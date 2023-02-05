@@ -19,7 +19,7 @@ jobs:
               shell: bash
               run: |
                 curl -o /tmp/flatc.zip https://github.com/google/flatbuffers/releases/download/v23.1.21/Linux.flatc.binary.g++-10.zip
-                7z x /tmp/flatc.zip -y -o /usr/local/bin/
+                7z x /tmp/flatc.zip -o/usr/local/bin/
                 flatc --version
 
             - name: Generate flatbuffer files
