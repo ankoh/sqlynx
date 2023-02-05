@@ -1,7 +1,7 @@
 runs:
   using: "composite"
   steps:
-    - name: Download Flatc
+    - name: Download WASI SDK
       run: |-
         export WASI_VERSION=19
         export WASI_VERSION_FULL=${WASI_VERSION}.0
@@ -9,7 +9,7 @@ runs:
         mkdir -p /opt/wasi-sdk
         tar xf ${{ github.action_path }}/wasi.zip -C /opt/wasi-sdk --strip-components 1
       shell: bash
-    - name: Print Flatc version
+    - name: List WASI SDK folder
       run: |-
         ls /opt/wasi-sdk
       shell: bash
