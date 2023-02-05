@@ -1,0 +1,4 @@
+/build
+/libs/flatsql-proto-cpp/include/flatsql/proto/
+/libs/flatsql-proto-es/src/gen
+/libs/flatsql-proto-rs/src/proto_generated.rs
