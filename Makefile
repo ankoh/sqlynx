@@ -27,11 +27,3 @@ parser:
 		-DCMAKE_EXPORT_COMPILE_COMMANDS=1
 	ln -sf ${PARSER_DEBUG_DIR}/compile_commands.json ${PARSER_SOURCE_DIR}/compile_commands.json
 	cmake --build ${PARSER_DEBUG_DIR}
-
-# C++ formatting
-.PHONY: clang_format
-clang_format:
-	python3 ./scripts/run_clang_format.py \
-	--exclude ./lib/build \
-	--exclude ./lib/third_party \
-	-r ./lib/
