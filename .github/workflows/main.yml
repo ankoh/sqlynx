@@ -109,7 +109,11 @@ jobs:
         shell: bash
         run: ./scripts/generate_proto.sh
 
-      - name: Build rust library
+      - name: Build library
         shell: bash
         run: cargo build
+
+      - name: Run tests
+        shell: bash
+        run: cargo test
 
