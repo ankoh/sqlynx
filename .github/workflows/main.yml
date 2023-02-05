@@ -24,7 +24,7 @@ jobs:
       - name: Setup binaryen
         uses: ./.github/actions/setup-binaryen
 
-      - name: Generate flatbuffer files
+      - name: Generate Flatbuffer files
         shell: bash
         run: ./scripts/generate_proto.sh
 
@@ -57,7 +57,7 @@ jobs:
       - name: Setup flatc
         uses: ./.github/actions/setup-flatc
 
-      - name: Generate flatbuffer files
+      - name: Generate Flatbuffer files
         shell: bash
         run: ./scripts/generate_proto.sh
 
@@ -101,7 +101,7 @@ jobs:
       - name: Setup flatc
         uses: ./.github/actions/setup-flatc
 
-      - name: Generate flatbuffer files
+      - name: Generate Flatbuffer files
         shell: bash
         run: ./scripts/generate_proto.sh
 
