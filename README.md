@@ -1,3 +1,5 @@
+![AST Figure](img/ast.png?raw=true)
+
 **FlatSQL**
 
 FlatSQL is a flat representation of a PostgreSQL AST.
