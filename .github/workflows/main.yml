@@ -95,7 +95,7 @@ jobs:
           name: flatsql_parser_native_debug
           path: ./packages/flatsql-parser/build/native/Debug/
 
-      - name: Setup rust toolchain
+      - name: Setup Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -109,11 +109,11 @@ jobs:
         shell: bash
         run: ./scripts/generate_proto.sh
 
-      - name: Build library
+      - name: Build FlatSQL tools
         shell: bash
         run: cargo build
 
-      - name: Run tests
+      - name: Run ast tests
         shell: bash
         run: cargo test
 
