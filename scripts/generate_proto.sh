@@ -42,9 +42,13 @@ ${FLATC} -I ${SPEC_DIR} -o ${OUT_DIR_TS} ${SPEC_INDEX} --ts \
     || { echo "[ ERR ] Generate Typescript Library"; exit 1; }
 
 
-TS_OUT_PROTO_BASE="${PROJECT_ROOT}/packages/flatsql-proto-es/src/flatsql/proto/"
+TS_OUT_PROTO_BASE="${PROJECT_ROOT}/packages/flatsql-proto-es/src/flatsql/proto"
 TS_OUT_PROTO_DIRS=`ls ${TS_OUT_PROTO_BASE}/`
-rm "${TS_OUT_PROTO_BASE}/../proto.ts"
+
+TS_OUT_PROTO_IDX="${TS_OUT_PROTO_BASE}/../proto.ts"
+if [ -f ${TS_OUT_PROTO_IDX} ]; then
+    rm ${TS_OUT_PROTO_IDX}
+fi
 
 PROTO_INDEX="${TS_OUT_PROTO_BASE}/index.ts"
 echo "Generating $PROTO_INDEX"
