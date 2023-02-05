@@ -5,9 +5,8 @@
 
 FlatSQL is a *just* flat representation of a PostgreSQL AST.
 The library provides a bison parser that materializes shallow AST Nodes into a single compact array.
-It can be compiled to WebAssembly and has been originally built for lightweight SQL instrumentation in DashQL.
+It can be compiled to WebAssembly and has been originally built for lightweight SQL instrumentation running on every user keystroke in DashQL.
 
 Each AST node is packed into 24 bytes and references matched substrings in the original script text.
-This makes the AST very lightweight and allows analyzing user input with every single keystroke.
 
 <img src="img/ast.png?raw=true" width="680px">
