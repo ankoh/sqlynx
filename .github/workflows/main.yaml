@@ -17,7 +17,7 @@ jobs:
 
             - name: Install flatbuffers
               shell: bash
-              run: sudo apt install flatbuffers
+              run: sudo apt install flatbuffers-compiler
 
             - name: Generate flatbuffer files
               shell: bash
