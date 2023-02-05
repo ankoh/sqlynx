@@ -13,9 +13,11 @@ SPEC_DIR="${PROJECT_ROOT}/proto/"
 SPEC_INDEX="${SPEC_DIR}/flatsql/proto.fbs"
 
 OUT_DIR_CPP="${PROJECT_ROOT}/packages/flatsql-proto-cpp/include/flatsql/proto"
-OUT_DIR_TS="${PROJECT_ROOT}/packages/flatsql-proto-es/src/"
-OUT_DIR_RS="${PROJECT_ROOT}/packages/flatsql-proto-rs/src/"
+OUT_DIR_TS="${PROJECT_ROOT}/packages/flatsql-proto-es/src"
+OUT_DIR_RS="${PROJECT_ROOT}/packages/flatsql-proto-rs/src"
 
+rm -rf ${OUT_DIR_CPP}/*
+rm -rf ${OUT_DIR_TS}/*
 mkdir -p ${OUT_DIR_CPP} ${OUT_DIR_TS}
 
 ${FLATC} -I ${SPEC_DIR} -o ${OUT_DIR_CPP} ${SPEC_INDEX} --cpp \
