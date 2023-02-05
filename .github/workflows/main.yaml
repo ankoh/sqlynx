@@ -1,8 +1,6 @@
 name: 'Main'
 on:
     push:
-        branches:
-            - main
     pull_request:
         branches:
             - main
@@ -10,18 +8,20 @@ on:
 jobs:
     parser_wasm:
         name: Parser WASM
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-22.04
         steps:
             - uses: actions/checkout@v3
               with:
                   submodules: 'recursive'
                   fetch-depth: 0
 
+            - name: Install flatbuffers
+              shell: bash
+              run: sudo apt install flatbuffers
+
             - name: Generate flatbuffer files
-              uses: ankoh/flatsql-ci-env@v0.3
-              with:
-                  script: |-
-                    ./scripts/generate_proto.sh
+              shell: bash
+              run: ./scripts/generate_proto.sh
 
             - name: Build WASM module
               uses: ankoh/flatsql-ci-env@v0.3
