@@ -83,7 +83,7 @@ jobs:
     name: Tests / Native / Debug
     runs-on: ubuntu-22.04
     needs:
-      - tests_native_debug
+      - parser_native_debug
     steps:
       - uses: actions/checkout@v3
         with:
