@@ -1,4 +1,4 @@
-<img src="img/ast.png?raw=true" width="66%">
+<img src="img/ast.png?raw=true" width="640px">
 
 **FlatSQL**
 
