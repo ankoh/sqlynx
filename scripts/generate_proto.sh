@@ -12,9 +12,9 @@ ${FLATC} --version \
 SPEC_DIR="${PROJECT_ROOT}/proto/"
 SPEC_INDEX="${SPEC_DIR}/flatsql/proto.fbs"
 
-OUT_DIR_CPP="${PROJECT_ROOT}/libs/flatsql-proto-cpp/include/flatsql/proto"
-OUT_DIR_TS="${PROJECT_ROOT}/libs/flatsql-proto-es/src/gen"
-OUT_DIR_RS="${PROJECT_ROOT}/libs/flatsql-proto-rs/src/"
+OUT_DIR_CPP="${PROJECT_ROOT}/packages/flatsql-proto-cpp/include/flatsql/proto"
+OUT_DIR_TS="${PROJECT_ROOT}/packages/flatsql-proto-es/src/"
+OUT_DIR_RS="${PROJECT_ROOT}/packages/flatsql-proto-rs/src/"
 
 mkdir -p ${OUT_DIR_CPP} ${OUT_DIR_TS}
 
@@ -42,7 +42,7 @@ ${FLATC} -I ${SPEC_DIR} -o ${OUT_DIR_TS} ${SPEC_INDEX} --ts \
     || { echo "[ ERR ] Generate Typescript Library"; exit 1; }
 
 
-TS_OUT_PROTO_BASE="${PROJECT_ROOT}/libs/flatsql-proto-es/src/gen/flatsql/proto/"
+TS_OUT_PROTO_BASE="${PROJECT_ROOT}/packages/flatsql-proto-es/src/flatsql/proto/"
 TS_OUT_PROTO_DIRS=`ls ${TS_OUT_PROTO_BASE}/syntax/`
 rm "${TS_OUT_PROTO_BASE}/syntax.ts"
 

@@ -1,0 +1,21 @@
+{
+    "compilerOptions": {
+        "outDir": "./dist/",
+        "baseUrl": ".",
+        "target": "es6",
+        "module": "es6",
+        "moduleResolution": "node",
+        "sourceMap": true,
+        "declaration": true,
+        "declarationMap": true,
+        "declarationDir": "./dist",
+        "noImplicitAny": true,
+        "esModuleInterop": true,
+        "lib": ["es6"],
+        "types": [],
+        "paths": {
+            "flatbuffers": ["../../node_modules/flatbuffers/js/flatbuffers.mjs"]
+        }
+    },
+    "files": ["./index.ts"]
+}

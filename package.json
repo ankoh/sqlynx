@@ -1,0 +1,19 @@
+{
+    "private": true,
+    "workspaces": [
+        "packages/flatsql-proto-es"
+    ],
+    "scripts": {
+        "format": "prettier --write packages",
+        "build:proto": "./scripts/generate_proto.sh",
+        "build:proto:es": "yarn workspace @ankoh/flatsql-proto build"
+    },
+    "dependencies": {
+        "jest": "^28.1.2",
+        "prettier": "^2.5.1"
+    },
+    "browserslist": [
+        "last 1 version",
+        "> 1%"
+    ]
+}

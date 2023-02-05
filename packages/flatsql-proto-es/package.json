@@ -1,0 +1,28 @@
+{
+    "name": "@ankoh/flatsql-proto",
+    "version": "0.0.5",
+    "description": "",
+    "license": "MPL-2.0",
+    "dependencies": {
+        "flatbuffers": "^2.0.4"
+    },
+    "devDependencies": {
+        "esbuild": "^0.14.25",
+        "typescript": "^4.5.5"
+    },
+    "scripts": {
+        "build": "tsc --emitDeclarationOnly && node bundle.mjs"
+    },
+    "include": [
+        "./index.ts"
+    ],
+    "files": [
+        "dist/gen/*.d.ts",
+        "dist/gen/*.js",
+        "dist/index.*",
+        "dist/dashql-proto.module.*"
+    ],
+    "type": "module",
+    "module": "./dist/dashql-proto.module.js",
+    "types": "./dist/dashql-proto.module.d.ts"
+}
