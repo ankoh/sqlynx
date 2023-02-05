@@ -24,6 +24,7 @@ esac
 echo "BUILD_TYPE=${MODE}"
 echo "WASI_SDK_PREFIX=${WASI_SDK_PREFIX}"
 echo "WASI_TOOLCHAIN=${WASI_CMAKE_TOOLCHAIN}"
+echo "WABT_BIN=${WABT_BIN}"
 
 mkdir -p ${CPP_BUILD_DIR}
 
@@ -43,7 +44,7 @@ make \
     flatsql_parser
 
 if [ ${MODE} == "Release" ]; then
-    wasm-opt -O3 -o ${CPP_BUILD_DIR}/flatsql_parser_opt.wasm ${CPP_BUILD_DIR}/flatsql_parser.wasm
-    wasm-strip ${CPP_BUILD_DIR}/flatsql_parser_opt.wasm
+    ${WABT_BIN}/wasm-opt -O3 -o ${CPP_BUILD_DIR}/flatsql_parser_opt.wasm ${CPP_BUILD_DIR}/flatsql_parser.wasm
+    ${WABT_BIN}/wasm-strip ${CPP_BUILD_DIR}/flatsql_parser_opt.wasm
     mv ${CPP_BUILD_DIR}/flatsql_parser_opt.wasm ${CPP_BUILD_DIR}/flatsql_parser.wasm
 fi

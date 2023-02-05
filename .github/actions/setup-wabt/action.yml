@@ -11,5 +11,5 @@ runs:
 
     - name: List WABT folder
       run: |-
-        ls /opt/wasi
+        ls /opt/wabt
       shell: bash
