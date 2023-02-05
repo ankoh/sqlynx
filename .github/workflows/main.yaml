@@ -27,10 +27,9 @@ jobs:
               run: ./scripts/generate_proto.sh
 
             - name: Build WASM module
-              uses: ankoh/flatsql-ci-env@v0.3
-              with:
-                  script: |-
-                    export WASI_SDK_PREFIX=/opt/wasi
-                    export WASI_SYSROOT=${WASI_SDK_PREFIX}/share/wasi-sysroot
-                    export WASI_CMAKE_TOOLCHAIN=${WASI_SDK_PREFIX}/share/cmake/wasi-sdk.cmake
-                    ./scripts/build_parser_wasm.sh Release
+              shell: bash
+              run: |
+                export WASI_SDK_PREFIX=/opt/wasi
+                export WASI_SYSROOT=${WASI_SDK_PREFIX}/share/wasi-sysroot
+                export WASI_CMAKE_TOOLCHAIN=${WASI_SDK_PREFIX}/share/cmake/wasi-sdk.cmake
+                ./scripts/build_parser_wasm.sh Release
