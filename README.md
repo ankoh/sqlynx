@@ -1,6 +1,6 @@
 **FlatSQL**
 
-FlatSQL is *just* a flat representation of a PostgreSQL AST.
+FlatSQL is a flat representation of a PostgreSQL AST.
 The library provides a Bison parser that materializes shallow AST Nodes into a single compact Flatbuffer vector.
 It can be compiled to WebAssembly and has been originally built for lightweight SQL instrumentation, running on every user keystroke in DashQL.
 
