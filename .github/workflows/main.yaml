@@ -18,13 +18,13 @@ jobs:
                   fetch-depth: 0
 
             - name: Generate flatbuffer files
-              uses: ankoh/flatsql-ci-env@v0.2
+              uses: ankoh/flatsql-ci-env@v0.3
               with:
                   script: |-
                     ./scripts/generate_proto.sh
 
             - name: Build WASM module
-              uses: ankoh/flatsql-ci-env@v0.2
+              uses: ankoh/flatsql-ci-env@v0.3
               with:
                   script: |-
                     ./scripts/build_parser_wasm.sh Release
