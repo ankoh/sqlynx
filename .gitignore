@@ -1,4 +1,5 @@
 node_modules
+/target
 /build
 /packages/flatsql-proto-cpp/include/flatsql/proto/
 /packages/flatsql-proto-es/src/
