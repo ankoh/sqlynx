@@ -1,13 +1,8 @@
 // ---------------------------------------------------------------------------
 // FlatSQL Objects
 
-opt_vararg:
-    vararg     { $$ = std::move($1); }
-  | %empty     { $$ = {}; }
-    ;
-
 vararg:
-    '(' vararg_fields ')'  { $$ = ctx.Add(@$, proto::NodeType::OBJECT_vararg, std::move($2)); }
+    '(' vararg_fields ')'  { $$ = ctx.Add(@$, proto::NodeType::OBJECT_EXT_VARARGS, std::move($2)); }
     ;
 
 vararg_fields:
@@ -16,7 +11,7 @@ vararg_fields:
     ;
 
 opt_vararg_field:
-    vararg_key_path '=' vararg_value { $$ = ctx.AddvarargField(@$, std::move($1), $3); }
+    vararg_key_path '=' vararg_value { $$ = ctx.AddVarArgField(@$, std::move($1), $3); }
   | %empty                           { $$ = Null(); }
     ;
 

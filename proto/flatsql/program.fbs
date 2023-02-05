@@ -53,8 +53,6 @@ enum NodeType: uint16 {
 
     OBJECT_KEYS_,
 
-    OBJECT_VARARGS,
-
     OBJECT_SQL_ALIAS,
     OBJECT_SQL_BIT_TYPE,
     OBJECT_SQL_CASE,
@@ -118,6 +116,9 @@ enum NodeType: uint16 {
     OBJECT_SQL_WINDOW_DEF,
     OBJECT_SQL_WINDOW_FRAME,
     OBJECT_SQL_WITH,
+
+    OBJECT_EXT_SET,
+    OBJECT_EXT_VARARGS,
 }
 
 enum AttributeKey: uint16 {
@@ -337,7 +338,9 @@ enum AttributeKey: uint16 {
     SQL_WINDOW_FRAME_ORDER,
     SQL_WINDOW_FRAME_PARTITION,
 
-    VARARG_DYNAMIC_KEYS_,
+    EXT_SET_FIELDS,
+
+    EXT_VARARG_DYNAMIC_KEYS_,
     // Dictionary encoded from here
 }
 

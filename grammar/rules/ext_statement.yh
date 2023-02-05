@@ -1,0 +1,3 @@
+%type <proto::Node> statement;
+%type <proto::Node> opt_statement;
+%type <proto::Node> sql_query_statement;

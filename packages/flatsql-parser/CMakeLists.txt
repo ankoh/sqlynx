@@ -98,13 +98,17 @@ set(GRAMMAR_RULES
     ${GRAMMAR_SOURCE_DIR}/rules/sql_create.y
     ${GRAMMAR_SOURCE_DIR}/rules/sql_select.y
     ${GRAMMAR_SOURCE_DIR}/rules/sql_view.y
-    ${GRAMMAR_SOURCE_DIR}/rules/varargs.y)
+    ${GRAMMAR_SOURCE_DIR}/rules/ext_statement.y
+    ${GRAMMAR_SOURCE_DIR}/rules/ext_set.y
+    ${GRAMMAR_SOURCE_DIR}/rules/ext_varargs.y)
 
 set(GRAMMAR_TYPES
     ${GRAMMAR_SOURCE_DIR}/rules/sql_create.yh
     ${GRAMMAR_SOURCE_DIR}/rules/sql_select.yh
     ${GRAMMAR_SOURCE_DIR}/rules/sql_view.yh
-    ${GRAMMAR_SOURCE_DIR}/rules/varargs.yh)
+    ${GRAMMAR_SOURCE_DIR}/rules/ext_statement.yh
+    ${GRAMMAR_SOURCE_DIR}/rules/ext_set.yh
+    ${GRAMMAR_SOURCE_DIR}/rules/ext_varargs.yh)
 
 # Build grammar file
 add_custom_command(

@@ -23,6 +23,8 @@
 #include <utility>
 #include "flatsql/parser/parser_driver.h"
 
+namespace sx = flatsql::proto;
+
 #define YYLLOC_DEFAULT(Cur, Rhs, N) { \
     if (N) { \
         uint32_t o = YYRHSLOC(Rhs, 1).offset(); \
@@ -35,7 +37,6 @@
     } \
 }
 }
-
 
 // ---------------------------------------------------------------------------
 // IMPLEMENTATION

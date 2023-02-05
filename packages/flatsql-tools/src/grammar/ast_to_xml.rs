@@ -39,12 +39,12 @@ where
                 pending.last_mut().unwrap().0 = true;
                 let mut node = BytesStart::borrowed_name(b"node");
                 if n.attribute_key() != 0 {
-                    let key = if n.attribute_key() < proto::AttributeKey::VARARG_DYNAMIC_KEYS_.0 {
+                    let key = if n.attribute_key() < proto::AttributeKey::EXT_VARARG_DYNAMIC_KEYS_.0 {
                         Key(n.attribute_key()).variant_name().unwrap_or_default().to_string()
                     } else {
                         format!(
                             "DSON_KEYS[{}]",
-                            (n.attribute_key() - proto::AttributeKey::VARARG_DYNAMIC_KEYS_.0)
+                            (n.attribute_key() - proto::AttributeKey::EXT_VARARG_DYNAMIC_KEYS_.0)
                         )
                     };
                     node.push_attribute(("key", key.as_str()));

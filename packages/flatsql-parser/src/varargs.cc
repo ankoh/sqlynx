@@ -35,10 +35,10 @@ VarArgDictionary::VarArgDictionary(std::string_view program_text, const proto::P
 
 /// Convert an dson key to string
 std::string_view VarArgDictionary::keyToString(uint16_t key) const {
-    if (key < static_cast<uint16_t>(proto::AttributeKey::VARARG_DYNAMIC_KEYS_)) {
+    if (key < static_cast<uint16_t>(proto::AttributeKey::EXT_VARARG_DYNAMIC_KEYS_)) {
         return proto::AttributeKeyTypeTable()->names[key];
     } else {
-        key -= static_cast<uint16_t>(proto::AttributeKey::VARARG_DYNAMIC_KEYS_);
+        key -= static_cast<uint16_t>(proto::AttributeKey::EXT_VARARG_DYNAMIC_KEYS_);
         assert(key < program_.vararg_keys.size());
         auto text = textAt(program_text_, program_.vararg_keys[key]);
         return text;
@@ -47,10 +47,10 @@ std::string_view VarArgDictionary::keyToString(uint16_t key) const {
 
 /// Convert an dson key to camelcase (primarily for JSON)
 std::string_view VarArgDictionary::keyToStringForJSON(uint16_t key, std::string& tmp) const {
-    if (key < static_cast<uint16_t>(proto::AttributeKey::VARARG_DYNAMIC_KEYS_)) {
+    if (key < static_cast<uint16_t>(proto::AttributeKey::EXT_VARARG_DYNAMIC_KEYS_)) {
         return proto::AttributeKeyTypeTable()->names[key];
     } else {
-        key -= static_cast<uint16_t>(proto::AttributeKey::VARARG_DYNAMIC_KEYS_);
+        key -= static_cast<uint16_t>(proto::AttributeKey::EXT_VARARG_DYNAMIC_KEYS_);
         assert(key < program_.vararg_keys.size());
         return textAt(program_text_, program_.vararg_keys[key]);
     }
@@ -100,7 +100,7 @@ proto::Node ParserDriver::AddVarArgField(proto::Location loc, std::vector<proto:
         if (auto iter = dson_key_map_.find(key_text); iter != dson_key_map_.end()) {
             key = iter->second;
         } else {
-            key = static_cast<uint16_t>(proto::AttributeKey::VARARG_DYNAMIC_KEYS_) + vararg_keys_.size();
+            key = static_cast<uint16_t>(proto::AttributeKey::EXT_VARARG_DYNAMIC_KEYS_) + vararg_keys_.size();
             dson_key_map_.insert({key_text, key});
             vararg_keys_.push_back(key_loc);
         }
@@ -116,7 +116,7 @@ proto::Node ParserDriver::AddVarArgField(proto::Location loc, std::vector<proto:
     auto iter = keys.rbegin() + (keys.size() - key_path.size());
     auto prev = Attr(*iter, value);
     for (++iter; iter != keys.rend(); ++iter) {
-        prev = Attr(*iter, AddObject(loc, proto::NodeType::OBJECT_VARARGS, {&prev, 1}, true, false));
+        prev = Attr(*iter, AddObject(loc, proto::NodeType::OBJECT_EXT_VARARGS, {&prev, 1}, true, false));
     }
     return prev;
 }
