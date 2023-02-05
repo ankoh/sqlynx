@@ -6,30 +6,49 @@ on:
             - main
 
 jobs:
-    parser_wasm:
-        name: Parser WASM
-        runs-on: ubuntu-22.04
-        steps:
-            - uses: actions/checkout@v3
-              with:
-                  submodules: 'recursive'
-                  fetch-depth: 0
+  parser_wasm:
+    name: Parser / WASM
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+          fetch-depth: 0
+      - name: Setup flatc
+        uses: ./.github/actions/setup-flatc
+      - name: Setup wasi-sdk
+        uses: ./.github/actions/setup-wasi-sdk
+      - name: Generate flatbuffer files
+        shell: bash
+        run: ./scripts/generate_proto.sh
+      - name: Build WASM module
+        shell: bash
+        env:
+          WABT_BIN: /opt/wabt/bin
+          WASI_SDK_PREFIX: /opt/wabi
+          WASI_SYSROOT: /opt/wabi/share/wasi-sysroot
+          WASI_CMAKE_TOOLCHAIN: /opt/wabi/share/cmake/wasi-sdk.cmake
+        run: |
+          ./scripts/build_parser_wasm.sh Release
 
-            - name: Setup flatc
-              uses: ./.github/actions/setup-flatc
-
-            - name: Setup wasi-sdk
-              uses: ./.github/actions/setup-wasi-sdk
-
-            - name: Generate flatbuffer files
-              shell: bash
-              run: ./scripts/generate_proto.sh
-
-            - name: Build WASM module
-              shell: bash
-              run: |
-                export WABT_BIN=/opt/wabt/bin
-                export WASI_SDK_PREFIX=/opt/wasi
-                export WASI_SYSROOT=${WASI_SDK_PREFIX}/share/wasi-sysroot
-                export WASI_CMAKE_TOOLCHAIN=${WASI_SDK_PREFIX}/share/cmake/wasi-sdk.cmake
-                ./scripts/build_parser_wasm.sh Release
+  parser_native:
+    name: Parser / Native
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+          fetch-depth: 0
+      - name: Setup flatc
+        uses: ./.github/actions/setup-flatc
+      - name: Compile parser library
+        shell: bash
+        env:
+          PARSER_SOURCE_DIR: ./packages/flatsql-parser
+          PARSER_DEBUG_DIR: ./packages/flatsql-parser/build/native/Debug
+        run: |
+          cmake -S ${PARSER_SOURCE_DIR} -B ${PARSER_DEBUG_DIR} \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+          ln -sf ${PARSER_DEBUG_DIR}/compile_commands.json ${PARSER_SOURCE_DIR}/compile_commands.json
+          cmake --build ${PARSER_DEBUG_DIR}
