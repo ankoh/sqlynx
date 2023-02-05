@@ -18,6 +18,11 @@ CORES=$(shell grep -c ^processor /proc/cpuinfo 2>/dev/null || sysctl -n hw.ncpu)
 # ---------------------------------------------------------------------------
 # Parser
 
+.PHONY: proto
+proto:
+	./scripts/generate_proto.sh
+	yarn workspace @ankoh/flatsql-proto build
+
 .PHONY: parser
 parser:
 	mkdir -p ${PARSER_DEBUG_DIR}
