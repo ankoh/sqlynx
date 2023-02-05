@@ -1,0 +1,1 @@
+%type <proto::Node> sql_view_stmt;
