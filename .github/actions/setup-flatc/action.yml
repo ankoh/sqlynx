@@ -1,0 +1,10 @@
+runs:
+  using: "composite"
+  steps:
+    - name: Install Flatc
+      run: |-
+        rm -f /tmp/flatc.zip
+        curl -Lo /tmp/flatc.zip https://github.com/google/flatbuffers/releases/download/v23.1.21/Linux.flatc.binary.g++-10.zip
+        7z x /tmp/flatc.zip -o/usr/local/bin/
+        flatc --version
+      shell: bash

@@ -15,12 +15,8 @@ jobs:
                   submodules: 'recursive'
                   fetch-depth: 0
 
-            - name: Install flatbuffers
-              shell: bash
-              run: |
-                curl -Lo /tmp/flatc.zip https://github.com/google/flatbuffers/releases/download/v23.1.21/Linux.flatc.binary.g++-10.zip
-                7z x /tmp/flatc.zip -o/usr/local/bin/
-                flatc --version
+            - name: Build WASM module
+              uses: ./.github/actions/setup-flatc
 
             - name: Generate flatbuffer files
               shell: bash
