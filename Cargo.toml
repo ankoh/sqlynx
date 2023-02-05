@@ -1,5 +1,6 @@
 [workspace]
 
 members = [
+    "packages/flatsql-parser-sys",
     "packages/flatsql-proto-rs"
 ]
