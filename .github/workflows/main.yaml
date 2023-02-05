@@ -29,7 +29,7 @@ jobs:
             - name: Build WASM module
               shell: bash
               run: |
-                export WABT_BIN=/opt/wabt
+                export WABT_BIN=/opt/wabt/bin
                 export WASI_SDK_PREFIX=/opt/wasi
                 export WASI_SYSROOT=${WASI_SDK_PREFIX}/share/wasi-sysroot
                 export WASI_CMAKE_TOOLCHAIN=${WASI_SDK_PREFIX}/share/cmake/wasi-sdk.cmake
