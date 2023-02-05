@@ -33,8 +33,6 @@ extern "C" void flatsql_delete_result(FFIResult* result) { delete result; }
 extern "C" void flatsql_delete_string(char* buffer) { delete buffer; }
 
 extern "C" void flatsql_parse(FFIResult* result, const uint8_t* text, size_t length) {
-    static_assert(sizeof(uint8_t) == sizeof(char));
-
     // Parse the program
     auto program = ParserDriver::Parse(std::string_view{reinterpret_cast<const char*>(text), length});
 

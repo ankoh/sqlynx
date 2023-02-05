@@ -1,0 +1,22 @@
+[package]
+name = "flatsql-tools"
+version = "0.1.0"
+edition = "2018"
+
+workspace = "../../"
+
+[dependencies]
+flatsql-proto = { path = "../flatsql-proto-rs" }
+flatsql-parser = { path = "../flatsql-parser-sys" }
+
+async-trait = "0.1.56"
+clap = { version = "^4.1.1", features = ["derive"] }
+env_logger = "0.8.3"
+flatbuffers = "23.1.21"
+libc = "0.2.121"
+log = "0.4.0"
+serde = { version = "1.0.136", features = ['derive', 'rc'] }
+quick-xml = { version = "0.22.0", features = ['serialize'] }
+tokio = { version = "1.19.2", features = ["rt-multi-thread", "macros"] }
+pretty_assertions = "1.2.1"
+bumpalo = "3.9.1"
