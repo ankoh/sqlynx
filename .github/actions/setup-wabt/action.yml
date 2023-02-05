@@ -12,4 +12,5 @@ runs:
     - name: List WABT folder
       run: |-
         ls /opt/wabt
+        ls /opt/wabt/bin
       shell: bash
