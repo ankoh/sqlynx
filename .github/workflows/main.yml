@@ -96,11 +96,7 @@ jobs:
           path: ./packages/flatsql-parser/build/native/Debug/
 
       - name: Setup Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-          components: rustfmt, clippy
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Setup flatc
         uses: ./.github/actions/setup-flatc
