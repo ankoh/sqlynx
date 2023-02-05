@@ -19,6 +19,8 @@ jobs:
               uses: ./.github/actions/setup-flatc
             - name: Setup wasi-sdk
               uses: ./.github/actions/setup-wasi-sdk
+            - name: Setup wabt
+              uses: ./.github/actions/setup-wabt
 
             - name: Generate flatbuffer files
               shell: bash
@@ -28,4 +30,7 @@ jobs:
               uses: ankoh/flatsql-ci-env@v0.3
               with:
                   script: |-
+                    export WASI_SDK_PREFIX=/opt/wasi
+                    export WASI_SYSROOT=${WASI_SDK_PREFIX}/share/wasi-sysroot
+                    export WASI_CMAKE_TOOLCHAIN=${WASI_SDK_PREFIX}/share/cmake/wasi-sdk.cmake
                     ./scripts/build_parser_wasm.sh Release

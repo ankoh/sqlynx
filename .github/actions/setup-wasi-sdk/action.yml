@@ -6,10 +6,11 @@ runs:
         export WASI_VERSION=19
         export WASI_VERSION_FULL=${WASI_VERSION}.0
         curl -Lo ${{ github.action_path }}/wasi.zip https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${WASI_VERSION}/wasi-sdk-${WASI_VERSION_FULL}-linux.tar.gz
-        mkdir -p /opt/wasi-sdk
-        tar xf ${{ github.action_path }}/wasi.zip -C /opt/wasi-sdk --strip-components 1
+        mkdir -p /opt/wasi
+        tar xf ${{ github.action_path }}/wasi.zip -C /opt/wasi --strip-components 1
       shell: bash
+
     - name: List WASI SDK folder
       run: |-
-        ls /opt/wasi-sdk
+        ls /opt/wasi
       shell: bash
