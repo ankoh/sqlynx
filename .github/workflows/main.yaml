@@ -14,13 +14,16 @@ jobs:
         with:
           submodules: 'recursive'
           fetch-depth: 0
+
       - name: Setup flatc
         uses: ./.github/actions/setup-flatc
       - name: Setup wasi-sdk
         uses: ./.github/actions/setup-wasi-sdk
+
       - name: Generate flatbuffer files
         shell: bash
         run: ./scripts/generate_proto.sh
+
       - name: Build WASM module
         shell: bash
         env:
@@ -31,19 +34,27 @@ jobs:
         run: |
           ./scripts/build_parser_wasm.sh Release
 
-  parser_native:
-    name: Parser / Native
+      - uses: actions/upload-artifact@v3
+        with:
+          name: flatsql_parser_wasm
+          path: ./packages/flatsql-parser/build/wasm/Release/flatsql_parser.wasm
+          retention-days: 1
+
+  parser_native_debug:
+    name: Parser / Native / Debug
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
         with:
           submodules: 'recursive'
           fetch-depth: 0
+
       - name: Setup flatc
         uses: ./.github/actions/setup-flatc
       - name: Generate flatbuffer files
         shell: bash
         run: ./scripts/generate_proto.sh
+
       - name: Compile parser library
         shell: bash
         env:
@@ -55,3 +66,9 @@ jobs:
             -DCMAKE_EXPORT_COMPILE_COMMANDS=1
           ln -sf ${PARSER_DEBUG_DIR}/compile_commands.json ${PARSER_SOURCE_DIR}/compile_commands.json
           cmake --build ${PARSER_DEBUG_DIR}
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: flatsql_parser_native_debug
+          path: ./packages/flatsql-parser/build/native/Debug/libflatsql_parser.a
+          retention-days: 1
