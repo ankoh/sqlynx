@@ -1,3 +1,5 @@
+[![Main](https://github.com/ankoh/flatsql/actions/workflows/main.yml/badge.svg)](https://github.com/ankoh/flatsql/actions/workflows/main.yml)
+
 **FlatSQL**
 
 FlatSQL is a flat representation of a PostgreSQL AST.
