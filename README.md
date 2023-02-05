@@ -1,4 +1,4 @@
-![AST Figure](img/ast.png?raw=true)
+<img src="img/ast.png?raw=true" width="66%">
 
 **FlatSQL**
 
