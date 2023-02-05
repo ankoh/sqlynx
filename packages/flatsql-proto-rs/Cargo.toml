@@ -12,4 +12,4 @@ test = false
 doctest = false
 
 [dependencies]
-flatbuffers = "2.1.1"
+flatbuffers = "23.1.21"
