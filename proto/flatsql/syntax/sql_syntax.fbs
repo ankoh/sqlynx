@@ -1,0 +1,309 @@
+namespace flatsql.proto.syntax;
+
+enum ExpressionOperator: uint8 {
+    DEFAULT,
+
+    NEGATE,
+    NOT,
+    TYPECAST,
+    COLLATE,
+    AT_TIMEZONE,
+
+    PLUS,
+    MINUS,
+    MULTIPLY,
+    DIVIDE,
+    MODULUS,
+    AND,
+    OR,
+    XOR,
+    GLOB,
+    NOT_GLOB,
+
+    IS_NULL,
+    LIKE,
+    ILIKE,
+    SIMILAR_TO,
+    NOT_NULL,
+    NOT_LIKE,
+    NOT_ILIKE,
+    NOT_SIMILAR_TO,
+
+    IS_TRUE,
+    IS_FALSE,
+    IS_UNKNOWN,
+    IS_DISTINCT_FROM,
+    IS_OF,
+    IS_NOT_TRUE,
+    IS_NOT_FALSE,
+    IS_NOT_UNKNOWN,
+    IS_NOT_DISTINCT_FROM,
+    IS_NOT_OF,
+
+    EQUAL,
+    NOT_EQUAL,
+    GREATER_EQUAL,
+    GREATER_THAN,
+    LESS_EQUAL,
+    LESS_THAN,
+
+    BETWEEN_SYMMETRIC,
+    BETWEEN_ASYMMETRIC,
+    NOT_BETWEEN_SYMMETRIC,
+    NOT_BETWEEN_ASYMMETRIC,
+    IN,
+    NOT_IN,
+
+    OVERLAPS
+}
+
+enum SubqueryQuantifier: uint8 {
+    ANY,
+    SOME,
+    ALL,
+}
+
+enum CombineModifier: uint8 {
+    NONE,
+    ALL,
+    DISTINCT,
+}
+
+enum CombineOperation: uint8 {
+    NONE,
+    INTERSECT,
+    UNION,
+    EXCEPT
+}
+
+enum AConstType: uint8 {
+    NONE = 0,
+    INTEGER = 1,
+    FLOAT = 2,
+    STRING = 3,
+    BITSTRING = 4,
+    INTERVAL = 5,
+    FUNCTION = 6,
+    NULL_ = 7,
+}
+
+enum TempType: uint8 {
+    NONE,
+    DEFAULT,
+    GLOBAL,
+    LOCAL,
+    UNLOGGED,
+}
+
+enum WindowBoundMode: uint8 {
+    UNBOUNDED,
+    CURRENT_ROW,
+    VALUE,
+}
+
+enum WindowBoundDirection: uint8 {
+    PRECEDING,
+    FOLLOWING,
+}
+
+enum WindowRangeMode: uint8 {
+    RANGE,
+    ROWS,
+    GROUPS,
+}
+
+enum WindowExclusionMode: uint8 {
+    CURRENT_ROW,
+    GROUP,
+    TIES
+}
+
+enum OrderDirection: uint8 {
+    ASCENDING,
+    DESCENDING
+}
+
+enum OrderNullRule: uint8 {
+    NULLS_FIRST,
+    NULLS_LAST
+}
+
+enum NumericType: uint8 {
+    INT1,
+    INT2,
+    INT4,
+    INT8,
+    FLOAT4,
+    FLOAT8,
+    NUMERIC,
+    BOOL,
+}
+
+enum OnCommitOption: uint8 {
+    DROP,
+    DELETE_ROWS,
+    PRESERVE_ROWS,
+    NOOP
+}
+
+enum CharacterType: uint8 {
+    VARCHAR,
+    BLANK_PADDED_CHAR
+}
+
+enum ConstraintAttribute: uint8 {
+    NOT_VALID,
+    NO_INHERIT,
+    DEFERRABLE,
+    NOT_DEFERRABLE,
+    INITIALLY_DEFERRED,
+    INITIALLY_IMMEDIATE,
+}
+
+enum ColumnConstraint: uint8 {
+    NOT_NULL,
+    NULL_,
+    UNIQUE,
+    PRIMARY_KEY,
+    CHECK,
+    DEFAULT,
+    COLLATE,
+}
+
+enum TableConstraint: uint8 {
+    CHECK,
+    UNIQUE,
+    PRIMARY_KEY,
+    FOREIGN_KEY,
+}
+
+enum KeyMatch: uint8 {
+    FULL,
+    PARTIAL,
+    SIMPLE
+}
+
+enum KeyActionCommand: uint8 {
+    NO_ACTION,
+    RESTRICT,
+    CASCADE,
+    SET_NULL,
+    SET_DEFAULT,
+}
+
+enum KeyActionTrigger: uint8 {
+    UPDATE,
+    DELETE
+}
+
+enum IntervalType: uint8 {
+    YEAR,
+    MONTH,
+    DAY,
+    HOUR,
+    MINUTE,
+    SECOND,
+    INTERVAL_SECOND,
+    YEAR_TO_MONTH,
+    DAY_TO_HOUR,
+    DAY_TO_MINUTE,
+    DAY_TO_SECOND,
+    HOUR_TO_MINUTE,
+    HOUR_TO_SECOND,
+    MINUTE_TO_SECOND,
+}
+
+enum TrimDirection: uint8 {
+    BOTH,
+    LEADING,
+    TRAILING
+}
+
+enum ExtractTarget: uint8 {
+    YEAR,
+    MONTH,
+    DAY,
+    HOUR,
+    MINUTE,
+    SECOND
+}
+
+enum JoinType: uint8 {
+    NONE = 0,
+
+    INNER = 1,
+    FULL = 2,
+    LEFT = 3,
+    RIGHT = 4,
+
+    // v | 64
+    OUTER_ = 64,
+    OUTER_INNER_INVALID = 65,
+    OUTER_FULL = 66,
+    OUTER_LEFT = 67,
+    OUTER_RIGHT = 68,
+
+    // v | 128
+    NATURAL_ = 128,
+    NATURAL_INNER = 129,
+    NATURAL_FULL = 130,
+    NATURAL_LEFT = 131,
+    NATURAL_RIGHT = 132,
+
+    // v | 128 | 64
+    NATURAL_OUTER_ = 192,
+    NATURAL_OUTER_INNER_INVALID = 193,
+    NATURAL_OUTER_FULL = 194,
+    NATURAL_OUTER_LEFT = 195,
+    NATURAL_OUTER_RIGHT = 196,
+}
+
+enum KnownFunction : uint8 {
+    COLLATION_FOR,
+    CURRENT_DATE,
+    CURRENT_TIME,
+    CURRENT_TIMESTAMP,
+    LOCALTIME,
+    LOCALTIMESTAMP,
+    CURRENT_ROLE,
+    CURRENT_USER,
+    SESSION_USER,
+    USER,
+    CURRENT_CATALOG,
+    CURRENT_SCHEMA,
+    CAST,
+    EXTRACT,
+    OVERLAY,
+    POSITION,
+    SUBSTRING,
+    TREAT,
+    TRIM,
+    NULLIF,
+    COALESCE,
+}
+
+enum RowLockingStrength: uint8 {
+    UPDATE,
+    NO_KEY_UPDATE,
+    SHARE,
+    KEY_SHARE,
+    READ_ONLY,
+}
+
+enum RowLockingBlockBehavior: uint8 {
+    NOWAIT,
+    SKIP_LOCKED
+}
+
+enum SampleCountUnit: uint8 {
+    PERCENT,
+    ROWS,
+}
+
+enum GroupByItemType: uint8 {
+    EMPTY,
+    EXPRESSION,
+    CUBE,
+    ROLLUP,
+    GROUPING_SETS,
+}
