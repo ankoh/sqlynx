@@ -15,7 +15,7 @@ jobs:
                   submodules: 'recursive'
                   fetch-depth: 0
 
-            - name: Build WASM module
+            - name: Setup flatc
               uses: ./.github/actions/setup-flatc
 
             - name: Generate flatbuffer files
