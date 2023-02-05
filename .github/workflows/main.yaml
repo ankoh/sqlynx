@@ -1,0 +1,30 @@
+name: 'Main'
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+        branches:
+            - main
+
+jobs:
+    parser_wasm:
+        name: Parser WASM
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+              with:
+                  submodules: 'recursive'
+                  fetch-depth: 0
+
+            - name: Generate flatbuffer files
+              uses: ankoh/flatsql-ci-env@v0.1
+              with:
+                  script: |-
+                    ./scripts/generate_proto.sh
+
+            - name: Build WASM module
+              uses: ankoh/flatsql-ci-env@v0.1
+              with:
+                  script: |-
+                    ./scripts/build_parser_wasm.sh Release
