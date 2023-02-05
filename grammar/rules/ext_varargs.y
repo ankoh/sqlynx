@@ -38,11 +38,11 @@ vararg_value:
     ;
 
 vararg_array:
-    vararg_array ',' vararg_value   { $1.push_back($3); $$ = move($1); }
+    vararg_array ',' vararg_value   { $1.push_back($3); $$ = std::move($1); }
   | vararg_value                    { $$ = {$1}; }
   | %empty                          { $$ = {}; }
     ;
 
 vararg_array_brackets:
-    '[' vararg_array ']'            { $$ = move($2); }
+    '[' vararg_array ']'            { $$ = std::move($2); }
     ;

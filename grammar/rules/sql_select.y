@@ -36,13 +36,13 @@
 // with or without outer parentheses.
 
 sql_select_stmt:
-    sql_select_no_parens    %prec UMINUS { $$ = move($1); }
-  | sql_select_with_parens  %prec UMINUS { $$ = move($1); }
+    sql_select_no_parens    %prec UMINUS { $$ = std::move($1); }
+  | sql_select_with_parens  %prec UMINUS { $$ = std::move($1); }
     ;
 
 sql_select_with_parens:
-    '(' sql_select_no_parens ')'    { $$ = move($2); }
-  | '(' sql_select_with_parens ')'  { $$ = move($2); }
+    '(' sql_select_no_parens ')'    { $$ = std::move($2); }
+  | '(' sql_select_with_parens ')'  { $$ = std::move($2); }
         ;
 
 // This rule parses the equivalent of the standard's <query expression>.
@@ -56,38 +56,38 @@ sql_select_with_parens:
 //    2002-08-28 bjm
 
 sql_select_no_parens:
-    sql_simple_select { $$ = move($1); }
+    sql_simple_select { $$ = std::move($1); }
   | sql_select_clause sql_sort_clause {
-        $$ = Concat(move($1), {
+        $$ = Concat(std::move($1), {
             Attr(Key::SQL_SELECT_ORDER, $2),
         });
     }
   | sql_select_clause sql_opt_sort_clause sql_for_locking_clause sql_opt_select_limit {
-        $$ = Concat(move($1), move($4), {
+        $$ = Concat(std::move($1), std::move($4), {
             Attr(Key::SQL_SELECT_ORDER, $2),
-            Attr(Key::SQL_SELECT_ROW_LOCKING, ctx.Add(@3, move($3))),
+            Attr(Key::SQL_SELECT_ROW_LOCKING, ctx.Add(@3, std::move($3))),
         });
     }
   | sql_select_clause sql_opt_sort_clause sql_select_limit sql_opt_for_locking_clause {
-        $$ = Concat(move($1), move($3), {
+        $$ = Concat(std::move($1), std::move($3), {
             Attr(Key::SQL_SELECT_ORDER, $2),
-            Attr(Key::SQL_SELECT_ROW_LOCKING, ctx.Add(@4, move($4))),
+            Attr(Key::SQL_SELECT_ROW_LOCKING, ctx.Add(@4, std::move($4))),
         });
     }
-  | sql_with_clause sql_select_clause { $$ = Concat(move($1), move($2)); }
+  | sql_with_clause sql_select_clause { $$ = Concat(std::move($1), std::move($2)); }
   | sql_with_clause sql_select_clause sql_sort_clause {
-        $$ = Concat(move($1), move($2), {
+        $$ = Concat(std::move($1), std::move($2), {
             Attr(Key::SQL_SELECT_ORDER, $3),
         });
     }
   | sql_with_clause sql_select_clause sql_opt_sort_clause sql_for_locking_clause sql_opt_select_limit {
-        $$ = Concat(move($1), move($2), move($5), {
+        $$ = Concat(std::move($1), std::move($2), std::move($5), {
             Attr(Key::SQL_SELECT_ORDER, $3),
-            Attr(Key::SQL_SELECT_ROW_LOCKING, ctx.Add(@4, move($4))),
+            Attr(Key::SQL_SELECT_ROW_LOCKING, ctx.Add(@4, std::move($4))),
         });
     }
   | sql_with_clause sql_select_clause sql_opt_sort_clause sql_select_limit sql_opt_for_locking_clause {
-        $$ = Concat(move($1), move($2), move($4), {
+        $$ = Concat(std::move($1), std::move($2), std::move($4), {
             Attr(Key::SQL_SELECT_ORDER, $3),
             Attr(Key::SQL_SELECT_ROW_LOCKING, ctx.Add(@5, std::move($5))),
         });
@@ -127,13 +127,13 @@ sql_simple_select:
         sql_group_clause sql_having_clause sql_window_clause sql_sample_clause {
             $$ = {
                 Attr(Key::SQL_SELECT_ALL, $2),
-                Attr(Key::SQL_SELECT_TARGETS, ctx.Add(@3, move($3))),
+                Attr(Key::SQL_SELECT_TARGETS, ctx.Add(@3, std::move($3))),
                 Attr(Key::SQL_SELECT_INTO, $4),
-                Attr(Key::SQL_SELECT_FROM, ctx.Add(@5, move($5))),
+                Attr(Key::SQL_SELECT_FROM, ctx.Add(@5, std::move($5))),
                 Attr(Key::SQL_SELECT_WHERE, $6),
-                Attr(Key::SQL_SELECT_GROUPS, ctx.Add(@7, move($7))),
+                Attr(Key::SQL_SELECT_GROUPS, ctx.Add(@7, std::move($7))),
                 Attr(Key::SQL_SELECT_HAVING, $8),
-                Attr(Key::SQL_SELECT_WINDOWS, ctx.Add(@9, move($9))),
+                Attr(Key::SQL_SELECT_WINDOWS, ctx.Add(@9, std::move($9))),
                 Attr(Key::SQL_SELECT_SAMPLE, $10),
             };
         }
@@ -142,25 +142,25 @@ sql_simple_select:
         sql_group_clause sql_having_clause sql_window_clause sql_sample_clause {
             $$ = {
                 Attr(Key::SQL_SELECT_DISTINCT, $2),
-                Attr(Key::SQL_SELECT_TARGETS, ctx.Add(@3, move($3))),
+                Attr(Key::SQL_SELECT_TARGETS, ctx.Add(@3, std::move($3))),
                 Attr(Key::SQL_SELECT_INTO, $4),
-                Attr(Key::SQL_SELECT_FROM, ctx.Add(@5, move($5))),
+                Attr(Key::SQL_SELECT_FROM, ctx.Add(@5, std::move($5))),
                 Attr(Key::SQL_SELECT_WHERE, $6),
-                Attr(Key::SQL_SELECT_GROUPS, ctx.Add(@7, move($7))),
+                Attr(Key::SQL_SELECT_GROUPS, ctx.Add(@7, std::move($7))),
                 Attr(Key::SQL_SELECT_HAVING, $8),
-                Attr(Key::SQL_SELECT_WINDOWS, ctx.Add(@9, move($9))),
+                Attr(Key::SQL_SELECT_WINDOWS, ctx.Add(@9, std::move($9))),
                 Attr(Key::SQL_SELECT_SAMPLE, $10),
             };
         }
   | sql_values_clause {
-        $$ = { Attr(Key::SQL_SELECT_VALUES, ctx.Add(@1, move($1))) };
+        $$ = { Attr(Key::SQL_SELECT_VALUES, ctx.Add(@1, std::move($1))) };
     }
   | TABLE sql_relation_expr {
-        $$ = { Attr(Key::SQL_SELECT_TABLE, ctx.Add(@$, proto::NodeType::OBJECT_SQL_TABLEREF, move($2))) };
+        $$ = { Attr(Key::SQL_SELECT_TABLE, ctx.Add(@$, proto::NodeType::OBJECT_SQL_TABLEREF, std::move($2))) };
     }
   | sql_select_clause UNION sql_all_or_distinct sql_select_clause {
-        auto l = ctx.Add(@1, proto::NodeType::OBJECT_SQL_SELECT, move($1));
-        auto r = ctx.Add(@4, proto::NodeType::OBJECT_SQL_SELECT, move($4));
+        auto l = ctx.Add(@1, proto::NodeType::OBJECT_SQL_SELECT, std::move($1));
+        auto r = ctx.Add(@4, proto::NodeType::OBJECT_SQL_SELECT, std::move($4));
         $$ = {
             Attr(Key::SQL_COMBINE_OPERATION, Enum(@2, proto::CombineOperation::UNION)),
             Attr(Key::SQL_COMBINE_MODIFIER, $3),
@@ -168,8 +168,8 @@ sql_simple_select:
         };
     }
   | sql_select_clause INTERSECT sql_all_or_distinct sql_select_clause {
-        auto l = ctx.Add(@1, proto::NodeType::OBJECT_SQL_SELECT, move($1));
-        auto r = ctx.Add(@4, proto::NodeType::OBJECT_SQL_SELECT, move($4));
+        auto l = ctx.Add(@1, proto::NodeType::OBJECT_SQL_SELECT, std::move($1));
+        auto r = ctx.Add(@4, proto::NodeType::OBJECT_SQL_SELECT, std::move($4));
         $$ = {
             Attr(Key::SQL_COMBINE_OPERATION, Enum(@2, proto::CombineOperation::INTERSECT)),
             Attr(Key::SQL_COMBINE_MODIFIER, $3),
@@ -177,8 +177,8 @@ sql_simple_select:
         };
     }
   | sql_select_clause EXCEPT sql_all_or_distinct sql_select_clause {
-        auto l = ctx.Add(@1, proto::NodeType::OBJECT_SQL_SELECT, move($1));
-        auto r = ctx.Add(@4, proto::NodeType::OBJECT_SQL_SELECT, move($4));
+        auto l = ctx.Add(@1, proto::NodeType::OBJECT_SQL_SELECT, std::move($1));
+        auto r = ctx.Add(@4, proto::NodeType::OBJECT_SQL_SELECT, std::move($4));
         $$ = {
             Attr(Key::SQL_COMBINE_OPERATION, Enum(@2, proto::CombineOperation::EXCEPT)),
             Attr(Key::SQL_COMBINE_MODIFIER, $3),
@@ -197,26 +197,26 @@ sql_simple_select:
 // Recognizing WITH_LA here allows a CTE to be named TIME or ORDINALITY.
 
 sql_with_clause:
-    WITH sql_cte_list       { $$ = { Attr(Key::SQL_SELECT_WITH_CTES, ctx.Add(@2, move($2))) }; }
-  | WITH_LA sql_cte_list    { $$ = { Attr(Key::SQL_SELECT_WITH_CTES, ctx.Add(@2, move($2))) }; }
+    WITH sql_cte_list       { $$ = { Attr(Key::SQL_SELECT_WITH_CTES, ctx.Add(@2, std::move($2))) }; }
+  | WITH_LA sql_cte_list    { $$ = { Attr(Key::SQL_SELECT_WITH_CTES, ctx.Add(@2, std::move($2))) }; }
   | WITH RECURSIVE sql_cte_list {
         $$ = {
             Attr(Key::SQL_SELECT_WITH_RECURSIVE, Bool(@2, true)),
-            Attr(Key::SQL_SELECT_WITH_CTES, ctx.Add(@3, move($3))),
+            Attr(Key::SQL_SELECT_WITH_CTES, ctx.Add(@3, std::move($3))),
         };
     }
     ;
 
 sql_cte_list:
     sql_common_table_expr                   { $$ = { $1 }; }
-  | sql_cte_list ',' sql_common_table_expr  { $1.push_back($3); $$ = move($1); }
+  | sql_cte_list ',' sql_common_table_expr  { $1.push_back($3); $$ = std::move($1); }
     ;
 
 sql_common_table_expr:
     sql_name sql_opt_name_list AS '(' sql_preparable_stmt ')' {
         $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_CTE, {
             Attr(Key::SQL_CTE_NAME, Ident(@1)),
-            Attr(Key::SQL_CTE_COLUMNS, ctx.Add(@2, move($2))),
+            Attr(Key::SQL_CTE_COLUMNS, ctx.Add(@2, std::move($2))),
             Attr(Key::SQL_CTE_STATEMENT, $5),
         });
     }
@@ -229,7 +229,7 @@ sql_into_clause:
 
 // XXX PreparableStmt: select | insert | update | delete
 sql_preparable_stmt:
-    sql_select_stmt                 { $$ = ctx.Add(@1, proto::NodeType::OBJECT_SQL_SELECT, move($1)); }
+    sql_select_stmt                 { $$ = ctx.Add(@1, proto::NodeType::OBJECT_SQL_SELECT, std::move($1)); }
     ;
 
 // Redundancy here is needed to avoid shift/reduce conflicts,
@@ -262,7 +262,7 @@ sql_all_or_distinct:
 
 sql_distinct_clause:
     DISTINCT                            { $$ = ctx.Add(@$, {}, false); }
-  | DISTINCT ON '(' sql_expr_list ')'   { $$ = ctx.Add(@$, move($4)); }
+  | DISTINCT ON '(' sql_expr_list ')'   { $$ = ctx.Add(@$, std::move($4)); }
     ;
 
 sql_opt_all_clause:
@@ -276,12 +276,12 @@ sql_opt_sort_clause:
     ;
 
 sql_sort_clause:
-    ORDER BY sql_sortby_list        { $$ = ctx.Add(@$, move($3)); }
+    ORDER BY sql_sortby_list        { $$ = ctx.Add(@$, std::move($3)); }
     ;
 
 sql_sortby_list:
     sql_sortby                      { $$ = { $1 }; }
-  | sql_sortby_list ',' sql_sortby  { $1.push_back($3); $$ = move($1); }
+  | sql_sortby_list ',' sql_sortby  { $1.push_back($3); $$ = std::move($1); }
     ;
 
 sql_sortby:
@@ -313,10 +313,10 @@ sql_opt_nulls_order:
     ;
 
 sql_select_limit:
-    sql_limit_clause sql_offset_clause  { $$ = Concat(move($1), move($2)); }
-  | sql_offset_clause sql_limit_clause  { $$ = Concat(move($1), move($2)); }
-  | sql_limit_clause                    { $$ = move($1); }
-  | sql_offset_clause                   { $$ = move($1); }
+    sql_limit_clause sql_offset_clause  { $$ = Concat(std::move($1), std::move($2)); }
+  | sql_offset_clause sql_limit_clause  { $$ = Concat(std::move($1), std::move($2)); }
+  | sql_limit_clause                    { $$ = std::move($1); }
+  | sql_offset_clause                   { $$ = std::move($1); }
     ;
 
 sql_opt_select_limit:
@@ -431,13 +431,13 @@ sql_first_or_next:
 // PGGroupingSet node of some type.
 
 sql_group_clause:
-    GROUP_P BY sql_group_by_list    { $$ = move($3); }
+    GROUP_P BY sql_group_by_list    { $$ = std::move($3); }
   | %empty                          { $$ = {}; }
     ;
 
 sql_group_by_list:
     sql_group_by_item                         { $$ = { $1 }; }
-  | sql_group_by_list ',' sql_group_by_item   { $1.push_back($3); $$ = move($1); }
+  | sql_group_by_list ',' sql_group_by_item   { $1.push_back($3); $$ = std::move($1); }
     ;
 
 sql_group_by_item:
@@ -540,8 +540,8 @@ sql_opt_nowait_or_skip:
 // than allowing the noise-word is worth.
 
 sql_values_clause:
-    VALUES '(' sql_expr_list ')'                  { $$ = { ctx.Add(@3, move($3)) }; }
-  | sql_values_clause ',' '(' sql_expr_list ')'   { $1.push_back(ctx.Add(@4, move($4))); $$ = move($1); }
+    VALUES '(' sql_expr_list ')'                  { $$ = { ctx.Add(@3, std::move($3)) }; }
+  | sql_values_clause ',' '(' sql_expr_list ')'   { $1.push_back(ctx.Add(@4, std::move($4))); $$ = std::move($1); }
     ;
 
 
@@ -550,20 +550,20 @@ sql_values_clause:
 // where_clause     - qualifications for joins or restrictions
 
 sql_from_clause:
-    FROM sql_from_list  { $$ = move($2); }
+    FROM sql_from_list  { $$ = std::move($2); }
   | %empty              { $$ = {}; }
     ;
 
 sql_from_list:
     sql_table_ref                       { $$ = { $1 }; }
-  | sql_from_list ',' sql_table_ref     { $1.push_back($3); $$ = move($1); }
+  | sql_from_list ',' sql_table_ref     { $1.push_back($3); $$ = std::move($1); }
     ;
 
 // table_ref is where an alias clause can be attached.
 // XXX Andre
 sql_table_ref:
     sql_relation_expr sql_opt_alias_clause sql_opt_tablesample_clause {
-        $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_TABLEREF, Concat(move($1), {
+        $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_TABLEREF, Concat(std::move($1), {
             Attr(Key::SQL_TABLEREF_ALIAS, $2),
             Attr(Key::SQL_TABLEREF_SAMPLE, $3),
         }));
@@ -576,7 +576,7 @@ sql_table_ref:
         });
     }
   | sql_select_with_parens sql_opt_alias_clause sql_opt_tablesample_clause {
-        auto t = ctx.Add(@1, proto::NodeType::OBJECT_SQL_SELECT, move($1));
+        auto t = ctx.Add(@1, proto::NodeType::OBJECT_SQL_SELECT, std::move($1));
         $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_TABLEREF, {
             Attr(Key::SQL_TABLEREF_ALIAS, $2),
             Attr(Key::SQL_TABLEREF_SAMPLE, $3),
@@ -591,7 +591,7 @@ sql_table_ref:
         });
     }
   | LATERAL_P sql_select_with_parens sql_opt_alias_clause {
-        auto t = ctx.Add(@1, proto::NodeType::OBJECT_SQL_SELECT, move($2));
+        auto t = ctx.Add(@1, proto::NodeType::OBJECT_SQL_SELECT, std::move($2));
         $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_TABLEREF, {
             Attr(Key::SQL_TABLEREF_LATERAL, Bool(@1, true)),
             Attr(Key::SQL_TABLEREF_ALIAS, $3),
@@ -599,13 +599,13 @@ sql_table_ref:
         });
     }
   | sql_joined_table {
-        auto t = ctx.Add(@1, proto::NodeType::OBJECT_SQL_JOINED_TABLE, move($1));
+        auto t = ctx.Add(@1, proto::NodeType::OBJECT_SQL_JOINED_TABLE, std::move($1));
         $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_TABLEREF, {
             Attr(Key::SQL_TABLEREF_TABLE, std::move(t)),
         });
     }
   | '(' sql_joined_table ')' sql_alias_clause {
-        auto t = ctx.Add(@1, proto::NodeType::OBJECT_SQL_JOINED_TABLE, move($2));
+        auto t = ctx.Add(@1, proto::NodeType::OBJECT_SQL_JOINED_TABLE, std::move($2));
         $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_TABLEREF, {
             Attr(Key::SQL_TABLEREF_ALIAS, $4),
             Attr(Key::SQL_TABLEREF_TABLE, std::move(t)),
@@ -667,14 +667,14 @@ sql_alias_clause:
     AS sql_col_id '(' sql_name_list ')' {
         $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_ALIAS, {
             Attr(Key::SQL_ALIAS_NAME, Ident(@2)),
-            Attr(Key::SQL_ALIAS_COLUMN_NAMES, ctx.Add(@4, move($4))),
+            Attr(Key::SQL_ALIAS_COLUMN_NAMES, ctx.Add(@4, std::move($4))),
         });
     }
   | AS sql_col_id_or_string { $$ = $2; }
   | sql_col_id '(' sql_name_list ')' {
         $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_ALIAS, {
             Attr(Key::SQL_ALIAS_NAME, Ident(@1)),
-            Attr(Key::SQL_ALIAS_COLUMN_NAMES, ctx.Add(@3, move($3))),
+            Attr(Key::SQL_ALIAS_COLUMN_NAMES, ctx.Add(@3, std::move($3))),
         });
     }
   | sql_col_id { $$ = Ident(@1); }
@@ -691,19 +691,19 @@ sql_func_alias_clause:
     sql_alias_clause { $$ = $1; }
   | AS '(' sql_table_func_element_list ')' {
         $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_ALIAS, {
-            Attr(Key::SQL_ALIAS_COLUMN_DEFS, ctx.Add(@3, move($3))),
+            Attr(Key::SQL_ALIAS_COLUMN_DEFS, ctx.Add(@3, std::move($3))),
         });
     }
   | AS sql_col_id '(' sql_table_func_element_list ')' {
         $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_ALIAS, {
             Attr(Key::SQL_ALIAS_NAME, Ident(@2)),
-            Attr(Key::SQL_ALIAS_COLUMN_DEFS, ctx.Add(@4, move($4))),
+            Attr(Key::SQL_ALIAS_COLUMN_DEFS, ctx.Add(@4, std::move($4))),
         });
     }
   | sql_col_id '(' sql_table_func_element_list ')' ')' {
         $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_ALIAS, {
             Attr(Key::SQL_ALIAS_NAME, Ident(@1)),
-            Attr(Key::SQL_ALIAS_COLUMN_DEFS, ctx.Add(@3, move($3))),
+            Attr(Key::SQL_ALIAS_COLUMN_DEFS, ctx.Add(@3, std::move($3))),
         });
     }
   | %empty { $$ = Null(); }
@@ -891,13 +891,13 @@ sql_typename:
     sql_simple_typename sql_opt_array_bounds {
         $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_TYPENAME, {
             Attr(Key::SQL_TYPENAME_TYPE, $1),
-            Attr(Key::SQL_TYPENAME_ARRAY, ctx.Add(@2, move($2))),
+            Attr(Key::SQL_TYPENAME_ARRAY, ctx.Add(@2, std::move($2))),
         });
     }
   | SETOF sql_simple_typename sql_opt_array_bounds {
         $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_TYPENAME, {
             Attr(Key::SQL_TYPENAME_TYPE, $2),
-            Attr(Key::SQL_TYPENAME_ARRAY, ctx.Add(@3, move($3))),
+            Attr(Key::SQL_TYPENAME_ARRAY, ctx.Add(@3, std::move($3))),
             Attr(Key::SQL_TYPENAME_SETOF, Bool(@1, true)),
         });
     }
@@ -931,8 +931,8 @@ sql_typename:
     ;
 
 sql_opt_array_bounds:
-    sql_opt_array_bounds '[' ']'            { $1.push_back(Null()); $$ = move($1); }
-  | sql_opt_array_bounds '[' ICONST ']'     { $1.push_back(Const(@3, proto::AConstType::INTEGER)); $$ = move($1); }
+    sql_opt_array_bounds '[' ']'            { $1.push_back(Null()); $$ = std::move($1); }
+  | sql_opt_array_bounds '[' ICONST ']'     { $1.push_back(Const(@3, proto::AConstType::INTEGER)); $$ = std::move($1); }
   | %empty                                  { $$ = {}; }
     ;
 
@@ -1006,19 +1006,19 @@ sql_numeric:
   | DECIMAL_P sql_opt_type_modifiers {
         $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_NUMERIC_TYPE, {
             Attr(Key::SQL_NUMERIC_TYPE_BASE, Enum(@1, proto::NumericType::NUMERIC)),
-            Attr(Key::SQL_NUMERIC_TYPE_MODIFIERS, ctx.Add(@2, move($2))),
+            Attr(Key::SQL_NUMERIC_TYPE_MODIFIERS, ctx.Add(@2, std::move($2))),
         });
     }
   | DEC sql_opt_type_modifiers {
         $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_NUMERIC_TYPE, {
             Attr(Key::SQL_NUMERIC_TYPE_BASE, Enum(@1, proto::NumericType::NUMERIC)),
-            Attr(Key::SQL_NUMERIC_TYPE_MODIFIERS, ctx.Add(@2, move($2))),
+            Attr(Key::SQL_NUMERIC_TYPE_MODIFIERS, ctx.Add(@2, std::move($2))),
         });
     }
   | NUMERIC sql_opt_type_modifiers {
         $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_NUMERIC_TYPE, {
             Attr(Key::SQL_NUMERIC_TYPE_BASE, Enum(@1, proto::NumericType::NUMERIC)),
-            Attr(Key::SQL_NUMERIC_TYPE_MODIFIERS, ctx.Add(@2, move($2))),
+            Attr(Key::SQL_NUMERIC_TYPE_MODIFIERS, ctx.Add(@2, std::move($2))),
         });
     }
   | BOOLEAN_P   { $$ = Enum(@1, proto::NumericType::BOOL); }
@@ -1068,17 +1068,17 @@ sql_bit_without_length:
 // The following implements CHAR() and VARCHAR().
 
 sql_character:
-    sql_character_with_length     { $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_CHARACTER_TYPE, move($1)); }
-  | sql_character_without_length  { $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_CHARACTER_TYPE, move($1)); }
+    sql_character_with_length     { $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_CHARACTER_TYPE, std::move($1)); }
+  | sql_character_without_length  { $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_CHARACTER_TYPE, std::move($1)); }
     ;
 
 sql_const_character:
-    sql_character_with_length     { $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_CHARACTER_TYPE, move($1)); }
-  | sql_character_without_length  { $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_CHARACTER_TYPE, move($1)); }
+    sql_character_with_length     { $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_CHARACTER_TYPE, std::move($1)); }
+  | sql_character_without_length  { $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_CHARACTER_TYPE, std::move($1)); }
     ;
 
 sql_character_with_length:
-    sql_character_without_length '(' ICONST ')'  { $1.push_back(Attr(Key::SQL_CHARACTER_TYPE_LENGTH, Const(@3, proto::AConstType::INTEGER))); $$ = move($1); }
+    sql_character_without_length '(' ICONST ')'  { $1.push_back(Attr(Key::SQL_CHARACTER_TYPE_LENGTH, Const(@3, proto::AConstType::INTEGER))); $$ = std::move($1); }
     ;
 
 sql_character_without_length:
@@ -1381,8 +1381,8 @@ sql_b_expr:
   | sql_b_expr sql_qual_op              %prec POSTFIXOP   { $$ = Expr(ctx, @$, $2, $1, PostFix); }
   | sql_b_expr IS DISTINCT FROM sql_b_expr          %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3, @4}), ExprFunc::IS_DISTINCT_FROM), $1, $5); }
   | sql_b_expr IS NOT DISTINCT FROM sql_b_expr      %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3, @4, @5}), ExprFunc::IS_NOT_DISTINCT_FROM), $1, $6); }
-  | sql_b_expr IS OF '(' sql_type_list ')'          %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::IS_OF), $1, ctx.Add(@5, move($5))); }
-  | sql_b_expr IS NOT OF '(' sql_type_list ')'      %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3, @4}), ExprFunc::IS_NOT_OF), $1, ctx.Add(@6, move($6))); }
+  | sql_b_expr IS OF '(' sql_type_list ')'          %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::IS_OF), $1, ctx.Add(@5, std::move($5))); }
+  | sql_b_expr IS NOT OF '(' sql_type_list ')'      %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3, @4}), ExprFunc::IS_NOT_OF), $1, ctx.Add(@6, std::move($6))); }
     ;
 
 // Productions that can be used in both a_expr and b_expr.
@@ -1425,20 +1425,20 @@ sql_c_expr:
   | sql_case_expr                             { $$ = $1; }
   | sql_func_expr                             { $$ = $1; }
   | sql_select_with_parens      %prec UMINUS  {
-        auto s = ctx.Add(@1, proto::NodeType::OBJECT_SQL_SELECT, move($1));
+        auto s = ctx.Add(@1, proto::NodeType::OBJECT_SQL_SELECT, std::move($1));
         $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_SELECT_EXPRESSION, {
             Attr(Key::SQL_SELECT_EXPRESSION_STATEMENT, s)
         });
     }
   | sql_select_with_parens sql_indirection {
-        auto s = ctx.Add(@1, proto::NodeType::OBJECT_SQL_SELECT, move($1));
+        auto s = ctx.Add(@1, proto::NodeType::OBJECT_SQL_SELECT, std::move($1));
         $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_SELECT_EXPRESSION, {
             Attr(Key::SQL_SELECT_EXPRESSION_STATEMENT, s),
             Attr(Key::SQL_SELECT_EXPRESSION_INDIRECTION, ctx.Add(@2, std::move($2))),
         });
     }
   | EXISTS sql_select_with_parens {
-        auto s = ctx.Add(@2, proto::NodeType::OBJECT_SQL_SELECT, move($2));
+        auto s = ctx.Add(@2, proto::NodeType::OBJECT_SQL_SELECT, std::move($2));
         $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_EXISTS_EXPRESSION, {
             Attr(Key::SQL_EXISTS_EXPRESSION_STATEMENT, s),
         });
@@ -1450,7 +1450,7 @@ sql_func_application:
   | sql_func_name '(' sql_func_arg_list sql_opt_sort_clause ')' {
         $$ = {
             Attr(Key::SQL_FUNCTION_NAME, Ident(@1)),
-            Attr(Key::SQL_FUNCTION_ARGUMENTS, ctx.Add(@3, move($3))),
+            Attr(Key::SQL_FUNCTION_ARGUMENTS, ctx.Add(@3, std::move($3))),
             Attr(Key::SQL_FUNCTION_ORDER, $4),
         };
     }
@@ -1464,7 +1464,7 @@ sql_func_application:
   | sql_func_name '(' sql_func_arg_list ',' VARIADIC sql_func_arg_expr sql_opt_sort_clause ')' {
         $$ = {
             Attr(Key::SQL_FUNCTION_NAME, Ident(@1)),
-            Attr(Key::SQL_FUNCTION_ARGUMENTS, ctx.Add(@3, move($3))),
+            Attr(Key::SQL_FUNCTION_ARGUMENTS, ctx.Add(@3, std::move($3))),
             Attr(Key::SQL_FUNCTION_VARIADIC, $6),
             Attr(Key::SQL_FUNCTION_ORDER, $7),
         };
@@ -1473,7 +1473,7 @@ sql_func_application:
         $$ = {
             Attr(Key::SQL_FUNCTION_NAME, Ident(@1)),
             Attr(Key::SQL_FUNCTION_ALL, Bool(@3, true)),
-            Attr(Key::SQL_FUNCTION_ARGUMENTS, ctx.Add(@4, move($4))),
+            Attr(Key::SQL_FUNCTION_ARGUMENTS, ctx.Add(@4, std::move($4))),
             Attr(Key::SQL_FUNCTION_ORDER, $5),
         };
     }
@@ -1481,7 +1481,7 @@ sql_func_application:
         $$ = {
             Attr(Key::SQL_FUNCTION_NAME, Ident(@1)),
             Attr(Key::SQL_FUNCTION_DISTINCT, Bool(@3, true)),
-            Attr(Key::SQL_FUNCTION_ARGUMENTS, ctx.Add(@4, move($4))),
+            Attr(Key::SQL_FUNCTION_ARGUMENTS, ctx.Add(@4, std::move($4))),
             Attr(Key::SQL_FUNCTION_ORDER, $5),
         };
     }
@@ -1676,13 +1676,13 @@ sql_filter_clause:
 // Window Definitions
 
 sql_window_clause:
-    WINDOW sql_window_definition_list   { $$ = move($2); }
+    WINDOW sql_window_definition_list   { $$ = std::move($2); }
   | %empty                              { $$ = {}; }
     ;
 
 sql_window_definition_list:
     sql_window_definition                                   { $$ = { $1 }; }
-  | sql_window_definition_list ',' sql_window_definition    { $1.push_back($3); $$ = move($1); }
+  | sql_window_definition_list ',' sql_window_definition    { $1.push_back($3); $$ = std::move($1); }
     ;
 
 sql_window_definition:
@@ -1702,7 +1702,7 @@ sql_over_clause:
 
 sql_window_specification:
     '(' sql_opt_existing_window_name sql_opt_partition_clause sql_opt_sort_clause sql_opt_frame_clause ')' {
-        $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_WINDOW_FRAME, Concat(move($2), move($3), move($5), {
+        $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_WINDOW_FRAME, Concat(std::move($2), std::move($3), std::move($5), {
             Attr(Key::SQL_WINDOW_FRAME_ORDER, $4)
         }), false);
     }
@@ -1723,7 +1723,7 @@ sql_opt_existing_window_name:
     ;
 
 sql_opt_partition_clause:
-    PARTITION BY sql_expr_list  { $$ = { Attr(Key::SQL_WINDOW_FRAME_PARTITION, ctx.Add(@3, move($3))) }; }
+    PARTITION BY sql_expr_list  { $$ = { Attr(Key::SQL_WINDOW_FRAME_PARTITION, ctx.Add(@3, std::move($3))) }; }
   | %empty                      { $$ = {}; }
     ;
 
@@ -1736,11 +1736,11 @@ sql_opt_partition_clause:
 sql_opt_frame_clause:
     RANGE sql_frame_extent { $$ = {
         Attr(Key::SQL_WINDOW_FRAME_MODE, Enum(@1, proto::WindowRangeMode::RANGE)),
-        Attr(Key::SQL_WINDOW_FRAME_BOUNDS, ctx.Add(@2, move($2))),
+        Attr(Key::SQL_WINDOW_FRAME_BOUNDS, ctx.Add(@2, std::move($2))),
     }; }
   | ROWS sql_frame_extent { $$ = {
         Attr(Key::SQL_WINDOW_FRAME_MODE, Enum(@1, proto::WindowRangeMode::ROWS)),
-        Attr(Key::SQL_WINDOW_FRAME_BOUNDS, ctx.Add(@2, move($2))),
+        Attr(Key::SQL_WINDOW_FRAME_BOUNDS, ctx.Add(@2, std::move($2))),
     }; }
   | %empty { $$ = {}; }
     ;
@@ -1859,12 +1859,12 @@ sql_any_operator:
 
 sql_expr_list:
     sql_a_expr                      { $$ = { $1 }; }
-  | sql_expr_list ',' sql_a_expr    { $1.push_back($3); $$ = move($1); }
+  | sql_expr_list ',' sql_a_expr    { $1.push_back($3); $$ = std::move($1); }
     ;
 
 sql_func_arg_list:
     sql_func_arg_expr                           { $$ = { $1 }; }
-  | sql_func_arg_list ',' sql_func_arg_expr     { $1.push_back($3); $$ = move($1); }
+  | sql_func_arg_list ',' sql_func_arg_expr     { $1.push_back($3); $$ = std::move($1); }
     ;
 
 sql_func_arg_expr:
@@ -1889,7 +1889,7 @@ sql_func_arg_expr:
 
 sql_type_list:
     sql_typename                    { $$ = { $1 }; }
-  | sql_type_list ',' sql_typename  { $1.push_back($3); $$ = move($1); }
+  | sql_type_list ',' sql_typename  { $1.push_back($3); $$ = std::move($1); }
     ;
 
 sql_extract_list:
@@ -2074,7 +2074,7 @@ sql_case_arg:
 
 sql_columnref:
     sql_col_id                  { $$ = ColumnRef(ctx, @$, {Ident(@1)}); }
-  | sql_col_id sql_indirection  { $2.insert($2.begin(), Ident(@1)); $$ = ColumnRef(ctx, @$, move($2)); }
+  | sql_col_id sql_indirection  { $2.insert($2.begin(), Ident(@1)); $$ = ColumnRef(ctx, @$, std::move($2)); }
     ;
 
 sql_indirection_el:
@@ -2091,12 +2091,12 @@ sql_opt_slice_bound:
 
 sql_indirection:
     sql_indirection_el                      { $$ = { $1 }; }
-  | sql_indirection sql_indirection_el      { $1.push_back($2); $$ = move($1); }
+  | sql_indirection sql_indirection_el      { $1.push_back($2); $$ = std::move($1); }
     ;
 
 sql_opt_indirection:
     %empty                                  { $$ = {}; }
-  | sql_opt_indirection sql_indirection_el  { $1.push_back($2); $$ = move($1); }
+  | sql_opt_indirection sql_indirection_el  { $1.push_back($2); $$ = std::move($1); }
     ;
 
 sql_opt_asymmetric:
@@ -2115,7 +2115,7 @@ sql_opt_target_list:
 
 sql_target_list:
     sql_target_el                       { $$ = { $1 }; }
-  | sql_target_list ',' sql_target_el   { $1.push_back($3); $$ = move($1); }
+  | sql_target_list ',' sql_target_el   { $1.push_back($3); $$ = std::move($1); }
     ;
 
 sql_target_el:
@@ -2168,12 +2168,12 @@ sql_qualified_name_list:
 
 sql_qualified_name:
     sql_col_id                      { $$ = ctx.Add(@$, { Ident(@1) }); };
-  | sql_col_id sql_indirection      { $2.insert($2.begin(), Ident(@1)); $$ = ctx.Add(@$, move($2)); };
+  | sql_col_id sql_indirection      { $2.insert($2.begin(), Ident(@1)); $$ = ctx.Add(@$, std::move($2)); };
     ;
 
 sql_name_list:
     sql_name                        { $$ = {}; $$.push_back(Ident(@1)); }
-  | sql_name_list ',' sql_name      { $1.push_back(Ident(@3)); $$ = move($1); }
+  | sql_name_list ',' sql_name      { $1.push_back(Ident(@3)); $$ = std::move($1); }
     ;
 
 sql_name: sql_col_id;
@@ -2188,7 +2188,7 @@ sql_attr_name: sql_col_label;
 
 sql_func_name:
     sql_type_function_name      { $$ = { Ident(@1) }; }
-  | sql_col_id sql_indirection  { $2.insert($2.begin(), Ident(@1)); $$ = move($2); }
+  | sql_col_id sql_indirection  { $2.insert($2.begin(), Ident(@1)); $$ = std::move($2); }
     ;
 
 // Constants
@@ -2307,7 +2307,7 @@ sql_attrs:
     ;
 
 sql_opt_name_list:
-    '(' sql_name_list ')'       { $$ = move($2); }
+    '(' sql_name_list ')'       { $$ = std::move($2); }
   | %empty                      { $$ = {}; }
     ;
 

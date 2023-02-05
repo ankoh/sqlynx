@@ -2,7 +2,7 @@ sql_create_as_stmt:
     CREATE_P sql_opt_temp TABLE sql_create_as_target AS sql_select_stmt sql_opt_with_data {
         $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_CREATE_AS, Concat(std::move($4), {
             Attr(Key::SQL_CREATE_AS_TEMP, Enum(@2, $2)),
-            Attr(Key::SQL_CREATE_AS_STATEMENT, ctx.Add(@6, proto::NodeType::OBJECT_SQL_SELECT, move($6))),
+            Attr(Key::SQL_CREATE_AS_STATEMENT, ctx.Add(@6, proto::NodeType::OBJECT_SQL_SELECT, std::move($6))),
             Attr(Key::SQL_CREATE_AS_WITH_DATA, $7),
         }));
     }
@@ -10,7 +10,7 @@ sql_create_as_stmt:
         $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_CREATE_AS, Concat(std::move($7), {
             Attr(Key::SQL_CREATE_AS_IF_NOT_EXISTS, Bool(Loc({@4, @5, @6}), true)),
             Attr(Key::SQL_CREATE_AS_TEMP, Enum(@2, $2)),
-            Attr(Key::SQL_CREATE_AS_STATEMENT, ctx.Add(@9, proto::NodeType::OBJECT_SQL_SELECT, move($9))),
+            Attr(Key::SQL_CREATE_AS_STATEMENT, ctx.Add(@9, proto::NodeType::OBJECT_SQL_SELECT, std::move($9))),
             Attr(Key::SQL_CREATE_AS_WITH_DATA, $10),
         }));
     }
@@ -20,7 +20,7 @@ sql_create_as_target:
     sql_qualified_name sql_opt_column_list sql_opt_with sql_on_commit_option {
         $$ = {
             Attr(Key::SQL_CREATE_AS_NAME, std::move($1)),
-            Attr(Key::SQL_CREATE_AS_COLUMNS, ctx.Add(@2, move($2))),
+            Attr(Key::SQL_CREATE_AS_COLUMNS, ctx.Add(@2, std::move($2))),
             Attr(Key::SQL_CREATE_AS_ON_COMMIT, Enum(@4, $4))
         };
     }
@@ -38,7 +38,7 @@ sql_create_stmt:
     ;
 
 sql_opt_table_element_list:
-    sql_table_element_list  { $$ = move($1); }
+    sql_table_element_list  { $$ = std::move($1); }
   | %empty                  { $$ = {}; }
     ;
 
@@ -189,12 +189,12 @@ sql_generic_option_elem:
     ;
 
 sql_opt_column_list:
-    '(' sql_column_list ')' { $$ = move($2); }
+    '(' sql_column_list ')' { $$ = std::move($2); }
   | %empty                  { $$ = {}; }
 
 sql_column_list:
     sql_column_elem                     { $$ = { Ident(@1) }; }
-  | sql_column_list ',' sql_column_elem { $1.push_back(Ident(@3)); $$ = move($1); }
+  | sql_column_list ',' sql_column_elem { $1.push_back(Ident(@3)); $$ = std::move($1); }
     ;
 
 sql_column_elem: sql_col_id;
@@ -255,7 +255,7 @@ sql_table_constraint_elem:
     }; }
   | UNIQUE sql_opt_column_list sql_opt_definition sql_table_constraint_attr_list { $$ = {
         Attr(Key::SQL_TABLE_CONSTRAINT_TYPE, Enum(@1, proto::TableConstraint::UNIQUE)),
-        Attr(Key::SQL_TABLE_CONSTRAINT_COLUMNS, ctx.Add(@2, move($2))),
+        Attr(Key::SQL_TABLE_CONSTRAINT_COLUMNS, ctx.Add(@2, std::move($2))),
         Attr(Key::SQL_TABLE_CONSTRAINT_DEFINITION, ctx.Add(@3, std::move($3))),
         Attr(Key::SQL_TABLE_CONSTRAINT_ATTRIBUTES, ctx.Add(@4, std::move($4))),
     }; }
@@ -267,13 +267,13 @@ sql_table_constraint_elem:
     }; }
   | PRIMARY KEY sql_opt_column_list sql_opt_definition sql_table_constraint_attr_list { $$ = {
         Attr(Key::SQL_TABLE_CONSTRAINT_TYPE, Enum(@$, proto::TableConstraint::PRIMARY_KEY)),
-        Attr(Key::SQL_TABLE_CONSTRAINT_COLUMNS, ctx.Add(@3, move($3))),
+        Attr(Key::SQL_TABLE_CONSTRAINT_COLUMNS, ctx.Add(@3, std::move($3))),
         Attr(Key::SQL_TABLE_CONSTRAINT_DEFINITION, ctx.Add(@4, std::move($4))),
         Attr(Key::SQL_TABLE_CONSTRAINT_ATTRIBUTES, ctx.Add(@5, std::move($5))),
     }; }
   | FOREIGN KEY sql_opt_column_list REFERENCES sql_qualified_name sql_opt_column_list sql_table_constraint_attr_list sql_key_match sql_key_actions { $$ = {
         Attr(Key::SQL_TABLE_CONSTRAINT_TYPE, Enum(Loc({@1, @2}), proto::TableConstraint::FOREIGN_KEY)),
-        Attr(Key::SQL_TABLE_CONSTRAINT_COLUMNS, ctx.Add(@3, move($3))),
+        Attr(Key::SQL_TABLE_CONSTRAINT_COLUMNS, ctx.Add(@3, std::move($3))),
         Attr(Key::SQL_TABLE_CONSTRAINT_REFERENCES_NAME, std::move($5)),
         Attr(Key::SQL_TABLE_CONSTRAINT_REFERENCES_COLUMNS, ctx.Add(@6, std::move($6))),
         Attr(Key::SQL_TABLE_CONSTRAINT_ATTRIBUTES, ctx.Add(@7, std::move($7))),
