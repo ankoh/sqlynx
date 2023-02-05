@@ -56,6 +56,7 @@ jobs:
 
       - name: Setup flatc
         uses: ./.github/actions/setup-flatc
+
       - name: Generate flatbuffer files
         shell: bash
         run: ./scripts/generate_proto.sh
@@ -77,3 +78,38 @@ jobs:
           name: flatsql_parser_native_debug
           path: ./packages/flatsql-parser/build/native/Debug/libflatsql_parser.a
           retention-days: 1
+
+  tests_native_debug:
+    name: Tests / Native / Debug
+    runs-on: ubuntu-22.04
+    needs:
+      - tests_native_debug
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: flatsql_parser_native_debug
+          path: ./packages/flatsql-parser/build/native/Debug/
+
+      - name: Setup rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+
+      - name: Setup flatc
+        uses: ./.github/actions/setup-flatc
+
+      - name: Generate flatbuffer files
+        shell: bash
+        run: ./scripts/generate_proto.sh
+
+      - name: Build rust library
+        shell: bash
+        run: cargo build
+
