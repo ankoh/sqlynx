@@ -19,8 +19,6 @@ jobs:
               uses: ./.github/actions/setup-flatc
             - name: Setup wasi-sdk
               uses: ./.github/actions/setup-wasi-sdk
-            - name: Setup wabt
-              uses: ./.github/actions/setup-wabt
 
             - name: Generate flatbuffer files
               shell: bash
