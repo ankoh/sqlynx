@@ -27,7 +27,6 @@ proto:
 parser:
 	mkdir -p ${PARSER_DEBUG_DIR}
 	cmake -S ${PARSER_SOURCE_DIR} -B ${PARSER_DEBUG_DIR} \
-		-GNinja \
 		-DCMAKE_BUILD_TYPE=Debug \
 		-DCMAKE_EXPORT_COMPILE_COMMANDS=1
 	ln -sf ${PARSER_DEBUG_DIR}/compile_commands.json ${PARSER_SOURCE_DIR}/compile_commands.json
