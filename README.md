@@ -1,4 +1,4 @@
-[![Main](https://github.com/ankoh/flatsql/actions/workflows/main.yml/badge.svg)](https://github.com/ankoh/flatsql/actions/workflows/main.yml)
+[![Main](https://github.com/ankoh/flatsql/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/ankoh/flatsql/actions/workflows/main.yml)
 
 **FlatSQL**
 
