@@ -1,0 +1,16 @@
+runs:
+  using: "composite"
+  steps:
+    - name: Download Binaryen
+      run: |-
+        export BINARYEN_VERSION=111
+        curl -Lo ${{ github.action_path }}/binaryen.zip https://github.com/WebAssembly/binaryen/releases/download/version_${BINARYEN_VERSION}/binaryen-version_${BINARYEN_VERSION}-x86_64-linux.tar.gz
+        mkdir -p /opt/binaryen
+        tar xf ${{ github.action_path }}/binaryen.zip -C /opt/binaryen --strip-components 1
+      shell: bash
+
+    - name: List Binaryen folder
+      run: |-
+        ls /opt/binaryen
+        ls /opt/binaryen/bin
+      shell: bash

@@ -19,6 +19,8 @@ jobs:
         uses: ./.github/actions/setup-flatc
       - name: Setup wasi-sdk
         uses: ./.github/actions/setup-wasi-sdk
+      - name: Setup binaryen
+        uses: ./.github/actions/setup-binaryen
 
       - name: Generate flatbuffer files
         shell: bash
@@ -27,6 +29,7 @@ jobs:
       - name: Build WASM module
         shell: bash
         env:
+          BINARYEN_BIN: /opt/binaryen/bin
           WABT_BIN: /opt/wabt/bin
           WASI_SDK_PREFIX: /opt/wasi
           WASI_SYSROOT: /opt/wasi/share/wasi-sysroot
