@@ -25,9 +25,9 @@ jobs:
         shell: bash
         env:
           WABT_BIN: /opt/wabt/bin
-          WASI_SDK_PREFIX: /opt/wabi
-          WASI_SYSROOT: /opt/wabi/share/wasi-sysroot
-          WASI_CMAKE_TOOLCHAIN: /opt/wabi/share/cmake/wasi-sdk.cmake
+          WASI_SDK_PREFIX: /opt/wasi
+          WASI_SYSROOT: /opt/wasi/share/wasi-sysroot
+          WASI_CMAKE_TOOLCHAIN: /opt/wasi/share/cmake/wasi-sdk.cmake
         run: |
           ./scripts/build_parser_wasm.sh Release
 
