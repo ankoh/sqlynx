@@ -1,0 +1,1 @@
+export * as proto from './gen/flatsql/proto';

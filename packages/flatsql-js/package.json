@@ -1,5 +1,5 @@
 {
-    "name": "@ankoh/flatsql-proto",
+    "name": "@ankoh/flatsql",
     "version": "0.0.5",
     "description": "",
     "license": "MPL-2.0",
@@ -20,9 +20,9 @@
         "dist/gen/*.d.ts",
         "dist/gen/*.js",
         "dist/index.*",
-        "dist/dashql-proto.module.*"
+        "dist/flatsql.module.*"
     ],
     "type": "module",
-    "module": "./dist/dashql-proto.module.js",
-    "types": "./dist/dashql-proto.module.d.ts"
+    "module": "./dist/flatsql.module.js",
+    "types": "./dist/flatsql.module.d.ts"
 }

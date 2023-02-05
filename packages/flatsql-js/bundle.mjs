@@ -9,10 +9,10 @@ function printErr(err) {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dist = path.resolve(__dirname, 'dist');
 
-console.log(`[ ESBUILD ] flatsql-proto.esm.js`);
+console.log(`[ ESBUILD ] flatsql.module.js`);
 esbuild.build({
     entryPoints: [`./index.ts`],
-    outfile: `dist/flatsql-proto.esm.js`,
+    outfile: `dist/flatsql.module.js`,
     platform: 'neutral',
     format: 'esm',
     target: 'es2020',
@@ -22,4 +22,4 @@ esbuild.build({
     external: ['flatbuffers'],
 });
 
-fs.writeFile(path.join(dist, 'flatsql-proto.esm.d.ts'), "export * from './index';", printErr);
+fs.writeFile(path.join(dist, 'flatsql.module.d.ts'), "export * from './index';", printErr);

@@ -1,6 +1,8 @@
 node_modules
 /target
 /.cache
+/packages/flatsql-js/dist
+/packages/flatsql-js/gen
 /packages/flatsql-parser/.cache
 /packages/flatsql-parser/build
 /packages/flatsql-proto-cpp/include/flatsql/proto/

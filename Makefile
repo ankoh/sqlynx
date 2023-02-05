@@ -21,7 +21,7 @@ CORES=$(shell grep -c ^processor /proc/cpuinfo 2>/dev/null || sysctl -n hw.ncpu)
 .PHONY: proto
 proto:
 	./scripts/generate_proto.sh
-	yarn workspace @ankoh/flatsql-proto build
+	yarn workspace @ankoh/flatsql build
 
 .PHONY: parser
 parser:

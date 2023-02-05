@@ -113,3 +113,14 @@ jobs:
         shell: bash
         run: cargo test
 
+  js_library:
+    name: Library / Javascript
+    runs-on: ubuntu-22.04
+    needs:
+      - parser_wasm
+      - tests_native_debug
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+          fetch-depth: 0
