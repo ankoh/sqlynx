@@ -98,13 +98,13 @@ set(GRAMMAR_RULES
     ${GRAMMAR_SOURCE_DIR}/rules/sql_create.y
     ${GRAMMAR_SOURCE_DIR}/rules/sql_select.y
     ${GRAMMAR_SOURCE_DIR}/rules/sql_view.y
-    ${GRAMMAR_SOURCE_DIR}/rules/vararg.y)
+    ${GRAMMAR_SOURCE_DIR}/rules/varargs.y)
 
 set(GRAMMAR_TYPES
     ${GRAMMAR_SOURCE_DIR}/rules/sql_create.yh
     ${GRAMMAR_SOURCE_DIR}/rules/sql_select.yh
     ${GRAMMAR_SOURCE_DIR}/rules/sql_view.yh
-    ${GRAMMAR_SOURCE_DIR}/rules/vararg.yh)
+    ${GRAMMAR_SOURCE_DIR}/rules/varargs.yh)
 
 # Build grammar file
 add_custom_command(
@@ -159,8 +159,8 @@ add_custom_command(
     ${BISON_EXECUTABLE} --defines=${PARSER_HEADER_OUT} --output=${PARSER_OUT}
     --report=state --report-file=${CMAKE_BINARY_DIR}/bison.log ${GRAMMAR_OUT}
   COMMAND ${FLEX_EXECUTABLE} --outfile=${SCANNER_OUT}
-          ${CMAKE_SOURCE_DIR}/src/scanner.l
-  DEPENDS ${GRAMMAR_OUT} ${CMAKE_SOURCE_DIR}/src/scanner.l)
+          ${GRAMMAR_SOURCE_DIR}/scanner.l
+  DEPENDS ${GRAMMAR_OUT} ${GRAMMAR_SOURCE_DIR}/scanner.l)
 
 # ---------------------------------------------------------------------------
 # Module
@@ -169,7 +169,7 @@ set(LIB_SRC
     ${SCANNER_OUT}
     ${PARSER_OUT}
     ${CMAKE_SOURCE_DIR}/src/ffi.cc
-    ${CMAKE_SOURCE_DIR}/src/dson.cc
+    ${CMAKE_SOURCE_DIR}/src/varargs.cc
     ${CMAKE_SOURCE_DIR}/src/enums.cc
     ${CMAKE_SOURCE_DIR}/src/highlighting.cc
     ${CMAKE_SOURCE_DIR}/src/keywords.cc

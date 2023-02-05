@@ -1,1 +1,1 @@
-export * as syntax from './src/flatsql/proto/syntax';
+export * from './src/flatsql/proto';

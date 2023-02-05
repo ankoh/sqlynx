@@ -1,7 +1,10 @@
 node_modules
 /target
+/.cache
+/packages/flatsql-parser/.cache
 /packages/flatsql-parser/build
 /packages/flatsql-proto-cpp/include/flatsql/proto/
+/packages/flatsql-proto-cpp/.cache
 /packages/flatsql-proto-es/src/
 /packages/flatsql-proto-es/dist/
 /packages/flatsql-proto-rs/src/proto_generated.rs

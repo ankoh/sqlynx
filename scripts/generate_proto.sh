@@ -43,13 +43,13 @@ ${FLATC} -I ${SPEC_DIR} -o ${OUT_DIR_TS} ${SPEC_INDEX} --ts \
 
 
 TS_OUT_PROTO_BASE="${PROJECT_ROOT}/packages/flatsql-proto-es/src/flatsql/proto/"
-TS_OUT_PROTO_DIRS=`ls ${TS_OUT_PROTO_BASE}/syntax/`
-rm "${TS_OUT_PROTO_BASE}/syntax.ts"
+TS_OUT_PROTO_DIRS=`ls ${TS_OUT_PROTO_BASE}/`
+rm "${TS_OUT_PROTO_BASE}/../proto.ts"
 
-PROTO_INDEX="${TS_OUT_PROTO_BASE}/syntax/index.ts"
+PROTO_INDEX="${TS_OUT_PROTO_BASE}/index.ts"
 echo "Generating $PROTO_INDEX"
 echo > ${PROTO_INDEX}
-PROTO_FILES=`ls ${TS_OUT_PROTO_BASE}/syntax/*.ts`
+PROTO_FILES=`ls ${TS_OUT_PROTO_BASE}/*.ts`
 for PROTO_FILE in ${PROTO_FILES}; do
     IMPORT="$(basename $PROTO_FILE)"
     if [ "${IMPORT}" = "index.ts" ]; then continue; fi

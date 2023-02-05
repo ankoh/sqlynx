@@ -1,0 +1,4 @@
+[submodule "submodules/flatbuffers"]
+	path = submodules/flatbuffers
+	url = https://github.com/google/flatbuffers
+    shallow = true

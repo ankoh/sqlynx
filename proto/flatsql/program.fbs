@@ -1,17 +1,22 @@
-include "flatsql/syntax/sql_syntax.fbs";
+include "flatsql/sql_syntax.fbs";
 
-namespace flatsql.proto.syntax;
+namespace flatsql.proto;
 
 struct Location { offset: uint32; length: uint32; }
 
 enum NodeType: uint16 {
     NONE = 0,
 
+    IDENTIFIER,
     BOOL,
-    UI32,
     UI32_BITMAP,
-    STRING_REF,
     ARRAY,
+
+    LITERAL_NULL,
+    LITERAL_INTEGER,
+    LITERAL_FLOAT,
+    LITERAL_STRING,
+    LITERAL_INTERVAL,
 
     ENUM_KEYS_,
 
@@ -48,15 +53,7 @@ enum NodeType: uint16 {
 
     OBJECT_KEYS_,
 
-    OBJECT_DSON,
-
-    OBJECT_FLATSQL_IMPORT,
-    OBJECT_FLATSQL_FUNCTION_CALL,
-    OBJECT_FLATSQL_DECLARE,
-    OBJECT_FLATSQL_LOAD,
-    OBJECT_FLATSQL_SET,
-    OBJECT_FLATSQL_VIZ,
-    OBJECT_FLATSQL_VIZ_COMPONENT,
+    OBJECT_VARARGS,
 
     OBJECT_SQL_ALIAS,
     OBJECT_SQL_BIT_TYPE,
@@ -140,6 +137,7 @@ enum AttributeKey: uint16 {
     SQL_CASE_DEFAULT,
     SQL_CHARACTER_TYPE,
     SQL_CHARACTER_TYPE_LENGTH,
+    SQL_COLUMN_CONSTRAINT_COLLATE,
     SQL_COLUMN_CONSTRAINT_DEFINITION,
     SQL_COLUMN_CONSTRAINT_NAME,
     SQL_COLUMN_CONSTRAINT_NO_INHERIT,
@@ -251,7 +249,6 @@ enum AttributeKey: uint16 {
     SQL_ORDER_NULLRULE,
     SQL_ORDER_VALUE,
     SQL_PARAMETER_NAME,
-    SQL_PARAMETER_PREFIX,
     SQL_QUALIFIED_NAME_CATALOG,
     SQL_QUALIFIED_NAME_INDEX,
     SQL_QUALIFIED_NAME_RELATION,
@@ -340,7 +337,7 @@ enum AttributeKey: uint16 {
     SQL_WINDOW_FRAME_ORDER,
     SQL_WINDOW_FRAME_PARTITION,
 
-    VARAG_DYNAMIC_KEYS_,
+    VARARG_DYNAMIC_KEYS_,
     // Dictionary encoded from here
 }
 
@@ -349,9 +346,13 @@ enum StatementType: uint8 {
     CREATE_TABLE,
     CREATE_TABLE_AS,
     CREATE_VIEW,
+    IMPORT,
+    DECLARE,
+    LOAD,
     SELECT,
     SELECT_INTO,
     SET,
+    VIZUALIZE,
 }
 
 struct Node {
@@ -377,7 +378,7 @@ table Statement {
 
 enum DependencyType: uint8 {
     TABLE_REF,
-    COLUMN_REF
+    PARAMETER_REF,
 }
 
 struct Dependency {
@@ -415,6 +416,5 @@ table Program {
     line_breaks: [Location];
     comments: [Location];
     vararg_keys: [Location];
-    dependencies: [Dependency];
     highlighting: Highlighting;
 }

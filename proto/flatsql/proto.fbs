@@ -1,2 +1,2 @@
-include "syntax/program.fbs";
-include "syntax/sql_syntax.fbs";
+include "program.fbs";
+include "sql_syntax.fbs";
