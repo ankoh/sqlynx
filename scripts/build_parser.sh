@@ -9,8 +9,8 @@ PROJECT_ROOT="$(cd $(dirname "$BASH_SOURCE[0]") && cd .. && pwd)" &> /dev/null
 MODE=${1:-Fast}
 echo "MODE=${MODE}"
 
-CPP_BUILD_DIR="${PROJECT_ROOT}/build/flatsql-parser/wasm/${MODE}"
-CPP_SOURCE_DIR="${PROJECT_ROOT}/libs/flatsql-parser"
+CPP_SOURCE_DIR="${PROJECT_ROOT}/packages/flatsql-parser"
+CPP_BUILD_DIR="${CPP_SOURCE_DIR}/build/wasm/${MODE}"
 
 CORES=$(grep -c ^processor /proc/cpuinfo 2>/dev/null || sysctl -n hw.ncpu)
 
@@ -25,7 +25,7 @@ echo "BUILD_TYPE=${MODE}"
 echo "WASI_SDK_PREFIX=${WASI_SDK_PREFIX}"
 echo "WASI_TOOLCHAIN=${WASI_CMAKE_TOOLCHAIN}"
 
-mkdir -p ${CPP_SOURCE_DIR}/build/wasm/${MODE}
+mkdir -p ${CPP_BUILD_DIR}
 
 set -x
 cmake \
@@ -43,7 +43,7 @@ make \
     flatsql_parser
 
 if [ ${MODE} == "Release" ]; then
-    wasm-opt -O3 -o ${CPP_BUILD_DIR}/flatsql_parser_opt.wasm ${CPP_BUILD_DIR}/dashql_parser.wasm
+    wasm-opt -O3 -o ${CPP_BUILD_DIR}/flatsql_parser_opt.wasm ${CPP_BUILD_DIR}/flatsql_parser.wasm
     wasm-strip ${CPP_BUILD_DIR}/flatsql_parser_opt.wasm
-    mv ${CPP_BUILD_DIR}/flatsql_parser_opt.wasm ${CPP_BUILD_DIR}/dashql_parser.wasm
+    mv ${CPP_BUILD_DIR}/flatsql_parser_opt.wasm ${CPP_BUILD_DIR}/flatsql_parser.wasm
 fi

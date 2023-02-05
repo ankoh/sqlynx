@@ -1,6 +1,6 @@
 node_modules
 /target
-/build
+/packages/flatsql-parser/build
 /packages/flatsql-proto-cpp/include/flatsql/proto/
 /packages/flatsql-proto-es/src/
 /packages/flatsql-proto-es/dist/

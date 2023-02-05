@@ -340,7 +340,7 @@ enum AttributeKey: uint16 {
     SQL_WINDOW_FRAME_ORDER,
     SQL_WINDOW_FRAME_PARTITION,
 
-    FSON_DYNAMIC_KEYS_,
+    VARAG_DYNAMIC_KEYS_,
     // Dictionary encoded from here
 }
 
@@ -399,7 +399,7 @@ enum HighlightingTokenType: uint8 {
     OPERATOR,
     IDENTIFIER,
     COMMENT,
-    FSON_KEY,
+    VARARG_KEY,
 }
 
 table Highlighting {
@@ -414,7 +414,7 @@ table Program {
     errors: [Error];
     line_breaks: [Location];
     comments: [Location];
-    fson_keys: [Location];
+    vararg_keys: [Location];
     dependencies: [Dependency];
     highlighting: Highlighting;
 }

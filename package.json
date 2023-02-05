@@ -5,7 +5,7 @@
     ],
     "scripts": {
         "format": "prettier --write packages",
-        "build:proto": "./scripts/generate_proto.sh",
+        "generate:proto": "./scripts/generate_proto.sh",
         "build:proto:es": "yarn workspace @ankoh/flatsql-proto build"
     },
     "dependencies": {

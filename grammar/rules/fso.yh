@@ -1,8 +1,0 @@
-%type <NodeVector> fson_array;
-%type <NodeVector> fson_array_brackets;
-%type <NodeVector> fson_fields;
-%type <proto::Node> fson;
-%type <proto::Node> fson_value;
-%type <proto::Node> opt_fson;
-%type <proto::Node> opt_fson_field;
-%type <std::vector<proto::Location>> fson_key_path;
