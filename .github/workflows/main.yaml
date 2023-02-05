@@ -17,6 +17,7 @@ jobs:
 
             - name: Setup flatc
               uses: ./.github/actions/setup-flatc
+
             - name: Setup wasi-sdk
               uses: ./.github/actions/setup-wasi-sdk
 
