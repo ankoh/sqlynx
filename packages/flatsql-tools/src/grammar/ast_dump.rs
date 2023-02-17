@@ -183,4 +183,12 @@ mod test {
     async fn test_sql_view() -> ASTTestResult {
         test_ast_dump("sql_view.xml").await
     }
+    #[tokio::test]
+    async fn test_tpch() -> ASTTestResult {
+        test_ast_dump("tpch.xml").await
+    }
+    #[tokio::test]
+    async fn test_bugs() -> ASTTestResult {
+        test_ast_dump("bugs.xml").await
+    }
 }
