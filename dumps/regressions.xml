@@ -1,0 +1,15 @@
+<astdumps>
+    <astdump name="regr_minus_interval">
+        <input>select date &apos;1998-12-01&apos; - interval &apos;90&apos; day</input>
+        <parsed>
+            <statements>
+            </statements>
+            <errors>
+                <error message="syntax error, unexpected INTERVAL, expecting FETCH or FOR or LIMIT or OFFSET" loc="27..35" text="interval"/>
+            </errors>
+            <line_breaks/>
+            <comments/>
+            <dson_keys/>
+        </parsed>
+    </astdump>
+</astdumps>

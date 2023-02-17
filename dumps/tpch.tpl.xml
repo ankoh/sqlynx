@@ -15,7 +15,7 @@ select
 from
     lineitem
 where
-    l_shipdate &#60;= timestamp '2007-01-02 00:00:00.000000'
+    l_shipdate &#60;= date '1998-12-01' - interval '90' day
 group by
     l_returnflag,
     l_linestatus
