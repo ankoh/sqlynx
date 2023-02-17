@@ -14,7 +14,7 @@
 from
     lineitem
 where
-    l_shipdate &lt;= date &apos;1998-12-01&apos; - interval &apos;90&apos; day
+    l_shipdate &lt;= timestamp &apos;2007-01-02 00:00:00.000000&apos;
 group by
     l_returnflag,
     l_linestatus
@@ -23,10 +23,235 @@ order by
     l_linestatus</input>
         <parsed>
             <statements>
+                <statement type="SELECT">
+                    <node type="OBJECT_SQL_SELECT" loc="0..555" text="select\n   ..linestatus">
+                        <node key="SQL_SELECT_FROM" type="ARRAY">
+                            <node type="OBJECT_SQL_TABLEREF" loc="396..404" text="lineitem">
+                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
+                                <node key="SQL_TABLEREF_NAME" type="ARRAY">
+                                    <node type="IDENTIFIER" loc="396..404" text="lineitem"/>
+                                </node>
+                            </node>
+                        </node>
+                        <node key="SQL_SELECT_GROUPS" type="ARRAY">
+                            <node type="OBJECT_SQL_GROUP_BY_ITEM" loc="481..493" text="l_returnflag">
+                                <node key="SQL_GROUP_BY_ITEM_ARG" type="OBJECT_SQL_COLUMN_REF" loc="481..493" text="l_returnflag">
+                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                        <node type="IDENTIFIER" loc="481..493" text="l_returnflag"/>
+                                    </node>
+                                </node>
+                                <node key="SQL_GROUP_BY_ITEM_TYPE" type="ENUM_SQL_GROUP_BY_ITEM_TYPE" value="EXPRESSION"/>
+                            </node>
+                            <node type="OBJECT_SQL_GROUP_BY_ITEM" loc="499..511" text="l_linestatus">
+                                <node key="SQL_GROUP_BY_ITEM_ARG" type="OBJECT_SQL_COLUMN_REF" loc="499..511" text="l_linestatus">
+                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                        <node type="IDENTIFIER" loc="499..511" text="l_linestatus"/>
+                                    </node>
+                                </node>
+                                <node key="SQL_GROUP_BY_ITEM_TYPE" type="ENUM_SQL_GROUP_BY_ITEM_TYPE" value="EXPRESSION"/>
+                            </node>
+                        </node>
+                        <node key="SQL_SELECT_ORDER" type="ARRAY">
+                            <node type="OBJECT_SQL_ORDER" loc="525..537" text="l_returnflag">
+                                <node key="SQL_ORDER_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="525..537" text="l_returnflag">
+                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                        <node type="IDENTIFIER" loc="525..537" text="l_returnflag"/>
+                                    </node>
+                                </node>
+                            </node>
+                            <node type="OBJECT_SQL_ORDER" loc="543..555" text="l_linestatus">
+                                <node key="SQL_ORDER_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="543..555" text="l_linestatus">
+                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                        <node type="IDENTIFIER" loc="543..555" text="l_linestatus"/>
+                                    </node>
+                                </node>
+                            </node>
+                        </node>
+                        <node key="SQL_SELECT_TARGETS" type="ARRAY">
+                            <node type="OBJECT_SQL_RESULT_TARGET" loc="11..23" text="l_returnflag">
+                                <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="11..23" text="l_returnflag">
+                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                        <node type="IDENTIFIER" loc="11..23" text="l_returnflag"/>
+                                    </node>
+                                </node>
+                            </node>
+                            <node type="OBJECT_SQL_RESULT_TARGET" loc="29..41" text="l_linestatus">
+                                <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="29..41" text="l_linestatus">
+                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                        <node type="IDENTIFIER" loc="29..41" text="l_linestatus"/>
+                                    </node>
+                                </node>
+                            </node>
+                            <node type="OBJECT_SQL_RESULT_TARGET" loc="47..73" text="sum(l_quan..as sum_qty">
+                                <node key="SQL_RESULT_TARGET_NAME" type="IDENTIFIER" loc="66..73" text="sum_qty"/>
+                                <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_FUNCTION_EXPRESSION" loc="47..62" text="sum(l_quantity)">
+                                    <node key="SQL_FUNCTION_ARGUMENTS" type="ARRAY">
+                                        <node type="OBJECT_SQL_FUNCTION_ARG" loc="51..61" text="l_quantity">
+                                            <node key="SQL_FUNCTION_ARG_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="51..61" text="l_quantity">
+                                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                    <node type="IDENTIFIER" loc="51..61" text="l_quantity"/>
+                                                </node>
+                                            </node>
+                                        </node>
+                                    </node>
+                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="47..50" text="sum"/>
+                                </node>
+                            </node>
+                            <node type="OBJECT_SQL_RESULT_TARGET" loc="79..117" text="sum(l_exte..base_price">
+                                <node key="SQL_RESULT_TARGET_NAME" type="IDENTIFIER" loc="103..117" text="sum_base_price"/>
+                                <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_FUNCTION_EXPRESSION" loc="79..99" text="sum(l_exte..ndedprice)">
+                                    <node key="SQL_FUNCTION_ARGUMENTS" type="ARRAY">
+                                        <node type="OBJECT_SQL_FUNCTION_ARG" loc="83..98" text="l_extendedprice">
+                                            <node key="SQL_FUNCTION_ARG_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="83..98" text="l_extendedprice">
+                                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                    <node type="IDENTIFIER" loc="83..98" text="l_extendedprice"/>
+                                                </node>
+                                            </node>
+                                        </node>
+                                    </node>
+                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="79..82" text="sum"/>
+                                </node>
+                            </node>
+                            <node type="OBJECT_SQL_RESULT_TARGET" loc="123..180" text="sum(l_exte..disc_price">
+                                <node key="SQL_RESULT_TARGET_NAME" type="IDENTIFIER" loc="166..180" text="sum_disc_price"/>
+                                <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_FUNCTION_EXPRESSION" loc="123..162" text="sum(l_exte..discount))">
+                                    <node key="SQL_FUNCTION_ARGUMENTS" type="ARRAY">
+                                        <node type="OBJECT_SQL_FUNCTION_ARG" loc="127..161" text="l_extended.._discount)">
+                                            <node key="SQL_FUNCTION_ARG_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="127..161" text="l_extended.._discount)">
+                                                <node key="SQL_EXPRESSION_ARG0" type="OBJECT_SQL_COLUMN_REF" loc="127..142" text="l_extendedprice">
+                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                        <node type="IDENTIFIER" loc="127..142" text="l_extendedprice"/>
+                                                    </node>
+                                                </node>
+                                                <node key="SQL_EXPRESSION_ARG1" type="OBJECT_SQL_NARY_EXPRESSION" loc="146..160" text="1 - l_discount">
+                                                    <node key="SQL_EXPRESSION_ARG0" type="LITERAL_INTEGER" loc="146..147" text="1"/>
+                                                    <node key="SQL_EXPRESSION_ARG1" type="OBJECT_SQL_COLUMN_REF" loc="150..160" text="l_discount">
+                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                            <node type="IDENTIFIER" loc="150..160" text="l_discount"/>
+                                                        </node>
+                                                    </node>
+                                                    <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MINUS"/>
+                                                </node>
+                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MULTIPLY"/>
+                                            </node>
+                                        </node>
+                                    </node>
+                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="123..126" text="sum"/>
+                                </node>
+                            </node>
+                            <node type="OBJECT_SQL_RESULT_TARGET" loc="186..253" text="sum(l_exte..sum_charge">
+                                <node key="SQL_RESULT_TARGET_NAME" type="IDENTIFIER" loc="243..253" text="sum_charge"/>
+                                <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_FUNCTION_EXPRESSION" loc="186..239" text="sum(l_exte.. + l_tax))">
+                                    <node key="SQL_FUNCTION_ARGUMENTS" type="ARRAY">
+                                        <node type="OBJECT_SQL_FUNCTION_ARG" loc="190..238" text="l_extended..1 + l_tax)">
+                                            <node key="SQL_FUNCTION_ARG_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="190..238" text="l_extended..1 + l_tax)">
+                                                <node key="SQL_EXPRESSION_ARG0" type="OBJECT_SQL_NARY_EXPRESSION" loc="190..224" text="l_extended.._discount)">
+                                                    <node key="SQL_EXPRESSION_ARG0" type="OBJECT_SQL_COLUMN_REF" loc="190..205" text="l_extendedprice">
+                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                            <node type="IDENTIFIER" loc="190..205" text="l_extendedprice"/>
+                                                        </node>
+                                                    </node>
+                                                    <node key="SQL_EXPRESSION_ARG1" type="OBJECT_SQL_NARY_EXPRESSION" loc="209..223" text="1 - l_discount">
+                                                        <node key="SQL_EXPRESSION_ARG0" type="LITERAL_INTEGER" loc="209..210" text="1"/>
+                                                        <node key="SQL_EXPRESSION_ARG1" type="OBJECT_SQL_COLUMN_REF" loc="213..223" text="l_discount">
+                                                            <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                                <node type="IDENTIFIER" loc="213..223" text="l_discount"/>
+                                                            </node>
+                                                        </node>
+                                                        <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MINUS"/>
+                                                    </node>
+                                                    <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MULTIPLY"/>
+                                                </node>
+                                                <node key="SQL_EXPRESSION_ARG1" type="OBJECT_SQL_NARY_EXPRESSION" loc="228..237" text="1 + l_tax">
+                                                    <node key="SQL_EXPRESSION_ARG0" type="LITERAL_INTEGER" loc="228..229" text="1"/>
+                                                    <node key="SQL_EXPRESSION_ARG1" type="OBJECT_SQL_COLUMN_REF" loc="232..237" text="l_tax">
+                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                            <node type="IDENTIFIER" loc="232..237" text="l_tax"/>
+                                                        </node>
+                                                    </node>
+                                                    <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="PLUS"/>
+                                                </node>
+                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MULTIPLY"/>
+                                            </node>
+                                        </node>
+                                    </node>
+                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="186..189" text="sum"/>
+                                </node>
+                            </node>
+                            <node type="OBJECT_SQL_RESULT_TARGET" loc="259..285" text="avg(l_quan..as avg_qty">
+                                <node key="SQL_RESULT_TARGET_NAME" type="IDENTIFIER" loc="278..285" text="avg_qty"/>
+                                <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_FUNCTION_EXPRESSION" loc="259..274" text="avg(l_quantity)">
+                                    <node key="SQL_FUNCTION_ARGUMENTS" type="ARRAY">
+                                        <node type="OBJECT_SQL_FUNCTION_ARG" loc="263..273" text="l_quantity">
+                                            <node key="SQL_FUNCTION_ARG_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="263..273" text="l_quantity">
+                                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                    <node type="IDENTIFIER" loc="263..273" text="l_quantity"/>
+                                                </node>
+                                            </node>
+                                        </node>
+                                    </node>
+                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="259..262" text="avg"/>
+                                </node>
+                            </node>
+                            <node type="OBJECT_SQL_RESULT_TARGET" loc="291..324" text="avg(l_exte.. avg_price">
+                                <node key="SQL_RESULT_TARGET_NAME" type="IDENTIFIER" loc="315..324" text="avg_price"/>
+                                <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_FUNCTION_EXPRESSION" loc="291..311" text="avg(l_exte..ndedprice)">
+                                    <node key="SQL_FUNCTION_ARGUMENTS" type="ARRAY">
+                                        <node type="OBJECT_SQL_FUNCTION_ARG" loc="295..310" text="l_extendedprice">
+                                            <node key="SQL_FUNCTION_ARG_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="295..310" text="l_extendedprice">
+                                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                    <node type="IDENTIFIER" loc="295..310" text="l_extendedprice"/>
+                                                </node>
+                                            </node>
+                                        </node>
+                                    </node>
+                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="291..294" text="avg"/>
+                                </node>
+                            </node>
+                            <node type="OBJECT_SQL_RESULT_TARGET" loc="330..357" text="avg(l_disc..s avg_disc">
+                                <node key="SQL_RESULT_TARGET_NAME" type="IDENTIFIER" loc="349..357" text="avg_disc"/>
+                                <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_FUNCTION_EXPRESSION" loc="330..345" text="avg(l_discount)">
+                                    <node key="SQL_FUNCTION_ARGUMENTS" type="ARRAY">
+                                        <node type="OBJECT_SQL_FUNCTION_ARG" loc="334..344" text="l_discount">
+                                            <node key="SQL_FUNCTION_ARG_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="334..344" text="l_discount">
+                                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                    <node type="IDENTIFIER" loc="334..344" text="l_discount"/>
+                                                </node>
+                                            </node>
+                                        </node>
+                                    </node>
+                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="330..333" text="avg"/>
+                                </node>
+                            </node>
+                            <node type="OBJECT_SQL_RESULT_TARGET" loc="363..386" text="count(*) a..ount_order">
+                                <node key="SQL_RESULT_TARGET_NAME" type="IDENTIFIER" loc="375..386" text="count_order"/>
+                                <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_FUNCTION_EXPRESSION" loc="363..371" text="count(*)">
+                                    <node key="SQL_FUNCTION_ARGUMENTS" type="ARRAY">
+                                        <node type="IDENTIFIER" loc="369..370" text="*"/>
+                                    </node>
+                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="363..368" text="count"/>
+                                </node>
+                            </node>
+                        </node>
+                        <node key="SQL_SELECT_WHERE" type="OBJECT_SQL_NARY_EXPRESSION" loc="415..467" text="l_shipdate..00.000000&apos;">
+                            <node key="SQL_EXPRESSION_ARG0" type="OBJECT_SQL_COLUMN_REF" loc="415..425" text="l_shipdate">
+                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                    <node type="IDENTIFIER" loc="415..425" text="l_shipdate"/>
+                                </node>
+                            </node>
+                            <node key="SQL_EXPRESSION_ARG1" type="OBJECT_SQL_CONST_TYPE_CAST" loc="429..467" text="timestamp ..00.000000&apos;">
+                                <node key="SQL_CONST_CAST_TYPE" type="OBJECT_SQL_TYPENAME" loc="429..467" text="timestamp ..00.000000&apos;">
+                                    <node key="SQL_TYPENAME_TYPE" type="OBJECT_SQL_TIMESTAMP_TYPE" loc="429..438" text="timestamp">
+                                    </node>
+                                </node>
+                                <node key="SQL_CONST_CAST_VALUE" type="LITERAL_STRING" loc="439..467" text="&apos;2007-01-0..00.000000&apos;"/>
+                            </node>
+                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="LESS_EQUAL"/>
+                        </node>
+                    </node>
+                </statement>
             </statements>
-            <errors>
-                <error message="syntax error, unexpected INTERVAL, expecting FETCH or FOR or LIMIT or OFFSET" loc="449..457" text="interval"/>
-            </errors>
+            <errors/>
             <line_breaks>
                 <line_break loc="6..7" text="\n"/>
                 <line_break loc="24..25" text="\n"/>
@@ -42,12 +267,12 @@ order by
                 <line_break loc="391..392" text="\n"/>
                 <line_break loc="404..405" text="\n"/>
                 <line_break loc="410..411" text="\n"/>
-                <line_break loc="466..467" text="\n"/>
-                <line_break loc="475..476" text="\n"/>
-                <line_break loc="493..494" text="\n"/>
-                <line_break loc="510..511" text="\n"/>
-                <line_break loc="519..520" text="\n"/>
-                <line_break loc="537..538" text="\n"/>
+                <line_break loc="467..468" text="\n"/>
+                <line_break loc="476..477" text="\n"/>
+                <line_break loc="494..495" text="\n"/>
+                <line_break loc="511..512" text="\n"/>
+                <line_break loc="520..521" text="\n"/>
+                <line_break loc="538..539" text="\n"/>
             </line_breaks>
             <comments/>
             <dson_keys/>
