@@ -192,6 +192,10 @@ mod test {
         test_ast_dump("tpcds.xml").await
     }
     #[tokio::test]
+    async fn test_ssb() -> ASTTestResult {
+        test_ast_dump("ssb.xml").await
+    }
+    #[tokio::test]
     async fn test_bugs() -> ASTTestResult {
         test_ast_dump("bugs.xml").await
     }
