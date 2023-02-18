@@ -736,10 +736,10 @@ sql_join_qual:
     ;
 
 sql_relation_expr:
-    sql_qualified_name              { $$ = { Attr(Key::SQL_TABLEREF_NAME, std::move($1)), Attr(Key::SQL_TABLEREF_INHERIT, Bool(@$, true)) }; }
-  | sql_qualified_name '*'          { $$ = { Attr(Key::SQL_TABLEREF_NAME, std::move($1)), Attr(Key::SQL_TABLEREF_INHERIT, Bool(@2, true)) }; }
-  | ONLY sql_qualified_name         { $$ = { Attr(Key::SQL_TABLEREF_NAME, std::move($2)), Attr(Key::SQL_TABLEREF_INHERIT, Bool(@1, false)) }; }
-  | ONLY '(' sql_qualified_name ')' { $$ = { Attr(Key::SQL_TABLEREF_NAME, std::move($3)), Attr(Key::SQL_TABLEREF_INHERIT, Bool(@1, false)) }; }
+    sql_qualified_name              { $$ = { Attr(Key::SQL_TABLEREF_NAME, std::move($1)) }; }
+  | sql_qualified_name '*'          { $$ = { Attr(Key::SQL_TABLEREF_NAME, std::move($1)) }; }
+  | ONLY sql_qualified_name         { $$ = { Attr(Key::SQL_TABLEREF_NAME, std::move($2)), Attr(Key::SQL_TABLEREF_ONLY, Bool(@1, true)) }; }
+  | ONLY '(' sql_qualified_name ')' { $$ = { Attr(Key::SQL_TABLEREF_NAME, std::move($3)), Attr(Key::SQL_TABLEREF_ONLY, Bool(@1, true)) }; }
     ;
 
 // Given "UPDATE foo set set ...", we have to decide without looking any

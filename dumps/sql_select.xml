@@ -315,7 +315,6 @@
                     <node type="OBJECT_SQL_SELECT" loc="0..15" text="select a from b">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="14..15" text="b">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="14..15" text="b"/>
                                 </node>
@@ -347,7 +346,6 @@
                     <node type="OBJECT_SQL_SELECT" loc="0..17" text="select a from b.c">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="14..17" text="b.c">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="14..15" text="b"/>
                                     <node type="IDENTIFIER" loc="16..17" text="c"/>
@@ -380,7 +378,7 @@
                     <node type="OBJECT_SQL_SELECT" loc="0..22" text="select a f..m only b.c">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="14..22" text="only b.c">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="false"/>
+                                <node key="SQL_TABLEREF_ONLY" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="19..20" text="b"/>
                                     <node type="IDENTIFIER" loc="21..22" text="c"/>
@@ -414,7 +412,6 @@
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="14..22" text="b.c as d">
                                 <node key="SQL_TABLEREF_ALIAS" type="IDENTIFIER" loc="21..22" text="d"/>
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="14..15" text="b"/>
                                     <node type="IDENTIFIER" loc="16..17" text="c"/>
@@ -447,13 +444,11 @@
                     <node type="OBJECT_SQL_SELECT" loc="0..18" text="select a from b, c">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="14..15" text="b">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="14..15" text="b"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="17..18" text="c">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="17..18" text="c"/>
                                 </node>
@@ -485,13 +480,11 @@
                     <node type="OBJECT_SQL_SELECT" loc="0..25" text="select a i.. from c, d">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="21..22" text="c">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="21..22" text="c"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="24..25" text="d">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="24..25" text="d"/>
                                 </node>
@@ -529,7 +522,6 @@
                     <node type="OBJECT_SQL_SELECT" loc="0..26" text="select a f..group by 1">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="14..15" text="b">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="14..15" text="b"/>
                                 </node>
@@ -567,7 +559,6 @@
                     <node type="OBJECT_SQL_SELECT" loc="0..30" text="select a f..ow c as ()">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="14..15" text="b">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="14..15" text="b"/>
                                 </node>
@@ -606,7 +597,6 @@
                     <node type="OBJECT_SQL_SELECT" loc="0..44" text="select a f..tion by d)">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="14..15" text="b">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="14..15" text="b"/>
                                 </node>
@@ -653,7 +643,6 @@
                     <node type="OBJECT_SQL_SELECT" loc="0..113" text="select a f..following)">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="14..15" text="b">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="14..15" text="b"/>
                                 </node>
@@ -713,7 +702,6 @@
                     <node type="OBJECT_SQL_SELECT" loc="0..97" text="select a f..rrent row)">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="14..15" text="b">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="14..15" text="b"/>
                                 </node>
@@ -774,7 +762,6 @@
                     <node type="OBJECT_SQL_SELECT" loc="0..141" text="select a f..tion by f)">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="14..15" text="b">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="14..15" text="b"/>
                                 </node>
@@ -848,7 +835,6 @@
                         </node>
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="23..24" text="b">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="23..24" text="b"/>
                                 </node>
@@ -887,7 +873,6 @@
                         </node>
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="30..31" text="b">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="30..31" text="b"/>
                                 </node>
@@ -920,7 +905,6 @@
                         <node key="SQL_SELECT_ALL" type="BOOL" value="true"/>
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="16..17" text="b">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="16..17" text="b"/>
                                 </node>
@@ -1010,7 +994,6 @@
                 <statement type="SELECT">
                     <node type="OBJECT_SQL_SELECT" loc="0..7" text="TABLE a">
                         <node key="SQL_SELECT_TABLE" type="OBJECT_SQL_TABLEREF" loc="0..7" text="TABLE a">
-                            <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                             <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                 <node type="IDENTIFIER" loc="6..7" text="a"/>
                             </node>
@@ -1454,7 +1437,6 @@
                     <node type="OBJECT_SQL_SELECT" loc="29..44" text="select 1 from b">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="43..44" text="b">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="43..44" text="b"/>
                                 </node>
@@ -1500,7 +1482,6 @@
                     <node type="OBJECT_SQL_SELECT" loc="29..61" text="select c f..c = $a + 1">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="43..44" text="b">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="43..44" text="b"/>
                                 </node>
@@ -1556,14 +1537,12 @@
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="36..55" text="country1_weather c1">
                                 <node key="SQL_TABLEREF_ALIAS" type="IDENTIFIER" loc="53..55" text="c1"/>
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="36..52" text="country1_weather"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="57..76" text="country2_weather c2">
                                 <node key="SQL_TABLEREF_ALIAS" type="IDENTIFIER" loc="74..76" text="c2"/>
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="57..73" text="country2_weather"/>
                                 </node>
@@ -2959,7 +2938,6 @@
                                     <node key="SQL_SELECT_EXPRESSION_STATEMENT" type="OBJECT_SQL_SELECT" loc="7..24" text="(select a from b)">
                                         <node key="SQL_SELECT_FROM" type="ARRAY">
                                             <node type="OBJECT_SQL_TABLEREF" loc="22..23" text="b">
-                                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                                     <node type="IDENTIFIER" loc="22..23" text="b"/>
                                                 </node>
@@ -3963,7 +3941,6 @@
                     <node type="OBJECT_SQL_SELECT" loc="0..35" text="select ext..) from foo">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="32..35" text="foo">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="32..35" text="foo"/>
                                 </node>
@@ -4486,7 +4463,6 @@
                     <node type="OBJECT_SQL_SELECT" loc="0..32" text="SELECT * F..G SAMPLE 5">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="14..17" text="tbl">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="14..17" text="tbl"/>
                                 </node>
@@ -4518,7 +4494,6 @@
                     <node type="OBJECT_SQL_SELECT" loc="0..34" text="SELECT * F..SAMPLE 10%">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="14..17" text="tbl">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="14..17" text="tbl"/>
                                 </node>
@@ -4550,7 +4525,6 @@
                     <node type="OBJECT_SQL_SELECT" loc="0..53" text="SELECT * F..bernoulli)">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="14..17" text="tbl">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="14..17" text="tbl"/>
                                 </node>
@@ -4583,7 +4557,6 @@
                     <node type="OBJECT_SQL_SELECT" loc="0..66" text="SELECT * F..ABLE (100)">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="14..17" text="tbl">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="14..17" text="tbl"/>
                                 </node>
@@ -4617,7 +4590,6 @@
                     <node type="OBJECT_SQL_SELECT" loc="0..48" text="SELECT * F..stem, 377)">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="14..17" text="tbl">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="14..17" text="tbl"/>
                                 </node>
@@ -4651,7 +4623,6 @@
                     <node type="OBJECT_SQL_SELECT" loc="0..69" text="SELECT * F..l.i=tbl2.i">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="14..44" text="tbl TABLES..RVOIR(20%)">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="14..17" text="tbl"/>
                                 </node>
@@ -4662,7 +4633,6 @@
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="46..50" text="tbl2">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="46..50" text="tbl2"/>
                                 </node>
@@ -4707,13 +4677,11 @@
                     <node type="OBJECT_SQL_SELECT" loc="0..70" text="SELECT * F..RVOIR(20%)">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="14..17" text="tbl">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="14..17" text="tbl"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="19..23" text="tbl2">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="19..23" text="tbl2"/>
                                 </node>
@@ -4766,13 +4734,11 @@
                                 <node key="SQL_TABLEREF_TABLE" type="OBJECT_SQL_JOINED_TABLE" loc="14..37" text="a INNER JO..b ON c = d">
                                     <node key="SQL_JOIN_INPUT" type="ARRAY">
                                         <node type="OBJECT_SQL_TABLEREF" loc="14..15" text="a">
-                                            <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                             <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                                 <node type="IDENTIFIER" loc="14..15" text="a"/>
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_TABLEREF" loc="27..28" text="b">
-                                            <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                             <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                                 <node type="IDENTIFIER" loc="27..28" text="b"/>
                                             </node>
@@ -4822,13 +4788,11 @@
                                 <node key="SQL_TABLEREF_TABLE" type="OBJECT_SQL_JOINED_TABLE" loc="14..31" text="a JOIN b ON c = d">
                                     <node key="SQL_JOIN_INPUT" type="ARRAY">
                                         <node type="OBJECT_SQL_TABLEREF" loc="14..15" text="a">
-                                            <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                             <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                                 <node type="IDENTIFIER" loc="14..15" text="a"/>
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_TABLEREF" loc="21..22" text="b">
-                                            <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                             <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                                 <node type="IDENTIFIER" loc="21..22" text="b"/>
                                             </node>
@@ -4878,13 +4842,11 @@
                                 <node key="SQL_TABLEREF_TABLE" type="OBJECT_SQL_JOINED_TABLE" loc="14..28" text="a CROSS JOIN b">
                                     <node key="SQL_JOIN_INPUT" type="ARRAY">
                                         <node type="OBJECT_SQL_TABLEREF" loc="14..15" text="a">
-                                            <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                             <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                                 <node type="IDENTIFIER" loc="14..15" text="a"/>
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_TABLEREF" loc="27..28" text="b">
-                                            <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                             <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                                 <node type="IDENTIFIER" loc="27..28" text="b"/>
                                             </node>
@@ -4919,13 +4881,11 @@
                                 <node key="SQL_TABLEREF_TABLE" type="OBJECT_SQL_JOINED_TABLE" loc="14..30" text="a NATURAL JOIN b">
                                     <node key="SQL_JOIN_INPUT" type="ARRAY">
                                         <node type="OBJECT_SQL_TABLEREF" loc="14..15" text="a">
-                                            <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                             <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                                 <node type="IDENTIFIER" loc="14..15" text="a"/>
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_TABLEREF" loc="29..30" text="b">
-                                            <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                             <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                                 <node type="IDENTIFIER" loc="29..30" text="b"/>
                                             </node>
@@ -4960,13 +4920,11 @@
                                 <node key="SQL_TABLEREF_TABLE" type="OBJECT_SQL_JOINED_TABLE" loc="14..42" text="a LEFT OUT..b ON c = d">
                                     <node key="SQL_JOIN_INPUT" type="ARRAY">
                                         <node type="OBJECT_SQL_TABLEREF" loc="14..15" text="a">
-                                            <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                             <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                                 <node type="IDENTIFIER" loc="14..15" text="a"/>
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_TABLEREF" loc="32..33" text="b">
-                                            <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                             <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                                 <node type="IDENTIFIER" loc="32..33" text="b"/>
                                             </node>
@@ -5016,13 +4974,11 @@
                                 <node key="SQL_TABLEREF_TABLE" type="OBJECT_SQL_JOINED_TABLE" loc="14..38" text="a LEFT JOI..ON foo = d">
                                     <node key="SQL_JOIN_INPUT" type="ARRAY">
                                         <node type="OBJECT_SQL_TABLEREF" loc="14..15" text="a">
-                                            <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                             <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                                 <node type="IDENTIFIER" loc="14..15" text="a"/>
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_TABLEREF" loc="26..27" text="b">
-                                            <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                             <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                                 <node type="IDENTIFIER" loc="26..27" text="b"/>
                                             </node>
@@ -5072,13 +5028,11 @@
                                 <node key="SQL_TABLEREF_TABLE" type="OBJECT_SQL_JOINED_TABLE" loc="14..37" text="a RIGHT JO..b ON c = d">
                                     <node key="SQL_JOIN_INPUT" type="ARRAY">
                                         <node type="OBJECT_SQL_TABLEREF" loc="14..15" text="a">
-                                            <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                             <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                                 <node type="IDENTIFIER" loc="14..15" text="a"/>
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_TABLEREF" loc="27..28" text="b">
-                                            <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                             <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                                 <node type="IDENTIFIER" loc="27..28" text="b"/>
                                             </node>
@@ -5128,13 +5082,11 @@
                                 <node key="SQL_TABLEREF_TABLE" type="OBJECT_SQL_JOINED_TABLE" loc="14..42" text="a FULL OUT..b ON c = d">
                                     <node key="SQL_JOIN_INPUT" type="ARRAY">
                                         <node type="OBJECT_SQL_TABLEREF" loc="14..15" text="a">
-                                            <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                             <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                                 <node type="IDENTIFIER" loc="14..15" text="a"/>
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_TABLEREF" loc="32..33" text="b">
-                                            <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                             <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                                 <node type="IDENTIFIER" loc="32..33" text="b"/>
                                             </node>
@@ -5184,13 +5136,11 @@
                                 <node key="SQL_TABLEREF_TABLE" type="OBJECT_SQL_JOINED_TABLE" loc="14..41" text="a INNER JO..ING (c, d)">
                                     <node key="SQL_JOIN_INPUT" type="ARRAY">
                                         <node type="OBJECT_SQL_TABLEREF" loc="14..15" text="a">
-                                            <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                             <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                                 <node type="IDENTIFIER" loc="14..15" text="a"/>
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_TABLEREF" loc="27..28" text="b">
-                                            <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                             <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                                 <node type="IDENTIFIER" loc="27..28" text="b"/>
                                             </node>
@@ -5230,7 +5180,6 @@
                                 <node key="SQL_TABLEREF_TABLE" type="OBJECT_SQL_SELECT" loc="14..48" text="(SELECT * ..OR UPDATE)">
                                     <node key="SQL_SELECT_FROM" type="ARRAY">
                                         <node type="OBJECT_SQL_TABLEREF" loc="29..36" text="mytable">
-                                            <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                             <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                                 <node type="IDENTIFIER" loc="29..36" text="mytable"/>
                                             </node>
@@ -5286,7 +5235,6 @@
                                 <node key="SQL_TABLEREF_TABLE" type="OBJECT_SQL_SELECT" loc="14..55" text="(SELECT * ..EY UPDATE)">
                                     <node key="SQL_SELECT_FROM" type="ARRAY">
                                         <node type="OBJECT_SQL_TABLEREF" loc="29..36" text="mytable">
-                                            <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                             <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                                 <node type="IDENTIFIER" loc="29..36" text="mytable"/>
                                             </node>
@@ -5342,7 +5290,6 @@
                                 <node key="SQL_TABLEREF_TABLE" type="OBJECT_SQL_SELECT" loc="14..47" text="(SELECT * ..FOR SHARE)">
                                     <node key="SQL_SELECT_FROM" type="ARRAY">
                                         <node type="OBJECT_SQL_TABLEREF" loc="29..36" text="mytable">
-                                            <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                             <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                                 <node type="IDENTIFIER" loc="29..36" text="mytable"/>
                                             </node>
@@ -5398,7 +5345,6 @@
                                 <node key="SQL_TABLEREF_TABLE" type="OBJECT_SQL_SELECT" loc="14..51" text="(SELECT * ..KEY SHARE)">
                                     <node key="SQL_SELECT_FROM" type="ARRAY">
                                         <node type="OBJECT_SQL_TABLEREF" loc="29..36" text="mytable">
-                                            <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                             <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                                 <node type="IDENTIFIER" loc="29..36" text="mytable"/>
                                             </node>
@@ -5454,7 +5400,6 @@
                                 <node key="SQL_TABLEREF_TABLE" type="OBJECT_SQL_SELECT" loc="14..51" text="(SELECT * ..READ ONLY)">
                                     <node key="SQL_SELECT_FROM" type="ARRAY">
                                         <node type="OBJECT_SQL_TABLEREF" loc="29..36" text="mytable">
-                                            <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                             <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                                 <node type="IDENTIFIER" loc="29..36" text="mytable"/>
                                             </node>
@@ -5510,7 +5455,6 @@
                                 <node key="SQL_TABLEREF_TABLE" type="OBJECT_SQL_SELECT" loc="14..55" text="(SELECT * ..TE OF foo)">
                                     <node key="SQL_SELECT_FROM" type="ARRAY">
                                         <node type="OBJECT_SQL_TABLEREF" loc="29..36" text="mytable">
-                                            <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                             <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                                 <node type="IDENTIFIER" loc="29..36" text="mytable"/>
                                             </node>
@@ -5571,7 +5515,6 @@
                                 <node key="SQL_TABLEREF_TABLE" type="OBJECT_SQL_SELECT" loc="14..62" text="(SELECT * ..oo NOWAIT)">
                                     <node key="SQL_SELECT_FROM" type="ARRAY">
                                         <node type="OBJECT_SQL_TABLEREF" loc="29..36" text="mytable">
-                                            <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                             <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                                 <node type="IDENTIFIER" loc="29..36" text="mytable"/>
                                             </node>
@@ -5629,7 +5572,6 @@
                     <node type="OBJECT_SQL_SELECT" loc="0..26" text="SELECT * F..o LIMIT 42">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="14..17" text="foo">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="14..17" text="foo"/>
                                 </node>
@@ -5671,7 +5613,6 @@
                     <node type="OBJECT_SQL_SELECT" loc="0..27" text="SELECT * F.. LIMIT ALL">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="14..17" text="foo">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="14..17" text="foo"/>
                                 </node>
@@ -5700,7 +5641,6 @@
                     <node type="OBJECT_SQL_SELECT" loc="0..37" text="SELECT * F.. OFFSET 21">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="14..17" text="foo">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="14..17" text="foo"/>
                                 </node>
@@ -5730,7 +5670,6 @@
                     <node type="OBJECT_SQL_SELECT" loc="0..42" text="SELECT * F.. ROWS ONLY">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="14..17" text="foo">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="14..17" text="foo"/>
                                 </node>
@@ -5759,7 +5698,6 @@
                     <node type="OBJECT_SQL_SELECT" loc="0..40" text="SELECT * F..1 ROW ONLY">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="14..17" text="foo">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="14..17" text="foo"/>
                                 </node>
@@ -5788,7 +5726,6 @@
                     <node type="OBJECT_SQL_SELECT" loc="0..39" text="SELECT * F..1 ROW ONLY">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="14..17" text="foo">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="14..17" text="foo"/>
                                 </node>
@@ -5817,7 +5754,6 @@
                     <node type="OBJECT_SQL_SELECT" loc="0..31" text="SELECT * F..IT ALL, 21">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="14..17" text="foo">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="14..17" text="foo"/>
                                 </node>

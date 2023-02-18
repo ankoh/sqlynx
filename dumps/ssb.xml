@@ -12,13 +12,11 @@ and lo_quantity &lt; 25</input>
                     <node type="OBJECT_SQL_SELECT" loc="0..176" text="select sum..ntity &lt; 25">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="57..66" text="lineorder">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="57..66" text="lineorder"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="68..74" text="&quot;date&quot;">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="68..74" text="&quot;date&quot;"/>
                                 </node>
@@ -133,13 +131,11 @@ and lo_quantity between 26 and 35</input>
                     <node type="OBJECT_SQL_SELECT" loc="0..199" text="select sum.. 26 and 35">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="57..66" text="lineorder">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="57..66" text="lineorder"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="68..74" text="&quot;date&quot;">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="68..74" text="&quot;date&quot;"/>
                                 </node>
@@ -256,13 +252,11 @@ and lo_quantity between 26 and 35</input>
                     <node type="OBJECT_SQL_SELECT" loc="0..213" text="select sum.. 26 and 35">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="57..66" text="lineorder">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="57..66" text="lineorder"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="68..74" text="&quot;date&quot;">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="68..74" text="&quot;date&quot;"/>
                                 </node>
@@ -393,25 +387,21 @@ order by d_year, p_brand1</input>
                     <node type="OBJECT_SQL_SELECT" loc="0..268" text="select sum.., p_brand1">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="46..55" text="lineorder">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="46..55" text="lineorder"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="57..63" text="&quot;date&quot;">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="57..63" text="&quot;date&quot;"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="65..69" text="part">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="65..69" text="part"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="71..79" text="supplier">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="71..79" text="supplier"/>
                                 </node>
@@ -588,25 +578,21 @@ order by d_year, p_brand1</input>
                     <node type="OBJECT_SQL_SELECT" loc="0..287" text="select sum.., p_brand1">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="46..55" text="lineorder">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="46..55" text="lineorder"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="57..63" text="&quot;date&quot;">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="57..63" text="&quot;date&quot;"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="65..69" text="part">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="65..69" text="part"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="71..79" text="supplier">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="71..79" text="supplier"/>
                                 </node>
@@ -784,25 +770,21 @@ order by d_year, p_brand1</input>
                     <node type="OBJECT_SQL_SELECT" loc="0..267" text="select sum.., p_brand1">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="46..55" text="lineorder">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="46..55" text="lineorder"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="57..63" text="&quot;date&quot;">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="57..63" text="&quot;date&quot;"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="65..69" text="part">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="65..69" text="part"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="71..79" text="supplier">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="71..79" text="supplier"/>
                                 </node>
@@ -978,25 +960,21 @@ order by d_year asc, revenue desc</input>
                     <node type="OBJECT_SQL_SELECT" loc="0..341" text="select c_n..venue desc">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="67..75" text="customer">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="67..75" text="customer"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="77..86" text="lineorder">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="77..86" text="lineorder"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="88..96" text="supplier">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="88..96" text="supplier"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="98..104" text="&quot;date&quot;">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="98..104" text="&quot;date&quot;"/>
                                 </node>
@@ -1213,25 +1191,21 @@ order by d_year asc, revenue desc</input>
                     <node type="OBJECT_SQL_SELECT" loc="0..351" text="select c_c..venue desc">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="63..71" text="customer">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="63..71" text="customer"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="73..82" text="lineorder">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="73..82" text="lineorder"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="84..92" text="supplier">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="84..92" text="supplier"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="94..100" text="&quot;date&quot;">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="94..100" text="&quot;date&quot;"/>
                                 </node>
@@ -1451,25 +1425,21 @@ order by d_year asc, revenue desc</input>
                     <node type="OBJECT_SQL_SELECT" loc="0..387" text="select c_c..venue desc">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="63..71" text="customer">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="63..71" text="customer"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="73..82" text="lineorder">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="73..82" text="lineorder"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="84..92" text="supplier">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="84..92" text="supplier"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="94..100" text="&quot;date&quot;">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="94..100" text="&quot;date&quot;"/>
                                 </node>
@@ -1727,25 +1697,21 @@ order by d_year asc, revenue desc</input>
                     <node type="OBJECT_SQL_SELECT" loc="0..377" text="select c_c..venue desc">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="63..71" text="customer">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="63..71" text="customer"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="73..82" text="lineorder">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="73..82" text="lineorder"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="84..92" text="supplier">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="84..92" text="supplier"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="94..100" text="&quot;date&quot;">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="94..100" text="&quot;date&quot;"/>
                                 </node>
@@ -1991,31 +1957,26 @@ order by d_year, c_nation</input>
                     <node type="OBJECT_SQL_SELECT" loc="0..374" text="select d_y.., c_nation">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="72..78" text="&quot;date&quot;">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="72..78" text="&quot;date&quot;"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="80..88" text="customer">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="80..88" text="customer"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="90..98" text="supplier">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="90..98" text="supplier"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="100..104" text="part">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="100..104" text="part"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="106..115" text="lineorder">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="106..115" text="lineorder"/>
                                 </node>
@@ -2252,31 +2213,26 @@ order by d_year, s_nation, p_category</input>
                     <node type="OBJECT_SQL_SELECT" loc="0..447" text="select d_y..p_category">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="84..90" text="&quot;date&quot;">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="84..90" text="&quot;date&quot;"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="92..100" text="customer">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="92..100" text="customer"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="102..110" text="supplier">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="102..110" text="supplier"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="112..116" text="part">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="112..116" text="part"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="118..127" text="lineorder">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="118..127" text="lineorder"/>
                                 </node>
@@ -2565,31 +2521,26 @@ order by d_year, s_city, p_brand1</input>
                     <node type="OBJECT_SQL_SELECT" loc="0..423" text="select d_y.., p_brand1">
                         <node key="SQL_SELECT_FROM" type="ARRAY">
                             <node type="OBJECT_SQL_TABLEREF" loc="80..86" text="&quot;date&quot;">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="80..86" text="&quot;date&quot;"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="88..96" text="customer">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="88..96" text="customer"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="98..106" text="supplier">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="98..106" text="supplier"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="108..112" text="part">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="108..112" text="part"/>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="114..123" text="lineorder">
-                                <node key="SQL_TABLEREF_INHERIT" type="BOOL" value="true"/>
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY">
                                     <node type="IDENTIFIER" loc="114..123" text="lineorder"/>
                                 </node>
