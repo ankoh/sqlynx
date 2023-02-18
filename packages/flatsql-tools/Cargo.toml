@@ -7,7 +7,7 @@ workspace = "../../"
 
 [dependencies]
 flatsql-proto = { path = "../flatsql-proto-rs" }
-flatsql-parser = { path = "../flatsql-parser-sys" }
+flatsql-parser = { path = "../flatsql-parser-rs" }
 
 async-trait = "0.1.56"
 clap = { version = "^4.1.1", features = ["derive"] }
