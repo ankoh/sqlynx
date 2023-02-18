@@ -1,4 +1,4 @@
-include "flatsql/sql_syntax.fbs";
+include "flatsql/sql_enums.fbs";
 
 namespace flatsql.proto;
 
