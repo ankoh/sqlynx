@@ -21,7 +21,7 @@ sql_create_as_target:
         $$ = {
             Attr(Key::SQL_CREATE_AS_NAME, std::move($1)),
             Attr(Key::SQL_CREATE_AS_COLUMNS, ctx.Add(@2, std::move($2))),
-            Attr(Key::SQL_CREATE_AS_ON_COMMIT, Enum(@4, $4))
+            Attr(Key::SQL_CREATE_AS_ON_COMMIT, $4)
         };
     }
     ;
@@ -32,7 +32,7 @@ sql_create_stmt:
             Attr(Key::SQL_CREATE_TABLE_TEMP, $2),
             Attr(Key::SQL_CREATE_TABLE_NAME, std::move($4)),
             Attr(Key::SQL_CREATE_TABLE_ELEMENTS, ctx.Add(Loc({@5, @6, @7}), std::move($6))),
-            Attr(Key::SQL_CREATE_TABLE_ON_COMMIT, Enum(@8, $8)),
+            Attr(Key::SQL_CREATE_TABLE_ON_COMMIT, $8),
         });
     }
     ;
@@ -217,10 +217,10 @@ sql_opt_temp:
     ;
 
 sql_on_commit_option: 
-    ON COMMIT DROP              { $$ = proto::OnCommitOption::DROP; }
-  | ON COMMIT DELETE_P ROWS     { $$ = proto::OnCommitOption::DELETE_ROWS; }
-  | ON COMMIT PRESERVE ROWS     { $$ = proto::OnCommitOption::PRESERVE_ROWS; }
-  | %empty                      { $$ = proto::OnCommitOption::NOOP; }
+    ON COMMIT DROP              { $$ = Enum(@$, proto::OnCommitOption::DROP); }
+  | ON COMMIT DELETE_P ROWS     { $$ = Enum(@$, proto::OnCommitOption::DELETE_ROWS); }
+  | ON COMMIT PRESERVE ROWS     { $$ = Enum(@$, proto::OnCommitOption::PRESERVE_ROWS); }
+  | %empty                      { $$ = Null(); }
   ;
 
 // XXX omitted reloptions and OIDS

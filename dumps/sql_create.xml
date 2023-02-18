@@ -8,7 +8,6 @@
                         <node key="SQL_CREATE_AS_NAME" type="ARRAY">
                             <node type="IDENTIFIER" loc="13..16" text="foo"/>
                         </node>
-                        <node key="SQL_CREATE_AS_ON_COMMIT" type="ENUM_SQL_ON_COMMIT_OPTION" value="NOOP"/>
                         <node key="SQL_CREATE_AS_STATEMENT" type="OBJECT_SQL_SELECT" loc="20..28" text="select 1">
                             <node key="SQL_SELECT_TARGETS" type="ARRAY">
                                 <node type="OBJECT_SQL_RESULT_TARGET" loc="27..28" text="1">
@@ -42,7 +41,6 @@
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY">
                             <node type="IDENTIFIER" loc="13..16" text="foo"/>
                         </node>
-                        <node key="SQL_CREATE_TABLE_ON_COMMIT" type="ENUM_SQL_ON_COMMIT_OPTION" value="NOOP"/>
                     </node>
                 </statement>
             </statements>
@@ -77,7 +75,6 @@
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY">
                             <node type="IDENTIFIER" loc="13..16" text="foo"/>
                         </node>
-                        <node key="SQL_CREATE_TABLE_ON_COMMIT" type="ENUM_SQL_ON_COMMIT_OPTION" value="NOOP"/>
                     </node>
                 </statement>
             </statements>
@@ -112,7 +109,6 @@
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY">
                             <node type="IDENTIFIER" loc="13..16" text="foo"/>
                         </node>
-                        <node key="SQL_CREATE_TABLE_ON_COMMIT" type="ENUM_SQL_ON_COMMIT_OPTION" value="NOOP"/>
                     </node>
                 </statement>
             </statements>
@@ -160,7 +156,6 @@
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY">
                             <node type="IDENTIFIER" loc="13..16" text="foo"/>
                         </node>
-                        <node key="SQL_CREATE_TABLE_ON_COMMIT" type="ENUM_SQL_ON_COMMIT_OPTION" value="NOOP"/>
                     </node>
                 </statement>
             </statements>
@@ -190,7 +185,6 @@
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY">
                             <node type="IDENTIFIER" loc="13..16" text="foo"/>
                         </node>
-                        <node key="SQL_CREATE_TABLE_ON_COMMIT" type="ENUM_SQL_ON_COMMIT_OPTION" value="NOOP"/>
                     </node>
                 </statement>
             </statements>
@@ -225,7 +219,6 @@
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY">
                             <node type="IDENTIFIER" loc="13..16" text="foo"/>
                         </node>
-                        <node key="SQL_CREATE_TABLE_ON_COMMIT" type="ENUM_SQL_ON_COMMIT_OPTION" value="NOOP"/>
                     </node>
                 </statement>
             </statements>
@@ -252,7 +245,6 @@
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY">
                             <node type="IDENTIFIER" loc="23..26" text="foo"/>
                         </node>
-                        <node key="SQL_CREATE_TABLE_ON_COMMIT" type="ENUM_SQL_ON_COMMIT_OPTION" value="NOOP"/>
                         <node key="SQL_CREATE_TABLE_TEMP" type="ENUM_SQL_TEMP_TYPE" value="LOCAL"/>
                     </node>
                 </statement>
@@ -299,7 +291,6 @@
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY">
                             <node type="IDENTIFIER" loc="13..16" text="foo"/>
                         </node>
-                        <node key="SQL_CREATE_TABLE_ON_COMMIT" type="ENUM_SQL_ON_COMMIT_OPTION" value="NOOP"/>
                     </node>
                 </statement>
             </statements>
@@ -331,7 +322,6 @@
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY">
                             <node type="IDENTIFIER" loc="13..16" text="foo"/>
                         </node>
-                        <node key="SQL_CREATE_TABLE_ON_COMMIT" type="ENUM_SQL_ON_COMMIT_OPTION" value="NOOP"/>
                     </node>
                 </statement>
             </statements>
@@ -367,7 +357,6 @@
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY">
                             <node type="IDENTIFIER" loc="13..16" text="foo"/>
                         </node>
-                        <node key="SQL_CREATE_TABLE_ON_COMMIT" type="ENUM_SQL_ON_COMMIT_OPTION" value="NOOP"/>
                     </node>
                 </statement>
             </statements>
