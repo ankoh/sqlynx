@@ -5,6 +5,7 @@
 #include <initializer_list>
 
 #include "flatsql/parser/grammar/enums.h"
+#include "flatsql/parser/grammar/location.h"
 #include "flatsql/parser/parser_driver.h"
 #include "flatsql/parser/scanner.h"
 
@@ -133,10 +134,11 @@ inline proto::Node Expr(ParserDriver& driver, proto::Location loc, proto::Node f
 
 /// Add an unary expression
 inline proto::Node Expr(ParserDriver& driver, proto::Location loc, proto::Node func, proto::Node arg) {
+    std::array<proto::Node, 1> args{arg};
     return driver.Add(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
                       {
                           Attr(Key::SQL_EXPRESSION_OPERATOR, func),
-                          Attr(Key::SQL_EXPRESSION_ARG0, arg),
+                          Attr(Key::SQL_EXPRESSION_ARGS, driver.AddArray(loc, args)),
                       });
 }
 
@@ -144,34 +146,34 @@ enum PostFixTag { PostFix };
 
 /// Add an unary expression
 inline proto::Node Expr(ParserDriver& driver, proto::Location loc, proto::Node func, proto::Node arg, PostFixTag) {
+    std::array<proto::Node, 1> args{arg};
     return driver.Add(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
                       {
                           Attr(Key::SQL_EXPRESSION_OPERATOR, func),
                           Attr(Key::SQL_EXPRESSION_POSTFIX, Bool(loc, true)),
-                          Attr(Key::SQL_EXPRESSION_ARG0, arg),
+                          Attr(Key::SQL_EXPRESSION_ARGS, driver.AddArray(loc, args)),
                       });
 }
 
 /// Add a binary expression
 inline proto::Node Expr(ParserDriver& driver, proto::Location loc, proto::Node func, proto::Node left,
                         proto::Node right) {
+    std::array<proto::Node, 2> args{left, right};
     return driver.Add(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
                       {
                           Attr(Key::SQL_EXPRESSION_OPERATOR, func),
-                          Attr(Key::SQL_EXPRESSION_ARG0, left),
-                          Attr(Key::SQL_EXPRESSION_ARG1, right),
+                          Attr(Key::SQL_EXPRESSION_ARGS, driver.AddArray(loc, args)),
                       });
 }
 
 /// Add a ternary expression
 inline proto::Node Expr(ParserDriver& driver, proto::Location loc, proto::Node func, proto::Node arg0, proto::Node arg1,
                         proto::Node arg2) {
+    std::array<proto::Node, 3> args{arg0, arg1, arg2};
     return driver.Add(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
                       {
                           Attr(Key::SQL_EXPRESSION_OPERATOR, func),
-                          Attr(Key::SQL_EXPRESSION_ARG0, arg0),
-                          Attr(Key::SQL_EXPRESSION_ARG1, arg1),
-                          Attr(Key::SQL_EXPRESSION_ARG2, arg2),
+                          Attr(Key::SQL_EXPRESSION_ARGS, driver.AddArray(loc, args)),
                       });
 }
 
@@ -180,10 +182,11 @@ inline proto::Node Negate(ParserDriver& driver, proto::Location loc, proto::Loca
     // XXX If node_type == OBJECT_SQL_CONST inspect the attributes and expand the value
 
     // Otherwise fall back to an unary negation
+    std::array<proto::Node, 1> args{value};
     return driver.Add(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
                       {
                           Attr(Key::SQL_EXPRESSION_OPERATOR, Enum(loc_minus, proto::ExpressionOperator::NEGATE)),
-                          Attr(Key::SQL_EXPRESSION_ARG0, value),
+                          Attr(Key::SQL_EXPRESSION_ARGS, driver.AddArray(loc, args)),
                       });
 }
 

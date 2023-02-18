@@ -160,8 +160,10 @@
                         <node key="SQL_SELECT_TARGETS" type="ARRAY">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..12" text="1 &gt; 2">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="7..12" text="1 &gt; 2">
-                                    <node key="SQL_EXPRESSION_ARG0" type="LITERAL_INTEGER" loc="7..8" text="1"/>
-                                    <node key="SQL_EXPRESSION_ARG1" type="LITERAL_INTEGER" loc="11..12" text="2"/>
+                                    <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                        <node type="LITERAL_INTEGER" loc="7..8" text="1"/>
+                                        <node type="LITERAL_INTEGER" loc="11..12" text="2"/>
+                                    </node>
                                     <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="GREATER_THAN"/>
                                 </node>
                             </node>
@@ -1514,19 +1516,23 @@
                             </node>
                         </node>
                         <node key="SQL_SELECT_WHERE" type="OBJECT_SQL_NARY_EXPRESSION" loc="51..61" text="c = $a + 1">
-                            <node key="SQL_EXPRESSION_ARG0" type="OBJECT_SQL_COLUMN_REF" loc="51..52" text="c">
-                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                    <node type="IDENTIFIER" loc="51..52" text="c"/>
-                                </node>
-                            </node>
-                            <node key="SQL_EXPRESSION_ARG1" type="OBJECT_SQL_NARY_EXPRESSION" loc="55..61" text="$a + 1">
-                                <node key="SQL_EXPRESSION_ARG0" type="OBJECT_SQL_PARAMETER_REF" loc="55..57" text="$a">
-                                    <node key="SQL_PARAMETER_NAME" type="ARRAY">
-                                        <node type="IDENTIFIER" loc="56..57" text="a"/>
+                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                <node type="OBJECT_SQL_COLUMN_REF" loc="51..52" text="c">
+                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                        <node type="IDENTIFIER" loc="51..52" text="c"/>
                                     </node>
                                 </node>
-                                <node key="SQL_EXPRESSION_ARG1" type="LITERAL_INTEGER" loc="60..61" text="1"/>
-                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="PLUS"/>
+                                <node type="OBJECT_SQL_NARY_EXPRESSION" loc="55..61" text="$a + 1">
+                                    <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                        <node type="OBJECT_SQL_PARAMETER_REF" loc="55..57" text="$a">
+                                            <node key="SQL_PARAMETER_NAME" type="ARRAY">
+                                                <node type="IDENTIFIER" loc="56..57" text="a"/>
+                                            </node>
+                                        </node>
+                                        <node type="LITERAL_INTEGER" loc="60..61" text="1"/>
+                                    </node>
+                                    <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="PLUS"/>
+                                </node>
                             </node>
                             <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
                         </node>
@@ -1575,34 +1581,40 @@
                             </node>
                         </node>
                         <node key="SQL_SELECT_WHERE" type="OBJECT_SQL_NARY_EXPRESSION" loc="83..124" text="c1.month =..h = $month">
-                            <node key="SQL_EXPRESSION_ARG0" type="OBJECT_SQL_NARY_EXPRESSION" loc="83..102" text="c1.month = c2.month">
-                                <node key="SQL_EXPRESSION_ARG0" type="OBJECT_SQL_COLUMN_REF" loc="83..91" text="c1.month">
-                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                        <node type="IDENTIFIER" loc="83..85" text="c1"/>
-                                        <node type="IDENTIFIER" loc="86..91" text="month"/>
+                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                <node type="OBJECT_SQL_NARY_EXPRESSION" loc="83..102" text="c1.month = c2.month">
+                                    <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                        <node type="OBJECT_SQL_COLUMN_REF" loc="83..91" text="c1.month">
+                                            <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                <node type="IDENTIFIER" loc="83..85" text="c1"/>
+                                                <node type="IDENTIFIER" loc="86..91" text="month"/>
+                                            </node>
+                                        </node>
+                                        <node type="OBJECT_SQL_COLUMN_REF" loc="94..102" text="c2.month">
+                                            <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                <node type="IDENTIFIER" loc="94..96" text="c2"/>
+                                                <node type="IDENTIFIER" loc="97..102" text="month"/>
+                                            </node>
+                                        </node>
                                     </node>
+                                    <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
                                 </node>
-                                <node key="SQL_EXPRESSION_ARG1" type="OBJECT_SQL_COLUMN_REF" loc="94..102" text="c2.month">
-                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                        <node type="IDENTIFIER" loc="94..96" text="c2"/>
-                                        <node type="IDENTIFIER" loc="97..102" text="month"/>
+                                <node type="OBJECT_SQL_NARY_EXPRESSION" loc="107..124" text="c2.month = $month">
+                                    <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                        <node type="OBJECT_SQL_COLUMN_REF" loc="107..115" text="c2.month">
+                                            <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                <node type="IDENTIFIER" loc="107..109" text="c2"/>
+                                                <node type="IDENTIFIER" loc="110..115" text="month"/>
+                                            </node>
+                                        </node>
+                                        <node type="OBJECT_SQL_PARAMETER_REF" loc="118..124" text="$month">
+                                            <node key="SQL_PARAMETER_NAME" type="ARRAY">
+                                                <node type="IDENTIFIER" loc="119..124" text="month"/>
+                                            </node>
+                                        </node>
                                     </node>
+                                    <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
                                 </node>
-                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
-                            </node>
-                            <node key="SQL_EXPRESSION_ARG1" type="OBJECT_SQL_NARY_EXPRESSION" loc="107..124" text="c2.month = $month">
-                                <node key="SQL_EXPRESSION_ARG0" type="OBJECT_SQL_COLUMN_REF" loc="107..115" text="c2.month">
-                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                        <node type="IDENTIFIER" loc="107..109" text="c2"/>
-                                        <node type="IDENTIFIER" loc="110..115" text="month"/>
-                                    </node>
-                                </node>
-                                <node key="SQL_EXPRESSION_ARG1" type="OBJECT_SQL_PARAMETER_REF" loc="118..124" text="$month">
-                                    <node key="SQL_PARAMETER_NAME" type="ARRAY">
-                                        <node type="IDENTIFIER" loc="119..124" text="month"/>
-                                    </node>
-                                </node>
-                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
                             </node>
                             <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="AND"/>
                         </node>
@@ -2173,8 +2185,10 @@
                         <node key="SQL_SELECT_TARGETS" type="ARRAY">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..33" text="1 operator..chema.+) 2">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="7..33" text="1 operator..chema.+) 2">
-                                    <node key="SQL_EXPRESSION_ARG0" type="LITERAL_INTEGER" loc="7..8" text="1"/>
-                                    <node key="SQL_EXPRESSION_ARG1" type="LITERAL_INTEGER" loc="32..33" text="2"/>
+                                    <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                        <node type="LITERAL_INTEGER" loc="7..8" text="1"/>
+                                        <node type="LITERAL_INTEGER" loc="32..33" text="2"/>
+                                    </node>
                                     <node key="SQL_EXPRESSION_OPERATOR" type="ARRAY">
                                         <node type="IDENTIFIER" loc="18..28" text="someschema"/>
                                         <node type="ENUM_SQL_EXPRESSION_OPERATOR" value="PLUS"/>
@@ -2200,9 +2214,11 @@
                         <node key="SQL_SELECT_TARGETS" type="ARRAY">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..24" text="1 between 0 and 3">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="7..24" text="1 between 0 and 3">
-                                    <node key="SQL_EXPRESSION_ARG0" type="LITERAL_INTEGER" loc="7..8" text="1"/>
-                                    <node key="SQL_EXPRESSION_ARG1" type="LITERAL_INTEGER" loc="17..18" text="0"/>
-                                    <node key="SQL_EXPRESSION_ARG2" type="LITERAL_INTEGER" loc="23..24" text="3"/>
+                                    <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                        <node type="LITERAL_INTEGER" loc="7..8" text="1"/>
+                                        <node type="LITERAL_INTEGER" loc="17..18" text="0"/>
+                                        <node type="LITERAL_INTEGER" loc="23..24" text="3"/>
+                                    </node>
                                     <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="BETWEEN_SYMMETRIC"/>
                                 </node>
                             </node>
@@ -2225,9 +2241,11 @@
                         <node key="SQL_SELECT_TARGETS" type="ARRAY">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..35" text="1 between ..ic 0 and 3">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="7..35" text="1 between ..ic 0 and 3">
-                                    <node key="SQL_EXPRESSION_ARG0" type="LITERAL_INTEGER" loc="7..8" text="1"/>
-                                    <node key="SQL_EXPRESSION_ARG1" type="LITERAL_INTEGER" loc="28..29" text="0"/>
-                                    <node key="SQL_EXPRESSION_ARG2" type="LITERAL_INTEGER" loc="34..35" text="3"/>
+                                    <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                        <node type="LITERAL_INTEGER" loc="7..8" text="1"/>
+                                        <node type="LITERAL_INTEGER" loc="28..29" text="0"/>
+                                        <node type="LITERAL_INTEGER" loc="34..35" text="3"/>
+                                    </node>
                                     <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="BETWEEN_ASYMMETRIC"/>
                                 </node>
                             </node>
@@ -2250,9 +2268,11 @@
                         <node key="SQL_SELECT_TARGETS" type="ARRAY">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..28" text="1 not betw..en 0 and 3">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="7..28" text="1 not betw..en 0 and 3">
-                                    <node key="SQL_EXPRESSION_ARG0" type="LITERAL_INTEGER" loc="7..8" text="1"/>
-                                    <node key="SQL_EXPRESSION_ARG1" type="LITERAL_INTEGER" loc="21..22" text="0"/>
-                                    <node key="SQL_EXPRESSION_ARG2" type="LITERAL_INTEGER" loc="27..28" text="3"/>
+                                    <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                        <node type="LITERAL_INTEGER" loc="7..8" text="1"/>
+                                        <node type="LITERAL_INTEGER" loc="21..22" text="0"/>
+                                        <node type="LITERAL_INTEGER" loc="27..28" text="3"/>
+                                    </node>
                                     <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="NOT_BETWEEN_SYMMETRIC"/>
                                 </node>
                             </node>
@@ -2275,9 +2295,11 @@
                         <node key="SQL_SELECT_TARGETS" type="ARRAY">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..39" text="1 not betw..ic 0 and 3">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="7..39" text="1 not betw..ic 0 and 3">
-                                    <node key="SQL_EXPRESSION_ARG0" type="LITERAL_INTEGER" loc="7..8" text="1"/>
-                                    <node key="SQL_EXPRESSION_ARG1" type="LITERAL_INTEGER" loc="32..33" text="0"/>
-                                    <node key="SQL_EXPRESSION_ARG2" type="LITERAL_INTEGER" loc="38..39" text="3"/>
+                                    <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                        <node type="LITERAL_INTEGER" loc="7..8" text="1"/>
+                                        <node type="LITERAL_INTEGER" loc="32..33" text="0"/>
+                                        <node type="LITERAL_INTEGER" loc="38..39" text="3"/>
+                                    </node>
                                     <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="NOT_BETWEEN_ASYMMETRIC"/>
                                 </node>
                             </node>
@@ -2300,9 +2322,11 @@
                         <node key="SQL_SELECT_TARGETS" type="ARRAY">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..34" text="1 between ..ic 0 and 3">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="7..34" text="1 between ..ic 0 and 3">
-                                    <node key="SQL_EXPRESSION_ARG0" type="LITERAL_INTEGER" loc="7..8" text="1"/>
-                                    <node key="SQL_EXPRESSION_ARG1" type="LITERAL_INTEGER" loc="27..28" text="0"/>
-                                    <node key="SQL_EXPRESSION_ARG2" type="LITERAL_INTEGER" loc="33..34" text="3"/>
+                                    <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                        <node type="LITERAL_INTEGER" loc="7..8" text="1"/>
+                                        <node type="LITERAL_INTEGER" loc="27..28" text="0"/>
+                                        <node type="LITERAL_INTEGER" loc="33..34" text="3"/>
+                                    </node>
                                     <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="BETWEEN_SYMMETRIC"/>
                                 </node>
                             </node>
@@ -2325,9 +2349,11 @@
                         <node key="SQL_SELECT_TARGETS" type="ARRAY">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..38" text="1 not betw..ic 0 and 3">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="7..38" text="1 not betw..ic 0 and 3">
-                                    <node key="SQL_EXPRESSION_ARG0" type="LITERAL_INTEGER" loc="7..8" text="1"/>
-                                    <node key="SQL_EXPRESSION_ARG1" type="LITERAL_INTEGER" loc="31..32" text="0"/>
-                                    <node key="SQL_EXPRESSION_ARG2" type="LITERAL_INTEGER" loc="37..38" text="3"/>
+                                    <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                        <node type="LITERAL_INTEGER" loc="7..8" text="1"/>
+                                        <node type="LITERAL_INTEGER" loc="31..32" text="0"/>
+                                        <node type="LITERAL_INTEGER" loc="37..38" text="3"/>
+                                    </node>
                                     <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="NOT_BETWEEN_SYMMETRIC"/>
                                 </node>
                             </node>
@@ -2350,8 +2376,10 @@
                         <node key="SQL_SELECT_TARGETS" type="ARRAY">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..47" text="&apos;2001-02-1..zone &apos;mst&apos;">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="7..47" text="&apos;2001-02-1..zone &apos;mst&apos;">
-                                    <node key="SQL_EXPRESSION_ARG0" type="LITERAL_STRING" loc="7..28" text="&apos;2001-02-1.. 20:38:40&apos;"/>
-                                    <node key="SQL_EXPRESSION_ARG1" type="LITERAL_STRING" loc="42..47" text="&apos;mst&apos;"/>
+                                    <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                        <node type="LITERAL_STRING" loc="7..28" text="&apos;2001-02-1.. 20:38:40&apos;"/>
+                                        <node type="LITERAL_STRING" loc="42..47" text="&apos;mst&apos;"/>
+                                    </node>
                                     <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="AT_TIMEZONE"/>
                                 </node>
                             </node>
@@ -2399,9 +2427,11 @@
                         <node key="SQL_SELECT_TARGETS" type="ARRAY">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..20" text="1 collate foo">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="7..20" text="1 collate foo">
-                                    <node key="SQL_EXPRESSION_ARG0" type="LITERAL_INTEGER" loc="7..8" text="1"/>
-                                    <node key="SQL_EXPRESSION_ARG1" type="ARRAY">
-                                        <node type="IDENTIFIER" loc="17..20" text="foo"/>
+                                    <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                        <node type="LITERAL_INTEGER" loc="7..8" text="1"/>
+                                        <node type="ARRAY">
+                                            <node type="IDENTIFIER" loc="17..20" text="foo"/>
+                                        </node>
                                     </node>
                                     <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="COLLATE"/>
                                 </node>
@@ -2425,32 +2455,34 @@
                         <node key="SQL_SELECT_TARGETS" type="ARRAY">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..93" text="(date &apos;202..21-02-10&apos;)">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="7..93" text="(date &apos;202..21-02-10&apos;)">
-                                    <node key="SQL_EXPRESSION_ARG0" type="ARRAY">
-                                        <node type="OBJECT_SQL_CONST_FUNCTION_CAST" loc="8..25" text="date &apos;2021-01-10&apos;">
-                                            <node key="SQL_CONST_CAST_FUNC_NAME" type="ARRAY">
-                                                <node type="IDENTIFIER" loc="8..12" text="date"/>
+                                    <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                        <node type="ARRAY">
+                                            <node type="OBJECT_SQL_CONST_FUNCTION_CAST" loc="8..25" text="date &apos;2021-01-10&apos;">
+                                                <node key="SQL_CONST_CAST_FUNC_NAME" type="ARRAY">
+                                                    <node type="IDENTIFIER" loc="8..12" text="date"/>
+                                                </node>
+                                                <node key="SQL_CONST_CAST_VALUE" type="LITERAL_STRING" loc="13..25" text="&apos;2021-01-10&apos;"/>
                                             </node>
-                                            <node key="SQL_CONST_CAST_VALUE" type="LITERAL_STRING" loc="13..25" text="&apos;2021-01-10&apos;"/>
+                                            <node type="OBJECT_SQL_CONST_FUNCTION_CAST" loc="27..44" text="date &apos;2021-02-01&apos;">
+                                                <node key="SQL_CONST_CAST_FUNC_NAME" type="ARRAY">
+                                                    <node type="IDENTIFIER" loc="27..31" text="date"/>
+                                                </node>
+                                                <node key="SQL_CONST_CAST_VALUE" type="LITERAL_STRING" loc="32..44" text="&apos;2021-02-01&apos;"/>
+                                            </node>
                                         </node>
-                                        <node type="OBJECT_SQL_CONST_FUNCTION_CAST" loc="27..44" text="date &apos;2021-02-01&apos;">
-                                            <node key="SQL_CONST_CAST_FUNC_NAME" type="ARRAY">
-                                                <node type="IDENTIFIER" loc="27..31" text="date"/>
+                                        <node type="ARRAY">
+                                            <node type="OBJECT_SQL_CONST_FUNCTION_CAST" loc="56..73" text="date &apos;2021-01-20&apos;">
+                                                <node key="SQL_CONST_CAST_FUNC_NAME" type="ARRAY">
+                                                    <node type="IDENTIFIER" loc="56..60" text="date"/>
+                                                </node>
+                                                <node key="SQL_CONST_CAST_VALUE" type="LITERAL_STRING" loc="61..73" text="&apos;2021-01-20&apos;"/>
                                             </node>
-                                            <node key="SQL_CONST_CAST_VALUE" type="LITERAL_STRING" loc="32..44" text="&apos;2021-02-01&apos;"/>
-                                        </node>
-                                    </node>
-                                    <node key="SQL_EXPRESSION_ARG1" type="ARRAY">
-                                        <node type="OBJECT_SQL_CONST_FUNCTION_CAST" loc="56..73" text="date &apos;2021-01-20&apos;">
-                                            <node key="SQL_CONST_CAST_FUNC_NAME" type="ARRAY">
-                                                <node type="IDENTIFIER" loc="56..60" text="date"/>
+                                            <node type="OBJECT_SQL_CONST_FUNCTION_CAST" loc="75..92" text="date &apos;2021-02-10&apos;">
+                                                <node key="SQL_CONST_CAST_FUNC_NAME" type="ARRAY">
+                                                    <node type="IDENTIFIER" loc="75..79" text="date"/>
+                                                </node>
+                                                <node key="SQL_CONST_CAST_VALUE" type="LITERAL_STRING" loc="80..92" text="&apos;2021-02-10&apos;"/>
                                             </node>
-                                            <node key="SQL_CONST_CAST_VALUE" type="LITERAL_STRING" loc="61..73" text="&apos;2021-01-20&apos;"/>
-                                        </node>
-                                        <node type="OBJECT_SQL_CONST_FUNCTION_CAST" loc="75..92" text="date &apos;2021-02-10&apos;">
-                                            <node key="SQL_CONST_CAST_FUNC_NAME" type="ARRAY">
-                                                <node type="IDENTIFIER" loc="75..79" text="date"/>
-                                            </node>
-                                            <node key="SQL_CONST_CAST_VALUE" type="LITERAL_STRING" loc="80..92" text="&apos;2021-02-10&apos;"/>
                                         </node>
                                     </node>
                                     <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="OVERLAPS"/>
@@ -2475,14 +2507,16 @@
                         <node key="SQL_SELECT_TARGETS" type="ARRAY">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..27" text="a is disti..nct from b">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="7..27" text="a is disti..nct from b">
-                                    <node key="SQL_EXPRESSION_ARG0" type="OBJECT_SQL_COLUMN_REF" loc="7..8" text="a">
-                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                            <node type="IDENTIFIER" loc="7..8" text="a"/>
+                                    <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                        <node type="OBJECT_SQL_COLUMN_REF" loc="7..8" text="a">
+                                            <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                <node type="IDENTIFIER" loc="7..8" text="a"/>
+                                            </node>
                                         </node>
-                                    </node>
-                                    <node key="SQL_EXPRESSION_ARG1" type="OBJECT_SQL_COLUMN_REF" loc="26..27" text="b">
-                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                            <node type="IDENTIFIER" loc="26..27" text="b"/>
+                                        <node type="OBJECT_SQL_COLUMN_REF" loc="26..27" text="b">
+                                            <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                <node type="IDENTIFIER" loc="26..27" text="b"/>
+                                            </node>
                                         </node>
                                     </node>
                                     <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="IS_DISTINCT_FROM"/>
@@ -2507,14 +2541,16 @@
                         <node key="SQL_SELECT_TARGETS" type="ARRAY">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..31" text="a is not d..nct from b">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="7..31" text="a is not d..nct from b">
-                                    <node key="SQL_EXPRESSION_ARG0" type="OBJECT_SQL_COLUMN_REF" loc="7..8" text="a">
-                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                            <node type="IDENTIFIER" loc="7..8" text="a"/>
+                                    <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                        <node type="OBJECT_SQL_COLUMN_REF" loc="7..8" text="a">
+                                            <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                <node type="IDENTIFIER" loc="7..8" text="a"/>
+                                            </node>
                                         </node>
-                                    </node>
-                                    <node key="SQL_EXPRESSION_ARG1" type="OBJECT_SQL_COLUMN_REF" loc="30..31" text="b">
-                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                            <node type="IDENTIFIER" loc="30..31" text="b"/>
+                                        <node type="OBJECT_SQL_COLUMN_REF" loc="30..31" text="b">
+                                            <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                <node type="IDENTIFIER" loc="30..31" text="b"/>
+                                            </node>
                                         </node>
                                     </node>
                                     <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="IS_NOT_DISTINCT_FROM"/>
@@ -2853,14 +2889,16 @@
                                         </node>
                                     </node>
                                     <node key="SQL_FUNCTION_FILTER" type="OBJECT_SQL_NARY_EXPRESSION" loc="33..38" text="a = b">
-                                        <node key="SQL_EXPRESSION_ARG0" type="OBJECT_SQL_COLUMN_REF" loc="33..34" text="a">
-                                            <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                <node type="IDENTIFIER" loc="33..34" text="a"/>
+                                        <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                            <node type="OBJECT_SQL_COLUMN_REF" loc="33..34" text="a">
+                                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                    <node type="IDENTIFIER" loc="33..34" text="a"/>
+                                                </node>
                                             </node>
-                                        </node>
-                                        <node key="SQL_EXPRESSION_ARG1" type="OBJECT_SQL_COLUMN_REF" loc="37..38" text="b">
-                                            <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                <node type="IDENTIFIER" loc="37..38" text="b"/>
+                                            <node type="OBJECT_SQL_COLUMN_REF" loc="37..38" text="b">
+                                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                    <node type="IDENTIFIER" loc="37..38" text="b"/>
+                                                </node>
                                             </node>
                                         </node>
                                         <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
@@ -3019,16 +3057,18 @@
                         <node key="SQL_SELECT_TARGETS" type="ARRAY">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..22" text="a in (select 1)">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="7..22" text="a in (select 1)">
-                                    <node key="SQL_EXPRESSION_ARG0" type="OBJECT_SQL_COLUMN_REF" loc="7..8" text="a">
-                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                            <node type="IDENTIFIER" loc="7..8" text="a"/>
+                                    <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                        <node type="OBJECT_SQL_COLUMN_REF" loc="7..8" text="a">
+                                            <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                <node type="IDENTIFIER" loc="7..8" text="a"/>
+                                            </node>
                                         </node>
-                                    </node>
-                                    <node key="SQL_EXPRESSION_ARG1" type="OBJECT_SQL_SELECT_EXPRESSION" loc="12..22" text="(select 1)">
-                                        <node key="SQL_SELECT_EXPRESSION_STATEMENT" type="OBJECT_SQL_SELECT" loc="12..22" text="(select 1)">
-                                            <node key="SQL_SELECT_TARGETS" type="ARRAY">
-                                                <node type="OBJECT_SQL_RESULT_TARGET" loc="20..21" text="1">
-                                                    <node key="SQL_RESULT_TARGET_VALUE" type="LITERAL_INTEGER" loc="20..21" text="1"/>
+                                        <node type="OBJECT_SQL_SELECT_EXPRESSION" loc="12..22" text="(select 1)">
+                                            <node key="SQL_SELECT_EXPRESSION_STATEMENT" type="OBJECT_SQL_SELECT" loc="12..22" text="(select 1)">
+                                                <node key="SQL_SELECT_TARGETS" type="ARRAY">
+                                                    <node type="OBJECT_SQL_RESULT_TARGET" loc="20..21" text="1">
+                                                        <node key="SQL_RESULT_TARGET_VALUE" type="LITERAL_INTEGER" loc="20..21" text="1"/>
+                                                    </node>
                                                 </node>
                                             </node>
                                         </node>
@@ -3055,14 +3095,16 @@
                         <node key="SQL_SELECT_TARGETS" type="ARRAY">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..18" text="a in (2, 3)">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="7..18" text="a in (2, 3)">
-                                    <node key="SQL_EXPRESSION_ARG0" type="OBJECT_SQL_COLUMN_REF" loc="7..8" text="a">
-                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                            <node type="IDENTIFIER" loc="7..8" text="a"/>
+                                    <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                        <node type="OBJECT_SQL_COLUMN_REF" loc="7..8" text="a">
+                                            <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                <node type="IDENTIFIER" loc="7..8" text="a"/>
+                                            </node>
                                         </node>
-                                    </node>
-                                    <node key="SQL_EXPRESSION_ARG1" type="ARRAY">
-                                        <node type="LITERAL_INTEGER" loc="13..14" text="2"/>
-                                        <node type="LITERAL_INTEGER" loc="16..17" text="3"/>
+                                        <node type="ARRAY">
+                                            <node type="LITERAL_INTEGER" loc="13..14" text="2"/>
+                                            <node type="LITERAL_INTEGER" loc="16..17" text="3"/>
+                                        </node>
                                     </node>
                                     <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="IN"/>
                                 </node>
@@ -4632,16 +4674,18 @@
                             </node>
                         </node>
                         <node key="SQL_SELECT_WHERE" type="OBJECT_SQL_NARY_EXPRESSION" loc="57..69" text="tbl.i=tbl2.i">
-                            <node key="SQL_EXPRESSION_ARG0" type="OBJECT_SQL_COLUMN_REF" loc="57..62" text="tbl.i">
-                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                    <node type="IDENTIFIER" loc="57..60" text="tbl"/>
-                                    <node type="IDENTIFIER" loc="61..62" text="i"/>
+                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                <node type="OBJECT_SQL_COLUMN_REF" loc="57..62" text="tbl.i">
+                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                        <node type="IDENTIFIER" loc="57..60" text="tbl"/>
+                                        <node type="IDENTIFIER" loc="61..62" text="i"/>
+                                    </node>
                                 </node>
-                            </node>
-                            <node key="SQL_EXPRESSION_ARG1" type="OBJECT_SQL_COLUMN_REF" loc="63..69" text="tbl2.i">
-                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                    <node type="IDENTIFIER" loc="63..67" text="tbl2"/>
-                                    <node type="IDENTIFIER" loc="68..69" text="i"/>
+                                <node type="OBJECT_SQL_COLUMN_REF" loc="63..69" text="tbl2.i">
+                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                        <node type="IDENTIFIER" loc="63..67" text="tbl2"/>
+                                        <node type="IDENTIFIER" loc="68..69" text="i"/>
+                                    </node>
                                 </node>
                             </node>
                             <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
@@ -4686,16 +4730,18 @@
                             </node>
                         </node>
                         <node key="SQL_SELECT_WHERE" type="OBJECT_SQL_NARY_EXPRESSION" loc="30..42" text="tbl.i=tbl2.i">
-                            <node key="SQL_EXPRESSION_ARG0" type="OBJECT_SQL_COLUMN_REF" loc="30..35" text="tbl.i">
-                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                    <node type="IDENTIFIER" loc="30..33" text="tbl"/>
-                                    <node type="IDENTIFIER" loc="34..35" text="i"/>
+                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                <node type="OBJECT_SQL_COLUMN_REF" loc="30..35" text="tbl.i">
+                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                        <node type="IDENTIFIER" loc="30..33" text="tbl"/>
+                                        <node type="IDENTIFIER" loc="34..35" text="i"/>
+                                    </node>
                                 </node>
-                            </node>
-                            <node key="SQL_EXPRESSION_ARG1" type="OBJECT_SQL_COLUMN_REF" loc="36..42" text="tbl2.i">
-                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                    <node type="IDENTIFIER" loc="36..40" text="tbl2"/>
-                                    <node type="IDENTIFIER" loc="41..42" text="i"/>
+                                <node type="OBJECT_SQL_COLUMN_REF" loc="36..42" text="tbl2.i">
+                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                        <node type="IDENTIFIER" loc="36..40" text="tbl2"/>
+                                        <node type="IDENTIFIER" loc="41..42" text="i"/>
+                                    </node>
                                 </node>
                             </node>
                             <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
@@ -4733,14 +4779,16 @@
                                         </node>
                                     </node>
                                     <node key="SQL_JOIN_ON" type="OBJECT_SQL_NARY_EXPRESSION" loc="32..37" text="c = d">
-                                        <node key="SQL_EXPRESSION_ARG0" type="OBJECT_SQL_COLUMN_REF" loc="32..33" text="c">
-                                            <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                <node type="IDENTIFIER" loc="32..33" text="c"/>
+                                        <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                            <node type="OBJECT_SQL_COLUMN_REF" loc="32..33" text="c">
+                                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                    <node type="IDENTIFIER" loc="32..33" text="c"/>
+                                                </node>
                                             </node>
-                                        </node>
-                                        <node key="SQL_EXPRESSION_ARG1" type="OBJECT_SQL_COLUMN_REF" loc="36..37" text="d">
-                                            <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                <node type="IDENTIFIER" loc="36..37" text="d"/>
+                                            <node type="OBJECT_SQL_COLUMN_REF" loc="36..37" text="d">
+                                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                    <node type="IDENTIFIER" loc="36..37" text="d"/>
+                                                </node>
                                             </node>
                                         </node>
                                         <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
@@ -4787,14 +4835,16 @@
                                         </node>
                                     </node>
                                     <node key="SQL_JOIN_ON" type="OBJECT_SQL_NARY_EXPRESSION" loc="26..31" text="c = d">
-                                        <node key="SQL_EXPRESSION_ARG0" type="OBJECT_SQL_COLUMN_REF" loc="26..27" text="c">
-                                            <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                <node type="IDENTIFIER" loc="26..27" text="c"/>
+                                        <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                            <node type="OBJECT_SQL_COLUMN_REF" loc="26..27" text="c">
+                                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                    <node type="IDENTIFIER" loc="26..27" text="c"/>
+                                                </node>
                                             </node>
-                                        </node>
-                                        <node key="SQL_EXPRESSION_ARG1" type="OBJECT_SQL_COLUMN_REF" loc="30..31" text="d">
-                                            <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                <node type="IDENTIFIER" loc="30..31" text="d"/>
+                                            <node type="OBJECT_SQL_COLUMN_REF" loc="30..31" text="d">
+                                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                    <node type="IDENTIFIER" loc="30..31" text="d"/>
+                                                </node>
                                             </node>
                                         </node>
                                         <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
@@ -4923,14 +4973,16 @@
                                         </node>
                                     </node>
                                     <node key="SQL_JOIN_ON" type="OBJECT_SQL_NARY_EXPRESSION" loc="37..42" text="c = d">
-                                        <node key="SQL_EXPRESSION_ARG0" type="OBJECT_SQL_COLUMN_REF" loc="37..38" text="c">
-                                            <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                <node type="IDENTIFIER" loc="37..38" text="c"/>
+                                        <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                            <node type="OBJECT_SQL_COLUMN_REF" loc="37..38" text="c">
+                                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                    <node type="IDENTIFIER" loc="37..38" text="c"/>
+                                                </node>
                                             </node>
-                                        </node>
-                                        <node key="SQL_EXPRESSION_ARG1" type="OBJECT_SQL_COLUMN_REF" loc="41..42" text="d">
-                                            <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                <node type="IDENTIFIER" loc="41..42" text="d"/>
+                                            <node type="OBJECT_SQL_COLUMN_REF" loc="41..42" text="d">
+                                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                    <node type="IDENTIFIER" loc="41..42" text="d"/>
+                                                </node>
                                             </node>
                                         </node>
                                         <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
@@ -4977,14 +5029,16 @@
                                         </node>
                                     </node>
                                     <node key="SQL_JOIN_ON" type="OBJECT_SQL_NARY_EXPRESSION" loc="31..38" text="foo = d">
-                                        <node key="SQL_EXPRESSION_ARG0" type="OBJECT_SQL_COLUMN_REF" loc="31..34" text="foo">
-                                            <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                <node type="IDENTIFIER" loc="31..34" text="foo"/>
+                                        <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                            <node type="OBJECT_SQL_COLUMN_REF" loc="31..34" text="foo">
+                                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                    <node type="IDENTIFIER" loc="31..34" text="foo"/>
+                                                </node>
                                             </node>
-                                        </node>
-                                        <node key="SQL_EXPRESSION_ARG1" type="OBJECT_SQL_COLUMN_REF" loc="37..38" text="d">
-                                            <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                <node type="IDENTIFIER" loc="37..38" text="d"/>
+                                            <node type="OBJECT_SQL_COLUMN_REF" loc="37..38" text="d">
+                                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                    <node type="IDENTIFIER" loc="37..38" text="d"/>
+                                                </node>
                                             </node>
                                         </node>
                                         <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
@@ -5031,14 +5085,16 @@
                                         </node>
                                     </node>
                                     <node key="SQL_JOIN_ON" type="OBJECT_SQL_NARY_EXPRESSION" loc="32..37" text="c = d">
-                                        <node key="SQL_EXPRESSION_ARG0" type="OBJECT_SQL_COLUMN_REF" loc="32..33" text="c">
-                                            <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                <node type="IDENTIFIER" loc="32..33" text="c"/>
+                                        <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                            <node type="OBJECT_SQL_COLUMN_REF" loc="32..33" text="c">
+                                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                    <node type="IDENTIFIER" loc="32..33" text="c"/>
+                                                </node>
                                             </node>
-                                        </node>
-                                        <node key="SQL_EXPRESSION_ARG1" type="OBJECT_SQL_COLUMN_REF" loc="36..37" text="d">
-                                            <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                <node type="IDENTIFIER" loc="36..37" text="d"/>
+                                            <node type="OBJECT_SQL_COLUMN_REF" loc="36..37" text="d">
+                                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                    <node type="IDENTIFIER" loc="36..37" text="d"/>
+                                                </node>
                                             </node>
                                         </node>
                                         <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
@@ -5085,14 +5141,16 @@
                                         </node>
                                     </node>
                                     <node key="SQL_JOIN_ON" type="OBJECT_SQL_NARY_EXPRESSION" loc="37..42" text="c = d">
-                                        <node key="SQL_EXPRESSION_ARG0" type="OBJECT_SQL_COLUMN_REF" loc="37..38" text="c">
-                                            <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                <node type="IDENTIFIER" loc="37..38" text="c"/>
+                                        <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                            <node type="OBJECT_SQL_COLUMN_REF" loc="37..38" text="c">
+                                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                    <node type="IDENTIFIER" loc="37..38" text="c"/>
+                                                </node>
                                             </node>
-                                        </node>
-                                        <node key="SQL_EXPRESSION_ARG1" type="OBJECT_SQL_COLUMN_REF" loc="41..42" text="d">
-                                            <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                <node type="IDENTIFIER" loc="41..42" text="d"/>
+                                            <node type="OBJECT_SQL_COLUMN_REF" loc="41..42" text="d">
+                                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                    <node type="IDENTIFIER" loc="41..42" text="d"/>
+                                                </node>
                                             </node>
                                         </node>
                                         <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
@@ -5197,12 +5255,14 @@
                             </node>
                         </node>
                         <node key="SQL_SELECT_WHERE" type="OBJECT_SQL_NARY_EXPRESSION" loc="58..66" text="col1 = 5">
-                            <node key="SQL_EXPRESSION_ARG0" type="OBJECT_SQL_COLUMN_REF" loc="58..62" text="col1">
-                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                    <node type="IDENTIFIER" loc="58..62" text="col1"/>
+                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                <node type="OBJECT_SQL_COLUMN_REF" loc="58..62" text="col1">
+                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                        <node type="IDENTIFIER" loc="58..62" text="col1"/>
+                                    </node>
                                 </node>
+                                <node type="LITERAL_INTEGER" loc="65..66" text="5"/>
                             </node>
-                            <node key="SQL_EXPRESSION_ARG1" type="LITERAL_INTEGER" loc="65..66" text="5"/>
                             <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
                         </node>
                     </node>
@@ -5251,12 +5311,14 @@
                             </node>
                         </node>
                         <node key="SQL_SELECT_WHERE" type="OBJECT_SQL_NARY_EXPRESSION" loc="65..73" text="col1 = 5">
-                            <node key="SQL_EXPRESSION_ARG0" type="OBJECT_SQL_COLUMN_REF" loc="65..69" text="col1">
-                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                    <node type="IDENTIFIER" loc="65..69" text="col1"/>
+                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                <node type="OBJECT_SQL_COLUMN_REF" loc="65..69" text="col1">
+                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                        <node type="IDENTIFIER" loc="65..69" text="col1"/>
+                                    </node>
                                 </node>
+                                <node type="LITERAL_INTEGER" loc="72..73" text="5"/>
                             </node>
-                            <node key="SQL_EXPRESSION_ARG1" type="LITERAL_INTEGER" loc="72..73" text="5"/>
                             <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
                         </node>
                     </node>
@@ -5305,12 +5367,14 @@
                             </node>
                         </node>
                         <node key="SQL_SELECT_WHERE" type="OBJECT_SQL_NARY_EXPRESSION" loc="57..65" text="col1 = 5">
-                            <node key="SQL_EXPRESSION_ARG0" type="OBJECT_SQL_COLUMN_REF" loc="57..61" text="col1">
-                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                    <node type="IDENTIFIER" loc="57..61" text="col1"/>
+                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                <node type="OBJECT_SQL_COLUMN_REF" loc="57..61" text="col1">
+                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                        <node type="IDENTIFIER" loc="57..61" text="col1"/>
+                                    </node>
                                 </node>
+                                <node type="LITERAL_INTEGER" loc="64..65" text="5"/>
                             </node>
-                            <node key="SQL_EXPRESSION_ARG1" type="LITERAL_INTEGER" loc="64..65" text="5"/>
                             <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
                         </node>
                     </node>
@@ -5359,12 +5423,14 @@
                             </node>
                         </node>
                         <node key="SQL_SELECT_WHERE" type="OBJECT_SQL_NARY_EXPRESSION" loc="61..69" text="col1 = 5">
-                            <node key="SQL_EXPRESSION_ARG0" type="OBJECT_SQL_COLUMN_REF" loc="61..65" text="col1">
-                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                    <node type="IDENTIFIER" loc="61..65" text="col1"/>
+                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                <node type="OBJECT_SQL_COLUMN_REF" loc="61..65" text="col1">
+                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                        <node type="IDENTIFIER" loc="61..65" text="col1"/>
+                                    </node>
                                 </node>
+                                <node type="LITERAL_INTEGER" loc="68..69" text="5"/>
                             </node>
-                            <node key="SQL_EXPRESSION_ARG1" type="LITERAL_INTEGER" loc="68..69" text="5"/>
                             <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
                         </node>
                     </node>
@@ -5413,12 +5479,14 @@
                             </node>
                         </node>
                         <node key="SQL_SELECT_WHERE" type="OBJECT_SQL_NARY_EXPRESSION" loc="61..69" text="col1 = 5">
-                            <node key="SQL_EXPRESSION_ARG0" type="OBJECT_SQL_COLUMN_REF" loc="61..65" text="col1">
-                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                    <node type="IDENTIFIER" loc="61..65" text="col1"/>
+                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                <node type="OBJECT_SQL_COLUMN_REF" loc="61..65" text="col1">
+                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                        <node type="IDENTIFIER" loc="61..65" text="col1"/>
+                                    </node>
                                 </node>
+                                <node type="LITERAL_INTEGER" loc="68..69" text="5"/>
                             </node>
-                            <node key="SQL_EXPRESSION_ARG1" type="LITERAL_INTEGER" loc="68..69" text="5"/>
                             <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
                         </node>
                     </node>
@@ -5472,12 +5540,14 @@
                             </node>
                         </node>
                         <node key="SQL_SELECT_WHERE" type="OBJECT_SQL_NARY_EXPRESSION" loc="65..73" text="col1 = 5">
-                            <node key="SQL_EXPRESSION_ARG0" type="OBJECT_SQL_COLUMN_REF" loc="65..69" text="col1">
-                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                    <node type="IDENTIFIER" loc="65..69" text="col1"/>
+                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                <node type="OBJECT_SQL_COLUMN_REF" loc="65..69" text="col1">
+                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                        <node type="IDENTIFIER" loc="65..69" text="col1"/>
+                                    </node>
                                 </node>
+                                <node type="LITERAL_INTEGER" loc="72..73" text="5"/>
                             </node>
-                            <node key="SQL_EXPRESSION_ARG1" type="LITERAL_INTEGER" loc="72..73" text="5"/>
                             <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
                         </node>
                     </node>
@@ -5532,12 +5602,14 @@
                             </node>
                         </node>
                         <node key="SQL_SELECT_WHERE" type="OBJECT_SQL_NARY_EXPRESSION" loc="72..80" text="col1 = 5">
-                            <node key="SQL_EXPRESSION_ARG0" type="OBJECT_SQL_COLUMN_REF" loc="72..76" text="col1">
-                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                    <node type="IDENTIFIER" loc="72..76" text="col1"/>
+                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                <node type="OBJECT_SQL_COLUMN_REF" loc="72..76" text="col1">
+                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                        <node type="IDENTIFIER" loc="72..76" text="col1"/>
+                                    </node>
                                 </node>
+                                <node type="LITERAL_INTEGER" loc="79..80" text="5"/>
                             </node>
-                            <node key="SQL_EXPRESSION_ARG1" type="LITERAL_INTEGER" loc="79..80" text="5"/>
                             <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
                         </node>
                     </node>
