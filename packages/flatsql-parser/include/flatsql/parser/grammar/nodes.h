@@ -8,6 +8,7 @@
 #include "flatsql/parser/grammar/location.h"
 #include "flatsql/parser/parser_driver.h"
 #include "flatsql/parser/scanner.h"
+#include "flatsql/proto/proto_generated.h"
 
 namespace flatsql {
 namespace parser {
@@ -133,8 +134,8 @@ inline proto::Node Expr(ParserDriver& driver, proto::Location loc, proto::Node f
 }
 
 /// Add an unary expression
-inline proto::Node Expr(ParserDriver& driver, proto::Location loc, proto::Node func, proto::Node arg) {
-    std::array<proto::Node, 1> args{arg};
+inline proto::Node Expr(ParserDriver& driver, proto::Location loc, proto::Node func, Expression arg) {
+    std::array<Expression, 1> args{std::move(arg)};
     return driver.Add(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
                       {
                           Attr(Key::SQL_EXPRESSION_OPERATOR, func),
@@ -143,10 +144,12 @@ inline proto::Node Expr(ParserDriver& driver, proto::Location loc, proto::Node f
 }
 
 enum PostFixTag { PostFix };
-
 /// Add an unary expression
-inline proto::Node Expr(ParserDriver& driver, proto::Location loc, proto::Node func, proto::Node arg, PostFixTag) {
-    std::array<proto::Node, 1> args{arg};
+inline Expression Expr(ParserDriver& driver, proto::Location loc, proto::Node func, Expression arg, PostFixTag) {
+    std::array<Expression, 1> args{std::move(arg)};
+    if (auto expr = driver.TryMerge(loc, func, args); expr.has_value()) {
+        return std::move(expr.value());
+    }
     return driver.Add(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
                       {
                           Attr(Key::SQL_EXPRESSION_OPERATOR, func),
@@ -156,9 +159,12 @@ inline proto::Node Expr(ParserDriver& driver, proto::Location loc, proto::Node f
 }
 
 /// Add a binary expression
-inline proto::Node Expr(ParserDriver& driver, proto::Location loc, proto::Node func, proto::Node left,
-                        proto::Node right) {
-    std::array<proto::Node, 2> args{left, right};
+inline Expression Expr(ParserDriver& driver, proto::Location loc, proto::Node func, Expression left,
+                        Expression right) {
+    std::array<Expression, 2> args{std::move(left), std::move(right)};
+    if (auto expr = driver.TryMerge(loc, func, args); expr.has_value()) {
+        return std::move(expr.value());
+    }
     return driver.Add(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
                       {
                           Attr(Key::SQL_EXPRESSION_OPERATOR, func),
@@ -167,9 +173,12 @@ inline proto::Node Expr(ParserDriver& driver, proto::Location loc, proto::Node f
 }
 
 /// Add a ternary expression
-inline proto::Node Expr(ParserDriver& driver, proto::Location loc, proto::Node func, proto::Node arg0, proto::Node arg1,
-                        proto::Node arg2) {
-    std::array<proto::Node, 3> args{arg0, arg1, arg2};
+inline Expression Expr(ParserDriver& driver, proto::Location loc, proto::Node func, Expression arg0, Expression arg1,
+                        Expression arg2) {
+    std::array<Expression, 3> args{std::move(arg0), std::move(arg1), std::move(arg2)};
+    if (auto expr = driver.TryMerge(loc, func, args); expr.has_value()) {
+        return std::move(expr.value());
+    }
     return driver.Add(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
                       {
                           Attr(Key::SQL_EXPRESSION_OPERATOR, func),
@@ -177,12 +186,24 @@ inline proto::Node Expr(ParserDriver& driver, proto::Location loc, proto::Node f
                       });
 }
 
+/// Negate an expression
+inline Expression Negate(ParserDriver& driver, proto::Location loc, proto::Location loc_minus, Expression value) {
+    // XXX If node_type == OBJECT_SQL_CONST inspect the attributes and expand the value
+
+    // Otherwise fall back to an unary negation
+    std::array<Expression, 1> args{std::move(value)};
+    return driver.Add(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
+                      {
+                          Attr(Key::SQL_EXPRESSION_OPERATOR, Enum(loc_minus, proto::ExpressionOperator::NEGATE)),
+                          Attr(Key::SQL_EXPRESSION_ARGS, driver.AddArray(loc, args)),
+                      });
+}
 /// Negate a value
 inline proto::Node Negate(ParserDriver& driver, proto::Location loc, proto::Location loc_minus, proto::Node value) {
     // XXX If node_type == OBJECT_SQL_CONST inspect the attributes and expand the value
 
     // Otherwise fall back to an unary negation
-    std::array<proto::Node, 1> args{value};
+    std::array<Expression, 1> args{std::move(value)};
     return driver.Add(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
                       {
                           Attr(Key::SQL_EXPRESSION_OPERATOR, Enum(loc_minus, proto::ExpressionOperator::NEGATE)),

@@ -68,6 +68,45 @@ NodeID ParserDriver::AddNode(proto::Node node) {
     return node_id;
 }
 
+/// Flatten an expression
+std::optional<Expression> ParserDriver::TryMerge(proto::Location loc, proto::Node opNode, nonstd::span<Expression> args) {
+    // Function is not an expression operator?
+    if (opNode.node_type() != proto::NodeType::ENUM_SQL_EXPRESSION_OPERATOR) {
+        return std::nullopt;
+    }
+    // Check if the expression operator can be flattened
+    auto op = static_cast<proto::ExpressionOperator>(opNode.children_begin_or_value());
+    switch (op) {
+        case proto::ExpressionOperator::AND:
+        case proto::ExpressionOperator::OR:
+            break;
+        default:
+            return std::nullopt;
+    }
+    // Create nary expression
+    NAryExpression nary {
+        .location = loc,
+        .op = op,
+        .opNode = opNode,
+        .args = {}
+    };
+    nary.args.reserve(args.size());
+    // Merge any nary expression arguments with the same operation, materialize others
+    for (auto& arg: args) {
+        // Argument is just a node or it's a different operation?
+        if (arg.index() == 0 || std::get<1>(arg).op != op) {
+            nary.args.push_back(std::move(arg));
+        } else {
+            auto& child = std::get<1>(arg);
+            nary.args.reserve(nary.args.size() + child.args.size());
+            for (auto& child_arg: child.args) {
+                nary.args.push_back(std::move(child_arg));
+            }
+        }
+    }
+    return nary;
+}
+
 /// Add an array
 proto::Node ParserDriver::AddArray(proto::Location loc, nonstd::span<proto::Node> values, bool null_if_empty,
                                    bool shrink_location) {
@@ -87,6 +126,30 @@ proto::Node ParserDriver::AddArray(proto::Location loc, nonstd::span<proto::Node
         loc = proto::Location(fstBegin, lstEnd - fstBegin);
     }
     return proto::Node(loc, proto::NodeType::ARRAY, 0, NO_PARENT, begin, n);
+}
+
+/// Add an array
+proto::Node ParserDriver::AddArray(proto::Location loc, nonstd::span<Expression> exprs, bool null_if_empty,
+                                   bool shrink_location) {
+    std::vector<proto::Node> nodes;
+    nodes.reserve(exprs.size());
+    for (auto& expr: exprs) {
+        nodes.push_back(AddExpression(std::move(expr)));
+    }
+    return AddArray(loc, nodes, null_if_empty, shrink_location);
+}
+
+/// Add an expression
+proto::Node ParserDriver::AddExpression(Expression&& expr) {
+    if (expr.index() == 0) {
+        return std::get<0>(std::move(expr));
+    } else {
+        auto& nary = std::get<1>(expr);
+        return Add(nary.location, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION, {
+            Attr(Key::SQL_EXPRESSION_OPERATOR, nary.opNode),
+            Attr(Key::SQL_EXPRESSION_ARGS, AddArray(nary.location, nary.args)),
+        });
+    }
 }
 
 /// Add an object

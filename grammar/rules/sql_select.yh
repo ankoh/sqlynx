@@ -1,3 +1,6 @@
+%type <Expression> sql_a_expr;
+%type <Expression> sql_a_expr_const;
+%type <Expression> sql_b_expr;
 %type <NodeVector> sql_any_name;
 %type <NodeVector> sql_any_operator;
 %type <NodeVector> sql_attrs;
@@ -63,12 +66,9 @@
 %type <bool> sql_opt_varying;
 %type <proto::JoinType> sql_join_outer;
 %type <proto::JoinType> sql_join_type;
-%type <proto::Node> sql_a_expr;
-%type <proto::Node> sql_a_expr_const;
 %type <proto::Node> sql_alias_clause;
 %type <proto::Node> sql_all_op;
 %type <proto::Node> sql_all_or_distinct;
-%type <proto::Node> sql_b_expr;
 %type <proto::Node> sql_bit;
 %type <proto::Node> sql_bit_with_length;
 %type <proto::Node> sql_bit_without_length;

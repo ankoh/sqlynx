@@ -32,9 +32,9 @@ vararg_value:
     vararg                    { $$ = std::move($1); }
   | vararg_array_brackets     { $$ = ctx.Add(@$, std::move($1)); }
   | sql_columnref             { $$ = $1; }
-  | sql_a_expr_const          { $$ = $1; }
-  | '+' sql_a_expr_const %prec UMINUS   { $$ = $2; }
-  | '-' sql_a_expr_const %prec UMINUS   { $$ = Negate(ctx, @$, @1, $2); }
+  | sql_a_expr_const          { $$ = ctx.Add(std::move($1)); }
+  | '+' sql_a_expr_const %prec UMINUS   { $$ = ctx.Add(std::move($2)); }
+  | '-' sql_a_expr_const %prec UMINUS   { $$ = Negate(ctx, @$, @1, ctx.Add(std::move($2))); }
     ;
 
 vararg_array:

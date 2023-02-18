@@ -153,13 +153,13 @@ sql_col_constraint_elem:
   }
   | CHECK_P '(' sql_a_expr ')' sql_opt_no_inherit { $$ = {
         Attr(Key::SQL_COLUMN_CONSTRAINT_TYPE, Enum(@$, proto::ColumnConstraint::CHECK)),
-        Attr(Key::SQL_COLUMN_CONSTRAINT_VALUE, std::move($3)),
+        Attr(Key::SQL_COLUMN_CONSTRAINT_VALUE, ctx.Add(std::move($3))),
         Attr(Key::SQL_COLUMN_CONSTRAINT_NO_INHERIT, std::move($5)),
     };
   }
   | DEFAULT sql_b_expr { $$ = {
         Attr(Key::SQL_COLUMN_CONSTRAINT_TYPE, Enum(@$, proto::ColumnConstraint::DEFAULT)),
-        Attr(Key::SQL_COLUMN_CONSTRAINT_VALUE, std::move($2)),
+        Attr(Key::SQL_COLUMN_CONSTRAINT_VALUE, ctx.Add(std::move($2))),
     };
   }
     ;
@@ -245,7 +245,7 @@ sql_existing_index:
 sql_table_constraint_elem:
     CHECK_P '(' sql_a_expr ')' sql_table_constraint_attr_list { $$ = {
         Attr(Key::SQL_TABLE_CONSTRAINT_TYPE, Enum(@$, proto::TableConstraint::CHECK)),
-        Attr(Key::SQL_TABLE_CONSTRAINT_ARGUMENT, std::move($3)),
+        Attr(Key::SQL_TABLE_CONSTRAINT_ARGUMENT, ctx.Add(std::move($3))),
     }; }
   | UNIQUE sql_existing_index sql_opt_definition sql_table_constraint_attr_list { $$ = {
         Attr(Key::SQL_TABLE_CONSTRAINT_TYPE, Enum(@$, proto::TableConstraint::UNIQUE)),

@@ -4,6 +4,7 @@
 #include <charconv>
 
 #include "flatsql/proto/proto_generated.h"
+#include "nonstd/span.h"
 
 namespace flatsql {
 namespace parser {
