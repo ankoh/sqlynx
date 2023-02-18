@@ -18,6 +18,10 @@ CORES=$(shell grep -c ^processor /proc/cpuinfo 2>/dev/null || sysctl -n hw.ncpu)
 # ---------------------------------------------------------------------------
 # Parser
 
+.PHONY: infra
+infra:
+	./scripts/install_infra_macos.sh
+
 .PHONY: proto
 proto:
 	./scripts/generate_proto.sh
@@ -32,4 +36,6 @@ parser:
 	ln -sf ${PARSER_DEBUG_DIR}/compile_commands.json ${PARSER_SOURCE_DIR}/compile_commands.json
 	cmake --build ${PARSER_DEBUG_DIR}
 
-wasm:
+.PHONY: parser_wasm
+parser_wasm:
+	./scripts/build_parser_wasm.sh Release
