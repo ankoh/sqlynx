@@ -610,18 +610,16 @@ limit
                                                             <node type="IDENTIFIER" loc="39..54" text="l_extendedprice"/>
                                                         </node>
                                                     </node>
-                                                    <node type="OBJECT_SQL_INDIRECTION" loc="57..73" text="(1 - l_discount)">
-                                                        <node key="SQL_INDIRECTION_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="58..72" text="1 - l_discount">
-                                                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                                <node type="LITERAL_INTEGER" loc="58..59" text="1"/>
-                                                                <node type="OBJECT_SQL_COLUMN_REF" loc="62..72" text="l_discount">
-                                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                                        <node type="IDENTIFIER" loc="62..72" text="l_discount"/>
-                                                                    </node>
+                                                    <node type="OBJECT_SQL_NARY_EXPRESSION" loc="58..72" text="1 - l_discount">
+                                                        <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                            <node type="LITERAL_INTEGER" loc="58..59" text="1"/>
+                                                            <node type="OBJECT_SQL_COLUMN_REF" loc="62..72" text="l_discount">
+                                                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                                    <node type="IDENTIFIER" loc="62..72" text="l_discount"/>
                                                                 </node>
                                                             </node>
-                                                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MINUS"/>
                                                         </node>
+                                                        <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MINUS"/>
                                                     </node>
                                                 </node>
                                                 <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MULTIPLY"/>
@@ -1046,18 +1044,16 @@ order by
                                                             <node type="IDENTIFIER" loc="35..50" text="l_extendedprice"/>
                                                         </node>
                                                     </node>
-                                                    <node type="OBJECT_SQL_INDIRECTION" loc="53..69" text="(1 - l_discount)">
-                                                        <node key="SQL_INDIRECTION_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="54..68" text="1 - l_discount">
-                                                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                                <node type="LITERAL_INTEGER" loc="54..55" text="1"/>
-                                                                <node type="OBJECT_SQL_COLUMN_REF" loc="58..68" text="l_discount">
-                                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                                        <node type="IDENTIFIER" loc="58..68" text="l_discount"/>
-                                                                    </node>
+                                                    <node type="OBJECT_SQL_NARY_EXPRESSION" loc="54..68" text="1 - l_discount">
+                                                        <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                            <node type="LITERAL_INTEGER" loc="54..55" text="1"/>
+                                                            <node type="OBJECT_SQL_COLUMN_REF" loc="58..68" text="l_discount">
+                                                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                                    <node type="IDENTIFIER" loc="58..68" text="l_discount"/>
                                                                 </node>
                                                             </node>
-                                                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MINUS"/>
                                                         </node>
+                                                        <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MINUS"/>
                                                     </node>
                                                 </node>
                                                 <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MULTIPLY"/>
@@ -1501,18 +1497,16 @@ order by
                                                             <node type="IDENTIFIER" loc="323..338" text="l_extendedprice"/>
                                                         </node>
                                                     </node>
-                                                    <node type="OBJECT_SQL_INDIRECTION" loc="341..357" text="(1 - l_discount)">
-                                                        <node key="SQL_INDIRECTION_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="342..356" text="1 - l_discount">
-                                                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                                <node type="LITERAL_INTEGER" loc="342..343" text="1"/>
-                                                                <node type="OBJECT_SQL_COLUMN_REF" loc="346..356" text="l_discount">
-                                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                                        <node type="IDENTIFIER" loc="346..356" text="l_discount"/>
-                                                                    </node>
+                                                    <node type="OBJECT_SQL_NARY_EXPRESSION" loc="342..356" text="1 - l_discount">
+                                                        <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                            <node type="LITERAL_INTEGER" loc="342..343" text="1"/>
+                                                            <node type="OBJECT_SQL_COLUMN_REF" loc="346..356" text="l_discount">
+                                                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                                    <node type="IDENTIFIER" loc="346..356" text="l_discount"/>
                                                                 </node>
                                                             </node>
-                                                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MINUS"/>
                                                         </node>
+                                                        <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MINUS"/>
                                                     </node>
                                                 </node>
                                                 <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MULTIPLY"/>
@@ -1598,74 +1592,68 @@ order by
                                                 </node>
                                                 <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
                                             </node>
-                                            <node type="OBJECT_SQL_INDIRECTION" loc="904..1096" text="(\n        ..         )">
-                                                <node key="SQL_INDIRECTION_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="938..1070" text="(n1.n_name.. &apos;FRANCE&apos;)">
-                                                    <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                        <node type="OBJECT_SQL_INDIRECTION" loc="938..986" text="(n1.n_name..&apos;GERMANY&apos;)">
-                                                            <node key="SQL_INDIRECTION_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="939..985" text="n1.n_name .. &apos;GERMANY&apos;">
+                                            <node type="OBJECT_SQL_NARY_EXPRESSION" loc="938..1070" text="(n1.n_name.. &apos;FRANCE&apos;)">
+                                                <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                    <node type="OBJECT_SQL_NARY_EXPRESSION" loc="939..985" text="n1.n_name .. &apos;GERMANY&apos;">
+                                                        <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                            <node type="OBJECT_SQL_NARY_EXPRESSION" loc="939..959" text="n1.n_name ..= &apos;FRANCE&apos;">
                                                                 <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                                    <node type="OBJECT_SQL_NARY_EXPRESSION" loc="939..959" text="n1.n_name ..= &apos;FRANCE&apos;">
-                                                                        <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                                            <node type="OBJECT_SQL_COLUMN_REF" loc="939..948" text="n1.n_name">
-                                                                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                                                    <node type="IDENTIFIER" loc="939..941" text="n1"/>
-                                                                                    <node type="IDENTIFIER" loc="942..948" text="n_name"/>
-                                                                                </node>
-                                                                            </node>
-                                                                            <node type="LITERAL_STRING" loc="951..959" text="&apos;FRANCE&apos;"/>
+                                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="939..948" text="n1.n_name">
+                                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                                            <node type="IDENTIFIER" loc="939..941" text="n1"/>
+                                                                            <node type="IDENTIFIER" loc="942..948" text="n_name"/>
                                                                         </node>
-                                                                        <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
                                                                     </node>
-                                                                    <node type="OBJECT_SQL_NARY_EXPRESSION" loc="964..985" text="n2.n_name .. &apos;GERMANY&apos;">
-                                                                        <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                                            <node type="OBJECT_SQL_COLUMN_REF" loc="964..973" text="n2.n_name">
-                                                                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                                                    <node type="IDENTIFIER" loc="964..966" text="n2"/>
-                                                                                    <node type="IDENTIFIER" loc="967..973" text="n_name"/>
-                                                                                </node>
-                                                                            </node>
-                                                                            <node type="LITERAL_STRING" loc="976..985" text="&apos;GERMANY&apos;"/>
-                                                                        </node>
-                                                                        <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
-                                                                    </node>
+                                                                    <node type="LITERAL_STRING" loc="951..959" text="&apos;FRANCE&apos;"/>
                                                                 </node>
-                                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="AND"/>
+                                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
+                                                            </node>
+                                                            <node type="OBJECT_SQL_NARY_EXPRESSION" loc="964..985" text="n2.n_name .. &apos;GERMANY&apos;">
+                                                                <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="964..973" text="n2.n_name">
+                                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                                            <node type="IDENTIFIER" loc="964..966" text="n2"/>
+                                                                            <node type="IDENTIFIER" loc="967..973" text="n_name"/>
+                                                                        </node>
+                                                                    </node>
+                                                                    <node type="LITERAL_STRING" loc="976..985" text="&apos;GERMANY&apos;"/>
+                                                                </node>
+                                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
                                                             </node>
                                                         </node>
-                                                        <node type="OBJECT_SQL_INDIRECTION" loc="1022..1070" text="(n1.n_name.. &apos;FRANCE&apos;)">
-                                                            <node key="SQL_INDIRECTION_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="1023..1069" text="n1.n_name ..= &apos;FRANCE&apos;">
-                                                                <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                                    <node type="OBJECT_SQL_NARY_EXPRESSION" loc="1023..1044" text="n1.n_name .. &apos;GERMANY&apos;">
-                                                                        <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                                            <node type="OBJECT_SQL_COLUMN_REF" loc="1023..1032" text="n1.n_name">
-                                                                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                                                    <node type="IDENTIFIER" loc="1023..1025" text="n1"/>
-                                                                                    <node type="IDENTIFIER" loc="1026..1032" text="n_name"/>
-                                                                                </node>
-                                                                            </node>
-                                                                            <node type="LITERAL_STRING" loc="1035..1044" text="&apos;GERMANY&apos;"/>
-                                                                        </node>
-                                                                        <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
-                                                                    </node>
-                                                                    <node type="OBJECT_SQL_NARY_EXPRESSION" loc="1049..1069" text="n2.n_name ..= &apos;FRANCE&apos;">
-                                                                        <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                                            <node type="OBJECT_SQL_COLUMN_REF" loc="1049..1058" text="n2.n_name">
-                                                                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                                                    <node type="IDENTIFIER" loc="1049..1051" text="n2"/>
-                                                                                    <node type="IDENTIFIER" loc="1052..1058" text="n_name"/>
-                                                                                </node>
-                                                                            </node>
-                                                                            <node type="LITERAL_STRING" loc="1061..1069" text="&apos;FRANCE&apos;"/>
-                                                                        </node>
-                                                                        <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
-                                                                    </node>
-                                                                </node>
-                                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="AND"/>
-                                                            </node>
-                                                        </node>
+                                                        <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="AND"/>
                                                     </node>
-                                                    <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="OR"/>
+                                                    <node type="OBJECT_SQL_NARY_EXPRESSION" loc="1023..1069" text="n1.n_name ..= &apos;FRANCE&apos;">
+                                                        <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                            <node type="OBJECT_SQL_NARY_EXPRESSION" loc="1023..1044" text="n1.n_name .. &apos;GERMANY&apos;">
+                                                                <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="1023..1032" text="n1.n_name">
+                                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                                            <node type="IDENTIFIER" loc="1023..1025" text="n1"/>
+                                                                            <node type="IDENTIFIER" loc="1026..1032" text="n_name"/>
+                                                                        </node>
+                                                                    </node>
+                                                                    <node type="LITERAL_STRING" loc="1035..1044" text="&apos;GERMANY&apos;"/>
+                                                                </node>
+                                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
+                                                            </node>
+                                                            <node type="OBJECT_SQL_NARY_EXPRESSION" loc="1049..1069" text="n2.n_name ..= &apos;FRANCE&apos;">
+                                                                <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="1049..1058" text="n2.n_name">
+                                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                                            <node type="IDENTIFIER" loc="1049..1051" text="n2"/>
+                                                                            <node type="IDENTIFIER" loc="1052..1058" text="n_name"/>
+                                                                        </node>
+                                                                    </node>
+                                                                    <node type="LITERAL_STRING" loc="1061..1069" text="&apos;FRANCE&apos;"/>
+                                                                </node>
+                                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
+                                                            </node>
+                                                        </node>
+                                                        <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="AND"/>
+                                                    </node>
                                                 </node>
+                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="OR"/>
                                             </node>
                                             <node type="OBJECT_SQL_NARY_EXPRESSION" loc="1125..1183" text="l_shipdate..996-12-31&apos;">
                                                 <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
@@ -1944,18 +1932,16 @@ order by
                                                             <node type="IDENTIFIER" loc="282..297" text="l_extendedprice"/>
                                                         </node>
                                                     </node>
-                                                    <node type="OBJECT_SQL_INDIRECTION" loc="300..316" text="(1 - l_discount)">
-                                                        <node key="SQL_INDIRECTION_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="301..315" text="1 - l_discount">
-                                                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                                <node type="LITERAL_INTEGER" loc="301..302" text="1"/>
-                                                                <node type="OBJECT_SQL_COLUMN_REF" loc="305..315" text="l_discount">
-                                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                                        <node type="IDENTIFIER" loc="305..315" text="l_discount"/>
-                                                                    </node>
+                                                    <node type="OBJECT_SQL_NARY_EXPRESSION" loc="301..315" text="1 - l_discount">
+                                                        <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                            <node type="LITERAL_INTEGER" loc="301..302" text="1"/>
+                                                            <node type="OBJECT_SQL_COLUMN_REF" loc="305..315" text="l_discount">
+                                                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                                    <node type="IDENTIFIER" loc="305..315" text="l_discount"/>
                                                                 </node>
                                                             </node>
-                                                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MINUS"/>
                                                         </node>
+                                                        <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MINUS"/>
                                                     </node>
                                                 </node>
                                                 <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MULTIPLY"/>
@@ -2362,18 +2348,16 @@ order by
                                                                     <node type="IDENTIFIER" loc="243..258" text="l_extendedprice"/>
                                                                 </node>
                                                             </node>
-                                                            <node type="OBJECT_SQL_INDIRECTION" loc="261..277" text="(1 - l_discount)">
-                                                                <node key="SQL_INDIRECTION_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="262..276" text="1 - l_discount">
-                                                                    <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                                        <node type="LITERAL_INTEGER" loc="262..263" text="1"/>
-                                                                        <node type="OBJECT_SQL_COLUMN_REF" loc="266..276" text="l_discount">
-                                                                            <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                                                <node type="IDENTIFIER" loc="266..276" text="l_discount"/>
-                                                                            </node>
+                                                            <node type="OBJECT_SQL_NARY_EXPRESSION" loc="262..276" text="1 - l_discount">
+                                                                <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                                    <node type="LITERAL_INTEGER" loc="262..263" text="1"/>
+                                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="266..276" text="l_discount">
+                                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                                            <node type="IDENTIFIER" loc="266..276" text="l_discount"/>
                                                                         </node>
                                                                     </node>
-                                                                    <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MINUS"/>
                                                                 </node>
+                                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MINUS"/>
                                                             </node>
                                                         </node>
                                                         <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MULTIPLY"/>
@@ -2770,18 +2754,16 @@ limit
                                                             <node type="IDENTIFIER" loc="54..69" text="l_extendedprice"/>
                                                         </node>
                                                     </node>
-                                                    <node type="OBJECT_SQL_INDIRECTION" loc="72..88" text="(1 - l_discount)">
-                                                        <node key="SQL_INDIRECTION_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="73..87" text="1 - l_discount">
-                                                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                                <node type="LITERAL_INTEGER" loc="73..74" text="1"/>
-                                                                <node type="OBJECT_SQL_COLUMN_REF" loc="77..87" text="l_discount">
-                                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                                        <node type="IDENTIFIER" loc="77..87" text="l_discount"/>
-                                                                    </node>
+                                                    <node type="OBJECT_SQL_NARY_EXPRESSION" loc="73..87" text="1 - l_discount">
+                                                        <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                            <node type="LITERAL_INTEGER" loc="73..74" text="1"/>
+                                                            <node type="OBJECT_SQL_COLUMN_REF" loc="77..87" text="l_discount">
+                                                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                                    <node type="IDENTIFIER" loc="77..87" text="l_discount"/>
                                                                 </node>
                                                             </node>
-                                                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MINUS"/>
                                                         </node>
+                                                        <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MINUS"/>
                                                     </node>
                                                 </node>
                                                 <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MULTIPLY"/>
@@ -3811,18 +3793,16 @@ where
                                                                                         <node type="IDENTIFIER" loc="104..119" text="l_extendedprice"/>
                                                                                     </node>
                                                                                 </node>
-                                                                                <node type="OBJECT_SQL_INDIRECTION" loc="122..138" text="(1 - l_discount)">
-                                                                                    <node key="SQL_INDIRECTION_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="123..137" text="1 - l_discount">
-                                                                                        <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                                                            <node type="LITERAL_INTEGER" loc="123..124" text="1"/>
-                                                                                            <node type="OBJECT_SQL_COLUMN_REF" loc="127..137" text="l_discount">
-                                                                                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                                                                    <node type="IDENTIFIER" loc="127..137" text="l_discount"/>
-                                                                                                </node>
+                                                                                <node type="OBJECT_SQL_NARY_EXPRESSION" loc="123..137" text="1 - l_discount">
+                                                                                    <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                                                        <node type="LITERAL_INTEGER" loc="123..124" text="1"/>
+                                                                                        <node type="OBJECT_SQL_COLUMN_REF" loc="127..137" text="l_discount">
+                                                                                            <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                                                                <node type="IDENTIFIER" loc="127..137" text="l_discount"/>
                                                                                             </node>
                                                                                         </node>
-                                                                                        <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MINUS"/>
                                                                                     </node>
+                                                                                    <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MINUS"/>
                                                                                 </node>
                                                                             </node>
                                                                             <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MULTIPLY"/>
@@ -3859,18 +3839,16 @@ where
                                                                     <node type="IDENTIFIER" loc="181..196" text="l_extendedprice"/>
                                                                 </node>
                                                             </node>
-                                                            <node type="OBJECT_SQL_INDIRECTION" loc="199..215" text="(1 - l_discount)">
-                                                                <node key="SQL_INDIRECTION_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="200..214" text="1 - l_discount">
-                                                                    <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                                        <node type="LITERAL_INTEGER" loc="200..201" text="1"/>
-                                                                        <node type="OBJECT_SQL_COLUMN_REF" loc="204..214" text="l_discount">
-                                                                            <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                                                <node type="IDENTIFIER" loc="204..214" text="l_discount"/>
-                                                                            </node>
+                                                            <node type="OBJECT_SQL_NARY_EXPRESSION" loc="200..214" text="1 - l_discount">
+                                                                <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                                    <node type="LITERAL_INTEGER" loc="200..201" text="1"/>
+                                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="204..214" text="l_discount">
+                                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                                            <node type="IDENTIFIER" loc="204..214" text="l_discount"/>
                                                                         </node>
                                                                     </node>
-                                                                    <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MINUS"/>
                                                                 </node>
+                                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MINUS"/>
                                                             </node>
                                                         </node>
                                                         <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MULTIPLY"/>
@@ -4150,18 +4128,16 @@ order by
                                                                         <node type="IDENTIFIER" loc="60..75" text="l_extendedprice"/>
                                                                     </node>
                                                                 </node>
-                                                                <node type="OBJECT_SQL_INDIRECTION" loc="78..94" text="(1 - l_discount)">
-                                                                    <node key="SQL_INDIRECTION_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="79..93" text="1 - l_discount">
-                                                                        <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                                            <node type="LITERAL_INTEGER" loc="79..80" text="1"/>
-                                                                            <node type="OBJECT_SQL_COLUMN_REF" loc="83..93" text="l_discount">
-                                                                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                                                    <node type="IDENTIFIER" loc="83..93" text="l_discount"/>
-                                                                                </node>
+                                                                <node type="OBJECT_SQL_NARY_EXPRESSION" loc="79..93" text="1 - l_discount">
+                                                                    <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                                        <node type="LITERAL_INTEGER" loc="79..80" text="1"/>
+                                                                        <node type="OBJECT_SQL_COLUMN_REF" loc="83..93" text="l_discount">
+                                                                            <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                                                <node type="IDENTIFIER" loc="83..93" text="l_discount"/>
                                                                             </node>
                                                                         </node>
-                                                                        <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MINUS"/>
                                                                     </node>
+                                                                    <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MINUS"/>
                                                                 </node>
                                                             </node>
                                                             <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MULTIPLY"/>
@@ -5087,18 +5063,16 @@ where
                                                             <node type="IDENTIFIER" loc="19..34" text="l_extendedprice"/>
                                                         </node>
                                                     </node>
-                                                    <node type="OBJECT_SQL_INDIRECTION" loc="36..52" text="(1 - l_discount)">
-                                                        <node key="SQL_INDIRECTION_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="37..51" text="1 - l_discount">
-                                                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                                <node type="LITERAL_INTEGER" loc="37..38" text="1"/>
-                                                                <node type="OBJECT_SQL_COLUMN_REF" loc="41..51" text="l_discount">
-                                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                                        <node type="IDENTIFIER" loc="41..51" text="l_discount"/>
-                                                                    </node>
+                                                    <node type="OBJECT_SQL_NARY_EXPRESSION" loc="37..51" text="1 - l_discount">
+                                                        <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                            <node type="LITERAL_INTEGER" loc="37..38" text="1"/>
+                                                            <node type="OBJECT_SQL_COLUMN_REF" loc="41..51" text="l_discount">
+                                                                <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                                    <node type="IDENTIFIER" loc="41..51" text="l_discount"/>
                                                                 </node>
                                                             </node>
-                                                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MINUS"/>
                                                         </node>
+                                                        <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MINUS"/>
                                                     </node>
                                                 </node>
                                                 <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MULTIPLY"/>
@@ -5111,347 +5085,341 @@ where
                         </node>
                         <node key="SQL_SELECT_WHERE" type="OBJECT_SQL_NARY_EXPRESSION" loc="115..1310" text="(\n        ..\n        )">
                             <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                <node type="OBJECT_SQL_INDIRECTION" loc="115..497" text="(\n        ..\n        )">
-                                    <node key="SQL_INDIRECTION_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="133..487" text="p_partkey ..IN PERSON&apos;">
-                                        <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                            <node type="OBJECT_SQL_NARY_EXPRESSION" loc="133..154" text="p_partkey .. l_partkey">
-                                                <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="133..142" text="p_partkey">
-                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                            <node type="IDENTIFIER" loc="133..142" text="p_partkey"/>
-                                                        </node>
-                                                    </node>
-                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="145..154" text="l_partkey">
-                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                            <node type="IDENTIFIER" loc="145..154" text="l_partkey"/>
-                                                        </node>
+                                <node type="OBJECT_SQL_NARY_EXPRESSION" loc="133..487" text="p_partkey ..IN PERSON&apos;">
+                                    <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                        <node type="OBJECT_SQL_NARY_EXPRESSION" loc="133..154" text="p_partkey .. l_partkey">
+                                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                <node type="OBJECT_SQL_COLUMN_REF" loc="133..142" text="p_partkey">
+                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                        <node type="IDENTIFIER" loc="133..142" text="p_partkey"/>
                                                     </node>
                                                 </node>
-                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
-                                            </node>
-                                            <node type="OBJECT_SQL_NARY_EXPRESSION" loc="175..195" text="p_brand = ..&apos;Brand#12&apos;">
-                                                <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="175..182" text="p_brand">
-                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                            <node type="IDENTIFIER" loc="175..182" text="p_brand"/>
-                                                        </node>
-                                                    </node>
-                                                    <node type="LITERAL_STRING" loc="185..195" text="&apos;Brand#12&apos;"/>
-                                                </node>
-                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
-                                            </node>
-                                            <node type="OBJECT_SQL_NARY_EXPRESSION" loc="216..273" text="p_containe.. &apos;SM PKG&apos;)">
-                                                <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="216..227" text="p_container">
-                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                            <node type="IDENTIFIER" loc="216..227" text="p_container"/>
-                                                        </node>
-                                                    </node>
-                                                    <node type="ARRAY">
-                                                        <node type="LITERAL_STRING" loc="232..241" text="&apos;SM CASE&apos;"/>
-                                                        <node type="LITERAL_STRING" loc="243..251" text="&apos;SM BOX&apos;"/>
-                                                        <node type="LITERAL_STRING" loc="253..262" text="&apos;SM PACK&apos;"/>
-                                                        <node type="LITERAL_STRING" loc="264..272" text="&apos;SM PKG&apos;"/>
+                                                <node type="OBJECT_SQL_COLUMN_REF" loc="145..154" text="l_partkey">
+                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                        <node type="IDENTIFIER" loc="145..154" text="l_partkey"/>
                                                     </node>
                                                 </node>
-                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="IN"/>
                                             </node>
-                                            <node type="OBJECT_SQL_NARY_EXPRESSION" loc="294..309" text="l_quantity &gt;= 1">
-                                                <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="294..304" text="l_quantity">
-                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                            <node type="IDENTIFIER" loc="294..304" text="l_quantity"/>
-                                                        </node>
-                                                    </node>
-                                                    <node type="LITERAL_INTEGER" loc="308..309" text="1"/>
-                                                </node>
-                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="GREATER_EQUAL"/>
-                                            </node>
-                                            <node type="OBJECT_SQL_NARY_EXPRESSION" loc="314..334" text="l_quantity.. &lt;= 1 + 10">
-                                                <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="314..324" text="l_quantity">
-                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                            <node type="IDENTIFIER" loc="314..324" text="l_quantity"/>
-                                                        </node>
-                                                    </node>
-                                                    <node type="OBJECT_SQL_NARY_EXPRESSION" loc="328..334" text="1 + 10">
-                                                        <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                            <node type="LITERAL_INTEGER" loc="328..329" text="1"/>
-                                                            <node type="LITERAL_INTEGER" loc="332..334" text="10"/>
-                                                        </node>
-                                                        <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="PLUS"/>
-                                                    </node>
-                                                </node>
-                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="LESS_EQUAL"/>
-                                            </node>
-                                            <node type="OBJECT_SQL_NARY_EXPRESSION" loc="355..377" text="p_size bet..en 1 and 5">
-                                                <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="355..361" text="p_size">
-                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                            <node type="IDENTIFIER" loc="355..361" text="p_size"/>
-                                                        </node>
-                                                    </node>
-                                                    <node type="LITERAL_INTEGER" loc="370..371" text="1"/>
-                                                    <node type="LITERAL_INTEGER" loc="376..377" text="5"/>
-                                                </node>
-                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="BETWEEN_SYMMETRIC"/>
-                                            </node>
-                                            <node type="OBJECT_SQL_NARY_EXPRESSION" loc="398..430" text="l_shipmode..&apos;AIR REG&apos;)">
-                                                <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="398..408" text="l_shipmode">
-                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                            <node type="IDENTIFIER" loc="398..408" text="l_shipmode"/>
-                                                        </node>
-                                                    </node>
-                                                    <node type="ARRAY">
-                                                        <node type="LITERAL_STRING" loc="413..418" text="&apos;AIR&apos;"/>
-                                                        <node type="LITERAL_STRING" loc="420..429" text="&apos;AIR REG&apos;"/>
-                                                    </node>
-                                                </node>
-                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="IN"/>
-                                            </node>
-                                            <node type="OBJECT_SQL_NARY_EXPRESSION" loc="451..487" text="l_shipinst..IN PERSON&apos;">
-                                                <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="451..465" text="l_shipinstruct">
-                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                            <node type="IDENTIFIER" loc="451..465" text="l_shipinstruct"/>
-                                                        </node>
-                                                    </node>
-                                                    <node type="LITERAL_STRING" loc="468..487" text="&apos;DELIVER IN PERSON&apos;"/>
-                                                </node>
-                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
-                                            </node>
+                                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
                                         </node>
-                                        <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="AND"/>
+                                        <node type="OBJECT_SQL_NARY_EXPRESSION" loc="175..195" text="p_brand = ..&apos;Brand#12&apos;">
+                                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                <node type="OBJECT_SQL_COLUMN_REF" loc="175..182" text="p_brand">
+                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                        <node type="IDENTIFIER" loc="175..182" text="p_brand"/>
+                                                    </node>
+                                                </node>
+                                                <node type="LITERAL_STRING" loc="185..195" text="&apos;Brand#12&apos;"/>
+                                            </node>
+                                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
+                                        </node>
+                                        <node type="OBJECT_SQL_NARY_EXPRESSION" loc="216..273" text="p_containe.. &apos;SM PKG&apos;)">
+                                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                <node type="OBJECT_SQL_COLUMN_REF" loc="216..227" text="p_container">
+                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                        <node type="IDENTIFIER" loc="216..227" text="p_container"/>
+                                                    </node>
+                                                </node>
+                                                <node type="ARRAY">
+                                                    <node type="LITERAL_STRING" loc="232..241" text="&apos;SM CASE&apos;"/>
+                                                    <node type="LITERAL_STRING" loc="243..251" text="&apos;SM BOX&apos;"/>
+                                                    <node type="LITERAL_STRING" loc="253..262" text="&apos;SM PACK&apos;"/>
+                                                    <node type="LITERAL_STRING" loc="264..272" text="&apos;SM PKG&apos;"/>
+                                                </node>
+                                            </node>
+                                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="IN"/>
+                                        </node>
+                                        <node type="OBJECT_SQL_NARY_EXPRESSION" loc="294..309" text="l_quantity &gt;= 1">
+                                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                <node type="OBJECT_SQL_COLUMN_REF" loc="294..304" text="l_quantity">
+                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                        <node type="IDENTIFIER" loc="294..304" text="l_quantity"/>
+                                                    </node>
+                                                </node>
+                                                <node type="LITERAL_INTEGER" loc="308..309" text="1"/>
+                                            </node>
+                                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="GREATER_EQUAL"/>
+                                        </node>
+                                        <node type="OBJECT_SQL_NARY_EXPRESSION" loc="314..334" text="l_quantity.. &lt;= 1 + 10">
+                                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                <node type="OBJECT_SQL_COLUMN_REF" loc="314..324" text="l_quantity">
+                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                        <node type="IDENTIFIER" loc="314..324" text="l_quantity"/>
+                                                    </node>
+                                                </node>
+                                                <node type="OBJECT_SQL_NARY_EXPRESSION" loc="328..334" text="1 + 10">
+                                                    <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                        <node type="LITERAL_INTEGER" loc="328..329" text="1"/>
+                                                        <node type="LITERAL_INTEGER" loc="332..334" text="10"/>
+                                                    </node>
+                                                    <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="PLUS"/>
+                                                </node>
+                                            </node>
+                                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="LESS_EQUAL"/>
+                                        </node>
+                                        <node type="OBJECT_SQL_NARY_EXPRESSION" loc="355..377" text="p_size bet..en 1 and 5">
+                                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                <node type="OBJECT_SQL_COLUMN_REF" loc="355..361" text="p_size">
+                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                        <node type="IDENTIFIER" loc="355..361" text="p_size"/>
+                                                    </node>
+                                                </node>
+                                                <node type="LITERAL_INTEGER" loc="370..371" text="1"/>
+                                                <node type="LITERAL_INTEGER" loc="376..377" text="5"/>
+                                            </node>
+                                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="BETWEEN_SYMMETRIC"/>
+                                        </node>
+                                        <node type="OBJECT_SQL_NARY_EXPRESSION" loc="398..430" text="l_shipmode..&apos;AIR REG&apos;)">
+                                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                <node type="OBJECT_SQL_COLUMN_REF" loc="398..408" text="l_shipmode">
+                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                        <node type="IDENTIFIER" loc="398..408" text="l_shipmode"/>
+                                                    </node>
+                                                </node>
+                                                <node type="ARRAY">
+                                                    <node type="LITERAL_STRING" loc="413..418" text="&apos;AIR&apos;"/>
+                                                    <node type="LITERAL_STRING" loc="420..429" text="&apos;AIR REG&apos;"/>
+                                                </node>
+                                            </node>
+                                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="IN"/>
+                                        </node>
+                                        <node type="OBJECT_SQL_NARY_EXPRESSION" loc="451..487" text="l_shipinst..IN PERSON&apos;">
+                                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                <node type="OBJECT_SQL_COLUMN_REF" loc="451..465" text="l_shipinstruct">
+                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                        <node type="IDENTIFIER" loc="451..465" text="l_shipinstruct"/>
+                                                    </node>
+                                                </node>
+                                                <node type="LITERAL_STRING" loc="468..487" text="&apos;DELIVER IN PERSON&apos;"/>
+                                            </node>
+                                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
+                                        </node>
                                     </node>
+                                    <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="AND"/>
                                 </node>
-                                <node type="OBJECT_SQL_INDIRECTION" loc="517..905" text="(\n        ..\n        )">
-                                    <node key="SQL_INDIRECTION_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="535..895" text="p_partkey ..IN PERSON&apos;">
-                                        <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                            <node type="OBJECT_SQL_NARY_EXPRESSION" loc="535..556" text="p_partkey .. l_partkey">
-                                                <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="535..544" text="p_partkey">
-                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                            <node type="IDENTIFIER" loc="535..544" text="p_partkey"/>
-                                                        </node>
-                                                    </node>
-                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="547..556" text="l_partkey">
-                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                            <node type="IDENTIFIER" loc="547..556" text="l_partkey"/>
-                                                        </node>
+                                <node type="OBJECT_SQL_NARY_EXPRESSION" loc="535..895" text="p_partkey ..IN PERSON&apos;">
+                                    <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                        <node type="OBJECT_SQL_NARY_EXPRESSION" loc="535..556" text="p_partkey .. l_partkey">
+                                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                <node type="OBJECT_SQL_COLUMN_REF" loc="535..544" text="p_partkey">
+                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                        <node type="IDENTIFIER" loc="535..544" text="p_partkey"/>
                                                     </node>
                                                 </node>
-                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
-                                            </node>
-                                            <node type="OBJECT_SQL_NARY_EXPRESSION" loc="577..597" text="p_brand = ..&apos;Brand#23&apos;">
-                                                <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="577..584" text="p_brand">
-                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                            <node type="IDENTIFIER" loc="577..584" text="p_brand"/>
-                                                        </node>
-                                                    </node>
-                                                    <node type="LITERAL_STRING" loc="587..597" text="&apos;Brand#23&apos;"/>
-                                                </node>
-                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
-                                            </node>
-                                            <node type="OBJECT_SQL_NARY_EXPRESSION" loc="618..678" text="p_containe..MED PACK&apos;)">
-                                                <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="618..629" text="p_container">
-                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                            <node type="IDENTIFIER" loc="618..629" text="p_container"/>
-                                                        </node>
-                                                    </node>
-                                                    <node type="ARRAY">
-                                                        <node type="LITERAL_STRING" loc="634..643" text="&apos;MED BAG&apos;"/>
-                                                        <node type="LITERAL_STRING" loc="645..654" text="&apos;MED BOX&apos;"/>
-                                                        <node type="LITERAL_STRING" loc="656..665" text="&apos;MED PKG&apos;"/>
-                                                        <node type="LITERAL_STRING" loc="667..677" text="&apos;MED PACK&apos;"/>
+                                                <node type="OBJECT_SQL_COLUMN_REF" loc="547..556" text="l_partkey">
+                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                        <node type="IDENTIFIER" loc="547..556" text="l_partkey"/>
                                                     </node>
                                                 </node>
-                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="IN"/>
                                             </node>
-                                            <node type="OBJECT_SQL_NARY_EXPRESSION" loc="699..715" text="l_quantity &gt;= 10">
-                                                <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="699..709" text="l_quantity">
-                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                            <node type="IDENTIFIER" loc="699..709" text="l_quantity"/>
-                                                        </node>
-                                                    </node>
-                                                    <node type="LITERAL_INTEGER" loc="713..715" text="10"/>
-                                                </node>
-                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="GREATER_EQUAL"/>
-                                            </node>
-                                            <node type="OBJECT_SQL_NARY_EXPRESSION" loc="720..741" text="l_quantity..&lt;= 10 + 10">
-                                                <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="720..730" text="l_quantity">
-                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                            <node type="IDENTIFIER" loc="720..730" text="l_quantity"/>
-                                                        </node>
-                                                    </node>
-                                                    <node type="OBJECT_SQL_NARY_EXPRESSION" loc="734..741" text="10 + 10">
-                                                        <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                            <node type="LITERAL_INTEGER" loc="734..736" text="10"/>
-                                                            <node type="LITERAL_INTEGER" loc="739..741" text="10"/>
-                                                        </node>
-                                                        <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="PLUS"/>
-                                                    </node>
-                                                </node>
-                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="LESS_EQUAL"/>
-                                            </node>
-                                            <node type="OBJECT_SQL_NARY_EXPRESSION" loc="762..785" text="p_size bet..n 1 and 10">
-                                                <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="762..768" text="p_size">
-                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                            <node type="IDENTIFIER" loc="762..768" text="p_size"/>
-                                                        </node>
-                                                    </node>
-                                                    <node type="LITERAL_INTEGER" loc="777..778" text="1"/>
-                                                    <node type="LITERAL_INTEGER" loc="783..785" text="10"/>
-                                                </node>
-                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="BETWEEN_SYMMETRIC"/>
-                                            </node>
-                                            <node type="OBJECT_SQL_NARY_EXPRESSION" loc="806..838" text="l_shipmode..&apos;AIR REG&apos;)">
-                                                <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="806..816" text="l_shipmode">
-                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                            <node type="IDENTIFIER" loc="806..816" text="l_shipmode"/>
-                                                        </node>
-                                                    </node>
-                                                    <node type="ARRAY">
-                                                        <node type="LITERAL_STRING" loc="821..826" text="&apos;AIR&apos;"/>
-                                                        <node type="LITERAL_STRING" loc="828..837" text="&apos;AIR REG&apos;"/>
-                                                    </node>
-                                                </node>
-                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="IN"/>
-                                            </node>
-                                            <node type="OBJECT_SQL_NARY_EXPRESSION" loc="859..895" text="l_shipinst..IN PERSON&apos;">
-                                                <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="859..873" text="l_shipinstruct">
-                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                            <node type="IDENTIFIER" loc="859..873" text="l_shipinstruct"/>
-                                                        </node>
-                                                    </node>
-                                                    <node type="LITERAL_STRING" loc="876..895" text="&apos;DELIVER IN PERSON&apos;"/>
-                                                </node>
-                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
-                                            </node>
+                                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
                                         </node>
-                                        <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="AND"/>
+                                        <node type="OBJECT_SQL_NARY_EXPRESSION" loc="577..597" text="p_brand = ..&apos;Brand#23&apos;">
+                                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                <node type="OBJECT_SQL_COLUMN_REF" loc="577..584" text="p_brand">
+                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                        <node type="IDENTIFIER" loc="577..584" text="p_brand"/>
+                                                    </node>
+                                                </node>
+                                                <node type="LITERAL_STRING" loc="587..597" text="&apos;Brand#23&apos;"/>
+                                            </node>
+                                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
+                                        </node>
+                                        <node type="OBJECT_SQL_NARY_EXPRESSION" loc="618..678" text="p_containe..MED PACK&apos;)">
+                                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                <node type="OBJECT_SQL_COLUMN_REF" loc="618..629" text="p_container">
+                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                        <node type="IDENTIFIER" loc="618..629" text="p_container"/>
+                                                    </node>
+                                                </node>
+                                                <node type="ARRAY">
+                                                    <node type="LITERAL_STRING" loc="634..643" text="&apos;MED BAG&apos;"/>
+                                                    <node type="LITERAL_STRING" loc="645..654" text="&apos;MED BOX&apos;"/>
+                                                    <node type="LITERAL_STRING" loc="656..665" text="&apos;MED PKG&apos;"/>
+                                                    <node type="LITERAL_STRING" loc="667..677" text="&apos;MED PACK&apos;"/>
+                                                </node>
+                                            </node>
+                                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="IN"/>
+                                        </node>
+                                        <node type="OBJECT_SQL_NARY_EXPRESSION" loc="699..715" text="l_quantity &gt;= 10">
+                                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                <node type="OBJECT_SQL_COLUMN_REF" loc="699..709" text="l_quantity">
+                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                        <node type="IDENTIFIER" loc="699..709" text="l_quantity"/>
+                                                    </node>
+                                                </node>
+                                                <node type="LITERAL_INTEGER" loc="713..715" text="10"/>
+                                            </node>
+                                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="GREATER_EQUAL"/>
+                                        </node>
+                                        <node type="OBJECT_SQL_NARY_EXPRESSION" loc="720..741" text="l_quantity..&lt;= 10 + 10">
+                                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                <node type="OBJECT_SQL_COLUMN_REF" loc="720..730" text="l_quantity">
+                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                        <node type="IDENTIFIER" loc="720..730" text="l_quantity"/>
+                                                    </node>
+                                                </node>
+                                                <node type="OBJECT_SQL_NARY_EXPRESSION" loc="734..741" text="10 + 10">
+                                                    <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                        <node type="LITERAL_INTEGER" loc="734..736" text="10"/>
+                                                        <node type="LITERAL_INTEGER" loc="739..741" text="10"/>
+                                                    </node>
+                                                    <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="PLUS"/>
+                                                </node>
+                                            </node>
+                                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="LESS_EQUAL"/>
+                                        </node>
+                                        <node type="OBJECT_SQL_NARY_EXPRESSION" loc="762..785" text="p_size bet..n 1 and 10">
+                                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                <node type="OBJECT_SQL_COLUMN_REF" loc="762..768" text="p_size">
+                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                        <node type="IDENTIFIER" loc="762..768" text="p_size"/>
+                                                    </node>
+                                                </node>
+                                                <node type="LITERAL_INTEGER" loc="777..778" text="1"/>
+                                                <node type="LITERAL_INTEGER" loc="783..785" text="10"/>
+                                            </node>
+                                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="BETWEEN_SYMMETRIC"/>
+                                        </node>
+                                        <node type="OBJECT_SQL_NARY_EXPRESSION" loc="806..838" text="l_shipmode..&apos;AIR REG&apos;)">
+                                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                <node type="OBJECT_SQL_COLUMN_REF" loc="806..816" text="l_shipmode">
+                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                        <node type="IDENTIFIER" loc="806..816" text="l_shipmode"/>
+                                                    </node>
+                                                </node>
+                                                <node type="ARRAY">
+                                                    <node type="LITERAL_STRING" loc="821..826" text="&apos;AIR&apos;"/>
+                                                    <node type="LITERAL_STRING" loc="828..837" text="&apos;AIR REG&apos;"/>
+                                                </node>
+                                            </node>
+                                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="IN"/>
+                                        </node>
+                                        <node type="OBJECT_SQL_NARY_EXPRESSION" loc="859..895" text="l_shipinst..IN PERSON&apos;">
+                                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                <node type="OBJECT_SQL_COLUMN_REF" loc="859..873" text="l_shipinstruct">
+                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                        <node type="IDENTIFIER" loc="859..873" text="l_shipinstruct"/>
+                                                    </node>
+                                                </node>
+                                                <node type="LITERAL_STRING" loc="876..895" text="&apos;DELIVER IN PERSON&apos;"/>
+                                            </node>
+                                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
+                                        </node>
                                     </node>
+                                    <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="AND"/>
                                 </node>
-                                <node type="OBJECT_SQL_INDIRECTION" loc="925..1310" text="(\n        ..\n        )">
-                                    <node key="SQL_INDIRECTION_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="943..1300" text="p_partkey ..IN PERSON&apos;">
-                                        <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                            <node type="OBJECT_SQL_NARY_EXPRESSION" loc="943..964" text="p_partkey .. l_partkey">
-                                                <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="943..952" text="p_partkey">
-                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                            <node type="IDENTIFIER" loc="943..952" text="p_partkey"/>
-                                                        </node>
-                                                    </node>
-                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="955..964" text="l_partkey">
-                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                            <node type="IDENTIFIER" loc="955..964" text="l_partkey"/>
-                                                        </node>
+                                <node type="OBJECT_SQL_NARY_EXPRESSION" loc="943..1300" text="p_partkey ..IN PERSON&apos;">
+                                    <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                        <node type="OBJECT_SQL_NARY_EXPRESSION" loc="943..964" text="p_partkey .. l_partkey">
+                                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                <node type="OBJECT_SQL_COLUMN_REF" loc="943..952" text="p_partkey">
+                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                        <node type="IDENTIFIER" loc="943..952" text="p_partkey"/>
                                                     </node>
                                                 </node>
-                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
-                                            </node>
-                                            <node type="OBJECT_SQL_NARY_EXPRESSION" loc="985..1005" text="p_brand = ..&apos;Brand#34&apos;">
-                                                <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="985..992" text="p_brand">
-                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                            <node type="IDENTIFIER" loc="985..992" text="p_brand"/>
-                                                        </node>
-                                                    </node>
-                                                    <node type="LITERAL_STRING" loc="995..1005" text="&apos;Brand#34&apos;"/>
-                                                </node>
-                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
-                                            </node>
-                                            <node type="OBJECT_SQL_NARY_EXPRESSION" loc="1026..1083" text="p_containe.. &apos;LG PKG&apos;)">
-                                                <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="1026..1037" text="p_container">
-                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                            <node type="IDENTIFIER" loc="1026..1037" text="p_container"/>
-                                                        </node>
-                                                    </node>
-                                                    <node type="ARRAY">
-                                                        <node type="LITERAL_STRING" loc="1042..1051" text="&apos;LG CASE&apos;"/>
-                                                        <node type="LITERAL_STRING" loc="1053..1061" text="&apos;LG BOX&apos;"/>
-                                                        <node type="LITERAL_STRING" loc="1063..1072" text="&apos;LG PACK&apos;"/>
-                                                        <node type="LITERAL_STRING" loc="1074..1082" text="&apos;LG PKG&apos;"/>
+                                                <node type="OBJECT_SQL_COLUMN_REF" loc="955..964" text="l_partkey">
+                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                        <node type="IDENTIFIER" loc="955..964" text="l_partkey"/>
                                                     </node>
                                                 </node>
-                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="IN"/>
                                             </node>
-                                            <node type="OBJECT_SQL_NARY_EXPRESSION" loc="1104..1120" text="l_quantity &gt;= 20">
-                                                <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="1104..1114" text="l_quantity">
-                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                            <node type="IDENTIFIER" loc="1104..1114" text="l_quantity"/>
-                                                        </node>
-                                                    </node>
-                                                    <node type="LITERAL_INTEGER" loc="1118..1120" text="20"/>
-                                                </node>
-                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="GREATER_EQUAL"/>
-                                            </node>
-                                            <node type="OBJECT_SQL_NARY_EXPRESSION" loc="1125..1146" text="l_quantity..&lt;= 20 + 10">
-                                                <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="1125..1135" text="l_quantity">
-                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                            <node type="IDENTIFIER" loc="1125..1135" text="l_quantity"/>
-                                                        </node>
-                                                    </node>
-                                                    <node type="OBJECT_SQL_NARY_EXPRESSION" loc="1139..1146" text="20 + 10">
-                                                        <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                            <node type="LITERAL_INTEGER" loc="1139..1141" text="20"/>
-                                                            <node type="LITERAL_INTEGER" loc="1144..1146" text="10"/>
-                                                        </node>
-                                                        <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="PLUS"/>
-                                                    </node>
-                                                </node>
-                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="LESS_EQUAL"/>
-                                            </node>
-                                            <node type="OBJECT_SQL_NARY_EXPRESSION" loc="1167..1190" text="p_size bet..n 1 and 15">
-                                                <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="1167..1173" text="p_size">
-                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                            <node type="IDENTIFIER" loc="1167..1173" text="p_size"/>
-                                                        </node>
-                                                    </node>
-                                                    <node type="LITERAL_INTEGER" loc="1182..1183" text="1"/>
-                                                    <node type="LITERAL_INTEGER" loc="1188..1190" text="15"/>
-                                                </node>
-                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="BETWEEN_SYMMETRIC"/>
-                                            </node>
-                                            <node type="OBJECT_SQL_NARY_EXPRESSION" loc="1211..1243" text="l_shipmode..&apos;AIR REG&apos;)">
-                                                <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="1211..1221" text="l_shipmode">
-                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                            <node type="IDENTIFIER" loc="1211..1221" text="l_shipmode"/>
-                                                        </node>
-                                                    </node>
-                                                    <node type="ARRAY">
-                                                        <node type="LITERAL_STRING" loc="1226..1231" text="&apos;AIR&apos;"/>
-                                                        <node type="LITERAL_STRING" loc="1233..1242" text="&apos;AIR REG&apos;"/>
-                                                    </node>
-                                                </node>
-                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="IN"/>
-                                            </node>
-                                            <node type="OBJECT_SQL_NARY_EXPRESSION" loc="1264..1300" text="l_shipinst..IN PERSON&apos;">
-                                                <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
-                                                    <node type="OBJECT_SQL_COLUMN_REF" loc="1264..1278" text="l_shipinstruct">
-                                                        <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
-                                                            <node type="IDENTIFIER" loc="1264..1278" text="l_shipinstruct"/>
-                                                        </node>
-                                                    </node>
-                                                    <node type="LITERAL_STRING" loc="1281..1300" text="&apos;DELIVER IN PERSON&apos;"/>
-                                                </node>
-                                                <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
-                                            </node>
+                                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
                                         </node>
-                                        <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="AND"/>
+                                        <node type="OBJECT_SQL_NARY_EXPRESSION" loc="985..1005" text="p_brand = ..&apos;Brand#34&apos;">
+                                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                <node type="OBJECT_SQL_COLUMN_REF" loc="985..992" text="p_brand">
+                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                        <node type="IDENTIFIER" loc="985..992" text="p_brand"/>
+                                                    </node>
+                                                </node>
+                                                <node type="LITERAL_STRING" loc="995..1005" text="&apos;Brand#34&apos;"/>
+                                            </node>
+                                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
+                                        </node>
+                                        <node type="OBJECT_SQL_NARY_EXPRESSION" loc="1026..1083" text="p_containe.. &apos;LG PKG&apos;)">
+                                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                <node type="OBJECT_SQL_COLUMN_REF" loc="1026..1037" text="p_container">
+                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                        <node type="IDENTIFIER" loc="1026..1037" text="p_container"/>
+                                                    </node>
+                                                </node>
+                                                <node type="ARRAY">
+                                                    <node type="LITERAL_STRING" loc="1042..1051" text="&apos;LG CASE&apos;"/>
+                                                    <node type="LITERAL_STRING" loc="1053..1061" text="&apos;LG BOX&apos;"/>
+                                                    <node type="LITERAL_STRING" loc="1063..1072" text="&apos;LG PACK&apos;"/>
+                                                    <node type="LITERAL_STRING" loc="1074..1082" text="&apos;LG PKG&apos;"/>
+                                                </node>
+                                            </node>
+                                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="IN"/>
+                                        </node>
+                                        <node type="OBJECT_SQL_NARY_EXPRESSION" loc="1104..1120" text="l_quantity &gt;= 20">
+                                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                <node type="OBJECT_SQL_COLUMN_REF" loc="1104..1114" text="l_quantity">
+                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                        <node type="IDENTIFIER" loc="1104..1114" text="l_quantity"/>
+                                                    </node>
+                                                </node>
+                                                <node type="LITERAL_INTEGER" loc="1118..1120" text="20"/>
+                                            </node>
+                                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="GREATER_EQUAL"/>
+                                        </node>
+                                        <node type="OBJECT_SQL_NARY_EXPRESSION" loc="1125..1146" text="l_quantity..&lt;= 20 + 10">
+                                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                <node type="OBJECT_SQL_COLUMN_REF" loc="1125..1135" text="l_quantity">
+                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                        <node type="IDENTIFIER" loc="1125..1135" text="l_quantity"/>
+                                                    </node>
+                                                </node>
+                                                <node type="OBJECT_SQL_NARY_EXPRESSION" loc="1139..1146" text="20 + 10">
+                                                    <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                        <node type="LITERAL_INTEGER" loc="1139..1141" text="20"/>
+                                                        <node type="LITERAL_INTEGER" loc="1144..1146" text="10"/>
+                                                    </node>
+                                                    <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="PLUS"/>
+                                                </node>
+                                            </node>
+                                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="LESS_EQUAL"/>
+                                        </node>
+                                        <node type="OBJECT_SQL_NARY_EXPRESSION" loc="1167..1190" text="p_size bet..n 1 and 15">
+                                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                <node type="OBJECT_SQL_COLUMN_REF" loc="1167..1173" text="p_size">
+                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                        <node type="IDENTIFIER" loc="1167..1173" text="p_size"/>
+                                                    </node>
+                                                </node>
+                                                <node type="LITERAL_INTEGER" loc="1182..1183" text="1"/>
+                                                <node type="LITERAL_INTEGER" loc="1188..1190" text="15"/>
+                                            </node>
+                                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="BETWEEN_SYMMETRIC"/>
+                                        </node>
+                                        <node type="OBJECT_SQL_NARY_EXPRESSION" loc="1211..1243" text="l_shipmode..&apos;AIR REG&apos;)">
+                                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                <node type="OBJECT_SQL_COLUMN_REF" loc="1211..1221" text="l_shipmode">
+                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                        <node type="IDENTIFIER" loc="1211..1221" text="l_shipmode"/>
+                                                    </node>
+                                                </node>
+                                                <node type="ARRAY">
+                                                    <node type="LITERAL_STRING" loc="1226..1231" text="&apos;AIR&apos;"/>
+                                                    <node type="LITERAL_STRING" loc="1233..1242" text="&apos;AIR REG&apos;"/>
+                                                </node>
+                                            </node>
+                                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="IN"/>
+                                        </node>
+                                        <node type="OBJECT_SQL_NARY_EXPRESSION" loc="1264..1300" text="l_shipinst..IN PERSON&apos;">
+                                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY">
+                                                <node type="OBJECT_SQL_COLUMN_REF" loc="1264..1278" text="l_shipinstruct">
+                                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY">
+                                                        <node type="IDENTIFIER" loc="1264..1278" text="l_shipinstruct"/>
+                                                    </node>
+                                                </node>
+                                                <node type="LITERAL_STRING" loc="1281..1300" text="&apos;DELIVER IN PERSON&apos;"/>
+                                            </node>
+                                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL"/>
+                                        </node>
                                     </node>
+                                    <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="AND"/>
                                 </node>
                             </node>
                             <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="OR"/>

@@ -1413,10 +1413,14 @@ sql_c_expr:
     sql_columnref     { $$ = $1; }
   | sql_a_expr_const  { $$ = ctx.Add(std::move($1)); }
   | '(' sql_a_expr ')' sql_opt_indirection {
-        $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_INDIRECTION, {
-            Attr(Key::SQL_INDIRECTION_VALUE, ctx.Add(std::move($2))),
-            Attr(Key::SQL_INDIRECTION_PATH, ctx.Add(@4, std::move($4))),
-        });
+        if  ($4.empty()) {
+            $$ = ctx.Add(std::move($2));
+        } else {
+            $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_INDIRECTION, {
+                Attr(Key::SQL_INDIRECTION_VALUE, ctx.Add(std::move($2))),
+                Attr(Key::SQL_INDIRECTION_PATH, ctx.Add(@4, std::move($4))),
+            });
+        }
     }
   | sql_case_expr                             { $$ = $1; }
   | sql_func_expr                             { $$ = $1; }
