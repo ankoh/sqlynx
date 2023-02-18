@@ -188,6 +188,10 @@ mod test {
         test_ast_dump("tpch.xml").await
     }
     #[tokio::test]
+    async fn test_tpds() -> ASTTestResult {
+        test_ast_dump("tpcds.xml").await
+    }
+    #[tokio::test]
     async fn test_bugs() -> ASTTestResult {
         test_ast_dump("bugs.xml").await
     }
