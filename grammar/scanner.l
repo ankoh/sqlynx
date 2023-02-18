@@ -502,7 +502,7 @@ void flatsql_yyfree (void*, yyscan_t) {
 namespace flatsql {
 namespace parser {
 
-Scanner::Scanner(nonstd::span<char> input_buffer)
+Scanner::Scanner(std::span<char> input_buffer)
     : input_buffer_(input_buffer)
 {
     static_assert(YY_SCANNER_STATE_SIZE >= (alignof(yyguts_t) + sizeof(yyguts_t)), "YY_SCANNER_STATE_SIZE is too small");
@@ -524,7 +524,7 @@ Scanner::Scanner(nonstd::span<char> input_buffer)
 
     // Write end-of-buffer markers
     if (input_buffer_.size() < 2) {
-        input_buffer_ = nonstd::span{null_buffer_.data(), null_buffer_.size()};
+        input_buffer_ = std::span{null_buffer_.data(), null_buffer_.size()};
     }
     input_buffer_[input_buffer_.size() - 2] = YY_END_OF_BUFFER_CHAR;
     input_buffer_[input_buffer_.size() - 1] = YY_END_OF_BUFFER_CHAR;

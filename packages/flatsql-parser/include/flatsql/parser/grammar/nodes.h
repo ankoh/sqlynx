@@ -37,7 +37,7 @@ inline NodeVector Concat(NodeVector&& l, NodeVector&& r) {
 }
 /// Helper to concatenate node vectors
 inline NodeVector Concat(NodeVector&& v0, NodeVector&& v1, NodeVector&& v2) {
-    v0.reserve(v0.size() + v1.size() + v2.size());
+    v0.reserve(v0.getSize() + v1.getSize() + v2.getSize());
     for (auto& n : v1) {
         v0.push_back(n);
     }
@@ -48,7 +48,7 @@ inline NodeVector Concat(NodeVector&& v0, NodeVector&& v1, NodeVector&& v2) {
 }
 /// Helper to concatenate node vectors
 inline NodeVector Concat(NodeVector&& v0, NodeVector&& v1, NodeVector&& v2, NodeVector&& v3) {
-    v0.reserve(v0.size() + v1.size() + v2.size() + v3.size());
+    v0.reserve(v0.getSize() + v1.getSize() + v2.getSize() + v3.getSize());
     for (auto& n : v1) {
         v0.push_back(n);
     }

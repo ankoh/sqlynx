@@ -1852,7 +1852,7 @@ sql_subquery_op:
 sql_any_operator:
     sql_all_op                        { $$ = { std::move($1) }; }
   | sql_col_id '.' sql_any_operator   {
-      $3.insert($3.begin(), Ident(@1));
+      $3.push_front(Ident(@1));
       $$ = std::move($3);
     }
     ;
@@ -2074,7 +2074,7 @@ sql_case_arg:
 
 sql_columnref:
     sql_col_id                  { $$ = ColumnRef(ctx, @$, {Ident(@1)}); }
-  | sql_col_id sql_indirection  { $2.insert($2.begin(), Ident(@1)); $$ = ColumnRef(ctx, @$, std::move($2)); }
+  | sql_col_id sql_indirection  { $2.push_front(Ident(@1)); $$ = ColumnRef(ctx, @$, std::move($2)); }
     ;
 
 sql_indirection_el:
@@ -2168,7 +2168,7 @@ sql_qualified_name_list:
 
 sql_qualified_name:
     sql_col_id                      { $$ = ctx.Add(@$, { Ident(@1) }); };
-  | sql_col_id sql_indirection      { $2.insert($2.begin(), Ident(@1)); $$ = ctx.Add(@$, std::move($2)); };
+  | sql_col_id sql_indirection      { $2.push_front(Ident(@1)); $$ = ctx.Add(@$, std::move($2)); };
     ;
 
 sql_name_list:
@@ -2188,7 +2188,7 @@ sql_attr_name: sql_col_label;
 
 sql_func_name:
     sql_type_function_name      { $$ = { Ident(@1) }; }
-  | sql_col_id sql_indirection  { $2.insert($2.begin(), Ident(@1)); $$ = std::move($2); }
+  | sql_col_id sql_indirection  { $2.push_front(Ident(@1)); $$ = std::move($2); }
     ;
 
 // Constants
@@ -2298,7 +2298,7 @@ sql_type_function_name:
 
 sql_any_name:
     sql_col_id                  { $$ = { Ident(@1) }; }
-  | sql_col_id sql_attrs        { $2.insert($2.begin(), Ident(@1)); $$ = std::move($2); }
+  | sql_col_id sql_attrs        { $2.push_front(Ident(@1)); $$ = std::move($2); }
     ;
 
 sql_attrs:

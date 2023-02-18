@@ -8,15 +8,14 @@
 
 #include "flatsql/parser/parser.h"
 #include "flatsql/proto/proto_generated.h"
-#include "nonstd/span.h"
 
 namespace flatsql {
 namespace parser {
 
 class ParserDriver;
 
-constexpr size_t YY_SCANNER_STATE_SIZE = 200;
-constexpr size_t YY_BUFFER_STATE_SIZE = 144;
+constexpr size_t YY_SCANNER_STATE_SIZE = 300;
+constexpr size_t YY_BUFFER_STATE_SIZE = 200;
 
 /// XXX Note that flex requires the input to be padded with 2 additional characters to match YY_END_OF_BUFFER.
 ///     This scanner will blindly overwrite these last two characters and fall back to an empty buffer if the size of
@@ -24,7 +23,7 @@ constexpr size_t YY_BUFFER_STATE_SIZE = 144;
 class Scanner {
    protected:
     /// The full input buffer
-    nonstd::span<char> input_buffer_;
+    std::span<char> input_buffer_;
     /// The invalid input buffer
     std::array<char, 2> null_buffer_ = {};
 
@@ -62,7 +61,7 @@ class Scanner {
 
    public:
     /// Constructor
-    Scanner(nonstd::span<char> input);
+    Scanner(std::span<char> input);
     /// Delete the copy constructor
     Scanner(const Scanner& other) = delete;
     /// Delete the copy assignment

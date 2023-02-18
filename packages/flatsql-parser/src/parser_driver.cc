@@ -69,7 +69,7 @@ NodeID ParserDriver::AddNode(proto::Node node) {
 }
 
 /// Flatten an expression
-std::optional<Expression> ParserDriver::TryMerge(proto::Location loc, proto::Node opNode, nonstd::span<Expression> args) {
+std::optional<Expression> ParserDriver::TryMerge(proto::Location loc, proto::Node opNode, std::span<Expression> args) {
     // Function is not an expression operator?
     if (opNode.node_type() != proto::NodeType::ENUM_SQL_EXPRESSION_OPERATOR) {
         return std::nullopt;
@@ -108,7 +108,7 @@ std::optional<Expression> ParserDriver::TryMerge(proto::Location loc, proto::Nod
 }
 
 /// Add an array
-proto::Node ParserDriver::AddArray(proto::Location loc, nonstd::span<proto::Node> values, bool null_if_empty,
+proto::Node ParserDriver::AddArray(proto::Location loc, std::span<proto::Node> values, bool null_if_empty,
                                    bool shrink_location) {
     auto begin = nodes_.size();
     nodes_.reserve(nodes_.size() + values.size());
@@ -129,14 +129,14 @@ proto::Node ParserDriver::AddArray(proto::Location loc, nonstd::span<proto::Node
 }
 
 /// Add an array
-proto::Node ParserDriver::AddArray(proto::Location loc, nonstd::span<Expression> exprs, bool null_if_empty,
+proto::Node ParserDriver::AddArray(proto::Location loc, std::span<Expression> exprs, bool null_if_empty,
                                    bool shrink_location) {
-    std::vector<proto::Node> nodes;
+    SmallVector<proto::Node, 5> nodes;
     nodes.reserve(exprs.size());
     for (auto& expr: exprs) {
         nodes.push_back(AddExpression(std::move(expr)));
     }
-    return AddArray(loc, nodes, null_if_empty, shrink_location);
+    return AddArray(loc, nodes.span(), null_if_empty, shrink_location);
 }
 
 /// Add an expression
@@ -153,7 +153,7 @@ proto::Node ParserDriver::AddExpression(Expression&& expr) {
 }
 
 /// Add an object
-proto::Node ParserDriver::AddObject(proto::Location loc, proto::NodeType type, nonstd::span<proto::Node> attrs,
+proto::Node ParserDriver::AddObject(proto::Location loc, proto::NodeType type, std::span<proto::Node> attrs,
                                     bool null_if_empty, bool shrink_location) {
     // Sort all the attributes
     auto begin = nodes_.size();
@@ -163,16 +163,16 @@ proto::Node ParserDriver::AddObject(proto::Location loc, proto::NodeType type, n
     });
     // Find duplicate ranges.
     // We optimize the fast path here and try to add as little overhead as possible for duplicate-free attributes.
-    std::vector<nonstd::span<proto::Node>> duplicates;
+    SmallVector<std::span<proto::Node>, 5> duplicates;
     for (size_t i = 0, j = 1; j < attrs.size(); i = j++) {
         for (; j < attrs.size() && attrs[j].attribute_key() == attrs[i].attribute_key(); ++j)
             ;
         if ((j - i) == 1) continue;
-        duplicates.emplace_back(attrs.data() + i, j - i);
+        duplicates.push_back({attrs.data() + i, j - i});
     }
     // Merge attributes if there are any
-    std::vector<proto::Node> merged_attrs;
-    if (duplicates.size() > 0) {
+    SmallVector<proto::Node, 5> merged_attrs;
+    if (duplicates.getSize() > 0) {
         merged_attrs.reserve(attrs.size());
 
         auto* reader = attrs.data();
@@ -180,7 +180,7 @@ proto::Node ParserDriver::AddObject(proto::Location loc, proto::NodeType type, n
         for (auto dups : duplicates) {
             // Copy attributes until first duplicate
             for (; reader != dups.data(); ++reader) merged_attrs.push_back(*reader);
-            reader = dups.end();
+            reader = dups.data() + dups.size();
 
             // Only keep first if its not an object
             auto& fst = dups[0];
@@ -200,13 +200,13 @@ proto::Node ParserDriver::AddObject(proto::Location loc, proto::NodeType type, n
             }
             // Add object.
             // Note that this will recursively merge paths such as style.data.fill and style.data.stroke
-            auto merged = AddObject(fst.location(), fst.node_type(), merged_attrs, true, true);
+            auto merged = AddObject(fst.location(), fst.node_type(), merged_attrs.span(), true, true);
             merged_attrs.push_back(merged);
         }
-        for (; reader != attrs.end(); ++reader) merged_attrs.push_back(*reader);
+        for (; reader != (attrs.data() + attrs.size()); ++reader) merged_attrs.push_back(*reader);
 
         // Replace attributes
-        attrs = {merged_attrs};
+        attrs = {merged_attrs.span()};
     }
     // Add the nodes
     for (auto& v : attrs) {
