@@ -4,8 +4,8 @@
 #include <unordered_map>
 
 #include "flatsql/parser/grammar/nodes.h"
-#include "flatsql/parser/string.h"
 #include "flatsql/proto/proto_generated.h"
+#include "flatsql/utils/string.h"
 
 namespace flatsql {
 namespace parser {
@@ -17,7 +17,7 @@ static std::string_view textAt(std::string_view text, proto::Location loc) {
 
 /// Map the VarArg keys
 static std::unordered_map<std::string_view, uint16_t> mapVarArgKeys(std::string_view text,
-                                                                  const std::vector<proto::Location>& keys) {
+                                                                    const std::vector<proto::Location>& keys) {
     std::unordered_map<std::string_view, uint16_t> dict;
     dict.reserve(keys.size());
     for (auto i = 0; i < keys.size(); ++i) {
@@ -74,7 +74,7 @@ uint16_t VarArgDictionary::keyFromString(std::string_view text) const {
 
 /// Add a dson file in the parser.
 proto::Node ParserDriver::AddVarArgField(proto::Location loc, std::vector<proto::Location>&& key_path,
-                                       proto::Node value) {
+                                         proto::Node value) {
     // return Null();
     constexpr size_t MAX_NESTING_LEVEL = 4;
 
