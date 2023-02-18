@@ -10,7 +10,7 @@ GID=${shell id -g}
 
 PARSER_SOURCE_DIR="${ROOT_DIR}/packages/flatsql-parser"
 PARSER_DEBUG_DIR="${PARSER_SOURCE_DIR}/build/native/Debug"
-PARSER_RELEASE_DIR="${PARSER_SOURCE_DIR}/build/Release"
+PARSER_RELEASE_DIR="${PARSER_SOURCE_DIR}/build/native/Release"
 PARSER_RELWITHDEBINFO_DIR="${PARSER_SOURCE_DIR}/build/RelWithDebInfo"
 
 CORES=$(shell grep -c ^processor /proc/cpuinfo 2>/dev/null || sysctl -n hw.ncpu)
@@ -35,6 +35,12 @@ parser:
 		-DCMAKE_EXPORT_COMPILE_COMMANDS=1
 	ln -sf ${PARSER_DEBUG_DIR}/compile_commands.json ${PARSER_SOURCE_DIR}/compile_commands.json
 	cmake --build ${PARSER_DEBUG_DIR}
+
+.PHONY: parser_release
+parser_release:
+	mkdir -p ${PARSER_RELEASE_DIR}
+	cmake -S ${PARSER_SOURCE_DIR} -B ${PARSER_RELEASE_DIR} -DCMAKE_BUILD_TYPE=Release
+	cmake --build ${PARSER_RELEASE_DIR}
 
 .PHONY: parser_wasm
 parser_wasm:
