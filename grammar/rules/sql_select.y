@@ -1243,8 +1243,8 @@ sql_a_expr:
             Attr(Key::SQL_TYPECAST_TYPE, $3),
         });
     }
-  | sql_a_expr COLLATE sql_any_name                             { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::COLLATE), $1, ctx.Add(@3, std::move($3))); }
-  | sql_a_expr AT TIME ZONE sql_a_expr      %prec AT            { $$ = Expr(ctx, @$, Enum(Loc({@2, @3, @4}), ExprFunc::AT_TIMEZONE), $1, $5); }
+  | sql_a_expr COLLATE sql_any_name                             { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::COLLATE), std::move($1), ctx.Add(@3, std::move($3))); }
+  | sql_a_expr AT TIME ZONE sql_a_expr      %prec AT            { $$ = Expr(ctx, @$, Enum(Loc({@2, @3, @4}), ExprFunc::AT_TIMEZONE), std::move($1), std::move($5)); }
 
   // These operators must be called out explicitly in order to make use
   // of bison's automatic operator-precedence handling.  All other
@@ -1256,54 +1256,54 @@ sql_a_expr:
 
   | '+' sql_a_expr %prec UMINUS { $$ = $2; }
   | '-' sql_a_expr %prec UMINUS { $$ = Negate(ctx, @$, @1, $2); }
-  | sql_a_expr '+' sql_a_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::PLUS), $1, $3); }
-  | sql_a_expr '-' sql_a_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::MINUS), $1, $3); }
-  | sql_a_expr '*' sql_a_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::MULTIPLY), $1, $3); }
-  | sql_a_expr '/' sql_a_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::DIVIDE), $1, $3); }
-  | sql_a_expr '%' sql_a_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::MODULUS), $1, $3); }
-  | sql_a_expr '^' sql_a_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::XOR), $1, $3); }
-  | sql_a_expr '<' sql_a_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::LESS_THAN), $1, $3); }
-  | sql_a_expr '>' sql_a_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::GREATER_THAN), $1, $3); }
-  | sql_a_expr '=' sql_a_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::EQUAL), $1, $3); }
-  | sql_a_expr LESS_EQUALS sql_a_expr       { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::LESS_EQUAL), $1, $3); }
-  | sql_a_expr GREATER_EQUALS sql_a_expr    { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::GREATER_EQUAL), $1, $3); }
-  | sql_a_expr NOT_EQUALS sql_a_expr        { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::NOT_EQUAL), $1, $3); }
-  | sql_a_expr sql_qual_op sql_a_expr   %prec Op          { $$ = Expr(ctx, @$, $2, $1, $3); }
-  | sql_qual_op sql_a_expr              %prec Op          { $$ = Expr(ctx, @$, $1, $2); }
-  | sql_a_expr sql_qual_op              %prec POSTFIXOP   { $$ = Expr(ctx, @$, $2, $1, PostFix); }
-  | sql_a_expr AND sql_a_expr               { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::AND), $1, $3); }
-  | sql_a_expr OR sql_a_expr                { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::OR), $1, $3); }
-  | NOT sql_a_expr                          { $$ = Expr(ctx, @$, Enum(@1, ExprFunc::NOT), $2); }
-  | NOT_LA sql_a_expr   %prec NOT           { $$ = Expr(ctx, @$, Enum(@1, ExprFunc::NOT), $2); }
-  | sql_a_expr GLOB sql_a_expr  %prec GLOB  { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::GLOB), $1, $3); }
-  | sql_a_expr LIKE sql_a_expr                                              { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::LIKE), $1, $3); }
-  | sql_a_expr LIKE sql_a_expr ESCAPE sql_a_expr            %prec LIKE      { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::LIKE), $1, $3, $5); }
-  | sql_a_expr NOT_LA LIKE sql_a_expr                       %prec NOT_LA    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::NOT_LIKE), $1, $4); }
-  | sql_a_expr NOT_LA LIKE sql_a_expr ESCAPE sql_a_expr     %prec NOT_LA    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::NOT_LIKE), $1, $4, $6); }
-  | sql_a_expr ILIKE sql_a_expr                                             { $$ = Expr(ctx, @$, Enum(@3, ExprFunc::ILIKE), $1, $3); }
-  | sql_a_expr ILIKE sql_a_expr ESCAPE sql_a_expr           %prec ILIKE     { $$ = Expr(ctx, @$, Enum(@3, ExprFunc::ILIKE), $1, $3, $5); }
-  | sql_a_expr NOT_LA ILIKE sql_a_expr                      %prec NOT_LA    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::NOT_ILIKE), $1, $4); }
-  | sql_a_expr NOT_LA ILIKE sql_a_expr ESCAPE sql_a_expr    %prec NOT_LA    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::NOT_ILIKE), $1, $4, $6); }
-  | sql_a_expr SIMILAR TO sql_a_expr                        %prec SIMILAR   { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::SIMILAR_TO), $1, $4); }
-  | sql_a_expr SIMILAR TO sql_a_expr ESCAPE sql_a_expr      %prec SIMILAR   { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::SIMILAR_TO), $1, $4, $6); }
-  | sql_a_expr NOT_LA SIMILAR TO sql_a_expr                 %prec NOT_LA    { $$ = Expr(ctx, @$, Enum(Loc({@3, @4}), ExprFunc::NOT_SIMILAR_TO), $1, $5); }
-  | sql_a_expr NOT_LA SIMILAR TO sql_a_expr ESCAPE sql_a_expr     %prec NOT_LA  { $$ = Expr(ctx, @$, Enum(Loc({@3, @4}), ExprFunc::NOT_SIMILAR_TO), $1, $5, $7); }
+  | sql_a_expr '+' sql_a_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::PLUS), std::move($1), std::move($3)); }
+  | sql_a_expr '-' sql_a_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::MINUS), std::move($1), std::move($3)); }
+  | sql_a_expr '*' sql_a_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::MULTIPLY), std::move($1), std::move($3)); }
+  | sql_a_expr '/' sql_a_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::DIVIDE), std::move($1), std::move($3)); }
+  | sql_a_expr '%' sql_a_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::MODULUS), std::move($1), std::move($3)); }
+  | sql_a_expr '^' sql_a_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::XOR), std::move($1), std::move($3)); }
+  | sql_a_expr '<' sql_a_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::LESS_THAN), std::move($1), std::move($3)); }
+  | sql_a_expr '>' sql_a_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::GREATER_THAN), std::move($1), std::move($3)); }
+  | sql_a_expr '=' sql_a_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::EQUAL), std::move($1), std::move($3)); }
+  | sql_a_expr LESS_EQUALS sql_a_expr       { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::LESS_EQUAL), std::move($1), std::move($3)); }
+  | sql_a_expr GREATER_EQUALS sql_a_expr    { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::GREATER_EQUAL), std::move($1), std::move($3)); }
+  | sql_a_expr NOT_EQUALS sql_a_expr        { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::NOT_EQUAL), std::move($1), std::move($3)); }
+  | sql_a_expr sql_qual_op sql_a_expr   %prec Op          { $$ = Expr(ctx, @$, $2, std::move($1), std::move($3)); }
+  | sql_qual_op sql_a_expr              %prec Op          { $$ = Expr(ctx, @$, $1, std::move($2)); }
+  | sql_a_expr sql_qual_op              %prec POSTFIXOP   { $$ = Expr(ctx, @$, $2, std::move($1), PostFix); }
+  | sql_a_expr AND sql_a_expr               { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::AND), std::move($1), std::move($3)); }
+  | sql_a_expr OR sql_a_expr                { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::OR), std::move($1), std::move($3)); }
+  | NOT sql_a_expr                          { $$ = Expr(ctx, @$, Enum(@1, ExprFunc::NOT), std::move($2)); }
+  | NOT_LA sql_a_expr   %prec NOT           { $$ = Expr(ctx, @$, Enum(@1, ExprFunc::NOT), std::move($2)); }
+  | sql_a_expr GLOB sql_a_expr  %prec GLOB  { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::GLOB), std::move($1), std::move($3)); }
+  | sql_a_expr LIKE sql_a_expr                                              { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::LIKE), std::move($1), std::move($3)); }
+  | sql_a_expr LIKE sql_a_expr ESCAPE sql_a_expr            %prec LIKE      { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::LIKE), std::move($1), std::move($3), std::move($5)); }
+  | sql_a_expr NOT_LA LIKE sql_a_expr                       %prec NOT_LA    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::NOT_LIKE), std::move($1), std::move($4)); }
+  | sql_a_expr NOT_LA LIKE sql_a_expr ESCAPE sql_a_expr     %prec NOT_LA    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::NOT_LIKE), std::move($1), std::move($4), std::move($6)); }
+  | sql_a_expr ILIKE sql_a_expr                                             { $$ = Expr(ctx, @$, Enum(@3, ExprFunc::ILIKE), std::move($1), std::move($3)); }
+  | sql_a_expr ILIKE sql_a_expr ESCAPE sql_a_expr           %prec ILIKE     { $$ = Expr(ctx, @$, Enum(@3, ExprFunc::ILIKE), std::move($1), std::move($3), std::move($5)); }
+  | sql_a_expr NOT_LA ILIKE sql_a_expr                      %prec NOT_LA    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::NOT_ILIKE), std::move($1), std::move($4)); }
+  | sql_a_expr NOT_LA ILIKE sql_a_expr ESCAPE sql_a_expr    %prec NOT_LA    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::NOT_ILIKE), std::move($1), std::move($4), std::move($6)); }
+  | sql_a_expr SIMILAR TO sql_a_expr                        %prec SIMILAR   { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::SIMILAR_TO), std::move($1), std::move($4)); }
+  | sql_a_expr SIMILAR TO sql_a_expr ESCAPE sql_a_expr      %prec SIMILAR   { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::SIMILAR_TO), std::move($1), std::move($4), std::move($6)); }
+  | sql_a_expr NOT_LA SIMILAR TO sql_a_expr                 %prec NOT_LA    { $$ = Expr(ctx, @$, Enum(Loc({@3, @4}), ExprFunc::NOT_SIMILAR_TO), std::move($1), std::move($5)); }
+  | sql_a_expr NOT_LA SIMILAR TO sql_a_expr ESCAPE sql_a_expr     %prec NOT_LA  { $$ = Expr(ctx, @$, Enum(Loc({@3, @4}), ExprFunc::NOT_SIMILAR_TO), std::move($1), std::move($5), std::move($7)); }
 
-  | sql_a_expr IS NULL_P        %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::IS_NULL), $1); }
-  | sql_a_expr ISNULL                       { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::IS_NULL), $1); }
-  | sql_a_expr IS NOT NULL_P    %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3, @4}), ExprFunc::NOT_NULL), $1); }
-  | sql_a_expr NOT NULL_P                   { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::NOT_NULL), $1); }
-  | sql_a_expr NOTNULL                      { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::NOT_NULL), $1); }
+  | sql_a_expr IS NULL_P        %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::IS_NULL), std::move($1)); }
+  | sql_a_expr ISNULL                       { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::IS_NULL), std::move($1)); }
+  | sql_a_expr IS NOT NULL_P    %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3, @4}), ExprFunc::NOT_NULL), std::move($1)); }
+  | sql_a_expr NOT NULL_P                   { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::NOT_NULL), std::move($1)); }
+  | sql_a_expr NOTNULL                      { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::NOT_NULL), std::move($1)); }
 
   | sql_row OVERLAPS sql_row { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::OVERLAPS), ctx.Add(@1, std::move($1), false), ctx.Add(@3, std::move($3), false)); }
-  | sql_a_expr IS TRUE_P                            %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::IS_TRUE), $1); }
-  | sql_a_expr IS NOT TRUE_P                        %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3, @4}), ExprFunc::IS_NOT_TRUE), $1); }
-  | sql_a_expr IS FALSE_P                           %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::IS_FALSE), $1); }
-  | sql_a_expr IS NOT FALSE_P                       %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3, @4}), ExprFunc::IS_NOT_FALSE), $1); }
-  | sql_a_expr IS UNKNOWN                           %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::IS_UNKNOWN), $1); }
-  | sql_a_expr IS NOT UNKNOWN                       %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3, @4}), ExprFunc::IS_NOT_UNKNOWN), $1); }
-  | sql_a_expr IS DISTINCT FROM sql_a_expr          %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3, @4}), ExprFunc::IS_DISTINCT_FROM), $1, $5); }
-  | sql_a_expr IS NOT DISTINCT FROM sql_a_expr      %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3, @4, @5}), ExprFunc::IS_NOT_DISTINCT_FROM), $1, $6); }
+  | sql_a_expr IS TRUE_P                            %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::IS_TRUE), std::move($1)); }
+  | sql_a_expr IS NOT TRUE_P                        %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3, @4}), ExprFunc::IS_NOT_TRUE), std::move($1)); }
+  | sql_a_expr IS FALSE_P                           %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::IS_FALSE), std::move($1)); }
+  | sql_a_expr IS NOT FALSE_P                       %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3, @4}), ExprFunc::IS_NOT_FALSE), std::move($1)); }
+  | sql_a_expr IS UNKNOWN                           %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::IS_UNKNOWN), std::move($1)); }
+  | sql_a_expr IS NOT UNKNOWN                       %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3, @4}), ExprFunc::IS_NOT_UNKNOWN), std::move($1)); }
+  | sql_a_expr IS DISTINCT FROM sql_a_expr          %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3, @4}), ExprFunc::IS_DISTINCT_FROM), std::move($1), std::move($5)); }
+  | sql_a_expr IS NOT DISTINCT FROM sql_a_expr      %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3, @4, @5}), ExprFunc::IS_NOT_DISTINCT_FROM), std::move($1), std::move($6)); }
   | sql_a_expr IS OF '(' sql_type_list ')'          %prec IS {
         $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_TYPETEST_EXPRESSION, {
             Attr(Key::SQL_TYPETEST_VALUE, ctx.Add(std::move($1))),
@@ -1317,12 +1317,12 @@ sql_a_expr:
             Attr(Key::SQL_TYPETEST_TYPES, ctx.Add(@6, std::move($6))),
         });
     }
-  | sql_a_expr BETWEEN sql_opt_asymmetric sql_b_expr AND sql_a_expr         %prec BETWEEN   { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), $3 ? ExprFunc::BETWEEN_ASYMMETRIC : ExprFunc::BETWEEN_SYMMETRIC), $1, $4, $6); }
-  | sql_a_expr NOT_LA BETWEEN sql_opt_asymmetric sql_b_expr AND sql_a_expr  %prec NOT_LA    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3, @4}), $4 ? ExprFunc::NOT_BETWEEN_ASYMMETRIC : ExprFunc::NOT_BETWEEN_SYMMETRIC), $1, $5, $7); }
-  | sql_a_expr BETWEEN SYMMETRIC sql_b_expr AND sql_a_expr                  %prec BETWEEN   { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::BETWEEN_SYMMETRIC), $1, $4, $6); }
-  | sql_a_expr NOT_LA BETWEEN SYMMETRIC sql_b_expr AND sql_a_expr           %prec NOT_LA    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3, @4}), ExprFunc::NOT_BETWEEN_SYMMETRIC), $1, $5, $7); }
-  | sql_a_expr IN_P sql_in_expr                                                             { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::IN), $1, $3); }
-  | sql_a_expr NOT_LA IN_P sql_in_expr                                      %prec NOT_LA    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::NOT_IN), $1, $4); }
+  | sql_a_expr BETWEEN sql_opt_asymmetric sql_b_expr AND sql_a_expr         %prec BETWEEN   { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), $3 ? ExprFunc::BETWEEN_ASYMMETRIC : ExprFunc::BETWEEN_SYMMETRIC), std::move($1), std::move($4), std::move($6)); }
+  | sql_a_expr NOT_LA BETWEEN sql_opt_asymmetric sql_b_expr AND sql_a_expr  %prec NOT_LA    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3, @4}), $4 ? ExprFunc::NOT_BETWEEN_ASYMMETRIC : ExprFunc::NOT_BETWEEN_SYMMETRIC), std::move($1), std::move($5), std::move($7)); }
+  | sql_a_expr BETWEEN SYMMETRIC sql_b_expr AND sql_a_expr                  %prec BETWEEN   { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::BETWEEN_SYMMETRIC), std::move($1), std::move($4), std::move($6)); }
+  | sql_a_expr NOT_LA BETWEEN SYMMETRIC sql_b_expr AND sql_a_expr           %prec NOT_LA    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3, @4}), ExprFunc::NOT_BETWEEN_SYMMETRIC), std::move($1), std::move($5), std::move($7)); }
+  | sql_a_expr IN_P sql_in_expr                                                             { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::IN), std::move($1), $3); }
+  | sql_a_expr NOT_LA IN_P sql_in_expr                                      %prec NOT_LA    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::NOT_IN), std::move($1), $4); }
   | sql_a_expr sql_subquery_op sql_subquery_quantifier sql_select_with_parens    %prec Op {
         auto s = ctx.Add(@4, proto::NodeType::OBJECT_SQL_SELECT, std::move($4));
         auto e = ctx.Add(@$, proto::NodeType::OBJECT_SQL_SELECT_EXPRESSION, {
@@ -1362,27 +1362,27 @@ sql_b_expr:
             Attr(Key::SQL_TYPECAST_TYPE, $3),
         });
     }
-  | '+' sql_b_expr                      %prec UMINUS  { $$ = $2; }
-  | '-' sql_b_expr                      %prec UMINUS  { $$ = Negate(ctx, @$, @1, $2); }
-  | sql_b_expr '+' sql_b_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::PLUS), $1, $3); }
-  | sql_b_expr '-' sql_b_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::MINUS), $1, $3); }
-  | sql_b_expr '*' sql_b_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::MULTIPLY), $1, $3); }
-  | sql_b_expr '/' sql_b_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::DIVIDE), $1, $3); }
-  | sql_b_expr '%' sql_b_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::MODULUS), $1, $3); }
-  | sql_b_expr '^' sql_b_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::XOR), $1, $3); }
-  | sql_b_expr '<' sql_b_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::LESS_THAN), $1, $3); }
-  | sql_b_expr '>' sql_b_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::GREATER_THAN), $1, $3); }
-  | sql_b_expr '=' sql_b_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::EQUAL), $1, $3); }
-  | sql_b_expr LESS_EQUALS sql_b_expr      { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::LESS_EQUAL), $1, $3); }
-  | sql_b_expr GREATER_EQUALS sql_b_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::GREATER_EQUAL), $1, $3); }
-  | sql_b_expr NOT_EQUALS sql_b_expr       { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::NOT_EQUAL), $1, $3); }
-  | sql_b_expr sql_qual_op sql_b_expr   %prec Op          { $$ = Expr(ctx, @$, $2, $1, $3); }
-  | sql_qual_op sql_b_expr              %prec Op          { $$ = Expr(ctx, @$, $1, $2); }
-  | sql_b_expr sql_qual_op              %prec POSTFIXOP   { $$ = Expr(ctx, @$, $2, $1, PostFix); }
-  | sql_b_expr IS DISTINCT FROM sql_b_expr          %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3, @4}), ExprFunc::IS_DISTINCT_FROM), $1, $5); }
-  | sql_b_expr IS NOT DISTINCT FROM sql_b_expr      %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3, @4, @5}), ExprFunc::IS_NOT_DISTINCT_FROM), $1, $6); }
-  | sql_b_expr IS OF '(' sql_type_list ')'          %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::IS_OF), $1, ctx.Add(@5, std::move($5))); }
-  | sql_b_expr IS NOT OF '(' sql_type_list ')'      %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3, @4}), ExprFunc::IS_NOT_OF), $1, ctx.Add(@6, std::move($6))); }
+  | '+' sql_b_expr                      %prec UMINUS  { $$ = std::move($2); }
+  | '-' sql_b_expr                      %prec UMINUS  { $$ = Negate(ctx, @$, @1, std::move($2)); }
+  | sql_b_expr '+' sql_b_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::PLUS), std::move($1), std::move($3)); }
+  | sql_b_expr '-' sql_b_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::MINUS), std::move($1), std::move($3)); }
+  | sql_b_expr '*' sql_b_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::MULTIPLY), std::move($1), std::move($3)); }
+  | sql_b_expr '/' sql_b_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::DIVIDE), std::move($1), std::move($3)); }
+  | sql_b_expr '%' sql_b_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::MODULUS), std::move($1), std::move($3)); }
+  | sql_b_expr '^' sql_b_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::XOR), std::move($1), std::move($3)); }
+  | sql_b_expr '<' sql_b_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::LESS_THAN), std::move($1), std::move($3)); }
+  | sql_b_expr '>' sql_b_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::GREATER_THAN), std::move($1), std::move($3)); }
+  | sql_b_expr '=' sql_b_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::EQUAL), std::move($1), std::move($3)); }
+  | sql_b_expr LESS_EQUALS sql_b_expr      { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::LESS_EQUAL), std::move($1), std::move($3)); }
+  | sql_b_expr GREATER_EQUALS sql_b_expr   { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::GREATER_EQUAL), std::move($1), std::move($3)); }
+  | sql_b_expr NOT_EQUALS sql_b_expr       { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::NOT_EQUAL), std::move($1), std::move($3)); }
+  | sql_b_expr sql_qual_op sql_b_expr   %prec Op          { $$ = Expr(ctx, @$, std::move($2), std::move($1), std::move($3)); }
+  | sql_qual_op sql_b_expr              %prec Op          { $$ = Expr(ctx, @$, $1, std::move($2)); }
+  | sql_b_expr sql_qual_op              %prec POSTFIXOP   { $$ = Expr(ctx, @$, std::move($2), std::move($1), PostFix); }
+  | sql_b_expr IS DISTINCT FROM sql_b_expr          %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3, @4}), ExprFunc::IS_DISTINCT_FROM), std::move($1), std::move($5)); }
+  | sql_b_expr IS NOT DISTINCT FROM sql_b_expr      %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3, @4, @5}), ExprFunc::IS_NOT_DISTINCT_FROM), std::move($1), std::move($6)); }
+  | sql_b_expr IS OF '(' sql_type_list ')'          %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::IS_OF), std::move($1), ctx.Add(@5, std::move($5))); }
+  | sql_b_expr IS NOT OF '(' sql_type_list ')'      %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3, @4}), ExprFunc::IS_NOT_OF), std::move($1), ctx.Add(@6, std::move($6))); }
     ;
 
 // Productions that can be used in both a_expr and b_expr.
