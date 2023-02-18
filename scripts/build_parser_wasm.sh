@@ -14,12 +14,12 @@ CPP_BUILD_DIR="${CPP_SOURCE_DIR}/build/wasm/${MODE}"
 
 CORES=$(grep -c ^processor /proc/cpuinfo 2>/dev/null || sysctl -n hw.ncpu)
 
-ADDITIONAL_FLAGS=
+ADDITIONAL_FLAGS="-DCMAKE_BUILD_TYPE=Release"
 case $MODE in
   "Debug") ADDITIONAL_FLAGS="-DCMAKE_BUILD_TYPE=Debug" ;;
   "Fast") ADDITIONAL_FLAGS="-DCMAKE_BUILD_TYPE=RelWithDebInfo" ;;
   "Release") ADDITIONAL_FLAGS="-DCMAKE_BUILD_TYPE=Release" ;;
-   *) ADDITIONAL_FLAGS="-DCMAKE_BUILD_TYPE=Release" ;;
+   *) ;;
 esac
 
 INFRA_DIR="${PROJECT_ROOT}/.infra"
@@ -37,6 +37,8 @@ echo "WABT_BIN=${WABT_BIN}"
 echo "BINARYEN_BIN=${BINARYEN_BIN}"
 
 mkdir -p ${CPP_BUILD_DIR}
+
+rm -f ${CPP_BUILD_DIR}/flatsql_parser.wasm
 
 set -x
 cmake \
