@@ -204,6 +204,7 @@ dependencies = [
  "flatbuffers",
  "flatsql-parser",
  "flatsql-proto",
+ "glob",
  "libc",
  "log",
  "pretty_assertions",
@@ -211,6 +212,12 @@ dependencies = [
  "serde",
  "tokio",
 ]
+
+[[package]]
+name = "glob"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d2fabcfbdc87f4758337ca535fb41a6d701b65693ce38287d856d1674551ec9b"
 
 [[package]]
 name = "heck"
