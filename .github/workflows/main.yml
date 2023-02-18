@@ -31,6 +31,7 @@ jobs:
       - name: Build WASM module
         shell: bash
         env:
+          FLATC: /usr/local/bin/flatc
           BINARYEN_BIN: /opt/binaryen/bin
           WABT_BIN: /opt/wabt/bin
           WASI_SDK_PREFIX: /opt/wasi
