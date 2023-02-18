@@ -1,7 +1,7 @@
 sql_create_as_stmt:
     CREATE_P sql_opt_temp TABLE sql_create_as_target AS sql_select_stmt sql_opt_with_data {
         $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_CREATE_AS, Concat(std::move($4), {
-            Attr(Key::SQL_CREATE_AS_TEMP, Enum(@2, $2)),
+            Attr(Key::SQL_CREATE_AS_TEMP, $2),
             Attr(Key::SQL_CREATE_AS_STATEMENT, ctx.Add(@6, proto::NodeType::OBJECT_SQL_SELECT, std::move($6))),
             Attr(Key::SQL_CREATE_AS_WITH_DATA, $7),
         }));
@@ -9,7 +9,7 @@ sql_create_as_stmt:
   | CREATE_P sql_opt_temp TABLE IF_P NOT EXISTS sql_create_as_target AS sql_select_stmt sql_opt_with_data {
         $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_CREATE_AS, Concat(std::move($7), {
             Attr(Key::SQL_CREATE_AS_IF_NOT_EXISTS, Bool(Loc({@4, @5, @6}), true)),
-            Attr(Key::SQL_CREATE_AS_TEMP, Enum(@2, $2)),
+            Attr(Key::SQL_CREATE_AS_TEMP, $2),
             Attr(Key::SQL_CREATE_AS_STATEMENT, ctx.Add(@9, proto::NodeType::OBJECT_SQL_SELECT, std::move($9))),
             Attr(Key::SQL_CREATE_AS_WITH_DATA, $10),
         }));
@@ -29,7 +29,7 @@ sql_create_as_target:
 sql_create_stmt:
     CREATE_P sql_opt_temp TABLE sql_qualified_name '(' sql_opt_table_element_list ')' sql_on_commit_option {
         $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_CREATE, {
-            Attr(Key::SQL_CREATE_TABLE_TEMP, Enum(@2, $2)),
+            Attr(Key::SQL_CREATE_TABLE_TEMP, $2),
             Attr(Key::SQL_CREATE_TABLE_NAME, std::move($4)),
             Attr(Key::SQL_CREATE_TABLE_ELEMENTS, ctx.Add(Loc({@5, @6, @7}), std::move($6))),
             Attr(Key::SQL_CREATE_TABLE_ON_COMMIT, Enum(@8, $8)),
@@ -202,18 +202,18 @@ sql_column_elem: sql_col_id;
 sql_opt_with_data:
     WITH DATA_P         { $$ = Bool(@$, true); }
   | WITH NO DATA_P      { $$ = Bool(@$, false); }
-  | %empty              { $$ = Bool(@$, true); }
+  | %empty              { $$ = Null(); }
     ;
 
 sql_opt_temp:
-    TEMPORARY           { $$ = proto::TempType::LOCAL; }
-  | TEMP                { $$ = proto::TempType::LOCAL; }
-  | LOCAL TEMPORARY     { $$ = proto::TempType::LOCAL; }
-  | LOCAL TEMP          { $$ = proto::TempType::LOCAL; }
-  | GLOBAL TEMPORARY    { $$ = proto::TempType::GLOBAL; }
-  | GLOBAL TEMP         { $$ = proto::TempType::GLOBAL; }
-  | UNLOGGED            { $$ = proto::TempType::UNLOGGED; }
-  | %empty              { $$ = proto::TempType::NONE; }
+    TEMPORARY           { $$ = Enum(@$, proto::TempType::LOCAL); }
+  | TEMP                { $$ = Enum(@$, proto::TempType::LOCAL); }
+  | LOCAL TEMPORARY     { $$ = Enum(@$, proto::TempType::LOCAL); }
+  | LOCAL TEMP          { $$ = Enum(@$, proto::TempType::LOCAL); }
+  | GLOBAL TEMPORARY    { $$ = Enum(@$, proto::TempType::GLOBAL); }
+  | GLOBAL TEMP         { $$ = Enum(@$, proto::TempType::GLOBAL); }
+  | UNLOGGED            { $$ = Enum(@$, proto::TempType::UNLOGGED); }
+  | %empty              { $$ = Null(); }
     ;
 
 sql_on_commit_option: 

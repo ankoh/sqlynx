@@ -15,7 +15,6 @@
                                 </node>
                             </node>
                         </node>
-                        <node key="SQL_VIEW_TEMP" type="ENUM_SQL_TEMP_TYPE" value="NONE"/>
                     </node>
                 </statement>
             </statements>

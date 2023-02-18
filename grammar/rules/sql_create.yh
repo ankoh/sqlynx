@@ -29,6 +29,7 @@
 %type <proto::Node> sql_key_update;
 %type <proto::Node> sql_numeric_only;
 %type <proto::Node> sql_opt_no_inherit;
+%type <proto::Node> sql_opt_temp;
 %type <proto::Node> sql_opt_with;
 %type <proto::Node> sql_opt_with_data;
 %type <proto::Node> sql_signed_iconst;
@@ -36,4 +37,3 @@
 %type <proto::Node> sql_table_constraint_attr_elem;
 %type <proto::Node> sql_table_element;
 %type <proto::OnCommitOption> sql_on_commit_option;
-%type <proto::TempType> sql_opt_temp;
