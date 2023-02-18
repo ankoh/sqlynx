@@ -31,3 +31,5 @@ parser:
 		-DCMAKE_EXPORT_COMPILE_COMMANDS=1
 	ln -sf ${PARSER_DEBUG_DIR}/compile_commands.json ${PARSER_SOURCE_DIR}/compile_commands.json
 	cmake --build ${PARSER_DEBUG_DIR}
+
+wasm:

@@ -19,11 +19,20 @@ case $MODE in
   "Debug") ADDITIONAL_FLAGS="-DCMAKE_BUILD_TYPE=Debug" ;;
   "Fast") ADDITIONAL_FLAGS="-DCMAKE_BUILD_TYPE=RelWithDebInfo" ;;
   "Release") ADDITIONAL_FLAGS="-DCMAKE_BUILD_TYPE=Release" ;;
-   *) ;;
+   *) ADDITIONAL_FLAGS="-DCMAKE_BUILD_TYPE=Release" ;;
 esac
+
+INFRA_DIR="${PROJECT_ROOT}/.infra"
+WASI_SDK_PREFIX=${WASI_SDK_PREFIX:-"${INFRA_DIR}/unpacked/wasi"}
+WASI_SYSROOT=${WASI_SYSROOT:-"${INFRA_DIR}/unpacked/wasi/share/wasi-sysroot"}
+WASI_CMAKE_TOOLCHAIN=${WASI_CMAKE_TOOLCHAIN:-"${INFRA_DIR}/unpacked/wasi/share/cmake/wasi-sdk.cmake"}
+WABT_BIN=${WABT_BIN:-"${INFRA_DIR}/unpacked/wabt/bin"}
+BINARYEN_BIN=${BINARYEN_BIN:-"${INFRA_DIR}/unpacked/binaryen/bin"}
+
 echo "BUILD_TYPE=${MODE}"
 echo "WASI_SDK_PREFIX=${WASI_SDK_PREFIX}"
-echo "WASI_TOOLCHAIN=${WASI_CMAKE_TOOLCHAIN}"
+echo "WASI_SYSROOT=${WASI_SYSROOT}"
+echo "WASI_CMAKE_TOOLCHAIN=${WASI_CMAKE_TOOLCHAIN}"
 echo "WABT_BIN=${WABT_BIN}"
 echo "BINARYEN_BIN=${BINARYEN_BIN}"
 
