@@ -23,7 +23,9 @@ fn main() {
         "debug" => build_dir.join("Debug"),
         _ => build_dir.join("Release"),
     };
-    if build_dir.join("libflatsql_parser.a").exists() {
+    let library_path = build_dir.join("libflatsql_parser.a");
+    if library_path.exists() {
+        println!("cargo:rerun-if-changed={}", library_path.display());
         println!("cargo:rustc-link-search=native={}", build_dir.display());
         return;
     }
