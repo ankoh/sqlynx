@@ -4,7 +4,7 @@ set -euo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)/.."
 
-FLATC="flatc"
+FLATC=${FLATC:-"./.infra/unpacked/flatc/flatc"}
 ${FLATC} --version \
     && { echo "[ OK  ] Command: flatc"; } \
     || { echo "[ ERR ] Command: flatc"; exit 1; }
