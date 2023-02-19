@@ -21,12 +21,12 @@ template <class T, std::size_t N> class SmallVector {
         public:
         Iterator(T* ptr) : ptr(ptr) {}
         Iterator operator++() {
-            ptr++;
+            ++ptr;
             return *this;
         }
         Iterator operator++(int) {
             Iterator i = *this;
-            ptr++;
+            ++ptr;
             return i;
         }
         T& operator*() { return *ptr; }
@@ -111,11 +111,12 @@ template <class T, std::size_t N> class SmallVector {
     void push_front(T&& value) {
         if (size < N) {
             for (size_t i = 0; i < size; ++i) {
-                stack[i + 1] = std::move(stack[i]);
+                stack[size - i] = std::move(stack[size - i - 1]);
             }
             stack[0] = std::move(value);
         } else {
             if (size == N) {
+                heap.reserve(N + 1);
                 std::move(stack.begin(), stack.end(), std::back_inserter(heap));
             }
             heap.push_back(std::move(value));
