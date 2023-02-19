@@ -30,7 +30,7 @@ std::unique_ptr<proto::StatementT> Statement::Finish() {
 
 /// Constructor
 ParserDriver::ParserDriver(Scanner& scanner)
-    : scanner_(scanner), nodes_(), current_statement_(), statements_(), errors_(), vararg_keys_(), dson_key_map_() {}
+    : scanner_(scanner), nodes_(), current_statement_(), statements_(), errors_(), vararg_keys_(), vararg_key_map_() {}
 
 /// Destructor
 ParserDriver::~ParserDriver() {}

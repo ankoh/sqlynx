@@ -43,7 +43,7 @@ where
                         Key(n.attribute_key()).variant_name().unwrap_or_default().to_string()
                     } else {
                         format!(
-                            "DSON_KEYS[{}]",
+                            "VARARG_KEYS[{}]",
                             (n.attribute_key() - proto::AttributeKey::EXT_VARARG_DYNAMIC_KEYS_.0)
                         )
                     };
@@ -152,15 +152,15 @@ where
 
     let vararg_keys = ast.vararg_keys().unwrap_or_default();
     if vararg_keys.is_empty() {
-        writer.write_event(Event::Empty(BytesStart::borrowed_name(b"dson_keys")))?;
+        writer.write_event(Event::Empty(BytesStart::borrowed_name(b"vararg_keys")))?;
     } else {
-        writer.write_event(Event::Start(BytesStart::borrowed_name(b"dson_keys")))?;
+        writer.write_event(Event::Start(BytesStart::borrowed_name(b"vararg_keys")))?;
         for key in vararg_keys {
             let mut elem = BytesStart::borrowed_name(b"key");
             encode_location(&mut elem, *key, text);
             writer.write_event(Event::Empty(elem))?;
         }
-        writer.write_event(Event::End(BytesEnd::borrowed(b"dson_keys")))?;
+        writer.write_event(Event::End(BytesEnd::borrowed(b"vararg_keys")))?;
     }
 
     Ok(())
@@ -228,7 +228,7 @@ mod test {
 <errors/>
 <line_breaks/>
 <comments/>
-<dson_keys/>
+<vararg_keys/>
 "#,
         )
         .await
@@ -269,7 +269,7 @@ mod test {
     <line_break loc="44..45" text="\n"/>
 </line_breaks>
 <comments/>
-<dson_keys/>
+<vararg_keys/>
 "#,
         )
         .await

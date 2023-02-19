@@ -115,7 +115,7 @@ and lo_quantity &lt; 25</input>
                 <line_break loc="155..156" text="\n"/>
             </line_breaks>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="q12_sql">
@@ -235,7 +235,7 @@ and lo_quantity between 26 and 35</input>
                 <line_break loc="165..166" text="\n"/>
             </line_breaks>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="q13_sql">
@@ -368,7 +368,7 @@ and lo_quantity between 26 and 35</input>
                 <line_break loc="179..180" text="\n"/>
             </line_breaks>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="q21_sql">
@@ -558,7 +558,7 @@ order by d_year, p_brand1</input>
                 <line_break loc="242..243" text="\n"/>
             </line_breaks>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="q22_sql">
@@ -751,7 +751,7 @@ order by d_year, p_brand1</input>
                 <line_break loc="261..262" text="\n"/>
             </line_breaks>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="q23_sql">
@@ -941,7 +941,7 @@ order by d_year, p_brand1</input>
                 <line_break loc="241..242" text="\n"/>
             </line_breaks>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="q31_sql">
@@ -1171,7 +1171,7 @@ order by d_year asc, revenue desc</input>
                 <line_break loc="307..308" text="\n"/>
             </line_breaks>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="q32_sql">
@@ -1403,7 +1403,7 @@ order by d_year asc, revenue desc</input>
                 <line_break loc="317..318" text="\n"/>
             </line_breaks>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="q33_sql">
@@ -1671,7 +1671,7 @@ order by d_year asc, revenue desc</input>
                 <line_break loc="353..354" text="\n"/>
             </line_breaks>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="q34_sql">
@@ -1928,7 +1928,7 @@ order by d_year asc, revenue desc</input>
                 <line_break loc="343..344" text="\n"/>
             </line_breaks>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="q41_sql">
@@ -2180,7 +2180,7 @@ order by d_year, c_nation</input>
                 <line_break loc="348..349" text="\n"/>
             </line_breaks>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="q42_sql">
@@ -2485,7 +2485,7 @@ order by d_year, s_nation, p_category</input>
                 <line_break loc="409..410" text="\n"/>
             </line_breaks>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="q43_sql">
@@ -2772,7 +2772,7 @@ order by d_year, s_city, p_brand1</input>
                 <line_break loc="389..390" text="\n"/>
             </line_breaks>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
 </astdumps>

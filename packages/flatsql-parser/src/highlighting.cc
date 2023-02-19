@@ -67,7 +67,7 @@ std::unique_ptr<proto::HighlightingT> Scanner::BuildHighlighting() {
             emit(comments_[ci++], proto::HighlightingTokenType::COMMENT);
         }
         // Is option key?
-        if (dson_key_offsets_.count(symbol.location.offset())) {
+        if (vararg_key_offsets_.count(symbol.location.offset())) {
             emit(symbol.location, proto::HighlightingTokenType::VARARG_KEY);
             continue;
         }

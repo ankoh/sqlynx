@@ -68,7 +68,7 @@ void Scanner::AddLineBreak(proto::Location location) {
 /// Add a comment
 void Scanner::AddComment(proto::Location location) { comments_.push_back(location); }
 /// Mark a location as start of an option key
-void Scanner::MarkAsVarArgKey(proto::Location location) { dson_key_offsets_.insert(location.offset()); }
+void Scanner::MarkAsVarArgKey(proto::Location location) { vararg_key_offsets_.insert(location.offset()); }
 
 /// Read a parameter
 Parser::symbol_type Scanner::ReadParameter(proto::Location loc) {

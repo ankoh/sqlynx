@@ -21,7 +21,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="create_table_1">
@@ -47,7 +47,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="create_table_2">
@@ -81,7 +81,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="create_table_3">
@@ -115,7 +115,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="create_table_4">
@@ -128,7 +128,7 @@
             </errors>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="create_table_5">
@@ -162,7 +162,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="create_table_6">
@@ -191,7 +191,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="create_table_7">
@@ -225,7 +225,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="create_table_8">
@@ -252,7 +252,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="create_table_9">
@@ -265,7 +265,7 @@
             </errors>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="create_table_10">
@@ -297,7 +297,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="create_table_11">
@@ -328,7 +328,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="create_table_12">
@@ -363,7 +363,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
 </astdumps>

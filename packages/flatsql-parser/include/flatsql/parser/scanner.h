@@ -49,8 +49,8 @@ class Scanner {
     std::vector<proto::Location> line_breaks_ = {};
     /// The comments
     std::vector<proto::Location> comments_ = {};
-    /// The dson keys
-    std::unordered_set<size_t> dson_key_offsets_ = {};
+    /// The vararg keys
+    std::unordered_set<size_t> vararg_key_offsets_ = {};
 
     /// All symbols
     std::vector<Parser::symbol_type> symbols_ = {};
@@ -78,8 +78,8 @@ class Scanner {
     auto& line_breaks() { return line_breaks_; }
     /// Get the comments
     auto& comments() { return comments_; }
-    /// Get the dson key offsets
-    auto& dson_key_offsets() { return dson_key_offsets_; }
+    /// Get the vararg key offsets
+    auto& vararg_key_offsets() { return vararg_key_offsets_; }
     /// Access the input
     std::string_view input_text() {
         assert(input_buffer_.size() >= 2);

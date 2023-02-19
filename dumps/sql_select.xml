@@ -16,7 +16,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_iconst_1">
@@ -36,7 +36,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_fconst_1e04">
@@ -56,7 +56,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_bconst_b1010">
@@ -76,7 +76,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_sconst_string">
@@ -100,7 +100,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_sconst_string_latin1">
@@ -124,7 +124,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_sconst_string_unicode_plane1">
@@ -148,7 +148,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_1_gt_2">
@@ -174,7 +174,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_sconst_quotes">
@@ -194,7 +194,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_sconst_quotes_nested_quote">
@@ -214,7 +214,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_sconst_quotes_nested_dquote">
@@ -234,7 +234,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_iconst_1_ident">
@@ -255,7 +255,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="comments_cstyle">
@@ -268,7 +268,7 @@
             <comments>
                 <comment loc="0..9" text="/* foo */"/>
             </comments>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="comments_cstyle_nested">
@@ -281,7 +281,7 @@
             <comments>
                 <comment loc="0..19" text="/* foo /* bar */ */"/>
             </comments>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_iconst_list">
@@ -304,7 +304,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_from_1rel">
@@ -335,7 +335,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_from_1rel_indirect1">
@@ -367,7 +367,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_from_1rel_indirect1_noinherit">
@@ -400,7 +400,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_from_1rel_indirect1_alias">
@@ -433,7 +433,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_from_2rel">
@@ -469,7 +469,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_from_into_2rel">
@@ -511,7 +511,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_from_1rel_group1">
@@ -548,7 +548,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_from_1rel_window_empty">
@@ -586,7 +586,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_from_1rel_window_partition1">
@@ -631,7 +631,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_from_1rel_window_partition1_rows_unbounded">
@@ -690,7 +690,7 @@
                 <line_break loc="15..16" text="\n"/>
             </line_breaks>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_from_1rel_window_partition1_rows_1preceding_current">
@@ -749,7 +749,7 @@
                 <line_break loc="15..16" text="\n"/>
             </line_breaks>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_from_1rel_2windows">
@@ -822,7 +822,7 @@
                 <line_break loc="99..100" text="\n"/>
             </line_breaks>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_distinct_from_1rel">
@@ -855,7 +855,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_distinct_on_from_1rel">
@@ -893,7 +893,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_all_from_1rel">
@@ -916,7 +916,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="values_1">
@@ -936,7 +936,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="values_1_2">
@@ -959,7 +959,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="values_12_34">
@@ -984,7 +984,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="table_a">
@@ -1004,7 +1004,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="union_select1_select2">
@@ -1036,7 +1036,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="union_all_select1_select2">
@@ -1069,7 +1069,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="union_distinct_select1_select2">
@@ -1102,7 +1102,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="intersect_select1_select2">
@@ -1134,7 +1134,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="with_1cte_select2">
@@ -1166,7 +1166,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="with_2ctes_select3">
@@ -1208,7 +1208,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="with_recursive_2ctes_select3">
@@ -1251,7 +1251,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_a_orderby_b">
@@ -1284,7 +1284,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_a_orderby_b_c">
@@ -1324,7 +1324,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_a_orderby_b_c_directions">
@@ -1366,7 +1366,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_a_orderby_b_c_directions_nulls">
@@ -1410,7 +1410,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_table_ref">
@@ -1455,7 +1455,7 @@
                 <line_break loc="16..17" text="\n"/>
             </line_breaks>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_column_ref_expr_1">
@@ -1525,7 +1525,7 @@
                 <line_break loc="16..17" text="\n"/>
             </line_breaks>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_column_ref_expr_2">
@@ -1603,7 +1603,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_generate_series">
@@ -1657,7 +1657,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_functable">
@@ -1693,7 +1693,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_funcconst_1">
@@ -1718,7 +1718,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_funcconst_2">
@@ -1748,7 +1748,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_const_typename_cast">
@@ -1773,7 +1773,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_const_interval_1">
@@ -1798,7 +1798,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_const_interval_2">
@@ -1823,7 +1823,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_const_interval_3">
@@ -1848,7 +1848,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="sql_datetime_type_1">
@@ -1878,7 +1878,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="sql_datetime_type_2">
@@ -1909,7 +1909,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="sql_datetime_type_3">
@@ -1939,7 +1939,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="sql_datetime_type_4">
@@ -1970,7 +1970,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="sql_interval_type_1">
@@ -2000,7 +2000,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="sql_interval_type_2">
@@ -2030,7 +2030,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="sql_generic_type_1">
@@ -2060,7 +2060,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="sql_bit_type_1">
@@ -2090,7 +2090,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="sql_bit_type_2">
@@ -2121,7 +2121,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="sql_bit_type_3">
@@ -2152,7 +2152,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_operators_1">
@@ -2181,7 +2181,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_between_1">
@@ -2208,7 +2208,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_between_2">
@@ -2235,7 +2235,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_between_3">
@@ -2262,7 +2262,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_between_4">
@@ -2289,7 +2289,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_between_5">
@@ -2316,7 +2316,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_between_6">
@@ -2343,7 +2343,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_attimezone_1">
@@ -2369,7 +2369,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_typecast_1">
@@ -2394,7 +2394,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_collate_1">
@@ -2422,7 +2422,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_overlaps_1">
@@ -2474,7 +2474,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_distinct_1">
@@ -2508,7 +2508,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_distinct_2">
@@ -2542,7 +2542,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_isof_1">
@@ -2573,7 +2573,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_isof_2">
@@ -2605,7 +2605,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_case_1">
@@ -2648,7 +2648,7 @@
                 <line_break loc="73..74" text="\n"/>
             </line_breaks>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_case_2">
@@ -2688,7 +2688,7 @@
                 <line_break loc="67..68" text="\n"/>
             </line_breaks>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_param_1">
@@ -2713,7 +2713,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_param_2">
@@ -2738,7 +2738,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_param_3">
@@ -2751,7 +2751,7 @@
             </errors>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_func_1">
@@ -2778,7 +2778,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_func_2">
@@ -2814,7 +2814,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_func_3">
@@ -2850,7 +2850,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_func_4">
@@ -2892,7 +2892,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_select_1">
@@ -2920,7 +2920,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_select_2">
@@ -2962,7 +2962,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_select_3">
@@ -2994,7 +2994,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_indirection_1">
@@ -3023,7 +3023,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_in_1">
@@ -3061,7 +3061,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_in_2">
@@ -3094,7 +3094,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_subquery_1">
@@ -3131,7 +3131,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_subquery_2">
@@ -3168,7 +3168,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_subquery_3">
@@ -3205,7 +3205,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_subquery_4">
@@ -3241,7 +3241,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_default">
@@ -3270,7 +3270,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_1">
@@ -3292,7 +3292,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_2">
@@ -3314,7 +3314,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_3">
@@ -3336,7 +3336,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_4">
@@ -3358,7 +3358,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_5">
@@ -3380,7 +3380,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_7">
@@ -3405,7 +3405,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_8">
@@ -3430,7 +3430,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_9">
@@ -3455,7 +3455,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_10">
@@ -3480,7 +3480,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_11">
@@ -3502,7 +3502,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_12">
@@ -3524,7 +3524,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_13">
@@ -3546,7 +3546,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_14">
@@ -3568,7 +3568,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_15">
@@ -3590,7 +3590,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_16">
@@ -3612,7 +3612,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_17">
@@ -3640,7 +3640,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_18">
@@ -3668,7 +3668,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_19">
@@ -3698,7 +3698,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_20">
@@ -3732,7 +3732,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_21">
@@ -3760,7 +3760,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_22">
@@ -3788,7 +3788,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_23">
@@ -3817,7 +3817,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_24">
@@ -3847,7 +3847,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_25">
@@ -3875,7 +3875,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_26">
@@ -3903,7 +3903,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_27">
@@ -3930,7 +3930,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_28">
@@ -3967,7 +3967,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_28_1">
@@ -3999,7 +3999,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_29">
@@ -4026,7 +4026,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_30">
@@ -4052,7 +4052,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_31">
@@ -4078,7 +4078,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_32">
@@ -4105,7 +4105,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_33">
@@ -4131,7 +4131,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_34">
@@ -4157,7 +4157,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_knownfunc_35">
@@ -4184,7 +4184,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_table_func_1">
@@ -4219,7 +4219,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_table_func_2">
@@ -4254,7 +4254,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_table_func_3">
@@ -4303,7 +4303,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_table_func_4">
@@ -4368,7 +4368,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_table_func_5">
@@ -4452,7 +4452,7 @@
                 <line_break loc="182..183" text="\n"/>
             </line_breaks>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_sample_1">
@@ -4483,7 +4483,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_sample_2">
@@ -4514,7 +4514,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_sample_3">
@@ -4546,7 +4546,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_sample_4">
@@ -4579,7 +4579,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_sample_5">
@@ -4612,7 +4612,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_sample_6">
@@ -4666,7 +4666,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_sample_7">
@@ -4720,7 +4720,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_join_1">
@@ -4774,7 +4774,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_join_2">
@@ -4828,7 +4828,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_join_3">
@@ -4867,7 +4867,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_join_4">
@@ -4906,7 +4906,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_join_5">
@@ -4960,7 +4960,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_join_6">
@@ -5014,7 +5014,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_join_7">
@@ -5068,7 +5068,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_join_8">
@@ -5122,7 +5122,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_join_9">
@@ -5165,7 +5165,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_row_locking_1">
@@ -5220,7 +5220,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_row_locking_2">
@@ -5275,7 +5275,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_row_locking_3">
@@ -5330,7 +5330,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_row_locking_4">
@@ -5385,7 +5385,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_row_locking_5">
@@ -5440,7 +5440,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_row_locking_6">
@@ -5500,7 +5500,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_row_locking_7">
@@ -5561,7 +5561,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_limit_1">
@@ -5589,7 +5589,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_limit_2">
@@ -5602,7 +5602,7 @@
             </errors>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_limit_3">
@@ -5630,7 +5630,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_limit_4">
@@ -5659,7 +5659,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_limit_5">
@@ -5687,7 +5687,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_limit_6">
@@ -5715,7 +5715,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_limit_7">
@@ -5743,7 +5743,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_limit_8">
@@ -5772,7 +5772,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="select_alias_1">
@@ -5823,7 +5823,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
 </astdumps>

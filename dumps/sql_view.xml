@@ -21,7 +21,7 @@
             <errors/>
             <line_breaks/>
             <comments/>
-            <dson_keys/>
+            <vararg_keys/>
         </parsed>
     </astdump>
 </astdumps>

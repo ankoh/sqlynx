@@ -33,7 +33,7 @@ VarArgDictionary::VarArgDictionary(std::string_view program_text, const proto::P
       program_(program),
       key_mapping_(mapVarArgKeys(program_text_, program_.vararg_keys)) {}
 
-/// Convert an dson key to string
+/// Convert an vararg key to string
 std::string_view VarArgDictionary::keyToString(uint16_t key) const {
     if (key < static_cast<uint16_t>(proto::AttributeKey::EXT_VARARG_DYNAMIC_KEYS_)) {
         return proto::AttributeKeyTypeTable()->names[key];
@@ -45,7 +45,7 @@ std::string_view VarArgDictionary::keyToString(uint16_t key) const {
     }
 }
 
-/// Convert an dson key to camelcase (primarily for JSON)
+/// Convert an vararg key to camelcase (primarily for JSON)
 std::string_view VarArgDictionary::keyToStringForJSON(uint16_t key, std::string& tmp) const {
     if (key < static_cast<uint16_t>(proto::AttributeKey::EXT_VARARG_DYNAMIC_KEYS_)) {
         return proto::AttributeKeyTypeTable()->names[key];
@@ -56,7 +56,7 @@ std::string_view VarArgDictionary::keyToStringForJSON(uint16_t key, std::string&
     }
 }
 
-/// Convert an dson key to string for a script
+/// Convert an vararg key to string for a script
 std::string_view VarArgDictionary::keyToStringForScript(uint16_t key, std::string& tmp) const {
     tmp = "'";
     tmp += keyToString(key);
@@ -72,7 +72,7 @@ uint16_t VarArgDictionary::keyFromString(std::string_view text) const {
     return 0;
 }
 
-/// Add a dson file in the parser.
+/// Add a vararg file in the parser.
 proto::Node ParserDriver::AddVarArgField(proto::Location loc, std::vector<proto::Location>&& key_path,
                                          proto::Node value) {
     // return Null();
@@ -97,15 +97,15 @@ proto::Node ParserDriver::AddVarArgField(proto::Location loc, std::vector<proto:
         // Check dictionary for unknown keys
         key_text = trimview(key_text, isNoQuote);
         key_loc = scanner().LocationOf(key_text);
-        if (auto iter = dson_key_map_.find(key_text); iter != dson_key_map_.end()) {
+        if (auto iter = vararg_key_map_.find(key_text); iter != vararg_key_map_.end()) {
             key = iter->second;
         } else {
             key = static_cast<uint16_t>(proto::AttributeKey::EXT_VARARG_DYNAMIC_KEYS_) + vararg_keys_.size();
-            dson_key_map_.insert({key_text, key});
+            vararg_key_map_.insert({key_text, key});
             vararg_keys_.push_back(key_loc);
         }
 
-        // Register as dson key in scanner (for syntax highlighting)
+        // Register as vararg key in scanner (for syntax highlighting)
         scanner().MarkAsVarArgKey(key_loc);
     }
 
