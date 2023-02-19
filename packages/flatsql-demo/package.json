@@ -1,0 +1,15 @@
+{
+    "name": "@ankoh/flatsql-demo",
+    "version": "0.0.5",
+    "description": "",
+    "license": "MPL-2.0",
+    "dependencies": {
+        "@codemirror/view": "^6.9.1",
+        "flatbuffers": "^2.0.4"
+    },
+    "devDependencies": {
+        "esbuild": "^0.14.25",
+        "typescript": "^4.5.5"
+    },
+    "type": "module"
+}
