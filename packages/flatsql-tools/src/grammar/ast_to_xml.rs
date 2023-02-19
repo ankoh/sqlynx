@@ -218,7 +218,7 @@ mod test {
 <statements>
     <statement type="SELECT">
         <node type="OBJECT_SQL_SELECT" loc="0..8" text="select 1">
-            <node key="SQL_SELECT_TARGETS" type="ARRAY">
+            <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="7..8" text="1">
                 <node type="OBJECT_SQL_RESULT_TARGET" loc="7..8" text="1">
                     <node key="SQL_RESULT_TARGET_VALUE" type="LITERAL_INTEGER" loc="7..8" text="1"/>
                 </node>
@@ -246,7 +246,7 @@ mod test {
 <statements>
     <statement type="SELECT">
         <node type="OBJECT_SQL_SELECT" loc="13..21" text="select 1">
-            <node key="SQL_SELECT_TARGETS" type="ARRAY">
+            <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="20..21" text="1">
                 <node type="OBJECT_SQL_RESULT_TARGET" loc="20..21" text="1">
                     <node key="SQL_RESULT_TARGET_VALUE" type="LITERAL_INTEGER" loc="20..21" text="1"/>
                 </node>
@@ -255,7 +255,7 @@ mod test {
     </statement>
     <statement type="SELECT">
         <node type="OBJECT_SQL_SELECT" loc="35..43" text="select 2">
-            <node key="SQL_SELECT_TARGETS" type="ARRAY">
+            <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="42..43" text="2">
                 <node type="OBJECT_SQL_RESULT_TARGET" loc="42..43" text="2">
                     <node key="SQL_RESULT_TARGET_VALUE" type="LITERAL_INTEGER" loc="42..43" text="2"/>
                 </node>
