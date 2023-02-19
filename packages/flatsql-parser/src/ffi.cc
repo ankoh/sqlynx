@@ -1,6 +1,7 @@
 #include "flatsql/parser/parser_driver.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatbuffers/flatbuffers.h"
+#include <span>
 
 using namespace flatsql::parser;
 namespace proto = flatsql::proto;
@@ -32,9 +33,9 @@ extern "C" char* flatsql_new_string(size_t length) {
 extern "C" void flatsql_delete_result(FFIResult* result) { delete result; }
 extern "C" void flatsql_delete_string(char* buffer) { delete buffer; }
 
-extern "C" void flatsql_parse(FFIResult* result, const uint8_t* text, size_t length) {
+extern "C" void flatsql_parse(FFIResult* result, uint8_t* text, size_t length) {
     // Parse the program
-    auto program = ParserDriver::Parse(std::string_view{reinterpret_cast<const char*>(text), length});
+    auto program = ParserDriver::Parse({reinterpret_cast<char*>(text), length});
 
     // Pack the flatbuffer program
     flatbuffers::FlatBufferBuilder fb;

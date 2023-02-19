@@ -50,8 +50,12 @@ pub fn parse(text: &str) -> Result<ProgramBuffer, String> {
         owner_ptr: std::ptr::null_mut(),
         owner_deleter: flatsql_parser_noop_deleter,
     };
+    // Zero-pad input that is passed to the parser function.
+    let mut text_buffer = text.as_bytes().to_vec();
+    text_buffer.push(0);
+    text_buffer.push(0);
     unsafe {
-        flatsql_parse(&mut result, text.as_bytes().as_ptr(), text.len());
+        flatsql_parse(&mut result, text_buffer.as_ptr(), text_buffer.len());
         if result.status_code != 0 {
             let data = std::mem::transmute::<*mut cty::c_void, *const cty::c_char>(result.data_ptr);
             let c_msg = std::ffi::CStr::from_ptr(data);

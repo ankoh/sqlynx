@@ -235,8 +235,6 @@ proto::Node ParserDriver::AddObject(proto::Location loc, proto::NodeType type, s
     return proto::Node(loc, type, 0, NO_PARENT, begin, n);
 }
 
-static std::regex IMPORT_URI_HTTP{"^https?://.*"};
-
 /// Add a statement
 void ParserDriver::AddStatement(proto::Node node) {
     if (node.node_type() == proto::NodeType::NONE) {
@@ -298,19 +296,23 @@ std::shared_ptr<proto::ProgramT> ParserDriver::Finish() {
     return program;
 }
 
-std::shared_ptr<proto::ProgramT> ParserDriver::Parse(std::string_view in, bool trace_scanning, bool trace_parsing) {
-    // XXX shortcut until tests are migrated
-    std::vector<char> padded_buffer{in.begin(), in.end()};
-    padded_buffer.push_back(0);
-    padded_buffer.push_back(0);
+std::shared_ptr<proto::ProgramT> ParserDriver::Parse(std::span<char> in, bool trace_scanning, bool trace_parsing) {
+    // The string must be zero-padded!
+    // Flex needs the last two characters in the buffer to be YY_END_OF_BUFFER.
+    // We blindly write overwrite any existing data there
+    assert(in.size() >= 2);
+    assert(in[in.size() - 1] == 0);
+    assert(in[in.size() - 2] == 0);
 
-    Scanner scanner{padded_buffer};
+    Scanner scanner{in};
     scanner.Produce();
     ParserDriver driver{scanner};
 
     flatsql::parser::Parser parser(driver);
     parser.parse();
 
+    in[in.size() - 1] = 0;
+    in[in.size() - 2] = 0;
     return driver.Finish();
 }
 

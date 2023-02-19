@@ -134,7 +134,7 @@ class ParserDriver {
     std::optional<Expression> TryMerge(proto::Location loc, proto::Node opNode, std::span<Expression> args);
 
     /// Parse a module
-    static std::shared_ptr<proto::ProgramT> Parse(std::string_view in, bool trace_scanning = false,
+    static std::shared_ptr<proto::ProgramT> Parse(std::span<char> in, bool trace_scanning = false,
                                                   bool trace_parsing = false);
 };
 
