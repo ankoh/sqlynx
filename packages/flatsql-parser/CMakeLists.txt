@@ -177,7 +177,6 @@ set(LIB_SRC
     ${CMAKE_SOURCE_DIR}/src/enums.cc
     ${CMAKE_SOURCE_DIR}/src/highlighting.cc
     ${CMAKE_SOURCE_DIR}/src/keywords.cc
-    ${CMAKE_SOURCE_DIR}/src/nodes.cc
     ${CMAKE_SOURCE_DIR}/src/parser_driver.cc
     ${CMAKE_SOURCE_DIR}/src/scanner.cc)
 

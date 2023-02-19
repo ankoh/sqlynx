@@ -236,9 +236,6 @@ inline proto::NumericType ReadFloatType(ParserDriver& driver, proto::Location bi
     return proto::NumericType::FLOAT4;
 }
 
-/// Create a qualified name
-proto::Node QualifiedName(ParserDriver& driver, proto::Location loc, std::vector<proto::Node>&& nodes);
-
 }  // namespace parser
 }  // namespace flatsql
 

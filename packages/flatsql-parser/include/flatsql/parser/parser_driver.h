@@ -74,8 +74,6 @@ class ParserDriver {
     std::vector<Statement> statements_;
     /// The errors
     std::vector<std::pair<proto::Location, std::string>> errors_;
-    /// The dependencies
-    std::vector<proto::Dependency> dependencies_;
     /// The vararg keys
     std::vector<proto::Location> vararg_keys_;
     /// The vararg key mapping

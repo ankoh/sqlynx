@@ -372,20 +372,6 @@ table Error {
 table Statement {
     statement_type: StatementType;
     root_node: uint32;
-    name_qualified: string;
-    name_pretty: string;
-}
-
-enum DependencyType: uint8 {
-    TABLE_REF,
-    PARAMETER_REF,
-}
-
-struct Dependency {
-    type: DependencyType;
-    source_statement: uint32;
-    target_statement: uint32;
-    target_node: uint32;
 }
 
 enum HighlightingTokenType: uint8 {
