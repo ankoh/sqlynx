@@ -93,12 +93,22 @@ std::optional<Expression> ParserDriver::TryMerge(proto::Location loc, proto::Nod
     nary.args.reserve(args.size());
     // Merge any nary expression arguments with the same operation, materialize others
     for (auto& arg: args) {
-        // Argument is just a node or it's a different operation?
-        if (arg.index() == 0 || std::get<1>(arg).op != op) {
-            nary.args.push_back(std::move(arg));
+        // Argument is just a node?
+        if (arg.index() == 0) {
+            nary.args.push_back(std::move(std::get<0>(arg)));
+            continue;
+        }
+        // Is a different operation?
+        auto& child = std::get<1>(arg);
+        if (child.op != op) {
+            nary.args.push_back(AddExpression(std::move(child)));
+            continue;
+        }
+        // Merge child arguments
+        if (nary.args.empty()) {
+            nary.args = std::move(child.args);
         } else {
-            auto& child = std::get<1>(arg);
-            nary.args.reserve(nary.args.size() + child.args.size());
+            nary.args.reserve(nary.args.getSize() + child.args.getSize());
             for (auto& child_arg: child.args) {
                 nary.args.push_back(std::move(child_arg));
             }
@@ -147,7 +157,7 @@ proto::Node ParserDriver::AddExpression(Expression&& expr) {
         auto& nary = std::get<1>(expr);
         return Add(nary.location, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION, {
             Attr(Key::SQL_EXPRESSION_OPERATOR, nary.opNode),
-            Attr(Key::SQL_EXPRESSION_ARGS, AddArray(nary.location, nary.args)),
+            Attr(Key::SQL_EXPRESSION_ARGS, AddArray(nary.location, nary.args.span())),
         });
     }
 }

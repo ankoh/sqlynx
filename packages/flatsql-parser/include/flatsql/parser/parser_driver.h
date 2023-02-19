@@ -57,7 +57,7 @@ struct NAryExpression {
     /// The expression operator node
     proto::Node opNode;
     /// The arguments
-    std::vector<std::variant<proto::Node, NAryExpression>> args;
+    SmallVector<proto::Node, 5> args;
 };
 /// An expression is either a proto node with materialized children, or an n-ary expression that can be flattened
 using Expression = std::variant<proto::Node, NAryExpression>;
