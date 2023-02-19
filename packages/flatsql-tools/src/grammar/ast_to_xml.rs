@@ -74,6 +74,7 @@ where
                         pending.pop();
                     }
                     proto::NodeType::ARRAY => {
+                        encode_location(&mut node, *n.location(), text);
                         let begin = n.children_begin_or_value();
                         let end = begin + n.children_count();
                         for i in 0..n.children_count() {
