@@ -54,7 +54,7 @@ template <class T, std::size_t N> class SmallVector {
                 stack[i] = value;
             }
         } else {
-            heap = std::move(std::vector<T>(count, value));
+            heap = {count, value};
         }
     }
     /// Initializer list
@@ -63,7 +63,7 @@ template <class T, std::size_t N> class SmallVector {
         if (input_size <= N) {
             std::copy(initlist.begin(), initlist.end(), stack.begin());
         } else {
-            heap = std::move(std::vector<T>(initlist));
+            heap = initlist;
         }
         size = input_size;
     }
@@ -114,12 +114,12 @@ template <class T, std::size_t N> class SmallVector {
                 stack[size - i] = std::move(stack[size - i - 1]);
             }
             stack[0] = std::move(value);
-        } else {
-            if (size == N) {
-                heap.reserve(N + 1);
-                std::move(stack.begin(), stack.end(), std::back_inserter(heap));
-            }
+        } else if (size == N) {
+            heap.reserve(N + 1);
             heap.push_back(std::move(value));
+            std::move(stack.begin(), stack.end(), std::back_inserter(heap));
+        } else {
+            heap.insert(heap.begin(), std::move(value));
         }
         size += 1;
     }
