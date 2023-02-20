@@ -1,31 +1,24 @@
-import { configure } from './webpack.common.js';
-import { fileURLToPath } from 'url';
+import { configure } from './webpack.pwa.common';
 import path from 'path';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const buildDir = path.resolve(__dirname, './dist/pwa');
-
 const base = configure({
-    buildDir,
+    target: 'web',
+    entry: {
+        app: ['./src/app.tsx'],
+    },
+    buildDir: path.resolve(__dirname, './build/pwa/debug'),
     tsLoaderOptions: {
+        configFile: 'tsconfig.pwa.json',
         compilerOptions: {
-            configFile: './tsconfig.json',
             sourceMap: true,
-        },
+        }
     },
     extractCss: false,
-    cssIdentifier: '[local]_[hash:base64]'
+    cssIdentifier: '[local]_[hash:base64]',
 });
 
 export default {
     ...base,
-    entry: {
-        app: ['./src/app.pwa.tsx'],
-    },
-    output: {
-        ...base.output,
-        devtoolModuleFilenameTemplate: 'file:///[absolute-resource-path]', // map to source with absolute file path not webpack:// protocol
-    },
     mode: 'development',
     watchOptions: {
         ignored: ['node_modules/**', 'dist/**'],
@@ -37,14 +30,19 @@ export default {
     devServer: {
         historyApiFallback: true,
         compress: true,
-        port: 9001,
+        port: 9002,
         static: {
-            directory: buildDir,
+            directory: path.join(__dirname, './build/pwa/debug/static'),
         },
         headers: {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
             'Access-Control-Allow-Headers': 'X-Requested-With, content-type, Authorization',
+            // This will enable SharedArrayBuffers in Firefox but will block most requests to third-party sites.
+            //
+            // "Cross-Origin-Resource-Policy": "cross-origin",
+            // "Cross-Origin-Embedder-Policy": "require-corp",
+            // "Cross-Origin-Opener-Policy": "same-origin"
         },
     },
 };

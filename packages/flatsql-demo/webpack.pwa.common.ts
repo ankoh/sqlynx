@@ -1,25 +1,18 @@
-import CopyWebpackPlugin from 'copy-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import path from 'path';
-import webpack from 'webpack';
-import { fileURLToPath } from 'url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-export function configure(params) {
+export function configure(params: any) {
     return {
-        target: 'browserslist',
-        entry: {
-            app: ['./src/app.tsx'],
-        },
+        target: params.target,
+        entry: params.entry,
         output: {
             path: params.buildDir,
-            publicPath: '/',
             filename: 'static/js/[name].[contenthash].js',
             chunkFilename: 'static/js/[name].[contenthash].js',
             assetModuleFilename: 'static/assets/[name].[contenthash][ext]',
-            globalObject: 'globalThis',
+            webassemblyModuleFilename: 'static/wasm/[hash].wasm',
             clean: true,
         },
         resolve: {
@@ -28,7 +21,7 @@ export function configure(params) {
         module: {
             rules: [
                 {
-                    test: /\.m?js$/,
+                    test: /\.m?js/,
                     resolve: {
                         fullySpecified: false,
                     },
@@ -36,6 +29,7 @@ export function configure(params) {
                 {
                     test: /\.tsx?$/,
                     loader: 'ts-loader',
+                    exclude: /node_modules/,
                     options: params.tsLoaderOptions,
                 },
                 {
@@ -57,36 +51,66 @@ export function configure(params) {
                     ],
                 },
                 {
-                    test: /\.(png|jpe?g|gif|svg)$/i,
+                    test: /.*\.wasm$/,
+                    type: 'asset/resource',
+                    generator: {
+                        filename: 'static/wasm/[name].[contenthash][ext]',
+                    },
+                },
+                {
+                    test: /\.(sql)$/i,
+                    type: 'asset/resource',
+                    generator: {
+                        filename: 'static/scripts/[name].[contenthash][ext]',
+                    },
+                },
+                {
+                    test: /\.(json)$/i,
+                    type: 'asset/resource',
+                    generator: {
+                        filename: 'static/json/[name].[contenthash][ext]',
+                    },
+                },
+                {
+                    test: /\.(csv|tbl)$/i,
+                    type: 'asset/resource',
+                    generator: {
+                        filename: 'static/csv/[name].[contenthash][ext]',
+                    },
+                },
+                {
+                    test: /\.(parquet)$/i,
+                    type: 'asset/resource',
+                    generator: {
+                        filename: 'static/parquet/[name].[contenthash][ext]',
+                    },
+                },
+                {
+                    test: /\.(png|jpe?g|gif|svg|ico)$/i,
                     type: 'asset/resource',
                     generator: {
                         filename: 'static/img/[name].[contenthash][ext]',
                     },
                 },
                 {
-                    test: /\.(ttf|eot|woff|woff2)$/,
+                    test: /site\.webmanifest$/i,
                     type: 'asset/resource',
                     generator: {
-                        filename: 'static/fonts/[name].[contenthash][ext]',
+                        filename: 'static/[name].[contenthash][ext]',
                     },
                 },
                 {
-                    test: /.*\.wasm$/,
+                    test: /browserconfig\.xml$/i,
                     type: 'asset/resource',
                     generator: {
-                        filename: 'static/wasm/[contenthash][ext]',
-                    },
-                },
-                {
-                    test: /.*github_oauth\.html$/,
-                    type: 'asset/resource',
-                    generator: {
-                        filename: `static/html/[name].${GITHUB_OAUTH_VERSION}[ext]`,
+                        filename: 'static/[name].[contenthash][ext]',
                     },
                 },
             ],
         },
         optimization: {
+            usedExports: 'global',
+            chunkIds: 'deterministic',
             moduleIds: 'deterministic',
             splitChunks: {
                 chunks: 'all',
@@ -103,30 +127,18 @@ export function configure(params) {
             },
         },
         plugins: [
-            new webpack.ProgressPlugin(),
-            new webpack.ProvidePlugin({
-                Buffer: ['buffer', 'Buffer'],
-            }),
-            new webpack.DefinePlugin({
-                'process.env.ENV_BROWSER': true,
-            }),
+            new ForkTsCheckerWebpackPlugin(),
             new HtmlWebpackPlugin({
                 template: './static/index.html',
                 filename: './index.html',
-                favicon: './static/favicon.ico',
             }),
             new MiniCssExtractPlugin({
                 filename: './static/css/[id].[contenthash].css',
                 chunkFilename: './static/css/[id].[contenthash].css',
             }),
-            new CopyWebpackPlugin({
-                patterns: [
-                    {
-                        from: './static/favicons',
-                        to: './static/favicons',
-                    },
-                ],
-            }),
         ],
+        experiments: {
+            asyncWebAssembly: true,
+        },
     };
 }

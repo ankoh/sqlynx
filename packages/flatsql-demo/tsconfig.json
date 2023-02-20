@@ -1,24 +1,22 @@
 {
     "compilerOptions": {
-        "outDir": "./dist/",
-        "target": "es2020",
-        "module": "es2020",
+        "baseUrl": "./src",
+        "outDir": "./build/ts/",
+        "target": "ES6",
+        "module": "commonjs",
+        // TODO(ankoh): Upgrade node resolution to node12 for exports once typescript 4.6.0 is out
+        // https://www.typescriptlang.org/docs/handbook/esm-node.html
         "moduleResolution": "node",
-        "strict": true,
-        "sourceMap": false,
-        "declaration": true,
-        "declarationMap": false,
-        "declarationDir": "./dist/types/",
+        "sourceMap": true,
         "noImplicitAny": true,
         "esModuleInterop": true,
         "downlevelIteration": true,
-        "resolveJsonModule": true,
-        "skipLibCheck": true,
-
+        "strict": true,
+        "jsx": "react",
         "types": ["node"],
-        "typeRoots": ["./types", "./node_modules/@types", "../../node_modules/@types"],
-        "lib": ["es6", "webworker", "dom"]
+        "plugins": [{ "name": "typescript-plugin-css-modules" }],
+        "lib": ["es6", "es2020", "dom"]
     },
-    "exclude": ["./node_modules"],
-    "include": ["./src/**/*", "./test/**/*", "./types/*.d.ts"]
+    "exclude": ["node_modules"],
+    "include": ["src/**/*", "test/**/*", "types/*.d.ts", "webpack.electron.common.ts"]
 }

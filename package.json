@@ -4,6 +4,9 @@
         "packages/flatsql-demo",
         "packages/flatsql-js"
     ],
+    "packages": {
+        "ts-node": "^10.9.1"
+    },
     "browserslist": [
         "last 1 version",
         "> 1%"
