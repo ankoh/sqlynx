@@ -4,7 +4,7 @@ namespace flatsql.proto;
 
 struct Location { offset: uint32; length: uint32; }
 
-enum NodeType: uint16 {
+enum NodeType: uint32 {
     NONE = 0,
 
     IDENTIFIER,
@@ -121,7 +121,7 @@ enum NodeType: uint16 {
     OBJECT_EXT_VARARGS,
 }
 
-enum AttributeKey: uint16 {
+enum AttributeKey: uint32 {
     NONE = 0,
 
     SQL_KEYS_,
@@ -358,7 +358,7 @@ enum StatementType: uint8 {
 struct Node {
     location: Location;
     node_type: NodeType = NONE;
-    attribute_key: uint16 = 0;
+    attribute_key: uint32 = 0;
     parent: uint32 = 0;
     children_begin_or_value: uint32 = 0;
     children_count: uint32 = 0;
