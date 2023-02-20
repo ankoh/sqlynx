@@ -1,0 +1,24 @@
+{
+    "compilerOptions": {
+        "outDir": "./dist/",
+        "target": "es2020",
+        "module": "es2020",
+        "moduleResolution": "node",
+        "strict": true,
+        "sourceMap": false,
+        "declaration": true,
+        "declarationMap": false,
+        "declarationDir": "./dist/types/",
+        "noImplicitAny": true,
+        "esModuleInterop": true,
+        "downlevelIteration": true,
+        "resolveJsonModule": true,
+        "skipLibCheck": true,
+
+        "types": ["node"],
+        "typeRoots": ["./types", "./node_modules/@types", "../../node_modules/@types"],
+        "lib": ["es6", "webworker", "dom"]
+    },
+    "exclude": ["./node_modules"],
+    "include": ["./src/**/*", "./test/**/*", "./types/*.d.ts"]
+}

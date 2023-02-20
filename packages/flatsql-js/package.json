@@ -19,8 +19,9 @@
     "files": [
         "dist/gen/*.d.ts",
         "dist/gen/*.js",
-        "dist/index.*",
-        "dist/flatsql.module.*"
+        "dist/*.js",
+        "dist/*.d.ts",
+        "dist/*.wasm"
     ],
     "type": "module",
     "module": "./dist/flatsql.module.js",
