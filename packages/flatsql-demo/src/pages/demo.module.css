@@ -1,0 +1,45 @@
+@media only screen and (max-width: 800px) {
+    .container {
+        width: 100%;
+        min-height: 100%;
+        background-color: rgb(240, 240, 240);
+
+        display: grid;
+        grid-template-columns: 90%;
+        grid-template-rows: 100%;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+@media only screen and (min-width: 800px) {
+    .container {
+        width: 100%;
+        min-height: 100%;
+        background-color: rgb(240, 240, 240);
+
+        display: grid;
+        grid-template-columns: 760px;
+        grid-template-rows: 100%;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+.page {
+    min-height: 100%;
+}
+
+.header {
+    font-size: 1.4rem;
+    padding: 16px 8px;
+    margin-top: 20px;
+}
+
+.editor {
+    box-sizing: border-box;
+    border: 1px solid rgb(200, 200, 200);
+    border-radius: 8px;
+    padding: 8px;
+    background-color: white;
+}
