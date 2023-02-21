@@ -2,9 +2,12 @@ import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import * as webpack from 'webpack';
+import * as webpackDevServer from 'webpack-dev-server';
 import path from 'path';
 
-export type Configuration = webpack.Configuration & { devServer?: any };
+export type Configuration = webpack.Configuration & {
+    devServer?: webpackDevServer.Configuration
+};
 
 interface ConfigParams {
     target?: string;
