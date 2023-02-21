@@ -3,7 +3,16 @@ import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import path from 'path';
 
-export function configure(params: any) {
+interface ConfigParams {
+    target?: string;
+    entry?: any;
+    buildDir?: string;
+    tsLoaderOptions?: any;
+    extractCss: boolean;
+    cssIdentifier: string
+}
+
+export function configure(params: ConfigParams) {
     return {
         target: params.target,
         entry: params.entry,
