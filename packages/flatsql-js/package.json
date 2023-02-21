@@ -11,7 +11,7 @@
         "typescript": "^4.5.5"
     },
     "scripts": {
-        "build": "tsc --emitDeclarationOnly && node bundle.mjs"
+        "build": "tsc --emitDeclarationOnly && ts-node bundle.ts"
     },
     "include": [
         "./index.ts"
@@ -23,7 +23,6 @@
         "dist/*.d.ts",
         "dist/*.wasm"
     ],
-    "type": "module",
     "module": "./dist/flatsql.module.js",
     "types": "./dist/flatsql.module.d.ts"
 }

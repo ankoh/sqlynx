@@ -2,8 +2,8 @@
     "compilerOptions": {
         "outDir": "./dist/",
         "baseUrl": ".",
-        "target": "es6",
-        "module": "es6",
+        "target": "ES6",
+        "module": "commonjs",
         "moduleResolution": "node",
         "sourceMap": true,
         "declaration": true,
@@ -12,7 +12,7 @@
         "noImplicitAny": true,
         "esModuleInterop": true,
         "lib": ["es6"],
-        "types": [],
+        "types": ["node"],
         "paths": {
             "flatbuffers": ["../../node_modules/flatbuffers/js/flatbuffers.mjs"]
         }

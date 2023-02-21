@@ -1,12 +1,10 @@
 import esbuild from 'esbuild';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
-function printErr(err) {
+function printErr(err: NodeJS.ErrnoException | null) {
     if (err) return console.log(err);
 }
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dist = path.resolve(__dirname, 'dist');
 
 console.log(`[ ESBUILD ] flatsql.module.js`);
