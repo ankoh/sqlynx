@@ -52,27 +52,9 @@ export interface CodeMirrorRef {
     view?: EditorView;
 }
 
-export const CodeMirror = forwardRef<CodeMirrorRef, CodeMirrorProps>((props, ref) => {
-    const editor = useRef<HTMLDivElement>(null);
-    const { state, view, container } = useCodeMirror({
-        container: editor.current,
-        ...props
-    });
-    useImperativeHandle(ref, () => ({ editor: editor.current, state: state, view: view }), [
-        editor,
-        container,
-        state,
-        view,
-    ]);
-    return <div ref={editor}></div>;
-});
-
-interface UseCodeMirror extends CodeMirrorProps {
-    container?: HTMLDivElement | null;
-}
-
-function useCodeMirror(props: UseCodeMirror) {
+export const CodeMirror: React.FC<CodeMirrorProps> = (props: CodeMirrorProps) => {
     // Setup react state
+    const editor = useRef<HTMLDivElement>(null);
     const [container, setContainer] = useState<HTMLDivElement>();
     const [view, setView] = useState<EditorView>();
     const [state, setState] = useState<EditorState>();
@@ -159,8 +141,8 @@ function useCodeMirror(props: UseCodeMirror) {
         };
     }, [container, state]);
 
-    // Set the div element
-    useEffect(() => setContainer(props.container!), [props.container]);
+    // Maintain editor state
+    useEffect(() => setContainer(editor.current!), [editor.current]);
     // Delete the editor view when destroyed
     useEffect(
         () => () => {
@@ -212,5 +194,5 @@ function useCodeMirror(props: UseCodeMirror) {
         }
     }, [props.value, view]);
 
-    return { state, setState, view, setView, container, setContainer };
-}
+    return <div ref={editor}></div>;
+};
