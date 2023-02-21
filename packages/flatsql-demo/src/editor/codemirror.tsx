@@ -53,47 +53,10 @@ export interface CodeMirrorRef {
 }
 
 export const CodeMirror = forwardRef<CodeMirrorRef, CodeMirrorProps>((props, ref) => {
-    const {
-        className,
-        value = '',
-        selection,
-        extensions = [],
-        onChange,
-        onCreateEditor,
-        onUpdate,
-        autoFocus,
-        height,
-        minHeight,
-        maxHeight,
-        width,
-        minWidth,
-        maxWidth,
-        placeholder,
-        editable,
-        readOnly,
-        root,
-        ...other
-    } = props;
     const editor = useRef<HTMLDivElement>(null);
     const { state, view, container } = useCodeMirror({
         container: editor.current,
-        root,
-        value,
-        autoFocus,
-        height,
-        minHeight,
-        maxHeight,
-        width,
-        minWidth,
-        maxWidth,
-        placeholder,
-        editable,
-        readOnly,
-        selection,
-        onChange,
-        onCreateEditor,
-        onUpdate,
-        extensions,
+        ...props
     });
     useImperativeHandle(ref, () => ({ editor: editor.current, state: state, view: view }), [
         editor,
@@ -101,7 +64,7 @@ export const CodeMirror = forwardRef<CodeMirrorRef, CodeMirrorProps>((props, ref
         state,
         view,
     ]);
-    return <div ref={editor} {...other}></div>;
+    return <div ref={editor}></div>;
 });
 
 interface UseCodeMirror extends CodeMirrorProps {
@@ -109,41 +72,22 @@ interface UseCodeMirror extends CodeMirrorProps {
 }
 
 function useCodeMirror(props: UseCodeMirror) {
-    const {
-        value,
-        selection,
-        onChange,
-        onCreateEditor,
-        onUpdate,
-        extensions = [],
-        autoFocus,
-        height = '',
-        minHeight = '',
-        maxHeight = '',
-        placeholder: placeholderStr = '',
-        width = '',
-        minWidth = '',
-        maxWidth = '',
-        editable = true,
-        readOnly = false,
-        root,
-    } = props;
-
     // Setup react state
     const [container, setContainer] = useState<HTMLDivElement>();
     const [view, setView] = useState<EditorView>();
     const [state, setState] = useState<EditorState>();
 
+    // Create editor theme
     const themeOption = EditorView.theme(
         {
             '&': {
                 backgroundColor: 'transparent',
-                height,
-                minHeight,
-                maxHeight,
-                width,
-                minWidth,
-                maxWidth,
+                height: props.height ?? null,
+                minHeight: props.minHeight ?? null,
+                maxHeight: props.maxHeight ?? null,
+                width: props.width ?? null,
+                minWidth: props.maxWidth ?? null,
+                maxWidth: props.maxWidth ?? null,
             },
             '&.cm-editor': {
                 outline: 'none !important',
@@ -158,39 +102,41 @@ function useCodeMirror(props: UseCodeMirror) {
     const updateListener = EditorView.updateListener.of((vu: ViewUpdate) => {
         if (
             vu.docChanged &&
-            typeof onChange === 'function' &&
+            typeof props.onChange === 'function' &&
             // Fix echoing of the remote changes:
             // If transaction is market as remote we don't have to call `onChange` handler again
             !vu.transactions.some(tr => tr.annotation(External))
         ) {
             const doc = vu.state.doc;
             const value = doc.toString();
-            onChange(value, vu);
+            props.onChange(value, vu);
         }
     });
 
     // Build extensions
     let getExtensions = [updateListener, themeOption];
-    if (placeholderStr) {
-        getExtensions.unshift(placeholder(placeholderStr));
+    if (props.placeholder) {
+        getExtensions.unshift(placeholder(props.placeholder));
     }
-    if (editable === false) {
+    if (props.editable === false) {
         getExtensions.push(EditorView.editable.of(false));
     }
-    if (readOnly) {
+    if (props.readOnly) {
         getExtensions.push(EditorState.readOnly.of(true));
     }
-    if (onUpdate && typeof onUpdate === 'function') {
-        getExtensions.push(EditorView.updateListener.of(onUpdate));
+    if (props.onUpdate && typeof props.onUpdate === 'function') {
+        getExtensions.push(EditorView.updateListener.of(props.onUpdate));
     }
-    getExtensions = getExtensions.concat(extensions);
+    if (props.extensions) {
+        getExtensions.push(props.extensions);
+    }
 
     // Create EditorView if it does not exist
     useEffect(() => {
         if (container && !state) {
             const config = {
-                doc: value,
-                selection,
+                doc: props.value,
+                selection: props.selection,
                 extensions: getExtensions,
             };
             const stateCurrent = EditorState.create(config);
@@ -199,10 +145,10 @@ function useCodeMirror(props: UseCodeMirror) {
                 const viewCurrent = new EditorView({
                     state: stateCurrent,
                     parent: container,
-                    root,
+                    root: props.root,
                 });
                 setView(viewCurrent);
-                onCreateEditor && onCreateEditor(viewCurrent, stateCurrent);
+                props.onCreateEditor && props.onCreateEditor(viewCurrent, stateCurrent);
             }
         }
         return () => {
@@ -227,44 +173,44 @@ function useCodeMirror(props: UseCodeMirror) {
     );
     // Autofocus the editor view, if requested
     useEffect(() => {
-        if (autoFocus && view) {
+        if (props.autoFocus && view) {
             view.focus();
         }
-    }, [autoFocus, view]);
+    }, [props.autoFocus, view]);
 
-    // Reconfigure extensions
+    // Reconfigure the state whenever properties change
     useEffect(() => {
         if (view) {
             view.dispatch({ effects: StateEffect.reconfigure.of(getExtensions) });
         }
     }, [
-        extensions,
-        height,
-        minHeight,
-        maxHeight,
-        width,
-        minWidth,
-        maxWidth,
-        placeholderStr,
-        editable,
-        readOnly,
-        onChange,
-        onUpdate,
+        props.extensions,
+        props.height,
+        props.minHeight,
+        props.maxHeight,
+        props.width,
+        props.minWidth,
+        props.maxWidth,
+        props.placeholder,
+        props.editable,
+        props.readOnly,
+        props.onChange,
+        props.onUpdate,
     ]);
 
     // Check view value if the props value changes
     useEffect(() => {
-        if (value === undefined) {
+        if (props.value === undefined) {
             return;
         }
         const currentValue = view ? view.state.doc.toString() : '';
-        if (view && value !== currentValue) {
+        if (view && props.value !== currentValue) {
             view.dispatch({
-                changes: { from: 0, to: currentValue.length, insert: value || '' },
+                changes: { from: 0, to: currentValue.length, insert: props.value || '' },
                 annotations: [External.of(true)],
             });
         }
-    }, [value, view]);
+    }, [props.value, view]);
 
     return { state, setState, view, setView, container, setContainer };
 }
