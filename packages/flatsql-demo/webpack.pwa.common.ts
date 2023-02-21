@@ -1,7 +1,10 @@
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
+import * as webpack from 'webpack';
 import path from 'path';
+
+export type Configuration = webpack.Configuration & { devServer?: any };
 
 interface ConfigParams {
     target?: string;
@@ -12,7 +15,7 @@ interface ConfigParams {
     cssIdentifier: string
 }
 
-export function configure(params: ConfigParams) {
+export function configure(params: ConfigParams): Partial<Configuration> {
     return {
         target: params.target,
         entry: params.entry,

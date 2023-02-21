@@ -1,4 +1,4 @@
-import { configure } from './webpack.pwa.common';
+import { configure, Configuration } from './webpack.pwa.common';
 import path from 'path';
 
 const base = configure({
@@ -17,7 +17,7 @@ const base = configure({
     cssIdentifier: '[local]_[hash:base64]',
 });
 
-export default {
+const config: Configuration = {
     ...base,
     mode: 'development',
     watchOptions: {
@@ -46,3 +46,4 @@ export default {
         },
     },
 };
+export default config;
