@@ -26,7 +26,7 @@ extern "C" FFIResult* flatsql_new_result() {
 
 extern "C" char* flatsql_new_string(size_t length) {
     auto buffer = new char[length];
-    memset(buffer, 0, length * sizeof(char));
+    memset(buffer, 0, (length + 2) * sizeof(char)); // Append 2 chars for flex
     return buffer;
 }
 

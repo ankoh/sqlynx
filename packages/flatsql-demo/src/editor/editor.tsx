@@ -21,7 +21,7 @@ export const Editor: React.FC<EditorProps> = (props: EditorProps) => {
     if (parser) {
         let result: flatsql.WasmBuffer | null = null;
         try {
-            result = parser.parse("select 42");
+            result = parser.parseString("select 42");
             const byteBuffer = new flatbuffers.ByteBuffer(result.getData());
             const program = flatsql.proto.Program.getRootAsProgram(byteBuffer);
             console.log(`statementsLength: ${program.statementsLength()}`);

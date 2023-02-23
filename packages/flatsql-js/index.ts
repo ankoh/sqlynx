@@ -7,7 +7,7 @@ export class Parser {
     instanceExports: ParserModuleExports;
     memory: WebAssembly.Memory;
 
-    constructor(instance: WebAssembly.Instance) {
+    public constructor(instance: WebAssembly.Instance) {
         this.encoder = new TextEncoder();
         this.decoder = new TextDecoder();
         this.instance = instance;
@@ -23,7 +23,7 @@ export class Parser {
         };
     }
 
-    static async instantiateStreaming(response: PromiseLike<Response>): Promise<Parser> {
+    public static async instantiateStreaming(response: PromiseLike<Response>): Promise<Parser> {
         const importStubs = {
             wasi_snapshot_preview1: {
                 proc_exit: (code: number) => console.error(`proc_exit(${code})`),
@@ -43,32 +43,46 @@ export class Parser {
         return new Parser(instance);
     }
 
-    parse(text: string): WasmBuffer {
-        try {
-            const textEncoded = this.encoder.encode(text);
-            const textPtr = this.instanceExports.flatsql_new_string(textEncoded.length);
-            const resultPtr = this.instanceExports.flatsql_new_result();
-            let heapU8 = new Uint8Array(this.memory.buffer);
-            heapU8.subarray(textPtr, textPtr + textEncoded.length).set(textEncoded);
-            this.instanceExports.flatsql_parse(resultPtr, textPtr, textEncoded.length);
-            this.instanceExports.flatsql_delete_string(textPtr);
-            heapU8 = new Uint8Array(this.memory.buffer);
-            const resultPtrU32 = resultPtr / 4;
-            const heapU32 = new Uint32Array(this.memory.buffer);
-            const statusCode = heapU32[resultPtrU32];
-            const dataLength = heapU32[resultPtrU32 + 1];
-            const dataPtr = heapU32[resultPtrU32 + 2];
-            const dataArray = heapU8.subarray(dataPtr, dataPtr + dataLength);
-            if (statusCode == 0) {
-                return new WasmBuffer(this, resultPtr, dataArray);
-            } else {
-                const error = this.decoder.decode(dataArray);
-                this.instanceExports.flatsql_delete_result(resultPtr);
-                throw new Error(error);
-            }
-        } catch (e: any) {
-            console.error(e);
-            throw e;
+    public parseUtf8(textBuffers: Uint8Array[], textByteLength: number): WasmBuffer {
+        // Copy all UTF-8 chunks to the Wasm memory
+        const textPtr = this.instanceExports.flatsql_new_string(textByteLength);
+        const heapU8 = new Uint8Array(this.memory.buffer);
+        let writer = textPtr;
+        for (const textBuffer of textBuffers) {
+            heapU8.subarray(writer, textBuffer.length).set(textBuffer);
+            writer += textBuffer.length;
+        }
+        // Parse the text
+        return this.parseImpl(textPtr, textByteLength);
+    }
+
+    public parseString(text: string): WasmBuffer {
+        // Copy string to the Wasm memory
+        const textEncoded = this.encoder.encode(text);
+        const textPtr = this.instanceExports.flatsql_new_string(textEncoded.length);
+        const heapU8 = new Uint8Array(this.memory.buffer);
+        heapU8.subarray(textPtr, textPtr + textEncoded.length).set(textEncoded);
+        // Parse the text
+        return this.parseImpl(textPtr, textEncoded.length);
+    }
+
+    protected parseImpl(textPtr: number, textLength: number): WasmBuffer {
+        const resultPtr = this.instanceExports.flatsql_new_result();
+        this.instanceExports.flatsql_parse(resultPtr, textPtr, textLength);
+        this.instanceExports.flatsql_delete_string(textPtr);
+        const heapU8 = new Uint8Array(this.memory.buffer);
+        const resultPtrU32 = resultPtr / 4;
+        const heapU32 = new Uint32Array(this.memory.buffer);
+        const statusCode = heapU32[resultPtrU32];
+        const dataLength = heapU32[resultPtrU32 + 1];
+        const dataPtr = heapU32[resultPtrU32 + 2];
+        const dataArray = heapU8.subarray(dataPtr, dataPtr + dataLength);
+        if (statusCode == 0) {
+            return new WasmBuffer(this, resultPtr, dataArray);
+        } else {
+            const error = this.decoder.decode(dataArray);
+            this.instanceExports.flatsql_delete_result(resultPtr);
+            throw new Error(error);
         }
     }
 }
@@ -86,23 +100,23 @@ export class WasmBuffer {
     resultPtr: number | null;
     data: Uint8Array;
 
-    constructor(parser: Parser, resultPtr: number, data: Uint8Array) {
+    public constructor(parser: Parser, resultPtr: number, data: Uint8Array) {
         this.parser = parser;
         this.resultPtr = resultPtr;
         this.data = data;
     }
-    delete() {
+    public delete() {
         if (this.resultPtr) {
             this.parser.instanceExports.flatsql_delete_result(this.resultPtr);
         }
         this.resultPtr = null;
     }
-    getDataCopy(): Uint8Array {
+    public getDataCopy(): Uint8Array {
         const copy = new Uint8Array(new ArrayBuffer(this.data.byteLength));
         copy.set(this.data);
         return copy;
     }
-    getData(): Uint8Array {
+    public getData(): Uint8Array {
         return this.data;
     }
 }

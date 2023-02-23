@@ -5,38 +5,80 @@ import { RangeSetBuilder, StateField, StateEffect, EditorState, Transaction, Fac
 /// We use this configuration to inject the WebAssembly module.
 export class FlatSQLExtensionConfig {};
 
+/// A state effect to overwrite the editor state with a given value
+const FLATSQL_EFFECT_SET_STATE = StateEffect.define<FlatSQLExtensionState>();
+/// A state effect to increment a dummy counter
+const FLATSQL_EFFECT_DUMMY = StateEffect.define<FlatSQLExtensionState>();
+
 /// A FlatSQL editor state.
 /// This state can be resolved in the individual plugins through the CodeMirror StateField FLATSQL_STATE_FIELD.
 class FlatSQLExtensionState {
-    apply(_tr: Transaction) {
-        return new FlatSQLExtensionState();
+    counter: number;
+
+    constructor() {
+        this.counter = 0;
+    }
+    
+    apply(tr: Transaction) {
+
+        // Copy-on-write
+        let result: FlatSQLExtensionState = this;
+        const cow = () => {
+            if (result == this) {
+                result = new FlatSQLExtensionState();
+                result.counter = this.counter;
+            }
+            return result;
+        };
+
+        // Find out if the transaction mutates us
+        for (let e of tr.effects) {
+            if (e.is(FLATSQL_EFFECT_SET_STATE)) {
+                return e.value;
+            }
+            if (e.is(FLATSQL_EFFECT_DUMMY)) {
+                cow().counter += 1;
+            }
+        }
+        return result;
     }
     static init(_state: EditorState) {
-        console.log("INITIAL STATE");
         return new FlatSQLExtensionState();
     }
 };
 
-/// A state effect to overwrite the editor state with a given value
-const FLATSQL_SET_STATE = StateEffect.define<FlatSQLExtensionState>();
 /// A state field to resolve the shared FlatSQL state
 const FLATSQL_STATE_FIELD = StateField.define<FlatSQLExtensionState>({
     create: FlatSQLExtensionState.init,
-    update: (value, transaction) => {
-        console.log("UPDATE STATE");
-        for (let e of transaction.effects) if (e.is(FLATSQL_SET_STATE)) return e.value
-        return value.apply(transaction)
-    }
-    },
-);
+    update: (value, transaction) => value.apply(transaction),
+});
 
 /// A FlatSQL parser plugin that parses the CodeMirror text whenever it changes
 class FlatSQLParser implements PluginValue {
+    encoder: TextEncoder;
+
     constructor(readonly view: EditorView) {
-        let builder = new RangeSetBuilder<Decoration>();
+        this.encoder = new TextEncoder();
     }
-    update(_update: ViewUpdate) {
-        console.log("-- UPDATE PARSER");
+    update(update: ViewUpdate) {
+        if (!update.docChanged) {
+            return;
+        }
+
+        // Collect the text buffers
+        console.time('UTF-8 Encoding');
+        let textBuffers = [];
+        let textLength = 0;
+        for (let iter = this.view.state.doc.iter(); !iter.done; iter = iter.next()) {
+            const buffer = this.encoder.encode(iter.value);
+            textLength += buffer.byteLength;
+            textBuffers.push(buffer);
+        }
+        console.timeEnd('UTF-8 Encoding');
+
+        // Resolve the parser
+
+
     }
     destroy() {}
 };
@@ -49,8 +91,10 @@ class FlatSQLHighlighter implements PluginValue {
         let builder = new RangeSetBuilder<Decoration>();
         this.decorations = builder.finish();
     }
-    update(_update: ViewUpdate) {
-        console.log("-- UPDATE HIGHLIGHTER");
+    update(update: ViewUpdate) {
+        if (!update.docChanged) {
+            return;
+        }
     }
     destroy() {}
 };
