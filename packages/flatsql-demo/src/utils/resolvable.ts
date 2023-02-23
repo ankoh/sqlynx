@@ -18,8 +18,8 @@ export class Resolvable<Value, Progress = null, Err = Error> {
         this.error = error;
     }
 
-    public resolving(): boolean {
-        return this.status != ResolvableStatus.NONE;
+    public unresolved(): boolean {
+        return this.status == ResolvableStatus.NONE;
     }
     public completeWith(value: Value): Resolvable<Value, Progress, Err> {
         return new Resolvable(ResolvableStatus.COMPLETED, value, this.error);

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { CodeMirror } from '../editor/codemirror';
+import { Editor } from '../editor/editor';
 
 import styles from './demo.module.css';
 
@@ -13,7 +13,7 @@ export const DemoPage: React.FC<DemoProps> = (props: DemoProps) => {
                     FlatSQL Editor
                 </div>
                 <div className={styles.editor}>
-                    <CodeMirror value="hello world" height='200px' />
+                    <Editor />
                 </div>
             </div>
         </div>

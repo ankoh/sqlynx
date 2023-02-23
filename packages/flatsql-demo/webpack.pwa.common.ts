@@ -1,3 +1,4 @@
+import CopyWebpackPlugin from 'copy-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
@@ -80,45 +81,10 @@ export function configure(params: ConfigParams): Partial<Configuration> {
                     },
                 },
                 {
-                    test: /\.(json)$/i,
-                    type: 'asset/resource',
-                    generator: {
-                        filename: 'static/json/[name].[contenthash][ext]',
-                    },
-                },
-                {
-                    test: /\.(csv|tbl)$/i,
-                    type: 'asset/resource',
-                    generator: {
-                        filename: 'static/csv/[name].[contenthash][ext]',
-                    },
-                },
-                {
-                    test: /\.(parquet)$/i,
-                    type: 'asset/resource',
-                    generator: {
-                        filename: 'static/parquet/[name].[contenthash][ext]',
-                    },
-                },
-                {
                     test: /\.(png|jpe?g|gif|svg|ico)$/i,
                     type: 'asset/resource',
                     generator: {
                         filename: 'static/img/[name].[contenthash][ext]',
-                    },
-                },
-                {
-                    test: /site\.webmanifest$/i,
-                    type: 'asset/resource',
-                    generator: {
-                        filename: 'static/[name].[contenthash][ext]',
-                    },
-                },
-                {
-                    test: /browserconfig\.xml$/i,
-                    type: 'asset/resource',
-                    generator: {
-                        filename: 'static/[name].[contenthash][ext]',
                     },
                 },
             ],
@@ -150,6 +116,14 @@ export function configure(params: ConfigParams): Partial<Configuration> {
             new MiniCssExtractPlugin({
                 filename: './static/css/[id].[contenthash].css',
                 chunkFilename: './static/css/[id].[contenthash].css',
+            }),
+            new CopyWebpackPlugin({
+                patterns: [
+                    {
+                        from: './static/favicons',
+                        to: './static/favicons',
+                    },
+                ],
             }),
         ],
         experiments: {
