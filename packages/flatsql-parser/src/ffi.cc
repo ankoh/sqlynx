@@ -30,7 +30,12 @@ extern "C" char* flatsql_new_string(size_t length) {
     return buffer;
 }
 
-extern "C" void flatsql_delete_result(FFIResult* result) { delete result; }
+extern "C" void flatsql_delete_result(FFIResult* result) {
+    result->owner_deleter(result->owner_ptr);
+    result->owner_ptr = nullptr;
+    result->owner_deleter = nullptr;
+    delete result;
+}
 extern "C" void flatsql_delete_string(char* buffer) { delete buffer; }
 
 extern "C" void flatsql_parse(FFIResult* result, uint8_t* text, size_t length) {

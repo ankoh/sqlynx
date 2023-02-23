@@ -76,7 +76,6 @@ class FlatSQLParser implements PluginValue {
         }
 
         // Collect the text buffers.
-        // XXX We could be more efficient here by maintaining UTF-8 chunks on view updates.
         console.time('UTF-8 Encoding');
         let textBuffers = [];
         let textLength = 0;
@@ -87,8 +86,10 @@ class FlatSQLParser implements PluginValue {
         }
         console.timeEnd('UTF-8 Encoding');
 
+        // Parse text buffers
         console.time('Parsing');
-        parser.parseUtf8(textBuffers, textLength);
+        const program = parser.parseUtf8(textBuffers, textLength);
+        program.delete();
         console.timeEnd('Parsing');
 
     }

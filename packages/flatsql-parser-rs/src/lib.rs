@@ -29,10 +29,10 @@ pub struct ProgramBuffer {
 impl Drop for ProgramBuffer {
     fn drop(&mut self) {
         let ptr = self.owner_ptr;
-        self.owner_ptr = std::ptr::null_mut();
         if ptr != std::ptr::null_mut() {
             (self.owner_deleter)(self.owner_ptr);
         }
+        self.owner_ptr = std::ptr::null_mut();
     }
 }
 
