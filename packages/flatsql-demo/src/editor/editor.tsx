@@ -27,7 +27,9 @@ export const Editor: React.FC<EditorProps> = (props: EditorProps) => {
         } catch(e) {
             console.error(e);
         } finally {
-            result!.delete();
+            if (result) {
+                result.delete();
+            }
         }
     }
     return (
