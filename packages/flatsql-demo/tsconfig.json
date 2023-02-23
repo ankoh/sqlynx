@@ -3,7 +3,7 @@
         "baseUrl": "./src",
         "outDir": "./build/ts/",
         "target": "ES6",
-        "module": "commonjs",
+        "module": "CommonJS",
         // TODO(ankoh): Upgrade node resolution to node12 for exports once typescript 4.6.0 is out
         // https://www.typescriptlang.org/docs/handbook/esm-node.html
         "moduleResolution": "node",

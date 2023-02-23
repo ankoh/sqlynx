@@ -11,7 +11,7 @@
         "declarationDir": "./dist",
         "noImplicitAny": true,
         "esModuleInterop": true,
-        "lib": ["es6"],
+        "lib": ["es6", "dom"],
         "types": ["node"],
         "paths": {
             "flatbuffers": ["../../node_modules/flatbuffers/js/flatbuffers.mjs"]
