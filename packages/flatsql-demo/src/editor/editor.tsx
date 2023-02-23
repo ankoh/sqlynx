@@ -4,7 +4,7 @@ import * as flatsql from '@ankoh/flatsql';
 
 import { useBackend, useBackendResolver } from '../backend';
 import { CodeMirror } from './codemirror';
-import { FlatSQLEditorConfig, FlatSQLEditorExtension } from './codemirror_extension';
+import { FlatSQLExtensionConfig, FlatSQLExtension } from './extension';
 
 import styles from './editor.module.css';
 
@@ -34,12 +34,12 @@ export const Editor: React.FC<EditorProps> = (props: EditorProps) => {
         }
     }
 
-    const extConfig = new FlatSQLEditorConfig();
+    const config = new FlatSQLExtensionConfig();
 
     return (
         <div className={styles.container}>
             <CodeMirror value="hello world" height='200px' extensions={[
-                FlatSQLEditorExtension.of(extConfig)
+                FlatSQLExtension.of(config)
             ]} />
         </div>
     );
