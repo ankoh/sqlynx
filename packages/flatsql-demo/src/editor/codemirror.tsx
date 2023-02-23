@@ -1,6 +1,6 @@
 // Significant portions of this file have been derived from @uiwjs/react-codemirror
 
-import React, { useRef, forwardRef, useImperativeHandle } from 'react';
+import React, { useRef } from 'react';
 import { EditorState, EditorStateConfig, Extension, Annotation, StateEffect } from '@codemirror/state';
 import { EditorView, ViewUpdate, placeholder } from '@codemirror/view';
 import { useEffect, useState } from 'react';
@@ -96,21 +96,21 @@ export const CodeMirror: React.FC<CodeMirrorProps> = (props: CodeMirrorProps) =>
     });
 
     // Build extensions
-    let getExtensions = [updateListener, themeOption];
+    let extensions = [updateListener, themeOption];
     if (props.placeholder) {
-        getExtensions.unshift(placeholder(props.placeholder));
+        extensions.unshift(placeholder(props.placeholder));
     }
     if (props.editable === false) {
-        getExtensions.push(EditorView.editable.of(false));
+        extensions.push(EditorView.editable.of(false));
     }
     if (props.readOnly) {
-        getExtensions.push(EditorState.readOnly.of(true));
+        extensions.push(EditorState.readOnly.of(true));
     }
     if (props.onUpdate && typeof props.onUpdate === 'function') {
-        getExtensions.push(EditorView.updateListener.of(props.onUpdate));
+        extensions.push(EditorView.updateListener.of(props.onUpdate));
     }
     if (props.extensions) {
-        getExtensions.push(props.extensions);
+        extensions.push(props.extensions);
     }
 
     // Create EditorView if it does not exist
@@ -119,7 +119,7 @@ export const CodeMirror: React.FC<CodeMirrorProps> = (props: CodeMirrorProps) =>
             const config = {
                 doc: props.value,
                 selection: props.selection,
-                extensions: getExtensions,
+                extensions: extensions,
             };
             const stateCurrent = EditorState.create(config);
             setState(stateCurrent);
@@ -163,7 +163,7 @@ export const CodeMirror: React.FC<CodeMirrorProps> = (props: CodeMirrorProps) =>
     // Reconfigure the state whenever properties change
     useEffect(() => {
         if (view) {
-            view.dispatch({ effects: StateEffect.reconfigure.of(getExtensions) });
+            view.dispatch({ effects: StateEffect.reconfigure.of(extensions) });
         }
     }, [
         props.extensions,
