@@ -43,7 +43,7 @@ export class Parser {
         return new Parser(instance);
     }
 
-    async parse(text: string): Promise<WasmBuffer> {
+    parse(text: string): WasmBuffer {
         try {
             const textEncoded = this.encoder.encode(text);
             const textPtr = this.instanceExports.flatsql_new_string(textEncoded.length);
