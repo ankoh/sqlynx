@@ -32,15 +32,19 @@ export const Editor: React.FC<EditorProps> = (props: EditorProps) => {
                 result.delete();
             }
         }
+
+        const config = {
+            parser
+        };
+        return (
+            <div className={styles.container}>
+                <CodeMirror value="hello world" height='200px' extensions={[
+                    FlatSQLExtension.of(config)
+                ]} />
+            </div>
+        );
+    } else {
+        return <div>Loading</div>
     }
 
-    const config = new FlatSQLExtensionConfig();
-
-    return (
-        <div className={styles.container}>
-            <CodeMirror value="hello world" height='200px' extensions={[
-                FlatSQLExtension.of(config)
-            ]} />
-        </div>
-    );
 }

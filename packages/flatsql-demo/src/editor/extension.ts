@@ -1,9 +1,12 @@
+import * as flatsql from '@ankoh/flatsql';
 import { EditorView, ViewUpdate, PluginValue, ViewPlugin, DecorationSet, Decoration } from "@codemirror/view";
 import { RangeSetBuilder, StateField, StateEffect, EditorState, Transaction, Facet } from "@codemirror/state"
 
 /// A configuration for a FlatSQL editor extension.
 /// We use this configuration to inject the WebAssembly module.
-export class FlatSQLExtensionConfig {};
+export interface FlatSQLExtensionConfig {
+    parser: flatsql.Parser
+};
 
 /// A state effect to overwrite the editor state with a given value
 const FLATSQL_EFFECT_SET_STATE = StateEffect.define<FlatSQLExtensionState>();
@@ -65,7 +68,15 @@ class FlatSQLParser implements PluginValue {
             return;
         }
 
-        // Collect the text buffers
+        // Resolve the parser
+        const parser = this.view.state.facet(FlatSQLExtension)?.parser;
+        if (!parser) {
+            console.warn("Parser not set");
+            return;
+        }
+
+        // Collect the text buffers.
+        // XXX We could be more efficient here by maintaining UTF-8 chunks on view updates.
         console.time('UTF-8 Encoding');
         let textBuffers = [];
         let textLength = 0;
@@ -76,8 +87,9 @@ class FlatSQLParser implements PluginValue {
         }
         console.timeEnd('UTF-8 Encoding');
 
-        // Resolve the parser
-
+        console.time('Parsing');
+        parser.parseUtf8(textBuffers, textLength);
+        console.timeEnd('Parsing');
 
     }
     destroy() {}

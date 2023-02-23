@@ -49,7 +49,7 @@ export class Parser {
         const heapU8 = new Uint8Array(this.memory.buffer);
         let writer = textPtr;
         for (const textBuffer of textBuffers) {
-            heapU8.subarray(writer, textBuffer.length).set(textBuffer);
+            heapU8.subarray(writer, writer + textBuffer.length).set(textBuffer);
             writer += textBuffer.length;
         }
         // Parse the text
