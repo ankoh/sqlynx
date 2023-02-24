@@ -47,12 +47,15 @@ endif()
 # CMake includes
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules ${CMAKE_MODULE_PATH})
-find_package(Threads REQUIRED)
 include("${CMAKE_SOURCE_DIR}/cmake/flatbuffers.cmake")
-include("${CMAKE_SOURCE_DIR}/cmake/gtest.cmake")
-include("${CMAKE_SOURCE_DIR}/cmake/gflags.cmake")
-include("${CMAKE_SOURCE_DIR}/cmake/benchmark.cmake")
-include("${CMAKE_SOURCE_DIR}/cmake/pugixml.cmake")
+
+if(NOT WASM)
+  find_package(Threads REQUIRED)
+  include("${CMAKE_SOURCE_DIR}/cmake/gtest.cmake")
+  include("${CMAKE_SOURCE_DIR}/cmake/gflags.cmake")
+  include("${CMAKE_SOURCE_DIR}/cmake/benchmark.cmake")
+  include("${CMAKE_SOURCE_DIR}/cmake/pugixml.cmake")
+endif()
 
 add_subdirectory("${CMAKE_SOURCE_DIR}/../flatsql-proto-cpp"
                  "${CMAKE_BINARY_DIR}/proto/")
