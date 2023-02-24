@@ -16,9 +16,9 @@ using namespace flatsql::testing;
 
 DEFINE_string(source_dir, "", "Source directory");
 
-static void generate_grammar_tests(const std::filesystem::path& source_dir) {
-    auto grammar_dir = source_dir / "dumps";
-    for (auto& p : std::filesystem::directory_iterator(grammar_dir)) {
+static void generate_astdumps(const std::filesystem::path& source_dir) {
+    auto dump_dir = source_dir / "dumps";
+    for (auto& p : std::filesystem::directory_iterator(dump_dir)) {
         auto filename = p.path().filename().filename().string();
 
         // Is template file file
@@ -75,6 +75,6 @@ int main(int argc, char* argv[]) {
         std::cout << "Invalid source directory: " << FLAGS_source_dir << std::endl;
     }
     auto source_dir = std::filesystem::path{FLAGS_source_dir};
-    generate_grammar_tests(source_dir);
+    generate_astdumps(source_dir);
     return 0;
 }

@@ -11,10 +11,6 @@ using namespace flatsql::testing;
 
 DEFINE_string(source_dir, "", "Source directory");
 
-namespace flatsql::testing {
-std::filesystem::path SOURCE_DIR;
-}
-
 int main(int argc, char* argv[]) {
     gflags::AllowCommandLineReparsing();
     gflags::SetUsageMessage("Usage: ./tester --source_dir <dir>");
@@ -23,8 +19,8 @@ int main(int argc, char* argv[]) {
     if (!std::filesystem::exists(FLAGS_source_dir)) {
         std::cout << "Invalid source directory: " << FLAGS_source_dir << std::endl;
     }
-    SOURCE_DIR = std::filesystem::path{FLAGS_source_dir};
-    ASTDumpTest::LoadTests(SOURCE_DIR);
+    auto source_dir = std::filesystem::path{FLAGS_source_dir};
+    ASTDumpTest::LoadTests(source_dir);
 
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
