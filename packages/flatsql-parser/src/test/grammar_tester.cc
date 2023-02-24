@@ -109,7 +109,6 @@ void GrammarTest::EncodeProgram(pugi::xml_node root, const proto::ProgramT& prog
                 default: {
                     auto node_type_id = static_cast<uint32_t>(target->node_type());
                     if (node_type_id > static_cast<uint32_t>(proto::NodeType::OBJECT_KEYS_)) {
-                        n.append_attribute("type") = node_type_tt->names[static_cast<size_t>(target->node_type())];
                         EncodeLocation(n, target->location(), text);
                         auto begin = target->children_begin_or_value();
                         for (auto i = 0; i < target->children_count(); ++i) {
