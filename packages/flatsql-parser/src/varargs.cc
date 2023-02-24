@@ -79,7 +79,7 @@ proto::Node ParserDriver::AddVarArgField(proto::Location loc, std::vector<proto:
     constexpr size_t MAX_NESTING_LEVEL = 4;
 
     // Check max nesting level
-    std::array<uint16_t, MAX_NESTING_LEVEL> keys;
+    std::array<uint32_t, MAX_NESTING_LEVEL> keys;
     if (key_path.size() > keys.size()) {
         std::stringstream err_msg;
         err_msg << "key length exceeds max nesting level of " << MAX_NESTING_LEVEL;
@@ -100,7 +100,7 @@ proto::Node ParserDriver::AddVarArgField(proto::Location loc, std::vector<proto:
         if (auto iter = vararg_key_map_.find(key_text); iter != vararg_key_map_.end()) {
             key = iter->second;
         } else {
-            key = static_cast<uint16_t>(proto::AttributeKey::EXT_VARARG_DYNAMIC_KEYS_) + vararg_keys_.size();
+            key = static_cast<uint32_t>(proto::AttributeKey::EXT_VARARG_DYNAMIC_KEYS_) + vararg_keys_.size();
             vararg_key_map_.insert({key_text, key});
             vararg_keys_.push_back(key_loc);
         }
