@@ -31,6 +31,7 @@ vararg_key:
 vararg_value:
     vararg                    { $$ = ctx.Add(@$, std::move($1)); }
   | vararg_array_brackets     { $$ = ctx.Add(@$, std::move($1)); }
+  | sql_func_expr             { $$ = $1; }
   | sql_columnref             { $$ = $1; }
   | sql_a_expr_const          { $$ = ctx.Add(std::move($1)); }
   | '+' sql_a_expr_const %prec UMINUS   { $$ = ctx.Add(std::move($2)); }

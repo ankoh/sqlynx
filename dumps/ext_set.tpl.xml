@@ -15,4 +15,12 @@
             );
         </input>
     </astdump>
+    <astdump name="set_3">
+        <input>
+            SET variable = (
+                'some' = 42,
+                'func' = somefunction($someparam),
+            );
+        </input>
+    </astdump>
 </astdumps>
