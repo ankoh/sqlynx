@@ -243,6 +243,10 @@ void ParserDriver::AddStatement(proto::Node node) {
     current_statement_.root = AddNode(node);
     auto stmt_type = proto::StatementType::NONE;
     switch (node.node_type()) {
+        case proto::NodeType::OBJECT_EXT_SET:
+            stmt_type = proto::StatementType::SET;
+            break;
+
         case proto::NodeType::OBJECT_SQL_CREATE_AS:
             stmt_type = proto::StatementType::CREATE_TABLE_AS;
             break;

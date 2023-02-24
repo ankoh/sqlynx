@@ -1,0 +1,65 @@
+<astdumps>
+    <astdump name="set_1">
+        <input>SET variable = &apos;value&apos;;</input>
+        <parsed>
+            <statements>
+                <statement type="SET">
+                    <node type="OBJECT_EXT_SET" loc="0..22" text="SET variab.. = &apos;value&apos;">
+                        <node key="EXT_SET_FIELDS" type="OBJECT_EXT_VARARGS" loc="4..22" text="variable = &apos;value&apos;">
+                            <node key="VARARG_KEYS[0]" type="LITERAL_STRING" loc="15..22" text="&apos;value&apos;"/>
+                        </node>
+                    </node>
+                </statement>
+            </statements>
+            <errors/>
+            <line_breaks/>
+            <comments/>
+            <vararg_keys>
+                <key loc="4..12" text="variable"/>
+            </vararg_keys>
+        </parsed>
+    </astdump>
+    <astdump name="set_2">
+        <input>SET variable = (
+                &apos;some&apos; = 42,
+                &apos;complex&apos; = &apos;configuration&apos;,
+                &apos;with&apos; = (
+                    &apos;nesting&apos; = true
+                )
+            );</input>
+        <parsed>
+            <statements>
+                <statement type="SET">
+                    <node type="OBJECT_EXT_SET" loc="0..186" text="SET variab..         )">
+                        <node key="EXT_SET_FIELDS" type="OBJECT_EXT_VARARGS" loc="4..186" text="variable =..         )">
+                            <node key="VARARG_KEYS[4]" type="OBJECT_EXT_VARARGS" loc="15..186" text="(\n        ..         )">
+                                <node key="VARARG_KEYS[0]" type="LITERAL_INTEGER" loc="42..44" text="42"/>
+                                <node key="VARARG_KEYS[1]" type="LITERAL_STRING" loc="74..89" text="&apos;configuration&apos;"/>
+                                <node key="VARARG_KEYS[3]" type="OBJECT_EXT_VARARGS" loc="116..172" text="(\n        ..         )">
+                                    <node key="VARARG_KEYS[2]" type="BOOL" value="true"/>
+                                </node>
+                            </node>
+                        </node>
+                    </node>
+                </statement>
+            </statements>
+            <errors/>
+            <line_breaks>
+                <line_break loc="16..17" text="\n"/>
+                <line_break loc="45..46" text="\n"/>
+                <line_break loc="90..91" text="\n"/>
+                <line_break loc="117..118" text="\n"/>
+                <line_break loc="154..155" text="\n"/>
+                <line_break loc="172..173" text="\n"/>
+            </line_breaks>
+            <comments/>
+            <vararg_keys>
+                <key loc="34..38" text="some"/>
+                <key loc="63..70" text="complex"/>
+                <key loc="139..146" text="nesting"/>
+                <key loc="108..112" text="with"/>
+                <key loc="4..12" text="variable"/>
+            </vararg_keys>
+        </parsed>
+    </astdump>
+</astdumps>
