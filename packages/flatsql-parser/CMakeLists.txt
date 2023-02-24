@@ -177,12 +177,12 @@ add_custom_command(
 set(LIB_SRC
     ${SCANNER_OUT}
     ${PARSER_OUT}
-    ${CMAKE_SOURCE_DIR}/src/ffi.cc
-    ${CMAKE_SOURCE_DIR}/src/enums.cc
-    ${CMAKE_SOURCE_DIR}/src/highlighting.cc
-    ${CMAKE_SOURCE_DIR}/src/keywords.cc
-    ${CMAKE_SOURCE_DIR}/src/parser_driver.cc
-    ${CMAKE_SOURCE_DIR}/src/scanner.cc)
+    ${CMAKE_SOURCE_DIR}/src/parser/ffi.cc
+    ${CMAKE_SOURCE_DIR}/src/parser/enums.cc
+    ${CMAKE_SOURCE_DIR}/src/parser/highlighting.cc
+    ${CMAKE_SOURCE_DIR}/src/parser/keywords.cc
+    ${CMAKE_SOURCE_DIR}/src/parser/parser_driver.cc
+    ${CMAKE_SOURCE_DIR}/src/parser/scanner.cc)
 
 if(WASM)
   add_executable(flatsql_parser ${LIB_SRC})
