@@ -4,7 +4,7 @@ namespace flatsql.proto;
 
 struct Location { offset: uint32; length: uint32; }
 
-enum NodeType: uint32 {
+enum NodeType: uint16 {
     NONE = 0,
 
     IDENTIFIER,
@@ -118,10 +118,10 @@ enum NodeType: uint32 {
     OBJECT_SQL_WITH,
 
     OBJECT_EXT_SET,
-    OBJECT_EXT_VARARGS,
+    OBJECT_EXT_VARARG_FIELD,
 }
 
-enum AttributeKey: uint32 {
+enum AttributeKey: uint16 {
     NONE = 0,
 
     SQL_KEYS_,
@@ -335,10 +335,9 @@ enum AttributeKey: uint32 {
     SQL_WINDOW_FRAME_ORDER,
     SQL_WINDOW_FRAME_PARTITION,
 
-    EXT_SET_FIELDS,
-
-    EXT_VARARG_DYNAMIC_KEYS_,
-    // Dictionary encoded from here
+    EXT_SET_VARARGS,
+    EXT_VARARG_FIELD_KEY,
+    EXT_VARARG_FIELD_VALUE,
 }
 
 enum StatementType: uint8 {
@@ -358,7 +357,7 @@ enum StatementType: uint8 {
 struct Node {
     location: Location;
     node_type: NodeType = NONE;
-    attribute_key: uint32 = 0;
+    attribute_key: uint16 = 0;
     parent: uint32 = 0;
     children_begin_or_value: uint32 = 0;
     children_count: uint32 = 0;
@@ -386,7 +385,6 @@ enum HighlightingTokenType: uint8 {
     OPERATOR,
     IDENTIFIER,
     COMMENT,
-    VARARG_KEY,
 }
 
 table Highlighting {
@@ -401,6 +399,5 @@ table Program {
     errors: [Error];
     line_breaks: [Location];
     comments: [Location];
-    vararg_keys: [Location];
     highlighting: Highlighting;
 }

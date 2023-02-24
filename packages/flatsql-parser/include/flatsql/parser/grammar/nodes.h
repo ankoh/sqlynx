@@ -236,6 +236,20 @@ inline proto::NumericType ReadFloatType(ParserDriver& driver, proto::Location bi
     return proto::NumericType::FLOAT4;
 }
 
+/// Add a vararg field
+inline proto::Node VarArgField(ParserDriver& driver, proto::Location loc, NodeVector&& key_path, proto::Node value) {
+    auto root = value;
+    auto keys = key_path.getData();
+    auto keys_length = key_path.getSize();
+    for (size_t i = 0; i < keys_length; ++i) {
+        root = driver.Add(loc, proto::NodeType::OBJECT_EXT_VARARG_FIELD, NodeVector {
+            Attr(proto::AttributeKey::EXT_VARARG_FIELD_KEY, keys[keys_length - i - 1]),
+            Attr(proto::AttributeKey::EXT_VARARG_FIELD_VALUE, value),
+        });
+    }
+    return root;
+}
+
 }  // namespace parser
 }  // namespace flatsql
 

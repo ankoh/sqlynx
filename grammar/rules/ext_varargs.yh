@@ -1,7 +1,8 @@
+%type <NodeVector> vararg;
 %type <NodeVector> vararg_array;
 %type <NodeVector> vararg_array_brackets;
 %type <NodeVector> vararg_fields;
-%type <proto::Node> vararg;
+%type <NodeVector> vararg_key_path;
+%type <proto::Node> vararg_key;
 %type <proto::Node> vararg_value;
 %type <proto::Node> opt_vararg_field;
-%type <std::vector<proto::Location>> vararg_key_path;

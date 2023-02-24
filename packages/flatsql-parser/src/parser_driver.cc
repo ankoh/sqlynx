@@ -30,7 +30,7 @@ std::unique_ptr<proto::StatementT> Statement::Finish() {
 
 /// Constructor
 ParserDriver::ParserDriver(Scanner& scanner)
-    : scanner_(scanner), nodes_(), current_statement_(), statements_(), errors_(), vararg_keys_(), vararg_key_map_() {}
+    : scanner_(scanner), nodes_(), current_statement_(), statements_(), errors_() {}
 
 /// Destructor
 ParserDriver::~ParserDriver() {}
@@ -293,7 +293,6 @@ std::shared_ptr<proto::ProgramT> ParserDriver::Finish() {
         err->message = std::move(msg);
         program->errors.push_back(std::move(err));
     }
-    program->vararg_keys = std::move(vararg_keys_);
     program->highlighting = scanner_.BuildHighlighting();
     program->line_breaks = scanner_.ReleaseLineBreaks();
     program->comments = scanner_.ReleaseComments();

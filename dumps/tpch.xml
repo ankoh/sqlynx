@@ -50,7 +50,6 @@ order by
                 <line_break loc="537..538" text="\n"/>
             </line_breaks>
             <comments/>
-            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="tpch_2">
@@ -497,7 +496,6 @@ limit
                 <line_break loc="1088..1089" text="\n"/>
             </line_breaks>
             <comments/>
-            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="tpch_3">
@@ -752,7 +750,6 @@ limit
                 <line_break loc="513..514" text="\n"/>
             </line_breaks>
             <comments/>
-            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="tpch_4">
@@ -940,7 +937,6 @@ order by
                 <line_break loc="477..478" text="\n"/>
             </line_breaks>
             <comments/>
-            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="tpch_5">
@@ -1232,7 +1228,6 @@ order by
                 <line_break loc="557..558" text="\n"/>
             </line_breaks>
             <comments/>
-            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="tpch_6">
@@ -1370,7 +1365,6 @@ where
                 <line_break loc="229..230" text="\n"/>
             </line_breaks>
             <comments/>
-            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="tpch_7">
@@ -1815,7 +1809,6 @@ order by
                 <line_break loc="1322..1323" text="\n"/>
             </line_breaks>
             <comments/>
-            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="tpch_8">
@@ -2238,7 +2231,6 @@ order by
                 <line_break loc="1303..1304" text="\n"/>
             </line_breaks>
             <comments/>
-            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="tpch_9">
@@ -2595,7 +2587,6 @@ order by
                 <line_break loc="993..994" text="\n"/>
             </line_breaks>
             <comments/>
-            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="tpch_10">
@@ -2941,7 +2932,6 @@ limit
                 <line_break loc="661..662" text="\n"/>
             </line_breaks>
             <comments/>
-            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="tpch_11">
@@ -3252,7 +3242,6 @@ order by
                 <line_break loc="814..815" text="\n"/>
             </line_breaks>
             <comments/>
-            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="tpch_12">
@@ -3548,7 +3537,6 @@ order by
                 <line_break loc="771..772" text="\n"/>
             </line_breaks>
             <comments/>
-            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="tpch_13">
@@ -3739,7 +3727,6 @@ order by
                 <line_break loc="523..524" text="\n"/>
             </line_breaks>
             <comments/>
-            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="tpch_14">
@@ -3933,7 +3920,6 @@ where
                 <line_break loc="349..350" text="\n"/>
             </line_breaks>
             <comments/>
-            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="tpch_15">
@@ -4224,7 +4210,6 @@ order by
                 <line_break loc="435..436" text="\n"/>
             </line_breaks>
             <comments/>
-            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="tpch_16">
@@ -4509,7 +4494,6 @@ order by
                 <line_break loc="677..678" text="\n"/>
             </line_breaks>
             <comments/>
-            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="tpch_17">
@@ -4692,7 +4676,6 @@ where
                 <line_break loc="414..415" text="\n"/>
             </line_breaks>
             <comments/>
-            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="tpch_18">
@@ -4995,7 +4978,6 @@ limit
                 <line_break loc="695..696" text="\n"/>
             </line_breaks>
             <comments/>
-            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="tpch_19">
@@ -5465,7 +5447,6 @@ where
                 <line_break loc="1300..1301" text="\n"/>
             </line_breaks>
             <comments/>
-            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="tpch_20">
@@ -5807,7 +5788,6 @@ order by
                 <line_break loc="1241..1242" text="\n"/>
             </line_breaks>
             <comments/>
-            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="tpch_21">
@@ -6197,7 +6177,6 @@ limit
                 <line_break loc="1039..1040" text="\n"/>
             </line_breaks>
             <comments/>
-            <vararg_keys/>
         </parsed>
     </astdump>
     <astdump name="tpch_22">
@@ -6521,7 +6500,6 @@ order by
                 <line_break loc="1346..1347" text="\n"/>
             </line_breaks>
             <comments/>
-            <vararg_keys/>
         </parsed>
     </astdump>
 </astdumps>

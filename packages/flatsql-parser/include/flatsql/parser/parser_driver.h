@@ -74,10 +74,6 @@ class ParserDriver {
     std::vector<Statement> statements_;
     /// The errors
     std::vector<std::pair<proto::Location, std::string>> errors_;
-    /// The vararg keys
-    std::vector<proto::Location> vararg_keys_;
-    /// The vararg key mapping
-    std::unordered_map<std::string_view, uint16_t> vararg_key_map_;
 
     /// Find an attribute
     std::optional<size_t> FindAttribute(const proto::Node& node, Key attribute) const;
@@ -105,8 +101,6 @@ class ParserDriver {
     /// Add an object
     proto::Node AddObject(proto::Location loc, proto::NodeType type, std::span<proto::Node> attrs,
                           bool null_if_empty = true, bool shrink_location = false);
-    /// Add a vararg field
-    proto::Node AddVarArgField(proto::Location loc, std::vector<proto::Location>&& key_path, proto::Node value);
     /// Add a statement
     void AddStatement(proto::Node node);
     /// Add an error

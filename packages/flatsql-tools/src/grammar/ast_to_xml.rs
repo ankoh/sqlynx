@@ -39,14 +39,7 @@ where
                 pending.last_mut().unwrap().0 = true;
                 let mut node = BytesStart::borrowed_name(b"node");
                 if n.attribute_key() != 0 {
-                    let key = if n.attribute_key() < proto::AttributeKey::EXT_VARARG_DYNAMIC_KEYS_.0 {
-                        Key(n.attribute_key()).variant_name().unwrap_or_default().to_string()
-                    } else {
-                        format!(
-                            "VARARG_KEYS[{}]",
-                            (n.attribute_key() - proto::AttributeKey::EXT_VARARG_DYNAMIC_KEYS_.0)
-                        )
-                    };
+                    let key = Key(n.attribute_key()).variant_name().unwrap_or_default().to_string();
                     node.push_attribute(("key", key.as_str()));
                 }
                 node.push_attribute(("type", n.node_type().variant_name().unwrap_or_default()));
@@ -150,20 +143,6 @@ where
         }
         writer.write_event(Event::End(BytesEnd::borrowed(b"comments")))?;
     }
-
-    let vararg_keys = ast.vararg_keys().unwrap_or_default();
-    if vararg_keys.is_empty() {
-        writer.write_event(Event::Empty(BytesStart::borrowed_name(b"vararg_keys")))?;
-    } else {
-        writer.write_event(Event::Start(BytesStart::borrowed_name(b"vararg_keys")))?;
-        for key in vararg_keys {
-            let mut elem = BytesStart::borrowed_name(b"key");
-            encode_location(&mut elem, *key, text);
-            writer.write_event(Event::Empty(elem))?;
-        }
-        writer.write_event(Event::End(BytesEnd::borrowed(b"vararg_keys")))?;
-    }
-
     Ok(())
 }
 
@@ -229,7 +208,6 @@ mod test {
 <errors/>
 <line_breaks/>
 <comments/>
-<vararg_keys/>
 "#,
         )
         .await
@@ -270,7 +248,6 @@ mod test {
     <line_break loc="44..45" text="\n"/>
 </line_breaks>
 <comments/>
-<vararg_keys/>
 "#,
         )
         .await

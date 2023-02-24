@@ -66,11 +66,6 @@ std::unique_ptr<proto::HighlightingT> Scanner::BuildHighlighting() {
         while (ci < comments_.size() && comments_[ci].offset() < symbol.location.offset()) {
             emit(comments_[ci++], proto::HighlightingTokenType::COMMENT);
         }
-        // Is option key?
-        if (vararg_key_offsets_.count(symbol.location.offset())) {
-            emit(symbol.location, proto::HighlightingTokenType::VARARG_KEY);
-            continue;
-        }
         // Map as standard token.
         emit(symbol.location, MapToken(symbol.kind()));
     }

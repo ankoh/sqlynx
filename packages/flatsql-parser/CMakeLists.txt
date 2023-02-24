@@ -173,7 +173,6 @@ set(LIB_SRC
     ${SCANNER_OUT}
     ${PARSER_OUT}
     ${CMAKE_SOURCE_DIR}/src/ffi.cc
-    ${CMAKE_SOURCE_DIR}/src/varargs.cc
     ${CMAKE_SOURCE_DIR}/src/enums.cc
     ${CMAKE_SOURCE_DIR}/src/highlighting.cc
     ${CMAKE_SOURCE_DIR}/src/keywords.cc
