@@ -61,7 +61,7 @@ jobs:
         shell: bash
         run: ./scripts/generate_proto.sh
 
-      - name: Compile parser library
+      - name: Compile parser
         shell: bash
         env:
           PARSER_SOURCE_DIR: ./packages/flatsql-parser
@@ -73,52 +73,20 @@ jobs:
           ln -sf ${PARSER_DEBUG_DIR}/compile_commands.json ${PARSER_SOURCE_DIR}/compile_commands.json
           cmake --build ${PARSER_DEBUG_DIR}
 
-      - uses: actions/upload-artifact@v3
-        with:
-          name: flatsql_parser_native_debug
-          path: ./packages/flatsql-parser/build/native/Debug/libflatsql_parser.a
-          retention-days: 1
-
-  tests_native_debug:
-    name: Tests / Native / Debug
-    runs-on: ubuntu-22.04
-    needs:
-      - parser_native_debug
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-          fetch-depth: 0
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: flatsql_parser_native_debug
-          path: ./packages/flatsql-parser/build/native/Debug/
-
-      - name: Setup Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Setup flatc
-        uses: ./.github/actions/setup-flatc
-
-      - name: Generate Flatbuffer files
+      - name: Test parser
         shell: bash
-        run: ./scripts/generate_proto.sh
-
-      - name: Build FlatSQL tools
-        shell: bash
-        run: cargo build
-
-      - name: Run ast tests
-        shell: bash
-        run: cargo test
+        env:
+          PARSER_SOURCE_DIR: ./packages/flatsql-parser
+          PARSER_DEBUG_DIR: ./packages/flatsql-parser/build/native/Debug
+        run: |
+          ${PARSER_DEBUG_DIR}/tester --source ${PARSER_SOURCE_DIR}
 
   js_library:
     name: Library / Javascript
     runs-on: ubuntu-22.04
     needs:
       - parser_wasm
-      - tests_native_debug
+      - parser_native_debug
     steps:
       - uses: actions/checkout@v3
         with:
