@@ -1,4 +1,4 @@
-#include "flatsql/test/grammar_tester.h"
+#include "flatsql/testing/astdump_test.h"
 
 #include <cstdint>
 #include <fstream>
@@ -12,7 +12,7 @@
 #include "flatsql/proto/proto_generated.h"
 #include "pugixml.hpp"
 
-namespace flatsql::test {
+namespace flatsql::testing {
 
 constexpr size_t INLINE_LOCATION_CAP = 20;
 constexpr size_t LOCATION_HINT_LENGTH = 10;
@@ -44,7 +44,7 @@ void EncodeError(pugi::xml_node n, const proto::ErrorT& err, std::string_view te
 }
 
 /// Encode yaml
-void GrammarTest::EncodeProgram(pugi::xml_node root, const proto::ProgramT& program, std::string_view text) {
+void ASTDumpTest::EncodeProgram(pugi::xml_node root, const proto::ProgramT& program, std::string_view text) {
     // Unpack modules
     auto& nodes = program.nodes;
     auto& statements = program.statements;
@@ -148,7 +148,7 @@ void GrammarTest::EncodeProgram(pugi::xml_node root, const proto::ProgramT& prog
 }
 
 /// Matches the expected result?
-::testing::AssertionResult GrammarTest::Matches(const pugi::xml_node& actual) const {
+::testing::AssertionResult ASTDumpTest::Matches(const pugi::xml_node& actual) const {
     std::stringstream expected_ss;
     std::stringstream actual_ss;
     expected.print(expected_ss);
@@ -176,10 +176,10 @@ void GrammarTest::EncodeProgram(pugi::xml_node root, const proto::ProgramT& prog
 }
 
 // The files
-static std::unordered_map<std::string, std::vector<GrammarTest>> TEST_FILES;
+static std::unordered_map<std::string, std::vector<ASTDumpTest>> TEST_FILES;
 
 // Load the tests
-void GrammarTest::LoadTests(std::filesystem::path& source_dir) {
+void ASTDumpTest::LoadTests(std::filesystem::path& source_dir) {
     auto dumps_dir = source_dir / "dumps";
 
     std::cout << "Loading grammar tests at: " << dumps_dir << std::endl;
@@ -206,7 +206,7 @@ void GrammarTest::LoadTests(std::filesystem::path& source_dir) {
         auto root = doc.child("astdumps");
 
         // Read tests
-        std::vector<GrammarTest> tests;
+        std::vector<ASTDumpTest> tests;
         for (auto test : root.children()) {
             // Create test
             tests.emplace_back();
@@ -231,13 +231,13 @@ void GrammarTest::LoadTests(std::filesystem::path& source_dir) {
 }
 
 // Get the tests
-std::vector<const GrammarTest*> GrammarTest::GetTests(std::string_view filename) {
+std::vector<const ASTDumpTest*> ASTDumpTest::GetTests(std::string_view filename) {
     std::string name{filename};
     auto iter = TEST_FILES.find(name);
     if (iter == TEST_FILES.end()) {
         return {};
     }
-    std::vector<const GrammarTest*> tests;
+    std::vector<const ASTDumpTest*> tests;
     for (auto& test : iter->second) {
         tests.emplace_back(&test);
     }

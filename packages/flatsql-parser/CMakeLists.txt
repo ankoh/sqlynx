@@ -195,14 +195,21 @@ target_link_libraries(flatsql_parser flatsql_proto flatbuffers)
 # ---------------------------------------------------------------------------
 # Tester
 
-set(TEST_CC
-    ${CMAKE_SOURCE_DIR}/src/test/grammar_tester.cc
-    ${CMAKE_SOURCE_DIR}/test/grammar_test.cc
-)
-
 if(NOT WASM)
-  add_executable(tester test/tester.cc ${TEST_CC})
-  add_executable(astdump test/astdump.cc ${TEST_CC})
-  target_link_libraries(tester flatsql_parser pugixml gtest gmock gflags Threads::Threads)
-  target_link_libraries(astdump flatsql_parser pugixml gtest gflags Threads::Threads)
+  add_library(flatsql_parser_testutils
+    ${CMAKE_SOURCE_DIR}/src/testing/astdump_test.cc
+  )
+  target_link_libraries(flatsql_parser_testutils flatsql_parser pugixml gtest)
+
+  set(TEST_SRC
+    ${CMAKE_SOURCE_DIR}/test/astdump_test_suite.cc
+  )
+  add_executable(tester test/tester.cc ${TEST_SRC})
+  target_link_libraries(tester flatsql_parser flatsql_parser_testutils pugixml gtest gmock gflags Threads::Threads)
+
+  add_executable(astdump tools/astdump.cc)
+  target_link_libraries(astdump flatsql_parser flatsql_parser_testutils pugixml gtest gflags Threads::Threads)
+
+  add_executable(sql2tpl tools/sql2tpl.cc)
+  target_link_libraries(sql2tpl flatsql_parser flatsql_parser_testutils pugixml gtest gflags Threads::Threads)
 endif()

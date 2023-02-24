@@ -1,5 +1,5 @@
-#ifndef INCLUDE_FLATSQL_TEST_GRAMMAR_TESTS_H_
-#define INCLUDE_FLATSQL_TEST_GRAMMAR_TESTS_H_
+#ifndef INCLUDE_FLATSQL_TESTING_ASTDUMP_TEST_H_
+#define INCLUDE_FLATSQL_TESTING_ASTDUMP_TEST_H_
 
 #include <filesystem>
 #include <string>
@@ -9,17 +9,17 @@
 #include "gtest/gtest.h"
 #include "pugixml.hpp"
 
-namespace flatsql::test {
+namespace flatsql::testing {
 
 /// Encode a location
 void EncodeLocation(pugi::xml_node n, proto::Location loc, std::string_view text);
 /// Encode an error
 void EncodeError(pugi::xml_node n, const proto::ErrorT& err, std::string_view text);
 
-struct GrammarTest {
+struct ASTDumpTest {
     /// Printer test name
     struct TestPrinter {
-        std::string operator()(const ::testing::TestParamInfo<const GrammarTest*>& info) const {
+        std::string operator()(const ::testing::TestParamInfo<const ASTDumpTest*>& info) const {
             return std::string{info.param->name};
         }
     };
@@ -39,7 +39,7 @@ struct GrammarTest {
     /// Get the grammar tests
     static void LoadTests(std::filesystem::path& project_root);
     /// Get the grammar tests
-    static std::vector<const GrammarTest*> GetTests(std::string_view filename);
+    static std::vector<const ASTDumpTest*> GetTests(std::string_view filename);
 };
 
 }  // namespace flatsql::test

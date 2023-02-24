@@ -8,10 +8,11 @@
 #include "flatbuffers/flatbuffers.h"
 #include "flatsql/parser/parser_driver.h"
 #include "flatsql/proto/proto_generated.h"
-#include "flatsql/test/grammar_tester.h"
+#include "flatsql/testing/astdump_test.h"
 #include "gflags/gflags.h"
 
 using namespace flatsql;
+using namespace flatsql::testing;
 
 DEFINE_string(source_dir, "", "Source directory");
 
@@ -58,7 +59,7 @@ static void generate_grammar_tests(const std::filesystem::path& source_dir) {
 
             /// Write output
             auto expected = test.append_child("expected");
-            test::GrammarTest::EncodeProgram(expected, *program, input_buffer);
+            ASTDumpTest::EncodeProgram(expected, *program, input_buffer);
         }
 
         // Write xml document
@@ -67,7 +68,6 @@ static void generate_grammar_tests(const std::filesystem::path& source_dir) {
 }
 
 int main(int argc, char* argv[]) {
-    gflags::AllowCommandLineReparsing();
     gflags::SetUsageMessage("Usage: ./astdump --source_dir <dir>");
     gflags::ParseCommandLineFlags(&argc, &argv, false);
 

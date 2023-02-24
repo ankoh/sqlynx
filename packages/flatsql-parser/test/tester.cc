@@ -1,17 +1,17 @@
 #include <string_view>
 
 #include "flatsql/parser/parser_driver.h"
-#include "flatsql/test/grammar_tester.h"
+#include "flatsql/testing/astdump_test.h"
 #include "gflags/gflags.h"
 #include "gtest/gtest.h"
 #include "pugixml.hpp"
 
 using namespace flatsql;
-using namespace flatsql::test;
+using namespace flatsql::testing;
 
 DEFINE_string(source_dir, "", "Source directory");
 
-namespace flatsql::test {
+namespace flatsql::testing {
 std::filesystem::path SOURCE_DIR;
 }
 
@@ -24,8 +24,8 @@ int main(int argc, char* argv[]) {
         std::cout << "Invalid source directory: " << FLAGS_source_dir << std::endl;
     }
     SOURCE_DIR = std::filesystem::path{FLAGS_source_dir};
-    GrammarTest::LoadTests(SOURCE_DIR);
+    ASTDumpTest::LoadTests(SOURCE_DIR);
 
-    testing::InitGoogleTest(&argc, argv);
+    ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
