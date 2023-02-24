@@ -7,6 +7,7 @@ ExternalProject_Add(
     TIMEOUT 10
     PREFIX "external_flatbuffers"
     INSTALL_DIR "external_flatbuffers/install"
+    UPDATE_DISCONNECTED True
     CMAKE_ARGS
         -G${CMAKE_GENERATOR}
         -DWASI_SDK_PREFIX=${WASI_SDK_PREFIX}

@@ -7,6 +7,7 @@ ExternalProject_Add(
     TIMEOUT 10
     PREFIX "external_gtest"
     INSTALL_DIR "external_gtest/install"
+    UPDATE_DISCONNECTED True
     CMAKE_ARGS
         -G${CMAKE_GENERATOR}
         -DINSTALL_GTEST=ON

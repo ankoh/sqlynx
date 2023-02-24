@@ -7,6 +7,7 @@ ExternalProject_Add(
     TIMEOUT 10
     PREFIX "external_pugixml"
     INSTALL_DIR "external_pugixml/install"
+    UPDATE_DISCONNECTED True
     CMAKE_ARGS
         -G${CMAKE_GENERATOR}
         -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/external_pugixml/install

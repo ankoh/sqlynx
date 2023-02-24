@@ -196,10 +196,13 @@ target_link_libraries(flatsql_parser flatsql_proto flatbuffers)
 # Tester
 
 set(TEST_CC
-    test/grammar_test.cc
+    ${CMAKE_SOURCE_DIR}/src/test/grammar_tester.cc
+    ${CMAKE_SOURCE_DIR}/test/grammar_test.cc
 )
 
 if(NOT WASM)
   add_executable(tester test/tester.cc ${TEST_CC})
-  target_link_libraries(tester flatsql_parser pugixml gtest gmock gflags benchmark Threads::Threads)
+  add_executable(testgen test/testgen.cc ${TEST_CC})
+  target_link_libraries(tester flatsql_parser pugixml gtest gmock gflags Threads::Threads)
+  target_link_libraries(testgen flatsql_parser pugixml gtest gmock Threads::Threads)
 endif()

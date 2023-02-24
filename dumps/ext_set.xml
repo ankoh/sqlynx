@@ -1,125 +1,138 @@
 <astdumps>
     <astdump name="set_1">
-        <input>SET variable = &apos;value&apos;;</input>
-        <parsed>
+        <input>
+            SET variable = 'value';
+        </input>
+        <expected>
             <statements>
                 <statement type="SET">
-                    <node type="OBJECT_EXT_SET" loc="0..22" text="SET variab.. = &apos;value&apos;">
-                        <node key="EXT_SET_VARARGS" type="OBJECT_EXT_VARARG_FIELD" loc="4..22" text="variable = &apos;value&apos;">
-                            <node key="EXT_VARARG_FIELD_KEY" type="IDENTIFIER" loc="4..12" text="variable"/>
-                            <node key="EXT_VARARG_FIELD_VALUE" type="LITERAL_STRING" loc="15..22" text="&apos;value&apos;"/>
+                    <node type="OBJECT_EXT_SET" type="OBJECT_EXT_SET" loc="13..35" text="SET variab.. = 'value'">
+                        <node key="EXT_SET_VARARGS" type="OBJECT_EXT_VARARG_FIELD" type="OBJECT_EXT_VARARG_FIELD" loc="17..35" text="variable = 'value'">
+                            <node key="EXT_VARARG_FIELD_KEY" type="IDENTIFIER" loc="17..25" text="variable" />
+                            <node key="EXT_VARARG_FIELD_VALUE" type="LITERAL_STRING" loc="28..35" text="'value'" />
                         </node>
                     </node>
                 </statement>
             </statements>
-            <errors/>
-            <line_breaks/>
-            <comments/>
-        </parsed>
+            <errors />
+            <line_breaks>
+                <line_break loc="0..1" text="&#10;" />
+                <line_break loc="36..37" text="&#10;" />
+            </line_breaks>
+            <comments />
+        </expected>
     </astdump>
     <astdump name="set_2">
-        <input>SET variable = (
-                &apos;some&apos; = 42,
-                &apos;complex&apos; = &apos;configuration&apos;,
-                &apos;with&apos; = (
-                    &apos;nesting&apos; = true
+        <input>
+            SET variable = (
+                'some' = 42,
+                'complex' = 'configuration',
+                'with' = (
+                    'nesting' = true
                 ),
-                &apos;andarrays&apos; = [43, 44]
-            );</input>
-        <parsed>
+                'andarrays' = [43, 44]
+            );
+        </input>
+        <expected>
             <statements>
                 <statement type="SET">
-                    <node type="OBJECT_EXT_SET" loc="0..226" text="SET variab..         )">
-                        <node key="EXT_SET_VARARGS" type="OBJECT_EXT_VARARG_FIELD" loc="4..226" text="variable =..         )">
-                            <node key="EXT_VARARG_FIELD_KEY" type="IDENTIFIER" loc="4..12" text="variable"/>
-                            <node key="EXT_VARARG_FIELD_VALUE" type="ARRAY" loc="15..226" text="(\n        ..         )">
-                                <node type="OBJECT_EXT_VARARG_FIELD" loc="33..44" text="&apos;some&apos; = 42">
-                                    <node key="EXT_VARARG_FIELD_KEY" type="LITERAL_STRING" loc="33..39" text="&apos;some&apos;"/>
-                                    <node key="EXT_VARARG_FIELD_VALUE" type="LITERAL_INTEGER" loc="42..44" text="42"/>
-                                </node>
-                                <node type="OBJECT_EXT_VARARG_FIELD" loc="62..89" text="&apos;complex&apos; ..iguration&apos;">
-                                    <node key="EXT_VARARG_FIELD_KEY" type="LITERAL_STRING" loc="62..71" text="&apos;complex&apos;"/>
-                                    <node key="EXT_VARARG_FIELD_VALUE" type="LITERAL_STRING" loc="74..89" text="&apos;configuration&apos;"/>
-                                </node>
-                                <node type="OBJECT_EXT_VARARG_FIELD" loc="107..172" text="&apos;with&apos; = (..         )">
-                                    <node key="EXT_VARARG_FIELD_KEY" type="LITERAL_STRING" loc="107..113" text="&apos;with&apos;"/>
-                                    <node key="EXT_VARARG_FIELD_VALUE" type="ARRAY" loc="116..172" text="(\n        ..         )">
-                                        <node type="OBJECT_EXT_VARARG_FIELD" loc="138..154" text="&apos;nesting&apos; = true">
-                                            <node key="EXT_VARARG_FIELD_KEY" type="LITERAL_STRING" loc="138..147" text="&apos;nesting&apos;"/>
-                                            <node key="EXT_VARARG_FIELD_VALUE" type="BOOL" value="true"/>
+                    <node type="OBJECT_EXT_SET" type="OBJECT_EXT_SET" loc="13..239" text="SET variab..         )">
+                        <node key="EXT_SET_VARARGS" type="OBJECT_EXT_VARARG_FIELD" type="OBJECT_EXT_VARARG_FIELD" loc="17..239" text="variable =..         )">
+                            <node key="EXT_VARARG_FIELD_KEY" type="IDENTIFIER" loc="17..25" text="variable" />
+                            <node key="EXT_VARARG_FIELD_VALUE" type="ARRAY" loc="28..239" text="(&#10;        ..         )">
+                                <node type="OBJECT_EXT_VARARG_FIELD" type="OBJECT_EXT_VARARG_FIELD" loc="203..225" text="'andarrays..= [43, 44]">
+                                    <node key="EXT_VARARG_FIELD_KEY" type="LITERAL_STRING" loc="203..214" text="'andarrays'" />
+                                    <node key="EXT_VARARG_FIELD_VALUE" type="OBJECT_EXT_VARARG_ARRAY" type="OBJECT_EXT_VARARG_ARRAY" loc="217..225" text="[43, 44]">
+                                        <node key="EXT_VARARG_ARRAY_VALUES" type="ARRAY" loc="217..225" text="[43, 44]">
+                                            <node type="LITERAL_INTEGER" loc="222..224" text="44" />
+                                            <node type="LITERAL_INTEGER" loc="218..220" text="43" />
                                         </node>
                                     </node>
                                 </node>
-                                <node type="OBJECT_EXT_VARARG_FIELD" loc="190..212" text="&apos;andarrays..= [43, 44]">
-                                    <node key="EXT_VARARG_FIELD_KEY" type="LITERAL_STRING" loc="190..201" text="&apos;andarrays&apos;"/>
-                                    <node key="EXT_VARARG_FIELD_VALUE" type="OBJECT_EXT_VARARG_ARRAY" loc="204..212" text="[43, 44]">
-                                        <node key="EXT_VARARG_ARRAY_VALUES" type="ARRAY" loc="204..212" text="[43, 44]">
-                                            <node type="LITERAL_INTEGER" loc="205..207" text="43"/>
-                                            <node type="LITERAL_INTEGER" loc="209..211" text="44"/>
+                                <node type="OBJECT_EXT_VARARG_FIELD" type="OBJECT_EXT_VARARG_FIELD" loc="120..185" text="'with' = (..         )">
+                                    <node key="EXT_VARARG_FIELD_KEY" type="LITERAL_STRING" loc="120..126" text="'with'" />
+                                    <node key="EXT_VARARG_FIELD_VALUE" type="ARRAY" loc="129..185" text="(&#10;        ..         )">
+                                        <node type="OBJECT_EXT_VARARG_FIELD" type="OBJECT_EXT_VARARG_FIELD" loc="151..167" text="'nesting' = true">
+                                            <node key="EXT_VARARG_FIELD_KEY" type="LITERAL_STRING" loc="151..160" text="'nesting'" />
+                                            <node key="EXT_VARARG_FIELD_VALUE" type="BOOL" value="true" />
                                         </node>
                                     </node>
+                                </node>
+                                <node type="OBJECT_EXT_VARARG_FIELD" type="OBJECT_EXT_VARARG_FIELD" loc="75..102" text="'complex' ..iguration'">
+                                    <node key="EXT_VARARG_FIELD_KEY" type="LITERAL_STRING" loc="75..84" text="'complex'" />
+                                    <node key="EXT_VARARG_FIELD_VALUE" type="LITERAL_STRING" loc="87..102" text="'configuration'" />
+                                </node>
+                                <node type="OBJECT_EXT_VARARG_FIELD" type="OBJECT_EXT_VARARG_FIELD" loc="46..57" text="'some' = 42">
+                                    <node key="EXT_VARARG_FIELD_KEY" type="LITERAL_STRING" loc="46..52" text="'some'" />
+                                    <node key="EXT_VARARG_FIELD_VALUE" type="LITERAL_INTEGER" loc="55..57" text="42" />
                                 </node>
                             </node>
                         </node>
                     </node>
                 </statement>
             </statements>
-            <errors/>
+            <errors />
             <line_breaks>
-                <line_break loc="16..17" text="\n"/>
-                <line_break loc="45..46" text="\n"/>
-                <line_break loc="90..91" text="\n"/>
-                <line_break loc="117..118" text="\n"/>
-                <line_break loc="154..155" text="\n"/>
-                <line_break loc="173..174" text="\n"/>
-                <line_break loc="212..213" text="\n"/>
+                <line_break loc="0..1" text="&#10;" />
+                <line_break loc="29..30" text="&#10;" />
+                <line_break loc="58..59" text="&#10;" />
+                <line_break loc="103..104" text="&#10;" />
+                <line_break loc="130..131" text="&#10;" />
+                <line_break loc="167..168" text="&#10;" />
+                <line_break loc="186..187" text="&#10;" />
+                <line_break loc="225..226" text="&#10;" />
+                <line_break loc="240..241" text="&#10;" />
             </line_breaks>
-            <comments/>
-        </parsed>
+            <comments />
+        </expected>
     </astdump>
     <astdump name="set_3">
-        <input>SET variable = (
-                &apos;some&apos; = 42,
-                &apos;func&apos; = somefunction($someparam),
-            );</input>
-        <parsed>
+        <input>
+            SET variable = (
+                'some' = 42,
+                'func' = somefunction($someparam),
+            );
+        </input>
+        <expected>
             <statements>
                 <statement type="SET">
-                    <node type="OBJECT_EXT_SET" loc="0..110" text="SET variab..         )">
-                        <node key="EXT_SET_VARARGS" type="OBJECT_EXT_VARARG_FIELD" loc="4..110" text="variable =..         )">
-                            <node key="EXT_VARARG_FIELD_KEY" type="IDENTIFIER" loc="4..12" text="variable"/>
-                            <node key="EXT_VARARG_FIELD_VALUE" type="ARRAY" loc="15..110" text="(\n        ..         )">
-                                <node type="OBJECT_EXT_VARARG_FIELD" loc="33..44" text="&apos;some&apos; = 42">
-                                    <node key="EXT_VARARG_FIELD_KEY" type="LITERAL_STRING" loc="33..39" text="&apos;some&apos;"/>
-                                    <node key="EXT_VARARG_FIELD_VALUE" type="LITERAL_INTEGER" loc="42..44" text="42"/>
-                                </node>
-                                <node type="OBJECT_EXT_VARARG_FIELD" loc="62..95" text="&apos;func&apos; = s..someparam)">
-                                    <node key="EXT_VARARG_FIELD_KEY" type="LITERAL_STRING" loc="62..68" text="&apos;func&apos;"/>
-                                    <node key="EXT_VARARG_FIELD_VALUE" type="OBJECT_SQL_FUNCTION_EXPRESSION" loc="71..95" text="somefuncti..someparam)">
-                                        <node key="SQL_FUNCTION_ARGUMENTS" type="ARRAY" loc="84..94" text="$someparam">
-                                            <node type="OBJECT_SQL_FUNCTION_ARG" loc="84..94" text="$someparam">
-                                                <node key="SQL_FUNCTION_ARG_VALUE" type="OBJECT_SQL_PARAMETER_REF" loc="84..94" text="$someparam">
-                                                    <node key="SQL_PARAMETER_NAME" type="ARRAY" loc="85..94" text="someparam">
-                                                        <node type="IDENTIFIER" loc="85..94" text="someparam"/>
+                    <node type="OBJECT_EXT_SET" type="OBJECT_EXT_SET" loc="13..123" text="SET variab..         )">
+                        <node key="EXT_SET_VARARGS" type="OBJECT_EXT_VARARG_FIELD" type="OBJECT_EXT_VARARG_FIELD" loc="17..123" text="variable =..         )">
+                            <node key="EXT_VARARG_FIELD_KEY" type="IDENTIFIER" loc="17..25" text="variable" />
+                            <node key="EXT_VARARG_FIELD_VALUE" type="ARRAY" loc="28..123" text="(&#10;        ..         )">
+                                <node type="OBJECT_EXT_VARARG_FIELD" type="OBJECT_EXT_VARARG_FIELD" loc="75..108" text="'func' = s..someparam)">
+                                    <node key="EXT_VARARG_FIELD_KEY" type="LITERAL_STRING" loc="75..81" text="'func'" />
+                                    <node key="EXT_VARARG_FIELD_VALUE" type="OBJECT_SQL_FUNCTION_EXPRESSION" type="OBJECT_SQL_FUNCTION_EXPRESSION" loc="84..108" text="somefuncti..someparam)">
+                                        <node key="SQL_FUNCTION_ARGUMENTS" type="ARRAY" loc="97..107" text="$someparam">
+                                            <node type="OBJECT_SQL_FUNCTION_ARG" type="OBJECT_SQL_FUNCTION_ARG" loc="97..107" text="$someparam">
+                                                <node key="SQL_FUNCTION_ARG_VALUE" type="OBJECT_SQL_PARAMETER_REF" type="OBJECT_SQL_PARAMETER_REF" loc="97..107" text="$someparam">
+                                                    <node key="SQL_PARAMETER_NAME" type="ARRAY" loc="98..107" text="someparam">
+                                                        <node type="IDENTIFIER" loc="98..107" text="someparam" />
                                                     </node>
                                                 </node>
                                             </node>
                                         </node>
-                                        <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="71..83" text="somefunction"/>
+                                        <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="84..96" text="somefunction" />
                                     </node>
+                                </node>
+                                <node type="OBJECT_EXT_VARARG_FIELD" type="OBJECT_EXT_VARARG_FIELD" loc="46..57" text="'some' = 42">
+                                    <node key="EXT_VARARG_FIELD_KEY" type="LITERAL_STRING" loc="46..52" text="'some'" />
+                                    <node key="EXT_VARARG_FIELD_VALUE" type="LITERAL_INTEGER" loc="55..57" text="42" />
                                 </node>
                             </node>
                         </node>
                     </node>
                 </statement>
             </statements>
-            <errors/>
+            <errors />
             <line_breaks>
-                <line_break loc="16..17" text="\n"/>
-                <line_break loc="45..46" text="\n"/>
-                <line_break loc="96..97" text="\n"/>
+                <line_break loc="0..1" text="&#10;" />
+                <line_break loc="29..30" text="&#10;" />
+                <line_break loc="58..59" text="&#10;" />
+                <line_break loc="109..110" text="&#10;" />
+                <line_break loc="124..125" text="&#10;" />
             </line_breaks>
-            <comments/>
-        </parsed>
+            <comments />
+        </expected>
     </astdump>
 </astdumps>

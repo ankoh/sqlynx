@@ -7,6 +7,7 @@ ExternalProject_Add(
     TIMEOUT 10
     PREFIX "external_gflags"
     INSTALL_DIR "external_gflags/install"
+    UPDATE_DISCONNECTED True
     CMAKE_ARGS
         -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/external_gflags/install
         -DCMAKE_CXX_STANDARD=20
