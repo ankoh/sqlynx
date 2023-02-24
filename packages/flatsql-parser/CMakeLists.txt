@@ -47,7 +47,11 @@ endif()
 # CMake includes
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules ${CMAKE_MODULE_PATH})
+find_package(Threads REQUIRED)
 include("${CMAKE_SOURCE_DIR}/cmake/flatbuffers.cmake")
+include("${CMAKE_SOURCE_DIR}/cmake/gtest.cmake")
+include("${CMAKE_SOURCE_DIR}/cmake/gflags.cmake")
+include("${CMAKE_SOURCE_DIR}/cmake/benchmark.cmake")
 
 add_subdirectory("${CMAKE_SOURCE_DIR}/../flatsql-proto-cpp"
                  "${CMAKE_BINARY_DIR}/proto/")
@@ -186,3 +190,15 @@ else()
 endif()
 
 target_link_libraries(flatsql_parser flatsql_proto flatbuffers)
+
+# ---------------------------------------------------------------------------
+# Tester
+
+set(TEST_CC
+    test/grammar_test.cc
+)
+
+if(NOT WASM)
+  add_executable(tester test/tester.cc ${TEST_CC})
+  target_link_libraries(tester flatsql_parser gtest gmock gflags benchmark Threads::Threads)
+endif()
