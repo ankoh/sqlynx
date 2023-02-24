@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------
 // FlatSQL Objects
 
-vararg:
+varargs:
     '(' vararg_fields ')'  { $$ = std::move($2); }
     ;
 
@@ -29,8 +29,12 @@ vararg_key:
     ;
 
 vararg_value:
-    vararg                    { $$ = ctx.Add(@$, std::move($1)); }
-  | vararg_array_brackets     { $$ = ctx.Add(@$, std::move($1)); }
+    varargs                   { $$ = ctx.Add(@$, std::move($1)); }
+  | vararg_array_brackets {
+      $$ = ctx.Add(@$, proto::NodeType::OBJECT_EXT_VARARG_ARRAY, {
+          Attr(Key::EXT_VARARG_ARRAY_VALUES, ctx.Add(@1, std::move($1))),
+      });
+    }
   | sql_func_expr             { $$ = $1; }
   | sql_columnref             { $$ = $1; }
   | sql_a_expr_const          { $$ = ctx.Add(std::move($1)); }

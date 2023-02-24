@@ -11,7 +11,8 @@
                 'complex' = 'configuration',
                 'with' = (
                     'nesting' = true
-                )
+                ),
+                'andarrays' = [43, 44]
             );
         </input>
     </astdump>
