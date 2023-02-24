@@ -15,7 +15,7 @@
     "@jridgewell/gen-mapping" "^0.1.0"
     "@jridgewell/trace-mapping" "^0.3.9"
 
-"@ankoh/flatsql@link:packages/libs/flatsql-js":
+"@ankoh/flatsql@link:packages/libs/flatsql":
   version "0.0.0"
   uid ""
 

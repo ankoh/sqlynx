@@ -1,7 +1,0 @@
-[workspace]
-
-members = [
-    "packages/flatsql-parser-rs",
-    "packages/flatsql-proto-rs",
-    "packages/flatsql-tools"
-]

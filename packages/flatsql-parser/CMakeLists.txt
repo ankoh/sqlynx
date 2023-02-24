@@ -57,9 +57,6 @@ if(NOT WASM)
   include("${CMAKE_SOURCE_DIR}/cmake/pugixml.cmake")
 endif()
 
-add_subdirectory("${CMAKE_SOURCE_DIR}/../flatsql-proto-cpp"
-                 "${CMAKE_BINARY_DIR}/proto/")
-
 include_directories("${CMAKE_SOURCE_DIR}/include" "${CMAKE_BINARY_DIR}/include")
 
 # ---------------------------------------------------------------------------
@@ -193,7 +190,7 @@ else()
   add_library(flatsql_parser ${LIB_SRC})
 endif()
 
-target_link_libraries(flatsql_parser flatsql_proto flatbuffers)
+target_link_libraries(flatsql_parser flatbuffers)
 
 # ---------------------------------------------------------------------------
 # Tester

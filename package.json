@@ -2,7 +2,7 @@
     "private": true,
     "workspaces": [
         "packages/flatsql-demo",
-        "packages/flatsql-js"
+        "packages/flatsql"
     ],
     "packages": {
         "ts-node": "^10.9.1"
