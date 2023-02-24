@@ -9,14 +9,13 @@
 #include "flatsql/parser/parser_driver.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/test/grammar_tester.h"
-#include "gtest/gtest.h"
-#include "gtest/internal/gtest-internal.h"
+#include "gflags/gflags.h"
 
 using namespace flatsql;
 
-namespace {
+DEFINE_string(source_dir, "", "Source directory");
 
-void generate_grammar_tests(const std::filesystem::path& source_dir) {
+static void generate_grammar_tests(const std::filesystem::path& source_dir) {
     auto grammar_dir = source_dir / "dumps";
     for (auto& p : std::filesystem::directory_iterator(grammar_dir)) {
         auto filename = p.path().filename().filename().string();
@@ -67,18 +66,15 @@ void generate_grammar_tests(const std::filesystem::path& source_dir) {
     }
 }
 
-}  // namespace
-
 int main(int argc, char* argv[]) {
-    if (argc < 2) {
-        std::cout << "Usage: ./testgen <source_dir>" << std::endl;
-        exit(1);
+    gflags::AllowCommandLineReparsing();
+    gflags::SetUsageMessage("Usage: ./astdump --source_dir <dir>");
+    gflags::ParseCommandLineFlags(&argc, &argv, false);
+
+    if (!std::filesystem::exists(FLAGS_source_dir)) {
+        std::cout << "Invalid source directory: " << FLAGS_source_dir << std::endl;
     }
-    if (!argv[1] || !std::filesystem::exists(argv[1])) {
-        std::cout << "Invalid directory: " << argv[1] << std::endl;
-        exit(1);
-    }
-    std::filesystem::path source_dir{argv[1]};
+    auto source_dir = std::filesystem::path{FLAGS_source_dir};
     generate_grammar_tests(source_dir);
     return 0;
 }

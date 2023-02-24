@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
     gflags::ParseCommandLineFlags(&argc, &argv, false);
 
     if (!std::filesystem::exists(FLAGS_source_dir)) {
-        std::cout << "Directory does not exist: " << FLAGS_source_dir << std::endl;
+        std::cout << "Invalid source directory: " << FLAGS_source_dir << std::endl;
     }
     SOURCE_DIR = std::filesystem::path{FLAGS_source_dir};
     GrammarTest::LoadTests(SOURCE_DIR);

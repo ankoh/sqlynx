@@ -191,7 +191,7 @@ void GrammarTest::LoadTests(std::filesystem::path& source_dir) {
         // Make sure that it's no template
         auto tpl = p.path();
         tpl.replace_extension();
-        if (tpl.extension() == ".tpl.xml") continue;
+        if (tpl.extension() == ".tpl") continue;
 
         // Open input stream
         std::ifstream in(p.path(), std::ios::in | std::ios::binary);

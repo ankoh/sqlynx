@@ -202,7 +202,7 @@ set(TEST_CC
 
 if(NOT WASM)
   add_executable(tester test/tester.cc ${TEST_CC})
-  add_executable(testgen test/testgen.cc ${TEST_CC})
+  add_executable(astdump test/astdump.cc ${TEST_CC})
   target_link_libraries(tester flatsql_parser pugixml gtest gmock gflags Threads::Threads)
-  target_link_libraries(testgen flatsql_parser pugixml gtest gmock Threads::Threads)
+  target_link_libraries(astdump flatsql_parser pugixml gtest gflags Threads::Threads)
 endif()
