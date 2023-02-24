@@ -42,6 +42,14 @@ parser_release:
 	cmake -S ${PARSER_SOURCE_DIR} -B ${PARSER_RELEASE_DIR} -DCMAKE_BUILD_TYPE=Release
 	cmake --build ${PARSER_RELEASE_DIR}
 
+.PHONY: parser_tests
+parser_tests:
+	./packages/flatsql-parser/build/native/Debug/tester --source_dir .
+
 .PHONY: parser_wasm
 parser_wasm:
 	./scripts/build_parser_wasm.sh Release
+
+.PHONY: astdump
+astdumps:
+	./packages/flatsql-parser/build/native/Debug/astdump --source_dir .

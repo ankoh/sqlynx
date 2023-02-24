@@ -67,18 +67,18 @@
                 <statement type="CREATE_TABLE">
                     <node type="OBJECT_SQL_CREATE" loc="13..52" text="create tab..b tinyint)">
                         <node key="SQL_CREATE_TABLE_ELEMENTS" type="ARRAY" loc="30..52" text="(a integer..b tinyint)">
+                            <node type="OBJECT_SQL_COLUMN_DEF" loc="31..40" text="a integer">
+                                <node key="SQL_COLUMN_DEF_NAME" type="IDENTIFIER" loc="31..32" text="a" />
+                                <node key="SQL_COLUMN_DEF_TYPE" type="OBJECT_SQL_TYPENAME" loc="33..40" text="integer">
+                                    <node key="SQL_TYPENAME_TYPE" type="ENUM_SQL_NUMERIC_TYPE" value="INT4" />
+                                </node>
+                            </node>
                             <node type="OBJECT_SQL_COLUMN_DEF" loc="42..51" text="b tinyint">
                                 <node key="SQL_COLUMN_DEF_NAME" type="IDENTIFIER" loc="42..43" text="b" />
                                 <node key="SQL_COLUMN_DEF_TYPE" type="OBJECT_SQL_TYPENAME" loc="44..51" text="tinyint">
                                     <node key="SQL_TYPENAME_TYPE" type="OBJECT_SQL_GENERIC_TYPE" loc="44..51" text="tinyint">
                                         <node key="SQL_GENERIC_TYPE_NAME" type="IDENTIFIER" loc="44..51" text="tinyint" />
                                     </node>
-                                </node>
-                            </node>
-                            <node type="OBJECT_SQL_COLUMN_DEF" loc="31..40" text="a integer">
-                                <node key="SQL_COLUMN_DEF_NAME" type="IDENTIFIER" loc="31..32" text="a" />
-                                <node key="SQL_COLUMN_DEF_TYPE" type="OBJECT_SQL_TYPENAME" loc="33..40" text="integer">
-                                    <node key="SQL_TYPENAME_TYPE" type="ENUM_SQL_NUMERIC_TYPE" value="INT4" />
                                 </node>
                             </node>
                         </node>
@@ -105,18 +105,18 @@
                 <statement type="CREATE_TABLE">
                     <node type="OBJECT_SQL_CREATE" loc="13..52" text="create tab..b varchar)">
                         <node key="SQL_CREATE_TABLE_ELEMENTS" type="ARRAY" loc="30..52" text="(a integer..b varchar)">
+                            <node type="OBJECT_SQL_COLUMN_DEF" loc="31..40" text="a integer">
+                                <node key="SQL_COLUMN_DEF_NAME" type="IDENTIFIER" loc="31..32" text="a" />
+                                <node key="SQL_COLUMN_DEF_TYPE" type="OBJECT_SQL_TYPENAME" loc="33..40" text="integer">
+                                    <node key="SQL_TYPENAME_TYPE" type="ENUM_SQL_NUMERIC_TYPE" value="INT4" />
+                                </node>
+                            </node>
                             <node type="OBJECT_SQL_COLUMN_DEF" loc="42..51" text="b varchar">
                                 <node key="SQL_COLUMN_DEF_NAME" type="IDENTIFIER" loc="42..43" text="b" />
                                 <node key="SQL_COLUMN_DEF_TYPE" type="OBJECT_SQL_TYPENAME" loc="44..51" text="varchar">
                                     <node key="SQL_TYPENAME_TYPE" type="OBJECT_SQL_CHARACTER_TYPE" loc="44..51" text="varchar">
                                         <node key="SQL_CHARACTER_TYPE" type="ENUM_SQL_CHARACTER_TYPE" value="VARCHAR" />
                                     </node>
-                                </node>
-                            </node>
-                            <node type="OBJECT_SQL_COLUMN_DEF" loc="31..40" text="a integer">
-                                <node key="SQL_COLUMN_DEF_NAME" type="IDENTIFIER" loc="31..32" text="a" />
-                                <node key="SQL_COLUMN_DEF_TYPE" type="OBJECT_SQL_TYPENAME" loc="33..40" text="integer">
-                                    <node key="SQL_TYPENAME_TYPE" type="ENUM_SQL_NUMERIC_TYPE" value="INT4" />
                                 </node>
                             </node>
                         </node>
@@ -159,18 +159,18 @@
                 <statement type="CREATE_TABLE">
                     <node type="OBJECT_SQL_CREATE" loc="13..52" text="create tab..b varchar)">
                         <node key="SQL_CREATE_TABLE_ELEMENTS" type="ARRAY" loc="30..52" text="(a integer..b varchar)">
+                            <node type="OBJECT_SQL_COLUMN_DEF" loc="31..40" text="a integer">
+                                <node key="SQL_COLUMN_DEF_NAME" type="IDENTIFIER" loc="31..32" text="a" />
+                                <node key="SQL_COLUMN_DEF_TYPE" type="OBJECT_SQL_TYPENAME" loc="33..40" text="integer">
+                                    <node key="SQL_TYPENAME_TYPE" type="ENUM_SQL_NUMERIC_TYPE" value="INT4" />
+                                </node>
+                            </node>
                             <node type="OBJECT_SQL_COLUMN_DEF" loc="42..51" text="b varchar">
                                 <node key="SQL_COLUMN_DEF_NAME" type="IDENTIFIER" loc="42..43" text="b" />
                                 <node key="SQL_COLUMN_DEF_TYPE" type="OBJECT_SQL_TYPENAME" loc="44..51" text="varchar">
                                     <node key="SQL_TYPENAME_TYPE" type="OBJECT_SQL_CHARACTER_TYPE" loc="44..51" text="varchar">
                                         <node key="SQL_CHARACTER_TYPE" type="ENUM_SQL_CHARACTER_TYPE" value="VARCHAR" />
                                     </node>
-                                </node>
-                            </node>
-                            <node type="OBJECT_SQL_COLUMN_DEF" loc="31..40" text="a integer">
-                                <node key="SQL_COLUMN_DEF_NAME" type="IDENTIFIER" loc="31..32" text="a" />
-                                <node key="SQL_COLUMN_DEF_TYPE" type="OBJECT_SQL_TYPENAME" loc="33..40" text="integer">
-                                    <node key="SQL_TYPENAME_TYPE" type="ENUM_SQL_NUMERIC_TYPE" value="INT4" />
                                 </node>
                             </node>
                         </node>
@@ -388,12 +388,12 @@
                         <node key="SQL_CREATE_TABLE_ELEMENTS" type="ARRAY" loc="30..61" text="(a integer..efault 42)">
                             <node type="OBJECT_SQL_COLUMN_DEF" loc="31..60" text="a integer ..default 42">
                                 <node key="SQL_COLUMN_DEF_CONSTRAINTS" type="ARRAY" loc="40..60" text=" not null ..default 42">
+                                    <node type="OBJECT_SQL_COLUMN_CONSTRAINT" loc="41..49" text="not null">
+                                        <node key="SQL_COLUMN_CONSTRAINT_TYPE" type="ENUM_SQL_COLUMN_CONSTRAINT" value="NOT_NULL" />
+                                    </node>
                                     <node type="OBJECT_SQL_COLUMN_CONSTRAINT" loc="50..60" text="default 42">
                                         <node key="SQL_COLUMN_CONSTRAINT_TYPE" type="ENUM_SQL_COLUMN_CONSTRAINT" value="DEFAULT" />
                                         <node key="SQL_COLUMN_CONSTRAINT_VALUE" type="LITERAL_INTEGER" loc="58..60" text="42" />
-                                    </node>
-                                    <node type="OBJECT_SQL_COLUMN_CONSTRAINT" loc="41..49" text="not null">
-                                        <node key="SQL_COLUMN_CONSTRAINT_TYPE" type="ENUM_SQL_COLUMN_CONSTRAINT" value="NOT_NULL" />
                                     </node>
                                 </node>
                                 <node key="SQL_COLUMN_DEF_NAME" type="IDENTIFIER" loc="31..32" text="a" />

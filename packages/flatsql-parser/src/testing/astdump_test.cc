@@ -102,7 +102,7 @@ void ASTDumpTest::EncodeProgram(pugi::xml_node root, const proto::ProgramT& prog
                     auto begin = target->children_begin_or_value();
                     auto end = begin + target->children_count();
                     for (auto i = 0; i < target->children_count(); ++i) {
-                        pending.push_back({n.append_child("node"), &nodes[end - i - 1]});
+                        pending.push_back({n.append_child("node"), &nodes[begin + i]});
                     }
                     break;
                 }
