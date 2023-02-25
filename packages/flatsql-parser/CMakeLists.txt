@@ -47,14 +47,15 @@ endif()
 # CMake includes
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules ${CMAKE_MODULE_PATH})
-include("${CMAKE_SOURCE_DIR}/cmake/flatbuffers.cmake")
+include(${CMAKE_SOURCE_DIR}/cmake/flatbuffers.cmake)
+add_subdirectory(${CMAKE_SOURCE_DIR}/vendor/utf8proc)
 
 if(NOT WASM)
   find_package(Threads REQUIRED)
-  include("${CMAKE_SOURCE_DIR}/cmake/gtest.cmake")
-  include("${CMAKE_SOURCE_DIR}/cmake/gflags.cmake")
-  include("${CMAKE_SOURCE_DIR}/cmake/benchmark.cmake")
-  include("${CMAKE_SOURCE_DIR}/cmake/pugixml.cmake")
+  include(${CMAKE_SOURCE_DIR}/cmake/gtest.cmake)
+  include(${CMAKE_SOURCE_DIR}/cmake/gflags.cmake)
+  include(${CMAKE_SOURCE_DIR}/cmake/benchmark.cmake)
+  include(${CMAKE_SOURCE_DIR}/cmake/pugixml.cmake)
 endif()
 
 include_directories("${CMAKE_SOURCE_DIR}/include" "${CMAKE_BINARY_DIR}/include")
@@ -190,7 +191,7 @@ else()
   add_library(flatsql_parser ${LIB_SRC})
 endif()
 
-target_link_libraries(flatsql_parser flatbuffers)
+target_link_libraries(flatsql_parser flatbuffers utf8proc)
 
 # ---------------------------------------------------------------------------
 # Tester
