@@ -204,6 +204,7 @@ if(NOT WASM)
 
   set(TEST_SRC
     ${CMAKE_SOURCE_DIR}/test/astdump_test_suite.cc
+    ${CMAKE_SOURCE_DIR}/test/rope_test.cc
   )
   add_executable(tester test/tester.cc ${TEST_SRC})
   target_link_libraries(tester flatsql_parser flatsql_parser_testutils pugixml gtest gmock gflags Threads::Threads)
