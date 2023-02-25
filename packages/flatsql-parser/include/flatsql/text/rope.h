@@ -16,11 +16,11 @@ template<size_t PAGE_SIZE>
 struct Rope {
     struct TextStatistics {
         /// The text bytes
-        uint64_t text_bytes;
+        size_t text_bytes;
         /// The UTF-8 codepoints
-        uint64_t utf8_codepoints;
+        size_t utf8_codepoints;
         /// The line breaks
-        uint64_t line_breaks;
+        size_t line_breaks;
     };
 
     struct LeafNode;
