@@ -67,8 +67,10 @@ UTF8ExtraByteLoop(const int first_pos_seq, int utf8char, size_t& i,
 	return UnicodeType::UNICODE;
 }
 
-UnicodeType Utf8Proc::Analyze(const char *s, size_t len, UnicodeInvalidReason *invalid_reason, size_t *invalid_pos) {
+UnicodeType Utf8Proc::Analyze(std::string_view sv, UnicodeInvalidReason *invalid_reason, size_t *invalid_pos) {
 	UnicodeType type = UnicodeType::ASCII;
+	auto s = sv.data();
+	auto len = sv.size();
 
 	for (size_t i = 0; i < len; i++) {
 		int c = (int) s[i];
@@ -102,27 +104,33 @@ UnicodeType Utf8Proc::Analyze(const char *s, size_t len, UnicodeInvalidReason *i
 	return type;
 }
 
-char* Utf8Proc::Normalize(const char *s, size_t len) {
+char* Utf8Proc::Normalize(std::string_view sv) {
+	auto s = sv.data();
+	auto len = sv.size();
 	assert(s);
-	assert(Utf8Proc::Analyze(s, len) != UnicodeType::INVALID);
+	assert(Utf8Proc::Analyze(sv) != UnicodeType::INVALID);
 	return (char*) utf8proc_NFC((const utf8proc_uint8_t*) s, len);
 }
 
-bool Utf8Proc::IsValid(const char *s, size_t len) {
-	return Utf8Proc::Analyze(s, len) != UnicodeType::INVALID;
+bool Utf8Proc::IsValid(std::string_view sv) {
+	return Utf8Proc::Analyze(sv) != UnicodeType::INVALID;
 }
 
-size_t Utf8Proc::NextGraphemeCluster(const char *s, size_t len, size_t cpos) {
+size_t Utf8Proc::NextGraphemeCluster(std::string_view sv, size_t cpos) {
+	auto s = sv.data();
+	auto len = sv.size();
 	return utf8proc_next_grapheme(s, len, cpos);
 }
 
-size_t Utf8Proc::PreviousGraphemeCluster(const char *s, size_t len, size_t cpos) {
-	if (!Utf8Proc::IsValid(s, len)) {
+size_t Utf8Proc::PreviousGraphemeCluster(std::string_view sv, size_t cpos) {
+	auto s = sv.data();
+	auto len = sv.size();
+	if (!Utf8Proc::IsValid(sv)) {
 		return cpos - 1;
 	}
 	size_t current_pos = 0;
 	while(true) {
-		size_t new_pos = NextGraphemeCluster(s, len, current_pos);
+		size_t new_pos = NextGraphemeCluster(sv, current_pos);
 		if (new_pos <= current_pos || new_pos >= cpos) {
 			return current_pos;
 		}
@@ -142,7 +150,9 @@ int32_t Utf8Proc::UTF8ToCodepoint(const char *c, int &sz) {
 	return utf8proc_codepoint(c, sz);
 }
 
-size_t Utf8Proc::RenderWidth(const char *s, size_t len, size_t pos) {
+size_t Utf8Proc::RenderWidth(std::string_view sv, size_t pos) {
+	auto s = sv.data();
+	auto len = sv.size();
     int sz;
     auto codepoint = flatsql::utf8proc_codepoint(s + pos, sz);
     auto properties = flatsql::utf8proc_get_property(codepoint);
