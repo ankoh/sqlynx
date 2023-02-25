@@ -41,5 +41,14 @@ TEST(Rope, InsertStringSplit) {
     node.PushStringSplit(asBytes("abc"), right);
     EXPECT_EQ(node.GetString(), "012345");
     EXPECT_EQ(right.GetString(), "6789abc");
+}
 
+TEST(Rope, EquiDistribute) {
+    Rope<128>::LeafNode left;
+    Rope<128>::LeafNode right;
+    left.PushString(asBytes("01"));
+    right.PushString(asBytes("23456789"));
+    left.EquiDistribute(right);
+    EXPECT_EQ(left.GetString(), "01234");
+    EXPECT_EQ(right.GetString(), "56789");
 }

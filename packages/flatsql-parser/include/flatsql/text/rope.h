@@ -62,8 +62,10 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
         bool IsLeafNode() { return GetTag() == 0; }
         /// Is an inner node?
         bool IsInnerNode() { return GetTag() == 1; }
-        /// Get the node
-        template <typename T> T* GetPtr() { return reinterpret_cast<T*>((raw_ptr >> 1) << 1); }
+        /// Get as leaf node
+        LeafNode* AsLeafNode() { return reinterpret_cast<LeafNode*>((raw_ptr >> 1) << 1); }
+        /// Get as inner node
+        InnerNode* AsInnerNode() { return reinterpret_cast<InnerNode*>((raw_ptr >> 1) << 1); }
     };
 
     static const size_t LEAF_NODE_CAPACITY = PAGE_SIZE - sizeof(uint16_t);
@@ -197,6 +199,26 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
         void PushStringSplit(std::span<const std::byte> str, LeafNode& right) {
             InsertStringSplit(GetSize(), str, right);
         }
+        /// Distribute children equally between nodes
+        void EquiDistribute(LeafNode& right) {
+            if (buffer_size < right.buffer_size) {
+                // Right got more children than left, append surplus to left
+                auto move = (right.buffer_size - buffer_size) / 2;
+                std::memcpy(buffer.data() + GetSize(), right.buffer.data(), move);
+                std::memmove(right.buffer.data(), right.buffer.data() + move, right.GetSize() - move);
+                right.buffer_size -= move;
+                buffer_size += move;
+
+            } else if (buffer_size > right.buffer_size) {
+                // Left got more children than right, prepend surplus to right
+                auto move = (buffer_size - right.buffer_size) / 2;
+                auto move_from = GetSize() - move - 1;
+                std::memmove(right.buffer.data() + move, right.buffer.data(), move);
+                std::memcpy(right.buffer.data(), buffer.data() + move_from, move);
+                right.buffer_size += move;
+                buffer_size -= move;
+            }
+        }
     };
     static_assert(sizeof(LeafNode) <= PAGE_SIZE, "Leaf node must fit on a page");
     static_assert(std::is_trivially_copyable_v<LeafNode>, "Leaf node is trivially copyable");
@@ -279,11 +301,64 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
             SplitOff(l_count, dst);
             dst.Push(child, stats);
         }
+        /// Distribute children equally between nodes
+        void EquiDistribute(InnerNode& right) {
+            if (child_count < right.child_count) {
+                // Right got more children than left, append surplus to left
+                auto move = (right.child_count - child_count) / 2;
+                std::memcpy(child_nodes.data() + GetSize(), right.child_nodes.data(), move);
+                std::memcpy(child_nodes.data() + GetSize(), right.child_stats.data(), move);
+                std::memmove(right.child_nodes.data(), right.child_nodes.data() + move, right.GetSize() - move);
+                std::memmove(right.child_stats.data(), right.child_stats.data() + move, right.GetSize() - move);
+                right.child_count -= move;
+                child_count += move;
+
+            } else if (child_count > right.child_count) {
+                // Left got more children than right, prepend surplus to right
+                auto move = (child_count - right.child_count) / 2;
+                auto move_from = GetSize() - move - 1;
+                std::memmove(right.child_nodes.data() + move, right.child_nodes.data(), move);
+                std::memmove(right.child_stats.data() + move, right.child_stats.data(), move);
+                std::memcpy(right.child_nodes.data(), child_nodes.data() + move_from, move);
+                std::memcpy(right.child_stats.data(), child_stats.data() + move_from, move);
+                right.child_count += move;
+                child_count -= move;
+            }
+        }
         /// Attempts to merge two nodes, and if it's too much data to merge equi-distributes it between the two
         /// Returns:
         /// - True, if merge was successful.
         /// - False, if merge failed, equidistributed instead.
-        bool MergeDistribute(size_t idx1, size_t idx2) {}
+        bool MergeDistributeChildren(size_t idx1, size_t idx2) {
+            TaggedNodePtr child_node_1 = child_nodes[idx1];
+            TaggedNodePtr child_node_2 = child_nodes[idx2];
+            TaggedNodePtr child_stats_1 = child_stats[idx1];
+            TaggedNodePtr child_stats_2 = child_stats[idx2];
+
+            if (child_node_1.IsLeafNode()) {
+                assert(!child_node_2.IsLeafNode());
+                LeafNode* child_1 = child_node_1.AsLeafNode();
+                LeafNode* child_2 = child_node_2.AsLeafNode();
+
+                // Child 2 text fits into child 1?
+                auto combined = child_1->GetSize() + child_2->GetSize();
+                if (combined <= child_1->GetCapacity()) {
+                    child_1->PushString(child_2->GetString());
+                } else if (combined <= child_2->GetCapacity()) {
+                    child_2->PushString(child_1->GetString());
+                } else {
+                    child_1->EquiDistribute(*child_2);
+                    // XXX
+                }
+            } else {
+                assert(!child_node_2.IsLeafNode());
+                InnerNode* child_1 = child_node_1.AsInnerNode();
+                InnerNode* child_2 = child_node_2.AsInnerNode();
+
+                child_1->EquiDistribute(*child_2);
+                // XXX
+            }
+        }
         /// Equi-distributes the children between the two child arrays, preserving ordering
         void DistributeWith(size_t idx1, size_t idx2);
         /// If the children are leaf nodes, compacts them to take up the fewest nodes
