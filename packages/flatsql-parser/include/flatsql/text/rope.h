@@ -15,10 +15,6 @@
 /// OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 /// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include "utf8proc/utf8proc_wrapper.hpp"
-#include "flatsql/text/utf8.h"
-#include "flatsql/text/crlf.h"
-
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -27,10 +23,13 @@
 #include <string_view>
 #include <type_traits>
 
+#include "flatsql/text/crlf.h"
+#include "flatsql/text/utf8.h"
+#include "utf8proc/utf8proc_wrapper.hpp"
+
 namespace flatsql {
 
-template<size_t PAGE_SIZE = 1024>
-struct Rope {
+template <size_t PAGE_SIZE = 1024> struct Rope {
     struct TextStatistics {
         /// The text bytes
         size_t text_bytes;
@@ -44,18 +43,18 @@ struct Rope {
     struct InnerNode;
 
     struct TaggedNodePtr {
-        protected:
+       protected:
         /// The raw pointer
         uintptr_t raw_ptr;
 
-        public:
+       public:
         static TaggedNodePtr From(LeafNode* ptr) {
             assert((reinterpret_cast<uintptr_t>(ptr) & 0b1) == 0);
-            return { .raw_ptr = ptr };
+            return {.raw_ptr = ptr};
         }
         static TaggedNodePtr From(InnerNode* ptr) {
             assert((reinterpret_cast<uintptr_t>(ptr) & 0b1) == 0);
-            return { .raw_ptr = reinterpret_cast<uintptr_t>(ptr) | 0b1 };
+            return {.raw_ptr = reinterpret_cast<uintptr_t>(ptr) | 0b1};
         }
         /// Get the tag
         uint8_t GetTag() { return raw_ptr & 0b1; }
@@ -64,21 +63,25 @@ struct Rope {
         /// Is an inner node?
         bool IsInnerNode() { return GetTag() == 1; }
         /// Get the node
-        template<typename T>
-        T* GetPtr() { return reinterpret_cast<T*>((raw_ptr >> 1) << 1); }
+        template <typename T> T* GetPtr() { return reinterpret_cast<T*>((raw_ptr >> 1) << 1); }
     };
 
     static const size_t LEAF_NODE_CAPACITY = PAGE_SIZE - sizeof(uint16_t);
-    static const size_t INNER_NODE_CAPACITY = (PAGE_SIZE - sizeof(uint8_t)) / (sizeof(TextStatistics) + sizeof(TaggedNodePtr));
+    static const size_t INNER_NODE_CAPACITY =
+        (PAGE_SIZE - sizeof(uint8_t)) / (sizeof(TextStatistics) + sizeof(TaggedNodePtr));
 
     struct LeafNode {
-        protected:
+       protected:
         /// The buffer size
         uint16_t buffer_size;
         /// The string buffer
         std::array<std::byte, LEAF_NODE_CAPACITY> buffer;
 
-        public:
+       public:
+        /// Constructor
+        LeafNode(std::string_view data) : buffer_size(data.size()), buffer() {
+            std::memcpy(buffer.data(), data.data(), data.size());
+        }
         /// Get the size of the buffer
         auto GetSize() noexcept { return buffer_size; }
         /// Get the capacity of the buffer
@@ -103,9 +106,7 @@ struct Rope {
             buffer_size += data.size();
         }
         /// Appends a string to the end of the buffer
-        void PushString(std::span<const std::byte> str) noexcept {
-            InsertString(GetSize(), str);
-        }
+        void PushString(std::span<const std::byte> str) noexcept { InsertString(GetSize(), str); }
         /// Remove text in range
         void RemoveRange(size_t start_byte_idx, size_t end_byte_idx) noexcept {
             assert(start_byte_idx <= end_byte_idx);
@@ -146,7 +147,7 @@ struct Rope {
             auto inserted_end = byte_idx + str.size();
 
             // Figure out the split index, accounting for code point boundaries and CRLF pairs.
-            // We first copy the bytes in the area of the proposed split point into a small 8-byte buffer. 
+            // We first copy the bytes in the area of the proposed split point into a small 8-byte buffer.
             // We then use that buffer to look for the real split point.
             size_t split_idx;
             {
@@ -198,11 +199,10 @@ struct Rope {
         }
     };
     static_assert(sizeof(LeafNode) <= PAGE_SIZE, "Leaf node must fit on a page");
-    static_assert(std::is_trivially_destructible_v<LeafNode>, "Leaf node is trivially destructible");
-    static_assert(std::is_trivially_constructible_v<LeafNode>, "Leaf node is trivially constructible");
+    static_assert(std::is_trivially_copyable_v<LeafNode>, "Leaf node is trivially copyable");
 
     struct InnerNode {
-        protected:
+       protected:
         /// The child statistics
         std::array<TextStatistics, INNER_NODE_CAPACITY> child_stats;
         /// The child nodes
@@ -210,7 +210,10 @@ struct Rope {
         /// The children count
         uint8_t child_count;
 
-        public:
+       public:
+        /// Constructor
+        InnerNode() : child_stats(), child_nodes(), child_count(0) {}
+
         /// Get the size of the node
         auto GetSize() noexcept { return child_count; }
         /// Get the capacity of the node
@@ -280,9 +283,7 @@ struct Rope {
         /// Returns:
         /// - True, if merge was successful.
         /// - False, if merge failed, equidistributed instead.
-        bool MergeDistribute(size_t idx1, size_t idx2) {
-
-        }
+        bool MergeDistribute(size_t idx1, size_t idx2) {}
         /// Equi-distributes the children between the two child arrays, preserving ordering
         void DistributeWith(size_t idx1, size_t idx2);
         /// If the children are leaf nodes, compacts them to take up the fewest nodes
@@ -294,8 +295,7 @@ struct Rope {
         std::pair<TextStatistics, TaggedNodePtr> Remove();
     };
     static_assert(sizeof(InnerNode) <= PAGE_SIZE, "Inner node must fit on a page");
-    static_assert(std::is_trivially_destructible_v<InnerNode>, "Inner node is trivially destructible");
-    static_assert(std::is_trivially_constructible_v<InnerNode>, "Inner node is trivially constructible");
+    static_assert(std::is_trivially_copyable_v<InnerNode>, "Inner node is trivially copyable");
 };
 
-}
+}  // namespace flatsql
