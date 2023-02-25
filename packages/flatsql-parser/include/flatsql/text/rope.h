@@ -79,7 +79,7 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
 
        public:
         /// Constructor
-        LeafNode(std::string_view data) : buffer_size(data.size()), buffer() {
+        LeafNode(std::string_view data = {}) : buffer_size(data.size()), buffer() {
             std::memcpy(buffer.data(), data.data(), data.size());
         }
         /// Get the size of the buffer
@@ -87,7 +87,7 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
         /// Get the capacity of the buffer
         auto GetCapacity() noexcept { return LEAF_NODE_CAPACITY; }
         /// Get the data
-        auto GetData() noexcept { return std::span<std::byte>{buffer, buffer_size}; }
+        auto GetData() noexcept { return std::span<std::byte>{buffer.data(), buffer_size}; }
         /// Get buffer content as string
         auto GetString() noexcept { return std::string_view{reinterpret_cast<char*>(buffer.data()), GetSize()}; }
 
@@ -99,7 +99,7 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
         /// Insert raw bytes at an offset
         void InsertString(size_t ofs, std::span<const std::byte> data) noexcept {
             assert(ofs <= GetSize());
-            assert(data.size() <= (GetSize() - ofs));
+            assert(data.size() <= (GetCapacity() - ofs));
             assert(isUTF8CodepointBoundary(GetData(), ofs));
 
             std::memcpy(&buffer[ofs], data.data(), data.size());
@@ -131,7 +131,7 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
             assert(byte_idx <= GetSize());
             assert(isUTF8CodepointBoundary(GetData(), byte_idx));
 
-            dst.Insert(0, Truncate(byte_idx));
+            dst.InsertString(0, Truncate(byte_idx));
         }
         /// Inserts `string` at `byte_idx` and splits the resulting string in half.
         ///
@@ -152,7 +152,7 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
             size_t split_idx;
             {
                 std::array<std::byte, 8> splitCandidates;
-                auto candidates_begin = mid_idx - std::min(4, mid_idx);
+                auto candidates_begin = mid_idx - std::min<size_t>(4, mid_idx);
                 auto candidates_end = std::min(mid_idx + 4, total_length);
                 for (size_t i = candidates_begin; i < candidates_end; ++i) {
                     std::byte out;
