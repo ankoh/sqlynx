@@ -12,7 +12,7 @@
 
 namespace flatsql {
 
-template<size_t PAGE_SIZE>
+template<size_t PAGE_SIZE = 1024>
 struct Rope {
     struct TextStatistics {
         /// The text bytes
@@ -32,15 +32,13 @@ struct Rope {
         uintptr_t raw_ptr;
 
         public:
-        /// Constructor
-        TaggedNodePtr(LeafNode* ptr)
-            : raw_ptr(ptr) {
+        static TaggedNodePtr From(LeafNode* ptr) {
             assert((reinterpret_cast<uintptr_t>(ptr) & 0b1) == 0);
+            return { .raw_ptr = ptr };
         }
-        /// Constructor
-        TaggedNodePtr(InnerNode* ptr)
-            : raw_ptr(reinterpret_cast<uintptr_t>(ptr) | 0b1) {
+        static TaggedNodePtr From(InnerNode* ptr) {
             assert((reinterpret_cast<uintptr_t>(ptr) & 0b1) == 0);
+            return { .raw_ptr = reinterpret_cast<uintptr_t>(ptr) | 0b1 };
         }
         /// Get the tag
         uint8_t GetTag() { return raw_ptr & 0b1; }
@@ -64,14 +62,6 @@ struct Rope {
         std::array<std::byte, LEAF_NODE_CAPACITY> buffer[];
 
         public:
-        /// Construct from string
-        LeafNode(std::string_view data)
-            : buffer_size(0) {
-
-            assert(data.size() <= LEAF_NODE_CAPACITY);
-            assert(Utf8Proc::IsValid(data));
-            std::memcpy(buffer, data.data(), data.size());
-        }
         /// Get the size of the buffer
         auto GetSize() noexcept { return buffer_size; }
         /// Get the capacity of the buffer
@@ -86,7 +76,8 @@ struct Rope {
         /// Reset the node
         auto Reset() noexcept { buffer_size = 0; }
 
-        /// Insert a raw string at an offset
+        protected:
+        /// Insert raw bytes at an offset
         void Insert(size_t ofs, std::span<std::byte> data) noexcept {
             assert(ofs <= GetSize());
             assert(data.size() <= (GetSize() - ofs));
@@ -120,6 +111,23 @@ struct Rope {
             assert(isUTF8CodepointBoundary(GetRawBuffer(), byte_idx));
 
             dst.Insert(0, Truncate(byte_idx));
+        }
+
+        public:
+        /// Inserts a `&str` at byte offset `byte_idx`.
+        void InsertString(size_t byte_idx, std::string_view str) {
+            Insert(byte_idx, str); // XXX string_view -> span<byte>?
+        }
+        /// Inserts `string` at `byte_idx` and splits the resulting string in half,
+        /// returning the right half.
+        ///
+        /// Only splits on code point boundaries and will never split CRLF pairs,
+        /// so if the whole string is a single code point or CRLF pair, the split
+        /// will fail and the returned string will be empty.
+        void InsertStringSplit(size_t byte_idx, std::string_view str, LeafNode& dst) {
+            assert(isUTF8CodepointBoundary(GetRawBuffer(), byte_idx));
+
+
         }
     };
     static_assert(sizeof(LeafNode) <= PAGE_SIZE, "Leaf node must fit on a page");
@@ -203,8 +211,8 @@ struct Rope {
         }
         /// Attempts to merge two nodes, and if it's too much data to merge equi-distributes it between the two
         /// Returns:
-        /// - True: merge was successful.
-        /// - False: merge failed, equidistributed instead.
+        /// - True, if merge was successful.
+        /// - False, if merge failed, equidistributed instead.
         bool MergeDistribute(size_t idx1, size_t idx2) {
 
         }
