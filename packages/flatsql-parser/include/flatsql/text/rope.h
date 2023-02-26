@@ -125,6 +125,11 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
             std::memmove(&buffer[start_byte_idx], &buffer[end_byte_idx], GetSize() - end_byte_idx);
             buffer_size -= end_byte_idx - start_byte_idx;
         }
+        /// Remove text in range
+        TextStatistics RemoveCharRange(size_t start_idx, size_t end_idx) noexcept {
+            auto byte_start = utf8::codepointToByteIdx(GetData(), start_idx);
+            auto byte_end = byte_start + utf8::codepointToByteIdx(GetData().subspan(byte_start), end_idx - start_idx);
+        }
         /// Removes text after byte_idx
         std::span<std::byte> TruncateBytes(size_t byte_idx) noexcept {
             assert(byte_idx <= GetSize());
