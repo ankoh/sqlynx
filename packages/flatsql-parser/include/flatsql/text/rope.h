@@ -447,7 +447,7 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct InnerNode {
     }
 
     /// Find the first child where a predicate returns true
-    template <typename Predicate> std::pair<size_t, TextStatistics> FindIf(size_t arg, Predicate predicate) {
+    template <typename Predicate> std::pair<size_t, TextStatistics> Find(size_t arg, Predicate predicate) {
         auto child_stats = GetChildStats();
         TextStatistics next;
         for (size_t child_idx = 0; child_idx < child_stats.size(); ++child_idx) {
@@ -462,22 +462,22 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct InnerNode {
 
     /// Find the child that contains a byte index
     std::pair<size_t, size_t> FindByte(size_t byte_idx) {
-        auto [child, stats] = FindIf(byte_idx, ChildContainsByteIdx);
+        auto [child, stats] = Find(byte_idx, ChildContainsByteIdx);
         return {child, stats.text_bytes};
     }
     /// Find the child that contains a character
     std::pair<size_t, size_t> FindChar(size_t char_idx) {
-        auto [child, stats] = FindIf(char_idx, ChildContainsCharIdx);
+        auto [child, stats] = Find(char_idx, ChildContainsCharIdx);
         return {child, stats.utf8_codepoints};
     }
     /// Find the child that contains a line break
     std::pair<size_t, size_t> FindLineBreak(size_t line_break_idx) {
-        auto [child, stats] = FindIf(line_break_idx, ChildContainsLineBreak);
+        auto [child, stats] = Find(line_break_idx, ChildContainsLineBreak);
         return {child, stats.line_breaks};
     }
 
     /// Find a range where two predicate return true
-    template <typename Predicate> std::pair<Child, Child> FindRangeIf(size_t arg0, size_t arg1, Predicate predicate) {
+    template <typename Predicate> std::pair<Child, Child> FindRange(size_t arg0, size_t arg1, Predicate predicate) {
         auto child_stats = GetChildStats();
         std::pair<size_t, TextStatistics> begin, end;
         TextStatistics next;
@@ -507,7 +507,7 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct InnerNode {
     /// Find the range that contains a character range
     std::pair<size_t, size_t> FindCharRange(size_t char_idx_0, size_t char_idx_1) {
         assert(char_idx_0 <= char_idx_1);
-        auto [child, stats] = FindRangeIf(char_idx_0, char_idx_1, ChildContainsCharIdx);
+        auto [child, stats] = FindRange(char_idx_0, char_idx_1, ChildContainsCharIdx);
         return {child, stats.text_bytes};
     }
 };
