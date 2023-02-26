@@ -3,7 +3,7 @@
 
 using namespace std;
 
-namespace flatsql {
+namespace flatsql::utf8 {
 
 // This function efficiently checks if a string is valid UTF8.
 // It was originally written by Sjoerd Mullender.
@@ -154,8 +154,8 @@ size_t Utf8Proc::RenderWidth(std::string_view sv, size_t pos) {
 	auto s = sv.data();
 	auto len = sv.size();
     int sz;
-    auto codepoint = flatsql::utf8proc_codepoint(s + pos, sz);
-    auto properties = flatsql::utf8proc_get_property(codepoint);
+    auto codepoint = flatsql::utf8::utf8proc_codepoint(s + pos, sz);
+    auto properties = flatsql::utf8::utf8proc_get_property(codepoint);
     return properties->charwidth;
 }
 
@@ -164,8 +164,8 @@ size_t Utf8Proc::RenderWidth(const std::string &str) {
 	size_t pos = 0;
 	while(pos < str.size()) {
 		int sz;
-		auto codepoint = flatsql::utf8proc_codepoint(str.c_str() + pos, sz);
-		auto properties = flatsql::utf8proc_get_property(codepoint);
+		auto codepoint = flatsql::utf8::utf8proc_codepoint(str.c_str() + pos, sz);
+		auto properties = flatsql::utf8::utf8proc_get_property(codepoint);
 		render_width += properties->charwidth;
 		pos += sz;
 	}

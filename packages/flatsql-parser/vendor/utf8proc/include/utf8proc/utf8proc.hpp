@@ -53,7 +53,7 @@
 #ifndef UTF8PROC_H
 #define UTF8PROC_H
 
-// flatsql change:
+// flatsql::utf8 change:
 #define UTF8PROC_STATIC
 
 /** @name API version
@@ -131,7 +131,7 @@ typedef bool utf8proc_bool;
 // #  endif
 // #endif
 
-namespace flatsql {
+namespace flatsql::utf8 {
 
 typedef int8_t utf8proc_int8_t;
 typedef uint8_t utf8proc_uint8_t;

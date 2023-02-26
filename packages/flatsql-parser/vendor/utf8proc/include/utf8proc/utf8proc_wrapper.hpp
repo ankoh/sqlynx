@@ -4,7 +4,7 @@
 #include <cassert>
 #include <cstring>
 
-namespace flatsql {
+namespace flatsql::utf8 {
 
 enum class UnicodeType { INVALID, ASCII, UNICODE };
 enum class UnicodeInvalidReason { BYTE_MISMATCH, INVALID_UNICODE };

@@ -43,7 +43,7 @@
 
 #include "utf8proc/utf8proc.hpp"
 
-namespace flatsql {
+namespace flatsql::utf8 {
 
 #ifndef SSIZE_MAX
 #define SSIZE_MAX ((size_t)SIZE_MAX/2)
