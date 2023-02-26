@@ -170,7 +170,7 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
                     splitCandidates[i - candidates_begin] = out;
                 }
                 std::span<const std::byte> candidates{splitCandidates.data(), candidates_end - candidates_begin};
-                split_idx = utf8::findNearestCodepointBoundary(candidates, mid_idx - candidates_begin) + candidates_begin;
+                split_idx = utf8::findNearestCodepoint(candidates, mid_idx - candidates_begin) + candidates_begin;
             }
 
             // Divide strings
