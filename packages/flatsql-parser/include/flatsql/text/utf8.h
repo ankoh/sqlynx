@@ -52,7 +52,7 @@ constexpr size_t findNearestCodepoint(std::span<const std::byte> buffer, size_t 
     }
 }
 /// Find a codepoint boundary, not necessarily the nearest
-constexpr size_t findCodepoint(std::span<const std::byte> buffer, size_t pos, bool bias_left) {
+constexpr size_t findCodepoint(std::span<const std::byte> buffer, size_t pos, bool bias_left = true) {
     assert(pos <= buffer.size());
     if (isCodepointBoundary(buffer, pos)) {
         return pos;

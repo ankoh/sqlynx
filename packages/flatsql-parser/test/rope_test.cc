@@ -51,4 +51,12 @@ TEST(RopeLeaf, EquiDistribute) {
     left.EquiDistribute(right);
     EXPECT_EQ(left.GetString(), "01234");
     EXPECT_EQ(right.GetString(), "56789");
+
+    left.Truncate(0);
+    right.Truncate(0);
+    left.PushString(asBytes("abcdefgh"));
+    right.PushString(asBytes("ij"));
+    left.EquiDistribute(right);
+    EXPECT_EQ(left.GetString(), "abcde");
+    EXPECT_EQ(right.GetString(), "fghij");
 }

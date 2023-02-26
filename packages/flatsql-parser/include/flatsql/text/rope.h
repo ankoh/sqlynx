@@ -92,6 +92,8 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
         /// Get buffer content as string
         auto GetString() noexcept { return std::string_view{reinterpret_cast<char*>(buffer.data()), GetSize()}; }
 
+        /// Is valid?
+        auto IsValid() noexcept { return utf8::isCodepointBoundary(GetData(), 0); }
         /// Is the node empty?
         auto IsEmpty() noexcept { return GetSize() == 0; }
         /// Reset the node
@@ -121,6 +123,7 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
         /// Removes text after byte_idx
         std::span<std::byte> Truncate(size_t byte_idx) noexcept {
             assert(byte_idx <= GetSize());
+            assert(utf8::isCodepointBoundary(GetData(), byte_idx));
 
             std::span<std::byte> tail{&buffer[byte_idx], GetSize() - byte_idx};
             buffer_size = byte_idx;
@@ -136,8 +139,7 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
         }
         /// Inserts `string` at `byte_idx` and splits the resulting string in half.
         ///
-        /// Only splits on code point boundaries, so if the whole string is a single code point,
-        /// the split will fail and the right node will be empty.
+        /// Only splits on code point boundaries, so if the whole string is a single code point the right node will be empty.
         void InsertStringSplit(size_t byte_idx, std::span<const std::byte> str, LeafNode& right) {
             assert(right.IsEmpty());
             assert(utf8::isCodepointBoundary(GetData(), byte_idx));
@@ -202,21 +204,26 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
         void EquiDistribute(LeafNode& right) {
             if (buffer_size < right.buffer_size) {
                 // Right got more children than left, append surplus to left
-                auto move = (right.buffer_size - buffer_size) / 2;
-                std::memcpy(buffer.data() + GetSize(), right.buffer.data(), move);
-                std::memmove(right.buffer.data(), right.buffer.data() + move, right.GetSize() - move);
-                right.buffer_size -= move;
-                buffer_size += move;
+                auto half_surplus = (right.buffer_size - buffer_size) / 2;
+                auto move_left = utf8::findCodepoint(right.GetData(), half_surplus);
+                std::memcpy(buffer.data() + GetSize(), right.buffer.data(), move_left);
+                std::memmove(right.buffer.data(), right.buffer.data() + move_left, right.GetSize() - move_left);
+                right.buffer_size -= move_left;
+                buffer_size += move_left;
 
             } else if (buffer_size > right.buffer_size) {
                 // Left got more children than right, prepend surplus to right
-                auto move = (buffer_size - right.buffer_size) / 2;
-                auto move_from = GetSize() - move - 1;
-                std::memmove(right.buffer.data() + move, right.buffer.data(), move);
-                std::memcpy(right.buffer.data(), buffer.data() + move_from, move);
-                right.buffer_size += move;
-                buffer_size -= move;
+                auto half_surplus = (buffer_size - right.buffer_size) / 2;
+                // Find first codepoint > (GetSize() - half_surplus - 1)
+                auto move_right_from = utf8::findCodepoint(GetData(), GetSize() - half_surplus);
+                auto move_right = GetSize() - move_right_from;
+                std::memmove(right.buffer.data() + move_right, right.buffer.data(), move_right);
+                std::memcpy(right.buffer.data(), buffer.data() + move_right_from, move_right);
+                right.buffer_size += move_right;
+                buffer_size -= move_right;
             }
+            assert(IsValid());
+            assert(right.IsValid());
         }
     };
     static_assert(sizeof(LeafNode) <= PAGE_SIZE, "Leaf node must fit on a page");
