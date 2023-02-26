@@ -33,8 +33,8 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
     struct TextStatistics {
         /// The text bytes
         size_t text_bytes;
-        /// The UTF-8 characters (aka codepoints)
-        size_t utf8_chars;
+        /// The UTF-8 codepoints
+        size_t utf8_codepoints;
         /// The line breaks
         size_t line_breaks;
     };
