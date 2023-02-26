@@ -19,6 +19,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <cassert>
 #include <span>
 #include <string_view>
 #include <type_traits>
@@ -255,12 +256,20 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
         /// Is the node full?
         auto IsFull() noexcept { return GetSize() >= GetCapacity(); }
 
-        /// Pushes an item into the end of the array
+        /// Pushes an item into the array
         void Push(TaggedNodePtr child, TextStatistics childStats) {
             assert(!IsFull());
             childStats[child_count] = childStats;
             child_nodes[child_count] = child;
             ++child_count;
+        }
+        /// Pushes items into the array
+        void Push(std::span<const TaggedNodePtr> nodes, std::span<const TextStatistics> stats) {
+            assert(nodes.size() == stats.size())
+            assert((GetCapacity() - GetSize()) <= nodes.size());
+            std::memcpy(child_nodes.data() + GetSize(), nodes.data(), nodes.size());
+            std::memcpy(child_stats.data() + GetSize(), stats.data(), nodes.size());
+            child_count += nodes.size();
         }
         /// Pops an item from the end of the array
         std::pair<TaggedNodePtr, TextStatistics> Pop() {
@@ -289,6 +298,14 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
                 std::memmove(&child_stats[idx], &child_nodes[idx + 1], tail);
             }
             --child_count;
+        }
+        /// Truncate children from a position
+        std::pair<std::span<const TaggedNodePtr>, std::span<const TextStatistics>> Truncate(size_t idx) noexcept {
+            assert(idx <= GetSize());
+            std::span<const TaggedNodePtr> tail_nodes{&child_nodes[idx], GetSize() - idx};
+            std::span<const TextStatistics> tail_stats{&child_stats[idx], GetSize() - idx};
+            child_count = idx;
+            return {tail_nodes, tail_stats};
         }
         /// Splits node at index
         void SplitOff(size_t byte_idx, InnerNode& dst) {
@@ -341,19 +358,18 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
             TaggedNodePtr child_stats_1 = child_stats[idx1];
             TaggedNodePtr child_stats_2 = child_stats[idx2];
 
+            bool remove_right = false;
             if (child_node_1.IsLeafNode()) {
                 assert(child_node_2.IsLeafNode());
                 LeafNode* child_1 = child_node_1.AsLeafNode();
                 LeafNode* child_2 = child_node_2.AsLeafNode();
 
-                // Child 2 text fits into child 1?
+                // Text fits into a single node?
                 auto combined = child_1->GetSize() + child_2->GetSize();
                 if (combined <= child_1->GetCapacity()) {
-                    child_1->PushString(child_2->GetString());
+                    child_1->PushString(child_2->Truncate());
                     assert(child_1->IsValid());
-                } else if (combined <= child_2->GetCapacity()) {
-                    child_2->PushString(child_1->GetString());
-                    assert(child_2->IsValid());
+                    remove_right = true;
                 } else {
                     child_1->EquiDistribute(*child_2);
                     assert(child_1->IsValid());
@@ -365,8 +381,14 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
                 InnerNode* child_1 = child_node_1.AsInnerNode();
                 InnerNode* child_2 = child_node_2.AsInnerNode();
 
-                child_1->EquiDistribute(*child_2);
-                // XXX
+                // Children fit into a single node?
+                auto combined = child_1->GetSize() + child_2->GetSize();
+                if (combined <= child_1->GetCapacity()) {
+                    child_1->Push(child_2->Truncate());
+                    remove_right = true;
+                } else {
+                    child_1->EquiDistribute(*child_2);
+                }
             }
         }
         /// Equi-distributes the children between the two child arrays, preserving ordering
