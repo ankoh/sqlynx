@@ -42,17 +42,17 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
     struct LeafNode;
     struct InnerNode;
 
-    struct TaggedNodePtr {
+    struct NodePtr {
        protected:
         /// The raw pointer
         uintptr_t raw_ptr;
 
        public:
-        static TaggedNodePtr From(LeafNode* ptr) {
+        static NodePtr From(LeafNode* ptr) {
             assert((reinterpret_cast<uintptr_t>(ptr) & 0b1) == 0);
             return {.raw_ptr = ptr};
         }
-        static TaggedNodePtr From(InnerNode* ptr) {
+        static NodePtr From(InnerNode* ptr) {
             assert((reinterpret_cast<uintptr_t>(ptr) & 0b1) == 0);
             return {.raw_ptr = reinterpret_cast<uintptr_t>(ptr) | 0b1};
         }
@@ -70,7 +70,7 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
 
     static const size_t LEAF_NODE_CAPACITY = PAGE_SIZE - sizeof(uint16_t);
     static const size_t INNER_NODE_CAPACITY =
-        (PAGE_SIZE - sizeof(uint8_t)) / (sizeof(TextStatistics) + sizeof(TaggedNodePtr));
+        (PAGE_SIZE - sizeof(uint8_t)) / (sizeof(TextStatistics) + sizeof(NodePtr));
 
     struct LeafNode {
        protected:
@@ -235,7 +235,7 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
         /// The child statistics
         std::array<TextStatistics, INNER_NODE_CAPACITY> child_stats;
         /// The child nodes
-        std::array<TaggedNodePtr, INNER_NODE_CAPACITY> child_nodes;
+        std::array<NodePtr, INNER_NODE_CAPACITY> child_nodes;
         /// The children count
         uint8_t child_count;
 
@@ -257,14 +257,14 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
         auto IsFull() noexcept { return GetSize() >= GetCapacity(); }
 
         /// Pushes an item into the array
-        void Push(TaggedNodePtr child, TextStatistics childStats) {
+        void Push(NodePtr child, TextStatistics childStats) {
             assert(!IsFull());
             childStats[child_count] = childStats;
             child_nodes[child_count] = child;
             ++child_count;
         }
         /// Pushes items into the array
-        void Push(std::span<const TaggedNodePtr> nodes, std::span<const TextStatistics> stats) {
+        void Push(std::span<const NodePtr> nodes, std::span<const TextStatistics> stats) {
             assert(nodes.size() == stats.size())
             assert((GetCapacity() - GetSize()) <= nodes.size());
             std::memcpy(child_nodes.data() + GetSize(), nodes.data(), nodes.size());
@@ -272,13 +272,13 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
             child_count += nodes.size();
         }
         /// Pops an item from the end of the array
-        std::pair<TaggedNodePtr, TextStatistics> Pop() {
+        std::pair<NodePtr, TextStatistics> Pop() {
             assert(!IsEmpty());
             --child_count;
             return {child_nodes[child_count], child_stats[child_count]};
         }
         /// Inserts an item at a position
-        void Insert(size_t idx, TaggedNodePtr child, TextStatistics child_stats) {
+        void Insert(size_t idx, NodePtr child, TextStatistics child_stats) {
             assert(idx <= GetSize());
             assert(GetSize() < GetCapacity());
             auto n = GetSize() - idx;
@@ -289,7 +289,7 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
             ++child_count;
         }
         /// Remove an element at a position
-        std::pair<TaggedNodePtr, TextStatistics> Remove(size_t idx) {
+        std::pair<NodePtr, TextStatistics> Remove(size_t idx) {
             assert(GetSize() > 0);
             assert(idx < GetSize());
             if ((idx + 1) < GetSize()) {
@@ -300,9 +300,9 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
             --child_count;
         }
         /// Truncate children from a position
-        std::pair<std::span<const TaggedNodePtr>, std::span<const TextStatistics>> Truncate(size_t idx) noexcept {
+        std::pair<std::span<const NodePtr>, std::span<const TextStatistics>> Truncate(size_t idx) noexcept {
             assert(idx <= GetSize());
-            std::span<const TaggedNodePtr> tail_nodes{&child_nodes[idx], GetSize() - idx};
+            std::span<const NodePtr> tail_nodes{&child_nodes[idx], GetSize() - idx};
             std::span<const TextStatistics> tail_stats{&child_stats[idx], GetSize() - idx};
             child_count = idx;
             return {tail_nodes, tail_stats};
@@ -318,7 +318,7 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
             child_count = byte_idx;
         }
         /// Pushes an element onto the end of the array, and then splits it in half
-        void PushSplit(TaggedNodePtr child, TextStatistics stats, InnerNode& dst) {
+        void PushSplit(NodePtr child, TextStatistics stats, InnerNode& dst) {
             auto r_count = (GetSize() + 1) / 2;
             auto l_count = (GetSize() + 1) - r_count;
             SplitOff(l_count, dst);
@@ -353,10 +353,10 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
         /// - True, if merge was successful.
         /// - False, if merge failed, equidistributed instead.
         bool MergeOrBalanceChildren(size_t idx1, size_t idx2) {
-            TaggedNodePtr child_node_1 = child_nodes[idx1];
-            TaggedNodePtr child_node_2 = child_nodes[idx2];
-            TaggedNodePtr child_stats_1 = child_stats[idx1];
-            TaggedNodePtr child_stats_2 = child_stats[idx2];
+            NodePtr child_node_1 = child_nodes[idx1];
+            NodePtr child_node_2 = child_nodes[idx2];
+            NodePtr child_stats_1 = child_stats[idx1];
+            NodePtr child_stats_2 = child_stats[idx2];
 
             bool remove_right = false;
             if (child_node_1.IsLeafNode()) {
@@ -396,10 +396,10 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
         /// If the children are leaf nodes, compacts them to take up the fewest nodes
         void CompactLeafs();
         /// Inserts an element into a the array, and then splits it in half
-        void InsertSplit(size_t idx, TaggedNodePtr child, TextStatistics stats, InnerNode& other);
+        void InsertSplit(size_t idx, NodePtr child, TextStatistics stats, InnerNode& other);
         /// Removes the item at the given index from the the array.
         /// Decreases length by one.  Preserves ordering of the other items.
-        std::pair<TextStatistics, TaggedNodePtr> Remove();
+        std::pair<TextStatistics, NodePtr> Remove();
     };
     static_assert(sizeof(InnerNode) <= PAGE_SIZE, "Inner node must fit on a page");
     static_assert(std::is_trivially_copyable_v<InnerNode>, "Inner node must be trivially copyable");
