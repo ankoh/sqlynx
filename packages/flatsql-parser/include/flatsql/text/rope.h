@@ -45,11 +45,16 @@ struct TextStatistics {
             utf8_codepoints += utf8::isCodepointBoundary(b);
         }
     }
-    /// Sum up text statistics
     TextStatistics& operator+=(const TextStatistics& other) {
         text_bytes += other.text_bytes;
         utf8_codepoints += other.utf8_codepoints;
         line_breaks += other.line_breaks;
+        return *this;
+    }
+    TextStatistics& operator-=(const TextStatistics& other) {
+        text_bytes -= other.text_bytes;
+        utf8_codepoints -= other.utf8_codepoints;
+        line_breaks -= other.line_breaks;
         return *this;
     }
 };
@@ -138,9 +143,13 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct LeafNode {
     TextStatistics RemoveCharRange(size_t start_idx, size_t end_idx) noexcept {
         auto byte_start = utf8::codepointToByteIdx(GetData(), start_idx);
         auto byte_end = byte_start + utf8::codepointToByteIdx(GetData().subspan(byte_start), end_idx - start_idx);
+        auto byte_count = byte_end - byte_start;
+        TextStatistics stats{GetData().subspan(byte_start, byte_count)};
+        RemoveByteRange(byte_start, byte_count);
+        return stats;
     }
     /// Removes text after byte_idx
-    std::span<std::byte> TruncateBytes(size_t byte_idx) noexcept {
+    std::span<std::byte> TruncateBytes(size_t byte_idx = 0) noexcept {
         assert(byte_idx <= GetSize());
         assert(utf8::isCodepointBoundary(GetData(), byte_idx));
 
@@ -148,7 +157,7 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct LeafNode {
         buffer_size = byte_idx;
         return tail;
     }
-    /// Splits node at index
+    /// Splits bytes at index
     void SplitBytesOff(size_t byte_idx, LeafNode& dst) noexcept {
         assert(dst.IsEmpty());
         assert(byte_idx <= GetSize());
@@ -156,10 +165,13 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct LeafNode {
 
         dst.InsertBytes(0, TruncateBytes(byte_idx));
     }
+    /// Split chars at index
+    void SplitCharsOff(size_t char_idx, LeafNode& dst) noexcept {
+        auto byte_idx = utf8::codepointToByteIdx(GetData(), char_idx);
+        SplitBytesOff(byte_idx, dst);
+    }
     /// Inserts `string` at `byte_idx` and splits the resulting string in half.
-    ///
-    /// Only splits on code point boundaries, so if the whole string is a single code point the right node will be
-    /// empty.
+    /// Only splits on code point boundaries, so if the whole string is a single code point the right node will be empty.
     void InsertBytesAndSplit(size_t byte_idx, std::span<const std::byte> str, LeafNode& right) {
         assert(right.IsEmpty());
         assert(utf8::isCodepointBoundary(GetData(), byte_idx));
@@ -221,7 +233,7 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct LeafNode {
         InsertBytesAndSplit(GetSize(), str, right);
     }
     /// Distribute children equally between nodes
-    void BalanceBytesWith(LeafNode& right) {
+    void BalanceBytes(LeafNode& right) {
         if (buffer_size < right.buffer_size) {
             // Right got more children than left, append surplus to left
             auto half_surplus = (right.buffer_size - buffer_size) / 2;
@@ -343,7 +355,7 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct InnerNode {
         dst.Push(child, stats);
     }
     /// Distribute children equally between nodes
-    void BalanceWith(InnerNode& right) {
+    void Balance(InnerNode& right) {
         if (child_count < right.child_count) {
             // Right got more children than left, append surplus to left
             auto move = (right.child_count - child_count) / 2;
@@ -389,7 +401,7 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct InnerNode {
                 assert(child_1->IsValid());
                 remove_right = true;
             } else {
-                child_1->BalanceBytesWith(*child_2);
+                child_1->BalanceBytes(*child_2);
                 assert(child_1->IsValid());
                 assert(child_2->IsValid());
             }

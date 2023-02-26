@@ -48,7 +48,7 @@ TEST(RopeLeafNode, BalanceBytesWith) {
     rope::LeafNode<128> right;
     left.PushBytes(asBytes("01"));
     right.PushBytes(asBytes("23456789"));
-    left.BalanceBytesWith(right);
+    left.BalanceBytes(right);
     EXPECT_EQ(left.GetString(), "01234");
     EXPECT_EQ(right.GetString(), "56789");
 
@@ -56,7 +56,7 @@ TEST(RopeLeafNode, BalanceBytesWith) {
     right.TruncateBytes(0);
     left.PushBytes(asBytes("abcdefgh"));
     right.PushBytes(asBytes("ij"));
-    left.BalanceBytesWith(right);
+    left.BalanceBytes(right);
     EXPECT_EQ(left.GetString(), "abcde");
     EXPECT_EQ(right.GetString(), "fghij");
 }
