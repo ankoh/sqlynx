@@ -36,6 +36,22 @@ struct TextStatistics {
     size_t utf8_codepoints;
     /// The line breaks
     size_t line_breaks;
+
+    /// Constructor
+    TextStatistics(std::span<const std::byte> data)
+        : text_bytes(data.size()) {
+        for (auto b: data) {
+            line_breaks += (b == std::byte{0x0A});
+            utf8_codepoints += utf8::isCodepointBoundary(b);
+        }
+    }
+    /// Sum up text statistics
+    TextStatistics& operator+=(const TextStatistics& other) {
+        text_bytes += other.text_bytes;
+        utf8_codepoints += other.utf8_codepoints;
+        line_breaks += other.line_breaks;
+        return *this;
+    }
 };
 
 template <size_t PageSize> struct LeafNode;
