@@ -23,7 +23,6 @@
 #include <string_view>
 #include <type_traits>
 
-#include "flatsql/text/crlf.h"
 #include "flatsql/text/utf8.h"
 #include "utf8proc/utf8proc_wrapper.hpp"
 
@@ -102,7 +101,7 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
         void InsertString(size_t ofs, std::span<const std::byte> data) noexcept {
             assert(ofs <= GetSize());
             assert(data.size() <= (GetCapacity() - ofs));
-            assert(isUTF8CodepointBoundary(GetData(), ofs));
+            assert(utf8::isCodepointBoundary(GetData(), ofs));
 
             std::memcpy(&buffer[ofs], data.data(), data.size());
             buffer_size += data.size();
@@ -113,8 +112,8 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
         void RemoveRange(size_t start_byte_idx, size_t end_byte_idx) noexcept {
             assert(start_byte_idx <= end_byte_idx);
             assert(end_byte_idx <= GetSize());
-            assert(isUTF8CodepointBoundary(GetData(), start_byte_idx));
-            assert(isUTF8CodepointBoundary(GetData(), end_byte_idx));
+            assert(utf8::isCodepointBoundary(GetData(), start_byte_idx));
+            assert(utf8::isCodepointBoundary(GetData(), end_byte_idx));
 
             std::memmove(&buffer[start_byte_idx], &buffer[end_byte_idx], GetSize() - end_byte_idx);
             buffer_size -= end_byte_idx - start_byte_idx;
@@ -131,24 +130,24 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
         void SplitOff(size_t byte_idx, LeafNode& dst) noexcept {
             assert(dst.IsEmpty());
             assert(byte_idx <= GetSize());
-            assert(isUTF8CodepointBoundary(GetData(), byte_idx));
+            assert(utf8::isCodepointBoundary(GetData(), byte_idx));
 
             dst.InsertString(0, Truncate(byte_idx));
         }
         /// Inserts `string` at `byte_idx` and splits the resulting string in half.
         ///
-        /// Only splits on code point boundaries and will never split CRLF pairs, so if the whole string is a
-        /// single code point or CRLF pair, the split will fail and the returned string will be empty.
+        /// Only splits on code point boundaries, so if the whole string is a single code point,
+        /// the split will fail and the right node will be empty.
         void InsertStringSplit(size_t byte_idx, std::span<const std::byte> str, LeafNode& right) {
             assert(right.IsEmpty());
-            assert(isUTF8CodepointBoundary(GetData(), byte_idx));
+            assert(utf8::isCodepointBoundary(GetData(), byte_idx));
 
             auto total_length = GetSize() + str.size();
             auto mid_idx = total_length / 2;
             auto inserted_begin = byte_idx;
             auto inserted_end = byte_idx + str.size();
 
-            // Figure out the split index, accounting for code point boundaries and CRLF pairs.
+            // Figure out the split index, accounting for code point boundaries.
             // We first copy the bytes in the area of the proposed split point into a small 8-byte buffer.
             // We then use that buffer to look for the real split point.
             size_t split_idx;
@@ -171,7 +170,7 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
                     splitCandidates[i - candidates_begin] = out;
                 }
                 std::span<const std::byte> candidates{splitCandidates.data(), candidates_end - candidates_begin};
-                split_idx = crlf::nearestInternalSplit(candidates, mid_idx - candidates_begin) + candidates_begin;
+                split_idx = utf8::findNearestCodepointBoundary(candidates, mid_idx - candidates_begin) + candidates_begin;
             }
 
             // Divide strings
@@ -194,8 +193,8 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
         }
         /// Appends a string and splits the resulting string in half.
         ///
-        /// Only splits on code point boundaries and will never split CRLF pairs, so if the whole string is
-        /// a single code point or CRLF pair, the split will fail and the returned string will be empty.
+        /// Only splits on code point boundaries, so if the whole string is a single code point,
+        /// the split will fail and the returned string will be empty.
         void PushStringSplit(std::span<const std::byte> str, LeafNode& right) {
             InsertStringSplit(GetSize(), str, right);
         }

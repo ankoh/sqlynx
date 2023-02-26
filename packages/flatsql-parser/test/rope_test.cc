@@ -7,7 +7,7 @@ static std::span<const std::byte> asBytes(std::string_view str) {
     return {reinterpret_cast<const std::byte*>(str.data()), str.size()};
 }
 
-TEST(Rope, SimpleOps) {
+TEST(RopeLeaf, SimpleOps) {
     Rope<128>::LeafNode node;
     EXPECT_TRUE(node.IsEmpty());
 
@@ -34,7 +34,7 @@ TEST(Rope, SimpleOps) {
     EXPECT_EQ(right.GetString(), "nananana");
 }
 
-TEST(Rope, InsertStringSplit) {
+TEST(RopeLeaf, InsertStringSplit) {
     Rope<128>::LeafNode node;
     node.PushString(asBytes("0123456789"));
     Rope<128>::LeafNode right;
@@ -43,7 +43,7 @@ TEST(Rope, InsertStringSplit) {
     EXPECT_EQ(right.GetString(), "6789abc");
 }
 
-TEST(Rope, EquiDistribute) {
+TEST(RopeLeaf, EquiDistribute) {
     Rope<128>::LeafNode left;
     Rope<128>::LeafNode right;
     left.PushString(asBytes("01"));
