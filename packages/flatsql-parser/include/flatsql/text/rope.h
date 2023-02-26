@@ -227,7 +227,7 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
         }
     };
     static_assert(sizeof(LeafNode) <= PAGE_SIZE, "Leaf node must fit on a page");
-    static_assert(std::is_trivially_copyable_v<LeafNode>, "Leaf node is trivially copyable");
+    static_assert(std::is_trivially_copyable_v<LeafNode>, "Leaf node must be trivially copyable");
 
     struct InnerNode {
        protected:
@@ -335,14 +335,14 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
         /// Returns:
         /// - True, if merge was successful.
         /// - False, if merge failed, equidistributed instead.
-        bool MergeDistributeChildren(size_t idx1, size_t idx2) {
+        bool MergeOrBalanceChildren(size_t idx1, size_t idx2) {
             TaggedNodePtr child_node_1 = child_nodes[idx1];
             TaggedNodePtr child_node_2 = child_nodes[idx2];
             TaggedNodePtr child_stats_1 = child_stats[idx1];
             TaggedNodePtr child_stats_2 = child_stats[idx2];
 
             if (child_node_1.IsLeafNode()) {
-                assert(!child_node_2.IsLeafNode());
+                assert(child_node_2.IsLeafNode());
                 LeafNode* child_1 = child_node_1.AsLeafNode();
                 LeafNode* child_2 = child_node_2.AsLeafNode();
 
@@ -350,14 +350,18 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
                 auto combined = child_1->GetSize() + child_2->GetSize();
                 if (combined <= child_1->GetCapacity()) {
                     child_1->PushString(child_2->GetString());
+                    assert(child_1->IsValid());
                 } else if (combined <= child_2->GetCapacity()) {
                     child_2->PushString(child_1->GetString());
+                    assert(child_2->IsValid());
                 } else {
                     child_1->EquiDistribute(*child_2);
-                    // XXX
+                    assert(child_1->IsValid());
+                    assert(child_2->IsValid());
                 }
             } else {
-                assert(!child_node_2.IsLeafNode());
+                assert(child_node_1.IsInnerNode());
+                assert(child_node_2.IsInnerNode());
                 InnerNode* child_1 = child_node_1.AsInnerNode();
                 InnerNode* child_2 = child_node_2.AsInnerNode();
 
@@ -376,7 +380,7 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
         std::pair<TextStatistics, TaggedNodePtr> Remove();
     };
     static_assert(sizeof(InnerNode) <= PAGE_SIZE, "Inner node must fit on a page");
-    static_assert(std::is_trivially_copyable_v<InnerNode>, "Inner node is trivially copyable");
+    static_assert(std::is_trivially_copyable_v<InnerNode>, "Inner node must be trivially copyable");
 };
 
 }  // namespace flatsql
