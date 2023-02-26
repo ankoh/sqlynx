@@ -33,8 +33,8 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
     struct TextStatistics {
         /// The text bytes
         size_t text_bytes;
-        /// The UTF-8 codepoints
-        size_t utf8_codepoints;
+        /// The UTF-8 characters (aka codepoints)
+        size_t utf8_chars;
         /// The line breaks
         size_t line_breaks;
     };
@@ -48,10 +48,12 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
         uintptr_t raw_ptr;
 
        public:
+        /// Create node ptr from leaf node
         static NodePtr From(LeafNode* ptr) {
             assert((reinterpret_cast<uintptr_t>(ptr) & 0b1) == 0);
             return {.raw_ptr = ptr};
         }
+        /// Create node ptr from inner node
         static NodePtr From(InnerNode* ptr) {
             assert((reinterpret_cast<uintptr_t>(ptr) & 0b1) == 0);
             return {.raw_ptr = reinterpret_cast<uintptr_t>(ptr) | 0b1};
@@ -66,6 +68,8 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
         LeafNode* AsLeafNode() { return reinterpret_cast<LeafNode*>((raw_ptr >> 1) << 1); }
         /// Get as inner node
         InnerNode* AsInnerNode() { return reinterpret_cast<InnerNode*>((raw_ptr >> 1) << 1); }
+
+        
     };
 
     static const size_t LEAF_NODE_CAPACITY = PAGE_SIZE - sizeof(uint16_t);
@@ -101,7 +105,7 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
         auto Reset() noexcept { buffer_size = 0; }
 
         /// Insert raw bytes at an offset
-        void InsertString(size_t ofs, std::span<const std::byte> data) noexcept {
+        void InsertBytes(size_t ofs, std::span<const std::byte> data) noexcept {
             assert(ofs <= GetSize());
             assert(data.size() <= (GetCapacity() - ofs));
             assert(utf8::isCodepointBoundary(GetData(), ofs));
@@ -110,9 +114,9 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
             buffer_size += data.size();
         }
         /// Appends a string to the end of the buffer
-        void PushString(std::span<const std::byte> str) noexcept { InsertString(GetSize(), str); }
+        void PushBytes(std::span<const std::byte> str) noexcept { InsertBytes(GetSize(), str); }
         /// Remove text in range
-        void RemoveRange(size_t start_byte_idx, size_t end_byte_idx) noexcept {
+        void RemoveByteRange(size_t start_byte_idx, size_t end_byte_idx) noexcept {
             assert(start_byte_idx <= end_byte_idx);
             assert(end_byte_idx <= GetSize());
             assert(utf8::isCodepointBoundary(GetData(), start_byte_idx));
@@ -122,7 +126,7 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
             buffer_size -= end_byte_idx - start_byte_idx;
         }
         /// Removes text after byte_idx
-        std::span<std::byte> Truncate(size_t byte_idx) noexcept {
+        std::span<std::byte> TruncateBytes(size_t byte_idx) noexcept {
             assert(byte_idx <= GetSize());
             assert(utf8::isCodepointBoundary(GetData(), byte_idx));
 
@@ -131,17 +135,17 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
             return tail;
         }
         /// Splits node at index
-        void SplitOff(size_t byte_idx, LeafNode& dst) noexcept {
+        void SplitBytesOff(size_t byte_idx, LeafNode& dst) noexcept {
             assert(dst.IsEmpty());
             assert(byte_idx <= GetSize());
             assert(utf8::isCodepointBoundary(GetData(), byte_idx));
 
-            dst.InsertString(0, Truncate(byte_idx));
+            dst.InsertBytes(0, TruncateBytes(byte_idx));
         }
         /// Inserts `string` at `byte_idx` and splits the resulting string in half.
         ///
         /// Only splits on code point boundaries, so if the whole string is a single code point the right node will be empty.
-        void InsertStringSplit(size_t byte_idx, std::span<const std::byte> str, LeafNode& right) {
+        void InsertBytesAndSplit(size_t byte_idx, std::span<const std::byte> str, LeafNode& right) {
             assert(right.IsEmpty());
             assert(utf8::isCodepointBoundary(GetData(), byte_idx));
 
@@ -179,30 +183,30 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
             // Divide strings
             auto data = GetData();
             if (split_idx <= inserted_begin) {
-                right.PushString(data.subspan(split_idx, inserted_begin - split_idx));
-                right.PushString(str);
-                right.PushString(data.subspan(inserted_begin));
-                Truncate(split_idx);
+                right.PushBytes(data.subspan(split_idx, inserted_begin - split_idx));
+                right.PushBytes(str);
+                right.PushBytes(data.subspan(inserted_begin));
+                TruncateBytes(split_idx);
             } else if (split_idx <= inserted_end) {
-                right.PushString(str.subspan(split_idx - inserted_begin));
-                right.PushString(data.subspan(inserted_begin));
-                Truncate(inserted_begin);
-                PushString(str.subspan(0, split_idx - inserted_begin));
+                right.PushBytes(str.subspan(split_idx - inserted_begin));
+                right.PushBytes(data.subspan(inserted_begin));
+                TruncateBytes(inserted_begin);
+                PushBytes(str.subspan(0, split_idx - inserted_begin));
             } else {
-                right.PushString(data.subspan(split_idx - str.size()));
-                Truncate(split_idx - str.size());
-                InsertString(inserted_begin, str);
+                right.PushBytes(data.subspan(split_idx - str.size()));
+                TruncateBytes(split_idx - str.size());
+                InsertBytes(inserted_begin, str);
             }
         }
         /// Appends a string and splits the resulting string in half.
         ///
         /// Only splits on code point boundaries, so if the whole string is a single code point,
         /// the split will fail and the returned string will be empty.
-        void PushStringSplit(std::span<const std::byte> str, LeafNode& right) {
-            InsertStringSplit(GetSize(), str, right);
+        void PushBytesAndSplit(std::span<const std::byte> str, LeafNode& right) {
+            InsertBytesAndSplit(GetSize(), str, right);
         }
         /// Distribute children equally between nodes
-        void EquiDistribute(LeafNode& right) {
+        void BalanceBytesWith(LeafNode& right) {
             if (buffer_size < right.buffer_size) {
                 // Right got more children than left, append surplus to left
                 auto half_surplus = (right.buffer_size - buffer_size) / 2;
@@ -318,14 +322,14 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
             child_count = byte_idx;
         }
         /// Pushes an element onto the end of the array, and then splits it in half
-        void PushSplit(NodePtr child, TextStatistics stats, InnerNode& dst) {
+        void PushAndSplit(NodePtr child, TextStatistics stats, InnerNode& dst) {
             auto r_count = (GetSize() + 1) / 2;
             auto l_count = (GetSize() + 1) - r_count;
-            SplitOff(l_count, dst);
+            SplitChildrenOff(l_count, dst);
             dst.Push(child, stats);
         }
         /// Distribute children equally between nodes
-        void EquiDistribute(InnerNode& right) {
+        void BalanceWith(InnerNode& right) {
             if (child_count < right.child_count) {
                 // Right got more children than left, append surplus to left
                 auto move = (right.child_count - child_count) / 2;
@@ -352,7 +356,7 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
         /// Returns:
         /// - True, if merge was successful.
         /// - False, if merge failed, equidistributed instead.
-        bool MergeOrBalanceChildren(size_t idx1, size_t idx2) {
+        bool MergeOrBalance(size_t idx1, size_t idx2) {
             NodePtr child_node_1 = child_nodes[idx1];
             NodePtr child_node_2 = child_nodes[idx2];
             NodePtr child_stats_1 = child_stats[idx1];
@@ -367,11 +371,11 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
                 // Text fits into a single node?
                 auto combined = child_1->GetSize() + child_2->GetSize();
                 if (combined <= child_1->GetCapacity()) {
-                    child_1->PushString(child_2->Truncate());
+                    child_1->PushBytes(child_2->TruncateBytes());
                     assert(child_1->IsValid());
                     remove_right = true;
                 } else {
-                    child_1->EquiDistribute(*child_2);
+                    child_1->BalanceBytesWith(*child_2);
                     assert(child_1->IsValid());
                     assert(child_2->IsValid());
                 }
@@ -384,7 +388,7 @@ template <size_t PAGE_SIZE = 1024> struct Rope {
                 // Children fit into a single node?
                 auto combined = child_1->GetSize() + child_2->GetSize();
                 if (combined <= child_1->GetCapacity()) {
-                    child_1->Push(child_2->Truncate());
+                    child_1->Push(child_2->TruncateChildren());
                     remove_right = true;
                 } else {
                     child_1->EquiDistribute(*child_2);

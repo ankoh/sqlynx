@@ -7,56 +7,56 @@ static std::span<const std::byte> asBytes(std::string_view str) {
     return {reinterpret_cast<const std::byte*>(str.data()), str.size()};
 }
 
-TEST(RopeLeaf, SimpleOps) {
+TEST(RopeLeaf, ByteOps) {
     Rope<128>::LeafNode node;
     EXPECT_TRUE(node.IsEmpty());
 
-    node.PushString(asBytes(""));
-    node.PushString(asBytes("test"));
+    node.PushBytes(asBytes(""));
+    node.PushBytes(asBytes("test"));
     EXPECT_EQ(node.GetString(), "test");
-    node.PushString(asBytes("foo"));
+    node.PushBytes(asBytes("foo"));
     EXPECT_EQ(node.GetString(), "testfoo");
 
-    node.PushString(asBytes("1"));
-    node.PushString(asBytes("2"));
-    node.PushString(asBytes("3"));
+    node.PushBytes(asBytes("1"));
+    node.PushBytes(asBytes("2"));
+    node.PushBytes(asBytes("3"));
     EXPECT_EQ(node.GetString(), "testfoo123");
-    node.RemoveRange(4, 7);
+    node.RemoveByteRange(4, 7);
     EXPECT_EQ(node.GetString(), "test123");
-    node.Truncate(4);
+    node.TruncateBytes(4);
 
     EXPECT_EQ(node.GetString(), "test");
-    node.PushString(asBytes("nananana"));
+    node.PushBytes(asBytes("nananana"));
     EXPECT_EQ(node.GetString(), "testnananana");
     Rope<128>::LeafNode right;
-    node.SplitOff(4, right);
+    node.SplitBytesOff(4, right);
     EXPECT_EQ(node.GetString(), "test");
     EXPECT_EQ(right.GetString(), "nananana");
 }
 
-TEST(RopeLeaf, InsertStringSplit) {
+TEST(RopeLeaf, PushBytesAndSplit) {
     Rope<128>::LeafNode node;
-    node.PushString(asBytes("0123456789"));
+    node.PushBytes(asBytes("0123456789"));
     Rope<128>::LeafNode right;
-    node.PushStringSplit(asBytes("abc"), right);
+    node.PushBytesAndSplit(asBytes("abc"), right);
     EXPECT_EQ(node.GetString(), "012345");
     EXPECT_EQ(right.GetString(), "6789abc");
 }
 
-TEST(RopeLeaf, EquiDistribute) {
+TEST(RopeLeaf, BalanceBytesWith) {
     Rope<128>::LeafNode left;
     Rope<128>::LeafNode right;
-    left.PushString(asBytes("01"));
-    right.PushString(asBytes("23456789"));
-    left.EquiDistribute(right);
+    left.PushBytes(asBytes("01"));
+    right.PushBytes(asBytes("23456789"));
+    left.BalanceBytesWith(right);
     EXPECT_EQ(left.GetString(), "01234");
     EXPECT_EQ(right.GetString(), "56789");
 
-    left.Truncate(0);
-    right.Truncate(0);
-    left.PushString(asBytes("abcdefgh"));
-    right.PushString(asBytes("ij"));
-    left.EquiDistribute(right);
+    left.TruncateBytes(0);
+    right.TruncateBytes(0);
+    left.PushBytes(asBytes("abcdefgh"));
+    right.PushBytes(asBytes("ij"));
+    left.BalanceBytesWith(right);
     EXPECT_EQ(left.GetString(), "abcde");
     EXPECT_EQ(right.GetString(), "fghij");
 }
