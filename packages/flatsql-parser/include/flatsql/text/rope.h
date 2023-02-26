@@ -37,10 +37,9 @@ struct TextStatistics {
     /// The line breaks
     size_t line_breaks;
 
-    /// Constructor
-    TextStatistics(std::span<const std::byte> data)
-        : text_bytes(data.size()) {
-        for (auto b: data) {
+    TextStatistics() : text_bytes(0), utf8_codepoints(0), line_breaks(0) {}
+    TextStatistics(std::span<const std::byte> data) : text_bytes(data.size()) {
+        for (auto b : data) {
             line_breaks += (b == std::byte{0x0A});
             utf8_codepoints += utf8::isCodepointBoundary(b);
         }
@@ -171,7 +170,8 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct LeafNode {
         SplitBytesOff(byte_idx, dst);
     }
     /// Inserts `string` at `byte_idx` and splits the resulting string in half.
-    /// Only splits on code point boundaries, so if the whole string is a single code point the right node will be empty.
+    /// Only splits on code point boundaries, so if the whole string is a single code point the right node will be
+    /// empty.
     void InsertBytesAndSplit(size_t byte_idx, std::span<const std::byte> str, LeafNode& right) {
         assert(right.IsEmpty());
         assert(utf8::isCodepointBoundary(GetData(), byte_idx));
@@ -422,14 +422,94 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct InnerNode {
         }
     }
     /// Equi-distributes the children between the two child arrays, preserving ordering
-    void DistributeWith(size_t idx1, size_t idx2);
+    void Balance(size_t idx1, size_t idx2);
     /// If the children are leaf nodes, compacts them to take up the fewest nodes
     void CompactLeafs();
     /// Inserts an element into a the array, and then splits it in half
-    void InsertSplit(size_t idx, NodePtr<PageSize> child, TextStatistics stats, InnerNode& other);
+    void InsertAndSplit(size_t idx, NodePtr<PageSize> child, TextStatistics stats, InnerNode& other);
     /// Removes the item at the given index from the the array.
     /// Decreases length by one.  Preserves ordering of the other items.
     std::pair<TextStatistics, NodePtr<PageSize>> Remove();
+
+    using Child = std::pair<size_t, TextStatistics>;
+
+    /// Helper to find a child that contains a byte index
+    static bool ChildContainsByteIdx(size_t byte_idx, TextStatistics prev, TextStatistics next) {
+        return next.text_bytes > byte_idx;
+    }
+    /// Helper to find a child that contains a character index
+    static bool ChildContainsCharIdx(size_t char_idx, TextStatistics prev, TextStatistics next) {
+        return next.utf8_codepoints > char_idx;
+    }
+    /// Helper to find a child that contains a line break index
+    static bool ChildContainsLineBreak(size_t line_break_idx, TextStatistics prev, TextStatistics next) {
+        return next.line_breaks > line_break_idx;
+    }
+
+    /// Find the first child where a predicate returns true
+    template <typename Predicate> std::pair<size_t, TextStatistics> FindIf(size_t arg, Predicate predicate) {
+        auto child_stats = GetChildStats();
+        TextStatistics next;
+        for (size_t child_idx = 0; child_idx < child_stats.size(); ++child_idx) {
+            TextStatistics prev = next;
+            next += child_stats[child_idx];
+            if (predicate(arg, prev, next)) {
+                return {child_idx, prev};
+            }
+        }
+        return {next, child_stats.size()};
+    }
+
+    /// Find the child that contains a byte index
+    std::pair<size_t, size_t> FindByte(size_t byte_idx) {
+        auto [child, stats] = FindIf(byte_idx, ChildContainsByteIdx);
+        return {child, stats.text_bytes};
+    }
+    /// Find the child that contains a character
+    std::pair<size_t, size_t> FindChar(size_t char_idx) {
+        auto [child, stats] = FindIf(char_idx, ChildContainsCharIdx);
+        return {child, stats.utf8_codepoints};
+    }
+    /// Find the child that contains a line break
+    std::pair<size_t, size_t> FindLineBreak(size_t line_break_idx) {
+        auto [child, stats] = FindIf(line_break_idx, ChildContainsLineBreak);
+        return {child, stats.line_breaks};
+    }
+
+    /// Find a range where two predicate return true
+    template <typename Predicate> std::pair<Child, Child> FindRangeIf(size_t arg0, size_t arg1, Predicate predicate) {
+        auto child_stats = GetChildStats();
+        std::pair<size_t, TextStatistics> begin, end;
+        TextStatistics next;
+        size_t child_idx = 0;
+        for (; child_idx < child_stats.size(); ++child_idx) {
+            TextStatistics prev = next;
+            next += child_stats[child_idx];
+            if (predicate(arg0, prev, next)) {
+                begin = {child_idx, prev};
+                end = begin;
+                if (predicate(arg1, prev, next)) {
+                    return {begin, end};
+                }
+                break;
+            }
+        }
+        for (; child_idx < child_stats.size(); ++child_idx) {
+            TextStatistics prev = next;
+            next += child_stats[child_idx];
+            if (predicate(arg1, prev, next)) {
+                end = {child_idx, prev};
+                break;
+            }
+        }
+        return {begin, end};
+    }
+    /// Find the range that contains a character range
+    std::pair<size_t, size_t> FindCharRange(size_t char_idx_0, size_t char_idx_1) {
+        assert(char_idx_0 <= char_idx_1);
+        auto [child, stats] = FindRangeIf(char_idx_0, char_idx_1, ChildContainsCharIdx);
+        return {child, stats.text_bytes};
+    }
 };
 
 static_assert(sizeof(LeafNode<DEFAULT_PAGE_SIZE>) <= DEFAULT_PAGE_SIZE, "Leaf node must fit on a page");
