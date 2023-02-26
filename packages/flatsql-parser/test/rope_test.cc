@@ -7,8 +7,8 @@ static std::span<const std::byte> asBytes(std::string_view str) {
     return {reinterpret_cast<const std::byte*>(str.data()), str.size()};
 }
 
-TEST(RopeLeaf, ByteOps) {
-    Rope<128>::LeafNode node;
+TEST(RopeLeafNode, ByteOps) {
+    rope::LeafNode<128> node;
     EXPECT_TRUE(node.IsEmpty());
 
     node.PushBytes(asBytes(""));
@@ -28,24 +28,24 @@ TEST(RopeLeaf, ByteOps) {
     EXPECT_EQ(node.GetString(), "test");
     node.PushBytes(asBytes("nananana"));
     EXPECT_EQ(node.GetString(), "testnananana");
-    Rope<128>::LeafNode right;
+    rope::LeafNode<128> right;
     node.SplitBytesOff(4, right);
     EXPECT_EQ(node.GetString(), "test");
     EXPECT_EQ(right.GetString(), "nananana");
 }
 
-TEST(RopeLeaf, PushBytesAndSplit) {
-    Rope<128>::LeafNode node;
+TEST(RopeLeafNode, PushBytesAndSplit) {
+    rope::LeafNode<128> node;
     node.PushBytes(asBytes("0123456789"));
-    Rope<128>::LeafNode right;
+    rope::LeafNode<128> right;
     node.PushBytesAndSplit(asBytes("abc"), right);
     EXPECT_EQ(node.GetString(), "012345");
     EXPECT_EQ(right.GetString(), "6789abc");
 }
 
-TEST(RopeLeaf, BalanceBytesWith) {
-    Rope<128>::LeafNode left;
-    Rope<128>::LeafNode right;
+TEST(RopeLeafNode, BalanceBytesWith) {
+    rope::LeafNode<128> left;
+    rope::LeafNode<128> right;
     left.PushBytes(asBytes("01"));
     right.PushBytes(asBytes("23456789"));
     left.BalanceBytesWith(right);
