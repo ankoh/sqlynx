@@ -351,7 +351,6 @@ enum StatementType: uint8 {
     DECLARE,
     LOAD,
     SELECT,
-    SELECT_INTO,
     SET,
     VIZUALIZE,
 }

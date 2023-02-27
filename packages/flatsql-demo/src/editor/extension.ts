@@ -87,10 +87,8 @@ class FlatSQLParser implements PluginValue {
         console.timeEnd('UTF-8 Encoding');
 
         // Parse text buffers
-        console.time('Parsing');
         const program = parser.parseUtf8(textBuffers, textLength);
         program.delete();
-        console.timeEnd('Parsing');
 
     }
     destroy() {}

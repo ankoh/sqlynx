@@ -556,7 +556,7 @@
         </input>
         <expected>
             <statements>
-                <statement type="SELECT_INTO">
+                <statement type="SELECT">
                     <node type="OBJECT_SQL_SELECT" loc="13..38" text="select a i.. from c, d">
                         <node key="SQL_SELECT_FROM" type="ARRAY" loc="29..38" text="from c, d">
                             <node type="OBJECT_SQL_TABLEREF" loc="34..35" text="c">
@@ -1593,7 +1593,7 @@
         </input>
         <expected>
             <statements>
-                <statement type="SELECT_INTO">
+                <statement type="SELECT">
                     <node type="OBJECT_SQL_SELECT" loc="13..28" text="select 1 into b">
                         <node key="SQL_SELECT_INTO" type="OBJECT_SQL_INTO" loc="27..28" text="b">
                             <node key="SQL_TEMP_NAME" type="ARRAY" loc="27..28" text="b">
@@ -1641,7 +1641,7 @@
         </input>
         <expected>
             <statements>
-                <statement type="SELECT_INTO">
+                <statement type="SELECT">
                     <node type="OBJECT_SQL_SELECT" loc="13..28" text="select 1 into b">
                         <node key="SQL_SELECT_INTO" type="OBJECT_SQL_INTO" loc="27..28" text="b">
                             <node key="SQL_TEMP_NAME" type="ARRAY" loc="27..28" text="b">
@@ -1713,7 +1713,7 @@
         </input>
         <expected>
             <statements>
-                <statement type="SELECT_INTO">
+                <statement type="SELECT">
                     <node type="OBJECT_SQL_SELECT" loc="13..137" text="select * i..h = $month">
                         <node key="SQL_SELECT_FROM" type="ARRAY" loc="44..89" text="from count..weather c2">
                             <node type="OBJECT_SQL_TABLEREF" loc="49..68" text="country1_weather c1">
@@ -1795,7 +1795,7 @@
         </input>
         <expected>
             <statements>
-                <statement type="SELECT_INTO">
+                <statement type="SELECT">
                     <node type="OBJECT_SQL_SELECT" loc="13..67" text="select v i..0) as t(v)">
                         <node key="SQL_SELECT_FROM" type="ARRAY" loc="29..67" text="FROM gener..0) as t(v)">
                             <node type="OBJECT_SQL_TABLEREF" loc="34..67" text="generate_s..0) as t(v)">
@@ -6454,7 +6454,7 @@
         </input>
         <expected>
             <statements>
-                <statement type="SELECT_INTO">
+                <statement type="SELECT">
                     <node type="OBJECT_SQL_SELECT" loc="13..60" text="select v i..a integer)">
                         <node key="SQL_SELECT_FROM" type="ARRAY" loc="29..60" text="FROM somef..a integer)">
                             <node type="OBJECT_SQL_TABLEREF" loc="34..60" text="somefunc()..a integer)">

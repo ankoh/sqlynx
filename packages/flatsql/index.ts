@@ -53,7 +53,10 @@ export class Parser {
             writer += textBuffer.length;
         }
         // Parse the text
-        return this.parseImpl(textPtr, textByteLength);
+        console.time('Parsing');
+        const result = this.parseImpl(textPtr, textByteLength);
+        console.timeEnd('Parsing');
+        return result;
     }
 
     public parseString(text: string): WasmBuffer {

@@ -75,9 +75,6 @@ class ParserDriver {
     /// The errors
     std::vector<std::pair<proto::Location, std::string>> errors_;
 
-    /// Find an attribute
-    std::optional<size_t> FindAttribute(const proto::Node& node, Key attribute) const;
-
     /// Add a node
     NodeID AddNode(proto::Node node);
     /// Get as flatbuffer object

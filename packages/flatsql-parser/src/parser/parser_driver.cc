@@ -35,19 +35,6 @@ ParserDriver::ParserDriver(Scanner& scanner)
 /// Destructor
 ParserDriver::~ParserDriver() {}
 
-/// Find an attribute
-std::optional<size_t> ParserDriver::FindAttribute(const proto::Node& node, Key attribute) const {
-    auto attr_begin = node.children_begin_or_value();
-    auto attr_count = node.children_count();
-    for (auto i = 0; i < attr_count; ++i) {
-        auto& attr = nodes_[attr_begin + i];
-        if (attr.attribute_key() == static_cast<uint16_t>(attribute)) {
-            return {attr_begin + i};
-        }
-    }
-    return std::nullopt;
-}
-
 /// Process a new node
 NodeID ParserDriver::AddNode(proto::Node node) {
     auto node_id = nodes_.size();
@@ -260,11 +247,7 @@ void ParserDriver::AddStatement(proto::Node node) {
             break;
 
         case proto::NodeType::OBJECT_SQL_SELECT:
-            if (auto into = FindAttribute(node, Key::SQL_SELECT_INTO); into) {
-                stmt_type = proto::StatementType::SELECT_INTO;
-            } else {
-                stmt_type = proto::StatementType::SELECT;
-            }
+            stmt_type = proto::StatementType::SELECT;
             break;
 
         default:
