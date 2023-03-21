@@ -14,7 +14,7 @@
 #include <span>
 
 #include "flatsql/proto/proto_generated.h"
-#include "flatsql/utils/append_buffer.h"
+#include "flatsql/utils/chunk_buffer.h"
 #include "flatsql/utils/small_vector.h"
 
 namespace flatsql {
@@ -68,7 +68,7 @@ class ParserDriver {
     /// The scanner
     Scanner& scanner;
     /// The nodes
-    AppendBuffer<proto::Node> nodes;
+    ChunkBuffer<proto::Node> nodes;
     /// The current statement
     Statement current_statement;
     /// The statements

@@ -10,7 +10,7 @@
 namespace flatsql {
 
 template <typename T>
-struct AppendBuffer {
+struct ChunkBuffer {
     protected:
     /// The buffers
     std::vector<std::vector<T>> buffers;
@@ -41,7 +41,7 @@ struct AppendBuffer {
 
     public:
     /// Constructor
-    AppendBuffer()
+    ChunkBuffer()
         : buffers(), offsets(), next_chunk_size(1024), total_value_count(0) {
         buffers.reserve(64);
         offsets.reserve(64);
