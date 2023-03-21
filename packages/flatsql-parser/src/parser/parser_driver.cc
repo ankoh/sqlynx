@@ -30,27 +30,24 @@ std::unique_ptr<proto::StatementT> Statement::Finish() {
 
 /// Constructor
 ParserDriver::ParserDriver(Scanner& scanner)
-    : scanner_(scanner), nodes_(), current_statement_(), statements_(), errors_() {}
+    : scanner(scanner), nodes(), current_statement(), statements(), errors() {}
 
 /// Destructor
 ParserDriver::~ParserDriver() {}
 
 /// Process a new node
 NodeID ParserDriver::AddNode(proto::Node node) {
-    auto node_id = nodes_.size();
-    nodes_.push_back(proto::Node(node.location(), node.node_type(), node.attribute_key(), node_id,
-                                 node.children_begin_or_value(), node.children_count()));
+    auto node_id = nodes.GetSize();
+    nodes.Append(proto::Node(node.location(), node.node_type(), node.attribute_key(), node_id,
+                              node.children_begin_or_value(), node.children_count()));
 
     // Set parent reference
     if (node.node_type() == proto::NodeType::ARRAY ||
         static_cast<uint16_t>(node.node_type()) > static_cast<uint16_t>(proto::NodeType::OBJECT_KEYS_)) {
-        auto begin = node.children_begin_or_value();
-        auto end = begin + node.children_count();
-        for (auto i = begin; i < end; ++i) {
-            auto& n = nodes_[i];
+        nodes.ForEachIn(node.children_begin_or_value(), node.children_count(), [](size_t node_id, proto::Node& n) {
             n = proto::Node(n.location(), n.node_type(), n.attribute_key(), node_id, n.children_begin_or_value(),
                             n.children_count());
-        }
+        });
     }
     return node_id;
 }
@@ -71,15 +68,10 @@ std::optional<Expression> ParserDriver::TryMerge(proto::Location loc, proto::Nod
             return std::nullopt;
     }
     // Create nary expression
-    NAryExpression nary {
-        .location = loc,
-        .op = op,
-        .opNode = opNode,
-        .args = {}
-    };
+    NAryExpression nary{.location = loc, .op = op, .opNode = opNode, .args = {}};
     nary.args.reserve(args.size());
     // Merge any nary expression arguments with the same operation, materialize others
-    for (auto& arg: args) {
+    for (auto& arg : args) {
         // Argument is just a node?
         if (arg.index() == 0) {
             nary.args.push_back(std::move(std::get<0>(arg)));
@@ -96,7 +88,7 @@ std::optional<Expression> ParserDriver::TryMerge(proto::Location loc, proto::Nod
             nary.args = std::move(child.args);
         } else {
             nary.args.reserve(nary.args.getSize() + child.args.getSize());
-            for (auto& child_arg: child.args) {
+            for (auto& child_arg : child.args) {
                 nary.args.push_back(std::move(child_arg));
             }
         }
@@ -107,19 +99,19 @@ std::optional<Expression> ParserDriver::TryMerge(proto::Location loc, proto::Nod
 /// Add an array
 proto::Node ParserDriver::AddArray(proto::Location loc, std::span<proto::Node> values, bool null_if_empty,
                                    bool shrink_location) {
-    auto begin = nodes_.size();
-    nodes_.reserve(nodes_.size() + values.size());
+    auto begin = nodes.GetSize();
     for (auto& v : values) {
         if (v.node_type() == proto::NodeType::NONE) continue;
         AddNode(v);
     }
-    auto n = nodes_.size() - begin;
+    auto n = nodes.GetSize() - begin;
     if ((n == 0) && null_if_empty) {
         return Null();
     }
     if (n > 0 && shrink_location) {
-        auto fstBegin = nodes_[begin].location().offset();
-        auto lstEnd = nodes_.back().location().offset() + nodes_.back().location().length();
+        auto fstBegin = nodes[begin].location().offset();
+        auto& lst = nodes.GetLast();
+        auto lstEnd = lst.location().offset() + lst.location().length();
         loc = proto::Location(fstBegin, lstEnd - fstBegin);
     }
     return proto::Node(loc, proto::NodeType::ARRAY, 0, NO_PARENT, begin, n);
@@ -130,7 +122,7 @@ proto::Node ParserDriver::AddArray(proto::Location loc, std::span<Expression> ex
                                    bool shrink_location) {
     SmallVector<proto::Node, 5> nodes;
     nodes.reserve(exprs.size());
-    for (auto& expr: exprs) {
+    for (auto& expr : exprs) {
         nodes.push_back(AddExpression(std::move(expr)));
     }
     return AddArray(loc, nodes.span(), null_if_empty, shrink_location);
@@ -142,10 +134,11 @@ proto::Node ParserDriver::AddExpression(Expression&& expr) {
         return std::get<0>(std::move(expr));
     } else {
         auto& nary = std::get<1>(expr);
-        return Add(nary.location, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION, {
-            Attr(Key::SQL_EXPRESSION_OPERATOR, nary.opNode),
-            Attr(Key::SQL_EXPRESSION_ARGS, AddArray(nary.location, nary.args.span())),
-        });
+        return Add(nary.location, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
+                   {
+                       Attr(Key::SQL_EXPRESSION_OPERATOR, nary.opNode),
+                       Attr(Key::SQL_EXPRESSION_ARGS, AddArray(nary.location, nary.args.span())),
+                   });
     }
 }
 
@@ -153,8 +146,7 @@ proto::Node ParserDriver::AddExpression(Expression&& expr) {
 proto::Node ParserDriver::AddObject(proto::Location loc, proto::NodeType type, std::span<proto::Node> attrs,
                                     bool null_if_empty, bool shrink_location) {
     // Sort all the attributes
-    auto begin = nodes_.size();
-    nodes_.reserve(nodes_.size() + attrs.size());
+    auto begin = nodes.GetSize();
     std::sort(attrs.begin(), attrs.end(), [&](auto& l, auto& r) {
         return static_cast<uint16_t>(l.attribute_key()) < static_cast<uint16_t>(r.attribute_key());
     });
@@ -191,9 +183,8 @@ proto::Node ParserDriver::AddObject(proto::Location loc, proto::NodeType type, s
             tmp.clear();
             tmp.reserve(child_count);
             for (auto dup : dups) {
-                for (size_t l = 0; l < dup.children_count(); ++l) {
-                    tmp.push_back(nodes_[dup.children_begin_or_value() + l]);
-                }
+                nodes.ForEachIn(dup.children_begin_or_value(), dup.children_count(),
+                                 [&](size_t l, proto::Node& n) { tmp.push_back(n); });
             }
             // Add object.
             // Note that this will recursively merge paths such as style.data.fill and style.data.stroke
@@ -210,13 +201,14 @@ proto::Node ParserDriver::AddObject(proto::Location loc, proto::NodeType type, s
         if (v.node_type() == proto::NodeType::NONE) continue;
         AddNode(v);
     }
-    auto n = nodes_.size() - begin;
+    auto n = nodes.GetSize() - begin;
     if ((n == 0) && null_if_empty) {
         return Null();
     }
     if (n > 0 && shrink_location) {
-        auto fstBegin = nodes_[begin].location().offset();
-        auto lstEnd = nodes_.back().location().offset() + nodes_.back().location().length();
+        auto fstBegin = nodes[begin].location().offset();
+        auto& lst = nodes.GetLast();
+        auto lstEnd = lst.location().offset() + lst.location().length();
         loc = proto::Location(fstBegin, lstEnd - fstBegin);
     }
     return proto::Node(loc, type, 0, NO_PARENT, begin, n);
@@ -227,7 +219,7 @@ void ParserDriver::AddStatement(proto::Node node) {
     if (node.node_type() == proto::NodeType::NONE) {
         return;
     }
-    current_statement_.root = AddNode(node);
+    current_statement.root = AddNode(node);
     auto stmt_type = proto::StatementType::NONE;
     switch (node.node_type()) {
         case proto::NodeType::OBJECT_EXT_SET:
@@ -253,32 +245,32 @@ void ParserDriver::AddStatement(proto::Node node) {
         default:
             assert(false);
     }
-    current_statement_.type = stmt_type;
-    statements_.push_back(std::move(current_statement_));
-    current_statement_.reset();
+    current_statement.type = stmt_type;
+    statements.push_back(std::move(current_statement));
+    current_statement.reset();
 }
 
 /// Add an error
-void ParserDriver::AddError(proto::Location loc, const std::string& message) { errors_.push_back({loc, message}); }
+void ParserDriver::AddError(proto::Location loc, const std::string& message) { errors.push_back({loc, message}); }
 
 /// Get as flatbuffer object
 std::shared_ptr<proto::ProgramT> ParserDriver::Finish() {
     auto program = std::make_unique<proto::ProgramT>();
-    program->nodes = std::move(nodes_);
-    program->statements.reserve(statements_.size());
-    for (auto& stmt : statements_) {
+    program->nodes = nodes.Flatten();
+    program->statements.reserve(statements.size());
+    for (auto& stmt : statements) {
         program->statements.push_back(stmt.Finish());
     }
-    program->errors.reserve(errors_.size());
-    for (auto& [loc, msg] : errors_) {
+    program->errors.reserve(errors.size());
+    for (auto& [loc, msg] : errors) {
         auto err = std::make_unique<proto::ErrorT>();
         err->location = std::make_unique<proto::Location>(loc);
         err->message = std::move(msg);
         program->errors.push_back(std::move(err));
     }
-    program->highlighting = scanner_.BuildHighlighting();
-    program->line_breaks = scanner_.ReleaseLineBreaks();
-    program->comments = scanner_.ReleaseComments();
+    program->highlighting = scanner.BuildHighlighting();
+    program->line_breaks = scanner.ReleaseLineBreaks();
+    program->comments = scanner.ReleaseComments();
     return program;
 }
 

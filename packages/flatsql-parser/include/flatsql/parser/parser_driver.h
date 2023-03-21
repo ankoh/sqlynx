@@ -14,6 +14,7 @@
 #include <span>
 
 #include "flatsql/proto/proto_generated.h"
+#include "flatsql/utils/append_buffer.h"
 #include "flatsql/utils/small_vector.h"
 
 namespace flatsql {
@@ -65,15 +66,15 @@ using Expression = std::variant<proto::Node, NAryExpression>;
 class ParserDriver {
    protected:
     /// The scanner
-    Scanner& scanner_;
+    Scanner& scanner;
     /// The nodes
-    std::vector<proto::Node> nodes_;
+    AppendBuffer<proto::Node> nodes;
     /// The current statement
-    Statement current_statement_;
+    Statement current_statement;
     /// The statements
-    std::vector<Statement> statements_;
+    std::vector<Statement> statements;
     /// The errors
-    std::vector<std::pair<proto::Location, std::string>> errors_;
+    std::vector<std::pair<proto::Location, std::string>> errors;
 
     /// Add a node
     NodeID AddNode(proto::Node node);
@@ -87,7 +88,7 @@ class ParserDriver {
     ~ParserDriver();
 
     /// Return the scanner
-    auto& scanner() { return scanner_; }
+    auto& GetScanner() { return scanner; }
 
     /// Add a an array
     proto::Node AddArray(proto::Location loc, std::span<proto::Node> values, bool null_if_empty = true,

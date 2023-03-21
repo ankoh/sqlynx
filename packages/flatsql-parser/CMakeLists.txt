@@ -204,7 +204,7 @@ if(NOT WASM)
 
   set(TEST_SRC
     ${CMAKE_SOURCE_DIR}/test/astdump_test_suite.cc
-    ${CMAKE_SOURCE_DIR}/test/append_tree_test.cc
+    ${CMAKE_SOURCE_DIR}/test/append_buffer_test.cc
     ${CMAKE_SOURCE_DIR}/test/rope_test.cc
   )
   add_executable(tester test/tester.cc ${TEST_SRC})
