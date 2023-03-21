@@ -6,7 +6,6 @@
 %define api.token.constructor
 %define api.token.prefix {FQL_}
 %define api.value.type variant
-%define parse.trace
 %define parse.error verbose
 
 %locations
