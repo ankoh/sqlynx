@@ -12,20 +12,20 @@ namespace flatsql {
 namespace parser {
 
 /// Get the text at location
-std::string_view Scanner::TextAt(proto::Location loc) { return input_text().substr(loc.offset(), loc.length()); }
+std::string_view Scanner::TextAt(proto::Location loc) { return GetInputText().substr(loc.offset(), loc.length()); }
 /// Get the text at location
 proto::Location Scanner::LocationOf(std::string_view text) {
-    return proto::Location(text.begin() - input_text().begin(), text.length());
+    return proto::Location(text.begin() - GetInputText().begin(), text.length());
 }
 /// Begin a literal
-void Scanner::BeginLiteral(proto::Location loc) { literal_begin_ = loc; }
+void Scanner::BeginLiteral(proto::Location loc) { literal_begin = loc; }
 
 /// End a literal
 proto::Location Scanner::EndLiteral(proto::Location loc, bool trim_right) {
-    auto begin = literal_begin_.offset();
+    auto begin = literal_begin.offset();
     auto end = loc.offset() + loc.length();
     if (trim_right) {
-        auto text = input_text();
+        auto text = GetInputText();
         for (; begin < end; --end) {
             auto c = text[end - 1];
             if (c == ' ' || c == '\n') {
@@ -39,36 +39,36 @@ proto::Location Scanner::EndLiteral(proto::Location loc, bool trim_right) {
 
 /// Begin a comment
 void Scanner::BeginComment(proto::Location loc) {
-    if (comment_depth_++ == 0) {
-        comment_begin_ = loc;
+    if (comment_depth++ == 0) {
+        comment_begin = loc;
     }
 }
 /// End a comment
 std::optional<proto::Location> Scanner::EndComment(proto::Location loc) {
-    if (--comment_depth_ == 0) {
-        return proto::Location(literal_begin_.offset(), loc.offset() + loc.length() - literal_begin_.offset());
+    if (--comment_depth == 0) {
+        return proto::Location(literal_begin.offset(), loc.offset() + loc.length() - literal_begin.offset());
     }
     return std::nullopt;
 }
 
 /// Add an error
-void Scanner::AddError(proto::Location location, const char* message) { errors_.push_back({location, message}); }
+void Scanner::AddError(proto::Location location, const char* message) { errors.push_back({location, message}); }
 
 /// Add an error
 void Scanner::AddError(proto::Location location, std::string&& message) {
-    errors_.push_back({location, std::move(message)});
+    errors.push_back({location, std::move(message)});
 }
 
 /// Add a line break
 void Scanner::AddLineBreak(proto::Location location) {
-    line_breaks_.push_back(location);
-    symbol_line_breaks_.push_back(symbols_.size());
+    line_breaks.push_back(location);
+    symbol_line_breaks.push_back(symbols.size());
 }
 
 /// Add a comment
-void Scanner::AddComment(proto::Location location) { comments_.push_back(location); }
+void Scanner::AddComment(proto::Location location) { comments.push_back(location); }
 /// Mark a location as start of an option key
-void Scanner::MarkAsVarArgKey(proto::Location location) { vararg_key_offsets_.insert(location.offset()); }
+void Scanner::MarkAsVarArgKey(proto::Location location) { vararg_key_offsets.insert(location.offset()); }
 
 /// Read a parameter
 Parser::symbol_type Scanner::ReadParameter(proto::Location loc) {
@@ -106,7 +106,7 @@ void Scanner::Produce() {
             current_symbol.move(*lookahead_symbol_);
             lookahead_symbol_.reset();
         } else {
-            auto t = flatsql_yylex(scanner_state_ptr_);
+            auto t = flatsql_yylex(scanner_state_ptr);
             current_symbol.move(t);
         }
 
@@ -121,7 +121,7 @@ void Scanner::Produce() {
         }
 
         // Get next token
-        auto next_symbol = flatsql_yylex(scanner_state_ptr_);
+        auto next_symbol = flatsql_yylex(scanner_state_ptr);
         auto next_symbol_kind = next_symbol.kind();
         lookahead_symbol_.emplace(std::move(next_symbol));
 
@@ -168,20 +168,20 @@ void Scanner::Produce() {
     };
 
     // Collect all tokens until we hit EOF
-    if (symbols_.empty()) {
+    if (symbols.empty()) {
         while (true) {
             auto token = next();
-            symbols_.push_back(token);
+            symbols.push_back(token);
             if (token.kind() == Parser::symbol_kind::S_YYEOF) break;
         }
     }
-    next_symbol_index_ = 0;
+    next_symbol_index = 0;
 }
 
 /// Get the next symbole
 Parser::symbol_type Scanner::Next() {
-    assert(next_symbol_index_ < symbols_.size());
-    return symbols_[next_symbol_index_++];
+    assert(next_symbol_index < symbols.size());
+    return symbols[next_symbol_index++];
 }
 
 }  // namespace parser

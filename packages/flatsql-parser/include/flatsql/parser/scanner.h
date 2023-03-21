@@ -23,41 +23,41 @@ constexpr size_t YY_BUFFER_STATE_SIZE = 200;
 class Scanner {
    protected:
     /// The full input buffer
-    std::span<char> input_buffer_;
+    std::span<char> input_buffer;
     /// The invalid input buffer
-    std::array<char, 2> null_buffer_ = {};
+    std::array<char, 2> null_buffer = {};
 
     /// The scanner state
-    std::array<char, YY_SCANNER_STATE_SIZE> scanner_state_mem_ = {};
+    std::array<char, YY_SCANNER_STATE_SIZE> scanner_state_mem = {};
     /// The buffer state
-    std::array<char, YY_BUFFER_STATE_SIZE> scanner_buffer_state_mem_ = {};
+    std::array<char, YY_BUFFER_STATE_SIZE> scanner_buffer_state_mem = {};
     /// The scanner buffer stack
-    std::array<void*, 2> scanner_buffer_stack_ = {};
+    std::array<void*, 2> scanner_buffer_stack = {};
     /// The address of the scanner state
-    void* scanner_state_ptr_ = nullptr;
+    void* scanner_state_ptr = nullptr;
 
     /// The begin of the comment
-    proto::Location comment_begin_ = proto::Location();
+    proto::Location comment_begin = proto::Location();
     /// The comment depth
-    int comment_depth_ = 0;
+    int comment_depth = 0;
     /// The begin of the literal
-    proto::Location literal_begin_ = proto::Location();
+    proto::Location literal_begin = proto::Location();
 
     /// The scanner errors
-    std::vector<std::pair<proto::Location, std::string>> errors_ = {};
+    std::vector<std::pair<proto::Location, std::string>> errors = {};
     /// The line breaks
-    std::vector<proto::Location> line_breaks_ = {};
+    std::vector<proto::Location> line_breaks = {};
     /// The comments
-    std::vector<proto::Location> comments_ = {};
+    std::vector<proto::Location> comments = {};
     /// The vararg keys
-    std::unordered_set<size_t> vararg_key_offsets_ = {};
+    std::unordered_set<size_t> vararg_key_offsets = {};
 
     /// All symbols
-    std::vector<Parser::symbol_type> symbols_ = {};
+    std::vector<Parser::symbol_type> symbols = {};
     /// All symbols linebreaks
-    std::vector<size_t> symbol_line_breaks_ = {};
+    std::vector<size_t> symbol_line_breaks = {};
     /// The next symbol index
-    size_t next_symbol_index_ = 0;
+    size_t next_symbol_index = 0;
 
    public:
     /// Constructor
@@ -71,25 +71,25 @@ class Scanner {
     void Produce();
 
     /// Get the scanner state pointer
-    auto* state() { return scanner_state_ptr_; }
+    auto* GetState() { return scanner_state_ptr; }
     /// Get the errors
-    auto& errors() { return errors_; }
+    auto& GetErrors() { return errors; }
     /// Get the line breaks
-    auto& line_breaks() { return line_breaks_; }
+    auto& GetLineBreaks() { return line_breaks; }
     /// Get the comments
-    auto& comments() { return comments_; }
+    auto& GetComments() { return comments; }
     /// Get the vararg key offsets
-    auto& vararg_key_offsets() { return vararg_key_offsets_; }
+    auto& GetVarargKeyOffsets() { return vararg_key_offsets; }
     /// Access the input
-    std::string_view input_text() {
-        assert(input_buffer_.size() >= 2);
-        return std::string_view{input_buffer_.data(), input_buffer_.size() - 2};
+    std::string_view GetInputText() {
+        assert(input_buffer.size() >= 2);
+        return std::string_view{input_buffer.data(), input_buffer.size() - 2};
     }
 
     /// Release the line breaks
-    auto&& ReleaseLineBreaks() { return std::move(line_breaks_); }
+    auto&& ReleaseLineBreaks() { return std::move(line_breaks); }
     /// Release the comments
-    auto&& ReleaseComments() { return std::move(comments_); }
+    auto&& ReleaseComments() { return std::move(comments); }
     /// Pack syntax highlighting
     std::unique_ptr<proto::HighlightingT> BuildHighlighting();
 

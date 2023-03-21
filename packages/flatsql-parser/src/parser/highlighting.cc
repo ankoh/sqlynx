@@ -61,10 +61,10 @@ std::unique_ptr<proto::HighlightingT> Scanner::BuildHighlighting() {
     };
 
     auto ci = 0;
-    for (auto& symbol : symbols_) {
+    for (auto& symbol : symbols) {
         // Emit all comments in between.
-        while (ci < comments_.size() && comments_[ci].offset() < symbol.location.offset()) {
-            emit(comments_[ci++], proto::HighlightingTokenType::COMMENT);
+        while (ci < comments.size() && comments[ci].offset() < symbol.location.offset()) {
+            emit(comments[ci++], proto::HighlightingTokenType::COMMENT);
         }
         // Map as standard token.
         emit(symbol.location, MapToken(symbol.kind()));
@@ -73,7 +73,7 @@ std::unique_ptr<proto::HighlightingT> Scanner::BuildHighlighting() {
     // Build the line breaks
     std::vector<uint32_t> breaks;
     auto oi = 0;
-    for (auto& lb : line_breaks_) {
+    for (auto& lb : line_breaks) {
         while (oi < offsets.size() && offsets[oi] < lb.offset()) ++oi;
         breaks.push_back(oi);
     }
