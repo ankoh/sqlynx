@@ -557,10 +557,13 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
     NodePtr<PageSize> root_node;
     /// The root page
     TextInfo root_info;
+    /// The first leaf
+    LeafNode<PageSize>* first_leaf;
 
     /// Constructor
     Rope(std::string_view text = {}) {
-        root_node = new LeafNode<PageSize>();
+        first_leaf = new LeafNode<PageSize>();
+        root_node = {first_leaf};
     }
     /// Destructor
     ~Rope() {
