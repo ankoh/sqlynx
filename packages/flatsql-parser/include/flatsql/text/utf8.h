@@ -71,7 +71,7 @@ constexpr size_t findCodepoint(std::span<const std::byte> buffer, size_t pos, bo
 inline static size_t codepointToByteIdx(std::span<const std::byte> buffer, size_t char_idx) {
     auto reader_base = reinterpret_cast<const char*>(buffer.data());
     auto reader = reader_base;
-    for (size_t i = 0; i <= char_idx; ++i) {
+    for (size_t i = 0; i < char_idx; ++i) {
         int n = 0;
         utf8proc_codepoint(reader, n);
         reader += n;
