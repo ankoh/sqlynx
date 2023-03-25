@@ -50,6 +50,18 @@ parser_tests:
 parser_wasm:
 	./scripts/build_parser_wasm.sh Release
 
+.PHONY: parser_wasm
+parser_wasm_fast:
+	./scripts/build_parser_wasm.sh Fast
+
+.PHONY: jslib
+jslib:
+	yarn workspace @ankoh/flatsql build
+
+.PHONY: demo_start
+demo_start:
+	yarn workspace @ankoh/flatsql-demo pwa:start
+
 .PHONY: astdump
 astdumps:
 	./packages/flatsql-parser/build/native/Debug/astdump --source_dir .
