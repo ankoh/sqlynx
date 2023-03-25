@@ -10,30 +10,6 @@ namespace flatsql {
 
 /// A poor-mans small vector
 template <class T, std::size_t N> class SmallVector {
-    public:
-    struct Iterator {
-        typedef std::forward_iterator_tag iterator_category;
-        typedef int difference_type;
-
-        protected:
-        T* ptr;
-
-        public:
-        Iterator(T* ptr) : ptr(ptr) {}
-        Iterator operator++() {
-            ++ptr;
-            return *this;
-        }
-        Iterator operator++(int) {
-            Iterator i = *this;
-            ++ptr;
-            return i;
-        }
-        T& operator*() { return *ptr; }
-        T* operator->() { return ptr; }
-        bool operator!=(const Iterator& rhs) { return ptr != rhs.ptr; }
-    };
-
    protected:
     /// The stack elements (if any)
     std::array<T, N> stack;
@@ -123,10 +99,14 @@ template <class T, std::size_t N> class SmallVector {
         }
         size += 1;
     }
-    /// Get the data begin
-    Iterator begin() { return Iterator(getData()); }
-    /// Get the data end
-    Iterator end() { return Iterator(getData() + size); }
+    /// Forward iterator
+    auto begin() { return span().begin(); }
+    /// Forward iterator end
+    auto end() { return span().end(); }
+    /// Reverse iterator
+    auto rbegin() { return span().rbegin(); }
+    /// Reverse iterator end
+    auto rend() { return span().rend(); }
 };
 
 }  // namespace flatsql

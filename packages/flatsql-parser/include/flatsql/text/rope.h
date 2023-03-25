@@ -9,6 +9,7 @@
 #include <iostream>
 
 #include "flatsql/text/utf8.h"
+#include "flatsql/utils/small_vector.h"
 #include "utf8proc/utf8proc_wrapper.hpp"
 
 namespace flatsql::rope {
@@ -642,7 +643,7 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
         };
 
         // Locate leaf node and remember traversed inner nodes
-        std::vector<VisitedInnerNode> inner_node_path;
+        SmallVector<VisitedInnerNode, 16> inner_node_path;
         auto next_node = root_node;
         auto next_info = &root_info;
         while (!next_node.IsLeafNode()) {
