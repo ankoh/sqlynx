@@ -121,7 +121,7 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct LeafNode {
     /// Get the data
     auto GetData() noexcept { return std::span<std::byte>{buffer.data(), buffer_size}; }
     /// Get buffer content as string
-    auto GetString() noexcept { return std::string_view{reinterpret_cast<char*>(buffer.data()), GetSize()}; }
+    auto GetStringView() noexcept { return std::string_view{reinterpret_cast<char*>(buffer.data()), GetSize()}; }
 
     /// Is valid?
     auto IsValid() noexcept { return utf8::isCodepointBoundary(GetData(), 0); }
@@ -616,7 +616,7 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
         std::string buffer;
         buffer.reserve(root_info.text_bytes);
         for (auto iter = first_leaf; iter; iter = iter->next_node) {
-            buffer += iter->GetString();
+            buffer += iter->GetStringView();
         }
         return buffer;
     }

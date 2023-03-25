@@ -13,25 +13,25 @@ TEST(RopeLeafNode, ByteOps) {
 
     node.PushBytes(asBytes(""));
     node.PushBytes(asBytes("test"));
-    EXPECT_EQ(node.GetString(), "test");
+    EXPECT_EQ(node.GetStringView(), "test");
     node.PushBytes(asBytes("foo"));
-    EXPECT_EQ(node.GetString(), "testfoo");
+    EXPECT_EQ(node.GetStringView(), "testfoo");
 
     node.PushBytes(asBytes("1"));
     node.PushBytes(asBytes("2"));
     node.PushBytes(asBytes("3"));
-    EXPECT_EQ(node.GetString(), "testfoo123");
+    EXPECT_EQ(node.GetStringView(), "testfoo123");
     node.RemoveByteRange(4, 7);
-    EXPECT_EQ(node.GetString(), "test123");
+    EXPECT_EQ(node.GetStringView(), "test123");
     node.TruncateBytes(4);
 
-    EXPECT_EQ(node.GetString(), "test");
+    EXPECT_EQ(node.GetStringView(), "test");
     node.PushBytes(asBytes("nananana"));
-    EXPECT_EQ(node.GetString(), "testnananana");
+    EXPECT_EQ(node.GetStringView(), "testnananana");
     rope::LeafNode<128> right;
     node.SplitBytesOff(4, right);
-    EXPECT_EQ(node.GetString(), "test");
-    EXPECT_EQ(right.GetString(), "nananana");
+    EXPECT_EQ(node.GetStringView(), "test");
+    EXPECT_EQ(right.GetStringView(), "nananana");
 }
 
 TEST(RopeLeafNode, PushBytesAndSplit) {
@@ -39,8 +39,8 @@ TEST(RopeLeafNode, PushBytesAndSplit) {
     node.PushBytes(asBytes("0123456789"));
     rope::LeafNode<128> right;
     node.PushBytesAndSplit(asBytes("abc"), right);
-    EXPECT_EQ(node.GetString(), "012345");
-    EXPECT_EQ(right.GetString(), "6789abc");
+    EXPECT_EQ(node.GetStringView(), "012345");
+    EXPECT_EQ(right.GetStringView(), "6789abc");
 }
 
 TEST(RopeLeafNode, BalanceBytesWith) {
@@ -49,16 +49,16 @@ TEST(RopeLeafNode, BalanceBytesWith) {
     left.PushBytes(asBytes("01"));
     right.PushBytes(asBytes("23456789"));
     left.BalanceBytes(right);
-    EXPECT_EQ(left.GetString(), "01234");
-    EXPECT_EQ(right.GetString(), "56789");
+    EXPECT_EQ(left.GetStringView(), "01234");
+    EXPECT_EQ(right.GetStringView(), "56789");
 
     left.TruncateBytes(0);
     right.TruncateBytes(0);
     left.PushBytes(asBytes("abcdefgh"));
     right.PushBytes(asBytes("ij"));
     left.BalanceBytes(right);
-    EXPECT_EQ(left.GetString(), "abcde");
-    EXPECT_EQ(right.GetString(), "fghij");
+    EXPECT_EQ(left.GetStringView(), "abcde");
+    EXPECT_EQ(right.GetStringView(), "fghij");
 }
 
 TEST(RopeInnerNode, InsertBoundedEnd) {
