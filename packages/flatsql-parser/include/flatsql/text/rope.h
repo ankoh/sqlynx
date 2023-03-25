@@ -735,15 +735,12 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
         //     return;
         // }
 
-        // Split a chunk off from the end of the text.
-        // We do this from the end instead of the front so that
-        // the repeated insertions can keep re-using the same
-        // insertion point.
+        // Split the input text in chunks and insert it into the rope
         while (!text.empty()) {
             auto split_idx = utf8::findCodepoint(text, std::min(LeafNode<PageSize>::CAPACITY - 4, text.size()), false);
             auto tail = text.substr(split_idx);
             text = text.substr(0, split_idx);
-            InsertBounded(split_idx, tail);
+            InsertBounded(char_idx, tail);
         }
     }
 };
