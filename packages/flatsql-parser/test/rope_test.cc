@@ -64,5 +64,8 @@ TEST(RopeLeafNode, BalanceBytesWith) {
 TEST(RopeInnerNode, InsertBounded) {
     rope::Rope<128> rope;
 
-    rope.InsertBounded(0, asBytes("01"));
+    rope.InsertBounded(0, asBytes("0"));
+    EXPECT_EQ(rope.ToString(), "0");
+    rope.InsertBounded(1, asBytes("1"));
+    EXPECT_EQ(rope.ToString(), "01");
 }

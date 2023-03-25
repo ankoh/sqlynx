@@ -589,6 +589,15 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
         root_node = {};
     }
 
+    std::string ToString() {
+        std::string buffer;
+        buffer.reserve(root_info.text_bytes);
+        for (auto iter = first_leaf; iter; iter = iter->next_node) {
+            buffer += iter->GetString();
+        }
+        return buffer;
+    }
+
     /// Split off a rope
     Rope SplitOff(size_t char_idx) {}
     /// Append a rope to this rope
