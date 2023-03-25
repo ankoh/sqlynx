@@ -1,5 +1,3 @@
-/// Significant parts of this file were derived from the Rust B-tree Rope "ropey".
-
 #include <array>
 #include <cassert>
 #include <cstddef>
