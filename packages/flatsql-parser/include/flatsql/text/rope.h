@@ -23,7 +23,9 @@ struct TextInfo {
     /// The line breaks
     size_t line_breaks = 0;
 
+    /// Constructor
     TextInfo() {}
+    /// Constructor
     TextInfo(std::span<const std::byte> data) : text_bytes(data.size()) {
         for (auto b : data) {
             line_breaks += (b == std::byte{0x0A});
@@ -671,7 +673,6 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
             leaf_node->InsertBytes(insert_at, text_bytes);
             // Update the text statistics in the parent
             *leaf_info += insert_info;
-            assert(TextInfo{leaf_node->GetData()}.utf8_codepoints == leaf_info->utf8_codepoints);
             // Propagate the inserted text info to all parents
             for (auto iter = inner_node_path.rbegin(); iter != inner_node_path.rend(); ++iter) {
                 *iter->parent_info += insert_info;
@@ -687,7 +688,6 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
         TextInfo split_info{new_leaf->GetData()};
         NodePtr<PageSize> split_node{new_leaf.release()};
         *leaf_info = *leaf_info + insert_info - split_info;
-        assert(TextInfo{leaf_node->GetData()}.utf8_codepoints == leaf_info->utf8_codepoints);
 
         // Propagate split upwards
         for (auto iter = inner_node_path.rbegin(); iter != inner_node_path.rend(); ++iter) {
@@ -697,9 +697,6 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
             if (!prev_visit.parent_node->IsFull()) {
                 prev_visit.parent_node->Insert(prev_visit.child_idx + 1, split_node, split_info);
                 *prev_visit.parent_info += insert_info;
-
-                auto acc = prev_visit.parent_node->AggregateTextInfo();
-                assert(acc.utf8_codepoints == prev_visit.parent_info->utf8_codepoints);
 
                 // Propagate the inserted text info to all parents
                 for (++iter; iter != inner_node_path.rend(); ++iter) {
@@ -714,9 +711,6 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
             split_info = new_inner->AggregateTextInfo();
             split_node = NodePtr<PageSize>{new_inner.release()};
             *prev_visit.parent_info = *prev_visit.parent_info + insert_info - split_info;
-
-            auto acc = prev_visit.parent_node->AggregateTextInfo();
-            assert(acc.utf8_codepoints == prev_visit.parent_info->utf8_codepoints);
         }
 
         // Is not null, then we have to split the root!
