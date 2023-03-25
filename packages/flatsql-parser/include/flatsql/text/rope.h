@@ -643,7 +643,7 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
         };
 
         // Locate leaf node and remember traversed inner nodes
-        SmallVector<VisitedInnerNode, 16> inner_node_path;
+        SmallVector<VisitedInnerNode, 8> inner_node_path;
         auto next_node = root_node;
         auto next_info = &root_info;
         while (!next_node.IsLeafNode()) {
