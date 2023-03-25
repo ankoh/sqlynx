@@ -8,6 +8,7 @@
 #include <span>
 #include <string_view>
 #include <type_traits>
+#include <iostream>
 
 #include "flatsql/text/utf8.h"
 #include "utf8proc/utf8proc_wrapper.hpp"
@@ -16,13 +17,13 @@ namespace flatsql::rope {
 
 struct TextInfo {
     /// The text bytes
-    size_t text_bytes;
+    size_t text_bytes = 0;
     /// The UTF-8 codepoints
-    size_t utf8_codepoints;
+    size_t utf8_codepoints = 0;
     /// The line breaks
-    size_t line_breaks;
+    size_t line_breaks = 0;
 
-    TextInfo() : text_bytes(0), utf8_codepoints(0), line_breaks(0) {}
+    TextInfo() {}
     TextInfo(std::span<const std::byte> data) : text_bytes(data.size()) {
         for (auto b : data) {
             line_breaks += (b == std::byte{0x0A});
@@ -34,18 +35,18 @@ struct TextInfo {
         result.text_bytes += other.text_bytes;
         result.utf8_codepoints += other.utf8_codepoints;
         result.line_breaks += other.line_breaks;
-        return *this;
+        return result;
     }
     TextInfo& operator+=(const TextInfo& other) {
         *this = *this + other;
         return *this;
     }
-    TextInfo& operator-(const TextInfo& other) {
+    TextInfo operator-(const TextInfo& other) {
         TextInfo result = *this;
         result.text_bytes -= other.text_bytes;
         result.utf8_codepoints -= other.utf8_codepoints;
         result.line_breaks -= other.line_breaks;
-        return *this;
+        return result;
     }
     TextInfo& operator-=(const TextInfo& other) {
         *this = *this - other;
@@ -107,6 +108,9 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct LeafNode {
     /// Constructor
     LeafNode(std::string_view data = {}) : buffer_size(data.size()), buffer() {
         std::memcpy(buffer.data(), data.data(), data.size());
+        for (auto i = 0; i < buffer.size(); ++i) {
+            buffer[i] = std::byte{0xFF};
+        }
     }
     /// Get the size of the buffer
     auto GetSize() noexcept { return buffer_size; }
@@ -125,7 +129,11 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct LeafNode {
     auto Reset() noexcept { buffer_size = 0; }
 
     /// Link a neighbor
-    void LinkNeighbor(LeafNode<PageSize>& other) {
+    void LinkNeighbors(LeafNode<PageSize>& other) {
+        if (next_node) {
+            other.next_node = next_node;
+            next_node->previous_node = &other;
+        }
         next_node = &other;
         other.previous_node = this;
     }
@@ -135,6 +143,7 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct LeafNode {
         assert(data.size() <= (GetCapacity() - ofs));
         assert(utf8::isCodepointBoundary(GetData(), ofs));
 
+        std::memmove(&buffer[ofs + data.size()], &buffer[ofs], buffer_size - ofs);
         std::memcpy(&buffer[ofs], data.data(), data.size());
         buffer_size += data.size();
     }
@@ -190,8 +199,8 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct LeafNode {
 
         auto total_length = GetSize() + str.size();
         auto mid_idx = total_length / 2;
-        auto inserted_begin = byte_idx;
-        auto inserted_end = byte_idx + str.size();
+        auto insert_begin = byte_idx;
+        auto insert_end = byte_idx + str.size();
 
         // Figure out the split index, accounting for code point boundaries.
         // We first copy the bytes in the area of the proposed split point into a small 8-byte buffer.
@@ -203,12 +212,12 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct LeafNode {
             auto candidates_end = std::min(mid_idx + 4, total_length);
             for (size_t i = candidates_begin; i < candidates_end; ++i) {
                 std::byte out;
-                if (i < inserted_begin) {
+                if (i < insert_begin) {
                     // The string will be inserted after i, just copy the buffer
                     out = buffer[i];
-                } else if (i < inserted_end) {
+                } else if (i < insert_end) {
                     // The string will be inserted around the mid point, read the new chars
-                    out = str[i - inserted_begin];
+                    out = str[i - insert_begin];
                 } else {
                     // The string will be inserted BEFORE i, thus we're seeing earlier chars
                     out = buffer[i - str.size()];
@@ -221,24 +230,25 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct LeafNode {
 
         // Divide strings
         auto data = GetData();
-        if (split_idx <= inserted_begin) {
-            right.PushBytes(data.subspan(split_idx, inserted_begin - split_idx));
+        if (split_idx < insert_begin) {
+            right.PushBytes(data.subspan(split_idx, insert_begin - split_idx));
             right.PushBytes(str);
-            right.PushBytes(data.subspan(inserted_begin));
+            right.PushBytes(data.subspan(insert_begin));
             TruncateBytes(split_idx);
-        } else if (split_idx <= inserted_end) {
-            right.PushBytes(str.subspan(split_idx - inserted_begin));
-            right.PushBytes(data.subspan(inserted_begin));
-            TruncateBytes(inserted_begin);
-            PushBytes(str.subspan(0, split_idx - inserted_begin));
+        } else if (split_idx < insert_end) {
+            right.PushBytes(str.subspan(split_idx - insert_begin));
+            right.PushBytes(data.subspan(insert_begin));
+            TruncateBytes(insert_begin);
+            PushBytes(str.subspan(0, split_idx - insert_begin));
         } else {
-            right.PushBytes(data.subspan(split_idx - str.size()));
-            TruncateBytes(split_idx - str.size());
-            InsertBytes(inserted_begin, str);
+            auto tail_after_inserting = split_idx - str.size();
+            right.PushBytes(data.subspan(tail_after_inserting));
+            TruncateBytes(tail_after_inserting);
+            InsertBytes(insert_begin, str);
         }
 
         // Store as neighbor
-        LinkNeighbor(right);
+        LinkNeighbors(right);
     }
     /// Appends a string and splits the resulting string in half.
     ///
@@ -276,7 +286,7 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct LeafNode {
 
 template <size_t PageSize = DEFAULT_PAGE_SIZE> struct InnerNode {
     friend struct Rope<PageSize>;
-    static const size_t CAPACITY = (PageSize - sizeof(uint8_t)) / (sizeof(TextInfo) + sizeof(NodePtr<PageSize>));
+    static const size_t CAPACITY = (PageSize - sizeof(uint8_t) - 2 * sizeof(void*)) / (sizeof(TextInfo) + sizeof(NodePtr<PageSize>));
     static_assert(CAPACITY >= 2, "Inner mode must have space for at least two children");
 
    protected:
@@ -296,9 +306,9 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct InnerNode {
     InnerNode() : child_stats(), child_nodes() {}
 
     /// Get the size of the node
-    auto GetSize() noexcept { return child_count; }
+    size_t GetSize() noexcept { return child_count; }
     /// Get the capacity of the node
-    auto GetCapacity() noexcept { return CAPACITY; }
+    size_t GetCapacity() noexcept { return CAPACITY; }
     /// Get the statistics
     auto GetChildStats() noexcept { return std::span{child_stats.data(), GetSize()}; }
     /// Get child nodes
@@ -309,7 +319,11 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct InnerNode {
     auto IsFull() noexcept { return GetSize() >= GetCapacity(); }
 
     /// Link a neighbor
-    void LinkNeighbor(InnerNode<PageSize>& other) {
+    void LinkNeighbors(InnerNode<PageSize>& other) {
+        if (next_node) {
+            other.next_node = next_node;
+            next_node->previous_node = &other;
+        }
         next_node = &other;
         other.previous_node = this;
     }
@@ -331,8 +345,8 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct InnerNode {
     /// Pushes items into the array
     void Push(std::span<const NodePtr<PageSize>> nodes, std::span<const TextInfo> stats) {
         assert(nodes.size() == stats.size()) assert((GetCapacity() - GetSize()) <= nodes.size());
-        std::memcpy(child_nodes.data() + GetSize(), nodes.data(), nodes.size());
-        std::memcpy(child_stats.data() + GetSize(), stats.data(), nodes.size());
+        std::memcpy(child_nodes.data() + GetSize(), nodes.data(), nodes.size() * sizeof(NodePtr<PageSize>));
+        std::memcpy(child_stats.data() + GetSize(), stats.data(), nodes.size() * sizeof(TextInfo));
         child_count += nodes.size();
     }
     /// Pops an item from the end of the array
@@ -345,9 +359,9 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct InnerNode {
     void Insert(size_t idx, NodePtr<PageSize> child, TextInfo stats) {
         assert(idx <= GetSize());
         assert(GetSize() < GetCapacity());
-        auto n = GetSize() - idx;
-        std::memmove(&child_nodes[idx + 1], &child_nodes[idx], n);
-        std::memmove(&child_stats[idx + 1], &child_stats[idx], n);
+        auto tail = GetSize() - idx;
+        std::memmove(&child_nodes[idx + 1], &child_nodes[idx], tail * sizeof(NodePtr<PageSize>));
+        std::memmove(&child_stats[idx + 1], &child_stats[idx], tail * sizeof(TextInfo));
         child_nodes[idx] = child;
         child_stats[idx] = stats;
         ++child_count;
@@ -358,8 +372,8 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct InnerNode {
         assert(idx < GetSize());
         if ((idx + 1) < GetSize()) {
             auto tail = GetSize() - (idx + 1);
-            std::memmove(&child_nodes[idx], &child_nodes[idx + 1], tail);
-            std::memmove(&child_stats[idx], &child_nodes[idx + 1], tail);
+            std::memmove(&child_nodes[idx], &child_nodes[idx + 1], tail * sizeof(NodePtr<PageSize>));
+            std::memmove(&child_stats[idx], &child_stats[idx + 1], tail * sizeof(TextInfo));
         }
         --child_count;
     }
@@ -377,11 +391,11 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct InnerNode {
         assert(child_idx <= GetSize());
 
         dst.child_count = GetSize() - child_idx;
-        std::memcpy(dst.child_nodes.data(), &child_nodes[child_idx], GetSize() - child_idx);
-        std::memcpy(dst.child_stats.data(), &child_stats[child_idx], GetSize() - child_idx);
+        std::memcpy(dst.child_nodes.data(), &child_nodes[child_idx], dst.child_count * sizeof(NodePtr<PageSize>));
+        std::memcpy(dst.child_stats.data(), &child_stats[child_idx], dst.child_count * sizeof(TextInfo));
         child_count = child_idx;
 
-        LinkNeighbor(dst);
+        LinkNeighbors(dst);
     }
     /// Pushes an element onto the end of the array, and then splits it in half
     void PushAndSplit(NodePtr<PageSize> child, TextInfo stats, InnerNode& dst) {
@@ -397,7 +411,7 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct InnerNode {
         std::pair<NodePtr<PageSize>, TextInfo> extra{child, stats};
         if (idx < GetSize()) {
             extra = Pop();
-            Insert(idx, std::get<0>(extra), std::get<1>(extra));
+            Insert(idx, child, stats);
         }
         PushAndSplit(std::get<0>(extra), std::get<1>(extra), other);
     }
@@ -406,10 +420,10 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct InnerNode {
         if (child_count < right.child_count) {
             // Right got more children than left, append surplus to left
             auto move = (right.child_count - child_count) / 2;
-            std::memcpy(child_nodes.data() + GetSize(), right.child_nodes.data(), move);
-            std::memcpy(child_nodes.data() + GetSize(), right.child_stats.data(), move);
-            std::memmove(right.child_nodes.data(), right.child_nodes.data() + move, right.GetSize() - move);
-            std::memmove(right.child_stats.data(), right.child_stats.data() + move, right.GetSize() - move);
+            std::memcpy(child_nodes.data() + GetSize(), right.child_nodes.data(), move * sizeof(NodePtr<PageSize>));
+            std::memcpy(child_stats.data() + GetSize(), right.child_stats.data(), move * sizeof(TextInfo));
+            std::memmove(right.child_nodes.data(), right.child_nodes.data() + move, (right.GetSize() - move) * sizeof(NodePtr<PageSize>));
+            std::memmove(right.child_stats.data(), right.child_stats.data() + move, (right.GetSize() - move) * sizeof(TextInfo));
             right.child_count -= move;
             child_count += move;
 
@@ -417,10 +431,10 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct InnerNode {
             // Left got more children than right, prepend surplus to right
             auto move = (child_count - right.child_count) / 2;
             auto move_from = GetSize() - move - 1;
-            std::memmove(right.child_nodes.data() + move, right.child_nodes.data(), move);
-            std::memmove(right.child_stats.data() + move, right.child_stats.data(), move);
-            std::memcpy(right.child_nodes.data(), child_nodes.data() + move_from, move);
-            std::memcpy(right.child_stats.data(), child_stats.data() + move_from, move);
+            std::memmove(right.child_nodes.data() + move, right.child_nodes.data(), move * sizeof(NodePtr<PageSize>));
+            std::memmove(right.child_stats.data() + move, right.child_stats.data(), move * sizeof(TextInfo));
+            std::memcpy(right.child_nodes.data(), child_nodes.data() + move_from, move * sizeof(NodePtr<PageSize>));
+            std::memcpy(right.child_stats.data(), child_stats.data() + move_from, move * sizeof(TextInfo));
             right.child_count += move;
             child_count -= move;
         }
@@ -479,28 +493,30 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct InnerNode {
     using Child = std::pair<size_t, TextInfo>;
 
     /// Helper to find a child that contains a byte index
-    static bool ChildContainsByte(size_t byte_idx, TextInfo prev, TextInfo next) { return next.text_bytes >= byte_idx; }
+    static bool ChildContainsByte(size_t byte_idx, TextInfo prev, TextInfo next) {
+        return next.text_bytes > byte_idx;
+    }
     /// Helper to find a child that contains a character index
     static bool ChildContainsCodepoint(size_t char_idx, TextInfo prev, TextInfo next) {
-        return next.utf8_codepoints >= char_idx;
+        return next.utf8_codepoints > char_idx;
     }
     /// Helper to find a child that contains a line break index
     static bool ChildContainsLineBreak(size_t line_break_idx, TextInfo prev, TextInfo next) {
-        return next.line_breaks >= line_break_idx;
+        return next.line_breaks > line_break_idx;
     }
 
-    /// Find the first child where a predicate returns true
+    /// Find the first child where a predicate returns true or the last child if none qualify
     template <typename Predicate> Child Find(size_t arg, Predicate predicate) {
         auto child_stats = GetChildStats();
         TextInfo next;
-        for (size_t child_idx = 0; child_idx < child_stats.size(); ++child_idx) {
+        for (size_t child_idx = 0; (child_idx + 1) < child_stats.size(); ++child_idx) {
             TextInfo prev = next;
             next += child_stats[child_idx];
             if (predicate(arg, prev, next)) {
                 return {child_idx, prev};
             }
         }
-        return {child_stats.size(), next};
+        return {child_stats.size() - 1, next};
     }
 
     /// Find the child that contains a byte index
@@ -589,6 +605,11 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
         root_node = {};
     }
 
+    /// Get the root text info
+    auto& GetInfo() {
+        return root_info;
+    }
+    /// Copy the rope to a std::string
     std::string ToString() {
         std::string buffer;
         buffer.reserve(root_info.text_bytes);
@@ -627,26 +648,34 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
         while (!next_node.IsLeafNode()) {
             // Find child with codepoint
             InnerNode<PageSize>* next_as_inner = next_node.AsInnerNode();
-            auto [child_idx, child_prefix_info] = next_as_inner->FindCodepoint(char_idx);
+            auto [child_idx, child_prefix_chars] = next_as_inner->FindCodepoint(char_idx);
             inner_node_path.push_back(
                 VisitedInnerNode{.parent_info = next_info, .parent_node = next_as_inner, .child_idx = child_idx});
 
             // Continue with child
             next_node = next_as_inner->GetChildNodes()[child_idx];
             next_info = &next_as_inner->GetChildStats()[child_idx];
+            char_idx -= child_prefix_chars;
+            assert(!next_node.IsNull());
         }
 
         // Edit when reached leaf
         LeafNode<PageSize>* leaf_node = next_node.AsLeafNode();
         auto leaf_info = next_info;
         auto insert_at = utf8::codepointToByteIdx(leaf_node->GetData(), char_idx);
+        assert(char_idx <= leaf_info->utf8_codepoints);
 
-        // Fits on leaf?
+        // Fits in leaf?
         if ((leaf_node->GetSize() + text_bytes.size()) <= leaf_node->GetCapacity()) {
+            assert(insert_at <= leaf_node->GetSize());
             leaf_node->InsertBytes(insert_at, text_bytes);
             // Update the text statistics in the parent
             *leaf_info += insert_info;
-            // Nothing else to do!
+            assert(TextInfo{leaf_node->GetData()}.utf8_codepoints == leaf_info->utf8_codepoints);
+            // Propagate the inserted text info to all parents
+            for (auto iter = inner_node_path.rbegin(); iter != inner_node_path.rend(); ++iter) {
+                *iter->parent_info += insert_info;
+            }
             return;
         }
 
@@ -657,7 +686,8 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
         // Collect split node
         TextInfo split_info{new_leaf->GetData()};
         NodePtr<PageSize> split_node{new_leaf.release()};
-        *leaf_info -= split_info;
+        *leaf_info = *leaf_info + insert_info - split_info;
+        assert(TextInfo{leaf_node->GetData()}.utf8_codepoints == leaf_info->utf8_codepoints);
 
         // Propagate split upwards
         for (auto iter = inner_node_path.rbegin(); iter != inner_node_path.rend(); ++iter) {
@@ -665,23 +695,28 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
 
             // Is there enough space in the inner node? - Then we're done splitting!
             if (!prev_visit.parent_node->IsFull()) {
-                prev_visit.parent_node->Insert(prev_visit.child_idx, split_node, split_info);
+                prev_visit.parent_node->Insert(prev_visit.child_idx + 1, split_node, split_info);
                 *prev_visit.parent_info += insert_info;
-                split_node = {};
+
+                auto acc = prev_visit.parent_node->AggregateTextInfo();
+                assert(acc.utf8_codepoints == prev_visit.parent_info->utf8_codepoints);
 
                 // Propagate the inserted text info to all parents
                 for (++iter; iter != inner_node_path.rend(); ++iter) {
                     *iter->parent_info += insert_info;
                 }
-                break;
+                return;
             }
 
             // Otherwise it's a split of the inner node!
             auto new_inner = std::make_unique<InnerNode<PageSize>>();
-            prev_visit.parent_node->InsertAndSplit(prev_visit.child_idx, split_node, split_info, *new_inner);
+            prev_visit.parent_node->InsertAndSplit(prev_visit.child_idx + 1, split_node, split_info, *new_inner);
             split_info = new_inner->AggregateTextInfo();
             split_node = NodePtr<PageSize>{new_inner.release()};
-            *prev_visit.parent_info -= split_info;
+            *prev_visit.parent_info = *prev_visit.parent_info + insert_info - split_info;
+
+            auto acc = prev_visit.parent_node->AggregateTextInfo();
+            assert(acc.utf8_codepoints == prev_visit.parent_info->utf8_codepoints);
         }
 
         // Is not null, then we have to split the root!

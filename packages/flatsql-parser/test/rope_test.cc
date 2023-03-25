@@ -61,11 +61,83 @@ TEST(RopeLeafNode, BalanceBytesWith) {
     EXPECT_EQ(right.GetString(), "fghij");
 }
 
-TEST(RopeInnerNode, InsertBounded) {
+TEST(RopeInnerNode, InsertBoundedEnd) {
     rope::Rope<128> rope;
+    std::string expected;
+    size_t pos = 0;
+    for (size_t i = 0; i < 1000; ++i) {
+        auto s = std::to_string(i) + ",";
+        expected += s;
+        rope.InsertBounded(pos, asBytes(s));
+        pos += s.size();
+        ASSERT_EQ(rope.ToString(), expected);
+        ASSERT_EQ(rope.GetInfo().text_bytes, expected.size());
+        ASSERT_EQ(rope.GetInfo().utf8_codepoints, expected.size());
+        ASSERT_EQ(rope.GetInfo().line_breaks, 0);
+    }
+}
 
-    rope.InsertBounded(0, asBytes("0"));
-    EXPECT_EQ(rope.ToString(), "0");
-    rope.InsertBounded(1, asBytes("1"));
-    EXPECT_EQ(rope.ToString(), "01");
+TEST(RopeInnerNode, InsertBounded0) {
+    rope::Rope<128> rope;
+    std::string expected;
+    for (size_t i = 0; i < 1000; ++i) {
+        auto s = std::to_string(i) + ",";
+        expected = s + expected;
+        rope.InsertBounded(0, asBytes(s));
+        ASSERT_EQ(rope.ToString(), expected);
+        ASSERT_EQ(rope.GetInfo().text_bytes, expected.size());
+        ASSERT_EQ(rope.GetInfo().utf8_codepoints, expected.size());
+        ASSERT_EQ(rope.GetInfo().line_breaks, 0);
+    }
+}
+
+TEST(RopeInnerNode, InsertBounded1IDiv2) {
+    rope::Rope<128> rope;
+    std::string expected;
+    for (size_t i = 0; i < 1000; ++i) {
+        auto s = std::to_string(i);
+        auto mid = i / 2;
+        auto prefix = expected.substr(0, mid);
+        auto suffix = expected.substr(mid);
+        expected = prefix + s + suffix;
+        rope.InsertBounded(mid, asBytes(s));
+        ASSERT_EQ(rope.ToString(), expected);
+        ASSERT_EQ(rope.GetInfo().text_bytes, expected.size());
+        ASSERT_EQ(rope.GetInfo().utf8_codepoints, expected.size());
+        ASSERT_EQ(rope.GetInfo().line_breaks, 0);
+    }
+}
+
+TEST(RopeInnerNode, InsertBounded1IDiv3) {
+    rope::Rope<128> rope;
+    std::string expected;
+    for (size_t i = 0; i < 1000; ++i) {
+        auto s = std::to_string(i);
+        auto mid = i / 3;
+        auto prefix = expected.substr(0, mid);
+        auto suffix = expected.substr(mid);
+        expected = prefix + s + suffix;
+        rope.InsertBounded(mid, asBytes(s));
+        ASSERT_EQ(rope.ToString(), expected);
+        ASSERT_EQ(rope.GetInfo().text_bytes, expected.size());
+        ASSERT_EQ(rope.GetInfo().utf8_codepoints, expected.size());
+        ASSERT_EQ(rope.GetInfo().line_breaks, 0);
+    }
+}
+
+TEST(RopeInnerNode, InsertBounded2IDiv3) {
+    rope::Rope<128> rope;
+    std::string expected;
+    for (size_t i = 0; i < 1000; ++i) {
+        auto s = std::to_string(i);
+        auto mid = 2 * i / 3;
+        auto prefix = expected.substr(0, mid);
+        auto suffix = expected.substr(mid);
+        expected = prefix + s + suffix;
+        rope.InsertBounded(mid, asBytes(s));
+        ASSERT_EQ(rope.ToString(), expected);
+        ASSERT_EQ(rope.GetInfo().text_bytes, expected.size());
+        ASSERT_EQ(rope.GetInfo().utf8_codepoints, expected.size());
+        ASSERT_EQ(rope.GetInfo().line_breaks, 0);
+    }
 }
