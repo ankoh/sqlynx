@@ -769,7 +769,6 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
         leafs.reserve((text.size() + LeafNode<PageSize>::CAPACITY - 1) / LeafNode<PageSize>::CAPACITY);
         LeafNode<PageSize>* prev_leaf = nullptr;
         while (!text.empty()) {
-            // Create leaf node
             leafs.push_back(LeafNode<PageSize>::FromString(text));
             auto new_leaf = leafs.back().get();
 
@@ -796,7 +795,6 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
         std::vector<std::unique_ptr<InnerNode<PageSize>>> inners;
         InnerNode<PageSize>* prev_inner = nullptr;
         for (size_t begin = 0; begin < leafs.size();) {
-            // Create inner node
             inners.push_back(std::make_unique<InnerNode<PageSize>>());
             auto& next = inners.back();
 
@@ -825,7 +823,6 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
 
             // Iterate of inner nodes of previous level
             for (size_t begin = level_begin; begin < level_end;) {
-                // Create inner node
                 inners.push_back(std::make_unique<InnerNode<PageSize>>());
                 auto& next = inners.back();
 
