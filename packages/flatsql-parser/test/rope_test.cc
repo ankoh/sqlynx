@@ -61,7 +61,7 @@ TEST(RopeLeafNode, BalanceBytesWith) {
     EXPECT_EQ(right.GetStringView(), "fghij");
 }
 
-TEST(RopeInnerNode, InsertBoundedEnd) {
+TEST(Rope, InsertBoundedEnd) {
     rope::Rope<128> rope;
     std::string expected;
     size_t pos = 0;
@@ -77,7 +77,7 @@ TEST(RopeInnerNode, InsertBoundedEnd) {
     }
 }
 
-TEST(RopeInnerNode, InsertBounded0) {
+TEST(Rope, InsertBounded0) {
     rope::Rope<128> rope;
     std::string expected;
     for (size_t i = 0; i < 1000; ++i) {
@@ -91,7 +91,7 @@ TEST(RopeInnerNode, InsertBounded0) {
     }
 }
 
-TEST(RopeInnerNode, InsertBounded1IDiv2) {
+TEST(Rope, InsertBounded1IDiv2) {
     rope::Rope<128> rope;
     std::string expected;
     for (size_t i = 0; i < 1000; ++i) {
@@ -108,7 +108,7 @@ TEST(RopeInnerNode, InsertBounded1IDiv2) {
     }
 }
 
-TEST(RopeInnerNode, InsertBounded1IDiv3) {
+TEST(Rope, InsertBounded1IDiv3) {
     rope::Rope<128> rope;
     std::string expected;
     for (size_t i = 0; i < 1000; ++i) {
@@ -125,7 +125,7 @@ TEST(RopeInnerNode, InsertBounded1IDiv3) {
     }
 }
 
-TEST(RopeInnerNode, InsertBounded2IDiv3) {
+TEST(Rope, InsertBounded2IDiv3) {
     rope::Rope<128> rope;
     std::string expected;
     for (size_t i = 0; i < 1000; ++i) {
@@ -139,5 +139,14 @@ TEST(RopeInnerNode, InsertBounded2IDiv3) {
         ASSERT_EQ(rope.GetInfo().text_bytes, expected.size());
         ASSERT_EQ(rope.GetInfo().utf8_codepoints, expected.size());
         ASSERT_EQ(rope.GetInfo().line_breaks, 0);
+    }
+}
+
+TEST(Rope, FromText) {
+    std::string expected;
+    for (size_t i = 0; i < 1000; ++i) {
+        expected += std::to_string(i);
+        auto rope = rope::Rope<128>::FromString(expected);
+        ASSERT_EQ(rope.ToString(), expected);
     }
 }

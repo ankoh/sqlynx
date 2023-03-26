@@ -3,10 +3,10 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <iostream>
 #include <span>
 #include <string_view>
 #include <type_traits>
-#include <iostream>
 
 #include "flatsql/text/utf8.h"
 #include "flatsql/utils/small_vector.h"
@@ -93,7 +93,7 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct NodePtr {
 
 template <size_t PageSize = DEFAULT_PAGE_SIZE> struct LeafNode {
     friend struct Rope<PageSize>;
-    static const size_t CAPACITY = PageSize - sizeof(uint16_t) - 2 * sizeof(void*);
+    static constexpr size_t CAPACITY = PageSize - sizeof(uint16_t) - 2 * sizeof(void*);
 
    protected:
     /// The previous leaf (if any)
@@ -283,11 +283,29 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct LeafNode {
         assert(IsValid());
         assert(right.IsValid());
     }
+
+    /// Create a leaf node from a string
+    static std::unique_ptr<LeafNode<PageSize>> FromString(std::string_view& text) {
+        auto leaf = std::make_unique<LeafNode<PageSize>>();
+        auto max_bytes = std::min(LeafNode<PageSize>::CAPACITY, text.size());
+        std::span<const std::byte> bytes{reinterpret_cast<const std::byte*>(text.data()), max_bytes};
+        for (auto iter = bytes.rbegin(); iter != bytes.rend(); ++iter) {
+            if (utf8::isCodepointBoundary(*iter)) {
+                bytes = bytes.subspan(0, bytes.rend() - iter);
+                break;
+            }
+        }
+        leaf->buffer_size = bytes.size();
+        std::memcpy(leaf->buffer.data(), text.data(), leaf->buffer_size);
+        text = text.substr(bytes.size());
+        return leaf;
+    }
 };
 
 template <size_t PageSize = DEFAULT_PAGE_SIZE> struct InnerNode {
     friend struct Rope<PageSize>;
-    static const size_t CAPACITY = (PageSize - sizeof(uint8_t) - 2 * sizeof(void*)) / (sizeof(TextInfo) + sizeof(NodePtr<PageSize>));
+    static constexpr size_t CAPACITY =
+        (PageSize - sizeof(uint8_t) - 2 * sizeof(void*)) / (sizeof(TextInfo) + sizeof(NodePtr<PageSize>));
     static_assert(CAPACITY >= 2, "Inner mode must have space for at least two children");
 
    protected:
@@ -423,8 +441,10 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct InnerNode {
             auto move = (right.child_count - child_count) / 2;
             std::memcpy(child_nodes.data() + GetSize(), right.child_nodes.data(), move * sizeof(NodePtr<PageSize>));
             std::memcpy(child_stats.data() + GetSize(), right.child_stats.data(), move * sizeof(TextInfo));
-            std::memmove(right.child_nodes.data(), right.child_nodes.data() + move, (right.GetSize() - move) * sizeof(NodePtr<PageSize>));
-            std::memmove(right.child_stats.data(), right.child_stats.data() + move, (right.GetSize() - move) * sizeof(TextInfo));
+            std::memmove(right.child_nodes.data(), right.child_nodes.data() + move,
+                         (right.GetSize() - move) * sizeof(NodePtr<PageSize>));
+            std::memmove(right.child_stats.data(), right.child_stats.data() + move,
+                         (right.GetSize() - move) * sizeof(TextInfo));
             right.child_count -= move;
             child_count += move;
 
@@ -494,9 +514,7 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct InnerNode {
     using Child = std::pair<size_t, TextInfo>;
 
     /// Helper to find a child that contains a byte index
-    static bool ChildContainsByte(size_t byte_idx, TextInfo prev, TextInfo next) {
-        return next.text_bytes > byte_idx;
-    }
+    static bool ChildContainsByte(size_t byte_idx, TextInfo prev, TextInfo next) { return next.text_bytes > byte_idx; }
     /// Helper to find a child that contains a character index
     static bool ChildContainsCodepoint(size_t char_idx, TextInfo prev, TextInfo next) {
         return next.utf8_codepoints > char_idx;
@@ -607,9 +625,7 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
     }
 
     /// Get the root text info
-    auto& GetInfo() {
-        return root_info;
-    }
+    auto& GetInfo() { return root_info; }
     /// Copy the rope to a std::string
     std::string ToString() {
         std::string buffer;
@@ -742,6 +758,111 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
             text = text.substr(0, split_idx);
             InsertBounded(char_idx, tail);
         }
+    }
+
+    /// Create a rope from a string
+    static Rope<PageSize> FromString(std::string_view text) {
+        Rope<PageSize> rope;
+
+        // Create leaf nodes
+        std::vector<std::unique_ptr<LeafNode<PageSize>>> leafs;
+        leafs.reserve((text.size() + LeafNode<PageSize>::CAPACITY - 1) / LeafNode<PageSize>::CAPACITY);
+        LeafNode<PageSize>* prev_leaf = nullptr;
+        while (!text.empty()) {
+            // Create leaf node
+            leafs.push_back(LeafNode<PageSize>::FromString(text));
+            auto new_leaf = leafs.back().get();
+
+            // Link leaf node
+            if (prev_leaf == nullptr) {
+                rope.first_leaf = new_leaf;
+            } else {
+                prev_leaf->next_node = new_leaf;
+                new_leaf->previous_node = prev_leaf;
+            }
+            prev_leaf = new_leaf;
+        }
+
+        // Is a leaf single leaf?
+        if (leafs.size() == 1) {
+            rope.root_node = NodePtr<PageSize>{leafs.back().get()};
+            rope.root_info = TextInfo{leafs.back()->GetData()};
+            rope.first_leaf = leafs.back().get();
+            leafs.back().release();
+            return rope;
+        }
+
+        // Create inner nodes from leafs
+        std::vector<std::unique_ptr<InnerNode<PageSize>>> inners;
+        InnerNode<PageSize>* prev_inner = nullptr;
+        for (size_t begin = 0; begin < leafs.size();) {
+            // Create inner node
+            inners.push_back(std::make_unique<InnerNode<PageSize>>());
+            auto& next = inners.back();
+
+            // Store child nodes
+            auto n = std::min(leafs.size() - begin, InnerNode<PageSize>::CAPACITY);
+            for (auto i = 0; i < n; ++i) {
+                next->child_nodes[i] = NodePtr<PageSize>{leafs[begin + i].get()};
+                next->child_stats[i] = TextInfo{leafs[begin + i]->GetData()};
+            }
+            begin += n;
+            next->child_count = n;
+
+            // Link child node
+            if (prev_inner != nullptr) {
+                prev_inner->next_node = next.get();
+                next->previous_node = prev_inner;
+            }
+            prev_inner = next.get();
+        }
+
+        // Create inner nodes from inner nodes
+        auto level_begin = 0;
+        auto level_end = inners.size();
+        while ((level_end - level_begin) > 1) {
+            InnerNode<PageSize>* prev_inner = nullptr;
+
+            // Iterate of inner nodes of previous level
+            for (size_t begin = level_begin; begin < level_end;) {
+                // Create inner node
+                inners.push_back(std::make_unique<InnerNode<PageSize>>());
+                auto& next = inners.back();
+
+                // Store children
+                auto n = std::min(level_end - begin, InnerNode<PageSize>::CAPACITY);
+                for (auto i = 0; i < n; ++i) {
+                    next->child_nodes[i] = NodePtr<PageSize>{inners[begin + i].get()};
+                    next->child_stats[i] = inners[begin + i]->AggregateTextInfo();
+                }
+                begin += n;
+                next->child_count = n;
+
+                // Link child node
+                if (prev_inner != nullptr) {
+                    prev_inner->next_node = next.get();
+                    next->previous_node = prev_inner;
+                }
+                prev_inner = next.get();
+            }
+
+            // Update level
+            level_begin = level_end;
+            level_end = inners.size();
+        }
+        assert((level_end - level_begin) == 1);
+
+        // Store root
+        rope.root_node = NodePtr<PageSize>{inners[level_begin].get()};
+        rope.root_info = inners[level_begin]->AggregateTextInfo();
+
+        for (auto& leaf : leafs) {
+            leaf.release();
+        }
+        for (auto& inner : inners) {
+            inner.release();
+        }
+        return rope;
     }
 };
 
