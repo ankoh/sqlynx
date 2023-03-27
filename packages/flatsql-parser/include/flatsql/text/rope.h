@@ -761,8 +761,8 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
     }
 
     /// Create a rope from a string
-    static Rope<PageSize> FromString(std::string_view text) {
-        Rope<PageSize> rope;
+    static std::unique_ptr<Rope<PageSize>> FromString(std::string_view text) {
+        auto rope = std::make_unique<Rope<PageSize>>();
 
         // Create leaf nodes
         std::vector<std::unique_ptr<LeafNode<PageSize>>> leafs;
@@ -773,9 +773,7 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
             auto new_leaf = leafs.back().get();
 
             // Link leaf node
-            if (prev_leaf == nullptr) {
-                rope.first_leaf = new_leaf;
-            } else {
+            if (prev_leaf != nullptr) {
                 prev_leaf->next_node = new_leaf;
                 new_leaf->previous_node = prev_leaf;
             }
@@ -784,9 +782,9 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
 
         // Is a leaf single leaf?
         if (leafs.size() == 1) {
-            rope.root_node = NodePtr<PageSize>{leafs.back().get()};
-            rope.root_info = TextInfo{leafs.back()->GetData()};
-            rope.first_leaf = leafs.back().get();
+            rope->root_node = NodePtr<PageSize>{leafs.back().get()};
+            rope->root_info = TextInfo{leafs.back()->GetData()};
+            rope->first_leaf = leafs.back().get();
             leafs.back().release();
             return rope;
         }
@@ -850,8 +848,9 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
         assert((level_end - level_begin) == 1);
 
         // Store root
-        rope.root_node = NodePtr<PageSize>{inners[level_begin].get()};
-        rope.root_info = inners[level_begin]->AggregateTextInfo();
+        rope->root_node = NodePtr<PageSize>{inners[level_begin].get()};
+        rope->root_info = inners[level_begin]->AggregateTextInfo();
+        rope->first_leaf = leafs.front().get();
 
         for (auto& leaf : leafs) {
             leaf.release();
