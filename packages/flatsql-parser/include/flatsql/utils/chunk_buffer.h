@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <array>
+#include <cassert>
+#include <cstring>
 #include <iostream>
 #include <span>
 #include <type_traits>
@@ -9,9 +11,8 @@
 
 namespace flatsql {
 
-template <typename T>
-struct ChunkBuffer {
-    protected:
+template <typename T> struct ChunkBuffer {
+   protected:
     /// The buffers
     std::vector<std::vector<T>> buffers;
     /// The offsets
@@ -39,10 +40,9 @@ struct ChunkBuffer {
         return {chunk_id, value_id};
     }
 
-    public:
+   public:
     /// Constructor
-    ChunkBuffer()
-        : buffers(), offsets(), next_chunk_size(1024), total_value_count(0) {
+    ChunkBuffer() : buffers(), offsets(), next_chunk_size(1024), total_value_count(0) {
         buffers.reserve(64);
         offsets.reserve(64);
         grow();
@@ -71,8 +71,7 @@ struct ChunkBuffer {
         ++total_value_count;
     }
     /// Apply a function for each node in a range
-    template <typename F>
-    void ForEachIn(size_t begin, size_t count, F fn) {
+    template <typename F> void ForEachIn(size_t begin, size_t count, F fn) {
         auto [chunk_id, value_id] = find(begin);
         while (count > 0) {
             auto& chunk = buffers[chunk_id];
@@ -90,8 +89,8 @@ struct ChunkBuffer {
     std::vector<T> Flatten() {
         std::vector<T> flat;
         flat.resize(total_value_count);
-        size_t writer = 0; 
-        for (auto& buffer: buffers) {
+        size_t writer = 0;
+        for (auto& buffer : buffers) {
             std::memcpy(flat.data() + writer, buffer.data(), buffer.size() * sizeof(T));
             writer += buffer.size();
         }
@@ -99,4 +98,4 @@ struct ChunkBuffer {
     }
 };
 
-}
+}  // namespace flatsql

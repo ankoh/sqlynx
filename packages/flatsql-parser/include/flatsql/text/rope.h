@@ -627,8 +627,7 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
     /// Copy constructor
     Rope(Rope& other) = delete;
     /// Move constructor
-    Rope(Rope&& other)
-        : root_node(other.root_node), root_info(other.root_info), first_leaf(other.first_leaf) {
+    Rope(Rope&& other) : root_node(other.root_node), root_info(other.root_info), first_leaf(other.first_leaf) {
         other.root_node = {};
         other.root_info = TextInfo{};
         other.first_leaf = nullptr;
