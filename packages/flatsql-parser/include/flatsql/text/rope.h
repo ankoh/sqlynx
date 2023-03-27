@@ -599,6 +599,9 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
     LeafNode<PageSize>* first_leaf;
 
     /// Constructor
+    Rope(NodePtr<PageSize> root_node, TextInfo root_info, LeafNode<PageSize>* first_leaf)
+        : root_node(root_node), root_info(root_info), first_leaf(first_leaf) {}
+    /// Constructor
     Rope(std::string_view text = {}) {
         first_leaf = new LeafNode<PageSize>();
         root_node = {first_leaf};
@@ -794,10 +797,10 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
 
         // Is a leaf single leaf?
         if (leafs.size() == 1) {
-            Rope<PageSize> rope;
-            rope.root_node = NodePtr<PageSize>{leafs.back().get()};
-            rope.root_info = TextInfo{leafs.back()->GetData()};
-            rope.first_leaf = leafs.back().get();
+            auto root_node = NodePtr<PageSize>{leafs.back().get()};
+            auto root_info = TextInfo{leafs.back()->GetData()};
+            auto first_leaf = leafs.back().get();
+            Rope<PageSize> rope{root_node, root_info, first_leaf};
             leafs.back().release();
             return rope;
         }
@@ -830,7 +833,7 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
         auto level_begin = 0;
         auto level_end = inners.size();
         while ((level_end - level_begin) > 1) {
-            InnerNode<PageSize>* prev_inner = nullptr;
+            prev_inner = nullptr;
 
             // Iterate of inner nodes of previous level
             for (size_t begin = level_begin; begin < level_end;) {
@@ -861,10 +864,10 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
         assert((level_end - level_begin) == 1);
 
         // Store root
-        Rope<PageSize> rope;
-        rope.root_node = NodePtr<PageSize>{inners[level_begin].get()};
-        rope.root_info = inners[level_begin]->AggregateTextInfo();
-        rope.first_leaf = leafs.front().get();
+        auto root_node = NodePtr<PageSize>{inners[level_begin].get()};
+        auto root_info = inners[level_begin]->AggregateTextInfo();
+        auto first_leaf = leafs.front().get();
+        Rope<PageSize> rope{root_node, root_info, first_leaf};
 
         for (auto& leaf : leafs) {
             leaf.release();
