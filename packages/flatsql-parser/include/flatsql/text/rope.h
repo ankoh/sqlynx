@@ -816,7 +816,7 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
             begin += n;
             next->child_count = n;
 
-            // Link child node
+            // Link inner node
             if (prev_inner != nullptr) {
                 prev_inner->next_node = next.get();
                 next->previous_node = prev_inner;
@@ -844,7 +844,7 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
                 begin += n;
                 next->child_count = n;
 
-                // Link child node
+                // Link inner node
                 if (prev_inner != nullptr) {
                     prev_inner->next_node = next.get();
                     next->previous_node = prev_inner;
