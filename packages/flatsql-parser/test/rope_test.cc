@@ -147,6 +147,6 @@ TEST(Rope, FromText) {
     for (size_t i = 0; i < 1000; ++i) {
         expected += std::to_string(i);
         auto rope = rope::Rope<128>::FromString(expected);
-        ASSERT_EQ(rope->ToString(), expected);
+        ASSERT_EQ(rope.ToString(), expected);
     }
 }

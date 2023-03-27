@@ -623,6 +623,17 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
         }
         root_node = {};
     }
+    /// Copy constructor
+    Rope(Rope& other) = delete;
+    /// Move constructor
+    Rope(Rope&& other)
+        : root_node(other.root_node), root_info(other.root_info), first_leaf(other.first_leaf) {
+        other.root_node = {};
+        other.root_info = TextInfo{};
+        other.first_leaf = nullptr;
+    };
+    /// Copy assignment
+    Rope& operator=(Rope& other) = delete;
 
     /// Get the root text info
     auto& GetInfo() { return root_info; }
@@ -761,9 +772,7 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
     }
 
     /// Create a rope from a string
-    static std::unique_ptr<Rope<PageSize>> FromString(std::string_view text) {
-        auto rope = std::make_unique<Rope<PageSize>>();
-
+    static Rope<PageSize> FromString(std::string_view text) {
         // Create leaf nodes
         std::vector<std::unique_ptr<LeafNode<PageSize>>> leafs;
         leafs.reserve((text.size() + LeafNode<PageSize>::CAPACITY - 1) / LeafNode<PageSize>::CAPACITY);
@@ -782,9 +791,10 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
 
         // Is a leaf single leaf?
         if (leafs.size() == 1) {
-            rope->root_node = NodePtr<PageSize>{leafs.back().get()};
-            rope->root_info = TextInfo{leafs.back()->GetData()};
-            rope->first_leaf = leafs.back().get();
+            Rope<PageSize> rope;
+            rope.root_node = NodePtr<PageSize>{leafs.back().get()};
+            rope.root_info = TextInfo{leafs.back()->GetData()};
+            rope.first_leaf = leafs.back().get();
             leafs.back().release();
             return rope;
         }
@@ -848,9 +858,10 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
         assert((level_end - level_begin) == 1);
 
         // Store root
-        rope->root_node = NodePtr<PageSize>{inners[level_begin].get()};
-        rope->root_info = inners[level_begin]->AggregateTextInfo();
-        rope->first_leaf = leafs.front().get();
+        Rope<PageSize> rope;
+        rope.root_node = NodePtr<PageSize>{inners[level_begin].get()};
+        rope.root_info = inners[level_begin]->AggregateTextInfo();
+        rope.first_leaf = leafs.front().get();
 
         for (auto& leaf : leafs) {
             leaf.release();
