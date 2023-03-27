@@ -1,3 +1,5 @@
+#include <__memory/unique_ptr.h>
+
 #include <array>
 #include <cassert>
 #include <cstddef>
@@ -182,17 +184,18 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct LeafNode {
         return tail;
     }
     /// Splits bytes at index
-    void SplitBytesOff(size_t byte_idx, LeafNode& dst) noexcept {
-        assert(dst.IsEmpty());
+    void SplitBytesOff(size_t byte_idx, LeafNode& right) noexcept {
+        assert(right.IsEmpty());
         assert(byte_idx <= GetSize());
         assert(utf8::isCodepointBoundary(GetData(), byte_idx));
 
-        dst.InsertBytes(0, TruncateBytes(byte_idx));
+        right.InsertBytes(0, TruncateBytes(byte_idx));
+        LinkNeighbors(right);
     }
     /// Split chars at index
-    void SplitCharsOff(size_t char_idx, LeafNode& dst) noexcept {
+    void SplitCharsOff(size_t char_idx, LeafNode& right) noexcept {
         auto byte_idx = utf8::codepointToByteIdx(GetData(), char_idx);
-        SplitBytesOff(byte_idx, dst);
+        SplitBytesOff(byte_idx, right);
     }
     /// Inserts `string` at `byte_idx` and splits the resulting string in half.
     /// Only splits on code point boundaries, so if the whole string is a single code point the right node will be
@@ -408,16 +411,16 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct InnerNode {
         return {tail_nodes, tail_stats};
     }
     /// Splits node at index
-    void SplitOff(size_t child_idx, InnerNode& dst) {
-        assert(dst.IsEmpty());
+    void SplitOff(size_t child_idx, InnerNode<PageSize>& right) {
+        assert(right.IsEmpty());
         assert(child_idx <= GetSize());
 
-        dst.child_count = GetSize() - child_idx;
-        std::memcpy(dst.child_nodes.data(), &child_nodes[child_idx], dst.child_count * sizeof(NodePtr<PageSize>));
-        std::memcpy(dst.child_stats.data(), &child_stats[child_idx], dst.child_count * sizeof(TextInfo));
+        right.child_count = GetSize() - child_idx;
+        std::memcpy(right.child_nodes.data(), &child_nodes[child_idx], right.child_count * sizeof(NodePtr<PageSize>));
+        std::memcpy(right.child_stats.data(), &child_stats[child_idx], right.child_count * sizeof(TextInfo));
         child_count = child_idx;
 
-        LinkNeighbors(dst);
+        LinkNeighbors(right);
     }
     /// Pushes an element onto the end of the array, and then splits it in half
     void PushAndSplit(NodePtr<PageSize> child, TextInfo stats, InnerNode& dst) {
@@ -654,7 +657,68 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
     }
 
     /// Split off a rope
-    Rope SplitOff(size_t char_idx) {}
+    Rope<PageSize> SplitOff(size_t char_idx) {
+        // Remember information about an inner node that we traversed.
+        struct VisitedInnerNode {
+            TextInfo* node_info;
+            InnerNode<PageSize>* node;
+            size_t child_idx;
+        };
+
+        // Locate leaf node and remember traversed inner nodes
+        SmallVector<VisitedInnerNode, 8> inner_path;
+        auto next_node = root_node;
+        auto next_stats = &root_info;
+        while (!next_node.IsLeafNode()) {
+            // Find child with codepoint
+            InnerNode<PageSize>* next_as_inner = next_node.AsInnerNode();
+            auto [child_idx, child_prefix_chars] = next_as_inner->FindCodepoint(char_idx);
+            inner_path.push_back(
+                VisitedInnerNode{.node_info = next_stats, .node = next_as_inner, .child_idx = child_idx});
+
+            // Continue with child
+            next_node = next_as_inner->GetChildNodes()[child_idx];
+            next_stats = &next_as_inner->GetChildStats()[child_idx];
+            char_idx -= child_prefix_chars;
+            assert(!next_node.IsNull());
+        }
+
+        // Edit when reached leaf
+        LeafNode<PageSize>* leaf_node = next_node.AsLeafNode();
+
+        // Create leaf node
+        auto new_leaf = std::make_unique<LeafNode<PageSize>>();
+        leaf_node->SplitCharsOff(char_idx, *new_leaf);
+        leaf_node->next_node = nullptr;
+        new_leaf->previous_node = nullptr;
+        TextInfo child_stats{new_leaf->GetData()};
+        NodePtr<PageSize> child_node{new_leaf.get()};
+
+        // Create new inner nodes
+        std::vector<std::unique_ptr<InnerNode<PageSize>>> new_inners;
+        new_inners.reserve(inner_path.getSize());
+        for (auto iter = inner_path.rbegin(); iter != inner_path.rend(); ++iter) {
+            new_inners.push_back(std::make_unique<InnerNode<PageSize>>());
+            auto& right = new_inners.back();
+            auto* left = iter->node;
+            left->SplitOff(iter->child_idx, *right);
+            ++left->child_count;
+            left->next_node = nullptr;
+            right->previous_node = nullptr;
+            right->child_stats[0] = child_stats;
+            right->child_nodes[0] = child_node;
+            child_stats = right->AggregateTextInfo();
+            child_node = {right.get()};
+        }
+
+        // Release inner nodes
+        for (auto& inner : new_inners) {
+            inner.release();
+        }
+        // Create new root
+        return Rope<PageSize>{child_node, child_stats, new_leaf.release()};
+    }
+
     /// Append a rope to this rope
     void Append(Rope other) {}
 
@@ -667,35 +731,32 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
 
         // Remember information about an inner node that we traversed.
         struct VisitedInnerNode {
-            /// The text info of the parent
-            TextInfo* parent_info;
-            /// The parent node pointer
-            InnerNode<PageSize>* parent_node;
-            /// The child idx within the node
+            TextInfo* node_info;
+            InnerNode<PageSize>* node;
             size_t child_idx;
         };
 
         // Locate leaf node and remember traversed inner nodes
-        SmallVector<VisitedInnerNode, 8> inner_node_path;
+        SmallVector<VisitedInnerNode, 8> inner_path;
         auto next_node = root_node;
-        auto next_info = &root_info;
+        auto next_stats = &root_info;
         while (!next_node.IsLeafNode()) {
             // Find child with codepoint
             InnerNode<PageSize>* next_as_inner = next_node.AsInnerNode();
             auto [child_idx, child_prefix_chars] = next_as_inner->FindCodepoint(char_idx);
-            inner_node_path.push_back(
-                VisitedInnerNode{.parent_info = next_info, .parent_node = next_as_inner, .child_idx = child_idx});
+            inner_path.push_back(
+                VisitedInnerNode{.node_info = next_stats, .node = next_as_inner, .child_idx = child_idx});
 
             // Continue with child
             next_node = next_as_inner->GetChildNodes()[child_idx];
-            next_info = &next_as_inner->GetChildStats()[child_idx];
+            next_stats = &next_as_inner->GetChildStats()[child_idx];
             char_idx -= child_prefix_chars;
             assert(!next_node.IsNull());
         }
 
         // Edit when reached leaf
         LeafNode<PageSize>* leaf_node = next_node.AsLeafNode();
-        auto leaf_info = next_info;
+        auto leaf_info = next_stats;
         auto insert_at = utf8::codepointToByteIdx(leaf_node->GetData(), char_idx);
         assert(char_idx <= leaf_info->utf8_codepoints);
 
@@ -706,8 +767,8 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
             // Update the text statistics in the parent
             *leaf_info += insert_info;
             // Propagate the inserted text info to all parents
-            for (auto iter = inner_node_path.rbegin(); iter != inner_node_path.rend(); ++iter) {
-                *iter->parent_info += insert_info;
+            for (auto iter = inner_path.rbegin(); iter != inner_path.rend(); ++iter) {
+                *iter->node_info += insert_info;
             }
             return;
         }
@@ -722,27 +783,27 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
         *leaf_info = *leaf_info + insert_info - split_info;
 
         // Propagate split upwards
-        for (auto iter = inner_node_path.rbegin(); iter != inner_node_path.rend(); ++iter) {
+        for (auto iter = inner_path.rbegin(); iter != inner_path.rend(); ++iter) {
             auto prev_visit = *iter;
 
             // Is there enough space in the inner node? - Then we're done splitting!
-            if (!prev_visit.parent_node->IsFull()) {
-                prev_visit.parent_node->Insert(prev_visit.child_idx + 1, split_node, split_info);
-                *prev_visit.parent_info += insert_info;
+            if (!prev_visit.node->IsFull()) {
+                prev_visit.node->Insert(prev_visit.child_idx + 1, split_node, split_info);
+                *prev_visit.node_info += insert_info;
 
                 // Propagate the inserted text info to all parents
-                for (++iter; iter != inner_node_path.rend(); ++iter) {
-                    *iter->parent_info += insert_info;
+                for (++iter; iter != inner_path.rend(); ++iter) {
+                    *iter->node_info += insert_info;
                 }
                 return;
             }
 
             // Otherwise it's a split of the inner node!
             auto new_inner = std::make_unique<InnerNode<PageSize>>();
-            prev_visit.parent_node->InsertAndSplit(prev_visit.child_idx + 1, split_node, split_info, *new_inner);
+            prev_visit.node->InsertAndSplit(prev_visit.child_idx + 1, split_node, split_info, *new_inner);
             split_info = new_inner->AggregateTextInfo();
             split_node = NodePtr<PageSize>{new_inner.release()};
-            *prev_visit.parent_info = *prev_visit.parent_info + insert_info - split_info;
+            *prev_visit.node_info = *prev_visit.node_info + insert_info - split_info;
         }
 
         // Is not null, then we have to split the root!

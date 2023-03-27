@@ -157,3 +157,15 @@ TEST(Rope, FromText) {
         ASSERT_EQ(rope.ToString(), expected);
     }
 }
+
+TEST(Rope, SplitOffMid) {
+    std::string expected;
+    for (size_t i = 0; i < 1000; ++i) {
+        expected += std::to_string(i);
+        auto half = expected.size() / 2;
+        auto left = rope::Rope<128>::FromString(expected);
+        auto right = left.SplitOff(half);
+        ASSERT_EQ(left.ToString(), expected.substr(0, half));
+        ASSERT_EQ(right.ToString(), expected.substr(half));
+    }
+}
