@@ -21,9 +21,9 @@ set(CMAKE_BUILD_PARALLEL_LEVEL ${NPROCS})
 # ---------------------------------------------------------------------------
 # Address sanitizer
 
-if(NOT WASM)
-  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
-  set(CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+if(NOT WASM AND NOT (CMAKE_BUILD_TYPE MATCHES Release))
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
+  set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
 endif()
 
 # ---------------------------------------------------------------------------
