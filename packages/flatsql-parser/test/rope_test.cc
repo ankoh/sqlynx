@@ -149,4 +149,11 @@ TEST(Rope, FromText) {
         auto rope = rope::Rope<128>::FromString(expected);
         ASSERT_EQ(rope.ToString(), expected);
     }
+    auto rope = rope::Rope<128>::FromString(expected);
+    for (size_t i = 0; i < 1000; ++i) {
+        auto v = std::to_string(i);
+        expected.insert(i, std::to_string(i));
+        rope.InsertBounded(i, asBytes(v));
+        ASSERT_EQ(rope.ToString(), expected);
+    }
 }
