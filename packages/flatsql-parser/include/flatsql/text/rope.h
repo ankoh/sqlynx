@@ -614,6 +614,7 @@ template <size_t PageSize = DEFAULT_PAGE_SIZE> struct Rope {
                 break;
             }
             InnerNode<PageSize>* iter = level.AsInnerNode();
+            assert(iter->GetSize() > 0);
             level = {iter->GetChildNodes()[0]};
             while (iter) {
                 auto next = iter->next_node;
