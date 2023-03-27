@@ -25,6 +25,8 @@ struct TextInfo {
     /// Constructor
     TextInfo() {}
     /// Constructor
+    TextInfo(std::span<std::byte> data) : TextInfo(std::span<const std::byte>(data)) {}
+    /// Constructor
     TextInfo(std::span<const std::byte> data) : text_bytes(data.size()) {
         for (auto b : data) {
             line_breaks += (b == std::byte{0x0A});
