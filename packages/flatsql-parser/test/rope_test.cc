@@ -158,14 +158,62 @@ TEST(Rope, FromText) {
     }
 }
 
-TEST(Rope, SplitOffMid) {
+TEST(Rope, SplitOff0) {
     std::string expected;
     for (size_t i = 0; i < 1000; ++i) {
         expected += std::to_string(i);
-        auto half = expected.size() / 2;
+        auto split = 0;
         auto left = rope::Rope<128>::FromString(expected);
-        auto right = left.SplitOff(half);
-        ASSERT_EQ(left.ToString(), expected.substr(0, half));
-        ASSERT_EQ(right.ToString(), expected.substr(half));
+        auto right = left.SplitOff(split);
+        ASSERT_EQ(left.ToString(), expected.substr(0, split));
+        ASSERT_EQ(right.ToString(), expected.substr(split));
+    }
+}
+
+TEST(Rope, SplitOff1) {
+    std::string expected;
+    for (size_t i = 0; i < 1000; ++i) {
+        expected += std::to_string(i);
+        auto split = 1;
+        auto left = rope::Rope<128>::FromString(expected);
+        auto right = left.SplitOff(split);
+        ASSERT_EQ(left.ToString(), expected.substr(0, split));
+        ASSERT_EQ(right.ToString(), expected.substr(split));
+    }
+}
+
+TEST(Rope, SplitOffNDiv2) {
+    std::string expected;
+    for (size_t i = 0; i < 1000; ++i) {
+        expected += std::to_string(i);
+        auto split = expected.size() / 2;
+        auto left = rope::Rope<128>::FromString(expected);
+        auto right = left.SplitOff(split);
+        ASSERT_EQ(left.ToString(), expected.substr(0, split));
+        ASSERT_EQ(right.ToString(), expected.substr(split));
+    }
+}
+
+TEST(Rope, SplitOffNMinus1) {
+    std::string expected;
+    for (size_t i = 0; i < 1000; ++i) {
+        expected += std::to_string(i);
+        auto split = expected.size() - 1;
+        auto left = rope::Rope<128>::FromString(expected);
+        auto right = left.SplitOff(split);
+        ASSERT_EQ(left.ToString(), expected.substr(0, split));
+        ASSERT_EQ(right.ToString(), expected.substr(split));
+    }
+}
+
+TEST(Rope, SplitOffN) {
+    std::string expected;
+    for (size_t i = 0; i < 1000; ++i) {
+        expected += std::to_string(i);
+        auto split = expected.size();
+        auto left = rope::Rope<128>::FromString(expected);
+        auto right = left.SplitOff(split);
+        ASSERT_EQ(left.ToString(), expected.substr(0, split));
+        ASSERT_EQ(right.ToString(), expected.substr(split));
     }
 }
