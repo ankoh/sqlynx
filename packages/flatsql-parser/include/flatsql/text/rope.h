@@ -63,20 +63,20 @@ struct Rope;
 struct LeafNode;
 struct InnerNode;
 
-struct Page {
+struct PagePtr {
     protected:
     /// The page
     std::unique_ptr<std::byte[]> page;
 
     public:
     /// Constructor
-    Page(size_t page_size): page(std::make_unique_for_overwrite<std::byte[]>(page_size)) {}
+    PagePtr(size_t page_size): page(std::make_unique_for_overwrite<std::byte[]>(page_size)) {}
     /// Constructor
-    Page(void* buffer): page() {}
+    PagePtr(void* buffer): page() {}
     /// Move constructor
-    Page(Page&& other) = default;
+    PagePtr(PagePtr&& other) = default;
     /// Move assignment
-    Page& operator=(Page&& other) = default;
+    PagePtr& operator=(PagePtr&& other) = default;
 
     /// Get raw page pointer
     std::byte* Get() { return page.get(); }
@@ -325,8 +325,8 @@ struct LeafNode {
     }
 
     /// Create a leaf node from a string
-    static Page FromString(size_t page_size, std::string_view& text) {
-        Page leaf_page{page_size};
+    static PagePtr FromString(size_t page_size, std::string_view& text) {
+        PagePtr leaf_page{page_size};
         auto leaf = new (leaf_page.Get()) LeafNode(page_size);
         std::span<const std::byte> bytes{reinterpret_cast<const std::byte*>(text.data()), text.size()};
         if (text.size() <= leaf->GetCapacity()) {
@@ -676,7 +676,7 @@ struct Rope {
     /// Constructor
     Rope(size_t page_size, std::string_view text = {})
         : page_size(page_size) {
-        Page first_page{page_size};
+        PagePtr first_page{page_size};
         first_leaf = new (first_page.Get()) LeafNode(page_size);
         root_node = {first_leaf};
         root_info = {};
@@ -760,7 +760,7 @@ struct Rope {
         LeafNode* leaf_node = next_node.AsLeafNode();
 
         // Create leaf node
-        Page new_leaf_page{page_size};
+        PagePtr new_leaf_page{page_size};
         auto new_leaf = new (new_leaf_page.Get()) LeafNode(page_size);
         leaf_node->SplitCharsOff(char_idx, *new_leaf);
         leaf_node->next_node = nullptr;
@@ -769,7 +769,7 @@ struct Rope {
         NodePtr child_node{new_leaf};
 
         // Create new inner nodes
-        std::vector<Page> new_inners;
+        std::vector<PagePtr> new_inners;
         new_inners.reserve(inner_path.getSize());
         for (auto iter = inner_path.rbegin(); iter != inner_path.rend(); ++iter) {
             new_inners.emplace_back(page_size);
@@ -848,7 +848,7 @@ struct Rope {
         }
 
         // Text does not fit on leaf, split the leaf
-        Page new_leaf_page{page_size};
+        PagePtr new_leaf_page{page_size};
         auto new_leaf = new (new_leaf_page.Get()) LeafNode(page_size);
         leaf_node->InsertBytesAndSplit(insert_at, text_bytes, *new_leaf);
 
@@ -874,7 +874,7 @@ struct Rope {
             }
 
             // Otherwise it's a split of the inner node!
-            Page new_inner_page{page_size};
+            PagePtr new_inner_page{page_size};
             auto new_inner = new (new_inner_page.Get()) InnerNode(page_size);
             prev_visit.node->InsertAndSplit(prev_visit.child_idx + 1, split_node, split_info, *new_inner);
             split_info = new_inner->AggregateTextInfo();
@@ -884,7 +884,7 @@ struct Rope {
 
         // Is not null, then we have to split the root!
         if (!split_node.IsNull()) {
-            Page new_root_page{page_size};
+            PagePtr new_root_page{page_size};
             auto new_root = new (new_root_page.Get()) InnerNode(page_size);
             new_root->Push(root_node, root_info);
             new_root->Push(split_node, split_info);
@@ -919,7 +919,7 @@ struct Rope {
     /// Create a rope from a string
     static Rope FromString(size_t page_size, std::string_view text) {
         // Create leaf nodes
-        std::vector<Page> leafs;
+        std::vector<PagePtr> leafs;
         auto leaf_capacity = LeafNode::Capacity(page_size);
         leafs.reserve((text.size() + leaf_capacity - 1) / leaf_capacity);
         LeafNode* prev_leaf = nullptr;
@@ -946,7 +946,7 @@ struct Rope {
         }
 
         // Create inner nodes from leafs
-        std::vector<Page> inners;
+        std::vector<PagePtr> inners;
         InnerNode* prev_inner = nullptr;
         for (size_t begin = 0; begin < leafs.size();) {
             inners.emplace_back(page_size);
