@@ -8,7 +8,8 @@ static std::span<const std::byte> asBytes(std::string_view str) {
 }
 
 TEST(RopeLeafNode, ByteOps) {
-    rope::LeafNode<128> node;
+    rope::Page page{128};
+    auto& node = *new (page.Get()) rope::LeafNode(128);
     EXPECT_TRUE(node.IsEmpty());
 
     node.PushBytes(asBytes(""));
@@ -28,24 +29,30 @@ TEST(RopeLeafNode, ByteOps) {
     EXPECT_EQ(node.GetStringView(), "test");
     node.PushBytes(asBytes("nananana"));
     EXPECT_EQ(node.GetStringView(), "testnananana");
-    rope::LeafNode<128> right;
+
+    rope::Page right_page{128};
+    auto& right = *new (right_page.Get()) rope::LeafNode(128);
     node.SplitBytesOff(4, right);
     EXPECT_EQ(node.GetStringView(), "test");
     EXPECT_EQ(right.GetStringView(), "nananana");
 }
 
 TEST(RopeLeafNode, PushBytesAndSplit) {
-    rope::LeafNode<128> node;
-    node.PushBytes(asBytes("0123456789"));
-    rope::LeafNode<128> right;
-    node.PushBytesAndSplit(asBytes("abc"), right);
-    EXPECT_EQ(node.GetStringView(), "012345");
+    rope::Page left_page{128};
+    rope::Page right_page{128};
+    auto& left = *new (left_page.Get()) rope::LeafNode(128);
+    auto& right = *new (right_page.Get()) rope::LeafNode(128);
+    left.PushBytes(asBytes("0123456789"));
+    left.PushBytesAndSplit(asBytes("abc"), right);
+    EXPECT_EQ(left.GetStringView(), "012345");
     EXPECT_EQ(right.GetStringView(), "6789abc");
 }
 
 TEST(RopeLeafNode, BalanceBytesWith) {
-    rope::LeafNode<128> left;
-    rope::LeafNode<128> right;
+    rope::Page left_page{128};
+    rope::Page right_page{128};
+    auto& left = *new (left_page.Get()) rope::LeafNode(128);
+    auto& right = *new (right_page.Get()) rope::LeafNode(128);
     left.PushBytes(asBytes("01"));
     right.PushBytes(asBytes("23456789"));
     left.BalanceBytes(right);
@@ -62,7 +69,7 @@ TEST(RopeLeafNode, BalanceBytesWith) {
 }
 
 TEST(Rope, InsertBoundedEnd) {
-    rope::Rope<128> rope;
+    rope::Rope rope{128};
     std::string expected;
     size_t pos = 0;
     for (size_t i = 0; i < 1000; ++i) {
@@ -78,7 +85,7 @@ TEST(Rope, InsertBoundedEnd) {
 }
 
 TEST(Rope, InsertBounded0) {
-    rope::Rope<128> rope;
+    rope::Rope rope{128};
     std::string expected;
     for (size_t i = 0; i < 1000; ++i) {
         auto s = std::to_string(i) + ",";
@@ -92,7 +99,7 @@ TEST(Rope, InsertBounded0) {
 }
 
 TEST(Rope, InsertBounded1IDiv2) {
-    rope::Rope<128> rope;
+    rope::Rope rope{128};
     std::string expected;
     for (size_t i = 0; i < 1000; ++i) {
         auto s = std::to_string(i);
@@ -109,7 +116,7 @@ TEST(Rope, InsertBounded1IDiv2) {
 }
 
 TEST(Rope, InsertBounded1IDiv3) {
-    rope::Rope<128> rope;
+    rope::Rope rope{128};
     std::string expected;
     for (size_t i = 0; i < 1000; ++i) {
         auto s = std::to_string(i);
@@ -126,7 +133,7 @@ TEST(Rope, InsertBounded1IDiv3) {
 }
 
 TEST(Rope, InsertBounded2IDiv3) {
-    rope::Rope<128> rope;
+    rope::Rope rope{128};
     std::string expected;
     for (size_t i = 0; i < 1000; ++i) {
         auto s = std::to_string(i);
@@ -146,10 +153,10 @@ TEST(Rope, FromText) {
     std::string expected;
     for (size_t i = 0; i < 1000; ++i) {
         expected += std::to_string(i);
-        auto rope = rope::Rope<128>::FromString(expected);
+        auto rope = rope::Rope::FromString(128, expected);
         ASSERT_EQ(rope.ToString(), expected);
     }
-    auto rope = rope::Rope<128>::FromString(expected);
+    auto rope = rope::Rope::FromString(128, expected);
     for (size_t i = 0; i < 1000; ++i) {
         auto v = std::to_string(i);
         expected.insert(i, std::to_string(i));
@@ -163,7 +170,7 @@ TEST(Rope, SplitOff0) {
     for (size_t i = 0; i < 1000; ++i) {
         expected += std::to_string(i);
         auto split = 0;
-        auto left = rope::Rope<128>::FromString(expected);
+        auto left = rope::Rope::FromString(128, expected);
         auto right = left.SplitOff(split);
         ASSERT_EQ(left.ToString(), expected.substr(0, split));
         ASSERT_EQ(right.ToString(), expected.substr(split));
@@ -175,7 +182,7 @@ TEST(Rope, SplitOff1) {
     for (size_t i = 0; i < 1000; ++i) {
         expected += std::to_string(i);
         auto split = 1;
-        auto left = rope::Rope<128>::FromString(expected);
+        auto left = rope::Rope::FromString(128, expected);
         auto right = left.SplitOff(split);
         ASSERT_EQ(left.ToString(), expected.substr(0, split));
         ASSERT_EQ(right.ToString(), expected.substr(split));
@@ -187,7 +194,7 @@ TEST(Rope, SplitOffNDiv2) {
     for (size_t i = 0; i < 1000; ++i) {
         expected += std::to_string(i);
         auto split = expected.size() / 2;
-        auto left = rope::Rope<128>::FromString(expected);
+        auto left = rope::Rope::FromString(128, expected);
         auto right = left.SplitOff(split);
         ASSERT_EQ(left.ToString(), expected.substr(0, split));
         ASSERT_EQ(right.ToString(), expected.substr(split));
@@ -199,7 +206,7 @@ TEST(Rope, SplitOffNMinus1) {
     for (size_t i = 0; i < 1000; ++i) {
         expected += std::to_string(i);
         auto split = expected.size() - 1;
-        auto left = rope::Rope<128>::FromString(expected);
+        auto left = rope::Rope::FromString(128, expected);
         auto right = left.SplitOff(split);
         ASSERT_EQ(left.ToString(), expected.substr(0, split));
         ASSERT_EQ(right.ToString(), expected.substr(split));
@@ -211,7 +218,7 @@ TEST(Rope, SplitOffN) {
     for (size_t i = 0; i < 1000; ++i) {
         expected += std::to_string(i);
         auto split = expected.size();
-        auto left = rope::Rope<128>::FromString(expected);
+        auto left = rope::Rope::FromString(128, expected);
         auto right = left.SplitOff(split);
         ASSERT_EQ(left.ToString(), expected.substr(0, split));
         ASSERT_EQ(right.ToString(), expected.substr(split));
