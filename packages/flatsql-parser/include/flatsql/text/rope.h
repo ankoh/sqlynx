@@ -19,31 +19,6 @@ struct Rope;
 struct LeafNode;
 struct InnerNode;
 
-struct Page {
-   protected:
-    /// The page size
-    size_t page_size;
-    /// The page
-    std::unique_ptr<std::byte[]> page;
-
-   public:
-    /// Constructor
-    Page(size_t page_size) : page_size(page_size), page(std::unique_ptr<std::byte[]>(new std::byte[page_size])) {}
-    /// Move constructor
-    Page(Page&& other) = default;
-    /// Move assignment
-    Page& operator=(Page&& other) = default;
-
-    /// Get the page size
-    size_t GetPageSize() { return page_size; }
-    /// Get raw page pointer
-    std::byte* Get() { return page.get(); }
-    /// Cast leaf pointer
-    template <typename T> T* Cast() { return reinterpret_cast<T*>(page.get()); }
-    /// Release leaf pointer
-    template <typename T = void> T* Release() { return reinterpret_cast<T*>(page.release()); }
-};
-
 struct TextInfo {
     /// The text bytes
     size_t text_bytes = 0;
@@ -68,6 +43,25 @@ struct TextInfo {
     TextInfo& operator-=(const TextInfo& other);
 };
 
+struct NodePage {
+   protected:
+    /// The page size
+    size_t page_size;
+    /// The page
+    std::unique_ptr<std::byte[]> page;
+
+   public:
+    /// Constructor
+    NodePage(size_t page_size) : page_size(page_size), page(std::unique_ptr<std::byte[]>(new std::byte[page_size])) {}
+
+    /// Get the page size
+    size_t GetPageSize() { return page_size; }
+    /// Cast leaf pointer
+    template <typename T = void> T* Get() { return reinterpret_cast<T*>(page.get()); }
+    /// Release leaf pointer
+    template <typename T = void> T* Release() { return reinterpret_cast<T*>(page.release()); }
+};
+
 struct NodePtr {
    protected:
     /// The raw pointer
@@ -75,28 +69,29 @@ struct NodePtr {
 
    public:
     /// Default constructor
-    NodePtr();
+    NodePtr() : raw_ptr(0) {}
     /// Create node ptr from leaf node
-    NodePtr(LeafNode* ptr);
+    NodePtr(LeafNode* ptr) : raw_ptr(reinterpret_cast<uintptr_t>(ptr)) {
+        assert((reinterpret_cast<uintptr_t>(ptr) & 0b1) == 0);
+    }
     /// Create node ptr from inner node
-    NodePtr(InnerNode* ptr);
+    NodePtr(InnerNode* ptr) : raw_ptr(reinterpret_cast<uintptr_t>(ptr) | 0b1) {
+        assert((reinterpret_cast<uintptr_t>(ptr) & 0b1) == 0);
+    }
 
     /// Get the tag
-    uint8_t GetTag();
+    inline uint8_t GetTag() { return raw_ptr & 0b1; };
     /// Is null?
-    bool IsNull();
-    /// Is a leaf node?
-    bool IsLeafNode();
-    /// Is an inner node?
-    bool IsInnerNode();
-    /// Get as leaf node
-    LeafNode* AsLeafNode();
-    /// Get as inner node
-    InnerNode* AsInnerNode();
+    inline bool IsNull() { return raw_ptr == 0; };
+    /// Node type check
+    template <typename T> bool Is() { return GetTag() == T::NodePtrTag; }
+    /// Cast a node
+    template <typename T> T* Get() { return reinterpret_cast<T*>((raw_ptr >> 1) << 1); }
 };
 
 struct LeafNode {
     friend struct Rope;
+    static constexpr size_t NodePtrTag = 0;
 
    protected:
     /// The previous leaf (if any)
@@ -109,9 +104,9 @@ struct LeafNode {
     uint32_t buffer_size = 0;
 
     /// Get the data
-    auto GetDataBuffer() noexcept {
+    inline std::span<std::byte> GetDataBuffer() noexcept {
         auto buffer = reinterpret_cast<std::byte*>(this + 1);
-        return std::span<std::byte>{buffer, buffer_capacity};
+        return {buffer, buffer_capacity};
     }
 
    public:
@@ -119,19 +114,19 @@ struct LeafNode {
     LeafNode(uint32_t page_size);
 
     /// Get the capacity of the buffer
-    auto GetCapacity() noexcept { return buffer_capacity; }
+    inline auto GetCapacity() noexcept { return buffer_capacity; }
     /// Get the size of the buffer
-    auto GetSize() noexcept { return buffer_size; }
+    inline auto GetSize() noexcept { return buffer_size; }
     /// Get the data
-    auto GetData() noexcept { return GetDataBuffer().subspan(0, buffer_size); }
+    inline auto GetData() noexcept { return GetDataBuffer().subspan(0, buffer_size); }
     /// Get buffer content as string
-    auto GetStringView() noexcept { return std::string_view{reinterpret_cast<char*>(GetData().data()), GetSize()}; }
+    inline auto GetStringView() noexcept { return std::string_view{reinterpret_cast<char*>(GetData().data()), GetSize()}; }
     /// Is valid?
-    auto IsValid() noexcept { return utf8::isCodepointBoundary(GetData(), 0); }
+    inline auto IsValid() noexcept { return utf8::isCodepointBoundary(GetData(), 0); }
     /// Is the node empty?
-    auto IsEmpty() noexcept { return GetSize() == 0; }
+    inline auto IsEmpty() noexcept { return GetSize() == 0; }
     /// Reset the node
-    auto Reset() noexcept { buffer_size = 0; }
+    inline auto Reset() noexcept { buffer_size = 0; }
 
     /// Link a neighbor
     void LinkNeighbors(LeafNode& other);
@@ -161,11 +156,12 @@ struct LeafNode {
     void BalanceBytes(LeafNode& right);
 
     /// Create a leaf node from a string
-    static LeafNode* FromString(Page& page, std::string_view& text);
+    static LeafNode* FromString(NodePage& page, std::string_view& text);
 };
 
 struct InnerNode {
     friend struct Rope;
+    static constexpr size_t NodePtrTag = 1;
 
    protected:
     /// The previous leaf (if any)
@@ -178,15 +174,15 @@ struct InnerNode {
     uint32_t child_count = 0;
 
     /// Get the child stats buffer
-    auto GetChildStatsBuffer() noexcept {
+    inline std::span<TextInfo> GetChildStatsBuffer() noexcept {
         auto buffer = reinterpret_cast<TextInfo*>(this + 1);
-        return std::span<TextInfo>{buffer, child_capacity};
+        return {buffer, child_capacity};
     }
     /// Get the child nodes buffer
-    auto GetChildNodesBuffer() noexcept {
+    inline std::span<NodePtr> GetChildNodesBuffer() noexcept {
         auto stats_end = GetChildStatsBuffer().data() + child_capacity;
         auto buffer = reinterpret_cast<NodePtr*>(stats_end);
-        return std::span<NodePtr>{buffer, child_capacity};
+        return {buffer, child_capacity};
     }
 
    public:
@@ -194,17 +190,17 @@ struct InnerNode {
     InnerNode(size_t page_size);
 
     /// Get the capacity of the node
-    size_t GetCapacity() noexcept { return child_capacity; }
+    inline size_t GetCapacity() noexcept { return child_capacity; }
     /// Get the size of the node
-    size_t GetSize() noexcept { return child_count; }
+    inline size_t GetSize() noexcept { return child_count; }
     /// Get the statistics
-    auto GetChildStats() noexcept { return GetChildStatsBuffer().subspan(0, GetSize()); }
+    inline auto GetChildStats() noexcept { return GetChildStatsBuffer().subspan(0, GetSize()); }
     /// Get child nodes
-    auto GetChildNodes() noexcept { return GetChildNodesBuffer().subspan(0, GetSize()); }
+    inline auto GetChildNodes() noexcept { return GetChildNodesBuffer().subspan(0, GetSize()); }
     /// Is the node empty?
-    auto IsEmpty() noexcept { return GetSize() == 0; }
+    inline auto IsEmpty() noexcept { return GetSize() == 0; }
     /// Is the node full?
-    auto IsFull() noexcept { return GetSize() >= GetCapacity(); }
+    inline auto IsFull() noexcept { return GetSize() >= GetCapacity(); }
 
     /// Find the child that contains a byte index
     std::pair<size_t, size_t> FindByte(size_t byte_idx);
@@ -244,6 +240,7 @@ struct InnerNode {
 };
 
 struct Rope {
+    protected:
     /// The page size
     const size_t page_size;
     /// The root page
@@ -253,6 +250,7 @@ struct Rope {
     /// The first leaf
     LeafNode* first_leaf;
 
+    public:
     /// Constructor
     Rope(size_t page_size, NodePtr root_node, TextInfo root_info, LeafNode* first_leaf);
     /// Constructor
@@ -267,7 +265,7 @@ struct Rope {
     Rope& operator=(Rope& other) = delete;
 
     /// Get the root text info
-    auto& GetInfo() { return root_info; }
+    inline auto& GetInfo() { return root_info; }
     /// Copy the rope to a std::string
     std::string ToString();
 

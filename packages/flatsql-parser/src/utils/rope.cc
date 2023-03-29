@@ -36,29 +36,6 @@ TextInfo& TextInfo::operator-=(const TextInfo& other) {
     return *this;
 }
 
-/// Default constructor
-NodePtr::NodePtr() : raw_ptr(0) {}
-/// Create node ptr from leaf node
-NodePtr::NodePtr(LeafNode* ptr) : raw_ptr(reinterpret_cast<uintptr_t>(ptr)) {
-    assert((reinterpret_cast<uintptr_t>(ptr) & 0b1) == 0);
-}
-/// Create node ptr from inner node
-NodePtr::NodePtr(InnerNode* ptr) : raw_ptr(reinterpret_cast<uintptr_t>(ptr) | 0b1) {
-    assert((reinterpret_cast<uintptr_t>(ptr) & 0b1) == 0);
-}
-/// Get the tag
-uint8_t NodePtr::GetTag() { return raw_ptr & 0b1; }
-/// Is null?
-bool NodePtr::IsNull() { return raw_ptr == 0; }
-/// Is a leaf node?
-bool NodePtr::IsLeafNode() { return GetTag() == 0; }
-/// Is an inner node?
-bool NodePtr::IsInnerNode() { return GetTag() == 1; }
-/// Get as leaf node
-LeafNode* NodePtr::AsLeafNode() { return reinterpret_cast<LeafNode*>((raw_ptr >> 1) << 1); }
-/// Get as inner node
-InnerNode* NodePtr::AsInnerNode() { return reinterpret_cast<InnerNode*>((raw_ptr >> 1) << 1); }
-
 static constexpr size_t LeafCapacity(size_t page_size) { return page_size - 2 * sizeof(void*) - 2 * sizeof(uint32_t); }
 /// Constructor
 LeafNode::LeafNode(uint32_t page_size) : buffer_capacity(LeafCapacity(page_size)) {}
@@ -226,7 +203,7 @@ void LeafNode::BalanceBytes(LeafNode& right) {
 }
 
 /// Create a leaf node from a string
-LeafNode* LeafNode::FromString(Page& page, std::string_view& text) {
+LeafNode* LeafNode::FromString(NodePage& page, std::string_view& text) {
     auto leaf = new (page.Get()) LeafNode(page.GetPageSize());
     std::span<const std::byte> bytes{reinterpret_cast<const std::byte*>(text.data()), text.size()};
     if (text.size() <= leaf->GetCapacity()) {
@@ -402,10 +379,10 @@ void InnerNode::Balance(InnerNode& right) {
 //        TextInfo child_stats_2 = child_stats[idx2];
 //
 //        bool remove_right = false;
-//        if (child_node_1.IsLeafNode()) {
-//            assert(child_node_2.IsLeafNode());
-//            LeafNode* child_1 = child_node_1.AsLeafNode();
-//            LeafNode* child_2 = child_node_2.AsLeafNode();
+//        if (child_node_1.Is<LeafNode>()) {
+//            assert(child_node_2.Is<LeafNode>());
+//            LeafNode* child_1 = child_node_1.Get<LeafNode>();
+//            LeafNode* child_2 = child_node_2.Get<LeafNode>();
 //
 //            // Text fits into a single node?
 //            auto combined = child_1->GetSize() + child_2->GetSize();
@@ -419,10 +396,10 @@ void InnerNode::Balance(InnerNode& right) {
 //                assert(child_2->IsValid());
 //            }
 //        } else {
-//            assert(child_node_1.IsInnerNode());
-//            assert(child_node_2.IsInnerNode());
-//            InnerNode* child_1 = child_node_1.AsInnerNode();
-//            InnerNode* child_2 = child_node_2.AsInnerNode();
+//            assert(child_node_1.Is<InnerNode>());
+//            assert(child_node_2.Is<InnerNode>());
+//            InnerNode* child_1 = child_node_1.Get<InnerNode>();
+//            InnerNode* child_2 = child_node_2.Get<InnerNode>();
 //
 //            // Children fit into a single node?
 //            auto combined = child_1->GetSize() + child_2->GetSize();
@@ -515,7 +492,7 @@ Rope::Rope(size_t page_size, NodePtr root_node, TextInfo root_info, LeafNode* fi
     : page_size(page_size), root_node(root_node), root_info(root_info), first_leaf(first_leaf) {}
 /// Constructor
 Rope::Rope(size_t page_size) : page_size(page_size) {
-    Page first_page{page_size};
+    NodePage first_page{page_size};
     first_leaf = new (first_page.Get()) LeafNode(page_size);
     root_node = {first_leaf};
     root_info = {};
@@ -525,8 +502,8 @@ Rope::Rope(size_t page_size) : page_size(page_size) {
 Rope::~Rope() {
     NodePtr level = root_node;
     while (true) {
-        if (level.IsLeafNode()) {
-            LeafNode* iter = level.AsLeafNode();
+        if (level.Is<LeafNode>()) {
+            LeafNode* iter = level.Get<LeafNode>();
             while (iter) {
                 auto next = iter->next_node;
                 delete[] reinterpret_cast<std::byte*>(iter);
@@ -534,7 +511,7 @@ Rope::~Rope() {
             }
             break;
         }
-        InnerNode* iter = level.AsInnerNode();
+        InnerNode* iter = level.Get<InnerNode>();
         assert(iter->GetSize() > 0);
         level = {iter->GetChildNodes()[0]};
         while (iter) {
@@ -576,9 +553,9 @@ Rope Rope::SplitOff(size_t char_idx) {
     SmallVector<VisitedInnerNode, 8> inner_path;
     auto next_node = root_node;
     auto next_stats = &root_info;
-    while (!next_node.IsLeafNode()) {
+    while (!next_node.Is<LeafNode>()) {
         // Find child with codepoint
-        InnerNode* next_as_inner = next_node.AsInnerNode();
+        InnerNode* next_as_inner = next_node.Get<InnerNode>();
         auto [child_idx, child_prefix_chars] = next_as_inner->FindCodepoint(char_idx);
         inner_path.push_back(VisitedInnerNode{.node_info = next_stats, .node = next_as_inner, .child_idx = child_idx});
 
@@ -590,10 +567,10 @@ Rope Rope::SplitOff(size_t char_idx) {
     }
 
     // Edit when reached leaf
-    LeafNode* leaf_node = next_node.AsLeafNode();
+    LeafNode* leaf_node = next_node.Get<LeafNode>();
 
     // Create leaf node
-    Page new_leaf_page{page_size};
+    NodePage new_leaf_page{page_size};
     auto new_leaf = new (new_leaf_page.Get()) LeafNode(page_size);
     leaf_node->SplitCharsOff(char_idx, *new_leaf);
     leaf_node->next_node = nullptr;
@@ -602,7 +579,7 @@ Rope Rope::SplitOff(size_t char_idx) {
     NodePtr child_node{new_leaf};
 
     // Create new inner nodes
-    std::vector<Page> new_inners;
+    std::vector<NodePage> new_inners;
     new_inners.reserve(inner_path.getSize());
     for (auto iter = inner_path.rbegin(); iter != inner_path.rend(); ++iter) {
         new_inners.emplace_back(page_size);
@@ -647,9 +624,9 @@ void Rope::InsertBounded(size_t char_idx, std::span<const std::byte> text_bytes)
     SmallVector<VisitedInnerNode, 8> inner_path;
     auto next_node = root_node;
     auto next_stats = &root_info;
-    while (!next_node.IsLeafNode()) {
+    while (!next_node.Is<LeafNode>()) {
         // Find child with codepoint
-        InnerNode* next_as_inner = next_node.AsInnerNode();
+        InnerNode* next_as_inner = next_node.Get<InnerNode>();
         auto [child_idx, child_prefix_chars] = next_as_inner->FindCodepoint(char_idx);
         inner_path.push_back(VisitedInnerNode{.node_info = next_stats, .node = next_as_inner, .child_idx = child_idx});
 
@@ -661,7 +638,7 @@ void Rope::InsertBounded(size_t char_idx, std::span<const std::byte> text_bytes)
     }
 
     // Edit when reached leaf
-    LeafNode* leaf_node = next_node.AsLeafNode();
+    LeafNode* leaf_node = next_node.Get<LeafNode>();
     auto leaf_info = next_stats;
     auto insert_at = utf8::codepointToByteIdx(leaf_node->GetData(), char_idx);
     assert(char_idx <= leaf_info->utf8_codepoints);
@@ -680,7 +657,7 @@ void Rope::InsertBounded(size_t char_idx, std::span<const std::byte> text_bytes)
     }
 
     // Text does not fit on leaf, split the leaf
-    Page new_leaf_page{page_size};
+    NodePage new_leaf_page{page_size};
     auto new_leaf = new (new_leaf_page.Get()) LeafNode(page_size);
     leaf_node->InsertBytesAndSplit(insert_at, text_bytes, *new_leaf);
 
@@ -706,7 +683,7 @@ void Rope::InsertBounded(size_t char_idx, std::span<const std::byte> text_bytes)
         }
 
         // Otherwise it's a split of the inner node!
-        Page new_inner_page{page_size};
+        NodePage new_inner_page{page_size};
         auto new_inner = new (new_inner_page.Get()) InnerNode(page_size);
         prev_visit.node->InsertAndSplit(prev_visit.child_idx + 1, split_node, split_info, *new_inner);
         split_info = new_inner->AggregateTextInfo();
@@ -716,7 +693,7 @@ void Rope::InsertBounded(size_t char_idx, std::span<const std::byte> text_bytes)
 
     // Is not null, then we have to split the root!
     if (!split_node.IsNull()) {
-        Page new_root_page{page_size};
+        NodePage new_root_page{page_size};
         auto new_root = new (new_root_page.Get()) InnerNode(page_size);
         new_root->Push(root_node, root_info);
         new_root->Push(split_node, split_info);
@@ -751,7 +728,7 @@ void Rope::Insert(size_t char_idx, std::string_view text) {
 /// Create a rope from a string
 Rope Rope::FromString(size_t page_size, std::string_view text) {
     // Create leaf nodes
-    std::vector<Page> leafs;
+    std::vector<NodePage> leafs;
     auto leaf_capacity = LeafCapacity(page_size);
     leafs.reserve((text.size() + leaf_capacity - 1) / leaf_capacity);
     LeafNode* prev_leaf = nullptr;
@@ -769,7 +746,7 @@ Rope Rope::FromString(size_t page_size, std::string_view text) {
 
     // Is a leaf single leaf?
     if (leafs.size() == 1) {
-        auto leaf_node = leafs.back().Cast<LeafNode>();
+        auto leaf_node = leafs.back().Get<LeafNode>();
         auto root_info = TextInfo{leaf_node->GetData()};
         Rope rope{page_size, NodePtr{leaf_node}, root_info, leaf_node};
         leafs.back().Release();
@@ -777,7 +754,7 @@ Rope Rope::FromString(size_t page_size, std::string_view text) {
     }
 
     // Create inner nodes from leafs
-    std::vector<Page> inners;
+    std::vector<NodePage> inners;
     InnerNode* prev_inner = nullptr;
     for (size_t begin = 0; begin < leafs.size();) {
         inners.emplace_back(page_size);
@@ -786,7 +763,7 @@ Rope Rope::FromString(size_t page_size, std::string_view text) {
         // Store child nodes
         auto n = std::min(leafs.size() - begin, InnerCapacity(page_size));
         for (auto i = 0; i < n; ++i) {
-            auto leaf = leafs[begin + i].Cast<LeafNode>();
+            auto leaf = leafs[begin + i].Get<LeafNode>();
             next->GetChildNodesBuffer()[i] = NodePtr{leaf};
             next->GetChildStatsBuffer()[i] = TextInfo{leaf->GetData()};
         }
@@ -815,7 +792,7 @@ Rope Rope::FromString(size_t page_size, std::string_view text) {
             // Store children
             auto n = std::min(level_end - begin, InnerCapacity(page_size));
             for (auto i = 0; i < n; ++i) {
-                auto inner = inners[begin + i].Cast<InnerNode>();
+                auto inner = inners[begin + i].Get<InnerNode>();
                 next->GetChildNodesBuffer()[i] = NodePtr{inner};
                 next->GetChildStatsBuffer()[i] = inner->AggregateTextInfo();
             }
@@ -837,9 +814,9 @@ Rope Rope::FromString(size_t page_size, std::string_view text) {
     assert((level_end - level_begin) == 1);
 
     // Store root
-    auto root_inner_node = inners[level_begin].Cast<InnerNode>();
+    auto root_inner_node = inners[level_begin].Get<InnerNode>();
     auto root_info = root_inner_node->AggregateTextInfo();
-    auto first_leaf = leafs.front().Cast<LeafNode>();
+    auto first_leaf = leafs.front().Get<LeafNode>();
     Rope rope{page_size, NodePtr{root_inner_node}, root_info, first_leaf};
 
     for (auto& leaf : leafs) {
