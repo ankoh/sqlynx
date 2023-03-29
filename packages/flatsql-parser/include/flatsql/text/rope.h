@@ -28,7 +28,7 @@ struct Page {
 
    public:
     /// Constructor
-    Page(size_t page_size) : page_size(page_size), page(std::make_unique_for_overwrite<std::byte[]>(page_size)) {}
+    Page(size_t page_size) : page_size(page_size), page(std::unique_ptr<std::byte[]>(new std::byte[page_size])) {}
     /// Move constructor
     Page(Page&& other) = default;
     /// Move assignment
