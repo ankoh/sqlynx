@@ -770,9 +770,8 @@ Rope Rope::FromString(size_t page_size, std::string_view text) {
     // Is a leaf single leaf?
     if (leafs.size() == 1) {
         auto leaf_node = leafs.back().Cast<LeafNode>();
-        auto root_node = NodePtr{leaf_node};
         auto root_info = TextInfo{leaf_node->GetData()};
-        Rope rope{page_size, root_node, root_info, leaf_node};
+        Rope rope{page_size, NodePtr{leaf_node}, root_info, leaf_node};
         leafs.back().Release();
         return rope;
     }
@@ -839,10 +838,9 @@ Rope Rope::FromString(size_t page_size, std::string_view text) {
 
     // Store root
     auto root_inner_node = inners[level_begin].Cast<InnerNode>();
-    auto root_node = NodePtr{root_inner_node};
     auto root_info = root_inner_node->AggregateTextInfo();
     auto first_leaf = leafs.front().Cast<LeafNode>();
-    Rope rope{page_size, root_node, root_info, first_leaf};
+    Rope rope{page_size, NodePtr{root_inner_node}, root_info, first_leaf};
 
     for (auto& leaf : leafs) {
         leaf.Release();
