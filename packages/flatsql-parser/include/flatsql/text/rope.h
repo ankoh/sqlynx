@@ -55,7 +55,7 @@ struct NodePage {
     NodePage(size_t page_size) : page_size(page_size), page(std::unique_ptr<std::byte[]>(new std::byte[page_size])) {}
 
     /// Get the page size
-    size_t GetPageSize() { return page_size; }
+    inline size_t GetPageSize() { return page_size; }
     /// Cast leaf pointer
     template <typename T = void> T* Get() { return reinterpret_cast<T*>(page.get()); }
     /// Release leaf pointer
