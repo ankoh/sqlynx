@@ -8,7 +8,7 @@ static std::span<const std::byte> asBytes(std::string_view str) {
 }
 
 TEST(RopeLeafNode, ByteOps) {
-    rope::PagePtr page{128};
+    rope::Page page{128};
     auto& node = *new (page.Get()) rope::LeafNode(128);
     EXPECT_TRUE(node.IsEmpty());
 
@@ -30,7 +30,7 @@ TEST(RopeLeafNode, ByteOps) {
     node.PushBytes(asBytes("nananana"));
     EXPECT_EQ(node.GetStringView(), "testnananana");
 
-    rope::PagePtr right_page{128};
+    rope::Page right_page{128};
     auto& right = *new (right_page.Get()) rope::LeafNode(128);
     node.SplitBytesOff(4, right);
     EXPECT_EQ(node.GetStringView(), "test");
@@ -38,8 +38,8 @@ TEST(RopeLeafNode, ByteOps) {
 }
 
 TEST(RopeLeafNode, PushBytesAndSplit) {
-    rope::PagePtr left_page{128};
-    rope::PagePtr right_page{128};
+    rope::Page left_page{128};
+    rope::Page right_page{128};
     auto& left = *new (left_page.Get()) rope::LeafNode(128);
     auto& right = *new (right_page.Get()) rope::LeafNode(128);
     left.PushBytes(asBytes("0123456789"));
@@ -49,8 +49,8 @@ TEST(RopeLeafNode, PushBytesAndSplit) {
 }
 
 TEST(RopeLeafNode, BalanceBytesWith) {
-    rope::PagePtr left_page{128};
-    rope::PagePtr right_page{128};
+    rope::Page left_page{128};
+    rope::Page right_page{128};
     auto& left = *new (left_page.Get()) rope::LeafNode(128);
     auto& right = *new (right_page.Get()) rope::LeafNode(128);
     left.PushBytes(asBytes("01"));

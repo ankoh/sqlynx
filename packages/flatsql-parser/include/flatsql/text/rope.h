@@ -19,7 +19,7 @@ struct Rope;
 struct LeafNode;
 struct InnerNode;
 
-struct PagePtr {
+struct Page {
    protected:
     /// The page size
     size_t page_size;
@@ -28,11 +28,11 @@ struct PagePtr {
 
    public:
     /// Constructor
-    PagePtr(size_t page_size) : page_size(page_size), page(std::make_unique_for_overwrite<std::byte[]>(page_size)) {}
+    Page(size_t page_size) : page_size(page_size), page(std::make_unique_for_overwrite<std::byte[]>(page_size)) {}
     /// Move constructor
-    PagePtr(PagePtr&& other) = default;
+    Page(Page&& other) = default;
     /// Move assignment
-    PagePtr& operator=(PagePtr&& other) = default;
+    Page& operator=(Page&& other) = default;
 
     /// Get the page size
     size_t GetPageSize() { return page_size; }
@@ -161,7 +161,7 @@ struct LeafNode {
     void BalanceBytes(LeafNode& right);
 
     /// Create a leaf node from a string
-    static LeafNode* FromString(PagePtr& page, std::string_view& text);
+    static LeafNode* FromString(Page& page, std::string_view& text);
 };
 
 struct InnerNode {

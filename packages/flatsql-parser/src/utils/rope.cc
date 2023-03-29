@@ -226,7 +226,7 @@ void LeafNode::BalanceBytes(LeafNode& right) {
 }
 
 /// Create a leaf node from a string
-LeafNode* LeafNode::FromString(PagePtr& page, std::string_view& text) {
+LeafNode* LeafNode::FromString(Page& page, std::string_view& text) {
     auto leaf = new (page.Get()) LeafNode(page.GetPageSize());
     std::span<const std::byte> bytes{reinterpret_cast<const std::byte*>(text.data()), text.size()};
     if (text.size() <= leaf->GetCapacity()) {
@@ -515,7 +515,7 @@ Rope::Rope(size_t page_size, NodePtr root_node, TextInfo root_info, LeafNode* fi
     : page_size(page_size), root_node(root_node), root_info(root_info), first_leaf(first_leaf) {}
 /// Constructor
 Rope::Rope(size_t page_size) : page_size(page_size) {
-    PagePtr first_page{page_size};
+    Page first_page{page_size};
     first_leaf = new (first_page.Get()) LeafNode(page_size);
     root_node = {first_leaf};
     root_info = {};
@@ -593,7 +593,7 @@ Rope Rope::SplitOff(size_t char_idx) {
     LeafNode* leaf_node = next_node.AsLeafNode();
 
     // Create leaf node
-    PagePtr new_leaf_page{page_size};
+    Page new_leaf_page{page_size};
     auto new_leaf = new (new_leaf_page.Get()) LeafNode(page_size);
     leaf_node->SplitCharsOff(char_idx, *new_leaf);
     leaf_node->next_node = nullptr;
@@ -602,7 +602,7 @@ Rope Rope::SplitOff(size_t char_idx) {
     NodePtr child_node{new_leaf};
 
     // Create new inner nodes
-    std::vector<PagePtr> new_inners;
+    std::vector<Page> new_inners;
     new_inners.reserve(inner_path.getSize());
     for (auto iter = inner_path.rbegin(); iter != inner_path.rend(); ++iter) {
         new_inners.emplace_back(page_size);
@@ -680,7 +680,7 @@ void Rope::InsertBounded(size_t char_idx, std::span<const std::byte> text_bytes)
     }
 
     // Text does not fit on leaf, split the leaf
-    PagePtr new_leaf_page{page_size};
+    Page new_leaf_page{page_size};
     auto new_leaf = new (new_leaf_page.Get()) LeafNode(page_size);
     leaf_node->InsertBytesAndSplit(insert_at, text_bytes, *new_leaf);
 
@@ -706,7 +706,7 @@ void Rope::InsertBounded(size_t char_idx, std::span<const std::byte> text_bytes)
         }
 
         // Otherwise it's a split of the inner node!
-        PagePtr new_inner_page{page_size};
+        Page new_inner_page{page_size};
         auto new_inner = new (new_inner_page.Get()) InnerNode(page_size);
         prev_visit.node->InsertAndSplit(prev_visit.child_idx + 1, split_node, split_info, *new_inner);
         split_info = new_inner->AggregateTextInfo();
@@ -716,7 +716,7 @@ void Rope::InsertBounded(size_t char_idx, std::span<const std::byte> text_bytes)
 
     // Is not null, then we have to split the root!
     if (!split_node.IsNull()) {
-        PagePtr new_root_page{page_size};
+        Page new_root_page{page_size};
         auto new_root = new (new_root_page.Get()) InnerNode(page_size);
         new_root->Push(root_node, root_info);
         new_root->Push(split_node, split_info);
@@ -751,7 +751,7 @@ void Rope::Insert(size_t char_idx, std::string_view text) {
 /// Create a rope from a string
 Rope Rope::FromString(size_t page_size, std::string_view text) {
     // Create leaf nodes
-    std::vector<PagePtr> leafs;
+    std::vector<Page> leafs;
     auto leaf_capacity = LeafCapacity(page_size);
     leafs.reserve((text.size() + leaf_capacity - 1) / leaf_capacity);
     LeafNode* prev_leaf = nullptr;
@@ -778,7 +778,7 @@ Rope Rope::FromString(size_t page_size, std::string_view text) {
     }
 
     // Create inner nodes from leafs
-    std::vector<PagePtr> inners;
+    std::vector<Page> inners;
     InnerNode* prev_inner = nullptr;
     for (size_t begin = 0; begin < leafs.size();) {
         inners.emplace_back(page_size);
