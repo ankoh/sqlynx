@@ -212,7 +212,7 @@ struct InnerNode {
     /// Link a neighbor
     void LinkNeighbors(InnerNode& other);
     /// Combine the text statistics
-    auto AggregateTextInfo() noexcept;
+    TextInfo AggregateTextInfo() noexcept;
     /// Pushes an item into the array
     void Push(NodePtr child, TextInfo stats);
     /// Pushes items into the array
@@ -266,8 +266,6 @@ struct Rope {
 
     /// Get the root text info
     inline auto& GetInfo() { return root_info; }
-    /// Copy the rope to a std::string
-    std::string ToString();
 
     /// Split off a rope
     Rope SplitOff(size_t char_idx);
@@ -280,6 +278,8 @@ struct Rope {
     /// Insert at index
     void Insert(size_t char_idx, std::string_view text);
 
+    /// Copy the rope to a std::string
+    std::string ToString();
     /// Create a rope from a string
     static Rope FromString(size_t page_size, std::string_view text);
 };

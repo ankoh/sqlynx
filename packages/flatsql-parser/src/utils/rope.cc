@@ -239,7 +239,7 @@ void InnerNode::LinkNeighbors(InnerNode& other) {
     other.previous_node = this;
 }
 /// Combine the text statistics
-auto InnerNode::AggregateTextInfo() noexcept {
+TextInfo InnerNode::AggregateTextInfo() noexcept {
     TextInfo acc;
     for (auto stats : GetChildStats()) {
         acc += stats;
