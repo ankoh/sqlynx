@@ -793,7 +793,7 @@ void Rope::Append(Rope right_rope) {
             split_info += orphan_info;
         } else {
             // If the left rope is our orphan, we split off the left side of the right node to preserve the right node pointer 
-            node->SplitOffLeft(node->GetSize() / 2, *split);
+            node->SplitOffLeft((node->GetSize() + 1) / 2, *split);
             split_info = split->AggregateTextInfo();
             (*iter->node_info) -= split_info;
             split->Insert(0, orphan_node, orphan_info);
