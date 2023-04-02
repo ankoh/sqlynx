@@ -532,8 +532,7 @@ Rope::~Rope() {
             break;
         }
         InnerNode* iter = level.Get<InnerNode>();
-        assert(iter->GetSize() > 0);
-        level = {iter->GetChildNodes()[0]};
+        level = (iter && iter->GetSize() > 0) ? iter->GetChildNodes()[0] : NodePtr{};
         while (iter) {
             auto next = iter->next_node;
             delete[] reinterpret_cast<std::byte*>(iter);
@@ -634,9 +633,8 @@ void Rope::Append(Rope right_rope) {
     //
     // A) We first collect all nodes along the "seam" between the ropes.
     //    That means we collect the right-most nodes of the left side and the left-most nodes of the right side.
-    // B) We then link the shared levels as if they would belong to the same tree.
-    // C) If both ropes have the same height, merge the roots or create a new one
-    // E) Otherwise the root of the "smaller" rope is inserted into the top of the "larger" rope.
+    // B) If both ropes have the same height, merge the roots or create a new one
+    // C) Otherwise the root of the "smaller" rope is inserted into the top of the "larger" rope.
     //    This may lead to splits.
 
     // A.1) Collect the last nodes of the left side
@@ -678,22 +676,9 @@ void Rope::Append(Rope right_rope) {
         assert(!iter_node.IsNull());
     }
 
-    // B.1) Link leaf nodes
-    left_last_leaf->next_node = right_rope.first_leaf;
-    right_rope.first_leaf->previous_node = left_last_leaf->next_node;
-
-    // B.2) Connect seam nodes
+    // B) Handle special case where both ropes have the same height
     auto left_seam_path = left_seam.span();
     auto right_seam_path = right_seam.span();
-    size_t inner_seam_size = std::min<size_t>(left_seam_path.size(), right_seam_path.size());
-    for (size_t i = 0; i < inner_seam_size; ++i) {
-        size_t left_height = left_seam_path.size();
-        size_t right_height = right_seam_path.size();
-        left_seam_path[left_height - i - 1].node->next_node = right_seam_path[right_height - i - 1].node;
-        right_seam_path[right_height - i - 1].node->previous_node = left_seam_path[left_height - i - 1].node;
-    }
-
-    // C) Handle special case where both ropes have the same height
     if (left_seam_path.size() == right_seam_path.size()) {
         assert(left_rope.root_node.Is<LeafNode>() == right_rope.root_node.Is<LeafNode>());
         // Merge the roots if they have enough free space
@@ -701,19 +686,17 @@ void Rope::Append(Rope right_rope) {
             if (left_rope.first_leaf->GetFreeSpace() >= right_rope.first_leaf->GetSize()) {
                 left_rope.root_info += right_rope.root_info;
                 left_rope.first_leaf->PushBytes(right_rope.first_leaf->TruncateBytes());
-                right_rope.root_node = {};
-                right_rope.root_info = {};
+                // Let the rope destructor cleanup the right root
                 return;
             }
         } else {
             auto left_inner = left_rope.root_node.Get<InnerNode>();
-            auto right_inner = left_rope.root_node.Get<InnerNode>();
+            auto right_inner = right_rope.root_node.Get<InnerNode>();
             if (left_inner->GetFreeSpace() >= right_inner->GetSize()) {
                 left_rope.root_info += right_rope.root_info;
                 auto [right_nodes, right_stats] = right_inner->Truncate();
                 left_inner->Push(right_nodes, right_stats);
-                right_rope.root_node = {};
-                right_rope.root_info = {};
+                // Let the rope destructor cleanup the right root
                 return;
             }
         }
@@ -725,6 +708,14 @@ void Rope::Append(Rope right_rope) {
         new_root->Push(right_rope.root_node, right_rope.root_info);
         auto new_root_info = new_root->AggregateTextInfo();
 
+        // Link both ropes
+        left_last_leaf->next_node = right_rope.first_leaf;
+        right_rope.first_leaf->previous_node = left_last_leaf;
+        for (size_t i = 0; i < left_seam_path.size(); ++i) {
+            left_seam_path[i].node->next_node = right_seam_path[i].node;
+            right_seam_path[i].node->previous_node = left_seam_path[i].node;
+        }
+
         // Store new root into left rope
         left_rope.root_node = new_root_page.Release<InnerNode>();
         left_rope.root_info = new_root_info;
@@ -733,7 +724,18 @@ void Rope::Append(Rope right_rope) {
         return;
     }
 
-    // D.1) Collect nodes at the top of the "taller" rope where we have to insert the child of the "smaller" rope.
+    // C.1) Link shared lower levels
+    left_last_leaf->next_node = right_rope.first_leaf;
+    right_rope.first_leaf->previous_node = left_last_leaf;
+    size_t inner_seam_size = std::min<size_t>(left_seam_path.size(), right_seam_path.size());
+    for (size_t i = 0; i < inner_seam_size; ++i) {
+        size_t left_height = left_seam_path.size();
+        size_t right_height = right_seam_path.size();
+        left_seam_path[left_height - i - 1].node->next_node = right_seam_path[right_height - i - 1].node;
+        right_seam_path[right_height - i - 1].node->previous_node = left_seam_path[left_height - i - 1].node;
+    }
+
+    // C.2) Collect nodes at the top of the "taller" rope where we have to insert the child of the "smaller" rope.
     //      The root of the "smaller" rope is in the following called "orphan".
     std::span<VisitedInnerNode> top_path;
     auto right_is_orphan = true;
@@ -759,7 +761,7 @@ void Rope::Append(Rope right_rope) {
     }
     assert(!top_path.empty());
 
-    // D.2) Now insert the orphan root into the larger side and propagate splits
+    // C.3) Now insert the orphan root into the larger side and propagate splits
     for (auto iter = top_path.rbegin(); iter != top_path.rend(); ++iter) {
         // Parent is not full?
         // Then we can just insert the orphan and we're done!
@@ -801,7 +803,7 @@ void Rope::Append(Rope right_rope) {
         orphan_node = split_page.Release<InnerNode>();
     }
 
-    // D.3) Create a new root if the split propagated fully upwards
+    // C.4) Create a new root if the split propagated fully upwards
     if (!orphan_node.IsNull()) {
         NodePage new_root_page{page_size};
         auto new_root = new (new_root_page.Get()) InnerNode(page_size);
