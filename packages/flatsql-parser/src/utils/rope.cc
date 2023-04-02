@@ -570,23 +570,23 @@ Rope Rope::SplitOff(size_t char_idx) {
 
     // Locate leaf node and remember traversed inner nodes
     SmallVector<VisitedInnerNode, 8> inner_path;
-    auto next_node = root_node;
-    auto next_stats = &root_info;
-    while (!next_node.Is<LeafNode>()) {
+    auto iter_node = root_node;
+    auto iter_stats = &root_info;
+    while (!iter_node.Is<LeafNode>()) {
         // Find child with codepoint
-        InnerNode* next_as_inner = next_node.Get<InnerNode>();
+        InnerNode* next_as_inner = iter_node.Get<InnerNode>();
         auto [child_idx, child_prefix_chars] = next_as_inner->FindCodepoint(char_idx);
-        inner_path.push_back(VisitedInnerNode{.node_info = next_stats, .node = next_as_inner, .child_idx = child_idx});
+        inner_path.push_back(VisitedInnerNode{.node_info = iter_stats, .node = next_as_inner, .child_idx = child_idx});
 
         // Continue with child
-        next_node = next_as_inner->GetChildNodes()[child_idx];
-        next_stats = &next_as_inner->GetChildStats()[child_idx];
+        iter_node = next_as_inner->GetChildNodes()[child_idx];
+        iter_stats = &next_as_inner->GetChildStats()[child_idx];
         char_idx -= child_prefix_chars;
-        assert(!next_node.IsNull());
+        assert(!iter_node.IsNull());
     }
 
     // Edit when reached leaf
-    LeafNode* leaf_node = next_node.Get<LeafNode>();
+    LeafNode* leaf_node = iter_node.Get<LeafNode>();
 
     // Create leaf node
     NodePage new_leaf_page{page_size};
@@ -841,24 +841,24 @@ void Rope::InsertBounded(size_t char_idx, std::span<const std::byte> text_bytes)
 
     // Locate leaf node and remember traversed inner nodes
     SmallVector<VisitedInnerNode, 8> inner_path;
-    auto next_node = root_node;
-    auto next_stats = &root_info;
-    while (!next_node.Is<LeafNode>()) {
+    auto iter_node = root_node;
+    auto iter_stats = &root_info;
+    while (!iter_node.Is<LeafNode>()) {
         // Find child with codepoint
-        InnerNode* next_as_inner = next_node.Get<InnerNode>();
+        InnerNode* next_as_inner = iter_node.Get<InnerNode>();
         auto [child_idx, child_prefix_chars] = next_as_inner->FindCodepoint(char_idx);
-        inner_path.push_back(VisitedInnerNode{.node_info = next_stats, .node = next_as_inner, .child_idx = child_idx});
+        inner_path.push_back(VisitedInnerNode{.node_info = iter_stats, .node = next_as_inner, .child_idx = child_idx});
 
         // Continue with child
-        next_node = next_as_inner->GetChildNodes()[child_idx];
-        next_stats = &next_as_inner->GetChildStats()[child_idx];
+        iter_node = next_as_inner->GetChildNodes()[child_idx];
+        iter_stats = &next_as_inner->GetChildStats()[child_idx];
         char_idx -= child_prefix_chars;
-        assert(!next_node.IsNull());
+        assert(!iter_node.IsNull());
     }
 
     // Edit when reached leaf
-    LeafNode* leaf_node = next_node.Get<LeafNode>();
-    auto leaf_info = next_stats;
+    LeafNode* leaf_node = iter_node.Get<LeafNode>();
+    auto leaf_info = iter_stats;
     auto insert_at = utf8::codepointToByteIdx(leaf_node->GetData(), char_idx);
     assert(char_idx <= leaf_info->utf8_codepoints);
 
