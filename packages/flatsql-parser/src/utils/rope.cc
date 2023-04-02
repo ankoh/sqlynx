@@ -304,25 +304,45 @@ std::pair<std::span<const NodePtr>, std::span<const TextInfo>> InnerNode::Trunca
     child_count = idx;
     return {tail_nodes, tail_stats};
 }
-/// Splits node at index
-void InnerNode::SplitOff(size_t child_idx, InnerNode& right) {
+/// Splits node at index and moves elements into a right child
+void InnerNode::SplitOffRight(size_t child_idx, InnerNode& right) {
     assert(right.IsEmpty());
     assert(child_idx <= GetSize());
+    auto left_child_nodes = GetChildNodesBuffer();
+    auto left_child_stats = GetChildStatsBuffer();
+    auto right_child_nodes = right.GetChildNodesBuffer();
+    auto right_child_stats = right.GetChildStatsBuffer();
 
     right.child_count = GetSize() - child_idx;
-    std::memcpy(right.GetChildNodesBuffer().data(), &GetChildNodesBuffer()[child_idx],
-                right.child_count * sizeof(NodePtr));
-    std::memcpy(right.GetChildStatsBuffer().data(), &GetChildStatsBuffer()[child_idx],
-                right.child_count * sizeof(TextInfo));
+    std::memcpy(right_child_nodes.data(), &left_child_nodes[child_idx], right.child_count * sizeof(NodePtr));
+    std::memcpy(right_child_stats.data(), &left_child_stats[child_idx], right.child_count * sizeof(TextInfo));
     child_count = child_idx;
 
     LinkNeighbors(right);
+}
+/// Splits node at index and moves elements into a left child
+void InnerNode::SplitOffLeft(size_t child_idx, InnerNode& left) {
+    assert(left.IsEmpty());
+    assert(child_idx <= GetSize());
+    auto left_child_nodes = left.GetChildNodesBuffer();
+    auto left_child_stats = left.GetChildStatsBuffer();
+    auto right_child_nodes = GetChildNodesBuffer();
+    auto right_child_stats = GetChildStatsBuffer();
+
+    left.child_count = child_idx;
+    std::memcpy(left_child_nodes.data(), right_child_nodes.data(), child_idx * sizeof(NodePtr));
+    std::memcpy(left_child_stats.data(), right_child_stats.data(), child_idx * sizeof(TextInfo));
+    std::memmove(&right_child_nodes[child_idx], &right_child_nodes[0], (child_count - child_idx) * sizeof(NodePtr));
+    std::memmove(&right_child_stats[child_idx], &right_child_stats[0], (child_count - child_idx) * sizeof(NodePtr));
+    child_count -= child_idx;
+
+    left.LinkNeighbors(*this);
 }
 /// Pushes an element onto the end of the array, and then splits it in half
 void InnerNode::PushAndSplit(NodePtr child, TextInfo stats, InnerNode& dst) {
     auto r_count = (GetSize() + 1) / 2;
     auto l_count = (GetSize() + 1) - r_count;
-    SplitOff(l_count, dst);
+    SplitOffRight(l_count, dst);
     dst.Push(child, stats);
 }
 /// Inserts an element into a the array, and then splits it in half
@@ -585,7 +605,7 @@ Rope Rope::SplitOff(size_t char_idx) {
         new_inners.emplace_back(page_size);
         auto* right = new (new_inners.back().Get()) InnerNode(page_size);
         auto* left = iter->node;
-        left->SplitOff(iter->child_idx, *right);
+        left->SplitOffRight(iter->child_idx, *right);
         ++left->child_count;
         left->next_node = nullptr;
         right->previous_node = nullptr;
@@ -604,7 +624,105 @@ Rope Rope::SplitOff(size_t char_idx) {
 }
 
 /// Append a rope to this rope
-void Rope::Append(Rope other) {}
+void Rope::Append(Rope other) {
+    struct VisitedInnerNode {
+        TextInfo* node_info;
+        InnerNode* node;
+    };
+
+    // Collect the left node
+    SmallVector<VisitedInnerNode, 8> left_seam;
+    auto next_node = root_node;
+    auto next_stats = &root_info;
+    while (!next_node.Is<LeafNode>()) {
+        // Get last child
+        InnerNode* next_as_inner = next_node.Get<InnerNode>();
+        left_seam.push_back(VisitedInnerNode{.node_info = next_stats, .node = next_as_inner});
+        assert(!next_as_inner->IsEmpty());
+
+        // Continue with child
+        auto last = next_as_inner->GetSize();
+        next_node = next_as_inner->GetChildNodes()[last];
+        next_stats = &next_as_inner->GetChildStats()[last];
+        assert(!next_node.IsNull());
+    }
+    LeafNode* leaf_node = next_node.Get<LeafNode>();
+
+    // Collect the right node
+    SmallVector<VisitedInnerNode, 8> right_seam;
+    next_node = other.root_node;
+    next_stats = &other.root_info;
+    while (!next_node.Is<LeafNode>()) {
+        // Get first child
+        InnerNode* next_as_inner = next_node.Get<InnerNode>();
+        left_seam.push_back(VisitedInnerNode{.node_info = next_stats, .node = next_as_inner});
+        assert(!next_as_inner->IsEmpty());
+
+        // Continue with child
+        next_node = next_as_inner->GetChildNodes()[0];
+        next_stats = &next_as_inner->GetChildStats()[0];
+        assert(!next_node.IsNull());
+    }
+
+    // Link leaf nodes
+    leaf_node->next_node = other.first_leaf;
+    other.first_leaf->previous_node = leaf_node->next_node;
+
+    // Connect seam
+    auto left_nodes = left_seam.span();
+    auto right_nodes = right_seam.span();
+    size_t seam_size = std::min<size_t>(left_nodes.size(), right_nodes.size());
+    for (size_t i = 0; i < seam_size; ++i) {
+        size_t left_height = left_nodes.size();
+        size_t right_height = left_nodes.size();
+        left_nodes[left_height - i - 1].node->next_node = right_nodes[left_height - i - 1].node;
+        right_nodes[right_height - i - 1].node->previous_node = left_nodes[right_height - i - 1].node;
+    }
+
+    std::span<VisitedInnerNode> top;
+    auto left_root = true;
+    if (left_nodes.size() >= right_nodes.size()) {
+        // Left rope is deeper then right rope?
+        top = left_nodes.subspan(0, left_nodes.size() - seam_size);
+    } else {
+        // Right rope is deeper than left rope
+        top = right_nodes.subspan(0, right_nodes.size() - seam_size);
+        left_root = false;
+    }
+
+    // XXX
+    NodePtr child_node;
+    TextInfo child_info;
+    if (!top.empty()) {
+        //
+        for (auto iter = top.rbegin(); iter != top.rend(); ++iter) {
+            auto node = iter->node;
+            if (!node->IsFull()) {
+                if (left_root) {
+                    node->Push(child_node, child_info);
+                } else {
+                    node->Insert(0, child_node, child_info);
+                }
+                child_node = {};
+                break;
+            }
+            NodePage split_page{page_size};
+            auto split = new (split_page.Get()) InnerNode(page_size);
+            if (left_root) {
+                node->SplitOffRight(node->GetSize() / 2, *split);
+                split->Push(child_node, child_info);
+            } else {
+                node->SplitOffLeft(node->GetSize() / 2, *split);
+                split->Insert(0, child_node, child_info);
+            }
+            auto inner = split_page.Release<InnerNode>();
+            child_node = inner;
+            child_info = inner->AggregateTextInfo();
+        }
+        if (child_node.IsNull()) {
+        }
+    }
+}
 
 /// Insert a small text at index.
 /// The text to be inserted must not exceed the size of leaf page.

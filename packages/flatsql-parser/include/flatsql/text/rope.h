@@ -226,7 +226,9 @@ struct InnerNode {
     /// Truncate children from a position
     std::pair<std::span<const NodePtr>, std::span<const TextInfo>> Truncate(size_t idx) noexcept;
     /// Splits node at index
-    void SplitOff(size_t child_idx, InnerNode& right);
+    void SplitOffRight(size_t child_idx, InnerNode& right);
+    /// Splits node at index
+    void SplitOffLeft(size_t child_idx, InnerNode& left);
     /// Pushes an element onto the end of the array, and then splits it in half
     void PushAndSplit(NodePtr child, TextInfo stats, InnerNode& dst);
     /// Inserts an element into a the array, and then splits it in half
