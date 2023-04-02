@@ -837,93 +837,109 @@ void Rope::InsertBounded(size_t char_idx, std::span<const std::byte> text_bytes)
     assert(text_bytes.size() <= LeafCapacity(page_size));
     TextInfo insert_info{text_bytes};
 
-    // Remember information about an inner node that we traversed.
-    struct VisitedInnerNode {
-        TextInfo* node_info;
-        InnerNode* node;
-        size_t child_idx;
-    };
+    // Preemptively split the root, if it is full
+    if (root_node.Is<InnerNode>() && root_node.Get<InnerNode>()->IsFull()) {
+        NodePage right_page{page_size};
+        NodePage root_page{page_size};
+        auto* left = root_node.Get<InnerNode>();
+        auto* right = new (right_page.Get()) InnerNode(page_size);
+        auto* root = new (root_page.Get()) InnerNode(page_size);
+        left->SplitOffRight((left->GetSize() + 1) / 2, *right);
+        auto right_info = right->AggregateTextInfo();
+        root->Push(left, root_info - right_info);
+        root->Push(right_page.Release<InnerNode>(), right_info);
+        // Root page remains the same
+        root_node = root_page.Release<InnerNode>();
+    }
 
-    // Locate leaf node and remember traversed inner nodes
-    SmallVector<VisitedInnerNode, 8> inner_path;
+    // Traverse down the tree with pre-emptive splitting
+    InnerNode* parent_node = nullptr;
+    size_t iter_idx = 0;
     auto iter_node = root_node;
     auto iter_stats = &root_info;
     while (!iter_node.Is<LeafNode>()) {
         // Find child with codepoint
-        InnerNode* next_as_inner = iter_node.Get<InnerNode>();
-        auto [child_idx, child_prefix_chars] = next_as_inner->FindCodepoint(char_idx);
-        inner_path.push_back(VisitedInnerNode{.node_info = iter_stats, .node = next_as_inner, .child_idx = child_idx});
+        InnerNode* inner = iter_node.Get<InnerNode>();
+
+        // Preemptively split the inner node if it's full
+        if (inner->IsFull()) {
+            assert(parent_node != nullptr);
+            assert(!parent_node->IsFull());
+
+            // Split node
+            NodePage right_page{page_size};
+            auto* right = new (right_page.Get()) InnerNode(page_size);
+            inner->SplitOffRight((inner->GetSize() + 1) / 2, *right);
+
+            // Update parent node
+            auto right_info = right->AggregateTextInfo();
+            (*iter_stats) -= right_info;
+            parent_node->Insert(iter_idx + 1, right_page.Release<InnerNode>(), right_info);
+
+            // Switch to split node?
+            if (char_idx >= iter_stats->utf8_codepoints) {
+                char_idx -= iter_stats->utf8_codepoints;
+                iter_idx = iter_idx + 1;
+                iter_node = right;
+                iter_stats = &parent_node->GetChildStats()[iter_idx];
+                continue;
+            }
+        }
+
+        // Preemptive splitting ensures that the inserted data is guaranteed to be below us.
+        // We can therefore already bump the node info in the parent.
+        (*iter_stats) += insert_info;
+
+        // Find the next child
+        auto [child_idx, child_prefix_chars] = inner->FindCodepoint(char_idx);
 
         // Continue with child
-        iter_node = next_as_inner->GetChildNodes()[child_idx];
-        iter_stats = &next_as_inner->GetChildStats()[child_idx];
+        parent_node = inner;
+        iter_idx  = child_idx;
+        iter_node = inner->GetChildNodes()[child_idx];
+        iter_stats = &inner->GetChildStats()[child_idx];
         char_idx -= child_prefix_chars;
+
+        // Make sure the tree is not broken
         assert(!iter_node.IsNull());
     }
 
-    // Edit when reached leaf
+    // Determine insert point
+    assert(iter_node.Is<LeafNode>());
     LeafNode* leaf_node = iter_node.Get<LeafNode>();
-    auto leaf_info = iter_stats;
     auto insert_at = utf8::codepointToByteIdx(leaf_node->GetData(), char_idx);
-    assert(char_idx <= leaf_info->utf8_codepoints);
+    assert(char_idx <= iter_stats->utf8_codepoints);
 
     // Fits in leaf?
     if ((leaf_node->GetSize() + text_bytes.size()) <= leaf_node->GetCapacity()) {
         assert(insert_at <= leaf_node->GetSize());
         leaf_node->InsertBytes(insert_at, text_bytes);
-        // Update the text statistics in the parent
-        *leaf_info += insert_info;
-        // Propagate the inserted text info to all parents
-        for (auto iter = inner_path.rbegin(); iter != inner_path.rend(); ++iter) {
-            *iter->node_info += insert_info;
-        }
+        *iter_stats += insert_info;
         return;
     }
 
     // Text does not fit on leaf, split the leaf
-    NodePage new_leaf_page{page_size};
-    auto new_leaf = new (new_leaf_page.Get()) LeafNode(page_size);
-    leaf_node->InsertBytesAndSplit(insert_at, text_bytes, *new_leaf);
+    NodePage split_page{page_size};
+    auto split = new (split_page.Get()) LeafNode(page_size);
+    leaf_node->InsertBytesAndSplit(insert_at, text_bytes, *split);
 
     // Collect split node
-    TextInfo split_info{new_leaf->GetData()};
-    NodePtr split_node{new_leaf_page.Release<LeafNode>()};
-    *leaf_info = *leaf_info - (split_info - insert_info);
+    TextInfo split_info{split->GetData()};
+    *iter_stats = *iter_stats + insert_info - split_info;
 
-    // Propagate split upwards
-    for (auto iter = inner_path.rbegin(); iter != inner_path.rend(); ++iter) {
-        auto prev_visit = *iter;
-
-        // Is there enough space in the inner node? - Then we're done splitting!
-        if (!prev_visit.node->IsFull()) {
-            prev_visit.node->Insert(prev_visit.child_idx + 1, split_node, split_info);
-            *prev_visit.node_info += insert_info;
-
-            // Propagate the inserted text info to all parents
-            for (++iter; iter != inner_path.rend(); ++iter) {
-                *iter->node_info += insert_info;
-            }
-            return;
-        }
-
-        // Otherwise it's a split of the inner node!
-        NodePage new_inner_page{page_size};
-        auto new_inner = new (new_inner_page.Get()) InnerNode(page_size);
-        prev_visit.node->InsertAndSplit(prev_visit.child_idx + 1, split_node, split_info, *new_inner);
-        split_info = new_inner->AggregateTextInfo();
-        split_node = NodePtr{new_inner_page.Release<InnerNode>()};
-        *prev_visit.node_info = *prev_visit.node_info - (split_info - insert_info);
+    // Is there a parent node?
+    if (parent_node) {
+        parent_node->Insert(iter_idx + 1, split_page.Release<LeafNode>(), split_info);
+        return;
     }
 
-    // Is not null, then we have to split the root!
-    if (!split_node.IsNull()) {
-        NodePage new_root_page{page_size};
-        auto new_root = new (new_root_page.Get()) InnerNode(page_size);
-        new_root->Push(root_node, root_info);
-        new_root->Push(split_node, split_info);
-        root_info = new_root->AggregateTextInfo();
-        root_node = new_root_page.Release<InnerNode>();
-    }
+    // Otherwise create a new root
+    NodePage new_root_page{page_size};
+    auto new_root = new (new_root_page.Get()) InnerNode(page_size);
+    new_root->Push(iter_node, *iter_stats);
+    new_root->Push(split_page.Release<LeafNode>(), split_info);
+    root_info = new_root->AggregateTextInfo();
+    root_node = new_root_page.Release<InnerNode>();
 }
 
 static constexpr size_t BulkloadThreshold(size_t page_size) { return 6 * page_size; }
