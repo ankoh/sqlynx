@@ -117,6 +117,8 @@ struct LeafNode {
     inline auto GetCapacity() noexcept { return buffer_capacity; }
     /// Get the size of the buffer
     inline auto GetSize() noexcept { return buffer_size; }
+    /// Get the free space of the buffer
+    inline auto GetFreeSpace() noexcept { return buffer_capacity - buffer_size; }
     /// Get the data
     inline auto GetData() noexcept { return GetDataBuffer().subspan(0, buffer_size); }
     /// Get buffer content as string
@@ -193,6 +195,8 @@ struct InnerNode {
     inline size_t GetCapacity() noexcept { return child_capacity; }
     /// Get the size of the node
     inline size_t GetSize() noexcept { return child_count; }
+    /// Get the free space in the node
+    inline size_t GetFreeSpace() noexcept { return child_capacity - child_count; }
     /// Get the statistics
     inline auto GetChildStats() noexcept { return GetChildStatsBuffer().subspan(0, GetSize()); }
     /// Get child nodes
@@ -224,7 +228,7 @@ struct InnerNode {
     /// Remove an element at a position
     std::pair<NodePtr, TextInfo> Remove(size_t idx);
     /// Truncate children from a position
-    std::pair<std::span<const NodePtr>, std::span<const TextInfo>> Truncate(size_t idx) noexcept;
+    std::pair<std::span<const NodePtr>, std::span<const TextInfo>> Truncate(size_t idx = 0) noexcept;
     /// Splits node at index
     void SplitOffRight(size_t child_idx, InnerNode& right);
     /// Splits node at index

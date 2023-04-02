@@ -521,7 +521,7 @@ Rope::Rope(size_t page_size) : page_size(page_size) {
 /// Destructor
 Rope::~Rope() {
     NodePtr level = root_node;
-    while (true) {
+    while (!level.IsNull()) {
         if (level.Is<LeafNode>()) {
             LeafNode* iter = level.Get<LeafNode>();
             while (iter) {
@@ -624,104 +624,193 @@ Rope Rope::SplitOff(size_t char_idx) {
 }
 
 /// Append a rope to this rope
-void Rope::Append(Rope other) {
+void Rope::Append(Rope right_rope) {
+    // Append works as follows:
+    // Let's assume we want to append the second rope to the first one:
+    //
+    // Level 2     Inner
+    // Level 1     Inner   Inner
+    // Level 0     Leaf    Leaf
+    //
+    // A) We first collect all nodes along the "seam" between the ropes.
+    //    That means we collect the right-most nodes of the left side and the left-most nodes of the right side.
+    // B) We then link the shared levels as if they would belong to the same tree.
+    // C) If both ropes have the same height, merge the roots or create a new one
+    // E) Otherwise the root of the "smaller" rope is inserted into the top of the "larger" rope.
+    //    This may lead to splits.
+
+    // A.1) Collect the last nodes of the left side
     struct VisitedInnerNode {
         TextInfo* node_info;
         InnerNode* node;
     };
-
-    // Collect the left node
+    auto& left_rope = *this;
     SmallVector<VisitedInnerNode, 8> left_seam;
-    auto next_node = root_node;
-    auto next_stats = &root_info;
-    while (!next_node.Is<LeafNode>()) {
+    auto iter_node = left_rope.root_node;
+    auto iter_stats = &left_rope.root_info;
+    while (!iter_node.Is<LeafNode>()) {
         // Get last child
-        InnerNode* next_as_inner = next_node.Get<InnerNode>();
-        left_seam.push_back(VisitedInnerNode{.node_info = next_stats, .node = next_as_inner});
+        InnerNode* next_as_inner = iter_node.Get<InnerNode>();
+        left_seam.push_back(VisitedInnerNode{.node_info = iter_stats, .node = next_as_inner});
         assert(!next_as_inner->IsEmpty());
 
         // Continue with child
         auto last = next_as_inner->GetSize();
-        next_node = next_as_inner->GetChildNodes()[last];
-        next_stats = &next_as_inner->GetChildStats()[last];
-        assert(!next_node.IsNull());
+        iter_node = next_as_inner->GetChildNodes()[last];
+        iter_stats = &next_as_inner->GetChildStats()[last];
+        assert(!iter_node.IsNull());
     }
-    LeafNode* leaf_node = next_node.Get<LeafNode>();
+    LeafNode* left_last_leaf = iter_node.Get<LeafNode>();
 
-    // Collect the right node
+    // A.2) Collect the first nodes of the right side
     SmallVector<VisitedInnerNode, 8> right_seam;
-    next_node = other.root_node;
-    next_stats = &other.root_info;
-    while (!next_node.Is<LeafNode>()) {
+    iter_node = right_rope.root_node;
+    iter_stats = &right_rope.root_info;
+    while (!iter_node.Is<LeafNode>()) {
         // Get first child
-        InnerNode* next_as_inner = next_node.Get<InnerNode>();
-        left_seam.push_back(VisitedInnerNode{.node_info = next_stats, .node = next_as_inner});
+        InnerNode* next_as_inner = iter_node.Get<InnerNode>();
+        left_seam.push_back(VisitedInnerNode{.node_info = iter_stats, .node = next_as_inner});
         assert(!next_as_inner->IsEmpty());
 
         // Continue with child
-        next_node = next_as_inner->GetChildNodes()[0];
-        next_stats = &next_as_inner->GetChildStats()[0];
-        assert(!next_node.IsNull());
+        iter_node = next_as_inner->GetChildNodes()[0];
+        iter_stats = &next_as_inner->GetChildStats()[0];
+        assert(!iter_node.IsNull());
     }
 
-    // Link leaf nodes
-    leaf_node->next_node = other.first_leaf;
-    other.first_leaf->previous_node = leaf_node->next_node;
+    // B.1) Link leaf nodes
+    left_last_leaf->next_node = right_rope.first_leaf;
+    right_rope.first_leaf->previous_node = left_last_leaf->next_node;
 
-    // Connect seam
-    auto left_nodes = left_seam.span();
-    auto right_nodes = right_seam.span();
-    size_t seam_size = std::min<size_t>(left_nodes.size(), right_nodes.size());
+    // B.2) Connect seam nodes
+    auto left_seam_path = left_seam.span();
+    auto right_seam_path = right_seam.span();
+    size_t seam_size = std::min<size_t>(left_seam_path.size(), right_seam_path.size());
     for (size_t i = 0; i < seam_size; ++i) {
-        size_t left_height = left_nodes.size();
-        size_t right_height = left_nodes.size();
-        left_nodes[left_height - i - 1].node->next_node = right_nodes[left_height - i - 1].node;
-        right_nodes[right_height - i - 1].node->previous_node = left_nodes[right_height - i - 1].node;
+        size_t left_height = left_seam_path.size();
+        size_t right_height = left_seam_path.size();
+        left_seam_path[left_height - i - 1].node->next_node = right_seam_path[left_height - i - 1].node;
+        right_seam_path[right_height - i - 1].node->previous_node = left_seam_path[right_height - i - 1].node;
     }
 
-    std::span<VisitedInnerNode> top;
-    auto left_root = true;
-    if (left_nodes.size() >= right_nodes.size()) {
+    // C) Handle special case where both ropes have the same height
+    if (left_seam_path.size() && right_seam_path.size()) {
+        assert(left_rope.root_node.Is<LeafNode>() == right_rope.root_node.Is<LeafNode>());
+        // Merge the roots if they have enough free space
+        if (left_rope.root_node.Is<LeafNode>()) {
+            if (left_rope.first_leaf->GetFreeSpace() >= right_rope.first_leaf->GetSize()) {
+                left_rope.root_info += right_rope.root_info;
+                left_rope.first_leaf->PushBytes(right_rope.first_leaf->TruncateBytes());
+                right_rope.root_node = {};
+                return;
+            }
+        } else {
+            auto left_inner = left_rope.root_node.Get<InnerNode>();
+            auto right_inner = left_rope.root_node.Get<InnerNode>();
+            if (left_inner->GetFreeSpace() >= right_inner->GetSize()) {
+                left_rope.root_info += right_rope.root_info;
+                auto [right_nodes, right_stats] = right_inner->Truncate();
+                left_inner->Push(right_nodes, right_stats);
+                right_rope.root_node = {};
+                return;
+            }
+        }
+
+        // Otherwise create a new parent for both
+        NodePage new_root_page{page_size};
+        auto new_root = new (new_root_page.Get()) InnerNode(page_size);
+        new_root->Push(left_rope.root_node, left_rope.root_info);
+        new_root->Push(right_rope.root_node, right_rope.root_info);
+        auto new_root_info = new_root->AggregateTextInfo();
+
+        // Store new root into left rope
+        left_rope.root_node = new_root_page.Release<InnerNode>();
+        left_rope.root_info = new_root_info;
+        right_rope.root_node = {};
+        return;
+    }
+
+    // D.1) Collect nodes at the top of the "taller" rope where we have to insert the child of the "smaller" rope.
+    //      The root of the "smaller" rope is in the following called "orphan".
+    std::span<VisitedInnerNode> top_path;
+    auto right_is_orphan = true;
+    NodePtr next_root_node;
+    TextInfo next_root_info;
+    NodePtr orphan_node;
+    TextInfo orphan_info;
+    if (left_seam_path.size() >= right_seam_path.size()) {
         // Left rope is deeper then right rope?
-        top = left_nodes.subspan(0, left_nodes.size() - seam_size);
+        top_path = left_seam_path.subspan(0, left_seam_path.size() - seam_size);
+        next_root_node = left_rope.root_node;
+        next_root_info = left_rope.root_info;
+        orphan_node = right_rope.root_node;
+        orphan_info = right_rope.root_info;
     } else {
         // Right rope is deeper than left rope
-        top = right_nodes.subspan(0, right_nodes.size() - seam_size);
-        left_root = false;
+        top_path = right_seam_path.subspan(0, right_seam_path.size() - seam_size);
+        right_is_orphan = false;
+        next_root_node = right_rope.root_node;
+        next_root_info = right_rope.root_info;
+        orphan_node = left_rope.root_node;
+        orphan_info = left_rope.root_info;
+    }
+    assert(!top_path.empty());
+
+    // D.2) Now insert the orphan root into the larger side and propagate splits
+    for (auto iter = top_path.rbegin(); iter != top_path.rend(); ++iter) {
+        // Parent is not full?
+        // Then we can just insert the orphan and we're done!
+        auto node = iter->node;
+        if (!node->IsFull()) {
+            // If the right rope is our orphan, we push to the left
+            if (right_is_orphan) {
+                node->Push(orphan_node, orphan_info);
+            } else {
+                // If the left rope is our orphan, we prepend to the right
+                node->Insert(0, orphan_node, orphan_info);
+            }
+            // Reset the orphan to signal that we're done
+            orphan_node = {};
+            break;
+        }
+        // We need to split the top
+        NodePage split_page{page_size};
+        auto split = new (split_page.Get()) InnerNode(page_size);
+        // If the right rope is our orphan, we split off the right side of the left node to preserve the
+        // left node pointer.
+        if (right_is_orphan) {
+            node->SplitOffRight(node->GetSize() / 2, *split);
+            split->Push(orphan_node, orphan_info);
+        } else {
+            // If the left rope is our orphan, we split off the left side of the right node to preserve the
+            // right node pointer 
+            node->SplitOffLeft(node->GetSize() / 2, *split);
+            split->Insert(0, orphan_node, orphan_info);
+        }
+        orphan_info = split->AggregateTextInfo();
+        orphan_node = split_page.Release<InnerNode>();
     }
 
-    // XXX
-    NodePtr child_node;
-    TextInfo child_info;
-    if (!top.empty()) {
-        //
-        for (auto iter = top.rbegin(); iter != top.rend(); ++iter) {
-            auto node = iter->node;
-            if (!node->IsFull()) {
-                if (left_root) {
-                    node->Push(child_node, child_info);
-                } else {
-                    node->Insert(0, child_node, child_info);
-                }
-                child_node = {};
-                break;
-            }
-            NodePage split_page{page_size};
-            auto split = new (split_page.Get()) InnerNode(page_size);
-            if (left_root) {
-                node->SplitOffRight(node->GetSize() / 2, *split);
-                split->Push(child_node, child_info);
-            } else {
-                node->SplitOffLeft(node->GetSize() / 2, *split);
-                split->Insert(0, child_node, child_info);
-            }
-            auto inner = split_page.Release<InnerNode>();
-            child_node = inner;
-            child_info = inner->AggregateTextInfo();
+    // D.3) Create a new root if the split propagated fully upwards
+    if (orphan_node.IsNull()) {
+        NodePage new_root_page{page_size};
+        auto new_root = new (new_root_page.Get()) InnerNode(page_size);
+        if (right_is_orphan) {
+            new_root->Push(next_root_node, next_root_info);
+            new_root->Push(orphan_node, orphan_info);
+        } else {
+            new_root->Push(orphan_node, orphan_info);
+            new_root->Push(next_root_node, next_root_info);
         }
-        if (child_node.IsNull()) {
-        }
+        next_root_info = new_root->AggregateTextInfo();
+        next_root_node = new_root_page.Release<InnerNode>();
     }
+
+    // Synchronize the roots
+    left_rope.root_info = next_root_info;
+    left_rope.root_node = next_root_node;
+    right_rope.root_node = {};
+    right_rope.root_info = {};
 }
 
 /// Insert a small text at index.
