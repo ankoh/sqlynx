@@ -237,3 +237,17 @@ TEST(Rope, AppendLeaf) {
         ASSERT_EQ(left.ToString(), expected);
     }
 }
+
+TEST(Rope, AppendHalf) {
+    std::string expected;
+    for (size_t i = 0; i < 1000; ++i) {
+        auto text = std::to_string(i);
+        expected += text;
+        auto left_text = std::string_view{expected}.substr(0, (expected.size() + 1) / 2);
+        auto right_text = std::string_view{expected}.substr(left_text.size());
+        auto left_rope = rope::Rope::FromString(128, left_text);
+        auto right_rope = rope::Rope::FromString(128, right_text);
+        left_rope.Append(std::move(right_rope));
+        ASSERT_EQ(left_rope.ToString(), expected);
+    }
+}

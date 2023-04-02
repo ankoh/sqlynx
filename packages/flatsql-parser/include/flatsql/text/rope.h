@@ -52,7 +52,7 @@ struct NodePage {
 
    public:
     /// Constructor
-    NodePage(size_t page_size) : page_size(page_size), page(std::unique_ptr<std::byte[]>(new std::byte[page_size])) {}
+    explicit NodePage(size_t page_size) : page_size(page_size), page(std::unique_ptr<std::byte[]>(new std::byte[page_size])) {}
 
     /// Get the page size
     inline size_t GetPageSize() { return page_size; }
@@ -111,7 +111,7 @@ struct LeafNode {
 
    public:
     /// Constructor
-    LeafNode(uint32_t page_size);
+    explicit LeafNode(uint32_t page_size);
 
     /// Get the capacity of the buffer
     inline auto GetCapacity() noexcept { return buffer_capacity; }
@@ -188,7 +188,7 @@ struct InnerNode {
 
    public:
     /// Constructor
-    InnerNode(size_t page_size);
+    explicit InnerNode(size_t page_size);
 
     /// Get the capacity of the node
     inline size_t GetCapacity() noexcept { return child_capacity; }
@@ -257,9 +257,9 @@ struct Rope {
 
    public:
     /// Constructor
-    Rope(size_t page_size, NodePtr root_node, TextInfo root_info, LeafNode* first_leaf);
+    explicit Rope(size_t page_size, NodePtr root_node, TextInfo root_info, LeafNode* first_leaf);
     /// Constructor
-    Rope(size_t page_size);
+    explicit Rope(size_t page_size);
     /// Destructor
     ~Rope();
     /// Copy constructor

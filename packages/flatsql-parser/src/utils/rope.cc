@@ -789,14 +789,16 @@ void Rope::Append(Rope right_rope) {
         // We need to split the top
         NodePage split_page{page_size};
         auto split = new (split_page.Get()) InnerNode(page_size);
-        // If the right rope is our orphan, we split off the right side of the left node to preserve the left node pointer.
+        // If the right rope is our orphan, we split off the right side of the left node to preserve the left node
+        // pointer.
         TextInfo split_info;
         if (right_is_orphan) {
             node->SplitOffRight((node->GetSize() + 1) / 2, *split);
             split->Push(orphan_node, orphan_info);
             split_info = split->AggregateTextInfo();
         } else {
-            // If the left rope is our orphan, we split off the left side of the right node to preserve the right node pointer 
+            // If the left rope is our orphan, we split off the left side of the right node to preserve the right node
+            // pointer
             node->SplitOffLeft((node->GetSize() + 1) / 2, *split);
             split->Insert(0, orphan_node, initial_orphan_info);
             split_info = split->AggregateTextInfo();
@@ -924,19 +926,21 @@ void Rope::InsertBounded(size_t char_idx, std::span<const std::byte> text_bytes)
     }
 }
 
+static constexpr size_t BulkloadThreshold(size_t page_size) { return 6 * page_size; }
+
 /// Insert at index
 void Rope::Insert(size_t char_idx, std::string_view text) {
     // Make sure the char idx is not out of bounds
     char_idx = std::min(char_idx, root_info.utf8_codepoints);
     std::span<const std::byte> text_buffer{reinterpret_cast<const std::byte*>(text.data()), text.size()};
 
-    // // Bulk-load the text into a new rope and merge it?
-    // if (text.size() >= BULKLOAD_THRESHOLD) {
-    //     auto right = SplitOff(char_idx);
-    //     Append(text.size());
-    //     Append(right);
-    //     return;
-    // }
+    // Bulk-load the text into a new rope and merge it?
+    if (text.size() >= BulkloadThreshold(page_size)) {
+        auto right = SplitOff(char_idx);
+        Append(Rope::FromString(page_size, text));
+        Append(std::move(right));
+        return;
+    }
 
     // Split the input text in chunks and insert it into the rope
     while (!text.empty()) {
