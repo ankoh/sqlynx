@@ -759,6 +759,7 @@ void Rope::Append(Rope right_rope) {
         orphan_node = left_rope.root_node;
         orphan_info = left_rope.root_info;
     }
+    TextInfo initial_orphan_info = orphan_info;
     assert(!top_path.empty());
 
     // C.3) Now insert the orphan root into the larger side and propagate splits
@@ -775,7 +776,12 @@ void Rope::Append(Rope right_rope) {
                 // If the left rope is our orphan, we prepend to the right
                 node->Insert(0, orphan_node, orphan_info);
             }
-            (*node_info) += orphan_info;
+            // We only add the initial orphan info here as everything else stayed the same!
+            (*node_info) += initial_orphan_info;
+            // Propagate node info upwards
+            for (++iter; iter != top_path.rend(); ++iter) {
+                (*iter->node_info) += initial_orphan_info;
+            }
             // Reset the orphan to signal that we're done
             orphan_node = {};
             break;
@@ -787,20 +793,17 @@ void Rope::Append(Rope right_rope) {
         TextInfo split_info;
         if (right_is_orphan) {
             node->SplitOffRight((node->GetSize() + 1) / 2, *split);
-            split_info = split->AggregateTextInfo();
-            (*iter->node_info) -= split_info;
             split->Push(orphan_node, orphan_info);
-            split_info += orphan_info;
+            split_info = split->AggregateTextInfo();
         } else {
             // If the left rope is our orphan, we split off the left side of the right node to preserve the right node pointer 
             node->SplitOffLeft((node->GetSize() + 1) / 2, *split);
+            split->Insert(0, orphan_node, initial_orphan_info);
             split_info = split->AggregateTextInfo();
-            (*iter->node_info) -= split_info;
-            split->Insert(0, orphan_node, orphan_info);
-            split_info += orphan_info;
         }
-        orphan_info = split_info;
+        (*iter->node_info) = (*iter->node_info) - (split_info - initial_orphan_info);
         orphan_node = split_page.Release<InnerNode>();
+        orphan_info = split_info;
     }
 
     // C.4) Create a new root if the split propagated fully upwards
@@ -811,8 +814,8 @@ void Rope::Append(Rope right_rope) {
             new_root->Push(next_root_node, next_root_info);
             new_root->Push(orphan_node, orphan_info);
         } else {
-            new_root->Push(orphan_node, orphan_info);
-            new_root->Push(next_root_node, next_root_info);
+            new_root->Push(orphan_node, initial_orphan_info);
+            new_root->Push(next_root_node, orphan_info);
         }
         next_root_info = new_root->AggregateTextInfo();
         next_root_node = new_root_page.Release<InnerNode>();
@@ -883,7 +886,7 @@ void Rope::InsertBounded(size_t char_idx, std::span<const std::byte> text_bytes)
     // Collect split node
     TextInfo split_info{new_leaf->GetData()};
     NodePtr split_node{new_leaf_page.Release<LeafNode>()};
-    *leaf_info = *leaf_info + insert_info - split_info;
+    *leaf_info = *leaf_info - (split_info - insert_info);
 
     // Propagate split upwards
     for (auto iter = inner_path.rbegin(); iter != inner_path.rend(); ++iter) {
@@ -907,7 +910,7 @@ void Rope::InsertBounded(size_t char_idx, std::span<const std::byte> text_bytes)
         prev_visit.node->InsertAndSplit(prev_visit.child_idx + 1, split_node, split_info, *new_inner);
         split_info = new_inner->AggregateTextInfo();
         split_node = NodePtr{new_inner_page.Release<InnerNode>()};
-        *prev_visit.node_info = *prev_visit.node_info + insert_info - split_info;
+        *prev_visit.node_info = *prev_visit.node_info - (split_info - insert_info);
     }
 
     // Is not null, then we have to split the root!
