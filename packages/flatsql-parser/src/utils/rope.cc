@@ -601,6 +601,9 @@ Rope Rope::SplitOff(size_t char_idx) {
     std::vector<NodePage> new_inners;
     new_inners.reserve(inner_path.getSize());
     for (auto iter = inner_path.rbegin(); iter != inner_path.rend(); ++iter) {
+        // XXX Check neighbors
+
+        // Split off new right node
         new_inners.emplace_back(page_size);
         auto* right = new (new_inners.back().Get()) InnerNode(page_size);
         auto* left = iter->node;
@@ -608,6 +611,9 @@ Rope Rope::SplitOff(size_t char_idx) {
         ++left->child_count;
         left->next_node = nullptr;
         right->previous_node = nullptr;
+
+        // Store right child in right node.
+        // We don't need to prepend here since we splitted at iter->child_idx
         right->GetChildStatsBuffer()[0] = child_stats;
         right->GetChildNodesBuffer()[0] = child_node;
         child_stats = right->AggregateTextInfo();
