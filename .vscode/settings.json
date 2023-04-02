@@ -1,8 +1,0 @@
-{
-    "clangd.arguments": [
-        "-j=8",
-        "--malloc-trim",
-        "--background-index",
-        "--pch-storage=memory"
-    ]
-}
