@@ -224,3 +224,16 @@ TEST(Rope, SplitOffN) {
         ASSERT_EQ(right.ToString(), expected.substr(split));
     }
 }
+
+TEST(Rope, AppendLeaf) {
+    rope::Rope left{128};
+    std::string expected;
+    for (size_t i = 0; i < 1000; ++i) {
+        auto text = std::to_string(i);
+        expected += text;
+        auto right = rope::Rope::FromString(128, text);
+        ASSERT_EQ(right.ToString(), text);
+        left.Append(std::move(right));
+        ASSERT_EQ(left.ToString(), expected);
+    }
+}

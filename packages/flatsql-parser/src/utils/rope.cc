@@ -650,14 +650,14 @@ void Rope::Append(Rope right_rope) {
     auto iter_stats = &left_rope.root_info;
     while (!iter_node.Is<LeafNode>()) {
         // Get last child
-        InnerNode* next_as_inner = iter_node.Get<InnerNode>();
-        left_seam.push_back(VisitedInnerNode{.node_info = iter_stats, .node = next_as_inner});
-        assert(!next_as_inner->IsEmpty());
+        InnerNode* iter_as_inner = iter_node.Get<InnerNode>();
+        left_seam.push_back(VisitedInnerNode{.node_info = iter_stats, .node = iter_as_inner});
+        assert(!iter_as_inner->IsEmpty());
 
         // Continue with child
-        auto last = next_as_inner->GetSize();
-        iter_node = next_as_inner->GetChildNodes()[last];
-        iter_stats = &next_as_inner->GetChildStats()[last];
+        auto last = iter_as_inner->GetSize() - 1;
+        iter_node = iter_as_inner->GetChildNodes()[last];
+        iter_stats = &iter_as_inner->GetChildStats()[last];
         assert(!iter_node.IsNull());
     }
     LeafNode* left_last_leaf = iter_node.Get<LeafNode>();
@@ -685,16 +685,16 @@ void Rope::Append(Rope right_rope) {
     // B.2) Connect seam nodes
     auto left_seam_path = left_seam.span();
     auto right_seam_path = right_seam.span();
-    size_t seam_size = std::min<size_t>(left_seam_path.size(), right_seam_path.size());
-    for (size_t i = 0; i < seam_size; ++i) {
+    size_t inner_seam_size = std::min<size_t>(left_seam_path.size(), right_seam_path.size());
+    for (size_t i = 0; i < inner_seam_size; ++i) {
         size_t left_height = left_seam_path.size();
-        size_t right_height = left_seam_path.size();
-        left_seam_path[left_height - i - 1].node->next_node = right_seam_path[left_height - i - 1].node;
-        right_seam_path[right_height - i - 1].node->previous_node = left_seam_path[right_height - i - 1].node;
+        size_t right_height = right_seam_path.size();
+        left_seam_path[left_height - i - 1].node->next_node = right_seam_path[right_height - i - 1].node;
+        right_seam_path[right_height - i - 1].node->previous_node = left_seam_path[left_height - i - 1].node;
     }
 
     // C) Handle special case where both ropes have the same height
-    if (left_seam_path.size() && right_seam_path.size()) {
+    if (left_seam_path.size() == right_seam_path.size()) {
         assert(left_rope.root_node.Is<LeafNode>() == right_rope.root_node.Is<LeafNode>());
         // Merge the roots if they have enough free space
         if (left_rope.root_node.Is<LeafNode>()) {
@@ -702,6 +702,7 @@ void Rope::Append(Rope right_rope) {
                 left_rope.root_info += right_rope.root_info;
                 left_rope.first_leaf->PushBytes(right_rope.first_leaf->TruncateBytes());
                 right_rope.root_node = {};
+                right_rope.root_info = {};
                 return;
             }
         } else {
@@ -712,6 +713,7 @@ void Rope::Append(Rope right_rope) {
                 auto [right_nodes, right_stats] = right_inner->Truncate();
                 left_inner->Push(right_nodes, right_stats);
                 right_rope.root_node = {};
+                right_rope.root_info = {};
                 return;
             }
         }
@@ -727,6 +729,7 @@ void Rope::Append(Rope right_rope) {
         left_rope.root_node = new_root_page.Release<InnerNode>();
         left_rope.root_info = new_root_info;
         right_rope.root_node = {};
+        right_rope.root_info = {};
         return;
     }
 
@@ -739,15 +742,15 @@ void Rope::Append(Rope right_rope) {
     NodePtr orphan_node;
     TextInfo orphan_info;
     if (left_seam_path.size() >= right_seam_path.size()) {
-        // Left rope is deeper then right rope?
-        top_path = left_seam_path.subspan(0, left_seam_path.size() - seam_size);
+        // Left rope is taller then right rope?
+        top_path = left_seam_path.subspan(0, left_seam_path.size() - inner_seam_size);
         next_root_node = left_rope.root_node;
         next_root_info = left_rope.root_info;
         orphan_node = right_rope.root_node;
         orphan_info = right_rope.root_info;
     } else {
-        // Right rope is deeper than left rope
-        top_path = right_seam_path.subspan(0, right_seam_path.size() - seam_size);
+        // Right rope is taller than left rope
+        top_path = right_seam_path.subspan(0, right_seam_path.size() - inner_seam_size);
         right_is_orphan = false;
         next_root_node = right_rope.root_node;
         next_root_info = right_rope.root_info;
@@ -761,6 +764,7 @@ void Rope::Append(Rope right_rope) {
         // Parent is not full?
         // Then we can just insert the orphan and we're done!
         auto node = iter->node;
+        auto node_info = iter->node_info;
         if (!node->IsFull()) {
             // If the right rope is our orphan, we push to the left
             if (right_is_orphan) {
@@ -769,6 +773,7 @@ void Rope::Append(Rope right_rope) {
                 // If the left rope is our orphan, we prepend to the right
                 node->Insert(0, orphan_node, orphan_info);
             }
+            (*node_info) += orphan_info;
             // Reset the orphan to signal that we're done
             orphan_node = {};
             break;
@@ -776,23 +781,28 @@ void Rope::Append(Rope right_rope) {
         // We need to split the top
         NodePage split_page{page_size};
         auto split = new (split_page.Get()) InnerNode(page_size);
-        // If the right rope is our orphan, we split off the right side of the left node to preserve the
-        // left node pointer.
+        // If the right rope is our orphan, we split off the right side of the left node to preserve the left node pointer.
+        TextInfo split_info;
         if (right_is_orphan) {
-            node->SplitOffRight(node->GetSize() / 2, *split);
+            node->SplitOffRight((node->GetSize() + 1) / 2, *split);
+            split_info = split->AggregateTextInfo();
+            (*iter->node_info) -= split_info;
             split->Push(orphan_node, orphan_info);
+            split_info += orphan_info;
         } else {
-            // If the left rope is our orphan, we split off the left side of the right node to preserve the
-            // right node pointer 
+            // If the left rope is our orphan, we split off the left side of the right node to preserve the right node pointer 
             node->SplitOffLeft(node->GetSize() / 2, *split);
+            split_info = split->AggregateTextInfo();
+            (*iter->node_info) -= split_info;
             split->Insert(0, orphan_node, orphan_info);
+            split_info += orphan_info;
         }
-        orphan_info = split->AggregateTextInfo();
+        orphan_info = split_info;
         orphan_node = split_page.Release<InnerNode>();
     }
 
     // D.3) Create a new root if the split propagated fully upwards
-    if (orphan_node.IsNull()) {
+    if (!orphan_node.IsNull()) {
         NodePage new_root_page{page_size};
         auto new_root = new (new_root_page.Get()) InnerNode(page_size);
         if (right_is_orphan) {

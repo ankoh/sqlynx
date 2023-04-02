@@ -122,7 +122,9 @@ struct LeafNode {
     /// Get the data
     inline auto GetData() noexcept { return GetDataBuffer().subspan(0, buffer_size); }
     /// Get buffer content as string
-    inline auto GetStringView() noexcept { return std::string_view{reinterpret_cast<char*>(GetData().data()), GetSize()}; }
+    inline auto GetStringView() noexcept {
+        return std::string_view{reinterpret_cast<char*>(GetData().data()), GetSize()};
+    }
     /// Is valid?
     inline auto IsValid() noexcept { return utf8::isCodepointBoundary(GetData(), 0); }
     /// Is the node empty?
@@ -177,14 +179,11 @@ struct InnerNode {
 
     /// Get the child stats buffer
     inline std::span<TextInfo> GetChildStatsBuffer() noexcept {
-        auto buffer = reinterpret_cast<TextInfo*>(this + 1);
-        return {buffer, child_capacity};
+        return {reinterpret_cast<TextInfo*>(this + 1), child_capacity};
     }
     /// Get the child nodes buffer
     inline std::span<NodePtr> GetChildNodesBuffer() noexcept {
-        auto stats_end = GetChildStatsBuffer().data() + child_capacity;
-        auto buffer = reinterpret_cast<NodePtr*>(stats_end);
-        return {buffer, child_capacity};
+        return {reinterpret_cast<NodePtr*>(GetChildStatsBuffer().data() + child_capacity), child_capacity};
     }
 
    public:
@@ -246,7 +245,7 @@ struct InnerNode {
 };
 
 struct Rope {
-    protected:
+   protected:
     /// The page size
     const size_t page_size;
     /// The root page
@@ -256,7 +255,7 @@ struct Rope {
     /// The first leaf
     LeafNode* first_leaf;
 
-    public:
+   public:
     /// Constructor
     Rope(size_t page_size, NodePtr root_node, TextInfo root_info, LeafNode* first_leaf);
     /// Constructor
