@@ -561,71 +561,76 @@ std::string Rope::ToString() {
 
 /// Split off a rope
 Rope Rope::SplitOff(size_t char_idx) {
-    // Remember information about an inner node that we traversed.
-    struct VisitedInnerNode {
-        TextInfo* node_info;
-        InnerNode* node;
-        size_t child_idx;
-    };
+    // Special case, split of end
+    if (char_idx >= root_info.utf8_codepoints) {
+        return Rope{page_size};
+    }
+
+    // TODO: Track height to preserve
+    std::vector<NodePage> right_seam;
 
     // Locate leaf node and remember traversed inner nodes
-    SmallVector<VisitedInnerNode, 8> inner_path;
-    auto iter_node = root_node;
-    auto iter_stats = &root_info;
-    while (!iter_node.Is<LeafNode>()) {
+    auto left_iter = root_node;
+    while (!left_iter.Is<LeafNode>()) {
         // Find child with codepoint
-        InnerNode* next_as_inner = iter_node.Get<InnerNode>();
-        auto [child_idx, child_prefix_chars] = next_as_inner->FindCodepoint(char_idx);
-        inner_path.push_back(VisitedInnerNode{.node_info = iter_stats, .node = next_as_inner, .child_idx = child_idx});
+        InnerNode* left_inner = left_iter.Get<InnerNode>();
+        auto [child_idx, child_prefix_chars] = left_inner->FindCodepoint(char_idx);
 
-        // Continue with child
-        iter_node = next_as_inner->GetChildNodes()[child_idx];
-        iter_stats = &next_as_inner->GetChildStats()[child_idx];
+        // Create right inner page.
+        // We increment the left child count immediately afterwards to keep child_idx referenced.
+        // We will traverse to that page next and split that as well.
+        // That way, we don't need to update pointers on the left side and can write new pages to right[0].
+        right_seam.emplace_back(page_size);
+        auto* right_inner = new (right_seam.back().Get()) InnerNode(page_size);
+        left_inner->SplitOffRight(child_idx, *right_inner);
+        ++left_inner->child_count;
+
+        // We will update the parent later
+
+        // Traverse to child
         char_idx -= child_prefix_chars;
-        assert(!iter_node.IsNull());
+        left_iter = left_inner->GetChildNodes()[child_idx];
     }
 
-    // Edit when reached leaf
-    LeafNode* leaf_node = iter_node.Get<LeafNode>();
+    // Reached a leaf
+    assert(left_iter.Is<LeafNode>());
+    auto* left_leaf = left_iter.Get<LeafNode>();
+    NodePage right_leaf_page{page_size};
+    auto* right_leaf = new (right_leaf_page.Get()) LeafNode(page_size);
+    left_leaf->SplitCharsOff(char_idx, *right_leaf);
 
-    // Create leaf node
-    NodePage new_leaf_page{page_size};
-    auto new_leaf = new (new_leaf_page.Get()) LeafNode(page_size);
-    leaf_node->SplitCharsOff(char_idx, *new_leaf);
-    leaf_node->next_node = nullptr;
-    new_leaf->previous_node = nullptr;
-    TextInfo child_stats{new_leaf->GetData()};
-    NodePtr child_node{new_leaf};
+    // Disconnect the leafs
+    left_leaf->next_node = nullptr;
+    right_leaf->previous_node = nullptr;
 
-    // Create new inner nodes
-    std::vector<NodePage> new_inners;
-    new_inners.reserve(inner_path.getSize());
-    for (auto iter = inner_path.rbegin(); iter != inner_path.rend(); ++iter) {
-        // XXX Check neighbors
-
-        // Split off new right node
-        new_inners.emplace_back(page_size);
-        auto* right = new (new_inners.back().Get()) InnerNode(page_size);
-        auto* left = iter->node;
-        left->SplitOffRight(iter->child_idx, *right);
-        ++left->child_count;
-        left->next_node = nullptr;
-        right->previous_node = nullptr;
-
-        // Store right child in right node.
-        // We don't need to prepend here since we splitted at iter->child_idx
-        right->GetChildStatsBuffer()[0] = child_stats;
-        right->GetChildNodesBuffer()[0] = child_node;
-        child_stats = right->AggregateTextInfo();
-        child_node = {right};
+    // Now propagate the text change up the seam nodes
+    NodePtr right_child{right_leaf};
+    TextInfo right_child_info{right_leaf->GetData()};
+    for (auto& right_parent_page: right_seam) {
+        // Store child in right parent
+        auto right_parent = right_parent_page.Get<InnerNode>();
+        right_parent->GetChildNodes().front() = right_child;
+        right_parent->GetChildStats().front() = right_child_info;
+        // Update left parent
+        auto left_parent = right_parent->previous_node;
+        assert(!left_parent->GetChildNodes().empty());
+        left_parent->GetChildStats().back() -= right_child_info;
+        // Disconnect nodes
+        left_parent->next_node = nullptr;
+        right_parent->previous_node = nullptr;
+        // Go 1 level up
+        right_child = right_parent;
+        right_child_info = right_parent->AggregateTextInfo();
     }
+    root_info -= right_child_info;
 
-    // Release inner nodes
-    for (auto& inner : new_inners) {
-        inner.Release();
+    // Pass ownership over right pages to the new rope
+    right_leaf_page.Release();
+    for (auto& right_page: right_seam) {
+        right_page.Release();
     }
-    // Create new root
-    return Rope{page_size, child_node, child_stats, new_leaf_page.Release<LeafNode>()};
+    // Create the right rope
+    return Rope{page_size, right_child, right_child_info, right_leaf};
 }
 
 /// Append a rope to this rope
