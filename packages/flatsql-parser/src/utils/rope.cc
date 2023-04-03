@@ -532,7 +532,7 @@ Rope::~Rope() {
             break;
         }
         InnerNode* iter = level.Get<InnerNode>();
-        level = (iter && iter->GetSize() > 0) ? iter->GetChildNodes()[0] : NodePtr{};
+        level = (iter && iter->GetSize() > 0) ? iter->GetChildNodes().front() : NodePtr{};
         while (iter) {
             auto next = iter->next_node;
             delete[] reinterpret_cast<std::byte*>(iter);
@@ -682,7 +682,7 @@ void Rope::Append(Rope right_rope) {
     while (!iter_node.Is<LeafNode>()) {
         // Get first child
         InnerNode* next_as_inner = iter_node.Get<InnerNode>();
-        left_seam.push_back(VisitedInnerNode{.node_info = iter_stats, .node = next_as_inner});
+        right_seam.push_back(VisitedInnerNode{.node_info = iter_stats, .node = next_as_inner});
         assert(!next_as_inner->IsEmpty());
 
         // Continue with child
