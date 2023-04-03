@@ -508,10 +508,10 @@ static std::pair<Child, Child> FindRange(InnerNode& node, size_t arg0, size_t ar
 }
 
 /// Constructor
-Rope::Rope(size_t page_size, NodePtr root_node, TextInfo root_info, LeafNode* first_leaf)
-    : page_size(page_size), root_node(root_node), root_info(root_info), first_leaf(first_leaf) {}
+Rope::Rope(size_t page_size, NodePtr root_node, TextInfo root_info, LeafNode* first_leaf, size_t tree_height)
+    : page_size(page_size), tree_height(tree_height), root_node(root_node), root_info(root_info), first_leaf(first_leaf) {}
 /// Constructor
-Rope::Rope(size_t page_size) : page_size(page_size) {
+Rope::Rope(size_t page_size) : page_size(page_size), tree_height(1) {
     NodePage first_page{page_size};
     first_leaf = new (first_page.Get()) LeafNode(page_size);
     root_node = {first_leaf};
@@ -543,10 +543,11 @@ Rope::~Rope() {
 }
 /// Move constructor
 Rope::Rope(Rope&& other)
-    : page_size(other.page_size), root_node(other.root_node), root_info(other.root_info), first_leaf(other.first_leaf) {
+    : page_size(other.page_size), tree_height(other.tree_height), root_node(other.root_node), root_info(other.root_info), first_leaf(other.first_leaf) {
     other.root_node = {};
     other.root_info = TextInfo{};
     other.first_leaf = nullptr;
+    other.tree_height = 0;
 };
 
 /// Copy the rope to a std::string
@@ -566,8 +567,9 @@ Rope Rope::SplitOff(size_t char_idx) {
         return Rope{page_size};
     }
 
-    // TODO: Track height to preserve
+    // Collect nodes of right seam
     std::vector<NodePage> right_seam;
+    right_seam.reserve(tree_height);
 
     // Locate leaf node and remember traversed inner nodes
     auto left_iter = root_node;
@@ -630,7 +632,7 @@ Rope Rope::SplitOff(size_t char_idx) {
         right_page.Release();
     }
     // Create the right rope
-    return Rope{page_size, right_child, right_child_info, right_leaf};
+    return Rope{page_size, right_child, right_child_info, right_leaf, tree_height};
 }
 
 /// Append a rope to this rope
@@ -654,7 +656,8 @@ void Rope::Append(Rope right_rope) {
         InnerNode* node;
     };
     auto& left_rope = *this;
-    SmallVector<VisitedInnerNode, 8> left_seam;
+    std::vector<VisitedInnerNode> left_seam;
+    left_seam.reserve(left_rope.tree_height);
     auto iter_node = left_rope.root_node;
     auto iter_stats = &left_rope.root_info;
     while (!iter_node.Is<LeafNode>()) {
@@ -672,7 +675,8 @@ void Rope::Append(Rope right_rope) {
     LeafNode* left_last_leaf = iter_node.Get<LeafNode>();
 
     // A.2) Collect the first nodes of the right side
-    SmallVector<VisitedInnerNode, 8> right_seam;
+    std::vector<VisitedInnerNode> right_seam;
+    right_seam.reserve(right_rope.tree_height);
     iter_node = right_rope.root_node;
     iter_stats = &right_rope.root_info;
     while (!iter_node.Is<LeafNode>()) {
@@ -688,8 +692,8 @@ void Rope::Append(Rope right_rope) {
     }
 
     // B) Handle special case where both ropes have the same height
-    auto left_seam_path = left_seam.span();
-    auto right_seam_path = right_seam.span();
+    std::span<VisitedInnerNode> left_seam_path{left_seam};
+    std::span<VisitedInnerNode> right_seam_path{right_seam};
     if (left_seam_path.size() == right_seam_path.size()) {
         assert(left_rope.root_node.Is<LeafNode>() == right_rope.root_node.Is<LeafNode>());
         // Merge the roots if they have enough free space
@@ -1006,7 +1010,7 @@ Rope Rope::FromString(size_t page_size, std::string_view text) {
     if (leafs.size() == 1) {
         auto leaf_node = leafs.back().Get<LeafNode>();
         auto root_info = TextInfo{leaf_node->GetData()};
-        Rope rope{page_size, NodePtr{leaf_node}, root_info, leaf_node};
+        Rope rope{page_size, NodePtr{leaf_node}, root_info, leaf_node, 1};
         leafs.back().Release();
         return rope;
     }
@@ -1035,12 +1039,14 @@ Rope Rope::FromString(size_t page_size, std::string_view text) {
         }
         prev_inner = next;
     }
+    size_t tree_height = 2;
 
     // Create inner nodes from inner nodes
     auto level_begin = 0;
     auto level_end = inners.size();
     while ((level_end - level_begin) > 1) {
         prev_inner = nullptr;
+        ++tree_height;
 
         // Iterate of inner nodes of previous level
         for (size_t begin = level_begin; begin < level_end;) {
@@ -1075,7 +1081,7 @@ Rope Rope::FromString(size_t page_size, std::string_view text) {
     auto root_inner_node = inners[level_begin].Get<InnerNode>();
     auto root_info = root_inner_node->AggregateTextInfo();
     auto first_leaf = leafs.front().Get<LeafNode>();
-    Rope rope{page_size, NodePtr{root_inner_node}, root_info, first_leaf};
+    Rope rope{page_size, NodePtr{root_inner_node}, root_info, first_leaf, tree_height};
 
     for (auto& leaf : leafs) {
         leaf.Release();

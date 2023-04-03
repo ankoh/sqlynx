@@ -248,6 +248,8 @@ struct Rope {
    protected:
     /// The page size
     const size_t page_size;
+    /// The tree height
+    size_t tree_height;
     /// The root page
     NodePtr root_node;
     /// The root page
@@ -257,7 +259,7 @@ struct Rope {
 
    public:
     /// Constructor
-    explicit Rope(size_t page_size, NodePtr root_node, TextInfo root_info, LeafNode* first_leaf);
+    explicit Rope(size_t page_size, NodePtr root_node, TextInfo root_info, LeafNode* first_leaf, size_t tree_height);
     /// Constructor
     explicit Rope(size_t page_size);
     /// Destructor
