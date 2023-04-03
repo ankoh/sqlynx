@@ -975,6 +975,11 @@ void Rope::Insert(size_t char_idx, std::string_view text) {
 
 /// Create a rope from a string
 Rope Rope::FromString(size_t page_size, std::string_view text) {
+    // Short-circuit case where the input text is empty
+    if (text.empty()) {
+        return Rope{page_size};
+    }
+
     // Create leaf nodes
     std::vector<NodePage> leafs;
     auto leaf_capacity = LeafCapacity(page_size);
