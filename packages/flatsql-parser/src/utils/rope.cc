@@ -720,7 +720,7 @@ void Rope::AppendEquiHeight(Rope&& right_rope) {
     right_rope.root_node = {};
 }
 
-/// Append a rope that is smaller height
+/// Append a rope that is smaller
 void Rope::AppendSmaller(Rope&& right_rope) {
     assert(tree_height > right_rope.tree_height);
 
@@ -778,11 +778,10 @@ void Rope::AppendSmaller(Rope&& right_rope) {
     right_rope.root_node = {};
 }
 
-/// Append a rope that is taller height
+/// Append a rope that is taller
 void Rope::AppendTaller(Rope&& right_rope) {
     assert(right_rope.tree_height > tree_height);
 
-    // Right rope is taller.
     // Preemptively split root?
     assert(right_rope.root_node.Is<InnerNode>());
     if (right_rope.root_node.Get<InnerNode>()->IsFull()) {

@@ -263,9 +263,9 @@ struct Rope {
     void SplitRootInner();
     /// Append a rope
     void AppendEquiHeight(Rope&& right_rope);
-    /// Append a rope that is smaller height
+    /// Append a rope that is smaller
     void AppendSmaller(Rope&& right_rope);
-    /// Append a rope that is taller height
+    /// Append a rope that is taller
     void AppendTaller(Rope&& right_rope);
 
    public:
