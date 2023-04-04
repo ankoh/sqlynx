@@ -257,6 +257,17 @@ struct Rope {
     /// The first leaf
     LeafNode* first_leaf;
 
+    /// Connect nodes
+    static void LinkEquiHeight(size_t page_size, NodePtr left, NodePtr right);
+    /// Split the inner root nodes
+    void SplitRootInner();
+    /// Append a rope
+    void AppendEquiHeight(Rope&& right_rope);
+    /// Append a rope that is smaller height
+    void AppendSmaller(Rope&& right_rope);
+    /// Append a rope that is taller height
+    void AppendTaller(Rope&& right_rope);
+
    public:
     /// Constructor
     explicit Rope(size_t page_size, NodePtr root_node, TextInfo root_info, LeafNode* first_leaf, size_t tree_height);
@@ -277,7 +288,7 @@ struct Rope {
     /// Split off a rope
     Rope SplitOff(size_t char_idx);
     /// Append a rope to this rope
-    void Append(Rope other);
+    void Append(Rope&& other);
     /// Insert a small text at index.
     /// The text to be inserted must not exceed the size of leaf page.
     /// That guarantees that we need at most one split.
