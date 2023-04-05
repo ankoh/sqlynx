@@ -184,8 +184,8 @@ TEST(Rope, SplitOff1) {
         auto split = 1;
         auto left = rope::Rope::FromString(128, expected);
         auto right = left.SplitOff(split);
-        ASSERT_EQ(left.ToString(), expected.substr(0, split));
-        ASSERT_EQ(right.ToString(), expected.substr(split));
+        ASSERT_EQ(left.ToString(), std::string_view{expected}.substr(0, split));
+        ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(split));
     }
 }
 
@@ -196,8 +196,8 @@ TEST(Rope, SplitOffNDiv2) {
         auto split = expected.size() / 2;
         auto left = rope::Rope::FromString(128, expected);
         auto right = left.SplitOff(split);
-        ASSERT_EQ(left.ToString(), expected.substr(0, split));
-        ASSERT_EQ(right.ToString(), expected.substr(split));
+        ASSERT_EQ(left.ToString(), std::string_view{expected}.substr(0, split));
+        ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(split));
     }
 }
 
@@ -208,8 +208,8 @@ TEST(Rope, SplitOffNMinus1) {
         auto split = expected.size() - 1;
         auto left = rope::Rope::FromString(128, expected);
         auto right = left.SplitOff(split);
-        ASSERT_EQ(left.ToString(), expected.substr(0, split));
-        ASSERT_EQ(right.ToString(), expected.substr(split));
+        ASSERT_EQ(left.ToString(), std::string_view{expected}.substr(0, split));
+        ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(split));
     }
 }
 
@@ -220,8 +220,8 @@ TEST(Rope, SplitOffN) {
         auto split = expected.size();
         auto left = rope::Rope::FromString(128, expected);
         auto right = left.SplitOff(split);
-        ASSERT_EQ(left.ToString(), expected.substr(0, split));
-        ASSERT_EQ(right.ToString(), expected.substr(split));
+        ASSERT_EQ(left.ToString(), std::string_view{expected}.substr(0, split));
+        ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(split));
     }
 }
 
