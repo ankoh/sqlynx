@@ -296,6 +296,17 @@ std::pair<NodePtr, TextInfo> InnerNode::Remove(size_t idx) {
     --child_count;
     return {n, s};
 }
+/// Remove elements in a range
+void InnerNode::RemoveRange(size_t idx, size_t count) {
+    assert(idx < GetSize());
+    assert((idx + count) <= GetSize());
+    auto child_nodes = GetChildNodesBuffer();
+    auto child_stats = GetChildStatsBuffer();
+    auto tail = GetSize() - (idx + count);
+    std::memmove(&child_nodes[idx], &child_nodes[idx + 1], tail * sizeof(NodePtr));
+    std::memmove(&child_stats[idx], &child_stats[idx + 1], tail * sizeof(TextInfo));
+    child_count -= count;
+}
 /// Truncate children from a position
 std::pair<std::span<const NodePtr>, std::span<const TextInfo>> InnerNode::Truncate(size_t idx) noexcept {
     assert(idx <= GetSize());
@@ -436,9 +447,8 @@ void InnerNode::Balance(size_t idx1, size_t idx2) {}
 /// If the children are leaf nodes, compacts them to take up the fewest nodes
 void InnerNode::CompactLeafs() {}
 
-using Child = std::pair<size_t, TextInfo>;
 /// Find the first child where a predicate returns true or the last child if none qualify
-template <typename Predicate> static Child Find(InnerNode& node, size_t arg, Predicate predicate) {
+template <typename Predicate> static InnerNode::Boundary Find(InnerNode& node, size_t arg, Predicate predicate) {
     auto child_stats = node.GetChildStats();
     TextInfo next;
     for (size_t child_idx = 0; (child_idx + 1) < child_stats.size(); ++child_idx) {
@@ -462,24 +472,25 @@ static bool ChildContainsLineBreak(size_t line_break_idx, TextInfo prev, TextInf
     return next.line_breaks > line_break_idx;
 }
 /// Find the child that contains a byte index
-std::pair<size_t, size_t> InnerNode::FindByte(size_t byte_idx) {
+InnerNode::Boundary InnerNode::FindByte(size_t byte_idx) {
     auto [child, stats] = Find(*this, byte_idx, ChildContainsByte);
-    return {child, stats.text_bytes};
+    return {child, stats};
 }
 /// Find the child that contains a character
-std::pair<size_t, size_t> InnerNode::FindCodepoint(size_t char_idx) {
+InnerNode::Boundary InnerNode::FindCodepoint(size_t char_idx) {
     auto [child, stats] = Find(*this, char_idx, ChildContainsCodepoint);
-    return {child, stats.utf8_codepoints};
+    return {child, stats};
 }
 /// Find the child that contains a line break
-std::pair<size_t, size_t> InnerNode::FindLineBreak(size_t line_break_idx) {
+InnerNode::Boundary InnerNode::FindLineBreak(size_t line_break_idx) {
     auto [child, stats] = Find(*this, line_break_idx, ChildContainsLineBreak);
-    return {child, stats.line_breaks};
+    return {child, stats};
 }
 
 /// Find a range where two predicate return true
 template <typename Predicate>
-static std::pair<Child, Child> FindRange(InnerNode& node, size_t arg0, size_t arg1, Predicate predicate) {
+static std::pair<InnerNode::Boundary, InnerNode::Boundary> FindRange(InnerNode& node, size_t arg0, size_t arg1,
+                                                                     Predicate predicate) {
     auto child_stats = node.GetChildStats();
     std::pair<size_t, TextInfo> begin, end;
     TextInfo next;
@@ -501,10 +512,15 @@ static std::pair<Child, Child> FindRange(InnerNode& node, size_t arg0, size_t ar
         next += child_stats[child_idx];
         if (predicate(arg1, prev, next)) {
             end = {child_idx, prev};
-            break;
+            return {begin, end};
         }
     }
     return {begin, end};
+}
+
+/// Find the children that contain a codepoint range
+std::pair<InnerNode::Boundary, InnerNode::Boundary> InnerNode::FindCodepointRange(size_t char_idx, size_t count) {
+    return FindRange(*this, char_idx, char_idx + count, ChildContainsCodepoint);
 }
 
 /// Constructor
@@ -582,10 +598,10 @@ Rope Rope::SplitOff(size_t char_idx) {
 
     // Locate leaf node and remember traversed inner nodes
     auto left_iter = root_node;
-    while (!left_iter.Is<LeafNode>()) {
+    while (left_iter.Is<InnerNode>()) {
         // Find child with codepoint
         InnerNode* left_inner = left_iter.Get<InnerNode>();
-        auto [child_idx, child_prefix_chars] = left_inner->FindCodepoint(char_idx);
+        auto [child_idx, child_prefix_stats] = left_inner->FindCodepoint(char_idx);
 
         // Create right inner page.
         // We increment the left child count immediately afterwards to keep child_idx referenced.
@@ -599,7 +615,7 @@ Rope Rope::SplitOff(size_t char_idx) {
         // We will update the parent later
 
         // Traverse to child
-        char_idx -= child_prefix_chars;
+        char_idx -= child_prefix_stats.utf8_codepoints;
         left_iter = left_inner->GetChildNodes()[child_idx];
     }
 
@@ -649,8 +665,8 @@ void Rope::LinkEquiHeight(size_t page_size, NodePtr left_root, NodePtr right_roo
     // Connect inner seam nodes
     auto left_iter = left_root;
     auto right_iter = right_root;
-    while (!left_iter.Is<LeafNode>()) {
-        assert(!right_iter.Is<LeafNode>());
+    while (left_iter.Is<InnerNode>()) {
+        assert(right_iter.Is<InnerNode>());
         auto left_inner = left_iter.Get<InnerNode>();
         auto right_inner = right_iter.Get<InnerNode>();
         assert(!left_inner->IsEmpty());
@@ -727,7 +743,7 @@ void Rope::AppendSmaller(Rope&& right_rope) {
     // Preemptively split root?
     assert(root_node.Is<InnerNode>());
     if (root_node.Get<InnerNode>()->IsFull()) {
-        SplitRootInner();
+        SplitInnerRoot();
     }
     root_info += right_rope.root_info;
 
@@ -785,7 +801,7 @@ void Rope::AppendTaller(Rope&& right_rope) {
     // Preemptively split root?
     assert(right_rope.root_node.Is<InnerNode>());
     if (right_rope.root_node.Get<InnerNode>()->IsFull()) {
-        right_rope.SplitRootInner();
+        right_rope.SplitInnerRoot();
     }
     right_rope.root_info += root_info;
 
@@ -850,7 +866,7 @@ void Rope::Append(Rope&& right_rope) {
 }
 
 /// Split the root inner page
-void Rope::SplitRootInner() {
+void Rope::SplitInnerRoot() {
     assert(root_node.Is<InnerNode>());
     NodePage right_page{page_size};
     NodePage root_page{page_size};
@@ -874,7 +890,7 @@ void Rope::InsertBounded(size_t char_idx, std::span<const std::byte> text_bytes)
 
     // Preemptively split the root, if it is full
     if (root_node.Is<InnerNode>() && root_node.Get<InnerNode>()->IsFull()) {
-        SplitRootInner();
+        SplitInnerRoot();
     }
 
     // Traverse down the tree with pre-emptive splitting
@@ -882,7 +898,7 @@ void Rope::InsertBounded(size_t char_idx, std::span<const std::byte> text_bytes)
     size_t iter_idx = 0;
     auto iter_node = root_node;
     auto iter_stats = &root_info;
-    while (!iter_node.Is<LeafNode>()) {
+    while (iter_node.Is<InnerNode>()) {
         // Find child with codepoint
         InnerNode* inner = iter_node.Get<InnerNode>();
 
@@ -916,14 +932,14 @@ void Rope::InsertBounded(size_t char_idx, std::span<const std::byte> text_bytes)
         (*iter_stats) += insert_info;
 
         // Find the next child
-        auto [child_idx, child_prefix_chars] = inner->FindCodepoint(char_idx);
+        auto [child_idx, child_prefix_stats] = inner->FindCodepoint(char_idx);
 
         // Continue with child
         parent_node = inner;
         iter_idx = child_idx;
         iter_node = inner->GetChildNodes()[child_idx];
         iter_stats = &inner->GetChildStats()[child_idx];
-        char_idx -= child_prefix_chars;
+        char_idx -= child_prefix_stats.utf8_codepoints;
 
         // Make sure the tree is not broken
         assert(!iter_node.IsNull());
@@ -1100,6 +1116,83 @@ Rope Rope::FromString(size_t page_size, std::string_view text) {
         inner.Release();
     }
     return rope;
+}
+
+// Remove a range of characters
+void Rope::RemoveRange(size_t char_idx, size_t char_count) {
+    char_idx = std::min<size_t>(char_idx, root_info.utf8_codepoints);
+
+    auto begin_node = root_node, end_node = root_node;
+    auto begin_info = root_info, end_info = root_info;
+    auto begin_char_idx = char_idx, end_char_idx = char_idx + char_count;
+    TextInfo begin_prefix, end_prefix;
+
+    while (begin_node.Is<InnerNode>()) {
+        assert(begin_node.Is<InnerNode>());
+        assert(end_node.Is<InnerNode>());
+        auto begin_inner = begin_node.Get<InnerNode>();
+        auto end_inner = end_node.Get<InnerNode>();
+
+        // Deletion in same node?
+        if (begin_inner == end_inner) { 
+            auto range = begin_inner->FindCodepointRange(begin_char_idx, end_char_idx - begin_char_idx);
+            auto [next_begin_idx, next_begin_prefix] = std::get<0>(range);
+            auto [next_end_idx, next_end_prefix] = std::get<1>(range);
+            auto next_begin_node = begin_inner->GetChildNodes()[next_begin_idx],
+                next_end_node = end_inner->GetChildNodes()[next_end_idx];
+            auto next_begin_info = begin_inner->GetChildStats()[next_begin_idx],
+                next_end_info = end_inner->GetChildStats()[next_end_idx];
+
+            // Delete children
+            // Exclude begin?
+            auto delete_begin = next_begin_idx;
+            if ((begin_char_idx - next_begin_prefix.utf8_codepoints) >= 1) {
+                ++delete_begin;
+            }
+            // Include end?
+            auto delete_end = next_end_idx;
+            if ((next_end_prefix.utf8_codepoints + next_end_info.utf8_codepoints) == end_char_idx) {
+                ++delete_end;
+            }
+            begin_inner->RemoveRange(delete_begin, delete_end - delete_begin);
+
+            begin_node = next_begin_node;
+            begin_info = next_begin_info, begin_prefix = next_begin_prefix;
+            begin_char_idx -= begin_prefix.utf8_codepoints;
+            end_node = next_end_node;
+            end_info = next_end_info, end_prefix = next_end_prefix;
+            end_char_idx -= end_prefix.utf8_codepoints;
+            continue;
+        }
+
+        // First, find the next left and right boundaries
+        auto [next_begin_idx, next_begin_prefix] = begin_inner->FindCodepoint(begin_char_idx);
+        auto [next_end_idx, next_end_prefix] = end_inner->FindCodepoint(end_char_idx);
+        auto next_begin_node = begin_inner->GetChildNodes()[next_begin_idx],
+             next_end_node = end_inner->GetChildNodes()[next_end_idx];
+        auto next_begin_info = begin_inner->GetChildStats()[next_begin_idx],
+             next_end_info = end_inner->GetChildStats()[next_end_idx];
+
+        // Truncate begin, delete starting from right neighbor if there's a prefix
+        auto delete_begin = next_begin_idx;
+        if ((begin_char_idx - next_begin_prefix.utf8_codepoints) >= 1) {
+            ++delete_begin;
+        }
+        begin_inner->Truncate(delete_begin);
+
+        // Delete from end, delete until previous neighbor if there's a suffix
+        auto delete_end = next_end_idx;
+        if ((next_end_prefix.utf8_codepoints + next_end_info.utf8_codepoints) > next_end_idx) {
+            delete_end = std::max<size_t>(1, delete_end) - 1;
+        }
+        end_inner->RemoveRange(0, delete_end);
+
+        // Blindly delete all nodes in between
+        auto level_iter = begin_inner->next_node;
+        while (level_iter != end_inner) {
+            //auto next_level_iter = begin_inner->next_node
+        }
+    }
 }
 
 }  // namespace flatsql::rope

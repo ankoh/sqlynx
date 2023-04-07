@@ -205,12 +205,15 @@ struct InnerNode {
     /// Is the node full?
     inline auto IsFull() noexcept { return GetSize() >= GetCapacity(); }
 
+    using Boundary = std::pair<size_t, TextInfo>;
     /// Find the child that contains a byte index
-    std::pair<size_t, size_t> FindByte(size_t byte_idx);
+    Boundary FindByte(size_t byte_idx);
     /// Find the child that contains a character
-    std::pair<size_t, size_t> FindCodepoint(size_t char_idx);
+    Boundary FindCodepoint(size_t char_idx);
     /// Find the child that contains a line break
-    std::pair<size_t, size_t> FindLineBreak(size_t line_break_idx);
+    Boundary FindLineBreak(size_t line_break_idx);
+    /// Find the children that contain a codepoint range
+    std::pair<Boundary, Boundary> FindCodepointRange(size_t char_idx, size_t count);
 
     /// Link a neighbor
     void LinkNeighbors(InnerNode& other);
@@ -226,6 +229,8 @@ struct InnerNode {
     void Insert(size_t idx, NodePtr child, TextInfo stats);
     /// Remove an element at a position
     std::pair<NodePtr, TextInfo> Remove(size_t idx);
+    /// Remove elements in a range
+    void RemoveRange(size_t idx, size_t count);
     /// Truncate children from a position
     std::pair<std::span<const NodePtr>, std::span<const TextInfo>> Truncate(size_t idx = 0) noexcept;
     /// Splits node at index
@@ -260,7 +265,7 @@ struct Rope {
     /// Connect nodes
     static void LinkEquiHeight(size_t page_size, NodePtr left, NodePtr right);
     /// Split the inner root nodes
-    void SplitRootInner();
+    void SplitInnerRoot();
     /// Append a rope
     void AppendEquiHeight(Rope&& right_rope);
     /// Append a rope that is smaller
@@ -293,8 +298,10 @@ struct Rope {
     /// The text to be inserted must not exceed the size of leaf page.
     /// That guarantees that we need at most one split.
     void InsertBounded(size_t char_idx, std::span<const std::byte> text_bytes);
-    /// Insert at index
+    /// Insert a character at index
     void Insert(size_t char_idx, std::string_view text);
+    /// Remove a range of characters
+    void RemoveRange(size_t begin, size_t count);
 
     /// Copy the rope to a std::string
     std::string ToString();
