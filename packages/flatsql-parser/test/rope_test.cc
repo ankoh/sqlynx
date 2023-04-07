@@ -311,3 +311,16 @@ TEST(Rope, RemoveLast) {
         ASSERT_EQ(buffer.GetInfo().utf8_codepoints, text.size() - 1);
     }
 }
+
+TEST(Rope, RemoveNothing) {
+    std::string text;
+    for (size_t i = 0; i < 1000; ++i) {
+        text += std::to_string(i);
+        auto buffer = rope::Rope::FromString(128, text);
+        buffer.RemoveRange(0, 0);
+        buffer.RemoveRange(text.size() / 2, 0);
+        buffer.RemoveRange(text.size() - 1, 0);
+        ASSERT_EQ(buffer.ToString(), text);
+        ASSERT_EQ(buffer.GetInfo().utf8_codepoints, text.size());
+    }
+}
