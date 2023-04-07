@@ -348,6 +348,17 @@ TEST_F(RopeTest, RemoveLast) {
     }
 }
 
+TEST_F(RopeTest, RemoveAll) {
+    std::string text;
+    for (size_t i = 0; i < 1000; ++i) {
+        text += std::to_string(i);
+        auto buffer = rope::Rope::FromString(128, text);
+        buffer.Remove(0, text.size());
+        ASSERT_EQ(buffer.ToString(), "");
+        ASSERT_EQ(buffer.GetInfo().utf8_codepoints, 0);
+    }
+}
+
 TEST_F(RopeTest, RemoveNDiv2) {
     std::string text;
     for (size_t i = 0; i < 1000; ++i) {
@@ -366,6 +377,23 @@ TEST_F(RopeTest, RemoveNDiv3Mid) {
     for (size_t i = 0; i < 1000; ++i) {
         text += std::to_string(i);
         auto n = text.size() / 3;
+        auto prefix = std::string_view{text}.substr(0, n);
+        auto inner = std::min(text.size() - prefix.size(), n);
+        auto suffix = std::string_view{text}.substr(prefix.size() + inner);
+        auto buffer = rope::Rope::FromString(128, text);
+        buffer.Remove(prefix.size(), inner);
+        std::string combined{prefix};
+        combined += suffix;
+        ASSERT_EQ(buffer.ToString(), combined);
+        ASSERT_EQ(buffer.GetInfo().utf8_codepoints, combined.size());
+    }
+}
+
+TEST_F(RopeTest, RemoveNDiv4Mid) {
+    std::string text;
+    for (size_t i = 0; i < 1000; ++i) {
+        text += std::to_string(i);
+        auto n = text.size() / 4;
         auto prefix = std::string_view{text}.substr(0, n);
         auto inner = std::min(text.size() - prefix.size(), n);
         auto suffix = std::string_view{text}.substr(prefix.size() + inner);
@@ -397,17 +425,6 @@ TEST_F(RopeTest, RemoveNMinus1Back) {
         buffer.Remove(text.size() - 1, 1);
         ASSERT_EQ(buffer.ToString(), text.substr(0, text.size() - 1));
         ASSERT_EQ(buffer.GetInfo().utf8_codepoints, text.size() - 1);
-    }
-}
-
-TEST_F(RopeTest, RemoveAll) {
-    std::string text;
-    for (size_t i = 0; i < 1000; ++i) {
-        text += std::to_string(i);
-        auto buffer = rope::Rope::FromString(128, text);
-        buffer.Remove(0, text.size());
-        ASSERT_EQ(buffer.ToString(), "");
-        ASSERT_EQ(buffer.GetInfo().utf8_codepoints, 0);
     }
 }
 
