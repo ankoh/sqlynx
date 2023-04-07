@@ -201,7 +201,7 @@ TEST_F(RopeTest, SplitOff0) {
         ASSERT_EQ(left.GetInfo().utf8_codepoints, split);
         ASSERT_EQ(right.GetInfo().utf8_codepoints, expected.size() - split);
         // left.Validate();
-        // right.Validate();
+        right.Validate();
     }
 }
 
@@ -217,7 +217,7 @@ TEST_F(RopeTest, SplitOff1) {
         ASSERT_EQ(left.GetInfo().utf8_codepoints, split);
         ASSERT_EQ(right.GetInfo().utf8_codepoints, expected.size() - split);
         // left.Validate();
-        // right.Validate();
+        right.Validate();
     }
 }
 
@@ -233,7 +233,7 @@ TEST_F(RopeTest, SplitOffNDiv2) {
         ASSERT_EQ(left.GetInfo().utf8_codepoints, split);
         ASSERT_EQ(right.GetInfo().utf8_codepoints, expected.size() - split);
         // left.Validate();
-        // right.Validate();
+        right.Validate();
     }
 }
 
@@ -249,7 +249,7 @@ TEST_F(RopeTest, SplitOffNMinus1) {
         ASSERT_EQ(left.GetInfo().utf8_codepoints, split);
         ASSERT_EQ(right.GetInfo().utf8_codepoints, expected.size() - split);
         // left.Validate();
-        // right.Validate();
+        right.Validate();
     }
 }
 
@@ -265,7 +265,7 @@ TEST_F(RopeTest, SplitOffN) {
         ASSERT_EQ(left.GetInfo().utf8_codepoints, split);
         ASSERT_EQ(right.GetInfo().utf8_codepoints, expected.size() - split);
         // left.Validate();
-        // right.Validate();
+        right.Validate();
     }
 }
 
