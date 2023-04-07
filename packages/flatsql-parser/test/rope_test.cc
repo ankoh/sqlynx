@@ -155,6 +155,7 @@ TEST(Rope, FromText) {
         expected += std::to_string(i);
         auto rope = rope::Rope::FromString(128, expected);
         ASSERT_EQ(rope.ToString(), expected);
+        ASSERT_EQ(rope.GetInfo().utf8_codepoints, expected.size());
     }
     auto rope = rope::Rope::FromString(128, expected);
     for (size_t i = 0; i < 1000; ++i) {
@@ -162,6 +163,7 @@ TEST(Rope, FromText) {
         expected.insert(i, std::to_string(i));
         rope.InsertBounded(i, asBytes(v));
         ASSERT_EQ(rope.ToString(), expected);
+        ASSERT_EQ(rope.GetInfo().utf8_codepoints, expected.size());
     }
 }
 
@@ -174,6 +176,8 @@ TEST(Rope, SplitOff0) {
         auto right = left.SplitOff(split);
         ASSERT_EQ(left.ToString(), expected.substr(0, split));
         ASSERT_EQ(right.ToString(), expected.substr(split));
+        ASSERT_EQ(left.GetInfo().utf8_codepoints, split);
+        ASSERT_EQ(right.GetInfo().utf8_codepoints, expected.size() - split);
     }
 }
 
@@ -186,6 +190,8 @@ TEST(Rope, SplitOff1) {
         auto right = left.SplitOff(split);
         ASSERT_EQ(left.ToString(), std::string_view{expected}.substr(0, split));
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(split));
+        ASSERT_EQ(left.GetInfo().utf8_codepoints, split);
+        ASSERT_EQ(right.GetInfo().utf8_codepoints, expected.size() - split);
     }
 }
 
@@ -198,6 +204,8 @@ TEST(Rope, SplitOffNDiv2) {
         auto right = left.SplitOff(split);
         ASSERT_EQ(left.ToString(), std::string_view{expected}.substr(0, split));
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(split));
+        ASSERT_EQ(left.GetInfo().utf8_codepoints, split);
+        ASSERT_EQ(right.GetInfo().utf8_codepoints, expected.size() - split);
     }
 }
 
@@ -210,6 +218,8 @@ TEST(Rope, SplitOffNMinus1) {
         auto right = left.SplitOff(split);
         ASSERT_EQ(left.ToString(), std::string_view{expected}.substr(0, split));
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(split));
+        ASSERT_EQ(left.GetInfo().utf8_codepoints, split);
+        ASSERT_EQ(right.GetInfo().utf8_codepoints, expected.size() - split);
     }
 }
 
@@ -222,6 +232,8 @@ TEST(Rope, SplitOffN) {
         auto right = left.SplitOff(split);
         ASSERT_EQ(left.ToString(), std::string_view{expected}.substr(0, split));
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(split));
+        ASSERT_EQ(left.GetInfo().utf8_codepoints, split);
+        ASSERT_EQ(right.GetInfo().utf8_codepoints, expected.size() - split);
     }
 }
 
@@ -235,6 +247,7 @@ TEST(Rope, AppendLeaf) {
         ASSERT_EQ(right.ToString(), text);
         left.Append(std::move(right));
         ASSERT_EQ(left.ToString(), expected);
+        ASSERT_EQ(left.GetInfo().utf8_codepoints, expected.size());
     }
 }
 
@@ -248,6 +261,7 @@ TEST(Rope, AppendNDiv2) {
         auto right_rope = rope::Rope::FromString(128, right_text);
         left_rope.Append(std::move(right_rope));
         ASSERT_EQ(left_rope.ToString(), expected);
+        ASSERT_EQ(left_rope.GetInfo().utf8_codepoints, expected.size());
     }
 }
 
@@ -261,6 +275,7 @@ TEST(Rope, AppendNDiv3) {
         auto right_rope = rope::Rope::FromString(128, right_text);
         left_rope.Append(std::move(right_rope));
         ASSERT_EQ(left_rope.ToString(), expected);
+        ASSERT_EQ(left_rope.GetInfo().utf8_codepoints, expected.size());
     }
 }
 
@@ -274,6 +289,7 @@ TEST(Rope, Append2NDiv3) {
         auto right_rope = rope::Rope::FromString(128, right_text);
         left_rope.Append(std::move(right_rope));
         ASSERT_EQ(left_rope.ToString(), expected);
+        ASSERT_EQ(left_rope.GetInfo().utf8_codepoints, expected.size());
     }
 }
 
