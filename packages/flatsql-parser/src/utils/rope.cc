@@ -1150,6 +1150,7 @@ void Rope::RemoveRange(size_t char_idx, size_t char_count) {
     struct InnerBounds {
         InnerNode *lower_node, *upper_node;
         TextInfo *lower_info, *upper_info;
+        TextInfo lower_deleted, upper_deleted;
     };
     std::vector<InnerBounds> inner_bounds;
     inner_bounds.reserve(tree_height);
@@ -1173,6 +1174,8 @@ void Rope::RemoveRange(size_t char_idx, size_t char_count) {
             .upper_node = upper_inner,
             .lower_info = lower_info,
             .upper_info = upper_info,
+            .lower_deleted = {},
+            .upper_deleted = {},
         });
 
         // Deletion in same node?
@@ -1187,9 +1190,7 @@ void Rope::RemoveRange(size_t char_idx, size_t char_count) {
             auto deleted_count = deleted_end - deleted_begin;
             auto deleted_info = lower_inner->AggregateTextInfoInRange(deleted_begin, deleted_count);
             lower_inner->RemoveRange(deleted_begin, deleted_count);
-
-            // Subtract the immediately deleted text statistics
-            (*lower_info) -= deleted_info;
+            inner_bounds.back().lower_deleted += deleted_info;
 
             // Traverse down to next
             lower_char_idx -= next_lower_prefix.utf8_codepoints;
@@ -1207,12 +1208,12 @@ void Rope::RemoveRange(size_t char_idx, size_t char_count) {
             auto lower_suffix_length = lower_inner->GetSize() - (next_lower_idx + 1);
             auto lower_deleted = lower_inner->AggregateTextInfoInRange(next_lower_idx + 1, lower_suffix_length);
             lower_inner->Truncate(next_lower_idx + 1);
-            (*lower_info) -= lower_deleted;
+            inner_bounds.back().lower_deleted += lower_deleted;
 
             // Delete prefix of upper bound
             auto upper_deleted = upper_inner->AggregateTextInfoInRange(0, next_upper_idx);
             upper_inner->RemoveRange(0, next_upper_idx);
-            (*upper_info) -= upper_deleted;
+            inner_bounds.back().upper_deleted += upper_deleted;
 
             // Blindly delete all nodes in between.
             // Note that we account for their deleted text statistics in the first shared ancestor node.
@@ -1246,8 +1247,9 @@ void Rope::RemoveRange(size_t char_idx, size_t char_count) {
         assert(upper_char_idx <= lower_leaf->GetSize());
         auto deleted = lower_leaf->RemoveCharRange(lower_char_idx, upper_char_idx - lower_char_idx);
         (*lower_info) -= deleted;
-        for (auto& parent : inner_bounds) {
-            (*parent.lower_info) -= deleted;
+        for (auto iter = inner_bounds.rbegin(); iter != inner_bounds.rend(); ++iter) {
+            deleted += iter->lower_deleted;
+            (*iter->lower_info) -= deleted;
         }
     } else {
         // Adjust boundaries
@@ -1266,9 +1268,11 @@ void Rope::RemoveRange(size_t char_idx, size_t char_count) {
         // Propagate statistics upwards
         (*lower_info) -= lower_deleted;
         (*upper_info) -= upper_deleted;
-        for (auto& parent : inner_bounds) {
-            (*parent.lower_info) -= lower_deleted;
-            (*parent.upper_info) -= upper_deleted;
+        for (auto iter = inner_bounds.rbegin(); iter != inner_bounds.rend(); ++iter) {
+            lower_deleted += iter->lower_deleted;
+            upper_deleted += iter->upper_deleted;
+            (*iter->lower_info) -= lower_deleted;
+            (*iter->upper_info) -= upper_deleted;
         }
     }
 }
