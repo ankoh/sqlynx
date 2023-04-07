@@ -13,7 +13,8 @@
 #include "flatsql/utils/small_vector.h"
 #include "utf8proc/utf8proc_wrapper.hpp"
 
-namespace flatsql::rope {
+namespace flatsql {
+namespace rope {
 
 struct Rope;
 struct LeafNode;
@@ -52,7 +53,8 @@ struct NodePage {
 
    public:
     /// Constructor
-    explicit NodePage(size_t page_size) : page_size(page_size), page(std::unique_ptr<std::byte[]>(new std::byte[page_size])) {}
+    explicit NodePage(size_t page_size)
+        : page_size(page_size), page(std::unique_ptr<std::byte[]>(new std::byte[page_size])) {}
 
     /// Get the page size
     inline size_t GetPageSize() { return page_size; }
@@ -276,6 +278,10 @@ struct Rope {
     void AppendSmaller(Rope&& right_rope);
     /// Append a rope that is taller
     void AppendTaller(Rope&& right_rope);
+    /// Insert a small text at index.
+    /// The text to be inserted must not exceed the size of leaf page.
+    /// That guarantees that we need at most one split.
+    void InsertBounded(size_t char_idx, std::span<const std::byte> text_bytes);
 
    public:
     /// Constructor
@@ -294,18 +300,14 @@ struct Rope {
     /// Get the root text info
     inline auto& GetInfo() { return root_info; }
 
-    /// Split off a rope
-    Rope SplitOff(size_t char_idx);
-    /// Append a rope to this rope
-    void Append(Rope&& other);
-    /// Insert a small text at index.
-    /// The text to be inserted must not exceed the size of leaf page.
-    /// That guarantees that we need at most one split.
-    void InsertBounded(size_t char_idx, std::span<const std::byte> text_bytes);
     /// Insert a character at index
     void Insert(size_t char_idx, std::string_view text);
     /// Remove a range of characters
     void Remove(size_t char_idx, size_t count);
+    /// Split off a rope
+    Rope SplitOff(size_t char_idx);
+    /// Append a rope to this rope
+    void Append(Rope&& other);
 
     /// Copy the rope to a std::string
     std::string ToString();
@@ -313,4 +315,5 @@ struct Rope {
     static Rope FromString(size_t page_size, std::string_view text);
 };
 
-}  // namespace flatsql::rope
+}  // namespace rope
+}  // namespace flatsql

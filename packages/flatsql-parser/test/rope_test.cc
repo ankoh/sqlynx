@@ -3,11 +3,26 @@
 
 using namespace flatsql;
 
+namespace {
+
 static std::span<const std::byte> asBytes(std::string_view str) {
     return {reinterpret_cast<const std::byte*>(str.data()), str.size()};
 }
 
-TEST(RopeLeafNode, ByteOps) {
+struct TestableRope: public rope::Rope {
+    explicit TestableRope(rope::Rope&& rope)
+        : rope::Rope(std::move(rope)) {}
+    explicit TestableRope(size_t page_size, rope::NodePtr root_node, rope::TextInfo root_info, rope::LeafNode* first_leaf, size_t tree_height)
+        : rope::Rope(page_size, root_node, root_info, first_leaf, tree_height) {}
+    explicit TestableRope(size_t page_size)
+        : rope::Rope(page_size) {}
+
+    using rope::Rope::InsertBounded;
+};
+
+struct RopeTest : public ::testing::Test {};
+
+TEST_F(RopeTest, LeafByteOps) {
     rope::NodePage page{128};
     auto& node = *new (page.Get()) rope::LeafNode(128);
     EXPECT_TRUE(node.IsEmpty());
@@ -37,7 +52,7 @@ TEST(RopeLeafNode, ByteOps) {
     EXPECT_EQ(right.GetStringView(), "nananana");
 }
 
-TEST(RopeLeafNode, PushBytesAndSplit) {
+TEST_F(RopeTest, LeafPushBytesAndSplit) {
     rope::NodePage left_page{128};
     rope::NodePage right_page{128};
     auto& left = *new (left_page.Get()) rope::LeafNode(128);
@@ -48,7 +63,7 @@ TEST(RopeLeafNode, PushBytesAndSplit) {
     EXPECT_EQ(right.GetStringView(), "6789abc");
 }
 
-TEST(RopeLeafNode, BalanceBytesWith) {
+TEST_F(RopeTest, LeafBalanceBytesWith) {
     rope::NodePage left_page{128};
     rope::NodePage right_page{128};
     auto& left = *new (left_page.Get()) rope::LeafNode(128);
@@ -68,8 +83,8 @@ TEST(RopeLeafNode, BalanceBytesWith) {
     EXPECT_EQ(right.GetStringView(), "fghij");
 }
 
-TEST(Rope, InsertBoundedEnd) {
-    rope::Rope rope{128};
+TEST_F(RopeTest, InsertBoundedEnd) {
+    TestableRope rope{128};
     std::string expected;
     size_t pos = 0;
     for (size_t i = 0; i < 1000; ++i) {
@@ -84,8 +99,8 @@ TEST(Rope, InsertBoundedEnd) {
     }
 }
 
-TEST(Rope, InsertBounded0) {
-    rope::Rope rope{128};
+TEST_F(RopeTest, InsertBounded0) {
+    TestableRope rope{128};
     std::string expected;
     for (size_t i = 0; i < 1000; ++i) {
         auto s = std::to_string(i) + ",";
@@ -98,8 +113,8 @@ TEST(Rope, InsertBounded0) {
     }
 }
 
-TEST(Rope, InsertBounded1IDiv2) {
-    rope::Rope rope{128};
+TEST_F(RopeTest, InsertBounded1IDiv2) {
+    TestableRope rope{128};
     std::string expected;
     for (size_t i = 0; i < 1000; ++i) {
         auto s = std::to_string(i);
@@ -115,8 +130,8 @@ TEST(Rope, InsertBounded1IDiv2) {
     }
 }
 
-TEST(Rope, InsertBounded1IDiv3) {
-    rope::Rope rope{128};
+TEST_F(RopeTest, InsertBounded1IDiv3) {
+    TestableRope rope{128};
     std::string expected;
     for (size_t i = 0; i < 1000; ++i) {
         auto s = std::to_string(i);
@@ -132,8 +147,8 @@ TEST(Rope, InsertBounded1IDiv3) {
     }
 }
 
-TEST(Rope, InsertBounded2IDiv3) {
-    rope::Rope rope{128};
+TEST_F(RopeTest, InsertBounded2IDiv3) {
+    TestableRope rope{128};
     std::string expected;
     for (size_t i = 0; i < 1000; ++i) {
         auto s = std::to_string(i);
@@ -149,7 +164,7 @@ TEST(Rope, InsertBounded2IDiv3) {
     }
 }
 
-TEST(Rope, FromText) {
+TEST_F(RopeTest, FromText) {
     std::string expected;
     for (size_t i = 0; i < 1000; ++i) {
         expected += std::to_string(i);
@@ -157,7 +172,7 @@ TEST(Rope, FromText) {
         ASSERT_EQ(rope.ToString(), expected);
         ASSERT_EQ(rope.GetInfo().utf8_codepoints, expected.size());
     }
-    auto rope = rope::Rope::FromString(128, expected);
+    TestableRope rope{rope::Rope::FromString(128, expected)};
     for (size_t i = 0; i < 1000; ++i) {
         auto v = std::to_string(i);
         expected.insert(i, std::to_string(i));
@@ -167,7 +182,7 @@ TEST(Rope, FromText) {
     }
 }
 
-TEST(Rope, SplitOff0) {
+TEST_F(RopeTest, SplitOff0) {
     std::string expected;
     for (size_t i = 0; i < 1000; ++i) {
         expected += std::to_string(i);
@@ -181,7 +196,7 @@ TEST(Rope, SplitOff0) {
     }
 }
 
-TEST(Rope, SplitOff1) {
+TEST_F(RopeTest, SplitOff1) {
     std::string expected;
     for (size_t i = 0; i < 1000; ++i) {
         expected += std::to_string(i);
@@ -195,7 +210,7 @@ TEST(Rope, SplitOff1) {
     }
 }
 
-TEST(Rope, SplitOffNDiv2) {
+TEST_F(RopeTest, SplitOffNDiv2) {
     std::string expected;
     for (size_t i = 0; i < 1000; ++i) {
         expected += std::to_string(i);
@@ -209,7 +224,7 @@ TEST(Rope, SplitOffNDiv2) {
     }
 }
 
-TEST(Rope, SplitOffNMinus1) {
+TEST_F(RopeTest, SplitOffNMinus1) {
     std::string expected;
     for (size_t i = 0; i < 1000; ++i) {
         expected += std::to_string(i);
@@ -223,7 +238,7 @@ TEST(Rope, SplitOffNMinus1) {
     }
 }
 
-TEST(Rope, SplitOffN) {
+TEST_F(RopeTest, SplitOffN) {
     std::string expected;
     for (size_t i = 0; i < 1000; ++i) {
         expected += std::to_string(i);
@@ -237,7 +252,7 @@ TEST(Rope, SplitOffN) {
     }
 }
 
-TEST(Rope, AppendLeaf) {
+TEST_F(RopeTest, AppendLeaf) {
     rope::Rope left{128};
     std::string expected;
     for (size_t i = 0; i < 1000; ++i) {
@@ -251,7 +266,7 @@ TEST(Rope, AppendLeaf) {
     }
 }
 
-TEST(Rope, AppendNDiv2) {
+TEST_F(RopeTest, AppendNDiv2) {
     std::string expected;
     for (size_t i = 0; i < 1000; ++i) {
         expected += std::to_string(i);
@@ -265,7 +280,7 @@ TEST(Rope, AppendNDiv2) {
     }
 }
 
-TEST(Rope, AppendNDiv3) {
+TEST_F(RopeTest, AppendNDiv3) {
     std::string expected;
     for (size_t i = 0; i < 1000; ++i) {
         expected += std::to_string(i);
@@ -279,7 +294,7 @@ TEST(Rope, AppendNDiv3) {
     }
 }
 
-TEST(Rope, Append2NDiv3) {
+TEST_F(RopeTest, Append2NDiv3) {
     std::string expected;
     for (size_t i = 0; i < 1000; ++i) {
         expected += std::to_string(i);
@@ -293,7 +308,7 @@ TEST(Rope, Append2NDiv3) {
     }
 }
 
-TEST(Rope, RemoveNothing) {
+TEST_F(RopeTest, RemoveNothing) {
     std::string text;
     for (size_t i = 0; i < 1000; ++i) {
         text += std::to_string(i);
@@ -306,7 +321,7 @@ TEST(Rope, RemoveNothing) {
     }
 }
 
-TEST(Rope, RemoveFirst) {
+TEST_F(RopeTest, RemoveFirst) {
     std::string text;
     for (size_t i = 0; i < 1000; ++i) {
         text += std::to_string(i);
@@ -317,7 +332,7 @@ TEST(Rope, RemoveFirst) {
     }
 }
 
-TEST(Rope, RemoveLast) {
+TEST_F(RopeTest, RemoveLast) {
     std::string text;
     for (size_t i = 0; i < 1000; ++i) {
         text += std::to_string(i);
@@ -328,7 +343,7 @@ TEST(Rope, RemoveLast) {
     }
 }
 
-TEST(Rope, RemoveNDiv2) {
+TEST_F(RopeTest, RemoveNDiv2) {
     std::string text;
     for (size_t i = 0; i < 1000; ++i) {
         text += std::to_string(i);
@@ -339,4 +354,6 @@ TEST(Rope, RemoveNDiv2) {
         ASSERT_EQ(buffer.ToString(), prefix);
         ASSERT_EQ(buffer.GetInfo().utf8_codepoints, prefix.size());
     }
+}
+
 }
