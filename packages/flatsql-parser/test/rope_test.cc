@@ -1,4 +1,5 @@
 #include "flatsql/text/rope.h"
+
 #include "gtest/gtest.h"
 
 using namespace flatsql;
@@ -9,13 +10,12 @@ static std::span<const std::byte> asBytes(std::string_view str) {
     return {reinterpret_cast<const std::byte*>(str.data()), str.size()};
 }
 
-struct TestableRope: public rope::Rope {
-    explicit TestableRope(rope::Rope&& rope)
-        : rope::Rope(std::move(rope)) {}
-    explicit TestableRope(size_t page_size, rope::NodePtr root_node, rope::TextInfo root_info, rope::LeafNode* first_leaf, size_t tree_height)
+struct TestableRope : public rope::Rope {
+    explicit TestableRope(rope::Rope&& rope) : rope::Rope(std::move(rope)) {}
+    explicit TestableRope(size_t page_size, rope::NodePtr root_node, rope::TextInfo root_info,
+                          rope::LeafNode* first_leaf, size_t tree_height)
         : rope::Rope(page_size, root_node, root_info, first_leaf, tree_height) {}
-    explicit TestableRope(size_t page_size)
-        : rope::Rope(page_size) {}
+    explicit TestableRope(size_t page_size) : rope::Rope(page_size) {}
 
     using rope::Rope::InsertBounded;
 };
@@ -384,4 +384,4 @@ TEST_F(RopeTest, RemoveAll) {
     }
 }
 
-}
+}  // namespace
