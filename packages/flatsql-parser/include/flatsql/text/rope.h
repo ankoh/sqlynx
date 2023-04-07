@@ -144,6 +144,8 @@ struct LeafNode {
     TextInfo RemoveCharRange(size_t start_idx, size_t end_idx) noexcept;
     /// Removes text after byte_idx
     std::span<std::byte> TruncateBytes(size_t byte_idx = 0) noexcept;
+    /// Removes text after char_idx
+    std::span<std::byte> TruncateChars(size_t char_idx = 0) noexcept;
     /// Splits bytes at index
     void SplitBytesOff(size_t byte_idx, LeafNode& right) noexcept;
     /// Split chars at index
