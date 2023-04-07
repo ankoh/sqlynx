@@ -1288,9 +1288,13 @@ void Rope::Remove(size_t char_idx, size_t char_count) {
 /// Validate a rope
 void Rope::Validate() {
     auto validate = [](bool value, std::string_view msg) {
+#ifdef WASM
+        assert(!value);
+#else
         if (!value) {
             throw std::logic_error{std::string{msg}};
         }
+#endif
     };
     if (root_node.IsNull()) return;
 
