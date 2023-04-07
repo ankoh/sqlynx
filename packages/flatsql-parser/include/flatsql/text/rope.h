@@ -305,7 +305,7 @@ struct Rope {
     /// Insert a character at index
     void Insert(size_t char_idx, std::string_view text);
     /// Remove a range of characters
-    void RemoveRange(size_t char_idx, size_t count);
+    void Remove(size_t char_idx, size_t count);
 
     /// Copy the rope to a std::string
     std::string ToString();

@@ -1136,7 +1136,7 @@ Rope Rope::FromString(size_t page_size, std::string_view text) {
 }
 
 // Remove a range of characters
-void Rope::RemoveRange(size_t char_idx, size_t char_count) {
+void Rope::Remove(size_t char_idx, size_t char_count) {
     char_idx = std::min<size_t>(char_idx, root_info.utf8_codepoints);
     char_count = std::min<size_t>(char_count, root_info.utf8_codepoints - char_idx);
 
