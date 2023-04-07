@@ -373,4 +373,15 @@ TEST_F(RopeTest, RemoveNDiv3Mid) {
     }
 }
 
+TEST_F(RopeTest, RemoveAll) {
+    std::string text;
+    for (size_t i = 0; i < 1000; ++i) {
+        text += std::to_string(i);
+        auto buffer = rope::Rope::FromString(128, text);
+        buffer.Remove(0, text.size());
+        ASSERT_EQ(buffer.ToString(), "");
+        ASSERT_EQ(buffer.GetInfo().utf8_codepoints, 0);
+    }
+}
+
 }
