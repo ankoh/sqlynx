@@ -221,6 +221,8 @@ struct InnerNode {
     void LinkNeighbors(InnerNode& other);
     /// Combine the text statistics
     TextInfo AggregateTextInfo() noexcept;
+    /// Combine the text statistics
+    TextInfo AggregateTextInfoInRange(size_t child_id, size_t count) noexcept;
     /// Pushes an item into the array
     void Push(NodePtr child, TextInfo stats);
     /// Pushes items into the array

@@ -251,6 +251,14 @@ TextInfo InnerNode::AggregateTextInfo() noexcept {
     }
     return acc;
 }
+/// Combine the text statistics
+TextInfo InnerNode::AggregateTextInfoInRange(size_t child_id, size_t count) noexcept {
+    TextInfo acc;
+    for (auto stats : GetChildStats().subspan(child_id, count)) {
+        acc += stats;
+    }
+    return acc;
+}
 /// Pushes an item into the array
 void InnerNode::Push(NodePtr child, TextInfo stats) {
     assert(!IsFull());
@@ -1127,12 +1135,25 @@ Rope Rope::FromString(size_t page_size, std::string_view text) {
 void Rope::RemoveRange(size_t char_idx, size_t char_count) {
     char_idx = std::min<size_t>(char_idx, root_info.utf8_codepoints);
 
+    // Remember the inner boundaries since we have to propagate the deleted text statistics upwards.
+    // This is inevitable since we cannot know beforehand how many text_bytes and lines are falling into the char range.
+    // Our only option is to traverse down to the leaf, perform the deletion and then propagate the deleted text
+    // stats to parents.
+    //
+    // NOTE that we don't have to propagate the statistics of nodes between the boundaries since they can be
+    //      accounted for when removing the range from the the shared parent!!
+    struct InnerBounds {
+        InnerNode *lower_node, *upper_node;
+        TextInfo *lower_info, *upper_info;
+    };
+    std::vector<InnerBounds> inner_bounds;
+    inner_bounds.reserve(tree_height);
+
     // During removal, we track the lower and upper boundary nodes.
     // Initially, both a are pointing to the root.
     auto lower_node = root_node, upper_node = root_node;
-    auto lower_info = root_info, upper_info = root_info;
+    auto lower_info = &root_info, upper_info = &root_info;
     auto lower_char_idx = char_idx, upper_char_idx = char_idx + char_count;
-    TextInfo lower_prefix, upper_prefix;
 
     // Remove nodes level-by-level
     while (lower_node.Is<InnerNode>()) {
@@ -1141,68 +1162,71 @@ void Rope::RemoveRange(size_t char_idx, size_t char_count) {
         auto lower_inner = lower_node.Get<InnerNode>();
         auto upper_inner = upper_node.Get<InnerNode>();
 
-        // State to resolve children boundaries before deleting
-        size_t next_lower_idx, next_upper_idx;
-        TextInfo next_lower_prefix, next_upper_prefix, next_lower_info, next_upper_info;
-        NodePtr next_lower_node, next_upper_node;
+        // Remember inner boundaries to propagate leaf deletions upwards
+        inner_bounds.push_back(InnerBounds{
+            .lower_node = lower_inner,
+            .upper_node = upper_inner,
+            .lower_info = lower_info,
+            .upper_info = upper_info,
+        });
 
         // Deletion in same node?
-        if (lower_inner == upper_inner) { 
+        if (lower_inner == upper_inner) {
             auto range = lower_inner->FindCodepointRange(lower_char_idx, upper_char_idx - lower_char_idx);
-            std::tie(next_lower_idx, next_lower_prefix) = std::get<0>(range);
-            std::tie(next_upper_idx, next_upper_prefix) = std::get<1>(range);
-            next_lower_node = lower_inner->GetChildNodes()[next_lower_idx];
-            next_upper_node = upper_inner->GetChildNodes()[next_upper_idx];
-            next_lower_info = lower_inner->GetChildStats()[next_lower_idx];
-            next_upper_info = upper_inner->GetChildStats()[next_upper_idx];
+            auto [next_lower_idx, next_lower_prefix] = std::get<0>(range);
+            auto [next_upper_idx, next_upper_prefix] = std::get<1>(range);
 
-            // Delete children
-            // Exclude begin?
-            auto delete_begin = next_lower_idx;
-            if ((lower_char_idx - next_lower_prefix.utf8_codepoints) >= 1) {
-                ++delete_begin;
-            }
-            // Include end?
-            auto delete_end = next_upper_idx;
-            if ((next_upper_prefix.utf8_codepoints + next_upper_info.utf8_codepoints) == upper_char_idx) {
-                ++delete_end;
-            }
-            delete_end = std::max<size_t>(delete_begin, delete_end);
-            lower_inner->RemoveRange(delete_begin, delete_end - delete_begin);
+            // Delete children in between (if there are any)
+            auto deleted_end = next_upper_idx;
+            auto deleted_begin = std::min<size_t>(next_lower_idx + 1, deleted_end);
+            auto deleted_count = deleted_end - deleted_begin;
+            auto deleted_info = lower_inner->AggregateTextInfoInRange(deleted_begin, deleted_count);
+            lower_inner->RemoveRange(deleted_begin, deleted_count);
+
+            // Subtract the immediately deleted text statistics
+            (*lower_info) -= deleted_info;
+
+            // Traverse down to next
+            lower_char_idx -= next_lower_prefix.utf8_codepoints;
+            lower_node = lower_inner->GetChildNodes()[next_lower_idx];
+            lower_info = &lower_inner->GetChildStats()[next_lower_idx];
+            upper_char_idx -= next_upper_prefix.utf8_codepoints;
+            upper_node = upper_inner->GetChildNodes()[next_upper_idx - deleted_count];
+            upper_info = &upper_inner->GetChildStats()[next_upper_idx - deleted_count];
         } else {
             // First, find the next left and right boundaries
-            std::tie(next_lower_idx, next_lower_prefix) = lower_inner->FindCodepoint(lower_char_idx);
-            std::tie(next_upper_idx, next_upper_prefix) = upper_inner->FindCodepoint(upper_char_idx);
-            auto next_lower_node = lower_inner->GetChildNodes()[next_lower_idx],
-                next_upper_node = upper_inner->GetChildNodes()[next_upper_idx];
-            auto next_lower_info = lower_inner->GetChildStats()[next_lower_idx],
-                next_upper_info = upper_inner->GetChildStats()[next_upper_idx];
+            auto [next_lower_idx, next_lower_prefix] = lower_inner->FindCodepoint(lower_char_idx);
+            auto [next_upper_idx, next_upper_prefix] = upper_inner->FindCodepoint(upper_char_idx);
 
-            // Truncate begin, and delete prefix of end
-            auto delete_begin = next_lower_idx + 1, delete_end = next_upper_idx;
-            lower_inner->Truncate(delete_begin);
-            upper_inner->RemoveRange(0, delete_end);
+            // Delete suffix of lower bound
+            auto lower_suffix_length = lower_inner->GetSize() - (next_lower_idx + 1);
+            auto lower_deleted = lower_inner->AggregateTextInfoInRange(next_lower_idx + 1, lower_suffix_length);
+            lower_inner->Truncate(next_lower_idx + 1);
+            (*lower_info) -= lower_deleted;
 
-            // Blindly delete all nodes in between
+            // Delete prefix of upper bound
+            auto upper_deleted = upper_inner->AggregateTextInfoInRange(0, next_upper_idx);
+            upper_inner->RemoveRange(0, next_upper_idx);
+            (*upper_info) -= upper_deleted;
+
+            // Blindly delete all nodes in between.
+            // Note that we account for their deleted text statistics in the first shared ancestor node.
             for (auto neighbor = lower_inner->next_node; neighbor != upper_inner;) {
                 auto next = neighbor->next_node;
-                delete[] reinterpret_cast<std::byte*>(next);
+                delete[] reinterpret_cast<std::byte*>(neighbor);
                 neighbor = next;
             }
             lower_inner->next_node = upper_inner;
             upper_inner->previous_node = lower_inner;
 
-            // XXX It could still be that the begin and and nodes are (almost) empty now
-            //     Balance them!
+            // Traverse down to next
+            lower_char_idx -= next_lower_prefix.utf8_codepoints;
+            lower_node = lower_inner->GetChildNodes().back();
+            lower_info = &lower_inner->GetChildStats().back();
+            upper_char_idx -= next_upper_prefix.utf8_codepoints;
+            upper_node = upper_inner->GetChildNodes().front();
+            upper_info = &upper_inner->GetChildStats().front();
         }
-
-        // Traverse to next level
-        lower_node = next_lower_node;
-        lower_info = next_lower_info, lower_prefix = next_lower_prefix;
-        lower_char_idx -= lower_prefix.utf8_codepoints;
-        upper_node = next_upper_node;
-        upper_info = next_upper_info, upper_prefix = next_upper_prefix;
-        upper_char_idx -= upper_prefix.utf8_codepoints;
     }
 
     // Reached leafs
@@ -1211,23 +1235,36 @@ void Rope::RemoveRange(size_t char_idx, size_t char_count) {
     auto lower_leaf = lower_node.Get<LeafNode>();
     auto upper_leaf = upper_node.Get<LeafNode>();
 
+    // Deletion in same leaf?
     if (lower_leaf == upper_leaf) {
         assert(lower_char_idx <= lower_leaf->GetSize());
         assert(upper_char_idx <= lower_leaf->GetSize());
-        lower_leaf->RemoveCharRange(lower_char_idx, upper_char_idx - lower_char_idx);
+        auto deleted = lower_leaf->RemoveCharRange(lower_char_idx, upper_char_idx - lower_char_idx);
+        (*lower_info) -= deleted;
+        for (auto& parent : inner_bounds) {
+            (*parent.lower_info) -= deleted;
+        }
     } else {
         // Adjust boundaries
-        lower_leaf->TruncateChars(lower_char_idx);
-        upper_leaf->RemoveCharRange(0, upper_char_idx);
+        TextInfo lower_deleted = lower_leaf->TruncateChars(lower_char_idx);
+        TextInfo upper_deleted = upper_leaf->RemoveCharRange(0, upper_char_idx);
 
         // Blindly delete all nodes in between
         for (auto neighbor = lower_leaf->next_node; neighbor != upper_leaf;) {
             auto next = neighbor->next_node;
-            delete[] reinterpret_cast<std::byte*>(next);
+            delete[] reinterpret_cast<std::byte*>(neighbor);
             neighbor = next;
         }
         lower_leaf->next_node = upper_leaf;
         upper_leaf->previous_node = lower_leaf;
+
+        // Propagate statistics upwards
+        (*lower_info) -= lower_deleted;
+        (*upper_info) -= upper_deleted;
+        for (auto& parent : inner_bounds) {
+            (*parent.lower_info) -= lower_deleted;
+            (*parent.upper_info) -= upper_deleted;
+        }
     }
 }
 
