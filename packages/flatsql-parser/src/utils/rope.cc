@@ -1167,6 +1167,7 @@ void Rope::RemoveRange(size_t char_idx, size_t char_count) {
             if ((next_upper_prefix.utf8_codepoints + next_upper_info.utf8_codepoints) == upper_char_idx) {
                 ++delete_end;
             }
+            delete_end = std::max<size_t>(delete_begin, delete_end);
             lower_inner->RemoveRange(delete_begin, delete_end - delete_begin);
         } else {
             // First, find the next left and right boundaries
