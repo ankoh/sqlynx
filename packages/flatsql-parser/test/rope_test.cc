@@ -356,4 +356,21 @@ TEST_F(RopeTest, RemoveNDiv2) {
     }
 }
 
+TEST_F(RopeTest, RemoveNDiv3Mid) {
+    std::string text;
+    for (size_t i = 0; i < 1000; ++i) {
+        text += std::to_string(i);
+        auto n = text.size() / 3;
+        auto prefix = std::string_view{text}.substr(0, n);
+        auto inner = std::min(text.size() - prefix.size(), n);
+        auto suffix = std::string_view{text}.substr(prefix.size() + inner);
+        auto buffer = rope::Rope::FromString(128, text);
+        buffer.Remove(prefix.size(), inner);
+        std::string combined{prefix};
+        combined += suffix;
+        ASSERT_EQ(buffer.ToString(), combined);
+        ASSERT_EQ(buffer.GetInfo().utf8_codepoints, combined.size());
+    }
+}
+
 }
