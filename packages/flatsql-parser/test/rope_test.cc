@@ -314,7 +314,12 @@ TEST_F(RopeTest, RemoveNothing) {
         text += std::to_string(i);
         auto buffer = rope::Rope::FromString(128, text);
         buffer.Remove(0, 0);
+        buffer.Remove(text.size() * 3 / 4, 0);
+        buffer.Remove(text.size() * 2 / 3, 0);
         buffer.Remove(text.size() / 2, 0);
+        buffer.Remove(text.size() / 3, 0);
+        buffer.Remove(text.size() / 4, 0);
+        buffer.Remove(text.size() / 5, 0);
         buffer.Remove(text.size() - 1, 0);
         ASSERT_EQ(buffer.ToString(), text);
         ASSERT_EQ(buffer.GetInfo().utf8_codepoints, text.size());
