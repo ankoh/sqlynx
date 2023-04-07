@@ -22,7 +22,7 @@ TEST(RopeLeafNode, ByteOps) {
     node.PushBytes(asBytes("2"));
     node.PushBytes(asBytes("3"));
     EXPECT_EQ(node.GetStringView(), "testfoo123");
-    node.RemoveByteRange(4, 7);
+    node.RemoveByteRange(4, 3);
     EXPECT_EQ(node.GetStringView(), "test123");
     node.TruncateBytes(4);
 
@@ -274,5 +274,17 @@ TEST(Rope, Append2NDiv3) {
         auto right_rope = rope::Rope::FromString(128, right_text);
         left_rope.Append(std::move(right_rope));
         ASSERT_EQ(left_rope.ToString(), expected);
+    }
+}
+
+TEST(Rope, RemoveRangeNDiv2) {
+    std::string text;
+    for (size_t i = 0; i < 1000; ++i) {
+        text += std::to_string(i);
+        auto mid = (text.size() + 1) / 2;
+        auto prefix = std::string_view{text}.substr(0, mid);
+        auto buffer = rope::Rope::FromString(128, text);
+        buffer.RemoveRange(mid, text.size() - mid);
+        ASSERT_EQ(buffer.ToString(), prefix);
     }
 }

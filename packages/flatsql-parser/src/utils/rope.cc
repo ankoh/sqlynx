@@ -62,15 +62,15 @@ void LeafNode::InsertBytes(size_t ofs, std::span<const std::byte> data) noexcept
 /// Appends a string to the end of the buffer
 void LeafNode::PushBytes(std::span<const std::byte> str) noexcept { InsertBytes(GetSize(), str); }
 /// Remove text in range
-void LeafNode::RemoveByteRange(size_t start_byte_idx, size_t upper_byte_idx) noexcept {
-    assert(start_byte_idx <= upper_byte_idx);
+void LeafNode::RemoveByteRange(size_t start_byte_idx, size_t byte_count) noexcept {
+    size_t upper_byte_idx = start_byte_idx + byte_count;
     assert(upper_byte_idx <= GetSize());
     assert(utf8::isCodepointBoundary(GetData(), start_byte_idx));
     assert(utf8::isCodepointBoundary(GetData(), upper_byte_idx));
 
     auto buffer = GetDataBuffer();
     std::memmove(&buffer[start_byte_idx], &buffer[upper_byte_idx], GetSize() - upper_byte_idx);
-    buffer_size -= upper_byte_idx - start_byte_idx;
+    buffer_size -= byte_count;
 }
 /// Remove text in range
 TextInfo LeafNode::RemoveCharRange(size_t start_idx, size_t count) noexcept {
@@ -316,8 +316,8 @@ void InnerNode::RemoveRange(size_t idx, size_t count) {
     auto child_nodes = GetChildNodesBuffer();
     auto child_stats = GetChildStatsBuffer();
     auto tail = GetSize() - (idx + count);
-    std::memmove(&child_nodes[idx], &child_nodes[idx + 1], tail * sizeof(NodePtr));
-    std::memmove(&child_stats[idx], &child_stats[idx + 1], tail * sizeof(TextInfo));
+    std::memmove(&child_nodes[idx], &child_nodes[idx + count], tail * sizeof(NodePtr));
+    std::memmove(&child_stats[idx], &child_stats[idx + count], tail * sizeof(TextInfo));
     child_count -= count;
 }
 /// Truncate children from a position
@@ -471,6 +471,7 @@ template <typename Predicate> static InnerNode::Boundary Find(InnerNode& node, s
             return {child_idx, prev};
         }
     }
+    assert(!child_stats.empty());
     return {child_stats.size() - 1, next};
 }
 
@@ -508,8 +509,9 @@ static std::pair<InnerNode::Boundary, InnerNode::Boundary> FindRange(InnerNode& 
     std::pair<size_t, TextInfo> begin, end;
     TextInfo next;
     size_t child_idx = 0;
+    TextInfo prev;
     for (; child_idx < child_stats.size(); ++child_idx) {
-        TextInfo prev = next;
+        prev = next;
         next += child_stats[child_idx];
         if (predicate(arg0, prev, next)) {
             begin = {child_idx, prev};
@@ -517,17 +519,19 @@ static std::pair<InnerNode::Boundary, InnerNode::Boundary> FindRange(InnerNode& 
             if (predicate(arg1, prev, next)) {
                 return {begin, end};
             }
+            ++child_idx;
             break;
         }
     }
     for (; child_idx < child_stats.size(); ++child_idx) {
-        TextInfo prev = next;
+        prev = next;
         next += child_stats[child_idx];
         if (predicate(arg1, prev, next)) {
             end = {child_idx, prev};
             return {begin, end};
         }
     }
+    end = {std::max<size_t>(1, child_stats.size()) - 1, prev};
     return {begin, end};
 }
 
@@ -1134,6 +1138,7 @@ Rope Rope::FromString(size_t page_size, std::string_view text) {
 // Remove a range of characters
 void Rope::RemoveRange(size_t char_idx, size_t char_count) {
     char_idx = std::min<size_t>(char_idx, root_info.utf8_codepoints);
+    char_count = std::min<size_t>(char_count, root_info.utf8_codepoints - char_idx);
 
     // Remember the inner boundaries since we have to propagate the deleted text statistics upwards.
     // This is inevitable since we cannot know beforehand how many text_bytes and lines are falling into the char range.

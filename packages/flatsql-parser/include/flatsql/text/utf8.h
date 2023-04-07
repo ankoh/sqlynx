@@ -72,6 +72,7 @@ inline static size_t codepointToByteIdx(std::span<const std::byte> buffer, size_
     auto reader_base = reinterpret_cast<const char*>(buffer.data());
     auto reader = reader_base;
     for (size_t i = 0; i < char_idx; ++i) {
+        assert(reader <= reader_base + buffer.size());
         int n = 0;
         utf8proc_codepoint(reader, n);
         reader += n;

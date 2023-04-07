@@ -139,7 +139,7 @@ struct LeafNode {
     /// Appends a string to the end of the buffer
     void PushBytes(std::span<const std::byte> str) noexcept;
     /// Remove text in range
-    void RemoveByteRange(size_t start_byte_idx, size_t end_byte_idx) noexcept;
+    void RemoveByteRange(size_t start_byte_idx, size_t byte_count) noexcept;
     /// Remove text in range
     TextInfo RemoveCharRange(size_t start_idx, size_t end_idx) noexcept;
     /// Removes text after byte_idx
@@ -305,7 +305,7 @@ struct Rope {
     /// Insert a character at index
     void Insert(size_t char_idx, std::string_view text);
     /// Remove a range of characters
-    void RemoveRange(size_t begin, size_t count);
+    void RemoveRange(size_t char_idx, size_t count);
 
     /// Copy the rope to a std::string
     std::string ToString();
