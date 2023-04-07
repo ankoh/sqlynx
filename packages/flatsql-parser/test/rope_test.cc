@@ -293,16 +293,16 @@ TEST(Rope, Append2NDiv3) {
     }
 }
 
-TEST(Rope, RemoveRangeNDiv2) {
+TEST(Rope, RemoveNothing) {
     std::string text;
     for (size_t i = 0; i < 1000; ++i) {
         text += std::to_string(i);
-        auto mid = (text.size() + 1) / 2;
-        auto prefix = std::string_view{text}.substr(0, mid);
         auto buffer = rope::Rope::FromString(128, text);
-        buffer.RemoveRange(mid, text.size() - mid);
-        ASSERT_EQ(buffer.ToString(), prefix);
-        ASSERT_EQ(buffer.GetInfo().utf8_codepoints, prefix.size());
+        buffer.RemoveRange(0, 0);
+        buffer.RemoveRange(text.size() / 2, 0);
+        buffer.RemoveRange(text.size() - 1, 0);
+        ASSERT_EQ(buffer.ToString(), text);
+        ASSERT_EQ(buffer.GetInfo().utf8_codepoints, text.size());
     }
 }
 
@@ -328,15 +328,15 @@ TEST(Rope, RemoveLast) {
     }
 }
 
-TEST(Rope, RemoveNothing) {
+TEST(Rope, RemoveRangeNDiv2) {
     std::string text;
     for (size_t i = 0; i < 1000; ++i) {
         text += std::to_string(i);
+        auto mid = (text.size() + 1) / 2;
+        auto prefix = std::string_view{text}.substr(0, mid);
         auto buffer = rope::Rope::FromString(128, text);
-        buffer.RemoveRange(0, 0);
-        buffer.RemoveRange(text.size() / 2, 0);
-        buffer.RemoveRange(text.size() - 1, 0);
-        ASSERT_EQ(buffer.ToString(), text);
-        ASSERT_EQ(buffer.GetInfo().utf8_codepoints, text.size());
+        buffer.RemoveRange(mid, text.size() - mid);
+        ASSERT_EQ(buffer.ToString(), prefix);
+        ASSERT_EQ(buffer.GetInfo().utf8_codepoints, prefix.size());
     }
 }
