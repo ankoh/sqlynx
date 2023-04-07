@@ -1,5 +1,7 @@
 #include "flatsql/text/rope.h"
 
+#include <stdexcept>
+
 namespace flatsql::rope {
 
 /// Constructor
@@ -762,18 +764,20 @@ void Rope::AppendSmaller(Rope&& right_rope) {
     if (root_node.Get<InnerNode>()->IsFull()) {
         SplitInnerRoot();
     }
-    root_info += right_rope.root_info;
 
     // Preemptively split head
     InnerNode* parent = nullptr;
-    auto iter = root_node;
+    auto iter_node = root_node;
+    auto iter_info = &root_info;
     for (size_t i = 0; i < tree_height - right_rope.tree_height; ++i) {
+        auto inner = iter_node.Get<InnerNode>();
+        (*iter_info) += right_rope.root_info;
+
         // Fast-track if not full
-        auto inner = iter.Get<InnerNode>();
         if (!inner->IsFull()) {
-            inner->GetChildStats().back() += right_rope.root_info;
             parent = inner;
-            iter = inner->GetChildNodes().back();
+            iter_node = inner->GetChildNodes().back();
+            iter_info = &inner->GetChildStats().back();
             continue;
         }
         assert(parent != nullptr);
@@ -782,27 +786,31 @@ void Rope::AppendSmaller(Rope&& right_rope) {
         NodePage split_page{page_size};
         auto* split = new (split_page.Get()) InnerNode(page_size);
         inner->SplitOffRight((inner->GetSize() + 1) / 2, *split);
-        parent->Push(split_page.Release<InnerNode>(), split->AggregateTextInfo());
-        split->GetChildStats().back() += right_rope.root_info;
+        auto split_info = split->AggregateTextInfo();
+        (*iter_info) -= split_info;
+        parent->Push(split_page.Release<InnerNode>(), split_info);
 
         // Update iterator
         parent = split;
-        iter = split->GetChildNodes().back();
+        iter_node = split->GetChildNodes().back();
+        iter_info = &inner->GetChildStats().back();
     }
 
     // Did we hit a leaf?
-    if (iter.Is<LeafNode>()) {
+    if (iter_node.Is<LeafNode>()) {
         assert(right_rope.root_node.Is<LeafNode>());
         assert(parent != nullptr);
         parent->Push(right_rope.root_node, right_rope.root_info);
-        auto left = iter.Get<LeafNode>();
+        auto left = iter_node.Get<LeafNode>();
         auto right = right_rope.root_node.Get<LeafNode>();
         left->LinkNeighbors(*right);
     } else {
+        (*iter_info) += right_rope.root_info;
+
         // Merge inners
         assert(right_rope.root_node.Is<InnerNode>());
         assert(parent != nullptr);
-        auto left = iter.Get<InnerNode>();
+        auto left = iter_node.Get<InnerNode>();
         parent->Push(right_rope.root_node, right_rope.root_info);
         LinkEquiHeight(page_size, left, right_rope.root_node);
     }
@@ -1273,6 +1281,56 @@ void Rope::Remove(size_t char_idx, size_t char_count) {
             upper_deleted += iter->upper_deleted;
             (*iter->lower_info) -= lower_deleted;
             (*iter->upper_info) -= upper_deleted;
+        }
+    }
+}
+
+/// Validate a rope
+void Rope::Validate() {
+    auto validate = [](bool value, std::string_view msg) {
+        if (!value) {
+            throw std::logic_error{std::string{msg}};
+        }
+    };
+    if (root_node.IsNull()) return;
+
+    // A pending validation
+    struct Validation {
+        NodePtr node;
+        TextInfo expected;
+    };
+    std::vector<Validation> pending;
+    pending.push_back(Validation{
+        .node = root_node,
+        .expected = root_info,
+    });
+    while (!pending.empty()) {
+        auto top = pending.back();
+        pending.pop_back();
+
+        // Is a leaf node?
+        if (top.node.Is<LeafNode>()) {
+            auto leaf = top.node.Get<LeafNode>();
+            TextInfo have{leaf->GetData()};
+            validate(top.expected.text_bytes == have.text_bytes, "leaf text bytes mismatch");
+            validate(top.expected.line_breaks == have.line_breaks, "leaf line breaks mismatch");
+            validate(top.expected.utf8_codepoints == have.utf8_codepoints, "leaf utf8 codepoint mismatch");
+        } else {
+            // Is an inner node
+            auto inner = top.node.Get<InnerNode>();
+            TextInfo have;
+            for (size_t i = 0; i < inner->child_count; ++i) {
+                auto nodes = inner->GetChildNodes();
+                auto stats = inner->GetChildStats();
+                have += stats[i];
+                pending.push_back(Validation {
+                    .node = nodes[i],
+                    .expected = stats[i],
+                });
+            }
+            validate(top.expected.text_bytes == have.text_bytes, "inner text bytes mismatch");
+            validate(top.expected.line_breaks == have.line_breaks, "inner line breaks mismatch");
+            validate(top.expected.utf8_codepoints == have.utf8_codepoints, "inner utf8 codepoint mismatch");
         }
     }
 }

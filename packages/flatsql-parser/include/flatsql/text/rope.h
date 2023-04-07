@@ -300,6 +300,8 @@ struct Rope {
     /// Get the root text info
     inline auto& GetInfo() { return root_info; }
 
+    /// Validate a rope
+    void Validate();
     /// Insert a character at index
     void Insert(size_t char_idx, std::string_view text);
     /// Remove a range of characters
