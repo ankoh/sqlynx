@@ -1300,6 +1300,7 @@ void Rope::Validate() {
         TextInfo expected;
     };
     std::vector<Validation> pending;
+    pending.reserve(10 * tree_height);
     pending.push_back(Validation{
         .node = root_node,
         .expected = root_info,
