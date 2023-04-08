@@ -195,12 +195,13 @@ TEST_F(RopeTest, SplitOff0) {
         expected += std::to_string(i);
         auto split = 0;
         auto left = rope::Rope::FromString(128, expected);
+        left.CheckIntegrity();
         auto right = left.SplitOff(split);
         ASSERT_EQ(left.ToString(), expected.substr(0, split));
         ASSERT_EQ(right.ToString(), expected.substr(split));
         ASSERT_EQ(left.GetInfo().utf8_codepoints, split);
         ASSERT_EQ(right.GetInfo().utf8_codepoints, expected.size() - split);
-        // left.Validate();
+        left.CheckIntegrity();
         right.CheckIntegrity();
     }
 }
@@ -216,7 +217,7 @@ TEST_F(RopeTest, SplitOff1) {
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(split));
         ASSERT_EQ(left.GetInfo().utf8_codepoints, split);
         ASSERT_EQ(right.GetInfo().utf8_codepoints, expected.size() - split);
-        // left.Validate();
+        left.CheckIntegrity();
         right.CheckIntegrity();
     }
 }
@@ -232,7 +233,7 @@ TEST_F(RopeTest, SplitOffNDiv2) {
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(split));
         ASSERT_EQ(left.GetInfo().utf8_codepoints, split);
         ASSERT_EQ(right.GetInfo().utf8_codepoints, expected.size() - split);
-        // left.Validate();
+        left.CheckIntegrity();
         right.CheckIntegrity();
     }
 }
@@ -248,7 +249,7 @@ TEST_F(RopeTest, SplitOffNMinus1) {
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(split));
         ASSERT_EQ(left.GetInfo().utf8_codepoints, split);
         ASSERT_EQ(right.GetInfo().utf8_codepoints, expected.size() - split);
-        // left.Validate();
+        left.CheckIntegrity();
         right.CheckIntegrity();
     }
 }
@@ -264,7 +265,7 @@ TEST_F(RopeTest, SplitOffN) {
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(split));
         ASSERT_EQ(left.GetInfo().utf8_codepoints, split);
         ASSERT_EQ(right.GetInfo().utf8_codepoints, expected.size() - split);
-        // left.Validate();
+        left.CheckIntegrity();
         right.CheckIntegrity();
     }
 }

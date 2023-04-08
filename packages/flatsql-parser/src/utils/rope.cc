@@ -28,6 +28,9 @@ TextInfo& TextInfo::operator+=(const TextInfo& other) {
 }
 TextInfo TextInfo::operator-(const TextInfo& other) {
     TextInfo result = *this;
+    assert(result.text_bytes >= other.text_bytes);
+    assert(result.utf8_codepoints >= other.utf8_codepoints);
+    assert(result.line_breaks >= other.line_breaks);
     result.text_bytes -= other.text_bytes;
     result.utf8_codepoints -= other.utf8_codepoints;
     result.line_breaks -= other.line_breaks;
@@ -239,6 +242,7 @@ InnerNode::InnerNode(size_t page_size) : child_capacity(InnerCapacity(page_size)
 /// Link a neighbor
 void InnerNode::LinkNeighbors(InnerNode& other) {
     if (next_node) {
+        assert(other.next_node == nullptr);
         other.next_node = next_node;
         next_node->previous_node = &other;
     }
@@ -617,10 +621,11 @@ Rope Rope::SplitOff(size_t char_idx) {
 
     // Locate leaf node and remember traversed inner nodes
     auto left_iter = root_node;
+    auto left_char_idx = char_idx;
     while (left_iter.Is<InnerNode>()) {
         // Find child with codepoint
         InnerNode* left_inner = left_iter.Get<InnerNode>();
-        auto [child_idx, child_prefix_stats] = left_inner->FindCodepoint(char_idx);
+        auto [child_idx, child_prefix_stats] = left_inner->FindCodepoint(left_char_idx);
 
         // Create right inner page.
         // We increment the left child count immediately afterwards to keep child_idx referenced.
@@ -631,41 +636,43 @@ Rope Rope::SplitOff(size_t char_idx) {
         left_inner->SplitOffRight(child_idx, *right_inner);
         ++left_inner->child_count;
 
-        // We will update the parent later
+        // We will update the parent & statistics later
 
         // Traverse to child
-        char_idx -= child_prefix_stats.utf8_codepoints;
+        assert(left_char_idx >= child_prefix_stats.utf8_codepoints);
+        assert(left_inner->GetSize() == (child_idx + 1));
+        left_char_idx -= child_prefix_stats.utf8_codepoints;
         left_iter = left_inner->GetChildNodes()[child_idx];
     }
 
     // Reached a leaf
     assert(left_iter.Is<LeafNode>());
-    auto* left_leaf = left_iter.Get<LeafNode>();
     NodePage right_leaf_page{page_size};
+    auto* left_leaf = left_iter.Get<LeafNode>();
     auto* right_leaf = new (right_leaf_page.Get()) LeafNode(page_size);
-    left_leaf->SplitCharsOff(char_idx, *right_leaf);
+    left_leaf->SplitCharsOff(left_char_idx, *right_leaf);
 
     // Disconnect the leafs
     left_leaf->next_node = nullptr;
     right_leaf->previous_node = nullptr;
 
     // Now propagate the text change up the seam nodes
-    NodePtr right_child{right_leaf};
+    NodePtr right_child_node{right_leaf};
     TextInfo right_child_info{right_leaf->GetData()};
-    for (auto& right_parent_page : right_seam) {
+    for (auto seam_iter = right_seam.rbegin(); seam_iter != right_seam.rend(); ++seam_iter) {
+        auto right_parent = seam_iter->Get<InnerNode>();
+        auto left_parent = right_parent->previous_node;
         // Store child in right parent
-        auto right_parent = right_parent_page.Get<InnerNode>();
-        right_parent->GetChildNodes().front() = right_child;
+        right_parent->GetChildNodes().front() = right_child_node;
         right_parent->GetChildStats().front() = right_child_info;
         // Update left parent
-        auto left_parent = right_parent->previous_node;
         assert(!left_parent->GetChildNodes().empty());
         left_parent->GetChildStats().back() -= right_child_info;
         // Disconnect nodes
         left_parent->next_node = nullptr;
         right_parent->previous_node = nullptr;
         // Go 1 level up
-        right_child = right_parent;
+        right_child_node = right_parent;
         right_child_info = right_parent->AggregateTextInfo();
     }
     root_info -= right_child_info;
@@ -676,7 +683,7 @@ Rope Rope::SplitOff(size_t char_idx) {
         right_page.Release();
     }
     // Create the right rope
-    return Rope{page_size, right_child, right_child_info, right_leaf, tree_height};
+    return Rope{page_size, right_child_node, right_child_info, right_leaf, tree_height};
 }
 
 /// Append a rope with the same height
