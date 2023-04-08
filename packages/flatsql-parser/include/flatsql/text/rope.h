@@ -249,10 +249,6 @@ struct InnerNode {
     void InsertAndSplit(size_t idx, NodePtr child, TextInfo stats, InnerNode& other);
     /// Distribute children equally between nodes
     void Balance(InnerNode& right);
-    /// Equi-distributes the children between the two child arrays, preserving ordering
-    void Balance(size_t idx1, size_t idx2);
-    /// If the children are leaf nodes, compacts them to take up the fewest nodes
-    void CompactLeafs();
 };
 
 struct Rope {

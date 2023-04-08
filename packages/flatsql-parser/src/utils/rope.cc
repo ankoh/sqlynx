@@ -461,10 +461,6 @@ void InnerNode::Balance(InnerNode& right) {
 //            }
 //        }
 //    }
-/// Equi-distributes the children between the two child arrays, preserving ordering
-void InnerNode::Balance(size_t idx1, size_t idx2) {}
-/// If the children are leaf nodes, compacts them to take up the fewest nodes
-void InnerNode::CompactLeafs() {}
 
 /// Find the first child where a predicate returns true or the last child if none qualify
 template <typename Predicate> static InnerNode::Boundary Find(InnerNode& node, size_t arg, Predicate predicate) {
