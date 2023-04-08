@@ -1286,7 +1286,7 @@ void Rope::Remove(size_t char_idx, size_t char_count) {
 }
 
 /// Validate a rope
-void Rope::Validate() {
+void Rope::CheckIntegrity() {
     auto validate = [](bool value, std::string_view msg) {
 #ifdef WASM
         assert(!value);
