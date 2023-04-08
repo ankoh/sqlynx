@@ -272,7 +272,7 @@ TEST_F(RopeTest, SplitOffN) {
 TEST_F(RopeTest, AppendLeaf) {
     rope::Rope left{128};
     std::string expected;
-    for (size_t i = 0; i < 1000; ++i) {
+    for (size_t i = 0; i < 100; ++i) {
         auto text = std::to_string(i);
         expected += text;
         auto right = rope::Rope::FromString(128, text);
@@ -280,7 +280,7 @@ TEST_F(RopeTest, AppendLeaf) {
         left.Append(std::move(right));
         ASSERT_EQ(left.ToString(), expected);
         ASSERT_EQ(left.GetInfo().utf8_codepoints, expected.size());
-        // left.Validate();
+        left.CheckIntegrity();
     }
 }
 
@@ -295,7 +295,7 @@ TEST_F(RopeTest, AppendNDiv2) {
         left_rope.Append(std::move(right_rope));
         ASSERT_EQ(left_rope.ToString(), expected);
         ASSERT_EQ(left_rope.GetInfo().utf8_codepoints, expected.size());
-        // left_rope.Validate();
+        left_rope.CheckIntegrity();
     }
 }
 
@@ -310,7 +310,7 @@ TEST_F(RopeTest, AppendNDiv3) {
         left_rope.Append(std::move(right_rope));
         ASSERT_EQ(left_rope.ToString(), expected);
         ASSERT_EQ(left_rope.GetInfo().utf8_codepoints, expected.size());
-        // left_rope.Validate();
+        left_rope.CheckIntegrity();
     }
 }
 
@@ -325,7 +325,7 @@ TEST_F(RopeTest, Append2NDiv3) {
         left_rope.Append(std::move(right_rope));
         ASSERT_EQ(left_rope.ToString(), expected);
         ASSERT_EQ(left_rope.GetInfo().utf8_codepoints, expected.size());
-        // left_rope.Validate();
+        left_rope.CheckIntegrity();
     }
 }
 

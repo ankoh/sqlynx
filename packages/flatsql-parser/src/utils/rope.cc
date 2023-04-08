@@ -771,10 +771,10 @@ void Rope::AppendSmaller(Rope&& right_rope) {
     auto iter_info = &root_info;
     for (size_t i = 0; i < tree_height - right_rope.tree_height; ++i) {
         auto inner = iter_node.Get<InnerNode>();
-        (*iter_info) += right_rope.root_info;
 
         // Fast-track if not full
         if (!inner->IsFull()) {
+            (*iter_info) += right_rope.root_info;
             parent = inner;
             iter_node = inner->GetChildNodes().back();
             iter_info = &inner->GetChildStats().back();
@@ -788,12 +788,13 @@ void Rope::AppendSmaller(Rope&& right_rope) {
         inner->SplitOffRight((inner->GetSize() + 1) / 2, *split);
         auto split_info = split->AggregateTextInfo();
         (*iter_info) -= split_info;
+        split_info += right_rope.root_info;
         parent->Push(split_page.Release<InnerNode>(), split_info);
 
         // Update iterator
         parent = split;
         iter_node = split->GetChildNodes().back();
-        iter_info = &inner->GetChildStats().back();
+        iter_info = &split->GetChildStats().back();
     }
 
     // Did we hit a leaf?
@@ -805,8 +806,6 @@ void Rope::AppendSmaller(Rope&& right_rope) {
         auto right = right_rope.root_node.Get<LeafNode>();
         left->LinkNeighbors(*right);
     } else {
-        (*iter_info) += right_rope.root_info;
-
         // Merge inners
         assert(right_rope.root_node.Is<InnerNode>());
         assert(parent != nullptr);
@@ -828,18 +827,19 @@ void Rope::AppendTaller(Rope&& right_rope) {
     if (right_rope.root_node.Get<InnerNode>()->IsFull()) {
         right_rope.SplitInnerRoot();
     }
-    right_rope.root_info += root_info;
 
     // Preemptively split head
     InnerNode* parent = nullptr;
-    auto iter = right_rope.root_node;
+    auto iter_node = right_rope.root_node;
+    auto iter_info = &right_rope.root_info;
     for (size_t i = 0; i < right_rope.tree_height - tree_height; ++i) {
         // Fast-track if not full
-        auto inner = iter.Get<InnerNode>();
+        auto inner = iter_node.Get<InnerNode>();
         if (!inner->IsFull()) {
-            inner->GetChildStats().front() += root_info;
+            (*iter_info) += root_info;
             parent = inner;
-            iter = inner->GetChildNodes().front();
+            iter_node = inner->GetChildNodes().front();
+            iter_info = &inner->GetChildStats().front();
             continue;
         }
         assert(parent != nullptr);
@@ -848,27 +848,30 @@ void Rope::AppendTaller(Rope&& right_rope) {
         NodePage split_page{page_size};
         auto* split = new (split_page.Get()) InnerNode(page_size);
         inner->SplitOffLeft((inner->GetSize() + 1) / 2, *split);
-        parent->Insert(0, split_page.Release<InnerNode>(), split->AggregateTextInfo());
-        split->GetChildStats().front() += right_rope.root_info;
+        auto split_info = split->AggregateTextInfo();
+        (*iter_info) -= split_info;
+        split_info += root_info;
+        parent->Insert(0, split_page.Release<InnerNode>(), split_info);
 
         // Update iterator
         parent = split;
-        iter = split->GetChildNodes().front();
+        iter_node = split->GetChildNodes().front();
+        iter_info = &split->GetChildStats().front();
     }
 
     // Did we hit a leaf?
-    if (iter.Is<LeafNode>()) {
+    if (iter_node.Is<LeafNode>()) {
         assert(root_node.Is<LeafNode>());
         assert(parent != nullptr);
         parent->Insert(0, root_node, root_info);
         auto left = root_node.Get<LeafNode>();
-        auto right = iter.Get<LeafNode>();
+        auto right = iter_node.Get<LeafNode>();
         left->LinkNeighbors(*right);
     } else {
         // Merge inners
         assert(root_node.Is<InnerNode>());
         assert(parent != nullptr);
-        auto right = iter.Get<InnerNode>();
+        auto right = iter_node.Get<InnerNode>();
         parent->Insert(0, root_node, root_info);
         LinkEquiHeight(page_size, root_node, right);
     }
@@ -876,6 +879,7 @@ void Rope::AppendTaller(Rope&& right_rope) {
     // Update root
     root_node = right_rope.root_node;
     root_info = right_rope.root_info;
+    tree_height = right_rope.tree_height;
     right_rope.root_node = {};
 }
 
