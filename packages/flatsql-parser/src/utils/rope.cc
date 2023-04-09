@@ -299,6 +299,21 @@ void InnerNode::Insert(size_t idx, NodePtr child, TextInfo stats) {
     child_stats[idx] = stats;
     ++child_count;
 }
+/// Inserts items at a position
+void InnerNode::Insert(size_t idx, std::span<const NodePtr> nodes, std::span<const TextInfo> stats) {
+    assert(idx <= GetSize());
+    assert(nodes.size() == stats.size());
+    assert((GetSize() + nodes.size()) <= GetCapacity());
+    auto n = nodes.size();
+    auto tail = GetSize() - idx;
+    auto child_nodes = GetChildNodesBuffer();
+    auto child_stats = GetChildStatsBuffer();
+    std::memmove(&child_nodes[idx + n], &child_nodes[idx], tail * sizeof(NodePtr));
+    std::memmove(&child_stats[idx + n], &child_stats[idx], tail * sizeof(TextInfo));
+    std::memcpy(&child_nodes[idx], nodes.data(), n * sizeof(NodePtr));
+    std::memcpy(&child_stats[idx], stats.data(), n * sizeof(NodePtr));
+    child_count += n;
+}
 /// Remove an element at a position
 std::pair<NodePtr, TextInfo> InnerNode::Remove(size_t idx) {
     assert(GetSize() > 0);
@@ -416,51 +431,46 @@ void InnerNode::Balance(InnerNode& right) {
     }
 }
 
-//    /// Attempts to merge two nodes, and if it's too much data to merge equi-distributes it between the two
-//    /// Returns:
-//    /// - True, if merge was successful.
-//    /// - False, if merge failed, equidistributed instead.
-//    bool MergeOrBalance(size_t idx1, size_t idx2) {
-//        auto child_nodes = GetChildNodesBuffer();
-//        auto child_stats = GetChildStatsBuffer();
-//        NodePtr child_node_1 = child_nodes[idx1];
-//        NodePtr child_node_2 = child_nodes[idx2];
-//        TextInfo child_stats_1 = child_stats[idx1];
-//        TextInfo child_stats_2 = child_stats[idx2];
-//
-//        bool remove_right = false;
-//        if (child_node_1.Is<LeafNode>()) {
-//            assert(child_node_2.Is<LeafNode>());
-//            LeafNode* child_1 = child_node_1.Get<LeafNode>();
-//            LeafNode* child_2 = child_node_2.Get<LeafNode>();
-//
-//            // Text fits into a single node?
-//            auto combined = child_1->GetSize() + child_2->GetSize();
-//            if (combined <= child_1->GetCapacity()) {
-//                child_1->PushBytes(child_2->TruncateBytes());
-//                assert(child_1->IsValid());
-//                remove_right = true;
-//            } else {
-//                child_1->BalanceBytes(*child_2);
-//                assert(child_1->IsValid());
-//                assert(child_2->IsValid());
-//            }
-//        } else {
-//            assert(child_node_1.Is<InnerNode>());
-//            assert(child_node_2.Is<InnerNode>());
-//            InnerNode* child_1 = child_node_1.Get<InnerNode>();
-//            InnerNode* child_2 = child_node_2.Get<InnerNode>();
-//
-//            // Children fit into a single node?
-//            auto combined = child_1->GetSize() + child_2->GetSize();
-//            if (combined <= child_1->GetCapacity()) {
-//                child_1->Push(child_2->TruncateChildren());
-//                remove_right = true;
-//            } else {
-//                child_1->EquiDistribute(*child_2);
-//            }
-//        }
-//    }
+/// Balance children to make space for preemptive split
+bool Rope::PreemptiveBalance(InnerNode& parent, size_t child_idx) {
+    auto child_ptr = parent.GetChildNodes()[child_idx];
+    assert(!child_ptr.Is<InnerNode>());
+    auto& child = *child_ptr.Get<InnerNode>();
+    assert(!child.IsEmpty());
+    assert(!parent.IsFull());
+
+    // Try to balance with left neighbor
+    if (child_idx > 0) {
+        auto left_idx = child_idx;
+        assert(child.previous_node == parent.GetChildNodes()[left_idx].Get<InnerNode>());
+
+        // Left neighbor has space?
+        auto left = *child.previous_node;
+        if (left.GetSize() <= child.GetSize()) {
+            auto move_left = std::max<size_t>(1, (child.GetSize() - left.GetSize()) / 2);
+            left.Push(child.GetChildNodes().subspan(0, move_left), child.GetChildStats().subspan(0, move_left));
+            child.RemoveRange(0, move_left);
+            return true;
+        }
+    }
+    // Try to balance with right neighbor
+    if ((child_idx + 1) < parent.child_count) {
+        auto right_idx = child_idx + 1;
+        assert(child.next_node == parent.GetChildNodes()[right_idx].Get<InnerNode>());
+
+        // Left neighbor has space?
+        auto right = *child.next_node;
+        if (!right.IsFull()) {
+            // Use the opportunity to balance the nodes
+            auto move_right = std::max<size_t>(1, (child.GetSize() - right.GetSize()) / 2);
+            auto move_right_from = child.GetSize() - move_right - 1;
+            auto [child_nodes, child_stats] = child.Truncate(move_right_from);
+            right.Insert(0, child_nodes, child_stats);
+            return true;
+        }
+    }
+    return false;
+}
 
 /// Find the first child where a predicate returns true or the last child if none qualify
 template <typename Predicate> static InnerNode::Boundary Find(InnerNode& node, size_t arg, Predicate predicate) {
@@ -765,7 +775,7 @@ void Rope::AppendSmaller(Rope&& right_rope) {
     // Preemptively split root?
     assert(root_node.Is<InnerNode>());
     if (root_node.Get<InnerNode>()->IsFull()) {
-        SplitInnerRoot();
+        PreemptiveSplitRoot();
     }
 
     // Preemptively split head
@@ -828,7 +838,7 @@ void Rope::AppendTaller(Rope&& right_rope) {
     // Preemptively split root?
     assert(right_rope.root_node.Is<InnerNode>());
     if (right_rope.root_node.Get<InnerNode>()->IsFull()) {
-        right_rope.SplitInnerRoot();
+        right_rope.PreemptiveSplitRoot();
     }
 
     // Preemptively split head
@@ -898,7 +908,7 @@ void Rope::Append(Rope&& right_rope) {
 }
 
 /// Split the root inner page
-void Rope::SplitInnerRoot() {
+void Rope::PreemptiveSplitRoot() {
     assert(root_node.Is<InnerNode>());
     NodePage right_page{page_size};
     NodePage root_page{page_size};
@@ -922,7 +932,7 @@ void Rope::InsertBounded(size_t char_idx, std::span<const std::byte> text_bytes)
 
     // Preemptively split the root, if it is full
     if (root_node.Is<InnerNode>() && root_node.Get<InnerNode>()->IsFull()) {
-        SplitInnerRoot();
+        PreemptiveSplitRoot();
     }
 
     // Traverse down the tree with pre-emptive splitting

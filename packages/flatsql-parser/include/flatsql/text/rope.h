@@ -233,6 +233,8 @@ struct InnerNode {
     std::pair<NodePtr, TextInfo> Pop();
     /// Inserts an item at a position
     void Insert(size_t idx, NodePtr child, TextInfo stats);
+    /// Inserts items at a position
+    void Insert(size_t idx, std::span<const NodePtr> child, std::span<const TextInfo> stats);
     /// Remove an element at a position
     std::pair<NodePtr, TextInfo> Remove(size_t idx);
     /// Remove elements in a range
@@ -266,8 +268,14 @@ struct Rope {
 
     /// Connect nodes
     static void LinkEquiHeight(size_t page_size, NodePtr left, NodePtr right);
+
     /// Split the inner root nodes
-    void SplitInnerRoot();
+    void PreemptiveSplitRoot();
+    /// Ensure at least one element can be inserted into the child node.
+    /// This method will attempt to move elements to the immediate left and right neighbors.
+    /// The balancing only succeeds if the other neighbor also has at least one child node capacity after balancing.
+    /// It might happen, that the child node is moved to a different parent and therefore MUST NOT rely on parent state.
+    bool PreemptiveBalance(InnerNode& parent, size_t child_idx);
     /// Append a rope
     void AppendEquiHeight(Rope&& right_rope);
     /// Append a rope that is smaller
