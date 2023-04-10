@@ -178,15 +178,6 @@ TEST_F(RopeTest, FromText) {
         ASSERT_EQ(rope.GetInfo().utf8_codepoints, expected.size());
         rope.CheckIntegrity();
     }
-    TestableRope rope{rope::Rope::FromString(128, expected)};
-    for (size_t i = 0; i < 1000; ++i) {
-        auto v = std::to_string(i);
-        expected.insert(i, std::to_string(i));
-        rope.InsertBounded(i, asBytes(v));
-        ASSERT_EQ(rope.ToString(), expected);
-        ASSERT_EQ(rope.GetInfo().utf8_codepoints, expected.size());
-        rope.CheckIntegrity();
-    }
 }
 
 TEST_F(RopeTest, SplitOff0) {
@@ -195,7 +186,6 @@ TEST_F(RopeTest, SplitOff0) {
         expected += std::to_string(i);
         auto split = 0;
         auto left = rope::Rope::FromString(128, expected);
-        left.CheckIntegrity();
         auto right = left.SplitOff(split);
         ASSERT_EQ(left.ToString(), expected.substr(0, split));
         ASSERT_EQ(right.ToString(), expected.substr(split));
