@@ -1353,16 +1353,20 @@ void Rope::CheckIntegrity() {
     struct Validation {
         NodePtr node;
         TextInfo expected;
+        size_t level;
     };
     std::vector<Validation> pending;
     pending.reserve(10 * tree_height);
     pending.push_back(Validation{
         .node = root_node,
         .expected = root_info,
+        .level = 0
     });
+    size_t max_level = 0;
     while (!pending.empty()) {
         auto top = pending.back();
         pending.pop_back();
+        max_level = std::max(top.level, max_level);
 
         // Is a leaf node?
         if (top.node.Is<LeafNode>()) {
@@ -1382,6 +1386,7 @@ void Rope::CheckIntegrity() {
                 pending.push_back(Validation {
                     .node = nodes[i],
                     .expected = stats[i],
+                    .level = top.level + 1,
                 });
             }
             validate(top.expected.text_bytes == have.text_bytes, "inner text bytes mismatch");
@@ -1389,6 +1394,7 @@ void Rope::CheckIntegrity() {
             validate(top.expected.utf8_codepoints == have.utf8_codepoints, "inner utf8 codepoint mismatch");
         }
     }
+    validate(tree_height == (max_level + 1), "tree height mismatch");
 }
 
 }  // namespace flatsql::rope
