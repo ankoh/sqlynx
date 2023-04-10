@@ -88,7 +88,10 @@ struct NodePtr {
     /// Node type check
     template <typename T> bool Is() { return GetTag() == T::NodePtrTag; }
     /// Cast a node
-    template <typename T> T* Get() { return reinterpret_cast<T*>((raw_ptr >> 1) << 1); }
+    template <typename T> T* Get() {
+        assert(Is<T>());
+        return reinterpret_cast<T*>((raw_ptr >> 1) << 1);
+    }
 };
 
 struct LeafNode {
@@ -269,13 +272,13 @@ struct Rope {
     /// Connect nodes
     static void LinkEquiHeight(size_t page_size, NodePtr left, NodePtr right);
 
-    /// Split the inner root nodes
-    void PreemptiveSplitRoot();
     /// Ensure at least one element can be inserted into the child node.
     /// This method will attempt to move elements to the immediate left and right neighbors.
     /// The balancing only succeeds if the other neighbor also has at least one child node capacity after balancing.
-    /// It might happen, that the child node is moved to a different parent and therefore MUST NOT rely on parent state.
-    bool PreemptiveBalance(InnerNode& parent, size_t child_idx);
+    /// It might happen, that the child node is moved to a different parent and therefore MUST NOT rely on parent state. 
+    void PreemptiveBalanceOrSplit(InnerNode& parent, size_t& child_idx, TextInfo& child_prefix, size_t char_idx);
+    /// Split the inner root nodes
+    void PreemptiveSplitRoot();
     /// Append a rope
     void AppendEquiHeight(Rope&& right_rope);
     /// Append a rope that is smaller
