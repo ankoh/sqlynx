@@ -41,9 +41,8 @@ TextInfo& TextInfo::operator-=(const TextInfo& other) {
     return *this;
 }
 
-static constexpr size_t LeafCapacity(size_t page_size) { return page_size - 2 * sizeof(void*) - 2 * sizeof(uint32_t); }
 /// Constructor
-LeafNode::LeafNode(uint32_t page_size) : buffer_capacity(LeafCapacity(page_size)) {}
+LeafNode::LeafNode(uint32_t page_size) : buffer_capacity(LeafNode::Capacity(page_size)) {}
 /// Link a neighbor
 void LeafNode::LinkNeighbors(LeafNode& other) {
     if (next_node) {
@@ -234,11 +233,8 @@ LeafNode* LeafNode::FromString(NodePage& page, std::string_view& text, size_t le
     return leaf;
 }
 
-static constexpr size_t InnerCapacity(size_t page_size) {
-    return (page_size - 2 * sizeof(void*) - 2 * sizeof(uint32_t) - 8) / (sizeof(TextInfo) + sizeof(NodePtr));
-}
 /// Constructor
-InnerNode::InnerNode(size_t page_size) : child_capacity(InnerCapacity(page_size)) {}
+InnerNode::InnerNode(size_t page_size) : child_capacity(InnerNode::Capacity(page_size)) {}
 
 /// Link a neighbor
 void InnerNode::LinkNeighbors(InnerNode& other) {
@@ -1113,7 +1109,7 @@ void Rope::PreemptiveSplitRoot() {
 /// The text to be inserted must not exceed the size of leaf page.
 /// That guarantees that we need at most one split.
 void Rope::InsertBounded(size_t char_idx, std::span<const std::byte> text_bytes) {
-    assert(text_bytes.size() <= LeafCapacity(page_size));
+    assert(text_bytes.size() <= LeafNode::Capacity(page_size));
     TextInfo insert_info{text_bytes};
 
     // Traversal state
@@ -1221,7 +1217,7 @@ void Rope::Insert(size_t char_idx, std::string_view text) {
 
     // Split the input text in chunks and insert it into the rope
     while (!text.empty()) {
-        auto split_idx = utf8::findCodepoint(text_buffer, std::min(LeafCapacity(page_size) - 4, text.size()), false);
+        auto split_idx = utf8::findCodepoint(text_buffer, std::min(LeafNode::Capacity(page_size) - 4, text.size()), false);
         auto tail = text_buffer.subspan(split_idx);
         text = text.substr(0, split_idx);
         InsertBounded(char_idx, tail);
@@ -1234,8 +1230,8 @@ Rope Rope::FromString(size_t page_size, std::string_view text, size_t leaf_capac
     if (text.empty()) {
         return Rope{page_size};
     }
-    leaf_capacity = std::min(LeafCapacity(page_size), leaf_capacity);
-    inner_capacity = std::min(InnerCapacity(page_size), inner_capacity);
+    leaf_capacity = std::min(LeafNode::Capacity(page_size), leaf_capacity);
+    inner_capacity = std::min(InnerNode::Capacity(page_size), inner_capacity);
 
     // Create leaf nodes
     std::vector<NodePage> leafs;

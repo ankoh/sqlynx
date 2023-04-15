@@ -98,6 +98,7 @@ struct NodePtr {
 struct LeafNode {
     friend struct Rope;
     static constexpr size_t NodePtrTag = 0;
+    static constexpr size_t Capacity(size_t page_size) { return page_size - 2 * sizeof(void*) - 2 * sizeof(uint32_t); }
 
    protected:
     /// The previous leaf (if any)
@@ -168,12 +169,16 @@ struct LeafNode {
     void BalanceBytes(LeafNode& right);
 
     /// Create a leaf node from a string
-    static LeafNode* FromString(NodePage& page, std::string_view& text, size_t leaf_capacity = std::numeric_limits<size_t>::max());
+    static LeafNode* FromString(NodePage& page, std::string_view& text,
+                                size_t leaf_capacity = std::numeric_limits<size_t>::max());
 };
 
 struct InnerNode {
     friend struct Rope;
     static constexpr size_t NodePtrTag = 1;
+    static constexpr size_t Capacity(size_t page_size) {
+        return (page_size - 2 * sizeof(void*) - 2 * sizeof(uint32_t) - 8) / (sizeof(TextInfo) + sizeof(NodePtr));
+    }
 
    protected:
     /// The previous leaf (if any)
@@ -276,7 +281,7 @@ struct Rope {
     /// Ensure at least one element can be inserted into the child node.
     /// This method will attempt to move elements to the immediate left and right neighbors.
     /// The balancing only succeeds if the other neighbor also has at least one child node capacity after balancing.
-    /// It might happen, that the child node is moved to a different parent and therefore MUST NOT rely on parent state. 
+    /// It might happen, that the child node is moved to a different parent and therefore MUST NOT rely on parent state.
     void PreemptiveBalanceOrSplit(InnerNode& parent, size_t& child_idx, TextInfo& child_prefix, size_t char_idx);
     /// Split the inner root nodes
     void PreemptiveSplitRoot();
@@ -322,7 +327,9 @@ struct Rope {
     /// Copy the rope to a std::string
     std::string ToString();
     /// Create a rope from a string
-    static Rope FromString(size_t page_size, std::string_view text, size_t leaf_capacity = std::numeric_limits<size_t>::max(), size_t inner_capacity = std::numeric_limits<size_t>::max());
+    static Rope FromString(size_t page_size, std::string_view text,
+                           size_t leaf_capacity = std::numeric_limits<size_t>::max(),
+                           size_t inner_capacity = std::numeric_limits<size_t>::max());
 };
 
 }  // namespace rope

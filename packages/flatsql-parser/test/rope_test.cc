@@ -228,6 +228,27 @@ TEST_F(RopeTest, SplitOffNDiv2) {
     }
 }
 
+TEST_F(RopeTest, NodeCapacities) {
+    ASSERT_EQ(rope::LeafNode::Capacity(128), 104);
+    ASSERT_EQ(rope::InnerNode::Capacity(128), 3);
+}
+
+TEST_F(RopeTest, SplitOffNDiv2FillNDiv2) {
+    std::string expected;
+    for (size_t i = 0; i < 1000; ++i) {
+        expected += std::to_string(i);
+        auto split = expected.size() / 2;
+        auto left = rope::Rope::FromString(128, expected, 50, 2);
+        auto right = left.SplitOff(split);
+        ASSERT_EQ(left.ToString(), std::string_view{expected}.substr(0, split));
+        ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(split));
+        ASSERT_EQ(left.GetInfo().utf8_codepoints, split);
+        ASSERT_EQ(right.GetInfo().utf8_codepoints, expected.size() - split);
+        left.CheckIntegrity();
+        right.CheckIntegrity();
+    }
+}
+
 TEST_F(RopeTest, SplitOffNMinus1) {
     std::string expected;
     for (size_t i = 0; i < 1000; ++i) {
