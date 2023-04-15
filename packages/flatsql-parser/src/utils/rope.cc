@@ -1551,20 +1551,19 @@ void Rope::CheckIntegrity() {
             // Is an inner node
             auto inner = top.node.Get<InnerNode>();
             validate(!inner->IsEmpty(), "inner node is empty");
-            TextInfo have;
+            TextInfo have = inner->AggregateTextInfo();
+            validate(top.expected.text_bytes == have.text_bytes, "inner text bytes mismatch");
+            validate(top.expected.line_breaks == have.line_breaks, "inner line breaks mismatch");
+            validate(top.expected.utf8_codepoints == have.utf8_codepoints, "inner utf8 codepoint mismatch");
             for (size_t i = 0; i < inner->child_count; ++i) {
                 auto nodes = inner->GetChildNodes();
                 auto stats = inner->GetChildStats();
-                have += stats[i];
                 pending.push_back(Validation {
                     .node = nodes[i],
                     .expected = stats[i],
                     .level = top.level + 1,
                 });
             }
-            validate(top.expected.text_bytes == have.text_bytes, "inner text bytes mismatch");
-            validate(top.expected.line_breaks == have.line_breaks, "inner line breaks mismatch");
-            validate(top.expected.utf8_codepoints == have.utf8_codepoints, "inner utf8 codepoint mismatch");
         }
     }
     validate(tree_height == (max_level + 1), "tree height mismatch");
