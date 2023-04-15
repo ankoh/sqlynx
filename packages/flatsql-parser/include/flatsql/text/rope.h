@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstring>
 #include <iostream>
+#include <limits>
 #include <memory>
 #include <span>
 #include <string_view>
@@ -167,7 +168,7 @@ struct LeafNode {
     void BalanceBytes(LeafNode& right);
 
     /// Create a leaf node from a string
-    static LeafNode* FromString(NodePage& page, std::string_view& text);
+    static LeafNode* FromString(NodePage& page, std::string_view& text, size_t leaf_capacity = std::numeric_limits<size_t>::max());
 };
 
 struct InnerNode {
@@ -321,7 +322,7 @@ struct Rope {
     /// Copy the rope to a std::string
     std::string ToString();
     /// Create a rope from a string
-    static Rope FromString(size_t page_size, std::string_view text);
+    static Rope FromString(size_t page_size, std::string_view text, size_t leaf_capacity = std::numeric_limits<size_t>::max(), size_t inner_capacity = std::numeric_limits<size_t>::max());
 };
 
 }  // namespace rope

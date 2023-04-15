@@ -213,15 +213,16 @@ void LeafNode::BalanceBytes(LeafNode& right) {
 }
 
 /// Create a leaf node from a string
-LeafNode* LeafNode::FromString(NodePage& page, std::string_view& text) {
+LeafNode* LeafNode::FromString(NodePage& page, std::string_view& text, size_t leaf_capacity) {
     auto leaf = new (page.Get()) LeafNode(page.GetPageSize());
+    leaf_capacity = std::min<size_t>(leaf_capacity, leaf->GetCapacity());
     std::span<const std::byte> bytes{reinterpret_cast<const std::byte*>(text.data()), text.size()};
     if (text.size() <= leaf->GetCapacity()) {
         leaf->PushBytes(bytes);
         text = {};
         return leaf;
     }
-    bytes = bytes.subspan(0, std::min<size_t>(leaf->GetCapacity(), text.size()));
+    bytes = bytes.subspan(0, std::min<size_t>(leaf_capacity, text.size()));
     for (auto iter = bytes.rbegin(); iter != bytes.rend(); ++iter) {
         if (utf8::isCodepointBoundary(*iter)) {
             bytes = bytes.subspan(0, bytes.rend() - iter);
@@ -1228,20 +1229,21 @@ void Rope::Insert(size_t char_idx, std::string_view text) {
 }
 
 /// Create a rope from a string
-Rope Rope::FromString(size_t page_size, std::string_view text) {
+Rope Rope::FromString(size_t page_size, std::string_view text, size_t leaf_capacity, size_t inner_capacity) {
     // Short-circuit case where the input text is empty
     if (text.empty()) {
         return Rope{page_size};
     }
+    leaf_capacity = std::min(LeafCapacity(page_size), leaf_capacity);
+    inner_capacity = std::min(InnerCapacity(page_size), inner_capacity);
 
     // Create leaf nodes
     std::vector<NodePage> leafs;
-    auto leaf_capacity = LeafCapacity(page_size);
     leafs.reserve((text.size() + leaf_capacity - 1) / leaf_capacity);
     LeafNode* prev_leaf = nullptr;
     while (!text.empty()) {
         leafs.emplace_back(page_size);
-        auto new_leaf = LeafNode::FromString(leafs.back(), text);
+        auto new_leaf = LeafNode::FromString(leafs.back(), text, leaf_capacity);
 
         // Link leaf node
         if (prev_leaf != nullptr) {
@@ -1268,7 +1270,7 @@ Rope Rope::FromString(size_t page_size, std::string_view text) {
         auto next = new (inners.back().Get()) InnerNode(page_size);
 
         // Store child nodes
-        auto n = std::min(leafs.size() - begin, InnerCapacity(page_size));
+        auto n = std::min(leafs.size() - begin, inner_capacity);
         for (auto i = 0; i < n; ++i) {
             auto leaf = leafs[begin + i].Get<LeafNode>();
             next->GetChildNodesBuffer()[i] = NodePtr{leaf};
@@ -1299,7 +1301,7 @@ Rope Rope::FromString(size_t page_size, std::string_view text) {
             auto next = new (inners.back().Get()) InnerNode(page_size);
 
             // Store children
-            auto n = std::min(level_end - begin, InnerCapacity(page_size));
+            auto n = std::min(level_end - begin, inner_capacity);
             for (auto i = 0; i < n; ++i) {
                 auto inner = inners[begin + i].Get<InnerNode>();
                 next->GetChildNodesBuffer()[i] = NodePtr{inner};
