@@ -584,9 +584,12 @@ Rope Rope::SplitOff(size_t char_idx) {
     if (root_node.Is<LeafNode>()) {
         NodePage right_leaf_page{page_size};
         auto* right_leaf = new (right_leaf_page.Get()) LeafNode(page_size);
-        root_node.Get<LeafNode>()->SplitCharsOff(char_idx, *right_leaf);
+        auto* left_leaf = root_node.Get<LeafNode>();
+        left_leaf->SplitCharsOff(char_idx, *right_leaf);
         TextInfo right_info{right_leaf->GetData()};
         root_info -= right_info;
+        left_leaf->next_node = nullptr;
+        right_leaf->previous_node = nullptr;
         return Rope{page_size, right_leaf_page.Release<LeafNode>(), right_info, right_leaf, 1};
     }
 
@@ -596,21 +599,35 @@ Rope Rope::SplitOff(size_t char_idx) {
     right_seam_pages.reserve(tree_height);
     right_seam_nodes.reserve(tree_height);
 
+    // We always create a new root page for the right rope.
+    // Note that we *could* special-case right roots with only a single child.
+    InnerNode* left_root = root_node.Get<InnerNode>();
+    auto [split_idx, split_prefix] = left_root->FindCodepoint(char_idx);
+    right_seam_pages.emplace_back(page_size);
+    auto* right_root = new (right_seam_pages.back().Get()) InnerNode(page_size);
+    left_root->SplitOffRight(split_idx, *right_root);
+    ++left_root->child_count;
+    right_seam_nodes.push_back(right_root);
+
+    // Prepare the traversal
+    auto* left_parent = left_root;
+    auto* right_parent = right_root;
+    size_t left_child_idx = split_idx;
+    char_idx -= split_prefix.utf8_codepoints;
+
     // Locate leaf node and remember traversed inner nodes
-    InnerNode* parent = nullptr;
-    size_t child_idx = 0;
-    for (auto child_node = parent->GetChildNodes()[child_idx]; child_node.Is<InnerNode>(); child_node = parent->GetChildNodes()[child_idx]) {
+    for (auto child_node = left_parent->GetChildNodes()[left_child_idx]; child_node.Is<InnerNode>(); child_node = left_parent->GetChildNodes()[left_child_idx]) {
         // Find split point in client
         auto* child = child_node.Get<InnerNode>();
-        auto [split_idx, split_prefix] = child->FindCodepoint(char_idx);
+        std::tie(split_idx, split_prefix) = child->FindCodepoint(char_idx);
         char_idx -= split_prefix.utf8_codepoints;
 
         // Check if we can merge the left prefix with the immediate left neighbor.
         // We only merge with the left neighbor if the nodes have the same parent (to simplify updating stats).
-        if (child_idx >= 2) {
+        if (left_child_idx >= 2) {
             // Get immediate left neighbor
             auto neighbor = child->previous_node;
-            assert(child->previous_node == parent->GetChildNodes()[child_idx - 1].Get<InnerNode>());
+            assert(child->previous_node == left_parent->GetChildNodes()[left_child_idx - 1].Get<InnerNode>());
             // Left neighbor has enough space to hold (split + 1) elements?
             // (split + 1) because we have to keep the yet-to-split child node.
             if (neighbor->GetFreeSpace() >= (split_idx + 1)) {
@@ -618,14 +635,15 @@ Rope Rope::SplitOff(size_t char_idx) {
                 // We also move split_idx here as we want to preserve the reference on the left side (in case we need to split).
                 neighbor->Push(child->GetChildNodes().subspan(0, split_idx + 1), child->GetChildStats().subspan(0, split_idx + 1));
                 child->RemoveRange(0, split_idx);
-                // Register the child as right seam node
+                // Update parents
+                assert(left_child_idx == (left_parent->GetSize() - 1));
+                left_parent->Pop();
+                right_parent->GetChildNodes()[0] = child;
                 right_seam_nodes.push_back(child);
-                // Remove the child from the parent (must be the last child in the parent)
-                assert(child_idx == (parent->GetSize() - 1));
-                parent->Pop();
                 // Continue with last node of the just moved elements
-                parent = neighbor;
-                child_idx = neighbor->GetSize() - 1;
+                right_parent = child;
+                left_parent = neighbor;
+                left_child_idx = neighbor->GetSize() - 1;
                 continue;
             }
         }
@@ -641,11 +659,16 @@ Rope Rope::SplitOff(size_t char_idx) {
                 auto [split_nodes, split_stats] = child->Truncate(split_idx);
                 ++child->child_count;
                 neighbor->Insert(0, split_nodes, split_stats);
-                // Register the neighbor as right seam node
+                // Update parents
+                assert(right_parent->GetSize() >= 2);
+                assert(right_parent->GetChildNodes()[0].Get<InnerNode>() == child);
+                assert(right_parent->GetChildNodes()[1].Get<InnerNode>() == neighbor);
+                right_parent->Remove(0);
                 right_seam_nodes.push_back(neighbor);
                 // Continue with last child node of current child
-                parent = child;
-                child_idx = split_idx;
+                right_parent = neighbor;
+                left_parent = child;
+                left_child_idx = split_idx;
                 continue;
             }
         }
@@ -655,6 +678,7 @@ Rope Rope::SplitOff(size_t char_idx) {
         right_seam_pages.emplace_back(page_size);
         auto* right = new (right_seam_pages.back().Get()) InnerNode(page_size);
         right_seam_nodes.push_back(right);
+        right_parent->GetChildNodes()[0] = right;
         child->SplitOffRight(split_idx, *right);
         ++child->child_count;
 
@@ -662,28 +686,28 @@ Rope Rope::SplitOff(size_t char_idx) {
 
         // Traverse to child
         assert(child->GetSize() == (split_idx + 1));
-        parent = child;
-        child_idx = child->GetSize() - 1;
+        right_parent = right;
+        left_parent = child;
+        left_child_idx = child->GetSize() - 1;
     }
 
     /// Helper to fixup the right seam.
     /// Returns the size of the right rope that can be used to update the root info.
-    auto finish = [this](LeafNode* right_leaf, TextInfo right_child_info, std::span<InnerNode*> right_seam, std::vector<NodePage>&& right_seam_pages) {
+    auto finish = [this](TextInfo left_child_info, LeafNode* right_leaf, TextInfo right_child_info, std::span<InnerNode*> right_seam, std::vector<NodePage>&& right_seam_pages) {
         // Now propagate the text change up the seam nodes
         NodePtr right_child_node{right_leaf};
         for (auto seam_iter = right_seam.rbegin(); seam_iter != right_seam.rend(); ++seam_iter) {
-            auto right_parent = *seam_iter;
-            auto left_parent = right_parent->previous_node;
-            // Store child in right parent
-            right_parent->GetChildNodes().front() = right_child_node;
-            right_parent->GetChildStats().front() = right_child_info;
-            // Update left parent
+            auto* right_parent = *seam_iter;
+            auto* left_parent = right_parent->previous_node;
+            // Update child stats in parents
             assert(!left_parent->GetChildNodes().empty());
-            left_parent->GetChildStats().back() -= right_child_info;
-            // Disconnect nodes
+            left_parent->GetChildStats().back() = left_child_info;
+            right_parent->GetChildStats().front() = right_child_info;
+            // Disconnect seam nodes
             left_parent->next_node = nullptr;
             right_parent->previous_node = nullptr;
             // Go 1 level up
+            left_child_info = left_parent->AggregateTextInfo();
             right_child_node = right_parent;
             right_child_info = right_parent->AggregateTextInfo();
         }
@@ -691,35 +715,41 @@ Rope Rope::SplitOff(size_t char_idx) {
         for (auto& page: right_seam_pages) {
             page.Release();
         }
+        // Update root info
+        root_info -= right_child_info;
         return Rope{page_size, right_child_node, right_child_info, right_leaf, tree_height};
     };
 
     /// Helper to split a leaf page
-    auto leaf_ptr = parent->GetChildNodes()[child_idx];
+    auto leaf_ptr = left_parent->GetChildNodes()[left_child_idx];
     auto leaf = leaf_ptr.Get<LeafNode>();
     auto leaf_prefix_bytes = utf8::codepointToByteIdx(leaf->GetData(), char_idx);
     auto leaf_suffix_bytes = leaf->GetSize() - leaf_prefix_bytes;
 
     // Do we have a left leaf neighbor?
-    if (child_idx >= 2) {
+    if (left_child_idx >= 2) {
         // Get immediate left neighbor
         auto neighbor = leaf->previous_node;
-        assert(leaf->previous_node == parent->GetChildNodes()[child_idx - 1].Get<LeafNode>());
+        assert(leaf->previous_node == left_parent->GetChildNodes()[left_child_idx - 1].Get<LeafNode>());
         // Does the neighbor have enough space for all bytes before the split?
         if (neighbor->GetFreeSpace() >= leaf_prefix_bytes) {
             // Move data in [0, leaf_prefix_bytes[ over to the left neighbor
             auto data = leaf->GetData().subspan(0, leaf_prefix_bytes);
+            TextInfo diff{data};
             neighbor->PushBytes(data);
             leaf->RemoveByteRange(0, leaf_prefix_bytes);
-            // Compute the the text statistics of the just-moved bytes
-            TextInfo diff{data};
-            parent->GetChildStats()[child_idx - 1] += diff;
-            // Update the nodes of the right seam
-            auto right_info = parent->GetChildStats()[child_idx] - diff;
+            // Update parents
+            assert(left_child_idx == (left_parent->GetSize() - 1));
+            left_parent->Pop();
+            right_parent->GetChildNodes()[0] = leaf;
+            // Unlink nodes
             auto right_node = leaf;
             neighbor->next_node = nullptr;
             right_node->previous_node = nullptr;
-            return finish(right_node, right_info, right_seam_nodes, std::move(right_seam_pages));
+            // Update text statistics
+            TextInfo left_info = left_parent->GetChildStats()[left_child_idx - 1] + diff;
+            TextInfo right_info = left_parent->GetChildStats()[left_child_idx] - diff;
+            return finish(left_info, right_node, right_info, right_seam_nodes, std::move(right_seam_pages));
         }
     }
 
@@ -729,34 +759,39 @@ Rope Rope::SplitOff(size_t char_idx) {
         auto neighbor = leaf->next_node;
         // Does the neighbor have enough space for all bytes after the split?
         if (neighbor->GetFreeSpace() >= leaf_suffix_bytes) {
-            // Move data in  [leaf_suffix_bytes, end[ over to the right neighbor
+            // Move data in [leaf_suffix_bytes, end[ over to the right neighbor
             auto data = leaf->TruncateBytes(leaf_prefix_bytes);
+            assert(data.size() == leaf_suffix_bytes);
             TextInfo diff{data};
             neighbor->InsertBytes(0, data);
-            // Compute the text statistics of the just-moved bytes
-            parent->GetChildStats()[child_idx] -= diff;
+            // Remove nodes[0] of the right parent since that slot is pointing to the current child page
+            assert(right_parent->GetSize() >= 2);
+            assert(right_parent->GetChildNodes()[0].Get<LeafNode>() == leaf);
+            assert(right_parent->GetChildNodes()[1].Get<LeafNode>() == neighbor);
+            right_parent->Remove(0);
             // Unlink nodes
             auto right_node = neighbor;
             right_node->previous_node = nullptr;
             leaf->next_node = nullptr;
-            // Fix nodes of the right seam
+            // Update text statistics
+            TextInfo left_info = left_parent->GetChildStats()[left_child_idx] - diff;
             TextInfo right_info{right_node->GetData()};
-            return finish(right_node, right_info, right_seam_nodes, std::move(right_seam_pages));
+            return finish(left_info, right_node, right_info, right_seam_nodes, std::move(right_seam_pages));
         }
     }
 
     // Failed to move bytes to neighbors, split off a new leaf page
     NodePage right_leaf_page{page_size};
     auto* right_leaf = new (right_leaf_page.Get()) LeafNode(page_size);
-    TextInfo right_info{leaf->GetData().subspan(leaf_prefix_bytes)};
+    right_parent->GetChildNodes()[0] = right_leaf;
     leaf->SplitBytesOff(leaf_prefix_bytes, *right_leaf);
-    // Update the statistics of the left leaf
-    parent->GetChildStats()[child_idx] -= right_info;
-    // Update the nodes of the right seam
+    // Update nodes
     leaf->next_node = nullptr;
     right_leaf->previous_node = nullptr;
     // Fix nodes of the right seam
-    return finish(right_leaf_page.Release<LeafNode>(), right_info, right_seam_nodes, std::move(right_seam_pages));
+    TextInfo right_info{right_leaf->GetData()};
+    TextInfo left_info = left_parent->GetChildStats()[left_child_idx] - right_info;
+    return finish(left_info, right_leaf_page.Release<LeafNode>(), right_info, right_seam_nodes, std::move(right_seam_pages));
 }
 
 /// Append a rope with the same height
