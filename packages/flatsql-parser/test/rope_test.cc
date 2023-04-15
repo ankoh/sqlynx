@@ -228,12 +228,82 @@ TEST_F(RopeTest, SplitOffNDiv2) {
     }
 }
 
-TEST_F(RopeTest, NodeCapacities) {
-    ASSERT_EQ(rope::LeafNode::Capacity(128), 104);
-    ASSERT_EQ(rope::InnerNode::Capacity(128), 3);
+TEST_F(RopeTest, SplitOffEverySecond) {
+    std::string expected;
+    for (size_t i = 0; i < 1000; ++i) {
+        expected += std::to_string(i);
+    }
+    for (size_t i = 0; i < expected.size(); i += 2) {
+        auto left = rope::Rope::FromString(128, expected);
+        auto right = left.SplitOff(i);
+        ASSERT_EQ(left.ToString(), std::string_view{expected}.substr(0, i));
+        ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(i));
+        ASSERT_EQ(left.GetInfo().utf8_codepoints, i);
+        ASSERT_EQ(right.GetInfo().utf8_codepoints, expected.size() - i);
+        left.CheckIntegrity();
+        right.CheckIntegrity();
+    }
 }
 
-TEST_F(RopeTest, SplitOffNDiv2FillNDiv2) {
+TEST_F(RopeTest, SplitOffEverySecondHalfFull) {
+    std::string expected;
+    for (size_t i = 0; i < 1000; ++i) {
+        expected += std::to_string(i);
+    }
+    for (size_t i = 0; i < expected.size(); i += 2) {
+        auto left = rope::Rope::FromString(128, expected, 50, 2);
+        auto right = left.SplitOff(i);
+        ASSERT_EQ(left.ToString(), std::string_view{expected}.substr(0, i));
+        ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(i));
+        ASSERT_EQ(left.GetInfo().utf8_codepoints, i);
+        ASSERT_EQ(right.GetInfo().utf8_codepoints, expected.size() - i);
+        left.CheckIntegrity();
+        right.CheckIntegrity();
+    }
+}
+
+TEST_F(RopeTest, SplitOffEveryThird) {
+    std::string expected;
+    for (size_t i = 0; i < 1000; ++i) {
+        expected += std::to_string(i);
+    }
+    for (size_t i = 0; i < expected.size(); i += 3) {
+        auto left = rope::Rope::FromString(128, expected);
+        auto right = left.SplitOff(i);
+        ASSERT_EQ(left.ToString(), std::string_view{expected}.substr(0, i));
+        ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(i));
+        ASSERT_EQ(left.GetInfo().utf8_codepoints, i);
+        ASSERT_EQ(right.GetInfo().utf8_codepoints, expected.size() - i);
+        left.CheckIntegrity();
+        right.CheckIntegrity();
+    }
+}
+
+TEST_F(RopeTest, SplitOffEveryThirdHalfFull) {
+    std::string expected;
+    for (size_t i = 0; i < 1000; ++i) {
+        expected += std::to_string(i);
+    }
+    for (size_t i = 0; i < expected.size(); i += 3) {
+        auto left = rope::Rope::FromString(256, expected, 120, 3);
+        auto right = left.SplitOff(i);
+        ASSERT_EQ(left.ToString(), std::string_view{expected}.substr(0, i));
+        ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(i));
+        ASSERT_EQ(left.GetInfo().utf8_codepoints, i);
+        ASSERT_EQ(right.GetInfo().utf8_codepoints, expected.size() - i);
+        left.CheckIntegrity();
+        right.CheckIntegrity();
+    }
+}
+
+TEST_F(RopeTest, NodeCapacities) {
+    EXPECT_EQ(rope::LeafNode::Capacity(128), 104);
+    EXPECT_EQ(rope::LeafNode::Capacity(256), 232);
+    EXPECT_EQ(rope::InnerNode::Capacity(128), 3);
+    EXPECT_EQ(rope::InnerNode::Capacity(256), 7);
+}
+
+TEST_F(RopeTest, SplitOffNDiv2HalfFill) {
     std::string expected;
     for (size_t i = 0; i < 1000; ++i) {
         expected += std::to_string(i);

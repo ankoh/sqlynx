@@ -93,6 +93,10 @@ struct NodePtr {
         assert(Is<T>());
         return reinterpret_cast<T*>((raw_ptr >> 1) << 1);
     }
+    /// Comparison operator
+    bool operator==(const NodePtr& other) const {
+        return raw_ptr == other.raw_ptr;
+    }
 };
 
 struct LeafNode {

@@ -611,6 +611,8 @@ Rope Rope::SplitOff(size_t char_idx) {
     auto* right_parent = right_root;
     size_t left_child_idx = split_idx;
     char_idx -= split_prefix.utf8_codepoints;
+    // Make sure new left and right parents point to the same child
+    assert(left_parent->GetChildNodes().back() == right_parent->GetChildNodes().front());
 
     // Locate leaf node and remember traversed inner nodes
     for (auto child_node = left_parent->GetChildNodes()[left_child_idx]; child_node.Is<InnerNode>(); child_node = left_parent->GetChildNodes()[left_child_idx]) {
@@ -632,40 +634,54 @@ Rope Rope::SplitOff(size_t char_idx) {
                 // We also move split_idx here as we want to preserve the reference on the left side (in case we need to split).
                 neighbor->Push(child->GetChildNodes().subspan(0, split_idx + 1), child->GetChildStats().subspan(0, split_idx + 1));
                 child->RemoveRange(0, split_idx);
-                // Update parents
+                // Our parent level made sure to point the left parent to the shared left child.
+                // We could split by just moving elements left, and therefore just have to remove the last child from the left parent.
                 assert(left_child_idx == (left_parent->GetSize() - 1));
                 left_parent->Pop();
-                right_parent->GetChildNodes()[0] = child;
+                // Make sure parents point to the correct nodes
+                assert(left_parent->GetChildNodes().back() == NodePtr{neighbor});
+                assert(right_parent->GetChildNodes().front() == NodePtr{child});
+                // Update parents
                 right_seam_nodes.push_back(child);
                 // Continue with last node of the just moved elements
                 right_parent = child;
                 left_parent = neighbor;
                 left_child_idx = neighbor->GetSize() - 1;
+                // Make sure new left and right parents point to the same child
+                assert(left_parent->GetChildNodes().back() == right_parent->GetChildNodes().front());
                 continue;
             }
         }
 
         // Check if we can merge the left suffix with the immediate right neighbor.
-        if (child->next_node != nullptr) {
+        if (right_parent->GetSize() >= 2) {
             // Get immediate right neighbor
             auto neighbor = child->next_node;
+            assert(right_parent->GetChildNodes()[0] == NodePtr{child});
+            assert(right_parent->GetChildNodes()[1] == NodePtr{neighbor});
             // Right neighbor has enough space to hold (child_count - split_idx) elements?
             if (neighbor->GetFreeSpace() >= (child->GetSize() - split_idx)) {
                 // Move children in [split_idx, end[ to right neighbor.
-                // Keep split_index alive since that holds the next to-be-split node
                 auto [split_nodes, split_stats] = child->Truncate(split_idx);
-                ++child->child_count;
                 neighbor->Insert(0, split_nodes, split_stats);
-                // Update parents
+                // Keep split_index alive on the left since that holds the next to-be-split node
+                ++child->child_count;
+                // Our parent level made sure to point the right parent to the shared left child.
+                // We could split by just moving elements over, and therefore just have to remove child [0] from the right parent.
                 assert(right_parent->GetSize() >= 2);
                 assert(right_parent->GetChildNodes()[0].Get<InnerNode>() == child);
                 assert(right_parent->GetChildNodes()[1].Get<InnerNode>() == neighbor);
                 right_parent->Remove(0);
                 right_seam_nodes.push_back(neighbor);
+                // Make sure parents point to the correct nodes
+                assert(left_parent->GetChildNodes().back() == NodePtr{child});
+                assert(right_parent->GetChildNodes().front() == NodePtr{neighbor});
                 // Continue with last child node of current child
                 right_parent = neighbor;
                 left_parent = child;
                 left_child_idx = split_idx;
+                // Make sure new left and right parents point to the same child
+                assert(left_parent->GetChildNodes().back() == right_parent->GetChildNodes().front());
                 continue;
             }
         }
@@ -675,17 +691,24 @@ Rope Rope::SplitOff(size_t char_idx) {
         right_seam_pages.emplace_back(page_size);
         auto* right = new (right_seam_pages.back().Get()) InnerNode(page_size);
         right_seam_nodes.push_back(right);
-        right_parent->GetChildNodes()[0] = right;
+        right_parent->GetChildNodes().front() = right;
+        right_parent->GetChildStats().front() = {};
         child->SplitOffRight(split_idx, *right);
         ++child->child_count;
 
         // We will update the parent & statistics later
+
+        // Make sure parents point to the correct nodes
+        assert(left_parent->GetChildNodes().back() == NodePtr{child});
+        assert(right_parent->GetChildNodes().front() == NodePtr{right});
 
         // Traverse to child
         assert(child->GetSize() == (split_idx + 1));
         right_parent = right;
         left_parent = child;
         left_child_idx = child->GetSize() - 1;
+        // Make sure new left and right parents point to the same child
+        assert(left_parent->GetChildNodes().back() == right_parent->GetChildNodes().front());
     }
 
     /// Helper to fixup the right seam.
@@ -739,6 +762,9 @@ Rope Rope::SplitOff(size_t char_idx) {
             assert(left_child_idx == (left_parent->GetSize() - 1));
             left_parent->Pop();
             right_parent->GetChildNodes()[0] = leaf;
+            // Make sure parents point to the correct nodes
+            assert(left_parent->GetChildNodes().back() == NodePtr{neighbor});
+            assert(right_parent->GetChildNodes().front() == NodePtr{leaf});
             // Unlink nodes
             auto right_node = leaf;
             neighbor->next_node = nullptr;
@@ -751,9 +777,11 @@ Rope Rope::SplitOff(size_t char_idx) {
     }
 
     // Do we have a right leaf neighbor?
-    if (leaf->next_node != nullptr) {
+    if (right_parent->GetSize() >= 2) {
         // Get immediate right neighbor
         auto neighbor = leaf->next_node;
+        assert(right_parent->GetChildNodes()[0] == NodePtr{leaf});
+        assert(right_parent->GetChildNodes()[1] == NodePtr{neighbor});
         // Does the neighbor have enough space for all bytes after the split?
         if (neighbor->GetFreeSpace() >= leaf_suffix_bytes) {
             // Move data in [leaf_suffix_bytes, end[ over to the right neighbor
@@ -766,6 +794,9 @@ Rope Rope::SplitOff(size_t char_idx) {
             assert(right_parent->GetChildNodes()[0].Get<LeafNode>() == leaf);
             assert(right_parent->GetChildNodes()[1].Get<LeafNode>() == neighbor);
             right_parent->Remove(0);
+            // Make sure parents point to the correct nodes
+            assert(left_parent->GetChildNodes().back() == NodePtr{leaf});
+            assert(right_parent->GetChildNodes().front() == NodePtr{neighbor});
             // Unlink nodes
             auto right_node = neighbor;
             right_node->previous_node = nullptr;
