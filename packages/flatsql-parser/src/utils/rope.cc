@@ -1550,6 +1550,7 @@ void Rope::CheckIntegrity() {
         } else {
             // Is an inner node
             auto inner = top.node.Get<InnerNode>();
+            validate(!inner->IsEmpty(), "inner node is empty");
             TextInfo have;
             for (size_t i = 0; i < inner->child_count; ++i) {
                 auto nodes = inner->GetChildNodes();
