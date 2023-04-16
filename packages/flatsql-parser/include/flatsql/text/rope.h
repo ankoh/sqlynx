@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <functional>
 #include <iostream>
 #include <limits>
 #include <memory>
@@ -143,12 +144,16 @@ struct LeafNode {
     /// Reset the node
     inline auto Reset() noexcept { buffer_size = 0; }
 
-    /// Link a neighbor
-    void LinkNeighbors(LeafNode& other);
+    /// Link a node
+    void LinkNodeRight(LeafNode& other);
+    /// Unlink a node
+    void UnlinkNode();
+
     /// Insert raw bytes at an offset
     void InsertBytes(size_t ofs, std::span<const std::byte> data) noexcept;
     /// Appends a string to the end of the buffer
     void PushBytes(std::span<const std::byte> str) noexcept;
+
     /// Remove text in range
     void RemoveByteRange(size_t start_byte_idx, size_t byte_count) noexcept;
     /// Remove text in range
@@ -161,6 +166,7 @@ struct LeafNode {
     void SplitBytesOff(size_t byte_idx, LeafNode& right) noexcept;
     /// Split chars at index
     void SplitCharsOff(size_t char_idx, LeafNode& right) noexcept;
+
     /// Inserts `string` at `byte_idx` and splits the resulting string in half.
     /// Only splits on code point boundaries, so if the whole string is a single code point the right node will be
     /// empty.
@@ -169,8 +175,9 @@ struct LeafNode {
     /// Only splits on code point boundaries, so if the whole string is a single code point,
     /// the split will fail and the returned string will be empty.
     void PushBytesAndSplit(std::span<const std::byte> str, LeafNode& right);
-    /// Distribute children equally between nodes
-    void BalanceBytes(LeafNode& right);
+
+    /// Distribute characters equally between nodes
+    void BalanceCharsRight(TextInfo& own_info, LeafNode& right_node, TextInfo& right_info);
 
     /// Create a leaf node from a string
     static LeafNode* FromString(NodePage& page, std::string_view& text,
@@ -233,11 +240,14 @@ struct InnerNode {
     std::pair<Boundary, Boundary> FindCodepointRange(size_t char_idx, size_t count);
 
     /// Link a neighbor
-    void LinkNeighbors(InnerNode& other);
+    void LinkNodeRight(InnerNode& other);
+    /// Unlink a node
+    void UnlinkNode();
     /// Combine the text statistics
     TextInfo AggregateTextInfo() noexcept;
     /// Combine the text statistics
     TextInfo AggregateTextInfoInRange(size_t child_id, size_t count) noexcept;
+
     /// Pushes an item into the array
     void Push(NodePtr child, TextInfo stats);
     /// Pushes items into the array
@@ -248,6 +258,7 @@ struct InnerNode {
     void Insert(size_t idx, NodePtr child, TextInfo stats);
     /// Inserts items at a position
     void Insert(size_t idx, std::span<const NodePtr> child, std::span<const TextInfo> stats);
+
     /// Remove an element at a position
     std::pair<NodePtr, TextInfo> Remove(size_t idx);
     /// Remove elements in a range
@@ -258,12 +269,16 @@ struct InnerNode {
     void SplitOffRight(size_t child_idx, InnerNode& right);
     /// Splits node at index
     void SplitOffLeft(size_t child_idx, InnerNode& left);
+
     /// Pushes an element onto the end of the array, and then splits it in half
     void PushAndSplit(NodePtr child, TextInfo stats, InnerNode& dst);
     /// Inserts an element into a the array, and then splits it in half
     void InsertAndSplit(size_t idx, NodePtr child, TextInfo stats, InnerNode& other);
+
     /// Distribute children equally between nodes
-    void Balance(InnerNode& right);
+    void BalanceRight(TextInfo& own_info, InnerNode& right_node, TextInfo& right_info);
+    /// Balance a child
+    void BalanceAroundChild(size_t idx);
 };
 
 struct Rope {
@@ -330,7 +345,8 @@ struct Rope {
 
     /// Copy the rope to a std::string
     std::string ToString();
-    /// Create a rope from a string
+    /// Create a rope from a string.
+    /// Control fill degree through `leaf_capacity` and `inner_capacity`.
     static Rope FromString(size_t page_size, std::string_view text,
                            size_t leaf_capacity = std::numeric_limits<size_t>::max(),
                            size_t inner_capacity = std::numeric_limits<size_t>::max());

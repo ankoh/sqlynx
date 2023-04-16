@@ -25,49 +25,35 @@ constexpr bool isCodepointBoundary(std::span<const std::byte> buffer, size_t pos
     }
 }
 /// Find the previous codepoint boundary
-constexpr size_t nextCodepoint(std::span<const std::byte> buffer, size_t pos) {
+constexpr size_t prevCodepoint(std::span<const std::byte> buffer, size_t pos) {
     assert(pos <= buffer.size());
-    if (pos == 0) {
-        return 0;
-    }
-    for (--pos; pos > 0 && !isCodepointBoundary(buffer[pos]); --pos)
+    for (; pos > 0 && !isCodepointBoundary(buffer[pos]); --pos)
         ;
     return pos;
 }
 /// Find the next codepoint boundary
-constexpr size_t prevCodepoint(std::span<const std::byte> buffer, size_t pos) {
+constexpr size_t nextCodepoint(std::span<const std::byte> buffer, size_t pos) {
     assert(pos <= buffer.size());
-    if (pos == buffer.size()) {
-        return buffer.size();
-    }
-    for (++pos; pos < buffer.size() && !isCodepointBoundary(buffer[pos]); ++pos)
+    for (; pos < buffer.size() && !isCodepointBoundary(buffer[pos]); ++pos)
         ;
     return pos;
 }
 /// Find the nearest codepoint boundary
 constexpr size_t findNearestCodepoint(std::span<const std::byte> buffer, size_t pos) {
     assert(pos <= buffer.size());
-    if (isCodepointBoundary(buffer, pos)) {
-        return pos;
-    } else {
-        auto prev = nextCodepoint(buffer, pos);
-        auto next = prevCodepoint(buffer, pos);
-        return ((pos - prev) <= (next - pos)) ? prev : next;
-    }
+    auto prev = prevCodepoint(buffer, pos);
+    auto next = nextCodepoint(buffer, pos);
+    return ((pos - prev) <= (next - pos)) ? prev : next;
 }
 /// Find a codepoint boundary, not necessarily the nearest
 constexpr size_t findCodepoint(std::span<const std::byte> buffer, size_t pos, bool bias_left = true) {
     assert(pos <= buffer.size());
-    if (isCodepointBoundary(buffer, pos)) {
-        return pos;
+    auto prev = prevCodepoint(buffer, pos);
+    auto next = nextCodepoint(buffer, pos);
+    if (bias_left) {
+        return (prev > 0) ? prev : next;
     } else {
-        auto prev = nextCodepoint(buffer, pos);
-        auto next = prevCodepoint(buffer, pos);
-        if (bias_left) {
-            return (prev > 0) ? prev : next;
-        } else {
-            return (next < buffer.size()) ? next : prev;
-        }
+        return (next < buffer.size()) ? next : prev;
     }
 }
 /// Find the byte index of a character index that is guaranteed to be in the buffer.

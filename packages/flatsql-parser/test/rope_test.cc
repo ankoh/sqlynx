@@ -70,7 +70,9 @@ TEST_F(RopeTest, LeafBalanceBytesWith) {
     auto& right = *new (right_page.Get()) rope::LeafNode(128);
     left.PushBytes(asBytes("01"));
     right.PushBytes(asBytes("23456789"));
-    left.BalanceBytes(right);
+    rope::TextInfo left_stats{left.GetData()};
+    rope::TextInfo right_stats{right.GetData()};
+    left.BalanceCharsRight(left_stats, right, right_stats);
     EXPECT_EQ(left.GetStringView(), "01234");
     EXPECT_EQ(right.GetStringView(), "56789");
 
@@ -78,7 +80,9 @@ TEST_F(RopeTest, LeafBalanceBytesWith) {
     right.TruncateBytes(0);
     left.PushBytes(asBytes("abcdefgh"));
     right.PushBytes(asBytes("ij"));
-    left.BalanceBytes(right);
+    left_stats = {left.GetData()};
+    right_stats = {right.GetData()};
+    left.BalanceCharsRight(left_stats, right, right_stats);
     EXPECT_EQ(left.GetStringView(), "abcde");
     EXPECT_EQ(right.GetStringView(), "fghij");
 }
