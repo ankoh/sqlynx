@@ -177,7 +177,7 @@ struct LeafNode {
     void PushBytesAndSplit(std::span<const std::byte> str, LeafNode& right);
 
     /// Distribute characters equally between nodes
-    void BalanceCharsRight(TextInfo& own_info, LeafNode& right_node, TextInfo& right_info);
+    void BalanceCharsRight(TextInfo& own_info, LeafNode& right_node, TextInfo& right_info, bool force = false);
 
     /// Create a leaf node from a string
     static LeafNode* FromString(NodePage& page, std::string_view& text,
@@ -294,6 +294,8 @@ struct Rope {
 
     /// Connect nodes
     static void LinkEquiHeight(size_t page_size, NodePtr left, NodePtr right);
+    /// Balance a child of an inner node
+    static void BalanceChild(InnerNode& node, size_t idx, LeafNode*& first_leaf);
 
     /// Ensure at least one element can be inserted into the child node.
     /// This method will attempt to move elements to the immediate left and right neighbors.
@@ -312,10 +314,8 @@ struct Rope {
     /// The text to be inserted must not exceed the size of leaf page.
     /// That guarantees that we need at most one split.
     void InsertBounded(size_t char_idx, std::span<const std::byte> text_bytes);
-    /// Balance a child of an inner node
-    void BalanceChild(InnerNode& node, size_t idx);
     /// Flatten the root
-    void FlattenRoot();
+    void FlattenTree();
 
    public:
     /// Constructor

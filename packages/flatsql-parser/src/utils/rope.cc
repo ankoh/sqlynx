@@ -191,8 +191,19 @@ void LeafNode::InsertBytesAndSplit(size_t byte_idx, std::span<const std::byte> s
 void LeafNode::PushBytesAndSplit(std::span<const std::byte> str, LeafNode& right) {
     InsertBytesAndSplit(GetSize(), str, right);
 }
+
+/// Only balance if left and right nodes diff by more than 1/4th of the page capacity
+constexpr bool shouldBalanceLeaf(size_t capacity, size_t left, size_t right) {
+    size_t diff = std::abs(static_cast<ssize_t>(left) - static_cast<ssize_t>(right));
+    return (diff * 4) >= capacity;
+}
+
 /// Distribute children equally between nodes
-void LeafNode::BalanceCharsRight(TextInfo& own_info, LeafNode& right_node, TextInfo& right_info) {
+void LeafNode::BalanceCharsRight(TextInfo& own_info, LeafNode& right_node, TextInfo& right_info, bool force) {
+    if (!shouldBalanceLeaf(buffer_capacity, GetSize(), right_node.GetSize()) && !force) {
+        return;
+    }
+
     // Move children from right to left?
     if (GetSize() < right_node.GetSize()) {
         size_t move_left = (right_node.GetSize() - GetSize()) / 2;
@@ -414,8 +425,18 @@ void InnerNode::InsertAndSplit(size_t idx, NodePtr child, TextInfo stats, InnerN
     }
     PushAndSplit(std::get<0>(extra), std::get<1>(extra), other);
 }
+
+/// Only balance if left and right nodes diff by more than 1/4th of the page capacity
+constexpr bool shouldBalanceInner(size_t capacity, size_t left, size_t right) {
+    size_t diff = std::abs(static_cast<ssize_t>(left) - static_cast<ssize_t>(right));
+    return (diff * 4) >= capacity;
+}
 /// Balance between two nodes
 void InnerNode::BalanceRight(TextInfo& own_info, InnerNode& right_node, TextInfo& right_info) {
+    if (!shouldBalanceInner(child_capacity, GetSize(), right_node.GetSize())) {
+        return;
+    }
+
     // Move children from right to left?
     if (GetSize() < right_node.GetSize()) {
         size_t move_left = (right_node.GetSize() - GetSize()) / 2;
@@ -626,7 +647,8 @@ Rope Rope::SplitOff(size_t char_idx) {
     assert(left_parent->GetChildNodes().back() == right_parent->GetChildNodes().front());
 
     // Locate leaf node and remember traversed inner nodes
-    for (auto child_node = left_parent->GetChildNodes()[left_child_idx]; child_node.Is<InnerNode>(); child_node = left_parent->GetChildNodes()[left_child_idx]) {
+    for (auto child_node = left_parent->GetChildNodes()[left_child_idx]; child_node.Is<InnerNode>();
+         child_node = left_parent->GetChildNodes()[left_child_idx]) {
         // Find split point in client
         auto* child = child_node.Get<InnerNode>();
         std::tie(split_idx, split_prefix) = child->FindCodepoint(char_idx);
@@ -642,11 +664,14 @@ Rope Rope::SplitOff(size_t char_idx) {
             // (split + 1) because we have to keep the yet-to-split child node.
             if (neighbor->GetFreeSpace() >= (split_idx + 1)) {
                 // Move children in [0, split_idx] to left neighbor.
-                // We also move split_idx here as we want to preserve the reference on the left side (in case we need to split).
-                neighbor->Push(child->GetChildNodes().subspan(0, split_idx + 1), child->GetChildStats().subspan(0, split_idx + 1));
+                // We also move split_idx here as we want to preserve the reference on the left side (in case we need to
+                // split).
+                neighbor->Push(child->GetChildNodes().subspan(0, split_idx + 1),
+                               child->GetChildStats().subspan(0, split_idx + 1));
                 child->RemoveRange(0, split_idx);
                 // Our parent level made sure to point the left parent to the shared left child.
-                // We could split by just moving elements left, and therefore just have to remove the last child from the left parent.
+                // We could split by just moving elements left, and therefore just have to remove the last child from
+                // the left parent.
                 assert(left_child_idx == (left_parent->GetSize() - 1));
                 left_parent->Pop();
                 // Make sure parents point to the correct nodes
@@ -678,7 +703,8 @@ Rope Rope::SplitOff(size_t char_idx) {
                 // Keep split_index alive on the left since that holds the next to-be-split node
                 ++child->child_count;
                 // Our parent level made sure to point the right parent to the shared left child.
-                // We could split by just moving elements over, and therefore just have to remove child [0] from the right parent.
+                // We could split by just moving elements over, and therefore just have to remove child [0] from the
+                // right parent.
                 assert(right_parent->GetSize() >= 2);
                 assert(right_parent->GetChildNodes()[0].Get<InnerNode>() == child);
                 assert(right_parent->GetChildNodes()[1].Get<InnerNode>() == neighbor);
@@ -723,7 +749,8 @@ Rope Rope::SplitOff(size_t char_idx) {
     }
 
     /// Helper to fixup the seam nodes
-    auto finish = [this](TextInfo left_child_info, LeafNode* right_leaf, TextInfo right_child_info, std::span<InnerNode*> right_seam, std::vector<NodePage>&& right_seam_pages) {
+    auto finish = [this](TextInfo left_child_info, LeafNode* right_leaf, TextInfo right_child_info,
+                         std::span<InnerNode*> right_seam, std::vector<NodePage>&& right_seam_pages) {
         // Now propagate the text change up the seam nodes
         NodePtr right_child_node{right_leaf};
         for (auto seam_iter = right_seam.rbegin(); seam_iter != right_seam.rend(); ++seam_iter) {
@@ -736,18 +763,25 @@ Rope Rope::SplitOff(size_t char_idx) {
             // Disconnect seam nodes
             left_parent->next_node = nullptr;
             right_parent->previous_node = nullptr;
+            // Balance seam nodes
+            BalanceChild(*left_parent, left_parent->GetSize() - 1, first_leaf);
+            BalanceChild(*right_parent, 0, right_leaf);
             // Go 1 level up
             left_child_info = left_parent->AggregateTextInfo();
             right_child_node = right_parent;
             right_child_info = right_parent->AggregateTextInfo();
         }
         // Release pages
-        for (auto& page: right_seam_pages) {
+        for (auto& page : right_seam_pages) {
             page.Release();
         }
         // Update root info
         root_info -= right_child_info;
-        return Rope{page_size, right_child_node, right_child_info, right_leaf, tree_height};
+        auto right = Rope{page_size, right_child_node, right_child_info, right_leaf, tree_height};
+        // Flatten both ropes
+        FlattenTree();
+        right.FlattenTree();
+        return right;
     };
 
     /// Helper to split a leaf page
@@ -829,7 +863,8 @@ Rope Rope::SplitOff(size_t char_idx) {
     // Fix nodes of the right seam
     TextInfo right_info{right_leaf->GetData()};
     TextInfo left_info = left_parent->GetChildStats()[left_child_idx] - right_info;
-    return finish(left_info, right_leaf_page.Release<LeafNode>(), right_info, right_seam_nodes, std::move(right_seam_pages));
+    return finish(left_info, right_leaf_page.Release<LeafNode>(), right_info, right_seam_nodes,
+                  std::move(right_seam_pages));
 }
 
 /// Append a rope with the same height
@@ -1114,7 +1149,7 @@ void Rope::PreemptiveBalanceOrSplit(InnerNode& parent, size_t& child_idx, TextIn
             return;
         }
     }
-    
+
     // Balancing failed, create a split page
     NodePage split_page{page_size};
     auto split_node = new (split_page.Get()) InnerNode(page_size);
@@ -1258,7 +1293,8 @@ void Rope::Insert(size_t char_idx, std::string_view text) {
 
     // Split the input text in chunks and insert it into the rope
     while (!text.empty()) {
-        auto split_idx = utf8::findCodepoint(text_buffer, std::min(LeafNode::Capacity(page_size) - 4, text.size()), false);
+        auto split_idx =
+            utf8::findCodepoint(text_buffer, std::min(LeafNode::Capacity(page_size) - 4, text.size()), false);
         auto tail = text_buffer.subspan(split_idx);
         text = text.substr(0, split_idx);
         InsertBounded(char_idx, tail);
@@ -1377,7 +1413,7 @@ Rope Rope::FromString(size_t page_size, std::string_view text, size_t leaf_capac
 }
 
 /// Balance a child
-void Rope::BalanceChild(InnerNode& parent, size_t child_idx) {
+void Rope::BalanceChild(InnerNode& parent, size_t child_idx, LeafNode*& first_leaf) {
     assert(child_idx < parent.GetSize());
     auto child_infos = parent.GetChildStats();
     auto child_nodes = parent.GetChildNodes();
@@ -1418,7 +1454,9 @@ void Rope::BalanceChild(InnerNode& parent, size_t child_idx) {
         if (neighbor_free >= child_node->GetSize() && child_node != first_leaf) {
             size_t move_left = 0, move_right = 0;
             if (left_node) {
-                move_left = std::min<size_t>(child_node->GetSize(), std::min<size_t>((child_node->GetSize() + 1) / neighbor_count, left_node->GetFreeSpace()));
+                move_left = std::min<size_t>(
+                    child_node->GetSize(),
+                    std::min<size_t>((child_node->GetSize() + 1) / neighbor_count, left_node->GetFreeSpace()));
                 auto move_left_data = child_node->GetData().subspan(0, move_left);
                 left_node->PushBytes(move_left_data);
                 *left_info += TextInfo{move_left_data};
@@ -1484,7 +1522,9 @@ void Rope::BalanceChild(InnerNode& parent, size_t child_idx) {
         if (neighbor_free >= child_node->GetSize()) {
             size_t move_left = 0, move_right = 0;
             if (left_node) {
-                move_left = std::min<size_t>(child_node->GetSize(), std::min<size_t>((child_node->GetSize() + 1) / neighbor_count, left_node->GetFreeSpace()));
+                move_left = std::min<size_t>(
+                    child_node->GetSize(),
+                    std::min<size_t>((child_node->GetSize() + 1) / neighbor_count, left_node->GetFreeSpace()));
                 auto move_left_nodes = child_node->GetChildNodes().subspan(0, move_left);
                 auto move_left_stats = child_node->GetChildStats().subspan(0, move_left);
                 left_node->Push(move_left_nodes, move_left_stats);
@@ -1504,7 +1544,6 @@ void Rope::BalanceChild(InnerNode& parent, size_t child_idx) {
             delete[] reinterpret_cast<std::byte*>(child_node);
             return;
         }
-
 
         // Balance children
         if (left_node) {
@@ -1652,7 +1691,7 @@ void Rope::Remove(size_t char_idx, size_t char_count) {
             // It's enough to just balance the lower node since we hit the same leaf
             assert(iter->lower_node == iter->upper_node);
             assert(iter->lower_child_idx == iter->upper_child_idx);
-            BalanceChild(*iter->lower_node, iter->lower_child_idx);
+            BalanceChild(*iter->lower_node, iter->lower_child_idx, first_leaf);
         }
     } else {
         // Adjust boundaries
@@ -1679,19 +1718,19 @@ void Rope::Remove(size_t char_idx, size_t char_count) {
 
             // Balance children
             if (iter->lower_node == iter->upper_node && iter->lower_child_idx == iter->upper_child_idx) {
-                BalanceChild(*iter->lower_node, iter->lower_child_idx);
+                BalanceChild(*iter->lower_node, iter->lower_child_idx, first_leaf);
             } else {
                 // Balance upper node first since we might interfere with lower
-                BalanceChild(*iter->upper_node, iter->upper_child_idx);
-                BalanceChild(*iter->lower_node, iter->lower_child_idx);
+                BalanceChild(*iter->upper_node, iter->upper_child_idx, first_leaf);
+                BalanceChild(*iter->lower_node, iter->lower_child_idx, first_leaf);
             }
         }
     }
     // Flatten the tree
-    FlattenRoot();
+    FlattenTree();
 }
 
-void Rope::FlattenRoot() {
+void Rope::FlattenTree() {
     while (root_node.Is<InnerNode>()) {
         auto inner = root_node.Get<InnerNode>();
         if (inner->GetSize() > 1) {
@@ -1735,11 +1774,7 @@ void Rope::CheckIntegrity() {
     };
     std::vector<Validation> pending;
     pending.reserve(10 * tree_height);
-    pending.push_back(Validation{
-        .node = root_node,
-        .expected = root_info,
-        .level = 0
-    });
+    pending.push_back(Validation{.node = root_node, .expected = root_info, .level = 0});
     size_t max_level = 0;
     while (!pending.empty()) {
         auto top = pending.back();
@@ -1749,6 +1784,7 @@ void Rope::CheckIntegrity() {
         // Is a leaf node?
         if (top.node.Is<LeafNode>()) {
             auto leaf = top.node.Get<LeafNode>();
+            validate(leaf == root_node || !leaf->IsEmpty(), "leaf node is empty");
             TextInfo have{leaf->GetData()};
             validate(top.expected.text_bytes == have.text_bytes, "leaf text bytes mismatch");
             validate(top.expected.line_breaks == have.line_breaks, "leaf line breaks mismatch");
@@ -1764,7 +1800,7 @@ void Rope::CheckIntegrity() {
             for (size_t i = 0; i < inner->child_count; ++i) {
                 auto nodes = inner->GetChildNodes();
                 auto stats = inner->GetChildStats();
-                pending.push_back(Validation {
+                pending.push_back(Validation{
                     .node = nodes[i],
                     .expected = stats[i],
                     .level = top.level + 1,

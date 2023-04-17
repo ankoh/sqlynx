@@ -72,7 +72,7 @@ TEST_F(RopeTest, LeafBalanceBytesWith) {
     right.PushBytes(asBytes("23456789"));
     rope::TextInfo left_stats{left.GetData()};
     rope::TextInfo right_stats{right.GetData()};
-    left.BalanceCharsRight(left_stats, right, right_stats);
+    left.BalanceCharsRight(left_stats, right, right_stats, true);
     EXPECT_EQ(left.GetStringView(), "01234");
     EXPECT_EQ(right.GetStringView(), "56789");
 
@@ -82,7 +82,7 @@ TEST_F(RopeTest, LeafBalanceBytesWith) {
     right.PushBytes(asBytes("ij"));
     left_stats = {left.GetData()};
     right_stats = {right.GetData()};
-    left.BalanceCharsRight(left_stats, right, right_stats);
+    left.BalanceCharsRight(left_stats, right, right_stats, true);
     EXPECT_EQ(left.GetStringView(), "abcde");
     EXPECT_EQ(right.GetStringView(), "fghij");
 }
