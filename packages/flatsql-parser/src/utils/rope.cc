@@ -433,148 +433,9 @@ void InnerNode::BalanceRight(TextInfo& own_info, InnerNode& right_node, TextInfo
         auto move_right_from = GetSize() - move_right;
         auto diff = AggregateTextInfoInRange(move_right_from, move_right);
         auto [move_right_nodes, move_right_stats] = Truncate(move_right_from);
-        right_node.Push(move_right_nodes, move_right_stats);
+        right_node.Insert(0, move_right_nodes, move_right_stats);
         own_info -= diff;
         right_info += diff;
-    }
-}
-
-/// Balance a child
-void InnerNode::BalanceAroundChild(size_t child_idx) {
-    assert(child_idx < GetSize());
-    auto child_infos = GetChildStats();
-    auto child_nodes = GetChildNodes();
-
-    // Is a leaf node?
-    if (child_nodes[child_idx].Is<LeafNode>()) {
-        // Easy case, leaf is empty, just remove it
-        auto* child_node = child_nodes[child_idx].Get<LeafNode>();
-        auto& child_info = child_infos[child_idx];
-        if (child_node->IsEmpty()) {
-            Remove(child_idx);
-            child_node->UnlinkNode();
-            delete[] reinterpret_cast<std::byte*>(child_node);
-            return;
-        }
-
-        // Neighbor capacity
-        size_t neighbor_count = 0, neighbor_free = 0;
-        LeafNode *left_node = nullptr, *right_node = nullptr;
-        TextInfo *left_info = nullptr, *right_info = nullptr;
-        if (child_idx >= 2) {
-            left_node = child_nodes[child_idx - 1].Get<LeafNode>();
-            left_info = &child_infos[child_idx - 1];
-            ++neighbor_count;
-            neighbor_free += left_node->GetFreeSpace();
-        }
-        if ((child_idx + 1) < GetSize()) {
-            right_node = child_nodes[child_idx + 1].Get<LeafNode>();
-            right_info = &child_infos[child_idx + 1];
-            ++neighbor_count;
-            neighbor_free += right_node->GetFreeSpace();
-        }
-
-        // Can get rid of child?
-        if (neighbor_free >= GetFreeSpace()) {
-            size_t move_left = 0, move_right = 0;
-            if (left_node) {
-                move_left = std::min<size_t>(child_node->GetSize(), std::min<size_t>((child_node->GetSize() + 1) / neighbor_count, left_node->GetFreeSpace()));
-                auto move_left_data = child_node->GetData().subspan(0, move_left);
-                left_node->PushBytes(move_left_data);
-                *left_info += TextInfo{move_left_data};
-            }
-            if (right_node) {
-                move_right = child_node->GetSize() - move_left;
-                assert(move_right <= right_node->GetFreeSpace());
-                auto move_right_data = child_node->GetData().subspan(move_left, move_right);
-                right_node->InsertBytes(0, move_right_data);
-                *right_info += TextInfo{move_right_data};
-            }
-            assert((move_left + move_right) == child_node->GetSize());
-            Remove(child_idx);
-            child_node->UnlinkNode();
-            delete[] reinterpret_cast<std::byte*>(child_node);
-            return;
-        }
-
-        // Balance children
-        if (left_node) {
-            if (right_node) {
-                left_node->BalanceCharsRight(*left_info, *child_node, child_info);
-                left_node->BalanceCharsRight(*left_info, *right_node, *right_info);
-                child_node->BalanceCharsRight(child_info, *right_node, *right_info);
-            } else {
-                left_node->BalanceCharsRight(*left_info, *child_node, child_info);
-            }
-        } else {
-            child_node->BalanceCharsRight(child_info, *right_node, *right_info);
-        }
-    } else {
-        // Easy case, inner is empty, just remove it
-        auto* child_node = child_nodes[child_idx].Get<InnerNode>();
-        auto& child_info = child_infos[child_idx];
-        if (child_node->IsEmpty()) {
-            Remove(child_idx);
-            child_node->UnlinkNode();
-            delete[] reinterpret_cast<std::byte*>(child_node);
-            return;
-        }
-
-        // Neighbor capacity
-        size_t neighbor_count = 0, neighbor_free = 0;
-        InnerNode *left_node = nullptr, *right_node = nullptr;
-        TextInfo *left_info = nullptr, *right_info = nullptr;
-        if (child_idx >= 2) {
-            left_node = child_nodes[child_idx - 1].Get<InnerNode>();
-            left_info = &child_infos[child_idx - 1];
-            ++neighbor_count;
-            neighbor_free += left_node->GetFreeSpace();
-        }
-        if ((child_idx + 1) < GetSize()) {
-            right_node = child_nodes[child_idx + 1].Get<InnerNode>();
-            right_info = &child_infos[child_idx + 1];
-            ++neighbor_count;
-            neighbor_free += right_node->GetFreeSpace();
-        }
-
-        // Can get rid of child?
-        if (neighbor_free >= GetFreeSpace()) {
-            size_t move_left = 0, move_right = 0;
-            if (left_node) {
-                move_left = std::min<size_t>(child_node->GetSize(), std::min<size_t>((child_node->GetSize() + 1) / neighbor_count, left_node->GetFreeSpace()));
-                auto move_left_nodes = child_node->GetChildNodes().subspan(0, move_left);
-                auto move_left_stats = child_node->GetChildStats().subspan(0, move_left);
-                left_node->Push(move_left_nodes, move_left_stats);
-                *left_info += child_node->AggregateTextInfoInRange(0, move_left);
-            }
-            if (right_node) {
-                move_right = child_node->GetSize() - move_left;
-                assert(move_right <= right_node->GetFreeSpace());
-                auto move_right_nodes = child_node->GetChildNodes().subspan(move_left, move_right);
-                auto move_right_stats = child_node->GetChildStats().subspan(move_left, move_right);
-                right_node->Insert(0, move_right_nodes, move_right_stats);
-                *right_info += child_node->AggregateTextInfoInRange(move_left, child_node->GetSize() - move_left);
-            }
-            assert((move_left + move_right) == child_node->GetSize());
-            Remove(child_idx);
-            child_node->UnlinkNode();
-            delete[] reinterpret_cast<std::byte*>(child_node);
-            return;
-        }
-
-
-        // Balance children
-        if (left_node) {
-            if (right_node) {
-                left_node->BalanceRight(*left_info, *child_node, child_info);
-                left_node->BalanceRight(*left_info, *right_node, *right_info);
-                child_node->BalanceRight(child_info, *right_node, *right_info);
-            } else {
-                left_node->BalanceRight(*left_info, *child_node, child_info);
-            }
-        } else {
-            child_node->BalanceRight(child_info, *right_node, *right_info);
-        }
     }
 }
 
@@ -1515,6 +1376,151 @@ Rope Rope::FromString(size_t page_size, std::string_view text, size_t leaf_capac
     return rope;
 }
 
+/// Balance a child
+void Rope::BalanceChild(InnerNode& parent, size_t child_idx) {
+    assert(child_idx < parent.GetSize());
+    auto child_infos = parent.GetChildStats();
+    auto child_nodes = parent.GetChildNodes();
+
+    // Is a leaf node?
+    if (child_nodes[child_idx].Is<LeafNode>()) {
+        // Easy case, leaf is empty, just remove it
+        auto* child_node = child_nodes[child_idx].Get<LeafNode>();
+        auto& child_info = child_infos[child_idx];
+        if (child_node->IsEmpty()) {
+            if (child_node == first_leaf) {
+                first_leaf = child_node->next_node;
+            }
+            parent.Remove(child_idx);
+            child_node->UnlinkNode();
+            delete[] reinterpret_cast<std::byte*>(child_node);
+            return;
+        }
+
+        // Neighbor capacity
+        size_t neighbor_count = 0, neighbor_free = 0;
+        LeafNode *left_node = nullptr, *right_node = nullptr;
+        TextInfo *left_info = nullptr, *right_info = nullptr;
+        if (child_idx >= 2) {
+            left_node = child_nodes[child_idx - 1].Get<LeafNode>();
+            left_info = &child_infos[child_idx - 1];
+            ++neighbor_count;
+            neighbor_free += left_node->GetFreeSpace();
+        }
+        if ((child_idx + 1) < parent.GetSize()) {
+            right_node = child_nodes[child_idx + 1].Get<LeafNode>();
+            right_info = &child_infos[child_idx + 1];
+            ++neighbor_count;
+            neighbor_free += right_node->GetFreeSpace();
+        }
+
+        // Can get rid of child?
+        if (neighbor_free >= child_node->GetSize() && child_node != first_leaf) {
+            size_t move_left = 0, move_right = 0;
+            if (left_node) {
+                move_left = std::min<size_t>(child_node->GetSize(), std::min<size_t>((child_node->GetSize() + 1) / neighbor_count, left_node->GetFreeSpace()));
+                auto move_left_data = child_node->GetData().subspan(0, move_left);
+                left_node->PushBytes(move_left_data);
+                *left_info += TextInfo{move_left_data};
+            }
+            if (right_node) {
+                move_right = child_node->GetSize() - move_left;
+                assert(move_right <= right_node->GetFreeSpace());
+                auto move_right_data = child_node->GetData().subspan(move_left, move_right);
+                right_node->InsertBytes(0, move_right_data);
+                *right_info += TextInfo{move_right_data};
+            }
+            if (child_node == first_leaf) {
+                first_leaf = child_node->next_node;
+            }
+            assert((move_left + move_right) == child_node->GetSize());
+            parent.Remove(child_idx);
+            child_node->UnlinkNode();
+            delete[] reinterpret_cast<std::byte*>(child_node);
+            return;
+        }
+
+        // Balance children
+        if (left_node) {
+            if (right_node) {
+                left_node->BalanceCharsRight(*left_info, *child_node, child_info);
+                left_node->BalanceCharsRight(*left_info, *right_node, *right_info);
+                child_node->BalanceCharsRight(child_info, *right_node, *right_info);
+            } else {
+                left_node->BalanceCharsRight(*left_info, *child_node, child_info);
+            }
+        } else if (right_node) {
+            child_node->BalanceCharsRight(child_info, *right_node, *right_info);
+        }
+    } else {
+        // Easy case, inner is empty, just remove it
+        auto* child_node = child_nodes[child_idx].Get<InnerNode>();
+        auto& child_info = child_infos[child_idx];
+        if (child_node->IsEmpty()) {
+            parent.Remove(child_idx);
+            child_node->UnlinkNode();
+            delete[] reinterpret_cast<std::byte*>(child_node);
+            return;
+        }
+
+        // Neighbor capacity
+        size_t neighbor_count = 0, neighbor_free = 0;
+        InnerNode *left_node = nullptr, *right_node = nullptr;
+        TextInfo *left_info = nullptr, *right_info = nullptr;
+        if (child_idx >= 2) {
+            left_node = child_nodes[child_idx - 1].Get<InnerNode>();
+            left_info = &child_infos[child_idx - 1];
+            ++neighbor_count;
+            neighbor_free += left_node->GetFreeSpace();
+        }
+        if ((child_idx + 1) < parent.GetSize()) {
+            right_node = child_nodes[child_idx + 1].Get<InnerNode>();
+            right_info = &child_infos[child_idx + 1];
+            ++neighbor_count;
+            neighbor_free += right_node->GetFreeSpace();
+        }
+
+        // Can get rid of child?
+        if (neighbor_free >= child_node->GetSize()) {
+            size_t move_left = 0, move_right = 0;
+            if (left_node) {
+                move_left = std::min<size_t>(child_node->GetSize(), std::min<size_t>((child_node->GetSize() + 1) / neighbor_count, left_node->GetFreeSpace()));
+                auto move_left_nodes = child_node->GetChildNodes().subspan(0, move_left);
+                auto move_left_stats = child_node->GetChildStats().subspan(0, move_left);
+                left_node->Push(move_left_nodes, move_left_stats);
+                *left_info += child_node->AggregateTextInfoInRange(0, move_left);
+            }
+            if (right_node) {
+                move_right = child_node->GetSize() - move_left;
+                assert(move_right <= right_node->GetFreeSpace());
+                auto move_right_nodes = child_node->GetChildNodes().subspan(move_left, move_right);
+                auto move_right_stats = child_node->GetChildStats().subspan(move_left, move_right);
+                right_node->Insert(0, move_right_nodes, move_right_stats);
+                *right_info += child_node->AggregateTextInfoInRange(move_left, move_right);
+            }
+            assert((move_left + move_right) == child_node->GetSize());
+            parent.Remove(child_idx);
+            child_node->UnlinkNode();
+            delete[] reinterpret_cast<std::byte*>(child_node);
+            return;
+        }
+
+
+        // Balance children
+        if (left_node) {
+            if (right_node) {
+                left_node->BalanceRight(*left_info, *child_node, child_info);
+                left_node->BalanceRight(*left_info, *right_node, *right_info);
+                child_node->BalanceRight(child_info, *right_node, *right_info);
+            } else {
+                left_node->BalanceRight(*left_info, *child_node, child_info);
+            }
+        } else if (right_node) {
+            child_node->BalanceRight(child_info, *right_node, *right_info);
+        }
+    }
+}
+
 // Remove a range of characters
 void Rope::Remove(size_t char_idx, size_t char_count) {
     char_idx = std::min<size_t>(char_idx, root_info.utf8_codepoints);
@@ -1531,6 +1537,7 @@ void Rope::Remove(size_t char_idx, size_t char_count) {
         InnerNode *lower_node, *upper_node;
         TextInfo *lower_info, *upper_info;
         TextInfo lower_deleted, upper_deleted;
+        size_t lower_child_idx, upper_child_idx;
     };
     std::vector<InnerBounds> inner_bounds;
     inner_bounds.reserve(tree_height);
@@ -1556,6 +1563,8 @@ void Rope::Remove(size_t char_idx, size_t char_count) {
             .upper_info = upper_info,
             .lower_deleted = {},
             .upper_deleted = {},
+            .lower_child_idx = 0,
+            .upper_child_idx = 0,
         });
 
         // Deletion in same node?
@@ -1570,15 +1579,21 @@ void Rope::Remove(size_t char_idx, size_t char_count) {
             auto deleted_count = deleted_end - deleted_begin;
             auto deleted_info = lower_inner->AggregateTextInfoInRange(deleted_begin, deleted_count);
             lower_inner->RemoveRange(deleted_begin, deleted_count);
+
+            // Update registered bounds
             inner_bounds.back().lower_deleted += deleted_info;
+            inner_bounds.back().lower_child_idx = next_lower_idx;
+            inner_bounds.back().upper_child_idx = next_upper_idx - deleted_count;
 
             // Traverse down to next
-            lower_char_idx -= next_lower_prefix.utf8_codepoints;
+            assert(next_lower_idx < lower_inner->GetSize());
+            assert((next_upper_idx - deleted_count) < upper_inner->GetSize());
             lower_node = lower_inner->GetChildNodes()[next_lower_idx];
             lower_info = &lower_inner->GetChildStats()[next_lower_idx];
-            upper_char_idx -= next_upper_prefix.utf8_codepoints;
+            lower_char_idx -= next_lower_prefix.utf8_codepoints;
             upper_node = upper_inner->GetChildNodes()[next_upper_idx - deleted_count];
             upper_info = &upper_inner->GetChildStats()[next_upper_idx - deleted_count];
+            upper_char_idx -= next_upper_prefix.utf8_codepoints;
         } else {
             // First, find the next left and right boundaries
             auto [next_lower_idx, next_lower_prefix] = lower_inner->FindCodepoint(lower_char_idx);
@@ -1589,11 +1604,13 @@ void Rope::Remove(size_t char_idx, size_t char_count) {
             auto lower_deleted = lower_inner->AggregateTextInfoInRange(next_lower_idx + 1, lower_suffix_length);
             lower_inner->Truncate(next_lower_idx + 1);
             inner_bounds.back().lower_deleted += lower_deleted;
+            inner_bounds.back().lower_child_idx = lower_inner->GetSize() - 1;
 
             // Delete prefix of upper bound
             auto upper_deleted = upper_inner->AggregateTextInfoInRange(0, next_upper_idx);
             upper_inner->RemoveRange(0, next_upper_idx);
             inner_bounds.back().upper_deleted += upper_deleted;
+            inner_bounds.back().upper_child_idx = 0;
 
             // Blindly delete all nodes in between.
             // Note that we account for their deleted text statistics in the first shared ancestor node.
@@ -1606,12 +1623,14 @@ void Rope::Remove(size_t char_idx, size_t char_count) {
             upper_inner->previous_node = lower_inner;
 
             // Traverse down to next
-            lower_char_idx -= next_lower_prefix.utf8_codepoints;
+            assert(next_lower_idx == (lower_inner->GetChildNodes().size() - 1));
+            assert((upper_inner->GetChildNodes().size() >= 1));
             lower_node = lower_inner->GetChildNodes().back();
             lower_info = &lower_inner->GetChildStats().back();
-            upper_char_idx -= next_upper_prefix.utf8_codepoints;
+            lower_char_idx -= next_lower_prefix.utf8_codepoints;
             upper_node = upper_inner->GetChildNodes().front();
             upper_info = &upper_inner->GetChildStats().front();
+            upper_char_idx -= next_upper_prefix.utf8_codepoints;
         }
     }
 
@@ -1630,6 +1649,10 @@ void Rope::Remove(size_t char_idx, size_t char_count) {
         for (auto iter = inner_bounds.rbegin(); iter != inner_bounds.rend(); ++iter) {
             deleted += iter->lower_deleted;
             (*iter->lower_info) -= deleted;
+            // It's enough to just balance the lower node since we hit the same leaf
+            assert(iter->lower_node == iter->upper_node);
+            assert(iter->lower_child_idx == iter->upper_child_idx);
+            BalanceChild(*iter->lower_node, iter->lower_child_idx);
         }
     } else {
         // Adjust boundaries
@@ -1644,16 +1667,50 @@ void Rope::Remove(size_t char_idx, size_t char_count) {
         }
         lower_leaf->next_node = upper_leaf;
         upper_leaf->previous_node = lower_leaf;
-
-        // Propagate statistics upwards
         (*lower_info) -= lower_deleted;
         (*upper_info) -= upper_deleted;
+
+        // Propagate statistics upwards
         for (auto iter = inner_bounds.rbegin(); iter != inner_bounds.rend(); ++iter) {
             lower_deleted += iter->lower_deleted;
             upper_deleted += iter->upper_deleted;
             (*iter->lower_info) -= lower_deleted;
             (*iter->upper_info) -= upper_deleted;
+
+            // Balance children
+            if (iter->lower_node == iter->upper_node && iter->lower_child_idx == iter->upper_child_idx) {
+                BalanceChild(*iter->lower_node, iter->lower_child_idx);
+            } else {
+                // Balance upper node first since we might interfere with lower
+                BalanceChild(*iter->upper_node, iter->upper_child_idx);
+                BalanceChild(*iter->lower_node, iter->lower_child_idx);
+            }
         }
+    }
+    // Flatten the tree
+    FlattenRoot();
+}
+
+void Rope::FlattenRoot() {
+    while (root_node.Is<InnerNode>()) {
+        auto inner = root_node.Get<InnerNode>();
+        if (inner->GetSize() > 1) {
+            return;
+        }
+        if (inner->IsEmpty()) {
+            NodePage first_page{page_size};
+            first_leaf = new (first_page.Get()) LeafNode(page_size);
+            root_node = {first_leaf};
+            root_info = {};
+            tree_height = 1;
+            first_page.Release();
+            return;
+        }
+        assert(inner->GetSize() == 1);
+        assert(root_info.utf8_codepoints == inner->GetChildStats()[0].utf8_codepoints);
+        root_node = inner->GetChildNodes()[0];
+        --tree_height;
+        delete[] reinterpret_cast<std::byte*>(inner);
     }
 }
 

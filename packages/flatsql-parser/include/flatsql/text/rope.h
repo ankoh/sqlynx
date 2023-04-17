@@ -277,8 +277,6 @@ struct InnerNode {
 
     /// Distribute children equally between nodes
     void BalanceRight(TextInfo& own_info, InnerNode& right_node, TextInfo& right_info);
-    /// Balance a child
-    void BalanceAroundChild(size_t idx);
 };
 
 struct Rope {
@@ -314,6 +312,10 @@ struct Rope {
     /// The text to be inserted must not exceed the size of leaf page.
     /// That guarantees that we need at most one split.
     void InsertBounded(size_t char_idx, std::span<const std::byte> text_bytes);
+    /// Balance a child of an inner node
+    void BalanceChild(InnerNode& node, size_t idx);
+    /// Flatten the root
+    void FlattenRoot();
 
    public:
     /// Constructor
