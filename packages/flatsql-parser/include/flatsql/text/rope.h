@@ -1,9 +1,7 @@
-#include <array>
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <functional>
 #include <iostream>
 #include <limits>
 #include <memory>
@@ -12,8 +10,6 @@
 #include <type_traits>
 
 #include "flatsql/text/utf8.h"
-#include "flatsql/utils/small_vector.h"
-#include "utf8proc/utf8proc_wrapper.hpp"
 
 namespace flatsql {
 namespace rope {
