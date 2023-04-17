@@ -1,5 +1,7 @@
 #include "flatsql/text/rope.h"
 
+#include <vector>
+
 namespace flatsql::rope {
 
 /// Constructor
