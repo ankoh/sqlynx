@@ -1275,7 +1275,7 @@ void Rope::InsertBounded(size_t char_idx, std::span<const std::byte> text_bytes)
     ++tree_height;
 }
 
-static constexpr size_t BulkloadThreshold(size_t page_size) { return 6 * page_size; }
+static constexpr size_t useBulkloadingInsert(size_t page_size, size_t text_size) { return text_size >= 6 * page_size; }
 
 /// Insert at index
 void Rope::Insert(size_t char_idx, std::string_view text) {
@@ -1284,7 +1284,7 @@ void Rope::Insert(size_t char_idx, std::string_view text) {
     std::span<const std::byte> text_buffer{reinterpret_cast<const std::byte*>(text.data()), text.size()};
 
     // Bulk-load the text into a new rope and merge it?
-    if (text.size() >= BulkloadThreshold(page_size)) {
+    if (useBulkloadingInsert(page_size, text.size())) {
         auto right = SplitOff(char_idx);
         Append(Rope::FromString(page_size, text));
         Append(std::move(right));
