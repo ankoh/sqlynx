@@ -1,7 +1,5 @@
 #include "flatsql/text/rope.h"
 
-#include <stdexcept>
-
 namespace flatsql::rope {
 
 /// Constructor
