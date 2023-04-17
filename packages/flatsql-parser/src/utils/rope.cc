@@ -193,7 +193,7 @@ void LeafNode::PushBytesAndSplit(std::span<const std::byte> str, LeafNode& right
 }
 
 /// Only balance if left and right nodes diff by more than 1/4th of the page capacity
-constexpr bool shouldBalanceLeaf(size_t capacity, size_t left, size_t right) {
+static inline bool shouldBalanceLeaf(size_t capacity, size_t left, size_t right) {
     size_t diff = std::abs(static_cast<ssize_t>(left) - static_cast<ssize_t>(right));
     return (diff * 4) >= capacity;
 }
@@ -427,7 +427,7 @@ void InnerNode::InsertAndSplit(size_t idx, NodePtr child, TextInfo stats, InnerN
 }
 
 /// Only balance if left and right nodes diff by more than 1/4th of the page capacity
-constexpr bool shouldBalanceInner(size_t capacity, size_t left, size_t right) {
+static inline bool shouldBalanceInner(size_t capacity, size_t left, size_t right) {
     size_t diff = std::abs(static_cast<ssize_t>(left) - static_cast<ssize_t>(right));
     return (diff * 4) >= capacity;
 }
