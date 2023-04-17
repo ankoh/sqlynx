@@ -1737,6 +1737,7 @@ void Rope::FlattenTree() {
             return;
         }
         if (inner->IsEmpty()) {
+            delete[] reinterpret_cast<std::byte*>(inner);
             NodePage first_page{page_size};
             first_leaf = new (first_page.Get()) LeafNode(page_size);
             root_node = {first_leaf};
