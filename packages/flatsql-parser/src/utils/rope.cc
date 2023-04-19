@@ -1292,12 +1292,14 @@ void Rope::Insert(size_t char_idx, std::string_view text) {
     }
 
     // Split the input text in chunks and insert it into the rope
-    while (!text.empty()) {
-        auto split_idx =
-            utf8::findCodepoint(text_buffer, std::min(LeafNode::Capacity(page_size) - 4, text.size()), false);
-        auto tail = text_buffer.subspan(split_idx);
-        text = text.substr(0, split_idx);
+    while (!text_buffer.empty()) {
+        auto chunk_size = std::min(LeafNode::Capacity(page_size) - 4, text_buffer.size());
+        auto split_approx = text_buffer.size() - chunk_size;
+        auto split_bound = utf8::findCodepoint(text_buffer, split_approx, false);
+    
+        auto tail = text_buffer.subspan(split_bound);
         InsertBounded(char_idx, tail);
+        text_buffer = text_buffer.subspan(0, split_bound);
     }
 }
 

@@ -1,5 +1,7 @@
 #include "flatsql/text/rope.h"
 
+#include <random>
+
 #include "gtest/gtest.h"
 
 using namespace flatsql;
@@ -543,5 +545,121 @@ TEST_F(RopeTest, RemoveNMinus1Back) {
         buffer.CheckIntegrity();
     }
 }
+
+struct RopeInteractionGenerator {
+    /// A type of an interaction
+    enum class InteractionType : uint8_t { Insert, Remove };
+    /// A single user interaction
+    struct Interaction {
+        /// The input operation tyep
+        InteractionType type;
+        /// The begin of the operation
+        size_t begin;
+        /// The operation size
+        size_t count;
+        /// The argument data
+        std::string_view data;
+
+        /// Apply the input operation to a string buffer
+        void Apply(std::string& buffer) {
+            switch (type) {
+                case InteractionType::Insert:
+                    assert(begin <= buffer.size());
+                    buffer.insert(begin, data);
+                    break;
+                case InteractionType::Remove:
+                    assert(begin <= buffer.size());
+                    assert((begin + count) <= buffer.size());
+                    buffer.erase(begin, count);
+                    break;
+            }
+        }
+        /// Aply the input operation to a rope
+        void Apply(rope::Rope& buffer) {
+            switch (type) {
+                case InteractionType::Insert:
+                    buffer.Insert(begin, data);
+                    break;
+                case InteractionType::Remove:
+                    buffer.Remove(begin, count);
+                    break;
+            }
+        }
+    };
+
+   protected:
+    /// The seeded data generator
+    std::mt19937 generator;
+    /// The current data source
+    std::string data_source = "";
+    /// The current buffer size
+    size_t current_buffer_size = 0;
+    /// Constructor
+    RopeInteractionGenerator(size_t seed, size_t max_bytes) : generator(seed) {
+        auto gen_u8 = std::uniform_int_distribution<uint8_t>(48, 57);
+        data_source.reserve(max_bytes);
+        for (size_t i = 0; i < max_bytes; ++i) {
+            data_source.push_back(gen_u8(generator));
+        }
+    }
+    /// Release the data source
+    std::string ReleaseDataSource() { return std::move(data_source); }
+    /// Generate the next edit
+    Interaction GenerateOne() {
+        auto gen_bool = std::uniform_int_distribution<uint8_t>(0, 1);
+        if (gen_bool(generator) == 0) {
+            auto count = std::uniform_int_distribution<size_t>(0, data_source.size())(generator);
+            auto begin = std::uniform_int_distribution<size_t>(0, current_buffer_size)(generator);
+            current_buffer_size += count;
+            return {.type = InteractionType::Insert,
+                    .begin = begin,
+                    .count = count,
+                    .data = std::string_view{data_source}.substr(0, count)};
+        } else {
+            auto begin = std::uniform_int_distribution<size_t>(0, current_buffer_size)(generator);
+            auto end = std::uniform_int_distribution<size_t>(begin, current_buffer_size)(generator);
+            current_buffer_size -= end - begin;
+            return {
+                .type = InteractionType::Remove,
+                .begin = begin,
+                .count = end - begin,
+            };
+        }
+    }
+
+   public:
+    /// Generate multiple input operations
+    static std::pair<std::string, std::vector<Interaction>> GenerateMany(size_t seed, size_t n, size_t max_bytes) {
+        RopeInteractionGenerator gen{seed, max_bytes};
+        std::vector<Interaction> out;
+        for (size_t i = 0; i < n; ++i) {
+            out.push_back(gen.GenerateOne());
+        }
+        return {gen.ReleaseDataSource(), out};
+    }
+};
+
+struct RopeFuzzerTestSuite : public ::testing::TestWithParam<size_t> {};
+
+struct SeedArgPrinter {
+    std::string operator()(const ::testing::TestParamInfo<size_t>& info) const { return std::to_string(info.param); }
+};
+
+TEST_P(RopeFuzzerTestSuite, Test) {
+    rope::Rope target{128};
+    std::string expected;
+    auto [data_buffer, input_ops] = RopeInteractionGenerator::GenerateMany(GetParam(), 128, 256);
+    for (auto& op : input_ops) {
+        op.Apply(expected);
+        op.Apply(target);
+        target.CheckIntegrity();
+        ASSERT_EQ(target.ToString(), expected);
+    }
+}
+
+static const std::array<size_t, 3> fixed_fuzzer_tests = {0, 1, 10};
+
+INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest, RopeFuzzerTestSuite, ::testing::ValuesIn(fixed_fuzzer_tests),
+                         SeedArgPrinter());
 
 }  // namespace
