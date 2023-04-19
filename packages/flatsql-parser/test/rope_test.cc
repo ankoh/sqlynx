@@ -594,30 +594,32 @@ struct RopeInteractionGenerator {
     std::string data_source = "";
     /// The current buffer size
     size_t current_buffer_size = 0;
+
+    /// Generate a random number
+    size_t rnd() { return static_cast<size_t>(generator()); }
     /// Constructor
     RopeInteractionGenerator(size_t seed, size_t max_bytes) : generator(seed) {
-        auto gen_u8 = std::uniform_int_distribution<uint8_t>(48, 57);
         data_source.reserve(max_bytes);
         for (size_t i = 0; i < max_bytes; ++i) {
-            data_source.push_back(gen_u8(generator));
+            data_source.push_back(48 + (rnd() % (57 - 48)));
         }
     }
     /// Release the data source
     std::string ReleaseDataSource() { return std::move(data_source); }
     /// Generate the next edit
     Interaction GenerateOne() {
-        auto gen_bool = std::uniform_int_distribution<uint8_t>(0, 1);
-        if (gen_bool(generator) == 0) {
-            auto count = std::uniform_int_distribution<size_t>(0, data_source.size())(generator);
-            auto begin = std::uniform_int_distribution<size_t>(0, current_buffer_size)(generator);
+        size_t begin = (current_buffer_size == 0) ? 0 : (rnd() % current_buffer_size);
+        assert(begin <= current_buffer_size);
+        if ((rnd() & 0b1) == 0) {
+            size_t count = rnd() % data_source.size();
             current_buffer_size += count;
             return {.type = InteractionType::Insert,
                     .begin = begin,
                     .count = count,
                     .data = std::string_view{data_source}.substr(0, count)};
         } else {
-            auto begin = std::uniform_int_distribution<size_t>(0, current_buffer_size)(generator);
-            auto end = std::uniform_int_distribution<size_t>(begin, current_buffer_size)(generator);
+            size_t end = begin + ((begin == current_buffer_size) ? 0 : (rnd() % (current_buffer_size - begin)));
+            assert((end - begin) <= current_buffer_size);
             current_buffer_size -= end - begin;
             return {
                 .type = InteractionType::Remove,
