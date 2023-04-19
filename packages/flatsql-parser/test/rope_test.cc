@@ -19,7 +19,15 @@ struct TestableRope : public rope::Rope {
         : rope::Rope(page_size, root_node, root_info, first_leaf, tree_height) {}
     explicit TestableRope(size_t page_size) : rope::Rope(page_size) {}
 
+    static TestableRope FromString(size_t page_size, std::string_view text,
+                                   size_t leaf_capacity = std::numeric_limits<size_t>::max(),
+                                   size_t inner_capacity = std::numeric_limits<size_t>::max()) {
+        return TestableRope{rope::Rope::FromString(page_size, text, leaf_capacity, inner_capacity)};
+    }
+
+    using rope::Rope::Append;
     using rope::Rope::InsertBounded;
+    using rope::Rope::SplitOff;
 };
 
 struct RopeTest : public ::testing::Test {};
@@ -179,7 +187,7 @@ TEST_F(RopeTest, FromText) {
     std::string expected;
     for (size_t i = 0; i < 1000; ++i) {
         expected += std::to_string(i);
-        auto rope = rope::Rope::FromString(128, expected);
+        auto rope = TestableRope::FromString(128, expected);
         ASSERT_EQ(rope.ToString(), expected);
         ASSERT_EQ(rope.GetInfo().utf8_codepoints, expected.size());
         rope.CheckIntegrity();
@@ -191,7 +199,7 @@ TEST_F(RopeTest, SplitOff0) {
     for (size_t i = 0; i < 1000; ++i) {
         expected += std::to_string(i);
         auto split = 0;
-        auto left = rope::Rope::FromString(128, expected);
+        auto left = TestableRope::FromString(128, expected);
         auto right = left.SplitOff(split);
         ASSERT_EQ(left.ToString(), expected.substr(0, split));
         ASSERT_EQ(right.ToString(), expected.substr(split));
@@ -207,7 +215,7 @@ TEST_F(RopeTest, SplitOff1) {
     for (size_t i = 0; i < 1000; ++i) {
         expected += std::to_string(i);
         auto split = 1;
-        auto left = rope::Rope::FromString(128, expected);
+        auto left = TestableRope::FromString(128, expected);
         auto right = left.SplitOff(split);
         ASSERT_EQ(left.ToString(), std::string_view{expected}.substr(0, split));
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(split));
@@ -223,7 +231,7 @@ TEST_F(RopeTest, SplitOffNDiv2) {
     for (size_t i = 0; i < 1000; ++i) {
         expected += std::to_string(i);
         auto split = expected.size() / 2;
-        auto left = rope::Rope::FromString(128, expected);
+        auto left = TestableRope::FromString(128, expected);
         auto right = left.SplitOff(split);
         ASSERT_EQ(left.ToString(), std::string_view{expected}.substr(0, split));
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(split));
@@ -240,7 +248,7 @@ TEST_F(RopeTest, SplitOffEverySecond) {
         expected += std::to_string(i);
     }
     for (size_t i = 0; i < expected.size(); i += 2) {
-        auto left = rope::Rope::FromString(128, expected);
+        auto left = TestableRope::FromString(128, expected);
         auto right = left.SplitOff(i);
         ASSERT_EQ(left.ToString(), std::string_view{expected}.substr(0, i));
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(i));
@@ -257,7 +265,7 @@ TEST_F(RopeTest, SplitOffEverySecondHalfFull) {
         expected += std::to_string(i);
     }
     for (size_t i = 0; i < expected.size(); i += 2) {
-        auto left = rope::Rope::FromString(128, expected, 50, 2);
+        auto left = TestableRope::FromString(128, expected, 50, 2);
         auto right = left.SplitOff(i);
         ASSERT_EQ(left.ToString(), std::string_view{expected}.substr(0, i));
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(i));
@@ -274,7 +282,7 @@ TEST_F(RopeTest, SplitOffEveryThird) {
         expected += std::to_string(i);
     }
     for (size_t i = 0; i < expected.size(); i += 3) {
-        auto left = rope::Rope::FromString(128, expected);
+        auto left = TestableRope::FromString(128, expected);
         auto right = left.SplitOff(i);
         ASSERT_EQ(left.ToString(), std::string_view{expected}.substr(0, i));
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(i));
@@ -291,7 +299,7 @@ TEST_F(RopeTest, SplitOffEveryThirdHalfFull) {
         expected += std::to_string(i);
     }
     for (size_t i = 0; i < expected.size(); i += 3) {
-        auto left = rope::Rope::FromString(256, expected, 120, 3);
+        auto left = TestableRope::FromString(256, expected, 120, 3);
         auto right = left.SplitOff(i);
         ASSERT_EQ(left.ToString(), std::string_view{expected}.substr(0, i));
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(i));
@@ -314,7 +322,7 @@ TEST_F(RopeTest, SplitOffNDiv2HalfFill) {
     for (size_t i = 0; i < 1000; ++i) {
         expected += std::to_string(i);
         auto split = expected.size() / 2;
-        auto left = rope::Rope::FromString(128, expected, 50, 2);
+        auto left = TestableRope::FromString(128, expected, 50, 2);
         auto right = left.SplitOff(split);
         ASSERT_EQ(left.ToString(), std::string_view{expected}.substr(0, split));
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(split));
@@ -330,7 +338,7 @@ TEST_F(RopeTest, SplitOffNMinus1) {
     for (size_t i = 0; i < 1000; ++i) {
         expected += std::to_string(i);
         auto split = expected.size() - 1;
-        auto left = rope::Rope::FromString(128, expected);
+        auto left = TestableRope::FromString(128, expected);
         auto right = left.SplitOff(split);
         ASSERT_EQ(left.ToString(), std::string_view{expected}.substr(0, split));
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(split));
@@ -346,7 +354,7 @@ TEST_F(RopeTest, SplitOffN) {
     for (size_t i = 0; i < 1000; ++i) {
         expected += std::to_string(i);
         auto split = expected.size();
-        auto left = rope::Rope::FromString(128, expected);
+        auto left = TestableRope::FromString(128, expected);
         auto right = left.SplitOff(split);
         ASSERT_EQ(left.ToString(), std::string_view{expected}.substr(0, split));
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(split));
@@ -358,12 +366,12 @@ TEST_F(RopeTest, SplitOffN) {
 }
 
 TEST_F(RopeTest, AppendLeaf) {
-    rope::Rope left{128};
+    TestableRope left{128};
     std::string expected;
     for (size_t i = 0; i < 100; ++i) {
         auto text = std::to_string(i);
         expected += text;
-        auto right = rope::Rope::FromString(128, text);
+        auto right = TestableRope::FromString(128, text);
         ASSERT_EQ(right.ToString(), text);
         left.Append(std::move(right));
         ASSERT_EQ(left.ToString(), expected);
@@ -378,8 +386,8 @@ TEST_F(RopeTest, AppendNDiv2) {
         expected += std::to_string(i);
         auto left_text = std::string_view{expected}.substr(0, (expected.size() + 1) / 2);
         auto right_text = std::string_view{expected}.substr(left_text.size());
-        auto left_rope = rope::Rope::FromString(128, left_text);
-        auto right_rope = rope::Rope::FromString(128, right_text);
+        auto left_rope = TestableRope::FromString(128, left_text);
+        auto right_rope = TestableRope::FromString(128, right_text);
         left_rope.Append(std::move(right_rope));
         ASSERT_EQ(left_rope.ToString(), expected);
         ASSERT_EQ(left_rope.GetInfo().utf8_codepoints, expected.size());
@@ -393,8 +401,8 @@ TEST_F(RopeTest, AppendNDiv3) {
         expected += std::to_string(i);
         auto left_text = std::string_view{expected}.substr(0, expected.size() / 3);
         auto right_text = std::string_view{expected}.substr(left_text.size());
-        auto left_rope = rope::Rope::FromString(128, left_text);
-        auto right_rope = rope::Rope::FromString(128, right_text);
+        auto left_rope = TestableRope::FromString(128, left_text);
+        auto right_rope = TestableRope::FromString(128, right_text);
         left_rope.Append(std::move(right_rope));
         ASSERT_EQ(left_rope.ToString(), expected);
         ASSERT_EQ(left_rope.GetInfo().utf8_codepoints, expected.size());
@@ -408,8 +416,8 @@ TEST_F(RopeTest, Append2NDiv3) {
         expected += std::to_string(i);
         auto left_text = std::string_view{expected}.substr(0, 2 * expected.size() / 3);
         auto right_text = std::string_view{expected}.substr(left_text.size());
-        auto left_rope = rope::Rope::FromString(128, left_text);
-        auto right_rope = rope::Rope::FromString(128, right_text);
+        auto left_rope = TestableRope::FromString(128, left_text);
+        auto right_rope = TestableRope::FromString(128, right_text);
         left_rope.Append(std::move(right_rope));
         ASSERT_EQ(left_rope.ToString(), expected);
         ASSERT_EQ(left_rope.GetInfo().utf8_codepoints, expected.size());
@@ -421,7 +429,7 @@ TEST_F(RopeTest, RemoveNothing) {
     std::string text;
     for (size_t i = 0; i < 1000; ++i) {
         text += std::to_string(i);
-        auto buffer = rope::Rope::FromString(128, text);
+        auto buffer = TestableRope::FromString(128, text);
         buffer.Remove(0, 0);
         buffer.Remove(text.size() * 3 / 4, 0);
         buffer.Remove(text.size() * 2 / 3, 0);
@@ -440,7 +448,7 @@ TEST_F(RopeTest, RemoveFirst) {
     std::string text;
     for (size_t i = 0; i < 1000; ++i) {
         text += std::to_string(i);
-        auto buffer = rope::Rope::FromString(128, text);
+        auto buffer = TestableRope::FromString(128, text);
         buffer.Remove(0, 1);
         ASSERT_EQ(buffer.ToString(), text.substr(1));
         ASSERT_EQ(buffer.GetInfo().utf8_codepoints, text.size() - 1);
@@ -452,7 +460,7 @@ TEST_F(RopeTest, RemoveLast) {
     std::string text;
     for (size_t i = 0; i < 1000; ++i) {
         text += std::to_string(i);
-        auto buffer = rope::Rope::FromString(128, text);
+        auto buffer = TestableRope::FromString(128, text);
         buffer.Remove(text.size() - 1, 1);
         ASSERT_EQ(buffer.ToString(), text.substr(0, text.size() - 1));
         ASSERT_EQ(buffer.GetInfo().utf8_codepoints, text.size() - 1);
@@ -464,7 +472,7 @@ TEST_F(RopeTest, RemoveAll) {
     std::string text;
     for (size_t i = 0; i < 1000; ++i) {
         text += std::to_string(i);
-        auto buffer = rope::Rope::FromString(128, text);
+        auto buffer = TestableRope::FromString(128, text);
         buffer.Remove(0, text.size());
         ASSERT_EQ(buffer.ToString(), "");
         ASSERT_EQ(buffer.GetInfo().utf8_codepoints, 0);
@@ -478,7 +486,7 @@ TEST_F(RopeTest, RemoveNDiv2) {
         text += std::to_string(i);
         auto mid = (text.size() + 1) / 2;
         auto prefix = std::string_view{text}.substr(0, mid);
-        auto buffer = rope::Rope::FromString(128, text);
+        auto buffer = TestableRope::FromString(128, text);
         buffer.Remove(mid, text.size() - mid);
         ASSERT_EQ(buffer.ToString(), prefix);
         ASSERT_EQ(buffer.GetInfo().utf8_codepoints, prefix.size());
@@ -494,7 +502,7 @@ TEST_F(RopeTest, RemoveNDiv3Mid) {
         auto prefix = std::string_view{text}.substr(0, n);
         auto inner = std::min(text.size() - prefix.size(), n);
         auto suffix = std::string_view{text}.substr(prefix.size() + inner);
-        auto buffer = rope::Rope::FromString(128, text);
+        auto buffer = TestableRope::FromString(128, text);
         buffer.Remove(prefix.size(), inner);
         std::string combined{prefix};
         combined += suffix;
@@ -512,7 +520,7 @@ TEST_F(RopeTest, RemoveNDiv4Mid) {
         auto prefix = std::string_view{text}.substr(0, n);
         auto inner = std::min(text.size() - prefix.size(), n);
         auto suffix = std::string_view{text}.substr(prefix.size() + inner);
-        auto buffer = rope::Rope::FromString(128, text);
+        auto buffer = TestableRope::FromString(128, text);
         buffer.Remove(prefix.size(), inner);
         std::string combined{prefix};
         combined += suffix;
@@ -526,7 +534,7 @@ TEST_F(RopeTest, RemoveNMinus1Front) {
     std::string text;
     for (size_t i = 0; i < 1000; ++i) {
         text += std::to_string(i);
-        auto buffer = rope::Rope::FromString(128, text);
+        auto buffer = TestableRope::FromString(128, text);
         buffer.Remove(0, 1);
         ASSERT_EQ(buffer.ToString(), text.substr(1));
         ASSERT_EQ(buffer.GetInfo().utf8_codepoints, text.size() - 1);
@@ -538,7 +546,7 @@ TEST_F(RopeTest, RemoveNMinus1Back) {
     std::string text;
     for (size_t i = 0; i < 1000; ++i) {
         text += std::to_string(i);
-        auto buffer = rope::Rope::FromString(128, text);
+        auto buffer = TestableRope::FromString(128, text);
         buffer.Remove(text.size() - 1, 1);
         ASSERT_EQ(buffer.ToString(), text.substr(0, text.size() - 1));
         ASSERT_EQ(buffer.GetInfo().utf8_codepoints, text.size() - 1);

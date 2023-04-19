@@ -312,6 +312,10 @@ struct Rope {
     void InsertBounded(size_t char_idx, std::span<const std::byte> text_bytes);
     /// Flatten the root
     void FlattenTree();
+    /// Split off a rope
+    Rope SplitOff(size_t char_idx);
+    /// Append a rope to this rope
+    void Append(Rope&& other);
 
    public:
     /// Constructor
@@ -336,10 +340,6 @@ struct Rope {
     void Insert(size_t char_idx, std::string_view text);
     /// Remove a range of characters
     void Remove(size_t char_idx, size_t count);
-    /// Split off a rope
-    Rope SplitOff(size_t char_idx);
-    /// Append a rope to this rope
-    void Append(Rope&& other);
 
     /// Copy the rope to a std::string
     std::string ToString();
