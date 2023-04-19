@@ -655,7 +655,7 @@ struct SeedArgPrinter {
     std::string operator()(const ::testing::TestParamInfo<size_t>& info) const { return std::to_string(info.param); }
 };
 
-TEST_P(RopeFuzzerTestSuite, Test) {
+TEST_P(RopeFuzzerTestSuite, Test128) {
     rope::Rope target{128};
     std::string expected;
     auto [data_buffer, input_ops] = RopeInteractionGenerator::GenerateMany(GetParam(), 128, 256);
