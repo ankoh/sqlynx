@@ -14,7 +14,7 @@ static std::span<const std::byte> asBytes(std::string_view str) {
 
 struct TestableRope : public rope::Rope {
     explicit TestableRope(rope::Rope&& rope) : rope::Rope(std::move(rope)) {}
-    explicit TestableRope(size_t page_size, rope::NodePtr root_node, rope::TextInfo root_info,
+    explicit TestableRope(size_t page_size, rope::NodePtr root_node, rope::TextStats root_info,
                           rope::LeafNode* first_leaf, size_t tree_height)
         : rope::Rope(page_size, root_node, root_info, first_leaf, tree_height) {}
     explicit TestableRope(size_t page_size) : rope::Rope(page_size) {}
@@ -80,8 +80,8 @@ TEST_F(RopeTest, LeafBalanceBytesWith) {
     auto& right = *new (right_page.Get()) rope::LeafNode(128);
     left.PushBytes(asBytes("01"));
     right.PushBytes(asBytes("23456789"));
-    rope::TextInfo left_stats{left.GetData()};
-    rope::TextInfo right_stats{right.GetData()};
+    rope::TextStats left_stats{left.GetData()};
+    rope::TextStats right_stats{right.GetData()};
     left.BalanceCharsRight(left_stats, right, right_stats, true);
     EXPECT_EQ(left.GetStringView(), "01234");
     EXPECT_EQ(right.GetStringView(), "56789");
@@ -107,9 +107,9 @@ TEST_F(RopeTest, InsertBoundedEnd) {
         rope.InsertBounded(pos, asBytes(s));
         pos += s.size();
         ASSERT_EQ(rope.ToString(), expected);
-        ASSERT_EQ(rope.GetInfo().text_bytes, expected.size());
-        ASSERT_EQ(rope.GetInfo().utf8_codepoints, expected.size());
-        ASSERT_EQ(rope.GetInfo().line_breaks, 0);
+        ASSERT_EQ(rope.GetStats().text_bytes, expected.size());
+        ASSERT_EQ(rope.GetStats().utf8_codepoints, expected.size());
+        ASSERT_EQ(rope.GetStats().line_breaks, 0);
         rope.CheckIntegrity();
     }
 }
@@ -122,9 +122,9 @@ TEST_F(RopeTest, InsertBounded0) {
         expected = s + expected;
         rope.InsertBounded(0, asBytes(s));
         ASSERT_EQ(rope.ToString(), expected);
-        ASSERT_EQ(rope.GetInfo().text_bytes, expected.size());
-        ASSERT_EQ(rope.GetInfo().utf8_codepoints, expected.size());
-        ASSERT_EQ(rope.GetInfo().line_breaks, 0);
+        ASSERT_EQ(rope.GetStats().text_bytes, expected.size());
+        ASSERT_EQ(rope.GetStats().utf8_codepoints, expected.size());
+        ASSERT_EQ(rope.GetStats().line_breaks, 0);
         rope.CheckIntegrity();
     }
 }
@@ -140,9 +140,9 @@ TEST_F(RopeTest, InsertBounded1IDiv2) {
         expected = prefix + s + suffix;
         rope.InsertBounded(mid, asBytes(s));
         ASSERT_EQ(rope.ToString(), expected);
-        ASSERT_EQ(rope.GetInfo().text_bytes, expected.size());
-        ASSERT_EQ(rope.GetInfo().utf8_codepoints, expected.size());
-        ASSERT_EQ(rope.GetInfo().line_breaks, 0);
+        ASSERT_EQ(rope.GetStats().text_bytes, expected.size());
+        ASSERT_EQ(rope.GetStats().utf8_codepoints, expected.size());
+        ASSERT_EQ(rope.GetStats().line_breaks, 0);
         rope.CheckIntegrity();
     }
 }
@@ -158,9 +158,9 @@ TEST_F(RopeTest, InsertBounded1IDiv3) {
         expected = prefix + s + suffix;
         rope.InsertBounded(mid, asBytes(s));
         ASSERT_EQ(rope.ToString(), expected);
-        ASSERT_EQ(rope.GetInfo().text_bytes, expected.size());
-        ASSERT_EQ(rope.GetInfo().utf8_codepoints, expected.size());
-        ASSERT_EQ(rope.GetInfo().line_breaks, 0);
+        ASSERT_EQ(rope.GetStats().text_bytes, expected.size());
+        ASSERT_EQ(rope.GetStats().utf8_codepoints, expected.size());
+        ASSERT_EQ(rope.GetStats().line_breaks, 0);
         rope.CheckIntegrity();
     }
 }
@@ -176,9 +176,9 @@ TEST_F(RopeTest, InsertBounded2IDiv3) {
         expected = prefix + s + suffix;
         rope.InsertBounded(mid, asBytes(s));
         ASSERT_EQ(rope.ToString(), expected);
-        ASSERT_EQ(rope.GetInfo().text_bytes, expected.size());
-        ASSERT_EQ(rope.GetInfo().utf8_codepoints, expected.size());
-        ASSERT_EQ(rope.GetInfo().line_breaks, 0);
+        ASSERT_EQ(rope.GetStats().text_bytes, expected.size());
+        ASSERT_EQ(rope.GetStats().utf8_codepoints, expected.size());
+        ASSERT_EQ(rope.GetStats().line_breaks, 0);
         rope.CheckIntegrity();
     }
 }
@@ -189,7 +189,7 @@ TEST_F(RopeTest, FromText) {
         expected += std::to_string(i);
         auto rope = TestableRope::FromString(128, expected);
         ASSERT_EQ(rope.ToString(), expected);
-        ASSERT_EQ(rope.GetInfo().utf8_codepoints, expected.size());
+        ASSERT_EQ(rope.GetStats().utf8_codepoints, expected.size());
         rope.CheckIntegrity();
     }
 }
@@ -203,8 +203,8 @@ TEST_F(RopeTest, SplitOff0) {
         auto right = left.SplitOff(split);
         ASSERT_EQ(left.ToString(), expected.substr(0, split));
         ASSERT_EQ(right.ToString(), expected.substr(split));
-        ASSERT_EQ(left.GetInfo().utf8_codepoints, split);
-        ASSERT_EQ(right.GetInfo().utf8_codepoints, expected.size() - split);
+        ASSERT_EQ(left.GetStats().utf8_codepoints, split);
+        ASSERT_EQ(right.GetStats().utf8_codepoints, expected.size() - split);
         left.CheckIntegrity();
         right.CheckIntegrity();
     }
@@ -219,8 +219,8 @@ TEST_F(RopeTest, SplitOff1) {
         auto right = left.SplitOff(split);
         ASSERT_EQ(left.ToString(), std::string_view{expected}.substr(0, split));
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(split));
-        ASSERT_EQ(left.GetInfo().utf8_codepoints, split);
-        ASSERT_EQ(right.GetInfo().utf8_codepoints, expected.size() - split);
+        ASSERT_EQ(left.GetStats().utf8_codepoints, split);
+        ASSERT_EQ(right.GetStats().utf8_codepoints, expected.size() - split);
         left.CheckIntegrity();
         right.CheckIntegrity();
     }
@@ -235,8 +235,8 @@ TEST_F(RopeTest, SplitOffNDiv2) {
         auto right = left.SplitOff(split);
         ASSERT_EQ(left.ToString(), std::string_view{expected}.substr(0, split));
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(split));
-        ASSERT_EQ(left.GetInfo().utf8_codepoints, split);
-        ASSERT_EQ(right.GetInfo().utf8_codepoints, expected.size() - split);
+        ASSERT_EQ(left.GetStats().utf8_codepoints, split);
+        ASSERT_EQ(right.GetStats().utf8_codepoints, expected.size() - split);
         left.CheckIntegrity();
         right.CheckIntegrity();
     }
@@ -252,8 +252,8 @@ TEST_F(RopeTest, SplitOffEverySecond) {
         auto right = left.SplitOff(i);
         ASSERT_EQ(left.ToString(), std::string_view{expected}.substr(0, i));
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(i));
-        ASSERT_EQ(left.GetInfo().utf8_codepoints, i);
-        ASSERT_EQ(right.GetInfo().utf8_codepoints, expected.size() - i);
+        ASSERT_EQ(left.GetStats().utf8_codepoints, i);
+        ASSERT_EQ(right.GetStats().utf8_codepoints, expected.size() - i);
         left.CheckIntegrity();
         right.CheckIntegrity();
     }
@@ -269,8 +269,8 @@ TEST_F(RopeTest, SplitOffEverySecondHalfFull) {
         auto right = left.SplitOff(i);
         ASSERT_EQ(left.ToString(), std::string_view{expected}.substr(0, i));
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(i));
-        ASSERT_EQ(left.GetInfo().utf8_codepoints, i);
-        ASSERT_EQ(right.GetInfo().utf8_codepoints, expected.size() - i);
+        ASSERT_EQ(left.GetStats().utf8_codepoints, i);
+        ASSERT_EQ(right.GetStats().utf8_codepoints, expected.size() - i);
         left.CheckIntegrity();
         right.CheckIntegrity();
     }
@@ -286,8 +286,8 @@ TEST_F(RopeTest, SplitOffEveryThird) {
         auto right = left.SplitOff(i);
         ASSERT_EQ(left.ToString(), std::string_view{expected}.substr(0, i));
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(i));
-        ASSERT_EQ(left.GetInfo().utf8_codepoints, i);
-        ASSERT_EQ(right.GetInfo().utf8_codepoints, expected.size() - i);
+        ASSERT_EQ(left.GetStats().utf8_codepoints, i);
+        ASSERT_EQ(right.GetStats().utf8_codepoints, expected.size() - i);
         left.CheckIntegrity();
         right.CheckIntegrity();
     }
@@ -303,8 +303,8 @@ TEST_F(RopeTest, SplitOffEveryThirdHalfFull) {
         auto right = left.SplitOff(i);
         ASSERT_EQ(left.ToString(), std::string_view{expected}.substr(0, i));
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(i));
-        ASSERT_EQ(left.GetInfo().utf8_codepoints, i);
-        ASSERT_EQ(right.GetInfo().utf8_codepoints, expected.size() - i);
+        ASSERT_EQ(left.GetStats().utf8_codepoints, i);
+        ASSERT_EQ(right.GetStats().utf8_codepoints, expected.size() - i);
         left.CheckIntegrity();
         right.CheckIntegrity();
     }
@@ -326,8 +326,8 @@ TEST_F(RopeTest, SplitOffNDiv2HalfFill) {
         auto right = left.SplitOff(split);
         ASSERT_EQ(left.ToString(), std::string_view{expected}.substr(0, split));
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(split));
-        ASSERT_EQ(left.GetInfo().utf8_codepoints, split);
-        ASSERT_EQ(right.GetInfo().utf8_codepoints, expected.size() - split);
+        ASSERT_EQ(left.GetStats().utf8_codepoints, split);
+        ASSERT_EQ(right.GetStats().utf8_codepoints, expected.size() - split);
         left.CheckIntegrity();
         right.CheckIntegrity();
     }
@@ -342,8 +342,8 @@ TEST_F(RopeTest, SplitOffNMinus1) {
         auto right = left.SplitOff(split);
         ASSERT_EQ(left.ToString(), std::string_view{expected}.substr(0, split));
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(split));
-        ASSERT_EQ(left.GetInfo().utf8_codepoints, split);
-        ASSERT_EQ(right.GetInfo().utf8_codepoints, expected.size() - split);
+        ASSERT_EQ(left.GetStats().utf8_codepoints, split);
+        ASSERT_EQ(right.GetStats().utf8_codepoints, expected.size() - split);
         left.CheckIntegrity();
         right.CheckIntegrity();
     }
@@ -358,8 +358,8 @@ TEST_F(RopeTest, SplitOffN) {
         auto right = left.SplitOff(split);
         ASSERT_EQ(left.ToString(), std::string_view{expected}.substr(0, split));
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(split));
-        ASSERT_EQ(left.GetInfo().utf8_codepoints, split);
-        ASSERT_EQ(right.GetInfo().utf8_codepoints, expected.size() - split);
+        ASSERT_EQ(left.GetStats().utf8_codepoints, split);
+        ASSERT_EQ(right.GetStats().utf8_codepoints, expected.size() - split);
         left.CheckIntegrity();
         right.CheckIntegrity();
     }
@@ -375,7 +375,7 @@ TEST_F(RopeTest, AppendLeaf) {
         ASSERT_EQ(right.ToString(), text);
         left.Append(std::move(right));
         ASSERT_EQ(left.ToString(), expected);
-        ASSERT_EQ(left.GetInfo().utf8_codepoints, expected.size());
+        ASSERT_EQ(left.GetStats().utf8_codepoints, expected.size());
         left.CheckIntegrity();
     }
 }
@@ -390,7 +390,7 @@ TEST_F(RopeTest, AppendNDiv2) {
         auto right_rope = TestableRope::FromString(128, right_text);
         left_rope.Append(std::move(right_rope));
         ASSERT_EQ(left_rope.ToString(), expected);
-        ASSERT_EQ(left_rope.GetInfo().utf8_codepoints, expected.size());
+        ASSERT_EQ(left_rope.GetStats().utf8_codepoints, expected.size());
         left_rope.CheckIntegrity();
     }
 }
@@ -405,7 +405,7 @@ TEST_F(RopeTest, AppendNDiv3) {
         auto right_rope = TestableRope::FromString(128, right_text);
         left_rope.Append(std::move(right_rope));
         ASSERT_EQ(left_rope.ToString(), expected);
-        ASSERT_EQ(left_rope.GetInfo().utf8_codepoints, expected.size());
+        ASSERT_EQ(left_rope.GetStats().utf8_codepoints, expected.size());
         left_rope.CheckIntegrity();
     }
 }
@@ -420,7 +420,7 @@ TEST_F(RopeTest, Append2NDiv3) {
         auto right_rope = TestableRope::FromString(128, right_text);
         left_rope.Append(std::move(right_rope));
         ASSERT_EQ(left_rope.ToString(), expected);
-        ASSERT_EQ(left_rope.GetInfo().utf8_codepoints, expected.size());
+        ASSERT_EQ(left_rope.GetStats().utf8_codepoints, expected.size());
         left_rope.CheckIntegrity();
     }
 }
@@ -439,7 +439,7 @@ TEST_F(RopeTest, RemoveNothing) {
         buffer.Remove(text.size() / 5, 0);
         buffer.Remove(text.size() - 1, 0);
         ASSERT_EQ(buffer.ToString(), text);
-        ASSERT_EQ(buffer.GetInfo().utf8_codepoints, text.size());
+        ASSERT_EQ(buffer.GetStats().utf8_codepoints, text.size());
         buffer.CheckIntegrity();
     }
 }
@@ -451,7 +451,7 @@ TEST_F(RopeTest, RemoveFirst) {
         auto buffer = TestableRope::FromString(128, text);
         buffer.Remove(0, 1);
         ASSERT_EQ(buffer.ToString(), text.substr(1));
-        ASSERT_EQ(buffer.GetInfo().utf8_codepoints, text.size() - 1);
+        ASSERT_EQ(buffer.GetStats().utf8_codepoints, text.size() - 1);
         buffer.CheckIntegrity();
     }
 }
@@ -463,7 +463,7 @@ TEST_F(RopeTest, RemoveLast) {
         auto buffer = TestableRope::FromString(128, text);
         buffer.Remove(text.size() - 1, 1);
         ASSERT_EQ(buffer.ToString(), text.substr(0, text.size() - 1));
-        ASSERT_EQ(buffer.GetInfo().utf8_codepoints, text.size() - 1);
+        ASSERT_EQ(buffer.GetStats().utf8_codepoints, text.size() - 1);
         buffer.CheckIntegrity();
     }
 }
@@ -475,7 +475,7 @@ TEST_F(RopeTest, RemoveAll) {
         auto buffer = TestableRope::FromString(128, text);
         buffer.Remove(0, text.size());
         ASSERT_EQ(buffer.ToString(), "");
-        ASSERT_EQ(buffer.GetInfo().utf8_codepoints, 0);
+        ASSERT_EQ(buffer.GetStats().utf8_codepoints, 0);
         buffer.CheckIntegrity();
     }
 }
@@ -489,7 +489,7 @@ TEST_F(RopeTest, RemoveNDiv2) {
         auto buffer = TestableRope::FromString(128, text);
         buffer.Remove(mid, text.size() - mid);
         ASSERT_EQ(buffer.ToString(), prefix);
-        ASSERT_EQ(buffer.GetInfo().utf8_codepoints, prefix.size());
+        ASSERT_EQ(buffer.GetStats().utf8_codepoints, prefix.size());
         buffer.CheckIntegrity();
     }
 }
@@ -507,7 +507,7 @@ TEST_F(RopeTest, RemoveNDiv3Mid) {
         std::string combined{prefix};
         combined += suffix;
         ASSERT_EQ(buffer.ToString(), combined);
-        ASSERT_EQ(buffer.GetInfo().utf8_codepoints, combined.size());
+        ASSERT_EQ(buffer.GetStats().utf8_codepoints, combined.size());
         buffer.CheckIntegrity();
     }
 }
@@ -525,7 +525,7 @@ TEST_F(RopeTest, RemoveNDiv4Mid) {
         std::string combined{prefix};
         combined += suffix;
         ASSERT_EQ(buffer.ToString(), combined);
-        ASSERT_EQ(buffer.GetInfo().utf8_codepoints, combined.size());
+        ASSERT_EQ(buffer.GetStats().utf8_codepoints, combined.size());
         buffer.CheckIntegrity();
     }
 }
@@ -537,7 +537,7 @@ TEST_F(RopeTest, RemoveNMinus1Front) {
         auto buffer = TestableRope::FromString(128, text);
         buffer.Remove(0, 1);
         ASSERT_EQ(buffer.ToString(), text.substr(1));
-        ASSERT_EQ(buffer.GetInfo().utf8_codepoints, text.size() - 1);
+        ASSERT_EQ(buffer.GetStats().utf8_codepoints, text.size() - 1);
         buffer.CheckIntegrity();
     }
 }
@@ -549,7 +549,7 @@ TEST_F(RopeTest, RemoveNMinus1Back) {
         auto buffer = TestableRope::FromString(128, text);
         buffer.Remove(text.size() - 1, 1);
         ASSERT_EQ(buffer.ToString(), text.substr(0, text.size() - 1));
-        ASSERT_EQ(buffer.GetInfo().utf8_codepoints, text.size() - 1);
+        ASSERT_EQ(buffer.GetStats().utf8_codepoints, text.size() - 1);
         buffer.CheckIntegrity();
     }
 }

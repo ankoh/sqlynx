@@ -5,29 +5,29 @@
 namespace flatsql::rope {
 
 /// Constructor
-TextInfo::TextInfo() {}
+TextStats::TextStats() {}
 /// Constructor
-TextInfo::TextInfo(std::span<std::byte> data) : TextInfo(std::span<const std::byte>(data)) {}
+TextStats::TextStats(std::span<std::byte> data) : TextStats(std::span<const std::byte>(data)) {}
 /// Constructor
-TextInfo::TextInfo(std::span<const std::byte> data) : text_bytes(data.size()) {
+TextStats::TextStats(std::span<const std::byte> data) : text_bytes(data.size()) {
     for (auto b : data) {
         line_breaks += (b == std::byte{0x0A});
         utf8_codepoints += utf8::isCodepointBoundary(b);
     }
 }
-TextInfo TextInfo::operator+(const TextInfo& other) {
-    TextInfo result = *this;
+TextStats TextStats::operator+(const TextStats& other) {
+    TextStats result = *this;
     result.text_bytes += other.text_bytes;
     result.utf8_codepoints += other.utf8_codepoints;
     result.line_breaks += other.line_breaks;
     return result;
 }
-TextInfo& TextInfo::operator+=(const TextInfo& other) {
+TextStats& TextStats::operator+=(const TextStats& other) {
     *this = *this + other;
     return *this;
 }
-TextInfo TextInfo::operator-(const TextInfo& other) {
-    TextInfo result = *this;
+TextStats TextStats::operator-(const TextStats& other) {
+    TextStats result = *this;
     assert(result.text_bytes >= other.text_bytes);
     assert(result.utf8_codepoints >= other.utf8_codepoints);
     assert(result.line_breaks >= other.line_breaks);
@@ -36,7 +36,7 @@ TextInfo TextInfo::operator-(const TextInfo& other) {
     result.line_breaks -= other.line_breaks;
     return result;
 }
-TextInfo& TextInfo::operator-=(const TextInfo& other) {
+TextStats& TextStats::operator-=(const TextStats& other) {
     *this = *this - other;
     return *this;
 }
@@ -86,11 +86,11 @@ void LeafNode::RemoveByteRange(size_t start_byte_idx, size_t byte_count) noexcep
     buffer_size -= byte_count;
 }
 /// Remove text in range
-TextInfo LeafNode::RemoveCharRange(size_t start_idx, size_t count) noexcept {
+TextStats LeafNode::RemoveCharRange(size_t start_idx, size_t count) noexcept {
     auto byte_start = utf8::codepointToByteIdx(GetData(), start_idx);
     auto byte_end = byte_start + utf8::codepointToByteIdx(GetData().subspan(byte_start), count);
     auto byte_count = byte_end - byte_start;
-    TextInfo stats{GetData().subspan(byte_start, byte_count)};
+    TextStats stats{GetData().subspan(byte_start, byte_count)};
     RemoveByteRange(byte_start, byte_count);
     return stats;
 }
@@ -199,7 +199,7 @@ static inline bool shouldBalanceLeaf(size_t capacity, size_t left, size_t right)
 }
 
 /// Distribute children equally between nodes
-void LeafNode::BalanceCharsRight(TextInfo& own_info, LeafNode& right_node, TextInfo& right_info, bool force) {
+void LeafNode::BalanceCharsRight(TextStats& own_info, LeafNode& right_node, TextStats& right_info, bool force) {
     if (!shouldBalanceLeaf(buffer_capacity, GetSize(), right_node.GetSize()) && !force) {
         return;
     }
@@ -208,7 +208,7 @@ void LeafNode::BalanceCharsRight(TextInfo& own_info, LeafNode& right_node, TextI
     if (GetSize() < right_node.GetSize()) {
         size_t move_left = (right_node.GetSize() - GetSize()) / 2;
         move_left = utf8::prevCodepoint(right_node.GetData(), move_left);
-        auto diff = TextInfo{right_node.GetData().subspan(0, move_left)};
+        auto diff = TextStats{right_node.GetData().subspan(0, move_left)};
         PushBytes(right_node.GetData().subspan(0, move_left));
         right_node.RemoveByteRange(0, move_left);
         own_info += diff;
@@ -221,7 +221,7 @@ void LeafNode::BalanceCharsRight(TextInfo& own_info, LeafNode& right_node, TextI
         auto move_right = (GetSize() - right_node.GetSize()) / 2;
         auto move_right_from = utf8::nextCodepoint(GetData(), GetSize() - move_right);
         move_right = GetSize() - move_right_from;
-        auto diff = TextInfo{GetData().subspan(move_right_from, move_right)};
+        auto diff = TextStats{GetData().subspan(move_right_from, move_right)};
         auto move_right_data = TruncateBytes(move_right_from);
         right_node.InsertBytes(0, move_right_data);
         own_info -= diff;
@@ -274,57 +274,57 @@ void InnerNode::UnlinkNode() {
     }
 }
 /// Combine the text statistics
-TextInfo InnerNode::AggregateTextInfo() noexcept {
-    TextInfo acc;
+TextStats InnerNode::AggregateTextInfo() noexcept {
+    TextStats acc;
     for (auto stats : GetChildStats()) {
         acc += stats;
     }
     return acc;
 }
 /// Combine the text statistics
-TextInfo InnerNode::AggregateTextInfoInRange(size_t child_id, size_t count) noexcept {
-    TextInfo acc;
+TextStats InnerNode::AggregateTextInfoInRange(size_t child_id, size_t count) noexcept {
+    TextStats acc;
     for (auto stats : GetChildStats().subspan(child_id, count)) {
         acc += stats;
     }
     return acc;
 }
 /// Pushes an item into the array
-void InnerNode::Push(NodePtr child, TextInfo stats) {
+void InnerNode::Push(NodePtr child, TextStats stats) {
     assert(!IsFull());
     GetChildStatsBuffer()[child_count] = stats;
     GetChildNodesBuffer()[child_count] = child;
     ++child_count;
 }
 /// Pushes items into the array
-void InnerNode::Push(std::span<const NodePtr> nodes, std::span<const TextInfo> stats) {
+void InnerNode::Push(std::span<const NodePtr> nodes, std::span<const TextStats> stats) {
     assert(nodes.size() == stats.size());
     assert(nodes.size() <= GetFreeSpace());
     std::memcpy(GetChildNodesBuffer().data() + GetSize(), nodes.data(), nodes.size() * sizeof(NodePtr));
-    std::memcpy(GetChildStatsBuffer().data() + GetSize(), stats.data(), stats.size() * sizeof(TextInfo));
+    std::memcpy(GetChildStatsBuffer().data() + GetSize(), stats.data(), stats.size() * sizeof(TextStats));
     child_count += nodes.size();
 }
 /// Pops an item from the end of the array
-std::pair<NodePtr, TextInfo> InnerNode::Pop() {
+std::pair<NodePtr, TextStats> InnerNode::Pop() {
     assert(!IsEmpty());
     --child_count;
     return {GetChildNodesBuffer()[child_count], GetChildStatsBuffer()[child_count]};
 }
 /// Inserts an item at a position
-void InnerNode::Insert(size_t idx, NodePtr child, TextInfo stats) {
+void InnerNode::Insert(size_t idx, NodePtr child, TextStats stats) {
     assert(idx <= GetSize());
     assert(GetSize() < GetCapacity());
     auto tail = GetSize() - idx;
     auto child_nodes = GetChildNodesBuffer();
     auto child_stats = GetChildStatsBuffer();
     std::memmove(&child_nodes[idx + 1], &child_nodes[idx], tail * sizeof(NodePtr));
-    std::memmove(&child_stats[idx + 1], &child_stats[idx], tail * sizeof(TextInfo));
+    std::memmove(&child_stats[idx + 1], &child_stats[idx], tail * sizeof(TextStats));
     child_nodes[idx] = child;
     child_stats[idx] = stats;
     ++child_count;
 }
 /// Inserts items at a position
-void InnerNode::Insert(size_t idx, std::span<const NodePtr> nodes, std::span<const TextInfo> stats) {
+void InnerNode::Insert(size_t idx, std::span<const NodePtr> nodes, std::span<const TextStats> stats) {
     assert(idx <= GetSize());
     assert(nodes.size() == stats.size());
     assert((GetSize() + nodes.size()) <= GetCapacity());
@@ -333,13 +333,13 @@ void InnerNode::Insert(size_t idx, std::span<const NodePtr> nodes, std::span<con
     auto child_nodes = GetChildNodesBuffer();
     auto child_stats = GetChildStatsBuffer();
     std::memmove(&child_nodes[idx + n], &child_nodes[idx], tail * sizeof(NodePtr));
-    std::memmove(&child_stats[idx + n], &child_stats[idx], tail * sizeof(TextInfo));
+    std::memmove(&child_stats[idx + n], &child_stats[idx], tail * sizeof(TextStats));
     std::memcpy(&child_nodes[idx], nodes.data(), n * sizeof(NodePtr));
-    std::memcpy(&child_stats[idx], stats.data(), n * sizeof(TextInfo));
+    std::memcpy(&child_stats[idx], stats.data(), n * sizeof(TextStats));
     child_count += n;
 }
 /// Remove an element at a position
-std::pair<NodePtr, TextInfo> InnerNode::Remove(size_t idx) {
+std::pair<NodePtr, TextStats> InnerNode::Remove(size_t idx) {
     assert(GetSize() > 0);
     assert(idx < GetSize());
     auto child_nodes = GetChildNodesBuffer();
@@ -349,7 +349,7 @@ std::pair<NodePtr, TextInfo> InnerNode::Remove(size_t idx) {
     if ((idx + 1) < GetSize()) {
         auto tail = GetSize() - (idx + 1);
         std::memmove(&child_nodes[idx], &child_nodes[idx + 1], tail * sizeof(NodePtr));
-        std::memmove(&child_stats[idx], &child_stats[idx + 1], tail * sizeof(TextInfo));
+        std::memmove(&child_stats[idx], &child_stats[idx + 1], tail * sizeof(TextStats));
     }
     --child_count;
     return {n, s};
@@ -362,14 +362,14 @@ void InnerNode::RemoveRange(size_t idx, size_t count) {
     auto child_stats = GetChildStatsBuffer();
     auto tail = GetSize() - (idx + count);
     std::memmove(&child_nodes[idx], &child_nodes[idx + count], tail * sizeof(NodePtr));
-    std::memmove(&child_stats[idx], &child_stats[idx + count], tail * sizeof(TextInfo));
+    std::memmove(&child_stats[idx], &child_stats[idx + count], tail * sizeof(TextStats));
     child_count -= count;
 }
 /// Truncate children from a position
-std::pair<std::span<const NodePtr>, std::span<const TextInfo>> InnerNode::Truncate(size_t idx) noexcept {
+std::pair<std::span<const NodePtr>, std::span<const TextStats>> InnerNode::Truncate(size_t idx) noexcept {
     assert(idx <= GetSize());
     std::span<const NodePtr> tail_nodes{&GetChildNodesBuffer()[idx], GetSize() - idx};
-    std::span<const TextInfo> tail_stats{&GetChildStatsBuffer()[idx], GetSize() - idx};
+    std::span<const TextStats> tail_stats{&GetChildStatsBuffer()[idx], GetSize() - idx};
     child_count = idx;
     return {tail_nodes, tail_stats};
 }
@@ -384,7 +384,7 @@ void InnerNode::SplitOffRight(size_t child_idx, InnerNode& right) {
 
     right.child_count = GetSize() - child_idx;
     std::memcpy(right_child_nodes.data(), &left_child_nodes[child_idx], right.child_count * sizeof(NodePtr));
-    std::memcpy(right_child_stats.data(), &left_child_stats[child_idx], right.child_count * sizeof(TextInfo));
+    std::memcpy(right_child_stats.data(), &left_child_stats[child_idx], right.child_count * sizeof(TextStats));
     child_count = child_idx;
 
     LinkNodeRight(right);
@@ -400,7 +400,7 @@ void InnerNode::SplitOffLeft(size_t child_idx, InnerNode& left) {
 
     left.child_count = child_idx;
     std::memcpy(left_child_nodes.data(), right_child_nodes.data(), child_idx * sizeof(NodePtr));
-    std::memcpy(left_child_stats.data(), right_child_stats.data(), child_idx * sizeof(TextInfo));
+    std::memcpy(left_child_stats.data(), right_child_stats.data(), child_idx * sizeof(TextStats));
     std::memmove(&right_child_nodes[child_idx], &right_child_nodes[0], (child_count - child_idx) * sizeof(NodePtr));
     std::memmove(&right_child_stats[child_idx], &right_child_stats[0], (child_count - child_idx) * sizeof(NodePtr));
     child_count -= child_idx;
@@ -408,17 +408,17 @@ void InnerNode::SplitOffLeft(size_t child_idx, InnerNode& left) {
     left.LinkNodeRight(*this);
 }
 /// Pushes an element onto the end of the array, and then splits it in half
-void InnerNode::PushAndSplit(NodePtr child, TextInfo stats, InnerNode& dst) {
+void InnerNode::PushAndSplit(NodePtr child, TextStats stats, InnerNode& dst) {
     auto r_count = (GetSize() + 1) / 2;
     auto l_count = (GetSize() + 1) - r_count;
     SplitOffRight(l_count, dst);
     dst.Push(child, stats);
 }
 /// Inserts an element into a the array, and then splits it in half
-void InnerNode::InsertAndSplit(size_t idx, NodePtr child, TextInfo stats, InnerNode& other) {
+void InnerNode::InsertAndSplit(size_t idx, NodePtr child, TextStats stats, InnerNode& other) {
     assert(GetSize() > 0);
     assert(idx <= GetSize());
-    std::pair<NodePtr, TextInfo> extra{child, stats};
+    std::pair<NodePtr, TextStats> extra{child, stats};
     if (idx < GetSize()) {
         extra = Pop();
         Insert(idx, child, stats);
@@ -432,7 +432,7 @@ static inline bool shouldBalanceInner(size_t capacity, size_t left, size_t right
     return (diff * 4) >= capacity;
 }
 /// Balance between two nodes
-void InnerNode::BalanceRight(TextInfo& own_info, InnerNode& right_node, TextInfo& right_info) {
+void InnerNode::BalanceRight(TextStats& own_info, InnerNode& right_node, TextStats& right_info) {
     if (!shouldBalanceInner(child_capacity, GetSize(), right_node.GetSize())) {
         return;
     }
@@ -463,9 +463,9 @@ void InnerNode::BalanceRight(TextInfo& own_info, InnerNode& right_node, TextInfo
 /// Find the first child where a predicate returns true or the last child if none qualify
 template <typename Predicate> static InnerNode::Boundary Find(InnerNode& node, size_t arg, Predicate predicate) {
     auto child_stats = node.GetChildStats();
-    TextInfo next;
+    TextStats next;
     for (size_t child_idx = 0; (child_idx + 1) < child_stats.size(); ++child_idx) {
-        TextInfo prev = next;
+        TextStats prev = next;
         next += child_stats[child_idx];
         if (predicate(arg, prev, next)) {
             return {child_idx, prev};
@@ -476,13 +476,13 @@ template <typename Predicate> static InnerNode::Boundary Find(InnerNode& node, s
 }
 
 /// Helper to find a child that contains a byte index
-static bool ChildContainsByte(size_t byte_idx, TextInfo prev, TextInfo next) { return next.text_bytes > byte_idx; }
+static bool ChildContainsByte(size_t byte_idx, TextStats prev, TextStats next) { return next.text_bytes > byte_idx; }
 /// Helper to find a child that contains a character index
-static bool ChildContainsCodepoint(size_t char_idx, TextInfo prev, TextInfo next) {
+static bool ChildContainsCodepoint(size_t char_idx, TextStats prev, TextStats next) {
     return next.utf8_codepoints > char_idx;
 }
 /// Helper to find a child that contains a line break index
-static bool ChildContainsLineBreak(size_t line_break_idx, TextInfo prev, TextInfo next) {
+static bool ChildContainsLineBreak(size_t line_break_idx, TextStats prev, TextStats next) {
     return next.line_breaks > line_break_idx;
 }
 /// Find the child that contains a byte index
@@ -506,10 +506,10 @@ template <typename Predicate>
 static std::pair<InnerNode::Boundary, InnerNode::Boundary> FindRange(InnerNode& node, size_t arg0, size_t arg1,
                                                                      Predicate predicate) {
     auto child_stats = node.GetChildStats();
-    std::pair<size_t, TextInfo> begin, end;
-    TextInfo next;
+    std::pair<size_t, TextStats> begin, end;
+    TextStats next;
     size_t child_idx = 0;
-    TextInfo prev;
+    TextStats prev;
     for (; child_idx < child_stats.size(); ++child_idx) {
         prev = next;
         next += child_stats[child_idx];
@@ -541,7 +541,7 @@ std::pair<InnerNode::Boundary, InnerNode::Boundary> InnerNode::FindCodepointRang
 }
 
 /// Constructor
-Rope::Rope(size_t page_size, NodePtr root_node, TextInfo root_info, LeafNode* first_leaf, size_t tree_height)
+Rope::Rope(size_t page_size, NodePtr root_node, TextStats root_info, LeafNode* first_leaf, size_t tree_height)
     : page_size(page_size),
       tree_height(tree_height),
       root_node(root_node),
@@ -587,7 +587,7 @@ Rope::Rope(Rope&& other)
       root_info(other.root_info),
       first_leaf(other.first_leaf) {
     other.root_node = {};
-    other.root_info = TextInfo{};
+    other.root_info = TextStats{};
     other.first_leaf = nullptr;
     other.tree_height = 0;
 };
@@ -615,7 +615,7 @@ Rope Rope::SplitOff(size_t char_idx) {
         auto* right_leaf = new (right_leaf_page.Get()) LeafNode(page_size);
         auto* left_leaf = root_node.Get<LeafNode>();
         left_leaf->SplitCharsOff(char_idx, *right_leaf);
-        TextInfo right_info{right_leaf->GetData()};
+        TextStats right_info{right_leaf->GetData()};
         root_info -= right_info;
         left_leaf->next_node = nullptr;
         right_leaf->previous_node = nullptr;
@@ -749,7 +749,7 @@ Rope Rope::SplitOff(size_t char_idx) {
     }
 
     /// Helper to fixup the seam nodes
-    auto finish = [this](TextInfo left_child_info, LeafNode* right_leaf, TextInfo right_child_info,
+    auto finish = [this](TextStats left_child_info, LeafNode* right_leaf, TextStats right_child_info,
                          std::span<InnerNode*> right_seam, std::vector<NodePage>&& right_seam_pages) {
         // Now propagate the text change up the seam nodes
         NodePtr right_child_node{right_leaf};
@@ -799,7 +799,7 @@ Rope Rope::SplitOff(size_t char_idx) {
         if (neighbor->GetFreeSpace() >= leaf_prefix_bytes) {
             // Move data in [0, leaf_prefix_bytes[ over to the left neighbor
             auto data = leaf->GetData().subspan(0, leaf_prefix_bytes);
-            TextInfo diff{data};
+            TextStats diff{data};
             neighbor->PushBytes(data);
             leaf->RemoveByteRange(0, leaf_prefix_bytes);
             // Update parents
@@ -814,8 +814,8 @@ Rope Rope::SplitOff(size_t char_idx) {
             neighbor->next_node = nullptr;
             right_node->previous_node = nullptr;
             // Update text statistics
-            TextInfo left_info = left_parent->GetChildStats()[left_child_idx - 1] + diff;
-            TextInfo right_info = left_parent->GetChildStats()[left_child_idx] - diff;
+            TextStats left_info = left_parent->GetChildStats()[left_child_idx - 1] + diff;
+            TextStats right_info = left_parent->GetChildStats()[left_child_idx] - diff;
             return finish(left_info, right_node, right_info, right_seam_nodes, std::move(right_seam_pages));
         }
     }
@@ -831,7 +831,7 @@ Rope Rope::SplitOff(size_t char_idx) {
             // Move data in [leaf_suffix_bytes, end[ over to the right neighbor
             auto data = leaf->TruncateBytes(leaf_prefix_bytes);
             assert(data.size() == leaf_suffix_bytes);
-            TextInfo diff{data};
+            TextStats diff{data};
             neighbor->InsertBytes(0, data);
             // Remove nodes[0] of the right parent since that slot is pointing to the current child page
             assert(right_parent->GetSize() >= 2);
@@ -846,8 +846,8 @@ Rope Rope::SplitOff(size_t char_idx) {
             right_node->previous_node = nullptr;
             leaf->next_node = nullptr;
             // Update text statistics
-            TextInfo left_info = left_parent->GetChildStats()[left_child_idx] - diff;
-            TextInfo right_info{right_node->GetData()};
+            TextStats left_info = left_parent->GetChildStats()[left_child_idx] - diff;
+            TextStats right_info{right_node->GetData()};
             return finish(left_info, right_node, right_info, right_seam_nodes, std::move(right_seam_pages));
         }
     }
@@ -861,8 +861,8 @@ Rope Rope::SplitOff(size_t char_idx) {
     leaf->next_node = nullptr;
     right_leaf->previous_node = nullptr;
     // Fix nodes of the right seam
-    TextInfo right_info{right_leaf->GetData()};
-    TextInfo left_info = left_parent->GetChildStats()[left_child_idx] - right_info;
+    TextStats right_info{right_leaf->GetData()};
+    TextStats left_info = left_parent->GetChildStats()[left_child_idx] - right_info;
     return finish(left_info, right_leaf_page.Release<LeafNode>(), right_info, right_seam_nodes,
                   std::move(right_seam_pages));
 }
@@ -1083,7 +1083,7 @@ void Rope::Append(Rope&& right_rope) {
 }
 
 /// Balance children to make space for preemptive split
-void Rope::PreemptiveBalanceOrSplit(InnerNode& parent, size_t& child_idx, TextInfo& child_prefix, size_t char_idx) {
+void Rope::PreemptiveBalanceOrSplit(InnerNode& parent, size_t& child_idx, TextStats& child_prefix, size_t char_idx) {
     assert(!parent.IsFull());
     auto child_ptr = parent.GetChildNodes()[child_idx];
     auto& child = *child_ptr.Get<InnerNode>();
@@ -1186,12 +1186,12 @@ void Rope::PreemptiveSplitRoot() {
 /// That guarantees that we need at most one split.
 void Rope::InsertBounded(size_t char_idx, std::span<const std::byte> text_bytes) {
     assert(text_bytes.size() <= LeafNode::Capacity(page_size));
-    TextInfo insert_info{text_bytes};
+    TextStats insert_info{text_bytes};
 
     // Traversal state
     InnerNode* parent_node = nullptr;
     LeafNode* leaf_node = nullptr;
-    TextInfo* leaf_stats = nullptr;
+    TextStats* leaf_stats = nullptr;
     size_t child_idx = 0;
 
     // Root is a leaf node?
@@ -1207,7 +1207,7 @@ void Rope::InsertBounded(size_t char_idx, std::span<const std::byte> text_bytes)
 
         // Traverse down the tree with pre-emptive splits
         parent_node = root_node.Get<InnerNode>();
-        TextInfo child_prefix;
+        TextStats child_prefix;
         while (true) {
             char_idx -= child_prefix.utf8_codepoints;
             std::tie(child_idx, child_prefix) = parent_node->FindCodepoint(char_idx);
@@ -1256,7 +1256,7 @@ void Rope::InsertBounded(size_t char_idx, std::span<const std::byte> text_bytes)
     leaf_node->InsertBytesAndSplit(insert_at, text_bytes, *split);
 
     // Collect split node
-    TextInfo split_info{split->GetData()};
+    TextStats split_info{split->GetData()};
     *leaf_stats = *leaf_stats + insert_info - split_info;
 
     // Is there a parent node?
@@ -1331,7 +1331,7 @@ Rope Rope::FromString(size_t page_size, std::string_view text, size_t leaf_capac
     // Is a leaf single leaf?
     if (leafs.size() == 1) {
         auto leaf_node = leafs.back().Get<LeafNode>();
-        auto root_info = TextInfo{leaf_node->GetData()};
+        auto root_info = TextStats{leaf_node->GetData()};
         Rope rope{page_size, NodePtr{leaf_node}, root_info, leaf_node, 1};
         leafs.back().Release();
         return rope;
@@ -1349,7 +1349,7 @@ Rope Rope::FromString(size_t page_size, std::string_view text, size_t leaf_capac
         for (auto i = 0; i < n; ++i) {
             auto leaf = leafs[begin + i].Get<LeafNode>();
             next->GetChildNodesBuffer()[i] = NodePtr{leaf};
-            next->GetChildStatsBuffer()[i] = TextInfo{leaf->GetData()};
+            next->GetChildStatsBuffer()[i] = TextStats{leaf->GetData()};
         }
         begin += n;
         next->child_count = n;
@@ -1438,7 +1438,7 @@ void Rope::BalanceChild(InnerNode& parent, size_t child_idx, LeafNode*& first_le
         // Neighbor capacity
         size_t neighbor_count = 0, neighbor_free = 0;
         LeafNode *left_node = nullptr, *right_node = nullptr;
-        TextInfo *left_info = nullptr, *right_info = nullptr;
+        TextStats *left_info = nullptr, *right_info = nullptr;
         if (child_idx >= 2) {
             left_node = child_nodes[child_idx - 1].Get<LeafNode>();
             left_info = &child_infos[child_idx - 1];
@@ -1461,14 +1461,14 @@ void Rope::BalanceChild(InnerNode& parent, size_t child_idx, LeafNode*& first_le
                     std::min<size_t>((child_node->GetSize() + 1) / neighbor_count, left_node->GetFreeSpace()));
                 auto move_left_data = child_node->GetData().subspan(0, move_left);
                 left_node->PushBytes(move_left_data);
-                *left_info += TextInfo{move_left_data};
+                *left_info += TextStats{move_left_data};
             }
             if (right_node) {
                 move_right = child_node->GetSize() - move_left;
                 assert(move_right <= right_node->GetFreeSpace());
                 auto move_right_data = child_node->GetData().subspan(move_left, move_right);
                 right_node->InsertBytes(0, move_right_data);
-                *right_info += TextInfo{move_right_data};
+                *right_info += TextStats{move_right_data};
             }
             if (child_node == first_leaf) {
                 first_leaf = child_node->next_node;
@@ -1506,7 +1506,7 @@ void Rope::BalanceChild(InnerNode& parent, size_t child_idx, LeafNode*& first_le
         // Neighbor capacity
         size_t neighbor_count = 0, neighbor_free = 0;
         InnerNode *left_node = nullptr, *right_node = nullptr;
-        TextInfo *left_info = nullptr, *right_info = nullptr;
+        TextStats *left_info = nullptr, *right_info = nullptr;
         if (child_idx >= 2) {
             left_node = child_nodes[child_idx - 1].Get<InnerNode>();
             left_info = &child_infos[child_idx - 1];
@@ -1576,8 +1576,8 @@ void Rope::Remove(size_t char_idx, size_t char_count) {
     //      accounted for when removing the range from the the shared parent!!
     struct InnerBounds {
         InnerNode *lower_node, *upper_node;
-        TextInfo *lower_info, *upper_info;
-        TextInfo lower_deleted, upper_deleted;
+        TextStats *lower_info, *upper_info;
+        TextStats lower_deleted, upper_deleted;
         size_t lower_child_idx, upper_child_idx;
     };
     std::vector<InnerBounds> inner_bounds;
@@ -1697,8 +1697,8 @@ void Rope::Remove(size_t char_idx, size_t char_count) {
         }
     } else {
         // Adjust boundaries
-        TextInfo lower_deleted = lower_leaf->TruncateChars(lower_char_idx);
-        TextInfo upper_deleted = upper_leaf->RemoveCharRange(0, upper_char_idx);
+        TextStats lower_deleted = lower_leaf->TruncateChars(lower_char_idx);
+        TextStats upper_deleted = upper_leaf->RemoveCharRange(0, upper_char_idx);
 
         // Blindly delete all nodes in between
         for (auto neighbor = lower_leaf->next_node; neighbor != upper_leaf;) {
@@ -1772,7 +1772,7 @@ void Rope::CheckIntegrity() {
     // A pending validation
     struct Validation {
         NodePtr node;
-        TextInfo expected;
+        TextStats expected;
         size_t level;
     };
     std::vector<Validation> pending;
@@ -1788,7 +1788,7 @@ void Rope::CheckIntegrity() {
         if (top.node.Is<LeafNode>()) {
             auto leaf = top.node.Get<LeafNode>();
             validate(leaf == root_node || !leaf->IsEmpty(), "leaf node is empty");
-            TextInfo have{leaf->GetData()};
+            TextStats have{leaf->GetData()};
             validate(top.expected.text_bytes == have.text_bytes, "leaf text bytes mismatch");
             validate(top.expected.line_breaks == have.line_breaks, "leaf line breaks mismatch");
             validate(top.expected.utf8_codepoints == have.utf8_codepoints, "leaf utf8 codepoint mismatch");
@@ -1796,7 +1796,7 @@ void Rope::CheckIntegrity() {
             // Is an inner node
             auto inner = top.node.Get<InnerNode>();
             validate(!inner->IsEmpty(), "inner node is empty");
-            TextInfo have = inner->AggregateTextInfo();
+            TextStats have = inner->AggregateTextInfo();
             validate(top.expected.text_bytes == have.text_bytes, "inner text bytes mismatch");
             validate(top.expected.line_breaks == have.line_breaks, "inner line breaks mismatch");
             validate(top.expected.utf8_codepoints == have.utf8_codepoints, "inner utf8 codepoint mismatch");

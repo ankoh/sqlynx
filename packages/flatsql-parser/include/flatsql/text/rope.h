@@ -18,7 +18,7 @@ struct Rope;
 struct LeafNode;
 struct InnerNode;
 
-struct TextInfo {
+struct TextStats {
     /// The text bytes
     size_t text_bytes = 0;
     /// The UTF-8 codepoints
@@ -27,19 +27,19 @@ struct TextInfo {
     size_t line_breaks = 0;
 
     /// Constructor
-    TextInfo();
+    TextStats();
     /// Constructor
-    TextInfo(std::span<std::byte> data);
+    TextStats(std::span<std::byte> data);
     /// Constructor
-    TextInfo(std::span<const std::byte> data);
+    TextStats(std::span<const std::byte> data);
     /// Addition
-    TextInfo operator+(const TextInfo& other);
+    TextStats operator+(const TextStats& other);
     /// Addition
-    TextInfo& operator+=(const TextInfo& other);
+    TextStats& operator+=(const TextStats& other);
     /// Subtraction
-    TextInfo operator-(const TextInfo& other);
+    TextStats operator-(const TextStats& other);
     /// Subtraction
-    TextInfo& operator-=(const TextInfo& other);
+    TextStats& operator-=(const TextStats& other);
 };
 
 struct NodePage {
@@ -153,7 +153,7 @@ struct LeafNode {
     /// Remove text in range
     void RemoveByteRange(size_t start_byte_idx, size_t byte_count) noexcept;
     /// Remove text in range
-    TextInfo RemoveCharRange(size_t start_idx, size_t end_idx) noexcept;
+    TextStats RemoveCharRange(size_t start_idx, size_t end_idx) noexcept;
     /// Removes text after byte_idx
     std::span<std::byte> TruncateBytes(size_t byte_idx = 0) noexcept;
     /// Removes text after char_idx
@@ -173,7 +173,7 @@ struct LeafNode {
     void PushBytesAndSplit(std::span<const std::byte> str, LeafNode& right);
 
     /// Distribute characters equally between nodes
-    void BalanceCharsRight(TextInfo& own_info, LeafNode& right_node, TextInfo& right_info, bool force = false);
+    void BalanceCharsRight(TextStats& own_info, LeafNode& right_node, TextStats& right_info, bool force = false);
 
     /// Create a leaf node from a string
     static LeafNode* FromString(NodePage& page, std::string_view& text,
@@ -184,7 +184,7 @@ struct InnerNode {
     friend struct Rope;
     static constexpr size_t NodePtrTag = 1;
     static constexpr size_t Capacity(size_t page_size) {
-        return (page_size - 2 * sizeof(void*) - 2 * sizeof(uint32_t) - 8) / (sizeof(TextInfo) + sizeof(NodePtr));
+        return (page_size - 2 * sizeof(void*) - 2 * sizeof(uint32_t) - 8) / (sizeof(TextStats) + sizeof(NodePtr));
     }
 
    protected:
@@ -198,8 +198,8 @@ struct InnerNode {
     uint32_t child_count = 0;
 
     /// Get the child stats buffer
-    inline std::span<TextInfo> GetChildStatsBuffer() noexcept {
-        return {reinterpret_cast<TextInfo*>(this + 1), child_capacity};
+    inline std::span<TextStats> GetChildStatsBuffer() noexcept {
+        return {reinterpret_cast<TextStats*>(this + 1), child_capacity};
     }
     /// Get the child nodes buffer
     inline std::span<NodePtr> GetChildNodesBuffer() noexcept {
@@ -225,7 +225,7 @@ struct InnerNode {
     /// Is the node full?
     inline auto IsFull() noexcept { return GetSize() >= GetCapacity(); }
 
-    using Boundary = std::pair<size_t, TextInfo>;
+    using Boundary = std::pair<size_t, TextStats>;
     /// Find the child that contains a byte index
     Boundary FindByte(size_t byte_idx);
     /// Find the child that contains a character
@@ -240,39 +240,39 @@ struct InnerNode {
     /// Unlink a node
     void UnlinkNode();
     /// Combine the text statistics
-    TextInfo AggregateTextInfo() noexcept;
+    TextStats AggregateTextInfo() noexcept;
     /// Combine the text statistics
-    TextInfo AggregateTextInfoInRange(size_t child_id, size_t count) noexcept;
+    TextStats AggregateTextInfoInRange(size_t child_id, size_t count) noexcept;
 
     /// Pushes an item into the array
-    void Push(NodePtr child, TextInfo stats);
+    void Push(NodePtr child, TextStats stats);
     /// Pushes items into the array
-    void Push(std::span<const NodePtr> nodes, std::span<const TextInfo> stats);
+    void Push(std::span<const NodePtr> nodes, std::span<const TextStats> stats);
     /// Pops an item from the end of the array
-    std::pair<NodePtr, TextInfo> Pop();
+    std::pair<NodePtr, TextStats> Pop();
     /// Inserts an item at a position
-    void Insert(size_t idx, NodePtr child, TextInfo stats);
+    void Insert(size_t idx, NodePtr child, TextStats stats);
     /// Inserts items at a position
-    void Insert(size_t idx, std::span<const NodePtr> child, std::span<const TextInfo> stats);
+    void Insert(size_t idx, std::span<const NodePtr> child, std::span<const TextStats> stats);
 
     /// Remove an element at a position
-    std::pair<NodePtr, TextInfo> Remove(size_t idx);
+    std::pair<NodePtr, TextStats> Remove(size_t idx);
     /// Remove elements in a range
     void RemoveRange(size_t idx, size_t count);
     /// Truncate children from a position
-    std::pair<std::span<const NodePtr>, std::span<const TextInfo>> Truncate(size_t idx = 0) noexcept;
+    std::pair<std::span<const NodePtr>, std::span<const TextStats>> Truncate(size_t idx = 0) noexcept;
     /// Splits node at index
     void SplitOffRight(size_t child_idx, InnerNode& right);
     /// Splits node at index
     void SplitOffLeft(size_t child_idx, InnerNode& left);
 
     /// Pushes an element onto the end of the array, and then splits it in half
-    void PushAndSplit(NodePtr child, TextInfo stats, InnerNode& dst);
+    void PushAndSplit(NodePtr child, TextStats stats, InnerNode& dst);
     /// Inserts an element into a the array, and then splits it in half
-    void InsertAndSplit(size_t idx, NodePtr child, TextInfo stats, InnerNode& other);
+    void InsertAndSplit(size_t idx, NodePtr child, TextStats stats, InnerNode& other);
 
     /// Distribute children equally between nodes
-    void BalanceRight(TextInfo& own_info, InnerNode& right_node, TextInfo& right_info);
+    void BalanceRight(TextStats& own_info, InnerNode& right_node, TextStats& right_info);
 };
 
 struct Rope {
@@ -284,7 +284,7 @@ struct Rope {
     /// The root page
     NodePtr root_node;
     /// The root page
-    TextInfo root_info;
+    TextStats root_info;
     /// The first leaf
     LeafNode* first_leaf;
 
@@ -297,7 +297,7 @@ struct Rope {
     /// This method will attempt to move elements to the immediate left and right neighbors.
     /// The balancing only succeeds if the other neighbor also has at least one child node capacity after balancing.
     /// It might happen, that the child node is moved to a different parent and therefore MUST NOT rely on parent state.
-    void PreemptiveBalanceOrSplit(InnerNode& parent, size_t& child_idx, TextInfo& child_prefix, size_t char_idx);
+    void PreemptiveBalanceOrSplit(InnerNode& parent, size_t& child_idx, TextStats& child_prefix, size_t char_idx);
     /// Split the inner root nodes
     void PreemptiveSplitRoot();
     /// Append a rope
@@ -319,7 +319,7 @@ struct Rope {
 
    public:
     /// Constructor
-    explicit Rope(size_t page_size, NodePtr root_node, TextInfo root_info, LeafNode* first_leaf, size_t tree_height);
+    explicit Rope(size_t page_size, NodePtr root_node, TextStats root_info, LeafNode* first_leaf, size_t tree_height);
     /// Constructor
     explicit Rope(size_t page_size);
     /// Destructor
@@ -332,15 +332,14 @@ struct Rope {
     Rope& operator=(Rope& other) = delete;
 
     /// Get the root text info
-    inline auto& GetInfo() { return root_info; }
+    inline auto& GetStats() { return root_info; }
 
-    /// Check the integrity of the rope
-    void CheckIntegrity();
     /// Insert a character at index
     void Insert(size_t char_idx, std::string_view text);
     /// Remove a range of characters
     void Remove(size_t char_idx, size_t count);
-
+    /// Check the integrity of the rope
+    void CheckIntegrity();
     /// Copy the rope to a std::string
     std::string ToString();
     /// Create a rope from a string.
