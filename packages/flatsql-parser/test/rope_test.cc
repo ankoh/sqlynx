@@ -649,13 +649,21 @@ struct RopeInteractionGenerator {
     }
 };
 
-struct RopeFuzzerTestSuite : public ::testing::TestWithParam<size_t> {};
-
 struct SeedArgPrinter {
     std::string operator()(const ::testing::TestParamInfo<size_t>& info) const { return std::to_string(info.param); }
 };
 
-TEST_P(RopeFuzzerTestSuite, Test128) {
+std::vector<size_t> generateSeedSeries(size_t n) {
+    std::vector<size_t> seeds;
+    seeds.reserve(n);
+    for (size_t i = 0; i < n; ++i) {
+        seeds.push_back(i);
+    }
+    return seeds;
+}
+
+struct RopeFuzzerTestSuite128 : public ::testing::TestWithParam<size_t> {};
+TEST_P(RopeFuzzerTestSuite128, Test) {
     rope::Rope target{128};
     std::string expected;
     auto [data_buffer, input_ops] = RopeInteractionGenerator::GenerateMany(GetParam(), 128, 256);
@@ -666,17 +674,23 @@ TEST_P(RopeFuzzerTestSuite, Test128) {
         ASSERT_EQ(target.ToString(), expected);
     }
 }
-
-std::vector<size_t> getKnownFuzzerTests() {
-    std::vector<size_t> seeds;
-    seeds.reserve(100);
-    for (size_t i = 0; i < 100; ++i) {
-        seeds.push_back(i);
-    }
-    return seeds;
-}
-
-INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest, RopeFuzzerTestSuite, ::testing::ValuesIn(getKnownFuzzerTests()),
+INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest, RopeFuzzerTestSuite128, ::testing::ValuesIn(generateSeedSeries(100)),
                          SeedArgPrinter());
+
+struct RopeFuzzerTestSuite1024 : public ::testing::TestWithParam<size_t> {};
+TEST_P(RopeFuzzerTestSuite1024, Test) {
+    rope::Rope target{1024};
+    std::string expected;
+    auto [data_buffer, input_ops] = RopeInteractionGenerator::GenerateMany(GetParam(), 128, 2048);
+    for (auto& op : input_ops) {
+        op.Apply(expected);
+        op.Apply(target);
+        target.CheckIntegrity();
+        ASSERT_EQ(target.ToString(), expected);
+    }
+}
+INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest, RopeFuzzerTestSuite1024, ::testing::ValuesIn(generateSeedSeries(1)),
+                         SeedArgPrinter());
+
 
 }  // namespace

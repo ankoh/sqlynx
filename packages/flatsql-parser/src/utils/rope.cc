@@ -1296,7 +1296,7 @@ void Rope::Insert(size_t char_idx, std::string_view text) {
         auto chunk_size = std::min(LeafNode::Capacity(page_size) - 4, text_buffer.size());
         auto split_approx = text_buffer.size() - chunk_size;
         auto split_bound = utf8::findCodepoint(text_buffer, split_approx, false);
-    
+
         auto tail = text_buffer.subspan(split_bound);
         InsertBounded(char_idx, tail);
         text_buffer = text_buffer.subspan(0, split_bound);
@@ -1458,7 +1458,10 @@ void Rope::BalanceChild(InnerNode& parent, size_t child_idx, LeafNode*& first_le
             if (left_node) {
                 move_left = std::min<size_t>(
                     child_node->GetSize(),
-                    std::min<size_t>((child_node->GetSize() + 1) / neighbor_count, left_node->GetFreeSpace()));
+                    std::min<size_t>(
+                        left_node->GetFreeSpace(),
+                        std::max<size_t>((child_node->GetSize() + 1) / neighbor_count,
+                                         child_node->GetSize() - (!right_node ? 0 : right_node->GetFreeSpace()))));
                 auto move_left_data = child_node->GetData().subspan(0, move_left);
                 left_node->PushBytes(move_left_data);
                 *left_info += TextStats{move_left_data};
