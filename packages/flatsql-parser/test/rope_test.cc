@@ -698,16 +698,22 @@ TEST_P(RopeFuzzerTestSuite, Test) {
     }
 }
 
-INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest128SBulk, RopeFuzzerTestSuite,
-                         ::testing::ValuesIn(generateTestSeries(128, 128, 16, 100, true)), RopeFuzzerTestPrinter());
 INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest128S, RopeFuzzerTestSuite,
                          ::testing::ValuesIn(generateTestSeries(128, 1024, 16, 100)), RopeFuzzerTestPrinter());
+INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest128SBulk, RopeFuzzerTestSuite,
+                         ::testing::ValuesIn(generateTestSeries(128, 1024, 16, 100, true)), RopeFuzzerTestPrinter());
 INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest128L, RopeFuzzerTestSuite,
                          ::testing::ValuesIn(generateTestSeries(128, 128, 256, 100)), RopeFuzzerTestPrinter());
+INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest128LBulk, RopeFuzzerTestSuite,
+                         ::testing::ValuesIn(generateTestSeries(128, 128, 256, 100, true)), RopeFuzzerTestPrinter());
 
 INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest1024S, RopeFuzzerTestSuite,
                          ::testing::ValuesIn(generateTestSeries(1024, 1024, 16, 100)), RopeFuzzerTestPrinter());
+INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest1024SBulk, RopeFuzzerTestSuite,
+                         ::testing::ValuesIn(generateTestSeries(1024, 1024, 16, 100, true)), RopeFuzzerTestPrinter());
 INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest1024L, RopeFuzzerTestSuite,
                          ::testing::ValuesIn(generateTestSeries(1024, 128, 2048, 100)), RopeFuzzerTestPrinter());
+// INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest1024LBulk, RopeFuzzerTestSuite,
+//                          ::testing::ValuesIn(generateTestSeries(1024, 128, 2048, 100, true)), RopeFuzzerTestPrinter());
 
 }  // namespace

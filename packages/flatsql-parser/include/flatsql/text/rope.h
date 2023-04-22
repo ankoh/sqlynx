@@ -316,6 +316,8 @@ struct Rope {
     Rope SplitOff(size_t char_idx);
     /// Append a rope to this rope
     void Append(Rope&& other);
+    /// Reset the rope
+    void Reset();
 
    public:
     /// Constructor
@@ -330,6 +332,8 @@ struct Rope {
     Rope(Rope&& other);
     /// Copy assignment
     Rope& operator=(Rope& other) = delete;
+    /// Move assignment
+    Rope& operator=(Rope&& other);
 
     /// Get the root text info
     inline auto& GetStats() { return root_info; }

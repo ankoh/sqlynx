@@ -401,8 +401,8 @@ void InnerNode::SplitOffLeft(size_t child_idx, InnerNode& left) {
     left.child_count = child_idx;
     std::memcpy(left_child_nodes.data(), right_child_nodes.data(), child_idx * sizeof(NodePtr));
     std::memcpy(left_child_stats.data(), right_child_stats.data(), child_idx * sizeof(TextStats));
-    std::memmove(&right_child_nodes[child_idx], &right_child_nodes[0], (child_count - child_idx) * sizeof(NodePtr));
-    std::memmove(&right_child_stats[child_idx], &right_child_stats[0], (child_count - child_idx) * sizeof(NodePtr));
+    std::memmove(right_child_nodes.data(), &right_child_nodes[child_idx], (child_count - child_idx) * sizeof(NodePtr));
+    std::memmove(right_child_stats.data(), &right_child_stats[child_idx], (child_count - child_idx) * sizeof(TextStats));
     child_count -= child_idx;
 
     left.LinkNodeRight(*this);
@@ -558,6 +558,10 @@ Rope::Rope(size_t page_size) : page_size(page_size), tree_height(1) {
 }
 /// Destructor
 Rope::~Rope() {
+    Reset();
+}
+
+void Rope::Reset() {
     NodePtr level = root_node;
     while (!level.IsNull()) {
         if (level.Is<LeafNode>()) {
@@ -578,7 +582,11 @@ Rope::~Rope() {
         }
     }
     root_node = {};
+    root_info = TextStats{};
+    first_leaf = nullptr;
+    tree_height = 0;
 }
+
 /// Move constructor
 Rope::Rope(Rope&& other)
     : page_size(other.page_size),
@@ -590,6 +598,21 @@ Rope::Rope(Rope&& other)
     other.root_info = TextStats{};
     other.first_leaf = nullptr;
     other.tree_height = 0;
+};
+
+/// Move constructor
+Rope& Rope::operator=(Rope&& other) {
+    assert(page_size == other.page_size);
+    Reset();
+    tree_height = other.tree_height;
+    root_node = other.root_node;
+    root_info = other.root_info;
+    first_leaf = other.first_leaf;
+    other.root_node = {};
+    other.root_info = TextStats{};
+    other.first_leaf = nullptr;
+    other.tree_height = 0;
+    return *this;
 };
 
 /// Copy the rope to a std::string
@@ -604,6 +627,17 @@ std::string Rope::ToString() {
 
 /// Split off a rope
 Rope Rope::SplitOff(size_t char_idx) {
+    // Special case, split at 0
+    if (char_idx == 0) {
+        Rope other{page_size, root_node, root_info, first_leaf, tree_height};
+        NodePage first_page{page_size};
+        first_leaf = new (first_page.Get()) LeafNode(page_size);
+        root_node = {first_leaf};
+        root_info = {};
+        tree_height = 1;
+        first_page.Release();
+        return other;
+    }
     // Special case, split of end
     if (char_idx >= root_info.utf8_codepoints) {
         return Rope{page_size};
@@ -895,6 +929,11 @@ void Rope::LinkEquiHeight(size_t page_size, NodePtr left_root, NodePtr right_roo
 void Rope::AppendEquiHeight(Rope&& right_rope) {
     assert(tree_height == right_rope.tree_height);
 
+    // Check if empty before doing any splits
+    if (right_rope.GetStats().text_bytes == 0) {
+        return;
+    }
+
     // Root is a leaf node?
     if (root_node.Is<LeafNode>()) {
         assert(right_rope.root_node.Is<LeafNode>());
@@ -947,6 +986,10 @@ void Rope::AppendEquiHeight(Rope&& right_rope) {
 void Rope::AppendSmaller(Rope&& right_rope) {
     assert(tree_height > right_rope.tree_height);
 
+    // Check if empty before doing any splits
+    if (right_rope.GetStats().text_bytes == 0) {
+        return;
+    }
     // Preemptively split root?
     assert(root_node.Is<InnerNode>());
     if (root_node.Get<InnerNode>()->IsFull()) {
@@ -1010,6 +1053,11 @@ void Rope::AppendSmaller(Rope&& right_rope) {
 void Rope::AppendTaller(Rope&& right_rope) {
     assert(right_rope.tree_height > tree_height);
 
+    // Check if empty before doing any splits
+    if (GetStats().text_bytes == 0) {
+        *this = std::move(right_rope);
+        return;
+    }
     // Preemptively split root?
     assert(right_rope.root_node.Is<InnerNode>());
     if (right_rope.root_node.Get<InnerNode>()->IsFull()) {
