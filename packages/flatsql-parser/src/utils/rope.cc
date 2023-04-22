@@ -1302,6 +1302,7 @@ void Rope::Insert(size_t char_idx, std::string_view text) {
         auto split_approx = text_buffer.size() - chunk_size;
         auto split_bound = utf8::findCodepoint(text_buffer, split_approx, false);
         auto tail = text_buffer.subspan(split_bound);
+        assert(tail.size() <= LeafNode::Capacity(page_size));
         InsertBounded(char_idx, tail);
         text_buffer = text_buffer.subspan(0, split_bound);
     }

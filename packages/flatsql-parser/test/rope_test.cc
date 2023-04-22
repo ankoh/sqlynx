@@ -593,6 +593,12 @@ struct RopeInteractionGenerator {
                     break;
             }
         }
+
+        /// Print the interaction as string
+        std::string ToString() {
+            std::string_view type_name = type == InteractionType::Insert ? "insert" : "remove";
+            return std::string{type_name} + "(" + std::to_string(begin) + "," + std::to_string(count) + ")";
+        }
     };
 
    protected:
@@ -649,48 +655,50 @@ struct RopeInteractionGenerator {
     }
 };
 
-struct SeedArgPrinter {
-    std::string operator()(const ::testing::TestParamInfo<size_t>& info) const { return std::to_string(info.param); }
+struct RopeFuzzerTest {
+    size_t page_size;
+    size_t interaction_count;
+    size_t max_bytes;
+    size_t seed;
 };
 
-std::vector<size_t> generateSeedSeries(size_t n) {
-    std::vector<size_t> seeds;
-    seeds.reserve(n);
-    for (size_t i = 0; i < n; ++i) {
-        seeds.push_back(i);
+struct RopeFuzzerTestPrinter {
+    std::string operator()(const ::testing::TestParamInfo<RopeFuzzerTest>& info) const {
+        auto& test = info.param;
+        return std::to_string(test.page_size) + "_" + std::to_string(test.interaction_count) + "_" +
+               std::to_string(test.max_bytes) + "_" + std::to_string(test.seed);
     }
-    return seeds;
+};
+
+std::vector<RopeFuzzerTest> generateTestSeries(size_t page_size, size_t interaction_count, size_t max_bytes,
+                                               size_t test_count) {
+    std::vector<RopeFuzzerTest> tests;
+    tests.reserve(test_count);
+    for (size_t i = 0; i < test_count; ++i) {
+        tests.push_back(RopeFuzzerTest{
+            .page_size = page_size, .max_bytes = max_bytes, .interaction_count = interaction_count, .seed = i});
+    }
+    return tests;
 }
 
-struct RopeFuzzerTestSuite128 : public ::testing::TestWithParam<size_t> {};
-TEST_P(RopeFuzzerTestSuite128, Test) {
-    rope::Rope target{128};
+struct RopeFuzzerTestSuite : public ::testing::TestWithParam<RopeFuzzerTest> {};
+TEST_P(RopeFuzzerTestSuite, Test) {
+    auto& test = GetParam();
+    rope::Rope target{test.page_size};
     std::string expected;
-    auto [data_buffer, input_ops] = RopeInteractionGenerator::GenerateMany(GetParam(), 128, 256);
-    for (auto& op : input_ops) {
+    auto [data_buffer, input_ops] =
+        RopeInteractionGenerator::GenerateMany(test.seed, test.interaction_count, test.max_bytes);
+    for (size_t i = 0; i < input_ops.size(); ++i) {
+        auto& op = input_ops[i];
         op.Apply(expected);
         op.Apply(target);
         target.CheckIntegrity();
-        ASSERT_EQ(target.ToString(), expected);
+        ASSERT_EQ(target.ToString(), expected) << "[" << i << "] " << op.ToString();
     }
 }
-INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest, RopeFuzzerTestSuite128, ::testing::ValuesIn(generateSeedSeries(100)),
-                         SeedArgPrinter());
-
-struct RopeFuzzerTestSuite1024 : public ::testing::TestWithParam<size_t> {};
-TEST_P(RopeFuzzerTestSuite1024, Test) {
-    rope::Rope target{1024};
-    std::string expected;
-    auto [data_buffer, input_ops] = RopeInteractionGenerator::GenerateMany(GetParam(), 128, 2048);
-    for (auto& op : input_ops) {
-        op.Apply(expected);
-        op.Apply(target);
-        target.CheckIntegrity();
-        ASSERT_EQ(target.ToString(), expected);
-    }
-}
-INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest, RopeFuzzerTestSuite1024, ::testing::ValuesIn(generateSeedSeries(1)),
-                         SeedArgPrinter());
-
+INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest128, RopeFuzzerTestSuite,
+                         ::testing::ValuesIn(generateTestSeries(128, 128, 256, 100)), RopeFuzzerTestPrinter());
+INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest1024, RopeFuzzerTestSuite,
+                         ::testing::ValuesIn(generateTestSeries(1024, 128, 2048, 1)), RopeFuzzerTestPrinter());
 
 }  // namespace
