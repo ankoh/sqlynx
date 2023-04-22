@@ -15,8 +15,8 @@ ${FLATC} --version \
 SPEC_DIR="${PROJECT_ROOT}/proto/"
 SPEC_INDEX="${SPEC_DIR}/flatsql/proto.fbs"
 
-OUT_DIR_CPP="${PROJECT_ROOT}/packages/flatsql-parser/include/flatsql/proto"
-OUT_DIR_TS="${PROJECT_ROOT}/packages/flatsql/gen"
+OUT_DIR_CPP="${PROJECT_ROOT}/packages/flatsql/include/flatsql/proto"
+OUT_DIR_TS="${PROJECT_ROOT}/packages/flatsql-wasm/gen"
 
 rm -rf ${OUT_DIR_CPP}/*
 rm -rf ${OUT_DIR_TS}/*

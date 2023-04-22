@@ -22,6 +22,6 @@ esbuild.build({
 
 fs.writeFile(path.join(dist, 'flatsql.module.d.ts'), "export * from './index';", printErr);
 
-const build_dir = path.resolve(__dirname, '..', 'flatsql-parser', 'build', 'wasm', 'Fast');
-fs.copyFile(path.resolve(build_dir, 'flatsql_parser.wasm'), path.resolve(dist, 'flatsql-parser.wasm'), printErr);
+const build_dir = path.resolve(__dirname, '..', 'flatsql', 'build', 'wasm', 'Fast');
+fs.copyFile(path.resolve(build_dir, 'flatsql.wasm'), path.resolve(dist, 'flatsql.wasm'), printErr);
 

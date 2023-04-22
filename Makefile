@@ -8,7 +8,7 @@ ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 UID=${shell id -u}
 GID=${shell id -g}
 
-PARSER_SOURCE_DIR="${ROOT_DIR}/packages/flatsql-parser"
+PARSER_SOURCE_DIR="${ROOT_DIR}/packages/flatsql"
 PARSER_DEBUG_DIR="${PARSER_SOURCE_DIR}/build/native/Debug"
 PARSER_RELEASE_DIR="${PARSER_SOURCE_DIR}/build/native/Release"
 PARSER_RELWITHDEBINFO_DIR="${PARSER_SOURCE_DIR}/build/RelWithDebInfo"
@@ -54,7 +54,7 @@ parser_release:
 
 .PHONY: parser_tests
 parser_tests:
-	./packages/flatsql-parser/build/native/Debug/tester --source_dir .
+	${PARSER_DEBUG_DIR}/tester --source_dir .
 
 .PHONY: coverage
 parser_coverage:
@@ -84,4 +84,4 @@ demo_start:
 
 .PHONY: astdump
 astdumps:
-	./packages/flatsql-parser/build/native/Debug/astdump --source_dir .
+	${PARSER_DEBUG_DIR}/astdump --source_dir .

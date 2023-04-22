@@ -42,7 +42,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: flatsql_parser_wasm
-          path: ./packages/flatsql-parser/build/wasm/Release/flatsql_parser.wasm
+          path: ./packages/flatsql/build/wasm/Release/flatsql.wasm
           retention-days: 1
 
   parser_native_debug:
@@ -64,8 +64,8 @@ jobs:
       - name: Compile parser
         shell: bash
         env:
-          PARSER_SOURCE_DIR: ./packages/flatsql-parser
-          PARSER_DEBUG_DIR: ./packages/flatsql-parser/build/native/Debug
+          PARSER_SOURCE_DIR: ./packages/flatsql
+          PARSER_DEBUG_DIR: ./packages/flatsql/build/native/Debug
         run: |
           cmake -S ${PARSER_SOURCE_DIR} -B ${PARSER_DEBUG_DIR} \
             -DCMAKE_BUILD_TYPE=Debug \
@@ -76,8 +76,8 @@ jobs:
       - name: Test parser
         shell: bash
         env:
-          PARSER_SOURCE_DIR: ./packages/flatsql-parser
-          PARSER_DEBUG_DIR: ./packages/flatsql-parser/build/native/Debug
+          PARSER_SOURCE_DIR: ./packages/flatsql
+          PARSER_DEBUG_DIR: ./packages/flatsql/build/native/Debug
         run: |
           ${PARSER_DEBUG_DIR}/tester --source ${PARSER_SOURCE_DIR}
 

@@ -2,7 +2,7 @@ if(POLICY CMP0048)
   cmake_policy(SET CMP0048 NEW)
 endif(POLICY CMP0048)
 
-project(flatsql_parser VERSION 0.1)
+project(flatsql VERSION 0.1)
 cmake_minimum_required(VERSION 3.10)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -19,9 +19,17 @@ ProcessorCount(NPROCS)
 set(CMAKE_BUILD_PARALLEL_LEVEL ${NPROCS})
 
 # ---------------------------------------------------------------------------
+# Address sanitizer
+
+if(NOT WASM AND NOT (CMAKE_BUILD_TYPE MATCHES Release))
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
+  set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
+endif()
+
+# ---------------------------------------------------------------------------
 # Code coverage
 
-if(CODE_COVERAGE)
+if(NOT WASM AND CODE_COVERAGE)
   if("${CMAKE_C_COMPILER_ID}" MATCHES "(Apple)?[Cc]lang"
      OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "(Apple)?[Cc]lang")
     message("Building with llvm code coverage")
@@ -38,14 +46,6 @@ if(CODE_COVERAGE)
   else()
     message(FATAL_ERROR "Code coverage requires Clang or GCC. Aborting.")
   endif()
-endif()
-
-# ---------------------------------------------------------------------------
-# Address sanitizer
-
-if(NOT WASM AND NOT (CMAKE_BUILD_TYPE MATCHES Release))
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
-  set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
 endif()
 
 # ---------------------------------------------------------------------------
@@ -217,21 +217,21 @@ set(LIB_SRC
     ${CMAKE_SOURCE_DIR}/src/utils/rope.cc)
 
 if(WASM)
-  add_executable(flatsql_parser ${LIB_SRC})
+  add_executable(flatsql ${LIB_SRC})
 else()
-  add_library(flatsql_parser ${LIB_SRC})
+  add_library(flatsql ${LIB_SRC})
 endif()
 
-target_link_libraries(flatsql_parser flatbuffers utf8proc)
+target_link_libraries(flatsql flatbuffers utf8proc)
 
 # ---------------------------------------------------------------------------
 # Tester
 
 if(NOT WASM)
-  add_library(flatsql_parser_testutils
+  add_library(flatsql_testutils
     ${CMAKE_SOURCE_DIR}/src/testing/astdump_test.cc
   )
-  target_link_libraries(flatsql_parser_testutils flatsql_parser pugixml gtest)
+  target_link_libraries(flatsql_testutils flatsql pugixml gtest)
 
   set(TEST_SRC
     ${CMAKE_SOURCE_DIR}/test/astdump_test_suite.cc
@@ -239,11 +239,11 @@ if(NOT WASM)
     ${CMAKE_SOURCE_DIR}/test/rope_test.cc
   )
   add_executable(tester test/tester.cc ${TEST_SRC})
-  target_link_libraries(tester flatsql_parser flatsql_parser_testutils pugixml gtest gmock gflags Threads::Threads)
+  target_link_libraries(tester flatsql flatsql_testutils pugixml gtest gmock gflags Threads::Threads)
 
   add_executable(astdump tools/astdump.cc)
-  target_link_libraries(astdump flatsql_parser flatsql_parser_testutils pugixml gtest gflags Threads::Threads)
+  target_link_libraries(astdump flatsql flatsql_testutils pugixml gtest gflags Threads::Threads)
 
   add_executable(sql2tpl tools/sql2tpl.cc)
-  target_link_libraries(sql2tpl flatsql_parser flatsql_parser_testutils pugixml gtest gflags Threads::Threads)
+  target_link_libraries(sql2tpl flatsql flatsql_testutils pugixml gtest gflags Threads::Threads)
 endif()
