@@ -335,7 +335,7 @@ struct Rope {
     inline auto& GetStats() { return root_info; }
 
     /// Insert a character at index
-    void Insert(size_t char_idx, std::string_view text, bool force_bulkload = false);
+    void Insert(size_t char_idx, std::string_view text, bool force_bulk = false);
     /// Remove a range of characters
     void Remove(size_t char_idx, size_t count);
     /// Check the integrity of the rope
