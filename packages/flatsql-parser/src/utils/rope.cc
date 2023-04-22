@@ -949,19 +949,19 @@ void Rope::AppendEquiHeight(Rope&& right_rope) {
             auto* new_root_node = new (new_root_page.Get()) InnerNode(page_size);
             new_root_node->Push(root_node, root_info);
             new_root_node->Push(right_rope.root_node, right_rope.root_info);
+            right_rope.root_node = {};
             root_node = new_root_page.Release<InnerNode>();
             root_info = new_root_node->AggregateTextInfo();
             left_leaf->LinkNodeRight(*right_leaf);
             ++tree_height;
-            right_rope.root_node = {};
         }
         return;
     }
 
     // Connect seam nodes
-    LinkEquiHeight(page_size, root_node, right_rope.root_node);
     auto left_inner = root_node.Get<InnerNode>();
     auto right_inner = right_rope.root_node.Get<InnerNode>();
+    LinkEquiHeight(page_size, left_inner->GetChildNodes().back(), right_inner->GetChildNodes().front());
 
     // Can merge the inner nodes?
     if (left_inner->GetFreeSpace() >= right_inner->GetSize()) {
@@ -974,11 +974,12 @@ void Rope::AppendEquiHeight(Rope&& right_rope) {
         auto* new_root_node = new (new_root_page.Get()) InnerNode(page_size);
         new_root_node->Push(root_node, root_info);
         new_root_node->Push(right_rope.root_node, right_rope.root_info);
+        left_inner->LinkNodeRight(*right_inner);
+        right_rope.root_node = {};
         root_node = new_root_page.Release<InnerNode>();
         root_info = new_root_node->AggregateTextInfo();
         ++tree_height;
     }
-    right_rope.root_node = {};
 }
 
 /// Append a rope that is smaller
