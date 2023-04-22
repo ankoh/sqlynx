@@ -402,7 +402,8 @@ void InnerNode::SplitOffLeft(size_t child_idx, InnerNode& left) {
     std::memcpy(left_child_nodes.data(), right_child_nodes.data(), child_idx * sizeof(NodePtr));
     std::memcpy(left_child_stats.data(), right_child_stats.data(), child_idx * sizeof(TextStats));
     std::memmove(right_child_nodes.data(), &right_child_nodes[child_idx], (child_count - child_idx) * sizeof(NodePtr));
-    std::memmove(right_child_stats.data(), &right_child_stats[child_idx], (child_count - child_idx) * sizeof(TextStats));
+    std::memmove(right_child_stats.data(), &right_child_stats[child_idx],
+                 (child_count - child_idx) * sizeof(TextStats));
     child_count -= child_idx;
 
     left.LinkNodeRight(*this);
@@ -557,9 +558,7 @@ Rope::Rope(size_t page_size) : page_size(page_size), tree_height(1) {
     first_page.Release();
 }
 /// Destructor
-Rope::~Rope() {
-    Reset();
-}
+Rope::~Rope() { Reset(); }
 
 void Rope::Reset() {
     NodePtr level = root_node;
@@ -966,7 +965,7 @@ void Rope::AppendEquiHeight(Rope&& right_rope) {
 
     // Can merge the inner nodes?
     if (left_inner->GetFreeSpace() >= right_inner->GetSize()) {
-        auto [nodes, stats] = left_inner->Truncate();
+        auto [nodes, stats] = right_inner->Truncate();
         left_inner->Push(nodes, stats);
         root_info += right_rope.root_info;
     } else {
@@ -1334,8 +1333,11 @@ void Rope::Insert(size_t char_idx, std::string_view text, bool force_bulk) {
     // Bulk-load the text into a new rope and merge it?
     if (force_bulk || useBulkInsert(page_size, text.size())) {
         auto right = SplitOff(char_idx);
+        right.CheckIntegrity();
         Append(Rope::FromString(page_size, text));
+        CheckIntegrity();
         Append(std::move(right));
+        CheckIntegrity();
         return;
     }
 

@@ -663,8 +663,7 @@ struct RopeFuzzerTestPrinter {
     std::string operator()(const ::testing::TestParamInfo<RopeFuzzerTest>& info) const {
         auto& test = info.param;
         return std::to_string(test.page_size) + "_" + std::to_string(test.interaction_count) + "_" +
-               std::to_string(test.max_bytes) + "_" + std::to_string(test.force_bulk) + "_" +
-               std::to_string(test.seed);
+               std::to_string(test.max_bytes) + "_" + std::to_string(test.force_bulk) + "_" + std::to_string(test.seed);
     }
 };
 
@@ -713,7 +712,7 @@ INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest1024SBulk, RopeFuzzerTestSuite,
                          ::testing::ValuesIn(generateTestSeries(1024, 1024, 16, 100, true)), RopeFuzzerTestPrinter());
 INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest1024L, RopeFuzzerTestSuite,
                          ::testing::ValuesIn(generateTestSeries(1024, 128, 2048, 100)), RopeFuzzerTestPrinter());
-// INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest1024LBulk, RopeFuzzerTestSuite,
-//                          ::testing::ValuesIn(generateTestSeries(1024, 128, 2048, 100, true)), RopeFuzzerTestPrinter());
+INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest1024LBulk, RopeFuzzerTestSuite,
+                         ::testing::ValuesIn(generateTestSeries(1024, 128, 2048, 100, true)), RopeFuzzerTestPrinter());
 
 }  // namespace
