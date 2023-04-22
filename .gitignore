@@ -2,3 +2,5 @@ node_modules
 /target
 /.cache
 /.infra
+/default.profraw
+/default.prof
