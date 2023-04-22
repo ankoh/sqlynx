@@ -110,7 +110,7 @@ TEST_F(RopeTest, InsertBoundedEnd) {
         ASSERT_EQ(rope.GetStats().text_bytes, expected.size());
         ASSERT_EQ(rope.GetStats().utf8_codepoints, expected.size());
         ASSERT_EQ(rope.GetStats().line_breaks, 0);
-        rope.CheckIntegrity();
+        ASSERT_NO_THROW(rope.CheckIntegrity());
     }
 }
 
@@ -125,7 +125,7 @@ TEST_F(RopeTest, InsertBounded0) {
         ASSERT_EQ(rope.GetStats().text_bytes, expected.size());
         ASSERT_EQ(rope.GetStats().utf8_codepoints, expected.size());
         ASSERT_EQ(rope.GetStats().line_breaks, 0);
-        rope.CheckIntegrity();
+        ASSERT_NO_THROW(rope.CheckIntegrity());
     }
 }
 
@@ -143,7 +143,7 @@ TEST_F(RopeTest, InsertBounded1IDiv2) {
         ASSERT_EQ(rope.GetStats().text_bytes, expected.size());
         ASSERT_EQ(rope.GetStats().utf8_codepoints, expected.size());
         ASSERT_EQ(rope.GetStats().line_breaks, 0);
-        rope.CheckIntegrity();
+        ASSERT_NO_THROW(rope.CheckIntegrity());
     }
 }
 
@@ -161,7 +161,7 @@ TEST_F(RopeTest, InsertBounded1IDiv3) {
         ASSERT_EQ(rope.GetStats().text_bytes, expected.size());
         ASSERT_EQ(rope.GetStats().utf8_codepoints, expected.size());
         ASSERT_EQ(rope.GetStats().line_breaks, 0);
-        rope.CheckIntegrity();
+        ASSERT_NO_THROW(rope.CheckIntegrity());
     }
 }
 
@@ -179,7 +179,7 @@ TEST_F(RopeTest, InsertBounded2IDiv3) {
         ASSERT_EQ(rope.GetStats().text_bytes, expected.size());
         ASSERT_EQ(rope.GetStats().utf8_codepoints, expected.size());
         ASSERT_EQ(rope.GetStats().line_breaks, 0);
-        rope.CheckIntegrity();
+        ASSERT_NO_THROW(rope.CheckIntegrity());
     }
 }
 
@@ -190,7 +190,7 @@ TEST_F(RopeTest, FromText) {
         auto rope = TestableRope::FromString(128, expected);
         ASSERT_EQ(rope.ToString(), expected);
         ASSERT_EQ(rope.GetStats().utf8_codepoints, expected.size());
-        rope.CheckIntegrity();
+        ASSERT_NO_THROW(rope.CheckIntegrity());
     }
 }
 
@@ -205,8 +205,8 @@ TEST_F(RopeTest, SplitOff0) {
         ASSERT_EQ(right.ToString(), expected.substr(split));
         ASSERT_EQ(left.GetStats().utf8_codepoints, split);
         ASSERT_EQ(right.GetStats().utf8_codepoints, expected.size() - split);
-        left.CheckIntegrity();
-        right.CheckIntegrity();
+        ASSERT_NO_THROW(left.CheckIntegrity());
+        ASSERT_NO_THROW(right.CheckIntegrity());
     }
 }
 
@@ -221,8 +221,8 @@ TEST_F(RopeTest, SplitOff1) {
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(split));
         ASSERT_EQ(left.GetStats().utf8_codepoints, split);
         ASSERT_EQ(right.GetStats().utf8_codepoints, expected.size() - split);
-        left.CheckIntegrity();
-        right.CheckIntegrity();
+        ASSERT_NO_THROW(left.CheckIntegrity());
+        ASSERT_NO_THROW(right.CheckIntegrity());
     }
 }
 
@@ -237,8 +237,8 @@ TEST_F(RopeTest, SplitOffNDiv2) {
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(split));
         ASSERT_EQ(left.GetStats().utf8_codepoints, split);
         ASSERT_EQ(right.GetStats().utf8_codepoints, expected.size() - split);
-        left.CheckIntegrity();
-        right.CheckIntegrity();
+        ASSERT_NO_THROW(left.CheckIntegrity());
+        ASSERT_NO_THROW(right.CheckIntegrity());
     }
 }
 
@@ -254,8 +254,8 @@ TEST_F(RopeTest, SplitOffEverySecond) {
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(i));
         ASSERT_EQ(left.GetStats().utf8_codepoints, i);
         ASSERT_EQ(right.GetStats().utf8_codepoints, expected.size() - i);
-        left.CheckIntegrity();
-        right.CheckIntegrity();
+        ASSERT_NO_THROW(left.CheckIntegrity());
+        ASSERT_NO_THROW(right.CheckIntegrity());
     }
 }
 
@@ -271,8 +271,8 @@ TEST_F(RopeTest, SplitOffEverySecondHalfFull) {
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(i));
         ASSERT_EQ(left.GetStats().utf8_codepoints, i);
         ASSERT_EQ(right.GetStats().utf8_codepoints, expected.size() - i);
-        left.CheckIntegrity();
-        right.CheckIntegrity();
+        ASSERT_NO_THROW(left.CheckIntegrity());
+        ASSERT_NO_THROW(right.CheckIntegrity());
     }
 }
 
@@ -288,8 +288,8 @@ TEST_F(RopeTest, SplitOffEveryThird) {
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(i));
         ASSERT_EQ(left.GetStats().utf8_codepoints, i);
         ASSERT_EQ(right.GetStats().utf8_codepoints, expected.size() - i);
-        left.CheckIntegrity();
-        right.CheckIntegrity();
+        ASSERT_NO_THROW(left.CheckIntegrity());
+        ASSERT_NO_THROW(right.CheckIntegrity());
     }
 }
 
@@ -305,8 +305,8 @@ TEST_F(RopeTest, SplitOffEveryThirdHalfFull) {
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(i));
         ASSERT_EQ(left.GetStats().utf8_codepoints, i);
         ASSERT_EQ(right.GetStats().utf8_codepoints, expected.size() - i);
-        left.CheckIntegrity();
-        right.CheckIntegrity();
+        ASSERT_NO_THROW(left.CheckIntegrity());
+        ASSERT_NO_THROW(right.CheckIntegrity());
     }
 }
 
@@ -328,8 +328,8 @@ TEST_F(RopeTest, SplitOffNDiv2HalfFill) {
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(split));
         ASSERT_EQ(left.GetStats().utf8_codepoints, split);
         ASSERT_EQ(right.GetStats().utf8_codepoints, expected.size() - split);
-        left.CheckIntegrity();
-        right.CheckIntegrity();
+        ASSERT_NO_THROW(left.CheckIntegrity());
+        ASSERT_NO_THROW(right.CheckIntegrity());
     }
 }
 
@@ -344,8 +344,8 @@ TEST_F(RopeTest, SplitOffNMinus1) {
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(split));
         ASSERT_EQ(left.GetStats().utf8_codepoints, split);
         ASSERT_EQ(right.GetStats().utf8_codepoints, expected.size() - split);
-        left.CheckIntegrity();
-        right.CheckIntegrity();
+        ASSERT_NO_THROW(left.CheckIntegrity());
+        ASSERT_NO_THROW(right.CheckIntegrity());
     }
 }
 
@@ -360,8 +360,8 @@ TEST_F(RopeTest, SplitOffN) {
         ASSERT_EQ(right.ToString(), std::string_view{expected}.substr(split));
         ASSERT_EQ(left.GetStats().utf8_codepoints, split);
         ASSERT_EQ(right.GetStats().utf8_codepoints, expected.size() - split);
-        left.CheckIntegrity();
-        right.CheckIntegrity();
+        ASSERT_NO_THROW(left.CheckIntegrity());
+        ASSERT_NO_THROW(right.CheckIntegrity());
     }
 }
 
@@ -376,7 +376,7 @@ TEST_F(RopeTest, AppendLeaf) {
         left.Append(std::move(right));
         ASSERT_EQ(left.ToString(), expected);
         ASSERT_EQ(left.GetStats().utf8_codepoints, expected.size());
-        left.CheckIntegrity();
+        ASSERT_NO_THROW(left.CheckIntegrity());
     }
 }
 
@@ -391,7 +391,7 @@ TEST_F(RopeTest, AppendNDiv2) {
         left_rope.Append(std::move(right_rope));
         ASSERT_EQ(left_rope.ToString(), expected);
         ASSERT_EQ(left_rope.GetStats().utf8_codepoints, expected.size());
-        left_rope.CheckIntegrity();
+        ASSERT_NO_THROW(left_rope.CheckIntegrity());
     }
 }
 
@@ -406,7 +406,7 @@ TEST_F(RopeTest, AppendNDiv3) {
         left_rope.Append(std::move(right_rope));
         ASSERT_EQ(left_rope.ToString(), expected);
         ASSERT_EQ(left_rope.GetStats().utf8_codepoints, expected.size());
-        left_rope.CheckIntegrity();
+        ASSERT_NO_THROW(left_rope.CheckIntegrity());
     }
 }
 
@@ -421,7 +421,7 @@ TEST_F(RopeTest, Append2NDiv3) {
         left_rope.Append(std::move(right_rope));
         ASSERT_EQ(left_rope.ToString(), expected);
         ASSERT_EQ(left_rope.GetStats().utf8_codepoints, expected.size());
-        left_rope.CheckIntegrity();
+        ASSERT_NO_THROW(left_rope.CheckIntegrity());
     }
 }
 
@@ -440,7 +440,7 @@ TEST_F(RopeTest, RemoveNothing) {
         buffer.Remove(text.size() - 1, 0);
         ASSERT_EQ(buffer.ToString(), text);
         ASSERT_EQ(buffer.GetStats().utf8_codepoints, text.size());
-        buffer.CheckIntegrity();
+        ASSERT_NO_THROW(buffer.CheckIntegrity());
     }
 }
 
@@ -452,7 +452,7 @@ TEST_F(RopeTest, RemoveFirst) {
         buffer.Remove(0, 1);
         ASSERT_EQ(buffer.ToString(), text.substr(1));
         ASSERT_EQ(buffer.GetStats().utf8_codepoints, text.size() - 1);
-        buffer.CheckIntegrity();
+        ASSERT_NO_THROW(buffer.CheckIntegrity());
     }
 }
 
@@ -464,7 +464,7 @@ TEST_F(RopeTest, RemoveLast) {
         buffer.Remove(text.size() - 1, 1);
         ASSERT_EQ(buffer.ToString(), text.substr(0, text.size() - 1));
         ASSERT_EQ(buffer.GetStats().utf8_codepoints, text.size() - 1);
-        buffer.CheckIntegrity();
+        ASSERT_NO_THROW(buffer.CheckIntegrity());
     }
 }
 
@@ -476,7 +476,7 @@ TEST_F(RopeTest, RemoveAll) {
         buffer.Remove(0, text.size());
         ASSERT_EQ(buffer.ToString(), "");
         ASSERT_EQ(buffer.GetStats().utf8_codepoints, 0);
-        buffer.CheckIntegrity();
+        ASSERT_NO_THROW(buffer.CheckIntegrity());
     }
 }
 
@@ -490,7 +490,7 @@ TEST_F(RopeTest, RemoveNDiv2) {
         buffer.Remove(mid, text.size() - mid);
         ASSERT_EQ(buffer.ToString(), prefix);
         ASSERT_EQ(buffer.GetStats().utf8_codepoints, prefix.size());
-        buffer.CheckIntegrity();
+        ASSERT_NO_THROW(buffer.CheckIntegrity());
     }
 }
 
@@ -508,7 +508,7 @@ TEST_F(RopeTest, RemoveNDiv3Mid) {
         combined += suffix;
         ASSERT_EQ(buffer.ToString(), combined);
         ASSERT_EQ(buffer.GetStats().utf8_codepoints, combined.size());
-        buffer.CheckIntegrity();
+        ASSERT_NO_THROW(buffer.CheckIntegrity());
     }
 }
 
@@ -526,7 +526,7 @@ TEST_F(RopeTest, RemoveNDiv4Mid) {
         combined += suffix;
         ASSERT_EQ(buffer.ToString(), combined);
         ASSERT_EQ(buffer.GetStats().utf8_codepoints, combined.size());
-        buffer.CheckIntegrity();
+        ASSERT_NO_THROW(buffer.CheckIntegrity());
     }
 }
 
@@ -538,7 +538,7 @@ TEST_F(RopeTest, RemoveNMinus1Front) {
         buffer.Remove(0, 1);
         ASSERT_EQ(buffer.ToString(), text.substr(1));
         ASSERT_EQ(buffer.GetStats().utf8_codepoints, text.size() - 1);
-        buffer.CheckIntegrity();
+        ASSERT_NO_THROW(buffer.CheckIntegrity());
     }
 }
 
@@ -550,7 +550,7 @@ TEST_F(RopeTest, RemoveNMinus1Back) {
         buffer.Remove(text.size() - 1, 1);
         ASSERT_EQ(buffer.ToString(), text.substr(0, text.size() - 1));
         ASSERT_EQ(buffer.GetStats().utf8_codepoints, text.size() - 1);
-        buffer.CheckIntegrity();
+        ASSERT_NO_THROW(buffer.CheckIntegrity());
     }
 }
 
