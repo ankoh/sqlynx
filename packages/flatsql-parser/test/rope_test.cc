@@ -582,10 +582,10 @@ struct RopeInteractionGenerator {
             }
         }
         /// Aply the input operation to a rope
-        void Apply(rope::Rope& buffer, std::string_view data) {
+        void Apply(rope::Rope& buffer, std::string_view data, bool force_bulkload) {
             switch (type) {
                 case InteractionType::Insert:
-                    buffer.Insert(begin, data.substr(0, count));
+                    buffer.Insert(begin, data.substr(0, count), force_bulkload);
                     break;
                 case InteractionType::Remove:
                     buffer.Remove(begin, count);
@@ -655,6 +655,7 @@ struct RopeFuzzerTest {
     size_t page_size;
     size_t max_bytes;
     size_t interaction_count;
+    bool force_bulkload;
     size_t seed;
 };
 
@@ -662,17 +663,21 @@ struct RopeFuzzerTestPrinter {
     std::string operator()(const ::testing::TestParamInfo<RopeFuzzerTest>& info) const {
         auto& test = info.param;
         return std::to_string(test.page_size) + "_" + std::to_string(test.interaction_count) + "_" +
-               std::to_string(test.max_bytes) + "_" + std::to_string(test.seed);
+               std::to_string(test.max_bytes) + "_" + std::to_string(test.force_bulkload) + "_" +
+               std::to_string(test.seed);
     }
 };
 
 std::vector<RopeFuzzerTest> generateTestSeries(size_t page_size, size_t interaction_count, size_t max_bytes,
-                                               size_t test_count) {
+                                               size_t test_count, bool force_bulkload = false) {
     std::vector<RopeFuzzerTest> tests;
     tests.reserve(test_count);
     for (size_t i = 0; i < test_count; ++i) {
-        tests.push_back(RopeFuzzerTest{
-            .page_size = page_size, .max_bytes = max_bytes, .interaction_count = interaction_count, .seed = i});
+        tests.push_back(RopeFuzzerTest{.page_size = page_size,
+                                       .max_bytes = max_bytes,
+                                       .interaction_count = interaction_count,
+                                       .force_bulkload = force_bulkload,
+                                       .seed = i});
     }
     return tests;
 }
@@ -687,12 +692,14 @@ TEST_P(RopeFuzzerTestSuite, Test) {
     for (size_t i = 0; i < input_ops.size(); ++i) {
         auto& op = input_ops[i];
         op.Apply(expected, data_buffer);
-        op.Apply(target, data_buffer);
+        op.Apply(target, data_buffer, test.force_bulkload);
         ASSERT_NO_THROW(target.CheckIntegrity()) << "[" << i << "] " << op.ToString();
         ASSERT_EQ(target.ToString(), expected) << "[" << i << "] " << op.ToString() << " " << data_buffer;
     }
 }
 
+INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest128SBulk, RopeFuzzerTestSuite,
+                         ::testing::ValuesIn(generateTestSeries(128, 128, 16, 100, true)), RopeFuzzerTestPrinter());
 INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest128S, RopeFuzzerTestSuite,
                          ::testing::ValuesIn(generateTestSeries(128, 1024, 16, 100)), RopeFuzzerTestPrinter());
 INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest128L, RopeFuzzerTestSuite,
