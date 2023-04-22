@@ -653,8 +653,8 @@ struct RopeInteractionGenerator {
 
 struct RopeFuzzerTest {
     size_t page_size;
-    size_t interaction_count;
     size_t max_bytes;
+    size_t interaction_count;
     size_t seed;
 };
 
