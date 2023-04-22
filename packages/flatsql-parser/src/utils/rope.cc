@@ -1492,8 +1492,8 @@ void Rope::BalanceChild(InnerNode& parent, size_t child_idx, LeafNode*& first_le
         if (left_node) {
             if (right_node) {
                 left_node->BalanceCharsRight(*left_info, *child_node, child_info);
-                left_node->BalanceCharsRight(*left_info, *right_node, *right_info);
                 child_node->BalanceCharsRight(child_info, *right_node, *right_info);
+                left_node->BalanceCharsRight(*left_info, *child_node, child_info);
             } else {
                 left_node->BalanceCharsRight(*left_info, *child_node, child_info);
             }
@@ -1534,7 +1534,10 @@ void Rope::BalanceChild(InnerNode& parent, size_t child_idx, LeafNode*& first_le
             if (left_node) {
                 move_left = std::min<size_t>(
                     child_node->GetSize(),
-                    std::min<size_t>((child_node->GetSize() + 1) / neighbor_count, left_node->GetFreeSpace()));
+                    std::min<size_t>(
+                        left_node->GetFreeSpace(),
+                        std::max<size_t>((child_node->GetSize() + 1) / neighbor_count,
+                                         child_node->GetSize() - (!right_node ? 0 : right_node->GetFreeSpace()))));
                 auto move_left_nodes = child_node->GetChildNodes().subspan(0, move_left);
                 auto move_left_stats = child_node->GetChildStats().subspan(0, move_left);
                 left_node->Push(move_left_nodes, move_left_stats);
@@ -1559,8 +1562,8 @@ void Rope::BalanceChild(InnerNode& parent, size_t child_idx, LeafNode*& first_le
         if (left_node) {
             if (right_node) {
                 left_node->BalanceRight(*left_info, *child_node, child_info);
-                left_node->BalanceRight(*left_info, *right_node, *right_info);
                 child_node->BalanceRight(child_info, *right_node, *right_info);
+                left_node->BalanceRight(*left_info, *child_node, child_info);
             } else {
                 left_node->BalanceRight(*left_info, *child_node, child_info);
             }

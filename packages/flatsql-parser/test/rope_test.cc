@@ -565,15 +565,14 @@ struct RopeInteractionGenerator {
         size_t begin;
         /// The operation size
         size_t count;
-        /// The argument data
-        std::string_view data;
 
         /// Apply the input operation to a string buffer
-        void Apply(std::string& buffer) {
+        void Apply(std::string& buffer, std::string_view data) {
             switch (type) {
                 case InteractionType::Insert:
                     assert(begin <= buffer.size());
-                    buffer.insert(begin, data);
+                    assert(count <= data.size());
+                    buffer.insert(begin, data.substr(0, count));
                     break;
                 case InteractionType::Remove:
                     assert(begin <= buffer.size());
@@ -583,10 +582,10 @@ struct RopeInteractionGenerator {
             }
         }
         /// Aply the input operation to a rope
-        void Apply(rope::Rope& buffer) {
+        void Apply(rope::Rope& buffer, std::string_view data) {
             switch (type) {
                 case InteractionType::Insert:
-                    buffer.Insert(begin, data);
+                    buffer.Insert(begin, data.substr(0, count));
                     break;
                 case InteractionType::Remove:
                     buffer.Remove(begin, count);
@@ -627,10 +626,7 @@ struct RopeInteractionGenerator {
         if ((rnd() & 0b1) == 0) {
             size_t count = rnd() % data_source.size();
             current_buffer_size += count;
-            return {.type = InteractionType::Insert,
-                    .begin = begin,
-                    .count = count,
-                    .data = std::string_view{data_source}.substr(0, count)};
+            return {.type = InteractionType::Insert, .begin = begin, .count = count};
         } else {
             size_t end = begin + ((begin == current_buffer_size) ? 0 : (rnd() % (current_buffer_size - begin)));
             assert((end - begin) <= current_buffer_size);
@@ -645,13 +641,13 @@ struct RopeInteractionGenerator {
 
    public:
     /// Generate multiple input operations
-    static std::pair<std::string, std::vector<Interaction>> GenerateMany(size_t seed, size_t n, size_t max_bytes) {
+    static std::pair<std::vector<Interaction>, std::string> GenerateMany(size_t seed, size_t n, size_t max_bytes) {
         RopeInteractionGenerator gen{seed, max_bytes};
         std::vector<Interaction> out;
         for (size_t i = 0; i < n; ++i) {
             out.push_back(gen.GenerateOne());
         }
-        return {gen.ReleaseDataSource(), out};
+        return {out, gen.ReleaseDataSource()};
     }
 };
 
@@ -686,19 +682,24 @@ TEST_P(RopeFuzzerTestSuite, Test) {
     auto& test = GetParam();
     rope::Rope target{test.page_size};
     std::string expected;
-    auto [data_buffer, input_ops] =
+    auto [input_ops, data_buffer] =
         RopeInteractionGenerator::GenerateMany(test.seed, test.interaction_count, test.max_bytes);
     for (size_t i = 0; i < input_ops.size(); ++i) {
         auto& op = input_ops[i];
-        op.Apply(expected);
-        op.Apply(target);
-        target.CheckIntegrity();
-        ASSERT_EQ(target.ToString(), expected) << "[" << i << "] " << op.ToString();
+        op.Apply(expected, data_buffer);
+        op.Apply(target, data_buffer);
+        ASSERT_NO_THROW(target.CheckIntegrity()) << "[" << i << "] " << op.ToString();
+        ASSERT_EQ(target.ToString(), expected) << "[" << i << "] " << op.ToString() << " " << data_buffer;
     }
 }
-INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest128, RopeFuzzerTestSuite,
+
+INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest128S, RopeFuzzerTestSuite,
+                         ::testing::ValuesIn(generateTestSeries(128, 128, 16, 100)), RopeFuzzerTestPrinter());
+INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest128L, RopeFuzzerTestSuite,
                          ::testing::ValuesIn(generateTestSeries(128, 128, 256, 100)), RopeFuzzerTestPrinter());
-INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest1024, RopeFuzzerTestSuite,
-                         ::testing::ValuesIn(generateTestSeries(1024, 128, 2048, 1)), RopeFuzzerTestPrinter());
+INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest1024S, RopeFuzzerTestSuite,
+                         ::testing::ValuesIn(generateTestSeries(1024, 128, 16, 100)), RopeFuzzerTestPrinter());
+INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest1024L, RopeFuzzerTestSuite,
+                         ::testing::ValuesIn(generateTestSeries(1024, 128, 2048, 100)), RopeFuzzerTestPrinter());
 
 }  // namespace
