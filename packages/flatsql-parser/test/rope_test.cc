@@ -694,11 +694,12 @@ TEST_P(RopeFuzzerTestSuite, Test) {
 }
 
 INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest128S, RopeFuzzerTestSuite,
-                         ::testing::ValuesIn(generateTestSeries(128, 128, 16, 100)), RopeFuzzerTestPrinter());
+                         ::testing::ValuesIn(generateTestSeries(128, 1024, 16, 100)), RopeFuzzerTestPrinter());
 INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest128L, RopeFuzzerTestSuite,
                          ::testing::ValuesIn(generateTestSeries(128, 128, 256, 100)), RopeFuzzerTestPrinter());
+
 INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest1024S, RopeFuzzerTestSuite,
-                         ::testing::ValuesIn(generateTestSeries(1024, 128, 16, 100)), RopeFuzzerTestPrinter());
+                         ::testing::ValuesIn(generateTestSeries(1024, 1024, 16, 100)), RopeFuzzerTestPrinter());
 INSTANTIATE_TEST_SUITE_P(RopeFuzzerTest1024L, RopeFuzzerTestSuite,
                          ::testing::ValuesIn(generateTestSeries(1024, 128, 2048, 100)), RopeFuzzerTestPrinter());
 
