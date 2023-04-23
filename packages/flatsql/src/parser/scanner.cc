@@ -62,7 +62,6 @@ void Scanner::AddError(proto::Location location, std::string&& message) {
 /// Add a line break
 void Scanner::AddLineBreak(proto::Location location) {
     line_breaks.push_back(location);
-    symbol_line_breaks.push_back(symbols.GetSize());
 }
 
 /// Add a comment
