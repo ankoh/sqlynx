@@ -8,11 +8,11 @@ ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 UID=${shell id -u}
 GID=${shell id -g}
 
-PARSER_SOURCE_DIR="${ROOT_DIR}/packages/flatsql"
-PARSER_DEBUG_DIR="${PARSER_SOURCE_DIR}/build/native/Debug"
-PARSER_RELEASE_DIR="${PARSER_SOURCE_DIR}/build/native/Release"
-PARSER_RELWITHDEBINFO_DIR="${PARSER_SOURCE_DIR}/build/RelWithDebInfo"
-PARSER_COVERAGE_DIR="${PARSER_SOURCE_DIR}/build/coverage"
+LIB_SOURCE_DIR="${ROOT_DIR}/packages/flatsql"
+LIB_DEBUG_DIR="${LIB_SOURCE_DIR}/build/native/Debug"
+LIB_RELEASE_DIR="${LIB_SOURCE_DIR}/build/native/Release"
+LIB_RELWITHDEBINFO_DIR="${LIB_SOURCE_DIR}/build/RelWithDebInfo"
+LIB_COVERAGE_DIR="${LIB_SOURCE_DIR}/build/coverage"
 
 CORES=$(shell grep -c ^processor /proc/cpuinfo 2>/dev/null || sysctl -n hw.ncpu)
 
@@ -38,25 +38,25 @@ proto:
 
 .PHONY: lib
 lib:
-	mkdir -p ${PARSER_DEBUG_DIR}
-	cmake -S ${PARSER_SOURCE_DIR} -B ${PARSER_DEBUG_DIR} \
+	mkdir -p ${LIB_DEBUG_DIR}
+	cmake -S ${LIB_SOURCE_DIR} -B ${LIB_DEBUG_DIR} \
 		-DCODE_COVERAGE=1 \
 		-DCMAKE_BUILD_TYPE=Debug \
 		-DCMAKE_EXPORT_COMPILE_COMMANDS=1
-	ln -sf ${PARSER_DEBUG_DIR}/compile_commands.json ${PARSER_SOURCE_DIR}/compile_commands.json
-	cmake --build ${PARSER_DEBUG_DIR}
+	ln -sf ${LIB_DEBUG_DIR}/compile_commands.json ${LIB_SOURCE_DIR}/compile_commands.json
+	cmake --build ${LIB_DEBUG_DIR}
 
 .PHONY: lib_release
 lib_release:
-	mkdir -p ${PARSER_RELEASE_DIR}
-	cmake -S ${PARSER_SOURCE_DIR} -B ${PARSER_RELEASE_DIR} -DCMAKE_BUILD_TYPE=Release
-	cmake --build ${PARSER_RELEASE_DIR}
+	mkdir -p ${LIB_RELEASE_DIR}
+	cmake -S ${LIB_SOURCE_DIR} -B ${LIB_RELEASE_DIR} -DCMAKE_BUILD_TYPE=Release
+	cmake --build ${LIB_RELEASE_DIR}
 
-.PHONY: tests
+.PHONY: lib_tests
 lib_tests:
-	${PARSER_DEBUG_DIR}/tester --source_dir .
+	${LIB_DEBUG_DIR}/tester --source_dir .
 
-.PHONY: coverage
+.PHONY: lib_coverage
 lib_coverage:
 	${LLVM_PROFDATA} merge -output=default.prof -instr default.profraw
 	${LLVM_COV} show \
@@ -66,14 +66,14 @@ lib_coverage:
 		--ignore-filename-regex='.*/utf8proc/.*' \
 		--ignore-filename-regex='.*/proto/proto_generated.h' \
 		--ignore-filename-regex='.*/.*\.list' \
-		-o ${PARSER_COVERAGE_DIR} \
-		${PARSER_DEBUG_DIR}/tester
+		-o ${LIB_COVERAGE_DIR} \
+		${LIB_DEBUG_DIR}/tester
 
-.PHONY: lib_wasm
+.PHONY: wasm
 wasm:
 	./scripts/build_parser_wasm.sh Release
 
-.PHONY: parser_wasm
+.PHONY: wasm_fast
 wasm_fast:
 	./scripts/build_parser_wasm.sh Fast
 
@@ -87,4 +87,4 @@ demo_start:
 
 .PHONY: astdump
 astdumps:
-	${PARSER_DEBUG_DIR}/astdump --source_dir .
+	${LIB_DEBUG_DIR}/astdump --source_dir .
