@@ -19,9 +19,8 @@ static const std::unordered_map<std::string_view, Keyword>& KeywordMap() {
 };
 
 /// Determine the maximum keyword length
-size_t constexpr length(const char* str) { return *str ? 1 + length(str + 1) : 0; }
 constexpr size_t MAX_KEYWORD_LENGTH = std::max<size_t>({
-#define X(CATEGORY, NAME, TOKEN) length(NAME),
+#define X(CATEGORY, NAME, TOKEN) Keyword::ConstLength(NAME),
 #include "../../../grammar/lists/sql_column_name_keywords.list"
 #include "../../../grammar/lists/sql_reserved_keywords.list"
 #include "../../../grammar/lists/sql_type_func_keywords.list"

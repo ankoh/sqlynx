@@ -9,7 +9,6 @@ enum NodeType: uint16 {
 
     IDENTIFIER,
     BOOL,
-    UI32_BITMAP,
     ARRAY,
 
     LITERAL_NULL,

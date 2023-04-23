@@ -22,6 +22,8 @@ struct Keyword {
 
     /// Find a keyword
     static const Keyword* Find(std::string_view text);
+    /// Get the length of a keyword known at compile-time
+    static constexpr size_t ConstLength(const char* str) { return *str ? 1 + ConstLength(str + 1) : 0; }
 };
 
 }  // namespace parser

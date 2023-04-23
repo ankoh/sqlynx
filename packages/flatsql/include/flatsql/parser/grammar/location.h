@@ -19,8 +19,6 @@ inline proto::Location Loc(std::initializer_list<proto::Location> locs) {
     return proto::Location(begin, end - begin);
 }
 
-inline proto::Location LocAfter(proto::Location loc) { return proto::Location(loc.offset() + loc.length(), 0); }
-
 }  // namespace parser
 }  // namespace flatsql
 

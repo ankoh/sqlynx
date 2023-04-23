@@ -408,24 +408,6 @@ void InnerNode::SplitOffLeft(size_t child_idx, InnerNode& left) {
 
     left.LinkNodeRight(*this);
 }
-/// Pushes an element onto the end of the array, and then splits it in half
-void InnerNode::PushAndSplit(NodePtr child, TextStats stats, InnerNode& dst) {
-    auto r_count = (GetSize() + 1) / 2;
-    auto l_count = (GetSize() + 1) - r_count;
-    SplitOffRight(l_count, dst);
-    dst.Push(child, stats);
-}
-/// Inserts an element into a the array, and then splits it in half
-void InnerNode::InsertAndSplit(size_t idx, NodePtr child, TextStats stats, InnerNode& other) {
-    assert(GetSize() > 0);
-    assert(idx <= GetSize());
-    std::pair<NodePtr, TextStats> extra{child, stats};
-    if (idx < GetSize()) {
-        extra = Pop();
-        Insert(idx, child, stats);
-    }
-    PushAndSplit(std::get<0>(extra), std::get<1>(extra), other);
-}
 
 /// Only balance if left and right nodes diff by more than 1/4th of the page capacity
 static inline bool shouldBalanceInner(size_t capacity, size_t left, size_t right) {

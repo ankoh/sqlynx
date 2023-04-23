@@ -150,52 +150,6 @@ proto::Node ParserDriver::AddObject(proto::Location loc, proto::NodeType type, s
     std::sort(attrs.begin(), attrs.end(), [&](auto& l, auto& r) {
         return static_cast<uint16_t>(l.attribute_key()) < static_cast<uint16_t>(r.attribute_key());
     });
-    // Find duplicate ranges.
-    // We optimize the fast path here and try to add as little overhead as possible for duplicate-free attributes.
-    SmallVector<std::span<proto::Node>, 5> duplicates;
-    for (size_t i = 0, j = 1; j < attrs.size(); i = j++) {
-        for (; j < attrs.size() && attrs[j].attribute_key() == attrs[i].attribute_key(); ++j)
-            ;
-        if ((j - i) == 1) continue;
-        duplicates.push_back({attrs.data() + i, j - i});
-    }
-    // Merge attributes if there are any
-    SmallVector<proto::Node, 5> merged_attrs;
-    if (duplicates.getSize() > 0) {
-        merged_attrs.reserve(attrs.size());
-
-        auto* reader = attrs.data();
-        std::vector<proto::Node> tmp;
-        for (auto dups : duplicates) {
-            // Copy attributes until first duplicate
-            for (; reader != dups.data(); ++reader) merged_attrs.push_back(*reader);
-            reader = dups.data() + dups.size();
-
-            // Only keep first if its not an object
-            auto& fst = dups[0];
-            if (fst.node_type() < proto::NodeType::OBJECT_KEYS_) {
-                merged_attrs.push_back(fst);
-                continue;
-            }
-            // Otherwise merge child attributes
-            size_t child_count = 0;
-            for (auto dup : dups) child_count += dup.children_count();
-            tmp.clear();
-            tmp.reserve(child_count);
-            for (auto dup : dups) {
-                nodes.ForEachIn(dup.children_begin_or_value(), dup.children_count(),
-                                 [&](size_t l, proto::Node& n) { tmp.push_back(n); });
-            }
-            // Add object.
-            // Note that this will recursively merge paths such as style.data.fill and style.data.stroke
-            auto merged = AddObject(fst.location(), fst.node_type(), merged_attrs.span(), true, true);
-            merged_attrs.push_back(merged);
-        }
-        for (; reader != (attrs.data() + attrs.size()); ++reader) merged_attrs.push_back(*reader);
-
-        // Replace attributes
-        attrs = {merged_attrs.span()};
-    }
     // Add the nodes
     for (auto& v : attrs) {
         if (v.node_type() == proto::NodeType::NONE) continue;

@@ -36,8 +36,8 @@ proto:
 	./scripts/generate_proto.sh
 	yarn workspace @ankoh/flatsql build
 
-.PHONY: parser
-parser:
+.PHONY: lib
+lib:
 	mkdir -p ${PARSER_DEBUG_DIR}
 	cmake -S ${PARSER_SOURCE_DIR} -B ${PARSER_DEBUG_DIR} \
 		-DCODE_COVERAGE=1 \
@@ -46,32 +46,35 @@ parser:
 	ln -sf ${PARSER_DEBUG_DIR}/compile_commands.json ${PARSER_SOURCE_DIR}/compile_commands.json
 	cmake --build ${PARSER_DEBUG_DIR}
 
-.PHONY: parser_release
-parser_release:
+.PHONY: lib_release
+lib_release:
 	mkdir -p ${PARSER_RELEASE_DIR}
 	cmake -S ${PARSER_SOURCE_DIR} -B ${PARSER_RELEASE_DIR} -DCMAKE_BUILD_TYPE=Release
 	cmake --build ${PARSER_RELEASE_DIR}
 
-.PHONY: parser_tests
-parser_tests:
+.PHONY: tests
+lib_tests:
 	${PARSER_DEBUG_DIR}/tester --source_dir .
 
 .PHONY: coverage
-parser_coverage:
+lib_coverage:
 	${LLVM_PROFDATA} merge -output=default.prof -instr default.profraw
 	${LLVM_COV} show \
 		--instr-profile default.prof \
 		--format html \
 		--ignore-filename-regex='.*/build/native/Debug/.*' \
+		--ignore-filename-regex='.*/utf8proc/.*' \
+		--ignore-filename-regex='.*/proto/proto_generated.h' \
+		--ignore-filename-regex='.*/.*\.list' \
 		-o ${PARSER_COVERAGE_DIR} \
 		${PARSER_DEBUG_DIR}/tester
 
-.PHONY: parser_wasm
-parser_wasm:
+.PHONY: lib_wasm
+wasm:
 	./scripts/build_parser_wasm.sh Release
 
 .PHONY: parser_wasm
-parser_wasm_fast:
+wasm_fast:
 	./scripts/build_parser_wasm.sh Fast
 
 .PHONY: jslib

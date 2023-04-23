@@ -18,18 +18,9 @@ inline proto::Node Attr(proto::AttributeKey key, proto::Node node) {
     return proto::Node(node.location(), node.node_type(), static_cast<uint16_t>(key), node.parent(),
                        node.children_begin_or_value(), node.children_count());
 }
-/// Helper to configure an attribute node
-inline proto::Node Attr(uint16_t key, proto::Node node) {
-    return proto::Node(node.location(), node.node_type(), key, node.parent(), node.children_begin_or_value(),
-                       node.children_count());
-}
-/// Helper to append a node to a node vector
-inline NodeVector& Attr(NodeVector& attrs, proto::Node node) {
-    attrs.push_back(node);
-    return attrs;
-}
 /// Helper to concatenate node vectors
 inline NodeVector Concat(NodeVector&& l, NodeVector&& r) {
+    l.reserve(l.getSize() + r.getSize());
     for (auto& node : r) {
         l.push_back(node);
     }
@@ -66,10 +57,6 @@ inline proto::Node Null() { return proto::Node(proto::Location(), proto::NodeTyp
 /// Create a string node
 inline proto::Node Ident(proto::Location loc) {
     return proto::Node(loc, proto::NodeType::IDENTIFIER, 0, NO_PARENT, 0, 0);
-}
-/// Create a ui32 bitmap node
-inline proto::Node UI32Bitmap(proto::Location loc, uint32_t value) {
-    return proto::Node(loc, proto::NodeType::UI32_BITMAP, 0, NO_PARENT, value, 0);
 }
 /// Create a bool node
 inline proto::Node Bool(proto::Location loc, bool v) {

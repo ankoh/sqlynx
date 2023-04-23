@@ -70,16 +70,6 @@ class Scanner {
     /// Scan entire input and produce all tokens
     void Produce();
 
-    /// Get the scanner state pointer
-    auto* GetState() { return scanner_state_ptr; }
-    /// Get the errors
-    auto& GetErrors() { return errors; }
-    /// Get the line breaks
-    auto& GetLineBreaks() { return line_breaks; }
-    /// Get the comments
-    auto& GetComments() { return comments; }
-    /// Get the vararg key offsets
-    auto& GetVarargKeyOffsets() { return vararg_key_offsets; }
     /// Access the input
     std::string_view GetInputText() {
         assert(input_buffer.size() >= 2);

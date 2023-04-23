@@ -266,11 +266,6 @@ struct InnerNode {
     /// Splits node at index
     void SplitOffLeft(size_t child_idx, InnerNode& left);
 
-    /// Pushes an element onto the end of the array, and then splits it in half
-    void PushAndSplit(NodePtr child, TextStats stats, InnerNode& dst);
-    /// Inserts an element into a the array, and then splits it in half
-    void InsertAndSplit(size_t idx, NodePtr child, TextStats stats, InnerNode& other);
-
     /// Distribute children equally between nodes
     void BalanceRight(TextStats& own_info, InnerNode& right_node, TextStats& right_info);
 };
