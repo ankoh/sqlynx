@@ -54,8 +54,6 @@ class Scanner {
 
     /// All symbols
     ChunkBuffer<Parser::symbol_type> symbols = {};
-    /// All symbols linebreaks
-    std::vector<size_t> symbol_line_breaks = {};
     /// The symbol iterator
     ChunkBuffer<Parser::symbol_type>::ForwardIterator symbol_scanner{symbols};
 
@@ -74,6 +72,12 @@ class Scanner {
     std::string_view GetInputText() {
         assert(input_buffer.size() >= 2);
         return std::string_view{input_buffer.data(), input_buffer.size() - 2};
+    }
+    /// Get the next symbol
+    Parser::symbol_type Next() {
+        auto sym = symbol_scanner.GetValue();
+        ++symbol_scanner;
+        return sym;
     }
 
     /// Release the line breaks
@@ -113,13 +117,6 @@ class Scanner {
     Parser::symbol_type ReadParameter(proto::Location loc);
     /// Read an integer
     Parser::symbol_type ReadInteger(proto::Location loc);
-
-    /// Get the next symbol
-    Parser::symbol_type Next() {
-        auto sym = symbol_scanner.GetValue();
-        ++symbol_scanner;
-        return sym;
-    }
 };
 
 }  // namespace parser
