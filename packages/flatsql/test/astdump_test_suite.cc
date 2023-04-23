@@ -12,6 +12,7 @@ TEST_P(ASTDumpTestSuite, Test) {
     auto* test = GetParam();
     auto input_buffer = test->input;
     auto program = parser::ParserDriver::Parse(std::span<char>{input_buffer.data(), input_buffer.size()});
+    ASSERT_EQ(input_buffer, test->input);
 
     pugi::xml_document out;
     ASTDumpTest::EncodeProgram(out, *program, test->input);
