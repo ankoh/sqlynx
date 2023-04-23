@@ -73,6 +73,7 @@ using YYSTYPE = flatsql::parser::Parser::symbol_type;
 %option noyyalloc
 %option noyyrealloc
 %option noyyfree
+%option never-interactive
 %option batch
 %option caseless
 %option prefix="flatsql_yy"

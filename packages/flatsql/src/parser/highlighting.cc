@@ -61,14 +61,14 @@ std::unique_ptr<proto::HighlightingT> Scanner::BuildHighlighting() {
     };
 
     auto ci = 0;
-    for (auto& symbol : symbols) {
+    symbols.ForEachIn(0, symbols.GetSize(), [&](size_t symbol_id, Parser::symbol_type symbol) {
         // Emit all comments in between.
         while (ci < comments.size() && comments[ci].offset() < symbol.location.offset()) {
             emit(comments[ci++], proto::HighlightingTokenType::COMMENT);
         }
         // Map as standard token.
         emit(symbol.location, MapToken(symbol.kind()));
-    }
+    });
 
     // Build the line breaks
     std::vector<uint32_t> breaks;

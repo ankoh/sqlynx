@@ -13,6 +13,40 @@
 namespace flatsql {
 
 template <typename T> struct ChunkBuffer {
+   public:
+    struct ForwardIterator {
+        /// The buffer
+        ChunkBuffer<T>& buffer;
+        /// The chunk chunk
+        size_t chunk_id;
+        /// The local value id
+        size_t local_value_id;
+
+        /// Constructor
+        ForwardIterator(ChunkBuffer<T>& buffer) : buffer(buffer), chunk_id(0), local_value_id(0) {}
+        /// Reset
+        void Reset() {
+            chunk_id = 0;
+            local_value_id = 0;
+        }
+        /// Increment operator
+        ForwardIterator& operator++() {
+            ++local_value_id;
+            if (local_value_id >= buffer.buffers[chunk_id].size() && (chunk_id + 1) < buffer.buffers.size()) {
+                ++chunk_id;
+                local_value_id = 0;
+            }
+            return *this;
+        }
+        /// Is at end?
+        bool IsAtEnd() { return local_value_id >= buffer.buffers[chunk_id].size(); }
+        /// Get the value
+        T GetValue() {
+            assert(!IsAtEnd());
+            return buffer.buffers[chunk_id][local_value_id];
+        }
+    };
+
    protected:
     /// The buffers
     std::vector<std::vector<T>> buffers;
