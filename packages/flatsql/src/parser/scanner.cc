@@ -94,11 +94,8 @@ Parser::symbol_type Scanner::ReadInteger(proto::Location loc) {
 
 /// Produce all tokens
 void Scanner::Produce() {
-    Parser::symbol_type current_symbol;
-    std::optional<Parser::symbol_type> lookahead_symbol;
-
     // Function to get next token
-    auto next = [&]() {
+    auto next = [](void* scanner_state_ptr, std::optional<Parser::symbol_type>& lookahead_symbol) {
         // Have lookahead?
         Parser::symbol_type current_symbol;
         if (lookahead_symbol) {
@@ -168,8 +165,9 @@ void Scanner::Produce() {
 
     // Collect all tokens until we hit EOF
     if (symbols.GetSize() == 0) {
+        std::optional<Parser::symbol_type> lookahead_symbol;
         while (true) {
-            auto token = next();
+            auto token = next(scanner_state_ptr, lookahead_symbol);
             symbols.Append(token);
             if (token.kind() == Parser::symbol_kind::S_YYEOF) break;
         }
