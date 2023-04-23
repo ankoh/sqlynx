@@ -1,0 +1,21 @@
+runs:
+  using: "composite"
+  steps:
+    - name: Install libtinfo5
+      shell: bash
+      run: |
+        sudo apt install libtinfo5
+
+    - name: Cache llvm
+      id: cache-llvm
+      uses: actions/cache@v3
+      with:
+        path: |
+          ./llvm
+        key: llvm-16.0.0
+
+    - name: Install llvm
+      uses: KyleMayes/install-llvm-action@v1
+      with:
+        version: "16.0.0"
+        cached: ${{ steps.cache-llvm.outputs.cache-hit }}

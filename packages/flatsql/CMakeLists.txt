@@ -29,7 +29,7 @@ endif()
 # ---------------------------------------------------------------------------
 # Code coverage
 
-if(NOT WASM AND CODE_COVERAGE)
+if(CODE_COVERAGE AND NOT WASM)
   if("${CMAKE_C_COMPILER_ID}" MATCHES "(Apple)?[Cc]lang"
      OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "(Apple)?[Cc]lang")
     message("Building with llvm code coverage")

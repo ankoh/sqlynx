@@ -54,6 +54,9 @@ jobs:
           submodules: 'recursive'
           fetch-depth: 0
 
+      - name: Setup llvm
+        uses: ./.github/actions/setup-llvm
+
       - name: Setup flatc
         uses: ./.github/actions/setup-flatc
 
@@ -68,9 +71,11 @@ jobs:
           LIB_DEBUG_DIR: ./packages/flatsql/build/native/Debug
         run: |
           cmake -S ${LIB_SOURCE_DIR} -B ${LIB_DEBUG_DIR} \
-            -DCODE_COVERAGE=1 \
+            -DCMAKE_C_COMPILER=${{env.LLVM_PATH}}/bin/clang \
+            -DCMAKE_CXX_COMPILER=${{env.LLVM_PATH}}/bin/clang++ \
             -DCMAKE_BUILD_TYPE=Debug \
-            -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=1 \
+            -DCODE_COVERAGE=1
           ln -sf ${LIB_DEBUG_DIR}/compile_commands.json ${LIB_SOURCE_DIR}/compile_commands.json
           cmake --build ${LIB_DEBUG_DIR}
 
@@ -81,6 +86,30 @@ jobs:
           LIB_DEBUG_DIR: ./packages/flatsql/build/native/Debug
         run: |
           ${LIB_DEBUG_DIR}/tester --source ${LIB_SOURCE_DIR}
+
+      - name: Merge coverage data
+        shell: bash
+        env:
+          LIB_COVERAGE_DIR: ./packages/flatsql/build/coverage
+        run: |
+          mkdir -p ${LIB_COVERAGE_DIR}
+          ${{env.LLVM_PATH}}/bin/llvm-profdata merge -output=${LIB_COVERAGE_DIR}/coverage.prof -instr default.profraw
+
+      - name: Build coverage report
+        shell: bash
+        env:
+          LIB_DEBUG_DIR: ./packages/flatsql/build/native/Debug
+          LIB_COVERAGE_DIR: ./packages/flatsql/build/coverage
+        run: |
+          ${{ env.LLVM_PATH }}/bin/llvm-cov show \
+            --instr-profile ${LIB_COVERAGE_DIR}/coverage.prof \
+            --format text \
+            --ignore-filename-regex='.*/build/native/Debug/.*' \
+            --ignore-filename-regex='.*/utf8proc/.*' \
+            --ignore-filename-regex='.*/proto/proto_generated.h' \
+            --ignore-filename-regex='.*/.*\.list' \
+            -o ${LIB_COVERAGE_DIR}/coverage.txt \
+            ${LIB_DEBUG_DIR}/tester
 
   js_library:
     name: Library / Javascript
