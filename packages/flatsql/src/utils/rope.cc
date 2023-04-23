@@ -597,11 +597,14 @@ Rope& Rope::operator=(Rope&& other) {
 };
 
 /// Copy the rope to a std::string
-std::string Rope::ToString() {
+std::string Rope::ToString(size_t right_padding) {
     std::string buffer;
-    buffer.reserve(root_info.text_bytes);
+    buffer.reserve(root_info.text_bytes + right_padding);
     for (auto iter = first_leaf; iter; iter = iter->next_node) {
         buffer += iter->GetStringView();
+    }
+    for (size_t i = 0; i < right_padding; ++i) {
+        buffer.push_back(0);
     }
     return buffer;
 }

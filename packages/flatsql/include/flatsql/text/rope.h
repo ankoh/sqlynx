@@ -340,7 +340,7 @@ struct Rope {
     /// Check the integrity of the rope
     void CheckIntegrity();
     /// Copy the rope to a std::string
-    std::string ToString();
+    std::string ToString(size_t right_padding = 0);
     /// Create a rope from a string.
     /// Control fill degree through `leaf_capacity` and `inner_capacity`.
     static Rope FromString(size_t page_size, std::string_view text,
