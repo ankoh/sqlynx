@@ -17,13 +17,13 @@ class ParserDriver;
 constexpr size_t YY_SCANNER_STATE_SIZE = 300;
 constexpr size_t YY_BUFFER_STATE_SIZE = 200;
 
-/// XXX Note that flex requires the input to be padded with 2 additional characters to match YY_END_OF_BUFFER.
-///     This scanner will blindly overwrite these last two characters and fall back to an empty buffer if the size of
-///     the input is < 2.
+/// Note that flex requires the input to be padded with 2 additional characters to match YY_END_OF_BUFFER.
+/// This scanner will blindly overwrite these last two characters and fall back to an empty buffer if the size of
+/// the input is < 2.
 class Scanner {
    protected:
-    /// The full input buffer
-    std::span<char> input_buffer;
+    /// The full input data
+    std::span<char> input_data;
     /// The invalid input buffer
     std::array<char, 2> null_buffer = {};
 
@@ -70,8 +70,8 @@ class Scanner {
 
     /// Access the input
     std::string_view GetInputText() {
-        assert(input_buffer.size() >= 2);
-        return std::string_view{input_buffer.data(), input_buffer.size() - 2};
+        assert(input_data.size() >= 2);
+        return std::string_view{input_data.data(), input_data.size() - 2};
     }
     /// Get the next symbol
     Parser::symbol_type Next() {

@@ -503,8 +503,8 @@ void flatsql_yyfree (void*, yyscan_t) {
 namespace flatsql {
 namespace parser {
 
-Scanner::Scanner(std::span<char> input_buffer)
-    : input_buffer(input_buffer)
+Scanner::Scanner(std::span<char> input_data)
+    : input_data(input_data)
 {
     static_assert(YY_SCANNER_STATE_SIZE >= (alignof(yyguts_t) + sizeof(yyguts_t)), "YY_SCANNER_STATE_SIZE is too small");
     static_assert(YY_BUFFER_STATE_SIZE >= (alignof(yy_buffer_state) + sizeof(yy_buffer_state)), "YY_BUFFER_STATE_SIZE is too small");
@@ -524,13 +524,14 @@ Scanner::Scanner(std::span<char> input_buffer)
     }
 
     // Write end-of-buffer markers
-    if (input_buffer.size() < 2) {
-        input_buffer = std::span{null_buffer.data(), null_buffer.size()};
+    if (input_data.size() < 2) {
+        input_data = std::span{null_buffer.data(), null_buffer.size()};
     }
-    input_buffer[input_buffer.size() - 2] = YY_END_OF_BUFFER_CHAR;
-    input_buffer[input_buffer.size() - 1] = YY_END_OF_BUFFER_CHAR;
+    input_data[input_data.size() - 2] = YY_END_OF_BUFFER_CHAR;
+    input_data[input_data.size() - 1] = YY_END_OF_BUFFER_CHAR;
 
     // Configure the initial scanner state
+    // As done by: yylex_init_extra, yy_init_globals (minus yyalloc)
     yyg->yy_buffer_stack = reinterpret_cast<yy_buffer_state**>(scanner_buffer_stack.data());
     yyg->yy_buffer_stack_top = 0;
     yyg->yy_buffer_stack_max = scanner_buffer_stack.size();
@@ -542,14 +543,15 @@ Scanner::Scanner(std::span<char> input_buffer)
     yyg->yy_start_stack =  NULL;
 
     // Configure the initial buffer state
-    yyb->yy_buf_size = input_buffer.size() - 2; /* "- 2" to take care of EOB's */
-    yyb->yy_buf_pos = yyb->yy_ch_buf = input_buffer.data();
+    // As done by: yy_scan_buffer (minus yyalloc)
+    yyb->yy_buf_size = input_data.size() - 2; /* "- 2" to take care of EOB's */
+    yyb->yy_buf_pos = yyb->yy_ch_buf = input_data.data();
     yyb->yy_is_our_buffer = 0;
     yyb->yy_input_file = 0;
     yyb->yy_n_chars = yyb->yy_buf_size;
     yyb->yy_is_interactive = 0;
     yyb->yy_at_bol = 1;
-    yyb->yy_fill_buffer = 0;
+    yyb->yy_fill_buffer = 0; // This will bypass any refill logic in flex, i.e. yy_get_next_buffer
     yyb->yy_buffer_status = YY_BUFFER_NEW;
 
     // Set the buffer
