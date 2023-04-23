@@ -101,15 +101,21 @@ jobs:
           LIB_DEBUG_DIR: ./packages/flatsql/build/native/Debug
           LIB_COVERAGE_DIR: ./packages/flatsql/build/coverage
         run: |
-          ${{ env.LLVM_PATH }}/bin/llvm-cov show \
+          ${{env.LLVM_PATH}}/bin/llvm-cov export \
             --instr-profile ${LIB_COVERAGE_DIR}/coverage.prof \
-            --format text \
+            --format lcov \
             --ignore-filename-regex='.*/build/native/Debug/.*' \
             --ignore-filename-regex='.*/utf8proc/.*' \
             --ignore-filename-regex='.*/proto/proto_generated.h' \
             --ignore-filename-regex='.*/.*\.list' \
-            -o ${LIB_COVERAGE_DIR}/coverage.txt \
-            ${LIB_DEBUG_DIR}/tester
+            ${LIB_DEBUG_DIR}/tester > ${LIB_COVERAGE_DIR}/lcov.info
+
+      - name: Upload coverage report
+        uses: coverallsapp/github-action@v2
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          path-to-lcov: ./packages/flatsql/build/coverage/lcov.info
+
 
   js_library:
     name: Library / Javascript
