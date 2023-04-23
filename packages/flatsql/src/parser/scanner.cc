@@ -62,7 +62,7 @@ void Scanner::AddError(proto::Location location, std::string&& message) {
 /// Add a line break
 void Scanner::AddLineBreak(proto::Location location) {
     line_breaks.push_back(location);
-    symbol_line_breaks.push_back(symbols.size());
+    symbol_line_breaks.push_back(symbols.GetSize());
 }
 
 /// Add a comment
@@ -168,20 +168,14 @@ void Scanner::Produce() {
     };
 
     // Collect all tokens until we hit EOF
-    if (symbols.empty()) {
+    if (symbols.GetSize() == 0) {
         while (true) {
             auto token = next();
-            symbols.push_back(token);
+            symbols.Append(token);
             if (token.kind() == Parser::symbol_kind::S_YYEOF) break;
         }
     }
-    next_symbol_index = 0;
-}
-
-/// Get the next symbole
-Parser::symbol_type Scanner::Next() {
-    assert(next_symbol_index < symbols.size());
-    return symbols[next_symbol_index++];
+    symbol_scanner.Reset();
 }
 
 }  // namespace parser

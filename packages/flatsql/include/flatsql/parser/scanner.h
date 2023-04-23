@@ -53,11 +53,11 @@ class Scanner {
     std::unordered_set<size_t> vararg_key_offsets = {};
 
     /// All symbols
-    std::vector<Parser::symbol_type> symbols = {};
+    ChunkBuffer<Parser::symbol_type> symbols = {};
     /// All symbols linebreaks
     std::vector<size_t> symbol_line_breaks = {};
-    /// The next symbol index
-    size_t next_symbol_index = 0;
+    /// The symbol iterator
+    ChunkBuffer<Parser::symbol_type>::ForwardIterator symbol_scanner{symbols};
 
    public:
     /// Constructor
@@ -115,7 +115,11 @@ class Scanner {
     Parser::symbol_type ReadInteger(proto::Location loc);
 
     /// Get the next symbol
-    Parser::symbol_type Next();
+    Parser::symbol_type Next() {
+        auto sym = symbol_scanner.GetValue();
+        ++symbol_scanner;
+        return sym;
+    }
 };
 
 }  // namespace parser
