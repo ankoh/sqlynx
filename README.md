@@ -1,6 +1,6 @@
 [![Main](https://github.com/ankoh/flatsql/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/ankoh/flatsql/actions/workflows/main.yml)
 [![Coverage](https://coveralls.io/repos/github/ankoh/flatsql/badge.svg?branch=main)](https://coveralls.io/github/ankoh/flatsql?branch=main)
-[![License](misc/ast.png?raw=true)](https://opensource.org/licenses/MPL-2.0)
+[![License](misc/mpl2.svg?raw=true)](https://opensource.org/licenses/MPL-2.0)
 
 **FlatSQL**
 
