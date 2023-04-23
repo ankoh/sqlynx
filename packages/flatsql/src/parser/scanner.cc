@@ -95,15 +95,15 @@ Parser::symbol_type Scanner::ReadInteger(proto::Location loc) {
 /// Produce all tokens
 void Scanner::Produce() {
     Parser::symbol_type current_symbol;
-    std::optional<Parser::symbol_type> lookahead_symbol_;
+    std::optional<Parser::symbol_type> lookahead_symbol;
 
     // Function to get next token
     auto next = [&]() {
         // Have lookahead?
         Parser::symbol_type current_symbol;
-        if (lookahead_symbol_) {
-            current_symbol.move(*lookahead_symbol_);
-            lookahead_symbol_.reset();
+        if (lookahead_symbol) {
+            current_symbol.move(*lookahead_symbol);
+            lookahead_symbol.reset();
         } else {
             auto t = flatsql_yylex(scanner_state_ptr);
             current_symbol.move(t);
@@ -122,7 +122,7 @@ void Scanner::Produce() {
         // Get next token
         auto next_symbol = flatsql_yylex(scanner_state_ptr);
         auto next_symbol_kind = next_symbol.kind();
-        lookahead_symbol_.emplace(std::move(next_symbol));
+        lookahead_symbol.emplace(std::move(next_symbol));
 
         // Should replace current token?
         switch (current_symbol.kind()) {
