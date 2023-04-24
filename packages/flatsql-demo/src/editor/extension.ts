@@ -1,12 +1,23 @@
 import * as flatsql from '@ankoh/flatsql';
-import { EditorView, ViewUpdate, PluginValue, ViewPlugin, DecorationSet, Decoration } from "@codemirror/view";
-import { RangeSetBuilder, StateField, StateEffect, EditorState, Transaction, Facet } from "@codemirror/state"
+import { EditorView, ViewUpdate, PluginValue, ViewPlugin, DecorationSet, Decoration } from '@codemirror/view';
+import {
+    RangeSetBuilder,
+    StateField,
+    StateEffect,
+    EditorState,
+    Transaction,
+    Facet,
+    Text as CMText,
+} from '@codemirror/state';
 
 /// A configuration for a FlatSQL editor extension.
 /// We use this configuration to inject the WebAssembly module.
 export interface FlatSQLExtensionConfig {
-    parser: flatsql.Parser
-};
+    /// The API
+    instance: flatsql.FlatSQL;
+    /// The rope
+    rope: flatsql.FlatSQLRope;
+}
 
 /// A state effect to overwrite the editor state with a given value
 const FLATSQL_EFFECT_SET_STATE = StateEffect.define<FlatSQLExtensionState>();
@@ -21,9 +32,8 @@ class FlatSQLExtensionState {
     constructor() {
         this.counter = 0;
     }
-    
-    apply(tr: Transaction) {
 
+    apply(tr: Transaction) {
         // Copy-on-write
         let result: FlatSQLExtensionState = this;
         const cow = () => {
@@ -48,7 +58,7 @@ class FlatSQLExtensionState {
     static init(_state: EditorState) {
         return new FlatSQLExtensionState();
     }
-};
+}
 
 /// A state field to resolve the shared FlatSQL state
 const FLATSQL_STATE_FIELD = StateField.define<FlatSQLExtensionState>({
@@ -58,42 +68,46 @@ const FLATSQL_STATE_FIELD = StateField.define<FlatSQLExtensionState>({
 
 /// A FlatSQL parser plugin that parses the CodeMirror text whenever it changes
 class FlatSQLParser implements PluginValue {
-    encoder: TextEncoder;
-
-    constructor(readonly view: EditorView) {
-        this.encoder = new TextEncoder();
-    }
+    constructor(readonly view: EditorView) {}
     update(update: ViewUpdate) {
         if (!update.docChanged) {
             return;
         }
 
         // Resolve the parser
-        const parser = this.view.state.facet(FlatSQLExtension)?.parser;
-        if (!parser) {
-            console.warn("Parser not set");
+        const ext = this.view.state.facet(FlatSQLExtension)!;
+        if (!ext.instance) {
+            console.warn('FlatSQL module not set');
             return;
         }
 
-        // Collect the text buffers.
-        console.time('UTF-8 Encoding');
-        let textBuffers = [];
-        let textLength = 0;
-        for (let iter = this.view.state.doc.iter(); !iter.done; iter = iter.next()) {
-            const buffer = this.encoder.encode(iter.value);
-            textLength += buffer.byteLength;
-            textBuffers.push(buffer);
-        }
-        console.timeEnd('UTF-8 Encoding');
-        console.log(`Text length=${textLength / 1000} KiB`);
+        // Insert the text
+        console.time('Rope Insert');
+        update.changes.iterChanges((fromA: number, toA: number, fromB: number, toB: number, inserted: CMText) => {
+            ext.rope.eraseTextRange(fromA, toA - fromA);
+            let writer = fromB;
+            let first = true;
+            for (const text of inserted) {
+                if (!first) {
+                    ext.rope.insertCharacterAt(writer, 10); // 10 == '\n'
+                    writer += 1;
+                }
+                first = false;
+                ext.rope.insertTextAt(writer, text);
+                writer += text.length;
+            }
+        });
+        console.timeEnd('Rope Insert');
 
-        // Parse text buffers
-        const program = parser.parseUtf8(textBuffers, textLength);
-        program.delete();
+        // Parse the rope
+        console.time('Rope Parsing');
+        ext.instance.parseRope(ext.rope);
+        console.timeEnd('Rope Parsing');
 
+        console.log(ext.rope.toString());
     }
     destroy() {}
-};
+}
 
 /// A FlatSQL highlighter plugin that emits highlighting decorations for a parsed SQL text
 class FlatSQLHighlighter implements PluginValue {
@@ -109,7 +123,7 @@ class FlatSQLHighlighter implements PluginValue {
         }
     }
     destroy() {}
-};
+}
 
 /// A facet to setup the CodeMirror extensions.
 ///
@@ -120,13 +134,15 @@ class FlatSQLHighlighter implements PluginValue {
 /// ```
 export const FlatSQLExtension = Facet.define<FlatSQLExtensionConfig, FlatSQLExtensionConfig | null>({
     // Just use the first config
-    combine(configs) { return configs.length ? configs[0] : null },
+    combine(configs) {
+        return configs.length ? configs[0] : null;
+    },
     // Enable the extension
     enables: _ => [
         FLATSQL_STATE_FIELD,
         ViewPlugin.fromClass(FlatSQLParser, {}),
         ViewPlugin.fromClass(FlatSQLHighlighter, {
-            decorations: v => v.decorations
+            decorations: v => v.decorations,
         }),
-    ]
-  })
+    ],
+});

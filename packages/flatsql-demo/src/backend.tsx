@@ -2,10 +2,10 @@ import * as flatsql from '@ankoh/flatsql';
 import React from 'react';
 import { Resolvable, ResolvableStatus, Resolver } from './utils/resolvable';
 
-import parserWasm from '@ankoh/flatsql/dist/flatsql-parser.wasm';
+import wasm from '@ankoh/flatsql/dist/flatsql.wasm';
 
 interface Backend {
-    parser: Resolvable<flatsql.Parser | null>;
+    instance: Resolvable<flatsql.FlatSQL | null>;
 }
 
 interface Props {
@@ -19,9 +19,11 @@ export const useBackendResolver = (): Resolver<Backend | null> => React.useConte
 
 export const BackendProvider: React.FC<Props> = (props: Props) => {
     const inFlight = React.useRef<Promise<Backend> | null>(null);
-    const [backend, setBackend] = React.useState<Resolvable<Backend>>(new Resolvable<Backend>(ResolvableStatus.NONE,  {
-        parser: new Resolvable<flatsql.Parser | null>(ResolvableStatus.NONE, null)
-    }));
+    const [backend, setBackend] = React.useState<Resolvable<Backend>>(
+        new Resolvable<Backend>(ResolvableStatus.NONE, {
+            instance: new Resolvable<flatsql.FlatSQL | null>(ResolvableStatus.NONE, null),
+        }),
+    );
     const resolver = React.useCallback(async () => {
         if (inFlight.current) return await inFlight.current;
         inFlight.current = (async () => {
@@ -33,10 +35,10 @@ export const BackendProvider: React.FC<Props> = (props: Props) => {
                 setBackend(b);
                 return b.value;
             }
-            
+
             // All done, complete backend
             b = b.completeWith({
-                parser: b.value.parser.completeWith(parser)
+                instance: b.value.instance.completeWith(parser),
             });
             setBackend(b);
             return b.value;
@@ -50,9 +52,9 @@ export const BackendProvider: React.FC<Props> = (props: Props) => {
     );
 };
 
-async function initParser(): Promise<[flatsql.Parser | null, Error | null]> {
+async function initParser(): Promise<[flatsql.FlatSQL | null, Error | null]> {
     try {
-        const instance = await flatsql.Parser.instantiateStreaming(fetch(parserWasm));
+        const instance = await flatsql.FlatSQL.instantiateStreaming(fetch(wasm));
         return [instance, null];
     } catch (e: any) {
         console.error(e);

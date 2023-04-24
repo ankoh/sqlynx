@@ -17,34 +17,18 @@ export const Editor: React.FC<EditorProps> = (props: EditorProps) => {
         backendResolver();
     }
 
-    const parser = backend.value.parser.value;
-    if (parser) {
-        let result: flatsql.WasmBuffer | null = null;
-        try {
-            result = parser.parseString("select 42");
-            const byteBuffer = new flatbuffers.ByteBuffer(result.getData());
-            const program = flatsql.proto.Program.getRootAsProgram(byteBuffer);
-            console.log(`statementsLength: ${program.statementsLength()}`);
-        } catch(e) {
-            console.error(e);
-        } finally {
-            if (result) {
-                result.delete();
-            }
-        }
-
+    const instance = backend.value.instance.value;
+    if (instance) {
         const config = {
-            parser
+            instance,
+            rope: instance.createRope(),
         };
         return (
             <div className={styles.container}>
-                <CodeMirror value="hello world" height='200px' extensions={[
-                    FlatSQLExtension.of(config)
-                ]} />
+                <CodeMirror value="hello world" height="200px" extensions={[FlatSQLExtension.of(config)]} />
             </div>
         );
     } else {
-        return <div>Loading</div>
+        return <div>Loading</div>;
     }
-
-}
+};

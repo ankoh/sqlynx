@@ -64,11 +64,16 @@ if(WASM)
         ")
   set(CMAKE_EXE_LINKER_FLAGS
       "${CMAKE_EXE_LINKER_FLAGS} \
-        -Wl,--export=flatsql_parse \
-        -Wl,--export=flatsql_new_result \
-        -Wl,--export=flatsql_new_string \
-        -Wl,--export=flatsql_delete_result \
-        -Wl,--export=flatsql_delete_string \
+        -Wl,--export=flatsql_malloc \
+        -Wl,--export=flatsql_free \
+        -Wl,--export=flatsql_result_delete \
+        -Wl,--export=flatsql_parse_rope \
+        -Wl,--export=flatsql_rope_new \
+        -Wl,--export=flatsql_rope_delete \
+        -Wl,--export=flatsql_rope_insert_text_at \
+        -Wl,--export=flatsql_rope_insert_char_at \
+        -Wl,--export=flatsql_rope_erase_text_range \
+        -Wl,--export=flatsql_rope_to_string \
         -flto \
     ")
 endif()
