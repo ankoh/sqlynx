@@ -5,6 +5,7 @@
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/text/rope.h"
 
+using namespace flatsql;
 using namespace flatsql::parser;
 namespace proto = flatsql::proto;
 
@@ -15,7 +16,6 @@ struct FFIResult {
     void* owner_ptr;
     void (*owner_deleter)(void*);
 };
-
 extern "C" FFIResult* flatsql_new_result() {
     auto result = new FFIResult();
     result->status_code = 0;
@@ -25,20 +25,22 @@ extern "C" FFIResult* flatsql_new_result() {
     result->owner_deleter = [](void* buffer) {};
     return result;
 }
-
-extern "C" char* flatsql_new_string(size_t length) {
-    auto buffer = new char[length];
-    memset(buffer, 0, (length + 2) * sizeof(char));  // Append 2 chars for flex
-    return buffer;
-}
-
 extern "C" void flatsql_delete_result(FFIResult* result) {
     result->owner_deleter(result->owner_ptr);
     result->owner_ptr = nullptr;
     result->owner_deleter = nullptr;
     delete result;
 }
+
+extern "C" char* flatsql_new_string(size_t length) {
+    auto buffer = new char[length];
+    memset(buffer, 0, length * sizeof(char));  // Append 2 chars for flex
+    return buffer;
+}
 extern "C" void flatsql_delete_string(char* buffer) { delete buffer; }
+
+extern "C" rope::Rope* flatsql_new_rope() { return new rope::Rope(1024); }
+extern "C" void flatsql_delete_rope(rope::Rope* rope) { delete rope; }
 
 extern "C" void flatsql_parse(FFIResult* result, uint8_t* text, size_t length) {
     // Parse the program
