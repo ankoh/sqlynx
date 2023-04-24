@@ -2,6 +2,8 @@
 
 #include <vector>
 
+#include "flatsql/text/utf8.h"
+
 namespace flatsql::rope {
 
 /// Constructor
@@ -597,14 +599,11 @@ Rope& Rope::operator=(Rope&& other) {
 };
 
 /// Copy the rope to a std::string
-std::string Rope::ToString(size_t right_padding) {
+std::string Rope::ToString() {
     std::string buffer;
-    buffer.reserve(root_info.text_bytes + right_padding);
+    buffer.reserve(root_info.text_bytes);
     for (auto iter = first_leaf; iter; iter = iter->next_node) {
         buffer += iter->GetStringView();
-    }
-    for (size_t i = 0; i < right_padding; ++i) {
-        buffer.push_back(0);
     }
     return buffer;
 }
@@ -1777,6 +1776,61 @@ void Rope::Remove(size_t char_idx, size_t char_count) {
     }
     // Flatten the tree
     FlattenTree();
+}
+
+std::string_view Rope::Read(size_t char_idx, size_t count, std::string& tmp) const {
+    assert(!root_node.IsNull());
+    char_idx = std::min<size_t>(char_idx, root_info.utf8_codepoints);
+    count = std::min<size_t>(count, root_info.utf8_codepoints - char_idx);
+
+    // Helper to traverse the tree down
+    auto find = [&](size_t char_idx) {
+        auto iter_node = root_node;
+        auto iter_stats = root_info;
+        while (iter_node.Is<InnerNode>()) {
+            auto iter_inner = iter_node.Get<InnerNode>();
+            auto [child_idx, child_prefix] = iter_inner->FindCodepoint(char_idx);
+            assert(child_idx < iter_inner->GetSize());
+            assert(child_prefix.utf8_codepoints <= char_idx);
+            iter_node = iter_inner->GetChildNodes()[child_idx];
+            iter_stats = iter_inner->GetChildStats()[child_idx];
+            char_idx -= child_prefix.utf8_codepoints;
+        }
+        return std::make_tuple(iter_node.Get<LeafNode>(), iter_stats, char_idx);
+    };
+
+    // Find the lower bound
+    auto [lb_leaf, lb_stats, lb_char_idx] = find(char_idx);
+    auto lb_begin = utf8::codepointToByteIdx(lb_leaf->GetData(), lb_char_idx);
+    auto lb_tail = lb_leaf->GetData().subspan(lb_begin);
+
+    // Check if we can just return a string_view
+    if ((lb_char_idx + count) <= lb_stats.utf8_codepoints) {
+        auto n = utf8::codepointToByteIdx(lb_tail, count);
+        assert(lb_begin <= lb_leaf->GetData().size());
+        assert((lb_begin + n) <= lb_leaf->GetData().size());
+        return lb_leaf->GetStringView().substr(lb_begin, n);
+    }
+
+    // Otherwise we have to copy, start with the tail here
+    tmp.clear();
+    tmp.reserve(count);
+    tmp += lb_leaf->GetStringView().substr(lb_begin);
+
+    // Search the upper bound
+    auto [ub_leaf, ub_stats, ub_char_idx] = find(char_idx + count);
+    assert(ub_leaf != lb_leaf);
+
+    // Append leafs in between lb and ub
+    for (auto iter = lb_leaf->next_node; iter != ub_leaf; iter = iter->next_node) {
+        assert(iter != nullptr);
+        tmp += iter->GetStringView();
+    }
+
+    // Append the tail in the upper bound
+    auto n = utf8::codepointToByteIdx(ub_leaf->GetData(), ub_char_idx);
+    tmp += ub_leaf->GetStringView().substr(0, n);
+    return tmp;
 }
 
 void Rope::FlattenTree() {

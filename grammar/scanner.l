@@ -26,20 +26,16 @@ namespace sx = proto;
 // Declare yy_extra_type
 #define YY_EXTRA_TYPE flatsql::parser::Scanner*
 
-// Done after the current pattern has been matched and before the corrsponding action.
-// We update the location here and not in YY_USER_ACTION so that yyless picks it up.
-#undef YY_DO_BEFORE_ACTION
-#define YY_DO_BEFORE_ACTION { \
-    yyg->yytext_ptr = yy_bp; \
-    yyleng = (yy_size_t) (yy_cp - yy_bp); \
-    yyg->yy_hold_char = *yy_cp; \
-    *yy_cp = '\0'; \
-    yyg->yy_c_buf_p = yy_cp; \
-    loc = sx::Location(yy_bp - YY_CURRENT_BUFFER_LVALUE->yy_ch_buf, yyleng); \
+// Define the function to fill data into the buffer
+#define YY_INPUT(buf,result,max_size) { \
+    static_assert(YY_NULL == 0, "unexpected YY_NULL value"); \
+    flatsql_yyget_extra(yyscanner)->ScanNextInputData(buf,result,max_size); \
 }
 
 // The user action is run whenever a token is matched
 #define YY_USER_ACTION { \
+    loc = sx::Location(ctx.GetInputOffset(), yyleng); \
+    ctx.AdvanceInputOffset(yyleng); \
     for (unsigned i = 0; i < yyleng; ++i) { \
         if (yytext[i] == '\n') { \
             ctx.AddLineBreak(sx::Location(loc.offset() + i, 1)); \
@@ -70,9 +66,6 @@ using YYSTYPE = flatsql::parser::Parser::symbol_type;
 %option noinput
 %option nounput
 %option noyywrap
-%option noyyalloc
-%option noyyrealloc
-%option noyyfree
 %option never-interactive
 %option batch
 %option caseless
@@ -308,31 +301,31 @@ auto loc = sx::Location();
 <xc>{xcinside}  {}
 <xc>{op_chars}  {}
 <xc>\*+         {}
-<xc><<EOF>>     { BEGIN(INITIAL); ctx.AddError(ctx.EndLiteral(loc), "unterminated bit string literal"); }
+<xc><<EOF>>     { BEGIN(INITIAL); ctx.AddError(ctx.EndLiteral({yytext, yyleng}, loc), "unterminated bit string literal"); }
 
 
 {xbstart}       { BEGIN(xb); ctx.BeginLiteral(loc); }
 <xb>{quotestop} |
-<xb>{quotefail} { BEGIN(INITIAL); return Parser::make_BCONST(ctx.EndLiteral(loc, true)); }
+<xb>{quotefail} { BEGIN(INITIAL); return Parser::make_BCONST(ctx.EndLiteral({yytext, yyleng}, loc, true)); }
 <xh>{xhinside}  |
 <xb>{xbinside}  {}
 <xh>{quotecontinue} |
 <xb>{quotecontinue} {}
-<xb><<EOF>>     { BEGIN(INITIAL); ctx.AddError(ctx.EndLiteral(loc), "unterminated bit string literal"); }
+<xb><<EOF>>     { BEGIN(INITIAL); ctx.AddError(ctx.EndLiteral({yytext, yyleng}, loc), "unterminated bit string literal"); }
 
 
 {xhstart}       { BEGIN(xh); ctx.BeginLiteral(loc); }
 <xh>{quotestop} |
-<xh>{quotefail} { BEGIN(INITIAL); return Parser::make_XCONST(ctx.EndLiteral(loc, true)); }
-<xh><<EOF>>     { BEGIN(INITIAL); ctx.AddError(ctx.EndLiteral(loc), "unterminated hexadecimal bit string literal"); }
+<xh>{quotefail} { BEGIN(INITIAL); return Parser::make_XCONST(ctx.EndLiteral({yytext, yyleng}, loc, true)); }
+<xh><<EOF>>     { BEGIN(INITIAL); ctx.AddError(ctx.EndLiteral({yytext, yyleng}, loc), "unterminated hexadecimal bit string literal"); }
 
 
 {xqstart}       { BEGIN(xq); ctx.BeginLiteral(loc); }
 <xq>{quotestop} |
-<xq>{quotefail} { BEGIN(INITIAL); return Parser::make_SCONST(ctx.EndLiteral(loc, true)); }
+<xq>{quotefail} { BEGIN(INITIAL); return Parser::make_SCONST(ctx.EndLiteral({yytext, yyleng}, loc, true)); }
 <xq>{xqdouble}  {}
 <xq>{xqinside}  {}
-<xq><<EOF>>     { BEGIN(INITIAL); ctx.AddError(ctx.EndLiteral(loc), "unterminated quoted string"); }
+<xq><<EOF>>     { BEGIN(INITIAL); ctx.AddError(ctx.EndLiteral({yytext, yyleng}, loc), "unterminated quoted string"); }
 
 
 {xdstart}       { BEGIN(xd); ctx.BeginLiteral(loc); }
@@ -340,12 +333,12 @@ auto loc = sx::Location();
 <xd>{xdinside}  {}
 <xd>{xdstop}    { 
                     BEGIN(INITIAL); 
-                    auto l = ctx.EndLiteral(loc, true);
+                    auto l = ctx.EndLiteral({yytext, yyleng}, loc, true);
                     if (l.length() == 2)
                         ctx.AddError(l, "zero-length delimited identifier");
                     return Parser::make_IDENT(l);
                 }
-<xd><<EOF>>     { BEGIN(INITIAL); ctx.AddError(ctx.EndLiteral(loc), "unterminated delimited identifier"); }
+<xd><<EOF>>     { BEGIN(INITIAL); ctx.AddError(ctx.EndLiteral({yytext, yyleng}, loc), "unterminated delimited identifier"); }
 
 {typecast}          { return Parser::make_TYPECAST(loc); }
 {dot_dot}           { return Parser::make_DOT_DOT(loc); }
@@ -463,9 +456,9 @@ auto loc = sx::Location();
                     return Parser::make_Op(loc);
                 }
 
-{param}         { return ctx.ReadParameter(loc); }
-{param2}        { return ctx.ReadParameter(loc); }
-{integer}       { return ctx.ReadInteger(loc); }
+{param}         { return ctx.ReadParameter({yytext, yyleng}, loc); }
+{param2}        { return ctx.ReadParameter({yytext, yyleng}, loc); }
+{integer}       { return ctx.ReadInteger({yytext, yyleng}, loc); }
 {decimal}       { return Parser::make_FCONST(loc); }
 {decimalfail}   { yyless(yyleng - 2); return Parser::make_FCONST(loc); }
 {real}          { return Parser::make_FCONST(loc); }
@@ -473,7 +466,7 @@ auto loc = sx::Location();
 {realfail2}     { yyless(yyleng - 2); return Parser::make_FCONST(loc); }
 
 {identifier}    {
-                    if (auto k = Keyword::Find(ctx.TextAt(loc)); !!k) {
+                    if (auto k = Keyword::Find({yytext, yyleng}); !!k) {
                         return Parser::symbol_type(k->token, loc);
                     }
                     return Parser::make_IDENT(loc);
@@ -484,80 +477,18 @@ auto loc = sx::Location();
 <<EOF>>         { return Parser::make_EOF(loc); }
 %%
 
-// Code
-
-void* flatsql_yyalloc(yy_size_t, yyscan_t) {
-    assert(false && "flex tried to allocate memory");
-    return nullptr;
-}
-
-void* flatsql_yyrealloc(void*, yy_size_t, yyscan_t) {
-    assert(false && "flex tried to reallocate memory");
-    return nullptr;
-}
-
-void flatsql_yyfree (void*, yyscan_t) {
-    assert(false && "flex tried to free memory");
-}
-
 namespace flatsql {
 namespace parser {
 
-Scanner::Scanner(std::span<char> input_data)
-    : input_data(input_data)
-{
-    static_assert(YY_SCANNER_STATE_SIZE >= (alignof(yyguts_t) + sizeof(yyguts_t)), "YY_SCANNER_STATE_SIZE is too small");
-    static_assert(YY_BUFFER_STATE_SIZE >= (alignof(yy_buffer_state) + sizeof(yy_buffer_state)), "YY_BUFFER_STATE_SIZE is too small");
-
-    // Get scanner and buffer pointers
-    yyguts_t* yyg;
-    yy_buffer_state* yyb;
-    {
-        void* p = scanner_state_mem.data();
-        size_t n = scanner_state_mem.size();
-        scanner_state_ptr = std::align(alignof(yyguts_t), sizeof(yyguts_t), p, n);
-        yyg = reinterpret_cast<yyguts_t*>(scanner_state_ptr);
-        p = scanner_buffer_state_mem.data();
-        n = scanner_buffer_state_mem.size();
-        auto b = std::align(alignof(yy_buffer_state), sizeof(yy_buffer_state), p, n);
-        yyb = reinterpret_cast<yy_buffer_state*>(b);
+Scanner::Scanner(rope::Rope& rope): input_data(rope), current_leaf_node(rope.GetLeafs()) {
+    if (current_leaf_node && current_leaf_node->GetSize() == 0) {
+        current_leaf_node = nullptr;
     }
+    flatsql_yylex_init_extra(this, &internal_scanner_state);
+}
 
-    // Write end-of-buffer markers
-    if (input_data.size() < 2) {
-        input_data = std::span{null_buffer.data(), null_buffer.size()};
-    }
-    input_data[input_data.size() - 2] = YY_END_OF_BUFFER_CHAR;
-    input_data[input_data.size() - 1] = YY_END_OF_BUFFER_CHAR;
-
-    // Configure the initial scanner state
-    // As done by: yylex_init_extra, yy_init_globals (minus yyalloc)
-    yyg->yy_buffer_stack = reinterpret_cast<yy_buffer_state**>(scanner_buffer_stack.data());
-    yyg->yy_buffer_stack_top = 0;
-    yyg->yy_buffer_stack_max = scanner_buffer_stack.size();
-    yyg->yy_c_buf_p = nullptr;
-    yyg->yy_init = 0;
-    yyg->yy_start = 0;
-    yyg->yy_start_stack_ptr = 0;
-    yyg->yy_start_stack_depth = 0;
-    yyg->yy_start_stack =  NULL;
-
-    // Configure the initial buffer state
-    // As done by: yy_scan_buffer (minus yyalloc)
-    yyb->yy_buf_size = input_data.size() - 2; /* "- 2" to take care of EOB's */
-    yyb->yy_buf_pos = yyb->yy_ch_buf = input_data.data();
-    yyb->yy_is_our_buffer = 0;
-    yyb->yy_input_file = 0;
-    yyb->yy_n_chars = yyb->yy_buf_size;
-    yyb->yy_is_interactive = 0;
-    yyb->yy_at_bol = 1;
-    yyb->yy_fill_buffer = 0; // This will bypass any refill logic in flex, i.e. yy_get_next_buffer
-    yyb->yy_buffer_status = YY_BUFFER_NEW;
-
-    // Set the buffer
-    flatsql_yy_switch_to_buffer(yyb, yyg);
-    // Set scanner ref
-    flatsql_yyset_extra(this, yyg);
+Scanner::~Scanner() {
+    flatsql_yylex_destroy(internal_scanner_state);
 }
 
 }

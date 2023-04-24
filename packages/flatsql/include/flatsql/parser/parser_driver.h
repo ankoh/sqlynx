@@ -4,6 +4,7 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <span>
 #include <stack>
 #include <string>
 #include <tuple>
@@ -11,9 +12,9 @@
 #include <utility>
 #include <variant>
 #include <vector>
-#include <span>
 
 #include "flatsql/proto/proto_generated.h"
+#include "flatsql/text/rope.h"
 #include "flatsql/utils/chunk_buffer.h"
 #include "flatsql/utils/small_vector.h"
 
@@ -24,7 +25,7 @@ class Scanner;
 
 using Key = proto::AttributeKey;
 using Location = proto::Location;
-using NodeVector = SmallVector<proto::Node, 5>; // 5 * 24 = 120 Bytes
+using NodeVector = SmallVector<proto::Node, 5>;  // 5 * 24 = 120 Bytes
 
 inline std::ostream& operator<<(std::ostream& out, const proto::Location& loc) {
     out << "[" << loc.offset() << "," << (loc.offset() + loc.length()) << "[";
@@ -117,14 +118,12 @@ class ParserDriver {
     /// Add an expression
     proto::Node AddExpression(Expression&& expr);
     /// Add a an expression
-    inline proto::Node Add(Expression&& expr) {
-        return AddExpression(std::move(expr));
-    }
+    inline proto::Node Add(Expression&& expr) { return AddExpression(std::move(expr)); }
     /// Flatten an expression
     std::optional<Expression> TryMerge(proto::Location loc, proto::Node opNode, std::span<Expression> args);
 
     /// Parse a module
-    static std::shared_ptr<proto::ProgramT> Parse(std::span<char> in, bool trace_scanning = false,
+    static std::shared_ptr<proto::ProgramT> Parse(rope::Rope& in, bool trace_scanning = false,
                                                   bool trace_parsing = false);
 };
 

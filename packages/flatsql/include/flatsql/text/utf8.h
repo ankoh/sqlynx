@@ -1,3 +1,6 @@
+#ifndef INCLUDE_FLATSQL_TEXT_UTF8_H_
+#define INCLUDE_FLATSQL_TEXT_UTF8_H_
+
 #include <cstddef>
 #include <cstdint>
 #include <span>
@@ -71,3 +74,5 @@ inline static size_t codepointToByteIdx(std::span<const std::byte> buffer, size_
 }
 
 }  // namespace flatsql::utf8
+
+#endif  // INCLUDE_FLATSQL_TEXT_UTF8_H_

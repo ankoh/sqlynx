@@ -11,28 +11,24 @@ extern Parser::symbol_type flatsql_yylex(void* state);
 namespace flatsql {
 namespace parser {
 
-/// Get the text at location
-std::string_view Scanner::TextAt(proto::Location loc) { return GetInputText().substr(loc.offset(), loc.length()); }
-/// Get the text at location
-proto::Location Scanner::LocationOf(std::string_view text) {
-    return proto::Location(text.begin() - GetInputText().begin(), text.length());
-}
 /// Begin a literal
 void Scanner::BeginLiteral(proto::Location loc) { literal_begin = loc; }
 
 /// End a literal
-proto::Location Scanner::EndLiteral(proto::Location loc, bool trim_right) {
+proto::Location Scanner::EndLiteral(std::string_view suffix, proto::Location loc, bool trim_right) {
     auto begin = literal_begin.offset();
     auto end = loc.offset() + loc.length();
+    assert(end >= begin);
     if (trim_right) {
-        auto text = GetInputText();
-        for (; begin < end; --end) {
-            auto c = text[end - 1];
+        auto iter = suffix.rbegin();
+        for (; iter != suffix.rend(); ++iter) {
+            auto c = *iter;
             if (c == ' ' || c == '\n') {
                 continue;
             }
             break;
         }
+        end -= iter - suffix.rbegin();
     }
     return proto::Location(begin, end - begin);
 }
@@ -60,9 +56,7 @@ void Scanner::AddError(proto::Location location, std::string&& message) {
 }
 
 /// Add a line break
-void Scanner::AddLineBreak(proto::Location location) {
-    line_breaks.push_back(location);
-}
+void Scanner::AddLineBreak(proto::Location location) { line_breaks.push_back(location); }
 
 /// Add a comment
 void Scanner::AddComment(proto::Location location) { comments.push_back(location); }
@@ -70,8 +64,7 @@ void Scanner::AddComment(proto::Location location) { comments.push_back(location
 void Scanner::MarkAsVarArgKey(proto::Location location) { vararg_key_offsets.insert(location.offset()); }
 
 /// Read a parameter
-Parser::symbol_type Scanner::ReadParameter(proto::Location loc) {
-    auto text = TextAt(loc);
+Parser::symbol_type Scanner::ReadParameter(std::string_view text, proto::Location loc) {
     int64_t value;
     auto result = std::from_chars(text.data(), text.data() + text.size(), value);
     if (result.ec == std::errc::invalid_argument) {
@@ -81,8 +74,7 @@ Parser::symbol_type Scanner::ReadParameter(proto::Location loc) {
 }
 
 /// Read an integer
-Parser::symbol_type Scanner::ReadInteger(proto::Location loc) {
-    auto text = TextAt(loc);
+Parser::symbol_type Scanner::ReadInteger(std::string_view text, proto::Location loc) {
     int64_t value;
     auto result = std::from_chars(text.data(), text.data() + text.size(), value);
     if (result.ec == std::errc::invalid_argument) {
@@ -92,8 +84,30 @@ Parser::symbol_type Scanner::ReadInteger(proto::Location loc) {
     }
 }
 
-/// Produce all tokens
-void Scanner::Produce() {
+/// Scan the next input data
+void Scanner::ScanNextInputData(void* out_buffer, size_t& out_bytes_read, size_t max_size) {
+    // Invariant: current_leaf_node != nullptr means we have data
+    assert(current_leaf_node == nullptr || current_leaf_node->GetSize() > current_leaf_offset);
+    // Check if we reached the end
+    if (current_leaf_node == nullptr) {
+        out_bytes_read = 0;
+        return;
+    }
+    // Copy input data
+    auto max_here = current_leaf_node->GetSize() - current_leaf_offset;
+    auto read_here = std::min<size_t>(max_size, max_here);
+    std::memcpy(out_buffer, current_leaf_node->GetData().data() + current_leaf_offset, read_here);
+    current_leaf_offset += read_here;
+    // Did we hit the end of the leaf?
+    if (current_leaf_offset == current_leaf_node->GetSize()) {
+        current_leaf_node = current_leaf_node->GetNext();
+        current_leaf_offset = 0;
+    }
+    out_bytes_read = read_here;
+}
+
+/// Scan input and produce all tokens
+void Scanner::Tokenize() {
     // Function to get next token
     auto next = [](void* scanner_state_ptr, std::optional<Parser::symbol_type>& lookahead_symbol) {
         // Have lookahead?
@@ -167,7 +181,7 @@ void Scanner::Produce() {
     if (symbols.GetSize() == 0) {
         std::optional<Parser::symbol_type> lookahead_symbol;
         while (true) {
-            auto token = next(scanner_state_ptr, lookahead_symbol);
+            auto token = next(internal_scanner_state, lookahead_symbol);
             symbols.Append(token);
             if (token.kind() == Parser::symbol_kind::S_YYEOF) break;
         }

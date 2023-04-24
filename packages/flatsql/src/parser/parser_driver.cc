@@ -228,23 +228,14 @@ std::shared_ptr<proto::ProgramT> ParserDriver::Finish() {
     return program;
 }
 
-std::shared_ptr<proto::ProgramT> ParserDriver::Parse(std::span<char> in, bool trace_scanning, bool trace_parsing) {
-    // The string must be zero-padded!
-    // Flex needs the last two characters in the buffer to be YY_END_OF_BUFFER.
-    // We blindly write overwrite any existing data there
-    assert(in.size() >= 2);
-    assert(in[in.size() - 1] == 0);
-    assert(in[in.size() - 2] == 0);
-
+std::shared_ptr<proto::ProgramT> ParserDriver::Parse(rope::Rope& in, bool trace_scanning, bool trace_parsing) {
     Scanner scanner{in};
-    scanner.Produce();
-    ParserDriver driver{scanner};
+    scanner.Tokenize();
 
+    ParserDriver driver{scanner};
     flatsql::parser::Parser parser(driver);
     parser.parse();
 
-    in[in.size() - 1] = 0;
-    in[in.size() - 2] = 0;
     return driver.Finish();
 }
 
