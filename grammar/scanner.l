@@ -21,18 +21,12 @@ using namespace flatsql;
 using namespace flatsql::parser;
 namespace sx = proto;
 
-// Flex use 16KiB buffers by default.
-// This is way too large as the data comes from main-memory.
-#undef YY_BUF_SIZE
-#define YY_BUF_SIZE 1024
-#define YY_STATE_BUF_SIZE   ((YY_BUF_SIZE + 2) * sizeof(yy_state_type))
-
 // Declare the yylex function
 #define YY_DECL Parser::symbol_type yylex(void* yyscanner)
 // Declare yy_extra_type
 #define YY_EXTRA_TYPE flatsql::parser::Scanner*
 
-// Define the function to fill data into the buffer
+// Define the function to fill data into the buffer.
 // `bytes_read` is for compatibility since flex generates int and size_t
 #define YY_INPUT(buf,result,max_size) { \
     static_assert(YY_NULL == 0, "unexpected YY_NULL value"); \
@@ -41,7 +35,8 @@ namespace sx = proto;
     result = static_cast<decltype(result)>(bytes_read); \
 }
 
-// The user action is run whenever a token is matched
+// The user action is run whenever a token is matched.
+// We update the token location and register line breaks.
 #define YY_USER_ACTION { \
     yytext_view = std::string_view{yytext, static_cast<size_t>(yyleng)}; \
     loc = sx::Location(ctx.GetInputOffset(), yyleng); \
