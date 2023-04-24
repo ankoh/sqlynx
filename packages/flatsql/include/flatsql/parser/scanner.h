@@ -63,7 +63,7 @@ class Scanner {
     /// Advance the input location
     void AdvanceInputOffset(size_t by) noexcept { current_input_offset += by; }
     /// Scan next input data
-    void ScanNextInputData(void* out_buffer, int& out_bytes_read, size_t max_size);
+    void ScanNextInputData(void* out_buffer, size_t& out_bytes_read, size_t max_size);
 
     /// Read a parameter
     Parser::symbol_type ReadParameter(std::string_view text, proto::Location loc);

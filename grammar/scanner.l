@@ -33,9 +33,12 @@ namespace sx = proto;
 #define YY_EXTRA_TYPE flatsql::parser::Scanner*
 
 // Define the function to fill data into the buffer
+// `bytes_read` is for compatibility since flex generates int and size_t
 #define YY_INPUT(buf,result,max_size) { \
     static_assert(YY_NULL == 0, "unexpected YY_NULL value"); \
-    flatsql_yyget_extra(yyscanner)->ScanNextInputData(buf,result,max_size); \
+    size_t bytes_read = 0; \
+    flatsql_yyget_extra(yyscanner)->ScanNextInputData(buf,bytes_read,max_size); \
+    result = static_cast<decltype(result)>(bytes_read); \
 }
 
 // The user action is run whenever a token is matched
