@@ -85,7 +85,7 @@ Parser::symbol_type Scanner::ReadInteger(std::string_view text, proto::Location 
 }
 
 /// Scan the next input data
-void Scanner::ScanNextInputData(void* out_buffer, size_t& out_bytes_read, size_t max_size) {
+void Scanner::ScanNextInputData(void* out_buffer, int& out_bytes_read, size_t max_size) {
     // Invariant: current_leaf_node != nullptr means we have data
     assert(current_leaf_node == nullptr || current_leaf_node->GetSize() > current_leaf_offset);
     // Check if we reached the end
