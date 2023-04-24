@@ -146,8 +146,7 @@ inline Expression Expr(ParserDriver& driver, proto::Location loc, proto::Node fu
 }
 
 /// Add a binary expression
-inline Expression Expr(ParserDriver& driver, proto::Location loc, proto::Node func, Expression left,
-                        Expression right) {
+inline Expression Expr(ParserDriver& driver, proto::Location loc, proto::Node func, Expression left, Expression right) {
     std::array<Expression, 2> args{std::move(left), std::move(right)};
     if (auto expr = driver.TryMerge(loc, func, args); expr.has_value()) {
         return std::move(expr.value());
@@ -161,7 +160,7 @@ inline Expression Expr(ParserDriver& driver, proto::Location loc, proto::Node fu
 
 /// Add a ternary expression
 inline Expression Expr(ParserDriver& driver, proto::Location loc, proto::Node func, Expression arg0, Expression arg1,
-                        Expression arg2) {
+                       Expression arg2) {
     std::array<Expression, 3> args{std::move(arg0), std::move(arg1), std::move(arg2)};
     if (auto expr = driver.TryMerge(loc, func, args); expr.has_value()) {
         return std::move(expr.value());
@@ -208,7 +207,8 @@ inline proto::JoinType Merge(proto::JoinType left, proto::JoinType right) {
 
 /// Read a float type
 inline proto::NumericType ReadFloatType(ParserDriver& driver, proto::Location bitsLoc) {
-    auto text = driver.GetScanner().TextAt(bitsLoc);
+    std::string tmp_buffer;
+    auto text = driver.GetScanner().GetInputData().Read(bitsLoc.offset(), bitsLoc.length(), tmp_buffer);
     int64_t bits;
     std::from_chars(text.data(), text.data() + text.size(), bits);
     if (bits < 1) {
@@ -229,10 +229,11 @@ inline proto::Node VarArgField(ParserDriver& driver, proto::Location loc, NodeVe
     auto keys = key_path.getData();
     auto keys_length = key_path.getSize();
     for (size_t i = 0; i < keys_length; ++i) {
-        root = driver.Add(loc, proto::NodeType::OBJECT_EXT_VARARG_FIELD, NodeVector {
-            Attr(proto::AttributeKey::EXT_VARARG_FIELD_KEY, keys[keys_length - i - 1]),
-            Attr(proto::AttributeKey::EXT_VARARG_FIELD_VALUE, value),
-        });
+        root = driver.Add(loc, proto::NodeType::OBJECT_EXT_VARARG_FIELD,
+                          NodeVector{
+                              Attr(proto::AttributeKey::EXT_VARARG_FIELD_KEY, keys[keys_length - i - 1]),
+                              Attr(proto::AttributeKey::EXT_VARARG_FIELD_VALUE, value),
+                          });
     }
     return root;
 }

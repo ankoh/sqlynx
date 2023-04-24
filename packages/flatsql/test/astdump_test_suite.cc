@@ -10,9 +10,8 @@ struct ASTDumpTestSuite : public ::testing::TestWithParam<const ASTDumpTest*> {}
 
 TEST_P(ASTDumpTestSuite, Test) {
     auto* test = GetParam();
-    auto input_buffer = test->input;
-    auto program = parser::ParserDriver::Parse(std::span<char>{input_buffer.data(), input_buffer.size()});
-    ASSERT_EQ(input_buffer, test->input);
+    auto input = rope::Rope::FromString(1024, test->input);
+    auto program = parser::ParserDriver::Parse(input);
 
     pugi::xml_document out;
     ASTDumpTest::EncodeProgram(out, *program, test->input);

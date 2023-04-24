@@ -1,7 +1,9 @@
+#include <span>
+
+#include "flatbuffers/flatbuffers.h"
 #include "flatsql/parser/parser_driver.h"
 #include "flatsql/proto/proto_generated.h"
-#include "flatbuffers/flatbuffers.h"
-#include <span>
+#include "flatsql/text/rope.h"
 
 using namespace flatsql::parser;
 namespace proto = flatsql::proto;
@@ -26,7 +28,7 @@ extern "C" FFIResult* flatsql_new_result() {
 
 extern "C" char* flatsql_new_string(size_t length) {
     auto buffer = new char[length];
-    memset(buffer, 0, (length + 2) * sizeof(char)); // Append 2 chars for flex
+    memset(buffer, 0, (length + 2) * sizeof(char));  // Append 2 chars for flex
     return buffer;
 }
 
@@ -40,7 +42,8 @@ extern "C" void flatsql_delete_string(char* buffer) { delete buffer; }
 
 extern "C" void flatsql_parse(FFIResult* result, uint8_t* text, size_t length) {
     // Parse the program
-    auto program = ParserDriver::Parse({reinterpret_cast<char*>(text), length});
+    auto data = flatsql::rope::Rope::FromString(1024, std::string_view{reinterpret_cast<char*>(text), length});
+    auto program = ParserDriver::Parse(data);
 
     // Pack the flatbuffer program
     flatbuffers::FlatBufferBuilder fb;

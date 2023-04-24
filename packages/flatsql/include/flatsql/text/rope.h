@@ -1,3 +1,6 @@
+#ifndef INCLUDE_FLATSQL_TEXT_ROPE_H_
+#define INCLUDE_FLATSQL_TEXT_ROPE_H_
+
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -80,9 +83,9 @@ struct NodePtr {
     }
 
     /// Get the tag
-    inline uint8_t GetTag() { return raw_ptr & 0b1; };
+    inline uint8_t GetTag() const { return raw_ptr & 0b1; };
     /// Is null?
-    inline bool IsNull() { return raw_ptr == 0; };
+    inline bool IsNull() const { return raw_ptr == 0; };
     /// Node type check
     template <typename T> bool Is() { return GetTag() == T::NodePtrTag; }
     /// Cast a node
@@ -91,9 +94,7 @@ struct NodePtr {
         return reinterpret_cast<T*>((raw_ptr >> 1) << 1);
     }
     /// Comparison operator
-    bool operator==(const NodePtr& other) const {
-        return raw_ptr == other.raw_ptr;
-    }
+    bool operator==(const NodePtr& other) const { return raw_ptr == other.raw_ptr; }
 };
 
 struct LeafNode {
@@ -121,6 +122,8 @@ struct LeafNode {
     /// Constructor
     explicit LeafNode(uint32_t page_size);
 
+    /// Get the next node
+    inline auto GetNext() noexcept { return next_node; }
     /// Get the capacity of the buffer
     inline auto GetCapacity() noexcept { return buffer_capacity; }
     /// Get the size of the buffer
@@ -332,15 +335,19 @@ struct Rope {
 
     /// Get the root text info
     inline auto& GetStats() { return root_info; }
+    /// Get the first leaf node
+    inline auto GetLeafs() noexcept { return first_leaf; }
 
     /// Insert a character at index
     void Insert(size_t char_idx, std::string_view text, bool force_bulk = false);
     /// Remove a range of characters
     void Remove(size_t char_idx, size_t count);
+    /// Read from the rope
+    std::string_view Read(size_t char_idx, size_t count, std::string& tmp) const;
     /// Check the integrity of the rope
     void CheckIntegrity();
     /// Copy the rope to a std::string
-    std::string ToString(size_t right_padding = 0);
+    std::string ToString();
     /// Create a rope from a string.
     /// Control fill degree through `leaf_capacity` and `inner_capacity`.
     static Rope FromString(size_t page_size, std::string_view text,
@@ -350,3 +357,5 @@ struct Rope {
 
 }  // namespace rope
 }  // namespace flatsql
+
+#endif  // INCLUDE_FLATSQL_TEXT_ROPE_H_

@@ -554,6 +554,29 @@ TEST_F(RopeTest, RemoveNMinus1Back) {
     }
 }
 
+TEST_F(RopeTest, ReadEmpty) {
+    rope::Rope rope{128};
+    std::string tmp;
+    ASSERT_EQ("", rope.Read(0, 10, tmp));
+}
+
+TEST_F(RopeTest, ReadHalf) {
+    rope::Rope rope{128};
+    std::string text;
+    for (size_t i = 0; i < 1000; ++i) {
+        text += std::to_string(i);
+        rope.Insert(rope.GetStats().utf8_codepoints, std::to_string(i));
+        auto half = text.size() / 2;
+        std::string tmp;
+        auto want = std::string_view{text}.substr(0, half);
+        auto have = rope.Read(0, half, tmp);
+        ASSERT_EQ(want, have);
+        want = std::string_view{text}.substr(half);
+        have = rope.Read(half, text.size() - half, tmp);
+        ASSERT_EQ(want, have);
+    }
+}
+
 struct RopeInteractionGenerator {
     /// A type of an interaction
     enum class InteractionType : uint8_t { Insert, Remove };
@@ -611,7 +634,7 @@ struct RopeInteractionGenerator {
     /// Generate a random number
     size_t rnd() { return static_cast<size_t>(generator()); }
     /// Constructor
-    RopeInteractionGenerator(size_t seed, size_t max_bytes) : generator(seed) {
+    RopeInteractionGenerator(std::mt19937& rnd, size_t max_bytes) : generator(rnd) {
         data_source.reserve(max_bytes);
         for (size_t i = 0; i < max_bytes; ++i) {
             data_source.push_back(48 + (rnd() % (57 - 48)));
@@ -641,8 +664,9 @@ struct RopeInteractionGenerator {
 
    public:
     /// Generate multiple input operations
-    static std::pair<std::vector<Interaction>, std::string> GenerateMany(size_t seed, size_t n, size_t max_bytes) {
-        RopeInteractionGenerator gen{seed, max_bytes};
+    static std::pair<std::vector<Interaction>, std::string> GenerateMany(std::mt19937& rnd, size_t n,
+                                                                         size_t max_bytes) {
+        RopeInteractionGenerator gen{rnd, max_bytes};
         std::vector<Interaction> out;
         for (size_t i = 0; i < n; ++i) {
             out.push_back(gen.GenerateOne());
@@ -656,7 +680,7 @@ struct RopeFuzzerTest {
     size_t max_bytes;
     size_t interaction_count;
     bool force_bulk;
-    size_t seed;
+    uint32_t seed;
 };
 
 struct RopeFuzzerTestPrinter {
@@ -671,7 +695,7 @@ std::vector<RopeFuzzerTest> generateTestSeries(size_t page_size, size_t interact
                                                size_t test_count, bool force_bulk = false) {
     std::vector<RopeFuzzerTest> tests;
     tests.reserve(test_count);
-    for (size_t i = 0; i < test_count; ++i) {
+    for (uint32_t i = 0; i < test_count; ++i) {
         tests.push_back(RopeFuzzerTest{.page_size = page_size,
                                        .max_bytes = max_bytes,
                                        .interaction_count = interaction_count,
@@ -681,19 +705,38 @@ std::vector<RopeFuzzerTest> generateTestSeries(size_t page_size, size_t interact
     return tests;
 }
 
-struct RopeFuzzerTestSuite : public ::testing::TestWithParam<RopeFuzzerTest> {};
+struct RopeFuzzerTestSuite : public ::testing::TestWithParam<RopeFuzzerTest> {
+    static void readRandomRange(std::mt19937& rnd, const std::string& text_buffer, const rope::Rope& rope_buffer) {
+        if (text_buffer.empty()) {
+            return;
+        }
+        auto o = rnd() % text_buffer.size();
+        auto n = rnd() % (text_buffer.size() - o);
+        auto expected = std::string_view{text_buffer}.substr(o, n);
+        std::string tmp;
+        auto result = rope_buffer.Read(o, n, tmp);
+        ASSERT_EQ(expected, result);
+    };
+    static void readRandomRanges(std::mt19937& rnd, const std::string& text_buffer, const rope::Rope& rope_buffer,
+                                 size_t n) {
+        for (size_t i = 0; i < n; ++i) {
+            readRandomRange(rnd, text_buffer, rope_buffer);
+        }
+    };
+};
 TEST_P(RopeFuzzerTestSuite, Test) {
     auto& test = GetParam();
+    std::mt19937 rnd{test.seed};
     rope::Rope target{test.page_size};
     std::string expected;
-    auto [input_ops, data_buffer] =
-        RopeInteractionGenerator::GenerateMany(test.seed, test.interaction_count, test.max_bytes);
+    auto [input_ops, data_buffer] = RopeInteractionGenerator::GenerateMany(rnd, test.interaction_count, test.max_bytes);
     for (size_t i = 0; i < input_ops.size(); ++i) {
         auto& op = input_ops[i];
         op.Apply(expected, data_buffer);
         op.Apply(target, data_buffer, test.force_bulk);
         ASSERT_NO_THROW(target.CheckIntegrity()) << "[" << i << "] " << op.ToString();
         ASSERT_EQ(target.ToString(), expected) << "[" << i << "] " << op.ToString() << " " << data_buffer;
+        readRandomRanges(rnd, expected, target, 8);
     }
 }
 
