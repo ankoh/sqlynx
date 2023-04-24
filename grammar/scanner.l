@@ -21,6 +21,10 @@ using namespace flatsql;
 using namespace flatsql::parser;
 namespace sx = proto;
 
+// Flex use 16KiB buffers by default.
+// This is way too large as the data comes from main-memory.
+#define YY_BUF_SIZE 1024
+
 // Declare the yylex function
 #define YY_DECL Parser::symbol_type yylex(void* yyscanner)
 // Declare yy_extra_type
@@ -301,31 +305,31 @@ auto loc = sx::Location();
 <xc>{xcinside}  {}
 <xc>{op_chars}  {}
 <xc>\*+         {}
-<xc><<EOF>>     { BEGIN(INITIAL); ctx.AddError(ctx.EndLiteral({yytext, yyleng}, loc), "unterminated bit string literal"); }
+<xc><<EOF>>     { BEGIN(INITIAL); ctx.AddError(ctx.EndLiteral({yytext, static_cast<size_t>(yyleng)}, loc), "unterminated bit string literal"); }
 
 
 {xbstart}       { BEGIN(xb); ctx.BeginLiteral(loc); }
 <xb>{quotestop} |
-<xb>{quotefail} { BEGIN(INITIAL); return Parser::make_BCONST(ctx.EndLiteral({yytext, yyleng}, loc, true)); }
+<xb>{quotefail} { BEGIN(INITIAL); return Parser::make_BCONST(ctx.EndLiteral({yytext, static_cast<size_t>(yyleng)}, loc, true)); }
 <xh>{xhinside}  |
 <xb>{xbinside}  {}
 <xh>{quotecontinue} |
 <xb>{quotecontinue} {}
-<xb><<EOF>>     { BEGIN(INITIAL); ctx.AddError(ctx.EndLiteral({yytext, yyleng}, loc), "unterminated bit string literal"); }
+<xb><<EOF>>     { BEGIN(INITIAL); ctx.AddError(ctx.EndLiteral({yytext, static_cast<size_t>(yyleng)}, loc), "unterminated bit string literal"); }
 
 
 {xhstart}       { BEGIN(xh); ctx.BeginLiteral(loc); }
 <xh>{quotestop} |
-<xh>{quotefail} { BEGIN(INITIAL); return Parser::make_XCONST(ctx.EndLiteral({yytext, yyleng}, loc, true)); }
-<xh><<EOF>>     { BEGIN(INITIAL); ctx.AddError(ctx.EndLiteral({yytext, yyleng}, loc), "unterminated hexadecimal bit string literal"); }
+<xh>{quotefail} { BEGIN(INITIAL); return Parser::make_XCONST(ctx.EndLiteral({yytext, static_cast<size_t>(yyleng)}, loc, true)); }
+<xh><<EOF>>     { BEGIN(INITIAL); ctx.AddError(ctx.EndLiteral({yytext, static_cast<size_t>(yyleng)}, loc), "unterminated hexadecimal bit string literal"); }
 
 
 {xqstart}       { BEGIN(xq); ctx.BeginLiteral(loc); }
 <xq>{quotestop} |
-<xq>{quotefail} { BEGIN(INITIAL); return Parser::make_SCONST(ctx.EndLiteral({yytext, yyleng}, loc, true)); }
+<xq>{quotefail} { BEGIN(INITIAL); return Parser::make_SCONST(ctx.EndLiteral({yytext, static_cast<size_t>(yyleng)}, loc, true)); }
 <xq>{xqdouble}  {}
 <xq>{xqinside}  {}
-<xq><<EOF>>     { BEGIN(INITIAL); ctx.AddError(ctx.EndLiteral({yytext, yyleng}, loc), "unterminated quoted string"); }
+<xq><<EOF>>     { BEGIN(INITIAL); ctx.AddError(ctx.EndLiteral({yytext, static_cast<size_t>(yyleng)}, loc), "unterminated quoted string"); }
 
 
 {xdstart}       { BEGIN(xd); ctx.BeginLiteral(loc); }
@@ -333,12 +337,12 @@ auto loc = sx::Location();
 <xd>{xdinside}  {}
 <xd>{xdstop}    { 
                     BEGIN(INITIAL); 
-                    auto l = ctx.EndLiteral({yytext, yyleng}, loc, true);
+                    auto l = ctx.EndLiteral({yytext, static_cast<size_t>(yyleng)}, loc, true);
                     if (l.length() == 2)
                         ctx.AddError(l, "zero-length delimited identifier");
                     return Parser::make_IDENT(l);
                 }
-<xd><<EOF>>     { BEGIN(INITIAL); ctx.AddError(ctx.EndLiteral({yytext, yyleng}, loc), "unterminated delimited identifier"); }
+<xd><<EOF>>     { BEGIN(INITIAL); ctx.AddError(ctx.EndLiteral({yytext, static_cast<size_t>(yyleng)}, loc), "unterminated delimited identifier"); }
 
 {typecast}          { return Parser::make_TYPECAST(loc); }
 {dot_dot}           { return Parser::make_DOT_DOT(loc); }
