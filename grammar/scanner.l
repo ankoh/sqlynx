@@ -21,6 +21,12 @@ using namespace flatsql;
 using namespace flatsql::parser;
 namespace sx = proto;
 
+// Flex use 16KiB buffers by default.
+// This is way too large as the data comes from main-memory.
+#undef YY_BUF_SIZE
+#define YY_BUF_SIZE 1024
+#define YY_STATE_BUF_SIZE   ((YY_BUF_SIZE + 2) * sizeof(yy_state_type))
+
 // Declare the yylex function
 #define YY_DECL Parser::symbol_type yylex(void* yyscanner)
 // Declare yy_extra_type
