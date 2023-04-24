@@ -1783,7 +1783,7 @@ std::string_view Rope::Read(size_t char_idx, size_t count, std::string& tmp) con
     char_idx = std::min<size_t>(char_idx, root_info.utf8_codepoints);
     count = std::min<size_t>(count, root_info.utf8_codepoints - char_idx);
 
-    // Traverse down the tree down
+    // Find the leaf nodes of the lower and upper bounds
     auto lb_node = root_node, ub_node = root_node;
     auto lb_stats = root_info, ub_stats = root_info;
     auto lb_char_idx = char_idx, ub_char_idx = char_idx + count;
