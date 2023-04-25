@@ -1,6 +1,7 @@
 #ifndef INCLUDE_FLATSQL_PARSER_PARSER_DRIVER_H_
 #define INCLUDE_FLATSQL_PARSER_PARSER_DRIVER_H_
 
+#include <initializer_list>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -16,6 +17,7 @@
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/text/rope.h"
 #include "flatsql/utils/chunk_buffer.h"
+#include "flatsql/utils/chunk_node_allocator.h"
 #include "flatsql/utils/small_vector.h"
 
 namespace flatsql {
@@ -25,7 +27,7 @@ class Scanner;
 
 using Key = proto::AttributeKey;
 using Location = proto::Location;
-using NodeVector = SmallVector<proto::Node, 4>;  // 4 * 24 = 96 Bytes
+using NodeVector = std::list<proto::Node, ChunkNodeAllocator<proto::Node>>;
 
 inline std::ostream& operator<<(std::ostream& out, const proto::Location& loc) {
     out << "[" << loc.offset() << "," << (loc.offset() + loc.length()) << "[";
@@ -59,7 +61,7 @@ struct NAryExpression {
     /// The expression operator node
     proto::Node opNode;
     /// The arguments
-    SmallVector<proto::Node, 5> args;
+    NodeVector args;
 };
 /// An expression is either a proto node with materialized children, or an n-ary expression that can be flattened
 using Expression = std::variant<proto::Node, NAryExpression>;
@@ -92,14 +94,14 @@ class ParserDriver {
     auto& GetScanner() { return scanner; }
 
     /// Add a an array
-    proto::Node AddArray(proto::Location loc, std::span<proto::Node> values, bool null_if_empty = true,
+    proto::Node AddArray(proto::Location loc, NodeVector&& values, bool null_if_empty = true,
                          bool shrink_location = false);
     /// Add a an array
     proto::Node AddArray(proto::Location loc, std::span<Expression> values, bool null_if_empty = true,
                          bool shrink_location = false);
     /// Add an object
-    proto::Node AddObject(proto::Location loc, proto::NodeType type, std::span<proto::Node> attrs,
-                          bool null_if_empty = true, bool shrink_location = false);
+    proto::Node AddObject(proto::Location loc, proto::NodeType type, NodeVector&& attrs, bool null_if_empty = true,
+                          bool shrink_location = false);
     /// Add a statement
     void AddStatement(proto::Node node);
     /// Add an error
@@ -108,12 +110,12 @@ class ParserDriver {
     /// Add a an array
     inline proto::Node Add(proto::Location loc, NodeVector&& values, bool null_if_empty = true,
                            bool shrink_location = false) {
-        return AddArray(loc, values.span(), null_if_empty, shrink_location);
+        return AddArray(loc, std::move(values), null_if_empty, shrink_location);
     }
     /// Add a an object
     inline proto::Node Add(proto::Location loc, proto::NodeType type, NodeVector&& values, bool null_if_empty = true,
                            bool shrink_location = false) {
-        return AddObject(loc, type, values.span(), null_if_empty, shrink_location);
+        return AddObject(loc, type, std::move(values), null_if_empty, shrink_location);
     }
     /// Add an expression
     proto::Node AddExpression(Expression&& expr);
