@@ -163,13 +163,11 @@ export class FlatSQLRope {
     }
     /// Insert text at an offset
     public insertTextAt(offset: number, text: string) {
-        console.log(`insert ${offset}: ${text}`);
         // To convert a JavaScript string s, the output space needed for full conversion is never less
         // than s.length bytes and never greater than s.length * 3 bytes.
         const textBegin = this.api.instanceExports.flatsql_malloc(text.length * 3);
         const textBuffer = new Uint8Array(this.api.memory.buffer).subarray(textBegin, textBegin + text.length * 3);
         const textEncoded = this.api.encoder.encodeInto(text, textBuffer);
-        console.log(textEncoded);
         // Insert into rope
         this.api.instanceExports.flatsql_rope_insert_text_at(this.ropePtr, offset, textBegin, textEncoded.written);
         // Delete text buffer
@@ -177,13 +175,11 @@ export class FlatSQLRope {
     }
     /// Insert text at an offset
     public insertCharacterAt(offset: number, utf8Char: number) {
-        console.log(`insert ascii: ${utf8Char}`);
         // Insert character into rope
         this.api.instanceExports.flatsql_rope_insert_char_at(this.ropePtr, offset, utf8Char);
     }
     /// Earse a range of characters
     public eraseTextRange(offset: number, length: number) {
-        console.log(`erase ${offset} ${length}`);
         // Insert into rope
         this.api.instanceExports.flatsql_rope_erase_text_range(this.ropePtr, offset, length);
     }
