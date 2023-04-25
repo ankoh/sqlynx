@@ -20,35 +20,20 @@ inline proto::Node Attr(proto::AttributeKey key, proto::Node node) {
 }
 /// Helper to concatenate node vectors
 inline NodeVector Concat(NodeVector&& l, NodeVector&& r) {
-    l.reserve(l.getSize() + r.getSize());
-    for (auto& node : r) {
-        l.push_back(node);
-    }
+    l.splice(l.end(), std::move(r));
     return l;
 }
 /// Helper to concatenate node vectors
 inline NodeVector Concat(NodeVector&& v0, NodeVector&& v1, NodeVector&& v2) {
-    v0.reserve(v0.getSize() + v1.getSize() + v2.getSize());
-    for (auto& n : v1) {
-        v0.push_back(n);
-    }
-    for (auto& n : v2) {
-        v0.push_back(n);
-    }
+    v0.splice(v0.end(), std::move(v1));
+    v0.splice(v0.end(), std::move(v2));
     return v0;
 }
 /// Helper to concatenate node vectors
 inline NodeVector Concat(NodeVector&& v0, NodeVector&& v1, NodeVector&& v2, NodeVector&& v3) {
-    v0.reserve(v0.getSize() + v1.getSize() + v2.getSize() + v3.getSize());
-    for (auto& n : v1) {
-        v0.push_back(n);
-    }
-    for (auto& n : v2) {
-        v0.push_back(n);
-    }
-    for (auto& n : v3) {
-        v0.push_back(n);
-    }
+    v0.splice(v0.end(), std::move(v1));
+    v0.splice(v0.end(), std::move(v2));
+    v0.splice(v0.end(), std::move(v3));
     return v0;
 }
 
@@ -226,12 +211,10 @@ inline proto::NumericType ReadFloatType(ParserDriver& driver, proto::Location bi
 /// Add a vararg field
 inline proto::Node VarArgField(ParserDriver& driver, proto::Location loc, NodeVector&& key_path, proto::Node value) {
     auto root = value;
-    auto keys = key_path.getData();
-    auto keys_length = key_path.getSize();
-    for (size_t i = 0; i < keys_length; ++i) {
+    for (auto iter = key_path.rbegin(); iter != key_path.rend(); ++iter) {
         root = driver.Add(loc, proto::NodeType::OBJECT_EXT_VARARG_FIELD,
                           NodeVector{
-                              Attr(proto::AttributeKey::EXT_VARARG_FIELD_KEY, keys[keys_length - i - 1]),
+                              Attr(proto::AttributeKey::EXT_VARARG_FIELD_KEY, *iter),
                               Attr(proto::AttributeKey::EXT_VARARG_FIELD_VALUE, value),
                           });
     }

@@ -10,6 +10,7 @@
 #include "flatsql/parser/parser.h"
 #include "flatsql/parser/scanner.h"
 #include "flatsql/proto/proto_generated.h"
+#include "flatsql/utils/chunk_node_allocator.h"
 
 namespace flatsql {
 namespace parser {
@@ -29,9 +30,7 @@ std::unique_ptr<proto::StatementT> Statement::Finish() {
 }
 
 /// Constructor
-ParserDriver::ParserDriver(Scanner& scanner)
-    : scanner(scanner), nodes(), current_statement(), statements(), errors() {}
-
+ParserDriver::ParserDriver(Scanner& scanner) : scanner(scanner), nodes(), current_statement(), statements(), errors() {}
 /// Destructor
 ParserDriver::~ParserDriver() {}
 
@@ -39,7 +38,7 @@ ParserDriver::~ParserDriver() {}
 NodeID ParserDriver::AddNode(proto::Node node) {
     auto node_id = nodes.GetSize();
     nodes.Append(proto::Node(node.location(), node.node_type(), node.attribute_key(), node_id,
-                              node.children_begin_or_value(), node.children_count()));
+                             node.children_begin_or_value(), node.children_count()));
 
     // Set parent reference
     if (node.node_type() == proto::NodeType::ARRAY ||
@@ -69,7 +68,6 @@ std::optional<Expression> ParserDriver::TryMerge(proto::Location loc, proto::Nod
     }
     // Create nary expression
     NAryExpression nary{.location = loc, .op = op, .opNode = opNode, .args = {}};
-    nary.args.reserve(args.size());
     // Merge any nary expression arguments with the same operation, materialize others
     for (auto& arg : args) {
         // Argument is just a node?
@@ -87,7 +85,6 @@ std::optional<Expression> ParserDriver::TryMerge(proto::Location loc, proto::Nod
         if (nary.args.empty()) {
             nary.args = std::move(child.args);
         } else {
-            nary.args.reserve(nary.args.getSize() + child.args.getSize());
             for (auto& child_arg : child.args) {
                 nary.args.push_back(std::move(child_arg));
             }
@@ -97,8 +94,7 @@ std::optional<Expression> ParserDriver::TryMerge(proto::Location loc, proto::Nod
 }
 
 /// Add an array
-proto::Node ParserDriver::AddArray(proto::Location loc, std::span<proto::Node> values, bool null_if_empty,
-                                   bool shrink_location) {
+proto::Node ParserDriver::AddArray(proto::Location loc, NodeVector&& values, bool null_if_empty, bool shrink_location) {
     auto begin = nodes.GetSize();
     for (auto& v : values) {
         if (v.node_type() == proto::NodeType::NONE) continue;
@@ -120,12 +116,11 @@ proto::Node ParserDriver::AddArray(proto::Location loc, std::span<proto::Node> v
 /// Add an array
 proto::Node ParserDriver::AddArray(proto::Location loc, std::span<Expression> exprs, bool null_if_empty,
                                    bool shrink_location) {
-    SmallVector<proto::Node, 5> nodes;
-    nodes.reserve(exprs.size());
+    NodeVector nodes;
     for (auto& expr : exprs) {
         nodes.push_back(AddExpression(std::move(expr)));
     }
-    return AddArray(loc, nodes.span(), null_if_empty, shrink_location);
+    return AddArray(loc, std::move(nodes), null_if_empty, shrink_location);
 }
 
 /// Add an expression
@@ -137,17 +132,17 @@ proto::Node ParserDriver::AddExpression(Expression&& expr) {
         return Add(nary.location, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
                    {
                        Attr(Key::SQL_EXPRESSION_OPERATOR, nary.opNode),
-                       Attr(Key::SQL_EXPRESSION_ARGS, AddArray(nary.location, nary.args.span())),
+                       Attr(Key::SQL_EXPRESSION_ARGS, AddArray(nary.location, std::move(nary.args))),
                    });
     }
 }
 
 /// Add an object
-proto::Node ParserDriver::AddObject(proto::Location loc, proto::NodeType type, std::span<proto::Node> attrs,
-                                    bool null_if_empty, bool shrink_location) {
+proto::Node ParserDriver::AddObject(proto::Location loc, proto::NodeType type, NodeVector&& attrs, bool null_if_empty,
+                                    bool shrink_location) {
     // Sort all the attributes
     auto begin = nodes.GetSize();
-    std::sort(attrs.begin(), attrs.end(), [&](auto& l, auto& r) {
+    attrs.sort([&](auto& l, auto& r) {
         return static_cast<uint16_t>(l.attribute_key()) < static_cast<uint16_t>(r.attribute_key());
     });
     // Add the nodes
@@ -235,6 +230,8 @@ std::shared_ptr<proto::ProgramT> ParserDriver::Parse(rope::Rope& in, bool trace_
     ParserDriver driver{scanner};
     flatsql::parser::Parser parser(driver);
     parser.parse();
+
+    ChunkNodeAllocator<proto::Node>::ResetThreadPool();
 
     return driver.Finish();
 }

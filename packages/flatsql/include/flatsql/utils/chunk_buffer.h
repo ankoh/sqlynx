@@ -95,8 +95,17 @@ template <typename T> struct ChunkBuffer {
         assert(total_value_count > 0);
         return buffers.back().back();
     }
+    /// Clear the buffer
+    void Clear() {
+        buffers.erase(buffers.begin() + 1, buffers.end());
+        offsets.erase(offsets.begin() + 1, offsets.end());
+        next_chunk_size = 1024;
+        total_value_count = 0;
+        buffers[0].clear();
+        offsets[0] = 0;
+    }
     /// Append a node
-    void Append(T value) {
+    T& Append(T value = {}) {
         auto* last = &buffers.back();
         if (last->size() == last->capacity()) {
             grow();
@@ -104,6 +113,7 @@ template <typename T> struct ChunkBuffer {
         }
         last->push_back(value);
         ++total_value_count;
+        return last->back();
     }
     /// Apply a function for each node in a range
     template <typename F> void ForEachIn(size_t begin, size_t count, F fn) {
