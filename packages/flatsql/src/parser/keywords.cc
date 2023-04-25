@@ -34,9 +34,9 @@ const Keyword* Keyword::Find(std::string_view text) {
     if (text.size() > MAX_KEYWORD_LENGTH) return nullptr;
 
     // Convert to lowercase
-    std::array<char, MAX_KEYWORD_LENGTH + 1> buffer;
+    char buffer[MAX_KEYWORD_LENGTH + 1];
     for (unsigned i = 0; i < text.size(); ++i) buffer[i] = ::tolower(text[i]);
-    std::string_view text_lc{buffer.data(), text.size()};
+    std::string_view text_lc{buffer, text.size()};
 
     // Find the keyword
     if (auto iter = KeywordMap().find(text_lc); iter != KeywordMap().end()) return &iter->second;

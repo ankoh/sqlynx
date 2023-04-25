@@ -84,19 +84,12 @@ class FlatSQLParser implements PluginValue {
         // Insert the text
         console.time('Rope Insert');
         update.changes.iterChanges((fromA: number, toA: number, fromB: number, toB: number, inserted: CMText) => {
-            ext.rope.eraseTextRange(fromA, toA - fromA);
-            let writer = fromB;
-            let first = true;
-            for (const text of inserted) {
-                if (!first) {
-                    ext.rope.insertCharacterAt(writer, '\n'.charCodeAt(0));
-                    writer += 1;
-                }
-                first = false;
-                if (text.length == 1) {
-                    ext.rope.insertCharacterAt(writer, text.charCodeAt(0));
-                    writer += 1;
-                } else {
+            if (toA - fromA > 0) {
+                ext.rope.eraseTextRange(fromA, toA - fromA);
+            }
+            if (inserted.length > 0) {
+                let writer = fromB;
+                for (const text of inserted.iter()) {
                     ext.rope.insertTextAt(writer, text);
                     writer += text.length;
                 }
@@ -106,7 +99,8 @@ class FlatSQLParser implements PluginValue {
 
         // Parse the rope
         console.time('Rope Parsing');
-        ext.instance.parseRope(ext.rope);
+        const result = ext.instance.parseRope(ext.rope);
+        result.delete();
         console.timeEnd('Rope Parsing');
 
         console.log(ext.rope.toString());

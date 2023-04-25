@@ -47,8 +47,8 @@ extern "C" rope::Rope* flatsql_rope_new() { return new rope::Rope(1024); }
 /// Delete a rope
 extern "C" void flatsql_rope_delete(rope::Rope* rope) { delete rope; }
 /// Insert char at a position
-extern "C" void flatsql_rope_insert_char_at(rope::Rope* rope, size_t offset, char character) {
-    std::string_view text{&character, 1};
+extern "C" void flatsql_rope_insert_char_at(rope::Rope* rope, size_t offset, char unicode) {
+    std::string_view text{&unicode, 1};
     rope->Insert(offset, text);
 }
 /// Insert text at a position

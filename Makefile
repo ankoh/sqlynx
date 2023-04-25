@@ -11,7 +11,7 @@ GID=${shell id -g}
 LIB_SOURCE_DIR="${ROOT_DIR}/packages/flatsql"
 LIB_DEBUG_DIR="${LIB_SOURCE_DIR}/build/native/Debug"
 LIB_RELEASE_DIR="${LIB_SOURCE_DIR}/build/native/Release"
-LIB_RELWITHDEBINFO_DIR="${LIB_SOURCE_DIR}/build/RelWithDebInfo"
+LIB_RELWITHDEBINFO_DIR="${LIB_SOURCE_DIR}/build/native/RelWithDebInfo"
 LIB_COVERAGE_DIR="${LIB_SOURCE_DIR}/build/coverage"
 
 CORES=$(shell grep -c ^processor /proc/cpuinfo 2>/dev/null || sysctl -n hw.ncpu)
@@ -45,6 +45,12 @@ lib:
 		-DCMAKE_EXPORT_COMPILE_COMMANDS=1
 	ln -sf ${LIB_DEBUG_DIR}/compile_commands.json ${LIB_SOURCE_DIR}/compile_commands.json
 	cmake --build ${LIB_DEBUG_DIR}
+
+.PHONY: lib_relwithdebinfo
+lib_relwithdebinfo:
+	mkdir -p ${LIB_RELWITHDEBINFO_DIR}
+	cmake -S ${LIB_SOURCE_DIR} -B ${LIB_RELWITHDEBINFO_DIR} -DCMAKE_BUILD_TYPE=RelWithDebInfo
+	cmake --build ${LIB_RELWITHDEBINFO_DIR}
 
 .PHONY: lib_release
 lib_release:

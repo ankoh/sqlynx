@@ -25,7 +25,7 @@ class Scanner;
 
 using Key = proto::AttributeKey;
 using Location = proto::Location;
-using NodeVector = SmallVector<proto::Node, 5>;  // 5 * 24 = 120 Bytes
+using NodeVector = SmallVector<proto::Node, 4>;  // 4 * 24 = 96 Bytes
 
 inline std::ostream& operator<<(std::ostream& out, const proto::Location& loc) {
     out << "[" << loc.offset() << "," << (loc.offset() + loc.length()) << "[";
