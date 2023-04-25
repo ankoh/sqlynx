@@ -17,7 +17,6 @@ constexpr size_t KEYWORD_COUNT = 0
 #undef X
     ;
 
-/// The keyword map
 constexpr frozen::unordered_map<frozen::string, Keyword, KEYWORD_COUNT> KEYWORD_MAP = {
 #define X(CATEGORY, NAME, TOKEN) {NAME, Keyword{NAME, Parser::token::FQL_##TOKEN, KeywordCategory::CATEGORY}},
 #include "../../../grammar/lists/sql_column_name_keywords.list"
@@ -27,7 +26,6 @@ constexpr frozen::unordered_map<frozen::string, Keyword, KEYWORD_COUNT> KEYWORD_
 #undef X
 };
 
-/// Determine the maximum keyword length
 constexpr size_t MAX_KEYWORD_LENGTH = std::max<size_t>({
 #define X(CATEGORY, NAME, TOKEN) Keyword::ConstLength(NAME),
 #include "../../../grammar/lists/sql_column_name_keywords.list"
