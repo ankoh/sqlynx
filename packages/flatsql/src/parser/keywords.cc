@@ -2,20 +2,29 @@
 
 #include <unordered_map>
 
+#include "frozen/string.h"
+#include "frozen/unordered_map.h"
+
 namespace flatsql {
 namespace parser {
 
+constexpr size_t KEYWORD_COUNT = 0
+#define X(CATEGORY, NAME, TOKEN) +1
+#include "../../../grammar/lists/sql_column_name_keywords.list"
+#include "../../../grammar/lists/sql_reserved_keywords.list"
+#include "../../../grammar/lists/sql_type_func_keywords.list"
+#include "../../../grammar/lists/sql_unreserved_keywords.list"
+#undef X
+    ;
+
 /// The keyword map
-static const std::unordered_map<std::string_view, Keyword>& KeywordMap() {
-    static const std::unordered_map<std::string_view, Keyword> keywords = {
+constexpr frozen::unordered_map<frozen::string, Keyword, KEYWORD_COUNT> KEYWORD_MAP = {
 #define X(CATEGORY, NAME, TOKEN) {NAME, Keyword{NAME, Parser::token::FQL_##TOKEN, KeywordCategory::CATEGORY}},
 #include "../../../grammar/lists/sql_column_name_keywords.list"
 #include "../../../grammar/lists/sql_reserved_keywords.list"
 #include "../../../grammar/lists/sql_type_func_keywords.list"
 #include "../../../grammar/lists/sql_unreserved_keywords.list"
 #undef X
-    };
-    return keywords;
 };
 
 /// Determine the maximum keyword length
@@ -39,7 +48,7 @@ const Keyword* Keyword::Find(std::string_view text) {
     std::string_view text_lc{buffer, text.size()};
 
     // Find the keyword
-    if (auto iter = KeywordMap().find(text_lc); iter != KeywordMap().end()) return &iter->second;
+    if (auto iter = KEYWORD_MAP.find(text_lc); iter != KEYWORD_MAP.end()) return &iter->second;
     return nullptr;
 }
 
