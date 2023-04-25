@@ -7,7 +7,7 @@ interface FlatSQLModuleExports {
     flatsql_rope_new: () => number;
     flatsql_rope_delete: (ptr: number) => void;
     flatsql_rope_insert_text_at: (ptr: number, offset: number, text: number, textLength: number) => void;
-    flatsql_rope_insert_char_at: (ptr: number, offset: number, character: number) => void;
+    flatsql_rope_insert_char_at: (ptr: number, offset: number, unicode: number) => void;
     flatsql_rope_erase_text_range: (ptr: number, offset: number, length: number) => void;
     flatsql_rope_to_string: (ptr: number) => number;
     flatsql_parse_rope: (ptr: number) => number;
@@ -163,6 +163,11 @@ export class FlatSQLRope {
     }
     /// Insert text at an offset
     public insertTextAt(offset: number, text: string) {
+        // Short-circuit inserting texts of length 1
+        if (text.length == 1) {
+            this.api.instanceExports.flatsql_rope_insert_char_at(this.ropePtr, offset, text.charCodeAt(0));
+            return;
+        }
         // To convert a JavaScript string s, the output space needed for full conversion is never less
         // than s.length bytes and never greater than s.length * 3 bytes.
         const textBegin = this.api.instanceExports.flatsql_malloc(text.length * 3);
@@ -172,11 +177,6 @@ export class FlatSQLRope {
         this.api.instanceExports.flatsql_rope_insert_text_at(this.ropePtr, offset, textBegin, textEncoded.written);
         // Delete text buffer
         this.api.instanceExports.flatsql_free(textBegin);
-    }
-    /// Insert text at an offset
-    public insertCharacterAt(offset: number, utf8Char: number) {
-        // Insert character into rope
-        this.api.instanceExports.flatsql_rope_insert_char_at(this.ropePtr, offset, utf8Char);
     }
     /// Earse a range of characters
     public eraseTextRange(offset: number, length: number) {

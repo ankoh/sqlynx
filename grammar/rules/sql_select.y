@@ -95,8 +95,8 @@ sql_select_no_parens:
     ;
 
 sql_select_clause:
-    sql_simple_select       { $$ = $1; }
-  | sql_select_with_parens  { $$ = $1; }
+    sql_simple_select       { $$ = std::move($1); }
+  | sql_select_with_parens  { $$ = std::move($1); }
     ;
 
 // This rule parses SELECT statements that can appear within set operations,
@@ -2109,7 +2109,7 @@ sql_opt_asymmetric:
 // Target list for SELECT
 
 sql_opt_target_list:
-    sql_target_list   { $$ = $1; }
+    sql_target_list   { $$ = std::move($1); }
   | %empty            { $$ = {}; }
     ;
 

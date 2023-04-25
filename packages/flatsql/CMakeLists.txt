@@ -21,7 +21,7 @@ set(CMAKE_BUILD_PARALLEL_LEVEL ${NPROCS})
 # ---------------------------------------------------------------------------
 # Address sanitizer
 
-if(NOT WASM AND NOT (CMAKE_BUILD_TYPE MATCHES Release))
+if(NOT WASM AND (CMAKE_BUILD_TYPE MATCHES Debug))
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
   set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
 endif()
@@ -246,6 +246,9 @@ if(NOT WASM)
   )
   add_executable(tester test/tester.cc ${TEST_SRC})
   target_link_libraries(tester flatsql flatsql_testutils pugixml gtest gmock gflags Threads::Threads)
+
+  add_executable(bm_parse_query benchmarks/bm_parse_query.cc)
+  target_link_libraries(bm_parse_query flatsql benchmark gtest gflags Threads::Threads)
 
   add_executable(astdump tools/astdump.cc)
   target_link_libraries(astdump flatsql flatsql_testutils pugixml gtest gflags Threads::Threads)

@@ -45,11 +45,14 @@ static const proto::HighlightingTokenType MapToken(Parser::symbol_kind_type symb
 std::unique_ptr<proto::HighlightingT> Scanner::BuildHighlighting() {
     std::vector<uint32_t> offsets;
     std::vector<proto::HighlightingTokenType> types;
+    offsets.reserve(symbols.GetSize() * 3 / 2);
+    types.reserve(symbols.GetSize() * 3 / 2);
 
     // Emit highlighting tokens at a location.
     // We emit 2 tokens at the begin and the end of every location and overwrite types if the offsets equal.
     // That allows us to capture whitespace accurately for Monaco.
-    auto emit = [&](proto::Location loc, proto::HighlightingTokenType type) {
+    auto emit = [](std::vector<uint32_t>& offsets, std::vector<proto::HighlightingTokenType>& types,
+                   proto::Location loc, proto::HighlightingTokenType type) {
         if (!offsets.empty() && offsets.back() == loc.offset()) {
             types.back() = type;
         } else {
@@ -64,14 +67,15 @@ std::unique_ptr<proto::HighlightingT> Scanner::BuildHighlighting() {
     symbols.ForEachIn(0, symbols.GetSize(), [&](size_t symbol_id, Parser::symbol_type symbol) {
         // Emit all comments in between.
         while (ci < comments.size() && comments[ci].offset() < symbol.location.offset()) {
-            emit(comments[ci++], proto::HighlightingTokenType::COMMENT);
+            emit(offsets, types, comments[ci++], proto::HighlightingTokenType::COMMENT);
         }
         // Map as standard token.
-        emit(symbol.location, MapToken(symbol.kind()));
+        emit(offsets, types, symbol.location, MapToken(symbol.kind()));
     });
 
     // Build the line breaks
     std::vector<uint32_t> breaks;
+    breaks.reserve(line_breaks.size());
     auto oi = 0;
     for (auto& lb : line_breaks) {
         while (oi < offsets.size() && offsets[oi] < lb.offset()) ++oi;
