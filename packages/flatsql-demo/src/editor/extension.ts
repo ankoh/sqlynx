@@ -89,12 +89,17 @@ class FlatSQLParser implements PluginValue {
             let first = true;
             for (const text of inserted) {
                 if (!first) {
-                    ext.rope.insertCharacterAt(writer, 10); // 10 == '\n'
+                    ext.rope.insertCharacterAt(writer, '\n'.charCodeAt(0));
                     writer += 1;
                 }
                 first = false;
-                ext.rope.insertTextAt(writer, text);
-                writer += text.length;
+                if (text.length == 1) {
+                    ext.rope.insertCharacterAt(writer, text.charCodeAt(0));
+                    writer += 1;
+                } else {
+                    ext.rope.insertTextAt(writer, text);
+                    writer += text.length;
+                }
             }
         });
         console.timeEnd('Rope Insert');
