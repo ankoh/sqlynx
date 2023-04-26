@@ -1,5 +1,4 @@
-#ifndef INCLUDE_FLATSQL_PARSER_GRAMMAR_LOCATION_H_
-#define INCLUDE_FLATSQL_PARSER_GRAMMAR_LOCATION_H_
+#pragma once
 
 #include <charconv>
 
@@ -21,5 +20,3 @@ inline proto::Location Loc(std::initializer_list<proto::Location> locs) {
 
 }  // namespace parser
 }  // namespace flatsql
-
-#endif  // INCLUDE_FLATSQL_PARSER_GRAMMAR_LOCATION_H_

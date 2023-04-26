@@ -1,5 +1,4 @@
-#ifndef INCLUDE_FLATSQL_PARSER_GRAMMAR_KEYWORDS_H_
-#define INCLUDE_FLATSQL_PARSER_GRAMMAR_KEYWORDS_H_
+#pragma once
 
 #include <string_view>
 
@@ -28,5 +27,3 @@ struct Keyword {
 
 }  // namespace parser
 }  // namespace flatsql
-
-#endif

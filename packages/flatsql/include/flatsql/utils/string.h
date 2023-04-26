@@ -1,5 +1,4 @@
-#ifndef INCLUDE_FLATSQL_PARSER_STRING_H_
-#define INCLUDE_FLATSQL_PARSER_STRING_H_
+#pragma once
 
 #include <algorithm>
 #include <cstddef>
@@ -39,5 +38,3 @@ template <typename Fn> static inline std::string_view trimview(std::string_view 
 
 }  // namespace parser
 }  // namespace flatsql
-
-#endif  // INCLUDE_FLATSQL_COMMON_STRING_H_

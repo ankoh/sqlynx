@@ -1,5 +1,4 @@
-#ifndef INCLUDE_FLATSQL_PARSER_SCANNER_H_
-#define INCLUDE_FLATSQL_PARSER_SCANNER_H_
+#pragma once
 
 #include <charconv>
 #include <optional>
@@ -119,5 +118,3 @@ class Scanner {
 
 }  // namespace parser
 }  // namespace flatsql
-
-#endif  // INCLUDE_FLATSQL_PARSER_PARSER_DRIVER_H_

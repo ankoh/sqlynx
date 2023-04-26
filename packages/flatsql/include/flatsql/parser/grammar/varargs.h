@@ -1,5 +1,4 @@
-#ifndef INCLUDE_FLATSQL_PARSER_GRAMMAR_VARARG_H_
-#define INCLUDE_FLATSQL_PARSER_GRAMMAR_VARARG_H_
+#pragma once
 
 #include <charconv>
 
@@ -33,5 +32,3 @@ class VarArgDictionary {
 
 }  // namespace parser
 }  // namespace flatsql
-
-#endif
