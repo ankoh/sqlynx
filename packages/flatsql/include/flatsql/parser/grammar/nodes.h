@@ -116,8 +116,8 @@ inline proto::Node Expr(ParserDriver& driver, proto::Location loc, proto::Node f
 }
 
 /// Add an unary expression
-inline proto::Node Expr(ParserDriver& driver, proto::Location loc, proto::Node func, Expression arg) {
-    std::array<Expression, 1> args{std::move(arg)};
+inline proto::Node Expr(ParserDriver& driver, proto::Location loc, proto::Node func, ExpressionVariant arg) {
+    std::array<ExpressionVariant, 1> args{std::move(arg)};
     return driver.Object(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
                          {
                              Attr(Key::SQL_EXPRESSION_OPERATOR, func),
@@ -127,8 +127,9 @@ inline proto::Node Expr(ParserDriver& driver, proto::Location loc, proto::Node f
 
 enum PostFixTag { PostFix };
 /// Add an unary expression
-inline Expression Expr(ParserDriver& driver, proto::Location loc, proto::Node func, Expression arg, PostFixTag) {
-    std::array<Expression, 1> args{std::move(arg)};
+inline ExpressionVariant Expr(ParserDriver& driver, proto::Location loc, proto::Node func, ExpressionVariant arg,
+                              PostFixTag) {
+    std::array<ExpressionVariant, 1> args{std::move(arg)};
     if (auto expr = driver.TryMerge(loc, func, args); expr.has_value()) {
         return std::move(expr.value());
     }
@@ -141,8 +142,9 @@ inline Expression Expr(ParserDriver& driver, proto::Location loc, proto::Node fu
 }
 
 /// Add a binary expression
-inline Expression Expr(ParserDriver& driver, proto::Location loc, proto::Node func, Expression left, Expression right) {
-    std::array<Expression, 2> args{std::move(left), std::move(right)};
+inline ExpressionVariant Expr(ParserDriver& driver, proto::Location loc, proto::Node func, ExpressionVariant left,
+                              ExpressionVariant right) {
+    std::array<ExpressionVariant, 2> args{std::move(left), std::move(right)};
     if (auto expr = driver.TryMerge(loc, func, args); expr.has_value()) {
         return std::move(expr.value());
     }
@@ -154,9 +156,9 @@ inline Expression Expr(ParserDriver& driver, proto::Location loc, proto::Node fu
 }
 
 /// Add a ternary expression
-inline Expression Expr(ParserDriver& driver, proto::Location loc, proto::Node func, Expression arg0, Expression arg1,
-                       Expression arg2) {
-    std::array<Expression, 3> args{std::move(arg0), std::move(arg1), std::move(arg2)};
+inline ExpressionVariant Expr(ParserDriver& driver, proto::Location loc, proto::Node func, ExpressionVariant arg0,
+                              ExpressionVariant arg1, ExpressionVariant arg2) {
+    std::array<ExpressionVariant, 3> args{std::move(arg0), std::move(arg1), std::move(arg2)};
     if (auto expr = driver.TryMerge(loc, func, args); expr.has_value()) {
         return std::move(expr.value());
     }
@@ -168,11 +170,12 @@ inline Expression Expr(ParserDriver& driver, proto::Location loc, proto::Node fu
 }
 
 /// Negate an expression
-inline Expression Negate(ParserDriver& driver, proto::Location loc, proto::Location loc_minus, Expression value) {
+inline ExpressionVariant Negate(ParserDriver& driver, proto::Location loc, proto::Location loc_minus,
+                                ExpressionVariant value) {
     // XXX If node_type == OBJECT_SQL_CONST inspect the attributes and expand the value
 
     // Otherwise fall back to an unary negation
-    std::array<Expression, 1> args{std::move(value)};
+    std::array<ExpressionVariant, 1> args{std::move(value)};
     return driver.Object(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
                          {
                              Attr(Key::SQL_EXPRESSION_OPERATOR, Enum(loc_minus, proto::ExpressionOperator::NEGATE)),
@@ -184,7 +187,7 @@ inline proto::Node Negate(ParserDriver& driver, proto::Location loc, proto::Loca
     // XXX If node_type == OBJECT_SQL_CONST inspect the attributes and expand the value
 
     // Otherwise fall back to an unary negation
-    std::array<Expression, 1> args{std::move(value)};
+    std::array<ExpressionVariant, 1> args{std::move(value)};
     return driver.Object(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
                          {
                              Attr(Key::SQL_EXPRESSION_OPERATOR, Enum(loc_minus, proto::ExpressionOperator::NEGATE)),

@@ -150,7 +150,8 @@ NodeID ParserDriver::AddNode(proto::Node node) {
 }
 
 /// Flatten an expression
-std::optional<Expression> ParserDriver::TryMerge(proto::Location loc, proto::Node op_node, std::span<Expression> args) {
+std::optional<ExpressionVariant> ParserDriver::TryMerge(proto::Location loc, proto::Node op_node,
+                                                        std::span<ExpressionVariant> args) {
     // Function is not an expression operator?
     if (op_node.node_type() != proto::NodeType::ENUM_SQL_EXPRESSION_OPERATOR) {
         return std::nullopt;
@@ -177,7 +178,7 @@ std::optional<Expression> ParserDriver::TryMerge(proto::Location loc, proto::Nod
         // Is a different operation?
         WeakUniquePtr<NAryExpression> child = std::get<1>(arg);
         if (child->op != op) {
-            nary->args->push_back(AddExpression(std::move(child)));
+            nary->args->push_back(Expression(std::move(child)));
             continue;
         }
         // Merge child arguments
@@ -210,17 +211,17 @@ proto::Node ParserDriver::Array(proto::Location loc, WeakUniquePtr<NodeList>&& v
 }
 
 /// Add an array
-proto::Node ParserDriver::Array(proto::Location loc, std::span<Expression> exprs, bool null_if_empty,
+proto::Node ParserDriver::Array(proto::Location loc, std::span<ExpressionVariant> exprs, bool null_if_empty,
                                 bool shrink_location) {
     auto nodes = List();
     for (auto& expr : exprs) {
-        nodes->push_back(AddExpression(std::move(expr)));
+        nodes->push_back(Expression(std::move(expr)));
     }
     return Array(loc, std::move(nodes), null_if_empty, shrink_location);
 }
 
 /// Add an expression
-proto::Node ParserDriver::AddExpression(Expression&& expr) {
+proto::Node ParserDriver::Expression(ExpressionVariant&& expr) {
     if (expr.index() == 0) {
         return std::get<0>(std::move(expr));
     } else {

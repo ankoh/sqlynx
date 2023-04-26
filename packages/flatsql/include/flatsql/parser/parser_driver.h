@@ -158,7 +158,7 @@ struct NAryExpression {
     }
 };
 /// An expression is either a proto node with materialized children, or an n-ary expression that can be flattened
-using Expression = std::variant<proto::Node, WeakUniquePtr<NAryExpression>>;
+using ExpressionVariant = std::variant<proto::Node, WeakUniquePtr<NAryExpression>>;
 
 class ParserDriver {
    protected:
@@ -201,7 +201,7 @@ class ParserDriver {
     proto::Node Array(proto::Location loc, WeakUniquePtr<NodeList>&& values, bool null_if_empty = true,
                       bool shrink_location = false);
     /// Add a an array
-    proto::Node Array(proto::Location loc, std::span<Expression> values, bool null_if_empty = true,
+    proto::Node Array(proto::Location loc, std::span<ExpressionVariant> values, bool null_if_empty = true,
                       bool shrink_location = false);
     /// Add a an array
     inline proto::Node Array(proto::Location loc, std::initializer_list<proto::Node> values, bool null_if_empty = true,
@@ -216,17 +216,16 @@ class ParserDriver {
                               bool null_if_empty = true, bool shrink_location = false) {
         return Object(loc, type, List(std::move(values)), null_if_empty, shrink_location);
     }
+    /// Add an expression
+    proto::Node Expression(ExpressionVariant&& expr);
     /// Add a statement
     void AddStatement(proto::Node node);
     /// Add an error
     void AddError(proto::Location loc, const std::string& message);
 
-    /// Add an expression
-    proto::Node AddExpression(Expression&& expr);
-    /// Add a an expression
-    inline proto::Node Add(Expression&& expr) { return AddExpression(std::move(expr)); }
     /// Flatten an expression
-    std::optional<Expression> TryMerge(proto::Location loc, proto::Node opNode, std::span<Expression> args);
+    std::optional<ExpressionVariant> TryMerge(proto::Location loc, proto::Node opNode,
+                                              std::span<ExpressionVariant> args);
 
     /// Parse a module
     static std::shared_ptr<proto::ProgramT> Parse(rope::Rope& in, bool trace_scanning = false,
