@@ -206,7 +206,7 @@ proto::Node ParserDriver::AddArray(proto::Location loc, WeakUniquePtr<NodeList>&
         auto lstEnd = lst.location().offset() + lst.location().length();
         loc = proto::Location(fstBegin, lstEnd - fstBegin);
     }
-    return proto::Node(loc, proto::NodeType::ARRAY, 0, NO_PARENT, begin, n);
+    return proto::Node(loc, proto::NodeType::ARRAY, proto::AttributeKey::NONE, NO_PARENT, begin, n);
 }
 
 /// Add an array
@@ -271,7 +271,7 @@ proto::Node ParserDriver::AddObject(proto::Location loc, proto::NodeType type, W
         auto lstEnd = lst.location().offset() + lst.location().length();
         loc = proto::Location(fstBegin, lstEnd - fstBegin);
     }
-    return proto::Node(loc, type, 0, NO_PARENT, begin, n);
+    return proto::Node(loc, type, proto::AttributeKey::NONE, NO_PARENT, begin, n);
 }
 
 /// Add a statement

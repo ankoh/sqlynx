@@ -13,9 +13,9 @@ constexpr uint32_t NO_PARENT = std::numeric_limits<uint32_t>::max();
 
 using ExprFunc = proto::ExpressionOperator;
 
-#define X(ENUM_TYPE, NODE_TYPE)                                                        \
-    inline proto::Node Enum(proto::Location loc, ENUM_TYPE e) {                        \
-        return proto::Node(loc, NODE_TYPE, 0, NO_PARENT, static_cast<uint32_t>(e), 0); \
+#define X(ENUM_TYPE, NODE_TYPE)                                                                                \
+    inline proto::Node Enum(proto::Location loc, ENUM_TYPE e) {                                                \
+        return proto::Node(loc, NODE_TYPE, proto::AttributeKey::NONE, NO_PARENT, static_cast<uint32_t>(e), 0); \
     }
 X(proto::AConstType, proto::NodeType::ENUM_SQL_CONST_TYPE)
 X(proto::CharacterType, proto::NodeType::ENUM_SQL_CHARACTER_TYPE)

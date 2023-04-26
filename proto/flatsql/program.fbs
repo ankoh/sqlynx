@@ -357,7 +357,7 @@ enum StatementType: uint8 {
 struct Node {
     location: Location;
     node_type: NodeType = NONE;
-    attribute_key: uint16 = 0;
+    attribute_key: AttributeKey = NONE;
     parent: uint32 = 0;
     children_begin_or_value: uint32 = 0;
     children_count: uint32 = 0;

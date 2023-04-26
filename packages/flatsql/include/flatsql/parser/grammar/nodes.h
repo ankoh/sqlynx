@@ -15,8 +15,8 @@ namespace parser {
 
 /// Helper to configure an attribute node
 inline proto::Node Attr(proto::AttributeKey key, proto::Node node) {
-    return proto::Node(node.location(), node.node_type(), static_cast<uint16_t>(key), node.parent(),
-                       node.children_begin_or_value(), node.children_count());
+    return proto::Node(node.location(), node.node_type(), key, node.parent(), node.children_begin_or_value(),
+                       node.children_count());
 }
 /// Helper to concatenate lists
 inline WeakUniquePtr<NodeList> Concat(WeakUniquePtr<NodeList>&& l, WeakUniquePtr<NodeList>&& r) {
@@ -45,29 +45,31 @@ inline WeakUniquePtr<NodeList> Concat(WeakUniquePtr<NodeList>&& v0, WeakUniquePt
 }
 
 /// Create a null node
-inline proto::Node Null() { return proto::Node(proto::Location(), proto::NodeType::NONE, 0, NO_PARENT, 0, 0); }
+inline proto::Node Null() {
+    return proto::Node(proto::Location(), proto::NodeType::NONE, proto::AttributeKey::NONE, NO_PARENT, 0, 0);
+}
 /// Create a string node
 inline proto::Node Ident(proto::Location loc) {
-    return proto::Node(loc, proto::NodeType::IDENTIFIER, 0, NO_PARENT, 0, 0);
+    return proto::Node(loc, proto::NodeType::IDENTIFIER, proto::AttributeKey::NONE, NO_PARENT, 0, 0);
 }
 /// Create a bool node
 inline proto::Node Bool(proto::Location loc, bool v) {
-    return proto::Node(loc, proto::NodeType::BOOL, 0, NO_PARENT, static_cast<uint32_t>(v), 0);
+    return proto::Node(loc, proto::NodeType::BOOL, proto::AttributeKey::NONE, NO_PARENT, static_cast<uint32_t>(v), 0);
 }
 
 /// Create a constant inline
 inline proto::Node Const(proto::Location loc, proto::AConstType type) {
     switch (type) {
         case proto::AConstType::NULL_:
-            return proto::Node(loc, proto::NodeType::LITERAL_NULL, 0, NO_PARENT, 0, 0);
+            return proto::Node(loc, proto::NodeType::LITERAL_NULL, proto::AttributeKey::NONE, NO_PARENT, 0, 0);
         case proto::AConstType::INTEGER:
-            return proto::Node(loc, proto::NodeType::LITERAL_INTEGER, 0, NO_PARENT, 0, 0);
+            return proto::Node(loc, proto::NodeType::LITERAL_INTEGER, proto::AttributeKey::NONE, NO_PARENT, 0, 0);
         case proto::AConstType::FLOAT:
-            return proto::Node(loc, proto::NodeType::LITERAL_FLOAT, 0, NO_PARENT, 0, 0);
+            return proto::Node(loc, proto::NodeType::LITERAL_FLOAT, proto::AttributeKey::NONE, NO_PARENT, 0, 0);
         case proto::AConstType::STRING:
-            return proto::Node(loc, proto::NodeType::LITERAL_STRING, 0, NO_PARENT, 0, 0);
+            return proto::Node(loc, proto::NodeType::LITERAL_STRING, proto::AttributeKey::NONE, NO_PARENT, 0, 0);
         case proto::AConstType::INTERVAL:
-            return proto::Node(loc, proto::NodeType::LITERAL_INTERVAL, 0, NO_PARENT, 0, 0);
+            return proto::Node(loc, proto::NodeType::LITERAL_INTERVAL, proto::AttributeKey::NONE, NO_PARENT, 0, 0);
     }
     return Null();
 }
