@@ -188,8 +188,8 @@ std::optional<Expression> ParserDriver::TryMerge(proto::Location loc, proto::Nod
 }
 
 /// Add an array
-proto::Node ParserDriver::AddArray(proto::Location loc, WeakUniquePtr<NodeList>&& values, bool null_if_empty,
-                                   bool shrink_location) {
+proto::Node ParserDriver::Array(proto::Location loc, WeakUniquePtr<NodeList>&& values, bool null_if_empty,
+                                bool shrink_location) {
     auto begin = nodes.GetSize();
     for (auto iter = values->front(); iter; iter = iter->next) {
         if (iter->node.node_type() == proto::NodeType::NONE) continue;
@@ -210,13 +210,13 @@ proto::Node ParserDriver::AddArray(proto::Location loc, WeakUniquePtr<NodeList>&
 }
 
 /// Add an array
-proto::Node ParserDriver::AddArray(proto::Location loc, std::span<Expression> exprs, bool null_if_empty,
-                                   bool shrink_location) {
+proto::Node ParserDriver::Array(proto::Location loc, std::span<Expression> exprs, bool null_if_empty,
+                                bool shrink_location) {
     auto nodes = List();
     for (auto& expr : exprs) {
         nodes->push_back(AddExpression(std::move(expr)));
     }
-    return AddArray(loc, std::move(nodes), null_if_empty, shrink_location);
+    return Array(loc, std::move(nodes), null_if_empty, shrink_location);
 }
 
 /// Add an expression
@@ -225,7 +225,7 @@ proto::Node ParserDriver::AddExpression(Expression&& expr) {
         return std::get<0>(std::move(expr));
     } else {
         auto nary = std::get<1>(expr);
-        auto args = AddArray(nary->location, std::move(nary->args));
+        auto args = Array(nary->location, std::move(nary->args));
         auto node = Object(nary->location, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
                            {
                                Attr(Key::SQL_EXPRESSION_OPERATOR, nary->opNode),
