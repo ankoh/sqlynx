@@ -10,7 +10,6 @@
 #include "flatsql/parser/parser.h"
 #include "flatsql/parser/scanner.h"
 #include "flatsql/proto/proto_generated.h"
-#include "flatsql/utils/chunk_node_allocator.h"
 
 namespace flatsql {
 namespace parser {
@@ -231,7 +230,7 @@ std::shared_ptr<proto::ProgramT> ParserDriver::Parse(rope::Rope& in, bool trace_
     flatsql::parser::Parser parser(driver);
     parser.parse();
 
-    ChunkNodeAllocator<proto::Node>::ResetThreadPool();
+    TempNodeAllocator<proto::Node>::ResetThreadPool();
 
     return driver.Finish();
 }

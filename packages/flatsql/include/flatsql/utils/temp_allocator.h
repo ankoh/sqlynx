@@ -11,7 +11,7 @@
 
 namespace flatsql {
 
-template <class T> class ChunkNodePool {
+template <class T> class TempNodePool {
     union Node {
         /// The next node
         Node *next;
@@ -25,15 +25,15 @@ template <class T> class ChunkNodePool {
 
    public:
     /// Constructor
-    ChunkNodePool() = default;
+    TempNodePool() = default;
     /// Move constructor
-    ChunkNodePool(ChunkNodePool &&memoryPool) = delete;
+    TempNodePool(TempNodePool &&memoryPool) = delete;
     /// Copy constructor
-    ChunkNodePool(const ChunkNodePool &memoryPool) = delete;
+    TempNodePool(const TempNodePool &memoryPool) = delete;
     /// Move assignment
-    ChunkNodePool &operator=(ChunkNodePool &&memoryPool) = delete;
+    TempNodePool &operator=(TempNodePool &&memoryPool) = delete;
     /// Copy assignment
-    ChunkNodePool &operator=(const ChunkNodePool &memoryPool) = delete;
+    TempNodePool &operator=(const TempNodePool &memoryPool) = delete;
 
     /// Clear node 0ool
     void Clear() {
@@ -42,23 +42,23 @@ template <class T> class ChunkNodePool {
     }
 
     /// Allocate a node
-    T *allocate() {
+    T *Allocate() {
         if (free_list) {
             Node *node = free_list;
             free_list = node->next;
             return &node->value;
         }
-        return &node_buffer.Append();
+        return &node_buffer.Append({});
     }
     /// Deallocate a node
-    void deallocate(T *pointer) {
+    void Deallocate(T *pointer) {
         Node *node = reinterpret_cast<Node *>(pointer);
         node->next = free_list;
         free_list = node;
     }
 };
 
-template <class T> class ChunkNodeAllocator {
+template <class T> class TempNodeAllocator {
    public:
     typedef std::size_t size_type;
     typedef std::ptrdiff_t difference_type;
@@ -69,20 +69,21 @@ template <class T> class ChunkNodeAllocator {
     typedef T value_type;
 
     template <typename U> struct rebind {
-        using other = ChunkNodeAllocator<U>;
+        using other = TempNodeAllocator<U>;
     };
 
    protected:
-    /// A chunk
-    ChunkNodePool<T> &node_pool;
+    /// The selected pool for temporary nodes
+    TempNodePool<T> &node_pool;
 
    public:
     /// Constructor
-    ChunkNodeAllocator() : node_pool(GetThreadPool()) {}
+    TempNodeAllocator() : node_pool(GetThreadPool()) {}
     /// Constructor
-    ChunkNodeAllocator(const ChunkNodeAllocator &aOther) = default;
+    TempNodeAllocator(const TempNodeAllocator &aOther) = default;
     /// Constructor
-    template <typename O> ChunkNodeAllocator(const ChunkNodeAllocator<O> &aOther) : node_pool(GetThreadPool()) {}
+    template <typename O>
+    TempNodeAllocator(const TempNodeAllocator<O> &aOther) : node_pool(TempNodeAllocator<O>::GetThreadPool()) {}
 
     /// Get a node pool
     auto &GetNodePool() const { return node_pool; }
@@ -90,10 +91,10 @@ template <class T> class ChunkNodeAllocator {
     /// Allocate a node
     pointer allocate(size_type n, const void *hint = 0) {
         if (n != 1 || hint) throw std::bad_alloc();
-        return node_pool.allocate();
+        return node_pool.Allocate();
     }
     /// Deallocate a node
-    void deallocate(pointer p, size_type n) { node_pool.deallocate(p); }
+    void deallocate(pointer p, size_type n) { node_pool.Deallocate(p); }
     /// Construct a node
     void construct(pointer p, const_reference val) { new (p) T(val); }
     /// Destroy a node
@@ -101,19 +102,17 @@ template <class T> class ChunkNodeAllocator {
 
     /// Get the thread-local node pool
     static auto &GetThreadPool() {
-        static thread_local ChunkNodePool<T> local_pool;
+        static thread_local TempNodePool<T> local_pool;
         return local_pool;
     }
     /// Reset the thread-local node pool
     static void ResetThreadPool() { GetThreadPool().Clear(); }
 };
 
-template <typename T, typename U>
-inline bool operator==(const ChunkNodeAllocator<T> &a, const ChunkNodeAllocator<U> &b) {
+template <typename T, typename U> inline bool operator==(const TempNodeAllocator<T> &a, const TempNodeAllocator<U> &b) {
     return &a.GetNodePool() == &b.GetNodePool();
 }
-template <typename T, typename U>
-inline bool operator!=(const ChunkNodeAllocator<T> &a, const ChunkNodeAllocator<U> &b) {
+template <typename T, typename U> inline bool operator!=(const TempNodeAllocator<T> &a, const TempNodeAllocator<U> &b) {
     return &a.GetNodePool() != &b.GetNodePool();
 }
 
