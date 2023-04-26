@@ -39,6 +39,8 @@ template <class T, size_t InitialSize = 128> class TempNodePool {
 
     /// Get the number of allocated nodes
     size_t GetAllocatedNodeCount() { return allocated_nodes; }
+    /// Get the allocation marker
+    constexpr Node *GetAllocationMarker() { return reinterpret_cast<Node *>(std::numeric_limits<uintptr_t>::max()); }
     /// Clear node pool
     void Clear() {
         node_buffer.Clear();
@@ -50,15 +52,19 @@ template <class T, size_t InitialSize = 128> class TempNodePool {
         if (free_list) {
             Node *node = free_list;
             free_list = node->next;
+            node->next = GetAllocationMarker();
             return &node->data;
         }
-        return static_cast<void *>(&node_buffer.Append(Node{}).data);
+        auto &node = node_buffer.Append(Node{});
+        node.next = GetAllocationMarker();
+        return static_cast<void *>(&node.data);
     }
     /// Deallocate a node
     void Deallocate(T *pointer) {
         assert(allocated_nodes > 0);
         --allocated_nodes;
         auto node = reinterpret_cast<Node *>(reinterpret_cast<std::byte *>(pointer) - offsetof(Node, data));
+        assert(node->next == GetAllocationMarker());
         node->next = free_list;
         free_list = node;
     }
