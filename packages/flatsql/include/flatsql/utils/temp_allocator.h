@@ -40,7 +40,9 @@ template <class T, size_t InitialSize = 128> class TempNodePool {
     /// Get the number of allocated nodes
     size_t GetAllocatedNodeCount() { return allocated_nodes; }
     /// Get the allocation marker
-    constexpr Node *GetAllocationMarker() { return reinterpret_cast<Node *>(std::numeric_limits<uintptr_t>::max()); }
+    static constexpr Node *GetAllocationMarker() {
+        return reinterpret_cast<Node *>(std::numeric_limits<uintptr_t>::max());
+    }
     /// Clear node pool
     void Clear() {
         node_buffer.Clear();
@@ -67,6 +69,14 @@ template <class T, size_t InitialSize = 128> class TempNodePool {
         assert(node->next == GetAllocationMarker());
         node->next = free_list;
         free_list = node;
+    }
+    /// ForEach allocated node
+    template <typename F> void ForEachAllocated(F func) {
+        node_buffer.ForEachIn(0, node_buffer.GetSize(), [func](size_t value_id, Node &value) {
+            if (value.next == GetAllocationMarker()) {
+                func(value_id, *reinterpret_cast<T *>(value.data));
+            }
+        });
     }
 };
 

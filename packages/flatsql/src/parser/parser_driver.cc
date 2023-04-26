@@ -344,11 +344,19 @@ std::shared_ptr<proto::ProgramT> ParserDriver::Parse(rope::Rope& in, bool trace_
     flatsql::parser::Parser parser(driver);
     parser.parse();
 
-    // Make sure we didn't leak into our temp allocators
-    // XXX We're apparently leaking some lists, find them!
-    //     (probably by not propagating them in bison rules)
-    // assert(driver.temp_lists.GetAllocatedNodeCount() == 0);
-    // assert(driver.temp_list_elements.GetAllocatedNodeCount() == 0);
+    // Make sure we didn't leak into our temp allocators.
+    // This can happen quickly when not consuming an allocated list in a bison rule.
+#define DEBUG_TEMP_POOL_LEAKS 1
+#if DEBUG_TEMP_POOL_LEAKS
+    driver.temp_list_elements.ForEachAllocated([](size_t value_id, NodeList::ListElement& elem) {
+        std::cout << proto::EnumNameAttributeKey(static_cast<proto::AttributeKey>(elem.node.attribute_key())) << " "
+                  << proto::EnumNameNodeType(elem.node.node_type()) << std::endl;
+    });
+#else
+    assert(driver.temp_lists.GetAllocatedNodeCount() == 0);
+    assert(driver.temp_list_elements.GetAllocatedNodeCount() == 0);
+#endif
+
     assert(driver.temp_nary_expressions.GetAllocatedNodeCount() == 0);
 
     // Pack the program
