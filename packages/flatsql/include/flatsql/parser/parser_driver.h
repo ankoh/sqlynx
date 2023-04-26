@@ -149,13 +149,9 @@ struct NAryExpression {
 
     /// Constructor
     NAryExpression(Pool& pool, proto::Location loc, proto::ExpressionOperator op, proto::Node node,
-                   WeakUniquePtr<NodeList> args)
-        : expression_pool(pool), location(loc), op(op), opNode(node), args(std::move(args)) {}
+                   WeakUniquePtr<NodeList> args);
     /// Destructor
-    ~NAryExpression() {
-        args.Destroy();
-        expression_pool.Deallocate(this);
-    }
+    ~NAryExpression();
 };
 /// An expression is either a proto node with materialized children, or an n-ary expression that can be flattened
 using ExpressionVariant = std::variant<proto::Node, WeakUniquePtr<NAryExpression>>;
@@ -180,11 +176,6 @@ class ParserDriver {
     /// The temporary nary expression nodes
     TempNodePool<NAryExpression, 16> temp_nary_expressions;
 
-    /// Add a node
-    NodeID AddNode(proto::Node node);
-    /// Get as flatbuffer object
-    std::shared_ptr<proto::ProgramT> Finish();
-
    public:
     /// Constructor
     explicit ParserDriver(Scanner& scanner);
@@ -196,7 +187,6 @@ class ParserDriver {
 
     /// Create a list
     WeakUniquePtr<NodeList> List(std::initializer_list<proto::Node> nodes = {});
-
     /// Add a an array
     proto::Node Array(proto::Location loc, WeakUniquePtr<NodeList>&& values, bool null_if_empty = true,
                       bool shrink_location = false);
@@ -218,14 +208,18 @@ class ParserDriver {
     }
     /// Add an expression
     proto::Node Expression(ExpressionVariant&& expr);
-    /// Add a statement
-    void AddStatement(proto::Node node);
-    /// Add an error
-    void AddError(proto::Location loc, const std::string& message);
-
     /// Flatten an expression
     std::optional<ExpressionVariant> TryMerge(proto::Location loc, proto::Node opNode,
                                               std::span<ExpressionVariant> args);
+
+    /// Add a node
+    NodeID AddNode(proto::Node node);
+    /// Add an error
+    void AddError(proto::Location loc, const std::string& message);
+    /// Add a statement
+    void FinishStatement(proto::Node node);
+    /// Get as flatbuffer object
+    std::shared_ptr<proto::ProgramT> Finish();
 
     /// Parse a module
     static std::shared_ptr<proto::ProgramT> Parse(rope::Rope& in, bool trace_scanning = false,
