@@ -69,8 +69,8 @@ void ASTDumpTest::EncodeProgram(pugi::xml_node root, const proto::ProgramT& prog
             pending.pop_back();
 
             // Add or append to parent
-            if (target->attribute_key() != 0) {
-                auto name = proto::AttributeKeyTypeTable()->names[target->attribute_key()];
+            if (target->attribute_key() != proto::AttributeKey::NONE) {
+                auto name = proto::EnumNameAttributeKey(target->attribute_key());
                 n.append_attribute("key").set_value(name);
             }
 
@@ -240,4 +240,4 @@ std::vector<const ASTDumpTest*> ASTDumpTest::GetTests(std::string_view filename)
     return tests;
 }
 
-}  // namespace flatsql::test
+}  // namespace flatsql::testing
