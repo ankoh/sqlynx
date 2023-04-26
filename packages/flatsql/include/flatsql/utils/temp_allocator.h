@@ -72,7 +72,7 @@ template <class T, size_t InitialSize = 128> class TempNodePool {
     }
     /// ForEach allocated node
     template <typename F> void ForEachAllocated(F func) {
-        node_buffer.ForEachIn(0, node_buffer.GetSize(), [func](size_t value_id, Node &value) {
+        node_buffer.ForEach(0, node_buffer.GetSize(), [func](size_t value_id, Node &value) {
             if (value.next == GetAllocationMarker()) {
                 func(value_id, *reinterpret_cast<T *>(value.data));
             }
