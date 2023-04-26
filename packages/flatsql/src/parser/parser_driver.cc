@@ -94,7 +94,7 @@ std::optional<Expression> ParserDriver::TryMerge(proto::Location loc, proto::Nod
 }
 
 /// Add an array
-proto::Node ParserDriver::AddArray(proto::Location loc, NodeVector&& values, bool null_if_empty, bool shrink_location) {
+proto::Node ParserDriver::AddArray(proto::Location loc, NodeList&& values, bool null_if_empty, bool shrink_location) {
     auto begin = nodes.GetSize();
     for (auto& v : values) {
         if (v.node_type() == proto::NodeType::NONE) continue;
@@ -116,7 +116,7 @@ proto::Node ParserDriver::AddArray(proto::Location loc, NodeVector&& values, boo
 /// Add an array
 proto::Node ParserDriver::AddArray(proto::Location loc, std::span<Expression> exprs, bool null_if_empty,
                                    bool shrink_location) {
-    NodeVector nodes;
+    NodeList nodes;
     for (auto& expr : exprs) {
         nodes.push_back(AddExpression(std::move(expr)));
     }
@@ -138,7 +138,7 @@ proto::Node ParserDriver::AddExpression(Expression&& expr) {
 }
 
 /// Add an object
-proto::Node ParserDriver::AddObject(proto::Location loc, proto::NodeType type, NodeVector&& attrs, bool null_if_empty,
+proto::Node ParserDriver::AddObject(proto::Location loc, proto::NodeType type, NodeList&& attrs, bool null_if_empty,
                                     bool shrink_location) {
     // Sort all the attributes
     auto begin = nodes.GetSize();

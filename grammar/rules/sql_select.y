@@ -164,7 +164,7 @@ sql_simple_select:
         $$ = {
             Attr(Key::SQL_COMBINE_OPERATION, Enum(@2, proto::CombineOperation::UNION)),
             Attr(Key::SQL_COMBINE_MODIFIER, $3),
-            Attr(Key::SQL_COMBINE_INPUT, ctx.Add(@$, NodeVector{l, r})),
+            Attr(Key::SQL_COMBINE_INPUT, ctx.Add(@$, {l, r})),
         };
     }
   | sql_select_clause INTERSECT sql_all_or_distinct sql_select_clause {
@@ -173,7 +173,7 @@ sql_simple_select:
         $$ = {
             Attr(Key::SQL_COMBINE_OPERATION, Enum(@2, proto::CombineOperation::INTERSECT)),
             Attr(Key::SQL_COMBINE_MODIFIER, $3),
-            Attr(Key::SQL_COMBINE_INPUT, ctx.Add(@$, NodeVector{l, r})),
+            Attr(Key::SQL_COMBINE_INPUT, ctx.Add(@$, {l, r})),
         };
     }
   | sql_select_clause EXCEPT sql_all_or_distinct sql_select_clause {
@@ -182,7 +182,7 @@ sql_simple_select:
         $$ = {
             Attr(Key::SQL_COMBINE_OPERATION, Enum(@2, proto::CombineOperation::EXCEPT)),
             Attr(Key::SQL_COMBINE_MODIFIER, $3),
-            Attr(Key::SQL_COMBINE_INPUT, ctx.Add(@$, NodeVector{l, r})),
+            Attr(Key::SQL_COMBINE_INPUT, ctx.Add(@$, {l, r})),
         };
     }
     ;
@@ -1082,12 +1082,12 @@ sql_character_with_length:
     ;
 
 sql_character_without_length:
-    CHARACTER sql_opt_varying           { $$ = NodeVector{ Attr(Key::SQL_CHARACTER_TYPE, Enum(@$, $2 ? proto::CharacterType::VARCHAR : proto::CharacterType::BLANK_PADDED_CHAR)) }; }
-  | CHAR_P sql_opt_varying              { $$ = NodeVector{ Attr(Key::SQL_CHARACTER_TYPE, Enum(@$, $2 ? proto::CharacterType::VARCHAR : proto::CharacterType::BLANK_PADDED_CHAR)) }; }
-  | VARCHAR                             { $$ = NodeVector{ Attr(Key::SQL_CHARACTER_TYPE, Enum(@$, proto::CharacterType::VARCHAR)) }; }
-  | NATIONAL CHARACTER sql_opt_varying  { $$ = NodeVector{ Attr(Key::SQL_CHARACTER_TYPE, Enum(@$, $3 ? proto::CharacterType::VARCHAR : proto::CharacterType::BLANK_PADDED_CHAR)) }; }
-  | NATIONAL CHAR_P sql_opt_varying     { $$ = NodeVector{ Attr(Key::SQL_CHARACTER_TYPE, Enum(@$, $3 ? proto::CharacterType::VARCHAR : proto::CharacterType::BLANK_PADDED_CHAR)) }; }
-  | NCHAR sql_opt_varying               { $$ = NodeVector{ Attr(Key::SQL_CHARACTER_TYPE, Enum(@$, $2 ? proto::CharacterType::VARCHAR : proto::CharacterType::BLANK_PADDED_CHAR)) }; }
+    CHARACTER sql_opt_varying           { $$ = { Attr(Key::SQL_CHARACTER_TYPE, Enum(@$, $2 ? proto::CharacterType::VARCHAR : proto::CharacterType::BLANK_PADDED_CHAR)) }; }
+  | CHAR_P sql_opt_varying              { $$ = { Attr(Key::SQL_CHARACTER_TYPE, Enum(@$, $2 ? proto::CharacterType::VARCHAR : proto::CharacterType::BLANK_PADDED_CHAR)) }; }
+  | VARCHAR                             { $$ = { Attr(Key::SQL_CHARACTER_TYPE, Enum(@$, proto::CharacterType::VARCHAR)) }; }
+  | NATIONAL CHARACTER sql_opt_varying  { $$ = { Attr(Key::SQL_CHARACTER_TYPE, Enum(@$, $3 ? proto::CharacterType::VARCHAR : proto::CharacterType::BLANK_PADDED_CHAR)) }; }
+  | NATIONAL CHAR_P sql_opt_varying     { $$ = { Attr(Key::SQL_CHARACTER_TYPE, Enum(@$, $3 ? proto::CharacterType::VARCHAR : proto::CharacterType::BLANK_PADDED_CHAR)) }; }
+  | NCHAR sql_opt_varying               { $$ = { Attr(Key::SQL_CHARACTER_TYPE, Enum(@$, $2 ? proto::CharacterType::VARCHAR : proto::CharacterType::BLANK_PADDED_CHAR)) }; }
     ;
 
 sql_opt_varying:
