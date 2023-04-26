@@ -46,7 +46,7 @@
     </astdump>
     <astdump name="create_table_9">
         <input>
-            create table foo (a integer options (ident 'thing2')
+            create table foo (a integer options (ident 'thing2'))
         </input>
     </astdump>
     <astdump name="create_table_10">

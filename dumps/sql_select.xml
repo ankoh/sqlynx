@@ -1815,7 +1815,9 @@
                                                 <node key="SQL_FUNCTION_ARG_VALUE" type="LITERAL_INTEGER" loc="53..58" text="10000" />
                                             </node>
                                         </node>
-                                        <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="34..49" text="generate_series" />
+                                        <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="34..49" text="generate_series">
+                                            <node type="IDENTIFIER" loc="34..49" text="generate_series" />
+                                        </node>
                                     </node>
                                     <node key="SQL_FUNCTION_TABLE_WITH_ORDINALITY" type="BOOL" value="false" />
                                 </node>
@@ -1865,7 +1867,9 @@
                                                 <node key="SQL_FUNCTION_ARG_VALUE" type="LITERAL_STRING" loc="36..45" text="'somearg'" />
                                             </node>
                                         </node>
-                                        <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="27..35" text="somefunc" />
+                                        <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="27..35" text="somefunc">
+                                            <node type="IDENTIFIER" loc="27..35" text="somefunc" />
+                                        </node>
                                     </node>
                                     <node key="SQL_FUNCTION_TABLE_WITH_ORDINALITY" type="BOOL" value="false" />
                                 </node>
@@ -3102,7 +3106,9 @@
                                             <node key="SQL_FUNCTION_ARG_VALUE" type="LITERAL_INTEGER" loc="29..30" text="1" />
                                         </node>
                                     </node>
-                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="20..28" text="somefunc" />
+                                    <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="20..28" text="somefunc">
+                                        <node type="IDENTIFIER" loc="20..28" text="somefunc" />
+                                    </node>
                                 </node>
                             </node>
                         </node>
@@ -3133,7 +3139,9 @@
                                             <node key="SQL_FUNCTION_ARG_VALUE" type="LITERAL_INTEGER" loc="29..30" text="1" />
                                         </node>
                                     </node>
-                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="20..28" text="somefunc" />
+                                    <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="20..28" text="somefunc">
+                                        <node type="IDENTIFIER" loc="20..28" text="somefunc" />
+                                    </node>
                                     <node key="SQL_FUNCTION_OVER" type="OBJECT_SQL_WINDOW_FRAME" loc="37..53" text="(partition by c)">
                                         <node key="SQL_WINDOW_FRAME_PARTITION" type="ARRAY" loc="51..52" text="c">
                                             <node type="OBJECT_SQL_COLUMN_REF" loc="51..52" text="c">
@@ -3173,7 +3181,9 @@
                                             <node key="SQL_FUNCTION_ARG_VALUE" type="LITERAL_INTEGER" loc="29..30" text="1" />
                                         </node>
                                     </node>
-                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="20..28" text="somefunc" />
+                                    <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="20..28" text="somefunc">
+                                        <node type="IDENTIFIER" loc="20..28" text="somefunc" />
+                                    </node>
                                     <node key="SQL_FUNCTION_WITHIN_GROUP" type="ARRAY" loc="46..56" text="order by c">
                                         <node type="OBJECT_SQL_ORDER" loc="55..56" text="c">
                                             <node key="SQL_ORDER_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="55..56" text="c">
@@ -3228,7 +3238,9 @@
                                         </node>
                                         <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL" />
                                     </node>
-                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="20..28" text="somefunc" />
+                                    <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="20..28" text="somefunc">
+                                        <node type="IDENTIFIER" loc="20..28" text="somefunc" />
+                                    </node>
                                 </node>
                             </node>
                         </node>
@@ -3614,7 +3626,9 @@
                                                 <node key="SQL_FUNCTION_ARG_VALUE" type="LITERAL_STRING" loc="37..42" text="'bar'" />
                                             </node>
                                         </node>
-                                        <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="33..36" text="foo" />
+                                        <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="33..36" text="foo">
+                                            <node type="IDENTIFIER" loc="33..36" text="foo" />
+                                        </node>
                                     </node>
                                     <node key="SQL_SUBQUERY_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="LIKE" />
                                     <node key="SQL_SUBQUERY_QUANTIFIER" type="ENUM_SQL_SUBQUERY_QUANTIFIER" value="SOME" />
@@ -3650,7 +3664,9 @@
                                             </node>
                                         </node>
                                     </node>
-                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="20..28" text="somefunc" />
+                                    <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="20..28" text="somefunc">
+                                        <node type="IDENTIFIER" loc="20..28" text="somefunc" />
+                                    </node>
                                 </node>
                             </node>
                         </node>
@@ -4735,7 +4751,9 @@
                                                 <node key="SQL_FUNCTION_ARG_VALUE" type="LITERAL_INTEGER" loc="43..44" text="1" />
                                             </node>
                                         </node>
-                                        <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="27..42" text="generate_series" />
+                                        <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="27..42" text="generate_series">
+                                            <node type="IDENTIFIER" loc="27..42" text="generate_series" />
+                                        </node>
                                     </node>
                                     <node key="SQL_FUNCTION_TABLE_WITH_ORDINALITY" type="BOOL" value="false" />
                                 </node>
@@ -4774,7 +4792,9 @@
                                                 <node key="SQL_FUNCTION_ARG_VALUE" type="LITERAL_INTEGER" loc="43..44" text="1" />
                                             </node>
                                         </node>
-                                        <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="27..42" text="generate_series" />
+                                        <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="27..42" text="generate_series">
+                                            <node type="IDENTIFIER" loc="27..42" text="generate_series" />
+                                        </node>
                                     </node>
                                     <node key="SQL_FUNCTION_TABLE_WITH_ORDINALITY" type="BOOL" value="true" />
                                 </node>
@@ -4815,7 +4835,9 @@
                                                         <node key="SQL_FUNCTION_ARG_VALUE" type="LITERAL_INTEGER" loc="54..55" text="1" />
                                                     </node>
                                                 </node>
-                                                <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="38..53" text="generate_series" />
+                                                <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="38..53" text="generate_series">
+                                                    <node type="IDENTIFIER" loc="38..53" text="generate_series" />
+                                                </node>
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_ROWSFROM_ITEM" loc="58..76" text="generate_series(2)">
@@ -4825,7 +4847,9 @@
                                                         <node key="SQL_FUNCTION_ARG_VALUE" type="LITERAL_INTEGER" loc="74..75" text="2" />
                                                     </node>
                                                 </node>
-                                                <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="58..73" text="generate_series" />
+                                                <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="58..73" text="generate_series">
+                                                    <node type="IDENTIFIER" loc="58..73" text="generate_series" />
+                                                </node>
                                             </node>
                                         </node>
                                     </node>
@@ -4876,7 +4900,9 @@
                                                         <node key="SQL_FUNCTION_ARG_VALUE" type="LITERAL_INTEGER" loc="54..55" text="1" />
                                                     </node>
                                                 </node>
-                                                <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="38..53" text="generate_series" />
+                                                <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="38..53" text="generate_series">
+                                                    <node type="IDENTIFIER" loc="38..53" text="generate_series" />
+                                                </node>
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_ROWSFROM_ITEM" loc="73..106" text="generate_s..a integer)">
@@ -4894,7 +4920,9 @@
                                                         <node key="SQL_FUNCTION_ARG_VALUE" type="LITERAL_INTEGER" loc="89..90" text="2" />
                                                     </node>
                                                 </node>
-                                                <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="73..88" text="generate_series" />
+                                                <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="73..88" text="generate_series">
+                                                    <node type="IDENTIFIER" loc="73..88" text="generate_series" />
+                                                </node>
                                             </node>
                                         </node>
                                     </node>
@@ -4954,7 +4982,9 @@
                                                         <node key="SQL_FUNCTION_ARG_VALUE" type="LITERAL_INTEGER" loc="91..92" text="1" />
                                                     </node>
                                                 </node>
-                                                <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="75..90" text="generate_series" />
+                                                <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="75..90" text="generate_series">
+                                                    <node type="IDENTIFIER" loc="75..90" text="generate_series" />
+                                                </node>
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_ROWSFROM_ITEM" loc="146..195" text="generate_s..e &quot;de_DE&quot;)">
@@ -4977,7 +5007,9 @@
                                                         <node key="SQL_FUNCTION_ARG_VALUE" type="LITERAL_INTEGER" loc="162..163" text="2" />
                                                     </node>
                                                 </node>
-                                                <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="146..161" text="generate_series" />
+                                                <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="146..161" text="generate_series">
+                                                    <node type="IDENTIFIER" loc="146..161" text="generate_series" />
+                                                </node>
                                             </node>
                                         </node>
                                     </node>
@@ -6240,16 +6272,33 @@
     </astdump>
     <astdump name="select_limit_2">
         <input>
-            SELECT * FROM foo LIMIT 42, OFFSET 21
+            SELECT * FROM foo LIMIT 42 OFFSET 21
         </input>
         <expected>
-            <statements />
-            <errors>
-                <error message="syntax error, unexpected OFFSET" loc="41..47" text="OFFSET" />
-            </errors>
+            <statements>
+                <statement type="SELECT">
+                    <node type="OBJECT_SQL_SELECT" loc="13..49" text="SELECT * F.. OFFSET 21">
+                        <node key="SQL_SELECT_FROM" type="ARRAY" loc="22..30" text="FROM foo">
+                            <node type="OBJECT_SQL_TABLEREF" loc="27..30" text="foo">
+                                <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="27..30" text="foo">
+                                    <node type="IDENTIFIER" loc="27..30" text="foo" />
+                                </node>
+                            </node>
+                        </node>
+                        <node key="SQL_SELECT_LIMIT" type="LITERAL_INTEGER" loc="37..39" text="42" />
+                        <node key="SQL_SELECT_OFFSET" type="LITERAL_INTEGER" loc="47..49" text="21" />
+                        <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="20..21" text="*">
+                            <node type="OBJECT_SQL_RESULT_TARGET" loc="20..21" text="*">
+                                <node key="SQL_RESULT_TARGET_STAR" type="BOOL" value="true" />
+                            </node>
+                        </node>
+                    </node>
+                </statement>
+            </statements>
+            <errors />
             <line_breaks>
                 <line_break loc="0..1" text="&#10;" />
-                <line_break loc="50..51" text="&#10;" />
+                <line_break loc="49..50" text="&#10;" />
             </line_breaks>
             <comments />
         </expected>
@@ -6471,7 +6520,9 @@
                                 </node>
                                 <node key="SQL_TABLEREF_TABLE" type="OBJECT_SQL_FUNCTION_TABLE" loc="34..44" text="somefunc()">
                                     <node key="SQL_FUNCTION_TABLE_FUNCTION" type="OBJECT_SQL_FUNCTION_EXPRESSION" loc="34..44" text="somefunc()">
-                                        <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="34..42" text="somefunc" />
+                                        <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="34..42" text="somefunc">
+                                            <node type="IDENTIFIER" loc="34..42" text="somefunc" />
+                                        </node>
                                     </node>
                                     <node key="SQL_FUNCTION_TABLE_WITH_ORDINALITY" type="BOOL" value="false" />
                                 </node>

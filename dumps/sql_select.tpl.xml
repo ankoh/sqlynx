@@ -842,7 +842,7 @@
     </astdump>
     <astdump name="select_limit_2">
         <input>
-            SELECT * FROM foo LIMIT 42, OFFSET 21
+            SELECT * FROM foo LIMIT 42 OFFSET 21
         </input>
     </astdump>
     <astdump name="select_limit_3">

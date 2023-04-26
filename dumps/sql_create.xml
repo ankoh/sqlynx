@@ -139,10 +139,33 @@
             create table if not exists foo (a integer, b varchar)
         </input>
         <expected>
-            <statements />
-            <errors>
-                <error message="syntax error, unexpected INTEGER, expecting ')' or ','" loc="47..54" text="integer" />
-            </errors>
+            <statements>
+                <statement type="CREATE_TABLE">
+                    <node type="OBJECT_SQL_CREATE" loc="13..66" text="create tab..b varchar)">
+                        <node key="SQL_CREATE_TABLE_ELEMENTS" type="ARRAY" loc="44..66" text="(a integer..b varchar)">
+                            <node type="OBJECT_SQL_COLUMN_DEF" loc="45..54" text="a integer">
+                                <node key="SQL_COLUMN_DEF_NAME" type="IDENTIFIER" loc="45..46" text="a" />
+                                <node key="SQL_COLUMN_DEF_TYPE" type="OBJECT_SQL_TYPENAME" loc="47..54" text="integer">
+                                    <node key="SQL_TYPENAME_TYPE" type="ENUM_SQL_NUMERIC_TYPE" value="INT4" />
+                                </node>
+                            </node>
+                            <node type="OBJECT_SQL_COLUMN_DEF" loc="56..65" text="b varchar">
+                                <node key="SQL_COLUMN_DEF_NAME" type="IDENTIFIER" loc="56..57" text="b" />
+                                <node key="SQL_COLUMN_DEF_TYPE" type="OBJECT_SQL_TYPENAME" loc="58..65" text="varchar">
+                                    <node key="SQL_TYPENAME_TYPE" type="OBJECT_SQL_CHARACTER_TYPE" loc="58..65" text="varchar">
+                                        <node key="SQL_CHARACTER_TYPE" type="ENUM_SQL_CHARACTER_TYPE" value="VARCHAR" />
+                                    </node>
+                                </node>
+                            </node>
+                        </node>
+                        <node key="SQL_CREATE_TABLE_IF_NOT_EXISTS" type="BOOL" value="true" />
+                        <node key="SQL_CREATE_TABLE_NAME" type="ARRAY" loc="40..43" text="foo">
+                            <node type="IDENTIFIER" loc="40..43" text="foo" />
+                        </node>
+                    </node>
+                </statement>
+            </statements>
+            <errors />
             <line_breaks>
                 <line_break loc="0..1" text="&#10;" />
                 <line_break loc="66..67" text="&#10;" />
@@ -292,16 +315,36 @@
     </astdump>
     <astdump name="create_table_9">
         <input>
-            create table foo (a integer options (ident 'thing2')
+            create table foo (a integer options (ident 'thing2'))
         </input>
         <expected>
-            <statements />
-            <errors>
-                <error message="syntax error, unexpected EOF, expecting ')'" loc="74..75" text="" />
-            </errors>
+            <statements>
+                <statement type="CREATE_TABLE">
+                    <node type="OBJECT_SQL_CREATE" loc="13..66" text="create tab..'thing2'))">
+                        <node key="SQL_CREATE_TABLE_ELEMENTS" type="ARRAY" loc="30..66" text="(a integer..'thing2'))">
+                            <node type="OBJECT_SQL_COLUMN_DEF" loc="31..65" text="a integer .. 'thing2')">
+                                <node key="SQL_COLUMN_DEF_NAME" type="IDENTIFIER" loc="31..32" text="a" />
+                                <node key="SQL_COLUMN_DEF_OPTIONS" type="ARRAY" loc="41..65" text="options (i.. 'thing2')">
+                                    <node type="OBJECT_SQL_GENERIC_OPTION" loc="50..64" text="ident 'thing2'">
+                                        <node key="SQL_GENERIC_OPTION_KEY" type="IDENTIFIER" loc="50..55" text="ident" />
+                                        <node key="SQL_GENERIC_OPTION_VALUE" type="LITERAL_STRING" loc="56..64" text="'thing2'" />
+                                    </node>
+                                </node>
+                                <node key="SQL_COLUMN_DEF_TYPE" type="OBJECT_SQL_TYPENAME" loc="33..40" text="integer">
+                                    <node key="SQL_TYPENAME_TYPE" type="ENUM_SQL_NUMERIC_TYPE" value="INT4" />
+                                </node>
+                            </node>
+                        </node>
+                        <node key="SQL_CREATE_TABLE_NAME" type="ARRAY" loc="26..29" text="foo">
+                            <node type="IDENTIFIER" loc="26..29" text="foo" />
+                        </node>
+                    </node>
+                </statement>
+            </statements>
+            <errors />
             <line_breaks>
                 <line_break loc="0..1" text="&#10;" />
-                <line_break loc="65..66" text="&#10;" />
+                <line_break loc="66..67" text="&#10;" />
             </line_breaks>
             <comments />
         </expected>

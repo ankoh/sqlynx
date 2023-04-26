@@ -362,7 +362,9 @@ limit
                                                                     </node>
                                                                 </node>
                                                             </node>
-                                                            <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="546..549" text="min" />
+                                                            <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="546..549" text="min">
+                                                                <node type="IDENTIFIER" loc="546..549" text="min" />
+                                                            </node>
                                                         </node>
                                                     </node>
                                                 </node>
@@ -633,7 +635,9 @@ limit
                                             </node>
                                         </node>
                                     </node>
-                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="36..39" text="sum" />
+                                    <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="36..39" text="sum">
+                                        <node type="IDENTIFIER" loc="36..39" text="sum" />
+                                    </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="96..107" text="o_orderdate">
@@ -831,7 +835,9 @@ order by
                                     <node key="SQL_FUNCTION_ARGUMENTS" type="ARRAY" loc="47..48" text="*">
                                         <node type="IDENTIFIER" loc="47..48" text="*" />
                                     </node>
-                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="41..46" text="count" />
+                                    <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="41..46" text="count">
+                                        <node type="IDENTIFIER" loc="41..46" text="count" />
+                                    </node>
                                 </node>
                             </node>
                         </node>
@@ -1074,7 +1080,9 @@ order by
                                             </node>
                                         </node>
                                     </node>
-                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="32..35" text="sum" />
+                                    <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="32..35" text="sum">
+                                        <node type="IDENTIFIER" loc="32..35" text="sum" />
+                                    </node>
                                 </node>
                             </node>
                         </node>
@@ -1297,7 +1305,9 @@ where
                                             </node>
                                         </node>
                                     </node>
-                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="16..19" text="sum" />
+                                    <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="16..19" text="sum">
+                                        <node type="IDENTIFIER" loc="16..19" text="sum" />
+                                    </node>
                                 </node>
                             </node>
                         </node>
@@ -1787,7 +1797,9 @@ order by
                                             </node>
                                         </node>
                                     </node>
-                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="74..77" text="sum" />
+                                    <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="74..77" text="sum">
+                                        <node type="IDENTIFIER" loc="74..77" text="sum" />
+                                    </node>
                                 </node>
                             </node>
                         </node>
@@ -2200,7 +2212,9 @@ order by
                                                     </node>
                                                 </node>
                                             </node>
-                                            <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="32..35" text="sum" />
+                                            <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="32..35" text="sum">
+                                                <node type="IDENTIFIER" loc="32..35" text="sum" />
+                                            </node>
                                         </node>
                                         <node type="OBJECT_SQL_FUNCTION_EXPRESSION" loc="130..141" text="sum(volume)">
                                             <node key="SQL_FUNCTION_ARGUMENTS" type="ARRAY" loc="134..140" text="volume">
@@ -2212,7 +2226,9 @@ order by
                                                     </node>
                                                 </node>
                                             </node>
-                                            <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="130..133" text="sum" />
+                                            <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="130..133" text="sum">
+                                                <node type="IDENTIFIER" loc="130..133" text="sum" />
+                                            </node>
                                         </node>
                                     </node>
                                     <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="DIVIDE" />
@@ -2580,7 +2596,9 @@ order by
                                             </node>
                                         </node>
                                     </node>
-                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="48..51" text="sum" />
+                                    <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="48..51" text="sum">
+                                        <node type="IDENTIFIER" loc="48..51" text="sum" />
+                                    </node>
                                 </node>
                             </node>
                         </node>
@@ -2800,7 +2818,9 @@ limit
                                             </node>
                                         </node>
                                     </node>
-                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="51..54" text="sum" />
+                                    <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="51..54" text="sum">
+                                        <node type="IDENTIFIER" loc="51..54" text="sum" />
+                                    </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="111..120" text="c_acctbal">
@@ -3058,7 +3078,9 @@ order by
                                             </node>
                                         </node>
                                     </node>
-                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="293..296" text="sum" />
+                                    <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="293..296" text="sum">
+                                        <node type="IDENTIFIER" loc="293..296" text="sum" />
+                                    </node>
                                 </node>
                                 <node type="OBJECT_SQL_SELECT_EXPRESSION" loc="328..806" text="(&#10;        ..         )">
                                     <node key="SQL_SELECT_EXPRESSION_STATEMENT" type="OBJECT_SQL_SELECT" loc="328..806" text="(&#10;        ..         )">
@@ -3103,7 +3125,9 @@ order by
                                                                     </node>
                                                                 </node>
                                                             </node>
-                                                            <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="393..396" text="sum" />
+                                                            <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="393..396" text="sum">
+                                                                <node type="IDENTIFIER" loc="393..396" text="sum" />
+                                                            </node>
                                                         </node>
                                                         <node type="LITERAL_FLOAT" loc="428..434" text="0.0001" />
                                                     </node>
@@ -3202,7 +3226,9 @@ order by
                                             </node>
                                         </node>
                                     </node>
-                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="36..39" text="sum" />
+                                    <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="36..39" text="sum">
+                                        <node type="IDENTIFIER" loc="36..39" text="sum" />
+                                    </node>
                                 </node>
                             </node>
                         </node>
@@ -3405,7 +3431,9 @@ order by
                                             </node>
                                         </node>
                                     </node>
-                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="36..39" text="sum" />
+                                    <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="36..39" text="sum">
+                                        <node type="IDENTIFIER" loc="36..39" text="sum" />
+                                    </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="244..444" text="sum(case&#10; ..line_count">
@@ -3450,7 +3478,9 @@ order by
                                             </node>
                                         </node>
                                     </node>
-                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="244..247" text="sum" />
+                                    <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="244..247" text="sum">
+                                        <node type="IDENTIFIER" loc="244..247" text="sum" />
+                                    </node>
                                 </node>
                             </node>
                         </node>
@@ -3699,7 +3729,9 @@ order by
                                                         </node>
                                                     </node>
                                                 </node>
-                                                <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="151..156" text="count" />
+                                                <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="151..156" text="count">
+                                                    <node type="IDENTIFIER" loc="151..156" text="count" />
+                                                </node>
                                             </node>
                                         </node>
                                     </node>
@@ -3748,7 +3780,9 @@ order by
                                     <node key="SQL_FUNCTION_ARGUMENTS" type="ARRAY" loc="39..40" text="*">
                                         <node type="IDENTIFIER" loc="39..40" text="*" />
                                     </node>
-                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="33..38" text="count" />
+                                    <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="33..38" text="count">
+                                        <node type="IDENTIFIER" loc="33..38" text="count" />
+                                    </node>
                                 </node>
                             </node>
                         </node>
@@ -3866,7 +3900,9 @@ where
                                                             </node>
                                                         </node>
                                                     </node>
-                                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="25..28" text="sum" />
+                                                    <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="25..28" text="sum">
+                                                        <node type="IDENTIFIER" loc="25..28" text="sum" />
+                                                    </node>
                                                 </node>
                                             </node>
                                             <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MULTIPLY" />
@@ -3897,7 +3933,9 @@ where
                                                     </node>
                                                 </node>
                                             </node>
-                                            <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="178..181" text="sum" />
+                                            <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="178..181" text="sum">
+                                                <node type="IDENTIFIER" loc="178..181" text="sum" />
+                                            </node>
                                         </node>
                                     </node>
                                     <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="DIVIDE" />
@@ -4119,7 +4157,9 @@ order by
                                                                     </node>
                                                                 </node>
                                                             </node>
-                                                            <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="388..391" text="max" />
+                                                            <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="388..391" text="max">
+                                                                <node type="IDENTIFIER" loc="388..391" text="max" />
+                                                            </node>
                                                         </node>
                                                     </node>
                                                 </node>
@@ -4189,7 +4229,9 @@ order by
                                                         </node>
                                                     </node>
                                                 </node>
-                                                <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="57..60" text="sum" />
+                                                <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="57..60" text="sum">
+                                                    <node type="IDENTIFIER" loc="57..60" text="sum" />
+                                                </node>
                                             </node>
                                         </node>
                                     </node>
@@ -4414,7 +4456,9 @@ order by
                                         </node>
                                     </node>
                                     <node key="SQL_FUNCTION_DISTINCT" type="BOOL" value="true" />
-                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="65..70" text="count" />
+                                    <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="65..70" text="count">
+                                        <node type="IDENTIFIER" loc="65..70" text="count" />
+                                    </node>
                                 </node>
                             </node>
                         </node>
@@ -4612,7 +4656,9 @@ where
                                                     </node>
                                                 </node>
                                             </node>
-                                            <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="16..19" text="sum" />
+                                            <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="16..19" text="sum">
+                                                <node type="IDENTIFIER" loc="16..19" text="sum" />
+                                            </node>
                                         </node>
                                         <node type="LITERAL_FLOAT" loc="39..42" text="7.0" />
                                     </node>
@@ -4690,7 +4736,9 @@ where
                                                                             </node>
                                                                         </node>
                                                                     </node>
-                                                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="278..281" text="avg" />
+                                                                    <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="278..281" text="avg">
+                                                                        <node type="IDENTIFIER" loc="278..281" text="avg" />
+                                                                    </node>
                                                                 </node>
                                                             </node>
                                                             <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MULTIPLY" />
@@ -4912,7 +4960,9 @@ limit
                                             </node>
                                         </node>
                                     </node>
-                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="114..117" text="sum" />
+                                    <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="114..117" text="sum">
+                                        <node type="IDENTIFIER" loc="114..117" text="sum" />
+                                    </node>
                                 </node>
                             </node>
                         </node>
@@ -4956,7 +5006,9 @@ limit
                                                                     </node>
                                                                 </node>
                                                             </node>
-                                                            <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="427..430" text="sum" />
+                                                            <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="427..430" text="sum">
+                                                                <node type="IDENTIFIER" loc="427..430" text="sum" />
+                                                            </node>
                                                         </node>
                                                         <node type="LITERAL_INTEGER" loc="445..448" text="300" />
                                                     </node>
@@ -5136,7 +5188,9 @@ where
                                             </node>
                                         </node>
                                     </node>
-                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="16..19" text="sum" />
+                                    <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="16..19" text="sum">
+                                        <node type="IDENTIFIER" loc="16..19" text="sum" />
+                                    </node>
                                 </node>
                             </node>
                         </node>
@@ -5708,7 +5762,9 @@ order by
                                                                                                     </node>
                                                                                                 </node>
                                                                                             </node>
-                                                                                            <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="709..712" text="sum" />
+                                                                                            <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="709..712" text="sum">
+                                                                                                <node type="IDENTIFIER" loc="709..712" text="sum" />
+                                                                                            </node>
                                                                                         </node>
                                                                                     </node>
                                                                                     <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MULTIPLY" />
@@ -5984,7 +6040,9 @@ limit
                                     <node key="SQL_FUNCTION_ARGUMENTS" type="ARRAY" loc="38..39" text="*">
                                         <node type="IDENTIFIER" loc="38..39" text="*" />
                                     </node>
-                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="32..37" text="count" />
+                                    <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="32..37" text="count">
+                                        <node type="IDENTIFIER" loc="32..37" text="count" />
+                                    </node>
                                 </node>
                             </node>
                         </node>
@@ -6399,7 +6457,9 @@ order by
                                                                                 </node>
                                                                             </node>
                                                                         </node>
-                                                                        <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="566..569" text="avg" />
+                                                                        <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="566..569" text="avg">
+                                                                            <node type="IDENTIFIER" loc="566..569" text="avg" />
+                                                                        </node>
                                                                     </node>
                                                                 </node>
                                                             </node>
@@ -6525,7 +6585,9 @@ order by
                                     <node key="SQL_FUNCTION_ARGUMENTS" type="ARRAY" loc="41..42" text="*">
                                         <node type="IDENTIFIER" loc="41..42" text="*" />
                                     </node>
-                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="35..40" text="count" />
+                                    <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="35..40" text="count">
+                                        <node type="IDENTIFIER" loc="35..40" text="count" />
+                                    </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="64..92" text="sum(c_acct..totacctbal">
@@ -6540,7 +6602,9 @@ order by
                                             </node>
                                         </node>
                                     </node>
-                                    <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="64..67" text="sum" />
+                                    <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="64..67" text="sum">
+                                        <node type="IDENTIFIER" loc="64..67" text="sum" />
+                                    </node>
                                 </node>
                             </node>
                         </node>
