@@ -1,16 +1,16 @@
 sql_create_as_stmt:
     CREATE_P sql_opt_temp TABLE sql_create_as_target AS sql_select_stmt sql_opt_with_data {
-        $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_CREATE_AS, Concat(std::move($4), {
+        $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_CREATE_AS, Concat(std::move($4), {
             Attr(Key::SQL_CREATE_AS_TEMP, $2),
-            Attr(Key::SQL_CREATE_AS_STATEMENT, ctx.Add(@6, proto::NodeType::OBJECT_SQL_SELECT, std::move($6))),
+            Attr(Key::SQL_CREATE_AS_STATEMENT, ctx.Object(@6, proto::NodeType::OBJECT_SQL_SELECT, std::move($6))),
             Attr(Key::SQL_CREATE_AS_WITH_DATA, $7),
         }));
     }
   | CREATE_P sql_opt_temp TABLE IF_P NOT EXISTS sql_create_as_target AS sql_select_stmt sql_opt_with_data {
-        $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_CREATE_AS, Concat(std::move($7), {
+        $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_CREATE_AS, Concat(std::move($7), {
             Attr(Key::SQL_CREATE_AS_IF_NOT_EXISTS, Bool(Loc({@4, @5, @6}), true)),
             Attr(Key::SQL_CREATE_AS_TEMP, $2),
-            Attr(Key::SQL_CREATE_AS_STATEMENT, ctx.Add(@9, proto::NodeType::OBJECT_SQL_SELECT, std::move($9))),
+            Attr(Key::SQL_CREATE_AS_STATEMENT, ctx.Object(@9, proto::NodeType::OBJECT_SQL_SELECT, std::move($9))),
             Attr(Key::SQL_CREATE_AS_WITH_DATA, $10),
         }));
     }
@@ -28,7 +28,7 @@ sql_create_as_target:
     
 sql_create_stmt:
     CREATE_P sql_opt_temp TABLE sql_qualified_name '(' sql_opt_table_element_list ')' sql_on_commit_option {
-        $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_CREATE, {
+        $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_CREATE, {
             Attr(Key::SQL_CREATE_TABLE_TEMP, $2),
             Attr(Key::SQL_CREATE_TABLE_NAME, std::move($4)),
             Attr(Key::SQL_CREATE_TABLE_ELEMENTS, ctx.Add(Loc({@5, @6, @7}), std::move($6))),
@@ -36,7 +36,7 @@ sql_create_stmt:
         });
     }
   | CREATE_P sql_opt_temp TABLE IF_P NOT EXISTS sql_qualified_name '(' sql_opt_table_element_list ')' sql_on_commit_option {
-        $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_CREATE, {
+        $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_CREATE, {
             Attr(Key::SQL_CREATE_TABLE_TEMP, $2),
             Attr(Key::SQL_CREATE_TABLE_IF_NOT_EXISTS, Bool(Loc({@4, @5, @6}), true)),
             Attr(Key::SQL_CREATE_TABLE_NAME, std::move($7)),
@@ -63,7 +63,7 @@ sql_table_element:
 
 sql_column_def:
     sql_col_id sql_typename sql_create_generic_options sql_col_qual_list {
-        $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_COLUMN_DEF, {
+        $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_COLUMN_DEF, {
             Attr(Key::SQL_COLUMN_DEF_NAME, Ident(@1)),
             Attr(Key::SQL_COLUMN_DEF_TYPE, std::move($2)),
             Attr(Key::SQL_COLUMN_DEF_OPTIONS, std::move($3)),
@@ -80,11 +80,11 @@ sql_col_qual_list:
 sql_col_constraint:
     CONSTRAINT sql_name sql_col_constraint_elem {
         $3->push_back(Attr(Key::SQL_COLUMN_CONSTRAINT_NAME, Ident(@2)));
-        $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_COLUMN_CONSTRAINT, std::move($3));
+        $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_COLUMN_CONSTRAINT, std::move($3));
     }
-  | sql_col_constraint_elem { $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_COLUMN_CONSTRAINT, std::move($1)); }
+  | sql_col_constraint_elem { $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_COLUMN_CONSTRAINT, std::move($1)); }
   | sql_col_constraint_attr { $$ = std::move($1); }
-  | COLLATE sql_any_name    { $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_COLUMN_CONSTRAINT, {
+  | COLLATE sql_any_name    { $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_COLUMN_CONSTRAINT, {
         Attr(Key::SQL_COLUMN_CONSTRAINT_TYPE, Enum(@$, proto::ColumnConstraint::COLLATE)),
         Attr(Key::SQL_COLUMN_CONSTRAINT_COLLATE, ctx.Add(@2, std::move($2))),
     });
@@ -112,7 +112,7 @@ sql_def_list:
 
 sql_def_elem:
     sql_col_label '=' sql_def_arg {
-        $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_DEF_ARG, {
+        $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_DEF_ARG, {
             Attr(Key::SQL_DEFINITION_ARG_KEY, std::move(Ident(@1))),
             Attr(Key::SQL_DEFINITION_ARG_VALUE, std::move(std::move($3))),
         });
@@ -190,7 +190,7 @@ sql_generic_option_list:
 
 sql_generic_option_elem:
     sql_col_label SCONST {
-        $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_GENERIC_OPTION, {
+        $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_GENERIC_OPTION, {
             Attr(Key::SQL_GENERIC_OPTION_KEY, Ident(@1)),
             Attr(Key::SQL_GENERIC_OPTION_VALUE, Const(@2, sx::AConstType::STRING)),
         });
@@ -240,10 +240,10 @@ sql_opt_with:
 sql_table_constraint:
     CONSTRAINT sql_name sql_table_constraint_elem {
         $3->push_back(Attr(Key::SQL_TABLE_CONSTRAINT_NAME, Ident(@2)));
-        $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_TABLE_CONSTRAINT, std::move($3));
+        $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_TABLE_CONSTRAINT, std::move($3));
     }
   | sql_table_constraint_elem {
-        $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_TABLE_CONSTRAINT, std::move($1));
+        $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_TABLE_CONSTRAINT, std::move($1));
     }
     ;
 
@@ -307,14 +307,14 @@ sql_key_actions:
     ;
 
 sql_key_update:
-    ON UPDATE sql_key_action_command { $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_KEY_ACTION, {
+    ON UPDATE sql_key_action_command { $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_KEY_ACTION, {
         Attr(Key::SQL_KEY_ACTION_TRIGGER, Enum(Loc({@1, @2}), proto::KeyActionTrigger::UPDATE)),
         Attr(Key::SQL_KEY_ACTION_COMMAND, $3),
     }); }
     ;
 
 sql_key_delete:
-    ON DELETE_P sql_key_action_command { $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_KEY_ACTION, {
+    ON DELETE_P sql_key_action_command { $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_KEY_ACTION, {
         Attr(Key::SQL_KEY_ACTION_TRIGGER, Enum(Loc({@1, @2}), proto::KeyActionTrigger::DELETE)),
         Attr(Key::SQL_KEY_ACTION_COMMAND, $3),
     }); }

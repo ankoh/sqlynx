@@ -76,53 +76,53 @@ inline proto::Node Const(proto::Location loc, proto::AConstType type) {
 
 /// Create indirection
 inline proto::Node IndirectionIndex(ParserDriver& driver, proto::Location loc, proto::Node index) {
-    return driver.Add(loc, proto::NodeType::OBJECT_SQL_INDIRECTION_INDEX,
-                      {
-                          Attr(Key::SQL_INDIRECTION_INDEX_VALUE, index),
-                      });
+    return driver.Object(loc, proto::NodeType::OBJECT_SQL_INDIRECTION_INDEX,
+                         {
+                             Attr(Key::SQL_INDIRECTION_INDEX_VALUE, index),
+                         });
 }
 
 /// Create indirection
 inline proto::Node IndirectionIndex(ParserDriver& driver, proto::Location loc, proto::Node lower_bound,
                                     proto::Node upper_bound) {
-    return driver.Add(loc, proto::NodeType::OBJECT_SQL_INDIRECTION_INDEX,
-                      {
-                          Attr(Key::SQL_INDIRECTION_INDEX_LOWER_BOUND, lower_bound),
-                          Attr(Key::SQL_INDIRECTION_INDEX_UPPER_BOUND, upper_bound),
-                      });
+    return driver.Object(loc, proto::NodeType::OBJECT_SQL_INDIRECTION_INDEX,
+                         {
+                             Attr(Key::SQL_INDIRECTION_INDEX_LOWER_BOUND, lower_bound),
+                             Attr(Key::SQL_INDIRECTION_INDEX_UPPER_BOUND, upper_bound),
+                         });
 }
 
 /// Create a temp table name
 inline proto::Node Into(ParserDriver& driver, proto::Location loc, proto::Node type, proto::Node name) {
-    return driver.Add(loc, proto::NodeType::OBJECT_SQL_INTO,
-                      {
-                          Attr(Key::SQL_TEMP_TYPE, type),
-                          Attr(Key::SQL_TEMP_NAME, name),
-                      });
+    return driver.Object(loc, proto::NodeType::OBJECT_SQL_INTO,
+                         {
+                             Attr(Key::SQL_TEMP_TYPE, type),
+                             Attr(Key::SQL_TEMP_NAME, name),
+                         });
 }
 
 /// Create a column ref
 inline proto::Node ColumnRef(ParserDriver& driver, proto::Location loc, WeakUniquePtr<NodeList>&& path) {
     auto path_nodes = driver.Add(loc, std::move(path));
-    return driver.Add(loc, proto::NodeType::OBJECT_SQL_COLUMN_REF,
-                      {
-                          Attr(Key::SQL_COLUMN_REF_PATH, path_nodes),
-                      });
+    return driver.Object(loc, proto::NodeType::OBJECT_SQL_COLUMN_REF,
+                         {
+                             Attr(Key::SQL_COLUMN_REF_PATH, path_nodes),
+                         });
 }
 
 /// Add an expression without arguments
 inline proto::Node Expr(ParserDriver& driver, proto::Location loc, proto::Node func) {
-    return driver.Add(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION, {Attr(Key::SQL_EXPRESSION_OPERATOR, func)});
+    return driver.Object(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION, {Attr(Key::SQL_EXPRESSION_OPERATOR, func)});
 }
 
 /// Add an unary expression
 inline proto::Node Expr(ParserDriver& driver, proto::Location loc, proto::Node func, Expression arg) {
     std::array<Expression, 1> args{std::move(arg)};
-    return driver.Add(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
-                      {
-                          Attr(Key::SQL_EXPRESSION_OPERATOR, func),
-                          Attr(Key::SQL_EXPRESSION_ARGS, driver.AddArray(loc, args)),
-                      });
+    return driver.Object(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
+                         {
+                             Attr(Key::SQL_EXPRESSION_OPERATOR, func),
+                             Attr(Key::SQL_EXPRESSION_ARGS, driver.AddArray(loc, args)),
+                         });
 }
 
 enum PostFixTag { PostFix };
@@ -132,12 +132,12 @@ inline Expression Expr(ParserDriver& driver, proto::Location loc, proto::Node fu
     if (auto expr = driver.TryMerge(loc, func, args); expr.has_value()) {
         return std::move(expr.value());
     }
-    return driver.Add(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
-                      {
-                          Attr(Key::SQL_EXPRESSION_OPERATOR, func),
-                          Attr(Key::SQL_EXPRESSION_POSTFIX, Bool(loc, true)),
-                          Attr(Key::SQL_EXPRESSION_ARGS, driver.AddArray(loc, args)),
-                      });
+    return driver.Object(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
+                         {
+                             Attr(Key::SQL_EXPRESSION_OPERATOR, func),
+                             Attr(Key::SQL_EXPRESSION_POSTFIX, Bool(loc, true)),
+                             Attr(Key::SQL_EXPRESSION_ARGS, driver.AddArray(loc, args)),
+                         });
 }
 
 /// Add a binary expression
@@ -146,11 +146,11 @@ inline Expression Expr(ParserDriver& driver, proto::Location loc, proto::Node fu
     if (auto expr = driver.TryMerge(loc, func, args); expr.has_value()) {
         return std::move(expr.value());
     }
-    return driver.Add(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
-                      {
-                          Attr(Key::SQL_EXPRESSION_OPERATOR, func),
-                          Attr(Key::SQL_EXPRESSION_ARGS, driver.AddArray(loc, args)),
-                      });
+    return driver.Object(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
+                         {
+                             Attr(Key::SQL_EXPRESSION_OPERATOR, func),
+                             Attr(Key::SQL_EXPRESSION_ARGS, driver.AddArray(loc, args)),
+                         });
 }
 
 /// Add a ternary expression
@@ -160,11 +160,11 @@ inline Expression Expr(ParserDriver& driver, proto::Location loc, proto::Node fu
     if (auto expr = driver.TryMerge(loc, func, args); expr.has_value()) {
         return std::move(expr.value());
     }
-    return driver.Add(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
-                      {
-                          Attr(Key::SQL_EXPRESSION_OPERATOR, func),
-                          Attr(Key::SQL_EXPRESSION_ARGS, driver.AddArray(loc, args)),
-                      });
+    return driver.Object(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
+                         {
+                             Attr(Key::SQL_EXPRESSION_OPERATOR, func),
+                             Attr(Key::SQL_EXPRESSION_ARGS, driver.AddArray(loc, args)),
+                         });
 }
 
 /// Negate an expression
@@ -173,11 +173,11 @@ inline Expression Negate(ParserDriver& driver, proto::Location loc, proto::Locat
 
     // Otherwise fall back to an unary negation
     std::array<Expression, 1> args{std::move(value)};
-    return driver.Add(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
-                      {
-                          Attr(Key::SQL_EXPRESSION_OPERATOR, Enum(loc_minus, proto::ExpressionOperator::NEGATE)),
-                          Attr(Key::SQL_EXPRESSION_ARGS, driver.AddArray(loc, args)),
-                      });
+    return driver.Object(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
+                         {
+                             Attr(Key::SQL_EXPRESSION_OPERATOR, Enum(loc_minus, proto::ExpressionOperator::NEGATE)),
+                             Attr(Key::SQL_EXPRESSION_ARGS, driver.AddArray(loc, args)),
+                         });
 }
 /// Negate a value
 inline proto::Node Negate(ParserDriver& driver, proto::Location loc, proto::Location loc_minus, proto::Node value) {
@@ -185,11 +185,11 @@ inline proto::Node Negate(ParserDriver& driver, proto::Location loc, proto::Loca
 
     // Otherwise fall back to an unary negation
     std::array<Expression, 1> args{std::move(value)};
-    return driver.Add(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
-                      {
-                          Attr(Key::SQL_EXPRESSION_OPERATOR, Enum(loc_minus, proto::ExpressionOperator::NEGATE)),
-                          Attr(Key::SQL_EXPRESSION_ARGS, driver.AddArray(loc, args)),
-                      });
+    return driver.Object(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
+                         {
+                             Attr(Key::SQL_EXPRESSION_OPERATOR, Enum(loc_minus, proto::ExpressionOperator::NEGATE)),
+                             Attr(Key::SQL_EXPRESSION_ARGS, driver.AddArray(loc, args)),
+                         });
 }
 
 /// Merge join types
@@ -223,11 +223,11 @@ inline proto::Node VarArgField(ParserDriver& driver, proto::Location loc, WeakUn
                                proto::Node value) {
     auto root = value;
     for (auto iter = path->back(); iter; iter = iter->prev) {
-        root = driver.Add(loc, proto::NodeType::OBJECT_EXT_VARARG_FIELD,
-                          {
-                              Attr(proto::AttributeKey::EXT_VARARG_FIELD_KEY, iter->node),
-                              Attr(proto::AttributeKey::EXT_VARARG_FIELD_VALUE, value),
-                          });
+        root = driver.Object(loc, proto::NodeType::OBJECT_EXT_VARARG_FIELD,
+                             {
+                                 Attr(proto::AttributeKey::EXT_VARARG_FIELD_KEY, iter->node),
+                                 Attr(proto::AttributeKey::EXT_VARARG_FIELD_VALUE, value),
+                             });
     }
     path.Destroy();
     return root;
