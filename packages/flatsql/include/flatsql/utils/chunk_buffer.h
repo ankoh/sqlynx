@@ -12,7 +12,7 @@
 
 namespace flatsql {
 
-template <typename T> struct ChunkBuffer {
+template <typename T, size_t InitialSize = 1024> struct ChunkBuffer {
    public:
     struct ForwardIterator {
         /// The buffer
@@ -77,7 +77,7 @@ template <typename T> struct ChunkBuffer {
 
    public:
     /// Constructor
-    ChunkBuffer() : buffers(), offsets(), next_chunk_size(1024), total_value_count(0) {
+    ChunkBuffer() : buffers(), offsets(), next_chunk_size(InitialSize), total_value_count(0) {
         buffers.reserve(64);
         offsets.reserve(64);
         grow();

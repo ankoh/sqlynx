@@ -64,7 +64,7 @@ struct NAryExpression {
     NodeList args;
 };
 /// An expression is either a proto node with materialized children, or an n-ary expression that can be flattened
-using Expression = std::variant<proto::Node, NAryExpression>;
+using Expression = std::variant<proto::Node, NAryExpression*>;
 
 class ParserDriver {
    protected:
@@ -78,6 +78,8 @@ class ParserDriver {
     std::vector<Statement> statements;
     /// The errors
     std::vector<std::pair<proto::Location, std::string>> errors;
+    /// The temporary nary expression nodes
+    TempNodePool<NAryExpression, 16> temp_nary_expressions;
 
     /// Add a node
     NodeID AddNode(proto::Node node);

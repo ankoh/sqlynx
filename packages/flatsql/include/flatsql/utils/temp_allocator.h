@@ -11,7 +11,7 @@
 
 namespace flatsql {
 
-template <class T> class TempNodePool {
+template <class T, size_t InitialSize = 128> class TempNodePool {
     union Node {
         /// The next node
         Node *next;
@@ -19,9 +19,11 @@ template <class T> class TempNodePool {
         std::aligned_storage<sizeof(T), alignof(T)> data;
     };
     /// The node buffer
-    ChunkBuffer<T> node_buffer;
+    ChunkBuffer<T, InitialSize> node_buffer;
     /// The first free block
     Node *free_list = nullptr;
+    /// The number of allocated objects in the pool
+    size_t allocated_nodes = 0;
 
    public:
     /// Constructor
@@ -35,7 +37,9 @@ template <class T> class TempNodePool {
     /// Copy assignment
     TempNodePool &operator=(const TempNodePool &memoryPool) = delete;
 
-    /// Clear node 0ool
+    /// Get the number of allocated nodes
+    size_t GetAllocatedNodeCount() { return allocated_nodes; }
+    /// Clear node pool
     void Clear() {
         node_buffer.Clear();
         free_list = nullptr;
@@ -43,6 +47,7 @@ template <class T> class TempNodePool {
 
     /// Allocate a node
     T *Allocate() {
+        ++allocated_nodes;
         if (free_list) {
             Node *node = free_list;
             free_list = node->next;
@@ -52,6 +57,8 @@ template <class T> class TempNodePool {
     }
     /// Deallocate a node
     void Deallocate(T *pointer) {
+        assert(allocated_nodes > 0);
+        --allocated_nodes;
         auto node = reinterpret_cast<Node *>(reinterpret_cast<std::byte *>(pointer) - offsetof(Node, data));
         node->next = free_list;
         free_list = node;
