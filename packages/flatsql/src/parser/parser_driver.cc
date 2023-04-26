@@ -66,28 +66,31 @@ std::optional<Expression> ParserDriver::TryMerge(proto::Location loc, proto::Nod
             return std::nullopt;
     }
     // Create nary expression
-    NAryExpression nary{.location = loc, .op = op, .opNode = opNode, .args = {}};
+    auto nary = temp_nary_expressions.Allocate();
+    *nary = NAryExpression{.location = loc, .op = op, .opNode = opNode, .args = {}};
     // Merge any nary expression arguments with the same operation, materialize others
     for (auto& arg : args) {
         // Argument is just a node?
         if (arg.index() == 0) {
-            nary.args.push_back(std::move(std::get<0>(arg)));
+            nary->args.push_back(std::move(std::get<0>(arg)));
             continue;
         }
         // Is a different operation?
-        auto& child = std::get<1>(arg);
-        if (child.op != op) {
-            nary.args.push_back(AddExpression(std::move(child)));
+        NAryExpression* child = std::get<1>(arg);
+        if (child->op != op) {
+            nary->args.push_back(AddExpression(std::move(child)));
+            temp_nary_expressions.Deallocate(child);
             continue;
         }
         // Merge child arguments
-        if (nary.args.empty()) {
-            nary.args = std::move(child.args);
+        if (nary->args.empty()) {
+            nary->args = std::move(child->args);
         } else {
-            for (auto& child_arg : child.args) {
-                nary.args.push_back(std::move(child_arg));
+            for (auto& child_arg : child->args) {
+                nary->args.push_back(std::move(child_arg));
             }
         }
+        temp_nary_expressions.Deallocate(child);
     }
     return nary;
 }
@@ -127,12 +130,14 @@ proto::Node ParserDriver::AddExpression(Expression&& expr) {
     if (expr.index() == 0) {
         return std::get<0>(std::move(expr));
     } else {
-        auto& nary = std::get<1>(expr);
-        return Add(nary.location, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
-                   {
-                       Attr(Key::SQL_EXPRESSION_OPERATOR, nary.opNode),
-                       Attr(Key::SQL_EXPRESSION_ARGS, AddArray(nary.location, std::move(nary.args))),
-                   });
+        auto* nary = std::get<1>(expr);
+        auto node = Add(nary->location, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
+                        {
+                            Attr(Key::SQL_EXPRESSION_OPERATOR, nary->opNode),
+                            Attr(Key::SQL_EXPRESSION_ARGS, AddArray(nary->location, std::move(nary->args))),
+                        });
+        temp_nary_expressions.Deallocate(nary);
+        return node;
     }
 }
 
@@ -223,15 +228,20 @@ std::shared_ptr<proto::ProgramT> ParserDriver::Finish() {
 }
 
 std::shared_ptr<proto::ProgramT> ParserDriver::Parse(rope::Rope& in, bool trace_scanning, bool trace_parsing) {
+    // Tokenize the input text
     Scanner scanner{in};
     scanner.Tokenize();
 
+    // Parse the tokens
     ParserDriver driver{scanner};
     flatsql::parser::Parser parser(driver);
     parser.parse();
 
+    // Reset node pools
+    assert(driver.temp_nary_expressions.GetAllocatedNodeCount() == 0);
     TempNodeAllocator<proto::Node>::ResetThreadPool();
 
+    // Pack the program
     return driver.Finish();
 }
 
