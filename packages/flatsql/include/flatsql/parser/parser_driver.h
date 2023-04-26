@@ -1,5 +1,4 @@
-#ifndef INCLUDE_FLATSQL_PARSER_PARSER_DRIVER_H_
-#define INCLUDE_FLATSQL_PARSER_PARSER_DRIVER_H_
+#pragma once
 
 #include <initializer_list>
 #include <iostream>
@@ -228,5 +227,3 @@ class ParserDriver {
 
 }  // namespace parser
 }  // namespace flatsql
-
-#endif  // INCLUDE_FLATSQL_PARSER_PARSER_DRIVER_H_

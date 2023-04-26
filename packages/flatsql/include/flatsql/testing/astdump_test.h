@@ -1,5 +1,4 @@
-#ifndef INCLUDE_FLATSQL_TESTING_ASTDUMP_TEST_H_
-#define INCLUDE_FLATSQL_TESTING_ASTDUMP_TEST_H_
+#pragma once
 
 #include <filesystem>
 #include <string>
@@ -42,6 +41,4 @@ struct ASTDumpTest {
     static std::vector<const ASTDumpTest*> GetTests(std::string_view filename);
 };
 
-}  // namespace flatsql::test
-
-#endif  // INCLUDE_FLATSQL_TEST_GRAMMAR_TESTS_H_
+}  // namespace flatsql::testing

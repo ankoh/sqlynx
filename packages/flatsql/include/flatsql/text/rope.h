@@ -1,5 +1,4 @@
-#ifndef INCLUDE_FLATSQL_TEXT_ROPE_H_
-#define INCLUDE_FLATSQL_TEXT_ROPE_H_
+#pragma once
 
 #include <cassert>
 #include <cstddef>
@@ -357,5 +356,3 @@ struct Rope {
 
 }  // namespace rope
 }  // namespace flatsql
-
-#endif  // INCLUDE_FLATSQL_TEXT_ROPE_H_

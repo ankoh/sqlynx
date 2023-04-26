@@ -1,5 +1,4 @@
-#ifndef INCLUDE_FLATSQL_PARSER_GRAMMAR_ENUMS_H_
-#define INCLUDE_FLATSQL_PARSER_GRAMMAR_ENUMS_H_
+#pragma once
 
 #include <charconv>
 
@@ -53,5 +52,3 @@ const char* getEnumText(const proto::Node& target);
 
 }  // namespace parser
 }  // namespace flatsql
-
-#endif  // INCLUDE_FLATSQL_PARSER_GRAMMAR_ENUMS_H_

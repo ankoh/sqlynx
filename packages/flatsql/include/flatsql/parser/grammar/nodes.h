@@ -1,5 +1,4 @@
-#ifndef INCLUDE_FLATSQL_PARSER_GRAMMAR_NODES_H_
-#define INCLUDE_FLATSQL_PARSER_GRAMMAR_NODES_H_
+#pragma once
 
 #include <charconv>
 #include <initializer_list>
@@ -238,5 +237,3 @@ inline proto::Node VarArgField(ParserDriver& driver, proto::Location loc, WeakUn
 
 }  // namespace parser
 }  // namespace flatsql
-
-#endif  // INCLUDE_FLATSQL_PARSER_GRAMMAR_NODES_H_
