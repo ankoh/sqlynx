@@ -121,7 +121,7 @@ inline proto::Node Expr(ParserDriver& driver, proto::Location loc, proto::Node f
     return driver.Object(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
                          {
                              Attr(Key::SQL_EXPRESSION_OPERATOR, func),
-                             Attr(Key::SQL_EXPRESSION_ARGS, driver.AddArray(loc, args)),
+                             Attr(Key::SQL_EXPRESSION_ARGS, driver.Array(loc, args)),
                          });
 }
 
@@ -136,7 +136,7 @@ inline Expression Expr(ParserDriver& driver, proto::Location loc, proto::Node fu
                          {
                              Attr(Key::SQL_EXPRESSION_OPERATOR, func),
                              Attr(Key::SQL_EXPRESSION_POSTFIX, Bool(loc, true)),
-                             Attr(Key::SQL_EXPRESSION_ARGS, driver.AddArray(loc, args)),
+                             Attr(Key::SQL_EXPRESSION_ARGS, driver.Array(loc, args)),
                          });
 }
 
@@ -149,7 +149,7 @@ inline Expression Expr(ParserDriver& driver, proto::Location loc, proto::Node fu
     return driver.Object(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
                          {
                              Attr(Key::SQL_EXPRESSION_OPERATOR, func),
-                             Attr(Key::SQL_EXPRESSION_ARGS, driver.AddArray(loc, args)),
+                             Attr(Key::SQL_EXPRESSION_ARGS, driver.Array(loc, args)),
                          });
 }
 
@@ -163,7 +163,7 @@ inline Expression Expr(ParserDriver& driver, proto::Location loc, proto::Node fu
     return driver.Object(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
                          {
                              Attr(Key::SQL_EXPRESSION_OPERATOR, func),
-                             Attr(Key::SQL_EXPRESSION_ARGS, driver.AddArray(loc, args)),
+                             Attr(Key::SQL_EXPRESSION_ARGS, driver.Array(loc, args)),
                          });
 }
 
@@ -176,7 +176,7 @@ inline Expression Negate(ParserDriver& driver, proto::Location loc, proto::Locat
     return driver.Object(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
                          {
                              Attr(Key::SQL_EXPRESSION_OPERATOR, Enum(loc_minus, proto::ExpressionOperator::NEGATE)),
-                             Attr(Key::SQL_EXPRESSION_ARGS, driver.AddArray(loc, args)),
+                             Attr(Key::SQL_EXPRESSION_ARGS, driver.Array(loc, args)),
                          });
 }
 /// Negate a value
@@ -188,7 +188,7 @@ inline proto::Node Negate(ParserDriver& driver, proto::Location loc, proto::Loca
     return driver.Object(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
                          {
                              Attr(Key::SQL_EXPRESSION_OPERATOR, Enum(loc_minus, proto::ExpressionOperator::NEGATE)),
-                             Attr(Key::SQL_EXPRESSION_ARGS, driver.AddArray(loc, args)),
+                             Attr(Key::SQL_EXPRESSION_ARGS, driver.Array(loc, args)),
                          });
 }
 

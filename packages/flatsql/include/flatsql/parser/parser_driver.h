@@ -198,34 +198,29 @@ class ParserDriver {
     WeakUniquePtr<NodeList> List(std::initializer_list<proto::Node> nodes = {});
 
     /// Add a an array
-    proto::Node AddArray(proto::Location loc, WeakUniquePtr<NodeList>&& values, bool null_if_empty = true,
-                         bool shrink_location = false);
+    proto::Node Array(proto::Location loc, WeakUniquePtr<NodeList>&& values, bool null_if_empty = true,
+                      bool shrink_location = false);
     /// Add a an array
-    proto::Node AddArray(proto::Location loc, std::span<Expression> values, bool null_if_empty = true,
-                         bool shrink_location = false);
-    /// Add an object
-    proto::Node Object(proto::Location loc, proto::NodeType type, WeakUniquePtr<NodeList>&& attrs,
-                       bool null_if_empty = true, bool shrink_location = false);
-    /// Add a statement
-    void AddStatement(proto::Node node);
-    /// Add an error
-    void AddError(proto::Location loc, const std::string& message);
-
+    proto::Node Array(proto::Location loc, std::span<Expression> values, bool null_if_empty = true,
+                      bool shrink_location = false);
     /// Add a an array
     inline proto::Node Array(proto::Location loc, std::initializer_list<proto::Node> values, bool null_if_empty = true,
                              bool shrink_location = false) {
-        return AddArray(loc, List(std::move(values)), null_if_empty, shrink_location);
+        return Array(loc, List(std::move(values)), null_if_empty, shrink_location);
     }
-    /// Add a an array
-    inline proto::Node Array(proto::Location loc, WeakUniquePtr<NodeList>&& values, bool null_if_empty = true,
-                             bool shrink_location = false) {
-        return AddArray(loc, std::move(values), null_if_empty, shrink_location);
-    }
+    /// Add an object
+    proto::Node Object(proto::Location loc, proto::NodeType type, WeakUniquePtr<NodeList>&& attrs,
+                       bool null_if_empty = true, bool shrink_location = false);
     /// Add a an object
     inline proto::Node Object(proto::Location loc, proto::NodeType type, std::initializer_list<proto::Node> values,
                               bool null_if_empty = true, bool shrink_location = false) {
         return Object(loc, type, List(std::move(values)), null_if_empty, shrink_location);
     }
+    /// Add a statement
+    void AddStatement(proto::Node node);
+    /// Add an error
+    void AddError(proto::Location loc, const std::string& message);
+
     /// Add an expression
     proto::Node AddExpression(Expression&& expr);
     /// Add a an expression
