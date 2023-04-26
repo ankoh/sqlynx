@@ -16,7 +16,7 @@ template <class T> class TempNodePool {
         /// The next node
         Node *next;
         /// The value
-        T value;
+        std::aligned_storage<sizeof(T), alignof(T)> data;
     };
     /// The node buffer
     ChunkBuffer<T> node_buffer;
@@ -46,13 +46,13 @@ template <class T> class TempNodePool {
         if (free_list) {
             Node *node = free_list;
             free_list = node->next;
-            return &node->value;
+            return reinterpret_cast<T *>(&node->data);
         }
         return &node_buffer.Append({});
     }
     /// Deallocate a node
     void Deallocate(T *pointer) {
-        Node *node = reinterpret_cast<Node *>(pointer);
+        auto node = reinterpret_cast<Node *>(reinterpret_cast<std::byte *>(pointer) - offsetof(Node, data));
         node->next = free_list;
         free_list = node;
     }
