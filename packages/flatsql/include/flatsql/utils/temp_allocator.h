@@ -89,8 +89,7 @@ template <class T> class TempNodeAllocator {
     /// Constructor
     TempNodeAllocator(const TempNodeAllocator &aOther) = default;
     /// Constructor
-    template <typename O>
-    TempNodeAllocator(const TempNodeAllocator<O> &aOther) : node_pool(TempNodeAllocator<O>::GetThreadPool()) {}
+    template <typename O> TempNodeAllocator(const TempNodeAllocator<O> &aOther) : node_pool(GetThreadPool()) {}
 
     /// Get a node pool
     auto &GetNodePool() const { return node_pool; }
