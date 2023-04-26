@@ -209,8 +209,6 @@ void ASTDumpTest::LoadTests(std::filesystem::path& source_dir) {
             auto& t = tests.back();
             t.name = test.attribute("name").as_string();
             t.input = test.child("input").last_child().value();
-            t.input.push_back(0);
-            t.input.push_back(0);
 
             pugi::xml_document expected;
             for (auto s : test.child("expected").children()) {

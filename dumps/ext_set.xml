@@ -116,7 +116,9 @@
                                                 </node>
                                             </node>
                                         </node>
-                                        <node key="SQL_FUNCTION_NAME" type="IDENTIFIER" loc="84..96" text="somefunction" />
+                                        <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="84..96" text="somefunction">
+                                            <node type="IDENTIFIER" loc="84..96" text="somefunction" />
+                                        </node>
                                     </node>
                                 </node>
                             </node>

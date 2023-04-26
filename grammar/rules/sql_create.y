@@ -35,6 +35,15 @@ sql_create_stmt:
             Attr(Key::SQL_CREATE_TABLE_ON_COMMIT, $8),
         });
     }
+  | CREATE_P sql_opt_temp TABLE IF_P NOT EXISTS sql_qualified_name '(' sql_opt_table_element_list ')' sql_on_commit_option {
+        $$ = ctx.Add(@$, proto::NodeType::OBJECT_SQL_CREATE, {
+            Attr(Key::SQL_CREATE_TABLE_TEMP, $2),
+            Attr(Key::SQL_CREATE_TABLE_IF_NOT_EXISTS, Bool(Loc({@4, @5, @6}), true)),
+            Attr(Key::SQL_CREATE_TABLE_NAME, std::move($7)),
+            Attr(Key::SQL_CREATE_TABLE_ELEMENTS, ctx.Add(Loc({@8, @9, @10}), std::move($9))),
+            Attr(Key::SQL_CREATE_TABLE_ON_COMMIT, $11),
+        });
+    }
     ;
 
 sql_opt_table_element_list:

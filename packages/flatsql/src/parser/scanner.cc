@@ -49,7 +49,6 @@ std::optional<proto::Location> Scanner::EndComment(proto::Location loc) {
 
 /// Add an error
 void Scanner::AddError(proto::Location location, const char* message) { errors.push_back({location, message}); }
-
 /// Add an error
 void Scanner::AddError(proto::Location location, std::string&& message) {
     errors.push_back({location, std::move(message)});

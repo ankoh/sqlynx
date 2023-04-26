@@ -1446,24 +1446,24 @@ sql_c_expr:
     ;
 
 sql_func_application:
-    sql_func_name '(' ')' { $$ = ctx.List({ Attr(Key::SQL_FUNCTION_NAME, Ident(@1)) }); }
+    sql_func_name '(' ')' { $$ = ctx.List({ Attr(Key::SQL_FUNCTION_NAME, ctx.Add(@1, std::move($1))) }); }
   | sql_func_name '(' sql_func_arg_list sql_opt_sort_clause ')' {
         $$ = ctx.List({
-            Attr(Key::SQL_FUNCTION_NAME, Ident(@1)),
+            Attr(Key::SQL_FUNCTION_NAME, ctx.Add(@1, std::move($1))),
             Attr(Key::SQL_FUNCTION_ARGUMENTS, ctx.Add(@3, std::move($3))),
             Attr(Key::SQL_FUNCTION_ORDER, $4),
         });
     }
   | sql_func_name '(' VARIADIC sql_func_arg_expr sql_opt_sort_clause ')' {
         $$ = ctx.List({
-            Attr(Key::SQL_FUNCTION_NAME, Ident(@1)),
+            Attr(Key::SQL_FUNCTION_NAME, ctx.Add(@1, std::move($1))),
             Attr(Key::SQL_FUNCTION_VARIADIC, $4),
             Attr(Key::SQL_FUNCTION_ORDER, $5),
         });
     }
   | sql_func_name '(' sql_func_arg_list ',' VARIADIC sql_func_arg_expr sql_opt_sort_clause ')' {
         $$ = ctx.List({
-            Attr(Key::SQL_FUNCTION_NAME, Ident(@1)),
+            Attr(Key::SQL_FUNCTION_NAME, ctx.Add(@1, std::move($1))),
             Attr(Key::SQL_FUNCTION_ARGUMENTS, ctx.Add(@3, std::move($3))),
             Attr(Key::SQL_FUNCTION_VARIADIC, $6),
             Attr(Key::SQL_FUNCTION_ORDER, $7),
@@ -1471,7 +1471,7 @@ sql_func_application:
     }
   | sql_func_name '(' ALL sql_func_arg_list sql_opt_sort_clause ')' {
         $$ = ctx.List({
-            Attr(Key::SQL_FUNCTION_NAME, Ident(@1)),
+            Attr(Key::SQL_FUNCTION_NAME, ctx.Add(@1, std::move($1))),
             Attr(Key::SQL_FUNCTION_ALL, Bool(@3, true)),
             Attr(Key::SQL_FUNCTION_ARGUMENTS, ctx.Add(@4, std::move($4))),
             Attr(Key::SQL_FUNCTION_ORDER, $5),
@@ -1479,7 +1479,7 @@ sql_func_application:
     }
   | sql_func_name '(' DISTINCT sql_func_arg_list sql_opt_sort_clause ')' {
         $$ = ctx.List({
-            Attr(Key::SQL_FUNCTION_NAME, Ident(@1)),
+            Attr(Key::SQL_FUNCTION_NAME, ctx.Add(@1, std::move($1))),
             Attr(Key::SQL_FUNCTION_DISTINCT, Bool(@3, true)),
             Attr(Key::SQL_FUNCTION_ARGUMENTS, ctx.Add(@4, std::move($4))),
             Attr(Key::SQL_FUNCTION_ORDER, $5),
@@ -1487,7 +1487,7 @@ sql_func_application:
     }
   | sql_func_name '(' '*' ')' {
         $$ = ctx.List({
-            Attr(Key::SQL_FUNCTION_NAME, Ident(@1)),
+            Attr(Key::SQL_FUNCTION_NAME, ctx.Add(@1, std::move($1))),
             Attr(Key::SQL_FUNCTION_ARGUMENTS, ctx.Add(@3, { Ident(@3) })), // XXX
         });
     }
