@@ -6,8 +6,8 @@ varargs:
     ;
 
 vararg_fields:
-    vararg_fields ',' opt_vararg_field  { $1.push_back($3); $$ = std::move($1); }
-  | opt_vararg_field                    { $$ = {$1}; }
+    vararg_fields ',' opt_vararg_field  { $1->push_back($3); $$ = std::move($1); }
+  | opt_vararg_field                    { $$ = ctx.List({$1}); }
     ;
 
 opt_vararg_field:
@@ -16,8 +16,8 @@ opt_vararg_field:
     ;
 
 vararg_key_path:
-    vararg_key_path '.' vararg_key  { $1.push_back($3); $$ = std::move($1); }
-  | vararg_key                      { $$ = { $1 }; }
+    vararg_key_path '.' vararg_key  { $1->push_back($3); $$ = std::move($1); }
+  | vararg_key                      { $$ = ctx.List({ $1 }); }
 
 vararg_key:
     SCONST                      { $$ = Const(@1, proto::AConstType::STRING); }
@@ -43,9 +43,9 @@ vararg_value:
     ;
 
 vararg_array:
-    vararg_array ',' vararg_value   { $1.push_back($3); $$ = std::move($1); }
-  | vararg_value                    { $$ = {$1}; }
-  | %empty                          { $$ = {}; }
+    vararg_array ',' vararg_value   { $1->push_back($3); $$ = std::move($1); }
+  | vararg_value                    { $$ = ctx.List({$1}); }
+  | %empty                          { $$ = ctx.List(); }
     ;
 
 vararg_array_brackets:

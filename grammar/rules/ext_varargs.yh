@@ -1,8 +1,8 @@
-%type <NodeList> vararg_array;
-%type <NodeList> vararg_array_brackets;
-%type <NodeList> vararg_fields;
-%type <NodeList> vararg_key_path;
-%type <NodeList> varargs;
+%type <WeakUniquePtr<NodeList>> vararg_array;
+%type <WeakUniquePtr<NodeList>> vararg_array_brackets;
+%type <WeakUniquePtr<NodeList>> vararg_fields;
+%type <WeakUniquePtr<NodeList>> vararg_key_path;
+%type <WeakUniquePtr<NodeList>> varargs;
+%type <proto::Node> opt_vararg_field;
 %type <proto::Node> vararg_key;
 %type <proto::Node> vararg_value;
-%type <proto::Node> opt_vararg_field;

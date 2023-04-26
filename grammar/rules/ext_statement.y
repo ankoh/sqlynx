@@ -6,13 +6,13 @@ opt_statement_list:
 
 statement_list:
     statement_list ';' opt_statement  { ctx.AddStatement($3); }
-  | statement error ';'                       { yyclearin; yyerrok; }
-  | statement                                 { ctx.AddStatement($1); }
+  | statement error ';'               { yyclearin; yyerrok; }
+  | statement                         { ctx.AddStatement($1); }
     ;
 
 opt_statement:
-    statement { $$ = $1; }
-  | %empty            { $$ = Null(); }
+    statement   { $$ = $1; }
+  | %empty      { $$ = Null(); }
 
 statement:
     sql_query_statement          { $$ = $1; }
