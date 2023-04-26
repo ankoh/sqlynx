@@ -17,7 +17,6 @@
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/text/rope.h"
 #include "flatsql/utils/chunk_buffer.h"
-#include "flatsql/utils/small_vector.h"
 #include "flatsql/utils/temp_allocator.h"
 
 namespace flatsql {
