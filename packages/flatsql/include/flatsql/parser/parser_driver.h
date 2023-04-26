@@ -212,13 +212,13 @@ class ParserDriver {
     void AddError(proto::Location loc, const std::string& message);
 
     /// Add a an array
-    inline proto::Node Add(proto::Location loc, std::initializer_list<proto::Node> values, bool null_if_empty = true,
-                           bool shrink_location = false) {
+    inline proto::Node Array(proto::Location loc, std::initializer_list<proto::Node> values, bool null_if_empty = true,
+                             bool shrink_location = false) {
         return AddArray(loc, List(std::move(values)), null_if_empty, shrink_location);
     }
     /// Add a an array
-    inline proto::Node Add(proto::Location loc, WeakUniquePtr<NodeList>&& values, bool null_if_empty = true,
-                           bool shrink_location = false) {
+    inline proto::Node Array(proto::Location loc, WeakUniquePtr<NodeList>&& values, bool null_if_empty = true,
+                             bool shrink_location = false) {
         return AddArray(loc, std::move(values), null_if_empty, shrink_location);
     }
     /// Add a an object

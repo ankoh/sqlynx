@@ -103,7 +103,7 @@ inline proto::Node Into(ParserDriver& driver, proto::Location loc, proto::Node t
 
 /// Create a column ref
 inline proto::Node ColumnRef(ParserDriver& driver, proto::Location loc, WeakUniquePtr<NodeList>&& path) {
-    auto path_nodes = driver.Add(loc, std::move(path));
+    auto path_nodes = driver.Array(loc, std::move(path));
     return driver.Object(loc, proto::NodeType::OBJECT_SQL_COLUMN_REF,
                          {
                              Attr(Key::SQL_COLUMN_REF_PATH, path_nodes),
