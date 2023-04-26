@@ -99,7 +99,7 @@ template <typename T, size_t InitialSize = 1024> struct ChunkBuffer {
     void Clear() {
         buffers.erase(buffers.begin() + 1, buffers.end());
         offsets.erase(offsets.begin() + 1, offsets.end());
-        next_chunk_size = 1024;
+        next_chunk_size = InitialSize;
         total_value_count = 0;
         buffers[0].clear();
         offsets[0] = 0;
@@ -111,7 +111,7 @@ template <typename T, size_t InitialSize = 1024> struct ChunkBuffer {
             grow();
             last = &buffers.back();
         }
-        last->push_back(value);
+        last->push_back(std::move(value));
         ++total_value_count;
         return last->back();
     }

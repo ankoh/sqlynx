@@ -25,17 +25,16 @@ namespace parser {
 
 class Scanner;
 
+using NodeID = uint32_t;
 using Key = proto::AttributeKey;
 using Location = proto::Location;
-using NodeList = std::list<proto::Node, TempNodeAllocator<proto::Node>>;
 
 inline std::ostream& operator<<(std::ostream& out, const proto::Location& loc) {
     out << "[" << loc.offset() << "," << (loc.offset() + loc.length()) << "[";
     return out;
 }
 
-using NodeID = uint32_t;
-
+/// A statement
 struct Statement {
     /// The statement type
     proto::StatementType type;
@@ -51,9 +50,95 @@ struct Statement {
     std::unique_ptr<proto::StatementT> Finish();
 };
 
+/// A raw pointer that is unique but does not destroy the object.
+/// If you get a WeakUniquePtr as r-value, you are responsible for deleting it.
+template <typename T> struct WeakUniquePtr {
+    T* inner;
+    WeakUniquePtr(T* value = nullptr) : inner(value) {}
+    WeakUniquePtr(const WeakUniquePtr& other) : inner(other.inner) {}
+    WeakUniquePtr& operator=(const WeakUniquePtr& other) {
+        Destroy();
+        inner = other.inner;
+        return *this;
+    }
+    WeakUniquePtr(WeakUniquePtr&& other) : inner(other.inner) { other.inner = nullptr; }
+    WeakUniquePtr& operator=(WeakUniquePtr&& other) {
+        Destroy();
+        inner = other.inner;
+        other.inner = nullptr;
+        return *this;
+    }
+    T* operator->() { return inner; }
+    T& operator*() { return *inner; }
+    void Destroy() {
+        if (inner) {
+            inner->~T();
+            inner = nullptr;
+        }
+    }
+};
+
+/// A list of nodes that uses own allocators for both, the list container and the nodes
+struct NodeList {
+    /// A list element
+    struct ListElement {
+        /// The next list element
+        ListElement* next = nullptr;
+        /// The next list element
+        ListElement* prev = nullptr;
+        /// The element node
+        proto::Node node;
+        /// Constructor
+        ListElement() = default;
+    };
+    using ListPool = TempNodePool<NodeList, 16>;
+    using ListElementPool = TempNodePool<ListElement, 128>;
+
+    /// The node list pool
+    ListPool& list_pool;
+    /// The node allocator
+    ListElementPool& element_pool;
+    /// The front of the list
+    ListElement* first_element = nullptr;
+    /// The back of the list
+    ListElement* last_element = nullptr;
+    /// The list size
+    size_t element_count = 0;
+
+    /// Constructor
+    NodeList(ListPool& list_pool, ListElementPool& node_pool);
+    /// Destructor
+    ~NodeList();
+    /// Move constructor
+    NodeList(NodeList&& other) = default;
+
+    /// Get the front
+    inline ListElement* front() { return first_element; }
+    /// Get the front
+    inline ListElement* back() { return last_element; }
+    /// Get the size
+    inline size_t size() { return element_count; }
+    /// Is empty?
+    inline bool empty() { return size() == 0; }
+    /// Prepend a node
+    void push_front(proto::Node node);
+    /// Append a node
+    void push_back(proto::Node node);
+    /// Append a list of nodes
+    void append(std::initializer_list<proto::Node> nodes);
+    /// Append a list of nodes
+    void append(WeakUniquePtr<NodeList>&& other);
+    /// Write elements into span
+    void copy_into(std::span<proto::Node> nodes);
+};
+
 /// Helper for nary expressions
 /// We defer the materialization of nary expressions to flatten conjunctions and disjunctions
 struct NAryExpression {
+    using Pool = TempNodePool<NAryExpression, 16>;
+
+    /// The expression pool
+    Pool& expression_pool;
     /// The location
     proto::Location location;
     /// The expression operator
@@ -61,10 +146,20 @@ struct NAryExpression {
     /// The expression operator node
     proto::Node opNode;
     /// The arguments
-    NodeList args;
+    WeakUniquePtr<NodeList> args;
+
+    /// Constructor
+    NAryExpression(Pool& pool, proto::Location loc, proto::ExpressionOperator op, proto::Node node,
+                   WeakUniquePtr<NodeList> args)
+        : expression_pool(pool), location(loc), op(op), opNode(node), args(std::move(args)) {}
+    /// Destructor
+    ~NAryExpression() {
+        args.Destroy();
+        expression_pool.Deallocate(this);
+    }
 };
 /// An expression is either a proto node with materialized children, or an n-ary expression that can be flattened
-using Expression = std::variant<proto::Node, NAryExpression*>;
+using Expression = std::variant<proto::Node, WeakUniquePtr<NAryExpression>>;
 
 class ParserDriver {
    protected:
@@ -78,6 +173,11 @@ class ParserDriver {
     std::vector<Statement> statements;
     /// The errors
     std::vector<std::pair<proto::Location, std::string>> errors;
+
+    /// The temporary node lists
+    NodeList::ListPool temp_lists;
+    /// The temporary node list elements
+    NodeList::ListElementPool temp_list_elements;
     /// The temporary nary expression nodes
     TempNodePool<NAryExpression, 16> temp_nary_expressions;
 
@@ -95,28 +195,41 @@ class ParserDriver {
     /// Return the scanner
     auto& GetScanner() { return scanner; }
 
+    /// Create a list
+    WeakUniquePtr<NodeList> List(std::initializer_list<proto::Node> nodes = {});
+
     /// Add a an array
-    proto::Node AddArray(proto::Location loc, NodeList&& values, bool null_if_empty = true,
+    proto::Node AddArray(proto::Location loc, WeakUniquePtr<NodeList>&& values, bool null_if_empty = true,
                          bool shrink_location = false);
     /// Add a an array
     proto::Node AddArray(proto::Location loc, std::span<Expression> values, bool null_if_empty = true,
                          bool shrink_location = false);
     /// Add an object
-    proto::Node AddObject(proto::Location loc, proto::NodeType type, NodeList&& attrs, bool null_if_empty = true,
-                          bool shrink_location = false);
+    proto::Node AddObject(proto::Location loc, proto::NodeType type, WeakUniquePtr<NodeList>&& attrs,
+                          bool null_if_empty = true, bool shrink_location = false);
     /// Add a statement
     void AddStatement(proto::Node node);
     /// Add an error
     void AddError(proto::Location loc, const std::string& message);
 
     /// Add a an array
-    inline proto::Node Add(proto::Location loc, NodeList&& values, bool null_if_empty = true,
+    inline proto::Node Add(proto::Location loc, std::initializer_list<proto::Node> values, bool null_if_empty = true,
+                           bool shrink_location = false) {
+        return AddArray(loc, List(std::move(values)), null_if_empty, shrink_location);
+    }
+    /// Add a an array
+    inline proto::Node Add(proto::Location loc, WeakUniquePtr<NodeList>&& values, bool null_if_empty = true,
                            bool shrink_location = false) {
         return AddArray(loc, std::move(values), null_if_empty, shrink_location);
     }
     /// Add a an object
-    inline proto::Node Add(proto::Location loc, proto::NodeType type, NodeList&& values, bool null_if_empty = true,
-                           bool shrink_location = false) {
+    inline proto::Node Add(proto::Location loc, proto::NodeType type, std::initializer_list<proto::Node> values,
+                           bool null_if_empty = true, bool shrink_location = false) {
+        return AddObject(loc, type, List(std::move(values)), null_if_empty, shrink_location);
+    }
+    /// Add a an object
+    inline proto::Node Add(proto::Location loc, proto::NodeType type, WeakUniquePtr<NodeList>&& values,
+                           bool null_if_empty = true, bool shrink_location = false) {
         return AddObject(loc, type, std::move(values), null_if_empty, shrink_location);
     }
     /// Add an expression

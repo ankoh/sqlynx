@@ -18,22 +18,29 @@ inline proto::Node Attr(proto::AttributeKey key, proto::Node node) {
     return proto::Node(node.location(), node.node_type(), static_cast<uint16_t>(key), node.parent(),
                        node.children_begin_or_value(), node.children_count());
 }
-/// Helper to concatenate node lists
-inline NodeList Concat(NodeList&& l, NodeList&& r) {
-    l.splice(l.end(), std::move(r));
+/// Helper to concatenate lists
+inline WeakUniquePtr<NodeList> Concat(WeakUniquePtr<NodeList>&& l, WeakUniquePtr<NodeList>&& r) {
+    l->append(std::move(r));
     return l;
 }
-/// Helper to concatenate node lists
-inline NodeList Concat(NodeList&& v0, NodeList&& v1, NodeList&& v2) {
-    v0.splice(v0.end(), std::move(v1));
-    v0.splice(v0.end(), std::move(v2));
+/// Helper to concatenate lists
+inline WeakUniquePtr<NodeList> Concat(WeakUniquePtr<NodeList>&& l, std::initializer_list<proto::Node> r) {
+    l->append(std::move(r));
+    return l;
+}
+/// Helper to concatenate lists
+inline WeakUniquePtr<NodeList> Concat(WeakUniquePtr<NodeList>&& v0, WeakUniquePtr<NodeList>&& v1,
+                                      std::initializer_list<proto::Node> v2) {
+    v0->append(std::move(v1));
+    v0->append(std::move(v2));
     return v0;
 }
-/// Helper to concatenate node lists
-inline NodeList Concat(NodeList&& v0, NodeList&& v1, NodeList&& v2, NodeList&& v3) {
-    v0.splice(v0.end(), std::move(v1));
-    v0.splice(v0.end(), std::move(v2));
-    v0.splice(v0.end(), std::move(v3));
+/// Helper to concatenate lists
+inline WeakUniquePtr<NodeList> Concat(WeakUniquePtr<NodeList>&& v0, WeakUniquePtr<NodeList>&& v1,
+                                      WeakUniquePtr<NodeList>&& v2, std::initializer_list<proto::Node> v3 = {}) {
+    v0->append(std::move(v1));
+    v0->append(std::move(v2));
+    v0->append(std::move(v3));
     return v0;
 }
 
@@ -93,10 +100,11 @@ inline proto::Node Into(ParserDriver& driver, proto::Location loc, proto::Node t
 }
 
 /// Create a column ref
-inline proto::Node ColumnRef(ParserDriver& driver, proto::Location loc, NodeList&& path) {
+inline proto::Node ColumnRef(ParserDriver& driver, proto::Location loc, WeakUniquePtr<NodeList>&& path) {
+    auto path_nodes = driver.Add(loc, std::move(path));
     return driver.Add(loc, proto::NodeType::OBJECT_SQL_COLUMN_REF,
                       {
-                          Attr(Key::SQL_COLUMN_REF_PATH, driver.Add(loc, std::move(path))),
+                          Attr(Key::SQL_COLUMN_REF_PATH, path_nodes),
                       });
 }
 
@@ -209,15 +217,17 @@ inline proto::NumericType ReadFloatType(ParserDriver& driver, proto::Location bi
 }
 
 /// Add a vararg field
-inline proto::Node VarArgField(ParserDriver& driver, proto::Location loc, NodeList&& key_path, proto::Node value) {
+inline proto::Node VarArgField(ParserDriver& driver, proto::Location loc, WeakUniquePtr<NodeList>&& path,
+                               proto::Node value) {
     auto root = value;
-    for (auto iter = key_path.rbegin(); iter != key_path.rend(); ++iter) {
+    for (auto iter = path->back(); iter; iter = iter->prev) {
         root = driver.Add(loc, proto::NodeType::OBJECT_EXT_VARARG_FIELD,
                           {
-                              Attr(proto::AttributeKey::EXT_VARARG_FIELD_KEY, *iter),
+                              Attr(proto::AttributeKey::EXT_VARARG_FIELD_KEY, iter->node),
                               Attr(proto::AttributeKey::EXT_VARARG_FIELD_VALUE, value),
                           });
     }
+    path.Destroy();
     return root;
 }
 
