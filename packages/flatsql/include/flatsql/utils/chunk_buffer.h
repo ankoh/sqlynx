@@ -116,7 +116,7 @@ template <typename T, size_t InitialSize = 1024> struct ChunkBuffer {
         return last->back();
     }
     /// Apply a function for each node in a range
-    template <typename F> void ForEachIn(size_t begin, size_t count, F fn) {
+    template <typename F> void ForEach(size_t begin, size_t count, F fn) {
         auto [chunk_id, value_id] = find(begin);
         while (count > 0) {
             auto& chunk = buffers[chunk_id];
