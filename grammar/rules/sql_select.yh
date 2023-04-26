@@ -1,6 +1,6 @@
-%type <Expression> sql_a_expr;
-%type <Expression> sql_a_expr_const;
-%type <Expression> sql_b_expr;
+%type <ExpressionVariant> sql_a_expr;
+%type <ExpressionVariant> sql_a_expr_const;
+%type <ExpressionVariant> sql_b_expr;
 %type <WeakUniquePtr<NodeList>> sql_any_name;
 %type <WeakUniquePtr<NodeList>> sql_any_operator;
 %type <WeakUniquePtr<NodeList>> sql_attrs;

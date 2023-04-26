@@ -37,9 +37,9 @@ vararg_value:
     }
   | sql_func_expr             { $$ = $1; }
   | sql_columnref             { $$ = $1; }
-  | sql_a_expr_const          { $$ = ctx.Add(std::move($1)); }
-  | '+' sql_a_expr_const %prec UMINUS   { $$ = ctx.Add(std::move($2)); }
-  | '-' sql_a_expr_const %prec UMINUS   { $$ = Negate(ctx, @$, @1, ctx.Add(std::move($2))); }
+  | sql_a_expr_const          { $$ = ctx.Expression(std::move($1)); }
+  | '+' sql_a_expr_const %prec UMINUS   { $$ = ctx.Expression(std::move($2)); }
+  | '-' sql_a_expr_const %prec UMINUS   { $$ = Negate(ctx, @$, @1, ctx.Expression(std::move($2))); }
     ;
 
 vararg_array:

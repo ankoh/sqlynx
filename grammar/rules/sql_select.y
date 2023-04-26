@@ -287,13 +287,13 @@ sql_sortby_list:
 sql_sortby:
     sql_a_expr USING sql_qual_all_op sql_opt_nulls_order {
         $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_ORDER, {
-            Attr(Key::SQL_ORDER_VALUE, ctx.Add(std::move($1))),
+            Attr(Key::SQL_ORDER_VALUE, ctx.Expression(std::move($1))),
             Attr(Key::SQL_ORDER_NULLRULE, $4),
         });
     }
   | sql_a_expr sql_opt_asc_desc sql_opt_nulls_order {
         $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_ORDER, {
-            Attr(Key::SQL_ORDER_VALUE, ctx.Add(std::move($1))),
+            Attr(Key::SQL_ORDER_VALUE, ctx.Expression(std::move($1))),
             Attr(Key::SQL_ORDER_DIRECTION, $2),
             Attr(Key::SQL_ORDER_NULLRULE, $3),
         });
@@ -361,12 +361,12 @@ sql_offset_clause:
     ;
 
 sql_select_limit_value:
-    sql_a_expr  { $$ = Attr(Key::SQL_SELECT_LIMIT, ctx.Add(std::move($1))); }
+    sql_a_expr  { $$ = Attr(Key::SQL_SELECT_LIMIT, ctx.Expression(std::move($1))); }
   | ALL         { $$ = Attr(Key::SQL_SELECT_LIMIT_ALL, Bool(@1, true)); }
     ;
 
 sql_select_offset_value:
-    sql_a_expr  { $$ = ctx.Add(std::move($1)); }
+    sql_a_expr  { $$ = ctx.Expression(std::move($1)); }
     ;
 
 // Allowing full expressions without parentheses causes various parsing
@@ -387,7 +387,7 @@ sql_select_offset_value:
 sql_select_fetch_first_value:
     sql_c_expr            { $$ = std::move($1); }
   | '+' sql_i_or_f_const  { $$ = $2; }
-  | '-' sql_i_or_f_const  { $$ = ctx.Add(Negate(ctx, @$, @1, $2)); }
+  | '-' sql_i_or_f_const  { $$ = ctx.Expression(Negate(ctx, @$, @1, $2)); }
 
         ;
 
@@ -444,7 +444,7 @@ sql_group_by_item:
     sql_a_expr {
         $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_GROUP_BY_ITEM, {
             Attr(Key::SQL_GROUP_BY_ITEM_TYPE, Enum(@$, proto::GroupByItemType::EXPRESSION)),
-            Attr(Key::SQL_GROUP_BY_ITEM_ARG, ctx.Add(std::move($1))),
+            Attr(Key::SQL_GROUP_BY_ITEM_ARG, ctx.Expression(std::move($1))),
         });
     }
   | sql_empty_grouping_set {
@@ -481,7 +481,7 @@ sql_empty_grouping_set:
 // unreserved_keyword rule.
 
 sql_having_clause:
-    HAVING sql_a_expr   { $$ = ctx.Add(std::move($2)); }
+    HAVING sql_a_expr   { $$ = ctx.Expression(std::move($2)); }
   | %empty              { $$ = Null(); }
     ;
 
@@ -732,7 +732,7 @@ sql_join_outer:
 
 sql_join_qual:
     USING '(' sql_name_list ')'   { $$ = ctx.List({ Attr(Key::SQL_JOIN_USING, ctx.Array(Loc({@2, @3, @4}), std::move($3))) }); }
-  | ON sql_a_expr                 { $$ = ctx.List({ Attr(Key::SQL_JOIN_ON, ctx.Add(std::move($2))) }); }
+  | ON sql_a_expr                 { $$ = ctx.List({ Attr(Key::SQL_JOIN_ON, ctx.Expression(std::move($2))) }); }
     ;
 
 sql_relation_expr:
@@ -855,7 +855,7 @@ sql_opt_ordinality:
 
 
 sql_where_clause:
-    WHERE sql_a_expr      { $$ = ctx.Add(std::move($2)); }
+    WHERE sql_a_expr      { $$ = ctx.Expression(std::move($2)); }
   | %empty                { $$ = Null(); }
     ;
 
@@ -1050,7 +1050,7 @@ sql_bit_with_length:
     BIT sql_opt_varying '(' sql_a_expr ')' {
         $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_BIT_TYPE, {
             Attr(Key::SQL_BIT_TYPE_VARYING, Bool(@2, $2)),
-            Attr(Key::SQL_BIT_TYPE_LENGTH, ctx.Add(std::move($4))),
+            Attr(Key::SQL_BIT_TYPE_LENGTH, ctx.Expression(std::move($4))),
         });
     }
     ;
@@ -1239,7 +1239,7 @@ sql_a_expr:
     sql_c_expr { $$ = $1; }
   | sql_a_expr TYPECAST sql_typename {
         $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_TYPECAST_EXPRESSION, {
-            Attr(Key::SQL_TYPECAST_VALUE, ctx.Add(std::move($1))),
+            Attr(Key::SQL_TYPECAST_VALUE, ctx.Expression(std::move($1))),
             Attr(Key::SQL_TYPECAST_TYPE, $3),
         });
     }
@@ -1306,14 +1306,14 @@ sql_a_expr:
   | sql_a_expr IS NOT DISTINCT FROM sql_a_expr      %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3, @4, @5}), ExprFunc::IS_NOT_DISTINCT_FROM), std::move($1), std::move($6)); }
   | sql_a_expr IS OF '(' sql_type_list ')'          %prec IS {
         $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_TYPETEST_EXPRESSION, {
-            Attr(Key::SQL_TYPETEST_VALUE, ctx.Add(std::move($1))),
+            Attr(Key::SQL_TYPETEST_VALUE, ctx.Expression(std::move($1))),
             Attr(Key::SQL_TYPETEST_TYPES, ctx.Array(@5, std::move($5))),
         });
     }
   | sql_a_expr IS NOT OF '(' sql_type_list ')'      %prec IS {
         $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_TYPETEST_EXPRESSION, {
             Attr(Key::SQL_TYPETEST_NEGATE, Bool(@3, true)),
-            Attr(Key::SQL_TYPETEST_VALUE, ctx.Add(std::move($1))),
+            Attr(Key::SQL_TYPETEST_VALUE, ctx.Expression(std::move($1))),
             Attr(Key::SQL_TYPETEST_TYPES, ctx.Array(@6, std::move($6))),
         });
     }
@@ -1329,7 +1329,7 @@ sql_a_expr:
             Attr(Key::SQL_SELECT_EXPRESSION_STATEMENT, s)
         });
         $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_SUBQUERY_EXPRESSION, {
-            Attr(Key::SQL_SUBQUERY_ARG0, ctx.Add(std::move($1))),
+            Attr(Key::SQL_SUBQUERY_ARG0, ctx.Expression(std::move($1))),
             Attr(Key::SQL_SUBQUERY_ARG1, std::move(e)),
             Attr(Key::SQL_SUBQUERY_OPERATOR, std::move($2)),
             Attr(Key::SQL_SUBQUERY_QUANTIFIER, std::move($3)),
@@ -1337,8 +1337,8 @@ sql_a_expr:
     }
   | sql_a_expr sql_subquery_op sql_subquery_quantifier '(' sql_a_expr ')'        %prec Op {
         $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_SUBQUERY_EXPRESSION, {
-            Attr(Key::SQL_SUBQUERY_ARG0, ctx.Add(std::move($1))),
-            Attr(Key::SQL_SUBQUERY_ARG1, ctx.Add(std::move($5))),
+            Attr(Key::SQL_SUBQUERY_ARG0, ctx.Expression(std::move($1))),
+            Attr(Key::SQL_SUBQUERY_ARG1, ctx.Expression(std::move($5))),
             Attr(Key::SQL_SUBQUERY_OPERATOR, std::move($2)),
             Attr(Key::SQL_SUBQUERY_QUANTIFIER, std::move($3)),
         });
@@ -1358,7 +1358,7 @@ sql_b_expr:
     sql_c_expr { $$ = std::move($1); }
   | sql_b_expr TYPECAST sql_typename {
         $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_TYPECAST_EXPRESSION, {
-            Attr(Key::SQL_TYPECAST_VALUE, ctx.Add(std::move($1))),
+            Attr(Key::SQL_TYPECAST_VALUE, ctx.Expression(std::move($1))),
             Attr(Key::SQL_TYPECAST_TYPE, $3),
         });
     }
@@ -1411,13 +1411,13 @@ sql_param_ref:
 
 sql_c_expr:
     sql_columnref     { $$ = $1; }
-  | sql_a_expr_const  { $$ = ctx.Add(std::move($1)); }
+  | sql_a_expr_const  { $$ = ctx.Expression(std::move($1)); }
   | '(' sql_a_expr ')' sql_opt_indirection {
         if  ($4->empty()) {
-            $$ = ctx.Add(std::move($2));
+            $$ = ctx.Expression(std::move($2));
         } else {
             $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_INDIRECTION, {
-                Attr(Key::SQL_INDIRECTION_VALUE, ctx.Add(std::move($2))),
+                Attr(Key::SQL_INDIRECTION_VALUE, ctx.Expression(std::move($2))),
                 Attr(Key::SQL_INDIRECTION_PATH, ctx.Array(@4, std::move($4))),
             });
         }
@@ -1529,7 +1529,7 @@ sql_func_expr_common_subexpr:
     COLLATION FOR '(' sql_a_expr ')' {
         $$ = ctx.List({
             Attr(Key::SQL_FUNCTION_NAME, Enum(Loc({@1, @2}), proto::KnownFunction::COLLATION_FOR)),
-            Attr(Key::SQL_FUNCTION_ARGUMENTS, ctx.Array(Loc({@1, @2, @3}), { ctx.Add(std::move($4)) })),
+            Attr(Key::SQL_FUNCTION_ARGUMENTS, ctx.Array(Loc({@1, @2, @3}), { ctx.Expression(std::move($4)) })),
         });
     }
   | CURRENT_DATE        { $$ = ctx.List({ Attr(Key::SQL_FUNCTION_NAME, Enum(@1, proto::KnownFunction::CURRENT_DATE)) }); }
@@ -1569,7 +1569,7 @@ sql_func_expr_common_subexpr:
   | CURRENT_SCHEMA  { $$ = ctx.List({ Attr(Key::SQL_FUNCTION_NAME, Enum(@1, proto::KnownFunction::CURRENT_SCHEMA)) }); }
   | CAST '(' sql_a_expr AS sql_typename ')' {
         auto args = ctx.Object(Loc({@2, @3, @4, @5, @6}), proto::NodeType::OBJECT_SQL_FUNCTION_CAST_ARGS, {
-            Attr(Key::SQL_FUNCTION_CAST_VALUE, ctx.Add(std::move($3))),
+            Attr(Key::SQL_FUNCTION_CAST_VALUE, ctx.Expression(std::move($3))),
             Attr(Key::SQL_FUNCTION_CAST_TYPE, std::move($5))
         });
         $$ = ctx.List({
@@ -1636,7 +1636,7 @@ sql_func_expr_common_subexpr:
     }
   | TREAT '(' sql_a_expr AS sql_typename ')' {
         auto args = ctx.Object(Loc({@2, @3, @4, @5, @6}), proto::NodeType::OBJECT_SQL_FUNCTION_TREAT_ARGS, {
-            Attr(Key::SQL_FUNCTION_TREAT_VALUE, ctx.Add(std::move($3))),
+            Attr(Key::SQL_FUNCTION_TREAT_VALUE, ctx.Expression(std::move($3))),
             Attr(Key::SQL_FUNCTION_TREAT_TYPE, std::move($5))
         });
         $$ = ctx.List({
@@ -1647,7 +1647,7 @@ sql_func_expr_common_subexpr:
   | NULLIF '(' sql_a_expr ',' sql_a_expr ')' {
         $$ = ctx.List({
             Attr(Key::SQL_FUNCTION_NAME, Enum(@1, proto::KnownFunction::NULLIF)),
-            Attr(Key::SQL_FUNCTION_ARGUMENTS, ctx.Array(Loc({@2, @3, @4, @5, @6}), { ctx.Add(std::move($3)), ctx.Add(std::move($5)) })),
+            Attr(Key::SQL_FUNCTION_ARGUMENTS, ctx.Array(Loc({@2, @3, @4, @5, @6}), { ctx.Expression(std::move($3)), ctx.Expression(std::move($5)) })),
         });
     }
   | COALESCE '(' sql_expr_list ')' {
@@ -1668,7 +1668,7 @@ sql_within_group_clause:
     ;
 
 sql_filter_clause:
-    FILTER '(' WHERE sql_a_expr ')'   { $$ = ctx.Add(std::move($4)); }
+    FILTER '(' WHERE sql_a_expr ')'   { $$ = ctx.Expression(std::move($4)); }
   | %empty                            { $$ = Null(); }
     ;
 
@@ -1769,13 +1769,13 @@ sql_frame_bound:
         $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_WINDOW_BOUND, {
             Attr(Key::SQL_WINDOW_BOUND_MODE, Enum(@1, proto::WindowBoundMode::VALUE)),
             Attr(Key::SQL_WINDOW_BOUND_DIRECTION, Enum(@1, proto::WindowBoundDirection::PRECEDING)),
-            Attr(Key::SQL_WINDOW_BOUND_VALUE, ctx.Add(std::move($1))),
+            Attr(Key::SQL_WINDOW_BOUND_VALUE, ctx.Expression(std::move($1))),
         });}
   | sql_a_expr FOLLOWING {
         $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_WINDOW_BOUND, {
             Attr(Key::SQL_WINDOW_BOUND_MODE, Enum(@1, proto::WindowBoundMode::VALUE)),
             Attr(Key::SQL_WINDOW_BOUND_DIRECTION, Enum(@1, proto::WindowBoundDirection::FOLLOWING)),
-            Attr(Key::SQL_WINDOW_BOUND_VALUE, ctx.Add(std::move($1))),
+            Attr(Key::SQL_WINDOW_BOUND_VALUE, ctx.Expression(std::move($1))),
         });}
     ;
 
@@ -1791,7 +1791,7 @@ sql_frame_bound:
 sql_row:
     ROW '(' sql_expr_list ')'             { $$ = std::move($3); }
   | ROW '(' ')'                           { $$ = ctx.List(); }
-  | '(' sql_expr_list ',' sql_a_expr ')'  { $2->push_back(ctx.Add(std::move($4))); $$ = std::move($2); }
+  | '(' sql_expr_list ',' sql_a_expr ')'  { $2->push_back(ctx.Expression(std::move($4))); $$ = std::move($2); }
     ;
 
 sql_subquery_quantifier:
@@ -1858,8 +1858,8 @@ sql_any_operator:
     ;
 
 sql_expr_list:
-    sql_a_expr                      { $$ = ctx.List({ ctx.Add(std::move($1)) }); }
-  | sql_expr_list ',' sql_a_expr    { $1->push_back(ctx.Add(std::move($3))); $$ = std::move($1); }
+    sql_a_expr                      { $$ = ctx.List({ ctx.Expression(std::move($1)) }); }
+  | sql_expr_list ',' sql_a_expr    { $1->push_back(ctx.Expression(std::move($3))); $$ = std::move($1); }
     ;
 
 sql_func_arg_list:
@@ -1870,19 +1870,19 @@ sql_func_arg_list:
 sql_func_arg_expr:
     sql_a_expr {
         $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_FUNCTION_ARG, {
-            Attr(Key::SQL_FUNCTION_ARG_VALUE, ctx.Add(std::move($1))),
+            Attr(Key::SQL_FUNCTION_ARG_VALUE, ctx.Expression(std::move($1))),
         });
     }
   | sql_param_name COLON_EQUALS sql_a_expr {
         $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_FUNCTION_ARG, {
             Attr(Key::SQL_FUNCTION_ARG_NAME, Ident(@1)),
-            Attr(Key::SQL_FUNCTION_ARG_VALUE, ctx.Add(std::move($3))),
+            Attr(Key::SQL_FUNCTION_ARG_VALUE, ctx.Expression(std::move($3))),
         });
     }
   | sql_param_name EQUALS_GREATER sql_a_expr {
         $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_FUNCTION_ARG, {
             Attr(Key::SQL_FUNCTION_ARG_NAME, Ident(@1)),
-            Attr(Key::SQL_FUNCTION_ARG_VALUE, ctx.Add(std::move($3))),
+            Attr(Key::SQL_FUNCTION_ARG_VALUE, ctx.Expression(std::move($3))),
         });
     }
     ;
@@ -1896,7 +1896,7 @@ sql_extract_list:
     sql_extract_arg FROM sql_a_expr {
         $$ = ctx.List({
             Attr(Key::SQL_FUNCTION_EXTRACT_TARGET, std::move($1)),
-            Attr(Key::SQL_FUNCTION_EXTRACT_INPUT, ctx.Add(std::move($3))),
+            Attr(Key::SQL_FUNCTION_EXTRACT_INPUT, ctx.Expression(std::move($3))),
         });
     }
   | %empty  { $$ = ctx.List(); }
@@ -1924,7 +1924,7 @@ sql_extract_arg:
 sql_overlay_list:
     sql_a_expr sql_overlay_placing sql_substr_from sql_substr_for {
         $$ = ctx.List({
-            Attr(Key::SQL_FUNCTION_OVERLAY_INPUT, ctx.Add(std::move($1))),
+            Attr(Key::SQL_FUNCTION_OVERLAY_INPUT, ctx.Expression(std::move($1))),
             Attr(Key::SQL_FUNCTION_OVERLAY_PLACING, std::move($2)),
             Attr(Key::SQL_FUNCTION_OVERLAY_FROM, std::move($3)),
             Attr(Key::SQL_FUNCTION_OVERLAY_FOR, std::move($4)),
@@ -1932,7 +1932,7 @@ sql_overlay_list:
     }
   | sql_a_expr sql_overlay_placing sql_substr_from {
         $$ = ctx.List({
-            Attr(Key::SQL_FUNCTION_OVERLAY_INPUT, ctx.Add(std::move($1))),
+            Attr(Key::SQL_FUNCTION_OVERLAY_INPUT, ctx.Expression(std::move($1))),
             Attr(Key::SQL_FUNCTION_OVERLAY_PLACING, std::move($2)),
             Attr(Key::SQL_FUNCTION_OVERLAY_FROM, std::move($3)),
         });
@@ -1940,7 +1940,7 @@ sql_overlay_list:
     ;
 
 sql_overlay_placing:
-    PLACING sql_a_expr { $$ = ctx.Add(std::move($2)); }
+    PLACING sql_a_expr { $$ = ctx.Expression(std::move($2)); }
     ;
 
 // position_list uses b_expr not a_expr to avoid conflict with general IN
@@ -1948,8 +1948,8 @@ sql_overlay_placing:
 sql_position_list:
     sql_b_expr IN_P sql_b_expr {
         $$ = ctx.List({
-            Attr(Key::SQL_FUNCTION_POSITION_SEARCH, ctx.Add(std::move($1))),
-            Attr(Key::SQL_FUNCTION_POSITION_INPUT, ctx.Add(std::move($3))),
+            Attr(Key::SQL_FUNCTION_POSITION_SEARCH, ctx.Expression(std::move($1))),
+            Attr(Key::SQL_FUNCTION_POSITION_INPUT, ctx.Expression(std::move($3))),
         });
     }
   | %empty { $$ = ctx.List(); }
@@ -1970,7 +1970,7 @@ sql_position_list:
 sql_substr_list:
     sql_a_expr sql_substr_from sql_substr_for {
         auto args = ctx.Object(@$, proto::NodeType::OBJECT_SQL_FUNCTION_SUBSTRING_ARGS, {
-            Attr(Key::SQL_FUNCTION_SUBSTRING_INPUT, ctx.Add(std::move($1))),
+            Attr(Key::SQL_FUNCTION_SUBSTRING_INPUT, ctx.Expression(std::move($1))),
             Attr(Key::SQL_FUNCTION_SUBSTRING_FROM, std::move($2)),
             Attr(Key::SQL_FUNCTION_SUBSTRING_FOR, std::move($3)),
         });
@@ -1978,7 +1978,7 @@ sql_substr_list:
     }
   | sql_a_expr sql_substr_for sql_substr_from {
         auto args = ctx.Object(@$, proto::NodeType::OBJECT_SQL_FUNCTION_SUBSTRING_ARGS, {
-            Attr(Key::SQL_FUNCTION_SUBSTRING_INPUT, ctx.Add(std::move($1))),
+            Attr(Key::SQL_FUNCTION_SUBSTRING_INPUT, ctx.Expression(std::move($1))),
             Attr(Key::SQL_FUNCTION_SUBSTRING_FOR, std::move($2)),
             Attr(Key::SQL_FUNCTION_SUBSTRING_FROM, std::move($3)),
         });
@@ -1986,14 +1986,14 @@ sql_substr_list:
     }
   | sql_a_expr sql_substr_from {
         auto args = ctx.Object(@$, proto::NodeType::OBJECT_SQL_FUNCTION_SUBSTRING_ARGS, {
-            Attr(Key::SQL_FUNCTION_SUBSTRING_INPUT, ctx.Add(std::move($1))),
+            Attr(Key::SQL_FUNCTION_SUBSTRING_INPUT, ctx.Expression(std::move($1))),
             Attr(Key::SQL_FUNCTION_SUBSTRING_FROM, std::move($2)),
         });
         $$ = ctx.List({ Attr(Key::SQL_FUNCTION_SUBSTRING_ARGS, args) });
    }
   | sql_a_expr sql_substr_for {
         auto args = ctx.Object(@$, proto::NodeType::OBJECT_SQL_FUNCTION_SUBSTRING_ARGS, {
-            Attr(Key::SQL_FUNCTION_SUBSTRING_INPUT, ctx.Add(std::move($1))),
+            Attr(Key::SQL_FUNCTION_SUBSTRING_INPUT, ctx.Expression(std::move($1))),
             Attr(Key::SQL_FUNCTION_SUBSTRING_FOR, std::move($2)),
         });
         $$ = ctx.List({ Attr(Key::SQL_FUNCTION_SUBSTRING_ARGS, args) });
@@ -2003,17 +2003,17 @@ sql_substr_list:
     ;
 
 sql_substr_from:
-    FROM sql_a_expr   { $$ = ctx.Add(std::move($2)); }
+    FROM sql_a_expr   { $$ = ctx.Expression(std::move($2)); }
     ;
 
 sql_substr_for:
-    FOR sql_a_expr    { $$ = ctx.Add(std::move($2)); }
+    FOR sql_a_expr    { $$ = ctx.Expression(std::move($2)); }
     ;
 
 sql_trim_list:
     sql_a_expr FROM sql_expr_list {
         $$ = ctx.List({
-            Attr(Key::SQL_FUNCTION_TRIM_CHARACTERS, ctx.Add(std::move($1))),
+            Attr(Key::SQL_FUNCTION_TRIM_CHARACTERS, ctx.Expression(std::move($1))),
             Attr(Key::SQL_FUNCTION_TRIM_INPUT, ctx.Array(Loc({@2, @3}), std::move($3))),
         });
     }
@@ -2056,19 +2056,19 @@ sql_when_clause_list:
 sql_when_clause:
     WHEN sql_a_expr THEN sql_a_expr {
       $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_CASE_CLAUSE, {
-        Attr(Key::SQL_CASE_CLAUSE_WHEN, ctx.Add(std::move($2))),
-        Attr(Key::SQL_CASE_CLAUSE_THEN, ctx.Add(std::move($4))),
+        Attr(Key::SQL_CASE_CLAUSE_WHEN, ctx.Expression(std::move($2))),
+        Attr(Key::SQL_CASE_CLAUSE_THEN, ctx.Expression(std::move($4))),
       });
     }
     ;
 
 sql_case_default:
-    ELSE sql_a_expr   { $$ = ctx.Add(std::move($2)); }
+    ELSE sql_a_expr   { $$ = ctx.Expression(std::move($2)); }
   | %empty            { $$ = Null(); }
     ;
 
 sql_case_arg:
-    sql_a_expr        { $$ = ctx.Add(std::move($1)); }
+    sql_a_expr        { $$ = ctx.Expression(std::move($1)); }
   | %empty            { $$ = Null(); }
     ;
 
@@ -2080,12 +2080,12 @@ sql_columnref:
 sql_indirection_el:
     '.' sql_attr_name       { $$ = Ident(@2); }
   | '.' '*'                 { $$ = Ident(@2); }
-  | '[' sql_a_expr ']'      { $$ = IndirectionIndex(ctx, @$, ctx.Add(std::move($2))); }
+  | '[' sql_a_expr ']'      { $$ = IndirectionIndex(ctx, @$, ctx.Expression(std::move($2))); }
   | '[' sql_opt_slice_bound ':' sql_opt_slice_bound ']'     { $$ = IndirectionIndex(ctx, @$, $2, $4); }
     ;
 
 sql_opt_slice_bound:
-    sql_a_expr              { $$ = ctx.Add(std::move($1)); }
+    sql_a_expr              { $$ = ctx.Expression(std::move($1)); }
   | %empty                  { $$ = Null(); }
     ;
 
@@ -2121,7 +2121,7 @@ sql_target_list:
 sql_target_el:
     sql_a_expr AS sql_col_label_or_string {
         $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_RESULT_TARGET, {
-            Attr(Key::SQL_RESULT_TARGET_VALUE, ctx.Add(std::move($1))),
+            Attr(Key::SQL_RESULT_TARGET_VALUE, ctx.Expression(std::move($1))),
             Attr(Key::SQL_RESULT_TARGET_NAME, $3),
         });
     }
@@ -2135,13 +2135,13 @@ sql_target_el:
 
   | sql_a_expr IDENT {
         $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_RESULT_TARGET, {
-            Attr(Key::SQL_RESULT_TARGET_VALUE, ctx.Add(std::move($1))),
+            Attr(Key::SQL_RESULT_TARGET_VALUE, ctx.Expression(std::move($1))),
             Attr(Key::SQL_RESULT_TARGET_NAME, Ident(@2)),
         });
     }
   | sql_a_expr  {
         $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_RESULT_TARGET, {
-            Attr(Key::SQL_RESULT_TARGET_VALUE, ctx.Add(std::move($1))),
+            Attr(Key::SQL_RESULT_TARGET_VALUE, ctx.Expression(std::move($1))),
         });
     }
   | '*' {
@@ -2240,7 +2240,7 @@ sql_a_expr_const:
   | sql_const_interval '(' sql_a_expr ')' SCONST {
       $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_CONST_INTERVAL_CAST, {
         Attr(Key::SQL_CONST_CAST_VALUE, Const(@5, proto::AConstType::STRING)),
-        Attr(Key::SQL_CONST_CAST_INTERVAL, ctx.Add(std::move($3))),
+        Attr(Key::SQL_CONST_CAST_INTERVAL, ctx.Expression(std::move($3))),
       });
     }
   | sql_const_interval sql_param_ref sql_opt_interval {
