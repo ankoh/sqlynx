@@ -90,7 +90,11 @@ template <class T> class TempNodeAllocator {
 
     /// Allocate a node
     pointer allocate(size_type n, const void *hint = 0) {
+#ifdef WASM
+        assert(n == 1 && !hint);
+#else
         if (n != 1 || hint) throw std::bad_alloc();
+#endif
         return node_pool.Allocate();
     }
     /// Deallocate a node
@@ -102,7 +106,11 @@ template <class T> class TempNodeAllocator {
 
     /// Get the thread-local node pool
     static auto &GetThreadPool() {
+#ifdef WASM
+        static TempNodePool<T> local_pool;
+#else
         static thread_local TempNodePool<T> local_pool;
+#endif
         return local_pool;
     }
     /// Reset the thread-local node pool
