@@ -5,9 +5,9 @@ opt_statement_list:
   | %empty
 
 statement_list:
-    statement_list ';' opt_statement  { ctx.AddStatement($3); }
+    statement_list ';' opt_statement  { ctx.FinishStatement($3); }
   | statement error ';'               { yyclearin; yyerrok; }
-  | statement                         { ctx.AddStatement($1); }
+  | statement                         { ctx.FinishStatement($1); }
     ;
 
 opt_statement:

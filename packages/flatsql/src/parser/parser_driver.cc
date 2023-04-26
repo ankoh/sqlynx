@@ -29,6 +29,16 @@ std::unique_ptr<proto::StatementT> Statement::Finish() {
 }
 
 /// Constructor
+NAryExpression::NAryExpression(Pool& pool, proto::Location loc, proto::ExpressionOperator op, proto::Node node,
+                               WeakUniquePtr<NodeList> args)
+    : expression_pool(pool), location(loc), op(op), opNode(node), args(std::move(args)) {}
+/// Destructor
+NAryExpression::~NAryExpression() {
+    args.Destroy();
+    expression_pool.Deallocate(this);
+}
+
+/// Constructor
 NodeList::NodeList(ListPool& l, ListElementPool& n) : list_pool(l), element_pool(n) {}
 /// Destructor
 NodeList::~NodeList() {
@@ -276,7 +286,7 @@ proto::Node ParserDriver::Object(proto::Location loc, proto::NodeType type, Weak
 }
 
 /// Add a statement
-void ParserDriver::AddStatement(proto::Node node) {
+void ParserDriver::FinishStatement(proto::Node node) {
     if (node.node_type() == proto::NodeType::NONE) {
         return;
     }
