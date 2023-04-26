@@ -226,19 +226,19 @@ proto::Node ParserDriver::AddExpression(Expression&& expr) {
     } else {
         auto nary = std::get<1>(expr);
         auto args = AddArray(nary->location, std::move(nary->args));
-        auto node = Add(nary->location, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
-                        {
-                            Attr(Key::SQL_EXPRESSION_OPERATOR, nary->opNode),
-                            Attr(Key::SQL_EXPRESSION_ARGS, args),
-                        });
+        auto node = Object(nary->location, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
+                           {
+                               Attr(Key::SQL_EXPRESSION_OPERATOR, nary->opNode),
+                               Attr(Key::SQL_EXPRESSION_ARGS, args),
+                           });
         nary.Destroy();
         return node;
     }
 }
 
 /// Add an object
-proto::Node ParserDriver::AddObject(proto::Location loc, proto::NodeType type, WeakUniquePtr<NodeList>&& attr_list,
-                                    bool null_if_empty, bool shrink_location) {
+proto::Node ParserDriver::Object(proto::Location loc, proto::NodeType type, WeakUniquePtr<NodeList>&& attr_list,
+                                 bool null_if_empty, bool shrink_location) {
     // Sort all the attributes
     std::array<proto::Node, 8> attrs_static;
     std::vector<proto::Node> attrs_heap;

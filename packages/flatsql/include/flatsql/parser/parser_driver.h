@@ -204,8 +204,8 @@ class ParserDriver {
     proto::Node AddArray(proto::Location loc, std::span<Expression> values, bool null_if_empty = true,
                          bool shrink_location = false);
     /// Add an object
-    proto::Node AddObject(proto::Location loc, proto::NodeType type, WeakUniquePtr<NodeList>&& attrs,
-                          bool null_if_empty = true, bool shrink_location = false);
+    proto::Node Object(proto::Location loc, proto::NodeType type, WeakUniquePtr<NodeList>&& attrs,
+                       bool null_if_empty = true, bool shrink_location = false);
     /// Add a statement
     void AddStatement(proto::Node node);
     /// Add an error
@@ -222,14 +222,9 @@ class ParserDriver {
         return AddArray(loc, std::move(values), null_if_empty, shrink_location);
     }
     /// Add a an object
-    inline proto::Node Add(proto::Location loc, proto::NodeType type, std::initializer_list<proto::Node> values,
-                           bool null_if_empty = true, bool shrink_location = false) {
-        return AddObject(loc, type, List(std::move(values)), null_if_empty, shrink_location);
-    }
-    /// Add a an object
-    inline proto::Node Add(proto::Location loc, proto::NodeType type, WeakUniquePtr<NodeList>&& values,
-                           bool null_if_empty = true, bool shrink_location = false) {
-        return AddObject(loc, type, std::move(values), null_if_empty, shrink_location);
+    inline proto::Node Object(proto::Location loc, proto::NodeType type, std::initializer_list<proto::Node> values,
+                              bool null_if_empty = true, bool shrink_location = false) {
+        return Object(loc, type, List(std::move(values)), null_if_empty, shrink_location);
     }
     /// Add an expression
     proto::Node AddExpression(Expression&& expr);
