@@ -10,7 +10,6 @@
 #include "flatsql/parser/parser.h"
 #include "flatsql/parser/scanner.h"
 #include "flatsql/proto/proto_generated.h"
-#include "flatsql/utils/small_vector.h"
 
 namespace flatsql {
 namespace parser {

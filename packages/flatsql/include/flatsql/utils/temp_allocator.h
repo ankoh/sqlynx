@@ -12,7 +12,7 @@
 namespace flatsql {
 
 template <class T, size_t InitialSize = 128> class TempNodePool {
-    union Node {
+    struct Node {
         /// The next node
         Node *next;
         /// The value
