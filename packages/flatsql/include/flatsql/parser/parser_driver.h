@@ -27,7 +27,7 @@ class Scanner;
 
 using Key = proto::AttributeKey;
 using Location = proto::Location;
-using NodeVector = std::list<proto::Node, ChunkNodeAllocator<proto::Node>>;
+using NodeList = std::list<proto::Node, ChunkNodeAllocator<proto::Node>>;
 
 inline std::ostream& operator<<(std::ostream& out, const proto::Location& loc) {
     out << "[" << loc.offset() << "," << (loc.offset() + loc.length()) << "[";
@@ -61,7 +61,7 @@ struct NAryExpression {
     /// The expression operator node
     proto::Node opNode;
     /// The arguments
-    NodeVector args;
+    NodeList args;
 };
 /// An expression is either a proto node with materialized children, or an n-ary expression that can be flattened
 using Expression = std::variant<proto::Node, NAryExpression>;
@@ -94,13 +94,13 @@ class ParserDriver {
     auto& GetScanner() { return scanner; }
 
     /// Add a an array
-    proto::Node AddArray(proto::Location loc, NodeVector&& values, bool null_if_empty = true,
+    proto::Node AddArray(proto::Location loc, NodeList&& values, bool null_if_empty = true,
                          bool shrink_location = false);
     /// Add a an array
     proto::Node AddArray(proto::Location loc, std::span<Expression> values, bool null_if_empty = true,
                          bool shrink_location = false);
     /// Add an object
-    proto::Node AddObject(proto::Location loc, proto::NodeType type, NodeVector&& attrs, bool null_if_empty = true,
+    proto::Node AddObject(proto::Location loc, proto::NodeType type, NodeList&& attrs, bool null_if_empty = true,
                           bool shrink_location = false);
     /// Add a statement
     void AddStatement(proto::Node node);
@@ -108,12 +108,12 @@ class ParserDriver {
     void AddError(proto::Location loc, const std::string& message);
 
     /// Add a an array
-    inline proto::Node Add(proto::Location loc, NodeVector&& values, bool null_if_empty = true,
+    inline proto::Node Add(proto::Location loc, NodeList&& values, bool null_if_empty = true,
                            bool shrink_location = false) {
         return AddArray(loc, std::move(values), null_if_empty, shrink_location);
     }
     /// Add a an object
-    inline proto::Node Add(proto::Location loc, proto::NodeType type, NodeVector&& values, bool null_if_empty = true,
+    inline proto::Node Add(proto::Location loc, proto::NodeType type, NodeList&& values, bool null_if_empty = true,
                            bool shrink_location = false) {
         return AddObject(loc, type, std::move(values), null_if_empty, shrink_location);
     }

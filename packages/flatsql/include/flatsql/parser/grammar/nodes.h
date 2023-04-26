@@ -18,19 +18,19 @@ inline proto::Node Attr(proto::AttributeKey key, proto::Node node) {
     return proto::Node(node.location(), node.node_type(), static_cast<uint16_t>(key), node.parent(),
                        node.children_begin_or_value(), node.children_count());
 }
-/// Helper to concatenate node vectors
-inline NodeVector Concat(NodeVector&& l, NodeVector&& r) {
+/// Helper to concatenate node lists
+inline NodeList Concat(NodeList&& l, NodeList&& r) {
     l.splice(l.end(), std::move(r));
     return l;
 }
-/// Helper to concatenate node vectors
-inline NodeVector Concat(NodeVector&& v0, NodeVector&& v1, NodeVector&& v2) {
+/// Helper to concatenate node lists
+inline NodeList Concat(NodeList&& v0, NodeList&& v1, NodeList&& v2) {
     v0.splice(v0.end(), std::move(v1));
     v0.splice(v0.end(), std::move(v2));
     return v0;
 }
-/// Helper to concatenate node vectors
-inline NodeVector Concat(NodeVector&& v0, NodeVector&& v1, NodeVector&& v2, NodeVector&& v3) {
+/// Helper to concatenate node lists
+inline NodeList Concat(NodeList&& v0, NodeList&& v1, NodeList&& v2, NodeList&& v3) {
     v0.splice(v0.end(), std::move(v1));
     v0.splice(v0.end(), std::move(v2));
     v0.splice(v0.end(), std::move(v3));
@@ -93,7 +93,7 @@ inline proto::Node Into(ParserDriver& driver, proto::Location loc, proto::Node t
 }
 
 /// Create a column ref
-inline proto::Node ColumnRef(ParserDriver& driver, proto::Location loc, NodeVector&& path) {
+inline proto::Node ColumnRef(ParserDriver& driver, proto::Location loc, NodeList&& path) {
     return driver.Add(loc, proto::NodeType::OBJECT_SQL_COLUMN_REF,
                       {
                           Attr(Key::SQL_COLUMN_REF_PATH, driver.Add(loc, std::move(path))),
@@ -209,11 +209,11 @@ inline proto::NumericType ReadFloatType(ParserDriver& driver, proto::Location bi
 }
 
 /// Add a vararg field
-inline proto::Node VarArgField(ParserDriver& driver, proto::Location loc, NodeVector&& key_path, proto::Node value) {
+inline proto::Node VarArgField(ParserDriver& driver, proto::Location loc, NodeList&& key_path, proto::Node value) {
     auto root = value;
     for (auto iter = key_path.rbegin(); iter != key_path.rend(); ++iter) {
         root = driver.Add(loc, proto::NodeType::OBJECT_EXT_VARARG_FIELD,
-                          NodeVector{
+                          {
                               Attr(proto::AttributeKey::EXT_VARARG_FIELD_KEY, *iter),
                               Attr(proto::AttributeKey::EXT_VARARG_FIELD_VALUE, value),
                           });
