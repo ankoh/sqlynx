@@ -46,8 +46,8 @@ namespace sx = proto;
 // We update the token location and register line breaks.
 #define YY_USER_ACTION { \
     yytext_view = std::string_view{yytext, static_cast<size_t>(yyleng)}; \
-    loc = sx::Location(ctx.GetInputOffset(), yyleng); \
-    ctx.AdvanceInputOffset(yyleng); \
+    loc = sx::Location(ctx.current_input_offset, yyleng); \
+    ctx.current_input_offset += yyleng; \
     for (unsigned i = 0; i < yyleng; ++i) { \
         if (yytext[i] == '\n') { \
             ctx.AddLineBreak(sx::Location(loc.offset() + i, 1)); \
