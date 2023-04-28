@@ -64,11 +64,12 @@ void Scanner::MarkAsVarArgKey(proto::Location location) { vararg_key_offsets.ins
 
 /// Add a string to the string dicationary
 size_t Scanner::AddStringToDictionary(std::string_view s, sx::Location location) {
-    if (auto iter = string_dictionary_ids.find(s); iter != string_dictionary_ids.end()) {
+    auto iter = string_dictionary_ids.find(s);
+    if (iter != string_dictionary_ids.end()) {
         return iter->second;
     }
     auto id = string_dictionary_locations.size();
-    string_dictionary_ids.insert({string_pool.AllocateCopy(s), id});
+    string_dictionary_ids.insert(iter, {string_pool.AllocateCopy(s), id});
     string_dictionary_locations.push_back(location);
     return id;
 }
