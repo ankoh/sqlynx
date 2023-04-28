@@ -3,6 +3,7 @@
 #include <regex>
 
 #include "flatsql/parser/parser_driver.h"
+#include "flatsql/utils/string.h"
 
 using Parser = flatsql::parser::Parser;
 
@@ -21,20 +22,6 @@ void Scanner::AddError(proto::Location location, std::string&& message) {
 void Scanner::AddLineBreak(proto::Location location) { line_breaks.push_back(location); }
 /// Add a comment
 void Scanner::AddComment(proto::Location location) { comments.push_back(location); }
-
-/// Add a string to the string dicationary
-size_t Scanner::AddStringToDictionary(std::string_view s, sx::Location location) {
-    auto iter = string_dictionary_ids.find(s);
-    if (iter != string_dictionary_ids.end()) {
-        return iter->second;
-    }
-    auto copy = string_pool.AllocateCopy(s);
-    // XXX Harmonize the string
-    auto id = string_dictionary_locations.size();
-    string_dictionary_ids.insert({copy, id});
-    string_dictionary_locations.push_back(location);
-    return id;
-}
 
 /// Read a parameter
 Parser::symbol_type Scanner::ReadParameter(std::string_view text, proto::Location loc) {
@@ -57,44 +44,38 @@ Parser::symbol_type Scanner::ReadInteger(std::string_view text, proto::Location 
     }
 }
 
+/// Add a string to the string dicationary
+size_t Scanner::AddStringToDictionary(std::string_view s, sx::Location location) {
+    auto iter = string_dictionary_ids.find(s);
+    if (iter != string_dictionary_ids.end()) {
+        return iter->second;
+    }
+    auto copy = string_pool.AllocateCopy(s);
+    // XXX Harmonize the string
+    auto id = string_dictionary_locations.size();
+    string_dictionary_ids.insert({copy, id});
+    string_dictionary_locations.push_back(location);
+    return id;
+}
 /// Read a double quoted identifier
 Parser::symbol_type Scanner::ReadDoubleQuotedIdentifier(std::string& text, proto::Location loc) {
     // XXX
     return Parser::make_IDENT(0, loc);
 }
-
-/// End a literal
-static proto::Location trimRight(std::string_view text, proto::Location loc) {
-    auto begin = loc.offset();
-    auto end = loc.offset() + loc.length();
-    assert(end >= begin);
-    auto iter = text.rbegin();
-    for (; iter != text.rend(); ++iter) {
-        auto c = *iter;
-        if (c == ' ' || c == '\n') {
-            continue;
-        }
-        break;
-    }
-    end -= iter - text.rbegin();
-    return proto::Location(begin, end - begin);
-}
-
 /// Read a string literal
 Parser::symbol_type Scanner::ReadStringLiteral(std::string& text, proto::Location loc) {
-    return Parser::make_SCONST(trimRight(text, loc));
+    auto trimmed = rtrimview(text, isNoSpace);
+    return Parser::make_SCONST(sx::Location(loc.offset(), trimmed.size()));
 }
-
 /// Read a hex string literal
 Parser::symbol_type Scanner::ReadHexStringLiteral(std::string& text, proto::Location loc) {
-    // XXX
-    return Parser::make_XCONST(trimRight(text, loc));
+    auto trimmed = rtrimview(text, isNoSpace);
+    return Parser::make_XCONST(sx::Location(loc.offset(), trimmed.size()));
 }
-
 /// Read a bit string literal
 Parser::symbol_type Scanner::ReadBitStringLiteral(std::string& text, proto::Location loc) {
-    // XXX
-    return Parser::make_BCONST(trimRight(text, loc));
+    auto trimmed = rtrimview(text, isNoSpace);
+    return Parser::make_BCONST(sx::Location(loc.offset(), trimmed.size()));
 }
 
 /// Scan the next input data

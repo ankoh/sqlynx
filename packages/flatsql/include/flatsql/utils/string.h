@@ -8,6 +8,8 @@ namespace flatsql {
 namespace parser {
 
 inline bool isNoQuote(unsigned char c) { return c != '\"' && c != '\''; }
+inline bool isNoSpace(unsigned char c) { return c != ' ' && c != '\n'; }
+inline bool isNoQuoteOrSpace(unsigned char c) { return isNoQuote(c) && isNoSpace(c); }
 
 template <typename Fn> static inline void ltrim(std::string &s, Fn keepChar) {
     s.erase(s.begin(), std::find_if(s.begin(), s.end(), keepChar));
