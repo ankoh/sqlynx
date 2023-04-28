@@ -64,12 +64,16 @@ void Scanner::MarkAsVarArgKey(proto::Location location) { vararg_key_offsets.ins
 
 /// Add a string to the string dicationary
 size_t Scanner::AddStringToDictionary(std::string_view s, sx::Location location) {
-    auto iter = string_dictionary_ids.lazy_emplace(s, [&](const auto& ctor) {
-        auto id = string_dictionary_locations.size();
-        ctor(string_pool.AllocateCopy(s), id);
-        string_dictionary_locations.push_back(location);
-    });
-    return iter->second;
+    auto iter = string_dictionary_ids.find(s);
+    if (iter != string_dictionary_ids.end()) {
+        return iter->second;
+    }
+    auto copy = string_pool.AllocateCopy(s);
+    // XXX Harmonize the string
+    auto id = string_dictionary_locations.size();
+    string_dictionary_ids.insert({copy, id});
+    string_dictionary_locations.push_back(location);
+    return id;
 }
 
 /// Read a parameter
