@@ -61,6 +61,13 @@ class Scanner {
    public:
     // Helpers that are called from the generated flex scanner
 
+    /// Text buffer for the active extended lexer rules
+    std::string ext_text;
+    /// Begin of the active extended lexer rules
+    sx::Location ext_begin;
+    /// Nesting depth of the active extended lexer rules
+    size_t ext_depth = 0;
+
     /// Get the input
     auto& GetInputData() noexcept { return input_data; }
     /// Get the input location
@@ -77,15 +84,14 @@ class Scanner {
     Parser::symbol_type ReadParameter(std::string_view text, proto::Location loc);
     /// Read an integer
     Parser::symbol_type ReadInteger(std::string_view text, proto::Location loc);
-
-    /// Begin a literal
-    void BeginLiteral(proto::Location loc);
-    /// End a literal
-    proto::Location EndLiteral(std::string_view text, proto::Location loc, bool trim_right = false);
-    /// Begin a comment
-    void BeginComment(proto::Location loc);
-    /// End a comment
-    std::optional<proto::Location> EndComment(proto::Location loc);
+    /// Read a double-quoted identifier
+    Parser::symbol_type ReadDoubleQuotedIdentifier(std::string& text, proto::Location loc);
+    /// Read a string literal
+    Parser::symbol_type ReadStringLiteral(std::string& text, proto::Location loc);
+    /// Read a hex literal
+    Parser::symbol_type ReadHexStringLiteral(std::string& text, proto::Location loc);
+    /// Read a hex literal
+    Parser::symbol_type ReadBitStringLiteral(std::string& text, proto::Location loc);
 
     /// Add an error
     void AddError(proto::Location location, const char* message);
@@ -95,8 +101,6 @@ class Scanner {
     void AddLineBreak(proto::Location location);
     /// Add a comment
     void AddComment(proto::Location location);
-    /// Mark as vararg key
-    void MarkAsVarArgKey(proto::Location location);
 
    public:
     /// Constructor

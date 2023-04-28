@@ -8,6 +8,7 @@
 #include <string>
 #include <charconv>
 #include "flatsql/parser/grammar/keywords.h"
+#include "flatsql/parser/grammar/location.h"
 #include "flatsql/parser/parser.h"
 #include "flatsql/parser/scanner.h"
 
@@ -294,63 +295,63 @@ other           .
 // This code is inlined at the beginning of yylex()
 
 Scanner& ctx = *flatsql_yyget_extra(yyscanner);
+
 sx::Location loc;
 std::string_view yytext_view;
+auto& ext_begin = ctx.ext_begin;
+auto& ext_text = ctx.ext_text;
+auto& ext_depth = ctx.ext_depth;
 
 %}
 
 {space}+        {}
 {comment}       { ctx.AddComment(loc); } 
 
-{xcstart}       { BEGIN(xc); ctx.BeginComment(loc); }
-<xc>{xcstart}   { ctx.BeginComment(loc); }
-<xc>{xcstop}    { 
-                    if (auto comment = ctx.EndComment(loc)) {
-                        BEGIN(INITIAL);
-                        ctx.AddComment(*comment);
-                    }
+{xcstart}       { ext_text = yytext_view; ext_begin = loc; ++ext_depth; BEGIN(xc); }
+<xc>{xcstart}   { ext_text += yytext_view; ext_begin = loc; ++ext_depth; }
+<xc>{xcstop}    {
+                    ext_text += yytext_view; 
+                    if (--ext_depth == 0) { ctx.AddComment(Loc({ext_begin, loc})); BEGIN(INITIAL); }
                 }
-<xc>{xcinside}  {}
-<xc>{op_chars}  {}
-<xc>\*+         {}
-<xc><<EOF>>     { BEGIN(INITIAL); ctx.AddError(ctx.EndLiteral(yytext_view, loc), "unterminated bit string literal"); }
+<xc>{xcinside}  { ext_text += yytext_view; }
+<xc>{op_chars}  { ext_text += yytext_view; }
+<xc>\*+         { ext_text += yytext_view; }
+<xc><<EOF>>     { ctx.AddError(Loc({ext_begin, loc}), "unterminated comment"); BEGIN(INITIAL); }
 
 
-{xbstart}       { BEGIN(xb); ctx.BeginLiteral(loc); }
+{xbstart}       { ext_text += yytext_view; ext_begin = loc; BEGIN(xb); }
 <xb>{quotestop} |
-<xb>{quotefail} { BEGIN(INITIAL); return Parser::make_BCONST(ctx.EndLiteral(yytext_view, loc, true)); }
+<xb>{quotefail} { ext_text += yytext_view; BEGIN(INITIAL); return ctx.ReadBitStringLiteral(ext_text, Loc({ext_begin, loc})); }
 <xh>{xhinside}  |
-<xb>{xbinside}  {}
+<xb>{xbinside}  { ext_text += yytext_view; }
 <xh>{quotecontinue} |
-<xb>{quotecontinue} {}
-<xb><<EOF>>     { BEGIN(INITIAL); ctx.AddError(ctx.EndLiteral(yytext_view, loc), "unterminated bit string literal"); }
-
-
-{xhstart}       { BEGIN(xh); ctx.BeginLiteral(loc); }
+<xb>{quotecontinue} { ext_text += yytext_view; }
+<xb><<EOF>>     { ctx.AddError(Loc({ext_begin, loc}), "unterminated bit string literal"); BEGIN(INITIAL); }
+{xhstart}       { ext_text += yytext_view; ext_begin = loc; BEGIN(xh); }
 <xh>{quotestop} |
-<xh>{quotefail} { BEGIN(INITIAL); return Parser::make_XCONST(ctx.EndLiteral(yytext_view, loc, true)); }
-<xh><<EOF>>     { BEGIN(INITIAL); ctx.AddError(ctx.EndLiteral(yytext_view, loc), "unterminated hexadecimal bit string literal"); }
+<xh>{quotefail} { ext_text += yytext_view; BEGIN(INITIAL); return ctx.ReadHexStringLiteral(ext_text, Loc({ext_begin, loc})); }
+<xh><<EOF>>     { ctx.AddError(Loc({ext_begin, loc}), "unterminated hexadecimal bit string literal"); BEGIN(INITIAL); }
 
 
-{xqstart}       { BEGIN(xq); ctx.BeginLiteral(loc); }
+{xqstart}       { ext_text = yytext_view; ext_begin = loc; BEGIN(xq); }
 <xq>{quotestop} |
-<xq>{quotefail} { BEGIN(INITIAL); return Parser::make_SCONST(ctx.EndLiteral(yytext_view, loc, true)); }
-<xq>{xqdouble}  {}
-<xq>{xqinside}  {}
-<xq><<EOF>>     { BEGIN(INITIAL); ctx.AddError(ctx.EndLiteral(yytext_view, loc), "unterminated quoted string"); }
+<xq>{quotefail} { ext_text += yytext_view; BEGIN(INITIAL); return ctx.ReadStringLiteral(ext_text, Loc({ext_begin, loc})); }
+<xq>{xqdouble}  { ext_text += yytext_view; }
+<xq>{xqinside}  { ext_text += yytext_view; }
+<xq><<EOF>>     { ctx.AddError(Loc({ext_begin, loc}), "unterminated quoted string"); BEGIN(INITIAL); }
 
 
-{xdstart}       { BEGIN(xd); ctx.BeginLiteral(loc); }
-<xd>{xddouble}  {}
-<xd>{xdinside}  {}
+{xdstart}       { ext_text = yytext_view; ext_begin = loc; BEGIN(xd); }
+<xd>{xddouble}  { ext_text += yytext_view; }
+<xd>{xdinside}  { ext_text += yytext_view; }
 <xd>{xdstop}    { 
+                    ext_text += yytext_view;
+                    auto xdloc = Loc({ ext_begin, loc });
+                    if (xdloc.length() == 2) { ctx.AddError(xdloc, "zero-length delimited identifier"); }
                     BEGIN(INITIAL); 
-                    auto l = ctx.EndLiteral(yytext_view, loc, true);
-                    if (l.length() == 2)
-                        ctx.AddError(l, "zero-length delimited identifier");
-                    return Parser::make_IDENT(0, l); // XXX TODO
+                    return ctx.ReadDoubleQuotedIdentifier(ext_text, Loc({ext_begin, loc}));
                 }
-<xd><<EOF>>     { BEGIN(INITIAL); ctx.AddError(ctx.EndLiteral(yytext_view, loc), "unterminated delimited identifier"); }
+<xd><<EOF>>     { ctx.AddError(Loc({ ext_begin, loc }), "unterminated delimited identifier"); BEGIN(INITIAL); }
 
 {typecast}          { return Parser::make_TYPECAST(loc); }
 {dot_dot}           { return Parser::make_DOT_DOT(loc); }

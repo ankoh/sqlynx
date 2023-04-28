@@ -318,7 +318,7 @@
                 <line_break loc="22..23" text="&#10;" />
             </line_breaks>
             <comments>
-                <comment loc="0..22" text="&#10;         .. /* foo */" />
+                <comment loc="13..22" text="/* foo */" />
             </comments>
         </expected>
     </astdump>
@@ -334,7 +334,7 @@
                 <line_break loc="32..33" text="&#10;" />
             </line_breaks>
             <comments>
-                <comment loc="0..32" text="&#10;         .. bar */ */" />
+                <comment loc="20..32" text="/* bar */ */" />
             </comments>
         </expected>
     </astdump>
