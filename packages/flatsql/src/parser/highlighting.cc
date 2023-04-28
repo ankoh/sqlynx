@@ -17,7 +17,6 @@ static const proto::HighlightingTokenType MapToken(Parser::symbol_kind_type symb
 #undef X
         return proto::HighlightingTokenType::KEYWORD;
         case Parser::symbol_kind_type::S_SCONST:
-        case Parser::symbol_kind_type::S_USCONST:
             return proto::HighlightingTokenType::LITERAL_STRING;
         case Parser::symbol_kind_type::S_ICONST:
             return proto::HighlightingTokenType::LITERAL_INTEGER;
@@ -30,8 +29,6 @@ static const proto::HighlightingTokenType MapToken(Parser::symbol_kind_type symb
         case Parser::symbol_kind_type::S_Op:
             return proto::HighlightingTokenType::OPERATOR;
         case Parser::symbol_kind_type::S_IDENT:
-        case Parser::symbol_kind_type::S_UIDENT:
-        case Parser::symbol_kind_type::S_IDENTIFIER:
             return proto::HighlightingTokenType::IDENTIFIER;
         default:
             return proto::HighlightingTokenType::NONE;

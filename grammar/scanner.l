@@ -348,7 +348,7 @@ std::string_view yytext_view;
                     auto l = ctx.EndLiteral(yytext_view, loc, true);
                     if (l.length() == 2)
                         ctx.AddError(l, "zero-length delimited identifier");
-                    return Parser::make_IDENT(l);
+                    return Parser::make_IDENT(0, l); // XXX TODO
                 }
 <xd><<EOF>>     { BEGIN(INITIAL); ctx.AddError(ctx.EndLiteral(yytext_view, loc), "unterminated delimited identifier"); }
 
@@ -481,7 +481,8 @@ std::string_view yytext_view;
                     if (auto k = Keyword::Find(yytext_view); !!k) {
                         return Parser::symbol_type(k->token, loc);
                     }
-                    return Parser::make_IDENT(loc);
+                    size_t id = ctx.AddStringToDictionary(yytext_view, loc);
+                    return Parser::make_IDENT(id, loc);
                 }
 
 {other}         { return Parser::symbol_type(yytext[0], loc); }
@@ -497,6 +498,10 @@ Scanner::Scanner(rope::Rope& rope): input_data(rope), current_leaf_node(rope.Get
         current_leaf_node = nullptr;
     }
     flatsql_yylex_init_extra(this, &internal_scanner_state);
+    string_dictionary_ids.reserve(128);
+    string_dictionary_locations.reserve(128);
+    string_dictionary_ids.insert({"", 0});
+    string_dictionary_locations.push_back(sx::Location(0, 0));
 }
 
 Scanner::~Scanner() {

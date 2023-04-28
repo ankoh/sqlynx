@@ -62,6 +62,17 @@ void Scanner::AddComment(proto::Location location) { comments.push_back(location
 /// Mark a location as start of an option key
 void Scanner::MarkAsVarArgKey(proto::Location location) { vararg_key_offsets.insert(location.offset()); }
 
+/// Add a string to the string dicationary
+size_t Scanner::AddStringToDictionary(std::string_view s, sx::Location location) {
+    if (auto iter = string_dictionary_ids.find(s); iter != string_dictionary_ids.end()) {
+        return iter->second;
+    }
+    auto id = string_dictionary_locations.size();
+    string_dictionary_ids.insert({string_pool.AllocateCopy(s), id});
+    string_dictionary_locations.push_back(location);
+    return id;
+}
+
 /// Read a parameter
 Parser::symbol_type Scanner::ReadParameter(std::string_view text, proto::Location loc) {
     int64_t value;
