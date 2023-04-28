@@ -72,9 +72,7 @@ using namespace flatsql::parser;
 %token              TYPECAST DOT_DOT COLON_EQUALS EQUALS_GREATER
 %token              LESS_EQUALS GREATER_EQUALS NOT_EQUALS
 
-%token<bool> BOOLEAN_LITERAL    "boolean literal"
 %token IDENTIFIER               "identifier literal"
-%token STRING_LITERAL           "string literal"
 
 %token EOF 0
 
