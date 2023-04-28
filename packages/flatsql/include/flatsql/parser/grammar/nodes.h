@@ -205,7 +205,7 @@ inline proto::JoinType Merge(proto::JoinType left, proto::JoinType right) {
 /// Read a float type
 inline proto::NumericType ReadFloatType(ParserDriver& driver, proto::Location bitsLoc) {
     std::string tmp_buffer;
-    auto text = driver.GetScanner().GetInputData().Read(bitsLoc.offset(), bitsLoc.length(), tmp_buffer);
+    auto text = driver.GetScanner().ReadTextAtLocation(bitsLoc, tmp_buffer);
     int64_t bits;
     std::from_chars(text.data(), text.data() + text.size(), bits);
     if (bits < 1) {

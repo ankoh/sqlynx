@@ -27,8 +27,6 @@ class Scanner {
     rope::LeafNode* current_leaf_node = nullptr;
     /// The local offset of the value within the current leaf
     size_t current_leaf_offset = 0;
-    /// The global offset within the rope
-    size_t current_input_offset = 0;
 
     /// The begin of the comment
     proto::Location comment_begin = proto::Location();
@@ -59,8 +57,10 @@ class Scanner {
     ChunkBuffer<Parser::symbol_type>::ForwardIterator symbol_scanner{symbols};
 
    public:
-    // Helpers that are called from the generated flex scanner
+    // Helpers that are used from the generated flex scanner
 
+    /// The global offset within the rope
+    size_t current_input_offset = 0;
     /// Text buffer for the active extended lexer rules
     std::string ext_text;
     /// Begin of the active extended lexer rules
@@ -68,12 +68,10 @@ class Scanner {
     /// Nesting depth of the active extended lexer rules
     size_t ext_depth = 0;
 
-    /// Get the input
-    auto& GetInputData() noexcept { return input_data; }
-    /// Get the input location
-    auto GetInputOffset() noexcept { return current_input_offset; }
-    /// Advance the input location
-    void AdvanceInputOffset(size_t by) noexcept { current_input_offset += by; }
+    /// Read a text at a location
+    inline std::string_view ReadTextAtLocation(sx::Location loc, std::string& tmp) {
+        return input_data.Read(loc.offset(), loc.length(), tmp);
+    }
     /// Scan next input data
     void ScanNextInputData(void* out_buffer, size_t& out_bytes_read, size_t max_size);
 
