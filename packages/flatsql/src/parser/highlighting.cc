@@ -16,7 +16,6 @@ static const proto::HighlightingTokenType MapToken(Parser::symbol_kind_type symb
 #include "../../../grammar/lists/sql_unreserved_keywords.list"
 #undef X
         return proto::HighlightingTokenType::KEYWORD;
-        case Parser::symbol_kind_type::S_STRING_LITERAL:
         case Parser::symbol_kind_type::S_SCONST:
         case Parser::symbol_kind_type::S_USCONST:
             return proto::HighlightingTokenType::LITERAL_STRING;
@@ -28,8 +27,6 @@ static const proto::HighlightingTokenType MapToken(Parser::symbol_kind_type symb
             return proto::HighlightingTokenType::LITERAL_BINARY;
         case Parser::symbol_kind_type::S_XCONST:
             return proto::HighlightingTokenType::LITERAL_HEX;
-        case Parser::symbol_kind_type::S_BOOLEAN_LITERAL:
-            return proto::HighlightingTokenType::LITERAL_BOOLEAN;
         case Parser::symbol_kind_type::S_Op:
             return proto::HighlightingTokenType::OPERATOR;
         case Parser::symbol_kind_type::S_IDENT:
