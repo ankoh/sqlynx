@@ -8,6 +8,8 @@
 #include "flatsql/parser/parser.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/text/rope.h"
+#include "flatsql/utils/string_pool.h"
+#include "parallel_hashmap/phmap.h"
 
 namespace flatsql {
 namespace parser {
@@ -47,6 +49,13 @@ class Scanner {
     /// The vararg keys
     std::unordered_set<size_t> vararg_key_offsets = {};
 
+    /// The string pool
+    StringPool<1024> string_pool;
+    /// The string dictionary ids
+    phmap::flat_hash_map<std::string_view, size_t> string_dictionary_ids;
+    /// The string dictionary locations
+    std::vector<sx::Location> string_dictionary_locations;
+
     /// All symbols
     ChunkBuffer<Parser::symbol_type> symbols = {};
     /// The symbol iterator
@@ -63,6 +72,9 @@ class Scanner {
     void AdvanceInputOffset(size_t by) noexcept { current_input_offset += by; }
     /// Scan next input data
     void ScanNextInputData(void* out_buffer, size_t& out_bytes_read, size_t max_size);
+
+    /// Add a string to the string dicationary
+    size_t AddStringToDictionary(std::string_view s, sx::Location location);
 
     /// Read a parameter
     Parser::symbol_type ReadParameter(std::string_view text, proto::Location loc);
