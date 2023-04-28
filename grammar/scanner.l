@@ -478,13 +478,7 @@ auto& ext_depth = ctx.ext_depth;
 {realfail1}     { yyless(yyleng - 1); return Parser::make_FCONST(loc); }
 {realfail2}     { yyless(yyleng - 2); return Parser::make_FCONST(loc); }
 
-{identifier}    {
-                    if (auto k = Keyword::Find(yytext_view); !!k) {
-                        return Parser::symbol_type(k->token, loc);
-                    }
-                    size_t id = ctx.AddStringToDictionary(yytext_view, loc);
-                    return Parser::make_IDENT(id, loc);
-                }
+{identifier}    { return ctx.ReadIdentifier(yytext_view, loc); }
 
 {other}         { return Parser::symbol_type(yytext[0], loc); }
 

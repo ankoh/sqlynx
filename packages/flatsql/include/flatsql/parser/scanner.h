@@ -82,6 +82,8 @@ class Scanner {
     Parser::symbol_type ReadParameter(std::string_view text, proto::Location loc);
     /// Read an integer
     Parser::symbol_type ReadInteger(std::string_view text, proto::Location loc);
+    /// Read an identifier
+    Parser::symbol_type ReadIdentifier(std::string_view text, proto::Location loc);
     /// Read a double-quoted identifier
     Parser::symbol_type ReadDoubleQuotedIdentifier(std::string& text, proto::Location loc);
     /// Read a string literal

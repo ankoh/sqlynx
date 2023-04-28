@@ -2,6 +2,7 @@
 
 #include <regex>
 
+#include "flatsql/parser/grammar/keywords.h"
 #include "flatsql/parser/parser_driver.h"
 #include "flatsql/utils/string.h"
 
@@ -57,11 +58,20 @@ size_t Scanner::AddStringToDictionary(std::string_view s, sx::Location location)
     string_dictionary_locations.push_back(location);
     return id;
 }
+/// Read an unquoted identifier
+Parser::symbol_type Scanner::ReadIdentifier(std::string_view text, proto::Location loc) {
+    if (auto k = Keyword::Find(text); !!k) {
+        return Parser::symbol_type(k->token, loc);
+    }
+    size_t id = AddStringToDictionary(text, loc);
+    return Parser::make_IDENT(id, loc);
+}
 /// Read a double quoted identifier
 Parser::symbol_type Scanner::ReadDoubleQuotedIdentifier(std::string& text, proto::Location loc) {
     // XXX
     return Parser::make_IDENT(0, loc);
 }
+
 /// Read a string literal
 Parser::symbol_type Scanner::ReadStringLiteral(std::string& text, proto::Location loc) {
     auto trimmed = rtrimview(text, isNoSpace);
