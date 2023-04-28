@@ -16,9 +16,6 @@ namespace parser {
 
 class ParserDriver;
 
-/// Note that flex requires the input to be padded with 2 additional characters to match YY_END_OF_BUFFER.
-/// This scanner will blindly overwrite these last two characters and fall back to an empty buffer if the size of
-/// the input is < 2.
 class Scanner {
    protected:
     /// The internal scanner state
