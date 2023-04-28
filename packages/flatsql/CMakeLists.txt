@@ -84,6 +84,7 @@ endif()
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules ${CMAKE_MODULE_PATH})
 include(${CMAKE_SOURCE_DIR}/cmake/flatbuffers.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/frozen.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/phmap.cmake)
 add_subdirectory(${CMAKE_SOURCE_DIR}/vendor/utf8proc)
 
 if(NOT WASM)
@@ -228,7 +229,7 @@ else()
   add_library(flatsql ${LIB_SRC})
 endif()
 
-target_link_libraries(flatsql flatbuffers frozen utf8proc)
+target_link_libraries(flatsql flatbuffers frozen phmap utf8proc)
 
 # ---------------------------------------------------------------------------
 # Tester
