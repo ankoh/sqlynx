@@ -5,11 +5,11 @@
 #include <string_view>
 #include <unordered_set>
 
+#include "ankerl/unordered_dense.h"
 #include "flatsql/parser/parser.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/text/rope.h"
 #include "flatsql/utils/string_pool.h"
-#include "parallel_hashmap/phmap.h"
 
 namespace flatsql {
 namespace parser {
@@ -52,7 +52,7 @@ class Scanner {
     /// The string pool
     StringPool<1024> string_pool;
     /// The string dictionary ids
-    phmap::flat_hash_map<std::string_view, size_t> string_dictionary_ids;
+    ankerl::unordered_dense::map<std::string_view, size_t> string_dictionary_ids;
     /// The string dictionary locations
     std::vector<sx::Location> string_dictionary_locations;
 
