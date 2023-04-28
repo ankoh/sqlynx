@@ -7,33 +7,28 @@
 namespace flatsql {
 namespace parser {
 
-inline bool isNoQuote(unsigned char c) { return c != '\"' && c != '\''; }
+inline bool isNoQuote(unsigned char c) { return c != '\''; }
+inline bool isNoDoubleQuote(unsigned char c) { return c != '\"'; }
 inline bool isNoSpace(unsigned char c) { return c != ' ' && c != '\n'; }
-inline bool isNoQuoteOrSpace(unsigned char c) { return isNoQuote(c) && isNoSpace(c); }
 
 template <typename Fn> static inline void ltrim(std::string &s, Fn keepChar) {
     s.erase(s.begin(), std::find_if(s.begin(), s.end(), keepChar));
 }
-
 template <typename Fn> static inline void rtrim(std::string &s, Fn keepChar) {
     s.erase(std::find_if(s.rbegin(), s.rend(), keepChar).base(), s.end());
 }
-
 template <typename Fn> static inline void trim(std::string &s, Fn keepChar) {
     ltrim(s, keepChar);
     rtrim(s, keepChar);
 }
-
 template <typename Fn> static inline std::string_view ltrimview(std::string_view s, Fn keepChar) {
     auto begin = std::find_if(s.begin(), s.end(), keepChar);
     return {begin, static_cast<size_t>(s.end() - begin)};
 }
-
 template <typename Fn> static inline std::string_view rtrimview(std::string_view s, Fn keepChar) {
     auto end = std::find_if(s.rbegin(), s.rend(), keepChar).base();
     return {s.begin(), static_cast<size_t>(end - s.begin())};
 }
-
 template <typename Fn> static inline std::string_view trimview(std::string_view s, Fn keepChar) {
     return ltrimview(rtrimview(s, keepChar), keepChar);
 }

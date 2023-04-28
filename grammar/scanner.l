@@ -319,7 +319,7 @@ auto& ext_depth = ctx.ext_depth;
 <xc><<EOF>>     { ctx.AddError(Loc({ext_begin, loc}), "unterminated comment"); BEGIN(INITIAL); }
 
 
-{xbstart}       { ext_text += yytext_view; ext_begin = loc; BEGIN(xb); }
+{xbstart}       { ext_text = yytext_view; ext_begin = loc; BEGIN(xb); }
 <xb>{quotestop} |
 <xb>{quotefail} { ext_text += yytext_view; BEGIN(INITIAL); return ctx.ReadBitStringLiteral(ext_text, Loc({ext_begin, loc})); }
 <xh>{xhinside}  |

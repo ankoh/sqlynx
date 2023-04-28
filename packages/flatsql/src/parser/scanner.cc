@@ -52,7 +52,6 @@ size_t Scanner::AddStringToDictionary(std::string_view s, sx::Location location)
         return iter->second;
     }
     auto copy = string_pool.AllocateCopy(s);
-    // XXX Harmonize the string
     auto id = string_dictionary_locations.size();
     string_dictionary_ids.insert({copy, id});
     string_dictionary_locations.push_back(location);
@@ -60,16 +59,26 @@ size_t Scanner::AddStringToDictionary(std::string_view s, sx::Location location)
 }
 /// Read an unquoted identifier
 Parser::symbol_type Scanner::ReadIdentifier(std::string_view text, proto::Location loc) {
-    if (auto k = Keyword::Find(text); !!k) {
+    // Convert to lower-case
+    ext_text = text;
+    for (size_t i = 0; i < ext_text.size(); ++i) ext_text[i] = ::tolower(ext_text[i]);
+    // Check if it's a keyword
+    if (auto k = Keyword::Find(ext_text); !!k) {
         return Parser::symbol_type(k->token, loc);
     }
-    size_t id = AddStringToDictionary(text, loc);
+    // Add string to dictionary
+    size_t id = AddStringToDictionary(ext_text, loc);
     return Parser::make_IDENT(id, loc);
 }
 /// Read a double quoted identifier
 Parser::symbol_type Scanner::ReadDoubleQuotedIdentifier(std::string& text, proto::Location loc) {
-    // XXX
-    return Parser::make_IDENT(0, loc);
+    // Trim spaces & quotes
+    ext_text = text;
+    auto trimmed = rtrimview(text, isNoSpace);
+    trimmed = trimview(trimmed, isNoDoubleQuote);
+    // Add string to dictionary
+    size_t id = AddStringToDictionary(trimmed, loc);
+    return Parser::make_IDENT(id, loc);
 }
 
 /// Read a string literal
