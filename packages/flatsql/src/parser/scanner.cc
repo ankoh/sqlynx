@@ -74,8 +74,8 @@ Parser::symbol_type Scanner::ReadIdentifier(std::string_view text, proto::Locati
 Parser::symbol_type Scanner::ReadDoubleQuotedIdentifier(std::string& text, proto::Location loc) {
     // Trim spaces & quotes
     ext_text = text;
-    auto trimmed = rtrimview(text, isNoSpace);
-    trimmed = trimview(trimmed, isNoDoubleQuote);
+    auto trimmed = trim_view_right(text, is_no_space);
+    trimmed = trim_view(trimmed, is_no_double_quote);
     // Add string to dictionary
     size_t id = AddStringToDictionary(trimmed, loc);
     return Parser::make_IDENT(id, loc);
@@ -83,17 +83,17 @@ Parser::symbol_type Scanner::ReadDoubleQuotedIdentifier(std::string& text, proto
 
 /// Read a string literal
 Parser::symbol_type Scanner::ReadStringLiteral(std::string& text, proto::Location loc) {
-    auto trimmed = rtrimview(text, isNoSpace);
+    auto trimmed = trim_view_right(text, is_no_space);
     return Parser::make_SCONST(sx::Location(loc.offset(), trimmed.size()));
 }
 /// Read a hex string literal
 Parser::symbol_type Scanner::ReadHexStringLiteral(std::string& text, proto::Location loc) {
-    auto trimmed = rtrimview(text, isNoSpace);
+    auto trimmed = trim_view_right(text, is_no_space);
     return Parser::make_XCONST(sx::Location(loc.offset(), trimmed.size()));
 }
 /// Read a bit string literal
 Parser::symbol_type Scanner::ReadBitStringLiteral(std::string& text, proto::Location loc) {
-    auto trimmed = rtrimview(text, isNoSpace);
+    auto trimmed = trim_view_right(text, is_no_space);
     return Parser::make_BCONST(sx::Location(loc.offset(), trimmed.size()));
 }
 
