@@ -1,6 +1,6 @@
 #include "flatsql/parser/program.h"
 
-#include "flatsql/parser/parser.h"
+#include "flatsql/parser/parse_context.h"
 #include "flatsql/parser/scanner.h"
 
 namespace flatsql {

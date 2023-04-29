@@ -1,5 +1,3 @@
-#include "flatsql/parser/parser.h"
-
 #include <iostream>
 #include <regex>
 #include <sstream>
@@ -7,6 +5,7 @@
 #include <unordered_set>
 
 #include "flatsql/parser/grammar/nodes.h"
+#include "flatsql/parser/parse_context.h"
 #include "flatsql/parser/parser_generated.h"
 #include "flatsql/parser/scanner.h"
 #include "flatsql/proto/proto_generated.h"
