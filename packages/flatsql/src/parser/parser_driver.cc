@@ -123,7 +123,7 @@ void NodeList::copy_into(std::span<proto::Node> nodes) {
 }
 
 /// Constructor
-ParserDriver::ParserDriver(ScannedProgram& scan)
+ParseContext::ParseContext(ScannedProgram& scan)
     : program(scan),
       nodes(),
       statements(),
@@ -133,17 +133,17 @@ ParserDriver::ParserDriver(ScannedProgram& scan)
       temp_lists(),
       temp_list_elements() {}
 /// Destructor
-ParserDriver::~ParserDriver() {}
+ParseContext::~ParseContext() {}
 
 /// Create a list
-WeakUniquePtr<NodeList> ParserDriver::List(std::initializer_list<proto::Node> nodes) {
+WeakUniquePtr<NodeList> ParseContext::List(std::initializer_list<proto::Node> nodes) {
     auto list = new (temp_lists.Allocate()) NodeList(temp_lists, temp_list_elements);
     list->append(nodes);
     return list;
 }
 
 /// Process a new node
-NodeID ParserDriver::AddNode(proto::Node node) {
+NodeID ParseContext::AddNode(proto::Node node) {
     auto node_id = nodes.GetSize();
     nodes.Append(proto::Node(node.location(), node.node_type(), node.attribute_key(), node_id,
                              node.children_begin_or_value(), node.children_count()));
@@ -160,7 +160,7 @@ NodeID ParserDriver::AddNode(proto::Node node) {
 }
 
 /// Flatten an expression
-std::optional<ExpressionVariant> ParserDriver::TryMerge(proto::Location loc, proto::Node op_node,
+std::optional<ExpressionVariant> ParseContext::TryMerge(proto::Location loc, proto::Node op_node,
                                                         std::span<ExpressionVariant> args) {
     // Function is not an expression operator?
     if (op_node.node_type() != proto::NodeType::ENUM_SQL_EXPRESSION_OPERATOR) {
@@ -199,7 +199,7 @@ std::optional<ExpressionVariant> ParserDriver::TryMerge(proto::Location loc, pro
 }
 
 /// Add an array
-proto::Node ParserDriver::Array(proto::Location loc, WeakUniquePtr<NodeList>&& values, bool null_if_empty,
+proto::Node ParseContext::Array(proto::Location loc, WeakUniquePtr<NodeList>&& values, bool null_if_empty,
                                 bool shrink_location) {
     auto begin = nodes.GetSize();
     for (auto iter = values->front(); iter; iter = iter->next) {
@@ -221,7 +221,7 @@ proto::Node ParserDriver::Array(proto::Location loc, WeakUniquePtr<NodeList>&& v
 }
 
 /// Add an array
-proto::Node ParserDriver::Array(proto::Location loc, std::span<ExpressionVariant> exprs, bool null_if_empty,
+proto::Node ParseContext::Array(proto::Location loc, std::span<ExpressionVariant> exprs, bool null_if_empty,
                                 bool shrink_location) {
     auto nodes = List();
     for (auto& expr : exprs) {
@@ -231,7 +231,7 @@ proto::Node ParserDriver::Array(proto::Location loc, std::span<ExpressionVariant
 }
 
 /// Add an expression
-proto::Node ParserDriver::Expression(ExpressionVariant&& expr) {
+proto::Node ParseContext::Expression(ExpressionVariant&& expr) {
     if (expr.index() == 0) {
         return std::get<0>(std::move(expr));
     } else {
@@ -248,7 +248,7 @@ proto::Node ParserDriver::Expression(ExpressionVariant&& expr) {
 }
 
 /// Add an object
-proto::Node ParserDriver::Object(proto::Location loc, proto::NodeType type, WeakUniquePtr<NodeList>&& attr_list,
+proto::Node ParseContext::Object(proto::Location loc, proto::NodeType type, WeakUniquePtr<NodeList>&& attr_list,
                                  bool null_if_empty, bool shrink_location) {
     // Sort all the attributes
     std::array<proto::Node, 8> attrs_static;
@@ -286,7 +286,7 @@ proto::Node ParserDriver::Object(proto::Location loc, proto::NodeType type, Weak
 }
 
 /// Add a statement
-void ParserDriver::FinishStatement(proto::Node node) {
+void ParseContext::FinishStatement(proto::Node node) {
     if (node.node_type() == proto::NodeType::NONE) {
         return;
     }
@@ -322,10 +322,10 @@ void ParserDriver::FinishStatement(proto::Node node) {
 }
 
 /// Add an error
-void ParserDriver::AddError(proto::Location loc, const std::string& message) { errors.push_back({loc, message}); }
+void ParseContext::AddError(proto::Location loc, const std::string& message) { errors.push_back({loc, message}); }
 
 /// Get as flatbuffer object
-std::shared_ptr<proto::ProgramT> ParserDriver::Finish() {
+std::shared_ptr<proto::ProgramT> ParseContext::Finish() {
     auto out = std::make_unique<proto::ProgramT>();
     out->nodes = nodes.Flatten();
     out->statements.reserve(statements.size());
@@ -345,13 +345,13 @@ std::shared_ptr<proto::ProgramT> ParserDriver::Finish() {
     return out;
 }
 
-std::shared_ptr<proto::ProgramT> ParserDriver::Parse(rope::Rope& in, bool trace_scanning, bool trace_parsing) {
+std::shared_ptr<proto::ProgramT> ParseContext::Parse(rope::Rope& in, bool trace_scanning, bool trace_parsing) {
     // Tokenize the input text
     auto program = Scanner::Scan(in);
 
     // Parse the tokens
-    ParserDriver driver{*program};
-    flatsql::parser::Parser parser(driver);
+    ParseContext ctx{*program};
+    flatsql::parser::Parser parser(ctx);
     parser.parse();
 
     // Make sure we didn't leak into our temp allocators.
@@ -360,21 +360,21 @@ std::shared_ptr<proto::ProgramT> ParserDriver::Parse(rope::Rope& in, bool trace_
 #if DEBUG_BISON_LEAKS
     auto text = in.ToString();
     auto text_view = std::string_view{text};
-    driver.temp_list_elements.ForEachAllocated([&](size_t value_id, NodeList::ListElement& elem) {
+    ctx.temp_list_elements.ForEachAllocated([&](size_t value_id, NodeList::ListElement& elem) {
         std::cout << proto::EnumNameAttributeKey(static_cast<proto::AttributeKey>(elem.node.attribute_key())) << " "
                   << proto::EnumNameNodeType(elem.node.node_type()) << " "
                   << text_view.substr(elem.node.location().offset(), elem.node.location().length()) << std::endl;
     });
 #else
-    if (driver.errors.empty()) {
-        assert(driver.temp_list_elements.GetAllocatedNodeCount() == 0);
+    if (ctx.errors.empty()) {
+        assert(ctx.temp_list_elements.GetAllocatedNodeCount() == 0);
     }
 #endif
 
-    assert(driver.temp_nary_expressions.GetAllocatedNodeCount() == 0);
+    assert(ctx.temp_nary_expressions.GetAllocatedNodeCount() == 0);
 
     // Pack the program
-    return driver.Finish();
+    return ctx.Finish();
 }
 
 }  // namespace parser

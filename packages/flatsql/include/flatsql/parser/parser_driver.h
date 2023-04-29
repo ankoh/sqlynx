@@ -155,7 +155,7 @@ struct NAryExpression {
 /// An expression is either a proto node with materialized children, or an n-ary expression that can be flattened
 using ExpressionVariant = std::variant<proto::Node, WeakUniquePtr<NAryExpression>>;
 
-class ParserDriver {
+class ParseContext {
    protected:
     /// The scanner
     ScannedProgram& program;
@@ -178,9 +178,9 @@ class ParserDriver {
 
    public:
     /// Constructor
-    explicit ParserDriver(ScannedProgram& scan);
+    explicit ParseContext(ScannedProgram& scan);
     /// Destructor
-    ~ParserDriver();
+    ~ParseContext();
 
     /// Get the program
     auto& GetProgram() { return program; };

@@ -14,7 +14,7 @@
 namespace flatsql {
 namespace parser {
 
-class ParserDriver;
+class ParseContext;
 
 class Scanner {
     friend class ScannedProgram;

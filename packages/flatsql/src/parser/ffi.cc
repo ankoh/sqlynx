@@ -76,7 +76,7 @@ extern "C" FFIResult* flatsql_rope_to_string(rope::Rope* rope) {
 /// Parse a rope
 extern "C" FFIResult* flatsql_parse_rope(rope::Rope* data) {
     // Parse the program
-    auto program = ParserDriver::Parse(*data);
+    auto program = ParseContext::Parse(*data);
 
     // Pack the flatbuffer program
     flatbuffers::FlatBufferBuilder fb;

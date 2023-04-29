@@ -11,7 +11,7 @@
 %locations
 %define api.location.type {proto::Location}
 
-%parse-param    { flatsql::parser::ParserDriver& ctx }
+%parse-param    { flatsql::parser::ParseContext& ctx }
 
 // ---------------------------------------------------------------------------
 // HEADER
