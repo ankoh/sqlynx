@@ -1,6 +1,6 @@
 #include <string_view>
 
-#include "flatsql/parser/parser.h"
+#include "flatsql/parser/parse_context.h"
 #include "flatsql/testing/astdump_test.h"
 #include "gflags/gflags.h"
 #include "gtest/gtest.h"

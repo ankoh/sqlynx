@@ -1,7 +1,7 @@
 #include <span>
 
 #include "flatbuffers/flatbuffers.h"
-#include "flatsql/parser/parser.h"
+#include "flatsql/parser/parse_context.h"
 #include "flatsql/parser/program.h"
 #include "flatsql/parser/scanner.h"
 #include "flatsql/proto/proto_generated.h"
