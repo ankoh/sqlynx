@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "flatbuffers/flatbuffers.h"
-#include "flatsql/parser/parser_driver.h"
+#include "flatsql/parser/parser.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/testing/astdump_test.h"
 #include "gflags/gflags.h"

@@ -20,7 +20,7 @@
 #include <string>
 #include <cstdlib>
 #include <utility>
-#include "flatsql/parser/parser_driver.h"
+#include "flatsql/parser/parser.h"
 
 namespace sx = flatsql::proto;
 

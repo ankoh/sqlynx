@@ -1,4 +1,4 @@
-#include "flatsql/parser/parser_driver.h"
+#include "flatsql/parser/parser.h"
 #include "flatsql/testing/astdump_test.h"
 #include "gtest/gtest.h"
 #include "pugixml.hpp"
