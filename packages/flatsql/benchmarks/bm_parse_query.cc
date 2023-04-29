@@ -1,5 +1,5 @@
 #include "benchmark/benchmark.h"
-#include "flatsql/parser/parser.h"
+#include "flatsql/parser/parser_generated.h"
 #include "flatsql/text/rope.h"
 
 static const std::string_view query = R"SQL(

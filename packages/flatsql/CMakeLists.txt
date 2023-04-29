@@ -192,9 +192,9 @@ add_custom_command(
   DEPENDS ${GRAMMAR_KEYWORDS} ${GRAMMAR_PROLOGUE} ${GRAMMAR_PRECEDENCES}
           ${GRAMMAR_TYPES} ${GRAMMAR_RULES} ${GRAMMAR_EPILOGUE})
 
-set(SCANNER_OUT ${CMAKE_BINARY_DIR}/include/flatsql/parser/scanner.cc)
-set(PARSER_OUT ${CMAKE_BINARY_DIR}/include/flatsql/parser/parser.cc)
-set(PARSER_HEADER_OUT ${CMAKE_BINARY_DIR}/include/flatsql/parser/parser.h)
+set(SCANNER_OUT ${CMAKE_BINARY_DIR}/include/flatsql/parser/scanner_generated.cc)
+set(PARSER_OUT ${CMAKE_BINARY_DIR}/include/flatsql/parser/parser_generated.cc)
+set(PARSER_HEADER_OUT ${CMAKE_BINARY_DIR}/include/flatsql/parser/parser_generated.h)
 
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/include/flatsql/parser/)
   file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/include/flatsql/parser/)

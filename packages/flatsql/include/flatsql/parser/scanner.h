@@ -6,7 +6,7 @@
 #include <unordered_set>
 
 #include "ankerl/unordered_dense.h"
-#include "flatsql/parser/parser.h"
+#include "flatsql/parser/parser_generated.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/text/rope.h"
 #include "flatsql/utils/string_pool.h"
