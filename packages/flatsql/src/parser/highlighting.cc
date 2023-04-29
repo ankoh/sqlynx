@@ -1,7 +1,7 @@
 #include <unordered_map>
 
 #include "flatsql/parser/grammar/keywords.h"
-#include "flatsql/parser/scanner.h"
+#include "flatsql/parser/program.h"
 #include "flatsql/proto/proto_generated.h"
 
 namespace flatsql {
@@ -36,7 +36,7 @@ static const proto::HighlightingTokenType MapToken(Parser::symbol_kind_type symb
 };
 
 /// Collect syntax highlighting information
-std::unique_ptr<proto::HighlightingT> Scanner::BuildHighlighting() {
+std::unique_ptr<proto::HighlightingT> ScannedProgram::BuildHighlighting() {
     std::vector<uint32_t> offsets;
     std::vector<proto::HighlightingTokenType> types;
     offsets.reserve(symbols.GetSize() * 3 / 2);

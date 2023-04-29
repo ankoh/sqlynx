@@ -123,12 +123,12 @@ void NodeList::copy_into(std::span<proto::Node> nodes) {
 }
 
 /// Constructor
-ParserDriver::ParserDriver(Scanner& scanner)
-    : scanner(scanner),
+ParserDriver::ParserDriver(ScannedProgram& scan)
+    : program(scan),
       nodes(),
-      current_statement(),
       statements(),
       errors(),
+      current_statement(),
       temp_nary_expressions(),
       temp_lists(),
       temp_list_elements() {}
@@ -326,32 +326,31 @@ void ParserDriver::AddError(proto::Location loc, const std::string& message) { e
 
 /// Get as flatbuffer object
 std::shared_ptr<proto::ProgramT> ParserDriver::Finish() {
-    auto program = std::make_unique<proto::ProgramT>();
-    program->nodes = nodes.Flatten();
-    program->statements.reserve(statements.size());
+    auto out = std::make_unique<proto::ProgramT>();
+    out->nodes = nodes.Flatten();
+    out->statements.reserve(statements.size());
     for (auto& stmt : statements) {
-        program->statements.push_back(stmt.Finish());
+        out->statements.push_back(stmt.Finish());
     }
-    program->errors.reserve(errors.size());
+    out->errors.reserve(errors.size());
     for (auto& [loc, msg] : errors) {
         auto err = std::make_unique<proto::ErrorT>();
         err->location = std::make_unique<proto::Location>(loc);
         err->message = std::move(msg);
-        program->errors.push_back(std::move(err));
+        out->errors.push_back(std::move(err));
     }
-    program->highlighting = scanner.BuildHighlighting();
-    program->line_breaks = scanner.ReleaseLineBreaks();
-    program->comments = scanner.ReleaseComments();
-    return program;
+    out->highlighting = program.BuildHighlighting();
+    out->line_breaks = std::move(program.line_breaks);
+    out->comments = std::move(program.comments);
+    return out;
 }
 
 std::shared_ptr<proto::ProgramT> ParserDriver::Parse(rope::Rope& in, bool trace_scanning, bool trace_parsing) {
     // Tokenize the input text
-    Scanner scanner{in};
-    scanner.Tokenize();
+    auto program = Scanner::Scan(in);
 
     // Parse the tokens
-    ParserDriver driver{scanner};
+    ParserDriver driver{*program};
     flatsql::parser::Parser parser(driver);
     parser.parse();
 

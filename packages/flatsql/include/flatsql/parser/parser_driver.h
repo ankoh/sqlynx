@@ -21,7 +21,7 @@
 namespace flatsql {
 namespace parser {
 
-class Scanner;
+class ScannedProgram;
 
 using NodeID = uint32_t;
 using Key = proto::AttributeKey;
@@ -158,16 +158,17 @@ using ExpressionVariant = std::variant<proto::Node, WeakUniquePtr<NAryExpression
 class ParserDriver {
    protected:
     /// The scanner
-    Scanner& scanner;
+    ScannedProgram& program;
+
     /// The nodes
     ChunkBuffer<proto::Node> nodes;
-    /// The current statement
-    Statement current_statement;
     /// The statements
     std::vector<Statement> statements;
     /// The errors
     std::vector<std::pair<proto::Location, std::string>> errors;
 
+    /// The current statement
+    Statement current_statement;
     /// The temporary node lists
     NodeList::ListPool temp_lists;
     /// The temporary node list elements
@@ -177,12 +178,12 @@ class ParserDriver {
 
    public:
     /// Constructor
-    explicit ParserDriver(Scanner& scanner);
+    explicit ParserDriver(ScannedProgram& scan);
     /// Destructor
     ~ParserDriver();
 
-    /// Return the scanner
-    auto& GetScanner() { return scanner; }
+    /// Get the program
+    auto& GetProgram() { return program; };
 
     /// Create a list
     WeakUniquePtr<NodeList> List(std::initializer_list<proto::Node> nodes = {});
