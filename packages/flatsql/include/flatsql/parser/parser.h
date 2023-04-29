@@ -22,6 +22,7 @@ namespace flatsql {
 namespace parser {
 
 class ScannedProgram;
+class ParsedProgram;
 
 using NodeID = uint32_t;
 using Key = proto::AttributeKey;
@@ -156,6 +157,8 @@ struct NAryExpression {
 using ExpressionVariant = std::variant<proto::Node, WeakUniquePtr<NAryExpression>>;
 
 class ParseContext {
+    friend class ParsedProgram;
+
    protected:
     /// The scanner
     ScannedProgram& program;
@@ -218,12 +221,10 @@ class ParseContext {
     void AddError(proto::Location loc, const std::string& message);
     /// Add a statement
     void FinishStatement(proto::Node node);
-    /// Get as flatbuffer object
-    std::shared_ptr<proto::ProgramT> Finish();
 
     /// Parse a module
-    static std::shared_ptr<proto::ProgramT> Parse(rope::Rope& in, bool trace_scanning = false,
-                                                  bool trace_parsing = false);
+    static std::unique_ptr<ParsedProgram> Parse(ScannedProgram& in, bool trace_scanning = false,
+                                                bool trace_parsing = false);
 };
 
 }  // namespace parser

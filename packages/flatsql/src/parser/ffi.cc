@@ -2,6 +2,8 @@
 
 #include "flatbuffers/flatbuffers.h"
 #include "flatsql/parser/parser.h"
+#include "flatsql/parser/program.h"
+#include "flatsql/parser/scanner.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/text/rope.h"
 
@@ -76,11 +78,13 @@ extern "C" FFIResult* flatsql_rope_to_string(rope::Rope* rope) {
 /// Parse a rope
 extern "C" FFIResult* flatsql_parse_rope(rope::Rope* data) {
     // Parse the program
-    auto program = ParseContext::Parse(*data);
+    auto scanned = Scanner::Scan(*data);
+    auto parsed = ParseContext::Parse(*scanned);
+    auto packed_program = parsed->BuildProgram();
 
     // Pack the flatbuffer program
     flatbuffers::FlatBufferBuilder fb;
-    auto program_ofs = proto::Program::Pack(fb, program.get());
+    auto program_ofs = proto::Program::Pack(fb, packed_program.get());
     fb.Finish(program_ofs);
 
     // Store the buffer

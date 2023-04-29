@@ -1,5 +1,7 @@
 #include "benchmark/benchmark.h"
-#include "flatsql/parser/parser_generated.h"
+#include "flatsql/parser/parser.h"
+#include "flatsql/parser/program.h"
+#include "flatsql/parser/scanner.h"
 #include "flatsql/text/rope.h"
 
 static const std::string_view query = R"SQL(
@@ -65,7 +67,8 @@ static const std::string_view query = R"SQL(
 static void bm_parse_query(benchmark::State& state) {
     auto buffer = flatsql::rope::Rope::FromString(1024, query);
     for (auto _ : state) {
-        flatsql::parser::ParseContext::Parse(buffer);
+        auto scanner = flatsql::parser::Scanner::Scan(buffer);
+        flatsql::parser::ParseContext::Parse(*scanner);
     }
 }
 

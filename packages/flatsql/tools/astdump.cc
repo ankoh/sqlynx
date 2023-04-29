@@ -7,6 +7,8 @@
 
 #include "flatbuffers/flatbuffers.h"
 #include "flatsql/parser/parser.h"
+#include "flatsql/parser/program.h"
+#include "flatsql/parser/scanner.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/testing/astdump_test.h"
 #include "gflags/gflags.h"
@@ -54,11 +56,13 @@ static void generate_astdumps(const std::filesystem::path& source_dir) {
             auto input = test.child("input");
             auto input_buffer = std::string{input.last_child().value()};
             auto input_rope = rope::Rope::FromString(1024, input_buffer);
-            auto program = parser::ParseContext::Parse(input_rope);
+            auto scanned = parser::Scanner::Scan(input_rope);
+            auto parsed = parser::ParseContext::Parse(*scanned);
+            auto packed_program = parsed->BuildProgram();
 
             /// Write output
             auto expected = test.append_child("expected");
-            ASTDumpTest::EncodeProgram(expected, *program, input_buffer);
+            ASTDumpTest::EncodeProgram(expected, *packed_program, input_buffer);
         }
 
         // Write xml document
