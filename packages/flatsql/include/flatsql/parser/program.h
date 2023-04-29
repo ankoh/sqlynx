@@ -10,6 +10,7 @@ namespace flatsql {
 namespace parser {
 
 class Scanner;
+class ParseContext;
 
 class ScannedProgram {
    public:
@@ -32,7 +33,7 @@ class ScannedProgram {
 
    public:
     /// Constructor
-    ScannedProgram(Scanner& scanner);
+    ScannedProgram(Scanner&& scanner);
 
     /// Get next symbol
     inline Parser::symbol_type IterNext() {
@@ -47,6 +48,26 @@ class ScannedProgram {
     std::string_view ReadTextAtLocation(sx::Location loc, std::string& tmp);
     /// Pack syntax highlighting
     std::unique_ptr<proto::HighlightingT> BuildHighlighting();
+};
+
+class ParsedProgram {
+   public:
+    /// The scanned program
+    ScannedProgram& scan;
+
+    /// The nodes
+    ChunkBuffer<proto::Node> nodes;
+    /// The statements
+    std::vector<Statement> statements;
+    /// The errors
+    std::vector<std::pair<proto::Location, std::string>> errors;
+
+   public:
+    /// Constructor
+    ParsedProgram(ParseContext&& context);
+
+    /// Build the program
+    std::shared_ptr<proto::ProgramT> BuildProgram();
 };
 
 }  // namespace parser

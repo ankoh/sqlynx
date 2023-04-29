@@ -191,8 +191,8 @@ std::unique_ptr<ScannedProgram> Scanner::Scan(rope::Rope& rope) {
         return current_symbol;
     };
 
+    // Create the scanner
     Scanner scanner{rope};
-
     // Collect all tokens until we hit EOF
     std::optional<Parser::symbol_type> lookahead_symbol;
     while (true) {
@@ -202,7 +202,7 @@ std::unique_ptr<ScannedProgram> Scanner::Scan(rope::Rope& rope) {
     }
 
     // Collect scanner output
-    return std::make_unique<ScannedProgram>(scanner);
+    return std::make_unique<ScannedProgram>(std::move(scanner));
 }
 
 }  // namespace parser

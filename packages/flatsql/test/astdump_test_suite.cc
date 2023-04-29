@@ -1,4 +1,6 @@
 #include "flatsql/parser/parser.h"
+#include "flatsql/parser/program.h"
+#include "flatsql/parser/scanner.h"
 #include "flatsql/testing/astdump_test.h"
 #include "gtest/gtest.h"
 #include "pugixml.hpp"
@@ -11,10 +13,12 @@ struct ASTDumpTestSuite : public ::testing::TestWithParam<const ASTDumpTest*> {}
 TEST_P(ASTDumpTestSuite, Test) {
     auto* test = GetParam();
     auto input = rope::Rope::FromString(1024, test->input);
-    auto program = parser::ParseContext::Parse(input);
+    auto scanned = parser::Scanner::Scan(input);
+    auto parsed = parser::ParseContext::Parse(*scanned);
+    auto packed_program = parsed->BuildProgram();
 
     pugi::xml_document out;
-    ASTDumpTest::EncodeProgram(out, *program, test->input);
+    ASTDumpTest::EncodeProgram(out, *packed_program, test->input);
 
     ASSERT_TRUE(test->Matches(out));
 }

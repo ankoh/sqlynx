@@ -324,33 +324,9 @@ void ParseContext::FinishStatement(proto::Node node) {
 /// Add an error
 void ParseContext::AddError(proto::Location loc, const std::string& message) { errors.push_back({loc, message}); }
 
-/// Get as flatbuffer object
-std::shared_ptr<proto::ProgramT> ParseContext::Finish() {
-    auto out = std::make_unique<proto::ProgramT>();
-    out->nodes = nodes.Flatten();
-    out->statements.reserve(statements.size());
-    for (auto& stmt : statements) {
-        out->statements.push_back(stmt.Finish());
-    }
-    out->errors.reserve(errors.size());
-    for (auto& [loc, msg] : errors) {
-        auto err = std::make_unique<proto::ErrorT>();
-        err->location = std::make_unique<proto::Location>(loc);
-        err->message = std::move(msg);
-        out->errors.push_back(std::move(err));
-    }
-    out->highlighting = program.BuildHighlighting();
-    out->line_breaks = std::move(program.line_breaks);
-    out->comments = std::move(program.comments);
-    return out;
-}
-
-std::shared_ptr<proto::ProgramT> ParseContext::Parse(rope::Rope& in, bool trace_scanning, bool trace_parsing) {
-    // Tokenize the input text
-    auto program = Scanner::Scan(in);
-
+std::unique_ptr<ParsedProgram> ParseContext::Parse(ScannedProgram& in, bool trace_scanning, bool trace_parsing) {
     // Parse the tokens
-    ParseContext ctx{*program};
+    ParseContext ctx{in};
     flatsql::parser::Parser parser(ctx);
     parser.parse();
 
@@ -374,7 +350,7 @@ std::shared_ptr<proto::ProgramT> ParseContext::Parse(rope::Rope& in, bool trace_
     assert(ctx.temp_nary_expressions.GetAllocatedNodeCount() == 0);
 
     // Pack the program
-    return ctx.Finish();
+    return std::make_unique<ParsedProgram>(std::move(ctx));
 }
 
 }  // namespace parser
