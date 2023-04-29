@@ -54,12 +54,6 @@ struct Statement {
 template <typename T> struct WeakUniquePtr {
     T* inner;
     WeakUniquePtr(T* value = nullptr) : inner(value) {}
-    WeakUniquePtr(const WeakUniquePtr& other) : inner(other.inner) {}
-    WeakUniquePtr& operator=(const WeakUniquePtr& other) {
-        Destroy();
-        inner = other.inner;
-        return *this;
-    }
     WeakUniquePtr(WeakUniquePtr&& other) : inner(other.inner) { other.inner = nullptr; }
     WeakUniquePtr& operator=(WeakUniquePtr&& other) {
         Destroy();
@@ -67,8 +61,25 @@ template <typename T> struct WeakUniquePtr {
         other.inner = nullptr;
         return *this;
     }
-    T* operator->() { return inner; }
-    T& operator*() { return *inner; }
+    WeakUniquePtr(const WeakUniquePtr& other) : inner(other.inner) {
+        // We only implement copy constructors to please the bison stack assignment.
+        *const_cast<T**>(&other.inner) = nullptr;
+    }
+    WeakUniquePtr& operator=(const WeakUniquePtr& other) {
+        Destroy();
+        inner = other.inner;
+        // We only implement copy assignment to please the bison stack assignment.
+        *const_cast<T**>(&other.inner) = nullptr;
+        return *this;
+    }
+    T* operator->() {
+        assert(inner);
+        return inner;
+    }
+    T& operator*() {
+        assert(inner);
+        return *inner;
+    }
     void Destroy() {
         if (inner) {
             inner->~T();
