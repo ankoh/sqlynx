@@ -6,6 +6,7 @@
 #include "flatsql/parser/grammar/enums.h"
 #include "flatsql/parser/grammar/location.h"
 #include "flatsql/parser/parser_driver.h"
+#include "flatsql/parser/program.h"
 #include "flatsql/parser/scanner.h"
 #include "flatsql/proto/proto_generated.h"
 
@@ -205,7 +206,7 @@ inline proto::JoinType Merge(proto::JoinType left, proto::JoinType right) {
 /// Read a float type
 inline proto::NumericType ReadFloatType(ParserDriver& driver, proto::Location bitsLoc) {
     std::string tmp_buffer;
-    auto text = driver.GetScanner().ReadTextAtLocation(bitsLoc, tmp_buffer);
+    auto text = driver.GetProgram().ReadTextAtLocation(bitsLoc, tmp_buffer);
     int64_t bits;
     std::from_chars(text.data(), text.data() + text.size(), bits);
     if (bits < 1) {

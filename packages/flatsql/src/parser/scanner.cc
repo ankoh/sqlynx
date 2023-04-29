@@ -4,6 +4,7 @@
 
 #include "flatsql/parser/grammar/keywords.h"
 #include "flatsql/parser/parser_driver.h"
+#include "flatsql/parser/program.h"
 #include "flatsql/utils/string.h"
 
 using Parser = flatsql::parser::Parser;
@@ -120,7 +121,7 @@ void Scanner::ScanNextInputData(void* out_buffer, size_t& out_bytes_read, size_t
 }
 
 /// Scan input and produce all tokens
-void Scanner::Tokenize() {
+std::unique_ptr<ScannedProgram> Scanner::Scan(rope::Rope& rope) {
     // Function to get next token
     auto next = [](void* scanner_state_ptr, std::optional<Parser::symbol_type>& lookahead_symbol) {
         // Have lookahead?
@@ -190,16 +191,18 @@ void Scanner::Tokenize() {
         return current_symbol;
     };
 
+    Scanner scanner{rope};
+
     // Collect all tokens until we hit EOF
-    if (symbols.GetSize() == 0) {
-        std::optional<Parser::symbol_type> lookahead_symbol;
-        while (true) {
-            auto token = next(internal_scanner_state, lookahead_symbol);
-            symbols.Append(token);
-            if (token.kind() == Parser::symbol_kind::S_YYEOF) break;
-        }
+    std::optional<Parser::symbol_type> lookahead_symbol;
+    while (true) {
+        auto token = next(scanner.internal_scanner_state, lookahead_symbol);
+        scanner.symbols.Append(token);
+        if (token.kind() == Parser::symbol_kind::S_YYEOF) break;
     }
-    symbol_scanner.Reset();
+
+    // Collect scanner output
+    return std::make_unique<ScannedProgram>(scanner);
 }
 
 }  // namespace parser

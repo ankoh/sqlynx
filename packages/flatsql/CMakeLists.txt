@@ -221,6 +221,7 @@ set(LIB_SRC
     ${CMAKE_SOURCE_DIR}/src/parser/highlighting.cc
     ${CMAKE_SOURCE_DIR}/src/parser/keywords.cc
     ${CMAKE_SOURCE_DIR}/src/parser/parser_driver.cc
+    ${CMAKE_SOURCE_DIR}/src/parser/program.cc
     ${CMAKE_SOURCE_DIR}/src/parser/scanner.cc
     ${CMAKE_SOURCE_DIR}/src/utils/rope.cc)
 

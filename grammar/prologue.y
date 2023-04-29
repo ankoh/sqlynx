@@ -47,7 +47,7 @@ namespace sx = flatsql::proto;
 #include "flatsql/parser/scanner.h"
 
 #undef yylex
-#define yylex ctx.GetScanner().NextToken
+#define yylex ctx.GetProgram().IterNext
 
 using namespace flatsql::parser;
 }

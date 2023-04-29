@@ -17,6 +17,8 @@ namespace parser {
 class ParserDriver;
 
 class Scanner {
+    friend class ScannedProgram;
+
    protected:
     /// The internal scanner state
     void* internal_scanner_state = nullptr;
@@ -41,8 +43,6 @@ class Scanner {
     std::vector<proto::Location> line_breaks = {};
     /// The comments
     std::vector<proto::Location> comments = {};
-    /// The vararg keys
-    std::unordered_set<size_t> vararg_key_offsets = {};
 
     /// The string pool
     StringPool<1024> string_pool;
@@ -53,8 +53,6 @@ class Scanner {
 
     /// All symbols
     ChunkBuffer<Parser::symbol_type> symbols = {};
-    /// The symbol iterator
-    ChunkBuffer<Parser::symbol_type>::ForwardIterator symbol_scanner{symbols};
 
    public:
     // Helpers that are used from the generated flex scanner
@@ -68,10 +66,6 @@ class Scanner {
     /// Nesting depth of the active extended lexer rules
     size_t ext_depth = 0;
 
-    /// Read a text at a location
-    inline std::string_view ReadTextAtLocation(sx::Location loc, std::string& tmp) {
-        return input_data.Read(loc.offset(), loc.length(), tmp);
-    }
     /// Scan next input data
     void ScanNextInputData(void* out_buffer, size_t& out_bytes_read, size_t max_size);
 
@@ -102,7 +96,7 @@ class Scanner {
     /// Add a comment
     void AddComment(proto::Location location);
 
-   public:
+   protected:
     /// Constructor
     Scanner(rope::Rope& rope);
     /// Destructor
@@ -112,21 +106,9 @@ class Scanner {
     /// Delete the copy assignment
     Scanner& operator=(const Scanner& other) = delete;
 
+   public:
     /// Scan input and produce all tokens
-    void Tokenize();
-    /// Get the next symbol
-    Parser::symbol_type NextToken() {
-        auto sym = symbol_scanner.GetValue();
-        ++symbol_scanner;
-        return sym;
-    }
-
-    /// Release the line breaks
-    auto&& ReleaseLineBreaks() { return std::move(line_breaks); }
-    /// Release the comments
-    auto&& ReleaseComments() { return std::move(comments); }
-    /// Pack syntax highlighting
-    std::unique_ptr<proto::HighlightingT> BuildHighlighting();
+    static std::unique_ptr<ScannedProgram> Scan(rope::Rope& rope);
 };
 
 }  // namespace parser
