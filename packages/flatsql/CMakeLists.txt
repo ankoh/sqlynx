@@ -216,11 +216,12 @@ add_custom_command(
 set(LIB_SRC
     ${SCANNER_OUT}
     ${PARSER_OUT}
-    ${CMAKE_SOURCE_DIR}/src/parser/ffi.cc
+    ${CMAKE_SOURCE_DIR}/src/analyzer/pass_manager.cc
+    ${CMAKE_SOURCE_DIR}/src/ffi.cc
     ${CMAKE_SOURCE_DIR}/src/parser/enums.cc
     ${CMAKE_SOURCE_DIR}/src/parser/highlighting.cc
     ${CMAKE_SOURCE_DIR}/src/parser/keywords.cc
-    ${CMAKE_SOURCE_DIR}/src/parser/parser.cc
+    ${CMAKE_SOURCE_DIR}/src/parser/parse_context.cc
     ${CMAKE_SOURCE_DIR}/src/parser/program.cc
     ${CMAKE_SOURCE_DIR}/src/parser/scanner.cc
     ${CMAKE_SOURCE_DIR}/src/utils/rope.cc)

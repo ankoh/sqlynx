@@ -38,12 +38,27 @@ template <typename T, size_t InitialSize = 1024> struct ChunkBuffer {
             }
             return *this;
         }
+        /// Increment operator
+        ForwardIterator& operator+=(size_t n) {
+            n = std::min<size_t>(buffer.buffers[chunk_id].size() - local_value_id, n);
+            local_value_id += n;
+            if (local_value_id >= buffer.buffers[chunk_id].size() && (chunk_id + 1) < buffer.buffers.size()) {
+                ++chunk_id;
+                local_value_id = 0;
+            }
+            return *this;
+        }
         /// Is at end?
         bool IsAtEnd() { return local_value_id >= buffer.buffers[chunk_id].size(); }
         /// Get the value
         T GetValue() {
             assert(!IsAtEnd());
             return buffer.buffers[chunk_id][local_value_id];
+        }
+        /// Get the next N value
+        std::span<T> GetValues(size_t n) {
+            n = std::min<size_t>(buffer.buffers[chunk_id].size() - local_value_id, n);
+            return std::span<T>{buffer.buffers[chunk_id]}.subspan(local_value_id, n);
         }
     };
 
@@ -95,6 +110,8 @@ template <typename T, size_t InitialSize = 1024> struct ChunkBuffer {
         assert(total_value_count > 0);
         return buffers.back().back();
     }
+    /// Iterate the buffer
+    ForwardIterator Iterate() { return ForwardIterator{*this}; }
     /// Clear the buffer
     void Clear() {
         buffers.erase(buffers.begin() + 1, buffers.end());

@@ -16,7 +16,6 @@ class ScannedProgram {
    public:
     /// The full input data
     rope::Rope& input_data;
-
     /// The scanner errors
     std::vector<std::pair<proto::Location, std::string>> errors;
     /// The line breaks
@@ -25,7 +24,6 @@ class ScannedProgram {
     std::vector<proto::Location> comments;
     /// The string dictionary
     std::vector<sx::Location> string_dictionary;
-
     /// All symbols
     ChunkBuffer<Parser::symbol_type> symbols;
     /// The symbol iterator
@@ -54,7 +52,6 @@ class ParsedProgram {
    public:
     /// The scanned program
     ScannedProgram& scan;
-
     /// The nodes
     ChunkBuffer<proto::Node> nodes;
     /// The statements
