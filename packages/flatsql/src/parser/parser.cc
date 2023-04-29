@@ -1,4 +1,4 @@
-#include "flatsql/parser/parser_driver.h"
+#include "flatsql/parser/parser.h"
 
 #include <iostream>
 #include <regex>

@@ -2,7 +2,7 @@
 
 #include <charconv>
 
-#include "flatsql/parser/parser_driver.h"
+#include "flatsql/parser/parser.h"
 #include "flatsql/proto/proto_generated.h"
 
 namespace flatsql {
