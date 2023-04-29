@@ -28,8 +28,8 @@ ParsedProgram::ParsedProgram(ParseContext&& ctx)
       statements(std::move(ctx.statements)),
       errors(std::move(ctx.errors)) {}
 
-/// Build the program
-std::shared_ptr<proto::ProgramT> ParsedProgram::BuildProgram() {
+/// Pack the FlatBuffer
+std::shared_ptr<proto::ProgramT> ParsedProgram::Pack() {
     auto out = std::make_unique<proto::ProgramT>();
     out->nodes = nodes.Flatten();
     out->statements.reserve(statements.size());
@@ -43,7 +43,7 @@ std::shared_ptr<proto::ProgramT> ParsedProgram::BuildProgram() {
         err->message = std::move(msg);
         out->errors.push_back(std::move(err));
     }
-    out->highlighting = scan.BuildHighlighting();
+    out->highlighting = scan.Pack();
     out->line_breaks = std::move(scan.line_breaks);
     out->comments = std::move(scan.comments);
     return out;

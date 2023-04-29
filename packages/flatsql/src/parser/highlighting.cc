@@ -35,8 +35,8 @@ static const proto::HighlightingTokenType MapToken(Parser::symbol_kind_type symb
     };
 };
 
-/// Collect syntax highlighting information
-std::unique_ptr<proto::HighlightingT> ScannedProgram::BuildHighlighting() {
+/// Pack the FlatBuffer
+std::unique_ptr<proto::HighlightingT> ScannedProgram::Pack() {
     std::vector<uint32_t> offsets;
     std::vector<proto::HighlightingTokenType> types;
     offsets.reserve(symbols.GetSize() * 3 / 2);

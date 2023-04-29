@@ -47,7 +47,7 @@ class ScannedProgram {
     /// Read a text at a location
     std::string_view ReadTextAtLocation(sx::Location loc, std::string& tmp);
     /// Pack syntax highlighting
-    std::unique_ptr<proto::HighlightingT> BuildHighlighting();
+    std::unique_ptr<proto::HighlightingT> Pack();
 };
 
 class ParsedProgram {
@@ -67,7 +67,7 @@ class ParsedProgram {
     ParsedProgram(ParseContext&& context);
 
     /// Build the program
-    std::shared_ptr<proto::ProgramT> BuildProgram();
+    std::shared_ptr<proto::ProgramT> Pack();
 };
 
 }  // namespace parser
