@@ -58,7 +58,7 @@ static void generate_astdumps(const std::filesystem::path& source_dir) {
             auto input_rope = rope::Rope::FromString(1024, input_buffer);
             auto scanned = parser::Scanner::Scan(input_rope);
             auto parsed = parser::ParseContext::Parse(*scanned);
-            auto packed_program = parsed->BuildProgram();
+            auto packed_program = parsed->Pack();
 
             /// Write output
             auto expected = test.append_child("expected");

@@ -80,7 +80,7 @@ extern "C" FFIResult* flatsql_parse_rope(rope::Rope* data) {
     // Parse the program
     auto scanned = Scanner::Scan(*data);
     auto parsed = ParseContext::Parse(*scanned);
-    auto packed_program = parsed->BuildProgram();
+    auto packed_program = parsed->Pack();
 
     // Pack the flatbuffer program
     flatbuffers::FlatBufferBuilder fb;

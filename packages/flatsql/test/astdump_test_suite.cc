@@ -15,7 +15,7 @@ TEST_P(ASTDumpTestSuite, Test) {
     auto input = rope::Rope::FromString(1024, test->input);
     auto scanned = parser::Scanner::Scan(input);
     auto parsed = parser::ParseContext::Parse(*scanned);
-    auto packed_program = parsed->BuildProgram();
+    auto packed_program = parsed->Pack();
 
     pugi::xml_document out;
     ASTDumpTest::EncodeProgram(out, *packed_program, test->input);
