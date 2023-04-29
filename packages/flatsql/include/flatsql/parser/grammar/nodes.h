@@ -75,7 +75,7 @@ inline proto::Node Const(proto::Location loc, proto::AConstType type) {
 }
 
 /// Create indirection
-inline proto::Node IndirectionIndex(ParserDriver& driver, proto::Location loc, proto::Node index) {
+inline proto::Node IndirectionIndex(ParseContext& driver, proto::Location loc, proto::Node index) {
     return driver.Object(loc, proto::NodeType::OBJECT_SQL_INDIRECTION_INDEX,
                          {
                              Attr(Key::SQL_INDIRECTION_INDEX_VALUE, index),
@@ -83,7 +83,7 @@ inline proto::Node IndirectionIndex(ParserDriver& driver, proto::Location loc, p
 }
 
 /// Create indirection
-inline proto::Node IndirectionIndex(ParserDriver& driver, proto::Location loc, proto::Node lower_bound,
+inline proto::Node IndirectionIndex(ParseContext& driver, proto::Location loc, proto::Node lower_bound,
                                     proto::Node upper_bound) {
     return driver.Object(loc, proto::NodeType::OBJECT_SQL_INDIRECTION_INDEX,
                          {
@@ -93,7 +93,7 @@ inline proto::Node IndirectionIndex(ParserDriver& driver, proto::Location loc, p
 }
 
 /// Create a temp table name
-inline proto::Node Into(ParserDriver& driver, proto::Location loc, proto::Node type, proto::Node name) {
+inline proto::Node Into(ParseContext& driver, proto::Location loc, proto::Node type, proto::Node name) {
     return driver.Object(loc, proto::NodeType::OBJECT_SQL_INTO,
                          {
                              Attr(Key::SQL_TEMP_TYPE, type),
@@ -102,7 +102,7 @@ inline proto::Node Into(ParserDriver& driver, proto::Location loc, proto::Node t
 }
 
 /// Create a column ref
-inline proto::Node ColumnRef(ParserDriver& driver, proto::Location loc, WeakUniquePtr<NodeList>&& path) {
+inline proto::Node ColumnRef(ParseContext& driver, proto::Location loc, WeakUniquePtr<NodeList>&& path) {
     auto path_nodes = driver.Array(loc, std::move(path));
     return driver.Object(loc, proto::NodeType::OBJECT_SQL_COLUMN_REF,
                          {
@@ -111,12 +111,12 @@ inline proto::Node ColumnRef(ParserDriver& driver, proto::Location loc, WeakUniq
 }
 
 /// Add an expression without arguments
-inline proto::Node Expr(ParserDriver& driver, proto::Location loc, proto::Node func) {
+inline proto::Node Expr(ParseContext& driver, proto::Location loc, proto::Node func) {
     return driver.Object(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION, {Attr(Key::SQL_EXPRESSION_OPERATOR, func)});
 }
 
 /// Add an unary expression
-inline proto::Node Expr(ParserDriver& driver, proto::Location loc, proto::Node func, ExpressionVariant arg) {
+inline proto::Node Expr(ParseContext& driver, proto::Location loc, proto::Node func, ExpressionVariant arg) {
     std::array<ExpressionVariant, 1> args{std::move(arg)};
     return driver.Object(loc, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
                          {
@@ -127,7 +127,7 @@ inline proto::Node Expr(ParserDriver& driver, proto::Location loc, proto::Node f
 
 enum PostFixTag { PostFix };
 /// Add an unary expression
-inline ExpressionVariant Expr(ParserDriver& driver, proto::Location loc, proto::Node func, ExpressionVariant arg,
+inline ExpressionVariant Expr(ParseContext& driver, proto::Location loc, proto::Node func, ExpressionVariant arg,
                               PostFixTag) {
     std::array<ExpressionVariant, 1> args{std::move(arg)};
     if (auto expr = driver.TryMerge(loc, func, args); expr.has_value()) {
@@ -142,7 +142,7 @@ inline ExpressionVariant Expr(ParserDriver& driver, proto::Location loc, proto::
 }
 
 /// Add a binary expression
-inline ExpressionVariant Expr(ParserDriver& driver, proto::Location loc, proto::Node func, ExpressionVariant left,
+inline ExpressionVariant Expr(ParseContext& driver, proto::Location loc, proto::Node func, ExpressionVariant left,
                               ExpressionVariant right) {
     std::array<ExpressionVariant, 2> args{std::move(left), std::move(right)};
     if (auto expr = driver.TryMerge(loc, func, args); expr.has_value()) {
@@ -156,7 +156,7 @@ inline ExpressionVariant Expr(ParserDriver& driver, proto::Location loc, proto::
 }
 
 /// Add a ternary expression
-inline ExpressionVariant Expr(ParserDriver& driver, proto::Location loc, proto::Node func, ExpressionVariant arg0,
+inline ExpressionVariant Expr(ParseContext& driver, proto::Location loc, proto::Node func, ExpressionVariant arg0,
                               ExpressionVariant arg1, ExpressionVariant arg2) {
     std::array<ExpressionVariant, 3> args{std::move(arg0), std::move(arg1), std::move(arg2)};
     if (auto expr = driver.TryMerge(loc, func, args); expr.has_value()) {
@@ -170,7 +170,7 @@ inline ExpressionVariant Expr(ParserDriver& driver, proto::Location loc, proto::
 }
 
 /// Negate an expression
-inline ExpressionVariant Negate(ParserDriver& driver, proto::Location loc, proto::Location loc_minus,
+inline ExpressionVariant Negate(ParseContext& driver, proto::Location loc, proto::Location loc_minus,
                                 ExpressionVariant value) {
     // XXX If node_type == OBJECT_SQL_CONST inspect the attributes and expand the value
 
@@ -183,7 +183,7 @@ inline ExpressionVariant Negate(ParserDriver& driver, proto::Location loc, proto
                          });
 }
 /// Negate a value
-inline proto::Node Negate(ParserDriver& driver, proto::Location loc, proto::Location loc_minus, proto::Node value) {
+inline proto::Node Negate(ParseContext& driver, proto::Location loc, proto::Location loc_minus, proto::Node value) {
     // XXX If node_type == OBJECT_SQL_CONST inspect the attributes and expand the value
 
     // Otherwise fall back to an unary negation
@@ -204,7 +204,7 @@ inline proto::JoinType Merge(proto::JoinType left, proto::JoinType right) {
 }
 
 /// Read a float type
-inline proto::NumericType ReadFloatType(ParserDriver& driver, proto::Location bitsLoc) {
+inline proto::NumericType ReadFloatType(ParseContext& driver, proto::Location bitsLoc) {
     std::string tmp_buffer;
     auto text = driver.GetProgram().ReadTextAtLocation(bitsLoc, tmp_buffer);
     int64_t bits;
@@ -222,7 +222,7 @@ inline proto::NumericType ReadFloatType(ParserDriver& driver, proto::Location bi
 }
 
 /// Add a vararg field
-inline proto::Node VarArgField(ParserDriver& driver, proto::Location loc, WeakUniquePtr<NodeList>&& path,
+inline proto::Node VarArgField(ParseContext& driver, proto::Location loc, WeakUniquePtr<NodeList>&& path,
                                proto::Node value) {
     auto root = value;
     for (auto iter = path->back(); iter; iter = iter->prev) {

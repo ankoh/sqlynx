@@ -11,7 +11,7 @@ struct ASTDumpTestSuite : public ::testing::TestWithParam<const ASTDumpTest*> {}
 TEST_P(ASTDumpTestSuite, Test) {
     auto* test = GetParam();
     auto input = rope::Rope::FromString(1024, test->input);
-    auto program = parser::ParserDriver::Parse(input);
+    auto program = parser::ParseContext::Parse(input);
 
     pugi::xml_document out;
     ASTDumpTest::EncodeProgram(out, *program, test->input);
