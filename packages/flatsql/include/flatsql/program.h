@@ -16,6 +16,7 @@ class ParseContext;
 using Key = proto::AttributeKey;
 using Location = proto::Location;
 using NodeID = uint32_t;
+using NameID = size_t;
 
 inline std::ostream& operator<<(std::ostream& out, const proto::Location& loc) {
     out << "[" << loc.offset() << "," << (loc.offset() + loc.length()) << "[";
@@ -53,7 +54,7 @@ class ScannedProgram {
     /// The name pool
     StringPool<1024> name_pool;
     /// The name dictionary ids
-    ankerl::unordered_dense::map<std::string_view, size_t> name_dictionary_ids;
+    ankerl::unordered_dense::map<std::string_view, NameID> name_dictionary_ids;
     /// The name dictionary locations
     std::vector<sx::Location> name_dictionary_locations;
 
