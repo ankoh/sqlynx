@@ -1,12 +1,11 @@
 #include <unordered_map>
 
 #include "flatsql/parser/grammar/keywords.h"
-#include "flatsql/parser/program.h"
+#include "flatsql/program.h"
 #include "flatsql/proto/proto_generated.h"
 
 namespace flatsql {
 namespace parser {
-
 static const proto::HighlightingTokenType MapToken(Parser::symbol_kind_type symbol) {
     switch (symbol) {
 #define X(CATEGORY, NAME, TOKEN) case Parser::symbol_kind_type::S_##TOKEN:
@@ -34,6 +33,7 @@ static const proto::HighlightingTokenType MapToken(Parser::symbol_kind_type symb
             return proto::HighlightingTokenType::NONE;
     };
 };
+}  // namespace parser
 
 /// Pack the FlatBuffer
 std::unique_ptr<proto::HighlightingT> ScannedProgram::Pack() {
@@ -58,7 +58,7 @@ std::unique_ptr<proto::HighlightingT> ScannedProgram::Pack() {
     };
 
     auto ci = 0;
-    symbols.ForEach(0, symbols.GetSize(), [&](size_t symbol_id, Parser::symbol_type symbol) {
+    symbols.ForEach(0, symbols.GetSize(), [&](size_t symbol_id, parser::Parser::symbol_type symbol) {
         // Emit all comments in between.
         while (ci < comments.size() && comments[ci].offset() < symbol.location.offset()) {
             emit(offsets, types, comments[ci++], proto::HighlightingTokenType::COMMENT);
@@ -84,5 +84,4 @@ std::unique_ptr<proto::HighlightingT> ScannedProgram::Pack() {
     return hl;
 }
 
-}  // namespace parser
 }  // namespace flatsql

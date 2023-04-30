@@ -1,10 +1,9 @@
-#include "flatsql/parser/program.h"
+#include "flatsql/program.h"
 
 #include "flatsql/parser/parse_context.h"
 #include "flatsql/parser/scanner.h"
 
 namespace flatsql {
-namespace parser {
 
 /// Constructor
 Statement::Statement() : root(std::numeric_limits<uint32_t>::max()) {}
@@ -48,7 +47,7 @@ std::string_view ScannedProgram::ReadTextAtLocation(sx::Location loc, std::strin
 }
 
 /// Constructor
-ParsedProgram::ParsedProgram(ParseContext&& ctx)
+ParsedProgram::ParsedProgram(parser::ParseContext&& ctx)
     : scan(ctx.program),
       nodes(std::move(ctx.nodes)),
       statements(std::move(ctx.statements)),
@@ -75,5 +74,4 @@ std::shared_ptr<proto::ProgramT> ParsedProgram::Pack() {
     return out;
 }
 
-}  // namespace parser
 }  // namespace flatsql

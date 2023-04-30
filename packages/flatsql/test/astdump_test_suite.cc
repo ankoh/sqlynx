@@ -1,6 +1,6 @@
 #include "flatsql/parser/parse_context.h"
-#include "flatsql/parser/program.h"
 #include "flatsql/parser/scanner.h"
+#include "flatsql/program.h"
 #include "flatsql/testing/astdump_test.h"
 #include "gtest/gtest.h"
 #include "pugixml.hpp"
