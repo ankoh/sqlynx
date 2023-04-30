@@ -84,7 +84,8 @@ void ASTDumpTest::EncodeProgram(pugi::xml_node root, const proto::ProgramT& prog
                     n.append_attribute("value") = target->children_begin_or_value() != 0;
                     break;
                 }
-                case proto::NodeType::IDENTIFIER:
+                case proto::NodeType::OPERATOR:
+                case proto::NodeType::NAME:
                 case proto::NodeType::LITERAL_NULL:
                 case proto::NodeType::LITERAL_FLOAT:
                 case proto::NodeType::LITERAL_INTEGER:

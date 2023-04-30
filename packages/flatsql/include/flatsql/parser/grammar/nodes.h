@@ -48,9 +48,13 @@ inline WeakUniquePtr<NodeList> Concat(WeakUniquePtr<NodeList>&& v0, WeakUniquePt
 inline proto::Node Null() {
     return proto::Node(proto::Location(), proto::NodeType::NONE, proto::AttributeKey::NONE, NO_PARENT, 0, 0);
 }
-/// Create a string node
-inline proto::Node Ident(proto::Location loc) {
-    return proto::Node(loc, proto::NodeType::IDENTIFIER, proto::AttributeKey::NONE, NO_PARENT, 0, 0);
+/// Create a name from an identifier
+inline proto::Node Operator(proto::Location loc) {
+    return proto::Node(loc, proto::NodeType::OPERATOR, proto::AttributeKey::NONE, NO_PARENT, 0, 0);
+}
+/// Create a name from an identifier
+inline proto::Node NameFromIdentifier(proto::Location loc, size_t value) {
+    return proto::Node(loc, proto::NodeType::NAME, proto::AttributeKey::NONE, NO_PARENT, value, 0);
 }
 /// Create a bool node
 inline proto::Node Bool(proto::Location loc, bool v) {
@@ -201,24 +205,6 @@ inline proto::JoinType Merge(proto::JoinType left, proto::JoinType right) {
     result |= static_cast<uint8_t>(left);
     result |= static_cast<uint8_t>(right);
     return static_cast<proto::JoinType>(result);
-}
-
-/// Read a float type
-inline proto::NumericType ReadFloatType(ParseContext& driver, proto::Location bitsLoc) {
-    std::string tmp_buffer;
-    auto text = driver.GetProgram().ReadTextAtLocation(bitsLoc, tmp_buffer);
-    int64_t bits;
-    std::from_chars(text.data(), text.data() + text.size(), bits);
-    if (bits < 1) {
-        driver.AddError(bitsLoc, "precision for float type must be least 1 bit");
-    } else if (bits < 24) {
-        return proto::NumericType::FLOAT4;
-    } else if (bits < 53) {
-        return proto::NumericType::FLOAT8;
-    } else {
-        driver.AddError(bitsLoc, "precision for float type must be less than 54 bits");
-    }
-    return proto::NumericType::FLOAT4;
 }
 
 /// Add a vararg field

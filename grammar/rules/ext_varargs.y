@@ -21,11 +21,11 @@ vararg_key_path:
 
 vararg_key:
     SCONST                      { $$ = Const(@1, proto::AConstType::STRING); }
-  | IDENT                       { $$ = Ident(@1); }
-  | sql_unreserved_keywords     { $$ = Ident(@1); }
-  | sql_column_name_keywords    { $$ = Ident(@1); }
-  | sql_type_func_keywords      { $$ = Ident(@1); }
-  | sql_reserved_keywords       { $$ = Ident(@1); }
+  | IDENT                       { $$ = NameFromIdentifier(@1, $1); }
+  | sql_unreserved_keywords     { $$ = ctx.NameFromKeyword(@1, $1); }
+  | sql_column_name_keywords    { $$ = ctx.NameFromKeyword(@1, $1); }
+  | sql_type_func_keywords      { $$ = ctx.NameFromKeyword(@1, $1); }
+  | sql_reserved_keywords       { $$ = ctx.NameFromKeyword(@1, $1); }
     ;
 
 vararg_value:

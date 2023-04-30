@@ -162,11 +162,15 @@ add_custom_command(
   # ------------------------------------------------
   # Write the prologue
   COMMAND cat ${GRAMMAR_PROLOGUE} >> ${GRAMMAR_OUT}
-  # Write the keyword token definitions Output: %token FILE1_KEYWORD1
-  # FILE1_KEYWORD2 %token FILE2_KEYWORD1 FILE2_KEYWORD2
+  # Write the keyword token definitions
+  # Output:
+  #   %type<string_view> file1
+  #   %token<string_view> FILE1_KEYWORD1 FILE1_KEYWORD2
+  #   %type<string_view> file2
+  #   %token<string_view> FILE2_KEYWORD1 FILE2_KEYWORD2
   COMMAND
     awk -F,
-    "{t=substr($3, 1, length($3)-1); if (FNR == 1) { printf \"\\n%%token \" t } else { printf t }} END {print \"\\n\"}"
+    "{n = split(FILENAME, p, \"/\"); bn=p[n]; bn=substr(bn, 1, length(bn)-5); t=substr($3, 1, length($3)-1); if (FNR == 1) { printf \"\\n%%type<std::string_view> \" bn \"\\n%%token<std::string_view> \" t } else { printf t }} END {print \"\\n\"}"
     ${GRAMMAR_KEYWORDS} >> ${GRAMMAR_OUT}
   # Write precedence rules
   COMMAND cat ${GRAMMAR_PRECEDENCES} >> ${GRAMMAR_OUT}
@@ -175,11 +179,13 @@ add_custom_command(
   # RULES
   # ------------------------------------------------
   COMMAND echo "%%" >> ${GRAMMAR_OUT}
-  # Write the keyword bison rules Output: file1: FILE1_KEYWORD1 |
-  # FILE1_KEYWORD2; file2: FILE2_KEYWORD1 | FILE2_KEYWORD2;
+  # Write the keyword bison rules
+  # Output:
+  #   file1: FILE1_KEYWORD1{$$=$1;} | FILE1_KEYWORD2{$$=$1;};
+  #   file2: FILE2_KEYWORD1{$$=$1;} | FILE2_KEYWORD2{$$=$1;};
   COMMAND
     awk -F,
-    "{n = split(FILENAME, p, \"/\"); bn=p[n]; bn=substr(bn, 1, length(bn)-5); t=substr($3, 1, length($3) - 1); if (NR == 1 && FNR == 1) {printf \"\\n\" bn \":\" t} else if (FNR == 1) {printf \";\\n\" bn \":\" t} else {printf \"|\" t}} END {printf \";\\n\\n\"}"
+    "{n = split(FILENAME, p, \"/\"); bn=p[n]; bn=substr(bn, 1, length(bn)-5); t=substr($3, 1, length($3) - 1); if (NR == 1 && FNR == 1) {printf \"\\n\" bn \":\" t \"{$$=$1;}\"} else if (FNR == 1) {printf \";\\n\" bn \":\" t \"{$$=$1;}\"} else {printf \"|\" t \"{$$=$1;}\"}} END {printf \";\\n\\n\"}"
     ${GRAMMAR_KEYWORDS} >> ${GRAMMAR_OUT}
   # Write all the grammar rules
   COMMAND cat ${GRAMMAR_RULES} >> ${GRAMMAR_OUT}

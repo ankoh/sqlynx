@@ -5,16 +5,13 @@
 #include <string_view>
 #include <unordered_set>
 
-#include "ankerl/unordered_dense.h"
 #include "flatsql/parser/parser_generated.h"
+#include "flatsql/parser/program.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/text/rope.h"
-#include "flatsql/utils/string_pool.h"
 
 namespace flatsql {
 namespace parser {
-
-class ParseContext;
 
 class Scanner {
     friend class ScannedProgram;
@@ -30,29 +27,8 @@ class Scanner {
     /// The local offset of the value within the current leaf
     size_t current_leaf_offset = 0;
 
-    /// The begin of the comment
-    proto::Location comment_begin = proto::Location();
-    /// The comment depth
-    int comment_depth = 0;
-    /// The begin of the literal
-    proto::Location literal_begin = proto::Location();
-
-    /// The scanner errors
-    std::vector<std::pair<proto::Location, std::string>> errors = {};
-    /// The line breaks
-    std::vector<proto::Location> line_breaks = {};
-    /// The comments
-    std::vector<proto::Location> comments = {};
-
-    /// The name pool
-    StringPool<1024> name_pool;
-    /// The name dictionary ids
-    ankerl::unordered_dense::map<std::string_view, size_t> name_dictionary_ids;
-    /// The name dictionary locations
-    std::vector<sx::Location> name_dictionary_locations;
-
-    /// All symbols
-    ChunkBuffer<Parser::symbol_type> symbols = {};
+    /// The output
+    std::unique_ptr<ScannedProgram> output;
 
    public:
     // Helpers that are used from the generated flex scanner
@@ -68,9 +44,6 @@ class Scanner {
 
     /// Scan next input data
     void ScanNextInputData(void* out_buffer, size_t& out_bytes_read, size_t max_size);
-
-    /// Register a name
-    size_t RegisterName(std::string_view s, sx::Location location);
 
     /// Read a parameter
     Parser::symbol_type ReadParameter(std::string_view text, proto::Location loc);
