@@ -59,8 +59,8 @@ class Scanner {
 
     /// The global offset within the rope
     size_t current_input_offset = 0;
-    /// Text buffer for the active extended lexer rules
-    std::string ext_text;
+    /// Temporary buffer to modify text across flex actions
+    std::string temp_buffer;
     /// Begin of the active extended lexer rules
     sx::Location ext_begin;
     /// Nesting depth of the active extended lexer rules
@@ -69,7 +69,7 @@ class Scanner {
     /// Scan next input data
     void ScanNextInputData(void* out_buffer, size_t& out_bytes_read, size_t max_size);
 
-    /// Add a string to the string dicationary
+    /// Get a numeric identifier for a string
     size_t AddStringToDictionary(std::string_view s, sx::Location location);
 
     /// Read a parameter
