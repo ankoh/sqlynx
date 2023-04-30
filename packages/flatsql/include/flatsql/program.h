@@ -33,6 +33,7 @@ class Statement {
    public:
     /// Constructor
     Statement();
+
     /// Get as flatbuffer object
     std::unique_ptr<proto::StatementT> Pack();
 };
@@ -70,7 +71,7 @@ class ScannedProgram {
     /// Read a text at a location
     std::string_view ReadTextAtLocation(sx::Location loc, std::string& tmp);
     /// Pack syntax highlighting
-    std::unique_ptr<proto::HighlightingT> Pack();
+    std::unique_ptr<proto::HighlightingT> PackHighlighting();
 };
 
 class ParsedProgram {
