@@ -347,12 +347,8 @@ enum StatementType: uint8 {
     CREATE_TABLE,
     CREATE_TABLE_AS,
     CREATE_VIEW,
-    IMPORT,
-    DECLARE,
-    LOAD,
     SELECT,
     SET,
-    VIZUALIZE,
 }
 
 struct Node {
