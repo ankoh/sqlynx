@@ -44,12 +44,12 @@ class Scanner {
     /// The comments
     std::vector<proto::Location> comments = {};
 
-    /// The string pool
-    StringPool<1024> string_pool;
-    /// The string dictionary ids
-    ankerl::unordered_dense::map<std::string_view, size_t> string_dictionary_ids;
-    /// The string dictionary locations
-    std::vector<sx::Location> string_dictionary_locations;
+    /// The name pool
+    StringPool<1024> name_pool;
+    /// The name dictionary ids
+    ankerl::unordered_dense::map<std::string_view, size_t> name_dictionary_ids;
+    /// The name dictionary locations
+    std::vector<sx::Location> name_dictionary_locations;
 
     /// All symbols
     ChunkBuffer<Parser::symbol_type> symbols = {};
@@ -69,8 +69,8 @@ class Scanner {
     /// Scan next input data
     void ScanNextInputData(void* out_buffer, size_t& out_bytes_read, size_t max_size);
 
-    /// Get a numeric identifier for a string
-    size_t AddStringToDictionary(std::string_view s, sx::Location location);
+    /// Register a name
+    size_t RegisterName(std::string_view s, sx::Location location);
 
     /// Read a parameter
     Parser::symbol_type ReadParameter(std::string_view text, proto::Location loc);

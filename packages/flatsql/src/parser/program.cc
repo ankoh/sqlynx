@@ -12,7 +12,7 @@ ScannedProgram::ScannedProgram(Scanner&& scanner)
       errors(std::move(scanner.errors)),
       line_breaks(std::move(scanner.line_breaks)),
       comments(std::move(scanner.comments)),
-      string_dictionary(std::move(scanner.string_dictionary_locations)),
+      string_dictionary(std::move(scanner.name_dictionary_locations)),
       symbols(std::move(scanner.symbols)),
       symbol_iterator(symbols) {}
 
