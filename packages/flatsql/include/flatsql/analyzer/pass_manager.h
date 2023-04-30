@@ -4,7 +4,7 @@
 #include <string_view>
 
 #include "flatsql/parser/parser_generated.h"
-#include "flatsql/parser/program.h"
+#include "flatsql/program.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/text/rope.h"
 
@@ -24,11 +24,11 @@ class PassManager {
 
    protected:
     /// The output of the parser
-    parser::ParsedProgram& parsedProgram;
+    ParsedProgram& parsedProgram;
 
    public:
     /// Constructor
-    PassManager(parser::ParsedProgram& parser);
+    PassManager(ParsedProgram& parser);
     /// Execute a pass
     void Execute(std::span<std::reference_wrapper<DepthFirstPostOrderPass>> passes);
 };

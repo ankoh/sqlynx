@@ -14,20 +14,21 @@
 #include <vector>
 
 #include "flatsql/parser/parser_generated.h"
-#include "flatsql/parser/program.h"
+#include "flatsql/program.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/text/rope.h"
 #include "flatsql/utils/chunk_buffer.h"
 #include "flatsql/utils/temp_allocator.h"
 
 namespace flatsql {
-namespace parser {
 
 class ScannedProgram;
 class ParsedProgram;
 
+namespace parser {
+
 class ParseContext {
-    friend class ParsedProgram;
+    friend class ::flatsql::ParsedProgram;
 
    protected:
     /// The scanner

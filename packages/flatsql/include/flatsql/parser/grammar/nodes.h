@@ -6,8 +6,8 @@
 #include "flatsql/parser/grammar/enums.h"
 #include "flatsql/parser/grammar/location.h"
 #include "flatsql/parser/parse_context.h"
-#include "flatsql/parser/program.h"
 #include "flatsql/parser/scanner.h"
+#include "flatsql/program.h"
 #include "flatsql/proto/proto_generated.h"
 
 namespace flatsql {

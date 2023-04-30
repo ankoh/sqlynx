@@ -1,5 +1,7 @@
 #pragma once
 
+#include <variant>
+
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/text/rope.h"
 #include "flatsql/utils/chunk_buffer.h"

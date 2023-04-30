@@ -10,9 +10,8 @@
 
 namespace flatsql {
 namespace parser {
-
-class Scanner;
 class ParseContext;
+}  // namespace parser
 
 using Key = proto::AttributeKey;
 using Location = proto::Location;
@@ -58,7 +57,7 @@ class ScannedProgram {
     std::vector<sx::Location> name_dictionary_locations;
 
     /// All symbols
-    ChunkBuffer<Parser::symbol_type> symbols;
+    ChunkBuffer<parser::Parser::symbol_type> symbols;
 
    public:
     /// Constructor
@@ -87,11 +86,10 @@ class ParsedProgram {
 
    public:
     /// Constructor
-    ParsedProgram(ParseContext&& context);
+    ParsedProgram(parser::ParseContext&& context);
 
     /// Build the program
     std::shared_ptr<proto::ProgramT> Pack();
 };
 
-}  // namespace parser
 }  // namespace flatsql
