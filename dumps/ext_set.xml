@@ -8,7 +8,7 @@
                 <statement type="SET">
                     <node type="OBJECT_EXT_SET" loc="13..35" text="SET variab.. = 'value'">
                         <node key="EXT_SET_VARARGS" type="OBJECT_EXT_VARARG_FIELD" loc="17..35" text="variable = 'value'">
-                            <node key="EXT_VARARG_FIELD_KEY" type="IDENTIFIER" loc="17..25" text="variable" />
+                            <node key="EXT_VARARG_FIELD_KEY" type="NAME" loc="17..25" text="variable" />
                             <node key="EXT_VARARG_FIELD_VALUE" type="LITERAL_STRING" loc="28..35" text="'value'" />
                         </node>
                     </node>
@@ -38,7 +38,7 @@
                 <statement type="SET">
                     <node type="OBJECT_EXT_SET" loc="13..239" text="SET variab..         )">
                         <node key="EXT_SET_VARARGS" type="OBJECT_EXT_VARARG_FIELD" loc="17..239" text="variable =..         )">
-                            <node key="EXT_VARARG_FIELD_KEY" type="IDENTIFIER" loc="17..25" text="variable" />
+                            <node key="EXT_VARARG_FIELD_KEY" type="NAME" loc="17..25" text="variable" />
                             <node key="EXT_VARARG_FIELD_VALUE" type="ARRAY" loc="28..239" text="(&#10;        ..         )">
                                 <node type="OBJECT_EXT_VARARG_FIELD" loc="46..57" text="'some' = 42">
                                     <node key="EXT_VARARG_FIELD_KEY" type="LITERAL_STRING" loc="46..52" text="'some'" />
@@ -98,7 +98,7 @@
                 <statement type="SET">
                     <node type="OBJECT_EXT_SET" loc="13..123" text="SET variab..         )">
                         <node key="EXT_SET_VARARGS" type="OBJECT_EXT_VARARG_FIELD" loc="17..123" text="variable =..         )">
-                            <node key="EXT_VARARG_FIELD_KEY" type="IDENTIFIER" loc="17..25" text="variable" />
+                            <node key="EXT_VARARG_FIELD_KEY" type="NAME" loc="17..25" text="variable" />
                             <node key="EXT_VARARG_FIELD_VALUE" type="ARRAY" loc="28..123" text="(&#10;        ..         )">
                                 <node type="OBJECT_EXT_VARARG_FIELD" loc="46..57" text="'some' = 42">
                                     <node key="EXT_VARARG_FIELD_KEY" type="LITERAL_STRING" loc="46..52" text="'some'" />
@@ -111,13 +111,13 @@
                                             <node type="OBJECT_SQL_FUNCTION_ARG" loc="97..107" text="$someparam">
                                                 <node key="SQL_FUNCTION_ARG_VALUE" type="OBJECT_SQL_PARAMETER_REF" loc="97..107" text="$someparam">
                                                     <node key="SQL_PARAMETER_NAME" type="ARRAY" loc="98..107" text="someparam">
-                                                        <node type="IDENTIFIER" loc="98..107" text="someparam" />
+                                                        <node type="NAME" loc="98..107" text="someparam" />
                                                     </node>
                                                 </node>
                                             </node>
                                         </node>
                                         <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="84..96" text="somefunction">
-                                            <node type="IDENTIFIER" loc="84..96" text="somefunction" />
+                                            <node type="NAME" loc="84..96" text="somefunction" />
                                         </node>
                                     </node>
                                 </node>

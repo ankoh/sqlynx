@@ -15,18 +15,18 @@ and lo_quantity &lt; 25
                         <node key="SQL_SELECT_FROM" type="ARRAY" loc="52..74" text="from lineo..er, &quot;date&quot;">
                             <node type="OBJECT_SQL_TABLEREF" loc="57..66" text="lineorder">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="57..66" text="lineorder">
-                                    <node type="IDENTIFIER" loc="57..66" text="lineorder" />
+                                    <node type="NAME" loc="57..66" text="lineorder" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="68..74" text="&quot;date&quot;">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="68..74" text="&quot;date&quot;">
-                                    <node type="IDENTIFIER" loc="68..74" text="&quot;date&quot;" />
+                                    <node type="NAME" loc="68..74" text="&quot;date&quot;" />
                                 </node>
                             </node>
                         </node>
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="7..51" text="sum(lo_ext..as revenue">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..51" text="sum(lo_ext..as revenue">
-                                <node key="SQL_RESULT_TARGET_NAME" type="IDENTIFIER" loc="44..51" text="revenue" />
+                                <node key="SQL_RESULT_TARGET_NAME" type="NAME" loc="44..51" text="revenue" />
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_FUNCTION_EXPRESSION" loc="7..40" text="sum(lo_ext.._discount)">
                                     <node key="SQL_FUNCTION_ARGUMENTS" type="ARRAY" loc="11..39" text="lo_extende..o_discount">
                                         <node type="OBJECT_SQL_FUNCTION_ARG" loc="11..39" text="lo_extende..o_discount">
@@ -34,12 +34,12 @@ and lo_quantity &lt; 25
                                                 <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="11..39" text="lo_extende..o_discount">
                                                     <node type="OBJECT_SQL_COLUMN_REF" loc="11..27" text="lo_extendedprice">
                                                         <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="11..27" text="lo_extendedprice">
-                                                            <node type="IDENTIFIER" loc="11..27" text="lo_extendedprice" />
+                                                            <node type="NAME" loc="11..27" text="lo_extendedprice" />
                                                         </node>
                                                     </node>
                                                     <node type="OBJECT_SQL_COLUMN_REF" loc="28..39" text="lo_discount">
                                                         <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="28..39" text="lo_discount">
-                                                            <node type="IDENTIFIER" loc="28..39" text="lo_discount" />
+                                                            <node type="NAME" loc="28..39" text="lo_discount" />
                                                         </node>
                                                     </node>
                                                 </node>
@@ -48,7 +48,7 @@ and lo_quantity &lt; 25
                                         </node>
                                     </node>
                                     <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="7..10" text="sum">
-                                        <node type="IDENTIFIER" loc="7..10" text="sum" />
+                                        <node type="NAME" loc="7..10" text="sum" />
                                     </node>
                                 </node>
                             </node>
@@ -59,12 +59,12 @@ and lo_quantity &lt; 25
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="81..105" text="lo_orderda.. d_datekey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="81..93" text="lo_orderdate">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="81..93" text="lo_orderdate">
-                                                <node type="IDENTIFIER" loc="81..93" text="lo_orderdate" />
+                                                <node type="NAME" loc="81..93" text="lo_orderdate" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="96..105" text="d_datekey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="96..105" text="d_datekey">
-                                                <node type="IDENTIFIER" loc="96..105" text="d_datekey" />
+                                                <node type="NAME" loc="96..105" text="d_datekey" />
                                             </node>
                                         </node>
                                     </node>
@@ -74,7 +74,7 @@ and lo_quantity &lt; 25
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="110..123" text="d_year = 1993">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="110..116" text="d_year">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="110..116" text="d_year">
-                                                <node type="IDENTIFIER" loc="110..116" text="d_year" />
+                                                <node type="NAME" loc="110..116" text="d_year" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_INTEGER" loc="119..123" text="1993" />
@@ -85,7 +85,7 @@ and lo_quantity &lt; 25
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="128..155" text="lo_discoun..en 1 and 3">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="128..139" text="lo_discount">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="128..139" text="lo_discount">
-                                                <node type="IDENTIFIER" loc="128..139" text="lo_discount" />
+                                                <node type="NAME" loc="128..139" text="lo_discount" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_INTEGER" loc="148..149" text="1" />
@@ -97,7 +97,7 @@ and lo_quantity &lt; 25
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="160..176" text="lo_quantity &lt; 25">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="160..171" text="lo_quantity">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="160..171" text="lo_quantity">
-                                                <node type="IDENTIFIER" loc="160..171" text="lo_quantity" />
+                                                <node type="NAME" loc="160..171" text="lo_quantity" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_INTEGER" loc="174..176" text="25" />
@@ -139,18 +139,18 @@ and lo_quantity between 26 and 35
                         <node key="SQL_SELECT_FROM" type="ARRAY" loc="52..74" text="from lineo..er, &quot;date&quot;">
                             <node type="OBJECT_SQL_TABLEREF" loc="57..66" text="lineorder">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="57..66" text="lineorder">
-                                    <node type="IDENTIFIER" loc="57..66" text="lineorder" />
+                                    <node type="NAME" loc="57..66" text="lineorder" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="68..74" text="&quot;date&quot;">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="68..74" text="&quot;date&quot;">
-                                    <node type="IDENTIFIER" loc="68..74" text="&quot;date&quot;" />
+                                    <node type="NAME" loc="68..74" text="&quot;date&quot;" />
                                 </node>
                             </node>
                         </node>
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="7..51" text="sum(lo_ext..as revenue">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..51" text="sum(lo_ext..as revenue">
-                                <node key="SQL_RESULT_TARGET_NAME" type="IDENTIFIER" loc="44..51" text="revenue" />
+                                <node key="SQL_RESULT_TARGET_NAME" type="NAME" loc="44..51" text="revenue" />
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_FUNCTION_EXPRESSION" loc="7..40" text="sum(lo_ext.._discount)">
                                     <node key="SQL_FUNCTION_ARGUMENTS" type="ARRAY" loc="11..39" text="lo_extende..o_discount">
                                         <node type="OBJECT_SQL_FUNCTION_ARG" loc="11..39" text="lo_extende..o_discount">
@@ -158,12 +158,12 @@ and lo_quantity between 26 and 35
                                                 <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="11..39" text="lo_extende..o_discount">
                                                     <node type="OBJECT_SQL_COLUMN_REF" loc="11..27" text="lo_extendedprice">
                                                         <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="11..27" text="lo_extendedprice">
-                                                            <node type="IDENTIFIER" loc="11..27" text="lo_extendedprice" />
+                                                            <node type="NAME" loc="11..27" text="lo_extendedprice" />
                                                         </node>
                                                     </node>
                                                     <node type="OBJECT_SQL_COLUMN_REF" loc="28..39" text="lo_discount">
                                                         <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="28..39" text="lo_discount">
-                                                            <node type="IDENTIFIER" loc="28..39" text="lo_discount" />
+                                                            <node type="NAME" loc="28..39" text="lo_discount" />
                                                         </node>
                                                     </node>
                                                 </node>
@@ -172,7 +172,7 @@ and lo_quantity between 26 and 35
                                         </node>
                                     </node>
                                     <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="7..10" text="sum">
-                                        <node type="IDENTIFIER" loc="7..10" text="sum" />
+                                        <node type="NAME" loc="7..10" text="sum" />
                                     </node>
                                 </node>
                             </node>
@@ -183,12 +183,12 @@ and lo_quantity between 26 and 35
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="81..105" text="lo_orderda.. d_datekey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="81..93" text="lo_orderdate">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="81..93" text="lo_orderdate">
-                                                <node type="IDENTIFIER" loc="81..93" text="lo_orderdate" />
+                                                <node type="NAME" loc="81..93" text="lo_orderdate" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="96..105" text="d_datekey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="96..105" text="d_datekey">
-                                                <node type="IDENTIFIER" loc="96..105" text="d_datekey" />
+                                                <node type="NAME" loc="96..105" text="d_datekey" />
                                             </node>
                                         </node>
                                     </node>
@@ -198,7 +198,7 @@ and lo_quantity between 26 and 35
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="110..133" text="d_yearmont..m = 199401">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="110..124" text="d_yearmonthnum">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="110..124" text="d_yearmonthnum">
-                                                <node type="IDENTIFIER" loc="110..124" text="d_yearmonthnum" />
+                                                <node type="NAME" loc="110..124" text="d_yearmonthnum" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_INTEGER" loc="127..133" text="199401" />
@@ -209,7 +209,7 @@ and lo_quantity between 26 and 35
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="138..165" text="lo_discoun..en 4 and 6">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="138..149" text="lo_discount">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="138..149" text="lo_discount">
-                                                <node type="IDENTIFIER" loc="138..149" text="lo_discount" />
+                                                <node type="NAME" loc="138..149" text="lo_discount" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_INTEGER" loc="158..159" text="4" />
@@ -221,7 +221,7 @@ and lo_quantity between 26 and 35
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="170..199" text="lo_quantit.. 26 and 35">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="170..181" text="lo_quantity">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="170..181" text="lo_quantity">
-                                                <node type="IDENTIFIER" loc="170..181" text="lo_quantity" />
+                                                <node type="NAME" loc="170..181" text="lo_quantity" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_INTEGER" loc="190..192" text="26" />
@@ -265,18 +265,18 @@ and lo_quantity between 26 and 35
                         <node key="SQL_SELECT_FROM" type="ARRAY" loc="52..74" text="from lineo..er, &quot;date&quot;">
                             <node type="OBJECT_SQL_TABLEREF" loc="57..66" text="lineorder">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="57..66" text="lineorder">
-                                    <node type="IDENTIFIER" loc="57..66" text="lineorder" />
+                                    <node type="NAME" loc="57..66" text="lineorder" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="68..74" text="&quot;date&quot;">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="68..74" text="&quot;date&quot;">
-                                    <node type="IDENTIFIER" loc="68..74" text="&quot;date&quot;" />
+                                    <node type="NAME" loc="68..74" text="&quot;date&quot;" />
                                 </node>
                             </node>
                         </node>
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="7..51" text="sum(lo_ext..as revenue">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..51" text="sum(lo_ext..as revenue">
-                                <node key="SQL_RESULT_TARGET_NAME" type="IDENTIFIER" loc="44..51" text="revenue" />
+                                <node key="SQL_RESULT_TARGET_NAME" type="NAME" loc="44..51" text="revenue" />
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_FUNCTION_EXPRESSION" loc="7..40" text="sum(lo_ext.._discount)">
                                     <node key="SQL_FUNCTION_ARGUMENTS" type="ARRAY" loc="11..39" text="lo_extende..o_discount">
                                         <node type="OBJECT_SQL_FUNCTION_ARG" loc="11..39" text="lo_extende..o_discount">
@@ -284,12 +284,12 @@ and lo_quantity between 26 and 35
                                                 <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="11..39" text="lo_extende..o_discount">
                                                     <node type="OBJECT_SQL_COLUMN_REF" loc="11..27" text="lo_extendedprice">
                                                         <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="11..27" text="lo_extendedprice">
-                                                            <node type="IDENTIFIER" loc="11..27" text="lo_extendedprice" />
+                                                            <node type="NAME" loc="11..27" text="lo_extendedprice" />
                                                         </node>
                                                     </node>
                                                     <node type="OBJECT_SQL_COLUMN_REF" loc="28..39" text="lo_discount">
                                                         <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="28..39" text="lo_discount">
-                                                            <node type="IDENTIFIER" loc="28..39" text="lo_discount" />
+                                                            <node type="NAME" loc="28..39" text="lo_discount" />
                                                         </node>
                                                     </node>
                                                 </node>
@@ -298,7 +298,7 @@ and lo_quantity between 26 and 35
                                         </node>
                                     </node>
                                     <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="7..10" text="sum">
-                                        <node type="IDENTIFIER" loc="7..10" text="sum" />
+                                        <node type="NAME" loc="7..10" text="sum" />
                                     </node>
                                 </node>
                             </node>
@@ -309,12 +309,12 @@ and lo_quantity between 26 and 35
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="81..105" text="lo_orderda.. d_datekey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="81..93" text="lo_orderdate">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="81..93" text="lo_orderdate">
-                                                <node type="IDENTIFIER" loc="81..93" text="lo_orderdate" />
+                                                <node type="NAME" loc="81..93" text="lo_orderdate" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="96..105" text="d_datekey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="96..105" text="d_datekey">
-                                                <node type="IDENTIFIER" loc="96..105" text="d_datekey" />
+                                                <node type="NAME" loc="96..105" text="d_datekey" />
                                             </node>
                                         </node>
                                     </node>
@@ -324,7 +324,7 @@ and lo_quantity between 26 and 35
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="110..129" text="d_weeknuminyear = 6">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="110..125" text="d_weeknuminyear">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="110..125" text="d_weeknuminyear">
-                                                <node type="IDENTIFIER" loc="110..125" text="d_weeknuminyear" />
+                                                <node type="NAME" loc="110..125" text="d_weeknuminyear" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_INTEGER" loc="128..129" text="6" />
@@ -335,7 +335,7 @@ and lo_quantity between 26 and 35
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="134..147" text="d_year = 1994">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="134..140" text="d_year">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="134..140" text="d_year">
-                                                <node type="IDENTIFIER" loc="134..140" text="d_year" />
+                                                <node type="NAME" loc="134..140" text="d_year" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_INTEGER" loc="143..147" text="1994" />
@@ -346,7 +346,7 @@ and lo_quantity between 26 and 35
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="152..179" text="lo_discoun..en 5 and 7">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="152..163" text="lo_discount">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="152..163" text="lo_discount">
-                                                <node type="IDENTIFIER" loc="152..163" text="lo_discount" />
+                                                <node type="NAME" loc="152..163" text="lo_discount" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_INTEGER" loc="172..173" text="5" />
@@ -358,7 +358,7 @@ and lo_quantity between 26 and 35
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="184..213" text="lo_quantit.. 26 and 35">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="184..195" text="lo_quantity">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="184..195" text="lo_quantity">
-                                                <node type="IDENTIFIER" loc="184..195" text="lo_quantity" />
+                                                <node type="NAME" loc="184..195" text="lo_quantity" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_INTEGER" loc="204..206" text="26" />
@@ -405,22 +405,22 @@ order by d_year, p_brand1
                         <node key="SQL_SELECT_FROM" type="ARRAY" loc="41..79" text="from lineo.., supplier">
                             <node type="OBJECT_SQL_TABLEREF" loc="46..55" text="lineorder">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="46..55" text="lineorder">
-                                    <node type="IDENTIFIER" loc="46..55" text="lineorder" />
+                                    <node type="NAME" loc="46..55" text="lineorder" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="57..63" text="&quot;date&quot;">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="57..63" text="&quot;date&quot;">
-                                    <node type="IDENTIFIER" loc="57..63" text="&quot;date&quot;" />
+                                    <node type="NAME" loc="57..63" text="&quot;date&quot;" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="65..69" text="part">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="65..69" text="part">
-                                    <node type="IDENTIFIER" loc="65..69" text="part" />
+                                    <node type="NAME" loc="65..69" text="part" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="71..79" text="supplier">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="71..79" text="supplier">
-                                    <node type="IDENTIFIER" loc="71..79" text="supplier" />
+                                    <node type="NAME" loc="71..79" text="supplier" />
                                 </node>
                             </node>
                         </node>
@@ -428,7 +428,7 @@ order by d_year, p_brand1
                             <node type="OBJECT_SQL_GROUP_BY_ITEM" loc="226..232" text="d_year">
                                 <node key="SQL_GROUP_BY_ITEM_ARG" type="OBJECT_SQL_COLUMN_REF" loc="226..232" text="d_year">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="226..232" text="d_year">
-                                        <node type="IDENTIFIER" loc="226..232" text="d_year" />
+                                        <node type="NAME" loc="226..232" text="d_year" />
                                     </node>
                                 </node>
                                 <node key="SQL_GROUP_BY_ITEM_TYPE" type="ENUM_SQL_GROUP_BY_ITEM_TYPE" value="EXPRESSION" />
@@ -436,7 +436,7 @@ order by d_year, p_brand1
                             <node type="OBJECT_SQL_GROUP_BY_ITEM" loc="234..242" text="p_brand1">
                                 <node key="SQL_GROUP_BY_ITEM_ARG" type="OBJECT_SQL_COLUMN_REF" loc="234..242" text="p_brand1">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="234..242" text="p_brand1">
-                                        <node type="IDENTIFIER" loc="234..242" text="p_brand1" />
+                                        <node type="NAME" loc="234..242" text="p_brand1" />
                                     </node>
                                 </node>
                                 <node key="SQL_GROUP_BY_ITEM_TYPE" type="ENUM_SQL_GROUP_BY_ITEM_TYPE" value="EXPRESSION" />
@@ -446,14 +446,14 @@ order by d_year, p_brand1
                             <node type="OBJECT_SQL_ORDER" loc="252..258" text="d_year">
                                 <node key="SQL_ORDER_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="252..258" text="d_year">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="252..258" text="d_year">
-                                        <node type="IDENTIFIER" loc="252..258" text="d_year" />
+                                        <node type="NAME" loc="252..258" text="d_year" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_ORDER" loc="260..268" text="p_brand1">
                                 <node key="SQL_ORDER_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="260..268" text="p_brand1">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="260..268" text="p_brand1">
-                                        <node type="IDENTIFIER" loc="260..268" text="p_brand1" />
+                                        <node type="NAME" loc="260..268" text="p_brand1" />
                                     </node>
                                 </node>
                             </node>
@@ -465,27 +465,27 @@ order by d_year, p_brand1
                                         <node type="OBJECT_SQL_FUNCTION_ARG" loc="11..21" text="lo_revenue">
                                             <node key="SQL_FUNCTION_ARG_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="11..21" text="lo_revenue">
                                                 <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="11..21" text="lo_revenue">
-                                                    <node type="IDENTIFIER" loc="11..21" text="lo_revenue" />
+                                                    <node type="NAME" loc="11..21" text="lo_revenue" />
                                                 </node>
                                             </node>
                                         </node>
                                     </node>
                                     <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="7..10" text="sum">
-                                        <node type="IDENTIFIER" loc="7..10" text="sum" />
+                                        <node type="NAME" loc="7..10" text="sum" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="24..30" text="d_year">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="24..30" text="d_year">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="24..30" text="d_year">
-                                        <node type="IDENTIFIER" loc="24..30" text="d_year" />
+                                        <node type="NAME" loc="24..30" text="d_year" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="32..40" text="p_brand1">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="32..40" text="p_brand1">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="32..40" text="p_brand1">
-                                        <node type="IDENTIFIER" loc="32..40" text="p_brand1" />
+                                        <node type="NAME" loc="32..40" text="p_brand1" />
                                     </node>
                                 </node>
                             </node>
@@ -496,12 +496,12 @@ order by d_year, p_brand1
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="86..110" text="lo_orderda.. d_datekey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="86..98" text="lo_orderdate">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="86..98" text="lo_orderdate">
-                                                <node type="IDENTIFIER" loc="86..98" text="lo_orderdate" />
+                                                <node type="NAME" loc="86..98" text="lo_orderdate" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="101..110" text="d_datekey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="101..110" text="d_datekey">
-                                                <node type="IDENTIFIER" loc="101..110" text="d_datekey" />
+                                                <node type="NAME" loc="101..110" text="d_datekey" />
                                             </node>
                                         </node>
                                     </node>
@@ -511,12 +511,12 @@ order by d_year, p_brand1
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="115..137" text="lo_partkey.. p_partkey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="115..125" text="lo_partkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="115..125" text="lo_partkey">
-                                                <node type="IDENTIFIER" loc="115..125" text="lo_partkey" />
+                                                <node type="NAME" loc="115..125" text="lo_partkey" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="128..137" text="p_partkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="128..137" text="p_partkey">
-                                                <node type="IDENTIFIER" loc="128..137" text="p_partkey" />
+                                                <node type="NAME" loc="128..137" text="p_partkey" />
                                             </node>
                                         </node>
                                     </node>
@@ -526,12 +526,12 @@ order by d_year, p_brand1
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="142..164" text="lo_suppkey.. s_suppkey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="142..152" text="lo_suppkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="142..152" text="lo_suppkey">
-                                                <node type="IDENTIFIER" loc="142..152" text="lo_suppkey" />
+                                                <node type="NAME" loc="142..152" text="lo_suppkey" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="155..164" text="s_suppkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="155..164" text="s_suppkey">
-                                                <node type="IDENTIFIER" loc="155..164" text="s_suppkey" />
+                                                <node type="NAME" loc="155..164" text="s_suppkey" />
                                             </node>
                                         </node>
                                     </node>
@@ -541,7 +541,7 @@ order by d_year, p_brand1
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="169..191" text="p_category.. 'MFGR#12'">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="169..179" text="p_category">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="169..179" text="p_category">
-                                                <node type="IDENTIFIER" loc="169..179" text="p_category" />
+                                                <node type="NAME" loc="169..179" text="p_category" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_STRING" loc="182..191" text="'MFGR#12'" />
@@ -552,7 +552,7 @@ order by d_year, p_brand1
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="196..216" text="s_region =.. 'AMERICA'">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="196..204" text="s_region">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="196..204" text="s_region">
-                                                <node type="IDENTIFIER" loc="196..204" text="s_region" />
+                                                <node type="NAME" loc="196..204" text="s_region" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_STRING" loc="207..216" text="'AMERICA'" />
@@ -601,22 +601,22 @@ order by d_year, p_brand1
                         <node key="SQL_SELECT_FROM" type="ARRAY" loc="41..79" text="from lineo.., supplier">
                             <node type="OBJECT_SQL_TABLEREF" loc="46..55" text="lineorder">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="46..55" text="lineorder">
-                                    <node type="IDENTIFIER" loc="46..55" text="lineorder" />
+                                    <node type="NAME" loc="46..55" text="lineorder" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="57..63" text="&quot;date&quot;">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="57..63" text="&quot;date&quot;">
-                                    <node type="IDENTIFIER" loc="57..63" text="&quot;date&quot;" />
+                                    <node type="NAME" loc="57..63" text="&quot;date&quot;" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="65..69" text="part">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="65..69" text="part">
-                                    <node type="IDENTIFIER" loc="65..69" text="part" />
+                                    <node type="NAME" loc="65..69" text="part" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="71..79" text="supplier">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="71..79" text="supplier">
-                                    <node type="IDENTIFIER" loc="71..79" text="supplier" />
+                                    <node type="NAME" loc="71..79" text="supplier" />
                                 </node>
                             </node>
                         </node>
@@ -624,7 +624,7 @@ order by d_year, p_brand1
                             <node type="OBJECT_SQL_GROUP_BY_ITEM" loc="245..251" text="d_year">
                                 <node key="SQL_GROUP_BY_ITEM_ARG" type="OBJECT_SQL_COLUMN_REF" loc="245..251" text="d_year">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="245..251" text="d_year">
-                                        <node type="IDENTIFIER" loc="245..251" text="d_year" />
+                                        <node type="NAME" loc="245..251" text="d_year" />
                                     </node>
                                 </node>
                                 <node key="SQL_GROUP_BY_ITEM_TYPE" type="ENUM_SQL_GROUP_BY_ITEM_TYPE" value="EXPRESSION" />
@@ -632,7 +632,7 @@ order by d_year, p_brand1
                             <node type="OBJECT_SQL_GROUP_BY_ITEM" loc="253..261" text="p_brand1">
                                 <node key="SQL_GROUP_BY_ITEM_ARG" type="OBJECT_SQL_COLUMN_REF" loc="253..261" text="p_brand1">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="253..261" text="p_brand1">
-                                        <node type="IDENTIFIER" loc="253..261" text="p_brand1" />
+                                        <node type="NAME" loc="253..261" text="p_brand1" />
                                     </node>
                                 </node>
                                 <node key="SQL_GROUP_BY_ITEM_TYPE" type="ENUM_SQL_GROUP_BY_ITEM_TYPE" value="EXPRESSION" />
@@ -642,14 +642,14 @@ order by d_year, p_brand1
                             <node type="OBJECT_SQL_ORDER" loc="271..277" text="d_year">
                                 <node key="SQL_ORDER_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="271..277" text="d_year">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="271..277" text="d_year">
-                                        <node type="IDENTIFIER" loc="271..277" text="d_year" />
+                                        <node type="NAME" loc="271..277" text="d_year" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_ORDER" loc="279..287" text="p_brand1">
                                 <node key="SQL_ORDER_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="279..287" text="p_brand1">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="279..287" text="p_brand1">
-                                        <node type="IDENTIFIER" loc="279..287" text="p_brand1" />
+                                        <node type="NAME" loc="279..287" text="p_brand1" />
                                     </node>
                                 </node>
                             </node>
@@ -661,27 +661,27 @@ order by d_year, p_brand1
                                         <node type="OBJECT_SQL_FUNCTION_ARG" loc="11..21" text="lo_revenue">
                                             <node key="SQL_FUNCTION_ARG_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="11..21" text="lo_revenue">
                                                 <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="11..21" text="lo_revenue">
-                                                    <node type="IDENTIFIER" loc="11..21" text="lo_revenue" />
+                                                    <node type="NAME" loc="11..21" text="lo_revenue" />
                                                 </node>
                                             </node>
                                         </node>
                                     </node>
                                     <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="7..10" text="sum">
-                                        <node type="IDENTIFIER" loc="7..10" text="sum" />
+                                        <node type="NAME" loc="7..10" text="sum" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="24..30" text="d_year">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="24..30" text="d_year">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="24..30" text="d_year">
-                                        <node type="IDENTIFIER" loc="24..30" text="d_year" />
+                                        <node type="NAME" loc="24..30" text="d_year" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="32..40" text="p_brand1">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="32..40" text="p_brand1">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="32..40" text="p_brand1">
-                                        <node type="IDENTIFIER" loc="32..40" text="p_brand1" />
+                                        <node type="NAME" loc="32..40" text="p_brand1" />
                                     </node>
                                 </node>
                             </node>
@@ -692,12 +692,12 @@ order by d_year, p_brand1
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="86..110" text="lo_orderda.. d_datekey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="86..98" text="lo_orderdate">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="86..98" text="lo_orderdate">
-                                                <node type="IDENTIFIER" loc="86..98" text="lo_orderdate" />
+                                                <node type="NAME" loc="86..98" text="lo_orderdate" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="101..110" text="d_datekey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="101..110" text="d_datekey">
-                                                <node type="IDENTIFIER" loc="101..110" text="d_datekey" />
+                                                <node type="NAME" loc="101..110" text="d_datekey" />
                                             </node>
                                         </node>
                                     </node>
@@ -707,12 +707,12 @@ order by d_year, p_brand1
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="115..137" text="lo_partkey.. p_partkey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="115..125" text="lo_partkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="115..125" text="lo_partkey">
-                                                <node type="IDENTIFIER" loc="115..125" text="lo_partkey" />
+                                                <node type="NAME" loc="115..125" text="lo_partkey" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="128..137" text="p_partkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="128..137" text="p_partkey">
-                                                <node type="IDENTIFIER" loc="128..137" text="p_partkey" />
+                                                <node type="NAME" loc="128..137" text="p_partkey" />
                                             </node>
                                         </node>
                                     </node>
@@ -722,12 +722,12 @@ order by d_year, p_brand1
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="142..164" text="lo_suppkey.. s_suppkey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="142..152" text="lo_suppkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="142..152" text="lo_suppkey">
-                                                <node type="IDENTIFIER" loc="142..152" text="lo_suppkey" />
+                                                <node type="NAME" loc="142..152" text="lo_suppkey" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="155..164" text="s_suppkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="155..164" text="s_suppkey">
-                                                <node type="IDENTIFIER" loc="155..164" text="s_suppkey" />
+                                                <node type="NAME" loc="155..164" text="s_suppkey" />
                                             </node>
                                         </node>
                                     </node>
@@ -737,7 +737,7 @@ order by d_year, p_brand1
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="169..213" text="p_brand1 b..MFGR#2228'">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="169..177" text="p_brand1">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="169..177" text="p_brand1">
-                                                <node type="IDENTIFIER" loc="169..177" text="p_brand1" />
+                                                <node type="NAME" loc="169..177" text="p_brand1" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_STRING" loc="186..197" text="'MFGR#2221'" />
@@ -749,7 +749,7 @@ order by d_year, p_brand1
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="218..235" text="s_region = 'ASIA'">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="218..226" text="s_region">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="218..226" text="s_region">
-                                                <node type="IDENTIFIER" loc="218..226" text="s_region" />
+                                                <node type="NAME" loc="218..226" text="s_region" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_STRING" loc="229..235" text="'ASIA'" />
@@ -798,22 +798,22 @@ order by d_year, p_brand1
                         <node key="SQL_SELECT_FROM" type="ARRAY" loc="41..79" text="from lineo.., supplier">
                             <node type="OBJECT_SQL_TABLEREF" loc="46..55" text="lineorder">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="46..55" text="lineorder">
-                                    <node type="IDENTIFIER" loc="46..55" text="lineorder" />
+                                    <node type="NAME" loc="46..55" text="lineorder" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="57..63" text="&quot;date&quot;">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="57..63" text="&quot;date&quot;">
-                                    <node type="IDENTIFIER" loc="57..63" text="&quot;date&quot;" />
+                                    <node type="NAME" loc="57..63" text="&quot;date&quot;" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="65..69" text="part">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="65..69" text="part">
-                                    <node type="IDENTIFIER" loc="65..69" text="part" />
+                                    <node type="NAME" loc="65..69" text="part" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="71..79" text="supplier">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="71..79" text="supplier">
-                                    <node type="IDENTIFIER" loc="71..79" text="supplier" />
+                                    <node type="NAME" loc="71..79" text="supplier" />
                                 </node>
                             </node>
                         </node>
@@ -821,7 +821,7 @@ order by d_year, p_brand1
                             <node type="OBJECT_SQL_GROUP_BY_ITEM" loc="225..231" text="d_year">
                                 <node key="SQL_GROUP_BY_ITEM_ARG" type="OBJECT_SQL_COLUMN_REF" loc="225..231" text="d_year">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="225..231" text="d_year">
-                                        <node type="IDENTIFIER" loc="225..231" text="d_year" />
+                                        <node type="NAME" loc="225..231" text="d_year" />
                                     </node>
                                 </node>
                                 <node key="SQL_GROUP_BY_ITEM_TYPE" type="ENUM_SQL_GROUP_BY_ITEM_TYPE" value="EXPRESSION" />
@@ -829,7 +829,7 @@ order by d_year, p_brand1
                             <node type="OBJECT_SQL_GROUP_BY_ITEM" loc="233..241" text="p_brand1">
                                 <node key="SQL_GROUP_BY_ITEM_ARG" type="OBJECT_SQL_COLUMN_REF" loc="233..241" text="p_brand1">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="233..241" text="p_brand1">
-                                        <node type="IDENTIFIER" loc="233..241" text="p_brand1" />
+                                        <node type="NAME" loc="233..241" text="p_brand1" />
                                     </node>
                                 </node>
                                 <node key="SQL_GROUP_BY_ITEM_TYPE" type="ENUM_SQL_GROUP_BY_ITEM_TYPE" value="EXPRESSION" />
@@ -839,14 +839,14 @@ order by d_year, p_brand1
                             <node type="OBJECT_SQL_ORDER" loc="251..257" text="d_year">
                                 <node key="SQL_ORDER_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="251..257" text="d_year">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="251..257" text="d_year">
-                                        <node type="IDENTIFIER" loc="251..257" text="d_year" />
+                                        <node type="NAME" loc="251..257" text="d_year" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_ORDER" loc="259..267" text="p_brand1">
                                 <node key="SQL_ORDER_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="259..267" text="p_brand1">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="259..267" text="p_brand1">
-                                        <node type="IDENTIFIER" loc="259..267" text="p_brand1" />
+                                        <node type="NAME" loc="259..267" text="p_brand1" />
                                     </node>
                                 </node>
                             </node>
@@ -858,27 +858,27 @@ order by d_year, p_brand1
                                         <node type="OBJECT_SQL_FUNCTION_ARG" loc="11..21" text="lo_revenue">
                                             <node key="SQL_FUNCTION_ARG_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="11..21" text="lo_revenue">
                                                 <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="11..21" text="lo_revenue">
-                                                    <node type="IDENTIFIER" loc="11..21" text="lo_revenue" />
+                                                    <node type="NAME" loc="11..21" text="lo_revenue" />
                                                 </node>
                                             </node>
                                         </node>
                                     </node>
                                     <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="7..10" text="sum">
-                                        <node type="IDENTIFIER" loc="7..10" text="sum" />
+                                        <node type="NAME" loc="7..10" text="sum" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="24..30" text="d_year">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="24..30" text="d_year">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="24..30" text="d_year">
-                                        <node type="IDENTIFIER" loc="24..30" text="d_year" />
+                                        <node type="NAME" loc="24..30" text="d_year" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="32..40" text="p_brand1">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="32..40" text="p_brand1">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="32..40" text="p_brand1">
-                                        <node type="IDENTIFIER" loc="32..40" text="p_brand1" />
+                                        <node type="NAME" loc="32..40" text="p_brand1" />
                                     </node>
                                 </node>
                             </node>
@@ -889,12 +889,12 @@ order by d_year, p_brand1
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="86..110" text="lo_orderda.. d_datekey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="86..98" text="lo_orderdate">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="86..98" text="lo_orderdate">
-                                                <node type="IDENTIFIER" loc="86..98" text="lo_orderdate" />
+                                                <node type="NAME" loc="86..98" text="lo_orderdate" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="101..110" text="d_datekey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="101..110" text="d_datekey">
-                                                <node type="IDENTIFIER" loc="101..110" text="d_datekey" />
+                                                <node type="NAME" loc="101..110" text="d_datekey" />
                                             </node>
                                         </node>
                                     </node>
@@ -904,12 +904,12 @@ order by d_year, p_brand1
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="115..137" text="lo_partkey.. p_partkey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="115..125" text="lo_partkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="115..125" text="lo_partkey">
-                                                <node type="IDENTIFIER" loc="115..125" text="lo_partkey" />
+                                                <node type="NAME" loc="115..125" text="lo_partkey" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="128..137" text="p_partkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="128..137" text="p_partkey">
-                                                <node type="IDENTIFIER" loc="128..137" text="p_partkey" />
+                                                <node type="NAME" loc="128..137" text="p_partkey" />
                                             </node>
                                         </node>
                                     </node>
@@ -919,12 +919,12 @@ order by d_year, p_brand1
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="142..164" text="lo_suppkey.. s_suppkey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="142..152" text="lo_suppkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="142..152" text="lo_suppkey">
-                                                <node type="IDENTIFIER" loc="142..152" text="lo_suppkey" />
+                                                <node type="NAME" loc="142..152" text="lo_suppkey" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="155..164" text="s_suppkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="155..164" text="s_suppkey">
-                                                <node type="IDENTIFIER" loc="155..164" text="s_suppkey" />
+                                                <node type="NAME" loc="155..164" text="s_suppkey" />
                                             </node>
                                         </node>
                                     </node>
@@ -934,7 +934,7 @@ order by d_year, p_brand1
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="169..191" text="p_brand1 =..MFGR#2221'">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="169..177" text="p_brand1">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="169..177" text="p_brand1">
-                                                <node type="IDENTIFIER" loc="169..177" text="p_brand1" />
+                                                <node type="NAME" loc="169..177" text="p_brand1" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_STRING" loc="180..191" text="'MFGR#2221'" />
@@ -945,7 +945,7 @@ order by d_year, p_brand1
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="196..215" text="s_region = 'EUROPE'">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="196..204" text="s_region">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="196..204" text="s_region">
-                                                <node type="IDENTIFIER" loc="196..204" text="s_region" />
+                                                <node type="NAME" loc="196..204" text="s_region" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_STRING" loc="207..215" text="'EUROPE'" />
@@ -993,22 +993,22 @@ order by d_year asc, revenue desc
                         <node key="SQL_SELECT_FROM" type="ARRAY" loc="62..104" text="from custo..er, &quot;date&quot;">
                             <node type="OBJECT_SQL_TABLEREF" loc="67..75" text="customer">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="67..75" text="customer">
-                                    <node type="IDENTIFIER" loc="67..75" text="customer" />
+                                    <node type="NAME" loc="67..75" text="customer" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="77..86" text="lineorder">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="77..86" text="lineorder">
-                                    <node type="IDENTIFIER" loc="77..86" text="lineorder" />
+                                    <node type="NAME" loc="77..86" text="lineorder" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="88..96" text="supplier">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="88..96" text="supplier">
-                                    <node type="IDENTIFIER" loc="88..96" text="supplier" />
+                                    <node type="NAME" loc="88..96" text="supplier" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="98..104" text="&quot;date&quot;">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="98..104" text="&quot;date&quot;">
-                                    <node type="IDENTIFIER" loc="98..104" text="&quot;date&quot;" />
+                                    <node type="NAME" loc="98..104" text="&quot;date&quot;" />
                                 </node>
                             </node>
                         </node>
@@ -1016,7 +1016,7 @@ order by d_year asc, revenue desc
                             <node type="OBJECT_SQL_GROUP_BY_ITEM" loc="281..289" text="c_nation">
                                 <node key="SQL_GROUP_BY_ITEM_ARG" type="OBJECT_SQL_COLUMN_REF" loc="281..289" text="c_nation">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="281..289" text="c_nation">
-                                        <node type="IDENTIFIER" loc="281..289" text="c_nation" />
+                                        <node type="NAME" loc="281..289" text="c_nation" />
                                     </node>
                                 </node>
                                 <node key="SQL_GROUP_BY_ITEM_TYPE" type="ENUM_SQL_GROUP_BY_ITEM_TYPE" value="EXPRESSION" />
@@ -1024,7 +1024,7 @@ order by d_year asc, revenue desc
                             <node type="OBJECT_SQL_GROUP_BY_ITEM" loc="291..299" text="s_nation">
                                 <node key="SQL_GROUP_BY_ITEM_ARG" type="OBJECT_SQL_COLUMN_REF" loc="291..299" text="s_nation">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="291..299" text="s_nation">
-                                        <node type="IDENTIFIER" loc="291..299" text="s_nation" />
+                                        <node type="NAME" loc="291..299" text="s_nation" />
                                     </node>
                                 </node>
                                 <node key="SQL_GROUP_BY_ITEM_TYPE" type="ENUM_SQL_GROUP_BY_ITEM_TYPE" value="EXPRESSION" />
@@ -1032,7 +1032,7 @@ order by d_year asc, revenue desc
                             <node type="OBJECT_SQL_GROUP_BY_ITEM" loc="301..307" text="d_year">
                                 <node key="SQL_GROUP_BY_ITEM_ARG" type="OBJECT_SQL_COLUMN_REF" loc="301..307" text="d_year">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="301..307" text="d_year">
-                                        <node type="IDENTIFIER" loc="301..307" text="d_year" />
+                                        <node type="NAME" loc="301..307" text="d_year" />
                                     </node>
                                 </node>
                                 <node key="SQL_GROUP_BY_ITEM_TYPE" type="ENUM_SQL_GROUP_BY_ITEM_TYPE" value="EXPRESSION" />
@@ -1043,7 +1043,7 @@ order by d_year asc, revenue desc
                                 <node key="SQL_ORDER_DIRECTION" type="ENUM_SQL_ORDER_DIRECTION" value="ASCENDING" />
                                 <node key="SQL_ORDER_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="317..323" text="d_year">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="317..323" text="d_year">
-                                        <node type="IDENTIFIER" loc="317..323" text="d_year" />
+                                        <node type="NAME" loc="317..323" text="d_year" />
                                     </node>
                                 </node>
                             </node>
@@ -1051,7 +1051,7 @@ order by d_year asc, revenue desc
                                 <node key="SQL_ORDER_DIRECTION" type="ENUM_SQL_ORDER_DIRECTION" value="DESCENDING" />
                                 <node key="SQL_ORDER_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="329..336" text="revenue">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="329..336" text="revenue">
-                                        <node type="IDENTIFIER" loc="329..336" text="revenue" />
+                                        <node type="NAME" loc="329..336" text="revenue" />
                                     </node>
                                 </node>
                             </node>
@@ -1060,38 +1060,38 @@ order by d_year asc, revenue desc
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..15" text="c_nation">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="7..15" text="c_nation">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="7..15" text="c_nation">
-                                        <node type="IDENTIFIER" loc="7..15" text="c_nation" />
+                                        <node type="NAME" loc="7..15" text="c_nation" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="17..25" text="s_nation">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="17..25" text="s_nation">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="17..25" text="s_nation">
-                                        <node type="IDENTIFIER" loc="17..25" text="s_nation" />
+                                        <node type="NAME" loc="17..25" text="s_nation" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="27..33" text="d_year">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="27..33" text="d_year">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="27..33" text="d_year">
-                                        <node type="IDENTIFIER" loc="27..33" text="d_year" />
+                                        <node type="NAME" loc="27..33" text="d_year" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="35..61" text="sum(lo_rev..as revenue">
-                                <node key="SQL_RESULT_TARGET_NAME" type="IDENTIFIER" loc="54..61" text="revenue" />
+                                <node key="SQL_RESULT_TARGET_NAME" type="NAME" loc="54..61" text="revenue" />
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_FUNCTION_EXPRESSION" loc="35..50" text="sum(lo_revenue)">
                                     <node key="SQL_FUNCTION_ARGUMENTS" type="ARRAY" loc="39..49" text="lo_revenue">
                                         <node type="OBJECT_SQL_FUNCTION_ARG" loc="39..49" text="lo_revenue">
                                             <node key="SQL_FUNCTION_ARG_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="39..49" text="lo_revenue">
                                                 <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="39..49" text="lo_revenue">
-                                                    <node type="IDENTIFIER" loc="39..49" text="lo_revenue" />
+                                                    <node type="NAME" loc="39..49" text="lo_revenue" />
                                                 </node>
                                             </node>
                                         </node>
                                     </node>
                                     <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="35..38" text="sum">
-                                        <node type="IDENTIFIER" loc="35..38" text="sum" />
+                                        <node type="NAME" loc="35..38" text="sum" />
                                     </node>
                                 </node>
                             </node>
@@ -1102,12 +1102,12 @@ order by d_year asc, revenue desc
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="111..133" text="lo_custkey.. c_custkey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="111..121" text="lo_custkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="111..121" text="lo_custkey">
-                                                <node type="IDENTIFIER" loc="111..121" text="lo_custkey" />
+                                                <node type="NAME" loc="111..121" text="lo_custkey" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="124..133" text="c_custkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="124..133" text="c_custkey">
-                                                <node type="IDENTIFIER" loc="124..133" text="c_custkey" />
+                                                <node type="NAME" loc="124..133" text="c_custkey" />
                                             </node>
                                         </node>
                                     </node>
@@ -1117,12 +1117,12 @@ order by d_year asc, revenue desc
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="138..160" text="lo_suppkey.. s_suppkey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="138..148" text="lo_suppkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="138..148" text="lo_suppkey">
-                                                <node type="IDENTIFIER" loc="138..148" text="lo_suppkey" />
+                                                <node type="NAME" loc="138..148" text="lo_suppkey" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="151..160" text="s_suppkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="151..160" text="s_suppkey">
-                                                <node type="IDENTIFIER" loc="151..160" text="s_suppkey" />
+                                                <node type="NAME" loc="151..160" text="s_suppkey" />
                                             </node>
                                         </node>
                                     </node>
@@ -1132,12 +1132,12 @@ order by d_year asc, revenue desc
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="165..189" text="lo_orderda.. d_datekey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="165..177" text="lo_orderdate">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="165..177" text="lo_orderdate">
-                                                <node type="IDENTIFIER" loc="165..177" text="lo_orderdate" />
+                                                <node type="NAME" loc="165..177" text="lo_orderdate" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="180..189" text="d_datekey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="180..189" text="d_datekey">
-                                                <node type="IDENTIFIER" loc="180..189" text="d_datekey" />
+                                                <node type="NAME" loc="180..189" text="d_datekey" />
                                             </node>
                                         </node>
                                     </node>
@@ -1147,7 +1147,7 @@ order by d_year asc, revenue desc
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="194..211" text="c_region = 'ASIA'">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="194..202" text="c_region">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="194..202" text="c_region">
-                                                <node type="IDENTIFIER" loc="194..202" text="c_region" />
+                                                <node type="NAME" loc="194..202" text="c_region" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_STRING" loc="205..211" text="'ASIA'" />
@@ -1158,7 +1158,7 @@ order by d_year asc, revenue desc
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="216..233" text="s_region = 'ASIA'">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="216..224" text="s_region">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="216..224" text="s_region">
-                                                <node type="IDENTIFIER" loc="216..224" text="s_region" />
+                                                <node type="NAME" loc="216..224" text="s_region" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_STRING" loc="227..233" text="'ASIA'" />
@@ -1169,7 +1169,7 @@ order by d_year asc, revenue desc
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="238..252" text="d_year >= 1992">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="238..244" text="d_year">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="238..244" text="d_year">
-                                                <node type="IDENTIFIER" loc="238..244" text="d_year" />
+                                                <node type="NAME" loc="238..244" text="d_year" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_INTEGER" loc="248..252" text="1992" />
@@ -1180,7 +1180,7 @@ order by d_year asc, revenue desc
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="257..271" text="d_year &lt;= 1997">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="257..263" text="d_year">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="257..263" text="d_year">
-                                                <node type="IDENTIFIER" loc="257..263" text="d_year" />
+                                                <node type="NAME" loc="257..263" text="d_year" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_INTEGER" loc="267..271" text="1997" />
@@ -1229,22 +1229,22 @@ order by d_year asc, revenue desc
                         <node key="SQL_SELECT_FROM" type="ARRAY" loc="58..100" text="from custo..er, &quot;date&quot;">
                             <node type="OBJECT_SQL_TABLEREF" loc="63..71" text="customer">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="63..71" text="customer">
-                                    <node type="IDENTIFIER" loc="63..71" text="customer" />
+                                    <node type="NAME" loc="63..71" text="customer" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="73..82" text="lineorder">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="73..82" text="lineorder">
-                                    <node type="IDENTIFIER" loc="73..82" text="lineorder" />
+                                    <node type="NAME" loc="73..82" text="lineorder" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="84..92" text="supplier">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="84..92" text="supplier">
-                                    <node type="IDENTIFIER" loc="84..92" text="supplier" />
+                                    <node type="NAME" loc="84..92" text="supplier" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="94..100" text="&quot;date&quot;">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="94..100" text="&quot;date&quot;">
-                                    <node type="IDENTIFIER" loc="94..100" text="&quot;date&quot;" />
+                                    <node type="NAME" loc="94..100" text="&quot;date&quot;" />
                                 </node>
                             </node>
                         </node>
@@ -1252,7 +1252,7 @@ order by d_year asc, revenue desc
                             <node type="OBJECT_SQL_GROUP_BY_ITEM" loc="295..301" text="c_city">
                                 <node key="SQL_GROUP_BY_ITEM_ARG" type="OBJECT_SQL_COLUMN_REF" loc="295..301" text="c_city">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="295..301" text="c_city">
-                                        <node type="IDENTIFIER" loc="295..301" text="c_city" />
+                                        <node type="NAME" loc="295..301" text="c_city" />
                                     </node>
                                 </node>
                                 <node key="SQL_GROUP_BY_ITEM_TYPE" type="ENUM_SQL_GROUP_BY_ITEM_TYPE" value="EXPRESSION" />
@@ -1260,7 +1260,7 @@ order by d_year asc, revenue desc
                             <node type="OBJECT_SQL_GROUP_BY_ITEM" loc="303..309" text="s_city">
                                 <node key="SQL_GROUP_BY_ITEM_ARG" type="OBJECT_SQL_COLUMN_REF" loc="303..309" text="s_city">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="303..309" text="s_city">
-                                        <node type="IDENTIFIER" loc="303..309" text="s_city" />
+                                        <node type="NAME" loc="303..309" text="s_city" />
                                     </node>
                                 </node>
                                 <node key="SQL_GROUP_BY_ITEM_TYPE" type="ENUM_SQL_GROUP_BY_ITEM_TYPE" value="EXPRESSION" />
@@ -1268,7 +1268,7 @@ order by d_year asc, revenue desc
                             <node type="OBJECT_SQL_GROUP_BY_ITEM" loc="311..317" text="d_year">
                                 <node key="SQL_GROUP_BY_ITEM_ARG" type="OBJECT_SQL_COLUMN_REF" loc="311..317" text="d_year">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="311..317" text="d_year">
-                                        <node type="IDENTIFIER" loc="311..317" text="d_year" />
+                                        <node type="NAME" loc="311..317" text="d_year" />
                                     </node>
                                 </node>
                                 <node key="SQL_GROUP_BY_ITEM_TYPE" type="ENUM_SQL_GROUP_BY_ITEM_TYPE" value="EXPRESSION" />
@@ -1279,7 +1279,7 @@ order by d_year asc, revenue desc
                                 <node key="SQL_ORDER_DIRECTION" type="ENUM_SQL_ORDER_DIRECTION" value="ASCENDING" />
                                 <node key="SQL_ORDER_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="327..333" text="d_year">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="327..333" text="d_year">
-                                        <node type="IDENTIFIER" loc="327..333" text="d_year" />
+                                        <node type="NAME" loc="327..333" text="d_year" />
                                     </node>
                                 </node>
                             </node>
@@ -1287,7 +1287,7 @@ order by d_year asc, revenue desc
                                 <node key="SQL_ORDER_DIRECTION" type="ENUM_SQL_ORDER_DIRECTION" value="DESCENDING" />
                                 <node key="SQL_ORDER_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="339..346" text="revenue">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="339..346" text="revenue">
-                                        <node type="IDENTIFIER" loc="339..346" text="revenue" />
+                                        <node type="NAME" loc="339..346" text="revenue" />
                                     </node>
                                 </node>
                             </node>
@@ -1296,38 +1296,38 @@ order by d_year asc, revenue desc
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..13" text="c_city">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="7..13" text="c_city">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="7..13" text="c_city">
-                                        <node type="IDENTIFIER" loc="7..13" text="c_city" />
+                                        <node type="NAME" loc="7..13" text="c_city" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="15..21" text="s_city">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="15..21" text="s_city">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="15..21" text="s_city">
-                                        <node type="IDENTIFIER" loc="15..21" text="s_city" />
+                                        <node type="NAME" loc="15..21" text="s_city" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="23..29" text="d_year">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="23..29" text="d_year">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="23..29" text="d_year">
-                                        <node type="IDENTIFIER" loc="23..29" text="d_year" />
+                                        <node type="NAME" loc="23..29" text="d_year" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="31..57" text="sum(lo_rev..as revenue">
-                                <node key="SQL_RESULT_TARGET_NAME" type="IDENTIFIER" loc="50..57" text="revenue" />
+                                <node key="SQL_RESULT_TARGET_NAME" type="NAME" loc="50..57" text="revenue" />
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_FUNCTION_EXPRESSION" loc="31..46" text="sum(lo_revenue)">
                                     <node key="SQL_FUNCTION_ARGUMENTS" type="ARRAY" loc="35..45" text="lo_revenue">
                                         <node type="OBJECT_SQL_FUNCTION_ARG" loc="35..45" text="lo_revenue">
                                             <node key="SQL_FUNCTION_ARG_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="35..45" text="lo_revenue">
                                                 <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="35..45" text="lo_revenue">
-                                                    <node type="IDENTIFIER" loc="35..45" text="lo_revenue" />
+                                                    <node type="NAME" loc="35..45" text="lo_revenue" />
                                                 </node>
                                             </node>
                                         </node>
                                     </node>
                                     <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="31..34" text="sum">
-                                        <node type="IDENTIFIER" loc="31..34" text="sum" />
+                                        <node type="NAME" loc="31..34" text="sum" />
                                     </node>
                                 </node>
                             </node>
@@ -1338,12 +1338,12 @@ order by d_year asc, revenue desc
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="107..129" text="lo_custkey.. c_custkey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="107..117" text="lo_custkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="107..117" text="lo_custkey">
-                                                <node type="IDENTIFIER" loc="107..117" text="lo_custkey" />
+                                                <node type="NAME" loc="107..117" text="lo_custkey" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="120..129" text="c_custkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="120..129" text="c_custkey">
-                                                <node type="IDENTIFIER" loc="120..129" text="c_custkey" />
+                                                <node type="NAME" loc="120..129" text="c_custkey" />
                                             </node>
                                         </node>
                                     </node>
@@ -1353,12 +1353,12 @@ order by d_year asc, revenue desc
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="134..156" text="lo_suppkey.. s_suppkey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="134..144" text="lo_suppkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="134..144" text="lo_suppkey">
-                                                <node type="IDENTIFIER" loc="134..144" text="lo_suppkey" />
+                                                <node type="NAME" loc="134..144" text="lo_suppkey" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="147..156" text="s_suppkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="147..156" text="s_suppkey">
-                                                <node type="IDENTIFIER" loc="147..156" text="s_suppkey" />
+                                                <node type="NAME" loc="147..156" text="s_suppkey" />
                                             </node>
                                         </node>
                                     </node>
@@ -1368,12 +1368,12 @@ order by d_year asc, revenue desc
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="161..185" text="lo_orderda.. d_datekey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="161..173" text="lo_orderdate">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="161..173" text="lo_orderdate">
-                                                <node type="IDENTIFIER" loc="161..173" text="lo_orderdate" />
+                                                <node type="NAME" loc="161..173" text="lo_orderdate" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="176..185" text="d_datekey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="176..185" text="d_datekey">
-                                                <node type="IDENTIFIER" loc="176..185" text="d_datekey" />
+                                                <node type="NAME" loc="176..185" text="d_datekey" />
                                             </node>
                                         </node>
                                     </node>
@@ -1383,7 +1383,7 @@ order by d_year asc, revenue desc
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="190..216" text="c_nation =..ED STATES'">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="190..198" text="c_nation">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="190..198" text="c_nation">
-                                                <node type="IDENTIFIER" loc="190..198" text="c_nation" />
+                                                <node type="NAME" loc="190..198" text="c_nation" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_STRING" loc="201..216" text="'UNITED STATES'" />
@@ -1394,7 +1394,7 @@ order by d_year asc, revenue desc
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="221..247" text="s_nation =..ED STATES'">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="221..229" text="s_nation">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="221..229" text="s_nation">
-                                                <node type="IDENTIFIER" loc="221..229" text="s_nation" />
+                                                <node type="NAME" loc="221..229" text="s_nation" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_STRING" loc="232..247" text="'UNITED STATES'" />
@@ -1405,7 +1405,7 @@ order by d_year asc, revenue desc
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="252..266" text="d_year >= 1992">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="252..258" text="d_year">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="252..258" text="d_year">
-                                                <node type="IDENTIFIER" loc="252..258" text="d_year" />
+                                                <node type="NAME" loc="252..258" text="d_year" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_INTEGER" loc="262..266" text="1992" />
@@ -1416,7 +1416,7 @@ order by d_year asc, revenue desc
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="271..285" text="d_year &lt;= 1997">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="271..277" text="d_year">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="271..277" text="d_year">
-                                                <node type="IDENTIFIER" loc="271..277" text="d_year" />
+                                                <node type="NAME" loc="271..277" text="d_year" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_INTEGER" loc="281..285" text="1997" />
@@ -1468,22 +1468,22 @@ order by d_year asc, revenue desc
                         <node key="SQL_SELECT_FROM" type="ARRAY" loc="58..100" text="from custo..er, &quot;date&quot;">
                             <node type="OBJECT_SQL_TABLEREF" loc="63..71" text="customer">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="63..71" text="customer">
-                                    <node type="IDENTIFIER" loc="63..71" text="customer" />
+                                    <node type="NAME" loc="63..71" text="customer" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="73..82" text="lineorder">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="73..82" text="lineorder">
-                                    <node type="IDENTIFIER" loc="73..82" text="lineorder" />
+                                    <node type="NAME" loc="73..82" text="lineorder" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="84..92" text="supplier">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="84..92" text="supplier">
-                                    <node type="IDENTIFIER" loc="84..92" text="supplier" />
+                                    <node type="NAME" loc="84..92" text="supplier" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="94..100" text="&quot;date&quot;">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="94..100" text="&quot;date&quot;">
-                                    <node type="IDENTIFIER" loc="94..100" text="&quot;date&quot;" />
+                                    <node type="NAME" loc="94..100" text="&quot;date&quot;" />
                                 </node>
                             </node>
                         </node>
@@ -1491,7 +1491,7 @@ order by d_year asc, revenue desc
                             <node type="OBJECT_SQL_GROUP_BY_ITEM" loc="331..337" text="c_city">
                                 <node key="SQL_GROUP_BY_ITEM_ARG" type="OBJECT_SQL_COLUMN_REF" loc="331..337" text="c_city">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="331..337" text="c_city">
-                                        <node type="IDENTIFIER" loc="331..337" text="c_city" />
+                                        <node type="NAME" loc="331..337" text="c_city" />
                                     </node>
                                 </node>
                                 <node key="SQL_GROUP_BY_ITEM_TYPE" type="ENUM_SQL_GROUP_BY_ITEM_TYPE" value="EXPRESSION" />
@@ -1499,7 +1499,7 @@ order by d_year asc, revenue desc
                             <node type="OBJECT_SQL_GROUP_BY_ITEM" loc="339..345" text="s_city">
                                 <node key="SQL_GROUP_BY_ITEM_ARG" type="OBJECT_SQL_COLUMN_REF" loc="339..345" text="s_city">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="339..345" text="s_city">
-                                        <node type="IDENTIFIER" loc="339..345" text="s_city" />
+                                        <node type="NAME" loc="339..345" text="s_city" />
                                     </node>
                                 </node>
                                 <node key="SQL_GROUP_BY_ITEM_TYPE" type="ENUM_SQL_GROUP_BY_ITEM_TYPE" value="EXPRESSION" />
@@ -1507,7 +1507,7 @@ order by d_year asc, revenue desc
                             <node type="OBJECT_SQL_GROUP_BY_ITEM" loc="347..353" text="d_year">
                                 <node key="SQL_GROUP_BY_ITEM_ARG" type="OBJECT_SQL_COLUMN_REF" loc="347..353" text="d_year">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="347..353" text="d_year">
-                                        <node type="IDENTIFIER" loc="347..353" text="d_year" />
+                                        <node type="NAME" loc="347..353" text="d_year" />
                                     </node>
                                 </node>
                                 <node key="SQL_GROUP_BY_ITEM_TYPE" type="ENUM_SQL_GROUP_BY_ITEM_TYPE" value="EXPRESSION" />
@@ -1518,7 +1518,7 @@ order by d_year asc, revenue desc
                                 <node key="SQL_ORDER_DIRECTION" type="ENUM_SQL_ORDER_DIRECTION" value="ASCENDING" />
                                 <node key="SQL_ORDER_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="363..369" text="d_year">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="363..369" text="d_year">
-                                        <node type="IDENTIFIER" loc="363..369" text="d_year" />
+                                        <node type="NAME" loc="363..369" text="d_year" />
                                     </node>
                                 </node>
                             </node>
@@ -1526,7 +1526,7 @@ order by d_year asc, revenue desc
                                 <node key="SQL_ORDER_DIRECTION" type="ENUM_SQL_ORDER_DIRECTION" value="DESCENDING" />
                                 <node key="SQL_ORDER_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="375..382" text="revenue">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="375..382" text="revenue">
-                                        <node type="IDENTIFIER" loc="375..382" text="revenue" />
+                                        <node type="NAME" loc="375..382" text="revenue" />
                                     </node>
                                 </node>
                             </node>
@@ -1535,38 +1535,38 @@ order by d_year asc, revenue desc
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..13" text="c_city">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="7..13" text="c_city">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="7..13" text="c_city">
-                                        <node type="IDENTIFIER" loc="7..13" text="c_city" />
+                                        <node type="NAME" loc="7..13" text="c_city" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="15..21" text="s_city">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="15..21" text="s_city">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="15..21" text="s_city">
-                                        <node type="IDENTIFIER" loc="15..21" text="s_city" />
+                                        <node type="NAME" loc="15..21" text="s_city" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="23..29" text="d_year">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="23..29" text="d_year">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="23..29" text="d_year">
-                                        <node type="IDENTIFIER" loc="23..29" text="d_year" />
+                                        <node type="NAME" loc="23..29" text="d_year" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="31..57" text="sum(lo_rev..as revenue">
-                                <node key="SQL_RESULT_TARGET_NAME" type="IDENTIFIER" loc="50..57" text="revenue" />
+                                <node key="SQL_RESULT_TARGET_NAME" type="NAME" loc="50..57" text="revenue" />
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_FUNCTION_EXPRESSION" loc="31..46" text="sum(lo_revenue)">
                                     <node key="SQL_FUNCTION_ARGUMENTS" type="ARRAY" loc="35..45" text="lo_revenue">
                                         <node type="OBJECT_SQL_FUNCTION_ARG" loc="35..45" text="lo_revenue">
                                             <node key="SQL_FUNCTION_ARG_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="35..45" text="lo_revenue">
                                                 <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="35..45" text="lo_revenue">
-                                                    <node type="IDENTIFIER" loc="35..45" text="lo_revenue" />
+                                                    <node type="NAME" loc="35..45" text="lo_revenue" />
                                                 </node>
                                             </node>
                                         </node>
                                     </node>
                                     <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="31..34" text="sum">
-                                        <node type="IDENTIFIER" loc="31..34" text="sum" />
+                                        <node type="NAME" loc="31..34" text="sum" />
                                     </node>
                                 </node>
                             </node>
@@ -1577,12 +1577,12 @@ order by d_year asc, revenue desc
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="107..129" text="lo_custkey.. c_custkey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="107..117" text="lo_custkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="107..117" text="lo_custkey">
-                                                <node type="IDENTIFIER" loc="107..117" text="lo_custkey" />
+                                                <node type="NAME" loc="107..117" text="lo_custkey" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="120..129" text="c_custkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="120..129" text="c_custkey">
-                                                <node type="IDENTIFIER" loc="120..129" text="c_custkey" />
+                                                <node type="NAME" loc="120..129" text="c_custkey" />
                                             </node>
                                         </node>
                                     </node>
@@ -1592,12 +1592,12 @@ order by d_year asc, revenue desc
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="134..156" text="lo_suppkey.. s_suppkey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="134..144" text="lo_suppkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="134..144" text="lo_suppkey">
-                                                <node type="IDENTIFIER" loc="134..144" text="lo_suppkey" />
+                                                <node type="NAME" loc="134..144" text="lo_suppkey" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="147..156" text="s_suppkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="147..156" text="s_suppkey">
-                                                <node type="IDENTIFIER" loc="147..156" text="s_suppkey" />
+                                                <node type="NAME" loc="147..156" text="s_suppkey" />
                                             </node>
                                         </node>
                                     </node>
@@ -1607,12 +1607,12 @@ order by d_year asc, revenue desc
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="161..185" text="lo_orderda.. d_datekey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="161..173" text="lo_orderdate">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="161..173" text="lo_orderdate">
-                                                <node type="IDENTIFIER" loc="161..173" text="lo_orderdate" />
+                                                <node type="NAME" loc="161..173" text="lo_orderdate" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="176..185" text="d_datekey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="176..185" text="d_datekey">
-                                                <node type="IDENTIFIER" loc="176..185" text="d_datekey" />
+                                                <node type="NAME" loc="176..185" text="d_datekey" />
                                             </node>
                                         </node>
                                     </node>
@@ -1624,7 +1624,7 @@ order by d_year asc, revenue desc
                                             <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="191..210" text="c_city='UNITED KI1'">
                                                 <node type="OBJECT_SQL_COLUMN_REF" loc="191..197" text="c_city">
                                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="191..197" text="c_city">
-                                                        <node type="IDENTIFIER" loc="191..197" text="c_city" />
+                                                        <node type="NAME" loc="191..197" text="c_city" />
                                                     </node>
                                                 </node>
                                                 <node type="LITERAL_STRING" loc="198..210" text="'UNITED KI1'" />
@@ -1635,7 +1635,7 @@ order by d_year asc, revenue desc
                                             <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="214..233" text="c_city='UNITED KI5'">
                                                 <node type="OBJECT_SQL_COLUMN_REF" loc="214..220" text="c_city">
                                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="214..220" text="c_city">
-                                                        <node type="IDENTIFIER" loc="214..220" text="c_city" />
+                                                        <node type="NAME" loc="214..220" text="c_city" />
                                                     </node>
                                                 </node>
                                                 <node type="LITERAL_STRING" loc="221..233" text="'UNITED KI5'" />
@@ -1651,7 +1651,7 @@ order by d_year asc, revenue desc
                                             <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="240..259" text="s_city='UNITED KI1'">
                                                 <node type="OBJECT_SQL_COLUMN_REF" loc="240..246" text="s_city">
                                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="240..246" text="s_city">
-                                                        <node type="IDENTIFIER" loc="240..246" text="s_city" />
+                                                        <node type="NAME" loc="240..246" text="s_city" />
                                                     </node>
                                                 </node>
                                                 <node type="LITERAL_STRING" loc="247..259" text="'UNITED KI1'" />
@@ -1662,7 +1662,7 @@ order by d_year asc, revenue desc
                                             <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="263..282" text="s_city='UNITED KI5'">
                                                 <node type="OBJECT_SQL_COLUMN_REF" loc="263..269" text="s_city">
                                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="263..269" text="s_city">
-                                                        <node type="IDENTIFIER" loc="263..269" text="s_city" />
+                                                        <node type="NAME" loc="263..269" text="s_city" />
                                                     </node>
                                                 </node>
                                                 <node type="LITERAL_STRING" loc="270..282" text="'UNITED KI5'" />
@@ -1676,7 +1676,7 @@ order by d_year asc, revenue desc
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="288..302" text="d_year >= 1992">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="288..294" text="d_year">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="288..294" text="d_year">
-                                                <node type="IDENTIFIER" loc="288..294" text="d_year" />
+                                                <node type="NAME" loc="288..294" text="d_year" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_INTEGER" loc="298..302" text="1992" />
@@ -1687,7 +1687,7 @@ order by d_year asc, revenue desc
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="307..321" text="d_year &lt;= 1997">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="307..313" text="d_year">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="307..313" text="d_year">
-                                                <node type="IDENTIFIER" loc="307..313" text="d_year" />
+                                                <node type="NAME" loc="307..313" text="d_year" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_INTEGER" loc="317..321" text="1997" />
@@ -1741,22 +1741,22 @@ order by d_year asc, revenue desc
                         <node key="SQL_SELECT_FROM" type="ARRAY" loc="58..100" text="from custo..er, &quot;date&quot;">
                             <node type="OBJECT_SQL_TABLEREF" loc="63..71" text="customer">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="63..71" text="customer">
-                                    <node type="IDENTIFIER" loc="63..71" text="customer" />
+                                    <node type="NAME" loc="63..71" text="customer" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="73..82" text="lineorder">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="73..82" text="lineorder">
-                                    <node type="IDENTIFIER" loc="73..82" text="lineorder" />
+                                    <node type="NAME" loc="73..82" text="lineorder" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="84..92" text="supplier">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="84..92" text="supplier">
-                                    <node type="IDENTIFIER" loc="84..92" text="supplier" />
+                                    <node type="NAME" loc="84..92" text="supplier" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="94..100" text="&quot;date&quot;">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="94..100" text="&quot;date&quot;">
-                                    <node type="IDENTIFIER" loc="94..100" text="&quot;date&quot;" />
+                                    <node type="NAME" loc="94..100" text="&quot;date&quot;" />
                                 </node>
                             </node>
                         </node>
@@ -1764,7 +1764,7 @@ order by d_year asc, revenue desc
                             <node type="OBJECT_SQL_GROUP_BY_ITEM" loc="321..327" text="c_city">
                                 <node key="SQL_GROUP_BY_ITEM_ARG" type="OBJECT_SQL_COLUMN_REF" loc="321..327" text="c_city">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="321..327" text="c_city">
-                                        <node type="IDENTIFIER" loc="321..327" text="c_city" />
+                                        <node type="NAME" loc="321..327" text="c_city" />
                                     </node>
                                 </node>
                                 <node key="SQL_GROUP_BY_ITEM_TYPE" type="ENUM_SQL_GROUP_BY_ITEM_TYPE" value="EXPRESSION" />
@@ -1772,7 +1772,7 @@ order by d_year asc, revenue desc
                             <node type="OBJECT_SQL_GROUP_BY_ITEM" loc="329..335" text="s_city">
                                 <node key="SQL_GROUP_BY_ITEM_ARG" type="OBJECT_SQL_COLUMN_REF" loc="329..335" text="s_city">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="329..335" text="s_city">
-                                        <node type="IDENTIFIER" loc="329..335" text="s_city" />
+                                        <node type="NAME" loc="329..335" text="s_city" />
                                     </node>
                                 </node>
                                 <node key="SQL_GROUP_BY_ITEM_TYPE" type="ENUM_SQL_GROUP_BY_ITEM_TYPE" value="EXPRESSION" />
@@ -1780,7 +1780,7 @@ order by d_year asc, revenue desc
                             <node type="OBJECT_SQL_GROUP_BY_ITEM" loc="337..343" text="d_year">
                                 <node key="SQL_GROUP_BY_ITEM_ARG" type="OBJECT_SQL_COLUMN_REF" loc="337..343" text="d_year">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="337..343" text="d_year">
-                                        <node type="IDENTIFIER" loc="337..343" text="d_year" />
+                                        <node type="NAME" loc="337..343" text="d_year" />
                                     </node>
                                 </node>
                                 <node key="SQL_GROUP_BY_ITEM_TYPE" type="ENUM_SQL_GROUP_BY_ITEM_TYPE" value="EXPRESSION" />
@@ -1791,7 +1791,7 @@ order by d_year asc, revenue desc
                                 <node key="SQL_ORDER_DIRECTION" type="ENUM_SQL_ORDER_DIRECTION" value="ASCENDING" />
                                 <node key="SQL_ORDER_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="353..359" text="d_year">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="353..359" text="d_year">
-                                        <node type="IDENTIFIER" loc="353..359" text="d_year" />
+                                        <node type="NAME" loc="353..359" text="d_year" />
                                     </node>
                                 </node>
                             </node>
@@ -1799,7 +1799,7 @@ order by d_year asc, revenue desc
                                 <node key="SQL_ORDER_DIRECTION" type="ENUM_SQL_ORDER_DIRECTION" value="DESCENDING" />
                                 <node key="SQL_ORDER_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="365..372" text="revenue">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="365..372" text="revenue">
-                                        <node type="IDENTIFIER" loc="365..372" text="revenue" />
+                                        <node type="NAME" loc="365..372" text="revenue" />
                                     </node>
                                 </node>
                             </node>
@@ -1808,38 +1808,38 @@ order by d_year asc, revenue desc
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..13" text="c_city">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="7..13" text="c_city">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="7..13" text="c_city">
-                                        <node type="IDENTIFIER" loc="7..13" text="c_city" />
+                                        <node type="NAME" loc="7..13" text="c_city" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="15..21" text="s_city">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="15..21" text="s_city">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="15..21" text="s_city">
-                                        <node type="IDENTIFIER" loc="15..21" text="s_city" />
+                                        <node type="NAME" loc="15..21" text="s_city" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="23..29" text="d_year">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="23..29" text="d_year">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="23..29" text="d_year">
-                                        <node type="IDENTIFIER" loc="23..29" text="d_year" />
+                                        <node type="NAME" loc="23..29" text="d_year" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="31..57" text="sum(lo_rev..as revenue">
-                                <node key="SQL_RESULT_TARGET_NAME" type="IDENTIFIER" loc="50..57" text="revenue" />
+                                <node key="SQL_RESULT_TARGET_NAME" type="NAME" loc="50..57" text="revenue" />
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_FUNCTION_EXPRESSION" loc="31..46" text="sum(lo_revenue)">
                                     <node key="SQL_FUNCTION_ARGUMENTS" type="ARRAY" loc="35..45" text="lo_revenue">
                                         <node type="OBJECT_SQL_FUNCTION_ARG" loc="35..45" text="lo_revenue">
                                             <node key="SQL_FUNCTION_ARG_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="35..45" text="lo_revenue">
                                                 <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="35..45" text="lo_revenue">
-                                                    <node type="IDENTIFIER" loc="35..45" text="lo_revenue" />
+                                                    <node type="NAME" loc="35..45" text="lo_revenue" />
                                                 </node>
                                             </node>
                                         </node>
                                     </node>
                                     <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="31..34" text="sum">
-                                        <node type="IDENTIFIER" loc="31..34" text="sum" />
+                                        <node type="NAME" loc="31..34" text="sum" />
                                     </node>
                                 </node>
                             </node>
@@ -1850,12 +1850,12 @@ order by d_year asc, revenue desc
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="107..129" text="lo_custkey.. c_custkey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="107..117" text="lo_custkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="107..117" text="lo_custkey">
-                                                <node type="IDENTIFIER" loc="107..117" text="lo_custkey" />
+                                                <node type="NAME" loc="107..117" text="lo_custkey" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="120..129" text="c_custkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="120..129" text="c_custkey">
-                                                <node type="IDENTIFIER" loc="120..129" text="c_custkey" />
+                                                <node type="NAME" loc="120..129" text="c_custkey" />
                                             </node>
                                         </node>
                                     </node>
@@ -1865,12 +1865,12 @@ order by d_year asc, revenue desc
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="134..156" text="lo_suppkey.. s_suppkey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="134..144" text="lo_suppkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="134..144" text="lo_suppkey">
-                                                <node type="IDENTIFIER" loc="134..144" text="lo_suppkey" />
+                                                <node type="NAME" loc="134..144" text="lo_suppkey" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="147..156" text="s_suppkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="147..156" text="s_suppkey">
-                                                <node type="IDENTIFIER" loc="147..156" text="s_suppkey" />
+                                                <node type="NAME" loc="147..156" text="s_suppkey" />
                                             </node>
                                         </node>
                                     </node>
@@ -1880,12 +1880,12 @@ order by d_year asc, revenue desc
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="161..185" text="lo_orderda.. d_datekey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="161..173" text="lo_orderdate">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="161..173" text="lo_orderdate">
-                                                <node type="IDENTIFIER" loc="161..173" text="lo_orderdate" />
+                                                <node type="NAME" loc="161..173" text="lo_orderdate" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="176..185" text="d_datekey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="176..185" text="d_datekey">
-                                                <node type="IDENTIFIER" loc="176..185" text="d_datekey" />
+                                                <node type="NAME" loc="176..185" text="d_datekey" />
                                             </node>
                                         </node>
                                     </node>
@@ -1897,7 +1897,7 @@ order by d_year asc, revenue desc
                                             <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="191..210" text="c_city='UNITED KI1'">
                                                 <node type="OBJECT_SQL_COLUMN_REF" loc="191..197" text="c_city">
                                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="191..197" text="c_city">
-                                                        <node type="IDENTIFIER" loc="191..197" text="c_city" />
+                                                        <node type="NAME" loc="191..197" text="c_city" />
                                                     </node>
                                                 </node>
                                                 <node type="LITERAL_STRING" loc="198..210" text="'UNITED KI1'" />
@@ -1908,7 +1908,7 @@ order by d_year asc, revenue desc
                                             <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="214..233" text="c_city='UNITED KI5'">
                                                 <node type="OBJECT_SQL_COLUMN_REF" loc="214..220" text="c_city">
                                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="214..220" text="c_city">
-                                                        <node type="IDENTIFIER" loc="214..220" text="c_city" />
+                                                        <node type="NAME" loc="214..220" text="c_city" />
                                                     </node>
                                                 </node>
                                                 <node type="LITERAL_STRING" loc="221..233" text="'UNITED KI5'" />
@@ -1924,7 +1924,7 @@ order by d_year asc, revenue desc
                                             <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="240..259" text="s_city='UNITED KI1'">
                                                 <node type="OBJECT_SQL_COLUMN_REF" loc="240..246" text="s_city">
                                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="240..246" text="s_city">
-                                                        <node type="IDENTIFIER" loc="240..246" text="s_city" />
+                                                        <node type="NAME" loc="240..246" text="s_city" />
                                                     </node>
                                                 </node>
                                                 <node type="LITERAL_STRING" loc="247..259" text="'UNITED KI1'" />
@@ -1935,7 +1935,7 @@ order by d_year asc, revenue desc
                                             <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="263..282" text="s_city='UNITED KI5'">
                                                 <node type="OBJECT_SQL_COLUMN_REF" loc="263..269" text="s_city">
                                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="263..269" text="s_city">
-                                                        <node type="IDENTIFIER" loc="263..269" text="s_city" />
+                                                        <node type="NAME" loc="263..269" text="s_city" />
                                                     </node>
                                                 </node>
                                                 <node type="LITERAL_STRING" loc="270..282" text="'UNITED KI5'" />
@@ -1949,7 +1949,7 @@ order by d_year asc, revenue desc
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="288..311" text="d_yearmont.. 'Dec1997'">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="288..299" text="d_yearmonth">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="288..299" text="d_yearmonth">
-                                                <node type="IDENTIFIER" loc="288..299" text="d_yearmonth" />
+                                                <node type="NAME" loc="288..299" text="d_yearmonth" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_STRING" loc="302..311" text="'Dec1997'" />
@@ -2002,27 +2002,27 @@ order by d_year, c_nation
                         <node key="SQL_SELECT_FROM" type="ARRAY" loc="67..115" text="from &quot;date.. lineorder">
                             <node type="OBJECT_SQL_TABLEREF" loc="72..78" text="&quot;date&quot;">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="72..78" text="&quot;date&quot;">
-                                    <node type="IDENTIFIER" loc="72..78" text="&quot;date&quot;" />
+                                    <node type="NAME" loc="72..78" text="&quot;date&quot;" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="80..88" text="customer">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="80..88" text="customer">
-                                    <node type="IDENTIFIER" loc="80..88" text="customer" />
+                                    <node type="NAME" loc="80..88" text="customer" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="90..98" text="supplier">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="90..98" text="supplier">
-                                    <node type="IDENTIFIER" loc="90..98" text="supplier" />
+                                    <node type="NAME" loc="90..98" text="supplier" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="100..104" text="part">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="100..104" text="part">
-                                    <node type="IDENTIFIER" loc="100..104" text="part" />
+                                    <node type="NAME" loc="100..104" text="part" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="106..115" text="lineorder">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="106..115" text="lineorder">
-                                    <node type="IDENTIFIER" loc="106..115" text="lineorder" />
+                                    <node type="NAME" loc="106..115" text="lineorder" />
                                 </node>
                             </node>
                         </node>
@@ -2030,7 +2030,7 @@ order by d_year, c_nation
                             <node type="OBJECT_SQL_GROUP_BY_ITEM" loc="332..338" text="d_year">
                                 <node key="SQL_GROUP_BY_ITEM_ARG" type="OBJECT_SQL_COLUMN_REF" loc="332..338" text="d_year">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="332..338" text="d_year">
-                                        <node type="IDENTIFIER" loc="332..338" text="d_year" />
+                                        <node type="NAME" loc="332..338" text="d_year" />
                                     </node>
                                 </node>
                                 <node key="SQL_GROUP_BY_ITEM_TYPE" type="ENUM_SQL_GROUP_BY_ITEM_TYPE" value="EXPRESSION" />
@@ -2038,7 +2038,7 @@ order by d_year, c_nation
                             <node type="OBJECT_SQL_GROUP_BY_ITEM" loc="340..348" text="c_nation">
                                 <node key="SQL_GROUP_BY_ITEM_ARG" type="OBJECT_SQL_COLUMN_REF" loc="340..348" text="c_nation">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="340..348" text="c_nation">
-                                        <node type="IDENTIFIER" loc="340..348" text="c_nation" />
+                                        <node type="NAME" loc="340..348" text="c_nation" />
                                     </node>
                                 </node>
                                 <node key="SQL_GROUP_BY_ITEM_TYPE" type="ENUM_SQL_GROUP_BY_ITEM_TYPE" value="EXPRESSION" />
@@ -2048,14 +2048,14 @@ order by d_year, c_nation
                             <node type="OBJECT_SQL_ORDER" loc="358..364" text="d_year">
                                 <node key="SQL_ORDER_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="358..364" text="d_year">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="358..364" text="d_year">
-                                        <node type="IDENTIFIER" loc="358..364" text="d_year" />
+                                        <node type="NAME" loc="358..364" text="d_year" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_ORDER" loc="366..374" text="c_nation">
                                 <node key="SQL_ORDER_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="366..374" text="c_nation">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="366..374" text="c_nation">
-                                        <node type="IDENTIFIER" loc="366..374" text="c_nation" />
+                                        <node type="NAME" loc="366..374" text="c_nation" />
                                     </node>
                                 </node>
                             </node>
@@ -2064,19 +2064,19 @@ order by d_year, c_nation
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..13" text="d_year">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="7..13" text="d_year">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="7..13" text="d_year">
-                                        <node type="IDENTIFIER" loc="7..13" text="d_year" />
+                                        <node type="NAME" loc="7..13" text="d_year" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="15..23" text="c_nation">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="15..23" text="c_nation">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="15..23" text="c_nation">
-                                        <node type="IDENTIFIER" loc="15..23" text="c_nation" />
+                                        <node type="NAME" loc="15..23" text="c_nation" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="25..66" text="sum(lo_rev.. as profit">
-                                <node key="SQL_RESULT_TARGET_NAME" type="IDENTIFIER" loc="60..66" text="profit" />
+                                <node key="SQL_RESULT_TARGET_NAME" type="NAME" loc="60..66" text="profit" />
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_FUNCTION_EXPRESSION" loc="25..56" text="sum(lo_rev..upplycost)">
                                     <node key="SQL_FUNCTION_ARGUMENTS" type="ARRAY" loc="29..55" text="lo_revenue..supplycost">
                                         <node type="OBJECT_SQL_FUNCTION_ARG" loc="29..55" text="lo_revenue..supplycost">
@@ -2084,12 +2084,12 @@ order by d_year, c_nation
                                                 <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="29..55" text="lo_revenue..supplycost">
                                                     <node type="OBJECT_SQL_COLUMN_REF" loc="29..39" text="lo_revenue">
                                                         <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="29..39" text="lo_revenue">
-                                                            <node type="IDENTIFIER" loc="29..39" text="lo_revenue" />
+                                                            <node type="NAME" loc="29..39" text="lo_revenue" />
                                                         </node>
                                                     </node>
                                                     <node type="OBJECT_SQL_COLUMN_REF" loc="42..55" text="lo_supplycost">
                                                         <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="42..55" text="lo_supplycost">
-                                                            <node type="IDENTIFIER" loc="42..55" text="lo_supplycost" />
+                                                            <node type="NAME" loc="42..55" text="lo_supplycost" />
                                                         </node>
                                                     </node>
                                                 </node>
@@ -2098,7 +2098,7 @@ order by d_year, c_nation
                                         </node>
                                     </node>
                                     <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="25..28" text="sum">
-                                        <node type="IDENTIFIER" loc="25..28" text="sum" />
+                                        <node type="NAME" loc="25..28" text="sum" />
                                     </node>
                                 </node>
                             </node>
@@ -2109,12 +2109,12 @@ order by d_year, c_nation
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="122..144" text="lo_custkey.. c_custkey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="122..132" text="lo_custkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="122..132" text="lo_custkey">
-                                                <node type="IDENTIFIER" loc="122..132" text="lo_custkey" />
+                                                <node type="NAME" loc="122..132" text="lo_custkey" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="135..144" text="c_custkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="135..144" text="c_custkey">
-                                                <node type="IDENTIFIER" loc="135..144" text="c_custkey" />
+                                                <node type="NAME" loc="135..144" text="c_custkey" />
                                             </node>
                                         </node>
                                     </node>
@@ -2124,12 +2124,12 @@ order by d_year, c_nation
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="149..171" text="lo_suppkey.. s_suppkey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="149..159" text="lo_suppkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="149..159" text="lo_suppkey">
-                                                <node type="IDENTIFIER" loc="149..159" text="lo_suppkey" />
+                                                <node type="NAME" loc="149..159" text="lo_suppkey" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="162..171" text="s_suppkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="162..171" text="s_suppkey">
-                                                <node type="IDENTIFIER" loc="162..171" text="s_suppkey" />
+                                                <node type="NAME" loc="162..171" text="s_suppkey" />
                                             </node>
                                         </node>
                                     </node>
@@ -2139,12 +2139,12 @@ order by d_year, c_nation
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="176..198" text="lo_partkey.. p_partkey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="176..186" text="lo_partkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="176..186" text="lo_partkey">
-                                                <node type="IDENTIFIER" loc="176..186" text="lo_partkey" />
+                                                <node type="NAME" loc="176..186" text="lo_partkey" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="189..198" text="p_partkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="189..198" text="p_partkey">
-                                                <node type="IDENTIFIER" loc="189..198" text="p_partkey" />
+                                                <node type="NAME" loc="189..198" text="p_partkey" />
                                             </node>
                                         </node>
                                     </node>
@@ -2154,12 +2154,12 @@ order by d_year, c_nation
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="203..227" text="lo_orderda.. d_datekey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="203..215" text="lo_orderdate">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="203..215" text="lo_orderdate">
-                                                <node type="IDENTIFIER" loc="203..215" text="lo_orderdate" />
+                                                <node type="NAME" loc="203..215" text="lo_orderdate" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="218..227" text="d_datekey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="218..227" text="d_datekey">
-                                                <node type="IDENTIFIER" loc="218..227" text="d_datekey" />
+                                                <node type="NAME" loc="218..227" text="d_datekey" />
                                             </node>
                                         </node>
                                     </node>
@@ -2169,7 +2169,7 @@ order by d_year, c_nation
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="232..252" text="c_region =.. 'AMERICA'">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="232..240" text="c_region">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="232..240" text="c_region">
-                                                <node type="IDENTIFIER" loc="232..240" text="c_region" />
+                                                <node type="NAME" loc="232..240" text="c_region" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_STRING" loc="243..252" text="'AMERICA'" />
@@ -2180,7 +2180,7 @@ order by d_year, c_nation
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="257..277" text="s_region =.. 'AMERICA'">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="257..265" text="s_region">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="257..265" text="s_region">
-                                                <node type="IDENTIFIER" loc="257..265" text="s_region" />
+                                                <node type="NAME" loc="257..265" text="s_region" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_STRING" loc="268..277" text="'AMERICA'" />
@@ -2193,7 +2193,7 @@ order by d_year, c_nation
                                             <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="283..300" text="p_mfgr = 'MFGR#1'">
                                                 <node type="OBJECT_SQL_COLUMN_REF" loc="283..289" text="p_mfgr">
                                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="283..289" text="p_mfgr">
-                                                        <node type="IDENTIFIER" loc="283..289" text="p_mfgr" />
+                                                        <node type="NAME" loc="283..289" text="p_mfgr" />
                                                     </node>
                                                 </node>
                                                 <node type="LITERAL_STRING" loc="292..300" text="'MFGR#1'" />
@@ -2204,7 +2204,7 @@ order by d_year, c_nation
                                             <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="304..321" text="p_mfgr = 'MFGR#2'">
                                                 <node type="OBJECT_SQL_COLUMN_REF" loc="304..310" text="p_mfgr">
                                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="304..310" text="p_mfgr">
-                                                        <node type="IDENTIFIER" loc="304..310" text="p_mfgr" />
+                                                        <node type="NAME" loc="304..310" text="p_mfgr" />
                                                     </node>
                                                 </node>
                                                 <node type="LITERAL_STRING" loc="313..321" text="'MFGR#2'" />
@@ -2261,27 +2261,27 @@ order by d_year, s_nation, p_category
                         <node key="SQL_SELECT_FROM" type="ARRAY" loc="79..127" text="from &quot;date.. lineorder">
                             <node type="OBJECT_SQL_TABLEREF" loc="84..90" text="&quot;date&quot;">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="84..90" text="&quot;date&quot;">
-                                    <node type="IDENTIFIER" loc="84..90" text="&quot;date&quot;" />
+                                    <node type="NAME" loc="84..90" text="&quot;date&quot;" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="92..100" text="customer">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="92..100" text="customer">
-                                    <node type="IDENTIFIER" loc="92..100" text="customer" />
+                                    <node type="NAME" loc="92..100" text="customer" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="102..110" text="supplier">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="102..110" text="supplier">
-                                    <node type="IDENTIFIER" loc="102..110" text="supplier" />
+                                    <node type="NAME" loc="102..110" text="supplier" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="112..116" text="part">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="112..116" text="part">
-                                    <node type="IDENTIFIER" loc="112..116" text="part" />
+                                    <node type="NAME" loc="112..116" text="part" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="118..127" text="lineorder">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="118..127" text="lineorder">
-                                    <node type="IDENTIFIER" loc="118..127" text="lineorder" />
+                                    <node type="NAME" loc="118..127" text="lineorder" />
                                 </node>
                             </node>
                         </node>
@@ -2289,7 +2289,7 @@ order by d_year, s_nation, p_category
                             <node type="OBJECT_SQL_GROUP_BY_ITEM" loc="381..387" text="d_year">
                                 <node key="SQL_GROUP_BY_ITEM_ARG" type="OBJECT_SQL_COLUMN_REF" loc="381..387" text="d_year">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="381..387" text="d_year">
-                                        <node type="IDENTIFIER" loc="381..387" text="d_year" />
+                                        <node type="NAME" loc="381..387" text="d_year" />
                                     </node>
                                 </node>
                                 <node key="SQL_GROUP_BY_ITEM_TYPE" type="ENUM_SQL_GROUP_BY_ITEM_TYPE" value="EXPRESSION" />
@@ -2297,7 +2297,7 @@ order by d_year, s_nation, p_category
                             <node type="OBJECT_SQL_GROUP_BY_ITEM" loc="389..397" text="s_nation">
                                 <node key="SQL_GROUP_BY_ITEM_ARG" type="OBJECT_SQL_COLUMN_REF" loc="389..397" text="s_nation">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="389..397" text="s_nation">
-                                        <node type="IDENTIFIER" loc="389..397" text="s_nation" />
+                                        <node type="NAME" loc="389..397" text="s_nation" />
                                     </node>
                                 </node>
                                 <node key="SQL_GROUP_BY_ITEM_TYPE" type="ENUM_SQL_GROUP_BY_ITEM_TYPE" value="EXPRESSION" />
@@ -2305,7 +2305,7 @@ order by d_year, s_nation, p_category
                             <node type="OBJECT_SQL_GROUP_BY_ITEM" loc="399..409" text="p_category">
                                 <node key="SQL_GROUP_BY_ITEM_ARG" type="OBJECT_SQL_COLUMN_REF" loc="399..409" text="p_category">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="399..409" text="p_category">
-                                        <node type="IDENTIFIER" loc="399..409" text="p_category" />
+                                        <node type="NAME" loc="399..409" text="p_category" />
                                     </node>
                                 </node>
                                 <node key="SQL_GROUP_BY_ITEM_TYPE" type="ENUM_SQL_GROUP_BY_ITEM_TYPE" value="EXPRESSION" />
@@ -2315,21 +2315,21 @@ order by d_year, s_nation, p_category
                             <node type="OBJECT_SQL_ORDER" loc="419..425" text="d_year">
                                 <node key="SQL_ORDER_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="419..425" text="d_year">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="419..425" text="d_year">
-                                        <node type="IDENTIFIER" loc="419..425" text="d_year" />
+                                        <node type="NAME" loc="419..425" text="d_year" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_ORDER" loc="427..435" text="s_nation">
                                 <node key="SQL_ORDER_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="427..435" text="s_nation">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="427..435" text="s_nation">
-                                        <node type="IDENTIFIER" loc="427..435" text="s_nation" />
+                                        <node type="NAME" loc="427..435" text="s_nation" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_ORDER" loc="437..447" text="p_category">
                                 <node key="SQL_ORDER_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="437..447" text="p_category">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="437..447" text="p_category">
-                                        <node type="IDENTIFIER" loc="437..447" text="p_category" />
+                                        <node type="NAME" loc="437..447" text="p_category" />
                                     </node>
                                 </node>
                             </node>
@@ -2338,26 +2338,26 @@ order by d_year, s_nation, p_category
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..13" text="d_year">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="7..13" text="d_year">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="7..13" text="d_year">
-                                        <node type="IDENTIFIER" loc="7..13" text="d_year" />
+                                        <node type="NAME" loc="7..13" text="d_year" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="15..23" text="s_nation">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="15..23" text="s_nation">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="15..23" text="s_nation">
-                                        <node type="IDENTIFIER" loc="15..23" text="s_nation" />
+                                        <node type="NAME" loc="15..23" text="s_nation" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="25..35" text="p_category">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="25..35" text="p_category">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="25..35" text="p_category">
-                                        <node type="IDENTIFIER" loc="25..35" text="p_category" />
+                                        <node type="NAME" loc="25..35" text="p_category" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="37..78" text="sum(lo_rev.. as profit">
-                                <node key="SQL_RESULT_TARGET_NAME" type="IDENTIFIER" loc="72..78" text="profit" />
+                                <node key="SQL_RESULT_TARGET_NAME" type="NAME" loc="72..78" text="profit" />
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_FUNCTION_EXPRESSION" loc="37..68" text="sum(lo_rev..upplycost)">
                                     <node key="SQL_FUNCTION_ARGUMENTS" type="ARRAY" loc="41..67" text="lo_revenue..supplycost">
                                         <node type="OBJECT_SQL_FUNCTION_ARG" loc="41..67" text="lo_revenue..supplycost">
@@ -2365,12 +2365,12 @@ order by d_year, s_nation, p_category
                                                 <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="41..67" text="lo_revenue..supplycost">
                                                     <node type="OBJECT_SQL_COLUMN_REF" loc="41..51" text="lo_revenue">
                                                         <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="41..51" text="lo_revenue">
-                                                            <node type="IDENTIFIER" loc="41..51" text="lo_revenue" />
+                                                            <node type="NAME" loc="41..51" text="lo_revenue" />
                                                         </node>
                                                     </node>
                                                     <node type="OBJECT_SQL_COLUMN_REF" loc="54..67" text="lo_supplycost">
                                                         <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="54..67" text="lo_supplycost">
-                                                            <node type="IDENTIFIER" loc="54..67" text="lo_supplycost" />
+                                                            <node type="NAME" loc="54..67" text="lo_supplycost" />
                                                         </node>
                                                     </node>
                                                 </node>
@@ -2379,7 +2379,7 @@ order by d_year, s_nation, p_category
                                         </node>
                                     </node>
                                     <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="37..40" text="sum">
-                                        <node type="IDENTIFIER" loc="37..40" text="sum" />
+                                        <node type="NAME" loc="37..40" text="sum" />
                                     </node>
                                 </node>
                             </node>
@@ -2390,12 +2390,12 @@ order by d_year, s_nation, p_category
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="134..156" text="lo_custkey.. c_custkey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="134..144" text="lo_custkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="134..144" text="lo_custkey">
-                                                <node type="IDENTIFIER" loc="134..144" text="lo_custkey" />
+                                                <node type="NAME" loc="134..144" text="lo_custkey" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="147..156" text="c_custkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="147..156" text="c_custkey">
-                                                <node type="IDENTIFIER" loc="147..156" text="c_custkey" />
+                                                <node type="NAME" loc="147..156" text="c_custkey" />
                                             </node>
                                         </node>
                                     </node>
@@ -2405,12 +2405,12 @@ order by d_year, s_nation, p_category
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="161..183" text="lo_suppkey.. s_suppkey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="161..171" text="lo_suppkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="161..171" text="lo_suppkey">
-                                                <node type="IDENTIFIER" loc="161..171" text="lo_suppkey" />
+                                                <node type="NAME" loc="161..171" text="lo_suppkey" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="174..183" text="s_suppkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="174..183" text="s_suppkey">
-                                                <node type="IDENTIFIER" loc="174..183" text="s_suppkey" />
+                                                <node type="NAME" loc="174..183" text="s_suppkey" />
                                             </node>
                                         </node>
                                     </node>
@@ -2420,12 +2420,12 @@ order by d_year, s_nation, p_category
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="188..210" text="lo_partkey.. p_partkey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="188..198" text="lo_partkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="188..198" text="lo_partkey">
-                                                <node type="IDENTIFIER" loc="188..198" text="lo_partkey" />
+                                                <node type="NAME" loc="188..198" text="lo_partkey" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="201..210" text="p_partkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="201..210" text="p_partkey">
-                                                <node type="IDENTIFIER" loc="201..210" text="p_partkey" />
+                                                <node type="NAME" loc="201..210" text="p_partkey" />
                                             </node>
                                         </node>
                                     </node>
@@ -2435,12 +2435,12 @@ order by d_year, s_nation, p_category
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="215..239" text="lo_orderda.. d_datekey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="215..227" text="lo_orderdate">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="215..227" text="lo_orderdate">
-                                                <node type="IDENTIFIER" loc="215..227" text="lo_orderdate" />
+                                                <node type="NAME" loc="215..227" text="lo_orderdate" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="230..239" text="d_datekey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="230..239" text="d_datekey">
-                                                <node type="IDENTIFIER" loc="230..239" text="d_datekey" />
+                                                <node type="NAME" loc="230..239" text="d_datekey" />
                                             </node>
                                         </node>
                                     </node>
@@ -2450,7 +2450,7 @@ order by d_year, s_nation, p_category
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="244..264" text="c_region =.. 'AMERICA'">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="244..252" text="c_region">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="244..252" text="c_region">
-                                                <node type="IDENTIFIER" loc="244..252" text="c_region" />
+                                                <node type="NAME" loc="244..252" text="c_region" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_STRING" loc="255..264" text="'AMERICA'" />
@@ -2461,7 +2461,7 @@ order by d_year, s_nation, p_category
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="269..289" text="s_region =.. 'AMERICA'">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="269..277" text="s_region">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="269..277" text="s_region">
-                                                <node type="IDENTIFIER" loc="269..277" text="s_region" />
+                                                <node type="NAME" loc="269..277" text="s_region" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_STRING" loc="280..289" text="'AMERICA'" />
@@ -2474,7 +2474,7 @@ order by d_year, s_nation, p_category
                                             <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="295..308" text="d_year = 1997">
                                                 <node type="OBJECT_SQL_COLUMN_REF" loc="295..301" text="d_year">
                                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="295..301" text="d_year">
-                                                        <node type="IDENTIFIER" loc="295..301" text="d_year" />
+                                                        <node type="NAME" loc="295..301" text="d_year" />
                                                     </node>
                                                 </node>
                                                 <node type="LITERAL_INTEGER" loc="304..308" text="1997" />
@@ -2485,7 +2485,7 @@ order by d_year, s_nation, p_category
                                             <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="312..325" text="d_year = 1998">
                                                 <node type="OBJECT_SQL_COLUMN_REF" loc="312..318" text="d_year">
                                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="312..318" text="d_year">
-                                                        <node type="IDENTIFIER" loc="312..318" text="d_year" />
+                                                        <node type="NAME" loc="312..318" text="d_year" />
                                                     </node>
                                                 </node>
                                                 <node type="LITERAL_INTEGER" loc="321..325" text="1998" />
@@ -2501,7 +2501,7 @@ order by d_year, s_nation, p_category
                                             <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="332..349" text="p_mfgr = 'MFGR#1'">
                                                 <node type="OBJECT_SQL_COLUMN_REF" loc="332..338" text="p_mfgr">
                                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="332..338" text="p_mfgr">
-                                                        <node type="IDENTIFIER" loc="332..338" text="p_mfgr" />
+                                                        <node type="NAME" loc="332..338" text="p_mfgr" />
                                                     </node>
                                                 </node>
                                                 <node type="LITERAL_STRING" loc="341..349" text="'MFGR#1'" />
@@ -2512,7 +2512,7 @@ order by d_year, s_nation, p_category
                                             <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="353..370" text="p_mfgr = 'MFGR#2'">
                                                 <node type="OBJECT_SQL_COLUMN_REF" loc="353..359" text="p_mfgr">
                                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="353..359" text="p_mfgr">
-                                                        <node type="IDENTIFIER" loc="353..359" text="p_mfgr" />
+                                                        <node type="NAME" loc="353..359" text="p_mfgr" />
                                                     </node>
                                                 </node>
                                                 <node type="LITERAL_STRING" loc="362..370" text="'MFGR#2'" />
@@ -2570,27 +2570,27 @@ order by d_year, s_city, p_brand1
                         <node key="SQL_SELECT_FROM" type="ARRAY" loc="75..123" text="from &quot;date.. lineorder">
                             <node type="OBJECT_SQL_TABLEREF" loc="80..86" text="&quot;date&quot;">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="80..86" text="&quot;date&quot;">
-                                    <node type="IDENTIFIER" loc="80..86" text="&quot;date&quot;" />
+                                    <node type="NAME" loc="80..86" text="&quot;date&quot;" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="88..96" text="customer">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="88..96" text="customer">
-                                    <node type="IDENTIFIER" loc="88..96" text="customer" />
+                                    <node type="NAME" loc="88..96" text="customer" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="98..106" text="supplier">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="98..106" text="supplier">
-                                    <node type="IDENTIFIER" loc="98..106" text="supplier" />
+                                    <node type="NAME" loc="98..106" text="supplier" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="108..112" text="part">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="108..112" text="part">
-                                    <node type="IDENTIFIER" loc="108..112" text="part" />
+                                    <node type="NAME" loc="108..112" text="part" />
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_TABLEREF" loc="114..123" text="lineorder">
                                 <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="114..123" text="lineorder">
-                                    <node type="IDENTIFIER" loc="114..123" text="lineorder" />
+                                    <node type="NAME" loc="114..123" text="lineorder" />
                                 </node>
                             </node>
                         </node>
@@ -2598,7 +2598,7 @@ order by d_year, s_city, p_brand1
                             <node type="OBJECT_SQL_GROUP_BY_ITEM" loc="365..371" text="d_year">
                                 <node key="SQL_GROUP_BY_ITEM_ARG" type="OBJECT_SQL_COLUMN_REF" loc="365..371" text="d_year">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="365..371" text="d_year">
-                                        <node type="IDENTIFIER" loc="365..371" text="d_year" />
+                                        <node type="NAME" loc="365..371" text="d_year" />
                                     </node>
                                 </node>
                                 <node key="SQL_GROUP_BY_ITEM_TYPE" type="ENUM_SQL_GROUP_BY_ITEM_TYPE" value="EXPRESSION" />
@@ -2606,7 +2606,7 @@ order by d_year, s_city, p_brand1
                             <node type="OBJECT_SQL_GROUP_BY_ITEM" loc="373..379" text="s_city">
                                 <node key="SQL_GROUP_BY_ITEM_ARG" type="OBJECT_SQL_COLUMN_REF" loc="373..379" text="s_city">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="373..379" text="s_city">
-                                        <node type="IDENTIFIER" loc="373..379" text="s_city" />
+                                        <node type="NAME" loc="373..379" text="s_city" />
                                     </node>
                                 </node>
                                 <node key="SQL_GROUP_BY_ITEM_TYPE" type="ENUM_SQL_GROUP_BY_ITEM_TYPE" value="EXPRESSION" />
@@ -2614,7 +2614,7 @@ order by d_year, s_city, p_brand1
                             <node type="OBJECT_SQL_GROUP_BY_ITEM" loc="381..389" text="p_brand1">
                                 <node key="SQL_GROUP_BY_ITEM_ARG" type="OBJECT_SQL_COLUMN_REF" loc="381..389" text="p_brand1">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="381..389" text="p_brand1">
-                                        <node type="IDENTIFIER" loc="381..389" text="p_brand1" />
+                                        <node type="NAME" loc="381..389" text="p_brand1" />
                                     </node>
                                 </node>
                                 <node key="SQL_GROUP_BY_ITEM_TYPE" type="ENUM_SQL_GROUP_BY_ITEM_TYPE" value="EXPRESSION" />
@@ -2624,21 +2624,21 @@ order by d_year, s_city, p_brand1
                             <node type="OBJECT_SQL_ORDER" loc="399..405" text="d_year">
                                 <node key="SQL_ORDER_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="399..405" text="d_year">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="399..405" text="d_year">
-                                        <node type="IDENTIFIER" loc="399..405" text="d_year" />
+                                        <node type="NAME" loc="399..405" text="d_year" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_ORDER" loc="407..413" text="s_city">
                                 <node key="SQL_ORDER_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="407..413" text="s_city">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="407..413" text="s_city">
-                                        <node type="IDENTIFIER" loc="407..413" text="s_city" />
+                                        <node type="NAME" loc="407..413" text="s_city" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_ORDER" loc="415..423" text="p_brand1">
                                 <node key="SQL_ORDER_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="415..423" text="p_brand1">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="415..423" text="p_brand1">
-                                        <node type="IDENTIFIER" loc="415..423" text="p_brand1" />
+                                        <node type="NAME" loc="415..423" text="p_brand1" />
                                     </node>
                                 </node>
                             </node>
@@ -2647,26 +2647,26 @@ order by d_year, s_city, p_brand1
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..13" text="d_year">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="7..13" text="d_year">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="7..13" text="d_year">
-                                        <node type="IDENTIFIER" loc="7..13" text="d_year" />
+                                        <node type="NAME" loc="7..13" text="d_year" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="15..21" text="s_city">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="15..21" text="s_city">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="15..21" text="s_city">
-                                        <node type="IDENTIFIER" loc="15..21" text="s_city" />
+                                        <node type="NAME" loc="15..21" text="s_city" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="23..31" text="p_brand1">
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="23..31" text="p_brand1">
                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="23..31" text="p_brand1">
-                                        <node type="IDENTIFIER" loc="23..31" text="p_brand1" />
+                                        <node type="NAME" loc="23..31" text="p_brand1" />
                                     </node>
                                 </node>
                             </node>
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="33..74" text="sum(lo_rev.. as profit">
-                                <node key="SQL_RESULT_TARGET_NAME" type="IDENTIFIER" loc="68..74" text="profit" />
+                                <node key="SQL_RESULT_TARGET_NAME" type="NAME" loc="68..74" text="profit" />
                                 <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_FUNCTION_EXPRESSION" loc="33..64" text="sum(lo_rev..upplycost)">
                                     <node key="SQL_FUNCTION_ARGUMENTS" type="ARRAY" loc="37..63" text="lo_revenue..supplycost">
                                         <node type="OBJECT_SQL_FUNCTION_ARG" loc="37..63" text="lo_revenue..supplycost">
@@ -2674,12 +2674,12 @@ order by d_year, s_city, p_brand1
                                                 <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="37..63" text="lo_revenue..supplycost">
                                                     <node type="OBJECT_SQL_COLUMN_REF" loc="37..47" text="lo_revenue">
                                                         <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="37..47" text="lo_revenue">
-                                                            <node type="IDENTIFIER" loc="37..47" text="lo_revenue" />
+                                                            <node type="NAME" loc="37..47" text="lo_revenue" />
                                                         </node>
                                                     </node>
                                                     <node type="OBJECT_SQL_COLUMN_REF" loc="50..63" text="lo_supplycost">
                                                         <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="50..63" text="lo_supplycost">
-                                                            <node type="IDENTIFIER" loc="50..63" text="lo_supplycost" />
+                                                            <node type="NAME" loc="50..63" text="lo_supplycost" />
                                                         </node>
                                                     </node>
                                                 </node>
@@ -2688,7 +2688,7 @@ order by d_year, s_city, p_brand1
                                         </node>
                                     </node>
                                     <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="33..36" text="sum">
-                                        <node type="IDENTIFIER" loc="33..36" text="sum" />
+                                        <node type="NAME" loc="33..36" text="sum" />
                                     </node>
                                 </node>
                             </node>
@@ -2699,12 +2699,12 @@ order by d_year, s_city, p_brand1
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="130..152" text="lo_custkey.. c_custkey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="130..140" text="lo_custkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="130..140" text="lo_custkey">
-                                                <node type="IDENTIFIER" loc="130..140" text="lo_custkey" />
+                                                <node type="NAME" loc="130..140" text="lo_custkey" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="143..152" text="c_custkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="143..152" text="c_custkey">
-                                                <node type="IDENTIFIER" loc="143..152" text="c_custkey" />
+                                                <node type="NAME" loc="143..152" text="c_custkey" />
                                             </node>
                                         </node>
                                     </node>
@@ -2714,12 +2714,12 @@ order by d_year, s_city, p_brand1
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="157..179" text="lo_suppkey.. s_suppkey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="157..167" text="lo_suppkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="157..167" text="lo_suppkey">
-                                                <node type="IDENTIFIER" loc="157..167" text="lo_suppkey" />
+                                                <node type="NAME" loc="157..167" text="lo_suppkey" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="170..179" text="s_suppkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="170..179" text="s_suppkey">
-                                                <node type="IDENTIFIER" loc="170..179" text="s_suppkey" />
+                                                <node type="NAME" loc="170..179" text="s_suppkey" />
                                             </node>
                                         </node>
                                     </node>
@@ -2729,12 +2729,12 @@ order by d_year, s_city, p_brand1
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="184..206" text="lo_partkey.. p_partkey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="184..194" text="lo_partkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="184..194" text="lo_partkey">
-                                                <node type="IDENTIFIER" loc="184..194" text="lo_partkey" />
+                                                <node type="NAME" loc="184..194" text="lo_partkey" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="197..206" text="p_partkey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="197..206" text="p_partkey">
-                                                <node type="IDENTIFIER" loc="197..206" text="p_partkey" />
+                                                <node type="NAME" loc="197..206" text="p_partkey" />
                                             </node>
                                         </node>
                                     </node>
@@ -2744,12 +2744,12 @@ order by d_year, s_city, p_brand1
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="211..235" text="lo_orderda.. d_datekey">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="211..223" text="lo_orderdate">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="211..223" text="lo_orderdate">
-                                                <node type="IDENTIFIER" loc="211..223" text="lo_orderdate" />
+                                                <node type="NAME" loc="211..223" text="lo_orderdate" />
                                             </node>
                                         </node>
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="226..235" text="d_datekey">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="226..235" text="d_datekey">
-                                                <node type="IDENTIFIER" loc="226..235" text="d_datekey" />
+                                                <node type="NAME" loc="226..235" text="d_datekey" />
                                             </node>
                                         </node>
                                     </node>
@@ -2759,7 +2759,7 @@ order by d_year, s_city, p_brand1
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="240..260" text="c_region =.. 'AMERICA'">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="240..248" text="c_region">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="240..248" text="c_region">
-                                                <node type="IDENTIFIER" loc="240..248" text="c_region" />
+                                                <node type="NAME" loc="240..248" text="c_region" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_STRING" loc="251..260" text="'AMERICA'" />
@@ -2770,7 +2770,7 @@ order by d_year, s_city, p_brand1
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="265..291" text="s_nation =..ED STATES'">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="265..273" text="s_nation">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="265..273" text="s_nation">
-                                                <node type="IDENTIFIER" loc="265..273" text="s_nation" />
+                                                <node type="NAME" loc="265..273" text="s_nation" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_STRING" loc="276..291" text="'UNITED STATES'" />
@@ -2783,7 +2783,7 @@ order by d_year, s_city, p_brand1
                                             <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="297..310" text="d_year = 1997">
                                                 <node type="OBJECT_SQL_COLUMN_REF" loc="297..303" text="d_year">
                                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="297..303" text="d_year">
-                                                        <node type="IDENTIFIER" loc="297..303" text="d_year" />
+                                                        <node type="NAME" loc="297..303" text="d_year" />
                                                     </node>
                                                 </node>
                                                 <node type="LITERAL_INTEGER" loc="306..310" text="1997" />
@@ -2794,7 +2794,7 @@ order by d_year, s_city, p_brand1
                                             <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="314..327" text="d_year = 1998">
                                                 <node type="OBJECT_SQL_COLUMN_REF" loc="314..320" text="d_year">
                                                     <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="314..320" text="d_year">
-                                                        <node type="IDENTIFIER" loc="314..320" text="d_year" />
+                                                        <node type="NAME" loc="314..320" text="d_year" />
                                                     </node>
                                                 </node>
                                                 <node type="LITERAL_INTEGER" loc="323..327" text="1998" />
@@ -2808,7 +2808,7 @@ order by d_year, s_city, p_brand1
                                     <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="333..355" text="p_category.. 'MFGR#14'">
                                         <node type="OBJECT_SQL_COLUMN_REF" loc="333..343" text="p_category">
                                             <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="333..343" text="p_category">
-                                                <node type="IDENTIFIER" loc="333..343" text="p_category" />
+                                                <node type="NAME" loc="333..343" text="p_category" />
                                             </node>
                                         </node>
                                         <node type="LITERAL_STRING" loc="346..355" text="'MFGR#14'" />
