@@ -17,26 +17,47 @@ struct ObjectName {
     std::optional<NameID> table;
 };
 
-struct ColumnInfo {
+struct ExternalColumnInfo {
     /// A column
     std::optional<NameID> name;
     /// XXX Collect everything that we can get easily (type, keys, collation)
 };
 
-struct TableInfo {
+struct ExternalTableInfo {
     /// The name of the table
     ObjectName name;
     /// The columns
-    std::vector<ColumnInfo> columns;
+    std::vector<ExternalColumnInfo> columns;
+};
+
+struct ColumnDefinition {
+    /// The node id
+    NodeID node_id;
+    /// The table alias (if any)
+    std::optional<NameID> column_alias;
+};
+
+struct TableDefinition {
+    /// The node id
+    NodeID node_id;
+    /// The table alias (if any)
+    std::optional<NameID> table_alias;
+    /// The columns
+    std::vector<ColumnDefinition> columns;
 };
 
 struct TableReference {
     /// The node id
     NodeID node_id;
-    /// The table name
-    ObjectName table_name;
     /// The table alias (if any)
     std::optional<NameID> table_alias;
+    /// The table name
+    ObjectName table_name;
+
+    using ExternalTableName = ObjectName;
+    using LocalTableDefintion = NodeID;
+    /// The target table (if resolved)
+    std::optional<std::variant<ExternalTableName, LocalTableDefintion>> target_table;
 };
 
 struct ColumnReference {
@@ -47,15 +68,8 @@ struct ColumnReference {
 
     using ExternalTableName = ObjectName;
     using LocalColumnDefintion = NodeID;
-    /// The reference target (if resolved)
+    /// The target table (if resolved)
     std::optional<std::variant<ExternalTableName, LocalColumnDefintion>> target_table;
-};
-
-struct ColumnDefinition {
-    /// The node id
-    NodeID node_id;
-    /// A column name (alias or external name id)
-    std::optional<NameID> name;
 };
 
 }  // namespace flatsql::schema

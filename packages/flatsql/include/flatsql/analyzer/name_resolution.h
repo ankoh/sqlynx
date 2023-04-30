@@ -16,8 +16,8 @@ class NameResolution : public PassManager::DepthFirstPostOrderPass {
         std::vector<schema::TableReference> table_references;
         /// Column references
         std::vector<schema::ColumnReference> column_references;
-        /// Column definitions
-        std::vector<schema::ColumnDefinition> column_definitions;
+        /// Table definitions
+        std::vector<schema::TableDefinition> table_definitions;
     };
 
     /// A name resolution state that tracks references and definitions falling out of scope
@@ -31,7 +31,7 @@ class NameResolution : public PassManager::DepthFirstPostOrderPass {
     /// We only need to hold the state of the immediate children of all unvisited nodes.
     std::unordered_map<NodeID, ScopedNameResolutionState> node_state;
     /// The external tables
-    std::unordered_map<schema::ObjectName, schema::TableInfo> external_tables;
+    std::unordered_map<schema::ObjectName, schema::ExternalTableInfo> external_tables;
 
    public:
     /// Constructor
