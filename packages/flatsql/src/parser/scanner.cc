@@ -46,16 +46,16 @@ Parser::symbol_type Scanner::ReadInteger(std::string_view text, proto::Location 
     }
 }
 
-/// Add a string to the string dicationary
-size_t Scanner::AddStringToDictionary(std::string_view s, sx::Location location) {
-    auto iter = string_dictionary_ids.find(s);
-    if (iter != string_dictionary_ids.end()) {
+/// Register a name
+size_t Scanner::RegisterName(std::string_view s, sx::Location location) {
+    auto iter = name_dictionary_ids.find(s);
+    if (iter != name_dictionary_ids.end()) {
         return iter->second;
     }
-    auto copy = string_pool.AllocateCopy(s);
-    auto id = string_dictionary_locations.size();
-    string_dictionary_ids.insert({copy, id});
-    string_dictionary_locations.push_back(location);
+    auto copy = name_pool.AllocateCopy(s);
+    auto id = name_dictionary_locations.size();
+    name_dictionary_ids.insert({copy, id});
+    name_dictionary_locations.push_back(location);
     return id;
 }
 /// Read an unquoted identifier
@@ -68,7 +68,7 @@ Parser::symbol_type Scanner::ReadIdentifier(std::string_view text, proto::Locati
         return Parser::symbol_type(k->token, loc);
     }
     // Add string to dictionary
-    size_t id = AddStringToDictionary(temp_buffer, loc);
+    size_t id = RegisterName(temp_buffer, loc);
     return Parser::make_IDENT(id, loc);
 }
 /// Read a double quoted identifier
@@ -78,7 +78,7 @@ Parser::symbol_type Scanner::ReadDoubleQuotedIdentifier(std::string& text, proto
     auto trimmed = trim_view_right(text, is_no_space);
     trimmed = trim_view(trimmed, is_no_double_quote);
     // Add string to dictionary
-    size_t id = AddStringToDictionary(trimmed, loc);
+    size_t id = RegisterName(trimmed, loc);
     return Parser::make_IDENT(id, loc);
 }
 
@@ -86,7 +86,7 @@ Parser::symbol_type Scanner::ReadDoubleQuotedIdentifier(std::string& text, proto
 Parser::symbol_type Scanner::ReadStringLiteral(std::string& text, proto::Location loc) {
     auto trimmed_string = trim_view_right(text, is_no_space);
     auto trimmed_ident = trim_view(trimmed_string, is_no_double_quote);
-    size_t id = AddStringToDictionary(trimmed_ident, loc);
+    size_t id = RegisterName(trimmed_ident, loc);
     return Parser::make_SCONST(id, sx::Location(loc.offset(), trimmed_string.size()));
 }
 /// Read a hex string literal
