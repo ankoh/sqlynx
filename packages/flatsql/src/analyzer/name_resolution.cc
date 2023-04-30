@@ -3,13 +3,13 @@
 namespace flatsql {
 
 /// Constructor
-NameResolutionPass::NameResolutionPass(ParsedProgram& parser) {}
+NameResolution::NameResolution(ParsedProgram& parser) {}
 
 /// Prepare the analysis pass
-void NameResolutionPass::Prepare() {}
+void NameResolution::Prepare() {}
 /// Visit a chunk of nodes
-void NameResolutionPass::Visit(size_t offset, std::span<proto::Node> nodes) {}
+void NameResolution::Visit(size_t offset, std::span<proto::Node> nodes) {}
 /// Finish the analysis pass
-void NameResolutionPass::Finish() {}
+void NameResolution::Finish() {}
 
 }  // namespace flatsql
