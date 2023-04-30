@@ -7,6 +7,16 @@ namespace flatsql {
 namespace parser {
 
 /// Constructor
+Statement::Statement() : root(std::numeric_limits<uint32_t>::max()) {}
+/// Finish a statement
+std::unique_ptr<proto::StatementT> Statement::Pack() {
+    auto stmt = std::make_unique<proto::StatementT>();
+    stmt->statement_type = type;
+    stmt->root_node = root;
+    return stmt;
+}
+
+/// Constructor
 ScannedProgram::ScannedProgram(rope::Rope& rope) : input_data(rope) {}
 
 /// Register a name

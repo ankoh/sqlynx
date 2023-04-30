@@ -224,9 +224,10 @@ set(LIB_SRC
     ${PARSER_OUT}
     ${CMAKE_SOURCE_DIR}/src/analyzer/pass_manager.cc
     ${CMAKE_SOURCE_DIR}/src/ffi.cc
-    ${CMAKE_SOURCE_DIR}/src/parser/enums.cc
-    ${CMAKE_SOURCE_DIR}/src/parser/highlighting.cc
-    ${CMAKE_SOURCE_DIR}/src/parser/keywords.cc
+    ${CMAKE_SOURCE_DIR}/src/parser/grammar/enums.cc
+    ${CMAKE_SOURCE_DIR}/src/parser/grammar/highlighting.cc
+    ${CMAKE_SOURCE_DIR}/src/parser/grammar/keywords.cc
+    ${CMAKE_SOURCE_DIR}/src/parser/grammar/state.cc
     ${CMAKE_SOURCE_DIR}/src/parser/parse_context.cc
     ${CMAKE_SOURCE_DIR}/src/parser/program.cc
     ${CMAKE_SOURCE_DIR}/src/parser/scanner.cc
