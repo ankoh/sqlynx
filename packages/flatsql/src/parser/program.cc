@@ -68,7 +68,7 @@ std::shared_ptr<proto::ProgramT> ParsedProgram::Pack() {
         err->message = std::move(msg);
         out->errors.push_back(std::move(err));
     }
-    out->highlighting = scan.Pack();
+    out->highlighting = scan.PackHighlighting();
     out->line_breaks = std::move(scan.line_breaks);
     out->comments = std::move(scan.comments);
     return out;
