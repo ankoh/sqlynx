@@ -28,7 +28,7 @@ class NameResolution : public PassManager::DepthFirstPostOrderPass {
         NameResolutionState names_out_of_scope;
     };
     /// The node state map.
-    /// We only need to hold the state of the immediate children of all unvisited nodes.
+    /// We only need to hold the state of the immediate children of the next nodes.
     std::unordered_map<NodeID, ScopedNameResolutionState> node_state;
     /// The external tables
     std::unordered_map<schema::ObjectName, schema::ExternalTableInfo> external_tables;
