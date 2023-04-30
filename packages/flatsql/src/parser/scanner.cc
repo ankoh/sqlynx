@@ -15,15 +15,15 @@ namespace flatsql {
 namespace parser {
 
 /// Add an error
-void Scanner::AddError(proto::Location location, const char* message) { errors.push_back({location, message}); }
+void Scanner::AddError(proto::Location location, const char* message) { output->errors.push_back({location, message}); }
 /// Add an error
 void Scanner::AddError(proto::Location location, std::string&& message) {
-    errors.push_back({location, std::move(message)});
+    output->errors.push_back({location, std::move(message)});
 }
 /// Add a line break
-void Scanner::AddLineBreak(proto::Location location) { line_breaks.push_back(location); }
+void Scanner::AddLineBreak(proto::Location location) { output->line_breaks.push_back(location); }
 /// Add a comment
-void Scanner::AddComment(proto::Location location) { comments.push_back(location); }
+void Scanner::AddComment(proto::Location location) { output->comments.push_back(location); }
 
 /// Read a parameter
 Parser::symbol_type Scanner::ReadParameter(std::string_view text, proto::Location loc) {
@@ -46,18 +46,6 @@ Parser::symbol_type Scanner::ReadInteger(std::string_view text, proto::Location 
     }
 }
 
-/// Register a name
-size_t Scanner::RegisterName(std::string_view s, sx::Location location) {
-    auto iter = name_dictionary_ids.find(s);
-    if (iter != name_dictionary_ids.end()) {
-        return iter->second;
-    }
-    auto copy = name_pool.AllocateCopy(s);
-    auto id = name_dictionary_locations.size();
-    name_dictionary_ids.insert({copy, id});
-    name_dictionary_locations.push_back(location);
-    return id;
-}
 /// Read an unquoted identifier
 Parser::symbol_type Scanner::ReadIdentifier(std::string_view text, proto::Location loc) {
     // Convert to lower-case
@@ -65,10 +53,10 @@ Parser::symbol_type Scanner::ReadIdentifier(std::string_view text, proto::Locati
     for (size_t i = 0; i < temp_buffer.size(); ++i) temp_buffer[i] = ::tolower(temp_buffer[i]);
     // Check if it's a keyword
     if (auto k = Keyword::Find(temp_buffer); !!k) {
-        return Parser::symbol_type(k->token, loc);
+        return Parser::symbol_type(k->token, k->name, loc);
     }
     // Add string to dictionary
-    size_t id = RegisterName(temp_buffer, loc);
+    size_t id = output->RegisterName(temp_buffer, loc);
     return Parser::make_IDENT(id, loc);
 }
 /// Read a double quoted identifier
@@ -78,16 +66,14 @@ Parser::symbol_type Scanner::ReadDoubleQuotedIdentifier(std::string& text, proto
     auto trimmed = trim_view_right(text, is_no_space);
     trimmed = trim_view(trimmed, is_no_double_quote);
     // Add string to dictionary
-    size_t id = RegisterName(trimmed, loc);
+    size_t id = output->RegisterName(trimmed, loc);
     return Parser::make_IDENT(id, loc);
 }
 
 /// Read a string literal
 Parser::symbol_type Scanner::ReadStringLiteral(std::string& text, proto::Location loc) {
-    auto trimmed_string = trim_view_right(text, is_no_space);
-    auto trimmed_ident = trim_view(trimmed_string, is_no_quote);
-    size_t id = RegisterName(trimmed_ident, loc);
-    return Parser::make_SCONST(id, sx::Location(loc.offset(), trimmed_string.size()));
+    auto trimmed = trim_view_right(text, is_no_space);
+    return Parser::make_SCONST(sx::Location(loc.offset(), trimmed.size()));
 }
 /// Read a hex string literal
 Parser::symbol_type Scanner::ReadHexStringLiteral(std::string& text, proto::Location loc) {
@@ -199,12 +185,12 @@ std::unique_ptr<ScannedProgram> Scanner::Scan(rope::Rope& rope) {
     std::optional<Parser::symbol_type> lookahead_symbol;
     while (true) {
         auto token = next(scanner.internal_scanner_state, lookahead_symbol);
-        scanner.symbols.Append(token);
+        scanner.output->symbols.Append(token);
         if (token.kind() == Parser::symbol_kind::S_YYEOF) break;
     }
 
     // Collect scanner output
-    return std::make_unique<ScannedProgram>(std::move(scanner));
+    return std::move(scanner.output);
 }
 
 }  // namespace parser

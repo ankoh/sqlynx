@@ -13,6 +13,8 @@
 #include <variant>
 #include <vector>
 
+#include "flatsql/parser/parser_generated.h"
+#include "flatsql/parser/program.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/text/rope.h"
 #include "flatsql/utils/chunk_buffer.h"
@@ -24,155 +26,14 @@ namespace parser {
 class ScannedProgram;
 class ParsedProgram;
 
-using NodeID = uint32_t;
-using Key = proto::AttributeKey;
-using Location = proto::Location;
-
-inline std::ostream& operator<<(std::ostream& out, const proto::Location& loc) {
-    out << "[" << loc.offset() << "," << (loc.offset() + loc.length()) << "[";
-    return out;
-}
-
-/// A statement
-struct Statement {
-    /// The statement type
-    proto::StatementType type;
-    /// The root node
-    NodeID root;
-
-    /// Constructor
-    Statement();
-
-    /// Reset
-    void reset();
-    /// Get as flatbuffer object
-    std::unique_ptr<proto::StatementT> Finish();
-};
-
-/// A raw pointer that is unique but does not destroy the object.
-/// If you get a WeakUniquePtr as r-value, you are responsible for deleting it.
-template <typename T> struct WeakUniquePtr {
-    T* inner;
-    WeakUniquePtr(T* value = nullptr) : inner(value) {}
-    WeakUniquePtr(WeakUniquePtr&& other) : inner(other.inner) { other.inner = nullptr; }
-    WeakUniquePtr& operator=(WeakUniquePtr&& other) {
-        Destroy();
-        inner = other.inner;
-        other.inner = nullptr;
-        return *this;
-    }
-    WeakUniquePtr(const WeakUniquePtr& other) : inner(other.inner) {
-        // We only implement copy constructors to please the bison stack assignment.
-        *const_cast<T**>(&other.inner) = nullptr;
-    }
-    WeakUniquePtr& operator=(const WeakUniquePtr& other) {
-        Destroy();
-        inner = other.inner;
-        // We only implement copy assignment to please the bison stack assignment.
-        *const_cast<T**>(&other.inner) = nullptr;
-        return *this;
-    }
-    T* operator->() {
-        assert(inner);
-        return inner;
-    }
-    T& operator*() {
-        assert(inner);
-        return *inner;
-    }
-    void Destroy() {
-        if (inner) {
-            inner->~T();
-            inner = nullptr;
-        }
-    }
-};
-
-/// A list of nodes that uses own allocators for both, the list container and the nodes
-struct NodeList {
-    /// A list element
-    struct ListElement {
-        /// The next list element
-        ListElement* next = nullptr;
-        /// The next list element
-        ListElement* prev = nullptr;
-        /// The element node
-        proto::Node node;
-        /// Constructor
-        ListElement() = default;
-    };
-    using ListPool = TempNodePool<NodeList, 16>;
-    using ListElementPool = TempNodePool<ListElement, 128>;
-
-    /// The node list pool
-    ListPool& list_pool;
-    /// The node allocator
-    ListElementPool& element_pool;
-    /// The front of the list
-    ListElement* first_element = nullptr;
-    /// The back of the list
-    ListElement* last_element = nullptr;
-    /// The list size
-    size_t element_count = 0;
-
-    /// Constructor
-    NodeList(ListPool& list_pool, ListElementPool& node_pool);
-    /// Destructor
-    ~NodeList();
-    /// Move constructor
-    NodeList(NodeList&& other) = default;
-
-    /// Get the front
-    inline ListElement* front() { return first_element; }
-    /// Get the front
-    inline ListElement* back() { return last_element; }
-    /// Get the size
-    inline size_t size() { return element_count; }
-    /// Is empty?
-    inline bool empty() { return size() == 0; }
-    /// Prepend a node
-    void push_front(proto::Node node);
-    /// Append a node
-    void push_back(proto::Node node);
-    /// Append a list of nodes
-    void append(std::initializer_list<proto::Node> nodes);
-    /// Append a list of nodes
-    void append(WeakUniquePtr<NodeList>&& other);
-    /// Write elements into span
-    void copy_into(std::span<proto::Node> nodes);
-};
-
-/// Helper for nary expressions
-/// We defer the materialization of nary expressions to flatten conjunctions and disjunctions
-struct NAryExpression {
-    using Pool = TempNodePool<NAryExpression, 16>;
-
-    /// The expression pool
-    Pool& expression_pool;
-    /// The location
-    proto::Location location;
-    /// The expression operator
-    proto::ExpressionOperator op;
-    /// The expression operator node
-    proto::Node opNode;
-    /// The arguments
-    WeakUniquePtr<NodeList> args;
-
-    /// Constructor
-    NAryExpression(Pool& pool, proto::Location loc, proto::ExpressionOperator op, proto::Node node,
-                   WeakUniquePtr<NodeList> args);
-    /// Destructor
-    ~NAryExpression();
-};
-/// An expression is either a proto node with materialized children, or an n-ary expression that can be flattened
-using ExpressionVariant = std::variant<proto::Node, WeakUniquePtr<NAryExpression>>;
-
 class ParseContext {
     friend class ParsedProgram;
 
    protected:
     /// The scanner
     ScannedProgram& program;
+    /// The symbol iterator
+    ChunkBuffer<Parser::symbol_type>::ForwardIterator symbol_iterator;
 
     /// The nodes
     ChunkBuffer<proto::Node> nodes;
@@ -198,6 +59,12 @@ class ParseContext {
 
     /// Get the program
     auto& GetProgram() { return program; };
+    /// Get next symbol
+    inline Parser::symbol_type NextSymbol() {
+        auto sym = symbol_iterator.GetValue();
+        ++symbol_iterator;
+        return sym;
+    }
 
     /// Create a list
     WeakUniquePtr<NodeList> List(std::initializer_list<proto::Node> nodes = {});
@@ -226,12 +93,13 @@ class ParseContext {
     std::optional<ExpressionVariant> TryMerge(proto::Location loc, proto::Node opNode,
                                               std::span<ExpressionVariant> args);
 
-    /// Create a name from an identifier
-    proto::Node NameFromIdentifier();
-    /// Create a name from a string literal
-    proto::Node NameFromStringLiteral();
     /// Create a name from a keyword
-    proto::Node NameFromKeyword();
+    proto::Node NameFromKeyword(proto::Location loc, std::string_view text);
+    /// Create a name from a string literal
+    proto::Node NameFromStringLiteral(proto::Location loc);
+
+    /// Read a float type
+    proto::NumericType ReadFloatType(proto::Location bitsLoc);
 
     /// Add a node
     NodeID AddNode(proto::Node node);

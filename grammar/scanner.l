@@ -488,19 +488,19 @@ auto& ext_depth = ctx.ext_depth;
 namespace flatsql {
 namespace parser {
 
-Scanner::Scanner(rope::Rope& rope): input_data(rope), current_leaf_node(rope.GetLeafs()) {
+Scanner::Scanner(rope::Rope& rope): input_data(rope), current_leaf_node(rope.GetLeafs()), output(std::make_unique<ScannedProgram>(rope)) {
     if (current_leaf_node && current_leaf_node->GetSize() == 0) {
         current_leaf_node = nullptr;
     }
     flatsql_yylex_init_extra(this, &internal_scanner_state);
 
     // Reserve space for the string dictionary
-    name_dictionary_ids.reserve(128);
-    name_dictionary_locations.reserve(128);
+    output->name_dictionary_ids.reserve(128);
+    output->name_dictionary_locations.reserve(128);
 
     // Always encode the empty string with identifier 0
-    name_dictionary_ids.insert({"", 0});
-    name_dictionary_locations.push_back(sx::Location(0, 0));
+    output->name_dictionary_ids.insert({"", 0});
+    output->name_dictionary_locations.push_back(sx::Location(0, 0));
 }
 
 Scanner::~Scanner() {

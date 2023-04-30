@@ -7,15 +7,31 @@ namespace flatsql {
 namespace parser {
 
 /// Constructor
-ScannedProgram::ScannedProgram(Scanner&& scanner)
-    : input_data(scanner.input_data),
-      errors(std::move(scanner.errors)),
-      line_breaks(std::move(scanner.line_breaks)),
-      comments(std::move(scanner.comments)),
-      string_dictionary(std::move(scanner.name_dictionary_locations)),
-      symbols(std::move(scanner.symbols)),
-      symbol_iterator(symbols) {}
+ScannedProgram::ScannedProgram(rope::Rope& rope) : input_data(rope) {}
 
+/// Register a name
+size_t ScannedProgram::RegisterKeywordAsName(std::string_view s, sx::Location location) {
+    auto iter = name_dictionary_ids.find(s);
+    if (iter != name_dictionary_ids.end()) {
+        return iter->second;
+    }
+    auto id = name_dictionary_locations.size();
+    name_dictionary_ids.insert({s, id});
+    name_dictionary_locations.push_back(location);
+    return id;
+}
+/// Register a name
+size_t ScannedProgram::RegisterName(std::string_view s, sx::Location location) {
+    auto iter = name_dictionary_ids.find(s);
+    if (iter != name_dictionary_ids.end()) {
+        return iter->second;
+    }
+    auto copy = name_pool.AllocateCopy(s);
+    auto id = name_dictionary_locations.size();
+    name_dictionary_ids.insert({copy, id});
+    name_dictionary_locations.push_back(location);
+    return id;
+}
 /// Read a text at a location
 std::string_view ScannedProgram::ReadTextAtLocation(sx::Location loc, std::string& tmp) {
     return input_data.Read(loc.offset(), loc.length(), tmp);
@@ -34,7 +50,7 @@ std::shared_ptr<proto::ProgramT> ParsedProgram::Pack() {
     out->nodes = nodes.Flatten();
     out->statements.reserve(statements.size());
     for (auto& stmt : statements) {
-        out->statements.push_back(stmt.Finish());
+        out->statements.push_back(stmt.Pack());
     }
     out->errors.reserve(errors.size());
     for (auto& [loc, msg] : errors) {

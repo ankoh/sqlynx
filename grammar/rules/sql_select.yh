@@ -69,6 +69,7 @@
 %type <proto::Node> sql_alias_clause;
 %type <proto::Node> sql_all_op;
 %type <proto::Node> sql_all_or_distinct;
+%type <proto::Node> sql_attr_name;
 %type <proto::Node> sql_bit;
 %type <proto::Node> sql_bit_with_length;
 %type <proto::Node> sql_bit_without_length;
@@ -79,6 +80,7 @@
 %type <proto::Node> sql_character;
 %type <proto::Node> sql_col_id;
 %type <proto::Node> sql_col_id_or_string;
+%type <proto::Node> sql_col_label;
 %type <proto::Node> sql_col_label_or_string;
 %type <proto::Node> sql_columnref;
 %type <proto::Node> sql_common_table_expr;
@@ -106,6 +108,7 @@
 %type <proto::Node> sql_interval_second;
 %type <proto::Node> sql_into_clause;
 %type <proto::Node> sql_math_op;
+%type <proto::Node> sql_name;
 %type <proto::Node> sql_numeric;
 %type <proto::Node> sql_opt_alias_clause;
 %type <proto::Node> sql_opt_all_clause;
@@ -125,6 +128,7 @@
 %type <proto::Node> sql_opt_timezone;
 %type <proto::Node> sql_over_clause;
 %type <proto::Node> sql_overlay_placing;
+%type <proto::Node> sql_param_name;
 %type <proto::Node> sql_param_ref;
 %type <proto::Node> sql_preparable_stmt;
 %type <proto::Node> sql_qual_all_op;

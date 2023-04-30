@@ -10,18 +10,15 @@
 #include "flatsql/parser/parser_generated.h"
 #include "flatsql/parser/scanner.h"
 #include "flatsql/proto/proto_generated.h"
+#include "flatsql/utils/string.h"
 
 namespace flatsql {
 namespace parser {
 
 /// Constructor
-Statement::Statement() : root() {}
-
-/// Reset the statement
-void Statement::reset() { root = std::numeric_limits<uint32_t>::max(); }
-
+Statement::Statement() : root(std::numeric_limits<uint32_t>::max()) {}
 /// Finish a statement
-std::unique_ptr<proto::StatementT> Statement::Finish() {
+std::unique_ptr<proto::StatementT> Statement::Pack() {
     auto stmt = std::make_unique<proto::StatementT>();
     stmt->statement_type = type;
     stmt->root_node = root;
@@ -125,6 +122,7 @@ void NodeList::copy_into(std::span<proto::Node> nodes) {
 /// Constructor
 ParseContext::ParseContext(ScannedProgram& scan)
     : program(scan),
+      symbol_iterator(scan.symbols),
       nodes(),
       statements(),
       errors(),
@@ -247,6 +245,39 @@ proto::Node ParseContext::Expression(ExpressionVariant&& expr) {
     }
 }
 
+/// Read a name from a keyword
+proto::Node ParseContext::NameFromKeyword(proto::Location loc, std::string_view text) {
+    auto id = program.RegisterKeywordAsName(text, loc);
+    return proto::Node(loc, proto::NodeType::NAME, proto::AttributeKey::NONE, NO_PARENT, id, 0);
+}
+
+/// Read a name from a string literal
+proto::Node ParseContext::NameFromStringLiteral(proto::Location loc) {
+    std::string temp;
+    auto text = program.ReadTextAtLocation(loc, temp);
+    auto trimmed = trim_view(text, is_no_double_quote);
+    auto id = program.RegisterName(trimmed, loc);
+    return proto::Node(loc, proto::NodeType::NAME, proto::AttributeKey::NONE, NO_PARENT, id, 0);
+}
+
+/// Read a float type
+proto::NumericType ParseContext::ReadFloatType(proto::Location bitsLoc) {
+    std::string tmp_buffer;
+    auto text = program.ReadTextAtLocation(bitsLoc, tmp_buffer);
+    int64_t bits;
+    std::from_chars(text.data(), text.data() + text.size(), bits);
+    if (bits < 1) {
+        AddError(bitsLoc, "precision for float type must be least 1 bit");
+    } else if (bits < 24) {
+        return proto::NumericType::FLOAT4;
+    } else if (bits < 53) {
+        return proto::NumericType::FLOAT8;
+    } else {
+        AddError(bitsLoc, "precision for float type must be less than 54 bits");
+    }
+    return proto::NumericType::FLOAT4;
+}
+
 /// Add an object
 proto::Node ParseContext::Object(proto::Location loc, proto::NodeType type, WeakUniquePtr<NodeList>&& attr_list,
                                  bool null_if_empty, bool shrink_location) {
@@ -318,7 +349,7 @@ void ParseContext::AddStatement(proto::Node node) {
     }
     current_statement.type = stmt_type;
     statements.push_back(std::move(current_statement));
-    current_statement.reset();
+    current_statement = {};
 }
 
 /// Add an error

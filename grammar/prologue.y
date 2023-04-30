@@ -20,9 +20,12 @@
 #include <string>
 #include <cstdlib>
 #include <utility>
-#include "flatsql/parser/parse_context.h"
+#include "flatsql/parser/grammar/state.h"
+#include "flatsql/proto/proto_generated.h"
 
 namespace sx = flatsql::proto;
+
+namespace flatsql { namespace parser { class ParseContext;  }}
 
 #define YYLLOC_DEFAULT(Cur, Rhs, N) { \
     if (N) { \
@@ -45,9 +48,10 @@ namespace sx = flatsql::proto;
 #include "flatsql/parser/grammar/location.h"
 #include "flatsql/parser/grammar/nodes.h"
 #include "flatsql/parser/scanner.h"
+#include "flatsql/parser/parse_context.h"
 
 #undef yylex
-#define yylex ctx.GetProgram().IterNext
+#define yylex ctx.NextSymbol
 
 using namespace flatsql::parser;
 }
@@ -63,7 +67,7 @@ using namespace flatsql::parser;
  */
 
 %token<size_t> IDENT   "identifier literal"
-%token<size_t> SCONST  "string literal"
+%token         SCONST  "string literal"
 %token              FCONST BCONST XCONST Op
 %token              ICONST PARAM
 %token              TYPECAST DOT_DOT COLON_EQUALS EQUALS_GREATER

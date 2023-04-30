@@ -15,6 +15,7 @@
 %type <proto::Node> sql_col_constraint;
 %type <proto::Node> sql_col_constraint_attr;
 %type <proto::Node> sql_column_def;
+%type <proto::Node> sql_column_elem;
 %type <proto::Node> sql_create_as_stmt;
 %type <proto::Node> sql_create_generic_options;
 %type <proto::Node> sql_create_stmt;
