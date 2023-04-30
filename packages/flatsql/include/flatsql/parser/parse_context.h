@@ -226,12 +226,19 @@ class ParseContext {
     std::optional<ExpressionVariant> TryMerge(proto::Location loc, proto::Node opNode,
                                               std::span<ExpressionVariant> args);
 
+    /// Create a name from an identifier
+    proto::Node NameFromIdentifier();
+    /// Create a name from a string literal
+    proto::Node NameFromStringLiteral();
+    /// Create a name from a keyword
+    proto::Node NameFromKeyword();
+
     /// Add a node
     NodeID AddNode(proto::Node node);
     /// Add an error
     void AddError(proto::Location loc, const std::string& message);
     /// Add a statement
-    void FinishStatement(proto::Node node);
+    void AddStatement(proto::Node node);
 
     /// Parse a module
     static std::unique_ptr<ParsedProgram> Parse(ScannedProgram& in, bool trace_scanning = false,
