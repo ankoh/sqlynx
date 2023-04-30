@@ -495,12 +495,12 @@ Scanner::Scanner(rope::Rope& rope): input_data(rope), current_leaf_node(rope.Get
     flatsql_yylex_init_extra(this, &internal_scanner_state);
 
     // Reserve space for the string dictionary
-    string_dictionary_ids.reserve(128);
-    string_dictionary_locations.reserve(128);
+    name_dictionary_ids.reserve(128);
+    name_dictionary_locations.reserve(128);
 
     // Always encode the empty string with identifier 0
-    string_dictionary_ids.insert({"", 0});
-    string_dictionary_locations.push_back(sx::Location(0, 0));
+    name_dictionary_ids.insert({"", 0});
+    name_dictionary_locations.push_back(sx::Location(0, 0));
 }
 
 Scanner::~Scanner() {
