@@ -61,20 +61,20 @@ size_t Scanner::AddStringToDictionary(std::string_view s, sx::Location location)
 /// Read an unquoted identifier
 Parser::symbol_type Scanner::ReadIdentifier(std::string_view text, proto::Location loc) {
     // Convert to lower-case
-    ext_text = text;
-    for (size_t i = 0; i < ext_text.size(); ++i) ext_text[i] = ::tolower(ext_text[i]);
+    temp_buffer = text;
+    for (size_t i = 0; i < temp_buffer.size(); ++i) temp_buffer[i] = ::tolower(temp_buffer[i]);
     // Check if it's a keyword
-    if (auto k = Keyword::Find(ext_text); !!k) {
+    if (auto k = Keyword::Find(temp_buffer); !!k) {
         return Parser::symbol_type(k->token, loc);
     }
     // Add string to dictionary
-    size_t id = AddStringToDictionary(ext_text, loc);
+    size_t id = AddStringToDictionary(temp_buffer, loc);
     return Parser::make_IDENT(id, loc);
 }
 /// Read a double quoted identifier
 Parser::symbol_type Scanner::ReadDoubleQuotedIdentifier(std::string& text, proto::Location loc) {
     // Trim spaces & quotes
-    ext_text = text;
+    temp_buffer = text;
     auto trimmed = trim_view_right(text, is_no_space);
     trimmed = trim_view(trimmed, is_no_double_quote);
     // Add string to dictionary

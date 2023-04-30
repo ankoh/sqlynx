@@ -299,7 +299,7 @@ Scanner& ctx = *flatsql_yyget_extra(yyscanner);
 sx::Location loc;
 std::string_view yytext_view;
 auto& ext_begin = ctx.ext_begin;
-auto& ext_text = ctx.ext_text;
+auto& temp_buffer = ctx.temp_buffer;
 auto& ext_depth = ctx.ext_depth;
 
 %}
@@ -307,49 +307,49 @@ auto& ext_depth = ctx.ext_depth;
 {space}+        {}
 {comment}       { ctx.AddComment(loc); } 
 
-{xcstart}       { ext_text = yytext_view; ext_begin = loc; ++ext_depth; BEGIN(xc); }
-<xc>{xcstart}   { ext_text += yytext_view; ext_begin = loc; ++ext_depth; }
+{xcstart}       { temp_buffer = yytext_view; ext_begin = loc; ++ext_depth; BEGIN(xc); }
+<xc>{xcstart}   { temp_buffer += yytext_view; ext_begin = loc; ++ext_depth; }
 <xc>{xcstop}    {
-                    ext_text += yytext_view; 
+                    temp_buffer += yytext_view; 
                     if (--ext_depth == 0) { ctx.AddComment(Loc({ext_begin, loc})); BEGIN(INITIAL); }
                 }
-<xc>{xcinside}  { ext_text += yytext_view; }
-<xc>{op_chars}  { ext_text += yytext_view; }
-<xc>\*+         { ext_text += yytext_view; }
+<xc>{xcinside}  { temp_buffer += yytext_view; }
+<xc>{op_chars}  { temp_buffer += yytext_view; }
+<xc>\*+         { temp_buffer += yytext_view; }
 <xc><<EOF>>     { ctx.AddError(Loc({ext_begin, loc}), "unterminated comment"); BEGIN(INITIAL); }
 
 
-{xbstart}       { ext_text = yytext_view; ext_begin = loc; BEGIN(xb); }
+{xbstart}       { temp_buffer = yytext_view; ext_begin = loc; BEGIN(xb); }
 <xb>{quotestop} |
-<xb>{quotefail} { ext_text += yytext_view; BEGIN(INITIAL); return ctx.ReadBitStringLiteral(ext_text, Loc({ext_begin, loc})); }
+<xb>{quotefail} { temp_buffer += yytext_view; BEGIN(INITIAL); return ctx.ReadBitStringLiteral(temp_buffer, Loc({ext_begin, loc})); }
 <xh>{xhinside}  |
-<xb>{xbinside}  { ext_text += yytext_view; }
+<xb>{xbinside}  { temp_buffer += yytext_view; }
 <xh>{quotecontinue} |
-<xb>{quotecontinue} { ext_text += yytext_view; }
+<xb>{quotecontinue} { temp_buffer += yytext_view; }
 <xb><<EOF>>     { ctx.AddError(Loc({ext_begin, loc}), "unterminated bit string literal"); BEGIN(INITIAL); }
-{xhstart}       { ext_text += yytext_view; ext_begin = loc; BEGIN(xh); }
+{xhstart}       { temp_buffer += yytext_view; ext_begin = loc; BEGIN(xh); }
 <xh>{quotestop} |
-<xh>{quotefail} { ext_text += yytext_view; BEGIN(INITIAL); return ctx.ReadHexStringLiteral(ext_text, Loc({ext_begin, loc})); }
+<xh>{quotefail} { temp_buffer += yytext_view; BEGIN(INITIAL); return ctx.ReadHexStringLiteral(temp_buffer, Loc({ext_begin, loc})); }
 <xh><<EOF>>     { ctx.AddError(Loc({ext_begin, loc}), "unterminated hexadecimal bit string literal"); BEGIN(INITIAL); }
 
 
-{xqstart}       { ext_text = yytext_view; ext_begin = loc; BEGIN(xq); }
+{xqstart}       { temp_buffer = yytext_view; ext_begin = loc; BEGIN(xq); }
 <xq>{quotestop} |
-<xq>{quotefail} { ext_text += yytext_view; BEGIN(INITIAL); return ctx.ReadStringLiteral(ext_text, Loc({ext_begin, loc})); }
-<xq>{xqdouble}  { ext_text += yytext_view; }
-<xq>{xqinside}  { ext_text += yytext_view; }
+<xq>{quotefail} { temp_buffer += yytext_view; BEGIN(INITIAL); return ctx.ReadStringLiteral(temp_buffer, Loc({ext_begin, loc})); }
+<xq>{xqdouble}  { temp_buffer += yytext_view; }
+<xq>{xqinside}  { temp_buffer += yytext_view; }
 <xq><<EOF>>     { ctx.AddError(Loc({ext_begin, loc}), "unterminated quoted string"); BEGIN(INITIAL); }
 
 
-{xdstart}       { ext_text = yytext_view; ext_begin = loc; BEGIN(xd); }
-<xd>{xddouble}  { ext_text += yytext_view; }
-<xd>{xdinside}  { ext_text += yytext_view; }
+{xdstart}       { temp_buffer = yytext_view; ext_begin = loc; BEGIN(xd); }
+<xd>{xddouble}  { temp_buffer += yytext_view; }
+<xd>{xdinside}  { temp_buffer += yytext_view; }
 <xd>{xdstop}    { 
-                    ext_text += yytext_view;
+                    temp_buffer += yytext_view;
                     auto xdloc = Loc({ ext_begin, loc });
                     if (xdloc.length() == 2) { ctx.AddError(xdloc, "zero-length delimited identifier"); }
                     BEGIN(INITIAL); 
-                    return ctx.ReadDoubleQuotedIdentifier(ext_text, Loc({ext_begin, loc}));
+                    return ctx.ReadDoubleQuotedIdentifier(temp_buffer, Loc({ext_begin, loc}));
                 }
 <xd><<EOF>>     { ctx.AddError(Loc({ ext_begin, loc }), "unterminated delimited identifier"); BEGIN(INITIAL); }
 
