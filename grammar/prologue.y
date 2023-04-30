@@ -63,7 +63,8 @@ using namespace flatsql::parser;
  */
 
 %token<size_t> IDENT   "identifier literal"
-%token              FCONST SCONST BCONST XCONST Op
+%token<size_t> SCONST  "string literal"
+%token              FCONST BCONST XCONST Op
 %token              ICONST PARAM
 %token              TYPECAST DOT_DOT COLON_EQUALS EQUALS_GREATER
 %token              LESS_EQUALS GREATER_EQUALS NOT_EQUALS

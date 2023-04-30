@@ -84,8 +84,10 @@ Parser::symbol_type Scanner::ReadDoubleQuotedIdentifier(std::string& text, proto
 
 /// Read a string literal
 Parser::symbol_type Scanner::ReadStringLiteral(std::string& text, proto::Location loc) {
-    auto trimmed = trim_view_right(text, is_no_space);
-    return Parser::make_SCONST(sx::Location(loc.offset(), trimmed.size()));
+    auto trimmed_string = trim_view_right(text, is_no_space);
+    auto trimmed_ident = trim_view(trimmed_string, is_no_double_quote);
+    size_t id = AddStringToDictionary(trimmed_ident, loc);
+    return Parser::make_SCONST(id, sx::Location(loc.offset(), trimmed_string.size()));
 }
 /// Read a hex string literal
 Parser::symbol_type Scanner::ReadHexStringLiteral(std::string& text, proto::Location loc) {
