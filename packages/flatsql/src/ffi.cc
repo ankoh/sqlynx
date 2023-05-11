@@ -15,7 +15,7 @@ namespace proto = flatsql::proto;
 #ifdef WASM
 __attribute__((__import_module__("env"), __import_name__("log"))) extern void log(const char* text, size_t textLength);
 #else
-extern void log(const char* text, size_t textLength) { std::cout << std::string_view{text, textLength}; }
+extern void log(const char* text, size_t textLength) { std::cout << std::string_view{text, textLength} << std::endl; }
 #endif
 
 /// Log a std::string
