@@ -212,7 +212,7 @@ add_custom_command(
   COMMAND
     ${BISON_EXECUTABLE} --defines=${PARSER_HEADER_OUT} --output=${PARSER_OUT}
     --report=state --report-file=${CMAKE_BINARY_DIR}/bison.log ${GRAMMAR_OUT}
-  COMMAND ${FLEX_EXECUTABLE} --outfile=${SCANNER_OUT}
+  COMMAND ${FLEX_EXECUTABLE} --outfile=${SCANNER_OUT} -F -8
           ${GRAMMAR_SOURCE_DIR}/scanner.l
   DEPENDS ${GRAMMAR_OUT} ${GRAMMAR_SOURCE_DIR}/scanner.l)
 
