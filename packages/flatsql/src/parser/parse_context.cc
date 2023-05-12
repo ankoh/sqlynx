@@ -3,8 +3,6 @@
 #include <iostream>
 #include <regex>
 #include <sstream>
-#include <unordered_map>
-#include <unordered_set>
 
 #include "flatsql/parser/grammar/nodes.h"
 #include "flatsql/parser/parser_generated.h"
