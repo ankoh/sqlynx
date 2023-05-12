@@ -1,2 +1,3 @@
+include "flatsql/name_resolution.fbs";
 include "flatsql/program.fbs";
 include "flatsql/sql_enums.fbs";
