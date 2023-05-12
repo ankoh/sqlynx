@@ -1,3 +1,4 @@
+include "flatsql/name_resolution.fbs";
 include "flatsql/sql_enums.fbs";
 
 namespace flatsql.proto;
@@ -398,4 +399,5 @@ table Program {
     line_breaks: [Location];
     comments: [Location];
     highlighting: Highlighting;
+    name_resolution: NameResolutionInfo;
 }
