@@ -87,9 +87,9 @@ wasm_fast:
 jslib:
 	yarn workspace @ankoh/flatsql build
 
-.PHONY: demo_start
-demo_start:
-	yarn workspace @ankoh/flatsql-demo pwa:start
+.PHONY: canvas_start
+canvas_start:
+	yarn workspace @ankoh/flatsql-canvas pwa:start
 
 .PHONY: astdump
 astdumps:
