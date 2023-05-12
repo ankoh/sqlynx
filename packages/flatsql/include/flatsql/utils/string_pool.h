@@ -81,6 +81,7 @@ template <size_t InitialSize = 1024> struct StringPool {
     /// Allocate a copy of a string
     std::string_view AllocateCopy(std::string_view src) {
         std::span<char> buffer = Allocate(src.size());
+        std::memcpy(buffer.data(), src.data(), src.length());
         return std::string_view{buffer.data(), buffer.size()};
     }
 };
