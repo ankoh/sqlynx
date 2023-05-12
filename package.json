@@ -1,7 +1,7 @@
 {
     "private": true,
     "workspaces": [
-        "packages/flatsql-demo",
+        "packages/flatsql-canvas",
         "packages/flatsql-wasm"
     ],
     "packages": {
