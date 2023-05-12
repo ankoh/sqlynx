@@ -1,7 +1,5 @@
 #pragma once
 
-#include <unordered_set>
-
 #include "flatsql/analyzer/pass_manager.h"
 #include "flatsql/program.h"
 #include "flatsql/proto/proto_generated.h"

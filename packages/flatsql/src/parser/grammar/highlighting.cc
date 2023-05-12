@@ -1,5 +1,3 @@
-#include <unordered_map>
-
 #include "flatsql/parser/grammar/keywords.h"
 #include "flatsql/program.h"
 #include "flatsql/proto/proto_generated.h"

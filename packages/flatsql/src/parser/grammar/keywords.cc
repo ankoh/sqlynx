@@ -1,7 +1,5 @@
 #include "flatsql/parser/grammar/keywords.h"
 
-#include <unordered_map>
-
 #include "frozen/string.h"
 #include "frozen/unordered_map.h"
 
