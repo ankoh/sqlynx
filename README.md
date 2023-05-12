@@ -1,10 +1,10 @@
-<img src="/misc/logo.svg" height="32">
+<img src="/misc/logo.svg" height="28">
 
 [![Main](https://github.com/ankoh/flatsql/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/ankoh/flatsql/actions/workflows/main.yml)
 [![Coverage](https://coveralls.io/repos/github/ankoh/flatsql/badge.svg?branch=main)](https://coveralls.io/github/ankoh/flatsql?branch=main)
 [![License](misc/mpl2.svg?raw=true)](https://opensource.org/licenses/MPL-2.0)
 
-**FlatSQL** is a flat representation of a PostgreSQL AST.
+FlatSQL is a flat representation of a PostgreSQL AST.
 The library provides a Bison parser that materializes AST Nodes into a single compact Flatbuffer vector.
 It can be compiled to WebAssembly and has been originally built for lightweight SQL instrumentation, running on every user keystroke in DashQL.
 
