@@ -1,0 +1,73 @@
+namespace flatsql.proto;
+
+struct ObjectName {
+    // The name of the database that owns the object 
+    database_name: uint32;
+    // The name of the schema that holds the object
+    schema_name: uint32;
+    // The object name, always a table for now
+    table_name: uint32;
+}
+
+struct TableColumnDeclaration {
+    // The id of the statement that contains the column declaration
+    statement_id: uint32;
+    // The id of the AST node that created this column declaration
+    ast_node_id: uint32;
+    // The id of the table for which the column is defined
+    table_id: uint32;
+    // The id of the column
+    column_id: uint32;
+    // The id of the column name in the AST identifier dictionary
+    column_name: uint32;
+}
+
+struct TableDeclaration {
+    // The id of the statement that created the table declaration, may not be set if external
+    statement_id: uint32;
+    // The id of the AST node that created this table declaration
+    ast_node_id: uint32;
+    // The id of the table
+    table_id: uint32;
+    // The name of the table that is declared by the node
+    table_name: ObjectName;
+    // Is an external table defined outside of the script?
+    is_external: uint8; // boolean breaks
+}
+
+struct TableReference {
+    // The id of the statement that contains the table reference
+    statement_id: uint32;
+    // The id of the AST node that created this table reference
+    ast_node_id: uint32;
+    // The name of the table that is referenced
+    table_name: ObjectName;
+    // The id of the table, if it could be resolved
+    target_table_id: uint32;
+}
+
+struct ColumnReference {
+    // The id of the statement that contains the column reference
+    statement_id: uint32;
+    // The id of the AST node that created this column reference
+    ast_node_id: uint32;
+    // The name of the table that is referenced
+    table_name: ObjectName;
+    // The id of the column name in the AST identifier dictionary
+    column_name: uint32;
+    // The id of the column, if it could be resolved
+    target_column_id: uint32;
+}
+
+table NameResolutionInfo {
+    // The statement names
+    statement_names: [ObjectName];
+    // The table declarations
+    table_declarations: [TableDeclaration];
+    // The table column declarations
+    table_column_declarations: [TableColumnDeclaration];
+    // The table references in the statement
+    table_references: [TableReference];
+    // The column references in the statement
+    column_references: [ColumnReference];
+}
