@@ -1,4 +1,4 @@
-<img src="/misc/logo.svg" height="28">
+<img src="/misc/logo.svg" height="24">
 
 [![Main](https://github.com/ankoh/flatsql/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/ankoh/flatsql/actions/workflows/main.yml)
 [![Coverage](https://coveralls.io/repos/github/ankoh/flatsql/badge.svg?branch=main)](https://coveralls.io/github/ankoh/flatsql?branch=main)
