@@ -16,7 +16,7 @@ namespace flatsql {
 /// We can therefore allocate this index once and reuse it during the tree traversal.
 struct AttributeIndex {
    public:
-    /// A scope guard that clears any set state pointers on destruction
+    /// A scope guard that clears any set pointers on destruction
     struct AccessGuard {
         friend struct AttributeIndex;
 
@@ -39,11 +39,13 @@ struct AttributeIndex {
         /// Move assignment
         AccessGuard& operator=(AccessGuard&& other);
         /// Access the index
-        const proto::Node* operator[](proto::AttributeKey key) { return attribute_index[static_cast<size_t>(key)]; }
+        const proto::Node* operator[](proto::AttributeKey key) const {
+            return attribute_index[static_cast<size_t>(key)];
+        }
     };
 
    protected:
-    /// The state pointers
+    /// The children pointers indexed by the attribute key
     std::vector<const proto::Node*> attribute_index;
 
    public:
