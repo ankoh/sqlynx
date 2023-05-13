@@ -175,32 +175,19 @@ proto::NumericType ParseContext::ReadFloatType(proto::Location bitsLoc) {
 /// Add an object
 proto::Node ParseContext::Object(proto::Location loc, proto::NodeType type, WeakUniquePtr<NodeList>&& attr_list,
                                  bool null_if_empty, bool shrink_location) {
-    // Sort all the attributes
-    std::array<proto::Node, 8> attrs_static;
-    std::vector<proto::Node> attrs_heap;
-    std::span<proto::Node> attrs;
-    if (attr_list->size() <= 8) {
-        attrs = {attrs_static.data(), attr_list->size()};
-    } else {
-        attrs_heap.resize(attr_list->size());
-        attrs = attrs_heap;
-    }
-    attr_list->copy_into(attrs);
-    attr_list.Destroy();
-    std::sort(attrs.begin(), attrs.end(), [&](auto& l, auto& r) {
-        return static_cast<uint16_t>(l.attribute_key()) < static_cast<uint16_t>(r.attribute_key());
-    });
-
     // Add the nodes
     auto begin = nodes.GetSize();
-    for (auto& v : attrs) {
-        if (v.node_type() == proto::NodeType::NONE) continue;
-        AddNode(v);
+    for (auto iter = attr_list->first_element; iter; iter = iter->next) {
+        if (iter->node.node_type() == proto::NodeType::NONE) continue;
+        AddNode(iter->node);
     }
+    attr_list.Destroy();
+    // Were there any attributes?
     auto n = nodes.GetSize() - begin;
     if ((n == 0) && null_if_empty) {
         return Null();
     }
+    // Shrink location?
     if (n > 0 && shrink_location) {
         auto fstBegin = nodes[begin].location().offset();
         auto& lst = nodes.GetLast();
