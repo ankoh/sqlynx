@@ -222,6 +222,7 @@ add_custom_command(
 set(LIB_SRC
     ${SCANNER_OUT}
     ${PARSER_OUT}
+    ${CMAKE_SOURCE_DIR}/src/analyzer/attribute_index.cc
     ${CMAKE_SOURCE_DIR}/src/analyzer/name_resolution_pass.cc
     ${CMAKE_SOURCE_DIR}/src/analyzer/pass_manager.cc
     ${CMAKE_SOURCE_DIR}/src/ffi.cc
