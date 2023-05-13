@@ -9,7 +9,9 @@ AttributeIndex::AttributeIndex() { attribute_index.resize(static_cast<size_t>(pr
 AttributeIndex::AccessGuard AttributeIndex::Load(std::span<const proto::Node> nodes, size_t children_begin,
                                                  size_t children_count) {
     for (auto& node : nodes) {
-        attribute_index[static_cast<size_t>(node.attribute_key())] = &node;
+        auto& slot = attribute_index[static_cast<size_t>(node.attribute_key())];
+        assert(slot == nullptr);
+        slot = &node;
     }
     return {attribute_index, nodes};
 }
