@@ -107,6 +107,9 @@
                                 <node type="OBJECT_EXT_VARARG_FIELD" loc="75..108" text="'func' = s..someparam)">
                                     <node key="EXT_VARARG_FIELD_KEY" type="LITERAL_STRING" loc="75..81" text="'func'" />
                                     <node key="EXT_VARARG_FIELD_VALUE" type="OBJECT_SQL_FUNCTION_EXPRESSION" loc="84..108" text="somefuncti..someparam)">
+                                        <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="84..96" text="somefunction">
+                                            <node type="NAME" loc="84..96" text="somefunction" />
+                                        </node>
                                         <node key="SQL_FUNCTION_ARGUMENTS" type="ARRAY" loc="97..107" text="$someparam">
                                             <node type="OBJECT_SQL_FUNCTION_ARG" loc="97..107" text="$someparam">
                                                 <node key="SQL_FUNCTION_ARG_VALUE" type="OBJECT_SQL_PARAMETER_REF" loc="97..107" text="$someparam">
@@ -115,9 +118,6 @@
                                                     </node>
                                                 </node>
                                             </node>
-                                        </node>
-                                        <node key="SQL_FUNCTION_NAME" type="ARRAY" loc="84..96" text="somefunction">
-                                            <node type="NAME" loc="84..96" text="somefunction" />
                                         </node>
                                     </node>
                                 </node>
