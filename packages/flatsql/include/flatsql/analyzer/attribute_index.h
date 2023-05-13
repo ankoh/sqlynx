@@ -50,7 +50,7 @@ struct AttributeIndex {
     /// Constructor
     AttributeIndex();
     /// Load into an attribute map
-    AccessGuard Load(std::span<const proto::Node> nodes, size_t children_begin, size_t children_count);
+    AccessGuard Load(std::span<const proto::Node> children);
 };
 
 }  // namespace flatsql
