@@ -43,7 +43,7 @@ class NameResolutionPass : public PassManager::LTRDepthFirstPostOrderPass {
     /// Prepare the analysis pass
     void Prepare() override;
     /// Visit a chunk of nodes
-    void Visit(size_t offset, std::span<proto::Node> nodes) override;
+    void Visit(size_t morsel_offset, size_t morsel_size) override;
     /// Finish the analysis pass
     void Finish() override;
 };

@@ -49,14 +49,14 @@ std::string_view ScannedProgram::ReadTextAtLocation(sx::Location loc, std::strin
 /// Constructor
 ParsedProgram::ParsedProgram(parser::ParseContext&& ctx)
     : scan(ctx.program),
-      nodes(std::move(ctx.nodes)),
+      nodes(ctx.nodes.Flatten()),
       statements(std::move(ctx.statements)),
       errors(std::move(ctx.errors)) {}
 
 /// Pack the FlatBuffer
 std::shared_ptr<proto::ProgramT> ParsedProgram::Pack() {
     auto out = std::make_unique<proto::ProgramT>();
-    out->nodes = nodes.Flatten();
+    out->nodes = std::move(nodes);
     out->statements.reserve(statements.size());
     for (auto& stmt : statements) {
         out->statements.push_back(stmt.Pack());
