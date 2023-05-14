@@ -15,7 +15,7 @@ void PassManager::Execute(std::span<std::reference_wrapper<LTRDepthFirstPostOrde
     while (iter != parsedProgram.nodes.size()) {
         size_t morsel_size = std::min<size_t>(parsedProgram.nodes.size() - iter, 1024);
         for (auto pass : passes) {
-            pass.get().Visit(iter, morsel_size);
+            pass.get().Visit(std::span<proto::Node>(parsedProgram.nodes).subspan(iter, morsel_size));
         }
         iter += morsel_size;
     }

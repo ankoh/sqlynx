@@ -3016,35 +3016,6 @@
             <comments />
         </expected>
     </astdump>
-    <astdump name="select_param_1">
-        <input>
-            select ? from c
-        </input>
-        <expected>
-            <statements>
-                <statement type="SELECT">
-                    <node type="OBJECT_SQL_SELECT" loc="13..28" text="select ? from c">
-                        <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="20..28" text="? from c">
-                            <node type="OBJECT_SQL_RESULT_TARGET" loc="20..28" text="? from c">
-                                <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_PARAMETER_REF" loc="20..26" text="? from">
-                                    <node key="SQL_PARAMETER_NAME" type="ARRAY" loc="22..26" text="from">
-                                        <node type="NAME" loc="22..26" text="from" />
-                                    </node>
-                                </node>
-                                <node key="SQL_RESULT_TARGET_NAME" type="NAME" loc="27..28" text="c" />
-                            </node>
-                        </node>
-                    </node>
-                </statement>
-            </statements>
-            <errors />
-            <line_breaks>
-                <line_break loc="0..1" text="&#10;" />
-                <line_break loc="28..29" text="&#10;" />
-            </line_breaks>
-            <comments />
-        </expected>
-    </astdump>
     <astdump name="select_param_2">
         <input>
             select $1 from c

@@ -2,6 +2,7 @@
 
 #include <unordered_set>
 
+#include "flatsql/analyzer/attribute_index.h"
 #include "flatsql/analyzer/pass_manager.h"
 #include "flatsql/analyzer/schema_info.h"
 #include "flatsql/program.h"
@@ -30,7 +31,12 @@ class NameResolutionPass : public PassManager::LTRDepthFirstPostOrderPass {
         /// The name resolution state that is currently out of scope
         NameResolutionState names_out_of_scope;
     };
-    /// The node state map.
+    /// The parsed program
+    ParsedProgram& parsed_program;
+    /// The attribute index.
+    AttributeIndex& attribute_index;
+    /// The program nodes
+    std::span<const proto::Node> nodes;
     /// We only need to hold the state of the immediate children of the next nodes.
     std::unordered_map<NodeID, NodeState> node_state;
     /// The external tables
@@ -38,12 +44,12 @@ class NameResolutionPass : public PassManager::LTRDepthFirstPostOrderPass {
 
    public:
     /// Constructor
-    NameResolutionPass(ParsedProgram& parser);
+    NameResolutionPass(ParsedProgram& parser, AttributeIndex& attribute_index);
 
     /// Prepare the analysis pass
     void Prepare() override;
     /// Visit a chunk of nodes
-    void Visit(size_t morsel_offset, size_t morsel_size) override;
+    void Visit(std::span<proto::Node> morsel) override;
     /// Finish the analysis pass
     void Finish() override;
 };
