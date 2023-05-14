@@ -426,11 +426,6 @@
             end;
         </input>
     </astdump>
-    <astdump name="select_param_1">
-        <input>
-            select ? from c
-        </input>
-    </astdump>
     <astdump name="select_param_2">
         <input>
             select $1 from c
