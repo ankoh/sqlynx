@@ -18,7 +18,7 @@ class PassManager {
         /// Prepare the analysis pass
         virtual void Prepare();
         /// Visit a chunk of nodes
-        virtual void Visit(size_t offset, std::span<proto::Node> nodes);
+        virtual void Visit(size_t morsel_offset, size_t morsel_size);
         /// Finish the analysis pass
         virtual void Finish();
     };
@@ -28,7 +28,7 @@ class PassManager {
         /// Prepare the analysis pass
         virtual void Prepare();
         /// Visit a chunk of nodes
-        virtual void Visit(size_t offset, std::span<proto::Node> reverse_nodes);
+        virtual void Visit(size_t morsel_offset, size_t morsel_size);
         /// Finish the analysis pass
         virtual void Finish();
     };

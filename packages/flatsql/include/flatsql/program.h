@@ -80,7 +80,7 @@ class ParsedProgram {
     /// The scanned program
     ScannedProgram& scan;
     /// The nodes
-    ChunkBuffer<proto::Node> nodes;
+    std::vector<proto::Node> nodes;
     /// The statements
     std::vector<Statement> statements;
     /// The errors

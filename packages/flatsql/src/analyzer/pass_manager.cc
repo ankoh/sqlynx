@@ -11,15 +11,13 @@ void PassManager::Execute(std::span<std::reference_wrapper<LTRDepthFirstPostOrde
         pass.get().Prepare();
     }
     // Scan all nodes
-    auto iter = parsedProgram.nodes.Iterate();
-    size_t offset = 0;
-    while (!iter.IsAtEnd()) {
-        auto nodes = iter.GetValues(1024);
+    auto iter = 0;
+    while (iter != parsedProgram.nodes.size()) {
+        size_t morsel_size = std::min<size_t>(parsedProgram.nodes.size() - iter, 1024);
         for (auto pass : passes) {
-            pass.get().Visit(offset, nodes);
+            pass.get().Visit(iter, morsel_size);
         }
-        iter += nodes.size();
-        offset += nodes.size();
+        iter += morsel_size;
     }
     // Finish all passes
     for (auto pass : passes) {
