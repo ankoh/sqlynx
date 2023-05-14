@@ -14,6 +14,11 @@ namespace flatsql {
 /// The attribute index has a high up-front cost as we have to allocate and clear a vector of ~200 node pointers.
 /// All of our analysis passes are node-local and won't require us to index multiple nodes simultaneously.
 /// We can therefore allocate this index once and reuse it during the tree traversal.
+///
+/// Without this index, we'd have to implement one of these options instead:
+///     A) Load children into a hash map. (overhead)
+///     B) Store attributes sorted and merge-join any expected key sequences. (complex logic per node type)
+///     C) Emit dynamically-sized structs in the parser. (no longer simple & flat ast)
 struct AttributeIndex {
    public:
     /// A scope guard that clears any set pointers on destruction
