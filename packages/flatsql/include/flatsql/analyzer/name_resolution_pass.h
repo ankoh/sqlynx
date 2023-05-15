@@ -40,7 +40,7 @@ class NameResolutionPass : public PassManager::LTRDepthFirstPostOrderPass {
     /// We only need to hold the state of the immediate children of the next nodes.
     std::unordered_map<NodeID, NodeState> node_state;
     /// The external tables
-    std::unordered_map<schema::ObjectName, schema::ExternalTableInfo> external_tables;
+    std::unordered_map<schema::QualifiedTableName, schema::ExternalTableInfo> external_tables;
 
    public:
     /// Constructor

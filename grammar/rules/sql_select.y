@@ -1822,12 +1822,12 @@ sql_math_op:
 
 sql_qual_op:
     Op                                  { $$ = Operator(@1); }
-  | OPERATOR '(' sql_any_operator ')'   { $$ = ctx.Array(@$, std::move($3)); }
+  | OPERATOR '(' sql_any_operator ')'   { $$ = ctx.Array(@$, std::move($3)); } // XXX Make object
     ;
 
 sql_qual_all_op:
     sql_all_op                          { $$ = std::move($1); }
-  | OPERATOR '(' sql_any_operator ')'   { $$ = ctx.Array(@$, std::move($3)); }
+  | OPERATOR '(' sql_any_operator ')'   { $$ = ctx.Array(@$, std::move($3)); } // XXX Make object
     ;
 
 // cannot put SIMILAR TO into sql_subquery_op, because SIMILAR TO is a hack.
