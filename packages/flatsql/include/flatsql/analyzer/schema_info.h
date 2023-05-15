@@ -6,13 +6,18 @@
 
 namespace flatsql::schema {
 
-struct ObjectName {
+struct QualifiedTableName {
     /// The database
     std::optional<NameID> database;
     /// The schema
     std::optional<NameID> schema;
     /// The table
     std::optional<NameID> table;
+};
+
+struct QualifiedColumnName : public QualifiedTableName {
+    /// The column
+    std::optional<NameID> column;
 };
 
 struct ExternalColumnInfo {
@@ -23,7 +28,7 @@ struct ExternalColumnInfo {
 
 struct ExternalTableInfo {
     /// The name of the table
-    ObjectName name;
+    QualifiedTableName name;
     /// The columns
     std::vector<ExternalColumnInfo> columns;
 };
@@ -47,12 +52,12 @@ struct TableDefinition {
 struct TableReference {
     /// The node id
     NodeID node_id;
-    /// The table alias (if any)
-    std::optional<NameID> table_alias;
     /// The table name
-    ObjectName table_name;
+    QualifiedTableName table_name;
+    /// The table alias
+    std::optional<NodeID> table_alias;
 
-    using ExternalTableName = ObjectName;
+    using ExternalTableName = QualifiedTableName;
     using LocalTableDefintion = NodeID;
     /// The target table (if resolved)
     std::optional<std::variant<ExternalTableName, LocalTableDefintion>> target_table;
@@ -62,9 +67,9 @@ struct ColumnReference {
     /// The node id
     NodeID node_id;
     /// The column name
-    NameID column_name;
+    QualifiedColumnName column_name;
 
-    using ExternalTableName = ObjectName;
+    using ExternalTableName = QualifiedTableName;
     using LocalColumnDefintion = NodeID;
     /// The target table (if resolved)
     std::optional<std::variant<ExternalTableName, LocalColumnDefintion>> target_table;
@@ -74,8 +79,8 @@ struct ColumnReference {
 
 namespace std {
 
-template <> struct std::hash<flatsql::schema::ObjectName> {
-    std::size_t operator()(flatsql::schema::ObjectName const& s) const noexcept { return 42; }
+template <> struct std::hash<flatsql::schema::QualifiedTableName> {
+    std::size_t operator()(flatsql::schema::QualifiedTableName const& s) const noexcept { return 42; }
 };
 
 }  // namespace std
