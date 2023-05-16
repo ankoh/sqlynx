@@ -6,7 +6,7 @@
 
 namespace flatsql {
 
-/// The attribute index allows us to efficiently access child nodes using the attribute key.
+/// The attribute index provides efficient access to child nodes using the attribute key.
 /// It maintains a map of N pointers where N is the total amount of attribute keys in the protocol.
 /// Indexing a node means iterating over the children and storing the child nodes into the slot indexed by the
 /// key. We use a scope guard to clean up any set pointers when the access is done.

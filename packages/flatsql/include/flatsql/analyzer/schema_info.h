@@ -7,6 +7,8 @@
 namespace flatsql::schema {
 
 struct QualifiedTableName {
+    /// The node id
+    std::optional<NodeID> node_id;
     /// The database
     std::optional<NameID> database;
     /// The schema
@@ -56,11 +58,9 @@ struct TableReference {
     QualifiedTableName table_name;
     /// The table alias
     std::optional<NodeID> table_alias;
-
-    using ExternalTableName = QualifiedTableName;
-    using LocalTableDefintion = NodeID;
-    /// The target table (if resolved)
-    std::optional<std::variant<ExternalTableName, LocalTableDefintion>> target_table;
+    /// Constructor
+    TableReference(NodeID node_id, QualifiedTableName name, std::optional<NodeID> table_alias = std::nullopt)
+        : node_id(node_id), table_name(name), table_alias(table_alias) {}
 };
 
 struct ColumnReference {
@@ -68,11 +68,8 @@ struct ColumnReference {
     NodeID node_id;
     /// The column name
     QualifiedColumnName column_name;
-
-    using ExternalTableName = QualifiedTableName;
-    using LocalColumnDefintion = NodeID;
-    /// The target table (if resolved)
-    std::optional<std::variant<ExternalTableName, LocalColumnDefintion>> target_table;
+    /// Constructor
+    ColumnReference(NodeID node_id, QualifiedColumnName name) : node_id(node_id), column_name(name) {}
 };
 
 }  // namespace flatsql::schema
