@@ -1,4 +1,4 @@
-#include "flatsql/analyzer/attribute_index.h"
+#include "flatsql/utils/attribute_index.h"
 
 #include "flatsql/proto/proto_generated.h"
 

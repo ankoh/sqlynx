@@ -5,7 +5,7 @@ namespace flatsql {
 /// Constructor
 PassManager::PassManager(ParsedProgram& parser) : parsedProgram(parser) {}
 /// Execute DFS post-order passes
-void PassManager::Execute(std::span<std::reference_wrapper<LTRDepthFirstPostOrderPass>> passes) {
+void PassManager::Execute(std::span<std::reference_wrapper<LTRPass>> passes) {
     // Prepare all passes
     for (auto pass : passes) {
         pass.get().Prepare();
