@@ -177,7 +177,7 @@ static std::unordered_map<std::string, std::vector<ASTDumpTest>> TEST_FILES;
 
 // Load the tests
 void ASTDumpTest::LoadTests(std::filesystem::path& source_dir) {
-    auto dumps_dir = source_dir / "dumps";
+    auto dumps_dir = source_dir / "dumps" / "parser";
 
     std::cout << "Loading grammar tests at: " << dumps_dir << std::endl;
 
