@@ -1,5 +1,7 @@
 #include "flatsql/testing/xml_tests.h"
 
+#include <sstream>
+
 namespace flatsql::testing {
 
 constexpr size_t INLINE_LOCATION_CAP = 20;
