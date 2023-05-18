@@ -76,7 +76,7 @@ struct ColumnReference {
 
 namespace std {
 
-template <> struct std::hash<flatsql::schema::QualifiedTableName> {
+template <> struct hash<flatsql::schema::QualifiedTableName> {
     std::size_t operator()(flatsql::schema::QualifiedTableName const& s) const noexcept { return 42; }
 };
 
