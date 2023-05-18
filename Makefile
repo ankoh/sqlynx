@@ -97,3 +97,11 @@ canvas_start:
 .PHONY: parser_dumps
 parser_dumps:
 	${LIB_DEBUG_DIR}/dump_parser --source_dir .
+
+.PHONY: analyzer_dumps
+analyzer_dumps:
+	${LIB_DEBUG_DIR}/dump_analyzer --source_dir .
+
+.PHONY: printer_dumps
+printer_dumps:
+	${LIB_DEBUG_DIR}/dump_analyzer --source_dir .
