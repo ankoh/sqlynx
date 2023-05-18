@@ -9,7 +9,7 @@ const dist = path.resolve(__dirname, 'dist');
 
 console.log(`[ ESBUILD ] flatsql.module.js`);
 esbuild.build({
-    entryPoints: [`./index.ts`],
+    entryPoints: [`./lib.ts`],
     outfile: `dist/flatsql.module.js`,
     platform: 'neutral',
     format: 'esm',
