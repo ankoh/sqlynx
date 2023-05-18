@@ -19,7 +19,7 @@ using namespace flatsql::testing;
 DEFINE_string(source_dir, "", "Source directory");
 
 static void generate_astdumps(const std::filesystem::path& source_dir) {
-    auto dump_dir = source_dir / "dumps";
+    auto dump_dir = source_dir / "dumps" / "parser";
     for (auto& p : std::filesystem::directory_iterator(dump_dir)) {
         auto filename = p.path().filename().filename().string();
 
