@@ -1,7 +1,7 @@
 #include <string_view>
 
 #include "flatsql/parser/parse_context.h"
-#include "flatsql/testing/astdump_test.h"
+#include "flatsql/testing/parser_dump_test.h"
 #include "gflags/gflags.h"
 #include "gtest/gtest.h"
 #include "pugixml.hpp"
@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
         std::cout << "Invalid source directory: " << FLAGS_source_dir << std::endl;
     }
     auto source_dir = std::filesystem::path{FLAGS_source_dir};
-    ASTDumpTest::LoadTests(source_dir);
+    ParserDumpTest::LoadTests(source_dir);
 
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

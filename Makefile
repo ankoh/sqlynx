@@ -94,6 +94,6 @@ jslib:
 canvas_start:
 	yarn workspace @ankoh/flatsql-canvas pwa:start
 
-.PHONY: astdump
-astdumps:
-	${LIB_DEBUG_DIR}/astdump --source_dir .
+.PHONY: parser_dumps
+parser_dumps:
+	${LIB_DEBUG_DIR}/dump_parser --source_dir .
