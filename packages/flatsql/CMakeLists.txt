@@ -248,7 +248,9 @@ target_link_libraries(flatsql flatbuffers frozen ankerl utf8proc)
 
 if(NOT WASM)
   add_library(flatsql_testutils
+    ${CMAKE_SOURCE_DIR}/src/testing/analyzer_dump_test.cc
     ${CMAKE_SOURCE_DIR}/src/testing/parser_dump_test.cc
+    ${CMAKE_SOURCE_DIR}/src/testing/printer_dump_test.cc
   )
   target_link_libraries(flatsql_testutils flatsql pugixml gtest)
 
