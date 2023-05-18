@@ -10,7 +10,7 @@
         "lint": "eslint src"
     },
     "dependencies": {
-        "@ankoh/flatsql": "file:../flatsql-wasm",
+        "@ankoh/flatsql": "link:../flatsql-wasm",
         "@codemirror/view": "^6.9.1",
         "@popperjs/core": "^2.11.2",
         "bootstrap": "^5.1.1",

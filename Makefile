@@ -27,14 +27,17 @@ endif
 # ---------------------------------------------------------------------------
 # Parser
 
-.PHONY: infra
-infra:
-	./scripts/install_infra_macos.sh
+.PHONY: infra_linux
+infra_linux:
+	./scripts/install_infra.sh linux
+
+.PHONY: infra_macos
+infra_macos:
+	./scripts/install_infra.sh macos
 
 .PHONY: proto
 proto:
 	./scripts/generate_proto.sh
-	yarn workspace @ankoh/flatsql build
 
 .PHONY: lib
 lib:

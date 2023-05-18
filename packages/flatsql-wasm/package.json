@@ -13,9 +13,6 @@
     "scripts": {
         "build": "tsc --emitDeclarationOnly && ts-node bundle.ts"
     },
-    "include": [
-        "./index.ts"
-    ],
     "files": [
         "dist/gen/*.d.ts",
         "dist/gen/*.js",
@@ -23,6 +20,7 @@
         "dist/*.d.ts",
         "dist/*.wasm"
     ],
+    "main": "./dist/flatsql.module.js",
     "module": "./dist/flatsql.module.js",
     "types": "./dist/flatsql.module.d.ts"
 }
