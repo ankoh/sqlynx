@@ -10,7 +10,7 @@
 #include "flatsql/parser/scanner.h"
 #include "flatsql/program.h"
 #include "flatsql/proto/proto_generated.h"
-#include "flatsql/testing/astdump_test.h"
+#include "flatsql/testing/parser_dump_test.h"
 #include "gflags/gflags.h"
 
 using namespace flatsql;
@@ -18,7 +18,7 @@ using namespace flatsql::testing;
 
 DEFINE_string(source_dir, "", "Source directory");
 
-static void generate_astdumps(const std::filesystem::path& source_dir) {
+static void generate_parser_dumps(const std::filesystem::path& source_dir) {
     auto dump_dir = source_dir / "dumps" / "parser";
     for (auto& p : std::filesystem::directory_iterator(dump_dir)) {
         auto filename = p.path().filename().filename().string();
@@ -62,7 +62,7 @@ static void generate_astdumps(const std::filesystem::path& source_dir) {
 
             /// Write output
             auto expected = test.append_child("expected");
-            ASTDumpTest::EncodeProgram(expected, *packed_program, input_buffer);
+            ParserDumpTest::EncodeProgram(expected, *packed_program, input_buffer);
         }
 
         // Write xml document
@@ -71,13 +71,13 @@ static void generate_astdumps(const std::filesystem::path& source_dir) {
 }
 
 int main(int argc, char* argv[]) {
-    gflags::SetUsageMessage("Usage: ./astdump --source_dir <dir>");
+    gflags::SetUsageMessage("Usage: ./dump_parser --source_dir <dir>");
     gflags::ParseCommandLineFlags(&argc, &argv, false);
 
     if (!std::filesystem::exists(FLAGS_source_dir)) {
         std::cout << "Invalid source directory: " << FLAGS_source_dir << std::endl;
     }
     auto source_dir = std::filesystem::path{FLAGS_source_dir};
-    generate_astdumps(source_dir);
+    generate_parser_dumps(source_dir);
     return 0;
 }

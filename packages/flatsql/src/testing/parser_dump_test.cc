@@ -1,4 +1,4 @@
-#include "flatsql/testing/astdump_test.h"
+#include "flatsql/testing/parser_dump_test.h"
 
 #include <cstdint>
 #include <fstream>
@@ -44,7 +44,7 @@ void EncodeError(pugi::xml_node n, const proto::ErrorT& err, std::string_view te
 }
 
 /// Encode yaml
-void ASTDumpTest::EncodeProgram(pugi::xml_node root, const proto::ProgramT& program, std::string_view text) {
+void ParserDumpTest::EncodeProgram(pugi::xml_node root, const proto::ProgramT& program, std::string_view text) {
     // Unpack modules
     auto& nodes = program.nodes;
     auto& statements = program.statements;
@@ -145,7 +145,7 @@ void ASTDumpTest::EncodeProgram(pugi::xml_node root, const proto::ProgramT& prog
 }
 
 /// Matches the expected result?
-::testing::AssertionResult ASTDumpTest::Matches(const pugi::xml_node& actual) const {
+::testing::AssertionResult ParserDumpTest::Matches(const pugi::xml_node& actual) const {
     std::stringstream expected_ss;
     std::stringstream actual_ss;
     expected.print(expected_ss);
@@ -173,10 +173,10 @@ void ASTDumpTest::EncodeProgram(pugi::xml_node root, const proto::ProgramT& prog
 }
 
 // The files
-static std::unordered_map<std::string, std::vector<ASTDumpTest>> TEST_FILES;
+static std::unordered_map<std::string, std::vector<ParserDumpTest>> TEST_FILES;
 
 // Load the tests
-void ASTDumpTest::LoadTests(std::filesystem::path& source_dir) {
+void ParserDumpTest::LoadTests(std::filesystem::path& source_dir) {
     auto dumps_dir = source_dir / "dumps" / "parser";
 
     std::cout << "Loading grammar tests at: " << dumps_dir << std::endl;
@@ -203,7 +203,7 @@ void ASTDumpTest::LoadTests(std::filesystem::path& source_dir) {
         auto root = doc.child("astdumps");
 
         // Read tests
-        std::vector<ASTDumpTest> tests;
+        std::vector<ParserDumpTest> tests;
         for (auto test : root.children()) {
             // Create test
             tests.emplace_back();
@@ -226,13 +226,13 @@ void ASTDumpTest::LoadTests(std::filesystem::path& source_dir) {
 }
 
 // Get the tests
-std::vector<const ASTDumpTest*> ASTDumpTest::GetTests(std::string_view filename) {
+std::vector<const ParserDumpTest*> ParserDumpTest::GetTests(std::string_view filename) {
     std::string name{filename};
     auto iter = TEST_FILES.find(name);
     if (iter == TEST_FILES.end()) {
         return {};
     }
-    std::vector<const ASTDumpTest*> tests;
+    std::vector<const ParserDumpTest*> tests;
     for (auto& test : iter->second) {
         tests.emplace_back(&test);
     }

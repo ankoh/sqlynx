@@ -248,12 +248,12 @@ target_link_libraries(flatsql flatbuffers frozen ankerl utf8proc)
 
 if(NOT WASM)
   add_library(flatsql_testutils
-    ${CMAKE_SOURCE_DIR}/src/testing/astdump_test.cc
+    ${CMAKE_SOURCE_DIR}/src/testing/parser_dump_test.cc
   )
   target_link_libraries(flatsql_testutils flatsql pugixml gtest)
 
   set(TEST_SRC
-    ${CMAKE_SOURCE_DIR}/test/astdump_test_suite.cc
+    ${CMAKE_SOURCE_DIR}/test/parser_dump_test_suite.cc
     ${CMAKE_SOURCE_DIR}/test/chunk_buffer_test.cc
     ${CMAKE_SOURCE_DIR}/test/utils_test.cc
     ${CMAKE_SOURCE_DIR}/test/rope_test.cc
@@ -264,8 +264,14 @@ if(NOT WASM)
   add_executable(bm_parse_query benchmarks/bm_parse_query.cc)
   target_link_libraries(bm_parse_query flatsql benchmark gtest gflags Threads::Threads)
 
-  add_executable(astdump tools/astdump.cc)
-  target_link_libraries(astdump flatsql flatsql_testutils pugixml gtest gflags Threads::Threads)
+  add_executable(dump_parser tools/dump_parser.cc)
+  target_link_libraries(dump_parser flatsql flatsql_testutils pugixml gtest gflags Threads::Threads)
+
+  add_executable(dump_analyzer tools/dump_analyzer.cc)
+  target_link_libraries(dump_analyzer flatsql flatsql_testutils pugixml gtest gflags Threads::Threads)
+
+  add_executable(dump_printer tools/dump_printer.cc)
+  target_link_libraries(dump_printer flatsql flatsql_testutils pugixml gtest gflags Threads::Threads)
 
   add_executable(sql2tpl tools/sql2tpl.cc)
   target_link_libraries(sql2tpl flatsql flatsql_testutils pugixml gtest gflags Threads::Threads)
