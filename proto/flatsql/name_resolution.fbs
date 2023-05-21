@@ -68,30 +68,31 @@ struct ColumnReference {
     resolved_column_id: uint32;
 }
 
-struct JoinEdge {
+struct HyperGraphNode {
+    /// A table id
+    table_id: uint32;
+    /// A column id
+    column_id: uint32;
+}
+
+table HyperEdge {
     // The id of the statement that contains the join edge
     statement_id: uint32;
     // The id of the AST node that created this join edge
     ast_node_id: uint32;
-    /// The first table id
-    table_id_0: uint32;
-    /// The second table id
-    table_id_1: uint32;
-    /// The first column id
-    column_id_0: uint32;
-    /// The second column id
-    column_id_1: uint32;
+    // Set of nodes in this hyper edge
+    nodes_0: [HyperGraphNode];
+    // Set of nodes in this hyper edge
+    nodes_1: [HyperGraphNode];
 }
 
 table NameResolutionInfo {
     // The table declarations
     table_declarations: [TableDeclaration];
-    // The table column declarations
-    table_column_declarations: [TableColumnDeclaration];
     // The table references in the statement
     table_references: [TableReference];
     // The column references in the statement
     column_references: [ColumnReference];
-    /// The join edge
-    join_edges: [JoinEdge];
+    /// The join edges
+    join_edges: [HyperEdge];
 }
