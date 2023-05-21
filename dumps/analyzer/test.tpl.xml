@@ -1,9 +1,11 @@
 <analyzer-dumps>
     <analyzer-dump name="analyzer_test">
-        <input>
+        <schema>
             create table A (a int, b int);
             create table B (d int, e int);
+        </schema>
+        <script>
             select * from A, B where a = b;
-        </input>
+        </script>
     </analyzer-dump>
 </analyzer-dumps>

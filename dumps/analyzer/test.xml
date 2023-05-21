@@ -1,30 +1,36 @@
 <analyzer-dumps>
     <analyzer-dump name="analyzer_test">
-        <input>
+        <schema>
             create table A (a int, b int);
             create table B (d int, e int);
+        </schema>
+        <script>
             select * from A, B where a = b;
-        </input>
+        </script>
         <tables>
             <table name="foo" external="false" loc="0..1" text="create table ...">
-                <column name="a int" loc="0..1"/>
-                <column name="b int" loc="0..1"/>
+                <column name="a" loc="0..1" text="a int" />
+                <column name="b" loc="0..1" text="b int" />
             </table>
             <table name="foo" external="false" loc="0..1" text="create table ...">
-                <column name="d int" loc="0..1"/>
-                <column name="e int" loc="0..1"/>
+                <column name="d" loc="0..1" text="d int" />
+                <column name="e" loc="0..1" text="e int" />
             </table>
         </tables>
         <table-references>
-            <table-reference loc="0..1" text="A" />
-            <table-reference />
+            <table-reference table="0" loc="0..1" text="A" />
+            <table-reference table="0" loc="0..1" text="B" />
         </table-references>
         <column-references>
-            <column-reference />
-            <column-reference />
+            <column-reference table="0" column="0" loc="0..1" text="a"/>
+            <column-reference table="0" column="0" loc="0..1" text="b"/>
         </column-references>
         <join-edges>
-            <join-edge />
+            <join-edge loc="0..1" text="a + b = c">
+                <node at="0" table="0" column="0" loc="0..1" text="a" />
+                <node at="0" table="0" column="0" loc="0..1" text="b" />
+                <node at="1" table="0" column="0" loc="0..1" text="c" />
+            </join-edge>
         </join-edges>
     </analyzer-dump>
 </analyzer-dumps>
