@@ -1,0 +1,9 @@
+<analyzer-dumps>
+    <analyzer-dump name="analyzer_test">
+        <input>
+            create table A (a int, b int);
+            create table B (d int, e int);
+            select * from A, B where a = b;
+        </input>
+    </analyzer-dump>
+</analyzer-dumps>

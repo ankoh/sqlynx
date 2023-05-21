@@ -1,5 +1,5 @@
-<astdumps>
-    <astdump name="create_table_as_select_1">
+<parser-dumps>
+    <parser-dump name="create_table_as_select_1">
         <input>
             create table foo as select 1
         </input>
@@ -21,14 +21,14 @@
                 </statement>
             </statements>
             <errors />
-            <line_breaks>
-                <line_break loc="0..1" text="&#10;" />
-                <line_break loc="41..42" text="&#10;" />
-            </line_breaks>
+            <line-breaks>
+                <line-break loc="0..1" text="&#10;" />
+                <line-break loc="41..42" text="&#10;" />
+            </line-breaks>
             <comments />
         </expected>
-    </astdump>
-    <astdump name="create_table_1">
+    </parser-dump>
+    <parser-dump name="create_table_1">
         <input>
             create table foo (a integer)
         </input>
@@ -51,14 +51,14 @@
                 </statement>
             </statements>
             <errors />
-            <line_breaks>
-                <line_break loc="0..1" text="&#10;" />
-                <line_break loc="41..42" text="&#10;" />
-            </line_breaks>
+            <line-breaks>
+                <line-break loc="0..1" text="&#10;" />
+                <line-break loc="41..42" text="&#10;" />
+            </line-breaks>
             <comments />
         </expected>
-    </astdump>
-    <astdump name="create_table_2">
+    </parser-dump>
+    <parser-dump name="create_table_2">
         <input>
             create table foo (a integer, b tinyint)
         </input>
@@ -89,14 +89,14 @@
                 </statement>
             </statements>
             <errors />
-            <line_breaks>
-                <line_break loc="0..1" text="&#10;" />
-                <line_break loc="52..53" text="&#10;" />
-            </line_breaks>
+            <line-breaks>
+                <line-break loc="0..1" text="&#10;" />
+                <line-break loc="52..53" text="&#10;" />
+            </line-breaks>
             <comments />
         </expected>
-    </astdump>
-    <astdump name="create_table_3">
+    </parser-dump>
+    <parser-dump name="create_table_3">
         <input>
             create table foo (a integer, b varchar)
         </input>
@@ -127,14 +127,14 @@
                 </statement>
             </statements>
             <errors />
-            <line_breaks>
-                <line_break loc="0..1" text="&#10;" />
-                <line_break loc="52..53" text="&#10;" />
-            </line_breaks>
+            <line-breaks>
+                <line-break loc="0..1" text="&#10;" />
+                <line-break loc="52..53" text="&#10;" />
+            </line-breaks>
             <comments />
         </expected>
-    </astdump>
-    <astdump name="create_table_4">
+    </parser-dump>
+    <parser-dump name="create_table_4">
         <input>
             create table if not exists foo (a integer, b varchar)
         </input>
@@ -166,14 +166,14 @@
                 </statement>
             </statements>
             <errors />
-            <line_breaks>
-                <line_break loc="0..1" text="&#10;" />
-                <line_break loc="66..67" text="&#10;" />
-            </line_breaks>
+            <line-breaks>
+                <line-break loc="0..1" text="&#10;" />
+                <line-break loc="66..67" text="&#10;" />
+            </line-breaks>
             <comments />
         </expected>
-    </astdump>
-    <astdump name="create_table_5">
+    </parser-dump>
+    <parser-dump name="create_table_5">
         <input>
             create table foo (a integer, b varchar)
         </input>
@@ -204,14 +204,14 @@
                 </statement>
             </statements>
             <errors />
-            <line_breaks>
-                <line_break loc="0..1" text="&#10;" />
-                <line_break loc="52..53" text="&#10;" />
-            </line_breaks>
+            <line-breaks>
+                <line-break loc="0..1" text="&#10;" />
+                <line-break loc="52..53" text="&#10;" />
+            </line-breaks>
             <comments />
         </expected>
-    </astdump>
-    <astdump name="create_table_6">
+    </parser-dump>
+    <parser-dump name="create_table_6">
         <input>
             create table foo (a integer deferrable)
         </input>
@@ -237,14 +237,14 @@
                 </statement>
             </statements>
             <errors />
-            <line_breaks>
-                <line_break loc="0..1" text="&#10;" />
-                <line_break loc="52..53" text="&#10;" />
-            </line_breaks>
+            <line-breaks>
+                <line-break loc="0..1" text="&#10;" />
+                <line-break loc="52..53" text="&#10;" />
+            </line-breaks>
             <comments />
         </expected>
-    </astdump>
-    <astdump name="create_table_7">
+    </parser-dump>
+    <parser-dump name="create_table_7">
         <input>
             create table foo (a integer collate "de_DE")
         </input>
@@ -275,14 +275,14 @@
                 </statement>
             </statements>
             <errors />
-            <line_breaks>
-                <line_break loc="0..1" text="&#10;" />
-                <line_break loc="57..58" text="&#10;" />
-            </line_breaks>
+            <line-breaks>
+                <line-break loc="0..1" text="&#10;" />
+                <line-break loc="57..58" text="&#10;" />
+            </line-breaks>
             <comments />
         </expected>
-    </astdump>
-    <astdump name="create_table_8">
+    </parser-dump>
+    <parser-dump name="create_table_8">
         <input>
             create temporary table foo (a integer)
         </input>
@@ -306,14 +306,14 @@
                 </statement>
             </statements>
             <errors />
-            <line_breaks>
-                <line_break loc="0..1" text="&#10;" />
-                <line_break loc="51..52" text="&#10;" />
-            </line_breaks>
+            <line-breaks>
+                <line-break loc="0..1" text="&#10;" />
+                <line-break loc="51..52" text="&#10;" />
+            </line-breaks>
             <comments />
         </expected>
-    </astdump>
-    <astdump name="create_table_9">
+    </parser-dump>
+    <parser-dump name="create_table_9">
         <input>
             create table foo (a integer options (ident 'thing2'))
         </input>
@@ -342,14 +342,14 @@
                 </statement>
             </statements>
             <errors />
-            <line_breaks>
-                <line_break loc="0..1" text="&#10;" />
-                <line_break loc="66..67" text="&#10;" />
-            </line_breaks>
+            <line-breaks>
+                <line-break loc="0..1" text="&#10;" />
+                <line-break loc="66..67" text="&#10;" />
+            </line-breaks>
             <comments />
         </expected>
-    </astdump>
-    <astdump name="create_table_10">
+    </parser-dump>
+    <parser-dump name="create_table_10">
         <input>
             create table foo (a integer constraint a not null)
         </input>
@@ -378,14 +378,14 @@
                 </statement>
             </statements>
             <errors />
-            <line_breaks>
-                <line_break loc="0..1" text="&#10;" />
-                <line_break loc="63..64" text="&#10;" />
-            </line_breaks>
+            <line-breaks>
+                <line-break loc="0..1" text="&#10;" />
+                <line-break loc="63..64" text="&#10;" />
+            </line-breaks>
             <comments />
         </expected>
-    </astdump>
-    <astdump name="create_table_11">
+    </parser-dump>
+    <parser-dump name="create_table_11">
         <input>
             create table foo (a integer primary key)
         </input>
@@ -413,14 +413,14 @@
                 </statement>
             </statements>
             <errors />
-            <line_breaks>
-                <line_break loc="0..1" text="&#10;" />
-                <line_break loc="53..54" text="&#10;" />
-            </line_breaks>
+            <line-breaks>
+                <line-break loc="0..1" text="&#10;" />
+                <line-break loc="53..54" text="&#10;" />
+            </line-breaks>
             <comments />
         </expected>
-    </astdump>
-    <astdump name="create_table_12">
+    </parser-dump>
+    <parser-dump name="create_table_12">
         <input>
             create table foo (a integer not null default 42)
         </input>
@@ -452,11 +452,11 @@
                 </statement>
             </statements>
             <errors />
-            <line_breaks>
-                <line_break loc="0..1" text="&#10;" />
-                <line_break loc="61..62" text="&#10;" />
-            </line_breaks>
+            <line-breaks>
+                <line-break loc="0..1" text="&#10;" />
+                <line-break loc="61..62" text="&#10;" />
+            </line-breaks>
             <comments />
         </expected>
-    </astdump>
-</astdumps>
+    </parser-dump>
+</parser-dumps>

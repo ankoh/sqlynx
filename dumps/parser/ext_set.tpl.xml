@@ -1,27 +1,27 @@
-<astdumps>
-    <astdump name="set_1">
+<parser-dumps>
+    <parser-dump name="set_1">
         <input>
             SET variable = 'value';
         </input>
-    </astdump>
-    <astdump name="set_2">
+    </parser-dump>
+    <parser-dump name="set_2">
         <input>
             SET variable = (
-                'some' = 42,
-                'complex' = 'configuration',
-                'with' = (
-                    'nesting' = true
-                ),
-                'andarrays' = [43, 44]
+            'some' = 42,
+            'complex' = 'configuration',
+            'with' = (
+            'nesting' = true
+            ),
+            'andarrays' = [43, 44]
             );
         </input>
-    </astdump>
-    <astdump name="set_3">
+    </parser-dump>
+    <parser-dump name="set_3">
         <input>
             SET variable = (
-                'some' = 42,
-                'func' = somefunction($someparam),
+            'some' = 42,
+            'func' = somefunction($someparam),
             );
         </input>
-    </astdump>
-</astdumps>
+    </parser-dump>
+</parser-dumps>

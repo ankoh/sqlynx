@@ -2,7 +2,7 @@ namespace flatsql.proto;
 
 struct QualifiedTableName {
     // The node id
-    node_id: uint32;
+    ast_node_id: uint32;
     // The name of the database that owns the object 
     database_name: uint32;
     // The name of the schema that holds the object
@@ -13,7 +13,7 @@ struct QualifiedTableName {
 
 struct QualifiedColumnName {
     // The node id
-    node_id: uint32;
+    ast_node_id: uint32;
     // The name of the database that owns the object 
     database_name: uint32;
     // The name of the schema that holds the object
@@ -24,37 +24,31 @@ struct QualifiedColumnName {
     column_name: uint32;
 }
 
-struct TableDeclaration {
-    // The id of the AST node that created this table declaration
-    ast_node_id: uint32;
-    // The id of the statement that created the table declaration, may not be set if external
-    statement_id: uint32;
-    // The id of the table
-    table_id: uint32;
-    // The name of the table that is declared by the node
-    table_name: QualifiedTableName;
-    // Is an external table defined outside of the script?
-    is_external: uint8;
-}
-
 struct TableColumnDeclaration {
-    // The id of the AST node that created this column declaration
-    ast_node_id: uint32;
-    // The id of the statement that contains the column declaration
-    statement_id: uint32;
-    // The id of the column
-    column_id: uint32;
-    // The id of the table
-    table_id: uint32;
     // The name of the column that is referenced
     column_name: uint32;
 }
 
-struct TableReference {
-    // The id of the AST node that created this table reference
+table TableDeclaration {
+    // The id of the table
+    table_id: uint32;
+    // The id of the AST node that created this table declaration
     ast_node_id: uint32;
+    // The id of the statement that created the table declaration, may not be set if external
+    statement_id: uint32;
+    // Is an external table defined outside of the script?
+    is_external: uint8;
+    // The name of the table that is declared by the node
+    table_name: QualifiedTableName;
+    /// The table colummns
+    columns: [TableColumnDeclaration];
+}
+
+struct TableReference {
     // The id of the statement that contains the table reference
     statement_id: uint32;
+    // The id of the AST node that created this table reference
+    ast_node_id: uint32;
     // The name of the table that is referenced
     table_name: QualifiedTableName;
     // The id of the table, if it could be resolved
@@ -69,7 +63,24 @@ struct ColumnReference {
     // The name of the table that is referenced
     column_name: QualifiedColumnName;
     // The id of the column, if it could be resolved
+    resolved_table_id: uint32;
+    // The id of the column, if it could be resolved
     resolved_column_id: uint32;
+}
+
+struct JoinEdge {
+    // The id of the statement that contains the join edge
+    statement_id: uint32;
+    // The id of the AST node that created this join edge
+    ast_node_id: uint32;
+    /// The first table id
+    table_id_0: uint32;
+    /// The second table id
+    table_id_1: uint32;
+    /// The first column id
+    column_id_0: uint32;
+    /// The second column id
+    column_id_1: uint32;
 }
 
 table NameResolutionInfo {
@@ -81,4 +92,6 @@ table NameResolutionInfo {
     table_references: [TableReference];
     // The column references in the statement
     column_references: [ColumnReference];
+    /// The join edge
+    join_edges: [JoinEdge];
 }

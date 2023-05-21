@@ -1,5 +1,5 @@
-<astdumps>
-    <astdump name="create_table_as_select_1">
+<parser-dumps>
+    <parser-dump name="create_table_as_select_1">
         <input>
             create view foo as select 1
         </input>
@@ -21,11 +21,11 @@
                 </statement>
             </statements>
             <errors />
-            <line_breaks>
-                <line_break loc="0..1" text="&#10;" />
-                <line_break loc="40..41" text="&#10;" />
-            </line_breaks>
+            <line-breaks>
+                <line-break loc="0..1" text="&#10;" />
+                <line-break loc="40..41" text="&#10;" />
+            </line-breaks>
             <comments />
         </expected>
-    </astdump>
-</astdumps>
+    </parser-dump>
+</parser-dumps>

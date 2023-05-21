@@ -1,5 +1,5 @@
-<astdumps>
-    <astdump name="q11_sql">
+<parser-dumps>
+    <parser-dump name="q11_sql">
         <input>select sum(lo_extendedprice*lo_discount) as revenue
 from lineorder, &quot;date&quot;
 where lo_orderdate = d_datekey
@@ -8,8 +8,8 @@ and lo_discount between 1 and 3
 and lo_quantity &lt; 25
 
 </input>
-    </astdump>
-    <astdump name="q12_sql">
+    </parser-dump>
+    <parser-dump name="q12_sql">
         <input>select sum(lo_extendedprice*lo_discount) as revenue
 from lineorder, &quot;date&quot;
 where lo_orderdate = d_datekey
@@ -18,8 +18,8 @@ and lo_discount between 4 and 6
 and lo_quantity between 26 and 35
 
 </input>
-    </astdump>
-    <astdump name="q13_sql">
+    </parser-dump>
+    <parser-dump name="q13_sql">
         <input>select sum(lo_extendedprice*lo_discount) as revenue
 from lineorder, &quot;date&quot;
 where lo_orderdate = d_datekey
@@ -29,8 +29,8 @@ and lo_discount between 5 and 7
 and lo_quantity between 26 and 35
 
 </input>
-    </astdump>
-    <astdump name="q21_sql">
+    </parser-dump>
+    <parser-dump name="q21_sql">
         <input>select sum(lo_revenue), d_year, p_brand1
 from lineorder, &quot;date&quot;, part, supplier
 where lo_orderdate = d_datekey
@@ -42,8 +42,8 @@ group by d_year, p_brand1
 order by d_year, p_brand1
 
 </input>
-    </astdump>
-    <astdump name="q22_sql">
+    </parser-dump>
+    <parser-dump name="q22_sql">
         <input>select sum(lo_revenue), d_year, p_brand1
 from lineorder, &quot;date&quot;, part, supplier
 where lo_orderdate = d_datekey
@@ -56,8 +56,8 @@ group by d_year, p_brand1
 order by d_year, p_brand1
 
 </input>
-    </astdump>
-    <astdump name="q23_sql">
+    </parser-dump>
+    <parser-dump name="q23_sql">
         <input>select sum(lo_revenue), d_year, p_brand1
 from lineorder, &quot;date&quot;, part, supplier
 where lo_orderdate = d_datekey
@@ -69,8 +69,8 @@ group by d_year, p_brand1
 order by d_year, p_brand1
 
 </input>
-    </astdump>
-    <astdump name="q31_sql">
+    </parser-dump>
+    <parser-dump name="q31_sql">
         <input>select c_nation, s_nation, d_year, sum(lo_revenue)
 as revenue from customer, lineorder, supplier, &quot;date&quot;
 where lo_custkey = c_custkey
@@ -82,8 +82,8 @@ group by c_nation, s_nation, d_year
 order by d_year asc, revenue desc
 
 </input>
-    </astdump>
-    <astdump name="q32_sql">
+    </parser-dump>
+    <parser-dump name="q32_sql">
         <input>select c_city, s_city, d_year, sum(lo_revenue) as revenue
 from customer, lineorder, supplier, &quot;date&quot;
 where lo_custkey = c_custkey
@@ -96,8 +96,8 @@ group by c_city, s_city, d_year
 order by d_year asc, revenue desc
 
 </input>
-    </astdump>
-    <astdump name="q33_sql">
+    </parser-dump>
+    <parser-dump name="q33_sql">
         <input>select c_city, s_city, d_year, sum(lo_revenue) as revenue
 from customer, lineorder, supplier, &quot;date&quot;
 where lo_custkey = c_custkey
@@ -112,8 +112,8 @@ group by c_city, s_city, d_year
 order by d_year asc, revenue desc
 
 </input>
-    </astdump>
-    <astdump name="q34_sql">
+    </parser-dump>
+    <parser-dump name="q34_sql">
         <input>select c_city, s_city, d_year, sum(lo_revenue) as revenue
 from customer, lineorder, supplier, &quot;date&quot;
 where lo_custkey = c_custkey
@@ -128,8 +128,8 @@ group by c_city, s_city, d_year
 order by d_year asc, revenue desc
 
 </input>
-    </astdump>
-    <astdump name="q41_sql">
+    </parser-dump>
+    <parser-dump name="q41_sql">
         <input>select d_year, c_nation, sum(lo_revenue - lo_supplycost) as profit
 from &quot;date&quot;, customer, supplier, part, lineorder
 where lo_custkey = c_custkey
@@ -143,8 +143,8 @@ group by d_year, c_nation
 order by d_year, c_nation
 
 </input>
-    </astdump>
-    <astdump name="q42_sql">
+    </parser-dump>
+    <parser-dump name="q42_sql">
         <input>select d_year, s_nation, p_category, sum(lo_revenue - lo_supplycost) as profit
 from &quot;date&quot;, customer, supplier, part, lineorder
 where lo_custkey = c_custkey
@@ -160,8 +160,8 @@ group by d_year, s_nation, p_category
 order by d_year, s_nation, p_category
 
 </input>
-    </astdump>
-    <astdump name="q43_sql">
+    </parser-dump>
+    <parser-dump name="q43_sql">
         <input>select d_year, s_city, p_brand1, sum(lo_revenue - lo_supplycost) as profit
 from &quot;date&quot;, customer, supplier, part, lineorder
 where lo_custkey = c_custkey
@@ -176,5 +176,5 @@ group by d_year, s_city, p_brand1
 order by d_year, s_city, p_brand1
 
 </input>
-    </astdump>
-</astdumps>
+    </parser-dump>
+</parser-dumps>

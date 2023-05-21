@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
 
     // Create XML doc
     pugi::xml_document doc;
-    auto xml_dumps = doc.append_child("astdumps");
+    auto xml_dumps = doc.append_child("parser-dumps");
 
     // Iterate over all file in the input directory
     for (auto& p : std::filesystem::directory_iterator(source_dir)) {
@@ -54,7 +54,7 @@ int main(int argc, char* argv[]) {
         auto dump_input = inBuffer.str();
 
         // Append an AST dump
-        auto xml_dump = xml_dumps.append_child("astdump");
+        auto xml_dump = xml_dumps.append_child("parser-dump");
         xml_dump.append_attribute("name").set_value(dump_name.c_str());
         xml_dump.append_child("input").text().set(dump_input.c_str());
     }

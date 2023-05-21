@@ -1,0 +1,30 @@
+<analyzer-dumps>
+    <analyzer-dump name="analyzer_test">
+        <input>
+            create table A (a int, b int);
+            create table B (d int, e int);
+            select * from A, B where a = b;
+        </input>
+        <tables>
+            <table name="foo" external="false" loc="0..1" text="create table ...">
+                <column name="a int" loc="0..1"/>
+                <column name="b int" loc="0..1"/>
+            </table>
+            <table name="foo" external="false" loc="0..1" text="create table ...">
+                <column name="d int" loc="0..1"/>
+                <column name="e int" loc="0..1"/>
+            </table>
+        </tables>
+        <table-references>
+            <table-reference loc="0..1" text="A" />
+            <table-reference />
+        </table-references>
+        <column-references>
+            <column-reference />
+            <column-reference />
+        </column-references>
+        <join-edges>
+            <join-edge />
+        </join-edges>
+    </analyzer-dump>
+</analyzer-dumps>

@@ -1,5 +1,5 @@
-<astdumps>
-    <astdump name="q11_sql">
+<parser-dumps>
+    <parser-dump name="q11_sql">
         <input>select sum(lo_extendedprice*lo_discount) as revenue
 from lineorder, "date"
 where lo_orderdate = d_datekey
@@ -111,19 +111,19 @@ and lo_quantity &lt; 25
                 </statement>
             </statements>
             <errors />
-            <line_breaks>
-                <line_break loc="51..52" text="&#10;" />
-                <line_break loc="74..75" text="&#10;" />
-                <line_break loc="105..106" text="&#10;" />
-                <line_break loc="123..124" text="&#10;" />
-                <line_break loc="155..156" text="&#10;" />
-                <line_break loc="176..177" text="&#10;" />
-                <line_break loc="177..178" text="&#10;" />
-            </line_breaks>
+            <line-breaks>
+                <line-break loc="51..52" text="&#10;" />
+                <line-break loc="74..75" text="&#10;" />
+                <line-break loc="105..106" text="&#10;" />
+                <line-break loc="123..124" text="&#10;" />
+                <line-break loc="155..156" text="&#10;" />
+                <line-break loc="176..177" text="&#10;" />
+                <line-break loc="177..178" text="&#10;" />
+            </line-breaks>
             <comments />
         </expected>
-    </astdump>
-    <astdump name="q12_sql">
+    </parser-dump>
+    <parser-dump name="q12_sql">
         <input>select sum(lo_extendedprice*lo_discount) as revenue
 from lineorder, "date"
 where lo_orderdate = d_datekey
@@ -236,19 +236,19 @@ and lo_quantity between 26 and 35
                 </statement>
             </statements>
             <errors />
-            <line_breaks>
-                <line_break loc="51..52" text="&#10;" />
-                <line_break loc="74..75" text="&#10;" />
-                <line_break loc="105..106" text="&#10;" />
-                <line_break loc="133..134" text="&#10;" />
-                <line_break loc="165..166" text="&#10;" />
-                <line_break loc="199..200" text="&#10;" />
-                <line_break loc="200..201" text="&#10;" />
-            </line_breaks>
+            <line-breaks>
+                <line-break loc="51..52" text="&#10;" />
+                <line-break loc="74..75" text="&#10;" />
+                <line-break loc="105..106" text="&#10;" />
+                <line-break loc="133..134" text="&#10;" />
+                <line-break loc="165..166" text="&#10;" />
+                <line-break loc="199..200" text="&#10;" />
+                <line-break loc="200..201" text="&#10;" />
+            </line-breaks>
             <comments />
         </expected>
-    </astdump>
-    <astdump name="q13_sql">
+    </parser-dump>
+    <parser-dump name="q13_sql">
         <input>select sum(lo_extendedprice*lo_discount) as revenue
 from lineorder, "date"
 where lo_orderdate = d_datekey
@@ -373,20 +373,20 @@ and lo_quantity between 26 and 35
                 </statement>
             </statements>
             <errors />
-            <line_breaks>
-                <line_break loc="51..52" text="&#10;" />
-                <line_break loc="74..75" text="&#10;" />
-                <line_break loc="105..106" text="&#10;" />
-                <line_break loc="129..130" text="&#10;" />
-                <line_break loc="147..148" text="&#10;" />
-                <line_break loc="179..180" text="&#10;" />
-                <line_break loc="213..214" text="&#10;" />
-                <line_break loc="214..215" text="&#10;" />
-            </line_breaks>
+            <line-breaks>
+                <line-break loc="51..52" text="&#10;" />
+                <line-break loc="74..75" text="&#10;" />
+                <line-break loc="105..106" text="&#10;" />
+                <line-break loc="129..130" text="&#10;" />
+                <line-break loc="147..148" text="&#10;" />
+                <line-break loc="179..180" text="&#10;" />
+                <line-break loc="213..214" text="&#10;" />
+                <line-break loc="214..215" text="&#10;" />
+            </line-breaks>
             <comments />
         </expected>
-    </astdump>
-    <astdump name="q21_sql">
+    </parser-dump>
+    <parser-dump name="q21_sql">
         <input>select sum(lo_revenue), d_year, p_brand1
 from lineorder, "date", part, supplier
 where lo_orderdate = d_datekey
@@ -566,22 +566,22 @@ order by d_year, p_brand1
                 </statement>
             </statements>
             <errors />
-            <line_breaks>
-                <line_break loc="40..41" text="&#10;" />
-                <line_break loc="79..80" text="&#10;" />
-                <line_break loc="110..111" text="&#10;" />
-                <line_break loc="137..138" text="&#10;" />
-                <line_break loc="164..165" text="&#10;" />
-                <line_break loc="191..192" text="&#10;" />
-                <line_break loc="216..217" text="&#10;" />
-                <line_break loc="242..243" text="&#10;" />
-                <line_break loc="268..269" text="&#10;" />
-                <line_break loc="269..270" text="&#10;" />
-            </line_breaks>
+            <line-breaks>
+                <line-break loc="40..41" text="&#10;" />
+                <line-break loc="79..80" text="&#10;" />
+                <line-break loc="110..111" text="&#10;" />
+                <line-break loc="137..138" text="&#10;" />
+                <line-break loc="164..165" text="&#10;" />
+                <line-break loc="191..192" text="&#10;" />
+                <line-break loc="216..217" text="&#10;" />
+                <line-break loc="242..243" text="&#10;" />
+                <line-break loc="268..269" text="&#10;" />
+                <line-break loc="269..270" text="&#10;" />
+            </line-breaks>
             <comments />
         </expected>
-    </astdump>
-    <astdump name="q22_sql">
+    </parser-dump>
+    <parser-dump name="q22_sql">
         <input>select sum(lo_revenue), d_year, p_brand1
 from lineorder, "date", part, supplier
 where lo_orderdate = d_datekey
@@ -763,23 +763,23 @@ order by d_year, p_brand1
                 </statement>
             </statements>
             <errors />
-            <line_breaks>
-                <line_break loc="40..41" text="&#10;" />
-                <line_break loc="79..80" text="&#10;" />
-                <line_break loc="110..111" text="&#10;" />
-                <line_break loc="137..138" text="&#10;" />
-                <line_break loc="164..165" text="&#10;" />
-                <line_break loc="185..186" text="&#10;" />
-                <line_break loc="213..214" text="&#10;" />
-                <line_break loc="235..236" text="&#10;" />
-                <line_break loc="261..262" text="&#10;" />
-                <line_break loc="287..288" text="&#10;" />
-                <line_break loc="288..289" text="&#10;" />
-            </line_breaks>
+            <line-breaks>
+                <line-break loc="40..41" text="&#10;" />
+                <line-break loc="79..80" text="&#10;" />
+                <line-break loc="110..111" text="&#10;" />
+                <line-break loc="137..138" text="&#10;" />
+                <line-break loc="164..165" text="&#10;" />
+                <line-break loc="185..186" text="&#10;" />
+                <line-break loc="213..214" text="&#10;" />
+                <line-break loc="235..236" text="&#10;" />
+                <line-break loc="261..262" text="&#10;" />
+                <line-break loc="287..288" text="&#10;" />
+                <line-break loc="288..289" text="&#10;" />
+            </line-breaks>
             <comments />
         </expected>
-    </astdump>
-    <astdump name="q23_sql">
+    </parser-dump>
+    <parser-dump name="q23_sql">
         <input>select sum(lo_revenue), d_year, p_brand1
 from lineorder, "date", part, supplier
 where lo_orderdate = d_datekey
@@ -959,22 +959,22 @@ order by d_year, p_brand1
                 </statement>
             </statements>
             <errors />
-            <line_breaks>
-                <line_break loc="40..41" text="&#10;" />
-                <line_break loc="79..80" text="&#10;" />
-                <line_break loc="110..111" text="&#10;" />
-                <line_break loc="137..138" text="&#10;" />
-                <line_break loc="164..165" text="&#10;" />
-                <line_break loc="191..192" text="&#10;" />
-                <line_break loc="215..216" text="&#10;" />
-                <line_break loc="241..242" text="&#10;" />
-                <line_break loc="267..268" text="&#10;" />
-                <line_break loc="268..269" text="&#10;" />
-            </line_breaks>
+            <line-breaks>
+                <line-break loc="40..41" text="&#10;" />
+                <line-break loc="79..80" text="&#10;" />
+                <line-break loc="110..111" text="&#10;" />
+                <line-break loc="137..138" text="&#10;" />
+                <line-break loc="164..165" text="&#10;" />
+                <line-break loc="191..192" text="&#10;" />
+                <line-break loc="215..216" text="&#10;" />
+                <line-break loc="241..242" text="&#10;" />
+                <line-break loc="267..268" text="&#10;" />
+                <line-break loc="268..269" text="&#10;" />
+            </line-breaks>
             <comments />
         </expected>
-    </astdump>
-    <astdump name="q31_sql">
+    </parser-dump>
+    <parser-dump name="q31_sql">
         <input>select c_nation, s_nation, d_year, sum(lo_revenue)
 as revenue from customer, lineorder, supplier, "date"
 where lo_custkey = c_custkey
@@ -1194,22 +1194,22 @@ order by d_year asc, revenue desc
                 </statement>
             </statements>
             <errors />
-            <line_breaks>
-                <line_break loc="50..51" text="&#10;" />
-                <line_break loc="104..105" text="&#10;" />
-                <line_break loc="133..134" text="&#10;" />
-                <line_break loc="160..161" text="&#10;" />
-                <line_break loc="189..190" text="&#10;" />
-                <line_break loc="233..234" text="&#10;" />
-                <line_break loc="271..272" text="&#10;" />
-                <line_break loc="307..308" text="&#10;" />
-                <line_break loc="341..342" text="&#10;" />
-                <line_break loc="342..343" text="&#10;" />
-            </line_breaks>
+            <line-breaks>
+                <line-break loc="50..51" text="&#10;" />
+                <line-break loc="104..105" text="&#10;" />
+                <line-break loc="133..134" text="&#10;" />
+                <line-break loc="160..161" text="&#10;" />
+                <line-break loc="189..190" text="&#10;" />
+                <line-break loc="233..234" text="&#10;" />
+                <line-break loc="271..272" text="&#10;" />
+                <line-break loc="307..308" text="&#10;" />
+                <line-break loc="341..342" text="&#10;" />
+                <line-break loc="342..343" text="&#10;" />
+            </line-breaks>
             <comments />
         </expected>
-    </astdump>
-    <astdump name="q32_sql">
+    </parser-dump>
+    <parser-dump name="q32_sql">
         <input>select c_city, s_city, d_year, sum(lo_revenue) as revenue
 from customer, lineorder, supplier, "date"
 where lo_custkey = c_custkey
@@ -1430,23 +1430,23 @@ order by d_year asc, revenue desc
                 </statement>
             </statements>
             <errors />
-            <line_breaks>
-                <line_break loc="57..58" text="&#10;" />
-                <line_break loc="100..101" text="&#10;" />
-                <line_break loc="129..130" text="&#10;" />
-                <line_break loc="156..157" text="&#10;" />
-                <line_break loc="185..186" text="&#10;" />
-                <line_break loc="216..217" text="&#10;" />
-                <line_break loc="247..248" text="&#10;" />
-                <line_break loc="285..286" text="&#10;" />
-                <line_break loc="317..318" text="&#10;" />
-                <line_break loc="351..352" text="&#10;" />
-                <line_break loc="352..353" text="&#10;" />
-            </line_breaks>
+            <line-breaks>
+                <line-break loc="57..58" text="&#10;" />
+                <line-break loc="100..101" text="&#10;" />
+                <line-break loc="129..130" text="&#10;" />
+                <line-break loc="156..157" text="&#10;" />
+                <line-break loc="185..186" text="&#10;" />
+                <line-break loc="216..217" text="&#10;" />
+                <line-break loc="247..248" text="&#10;" />
+                <line-break loc="285..286" text="&#10;" />
+                <line-break loc="317..318" text="&#10;" />
+                <line-break loc="351..352" text="&#10;" />
+                <line-break loc="352..353" text="&#10;" />
+            </line-breaks>
             <comments />
         </expected>
-    </astdump>
-    <astdump name="q33_sql">
+    </parser-dump>
+    <parser-dump name="q33_sql">
         <input>select c_city, s_city, d_year, sum(lo_revenue) as revenue
 from customer, lineorder, supplier, "date"
 where lo_custkey = c_custkey
@@ -1701,25 +1701,25 @@ order by d_year asc, revenue desc
                 </statement>
             </statements>
             <errors />
-            <line_breaks>
-                <line_break loc="57..58" text="&#10;" />
-                <line_break loc="100..101" text="&#10;" />
-                <line_break loc="129..130" text="&#10;" />
-                <line_break loc="156..157" text="&#10;" />
-                <line_break loc="185..186" text="&#10;" />
-                <line_break loc="210..211" text="&#10;" />
-                <line_break loc="234..235" text="&#10;" />
-                <line_break loc="259..260" text="&#10;" />
-                <line_break loc="283..284" text="&#10;" />
-                <line_break loc="321..322" text="&#10;" />
-                <line_break loc="353..354" text="&#10;" />
-                <line_break loc="387..388" text="&#10;" />
-                <line_break loc="388..389" text="&#10;" />
-            </line_breaks>
+            <line-breaks>
+                <line-break loc="57..58" text="&#10;" />
+                <line-break loc="100..101" text="&#10;" />
+                <line-break loc="129..130" text="&#10;" />
+                <line-break loc="156..157" text="&#10;" />
+                <line-break loc="185..186" text="&#10;" />
+                <line-break loc="210..211" text="&#10;" />
+                <line-break loc="234..235" text="&#10;" />
+                <line-break loc="259..260" text="&#10;" />
+                <line-break loc="283..284" text="&#10;" />
+                <line-break loc="321..322" text="&#10;" />
+                <line-break loc="353..354" text="&#10;" />
+                <line-break loc="387..388" text="&#10;" />
+                <line-break loc="388..389" text="&#10;" />
+            </line-breaks>
             <comments />
         </expected>
-    </astdump>
-    <astdump name="q34_sql">
+    </parser-dump>
+    <parser-dump name="q34_sql">
         <input>select c_city, s_city, d_year, sum(lo_revenue) as revenue
 from customer, lineorder, supplier, "date"
 where lo_custkey = c_custkey
@@ -1963,25 +1963,25 @@ order by d_year asc, revenue desc
                 </statement>
             </statements>
             <errors />
-            <line_breaks>
-                <line_break loc="57..58" text="&#10;" />
-                <line_break loc="100..101" text="&#10;" />
-                <line_break loc="129..130" text="&#10;" />
-                <line_break loc="156..157" text="&#10;" />
-                <line_break loc="185..186" text="&#10;" />
-                <line_break loc="213..214" text="&#10;" />
-                <line_break loc="234..235" text="&#10;" />
-                <line_break loc="262..263" text="&#10;" />
-                <line_break loc="283..284" text="&#10;" />
-                <line_break loc="311..312" text="&#10;" />
-                <line_break loc="343..344" text="&#10;" />
-                <line_break loc="377..378" text="&#10;" />
-                <line_break loc="378..379" text="&#10;" />
-            </line_breaks>
+            <line-breaks>
+                <line-break loc="57..58" text="&#10;" />
+                <line-break loc="100..101" text="&#10;" />
+                <line-break loc="129..130" text="&#10;" />
+                <line-break loc="156..157" text="&#10;" />
+                <line-break loc="185..186" text="&#10;" />
+                <line-break loc="213..214" text="&#10;" />
+                <line-break loc="234..235" text="&#10;" />
+                <line-break loc="262..263" text="&#10;" />
+                <line-break loc="283..284" text="&#10;" />
+                <line-break loc="311..312" text="&#10;" />
+                <line-break loc="343..344" text="&#10;" />
+                <line-break loc="377..378" text="&#10;" />
+                <line-break loc="378..379" text="&#10;" />
+            </line-breaks>
             <comments />
         </expected>
-    </astdump>
-    <astdump name="q41_sql">
+    </parser-dump>
+    <parser-dump name="q41_sql">
         <input>select d_year, c_nation, sum(lo_revenue - lo_supplycost) as profit
 from "date", customer, supplier, part, lineorder
 where lo_custkey = c_custkey
@@ -2221,24 +2221,24 @@ order by d_year, c_nation
                 </statement>
             </statements>
             <errors />
-            <line_breaks>
-                <line_break loc="66..67" text="&#10;" />
-                <line_break loc="115..116" text="&#10;" />
-                <line_break loc="144..145" text="&#10;" />
-                <line_break loc="171..172" text="&#10;" />
-                <line_break loc="198..199" text="&#10;" />
-                <line_break loc="227..228" text="&#10;" />
-                <line_break loc="252..253" text="&#10;" />
-                <line_break loc="277..278" text="&#10;" />
-                <line_break loc="322..323" text="&#10;" />
-                <line_break loc="348..349" text="&#10;" />
-                <line_break loc="374..375" text="&#10;" />
-                <line_break loc="375..376" text="&#10;" />
-            </line_breaks>
+            <line-breaks>
+                <line-break loc="66..67" text="&#10;" />
+                <line-break loc="115..116" text="&#10;" />
+                <line-break loc="144..145" text="&#10;" />
+                <line-break loc="171..172" text="&#10;" />
+                <line-break loc="198..199" text="&#10;" />
+                <line-break loc="227..228" text="&#10;" />
+                <line-break loc="252..253" text="&#10;" />
+                <line-break loc="277..278" text="&#10;" />
+                <line-break loc="322..323" text="&#10;" />
+                <line-break loc="348..349" text="&#10;" />
+                <line-break loc="374..375" text="&#10;" />
+                <line-break loc="375..376" text="&#10;" />
+            </line-breaks>
             <comments />
         </expected>
-    </astdump>
-    <astdump name="q42_sql">
+    </parser-dump>
+    <parser-dump name="q42_sql">
         <input>select d_year, s_nation, p_category, sum(lo_revenue - lo_supplycost) as profit
 from "date", customer, supplier, part, lineorder
 where lo_custkey = c_custkey
@@ -2529,26 +2529,26 @@ order by d_year, s_nation, p_category
                 </statement>
             </statements>
             <errors />
-            <line_breaks>
-                <line_break loc="78..79" text="&#10;" />
-                <line_break loc="127..128" text="&#10;" />
-                <line_break loc="156..157" text="&#10;" />
-                <line_break loc="183..184" text="&#10;" />
-                <line_break loc="210..211" text="&#10;" />
-                <line_break loc="239..240" text="&#10;" />
-                <line_break loc="264..265" text="&#10;" />
-                <line_break loc="289..290" text="&#10;" />
-                <line_break loc="326..327" text="&#10;" />
-                <line_break loc="349..350" text="&#10;" />
-                <line_break loc="371..372" text="&#10;" />
-                <line_break loc="409..410" text="&#10;" />
-                <line_break loc="447..448" text="&#10;" />
-                <line_break loc="448..449" text="&#10;" />
-            </line_breaks>
+            <line-breaks>
+                <line-break loc="78..79" text="&#10;" />
+                <line-break loc="127..128" text="&#10;" />
+                <line-break loc="156..157" text="&#10;" />
+                <line-break loc="183..184" text="&#10;" />
+                <line-break loc="210..211" text="&#10;" />
+                <line-break loc="239..240" text="&#10;" />
+                <line-break loc="264..265" text="&#10;" />
+                <line-break loc="289..290" text="&#10;" />
+                <line-break loc="326..327" text="&#10;" />
+                <line-break loc="349..350" text="&#10;" />
+                <line-break loc="371..372" text="&#10;" />
+                <line-break loc="409..410" text="&#10;" />
+                <line-break loc="447..448" text="&#10;" />
+                <line-break loc="448..449" text="&#10;" />
+            </line-breaks>
             <comments />
         </expected>
-    </astdump>
-    <astdump name="q43_sql">
+    </parser-dump>
+    <parser-dump name="q43_sql">
         <input>select d_year, s_city, p_brand1, sum(lo_revenue - lo_supplycost) as profit
 from "date", customer, supplier, part, lineorder
 where lo_custkey = c_custkey
@@ -2822,22 +2822,22 @@ order by d_year, s_city, p_brand1
                 </statement>
             </statements>
             <errors />
-            <line_breaks>
-                <line_break loc="74..75" text="&#10;" />
-                <line_break loc="123..124" text="&#10;" />
-                <line_break loc="152..153" text="&#10;" />
-                <line_break loc="179..180" text="&#10;" />
-                <line_break loc="206..207" text="&#10;" />
-                <line_break loc="235..236" text="&#10;" />
-                <line_break loc="260..261" text="&#10;" />
-                <line_break loc="291..292" text="&#10;" />
-                <line_break loc="328..329" text="&#10;" />
-                <line_break loc="355..356" text="&#10;" />
-                <line_break loc="389..390" text="&#10;" />
-                <line_break loc="423..424" text="&#10;" />
-                <line_break loc="424..425" text="&#10;" />
-            </line_breaks>
+            <line-breaks>
+                <line-break loc="74..75" text="&#10;" />
+                <line-break loc="123..124" text="&#10;" />
+                <line-break loc="152..153" text="&#10;" />
+                <line-break loc="179..180" text="&#10;" />
+                <line-break loc="206..207" text="&#10;" />
+                <line-break loc="235..236" text="&#10;" />
+                <line-break loc="260..261" text="&#10;" />
+                <line-break loc="291..292" text="&#10;" />
+                <line-break loc="328..329" text="&#10;" />
+                <line-break loc="355..356" text="&#10;" />
+                <line-break loc="389..390" text="&#10;" />
+                <line-break loc="423..424" text="&#10;" />
+                <line-break loc="424..425" text="&#10;" />
+            </line-breaks>
             <comments />
         </expected>
-    </astdump>
-</astdumps>
+    </parser-dump>
+</parser-dumps>
