@@ -101,9 +101,9 @@ void ParserDumpTest::EncodeProgram(pugi::xml_node root, const proto::ProgramT& p
     }
 
     // Add line breaks
-    auto line_breaks = root.append_child("line_breaks");
+    auto line_breaks = root.append_child("line-breaks");
     for (auto& lb : program.line_breaks) {
-        auto lb_node = line_breaks.append_child("line_break");
+        auto lb_node = line_breaks.append_child("line-break");
         EncodeLocation(lb_node, lb, text);
     }
 
@@ -171,7 +171,7 @@ void ParserDumpTest::LoadTests(std::filesystem::path& source_dir) {
         // Parse xml document
         pugi::xml_document doc;
         doc.load(in);
-        auto root = doc.child("astdumps");
+        auto root = doc.child("parser-dumps");
 
         // Read tests
         std::vector<ParserDumpTest> tests;

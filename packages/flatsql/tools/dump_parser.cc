@@ -45,7 +45,7 @@ static void generate_parser_dumps(const std::filesystem::path& source_dir) {
         // Parse xml document
         pugi::xml_document doc;
         doc.load(in);
-        auto root = doc.child("astdumps");
+        auto root = doc.child("parser-dumps");
 
         for (auto test : root.children()) {
             // Copy expected

@@ -1,5 +1,5 @@
-<astdumps>
-    <astdump name="01_sql">
+<parser-dumps>
+    <parser-dump name="01_sql">
         <input>with customer_total_return as
 (select sr_customer_sk as ctr_customer_sk
 ,sr_store_sk as ctr_store_sk
@@ -22,8 +22,8 @@ and s_state = &apos;TN&apos;
 and ctr1.ctr_customer_sk = c_customer_sk
 order by c_customer_id
 limit 100;</input>
-    </astdump>
-    <astdump name="02_sql">
+    </parser-dump>
+    <parser-dump name="02_sql">
         <input>with wscs as
  (select sold_date_sk
         ,sales_price
@@ -81,8 +81,8 @@ limit 100;</input>
         d_year = 2001+1) z
  where d_week_seq1=d_week_seq2-53
  order by d_week_seq1;</input>
-    </astdump>
-    <astdump name="03_sql">
+    </parser-dump>
+    <parser-dump name="03_sql">
         <input>select  dt.d_year
        ,item.i_brand_id brand_id
        ,item.i_brand brand
@@ -101,8 +101,8 @@ limit 100;</input>
          ,sum_agg desc
          ,brand_id
  limit 100;</input>
-    </astdump>
-    <astdump name="04_sql">
+    </parser-dump>
+    <parser-dump name="04_sql">
         <input>with year_total as (
  select c_customer_id customer_id
        ,c_first_name customer_first_name
@@ -216,8 +216,8 @@ union all
          ,t_s_secyear.customer_last_name
          ,t_s_secyear.customer_id,t_s_secyear.customer_first_name,t_s_secyear.customer_last_name,t_s_secyear.customer_preferred_cust_flag,t_s_secyear.customer_birth_country,t_s_secyear.customer_login,t_s_secyear.customer_email_address
 limit 100;</input>
-    </astdump>
-    <astdump name="05_sql">
+    </parser-dump>
+    <parser-dump name="05_sql">
         <input>with ssr as
  (select s_store_id,
         sum(sales_price) as sales,
@@ -351,8 +351,8 @@ limit 100;</input>
 order by channel, id
 limit 100;
 </input>
-    </astdump>
-    <astdump name="06_sql">
+    </parser-dump>
+    <parser-dump name="06_sql">
         <input>select  a.ca_state state, count(*) cnt
  from customer_address a
      ,customer c
@@ -376,8 +376,8 @@ limit 100;
  having count(*) &gt;= 10
  order by cnt
  limit 100;</input>
-    </astdump>
-    <astdump name="07_sql">
+    </parser-dump>
+    <parser-dump name="07_sql">
         <input>select  i_item_id,
         avg(ss_quantity) agg1,
         avg(ss_list_price) agg2,
@@ -396,8 +396,8 @@ limit 100;
  group by i_item_id
  order by i_item_id
  limit 100;</input>
-    </astdump>
-    <astdump name="08_sql">
+    </parser-dump>
+    <parser-dump name="08_sql">
         <input>select  s_store_name
       ,sum(ss_net_profit)
  from store_sales
@@ -503,8 +503,8 @@ limit 100;
  group by s_store_name
  order by s_store_name
  limit 100;</input>
-    </astdump>
-    <astdump name="09_sql">
+    </parser-dump>
+    <parser-dump name="09_sql">
         <input>select case when (select count(*)
                   from store_sales
                   where ss_quantity between 1 and 20) &gt; 74129
@@ -553,8 +553,8 @@ limit 100;
 from reason
 where r_reason_sk = 1
 ;</input>
-    </astdump>
-    <astdump name="10_sql">
+    </parser-dump>
+    <parser-dump name="10_sql">
         <input>select
   cd_gender,
   cd_marital_status,
@@ -611,8 +611,8 @@ where r_reason_sk = 1
           cd_dep_employed_count,
           cd_dep_college_count
 limit 100;</input>
-    </astdump>
-    <astdump name="11_sql">
+    </parser-dump>
+    <parser-dump name="11_sql">
         <input>with year_total as (
  select c_customer_id customer_id
        ,c_first_name customer_first_name
@@ -691,8 +691,8 @@ limit 100;</input>
          ,t_s_secyear.customer_last_name
          ,t_s_secyear.customer_preferred_cust_flag
 limit 100;</input>
-    </astdump>
-    <astdump name="12_sql">
+    </parser-dump>
+    <parser-dump name="12_sql">
         <input>select i_item_id
       ,i_item_desc
       ,i_category
@@ -725,8 +725,8 @@ order by
          ,revenueratio
 limit 100;
 </input>
-    </astdump>
-    <astdump name="13_sql">
+    </parser-dump>
+    <parser-dump name="13_sql">
         <input>select avg(ss_quantity)
        ,avg(ss_ext_sales_price)
        ,avg(ss_ext_wholesale_cost)
@@ -776,8 +776,8 @@ limit 100;
   and ss_net_profit between 50 and 250
      ))
 ;</input>
-    </astdump>
-    <astdump name="14a_sql">
+    </parser-dump>
+    <parser-dump name="14a_sql">
         <input>with  cross_items as
  (select i_item_sk ss_item_sk
  from item,
@@ -896,8 +896,8 @@ from (
 order by channel, i_brand_id, i_class_id, i_category_id
  limit 100;
 </input>
-    </astdump>
-    <astdump name="14b_sql">
+    </parser-dump>
+    <parser-dump name="14b_sql">
         <input> with  cross_items as
  (select i_item_sk ss_item_sk
  from item,
@@ -993,8 +993,8 @@ order by channel, i_brand_id, i_class_id, i_category_id
  order by this_year.channel, this_year.i_brand_id, this_year.i_class_id, this_year.i_category_id
  limit 100;
 </input>
-    </astdump>
-    <astdump name="15_sql">
+    </parser-dump>
+    <parser-dump name="15_sql">
         <input>select  ca_zip
        ,sum(cs_sales_price)
  from catalog_sales
@@ -1012,8 +1012,8 @@ order by channel, i_brand_id, i_class_id, i_category_id
  group by ca_zip
  order by ca_zip
  limit 100;</input>
-    </astdump>
-    <astdump name="16_sql">
+    </parser-dump>
+    <parser-dump name="16_sql">
         <input>select
    count(distinct cs_order_number) as &quot;order count&quot;
   ,sum(cs_ext_ship_cost) as &quot;total shipping cost&quot;
@@ -1043,8 +1043,8 @@ and not exists(select *
 order by count(distinct cs_order_number)
 limit 100;
 </input>
-    </astdump>
-    <astdump name="17_sql">
+    </parser-dump>
+    <parser-dump name="17_sql">
         <input>select  i_item_id
        ,i_item_desc
        ,s_state
@@ -1087,8 +1087,8 @@ limit 100;
          ,i_item_desc
          ,s_state
 limit 100;</input>
-    </astdump>
-    <astdump name="18_sql">
+    </parser-dump>
+    <parser-dump name="18_sql">
         <input>with results as
  (select i_item_id,
         ca_country,
@@ -1135,8 +1135,8 @@ limit 100;</input>
  ) foo
  order by ca_country, ca_state, ca_county, i_item_id
  limit 100;</input>
-    </astdump>
-    <astdump name="19_sql">
+    </parser-dump>
+    <parser-dump name="19_sql">
         <input>select  i_brand_id brand_id, i_brand brand, i_manufact_id, i_manufact,
  	sum(ss_ext_sales_price) ext_price
  from date_dim, store_sales, item,customer,customer_address,store
@@ -1159,8 +1159,8 @@ limit 100;</input>
          ,i_manufact_id
          ,i_manufact
 limit 100 ;</input>
-    </astdump>
-    <astdump name="20_sql">
+    </parser-dump>
+    <parser-dump name="20_sql">
         <input>select  i_item_id
        ,i_item_desc
        ,i_category
@@ -1189,8 +1189,8 @@ limit 100 ;</input>
            ,revenueratio
 limit 100;
 </input>
-    </astdump>
-    <astdump name="21_sql">
+    </parser-dump>
+    <parser-dump name="21_sql">
         <input>select  *
  from(select w_warehouse_name
             ,i_item_id
@@ -1219,8 +1219,8 @@ limit 100;
          ,i_item_id
  limit 100;
 </input>
-    </astdump>
-    <astdump name="22_sql">
+    </parser-dump>
+    <parser-dump name="22_sql">
         <input>with results as
 (select  i_product_name
              ,i_brand
@@ -1250,8 +1250,8 @@ results_rollup as
       from results_rollup
       order by qoh, i_product_name, i_brand, i_class, i_category
 limit 100;</input>
-    </astdump>
-    <astdump name="23a_sql">
+    </parser-dump>
+    <parser-dump name="23a_sql">
         <input>with frequent_ss_items as
  (select substr(i_item_desc,1,30) itemdesc,i_item_sk item_sk,d_date solddate,count(*) cnt
   from store_sales
@@ -1302,8 +1302,8 @@ from
          and ws_bill_customer_sk in (select c_customer_sk from best_ss_customer))) y
  limit 100;
 </input>
-    </astdump>
-    <astdump name="23b_sql">
+    </parser-dump>
+    <parser-dump name="23b_sql">
         <input> with frequent_ss_items as
  (select substr(i_item_desc,1,30) itemdesc,i_item_sk item_sk,d_date solddate,count(*) cnt
   from store_sales
@@ -1360,8 +1360,8 @@ from
      order by c_last_name,c_first_name,sales
   limit 100;
 </input>
-    </astdump>
-    <astdump name="24a_sql">
+    </parser-dump>
+    <parser-dump name="24a_sql">
         <input>with ssales as
 (select c_last_name
       ,c_first_name
@@ -1411,8 +1411,8 @@ having sum(netpaid) &gt; (select 0.05*avg(netpaid)
                                  from ssales)
 order by c_last_name ,c_first_name ,s_store_name;
 </input>
-    </astdump>
-    <astdump name="24b_sql">
+    </parser-dump>
+    <parser-dump name="24b_sql">
         <input>with ssales as
 (select c_last_name
       ,c_first_name
@@ -1462,8 +1462,8 @@ having sum(netpaid) &gt; (select 0.05*avg(netpaid)
                            from ssales)
 order by c_last_name ,c_first_name ,s_store_name;
 </input>
-    </astdump>
-    <astdump name="25_sql">
+    </parser-dump>
+    <parser-dump name="25_sql">
         <input>select
  i_item_id
  ,i_item_desc
@@ -1509,8 +1509,8 @@ order by c_last_name ,c_first_name ,s_store_name;
  ,s_store_id
  ,s_store_name
  limit 100;</input>
-    </astdump>
-    <astdump name="26_sql">
+    </parser-dump>
+    <parser-dump name="26_sql">
         <input>select  i_item_id,
         avg(cs_quantity) agg1,
         avg(cs_list_price) agg2,
@@ -1529,8 +1529,8 @@ order by c_last_name ,c_first_name ,s_store_name;
  group by i_item_id
  order by i_item_id
  limit 100;</input>
-    </astdump>
-    <astdump name="27_sql">
+    </parser-dump>
+    <parser-dump name="27_sql">
         <input>with results as
  (select i_item_id,
         s_state, 0 as g_state,
@@ -1564,8 +1564,8 @@ order by c_last_name ,c_first_name ,s_store_name;
         ) foo
   order by i_item_id, s_state
  limit 100;</input>
-    </astdump>
-    <astdump name="28_sql">
+    </parser-dump>
+    <parser-dump name="28_sql">
         <input>select  *
 from (select avg(ss_list_price) B1_LP
             ,count(ss_list_price) B1_CNT
@@ -1616,8 +1616,8 @@ from (select avg(ss_list_price) B1_LP
           or ss_coupon_amt between 7326 and 7326+1000
           or ss_wholesale_cost between 7 and 7+20)) B6
 limit 100;</input>
-    </astdump>
-    <astdump name="29_sql">
+    </parser-dump>
+    <parser-dump name="29_sql">
         <input>select
      i_item_id
     ,i_item_desc
@@ -1662,8 +1662,8 @@ limit 100;</input>
    ,s_store_id
    ,s_store_name
  limit 100;</input>
-    </astdump>
-    <astdump name="30_sql">
+    </parser-dump>
+    <parser-dump name="30_sql">
         <input>with customer_total_return as
  (select wr_returning_customer_sk as ctr_customer_sk
         ,ca_state as ctr_state,
@@ -1692,8 +1692,8 @@ limit 100;</input>
                   ,c_birth_day,c_birth_month,c_birth_year,c_birth_country,c_login,c_email_address
                   ,c_last_review_date,ctr_total_return
 limit 100;</input>
-    </astdump>
-    <astdump name="31_sql">
+    </parser-dump>
+    <parser-dump name="31_sql">
         <input>with ss as
  (select ca_county,d_qoy, d_year,sum(ss_ext_sales_price) as store_sales
  from store_sales,date_dim,customer_address
@@ -1743,8 +1743,8 @@ limit 100;</input>
     and case when ws2.web_sales &gt; 0 then ws3.web_sales/ws2.web_sales else null end
        &gt; case when ss2.store_sales &gt; 0 then ss3.store_sales/ss2.store_sales else null end
  order by ss1.ca_county;</input>
-    </astdump>
-    <astdump name="32_sql">
+    </parser-dump>
+    <parser-dump name="32_sql">
         <input>select  sum(cs_ext_discount_amt)  as &quot;excess discount amount&quot;
 from
    catalog_sales
@@ -1771,8 +1771,8 @@ and cs_ext_discount_amt
       )
 limit 100;
 </input>
-    </astdump>
-    <astdump name="33_sql">
+    </parser-dump>
+    <parser-dump name="33_sql">
         <input>with ss as (
  select
           i_manufact_id,sum(ss_ext_sales_price) total_sales
@@ -1845,8 +1845,8 @@ where i_category in (&apos;Electronics&apos;))
  group by i_manufact_id
  order by total_sales
 limit 100;</input>
-    </astdump>
-    <astdump name="34_sql">
+    </parser-dump>
+    <parser-dump name="34_sql">
         <input>select c_last_name
        ,c_first_name
        ,c_salutation
@@ -1875,8 +1875,8 @@ limit 100;</input>
     where ss_customer_sk = c_customer_sk
       and cnt between 15 and 20
     order by c_last_name,c_first_name,c_salutation,c_preferred_cust_flag desc;</input>
-    </astdump>
-    <astdump name="35_sql">
+    </parser-dump>
+    <parser-dump name="35_sql">
         <input>select
   ca_state,
   cd_gender,
@@ -1932,8 +1932,8 @@ limit 100;</input>
           cd_dep_employed_count,
           cd_dep_college_count
  limit 100;</input>
-    </astdump>
-    <astdump name="36_sql">
+    </parser-dump>
+    <parser-dump name="36_sql">
         <input>with results as
  (select
     sum(ss_net_profit) as ss_net_profit, sum(ss_ext_sales_price) as ss_ext_sales_price,
@@ -1976,8 +1976,8 @@ limit 100;</input>
   ,i_class desc
    limit 100;
 </input>
-    </astdump>
-    <astdump name="37_sql">
+    </parser-dump>
+    <parser-dump name="37_sql">
         <input>select  i_item_id
        ,i_item_desc
        ,i_current_price
@@ -1993,8 +1993,8 @@ limit 100;</input>
  order by i_item_id
  limit 100;
 </input>
-    </astdump>
-    <astdump name="38_sql">
+    </parser-dump>
+    <parser-dump name="38_sql">
         <input>select  count(*) from (
     select distinct c_last_name, c_first_name, d_date
     from store_sales, date_dim, customer
@@ -2015,8 +2015,8 @@ limit 100;</input>
       and d_month_seq between 1200 and 1200 + 11
 ) hot_cust
 limit 100;</input>
-    </astdump>
-    <astdump name="39a_sql">
+    </parser-dump>
+    <parser-dump name="39a_sql">
         <input>with inv as
 (select w_warehouse_name,w_warehouse_sk,i_item_sk,d_moy
        ,stdev,mean, case mean when 0 then null else stdev/mean end cov
@@ -2043,8 +2043,8 @@ order by inv1.w_warehouse_sk,inv1.i_item_sk,inv1.d_moy,inv1.mean,inv1.cov
         ,inv2.d_moy,inv2.mean, inv2.cov
 ;
 </input>
-    </astdump>
-    <astdump name="39b_sql">
+    </parser-dump>
+    <parser-dump name="39b_sql">
         <input>with inv as
 (select w_warehouse_name,w_warehouse_sk,i_item_sk,d_moy
        ,stdev,mean, case mean when 0 then null else stdev/mean end cov
@@ -2072,8 +2072,8 @@ order by inv1.w_warehouse_sk,inv1.i_item_sk,inv1.d_moy,inv1.mean,inv1.cov
         ,inv2.d_moy,inv2.mean, inv2.cov
 ;
 </input>
-    </astdump>
-    <astdump name="40_sql">
+    </parser-dump>
+    <parser-dump name="40_sql">
         <input>select
    w_state
   ,i_item_id
@@ -2100,8 +2100,8 @@ order by inv1.w_warehouse_sk,inv1.i_item_sk,inv1.d_moy,inv1.mean,inv1.cov
  order by w_state,i_item_id
 limit 100;
 </input>
-    </astdump>
-    <astdump name="41_sql">
+    </parser-dump>
+    <parser-dump name="41_sql">
         <input>select  distinct(i_product_name)
  from item i1
  where i_manufact_id between 738 and 738+40
@@ -2151,8 +2151,8 @@ limit 100;
         )))) &gt; 0
  order by i_product_name
  limit 100;</input>
-    </astdump>
-    <astdump name="42_sql">
+    </parser-dump>
+    <parser-dump name="42_sql">
         <input>select  dt.d_year
  	,item.i_category_id
  	,item.i_category
@@ -2172,8 +2172,8 @@ limit 100;
  		,item.i_category_id
  		,item.i_category
 limit 100 ;</input>
-    </astdump>
-    <astdump name="43_sql">
+    </parser-dump>
+    <parser-dump name="43_sql">
         <input>select  s_store_name, s_store_id,
         sum(case when (d_day_name=&apos;Sunday&apos;) then ss_sales_price else null end) sun_sales,
         sum(case when (d_day_name=&apos;Monday&apos;) then ss_sales_price else null end) mon_sales,
@@ -2190,8 +2190,8 @@ limit 100 ;</input>
  group by s_store_name, s_store_id
  order by s_store_name, s_store_id,sun_sales,mon_sales,tue_sales,wed_sales,thu_sales,fri_sales,sat_sales
  limit 100;</input>
-    </astdump>
-    <astdump name="44_sql">
+    </parser-dump>
+    <parser-dump name="44_sql">
         <input>select     asceding.rnk,  i1.i_product_name best_performing, i2.i_product_name worst_performing
 from(select *
      from (select item_sk
@@ -2230,8 +2230,8 @@ where
   order by asceding.rnk
 limit 100;
 </input>
-    </astdump>
-    <astdump name="45_sql">
+    </parser-dump>
+    <parser-dump name="45_sql">
         <input>select  ca_zip, ca_city, sum(ws_sales_price)
  from web_sales, customer, customer_address, date_dim, item
  where ws_bill_customer_sk = c_customer_sk
@@ -2249,8 +2249,8 @@ limit 100;
  group by ca_zip, ca_city
  order by ca_zip, ca_city
  limit 100;</input>
-    </astdump>
-    <astdump name="46_sql">
+    </parser-dump>
+    <parser-dump name="46_sql">
         <input>select  c_last_name
        ,c_first_name
        ,ca_city
@@ -2283,8 +2283,8 @@ limit 100;
           ,bought_city
           ,ss_ticket_number
   limit 100;</input>
-    </astdump>
-    <astdump name="47_sql">
+    </parser-dump>
+    <parser-dump name="47_sql">
         <input>with v1 as(
  select i_category, i_brand,
         s_store_name, s_company_name,
@@ -2335,8 +2335,8 @@ limit 100;
  order by sum_sales   - avg_monthly_sales  , 3
  limit 100;
 </input>
-    </astdump>
-    <astdump name="48_sql">
+    </parser-dump>
+    <parser-dump name="48_sql">
         <input>select sum (ss_quantity)
  from store_sales, store, customer_demographics, customer_address, date_dim
  where s_store_sk = ss_store_sk
@@ -2401,8 +2401,8 @@ limit 100;
   )
  )
 ;</input>
-    </astdump>
-    <astdump name="49_sql">
+    </parser-dump>
+    <parser-dump name="49_sql">
         <input>select
  &apos;web&apos; as channel
  ,web.item
@@ -2529,8 +2529,8 @@ limit 100;
  order by 1  ,4,5
  limit 100;
 </input>
-    </astdump>
-    <astdump name="50_sql">
+    </parser-dump>
+    <parser-dump name="50_sql">
         <input>select
    s_store_name
   ,s_company_id
@@ -2587,8 +2587,8 @@ order by s_store_name
         ,s_state
         ,s_zip
 limit 100;</input>
-    </astdump>
-    <astdump name="51_sql">
+    </parser-dump>
+    <parser-dump name="51_sql">
         <input>WITH web_tv as (
 select
   ws_item_sk item_sk, d_date, sum(ws_sales_price) sumws
@@ -2648,8 +2648,8 @@ where web_cumulative &gt; store_cumulative
 order by item_sk, d_date
 limit 100;
 </input>
-    </astdump>
-    <astdump name="52_sql">
+    </parser-dump>
+    <parser-dump name="52_sql">
         <input>select  dt.d_year
  	,item.i_brand_id brand_id
  	,item.i_brand brand
@@ -2669,8 +2669,8 @@ limit 100;
  	,ext_price desc
  	,brand_id
 limit 100 ;</input>
-    </astdump>
-    <astdump name="53_sql">
+    </parser-dump>
+    <parser-dump name="53_sql">
         <input>select  * from
 (select i_manufact_id,
 sum(ss_sales_price) sum_sales
@@ -2697,8 +2697,8 @@ order by avg_quarterly_sales,
 	 i_manufact_id
 limit 100;
 </input>
-    </astdump>
-    <astdump name="54_sql">
+    </parser-dump>
+    <parser-dump name="54_sql">
         <input>with my_customers as (
  select distinct c_customer_sk
         , c_current_addr_sk
@@ -2752,8 +2752,8 @@ limit 100;
  group by segment
  order by segment, num_customers
  limit 100;</input>
-    </astdump>
-    <astdump name="55_sql">
+    </parser-dump>
+    <parser-dump name="55_sql">
         <input>select  i_brand_id brand_id, i_brand brand,
  	sum(ss_ext_sales_price) ext_price
  from date_dim, store_sales, item
@@ -2765,8 +2765,8 @@ limit 100;
  group by i_brand, i_brand_id
  order by ext_price desc, i_brand_id
 limit 100 ;</input>
-    </astdump>
-    <astdump name="56_sql">
+    </parser-dump>
+    <parser-dump name="56_sql">
         <input>with ss as (
  select i_item_id,sum(ss_ext_sales_price) total_sales
  from
@@ -2832,8 +2832,8 @@ where i_color in (&apos;slate&apos;,&apos;blanched&apos;,&apos;burnished&apos;))
  group by i_item_id
  order by total_sales
  limit 100;</input>
-    </astdump>
-    <astdump name="57_sql">
+    </parser-dump>
+    <parser-dump name="57_sql">
         <input>with v1 as(
  select i_category, i_brand,
         cc_name,
@@ -2881,8 +2881,8 @@ where i_color in (&apos;slate&apos;,&apos;blanched&apos;,&apos;burnished&apos;))
  order by sum_sales  - avg_monthly_sales , 3
  limit 100;
 </input>
-    </astdump>
-    <astdump name="58_sql">
+    </parser-dump>
+    <parser-dump name="58_sql">
         <input>with ss_items as
  (select i_item_id item_id
         ,sum(ss_ext_sales_price) ss_item_rev
@@ -2945,8 +2945,8 @@ where i_color in (&apos;slate&apos;,&apos;blanched&apos;,&apos;burnished&apos;))
  order by item_id
          ,ss_item_rev
  limit 100;</input>
-    </astdump>
-    <astdump name="59_sql">
+    </parser-dump>
+    <parser-dump name="59_sql">
         <input>with wss as
  (select d_week_seq,
         ss_store_sk,
@@ -2988,8 +2988,8 @@ where i_color in (&apos;slate&apos;,&apos;blanched&apos;,&apos;burnished&apos;))
    and d_week_seq1=d_week_seq2-52
  order by s_store_name1,s_store_id1,d_week_seq1
 limit 100;</input>
-    </astdump>
-    <astdump name="60_sql">
+    </parser-dump>
+    <parser-dump name="60_sql">
         <input>with ss as (
  select
           i_item_id,sum(ss_ext_sales_price) total_sales
@@ -3065,8 +3065,8 @@ where i_category in (&apos;Music&apos;))
  order by i_item_id
       ,total_sales
  limit 100;</input>
-    </astdump>
-    <astdump name="61_sql">
+    </parser-dump>
+    <parser-dump name="61_sql">
         <input>select  promotions,total,cast(promotions as decimal(15,4))/cast(total as decimal(15,4))*100
 from
   (select sum(ss_ext_sales_price) promotions
@@ -3108,8 +3108,8 @@ from
    and   d_moy  = 11) all_sales
 order by promotions, total
 limit 100;</input>
-    </astdump>
-    <astdump name="62_sql">
+    </parser-dump>
+    <parser-dump name="62_sql">
         <input>select
    substr(w_warehouse_name,1,20)
   ,sm_type
@@ -3142,8 +3142,8 @@ order by substr(w_warehouse_name,1,20)
         ,sm_type
        ,web_name
 limit 100;</input>
-    </astdump>
-    <astdump name="63_sql">
+    </parser-dump>
+    <parser-dump name="63_sql">
         <input>select  *
 from (select i_manager_id
              ,sum(ss_sales_price) sum_sales
@@ -3171,8 +3171,8 @@ order by i_manager_id
         ,sum_sales
 limit 100;
 </input>
-    </astdump>
-    <astdump name="64_sql">
+    </parser-dump>
+    <parser-dump name="64_sql">
         <input>with cs_ui as
  (select cs_item_sk
         ,sum(cs_ext_list_price) as sale,sum(cr_refunded_cash+cr_reversed_charge+cr_store_credit) as refund
@@ -3289,8 +3289,8 @@ where cs1.item_sk=cs2.item_sk and
 order by cs1.product_name
        ,cs1.store_name
        ,cs2.cnt;</input>
-    </astdump>
-    <astdump name="65_sql">
+    </parser-dump>
+    <parser-dump name="65_sql">
         <input>select
 	s_store_name,
 	i_item_desc,
@@ -3317,8 +3317,8 @@ order by cs1.product_name
        i_item_sk = sc.ss_item_sk
  order by s_store_name, i_item_desc
 limit 100;</input>
-    </astdump>
-    <astdump name="66_sql">
+    </parser-dump>
+    <parser-dump name="66_sql">
         <input>select
          w_warehouse_name
  	,w_warehouse_sq_ft
@@ -3536,8 +3536,8 @@ limit 100;</input>
        ,year
  order by w_warehouse_name
  limit 100;</input>
-    </astdump>
-    <astdump name="67_sql">
+    </parser-dump>
+    <parser-dump name="67_sql">
         <input>with results as
 (     select i_category ,i_class ,i_brand ,i_product_name ,d_year ,d_qoy ,d_moy ,s_store_id
                   ,sum(coalesce(ss_sales_price*ss_quantity,0)) sumsales
@@ -3608,8 +3608,8 @@ order by i_category
         ,rk
 limit 100;
 </input>
-    </astdump>
-    <astdump name="68_sql">
+    </parser-dump>
+    <parser-dump name="68_sql">
         <input>select  c_last_name
        ,c_first_name
        ,ca_city
@@ -3649,8 +3649,8 @@ limit 100;
  order by c_last_name
          ,ss_ticket_number
  limit 100;</input>
-    </astdump>
-    <astdump name="69_sql">
+    </parser-dump>
+    <parser-dump name="69_sql">
         <input>select
   cd_gender,
   cd_marital_status,
@@ -3695,8 +3695,8 @@ limit 100;
           cd_purchase_estimate,
           cd_credit_rating
  limit 100;</input>
-    </astdump>
-    <astdump name="70_sql">
+    </parser-dump>
+    <parser-dump name="70_sql">
         <input>with results as
 ( select
     sum(ss_net_profit) as total_sum ,s_state ,s_county, 0 as gstate, 0 as g_county
@@ -3739,8 +3739,8 @@ select total_sum ,s_state ,s_county, 0 as g_state, 0 as g_county, 0 as lochierar
    ,rank_within_parent
  limit 100;
 </input>
-    </astdump>
-    <astdump name="71_sql">
+    </parser-dump>
+    <parser-dump name="71_sql">
         <input>select i_brand_id brand_id, i_brand brand,t_hour,t_minute,
  	sum(ext_price) ext_price
  from item, (select ws_ext_sales_price as ext_price,
@@ -3778,8 +3778,8 @@ select total_sum ,s_state ,s_county, 0 as g_state, 0 as g_county, 0 as lochierar
  group by i_brand, i_brand_id,t_hour,t_minute
  order by ext_price desc, i_brand_id
  ;</input>
-    </astdump>
-    <astdump name="72_sql">
+    </parser-dump>
+    <parser-dump name="72_sql">
         <input>select  i_item_desc
       ,w_warehouse_name
       ,d1.d_week_seq
@@ -3807,8 +3807,8 @@ group by i_item_desc,w_warehouse_name,d1.d_week_seq
 order by total_cnt desc, i_item_desc, w_warehouse_name, d_week_seq
 limit 100;
 </input>
-    </astdump>
-    <astdump name="73_sql">
+    </parser-dump>
+    <parser-dump name="73_sql">
         <input>select c_last_name
        ,c_first_name
        ,c_salutation
@@ -3834,8 +3834,8 @@ limit 100;
     where ss_customer_sk = c_customer_sk
       and cnt between 1 and 5
     order by cnt desc, c_last_name asc;</input>
-    </astdump>
-    <astdump name="74_sql">
+    </parser-dump>
+    <parser-dump name="74_sql">
         <input>with year_total as (
  select c_customer_id customer_id
        ,c_first_name customer_first_name
@@ -3894,8 +3894,8 @@ limit 100;
            &gt; case when t_s_firstyear.year_total &gt; 0 then t_s_secyear.year_total / t_s_firstyear.year_total else null end
  order by 1,1,1
 limit 100;</input>
-    </astdump>
-    <astdump name="75_sql">
+    </parser-dump>
+    <parser-dump name="75_sql">
         <input>WITH all_sales AS (
  SELECT d_year
        ,i_brand_id
@@ -3963,8 +3963,8 @@ limit 100;</input>
    AND CAST(curr_yr.sales_cnt AS DECIMAL(17,2))/CAST(prev_yr.sales_cnt AS DECIMAL(17,2))&lt;0.9
  ORDER BY sales_cnt_diff
  limit 100;</input>
-    </astdump>
-    <astdump name="76_sql">
+    </parser-dump>
+    <parser-dump name="76_sql">
         <input>select  channel, col_name, d_year, d_qoy, i_category, COUNT(*) sales_cnt, SUM(ext_sales_price) sales_amt FROM (
         SELECT &apos;store&apos; as channel, &apos;ss_store_sk&apos; col_name, d_year, d_qoy, i_category, ss_ext_sales_price ext_sales_price
          FROM store_sales, item, date_dim
@@ -3986,8 +3986,8 @@ limit 100;</input>
 GROUP BY channel, col_name, d_year, d_qoy, i_category
 ORDER BY channel, col_name, d_year, d_qoy, i_category
 limit 100;</input>
-    </astdump>
-    <astdump name="77_sql">
+    </parser-dump>
+    <parser-dump name="77_sql">
         <input>with ss as
  (select s_store_sk,
          sum(ss_ext_sales_price) as sales,
@@ -4103,8 +4103,8 @@ limit 100;</input>
 order by channel, id
  limit 100;
 </input>
-    </astdump>
-    <astdump name="78_sql">
+    </parser-dump>
+    <parser-dump name="78_sql">
         <input>with ws as
   (select d_year AS ws_sold_year, ws_item_sk,
     ws_bill_customer_sk ws_customer_sk,
@@ -4161,8 +4161,8 @@ order by
   round(ss_qty/(coalesce(ws_qty+cs_qty,1)),2)
 limit 100;
 </input>
-    </astdump>
-    <astdump name="79_sql">
+    </parser-dump>
+    <parser-dump name="79_sql">
         <input>select
   c_last_name,c_first_name,substr(s_city,1,30),ss_ticket_number,amt,profit
   from
@@ -4183,8 +4183,8 @@ limit 100;
     where ss_customer_sk = c_customer_sk
  order by c_last_name,c_first_name,substr(s_city,1,30), profit
 limit 100;</input>
-    </astdump>
-    <astdump name="80_sql">
+    </parser-dump>
+    <parser-dump name="80_sql">
         <input>with ssr as
  (select  s_store_id as store_id,
           sum(ss_ext_sales_price) as sales,
@@ -4293,8 +4293,8 @@ results as
  order by channel, id
  limit 100;
 </input>
-    </astdump>
-    <astdump name="81_sql">
+    </parser-dump>
+    <parser-dump name="81_sql">
         <input>with customer_total_return as
  (select cr_returning_customer_sk as ctr_customer_sk
         ,ca_state as ctr_state,
@@ -4323,8 +4323,8 @@ results as
                    ,ca_street_type,ca_suite_number,ca_city,ca_county,ca_state,ca_zip,ca_country,ca_gmt_offset
                   ,ca_location_type,ctr_total_return
  limit 100;</input>
-    </astdump>
-    <astdump name="82_sql">
+    </parser-dump>
+    <parser-dump name="82_sql">
         <input>select  i_item_id
        ,i_item_desc
        ,i_current_price
@@ -4340,8 +4340,8 @@ results as
  order by i_item_id
  limit 100;
 </input>
-    </astdump>
-    <astdump name="83_sql">
+    </parser-dump>
+    <parser-dump name="83_sql">
         <input>with sr_items as
  (select i_item_id item_id,
         sum(sr_return_quantity) sr_item_qty
@@ -4407,8 +4407,8 @@ results as
          ,sr_item_qty
  limit 100;
 </input>
-    </astdump>
-    <astdump name="84_sql">
+    </parser-dump>
+    <parser-dump name="84_sql">
         <input>select  c_customer_id as customer_id
        ,c_last_name || &apos;, &apos; || c_first_name as customername
  from customer
@@ -4427,8 +4427,8 @@ results as
    and sr_cdemo_sk = cd_demo_sk
  order by c_customer_id
  limit 100;</input>
-    </astdump>
-    <astdump name="85_sql">
+    </parser-dump>
+    <parser-dump name="85_sql">
         <input>select  substr(r_reason_desc,1,20)
        ,avg(ws_quantity)
        ,avg(wr_refunded_cash)
@@ -4510,8 +4510,8 @@ order by substr(r_reason_desc,1,20)
         ,avg(wr_refunded_cash)
         ,avg(wr_fee)
 limit 100;</input>
-    </astdump>
-    <astdump name="86_sql">
+    </parser-dump>
+    <parser-dump name="86_sql">
         <input>with results as
 ( select sum(ws_net_paid) as total_sum, i_category, i_class, 0 as g_category, 0 as g_class
  from
@@ -4545,8 +4545,8 @@ limit 100;</input>
     , rank_within_parent
  limit 100;
 </input>
-    </astdump>
-    <astdump name="87_sql">
+    </parser-dump>
+    <parser-dump name="87_sql">
         <input>select count(*)
 from ((select distinct c_last_name, c_first_name, d_date
        from store_sales, date_dim, customer
@@ -4567,8 +4567,8 @@ from ((select distinct c_last_name, c_first_name, d_date
          and d_month_seq between 1200 and 1200+11)
 ) cool_cust
 ;</input>
-    </astdump>
-    <astdump name="88_sql">
+    </parser-dump>
+    <parser-dump name="88_sql">
         <input>select  *
 from
  (select count(*) h8_30_to_9
@@ -4660,8 +4660,8 @@ from
           (household_demographics.hd_dep_count = 0 and household_demographics.hd_vehicle_count&lt;=0+2))
      and store.s_store_name = &apos;ese&apos;) s8
 ;</input>
-    </astdump>
-    <astdump name="89_sql">
+    </parser-dump>
+    <parser-dump name="89_sql">
         <input>select  *
 from(
 select i_category, i_class, i_brand,
@@ -4688,8 +4688,8 @@ group by i_category, i_class, i_brand,
 order by sum_sales  - avg_monthly_sales , s_store_name
 limit 100;
 </input>
-    </astdump>
-    <astdump name="90_sql">
+    </parser-dump>
+    <parser-dump name="90_sql">
         <input>select case when pmc!=0 then cast(amc as decimal(15,4))/cast(pmc as decimal(15,4)) else null end am_pm_ratio
  from ( select count(*) amc
        from web_sales, household_demographics , time_dim, web_page
@@ -4710,8 +4710,8 @@ limit 100;
  order by am_pm_ratio
  limit 100;
 </input>
-    </astdump>
-    <astdump name="91_sql">
+    </parser-dump>
+    <parser-dump name="91_sql">
         <input>select
         cc_call_center_id Call_Center,
         cc_name Call_Center_Name,
@@ -4740,8 +4740,8 @@ and     hd_buy_potential like &apos;Unknown%&apos;
 and     ca_gmt_offset           = -7
 group by cc_call_center_id,cc_name,cc_manager,cd_marital_status,cd_education_status
 order by sum(cr_net_loss) desc;</input>
-    </astdump>
-    <astdump name="92_sql">
+    </parser-dump>
+    <parser-dump name="92_sql">
         <input>select
    sum(ws_ext_discount_amt)  as &quot;Excess Discount Amount&quot;
 from
@@ -4770,8 +4770,8 @@ and ws_ext_discount_amt
 order by sum(ws_ext_discount_amt)
 limit 100;
 </input>
-    </astdump>
-    <astdump name="93_sql">
+    </parser-dump>
+    <parser-dump name="93_sql">
         <input>select  ss_customer_sk
             ,sum(act_sales) sumsales
       from (select ss_item_sk
@@ -4788,8 +4788,8 @@ limit 100;
       order by sumsales, ss_customer_sk
 limit 100;
 </input>
-    </astdump>
-    <astdump name="94_sql">
+    </parser-dump>
+    <parser-dump name="94_sql">
         <input>select
    count(distinct ws_order_number) as &quot;order count&quot;
   ,sum(ws_ext_ship_cost) as &quot;total shipping cost&quot;
@@ -4817,8 +4817,8 @@ and not exists(select *
 order by count(distinct ws_order_number)
 limit 100;
 </input>
-    </astdump>
-    <astdump name="95_sql">
+    </parser-dump>
+    <parser-dump name="95_sql">
         <input>with ws_wh as
 (select ws1.ws_order_number,ws1.ws_warehouse_sk wh1,ws2.ws_warehouse_sk wh2
  from web_sales ws1,web_sales ws2
@@ -4849,8 +4849,8 @@ and ws1.ws_order_number in (select wr_order_number
 order by count(distinct ws_order_number)
 limit 100;
 </input>
-    </astdump>
-    <astdump name="96_sql">
+    </parser-dump>
+    <parser-dump name="96_sql">
         <input>select  count(*)
 from store_sales
     ,household_demographics
@@ -4864,8 +4864,8 @@ where ss_sold_time_sk = time_dim.t_time_sk
     and store.s_store_name = &apos;ese&apos;
 order by count(*)
 limit 100;</input>
-    </astdump>
-    <astdump name="97_sql">
+    </parser-dump>
+    <parser-dump name="97_sql">
         <input>with ssci as (
 select ss_customer_sk customer_sk
       ,ss_item_sk item_sk
@@ -4888,8 +4888,8 @@ group by cs_bill_customer_sk
 from ssci full outer join csci on (ssci.customer_sk=csci.customer_sk
                                and ssci.item_sk = csci.item_sk)
 limit 100;</input>
-    </astdump>
-    <astdump name="98_sql">
+    </parser-dump>
+    <parser-dump name="98_sql">
         <input>select i_item_id
       ,i_item_desc
       ,i_category
@@ -4922,8 +4922,8 @@ order by
          ,revenueratio
         ;
 </input>
-    </astdump>
-    <astdump name="99_sql">
+    </parser-dump>
+    <parser-dump name="99_sql">
         <input>select
    substr(w_warehouse_name,1,20)
   ,sm_type
@@ -4956,5 +4956,5 @@ order by substr(w_warehouse_name,1,20)
         ,sm_type
         ,cc_name
 limit 100;</input>
-    </astdump>
-</astdumps>
+    </parser-dump>
+</parser-dumps>

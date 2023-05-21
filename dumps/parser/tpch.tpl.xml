@@ -1,5 +1,5 @@
-<astdumps>
-    <astdump name="tpch_1">
+<parser-dumps>
+    <parser-dump name="tpch_1">
         <input>
 select
     l_returnflag,
@@ -23,8 +23,8 @@ order by
     l_returnflag,
     l_linestatus
         </input>
-    </astdump>
-    <astdump name="tpch_2">
+    </parser-dump>
+    <parser-dump name="tpch_2">
         <input>
 select
         s_acctbal,
@@ -72,8 +72,8 @@ order by
 limit
 	100
         </input>
-    </astdump>
-    <astdump name="tpch_3">
+    </parser-dump>
+    <parser-dump name="tpch_3">
         <input>
 select
         l_orderkey,
@@ -100,8 +100,8 @@ order by
 limit
 	10
         </input>
-    </astdump>
-    <astdump name="tpch_4">
+    </parser-dump>
+    <parser-dump name="tpch_4">
         <input>
 select
         o_orderpriority,
@@ -125,8 +125,8 @@ group by
 order by
         o_orderpriority
         </input>
-    </astdump>
-    <astdump name="tpch_5">
+    </parser-dump>
+    <parser-dump name="tpch_5">
         <input>
 select
         n_name,
@@ -154,8 +154,8 @@ order by
         revenue desc
 
         </input>
-    </astdump>
-    <astdump name="tpch_6">
+    </parser-dump>
+    <parser-dump name="tpch_6">
         <input>
 select
         sum(l_extendedprice * l_discount) as revenue
@@ -167,8 +167,8 @@ where
         and l_discount between 0.06 - 0.01 and 0.06 + 0.01
         and l_quantity &#60; 24
         </input>
-    </astdump>
-    <astdump name="tpch_7">
+    </parser-dump>
+    <parser-dump name="tpch_7">
         <input>
 select
         supp_nation,
@@ -210,8 +210,8 @@ order by
         cust_nation,
         l_year
         </input>
-    </astdump>
-    <astdump name="tpch_8">
+    </parser-dump>
+    <parser-dump name="tpch_8">
         <input>
 select
         o_year,
@@ -251,8 +251,8 @@ group by
 order by
         o_year
         </input>
-    </astdump>
-    <astdump name="tpch_9">
+    </parser-dump>
+    <parser-dump name="tpch_9">
         <input>
 select
         nation,
@@ -287,8 +287,8 @@ order by
         nation,
         o_year desc
         </input>
-    </astdump>
-    <astdump name="tpch_10">
+    </parser-dump>
+    <parser-dump name="tpch_10">
         <input>
 select
         c_custkey,
@@ -324,8 +324,8 @@ order by
 limit
 	20
         </input>
-    </astdump>
-    <astdump name="tpch_11">
+    </parser-dump>
+    <parser-dump name="tpch_11">
         <input>
 select
         ps_partkey,
@@ -355,8 +355,8 @@ group by
 order by
         "value" desc
         </input>
-    </astdump>
-    <astdump name="tpch_12">
+    </parser-dump>
+    <parser-dump name="tpch_12">
         <input>
 select
         l_shipmode,
@@ -387,8 +387,8 @@ group by
 order by
         l_shipmode
         </input>
-    </astdump>
-    <astdump name="tpch_13">
+    </parser-dump>
+    <parser-dump name="tpch_13">
         <input>
 select
         c_count,
@@ -411,8 +411,8 @@ order by
         custdist desc,
         c_count desc
         </input>
-    </astdump>
-    <astdump name="tpch_14">
+    </parser-dump>
+    <parser-dump name="tpch_14">
         <input>
 select
         100.00 * sum(case
@@ -428,8 +428,8 @@ where
         and l_shipdate &#62;= date '1995-09-01'
         and l_shipdate &#60; date '1995-10-01'
         </input>
-    </astdump>
-    <astdump name="tpch_15">
+    </parser-dump>
+    <parser-dump name="tpch_15">
         <input>
 with revenue as (
 	select
@@ -462,8 +462,8 @@ where
 order by
 	s_suppkey
         </input>
-    </astdump>
-    <astdump name="tpch_16">
+    </parser-dump>
+    <parser-dump name="tpch_16">
         <input>
 select
         p_brand,
@@ -496,8 +496,8 @@ order by
         p_type,
         p_size
         </input>
-    </astdump>
-    <astdump name="tpch_17">
+    </parser-dump>
+    <parser-dump name="tpch_17">
         <input>
 select
         sum(l_extendedprice) / 7.0 as avg_yearly
@@ -517,8 +517,8 @@ where
                         l_partkey = p_partkey
         )
         </input>
-    </astdump>
-    <astdump name="tpch_18">
+    </parser-dump>
+    <parser-dump name="tpch_18">
         <input>
 select
         c_name,
@@ -555,8 +555,8 @@ order by
 limit
 	100
         </input>
-    </astdump>
-    <astdump name="tpch_19">
+    </parser-dump>
+    <parser-dump name="tpch_19">
         <input>
 select
         sum(l_extendedprice* (1 - l_discount)) as revenue
@@ -594,8 +594,8 @@ where
                 and l_shipinstruct = 'DELIVER IN PERSON'
         )
         </input>
-    </astdump>
-    <astdump name="tpch_20">
+    </parser-dump>
+    <parser-dump name="tpch_20">
         <input>
 select
         s_name,
@@ -635,8 +635,8 @@ where
 order by
         s_name
         </input>
-    </astdump>
-    <astdump name="tpch_21">
+    </parser-dump>
+    <parser-dump name="tpch_21">
         <input>
 select
         s_name,
@@ -680,8 +680,8 @@ order by
 limit
 	100
         </input>
-    </astdump>
-    <astdump name="tpch_22">
+    </parser-dump>
+    <parser-dump name="tpch_22">
         <input>
 select
         cntrycode,
@@ -721,5 +721,5 @@ group by
 order by
         cntrycode
         </input>
-    </astdump>
-</astdumps>
+    </parser-dump>
+</parser-dumps>
