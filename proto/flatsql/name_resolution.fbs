@@ -25,6 +25,8 @@ struct QualifiedColumnName {
 }
 
 struct TableColumnDeclaration {
+    // The id of the AST node that created this column declaration
+    ast_node_id: uint32;
     // The name of the column that is referenced
     column_name: uint32;
 }
