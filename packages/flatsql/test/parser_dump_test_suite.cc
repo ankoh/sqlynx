@@ -2,6 +2,7 @@
 #include "flatsql/parser/scanner.h"
 #include "flatsql/program.h"
 #include "flatsql/testing/parser_dump_test.h"
+#include "flatsql/testing/xml_tests.h"
 #include "gtest/gtest.h"
 #include "pugixml.hpp"
 
@@ -20,7 +21,7 @@ TEST_P(ParserDumpTestSuite, Test) {
     pugi::xml_document out;
     ParserDumpTest::EncodeProgram(out, *packed_program, test->input);
 
-    ASSERT_TRUE(test->Matches(out));
+    ASSERT_TRUE(Matches(out, test->expected));
 }
 
 // clang-format off

@@ -115,34 +115,6 @@ void ParserDumpTest::EncodeProgram(pugi::xml_node root, const proto::ProgramT& p
     }
 }
 
-/// Matches the expected result?
-::testing::AssertionResult ParserDumpTest::Matches(const pugi::xml_node& actual) const {
-    std::stringstream expected_ss;
-    std::stringstream actual_ss;
-    expected.print(expected_ss);
-    actual.print(actual_ss);
-    auto expected_str = expected_ss.str();
-    auto actual_str = actual_ss.str();
-    if (expected_str == actual_str) return ::testing::AssertionSuccess();
-
-    std::stringstream err;
-
-    err << std::endl;
-    err << "OUTPUT" << std::endl;
-    err << "----------------------------------------" << std::endl;
-    err << actual_str << std::endl;
-
-    err << "EXPECTED" << std::endl;
-    err << "----------------------------------------" << std::endl;
-    std::vector<std::string> expected_lines, actual_lines;
-    ::testing::internal::SplitString(expected_str, '\n', &expected_lines);
-    ::testing::internal::SplitString(actual_str, '\n', &actual_lines);
-    err << ::testing::internal::edit_distance::CreateUnifiedDiff(actual_lines, expected_lines);
-    err << std::endl;
-
-    return ::testing::AssertionFailure() << err.str();
-}
-
 // The files
 static std::unordered_map<std::string, std::vector<ParserDumpTest>> TEST_FILES;
 
