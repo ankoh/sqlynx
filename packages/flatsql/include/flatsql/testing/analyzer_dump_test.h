@@ -20,10 +20,18 @@ struct AnalyzerDumpTest {
 
     /// The name
     std::string name;
-    /// The input
-    std::string input;
-    /// The expected output
-    pugi::xml_document expected;
+    /// The schema
+    std::string schema;
+    /// The script
+    std::string script;
+    /// The tables
+    pugi::xml_document tables;
+    /// The table references
+    pugi::xml_document table_references;
+    /// The column references
+    pugi::xml_document column_references;
+    /// The join edges
+    pugi::xml_document join_edges;
 
     /// Matches the expected output?
     ::testing::AssertionResult Matches(const pugi::xml_node& actual) const;

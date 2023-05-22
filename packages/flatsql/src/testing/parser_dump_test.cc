@@ -149,7 +149,6 @@ static std::unordered_map<std::string, std::vector<ParserDumpTest>> TEST_FILES;
 // Load the tests
 void ParserDumpTest::LoadTests(std::filesystem::path& source_dir) {
     auto dumps_dir = source_dir / "dumps" / "parser";
-
     std::cout << "Loading grammar tests at: " << dumps_dir << std::endl;
 
     for (auto& p : std::filesystem::directory_iterator(dumps_dir)) {

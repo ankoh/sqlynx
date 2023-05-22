@@ -256,6 +256,7 @@ if(NOT WASM)
   target_link_libraries(flatsql_testutils flatsql pugixml gtest)
 
   set(TEST_SRC
+    ${CMAKE_SOURCE_DIR}/test/analyzer_dump_test_suite.cc
     ${CMAKE_SOURCE_DIR}/test/parser_dump_test_suite.cc
     ${CMAKE_SOURCE_DIR}/test/chunk_buffer_test.cc
     ${CMAKE_SOURCE_DIR}/test/utils_test.cc
