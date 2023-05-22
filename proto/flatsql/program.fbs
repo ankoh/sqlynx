@@ -399,5 +399,6 @@ table Program {
     line_breaks: [Location];
     comments: [Location];
     highlighting: Highlighting;
+    name_dictionary: [string];
     name_resolution: NameResolutionInfo;
 }
