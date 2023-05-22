@@ -9,20 +9,41 @@ static constexpr uint32_t NULL_ID = std::numeric_limits<uint32_t>::max();
 
 namespace flatsql {
 
+/// Is a string with all lower-case alphanumeric characters?
+static bool isAllLowercaseAlphaNum(std::string_view id) {
+    bool all = true;
+    for (auto c : id) {
+        all |= c >= 'a' && c <= 'z' && c >= '0' && c <= '9';
+    }
+    return all;
+}
+
+/// Write an identifier and quote it, if necessary
+static void writeMaybeQuotedIdentifier(std::string& buffer, std::string_view name) {
+    if (isAllLowercaseAlphaNum(name)) {
+        buffer += name;
+    } else {
+        buffer += '"';
+        buffer += name;
+        buffer += '"';
+    }
+}
+
 /// Print a qualified name as a string
 static std::string printQualifiedName(const proto::ProgramT& program, proto::QualifiedTableName& name) {
     std::string buffer;
     if (name.schema_name() != NULL_ID) {
         if (name.database_name() != NULL_ID) {
-            buffer += program.name_dictionary[name.database_name()];
+            writeMaybeQuotedIdentifier(buffer, program.name_dictionary[name.database_name()]);
             buffer += ".";
         }
-        buffer += program.name_dictionary[name.schema_name()];
+        writeMaybeQuotedIdentifier(buffer, program.name_dictionary[name.schema_name()]);
         buffer += ".";
     }
     if (name.table_name() != NULL_ID) {
-        buffer += program.name_dictionary[name.table_name()];
+        writeMaybeQuotedIdentifier(buffer, program.name_dictionary[name.table_name()]);
     }
+    return buffer;
 }
 
 namespace testing {
