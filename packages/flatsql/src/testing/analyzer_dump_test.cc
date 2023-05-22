@@ -1,5 +1,6 @@
 #include "flatsql/testing/analyzer_dump_test.h"
 
+#include <fstream>
 #include <limits>
 
 #include "flatsql/proto/proto_generated.h"
@@ -164,6 +165,95 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const proto::ProgramT&
         writeNodes(xml_edge, program, text, edge->nodes_0, 0);
         writeNodes(xml_edge, program, text, edge->nodes_1, 1);
     }
+}
+
+// The files
+static std::unordered_map<std::string, std::vector<AnalyzerDumpTest>> TEST_FILES;
+
+/// Get the grammar tests
+void AnalyzerDumpTest::LoadTests(std::filesystem::path& source_dir) {
+    auto dumps_dir = source_dir / "dumps" / "analyzer";
+    std::cout << "Loading analyzer tests at: " << dumps_dir << std::endl;
+
+    for (auto& p : std::filesystem::directory_iterator(dumps_dir)) {
+        auto filename = p.path().filename().string();
+        if (p.path().extension().string() != ".xml") continue;
+
+        // Make sure that it's no template
+        auto tpl = p.path();
+        tpl.replace_extension();
+        if (tpl.extension() == ".tpl") continue;
+
+        // Open input stream
+        std::ifstream in(p.path(), std::ios::in | std::ios::binary);
+        if (!in) {
+            std::cout << "[ SETUP    ] failed to read test file: " << filename << std::endl;
+            continue;
+        }
+
+        // Parse xml document
+        pugi::xml_document doc;
+        doc.load(in);
+        auto root = doc.child("analyzer-dumps");
+
+        // Read tests
+        std::vector<AnalyzerDumpTest> tests;
+        for (auto test : root.children()) {
+            // Create test
+            tests.emplace_back();
+            auto& t = tests.back();
+            t.name = test.attribute("name").as_string();
+            t.schema = test.child("schema").last_child().value();
+            t.script = test.child("script").last_child().value();
+
+            // Read the tables
+            pugi::xml_document tables;
+            for (auto s : test.child("tables").children()) {
+                tables.append_copy(s);
+            }
+            t.tables = std::move(tables);
+
+            // Read the table refs
+            pugi::xml_document table_refs;
+            for (auto s : test.child("table-references").children()) {
+                table_refs.append_copy(s);
+            }
+            t.table_references = std::move(table_refs);
+
+            // Read the column refs
+            pugi::xml_document column_refs;
+            for (auto s : test.child("column-references").children()) {
+                column_refs.append_copy(s);
+            }
+            t.column_references = std::move(column_refs);
+
+            // Read the join edges
+            pugi::xml_document join_edges;
+            for (auto s : test.child("join-edges").children()) {
+                join_edges.append_copy(s);
+            }
+            t.join_edges = std::move(join_edges);
+        }
+
+        std::cout << "[ SETUP    ] " << filename << ": " << tests.size() << " tests" << std::endl;
+
+        // Register test
+        TEST_FILES.insert({filename, std::move(tests)});
+    }
+}
+
+// Get the tests
+std::vector<const AnalyzerDumpTest*> AnalyzerDumpTest::GetTests(std::string_view filename) {
+    std::string name{filename};
+    auto iter = TEST_FILES.find(name);
+    if (iter == TEST_FILES.end()) {
+        return {};
+    }
+    std::vector<const AnalyzerDumpTest*> tests;
+    for (auto& test : iter->second) {
+        tests.emplace_back(&test);
+    }
+    return tests;
 }
 
 }  // namespace testing
