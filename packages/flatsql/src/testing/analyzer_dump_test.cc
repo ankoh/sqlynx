@@ -168,9 +168,6 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const proto::ProgramT&
     }
 }
 
-/// Matches the expected result?
-::testing::AssertionResult AnalyzerDumpTest::Matches(const pugi::xml_node& actual) const {}
-
 // The files
 static std::unordered_map<std::string, std::vector<AnalyzerDumpTest>> TEST_FILES;
 
