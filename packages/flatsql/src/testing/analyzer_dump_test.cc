@@ -5,6 +5,7 @@
 
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/testing/xml_tests.h"
+#include "gtest/gtest.h"
 
 static constexpr uint32_t NULL_ID = std::numeric_limits<uint32_t>::max();
 
@@ -166,6 +167,9 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const proto::ProgramT&
         writeNodes(xml_edge, program, text, edge->nodes_1, 1);
     }
 }
+
+/// Matches the expected result?
+::testing::AssertionResult AnalyzerDumpTest::Matches(const pugi::xml_node& actual) const {}
 
 // The files
 static std::unordered_map<std::string, std::vector<AnalyzerDumpTest>> TEST_FILES;

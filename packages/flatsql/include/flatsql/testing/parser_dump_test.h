@@ -30,9 +30,6 @@ struct ParserDumpTest {
     /// The expected output
     pugi::xml_document expected;
 
-    /// Matches the expected output?
-    ::testing::AssertionResult Matches(const pugi::xml_node& actual) const;
-
     /// Encode a program
     static void EncodeProgram(pugi::xml_node root, const proto::ProgramT& program, std::string_view text);
     /// Get the grammar tests
