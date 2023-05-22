@@ -13,6 +13,8 @@ namespace parser {
 class ParseContext;
 }  // namespace parser
 
+class Analyzer;
+
 using Key = proto::AttributeKey;
 using Location = proto::Location;
 using NodeID = uint32_t;
@@ -92,6 +94,29 @@ class ParsedProgram {
 
     /// Build the program
     std::shared_ptr<proto::ProgramT> Pack();
+};
+
+class AnalyzedProgram {
+   public:
+    /// The scanned program
+    ScannedProgram& scanned;
+    /// The scanned program
+    ParsedProgram& parsed;
+    /// The table declarations
+    std::vector<std::unique_ptr<proto::TableDeclarationT>> table_declarations;
+    /// The table references
+    std::vector<proto::TableReference> table_references;
+    /// The column_references
+    std::vector<proto::ColumnReference> column_references;
+    /// The column_references
+    std::vector<std::unique_ptr<proto::HyperEdgeT>> join_edges;
+
+   public:
+    /// Constructor
+    AnalyzedProgram(Analyzer&& analyzer);
+
+    /// Build the program
+    std::shared_ptr<proto::NameResolutionInfoT> Pack();
 };
 
 }  // namespace flatsql
