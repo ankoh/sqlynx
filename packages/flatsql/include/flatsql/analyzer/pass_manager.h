@@ -41,7 +41,7 @@ class PassManager {
     /// Constructor
     PassManager(ParsedProgram& parser);
     /// Execute a pass
-    void Execute(std::span<std::reference_wrapper<LTRPass>> passes);
+    void Execute(LTRPass& pass);
 };
 
 }  // namespace flatsql
