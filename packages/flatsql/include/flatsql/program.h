@@ -18,12 +18,9 @@ class Analyzer;
 using Key = proto::AttributeKey;
 using Location = proto::Location;
 using NodeID = uint32_t;
-using NameID = size_t;
+using NameID = uint32_t;
 
-inline std::ostream& operator<<(std::ostream& out, const proto::Location& loc) {
-    out << "[" << loc.offset() << "," << (loc.offset() + loc.length()) << "[";
-    return out;
-}
+static constexpr uint32_t NULL_ID = std::numeric_limits<uint32_t>::max();
 
 /// A statement
 class Statement {
@@ -108,9 +105,9 @@ class AnalyzedProgram {
     std::vector<std::unique_ptr<proto::TableDeclarationT>> table_declarations;
     /// The table references
     std::vector<proto::TableReference> table_references;
-    /// The column_references
+    /// The column references
     std::vector<proto::ColumnReference> column_references;
-    /// The column_references
+    /// The join edges
     std::vector<std::unique_ptr<proto::HyperEdgeT>> join_edges;
 
    public:
