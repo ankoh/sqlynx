@@ -113,10 +113,10 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                     }
                 }
                 // Add column reference
-                node_state.column_references.emplace_back();
-                auto& col_ref = node_state.column_references.back();
+                auto& col_ref = column_references.Append(proto::ColumnReference());
                 col_ref.mutate_ast_node_id(node_id);
                 col_ref.mutable_column_name() = name;
+                node_state.column_references.push_back(&col_ref);
                 break;
             }
 
@@ -156,11 +156,11 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                     alias = alias_node->children_begin_or_value();
                 }
                 // Add table reference
-                node_state.table_references.emplace_back();
-                auto& table_ref = node_state.table_references.back();
+                auto& table_ref = table_references.Append(proto::TableReference());
                 table_ref.mutate_ast_node_id(node_id);
                 table_ref.mutable_table_name() = name;
                 table_ref.mutate_alias_name(alias);
+                node_state.table_references.push_back(&table_ref);
                 break;
             }
 
