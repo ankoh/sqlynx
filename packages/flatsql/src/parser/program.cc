@@ -74,4 +74,7 @@ std::shared_ptr<proto::ProgramT> ParsedProgram::Pack() {
     return out;
 }
 
+/// Constructor
+AnalyzedProgram::AnalyzedProgram(ScannedProgram& scanned, ParsedProgram& parsed) : scanned(scanned), parsed(parsed) {}
+
 }  // namespace flatsql

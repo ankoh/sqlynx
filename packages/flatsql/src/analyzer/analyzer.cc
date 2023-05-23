@@ -6,15 +6,18 @@
 
 namespace flatsql {
 
-Analyzer::Analyzer(ScannedProgram& scanned, ParsedProgram& parsed)
+Analyzer::Analyzer(ScannedProgram& scanned, ParsedProgram& parsed,
+                   std::optional<std::reference_wrapper<AnalyzedProgram>> schema)
     : scanned_program(scanned),
       parsed_program(parsed),
       pass_manager(parsed),
-      name_resolution(parsed, attribute_index) {}
+      name_resolution(parsed, attribute_index),
+      schema(std::move(schema)) {}
 
-std::unique_ptr<AnalyzedProgram> Analyzer::Analyze(ScannedProgram& scanned, ParsedProgram& parsed) {
+std::unique_ptr<AnalyzedProgram> Analyzer::Analyze(ScannedProgram& scanned, ParsedProgram& parsed,
+                                                   std::optional<std::reference_wrapper<AnalyzedProgram>> schema) {
     // Run analysis passes
-    Analyzer az{scanned, parsed};
+    Analyzer az{scanned, parsed, std::move(schema)};
     az.pass_manager.Execute(az.name_resolution);
 
     // Build program

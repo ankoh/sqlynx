@@ -233,7 +233,6 @@ set(LIB_SRC
     ${CMAKE_SOURCE_DIR}/src/parser/parse_context.cc
     ${CMAKE_SOURCE_DIR}/src/parser/program.cc
     ${CMAKE_SOURCE_DIR}/src/parser/scanner.cc
-    ${CMAKE_SOURCE_DIR}/src/utils/attribute_index.cc
     ${CMAKE_SOURCE_DIR}/src/utils/rope.cc)
 
 if(WASM)

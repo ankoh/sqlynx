@@ -1,4 +1,6 @@
+#include <cassert>
 #include <deque>
+#include <optional>
 
 /// A wake vector maintains state "in the wake" of a read front.
 /// In FlatSQL, analysis passes are ususally scanning the ast buffer linearly either ltr or rtl.
@@ -25,12 +27,12 @@ template <typename ValueType> struct WakeVector {
     }
     /// Append an element
     template <typename... Params> ValueType& EmplaceBack(Params&&... args) {
-        return values.emplace_back(std::forward(args)...).value();
+        return values.emplace_back(ValueType{std::forward(args)...}).value();
     }
     /// Erase an element
     void Erase(size_t index) {
-        assert(index > offset);
-        assert(index <= (offset + values.size()));
+        assert(index >= offset);
+        assert(index < (offset + values.size()));
         // Erase the element
         values[index - offset].reset();
         // If we erased the first element, truncate from left

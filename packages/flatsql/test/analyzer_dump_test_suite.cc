@@ -1,3 +1,4 @@
+#include "flatsql/analyzer/analyzer.h"
 #include "flatsql/parser/parse_context.h"
 #include "flatsql/parser/scanner.h"
 #include "flatsql/program.h"
@@ -14,8 +15,16 @@ TEST_P(AnalyzerDumpTestSuite, Test) {
     auto* test = GetParam();
     auto schema = rope::Rope::FromString(1024, test->schema);
     auto script = rope::Rope::FromString(1024, test->script);
+
+    // Analyze schema
     auto schema_scan = parser::Scanner::Scan(schema);
     auto schema_parsed = parser::ParseContext::Parse(*schema_scan);
+    auto schema_analyzed = Analyzer::Analyze(*schema_scan, *schema_parsed);
+
+    // Analyze script
+    auto script_scan = parser::Scanner::Scan(script);
+    auto script_parsed = parser::ParseContext::Parse(*script_scan);
+    auto script_analyzed = Analyzer::Analyze(*script_scan, *script_parsed, *schema_analyzed);
 }
 
 // clang-format off
