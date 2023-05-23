@@ -116,7 +116,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 auto& col_ref = column_references.Append(proto::ColumnReference());
                 col_ref.mutate_ast_node_id(node_id);
                 col_ref.mutable_column_name() = name;
-                node_state.column_references.push_back(&col_ref);
+                node_state.column_references.push_back(col_ref);
                 break;
             }
 
@@ -160,7 +160,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 table_ref.mutate_ast_node_id(node_id);
                 table_ref.mutable_table_name() = name;
                 table_ref.mutate_alias_name(alias);
-                node_state.table_references.push_back(&table_ref);
+                node_state.table_references.push_back(table_ref);
                 break;
             }
 
