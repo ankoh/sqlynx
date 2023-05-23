@@ -3,11 +3,10 @@
 #include <fstream>
 #include <limits>
 
+#include "flatsql/program.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/testing/xml_tests.h"
 #include "gtest/gtest.h"
-
-static constexpr uint32_t NULL_ID = std::numeric_limits<uint32_t>::max();
 
 namespace flatsql {
 

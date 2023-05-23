@@ -2,7 +2,6 @@
 
 #include <iterator>
 
-#include "flatsql/analyzer/schema_info.h"
 #include "flatsql/program.h"
 #include "flatsql/proto/proto_generated.h"
 
@@ -20,9 +19,10 @@ template <typename T> static void merge(std::vector<T>& left, std::vector<T>&& r
 
 /// Merge two node states
 void NameResolutionPass::NodeState::Merge(NodeState&& other) {
+    merge(table_declarations, std::move(other.table_declarations));
     merge(table_references, std::move(other.table_references));
     merge(column_references, std::move(other.column_references));
-    merge(table_definitions, std::move(other.table_definitions));
+    merge(join_edges, std::move(other.join_edges));
 }
 
 /// Constructor
@@ -80,47 +80,50 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
 
             // Read a column reference
             case proto::NodeType::OBJECT_SQL_COLUMN_REF: {
-                schema::QualifiedColumnName name;
+                proto::QualifiedColumnName name;
                 // Read column ref path
                 auto children = nodes.subspan(node.children_begin_or_value(), node.children_count());
                 auto attrs = attribute_index.Load(children);
                 auto column_ref_node = attrs[proto::AttributeKey::SQL_COLUMN_REF_PATH];
                 if (column_ref_node && column_ref_node->node_type() == sx::NodeType::ARRAY) {
                     auto name_path = read_name_path(*column_ref_node);
-                    name.node_id = column_ref_node - nodes.data();
+                    name.mutate_ast_node_id(column_ref_node - nodes.data());
                     // Build the qualified column name
                     switch (name_path.size()) {
                         case 4:
-                            name.schema = name_path[0];
-                            name.database = name_path[1];
-                            name.table = name_path[2];
-                            name.column = name_path[3];
+                            name.mutate_schema_name(name_path[0]);
+                            name.mutate_database_name(name_path[1]);
+                            name.mutate_table_name(name_path[2]);
+                            name.mutate_column_name(name_path[3]);
                             break;
                         case 3:
-                            name.database = name_path[0];
-                            name.table = name_path[1];
-                            name.column = name_path[2];
+                            name.mutate_database_name(name_path[0]);
+                            name.mutate_table_name(name_path[1]);
+                            name.mutate_column_name(name_path[2]);
                             break;
                         case 2:
-                            name.table = name_path[0];
-                            name.column = name_path[1];
+                            name.mutate_table_name(name_path[0]);
+                            name.mutate_column_name(name_path[1]);
                             break;
                         case 1:
-                            name.column = name_path[0];
+                            name.mutate_column_name(name_path[0]);
                             break;
                         default:
                             break;
                     }
                 }
                 // Add column reference
-                node_state.column_references.emplace_back(node_id, name);
+                node_state.column_references.emplace_back();
+                auto& col_ref = node_state.column_references.back();
+                col_ref.mutate_ast_node_id(node_id);
+                col_ref.mutable_column_name() = name;
                 break;
             }
 
             // Read a table reference
             case proto::NodeType::OBJECT_SQL_TABLEREF: {
-                schema::QualifiedTableName name;
-                std::optional<NodeID> alias;
+                proto::QualifiedTableName name;
+                NodeID alias = NULL_ID;
 
                 // Read a table ref name
                 auto children = nodes.subspan(node.children_begin_or_value(), node.children_count());
@@ -128,20 +131,20 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 auto table_ref_node = attrs[proto::AttributeKey::SQL_TABLEREF_NAME];
                 if (table_ref_node && table_ref_node->node_type() == sx::NodeType::ARRAY) {
                     auto name_path = read_name_path(*table_ref_node);
-                    name.node_id = table_ref_node - nodes.data();
+                    name.mutate_ast_node_id(table_ref_node - nodes.data());
                     // Build the qualified table name
                     switch (tmp_name_path.size()) {
                         case 3:
-                            name.schema = name_path[0];
-                            name.database = name_path[1];
-                            name.table = name_path[2];
+                            name.mutate_schema_name(name_path[0]);
+                            name.mutate_database_name(name_path[1]);
+                            name.mutate_table_name(name_path[2]);
                             break;
                         case 2:
-                            name.database = name_path[0];
-                            name.table = name_path[1];
+                            name.mutate_database_name(name_path[0]);
+                            name.mutate_table_name(name_path[1]);
                             break;
                         case 1:
-                            name.table = name_path[0];
+                            name.mutate_table_name(name_path[0]);
                             break;
                         default:
                             break;
@@ -153,7 +156,11 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                     alias = alias_node->children_begin_or_value();
                 }
                 // Add table reference
-                node_state.table_references.emplace_back(node_id, name, alias);
+                node_state.table_references.emplace_back();
+                auto& table_ref = node_state.table_references.back();
+                table_ref.mutate_ast_node_id(node_id);
+                table_ref.mutable_table_name() = name;
+                table_ref.mutate_alias_name(alias);
                 break;
             }
 

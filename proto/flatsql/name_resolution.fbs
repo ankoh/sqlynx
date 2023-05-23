@@ -53,6 +53,8 @@ struct TableReference {
     ast_node_id: uint32;
     // The name of the table that is referenced
     table_name: QualifiedTableName;
+    // The alias name
+    alias_name: uint32;
     // The id of the table, if it could be resolved
     resolved_table_id: uint32;
 }
