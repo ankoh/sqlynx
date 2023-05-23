@@ -132,19 +132,30 @@ template <typename T, size_t InitialSize = 1024> struct ChunkBuffer {
         ++total_value_count;
         return last->back();
     }
+    /// Apply a function for each node
+    template <typename F> void ForEach(F fn) {
+        size_t value_id = 0;
+        for (auto& chunk : buffers) {
+            for (auto& value : chunk) {
+                fn(value_id++, value);
+            }
+        }
+    }
     /// Apply a function for each node in a range
     template <typename F> void ForEach(size_t begin, size_t count, F fn) {
-        auto [chunk_id, value_id] = find(begin);
+        auto [chunk_id, chunk_offset] = find(begin);
+        auto local_offset = begin - chunk_offset;
+        auto value_id = begin;
         while (count > 0) {
             auto& chunk = buffers[chunk_id];
-            auto here = std::min(chunk.size() - value_id, count);
+            auto here = std::min(chunk.size() - local_offset, count);
+            local_offset = 0;
             for (size_t i = 0; i < here; ++i) {
-                auto& value = chunk[value_id + i];
-                fn(value_id, value);
+                auto& value = chunk[local_offset + i];
+                fn(value_id++, value);
             }
             count -= here;
             ++chunk_id;
-            value_id = 0;
         }
     }
     /// Flatten the buffer

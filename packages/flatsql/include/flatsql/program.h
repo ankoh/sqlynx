@@ -102,13 +102,13 @@ class AnalyzedProgram {
     /// The scanned program
     ParsedProgram& parsed;
     /// The table declarations
-    std::vector<std::unique_ptr<proto::TableDeclarationT>> table_declarations;
+    ChunkBuffer<proto::TableDeclarationT, 16> table_declarations;
     /// The table references
-    std::vector<proto::TableReference> table_references;
+    ChunkBuffer<proto::TableReference, 16> table_references;
     /// The column references
-    std::vector<proto::ColumnReference> column_references;
+    ChunkBuffer<proto::ColumnReference, 16> column_references;
     /// The join edges
-    std::vector<std::unique_ptr<proto::HyperEdgeT>> join_edges;
+    ChunkBuffer<proto::HyperEdgeT, 16> join_edges;
 
    public:
     /// Constructor
