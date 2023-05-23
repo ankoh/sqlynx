@@ -3,6 +3,7 @@
 #include "flatsql/analyzer/name_resolution_pass.h"
 #include "flatsql/analyzer/pass_manager.h"
 #include "flatsql/program.h"
+#include "flatsql/utils/attribute_index.h"
 
 namespace flatsql {
 
@@ -14,6 +15,8 @@ struct Analyzer {
     ScannedProgram& scanned_program;
     /// The parsed program
     ParsedProgram& parsed_program;
+    /// The attribute index
+    AttributeIndex attribute_index;
     /// The pass manager
     PassManager pass_manager;
     /// The name resolution pass
