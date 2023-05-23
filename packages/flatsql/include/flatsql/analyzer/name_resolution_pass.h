@@ -45,9 +45,9 @@ class NameResolutionPass : public PassManager::LTRPass {
     ///     WITH foo AS (SELECT 1) SELECT * FROM (SELECT 2) AS foo;
     ///     Table definitions of SQL_SELECT_WITH_CTES are only visible in other SELECT attrs.
     ChunkBuffer<std::unique_ptr<proto::TableDeclarationT>, 16> table_declarations;
-    /// Table definitions
+    /// The table definitions
     ChunkBuffer<proto::TableReference, 16> table_references;
-    /// Column references
+    /// The column references
     ChunkBuffer<proto::ColumnReference, 16> column_references;
     /// The join edges
     ChunkBuffer<std::unique_ptr<proto::HyperEdgeT>, 16> join_edges;
