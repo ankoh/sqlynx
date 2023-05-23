@@ -37,24 +37,24 @@ class NameResolutionPass : public PassManager::LTRPass {
     AttributeIndex& attribute_index;
     /// The program nodes
     std::span<const proto::Node> nodes;
-    /// The state of all visited nodes with yet-to-visit parents
-    WakeVector<NodeState> node_states;
     /// The table declarations
     /// We propagate new table definitions upwards only to apply them to other subtrees!
     /// Example:
     ///     WITH foo AS (SELECT 1) SELECT * FROM (SELECT 2) AS foo;
     ///     Table definitions of SQL_SELECT_WITH_CTES are only visible in other SELECT attrs.
-    ChunkBuffer<std::unique_ptr<proto::TableDeclarationT>, 16> table_declarations;
+    decltype(AnalyzedProgram::table_declarations) table_declarations;
     /// The table definitions
-    ChunkBuffer<proto::TableReference, 16> table_references;
+    decltype(AnalyzedProgram::table_references) table_references;
     /// The column references
-    ChunkBuffer<proto::ColumnReference, 16> column_references;
+    decltype(AnalyzedProgram::column_references) column_references;
     /// The join edges
-    ChunkBuffer<std::unique_ptr<proto::HyperEdgeT>, 16> join_edges;
+    decltype(AnalyzedProgram::join_edges) join_edges;
+    /// The state of all visited nodes with yet-to-visit parents
+    WakeVector<NodeState> node_states;
 
    public:
     /// Constructor
-    NameResolutionPass(ParsedProgram& parser, AttributeIndex& attribute_index);
+    NameResolutionPass(ParsedProgram& parser, AttributeIndex& attribute_index, const AnalyzedProgram* schema = nullptr);
 
     /// Prepare the analysis pass
     void Prepare() override;

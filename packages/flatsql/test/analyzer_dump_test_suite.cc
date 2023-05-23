@@ -24,7 +24,7 @@ TEST_P(AnalyzerDumpTestSuite, Test) {
     // Analyze script
     auto script_scan = parser::Scanner::Scan(script);
     auto script_parsed = parser::ParseContext::Parse(*script_scan);
-    auto script_analyzed = Analyzer::Analyze(*script_scan, *script_parsed, *schema_analyzed);
+    auto script_analyzed = Analyzer::Analyze(*script_scan, *script_parsed, schema_analyzed.get());
 }
 
 // clang-format off

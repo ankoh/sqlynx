@@ -16,7 +16,7 @@ struct Analyzer {
     /// The parsed program
     ParsedProgram& parsed_program;
     /// The schema
-    std::optional<std::reference_wrapper<AnalyzedProgram>> schema;
+    const AnalyzedProgram* schema;
     /// The attribute index
     AttributeIndex attribute_index;
     /// The pass manager
@@ -26,13 +26,11 @@ struct Analyzer {
 
    public:
     /// Constructor
-    Analyzer(ScannedProgram& scanned, ParsedProgram& parsed,
-             std::optional<std::reference_wrapper<AnalyzedProgram>> schema);
+    Analyzer(ScannedProgram& scanned, ParsedProgram& parsed, const AnalyzedProgram* schema);
 
     /// Analyze a program
-    static std::unique_ptr<AnalyzedProgram> Analyze(
-        ScannedProgram& scanned, ParsedProgram& parsed,
-        std::optional<std::reference_wrapper<AnalyzedProgram>> schema = std::nullopt);
+    static std::unique_ptr<AnalyzedProgram> Analyze(ScannedProgram& scanned, ParsedProgram& parsed,
+                                                    const AnalyzedProgram* schema = nullptr);
 };
 
 }  // namespace flatsql

@@ -26,8 +26,18 @@ void NameResolutionPass::NodeState::Merge(NodeState&& other) {
 }
 
 /// Constructor
-NameResolutionPass::NameResolutionPass(ParsedProgram& parser, AttributeIndex& attribute_index)
-    : parsed_program(parser), attribute_index(attribute_index), nodes(parsed_program.nodes) {}
+NameResolutionPass::NameResolutionPass(ParsedProgram& parser, AttributeIndex& attribute_index,
+                                       const AnalyzedProgram* schema)
+    : parsed_program(parser), attribute_index(attribute_index), nodes(parsed_program.nodes), table_declarations() {
+    if (schema) {
+        table_declarations = schema->table_declarations;
+        table_declarations.ForEach([](size_t /*id*/, proto::TableDeclarationT& tbl) {
+            tbl.statement_id = NULL_ID;
+            tbl.ast_node_id = NULL_ID;
+            tbl.is_external = true;
+        });
+    }
+}
 
 /// Prepare the analysis pass
 void NameResolutionPass::Prepare() {}
