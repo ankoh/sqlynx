@@ -258,4 +258,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
 /// Finish the analysis pass
 void NameResolutionPass::Finish() {}
 
+/// Export an analyzed program
+void NameResolutionPass::Export(AnalyzedProgram& program) {}
+
 }  // namespace flatsql

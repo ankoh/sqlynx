@@ -2,6 +2,7 @@
 
 #include "flatsql/analyzer/name_resolution_pass.h"
 #include "flatsql/analyzer/pass_manager.h"
+#include "flatsql/program.h"
 
 namespace flatsql {
 
@@ -12,9 +13,14 @@ Analyzer::Analyzer(ScannedProgram& scanned, ParsedProgram& parsed)
       name_resolution(parsed, attribute_index) {}
 
 std::unique_ptr<AnalyzedProgram> Analyzer::Analyze(ScannedProgram& scanned, ParsedProgram& parsed) {
+    // Run analysis passes
     Analyzer az{scanned, parsed};
     az.pass_manager.Execute(az.name_resolution);
-    return nullptr;
+
+    // Build program
+    auto program = std::make_unique<AnalyzedProgram>(scanned, parsed);
+    az.name_resolution.Export(*program);
+    return program;
 }
 
 }  // namespace flatsql
