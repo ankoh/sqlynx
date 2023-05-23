@@ -2,6 +2,11 @@
 
 namespace flatsql {
 
+/// Destructor
+PassManager::LTRPass::~LTRPass() {}
+/// Destructor
+PassManager::RTLPass::~RTLPass() {}
+
 /// Constructor
 PassManager::PassManager(ParsedProgram& parser) : parsedProgram(parser) {}
 /// Execute DFS post-order passes
