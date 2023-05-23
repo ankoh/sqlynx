@@ -70,6 +70,9 @@ class NameResolutionPass : public PassManager::LTRPass {
     void Visit(std::span<proto::Node> morsel) override;
     /// Finish the analysis pass
     void Finish() override;
+
+    /// Export an analyzed program
+    void Export(AnalyzedProgram& program);
 };
 
 }  // namespace flatsql

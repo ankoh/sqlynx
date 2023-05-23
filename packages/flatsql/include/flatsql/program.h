@@ -97,6 +97,8 @@ class ParsedProgram {
 };
 
 class AnalyzedProgram {
+    friend class NameResolutionPass;
+
    public:
     /// The scanned program
     ScannedProgram& scanned;
@@ -113,7 +115,7 @@ class AnalyzedProgram {
 
    public:
     /// Constructor
-    AnalyzedProgram(Analyzer&& analyzer);
+    AnalyzedProgram(ScannedProgram& scanned, ParsedProgram& parsed);
 
     /// Build the program
     std::shared_ptr<proto::NameResolutionInfoT> Pack();
