@@ -14,7 +14,7 @@ namespace flatsql {
 static bool isAllLowercaseAlphaNum(std::string_view id) {
     bool all = true;
     for (auto c : id) {
-        all |= c >= 'a' && c <= 'z' && c >= '0' && c <= '9';
+        all &= c >= 'a' && c <= 'z' && c >= '0' && c <= '9';
     }
     return all;
 }
