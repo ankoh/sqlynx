@@ -14,18 +14,14 @@ class NameResolutionPass : public PassManager::LTRPass {
    public:
     /// A name resolution state
     struct NodeState {
-        /// The table declarations
-        /// We propagate new table definitions upwards only to apply them to other subtrees!
-        /// Example:
-        ///     WITH foo AS (SELECT 1) SELECT * FROM (SELECT 2) AS foo;
-        ///     Table definitions of SQL_SELECT_WITH_CTES are only visible in other SELECT attrs.
-        std::vector<std::unique_ptr<proto::TableDeclarationT>> table_declarations;
-        /// Table definitions
-        std::vector<proto::TableReference> table_references;
-        /// Column references
-        std::vector<proto::ColumnReference> column_references;
-        /// The join edges
-        std::vector<std::unique_ptr<proto::HyperEdgeT>> join_edges;
+        /// The table declarations that are alive
+        std::vector<proto::TableDeclarationT*> table_declarations;
+        /// The table references that are alive
+        std::vector<proto::TableReference*> table_references;
+        /// The column references that are alive
+        std::vector<proto::ColumnReference*> column_references;
+        /// The join edges that are alive
+        std::vector<proto::HyperEdgeT*> join_edges;
 
         /// XXX Make table definitions a map
         /// XXX Add column definition map
@@ -43,6 +39,18 @@ class NameResolutionPass : public PassManager::LTRPass {
     std::span<const proto::Node> nodes;
     /// The state of all visited nodes with yet-to-visit parents
     WakeVector<NodeState> node_states;
+    /// The table declarations
+    /// We propagate new table definitions upwards only to apply them to other subtrees!
+    /// Example:
+    ///     WITH foo AS (SELECT 1) SELECT * FROM (SELECT 2) AS foo;
+    ///     Table definitions of SQL_SELECT_WITH_CTES are only visible in other SELECT attrs.
+    ChunkBuffer<std::unique_ptr<proto::TableDeclarationT>, 16> table_declarations;
+    /// Table definitions
+    ChunkBuffer<proto::TableReference, 16> table_references;
+    /// Column references
+    ChunkBuffer<proto::ColumnReference, 16> column_references;
+    /// The join edges
+    ChunkBuffer<std::unique_ptr<proto::HyperEdgeT>, 16> join_edges;
 
    public:
     /// Constructor
