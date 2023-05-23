@@ -15,13 +15,13 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// A name resolution state
     struct NodeState {
         /// The table declarations that are alive
-        std::vector<proto::TableDeclarationT*> table_declarations;
+        std::vector<std::reference_wrapper<proto::TableDeclarationT>> table_declarations;
         /// The table references that are alive
-        std::vector<proto::TableReference*> table_references;
+        std::vector<std::reference_wrapper<proto::TableReference>> table_references;
         /// The column references that are alive
-        std::vector<proto::ColumnReference*> column_references;
+        std::vector<std::reference_wrapper<proto::ColumnReference>> column_references;
         /// The join edges that are alive
-        std::vector<proto::HyperEdgeT*> join_edges;
+        std::vector<std::reference_wrapper<proto::HyperEdgeT>> join_edges;
 
         /// XXX Make table definitions a map
         /// XXX Add column definition map
