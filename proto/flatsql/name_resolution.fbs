@@ -92,7 +92,7 @@ table HyperEdge {
     nodes_1: [HyperGraphNode];
 }
 
-table NameResolutionInfo {
+table AnalyzedProgram {
     // The table declarations
     table_declarations: [TableDeclaration];
     // The table references in the statement

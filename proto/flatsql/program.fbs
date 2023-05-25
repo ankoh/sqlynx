@@ -401,7 +401,3 @@ table ParsedProgram {
     highlighting: Highlighting;
     name_dictionary: [string];
 }
-
-table AnalyzedProgram {
-    name_resolution: NameResolutionInfo;
-}
