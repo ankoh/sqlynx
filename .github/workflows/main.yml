@@ -55,8 +55,8 @@ jobs:
                   fetch-depth: 0
 
             - name: Get number of CPU cores
-              uses: ./.github/actions/available-cores
-              id: available-cores
+              uses: ./.github/actions/cpu-cores
+              id: cpu-cores
 
             - name: Setup llvm
               uses: ./.github/actions/setup-llvm
@@ -81,7 +81,7 @@ jobs:
                     -DCMAKE_EXPORT_COMPILE_COMMANDS=1 \
                     -DCODE_COVERAGE=1
                   ln -sf ${LIB_DEBUG_DIR}/compile_commands.json ${LIB_SOURCE_DIR}/compile_commands.json
-                  cmake --build ${LIB_DEBUG_DIR} --parallel ${{ steps.available-cores.outputs.count }}
+                  cmake --build ${LIB_DEBUG_DIR} --parallel ${{ steps.cpu-cores.outputs.count }}
 
             - name: Test library
               shell: bash
