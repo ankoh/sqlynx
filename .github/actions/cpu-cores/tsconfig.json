@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+        "outDir": "./dist/",
+        "baseUrl": ".",
+        "target": "ES6",
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "sourceMap": false,
+        "declarationMap": false,
+        "noImplicitAny": false,
+        "esModuleInterop": true,
+        "lib": ["es6"],
+        "types": ["node"]
+    },
+    "files": ["action.ts"]
+}
