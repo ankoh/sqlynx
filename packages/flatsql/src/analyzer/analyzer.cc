@@ -10,7 +10,7 @@ Analyzer::Analyzer(ScannedProgram& scanned, ParsedProgram& parsed, const Analyze
     : scanned_program(scanned),
       parsed_program(parsed),
       pass_manager(parsed),
-      name_resolution(parsed, attribute_index),
+      name_resolution(parsed, attribute_index, schema),
       schema(schema) {}
 
 std::unique_ptr<AnalyzedProgram> Analyzer::Analyze(ScannedProgram& scanned, ParsedProgram& parsed,

@@ -115,7 +115,7 @@ class AnalyzedProgram {
     AnalyzedProgram(ScannedProgram& scanned, ParsedProgram& parsed);
 
     /// Build the program
-    std::shared_ptr<proto::NameResolutionInfoT> Pack();
+    std::unique_ptr<proto::NameResolutionInfoT> Pack();
 };
 
 }  // namespace flatsql

@@ -54,7 +54,7 @@ class NameResolutionPass : public PassManager::LTRPass {
 
    public:
     /// Constructor
-    NameResolutionPass(ParsedProgram& parser, AttributeIndex& attribute_index, const AnalyzedProgram* schema = nullptr);
+    NameResolutionPass(ParsedProgram& parser, AttributeIndex& attribute_index, const AnalyzedProgram* schema);
 
     /// Prepare the analysis pass
     void Prepare() override;
