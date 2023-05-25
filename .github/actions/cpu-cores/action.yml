@@ -1,8 +1,0 @@
-name: 'CPU Core Count'
-description: 'Get the number of available cores on the runner'
-outputs:
-    count:
-        description: 'The number of available CPU cores'
-runs:
-    using: 'node16'
-    main: 'dist/action.js'
