@@ -1,4 +1,3 @@
-include "flatsql/name_resolution.fbs";
 include "flatsql/sql_enums.fbs";
 
 namespace flatsql.proto;
