@@ -55,8 +55,8 @@ ParsedProgram::ParsedProgram(parser::ParseContext&& ctx)
       errors(std::move(ctx.errors)) {}
 
 /// Pack the FlatBuffer
-std::shared_ptr<proto::ProgramT> ParsedProgram::Pack() {
-    auto out = std::make_unique<proto::ProgramT>();
+std::shared_ptr<proto::ParsedProgramT> ParsedProgram::Pack() {
+    auto out = std::make_unique<proto::ParsedProgramT>();
     out->nodes = std::move(nodes);
     out->statements.reserve(statements.size());
     for (auto& stmt : statements) {
@@ -78,7 +78,7 @@ std::shared_ptr<proto::ProgramT> ParsedProgram::Pack() {
 /// Constructor
 AnalyzedProgram::AnalyzedProgram(ScannedProgram& scanned, ParsedProgram& parsed) : scanned(scanned), parsed(parsed) {}
 
-std::unique_ptr<proto::NameResolutionInfoT> AnalyzedProgram::Pack() {
+std::unique_ptr<proto::AnalyzedProgramT> AnalyzedProgram::Pack() {
     auto names = std::make_unique<proto::NameResolutionInfoT>();
     names->column_references = column_references.Flatten();
     names->table_references = table_references.Flatten();
@@ -90,7 +90,9 @@ std::unique_ptr<proto::NameResolutionInfoT> AnalyzedProgram::Pack() {
     for (auto edge : join_edges.Flatten()) {
         names->join_edges.push_back(std::make_unique<proto::HyperEdgeT>(std::move(edge)));
     }
-    return names;
+    auto analyzed = std::make_unique<proto::AnalyzedProgramT>();
+    analyzed->name_resolution = std::move(names);
+    return analyzed;
 }
 
 }  // namespace flatsql

@@ -90,7 +90,7 @@ class ParsedProgram {
     ParsedProgram(parser::ParseContext&& context);
 
     /// Build the program
-    std::shared_ptr<proto::ProgramT> Pack();
+    std::shared_ptr<proto::ParsedProgramT> Pack();
 };
 
 class AnalyzedProgram {
@@ -115,7 +115,7 @@ class AnalyzedProgram {
     AnalyzedProgram(ScannedProgram& scanned, ParsedProgram& parsed);
 
     /// Build the program
-    std::unique_ptr<proto::NameResolutionInfoT> Pack();
+    std::unique_ptr<proto::AnalyzedProgramT> Pack();
 };
 
 }  // namespace flatsql
