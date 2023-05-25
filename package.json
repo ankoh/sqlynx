@@ -1,6 +1,7 @@
 {
     "private": true,
     "workspaces": [
+        ".github/actions/cpu-cores",
         "packages/flatsql-canvas",
         "packages/flatsql-wasm"
     ],
