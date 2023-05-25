@@ -79,20 +79,18 @@ std::shared_ptr<proto::ParsedProgramT> ParsedProgram::Pack() {
 AnalyzedProgram::AnalyzedProgram(ScannedProgram& scanned, ParsedProgram& parsed) : scanned(scanned), parsed(parsed) {}
 
 std::unique_ptr<proto::AnalyzedProgramT> AnalyzedProgram::Pack() {
-    auto names = std::make_unique<proto::NameResolutionInfoT>();
-    names->column_references = column_references.Flatten();
-    names->table_references = table_references.Flatten();
-    names->table_declarations.reserve(table_declarations.GetSize());
+    auto out = std::make_unique<proto::AnalyzedProgramT>();
+    out->column_references = column_references.Flatten();
+    out->table_references = table_references.Flatten();
+    out->table_declarations.reserve(table_declarations.GetSize());
     for (auto tbl : table_declarations.Flatten()) {
-        names->table_declarations.push_back(std::make_unique<proto::TableDeclarationT>(std::move(tbl)));
+        out->table_declarations.push_back(std::make_unique<proto::TableDeclarationT>(std::move(tbl)));
     }
-    names->join_edges.reserve(join_edges.GetSize());
+    out->join_edges.reserve(join_edges.GetSize());
     for (auto edge : join_edges.Flatten()) {
-        names->join_edges.push_back(std::make_unique<proto::HyperEdgeT>(std::move(edge)));
+        out->join_edges.push_back(std::make_unique<proto::HyperEdgeT>(std::move(edge)));
     }
-    auto analyzed = std::make_unique<proto::AnalyzedProgramT>();
-    analyzed->name_resolution = std::move(names);
-    return analyzed;
+    return out;
 }
 
 }  // namespace flatsql

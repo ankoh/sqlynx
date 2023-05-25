@@ -75,7 +75,6 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const proto::ParsedPro
     // Unpack modules
     auto& nodes = parsed.nodes;
     auto& statements = parsed.statements;
-    auto& name_res = *analyzed.name_resolution;
     auto* stmt_type_tt = proto::StatementTypeTypeTable();
     auto* node_type_tt = proto::NodeTypeTypeTable();
 
@@ -85,13 +84,8 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const proto::ParsedPro
     auto column_refs = root.append_child("column-references");
     auto join_edges = root.append_child("join-edges");
 
-    // Name resolution missing?
-    if (!analyzed.name_resolution) {
-        return;
-    }
-
     // Write table declarations
-    for (auto& table_decl : name_res.table_declarations) {
+    for (auto& table_decl : analyzed.table_declarations) {
         auto xml_tbl = tables.append_child("table");
         // Write table name
         auto table_name = printQualifiedName(parsed, *table_decl->table_name);
@@ -118,7 +112,7 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const proto::ParsedPro
     }
 
     // Write table references
-    for (auto& ref : name_res.table_references) {
+    for (auto& ref : analyzed.table_references) {
         auto xml_ref = table_refs.append_child("table-reference");
         auto table_name = printQualifiedName(parsed, ref.table_name());
         xml_ref.append_attribute("name").set_value(table_name.c_str());
@@ -131,7 +125,7 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const proto::ParsedPro
     }
 
     // Write column references
-    for (auto& ref : name_res.column_references) {
+    for (auto& ref : analyzed.column_references) {
         auto xml_ref = column_refs.append_child("column-reference");
         auto table_name = printQualifiedName(parsed, ref.column_name());
         xml_ref.append_attribute("name").set_value(table_name.c_str());
@@ -147,7 +141,7 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const proto::ParsedPro
     }
 
     // Write join edges
-    for (auto& edge : name_res.join_edges) {
+    for (auto& edge : analyzed.join_edges) {
         auto xml_edge = join_edges.append_child("join-edge");
         if (auto node_id = edge->ast_node_id; node_id != NULL_ID) {
             EncodeLocation(xml_edge, parsed.nodes[node_id].location(), text);
