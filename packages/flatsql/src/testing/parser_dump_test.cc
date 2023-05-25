@@ -15,7 +15,7 @@
 namespace flatsql::testing {
 
 /// Encode yaml
-void ParserDumpTest::EncodeProgram(pugi::xml_node root, const proto::ProgramT& program, std::string_view text) {
+void ParserDumpTest::EncodeProgram(pugi::xml_node root, const proto::ParsedProgramT& program, std::string_view text) {
     // Unpack modules
     auto& nodes = program.nodes;
     auto& statements = program.statements;

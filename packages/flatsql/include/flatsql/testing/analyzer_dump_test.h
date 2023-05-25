@@ -34,7 +34,8 @@ struct AnalyzerDumpTest {
     pugi::xml_document join_edges;
 
     /// Encode a program
-    static void EncodeProgram(pugi::xml_node root, const proto::ProgramT& program, std::string_view text);
+    static void EncodeProgram(pugi::xml_node root, const proto::ParsedProgramT& parsed,
+                              const proto::AnalyzedProgramT& analyzed, std::string_view text);
     /// Get the grammar tests
     static void LoadTests(std::filesystem::path& project_root);
     /// Get the grammar tests

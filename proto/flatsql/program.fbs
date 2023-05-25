@@ -392,7 +392,7 @@ table Highlighting {
     token_breaks: [uint32];
 }
 
-table Program {
+table ParsedProgram {
     nodes: [Node];
     statements: [Statement];
     errors: [Error];
@@ -400,5 +400,8 @@ table Program {
     comments: [Location];
     highlighting: Highlighting;
     name_dictionary: [string];
+}
+
+table AnalyzedProgram {
     name_resolution: NameResolutionInfo;
 }

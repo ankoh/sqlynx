@@ -62,10 +62,10 @@ static void generate_analyzer_dumps(const std::filesystem::path& source_dir) {
             auto script_scan = parser::Scanner::Scan(script_rope);
             auto script_parsed = parser::ParseContext::Parse(*script_scan);
             auto script_analyzed = Analyzer::Analyze(*script_scan, *script_parsed, schema_analyzed.get());
-            auto program = script_parsed->Pack();
-            program->name_resolution = script_analyzed->Pack();
+            auto parsed = script_parsed->Pack();
+            auto analyzed = script_analyzed->Pack();
 
-            AnalyzerDumpTest::EncodeProgram(test, *program, script_text);
+            AnalyzerDumpTest::EncodeProgram(test, *parsed, *analyzed, script_text);
         }
 
         // Write xml document
