@@ -12,13 +12,6 @@ set(CMAKE_CXX_FLAGS -std=c++20)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # ---------------------------------------------------------------------------
-# Parallelism
-
-include(ProcessorCount)
-ProcessorCount(NPROCS)
-set(CMAKE_BUILD_PARALLEL_LEVEL ${NPROCS})
-
-# ---------------------------------------------------------------------------
 # Address sanitizer
 
 if(NOT WASM AND (CMAKE_BUILD_TYPE MATCHES Debug))

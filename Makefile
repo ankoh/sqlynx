@@ -47,19 +47,19 @@ lib:
 		-DCMAKE_BUILD_TYPE=Debug \
 		-DCMAKE_EXPORT_COMPILE_COMMANDS=1
 	ln -sf ${LIB_DEBUG_DIR}/compile_commands.json ${LIB_SOURCE_DIR}/compile_commands.json
-	cmake --build ${LIB_DEBUG_DIR}
+	cmake --build ${LIB_DEBUG_DIR} --parallel ${CORES}
 
 .PHONY: lib_relwithdebinfo
 lib_relwithdebinfo:
 	mkdir -p ${LIB_RELWITHDEBINFO_DIR}
 	cmake -S ${LIB_SOURCE_DIR} -B ${LIB_RELWITHDEBINFO_DIR} -DCMAKE_BUILD_TYPE=RelWithDebInfo
-	cmake --build ${LIB_RELWITHDEBINFO_DIR}
+	cmake --build ${LIB_RELWITHDEBINFO_DIR} --parallel ${CORES}
 
 .PHONY: lib_release
 lib_release:
 	mkdir -p ${LIB_RELEASE_DIR}
 	cmake -S ${LIB_SOURCE_DIR} -B ${LIB_RELEASE_DIR} -DCMAKE_BUILD_TYPE=Release
-	cmake --build ${LIB_RELEASE_DIR}
+	cmake --build ${LIB_RELEASE_DIR} --parallel ${CORES}
 
 .PHONY: lib_tests
 lib_tests:
