@@ -12,19 +12,29 @@ namespace flatsql {
 
 class NameResolutionPass : public PassManager::LTRPass {
    public:
-    /// A name resolution state
-    struct NodeState {
-        /// The table declarations that are alive
-        std::vector<std::reference_wrapper<proto::TableDeclarationT>> table_declarations;
-        /// The table references that are alive
-        std::vector<std::reference_wrapper<proto::TableReference>> table_references;
-        /// The column references that are alive
-        std::vector<std::reference_wrapper<proto::ColumnReference>> column_references;
-        /// The join edges that are alive
-        std::vector<std::reference_wrapper<proto::HyperEdgeT>> join_edges;
+    using TableID = uint32_t;
 
-        /// XXX Make table definitions a map
-        /// XXX Add column definition map
+    /// The name resolution pass works as follows:
+    /// We traverse the AST in a depth-first post-order, means children before parents.
+    ///
+    /// For every node, we track:
+    ///     A) Mapping (table name -> table id). From table decls, for table refs.
+    ///     B) Mapping (table alias -> table id). From table refs, for column refs.
+    ///     C) Mapping (column name -> table id). From table refs, for column refs.
+    ///     D) Table refs in scope to resolve a table id via a table name
+    ///     E) Column refs in scope to resolve a table id via a table alias
+    ///
+    struct NodeState {
+        /// The (table name -> virtual table id) mapping created through table declarations
+        std::unordered_map<NameID, TableID> table_names;
+        /// The (table alias -> virtual table id) mapping created through table refs
+        std::unordered_map<NameID, TableID> table_aliases;
+        /// The (column name -> virtual table id) mapping created through table refs
+        std::unordered_map<NameID, TableID> column_names;
+        /// The table references in scope
+        std::vector<proto::TableReference*> table_references;
+        /// The column references in scope
+        std::vector<proto::ColumnReference*> column_references;
 
         /// Merge two states
         void Merge(NodeState&& other);
@@ -37,18 +47,19 @@ class NameResolutionPass : public PassManager::LTRPass {
     AttributeIndex& attribute_index;
     /// The program nodes
     std::span<const proto::Node> nodes;
+
     /// The table declarations
-    /// We propagate new table definitions upwards only to apply them to other subtrees!
-    /// Example:
-    ///     WITH foo AS (SELECT 1) SELECT * FROM (SELECT 2) AS foo;
-    ///     Table definitions of SQL_SELECT_WITH_CTES are only visible in other SELECT attrs.
     decltype(AnalyzedProgram::table_declarations) table_declarations;
     /// The table definitions
     decltype(AnalyzedProgram::table_references) table_references;
     /// The column references
     decltype(AnalyzedProgram::column_references) column_references;
-    /// The join edges
-    decltype(AnalyzedProgram::join_edges) join_edges;
+    /// The join edge nodes
+    decltype(AnalyzedProgram::join_edge_nodes) join_edge_nodes;
+
+    /// The join edge count
+    size_t join_edge_count;
+
     /// The state of all visited nodes with yet-to-visit parents
     WakeVector<NodeState> node_states;
 

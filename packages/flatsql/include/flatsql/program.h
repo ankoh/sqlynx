@@ -107,8 +107,10 @@ class AnalyzedProgram {
     ChunkBuffer<proto::TableReference, 16> table_references;
     /// The column references
     ChunkBuffer<proto::ColumnReference, 16> column_references;
-    /// The join edges
-    ChunkBuffer<proto::HyperEdgeT, 16> join_edges;
+    /// The join edge count
+    size_t join_edge_count;
+    /// The join edge nodes
+    ChunkBuffer<proto::JoinEdgeNode, 16> join_edge_nodes;
 
    public:
     /// Constructor

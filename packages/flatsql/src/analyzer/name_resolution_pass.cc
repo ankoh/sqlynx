@@ -19,10 +19,11 @@ template <typename T> static void merge(std::vector<T>& left, std::vector<T>&& r
 
 /// Merge two node states
 void NameResolutionPass::NodeState::Merge(NodeState&& other) {
-    merge(table_declarations, std::move(other.table_declarations));
+    table_names.merge(std::move(other.table_names));
+    table_aliases.merge(std::move(other.table_aliases));
+    column_names.merge(std::move(other.column_names));
     merge(table_references, std::move(other.table_references));
     merge(column_references, std::move(other.column_references));
-    merge(join_edges, std::move(other.join_edges));
 }
 
 /// Constructor
@@ -34,7 +35,6 @@ NameResolutionPass::NameResolutionPass(ParsedProgram& parser, AttributeIndex& at
         table_declarations.ForEach([](size_t /*id*/, proto::TableDeclarationT& tbl) {
             tbl.statement_id = NULL_ID;
             tbl.ast_node_id = NULL_ID;
-            tbl.is_external = true;
         });
     }
 }
@@ -100,19 +100,8 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                     name.mutate_ast_node_id(column_ref_node - nodes.data());
                     // Build the qualified column name
                     switch (name_path.size()) {
-                        case 4:
-                            name.mutate_schema_name(name_path[0]);
-                            name.mutate_database_name(name_path[1]);
-                            name.mutate_table_name(name_path[2]);
-                            name.mutate_column_name(name_path[3]);
-                            break;
-                        case 3:
-                            name.mutate_database_name(name_path[0]);
-                            name.mutate_table_name(name_path[1]);
-                            name.mutate_column_name(name_path[2]);
-                            break;
                         case 2:
-                            name.mutate_table_name(name_path[0]);
+                            name.mutate_table_alias(name_path[0]);
                             name.mutate_column_name(name_path[1]);
                             break;
                         case 1:
@@ -126,7 +115,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 auto& col_ref = column_references.Append(proto::ColumnReference());
                 col_ref.mutate_ast_node_id(node_id);
                 col_ref.mutable_column_name() = name;
-                node_state.column_references.push_back(col_ref);
+                node_state.column_references.push_back(&column_references.Append(col_ref));
                 break;
             }
 
@@ -170,7 +159,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 table_ref.mutate_ast_node_id(node_id);
                 table_ref.mutable_table_name() = name;
                 table_ref.mutate_alias_name(alias);
-                node_state.table_references.push_back(table_ref);
+                node_state.table_references.push_back(&table_references.Append(table_ref));
                 break;
             }
 
