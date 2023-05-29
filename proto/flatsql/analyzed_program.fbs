@@ -3,23 +3,19 @@ namespace flatsql.proto;
 struct QualifiedTableName {
     // The node id
     ast_node_id: uint32;
-    // The name of the database that owns the object 
+    // The name of the database that owns the table 
     database_name: uint32;
-    // The name of the schema that holds the object
+    // The name of the schema that holds the table
     schema_name: uint32;
-    // The object name, always a table for now
+    // The table name, always a table for now
     table_name: uint32;
 }
 
 struct QualifiedColumnName {
     // The node id
     ast_node_id: uint32;
-    // The name of the database that owns the object 
-    database_name: uint32;
-    // The name of the schema that holds the object
-    schema_name: uint32;
-    // The object name, always a table for now
-    table_name: uint32;
+    // The table alias, if exists
+    table_alias: uint32;
     // The column name
     column_name: uint32;
 }
@@ -32,64 +28,52 @@ struct TableColumnDeclaration {
 }
 
 table TableDeclaration {
+    // The id of the AST node that created this table declaration.
+    // If null, the declaration refers to an external table.
+    ast_node_id: uint32;
     // The id of the table
     table_id: uint32;
-    // The id of the AST node that created this table declaration
-    ast_node_id: uint32;
-    // The id of the statement that created the table declaration, may not be set if external
-    statement_id: uint32;
-    // Is an external table defined outside of the script?
-    is_external: uint8;
     // The name of the table that is declared by the node
     table_name: QualifiedTableName;
     /// The table colummns
     columns: [TableColumnDeclaration];
+    // The id of the statement that created the table declaration, may not be set if external
+    statement_id: uint32;
 }
 
 struct TableReference {
-    // The id of the statement that contains the table reference
-    statement_id: uint32;
     // The id of the AST node that created this table reference
     ast_node_id: uint32;
+    // The id of the table that is referenced
+    table_id: uint32;
     // The name of the table that is referenced
     table_name: QualifiedTableName;
     // The alias name
     alias_name: uint32;
-    // The id of the table, if it could be resolved
-    resolved_table_id: uint32;
+    // The id of the statement that contains the table reference
+    statement_id: uint32;
 }
 
 struct ColumnReference {
-    // The id of the statement that contains the column reference
-    statement_id: uint32;
     // The id of the AST node that created this column reference
     ast_node_id: uint32;
-    // The name of the table that is referenced
-    column_name: QualifiedColumnName;
-    // The id of the column, if it could be resolved
-    resolved_table_id: uint32;
-    // The id of the column, if it could be resolved
-    resolved_column_id: uint32;
-}
-
-struct HyperGraphNode {
-    // The id of the AST node that created this graph node
-    ast_node_id: uint32;
-    /// A table id
+    // The id of the table that is referenced
     table_id: uint32;
-    /// A column id
-    column_id: uint32;
+    // The column name
+    column_name: QualifiedColumnName;
+    // The id of the statement that contains the column reference
+    statement_id: uint32;
 }
 
-table HyperEdge {
-    // The id of the statement that contains the join edge
-    statement_id: uint32;
-    // The id of the AST node that created this join edge
+struct JoinEdgeNode {
+    /// The id of the AST node that created this graph node
     ast_node_id: uint32;
-    // Set of nodes in this hyper edge
-    nodes_0: [HyperGraphNode];
-    // Set of nodes in this hyper edge
-    nodes_1: [HyperGraphNode];
+    /// The id of the edge in the hyper graph
+    edge_id: uint32;
+    /// The set id of this edge, either 0 or 1
+    edge_side: uint8;
+    /// The id of the column reference
+    column_reference_id: uint32;
 }
 
 table AnalyzedProgram {
@@ -99,6 +83,8 @@ table AnalyzedProgram {
     table_references: [TableReference];
     // The column references in the statement
     column_references: [ColumnReference];
-    /// The join edges
-    join_edges: [HyperEdge];
+    /// The join edge nodes
+    join_edge_nodes: [JoinEdgeNode];
+    /// The join edge count
+    join_edge_count: uint32;
 }
