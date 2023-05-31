@@ -19,9 +19,7 @@ template <typename T> static void merge(std::vector<T>& left, std::vector<T>&& r
 
 /// Merge two node states
 void NameResolutionPass::NodeState::Merge(NodeState&& other) {
-    table_names.merge(std::move(other.table_names));
-    table_aliases.merge(std::move(other.table_aliases));
-    column_names.merge(std::move(other.column_names));
+    merge(table_columns, std::move(other.table_columns));
     merge(table_references, std::move(other.table_references));
     merge(column_references, std::move(other.column_references));
 }
@@ -84,7 +82,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 if (column_def_node && column_def_node->node_type() == sx::NodeType::NAME) {
                     column_name = column_def_node->children_begin_or_value();
                 }
-                // XXX Construct the column def
+                node_state.table_columns.push_back(proto::TableColumnDeclaration(node_id, column_name));
                 break;
             }
 
