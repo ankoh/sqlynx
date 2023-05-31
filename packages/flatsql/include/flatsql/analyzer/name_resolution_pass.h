@@ -16,21 +16,9 @@ class NameResolutionPass : public PassManager::LTRPass {
 
     /// The name resolution pass works as follows:
     /// We traverse the AST in a depth-first post-order, means children before parents.
-    ///
-    /// For every node, we track:
-    ///     A) Mapping (table name -> table id). From table decls, for table refs.
-    ///     B) Mapping (table alias -> table id). From table refs, for column refs.
-    ///     C) Mapping (column name -> table id). From table refs, for column refs.
-    ///     D) Table refs in scope to resolve a table id via a table name
-    ///     E) Column refs in scope to resolve a table id via a table alias
-    ///
     struct NodeState {
-        /// The (table name -> virtual table id) mapping created through table declarations
-        std::unordered_map<NameID, TableID> table_names;
-        /// The (table alias -> virtual table id) mapping created through table refs
-        std::unordered_map<NameID, TableID> table_aliases;
-        /// The (column name -> virtual table id) mapping created through table refs
-        std::unordered_map<NameID, TableID> column_names;
+        /// The column definitions in the subtree
+        std::vector<proto::TableColumnDeclaration> table_columns;
         /// The table references in scope
         std::vector<proto::TableReference*> table_references;
         /// The column references in scope
