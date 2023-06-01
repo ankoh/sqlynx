@@ -248,6 +248,43 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 break;
             }
 
+            // Finish select statement
+            case proto::NodeType::OBJECT_SQL_SELECT: {
+                auto attrs = attribute_index.Load(nodes.subspan(node.children_begin_or_value(), node.children_count()));
+                auto from_node = attrs[proto::AttributeKey::SQL_SELECT_FROM];
+                auto with_node = attrs[proto::AttributeKey::SQL_SELECT_WITH_CTES];
+                auto into_node = attrs[proto::AttributeKey::SQL_SELECT_INTO];
+
+                (void)from_node;
+                (void)with_node;
+                (void)into_node;
+                break;
+            }
+
+            // Finish create table statement
+            case proto::NodeType::OBJECT_SQL_CREATE: {
+                auto attrs = attribute_index.Load(nodes.subspan(node.children_begin_or_value(), node.children_count()));
+                auto name_node = attrs[proto::AttributeKey::SQL_CREATE_TABLE_NAME];
+                auto elements_node = attrs[proto::AttributeKey::SQL_CREATE_TABLE_ELEMENTS];
+
+                (void)name_node;
+                (void)elements_node;
+                break;
+            }
+
+            // Finish create table statement
+            case proto::NodeType::OBJECT_SQL_CREATE_AS: {
+                auto attrs = attribute_index.Load(nodes.subspan(node.children_begin_or_value(), node.children_count()));
+                auto name_node = attrs[proto::AttributeKey::SQL_CREATE_TABLE_NAME];
+                auto columns_node = attrs[proto::AttributeKey::SQL_CREATE_TABLE_NAME];
+                auto elements_node = attrs[proto::AttributeKey::SQL_CREATE_TABLE_ELEMENTS];
+
+                (void)name_node;
+                (void)columns_node;
+                (void)elements_node;
+                break;
+            }
+
             default:
                 break;
         }
