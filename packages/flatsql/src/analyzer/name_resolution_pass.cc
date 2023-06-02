@@ -47,7 +47,6 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
 
     // Helper to read a name path
     auto read_name_path = [this, &tmp_name_path](const sx::Node& node) {
-        // Collect all path nodes
         tmp_name_path.clear();
         auto children = nodes.subspan(node.children_begin_or_value(), node.children_count());
         for (size_t i = node.children_begin_or_value(); i != node.children_count(); ++i) {
@@ -61,6 +60,16 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
             tmp_name_path.push_back(child.children_begin_or_value());
         }
         return std::span{tmp_name_path};
+    };
+
+    // Helper to merge child states
+    auto merge_child_states = [this](const sx::Node& node, NodeState& state) {
+        for (size_t i = 0; i < node.children_count(); ++i) {
+            auto child_id = node.children_begin_or_value() + i;
+            auto& child = node_states[node.children_begin_or_value() + i];
+            assert(node_states[child_id].has_value());
+            state.Merge(std::move(child.value()));
+        }
     };
 
     // Scan nodes in morsel
@@ -250,11 +259,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                         case proto::ExpressionOperator::PLUS:
                         case proto::ExpressionOperator::SIMILAR_TO:
                         case proto::ExpressionOperator::TYPECAST: {
-                            for (size_t i = 0; i < args_count; ++i) {
-                                assert(node_states[args_begin + i].has_value());
-                                auto& child_state = node_states[args_begin + i].value();
-                                node_state.Merge(std::move(child_state));
-                            }
+                            merge_child_states(*args_node, node_state);
                             break;
                         }
                     }
@@ -299,37 +304,27 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 break;
             }
 
+            // Preserve state of individual array elements for expression args.
+            case proto::NodeType::ARRAY: {
+                if (node.attribute_key() != proto::AttributeKey::SQL_EXPRESSION_ARGS) {
+                    merge_child_states(node, node_state);
+                }
+                break;
+            }
+
+            // By default, merge child states into the node state
             default:
+                merge_child_states(node, node_state);
                 break;
         }
 
-        // Helper to check for deferred delete.
-        // We defer the state deletion for nodes that preserve state for the parent.
-        // For example child state of Arrays may by inspected by parent nodes.
-        auto deferred_delete = [](proto::NodeType t) { return t == sx::NodeType::ARRAY; };
-        // Erase child states and delete deferred children
-        if (!deferred_delete(node.node_type())) {
-            // Clean children and collect deferred deletions.
-            // We assume the fast path here and only prepare for recursion if there are any deferred nodes.
-            std::stack<size_t> deferred;
-            for (size_t i = 0; i < node.children_count(); ++i) {
-                auto child_id = node.children_begin_or_value() + i;
-                if (deferred_delete(nodes[child_id].node_type())) {
-                    deferred.push(child_id);
-                }
-                node_states.Erase(child_id);
-            }
-            // Perform deferred deletions
-            while (!deferred.empty()) {
-                auto& node = nodes[deferred.top()];
-                deferred.pop();
-                for (size_t i = 0; i < node.children_count(); ++i) {
-                    auto child_id = node.children_begin_or_value() + i;
-                    if (deferred_delete(nodes[child_id].node_type())) {
-                        deferred.push(child_id);
-                    }
-                    node_states.Erase(child_id);
-                }
+        // Erase grand-child states
+        for (size_t i = 0; i < node.children_count(); ++i) {
+            auto child_id = node.children_begin_or_value() + i;
+            auto& child_node = nodes[child_id];
+            for (size_t j = 0; j < child_node.children_count(); ++j) {
+                auto grand_child_id = child_node.children_begin_or_value() + j;
+                node_states.Erase(grand_child_id);
             }
         }
     }
