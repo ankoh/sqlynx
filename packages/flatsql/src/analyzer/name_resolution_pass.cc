@@ -183,6 +183,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 if (args_node && args_node->node_type() == sx::NodeType::ARRAY) {
                     args_begin = args_node->children_begin_or_value();
                     args_count = args_node->children_count();
+                    merge_child_states(*args_node, node_state);
                 }
 
                 // Has expression operator
@@ -259,7 +260,6 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                         case proto::ExpressionOperator::PLUS:
                         case proto::ExpressionOperator::SIMILAR_TO:
                         case proto::ExpressionOperator::TYPECAST: {
-                            merge_child_states(*args_node, node_state);
                             break;
                         }
                     }
