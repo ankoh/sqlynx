@@ -80,11 +80,11 @@ AnalyzedProgram::AnalyzedProgram(ScannedProgram& scanned, ParsedProgram& parsed)
 
 std::unique_ptr<proto::AnalyzedProgramT> AnalyzedProgram::Pack() {
     auto out = std::make_unique<proto::AnalyzedProgramT>();
-    out->table_declarations.reserve(table_declarations.GetSize());
-    out->table_references = table_references.Flatten();
-    out->column_references = column_references.Flatten();
-    out->join_edge_nodes = join_edge_nodes.Flatten();
-    for (auto tbl : table_declarations.Flatten()) {
+    out->table_declarations.reserve(table_declarations.size());
+    out->table_references = table_references;
+    out->column_references = column_references;
+    out->join_edge_nodes = join_edge_nodes;
+    for (auto tbl : table_declarations) {
         out->table_declarations.push_back(std::make_unique<proto::TableDeclarationT>(std::move(tbl)));
     }
     out->join_edge_count = join_edge_count;

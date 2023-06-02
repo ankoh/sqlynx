@@ -17,6 +17,8 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// The name resolution pass works as follows:
     /// We traverse the AST in a depth-first post-order, means children before parents.
     struct NodeState {
+        /// The preserved child states (if any)
+        std::vector<NodeState> preserved_child_states;
         /// The column definitions in the subtree
         std::vector<proto::TableColumnDeclaration> table_columns;
         /// The table references in scope
