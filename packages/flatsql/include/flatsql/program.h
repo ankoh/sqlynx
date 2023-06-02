@@ -102,15 +102,15 @@ class AnalyzedProgram {
     /// The scanned program
     ParsedProgram& parsed;
     /// The table declarations
-    ChunkBuffer<proto::TableDeclarationT, 16> table_declarations;
+    std::vector<proto::TableDeclarationT> table_declarations;
     /// The table references
-    ChunkBuffer<proto::TableReference, 16> table_references;
+    std::vector<proto::TableReference> table_references;
     /// The column references
-    ChunkBuffer<proto::ColumnReference, 16> column_references;
+    std::vector<proto::ColumnReference> column_references;
     /// The join edge count
     size_t join_edge_count;
     /// The join edge nodes
-    ChunkBuffer<proto::JoinEdgeNode, 16> join_edge_nodes;
+    std::vector<proto::JoinEdgeNode> join_edge_nodes;
 
    public:
     /// Constructor

@@ -1,6 +1,7 @@
 #include "flatsql/analyzer/name_resolution_pass.h"
 
 #include <iterator>
+#include <stack>
 
 #include "flatsql/program.h"
 #include "flatsql/proto/proto_generated.h"
@@ -30,10 +31,10 @@ NameResolutionPass::NameResolutionPass(ParsedProgram& parser, AttributeIndex& at
     : parsed_program(parser), attribute_index(attribute_index), nodes(parsed_program.nodes), table_declarations() {
     if (schema) {
         table_declarations = schema->table_declarations;
-        table_declarations.ForEach([](size_t /*id*/, proto::TableDeclarationT& tbl) {
+        for (auto& tbl : table_declarations) {
             tbl.statement_id = NULL_ID;
             tbl.ast_node_id = NULL_ID;
-        });
+        }
     }
 }
 
@@ -82,7 +83,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 if (column_def_node && column_def_node->node_type() == sx::NodeType::NAME) {
                     column_name = column_def_node->children_begin_or_value();
                 }
-                node_state.table_columns.push_back(proto::TableColumnDeclaration(node_id, column_name));
+                node_state.table_columns.emplace_back(node_id, column_name);
                 break;
             }
 
@@ -110,10 +111,10 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                     }
                 }
                 // Add column reference
-                auto& col_ref = column_references.Append(proto::ColumnReference());
+                auto& col_ref = column_references.emplace_back();
                 col_ref.mutate_ast_node_id(node_id);
                 col_ref.mutable_column_name() = name;
-                node_state.column_references.push_back(&column_references.Append(col_ref));
+                node_state.column_references.push_back(&col_ref);
                 break;
             }
 
@@ -153,11 +154,11 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                     alias = alias_node->children_begin_or_value();
                 }
                 // Add table reference
-                auto& table_ref = table_references.Append(proto::TableReference());
+                auto& table_ref = table_references.emplace_back();
                 table_ref.mutate_ast_node_id(node_id);
                 table_ref.mutable_table_name() = name;
                 table_ref.mutate_alias_name(alias);
-                node_state.table_references.push_back(&table_references.Append(table_ref));
+                node_state.table_references.push_back(&table_ref);
                 break;
             }
 
@@ -192,9 +193,23 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                         case proto::ExpressionOperator::GREATER_THAN:
                         case proto::ExpressionOperator::LESS_EQUAL:
                         case proto::ExpressionOperator::LESS_THAN:
-                        case proto::ExpressionOperator::NOT_EQUAL:
-                            // XXX
+                        case proto::ExpressionOperator::NOT_EQUAL: {
+                            assert(args_count == 2);
+                            assert(node_states[args_begin].has_value());
+                            assert(node_states[args_begin + 1].has_value());
+                            auto& l = node_states[args_begin].value();
+                            auto& r = node_states[args_begin + 1].value();
+                            size_t edge_id = join_edge_count++;
+                            for (auto ref : l.column_references) {
+                                auto ref_id = ref - column_references.data();
+                                join_edge_nodes.emplace_back(node_id, edge_id, 0, ref_id);
+                            }
+                            for (auto ref : r.column_references) {
+                                auto ref_id = ref - column_references.data();
+                                join_edge_nodes.emplace_back(node_id, edge_id, 1, ref_id);
+                            }
                             break;
+                        }
 
                         // Other operators
                         case proto::ExpressionOperator::AT_TIMEZONE:
@@ -235,7 +250,6 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                         case proto::ExpressionOperator::PLUS:
                         case proto::ExpressionOperator::SIMILAR_TO:
                         case proto::ExpressionOperator::TYPECAST: {
-                            // Merge the child states directly
                             for (size_t i = 0; i < args_count; ++i) {
                                 assert(node_states[args_begin + i].has_value());
                                 auto& child_state = node_states[args_begin + i].value();
@@ -289,9 +303,34 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 break;
         }
 
-        // Erase child states
-        for (size_t i = 0; i < node.children_count(); ++i) {
-            node_states.Erase(node.children_begin_or_value() + i);
+        // Helper to check for deferred delete.
+        // We defer the state deletion for nodes that preserve state for the parent.
+        // For example state of Arrays is usually inspected by parent nodes.
+        auto deferred_delete = [](proto::NodeType t) { return t == sx::NodeType::ARRAY; };
+        // Erase child states and delete deferred children
+        if (!deferred_delete(node.node_type())) {
+            // Clean children and collect deferred deletions.
+            // We assume the fast path here and only prepare for recursion if there are any deferred nodes.
+            std::stack<size_t> deferred;
+            for (size_t i = 0; i < node.children_count(); ++i) {
+                auto child_id = node.children_begin_or_value() + i;
+                if (deferred_delete(nodes[child_id].node_type())) {
+                    deferred.push(child_id);
+                }
+                node_states.Erase(child_id);
+            }
+            // Perform deferred deletions
+            while (!deferred.empty()) {
+                auto& node = nodes[deferred.top()];
+                deferred.pop();
+                for (size_t i = 0; i < node.children_count(); ++i) {
+                    auto child_id = node.children_begin_or_value() + i;
+                    if (deferred_delete(nodes[child_id].node_type())) {
+                        deferred.push(child_id);
+                    }
+                    node_states.Erase(child_id);
+                }
+            }
         }
     }
 }

@@ -21,7 +21,7 @@ template <typename ValueType> struct WakeVector {
     WakeVector() = default;
     /// Access an element
     std::optional<ValueType>& operator[](size_t index) {
-        assert(index > offset);
+        assert(index >= offset);
         assert(index <= (offset + values.size()));
         return values[index - offset];
     }
