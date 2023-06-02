@@ -1,5 +1,6 @@
 #pragma once
 
+#include <tuple>
 #include <unordered_set>
 
 #include "flatsql/analyzer/pass_manager.h"
@@ -20,9 +21,9 @@ class NameResolutionPass : public PassManager::LTRPass {
         /// The column definitions in the subtree
         std::vector<proto::TableColumnDeclaration> table_columns;
         /// The table references in scope
-        std::vector<proto::TableReference*> table_references;
+        std::vector<size_t> table_references;
         /// The column references in scope
-        std::vector<proto::ColumnReference*> column_references;
+        std::vector<size_t> column_references;
 
         /// Merge two states
         void Merge(NodeState&& other);

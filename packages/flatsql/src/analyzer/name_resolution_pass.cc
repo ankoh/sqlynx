@@ -31,10 +31,10 @@ NameResolutionPass::NameResolutionPass(ParsedProgram& parser, AttributeIndex& at
     : parsed_program(parser), attribute_index(attribute_index), nodes(parsed_program.nodes), table_declarations() {
     if (schema) {
         table_declarations = schema->table_declarations;
-        for (auto& tbl : table_declarations) {
+        table_declarations.ForEach([](size_t i, auto& tbl) {
             tbl.statement_id = NULL_ID;
             tbl.ast_node_id = NULL_ID;
-        }
+        });
     }
 }
 
@@ -98,7 +98,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
 
             // Read a column reference
             case proto::NodeType::OBJECT_SQL_COLUMN_REF: {
-                proto::QualifiedColumnName name;
+                proto::QualifiedColumnName name{NULL_ID, NULL_ID, NULL_ID};
                 // Read column ref path
                 auto children = nodes.subspan(node.children_begin_or_value(), node.children_count());
                 auto attrs = attribute_index.Load(children);
@@ -120,16 +120,19 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                     }
                 }
                 // Add column reference
-                auto& col_ref = column_references.emplace_back();
+                auto col_ref_id = column_references.GetSize();
+                auto& col_ref = column_references.Append(proto::ColumnReference());
                 col_ref.mutate_ast_node_id(node_id);
+                col_ref.mutate_table_id(NULL_ID);
                 col_ref.mutable_column_name() = name;
-                node_state.column_references.push_back(&col_ref);
+                col_ref.mutate_statement_id(NULL_ID);
+                node_state.column_references.push_back(col_ref_id);
                 break;
             }
 
             // Read a table reference
             case proto::NodeType::OBJECT_SQL_TABLEREF: {
-                proto::QualifiedTableName name;
+                proto::QualifiedTableName name{NULL_ID, NULL_ID, NULL_ID, NULL_ID};
                 NodeID alias = NULL_ID;
 
                 // Read a table ref name
@@ -163,11 +166,14 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                     alias = alias_node->children_begin_or_value();
                 }
                 // Add table reference
-                auto& table_ref = table_references.emplace_back();
+                auto table_ref_id = table_references.GetSize();
+                auto& table_ref = table_references.Append(proto::TableReference());
                 table_ref.mutate_ast_node_id(node_id);
+                table_ref.mutate_table_id(NULL_ID);
                 table_ref.mutable_table_name() = name;
                 table_ref.mutate_alias_name(alias);
-                node_state.table_references.push_back(&table_ref);
+                table_ref.mutate_statement_id(NULL_ID);
+                node_state.table_references.push_back(table_ref_id);
                 break;
             }
 
@@ -183,7 +189,6 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 if (args_node && args_node->node_type() == sx::NodeType::ARRAY) {
                     args_begin = args_node->children_begin_or_value();
                     args_count = args_node->children_count();
-                    merge_child_states(*args_node, node_state);
                 }
 
                 // Has expression operator
@@ -194,7 +199,6 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                         case proto::ExpressionOperator::AND:
                         case proto::ExpressionOperator::OR:
                         case proto::ExpressionOperator::XOR:
-                            // XXX
                             break;
 
                         // Comparison operator? - Finish dependencies.
@@ -210,24 +214,33 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                             auto& l = node_states[args_begin].value();
                             auto& r = node_states[args_begin + 1].value();
                             size_t edge_id = join_edge_count++;
-                            for (auto ref : l.column_references) {
-                                auto ref_id = ref - column_references.data();
-                                join_edge_nodes.emplace_back(node_id, edge_id, 0, ref_id);
+                            for (auto ref_id : l.column_references) {
+                                join_edge_nodes.Append(proto::JoinEdgeNode(node_id, edge_id, 0, ref_id));
                             }
-                            for (auto ref : r.column_references) {
-                                auto ref_id = ref - column_references.data();
-                                join_edge_nodes.emplace_back(node_id, edge_id, 1, ref_id);
+                            for (auto ref_id : r.column_references) {
+                                join_edge_nodes.Append(proto::JoinEdgeNode(node_id, edge_id, 1, ref_id));
                             }
                             break;
                         }
+
+                        // Operators that preserve refs
+                        case proto::ExpressionOperator::COLLATE:
+                        case proto::ExpressionOperator::DEFAULT:
+                        case proto::ExpressionOperator::DIVIDE:
+                        case proto::ExpressionOperator::MINUS:
+                        case proto::ExpressionOperator::MODULUS:
+                        case proto::ExpressionOperator::MULTIPLY:
+                        case proto::ExpressionOperator::NEGATE:
+                        case proto::ExpressionOperator::NOT:
+                        case proto::ExpressionOperator::PLUS:
+                        case proto::ExpressionOperator::TYPECAST:
+                            merge_child_states(*args_node, node_state);
+                            break;
 
                         // Other operators
                         case proto::ExpressionOperator::AT_TIMEZONE:
                         case proto::ExpressionOperator::BETWEEN_ASYMMETRIC:
                         case proto::ExpressionOperator::BETWEEN_SYMMETRIC:
-                        case proto::ExpressionOperator::COLLATE:
-                        case proto::ExpressionOperator::DEFAULT:
-                        case proto::ExpressionOperator::DIVIDE:
                         case proto::ExpressionOperator::GLOB:
                         case proto::ExpressionOperator::ILIKE:
                         case proto::ExpressionOperator::IN:
@@ -243,11 +256,6 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                         case proto::ExpressionOperator::IS_TRUE:
                         case proto::ExpressionOperator::IS_UNKNOWN:
                         case proto::ExpressionOperator::LIKE:
-                        case proto::ExpressionOperator::MINUS:
-                        case proto::ExpressionOperator::MODULUS:
-                        case proto::ExpressionOperator::MULTIPLY:
-                        case proto::ExpressionOperator::NEGATE:
-                        case proto::ExpressionOperator::NOT:
                         case proto::ExpressionOperator::NOT_BETWEEN_ASYMMETRIC:
                         case proto::ExpressionOperator::NOT_BETWEEN_SYMMETRIC:
                         case proto::ExpressionOperator::NOT_GLOB:
@@ -257,11 +265,8 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                         case proto::ExpressionOperator::NOT_NULL:
                         case proto::ExpressionOperator::NOT_SIMILAR_TO:
                         case proto::ExpressionOperator::OVERLAPS:
-                        case proto::ExpressionOperator::PLUS:
                         case proto::ExpressionOperator::SIMILAR_TO:
-                        case proto::ExpressionOperator::TYPECAST: {
                             break;
-                        }
                     }
                 }
                 break;
@@ -334,6 +339,12 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
 void NameResolutionPass::Finish() {}
 
 /// Export an analyzed program
-void NameResolutionPass::Export(AnalyzedProgram& program) {}
+void NameResolutionPass::Export(AnalyzedProgram& program) {
+    program.table_declarations = std::move(table_declarations);
+    program.table_references = std::move(table_references);
+    program.column_references = std::move(column_references);
+    program.join_edge_count = join_edge_count;
+    program.join_edge_nodes = std::move(join_edge_nodes);
+}
 
 }  // namespace flatsql
