@@ -81,8 +81,10 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const proto::ParsedPro
     for (auto& table_decl : analyzed.table_declarations) {
         auto xml_tbl = tables.append_child("table");
         // Write table name
-        auto table_name = printQualifiedName(parsed, *table_decl->table_name);
-        xml_tbl.append_attribute("name").set_value(table_name.c_str());
+        if (table_decl->table_name->table_name() != NULL_ID) {
+            auto table_name = printQualifiedName(parsed, *table_decl->table_name);
+            xml_tbl.append_attribute("name").set_value(table_name.c_str());
+        }
         // Is external?
         xml_tbl.append_attribute("external").set_value(table_decl->ast_node_id == NULL_ID);
         // Has a node id?
@@ -107,8 +109,10 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const proto::ParsedPro
     // Write table references
     for (auto& ref : analyzed.table_references) {
         auto xml_ref = table_refs.append_child("table-reference");
-        auto table_name = printQualifiedName(parsed, ref.table_name());
-        xml_ref.append_attribute("name").set_value(table_name.c_str());
+        if (ref.table_name().table_name() != NULL_ID) {
+            auto name = printQualifiedName(parsed, ref.table_name());
+            xml_ref.append_attribute("name").set_value(name.c_str());
+        }
         if (auto table_id = ref.table_id(); table_id != NULL_ID) {
             xml_ref.append_attribute("table").set_value(table_id);
         }
@@ -120,8 +124,10 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const proto::ParsedPro
     // Write column references
     for (auto& ref : analyzed.column_references) {
         auto xml_ref = column_refs.append_child("column-reference");
-        auto table_name = printQualifiedName(parsed, ref.column_name());
-        xml_ref.append_attribute("name").set_value(table_name.c_str());
+        if (ref.column_name().column_name() != NULL_ID) {
+            auto name = printQualifiedName(parsed, ref.column_name());
+            xml_ref.append_attribute("name").set_value(name.c_str());
+        }
         if (auto table_id = ref.table_id(); table_id != NULL_ID) {
             xml_ref.append_attribute("table").set_value(table_id);
         }
@@ -138,11 +144,13 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const proto::ParsedPro
         auto end = std::partition_point(begin, analyzed.join_edge_nodes.end(),
                                         [&](auto& candidate) { return candidate.edge_id() == begin->edge_id(); });
         auto join_edge = join_edges.append_child("join-edge");
+        if (auto node_id = begin->ast_node_id(); node_id != NULL_ID) {
+            EncodeLocation(join_edge, parsed.nodes[node_id].location(), text);
+        }
         for (auto iter = begin; iter != end; ++iter) {
             auto xml_node = join_edge.append_child("node");
             xml_node.append_attribute("at").set_value(iter->edge_side());
             xml_node.append_attribute("ref").set_value(iter->column_reference_id());
-            EncodeLocation(xml_node, parsed.nodes[iter->ast_node_id()].location(), text);
         }
         begin = end;
     }
