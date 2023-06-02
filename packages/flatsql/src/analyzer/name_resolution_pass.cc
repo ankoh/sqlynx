@@ -305,7 +305,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
 
         // Helper to check for deferred delete.
         // We defer the state deletion for nodes that preserve state for the parent.
-        // For example state of Arrays is usually inspected by parent nodes.
+        // For example child state of Arrays may by inspected by parent nodes.
         auto deferred_delete = [](proto::NodeType t) { return t == sx::NodeType::ARRAY; };
         // Erase child states and delete deferred children
         if (!deferred_delete(node.node_type())) {
