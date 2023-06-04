@@ -213,12 +213,13 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                             assert(node_states[args_begin + 1].has_value());
                             auto& l = node_states[args_begin].value();
                             auto& r = node_states[args_begin + 1].value();
-                            size_t edge_id = join_edge_count++;
+                            join_edges.Append(proto::JoinEdge(node_id, join_edge_nodes.GetSize(),
+                                                              l.column_references.size(), r.column_references.size()));
                             for (auto ref_id : l.column_references) {
-                                join_edge_nodes.Append(proto::JoinEdgeNode(node_id, edge_id, 0, ref_id));
+                                join_edge_nodes.Append(proto::JoinEdgeNode(ref_id));
                             }
                             for (auto ref_id : r.column_references) {
-                                join_edge_nodes.Append(proto::JoinEdgeNode(node_id, edge_id, 1, ref_id));
+                                join_edge_nodes.Append(proto::JoinEdgeNode(ref_id));
                             }
                             break;
                         }
@@ -343,7 +344,7 @@ void NameResolutionPass::Export(AnalyzedProgram& program) {
     program.table_declarations = std::move(table_declarations);
     program.table_references = std::move(table_references);
     program.column_references = std::move(column_references);
-    program.join_edge_count = join_edge_count;
+    program.join_edges = std::move(join_edges);
     program.join_edge_nodes = std::move(join_edge_nodes);
 }
 

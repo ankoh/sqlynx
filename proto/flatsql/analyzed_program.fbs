@@ -65,13 +65,18 @@ struct ColumnReference {
     statement_id: uint32;
 }
 
-struct JoinEdgeNode {
+struct JoinEdge {
     /// The id of the AST node that created this graph node
     ast_node_id: uint32;
-    /// The id of the edge in the hyper graph
-    edge_id: uint32;
-    /// The set id of this edge, either 0 or 1
-    edge_side: uint8;
+    /// The begin of the nodes
+    nodes_begin: uint32;
+    /// The number of nodes on the left side
+    node_count_left: uint16;
+    /// The set id of nodes on the right side
+    node_count_right: uint16;
+}
+
+struct JoinEdgeNode {
     /// The id of the column reference
     column_reference_id: uint32;
 }
@@ -83,8 +88,8 @@ table AnalyzedProgram {
     table_references: [TableReference];
     // The column references in the statement
     column_references: [ColumnReference];
+    /// The join edges
+    join_edges: [JoinEdge];
     /// The join edge nodes
     join_edge_nodes: [JoinEdgeNode];
-    /// The join edge count
-    join_edge_count: uint32;
 }
