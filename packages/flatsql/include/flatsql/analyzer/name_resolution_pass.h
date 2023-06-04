@@ -48,9 +48,6 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// The join edge nodes
     decltype(AnalyzedProgram::join_edge_nodes) join_edge_nodes;
 
-    /// The join edge count
-    size_t join_edge_count;
-
     /// The state of all visited nodes with yet-to-visit parents
     WakeVector<NodeState> node_states;
 

@@ -29,7 +29,6 @@ struct TableColumnDeclaration {
 
 table TableDeclaration {
     // The id of the AST node that created this table declaration.
-    // If null, the declaration refers to an external table.
     ast_node_id: uint32;
     // The id of the table
     table_id: uint32;
@@ -37,7 +36,7 @@ table TableDeclaration {
     table_name: QualifiedTableName;
     /// The table colummns
     columns: [TableColumnDeclaration];
-    // The id of the statement that created the table declaration, may not be set if external
+    // The id of the statement that created the table declaration
     statement_id: uint32;
 }
 
