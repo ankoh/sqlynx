@@ -140,19 +140,21 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const proto::ParsedPro
     }
 
     // Write join edges
-    for (auto begin = analyzed.join_edge_nodes.begin(); begin != analyzed.join_edge_nodes.end();) {
-        auto end = std::partition_point(begin, analyzed.join_edge_nodes.end(),
-                                        [&](auto& candidate) { return candidate.edge_id() == begin->edge_id(); });
-        auto join_edge = join_edges.append_child("join-edge");
-        if (auto node_id = begin->ast_node_id(); node_id != NULL_ID) {
-            EncodeLocation(join_edge, parsed.nodes[node_id].location(), text);
+    for (auto& edge : analyzed.join_edges) {
+        auto xml_edge = join_edges.append_child("join-edge");
+        EncodeLocation(xml_edge, parsed.nodes[edge.ast_node_id()].location(), text);
+        for (size_t i = 0; i < edge.node_count_left(); ++i) {
+            auto& node = analyzed.join_edge_nodes[edge.nodes_begin() + i];
+            auto xml_node = xml_edge.append_child("node");
+            xml_node.append_attribute("at").set_value(0);
+            xml_node.append_attribute("ref").set_value(node.column_reference_id());
         }
-        for (auto iter = begin; iter != end; ++iter) {
-            auto xml_node = join_edge.append_child("node");
-            xml_node.append_attribute("at").set_value(iter->edge_side());
-            xml_node.append_attribute("ref").set_value(iter->column_reference_id());
+        for (size_t i = 0; i < edge.node_count_left(); ++i) {
+            auto& node = analyzed.join_edge_nodes[edge.nodes_begin() + edge.node_count_left() + i];
+            auto xml_node = xml_edge.append_child("node");
+            xml_node.append_attribute("at").set_value(1);
+            xml_node.append_attribute("ref").set_value(node.column_reference_id());
         }
-        begin = end;
     }
 }
 

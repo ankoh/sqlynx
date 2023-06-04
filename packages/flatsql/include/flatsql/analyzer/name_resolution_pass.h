@@ -43,6 +43,8 @@ class NameResolutionPass : public PassManager::LTRPass {
     decltype(AnalyzedProgram::table_references) table_references;
     /// The column references
     decltype(AnalyzedProgram::column_references) column_references;
+    /// The join edges
+    decltype(AnalyzedProgram::join_edges) join_edges;
     /// The join edge nodes
     decltype(AnalyzedProgram::join_edge_nodes) join_edge_nodes;
 
