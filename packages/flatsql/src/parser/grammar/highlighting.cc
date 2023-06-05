@@ -56,7 +56,7 @@ std::unique_ptr<proto::HighlightingT> ScannedProgram::PackHighlighting() {
     };
 
     auto ci = 0;
-    symbols.ForEach(0, symbols.GetSize(), [&](size_t symbol_id, parser::Parser::symbol_type symbol) {
+    symbols.ForEachIn(0, symbols.GetSize(), [&](size_t symbol_id, parser::Parser::symbol_type symbol) {
         // Emit all comments in between.
         while (ci < comments.size() && comments[ci].offset() < symbol.location.offset()) {
             emit(offsets, types, comments[ci++], proto::HighlightingTokenType::COMMENT);

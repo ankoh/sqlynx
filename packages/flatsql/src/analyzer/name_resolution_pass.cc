@@ -26,16 +26,19 @@ void NameResolutionPass::NodeState::Merge(NodeState&& other) {
 }
 
 /// Constructor
-NameResolutionPass::NameResolutionPass(ParsedProgram& parser, AttributeIndex& attribute_index,
-                                       const AnalyzedProgram* schema)
-    : parsed_program(parser), attribute_index(attribute_index), nodes(parsed_program.nodes), table_declarations() {
-    if (schema) {
-        table_declarations = schema->table_declarations;
-        table_declarations.ForEach([](size_t i, auto& tbl) {
-            tbl.statement_id = NULL_ID;
-            tbl.ast_node_id = NULL_ID;
-        });
-    }
+NameResolutionPass::NameResolutionPass(ParsedProgram& parser, AttributeIndex& attribute_index)
+    : parsed_program(parser), attribute_index(attribute_index), nodes(parsed_program.nodes) {}
+
+/// Register external tables from an analyzed program
+void NameResolutionPass::RegisterExternalTables(const AnalyzedProgram& program) {
+    // This has to be called before running the analysis pass
+    assert(external_tables.GetSize() == 0);
+    // Register all tables
+    program.local_tables.ForEach([&](size_t table_id, const proto::LocalTable& table) {
+        if (auto mapped = program.scanned.Remap(table.table_name()); mapped.has_value()) {
+            // XXX
+        }
+    });
 }
 
 /// Prepare the analysis pass
@@ -123,9 +126,9 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 auto col_ref_id = column_references.GetSize();
                 auto& col_ref = column_references.Append(proto::ColumnReference());
                 col_ref.mutate_ast_node_id(node_id);
+                col_ref.mutate_ast_statement_id(NULL_ID);
                 col_ref.mutate_table_id(NULL_ID);
                 col_ref.mutable_column_name() = name;
-                col_ref.mutate_statement_id(NULL_ID);
                 node_state.column_references.push_back(col_ref_id);
                 break;
             }
@@ -169,10 +172,10 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 auto table_ref_id = table_references.GetSize();
                 auto& table_ref = table_references.Append(proto::TableReference());
                 table_ref.mutate_ast_node_id(node_id);
+                table_ref.mutate_ast_statement_id(NULL_ID);
                 table_ref.mutate_table_id(NULL_ID);
                 table_ref.mutable_table_name() = name;
                 table_ref.mutate_alias_name(alias);
-                table_ref.mutate_statement_id(NULL_ID);
                 node_state.table_references.push_back(table_ref_id);
                 break;
             }
@@ -341,7 +344,10 @@ void NameResolutionPass::Finish() {}
 
 /// Export an analyzed program
 void NameResolutionPass::Export(AnalyzedProgram& program) {
-    program.table_declarations = std::move(table_declarations);
+    program.external_tables = std::move(external_tables);
+    program.external_table_columns = std::move(external_table_columns);
+    program.local_tables = std::move(local_tables);
+    program.local_table_columns = std::move(local_table_columns);
     program.table_references = std::move(table_references);
     program.column_references = std::move(column_references);
     program.join_edges = std::move(join_edges);
