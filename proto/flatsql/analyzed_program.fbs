@@ -20,48 +20,66 @@ struct QualifiedColumnName {
     column_name: uint32;
 }
 
-struct TableColumnDeclaration {
+struct ExternalTableColumn {
+    /// The id of the column
+    column_id: uint32;
+    // The name of the column that is referenced
+    column_name: uint32;
+}
+
+struct ExternalTable {
+    /// The external table id
+    external_table_id: uint32;
+    // The name of the table that is declared by the node
+    table_name: QualifiedTableName;
+    /// The table colummns
+    columns_begin: uint32;
+    /// The table colummns
+    column_count: uint32;
+}
+
+struct LocalTableColumn {
     // The id of the AST node that created this column declaration
     ast_node_id: uint32;
     // The name of the column that is referenced
     column_name: uint32;
 }
 
-table TableDeclaration {
+struct LocalTable {
     // The id of the AST node that created this table declaration.
     ast_node_id: uint32;
-    // The id of the table
-    table_id: uint32;
+    // The id of the statement that created the table declaration
+    ast_statement_id: uint32;
     // The name of the table that is declared by the node
     table_name: QualifiedTableName;
     /// The table colummns
-    columns: [TableColumnDeclaration];
-    // The id of the statement that created the table declaration
-    statement_id: uint32;
+    columns_begin: uint32;
+    /// The table colummns
+    column_count: uint32;
 }
 
 struct TableReference {
     // The id of the AST node that created this table reference
     ast_node_id: uint32;
-    // The id of the table that is referenced
-    table_id: uint32;
+    // The id of the statement that contains the table reference
+    ast_statement_id: uint32;
     // The name of the table that is referenced
     table_name: QualifiedTableName;
     // The alias name
     alias_name: uint32;
-    // The id of the statement that contains the table reference
-    statement_id: uint32;
+    // The id of the table that is referenced
+    table_id: uint32;
 }
 
 struct ColumnReference {
     // The id of the AST node that created this column reference
     ast_node_id: uint32;
-    // The id of the table that is referenced
-    table_id: uint32;
+    // The id of the statement that contains the column reference
+    ast_statement_id: uint32;
     // The column name
     column_name: QualifiedColumnName;
-    // The id of the statement that contains the column reference
-    statement_id: uint32;
+    // The id of the table that is referenced
+    table_id: uint32;
 }
 
 struct JoinEdge {
@@ -81,8 +99,14 @@ struct JoinEdgeNode {
 }
 
 table AnalyzedProgram {
-    // The table declarations
-    table_declarations: [TableDeclaration];
+    // The external tables
+    external_tables: [ExternalTable];
+    // The external table columns
+    external_table_columns: [ExternalTableColumn];
+    // The local tables
+    local_tables: [LocalTable];
+    // The local table columns
+    local_table_columns: [LocalTableColumn];
     // The table references in the statement
     table_references: [TableReference];
     // The column references in the statement

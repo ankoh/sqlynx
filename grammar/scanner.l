@@ -496,11 +496,11 @@ Scanner::Scanner(rope::Rope& rope): input_data(rope), current_leaf_node(rope.Get
 
     // Reserve space for the string dictionary
     output->name_dictionary_ids.reserve(128);
-    output->name_dictionary_locations.reserve(128);
+    output->name_dictionary.reserve(128);
 
     // Always encode the empty string with identifier 0
     output->name_dictionary_ids.insert({"", 0});
-    output->name_dictionary_locations.push_back(sx::Location(0, 0));
+    output->name_dictionary.push_back({"", sx::Location(0, 0)});
 }
 
 Scanner::~Scanner() {

@@ -77,22 +77,23 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const proto::ParsedPro
     auto column_refs = root.append_child("column-references");
     auto join_edges = root.append_child("join-edges");
 
-    // Write table declarations
-    for (auto& table_decl : analyzed.table_declarations) {
+    // Write local declarations
+    for (auto& table_decl : analyzed.local_tables) {
         auto xml_tbl = tables.append_child("table");
         // Write table name
-        if (table_decl->table_name->table_name() != NULL_ID) {
-            auto table_name = printQualifiedName(parsed, *table_decl->table_name);
+        if (table_decl.table_name().table_name() != NULL_ID) {
+            auto table_name = printQualifiedName(parsed, table_decl.table_name());
             xml_tbl.append_attribute("name").set_value(table_name.c_str());
         }
         // Is external?
-        xml_tbl.append_attribute("external").set_value(table_decl->ast_node_id == NULL_ID);
+        xml_tbl.append_attribute("external").set_value(table_decl.ast_node_id() == NULL_ID);
         // Has a node id?
-        if (auto node_id = table_decl->ast_node_id; node_id != NULL_ID) {
+        if (auto node_id = table_decl.ast_node_id(); node_id != NULL_ID) {
             EncodeLocation(xml_tbl, parsed.nodes[node_id].location(), text);
         }
         // Write child columns
-        for (auto& column_decl : table_decl->columns) {
+        for (size_t i = table_decl.columns_begin(); i < table_decl.column_count(); ++i) {
+            auto& column_decl = analyzed.local_table_columns[i];
             auto xml_col = xml_tbl.append_child("column");
             if (column_decl.column_name() != NULL_ID) {
                 auto column_name = parsed.name_dictionary[column_decl.column_name()];

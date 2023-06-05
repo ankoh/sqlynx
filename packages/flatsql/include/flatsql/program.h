@@ -22,6 +22,25 @@ using NameID = uint32_t;
 
 static constexpr uint32_t NULL_ID = std::numeric_limits<uint32_t>::max();
 
+/// A table key
+struct TableKey {
+    /// The name
+    proto::QualifiedTableName name;
+    /// Constructor
+    TableKey(proto::QualifiedTableName name) : name(name) {}
+    /// The derefence operator
+    const proto::QualifiedTableName& operator*() { return name; }
+    /// Equality operator
+    bool operator==(TableKey& other) {
+        return name.database_name() == other.name.database_name() && name.schema_name() == other.name.schema_name() &&
+               name.table_name() == other.name.table_name();
+    }
+    /// A hasher
+    struct Hasher {
+        size_t operator()(const TableKey& key) const { return 42; }
+    };
+};
+
 /// A statement
 class Statement {
    public:
@@ -55,7 +74,7 @@ class ScannedProgram {
     /// The name dictionary ids
     ankerl::unordered_dense::map<std::string_view, NameID> name_dictionary_ids;
     /// The name dictionary locations
-    std::vector<sx::Location> name_dictionary_locations;
+    std::vector<std::pair<std::string_view, sx::Location>> name_dictionary;
 
     /// All symbols
     ChunkBuffer<parser::Parser::symbol_type> symbols;
@@ -72,6 +91,10 @@ class ScannedProgram {
     std::string_view ReadTextAtLocation(sx::Location loc, std::string& tmp);
     /// Pack syntax highlighting
     std::unique_ptr<proto::HighlightingT> PackHighlighting();
+    /// Remap a qualified table name
+    std::optional<NameID> Remap(NameID name);
+    /// Remap a qualified table name
+    std::optional<proto::QualifiedTableName> Remap(proto::QualifiedTableName name);
 };
 
 class ParsedProgram {
@@ -101,8 +124,14 @@ class AnalyzedProgram {
     ScannedProgram& scanned;
     /// The scanned program
     ParsedProgram& parsed;
-    /// The table declarations
-    ChunkBuffer<proto::TableDeclarationT, 16> table_declarations;
+    /// The external tables
+    ChunkBuffer<proto::ExternalTable, 16> external_tables;
+    /// The external table columns
+    ChunkBuffer<proto::ExternalTableColumn, 16> external_table_columns;
+    /// The local tables
+    ChunkBuffer<proto::LocalTable, 16> local_tables;
+    /// The local table columns
+    ChunkBuffer<proto::LocalTableColumn, 16> local_table_columns;
     /// The table references
     ChunkBuffer<proto::TableReference, 16> table_references;
     /// The column references

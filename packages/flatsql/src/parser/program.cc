@@ -25,9 +25,9 @@ size_t ScannedProgram::RegisterKeywordAsName(std::string_view s, sx::Location lo
     if (iter != name_dictionary_ids.end()) {
         return iter->second;
     }
-    auto id = name_dictionary_locations.size();
+    auto id = name_dictionary.size();
     name_dictionary_ids.insert({s, id});
-    name_dictionary_locations.push_back(location);
+    name_dictionary.push_back({s, location});
     return id;
 }
 /// Register a name
@@ -37,14 +37,24 @@ size_t ScannedProgram::RegisterName(std::string_view s, sx::Location location) {
         return iter->second;
     }
     auto copy = name_pool.AllocateCopy(s);
-    auto id = name_dictionary_locations.size();
+    auto id = name_dictionary.size();
     name_dictionary_ids.insert({copy, id});
-    name_dictionary_locations.push_back(location);
+    name_dictionary.push_back({copy, location});
     return id;
 }
 /// Read a text at a location
 std::string_view ScannedProgram::ReadTextAtLocation(sx::Location loc, std::string& tmp) {
     return input_data.Read(loc.offset(), loc.length(), tmp);
+}
+/// Remap a qualified table name
+std::optional<NameID> ScannedProgram::Remap(NameID name) {
+    // XXX
+    return std::nullopt;
+}
+/// Remap a qualified table name
+std::optional<proto::QualifiedTableName> ScannedProgram::Remap(proto::QualifiedTableName name) {
+    // XXX
+    return std::nullopt;
 }
 
 /// Constructor
@@ -80,14 +90,14 @@ AnalyzedProgram::AnalyzedProgram(ScannedProgram& scanned, ParsedProgram& parsed)
 
 std::unique_ptr<proto::AnalyzedProgramT> AnalyzedProgram::Pack() {
     auto out = std::make_unique<proto::AnalyzedProgramT>();
-    out->table_declarations.reserve(table_declarations.GetSize());
+    out->external_tables = external_tables.Flatten();
+    out->external_table_columns = external_table_columns.Flatten();
+    out->local_tables = local_tables.Flatten();
+    out->local_table_columns = local_table_columns.Flatten();
     out->table_references = table_references.Flatten();
     out->column_references = column_references.Flatten();
     out->join_edges = join_edges.Flatten();
     out->join_edge_nodes = join_edge_nodes.Flatten();
-    table_declarations.ForEach([&](size_t, auto& tbl) {
-        out->table_declarations.push_back(std::make_unique<proto::TableDeclarationT>(std::move(tbl)));
-    });
     return out;
 }
 
