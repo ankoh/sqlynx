@@ -31,6 +31,8 @@ class NameResolutionPass : public PassManager::LTRPass {
     };
 
    protected:
+    /// The scanned program
+    ScannedProgram& scanned_program;
     /// The parsed program
     ParsedProgram& parsed_program;
     /// The attribute index.
@@ -38,8 +40,14 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// The program nodes
     std::span<const proto::Node> nodes;
 
+    /// The external tables
+    std::vector<proto::Table> external_tables;
+    /// The external table columns
+    std::vector<proto::TableColumn> external_table_columns;
+    /// The external name mapping
+    ankerl::unordered_dense::map<NameID, NameID> external_names;
     /// The external table map
-    std::unordered_map<TableKey, size_t, TableKey::Hasher> external_table_map;
+    ankerl::unordered_dense::map<TableKey, size_t, TableKey::Hasher> external_table_ids;
 
     /// The local tables
     decltype(AnalyzedProgram::tables) tables;

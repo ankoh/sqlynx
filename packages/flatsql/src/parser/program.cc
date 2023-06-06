@@ -46,16 +46,6 @@ size_t ScannedProgram::RegisterName(std::string_view s, sx::Location location) {
 std::string_view ScannedProgram::ReadTextAtLocation(sx::Location loc, std::string& tmp) {
     return input_data.Read(loc.offset(), loc.length(), tmp);
 }
-/// Remap a qualified table name
-std::optional<NameID> ScannedProgram::Remap(NameID name) {
-    // XXX
-    return std::nullopt;
-}
-/// Remap a qualified table name
-std::optional<proto::QualifiedTableName> ScannedProgram::Remap(proto::QualifiedTableName name) {
-    // XXX
-    return std::nullopt;
-}
 
 /// Constructor
 ParsedProgram::ParsedProgram(parser::ParseContext&& ctx)

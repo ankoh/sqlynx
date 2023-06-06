@@ -1,6 +1,7 @@
 #include "flatsql/analyzer/name_resolution_pass.h"
 
 #include <iterator>
+#include <limits>
 #include <stack>
 
 #include "flatsql/program.h"
@@ -27,20 +28,68 @@ void NameResolutionPass::NodeState::Merge(NodeState&& other) {
 
 /// Constructor
 NameResolutionPass::NameResolutionPass(ParsedProgram& parser, AttributeIndex& attribute_index)
-    : parsed_program(parser), attribute_index(attribute_index), nodes(parsed_program.nodes) {}
+    : scanned_program(parser.scan),
+      parsed_program(parser),
+      attribute_index(attribute_index),
+      nodes(parsed_program.nodes) {}
 
 /// Register external tables from an analyzed program
-void NameResolutionPass::RegisterExternalTables(const AnalyzedProgram& program) {
-    // XXX Remap external names here.
-    //     Use a map for new names and assign them a new id.
-    //     Don't map external string -> new string, just check external id -> new id.
-    //     For each external id:
-    //          First check if external id is mapped,
-    //          If not, get string and lookup local string id.
-    //          If not matching any local id, create new mapping for external id
-    //      We don't need to materialize any external tables.
-    //      We only need track how many external tables were imported and offset local table ids by that amount.
-    //      So that table_id = external_table_count + offset in local_tables
+void NameResolutionPass::RegisterExternalTables(const AnalyzedProgram& external) {
+    // Use a map for external names and assign them new ids.
+    // We don't map (external string -> new string) but instead just track (external id -> new id).
+    //
+    // For each external id:
+    //      Check if the external id is already mapped,
+    //      If not, get string and lookup local string id.
+    //      If not matching any local name, create new id mapping for external name
+    //
+    // That way, we only need to track how many external tables were imported and can offset local table ids by that
+    // amount. That is, `table_id = external_tables.size() + offset in tables`
+
+    // Helper to remap a name id
+    auto map_name = [this](const AnalyzedProgram& external, NameID name) {
+        if (name == std::numeric_limits<NameID>::max()) return name;
+        // First check if the external id is already mapped,
+        if (auto iter = external_names.find(name); iter != external_names.end()) {
+            return iter->second;
+        }
+        // If not, get name string and lookup local name
+        if (auto iter = scanned_program.name_dictionary_ids.find(external.scanned.name_dictionary[name].first);
+            iter != scanned_program.name_dictionary_ids.end()) {
+            external_names.insert({name, iter->second});
+            return iter->second;
+        }
+        // If not matching any local, create new mapping
+        NameID mapped_id = external_names.size();
+        external_names.insert({name, mapped_id});
+        return mapped_id;
+    };
+
+    // Copy all over
+    external_tables = external.tables.Flatten();
+    external_table_columns = external.table_columns.Flatten();
+    external_names.clear();
+    external_names.reserve(external.scanned.name_dictionary_ids.size());
+    external_table_ids.clear();
+    external_table_ids.reserve(external_tables.size());
+
+    // Map tables
+    for (size_t table_id = 0; table_id < external_tables.size(); ++table_id) {
+        auto& t = external_tables[table_id];
+        proto::QualifiedTableName name = t.table_name();
+        name.mutate_database_name(map_name(external, name.database_name()));
+        name.mutate_schema_name(map_name(external, name.schema_name()));
+        name.mutate_table_name(map_name(external, name.table_name()));
+        t.mutate_ast_node_id(NULL_ID);
+        t.mutate_ast_statement_id(NULL_ID);
+        external_table_ids.insert({name, table_id});
+        // XXX Also register without database & schema
+    }
+    // Map columns
+    for (auto& c : external_table_columns) {
+        c.mutate_column_name(map_name(external, c.column_name()));
+        c.mutate_ast_node_id(NULL_ID);
+    }
 }
 
 /// Prepare the analysis pass

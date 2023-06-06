@@ -31,7 +31,7 @@ struct TableKey {
     /// The derefence operator
     const proto::QualifiedTableName& operator*() { return name; }
     /// Equality operator
-    bool operator==(TableKey& other) {
+    bool operator==(const TableKey& other) const {
         return name.database_name() == other.name.database_name() && name.schema_name() == other.name.schema_name() &&
                name.table_name() == other.name.table_name();
     }
@@ -91,10 +91,6 @@ class ScannedProgram {
     std::string_view ReadTextAtLocation(sx::Location loc, std::string& tmp);
     /// Pack syntax highlighting
     std::unique_ptr<proto::HighlightingT> PackHighlighting();
-    /// Remap a qualified table name
-    std::optional<NameID> Remap(NameID name);
-    /// Remap a qualified table name
-    std::optional<proto::QualifiedTableName> Remap(proto::QualifiedTableName name);
 };
 
 class ParsedProgram {
