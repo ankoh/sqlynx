@@ -86,8 +86,7 @@ template <typename T, size_t InitialSize = 1024> struct ChunkBuffer {
         auto offset_iter = std::upper_bound(offsets.begin(), offsets.end(), offset);
         assert(offset_iter > offsets.begin());
         auto chunk_id = offset_iter - offsets.begin() - 1;
-        auto value_id = offset - offsets[chunk_id];
-        return {chunk_id, value_id};
+        return {chunk_id, offsets[chunk_id]};
     }
 
    public:
@@ -102,8 +101,8 @@ template <typename T, size_t InitialSize = 1024> struct ChunkBuffer {
     size_t GetSize() const { return total_value_count; }
     /// Subscript operator
     T& operator[](size_t offset) {
-        auto [chunk_id, value_id] = find(offset);
-        return buffers[chunk_id][value_id];
+        auto [chunk_id, chunk_offset] = find(offset);
+        return buffers[chunk_id][offset - chunk_offset];
     }
     /// Get the last node
     T& GetLast() {
@@ -157,6 +156,7 @@ template <typename T, size_t InitialSize = 1024> struct ChunkBuffer {
         auto global_offset = begin;
         while (count > 0) {
             auto& chunk = buffers[chunk_id];
+            assert(chunk.size() >= local_offset);
             auto here = std::min(chunk.size() - local_offset, count);
             for (size_t i = 0; i < here; ++i) {
                 fn(global_offset++, chunk[local_offset + i]);
