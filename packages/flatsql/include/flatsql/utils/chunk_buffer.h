@@ -167,7 +167,7 @@ template <typename T, size_t InitialSize = 1024> struct ChunkBuffer {
         }
     }
     /// Flatten the buffer
-    std::vector<T> Flatten() {
+    std::vector<T> Flatten() const {
         std::vector<T> flat;
         flat.resize(total_value_count);
         size_t writer = 0;
