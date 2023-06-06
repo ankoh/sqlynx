@@ -20,32 +20,14 @@ struct QualifiedColumnName {
     column_name: uint32;
 }
 
-struct ExternalTableColumn {
-    /// The id of the column
-    column_id: uint32;
-    // The name of the column that is referenced
-    column_name: uint32;
-}
-
-struct ExternalTable {
-    /// The external table id
-    external_table_id: uint32;
-    // The name of the table that is declared by the node
-    table_name: QualifiedTableName;
-    /// The table colummns
-    columns_begin: uint32;
-    /// The table colummns
-    column_count: uint32;
-}
-
-struct LocalTableColumn {
+struct TableColumn {
     // The id of the AST node that created this column declaration
     ast_node_id: uint32;
     // The name of the column that is referenced
     column_name: uint32;
 }
 
-struct LocalTable {
+struct Table {
     // The id of the AST node that created this table declaration.
     ast_node_id: uint32;
     // The id of the statement that created the table declaration
@@ -99,14 +81,10 @@ struct JoinEdgeNode {
 }
 
 table AnalyzedProgram {
-    // The external tables
-    external_tables: [ExternalTable];
-    // The external table columns
-    external_table_columns: [ExternalTableColumn];
     // The local tables
-    local_tables: [LocalTable];
+    tables: [Table];
     // The local table columns
-    local_table_columns: [LocalTableColumn];
+    table_columns: [TableColumn];
     // The table references in the statement
     table_references: [TableReference];
     // The column references in the statement

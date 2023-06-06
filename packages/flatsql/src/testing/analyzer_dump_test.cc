@@ -78,7 +78,7 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const proto::ParsedPro
     auto join_edges = root.append_child("join-edges");
 
     // Write local declarations
-    for (auto& table_decl : analyzed.local_tables) {
+    for (auto& table_decl : analyzed.tables) {
         auto xml_tbl = tables.append_child("table");
         // Write table name
         if (table_decl.table_name().table_name() != NULL_ID) {
@@ -93,7 +93,7 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const proto::ParsedPro
         }
         // Write child columns
         for (size_t i = table_decl.columns_begin(); i < table_decl.column_count(); ++i) {
-            auto& column_decl = analyzed.local_table_columns[i];
+            auto& column_decl = analyzed.table_columns[i];
             auto xml_col = xml_tbl.append_child("column");
             if (column_decl.column_name() != NULL_ID) {
                 auto column_name = parsed.name_dictionary[column_decl.column_name()];

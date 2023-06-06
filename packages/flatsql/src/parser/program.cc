@@ -90,10 +90,8 @@ AnalyzedProgram::AnalyzedProgram(ScannedProgram& scanned, ParsedProgram& parsed)
 
 std::unique_ptr<proto::AnalyzedProgramT> AnalyzedProgram::Pack() {
     auto out = std::make_unique<proto::AnalyzedProgramT>();
-    out->external_tables = external_tables.Flatten();
-    out->external_table_columns = external_table_columns.Flatten();
-    out->local_tables = local_tables.Flatten();
-    out->local_table_columns = local_table_columns.Flatten();
+    out->tables = tables.Flatten();
+    out->table_columns = table_columns.Flatten();
     out->table_references = table_references.Flatten();
     out->column_references = column_references.Flatten();
     out->join_edges = join_edges.Flatten();

@@ -124,14 +124,10 @@ class AnalyzedProgram {
     ScannedProgram& scanned;
     /// The scanned program
     ParsedProgram& parsed;
-    /// The external tables
-    ChunkBuffer<proto::ExternalTable, 16> external_tables;
-    /// The external table columns
-    ChunkBuffer<proto::ExternalTableColumn, 16> external_table_columns;
     /// The local tables
-    ChunkBuffer<proto::LocalTable, 16> local_tables;
+    ChunkBuffer<proto::Table, 16> tables;
     /// The local table columns
-    ChunkBuffer<proto::LocalTableColumn, 16> local_table_columns;
+    ChunkBuffer<proto::TableColumn, 16> table_columns;
     /// The table references
     ChunkBuffer<proto::TableReference, 16> table_references;
     /// The column references
