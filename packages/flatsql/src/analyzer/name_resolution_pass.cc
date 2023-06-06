@@ -33,12 +33,13 @@ NameResolutionPass::NameResolutionPass(ParsedProgram& parser, AttributeIndex& at
 void NameResolutionPass::RegisterExternalTables(const AnalyzedProgram& program) {
     // This has to be called before running the analysis pass
     assert(external_tables.GetSize() == 0);
-    // Register all tables
-    program.local_tables.ForEach([&](size_t table_id, const proto::LocalTable& table) {
-        if (auto mapped = program.scanned.Remap(table.table_name()); mapped.has_value()) {
-            // XXX
-        }
-    });
+    // XXX Remap external names here.
+    //     Use a map for new names and assign them a new id.
+    //     Don't map external string -> new string, just check external id -> new id.
+    //     For each external id:
+    //          First check if external id is mapped,
+    //          If not, get string and lookup local string id.
+    //          If not matching any local id, create new mapping for external id
 }
 
 /// Prepare the analysis pass
