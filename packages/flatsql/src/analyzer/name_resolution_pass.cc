@@ -40,6 +40,9 @@ void NameResolutionPass::RegisterExternalTables(const AnalyzedProgram& program) 
     //          First check if external id is mapped,
     //          If not, get string and lookup local string id.
     //          If not matching any local id, create new mapping for external id
+    //      We don't need to materialize any external tables.
+    //      We only need track how many external tables were imported and offset local table ids by that amount.
+    //      So that table_id = external_table_count + offset in local_tables
 }
 
 /// Prepare the analysis pass
