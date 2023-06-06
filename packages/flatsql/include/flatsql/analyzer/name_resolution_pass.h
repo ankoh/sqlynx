@@ -20,7 +20,7 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// We traverse the AST in a depth-first post-order, means children before parents.
     struct NodeState {
         /// The column definitions in the subtree
-        std::vector<proto::LocalTableColumn> table_columns;
+        std::vector<proto::TableColumn> table_columns;
         /// The table references in scope
         std::vector<size_t> table_references;
         /// The column references in scope
@@ -41,14 +41,10 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// The external table map
     std::unordered_map<TableKey, size_t, TableKey::Hasher> external_table_map;
 
-    /// The external tables
-    decltype(AnalyzedProgram::external_tables) external_tables;
-    /// The external table columns
-    decltype(AnalyzedProgram::external_table_columns) external_table_columns;
     /// The local tables
-    decltype(AnalyzedProgram::local_tables) local_tables;
+    decltype(AnalyzedProgram::tables) tables;
     /// The local table columns
-    decltype(AnalyzedProgram::local_table_columns) local_table_columns;
+    decltype(AnalyzedProgram::table_columns) table_columns;
     /// The table definitions
     decltype(AnalyzedProgram::table_references) table_references;
     /// The column references

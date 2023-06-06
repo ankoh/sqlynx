@@ -31,8 +31,6 @@ NameResolutionPass::NameResolutionPass(ParsedProgram& parser, AttributeIndex& at
 
 /// Register external tables from an analyzed program
 void NameResolutionPass::RegisterExternalTables(const AnalyzedProgram& program) {
-    // This has to be called before running the analysis pass
-    assert(external_tables.GetSize() == 0);
     // XXX Remap external names here.
     //     Use a map for new names and assign them a new id.
     //     Don't map external string -> new string, just check external id -> new id.
@@ -348,10 +346,8 @@ void NameResolutionPass::Finish() {}
 
 /// Export an analyzed program
 void NameResolutionPass::Export(AnalyzedProgram& program) {
-    program.external_tables = std::move(external_tables);
-    program.external_table_columns = std::move(external_table_columns);
-    program.local_tables = std::move(local_tables);
-    program.local_table_columns = std::move(local_table_columns);
+    program.tables = std::move(tables);
+    program.table_columns = std::move(table_columns);
     program.table_references = std::move(table_references);
     program.column_references = std::move(column_references);
     program.join_edges = std::move(join_edges);
