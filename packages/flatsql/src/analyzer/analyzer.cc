@@ -20,7 +20,7 @@ Analyzer::Analyzer(ScannedProgram& scanned, ParsedProgram& parsed, const Analyze
 std::unique_ptr<AnalyzedProgram> Analyzer::Analyze(ScannedProgram& scanned, ParsedProgram& parsed,
                                                    const AnalyzedProgram* schema) {
     // Run analysis passes
-    Analyzer az{scanned, parsed, std::move(schema)};
+    Analyzer az{scanned, parsed, schema};
     az.pass_manager.Execute(az.name_resolution);
 
     // Build program

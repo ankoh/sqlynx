@@ -32,6 +32,8 @@ struct Table {
     ast_node_id: uint32;
     // The id of the statement that created the table declaration
     ast_statement_id: uint32;
+    // The root of the scope where this table reference is live
+    ast_scope_root: uint32;
     // The name of the table that is declared by the node
     table_name: QualifiedTableName;
     /// The table colummns
@@ -45,6 +47,8 @@ struct TableReference {
     ast_node_id: uint32;
     // The id of the statement that contains the table reference
     ast_statement_id: uint32;
+    // The root of the scope where this table reference is live
+    ast_scope_root: uint32;
     // The name of the table that is referenced
     table_name: QualifiedTableName;
     // The alias name
@@ -58,6 +62,8 @@ struct ColumnReference {
     ast_node_id: uint32;
     // The id of the statement that contains the column reference
     ast_statement_id: uint32;
+    // The root of the scope where this table reference is live
+    ast_scope_root: uint32;
     // The column name
     column_name: QualifiedColumnName;
     // The id of the table that is referenced
