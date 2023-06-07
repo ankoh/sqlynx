@@ -6,6 +6,7 @@
 #include "flatsql/parser/parser_generated.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/text/rope.h"
+#include "flatsql/utils/hash.h"
 #include "flatsql/utils/string_pool.h"
 
 namespace flatsql {
@@ -37,7 +38,14 @@ struct TableKey {
     }
     /// A hasher
     struct Hasher {
-        size_t operator()(const TableKey& key) const { return 42; }
+        size_t operator()(const TableKey& key) const {
+            std::hash<NameID> hasher;
+            size_t seed = 0;
+            hash_combine(seed, key.name.database_name());
+            hash_combine(seed, key.name.schema_name());
+            hash_combine(seed, key.name.table_name());
+            return seed;
+        }
     };
 };
 
@@ -55,7 +63,13 @@ struct ColumnKey {
     }
     /// A hasher
     struct Hasher {
-        size_t operator()(const ColumnKey& key) const { return 42; }
+        size_t operator()(const ColumnKey& key) const {
+            std::hash<NameID> hasher;
+            size_t seed = 0;
+            hash_combine(seed, key.name.table_alias());
+            hash_combine(seed, key.name.column_name());
+            return seed;
+        }
     };
 };
 
