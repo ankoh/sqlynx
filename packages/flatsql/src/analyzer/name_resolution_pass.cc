@@ -83,7 +83,6 @@ void NameResolutionPass::RegisterExternalTables(const AnalyzedProgram& external)
         t.mutate_ast_node_id(NULL_ID);
         t.mutate_ast_statement_id(NULL_ID);
         external_table_ids.insert({name, table_id});
-        // XXX Also register without database & schema
     }
     // Map columns
     for (auto& c : external_table_columns) {
@@ -330,9 +329,52 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
             // Finish select statement
             case proto::NodeType::OBJECT_SQL_SELECT: {
                 auto attrs = attribute_index.Load(nodes.subspan(node.children_begin_or_value(), node.children_count()));
-                auto from_node = attrs[proto::AttributeKey::SQL_SELECT_FROM];
-                auto with_node = attrs[proto::AttributeKey::SQL_SELECT_WITH_CTES];
-                auto into_node = attrs[proto::AttributeKey::SQL_SELECT_INTO];
+                const proto::Node* from_node = attrs[proto::AttributeKey::SQL_SELECT_FROM];
+                const proto::Node* with_node = attrs[proto::AttributeKey::SQL_SELECT_WITH_CTES];
+                const proto::Node* into_node = attrs[proto::AttributeKey::SQL_SELECT_INTO];
+
+                // Merge all node states
+                NodeState sources;
+                if (from_node && node_states[from_node - nodes.data()].has_value()) {
+                    sources.Merge(std::move(node_states[from_node - nodes.data()].value()));
+                }
+                if (with_node && node_states[with_node - nodes.data()].has_value()) {
+                    sources.Merge(std::move(node_states[with_node - nodes.data()].value()));
+                }
+
+                // Build a map with all table names that are in scope
+                ankerl::unordered_dense::map<TableKey, TableID, TableKey::Hasher> local_tables;
+                for (TableID table_id : sources.tables) {
+                    proto::Table& table = tables[table_id];
+                    proto::QualifiedTableName table_name = table.table_name();
+                    local_tables.insert({table_name, table_id});
+                }
+
+                // Collect all columns that are in scope
+                ankerl::unordered_dense::map<ColumnKey, std::pair<TableID, ColumnID>, ColumnKey::Hasher> local_columns;
+                for (size_t table_ref_id : sources.table_references) {
+                    proto::TableReference& table_ref = table_references[table_ref_id];
+
+                    // Helper to register columns from a table
+                    auto registerColumnsFrom = [&](size_t tid) {
+                        proto::Table& resolved = tables[tid];
+                        for (uint32_t cid = 0; cid < resolved.column_count(); ++cid) {
+                            proto::TableColumn& col = table_columns[resolved.columns_begin() + cid];
+                            proto::QualifiedColumnName col_name{table_ref.ast_node_id(), table_ref.alias_name(), cid};
+                            local_columns.insert({col_name, {tid, cid}});
+                        }
+                    };
+
+                    // Available locally?
+                    if (auto iter = local_tables.find(table_ref.table_name()); iter != local_tables.end()) {
+                        registerColumnsFrom(iter->second);
+                    }
+
+                    // Available globally?
+                    if (auto iter = external_table_ids.find(table_ref.table_name()); iter != local_tables.end()) {
+                        registerColumnsFrom(iter->second);
+                    }
+                }
 
                 (void)from_node;
                 (void)with_node;

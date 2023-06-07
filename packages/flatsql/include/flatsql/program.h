@@ -41,6 +41,24 @@ struct TableKey {
     };
 };
 
+/// A column key
+struct ColumnKey {
+    /// The name
+    proto::QualifiedColumnName name;
+    /// Constructor
+    ColumnKey(proto::QualifiedColumnName name) : name(name) {}
+    /// The derefence operator
+    const proto::QualifiedColumnName& operator*() { return name; }
+    /// Equality operator
+    bool operator==(const ColumnKey& other) const {
+        return name.table_alias() == other.name.table_alias() && name.column_name() == other.name.column_name();
+    }
+    /// A hasher
+    struct Hasher {
+        size_t operator()(const ColumnKey& key) const { return 42; }
+    };
+};
+
 /// A statement
 class Statement {
    public:
