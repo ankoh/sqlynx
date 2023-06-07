@@ -15,12 +15,15 @@ namespace flatsql {
 class NameResolutionPass : public PassManager::LTRPass {
    public:
     using TableID = uint32_t;
+    using ColumnID = uint32_t;
 
     /// The name resolution pass works as follows:
     /// We traverse the AST in a depth-first post-order, means children before parents.
     struct NodeState {
         /// The column definitions in the subtree
         std::vector<proto::TableColumn> table_columns;
+        /// The tables in scope
+        std::vector<size_t> tables;
         /// The table references in scope
         std::vector<size_t> table_references;
         /// The column references in scope
@@ -47,7 +50,7 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// The external name mapping
     ankerl::unordered_dense::map<NameID, NameID> external_names;
     /// The external table map
-    ankerl::unordered_dense::map<TableKey, size_t, TableKey::Hasher> external_table_ids;
+    ankerl::unordered_dense::map<TableKey, TableID, TableKey::Hasher> external_table_ids;
 
     /// The local tables
     decltype(AnalyzedProgram::tables) tables;
