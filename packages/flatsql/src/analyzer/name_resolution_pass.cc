@@ -334,25 +334,28 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 const proto::Node* into_node = attrs[proto::AttributeKey::SQL_SELECT_INTO];
 
                 // Merge all node states
-                NodeState sources;
+                NodeState merged;
                 if (from_node && node_states[from_node - nodes.data()].has_value()) {
-                    sources.Merge(std::move(node_states[from_node - nodes.data()].value()));
+                    merged.Merge(std::move(node_states[from_node - nodes.data()].value()));
                 }
                 if (with_node && node_states[with_node - nodes.data()].has_value()) {
-                    sources.Merge(std::move(node_states[with_node - nodes.data()].value()));
+                    merged.Merge(std::move(node_states[with_node - nodes.data()].value()));
                 }
 
                 // Build a map with all table names that are in scope
-                ankerl::unordered_dense::map<TableKey, TableID, TableKey::Hasher> local_tables;
-                for (TableID table_id : sources.tables) {
+                std::unordered_map<TableKey, TableID, TableKey::Hasher> local_tables;
+                size_t max_column_count;
+                for (TableID table_id : merged.tables) {
                     proto::Table& table = tables[table_id];
                     proto::QualifiedTableName table_name = table.table_name();
+                    max_column_count += table.column_count();
                     local_tables.insert({table_name, table_id});
                 }
 
                 // Collect all columns that are in scope
-                ankerl::unordered_dense::map<ColumnKey, std::pair<TableID, ColumnID>, ColumnKey::Hasher> local_columns;
-                for (size_t table_ref_id : sources.table_references) {
+                std::unordered_map<ColumnKey, std::pair<TableID, ColumnID>, ColumnKey::Hasher> local_columns;
+                local_columns.reserve(max_column_count);
+                for (size_t table_ref_id : merged.table_references) {
                     proto::TableReference& table_ref = table_references[table_ref_id];
 
                     // Helper to register columns from a table
@@ -369,16 +372,27 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                     if (auto iter = local_tables.find(table_ref.table_name()); iter != local_tables.end()) {
                         registerColumnsFrom(iter->second);
                     }
-
                     // Available globally?
-                    if (auto iter = external_table_ids.find(table_ref.table_name()); iter != local_tables.end()) {
+                    if (auto iter = external_table_ids.find(table_ref.table_name()); iter != external_table_ids.end()) {
                         registerColumnsFrom(iter->second);
                     }
                 }
 
-                (void)from_node;
-                (void)with_node;
-                (void)into_node;
+                // Now scan all unresolved column refs and look them up in the map
+                for (size_t column_ref_id : merged.column_references) {
+                    proto::ColumnReference& column_ref = column_references[column_ref_id];
+
+                    // Already resolved?
+                    if (column_ref.table_id() != NULL_ID) {
+                        continue;
+                    }
+                    // Resolve the column ref
+                    if (auto iter = local_columns.find(column_ref.column_name()); iter != local_columns.end()) {
+                        auto [tid, cid] = iter->second;
+                        column_ref.mutate_table_id(tid);
+                        column_ref.mutate_column_id(cid);
+                    }
+                }
                 break;
             }
 

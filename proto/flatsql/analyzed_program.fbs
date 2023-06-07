@@ -62,6 +62,8 @@ struct ColumnReference {
     column_name: QualifiedColumnName;
     // The id of the table that is referenced
     table_id: uint32;
+    // The id of the column that is referenced
+    column_id: uint32;
 }
 
 struct JoinEdge {
