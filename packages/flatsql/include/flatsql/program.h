@@ -39,12 +39,11 @@ struct TableKey {
     /// A hasher
     struct Hasher {
         size_t operator()(const TableKey& key) const {
-            std::hash<NameID> hasher;
-            size_t seed = 0;
-            hash_combine(seed, key.name.database_name());
-            hash_combine(seed, key.name.schema_name());
-            hash_combine(seed, key.name.table_name());
-            return seed;
+            size_t hash = 0;
+            hash_combine(hash, key.name.database_name());
+            hash_combine(hash, key.name.schema_name());
+            hash_combine(hash, key.name.table_name());
+            return hash;
         }
     };
 };
@@ -64,11 +63,10 @@ struct ColumnKey {
     /// A hasher
     struct Hasher {
         size_t operator()(const ColumnKey& key) const {
-            std::hash<NameID> hasher;
-            size_t seed = 0;
-            hash_combine(seed, key.name.table_alias());
-            hash_combine(seed, key.name.column_name());
-            return seed;
+            size_t hash = 0;
+            hash_combine(hash, key.name.table_alias());
+            hash_combine(hash, key.name.column_name());
+            return hash;
         }
     };
 };

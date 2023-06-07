@@ -344,7 +344,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
 
                 // Build a map with all table names that are in scope
                 std::unordered_map<TableKey, TableID, TableKey::Hasher> local_tables;
-                size_t max_column_count;
+                size_t max_column_count = 0;
                 for (TableID table_id : merged.tables) {
                     proto::Table& table = tables[table_id];
                     proto::QualifiedTableName table_name = table.table_name();
@@ -380,9 +380,8 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
 
                 // Now scan all unresolved column refs and look them up in the map
                 for (size_t column_ref_id : merged.column_references) {
-                    proto::ColumnReference& column_ref = column_references[column_ref_id];
-
                     // Already resolved?
+                    proto::ColumnReference& column_ref = column_references[column_ref_id];
                     if (column_ref.table_id() != NULL_ID) {
                         continue;
                     }
