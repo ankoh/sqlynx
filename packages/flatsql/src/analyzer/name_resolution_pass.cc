@@ -83,6 +83,7 @@ void NameResolutionPass::RegisterExternalTables(const AnalyzedProgram& external)
         t.mutate_ast_node_id(NULL_ID);
         t.mutate_ast_statement_id(NULL_ID);
         external_table_ids.insert({name, table_id});
+        std::cout << "REGISTER NAME " << external.scanned.name_dictionary[table_id].first << std::endl;
     }
     // Map columns
     for (auto& c : external_table_columns) {
@@ -177,6 +178,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 auto& col_ref = column_references.Append(proto::ColumnReference());
                 col_ref.mutate_ast_node_id(node_id);
                 col_ref.mutate_ast_statement_id(NULL_ID);
+                col_ref.mutate_ast_scope_root(NULL_ID);
                 col_ref.mutate_table_id(NULL_ID);
                 col_ref.mutable_column_name() = name;
                 node_state.column_references.push_back(col_ref_id);
@@ -223,6 +225,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 auto& table_ref = table_references.Append(proto::TableReference());
                 table_ref.mutate_ast_node_id(node_id);
                 table_ref.mutate_ast_statement_id(NULL_ID);
+                table_ref.mutate_ast_scope_root(NULL_ID);
                 table_ref.mutate_table_id(NULL_ID);
                 table_ref.mutable_table_name() = name;
                 table_ref.mutate_alias_name(alias);
@@ -334,30 +337,37 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 const proto::Node* into_node = attrs[proto::AttributeKey::SQL_SELECT_INTO];
 
                 // Merge all node states
-                NodeState merged;
                 if (from_node && node_states[from_node - nodes.data()].has_value()) {
-                    merged.Merge(std::move(node_states[from_node - nodes.data()].value()));
+                    node_state.Merge(std::move(node_states[from_node - nodes.data()].value()));
                 }
                 if (with_node && node_states[with_node - nodes.data()].has_value()) {
-                    merged.Merge(std::move(node_states[with_node - nodes.data()].value()));
+                    node_state.Merge(std::move(node_states[with_node - nodes.data()].value()));
                 }
 
                 // Build a map with all table names that are in scope
-                std::unordered_map<TableKey, TableID, TableKey::Hasher> local_tables;
+                ankerl::unordered_dense::map<TableKey, TableID, TableKey::Hasher> local_tables;
                 size_t max_column_count = 0;
-                for (TableID table_id : merged.tables) {
+                for (TableID table_id : node_state.tables) {
                     proto::Table& table = tables[table_id];
+                    // Is out of scope?
+                    if (table.ast_scope_root() != NULL_ID) {
+                        continue;
+                    }
+                    // Register as local table if in scope
                     proto::QualifiedTableName table_name = table.table_name();
                     max_column_count += table.column_count();
                     local_tables.insert({table_name, table_id});
                 }
 
                 // Collect all columns that are in scope
-                std::unordered_map<ColumnKey, std::pair<TableID, ColumnID>, ColumnKey::Hasher> local_columns;
+                ankerl::unordered_dense::map<ColumnKey, std::pair<TableID, ColumnID>, ColumnKey::Hasher> local_columns;
                 local_columns.reserve(max_column_count);
-                for (size_t table_ref_id : merged.table_references) {
+                for (size_t table_ref_id : node_state.table_references) {
                     proto::TableReference& table_ref = table_references[table_ref_id];
-
+                    // Is out of scope?
+                    if (table_ref.ast_scope_root() != NULL_ID) {
+                        continue;
+                    }
                     // Helper to register columns from a table
                     auto registerColumnsFrom = [&](size_t tid) {
                         proto::Table& resolved = tables[tid];
@@ -367,22 +377,21 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                             local_columns.insert({col_name, {tid, cid}});
                         }
                     };
-
                     // Available locally?
                     if (auto iter = local_tables.find(table_ref.table_name()); iter != local_tables.end()) {
                         registerColumnsFrom(iter->second);
-                    }
-                    // Available globally?
-                    if (auto iter = external_table_ids.find(table_ref.table_name()); iter != external_table_ids.end()) {
+                    } else if (auto iter = external_table_ids.find(table_ref.table_name());
+                               iter != external_table_ids.end()) {
+                        // Available globally
                         registerColumnsFrom(iter->second);
                     }
                 }
 
                 // Now scan all unresolved column refs and look them up in the map
-                for (size_t column_ref_id : merged.column_references) {
-                    // Already resolved?
+                for (size_t column_ref_id : node_state.column_references) {
                     proto::ColumnReference& column_ref = column_references[column_ref_id];
-                    if (column_ref.table_id() != NULL_ID) {
+                    // Already resolved or out of scope?
+                    if (column_ref.ast_scope_root() != NULL_ID || column_ref.table_id() != NULL_ID) {
                         continue;
                     }
                     // Resolve the column ref
@@ -391,6 +400,20 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                         column_ref.mutate_table_id(tid);
                         column_ref.mutate_column_id(cid);
                     }
+                }
+
+                // Clear any unfinished table columns
+                node_state.table_columns.clear();
+
+                // Set the scope root
+                for (size_t i : node_state.tables) {
+                    tables[i].mutate_ast_scope_root(node_id);
+                }
+                for (size_t i : node_state.table_references) {
+                    table_references[i].mutate_ast_scope_root(node_id);
+                }
+                for (size_t i : node_state.column_references) {
+                    column_references[i].mutate_ast_scope_root(node_id);
                 }
                 break;
             }
