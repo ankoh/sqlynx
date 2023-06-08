@@ -80,15 +80,14 @@ void NameResolutionPass::RegisterExternalTables(const AnalyzedProgram& external)
         name.mutate_database_name(map_name(external, name.database_name()));
         name.mutate_schema_name(map_name(external, name.schema_name()));
         name.mutate_table_name(map_name(external, name.table_name()));
-        t.mutate_ast_node_id(NULL_ID);
-        t.mutate_ast_statement_id(NULL_ID);
+        t.mutate_ast_node_id(Tagged<NodeID>());
+        t.mutate_ast_statement_id(Tagged<StatementID>());
         external_table_ids.insert({name, table_id});
-        std::cout << "REGISTER NAME " << external.scanned.name_dictionary[table_id].first << std::endl;
     }
     // Map columns
     for (auto& c : external_table_columns) {
         c.mutate_column_name(map_name(external, c.column_name()));
-        c.mutate_ast_node_id(NULL_ID);
+        c.mutate_ast_node_id(Tagged<NodeID>());
     }
 }
 
@@ -152,7 +151,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
 
             // Read a column reference
             case proto::NodeType::OBJECT_SQL_COLUMN_REF: {
-                proto::QualifiedColumnName name{NULL_ID, NULL_ID, NULL_ID};
+                proto::QualifiedColumnName name{Tagged<NodeID>(), Tagged<NameID>(), Tagged<NameID>()};
                 // Read column ref path
                 auto children = nodes.subspan(node.children_begin_or_value(), node.children_count());
                 auto attrs = attribute_index.Load(children);
@@ -177,9 +176,9 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 auto col_ref_id = column_references.GetSize();
                 auto& col_ref = column_references.Append(proto::ColumnReference());
                 col_ref.mutate_ast_node_id(node_id);
-                col_ref.mutate_ast_statement_id(NULL_ID);
-                col_ref.mutate_ast_scope_root(NULL_ID);
-                col_ref.mutate_table_id(NULL_ID);
+                col_ref.mutate_ast_statement_id(Tagged<StatementID>());
+                col_ref.mutate_ast_scope_root(Tagged<NodeID>());
+                col_ref.mutate_table_id(Tagged<TableID>());
                 col_ref.mutable_column_name() = name;
                 node_state.column_references.push_back(col_ref_id);
                 break;
@@ -187,8 +186,8 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
 
             // Read a table reference
             case proto::NodeType::OBJECT_SQL_TABLEREF: {
-                proto::QualifiedTableName name{NULL_ID, NULL_ID, NULL_ID, NULL_ID};
-                NodeID alias = NULL_ID;
+                proto::QualifiedTableName name{Tagged<NodeID>(), Tagged<NameID>(), Tagged<NameID>(), Tagged<NameID>()};
+                NodeID alias = Tagged<NameID>();
 
                 // Read a table ref name
                 auto children = nodes.subspan(node.children_begin_or_value(), node.children_count());
@@ -224,9 +223,9 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 auto table_ref_id = table_references.GetSize();
                 auto& table_ref = table_references.Append(proto::TableReference());
                 table_ref.mutate_ast_node_id(node_id);
-                table_ref.mutate_ast_statement_id(NULL_ID);
-                table_ref.mutate_ast_scope_root(NULL_ID);
-                table_ref.mutate_table_id(NULL_ID);
+                table_ref.mutate_ast_statement_id(Tagged<StatementID>());
+                table_ref.mutate_ast_scope_root(Tagged<NodeID>());
+                table_ref.mutate_table_id(Tagged<TableID>());
                 table_ref.mutable_table_name() = name;
                 table_ref.mutate_alias_name(alias);
                 node_state.table_references.push_back(table_ref_id);
@@ -350,7 +349,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 for (TableID table_id : node_state.tables) {
                     proto::Table& table = tables[table_id];
                     // Is out of scope?
-                    if (table.ast_scope_root() != NULL_ID) {
+                    if (!Tagged{table.ast_scope_root()}) {
                         continue;
                     }
                     // Register as local table if in scope
@@ -365,7 +364,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 for (size_t table_ref_id : node_state.table_references) {
                     proto::TableReference& table_ref = table_references[table_ref_id];
                     // Is out of scope?
-                    if (table_ref.ast_scope_root() != NULL_ID) {
+                    if (!Tagged{table_ref.ast_scope_root()}) {
                         continue;
                     }
                     // Helper to register columns from a table
@@ -391,7 +390,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 for (size_t column_ref_id : node_state.column_references) {
                     proto::ColumnReference& column_ref = column_references[column_ref_id];
                     // Already resolved or out of scope?
-                    if (column_ref.ast_scope_root() != NULL_ID || column_ref.table_id() != NULL_ID) {
+                    if (!Tagged{column_ref.ast_scope_root()} || !Tagged{column_ref.table_id()}) {
                         continue;
                     }
                     // Resolve the column ref
@@ -404,7 +403,6 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
 
                 // Clear any unfinished table columns
                 node_state.table_columns.clear();
-
                 // Set the scope root
                 for (size_t i : node_state.tables) {
                     tables[i].mutate_ast_scope_root(node_id);

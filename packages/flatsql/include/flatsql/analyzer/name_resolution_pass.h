@@ -1,5 +1,6 @@
 #pragma once
 
+#include <limits>
 #include <tuple>
 #include <unordered_map>
 #include <unordered_set>
@@ -14,9 +15,6 @@ namespace flatsql {
 
 class NameResolutionPass : public PassManager::LTRPass {
    public:
-    using TableID = uint32_t;
-    using ColumnID = uint32_t;
-
     /// The name resolution pass works as follows:
     /// We traverse the AST in a depth-first post-order, means children before parents.
     struct NodeState {
