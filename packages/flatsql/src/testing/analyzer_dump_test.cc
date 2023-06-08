@@ -34,15 +34,15 @@ static void writeMaybeQuotedIdentifier(std::string& buffer, std::string_view nam
 /// Print a qualified name as a string
 static std::string printQualifiedName(const proto::ParsedProgramT& program, const proto::QualifiedTableName& name) {
     std::string buffer;
-    if (name.schema_name() != NULL_ID) {
-        if (name.database_name() != NULL_ID) {
+    if (!Tagged{name.schema_name()}) {
+        if (!Tagged{name.database_name()}) {
             writeMaybeQuotedIdentifier(buffer, program.name_dictionary[name.database_name()]);
             buffer += ".";
         }
         writeMaybeQuotedIdentifier(buffer, program.name_dictionary[name.schema_name()]);
         buffer += ".";
     }
-    if (name.table_name() != NULL_ID) {
+    if (!Tagged{name.table_name()}) {
         writeMaybeQuotedIdentifier(buffer, program.name_dictionary[name.table_name()]);
     }
     return buffer;
@@ -51,11 +51,11 @@ static std::string printQualifiedName(const proto::ParsedProgramT& program, cons
 /// Print a qualified name
 static std::string printQualifiedName(const proto::ParsedProgramT& program, const proto::QualifiedColumnName& name) {
     std::string buffer;
-    if (name.table_alias() != NULL_ID) {
+    if (!Tagged{name.table_alias()}) {
         writeMaybeQuotedIdentifier(buffer, program.name_dictionary[name.table_alias()]);
         buffer += ".";
     }
-    if (name.column_name() != NULL_ID) {
+    if (!Tagged{name.column_name()}) {
         writeMaybeQuotedIdentifier(buffer, program.name_dictionary[name.column_name()]);
     }
     return buffer;
@@ -81,28 +81,28 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const proto::ParsedPro
     for (auto& table_decl : analyzed.tables) {
         auto xml_tbl = tables.append_child("table");
         // Write table name
-        if (table_decl.table_name().table_name() != NULL_ID) {
+        if (!Tagged{table_decl.table_name().table_name()}) {
             auto table_name = printQualifiedName(parsed, table_decl.table_name());
             xml_tbl.append_attribute("name").set_value(table_name.c_str());
         }
         // Is external?
-        xml_tbl.append_attribute("external").set_value(table_decl.ast_node_id() == NULL_ID);
+        xml_tbl.append_attribute("external").set_value(!!Tagged{table_decl.ast_node_id()});
         // Has a node id?
-        if (auto node_id = table_decl.ast_node_id(); node_id != NULL_ID) {
-            EncodeLocation(xml_tbl, parsed.nodes[node_id].location(), text);
+        if (auto node_id = Tagged{table_decl.ast_node_id()}; !node_id) {
+            EncodeLocation(xml_tbl, parsed.nodes[*node_id].location(), text);
         }
         // Write child columns
         for (size_t i = table_decl.columns_begin(); i < table_decl.column_count(); ++i) {
             auto& column_decl = analyzed.table_columns[i];
             auto xml_col = xml_tbl.append_child("column");
-            if (column_decl.column_name() != NULL_ID) {
+            if (!Tagged{column_decl.column_name()}) {
                 auto column_name = parsed.name_dictionary[column_decl.column_name()];
                 xml_col.append_attribute("name").set_value(column_name.c_str());
             } else {
                 xml_col.append_attribute("name").set_value("?");
             }
-            if (auto node_id = column_decl.ast_node_id(); node_id != NULL_ID) {
-                EncodeLocation(xml_col, parsed.nodes[node_id].location(), text);
+            if (auto node_id = Tagged{column_decl.ast_node_id()}; !node_id) {
+                EncodeLocation(xml_col, parsed.nodes[*node_id].location(), text);
             }
         }
     }
@@ -110,33 +110,33 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const proto::ParsedPro
     // Write table references
     for (auto& ref : analyzed.table_references) {
         auto xml_ref = table_refs.append_child("table-reference");
-        if (ref.table_name().table_name() != NULL_ID) {
+        if (!Tagged{ref.table_name().table_name()}) {
             auto name = printQualifiedName(parsed, ref.table_name());
             xml_ref.append_attribute("name").set_value(name.c_str());
         }
-        if (auto table_id = ref.table_id(); table_id != NULL_ID) {
-            xml_ref.append_attribute("table").set_value(table_id);
+        if (auto table_id = Tagged{ref.table_id()}; !table_id) {
+            xml_ref.append_attribute("table").set_value(*table_id);
         }
-        if (auto node_id = ref.ast_node_id(); node_id != NULL_ID) {
-            EncodeLocation(xml_ref, parsed.nodes[node_id].location(), text);
+        if (auto node_id = Tagged{ref.ast_node_id()}; !node_id) {
+            EncodeLocation(xml_ref, parsed.nodes[*node_id].location(), text);
         }
     }
 
     // Write column references
     for (auto& ref : analyzed.column_references) {
         auto xml_ref = column_refs.append_child("column-reference");
-        if (ref.column_name().column_name() != NULL_ID) {
+        if (!Tagged{ref.column_name().column_name()}) {
             auto name = printQualifiedName(parsed, ref.column_name());
             xml_ref.append_attribute("name").set_value(name.c_str());
         }
-        if (auto table_id = ref.table_id(); table_id != NULL_ID) {
-            xml_ref.append_attribute("table").set_value(table_id);
+        if (auto table_id = Tagged{ref.table_id()}; !table_id.IsNull()) {
+            xml_ref.append_attribute("table").set_value(*table_id);
         }
-        if (auto column_id = ref.table_id(); column_id != NULL_ID) {
-            xml_ref.append_attribute("column").set_value(column_id);
+        if (auto column_id = Tagged{ref.table_id()}; !column_id.IsNull()) {
+            xml_ref.append_attribute("column").set_value(*column_id);
         }
-        if (auto node_id = ref.ast_node_id(); node_id != NULL_ID) {
-            EncodeLocation(xml_ref, parsed.nodes[node_id].location(), text);
+        if (auto node_id = Tagged{ref.ast_node_id()}; !node_id.IsNull()) {
+            EncodeLocation(xml_ref, parsed.nodes[*node_id].location(), text);
         }
     }
 

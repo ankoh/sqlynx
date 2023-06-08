@@ -6,6 +6,7 @@
 #include "flatsql/parser/parser_generated.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/text/rope.h"
+#include "flatsql/utils/bits.h"
 #include "flatsql/utils/hash.h"
 #include "flatsql/utils/string_pool.h"
 
@@ -20,8 +21,30 @@ using Key = proto::AttributeKey;
 using Location = proto::Location;
 using NodeID = uint32_t;
 using NameID = uint32_t;
+using StatementID = uint32_t;
+using TableID = uint32_t;
+using ColumnID = uint32_t;
 
-static constexpr uint32_t NULL_ID = std::numeric_limits<uint32_t>::max();
+/// A tagged identifier
+template <typename T> struct Tagged {
+    static constexpr size_t BitWidth = UnsignedBitWidth<T>();
+    /// The value
+    T value;
+    /// Constructor
+    Tagged() : value(std::numeric_limits<T>::max()) {}
+    /// Constructor
+    Tagged(T value, bool is_external = false) : value(value | ((is_external ? 0b1 : 0) << 31)) {}
+    /// Is an external id?
+    inline bool IsExternal() const { return (value >> (BitWidth - 1)) != 0; }
+    /// Is a null id?
+    inline bool IsNull() const { return value == std::numeric_limits<T>::max(); }
+    /// Convert to bool
+    operator bool() const { return !IsNull(); }
+    /// Convert to value
+    operator T() const { return value; }
+    /// Convert to value
+    T operator*() const { return value & ~(0b1 << (BitWidth - 1)); }
+};
 
 /// A table key
 struct TableKey {
