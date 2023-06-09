@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "flatsql/analyzer/analyzer.h"
 #include "flatsql/analyzer/pass_manager.h"
 #include "flatsql/program.h"
 #include "flatsql/proto/proto_generated.h"
@@ -48,7 +49,7 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// The external name mapping
     ankerl::unordered_dense::map<NameID, NameID> external_names;
     /// The external table map
-    ankerl::unordered_dense::map<TableKey, TableID, TableKey::Hasher> external_table_ids;
+    ankerl::unordered_dense::map<Analyzer::TableKey, TableID, Analyzer::TableKey::Hasher> external_table_ids;
 
     /// The local tables
     decltype(AnalyzedProgram::tables) tables;
