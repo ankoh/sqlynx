@@ -27,19 +27,18 @@ using ColumnID = uint32_t;
 
 /// A tagged identifier
 template <typename T> struct Tagged {
-    static constexpr size_t BitWidth = UnsignedBitWidth<T>();
     /// The value
     T value;
     /// Constructor
     Tagged() : value(std::numeric_limits<T>::max()) {}
     /// Constructor
     Tagged(T value, bool is_external = false) : value(value | ((is_external ? 0b1 : 0) << 31)) {}
-    /// Is an external id?
-    inline bool IsExternal() const { return (value >> (BitWidth - 1)) != 0; }
+    /// Is a null id?
+    inline T GetValue() const { return value & ~(0b1 << (UnsignedBitWidth<T>() - 1)); }
     /// Is a null id?
     inline bool IsNull() const { return value == std::numeric_limits<T>::max(); }
-    /// Is a null id?
-    inline bool GetValue() const { return value & ~(0b1 << (BitWidth - 1)); }
+    /// Is an external id?
+    inline bool IsExternal() const { return (value >> (UnsignedBitWidth<T>() - 1)) != 0; }
     /// Convert to bool
     operator bool() const { return !IsNull(); }
     /// Convert to value
