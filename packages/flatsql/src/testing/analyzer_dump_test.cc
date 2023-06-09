@@ -89,7 +89,7 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const proto::ParsedPro
         xml_tbl.append_attribute("external").set_value(!!Tagged{table_decl.ast_node_id()});
         // Has a node id?
         if (auto node_id = Tagged{table_decl.ast_node_id()}; !node_id) {
-            EncodeLocation(xml_tbl, parsed.nodes[*node_id].location(), text);
+            EncodeLocation(xml_tbl, parsed.nodes[node_id.GetValue()].location(), text);
         }
         // Write child columns
         for (size_t i = table_decl.columns_begin(); i < table_decl.column_count(); ++i) {
@@ -102,7 +102,7 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const proto::ParsedPro
                 xml_col.append_attribute("name").set_value("?");
             }
             if (auto node_id = Tagged{column_decl.ast_node_id()}; !node_id) {
-                EncodeLocation(xml_col, parsed.nodes[*node_id].location(), text);
+                EncodeLocation(xml_col, parsed.nodes[node_id.GetValue()].location(), text);
             }
         }
     }
@@ -115,10 +115,10 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const proto::ParsedPro
             xml_ref.append_attribute("name").set_value(name.c_str());
         }
         if (auto table_id = Tagged{ref.table_id()}; !table_id) {
-            xml_ref.append_attribute("table").set_value(*table_id);
+            xml_ref.append_attribute("table").set_value(table_id.GetValue());
         }
         if (auto node_id = Tagged{ref.ast_node_id()}; !node_id) {
-            EncodeLocation(xml_ref, parsed.nodes[*node_id].location(), text);
+            EncodeLocation(xml_ref, parsed.nodes[node_id.GetValue()].location(), text);
         }
     }
 
@@ -130,13 +130,13 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const proto::ParsedPro
             xml_ref.append_attribute("name").set_value(name.c_str());
         }
         if (auto table_id = Tagged{ref.table_id()}; !table_id.IsNull()) {
-            xml_ref.append_attribute("table").set_value(*table_id);
+            xml_ref.append_attribute("table").set_value(table_id.GetValue());
         }
         if (auto column_id = Tagged{ref.table_id()}; !column_id.IsNull()) {
-            xml_ref.append_attribute("column").set_value(*column_id);
+            xml_ref.append_attribute("column").set_value(column_id.GetValue());
         }
         if (auto node_id = Tagged{ref.ast_node_id()}; !node_id.IsNull()) {
-            EncodeLocation(xml_ref, parsed.nodes[*node_id].location(), text);
+            EncodeLocation(xml_ref, parsed.nodes[node_id.GetValue()].location(), text);
         }
     }
 
