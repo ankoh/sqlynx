@@ -27,6 +27,22 @@
             "program": "${workspaceFolder}/packages/flatsql/build/native/Debug/tester",
             "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*Rope*"],
             "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Parser Dumps",
+            "program": "${workspaceFolder}/packages/flatsql/build/native/Debug/dump_parser",
+            "args": ["--source_dir=${workspaceFolder}"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Analyzer Dumps",
+            "program": "${workspaceFolder}/packages/flatsql/build/native/Debug/dump_analyzer",
+            "args": ["--source_dir=${workspaceFolder}"],
+            "cwd": "${workspaceFolder}"
         }
     ]
 }
