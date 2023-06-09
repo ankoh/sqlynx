@@ -1,0 +1,32 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Analyzer Tests",
+            "program": "${workspaceFolder}/packages/flatsql/build/native/Debug/tester",
+            "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*Analyzer*"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Parser Tests",
+            "program": "${workspaceFolder}/packages/flatsql/build/native/Debug/tester",
+            "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*Parser*"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Rope Tests",
+            "program": "${workspaceFolder}/packages/flatsql/build/native/Debug/tester",
+            "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*Rope*"],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
