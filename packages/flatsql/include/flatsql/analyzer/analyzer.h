@@ -12,14 +12,16 @@ struct Analyzer {
     friend class AnalyzedProgram;
 
    public:
-    /// An identifier scheme used by the analyzer
+    /// An identifier
     struct ID {
         /// The value
         uint32_t value;
         /// Constructor
         ID() : value(std::numeric_limits<uint32_t>::max()) {}
         /// Constructor
-        ID(uint32_t value, bool is_external = false) : value(value | ((is_external ? 0b1 : 0) << 31)) {}
+        ID(uint32_t value) : value(value) {}
+        /// Constructor
+        ID(uint32_t value, bool is_external) : value(value | ((is_external ? 0b1 : 0) << 31)) {}
         /// Is a null id?
         inline uint32_t GetValue() const { return value & ~(0b1 << 31); }
         /// Is a null id?

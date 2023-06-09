@@ -348,8 +348,8 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 size_t max_column_count = 0;
                 for (TableID table_id : node_state.tables) {
                     proto::Table& table = tables[table_id];
-                    // Is out of scope?
-                    if (!Analyzer::ID{table.ast_scope_root()}) {
+                    // Table declarations are out of scope if they have a scope root set
+                    if (Analyzer::ID(table.ast_scope_root())) {
                         continue;
                     }
                     // Register as local table if in scope
@@ -365,8 +365,8 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 local_columns.reserve(max_column_count);
                 for (size_t table_ref_id : node_state.table_references) {
                     proto::TableReference& table_ref = table_references[table_ref_id];
-                    // Is out of scope?
-                    if (!Analyzer::ID{table_ref.ast_scope_root()}) {
+                    // Table references are out of scope if they have a scope root set
+                    if (Analyzer::ID(table_ref.ast_scope_root())) {
                         continue;
                     }
                     // Helper to register columns from a table
@@ -391,8 +391,8 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 // Now scan all unresolved column refs and look them up in the map
                 for (size_t column_ref_id : node_state.column_references) {
                     proto::ColumnReference& column_ref = column_references[column_ref_id];
-                    // Already resolved or out of scope?
-                    if (!Analyzer::ID{column_ref.ast_scope_root()} || !Analyzer::ID{column_ref.table_id()}) {
+                    // Out of scope or already resolved?
+                    if (Analyzer::ID(column_ref.ast_scope_root()) || Analyzer::ID(column_ref.table_id())) {
                         continue;
                     }
                     // Resolve the column ref
