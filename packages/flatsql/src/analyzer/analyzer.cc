@@ -10,10 +10,10 @@ Analyzer::Analyzer(ScannedProgram& scanned, ParsedProgram& parsed, const Analyze
     : scanned_program(scanned),
       parsed_program(parsed),
       pass_manager(parsed),
-      name_resolution(parsed, attribute_index),
+      name_resolution(std::make_unique<NameResolutionPass>(parsed, attribute_index)),
       schema(schema) {
     if (schema) {
-        name_resolution.RegisterExternalTables(*schema);
+        name_resolution->RegisterExternalTables(*schema);
     }
 }
 
@@ -21,11 +21,11 @@ std::unique_ptr<AnalyzedProgram> Analyzer::Analyze(ScannedProgram& scanned, Pars
                                                    const AnalyzedProgram* schema) {
     // Run analysis passes
     Analyzer az{scanned, parsed, schema};
-    az.pass_manager.Execute(az.name_resolution);
+    az.pass_manager.Execute(*az.name_resolution);
 
     // Build program
     auto program = std::make_unique<AnalyzedProgram>(scanned, parsed);
-    az.name_resolution.Export(*program);
+    az.name_resolution->Export(*program);
     return program;
 }
 

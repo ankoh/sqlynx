@@ -25,74 +25,6 @@ using StatementID = uint32_t;
 using TableID = uint32_t;
 using ColumnID = uint32_t;
 
-/// A tagged identifier
-template <typename T> struct Tagged {
-    /// The value
-    T value;
-    /// Constructor
-    Tagged() : value(std::numeric_limits<T>::max()) {}
-    /// Constructor
-    Tagged(T value, bool is_external = false) : value(value | ((is_external ? 0b1 : 0) << 31)) {}
-    /// Is a null id?
-    inline T GetValue() const { return value & ~(0b1 << (UnsignedBitWidth<T>() - 1)); }
-    /// Is a null id?
-    inline bool IsNull() const { return value == std::numeric_limits<T>::max(); }
-    /// Is an external id?
-    inline bool IsExternal() const { return (value >> (UnsignedBitWidth<T>() - 1)) != 0; }
-    /// Convert to bool
-    operator bool() const { return !IsNull(); }
-    /// Convert to value
-    operator T() const { return value; }
-};
-
-/// A table key
-struct TableKey {
-    /// The name
-    proto::QualifiedTableName name;
-    /// Constructor
-    TableKey(proto::QualifiedTableName name) : name(name) {}
-    /// The derefence operator
-    const proto::QualifiedTableName& operator*() { return name; }
-    /// Equality operator
-    bool operator==(const TableKey& other) const {
-        return name.database_name() == other.name.database_name() && name.schema_name() == other.name.schema_name() &&
-               name.table_name() == other.name.table_name();
-    }
-    /// A hasher
-    struct Hasher {
-        size_t operator()(const TableKey& key) const {
-            size_t hash = 0;
-            hash_combine(hash, key.name.database_name());
-            hash_combine(hash, key.name.schema_name());
-            hash_combine(hash, key.name.table_name());
-            return hash;
-        }
-    };
-};
-
-/// A column key
-struct ColumnKey {
-    /// The name
-    proto::QualifiedColumnName name;
-    /// Constructor
-    ColumnKey(proto::QualifiedColumnName name) : name(name) {}
-    /// The derefence operator
-    const proto::QualifiedColumnName& operator*() { return name; }
-    /// Equality operator
-    bool operator==(const ColumnKey& other) const {
-        return name.table_alias() == other.name.table_alias() && name.column_name() == other.name.column_name();
-    }
-    /// A hasher
-    struct Hasher {
-        size_t operator()(const ColumnKey& key) const {
-            size_t hash = 0;
-            hash_combine(hash, key.name.table_alias());
-            hash_combine(hash, key.name.column_name());
-            return hash;
-        }
-    };
-};
-
 /// A statement
 class Statement {
    public:
@@ -165,8 +97,6 @@ class ParsedProgram {
 };
 
 class AnalyzedProgram {
-    friend class NameResolutionPass;
-
    public:
     /// The scanned program
     ScannedProgram& scanned;
