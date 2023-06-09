@@ -38,12 +38,12 @@ template <typename T> struct Tagged {
     inline bool IsExternal() const { return (value >> (BitWidth - 1)) != 0; }
     /// Is a null id?
     inline bool IsNull() const { return value == std::numeric_limits<T>::max(); }
+    /// Is a null id?
+    inline bool GetValue() const { return value & ~(0b1 << (BitWidth - 1)); }
     /// Convert to bool
     operator bool() const { return !IsNull(); }
     /// Convert to value
     operator T() const { return value; }
-    /// Convert to value
-    T operator*() const { return value & ~(0b1 << (BitWidth - 1)); }
 };
 
 /// A table key
