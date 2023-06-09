@@ -1,18 +1,13 @@
-#include <bitset>
-#include <cstdint>
-#include <limits>
+#include <type_traits>
 
 namespace flatsql {
 
 template <typename T> constexpr size_t UnsignedBitWidth() {
-    T max = std::numeric_limits<T>::max();
-    T value = 0b1;
-    size_t width = 1;
-    do {
-        ++width;
-        value = (value << 1) | 0b1;
-    } while (value != max);
-    return width;
+    if constexpr (std::is_same_v<T, uint64_t>) return 64;
+    if constexpr (std::is_same_v<T, uint32_t>) return 32;
+    if constexpr (std::is_same_v<T, uint16_t>) return 16;
+    if constexpr (std::is_same_v<T, uint8_t>) return 8;
+    __builtin_unreachable();
 }
 
 }  // namespace flatsql
