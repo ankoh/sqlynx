@@ -16,7 +16,7 @@ namespace flatsql {
 static bool isAllLowercaseAlphaNum(std::string_view id) {
     bool all = true;
     for (auto c : id) {
-        all &= c >= 'a' && c <= 'z' && c >= '0' && c <= '9';
+        all &= (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9');
     }
     return all;
 }
@@ -127,10 +127,6 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const AnalyzedProgram&
     // Write table references
     for (auto& ref : main.table_references) {
         auto xml_ref = table_refs.append_child("table-reference");
-        if (Analyzer::ID(ref.table_name().table_name())) {
-            auto name = writeQualifiedName(main, external, ref.table_name());
-            xml_ref.append_attribute("name").set_value(name.c_str());
-        }
         if (auto table_id = Analyzer::ID(ref.table_id()); table_id) {
             xml_ref.append_attribute("table").set_value(table_id.AsIndex());
         }
@@ -142,10 +138,6 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const AnalyzedProgram&
     // Write column references
     for (auto& ref : main.column_references) {
         auto xml_ref = column_refs.append_child("column-reference");
-        if (Analyzer::ID(ref.column_name().column_name())) {
-            auto name = writeQualifiedName(main, external, ref.column_name());
-            xml_ref.append_attribute("name").set_value(name.c_str());
-        }
         if (auto table_id = Analyzer::ID(ref.table_id()); table_id) {
             xml_ref.append_attribute("table").set_value(table_id.AsIndex());
         }
