@@ -1,0 +1,26 @@
+<analyzer-dumps>
+    <analyzer-dump name="analyzer_test">
+        <schema>
+            create table A (a int, b int);
+            create table B (d int, e int);
+        </schema>
+        <script>
+            select * from A, B where a = b;
+        </script>
+        <tables />
+        <table-references>
+            <table-reference table="0" loc="27..28" text="A" />
+            <table-reference table="1" loc="30..31" text="B" />
+        </table-references>
+        <column-references>
+            <column-reference column="0" loc="38..39" text="a" />
+            <column-reference column="0" loc="42..43" text="b" />
+        </column-references>
+        <join-edges>
+            <join-edge loc="38..43" text="a = b">
+                <node at="0" ref="0" />
+                <node at="1" ref="1" />
+            </join-edge>
+        </join-edges>
+    </analyzer-dump>
+</analyzer-dumps>
