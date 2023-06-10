@@ -17,13 +17,13 @@ struct Analyzer {
         /// The value
         uint32_t value;
         /// Constructor
-        ID() : value(std::numeric_limits<uint32_t>::max()) {}
+        explicit ID() : value(std::numeric_limits<uint32_t>::max()) {}
         /// Constructor
-        ID(uint32_t value) : value(value) {}
+        explicit ID(uint32_t value) : value(value) {}
         /// Constructor
-        ID(uint32_t value, bool is_external) : value(value | ((is_external ? 0b1 : 0) << 31)) {}
+        explicit ID(uint32_t value, bool is_external) : value(value | ((is_external ? 0b1 : 0) << 31)) {}
         /// Is a null id?
-        inline uint32_t GetValue() const { return value & ~(0b1 << 31); }
+        inline uint32_t AsIndex() const { return value & ~(0b1 << 31); }
         /// Is a null id?
         inline bool IsNull() const { return value == std::numeric_limits<uint32_t>::max(); }
         /// Is an external id?

@@ -22,8 +22,6 @@ using Location = proto::Location;
 using NodeID = uint32_t;
 using NameID = uint32_t;
 using StatementID = uint32_t;
-using TableID = uint32_t;
-using ColumnID = uint32_t;
 
 /// A statement
 class Statement {
@@ -67,6 +65,8 @@ class ScannedProgram {
     /// Constructor
     ScannedProgram(rope::Rope& rope);
 
+    /// Get the input
+    auto& GetInput() const { return input_data; }
     /// Register a name
     size_t RegisterName(std::string_view s, sx::Location location);
     /// Register a keyword as name
