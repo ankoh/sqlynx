@@ -49,7 +49,7 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// The external name mapping
     ankerl::unordered_dense::map<NameID, NameID> external_names;
     /// The external table map
-    ankerl::unordered_dense::map<Analyzer::TableKey, TableID, Analyzer::TableKey::Hasher> external_table_ids;
+    ankerl::unordered_dense::map<Analyzer::TableKey, Analyzer::ID, Analyzer::TableKey::Hasher> external_table_ids;
 
     /// The local tables
     decltype(AnalyzedProgram::tables) tables;
@@ -66,6 +66,23 @@ class NameResolutionPass : public PassManager::LTRPass {
 
     /// The state of all visited nodes with yet-to-visit parents
     WakeVector<NodeState> node_states;
+    /// Temporary name path
+    std::vector<NameID> tmp_name_path;
+
+    /// Merge child states into a destination state
+    std::span<NameID> ReadNamePath(const sx::Node& node);
+    /// Merge child states into a destination state
+    proto::QualifiedTableName ReadQualifiedTableName(const sx::Node* node);
+    /// Merge child states into a destination state
+    proto::QualifiedColumnName ReadQualifiedColumnName(const sx::Node* column);
+    /// Merge child states into a destination state
+    void CloseScope(NodeState& target, size_t node_id);
+    /// Merge child states into a destination state
+    void MergeChildStates(NodeState& dst, const sx::Node& parent);
+    /// Merge child states into a destination state
+    void MergeChildStates(NodeState& dst, std::initializer_list<const proto::Node*> children);
+    /// Resolve names in the given state
+    void ResolveNames(NodeState& state);
 
    public:
     /// Constructor

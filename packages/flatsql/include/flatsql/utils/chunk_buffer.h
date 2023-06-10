@@ -13,24 +13,27 @@
 namespace flatsql {
 
 template <typename T, size_t InitialSize = 1024> struct ChunkBuffer {
+    friend struct ConstForwardIterator;
+
    public:
-    struct ForwardIterator {
+    /// Pseudo end iterator
+    struct EndIterator {};
+    /// A forward iterator
+    struct ConstForwardIterator {
         /// The buffer
-        ChunkBuffer<T>& buffer;
+        const ChunkBuffer<T, InitialSize>& buffer;
         /// The chunk chunk
         size_t chunk_id;
         /// The local value id
         size_t local_value_id;
 
         /// Constructor
-        ForwardIterator(ChunkBuffer<T>& buffer) : buffer(buffer), chunk_id(0), local_value_id(0) {}
-        /// Reset
-        void Reset() {
-            chunk_id = 0;
-            local_value_id = 0;
-        }
+        ConstForwardIterator(const ChunkBuffer<T, InitialSize>& buffer)
+            : buffer(buffer), chunk_id(0), local_value_id(0) {}
+        /// Is at end?
+        inline bool IsAtEnd() const { return local_value_id >= buffer.buffers[chunk_id].size(); }
         /// Increment operator
-        ForwardIterator& operator++() {
+        inline ConstForwardIterator& operator++() {
             ++local_value_id;
             if (local_value_id >= buffer.buffers[chunk_id].size() && (chunk_id + 1) < buffer.buffers.size()) {
                 ++chunk_id;
@@ -38,27 +41,19 @@ template <typename T, size_t InitialSize = 1024> struct ChunkBuffer {
             }
             return *this;
         }
-        /// Increment operator
-        ForwardIterator& operator+=(size_t n) {
-            n = std::min<size_t>(buffer.buffers[chunk_id].size() - local_value_id, n);
-            local_value_id += n;
-            if (local_value_id >= buffer.buffers[chunk_id].size() && (chunk_id + 1) < buffer.buffers.size()) {
-                ++chunk_id;
-                local_value_id = 0;
-            }
-            return *this;
-        }
-        /// Is at end?
-        bool IsAtEnd() { return local_value_id >= buffer.buffers[chunk_id].size(); }
-        /// Get the value
-        T GetValue() {
+        /// Compare with end iterator
+        inline bool operator==(EndIterator&) const { return IsAtEnd(); }
+        /// Compare with end iterator
+        inline bool operator==(const EndIterator&) const { return IsAtEnd(); }
+        /// Reference operator
+        inline const T& operator*() const {
             assert(!IsAtEnd());
             return buffer.buffers[chunk_id][local_value_id];
         }
-        /// Get the next N value
-        std::span<T> GetValues(size_t n) {
-            n = std::min<size_t>(buffer.buffers[chunk_id].size() - local_value_id, n);
-            return std::span<T>{buffer.buffers[chunk_id]}.subspan(local_value_id, n);
+        /// Reference operator
+        inline const T* operator->() const {
+            assert(!IsAtEnd());
+            return &buffer.buffers[chunk_id][local_value_id];
         }
     };
 
@@ -82,7 +77,7 @@ template <typename T, size_t InitialSize = 1024> struct ChunkBuffer {
         offsets.push_back(total_value_count);
     }
     /// Find an offset in the buffer
-    std::pair<size_t, size_t> find(size_t offset) {
+    std::pair<size_t, size_t> find(size_t offset) const {
         auto offset_iter = std::upper_bound(offsets.begin(), offsets.end(), offset);
         assert(offset_iter > offsets.begin());
         auto chunk_id = offset_iter - offsets.begin() - 1;
@@ -104,13 +99,20 @@ template <typename T, size_t InitialSize = 1024> struct ChunkBuffer {
         auto [chunk_id, chunk_offset] = find(offset);
         return buffers[chunk_id][offset - chunk_offset];
     }
+    /// Subscript operator
+    const T& operator[](size_t offset) const {
+        auto [chunk_id, chunk_offset] = find(offset);
+        return buffers[chunk_id][offset - chunk_offset];
+    }
+    /// Get the begin iterator
+    ConstForwardIterator begin() const { return ConstForwardIterator{*this}; }
+    /// Get the end iterator
+    EndIterator end() const { return EndIterator{}; }
     /// Get the last node
     T& GetLast() {
         assert(total_value_count > 0);
         return buffers.back().back();
     }
-    /// Iterate the buffer
-    ForwardIterator Iterate() { return ForwardIterator{*this}; }
     /// Clear the buffer
     void Clear() {
         buffers.erase(buffers.begin() + 1, buffers.end());

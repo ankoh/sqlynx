@@ -4,6 +4,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "flatsql/program.h"
 #include "flatsql/proto/proto_generated.h"
 #include "gtest/gtest.h"
 #include "pugixml.hpp"
@@ -34,8 +35,7 @@ struct AnalyzerDumpTest {
     pugi::xml_document join_edges;
 
     /// Encode a program
-    static void EncodeProgram(pugi::xml_node root, const proto::ParsedProgramT& parsed,
-                              const proto::AnalyzedProgramT& analyzed, std::string_view text);
+    static void EncodeProgram(pugi::xml_node root, const AnalyzedProgram& main, const AnalyzedProgram* external);
     /// Get the grammar tests
     static void LoadTests(std::filesystem::path& project_root);
     /// Get the grammar tests

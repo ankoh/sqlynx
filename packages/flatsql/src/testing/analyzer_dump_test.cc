@@ -22,7 +22,7 @@ static bool isAllLowercaseAlphaNum(std::string_view id) {
 }
 
 /// Write an identifier and quote it, if necessary
-static void writeMaybeQuotedIdentifier(std::string& buffer, std::string_view name) {
+static void quoteIdentifier(std::string& buffer, std::string_view name) {
     if (isAllLowercaseAlphaNum(name)) {
         buffer += name;
     } else {
@@ -32,46 +32,60 @@ static void writeMaybeQuotedIdentifier(std::string& buffer, std::string_view nam
     }
 }
 
+// Resolve a name
+static std::string_view resolveName(const AnalyzedProgram& main, const AnalyzedProgram* external, Analyzer::ID name) {
+    if (name.IsNull()) {
+        return "null";
+    }
+    if (name.IsExternal()) {
+        assert(external != nullptr);
+        return external->scanned.name_dictionary[name.AsIndex()].first;
+    } else {
+        return main.scanned.name_dictionary[name.AsIndex()].first;
+    }
+}
+
 /// Print a qualified name as a string
-static std::string printQualifiedName(const proto::ParsedProgramT& program, const proto::QualifiedTableName& name) {
+static std::string writeQualifiedName(const AnalyzedProgram& main, const AnalyzedProgram* external,
+                                      const proto::QualifiedTableName& name) {
     std::string buffer;
     if (Analyzer::ID(name.schema_name())) {
         if (Analyzer::ID(name.database_name())) {
-            writeMaybeQuotedIdentifier(buffer, program.name_dictionary[name.database_name()]);
+            quoteIdentifier(buffer, resolveName(main, external, Analyzer::ID(name.database_name())));
             buffer += ".";
         }
-        writeMaybeQuotedIdentifier(buffer, program.name_dictionary[name.schema_name()]);
+        quoteIdentifier(buffer, resolveName(main, external, Analyzer::ID(name.schema_name())));
         buffer += ".";
     }
     if (Analyzer::ID(name.table_name())) {
-        writeMaybeQuotedIdentifier(buffer, program.name_dictionary[name.table_name()]);
+        quoteIdentifier(buffer, resolveName(main, external, Analyzer::ID(name.table_name())));
     }
     return buffer;
 }
 
 /// Print a qualified name
-static std::string printQualifiedName(const proto::ParsedProgramT& program, const proto::QualifiedColumnName& name) {
+static std::string writeQualifiedName(const AnalyzedProgram& main, const AnalyzedProgram* external,
+                                      const proto::QualifiedColumnName& name) {
     std::string buffer;
     if (Analyzer::ID(name.table_alias())) {
-        writeMaybeQuotedIdentifier(buffer, program.name_dictionary[name.table_alias()]);
+        quoteIdentifier(buffer, resolveName(main, external, Analyzer::ID(name.table_alias())));
         buffer += ".";
     }
     if (Analyzer::ID(name.column_name())) {
-        writeMaybeQuotedIdentifier(buffer, program.name_dictionary[name.column_name()]);
+        quoteIdentifier(buffer, resolveName(main, external, Analyzer::ID(name.column_name())));
     }
     return buffer;
 }
 
 namespace testing {
 
-void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const proto::ParsedProgramT& parsed,
-                                     const proto::AnalyzedProgramT& analyzed, std::string_view text) {
+void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const AnalyzedProgram& main,
+                                     const AnalyzedProgram* external) {
     // Unpack modules
-    auto& nodes = parsed.nodes;
-    auto& statements = parsed.statements;
+    auto& nodes = main.parsed.nodes;
+    auto& statements = main.parsed.statements;
     auto* stmt_type_tt = proto::StatementTypeTypeTable();
     auto* node_type_tt = proto::NodeTypeTypeTable();
-
     // Create xml elements
     auto tables = root.append_child("tables");
     auto table_refs = root.append_child("table-references");
@@ -79,80 +93,82 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const proto::ParsedPro
     auto join_edges = root.append_child("join-edges");
 
     // Write local declarations
-    for (auto& table_decl : analyzed.tables) {
+    for (auto& table_decl : main.tables) {
         auto xml_tbl = tables.append_child("table");
         // Write table name
         if (Analyzer::ID(table_decl.table_name().table_name())) {
-            auto table_name = printQualifiedName(parsed, table_decl.table_name());
+            auto table_name = writeQualifiedName(main, external, table_decl.table_name());
             xml_tbl.append_attribute("name").set_value(table_name.c_str());
         }
         // Is external?
         xml_tbl.append_attribute("external").set_value(!!Analyzer::ID(table_decl.ast_node_id()));
         // Has a node id?
         if (auto node_id = Analyzer::ID(table_decl.ast_node_id()); !node_id) {
-            EncodeLocation(xml_tbl, parsed.nodes[node_id.GetValue()].location(), text);
+            EncodeLocation(xml_tbl, nodes[node_id.AsIndex()].location(), main.scanned.GetInput());
         }
         // Write child columns
         for (size_t i = table_decl.columns_begin(); i < table_decl.column_count(); ++i) {
-            auto& column_decl = analyzed.table_columns[i];
+            auto& column_decl = main.table_columns[i];
             auto xml_col = xml_tbl.append_child("column");
-            if (Analyzer::ID(column_decl.column_name())) {
-                auto column_name = parsed.name_dictionary[column_decl.column_name()];
+            if (auto column_name_id = Analyzer::ID(column_decl.column_name()); column_name_id) {
+                assert(!column_name_id.IsNull());
+                assert(!column_name_id.IsExternal());
+                std::string column_name{main.scanned.name_dictionary[column_name_id.AsIndex()].first};
                 xml_col.append_attribute("name").set_value(column_name.c_str());
             } else {
                 xml_col.append_attribute("name").set_value("?");
             }
             if (auto node_id = Analyzer::ID(column_decl.ast_node_id()); !node_id) {
-                EncodeLocation(xml_col, parsed.nodes[node_id.GetValue()].location(), text);
+                EncodeLocation(xml_col, nodes[node_id.AsIndex()].location(), main.scanned.GetInput());
             }
         }
     }
 
     // Write table references
-    for (auto& ref : analyzed.table_references) {
+    for (auto& ref : main.table_references) {
         auto xml_ref = table_refs.append_child("table-reference");
         if (Analyzer::ID(ref.table_name().table_name())) {
-            auto name = printQualifiedName(parsed, ref.table_name());
+            auto name = writeQualifiedName(main, external, ref.table_name());
             xml_ref.append_attribute("name").set_value(name.c_str());
         }
         if (auto table_id = Analyzer::ID(ref.table_id()); table_id) {
-            xml_ref.append_attribute("table").set_value(table_id.GetValue());
+            xml_ref.append_attribute("table").set_value(table_id.AsIndex());
         }
         if (auto node_id = Analyzer::ID(ref.ast_node_id()); node_id) {
-            EncodeLocation(xml_ref, parsed.nodes[node_id.GetValue()].location(), text);
+            EncodeLocation(xml_ref, nodes[node_id.AsIndex()].location(), main.scanned.GetInput());
         }
     }
 
     // Write column references
-    for (auto& ref : analyzed.column_references) {
+    for (auto& ref : main.column_references) {
         auto xml_ref = column_refs.append_child("column-reference");
         if (Analyzer::ID(ref.column_name().column_name())) {
-            auto name = printQualifiedName(parsed, ref.column_name());
+            auto name = writeQualifiedName(main, external, ref.column_name());
             xml_ref.append_attribute("name").set_value(name.c_str());
         }
         if (auto table_id = Analyzer::ID(ref.table_id()); table_id) {
-            xml_ref.append_attribute("table").set_value(table_id.GetValue());
+            xml_ref.append_attribute("table").set_value(table_id.AsIndex());
         }
-        if (auto column_id = Analyzer::ID(ref.table_id()); column_id) {
-            xml_ref.append_attribute("column").set_value(column_id.GetValue());
+        if (auto column_id = Analyzer::ID(ref.column_id()); column_id) {
+            xml_ref.append_attribute("column").set_value(column_id.AsIndex());
         }
         if (auto node_id = Analyzer::ID(ref.ast_node_id()); node_id) {
-            EncodeLocation(xml_ref, parsed.nodes[node_id.GetValue()].location(), text);
+            EncodeLocation(xml_ref, nodes[node_id.AsIndex()].location(), main.scanned.GetInput());
         }
     }
 
     // Write join edges
-    for (auto& edge : analyzed.join_edges) {
+    for (auto& edge : main.join_edges) {
         auto xml_edge = join_edges.append_child("join-edge");
-        EncodeLocation(xml_edge, parsed.nodes[edge.ast_node_id()].location(), text);
+        EncodeLocation(xml_edge, nodes[edge.ast_node_id()].location(), main.scanned.GetInput());
         for (size_t i = 0; i < edge.node_count_left(); ++i) {
-            auto& node = analyzed.join_edge_nodes[edge.nodes_begin() + i];
+            auto& node = main.join_edge_nodes[edge.nodes_begin() + i];
             auto xml_node = xml_edge.append_child("node");
             xml_node.append_attribute("at").set_value(0);
             xml_node.append_attribute("ref").set_value(node.column_reference_id());
         }
         for (size_t i = 0; i < edge.node_count_left(); ++i) {
-            auto& node = analyzed.join_edge_nodes[edge.nodes_begin() + edge.node_count_left() + i];
+            auto& node = main.join_edge_nodes[edge.nodes_begin() + edge.node_count_left() + i];
             auto xml_node = xml_edge.append_child("node");
             xml_node.append_attribute("at").set_value(1);
             xml_node.append_attribute("ref").set_value(node.column_reference_id());

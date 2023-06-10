@@ -33,7 +33,7 @@ class ParseContext {
     /// The scanner
     ScannedProgram& program;
     /// The symbol iterator
-    ChunkBuffer<Parser::symbol_type>::ForwardIterator symbol_iterator;
+    ChunkBuffer<Parser::symbol_type>::ConstForwardIterator symbol_iterator;
 
     /// The nodes
     ChunkBuffer<proto::Node> nodes;
@@ -61,7 +61,7 @@ class ParseContext {
     auto& GetProgram() { return program; };
     /// Get next symbol
     inline Parser::symbol_type NextSymbol() {
-        auto sym = symbol_iterator.GetValue();
+        Parser::symbol_type sym = *symbol_iterator;
         ++symbol_iterator;
         return sym;
     }
