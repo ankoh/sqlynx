@@ -381,7 +381,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                             if (l.column_references.size() >= 1 && r.column_references.size() >= 1) {
                                 join_edges.Append(proto::JoinEdge(node_id, join_edge_nodes.GetSize(),
                                                                   l.column_references.size(),
-                                                                  r.column_references.size()));
+                                                                  r.column_references.size(), func));
                                 for (auto ref_id : l.column_references) {
                                     join_edge_nodes.Append(proto::JoinEdgeNode(ref_id));
                                 }

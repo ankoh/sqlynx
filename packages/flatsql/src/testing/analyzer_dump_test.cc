@@ -166,6 +166,7 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const AnalyzedProgram&
     // Write join edges
     for (auto& edge : main.join_edges) {
         auto xml_edge = xml_main_join_edges.append_child("edge");
+        xml_edge.append_attribute("op").set_value(proto::EnumNameExpressionOperator(edge.expression_operator()));
         WriteLocation(xml_edge, main.parsed.nodes[edge.ast_node_id()].location(), main.scanned.GetInput());
         for (size_t i = 0; i < edge.node_count_left(); ++i) {
             auto& node = main.join_edge_nodes[edge.nodes_begin() + i];

@@ -1,3 +1,5 @@
+include "flatsql/sql_enums.fbs";
+
 namespace flatsql.proto;
 
 struct QualifiedTableName {
@@ -81,6 +83,8 @@ struct JoinEdge {
     node_count_left: uint16;
     /// The set id of nodes on the right side
     node_count_right: uint16;
+    /// The expression operator
+    expression_operator: ExpressionOperator;
 }
 
 struct JoinEdgeNode {
