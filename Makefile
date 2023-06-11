@@ -78,6 +78,14 @@ lib_coverage:
 		-o ${LIB_COVERAGE_DIR} \
 		${LIB_DEBUG_DIR}/tester
 
+.PHONY: bm_parser
+bm_parser:
+	${LIB_RELWITHDEBINFO_DIR}/bm_parse_query
+
+.PHONY: bm_analyzer
+bm_analyzer:
+	${LIB_RELWITHDEBINFO_DIR}/bm_analyze_query
+
 .PHONY: wasm
 wasm:
 	./scripts/build_parser_wasm.sh Release
