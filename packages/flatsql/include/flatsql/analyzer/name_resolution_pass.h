@@ -66,8 +66,14 @@ class NameResolutionPass : public PassManager::LTRPass {
 
     /// The state of all visited nodes with yet-to-visit parents
     WakeVector<NodeState> node_states;
-    /// Temporary name path
+
+    /// Temporary name path buffer
     std::vector<NameID> tmp_name_path;
+    /// Temporary dictionary for tables
+    ankerl::unordered_dense::map<Analyzer::TableKey, Analyzer::ID, Analyzer::TableKey::Hasher> tmp_tables;
+    /// Temporary dictionary for columns
+    ankerl::unordered_dense::map<Analyzer::ColumnKey, std::pair<Analyzer::ID, size_t>, Analyzer::ColumnKey::Hasher>
+        tmp_columns;
 
     /// Merge child states into a destination state
     std::span<NameID> ReadNamePath(const sx::Node& node);
