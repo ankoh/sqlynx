@@ -1,4 +1,17 @@
 <analyzer-dumps>
+    <analyzer-dump name="empty">
+        <external>
+            <input />
+            <tables />
+        </external>
+        <main>
+            <input />
+            <tables />
+            <table-references />
+            <column-references />
+            <join-edges />
+        </main>
+    </analyzer-dump>
     <analyzer-dump name="refs_0">
         <external>
             <input>
