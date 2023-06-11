@@ -21,6 +21,7 @@ template <typename T> static void merge(std::vector<T>& left, std::vector<T>&& r
 
 /// Merge two node states
 void NameResolutionPass::NodeState::Merge(NodeState&& other) {
+    merge(tables, std::move(other.tables));
     merge(table_columns, std::move(other.table_columns));
     merge(table_references, std::move(other.table_references));
     merge(column_references, std::move(other.column_references));
@@ -196,7 +197,7 @@ void NameResolutionPass::MergeChildStates(NodeState& dst, const proto::Node& par
 
 void NameResolutionPass::ResolveNames(NodeState& state) {
     // Build a map with all table names that are in scope
-    ankerl::unordered_dense::map<Analyzer::TableKey, Analyzer::ID, Analyzer::TableKey::Hasher> local_tables;
+    tmp_tables.clear();
     size_t max_column_count = 0;
     for (size_t table_id : state.tables) {
         proto::Table& table = tables[table_id];
@@ -207,13 +208,12 @@ void NameResolutionPass::ResolveNames(NodeState& state) {
         // Register as local table if in scope
         proto::QualifiedTableName table_name = table.table_name();
         max_column_count += table.column_count();
-        local_tables.insert({table_name, Analyzer::ID(table_id, false)});
+        tmp_tables.insert({table_name, Analyzer::ID(table_id, false)});
     }
 
     // Collect all columns that are in scope
-    ankerl::unordered_dense::map<Analyzer::ColumnKey, std::pair<Analyzer::ID, size_t>, Analyzer::ColumnKey::Hasher>
-        columns;
-    columns.reserve(max_column_count);
+    tmp_columns.clear();
+    tmp_columns.reserve(max_column_count);
     for (size_t table_ref_id : state.table_references) {
         proto::TableReference& table_ref = table_references[table_ref_id];
         // Table references are out of scope if they have a scope root set
@@ -228,7 +228,7 @@ void NameResolutionPass::ResolveNames(NodeState& state) {
                     proto::TableColumn& col = external_table_columns[resolved.columns_begin() + cid];
                     proto::QualifiedColumnName col_name{table_ref.ast_node_id(), table_ref.alias_name(),
                                                         col.column_name()};
-                    columns.insert({col_name, {tid, cid}});
+                    tmp_columns.insert({col_name, {tid, cid}});
                 }
             } else {
                 proto::Table& resolved = tables[tid.AsIndex()];
@@ -236,12 +236,12 @@ void NameResolutionPass::ResolveNames(NodeState& state) {
                     proto::TableColumn& col = table_columns[resolved.columns_begin() + cid];
                     proto::QualifiedColumnName col_name{table_ref.ast_node_id(), table_ref.alias_name(),
                                                         col.column_name()};
-                    columns.insert({col_name, {tid, cid}});
+                    tmp_columns.insert({col_name, {tid, cid}});
                 }
             }
         };
-        // Available locally?
-        if (auto iter = local_tables.find(table_ref.table_name()); iter != local_tables.end()) {
+        // Available in scope?
+        if (auto iter = tmp_tables.find(table_ref.table_name()); iter != tmp_tables.end()) {
             register_columns_from(iter->second);
             table_ref.mutate_table_id(Analyzer::ID(iter->second, false));
         } else if (auto iter = external_table_ids.find(table_ref.table_name()); iter != external_table_ids.end()) {
@@ -259,7 +259,7 @@ void NameResolutionPass::ResolveNames(NodeState& state) {
             continue;
         }
         // Resolve the column ref
-        if (auto iter = columns.find(column_ref.column_name()); iter != columns.end()) {
+        if (auto iter = tmp_columns.find(column_ref.column_name()); iter != tmp_columns.end()) {
             auto [tid, cid] = iter->second;
             column_ref.mutate_table_id(tid);
             column_ref.mutate_column_id(cid);
