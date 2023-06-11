@@ -131,4 +131,30 @@
             </input>
         </main>
     </analyzer-dump>
+    <analyzer-dump name="nesting_1">
+        <external>
+            <input>
+                create table A (a int, b int);
+                create table B (d int, e int);
+            </input>
+        </external>
+        <main>
+            <input>
+                select * from A where not exists (select * from B where a = d);
+            </input>
+        </main>
+    </analyzer-dump>
+    <analyzer-dump name="nesting_2">
+        <external>
+            <input>
+                create table A (a int, b int);
+                create table B (d int, e int);
+            </input>
+        </external>
+        <main>
+            <input>
+                select * from A where not exists (select * from A, B where a = d);
+            </input>
+        </main>
+    </analyzer-dump>
 </analyzer-dumps>
