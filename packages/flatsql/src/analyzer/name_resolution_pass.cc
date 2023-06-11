@@ -225,14 +225,16 @@ void NameResolutionPass::ResolveNames(NodeState& state) {
                 proto::Table& resolved = external_tables[tid.AsIndex()];
                 for (uint32_t cid = 0; cid < resolved.column_count(); ++cid) {
                     proto::TableColumn& col = external_table_columns[resolved.columns_begin() + cid];
-                    proto::QualifiedColumnName col_name{table_ref.ast_node_id(), table_ref.alias_name(), cid};
+                    proto::QualifiedColumnName col_name{table_ref.ast_node_id(), table_ref.alias_name(),
+                                                        col.column_name()};
                     columns.insert({col_name, {tid, cid}});
                 }
             } else {
                 proto::Table& resolved = tables[tid.AsIndex()];
                 for (uint32_t cid = 0; cid < resolved.column_count(); ++cid) {
                     proto::TableColumn& col = table_columns[resolved.columns_begin() + cid];
-                    proto::QualifiedColumnName col_name{table_ref.ast_node_id(), table_ref.alias_name(), cid};
+                    proto::QualifiedColumnName col_name{table_ref.ast_node_id(), table_ref.alias_name(),
+                                                        col.column_name()};
                     columns.insert({col_name, {tid, cid}});
                 }
             }
@@ -307,6 +309,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 col_ref.mutate_ast_statement_id(Analyzer::ID());
                 col_ref.mutate_ast_scope_root(Analyzer::ID());
                 col_ref.mutate_table_id(Analyzer::ID());
+                col_ref.mutate_column_id(Analyzer::ID());
                 col_ref.mutable_column_name() = column_name;
                 node_state.column_references.push_back(col_ref_id);
                 break;
@@ -356,7 +359,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 if (op_node && op_node->node_type() == sx::NodeType::ENUM_SQL_EXPRESSION_OPERATOR) {
                     auto func = static_cast<proto::ExpressionOperator>(op_node->children_begin_or_value());
                     switch (func) {
-                        // And operator? - Close subtrees.
+                        // And operator?
                         case proto::ExpressionOperator::AND:
                         case proto::ExpressionOperator::OR:
                         case proto::ExpressionOperator::XOR:
@@ -385,24 +388,13 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                             break;
                         }
 
-                        // Operators that preserve refs
-                        case proto::ExpressionOperator::COLLATE:
-                        case proto::ExpressionOperator::DEFAULT:
-                        case proto::ExpressionOperator::DIVIDE:
-                        case proto::ExpressionOperator::MINUS:
-                        case proto::ExpressionOperator::MODULUS:
-                        case proto::ExpressionOperator::MULTIPLY:
-                        case proto::ExpressionOperator::NEGATE:
-                        case proto::ExpressionOperator::NOT:
-                        case proto::ExpressionOperator::PLUS:
-                        case proto::ExpressionOperator::TYPECAST:
-                            MergeChildStates(node_state, *args_node);
-                            break;
-
                         // Other operators
                         case proto::ExpressionOperator::AT_TIMEZONE:
                         case proto::ExpressionOperator::BETWEEN_ASYMMETRIC:
                         case proto::ExpressionOperator::BETWEEN_SYMMETRIC:
+                        case proto::ExpressionOperator::COLLATE:
+                        case proto::ExpressionOperator::DEFAULT:
+                        case proto::ExpressionOperator::DIVIDE:
                         case proto::ExpressionOperator::GLOB:
                         case proto::ExpressionOperator::ILIKE:
                         case proto::ExpressionOperator::IN:
@@ -418,6 +410,11 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                         case proto::ExpressionOperator::IS_TRUE:
                         case proto::ExpressionOperator::IS_UNKNOWN:
                         case proto::ExpressionOperator::LIKE:
+                        case proto::ExpressionOperator::MINUS:
+                        case proto::ExpressionOperator::MODULUS:
+                        case proto::ExpressionOperator::MULTIPLY:
+                        case proto::ExpressionOperator::NEGATE:
+                        case proto::ExpressionOperator::NOT:
                         case proto::ExpressionOperator::NOT_BETWEEN_ASYMMETRIC:
                         case proto::ExpressionOperator::NOT_BETWEEN_SYMMETRIC:
                         case proto::ExpressionOperator::NOT_GLOB:
@@ -427,9 +424,16 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                         case proto::ExpressionOperator::NOT_NULL:
                         case proto::ExpressionOperator::NOT_SIMILAR_TO:
                         case proto::ExpressionOperator::OVERLAPS:
+                        case proto::ExpressionOperator::PLUS:
                         case proto::ExpressionOperator::SIMILAR_TO:
+                        case proto::ExpressionOperator::TYPECAST:
                             break;
                     }
+                }
+
+                // Merge all child states
+                if (args_node) {
+                    MergeChildStates(node_state, *args_node);
                 }
                 break;
             }
@@ -438,9 +442,10 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
             case proto::NodeType::OBJECT_SQL_SELECT: {
                 auto attrs = attribute_index.Load(nodes.subspan(node.children_begin_or_value(), node.children_count()));
                 const proto::Node* from_node = attrs[proto::AttributeKey::SQL_SELECT_FROM];
-                const proto::Node* with_node = attrs[proto::AttributeKey::SQL_SELECT_WITH_CTES];
                 const proto::Node* into_node = attrs[proto::AttributeKey::SQL_SELECT_INTO];
-                MergeChildStates(node_state, {from_node, with_node});
+                const proto::Node* where_node = attrs[proto::AttributeKey::SQL_SELECT_WHERE];
+                const proto::Node* with_node = attrs[proto::AttributeKey::SQL_SELECT_WITH_CTES];
+                MergeChildStates(node_state, {from_node, with_node, where_node});
                 ResolveNames(node_state);
                 CloseScope(node_state, node_id);
                 break;
