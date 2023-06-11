@@ -47,8 +47,8 @@ void NameResolutionPass::RegisterExternalTables(const AnalyzedProgram& external)
     // amount. That is, `table_id = external_tables.size() + offset in tables`
 
     // Helper to remap a name id
-    auto map_name = [this](const AnalyzedProgram& external, NameID name) {
-        if (name == std::numeric_limits<NameID>::max()) return name;
+    auto map_name = [this](const AnalyzedProgram& external, NameID name) -> Analyzer::ID {
+        if (Analyzer::ID(name).IsNull()) return Analyzer::ID(name);
         // First check if the external id is already mapped,
         if (auto iter = external_names.find(name); iter != external_names.end()) {
             return iter->second;
@@ -56,11 +56,12 @@ void NameResolutionPass::RegisterExternalTables(const AnalyzedProgram& external)
         // If not, get name string and lookup local name
         if (auto iter = scanned_program.name_dictionary_ids.find(external.scanned.name_dictionary[name].first);
             iter != scanned_program.name_dictionary_ids.end()) {
-            external_names.insert({name, iter->second});
-            return iter->second;
+            Analyzer::ID mapped_id{iter->second, false};
+            external_names.insert({name, mapped_id});
+            return mapped_id;
         }
         // If not matching any local, create new mapping
-        NameID mapped_id = external_names.size();
+        Analyzer::ID mapped_id{name, true};
         external_names.insert({name, mapped_id});
         return mapped_id;
     };

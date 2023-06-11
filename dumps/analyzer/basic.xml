@@ -1,0 +1,243 @@
+<analyzer-dumps>
+    <analyzer-dump name="refs_0">
+        <external>
+            <input>
+                create table A (a int, b int);
+                create table B (d int, e int);
+            </input>
+            <tables>
+                <table name="a" loc="17..46" text="create tab..nt, b int)">
+                    <column name="a" loc="33..38" text="a int" />
+                    <column name="b" loc="40..45" text="b int" />
+                </table>
+                <table name="b" loc="64..93" text="create tab..nt, e int)">
+                    <column name="d" loc="80..85" text="d int" />
+                    <column name="e" loc="87..92" text="e int" />
+                </table>
+            </tables>
+        </external>
+        <main>
+            <input>
+                select * from A, B where a = b;
+            </input>
+            <tables />
+            <table-references>
+                <external table="0" loc="31..32" text="A" />
+                <external table="1" loc="34..35" text="B" />
+            </table-references>
+            <column-references>
+                <external table="0" column="0" loc="42..43" text="a" />
+                <external table="0" column="1" loc="46..47" text="b" />
+            </column-references>
+            <join-edges>
+                <edge loc="42..47" text="a = b">
+                    <node side="0" ref="0" />
+                    <node side="1" ref="1" />
+                </edge>
+            </join-edges>
+        </main>
+    </analyzer-dump>
+    <analyzer-dump name="edges_0">
+        <external>
+            <input>
+                create table A (a int, b int);
+                create table B (d int, e int);
+            </input>
+            <tables>
+                <table name="a" loc="17..46" text="create tab..nt, b int)">
+                    <column name="a" loc="33..38" text="a int" />
+                    <column name="b" loc="40..45" text="b int" />
+                </table>
+                <table name="b" loc="64..93" text="create tab..nt, e int)">
+                    <column name="d" loc="80..85" text="d int" />
+                    <column name="e" loc="87..92" text="e int" />
+                </table>
+            </tables>
+        </external>
+        <main>
+            <input>
+                select * from A, B where a + d = e;
+            </input>
+            <tables />
+            <table-references>
+                <external table="0" loc="31..32" text="A" />
+                <external table="1" loc="34..35" text="B" />
+            </table-references>
+            <column-references>
+                <external table="0" column="0" loc="42..43" text="a" />
+                <external table="1" column="0" loc="46..47" text="d" />
+                <external table="1" column="1" loc="50..51" text="e" />
+            </column-references>
+            <join-edges>
+                <edge loc="42..51" text="a + d = e">
+                    <node side="0" ref="0" />
+                    <node side="0" ref="1" />
+                    <node side="1" ref="2" />
+                </edge>
+            </join-edges>
+        </main>
+    </analyzer-dump>
+    <analyzer-dump name="edges_1">
+        <external>
+            <input>
+                create table A (a int, b int);
+                create table B (d int, e int);
+            </input>
+            <tables>
+                <table name="a" loc="17..46" text="create tab..nt, b int)">
+                    <column name="a" loc="33..38" text="a int" />
+                    <column name="b" loc="40..45" text="b int" />
+                </table>
+                <table name="b" loc="64..93" text="create tab..nt, e int)">
+                    <column name="d" loc="80..85" text="d int" />
+                    <column name="e" loc="87..92" text="e int" />
+                </table>
+            </tables>
+        </external>
+        <main>
+            <input>
+                select * from A, B where a = d and b = e;
+            </input>
+            <tables />
+            <table-references>
+                <external table="0" loc="31..32" text="A" />
+                <external table="1" loc="34..35" text="B" />
+            </table-references>
+            <column-references>
+                <external table="0" column="0" loc="42..43" text="a" />
+                <external table="1" column="0" loc="46..47" text="d" />
+                <external table="0" column="1" loc="52..53" text="b" />
+                <external table="1" column="1" loc="56..57" text="e" />
+            </column-references>
+            <join-edges>
+                <edge loc="42..47" text="a = d">
+                    <node side="0" ref="0" />
+                    <node side="1" ref="1" />
+                </edge>
+                <edge loc="52..57" text="b = e">
+                    <node side="0" ref="2" />
+                    <node side="1" ref="3" />
+                </edge>
+            </join-edges>
+        </main>
+    </analyzer-dump>
+    <analyzer-dump name="unresolved_0">
+        <external>
+            <input>
+                create table A (a int, b int);
+                create table B (d int, e int);
+            </input>
+            <tables>
+                <table name="a" loc="17..46" text="create tab..nt, b int)">
+                    <column name="a" loc="33..38" text="a int" />
+                    <column name="b" loc="40..45" text="b int" />
+                </table>
+                <table name="c" loc="64..93" text="create tab..nt, e int)">
+                    <column name="d" loc="80..85" text="d int" />
+                    <column name="e" loc="87..92" text="e int" />
+                </table>
+            </tables>
+        </external>
+        <main>
+            <input>
+                select * from A, C where a = c;
+            </input>
+            <tables />
+            <table-references>
+                <external table="0" loc="31..32" text="A" />
+                <unresolved loc="34..35" text="C" />
+            </table-references>
+            <column-references>
+                <external table="0" column="0" loc="42..43" text="a" />
+                <unresolved loc="46..47" text="c" />
+            </column-references>
+            <join-edges>
+                <edge loc="42..47" text="a = c">
+                    <node side="0" ref="0" />
+                    <node side="1" ref="1" />
+                </edge>
+            </join-edges>
+        </main>
+    </analyzer-dump>
+    <analyzer-dump name="unresolved_1">
+        <external>
+            <input>
+                create table A (a int, b int);
+                create table B (d int, e int);
+            </input>
+            <tables>
+                <table name="a" loc="17..46" text="create tab..nt, b int)">
+                    <column name="a" loc="33..38" text="a int" />
+                    <column name="b" loc="40..45" text="b int" />
+                </table>
+                <table name="b" loc="64..93" text="create tab..nt, e int)">
+                    <column name="d" loc="80..85" text="d int" />
+                    <column name="e" loc="87..92" text="e int" />
+                </table>
+            </tables>
+        </external>
+        <main>
+            <input>
+                select * from A, B where a = c;
+            </input>
+            <tables />
+            <table-references>
+                <external table="0" loc="31..32" text="A" />
+                <external table="1" loc="34..35" text="B" />
+            </table-references>
+            <column-references>
+                <external table="0" column="0" loc="42..43" text="a" />
+                <unresolved loc="46..47" text="c" />
+            </column-references>
+            <join-edges>
+                <edge loc="42..47" text="a = c">
+                    <node side="0" ref="0" />
+                    <node side="1" ref="1" />
+                </edge>
+            </join-edges>
+        </main>
+    </analyzer-dump>
+    <analyzer-dump name="unresolved_2">
+        <external>
+            <input />
+            <tables />
+        </external>
+        <main>
+            <input>
+                select * from A;
+            </input>
+            <tables />
+            <table-references>
+                <unresolved loc="31..32" text="A" />
+            </table-references>
+            <column-references />
+            <join-edges />
+        </main>
+    </analyzer-dump>
+    <analyzer-dump name="unresolved_3">
+        <external>
+            <input />
+            <tables />
+        </external>
+        <main>
+            <input>
+                select * from A, B where c = d;
+            </input>
+            <tables />
+            <table-references>
+                <unresolved loc="31..32" text="A" />
+                <unresolved loc="34..35" text="B" />
+            </table-references>
+            <column-references>
+                <unresolved loc="42..43" text="c" />
+                <unresolved loc="46..47" text="d" />
+            </column-references>
+            <join-edges>
+                <edge loc="42..47" text="c = d">
+                    <node side="0" ref="0" />
+                    <node side="1" ref="1" />
+                </edge>
+            </join-edges>
+        </main>
+    </analyzer-dump>
+</analyzer-dumps>
