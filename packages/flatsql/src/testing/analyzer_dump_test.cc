@@ -182,39 +182,17 @@ void AnalyzerDumpTest::LoadTests(std::filesystem::path& source_dir) {
             // Create test
             tests.emplace_back();
             auto& t = tests.back();
-            auto xml_external = test.child("external").last_child();
-            auto xml_main = test.child("main").last_child();
+            auto xml_external = test.child("external");
+            auto xml_main = test.child("main");
             t.name = test.attribute("name").as_string();
             t.input_external = xml_external.child("input").last_child().value();
             t.input_main = xml_main.child("input").last_child().value();
 
-            // Read the tables
-            pugi::xml_document tables;
-            for (auto s : xml_main.child("tables").children()) {
-                tables.append_copy(s);
-            }
-            t.tables = std::move(tables);
-
-            // Read the table refs
-            pugi::xml_document table_refs;
-            for (auto s : xml_main.child("table-references").children()) {
-                table_refs.append_copy(s);
-            }
-            t.table_references = std::move(table_refs);
-
-            // Read the column refs
-            pugi::xml_document column_refs;
-            for (auto s : xml_main.child("column-references").children()) {
-                column_refs.append_copy(s);
-            }
-            t.column_references = std::move(column_refs);
-
-            // Read the join edges
-            pugi::xml_document graph_edges;
-            for (auto s : xml_main.child("query-graph").children()) {
-                graph_edges.append_copy(s);
-            }
-            t.graph_edges = std::move(graph_edges);
+            // Read xml elements
+            t.tables.append_copy(xml_main.child("tables"));
+            t.table_references.append_copy(xml_main.child("table-references"));
+            t.column_references.append_copy(xml_main.child("column-references"));
+            t.graph_edges.append_copy(xml_main.child("query-graph"));
         }
 
         std::cout << "[ SETUP    ] " << filename << ": " << tests.size() << " tests" << std::endl;
