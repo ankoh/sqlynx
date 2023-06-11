@@ -380,4 +380,81 @@
             </query-graph>
         </main>
     </analyzer-dump>
+    <analyzer-dump name="nesting_1">
+        <external>
+            <input>
+                create table A (a int, b int);
+                create table B (d int, e int);
+            </input>
+            <tables>
+                <table name="a" loc="17..46" text="create tab..nt, b int)">
+                    <column name="a" loc="33..38" text="a int" />
+                    <column name="b" loc="40..45" text="b int" />
+                </table>
+                <table name="b" loc="64..93" text="create tab..nt, e int)">
+                    <column name="d" loc="80..85" text="d int" />
+                    <column name="e" loc="87..92" text="e int" />
+                </table>
+            </tables>
+        </external>
+        <main>
+            <input>
+                select * from A where not exists (select * from B where a = d);
+            </input>
+            <tables />
+            <table-references>
+                <external table="1" loc="65..66" text="B" />
+                <external table="0" loc="31..32" text="A" />
+            </table-references>
+            <column-references>
+                <external table="0" column="0" loc="73..74" text="a" />
+                <external table="1" column="0" loc="77..78" text="d" />
+            </column-references>
+            <query-graph>
+                <edge op="EQUAL" loc="73..78" text="a = d">
+                    <node side="0" ref="0" />
+                    <node side="1" ref="1" />
+                </edge>
+            </query-graph>
+        </main>
+    </analyzer-dump>
+    <analyzer-dump name="nesting_2">
+        <external>
+            <input>
+                create table A (a int, b int);
+                create table B (d int, e int);
+            </input>
+            <tables>
+                <table name="a" loc="17..46" text="create tab..nt, b int)">
+                    <column name="a" loc="33..38" text="a int" />
+                    <column name="b" loc="40..45" text="b int" />
+                </table>
+                <table name="b" loc="64..93" text="create tab..nt, e int)">
+                    <column name="d" loc="80..85" text="d int" />
+                    <column name="e" loc="87..92" text="e int" />
+                </table>
+            </tables>
+        </external>
+        <main>
+            <input>
+                select * from A where not exists (select * from A, B where a = d);
+            </input>
+            <tables />
+            <table-references>
+                <external table="0" loc="65..66" text="A" />
+                <external table="1" loc="68..69" text="B" />
+                <external table="0" loc="31..32" text="A" />
+            </table-references>
+            <column-references>
+                <external table="0" column="0" loc="76..77" text="a" />
+                <external table="1" column="0" loc="80..81" text="d" />
+            </column-references>
+            <query-graph>
+                <edge op="EQUAL" loc="76..81" text="a = d">
+                    <node side="0" ref="0" />
+                    <node side="1" ref="1" />
+                </edge>
+            </query-graph>
+        </main>
+    </analyzer-dump>
 </analyzer-dumps>

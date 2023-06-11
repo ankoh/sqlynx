@@ -457,7 +457,6 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 const proto::Node* with_node = attrs[proto::AttributeKey::SQL_SELECT_WITH_CTES];
                 MergeChildStates(node_state, {from_node, with_node, where_node});
                 ResolveNames(node_state);
-                CloseScope(node_state, node_id);
                 break;
             }
 
