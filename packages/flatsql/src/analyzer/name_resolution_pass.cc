@@ -383,8 +383,9 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                             assert(node_states[args_begin].has_value());
                             assert(node_states[args_begin + 1].has_value());
                             auto qualifies = [&](size_t idx) {
-                                return node_states[idx].value().column_references.size() >= 1 &&
-                                       nodes[idx].node_type() != proto::NodeType::OBJECT_SQL_SELECT_EXPRESSION;
+                                // XXX Should we emit subselect hyperedges?
+                                // nodes[idx].node_type() != proto::NodeType::OBJECT_SQL_SELECT_EXPRESSION;
+                                return node_states[idx].value().column_references.size() >= 1;
                             };
                             if (qualifies(args_begin) && qualifies(args_begin + 1)) {
                                 auto& l = node_states[args_begin].value();
