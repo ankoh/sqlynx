@@ -1,0 +1,87 @@
+<analyzer-dumps>
+    <analyzer-dump name="refs_0">
+        <external>
+            <input>
+                create table A (a int, b int);
+                create table B (d int, e int);
+            </input>
+        </external>
+        <main>
+            <input>
+                select * from A, B where a = b;
+            </input>
+        </main>
+    </analyzer-dump>
+    <analyzer-dump name="edges_0">
+        <external>
+            <input>
+                create table A (a int, b int);
+                create table B (d int, e int);
+            </input>
+        </external>
+        <main>
+            <input>
+                select * from A, B where a + d = e;
+            </input>
+        </main>
+    </analyzer-dump>
+    <analyzer-dump name="edges_1">
+        <external>
+            <input>
+                create table A (a int, b int);
+                create table B (d int, e int);
+            </input>
+        </external>
+        <main>
+            <input>
+                select * from A, B where a = d and b = e;
+            </input>
+        </main>
+    </analyzer-dump>
+    <analyzer-dump name="unresolved_0">
+        <external>
+            <input>
+                create table A (a int, b int);
+                create table B (d int, e int);
+            </input>
+        </external>
+        <main>
+            <input>
+                select * from A, C where a = c;
+            </input>
+        </main>
+    </analyzer-dump>
+    <analyzer-dump name="unresolved_1">
+        <external>
+            <input>
+                create table A (a int, b int);
+                create table B (d int, e int);
+            </input>
+        </external>
+        <main>
+            <input>
+                select * from A, B where a = c;
+            </input>
+        </main>
+    </analyzer-dump>
+    <analyzer-dump name="unresolved_2">
+        <external>
+            <input />
+        </external>
+        <main>
+            <input>
+                select * from A;
+            </input>
+        </main>
+    </analyzer-dump>
+    <analyzer-dump name="unresolved_3">
+        <external>
+            <input />
+        </external>
+        <main>
+            <input>
+                select * from A, B where c = d;
+            </input>
+        </main>
+    </analyzer-dump>
+</analyzer-dumps>

@@ -173,8 +173,9 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const AnalyzedProgram&
             xml_node.append_attribute("side").set_value(0);
             xml_node.append_attribute("ref").set_value(node.column_reference_id());
         }
-        for (size_t i = 0; i < edge.node_count_left(); ++i) {
+        for (size_t i = 0; i < edge.node_count_right(); ++i) {
             auto& node = main.join_edge_nodes[edge.nodes_begin() + edge.node_count_left() + i];
+            assert(!Analyzer::ID(node.column_reference_id()).IsNull());
             auto xml_node = xml_edge.append_child("node");
             xml_node.append_attribute("side").set_value(1);
             xml_node.append_attribute("ref").set_value(node.column_reference_id());
