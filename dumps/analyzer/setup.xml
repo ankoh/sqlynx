@@ -1,26 +1,30 @@
 <analyzer-dumps>
     <analyzer-dump name="analyzer_test">
-        <schema>
-            create table A (a int, b int);
-            create table B (d int, e int);
-        </schema>
-        <script>
-            select * from A, B where a = b;
-        </script>
-        <tables />
-        <table-references>
-            <table-reference loc="27..28" text="A" />
-            <table-reference loc="30..31" text="B" />
-        </table-references>
-        <column-references>
-            <column-reference loc="38..39" text="a" />
-            <column-reference loc="42..43" text="b" />
-        </column-references>
-        <join-edges>
-            <join-edge loc="38..43" text="a = b">
-                <node at="0" ref="0" />
-                <node at="1" ref="1" />
-            </join-edge>
-        </join-edges>
+        <external>
+            <input>
+                create table A (a int, b int);
+                create table B (d int, e int);
+            </input>
+        </external>
+        <main>
+            <input>
+                select * from A, B where a = b;
+            </input>
+            <tables />
+            <table-references>
+                <table-reference loc="31..32" text="A" />
+                <table-reference loc="34..35" text="B" />
+            </table-references>
+            <column-references>
+                <column-reference loc="42..43" text="a" />
+                <column-reference loc="46..47" text="b" />
+            </column-references>
+            <join-edges>
+                <join-edge loc="42..47" text="a = b">
+                    <node at="0" ref="0" />
+                    <node at="1" ref="1" />
+                </join-edge>
+            </join-edges>
+        </main>
     </analyzer-dump>
 </analyzer-dumps>

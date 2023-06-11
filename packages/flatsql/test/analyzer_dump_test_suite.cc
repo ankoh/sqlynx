@@ -13,18 +13,18 @@ struct AnalyzerDumpTestSuite : public ::testing::TestWithParam<const AnalyzerDum
 
 TEST_P(AnalyzerDumpTestSuite, Test) {
     auto* test = GetParam();
-    auto schema = rope::Rope::FromString(1024, test->schema);
-    auto script = rope::Rope::FromString(1024, test->script);
+    auto input_external = rope::Rope::FromString(1024, test->input_external);
+    auto input_main = rope::Rope::FromString(1024, test->input_main);
 
     // Analyze schema
-    auto schema_scan = parser::Scanner::Scan(schema);
-    auto schema_parsed = parser::ParseContext::Parse(*schema_scan);
-    auto schema_analyzed = Analyzer::Analyze(*schema_scan, *schema_parsed);
+    auto external_scan = parser::Scanner::Scan(input_external);
+    auto external_parsed = parser::ParseContext::Parse(*external_scan);
+    auto external_analyzed = Analyzer::Analyze(*external_scan, *external_parsed);
 
     // Analyze script
-    auto script_scan = parser::Scanner::Scan(script);
-    auto script_parsed = parser::ParseContext::Parse(*script_scan);
-    auto script_analyzed = Analyzer::Analyze(*script_scan, *script_parsed, schema_analyzed.get());
+    auto main_scan = parser::Scanner::Scan(input_main);
+    auto main_parsed = parser::ParseContext::Parse(*main_scan);
+    auto main_analyzed = Analyzer::Analyze(*main_scan, *main_parsed, external_analyzed.get());
 }
 
 // clang-format off

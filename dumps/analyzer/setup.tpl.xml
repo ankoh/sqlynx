@@ -1,11 +1,15 @@
 <analyzer-dumps>
     <analyzer-dump name="analyzer_test">
-        <schema>
-            create table A (a int, b int);
-            create table B (d int, e int);
-        </schema>
-        <script>
-            select * from A, B where a = b;
-        </script>
+        <external>
+            <input>
+                create table A (a int, b int);
+                create table B (d int, e int);
+            </input>
+        </external>
+        <main>
+            <input>
+                select * from A, B where a = b;
+            </input>
+        </main>
     </analyzer-dump>
 </analyzer-dumps>

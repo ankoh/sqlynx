@@ -49,22 +49,24 @@ static void generate_analyzer_dumps(const std::filesystem::path& source_dir) {
             auto name = test.attribute("name").as_string();
             std::cout << "  TEST " << name << std::endl;
 
-            // Read the schema
-            std::string schema_text = test.child("schema").last_child().value();
-            auto schema_rope = rope::Rope::FromString(1024, schema_text);
-            auto schema_scan = parser::Scanner::Scan(schema_rope);
-            auto schema_parsed = parser::ParseContext::Parse(*schema_scan);
-            auto schema_analyzed = Analyzer::Analyze(*schema_scan, *schema_parsed);
+            // Read the external script
+            auto xml_external = test.child("external");
+            std::string external_text = xml_external.child("input").last_child().value();
+            auto external_rope = rope::Rope::FromString(1024, external_text);
+            auto external_scan = parser::Scanner::Scan(external_rope);
+            auto external_parsed = parser::ParseContext::Parse(*external_scan);
+            auto external_analyzed = Analyzer::Analyze(*external_scan, *external_parsed);
 
             /// Read the script
-            std::string script_text = test.child("script").last_child().value();
-            auto script_rope = rope::Rope::FromString(1024, script_text);
-            auto script_scan = parser::Scanner::Scan(script_rope);
-            auto script_parsed = parser::ParseContext::Parse(*script_scan);
-            auto script_analyzed = Analyzer::Analyze(*script_scan, *script_parsed, schema_analyzed.get());
+            auto xml_main = test.child("main");
+            std::string main_text = xml_main.child("input").last_child().value();
+            auto main_rope = rope::Rope::FromString(1024, main_text);
+            auto main_scan = parser::Scanner::Scan(main_rope);
+            auto main_parsed = parser::ParseContext::Parse(*main_scan);
+            auto main_analyzed = Analyzer::Analyze(*main_scan, *main_parsed, external_analyzed.get());
 
             // Encode a program
-            AnalyzerDumpTest::EncodeProgram(test, *script_analyzed, schema_analyzed.get());
+            AnalyzerDumpTest::EncodeProgram(test, *main_analyzed, external_analyzed.get());
         }
 
         // Write xml document
