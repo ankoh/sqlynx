@@ -38,6 +38,32 @@
             </input>
         </main>
     </analyzer-dump>
+    <analyzer-dump name="edges_2">
+        <external>
+            <input>
+                create table A (a int, b int);
+                create table B (d int, e int);
+            </input>
+        </external>
+        <main>
+            <input>
+                select * from A, B where (a = d and b = e) or (a = d and d = 42);
+            </input>
+        </main>
+    </analyzer-dump>
+    <analyzer-dump name="edges_3">
+        <external>
+            <input>
+                create table A (a int, b int);
+                create table B (d int, e int);
+            </input>
+        </external>
+        <main>
+            <input>
+                select * from A, B where a = (d + 42);
+            </input>
+        </main>
+    </analyzer-dump>
     <analyzer-dump name="unresolved_0">
         <external>
             <input>
