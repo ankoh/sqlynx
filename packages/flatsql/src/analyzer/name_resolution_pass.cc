@@ -385,14 +385,14 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                             auto& l = node_states[args_begin].value();
                             auto& r = node_states[args_begin + 1].value();
                             if (l.column_references.size() >= 1 && r.column_references.size() >= 1) {
-                                join_edges.Append(proto::JoinEdge(node_id, join_edge_nodes.GetSize(),
-                                                                  l.column_references.size(),
-                                                                  r.column_references.size(), func));
+                                graph_edges.Append(proto::QueryGraphEdge(node_id, graph_edge_nodes.GetSize(),
+                                                                         l.column_references.size(),
+                                                                         r.column_references.size(), func));
                                 for (auto ref_id : l.column_references) {
-                                    join_edge_nodes.Append(proto::JoinEdgeNode(ref_id));
+                                    graph_edge_nodes.Append(proto::QueryGraphEdgeNode(ref_id));
                                 }
                                 for (auto ref_id : r.column_references) {
-                                    join_edge_nodes.Append(proto::JoinEdgeNode(ref_id));
+                                    graph_edge_nodes.Append(proto::QueryGraphEdgeNode(ref_id));
                                 }
                             }
                             break;
@@ -540,8 +540,8 @@ void NameResolutionPass::Export(AnalyzedProgram& program) {
     program.table_columns = std::move(table_columns);
     program.table_references = std::move(table_references);
     program.column_references = std::move(column_references);
-    program.join_edges = std::move(join_edges);
-    program.join_edge_nodes = std::move(join_edge_nodes);
+    program.graph_edges = std::move(graph_edges);
+    program.graph_edge_nodes = std::move(graph_edge_nodes);
 }
 
 }  // namespace flatsql

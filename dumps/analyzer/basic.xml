@@ -9,7 +9,7 @@
             <tables />
             <table-references />
             <column-references />
-            <join-edges />
+            <query-graph />
         </main>
     </analyzer-dump>
     <analyzer-dump name="refs_0">
@@ -42,12 +42,12 @@
                 <external table="0" column="0" loc="42..43" text="a" />
                 <external table="0" column="1" loc="46..47" text="b" />
             </column-references>
-            <join-edges>
+            <query-graph>
                 <edge op="EQUAL" loc="42..47" text="a = b">
                     <node side="0" ref="0" />
                     <node side="1" ref="1" />
                 </edge>
-            </join-edges>
+            </query-graph>
         </main>
     </analyzer-dump>
     <analyzer-dump name="edges_0">
@@ -81,13 +81,13 @@
                 <external table="1" column="0" loc="46..47" text="d" />
                 <external table="1" column="1" loc="50..51" text="e" />
             </column-references>
-            <join-edges>
+            <query-graph>
                 <edge op="EQUAL" loc="42..51" text="a + d = e">
                     <node side="0" ref="0" />
                     <node side="0" ref="1" />
                     <node side="1" ref="2" />
                 </edge>
-            </join-edges>
+            </query-graph>
         </main>
     </analyzer-dump>
     <analyzer-dump name="edges_1">
@@ -122,7 +122,7 @@
                 <external table="0" column="1" loc="52..53" text="b" />
                 <external table="1" column="1" loc="56..57" text="e" />
             </column-references>
-            <join-edges>
+            <query-graph>
                 <edge op="EQUAL" loc="42..47" text="a = d">
                     <node side="0" ref="0" />
                     <node side="1" ref="1" />
@@ -131,7 +131,7 @@
                     <node side="0" ref="2" />
                     <node side="1" ref="3" />
                 </edge>
-            </join-edges>
+            </query-graph>
         </main>
     </analyzer-dump>
     <analyzer-dump name="edges_2">
@@ -169,7 +169,7 @@
                 <external table="1" column="0" loc="68..69" text="d" />
                 <external table="1" column="0" loc="74..75" text="d" />
             </column-references>
-            <join-edges>
+            <query-graph>
                 <edge op="EQUAL" loc="43..48" text="a = d">
                     <node side="0" ref="0" />
                     <node side="1" ref="1" />
@@ -182,7 +182,7 @@
                     <node side="0" ref="4" />
                     <node side="1" ref="5" />
                 </edge>
-            </join-edges>
+            </query-graph>
         </main>
     </analyzer-dump>
     <analyzer-dump name="edges_3">
@@ -215,12 +215,12 @@
                 <external table="1" column="0" loc="47..48" text="d" />
                 <external table="0" column="0" loc="42..43" text="a" />
             </column-references>
-            <join-edges>
+            <query-graph>
                 <edge op="EQUAL" loc="42..54" text="a = (d + 42)">
                     <node side="0" ref="1" />
                     <node side="1" ref="0" />
                 </edge>
-            </join-edges>
+            </query-graph>
         </main>
     </analyzer-dump>
     <analyzer-dump name="edges_4">
@@ -253,12 +253,12 @@
                 <external table="0" column="0" loc="44..45" text="a" />
                 <external table="0" column="1" loc="48..49" text="b" />
             </column-references>
-            <join-edges>
+            <query-graph>
                 <edge op="EQUAL" loc="44..49" text="a = b">
                     <node side="0" ref="0" />
                     <node side="1" ref="1" />
                 </edge>
-            </join-edges>
+            </query-graph>
         </main>
     </analyzer-dump>
     <analyzer-dump name="unresolved_0">
@@ -291,12 +291,12 @@
                 <external table="0" column="0" loc="42..43" text="a" />
                 <unresolved loc="46..47" text="c" />
             </column-references>
-            <join-edges>
+            <query-graph>
                 <edge op="EQUAL" loc="42..47" text="a = c">
                     <node side="0" ref="0" />
                     <node side="1" ref="1" />
                 </edge>
-            </join-edges>
+            </query-graph>
         </main>
     </analyzer-dump>
     <analyzer-dump name="unresolved_1">
@@ -329,12 +329,12 @@
                 <external table="0" column="0" loc="42..43" text="a" />
                 <unresolved loc="46..47" text="c" />
             </column-references>
-            <join-edges>
+            <query-graph>
                 <edge op="EQUAL" loc="42..47" text="a = c">
                     <node side="0" ref="0" />
                     <node side="1" ref="1" />
                 </edge>
-            </join-edges>
+            </query-graph>
         </main>
     </analyzer-dump>
     <analyzer-dump name="unresolved_2">
@@ -351,7 +351,7 @@
                 <unresolved loc="31..32" text="A" />
             </table-references>
             <column-references />
-            <join-edges />
+            <query-graph />
         </main>
     </analyzer-dump>
     <analyzer-dump name="unresolved_3">
@@ -372,12 +372,12 @@
                 <unresolved loc="42..43" text="c" />
                 <unresolved loc="46..47" text="d" />
             </column-references>
-            <join-edges>
+            <query-graph>
                 <edge op="EQUAL" loc="42..47" text="c = d">
                     <node side="0" ref="0" />
                     <node side="1" ref="1" />
                 </edge>
-            </join-edges>
+            </query-graph>
         </main>
     </analyzer-dump>
 </analyzer-dumps>

@@ -74,7 +74,7 @@ struct ColumnReference {
     column_id: uint32;
 }
 
-struct JoinEdge {
+struct QueryGraphEdge {
     /// The id of the AST node that created this graph node
     ast_node_id: uint32;
     /// The begin of the nodes
@@ -87,7 +87,7 @@ struct JoinEdge {
     expression_operator: ExpressionOperator;
 }
 
-struct JoinEdgeNode {
+struct QueryGraphEdgeNode {
     /// The id of the column reference
     column_reference_id: uint32;
 }
@@ -101,8 +101,8 @@ table AnalyzedProgram {
     table_references: [TableReference];
     // The column references in the statement
     column_references: [ColumnReference];
-    /// The join edges
-    join_edges: [JoinEdge];
-    /// The join edge nodes
-    join_edge_nodes: [JoinEdgeNode];
+    /// The query graph edges
+    graph_edges: [QueryGraphEdge];
+    /// The query graph edge nodes
+    graph_edge_nodes: [QueryGraphEdgeNode];
 }

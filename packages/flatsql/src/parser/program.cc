@@ -84,8 +84,8 @@ std::unique_ptr<proto::AnalyzedProgramT> AnalyzedProgram::Pack() {
     out->table_columns = table_columns.Flatten();
     out->table_references = table_references.Flatten();
     out->column_references = column_references.Flatten();
-    out->join_edges = join_edges.Flatten();
-    out->join_edge_nodes = join_edge_nodes.Flatten();
+    out->graph_edges = graph_edges.Flatten();
+    out->graph_edge_nodes = graph_edge_nodes.Flatten();
     return out;
 }
 
