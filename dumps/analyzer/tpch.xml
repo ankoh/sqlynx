@@ -236,4 +236,117 @@ limit
             </query-graph>
         </main>
     </analyzer-dump>
+    <analyzer-dump name="tpch_3">
+        <external>
+            <input>
+create table customer (c_custkey integer not null, c_name varchar(25) not null, c_address varchar(40) not null, c_nationkey integer not null, c_phone char(15) not null, c_acctbal decimal(12,2) not null, c_mktsegment char(10) not null, c_comment varchar(117) not null, primary key (c_custkey));
+create table orders (o_orderkey integer not null, o_custkey integer not null, o_orderstatus char(1) not null, o_totalprice decimal(12,2) not null, o_orderdate date not null, o_orderpriority char(15) not null, o_clerk char(15) not null, o_shippriority integer not null, o_comment varchar(79) not null, primary key (o_orderkey));
+create table lineitem (l_orderkey integer not null, l_partkey integer not null, l_suppkey integer not null, l_linenumber integer not null, l_quantity decimal(12,2) not null, l_extendedprice decimal(12,2) not null, l_discount decimal(12,2) not null, l_tax decimal(12,2) not null, l_returnflag char(1) not null, l_linestatus char(1) not null, l_shipdate date not null, l_commitdate date not null, l_receiptdate date not null, l_shipinstruct char(25) not null, l_shipmode char(10) not null, l_comment varchar(44) not null, primary key (l_orderkey,l_linenumber));
+            </input>
+            <tables>
+                <table loc="1..293" text="create tab.._custkey))">
+                    <column name="c_custkey" loc="24..50" text="c_custkey ..r not null" />
+                    <column name="c_name" loc="52..79" text="c_name var..) not null" />
+                    <column name="c_address" loc="81..111" text="c_address ..) not null" />
+                    <column name="c_nationkey" loc="113..141" text="c_nationke..r not null" />
+                    <column name="c_phone" loc="143..168" text="c_phone ch..) not null" />
+                    <column name="c_acctbal" loc="170..202" text="c_acctbal ..) not null" />
+                    <column name="c_mktsegment" loc="204..234" text="c_mktsegme..) not null" />
+                    <column name="c_comment" loc="236..267" text="c_comment ..) not null" />
+                </table>
+                <table loc="295..621" text="create tab..orderkey))">
+                    <column name="o_orderkey" loc="316..343" text="o_orderkey..r not null" />
+                    <column name="o_custkey" loc="345..371" text="o_custkey ..r not null" />
+                    <column name="o_orderstatus" loc="373..403" text="o_ordersta..) not null" />
+                    <column name="o_totalprice" loc="405..440" text="o_totalpri..) not null" />
+                    <column name="o_orderdate" loc="442..467" text="o_orderdat..e not null" />
+                    <column name="o_orderpriority" loc="469..502" text="o_orderpri..) not null" />
+                    <column name="o_clerk" loc="504..529" text="o_clerk ch..) not null" />
+                    <column name="o_shippriority" loc="531..562" text="o_shipprio..r not null" />
+                    <column name="o_comment" loc="564..594" text="o_comment ..) not null" />
+                </table>
+                <table loc="623..1181" text="create tab..nenumber))">
+                    <column name="l_orderkey" loc="646..673" text="l_orderkey..r not null" />
+                    <column name="l_partkey" loc="675..701" text="l_partkey ..r not null" />
+                    <column name="l_suppkey" loc="703..729" text="l_suppkey ..r not null" />
+                    <column name="l_linenumber" loc="731..760" text="l_linenumb..r not null" />
+                    <column name="l_quantity" loc="762..795" text="l_quantity..) not null" />
+                    <column name="l_extendedprice" loc="797..835" text="l_extended..) not null" />
+                    <column name="l_discount" loc="837..870" text="l_discount..) not null" />
+                    <column name="l_tax" loc="872..900" text="l_tax deci..) not null" />
+                    <column name="l_returnflag" loc="902..931" text="l_returnfl..) not null" />
+                    <column name="l_linestatus" loc="933..962" text="l_linestat..) not null" />
+                    <column name="l_shipdate" loc="964..988" text="l_shipdate..e not null" />
+                    <column name="l_commitdate" loc="990..1016" text="l_commitda..e not null" />
+                    <column name="l_receiptdate" loc="1018..1045" text="l_receiptd..e not null" />
+                    <column name="l_shipinstruct" loc="1047..1079" text="l_shipinst..) not null" />
+                    <column name="l_shipmode" loc="1081..1109" text="l_shipmode..) not null" />
+                    <column name="l_comment" loc="1111..1141" text="l_comment ..) not null" />
+                </table>
+            </tables>
+        </external>
+        <main>
+            <input>
+select
+        l_orderkey,
+        sum(l_extendedprice * (1 - l_discount)) as revenue,
+        o_orderdate,
+        o_shippriority
+from
+        customer,
+        orders,
+        lineitem
+where
+        c_mktsegment = 'BUILDING'
+        and c_custkey = o_custkey
+        and l_orderkey = o_orderkey
+        and o_orderdate &lt; date '1995-03-15'
+        and l_shipdate &gt; date '1995-03-15'
+group by
+        l_orderkey,
+        o_orderdate,
+        o_shippriority
+order by
+        revenue desc,
+        o_orderdate
+limit
+	10
+            </input>
+            <tables />
+            <table-references>
+                <external table="0" loc="145..153" text="customer" />
+                <external table="1" loc="163..169" text="orders" />
+                <external table="2" loc="179..187" text="lineitem" />
+            </table-references>
+            <column-references>
+                <external table="2" column="0" loc="16..26" text="l_orderkey" />
+                <external table="2" column="6" loc="63..73" text="l_discount" />
+                <external table="2" column="5" loc="40..55" text="l_extendedprice" />
+                <external table="1" column="4" loc="96..107" text="o_orderdate" />
+                <external table="1" column="7" loc="117..131" text="o_shippriority" />
+                <external table="0" column="6" loc="202..214" text="c_mktsegment" />
+                <external table="0" column="0" loc="240..249" text="c_custkey" />
+                <external table="1" column="1" loc="252..261" text="o_custkey" />
+                <external table="2" column="0" loc="274..284" text="l_orderkey" />
+                <external table="1" column="0" loc="287..297" text="o_orderkey" />
+                <external table="1" column="4" loc="310..321" text="o_orderdate" />
+                <external table="2" column="10" loc="354..364" text="l_shipdate" />
+                <external table="2" column="0" loc="402..412" text="l_orderkey" />
+                <external table="1" column="4" loc="422..433" text="o_orderdate" />
+                <external table="1" column="7" loc="443..457" text="o_shippriority" />
+                <unresolved loc="475..482" text="revenue" />
+                <external table="1" column="4" loc="497..508" text="o_orderdate" />
+            </column-references>
+            <query-graph>
+                <edge op="EQUAL" loc="240..261" text="c_custkey .. o_custkey">
+                    <node side="0" ref="6" />
+                    <node side="1" ref="7" />
+                </edge>
+                <edge op="EQUAL" loc="274..297" text="l_orderkey..o_orderkey">
+                    <node side="0" ref="8" />
+                    <node side="1" ref="9" />
+                </edge>
+            </query-graph>
+        </main>
+    </analyzer-dump>
 </analyzer-dumps>
