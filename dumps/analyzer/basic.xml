@@ -43,7 +43,7 @@
                 <external table="0" column="1" loc="46..47" text="b" />
             </column-references>
             <join-edges>
-                <edge loc="42..47" text="a = b">
+                <edge op="EQUAL" loc="42..47" text="a = b">
                     <node side="0" ref="0" />
                     <node side="1" ref="1" />
                 </edge>
@@ -82,7 +82,7 @@
                 <external table="1" column="1" loc="50..51" text="e" />
             </column-references>
             <join-edges>
-                <edge loc="42..51" text="a + d = e">
+                <edge op="EQUAL" loc="42..51" text="a + d = e">
                     <node side="0" ref="0" />
                     <node side="0" ref="1" />
                     <node side="1" ref="2" />
@@ -123,11 +123,11 @@
                 <external table="1" column="1" loc="56..57" text="e" />
             </column-references>
             <join-edges>
-                <edge loc="42..47" text="a = d">
+                <edge op="EQUAL" loc="42..47" text="a = d">
                     <node side="0" ref="0" />
                     <node side="1" ref="1" />
                 </edge>
-                <edge loc="52..57" text="b = e">
+                <edge op="EQUAL" loc="52..57" text="b = e">
                     <node side="0" ref="2" />
                     <node side="1" ref="3" />
                 </edge>
@@ -170,15 +170,15 @@
                 <external table="1" column="0" loc="74..75" text="d" />
             </column-references>
             <join-edges>
-                <edge loc="43..48" text="a = d">
+                <edge op="EQUAL" loc="43..48" text="a = d">
                     <node side="0" ref="0" />
                     <node side="1" ref="1" />
                 </edge>
-                <edge loc="53..58" text="b = e">
+                <edge op="EQUAL" loc="53..58" text="b = e">
                     <node side="0" ref="2" />
                     <node side="1" ref="3" />
                 </edge>
-                <edge loc="64..69" text="a = d">
+                <edge op="EQUAL" loc="64..69" text="a = d">
                     <node side="0" ref="4" />
                     <node side="1" ref="5" />
                 </edge>
@@ -216,7 +216,7 @@
                 <external table="0" column="0" loc="42..43" text="a" />
             </column-references>
             <join-edges>
-                <edge loc="42..54" text="a = (d + 42)">
+                <edge op="EQUAL" loc="42..54" text="a = (d + 42)">
                     <node side="0" ref="1" />
                     <node side="1" ref="0" />
                 </edge>
@@ -254,7 +254,7 @@
                 <unresolved loc="46..47" text="c" />
             </column-references>
             <join-edges>
-                <edge loc="42..47" text="a = c">
+                <edge op="EQUAL" loc="42..47" text="a = c">
                     <node side="0" ref="0" />
                     <node side="1" ref="1" />
                 </edge>
@@ -292,7 +292,7 @@
                 <unresolved loc="46..47" text="c" />
             </column-references>
             <join-edges>
-                <edge loc="42..47" text="a = c">
+                <edge op="EQUAL" loc="42..47" text="a = c">
                     <node side="0" ref="0" />
                     <node side="1" ref="1" />
                 </edge>
@@ -335,7 +335,7 @@
                 <unresolved loc="46..47" text="d" />
             </column-references>
             <join-edges>
-                <edge loc="42..47" text="c = d">
+                <edge op="EQUAL" loc="42..47" text="c = d">
                     <node side="0" ref="0" />
                     <node side="1" ref="1" />
                 </edge>
