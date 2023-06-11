@@ -220,6 +220,19 @@ limit
                     <node side="0" ref="16" />
                     <node side="1" ref="17" />
                 </edge>
+                <edge op="EQUAL" loc="481..1000" text="ps_supplyc..&#10;        )">
+                    <node side="0" ref="29" />
+                    <node side="1" ref="19" />
+                    <node side="1" ref="20" />
+                    <node side="1" ref="21" />
+                    <node side="1" ref="22" />
+                    <node side="1" ref="23" />
+                    <node side="1" ref="24" />
+                    <node side="1" ref="25" />
+                    <node side="1" ref="26" />
+                    <node side="1" ref="27" />
+                    <node side="1" ref="28" />
+                </edge>
             </query-graph>
         </main>
     </analyzer-dump>
