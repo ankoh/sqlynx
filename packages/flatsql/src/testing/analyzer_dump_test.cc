@@ -170,13 +170,13 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const AnalyzedProgram&
         for (size_t i = 0; i < edge.node_count_left(); ++i) {
             auto& node = main.join_edge_nodes[edge.nodes_begin() + i];
             auto xml_node = xml_edge.append_child("node");
-            xml_node.append_attribute("set").set_value(0);
+            xml_node.append_attribute("side").set_value(0);
             xml_node.append_attribute("ref").set_value(node.column_reference_id());
         }
         for (size_t i = 0; i < edge.node_count_left(); ++i) {
             auto& node = main.join_edge_nodes[edge.nodes_begin() + edge.node_count_left() + i];
             auto xml_node = xml_edge.append_child("node");
-            xml_node.append_attribute("set").set_value(1);
+            xml_node.append_attribute("side").set_value(1);
             xml_node.append_attribute("ref").set_value(node.column_reference_id());
         }
     }

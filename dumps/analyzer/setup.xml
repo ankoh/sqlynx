@@ -31,8 +31,8 @@
             </column-references>
             <join-edges>
                 <edge loc="42..47" text="a = b">
-                    <node set="0" ref="0" />
-                    <node set="1" ref="1" />
+                    <node side="0" ref="0" />
+                    <node side="1" ref="1" />
                 </edge>
             </join-edges>
         </main>
