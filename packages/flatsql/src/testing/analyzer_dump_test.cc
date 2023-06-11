@@ -82,8 +82,6 @@ namespace testing {
 void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const AnalyzedProgram& main,
                                      const AnalyzedProgram* external) {
     // Unpack modules
-    auto& nodes = main.parsed.nodes;
-    auto& statements = main.parsed.statements;
     auto* stmt_type_tt = proto::StatementTypeTypeTable();
     auto* node_type_tt = proto::NodeTypeTypeTable();
 
@@ -91,10 +89,42 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const AnalyzedProgram&
     auto xml_external = root.child("external");
     auto xml_main = root.child("main");
 
+    auto xml_external_tables = xml_external.append_child("tables");
     auto xml_main_tables = xml_main.append_child("tables");
     auto xml_main_table_refs = xml_main.append_child("table-references");
     auto xml_main_col_refs = xml_main.append_child("column-references");
     auto xml_main_join_edges = xml_main.append_child("join-edges");
+
+    // Write external tables (if there are any)
+    if (external) {
+        for (auto& table_decl : external->tables) {
+            auto xml_tbl = xml_external_tables.append_child("table");
+            // Write table name
+            if (Analyzer::ID(table_decl.table_name().table_name())) {
+                auto table_name = writeQualifiedName(main, external, table_decl.table_name());
+                xml_tbl.append_attribute("name").set_value(table_name.c_str());
+            }
+            WriteLocation(xml_tbl, external->parsed.nodes[table_decl.ast_node_id()].location(),
+                          external->scanned.GetInput());
+            // Write child columns
+            for (size_t i = table_decl.columns_begin(); i < table_decl.column_count(); ++i) {
+                auto& column_decl = external->table_columns[i];
+                auto xml_col = xml_tbl.append_child("column");
+                if (auto column_name_id = Analyzer::ID(column_decl.column_name()); column_name_id) {
+                    assert(!column_name_id.IsNull());
+                    assert(!column_name_id.IsExternal());
+                    std::string column_name{external->scanned.name_dictionary[column_name_id.AsIndex()].first};
+                    xml_col.append_attribute("name").set_value(column_name.c_str());
+                } else {
+                    xml_col.append_attribute("name").set_value("?");
+                }
+                if (auto node_id = Analyzer::ID(column_decl.ast_node_id()); node_id) {
+                    WriteLocation(xml_col, external->parsed.nodes[node_id.AsIndex()].location(),
+                                  external->scanned.GetInput());
+                }
+            }
+        }
+    }
 
     // Write local declarations
     for (auto& table_decl : main.tables) {
@@ -104,12 +134,8 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const AnalyzedProgram&
             auto table_name = writeQualifiedName(main, external, table_decl.table_name());
             xml_tbl.append_attribute("name").set_value(table_name.c_str());
         }
-        // Is external?
-        xml_tbl.append_attribute("external").set_value(!!Analyzer::ID(table_decl.ast_node_id()));
-        // Has a node id?
-        if (auto node_id = Analyzer::ID(table_decl.ast_node_id()); !node_id) {
-            EncodeLocation(xml_tbl, nodes[node_id.AsIndex()].location(), main.scanned.GetInput());
-        }
+        WriteLocation(xml_tbl, main.parsed.nodes[Analyzer::ID(table_decl.ast_node_id()).AsIndex()].location(),
+                      main.scanned.GetInput());
         // Write child columns
         for (size_t i = table_decl.columns_begin(); i < table_decl.column_count(); ++i) {
             auto& column_decl = main.table_columns[i];
@@ -122,9 +148,7 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const AnalyzedProgram&
             } else {
                 xml_col.append_attribute("name").set_value("?");
             }
-            if (auto node_id = Analyzer::ID(column_decl.ast_node_id()); !node_id) {
-                EncodeLocation(xml_col, nodes[node_id.AsIndex()].location(), main.scanned.GetInput());
-            }
+            WriteLocation(xml_col, main.parsed.nodes[column_decl.ast_node_id()].location(), main.scanned.GetInput());
         }
     }
 
@@ -132,11 +156,9 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const AnalyzedProgram&
     for (auto& ref : main.table_references) {
         auto tag = Analyzer::ID(ref.table_id()).IsNull() ? "unresolved" : "resolved";
         auto xml_ref = xml_main_table_refs.append_child(tag);
+        WriteLocation(xml_ref, main.parsed.nodes[ref.ast_node_id()].location(), main.scanned.GetInput());
         if (auto table_id = Analyzer::ID(ref.table_id()); table_id) {
             xml_ref.append_attribute("table").set_value(table_id.AsIndex());
-        }
-        if (auto node_id = Analyzer::ID(ref.ast_node_id()); node_id) {
-            EncodeLocation(xml_ref, nodes[node_id.AsIndex()].location(), main.scanned.GetInput());
         }
     }
 
@@ -144,21 +166,19 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const AnalyzedProgram&
     for (auto& ref : main.column_references) {
         auto tag = Analyzer::ID(ref.table_id()).IsNull() ? "unresolved" : "resolved";
         auto xml_ref = xml_main_col_refs.append_child(tag);
+        WriteLocation(xml_ref, main.parsed.nodes[ref.ast_node_id()].location(), main.scanned.GetInput());
         if (auto table_id = Analyzer::ID(ref.table_id()); table_id) {
             xml_ref.append_attribute("table").set_value(table_id.AsIndex());
         }
         if (auto column_id = Analyzer::ID(ref.column_id()); column_id) {
             xml_ref.append_attribute("column").set_value(column_id.AsIndex());
         }
-        if (auto node_id = Analyzer::ID(ref.ast_node_id()); node_id) {
-            EncodeLocation(xml_ref, nodes[node_id.AsIndex()].location(), main.scanned.GetInput());
-        }
     }
 
     // Write join edges
     for (auto& edge : main.join_edges) {
         auto xml_edge = xml_main_join_edges.append_child("edge");
-        EncodeLocation(xml_edge, nodes[edge.ast_node_id()].location(), main.scanned.GetInput());
+        WriteLocation(xml_edge, main.parsed.nodes[edge.ast_node_id()].location(), main.scanned.GetInput());
         for (size_t i = 0; i < edge.node_count_left(); ++i) {
             auto& node = main.join_edge_nodes[edge.nodes_begin() + i];
             auto xml_node = xml_edge.append_child("node");

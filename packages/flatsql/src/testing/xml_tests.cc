@@ -56,7 +56,7 @@ void EncodeLocation(pugi::xml_node n, proto::Location loc, std::string_view text
     }
 }
 
-void EncodeLocation(pugi::xml_node n, proto::Location loc, rope::Rope& text) {
+void WriteLocation(pugi::xml_node n, proto::Location loc, rope::Rope& text) {
     std::string tmp;
     auto begin = loc.offset();
     auto end = loc.offset() + loc.length();
