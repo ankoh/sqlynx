@@ -11,7 +11,7 @@ namespace flatsql {
 
 /// Helper to merge two vectors
 template <typename T> static void merge(std::vector<T>& left, std::vector<T>&& right) {
-    if (right.empty()) {
+    if (left.empty()) {
         left = std::move(right);
     } else {
         left.insert(left.end(), std::make_move_iterator(right.begin()), std::make_move_iterator(right.end()));
