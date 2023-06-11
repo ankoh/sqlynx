@@ -22,9 +22,9 @@ struct AnalyzerDumpTest {
     /// The name
     std::string name;
     /// The schema
-    std::string schema;
+    std::string input_external;
     /// The script
-    std::string script;
+    std::string input_main;
     /// The tables
     pugi::xml_document tables;
     /// The table references
