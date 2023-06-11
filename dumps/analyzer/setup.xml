@@ -5,6 +5,13 @@
                 create table A (a int, b int);
                 create table B (d int, e int);
             </input>
+            <tables>
+                <table name="a" loc="17..46" text="create tab..nt, b int)">
+                    <column name="a" loc="33..38" text="a int" />
+                    <column name="b" loc="40..45" text="b int" />
+                </table>
+                <table name="b" loc="64..93" text="create tab..nt, e int)" />
+            </tables>
         </external>
         <main>
             <input>
