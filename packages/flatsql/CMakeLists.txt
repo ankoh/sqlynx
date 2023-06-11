@@ -261,6 +261,9 @@ if(NOT WASM)
   add_executable(bm_parse_query benchmarks/bm_parse_query.cc)
   target_link_libraries(bm_parse_query flatsql benchmark gtest gflags Threads::Threads)
 
+  add_executable(bm_analyze_query benchmarks/bm_analyze_query.cc)
+  target_link_libraries(bm_analyze_query flatsql benchmark gtest gflags Threads::Threads)
+
   add_executable(dump_parser tools/dump_parser.cc)
   target_link_libraries(dump_parser flatsql flatsql_testutils pugixml gtest gflags Threads::Threads)
 
