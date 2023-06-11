@@ -31,8 +31,8 @@ struct AnalyzerDumpTest {
     pugi::xml_document table_references;
     /// The column references
     pugi::xml_document column_references;
-    /// The join edges
-    pugi::xml_document join_edges;
+    /// The graph edges
+    pugi::xml_document graph_edges;
 
     /// Encode a program
     static void EncodeProgram(pugi::xml_node root, const AnalyzedProgram& main, const AnalyzedProgram* external);

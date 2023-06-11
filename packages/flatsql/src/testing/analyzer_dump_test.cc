@@ -126,7 +126,7 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const AnalyzedProgram&
     auto xml_main_tables = xml_main.append_child("tables");
     auto xml_main_table_refs = xml_main.append_child("table-references");
     auto xml_main_col_refs = xml_main.append_child("column-references");
-    auto xml_main_join_edges = xml_main.append_child("join-edges");
+    auto xml_main_query_graph = xml_main.append_child("query-graph");
 
     // Write external tables (if there are any)
     if (external) {
@@ -164,18 +164,18 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const AnalyzedProgram&
     }
 
     // Write join edges
-    for (auto& edge : main.join_edges) {
-        auto xml_edge = xml_main_join_edges.append_child("edge");
+    for (auto& edge : main.graph_edges) {
+        auto xml_edge = xml_main_query_graph.append_child("edge");
         xml_edge.append_attribute("op").set_value(proto::EnumNameExpressionOperator(edge.expression_operator()));
         WriteLocation(xml_edge, main.parsed.nodes[edge.ast_node_id()].location(), main.scanned.GetInput());
         for (size_t i = 0; i < edge.node_count_left(); ++i) {
-            auto& node = main.join_edge_nodes[edge.nodes_begin() + i];
+            auto& node = main.graph_edge_nodes[edge.nodes_begin() + i];
             auto xml_node = xml_edge.append_child("node");
             xml_node.append_attribute("side").set_value(0);
             xml_node.append_attribute("ref").set_value(node.column_reference_id());
         }
         for (size_t i = 0; i < edge.node_count_right(); ++i) {
-            auto& node = main.join_edge_nodes[edge.nodes_begin() + edge.node_count_left() + i];
+            auto& node = main.graph_edge_nodes[edge.nodes_begin() + edge.node_count_left() + i];
             assert(!Analyzer::ID(node.column_reference_id()).IsNull());
             auto xml_node = xml_edge.append_child("node");
             xml_node.append_attribute("side").set_value(1);
@@ -247,11 +247,11 @@ void AnalyzerDumpTest::LoadTests(std::filesystem::path& source_dir) {
             t.column_references = std::move(column_refs);
 
             // Read the join edges
-            pugi::xml_document join_edges;
-            for (auto s : xml_main.child("join-edges").children()) {
-                join_edges.append_copy(s);
+            pugi::xml_document graph_edges;
+            for (auto s : xml_main.child("query-graph").children()) {
+                graph_edges.append_copy(s);
             }
-            t.join_edges = std::move(join_edges);
+            t.graph_edges = std::move(graph_edges);
         }
 
         std::cout << "[ SETUP    ] " << filename << ": " << tests.size() << " tests" << std::endl;

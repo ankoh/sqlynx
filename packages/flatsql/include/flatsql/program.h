@@ -111,9 +111,9 @@ class AnalyzedProgram {
     /// The column references
     ChunkBuffer<proto::ColumnReference, 16> column_references;
     /// The join edges
-    ChunkBuffer<proto::JoinEdge, 16> join_edges;
+    ChunkBuffer<proto::QueryGraphEdge, 16> graph_edges;
     /// The join edge nodes
-    ChunkBuffer<proto::JoinEdgeNode, 16> join_edge_nodes;
+    ChunkBuffer<proto::QueryGraphEdgeNode, 16> graph_edge_nodes;
 
    public:
     /// Constructor
