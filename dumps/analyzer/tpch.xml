@@ -617,4 +617,57 @@ order by
             </query-graph>
         </main>
     </analyzer-dump>
+    <analyzer-dump name="tpch_6">
+        <external>
+            <input>
+create table lineitem (l_orderkey integer not null, l_partkey integer not null, l_suppkey integer not null, l_linenumber integer not null, l_quantity decimal(12,2) not null, l_extendedprice decimal(12,2) not null, l_discount decimal(12,2) not null, l_tax decimal(12,2) not null, l_returnflag char(1) not null, l_linestatus char(1) not null, l_shipdate date not null, l_commitdate date not null, l_receiptdate date not null, l_shipinstruct char(25) not null, l_shipmode char(10) not null, l_comment varchar(44) not null, primary key (l_orderkey,l_linenumber));
+            </input>
+            <tables>
+                <table loc="1..559" text="create tab..nenumber))">
+                    <column name="l_orderkey" loc="24..51" text="l_orderkey..r not null" />
+                    <column name="l_partkey" loc="53..79" text="l_partkey ..r not null" />
+                    <column name="l_suppkey" loc="81..107" text="l_suppkey ..r not null" />
+                    <column name="l_linenumber" loc="109..138" text="l_linenumb..r not null" />
+                    <column name="l_quantity" loc="140..173" text="l_quantity..) not null" />
+                    <column name="l_extendedprice" loc="175..213" text="l_extended..) not null" />
+                    <column name="l_discount" loc="215..248" text="l_discount..) not null" />
+                    <column name="l_tax" loc="250..278" text="l_tax deci..) not null" />
+                    <column name="l_returnflag" loc="280..309" text="l_returnfl..) not null" />
+                    <column name="l_linestatus" loc="311..340" text="l_linestat..) not null" />
+                    <column name="l_shipdate" loc="342..366" text="l_shipdate..e not null" />
+                    <column name="l_commitdate" loc="368..394" text="l_commitda..e not null" />
+                    <column name="l_receiptdate" loc="396..423" text="l_receiptd..e not null" />
+                    <column name="l_shipinstruct" loc="425..457" text="l_shipinst..) not null" />
+                    <column name="l_shipmode" loc="459..487" text="l_shipmode..) not null" />
+                    <column name="l_comment" loc="489..519" text="l_comment ..) not null" />
+                </table>
+            </tables>
+        </external>
+        <main>
+            <input>
+select
+        sum(l_extendedprice * l_discount) as revenue
+from
+        lineitem
+where
+        l_shipdate &gt;= date '1994-01-01'
+        and l_shipdate &lt; date '1995-01-01'
+        and l_discount between 0.06 - 0.01 and 0.06 + 0.01
+        and l_quantity &lt; 24
+            </input>
+            <tables />
+            <table-references>
+                <external table="0" loc="74..82" text="lineitem" />
+            </table-references>
+            <column-references>
+                <external table="0" column="5" loc="20..35" text="l_extendedprice" />
+                <external table="0" column="6" loc="38..48" text="l_discount" />
+                <external table="0" column="10" loc="97..107" text="l_shipdate" />
+                <external table="0" column="10" loc="141..151" text="l_shipdate" />
+                <external table="0" column="6" loc="184..194" text="l_discount" />
+                <external table="0" column="4" loc="243..253" text="l_quantity" />
+            </column-references>
+            <query-graph />
+        </main>
+    </analyzer-dump>
 </analyzer-dumps>

@@ -174,4 +174,24 @@ order by
             </input>
         </main>
     </analyzer-dump>
+    <analyzer-dump name="tpch_6">
+        <external>
+            <input>
+create table lineitem (l_orderkey integer not null, l_partkey integer not null, l_suppkey integer not null, l_linenumber integer not null, l_quantity decimal(12,2) not null, l_extendedprice decimal(12,2) not null, l_discount decimal(12,2) not null, l_tax decimal(12,2) not null, l_returnflag char(1) not null, l_linestatus char(1) not null, l_shipdate date not null, l_commitdate date not null, l_receiptdate date not null, l_shipinstruct char(25) not null, l_shipmode char(10) not null, l_comment varchar(44) not null, primary key (l_orderkey,l_linenumber));
+            </input>
+        </external>
+        <main>
+            <input>
+select
+        sum(l_extendedprice * l_discount) as revenue
+from
+        lineitem
+where
+        l_shipdate &#62;= date '1994-01-01'
+        and l_shipdate &#60; date '1995-01-01'
+        and l_discount between 0.06 - 0.01 and 0.06 + 0.01
+        and l_quantity &#60; 24
+            </input>
+        </main>
+    </analyzer-dump>
 </analyzer-dumps>
