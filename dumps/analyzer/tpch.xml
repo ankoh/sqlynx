@@ -2101,4 +2101,1175 @@ order by
             </query-graph>
         </main>
     </analyzer-dump>
+    <analyzer-dump name="tpch_16">
+        <external>
+            <input>
+create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
+create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
+create table partsupp (ps_partkey integer not null, ps_suppkey integer not null, ps_availqty integer not null, ps_supplycost decimal(12,2) not null, ps_comment varchar(199) not null, primary key (ps_partkey,ps_suppkey));
+create table customer (c_custkey integer not null, c_name varchar(25) not null, c_address varchar(40) not null, c_nationkey integer not null, c_phone char(15) not null, c_acctbal decimal(12,2) not null, c_mktsegment char(10) not null, c_comment varchar(117) not null, primary key (c_custkey));
+create table orders (o_orderkey integer not null, o_custkey integer not null, o_orderstatus char(1) not null, o_totalprice decimal(12,2) not null, o_orderdate date not null, o_orderpriority char(15) not null, o_clerk char(15) not null, o_shippriority integer not null, o_comment varchar(79) not null, primary key (o_orderkey));
+create table lineitem (l_orderkey integer not null, l_partkey integer not null, l_suppkey integer not null, l_linenumber integer not null, l_quantity decimal(12,2) not null, l_extendedprice decimal(12,2) not null, l_discount decimal(12,2) not null, l_tax decimal(12,2) not null, l_returnflag char(1) not null, l_linestatus char(1) not null, l_shipdate date not null, l_commitdate date not null, l_receiptdate date not null, l_shipinstruct char(25) not null, l_shipmode char(10) not null, l_comment varchar(44) not null, primary key (l_orderkey,l_linenumber));
+create table nation (n_nationkey integer not null, n_name char(25) not null, n_regionkey integer not null, n_comment varchar(152) not null, primary key (n_nationkey));
+create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
+            </input>
+            <tables>
+                <table loc="1..309" text="create tab.._partkey))">
+                    <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
+                    <column name="p_name" loc="48..75" text="p_name var..) not null" />
+                    <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
+                    <column name="p_brand" loc="103..128" text="p_brand ch..) not null" />
+                    <column name="p_type" loc="130..157" text="p_type var..) not null" />
+                    <column name="p_size" loc="159..182" text="p_size int..r not null" />
+                    <column name="p_container" loc="184..213" text="p_containe..) not null" />
+                    <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
+                    <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
+                </table>
+                <table loc="311..568" text="create tab.._suppkey))">
+                    <column name="s_suppkey" loc="334..360" text="s_suppkey ..r not null" />
+                    <column name="s_name" loc="362..386" text="s_name cha..) not null" />
+                    <column name="s_address" loc="388..418" text="s_address ..) not null" />
+                    <column name="s_nationkey" loc="420..448" text="s_nationke..r not null" />
+                    <column name="s_phone" loc="450..475" text="s_phone ch..) not null" />
+                    <column name="s_acctbal" loc="477..509" text="s_acctbal ..) not null" />
+                    <column name="s_comment" loc="511..542" text="s_comment ..) not null" />
+                </table>
+                <table loc="570..789" text="create tab.._suppkey))">
+                    <column name="ps_partkey" loc="593..620" text="ps_partkey..r not null" />
+                    <column name="ps_suppkey" loc="622..649" text="ps_suppkey..r not null" />
+                    <column name="ps_availqty" loc="651..679" text="ps_availqt..r not null" />
+                    <column name="ps_supplycost" loc="681..717" text="ps_supplyc..) not null" />
+                    <column name="ps_comment" loc="719..751" text="ps_comment..) not null" />
+                </table>
+                <table loc="791..1083" text="create tab.._custkey))">
+                    <column name="c_custkey" loc="814..840" text="c_custkey ..r not null" />
+                    <column name="c_name" loc="842..869" text="c_name var..) not null" />
+                    <column name="c_address" loc="871..901" text="c_address ..) not null" />
+                    <column name="c_nationkey" loc="903..931" text="c_nationke..r not null" />
+                    <column name="c_phone" loc="933..958" text="c_phone ch..) not null" />
+                    <column name="c_acctbal" loc="960..992" text="c_acctbal ..) not null" />
+                    <column name="c_mktsegment" loc="994..1024" text="c_mktsegme..) not null" />
+                    <column name="c_comment" loc="1026..1057" text="c_comment ..) not null" />
+                </table>
+                <table loc="1085..1411" text="create tab..orderkey))">
+                    <column name="o_orderkey" loc="1106..1133" text="o_orderkey..r not null" />
+                    <column name="o_custkey" loc="1135..1161" text="o_custkey ..r not null" />
+                    <column name="o_orderstatus" loc="1163..1193" text="o_ordersta..) not null" />
+                    <column name="o_totalprice" loc="1195..1230" text="o_totalpri..) not null" />
+                    <column name="o_orderdate" loc="1232..1257" text="o_orderdat..e not null" />
+                    <column name="o_orderpriority" loc="1259..1292" text="o_orderpri..) not null" />
+                    <column name="o_clerk" loc="1294..1319" text="o_clerk ch..) not null" />
+                    <column name="o_shippriority" loc="1321..1352" text="o_shipprio..r not null" />
+                    <column name="o_comment" loc="1354..1384" text="o_comment ..) not null" />
+                </table>
+                <table loc="1413..1971" text="create tab..nenumber))">
+                    <column name="l_orderkey" loc="1436..1463" text="l_orderkey..r not null" />
+                    <column name="l_partkey" loc="1465..1491" text="l_partkey ..r not null" />
+                    <column name="l_suppkey" loc="1493..1519" text="l_suppkey ..r not null" />
+                    <column name="l_linenumber" loc="1521..1550" text="l_linenumb..r not null" />
+                    <column name="l_quantity" loc="1552..1585" text="l_quantity..) not null" />
+                    <column name="l_extendedprice" loc="1587..1625" text="l_extended..) not null" />
+                    <column name="l_discount" loc="1627..1660" text="l_discount..) not null" />
+                    <column name="l_tax" loc="1662..1690" text="l_tax deci..) not null" />
+                    <column name="l_returnflag" loc="1692..1721" text="l_returnfl..) not null" />
+                    <column name="l_linestatus" loc="1723..1752" text="l_linestat..) not null" />
+                    <column name="l_shipdate" loc="1754..1778" text="l_shipdate..e not null" />
+                    <column name="l_commitdate" loc="1780..1806" text="l_commitda..e not null" />
+                    <column name="l_receiptdate" loc="1808..1835" text="l_receiptd..e not null" />
+                    <column name="l_shipinstruct" loc="1837..1869" text="l_shipinst..) not null" />
+                    <column name="l_shipmode" loc="1871..1899" text="l_shipmode..) not null" />
+                    <column name="l_comment" loc="1901..1931" text="l_comment ..) not null" />
+                </table>
+                <table loc="1973..2139" text="create tab..ationkey))">
+                    <column name="n_nationkey" loc="1994..2022" text="n_nationke..r not null" />
+                    <column name="n_name" loc="2024..2048" text="n_name cha..) not null" />
+                    <column name="n_regionkey" loc="2050..2078" text="n_regionke..r not null" />
+                    <column name="n_comment" loc="2080..2111" text="n_comment ..) not null" />
+                </table>
+                <table loc="2141..2277" text="create tab..egionkey))">
+                    <column name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
+                    <column name="r_name" loc="2192..2216" text="r_name cha..) not null" />
+                    <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
+                </table>
+            </tables>
+        </external>
+        <main>
+            <input>
+select
+        p_brand,
+        p_type,
+        p_size,
+        count(distinct ps_suppkey) as supplier_cnt
+from
+        partsupp,
+        part
+where
+        p_partkey = ps_partkey
+        and p_brand &lt;&gt; 'Brand#45'
+        and p_type not like 'MEDIUM POLISHED%'
+        and p_size in (49, 14, 23, 45, 19, 3, 36, 9)
+        and ps_suppkey not in (
+                select
+                        s_suppkey
+                from
+                        supplier
+                where
+                        s_comment like '%Customer%Complaints%'
+        )
+group by
+        p_brand,
+        p_type,
+        p_size
+order by
+        supplier_cnt desc,
+        p_brand,
+        p_type,
+        p_size
+            </input>
+            <tables />
+            <table-references>
+                <external table="1" loc="449..457" text="supplier" />
+                <external table="2" loc="121..129" text="partsupp" />
+                <external table="0" loc="139..143" text="part" />
+            </table-references>
+            <column-references>
+                <external table="0" column="3" loc="16..23" text="p_brand" />
+                <external table="0" column="4" loc="33..39" text="p_type" />
+                <external table="0" column="5" loc="49..55" text="p_size" />
+                <external table="2" column="1" loc="80..90" text="ps_suppkey" />
+                <external table="0" column="0" loc="158..167" text="p_partkey" />
+                <external table="2" column="0" loc="170..180" text="ps_partkey" />
+                <external table="0" column="3" loc="193..200" text="p_brand" />
+                <external table="0" column="4" loc="227..233" text="p_type" />
+                <external table="0" column="5" loc="274..280" text="p_size" />
+                <external table="1" column="0" loc="394..403" text="s_suppkey" />
+                <external table="1" column="6" loc="504..513" text="s_comment" />
+                <external table="2" column="1" loc="327..337" text="ps_suppkey" />
+                <external table="0" column="3" loc="570..577" text="p_brand" />
+                <external table="0" column="4" loc="587..593" text="p_type" />
+                <external table="0" column="5" loc="603..609" text="p_size" />
+                <unresolved loc="627..639" text="supplier_cnt" />
+                <external table="0" column="3" loc="654..661" text="p_brand" />
+                <external table="0" column="4" loc="671..677" text="p_type" />
+                <external table="0" column="5" loc="687..693" text="p_size" />
+            </column-references>
+            <query-graph>
+                <edge op="EQUAL" loc="158..180" text="p_partkey ..ps_partkey">
+                    <node side="0" ref="4" />
+                    <node side="1" ref="5" />
+                </edge>
+            </query-graph>
+        </main>
+    </analyzer-dump>
+    <analyzer-dump name="tpch_17">
+        <external>
+            <input>
+create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
+create table lineitem (l_orderkey integer not null, l_partkey integer not null, l_suppkey integer not null, l_linenumber integer not null, l_quantity decimal(12,2) not null, l_extendedprice decimal(12,2) not null, l_discount decimal(12,2) not null, l_tax decimal(12,2) not null, l_returnflag char(1) not null, l_linestatus char(1) not null, l_shipdate date not null, l_commitdate date not null, l_receiptdate date not null, l_shipinstruct char(25) not null, l_shipmode char(10) not null, l_comment varchar(44) not null, primary key (l_orderkey,l_linenumber));
+            </input>
+            <tables>
+                <table loc="1..309" text="create tab.._partkey))">
+                    <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
+                    <column name="p_name" loc="48..75" text="p_name var..) not null" />
+                    <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
+                    <column name="p_brand" loc="103..128" text="p_brand ch..) not null" />
+                    <column name="p_type" loc="130..157" text="p_type var..) not null" />
+                    <column name="p_size" loc="159..182" text="p_size int..r not null" />
+                    <column name="p_container" loc="184..213" text="p_containe..) not null" />
+                    <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
+                    <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
+                </table>
+                <table loc="311..869" text="create tab..nenumber))">
+                    <column name="l_orderkey" loc="334..361" text="l_orderkey..r not null" />
+                    <column name="l_partkey" loc="363..389" text="l_partkey ..r not null" />
+                    <column name="l_suppkey" loc="391..417" text="l_suppkey ..r not null" />
+                    <column name="l_linenumber" loc="419..448" text="l_linenumb..r not null" />
+                    <column name="l_quantity" loc="450..483" text="l_quantity..) not null" />
+                    <column name="l_extendedprice" loc="485..523" text="l_extended..) not null" />
+                    <column name="l_discount" loc="525..558" text="l_discount..) not null" />
+                    <column name="l_tax" loc="560..588" text="l_tax deci..) not null" />
+                    <column name="l_returnflag" loc="590..619" text="l_returnfl..) not null" />
+                    <column name="l_linestatus" loc="621..650" text="l_linestat..) not null" />
+                    <column name="l_shipdate" loc="652..676" text="l_shipdate..e not null" />
+                    <column name="l_commitdate" loc="678..704" text="l_commitda..e not null" />
+                    <column name="l_receiptdate" loc="706..733" text="l_receiptd..e not null" />
+                    <column name="l_shipinstruct" loc="735..767" text="l_shipinst..) not null" />
+                    <column name="l_shipmode" loc="769..797" text="l_shipmode..) not null" />
+                    <column name="l_comment" loc="799..829" text="l_comment ..) not null" />
+                </table>
+            </tables>
+        </external>
+        <main>
+            <input>
+select
+        sum(l_extendedprice) / 7.0 as avg_yearly
+from
+        lineitem,
+        part
+where
+        p_partkey = l_partkey
+        and p_brand = 'Brand#23'
+        and p_container = 'MED BOX'
+        and l_quantity &lt; (
+                select
+                        0.2 * avg(l_quantity)
+                from
+                        lineitem
+                where
+                        l_partkey = p_partkey
+        )
+            </input>
+            <tables />
+            <table-references>
+                <external table="1" loc="339..347" text="lineitem" />
+                <external table="1" loc="70..78" text="lineitem" />
+                <external table="0" loc="88..92" text="part" />
+            </table-references>
+            <column-references>
+                <external table="1" column="5" loc="20..35" text="l_extendedprice" />
+                <external table="0" column="0" loc="107..116" text="p_partkey" />
+                <external table="1" column="1" loc="119..128" text="l_partkey" />
+                <external table="0" column="3" loc="141..148" text="p_brand" />
+                <external table="0" column="6" loc="174..185" text="p_container" />
+                <external table="1" column="4" loc="282..292" text="l_quantity" />
+                <external table="1" column="1" loc="394..403" text="l_partkey" />
+                <external table="0" column="0" loc="406..415" text="p_partkey" />
+                <external table="1" column="4" loc="210..220" text="l_quantity" />
+            </column-references>
+            <query-graph>
+                <edge op="EQUAL" loc="394..415" text="l_partkey .. p_partkey">
+                    <node side="0" ref="6" />
+                    <node side="1" ref="7" />
+                </edge>
+                <edge op="EQUAL" loc="107..128" text="p_partkey .. l_partkey">
+                    <node side="0" ref="1" />
+                    <node side="1" ref="2" />
+                </edge>
+                <edge op="LESS_THAN" loc="210..425" text="l_quantity..&#10;        )">
+                    <node side="0" ref="8" />
+                    <node side="1" ref="5" />
+                    <node side="1" ref="6" />
+                    <node side="1" ref="7" />
+                </edge>
+            </query-graph>
+        </main>
+    </analyzer-dump>
+    <analyzer-dump name="tpch_18">
+        <external>
+            <input>
+create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
+create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
+create table partsupp (ps_partkey integer not null, ps_suppkey integer not null, ps_availqty integer not null, ps_supplycost decimal(12,2) not null, ps_comment varchar(199) not null, primary key (ps_partkey,ps_suppkey));
+create table customer (c_custkey integer not null, c_name varchar(25) not null, c_address varchar(40) not null, c_nationkey integer not null, c_phone char(15) not null, c_acctbal decimal(12,2) not null, c_mktsegment char(10) not null, c_comment varchar(117) not null, primary key (c_custkey));
+create table orders (o_orderkey integer not null, o_custkey integer not null, o_orderstatus char(1) not null, o_totalprice decimal(12,2) not null, o_orderdate date not null, o_orderpriority char(15) not null, o_clerk char(15) not null, o_shippriority integer not null, o_comment varchar(79) not null, primary key (o_orderkey));
+create table lineitem (l_orderkey integer not null, l_partkey integer not null, l_suppkey integer not null, l_linenumber integer not null, l_quantity decimal(12,2) not null, l_extendedprice decimal(12,2) not null, l_discount decimal(12,2) not null, l_tax decimal(12,2) not null, l_returnflag char(1) not null, l_linestatus char(1) not null, l_shipdate date not null, l_commitdate date not null, l_receiptdate date not null, l_shipinstruct char(25) not null, l_shipmode char(10) not null, l_comment varchar(44) not null, primary key (l_orderkey,l_linenumber));
+create table nation (n_nationkey integer not null, n_name char(25) not null, n_regionkey integer not null, n_comment varchar(152) not null, primary key (n_nationkey));
+create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
+            </input>
+            <tables>
+                <table loc="1..309" text="create tab.._partkey))">
+                    <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
+                    <column name="p_name" loc="48..75" text="p_name var..) not null" />
+                    <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
+                    <column name="p_brand" loc="103..128" text="p_brand ch..) not null" />
+                    <column name="p_type" loc="130..157" text="p_type var..) not null" />
+                    <column name="p_size" loc="159..182" text="p_size int..r not null" />
+                    <column name="p_container" loc="184..213" text="p_containe..) not null" />
+                    <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
+                    <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
+                </table>
+                <table loc="311..568" text="create tab.._suppkey))">
+                    <column name="s_suppkey" loc="334..360" text="s_suppkey ..r not null" />
+                    <column name="s_name" loc="362..386" text="s_name cha..) not null" />
+                    <column name="s_address" loc="388..418" text="s_address ..) not null" />
+                    <column name="s_nationkey" loc="420..448" text="s_nationke..r not null" />
+                    <column name="s_phone" loc="450..475" text="s_phone ch..) not null" />
+                    <column name="s_acctbal" loc="477..509" text="s_acctbal ..) not null" />
+                    <column name="s_comment" loc="511..542" text="s_comment ..) not null" />
+                </table>
+                <table loc="570..789" text="create tab.._suppkey))">
+                    <column name="ps_partkey" loc="593..620" text="ps_partkey..r not null" />
+                    <column name="ps_suppkey" loc="622..649" text="ps_suppkey..r not null" />
+                    <column name="ps_availqty" loc="651..679" text="ps_availqt..r not null" />
+                    <column name="ps_supplycost" loc="681..717" text="ps_supplyc..) not null" />
+                    <column name="ps_comment" loc="719..751" text="ps_comment..) not null" />
+                </table>
+                <table loc="791..1083" text="create tab.._custkey))">
+                    <column name="c_custkey" loc="814..840" text="c_custkey ..r not null" />
+                    <column name="c_name" loc="842..869" text="c_name var..) not null" />
+                    <column name="c_address" loc="871..901" text="c_address ..) not null" />
+                    <column name="c_nationkey" loc="903..931" text="c_nationke..r not null" />
+                    <column name="c_phone" loc="933..958" text="c_phone ch..) not null" />
+                    <column name="c_acctbal" loc="960..992" text="c_acctbal ..) not null" />
+                    <column name="c_mktsegment" loc="994..1024" text="c_mktsegme..) not null" />
+                    <column name="c_comment" loc="1026..1057" text="c_comment ..) not null" />
+                </table>
+                <table loc="1085..1411" text="create tab..orderkey))">
+                    <column name="o_orderkey" loc="1106..1133" text="o_orderkey..r not null" />
+                    <column name="o_custkey" loc="1135..1161" text="o_custkey ..r not null" />
+                    <column name="o_orderstatus" loc="1163..1193" text="o_ordersta..) not null" />
+                    <column name="o_totalprice" loc="1195..1230" text="o_totalpri..) not null" />
+                    <column name="o_orderdate" loc="1232..1257" text="o_orderdat..e not null" />
+                    <column name="o_orderpriority" loc="1259..1292" text="o_orderpri..) not null" />
+                    <column name="o_clerk" loc="1294..1319" text="o_clerk ch..) not null" />
+                    <column name="o_shippriority" loc="1321..1352" text="o_shipprio..r not null" />
+                    <column name="o_comment" loc="1354..1384" text="o_comment ..) not null" />
+                </table>
+                <table loc="1413..1971" text="create tab..nenumber))">
+                    <column name="l_orderkey" loc="1436..1463" text="l_orderkey..r not null" />
+                    <column name="l_partkey" loc="1465..1491" text="l_partkey ..r not null" />
+                    <column name="l_suppkey" loc="1493..1519" text="l_suppkey ..r not null" />
+                    <column name="l_linenumber" loc="1521..1550" text="l_linenumb..r not null" />
+                    <column name="l_quantity" loc="1552..1585" text="l_quantity..) not null" />
+                    <column name="l_extendedprice" loc="1587..1625" text="l_extended..) not null" />
+                    <column name="l_discount" loc="1627..1660" text="l_discount..) not null" />
+                    <column name="l_tax" loc="1662..1690" text="l_tax deci..) not null" />
+                    <column name="l_returnflag" loc="1692..1721" text="l_returnfl..) not null" />
+                    <column name="l_linestatus" loc="1723..1752" text="l_linestat..) not null" />
+                    <column name="l_shipdate" loc="1754..1778" text="l_shipdate..e not null" />
+                    <column name="l_commitdate" loc="1780..1806" text="l_commitda..e not null" />
+                    <column name="l_receiptdate" loc="1808..1835" text="l_receiptd..e not null" />
+                    <column name="l_shipinstruct" loc="1837..1869" text="l_shipinst..) not null" />
+                    <column name="l_shipmode" loc="1871..1899" text="l_shipmode..) not null" />
+                    <column name="l_comment" loc="1901..1931" text="l_comment ..) not null" />
+                </table>
+                <table loc="1973..2139" text="create tab..ationkey))">
+                    <column name="n_nationkey" loc="1994..2022" text="n_nationke..r not null" />
+                    <column name="n_name" loc="2024..2048" text="n_name cha..) not null" />
+                    <column name="n_regionkey" loc="2050..2078" text="n_regionke..r not null" />
+                    <column name="n_comment" loc="2080..2111" text="n_comment ..) not null" />
+                </table>
+                <table loc="2141..2277" text="create tab..egionkey))">
+                    <column name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
+                    <column name="r_name" loc="2192..2216" text="r_name cha..) not null" />
+                    <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
+                </table>
+            </tables>
+        </external>
+        <main>
+            <input>
+select
+        c_name,
+        c_custkey,
+        o_orderkey,
+        o_orderdate,
+        o_totalprice,
+        sum(l_quantity)
+from
+        customer,
+        orders,
+        lineitem
+where
+        o_orderkey in (
+                select
+                        l_orderkey
+                from
+                        lineitem
+                group by
+                        l_orderkey having
+                                sum(l_quantity) &gt; 300
+        )
+        and c_custkey = o_custkey
+        and o_orderkey = l_orderkey
+group by
+        c_name,
+        c_custkey,
+        o_orderkey,
+        o_orderdate,
+        o_totalprice
+order by
+        o_totalprice desc,
+        o_orderdate
+limit
+	100
+            </input>
+            <tables />
+            <table-references>
+                <external table="5" loc="319..327" text="lineitem" />
+                <external table="3" loc="143..151" text="customer" />
+                <external table="4" loc="161..167" text="orders" />
+                <external table="5" loc="177..185" text="lineitem" />
+            </table-references>
+            <column-references>
+                <external table="3" column="1" loc="16..22" text="c_name" />
+                <external table="3" column="0" loc="32..41" text="c_custkey" />
+                <external table="4" column="0" loc="51..61" text="o_orderkey" />
+                <external table="4" column="4" loc="71..82" text="o_orderdate" />
+                <external table="4" column="3" loc="92..104" text="o_totalprice" />
+                <external table="5" column="4" loc="118..128" text="l_quantity" />
+                <external table="5" column="0" loc="263..273" text="l_orderkey" />
+                <external table="5" column="0" loc="377..387" text="l_orderkey" />
+                <external table="5" column="4" loc="431..441" text="l_quantity" />
+                <external table="4" column="0" loc="200..210" text="o_orderkey" />
+                <external table="3" column="0" loc="471..480" text="c_custkey" />
+                <external table="4" column="1" loc="483..492" text="o_custkey" />
+                <external table="4" column="0" loc="505..515" text="o_orderkey" />
+                <external table="5" column="0" loc="518..528" text="l_orderkey" />
+                <external table="3" column="1" loc="546..552" text="c_name" />
+                <external table="3" column="0" loc="562..571" text="c_custkey" />
+                <external table="4" column="0" loc="581..591" text="o_orderkey" />
+                <external table="4" column="4" loc="601..612" text="o_orderdate" />
+                <external table="4" column="3" loc="622..634" text="o_totalprice" />
+                <external table="4" column="3" loc="652..664" text="o_totalprice" />
+                <external table="4" column="4" loc="679..690" text="o_orderdate" />
+            </column-references>
+            <query-graph>
+                <edge op="EQUAL" loc="471..492" text="c_custkey .. o_custkey">
+                    <node side="0" ref="10" />
+                    <node side="1" ref="11" />
+                </edge>
+                <edge op="EQUAL" loc="505..528" text="o_orderkey..l_orderkey">
+                    <node side="0" ref="12" />
+                    <node side="1" ref="13" />
+                </edge>
+            </query-graph>
+        </main>
+    </analyzer-dump>
+    <analyzer-dump name="tpch_19">
+        <external>
+            <input>
+create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
+create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
+create table partsupp (ps_partkey integer not null, ps_suppkey integer not null, ps_availqty integer not null, ps_supplycost decimal(12,2) not null, ps_comment varchar(199) not null, primary key (ps_partkey,ps_suppkey));
+create table customer (c_custkey integer not null, c_name varchar(25) not null, c_address varchar(40) not null, c_nationkey integer not null, c_phone char(15) not null, c_acctbal decimal(12,2) not null, c_mktsegment char(10) not null, c_comment varchar(117) not null, primary key (c_custkey));
+create table orders (o_orderkey integer not null, o_custkey integer not null, o_orderstatus char(1) not null, o_totalprice decimal(12,2) not null, o_orderdate date not null, o_orderpriority char(15) not null, o_clerk char(15) not null, o_shippriority integer not null, o_comment varchar(79) not null, primary key (o_orderkey));
+create table lineitem (l_orderkey integer not null, l_partkey integer not null, l_suppkey integer not null, l_linenumber integer not null, l_quantity decimal(12,2) not null, l_extendedprice decimal(12,2) not null, l_discount decimal(12,2) not null, l_tax decimal(12,2) not null, l_returnflag char(1) not null, l_linestatus char(1) not null, l_shipdate date not null, l_commitdate date not null, l_receiptdate date not null, l_shipinstruct char(25) not null, l_shipmode char(10) not null, l_comment varchar(44) not null, primary key (l_orderkey,l_linenumber));
+create table nation (n_nationkey integer not null, n_name char(25) not null, n_regionkey integer not null, n_comment varchar(152) not null, primary key (n_nationkey));
+create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
+            </input>
+            <tables>
+                <table loc="1..309" text="create tab.._partkey))">
+                    <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
+                    <column name="p_name" loc="48..75" text="p_name var..) not null" />
+                    <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
+                    <column name="p_brand" loc="103..128" text="p_brand ch..) not null" />
+                    <column name="p_type" loc="130..157" text="p_type var..) not null" />
+                    <column name="p_size" loc="159..182" text="p_size int..r not null" />
+                    <column name="p_container" loc="184..213" text="p_containe..) not null" />
+                    <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
+                    <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
+                </table>
+                <table loc="311..568" text="create tab.._suppkey))">
+                    <column name="s_suppkey" loc="334..360" text="s_suppkey ..r not null" />
+                    <column name="s_name" loc="362..386" text="s_name cha..) not null" />
+                    <column name="s_address" loc="388..418" text="s_address ..) not null" />
+                    <column name="s_nationkey" loc="420..448" text="s_nationke..r not null" />
+                    <column name="s_phone" loc="450..475" text="s_phone ch..) not null" />
+                    <column name="s_acctbal" loc="477..509" text="s_acctbal ..) not null" />
+                    <column name="s_comment" loc="511..542" text="s_comment ..) not null" />
+                </table>
+                <table loc="570..789" text="create tab.._suppkey))">
+                    <column name="ps_partkey" loc="593..620" text="ps_partkey..r not null" />
+                    <column name="ps_suppkey" loc="622..649" text="ps_suppkey..r not null" />
+                    <column name="ps_availqty" loc="651..679" text="ps_availqt..r not null" />
+                    <column name="ps_supplycost" loc="681..717" text="ps_supplyc..) not null" />
+                    <column name="ps_comment" loc="719..751" text="ps_comment..) not null" />
+                </table>
+                <table loc="791..1083" text="create tab.._custkey))">
+                    <column name="c_custkey" loc="814..840" text="c_custkey ..r not null" />
+                    <column name="c_name" loc="842..869" text="c_name var..) not null" />
+                    <column name="c_address" loc="871..901" text="c_address ..) not null" />
+                    <column name="c_nationkey" loc="903..931" text="c_nationke..r not null" />
+                    <column name="c_phone" loc="933..958" text="c_phone ch..) not null" />
+                    <column name="c_acctbal" loc="960..992" text="c_acctbal ..) not null" />
+                    <column name="c_mktsegment" loc="994..1024" text="c_mktsegme..) not null" />
+                    <column name="c_comment" loc="1026..1057" text="c_comment ..) not null" />
+                </table>
+                <table loc="1085..1411" text="create tab..orderkey))">
+                    <column name="o_orderkey" loc="1106..1133" text="o_orderkey..r not null" />
+                    <column name="o_custkey" loc="1135..1161" text="o_custkey ..r not null" />
+                    <column name="o_orderstatus" loc="1163..1193" text="o_ordersta..) not null" />
+                    <column name="o_totalprice" loc="1195..1230" text="o_totalpri..) not null" />
+                    <column name="o_orderdate" loc="1232..1257" text="o_orderdat..e not null" />
+                    <column name="o_orderpriority" loc="1259..1292" text="o_orderpri..) not null" />
+                    <column name="o_clerk" loc="1294..1319" text="o_clerk ch..) not null" />
+                    <column name="o_shippriority" loc="1321..1352" text="o_shipprio..r not null" />
+                    <column name="o_comment" loc="1354..1384" text="o_comment ..) not null" />
+                </table>
+                <table loc="1413..1971" text="create tab..nenumber))">
+                    <column name="l_orderkey" loc="1436..1463" text="l_orderkey..r not null" />
+                    <column name="l_partkey" loc="1465..1491" text="l_partkey ..r not null" />
+                    <column name="l_suppkey" loc="1493..1519" text="l_suppkey ..r not null" />
+                    <column name="l_linenumber" loc="1521..1550" text="l_linenumb..r not null" />
+                    <column name="l_quantity" loc="1552..1585" text="l_quantity..) not null" />
+                    <column name="l_extendedprice" loc="1587..1625" text="l_extended..) not null" />
+                    <column name="l_discount" loc="1627..1660" text="l_discount..) not null" />
+                    <column name="l_tax" loc="1662..1690" text="l_tax deci..) not null" />
+                    <column name="l_returnflag" loc="1692..1721" text="l_returnfl..) not null" />
+                    <column name="l_linestatus" loc="1723..1752" text="l_linestat..) not null" />
+                    <column name="l_shipdate" loc="1754..1778" text="l_shipdate..e not null" />
+                    <column name="l_commitdate" loc="1780..1806" text="l_commitda..e not null" />
+                    <column name="l_receiptdate" loc="1808..1835" text="l_receiptd..e not null" />
+                    <column name="l_shipinstruct" loc="1837..1869" text="l_shipinst..) not null" />
+                    <column name="l_shipmode" loc="1871..1899" text="l_shipmode..) not null" />
+                    <column name="l_comment" loc="1901..1931" text="l_comment ..) not null" />
+                </table>
+                <table loc="1973..2139" text="create tab..ationkey))">
+                    <column name="n_nationkey" loc="1994..2022" text="n_nationke..r not null" />
+                    <column name="n_name" loc="2024..2048" text="n_name cha..) not null" />
+                    <column name="n_regionkey" loc="2050..2078" text="n_regionke..r not null" />
+                    <column name="n_comment" loc="2080..2111" text="n_comment ..) not null" />
+                </table>
+                <table loc="2141..2277" text="create tab..egionkey))">
+                    <column name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
+                    <column name="r_name" loc="2192..2216" text="r_name cha..) not null" />
+                    <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
+                </table>
+            </tables>
+        </external>
+        <main>
+            <input>
+select
+        sum(l_extendedprice* (1 - l_discount)) as revenue
+from
+        lineitem,
+        part
+where
+        (
+                p_partkey = l_partkey
+                and p_brand = 'Brand#12'
+                and p_container in ('SM CASE', 'SM BOX', 'SM PACK', 'SM PKG')
+                and l_quantity &gt;= 1 and l_quantity &lt;= 1 + 10
+                and p_size between 1 and 5
+                and l_shipmode in ('AIR', 'AIR REG')
+                and l_shipinstruct = 'DELIVER IN PERSON'
+        )
+        or
+        (
+                p_partkey = l_partkey
+                and p_brand = 'Brand#23'
+                and p_container in ('MED BAG', 'MED BOX', 'MED PKG', 'MED PACK')
+                and l_quantity &gt;= 10 and l_quantity &lt;= 10 + 10
+                and p_size between 1 and 10
+                and l_shipmode in ('AIR', 'AIR REG')
+                and l_shipinstruct = 'DELIVER IN PERSON'
+        )
+        or
+        (
+                p_partkey = l_partkey
+                and p_brand = 'Brand#34'
+                and p_container in ('LG CASE', 'LG BOX', 'LG PACK', 'LG PKG')
+                and l_quantity &gt;= 20 and l_quantity &lt;= 20 + 10
+                and p_size between 1 and 15
+                and l_shipmode in ('AIR', 'AIR REG')
+                and l_shipinstruct = 'DELIVER IN PERSON'
+        )
+            </input>
+            <tables />
+            <table-references>
+                <external table="5" loc="79..87" text="lineitem" />
+                <external table="0" loc="97..101" text="part" />
+            </table-references>
+            <column-references>
+                <external table="5" column="6" loc="42..52" text="l_discount" />
+                <external table="5" column="5" loc="20..35" text="l_extendedprice" />
+                <external table="0" column="0" loc="134..143" text="p_partkey" />
+                <external table="5" column="1" loc="146..155" text="l_partkey" />
+                <external table="0" column="3" loc="176..183" text="p_brand" />
+                <external table="0" column="6" loc="217..228" text="p_container" />
+                <external table="5" column="4" loc="295..305" text="l_quantity" />
+                <external table="5" column="4" loc="315..325" text="l_quantity" />
+                <external table="0" column="5" loc="356..362" text="p_size" />
+                <external table="5" column="14" loc="399..409" text="l_shipmode" />
+                <external table="5" column="13" loc="452..466" text="l_shipinstruct" />
+                <external table="0" column="0" loc="536..545" text="p_partkey" />
+                <external table="5" column="1" loc="548..557" text="l_partkey" />
+                <external table="0" column="3" loc="578..585" text="p_brand" />
+                <external table="0" column="6" loc="619..630" text="p_container" />
+                <external table="5" column="4" loc="700..710" text="l_quantity" />
+                <external table="5" column="4" loc="721..731" text="l_quantity" />
+                <external table="0" column="5" loc="763..769" text="p_size" />
+                <external table="5" column="14" loc="807..817" text="l_shipmode" />
+                <external table="5" column="13" loc="860..874" text="l_shipinstruct" />
+                <external table="0" column="0" loc="944..953" text="p_partkey" />
+                <external table="5" column="1" loc="956..965" text="l_partkey" />
+                <external table="0" column="3" loc="986..993" text="p_brand" />
+                <external table="0" column="6" loc="1027..1038" text="p_container" />
+                <external table="5" column="4" loc="1105..1115" text="l_quantity" />
+                <external table="5" column="4" loc="1126..1136" text="l_quantity" />
+                <external table="0" column="5" loc="1168..1174" text="p_size" />
+                <external table="5" column="14" loc="1212..1222" text="l_shipmode" />
+                <external table="5" column="13" loc="1265..1279" text="l_shipinstruct" />
+            </column-references>
+            <query-graph>
+                <edge op="EQUAL" loc="134..155" text="p_partkey .. l_partkey">
+                    <node side="0" ref="2" />
+                    <node side="1" ref="3" />
+                </edge>
+                <edge op="EQUAL" loc="536..557" text="p_partkey .. l_partkey">
+                    <node side="0" ref="11" />
+                    <node side="1" ref="12" />
+                </edge>
+                <edge op="EQUAL" loc="944..965" text="p_partkey .. l_partkey">
+                    <node side="0" ref="20" />
+                    <node side="1" ref="21" />
+                </edge>
+            </query-graph>
+        </main>
+    </analyzer-dump>
+    <analyzer-dump name="tpch_20">
+        <external>
+            <input>
+create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
+create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
+create table partsupp (ps_partkey integer not null, ps_suppkey integer not null, ps_availqty integer not null, ps_supplycost decimal(12,2) not null, ps_comment varchar(199) not null, primary key (ps_partkey,ps_suppkey));
+create table customer (c_custkey integer not null, c_name varchar(25) not null, c_address varchar(40) not null, c_nationkey integer not null, c_phone char(15) not null, c_acctbal decimal(12,2) not null, c_mktsegment char(10) not null, c_comment varchar(117) not null, primary key (c_custkey));
+create table orders (o_orderkey integer not null, o_custkey integer not null, o_orderstatus char(1) not null, o_totalprice decimal(12,2) not null, o_orderdate date not null, o_orderpriority char(15) not null, o_clerk char(15) not null, o_shippriority integer not null, o_comment varchar(79) not null, primary key (o_orderkey));
+create table lineitem (l_orderkey integer not null, l_partkey integer not null, l_suppkey integer not null, l_linenumber integer not null, l_quantity decimal(12,2) not null, l_extendedprice decimal(12,2) not null, l_discount decimal(12,2) not null, l_tax decimal(12,2) not null, l_returnflag char(1) not null, l_linestatus char(1) not null, l_shipdate date not null, l_commitdate date not null, l_receiptdate date not null, l_shipinstruct char(25) not null, l_shipmode char(10) not null, l_comment varchar(44) not null, primary key (l_orderkey,l_linenumber));
+create table nation (n_nationkey integer not null, n_name char(25) not null, n_regionkey integer not null, n_comment varchar(152) not null, primary key (n_nationkey));
+create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
+            </input>
+            <tables>
+                <table loc="1..309" text="create tab.._partkey))">
+                    <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
+                    <column name="p_name" loc="48..75" text="p_name var..) not null" />
+                    <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
+                    <column name="p_brand" loc="103..128" text="p_brand ch..) not null" />
+                    <column name="p_type" loc="130..157" text="p_type var..) not null" />
+                    <column name="p_size" loc="159..182" text="p_size int..r not null" />
+                    <column name="p_container" loc="184..213" text="p_containe..) not null" />
+                    <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
+                    <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
+                </table>
+                <table loc="311..568" text="create tab.._suppkey))">
+                    <column name="s_suppkey" loc="334..360" text="s_suppkey ..r not null" />
+                    <column name="s_name" loc="362..386" text="s_name cha..) not null" />
+                    <column name="s_address" loc="388..418" text="s_address ..) not null" />
+                    <column name="s_nationkey" loc="420..448" text="s_nationke..r not null" />
+                    <column name="s_phone" loc="450..475" text="s_phone ch..) not null" />
+                    <column name="s_acctbal" loc="477..509" text="s_acctbal ..) not null" />
+                    <column name="s_comment" loc="511..542" text="s_comment ..) not null" />
+                </table>
+                <table loc="570..789" text="create tab.._suppkey))">
+                    <column name="ps_partkey" loc="593..620" text="ps_partkey..r not null" />
+                    <column name="ps_suppkey" loc="622..649" text="ps_suppkey..r not null" />
+                    <column name="ps_availqty" loc="651..679" text="ps_availqt..r not null" />
+                    <column name="ps_supplycost" loc="681..717" text="ps_supplyc..) not null" />
+                    <column name="ps_comment" loc="719..751" text="ps_comment..) not null" />
+                </table>
+                <table loc="791..1083" text="create tab.._custkey))">
+                    <column name="c_custkey" loc="814..840" text="c_custkey ..r not null" />
+                    <column name="c_name" loc="842..869" text="c_name var..) not null" />
+                    <column name="c_address" loc="871..901" text="c_address ..) not null" />
+                    <column name="c_nationkey" loc="903..931" text="c_nationke..r not null" />
+                    <column name="c_phone" loc="933..958" text="c_phone ch..) not null" />
+                    <column name="c_acctbal" loc="960..992" text="c_acctbal ..) not null" />
+                    <column name="c_mktsegment" loc="994..1024" text="c_mktsegme..) not null" />
+                    <column name="c_comment" loc="1026..1057" text="c_comment ..) not null" />
+                </table>
+                <table loc="1085..1411" text="create tab..orderkey))">
+                    <column name="o_orderkey" loc="1106..1133" text="o_orderkey..r not null" />
+                    <column name="o_custkey" loc="1135..1161" text="o_custkey ..r not null" />
+                    <column name="o_orderstatus" loc="1163..1193" text="o_ordersta..) not null" />
+                    <column name="o_totalprice" loc="1195..1230" text="o_totalpri..) not null" />
+                    <column name="o_orderdate" loc="1232..1257" text="o_orderdat..e not null" />
+                    <column name="o_orderpriority" loc="1259..1292" text="o_orderpri..) not null" />
+                    <column name="o_clerk" loc="1294..1319" text="o_clerk ch..) not null" />
+                    <column name="o_shippriority" loc="1321..1352" text="o_shipprio..r not null" />
+                    <column name="o_comment" loc="1354..1384" text="o_comment ..) not null" />
+                </table>
+                <table loc="1413..1971" text="create tab..nenumber))">
+                    <column name="l_orderkey" loc="1436..1463" text="l_orderkey..r not null" />
+                    <column name="l_partkey" loc="1465..1491" text="l_partkey ..r not null" />
+                    <column name="l_suppkey" loc="1493..1519" text="l_suppkey ..r not null" />
+                    <column name="l_linenumber" loc="1521..1550" text="l_linenumb..r not null" />
+                    <column name="l_quantity" loc="1552..1585" text="l_quantity..) not null" />
+                    <column name="l_extendedprice" loc="1587..1625" text="l_extended..) not null" />
+                    <column name="l_discount" loc="1627..1660" text="l_discount..) not null" />
+                    <column name="l_tax" loc="1662..1690" text="l_tax deci..) not null" />
+                    <column name="l_returnflag" loc="1692..1721" text="l_returnfl..) not null" />
+                    <column name="l_linestatus" loc="1723..1752" text="l_linestat..) not null" />
+                    <column name="l_shipdate" loc="1754..1778" text="l_shipdate..e not null" />
+                    <column name="l_commitdate" loc="1780..1806" text="l_commitda..e not null" />
+                    <column name="l_receiptdate" loc="1808..1835" text="l_receiptd..e not null" />
+                    <column name="l_shipinstruct" loc="1837..1869" text="l_shipinst..) not null" />
+                    <column name="l_shipmode" loc="1871..1899" text="l_shipmode..) not null" />
+                    <column name="l_comment" loc="1901..1931" text="l_comment ..) not null" />
+                </table>
+                <table loc="1973..2139" text="create tab..ationkey))">
+                    <column name="n_nationkey" loc="1994..2022" text="n_nationke..r not null" />
+                    <column name="n_name" loc="2024..2048" text="n_name cha..) not null" />
+                    <column name="n_regionkey" loc="2050..2078" text="n_regionke..r not null" />
+                    <column name="n_comment" loc="2080..2111" text="n_comment ..) not null" />
+                </table>
+                <table loc="2141..2277" text="create tab..egionkey))">
+                    <column name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
+                    <column name="r_name" loc="2192..2216" text="r_name cha..) not null" />
+                    <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
+                </table>
+            </tables>
+        </external>
+        <main>
+            <input>
+select
+        s_name,
+        s_address
+from
+        supplier,
+        nation
+where
+        s_suppkey in (
+                select
+                        ps_suppkey
+                from
+                        partsupp
+                where
+                        ps_partkey in (
+                                select
+                                        p_partkey
+                                from
+                                        part
+                                where
+                                        p_name like 'forest%'
+                        )
+                        and ps_availqty &gt; (
+                                select
+                                        0.5 * sum(l_quantity)
+                                from
+                                        lineitem
+                                where
+                                        l_partkey = ps_partkey
+                                        and l_suppkey = ps_suppkey
+                                        and l_shipdate &gt;= date '1994-01-01'
+                                        and l_shipdate &lt; date '1995-01-01'
+                        )
+        )
+        and s_nationkey = n_nationkey
+        and n_name = 'CANADA'
+order by
+        s_name
+            </input>
+            <tables />
+            <table-references>
+                <external table="0" loc="449..453" text="part" />
+                <external table="5" loc="802..810" text="lineitem" />
+                <external table="2" loc="212..220" text="partsupp" />
+                <external table="1" loc="55..63" text="supplier" />
+                <external table="6" loc="73..79" text="nation" />
+            </table-references>
+            <column-references>
+                <external table="1" column="1" loc="16..22" text="s_name" />
+                <external table="1" column="2" loc="32..41" text="s_address" />
+                <external table="2" column="1" loc="156..166" text="ps_suppkey" />
+                <external table="0" column="0" loc="362..371" text="p_partkey" />
+                <external table="0" column="1" loc="532..538" text="p_name" />
+                <external table="2" column="0" loc="267..277" text="ps_partkey" />
+                <external table="5" column="4" loc="713..723" text="l_quantity" />
+                <external table="5" column="1" loc="889..898" text="l_partkey" />
+                <external table="2" column="0" loc="901..911" text="ps_partkey" />
+                <external table="5" column="2" loc="956..965" text="l_suppkey" />
+                <external table="2" column="1" loc="968..978" text="ps_suppkey" />
+                <external table="5" column="10" loc="1023..1033" text="l_shipdate" />
+                <external table="5" column="10" loc="1099..1109" text="l_shipdate" />
+                <external table="2" column="2" loc="608..619" text="ps_availqty" />
+                <external table="1" column="0" loc="94..103" text="s_suppkey" />
+                <external table="1" column="3" loc="1178..1189" text="s_nationkey" />
+                <external table="6" column="0" loc="1192..1203" text="n_nationkey" />
+                <external table="6" column="1" loc="1216..1222" text="n_name" />
+                <external table="1" column="1" loc="1251..1257" text="s_name" />
+            </column-references>
+            <query-graph>
+                <edge op="EQUAL" loc="889..911" text="l_partkey ..ps_partkey">
+                    <node side="0" ref="7" />
+                    <node side="1" ref="8" />
+                </edge>
+                <edge op="EQUAL" loc="956..978" text="l_suppkey ..ps_suppkey">
+                    <node side="0" ref="9" />
+                    <node side="1" ref="10" />
+                </edge>
+                <edge op="GREATER_THAN" loc="608..1155" text="ps_availqt..         )">
+                    <node side="0" ref="13" />
+                    <node side="1" ref="6" />
+                    <node side="1" ref="7" />
+                    <node side="1" ref="8" />
+                    <node side="1" ref="9" />
+                    <node side="1" ref="10" />
+                    <node side="1" ref="11" />
+                    <node side="1" ref="12" />
+                </edge>
+                <edge op="EQUAL" loc="1178..1203" text="s_nationke.._nationkey">
+                    <node side="0" ref="15" />
+                    <node side="1" ref="16" />
+                </edge>
+            </query-graph>
+        </main>
+    </analyzer-dump>
+    <analyzer-dump name="tpch_21">
+        <external>
+            <input>
+create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
+create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
+create table partsupp (ps_partkey integer not null, ps_suppkey integer not null, ps_availqty integer not null, ps_supplycost decimal(12,2) not null, ps_comment varchar(199) not null, primary key (ps_partkey,ps_suppkey));
+create table customer (c_custkey integer not null, c_name varchar(25) not null, c_address varchar(40) not null, c_nationkey integer not null, c_phone char(15) not null, c_acctbal decimal(12,2) not null, c_mktsegment char(10) not null, c_comment varchar(117) not null, primary key (c_custkey));
+create table orders (o_orderkey integer not null, o_custkey integer not null, o_orderstatus char(1) not null, o_totalprice decimal(12,2) not null, o_orderdate date not null, o_orderpriority char(15) not null, o_clerk char(15) not null, o_shippriority integer not null, o_comment varchar(79) not null, primary key (o_orderkey));
+create table lineitem (l_orderkey integer not null, l_partkey integer not null, l_suppkey integer not null, l_linenumber integer not null, l_quantity decimal(12,2) not null, l_extendedprice decimal(12,2) not null, l_discount decimal(12,2) not null, l_tax decimal(12,2) not null, l_returnflag char(1) not null, l_linestatus char(1) not null, l_shipdate date not null, l_commitdate date not null, l_receiptdate date not null, l_shipinstruct char(25) not null, l_shipmode char(10) not null, l_comment varchar(44) not null, primary key (l_orderkey,l_linenumber));
+create table nation (n_nationkey integer not null, n_name char(25) not null, n_regionkey integer not null, n_comment varchar(152) not null, primary key (n_nationkey));
+create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
+            </input>
+            <tables>
+                <table loc="1..309" text="create tab.._partkey))">
+                    <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
+                    <column name="p_name" loc="48..75" text="p_name var..) not null" />
+                    <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
+                    <column name="p_brand" loc="103..128" text="p_brand ch..) not null" />
+                    <column name="p_type" loc="130..157" text="p_type var..) not null" />
+                    <column name="p_size" loc="159..182" text="p_size int..r not null" />
+                    <column name="p_container" loc="184..213" text="p_containe..) not null" />
+                    <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
+                    <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
+                </table>
+                <table loc="311..568" text="create tab.._suppkey))">
+                    <column name="s_suppkey" loc="334..360" text="s_suppkey ..r not null" />
+                    <column name="s_name" loc="362..386" text="s_name cha..) not null" />
+                    <column name="s_address" loc="388..418" text="s_address ..) not null" />
+                    <column name="s_nationkey" loc="420..448" text="s_nationke..r not null" />
+                    <column name="s_phone" loc="450..475" text="s_phone ch..) not null" />
+                    <column name="s_acctbal" loc="477..509" text="s_acctbal ..) not null" />
+                    <column name="s_comment" loc="511..542" text="s_comment ..) not null" />
+                </table>
+                <table loc="570..789" text="create tab.._suppkey))">
+                    <column name="ps_partkey" loc="593..620" text="ps_partkey..r not null" />
+                    <column name="ps_suppkey" loc="622..649" text="ps_suppkey..r not null" />
+                    <column name="ps_availqty" loc="651..679" text="ps_availqt..r not null" />
+                    <column name="ps_supplycost" loc="681..717" text="ps_supplyc..) not null" />
+                    <column name="ps_comment" loc="719..751" text="ps_comment..) not null" />
+                </table>
+                <table loc="791..1083" text="create tab.._custkey))">
+                    <column name="c_custkey" loc="814..840" text="c_custkey ..r not null" />
+                    <column name="c_name" loc="842..869" text="c_name var..) not null" />
+                    <column name="c_address" loc="871..901" text="c_address ..) not null" />
+                    <column name="c_nationkey" loc="903..931" text="c_nationke..r not null" />
+                    <column name="c_phone" loc="933..958" text="c_phone ch..) not null" />
+                    <column name="c_acctbal" loc="960..992" text="c_acctbal ..) not null" />
+                    <column name="c_mktsegment" loc="994..1024" text="c_mktsegme..) not null" />
+                    <column name="c_comment" loc="1026..1057" text="c_comment ..) not null" />
+                </table>
+                <table loc="1085..1411" text="create tab..orderkey))">
+                    <column name="o_orderkey" loc="1106..1133" text="o_orderkey..r not null" />
+                    <column name="o_custkey" loc="1135..1161" text="o_custkey ..r not null" />
+                    <column name="o_orderstatus" loc="1163..1193" text="o_ordersta..) not null" />
+                    <column name="o_totalprice" loc="1195..1230" text="o_totalpri..) not null" />
+                    <column name="o_orderdate" loc="1232..1257" text="o_orderdat..e not null" />
+                    <column name="o_orderpriority" loc="1259..1292" text="o_orderpri..) not null" />
+                    <column name="o_clerk" loc="1294..1319" text="o_clerk ch..) not null" />
+                    <column name="o_shippriority" loc="1321..1352" text="o_shipprio..r not null" />
+                    <column name="o_comment" loc="1354..1384" text="o_comment ..) not null" />
+                </table>
+                <table loc="1413..1971" text="create tab..nenumber))">
+                    <column name="l_orderkey" loc="1436..1463" text="l_orderkey..r not null" />
+                    <column name="l_partkey" loc="1465..1491" text="l_partkey ..r not null" />
+                    <column name="l_suppkey" loc="1493..1519" text="l_suppkey ..r not null" />
+                    <column name="l_linenumber" loc="1521..1550" text="l_linenumb..r not null" />
+                    <column name="l_quantity" loc="1552..1585" text="l_quantity..) not null" />
+                    <column name="l_extendedprice" loc="1587..1625" text="l_extended..) not null" />
+                    <column name="l_discount" loc="1627..1660" text="l_discount..) not null" />
+                    <column name="l_tax" loc="1662..1690" text="l_tax deci..) not null" />
+                    <column name="l_returnflag" loc="1692..1721" text="l_returnfl..) not null" />
+                    <column name="l_linestatus" loc="1723..1752" text="l_linestat..) not null" />
+                    <column name="l_shipdate" loc="1754..1778" text="l_shipdate..e not null" />
+                    <column name="l_commitdate" loc="1780..1806" text="l_commitda..e not null" />
+                    <column name="l_receiptdate" loc="1808..1835" text="l_receiptd..e not null" />
+                    <column name="l_shipinstruct" loc="1837..1869" text="l_shipinst..) not null" />
+                    <column name="l_shipmode" loc="1871..1899" text="l_shipmode..) not null" />
+                    <column name="l_comment" loc="1901..1931" text="l_comment ..) not null" />
+                </table>
+                <table loc="1973..2139" text="create tab..ationkey))">
+                    <column name="n_nationkey" loc="1994..2022" text="n_nationke..r not null" />
+                    <column name="n_name" loc="2024..2048" text="n_name cha..) not null" />
+                    <column name="n_regionkey" loc="2050..2078" text="n_regionke..r not null" />
+                    <column name="n_comment" loc="2080..2111" text="n_comment ..) not null" />
+                </table>
+                <table loc="2141..2277" text="create tab..egionkey))">
+                    <column name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
+                    <column name="r_name" loc="2192..2216" text="r_name cha..) not null" />
+                    <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
+                </table>
+            </tables>
+        </external>
+        <main>
+            <input>
+select
+        s_name,
+        count(*) as numwait
+from
+        supplier,
+        lineitem l1,
+        orders,
+        nation
+where
+        s_suppkey = l1.l_suppkey
+        and o_orderkey = l1.l_orderkey
+        and o_orderstatus = 'F'
+        and l1.l_receiptdate &gt; l1.l_commitdate
+        and exists (
+                select
+                        *
+                from
+                        lineitem l2
+                where
+                        l2.l_orderkey = l1.l_orderkey
+                        and l2.l_suppkey &lt;&gt; l1.l_suppkey
+        )
+        and not exists (
+                select
+                        *
+                from
+                        lineitem l3
+                where
+                        l3.l_orderkey = l1.l_orderkey
+                        and l3.l_suppkey &lt;&gt; l1.l_suppkey
+                        and l3.l_receiptdate &gt; l3.l_commitdate
+        )
+        and s_nationkey = n_nationkey
+        and n_name = 'SAUDI ARABIA'
+group by
+        s_name
+order by
+        numwait desc,
+        s_name
+limit
+	100
+            </input>
+            <tables />
+            <table-references>
+                <external table="5" loc="399..410" text="lineitem l2" />
+                <external table="5" loc="673..684" text="lineitem l3" />
+                <external table="1" loc="65..73" text="supplier" />
+                <external table="5" loc="83..94" text="lineitem l1" />
+                <external table="4" loc="104..110" text="orders" />
+                <external table="6" loc="120..126" text="nation" />
+            </table-references>
+            <column-references>
+                <external table="1" column="1" loc="16..22" text="s_name" />
+                <external table="1" column="0" loc="141..150" text="s_suppkey" />
+                <external table="5" column="2" loc="153..165" text="l1.l_suppkey" />
+                <external table="4" column="0" loc="178..188" text="o_orderkey" />
+                <external table="5" column="0" loc="191..204" text="l1.l_orderkey" />
+                <external table="4" column="2" loc="217..230" text="o_orderstatus" />
+                <external table="5" column="12" loc="249..265" text="l1.l_receiptdate" />
+                <external table="5" column="11" loc="268..283" text="l1.l_commitdate" />
+                <external table="5" column="0" loc="457..470" text="l2.l_orderkey" />
+                <external table="5" column="0" loc="473..486" text="l1.l_orderkey" />
+                <external table="5" column="2" loc="515..527" text="l2.l_suppkey" />
+                <external table="5" column="2" loc="531..543" text="l1.l_suppkey" />
+                <external table="5" column="0" loc="731..744" text="l3.l_orderkey" />
+                <external table="5" column="0" loc="747..760" text="l1.l_orderkey" />
+                <external table="5" column="2" loc="789..801" text="l3.l_suppkey" />
+                <external table="5" column="2" loc="805..817" text="l1.l_suppkey" />
+                <external table="5" column="12" loc="846..862" text="l3.l_receiptdate" />
+                <external table="5" column="11" loc="865..880" text="l3.l_commitdate" />
+                <external table="1" column="3" loc="903..914" text="s_nationkey" />
+                <external table="6" column="0" loc="917..928" text="n_nationkey" />
+                <external table="6" column="1" loc="941..947" text="n_name" />
+                <external table="1" column="1" loc="982..988" text="s_name" />
+                <unresolved loc="1006..1013" text="numwait" />
+                <external table="1" column="1" loc="1028..1034" text="s_name" />
+            </column-references>
+            <query-graph>
+                <edge op="EQUAL" loc="457..486" text="l2.l_order..l_orderkey">
+                    <node side="0" ref="8" />
+                    <node side="1" ref="9" />
+                </edge>
+                <edge op="NOT_EQUAL" loc="515..543" text="l2.l_suppk...l_suppkey">
+                    <node side="0" ref="10" />
+                    <node side="1" ref="11" />
+                </edge>
+                <edge op="EQUAL" loc="731..760" text="l3.l_order..l_orderkey">
+                    <node side="0" ref="12" />
+                    <node side="1" ref="13" />
+                </edge>
+                <edge op="NOT_EQUAL" loc="789..817" text="l3.l_suppk...l_suppkey">
+                    <node side="0" ref="14" />
+                    <node side="1" ref="15" />
+                </edge>
+                <edge op="GREATER_THAN" loc="846..880" text="l3.l_recei..commitdate">
+                    <node side="0" ref="16" />
+                    <node side="1" ref="17" />
+                </edge>
+                <edge op="EQUAL" loc="141..165" text="s_suppkey ...l_suppkey">
+                    <node side="0" ref="1" />
+                    <node side="1" ref="2" />
+                </edge>
+                <edge op="EQUAL" loc="178..204" text="o_orderkey..l_orderkey">
+                    <node side="0" ref="3" />
+                    <node side="1" ref="4" />
+                </edge>
+                <edge op="GREATER_THAN" loc="249..283" text="l1.l_recei..commitdate">
+                    <node side="0" ref="6" />
+                    <node side="1" ref="7" />
+                </edge>
+                <edge op="EQUAL" loc="903..928" text="s_nationke.._nationkey">
+                    <node side="0" ref="18" />
+                    <node side="1" ref="19" />
+                </edge>
+            </query-graph>
+        </main>
+    </analyzer-dump>
+    <analyzer-dump name="tpch_22">
+        <external>
+            <input>
+create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
+create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
+create table partsupp (ps_partkey integer not null, ps_suppkey integer not null, ps_availqty integer not null, ps_supplycost decimal(12,2) not null, ps_comment varchar(199) not null, primary key (ps_partkey,ps_suppkey));
+create table customer (c_custkey integer not null, c_name varchar(25) not null, c_address varchar(40) not null, c_nationkey integer not null, c_phone char(15) not null, c_acctbal decimal(12,2) not null, c_mktsegment char(10) not null, c_comment varchar(117) not null, primary key (c_custkey));
+create table orders (o_orderkey integer not null, o_custkey integer not null, o_orderstatus char(1) not null, o_totalprice decimal(12,2) not null, o_orderdate date not null, o_orderpriority char(15) not null, o_clerk char(15) not null, o_shippriority integer not null, o_comment varchar(79) not null, primary key (o_orderkey));
+create table lineitem (l_orderkey integer not null, l_partkey integer not null, l_suppkey integer not null, l_linenumber integer not null, l_quantity decimal(12,2) not null, l_extendedprice decimal(12,2) not null, l_discount decimal(12,2) not null, l_tax decimal(12,2) not null, l_returnflag char(1) not null, l_linestatus char(1) not null, l_shipdate date not null, l_commitdate date not null, l_receiptdate date not null, l_shipinstruct char(25) not null, l_shipmode char(10) not null, l_comment varchar(44) not null, primary key (l_orderkey,l_linenumber));
+create table nation (n_nationkey integer not null, n_name char(25) not null, n_regionkey integer not null, n_comment varchar(152) not null, primary key (n_nationkey));
+create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
+            </input>
+            <tables>
+                <table loc="1..309" text="create tab.._partkey))">
+                    <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
+                    <column name="p_name" loc="48..75" text="p_name var..) not null" />
+                    <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
+                    <column name="p_brand" loc="103..128" text="p_brand ch..) not null" />
+                    <column name="p_type" loc="130..157" text="p_type var..) not null" />
+                    <column name="p_size" loc="159..182" text="p_size int..r not null" />
+                    <column name="p_container" loc="184..213" text="p_containe..) not null" />
+                    <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
+                    <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
+                </table>
+                <table loc="311..568" text="create tab.._suppkey))">
+                    <column name="s_suppkey" loc="334..360" text="s_suppkey ..r not null" />
+                    <column name="s_name" loc="362..386" text="s_name cha..) not null" />
+                    <column name="s_address" loc="388..418" text="s_address ..) not null" />
+                    <column name="s_nationkey" loc="420..448" text="s_nationke..r not null" />
+                    <column name="s_phone" loc="450..475" text="s_phone ch..) not null" />
+                    <column name="s_acctbal" loc="477..509" text="s_acctbal ..) not null" />
+                    <column name="s_comment" loc="511..542" text="s_comment ..) not null" />
+                </table>
+                <table loc="570..789" text="create tab.._suppkey))">
+                    <column name="ps_partkey" loc="593..620" text="ps_partkey..r not null" />
+                    <column name="ps_suppkey" loc="622..649" text="ps_suppkey..r not null" />
+                    <column name="ps_availqty" loc="651..679" text="ps_availqt..r not null" />
+                    <column name="ps_supplycost" loc="681..717" text="ps_supplyc..) not null" />
+                    <column name="ps_comment" loc="719..751" text="ps_comment..) not null" />
+                </table>
+                <table loc="791..1083" text="create tab.._custkey))">
+                    <column name="c_custkey" loc="814..840" text="c_custkey ..r not null" />
+                    <column name="c_name" loc="842..869" text="c_name var..) not null" />
+                    <column name="c_address" loc="871..901" text="c_address ..) not null" />
+                    <column name="c_nationkey" loc="903..931" text="c_nationke..r not null" />
+                    <column name="c_phone" loc="933..958" text="c_phone ch..) not null" />
+                    <column name="c_acctbal" loc="960..992" text="c_acctbal ..) not null" />
+                    <column name="c_mktsegment" loc="994..1024" text="c_mktsegme..) not null" />
+                    <column name="c_comment" loc="1026..1057" text="c_comment ..) not null" />
+                </table>
+                <table loc="1085..1411" text="create tab..orderkey))">
+                    <column name="o_orderkey" loc="1106..1133" text="o_orderkey..r not null" />
+                    <column name="o_custkey" loc="1135..1161" text="o_custkey ..r not null" />
+                    <column name="o_orderstatus" loc="1163..1193" text="o_ordersta..) not null" />
+                    <column name="o_totalprice" loc="1195..1230" text="o_totalpri..) not null" />
+                    <column name="o_orderdate" loc="1232..1257" text="o_orderdat..e not null" />
+                    <column name="o_orderpriority" loc="1259..1292" text="o_orderpri..) not null" />
+                    <column name="o_clerk" loc="1294..1319" text="o_clerk ch..) not null" />
+                    <column name="o_shippriority" loc="1321..1352" text="o_shipprio..r not null" />
+                    <column name="o_comment" loc="1354..1384" text="o_comment ..) not null" />
+                </table>
+                <table loc="1413..1971" text="create tab..nenumber))">
+                    <column name="l_orderkey" loc="1436..1463" text="l_orderkey..r not null" />
+                    <column name="l_partkey" loc="1465..1491" text="l_partkey ..r not null" />
+                    <column name="l_suppkey" loc="1493..1519" text="l_suppkey ..r not null" />
+                    <column name="l_linenumber" loc="1521..1550" text="l_linenumb..r not null" />
+                    <column name="l_quantity" loc="1552..1585" text="l_quantity..) not null" />
+                    <column name="l_extendedprice" loc="1587..1625" text="l_extended..) not null" />
+                    <column name="l_discount" loc="1627..1660" text="l_discount..) not null" />
+                    <column name="l_tax" loc="1662..1690" text="l_tax deci..) not null" />
+                    <column name="l_returnflag" loc="1692..1721" text="l_returnfl..) not null" />
+                    <column name="l_linestatus" loc="1723..1752" text="l_linestat..) not null" />
+                    <column name="l_shipdate" loc="1754..1778" text="l_shipdate..e not null" />
+                    <column name="l_commitdate" loc="1780..1806" text="l_commitda..e not null" />
+                    <column name="l_receiptdate" loc="1808..1835" text="l_receiptd..e not null" />
+                    <column name="l_shipinstruct" loc="1837..1869" text="l_shipinst..) not null" />
+                    <column name="l_shipmode" loc="1871..1899" text="l_shipmode..) not null" />
+                    <column name="l_comment" loc="1901..1931" text="l_comment ..) not null" />
+                </table>
+                <table loc="1973..2139" text="create tab..ationkey))">
+                    <column name="n_nationkey" loc="1994..2022" text="n_nationke..r not null" />
+                    <column name="n_name" loc="2024..2048" text="n_name cha..) not null" />
+                    <column name="n_regionkey" loc="2050..2078" text="n_regionke..r not null" />
+                    <column name="n_comment" loc="2080..2111" text="n_comment ..) not null" />
+                </table>
+                <table loc="2141..2277" text="create tab..egionkey))">
+                    <column name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
+                    <column name="r_name" loc="2192..2216" text="r_name cha..) not null" />
+                    <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
+                </table>
+            </tables>
+        </external>
+        <main>
+            <input>
+select
+        cntrycode,
+        count(*) as numcust,
+        sum(c_acctbal) as totacctbal
+from
+        (
+                select
+                        substring(c_phone from 1 for 2) as cntrycode,
+                        c_acctbal
+                from
+                        customer
+                where
+                        substring(c_phone from 1 for 2) in
+                                ('13', '31', '23', '29', '30', '18', '17')
+                        and c_acctbal &gt; (
+                                select
+                                        avg(c_acctbal)
+                                from
+                                        customer
+                                where
+                                        c_acctbal &gt; 0.00
+                                        and substring(c_phone from 1 for 2) in
+                                                ('13', '31', '23', '29', '30', '18', '17')
+                        )
+                        and not exists (
+                                select
+                                        *
+                                from
+                                        orders
+                                where
+                                        o_custkey = c_custkey
+                        )
+        ) as custsale
+group by
+        cntrycode
+order by
+        cntrycode
+            </input>
+            <tables />
+            <table-references>
+                <external table="3" loc="658..666" text="customer" />
+                <external table="4" loc="1157..1163" text="orders" />
+                <external table="3" loc="280..288" text="customer" />
+            </table-references>
+            <column-references>
+                <unresolved loc="16..25" text="cntrycode" />
+                <external table="3" column="5" loc="68..77" text="c_acctbal" />
+                <external table="3" column="4" loc="165..172" text="c_phone" />
+                <external table="3" column="5" loc="225..234" text="c_acctbal" />
+                <external table="3" column="4" loc="345..352" text="c_phone" />
+                <external table="3" column="5" loc="570..579" text="c_acctbal" />
+                <external table="3" column="5" loc="745..754" text="c_acctbal" />
+                <external table="3" column="4" loc="816..823" text="c_phone" />
+                <external table="3" column="5" loc="473..482" text="c_acctbal" />
+                <external table="4" column="1" loc="1242..1251" text="o_custkey" />
+                <external table="3" column="0" loc="1254..1263" text="c_custkey" />
+                <unresolved loc="1329..1338" text="cntrycode" />
+                <unresolved loc="1356..1365" text="cntrycode" />
+            </column-references>
+            <query-graph>
+                <edge op="EQUAL" loc="1242..1263" text="o_custkey .. c_custkey">
+                    <node side="0" ref="9" />
+                    <node side="1" ref="10" />
+                </edge>
+                <edge op="GREATER_THAN" loc="473..957" text="c_acctbal ..         )">
+                    <node side="0" ref="8" />
+                    <node side="1" ref="5" />
+                    <node side="1" ref="6" />
+                    <node side="1" ref="7" />
+                </edge>
+            </query-graph>
+        </main>
+    </analyzer-dump>
 </analyzer-dumps>
