@@ -9,12 +9,12 @@
         </script>
         <tables />
         <table-references>
-            <table-reference table="0" loc="27..28" text="A" />
-            <table-reference table="1" loc="30..31" text="B" />
+            <table-reference loc="27..28" text="A" />
+            <table-reference loc="30..31" text="B" />
         </table-references>
         <column-references>
-            <column-reference column="0" loc="38..39" text="a" />
-            <column-reference column="0" loc="42..43" text="b" />
+            <column-reference loc="38..39" text="a" />
+            <column-reference loc="42..43" text="b" />
         </column-references>
         <join-edges>
             <join-edge loc="38..43" text="a = b">
