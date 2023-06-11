@@ -107,8 +107,9 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const AnalyzedProgram&
             WriteLocation(xml_tbl, external->parsed.nodes[table_decl.ast_node_id()].location(),
                           external->scanned.GetInput());
             // Write child columns
-            for (size_t i = table_decl.columns_begin(); i < table_decl.column_count(); ++i) {
-                auto& column_decl = external->table_columns[i];
+            for (size_t i = 0; i < table_decl.column_count(); ++i) {
+                auto table_idx = table_decl.columns_begin() + i;
+                auto& column_decl = external->table_columns[table_idx];
                 auto xml_col = xml_tbl.append_child("column");
                 if (auto column_name_id = Analyzer::ID(column_decl.column_name()); column_name_id) {
                     assert(!column_name_id.IsNull());
@@ -137,8 +138,9 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const AnalyzedProgram&
         WriteLocation(xml_tbl, main.parsed.nodes[Analyzer::ID(table_decl.ast_node_id()).AsIndex()].location(),
                       main.scanned.GetInput());
         // Write child columns
-        for (size_t i = table_decl.columns_begin(); i < table_decl.column_count(); ++i) {
-            auto& column_decl = main.table_columns[i];
+        for (size_t i = 0; i < table_decl.column_count(); ++i) {
+            auto table_idx = table_decl.columns_begin() + i;
+            auto& column_decl = main.table_columns[table_idx];
             auto xml_col = xml_tbl.append_child("column");
             if (auto column_name_id = Analyzer::ID(column_decl.column_name()); column_name_id) {
                 assert(!column_name_id.IsNull());
