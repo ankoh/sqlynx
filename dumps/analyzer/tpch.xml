@@ -1444,4 +1444,127 @@ limit
             </query-graph>
         </main>
     </analyzer-dump>
+    <analyzer-dump name="tpch_11">
+        <external>
+            <input>
+create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
+create table partsupp (ps_partkey integer not null, ps_suppkey integer not null, ps_availqty integer not null, ps_supplycost decimal(12,2) not null, ps_comment varchar(199) not null, primary key (ps_partkey,ps_suppkey));
+create table nation (n_nationkey integer not null, n_name char(25) not null, n_regionkey integer not null, n_comment varchar(152) not null, primary key (n_nationkey));
+            </input>
+            <tables>
+                <table loc="1..258" text="create tab.._suppkey))">
+                    <column name="s_suppkey" loc="24..50" text="s_suppkey ..r not null" />
+                    <column name="s_name" loc="52..76" text="s_name cha..) not null" />
+                    <column name="s_address" loc="78..108" text="s_address ..) not null" />
+                    <column name="s_nationkey" loc="110..138" text="s_nationke..r not null" />
+                    <column name="s_phone" loc="140..165" text="s_phone ch..) not null" />
+                    <column name="s_acctbal" loc="167..199" text="s_acctbal ..) not null" />
+                    <column name="s_comment" loc="201..232" text="s_comment ..) not null" />
+                </table>
+                <table loc="260..479" text="create tab.._suppkey))">
+                    <column name="ps_partkey" loc="283..310" text="ps_partkey..r not null" />
+                    <column name="ps_suppkey" loc="312..339" text="ps_suppkey..r not null" />
+                    <column name="ps_availqty" loc="341..369" text="ps_availqt..r not null" />
+                    <column name="ps_supplycost" loc="371..407" text="ps_supplyc..) not null" />
+                    <column name="ps_comment" loc="409..441" text="ps_comment..) not null" />
+                </table>
+                <table loc="481..647" text="create tab..ationkey))">
+                    <column name="n_nationkey" loc="502..530" text="n_nationke..r not null" />
+                    <column name="n_name" loc="532..556" text="n_name cha..) not null" />
+                    <column name="n_regionkey" loc="558..586" text="n_regionke..r not null" />
+                    <column name="n_comment" loc="588..619" text="n_comment ..) not null" />
+                </table>
+            </tables>
+        </external>
+        <main>
+            <input>
+select
+        ps_partkey,
+        sum(ps_supplycost * ps_availqty) as "value"
+from
+        partsupp,
+        supplier,
+        nation
+where
+        ps_suppkey = s_suppkey
+        and s_nationkey = n_nationkey
+        and n_name = 'GERMANY'
+group by
+        ps_partkey having
+                sum(ps_supplycost * ps_availqty) &gt; (
+                        select
+                                sum(ps_supplycost * ps_availqty) * 0.0001
+                        from
+                                partsupp,
+                                supplier,
+                                nation
+                        where
+                                ps_suppkey = s_suppkey
+                                and s_nationkey = n_nationkey
+                                and n_name = 'GERMANY'
+                )
+order by
+        "value" desc
+            </input>
+            <tables />
+            <table-references>
+                <external table="1" loc="496..504" text="partsupp" />
+                <external table="0" loc="538..546" text="supplier" />
+                <external table="2" loc="580..586" text="nation" />
+                <external table="1" loc="93..101" text="partsupp" />
+                <external table="0" loc="111..119" text="supplier" />
+                <external table="2" loc="129..135" text="nation" />
+            </table-references>
+            <column-references>
+                <external table="1" column="0" loc="16..26" text="ps_partkey" />
+                <external table="1" column="3" loc="40..53" text="ps_supplycost" />
+                <external table="1" column="2" loc="56..67" text="ps_availqty" />
+                <external table="1" column="1" loc="150..160" text="ps_suppkey" />
+                <external table="0" column="0" loc="163..172" text="s_suppkey" />
+                <external table="0" column="3" loc="185..196" text="s_nationkey" />
+                <external table="2" column="0" loc="199..210" text="n_nationkey" />
+                <external table="2" column="1" loc="223..229" text="n_name" />
+                <external table="1" column="0" loc="259..269" text="ps_partkey" />
+                <external table="1" column="3" loc="297..310" text="ps_supplycost" />
+                <external table="1" column="2" loc="313..324" text="ps_availqty" />
+                <external table="1" column="3" loc="397..410" text="ps_supplycost" />
+                <external table="1" column="2" loc="413..424" text="ps_availqty" />
+                <external table="1" column="1" loc="649..659" text="ps_suppkey" />
+                <external table="0" column="0" loc="662..671" text="s_suppkey" />
+                <external table="0" column="3" loc="708..719" text="s_nationkey" />
+                <external table="2" column="0" loc="722..733" text="n_nationkey" />
+                <external table="2" column="1" loc="770..776" text="n_name" />
+                <unresolved loc="824..831" text="&quot;value&quot;" />
+            </column-references>
+            <query-graph>
+                <edge op="EQUAL" loc="150..172" text="ps_suppkey.. s_suppkey">
+                    <node side="0" ref="3" />
+                    <node side="1" ref="4" />
+                </edge>
+                <edge op="EQUAL" loc="185..210" text="s_nationke.._nationkey">
+                    <node side="0" ref="5" />
+                    <node side="1" ref="6" />
+                </edge>
+                <edge op="EQUAL" loc="649..671" text="ps_suppkey.. s_suppkey">
+                    <node side="0" ref="13" />
+                    <node side="1" ref="14" />
+                </edge>
+                <edge op="EQUAL" loc="708..733" text="s_nationke.._nationkey">
+                    <node side="0" ref="15" />
+                    <node side="1" ref="16" />
+                </edge>
+                <edge op="GREATER_THAN" loc="293..806" text="sum(ps_sup..         )">
+                    <node side="0" ref="9" />
+                    <node side="0" ref="10" />
+                    <node side="1" ref="11" />
+                    <node side="1" ref="12" />
+                    <node side="1" ref="13" />
+                    <node side="1" ref="14" />
+                    <node side="1" ref="15" />
+                    <node side="1" ref="16" />
+                    <node side="1" ref="17" />
+                </edge>
+            </query-graph>
+        </main>
+    </analyzer-dump>
 </analyzer-dumps>
