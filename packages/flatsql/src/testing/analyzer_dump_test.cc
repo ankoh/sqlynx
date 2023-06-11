@@ -12,6 +12,8 @@
 
 namespace flatsql {
 
+using namespace testing;
+
 /// Is a string with all lower-case alphanumeric characters?
 static bool isAllLowercaseAlphaNum(std::string_view id) {
     bool all = true;
@@ -77,6 +79,37 @@ static std::string writeQualifiedName(const AnalyzedProgram& main, const Analyze
     return buffer;
 }
 
+/// Write all table declarations
+static void writeTables(pugi::xml_node root, const AnalyzedProgram& target, const AnalyzedProgram& main,
+                        const AnalyzedProgram* external) {
+    for (auto& table_decl : target.tables) {
+        auto xml_tbl = root.append_child("table");
+        // Write table name
+        if (Analyzer::ID(table_decl.table_name().table_name())) {
+            auto table_name = writeQualifiedName(main, external, table_decl.table_name());
+            xml_tbl.append_attribute("name").set_value(table_name.c_str());
+        }
+        WriteLocation(xml_tbl, target.parsed.nodes[table_decl.ast_node_id()].location(), target.scanned.GetInput());
+        // Write child columns
+        for (size_t i = 0; i < table_decl.column_count(); ++i) {
+            auto table_idx = table_decl.columns_begin() + i;
+            auto& column_decl = target.table_columns[table_idx];
+            auto xml_col = xml_tbl.append_child("column");
+            if (auto column_name_id = Analyzer::ID(column_decl.column_name()); column_name_id) {
+                assert(!column_name_id.IsNull());
+                assert(!column_name_id.IsExternal());
+                std::string column_name{target.scanned.name_dictionary[column_name_id.AsIndex()].first};
+                xml_col.append_attribute("name").set_value(column_name.c_str());
+            } else {
+                xml_col.append_attribute("name").set_value("?");
+            }
+            if (auto node_id = Analyzer::ID(column_decl.ast_node_id()); node_id) {
+                WriteLocation(xml_col, target.parsed.nodes[node_id.AsIndex()].location(), target.scanned.GetInput());
+            }
+        }
+    }
+}
+
 namespace testing {
 
 void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const AnalyzedProgram& main,
@@ -97,61 +130,12 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const AnalyzedProgram&
 
     // Write external tables (if there are any)
     if (external) {
-        for (auto& table_decl : external->tables) {
-            auto xml_tbl = xml_external_tables.append_child("table");
-            // Write table name
-            if (Analyzer::ID(table_decl.table_name().table_name())) {
-                auto table_name = writeQualifiedName(main, external, table_decl.table_name());
-                xml_tbl.append_attribute("name").set_value(table_name.c_str());
-            }
-            WriteLocation(xml_tbl, external->parsed.nodes[table_decl.ast_node_id()].location(),
-                          external->scanned.GetInput());
-            // Write child columns
-            for (size_t i = 0; i < table_decl.column_count(); ++i) {
-                auto table_idx = table_decl.columns_begin() + i;
-                auto& column_decl = external->table_columns[table_idx];
-                auto xml_col = xml_tbl.append_child("column");
-                if (auto column_name_id = Analyzer::ID(column_decl.column_name()); column_name_id) {
-                    assert(!column_name_id.IsNull());
-                    assert(!column_name_id.IsExternal());
-                    std::string column_name{external->scanned.name_dictionary[column_name_id.AsIndex()].first};
-                    xml_col.append_attribute("name").set_value(column_name.c_str());
-                } else {
-                    xml_col.append_attribute("name").set_value("?");
-                }
-                if (auto node_id = Analyzer::ID(column_decl.ast_node_id()); node_id) {
-                    WriteLocation(xml_col, external->parsed.nodes[node_id.AsIndex()].location(),
-                                  external->scanned.GetInput());
-                }
-            }
-        }
+        writeTables(xml_external_tables, *external, main, external);
     }
 
     // Write local declarations
     for (auto& table_decl : main.tables) {
-        auto xml_tbl = xml_main_tables.append_child("table");
-        // Write table name
-        if (Analyzer::ID(table_decl.table_name().table_name())) {
-            auto table_name = writeQualifiedName(main, external, table_decl.table_name());
-            xml_tbl.append_attribute("name").set_value(table_name.c_str());
-        }
-        WriteLocation(xml_tbl, main.parsed.nodes[Analyzer::ID(table_decl.ast_node_id()).AsIndex()].location(),
-                      main.scanned.GetInput());
-        // Write child columns
-        for (size_t i = 0; i < table_decl.column_count(); ++i) {
-            auto table_idx = table_decl.columns_begin() + i;
-            auto& column_decl = main.table_columns[table_idx];
-            auto xml_col = xml_tbl.append_child("column");
-            if (auto column_name_id = Analyzer::ID(column_decl.column_name()); column_name_id) {
-                assert(!column_name_id.IsNull());
-                assert(!column_name_id.IsExternal());
-                std::string column_name{main.scanned.name_dictionary[column_name_id.AsIndex()].first};
-                xml_col.append_attribute("name").set_value(column_name.c_str());
-            } else {
-                xml_col.append_attribute("name").set_value("?");
-            }
-            WriteLocation(xml_col, main.parsed.nodes[column_decl.ast_node_id()].location(), main.scanned.GetInput());
-        }
+        writeTables(xml_main_tables, main, main, external);
     }
 
     // Write table references
