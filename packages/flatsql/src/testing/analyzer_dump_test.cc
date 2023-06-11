@@ -47,48 +47,11 @@ static std::string_view resolveName(const AnalyzedProgram& main, const AnalyzedP
     }
 }
 
-/// Print a qualified name as a string
-static std::string writeQualifiedName(const AnalyzedProgram& main, const AnalyzedProgram* external,
-                                      const proto::QualifiedTableName& name) {
-    std::string buffer;
-    if (Analyzer::ID(name.schema_name())) {
-        if (Analyzer::ID(name.database_name())) {
-            quoteIdentifier(buffer, resolveName(main, external, Analyzer::ID(name.database_name())));
-            buffer += ".";
-        }
-        quoteIdentifier(buffer, resolveName(main, external, Analyzer::ID(name.schema_name())));
-        buffer += ".";
-    }
-    if (Analyzer::ID(name.table_name())) {
-        quoteIdentifier(buffer, resolveName(main, external, Analyzer::ID(name.table_name())));
-    }
-    return buffer;
-}
-
-/// Print a qualified name
-static std::string writeQualifiedName(const AnalyzedProgram& main, const AnalyzedProgram* external,
-                                      const proto::QualifiedColumnName& name) {
-    std::string buffer;
-    if (Analyzer::ID(name.table_alias())) {
-        quoteIdentifier(buffer, resolveName(main, external, Analyzer::ID(name.table_alias())));
-        buffer += ".";
-    }
-    if (Analyzer::ID(name.column_name())) {
-        quoteIdentifier(buffer, resolveName(main, external, Analyzer::ID(name.column_name())));
-    }
-    return buffer;
-}
-
 /// Write all table declarations
 static void writeTables(pugi::xml_node root, const AnalyzedProgram& target, const AnalyzedProgram& main,
                         const AnalyzedProgram* external) {
     for (auto& table_decl : target.tables) {
         auto xml_tbl = root.append_child("table");
-        // Write table name
-        if (Analyzer::ID(table_decl.table_name().table_name())) {
-            auto table_name = writeQualifiedName(main, external, table_decl.table_name());
-            xml_tbl.append_attribute("name").set_value(table_name.c_str());
-        }
         WriteLocation(xml_tbl, target.parsed.nodes[table_decl.ast_node_id()].location(), target.scanned.GetInput());
         // Write child columns
         for (size_t i = 0; i < table_decl.column_count(); ++i) {

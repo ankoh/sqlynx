@@ -382,9 +382,13 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                             assert(args_count == 2);
                             assert(node_states[args_begin].has_value());
                             assert(node_states[args_begin + 1].has_value());
-                            auto& l = node_states[args_begin].value();
-                            auto& r = node_states[args_begin + 1].value();
-                            if (l.column_references.size() >= 1 && r.column_references.size() >= 1) {
+                            auto qualifies = [&](size_t idx) {
+                                return node_states[idx].value().column_references.size() >= 1 &&
+                                       nodes[idx].node_type() != proto::NodeType::OBJECT_SQL_SELECT_EXPRESSION;
+                            };
+                            if (qualifies(args_begin) && qualifies(args_begin + 1)) {
+                                auto& l = node_states[args_begin].value();
+                                auto& r = node_states[args_begin + 1].value();
                                 graph_edges.Append(proto::QueryGraphEdge(node_id, graph_edge_nodes.GetSize(),
                                                                          l.column_references.size(),
                                                                          r.column_references.size(), func));
@@ -450,12 +454,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
 
             // Finish select statement
             case proto::NodeType::OBJECT_SQL_SELECT: {
-                auto attrs = attribute_index.Load(nodes.subspan(node.children_begin_or_value(), node.children_count()));
-                const proto::Node* from_node = attrs[proto::AttributeKey::SQL_SELECT_FROM];
-                const proto::Node* into_node = attrs[proto::AttributeKey::SQL_SELECT_INTO];
-                const proto::Node* where_node = attrs[proto::AttributeKey::SQL_SELECT_WHERE];
-                const proto::Node* with_node = attrs[proto::AttributeKey::SQL_SELECT_WITH_CTES];
-                MergeChildStates(node_state, {from_node, with_node, where_node});
+                MergeChildStates(node_state, node);
                 ResolveNames(node_state);
                 break;
             }

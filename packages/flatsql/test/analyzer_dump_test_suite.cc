@@ -28,4 +28,5 @@ TEST_P(AnalyzerDumpTestSuite, Test) {
 }
 
 // clang-format off
-INSTANTIATE_TEST_SUITE_P(Setup, AnalyzerDumpTestSuite, ::testing::ValuesIn(AnalyzerDumpTest::GetTests("basic.xml")), AnalyzerDumpTest::TestPrinter());
+INSTANTIATE_TEST_SUITE_P(Basic, AnalyzerDumpTestSuite, ::testing::ValuesIn(AnalyzerDumpTest::GetTests("basic.xml")), AnalyzerDumpTest::TestPrinter());
+INSTANTIATE_TEST_SUITE_P(TPCH, AnalyzerDumpTestSuite, ::testing::ValuesIn(AnalyzerDumpTest::GetTests("tpch.xml")), AnalyzerDumpTest::TestPrinter());
