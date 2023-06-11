@@ -378,13 +378,16 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                             assert(node_states[args_begin + 1].has_value());
                             auto& l = node_states[args_begin].value();
                             auto& r = node_states[args_begin + 1].value();
-                            join_edges.Append(proto::JoinEdge(node_id, join_edge_nodes.GetSize(),
-                                                              l.column_references.size(), r.column_references.size()));
-                            for (auto ref_id : l.column_references) {
-                                join_edge_nodes.Append(proto::JoinEdgeNode(ref_id));
-                            }
-                            for (auto ref_id : r.column_references) {
-                                join_edge_nodes.Append(proto::JoinEdgeNode(ref_id));
+                            if (l.column_references.size() >= 1 && r.column_references.size() >= 1) {
+                                join_edges.Append(proto::JoinEdge(node_id, join_edge_nodes.GetSize(),
+                                                                  l.column_references.size(),
+                                                                  r.column_references.size()));
+                                for (auto ref_id : l.column_references) {
+                                    join_edge_nodes.Append(proto::JoinEdgeNode(ref_id));
+                                }
+                                for (auto ref_id : r.column_references) {
+                                    join_edge_nodes.Append(proto::JoinEdgeNode(ref_id));
+                                }
                             }
                             break;
                         }
