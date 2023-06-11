@@ -407,4 +407,44 @@ limit
             </input>
         </main>
     </analyzer-dump>
+    <analyzer-dump name="tpch_11">
+        <external>
+            <input>
+create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
+create table partsupp (ps_partkey integer not null, ps_suppkey integer not null, ps_availqty integer not null, ps_supplycost decimal(12,2) not null, ps_comment varchar(199) not null, primary key (ps_partkey,ps_suppkey));
+create table nation (n_nationkey integer not null, n_name char(25) not null, n_regionkey integer not null, n_comment varchar(152) not null, primary key (n_nationkey));
+            </input>
+        </external>
+        <main>
+            <input>
+select
+        ps_partkey,
+        sum(ps_supplycost * ps_availqty) as "value"
+from
+        partsupp,
+        supplier,
+        nation
+where
+        ps_suppkey = s_suppkey
+        and s_nationkey = n_nationkey
+        and n_name = 'GERMANY'
+group by
+        ps_partkey having
+                sum(ps_supplycost * ps_availqty) &#62; (
+                        select
+                                sum(ps_supplycost * ps_availqty) * 0.0001
+                        from
+                                partsupp,
+                                supplier,
+                                nation
+                        where
+                                ps_suppkey = s_suppkey
+                                and s_nationkey = n_nationkey
+                                and n_name = 'GERMANY'
+                )
+order by
+        "value" desc
+            </input>
+        </main>
+    </analyzer-dump>
 </analyzer-dumps>
