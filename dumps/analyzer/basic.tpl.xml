@@ -1,4 +1,12 @@
 <analyzer-dumps>
+    <analyzer-dump name="empty">
+        <external>
+            <input />
+        </external>
+        <main>
+            <input />
+        </main>
+    </analyzer-dump>
     <analyzer-dump name="refs_0">
         <external>
             <input>
