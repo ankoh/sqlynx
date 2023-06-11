@@ -10,7 +10,10 @@
                     <column name="a" loc="33..38" text="a int" />
                     <column name="b" loc="40..45" text="b int" />
                 </table>
-                <table name="b" loc="64..93" text="create tab..nt, e int)" />
+                <table name="b" loc="64..93" text="create tab..nt, e int)">
+                    <column name="d" loc="80..85" text="d int" />
+                    <column name="e" loc="87..92" text="e int" />
+                </table>
             </tables>
         </external>
         <main>
