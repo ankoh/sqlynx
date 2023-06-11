@@ -313,6 +313,8 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 col_ref.mutate_column_id(Analyzer::ID());
                 col_ref.mutable_column_name() = column_name;
                 node_state.column_references.push_back(col_ref_id);
+                // Column refs may be recursive
+                MergeChildStates(node_state, node);
                 break;
             }
 
@@ -321,24 +323,28 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 // Read a table ref name
                 auto children = nodes.subspan(node.children_begin_or_value(), node.children_count());
                 auto attrs = attribute_index.Load(children);
-                auto table_ref_node = attrs[proto::AttributeKey::SQL_TABLEREF_NAME];
-                auto table_name = ReadQualifiedTableName(table_ref_node);
-                // Read a table alias
-                NodeID alias = Analyzer::ID();
-                auto alias_node = attrs[proto::AttributeKey::SQL_TABLEREF_ALIAS];
-                if (alias_node && alias_node->node_type() == sx::NodeType::NAME) {
-                    alias = alias_node->children_begin_or_value();
+                // Only consider table refs with a name for now
+                if (auto name_node = attrs[proto::AttributeKey::SQL_TABLEREF_NAME]) {
+                    auto name = ReadQualifiedTableName(name_node);
+                    // Read a table alias
+                    NodeID alias = Analyzer::ID();
+                    auto alias_node = attrs[proto::AttributeKey::SQL_TABLEREF_ALIAS];
+                    if (alias_node && alias_node->node_type() == sx::NodeType::NAME) {
+                        alias = alias_node->children_begin_or_value();
+                    }
+                    // Add table reference
+                    auto table_ref_id = table_references.GetSize();
+                    auto& table_ref = table_references.Append(proto::TableReference());
+                    table_ref.mutate_ast_node_id(node_id);
+                    table_ref.mutate_ast_statement_id(Analyzer::ID());
+                    table_ref.mutate_ast_scope_root(Analyzer::ID());
+                    table_ref.mutate_table_id(Analyzer::ID());
+                    table_ref.mutable_table_name() = name;
+                    table_ref.mutate_alias_name(alias);
+                    node_state.table_references.push_back(table_ref_id);
                 }
-                // Add table reference
-                auto table_ref_id = table_references.GetSize();
-                auto& table_ref = table_references.Append(proto::TableReference());
-                table_ref.mutate_ast_node_id(node_id);
-                table_ref.mutate_ast_statement_id(Analyzer::ID());
-                table_ref.mutate_ast_scope_root(Analyzer::ID());
-                table_ref.mutate_table_id(Analyzer::ID());
-                table_ref.mutable_table_name() = table_name;
-                table_ref.mutate_alias_name(alias);
-                node_state.table_references.push_back(table_ref_id);
+                // Table refs may be recursive
+                MergeChildStates(node_state, node);
                 break;
             }
 
