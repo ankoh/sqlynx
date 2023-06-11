@@ -140,25 +140,27 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const AnalyzedProgram&
 
     // Write table references
     for (auto& ref : main.table_references) {
-        auto tag = Analyzer::ID(ref.table_id()).IsNull() ? "unresolved" : "resolved";
+        auto table_id = Analyzer::ID(ref.table_id());
+        auto tag = table_id.IsNull() ? "unresolved" : table_id.IsExternal() ? "external" : "internal";
         auto xml_ref = xml_main_table_refs.append_child(tag);
-        WriteLocation(xml_ref, main.parsed.nodes[ref.ast_node_id()].location(), main.scanned.GetInput());
         if (auto table_id = Analyzer::ID(ref.table_id()); table_id) {
             xml_ref.append_attribute("table").set_value(table_id.AsIndex());
         }
+        WriteLocation(xml_ref, main.parsed.nodes[ref.ast_node_id()].location(), main.scanned.GetInput());
     }
 
     // Write column references
     for (auto& ref : main.column_references) {
-        auto tag = Analyzer::ID(ref.table_id()).IsNull() ? "unresolved" : "resolved";
+        auto table_id = Analyzer::ID(ref.table_id());
+        auto tag = table_id.IsNull() ? "unresolved" : table_id.IsExternal() ? "external" : "internal";
         auto xml_ref = xml_main_col_refs.append_child(tag);
-        WriteLocation(xml_ref, main.parsed.nodes[ref.ast_node_id()].location(), main.scanned.GetInput());
         if (auto table_id = Analyzer::ID(ref.table_id()); table_id) {
             xml_ref.append_attribute("table").set_value(table_id.AsIndex());
         }
         if (auto column_id = Analyzer::ID(ref.column_id()); column_id) {
             xml_ref.append_attribute("column").set_value(column_id.AsIndex());
         }
+        WriteLocation(xml_ref, main.parsed.nodes[ref.ast_node_id()].location(), main.scanned.GetInput());
     }
 
     // Write join edges

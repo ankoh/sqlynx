@@ -22,12 +22,12 @@
             </input>
             <tables />
             <table-references>
-                <unresolved loc="31..32" text="A" />
-                <unresolved loc="34..35" text="B" />
+                <external table="0" loc="31..32" text="A" />
+                <external table="1" loc="34..35" text="B" />
             </table-references>
             <column-references>
-                <unresolved loc="42..43" text="a" />
-                <unresolved loc="46..47" text="b" />
+                <external table="0" column="0" loc="42..43" text="a" />
+                <external table="0" column="1" loc="46..47" text="b" />
             </column-references>
             <join-edges>
                 <edge loc="42..47" text="a = b">
