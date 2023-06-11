@@ -130,7 +130,8 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const AnalyzedProgram&
 
     // Write table references
     for (auto& ref : main.table_references) {
-        auto xml_ref = xml_main_table_refs.append_child("table-reference");
+        auto tag = Analyzer::ID(ref.table_id()).IsNull() ? "unresolved" : "resolved";
+        auto xml_ref = xml_main_table_refs.append_child(tag);
         if (auto table_id = Analyzer::ID(ref.table_id()); table_id) {
             xml_ref.append_attribute("table").set_value(table_id.AsIndex());
         }
@@ -141,7 +142,8 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const AnalyzedProgram&
 
     // Write column references
     for (auto& ref : main.column_references) {
-        auto xml_ref = xml_main_col_refs.append_child("column-reference");
+        auto tag = Analyzer::ID(ref.table_id()).IsNull() ? "unresolved" : "resolved";
+        auto xml_ref = xml_main_col_refs.append_child(tag);
         if (auto table_id = Analyzer::ID(ref.table_id()); table_id) {
             xml_ref.append_attribute("table").set_value(table_id.AsIndex());
         }
@@ -155,7 +157,7 @@ void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const AnalyzedProgram&
 
     // Write join edges
     for (auto& edge : main.join_edges) {
-        auto xml_edge = xml_main_join_edges.append_child("join-edge");
+        auto xml_edge = xml_main_join_edges.append_child("edge");
         EncodeLocation(xml_edge, nodes[edge.ast_node_id()].location(), main.scanned.GetInput());
         for (size_t i = 0; i < edge.node_count_left(); ++i) {
             auto& node = main.join_edge_nodes[edge.nodes_begin() + i];
