@@ -32,7 +32,9 @@ NameResolutionPass::NameResolutionPass(ParsedProgram& parser, AttributeIndex& at
     : scanned_program(parser.scan),
       parsed_program(parser),
       attribute_index(attribute_index),
-      nodes(parsed_program.nodes) {}
+      nodes(parsed_program.nodes) {
+    node_states.resize(nodes.size(), std::nullopt);
+}
 
 /// Register external tables from an analyzed program
 void NameResolutionPass::RegisterExternalTables(const AnalyzedProgram& external) {
@@ -279,7 +281,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
         proto::Node& node = morsel[i];
         NodeID node_id = morsel_offset + i;
         // Create empty node state
-        NodeState& node_state = node_states.EmplaceBack();
+        NodeState& node_state = node_states[node_id].emplace();
 
         // Check node type
         switch (node.node_type()) {
@@ -524,7 +526,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
             auto& child_node = nodes[child_id];
             for (size_t j = 0; j < child_node.children_count(); ++j) {
                 auto grand_child_id = child_node.children_begin_or_value() + j;
-                node_states.Erase(grand_child_id);
+                node_states[grand_child_id].reset();
             }
         }
     }

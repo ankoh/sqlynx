@@ -10,7 +10,6 @@
 #include "flatsql/program.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/utils/attribute_index.h"
-#include "flatsql/utils/wake_vector.h"
 
 namespace flatsql {
 
@@ -65,7 +64,7 @@ class NameResolutionPass : public PassManager::LTRPass {
     decltype(AnalyzedProgram::graph_edge_nodes) graph_edge_nodes;
 
     /// The state of all visited nodes with yet-to-visit parents
-    WakeVector<NodeState> node_states;
+    std::vector<std::optional<NodeState>> node_states;
 
     /// Temporary name path buffer
     std::vector<NameID> tmp_name_path;
