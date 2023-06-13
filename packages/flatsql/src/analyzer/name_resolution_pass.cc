@@ -33,7 +33,7 @@ NameResolutionPass::NameResolutionPass(ParsedProgram& parser, AttributeIndex& at
       parsed_program(parser),
       attribute_index(attribute_index),
       nodes(parsed_program.nodes) {
-    node_states.resize(nodes.size(), std::nullopt);
+    node_states.resize(nodes.size());
 }
 
 /// Register external tables from an analyzed program
@@ -184,7 +184,7 @@ void NameResolutionPass::CloseScope(NodeState& target, size_t node_id) {
 void NameResolutionPass::MergeChildStates(NodeState& dst, std::initializer_list<const proto::Node*> children) {
     for (const proto::Node* child : children) {
         if (!child) continue;
-        dst.Merge(std::move(node_states[child - nodes.data()].value()));
+        dst.Merge(std::move(node_states[child - nodes.data()]));
     }
 }
 
@@ -192,8 +192,7 @@ void NameResolutionPass::MergeChildStates(NodeState& dst, const proto::Node& par
     for (size_t i = 0; i < parent.children_count(); ++i) {
         auto child_id = parent.children_begin_or_value() + i;
         auto& child = node_states[parent.children_begin_or_value() + i];
-        assert(node_states[child_id].has_value());
-        dst.Merge(std::move(child.value()));
+        dst.Merge(std::move(child));
     }
 }
 
@@ -277,7 +276,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
         proto::Node& node = morsel[i];
         NodeID node_id = morsel_offset + i;
         // Create empty node state
-        NodeState& node_state = node_states[node_id].emplace();
+        NodeState& node_state = node_states[node_id];
 
         // Check node type
         switch (node.node_type()) {
@@ -380,16 +379,14 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                         case proto::ExpressionOperator::LESS_THAN:
                         case proto::ExpressionOperator::NOT_EQUAL: {
                             assert(args_count == 2);
-                            assert(node_states[args_begin].has_value());
-                            assert(node_states[args_begin + 1].has_value());
                             auto qualifies = [&](size_t idx) {
                                 // XXX Should we emit subselect hyperedges?
                                 // nodes[idx].node_type() != proto::NodeType::OBJECT_SQL_SELECT_EXPRESSION;
-                                return node_states[idx].value().column_references.GetSize() >= 1;
+                                return node_states[idx].column_references.GetSize() >= 1;
                             };
                             if (qualifies(args_begin) && qualifies(args_begin + 1)) {
-                                auto& l = node_states[args_begin].value();
-                                auto& r = node_states[args_begin + 1].value();
+                                auto& l = node_states[args_begin];
+                                auto& r = node_states[args_begin + 1];
                                 graph_edges.Append(proto::QueryGraphEdge(node_id, graph_edge_nodes.GetSize(),
                                                                          l.column_references.GetSize(),
                                                                          r.column_references.GetSize(), func));
@@ -518,16 +515,6 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
             default:
                 MergeChildStates(node_state, node);
                 break;
-        }
-
-        // Erase grand-child states, this leaves the state of Array children in-tact
-        for (size_t i = 0; i < node.children_count(); ++i) {
-            auto child_id = node.children_begin_or_value() + i;
-            auto& child_node = nodes[child_id];
-            for (size_t j = 0; j < child_node.children_count(); ++j) {
-                auto grand_child_id = child_node.children_begin_or_value() + j;
-                node_states[grand_child_id].reset();
-            }
         }
     }
 }
