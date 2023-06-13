@@ -65,7 +65,7 @@ class NameResolutionPass : public PassManager::LTRPass {
     ChunkBuffer<OverlayList<proto::QueryGraphEdgeNode>::Node, 16> graph_edge_nodes;
 
     /// The state of all visited nodes with yet-to-visit parents
-    std::vector<std::optional<NodeState>> node_states;
+    std::vector<NodeState> node_states;
 
     /// Temporary name path buffer
     std::vector<NameID> tmp_name_path;
