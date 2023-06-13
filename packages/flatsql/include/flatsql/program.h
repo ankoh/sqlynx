@@ -103,17 +103,17 @@ class AnalyzedProgram {
     /// The scanned program
     ParsedProgram& parsed;
     /// The local tables
-    ChunkBuffer<proto::Table, 16> tables;
+    std::vector<proto::Table> tables;
     /// The local table columns
-    ChunkBuffer<proto::TableColumn, 16> table_columns;
+    std::vector<proto::TableColumn> table_columns;
     /// The table references
-    ChunkBuffer<proto::TableReference, 16> table_references;
+    std::vector<proto::TableReference> table_references;
     /// The column references
-    ChunkBuffer<proto::ColumnReference, 16> column_references;
+    std::vector<proto::ColumnReference> column_references;
     /// The join edges
-    ChunkBuffer<proto::QueryGraphEdge, 16> graph_edges;
+    std::vector<proto::QueryGraphEdge> graph_edges;
     /// The join edge nodes
-    ChunkBuffer<proto::QueryGraphEdgeNode, 16> graph_edge_nodes;
+    std::vector<proto::QueryGraphEdgeNode> graph_edge_nodes;
 
    public:
     /// Constructor

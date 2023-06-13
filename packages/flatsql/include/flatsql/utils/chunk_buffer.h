@@ -19,7 +19,7 @@ template <typename T, size_t InitialSize = 1024> struct ChunkBuffer {
     /// Pseudo end iterator
     struct EndIterator {};
     /// A forward iterator
-    struct ConstForwardIterator {
+    struct ConstTupleIterator {
         /// The buffer
         const ChunkBuffer<T, InitialSize>& buffer;
         /// The chunk chunk
@@ -28,12 +28,12 @@ template <typename T, size_t InitialSize = 1024> struct ChunkBuffer {
         size_t local_value_id;
 
         /// Constructor
-        ConstForwardIterator(const ChunkBuffer<T, InitialSize>& buffer)
+        ConstTupleIterator(const ChunkBuffer<T, InitialSize>& buffer)
             : buffer(buffer), chunk_id(0), local_value_id(0) {}
         /// Is at end?
         inline bool IsAtEnd() const { return local_value_id >= buffer.buffers[chunk_id].size(); }
         /// Increment operator
-        inline ConstForwardIterator& operator++() {
+        inline ConstTupleIterator& operator++() {
             ++local_value_id;
             if (local_value_id >= buffer.buffers[chunk_id].size() && (chunk_id + 1) < buffer.buffers.size()) {
                 ++chunk_id;
@@ -105,9 +105,13 @@ template <typename T, size_t InitialSize = 1024> struct ChunkBuffer {
         return buffers[chunk_id][offset - chunk_offset];
     }
     /// Get the begin iterator
-    ConstForwardIterator begin() const { return ConstForwardIterator{*this}; }
+    ConstTupleIterator begin() const { return ConstTupleIterator{*this}; }
     /// Get the end iterator
     EndIterator end() const { return EndIterator{}; }
+    /// Get the chunk iterator
+    auto GetChunksBegin() const { return buffers.begin(); }
+    /// Get the end chunk iterator
+    auto GetChunksEnd() const { return buffers.end(); }
     /// Get the last node
     T& GetLast() {
         assert(total_value_count > 0);
