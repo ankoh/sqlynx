@@ -80,12 +80,12 @@ AnalyzedProgram::AnalyzedProgram(ScannedProgram& scanned, ParsedProgram& parsed)
 
 std::unique_ptr<proto::AnalyzedProgramT> AnalyzedProgram::Pack() {
     auto out = std::make_unique<proto::AnalyzedProgramT>();
-    out->tables = tables.Flatten();
-    out->table_columns = table_columns.Flatten();
-    out->table_references = table_references.Flatten();
-    out->column_references = column_references.Flatten();
-    out->graph_edges = graph_edges.Flatten();
-    out->graph_edge_nodes = graph_edge_nodes.Flatten();
+    out->tables = tables;
+    out->table_columns = table_columns;
+    out->table_references = table_references;
+    out->column_references = column_references;
+    out->graph_edges = graph_edges;
+    out->graph_edge_nodes = graph_edge_nodes;
     return out;
 }
 

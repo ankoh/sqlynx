@@ -10,6 +10,7 @@
 #include "flatsql/program.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/utils/attribute_index.h"
+#include "flatsql/utils/overlay_list.h"
 
 namespace flatsql {
 
@@ -19,13 +20,13 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// We traverse the AST in a depth-first post-order, means children before parents.
     struct NodeState {
         /// The column definitions in the subtree
-        std::vector<proto::TableColumn> table_columns;
+        OverlayList<proto::TableColumn> table_columns;
         /// The tables in scope
-        std::vector<size_t> tables;
+        OverlayList<proto::Table> tables;
         /// The table references in scope
-        std::vector<size_t> table_references;
+        OverlayList<proto::TableReference> table_references;
         /// The column references in scope
-        std::vector<size_t> column_references;
+        OverlayList<proto::ColumnReference> column_references;
 
         /// Merge two states
         void Merge(NodeState&& other);
@@ -50,29 +51,31 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// The external table map
     ankerl::unordered_dense::map<Analyzer::TableKey, Analyzer::ID, Analyzer::TableKey::Hasher> external_table_ids;
 
-    /// The local tables
-    decltype(AnalyzedProgram::tables) tables;
-    /// The local table columns
-    decltype(AnalyzedProgram::table_columns) table_columns;
-    /// The table definitions
-    decltype(AnalyzedProgram::table_references) table_references;
+    /// The tables
+    ChunkBuffer<OverlayList<proto::Table>::Node, 16> tables;
+    /// The ordered table columns
+    ChunkBuffer<proto::TableColumn, 16> table_columns;
+    /// The table references
+    ChunkBuffer<OverlayList<proto::TableReference>::Node, 16> table_references;
     /// The column references
-    decltype(AnalyzedProgram::column_references) column_references;
-    /// The query graph edges
-    decltype(AnalyzedProgram::graph_edges) graph_edges;
-    /// The query graph edge nodes
-    decltype(AnalyzedProgram::graph_edge_nodes) graph_edge_nodes;
+    ChunkBuffer<OverlayList<proto::ColumnReference>::Node, 16> column_references;
+    /// The join edges
+    ChunkBuffer<OverlayList<proto::QueryGraphEdge>::Node, 16> graph_edges;
+    /// The join edge nodes
+    ChunkBuffer<OverlayList<proto::QueryGraphEdgeNode>::Node, 16> graph_edge_nodes;
 
     /// The state of all visited nodes with yet-to-visit parents
     std::vector<std::optional<NodeState>> node_states;
 
     /// Temporary name path buffer
     std::vector<NameID> tmp_name_path;
+    /// The table columns
+    ChunkBuffer<OverlayList<proto::TableColumn>::Node, 16> tmp_columns;
     /// Temporary dictionary for tables
-    ankerl::unordered_dense::map<Analyzer::TableKey, Analyzer::ID, Analyzer::TableKey::Hasher> tmp_tables;
+    ankerl::unordered_dense::map<Analyzer::TableKey, Analyzer::ID, Analyzer::TableKey::Hasher> tmp_table_map;
     /// Temporary dictionary for columns
     ankerl::unordered_dense::map<Analyzer::ColumnKey, std::pair<Analyzer::ID, size_t>, Analyzer::ColumnKey::Hasher>
-        tmp_columns;
+        tmp_column_map;
 
     /// Merge child states into a destination state
     std::span<NameID> ReadNamePath(const sx::Node& node);

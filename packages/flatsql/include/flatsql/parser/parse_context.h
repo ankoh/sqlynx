@@ -33,7 +33,7 @@ class ParseContext {
     /// The scanner
     ScannedProgram& program;
     /// The symbol iterator
-    ChunkBuffer<Parser::symbol_type>::ConstForwardIterator symbol_iterator;
+    ChunkBuffer<Parser::symbol_type>::ConstTupleIterator symbol_iterator;
 
     /// The nodes
     ChunkBuffer<proto::Node> nodes;
