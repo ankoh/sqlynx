@@ -41,7 +41,6 @@ class NameResolutionPass : public PassManager::LTRPass {
     AttributeIndex& attribute_index;
     /// The program nodes
     std::span<const proto::Node> nodes;
-
     /// The external tables
     std::vector<proto::Table> external_tables;
     /// The external table columns
@@ -67,15 +66,15 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// The state of all visited nodes with yet-to-visit parents
     std::vector<NodeState> node_states;
 
-    /// Temporary name path buffer
-    std::vector<NameID> tmp_name_path;
-    /// The table columns
-    ChunkBuffer<OverlayList<proto::TableColumn>::Node, 16> tmp_columns;
-    /// Temporary dictionary for tables
-    ankerl::unordered_dense::map<Analyzer::TableKey, Analyzer::ID, Analyzer::TableKey::Hasher> tmp_table_map;
-    /// Temporary dictionary for columns
+    /// The name path buffer
+    std::vector<NameID> name_path_buffer;
+    /// The pending table columns
+    ChunkBuffer<OverlayList<proto::TableColumn>::Node, 16> pending_columns;
+    /// The tables that are in scope
+    ankerl::unordered_dense::map<Analyzer::TableKey, Analyzer::ID, Analyzer::TableKey::Hasher> scope_tables;
+    /// The columns that are in scope
     ankerl::unordered_dense::map<Analyzer::ColumnKey, std::pair<Analyzer::ID, size_t>, Analyzer::ColumnKey::Hasher>
-        tmp_column_map;
+        scope_columns;
 
     /// Merge child states into a destination state
     std::span<NameID> ReadNamePath(const sx::Node& node);

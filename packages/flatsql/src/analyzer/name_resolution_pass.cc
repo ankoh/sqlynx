@@ -99,19 +99,19 @@ std::span<NameID> NameResolutionPass::ReadNamePath(const sx::Node& node) {
     if (node.node_type() != proto::NodeType::ARRAY) {
         return {};
     }
-    tmp_name_path.clear();
+    name_path_buffer.clear();
     auto children = nodes.subspan(node.children_begin_or_value(), node.children_count());
     for (size_t i = 0; i != children.size(); ++i) {
         // A child is either a name, an indirection or an operator (*).
         // We only consider plan name paths for now and extend later.
         auto& child = children[i];
         if (child.node_type() != proto::NodeType::NAME) {
-            tmp_name_path.clear();
+            name_path_buffer.clear();
             break;
         }
-        tmp_name_path.push_back(child.children_begin_or_value());
+        name_path_buffer.push_back(child.children_begin_or_value());
     }
-    return std::span{tmp_name_path};
+    return std::span{name_path_buffer};
 }
 
 proto::QualifiedTableName NameResolutionPass::ReadQualifiedTableName(const sx::Node* node) {
@@ -121,7 +121,7 @@ proto::QualifiedTableName NameResolutionPass::ReadQualifiedTableName(const sx::N
     }
     auto name_path = ReadNamePath(*node);
     name.mutate_ast_node_id(node - nodes.data());
-    switch (tmp_name_path.size()) {
+    switch (name_path.size()) {
         case 3:
             name.mutate_schema_name(name_path[0]);
             name.mutate_database_name(name_path[1]);
@@ -198,7 +198,7 @@ void NameResolutionPass::MergeChildStates(NodeState& dst, const proto::Node& par
 
 void NameResolutionPass::ResolveNames(NodeState& state) {
     // Build a map with all table names that are in scope
-    tmp_table_map.clear();
+    scope_tables.clear();
     size_t max_column_count = 0;
     for (auto iter = state.tables.begin(); iter != state.tables.end(); ++iter) {
         size_t table_id = iter.GetBufferIndex();
@@ -209,12 +209,12 @@ void NameResolutionPass::ResolveNames(NodeState& state) {
         // Register as local table if in scope
         proto::QualifiedTableName table_name = iter->table_name();
         max_column_count += iter->column_count();
-        tmp_table_map.insert({table_name, Analyzer::ID(table_id, false)});
+        scope_tables.insert({table_name, Analyzer::ID(table_id, false)});
     }
 
     // Collect all columns that are in scope
-    tmp_column_map.clear();
-    tmp_column_map.reserve(max_column_count);
+    scope_columns.clear();
+    scope_columns.reserve(max_column_count);
     for (auto iter = state.table_references.begin(); iter != state.table_references.end(); ++iter) {
         // Table references are out of scope if they have a scope root set
         if (Analyzer::ID(iter->ast_scope_root())) {
@@ -227,19 +227,19 @@ void NameResolutionPass::ResolveNames(NodeState& state) {
                 for (uint32_t cid = 0; cid < resolved.column_count(); ++cid) {
                     proto::TableColumn& col = external_table_columns[resolved.columns_begin() + cid];
                     proto::QualifiedColumnName col_name{iter->ast_node_id(), iter->alias_name(), col.column_name()};
-                    tmp_column_map.insert({col_name, {tid, cid}});
+                    scope_columns.insert({col_name, {tid, cid}});
                 }
             } else {
                 proto::Table& resolved = tables[tid.AsIndex()].value;
                 for (uint32_t cid = 0; cid < resolved.column_count(); ++cid) {
                     proto::TableColumn& col = table_columns[resolved.columns_begin() + cid];
                     proto::QualifiedColumnName col_name{iter->ast_node_id(), iter->alias_name(), col.column_name()};
-                    tmp_column_map.insert({col_name, {tid, cid}});
+                    scope_columns.insert({col_name, {tid, cid}});
                 }
             }
         };
         // Available in scope?
-        if (auto tbl_iter = tmp_table_map.find(iter->table_name()); tbl_iter != tmp_table_map.end()) {
+        if (auto tbl_iter = scope_tables.find(iter->table_name()); tbl_iter != scope_tables.end()) {
             register_columns_from(tbl_iter->second);
             iter->mutate_table_id(Analyzer::ID(tbl_iter->second, false));
         } else if (auto tbl_iter = external_table_ids.find(iter->table_name()); tbl_iter != external_table_ids.end()) {
@@ -256,7 +256,7 @@ void NameResolutionPass::ResolveNames(NodeState& state) {
             continue;
         }
         // Resolve the column ref
-        if (auto column_iter = tmp_column_map.find(iter->column_name()); column_iter != tmp_column_map.end()) {
+        if (auto column_iter = scope_columns.find(iter->column_name()); column_iter != scope_columns.end()) {
             auto [tid, cid] = column_iter->second;
             iter->mutate_table_id(tid);
             iter->mutate_column_id(cid);
@@ -289,8 +289,8 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 if (column_def_node && column_def_node->node_type() == sx::NodeType::NAME) {
                     column_name = column_def_node->children_begin_or_value();
                 }
-                auto& n = tmp_columns.Append(proto::TableColumn(node_id, column_name));
-                n.buffer_index = tmp_columns.GetSize() - 1;
+                auto& n = pending_columns.Append(proto::TableColumn(node_id, column_name));
+                n.buffer_index = pending_columns.GetSize() - 1;
                 node_state.table_columns.PushBack(n);
                 break;
             }
