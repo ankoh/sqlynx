@@ -41,6 +41,7 @@ class NameResolutionPass : public PassManager::LTRPass {
     AttributeIndex& attribute_index;
     /// The program nodes
     std::span<const proto::Node> nodes;
+
     /// The external tables
     std::vector<proto::Table> external_tables;
     /// The external table columns
@@ -49,6 +50,20 @@ class NameResolutionPass : public PassManager::LTRPass {
     ankerl::unordered_dense::map<NameID, Analyzer::ID> external_names;
     /// The external table map
     ankerl::unordered_dense::map<Analyzer::TableKey, Analyzer::ID, Analyzer::TableKey::Hasher> external_table_ids;
+
+    /// The state of all visited nodes with yet-to-visit parents
+    std::vector<NodeState> node_states;
+    /// The name path buffer
+    std::vector<NameID> name_path_buffer;
+    /// The pending table columns
+    ChunkBuffer<OverlayList<proto::TableColumn>::Node, 16> pending_columns;
+    /// The free-list for pending table columns
+    OverlayList<proto::TableColumn> pending_columns_free_list;
+    /// The tables that are in scope
+    ankerl::unordered_dense::map<Analyzer::TableKey, Analyzer::ID, Analyzer::TableKey::Hasher> scope_tables;
+    /// The columns that are in scope
+    ankerl::unordered_dense::map<Analyzer::ColumnKey, std::pair<Analyzer::ID, size_t>, Analyzer::ColumnKey::Hasher>
+        scope_columns;
 
     /// The tables
     ChunkBuffer<OverlayList<proto::Table>::Node, 16> tables;
@@ -62,21 +77,6 @@ class NameResolutionPass : public PassManager::LTRPass {
     ChunkBuffer<OverlayList<proto::QueryGraphEdge>::Node, 16> graph_edges;
     /// The join edge nodes
     ChunkBuffer<OverlayList<proto::QueryGraphEdgeNode>::Node, 16> graph_edge_nodes;
-
-    /// The state of all visited nodes with yet-to-visit parents
-    std::vector<NodeState> node_states;
-
-    /// The name path buffer
-    std::vector<NameID> name_path_buffer;
-    /// The pending table columns
-    ChunkBuffer<OverlayList<proto::TableColumn>::Node, 16> pending_columns;
-    /// The free-list for pending table columns
-    OverlayList<proto::TableColumn> pending_columns_free_list;
-    /// The tables that are in scope
-    ankerl::unordered_dense::map<Analyzer::TableKey, Analyzer::ID, Analyzer::TableKey::Hasher> scope_tables;
-    /// The columns that are in scope
-    ankerl::unordered_dense::map<Analyzer::ColumnKey, std::pair<Analyzer::ID, size_t>, Analyzer::ColumnKey::Hasher>
-        scope_columns;
 
     /// Merge child states into a destination state
     std::span<NameID> ReadNamePath(const sx::Node& node);
