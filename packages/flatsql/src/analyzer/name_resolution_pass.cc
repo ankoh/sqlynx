@@ -480,6 +480,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 for (auto table_col : node_state.table_columns) {
                     table_columns.Append(table_col);
                 }
+                pending_columns_free_list.Append(std::move(node_state.table_columns));
                 // Build the table
                 auto& n = tables.Append(proto::Table());
                 n.buffer_index = tables.GetSize() - 1;
