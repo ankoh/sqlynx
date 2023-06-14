@@ -289,9 +289,13 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 if (column_def_node && column_def_node->node_type() == sx::NodeType::NAME) {
                     column_name = column_def_node->children_begin_or_value();
                 }
-                auto& n = pending_columns.Append(proto::TableColumn(node_id, column_name));
-                n.buffer_index = pending_columns.GetSize() - 1;
-                node_state.table_columns.PushBack(n);
+                if (auto reused = pending_columns_free_list.PopFront()) {
+                    *reused = proto::TableColumn(node_id, column_name);
+                    node_state.table_columns.PushBack(*reused);
+                } else {
+                    auto& node = pending_columns.Append(proto::TableColumn(node_id, column_name));
+                    node_state.table_columns.PushBack(node);
+                }
                 break;
             }
 

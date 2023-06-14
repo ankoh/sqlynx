@@ -70,6 +70,8 @@ class NameResolutionPass : public PassManager::LTRPass {
     std::vector<NameID> name_path_buffer;
     /// The pending table columns
     ChunkBuffer<OverlayList<proto::TableColumn>::Node, 16> pending_columns;
+    /// The free-list for pending table columns
+    OverlayList<proto::TableColumn> pending_columns_free_list;
     /// The tables that are in scope
     ankerl::unordered_dense::map<Analyzer::TableKey, Analyzer::ID, Analyzer::TableKey::Hasher> scope_tables;
     /// The columns that are in scope

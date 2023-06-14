@@ -113,6 +113,18 @@ template <typename T> struct OverlayList {
             ++size;
         }
     }
+    /// Pop a node from the front
+    Node* PopFront() {
+        if (size == 0) {
+            return nullptr;
+        } else {
+            Node* out = first;
+            first = out->next;
+            last = (out == last) ? first : last;
+            --size;
+            return out;
+        }
+    }
     /// Clear the list
     void Clear() {
         first = nullptr;
