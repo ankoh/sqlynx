@@ -13,8 +13,8 @@
 #include <vector>
 
 #include "flatsql/parser/parser_generated.h"
-#include "flatsql/program.h"
 #include "flatsql/proto/proto_generated.h"
+#include "flatsql/script.h"
 #include "flatsql/text/rope.h"
 #include "flatsql/utils/chunk_buffer.h"
 #include "flatsql/utils/temp_allocator.h"

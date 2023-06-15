@@ -123,4 +123,33 @@ class AnalyzedScript {
     std::unique_ptr<proto::AnalyzedScriptT> Pack();
 };
 
+class Script {
+   public:
+    /// The script text
+    rope::Rope text;
+    /// The scanner output
+    std::unique_ptr<ScannedScript> scanned;
+    /// The parser output
+    std::unique_ptr<ParsedScript> parsed;
+    /// The analyzer output
+    std::unique_ptr<AnalyzedScript> analyzed;
+
+   public:
+    /// Constructor
+    Script();
+
+    /// Insert a unicode codepoint at an offset
+    void InsertCharAt(size_t offset, uint32_t unicode);
+    /// Insert a text at an offset
+    void InsertTextAt(size_t offset, std::string_view text);
+    /// Erase a text range
+    void EraseTextRange(size_t offset, size_t count);
+    /// Print a script as string
+    std::string ToString();
+    /// Parse a rope
+    void Parse();
+    /// Analyze a script, optionally with provided schema
+    void Analyze(Script* schema = nullptr);
+};
+
 }  // namespace flatsql

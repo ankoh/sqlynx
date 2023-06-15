@@ -1,7 +1,7 @@
 #pragma once
 
 #include "flatsql/analyzer/pass_manager.h"
-#include "flatsql/program.h"
+#include "flatsql/script.h"
 #include "flatsql/utils/attribute_index.h"
 
 namespace flatsql {
