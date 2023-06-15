@@ -2,7 +2,7 @@
 
 #include "flatsql/analyzer/name_resolution_pass.h"
 #include "flatsql/analyzer/pass_manager.h"
-#include "flatsql/program.h"
+#include "flatsql/script.h"
 
 namespace flatsql {
 

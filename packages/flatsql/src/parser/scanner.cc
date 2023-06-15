@@ -4,7 +4,7 @@
 
 #include "flatsql/parser/grammar/keywords.h"
 #include "flatsql/parser/parse_context.h"
-#include "flatsql/program.h"
+#include "flatsql/script.h"
 #include "flatsql/utils/string.h"
 
 using Parser = flatsql::parser::Parser;

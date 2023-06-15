@@ -5,8 +5,8 @@
 #include <limits>
 
 #include "flatsql/analyzer/analyzer.h"
-#include "flatsql/program.h"
 #include "flatsql/proto/proto_generated.h"
+#include "flatsql/script.h"
 #include "flatsql/testing/xml_tests.h"
 #include "gtest/gtest.h"
 

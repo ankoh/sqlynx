@@ -7,8 +7,8 @@
 
 #include "flatsql/analyzer/analyzer.h"
 #include "flatsql/analyzer/pass_manager.h"
-#include "flatsql/program.h"
 #include "flatsql/proto/proto_generated.h"
+#include "flatsql/script.h"
 #include "flatsql/utils/attribute_index.h"
 #include "flatsql/utils/overlay_list.h"
 

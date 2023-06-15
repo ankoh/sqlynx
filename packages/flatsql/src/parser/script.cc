@@ -1,4 +1,4 @@
-#include "flatsql/program.h"
+#include "flatsql/script.h"
 
 #include "flatsql/parser/parse_context.h"
 #include "flatsql/parser/scanner.h"

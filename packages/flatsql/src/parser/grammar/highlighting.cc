@@ -1,6 +1,6 @@
 #include "flatsql/parser/grammar/keywords.h"
-#include "flatsql/program.h"
 #include "flatsql/proto/proto_generated.h"
+#include "flatsql/script.h"
 
 namespace flatsql {
 namespace parser {

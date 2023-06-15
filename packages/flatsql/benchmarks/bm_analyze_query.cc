@@ -2,7 +2,7 @@
 #include "flatsql/analyzer/analyzer.h"
 #include "flatsql/parser/parse_context.h"
 #include "flatsql/parser/scanner.h"
-#include "flatsql/program.h"
+#include "flatsql/script.h"
 #include "flatsql/text/rope.h"
 
 using namespace flatsql;

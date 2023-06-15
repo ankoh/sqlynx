@@ -4,8 +4,8 @@
 #include <string>
 #include <unordered_map>
 
-#include "flatsql/program.h"
 #include "flatsql/proto/proto_generated.h"
+#include "flatsql/script.h"
 #include "gtest/gtest.h"
 #include "pugixml.hpp"
 
