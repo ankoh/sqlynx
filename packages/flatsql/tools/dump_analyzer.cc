@@ -66,7 +66,7 @@ static void generate_analyzer_dumps(const std::filesystem::path& source_dir) {
             auto main_analyzed = Analyzer::Analyze(*main_scan, *main_parsed, external_analyzed.get());
 
             // Encode a program
-            AnalyzerDumpTest::EncodeProgram(test, *main_analyzed, external_analyzed.get());
+            AnalyzerDumpTest::EncodeScript(test, *main_analyzed, external_analyzed.get());
         }
 
         // Write xml document

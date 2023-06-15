@@ -84,7 +84,7 @@ extern "C" FFIResult* flatsql_parse_rope(rope::Rope* data) {
 
     // Pack the flatbuffer program
     flatbuffers::FlatBufferBuilder fb;
-    auto program_ofs = proto::ParsedProgram::Pack(fb, packed_program.get());
+    auto program_ofs = proto::ParsedScript::Pack(fb, packed_program.get());
     fb.Finish(program_ofs);
 
     // Store the buffer

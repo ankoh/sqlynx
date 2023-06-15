@@ -35,7 +35,7 @@ static void quoteIdentifier(std::string& buffer, std::string_view name) {
 }
 
 // Resolve a name
-static std::string_view resolveName(const AnalyzedProgram& main, const AnalyzedProgram* external, Analyzer::ID name) {
+static std::string_view resolveName(const AnalyzedScript& main, const AnalyzedScript* external, Analyzer::ID name) {
     if (name.IsNull()) {
         return "null";
     }
@@ -48,8 +48,8 @@ static std::string_view resolveName(const AnalyzedProgram& main, const AnalyzedP
 }
 
 /// Write all table declarations
-static void writeTables(pugi::xml_node root, const AnalyzedProgram& target, const AnalyzedProgram& main,
-                        const AnalyzedProgram* external) {
+static void writeTables(pugi::xml_node root, const AnalyzedScript& target, const AnalyzedScript& main,
+                        const AnalyzedScript* external) {
     for (auto& table_decl : target.tables) {
         auto xml_tbl = root.append_child("table");
         WriteLocation(xml_tbl, target.parsed.nodes[table_decl.ast_node_id()].location(), target.scanned.GetInput());
@@ -75,8 +75,7 @@ static void writeTables(pugi::xml_node root, const AnalyzedProgram& target, cons
 
 namespace testing {
 
-void AnalyzerDumpTest::EncodeProgram(pugi::xml_node root, const AnalyzedProgram& main,
-                                     const AnalyzedProgram* external) {
+void AnalyzerDumpTest::EncodeScript(pugi::xml_node root, const AnalyzedScript& main, const AnalyzedScript* external) {
     // Unpack modules
     auto* stmt_type_tt = proto::StatementTypeTypeTable();
     auto* node_type_tt = proto::NodeTypeTypeTable();

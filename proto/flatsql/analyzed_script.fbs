@@ -92,7 +92,7 @@ struct QueryGraphEdgeNode {
     column_reference_id: uint32;
 }
 
-table AnalyzedProgram {
+table AnalyzedScript {
     // The local tables
     tables: [Table];
     // The local table columns

@@ -39,11 +39,11 @@ class PassManager {
 
    protected:
     /// The output of the parser
-    ParsedProgram& parsedProgram;
+    ParsedScript& parsedProgram;
 
    public:
     /// Constructor
-    PassManager(ParsedProgram& parser);
+    PassManager(ParsedScript& parser);
     /// Execute a pass
     void Execute(LTRPass& pass);
 };

@@ -39,7 +39,7 @@ class Statement {
     std::unique_ptr<proto::StatementT> Pack();
 };
 
-class ScannedProgram {
+class ScannedScript {
    public:
     /// The full input data
     rope::Rope& input_data;
@@ -63,7 +63,7 @@ class ScannedProgram {
 
    public:
     /// Constructor
-    ScannedProgram(rope::Rope& rope);
+    ScannedScript(rope::Rope& rope);
 
     /// Get the input
     auto& GetInput() const { return input_data; }
@@ -77,10 +77,10 @@ class ScannedProgram {
     std::unique_ptr<proto::HighlightingT> PackHighlighting();
 };
 
-class ParsedProgram {
+class ParsedScript {
    public:
-    /// The scanned program
-    ScannedProgram& scan;
+    /// The scanned script
+    ScannedScript& scan;
     /// The nodes
     std::vector<proto::Node> nodes;
     /// The statements
@@ -90,18 +90,18 @@ class ParsedProgram {
 
    public:
     /// Constructor
-    ParsedProgram(parser::ParseContext&& context);
+    ParsedScript(parser::ParseContext&& context);
 
-    /// Build the program
-    std::shared_ptr<proto::ParsedProgramT> Pack();
+    /// Build the script
+    std::shared_ptr<proto::ParsedScriptT> Pack();
 };
 
-class AnalyzedProgram {
+class AnalyzedScript {
    public:
-    /// The scanned program
-    ScannedProgram& scanned;
-    /// The scanned program
-    ParsedProgram& parsed;
+    /// The scanned script
+    ScannedScript& scanned;
+    /// The scanned script
+    ParsedScript& parsed;
     /// The local tables
     std::vector<proto::Table> tables;
     /// The local table columns
@@ -117,10 +117,10 @@ class AnalyzedProgram {
 
    public:
     /// Constructor
-    AnalyzedProgram(ScannedProgram& scanned, ParsedProgram& parsed);
+    AnalyzedScript(ScannedScript& scanned, ParsedScript& parsed);
 
     /// Build the program
-    std::unique_ptr<proto::AnalyzedProgramT> Pack();
+    std::unique_ptr<proto::AnalyzedScriptT> Pack();
 };
 
 }  // namespace flatsql

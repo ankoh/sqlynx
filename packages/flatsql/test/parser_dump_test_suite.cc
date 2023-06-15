@@ -19,7 +19,7 @@ TEST_P(ParserDumpTestSuite, Test) {
     auto packed_program = parsed->Pack();
 
     pugi::xml_document out;
-    ParserDumpTest::EncodeProgram(out, *packed_program, test->input);
+    ParserDumpTest::EncodeScript(out, *packed_program, test->input);
 
     ASSERT_TRUE(Matches(out, test->expected));
 }

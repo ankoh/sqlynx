@@ -30,8 +30,8 @@ struct ParserDumpTest {
     /// The expected output
     pugi::xml_document expected;
 
-    /// Encode a program
-    static void EncodeProgram(pugi::xml_node root, const proto::ParsedProgramT& program, std::string_view text);
+    /// Encode a script
+    static void EncodeScript(pugi::xml_node root, const proto::ParsedScriptT& program, std::string_view text);
     /// Get the grammar tests
     static void LoadTests(std::filesystem::path& project_root);
     /// Get the grammar tests
