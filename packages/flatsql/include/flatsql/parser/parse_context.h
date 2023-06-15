@@ -21,17 +21,17 @@
 
 namespace flatsql {
 
-class ScannedProgram;
-class ParsedProgram;
+class ScannedScript;
+class ParsedScript;
 
 namespace parser {
 
 class ParseContext {
-    friend class ::flatsql::ParsedProgram;
+    friend class ::flatsql::ParsedScript;
 
    protected:
     /// The scanner
-    ScannedProgram& program;
+    ScannedScript& program;
     /// The symbol iterator
     ChunkBuffer<Parser::symbol_type>::ConstTupleIterator symbol_iterator;
 
@@ -53,7 +53,7 @@ class ParseContext {
 
    public:
     /// Constructor
-    explicit ParseContext(ScannedProgram& scan);
+    explicit ParseContext(ScannedScript& scan);
     /// Destructor
     ~ParseContext();
 
@@ -109,8 +109,8 @@ class ParseContext {
     void AddStatement(proto::Node node);
 
     /// Parse a module
-    static std::unique_ptr<ParsedProgram> Parse(ScannedProgram& in, bool trace_scanning = false,
-                                                bool trace_parsing = false);
+    static std::unique_ptr<ParsedScript> Parse(ScannedScript& in, bool trace_scanning = false,
+                                               bool trace_parsing = false);
 };
 
 }  // namespace parser

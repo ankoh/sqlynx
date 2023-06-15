@@ -8,7 +8,7 @@ PassManager::LTRPass::~LTRPass() {}
 PassManager::RTLPass::~RTLPass() {}
 
 /// Constructor
-PassManager::PassManager(ParsedProgram& parser) : parsedProgram(parser) {}
+PassManager::PassManager(ParsedScript& parser) : parsedProgram(parser) {}
 /// Execute DFS post-order passes
 void PassManager::Execute(LTRPass& pass) {
     // Prepare all passes

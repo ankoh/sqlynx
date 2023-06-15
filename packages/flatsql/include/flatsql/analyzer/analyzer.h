@@ -9,7 +9,7 @@ namespace flatsql {
 struct NameResolutionPass;
 
 struct Analyzer {
-    friend class AnalyzedProgram;
+    friend class AnalyzedScript;
 
    public:
     /// An identifier
@@ -82,11 +82,11 @@ struct Analyzer {
 
    protected:
     /// The scanned program
-    ScannedProgram& scanned_program;
+    ScannedScript& scanned_program;
     /// The parsed program
-    ParsedProgram& parsed_program;
+    ParsedScript& parsed_program;
     /// The schema
-    const AnalyzedProgram* schema;
+    const AnalyzedScript* schema;
     /// The attribute index
     AttributeIndex attribute_index;
     /// The pass manager
@@ -96,11 +96,11 @@ struct Analyzer {
 
    public:
     /// Constructor
-    Analyzer(ScannedProgram& scanned, ParsedProgram& parsed, const AnalyzedProgram* schema);
+    Analyzer(ScannedScript& scanned, ParsedScript& parsed, const AnalyzedScript* schema);
 
     /// Analyze a program
-    static std::unique_ptr<AnalyzedProgram> Analyze(ScannedProgram& scanned, ParsedProgram& parsed,
-                                                    const AnalyzedProgram* schema = nullptr);
+    static std::unique_ptr<AnalyzedScript> Analyze(ScannedScript& scanned, ParsedScript& parsed,
+                                                   const AnalyzedScript* schema = nullptr);
 };
 
 }  // namespace flatsql

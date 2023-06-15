@@ -34,9 +34,9 @@ class NameResolutionPass : public PassManager::LTRPass {
 
    protected:
     /// The scanned program
-    ScannedProgram& scanned_program;
+    ScannedScript& scanned_program;
     /// The parsed program
-    ParsedProgram& parsed_program;
+    ParsedScript& parsed_program;
     /// The attribute index.
     AttributeIndex& attribute_index;
     /// The program nodes
@@ -95,10 +95,10 @@ class NameResolutionPass : public PassManager::LTRPass {
 
    public:
     /// Constructor
-    NameResolutionPass(ParsedProgram& parser, AttributeIndex& attribute_index);
+    NameResolutionPass(ParsedScript& parser, AttributeIndex& attribute_index);
 
     /// Register external tables from analyzed program
-    void RegisterExternalTables(const AnalyzedProgram& program);
+    void RegisterExternalTables(const AnalyzedScript& program);
 
     /// Prepare the analysis pass
     void Prepare() override;
@@ -108,7 +108,7 @@ class NameResolutionPass : public PassManager::LTRPass {
     void Finish() override;
 
     /// Export an analyzed program
-    void Export(AnalyzedProgram& program);
+    void Export(AnalyzedScript& program);
 };
 
 }  // namespace flatsql

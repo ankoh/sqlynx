@@ -17,10 +17,10 @@ std::unique_ptr<proto::StatementT> Statement::Pack() {
 }
 
 /// Constructor
-ScannedProgram::ScannedProgram(rope::Rope& rope) : input_data(rope) {}
+ScannedScript::ScannedScript(rope::Rope& rope) : input_data(rope) {}
 
 /// Register a name
-size_t ScannedProgram::RegisterKeywordAsName(std::string_view s, sx::Location location) {
+size_t ScannedScript::RegisterKeywordAsName(std::string_view s, sx::Location location) {
     auto iter = name_dictionary_ids.find(s);
     if (iter != name_dictionary_ids.end()) {
         return iter->second;
@@ -31,7 +31,7 @@ size_t ScannedProgram::RegisterKeywordAsName(std::string_view s, sx::Location lo
     return id;
 }
 /// Register a name
-size_t ScannedProgram::RegisterName(std::string_view s, sx::Location location) {
+size_t ScannedScript::RegisterName(std::string_view s, sx::Location location) {
     auto iter = name_dictionary_ids.find(s);
     if (iter != name_dictionary_ids.end()) {
         return iter->second;
@@ -43,20 +43,20 @@ size_t ScannedProgram::RegisterName(std::string_view s, sx::Location location) {
     return id;
 }
 /// Read a text at a location
-std::string_view ScannedProgram::ReadTextAtLocation(sx::Location loc, std::string& tmp) {
+std::string_view ScannedScript::ReadTextAtLocation(sx::Location loc, std::string& tmp) {
     return input_data.Read(loc.offset(), loc.length(), tmp);
 }
 
 /// Constructor
-ParsedProgram::ParsedProgram(parser::ParseContext&& ctx)
+ParsedScript::ParsedScript(parser::ParseContext&& ctx)
     : scan(ctx.program),
       nodes(ctx.nodes.Flatten()),
       statements(std::move(ctx.statements)),
       errors(std::move(ctx.errors)) {}
 
 /// Pack the FlatBuffer
-std::shared_ptr<proto::ParsedProgramT> ParsedProgram::Pack() {
-    auto out = std::make_unique<proto::ParsedProgramT>();
+std::shared_ptr<proto::ParsedScriptT> ParsedScript::Pack() {
+    auto out = std::make_unique<proto::ParsedScriptT>();
     out->nodes = std::move(nodes);
     out->statements.reserve(statements.size());
     for (auto& stmt : statements) {
@@ -76,10 +76,10 @@ std::shared_ptr<proto::ParsedProgramT> ParsedProgram::Pack() {
 }
 
 /// Constructor
-AnalyzedProgram::AnalyzedProgram(ScannedProgram& scanned, ParsedProgram& parsed) : scanned(scanned), parsed(parsed) {}
+AnalyzedScript::AnalyzedScript(ScannedScript& scanned, ParsedScript& parsed) : scanned(scanned), parsed(parsed) {}
 
-std::unique_ptr<proto::AnalyzedProgramT> AnalyzedProgram::Pack() {
-    auto out = std::make_unique<proto::AnalyzedProgramT>();
+std::unique_ptr<proto::AnalyzedScriptT> AnalyzedScript::Pack() {
+    auto out = std::make_unique<proto::AnalyzedScriptT>();
     out->tables = tables;
     out->table_columns = table_columns;
     out->table_references = table_references;

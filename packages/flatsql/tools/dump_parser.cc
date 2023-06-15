@@ -62,7 +62,7 @@ static void generate_parser_dumps(const std::filesystem::path& source_dir) {
 
             /// Write output
             auto expected = test.append_child("expected");
-            ParserDumpTest::EncodeProgram(expected, *packed_program, input_buffer);
+            ParserDumpTest::EncodeScript(expected, *packed_program, input_buffer);
         }
 
         // Write xml document

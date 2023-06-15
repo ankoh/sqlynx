@@ -391,7 +391,7 @@ table Highlighting {
     token_breaks: [uint32];
 }
 
-table ParsedProgram {
+table ParsedScript {
     nodes: [Node];
     statements: [Statement];
     errors: [Error];

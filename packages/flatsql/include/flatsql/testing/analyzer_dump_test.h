@@ -34,8 +34,8 @@ struct AnalyzerDumpTest {
     /// The graph edges
     pugi::xml_document graph_edges;
 
-    /// Encode a program
-    static void EncodeProgram(pugi::xml_node root, const AnalyzedProgram& main, const AnalyzedProgram* external);
+    /// Encode a script
+    static void EncodeScript(pugi::xml_node root, const AnalyzedScript& main, const AnalyzedScript* external);
     /// Get the grammar tests
     static void LoadTests(std::filesystem::path& project_root);
     /// Get the grammar tests

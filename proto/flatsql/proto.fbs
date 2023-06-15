@@ -1,3 +1,3 @@
-include "flatsql/analyzed_program.fbs";
-include "flatsql/parsed_program.fbs";
+include "flatsql/analyzed_script.fbs";
+include "flatsql/parsed_script.fbs";
 include "flatsql/sql_enums.fbs";

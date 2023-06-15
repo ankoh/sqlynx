@@ -28,7 +28,7 @@ void NameResolutionPass::NodeState::Merge(NodeState&& other) {
 }
 
 /// Constructor
-NameResolutionPass::NameResolutionPass(ParsedProgram& parser, AttributeIndex& attribute_index)
+NameResolutionPass::NameResolutionPass(ParsedScript& parser, AttributeIndex& attribute_index)
     : scanned_program(parser.scan),
       parsed_program(parser),
       attribute_index(attribute_index),
@@ -37,7 +37,7 @@ NameResolutionPass::NameResolutionPass(ParsedProgram& parser, AttributeIndex& at
 }
 
 /// Register external tables from an analyzed program
-void NameResolutionPass::RegisterExternalTables(const AnalyzedProgram& external) {
+void NameResolutionPass::RegisterExternalTables(const AnalyzedScript& external) {
     // Use a map for external names and assign them new ids.
     // We don't map (external string -> new string) but instead just track (external id -> new id).
     //
@@ -50,7 +50,7 @@ void NameResolutionPass::RegisterExternalTables(const AnalyzedProgram& external)
     // amount. That is, `table_id = external_tables.size() + offset in tables`
 
     // Helper to remap a name id
-    auto map_name = [this](const AnalyzedProgram& external, NameID name) -> Analyzer::ID {
+    auto map_name = [this](const AnalyzedScript& external, NameID name) -> Analyzer::ID {
         if (Analyzer::ID(name).IsNull()) return Analyzer::ID(name);
         // First check if the external id is already mapped,
         if (auto iter = external_names.find(name); iter != external_names.end()) {
@@ -528,7 +528,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
 void NameResolutionPass::Finish() {}
 
 /// Export an analyzed program
-void NameResolutionPass::Export(AnalyzedProgram& program) {
+void NameResolutionPass::Export(AnalyzedScript& program) {
     program.table_columns = table_columns.Flatten();
     program.tables.reserve(tables.GetSize());
     program.table_references.reserve(table_references.GetSize());

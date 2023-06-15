@@ -14,7 +14,7 @@ namespace flatsql {
 namespace parser {
 
 /// Constructor
-ParseContext::ParseContext(ScannedProgram& scan)
+ParseContext::ParseContext(ScannedScript& scan)
     : program(scan),
       symbol_iterator(scan.symbols),
       nodes(),
@@ -236,7 +236,7 @@ void ParseContext::AddStatement(proto::Node node) {
 /// Add an error
 void ParseContext::AddError(proto::Location loc, const std::string& message) { errors.push_back({loc, message}); }
 
-std::unique_ptr<ParsedProgram> ParseContext::Parse(ScannedProgram& in, bool trace_scanning, bool trace_parsing) {
+std::unique_ptr<ParsedScript> ParseContext::Parse(ScannedScript& in, bool trace_scanning, bool trace_parsing) {
     // Parse the tokens
     ParseContext ctx{in};
     flatsql::parser::Parser parser(ctx);
@@ -262,7 +262,7 @@ std::unique_ptr<ParsedProgram> ParseContext::Parse(ScannedProgram& in, bool trac
     assert(ctx.temp_nary_expressions.GetAllocatedNodeCount() == 0);
 
     // Pack the program
-    return std::make_unique<ParsedProgram>(std::move(ctx));
+    return std::make_unique<ParsedScript>(std::move(ctx));
 }
 
 }  // namespace parser

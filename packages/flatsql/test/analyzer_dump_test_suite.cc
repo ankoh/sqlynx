@@ -31,7 +31,7 @@ TEST_P(AnalyzerDumpTestSuite, Test) {
     pugi::xml_document out;
     auto xml_external = out.append_child("external");
     auto xml_main = out.append_child("main");
-    AnalyzerDumpTest::EncodeProgram(out, *main_analyzed, external_analyzed.get());
+    AnalyzerDumpTest::EncodeScript(out, *main_analyzed, external_analyzed.get());
 
     // Test the XMLs
     ASSERT_TRUE(Matches(xml_main.child("tables"), test->tables));
