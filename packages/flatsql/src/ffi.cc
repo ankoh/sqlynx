@@ -98,6 +98,18 @@ extern "C" FFIResult* flatsql_parse_rope(rope::Rope* data) {
     return result;
 }
 
+// TODO: Center api around individual script objects
+//
+// flatsql_script_new
+// flatsql_script_delete
+// flatsql_script_insert_char_at
+// flatsql_script_insert_char_at
+// flatsql_script_insert_text_at
+// flatsql_script_erase_range
+// flatsql_script_to_string
+// flatsql_script_parse
+// flatsql_script_analyze
+
 #ifdef WASM
 extern "C" int main() { return 0; }
 #endif
