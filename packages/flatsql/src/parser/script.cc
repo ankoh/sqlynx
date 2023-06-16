@@ -1,5 +1,6 @@
 #include "flatsql/script.h"
 
+#include "flatsql/analyzer/analyzer.h"
 #include "flatsql/parser/parse_context.h"
 #include "flatsql/parser/scanner.h"
 #include "flatsql/proto/proto_generated.h"
@@ -77,7 +78,7 @@ std::shared_ptr<proto::ParsedScriptT> ParsedScript::Pack() {
 
 /// Constructor
 AnalyzedScript::AnalyzedScript(ScannedScript& scanned, ParsedScript& parsed) : scanned(scanned), parsed(parsed) {}
-
+// Pack an analyzed script
 std::unique_ptr<proto::AnalyzedScriptT> AnalyzedScript::Pack() {
     auto out = std::make_unique<proto::AnalyzedScriptT>();
     out->tables = tables;
@@ -87,6 +88,46 @@ std::unique_ptr<proto::AnalyzedScriptT> AnalyzedScript::Pack() {
     out->graph_edges = graph_edges;
     out->graph_edge_nodes = graph_edge_nodes;
     return out;
+}
+
+/// Insert a character at an offet
+void Script::InsertCharAt(size_t char_idx, uint32_t unicode) {
+    std::array<std::byte, 6> buffer;
+    auto length = flatsql::utf8::utf8proc_encode_char(unicode, reinterpret_cast<uint8_t*>(buffer.data()));
+    std::string_view encoded{reinterpret_cast<char*>(buffer.data()), static_cast<size_t>(length)};
+    text.Insert(char_idx, encoded);
+}
+/// Insert a text at an offet
+void Script::InsertTextAt(size_t char_idx, std::string_view encoded) { text.Insert(char_idx, encoded); }
+/// Erase a text at an offet
+void Script::EraseTextRange(size_t char_idx, size_t count) { text.Remove(char_idx, count); }
+/// Print a script as string
+std::string Script::ToString() { return text.ToString(); }
+
+/// Parse a script
+void Script::Parse() {
+    scanned = parser::Scanner::Scan(text);
+    parsed = parser::ParseContext::Parse(*scanned);
+    analyzed = nullptr;
+}
+/// Analyze a script
+void Script::Analyze(Script* external) {
+    assert(scanned != nullptr);
+    assert(parsed != nullptr);
+    analyzed = Analyzer::Analyze(*scanned, *parsed, external ? external->analyzed.get() : nullptr);
+}
+
+/// Pack a parsed script
+flatbuffers::Offset<proto::ParsedScript> Script::PackParsedScript(flatbuffers::FlatBufferBuilder& builder) {
+    assert(parsed != nullptr);
+    auto packed = parsed->Pack();
+    return proto::ParsedScript::Pack(builder, packed.get());
+}
+/// Pack a analyzed script
+flatbuffers::Offset<proto::AnalyzedScript> Script::PackAnalyzedScript(flatbuffers::FlatBufferBuilder& builder) {
+    assert(analyzed != nullptr);
+    auto packed = analyzed->Pack();
+    return proto::AnalyzedScript::Pack(builder, packed.get());
 }
 
 }  // namespace flatsql

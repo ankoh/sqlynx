@@ -18,9 +18,9 @@ Analyzer::Analyzer(ScannedScript& scanned, ParsedScript& parsed, const AnalyzedS
 }
 
 std::unique_ptr<AnalyzedScript> Analyzer::Analyze(ScannedScript& scanned, ParsedScript& parsed,
-                                                  const AnalyzedScript* schema) {
+                                                  const AnalyzedScript* external) {
     // Run analysis passes
-    Analyzer az{scanned, parsed, schema};
+    Analyzer az{scanned, parsed, external};
     az.pass_manager.Execute(*az.name_resolution);
 
     // Build program

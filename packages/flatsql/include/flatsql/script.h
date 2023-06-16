@@ -1,5 +1,7 @@
 #pragma once
 
+#include <flatbuffers/buffer.h>
+
 #include <string_view>
 
 #include "ankerl/unordered_dense.h"
@@ -150,6 +152,11 @@ class Script {
     void Parse();
     /// Analyze a script, optionally with provided schema
     void Analyze(Script* schema = nullptr);
+
+    /// Pack the parsed program
+    flatbuffers::Offset<proto::ParsedScript> PackParsedScript(flatbuffers::FlatBufferBuilder& builder);
+    /// Pack the parsed program
+    flatbuffers::Offset<proto::AnalyzedScript> PackAnalyzedScript(flatbuffers::FlatBufferBuilder& builder);
 };
 
 }  // namespace flatsql
