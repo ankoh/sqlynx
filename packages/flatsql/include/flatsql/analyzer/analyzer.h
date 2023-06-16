@@ -100,7 +100,7 @@ struct Analyzer {
 
     /// Analyze a program
     static std::unique_ptr<AnalyzedScript> Analyze(ScannedScript& scanned, ParsedScript& parsed,
-                                                   const AnalyzedScript* schema = nullptr);
+                                                   const AnalyzedScript* external = nullptr);
 };
 
 }  // namespace flatsql

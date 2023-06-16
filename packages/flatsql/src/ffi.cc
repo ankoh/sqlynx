@@ -44,28 +44,26 @@ extern "C" void flatsql_result_delete(FFIResult* result) {
     delete result;
 }
 
-/// Create a rope
-extern "C" rope::Rope* flatsql_rope_new() { return new rope::Rope(1024); }
-/// Delete a rope
-extern "C" void flatsql_rope_delete(rope::Rope* rope) { delete rope; }
+/// Create a script
+extern "C" Script* flatsql_script_new() { return new Script(); }
+/// Delete a script
+extern "C" void flatsql_script_delete(Script* script) { delete script; }
 /// Insert char at a position
-extern "C" void flatsql_rope_insert_char_at(rope::Rope* rope, size_t offset, char unicode) {
-    std::string_view text{&unicode, 1};
-    rope->Insert(offset, text);
+extern "C" void flatsql_script_insert_char_at(Script* script, size_t offset, char unicode) {
+    script->InsertCharAt(offset, unicode);
 }
 /// Insert text at a position
-extern "C" void flatsql_rope_insert_text_at(rope::Rope* rope, size_t offset, char* text_ptr, size_t text_length) {
+extern "C" void flatsql_script_insert_text_at(Script* script, size_t offset, char* text_ptr, size_t text_length) {
     std::string_view text{text_ptr, text_length};
-    rope->Insert(offset, text);
+    script->InsertTextAt(offset, text);
 }
 /// Erase a text range
-extern "C" void flatsql_rope_erase_text_range(rope::Rope* rope, size_t offset, size_t count) {
-    rope->Remove(offset, count);
+extern "C" void flatsql_script_erase_text_range(Script* script, size_t offset, size_t count) {
+    script->EraseTextRange(offset, count);
 }
 /// Get the rope content as string
-extern "C" FFIResult* flatsql_rope_to_string(rope::Rope* rope) {
-    auto text = std::make_unique<std::string>(std::move(rope->ToString()));
-
+extern "C" FFIResult* flatsql_script_to_string(Script* script) {
+    auto text = std::make_unique<std::string>(std::move(script->ToString()));
     auto result = new FFIResult();
     result->status_code = 0;
     result->data_ptr = text->data();
@@ -75,17 +73,14 @@ extern "C" FFIResult* flatsql_rope_to_string(rope::Rope* rope) {
     return result;
 }
 
-/// Parse a rope
-extern "C" FFIResult* flatsql_parse_rope(rope::Rope* data) {
-    // Parse the program
-    auto scanned = Scanner::Scan(*data);
-    auto parsed = ParseContext::Parse(*scanned);
-    auto packed_program = parsed->Pack();
+/// Parse a script
+extern "C" FFIResult* flatsql_script_parse(Script* script) {
+    script->Parse();
 
-    // Pack the flatbuffer program
+    // Pack a parsed script
     flatbuffers::FlatBufferBuilder fb;
-    auto program_ofs = proto::ParsedScript::Pack(fb, packed_program.get());
-    fb.Finish(program_ofs);
+    auto parsed = script->PackParsedScript(fb);
+    fb.Finish(parsed);
 
     // Store the buffer
     auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));
@@ -98,17 +93,25 @@ extern "C" FFIResult* flatsql_parse_rope(rope::Rope* data) {
     return result;
 }
 
-// TODO: Center api around individual script objects
-//
-// flatsql_script_new
-// flatsql_script_delete
-// flatsql_script_insert_char_at
-// flatsql_script_insert_char_at
-// flatsql_script_insert_text_at
-// flatsql_script_erase_range
-// flatsql_script_to_string
-// flatsql_script_parse
-// flatsql_script_analyze
+/// Analyze a script
+extern "C" FFIResult* flatsql_script_analyze(Script* script, Script* external) {
+    script->Analyze(external);
+
+    // Pack a parsed script
+    flatbuffers::FlatBufferBuilder fb;
+    auto parsed = script->PackAnalyzedScript(fb);
+    fb.Finish(parsed);
+
+    // Store the buffer
+    auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));
+    auto result = new FFIResult();
+    result->status_code = 0;
+    result->data_ptr = detached->data();
+    result->data_length = detached->size();
+    result->owner_ptr = detached.release();
+    result->owner_deleter = [](void* buffer) { delete reinterpret_cast<flatbuffers::DetachedBuffer*>(buffer); };
+    return result;
+}
 
 #ifdef WASM
 extern "C" int main() { return 0; }
