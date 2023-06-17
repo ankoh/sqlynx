@@ -535,28 +535,28 @@ void NameResolutionPass::Export(AnalyzedScript& program) {
     program.column_references.reserve(column_references.GetSize());
     program.graph_edges.reserve(graph_edges.GetSize());
     program.graph_edge_nodes.reserve(graph_edge_nodes.GetSize());
-    for (auto iter = tables.GetChunksBegin(); iter != tables.GetChunksEnd(); ++iter) {
-        for (auto& table : *iter) {
+    for (auto& chunk : tables.GetChunks()) {
+        for (auto& table : chunk) {
             program.tables.push_back(std::move(table.value));
         }
     }
-    for (auto iter = table_references.GetChunksBegin(); iter != table_references.GetChunksEnd(); ++iter) {
-        for (auto& ref : *iter) {
+    for (auto& chunk : table_references.GetChunks()) {
+        for (auto& ref : chunk) {
             program.table_references.push_back(std::move(ref.value));
         }
     }
-    for (auto iter = column_references.GetChunksBegin(); iter != column_references.GetChunksEnd(); ++iter) {
-        for (auto& ref : *iter) {
+    for (auto& chunk : column_references.GetChunks()) {
+        for (auto& ref : chunk) {
             program.column_references.push_back(std::move(ref.value));
         }
     }
-    for (auto iter = graph_edges.GetChunksBegin(); iter != graph_edges.GetChunksEnd(); ++iter) {
-        for (auto& ref : *iter) {
+    for (auto& chunk : graph_edges.GetChunks()) {
+        for (auto& ref : chunk) {
             program.graph_edges.push_back(std::move(ref.value));
         }
     }
-    for (auto iter = graph_edge_nodes.GetChunksBegin(); iter != graph_edge_nodes.GetChunksEnd(); ++iter) {
-        for (auto& ref : *iter) {
+    for (auto& chunk : graph_edge_nodes.GetChunks()) {
+        for (auto& ref : chunk) {
             program.graph_edge_nodes.push_back(std::move(ref.value));
         }
     }

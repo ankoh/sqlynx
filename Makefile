@@ -90,6 +90,22 @@ lib_coverage:
 		-o ${LIB_COVERAGE_DIR} \
 		${LIB_DEBUG_DIR}/tester
 
+.PHONY: parser_tests
+parser_tests:
+	${LIB_DEBUG_DIR}/tester --source_dir . --gtest_filter="*Parser*"
+
+.PHONY: analyzer_tests
+analyzer_tests:
+	${LIB_DEBUG_DIR}/tester --source_dir . --gtest_filter="*Analyzer*"
+
+.PHONY: rope_tests
+rope_tests:
+	${LIB_DEBUG_DIR}/tester --source_dir . --gtest_filter="*Rope*"
+
+.PHONY: completion_tests
+completion_tests:
+	${LIB_DEBUG_DIR}/tester --source_dir . --gtest_filter="*Suffix*"
+
 .PHONY: bm_parser
 bm_parser:
 	${LIB_RELWITHDEBINFO_DIR}/bm_parse_query
