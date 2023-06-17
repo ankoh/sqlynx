@@ -90,6 +90,9 @@ std::unique_ptr<proto::AnalyzedScriptT> AnalyzedScript::Pack() {
     return out;
 }
 
+/// Constructor
+Script::Script() : text(1024) {}
+
 /// Insert a character at an offet
 void Script::InsertCharAt(size_t char_idx, uint32_t unicode) {
     std::array<std::byte, 6> buffer;

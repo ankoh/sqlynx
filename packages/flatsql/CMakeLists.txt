@@ -60,13 +60,14 @@ if(WASM)
         -Wl,--export=flatsql_malloc \
         -Wl,--export=flatsql_free \
         -Wl,--export=flatsql_result_delete \
-        -Wl,--export=flatsql_parse_rope \
-        -Wl,--export=flatsql_rope_new \
-        -Wl,--export=flatsql_rope_delete \
-        -Wl,--export=flatsql_rope_insert_text_at \
-        -Wl,--export=flatsql_rope_insert_char_at \
-        -Wl,--export=flatsql_rope_erase_text_range \
-        -Wl,--export=flatsql_rope_to_string \
+        -Wl,--export=flatsql_script_new \
+        -Wl,--export=flatsql_script_delete \
+        -Wl,--export=flatsql_script_insert_text_at \
+        -Wl,--export=flatsql_script_insert_char_at \
+        -Wl,--export=flatsql_script_erase_text_range \
+        -Wl,--export=flatsql_script_to_string \
+        -Wl,--export=flatsql_script_parse \
+        -Wl,--export=flatsql_script_analyze \
         -flto \
     ")
 endif()

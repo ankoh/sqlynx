@@ -9,7 +9,6 @@
 
 using namespace flatsql;
 using namespace flatsql::parser;
-namespace proto = flatsql::proto;
 
 /// Log to console
 #ifdef WASM
