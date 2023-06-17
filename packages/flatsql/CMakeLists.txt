@@ -227,6 +227,7 @@ set(LIB_SRC
     ${CMAKE_SOURCE_DIR}/src/parser/parse_context.cc
     ${CMAKE_SOURCE_DIR}/src/parser/scanner.cc
     ${CMAKE_SOURCE_DIR}/src/parser/script.cc
+    ${CMAKE_SOURCE_DIR}/src/utils/suffix_trie.cc
     ${CMAKE_SOURCE_DIR}/src/utils/rope.cc)
 
 if(WASM)
@@ -254,6 +255,7 @@ if(NOT WASM)
     ${CMAKE_SOURCE_DIR}/test/parser_dump_test_suite.cc
     ${CMAKE_SOURCE_DIR}/test/chunk_buffer_test.cc
     ${CMAKE_SOURCE_DIR}/test/utils_test.cc
+    ${CMAKE_SOURCE_DIR}/test/suffix_trie_test.cc
     ${CMAKE_SOURCE_DIR}/test/rope_test.cc
   )
   add_executable(tester test/tester.cc ${TEST_SRC})

@@ -108,10 +108,10 @@ template <typename T, size_t InitialSize = 1024> struct ChunkBuffer {
     ConstTupleIterator begin() const { return ConstTupleIterator{*this}; }
     /// Get the end iterator
     EndIterator end() const { return EndIterator{}; }
-    /// Get the chunk iterator
-    auto GetChunksBegin() const { return buffers.begin(); }
-    /// Get the end chunk iterator
-    auto GetChunksEnd() const { return buffers.end(); }
+    /// Get the chunks
+    auto& GetChunks() { return buffers; }
+    /// Get the chunks
+    auto& GetChunks() const { return buffers; }
     /// Get the last node
     T& GetLast() {
         assert(total_value_count > 0);
