@@ -65,6 +65,18 @@ lib_release:
 lib_tests:
 	${LIB_DEBUG_DIR}/tester --source_dir .
 
+.PHONY: parser_tests
+parser_tests:
+	${LIB_DEBUG_DIR}/tester --source_dir . --gtest_filter="*Parser*"
+
+.PHONY: analyzer_tests
+analyzer_tests:
+	${LIB_DEBUG_DIR}/tester --source_dir . --gtest_filter="*Analyzer*"
+
+.PHONY: rope_tests
+rope_tests:
+	${LIB_DEBUG_DIR}/tester --source_dir . --gtest_filter="*Rope*"
+
 .PHONY: lib_coverage
 lib_coverage:
 	${LLVM_PROFDATA} merge -output=default.prof -instr default.profraw

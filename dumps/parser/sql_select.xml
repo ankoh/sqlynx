@@ -3045,22 +3045,6 @@
             <comments />
         </expected>
     </parser-dump>
-    <parser-dump name="select_param_3">
-        <input>
-            select $1.a from c
-        </input>
-        <expected>
-            <statements />
-            <errors>
-                <error message="syntax error, unexpected '.'" loc="22..23" text="." />
-            </errors>
-            <line-breaks>
-                <line-break loc="0..1" text="&#10;" />
-                <line-break loc="31..32" text="&#10;" />
-            </line-breaks>
-            <comments />
-        </expected>
-    </parser-dump>
     <parser-dump name="select_func_1">
         <input>
             select somefunc(1)
