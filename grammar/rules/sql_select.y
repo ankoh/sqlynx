@@ -551,6 +551,7 @@ sql_values_clause:
 
 sql_from_clause:
     FROM sql_from_list  { $$ = std::move($2); }
+  | FROM                { $$ = ctx.List(); }
   | %empty              { $$ = ctx.List(); }
     ;
 
@@ -856,6 +857,7 @@ sql_opt_ordinality:
 
 sql_where_clause:
     WHERE sql_a_expr      { $$ = ctx.Expression(std::move($2)); }
+  | WHERE                 { $$ = Null(); }
   | %empty                { $$ = Null(); }
     ;
 
@@ -1236,7 +1238,7 @@ sql_interval_second:
 // you expect!  So we use %prec annotations freely to set precedences.
 
 sql_a_expr:
-    error { yyclearin; $$ = Null(); }
+    error      { yyclearin; $$ = Null(); }
   | sql_c_expr { $$ = $1; }
   | sql_a_expr TYPECAST sql_typename {
         $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_TYPECAST_EXPRESSION, {

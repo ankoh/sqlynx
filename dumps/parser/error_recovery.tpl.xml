@@ -7,7 +7,37 @@
     </parser-dump>
     <parser-dump name="recovery_expr_0">
         <input>
-            SELECT * FROM A WHERE x + (something invalid);
+            SELECT * FROM A WHERE x + (something invalid)
+        </input>
+    </parser-dump>
+    <parser-dump name="recovery_interactive_1">
+        <input>
+            SELECT a. FROM A
+        </input>
+    </parser-dump>
+    <parser-dump name="recovery_interactive_2">
+        <input>
+            SELECT a FROM
+        </input>
+    </parser-dump>
+    <parser-dump name="recovery_interactive_3">
+        <input>
+            SELECT a FRO
+        </input>
+    </parser-dump>
+    <parser-dump name="recovery_interactive_4">
+        <input>
+            SELECT  FROM A
+        </input>
+    </parser-dump>
+    <parser-dump name="recovery_interactive_5">
+        <input>
+            SELECT * FROM A WHER
+        </input>
+    </parser-dump>
+    <parser-dump name="recovery_interactive_6">
+        <input>
+            SELECT * FROM A WHERE
         </input>
     </parser-dump>
 </parser-dumps>
