@@ -29,7 +29,7 @@
     </parser-dump>
     <parser-dump name="recovery_expr_0">
         <input>
-            SELECT * FROM A WHERE x + (something invalid);
+            SELECT * FROM A WHERE x + (something invalid)
         </input>
         <expected>
             <statements>
@@ -65,7 +65,183 @@
             </errors>
             <line-breaks>
                 <line-break loc="0..1" text="&#10;" />
-                <line-break loc="59..60" text="&#10;" />
+                <line-break loc="58..59" text="&#10;" />
+            </line-breaks>
+            <comments />
+        </expected>
+    </parser-dump>
+    <parser-dump name="recovery_interactive_1">
+        <input>
+            SELECT a. FROM A
+        </input>
+        <expected>
+            <statements>
+                <statement type="SELECT">
+                    <node type="OBJECT_SQL_SELECT" loc="13..29" text="SELECT a. FROM A">
+                        <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="20..29" text="a. FROM A">
+                            <node type="OBJECT_SQL_RESULT_TARGET" loc="20..29" text="a. FROM A">
+                                <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="20..27" text="a. FROM">
+                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="20..27" text="a. FROM">
+                                        <node type="NAME" loc="20..21" text="a" />
+                                        <node type="NAME" loc="23..27" text="FROM" />
+                                    </node>
+                                </node>
+                                <node key="SQL_RESULT_TARGET_NAME" type="NAME" loc="28..29" text="A" />
+                            </node>
+                        </node>
+                    </node>
+                </statement>
+            </statements>
+            <errors />
+            <line-breaks>
+                <line-break loc="0..1" text="&#10;" />
+                <line-break loc="29..30" text="&#10;" />
+            </line-breaks>
+            <comments />
+        </expected>
+    </parser-dump>
+    <parser-dump name="recovery_interactive_2">
+        <input>
+            SELECT a FROM
+        </input>
+        <expected>
+            <statements>
+                <statement type="SELECT">
+                    <node type="OBJECT_SQL_SELECT" loc="13..26" text="SELECT a FROM">
+                        <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="20..21" text="a">
+                            <node type="OBJECT_SQL_RESULT_TARGET" loc="20..21" text="a">
+                                <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="20..21" text="a">
+                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="20..21" text="a">
+                                        <node type="NAME" loc="20..21" text="a" />
+                                    </node>
+                                </node>
+                            </node>
+                        </node>
+                    </node>
+                </statement>
+            </statements>
+            <errors />
+            <line-breaks>
+                <line-break loc="0..1" text="&#10;" />
+                <line-break loc="26..27" text="&#10;" />
+            </line-breaks>
+            <comments />
+        </expected>
+    </parser-dump>
+    <parser-dump name="recovery_interactive_3">
+        <input>
+            SELECT a FRO
+        </input>
+        <expected>
+            <statements>
+                <statement type="SELECT">
+                    <node type="OBJECT_SQL_SELECT" loc="13..25" text="SELECT a FRO">
+                        <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="20..25" text="a FRO">
+                            <node type="OBJECT_SQL_RESULT_TARGET" loc="20..25" text="a FRO">
+                                <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_COLUMN_REF" loc="20..21" text="a">
+                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="20..21" text="a">
+                                        <node type="NAME" loc="20..21" text="a" />
+                                    </node>
+                                </node>
+                                <node key="SQL_RESULT_TARGET_NAME" type="NAME" loc="22..25" text="FRO" />
+                            </node>
+                        </node>
+                    </node>
+                </statement>
+            </statements>
+            <errors />
+            <line-breaks>
+                <line-break loc="0..1" text="&#10;" />
+                <line-break loc="25..26" text="&#10;" />
+            </line-breaks>
+            <comments />
+        </expected>
+    </parser-dump>
+    <parser-dump name="recovery_interactive_4">
+        <input>
+            SELECT  FROM A
+        </input>
+        <expected>
+            <statements>
+                <statement type="SELECT">
+                    <node type="OBJECT_SQL_SELECT" loc="13..27" text="SELECT  FROM A">
+                        <node key="SQL_SELECT_FROM" type="ARRAY" loc="21..27" text="FROM A">
+                            <node type="OBJECT_SQL_TABLEREF" loc="26..27" text="A">
+                                <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="26..27" text="A">
+                                    <node type="NAME" loc="26..27" text="A" />
+                                </node>
+                            </node>
+                        </node>
+                    </node>
+                </statement>
+            </statements>
+            <errors />
+            <line-breaks>
+                <line-break loc="0..1" text="&#10;" />
+                <line-break loc="27..28" text="&#10;" />
+            </line-breaks>
+            <comments />
+        </expected>
+    </parser-dump>
+    <parser-dump name="recovery_interactive_5">
+        <input>
+            SELECT * FROM A WHER
+        </input>
+        <expected>
+            <statements>
+                <statement type="SELECT">
+                    <node type="OBJECT_SQL_SELECT" loc="13..33" text="SELECT * F..ROM A WHER">
+                        <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="20..21" text="*">
+                            <node type="OBJECT_SQL_RESULT_TARGET" loc="20..21" text="*">
+                                <node key="SQL_RESULT_TARGET_STAR" type="BOOL" value="true" />
+                            </node>
+                        </node>
+                        <node key="SQL_SELECT_FROM" type="ARRAY" loc="22..33" text="FROM A WHER">
+                            <node type="OBJECT_SQL_TABLEREF" loc="27..33" text="A WHER">
+                                <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="27..28" text="A">
+                                    <node type="NAME" loc="27..28" text="A" />
+                                </node>
+                                <node key="SQL_TABLEREF_ALIAS" type="NAME" loc="29..33" text="WHER" />
+                            </node>
+                        </node>
+                    </node>
+                </statement>
+            </statements>
+            <errors />
+            <line-breaks>
+                <line-break loc="0..1" text="&#10;" />
+                <line-break loc="33..34" text="&#10;" />
+            </line-breaks>
+            <comments />
+        </expected>
+    </parser-dump>
+    <parser-dump name="recovery_interactive_6">
+        <input>
+            SELECT * FROM A WHERE
+        </input>
+        <expected>
+            <statements>
+                <statement type="SELECT">
+                    <node type="OBJECT_SQL_SELECT" loc="13..34" text="SELECT * F..OM A WHERE">
+                        <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="20..21" text="*">
+                            <node type="OBJECT_SQL_RESULT_TARGET" loc="20..21" text="*">
+                                <node key="SQL_RESULT_TARGET_STAR" type="BOOL" value="true" />
+                            </node>
+                        </node>
+                        <node key="SQL_SELECT_FROM" type="ARRAY" loc="22..28" text="FROM A">
+                            <node type="OBJECT_SQL_TABLEREF" loc="27..28" text="A">
+                                <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="27..28" text="A">
+                                    <node type="NAME" loc="27..28" text="A" />
+                                </node>
+                            </node>
+                        </node>
+                    </node>
+                </statement>
+            </statements>
+            <errors />
+            <line-breaks>
+                <line-break loc="0..1" text="&#10;" />
+                <line-break loc="34..35" text="&#10;" />
             </line-breaks>
             <comments />
         </expected>
