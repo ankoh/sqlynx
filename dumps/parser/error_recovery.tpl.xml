@@ -1,0 +1,13 @@
+<parser-dumps>
+    <parser-dump name="recovery_stmts_0">
+        <input>
+            SELEC 1;
+            SELECT 1;
+        </input>
+    </parser-dump>
+    <parser-dump name="recovery_expr_0">
+        <input>
+            SELECT * FROM A WHERE x + (something invalid);
+        </input>
+    </parser-dump>
+</parser-dumps>
