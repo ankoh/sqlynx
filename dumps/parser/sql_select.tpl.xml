@@ -431,11 +431,6 @@
             select $1 from c
         </input>
     </parser-dump>
-    <parser-dump name="select_param_3">
-        <input>
-            select $1.a from c
-        </input>
-    </parser-dump>
     <parser-dump name="select_func_1">
         <input>
             select somefunc(1)

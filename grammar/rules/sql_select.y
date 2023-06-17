@@ -1236,7 +1236,8 @@ sql_interval_second:
 // you expect!  So we use %prec annotations freely to set precedences.
 
 sql_a_expr:
-    sql_c_expr { $$ = $1; }
+    error { yyclearin; $$ = Null(); }
+  | sql_c_expr { $$ = $1; }
   | sql_a_expr TYPECAST sql_typename {
         $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_TYPECAST_EXPRESSION, {
             Attr(Key::SQL_TYPECAST_VALUE, ctx.Expression(std::move($1))),
