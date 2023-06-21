@@ -11,6 +11,7 @@
 #include "flatsql/utils/bits.h"
 #include "flatsql/utils/hash.h"
 #include "flatsql/utils/string_pool.h"
+#include "flatsql/utils/suffix_trie.h"
 
 namespace flatsql {
 namespace parser {
@@ -100,10 +101,10 @@ class ParsedScript {
 
 class AnalyzedScript {
    public:
-    /// The scanned script
-    std::shared_ptr<ScannedScript> scanned;
-    /// The scanned script
-    std::shared_ptr<ParsedScript> parsed;
+    /// The parsed script
+    std::shared_ptr<ParsedScript> parsed_script;
+    /// The external script
+    std::shared_ptr<AnalyzedScript> external_script;
     /// The local tables
     std::vector<proto::Table> tables;
     /// The local table columns
@@ -119,11 +120,12 @@ class AnalyzedScript {
 
    public:
     /// Constructor
-    AnalyzedScript(std::shared_ptr<ScannedScript> scanned, std::shared_ptr<ParsedScript> parsed);
+    AnalyzedScript(std::shared_ptr<ParsedScript> parsed, std::shared_ptr<AnalyzedScript> external);
 
     /// Build the program
     std::unique_ptr<proto::AnalyzedScriptT> Pack();
 };
+;
 
 class Script {
    public:

@@ -72,14 +72,14 @@ static void bm_analyze_query(benchmark::State& state) {
     // Analyze external script
     auto external_scan = parser::Scanner::Scan(input_external);
     auto external_parsed = parser::ParseContext::Parse(external_scan);
-    auto external_analyzed = Analyzer::Analyze(external_scan, external_parsed);
+    auto external_analyzed = Analyzer::Analyze(external_parsed);
 
     // Parse script
     auto main_scan = parser::Scanner::Scan(input_main);
     auto main_parsed = parser::ParseContext::Parse(main_scan);
 
     for (auto _ : state) {
-        auto main_analyzed = Analyzer::Analyze(main_scan, main_parsed, external_analyzed);
+        auto main_analyzed = Analyzer::Analyze(main_parsed, external_analyzed);
         benchmark::DoNotOptimize(main_analyzed);
     }
 }

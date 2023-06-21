@@ -81,12 +81,10 @@ struct Analyzer {
     };
 
    protected:
-    /// The scanned program
-    std::shared_ptr<ScannedScript> scanned_program;
     /// The parsed program
     std::shared_ptr<ParsedScript> parsed_program;
-    /// The schema
-    std::shared_ptr<AnalyzedScript> schema;
+    /// The external script
+    std::shared_ptr<AnalyzedScript> external_script;
     /// The attribute index
     AttributeIndex attribute_index;
     /// The pass manager
@@ -96,12 +94,10 @@ struct Analyzer {
 
    public:
     /// Constructor
-    Analyzer(std::shared_ptr<ScannedScript> scanned, std::shared_ptr<ParsedScript> parsed,
-             std::shared_ptr<AnalyzedScript> external);
+    Analyzer(std::shared_ptr<ParsedScript> parsed, std::shared_ptr<AnalyzedScript> external);
 
     /// Analyze a program
-    static std::shared_ptr<AnalyzedScript> Analyze(std::shared_ptr<ScannedScript> scanned,
-                                                   std::shared_ptr<ParsedScript> parsed,
+    static std::shared_ptr<AnalyzedScript> Analyze(std::shared_ptr<ParsedScript> parsed,
                                                    std::shared_ptr<AnalyzedScript> external = nullptr);
 };
 

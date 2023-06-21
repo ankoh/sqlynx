@@ -6,27 +6,24 @@
 
 namespace flatsql {
 
-Analyzer::Analyzer(std::shared_ptr<ScannedScript> scanned, std::shared_ptr<ParsedScript> parsed,
-                   std::shared_ptr<AnalyzedScript> external)
-    : scanned_program(scanned),
-      parsed_program(parsed),
+Analyzer::Analyzer(std::shared_ptr<ParsedScript> parsed, std::shared_ptr<AnalyzedScript> external)
+    : parsed_program(parsed),
       pass_manager(*parsed),
       name_resolution(std::make_unique<NameResolutionPass>(*parsed, attribute_index)),
-      schema(external) {
-    if (schema) {
-        name_resolution->RegisterExternalTables(*schema);
+      external_script(external) {
+    if (external) {
+        name_resolution->RegisterExternalTables(*external);
     }
 }
 
-std::shared_ptr<AnalyzedScript> Analyzer::Analyze(std::shared_ptr<ScannedScript> scanned,
-                                                  std::shared_ptr<ParsedScript> parsed,
+std::shared_ptr<AnalyzedScript> Analyzer::Analyze(std::shared_ptr<ParsedScript> parsed,
                                                   std::shared_ptr<AnalyzedScript> external) {
     // Run analysis passes
-    Analyzer az{scanned, parsed, external};
+    Analyzer az{parsed, external};
     az.pass_manager.Execute(*az.name_resolution);
 
     // Build program
-    auto program = std::make_shared<AnalyzedScript>(scanned, parsed);
+    auto program = std::make_shared<AnalyzedScript>(parsed, external);
     az.name_resolution->Export(*program);
     return program;
 }
