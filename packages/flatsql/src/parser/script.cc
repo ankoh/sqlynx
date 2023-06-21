@@ -74,8 +74,8 @@ std::shared_ptr<proto::ParsedScriptT> ParsedScript::Pack() {
 }
 
 /// Constructor
-AnalyzedScript::AnalyzedScript(std::shared_ptr<ScannedScript> scanned, std::shared_ptr<ParsedScript> parsed)
-    : scanned(std::move(scanned)), parsed(std::move(parsed)) {}
+AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, std::shared_ptr<AnalyzedScript> external)
+    : parsed_script(std::move(parsed)), external_script(std::move(external)) {}
 // Pack an analyzed script
 std::unique_ptr<proto::AnalyzedScriptT> AnalyzedScript::Pack() {
     auto out = std::make_unique<proto::AnalyzedScriptT>();
@@ -115,7 +115,7 @@ void Script::Parse() {
 void Script::Analyze(Script* external) {
     assert(scanned != nullptr);
     assert(parsed != nullptr);
-    analyzed = Analyzer::Analyze(scanned, parsed, external ? external->analyzed : nullptr);
+    analyzed = Analyzer::Analyze(parsed, external ? external->analyzed : nullptr);
 }
 
 /// Pack a parsed script

@@ -57,7 +57,8 @@ void NameResolutionPass::RegisterExternalTables(const AnalyzedScript& external) 
             return iter->second;
         }
         // If not, get name string and lookup local name
-        if (auto iter = scanned_program.name_dictionary_ids.find(external.scanned->name_dictionary[name].first);
+        if (auto iter =
+                scanned_program.name_dictionary_ids.find(external.parsed_script->scan->name_dictionary[name].first);
             iter != scanned_program.name_dictionary_ids.end()) {
             Analyzer::ID mapped_id{iter->second, false};
             external_names.insert({name, mapped_id});
@@ -73,7 +74,7 @@ void NameResolutionPass::RegisterExternalTables(const AnalyzedScript& external) 
     external_tables = external.tables;
     external_table_columns = external.table_columns;
     external_names.clear();
-    external_names.reserve(external.scanned->name_dictionary_ids.size());
+    external_names.reserve(external.parsed_script->scan->name_dictionary_ids.size());
     external_table_ids.clear();
     external_table_ids.reserve(external_tables.size());
 
