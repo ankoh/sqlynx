@@ -49,11 +49,8 @@ std::string_view ScannedScript::ReadTextAtLocation(sx::Location loc, std::string
 }
 
 /// Constructor
-ParsedScript::ParsedScript(parser::ParseContext&& ctx)
-    : scan(ctx.program),
-      nodes(ctx.nodes.Flatten()),
-      statements(std::move(ctx.statements)),
-      errors(std::move(ctx.errors)) {}
+ParsedScript::ParsedScript(std::shared_ptr<ScannedScript> scan, parser::ParseContext&& ctx)
+    : scan(scan), nodes(ctx.nodes.Flatten()), statements(std::move(ctx.statements)), errors(std::move(ctx.errors)) {}
 
 /// Pack the FlatBuffer
 std::shared_ptr<proto::ParsedScriptT> ParsedScript::Pack() {
@@ -70,14 +67,15 @@ std::shared_ptr<proto::ParsedScriptT> ParsedScript::Pack() {
         err->message = std::move(msg);
         out->errors.push_back(std::move(err));
     }
-    out->highlighting = scan.PackHighlighting();
-    out->line_breaks = std::move(scan.line_breaks);
-    out->comments = std::move(scan.comments);
+    out->highlighting = scan->PackHighlighting();
+    out->line_breaks = std::move(scan->line_breaks);
+    out->comments = std::move(scan->comments);
     return out;
 }
 
 /// Constructor
-AnalyzedScript::AnalyzedScript(ScannedScript& scanned, ParsedScript& parsed) : scanned(scanned), parsed(parsed) {}
+AnalyzedScript::AnalyzedScript(std::shared_ptr<ScannedScript> scanned, std::shared_ptr<ParsedScript> parsed)
+    : scanned(std::move(scanned)), parsed(std::move(parsed)) {}
 // Pack an analyzed script
 std::unique_ptr<proto::AnalyzedScriptT> AnalyzedScript::Pack() {
     auto out = std::make_unique<proto::AnalyzedScriptT>();
@@ -110,14 +108,14 @@ std::string Script::ToString() { return text.ToString(); }
 /// Parse a script
 void Script::Parse() {
     scanned = parser::Scanner::Scan(text);
-    parsed = parser::ParseContext::Parse(*scanned);
+    parsed = parser::ParseContext::Parse(scanned);
     analyzed = nullptr;
 }
 /// Analyze a script
 void Script::Analyze(Script* external) {
     assert(scanned != nullptr);
     assert(parsed != nullptr);
-    analyzed = Analyzer::Analyze(*scanned, *parsed, external ? external->analyzed.get() : nullptr);
+    analyzed = Analyzer::Analyze(scanned, parsed, external ? external->analyzed : nullptr);
 }
 
 /// Pack a parsed script

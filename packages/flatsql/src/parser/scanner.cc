@@ -109,7 +109,7 @@ void Scanner::ScanNextInputData(void* out_buffer, size_t& out_bytes_read, size_t
 }
 
 /// Scan input and produce all tokens
-std::unique_ptr<ScannedScript> Scanner::Scan(rope::Rope& rope) {
+std::shared_ptr<ScannedScript> Scanner::Scan(rope::Rope& rope) {
     // Function to get next token
     auto next = [](void* scanner_state_ptr, std::optional<Parser::symbol_type>& lookahead_symbol) {
         // Have lookahead?

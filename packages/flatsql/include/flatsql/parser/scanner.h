@@ -28,7 +28,7 @@ class Scanner {
     size_t current_leaf_offset = 0;
 
     /// The output
-    std::unique_ptr<ScannedScript> output;
+    std::shared_ptr<ScannedScript> output;
 
    public:
     // Helpers that are used from the generated flex scanner
@@ -81,7 +81,7 @@ class Scanner {
 
    public:
     /// Scan input and produce all tokens
-    static std::unique_ptr<ScannedScript> Scan(rope::Rope& rope);
+    static std::shared_ptr<ScannedScript> Scan(rope::Rope& rope);
 };
 
 }  // namespace parser

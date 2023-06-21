@@ -82,7 +82,7 @@ class ScannedScript {
 class ParsedScript {
    public:
     /// The scanned script
-    ScannedScript& scan;
+    std::shared_ptr<ScannedScript> scan;
     /// The nodes
     std::vector<proto::Node> nodes;
     /// The statements
@@ -92,7 +92,7 @@ class ParsedScript {
 
    public:
     /// Constructor
-    ParsedScript(parser::ParseContext&& context);
+    ParsedScript(std::shared_ptr<ScannedScript> scan, parser::ParseContext&& context);
 
     /// Build the script
     std::shared_ptr<proto::ParsedScriptT> Pack();
@@ -101,9 +101,9 @@ class ParsedScript {
 class AnalyzedScript {
    public:
     /// The scanned script
-    ScannedScript& scanned;
+    std::shared_ptr<ScannedScript> scanned;
     /// The scanned script
-    ParsedScript& parsed;
+    std::shared_ptr<ParsedScript> parsed;
     /// The local tables
     std::vector<proto::Table> tables;
     /// The local table columns
@@ -119,7 +119,7 @@ class AnalyzedScript {
 
    public:
     /// Constructor
-    AnalyzedScript(ScannedScript& scanned, ParsedScript& parsed);
+    AnalyzedScript(std::shared_ptr<ScannedScript> scanned, std::shared_ptr<ParsedScript> parsed);
 
     /// Build the program
     std::unique_ptr<proto::AnalyzedScriptT> Pack();
@@ -130,11 +130,11 @@ class Script {
     /// The script text
     rope::Rope text;
     /// The scanner output
-    std::unique_ptr<ScannedScript> scanned;
+    std::shared_ptr<ScannedScript> scanned;
     /// The parser output
-    std::unique_ptr<ParsedScript> parsed;
+    std::shared_ptr<ParsedScript> parsed;
     /// The analyzer output
-    std::unique_ptr<AnalyzedScript> analyzed;
+    std::shared_ptr<AnalyzedScript> analyzed;
 
    public:
     /// Constructor

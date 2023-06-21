@@ -109,7 +109,7 @@ class ParseContext {
     void AddStatement(proto::Node node);
 
     /// Parse a module
-    static std::unique_ptr<ParsedScript> Parse(ScannedScript& in, bool trace_scanning = false,
+    static std::shared_ptr<ParsedScript> Parse(std::shared_ptr<ScannedScript> in, bool trace_scanning = false,
                                                bool trace_parsing = false);
 };
 
