@@ -29,7 +29,7 @@ void NameResolutionPass::NodeState::Merge(NodeState&& other) {
 
 /// Constructor
 NameResolutionPass::NameResolutionPass(ParsedScript& parser, AttributeIndex& attribute_index)
-    : scanned_program(*parser.scan),
+    : scanned_program(*parser.scanned_script),
       parsed_program(parser),
       attribute_index(attribute_index),
       nodes(parsed_program.nodes) {
@@ -57,8 +57,8 @@ void NameResolutionPass::RegisterExternalTables(const AnalyzedScript& external) 
             return iter->second;
         }
         // If not, get name string and lookup local name
-        if (auto iter =
-                scanned_program.name_dictionary_ids.find(external.parsed_script->scan->name_dictionary[name].first);
+        if (auto iter = scanned_program.name_dictionary_ids.find(
+                external.parsed_script->scanned_script->name_dictionary[name].first);
             iter != scanned_program.name_dictionary_ids.end()) {
             Analyzer::ID mapped_id{iter->second, false};
             external_names.insert({name, mapped_id});
@@ -74,7 +74,7 @@ void NameResolutionPass::RegisterExternalTables(const AnalyzedScript& external) 
     external_tables = external.tables;
     external_table_columns = external.table_columns;
     external_names.clear();
-    external_names.reserve(external.parsed_script->scan->name_dictionary_ids.size());
+    external_names.reserve(external.parsed_script->scanned_script->name_dictionary_ids.size());
     external_table_ids.clear();
     external_table_ids.reserve(external_tables.size());
 

@@ -488,7 +488,7 @@ auto& ext_depth = ctx.ext_depth;
 namespace flatsql {
 namespace parser {
 
-Scanner::Scanner(rope::Rope& rope): input_data(rope), current_leaf_node(rope.GetLeafs()), output(std::make_unique<ScannedScript>(rope)) {
+Scanner::Scanner(std::shared_ptr<rope::Rope> rope): input_data(rope), current_leaf_node(rope->GetLeafs()), output(std::make_shared<ScannedScript>(rope)) {
     if (current_leaf_node && current_leaf_node->GetSize() == 0) {
         current_leaf_node = nullptr;
     }

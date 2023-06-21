@@ -22,7 +22,7 @@ struct TestableRope : public rope::Rope {
     static TestableRope FromString(size_t page_size, std::string_view text,
                                    size_t leaf_capacity = std::numeric_limits<size_t>::max(),
                                    size_t inner_capacity = std::numeric_limits<size_t>::max()) {
-        return TestableRope{rope::Rope::FromString(page_size, text, leaf_capacity, inner_capacity)};
+        return TestableRope{rope::Rope(page_size, text, leaf_capacity, inner_capacity)};
     }
 
     using rope::Rope::Append;

@@ -321,6 +321,10 @@ struct Rope {
     explicit Rope(size_t page_size, NodePtr root_node, TextStats root_info, LeafNode* first_leaf, size_t tree_height);
     /// Constructor
     explicit Rope(size_t page_size);
+    /// Constructor.
+    /// Control fill degree through `leaf_capacity` and `inner_capacity`.
+    explicit Rope(size_t page_size, std::string_view text, size_t leaf_capacity = std::numeric_limits<size_t>::max(),
+                  size_t inner_capacity = std::numeric_limits<size_t>::max());
     /// Destructor
     ~Rope();
     /// Copy constructor
@@ -347,11 +351,6 @@ struct Rope {
     void CheckIntegrity();
     /// Copy the rope to a std::string
     std::string ToString();
-    /// Create a rope from a string.
-    /// Control fill degree through `leaf_capacity` and `inner_capacity`.
-    static Rope FromString(size_t page_size, std::string_view text,
-                           size_t leaf_capacity = std::numeric_limits<size_t>::max(),
-                           size_t inner_capacity = std::numeric_limits<size_t>::max());
 };
 
 }  // namespace rope

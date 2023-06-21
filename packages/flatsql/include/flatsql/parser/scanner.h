@@ -21,7 +21,7 @@ class Scanner {
     void* internal_scanner_state = nullptr;
 
     /// The full input data
-    rope::Rope& input_data;
+    std::shared_ptr<rope::Rope> input_data;
     /// The current leaf node
     rope::LeafNode* current_leaf_node = nullptr;
     /// The local offset of the value within the current leaf
@@ -71,7 +71,7 @@ class Scanner {
 
    protected:
     /// Constructor
-    Scanner(rope::Rope& rope);
+    Scanner(std::shared_ptr<rope::Rope> rope);
     /// Destructor
     ~Scanner();
     /// Delete the copy constructor
@@ -81,7 +81,7 @@ class Scanner {
 
    public:
     /// Scan input and produce all tokens
-    static std::shared_ptr<ScannedScript> Scan(rope::Rope& rope);
+    static std::shared_ptr<ScannedScript> Scan(std::shared_ptr<rope::Rope> rope);
 };
 
 }  // namespace parser

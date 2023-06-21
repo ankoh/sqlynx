@@ -52,7 +52,7 @@ static void generate_analyzer_dumps(const std::filesystem::path& source_dir) {
             // Read the external script
             auto xml_external = test.child("external");
             std::string external_text = xml_external.child("input").last_child().value();
-            auto external_rope = rope::Rope::FromString(1024, external_text);
+            auto external_rope = std::make_shared<rope::Rope>(1024, external_text);
             auto external_scan = parser::Scanner::Scan(external_rope);
             auto external_parsed = parser::ParseContext::Parse(external_scan);
             auto external_analyzed = Analyzer::Analyze(external_parsed);
@@ -60,7 +60,7 @@ static void generate_analyzer_dumps(const std::filesystem::path& source_dir) {
             /// Read the script
             auto xml_main = test.child("main");
             std::string main_text = xml_main.child("input").last_child().value();
-            auto main_rope = rope::Rope::FromString(1024, main_text);
+            auto main_rope = std::make_shared<rope::Rope>(1024, main_text);
             auto main_scan = parser::Scanner::Scan(main_rope);
             auto main_parsed = parser::ParseContext::Parse(main_scan);
             auto main_analyzed = Analyzer::Analyze(main_parsed, external_analyzed);
