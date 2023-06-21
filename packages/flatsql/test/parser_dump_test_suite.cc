@@ -15,7 +15,7 @@ TEST_P(ParserDumpTestSuite, Test) {
     auto* test = GetParam();
     auto input = rope::Rope::FromString(1024, test->input);
     auto scanned = parser::Scanner::Scan(input);
-    auto parsed = parser::ParseContext::Parse(*scanned);
+    auto parsed = parser::ParseContext::Parse(scanned);
     auto packed_program = parsed->Pack();
 
     pugi::xml_document out;

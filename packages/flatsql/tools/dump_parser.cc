@@ -57,7 +57,7 @@ static void generate_parser_dumps(const std::filesystem::path& source_dir) {
             auto input_buffer = std::string{input.last_child().value()};
             auto input_rope = rope::Rope::FromString(1024, input_buffer);
             auto scanned = parser::Scanner::Scan(input_rope);
-            auto parsed = parser::ParseContext::Parse(*scanned);
+            auto parsed = parser::ParseContext::Parse(scanned);
             auto packed_program = parsed->Pack();
 
             /// Write output

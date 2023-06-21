@@ -54,16 +54,16 @@ static void generate_analyzer_dumps(const std::filesystem::path& source_dir) {
             std::string external_text = xml_external.child("input").last_child().value();
             auto external_rope = rope::Rope::FromString(1024, external_text);
             auto external_scan = parser::Scanner::Scan(external_rope);
-            auto external_parsed = parser::ParseContext::Parse(*external_scan);
-            auto external_analyzed = Analyzer::Analyze(*external_scan, *external_parsed);
+            auto external_parsed = parser::ParseContext::Parse(external_scan);
+            auto external_analyzed = Analyzer::Analyze(external_scan, external_parsed);
 
             /// Read the script
             auto xml_main = test.child("main");
             std::string main_text = xml_main.child("input").last_child().value();
             auto main_rope = rope::Rope::FromString(1024, main_text);
             auto main_scan = parser::Scanner::Scan(main_rope);
-            auto main_parsed = parser::ParseContext::Parse(*main_scan);
-            auto main_analyzed = Analyzer::Analyze(*main_scan, *main_parsed, external_analyzed.get());
+            auto main_parsed = parser::ParseContext::Parse(main_scan);
+            auto main_analyzed = Analyzer::Analyze(main_scan, main_parsed, external_analyzed);
 
             // Encode a program
             AnalyzerDumpTest::EncodeScript(test, *main_analyzed, external_analyzed.get());

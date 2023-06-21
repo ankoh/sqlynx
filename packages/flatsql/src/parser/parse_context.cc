@@ -236,9 +236,10 @@ void ParseContext::AddStatement(proto::Node node) {
 /// Add an error
 void ParseContext::AddError(proto::Location loc, const std::string& message) { errors.push_back({loc, message}); }
 
-std::unique_ptr<ParsedScript> ParseContext::Parse(ScannedScript& in, bool trace_scanning, bool trace_parsing) {
+std::shared_ptr<ParsedScript> ParseContext::Parse(std::shared_ptr<ScannedScript> in, bool trace_scanning,
+                                                  bool trace_parsing) {
     // Parse the tokens
-    ParseContext ctx{in};
+    ParseContext ctx{*in};
     flatsql::parser::Parser parser(ctx);
     parser.parse();
 
@@ -262,7 +263,7 @@ std::unique_ptr<ParsedScript> ParseContext::Parse(ScannedScript& in, bool trace_
     assert(ctx.temp_nary_expressions.GetAllocatedNodeCount() == 0);
 
     // Pack the program
-    return std::make_unique<ParsedScript>(std::move(ctx));
+    return std::make_shared<ParsedScript>(in, std::move(ctx));
 }
 
 }  // namespace parser

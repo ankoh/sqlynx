@@ -82,11 +82,11 @@ struct Analyzer {
 
    protected:
     /// The scanned program
-    ScannedScript& scanned_program;
+    std::shared_ptr<ScannedScript> scanned_program;
     /// The parsed program
-    ParsedScript& parsed_program;
+    std::shared_ptr<ParsedScript> parsed_program;
     /// The schema
-    const AnalyzedScript* schema;
+    std::shared_ptr<AnalyzedScript> schema;
     /// The attribute index
     AttributeIndex attribute_index;
     /// The pass manager
@@ -96,11 +96,13 @@ struct Analyzer {
 
    public:
     /// Constructor
-    Analyzer(ScannedScript& scanned, ParsedScript& parsed, const AnalyzedScript* schema);
+    Analyzer(std::shared_ptr<ScannedScript> scanned, std::shared_ptr<ParsedScript> parsed,
+             std::shared_ptr<AnalyzedScript> external);
 
     /// Analyze a program
-    static std::unique_ptr<AnalyzedScript> Analyze(ScannedScript& scanned, ParsedScript& parsed,
-                                                   const AnalyzedScript* external = nullptr);
+    static std::shared_ptr<AnalyzedScript> Analyze(std::shared_ptr<ScannedScript> scanned,
+                                                   std::shared_ptr<ParsedScript> parsed,
+                                                   std::shared_ptr<AnalyzedScript> external = nullptr);
 };
 
 }  // namespace flatsql

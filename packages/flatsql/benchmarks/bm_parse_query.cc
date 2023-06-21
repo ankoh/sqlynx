@@ -68,7 +68,7 @@ static void bm_parse_query(benchmark::State& state) {
     auto buffer = flatsql::rope::Rope::FromString(1024, query);
     for (auto _ : state) {
         auto scanner = flatsql::parser::Scanner::Scan(buffer);
-        flatsql::parser::ParseContext::Parse(*scanner);
+        flatsql::parser::ParseContext::Parse(scanner);
     }
 }
 
