@@ -45,7 +45,7 @@ class Statement {
 class ScannedScript {
    public:
     /// The full input data
-    rope::Rope& input_data;
+    std::shared_ptr<rope::Rope> input_data;
 
     /// The scanner errors
     std::vector<std::pair<proto::Location, std::string>> errors;
@@ -66,7 +66,7 @@ class ScannedScript {
 
    public:
     /// Constructor
-    ScannedScript(rope::Rope& rope);
+    ScannedScript(std::shared_ptr<rope::Rope> rope);
 
     /// Get the input
     auto& GetInput() const { return input_data; }
@@ -83,7 +83,7 @@ class ScannedScript {
 class ParsedScript {
    public:
     /// The scanned script
-    std::shared_ptr<ScannedScript> scan;
+    std::shared_ptr<ScannedScript> scanned_script;
     /// The nodes
     std::vector<proto::Node> nodes;
     /// The statements
@@ -125,18 +125,28 @@ class AnalyzedScript {
     /// Build the program
     std::unique_ptr<proto::AnalyzedScriptT> Pack();
 };
-;
+
+class CompletionIndex {
+    /// The analyzed script
+    std::shared_ptr<AnalyzedScript> analyzed_script;
+    /// The external script
+    std::shared_ptr<AnalyzedScript> external_script;
+    /// The suffix trie
+    SuffixTrie suffix_trie;
+};
 
 class Script {
    public:
     /// The script text
-    rope::Rope text;
+    std::shared_ptr<rope::Rope> text;
     /// The scanner output
     std::shared_ptr<ScannedScript> scanned;
     /// The parser output
     std::shared_ptr<ParsedScript> parsed;
     /// The analyzer output
     std::shared_ptr<AnalyzedScript> analyzed;
+    /// The completion model
+    std::unique_ptr<CompletionIndex> completion;
 
    public:
     /// Constructor

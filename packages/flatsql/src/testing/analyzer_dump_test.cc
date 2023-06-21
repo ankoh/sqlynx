@@ -41,9 +41,9 @@ static std::string_view resolveName(const AnalyzedScript& main, const AnalyzedSc
     }
     if (name.IsExternal()) {
         assert(external != nullptr);
-        return external->parsed_script->scan->name_dictionary[name.AsIndex()].first;
+        return external->parsed_script->scanned_script->name_dictionary[name.AsIndex()].first;
     } else {
-        return main.parsed_script->scan->name_dictionary[name.AsIndex()].first;
+        return main.parsed_script->scanned_script->name_dictionary[name.AsIndex()].first;
     }
 }
 
@@ -53,7 +53,7 @@ static void writeTables(pugi::xml_node root, const AnalyzedScript& target, const
     for (auto& table_decl : target.tables) {
         auto xml_tbl = root.append_child("table");
         WriteLocation(xml_tbl, target.parsed_script->nodes[table_decl.ast_node_id()].location(),
-                      target.parsed_script->scan->GetInput());
+                      *target.parsed_script->scanned_script->GetInput());
         // Write child columns
         for (size_t i = 0; i < table_decl.column_count(); ++i) {
             auto table_idx = table_decl.columns_begin() + i;
@@ -62,14 +62,15 @@ static void writeTables(pugi::xml_node root, const AnalyzedScript& target, const
             if (auto column_name_id = Analyzer::ID(column_decl.column_name()); column_name_id) {
                 assert(!column_name_id.IsNull());
                 assert(!column_name_id.IsExternal());
-                std::string column_name{target.parsed_script->scan->name_dictionary[column_name_id.AsIndex()].first};
+                std::string column_name{
+                    target.parsed_script->scanned_script->name_dictionary[column_name_id.AsIndex()].first};
                 xml_col.append_attribute("name").set_value(column_name.c_str());
             } else {
                 xml_col.append_attribute("name").set_value("?");
             }
             if (auto node_id = Analyzer::ID(column_decl.ast_node_id()); node_id) {
                 WriteLocation(xml_col, target.parsed_script->nodes[node_id.AsIndex()].location(),
-                              target.parsed_script->scan->GetInput());
+                              *target.parsed_script->scanned_script->GetInput());
             }
         }
     }
@@ -111,7 +112,7 @@ void AnalyzerDumpTest::EncodeScript(pugi::xml_node root, const AnalyzedScript& m
             xml_ref.append_attribute("table").set_value(table_id.AsIndex());
         }
         WriteLocation(xml_ref, main.parsed_script->nodes[ref.ast_node_id()].location(),
-                      main.parsed_script->scan->GetInput());
+                      *main.parsed_script->scanned_script->GetInput());
     }
 
     // Write column references
@@ -126,7 +127,7 @@ void AnalyzerDumpTest::EncodeScript(pugi::xml_node root, const AnalyzedScript& m
             xml_ref.append_attribute("column").set_value(column_id.AsIndex());
         }
         WriteLocation(xml_ref, main.parsed_script->nodes[ref.ast_node_id()].location(),
-                      main.parsed_script->scan->GetInput());
+                      *main.parsed_script->scanned_script->GetInput());
     }
 
     // Write join edges
@@ -134,7 +135,7 @@ void AnalyzerDumpTest::EncodeScript(pugi::xml_node root, const AnalyzedScript& m
         auto xml_edge = xml_main_query_graph.append_child("edge");
         xml_edge.append_attribute("op").set_value(proto::EnumNameExpressionOperator(edge.expression_operator()));
         WriteLocation(xml_edge, main.parsed_script->nodes[edge.ast_node_id()].location(),
-                      main.parsed_script->scan->GetInput());
+                      *main.parsed_script->scanned_script->GetInput());
         for (size_t i = 0; i < edge.node_count_left(); ++i) {
             auto& node = main.graph_edge_nodes[edge.nodes_begin() + i];
             auto xml_node = xml_edge.append_child("node");
