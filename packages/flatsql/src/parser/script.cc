@@ -110,27 +110,27 @@ std::string Script::ToString() { return text->ToString(); }
 
 /// Parse a script
 void Script::Parse() {
-    scanned = parser::Scanner::Scan(text);
-    parsed = parser::ParseContext::Parse(scanned);
-    analyzed = nullptr;
+    scanned_script = parser::Scanner::Scan(text);
+    parsed_script = parser::ParseContext::Parse(scanned_script);
+    analyzed_script = nullptr;
 }
 /// Analyze a script
 void Script::Analyze(Script* external) {
-    assert(scanned != nullptr);
-    assert(parsed != nullptr);
-    analyzed = Analyzer::Analyze(parsed, external ? external->analyzed : nullptr);
+    assert(scanned_script != nullptr);
+    assert(parsed_script != nullptr);
+    analyzed_script = Analyzer::Analyze(parsed_script, external ? external->analyzed_script : nullptr);
 }
 
 /// Pack a parsed script
 flatbuffers::Offset<proto::ParsedScript> Script::PackParsedScript(flatbuffers::FlatBufferBuilder& builder) {
-    assert(parsed != nullptr);
-    auto packed = parsed->Pack();
+    assert(parsed_script != nullptr);
+    auto packed = parsed_script->Pack();
     return proto::ParsedScript::Pack(builder, packed.get());
 }
 /// Pack a analyzed script
 flatbuffers::Offset<proto::AnalyzedScript> Script::PackAnalyzedScript(flatbuffers::FlatBufferBuilder& builder) {
-    assert(analyzed != nullptr);
-    auto packed = analyzed->Pack();
+    assert(analyzed_script != nullptr);
+    auto packed = analyzed_script->Pack();
     return proto::AnalyzedScript::Pack(builder, packed.get());
 }
 

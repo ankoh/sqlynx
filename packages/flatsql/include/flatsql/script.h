@@ -139,14 +139,14 @@ class Script {
    public:
     /// The script text
     std::shared_ptr<rope::Rope> text;
-    /// The scanner output
-    std::shared_ptr<ScannedScript> scanned;
-    /// The parser output
-    std::shared_ptr<ParsedScript> parsed;
-    /// The analyzer output
-    std::shared_ptr<AnalyzedScript> analyzed;
-    /// The completion model
-    std::unique_ptr<CompletionIndex> completion;
+    /// The (current) scanner output
+    std::shared_ptr<ScannedScript> scanned_script;
+    /// The (current) parser output
+    std::shared_ptr<ParsedScript> parsed_script;
+    /// The (current) analyzer output
+    std::shared_ptr<AnalyzedScript> analyzed_script;
+    /// The (current) completion model
+    std::unique_ptr<CompletionIndex> completion_index;
 
    public:
     /// Constructor
