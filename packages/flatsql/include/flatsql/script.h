@@ -93,24 +93,18 @@ class ScannedScript {
     std::unique_ptr<proto::HighlightingT> PackHighlighting();
 };
 
-/// A statement
-class Statement {
-   public:
-    /// The statement type
-    proto::StatementType type;
-    /// The root node
-    NodeID root;
-
-   public:
-    /// Constructor
-    Statement();
-
-    /// Get as flatbuffer object
-    std::unique_ptr<proto::StatementT> Pack();
-};
-
 class ParsedScript {
    public:
+    /// A statement
+    struct Statement {
+        /// The statement type
+        proto::StatementType type = proto::StatementType::NONE;
+        /// The root node
+        NodeID root = std::numeric_limits<uint32_t>::max();
+        /// Get as flatbuffer object
+        std::unique_ptr<proto::StatementT> Pack();
+    };
+
     /// The scanned script
     std::shared_ptr<ScannedScript> scanned_script;
     /// The nodes
