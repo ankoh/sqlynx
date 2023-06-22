@@ -39,17 +39,23 @@ class TextBuffer {
     TextBuffer(size_t page_size, std::string_view text) : rope(page_size, text), version(0) {}
 
     /// Get the rope
-    auto& GetRope() { return rope; }
+    inline auto& GetRope() { return rope; }
     /// Read from the rope
-    std::string_view Read(size_t char_idx, size_t count, std::string& tmp) const {
+    inline std::string_view Read(size_t char_idx, size_t count, std::string& tmp) const {
         return rope.Read(char_idx, count, tmp);
     }
     /// Insert a text at an offset
-    void InsertTextAt(size_t offset, std::string_view text) { return rope.Insert(offset, text); }
+    inline void InsertTextAt(size_t offset, std::string_view text) {
+        ++version;
+        return rope.Insert(offset, text);
+    }
     /// Erase a text range
-    void EraseTextRange(size_t offset, size_t count) { return rope.Remove(offset, count); }
+    inline void EraseTextRange(size_t offset, size_t count) {
+        ++version;
+        return rope.Remove(offset, count);
+    }
     /// Print a script as string
-    std::string ToString() { return rope.ToString(); }
+    inline std::string ToString() { return rope.ToString(); }
 };
 
 class ScannedScript {
