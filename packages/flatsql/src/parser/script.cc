@@ -7,10 +7,8 @@
 
 namespace flatsql {
 
-/// Constructor
-Statement::Statement() : root(std::numeric_limits<uint32_t>::max()) {}
 /// Finish a statement
-std::unique_ptr<proto::StatementT> Statement::Pack() {
+std::unique_ptr<proto::StatementT> ParsedScript::Statement::Pack() {
     auto stmt = std::make_unique<proto::StatementT>();
     stmt->statement_type = type;
     stmt->root_node = root;

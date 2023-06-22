@@ -38,12 +38,12 @@ class ParseContext {
     /// The nodes
     ChunkBuffer<proto::Node> nodes;
     /// The statements
-    std::vector<Statement> statements;
+    std::vector<ParsedScript::Statement> statements;
     /// The errors
     std::vector<std::pair<proto::Location, std::string>> errors;
 
     /// The current statement
-    Statement current_statement;
+    ParsedScript::Statement current_statement;
     /// The temporary node lists
     NodeList::ListPool temp_lists;
     /// The temporary node list elements
