@@ -55,7 +55,7 @@ static void generate_parser_dumps(const std::filesystem::path& source_dir) {
             /// Parse module
             auto input = test.child("input");
             auto input_buffer = std::string{input.last_child().value()};
-            auto input_rope = std::make_shared<rope::Rope>(1024, input_buffer);
+            auto input_rope = std::make_shared<TextBuffer>(1024, input_buffer);
             auto scanned = parser::Scanner::Scan(input_rope);
             auto parsed = parser::ParseContext::Parse(scanned);
             auto packed_program = parsed->Pack();

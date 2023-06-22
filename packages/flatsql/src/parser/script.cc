@@ -18,7 +18,7 @@ std::unique_ptr<proto::StatementT> Statement::Pack() {
 }
 
 /// Constructor
-ScannedScript::ScannedScript(std::shared_ptr<rope::Rope> rope) : input_data(std::move(rope)) {}
+ScannedScript::ScannedScript(std::shared_ptr<TextBuffer> text) : input_data(std::move(text)) {}
 
 /// Register a name
 size_t ScannedScript::RegisterKeywordAsName(std::string_view s, sx::Location location) {
@@ -92,45 +92,51 @@ std::unique_ptr<proto::AnalyzedScriptT> AnalyzedScript::Pack() {
 }
 
 /// Constructor
-Script::Script() : text(std::make_shared<rope::Rope>(1024)) {}
+Script::Script() : text(std::make_shared<TextBuffer>(1024)) {}
 
 /// Insert a character at an offet
 void Script::InsertCharAt(size_t char_idx, uint32_t unicode) {
     std::array<std::byte, 6> buffer;
     auto length = flatsql::utf8::utf8proc_encode_char(unicode, reinterpret_cast<uint8_t*>(buffer.data()));
     std::string_view encoded{reinterpret_cast<char*>(buffer.data()), static_cast<size_t>(length)};
-    text->Insert(char_idx, encoded);
+    text->InsertTextAt(char_idx, encoded);
 }
 /// Insert a text at an offet
-void Script::InsertTextAt(size_t char_idx, std::string_view encoded) { text->Insert(char_idx, encoded); }
+void Script::InsertTextAt(size_t char_idx, std::string_view encoded) { text->InsertTextAt(char_idx, encoded); }
 /// Erase a text at an offet
-void Script::EraseTextRange(size_t char_idx, size_t count) { text->Remove(char_idx, count); }
+void Script::EraseTextRange(size_t char_idx, size_t count) { text->EraseTextRange(char_idx, count); }
 /// Print a script as string
 std::string Script::ToString() { return text->ToString(); }
 
 /// Parse a script
-void Script::Parse() {
+ParsedScript& Script::Parse() {
     scanned_script = parser::Scanner::Scan(text);
-    parsed_script = parser::ParseContext::Parse(scanned_script);
-    analyzed_script = nullptr;
+    parsed_scripts.push_back(parser::ParseContext::Parse(scanned_script));
+    return *parsed_scripts.back();
 }
 /// Analyze a script
-void Script::Analyze(Script* external) {
+AnalyzedScript& Script::Analyze(Script* external) {
     assert(scanned_script != nullptr);
-    assert(parsed_script != nullptr);
-    analyzed_script = Analyzer::Analyze(parsed_script, external ? external->analyzed_script : nullptr);
+    assert(!parsed_scripts.empty());
+    auto parsed_script = parsed_scripts.back();
+    if (!external->analyzed_scripts.empty()) {
+        analyzed_scripts.push_back(Analyzer::Analyze(std::move(parsed_script), external->analyzed_scripts.back()));
+    } else {
+        analyzed_scripts.push_back(Analyzer::Analyze(std::move(parsed_script)));
+    }
+    return *analyzed_scripts.back();
 }
 
 /// Pack a parsed script
 flatbuffers::Offset<proto::ParsedScript> Script::PackParsedScript(flatbuffers::FlatBufferBuilder& builder) {
-    assert(parsed_script != nullptr);
-    auto packed = parsed_script->Pack();
+    assert(!parsed_scripts.empty());
+    auto packed = parsed_scripts.back()->Pack();
     return proto::ParsedScript::Pack(builder, packed.get());
 }
 /// Pack a analyzed script
 flatbuffers::Offset<proto::AnalyzedScript> Script::PackAnalyzedScript(flatbuffers::FlatBufferBuilder& builder) {
-    assert(analyzed_script != nullptr);
-    auto packed = analyzed_script->Pack();
+    assert(!analyzed_scripts.empty());
+    auto packed = analyzed_scripts.back()->Pack();
     return proto::AnalyzedScript::Pack(builder, packed.get());
 }
 

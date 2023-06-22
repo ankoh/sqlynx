@@ -66,8 +66,8 @@ limit
 )SQL";
 
 static void bm_analyze_query(benchmark::State& state) {
-    auto input_external = std::make_shared<rope::Rope>(1024, external_script);
-    auto input_main = std::make_shared<rope::Rope>(1024, main_script);
+    auto input_external = std::make_shared<TextBuffer>(1024, external_script);
+    auto input_main = std::make_shared<TextBuffer>(1024, main_script);
 
     // Analyze external script
     auto external_scan = parser::Scanner::Scan(input_external);

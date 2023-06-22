@@ -65,7 +65,7 @@ static const std::string_view query = R"SQL(
 )SQL";
 
 static void bm_parse_query(benchmark::State& state) {
-    auto buffer = std::make_shared<flatsql::rope::Rope>(flatsql::rope::Rope(1024, query));
+    auto buffer = std::make_shared<flatsql::TextBuffer>(1024, query);
     for (auto _ : state) {
         auto scanner = flatsql::parser::Scanner::Scan(buffer);
         flatsql::parser::ParseContext::Parse(scanner);

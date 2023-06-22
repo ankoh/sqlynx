@@ -26,26 +26,39 @@ using NodeID = uint32_t;
 using NameID = uint32_t;
 using StatementID = uint32_t;
 
-/// A statement
-class Statement {
-   public:
-    /// The statement type
-    proto::StatementType type;
-    /// The root node
-    NodeID root;
+class TextBuffer {
+    /// The underlying rope
+    rope::Rope rope;
+    /// The version counter for text modifications
+    size_t version;
 
    public:
     /// Constructor
-    Statement();
+    TextBuffer(size_t page_size) : rope(page_size), version(0) {}
+    /// Constructor
+    TextBuffer(size_t page_size, std::string_view text) : rope(page_size, text), version(0) {}
 
-    /// Get as flatbuffer object
-    std::unique_ptr<proto::StatementT> Pack();
+    /// Get the rope
+    auto& GetRope() { return rope; }
+    /// Read from the rope
+    std::string_view Read(size_t char_idx, size_t count, std::string& tmp) const {
+        return rope.Read(char_idx, count, tmp);
+    }
+    /// Insert a text at an offset
+    void InsertTextAt(size_t offset, std::string_view text) { return rope.Insert(offset, text); }
+    /// Erase a text range
+    void EraseTextRange(size_t offset, size_t count) { return rope.Remove(offset, count); }
+    /// Print a script as string
+    std::string ToString() { return rope.ToString(); }
 };
 
 class ScannedScript {
    public:
     /// The full input data
-    std::shared_ptr<rope::Rope> input_data;
+    std::shared_ptr<TextBuffer> input_data;
+    /// The version of the text that was read.
+    /// We're not allowed to read from the input if the version differs.
+    size_t input_version;
 
     /// The scanner errors
     std::vector<std::pair<proto::Location, std::string>> errors;
@@ -66,7 +79,7 @@ class ScannedScript {
 
    public:
     /// Constructor
-    ScannedScript(std::shared_ptr<rope::Rope> rope);
+    ScannedScript(std::shared_ptr<TextBuffer> text);
 
     /// Get the input
     auto& GetInput() const { return input_data; }
@@ -78,6 +91,22 @@ class ScannedScript {
     std::string_view ReadTextAtLocation(sx::Location loc, std::string& tmp);
     /// Pack syntax highlighting
     std::unique_ptr<proto::HighlightingT> PackHighlighting();
+};
+
+/// A statement
+class Statement {
+   public:
+    /// The statement type
+    proto::StatementType type;
+    /// The root node
+    NodeID root;
+
+   public:
+    /// Constructor
+    Statement();
+
+    /// Get as flatbuffer object
+    std::unique_ptr<proto::StatementT> Pack();
 };
 
 class ParsedScript {
@@ -138,15 +167,17 @@ class CompletionIndex {
 class Script {
    public:
     /// The script text
-    std::shared_ptr<rope::Rope> text;
-    /// The (current) scanner output
+    std::shared_ptr<TextBuffer> text;
+    /// The external script (if any)
+    Script* external_script;
+    /// The last scanner output
     std::shared_ptr<ScannedScript> scanned_script;
-    /// The (current) parser output
-    std::shared_ptr<ParsedScript> parsed_script;
-    /// The (current) analyzer output
-    std::shared_ptr<AnalyzedScript> analyzed_script;
-    /// The (current) completion model
-    std::unique_ptr<CompletionIndex> completion_index;
+    /// The last parsed scripts
+    std::list<std::shared_ptr<ParsedScript>> parsed_scripts;
+    /// The last analyzed scripts
+    std::list<std::shared_ptr<AnalyzedScript>> analyzed_scripts;
+    /// The completion model
+    CompletionIndex completion_index;
 
    public:
     /// Constructor
@@ -160,10 +191,15 @@ class Script {
     void EraseTextRange(size_t offset, size_t count);
     /// Print a script as string
     std::string ToString();
-    /// Parse a rope
-    void Parse();
-    /// Analyze a script, optionally with provided schema
-    void Analyze(Script* schema = nullptr);
+
+    /// Parse the latest scanned script
+    ParsedScript& Parse();
+    /// Analyze the latest parsed script
+    AnalyzedScript& Analyze(Script* external = nullptr);
+    /// Update the completion index
+    void UpdateCompletionIndex();
+    /// Complete at a text offset
+    void CompleteAt(size_t offset);
 
     /// Pack the parsed program
     flatbuffers::Offset<proto::ParsedScript> PackParsedScript(flatbuffers::FlatBufferBuilder& builder);
