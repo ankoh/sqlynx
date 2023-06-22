@@ -90,7 +90,7 @@ std::unique_ptr<proto::AnalyzedScriptT> AnalyzedScript::Pack() {
 }
 
 /// Constructor
-Script::Script() : text(std::make_shared<TextBuffer>(1024)) {}
+Script::Script() : text(std::make_shared<TextBuffer>(1024)), external_script(nullptr) {}
 
 /// Insert a character at an offet
 void Script::InsertCharAt(size_t char_idx, uint32_t unicode) {
