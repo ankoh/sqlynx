@@ -391,6 +391,8 @@ table Highlighting {
     token_breaks: [uint32];
 }
 
+// XXX linebreaks, scanner errors, highlighting and name dictionary into ScannedScript?
+
 table ParsedScript {
     nodes: [Node];
     statements: [Statement];
