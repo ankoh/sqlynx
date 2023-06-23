@@ -7,11 +7,16 @@
         "flatbuffers": "^2.0.4"
     },
     "devDependencies": {
+        "@types/jasmine": "^4.3.1",
         "esbuild": "^0.14.25",
-        "typescript": "^4.5.5"
+        "typescript": "^4.5.5",
+        "jasmine": "^4.5.0",
+        "jasmine-core": "^5.0.0",
+        "jasmine-spec-reporter": "^7.0.0"
     },
     "scripts": {
-        "build": "tsc --emitDeclarationOnly && ts-node bundle.ts"
+        "build:debug": "tsc --emitDeclarationOnly && ts-node bundle.ts debug",
+        "build:release": "tsc --emitDeclarationOnly && ts-node bundle.ts release"
     },
     "files": [
         "dist/gen/*.d.ts",
