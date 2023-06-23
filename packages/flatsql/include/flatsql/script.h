@@ -158,8 +158,6 @@ class AnalyzedScript {
 class CompletionIndex {
     /// The analyzed script
     std::shared_ptr<AnalyzedScript> analyzed_script;
-    /// The external script
-    std::shared_ptr<AnalyzedScript> external_script;
     /// The suffix trie
     SuffixTrie suffix_trie;
 };
