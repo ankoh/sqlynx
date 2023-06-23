@@ -110,6 +110,10 @@ std::string Script::ToString() { return text->ToString(); }
 ParsedScript& Script::Parse() {
     scanned_script = parser::Scanner::Scan(text);
     parsed_scripts.push_back(parser::ParseContext::Parse(scanned_script));
+    // XXX Cleanup the old for now, replace with smarter garbage collection later
+    if (parsed_scripts.size() > 1) {
+        parsed_scripts.pop_front();
+    }
     return *parsed_scripts.back();
 }
 /// Analyze a script
@@ -121,6 +125,10 @@ AnalyzedScript& Script::Analyze(Script* external) {
         analyzed_scripts.push_back(Analyzer::Analyze(std::move(parsed_script), external->analyzed_scripts.back()));
     } else {
         analyzed_scripts.push_back(Analyzer::Analyze(std::move(parsed_script)));
+    }
+    // XXX Cleanup the old for now, replace with smarter garbage collection later
+    if (analyzed_scripts.size() > 1) {
+        analyzed_scripts.pop_front();
     }
     return *analyzed_scripts.back();
 }
