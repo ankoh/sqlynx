@@ -65,18 +65,6 @@ lib_release:
 lib_tests:
 	${LIB_DEBUG_DIR}/tester --source_dir .
 
-.PHONY: parser_tests
-parser_tests:
-	${LIB_DEBUG_DIR}/tester --source_dir . --gtest_filter="*Parser*"
-
-.PHONY: analyzer_tests
-analyzer_tests:
-	${LIB_DEBUG_DIR}/tester --source_dir . --gtest_filter="*Analyzer*"
-
-.PHONY: rope_tests
-rope_tests:
-	${LIB_DEBUG_DIR}/tester --source_dir . --gtest_filter="*Rope*"
-
 .PHONY: lib_coverage
 lib_coverage:
 	${LLVM_PROFDATA} merge -output=default.prof -instr default.profraw
@@ -124,7 +112,11 @@ wasm_fast:
 
 .PHONY: jslib
 jslib:
-	yarn workspace @ankoh/flatsql build
+	yarn workspace @ankoh/flatsql build:debug
+
+.PHONY: jslib_release
+jslib_release:
+	yarn workspace @ankoh/flatsql build:release
 
 .PHONY: canvas_start
 canvas_start:
