@@ -99,7 +99,7 @@ class FlatSQLParser implements PluginValue {
 
         // Parse the rope
         console.time('Rope Parsing');
-        const result = ext.instance.parseRope(ext.rope);
+        const result = ext.instance.parseScript(ext.rope);
         result.delete();
         console.timeEnd('Rope Parsing');
 
