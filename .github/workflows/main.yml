@@ -133,6 +133,13 @@ jobs:
                   name: flatsql_parser_wasm
                   path: ./packages/flatsql/build/wasm/Release/flatsql.wasm
 
+            - name: Setup flatc
+              uses: ./.github/actions/setup-flatc
+
+            - name: Generate Flatbuffer files
+              shell: bash
+              run: ./scripts/generate_proto.sh
+
             - name: Install npm dependencies
               shell: bash
               run: |
