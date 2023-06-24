@@ -86,9 +86,9 @@ export class FlatSQL {
         return instanceRef.instance;
     }
 
-    public createRope(): FlatSQLScript {
-        const ropePtr = this.instanceExports.flatsql_script_new();
-        return new FlatSQLScript(this, ropePtr);
+    public createScript(): FlatSQLScript {
+        const scriptPtr = this.instanceExports.flatsql_script_new();
+        return new FlatSQLScript(this, scriptPtr);
     }
 
     public readResult(resultPtr: number) {
@@ -106,11 +106,6 @@ export class FlatSQL {
             this.instanceExports.flatsql_result_delete(resultPtr);
             throw new Error(error);
         }
-    }
-
-    public parseScript(rope: FlatSQLScript): FlatSQLBuffer {
-        const result = this.instanceExports.flatsql_parse_rope(rope.ropePtr);
-        return this.readResult(result);
     }
 }
 
@@ -149,25 +144,33 @@ export class FlatSQLBuffer {
 export class FlatSQLScript {
     /// The FlatSQL api
     api: FlatSQL;
-    /// The rope pointer
-    ropePtr: number | null;
+    /// The script pointer
+    scriptPtr: number | null;
 
     public constructor(api: FlatSQL, ropePtr: number) {
         this.api = api;
-        this.ropePtr = ropePtr;
+        this.scriptPtr = ropePtr;
     }
     /// Delete a rope
     public delete() {
-        if (this.ropePtr) {
-            this.api.instanceExports.flatsql_script_delete(this.ropePtr);
+        if (this.scriptPtr) {
+            this.api.instanceExports.flatsql_script_delete(this.scriptPtr);
         }
-        this.ropePtr = null;
+        this.scriptPtr = null;
+    }
+
+    protected assertScriptNotNull(): number {
+        if (this.scriptPtr == null) {
+            throw new Error('');
+        }
+        return this.scriptPtr!;
     }
     /// Insert text at an offset
     public insertTextAt(offset: number, text: string) {
+        const scriptPtr = this.assertScriptNotNull();
         // Short-circuit inserting texts of length 1
         if (text.length == 1) {
-            this.api.instanceExports.flatsql_script_insert_char_at(this.ropePtr, offset, text.charCodeAt(0));
+            this.api.instanceExports.flatsql_script_insert_char_at(scriptPtr, offset, text.charCodeAt(0));
             return;
         }
         // To convert a JavaScript string s, the output space needed for full conversion is never less
@@ -175,19 +178,25 @@ export class FlatSQLScript {
         const textBegin = this.api.instanceExports.flatsql_malloc(text.length * 3);
         const textBuffer = new Uint8Array(this.api.memory.buffer).subarray(textBegin, textBegin + text.length * 3);
         const textEncoded = this.api.encoder.encodeInto(text, textBuffer);
+        // Nothing written?
+        if (textEncoded.written == undefined || textEncoded.written == 0) {
+            return;
+        }
         // Insert into rope
-        this.api.instanceExports.flatsql_script_insert_text_at(this.ropePtr, offset, textBegin, textEncoded.written);
+        this.api.instanceExports.flatsql_script_insert_text_at(scriptPtr, offset, textBegin, textEncoded.written);
         // Delete text buffer
         this.api.instanceExports.flatsql_free(textBegin);
     }
     /// Earse a range of characters
     public eraseTextRange(offset: number, length: number) {
+        const scriptPtr = this.assertScriptNotNull();
         // Insert into rope
-        this.api.instanceExports.flatsql_script_erase_text_range(this.ropePtr, offset, length);
+        this.api.instanceExports.flatsql_script_erase_text_range(scriptPtr, offset, length);
     }
     /// Convert a rope to a string
     public toString(): string {
-        const result = this.api.instanceExports.flatsql_script_to_string(this.ropePtr);
+        const scriptPtr = this.assertScriptNotNull();
+        const result = this.api.instanceExports.flatsql_script_to_string(scriptPtr);
         const resultBuffer = this.api.readResult(result);
         const text = this.api.decoder.decode(resultBuffer.getData());
         resultBuffer.delete();
