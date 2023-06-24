@@ -1,15 +1,17 @@
-// import * as flatsql from '../lib';
-// import path from 'path';
-// import fs from 'fs';
+import '@jest/globals';
 
-import "@jest/globals";
+import * as flatsql from '../src';
+import path from 'path';
+import fs from 'fs';
 
-beforeAll(async () => {});
+const distPath = path.resolve(__dirname, '../dist');
+const wasmPath = path.resolve(distPath, './flatsql.wasm');
 
-afterAll(async () => {});
-
-describe('add', () => {
-    it('should return 2 when it gives 1,1', () => {
-        expect(1 + 1).toBe(2)
-    })
-})
+describe('FlatSQL.create', () => {
+    it('instantiate WebAssembly module', () => {
+        flatsql.FlatSQL.create(async (imports: WebAssembly.Imports) => {
+            const buf = fs.readFileSync(wasmPath);
+            return await WebAssembly.instantiate(buf, imports);
+        });
+    });
+});

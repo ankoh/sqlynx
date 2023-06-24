@@ -13,6 +13,8 @@ interface FlatSQLModuleExports {
     flatsql_parse_rope: (ptr: number) => number;
 }
 
+type InstantiateWasmCallback = (stubs: WebAssembly.Imports) => PromiseLike<WebAssembly.WebAssemblyInstantiatedSource>;
+
 export class FlatSQL {
     encoder: TextEncoder;
     decoder: TextDecoder;
@@ -54,7 +56,7 @@ export class FlatSQL {
         };
     }
 
-    public static async instantiateStreaming(response: PromiseLike<Response>): Promise<FlatSQL> {
+    public static async create(instantiate: InstantiateWasmCallback): Promise<FlatSQL> {
         const instanceRef: { instance: FlatSQL | null } = { instance: null };
         const importStubs = {
             wasi_snapshot_preview1: {
@@ -76,7 +78,7 @@ export class FlatSQL {
                 },
             },
         };
-        const streaming = await WebAssembly.instantiateStreaming(response, importStubs);
+        const streaming = await instantiate(importStubs);
         const instance = streaming.instance;
         const startFn = instance.exports['_start'] as () => number;
         startFn();
