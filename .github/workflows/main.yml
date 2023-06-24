@@ -121,7 +121,6 @@ jobs:
         runs-on: ubuntu-22.04
         needs:
             - lib_wasm
-            - lib_native_debug
         steps:
             - uses: actions/checkout@v3
               with:
