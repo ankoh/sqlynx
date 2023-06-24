@@ -161,7 +161,7 @@ export class FlatSQLScript {
 
     protected assertScriptNotNull(): number {
         if (this.scriptPtr == null) {
-            throw new Error('');
+            throw new Error('script pointer is null');
         }
         return this.scriptPtr!;
     }
