@@ -60,7 +60,7 @@ extern "C" void flatsql_script_insert_text_at(Script* script, size_t offset, cha
 extern "C" void flatsql_script_erase_text_range(Script* script, size_t offset, size_t count) {
     script->EraseTextRange(offset, count);
 }
-/// Get the rope content as string
+/// Get the script content as string
 extern "C" FFIResult* flatsql_script_to_string(Script* script) {
     auto text = std::make_unique<std::string>(std::move(script->ToString()));
     auto result = new FFIResult();

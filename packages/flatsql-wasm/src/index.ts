@@ -4,12 +4,12 @@ interface FlatSQLModuleExports {
     flatsql_malloc: (lenght: number) => number;
     flatsql_free: (ptr: number) => void;
     flatsql_result_delete: (ptr: number) => void;
-    flatsql_rope_new: () => number;
-    flatsql_rope_delete: (ptr: number) => void;
-    flatsql_rope_insert_text_at: (ptr: number, offset: number, text: number, textLength: number) => void;
-    flatsql_rope_insert_char_at: (ptr: number, offset: number, unicode: number) => void;
-    flatsql_rope_erase_text_range: (ptr: number, offset: number, length: number) => void;
-    flatsql_rope_to_string: (ptr: number) => number;
+    flatsql_script_new: () => number;
+    flatsql_script_delete: (ptr: number) => void;
+    flatsql_script_insert_text_at: (ptr: number, offset: number, text: number, textLength: number) => void;
+    flatsql_script_insert_char_at: (ptr: number, offset: number, unicode: number) => void;
+    flatsql_script_erase_text_range: (ptr: number, offset: number, length: number) => void;
+    flatsql_script_to_string: (ptr: number) => number;
     flatsql_parse_rope: (ptr: number) => number;
 }
 
@@ -33,25 +33,25 @@ export class FlatSQL {
             flatsql_malloc: parserExports['flatsql_malloc'] as (length: number) => number,
             flatsql_free: parserExports['flatsql_free'] as (ptr: number) => void,
             flatsql_result_delete: parserExports['flatsql_result_delete'] as (ptr: number) => void,
-            flatsql_rope_new: parserExports['flatsql_rope_new'] as () => number,
-            flatsql_rope_delete: parserExports['flatsql_rope_delete'] as (ptr: number) => void,
-            flatsql_rope_insert_text_at: parserExports['flatsql_rope_insert_text_at'] as (
+            flatsql_script_new: parserExports['flatsql_script_new'] as () => number,
+            flatsql_script_delete: parserExports['flatsql_script_delete'] as (ptr: number) => void,
+            flatsql_script_insert_text_at: parserExports['flatsql_script_insert_text_at'] as (
                 ptr: number,
                 offset: number,
                 textPtr: number,
                 textLength: number,
             ) => void,
-            flatsql_rope_insert_char_at: parserExports['flatsql_rope_insert_char_at'] as (
+            flatsql_script_insert_char_at: parserExports['flatsql_script_insert_char_at'] as (
                 ptr: number,
                 offset: number,
                 character: number,
             ) => void,
-            flatsql_rope_erase_text_range: parserExports['flatsql_rope_erase_text_range'] as (
+            flatsql_script_erase_text_range: parserExports['flatsql_script_erase_text_range'] as (
                 ptr: number,
                 offset: number,
                 length: number,
             ) => void,
-            flatsql_rope_to_string: parserExports['flatsql_rope_to_string'] as (ptr: number) => number,
+            flatsql_script_to_string: parserExports['flatsql_script_to_string'] as (ptr: number) => number,
             flatsql_parse_rope: parserExports['flatsql_parse_rope'] as (ptr: number) => number,
         };
     }
@@ -86,9 +86,9 @@ export class FlatSQL {
         return instanceRef.instance;
     }
 
-    public createRope(): FlatSQLRope {
-        const ropePtr = this.instanceExports.flatsql_rope_new();
-        return new FlatSQLRope(this, ropePtr);
+    public createRope(): FlatSQLScript {
+        const ropePtr = this.instanceExports.flatsql_script_new();
+        return new FlatSQLScript(this, ropePtr);
     }
 
     public readResult(resultPtr: number) {
@@ -108,7 +108,7 @@ export class FlatSQL {
         }
     }
 
-    public parseRope(rope: FlatSQLRope): FlatSQLBuffer {
+    public parseScript(rope: FlatSQLScript): FlatSQLBuffer {
         const result = this.instanceExports.flatsql_parse_rope(rope.ropePtr);
         return this.readResult(result);
     }
@@ -146,7 +146,7 @@ export class FlatSQLBuffer {
     }
 }
 
-export class FlatSQLRope {
+export class FlatSQLScript {
     /// The FlatSQL api
     api: FlatSQL;
     /// The rope pointer
@@ -159,7 +159,7 @@ export class FlatSQLRope {
     /// Delete a rope
     public delete() {
         if (this.ropePtr) {
-            this.api.instanceExports.flatsql_rope_delete(this.ropePtr);
+            this.api.instanceExports.flatsql_script_delete(this.ropePtr);
         }
         this.ropePtr = null;
     }
@@ -167,7 +167,7 @@ export class FlatSQLRope {
     public insertTextAt(offset: number, text: string) {
         // Short-circuit inserting texts of length 1
         if (text.length == 1) {
-            this.api.instanceExports.flatsql_rope_insert_char_at(this.ropePtr, offset, text.charCodeAt(0));
+            this.api.instanceExports.flatsql_script_insert_char_at(this.ropePtr, offset, text.charCodeAt(0));
             return;
         }
         // To convert a JavaScript string s, the output space needed for full conversion is never less
@@ -176,18 +176,18 @@ export class FlatSQLRope {
         const textBuffer = new Uint8Array(this.api.memory.buffer).subarray(textBegin, textBegin + text.length * 3);
         const textEncoded = this.api.encoder.encodeInto(text, textBuffer);
         // Insert into rope
-        this.api.instanceExports.flatsql_rope_insert_text_at(this.ropePtr, offset, textBegin, textEncoded.written);
+        this.api.instanceExports.flatsql_script_insert_text_at(this.ropePtr, offset, textBegin, textEncoded.written);
         // Delete text buffer
         this.api.instanceExports.flatsql_free(textBegin);
     }
     /// Earse a range of characters
     public eraseTextRange(offset: number, length: number) {
         // Insert into rope
-        this.api.instanceExports.flatsql_rope_erase_text_range(this.ropePtr, offset, length);
+        this.api.instanceExports.flatsql_script_erase_text_range(this.ropePtr, offset, length);
     }
     /// Convert a rope to a string
     public toString(): string {
-        const result = this.api.instanceExports.flatsql_rope_to_string(this.ropePtr);
+        const result = this.api.instanceExports.flatsql_script_to_string(this.ropePtr);
         const resultBuffer = this.api.readResult(result);
         const text = this.api.decoder.decode(resultBuffer.getData());
         resultBuffer.delete();
