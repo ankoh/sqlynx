@@ -127,3 +127,24 @@ jobs:
               with:
                   submodules: 'recursive'
                   fetch-depth: 0
+
+            - uses: actions/download-artifact@v3
+              with:
+                  name: flatsql_parser_wasm
+                  path: ./packages/flatsql/build/wasm/Release/flatsql.wasm
+
+            - name: Install npm dependencies
+              shell: bash
+              run: |
+                  mkdir -p ./lib/build/wasm/release ./reports
+                  yarn install --frozen-lockfile
+
+            - name: Build @ankoh/flatsql
+              shell: bash
+              run: |
+                  yarn workspace @ankoh/flatsql build:release
+
+            - name: Test @ankoh/flatsql
+              shell: bash
+              run: |
+                  yarn workspace @ankoh/flatsql test
