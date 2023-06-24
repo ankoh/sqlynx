@@ -30,19 +30,6 @@ console.log(`DEBUG=${isDebug}`);
         external: ['flatbuffers'],
     });
 
-    console.log('[ ESBUILD ] tests-node.cjs');
-    await esbuild.build({
-        entryPoints: ['./test/index.ts'],
-        outfile: 'dist/tests-node.cjs',
-        platform: 'node',
-        format: 'cjs',
-        target: 'node14.6',
-        bundle: true,
-        minify: false,
-        sourcemap: isDebug ? 'inline' : true,
-        external: ['flatbuffers'],
-    });
-
     fs.writeFile(path.join(dist, 'flatsql.module.d.ts'), "export * from './index';", printErr);
 
     const build_dir = path.resolve(__dirname, '..', 'flatsql', 'build', 'wasm', 'Release');
