@@ -19,7 +19,7 @@ console.log(`DEBUG=${isDebug}`);
 (async () => {
     console.log(`[ ESBUILD ] flatsql.module.js`);
     await esbuild.build({
-        entryPoints: [`./lib.ts`],
+        entryPoints: [`./src/index.ts`],
         outfile: `dist/flatsql.module.js`,
         platform: 'neutral',
         format: 'esm',
@@ -30,7 +30,7 @@ console.log(`DEBUG=${isDebug}`);
         external: ['flatbuffers'],
     });
 
-    fs.writeFile(path.join(dist, 'flatsql.module.d.ts'), "export * from './index';", printErr);
+    fs.writeFile(path.join(dist, 'flatsql.module.d.ts'), "export * from './src';", printErr);
 
     const build_dir = path.resolve(__dirname, '..', 'flatsql', 'build', 'wasm', 'Release');
     fs.copyFile(path.resolve(build_dir, 'flatsql.wasm'), path.resolve(dist, 'flatsql.wasm'), printErr);
