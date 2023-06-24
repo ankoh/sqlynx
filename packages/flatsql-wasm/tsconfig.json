@@ -17,5 +17,5 @@
             "flatbuffers": ["../../node_modules/flatbuffers/js/flatbuffers.mjs"]
         }
     },
-    "files": ["lib.ts"]
+    "files": ["./src/index.ts"]
 }

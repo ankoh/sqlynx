@@ -1,4 +1,4 @@
-export * as proto from './gen/flatsql/proto';
+export * as proto from '../gen/flatsql/proto';
 
 interface FlatSQLModuleExports {
     flatsql_malloc: (lenght: number) => number;
