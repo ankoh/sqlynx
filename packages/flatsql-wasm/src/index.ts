@@ -241,20 +241,52 @@ export class FlatSQLScript {
 }
 
 export class FlatID {
-    protected value: number;
-    constructor(value: number) {
-        this.value = value;
-    }
     /// Mask index
-    public get index(): number {
-        return this.value & ~(0b1 << 31);
+    public static maskIndex(value: number): number {
+        return value & ~(0b1 << 31);
     }
     /// Is a null id?
-    public get isNull(): boolean {
-        return this.value == 0xffffffff;
+    public static isNull(value: number): boolean {
+        return value == 0xffffffff;
     }
     /// Is an external id?
-    public get isExternal(): boolean {
-        return this.value >> 31 != 0;
+    public static isExternal(value: number): boolean {
+        return value >> 31 != 0;
+    }
+    /// Read a name
+    public static readName(
+        value: number,
+        script: proto.ParsedScript,
+        external: proto.ParsedScript | null = null,
+    ): string | null {
+        if (FlatID.isNull(value)) {
+            return null;
+        }
+        if (FlatID.isExternal(value)) {
+            return external?.nameDictionary(FlatID.maskIndex(value)) ?? null;
+        } else {
+            return script.nameDictionary(FlatID.maskIndex(value)) ?? null;
+        }
+    }
+    /// Read a table name
+    public static readTableName(
+        name: proto.QualifiedTableName,
+        script: proto.ParsedScript,
+        external: proto.ParsedScript | null = null,
+    ) {
+        const database = FlatID.readName(name.databaseName(), script, external);
+        const schema = FlatID.readName(name.schemaName(), script, external);
+        const table = FlatID.readName(name.tableName(), script, external);
+        return { database, schema, table };
+    }
+    /// Read a table name
+    public static readColumnName(
+        name: proto.QualifiedColumnName,
+        script: proto.ParsedScript,
+        external: proto.ParsedScript | null = null,
+    ) {
+        const column = FlatID.readName(name.columnName(), script, external);
+        const alias = FlatID.readName(name.tableAlias(), script, external);
+        return { column, alias };
     }
 }
