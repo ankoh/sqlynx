@@ -32,7 +32,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
         const script = fsql!.createScript();
         script.insertTextAt(0, text);
         const result = script.parse();
-        const parsedScript = result.get(new flatsql.proto.ParsedScript());
+        const parsedScript = result.read(new flatsql.proto.ParsedScript());
         expect(parsedScript.statementsLength()).toEqual(8);
         for (let i = 0; i < 8; ++i) {
             expect(parsedScript.statements(0)!.statementType()).toEqual(flatsql.proto.StatementType.CREATE_TABLE);
@@ -92,7 +92,7 @@ limit 100
         const script = fsql!.createScript();
         script.insertTextAt(0, text);
         const result = script.parse();
-        const parsedScript = result.get(new flatsql.proto.ParsedScript());
+        const parsedScript = result.read(new flatsql.proto.ParsedScript());
         expect(parsedScript.statementsLength()).toEqual(1);
         expect(parsedScript.statements(0)!.statementType()).toEqual(flatsql.proto.StatementType.SELECT);
         expect(parsedScript.errorsLength()).toEqual(0);
