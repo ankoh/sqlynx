@@ -1,5 +1,6 @@
 {
     "editor.formatOnSave": true,
+    "json.validate.enable": false,
     "[xml]": {
         "editor.formatOnSave": false
     }
