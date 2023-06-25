@@ -48,11 +48,22 @@ describe('FlatSQL TPCH Parsing', () => {
         expect(analyzedScript.tablesLength()).toEqual(8);
 
         // Test tables
-        const table = (name: string) => ({
+        const table = (name: string, columns: string[] = []) => ({
             name,
+            columns,
         });
         const expectedTables = [
-            table('part'),
+            table('part', [
+                'p_partkey',
+                'p_name',
+                'p_mfgr',
+                'p_brand',
+                'p_type',
+                'p_size',
+                'p_container',
+                'p_retailprice',
+                'p_comment',
+            ]),
             table('supplier'),
             table('partsupp'),
             table('customer'),
@@ -70,6 +81,13 @@ describe('FlatSQL TPCH Parsing', () => {
                 schema: null,
                 table: expectedTables[i].name,
             });
+            for (let j = 0; j < expectedTables[i].columns.length; ++j) {
+                expect(j).toBeLessThan(table.columnCount());
+                const column = analyzedScript.tableColumns(table.columnsBegin() + j)!;
+                const columnName = flatsql.FlatID.readName(column.columnName(), parsedScript);
+                expect(columnName).toEqual(expectedTables[i].columns[j]);
+            }
+            const colNames = table.columnsBegin;
         }
 
         analyzerResult.delete();
