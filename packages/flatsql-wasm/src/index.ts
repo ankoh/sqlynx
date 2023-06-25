@@ -123,8 +123,8 @@ export class FlatSQL {
 export class FlatBufferRef<T extends FlatBufferObject<T>> {
     /// The FlatSQL api
     api: FlatSQL;
-    /// The buffer pointer
-    bufferPtr: number | null;
+    /// The result pointer
+    resultPtr: number | null;
     /// The data pointer
     dataPtr: number | null;
     /// The data length
@@ -132,16 +132,16 @@ export class FlatBufferRef<T extends FlatBufferObject<T>> {
 
     public constructor(api: FlatSQL, resultPtr: number, dataPtr: number, dataLength: number) {
         this.api = api;
-        this.bufferPtr = resultPtr;
+        this.resultPtr = resultPtr;
         this.dataPtr = dataPtr;
         this.dataLength = dataLength;
     }
     /// Delete the buffer
     public delete() {
-        if (this.bufferPtr) {
-            this.api.instanceExports.flatsql_result_delete(this.bufferPtr);
+        if (this.resultPtr) {
+            this.api.instanceExports.flatsql_result_delete(this.resultPtr);
         }
-        this.bufferPtr = null;
+        this.resultPtr = null;
     }
     /// Get the data
     public get data(): Uint8Array {
@@ -237,5 +237,24 @@ export class FlatSQLScript {
         const scriptPtr = this.assertScriptNotNull();
         const resultPtr = this.api.instanceExports.flatsql_script_analyze(scriptPtr, external?.scriptPtr ?? 0);
         return this.api.readResult<proto.AnalyzedScript>(resultPtr);
+    }
+}
+
+export class FlatID {
+    protected value: number;
+    constructor(value: number) {
+        this.value = value;
+    }
+    /// Mask index
+    public get index(): number {
+        return this.value & ~(0b1 << 31);
+    }
+    /// Is a null id?
+    public get isNull(): boolean {
+        return this.value == 0xffffffff;
+    }
+    /// Is an external id?
+    public get isExternal(): boolean {
+        return this.value >> 31 != 0;
     }
 }

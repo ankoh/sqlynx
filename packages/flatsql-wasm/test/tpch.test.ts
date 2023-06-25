@@ -31,14 +31,23 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
         `;
         const script = fsql!.createScript();
         script.insertTextAt(0, text);
-        const result = script.parse();
-        const parsedScript = result.read(new flatsql.proto.ParsedScript());
+
+        // Parse the script
+        const parserResult = script.parse();
+        const parsedScript = parserResult.read(new flatsql.proto.ParsedScript());
         expect(parsedScript.statementsLength()).toEqual(8);
         for (let i = 0; i < 8; ++i) {
             expect(parsedScript.statements(0)!.statementType()).toEqual(flatsql.proto.StatementType.CREATE_TABLE);
         }
         expect(parsedScript.errorsLength()).toEqual(0);
-        result.delete();
+
+        // Analyze the script
+        const analyzerResult = script.analyze();
+        const analyzedScript = analyzerResult.read(new flatsql.proto.AnalyzedScript());
+        expect(analyzedScript.tablesLength()).toEqual(8);
+
+        analyzerResult.delete();
+        parserResult.delete();
         script.delete();
     });
 
@@ -91,12 +100,24 @@ limit 100
         `;
         const script = fsql!.createScript();
         script.insertTextAt(0, text);
-        const result = script.parse();
-        const parsedScript = result.read(new flatsql.proto.ParsedScript());
+
+        // Parse the script
+        const parserResult = script.parse();
+        const parsedScript = parserResult.read(new flatsql.proto.ParsedScript());
         expect(parsedScript.statementsLength()).toEqual(1);
         expect(parsedScript.statements(0)!.statementType()).toEqual(flatsql.proto.StatementType.SELECT);
         expect(parsedScript.errorsLength()).toEqual(0);
-        result.delete();
+
+        // Analyze the script
+        const analyzerResult = script.analyze();
+        const analyzedScript = analyzerResult.read(new flatsql.proto.AnalyzedScript());
+        expect(analyzedScript.tablesLength()).toEqual(0);
+        expect(analyzedScript.tableReferencesLength()).toBeGreaterThan(0);
+        expect(analyzedScript.columnReferencesLength()).toBeGreaterThan(0);
+        expect(analyzedScript.graphEdgesLength()).toEqual(9);
+
+        analyzerResult.delete();
+        parserResult.delete();
         script.delete();
     });
 });
