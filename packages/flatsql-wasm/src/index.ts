@@ -1,4 +1,6 @@
 export * as proto from '../gen/flatsql/proto';
+import * as proto from '../gen/flatsql/proto';
+import * as flatbuffers from 'flatbuffers';
 
 interface FlatSQLModuleExports {
     flatsql_malloc: (lenght: number) => number;
@@ -15,6 +17,10 @@ interface FlatSQLModuleExports {
 }
 
 type InstantiateWasmCallback = (stubs: WebAssembly.Imports) => PromiseLike<WebAssembly.WebAssemblyInstantiatedSource>;
+
+interface FlatBufferObject<T> {
+    __init(i: number, bb: flatbuffers.ByteBuffer): T;
+}
 
 export class FlatSQL {
     encoder: TextEncoder;
@@ -93,17 +99,17 @@ export class FlatSQL {
         return new FlatSQLScript(this, scriptPtr);
     }
 
-    public readResult(resultPtr: number) {
+    public readResult<T extends FlatBufferObject<T>>(resultPtr: number) {
         const heapU8 = new Uint8Array(this.memory.buffer);
         const resultPtrU32 = resultPtr / 4;
         const heapU32 = new Uint32Array(this.memory.buffer);
         const statusCode = heapU32[resultPtrU32];
         const dataLength = heapU32[resultPtrU32 + 1];
         const dataPtr = heapU32[resultPtrU32 + 2];
-        const dataArray = heapU8.subarray(dataPtr, dataPtr + dataLength);
         if (statusCode == 0) {
-            return new FlatSQLBuffer(this, resultPtr, dataArray);
+            return new FlatBufferRef<T>(this, resultPtr, dataPtr, dataLength);
         } else {
+            const dataArray = heapU8.subarray(dataPtr, dataPtr + dataLength);
             const error = this.decoder.decode(dataArray);
             this.instanceExports.flatsql_result_delete(resultPtr);
             throw new Error(error);
@@ -111,18 +117,21 @@ export class FlatSQL {
     }
 }
 
-export class FlatSQLBuffer {
+export class FlatBufferRef<T extends FlatBufferObject<T>> {
     /// The FlatSQL api
     api: FlatSQL;
     /// The buffer pointer
     bufferPtr: number | null;
-    /// The data view
-    dataView: Uint8Array;
+    /// The data pointer
+    dataPtr: number | null;
+    /// The data length
+    dataLength: number;
 
-    public constructor(api: FlatSQL, resultPtr: number, data: Uint8Array) {
+    public constructor(api: FlatSQL, resultPtr: number, dataPtr: number, dataLength: number) {
         this.api = api;
         this.bufferPtr = resultPtr;
-        this.dataView = data;
+        this.dataPtr = dataPtr;
+        this.dataLength = dataLength;
     }
     /// Delete the buffer
     public delete() {
@@ -131,15 +140,22 @@ export class FlatSQLBuffer {
         }
         this.bufferPtr = null;
     }
+    /// Get the data
+    public get data(): Uint8Array {
+        const begin = this.dataPtr ?? 0;
+        return new Uint8Array(this.api.memory.buffer).subarray(begin, begin + this.dataLength);
+    }
     /// Copy the data into a buffer
-    public getDataCopy(): Uint8Array {
-        const copy = new Uint8Array(new ArrayBuffer(this.dataView.byteLength));
-        copy.set(this.dataView);
+    public copy(): Uint8Array {
+        const copy = new Uint8Array(new ArrayBuffer(this.data.byteLength));
+        copy.set(this.data);
         return copy;
     }
-    /// Get the data
-    public getData(): Uint8Array {
-        return this.dataView;
+    // Get the flatbuffer object
+    // C.f. getRootAsAnalyzedScript
+    public get(obj: T): T {
+        const bb = new flatbuffers.ByteBuffer(this.data);
+        return obj.__init(bb.readInt32(bb.position()) + bb.position(), bb);
     }
 }
 
@@ -203,8 +219,14 @@ export class FlatSQLScript {
         const scriptPtr = this.assertScriptNotNull();
         const result = this.api.instanceExports.flatsql_script_to_string(scriptPtr);
         const resultBuffer = this.api.readResult(result);
-        const text = this.api.decoder.decode(resultBuffer.getData());
+        const text = this.api.decoder.decode(resultBuffer.data);
         resultBuffer.delete();
         return text;
+    }
+    /// Parse a text
+    public parse(): FlatBufferRef<proto.ParsedScript> {
+        const scriptPtr = this.assertScriptNotNull();
+        const resultPtr = this.api.instanceExports.flatsql_script_parse(scriptPtr);
+        return this.api.readResult<proto.ParsedScript>(resultPtr);
     }
 }
