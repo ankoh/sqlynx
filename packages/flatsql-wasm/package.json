@@ -16,7 +16,7 @@
     "scripts": {
         "build:debug": "tsc --emitDeclarationOnly && ts-node bundle.ts debug",
         "build:release": "tsc --emitDeclarationOnly && ts-node bundle.ts release",
-        "test": "node ./node_modules/jest/bin/jest"
+        "test": "node ./node_modules/jest/bin/jest --verbose"
     },
     "files": [
         "dist/gen/*.d.ts",
