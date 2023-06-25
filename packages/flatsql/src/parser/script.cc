@@ -71,6 +71,10 @@ std::shared_ptr<proto::ParsedScriptT> ParsedScript::Pack() {
     out->highlighting = scanned_script->PackHighlighting();
     out->line_breaks = scanned_script->line_breaks;
     out->comments = scanned_script->comments;
+    out->name_dictionary.reserve(scanned_script->name_dictionary.size());
+    for (auto& [name, loc] : scanned_script->name_dictionary) {
+        out->name_dictionary.push_back(std::string{name});
+    }
     return out;
 }
 
