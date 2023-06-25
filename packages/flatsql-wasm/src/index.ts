@@ -10,7 +10,8 @@ interface FlatSQLModuleExports {
     flatsql_script_insert_char_at: (ptr: number, offset: number, unicode: number) => void;
     flatsql_script_erase_text_range: (ptr: number, offset: number, length: number) => void;
     flatsql_script_to_string: (ptr: number) => number;
-    flatsql_parse_rope: (ptr: number) => number;
+    flatsql_script_parse: (ptr: number) => number;
+    flatsql_script_analyze: (ptr: number) => number;
 }
 
 type InstantiateWasmCallback = (stubs: WebAssembly.Imports) => PromiseLike<WebAssembly.WebAssemblyInstantiatedSource>;
@@ -52,7 +53,8 @@ export class FlatSQL {
                 length: number,
             ) => void,
             flatsql_script_to_string: parserExports['flatsql_script_to_string'] as (ptr: number) => number,
-            flatsql_parse_rope: parserExports['flatsql_parse_rope'] as (ptr: number) => number,
+            flatsql_script_parse: parserExports['flatsql_script_parse'] as (ptr: number) => number,
+            flatsql_script_analyze: parserExports['flatsql_script_analyze'] as (ptr: number) => number,
         };
     }
 
