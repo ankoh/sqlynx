@@ -13,7 +13,7 @@ interface FlatSQLModuleExports {
     flatsql_script_erase_text_range: (ptr: number, offset: number, length: number) => void;
     flatsql_script_to_string: (ptr: number) => number;
     flatsql_script_parse: (ptr: number) => number;
-    flatsql_script_analyze: (ptr: number) => number;
+    flatsql_script_analyze: (ptr: number, external: number) => number;
 }
 
 type InstantiateWasmCallback = (stubs: WebAssembly.Imports) => PromiseLike<WebAssembly.WebAssemblyInstantiatedSource>;
@@ -60,7 +60,10 @@ export class FlatSQL {
             ) => void,
             flatsql_script_to_string: parserExports['flatsql_script_to_string'] as (ptr: number) => number,
             flatsql_script_parse: parserExports['flatsql_script_parse'] as (ptr: number) => number,
-            flatsql_script_analyze: parserExports['flatsql_script_analyze'] as (ptr: number) => number,
+            flatsql_script_analyze: parserExports['flatsql_script_analyze'] as (
+                ptr: number,
+                external: number,
+            ) => number,
         };
     }
 
@@ -223,10 +226,16 @@ export class FlatSQLScript {
         resultBuffer.delete();
         return text;
     }
-    /// Parse a text
+    /// Parse the script
     public parse(): FlatBufferRef<proto.ParsedScript> {
         const scriptPtr = this.assertScriptNotNull();
         const resultPtr = this.api.instanceExports.flatsql_script_parse(scriptPtr);
         return this.api.readResult<proto.ParsedScript>(resultPtr);
+    }
+    /// Analyze the script (optionally with an external script)
+    public analyze(external: FlatSQLScript | null = null): FlatBufferRef<proto.AnalyzedScript> {
+        const scriptPtr = this.assertScriptNotNull();
+        const resultPtr = this.api.instanceExports.flatsql_script_analyze(scriptPtr, external?.scriptPtr ?? 0);
+        return this.api.readResult<proto.AnalyzedScript>(resultPtr);
     }
 }
