@@ -8,7 +8,7 @@ const distPath = path.resolve(__dirname, '../dist');
 const wasmPath = path.resolve(distPath, './flatsql.wasm');
 
 describe('FlatSQL setup', () => {
-    it('wasm file exists', () => {
+    it('WebAssembly file exists', () => {
         expect(async () => await fs.promises.access(wasmPath)).not.toThrow();
     });
     it('instantiates WebAssembly module', () => {
