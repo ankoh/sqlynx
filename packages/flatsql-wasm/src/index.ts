@@ -156,7 +156,7 @@ export class FlatBufferRef<T extends FlatBufferObject<T>> {
     }
     // Get the flatbuffer object
     // C.f. getRootAsAnalyzedScript
-    public get(obj: T): T {
+    public read(obj: T): T {
         const bb = new flatbuffers.ByteBuffer(this.data);
         return obj.__init(bb.readInt32(bb.position()) + bb.position(), bb);
     }
