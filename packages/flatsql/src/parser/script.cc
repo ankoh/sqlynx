@@ -56,7 +56,7 @@ ParsedScript::ParsedScript(std::shared_ptr<ScannedScript> scan, parser::ParseCon
 /// Pack the FlatBuffer
 std::shared_ptr<proto::ParsedScriptT> ParsedScript::Pack() {
     auto out = std::make_unique<proto::ParsedScriptT>();
-    out->nodes = std::move(nodes);
+    out->nodes = nodes;
     out->statements.reserve(statements.size());
     for (auto& stmt : statements) {
         out->statements.push_back(stmt.Pack());
@@ -65,12 +65,12 @@ std::shared_ptr<proto::ParsedScriptT> ParsedScript::Pack() {
     for (auto& [loc, msg] : errors) {
         auto err = std::make_unique<proto::ErrorT>();
         err->location = std::make_unique<proto::Location>(loc);
-        err->message = std::move(msg);
+        err->message = msg;
         out->errors.push_back(std::move(err));
     }
     out->highlighting = scanned_script->PackHighlighting();
-    out->line_breaks = std::move(scanned_script->line_breaks);
-    out->comments = std::move(scanned_script->comments);
+    out->line_breaks = scanned_script->line_breaks;
+    out->comments = scanned_script->comments;
     return out;
 }
 
@@ -120,11 +120,12 @@ ParsedScript& Script::Parse() {
 AnalyzedScript& Script::Analyze(Script* external) {
     assert(scanned_script != nullptr);
     assert(!parsed_scripts.empty());
-    auto parsed_script = parsed_scripts.back();
-    if (!external->analyzed_scripts.empty()) {
-        analyzed_scripts.push_back(Analyzer::Analyze(std::move(parsed_script), external->analyzed_scripts.back()));
+
+    auto& parsed_script = parsed_scripts.back();
+    if (external && !external->analyzed_scripts.empty()) {
+        analyzed_scripts.push_back(Analyzer::Analyze(parsed_script, external->analyzed_scripts.back()));
     } else {
-        analyzed_scripts.push_back(Analyzer::Analyze(std::move(parsed_script)));
+        analyzed_scripts.push_back(Analyzer::Analyze(parsed_script));
     }
     // XXX Cleanup the old for now, replace with smarter garbage collection later
     if (analyzed_scripts.size() > 1) {

@@ -76,9 +76,9 @@ std::unique_ptr<proto::HighlightingT> ScannedScript::PackHighlighting() {
 
     // Build highlighting
     auto hl = std::make_unique<proto::HighlightingT>();
-    hl->token_offsets = std::move(offsets);
-    hl->token_types = std::move(types);
-    hl->token_breaks = std::move(breaks);
+    hl->token_offsets = offsets;
+    hl->token_types = types;
+    hl->token_breaks = breaks;
     return hl;
 }
 
