@@ -14,5 +14,6 @@ describe('FlatSQL setup', () => {
             return await WebAssembly.instantiate(buf, imports);
         });
         expect(instance).not.toBeNull();
+        expect(instance).not.toBeUndefined();
     });
 });

@@ -182,6 +182,7 @@ export class FlatSQLScript {
         const textEncoded = this.api.encoder.encodeInto(text, textBuffer);
         // Nothing written?
         if (textEncoded.written == undefined || textEncoded.written == 0) {
+            this.api.instanceExports.flatsql_free(textBegin);
             return;
         }
         // Insert into rope
