@@ -141,6 +141,8 @@ export class FlatSQLBuffer {
     }
 }
 
+export const NULL_POINTER_EXCEPTION = new Error('tried to access a null pointer');
+
 export class FlatSQLScript {
     /// The FlatSQL api
     api: FlatSQL;
@@ -158,10 +160,10 @@ export class FlatSQLScript {
         }
         this.scriptPtr = null;
     }
-
+    /// Make sure the script is not null
     protected assertScriptNotNull(): number {
         if (this.scriptPtr == null) {
-            throw new Error('script pointer is null');
+            throw NULL_POINTER_EXCEPTION;
         }
         return this.scriptPtr!;
     }
