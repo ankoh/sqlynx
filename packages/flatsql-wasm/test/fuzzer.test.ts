@@ -116,7 +116,7 @@ class ScriptInteractionGenerator {
 
 describe('FlatSQL fuzzer', () => {
     for (let seed = 0; seed < 100; ++seed) {
-        it('script interaction sequence', () => {
+        it(`script interaction sequence, seed=${seed}`, () => {
             const [ops, dataSource] = ScriptInteractionGenerator.generateMany(seed, 100, 100);
             const script = fsql!.createScript();
             let expected = '';
