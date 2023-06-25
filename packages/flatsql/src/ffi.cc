@@ -78,8 +78,8 @@ extern "C" FFIResult* flatsql_script_parse(Script* script) {
 
     // Pack a parsed script
     flatbuffers::FlatBufferBuilder fb;
-    auto parsed = script->PackParsedScript(fb);
-    fb.Finish(parsed);
+    auto packed = script->PackParsedScript(fb);
+    fb.Finish(packed);
 
     // Store the buffer
     auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));
@@ -98,8 +98,8 @@ extern "C" FFIResult* flatsql_script_analyze(Script* script, Script* external) {
 
     // Pack a parsed script
     flatbuffers::FlatBufferBuilder fb;
-    auto parsed = script->PackAnalyzedScript(fb);
-    fb.Finish(parsed);
+    auto packed = script->PackAnalyzedScript(fb);
+    fb.Finish(packed);
 
     // Store the buffer
     auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));
