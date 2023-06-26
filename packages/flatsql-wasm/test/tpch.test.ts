@@ -35,6 +35,7 @@ describe('FlatSQL TPCH Parsing', () => {
         script.insertTextAt(0, text);
 
         // Parse the script
+        script.scan();
         const parserResult = script.parse();
         const parsedScript = parserResult.read(new flatsql.proto.ParsedScript());
         expect(parsedScript.statementsLength()).toEqual(8);
@@ -162,6 +163,7 @@ limit 100
         script.insertTextAt(0, text);
 
         // Parse the script
+        script.scan();
         const parserResult = script.parse();
         const parsedScript = parserResult.read(new flatsql.proto.ParsedScript());
         expect(parsedScript.statementsLength()).toEqual(1);

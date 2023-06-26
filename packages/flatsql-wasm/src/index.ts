@@ -12,6 +12,7 @@ interface FlatSQLModuleExports {
     flatsql_script_insert_char_at: (ptr: number, offset: number, unicode: number) => void;
     flatsql_script_erase_text_range: (ptr: number, offset: number, length: number) => void;
     flatsql_script_to_string: (ptr: number) => number;
+    flatsql_script_scan: (ptr: number) => number;
     flatsql_script_parse: (ptr: number) => number;
     flatsql_script_analyze: (ptr: number, external: number) => number;
 }
@@ -59,6 +60,7 @@ export class FlatSQL {
                 length: number,
             ) => void,
             flatsql_script_to_string: parserExports['flatsql_script_to_string'] as (ptr: number) => number,
+            flatsql_script_scan: parserExports['flatsql_script_scan'] as (ptr: number) => number,
             flatsql_script_parse: parserExports['flatsql_script_parse'] as (ptr: number) => number,
             flatsql_script_analyze: parserExports['flatsql_script_analyze'] as (
                 ptr: number,
@@ -225,6 +227,12 @@ export class FlatSQLScript {
         const text = this.api.decoder.decode(resultBuffer.data);
         resultBuffer.delete();
         return text;
+    }
+    /// Parse the script
+    public scan(): FlatBufferRef<proto.ScannedScript> {
+        const scriptPtr = this.assertScriptNotNull();
+        const resultPtr = this.api.instanceExports.flatsql_script_scan(scriptPtr);
+        return this.api.readResult<proto.ScannedScript>(resultPtr);
     }
     /// Parse the script
     public parse(): FlatBufferRef<proto.ParsedScript> {
