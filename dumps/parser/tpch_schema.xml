@@ -1039,7 +1039,8 @@ create table region (
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="0..1" text="&#10;" />
                 <line-break loc="20..21" text="&#10;" />
@@ -2094,7 +2095,8 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="0..1" text="&#10;" />
                 <line-break loc="310..311" text="&#10;" />

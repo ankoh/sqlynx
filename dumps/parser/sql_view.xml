@@ -20,7 +20,8 @@
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="0..1" text="&#10;" />
                 <line-break loc="40..41" text="&#10;" />

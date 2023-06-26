@@ -5,9 +5,10 @@
         </input>
         <expected>
             <statements />
-            <errors>
+            <scanner-errors />
+            <parser-errors>
                 <error message="syntax error, unexpected INTERVAL, expecting FETCH or FOR or LIMIT or OFFSET" loc="40..48" text="interval" />
-            </errors>
+            </parser-errors>
             <line-breaks>
                 <line-break loc="0..1" text="&#10;" />
                 <line-break loc="57..58" text="&#10;" />

@@ -20,7 +20,8 @@
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="0..1" text="&#10;" />
                 <line-break loc="41..42" text="&#10;" />
@@ -50,7 +51,8 @@
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="0..1" text="&#10;" />
                 <line-break loc="41..42" text="&#10;" />
@@ -88,7 +90,8 @@
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="0..1" text="&#10;" />
                 <line-break loc="52..53" text="&#10;" />
@@ -126,7 +129,8 @@
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="0..1" text="&#10;" />
                 <line-break loc="52..53" text="&#10;" />
@@ -165,7 +169,8 @@
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="0..1" text="&#10;" />
                 <line-break loc="66..67" text="&#10;" />
@@ -203,7 +208,8 @@
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="0..1" text="&#10;" />
                 <line-break loc="52..53" text="&#10;" />
@@ -236,7 +242,8 @@
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="0..1" text="&#10;" />
                 <line-break loc="52..53" text="&#10;" />
@@ -274,7 +281,8 @@
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="0..1" text="&#10;" />
                 <line-break loc="57..58" text="&#10;" />
@@ -305,7 +313,8 @@
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="0..1" text="&#10;" />
                 <line-break loc="51..52" text="&#10;" />
@@ -341,7 +350,8 @@
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="0..1" text="&#10;" />
                 <line-break loc="66..67" text="&#10;" />
@@ -377,7 +387,8 @@
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="0..1" text="&#10;" />
                 <line-break loc="63..64" text="&#10;" />
@@ -412,7 +423,8 @@
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="0..1" text="&#10;" />
                 <line-break loc="53..54" text="&#10;" />
@@ -451,7 +463,8 @@
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="0..1" text="&#10;" />
                 <line-break loc="61..62" text="&#10;" />
