@@ -3,6 +3,7 @@ import '@jest/globals';
 import * as flatsql from '../src';
 import path from 'path';
 import fs from 'fs';
+import { expectTables, table } from './matchers';
 
 const distPath = path.resolve(__dirname, '../dist');
 const wasmPath = path.resolve(distPath, './flatsql.wasm');
@@ -48,11 +49,7 @@ describe('FlatSQL TPCH Parsing', () => {
         expect(analyzedScript.tablesLength()).toEqual(8);
 
         // Test tables
-        const table = (name: string, columns: string[] = []) => ({
-            name,
-            columns,
-        });
-        const expectedTables = [
+        expectTables(parsedScript, analyzedScript, [
             table('part', [
                 'p_partkey',
                 'p_name',
@@ -107,24 +104,7 @@ describe('FlatSQL TPCH Parsing', () => {
             ]),
             table('nation', ['n_nationkey', 'n_name', 'n_regionkey', 'n_comment']),
             table('region', ['r_regionkey', 'r_name', 'r_comment']),
-        ];
-        for (let i = 0; i < expectedTables.length; ++i) {
-            const table = analyzedScript.tables(i)!;
-            const tableName = table.tableName()!;
-            const resolvedName = flatsql.FlatID.readTableName(tableName, parsedScript);
-            expect(resolvedName).toEqual({
-                database: null,
-                schema: null,
-                table: expectedTables[i].name,
-            });
-            for (let j = 0; j < expectedTables[i].columns.length; ++j) {
-                expect(j).toBeLessThan(table.columnCount());
-                const column = analyzedScript.tableColumns(table.columnsBegin() + j)!;
-                const columnName = flatsql.FlatID.readName(column.columnName(), parsedScript);
-                expect(columnName).toEqual(expectedTables[i].columns[j]);
-            }
-            const colNames = table.columnsBegin;
-        }
+        ]);
 
         analyzerResult.delete();
         parserResult.delete();
