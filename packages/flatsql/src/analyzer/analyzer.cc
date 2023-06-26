@@ -19,6 +19,10 @@ Analyzer::Analyzer(std::shared_ptr<ParsedScript> parsed, std::shared_ptr<Analyze
 
 std::pair<std::shared_ptr<AnalyzedScript>, proto::StatusCode> Analyzer::Analyze(
     std::shared_ptr<ParsedScript> parsed, std::shared_ptr<AnalyzedScript> external) {
+    if (parsed == nullptr) {
+        return {nullptr, proto::StatusCode::ANALYZER_INPUT_INVALID};
+    }
+
     // Run analysis passes
     Analyzer az{parsed, external};
     az.pass_manager.Execute(*az.name_resolution);

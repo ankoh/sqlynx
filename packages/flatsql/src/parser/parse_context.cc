@@ -236,15 +236,15 @@ void ParseContext::AddStatement(proto::Node node) {
 /// Add an error
 void ParseContext::AddError(proto::Location loc, const std::string& message) { errors.push_back({loc, message}); }
 
-std::pair<std::shared_ptr<ParsedScript>, proto::StatusCode> ParseContext::Parse(std::shared_ptr<ScannedScript> in,
+std::pair<std::shared_ptr<ParsedScript>, proto::StatusCode> ParseContext::Parse(std::shared_ptr<ScannedScript> scanned,
                                                                                 bool trace_scanning,
                                                                                 bool trace_parsing) {
-    if (in == nullptr) {
+    if (scanned == nullptr) {
         return {nullptr, proto::StatusCode::PARSER_INPUT_INVALID};
     }
 
     // Parse the tokens
-    ParseContext ctx{*in};
+    ParseContext ctx{*scanned};
     flatsql::parser::Parser parser(ctx);
     parser.parse();
 
@@ -268,7 +268,7 @@ std::pair<std::shared_ptr<ParsedScript>, proto::StatusCode> ParseContext::Parse(
     assert(ctx.temp_nary_expressions.GetAllocatedNodeCount() == 0);
 
     // Pack the program
-    return {std::make_shared<ParsedScript>(in, std::move(ctx)), proto::StatusCode::NONE};
+    return {std::make_shared<ParsedScript>(scanned, std::move(ctx)), proto::StatusCode::NONE};
 }
 
 }  // namespace parser

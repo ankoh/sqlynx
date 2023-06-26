@@ -144,20 +144,16 @@ std::pair<ParsedScript*, proto::StatusCode> Script::Parse() {
 }
 /// Analyze a script
 std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(Script* external) {
-    assert(!scanned_script);
-    assert(!parsed_script);
+    auto external_analyzed =
+        (external && !external->analyzed_scripts.empty()) ? external->analyzed_scripts.back() : nullptr;
 
-    proto::StatusCode status;
-    if (external && !external->analyzed_scripts.empty()) {
-        auto [script, code] = Analyzer::Analyze(parsed_script, external->analyzed_scripts.back());
-        status = code;
-        analyzed_scripts.push_back(std::move(script));
-    } else {
-        analyzed_scripts.emplace_back();
-        auto [script, code] = Analyzer::Analyze(parsed_script);
-        status = code;
-        analyzed_scripts.push_back(std::move(script));
+    // Analyze a script
+    auto [script, status] = Analyzer::Analyze(parsed_script, external_analyzed);
+    if (status != proto::StatusCode::NONE) {
+        return {nullptr, status};
     }
+    analyzed_scripts.push_back(std::move(script));
+
     // XXX Cleanup the old for now, replace with smarter garbage collection later
     if (analyzed_scripts.size() > 1) {
         analyzed_scripts.pop_front();
