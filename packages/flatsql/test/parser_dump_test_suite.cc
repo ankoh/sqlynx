@@ -14,8 +14,11 @@ struct ParserDumpTestSuite : public ::testing::TestWithParam<const ParserDumpTes
 TEST_P(ParserDumpTestSuite, Test) {
     auto* test = GetParam();
     auto input = std::make_shared<TextBuffer>(1024, test->input);
-    auto scanned = parser::Scanner::Scan(input);
-    auto parsed = parser::ParseContext::Parse(scanned);
+    auto [scanned, scannedStatus] = parser::Scanner::Scan(input);
+    auto [parsed, parsedStatus] = parser::ParseContext::Parse(scanned);
+
+    ASSERT_EQ(scannedStatus, proto::StatusCode::NONE);
+    ASSERT_EQ(parsedStatus, proto::StatusCode::NONE);
 
     pugi::xml_document out;
     ParserDumpTest::EncodeScript(out, *scanned, *parsed, test->input);

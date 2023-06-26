@@ -5,6 +5,7 @@
 #include "flatsql/analyzer/analyzer.h"
 #include "flatsql/parser/parse_context.h"
 #include "flatsql/parser/scanner.h"
+#include "flatsql/proto/proto_generated.h"
 #include "flatsql/testing/analyzer_dump_test.h"
 #include "gflags/gflags.h"
 #include "gtest/gtest.h"
@@ -54,19 +55,43 @@ static void generate_analyzer_dumps(const std::filesystem::path& source_dir) {
             std::string external_text = xml_external.child("input").last_child().value();
             auto external_rope = std::make_shared<TextBuffer>(1024, external_text);
             auto external_scan = parser::Scanner::Scan(external_rope);
-            auto external_parsed = parser::ParseContext::Parse(external_scan);
-            auto external_analyzed = Analyzer::Analyze(external_parsed);
+            if (external_scan.second != proto::StatusCode::NONE) {
+                std::cout << "  ERROR " << proto::EnumNameStatusCode(external_scan.second) << std::endl;
+                continue;
+            }
+            auto external_parsed = parser::ParseContext::Parse(external_scan.first);
+            if (external_parsed.second != proto::StatusCode::NONE) {
+                std::cout << "  ERROR " << proto::EnumNameStatusCode(external_parsed.second) << std::endl;
+                continue;
+            }
+            auto external_analyzed = Analyzer::Analyze(external_parsed.first);
+            if (external_analyzed.second != proto::StatusCode::NONE) {
+                std::cout << "  ERROR " << proto::EnumNameStatusCode(external_analyzed.second) << std::endl;
+                continue;
+            }
 
             /// Read the script
             auto xml_main = test.child("main");
             std::string main_text = xml_main.child("input").last_child().value();
             auto main_rope = std::make_shared<TextBuffer>(1024, main_text);
             auto main_scan = parser::Scanner::Scan(main_rope);
-            auto main_parsed = parser::ParseContext::Parse(main_scan);
-            auto main_analyzed = Analyzer::Analyze(main_parsed, external_analyzed);
+            if (main_scan.second != proto::StatusCode::NONE) {
+                std::cout << "  ERROR " << proto::EnumNameStatusCode(main_scan.second) << std::endl;
+                continue;
+            }
+            auto main_parsed = parser::ParseContext::Parse(main_scan.first);
+            if (main_parsed.second != proto::StatusCode::NONE) {
+                std::cout << "  ERROR " << proto::EnumNameStatusCode(main_parsed.second) << std::endl;
+                continue;
+            }
+            auto main_analyzed = Analyzer::Analyze(main_parsed.first, external_analyzed.first);
+            if (main_analyzed.second != proto::StatusCode::NONE) {
+                std::cout << "  ERROR " << proto::EnumNameStatusCode(main_analyzed.second) << std::endl;
+                continue;
+            }
 
             // Encode a program
-            AnalyzerDumpTest::EncodeScript(test, *main_analyzed, external_analyzed.get());
+            AnalyzerDumpTest::EncodeScript(test, *main_analyzed.first, external_analyzed.first.get());
         }
 
         // Write xml document

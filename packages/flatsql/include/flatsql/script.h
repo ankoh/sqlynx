@@ -3,6 +3,7 @@
 #include <flatbuffers/buffer.h>
 
 #include <string_view>
+#include <tuple>
 
 #include "ankerl/unordered_dense.h"
 #include "flatsql/parser/parser_generated.h"
@@ -193,11 +194,11 @@ class Script {
     std::string ToString();
 
     /// Parse the latest scanned script
-    ScannedScript& Scan();
+    std::pair<ScannedScript*, proto::StatusCode> Scan();
     /// Parse the latest scanned script
-    ParsedScript& Parse();
+    std::pair<ParsedScript*, proto::StatusCode> Parse();
     /// Analyze the latest parsed script
-    AnalyzedScript& Analyze(Script* external = nullptr);
+    std::pair<AnalyzedScript*, proto::StatusCode> Analyze(Script* external = nullptr);
     /// Update the completion index
     void UpdateCompletionIndex();
     /// Complete at a text offset
