@@ -2,6 +2,7 @@
 
 #include "flatsql/analyzer/name_resolution_pass.h"
 #include "flatsql/analyzer/pass_manager.h"
+#include "flatsql/proto/proto_generated.h"
 #include "flatsql/script.h"
 
 namespace flatsql {
@@ -16,8 +17,8 @@ Analyzer::Analyzer(std::shared_ptr<ParsedScript> parsed, std::shared_ptr<Analyze
     }
 }
 
-std::shared_ptr<AnalyzedScript> Analyzer::Analyze(std::shared_ptr<ParsedScript> parsed,
-                                                  std::shared_ptr<AnalyzedScript> external) {
+std::pair<std::shared_ptr<AnalyzedScript>, proto::StatusCode> Analyzer::Analyze(
+    std::shared_ptr<ParsedScript> parsed, std::shared_ptr<AnalyzedScript> external) {
     // Run analysis passes
     Analyzer az{parsed, external};
     az.pass_manager.Execute(*az.name_resolution);
@@ -25,7 +26,7 @@ std::shared_ptr<AnalyzedScript> Analyzer::Analyze(std::shared_ptr<ParsedScript> 
     // Build program
     auto program = std::make_shared<AnalyzedScript>(parsed, external);
     az.name_resolution->Export(*program);
-    return program;
+    return {program, proto::StatusCode::NONE};
 }
 
 }  // namespace flatsql

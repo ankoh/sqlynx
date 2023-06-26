@@ -1,6 +1,7 @@
 #pragma once
 
 #include "flatsql/analyzer/pass_manager.h"
+#include "flatsql/proto/proto_generated.h"
 #include "flatsql/script.h"
 #include "flatsql/utils/attribute_index.h"
 
@@ -97,8 +98,8 @@ struct Analyzer {
     Analyzer(std::shared_ptr<ParsedScript> parsed, std::shared_ptr<AnalyzedScript> external);
 
     /// Analyze a program
-    static std::shared_ptr<AnalyzedScript> Analyze(std::shared_ptr<ParsedScript> parsed,
-                                                   std::shared_ptr<AnalyzedScript> external = nullptr);
+    static std::pair<std::shared_ptr<AnalyzedScript>, proto::StatusCode> Analyze(
+        std::shared_ptr<ParsedScript> parsed, std::shared_ptr<AnalyzedScript> external = nullptr);
 };
 
 }  // namespace flatsql

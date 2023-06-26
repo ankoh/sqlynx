@@ -19,19 +19,19 @@ TEST_P(AnalyzerDumpTestSuite, Test) {
 
     // Analyze schema
     auto external_scan = parser::Scanner::Scan(input_external);
-    auto external_parsed = parser::ParseContext::Parse(external_scan);
-    auto external_analyzed = Analyzer::Analyze(external_parsed);
+    auto external_parsed = parser::ParseContext::Parse(external_scan.first);
+    auto external_analyzed = Analyzer::Analyze(external_parsed.first);
 
     // Analyze script
     auto main_scan = parser::Scanner::Scan(input_main);
-    auto main_parsed = parser::ParseContext::Parse(main_scan);
-    auto main_analyzed = Analyzer::Analyze(main_parsed, external_analyzed);
+    auto main_parsed = parser::ParseContext::Parse(main_scan.first);
+    auto main_analyzed = Analyzer::Analyze(main_parsed.first, external_analyzed.first);
 
     // Encode the program
     pugi::xml_document out;
     auto xml_external = out.append_child("external");
     auto xml_main = out.append_child("main");
-    AnalyzerDumpTest::EncodeScript(out, *main_analyzed, external_analyzed.get());
+    AnalyzerDumpTest::EncodeScript(out, *main_analyzed.first, external_analyzed.first.get());
 
     // Test the XMLs
     ASSERT_TRUE(Matches(xml_main.child("tables"), test->tables));

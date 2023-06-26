@@ -31,7 +31,7 @@ extern "C" void flatsql_free(void* buffer) { delete[] reinterpret_cast<std::byte
 struct FFIResult {
     uint32_t status_code;
     uint32_t data_length;
-    void* data_ptr;
+    const void* data_ptr;
     void* owner_ptr;
     void (*owner_deleter)(void*);
 };
@@ -72,15 +72,44 @@ extern "C" FFIResult* flatsql_script_to_string(Script* script) {
     return result;
 }
 
+static FFIResult* packError(proto::StatusCode status) {
+    std::string_view message;
+    switch (status) {
+        case proto::StatusCode::PARSER_INPUT_INVALID:
+            message = "Parser input is invalid";
+            break;
+        case proto::StatusCode::SCANNER_INPUT_INVALID:
+            message = "Scanner input is invalid";
+            break;
+        case proto::StatusCode::ANALYZER_INPUT_INVALID:
+            message = "Analyzer input is invalid";
+            break;
+        case proto::StatusCode::NONE:
+            message = "";
+            break;
+    }
+    auto result = new FFIResult();
+    result->status_code = static_cast<uint32_t>(status);
+    result->data_ptr = static_cast<const void*>(message.data());
+    result->data_length = message.size();
+    result->owner_ptr = nullptr;
+    result->owner_deleter = [](void*) {};
+    return result;
+}
+
 /// Scan a script
 extern "C" FFIResult* flatsql_script_scan(Script* script) {
-    auto& scanned = script->Scan();
+    // Scan the script
+    auto [scanned, status] = script->Scan();
+    if (status != proto::StatusCode::NONE) {
+        return packError(status);
+    }
 
     // Pack a parsed script
     flatbuffers::FlatBufferBuilder fb;
-    fb.Finish(scanned.Pack(fb));
+    fb.Finish(scanned->Pack(fb));
 
-    // Store the buffer
+    // Pack the buffer
     auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));
     auto result = new FFIResult();
     result->status_code = 0;
@@ -88,18 +117,24 @@ extern "C" FFIResult* flatsql_script_scan(Script* script) {
     result->data_length = detached->size();
     result->owner_ptr = detached.release();
     result->owner_deleter = [](void* buffer) { delete reinterpret_cast<flatbuffers::DetachedBuffer*>(buffer); };
+
+    // Store the buffer
     return result;
 }
 
 /// Parse a script
 extern "C" FFIResult* flatsql_script_parse(Script* script) {
-    auto& parsed = script->Parse();
+    // Parse the script
+    auto [parsed, status] = script->Parse();
+    if (status != proto::StatusCode::NONE) {
+        return packError(status);
+    }
 
     // Pack a parsed script
     flatbuffers::FlatBufferBuilder fb;
-    fb.Finish(parsed.Pack(fb));
+    fb.Finish(parsed->Pack(fb));
 
-    // Store the buffer
+    // Pack the buffer
     auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));
     auto result = new FFIResult();
     result->status_code = 0;
@@ -112,11 +147,15 @@ extern "C" FFIResult* flatsql_script_parse(Script* script) {
 
 /// Analyze a script
 extern "C" FFIResult* flatsql_script_analyze(Script* script, Script* external) {
-    auto& analyzed = script->Analyze(external);
+    // Analyze the script
+    auto [analyzed, status] = script->Analyze(external);
+    if (status != proto::StatusCode::NONE) {
+        return packError(status);
+    }
 
     // Pack a parsed script
     flatbuffers::FlatBufferBuilder fb;
-    fb.Finish(analyzed.Pack(fb));
+    fb.Finish(analyzed->Pack(fb));
 
     // Store the buffer
     auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));

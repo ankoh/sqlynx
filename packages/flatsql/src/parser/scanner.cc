@@ -4,6 +4,7 @@
 
 #include "flatsql/parser/grammar/keywords.h"
 #include "flatsql/parser/parse_context.h"
+#include "flatsql/proto/proto_generated.h"
 #include "flatsql/script.h"
 #include "flatsql/utils/string.h"
 
@@ -109,7 +110,7 @@ void Scanner::ScanNextInputData(void* out_buffer, size_t& out_bytes_read, size_t
 }
 
 /// Scan input and produce all tokens
-std::shared_ptr<ScannedScript> Scanner::Scan(std::shared_ptr<TextBuffer> rope) {
+std::pair<std::shared_ptr<ScannedScript>, proto::StatusCode> Scanner::Scan(std::shared_ptr<TextBuffer> rope) {
     // Function to get next token
     auto next = [](void* scanner_state_ptr, std::optional<Parser::symbol_type>& lookahead_symbol) {
         // Have lookahead?
@@ -190,7 +191,7 @@ std::shared_ptr<ScannedScript> Scanner::Scan(std::shared_ptr<TextBuffer> rope) {
     }
 
     // Collect scanner output
-    return std::move(scanner.output);
+    return {std::move(scanner.output), proto::StatusCode::NONE};
 }
 
 }  // namespace parser

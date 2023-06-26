@@ -131,30 +131,38 @@ void Script::EraseTextRange(size_t char_idx, size_t count) { text->EraseTextRang
 std::string Script::ToString() { return text->ToString(); }
 
 /// Scan a script
-ScannedScript& Script::Scan() {
-    scanned_script = parser::Scanner::Scan(text);
-    return *scanned_script;
+std::pair<ScannedScript*, proto::StatusCode> Script::Scan() {
+    auto [script, status] = parser::Scanner::Scan(text);
+    scanned_script = std::move(script);
+    return {scanned_script.get(), status};
 }
 /// Parse a script
-ParsedScript& Script::Parse() {
-    parsed_script = parser::ParseContext::Parse(scanned_script);
-    return *parsed_script;
+std::pair<ParsedScript*, proto::StatusCode> Script::Parse() {
+    auto [script, status] = parser::ParseContext::Parse(scanned_script);
+    parsed_script = std::move(script);
+    return {parsed_script.get(), status};
 }
 /// Analyze a script
-AnalyzedScript& Script::Analyze(Script* external) {
+std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(Script* external) {
     assert(!scanned_script);
     assert(!parsed_script);
 
+    proto::StatusCode status;
     if (external && !external->analyzed_scripts.empty()) {
-        analyzed_scripts.push_back(Analyzer::Analyze(parsed_script, external->analyzed_scripts.back()));
+        auto [script, code] = Analyzer::Analyze(parsed_script, external->analyzed_scripts.back());
+        status = code;
+        analyzed_scripts.push_back(std::move(script));
     } else {
-        analyzed_scripts.push_back(Analyzer::Analyze(parsed_script));
+        analyzed_scripts.emplace_back();
+        auto [script, code] = Analyzer::Analyze(parsed_script);
+        status = code;
+        analyzed_scripts.push_back(std::move(script));
     }
     // XXX Cleanup the old for now, replace with smarter garbage collection later
     if (analyzed_scripts.size() > 1) {
         analyzed_scripts.pop_front();
     }
-    return *analyzed_scripts.back();
+    return {analyzed_scripts.back().get(), status};
 }
 
 }  // namespace flatsql

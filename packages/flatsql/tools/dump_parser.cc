@@ -57,11 +57,15 @@ static void generate_parser_dumps(const std::filesystem::path& source_dir) {
             auto input_buffer = std::string{input.last_child().value()};
             auto input_rope = std::make_shared<TextBuffer>(1024, input_buffer);
             auto scanned = parser::Scanner::Scan(input_rope);
-            auto parsed = parser::ParseContext::Parse(scanned);
+            if (scanned.second != proto::StatusCode::NONE) {
+                std::cout << "  ERROR " << proto::EnumNameStatusCode(scanned.second) << std::endl;
+                continue;
+            }
+            auto [parsed, parserError] = parser::ParseContext::Parse(scanned.first);
 
             /// Write output
             auto expected = test.append_child("expected");
-            ParserDumpTest::EncodeScript(expected, *scanned, *parsed, input_buffer);
+            ParserDumpTest::EncodeScript(expected, *scanned.first, *parsed, input_buffer);
         }
 
         // Write xml document
