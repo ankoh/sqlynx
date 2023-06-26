@@ -78,9 +78,6 @@ static FFIResult* packError(proto::StatusCode status) {
         case proto::StatusCode::PARSER_INPUT_INVALID:
             message = "Parser input is invalid";
             break;
-        case proto::StatusCode::SCANNER_INPUT_INVALID:
-            message = "Scanner input is invalid";
-            break;
         case proto::StatusCode::ANALYZER_INPUT_INVALID:
             message = "Analyzer input is invalid";
             break;
