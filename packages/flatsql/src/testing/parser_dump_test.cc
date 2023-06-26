@@ -15,10 +15,11 @@
 namespace flatsql::testing {
 
 /// Encode yaml
-void ParserDumpTest::EncodeScript(pugi::xml_node root, const proto::ParsedScriptT& program, std::string_view text) {
+void ParserDumpTest::EncodeScript(pugi::xml_node root, const ScannedScript& scanned, const ParsedScript& parsed,
+                                  std::string_view text) {
     // Unpack modules
-    auto& nodes = program.nodes;
-    auto& statements = program.statements;
+    auto& nodes = parsed.nodes;
+    auto& statements = parsed.statements;
     auto* stmt_type_tt = proto::StatementTypeTypeTable();
     auto* node_type_tt = proto::NodeTypeTypeTable();
 
@@ -27,13 +28,13 @@ void ParserDumpTest::EncodeScript(pugi::xml_node root, const proto::ParsedScript
 
     // Translate the statement tree with a DFS
     for (unsigned stmt_id = 0; stmt_id < statements.size(); ++stmt_id) {
-        auto& s = *statements[stmt_id];
+        auto& s = statements[stmt_id];
 
         auto stmt = stmts.append_child("statement");
-        stmt.append_attribute("type") = stmt_type_tt->names[static_cast<uint16_t>(s.statement_type)];
+        stmt.append_attribute("type") = stmt_type_tt->names[static_cast<uint16_t>(s.type)];
 
         std::vector<std::tuple<pugi::xml_node, const proto::Node*>> pending;
-        pending.push_back({stmt.append_child("node"), &nodes[s.root_node]});
+        pending.push_back({stmt.append_child("node"), &nodes[s.root]});
 
         while (!pending.empty()) {
             auto [n, target] = pending.back();
@@ -95,21 +96,22 @@ void ParserDumpTest::EncodeScript(pugi::xml_node root, const proto::ParsedScript
 
     // Add errors
     auto errors = root.append_child("errors");
-    for (auto& err : program.errors) {
+    for (auto& [err_loc, err_msg] : parsed.errors) {
         auto error = errors.append_child("error");
-        EncodeError(error, *err, text);
+        error.append_attribute("message") = err_msg.c_str();
+        EncodeLocation(error, err_loc, text);
     }
 
     // Add line breaks
     auto line_breaks = root.append_child("line-breaks");
-    for (auto& lb : program.line_breaks) {
+    for (auto& lb : scanned.line_breaks) {
         auto lb_node = line_breaks.append_child("line-break");
         EncodeLocation(lb_node, lb, text);
     }
 
     // Add comments
     auto comments = root.append_child("comments");
-    for (auto& comment : program.comments) {
+    for (auto& comment : scanned.comments) {
         auto comment_node = comments.append_child("comment");
         EncodeLocation(comment_node, comment, text);
     }

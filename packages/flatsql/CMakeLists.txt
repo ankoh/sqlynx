@@ -66,6 +66,7 @@ if(WASM)
         -Wl,--export=flatsql_script_insert_char_at \
         -Wl,--export=flatsql_script_erase_text_range \
         -Wl,--export=flatsql_script_to_string \
+        -Wl,--export=flatsql_script_scan \
         -Wl,--export=flatsql_script_parse \
         -Wl,--export=flatsql_script_analyze \
         -flto \

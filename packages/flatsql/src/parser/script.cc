@@ -1,5 +1,7 @@
 #include "flatsql/script.h"
 
+#include <flatbuffers/flatbuffer_builder.h>
+
 #include "flatsql/analyzer/analyzer.h"
 #include "flatsql/parser/parse_context.h"
 #include "flatsql/parser/scanner.h"
@@ -46,6 +48,24 @@ std::string_view ScannedScript::ReadTextAtLocation(sx::Location loc, std::string
     return input_data->Read(loc.offset(), loc.length(), tmp);
 }
 
+flatbuffers::Offset<proto::ScannedScript> ScannedScript::Pack(flatbuffers::FlatBufferBuilder& builder) {
+    proto::ScannedScriptT out;
+    out.errors.reserve(errors.size());
+    for (auto& [loc, msg] : errors) {
+        auto err = std::make_unique<proto::ErrorT>();
+        err->location = std::make_unique<proto::Location>(loc);
+        err->message = msg;
+        out.errors.push_back(std::move(err));
+    }
+    out.highlighting = PackHighlighting();
+    out.line_breaks = line_breaks;
+    out.name_dictionary.reserve(name_dictionary.size());
+    for (auto& [name, loc] : name_dictionary) {
+        out.name_dictionary.emplace_back(name);
+    }
+    return proto::ScannedScript::Pack(builder, &out);
+}
+
 /// Constructor
 ParsedScript::ParsedScript(std::shared_ptr<ScannedScript> scan, parser::ParseContext&& ctx)
     : scanned_script(scan),
@@ -54,43 +74,43 @@ ParsedScript::ParsedScript(std::shared_ptr<ScannedScript> scan, parser::ParseCon
       errors(std::move(ctx.errors)) {}
 
 /// Pack the FlatBuffer
-std::shared_ptr<proto::ParsedScriptT> ParsedScript::Pack() {
-    auto out = std::make_unique<proto::ParsedScriptT>();
-    out->nodes = nodes;
-    out->statements.reserve(statements.size());
+flatbuffers::Offset<proto::ParsedScript> ParsedScript::Pack(flatbuffers::FlatBufferBuilder& builder) {
+    proto::ParsedScriptT out;
+    out.nodes = nodes;
+    out.statements.reserve(statements.size());
     for (auto& stmt : statements) {
-        out->statements.push_back(stmt.Pack());
+        out.statements.push_back(stmt.Pack());
     }
-    out->errors.reserve(errors.size());
+    out.errors.reserve(errors.size());
     for (auto& [loc, msg] : errors) {
         auto err = std::make_unique<proto::ErrorT>();
         err->location = std::make_unique<proto::Location>(loc);
         err->message = msg;
-        out->errors.push_back(std::move(err));
+        out.errors.push_back(std::move(err));
     }
-    out->highlighting = scanned_script->PackHighlighting();
-    out->line_breaks = scanned_script->line_breaks;
-    out->comments = scanned_script->comments;
-    out->name_dictionary.reserve(scanned_script->name_dictionary.size());
+    out.highlighting = scanned_script->PackHighlighting();
+    out.line_breaks = scanned_script->line_breaks;
+    out.comments = scanned_script->comments;
+    out.name_dictionary.reserve(scanned_script->name_dictionary.size());
     for (auto& [name, loc] : scanned_script->name_dictionary) {
-        out->name_dictionary.push_back(std::string{name});
+        out.name_dictionary.push_back(std::string{name});
     }
-    return out;
+    return proto::ParsedScript::Pack(builder, &out);
 }
 
 /// Constructor
 AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, std::shared_ptr<AnalyzedScript> external)
     : parsed_script(std::move(parsed)), external_script(std::move(external)) {}
 // Pack an analyzed script
-std::unique_ptr<proto::AnalyzedScriptT> AnalyzedScript::Pack() {
-    auto out = std::make_unique<proto::AnalyzedScriptT>();
-    out->tables = tables;
-    out->table_columns = table_columns;
-    out->table_references = table_references;
-    out->column_references = column_references;
-    out->graph_edges = graph_edges;
-    out->graph_edge_nodes = graph_edge_nodes;
-    return out;
+flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::FlatBufferBuilder& builder) {
+    proto::AnalyzedScriptT out;
+    out.tables = tables;
+    out.table_columns = table_columns;
+    out.table_references = table_references;
+    out.column_references = column_references;
+    out.graph_edges = graph_edges;
+    out.graph_edge_nodes = graph_edge_nodes;
+    return proto::AnalyzedScript::Pack(builder, &out);
 }
 
 /// Constructor
@@ -110,22 +130,21 @@ void Script::EraseTextRange(size_t char_idx, size_t count) { text->EraseTextRang
 /// Print a script as string
 std::string Script::ToString() { return text->ToString(); }
 
+/// Scan a script
+ScannedScript& Script::Scan() {
+    scanned_script = parser::Scanner::Scan(text);
+    return *scanned_script;
+}
 /// Parse a script
 ParsedScript& Script::Parse() {
-    scanned_script = parser::Scanner::Scan(text);
-    parsed_scripts.push_back(parser::ParseContext::Parse(scanned_script));
-    // XXX Cleanup the old for now, replace with smarter garbage collection later
-    if (parsed_scripts.size() > 1) {
-        parsed_scripts.pop_front();
-    }
-    return *parsed_scripts.back();
+    parsed_script = parser::ParseContext::Parse(scanned_script);
+    return *parsed_script;
 }
 /// Analyze a script
 AnalyzedScript& Script::Analyze(Script* external) {
-    assert(scanned_script != nullptr);
-    assert(!parsed_scripts.empty());
+    assert(!scanned_script);
+    assert(!parsed_script);
 
-    auto& parsed_script = parsed_scripts.back();
     if (external && !external->analyzed_scripts.empty()) {
         analyzed_scripts.push_back(Analyzer::Analyze(parsed_script, external->analyzed_scripts.back()));
     } else {
@@ -136,19 +155,6 @@ AnalyzedScript& Script::Analyze(Script* external) {
         analyzed_scripts.pop_front();
     }
     return *analyzed_scripts.back();
-}
-
-/// Pack a parsed script
-flatbuffers::Offset<proto::ParsedScript> Script::PackParsedScript(flatbuffers::FlatBufferBuilder& builder) {
-    assert(!parsed_scripts.empty());
-    auto packed = parsed_scripts.back()->Pack();
-    return proto::ParsedScript::Pack(builder, packed.get());
-}
-/// Pack a analyzed script
-flatbuffers::Offset<proto::AnalyzedScript> Script::PackAnalyzedScript(flatbuffers::FlatBufferBuilder& builder) {
-    assert(!analyzed_scripts.empty());
-    auto packed = analyzed_scripts.back()->Pack();
-    return proto::AnalyzedScript::Pack(builder, packed.get());
 }
 
 }  // namespace flatsql

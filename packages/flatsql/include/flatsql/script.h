@@ -97,6 +97,8 @@ class ScannedScript {
     std::string_view ReadTextAtLocation(sx::Location loc, std::string& tmp);
     /// Pack syntax highlighting
     std::unique_ptr<proto::HighlightingT> PackHighlighting();
+    /// Pack scanned program
+    flatbuffers::Offset<proto::ScannedScript> Pack(flatbuffers::FlatBufferBuilder& builder);
 };
 
 class ParsedScript {
@@ -125,7 +127,7 @@ class ParsedScript {
     ParsedScript(std::shared_ptr<ScannedScript> scan, parser::ParseContext&& context);
 
     /// Build the script
-    std::shared_ptr<proto::ParsedScriptT> Pack();
+    flatbuffers::Offset<proto::ParsedScript> Pack(flatbuffers::FlatBufferBuilder& builder);
 };
 
 class AnalyzedScript {
@@ -152,7 +154,7 @@ class AnalyzedScript {
     AnalyzedScript(std::shared_ptr<ParsedScript> parsed, std::shared_ptr<AnalyzedScript> external);
 
     /// Build the program
-    std::unique_ptr<proto::AnalyzedScriptT> Pack();
+    flatbuffers::Offset<proto::AnalyzedScript> Pack(flatbuffers::FlatBufferBuilder& builder);
 };
 
 class CompletionIndex {
@@ -168,10 +170,10 @@ class Script {
     std::shared_ptr<TextBuffer> text;
     /// The external script (if any)
     Script* external_script;
-    /// The last scanner output
+    /// The last scanned script
     std::shared_ptr<ScannedScript> scanned_script;
-    /// The last parsed scripts
-    std::list<std::shared_ptr<ParsedScript>> parsed_scripts;
+    /// The last parsed script
+    std::shared_ptr<ParsedScript> parsed_script;
     /// The last analyzed scripts
     std::list<std::shared_ptr<AnalyzedScript>> analyzed_scripts;
     /// The completion model
@@ -191,6 +193,8 @@ class Script {
     std::string ToString();
 
     /// Parse the latest scanned script
+    ScannedScript& Scan();
+    /// Parse the latest scanned script
     ParsedScript& Parse();
     /// Analyze the latest parsed script
     AnalyzedScript& Analyze(Script* external = nullptr);
@@ -198,11 +202,6 @@ class Script {
     void UpdateCompletionIndex();
     /// Complete at a text offset
     void CompleteAt(size_t offset);
-
-    /// Pack the parsed program
-    flatbuffers::Offset<proto::ParsedScript> PackParsedScript(flatbuffers::FlatBufferBuilder& builder);
-    /// Pack the parsed program
-    flatbuffers::Offset<proto::AnalyzedScript> PackAnalyzedScript(flatbuffers::FlatBufferBuilder& builder);
 };
 
 }  // namespace flatsql

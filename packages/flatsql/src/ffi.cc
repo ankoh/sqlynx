@@ -72,14 +72,32 @@ extern "C" FFIResult* flatsql_script_to_string(Script* script) {
     return result;
 }
 
-/// Parse a script
-extern "C" FFIResult* flatsql_script_parse(Script* script) {
-    script->Parse();
+/// Scan a script
+extern "C" FFIResult* flatsql_script_scan(Script* script) {
+    auto& scanned = script->Scan();
 
     // Pack a parsed script
     flatbuffers::FlatBufferBuilder fb;
-    auto packed = script->PackParsedScript(fb);
-    fb.Finish(packed);
+    fb.Finish(scanned.Pack(fb));
+
+    // Store the buffer
+    auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));
+    auto result = new FFIResult();
+    result->status_code = 0;
+    result->data_ptr = detached->data();
+    result->data_length = detached->size();
+    result->owner_ptr = detached.release();
+    result->owner_deleter = [](void* buffer) { delete reinterpret_cast<flatbuffers::DetachedBuffer*>(buffer); };
+    return result;
+}
+
+/// Parse a script
+extern "C" FFIResult* flatsql_script_parse(Script* script) {
+    auto& parsed = script->Parse();
+
+    // Pack a parsed script
+    flatbuffers::FlatBufferBuilder fb;
+    fb.Finish(parsed.Pack(fb));
 
     // Store the buffer
     auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));
@@ -94,12 +112,11 @@ extern "C" FFIResult* flatsql_script_parse(Script* script) {
 
 /// Analyze a script
 extern "C" FFIResult* flatsql_script_analyze(Script* script, Script* external) {
-    script->Analyze(external);
+    auto& analyzed = script->Analyze(external);
 
     // Pack a parsed script
     flatbuffers::FlatBufferBuilder fb;
-    auto packed = script->PackAnalyzedScript(fb);
-    fb.Finish(packed);
+    fb.Finish(analyzed.Pack(fb));
 
     // Store the buffer
     auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));

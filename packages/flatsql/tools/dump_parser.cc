@@ -58,11 +58,10 @@ static void generate_parser_dumps(const std::filesystem::path& source_dir) {
             auto input_rope = std::make_shared<TextBuffer>(1024, input_buffer);
             auto scanned = parser::Scanner::Scan(input_rope);
             auto parsed = parser::ParseContext::Parse(scanned);
-            auto packed_program = parsed->Pack();
 
             /// Write output
             auto expected = test.append_child("expected");
-            ParserDumpTest::EncodeScript(expected, *packed_program, input_buffer);
+            ParserDumpTest::EncodeScript(expected, *scanned, *parsed, input_buffer);
         }
 
         // Write xml document
