@@ -94,10 +94,18 @@ void ParserDumpTest::EncodeScript(pugi::xml_node root, const ScannedScript& scan
         }
     }
 
-    // Add errors
-    auto errors = root.append_child("errors");
+    // Add scanner errors
+    auto parser_errors = root.append_child("scanner-errors");
+    for (auto& [err_loc, err_msg] : scanned.errors) {
+        auto error = parser_errors.append_child("error");
+        error.append_attribute("message") = err_msg.c_str();
+        EncodeLocation(error, err_loc, text);
+    }
+
+    // Add parser errors
+    auto scanner_errors = root.append_child("parser-errors");
     for (auto& [err_loc, err_msg] : parsed.errors) {
-        auto error = errors.append_child("error");
+        auto error = scanner_errors.append_child("error");
         error.append_attribute("message") = err_msg.c_str();
         EncodeLocation(error, err_loc, text);
     }

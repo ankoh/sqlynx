@@ -110,7 +110,8 @@ and lo_quantity &lt; 25
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="51..52" text="&#10;" />
                 <line-break loc="74..75" text="&#10;" />
@@ -235,7 +236,8 @@ and lo_quantity between 26 and 35
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="51..52" text="&#10;" />
                 <line-break loc="74..75" text="&#10;" />
@@ -372,7 +374,8 @@ and lo_quantity between 26 and 35
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="51..52" text="&#10;" />
                 <line-break loc="74..75" text="&#10;" />
@@ -565,7 +568,8 @@ order by d_year, p_brand1
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="40..41" text="&#10;" />
                 <line-break loc="79..80" text="&#10;" />
@@ -762,7 +766,8 @@ order by d_year, p_brand1
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="40..41" text="&#10;" />
                 <line-break loc="79..80" text="&#10;" />
@@ -958,7 +963,8 @@ order by d_year, p_brand1
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="40..41" text="&#10;" />
                 <line-break loc="79..80" text="&#10;" />
@@ -1193,7 +1199,8 @@ order by d_year asc, revenue desc
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="50..51" text="&#10;" />
                 <line-break loc="104..105" text="&#10;" />
@@ -1429,7 +1436,8 @@ order by d_year asc, revenue desc
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="57..58" text="&#10;" />
                 <line-break loc="100..101" text="&#10;" />
@@ -1700,7 +1708,8 @@ order by d_year asc, revenue desc
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="57..58" text="&#10;" />
                 <line-break loc="100..101" text="&#10;" />
@@ -1962,7 +1971,8 @@ order by d_year asc, revenue desc
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="57..58" text="&#10;" />
                 <line-break loc="100..101" text="&#10;" />
@@ -2220,7 +2230,8 @@ order by d_year, c_nation
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="66..67" text="&#10;" />
                 <line-break loc="115..116" text="&#10;" />
@@ -2528,7 +2539,8 @@ order by d_year, s_nation, p_category
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="78..79" text="&#10;" />
                 <line-break loc="127..128" text="&#10;" />
@@ -2821,7 +2833,8 @@ order by d_year, s_city, p_brand1
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="74..75" text="&#10;" />
                 <line-break loc="123..124" text="&#10;" />

@@ -16,9 +16,10 @@
                     </node>
                 </statement>
             </statements>
-            <errors>
+            <scanner-errors />
+            <parser-errors>
                 <error message="syntax error, unexpected identifier literal" loc="13..18" text="SELEC" />
-            </errors>
+            </parser-errors>
             <line-breaks>
                 <line-break loc="0..1" text="&#10;" />
                 <line-break loc="21..22" text="&#10;" />
@@ -60,9 +61,10 @@
                     </node>
                 </statement>
             </statements>
-            <errors>
+            <scanner-errors />
+            <parser-errors>
                 <error message="syntax error, unexpected identifier literal, expecting ','" loc="50..57" text="invalid" />
-            </errors>
+            </parser-errors>
             <line-breaks>
                 <line-break loc="0..1" text="&#10;" />
                 <line-break loc="58..59" text="&#10;" />
@@ -92,7 +94,8 @@
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="0..1" text="&#10;" />
                 <line-break loc="29..30" text="&#10;" />
@@ -120,7 +123,8 @@
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="0..1" text="&#10;" />
                 <line-break loc="26..27" text="&#10;" />
@@ -149,7 +153,8 @@
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="0..1" text="&#10;" />
                 <line-break loc="25..26" text="&#10;" />
@@ -175,7 +180,8 @@
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="0..1" text="&#10;" />
                 <line-break loc="27..28" text="&#10;" />
@@ -207,7 +213,8 @@
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="0..1" text="&#10;" />
                 <line-break loc="33..34" text="&#10;" />
@@ -238,7 +245,8 @@
                     </node>
                 </statement>
             </statements>
-            <errors />
+            <scanner-errors />
+            <parser-errors />
             <line-breaks>
                 <line-break loc="0..1" text="&#10;" />
                 <line-break loc="34..35" text="&#10;" />
