@@ -1,6 +1,7 @@
 #include "flatsql/analyzer/analyzer.h"
 #include "flatsql/parser/parse_context.h"
 #include "flatsql/parser/scanner.h"
+#include "flatsql/proto/proto_generated.h"
 #include "flatsql/script.h"
 #include "flatsql/testing/analyzer_dump_test.h"
 #include "flatsql/testing/xml_tests.h"
@@ -19,13 +20,19 @@ TEST_P(AnalyzerDumpTestSuite, Test) {
 
     // Analyze schema
     auto external_scan = parser::Scanner::Scan(input_external);
+    ASSERT_EQ(external_scan.second, proto::StatusCode::NONE);
     auto external_parsed = parser::ParseContext::Parse(external_scan.first);
+    ASSERT_EQ(external_parsed.second, proto::StatusCode::NONE);
     auto external_analyzed = Analyzer::Analyze(external_parsed.first);
+    ASSERT_EQ(external_analyzed.second, proto::StatusCode::NONE);
 
     // Analyze script
     auto main_scan = parser::Scanner::Scan(input_main);
+    ASSERT_EQ(main_scan.second, proto::StatusCode::NONE);
     auto main_parsed = parser::ParseContext::Parse(main_scan.first);
+    ASSERT_EQ(main_parsed.second, proto::StatusCode::NONE);
     auto main_analyzed = Analyzer::Analyze(main_parsed.first, external_analyzed.first);
+    ASSERT_EQ(main_analyzed.second, proto::StatusCode::NONE);
 
     // Encode the program
     pugi::xml_document out;

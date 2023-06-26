@@ -15,9 +15,8 @@ TEST_P(ParserDumpTestSuite, Test) {
     auto* test = GetParam();
     auto input = std::make_shared<TextBuffer>(1024, test->input);
     auto [scanned, scannedStatus] = parser::Scanner::Scan(input);
-    auto [parsed, parsedStatus] = parser::ParseContext::Parse(scanned);
-
     ASSERT_EQ(scannedStatus, proto::StatusCode::NONE);
+    auto [parsed, parsedStatus] = parser::ParseContext::Parse(scanned);
     ASSERT_EQ(parsedStatus, proto::StatusCode::NONE);
 
     pugi::xml_document out;
