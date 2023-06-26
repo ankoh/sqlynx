@@ -5,6 +5,7 @@
 #include <unordered_map>
 
 #include "flatsql/proto/proto_generated.h"
+#include "flatsql/script.h"
 #include "gtest/gtest.h"
 #include "pugixml.hpp"
 
@@ -31,7 +32,8 @@ struct ParserDumpTest {
     pugi::xml_document expected;
 
     /// Encode a script
-    static void EncodeScript(pugi::xml_node root, const proto::ParsedScriptT& program, std::string_view text);
+    static void EncodeScript(pugi::xml_node root, const ScannedScript& scanned, const ParsedScript& parsed,
+                             std::string_view text);
     /// Get the grammar tests
     static void LoadTests(std::filesystem::path& project_root);
     /// Get the grammar tests

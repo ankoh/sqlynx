@@ -16,10 +16,9 @@ TEST_P(ParserDumpTestSuite, Test) {
     auto input = std::make_shared<TextBuffer>(1024, test->input);
     auto scanned = parser::Scanner::Scan(input);
     auto parsed = parser::ParseContext::Parse(scanned);
-    auto packed_program = parsed->Pack();
 
     pugi::xml_document out;
-    ParserDumpTest::EncodeScript(out, *packed_program, test->input);
+    ParserDumpTest::EncodeScript(out, *scanned, *parsed, test->input);
 
     ASSERT_TRUE(Matches(out, test->expected));
 }

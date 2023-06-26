@@ -393,6 +393,13 @@ table Highlighting {
 
 // XXX linebreaks, scanner errors, highlighting and name dictionary into ScannedScript?
 
+table ScannedScript {
+    line_breaks: [Location];
+    errors: [Error];
+    highlighting: Highlighting;
+    name_dictionary: [string];
+}
+
 table ParsedScript {
     nodes: [Node];
     statements: [Statement];
