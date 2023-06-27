@@ -220,7 +220,7 @@ set(LIB_SRC
     ${CMAKE_SOURCE_DIR}/src/analyzer/analyzer.cc
     ${CMAKE_SOURCE_DIR}/src/analyzer/name_resolution_pass.cc
     ${CMAKE_SOURCE_DIR}/src/analyzer/pass_manager.cc
-    ${CMAKE_SOURCE_DIR}/src/ffi.cc
+    ${CMAKE_SOURCE_DIR}/src/api.cc
     ${CMAKE_SOURCE_DIR}/src/parser/grammar/enums.cc
     ${CMAKE_SOURCE_DIR}/src/parser/grammar/highlighting.cc
     ${CMAKE_SOURCE_DIR}/src/parser/grammar/keywords.cc
@@ -253,8 +253,8 @@ if(NOT WASM)
 
   set(TEST_SRC
     ${CMAKE_SOURCE_DIR}/test/analyzer_dump_test_suite.cc
+    ${CMAKE_SOURCE_DIR}/test/api_test.cc
     ${CMAKE_SOURCE_DIR}/test/chunk_buffer_test.cc
-    ${CMAKE_SOURCE_DIR}/test/ffi_test.cc
     ${CMAKE_SOURCE_DIR}/test/keywords_test.cc
     ${CMAKE_SOURCE_DIR}/test/parser_dump_test_suite.cc
     ${CMAKE_SOURCE_DIR}/test/rope_test.cc

@@ -1,4 +1,4 @@
-#include "flatsql/ffi.h"
+#include "flatsql/api.h"
 
 #include <span>
 
