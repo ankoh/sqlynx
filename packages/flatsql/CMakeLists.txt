@@ -253,11 +253,13 @@ if(NOT WASM)
 
   set(TEST_SRC
     ${CMAKE_SOURCE_DIR}/test/analyzer_dump_test_suite.cc
-    ${CMAKE_SOURCE_DIR}/test/parser_dump_test_suite.cc
     ${CMAKE_SOURCE_DIR}/test/chunk_buffer_test.cc
-    ${CMAKE_SOURCE_DIR}/test/utils_test.cc
-    ${CMAKE_SOURCE_DIR}/test/suffix_trie_test.cc
+    ${CMAKE_SOURCE_DIR}/test/ffi_test.cc
+    ${CMAKE_SOURCE_DIR}/test/keywords_test.cc
+    ${CMAKE_SOURCE_DIR}/test/parser_dump_test_suite.cc
     ${CMAKE_SOURCE_DIR}/test/rope_test.cc
+    ${CMAKE_SOURCE_DIR}/test/script_test.cc
+    ${CMAKE_SOURCE_DIR}/test/suffix_trie_test.cc
   )
   add_executable(tester test/tester.cc ${TEST_SRC})
   target_link_libraries(tester flatsql flatsql_testutils pugixml gtest gmock gflags Threads::Threads)

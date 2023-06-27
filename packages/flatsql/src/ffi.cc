@@ -1,3 +1,5 @@
+#include "flatsql/ffi.h"
+
 #include <span>
 
 #include "flatbuffers/flatbuffers.h"
@@ -27,14 +29,6 @@ extern "C" std::byte* flatsql_malloc(size_t length) { return new std::byte[lengt
 /// Delete memory
 extern "C" void flatsql_free(void* buffer) { delete[] reinterpret_cast<std::byte*>(buffer); }
 
-/// A managed FFI result container
-struct FFIResult {
-    uint32_t status_code;
-    uint32_t data_length;
-    const void* data_ptr;
-    void* owner_ptr;
-    void (*owner_deleter)(void*);
-};
 /// Delete a result
 extern "C" void flatsql_result_delete(FFIResult* result) {
     result->owner_deleter(result->owner_ptr);
