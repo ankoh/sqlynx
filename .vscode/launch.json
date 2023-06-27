@@ -23,6 +23,14 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Highlighter Tests",
+            "program": "${workspaceFolder}/packages/flatsql/build/native/Debug/tester",
+            "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*Highlighting*"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Rope Tests",
             "program": "${workspaceFolder}/packages/flatsql/build/native/Debug/tester",
             "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*Rope*"],

@@ -255,6 +255,7 @@ if(NOT WASM)
     ${CMAKE_SOURCE_DIR}/test/analyzer_dump_test_suite.cc
     ${CMAKE_SOURCE_DIR}/test/api_test.cc
     ${CMAKE_SOURCE_DIR}/test/chunk_buffer_test.cc
+    ${CMAKE_SOURCE_DIR}/test/highlighting_test.cc
     ${CMAKE_SOURCE_DIR}/test/keywords_test.cc
     ${CMAKE_SOURCE_DIR}/test/parser_dump_test_suite.cc
     ${CMAKE_SOURCE_DIR}/test/rope_test.cc
