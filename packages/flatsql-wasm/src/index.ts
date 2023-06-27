@@ -111,7 +111,7 @@ export class FlatSQL {
         const statusCode = heapU32[resultPtrU32];
         const dataLength = heapU32[resultPtrU32 + 1];
         const dataPtr = heapU32[resultPtrU32 + 2];
-        if (statusCode == 0) {
+        if (statusCode == proto.StatusCode.OK) {
             return new FlatBufferRef<T>(this, resultPtr, dataPtr, dataLength);
         } else {
             const dataArray = heapU8.subarray(dataPtr, dataPtr + dataLength);
