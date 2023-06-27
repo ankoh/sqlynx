@@ -12,9 +12,10 @@ constexpr auto OK = static_cast<uint32_t>(proto::StatusCode::OK);
 
 static void match_tokens(const void* data, const std::vector<uint32_t>& offsets, const std::vector<Token>& types) {
     auto scanned = flatbuffers::GetRoot<proto::ScannedScript>(data);
-    auto unpacked = scanned->UnPack();
-    ASSERT_EQ(unpacked->highlighting->token_offsets, offsets);
-    ASSERT_EQ(unpacked->highlighting->token_types, types);
+    proto::ScannedScriptT unpacked;
+    scanned->UnPackTo(&unpacked);
+    ASSERT_EQ(unpacked.highlighting->token_offsets, offsets);
+    ASSERT_EQ(unpacked.highlighting->token_types, types);
 }
 
 TEST(HighlightingTest, InsertChars) {
