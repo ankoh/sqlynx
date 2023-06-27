@@ -17,6 +17,7 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
 create table nation (n_nationkey integer not null, n_name char(25) not null, n_regionkey integer not null, n_comment varchar(152) not null, primary key (n_nationkey));
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
 )SQL";
+
 static const std::string_view main_script = R"SQL(
 select
         s_acctbal,
@@ -65,7 +66,22 @@ limit
 	100
 )SQL";
 
-static void bm_analyze_query(benchmark::State& state) {
+static void scan_query(benchmark::State& state) {
+    auto buffer = std::make_shared<flatsql::TextBuffer>(1024, main_script);
+    for (auto _ : state) {
+        flatsql::parser::Scanner::Scan(buffer);
+    }
+}
+
+static void parse_query(benchmark::State& state) {
+    auto buffer = std::make_shared<flatsql::TextBuffer>(1024, main_script);
+    auto scanner = flatsql::parser::Scanner::Scan(buffer);
+    for (auto _ : state) {
+        flatsql::parser::ParseContext::Parse(scanner.first);
+    }
+}
+
+static void analyze_query(benchmark::State& state) {
     auto input_external = std::make_shared<TextBuffer>(1024, external_script);
     auto input_main = std::make_shared<TextBuffer>(1024, main_script);
 
@@ -84,5 +100,7 @@ static void bm_analyze_query(benchmark::State& state) {
     }
 }
 
-BENCHMARK(bm_analyze_query);
+BENCHMARK(scan_query);
+BENCHMARK(parse_query);
+BENCHMARK(analyze_query);
 BENCHMARK_MAIN();
