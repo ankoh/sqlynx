@@ -94,12 +94,16 @@ rope_tests:
 completion_tests:
 	${LIB_DEBUG_DIR}/tester --source_dir . --gtest_filter="*Suffix*"
 
-.PHONY: bm_parser
-bm_parser:
+.PHONY: benchmark_scanner
+benchmark_scanner:
+	${LIB_RELWITHDEBINFO_DIR}/bm_scan_query
+
+.PHONY: benchmark_parser
+benchmark_parser:
 	${LIB_RELWITHDEBINFO_DIR}/bm_parse_query
 
-.PHONY: bm_analyzer
-bm_analyzer:
+.PHONY: benchmark_analyzer
+benchmark_analyzer:
 	${LIB_RELWITHDEBINFO_DIR}/bm_analyze_query
 
 .PHONY: wasm
