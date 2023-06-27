@@ -20,19 +20,19 @@ TEST_P(AnalyzerDumpTestSuite, Test) {
 
     // Analyze schema
     auto external_scan = parser::Scanner::Scan(input_external);
-    ASSERT_EQ(external_scan.second, proto::StatusCode::NONE);
+    ASSERT_EQ(external_scan.second, proto::StatusCode::OK);
     auto external_parsed = parser::ParseContext::Parse(external_scan.first);
-    ASSERT_EQ(external_parsed.second, proto::StatusCode::NONE);
+    ASSERT_EQ(external_parsed.second, proto::StatusCode::OK);
     auto external_analyzed = Analyzer::Analyze(external_parsed.first);
-    ASSERT_EQ(external_analyzed.second, proto::StatusCode::NONE);
+    ASSERT_EQ(external_analyzed.second, proto::StatusCode::OK);
 
     // Analyze script
     auto main_scan = parser::Scanner::Scan(input_main);
-    ASSERT_EQ(main_scan.second, proto::StatusCode::NONE);
+    ASSERT_EQ(main_scan.second, proto::StatusCode::OK);
     auto main_parsed = parser::ParseContext::Parse(main_scan.first);
-    ASSERT_EQ(main_parsed.second, proto::StatusCode::NONE);
+    ASSERT_EQ(main_parsed.second, proto::StatusCode::OK);
     auto main_analyzed = Analyzer::Analyze(main_parsed.first, external_analyzed.first);
-    ASSERT_EQ(main_analyzed.second, proto::StatusCode::NONE);
+    ASSERT_EQ(main_analyzed.second, proto::StatusCode::OK);
 
     // Encode the program
     pugi::xml_document out;

@@ -191,7 +191,7 @@ std::pair<std::shared_ptr<ScannedScript>, proto::StatusCode> Scanner::Scan(std::
     }
 
     // Collect scanner output
-    return {std::move(scanner.output), proto::StatusCode::NONE};
+    return {std::move(scanner.output), proto::StatusCode::OK};
 }
 
 }  // namespace parser

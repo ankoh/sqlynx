@@ -57,7 +57,7 @@ static void generate_parser_dumps(const std::filesystem::path& source_dir) {
             auto input_buffer = std::string{input.last_child().value()};
             auto input_rope = std::make_shared<TextBuffer>(1024, input_buffer);
             auto scanned = parser::Scanner::Scan(input_rope);
-            if (scanned.second != proto::StatusCode::NONE) {
+            if (scanned.second != proto::StatusCode::OK) {
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(scanned.second) << std::endl;
                 continue;
             }

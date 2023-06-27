@@ -268,7 +268,7 @@ std::pair<std::shared_ptr<ParsedScript>, proto::StatusCode> ParseContext::Parse(
     assert(ctx.temp_nary_expressions.GetAllocatedNodeCount() == 0);
 
     // Pack the program
-    return {std::make_shared<ParsedScript>(scanned, std::move(ctx)), proto::StatusCode::NONE};
+    return {std::make_shared<ParsedScript>(scanned, std::move(ctx)), proto::StatusCode::OK};
 }
 
 }  // namespace parser
