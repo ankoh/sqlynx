@@ -46,7 +46,7 @@ extern "C" void flatsql_script_insert_char_at(Script* script, size_t offset, cha
     script->InsertCharAt(offset, unicode);
 }
 /// Insert text at a position
-extern "C" void flatsql_script_insert_text_at(Script* script, size_t offset, char* text_ptr, size_t text_length) {
+extern "C" void flatsql_script_insert_text_at(Script* script, size_t offset, const char* text_ptr, size_t text_length) {
     std::string_view text{text_ptr, text_length};
     script->InsertTextAt(offset, text);
 }
@@ -58,7 +58,7 @@ extern "C" void flatsql_script_erase_text_range(Script* script, size_t offset, s
 extern "C" FFIResult* flatsql_script_to_string(Script* script) {
     auto text = std::make_unique<std::string>(std::move(script->ToString()));
     auto result = new FFIResult();
-    result->status_code = 0;
+    result->status_code = static_cast<uint32_t>(proto::StatusCode::OK);
     result->data_ptr = text->data();
     result->data_length = text->length();
     result->owner_ptr = text.release();
@@ -103,7 +103,7 @@ extern "C" FFIResult* flatsql_script_scan(Script* script) {
     // Pack the buffer
     auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));
     auto result = new FFIResult();
-    result->status_code = 0;
+    result->status_code = static_cast<uint32_t>(proto::StatusCode::OK);
     result->data_ptr = detached->data();
     result->data_length = detached->size();
     result->owner_ptr = detached.release();
@@ -128,7 +128,7 @@ extern "C" FFIResult* flatsql_script_parse(Script* script) {
     // Pack the buffer
     auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));
     auto result = new FFIResult();
-    result->status_code = 0;
+    result->status_code = static_cast<uint32_t>(proto::StatusCode::OK);
     result->data_ptr = detached->data();
     result->data_length = detached->size();
     result->owner_ptr = detached.release();
@@ -151,7 +151,7 @@ extern "C" FFIResult* flatsql_script_analyze(Script* script, Script* external) {
     // Store the buffer
     auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));
     auto result = new FFIResult();
-    result->status_code = 0;
+    result->status_code = static_cast<uint32_t>(proto::StatusCode::OK);
     result->data_ptr = detached->data();
     result->data_length = detached->size();
     result->owner_ptr = detached.release();
