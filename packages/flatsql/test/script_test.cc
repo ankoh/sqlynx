@@ -19,7 +19,7 @@ TEST(ScriptTest, AnalyzingBeforeParsing) {
     ASSERT_EQ(status, proto::StatusCode::ANALYZER_INPUT_INVALID);
 }
 
-TEST(ScriptTest, Example0) {
+TEST(ScriptTest, TPCH_Q2) {
     const std::string_view external_script_text = R"SQL(
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -32,51 +32,50 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
     )SQL";
 
     const std::string_view main_script_text = R"SQL(
-    select
-            s_acctbal,
-            s_name,
-            n_name,
-            p_partkey,
-            p_mfgr,
-            s_address,
-            s_phone,
-            s_comment
-    from
-            part,
-            supplier,
+select
+    s_acctbal,
+    s_name,
+    n_name,
+    p_partkey,
+    p_mfgr,
+    s_address,
+    s_phone,
+    s_comment
+from
+    part,
+    supplier,
+    partsupp,
+    nation,
+    region
+where
+    p_partkey = ps_partkey
+    and s_suppkey = ps_suppkey
+    and p_size = 15
+    and p_type like '%BRASS'
+    and s_nationkey = n_nationkey
+    and n_regionkey = r_regionkey
+    and r_name = 'EUROPE'
+    and ps_supplycost = (
+        select
+            min(ps_supplycost)
+        from
             partsupp,
+            supplier,
             nation,
             region
-    where
+        where
             p_partkey = ps_partkey
             and s_suppkey = ps_suppkey
-            and p_size = 15
-            and p_type like '%BRASS'
             and s_nationkey = n_nationkey
             and n_regionkey = r_regionkey
             and r_name = 'EUROPE'
-            and ps_supplycost = (
-                    select
-                            min(ps_supplycost)
-                    from
-                            partsupp,
-                            supplier,
-                            nation,
-                            region
-                    where
-                            p_partkey = ps_partkey
-                            and s_suppkey = ps_suppkey
-                            and s_nationkey = n_nationkey
-                            and n_regionkey = r_regionkey
-                            and r_name = 'EUROPE'
-            )
-    order by
-            s_acctbal desc,
-            n_name,
-            s_name,
-            p_partkey
-    limit
-        100
+    )
+order by
+    s_acctbal desc,
+    n_name,
+    s_name,
+    p_partkey
+limit 100
     )SQL";
 
     Script external_script;

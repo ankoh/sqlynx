@@ -20,12 +20,14 @@ struct FFIResult {
 
 /// Create a script
 extern "C" flatsql::Script* flatsql_script_new();
+/// Delete a script
+extern "C" void flatsql_script_delete(flatsql::Script* script);
 /// Delete a result
 extern "C" void flatsql_result_delete(FFIResult* result);
 /// Insert char at a position
 extern "C" void flatsql_script_insert_char_at(flatsql::Script* script, size_t offset, char unicode);
 /// Insert text at a position
-extern "C" void flatsql_script_insert_text_at(flatsql::Script* script, size_t offset, char* text_ptr,
+extern "C" void flatsql_script_insert_text_at(flatsql::Script* script, size_t offset, const char* text_ptr,
                                               size_t text_length);
 /// Erase a text range
 extern "C" void flatsql_script_erase_text_range(flatsql::Script* script, size_t offset, size_t count);
