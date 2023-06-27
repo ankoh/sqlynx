@@ -1,7 +1,7 @@
 namespace flatsql.proto;
 
 enum StatusCode: uint32 {
-    NONE = 1,
+    OK = 1,
 
     PARSER_INPUT_INVALID = 2,
     ANALYZER_INPUT_INVALID = 3,

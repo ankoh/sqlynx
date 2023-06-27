@@ -81,13 +81,13 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
 
     Script external_script;
     external_script.InsertTextAt(0, external_script_text);
-    ASSERT_EQ(external_script.Scan().second, proto::StatusCode::NONE);
-    ASSERT_EQ(external_script.Parse().second, proto::StatusCode::NONE);
-    ASSERT_EQ(external_script.Analyze().second, proto::StatusCode::NONE);
+    ASSERT_EQ(external_script.Scan().second, proto::StatusCode::OK);
+    ASSERT_EQ(external_script.Parse().second, proto::StatusCode::OK);
+    ASSERT_EQ(external_script.Analyze().second, proto::StatusCode::OK);
 
     Script main_script;
     main_script.InsertTextAt(0, main_script_text);
-    ASSERT_EQ(main_script.Scan().second, proto::StatusCode::NONE);
-    ASSERT_EQ(main_script.Parse().second, proto::StatusCode::NONE);
-    ASSERT_EQ(main_script.Analyze(&external_script).second, proto::StatusCode::NONE);
+    ASSERT_EQ(main_script.Scan().second, proto::StatusCode::OK);
+    ASSERT_EQ(main_script.Parse().second, proto::StatusCode::OK);
+    ASSERT_EQ(main_script.Analyze(&external_script).second, proto::StatusCode::OK);
 }

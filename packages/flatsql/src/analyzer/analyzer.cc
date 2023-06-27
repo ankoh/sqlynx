@@ -30,7 +30,7 @@ std::pair<std::shared_ptr<AnalyzedScript>, proto::StatusCode> Analyzer::Analyze(
     // Build program
     auto program = std::make_shared<AnalyzedScript>(parsed, external);
     az.name_resolution->Export(*program);
-    return {program, proto::StatusCode::NONE};
+    return {program, proto::StatusCode::OK};
 }
 
 }  // namespace flatsql

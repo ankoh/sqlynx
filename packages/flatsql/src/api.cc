@@ -75,7 +75,7 @@ static FFIResult* packError(proto::StatusCode status) {
         case proto::StatusCode::ANALYZER_INPUT_INVALID:
             message = "Analyzer input is invalid";
             break;
-        case proto::StatusCode::NONE:
+        case proto::StatusCode::OK:
             message = "";
             break;
     }
@@ -92,7 +92,7 @@ static FFIResult* packError(proto::StatusCode status) {
 extern "C" FFIResult* flatsql_script_scan(Script* script) {
     // Scan the script
     auto [scanned, status] = script->Scan();
-    if (status != proto::StatusCode::NONE) {
+    if (status != proto::StatusCode::OK) {
         return packError(status);
     }
 
@@ -117,7 +117,7 @@ extern "C" FFIResult* flatsql_script_scan(Script* script) {
 extern "C" FFIResult* flatsql_script_parse(Script* script) {
     // Parse the script
     auto [parsed, status] = script->Parse();
-    if (status != proto::StatusCode::NONE) {
+    if (status != proto::StatusCode::OK) {
         return packError(status);
     }
 
@@ -140,7 +140,7 @@ extern "C" FFIResult* flatsql_script_parse(Script* script) {
 extern "C" FFIResult* flatsql_script_analyze(Script* script, Script* external) {
     // Analyze the script
     auto [analyzed, status] = script->Analyze(external);
-    if (status != proto::StatusCode::NONE) {
+    if (status != proto::StatusCode::OK) {
         return packError(status);
     }
 

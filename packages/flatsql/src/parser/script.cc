@@ -149,7 +149,7 @@ std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(Script* external) 
 
     // Analyze a script
     auto [script, status] = Analyzer::Analyze(parsed_script, external_analyzed);
-    if (status != proto::StatusCode::NONE) {
+    if (status != proto::StatusCode::OK) {
         return {nullptr, status};
     }
     analyzed_scripts.push_back(std::move(script));
