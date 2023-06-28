@@ -162,7 +162,7 @@ jobs:
                   retention-days: 1
 
     coverage:
-        name: Coverage
+        name: Coverage Report
         runs-on: ubuntu-22.04
         needs:
             - lib_js
