@@ -15,6 +15,7 @@ interface FlatSQLModuleExports {
     flatsql_script_scan: (ptr: number) => number;
     flatsql_script_parse: (ptr: number) => number;
     flatsql_script_analyze: (ptr: number, external: number) => number;
+    flatsql_script_update_completion_index: (ptr: number) => number;
 }
 
 type InstantiateWasmCallback = (stubs: WebAssembly.Imports) => PromiseLike<WebAssembly.WebAssemblyInstantiatedSource>;
@@ -65,6 +66,9 @@ export class FlatSQL {
             flatsql_script_analyze: parserExports['flatsql_script_analyze'] as (
                 ptr: number,
                 external: number,
+            ) => number,
+            flatsql_script_update_completion_index: parserExports['flatsql_script_update_completion_index'] as (
+                ptr: number,
             ) => number,
         };
     }
@@ -245,6 +249,12 @@ export class FlatSQLScript {
         const scriptPtr = this.assertScriptNotNull();
         const resultPtr = this.api.instanceExports.flatsql_script_analyze(scriptPtr, external?.scriptPtr ?? 0);
         return this.api.readResult<proto.AnalyzedScript>(resultPtr);
+    }
+    /// Update the completion index
+    public updateCompletionIndex(): boolean {
+        const scriptPtr = this.assertScriptNotNull();
+        const status = this.api.instanceExports.flatsql_script_update_completion_index(scriptPtr);
+        return status == proto.StatusCode.OK;
     }
 }
 
