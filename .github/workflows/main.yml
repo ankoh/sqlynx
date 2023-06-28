@@ -110,11 +110,11 @@ jobs:
                     --ignore-filename-regex='.*/.*\.list' \
                     ${LIB_DEBUG_DIR}/tester > ${LIB_COVERAGE_DIR}/lcov.info
 
-            - name: Upload coverage report
-              uses: coverallsapp/github-action@v2
+            - uses: actions/upload-artifact@v3
               with:
-                  github-token: ${{secrets.GITHUB_TOKEN}}
-                  path-to-lcov: ./packages/flatsql/build/coverage/lcov.info
+                  name: flatsql_coverage_native
+                  path: ./packages/flatsql/build/coverage/lcov.info
+                  retention-days: 1
 
     lib_js:
         name: Library / Javascript
@@ -153,4 +153,36 @@ jobs:
             - name: Test @ankoh/flatsql
               shell: bash
               run: |
-                  yarn workspace @ankoh/flatsql test
+                  yarn workspace @ankoh/flatsql test:coverage
+
+            - uses: actions/upload-artifact@v3
+              with:
+                  name: flatsql_coverage_js
+                  path: ./packages/flatsql-wasm/coverage/lcov.info
+                  retention-days: 1
+
+    coverage:
+        name: Library / Javascript
+        runs-on: ubuntu-22.04
+        needs:
+            - lib_wasm
+        steps:
+            - uses: actions/checkout@v3
+              with:
+                  submodules: 'recursive'
+                  fetch-depth: 0
+
+            - uses: actions/download-artifact@v3
+              with:
+                  name: flatsql_coverage_native
+                  path: ./packages/flatsql/build/coverage/
+
+            - uses: actions/download-artifact@v3
+              with:
+                  name: flatsql_coverage_js
+                  path: ./packages/flatsql-wasm/coverage/
+
+            - name: Upload coverage report
+              uses: coverallsapp/github-action@v2
+              with:
+                  github-token: ${{secrets.GITHUB_TOKEN}}
