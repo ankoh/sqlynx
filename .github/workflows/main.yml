@@ -128,7 +128,7 @@ jobs:
               if: matrix.build_type == 'RelWithDebInfo'
               with:
                   name: flatsql_benchmarks
-                  path: ./packages/flatsql/build/${{ matrix.build_type }}/bm_steps
+                  path: ./packages/flatsql/build/native/${{ matrix.build_type }}/bm_steps
                   retention-days: 1
 
     lib_js:
@@ -177,7 +177,7 @@ jobs:
                   retention-days: 1
 
     benchmarks:
-        name: Benchmarks
+        name: Benchmarks / Native
         runs-on: ubuntu-22.04
         needs:
             - lib_native
@@ -190,11 +190,11 @@ jobs:
             - uses: actions/download-artifact@v3
               with:
                   name: flatsql_benchmarks
-                  path: ./packages/flatsql/build/RelWithDebInfo/
+                  path: ./packages/flatsql/build/native/RelWithDebInfo/
 
             - name: Benchmark steps
               shell: bash
-              run: ./packages/flatsql/build/RelWithDebInfo/bm_steps
+              run: ./packages/flatsql/build/native/RelWithDebInfo/bm_steps
 
     coverage:
         name: Coverage Report
