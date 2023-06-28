@@ -7,7 +7,11 @@ on:
 
 jobs:
     lib_wasm:
-        name: Library / WASM
+        strategy:
+            matrix:
+                build_type: ['Debug', 'Release']
+
+        name: Library / WASM / ${{ matrix.build_type }}
         runs-on: ubuntu-22.04
         steps:
             - uses: actions/checkout@v3
@@ -37,18 +41,19 @@ jobs:
                   WASI_SYSROOT: /opt/wasi/share/wasi-sysroot
                   WASI_CMAKE_TOOLCHAIN: /opt/wasi/share/cmake/wasi-sdk.cmake
               run: |
-                  ./scripts/build_parser_wasm.sh Release
+                  ./scripts/build_parser_wasm.sh ${{ matrix.build_type }}
 
             - uses: actions/upload-artifact@v3
               with:
-                  name: flatsql_parser_wasm
-                  path: ./packages/flatsql/build/wasm/Release/flatsql.wasm
+                  name: flatsql_parser_wasm_${{ matrix.build_type }}
+                  path: ./packages/flatsql/build/wasm/${{ matrix.build_type }}/flatsql.wasm
                   retention-days: 1
 
     lib_native:
         strategy:
             matrix:
                 build_type: ['Debug', 'RelWithDebInfo']
+
         name: Library / Native / ${{ matrix.build_type }}
         runs-on: ubuntu-22.04
         steps:
