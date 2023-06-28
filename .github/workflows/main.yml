@@ -204,6 +204,7 @@ jobs:
         needs:
             - lib_js
             - lib_native
+            - benchmarks
         steps:
             - uses: actions/checkout@v3
               with:
