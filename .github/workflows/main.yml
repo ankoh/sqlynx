@@ -46,7 +46,7 @@ jobs:
                   retention-days: 1
 
     lib_native:
-        matrix:
+        build_type_matrix:
             strategy:
                 matrix:
                     build_type: ['Debug', 'RelWithDebInfo']
