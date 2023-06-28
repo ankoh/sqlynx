@@ -96,7 +96,7 @@ jobs:
                   ${LIB_BUILD_DIR}/tester --source ${LIB_SOURCE_DIR}
 
             - name: Run benchmarks
-              if: matrix.build_type == "RelWithDebInfo"
+              if: matrix.build_type == 'RelWithDebInfo'
               shell: bash
               env:
                   LIB_SOURCE_DIR: ./packages/flatsql
