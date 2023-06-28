@@ -53,71 +53,71 @@ jobs:
         runs-on: ubuntu-22.04
         steps:
             - uses: actions/checkout@v3
-                with:
-                    submodules: 'recursive'
-                    fetch-depth: 0
+              with:
+                  submodules: 'recursive'
+                  fetch-depth: 0
 
             - name: Setup llvm
-                uses: ./.github/actions/setup-llvm
+              uses: ./.github/actions/setup-llvm
 
             - name: Setup flatc
-                uses: ./.github/actions/setup-flatc
+              uses: ./.github/actions/setup-flatc
 
             - name: Generate Flatbuffer files
-                shell: bash
-                run: ./scripts/generate_proto.sh
+              shell: bash
+              run: ./scripts/generate_proto.sh
 
             - name: Compile library
-                shell: bash
-                env:
-                    LIB_SOURCE_DIR: ./packages/flatsql
-                    LIB_BUILD_DIR: ./packages/flatsql/build/native/${{ matrix.build_type }}
-                run: |
-                    cmake -S ${LIB_SOURCE_DIR} -B ${LIB_BUILD_DIR} \
-                    -DCMAKE_C_COMPILER=${{env.LLVM_PATH}}/bin/clang \
-                    -DCMAKE_CXX_COMPILER=${{env.LLVM_PATH}}/bin/clang++ \
-                    -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-                    -DCMAKE_EXPORT_COMPILE_COMMANDS=1 \
-                    -DCODE_COVERAGE=1
-                    ln -sf ${LIB_BUILD_DIR}/compile_commands.json ${LIB_SOURCE_DIR}/compile_commands.json
-                    cmake --build ${LIB_BUILD_DIR} --parallel $(nproc --all)
+              shell: bash
+              env:
+                  LIB_SOURCE_DIR: ./packages/flatsql
+                  LIB_BUILD_DIR: ./packages/flatsql/build/native/${{ matrix.build_type }}
+              run: |
+                  cmake -S ${LIB_SOURCE_DIR} -B ${LIB_BUILD_DIR} \
+                  -DCMAKE_C_COMPILER=${{env.LLVM_PATH}}/bin/clang \
+                  -DCMAKE_CXX_COMPILER=${{env.LLVM_PATH}}/bin/clang++ \
+                  -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+                  -DCMAKE_EXPORT_COMPILE_COMMANDS=1 \
+                  -DCODE_COVERAGE=1
+                  ln -sf ${LIB_BUILD_DIR}/compile_commands.json ${LIB_SOURCE_DIR}/compile_commands.json
+                  cmake --build ${LIB_BUILD_DIR} --parallel $(nproc --all)
 
             - name: Test library
-                shell: bash
-                env:
-                    LIB_SOURCE_DIR: ./packages/flatsql
-                    LIB_BUILD_DIR: ./packages/flatsql/build/native/${{ matrix.build_type }}
-                run: |
-                    ${LIB_BUILD_DIR}/tester --source ${LIB_SOURCE_DIR}
+              shell: bash
+              env:
+                  LIB_SOURCE_DIR: ./packages/flatsql
+                  LIB_BUILD_DIR: ./packages/flatsql/build/native/${{ matrix.build_type }}
+              run: |
+                  ${LIB_BUILD_DIR}/tester --source ${LIB_SOURCE_DIR}
 
             - name: Merge coverage data
-                shell: bash
-                env:
-                    LIB_COVERAGE_DIR: ./packages/flatsql/build/coverage
-                run: |
-                    mkdir -p ${LIB_COVERAGE_DIR}
-                    ${{env.LLVM_PATH}}/bin/llvm-profdata merge -output=${LIB_COVERAGE_DIR}/coverage.prof -instr default.profraw
+              shell: bash
+              env:
+                  LIB_COVERAGE_DIR: ./packages/flatsql/build/coverage
+              run: |
+                  mkdir -p ${LIB_COVERAGE_DIR}
+                  ${{env.LLVM_PATH}}/bin/llvm-profdata merge -output=${LIB_COVERAGE_DIR}/coverage.prof -instr default.profraw
 
             - name: Build coverage report
-                shell: bash
-                env:
-                    LIB_BUILD_DIR: ./packages/flatsql/build/native/${{ matrix.build_type }}
-                    LIB_COVERAGE_DIR: ./packages/flatsql/build/coverage
-                run: |
-                    ${{env.LLVM_PATH}}/bin/llvm-cov export \
-                    --instr-profile ${LIB_COVERAGE_DIR}/coverage.prof \
-                    --format lcov \
-                    --ignore-filename-regex='.*/build/native/${{ matrix.build_type }}/.*' \
-                    --ignore-filename-regex='.*/utf8proc/.*' \
-                    --ignore-filename-regex='.*/proto/proto_generated.h' \
-                    --ignore-filename-regex='.*/.*\.list' \
-                    ${LIB_BUILD_DIR}/tester > ${LIB_COVERAGE_DIR}/lcov.info
+              shell: bash
+              env:
+                  LIB_BUILD_DIR: ./packages/flatsql/build/native/${{ matrix.build_type }}
+                  LIB_COVERAGE_DIR: ./packages/flatsql/build/coverage
+              run: |
+                  ${{env.LLVM_PATH}}/bin/llvm-cov export \
+                  --instr-profile ${LIB_COVERAGE_DIR}/coverage.prof \
+                  --format lcov \
+                  --ignore-filename-regex='.*/build/native/${{ matrix.build_type }}/.*' \
+                  --ignore-filename-regex='.*/utf8proc/.*' \
+                  --ignore-filename-regex='.*/proto/proto_generated.h' \
+                  --ignore-filename-regex='.*/.*\.list' \
+                  ${LIB_BUILD_DIR}/tester > ${LIB_COVERAGE_DIR}/lcov.info
 
             - uses: actions/upload-artifact@v3
-                with:
-                    name: flatsql_coverage_native_${{ matrix.build_type }}
-                    path: ./packages/flatsql/build/coverage/lcov.info
-                    retention-days: 1
+              with:
+                  name: flatsql_coverage_native_${{ matrix.build_type }}
+                  path: ./packages/flatsql/build/coverage/lcov.info
+                  retention-days: 1
 
     lib_js:
         name: Library / Javascript
