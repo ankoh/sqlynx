@@ -4,6 +4,7 @@
 #include "flatsql/parser/scanner.h"
 #include "flatsql/script.h"
 #include "flatsql/text/rope.h"
+#include "flatsql/utils/suffix_trie.h"
 
 using namespace flatsql;
 
@@ -69,7 +70,8 @@ limit
 static void scan_query(benchmark::State& state) {
     auto buffer = std::make_shared<flatsql::TextBuffer>(1024, main_script);
     for (auto _ : state) {
-        flatsql::parser::Scanner::Scan(buffer);
+        auto scan = flatsql::parser::Scanner::Scan(buffer);
+        benchmark::DoNotOptimize(scan);
     }
 }
 
@@ -77,7 +79,8 @@ static void parse_query(benchmark::State& state) {
     auto buffer = std::make_shared<flatsql::TextBuffer>(1024, main_script);
     auto scanner = flatsql::parser::Scanner::Scan(buffer);
     for (auto _ : state) {
-        flatsql::parser::ParseContext::Parse(scanner.first);
+        auto parsed = flatsql::parser::ParseContext::Parse(scanner.first);
+        benchmark::DoNotOptimize(parsed);
     }
 }
 
@@ -100,7 +103,28 @@ static void analyze_query(benchmark::State& state) {
     }
 }
 
+static void index_query(benchmark::State& state) {
+    auto input_external = std::make_shared<TextBuffer>(1024, external_script);
+    auto input_main = std::make_shared<TextBuffer>(1024, main_script);
+
+    // Analyze external script
+    auto external_scan = parser::Scanner::Scan(input_external);
+    auto external_parsed = parser::ParseContext::Parse(external_scan.first);
+    auto external_analyzed = Analyzer::Analyze(external_parsed.first);
+
+    // Parse script
+    auto main_scan = parser::Scanner::Scan(input_main);
+    auto main_parsed = parser::ParseContext::Parse(main_scan.first);
+    auto main_analyzed = Analyzer::Analyze(main_parsed.first);
+
+    for (auto _ : state) {
+        auto trie = SuffixTrie::BulkLoad(main_scan.first->name_dictionary);
+        benchmark::DoNotOptimize(trie);
+    }
+}
+
 BENCHMARK(scan_query);
 BENCHMARK(parse_query);
 BENCHMARK(analyze_query);
+BENCHMARK(index_query);
 BENCHMARK_MAIN();
