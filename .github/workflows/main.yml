@@ -162,10 +162,11 @@ jobs:
                   retention-days: 1
 
     coverage:
-        name: Library / Javascript
+        name: Coverage
         runs-on: ubuntu-22.04
         needs:
-            - lib_wasm
+            - lib_js
+            - lib_native_debug
         steps:
             - uses: actions/checkout@v3
               with:
