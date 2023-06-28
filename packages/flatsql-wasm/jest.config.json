@@ -1,5 +1,6 @@
 {
     "transform": {
         "^.+\\.tsx?$": "ts-jest"
-    }
+    },
+    "coverageReporters": ["lcov"]
 }
