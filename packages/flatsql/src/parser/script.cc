@@ -6,6 +6,7 @@
 #include "flatsql/parser/parse_context.h"
 #include "flatsql/parser/scanner.h"
 #include "flatsql/proto/proto_generated.h"
+#include "flatsql/utils/suffix_trie.h"
 
 namespace flatsql {
 
@@ -159,6 +160,20 @@ std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(Script* external) 
         analyzed_scripts.pop_front();
     }
     return {analyzed_scripts.back().get(), status};
+}
+
+/// Update the completion index
+proto::StatusCode Script::UpdateCompletionIndex() {
+    if (analyzed_scripts.empty()) {
+        return proto::StatusCode::COMPLETION_DATA_INVALID;
+    }
+    auto& analyzed = analyzed_scripts.back();
+    auto& parsed = analyzed->parsed_script;
+    auto& scanned = parsed->scanned_script;
+
+    completion_index.analyzed_script = analyzed;
+    completion_index.suffix_trie = SuffixTrie::BulkLoad(scanned->name_dictionary);
+    return proto::StatusCode::OK;
 }
 
 }  // namespace flatsql

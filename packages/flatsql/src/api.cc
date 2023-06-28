@@ -75,6 +75,9 @@ static FFIResult* packError(proto::StatusCode status) {
         case proto::StatusCode::ANALYZER_INPUT_INVALID:
             message = "Analyzer input is invalid";
             break;
+        case proto::StatusCode::COMPLETION_DATA_INVALID:
+            message = "Completion data is invalid";
+            break;
         case proto::StatusCode::OK:
             message = "";
             break;
@@ -157,6 +160,11 @@ extern "C" FFIResult* flatsql_script_analyze(Script* script, Script* external) {
     result->owner_ptr = detached.release();
     result->owner_deleter = [](void* buffer) { delete reinterpret_cast<flatbuffers::DetachedBuffer*>(buffer); };
     return result;
+}
+
+/// Update the completion index
+extern "C" uint32_t flatsql_script_update_completion_index(Script* script) {
+    return static_cast<uint32_t>(script->UpdateCompletionIndex());
 }
 
 #ifdef WASM

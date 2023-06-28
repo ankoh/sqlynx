@@ -158,11 +158,11 @@ class AnalyzedScript {
     flatbuffers::Offset<proto::AnalyzedScript> Pack(flatbuffers::FlatBufferBuilder& builder);
 };
 
-class CompletionIndex {
+struct CompletionIndex {
     /// The analyzed script
     std::shared_ptr<AnalyzedScript> analyzed_script;
     /// The suffix trie
-    SuffixTrie suffix_trie;
+    std::unique_ptr<SuffixTrie> suffix_trie;
 };
 
 class Script {
@@ -200,7 +200,7 @@ class Script {
     /// Analyze the latest parsed script
     std::pair<AnalyzedScript*, proto::StatusCode> Analyze(Script* external = nullptr);
     /// Update the completion index
-    void UpdateCompletionIndex();
+    proto::StatusCode UpdateCompletionIndex();
     /// Complete at a text offset
     void CompleteAt(size_t offset);
 };

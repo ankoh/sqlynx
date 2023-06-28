@@ -5,4 +5,5 @@ enum StatusCode: uint32 {
 
     PARSER_INPUT_INVALID = 2,
     ANALYZER_INPUT_INVALID = 3,
+    COMPLETION_DATA_INVALID = 4,
 }
