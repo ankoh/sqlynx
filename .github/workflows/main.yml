@@ -137,7 +137,7 @@ jobs:
 
             - uses: actions/download-artifact@v3
               with:
-                  name: flatsql_parser_wasm
+                  name: flatsql_parser_wasm_Release
                   path: ./packages/flatsql/build/wasm/Release/
 
             - name: Setup flatc
