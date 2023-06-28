@@ -194,7 +194,10 @@ jobs:
 
             - name: Benchmark steps
               shell: bash
-              run: ./packages/flatsql/build/native/RelWithDebInfo/bm_steps
+              run: |
+                  ls -lisah ./packages/flatsql/build/native/RelWithDebInfo/
+                  chmod +x ./packages/flatsql/build/native/RelWithDebInfo/bm_steps
+                  ./packages/flatsql/build/native/RelWithDebInfo/bm_steps
 
     coverage:
         name: Coverage Report
