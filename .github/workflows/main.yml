@@ -124,6 +124,13 @@ jobs:
                   path: ./packages/flatsql/build/coverage/lcov.info
                   retention-days: 1
 
+            - uses: actions/upload-artifact@v3
+              if: matrix.build_type == 'RelWithDebInfo'
+              with:
+                  name: flatsql_benchmarks
+                  path: ./packages/flatsql/build/${{ matrix.build_type }}/bm_steps
+                  retention-days: 1
+
     lib_js:
         name: Library / Javascript
         runs-on: ubuntu-22.04
@@ -168,6 +175,26 @@ jobs:
                   name: flatsql_coverage_js
                   path: ./packages/flatsql-wasm/coverage/lcov.info
                   retention-days: 1
+
+    benchmarks:
+        name: Benchmarks
+        runs-on: ubuntu-22.04
+        needs:
+            - lib_native
+        steps:
+            - uses: actions/checkout@v3
+              with:
+                  submodules: 'recursive'
+                  fetch-depth: 0
+
+            - uses: actions/download-artifact@v3
+              with:
+                  name: flatsql_benchmarks
+                  path: ./packages/flatsql/build/RelWithDebInfo/
+
+            - name: Benchmark steps
+              shell: bash
+              run: ./packages/flatsql/build/RelWithDebInfo/bm_steps
 
     coverage:
         name: Coverage Report
