@@ -404,8 +404,5 @@ table ParsedScript {
     nodes: [Node];
     statements: [Statement];
     errors: [Error];
-    line_breaks: [Location];
     comments: [Location];
-    highlighting: Highlighting;
-    name_dictionary: [string];
 }
