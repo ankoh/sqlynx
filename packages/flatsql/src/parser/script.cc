@@ -60,10 +60,7 @@ flatbuffers::Offset<proto::ScannedScript> ScannedScript::Pack(flatbuffers::FlatB
     }
     out.highlighting = PackHighlighting();
     out.line_breaks = line_breaks;
-    out.name_dictionary.reserve(name_dictionary.size());
-    for (auto& [name, loc] : name_dictionary) {
-        out.name_dictionary.emplace_back(name);
-    }
+    out.comments = comments;
     return proto::ScannedScript::Pack(builder, &out);
 }
 
@@ -89,7 +86,10 @@ flatbuffers::Offset<proto::ParsedScript> ParsedScript::Pack(flatbuffers::FlatBuf
         err->message = msg;
         out.errors.push_back(std::move(err));
     }
-    out.comments = scanned_script->comments;
+    out.name_dictionary.reserve(scanned_script->name_dictionary.size());
+    for (auto& [name, loc] : scanned_script->name_dictionary) {
+        out.name_dictionary.emplace_back(name);
+    }
     return proto::ParsedScript::Pack(builder, &out);
 }
 
