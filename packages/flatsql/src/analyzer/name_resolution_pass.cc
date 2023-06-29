@@ -45,9 +45,6 @@ void NameResolutionPass::RegisterExternalTables(const AnalyzedScript& external) 
     //      Check if the external id is already mapped,
     //      If not, get string and lookup local string id.
     //      If not matching any local name, create new id mapping for external name
-    //
-    // That way, we only need to track how many external tables were imported and can offset local table ids by that
-    // amount. That is, `table_id = external_tables.size() + offset in tables`
 
     // Helper to remap a name id
     auto map_name = [this](const AnalyzedScript& external, NameID name) -> Analyzer::ID {
