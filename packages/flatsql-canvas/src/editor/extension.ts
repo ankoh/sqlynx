@@ -97,11 +97,23 @@ class FlatSQLParser implements PluginValue {
         });
         console.timeEnd('Rope Insert');
 
-        // Parse the rope
-        console.time('Rope Scanning');
-        const result = ext.script.scan();
-        result.delete();
-        console.timeEnd('Rope Scanning');
+        // Scan the script
+        console.time('Script Scanning');
+        const scanerRes = ext.script.scan();
+        scanerRes.delete();
+        console.timeEnd('Script Scanning');
+
+        // Parse the script
+        console.time('Script Parsing');
+        const parserRes = ext.script.parse();
+        parserRes.delete();
+        console.timeEnd('Script Parsing');
+
+        // Parse the script
+        console.time('Script Analyzing');
+        const analyzerRes = ext.script.analyze();
+        analyzerRes.delete();
+        console.timeEnd('Script Analyzing');
 
         // console.log(ext.script.toString());
     }
