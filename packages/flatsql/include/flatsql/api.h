@@ -25,7 +25,7 @@ extern "C" void flatsql_script_delete(flatsql::Script* script);
 /// Delete a result
 extern "C" void flatsql_result_delete(FFIResult* result);
 /// Insert char at a position
-extern "C" void flatsql_script_insert_char_at(flatsql::Script* script, size_t offset, char unicode);
+extern "C" void flatsql_script_insert_char_at(flatsql::Script* script, size_t offset, uint32_t unicode);
 /// Insert text at a position
 extern "C" void flatsql_script_insert_text_at(flatsql::Script* script, size_t offset, const char* text_ptr,
                                               size_t text_length);

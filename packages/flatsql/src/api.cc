@@ -42,7 +42,7 @@ extern "C" Script* flatsql_script_new() { return new Script(); }
 /// Delete a script
 extern "C" void flatsql_script_delete(Script* script) { delete script; }
 /// Insert char at a position
-extern "C" void flatsql_script_insert_char_at(Script* script, size_t offset, char unicode) {
+extern "C" void flatsql_script_insert_char_at(Script* script, size_t offset, uint32_t unicode) {
     script->InsertCharAt(offset, unicode);
 }
 /// Insert text at a position
