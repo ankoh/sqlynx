@@ -397,12 +397,12 @@ table ScannedScript {
     line_breaks: [Location];
     errors: [Error];
     highlighting: Highlighting;
-    name_dictionary: [string];
+    comments: [Location];
 }
 
 table ParsedScript {
     nodes: [Node];
     statements: [Statement];
     errors: [Error];
-    comments: [Location];
+    name_dictionary: [string];
 }
