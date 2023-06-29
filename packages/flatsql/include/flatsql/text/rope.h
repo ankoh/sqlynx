@@ -350,7 +350,7 @@ struct Rope {
     /// Check the integrity of the rope
     void CheckIntegrity();
     /// Copy the rope to a std::string
-    std::string ToString();
+    std::string ToString(bool withPadding = false);
 };
 
 }  // namespace rope

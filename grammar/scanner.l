@@ -33,21 +33,20 @@ namespace sx = proto;
 // Declare yy_extra_type
 #define YY_EXTRA_TYPE flatsql::parser::Scanner*
 
-// Define the function to fill data into the buffer.
-// `bytes_read` is for compatibility since flex generates int and size_t
-#define YY_INPUT(buf,result,max_size) { \
-    static_assert(YY_NULL == 0, "unexpected YY_NULL value"); \
-    size_t bytes_read = 0; \
-    flatsql_yyget_extra(yyscanner)->ScanNextInputData(buf,bytes_read,max_size); \
-    result = static_cast<decltype(result)>(bytes_read); \
+// Done after the current pattern has been matched and before the corrsponding action.
+// We update the location here and not in YY_USER_ACTION so that yyless picks it up.
+#undef YY_DO_BEFORE_ACTION
+#define YY_DO_BEFORE_ACTION { \
+    yyg->yytext_ptr = yy_bp; \
+    yyleng = (yy_size_t) (yy_cp - yy_bp); \
+    yyg->yy_hold_char = *yy_cp; \
+    *yy_cp = '\0'; \
+    yyg->yy_c_buf_p = yy_cp; \
+    loc = sx::Location(yy_bp - YY_CURRENT_BUFFER_LVALUE->yy_ch_buf, yyleng); \
 }
 
-// The user action is run whenever a token is matched.
-// We update the token location and register line breaks.
+// The user action is run whenever a token is matched
 #define YY_USER_ACTION { \
-    yytext_view = std::string_view{yytext, static_cast<size_t>(yyleng)}; \
-    loc = sx::Location(ctx.current_input_offset, yyleng); \
-    ctx.current_input_offset += yyleng; \
     for (unsigned i = 0; i < yyleng; ++i) { \
         if (yytext[i] == '\n') { \
             ctx.AddLineBreak(sx::Location(loc.offset() + i, 1)); \
@@ -297,59 +296,54 @@ other           .
 Scanner& ctx = *flatsql_yyget_extra(yyscanner);
 
 sx::Location loc;
-std::string_view yytext_view;
 auto& ext_begin = ctx.ext_begin;
-auto& temp_buffer = ctx.temp_buffer;
 auto& ext_depth = ctx.ext_depth;
+std::string_view input = ctx.input_data;
 
 %}
 
 {space}+        {}
 {comment}       { ctx.AddComment(loc); } 
 
-{xcstart}       { temp_buffer = yytext_view; ext_begin = loc; ++ext_depth; BEGIN(xc); }
-<xc>{xcstart}   { temp_buffer += yytext_view; ext_begin = loc; ++ext_depth; }
-<xc>{xcstop}    {
-                    temp_buffer += yytext_view; 
-                    if (--ext_depth == 0) { ctx.AddComment(Loc({ext_begin, loc})); BEGIN(INITIAL); }
-                }
-<xc>{xcinside}  { temp_buffer += yytext_view; }
-<xc>{op_chars}  { temp_buffer += yytext_view; }
-<xc>\*+         { temp_buffer += yytext_view; }
+{xcstart}       { ext_begin = loc; ++ext_depth; BEGIN(xc); }
+<xc>{xcstart}   { ext_begin = loc; ++ext_depth; }
+<xc>{xcstop}    { if (--ext_depth == 0) { ctx.AddComment(Loc({ext_begin, loc})); BEGIN(INITIAL); } }
+<xc>{xcinside}
+<xc>{op_chars}
+<xc>\*+
 <xc><<EOF>>     { ctx.AddError(Loc({ext_begin, loc}), "unterminated comment"); BEGIN(INITIAL); }
 
 
-{xbstart}       { temp_buffer = yytext_view; ext_begin = loc; BEGIN(xb); }
+{xbstart}       { ext_begin = loc; BEGIN(xb); }
 <xb>{quotestop} |
-<xb>{quotefail} { temp_buffer += yytext_view; BEGIN(INITIAL); return ctx.ReadBitStringLiteral(temp_buffer, Loc({ext_begin, loc})); }
+<xb>{quotefail} { BEGIN(INITIAL); return ctx.ReadBitStringLiteral(Loc({ext_begin, loc})); }
 <xh>{xhinside}  |
-<xb>{xbinside}  { temp_buffer += yytext_view; }
+<xb>{xbinside} 
 <xh>{quotecontinue} |
-<xb>{quotecontinue} { temp_buffer += yytext_view; }
+<xb>{quotecontinue}
 <xb><<EOF>>     { ctx.AddError(Loc({ext_begin, loc}), "unterminated bit string literal"); BEGIN(INITIAL); }
-{xhstart}       { temp_buffer += yytext_view; ext_begin = loc; BEGIN(xh); }
+{xhstart}       { ext_begin = loc; BEGIN(xh); }
 <xh>{quotestop} |
-<xh>{quotefail} { temp_buffer += yytext_view; BEGIN(INITIAL); return ctx.ReadHexStringLiteral(temp_buffer, Loc({ext_begin, loc})); }
+<xh>{quotefail} { BEGIN(INITIAL); return ctx.ReadHexStringLiteral(Loc({ext_begin, loc})); }
 <xh><<EOF>>     { ctx.AddError(Loc({ext_begin, loc}), "unterminated hexadecimal bit string literal"); BEGIN(INITIAL); }
 
 
-{xqstart}       { temp_buffer = yytext_view; ext_begin = loc; BEGIN(xq); }
+{xqstart}       { ext_begin = loc; BEGIN(xq); }
 <xq>{quotestop} |
-<xq>{quotefail} { temp_buffer += yytext_view; BEGIN(INITIAL); return ctx.ReadStringLiteral(temp_buffer, Loc({ext_begin, loc})); }
-<xq>{xqdouble}  { temp_buffer += yytext_view; }
-<xq>{xqinside}  { temp_buffer += yytext_view; }
+<xq>{quotefail} { BEGIN(INITIAL); return ctx.ReadStringLiteral(Loc({ext_begin, loc})); }
+<xq>{xqdouble}
+<xq>{xqinside}
 <xq><<EOF>>     { ctx.AddError(Loc({ext_begin, loc}), "unterminated quoted string"); BEGIN(INITIAL); }
 
 
-{xdstart}       { temp_buffer = yytext_view; ext_begin = loc; BEGIN(xd); }
-<xd>{xddouble}  { temp_buffer += yytext_view; }
-<xd>{xdinside}  { temp_buffer += yytext_view; }
+{xdstart}       { ext_begin = loc; BEGIN(xd); }
+<xd>{xddouble}
+<xd>{xdinside}
 <xd>{xdstop}    { 
-                    temp_buffer += yytext_view;
                     auto xdloc = Loc({ ext_begin, loc });
                     if (xdloc.length() == 2) { ctx.AddError(xdloc, "zero-length delimited identifier"); }
                     BEGIN(INITIAL); 
-                    return ctx.ReadDoubleQuotedIdentifier(temp_buffer, Loc({ext_begin, loc}));
+                    return ctx.ReadDoubleQuotedIdentifier(Loc({ext_begin, loc}));
                 }
 <xd><<EOF>>     { ctx.AddError(Loc({ ext_begin, loc }), "unterminated delimited identifier"); BEGIN(INITIAL); }
 
@@ -469,16 +463,16 @@ auto& ext_depth = ctx.ext_depth;
                     return Parser::make_Op(loc);
                 }
 
-{param}         { return ctx.ReadParameter(yytext_view, loc); }
-{param2}        { return ctx.ReadParameter(yytext_view, loc); }
-{integer}       { return ctx.ReadInteger(yytext_view, loc); }
+{param}         { return ctx.ReadParameter(loc); }
+{param2}        { return ctx.ReadParameter(loc); }
+{integer}       { return ctx.ReadInteger(loc); }
 {decimal}       { return Parser::make_FCONST(loc); }
 {decimalfail}   { yyless(yyleng - 2); return Parser::make_FCONST(loc); }
 {real}          { return Parser::make_FCONST(loc); }
 {realfail1}     { yyless(yyleng - 1); return Parser::make_FCONST(loc); }
 {realfail2}     { yyless(yyleng - 2); return Parser::make_FCONST(loc); }
 
-{identifier}    { return ctx.ReadIdentifier(yytext_view, loc); }
+{identifier}    { return ctx.ReadIdentifier(loc); }
 
 {other}         { return Parser::symbol_type(yytext[0], loc); }
 
@@ -488,11 +482,54 @@ auto& ext_depth = ctx.ext_depth;
 namespace flatsql {
 namespace parser {
 
-Scanner::Scanner(std::shared_ptr<TextBuffer> text): input_data(text), current_leaf_node(text->GetRope().GetLeafs()), output(std::make_shared<ScannedScript>(text)) {
-    if (current_leaf_node && current_leaf_node->GetSize() == 0) {
-        current_leaf_node = nullptr;
+Scanner::Scanner(std::shared_ptr<TextBuffer> text): output(std::make_shared<ScannedScript>(text)) {
+    // Write end-of-buffer markers
+    input_data = text->GetRope().ToString(true);
+    input_data[input_data.size() - 2] = YY_END_OF_BUFFER_CHAR;
+    input_data[input_data.size() - 1] = YY_END_OF_BUFFER_CHAR;
+
+    // Get scanner and buffer pointers
+    yyguts_t* yyg;
+    yy_buffer_state* yyb;
+    {
+        void* p = scanner_state_mem.data();
+        size_t n = scanner_state_mem.size();
+        scanner_state_ptr = std::align(alignof(yyguts_t), sizeof(yyguts_t), p, n);
+        yyg = reinterpret_cast<yyguts_t*>(scanner_state_ptr);
+        p = scanner_buffer_state_mem.data();
+        n = scanner_buffer_state_mem.size();
+        auto b = std::align(alignof(yy_buffer_state), sizeof(yy_buffer_state), p, n);
+        yyb = reinterpret_cast<yy_buffer_state*>(b);
     }
-    flatsql_yylex_init_extra(this, &internal_scanner_state);
+
+    // Configure the initial scanner state
+    // As done by: yylex_init_extra, yy_init_globals (minus yyalloc)
+    yyg->yy_buffer_stack = reinterpret_cast<yy_buffer_state**>(scanner_buffer_stack.data());
+    yyg->yy_buffer_stack_top = 0;
+    yyg->yy_buffer_stack_max = scanner_buffer_stack.size();
+    yyg->yy_c_buf_p = nullptr;
+    yyg->yy_init = 0;
+    yyg->yy_start = 0;
+    yyg->yy_start_stack_ptr = 0;
+    yyg->yy_start_stack_depth = 0;
+    yyg->yy_start_stack =  NULL;
+
+    // Configure the initial buffer state
+    // As done by: yy_scan_buffer (minus yyalloc)
+    yyb->yy_buf_size = input_data.size() - 2; /* "- 2" to take care of EOB's */
+    yyb->yy_buf_pos = yyb->yy_ch_buf = input_data.data();
+    yyb->yy_is_our_buffer = 0;
+    yyb->yy_input_file = 0;
+    yyb->yy_n_chars = yyb->yy_buf_size;
+    yyb->yy_is_interactive = 0;
+    yyb->yy_at_bol = 1;
+    yyb->yy_fill_buffer = 0; // This will bypass any refill logic in flex, i.e. yy_get_next_buffer
+    yyb->yy_buffer_status = YY_BUFFER_NEW;
+
+    // Set the buffer
+    flatsql_yy_switch_to_buffer(yyb, yyg);
+    // Set scanner ref
+    flatsql_yyset_extra(this, yyg);
 
     // Reserve space for the string dictionary
     output->name_dictionary_ids.reserve(128);
@@ -501,10 +538,6 @@ Scanner::Scanner(std::shared_ptr<TextBuffer> text): input_data(text), current_le
     // Always encode the empty string with identifier 0
     output->name_dictionary_ids.insert({"", 0});
     output->name_dictionary.push_back({"", sx::Location(0, 0)});
-}
-
-Scanner::~Scanner() {
-    flatsql_yylex_destroy(internal_scanner_state);
 }
 
 }

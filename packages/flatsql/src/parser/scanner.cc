@@ -27,7 +27,8 @@ void Scanner::AddLineBreak(proto::Location location) { output->line_breaks.push_
 void Scanner::AddComment(proto::Location location) { output->comments.push_back(location); }
 
 /// Read a parameter
-Parser::symbol_type Scanner::ReadParameter(std::string_view text, proto::Location loc) {
+Parser::symbol_type Scanner::ReadParameter(proto::Location loc) {
+    auto text = std::string_view{input_data}.substr(loc.offset(), loc.length());
     int64_t value;
     auto result = std::from_chars(text.data(), text.data() + text.size(), value);
     if (result.ec == std::errc::invalid_argument) {
@@ -37,7 +38,8 @@ Parser::symbol_type Scanner::ReadParameter(std::string_view text, proto::Locatio
 }
 
 /// Read an integer
-Parser::symbol_type Scanner::ReadInteger(std::string_view text, proto::Location loc) {
+Parser::symbol_type Scanner::ReadInteger(proto::Location loc) {
+    auto text = std::string_view{input_data}.substr(loc.offset(), loc.length());
     int64_t value;
     auto result = std::from_chars(text.data(), text.data() + text.size(), value);
     if (result.ec == std::errc::invalid_argument) {
@@ -48,7 +50,8 @@ Parser::symbol_type Scanner::ReadInteger(std::string_view text, proto::Location 
 }
 
 /// Read an unquoted identifier
-Parser::symbol_type Scanner::ReadIdentifier(std::string_view text, proto::Location loc) {
+Parser::symbol_type Scanner::ReadIdentifier(proto::Location loc) {
+    auto text = std::string_view{input_data}.substr(loc.offset(), loc.length());
     // Convert to lower-case
     temp_buffer = text;
     for (size_t i = 0; i < temp_buffer.size(); ++i) temp_buffer[i] = ::tolower(temp_buffer[i]);
@@ -61,7 +64,8 @@ Parser::symbol_type Scanner::ReadIdentifier(std::string_view text, proto::Locati
     return Parser::make_IDENT(id, loc);
 }
 /// Read a double quoted identifier
-Parser::symbol_type Scanner::ReadDoubleQuotedIdentifier(std::string& text, proto::Location loc) {
+Parser::symbol_type Scanner::ReadDoubleQuotedIdentifier(proto::Location loc) {
+    auto text = std::string_view{input_data}.substr(loc.offset(), loc.length());
     // Trim spaces & quotes
     temp_buffer = text;
     auto trimmed = trim_view_right(text, is_no_space);
@@ -72,41 +76,22 @@ Parser::symbol_type Scanner::ReadDoubleQuotedIdentifier(std::string& text, proto
 }
 
 /// Read a string literal
-Parser::symbol_type Scanner::ReadStringLiteral(std::string& text, proto::Location loc) {
+Parser::symbol_type Scanner::ReadStringLiteral(proto::Location loc) {
+    auto text = std::string_view{input_data}.substr(loc.offset(), loc.length());
     auto trimmed = trim_view_right(text, is_no_space);
     return Parser::make_SCONST(sx::Location(loc.offset(), trimmed.size()));
 }
 /// Read a hex string literal
-Parser::symbol_type Scanner::ReadHexStringLiteral(std::string& text, proto::Location loc) {
+Parser::symbol_type Scanner::ReadHexStringLiteral(proto::Location loc) {
+    auto text = std::string_view{input_data}.substr(loc.offset(), loc.length());
     auto trimmed = trim_view_right(text, is_no_space);
     return Parser::make_XCONST(sx::Location(loc.offset(), trimmed.size()));
 }
 /// Read a bit string literal
-Parser::symbol_type Scanner::ReadBitStringLiteral(std::string& text, proto::Location loc) {
+Parser::symbol_type Scanner::ReadBitStringLiteral(proto::Location loc) {
+    auto text = std::string_view{input_data}.substr(loc.offset(), loc.length());
     auto trimmed = trim_view_right(text, is_no_space);
     return Parser::make_BCONST(sx::Location(loc.offset(), trimmed.size()));
-}
-
-/// Scan the next input data
-void Scanner::ScanNextInputData(void* out_buffer, size_t& out_bytes_read, size_t max_size) {
-    // Invariant: current_leaf_node != nullptr means we have data
-    assert(current_leaf_node == nullptr || current_leaf_node->GetSize() > current_leaf_offset);
-    // Check if we reached the end
-    if (current_leaf_node == nullptr) {
-        out_bytes_read = 0;
-        return;
-    }
-    // Copy input data
-    auto max_here = current_leaf_node->GetSize() - current_leaf_offset;
-    auto read_here = std::min<size_t>(max_size, max_here);
-    std::memcpy(out_buffer, current_leaf_node->GetData().data() + current_leaf_offset, read_here);
-    current_leaf_offset += read_here;
-    // Did we hit the end of the leaf?
-    if (current_leaf_offset == current_leaf_node->GetSize()) {
-        current_leaf_node = current_leaf_node->GetNext();
-        current_leaf_offset = 0;
-    }
-    out_bytes_read = read_here;
 }
 
 /// Scan input and produce all tokens
@@ -185,7 +170,7 @@ std::pair<std::shared_ptr<ScannedScript>, proto::StatusCode> Scanner::Scan(std::
     // Collect all tokens until we hit EOF
     std::optional<Parser::symbol_type> lookahead_symbol;
     while (true) {
-        auto token = next(scanner.internal_scanner_state, lookahead_symbol);
+        auto token = next(scanner.scanner_state_ptr, lookahead_symbol);
         scanner.output->symbols.Append(token);
         if (token.kind() == Parser::symbol_kind::S_YYEOF) break;
     }

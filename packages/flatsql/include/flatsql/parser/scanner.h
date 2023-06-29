@@ -13,26 +13,28 @@
 namespace flatsql {
 namespace parser {
 
+constexpr size_t YY_SCANNER_STATE_SIZE = 300;
+constexpr size_t YY_BUFFER_STATE_SIZE = 200;
+
 class Scanner {
     friend class ScannedProgram;
 
    protected:
-    /// The internal scanner state
-    void* internal_scanner_state = nullptr;
-
-    /// The full input data
-    std::shared_ptr<TextBuffer> input_data;
-    /// The current leaf node
-    rope::LeafNode* current_leaf_node = nullptr;
-    /// The local offset of the value within the current leaf
-    size_t current_leaf_offset = 0;
+    /// The scanner state
+    std::array<char, YY_SCANNER_STATE_SIZE> scanner_state_mem = {};
+    /// The buffer state
+    std::array<char, YY_BUFFER_STATE_SIZE> scanner_buffer_state_mem = {};
+    /// The scanner buffer stack
+    std::array<void*, 2> scanner_buffer_stack = {};
+    /// The scanner state ptr
+    void* scanner_state_ptr = nullptr;
 
     /// The output
     std::shared_ptr<ScannedScript> output;
 
    public:
-    // Helpers that are used from the generated flex scanner
-
+    /// The input data
+    std::string input_data;
     /// The global offset within the rope
     size_t current_input_offset = 0;
     /// Temporary buffer to modify text across flex actions
@@ -42,23 +44,22 @@ class Scanner {
     /// Nesting depth of the active extended lexer rules
     size_t ext_depth = 0;
 
-    /// Scan next input data
-    void ScanNextInputData(void* out_buffer, size_t& out_bytes_read, size_t max_size);
-
     /// Read a parameter
-    Parser::symbol_type ReadParameter(std::string_view text, proto::Location loc);
+    std::string_view GetInputData() const { return input_data; };
+    /// Read a parameter
+    Parser::symbol_type ReadParameter(proto::Location loc);
     /// Read an integer
-    Parser::symbol_type ReadInteger(std::string_view text, proto::Location loc);
+    Parser::symbol_type ReadInteger(proto::Location loc);
     /// Read an identifier
-    Parser::symbol_type ReadIdentifier(std::string_view text, proto::Location loc);
+    Parser::symbol_type ReadIdentifier(proto::Location loc);
     /// Read a double-quoted identifier
-    Parser::symbol_type ReadDoubleQuotedIdentifier(std::string& text, proto::Location loc);
+    Parser::symbol_type ReadDoubleQuotedIdentifier(proto::Location loc);
     /// Read a string literal
-    Parser::symbol_type ReadStringLiteral(std::string& text, proto::Location loc);
+    Parser::symbol_type ReadStringLiteral(proto::Location loc);
     /// Read a hex literal
-    Parser::symbol_type ReadHexStringLiteral(std::string& text, proto::Location loc);
+    Parser::symbol_type ReadHexStringLiteral(proto::Location loc);
     /// Read a hex literal
-    Parser::symbol_type ReadBitStringLiteral(std::string& text, proto::Location loc);
+    Parser::symbol_type ReadBitStringLiteral(proto::Location loc);
 
     /// Add an error
     void AddError(proto::Location location, const char* message);
@@ -72,8 +73,6 @@ class Scanner {
    protected:
     /// Constructor
     Scanner(std::shared_ptr<TextBuffer> rope);
-    /// Destructor
-    ~Scanner();
     /// Delete the copy constructor
     Scanner(const Scanner& other) = delete;
     /// Delete the copy assignment
