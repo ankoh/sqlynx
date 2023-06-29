@@ -16,7 +16,7 @@ export interface FlatSQLExtensionConfig {
     /// The API
     instance: flatsql.FlatSQL;
     /// The rope
-    rope: flatsql.FlatSQLRope;
+    script: flatsql.FlatSQLScript;
 }
 
 /// A state effect to overwrite the editor state with a given value
@@ -85,12 +85,12 @@ class FlatSQLParser implements PluginValue {
         console.time('Rope Insert');
         update.changes.iterChanges((fromA: number, toA: number, fromB: number, toB: number, inserted: CMText) => {
             if (toA - fromA > 0) {
-                ext.rope.eraseTextRange(fromA, toA - fromA);
+                ext.script.eraseTextRange(fromA, toA - fromA);
             }
             if (inserted.length > 0) {
                 let writer = fromB;
                 for (const text of inserted.iter()) {
-                    ext.rope.insertTextAt(writer, text);
+                    ext.script.insertTextAt(writer, text);
                     writer += text.length;
                 }
             }
@@ -98,12 +98,12 @@ class FlatSQLParser implements PluginValue {
         console.timeEnd('Rope Insert');
 
         // Parse the rope
-        console.time('Rope Parsing');
-        const result = ext.instance.parseScript(ext.rope);
+        console.time('Rope Scanning');
+        const result = ext.script.scan();
         result.delete();
-        console.timeEnd('Rope Parsing');
+        console.timeEnd('Rope Scanning');
 
-        console.log(ext.rope.toString());
+        // console.log(ext.script.toString());
     }
     destroy() {}
 }
