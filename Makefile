@@ -126,6 +126,14 @@ editor_release:
 editor_start:
 	yarn workspace @ankoh/flatsql-editor pwa:start
 
+.PHONY: lsp
+lsp:
+	yarn workspace @ankoh/flatsql-lsp build
+
+.PHONY: vscode
+vscode:
+	yarn workspace @ankoh/flatsql-vscode build
+
 .PHONY: parser_dumps
 parser_dumps:
 	${LIB_DEBUG_DIR}/dump_parser --source_dir .

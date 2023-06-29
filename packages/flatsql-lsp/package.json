@@ -1,0 +1,25 @@
+{
+	"name": "@ankoh/flatsql-lsp",
+	"version": "0.0.1",
+	"description": "Language server for flatsql",
+	"license": "MPL-2.0",
+	"private": true,
+	"engines": {
+		"node": "*"
+	},
+	"main": "./dist/server",
+	"scripts": {
+		"vscode:prepublish": "yarn run build",
+		"build": "tsc -b",
+		"watch": "tsc -b -w"
+	},
+	"dependencies": {
+		"vscode-languageserver": "^8.1.0",
+		"vscode-languageserver-textdocument": "^1.0.8"
+	},
+	"devDependencies": {
+		"@types/node": "^16.18.34",
+		"@types/vscode": "^1.75.1",
+		"typescript": "^5.0.0"
+	}
+}
