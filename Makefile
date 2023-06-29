@@ -118,6 +118,10 @@ jslib_release:
 jslib_tests:
 	yarn workspace @ankoh/flatsql test
 
+.PHONY: canvas_release
+canvas_release:
+	yarn workspace @ankoh/flatsql-canvas pwa:build:release
+
 .PHONY: canvas_start
 canvas_start:
 	yarn workspace @ankoh/flatsql-canvas pwa:start

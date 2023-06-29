@@ -54,7 +54,9 @@ export const BackendProvider: React.FC<Props> = (props: Props) => {
 
 async function initParser(): Promise<[flatsql.FlatSQL | null, Error | null]> {
     try {
-        const instance = await flatsql.FlatSQL.instantiateStreaming(fetch(wasm));
+        const instance = await flatsql.FlatSQL.create(async (imports: WebAssembly.Imports) => {
+            return await WebAssembly.instantiateStreaming(fetch(wasm), imports);
+        });
         return [instance, null];
     } catch (e: any) {
         console.error(e);

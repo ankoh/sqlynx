@@ -4,7 +4,7 @@ import * as flatsql from '@ankoh/flatsql';
 
 import { useBackend, useBackendResolver } from '../backend';
 import { CodeMirror } from './codemirror';
-import { FlatSQLExtensionConfig, FlatSQLExtension } from './extension';
+import { FlatSQLExtension } from './extension';
 
 import styles from './editor.module.css';
 
@@ -17,11 +17,22 @@ export const Editor: React.FC<EditorProps> = (props: EditorProps) => {
         backendResolver();
     }
 
+    // Prepare a script for the editor
+    const [script, setScript] = React.useState<flatsql.FlatSQLScript | null>(null);
     const instance = backend.value.instance.value;
+    React.useEffect(() => {
+        if (!instance) return;
+        const s = instance!.createScript();
+        setScript(s);
+        return () => {
+            s?.delete();
+        };
+    }, [instance]);
+
     if (instance) {
         const config = {
             instance,
-            rope: instance.createRope(),
+            script: instance.createScript(),
         };
         return (
             <div className={styles.container}>
