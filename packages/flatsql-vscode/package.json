@@ -1,0 +1,28 @@
+{
+	"name": "@ankoh/flatsql-vscode",
+	"version": "0.0.1",
+	"description": "VSCode plugin for SQL based on flatsql",
+	"license": "MPL-2.0",
+	"private": true,
+	"engines": {
+		"vscode": "^1.75.0"
+	},
+	"activationEvents": [
+		"onLanguage:sql"
+	],
+	"main": "./dist/extension",
+	"scripts": {
+		"vscode:prepublish": "yarn run build",
+		"build": "tsc -b",
+		"watch": "tsc -b -w"
+	},
+	"dependencies": {
+		"vscode-languageclient": "^8.1.0",
+		"@akohn/flatsql-lsp": "link:../flatsql-lsp"
+	},
+	"devDependencies": {
+		"@types/node": "^16.18.34",
+		"@types/vscode": "^1.75.1",
+		"typescript": "^5.0.0"
+	}
+}

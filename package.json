@@ -2,7 +2,9 @@
     "private": true,
     "workspaces": [
         "packages/flatsql-editor",
-        "packages/flatsql-wasm"
+        "packages/flatsql-wasm",
+        "packages/flatsql-vscode",
+        "packages/flatsql-lsp"
     ],
     "packages": {
         "ts-node": "^10.9.1"

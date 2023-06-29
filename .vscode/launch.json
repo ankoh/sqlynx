@@ -59,6 +59,14 @@
             "program": "${workspaceFolder}/packages/flatsql/build/native/Debug/dump_analyzer",
             "args": ["--source_dir=${workspaceFolder}"],
             "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "extensionHost",
+            "request": "launch",
+            "name": "Launch VSCode Plugin",
+            "runtimeExecutable": "${execPath}",
+            "args": ["--extensionDevelopmentPath=${workspaceRoot}/packages/flatsql-vscode"],
+            "outFiles": ["${workspaceRoot}/packages/flatsql-vscode/dist/**/*.js"]
         }
     ]
 }
