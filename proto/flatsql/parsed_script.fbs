@@ -391,8 +391,6 @@ table Highlighting {
     token_breaks: [uint32];
 }
 
-// XXX linebreaks, scanner errors, highlighting and name dictionary into ScannedScript?
-
 table ScannedScript {
     line_breaks: [Location];
     errors: [Error];
