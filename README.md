@@ -21,10 +21,12 @@ This encoding is compact and efficient for simple passes, but is not directly su
 ```
 # Setup
 make infra_macos  # or infra_linux, depending on your system
+yarn install
 
 # Building
 make proto
 make lib
+make wasm
 make jslib
 
 # Testing
