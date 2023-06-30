@@ -199,7 +199,13 @@ jobs:
             - uses: actions/download-artifact@v3
               with:
                   name: flatsql_jslib
-                  path: ./packages/flatsql-wasm/
+                  path: ./packages/flatsql-wasm/dist
+
+            - name: Sanity check
+              shell: bash
+              run: |
+                  ls -lisah ./packages/flatsql-wasm/
+                  ls -lisah ./packages/flatsql-wasm/dist
 
             - name: Setup flatc
               uses: ./.github/actions/setup-flatc
