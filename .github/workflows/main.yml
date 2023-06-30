@@ -219,6 +219,29 @@ jobs:
               run: |
                   yarn workspace @ankoh/flatsql-explorer pwa:build:release
 
+            - uses: actions/upload-artifact@v3
+              with:
+                  name: flatsql_explorer
+                  path: ./packages/flatsql-explorer/build/pwa/release
+                  retention-days: 1
+
+    pages:
+        name: Deploy GitHub Pages
+        runs-on: ubuntu-22.04
+        needs:
+            - explorer
+        steps:
+            - uses: actions/download-artifact@v3
+              with:
+                  name: flatsql_explorer
+                  path: ./page
+
+            - uses: actions/upload-pages-artifact@v1
+              with:
+                  path: ./page
+
+            - uses: actions/deploy-pages@v2
+
     coverage:
         name: Build Coverage Report
         runs-on: ubuntu-22.04
