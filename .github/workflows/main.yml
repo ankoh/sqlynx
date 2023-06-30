@@ -184,8 +184,8 @@ jobs:
                   path: ./packages/flatsql-wasm/coverage/lcov.info
                   retention-days: 1
 
-    canvas:
-        name: Build FlatSQL Canvas
+    explorer:
+        name: Build Explorer
         runs-on: ubuntu-22.04
         needs:
             - lib_js
@@ -214,10 +214,10 @@ jobs:
                   mkdir -p ./lib/build/wasm/release ./reports
                   yarn install --frozen-lockfile
 
-            - name: Build @ankoh/flatsql-canvas
+            - name: Build @ankoh/flatsql-explorer
               shell: bash
               run: |
-                  yarn workspace @ankoh/flatsql-canvas pwa:build:release
+                  yarn workspace @ankoh/flatsql-explorer pwa:build:release
 
     coverage:
         name: Build Coverage Report
