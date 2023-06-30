@@ -37,28 +37,11 @@ describe('FlatSQL Highlighting', () => {
 
             expect(scanned.highlighting()).toBeTruthy();
             let hl = scanned.highlighting()!;
-
             expect(hl.tokenOffsetsArray()).toBeTruthy();
             expect(hl.tokenTypesArray()).toBeTruthy();
-            let tokenOffsets = hl.tokenOffsetsArray()!;
-            let tokenTypes = hl.tokenTypesArray()!;
-            let tokenBreaks = hl.tokenBreaksArray() ?? new Uint32Array();
-
-            let offsets: number[] = [];
-            let types: flatsql.proto.HighlightingTokenType[] = [];
-            let breaks: number[] = [];
-            for (let i = 0; i < tokenOffsets.length; ++i) {
-                offsets.push(tokenOffsets[i]);
-            }
-            for (let i = 0; i < tokenTypes.length; ++i) {
-                types.push(tokenTypes[i]);
-            }
-            for (let i = 0; i < tokenBreaks.length; ++i) {
-                breaks.push(tokenBreaks[i]);
-            }
-            expect(offsets).toEqual(expectedOffsets);
-            expect(types).toEqual(expectedTypes);
-            expect(breaks).toEqual(expectedBreaks);
+            expect(Array.from(hl.tokenOffsetsArray()!)).toEqual(expectedOffsets);
+            expect(Array.from(hl.tokenTypesArray()!)).toEqual(expectedTypes);
+            expect(Array.from(hl.tokenBreaksArray() ?? new Uint32Array())).toEqual(expectedBreaks);
         };
 
         add('s', [0, 1], [Token.IDENTIFIER, Token.NONE], []);
@@ -71,5 +54,77 @@ describe('FlatSQL Highlighting', () => {
         add('1', [0, 6, 7, 8], [Token.KEYWORD, Token.NONE, Token.LITERAL_INTEGER, Token.NONE], [1]);
 
         script.delete();
+    });
+
+    describe(`Utils`, () => {
+        it(`Should find tokens in range`, () => {
+            const test_tokens = (
+                text: string,
+                expectedOffsets: number[],
+                expectedTypes: flatsql.proto.HighlightingTokenType[],
+                textRange: [number, number],
+                expectedFiltered: [number, number],
+            ) => {
+                const script = fsql!.createScript();
+                script.insertTextAt(0, text);
+                const scanResult = script.scan();
+                const scannedScript = scanResult.read(new flatsql.proto.ScannedScript());
+                expect(scannedScript.highlighting()).toBeTruthy();
+
+                const hl = scannedScript.highlighting();
+                expect(hl).toBeTruthy();
+                expect(hl!.tokenOffsetsArray()).toBeTruthy();
+                expect(hl!.tokenTypesArray()).toBeTruthy();
+                expect(Array.from(hl!.tokenOffsetsArray()!)).toEqual(expectedOffsets);
+                expect(Array.from(hl!.tokenTypesArray()!)).toEqual(expectedTypes);
+
+                const [textBegin, textEnd] = textRange;
+                const [tokenBegin, tokenEnd] = flatsql.findHighlightingInRange(hl!, textBegin, textEnd);
+
+                expect([tokenBegin, tokenEnd]).toEqual(expectedFiltered);
+                script.delete();
+            };
+
+            // Full text
+            test_tokens(
+                'select 1',
+                [0, 6, 7, 8],
+                [Token.KEYWORD, Token.NONE, Token.LITERAL_INTEGER, Token.NONE],
+                [0, 8],
+                [0, 3],
+            );
+            // Expand left
+            test_tokens(
+                'select 1',
+                [0, 6, 7, 8],
+                [Token.KEYWORD, Token.NONE, Token.LITERAL_INTEGER, Token.NONE],
+                [3, 8],
+                [0, 3],
+            );
+            // Not begin, not end
+            test_tokens(
+                'select 111111',
+                [0, 6, 7, 13],
+                [Token.KEYWORD, Token.NONE, Token.LITERAL_INTEGER, Token.NONE],
+                [7, 9],
+                [2, 3],
+            );
+            // Begin, expand right
+            test_tokens(
+                'select 111111',
+                [0, 6, 7, 13],
+                [Token.KEYWORD, Token.NONE, Token.LITERAL_INTEGER, Token.NONE],
+                [0, 9],
+                [0, 3],
+            );
+            // Begin, don't expand right
+            test_tokens(
+                'select 111111',
+                [0, 6, 7, 13],
+                [Token.KEYWORD, Token.NONE, Token.LITERAL_INTEGER, Token.NONE],
+                [0, 3],
+                [0, 1],
+            );
+        });
     });
 });
