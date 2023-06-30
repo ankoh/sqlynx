@@ -43,6 +43,6 @@ make analyzer_dumps
 # Benchmarking
 make benchmark_steps
 
-# Start PWA dev server
-make explorer_start
+# Start editor dev server
+make editor_start
 ```
