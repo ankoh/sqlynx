@@ -227,6 +227,7 @@ jobs:
 
     pages:
         name: Deploy GitHub Page
+        if: github.ref == 'refs/heads/main'
         runs-on: ubuntu-22.04
         needs:
             - explorer
