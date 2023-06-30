@@ -226,7 +226,7 @@ jobs:
                   retention-days: 1
 
     pages:
-        name: Deploy GitHub Pages
+        name: Deploy GitHub Page
         runs-on: ubuntu-22.04
         needs:
             - explorer
