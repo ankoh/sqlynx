@@ -42,5 +42,5 @@ make analyzer_dumps
 make benchmark_steps
 
 # Start PWA dev server
-make canvas_start
+make explorer_start
 ```
