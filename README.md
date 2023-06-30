@@ -15,3 +15,19 @@ _Each AST node is packed into [24 bytes](https://github.com/ankoh/flatsql/blob/a
 This encoding is compact and efficient for simple passes, but is not directly suited for a full semantic analysis._
 
 <img src="misc/ast.png?raw=true" width="680px">
+
+### Building
+
+```
+# Setup
+make infra_macos  # or infra_linux, depending on your system
+
+# Building
+make proto
+make lib
+make jslib
+
+# Testing
+make lib_tests
+make jslib_tests
+```
