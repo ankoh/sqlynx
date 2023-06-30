@@ -32,4 +32,14 @@ make jslib
 # Testing
 make lib_tests
 make jslib_tests
+
+# Update dumps
+make parser_dumps
+make analyzer_dumps
+
+# Benchmarking
+make benchmark_steps
+
+# Start PWA dev server
+make canvas_start
 ```
