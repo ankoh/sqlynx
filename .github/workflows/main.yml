@@ -230,6 +230,10 @@ jobs:
         runs-on: ubuntu-22.04
         needs:
             - explorer
+        permissions:
+            contents: read
+            pages: write
+            id-token: write
         steps:
             - uses: actions/download-artifact@v3
               with:
