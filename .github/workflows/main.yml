@@ -184,8 +184,8 @@ jobs:
                   path: ./packages/flatsql-wasm/coverage/lcov.info
                   retention-days: 1
 
-    explorer:
-        name: Build Explorer
+    editor:
+        name: Build Editor
         runs-on: ubuntu-22.04
         needs:
             - lib_js
@@ -214,15 +214,15 @@ jobs:
                   mkdir -p ./lib/build/wasm/release ./reports
                   yarn install --frozen-lockfile
 
-            - name: Build @ankoh/flatsql-explorer
+            - name: Build @ankoh/flatsql-editor
               shell: bash
               run: |
-                  yarn workspace @ankoh/flatsql-explorer pwa:build:release
+                  yarn workspace @ankoh/flatsql-editor pwa:build:release
 
             - uses: actions/upload-artifact@v3
               with:
-                  name: flatsql_explorer
-                  path: ./packages/flatsql-explorer/build/pwa/release
+                  name: flatsql_editor
+                  path: ./packages/flatsql-editor/build/pwa/release
                   retention-days: 1
 
     pages:
@@ -230,7 +230,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         runs-on: ubuntu-22.04
         needs:
-            - explorer
+            - editor
         permissions:
             contents: read
             pages: write
@@ -238,7 +238,7 @@ jobs:
         steps:
             - uses: actions/download-artifact@v3
               with:
-                  name: flatsql_explorer
+                  name: flatsql_editor
                   path: ./page
 
             - uses: actions/upload-pages-artifact@v1
@@ -253,7 +253,7 @@ jobs:
         needs:
             - lib_js
             - lib_native
-            - explorer
+            - editor
         steps:
             - uses: actions/checkout@v3
               with:
