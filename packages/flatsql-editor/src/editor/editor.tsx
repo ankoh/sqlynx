@@ -36,7 +36,14 @@ export const Editor: React.FC<EditorProps> = (props: EditorProps) => {
         };
         return (
             <div className={styles.container}>
-                <CodeMirror value="hello world" height="200px" extensions={[FlatSQLExtension.of(config)]} />
+                <div className={styles.headerbar}></div>
+                <div className={styles.tabbar}></div>
+                <CodeMirror
+                    className={styles.codemirror}
+                    value="hello world"
+                    height="200px"
+                    extensions={[FlatSQLExtension.of(config)]}
+                />
             </div>
         );
     } else {

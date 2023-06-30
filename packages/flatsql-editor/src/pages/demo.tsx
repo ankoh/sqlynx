@@ -7,15 +7,12 @@ interface DemoProps {}
 
 export const DemoPage: React.FC<DemoProps> = (props: DemoProps) => {
     return (
-        <div className={styles.container}>
-            <div className={styles.page}>
-                <div className={styles.header}>
-                    FlatSQL Editor
-                </div>
-                <div className={styles.editor}>
+        <div className={styles.page}>
+            <div className={styles.editor_section} style={{ height: '66%' }}>
+                <div className={styles.editor_card}>
                     <Editor />
                 </div>
             </div>
         </div>
     );
-}
+};
