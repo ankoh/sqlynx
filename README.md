@@ -16,6 +16,8 @@ This encoding is compact and efficient for simple passes, but is not directly su
 
 <img src="misc/ast.png?raw=true" width="680px">
 
+---
+
 ### Building
 
 ```
