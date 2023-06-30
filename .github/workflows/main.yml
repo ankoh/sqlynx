@@ -11,7 +11,7 @@ jobs:
             matrix:
                 build_type: ['Debug', 'Release']
 
-        name: Library / WASM / ${{ matrix.build_type }}
+        name: Build Library / WASM / ${{ matrix.build_type }}
         runs-on: ubuntu-22.04
         steps:
             - uses: actions/checkout@v3
@@ -54,7 +54,7 @@ jobs:
             matrix:
                 build_type: ['Debug', 'RelWithDebInfo']
 
-        name: Library / Native / ${{ matrix.build_type }}
+        name: Build Library / Native / ${{ matrix.build_type }}
         runs-on: ubuntu-22.04
         steps:
             - uses: actions/checkout@v3
@@ -134,7 +134,7 @@ jobs:
                   retention-days: 1
 
     lib_js:
-        name: Library / Javascript
+        name: Build Library / Javascript
         runs-on: ubuntu-22.04
         needs:
             - lib_wasm
@@ -174,12 +174,53 @@ jobs:
 
             - uses: actions/upload-artifact@v3
               with:
+                  name: flatsql_jslib
+                  path: ./packages/flatsql-wasm/dist
+                  retention-days: 1
+
+            - uses: actions/upload-artifact@v3
+              with:
                   name: flatsql_coverage_js
                   path: ./packages/flatsql-wasm/coverage/lcov.info
                   retention-days: 1
 
+    canvas:
+        name: Build FlatSQL Canvas
+        runs-on: ubuntu-22.04
+        needs:
+            - lib_js
+            - lib_native
+        steps:
+            - uses: actions/checkout@v3
+              with:
+                  submodules: 'recursive'
+                  fetch-depth: 0
+
+            - uses: actions/download-artifact@v3
+              with:
+                  name: flatsql_jslib
+                  path: ./packages/flatsql-wasm/
+
+            - name: Setup flatc
+              uses: ./.github/actions/setup-flatc
+
+            - name: Generate Flatbuffer files
+              shell: bash
+              run: ./scripts/generate_proto.sh
+
+            - name: Install npm dependencies
+              shell: bash
+              run: |
+                  mkdir -p ./lib/build/wasm/release ./reports
+                  yarn install --frozen-lockfile
+
+            - name: Build @ankoh/flatsql-canvas
+              shell: bash
+              run: |
+                  yarn workspace @ankoh/flatsql-canvas pwa:build:release
+
     coverage:
-        name: Coverage Report
+        name: Build Coverage Report
         runs-on: ubuntu-22.04
         needs:
             - lib_js
