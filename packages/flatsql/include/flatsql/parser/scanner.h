@@ -35,8 +35,6 @@ class Scanner {
    public:
     /// The input data
     std::string input_data;
-    /// The global offset within the rope
-    size_t current_input_offset = 0;
     /// Temporary buffer to modify text across flex actions
     std::string temp_buffer;
     /// Begin of the active extended lexer rules
