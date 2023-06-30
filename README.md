@@ -26,6 +26,7 @@ yarn install
 # Building
 make proto
 make lib
+make lib_relwithdebinfo
 make wasm
 make jslib
 
