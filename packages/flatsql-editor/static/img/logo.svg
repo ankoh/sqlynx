@@ -1,0 +1,16 @@
+<svg width="100%" height="100%" viewBox="0 0 640 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+    <g transform="matrix(1.6,0,0,1,0,0)">
+        <rect id="Artboard1" x="0" y="0" width="400" height="100" style="fill:none;"/>
+        <g id="Artboard11" serif:id="Artboard1">
+            <g transform="matrix(0.625,0,0,1,0,0)">
+                <path d="M0,0L200,0L200,20L20,20L20,40L200,40L200,100L0,100L0,80L180,80L180,60L0,60L0,0Z"/>
+            </g>
+            <g transform="matrix(0.625,0,0,1,62.5,0)">
+                <path d="M120,0L120,100L220,100L220,80L140,80L140,20L300,20L300,60L220,60L220,80L320,80L320,0L120,0Z"/>
+            </g>
+            <g transform="matrix(0.625,0,0,1,25,0)">
+                <path d="M400,0L400,100L600,100L600,80L420,80L420,0L400,0Z"/>
+            </g>
+        </g>
+    </g>
+</svg>

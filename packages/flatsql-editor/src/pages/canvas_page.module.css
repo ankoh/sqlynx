@@ -28,6 +28,11 @@
     left: 20px;
 }
 
+.header_logo {
+    height: 18px;
+    z-index: 100;
+}
+
 .modelgraph_container {
     position: absolute;
     top: 0;
