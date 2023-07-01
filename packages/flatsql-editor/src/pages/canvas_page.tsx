@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useBackend, useBackendResolver } from '../backend';
 import ReactFlow, { BackgroundVariant, Background as FlowBackground } from 'reactflow';
 import { ScriptEditor } from '../editor/script_editor';
 
@@ -10,6 +11,18 @@ import logo from '../../static/img/logo.svg';
 interface Props {}
 
 export const CanvasPage: React.FC<Props> = (props: Props) => {
+    const backend = useBackend();
+    const backendResolver = useBackendResolver();
+    if (backend.unresolved()) {
+        backendResolver();
+    }
+
+    const instance = backend.value.instance.value;
+    const version = React.useMemo(() => {
+        if (!instance) return 'unknown';
+        return instance!.getVersionText();
+    }, [instance]);
+
     return (
         <div className={styles.page}>
             <div className={styles.modelgraph_container}>
@@ -26,7 +39,7 @@ export const CanvasPage: React.FC<Props> = (props: Props) => {
             </div>
             <div className={styles.header_left_container}>
                 <img className={styles.header_logo} src={logo} />
-                <div className={styles.header_version}>Version: 0.0.1-dev21.0</div>
+                <div className={styles.header_version}>Version: {version}</div>
             </div>
             <div className={styles.header_right_container}>
                 <div className={styles.header_examples}>
