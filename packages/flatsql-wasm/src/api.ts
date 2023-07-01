@@ -2,7 +2,8 @@ import * as proto from '../gen/flatsql/proto';
 import * as flatbuffers from 'flatbuffers';
 
 interface FlatSQLModuleExports {
-    flatsql_malloc: (lenght: number) => number;
+    flatsql_version: () => number;
+    flatsql_malloc: (length: number) => number;
     flatsql_free: (ptr: number) => void;
     flatsql_result_delete: (ptr: number) => void;
     flatsql_script_new: () => number;
@@ -38,6 +39,7 @@ export class FlatSQL {
         const parserMemory = parserExports['memory'] as unknown as WebAssembly.Memory;
         this.memory = parserMemory;
         this.instanceExports = {
+            flatsql_version: parserExports['flatsql_version'] as () => number,
             flatsql_malloc: parserExports['flatsql_malloc'] as (length: number) => number,
             flatsql_free: parserExports['flatsql_free'] as (ptr: number) => void,
             flatsql_result_delete: parserExports['flatsql_result_delete'] as (ptr: number) => void,
@@ -105,6 +107,16 @@ export class FlatSQL {
     public createScript(): FlatSQLScript {
         const scriptPtr = this.instanceExports.flatsql_script_new();
         return new FlatSQLScript(this, scriptPtr);
+    }
+
+    public getVersionText(): string {
+        const versionPtr = this.instanceExports.flatsql_version();
+        const heapU8 = new Uint8Array(this.memory.buffer);
+        const heapU32 = new Uint32Array(this.memory.buffer);
+        const dataPtr = heapU32[versionPtr / 4];
+        const dataLength = heapU32[versionPtr / 4 + 1];
+        const dataArray = heapU8.subarray(dataPtr, dataPtr + dataLength);
+        return this.decoder.decode(dataArray);
     }
 
     public readResult<T extends FlatBufferObject<T>>(resultPtr: number) {

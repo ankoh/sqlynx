@@ -4,7 +4,12 @@
 #include <cstdint>
 
 #include "flatsql/script.h"
+#include "flatsql/version.h"
 
+/// Get the FlatSQL version
+extern "C" flatsql::FlatSQLVersion* flatsql_version();
+
+/// Allocate memory
 extern "C" std::byte* flatsql_malloc(size_t length);
 /// Delete memory
 extern "C" void flatsql_free(void* buffer);

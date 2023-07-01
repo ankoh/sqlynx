@@ -8,6 +8,7 @@
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/script.h"
 #include "flatsql/text/rope.h"
+#include "flatsql/version.h"
 
 using namespace flatsql;
 using namespace flatsql::parser;
@@ -23,6 +24,9 @@ extern void log(const char* text, size_t textLength) { std::cout << std::string_
 void log(std::string text) { return log(text.data(), text.size()); }
 /// Log a string_view
 void log(std::string_view text) { return log(text.data(), text.size()); }
+
+/// Get the FlatSQL version
+extern "C" FlatSQLVersion* flatsql_version() { return &flatsql::VERSION; }
 
 /// Allocate memory
 extern "C" std::byte* flatsql_malloc(size_t length) { return new std::byte[length]; }
