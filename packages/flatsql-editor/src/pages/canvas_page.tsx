@@ -17,7 +17,7 @@ export const CanvasPage: React.FC<Props> = (props: Props) => {
         backendResolver();
     }
 
-    const instance = backend.value.instance.value;
+    const instance = backend.value?.instance;
     const version = React.useMemo(() => {
         if (!instance) return 'unknown';
         return instance!.getVersionText();
