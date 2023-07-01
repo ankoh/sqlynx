@@ -4,3 +4,4 @@ node_modules
 /.infra
 /default.profraw
 /default.prof
+yarn-error.log
