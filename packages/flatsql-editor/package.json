@@ -25,7 +25,8 @@
         "react-dom": "^18.2.0",
         "react-popper": "^2.3.0",
         "react-resizable": "^3.0.4",
-        "react-router-dom": "^6.2.2"
+        "react-router-dom": "^6.2.2",
+        "reactflow": "^11.7.4"
     },
     "devDependencies": {
         "@types/flatbuffers": "^1.10.0",
