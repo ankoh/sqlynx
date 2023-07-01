@@ -5,12 +5,12 @@
     background-color: rgb(240, 240, 240);
 }
 
-@media only screen and (max-width: 800px) {
+@media only screen and (max-width: 840px) {
     .editor_section {
         position: absolute;
         bottom: 0;
-        width: 90%;
-        left: 5%;
+        width: 96%;
+        left: 2%;
     }
 }
 @media only screen and (min-width: 840px) {
