@@ -10,15 +10,17 @@
 .headerbar {
     grid-row: 1;
     grid-column: 2;
-    background-color: rgb(220, 220, 220);
+    background-color: var(--background_color_primary);
     border-radius: 0px 7px 0px 0px;
+    border-bottom: 1px solid var(--border_color_primary);
 }
 
 .tabbar {
     grid-row: 1 / span 2;
     grid-column: 1;
-    background-color: rgb(180, 180, 180);
+    background-color: var(--background_color_tabbar);
     border-radius: 7px 0px 0px 0px;
+    border-right: 1px solid var(--border_color_primary);
 }
 
 .codemirror {
