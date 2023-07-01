@@ -4,6 +4,7 @@
     --background_color_primary: rgb(246, 248, 250);
     --background_color_tabbar: hsl(210, 30%, 92%);
     --border_color_primary: rgb(208, 215, 222);
+    --border_radius: 8px;
 }
 
 :root {
