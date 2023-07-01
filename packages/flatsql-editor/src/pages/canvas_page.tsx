@@ -13,7 +13,14 @@ export const CanvasPage: React.FC<Props> = (props: Props) => {
     return (
         <div className={styles.page}>
             <div className={styles.modelgraph_container}>
-                <ReactFlow nodes={[]} edges={[]} fitView attributionPosition="bottom-right">
+                <ReactFlow
+                    nodes={[]}
+                    edges={[]}
+                    attributionPosition="bottom-right"
+                    zoomOnScroll={false}
+                    zoomOnPinch={false}
+                    zoomOnDoubleClick={false}
+                >
                     <FlowBackground color="#aaa" variant={BackgroundVariant.Dots} gap={16} />
                 </ReactFlow>
             </div>
