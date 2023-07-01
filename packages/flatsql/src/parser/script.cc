@@ -19,7 +19,7 @@ std::unique_ptr<proto::StatementT> ParsedScript::Statement::Pack() {
 }
 
 /// Constructor
-ScannedScript::ScannedScript(std::string text) : input_data(std::move(text)) {}
+ScannedScript::ScannedScript(const rope::Rope& text) : input_data(text.ToString(true)) {}
 
 /// Register a name
 size_t ScannedScript::RegisterKeywordAsName(std::string_view s, sx::Location location) {

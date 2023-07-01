@@ -171,7 +171,7 @@ std::pair<std::shared_ptr<ScannedScript>, proto::StatusCode> Scanner::Scan(rope:
     };
 
     // Create the scanner
-    Scanner scanner{text.ToString(true)};
+    Scanner scanner{text};
     // Collect all tokens until we hit EOF
     std::optional<Parser::symbol_type> lookahead_symbol;
     while (true) {

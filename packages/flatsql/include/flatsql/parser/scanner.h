@@ -70,7 +70,7 @@ class Scanner {
 
    protected:
     /// Constructor
-    Scanner(std::string text);
+    Scanner(const rope::Rope& text);
     /// Delete the copy constructor
     Scanner(const Scanner& other) = delete;
     /// Delete the copy assignment

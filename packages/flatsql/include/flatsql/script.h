@@ -51,7 +51,7 @@ class ScannedScript {
 
    public:
     /// Constructor
-    ScannedScript(std::string data);
+    ScannedScript(const rope::Rope& text);
 
     /// Get the input
     auto& GetInput() const { return input_data; }

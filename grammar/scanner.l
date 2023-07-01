@@ -482,9 +482,10 @@ std::string_view input = ctx.GetInputData();
 namespace flatsql {
 namespace parser {
 
-Scanner::Scanner(std::string text): output(std::make_shared<ScannedScript>(std::move(text))) {
+Scanner::Scanner(const rope::Rope& text): output(std::make_shared<ScannedScript>(text)) {
     // Write end-of-buffer markers
     input_data = output->input_data;
+    assert(input_data.size() >= 2);
     input_data[input_data.size() - 2] = YY_END_OF_BUFFER_CHAR;
     input_data[input_data.size() - 1] = YY_END_OF_BUFFER_CHAR;
 

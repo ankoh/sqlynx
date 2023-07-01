@@ -717,7 +717,7 @@ Rope& Rope::operator=(Rope&& other) {
 };
 
 /// Copy the rope to a std::string
-std::string Rope::ToString(bool with_padding) {
+std::string Rope::ToString(bool with_padding) const {
     std::string buffer;
     buffer.reserve(root_info.text_bytes + (with_padding ? 2 : 0));
     for (auto iter = first_leaf; iter; iter = iter->next_node) {
