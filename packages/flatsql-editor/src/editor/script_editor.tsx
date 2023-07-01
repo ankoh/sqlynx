@@ -40,7 +40,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                 <div className={styles.tabbar}></div>
                 <CodeMirror
                     className={styles.codemirror}
-                    value="hello world"
+                    value="Psst, this is work in progress..."
                     height="200px"
                     extensions={[FlatSQLExtension.of(config)]}
                 />
