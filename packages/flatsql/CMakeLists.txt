@@ -57,6 +57,7 @@ if(WASM)
         ")
   set(CMAKE_EXE_LINKER_FLAGS
       "${CMAKE_EXE_LINKER_FLAGS} \
+        -Wl,--export=flatsql_version \
         -Wl,--export=flatsql_malloc \
         -Wl,--export=flatsql_free \
         -Wl,--export=flatsql_result_delete \
@@ -78,6 +79,7 @@ endif()
 # CMake includes
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules ${CMAKE_MODULE_PATH})
+include(${CMAKE_SOURCE_DIR}/cmake/version.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/flatbuffers.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/frozen.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/ankerl.cmake)
@@ -238,7 +240,7 @@ else()
   add_library(flatsql ${LIB_SRC})
 endif()
 
-target_link_libraries(flatsql flatbuffers frozen ankerl utf8proc)
+target_link_libraries(flatsql flatsql_version flatbuffers frozen ankerl utf8proc)
 
 # ---------------------------------------------------------------------------
 # Tester
