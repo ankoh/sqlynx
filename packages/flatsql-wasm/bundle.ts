@@ -5,7 +5,7 @@ import path from 'path';
 function printErr(err: NodeJS.ErrnoException | null) {
     if (err) return console.log(err);
 }
-const dist = path.resolve(__dirname, 'dist');
+const dist = new URL('dist/', import.meta.url);
 
 let isDebug = false;
 let args = process.argv.slice(2);
@@ -16,22 +16,20 @@ if (args.length == 0) {
 }
 console.log(`DEBUG=${isDebug}`);
 
-(async () => {
-    console.log(`[ ESBUILD ] flatsql.module.js`);
-    await esbuild.build({
-        entryPoints: [`./src/index.ts`],
-        outfile: `dist/flatsql.module.js`,
-        platform: 'neutral',
-        format: 'esm',
-        target: 'es2020',
-        bundle: true,
-        minify: false,
-        sourcemap: true,
-        external: ['flatbuffers'],
-    });
+console.log(`[ ESBUILD ] flatsql.module.js`);
+await esbuild.build({
+    entryPoints: [`./src/index.ts`],
+    outfile: `dist/flatsql.module.js`,
+    platform: 'neutral',
+    format: 'esm',
+    target: 'es2020',
+    bundle: true,
+    minify: false,
+    sourcemap: true,
+    external: ['flatbuffers'],
+});
 
-    fs.writeFile(path.join(dist, 'flatsql.module.d.ts'), "export * from './src';", printErr);
+await fs.promises.writeFile(new URL('flatsql.module.d.ts', dist), "export * from './src';");
 
-    const build_dir = path.resolve(__dirname, '..', 'flatsql', 'build', 'wasm', 'Release');
-    fs.copyFile(path.resolve(build_dir, 'flatsql.wasm'), path.resolve(dist, 'flatsql.wasm'), printErr);
-})();
+const wasmUrl = new URL('../flatsql/build/wasm/Release/flatsql.wasm', import.meta.url);
+await fs.promises.copyFile(wasmUrl, new URL('flatsql.wasm', dist));
