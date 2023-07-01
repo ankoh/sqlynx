@@ -13,7 +13,7 @@ struct ParserDumpTestSuite : public ::testing::TestWithParam<const ParserDumpTes
 
 TEST_P(ParserDumpTestSuite, Test) {
     auto* test = GetParam();
-    auto input = std::make_shared<TextBuffer>(1024, test->input);
+    rope::Rope input{1024, test->input};
     auto [scanned, scannedStatus] = parser::Scanner::Scan(input);
     ASSERT_EQ(scannedStatus, proto::StatusCode::OK);
     auto [parsed, parsedStatus] = parser::ParseContext::Parse(scanned);
