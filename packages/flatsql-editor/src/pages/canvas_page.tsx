@@ -5,12 +5,16 @@ import { ScriptEditor } from '../editor/script_editor';
 import 'reactflow/dist/style.css';
 import styles from './canvas_page.module.css';
 
+import logo from '../../static/img/logo.svg';
+
 interface Props {}
 
 export const CanvasPage: React.FC<Props> = (props: Props) => {
     return (
         <div className={styles.page}>
-            <div className={styles.header_container}>FlatSQL Logo</div>
+            <div className={styles.header_container}>
+                <img src={logo} className={styles.header_logo} />
+            </div>
             <div className={styles.modelgraph_container}>
                 <ReactFlow nodes={[]} edges={[]} fitView attributionPosition="bottom-right">
                     <FlowBackground color="#aaa" variant={BackgroundVariant.Dots} gap={16} />
