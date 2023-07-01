@@ -5,7 +5,7 @@ import { Resolvable, ResolvableStatus, Resolver } from './utils/resolvable';
 import wasm from '@ankoh/flatsql/dist/flatsql.wasm';
 
 interface Backend {
-    instance: Resolvable<flatsql.FlatSQL | null>;
+    instance: flatsql.FlatSQL;
 }
 
 interface Props {
@@ -18,11 +18,9 @@ export const useBackend = (): Resolvable<Backend> => React.useContext(BACKEND_CO
 export const useBackendResolver = (): Resolver<Backend | null> => React.useContext(BACKEND_RESOLVER_CONTEXT)!;
 
 export const BackendProvider: React.FC<Props> = (props: Props) => {
-    const inFlight = React.useRef<Promise<Backend> | null>(null);
+    const inFlight = React.useRef<Promise<Backend | null> | null>(null);
     const [backend, setBackend] = React.useState<Resolvable<Backend>>(
-        new Resolvable<Backend>(ResolvableStatus.NONE, {
-            instance: new Resolvable<flatsql.FlatSQL | null>(ResolvableStatus.NONE, null),
-        }),
+        new Resolvable<Backend>(ResolvableStatus.NONE, null),
     );
     const resolver = React.useCallback(async () => {
         if (inFlight.current) return await inFlight.current;
@@ -33,12 +31,12 @@ export const BackendProvider: React.FC<Props> = (props: Props) => {
             if (parserError != null) {
                 b = b.failWith(parserError);
                 setBackend(b);
-                return b.value;
+                return null;
             }
 
             // All done, complete backend
             b = b.completeWith({
-                instance: b.value.instance.completeWith(parser),
+                instance: parser!,
             });
             setBackend(b);
             return b.value;

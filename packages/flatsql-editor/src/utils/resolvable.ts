@@ -9,10 +9,10 @@ export type Resolver<Value> = () => Promise<Value>;
 
 export class Resolvable<Value, Progress = null, Err = Error> {
     public readonly status: ResolvableStatus;
-    public readonly value: Value;
+    public readonly value: Value | null;
     public readonly error: Err | null;
 
-    constructor(status: ResolvableStatus, value: Value, error: Err | null = null) {
+    constructor(status: ResolvableStatus, value: Value | null = null, error: Err | null = null) {
         this.status = status;
         this.value = value;
         this.error = error;

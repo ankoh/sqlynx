@@ -1,5 +1,4 @@
 import * as React from 'react';
-import * as flatbuffers from 'flatbuffers';
 import * as flatsql from '@ankoh/flatsql';
 
 import { useBackend, useBackendResolver } from '../backend';
@@ -19,7 +18,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
 
     // Prepare a script for the editor
     const [script, setScript] = React.useState<flatsql.FlatSQLScript | null>(null);
-    const instance = backend.value.instance.value;
+    const instance = backend.value?.instance;
     React.useEffect(() => {
         if (!instance) return;
         const s = instance!.createScript();
