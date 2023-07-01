@@ -12,9 +12,22 @@ import {
     TextDocumentPositionParams,
     TextDocumentSyncKind,
     InitializeResult,
-} from 'vscode-languageserver/node';
+} from 'vscode-languageserver/node.js';
 
 import { TextDocument } from 'vscode-languageserver-textdocument';
+
+import * as fs from 'fs';
+import * as flatsql from '@ankoh/flatsql';
+
+// TODO: use `import.meta.resolve` as soon as it is no longer experimental
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+
+const fsql = await flatsql.FlatSQL.create(async (imports: WebAssembly.Imports) => {
+    const wasmPath = require.resolve('@akohn/flatsql/dist/flatsql.wasm');
+    const buf = await fs.promises.readFile(wasmPath);
+    return await WebAssembly.instantiate(buf, imports);
+});
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.

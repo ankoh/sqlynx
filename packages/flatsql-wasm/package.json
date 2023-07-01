@@ -14,8 +14,8 @@
         "typescript": "^5.0.0"
     },
     "scripts": {
-        "build:debug": "tsc --emitDeclarationOnly && ts-node bundle.ts debug",
-        "build:release": "tsc --emitDeclarationOnly && ts-node bundle.ts release",
+        "build:debug": "tsc --emitDeclarationOnly && ts-node-esm bundle.ts debug",
+        "build:release": "tsc --emitDeclarationOnly && ts-node-esm bundle.ts release",
         "test": "node ./node_modules/jest/bin/jest",
         "test:coverage": "node ./node_modules/jest/bin/jest --coverage"
     },
@@ -26,6 +26,7 @@
         "dist/*.d.ts",
         "dist/*.wasm"
     ],
+    "type": "module",
     "main": "./dist/flatsql.module.js",
     "module": "./dist/flatsql.module.js",
     "types": "./dist/flatsql.module.d.ts"

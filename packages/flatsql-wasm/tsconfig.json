@@ -17,5 +17,11 @@
             "flatbuffers": ["../../node_modules/flatbuffers/js/flatbuffers.mjs"]
         }
     },
-    "include": ["./src/**/*.ts"]
+    "include": ["./src/**/*.ts"],
+    "ts-node": {
+        "compilerOptions": {
+            "target": "es2022",
+            "module": "es2022"
+        }
+    }
 }
