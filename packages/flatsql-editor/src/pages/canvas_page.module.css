@@ -22,10 +22,10 @@
     }
 }
 
-.header {
-    font-size: 1.4rem;
-    padding: 16px 8px;
-    margin-top: 20px;
+.header_container {
+    position: absolute;
+    top: 16px;
+    left: 20px;
 }
 
 .editor_card {
