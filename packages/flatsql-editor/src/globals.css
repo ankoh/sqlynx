@@ -1,3 +1,16 @@
 :root {
+    --color_primary: rgb(40, 40, 40);
+    --color_version: rgb(160, 160, 160);
+    --background_color_primary: rgb(246, 248, 250);
+    --background_color_tabbar: hsl(210, 20%, 92%);
+    --border_color_primary: rgb(208, 215, 222);
+}
+
+:root {
     font-family: 'Roboto';
+    color: var(--color_primary);
+}
+
+* {
+    box-sizing: border-box;
 }
