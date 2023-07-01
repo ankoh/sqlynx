@@ -19,7 +19,7 @@ export const CanvasPage: React.FC<Props> = (props: Props) => {
             </div>
             <div className={styles.header_left_container}>
                 <img className={styles.header_logo} src={logo} />
-                <div className={styles.header_version}>Version: e7ab838</div>
+                <div className={styles.header_version}>Version: 0.0.1-dev21.0</div>
             </div>
             <div className={styles.header_right_container}>
                 <div className={styles.header_examples}>
