@@ -4,13 +4,13 @@ import * as flatsql from '@ankoh/flatsql';
 
 import { useBackend, useBackendResolver } from '../backend';
 import { CodeMirror } from './codemirror';
-import { FlatSQLExtension } from './extension';
+import { FlatSQLExtension } from './codemirror_extension';
 
-import styles from './editor.module.css';
+import styles from './script_editor.module.css';
 
-interface EditorProps {}
+interface Props {}
 
-export const Editor: React.FC<EditorProps> = (props: EditorProps) => {
+export const ScriptEditor: React.FC<Props> = (props: Props) => {
     const backend = useBackend();
     const backendResolver = useBackendResolver();
     if (backend.unresolved()) {

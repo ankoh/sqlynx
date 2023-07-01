@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { BackendProvider } from './backend';
-import { DemoPage } from './pages/demo';
+import { CanvasPage } from './pages/canvas_page';
 import { createRoot } from 'react-dom/client';
 import { Route, Routes, Navigate, BrowserRouter } from 'react-router-dom';
 
@@ -13,9 +13,9 @@ root.render(
     <BrowserRouter>
         <BackendProvider>
             <Routes>
-                <Route index element={<DemoPage />} />
+                <Route index element={<CanvasPage />} />
                 <Route path="*" element={<Navigate to="/" />} />
             </Routes>
         </BackendProvider>
-    </BrowserRouter>
+    </BrowserRouter>,
 );

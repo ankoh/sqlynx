@@ -4,21 +4,21 @@
 
     display: grid;
     grid-template-columns: 56px auto;
-    grid-template-rows: 40px auto;
+    grid-template-rows: 48px auto;
 }
 
 .headerbar {
     grid-row: 1;
     grid-column: 2;
     background-color: rgb(220, 220, 220);
-    border-radius: 0px 8px 0px 0px;
+    border-radius: 0px 7px 0px 0px;
 }
 
 .tabbar {
     grid-row: 1 / span 2;
     grid-column: 1;
     background-color: rgb(180, 180, 180);
-    border-radius: 8px 0px 0px 0px;
+    border-radius: 7px 0px 0px 0px;
 }
 
 .codemirror {
