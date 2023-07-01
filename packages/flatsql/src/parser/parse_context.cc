@@ -147,8 +147,7 @@ proto::Node ParseContext::NameFromKeyword(proto::Location loc, std::string_view 
 
 /// Read a name from a string literal
 proto::Node ParseContext::NameFromStringLiteral(proto::Location loc) {
-    std::string temp;
-    auto text = program.ReadTextAtLocation(loc, temp);
+    auto text = program.ReadTextAtLocation(loc);
     auto trimmed = trim_view(text, is_no_double_quote);
     auto id = program.RegisterName(trimmed, loc);
     return proto::Node(loc, proto::NodeType::NAME, proto::AttributeKey::NONE, NO_PARENT, id, 0);
@@ -156,8 +155,7 @@ proto::Node ParseContext::NameFromStringLiteral(proto::Location loc) {
 
 /// Read a float type
 proto::NumericType ParseContext::ReadFloatType(proto::Location bitsLoc) {
-    std::string tmp_buffer;
-    auto text = program.ReadTextAtLocation(bitsLoc, tmp_buffer);
+    auto text = program.ReadTextAtLocation(bitsLoc);
     int64_t bits;
     std::from_chars(text.data(), text.data() + text.size(), bits);
     if (bits < 1) {

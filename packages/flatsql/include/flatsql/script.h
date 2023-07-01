@@ -56,16 +56,13 @@ class TextBuffer {
         return rope.Remove(offset, count);
     }
     /// Print a script as string
-    inline std::string ToString() { return rope.ToString(); }
+    inline std::string ToString(bool with_padding) { return rope.ToString(with_padding); }
 };
 
 class ScannedScript {
    public:
     /// The full input data
-    std::shared_ptr<TextBuffer> input_data;
-    /// The version of the text that was read.
-    /// We're not allowed to read from the input if the version differs.
-    size_t input_version;
+    std::string input_data;
 
     /// The scanner errors
     std::vector<std::pair<proto::Location, std::string>> errors;
@@ -86,7 +83,7 @@ class ScannedScript {
 
    public:
     /// Constructor
-    ScannedScript(std::shared_ptr<TextBuffer> text);
+    ScannedScript(std::string data);
 
     /// Get the input
     auto& GetInput() const { return input_data; }
@@ -95,7 +92,9 @@ class ScannedScript {
     /// Register a keyword as name
     size_t RegisterKeywordAsName(std::string_view s, sx::Location location);
     /// Read a text at a location
-    std::string_view ReadTextAtLocation(sx::Location loc, std::string& tmp);
+    std::string_view ReadTextAtLocation(sx::Location loc) {
+        return std::string_view{input_data}.substr(loc.offset(), loc.length());
+    }
     /// Pack syntax highlighting
     std::unique_ptr<proto::HighlightingT> PackHighlighting();
     /// Pack scanned program
