@@ -16,10 +16,10 @@ export const CanvasPage: React.FC<Props> = (props: Props) => {
                 <ReactFlow
                     nodes={[]}
                     edges={[]}
-                    attributionPosition="bottom-right"
                     zoomOnScroll={false}
                     zoomOnPinch={false}
                     zoomOnDoubleClick={false}
+                    proOptions={{ hideAttribution: true }}
                 >
                     <FlowBackground color="#aaa" variant={BackgroundVariant.Dots} gap={16} />
                 </ReactFlow>
@@ -34,7 +34,7 @@ export const CanvasPage: React.FC<Props> = (props: Props) => {
                 </div>
                 <div className={styles.header_github_buttons}>
                     <div className={styles.header_github_button}>Bug</div>
-                    <div className={styles.header_github_button}>Star</div>
+                    <div className={styles.header_github_button}>GH</div>
                 </div>
             </div>
             <div className={styles.editor_section} style={{ height: '55%' }}>
