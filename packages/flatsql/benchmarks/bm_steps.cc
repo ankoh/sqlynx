@@ -68,7 +68,7 @@ limit
 )SQL";
 
 static void scan_query(benchmark::State& state) {
-    auto buffer = std::make_shared<flatsql::TextBuffer>(1024, main_script);
+    rope::Rope buffer{1024, main_script};
     for (auto _ : state) {
         auto scan = flatsql::parser::Scanner::Scan(buffer);
         benchmark::DoNotOptimize(scan);
@@ -76,7 +76,7 @@ static void scan_query(benchmark::State& state) {
 }
 
 static void parse_query(benchmark::State& state) {
-    auto buffer = std::make_shared<flatsql::TextBuffer>(1024, main_script);
+    rope::Rope buffer{1024, main_script};
     auto scanner = flatsql::parser::Scanner::Scan(buffer);
     for (auto _ : state) {
         auto parsed = flatsql::parser::ParseContext::Parse(scanner.first);
@@ -85,8 +85,8 @@ static void parse_query(benchmark::State& state) {
 }
 
 static void analyze_query(benchmark::State& state) {
-    auto input_external = std::make_shared<TextBuffer>(1024, external_script);
-    auto input_main = std::make_shared<TextBuffer>(1024, main_script);
+    rope::Rope input_external{1024, external_script};
+    rope::Rope input_main{1024, main_script};
 
     // Analyze external script
     auto external_scan = parser::Scanner::Scan(input_external);
@@ -104,8 +104,8 @@ static void analyze_query(benchmark::State& state) {
 }
 
 static void index_query(benchmark::State& state) {
-    auto input_external = std::make_shared<TextBuffer>(1024, external_script);
-    auto input_main = std::make_shared<TextBuffer>(1024, main_script);
+    rope::Rope input_external{1024, external_script};
+    rope::Rope input_main{1024, main_script};
 
     // Analyze external script
     auto external_scan = parser::Scanner::Scan(input_external);

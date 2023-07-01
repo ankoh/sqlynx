@@ -15,8 +15,8 @@ struct AnalyzerDumpTestSuite : public ::testing::TestWithParam<const AnalyzerDum
 
 TEST_P(AnalyzerDumpTestSuite, Test) {
     auto* test = GetParam();
-    auto input_external = std::make_shared<TextBuffer>(1024, test->input_external);
-    auto input_main = std::make_shared<TextBuffer>(1024, test->input_main);
+    rope::Rope input_external{1024, test->input_external};
+    rope::Rope input_main{1024, test->input_main};
 
     // Analyze schema
     auto external_scan = parser::Scanner::Scan(input_external);

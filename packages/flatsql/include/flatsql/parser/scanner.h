@@ -78,7 +78,7 @@ class Scanner {
 
    public:
     /// Scan input and produce all tokens
-    static std::pair<std::shared_ptr<ScannedScript>, proto::StatusCode> Scan(std::shared_ptr<TextBuffer> rope);
+    static std::pair<std::shared_ptr<ScannedScript>, proto::StatusCode> Scan(rope::Rope& text);
 };
 
 }  // namespace parser

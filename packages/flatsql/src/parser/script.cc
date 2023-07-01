@@ -104,21 +104,21 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
 }
 
 /// Constructor
-Script::Script() : text(std::make_shared<TextBuffer>(1024)), external_script(nullptr) {}
+Script::Script() : text(1024), external_script(nullptr) {}
 
 /// Insert a character at an offet
 void Script::InsertCharAt(size_t char_idx, uint32_t unicode) {
     std::array<std::byte, 6> buffer;
     auto length = flatsql::utf8::utf8proc_encode_char(unicode, reinterpret_cast<uint8_t*>(buffer.data()));
     std::string_view encoded{reinterpret_cast<char*>(buffer.data()), static_cast<size_t>(length)};
-    text->InsertTextAt(char_idx, encoded);
+    text.Insert(char_idx, encoded);
 }
 /// Insert a text at an offet
-void Script::InsertTextAt(size_t char_idx, std::string_view encoded) { text->InsertTextAt(char_idx, encoded); }
+void Script::InsertTextAt(size_t char_idx, std::string_view encoded) { text.Insert(char_idx, encoded); }
 /// Erase a text at an offet
-void Script::EraseTextRange(size_t char_idx, size_t count) { text->EraseTextRange(char_idx, count); }
+void Script::EraseTextRange(size_t char_idx, size_t count) { text.Remove(char_idx, count); }
 /// Print a script as string
-std::string Script::ToString() { return text->ToString(false); }
+std::string Script::ToString() { return text.ToString(); }
 
 /// Scan a script
 std::pair<ScannedScript*, proto::StatusCode> Script::Scan() {

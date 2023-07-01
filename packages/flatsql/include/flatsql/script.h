@@ -27,38 +27,6 @@ using NodeID = uint32_t;
 using NameID = uint32_t;
 using StatementID = uint32_t;
 
-class TextBuffer {
-    /// The underlying rope
-    rope::Rope rope;
-    /// The version counter for text modifications
-    size_t version;
-
-   public:
-    /// Constructor
-    TextBuffer(size_t page_size) : rope(page_size), version(0) {}
-    /// Constructor
-    TextBuffer(size_t page_size, std::string_view text) : rope(page_size, text), version(0) {}
-
-    /// Get the rope
-    inline auto& GetRope() { return rope; }
-    /// Read from the rope
-    inline std::string_view Read(size_t char_idx, size_t count, std::string& tmp) const {
-        return rope.Read(char_idx, count, tmp);
-    }
-    /// Insert a text at an offset
-    inline void InsertTextAt(size_t offset, std::string_view text) {
-        ++version;
-        return rope.Insert(offset, text);
-    }
-    /// Erase a text range
-    inline void EraseTextRange(size_t offset, size_t count) {
-        ++version;
-        return rope.Remove(offset, count);
-    }
-    /// Print a script as string
-    inline std::string ToString(bool with_padding) { return rope.ToString(with_padding); }
-};
-
 class ScannedScript {
    public:
     /// The full input data
@@ -166,8 +134,8 @@ struct CompletionIndex {
 
 class Script {
    public:
-    /// The script text
-    std::shared_ptr<TextBuffer> text;
+    /// The underlying rope
+    rope::Rope text;
     /// The external script (if any)
     Script* external_script;
     /// The last scanned script
