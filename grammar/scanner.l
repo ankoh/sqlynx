@@ -298,7 +298,7 @@ Scanner& ctx = *flatsql_yyget_extra(yyscanner);
 sx::Location loc;
 auto& ext_begin = ctx.ext_begin;
 auto& ext_depth = ctx.ext_depth;
-std::string_view input = ctx.input_data;
+std::string_view input = ctx.GetInputData();
 
 %}
 
@@ -482,9 +482,9 @@ std::string_view input = ctx.input_data;
 namespace flatsql {
 namespace parser {
 
-Scanner::Scanner(std::shared_ptr<TextBuffer> text): output(std::make_shared<ScannedScript>(text)) {
+Scanner::Scanner(std::string text): output(std::make_shared<ScannedScript>(std::move(text))) {
     // Write end-of-buffer markers
-    input_data = text->GetRope().ToString(true);
+    input_data = output->input_data;
     input_data[input_data.size() - 2] = YY_END_OF_BUFFER_CHAR;
     input_data[input_data.size() - 1] = YY_END_OF_BUFFER_CHAR;
 

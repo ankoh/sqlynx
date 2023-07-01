@@ -28,7 +28,7 @@ void Scanner::AddComment(proto::Location location) { output->comments.push_back(
 
 /// Read a parameter
 Parser::symbol_type Scanner::ReadParameter(proto::Location loc) {
-    auto text = std::string_view{input_data}.substr(loc.offset(), loc.length());
+    auto text = GetInputData().substr(loc.offset(), loc.length());
     int64_t value;
     auto result = std::from_chars(text.data(), text.data() + text.size(), value);
     if (result.ec == std::errc::invalid_argument) {
@@ -39,7 +39,7 @@ Parser::symbol_type Scanner::ReadParameter(proto::Location loc) {
 
 /// Read an integer
 Parser::symbol_type Scanner::ReadInteger(proto::Location loc) {
-    auto text = std::string_view{input_data}.substr(loc.offset(), loc.length());
+    auto text = GetInputData().substr(loc.offset(), loc.length());
     int64_t value;
     auto result = std::from_chars(text.data(), text.data() + text.size(), value);
     if (result.ec == std::errc::invalid_argument) {
@@ -51,21 +51,26 @@ Parser::symbol_type Scanner::ReadInteger(proto::Location loc) {
 
 /// Read an unquoted identifier
 Parser::symbol_type Scanner::ReadIdentifier(proto::Location loc) {
-    auto text = std::string_view{input_data}.substr(loc.offset(), loc.length());
+    auto text = GetInputData().substr(loc.offset(), loc.length());
     // Convert to lower-case
     temp_buffer = text;
-    for (size_t i = 0; i < temp_buffer.size(); ++i) temp_buffer[i] = ::tolower(temp_buffer[i]);
+    bool all_lower = true;
+    for (size_t i = 0; i < temp_buffer.size(); ++i) {
+        temp_buffer[i] = ::tolower(temp_buffer[i]);
+        all_lower &= temp_buffer[i] == text[i];
+    }
     // Check if it's a keyword
     if (auto k = Keyword::Find(temp_buffer); !!k) {
         return Parser::symbol_type(k->token, k->name, loc);
     }
     // Add string to dictionary
-    size_t id = output->RegisterName(temp_buffer, loc);
+    std::string_view owned = all_lower ? text : output->name_pool.AllocateCopy(temp_buffer);
+    size_t id = output->RegisterName(owned, loc);
     return Parser::make_IDENT(id, loc);
 }
 /// Read a double quoted identifier
 Parser::symbol_type Scanner::ReadDoubleQuotedIdentifier(proto::Location loc) {
-    auto text = std::string_view{input_data}.substr(loc.offset(), loc.length());
+    auto text = GetInputData().substr(loc.offset(), loc.length());
     // Trim spaces & quotes
     temp_buffer = text;
     auto trimmed = trim_view_right(text, is_no_space);
@@ -77,19 +82,19 @@ Parser::symbol_type Scanner::ReadDoubleQuotedIdentifier(proto::Location loc) {
 
 /// Read a string literal
 Parser::symbol_type Scanner::ReadStringLiteral(proto::Location loc) {
-    auto text = std::string_view{input_data}.substr(loc.offset(), loc.length());
+    auto text = GetInputData().substr(loc.offset(), loc.length());
     auto trimmed = trim_view_right(text, is_no_space);
     return Parser::make_SCONST(sx::Location(loc.offset(), trimmed.size()));
 }
 /// Read a hex string literal
 Parser::symbol_type Scanner::ReadHexStringLiteral(proto::Location loc) {
-    auto text = std::string_view{input_data}.substr(loc.offset(), loc.length());
+    auto text = GetInputData().substr(loc.offset(), loc.length());
     auto trimmed = trim_view_right(text, is_no_space);
     return Parser::make_XCONST(sx::Location(loc.offset(), trimmed.size()));
 }
 /// Read a bit string literal
 Parser::symbol_type Scanner::ReadBitStringLiteral(proto::Location loc) {
-    auto text = std::string_view{input_data}.substr(loc.offset(), loc.length());
+    auto text = GetInputData().substr(loc.offset(), loc.length());
     auto trimmed = trim_view_right(text, is_no_space);
     return Parser::make_BCONST(sx::Location(loc.offset(), trimmed.size()));
 }
@@ -166,7 +171,7 @@ std::pair<std::shared_ptr<ScannedScript>, proto::StatusCode> Scanner::Scan(std::
     };
 
     // Create the scanner
-    Scanner scanner{rope};
+    Scanner scanner{rope->ToString(true)};
     // Collect all tokens until we hit EOF
     std::optional<Parser::symbol_type> lookahead_symbol;
     while (true) {

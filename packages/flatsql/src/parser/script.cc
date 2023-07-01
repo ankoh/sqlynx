@@ -19,7 +19,7 @@ std::unique_ptr<proto::StatementT> ParsedScript::Statement::Pack() {
 }
 
 /// Constructor
-ScannedScript::ScannedScript(std::shared_ptr<TextBuffer> text) : input_data(std::move(text)) {}
+ScannedScript::ScannedScript(std::string text) : input_data(std::move(text)) {}
 
 /// Register a name
 size_t ScannedScript::RegisterKeywordAsName(std::string_view s, sx::Location location) {
@@ -38,15 +38,10 @@ size_t ScannedScript::RegisterName(std::string_view s, sx::Location location) {
     if (iter != name_dictionary_ids.end()) {
         return iter->second;
     }
-    auto copy = name_pool.AllocateCopy(s);
     auto id = name_dictionary.size();
-    name_dictionary_ids.insert({copy, id});
-    name_dictionary.push_back({copy, location});
+    name_dictionary_ids.insert({s, id});
+    name_dictionary.push_back({s, location});
     return id;
-}
-/// Read a text at a location
-std::string_view ScannedScript::ReadTextAtLocation(sx::Location loc, std::string& tmp) {
-    return input_data->Read(loc.offset(), loc.length(), tmp);
 }
 
 flatbuffers::Offset<proto::ScannedScript> ScannedScript::Pack(flatbuffers::FlatBufferBuilder& builder) {
@@ -123,7 +118,7 @@ void Script::InsertTextAt(size_t char_idx, std::string_view encoded) { text->Ins
 /// Erase a text at an offet
 void Script::EraseTextRange(size_t char_idx, size_t count) { text->EraseTextRange(char_idx, count); }
 /// Print a script as string
-std::string Script::ToString() { return text->ToString(); }
+std::string Script::ToString() { return text->ToString(false); }
 
 /// Scan a script
 std::pair<ScannedScript*, proto::StatusCode> Script::Scan() {

@@ -34,7 +34,7 @@ class Scanner {
 
    public:
     /// The input data
-    std::string input_data;
+    std::span<char> input_data;
     /// Temporary buffer to modify text across flex actions
     std::string temp_buffer;
     /// Begin of the active extended lexer rules
@@ -43,7 +43,7 @@ class Scanner {
     size_t ext_depth = 0;
 
     /// Read a parameter
-    std::string_view GetInputData() const { return input_data; };
+    std::string_view GetInputData() const { return {input_data.data(), input_data.size()}; };
     /// Read a parameter
     Parser::symbol_type ReadParameter(proto::Location loc);
     /// Read an integer
@@ -70,7 +70,7 @@ class Scanner {
 
    protected:
     /// Constructor
-    Scanner(std::shared_ptr<TextBuffer> rope);
+    Scanner(std::string text);
     /// Delete the copy constructor
     Scanner(const Scanner& other) = delete;
     /// Delete the copy assignment

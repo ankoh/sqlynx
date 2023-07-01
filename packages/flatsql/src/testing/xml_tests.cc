@@ -58,8 +58,7 @@ void EncodeLocation(pugi::xml_node n, proto::Location loc, std::string_view text
     }
 }
 
-void WriteLocation(pugi::xml_node n, proto::Location loc, TextBuffer& text) {
-    std::string tmp;
+void WriteLocation(pugi::xml_node n, proto::Location loc, std::string_view text) {
     auto begin = loc.offset();
     auto end = loc.offset() + loc.length();
     {
@@ -70,10 +69,10 @@ void WriteLocation(pugi::xml_node n, proto::Location loc, TextBuffer& text) {
     {
         std::stringstream ss;
         if (loc.length() < INLINE_LOCATION_CAP) {
-            ss << text.Read(loc.offset(), loc.length(), tmp);
+            ss << text.substr(loc.offset(), loc.length());
         } else {
-            auto prefix = text.Read(loc.offset(), LOCATION_HINT_LENGTH, tmp);
-            auto suffix = text.Read(loc.offset() + loc.length() - LOCATION_HINT_LENGTH, LOCATION_HINT_LENGTH, tmp);
+            auto prefix = text.substr(loc.offset(), LOCATION_HINT_LENGTH);
+            auto suffix = text.substr(loc.offset() + loc.length() - LOCATION_HINT_LENGTH, LOCATION_HINT_LENGTH);
             ss << prefix << ".." << suffix;
         }
         n.append_attribute("text") = ss.str().c_str();
