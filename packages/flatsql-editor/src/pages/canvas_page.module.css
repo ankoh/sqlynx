@@ -22,14 +22,52 @@
     }
 }
 
-.header_container {
+.header_left_container {
     position: absolute;
     top: 16px;
     left: 20px;
 }
 
+.header_right_container {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    display: flex;
+    flex-direction: row;
+}
+
+.header_github_buttons {
+    display: grid;
+    grid-template-rows: 32px;
+    grid-template-columns: repeat(2, 40px);
+    border-radius: 8px;
+    border: 1px solid rgb(200, 200, 200);
+    background-color: white;
+}
+
+.header_github_button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.header_examples {
+    margin-right: 16px;
+    display: grid;
+    grid-template-rows: 32px;
+    border-radius: 8px;
+    border: 1px solid rgb(200, 200, 200);
+    background-color: white;
+}
+
 .header_logo {
-    height: 18px;
+    height: 16px;
+}
+
+.header_version {
+    font-size: 9pt;
+    color: rgb(160, 160, 160);
+    margin-top: 2px;
 }
 
 .modelgraph_container {

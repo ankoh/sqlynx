@@ -17,10 +17,20 @@ export const CanvasPage: React.FC<Props> = (props: Props) => {
                     <FlowBackground color="#aaa" variant={BackgroundVariant.Dots} gap={16} />
                 </ReactFlow>
             </div>
-            <div className={styles.header_container}>
-                <img src={logo} className={styles.header_logo} />
+            <div className={styles.header_left_container}>
+                <img className={styles.header_logo} src={logo} />
+                <div className={styles.header_version}>Version: e7ab838</div>
             </div>
-            <div className={styles.editor_section} style={{ height: '66%' }}>
+            <div className={styles.header_right_container}>
+                <div className={styles.header_examples}>
+                    <div>Examples</div>
+                </div>
+                <div className={styles.header_github_buttons}>
+                    <div className={styles.header_github_button}>Bug</div>
+                    <div className={styles.header_github_button}>Star</div>
+                </div>
+            </div>
+            <div className={styles.editor_section} style={{ height: '55%' }}>
                 <div className={styles.editor_card}>
                     <ScriptEditor />
                 </div>

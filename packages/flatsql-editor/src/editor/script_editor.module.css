@@ -4,7 +4,7 @@
 
     display: grid;
     grid-template-columns: 56px auto;
-    grid-template-rows: 48px auto;
+    grid-template-rows: 40px auto;
 }
 
 .headerbar {
