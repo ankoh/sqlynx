@@ -7,7 +7,7 @@ import * as webpackDevServer from 'webpack-dev-server';
 import path from 'path';
 
 export type Configuration = webpack.Configuration & {
-    devServer?: webpackDevServer.Configuration
+    devServer?: webpackDevServer.Configuration;
 };
 
 interface ConfigParams {
@@ -16,7 +16,7 @@ interface ConfigParams {
     buildDir?: string;
     tsLoaderOptions?: any;
     extractCss: boolean;
-    cssIdentifier: string
+    cssIdentifier: string;
 }
 
 export function configure(params: ConfigParams): Partial<Configuration> {
