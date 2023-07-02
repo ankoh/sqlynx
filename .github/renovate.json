@@ -1,0 +1,63 @@
+{
+    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "extends": [
+        // Maintain dependency dashboard issue
+        ":dependencyDashboard",
+        // Ignore package.json's found in node_modules
+        ":ignoreModulesAndTests",
+        // Semantic commit messages
+        ":semanticPrefixFixDepsChoreOthers",
+        // Group known monorepos together
+        // https://docs.renovatebot.com/presets-group/#groupmonorepos
+        "group:monorepos",
+        // Curated list of package groupings
+        // https://docs.renovatebot.com/presets-group/#groupmonorepos
+        "group:recommended",
+        // Crowd-sourced package replacement rules
+        "replacements:all",
+        // Crowd-sourced workarounds for known problems with packages
+        "workarounds:all"
+    ],
+    "timezone": "Europe/Berlin",
+    // Work against main branch
+    "baseBranches": ["main"],
+    // Bump the range even if the new version satisfies the existing range
+    "rangeStrategy": "bump",
+    // Squash automerged commits
+    "automergeStrategy": "squash",
+    // Deduplicate yarn depdendencies
+    "postUpdateOptions": ["yarnDedupeFewer"],
+    // Label PRs
+    "labels": ["dependencies"],
+    // Label npm dependencies
+    "npm": {
+        "labels": ["javascript", "dependencies"]
+    },
+    "packageRules": [
+        {
+            "description": "Automerge minor updates of widely used libraries",
+            "matchPackageNames": ["esbuild", "jest", "ts-jest", "typescript"],
+            "matchUpdateTypes": ["minor"],
+            "matchDepTypes": ["devDependencies"],
+            "automerge": true
+        },
+        {
+            "description": "Automerge uncritical dev dependencies",
+            "matchPackagePatterns": ["^eslint"],
+            "depTypeList": ["devDependencies"],
+            "automerge": true
+        }
+        {
+            "description": "Automerge webpack updates",
+            "matchPackagePatterns": ["^webpack"],
+            "groupName": "webpack",
+            "automerge": true
+        },
+        {
+            "description": "Automerge type updates",
+            "matchPackagePatterns": ["^@types/"],
+            "rangeStrategy": "pin",
+            "automerge": true
+        },
+    ]
+}
