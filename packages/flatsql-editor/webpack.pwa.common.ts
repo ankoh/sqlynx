@@ -25,6 +25,7 @@ export function configure(params: ConfigParams): Partial<Configuration> {
         entry: params.entry,
         output: {
             path: params.buildDir,
+            publicPath: '/',
             filename: 'static/js/[name].[contenthash].js',
             chunkFilename: 'static/js/[name].[contenthash].js',
             assetModuleFilename: 'static/assets/[name].[contenthash][ext]',
