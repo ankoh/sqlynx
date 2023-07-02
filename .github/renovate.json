@@ -4,6 +4,7 @@
         ":dependencyDashboard",
         ":ignoreModulesAndTests",
         ":semanticPrefixFixDepsChoreOthers",
+        ":preserveSemverRanges",
         "group:monorepos",
         "group:recommended",
         "replacements:all",
@@ -41,7 +42,6 @@
         {
             "description": "Automerge type updates",
             "matchPackagePatterns": ["^@types/"],
-            "rangeStrategy": "pin",
             "automerge": true
         }
     ]
