@@ -22,26 +22,29 @@
     "packageRules": [
         {
             "description": "Automerge linter updates",
-            "matchPackagePatterns": ["^eslint"],
+            "matchPackagePatterns": [".*eslint.*"],
             "depTypeList": ["devDependencies"],
             "groupName": "linter",
             "automerge": true
         },
         {
             "description": "Automerge webpack updates",
-            "matchPackagePatterns": ["^webpack"],
+            "matchPackagePatterns": [".*webpack.*"],
+            "depTypeList": ["devDependencies"],
             "groupName": "webpack",
             "automerge": true
         },
         {
             "description": "Automerge typescript updates",
-            "matchPackagePatterns": ["^typescript"],
+            "matchPackagePatterns": [".*typescript.*"],
+            "depTypeList": ["devDependencies"],
             "groupName": "typescript",
             "automerge": true
         },
         {
             "description": "Automerge type definition updates",
             "matchPackagePatterns": ["^@types/"],
+            "depTypeList": ["devDependencies"],
             "groupName": "type definitions",
             "automerge": true
         }
