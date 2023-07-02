@@ -50,7 +50,7 @@ jobs:
                   RENOVATE_USERNAME: 'flatsql-renovate[bot]'
                   # Git commit author used, must match GitHub App
                   # Get user-id from https://api.github.com/users/flatsql-renovate[bot]
-                  RENOVATE_GIT_AUTHOR: 'FlatSQL Renovate Bot <138368581+github-actions[bot]@users.noreply.github.com>'
+                  RENOVATE_GIT_AUTHOR: 'FlatSQL Renovate Bot <138368581+flatsql-renovate[bot]@users.noreply.github.com>'
                   # Use GitHub API to create commits (this allows for signed commits from GitHub App)
                   RENOVATE_PLATFORM_COMMIT: 'true'
                   # Override schedule if set
