@@ -21,10 +21,10 @@
     },
     "packageRules": [
         {
-            "description": "Automerge uncritical dev dependencies",
+            "description": "Automerge linter updates",
             "matchPackagePatterns": ["^eslint"],
             "depTypeList": ["devDependencies"],
-            "groupName": "eslint",
+            "groupName": "linter",
             "automerge": true
         },
         {
@@ -40,7 +40,7 @@
             "automerge": true
         },
         {
-            "description": "Automerge type updates",
+            "description": "Automerge type definition updates",
             "matchPackagePatterns": ["^@types/"],
             "groupName": "type definitions",
             "automerge": true
