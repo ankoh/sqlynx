@@ -3,7 +3,7 @@
     height: 100%;
 
     display: grid;
-    grid-template-columns: 56px auto;
+    grid-template-columns: 48px auto;
     grid-template-rows: 40px auto;
 }
 
@@ -18,7 +18,7 @@
 .tabbar {
     grid-row: 1 / span 2;
     grid-column: 1;
-    background-color: var(--background_color_tabbar);
+    background-color: var(--tabbar_background);
     border-radius: calc(var(--border_radius) - 1px) 0px 0px 0px;
     border-right: 1px solid var(--border_color_primary);
 
@@ -28,6 +28,20 @@
 
 .tabbar_tab {
     height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-top: 1px solid transparent;
+    border-bottom: 1px solid var(--border_color_primary);
+    border-left: var(--tabbar_indicator_width) solid transparent;
+}
+.tabbar_tab:first-child {
+    border-radius: calc(var(--border_radius) - 1px) 0px 0px 0px;
+}
+
+.tabbar_tab_active {
+    background-color: var(--tabbar_background_active);
+    border-left: var(--tabbar_indicator_width) solid var(--tabbar_indicator_color) !important;
 }
 
 .codemirror {

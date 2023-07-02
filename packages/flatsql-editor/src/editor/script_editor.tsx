@@ -1,11 +1,13 @@
 import * as React from 'react';
 import * as flatsql from '@ankoh/flatsql';
+import cn from 'classnames';
 
 import { useBackend, useBackendResolver } from '../backend';
 import { CodeMirror } from './codemirror';
 import { FlatSQLExtension } from './codemirror_extension';
 
-import iconPlan from '../../static/svg/icons/database.svg';
+import iconMainScript from '../../static/svg/icons/database_search.svg';
+import iconExternalScript from '../../static/svg/icons/database.svg';
 
 import styles from './script_editor.module.css';
 
@@ -39,12 +41,16 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
             <div className={styles.container}>
                 <div className={styles.headerbar}></div>
                 <div className={styles.tabbar}>
-                    <div className={styles.tabbar_tab}>
-                        <svg width="32px" height="32px">
-                            <use xlinkHref={`${iconPlan}#sym`} />
+                    <div className={cn(styles.tabbar_tab)}>
+                        <svg width="22px" height="22px">
+                            <use xlinkHref={`${iconMainScript}#sym`} />
                         </svg>
                     </div>
-                    <div className={styles.tabbar_tab}></div>
+                    <div className={cn(styles.tabbar_tab, styles.tabbar_tab_active)}>
+                        <svg width="22px" height="22px">
+                            <use xlinkHref={`${iconExternalScript}#sym`} />
+                        </svg>
+                    </div>
                 </div>
                 <CodeMirror
                     className={styles.codemirror}
