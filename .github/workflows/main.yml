@@ -191,7 +191,6 @@ jobs:
         runs-on: ubuntu-22.04
         needs:
             - lib_js
-            - lib_native
         steps:
             - uses: actions/checkout@v3
               with:
@@ -226,6 +225,7 @@ jobs:
         runs-on: ubuntu-22.04
         needs:
             - editor
+            - lib_native
         permissions:
             contents: read
             pages: write
