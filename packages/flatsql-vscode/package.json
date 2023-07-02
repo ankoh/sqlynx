@@ -1,8 +1,13 @@
 {
-	"name": "@ankoh/flatsql-vscode",
+	"name": "flatsql-vscode",
 	"version": "0.0.1",
-	"description": "VSCode plugin for SQL based on flatsql",
+	"displayName": "flatsql",
+	"description": "SQL completion, navigation, and more",
 	"license": "MPL-2.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ankohn/flatsql"
+	},
 	"private": true,
 	"engines": {
 		"vscode": "^1.75.0"
@@ -10,19 +15,29 @@
 	"activationEvents": [
 		"onLanguage:sql"
 	],
+	"categories": [
+		"Programming Languages",
+		"Linters",
+		"Formatters"
+	],
+	"keywords": [
+		"SQL"
+	],
 	"main": "./dist/extension",
 	"scripts": {
 		"vscode:prepublish": "yarn run build",
 		"build": "tsc -b",
-		"watch": "tsc -b -w"
+		"watch": "tsc -b -w",
+		"package": "vsce package --yarn"
 	},
 	"dependencies": {
-		"vscode-languageclient": "^8.1.0",
-		"@akohn/flatsql-lsp": "link:../flatsql-lsp"
+		"@akohn/flatsql-lsp": "link:../flatsql-lsp",
+		"vscode-languageclient": "^8.1.0"
 	},
 	"devDependencies": {
 		"@types/node": "^16.18.34",
 		"@types/vscode": "^1.75.1",
-		"typescript": "^5.0.0"
+		"typescript": "^5.0.0",
+		"@vscode/vsce": "^2.19.0"
 	}
 }

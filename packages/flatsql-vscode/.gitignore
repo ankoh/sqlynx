@@ -1,4 +1,3 @@
 /dist
-/gen
 /node_modules
-/coverage
+*.vsix
