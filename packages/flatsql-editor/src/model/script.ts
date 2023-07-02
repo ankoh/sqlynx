@@ -33,12 +33,22 @@ export interface Script {
 
 export function createScript(script: Omit<Script, 'scriptId'>): Script {
     const s = script as any;
-    s.scriptId = `${getScriptOriginTypeName}|${script.name}`;
+    switch (script.originType) {
+        case ScriptOriginType.HTTP:
+            s.scriptId = script.httpURL;
+            break;
+        case ScriptOriginType.GITHUB_GIST:
+            s.scriptId = `${script.githubAccount}/${script.githubGistName}`;
+            break;
+        case ScriptOriginType.LOCAL:
+            s.scriptId = script.name;
+            break;
+    }
     return s as Script;
 }
 
-export function getScriptOriginTypeName(prefix: ScriptOriginType): string {
-    switch (prefix) {
+export function getScriptOriginTypeName(origin: ScriptOriginType): string {
+    switch (origin) {
         case ScriptOriginType.LOCAL:
             return 'local';
         case ScriptOriginType.GITHUB_GIST:
