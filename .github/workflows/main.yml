@@ -203,13 +203,6 @@ jobs:
                   name: flatsql_jslib
                   path: ./packages/flatsql-wasm/dist
 
-            - name: Setup flatc
-              uses: ./.github/actions/setup-flatc
-
-            - name: Generate Flatbuffer files
-              shell: bash
-              run: ./scripts/generate_proto.sh
-
             - name: Install npm dependencies
               shell: bash
               run: |
