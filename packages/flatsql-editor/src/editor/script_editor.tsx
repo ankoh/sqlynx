@@ -5,6 +5,8 @@ import { useBackend, useBackendResolver } from '../backend';
 import { CodeMirror } from './codemirror';
 import { FlatSQLExtension } from './codemirror_extension';
 
+import iconPlan from '../../static/svg/icons/database.svg';
+
 import styles from './script_editor.module.css';
 
 interface Props {}
@@ -36,7 +38,14 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         return (
             <div className={styles.container}>
                 <div className={styles.headerbar}></div>
-                <div className={styles.tabbar}></div>
+                <div className={styles.tabbar}>
+                    <div className={styles.tabbar_tab}>
+                        <svg width="32px" height="32px">
+                            <use xlinkHref={`${iconPlan}#sym`} />
+                        </svg>
+                    </div>
+                    <div className={styles.tabbar_tab}></div>
+                </div>
                 <CodeMirror
                     className={styles.codemirror}
                     value="Psst, this is work in progress..."
