@@ -36,23 +36,28 @@
     flex-direction: row;
 }
 
-.header_github_buttons {
-    display: grid;
-    grid-template-rows: 32px;
-    grid-template-columns: repeat(2, 40px);
+.header_button_group {
+    margin-left: 16px;
+    display: flex;
+    flex-direction: row;
+    height: 32px;
     border-radius: var(--border_radius);
     border: 1px solid var(--border_color_primary);
     background-color: white;
 }
 
-.header_github_button {
+.header_button {
+    width: 40px;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
+.header_button:not(:first-child) {
+    border-left: 1px solid var(--border_color_primary);
+}
+
 .header_examples {
-    margin-right: 16px;
     display: grid;
     grid-template-rows: 32px;
     border-radius: var(--border_radius);

@@ -6,6 +6,10 @@ import { ScriptEditor } from '../editor/script_editor';
 import 'reactflow/dist/style.css';
 import styles from './canvas_page.module.css';
 
+import iconGitHub from '../../static/svg/icons/github.svg';
+import iconBug from '../../static/svg/icons/bug.svg';
+import iconShare from '../../static/svg/icons/share.svg';
+
 import logo from '../../static/svg/logo/logo.svg';
 
 interface Props {}
@@ -42,12 +46,24 @@ export const CanvasPage: React.FC<Props> = (props: Props) => {
                 <div className={styles.header_version}>Version: {version}</div>
             </div>
             <div className={styles.header_right_container}>
-                <div className={styles.header_examples}>
-                    <div>Examples</div>
+                <div className={styles.header_button_group}>
+                    <div className={styles.header_button}>
+                        <svg width="22px" height="22px">
+                            <use xlinkHref={`${iconShare}#sym`} />
+                        </svg>
+                    </div>
                 </div>
-                <div className={styles.header_github_buttons}>
-                    <div className={styles.header_github_button}>Bug</div>
-                    <div className={styles.header_github_button}>GH</div>
+                <div className={styles.header_button_group}>
+                    <div className={styles.header_button}>
+                        <svg width="22px" height="22px">
+                            <use xlinkHref={`${iconBug}#sym`} />
+                        </svg>
+                    </div>
+                    <div className={styles.header_button}>
+                        <svg width="22px" height="22px">
+                            <use xlinkHref={`${iconGitHub}#sym`} />
+                        </svg>
+                    </div>
                 </div>
             </div>
             <div className={styles.editor_section} style={{ height: '55%' }}>
