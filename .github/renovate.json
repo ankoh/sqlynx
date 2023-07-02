@@ -21,35 +21,28 @@
     },
     "packageRules": [
         {
-            "description": "Automerge minor updates of widely used libraries",
-            "matchPackageNames": ["esbuild", "jest", "ts-jest", "typescript"],
-            "matchUpdateTypes": ["minor"],
-            "matchDepTypes": ["devDependencies"],
-            "automerge": true
-        },
-        {
             "description": "Automerge uncritical dev dependencies",
             "matchPackagePatterns": ["^eslint"],
             "depTypeList": ["devDependencies"],
-            "groupName": "Eslint",
+            "groupName": "eslint",
             "automerge": true
         },
         {
             "description": "Automerge webpack updates",
             "matchPackagePatterns": ["^webpack"],
-            "groupName": "Webpack",
+            "groupName": "webpack",
             "automerge": true
         },
         {
             "description": "Automerge typescript updates",
             "matchPackagePatterns": ["^typescript"],
-            "groupName": "Typescript",
+            "groupName": "typescript",
             "automerge": true
         },
         {
             "description": "Automerge type updates",
             "matchPackagePatterns": ["^@types/"],
-            "groupName": "Type Definitions",
+            "groupName": "type definitions",
             "automerge": true
         }
     ]
