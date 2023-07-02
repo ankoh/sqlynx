@@ -1,6 +1,7 @@
 <img src="/misc/logo.svg" height="24">
 
 [![Main](https://github.com/ankoh/flatsql/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/ankoh/flatsql/actions/workflows/main.yml)
+[![Renovate](https://github.com/ankoh/flatsql/actions/workflows/renovate.yml/badge.svg)](https://github.com/ankoh/flatsql/actions/workflows/renovate.yml)
 [![Coverage](https://coveralls.io/repos/github/ankoh/flatsql/badge.svg?branch=main)](https://coveralls.io/github/ankoh/flatsql?branch=main)
 [![License](misc/badge_mpl2.svg?raw=true)](https://opensource.org/licenses/MPL-2.0)
 [![Status](misc/badge_wip.svg?raw=true)](https://github.com/ankoh/flatsql/commits/main)
