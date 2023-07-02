@@ -3,32 +3,32 @@ import React from 'react';
 import { Script } from './script';
 import { SET_SCRIPT_CONTENT, useScriptRegistryDispatch } from './script_registry';
 
-type ScriptResolver = (script: Script) => Promise<void>;
+type ScriptLoader = (script: Script) => Promise<string | null>;
 
-interface ScriptLoader {
+interface ScriptLoadingPromise {
     script: Script;
-    loader: Promise<void>;
+    loader: Promise<string | null>;
 }
 
 interface ScriptLoaderState {
-    scripts: Map<string, ScriptLoader>;
+    scripts: Map<string, ScriptLoadingPromise>;
 }
 
 type Props = {
     children: React.ReactElement;
 };
 
-const resolverCtx = React.createContext<ScriptResolver | null>(null);
+const resolverCtx = React.createContext<ScriptLoader | null>(null);
 
 export const ScriptLoaderProvider: React.FC<Props> = (props: Props) => {
     const registryDispatch = useScriptRegistryDispatch();
     const state = React.useRef<ScriptLoaderState>({
-        scripts: new Map<string, ScriptLoader>(),
+        scripts: new Map<string, ScriptLoadingPromise>(),
     });
-    const resolver = React.useCallback<ScriptResolver>(
+    const resolver = React.useCallback<ScriptLoader>(
         async (script: Script) => {
             // Already loaded?
-            if (script.content != null) return;
+            if (script.content != null) return script.content;
             // Load pending?
             const inflight = state.current.scripts.get(script.scriptId);
             if (inflight) {
@@ -43,11 +43,13 @@ export const ScriptLoaderProvider: React.FC<Props> = (props: Props) => {
                     data: [script.scriptId, content],
                 });
                 state.current.scripts.delete(script.scriptId);
+                return content;
             }
+            return null;
         },
         [registryDispatch],
     );
     return <resolverCtx.Provider value={resolver}>{props.children}</resolverCtx.Provider>;
 };
 
-export const useScriptResolver = (): ScriptResolver => React.useContext(resolverCtx)!;
+export const useScriptLoader = (): ScriptLoader => React.useContext(resolverCtx)!;

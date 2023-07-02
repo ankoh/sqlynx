@@ -9,7 +9,7 @@ import { FlatSQLExtension } from './codemirror_extension';
 
 import iconMainScript from '../../static/svg/icons/database_search.svg';
 import iconExternalScript from '../../static/svg/icons/database.svg';
-import iconLoadExample from '../../static/svg/icons/school.svg';
+import iconLoadExample from '../../static/svg/icons/folder_open.svg';
 
 import styles from './script_editor.module.css';
 
@@ -141,9 +141,8 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                     </div>
                     <div className={styles.headerbar_right}>
                         <div className={styles.example_loader_container}>
-                            <div className={styles.example_loader_selected}></div>
                             <div className={styles.example_loader_button}>
-                                <svg width="18px" height="18px">
+                                <svg width="20px" height="20px">
                                     <use xlinkHref={`${iconLoadExample}#sym`} />
                                 </svg>
                             </div>
