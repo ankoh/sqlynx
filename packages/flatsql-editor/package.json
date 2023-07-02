@@ -52,7 +52,6 @@
         "kleur": "^4.1.5",
         "mini-css-extract-plugin": "^2.7.6",
         "prettier": "^2.8.8",
-        "puppeteer": "^19.11.1",
         "react-test-renderer": "^18.2.0",
         "source-map-loader": "^4.0.1",
         "style-loader": "^3.3.3",
