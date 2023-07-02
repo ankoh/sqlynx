@@ -46,7 +46,7 @@
             "matchPackagePatterns": ["^eslint"],
             "depTypeList": ["devDependencies"],
             "automerge": true
-        }
+        },
         {
             "description": "Automerge webpack updates",
             "matchPackagePatterns": ["^webpack"],
@@ -58,6 +58,6 @@
             "matchPackagePatterns": ["^@types/"],
             "rangeStrategy": "pin",
             "automerge": true
-        },
+        }
     ]
 }
