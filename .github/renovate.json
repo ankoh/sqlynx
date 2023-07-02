@@ -31,17 +31,25 @@
             "description": "Automerge uncritical dev dependencies",
             "matchPackagePatterns": ["^eslint"],
             "depTypeList": ["devDependencies"],
+            "groupName": "Eslint",
             "automerge": true
         },
         {
             "description": "Automerge webpack updates",
             "matchPackagePatterns": ["^webpack"],
-            "groupName": "webpack",
+            "groupName": "Webpack",
+            "automerge": true
+        },
+        {
+            "description": "Automerge typescript updates",
+            "matchPackagePatterns": ["^typescript"],
+            "groupName": "Typescript",
             "automerge": true
         },
         {
             "description": "Automerge type updates",
             "matchPackagePatterns": ["^@types/"],
+            "groupName": "Type Definitions",
             "automerge": true
         }
     ]
