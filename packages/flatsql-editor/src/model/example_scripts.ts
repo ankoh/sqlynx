@@ -37,7 +37,26 @@ import tpch_q20 from '../../static/examples/tpch/q20.sql';
 import tpch_q21 from '../../static/examples/tpch/q21.sql';
 import tpch_q22 from '../../static/examples/tpch/q22.sql';
 
+import tpcds_schema from '../../static/examples/tpcds/schema.sql';
+
+import ssb_schema from '../../static/examples/ssb/schema.sql';
+import ssb_q11 from '../../static/examples/ssb/q11.sql';
+import ssb_q12 from '../../static/examples/ssb/q12.sql';
+import ssb_q13 from '../../static/examples/ssb/q13.sql';
+import ssb_q21 from '../../static/examples/ssb/q21.sql';
+import ssb_q22 from '../../static/examples/ssb/q22.sql';
+import ssb_q23 from '../../static/examples/ssb/q23.sql';
+import ssb_q31 from '../../static/examples/ssb/q31.sql';
+import ssb_q32 from '../../static/examples/ssb/q32.sql';
+import ssb_q33 from '../../static/examples/ssb/q33.sql';
+import ssb_q34 from '../../static/examples/ssb/q34.sql';
+import ssb_q41 from '../../static/examples/ssb/q41.sql';
+import ssb_q42 from '../../static/examples/ssb/q42.sql';
+import ssb_q43 from '../../static/examples/ssb/q43.sql';
+
 const tpchSchema = example(ScriptType.SCHEMA, 'TPCH Schema', tpch_schema);
+const tpcdsSchema = example(ScriptType.SCHEMA, 'TPCDS Schema', tpcds_schema);
+const ssbSchema = example(ScriptType.SCHEMA, 'SSB Schema', ssb_schema);
 
 export const exampleScripts = [
     tpchSchema,
@@ -63,5 +82,19 @@ export const exampleScripts = [
     example(ScriptType.QUERY, 'TPCH Query 20', tpch_q20, tpchSchema.scriptId),
     example(ScriptType.QUERY, 'TPCH Query 21', tpch_q21, tpchSchema.scriptId),
     example(ScriptType.QUERY, 'TPCH Query 22', tpch_q22, tpchSchema.scriptId),
+    ssb_schema,
+    example(ScriptType.QUERY, 'SSB Query 1', ssb_q11, ssbSchema.scriptId),
+    example(ScriptType.QUERY, 'SSB Query 2', ssb_q12, ssbSchema.scriptId),
+    example(ScriptType.QUERY, 'SSB Query 3', ssb_q13, ssbSchema.scriptId),
+    example(ScriptType.QUERY, 'SSB Query 1', ssb_q21, ssbSchema.scriptId),
+    example(ScriptType.QUERY, 'SSB Query 2', ssb_q22, ssbSchema.scriptId),
+    example(ScriptType.QUERY, 'SSB Query 3', ssb_q23, ssbSchema.scriptId),
+    example(ScriptType.QUERY, 'SSB Query 1', ssb_q31, ssbSchema.scriptId),
+    example(ScriptType.QUERY, 'SSB Query 2', ssb_q32, ssbSchema.scriptId),
+    example(ScriptType.QUERY, 'SSB Query 3', ssb_q33, ssbSchema.scriptId),
+    example(ScriptType.QUERY, 'SSB Query 4', ssb_q34, ssbSchema.scriptId),
+    example(ScriptType.QUERY, 'SSB Query 1', ssb_q41, ssbSchema.scriptId),
+    example(ScriptType.QUERY, 'SSB Query 2', ssb_q42, ssbSchema.scriptId),
+    example(ScriptType.QUERY, 'SSB Query 3', ssb_q43, ssbSchema.scriptId),
 ];
 console.log(exampleScripts);
