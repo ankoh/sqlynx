@@ -68,7 +68,36 @@ const FLATSQL_STATE_FIELD = StateField.define<FlatSQLExtensionState>({
 
 /// A FlatSQL parser plugin that parses the CodeMirror text whenever it changes
 class FlatSQLParser implements PluginValue {
-    constructor(readonly view: EditorView) {}
+    constructor(readonly view: EditorView) {
+        // Resolve the parser
+        const ext = this.view.state.facet(FlatSQLExtension)!;
+        if (!ext.instance) {
+            console.warn('FlatSQL module not set');
+            return;
+        }
+
+        const text = view.state.doc.toString();
+        ext.script.eraseTextRange(0, Number.MAX_SAFE_INTEGER);
+        ext.script.insertTextAt(0, text);
+
+        // Scan the script
+        console.time('Script Scanning');
+        const scannerRes = ext.script.scan();
+        scannerRes.delete();
+        console.timeEnd('Script Scanning');
+
+        // Parse the script
+        console.time('Script Parsing');
+        const parserRes = ext.script.parse();
+        parserRes.delete();
+        console.timeEnd('Script Parsing');
+
+        // Parse the script
+        console.time('Script Analyzing');
+        const analyzerRes = ext.script.analyze();
+        analyzerRes.delete();
+        console.timeEnd('Script Analyzing');
+    }
     update(update: ViewUpdate) {
         if (!update.docChanged) {
             return;
