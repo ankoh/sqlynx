@@ -1,9 +1,11 @@
 name: Main
 on:
     push:
+        branches-ignore:
+            - 'renovate/*'
     pull_request:
         branches:
-            - main
+            - 'main'
 
 jobs:
     lib_wasm:
