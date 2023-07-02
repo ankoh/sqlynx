@@ -17,9 +17,10 @@ on:
                 default: 'false'
                 type: string
 
-    # Run renovate at 8 and 9 in the morning, every day
+    # Run renovate at 5 and 6 in the morning (8, 9 CEST), every day
+    # We run twice to trigger auto-merges of the first round.
     schedule:
-        - cron: '0 8,9 * * *'
+        - cron: '0 5,6 * * *'
 
 concurrency: renovate
 jobs:
