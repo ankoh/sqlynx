@@ -1,4 +1,8 @@
 name: Renovate
+
+# Instructions can be found here:
+# https://github.com/renovatebot/github-action
+
 on:
     workflow_dispatch:
         inputs:
@@ -23,6 +27,13 @@ jobs:
         name: 'Renovate'
         runs-on: ubuntu-latest
         steps:
+            - name: Get token
+              id: get_token
+              uses: tibdex/github-app-token@v1
+              with:
+                  private_key: ${{ secrets.RENOVATE_APP_PRIVATE_KEY }}
+                  app_id: ${{ secrets.RENOVATE_APP_ID }}
+
             - uses: actions/checkout@v3
               with:
                   submodules: 'recursive'
@@ -36,9 +47,10 @@ jobs:
                   # Onboarding not needed for self hosted
                   RENOVATE_ONBOARDING: 'false'
                   # Username for GitHub authentication (should match GitHub App name + [bot])
-                  RENOVATE_USERNAME: 'github-actions[bot]'
+                  RENOVATE_USERNAME: 'flatsql-renovate[bot]'
                   # Git commit author used, must match GitHub App
-                  RENOVATE_GIT_AUTHOR: 'github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>'
+                  # Get user-id from https://api.github.com/users/flatsql-renovate[bot]
+                  RENOVATE_GIT_AUTHOR: 'FlatSQL Renovate Bot <138368581+github-actions[bot]@users.noreply.github.com>'
                   # Use GitHub API to create commits (this allows for signed commits from GitHub App)
                   RENOVATE_PLATFORM_COMMIT: 'true'
                   # Override schedule if set
@@ -47,4 +59,4 @@ jobs:
                   LOG_LEVEL: ${{ inputs.logLevel || 'info' }}
               with:
                   configurationFile: .github/renovate.json
-                  token: '${{ secrets.RENOVATE_TOKEN }}'
+                  token: '${{ steps.get_token.outputs.token }}'
