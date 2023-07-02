@@ -41,6 +41,9 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         return (
             <div className={styles.container}>
                 <div className={styles.headerbar}>
+                    <div className={styles.headerbar_left}>
+                        <div className={styles.headerbar_script_title}>SQL Schema</div>
+                    </div>
                     <div className={styles.headerbar_right}>
                         <div className={styles.example_loader_container}>
                             <div className={styles.example_loader_selected}></div>
