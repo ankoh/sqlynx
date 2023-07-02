@@ -132,7 +132,11 @@ lsp:
 
 .PHONY: vscode
 vscode:
-	yarn workspace @ankoh/flatsql-vscode build
+	yarn workspace flatsql-vscode build
+
+.PHONY: vscode_package
+vscode_package:
+	yarn workspace flatsql-vscode package
 
 .PHONY: parser_dumps
 parser_dumps:
