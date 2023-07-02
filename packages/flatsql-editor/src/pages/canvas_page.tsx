@@ -6,7 +6,7 @@ import { ScriptEditor } from '../editor/script_editor';
 import 'reactflow/dist/style.css';
 import styles from './canvas_page.module.css';
 
-import logo from '../../static/img/logo.svg';
+import logo from '../../static/svg/logo/logo.svg';
 
 interface Props {}
 
