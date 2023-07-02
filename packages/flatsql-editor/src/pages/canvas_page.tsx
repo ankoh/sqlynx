@@ -8,7 +8,7 @@ import styles from './canvas_page.module.css';
 
 import iconGitHub from '../../static/svg/icons/github.svg';
 import iconBug from '../../static/svg/icons/bug.svg';
-import iconShare from '../../static/svg/icons/share.svg';
+import iconShare from '../../static/svg/icons/link.svg';
 
 import logo from '../../static/svg/logo/logo.svg';
 
