@@ -1,5 +1,6 @@
 import * as React from 'react';
 import * as flatsql from '@ankoh/flatsql';
+import AutoSizer from 'react-virtualized-auto-sizer';
 import cn from 'classnames';
 
 import { useBackend, useBackendResolver } from '../backend';
@@ -161,12 +162,19 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                         </svg>
                     </div>
                 </div>
-                <CodeMirror
-                    className={styles.codemirror}
-                    value={TMP_TPCH_SCHEMA}
-                    height="200px"
-                    extensions={[FlatSQLExtension.of(config)]}
-                />
+                <div className={styles.editor}>
+                    <AutoSizer>
+                        {(s: { height: number; width: number }) => (
+                            <CodeMirror
+                                className={styles.codemirror}
+                                value={TMP_TPCH_SCHEMA}
+                                extensions={[FlatSQLExtension.of(config)]}
+                                width={`${s.width}px`}
+                                height={`${s.height}px`}
+                            />
+                        )}
+                    </AutoSizer>
+                </div>
             </div>
         );
     } else {
