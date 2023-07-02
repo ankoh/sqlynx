@@ -70,7 +70,7 @@ export const CodeMirror: React.FC<CodeMirrorProps> = (props: CodeMirrorProps) =>
                 width: props.width ?? null,
                 minWidth: props.maxWidth ?? null,
                 maxWidth: props.maxWidth ?? null,
-                fontSize: '12pt',
+                fontSize: '11pt',
             },
             '&.cm-editor': {
                 outline: 'none !important',
