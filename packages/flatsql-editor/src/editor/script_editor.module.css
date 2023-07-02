@@ -21,6 +21,13 @@
     background-color: var(--background_color_tabbar);
     border-radius: calc(var(--border_radius) - 1px) 0px 0px 0px;
     border-right: 1px solid var(--border_color_primary);
+
+    display: flex;
+    flex-direction: column;
+}
+
+.tabbar_tab {
+    height: 40px;
 }
 
 .codemirror {
