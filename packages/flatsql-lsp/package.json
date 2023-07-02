@@ -20,7 +20,7 @@
 		"@akohn/flatsql": "link:../flatsql-wasm"
 	},
 	"devDependencies": {
-		"@types/node": "^16.18.34",
+		"@types/node": "^18.0.0",
 		"@types/vscode": "^1.75.1",
 		"typescript": "^5.0.0"
 	}
