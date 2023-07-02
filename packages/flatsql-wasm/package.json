@@ -4,7 +4,7 @@
     "description": "",
     "license": "MPL-2.0",
     "dependencies": {
-        "flatbuffers": "^2.0.7"
+        "flatbuffers": "^23.0.0"
     },
     "devDependencies": {
         "@types/jest": "^29.5.2",
