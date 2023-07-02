@@ -53,6 +53,7 @@ export const CanvasPage: React.FC<Props> = (props: Props) => {
                         </svg>
                     </div>
                 </div>
+
                 <div className={styles.header_button_group}>
                     <div className={styles.header_button}>
                         <svg width="22px" height="22px">
@@ -66,7 +67,7 @@ export const CanvasPage: React.FC<Props> = (props: Props) => {
                     </div>
                 </div>
             </div>
-            <div className={styles.editor_section} style={{ height: '55%' }}>
+            <div className={styles.editor_container} style={{ height: '55%' }}>
                 <div className={styles.editor_card}>
                     <ScriptEditor />
                 </div>
