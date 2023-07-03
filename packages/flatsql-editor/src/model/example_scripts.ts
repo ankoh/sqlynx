@@ -289,7 +289,7 @@ export const exampleScripts = [
     example(ScriptType.QUERY, 'TPC-DS Query 97', tpcds_q97, tpchSchema.scriptId),
     example(ScriptType.QUERY, 'TPC-DS Query 98', tpcds_q98, tpchSchema.scriptId),
 
-    ssb_schema,
+    ssbSchema,
     example(ScriptType.QUERY, 'SSB Query 1', ssb_q11, ssbSchema.scriptId),
     example(ScriptType.QUERY, 'SSB Query 2', ssb_q12, ssbSchema.scriptId),
     example(ScriptType.QUERY, 'SSB Query 3', ssb_q13, ssbSchema.scriptId),
