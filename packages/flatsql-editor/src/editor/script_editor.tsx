@@ -171,18 +171,21 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                         </div>
                     </div>
                 </div>
-                <div className={styles.editor}>
-                    <AutoSizer>
-                        {(s: { height: number; width: number }) => (
-                            <CodeMirror
-                                className={styles.codemirror}
-                                value={TMP_TPCH_SCHEMA}
-                                extensions={[FlatSQLExtension.of(config)]}
-                                width={`${s.width}px`}
-                                height={`${s.height}px`}
-                            />
-                        )}
-                    </AutoSizer>
+                <div className={styles.editor_with_loader}>
+                    <div className={styles.editor}>
+                        <AutoSizer>
+                            {(s: { height: number; width: number }) => (
+                                <CodeMirror
+                                    className={styles.codemirror}
+                                    value={TMP_TPCH_SCHEMA}
+                                    extensions={[FlatSQLExtension.of(config)]}
+                                    width={`${s.width}px`}
+                                    height={`${s.height}px`}
+                                />
+                            )}
+                        </AutoSizer>
+                    </div>
+                    <div className={styles.loader_container} />
                 </div>
             </div>
         );
