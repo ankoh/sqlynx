@@ -15,10 +15,22 @@ export interface FlatSQLPluginConfig {
 
 /// A FlatSQL parser plugin that parses the CodeMirror text whenever it changes
 class FlatSQLPluginValue implements PluginValue {
+    /// The scanned script
+    scannedScript: flatsql.FlatBufferRef<flatsql.proto.ScannedScript> | null;
+    /// The parsed script
+    parsedScript: flatsql.FlatBufferRef<flatsql.proto.ParsedScript> | null;
+    /// The analyzed script
+    analyzedScript: flatsql.FlatBufferRef<flatsql.proto.AnalyzedScript> | null;
+
     /// The decorations
     decorations: DecorationSet;
 
+    /// Construct the plugin
     constructor(readonly view: EditorView) {
+        this.scannedScript = null;
+        this.parsedScript = null;
+        this.analyzedScript = null;
+
         // Build decorations
         let builder = new RangeSetBuilder<Decoration>();
         this.decorations = builder.finish();
@@ -37,26 +49,53 @@ class FlatSQLPluginValue implements PluginValue {
         this.onDocChanged(config.mainScript);
     }
 
+    /// Destroy the plugin
+    destroy() {
+        if (this.scannedScript != null) {
+            this.scannedScript.delete();
+            this.scannedScript = null;
+        }
+        if (this.parsedScript != null) {
+            this.parsedScript.delete();
+            this.parsedScript = null;
+        }
+        if (this.analyzedScript != null) {
+            this.analyzedScript.delete();
+            this.analyzedScript = null;
+        }
+    }
+
+    /// Did the doc change?
     protected onDocChanged(script: flatsql.FlatSQLScript) {
         // Scan the script
         console.time('Script Scanning');
-        const scannerRes = script.scan();
-        scannerRes.delete();
+        if (this.scannedScript != null) {
+            this.scannedScript.delete();
+            this.scannedScript = null;
+        }
+        this.scannedScript = script.scan();
         console.timeEnd('Script Scanning');
 
         // Parse the script
         console.time('Script Parsing');
-        const parserRes = script.parse();
-        parserRes.delete();
+        if (this.parsedScript != null) {
+            this.parsedScript.delete();
+            this.parsedScript = null;
+        }
+        this.parsedScript = script.parse();
         console.timeEnd('Script Parsing');
 
         // Parse the script
         console.time('Script Analyzing');
-        const analyzerRes = script.analyze();
-        analyzerRes.delete();
+        if (this.analyzedScript != null) {
+            this.analyzedScript.delete();
+            this.analyzedScript = null;
+        }
+        this.analyzedScript = script.analyze();
         console.timeEnd('Script Analyzing');
     }
 
+    /// Apply a view update
     update(update: ViewUpdate) {
         // The the extension props
         const config = this.view.state.facet(FlatSQLPlugin)!;
@@ -87,8 +126,6 @@ class FlatSQLPluginValue implements PluginValue {
             return;
         }
     }
-
-    destroy() {}
 }
 
 /// A facet to setup the CodeMirror extensions.
