@@ -8,7 +8,7 @@ import { CodeMirror } from './codemirror';
 import { FlatSQLExtension } from './codemirror_extension';
 
 import iconMainScript from '../../static/svg/icons/database_search.svg';
-import iconExternalScript from '../../static/svg/icons/database.svg';
+import iconExternalScript from '../../static/svg/icons/tables_connected.svg';
 import iconLoadExample from '../../static/svg/icons/folder_open.svg';
 
 import styles from './script_editor.module.css';
