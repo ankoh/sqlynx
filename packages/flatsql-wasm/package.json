@@ -14,10 +14,10 @@
         "typescript": "^5.0.0"
     },
     "scripts": {
-        "build:debug": "tsc --emitDeclarationOnly && ts-node-esm bundle.ts debug",
-        "build:release": "tsc --emitDeclarationOnly && ts-node-esm bundle.ts release",
-        "test": "node ./node_modules/jest/bin/jest",
-        "test:coverage": "node ./node_modules/jest/bin/jest --coverage"
+        "build:debug": "tsc --emitDeclarationOnly && node --loader ts-node/esm ./bundle.ts debug",
+        "build:release": "tsc --emitDeclarationOnly && node --loader ts-node/esm ./bundle.ts release",
+        "test": "node --experimental-vm-modules ./node_modules/.bin/jest",
+        "test:coverage": "node --experimental-vm-modules ./node_modules/.bin/jest --coverage"
     },
     "files": [
         "dist/gen/*.d.ts",
