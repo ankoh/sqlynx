@@ -2,7 +2,7 @@ import * as flatsql from '@ankoh/flatsql';
 import { EditorView, ViewUpdate, PluginValue, ViewPlugin, DecorationSet, Decoration } from '@codemirror/view';
 import { RangeSetBuilder, Facet, Text as CMText } from '@codemirror/state';
 
-/// A configuration for a FlatSQL editor extension.
+/// A configuration for a FlatSQL editor plugin.
 /// We use this configuration to inject the WebAssembly module.
 export interface FlatSQLPluginConfig {
     /// The API
