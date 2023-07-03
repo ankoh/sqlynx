@@ -27,8 +27,8 @@
     .editor_container {
         position: absolute;
         bottom: 0;
-        width: 960px;
-        left: calc(50% - 480px);
+        width: 860px;
+        left: calc(50% - 430px);
     }
 }
 
