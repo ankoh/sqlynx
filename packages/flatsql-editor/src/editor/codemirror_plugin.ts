@@ -73,35 +73,10 @@ class FlatSQLPluginValue implements PluginValue {
         }
     }
 
-    /// Did the doc change?
-    protected onDocChanged(script: flatsql.FlatSQLScript) {
-        // Scan the script
-        console.time('Script Scanning');
-        if (this.scannedScript != null) {
-            this.scannedScript.delete();
-            this.scannedScript = null;
+    protected updateDecoration() {
+        if (!this.scannedScript) {
+            return;
         }
-        this.scannedScript = script.scan();
-        console.timeEnd('Script Scanning');
-
-        // Parse the script
-        console.time('Script Parsing');
-        if (this.parsedScript != null) {
-            this.parsedScript.delete();
-            this.parsedScript = null;
-        }
-        this.parsedScript = script.parse();
-        console.timeEnd('Script Parsing');
-
-        // Parse the script
-        console.time('Script Analyzing');
-        if (this.analyzedScript != null) {
-            this.analyzedScript.delete();
-            this.analyzedScript = null;
-        }
-        this.analyzedScript = script.analyze();
-        console.timeEnd('Script Analyzing');
-
         // Build decorations
         let builder = new RangeSetBuilder<Decoration>();
         const scan = this.scannedScript.read(new flatsql.proto.ScannedScript());
@@ -125,9 +100,40 @@ class FlatSQLPluginValue implements PluginValue {
                 prevType = tokenTypes[i];
             }
         }
-
-        // builder.add()
         this.decorations = builder.finish();
+    }
+
+    /// Did the doc change?
+    protected onDocChanged(script: flatsql.FlatSQLScript) {
+        // Scan the script
+        // console.time('Script Scanning');
+        if (this.scannedScript != null) {
+            this.scannedScript.delete();
+            this.scannedScript = null;
+        }
+        this.scannedScript = script.scan();
+        // console.timeEnd('Script Scanning');
+
+        // Parse the script
+        // console.time('Script Parsing');
+        if (this.parsedScript != null) {
+            this.parsedScript.delete();
+            this.parsedScript = null;
+        }
+        this.parsedScript = script.parse();
+        // console.timeEnd('Script Parsing');
+
+        // Parse the script
+        // console.time('Script Analyzing');
+        if (this.analyzedScript != null) {
+            this.analyzedScript.delete();
+            this.analyzedScript = null;
+        }
+        this.analyzedScript = script.analyze();
+        // console.timeEnd('Script Analyzing');
+
+        // Build decorations
+        this.updateDecoration();
     }
 
     /// Apply a view update
@@ -141,7 +147,7 @@ class FlatSQLPluginValue implements PluginValue {
         // Did the doc change?
         if (update.docChanged) {
             // Apply the text changes
-            console.time('Rope Insert');
+            // console.time('Rope Insert');
             update.changes.iterChanges((fromA: number, toA: number, fromB: number, toB: number, inserted: CMText) => {
                 if (toA - fromA > 0) {
                     config.mainScript.eraseTextRange(fromA, toA - fromA);
@@ -154,7 +160,7 @@ class FlatSQLPluginValue implements PluginValue {
                     }
                 }
             });
-            console.timeEnd('Rope Insert');
+            // console.timeEnd('Rope Insert');
 
             // Update the document
             this.onDocChanged(config.mainScript);
