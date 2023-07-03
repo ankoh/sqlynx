@@ -111,6 +111,7 @@
 }
 
 .loader_container {
+    display: none; /* XXX */
     width: 240px;
     background-color: var(--loader_background);
     border-left: 1px solid var(--border_color_primary);
