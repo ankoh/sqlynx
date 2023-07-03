@@ -5,7 +5,7 @@ import cn from 'classnames';
 
 import { useBackend, useBackendResolver } from '../backend';
 import { CodeMirror } from './codemirror';
-import { FlatSQLExtension } from './codemirror_extension';
+import { FlatSQLPlugin, FlatSQLPluginConfig } from './codemirror_extension';
 
 import iconMainScript from '../../static/svg/icons/database_search.svg';
 import iconExternalScript from '../../static/svg/icons/tables_connected.svg';
@@ -130,9 +130,10 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
     }, [instance]);
 
     if (instance && script) {
-        const config = {
+        const config: FlatSQLPluginConfig = {
             instance,
-            script: script,
+            mainScript: script,
+            externalScript: null,
         };
         return (
             <div className={styles.container}>
@@ -178,7 +179,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                                 <CodeMirror
                                     className={styles.codemirror}
                                     value={TMP_TPCH_SCHEMA}
-                                    extensions={[FlatSQLExtension.of(config)]}
+                                    extensions={[FlatSQLPlugin.of(config)]}
                                     width={`${s.width}px`}
                                     height={`${s.height}px`}
                                 />
