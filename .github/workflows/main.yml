@@ -219,12 +219,46 @@ jobs:
                   path: ./packages/flatsql-editor/build/pwa/release
                   retention-days: 1
 
+    lsp:
+        name: Build and Package Language Server
+        runs-on: ubuntu-22.04
+        needs:
+            - lib_js
+        steps:
+            - uses: actions/checkout@v3
+              with:
+                  submodules: 'recursive'
+                  fetch-depth: 0
+
+            - uses: actions/download-artifact@v3
+              with:
+                  name: flatsql_jslib
+                  path: ./packages/flatsql-wasm/dist
+
+            - name: Install npm dependencies
+              shell: bash
+              run: |
+                  yarn install --frozen-lockfile
+
+            - name: Build @ankoh/flatsql-lsp
+              shell: bash
+              run: |
+                  yarn workspace @ankoh/flatsql-lsp build
+
+            - uses: actions/upload-artifact@v3
+              with:
+                  name: flatsql_lsp
+                  path: ./packages/flatsql-lsp/dist/
+                  retention-days: 1
+
     pages:
         name: Deploy GitHub Page
         if: github.ref == 'refs/heads/main'
         runs-on: ubuntu-22.04
         needs:
             - editor
+            # Most test cases are in the native library. Don't update
+            # the deployed webpage if the native tests failed.
             - lib_native
         permissions:
             contents: read
