@@ -303,5 +303,3 @@ export const exampleScripts = [
     example(ScriptType.QUERY, 'SSB Query 2', ssb_q42, ssbSchema.scriptId),
     example(ScriptType.QUERY, 'SSB Query 3', ssb_q43, ssbSchema.scriptId),
 ];
-
-console.log(exampleScripts);
