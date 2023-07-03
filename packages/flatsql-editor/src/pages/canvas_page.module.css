@@ -15,7 +15,7 @@
     height: 100%;
 }
 
-@media only screen and (max-width: 840px) {
+@media only screen and (max-width: 900px) {
     .editor_container {
         position: absolute;
         bottom: 0;
@@ -23,12 +23,12 @@
         left: 2%;
     }
 }
-@media only screen and (min-width: 840px) {
+@media only screen and (min-width: 900px) {
     .editor_container {
         position: absolute;
         bottom: 0;
-        width: 800px;
-        left: calc(50% - 400px);
+        width: 960px;
+        left: calc(50% - 480px);
     }
 }
 
