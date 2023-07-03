@@ -1,54 +1,65 @@
 import React from 'react';
 
-import { Script } from './script';
-import { SET_SCRIPT_CONTENT, useScriptRegistryDispatch } from './script_registry';
+import { ScriptMetadata } from './script_metadata';
 
-type ScriptLoader = (script: Script) => Promise<string | null>;
+type ScriptLoader = (script: ScriptMetadata) => Promise<string | null>;
 
-interface ScriptLoadingPromise {
-    script: Script;
-    loader: Promise<string | null>;
+interface ScriptLoadingState {
+    script: ScriptMetadata;
+    inflight: Promise<string>;
+    content: string | null;
+    error: Error | null;
 }
 
-interface ScriptLoaderState {
-    scripts: Map<string, ScriptLoadingPromise>;
+interface State {
+    scripts: Map<string, ScriptLoadingState>;
 }
-
-type Props = {
+interface Props {
     children: React.ReactElement;
-};
+}
 
 const resolverCtx = React.createContext<ScriptLoader | null>(null);
 
 export const ScriptLoaderProvider: React.FC<Props> = (props: Props) => {
-    const registryDispatch = useScriptRegistryDispatch();
-    const state = React.useRef<ScriptLoaderState>({
-        scripts: new Map<string, ScriptLoadingPromise>(),
+    const state = React.useRef<State>({
+        scripts: new Map<string, ScriptLoadingState>(),
     });
-    const resolver = React.useCallback<ScriptLoader>(
-        async (script: Script) => {
-            // Already loaded?
-            if (script.content != null) return script.content;
-            // Load pending?
-            const inflight = state.current.scripts.get(script.scriptId);
-            if (inflight) {
-                return await inflight.loader;
+    const resolver = React.useCallback<ScriptLoader>(async (script: ScriptMetadata) => {
+        // Requested before?
+        const previous = state.current.scripts.get(script.scriptId);
+        if (previous) {
+            // Has content?
+            if (previous.content) {
+                return previous.content;
             }
-            // Otherwise load the url
-            if (script.httpURL) {
-                const response = await fetch(script.httpURL);
-                const content = await response.text();
-                registryDispatch({
-                    type: SET_SCRIPT_CONTENT,
-                    data: [script.scriptId, content],
-                });
-                state.current.scripts.delete(script.scriptId);
-                return content;
+            // Has error?
+            if (previous.error) {
+                throw previous.error;
             }
-            return null;
-        },
-        [registryDispatch],
-    );
+            // Otherwise await the promise
+            return await previous.inflight;
+        }
+        const loadingState: ScriptLoadingState = {
+            script,
+            inflight: Promise.reject('unsupported script type'),
+            content: null,
+            error: null,
+        };
+        // Otherwise load the url
+        if (script.httpURL) {
+            loadingState.inflight = (async () => {
+                try {
+                    const response = await fetch(script.httpURL!);
+                    const content = await response.text();
+                    return content;
+                } catch (e) {
+                    loadingState.error = e as Error;
+                    throw e;
+                }
+            })();
+        }
+        return await loadingState.inflight;
+    }, []);
     return <resolverCtx.Provider value={resolver}>{props.children}</resolverCtx.Provider>;
 };
 
