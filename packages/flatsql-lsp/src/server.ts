@@ -3,18 +3,14 @@
 import {
     createConnection,
     TextDocuments,
-    Diagnostic,
-    DiagnosticSeverity,
     ProposedFeatures,
     InitializeParams,
-    CompletionItem,
-    CompletionItemKind,
-    TextDocumentPositionParams,
     TextDocumentSyncKind,
     InitializeResult,
+    DocumentUri,
+    TextDocumentContentChangeEvent,
+    TextEdit,
 } from 'vscode-languageserver/node.js';
-
-import { TextDocument } from 'vscode-languageserver-textdocument';
 
 import * as fs from 'fs';
 import * as flatsql from '@ankoh/flatsql';
@@ -33,121 +29,84 @@ const fsql = await flatsql.FlatSQL.create(async (imports: WebAssembly.Imports) =
 // Also include all preview / proposed LSP features.
 const connection = createConnection(ProposedFeatures.all);
 
-// Create a simple text document manager.
-const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
-
-let hasDiagnosticRelatedInformationCapability = false;
-
 connection.onInitialize((params: InitializeParams) => {
-    const capabilities = params.capabilities;
-
-    hasDiagnosticRelatedInformationCapability = !!(
-        capabilities.textDocument &&
-        capabilities.textDocument.publishDiagnostics &&
-        capabilities.textDocument.publishDiagnostics.relatedInformation
-    );
-
     const result: InitializeResult = {
         capabilities: {
-            textDocumentSync: TextDocumentSyncKind.Incremental,
-            // Tell the client that this server supports code completion.
-            completionProvider: {
-                resolveProvider: true,
-            },
+            // For the time being, we only support full synchronization
+            // TODO: support incremental sync
+            textDocumentSync: TextDocumentSyncKind.Full,
+            // Tell the client that this server supports formatting.
+            documentFormattingProvider: true,
         },
     };
     return result;
 });
 
-connection.onInitialized(() => {});
+class FlatSQLDocument {
+    private _uri: DocumentUri;
+    private _script: flatsql.FlatSQLScript;
 
-// The content of a text document has changed. This event is emitted
-// when the text document first opened or when its content has changed.
-documents.onDidChangeContent(change => {
-    validateTextDocument(change.document);
-});
-
-async function validateTextDocument(textDocument: TextDocument): Promise<void> {
-    const maxNumberOfProblems = 1000;
-
-    // The validator creates diagnostics for all uppercase words length 2 and more
-    const text = textDocument.getText();
-    const pattern = /\b[A-Z]{2,}\b/g;
-    let m: RegExpExecArray | null;
-
-    let problems = 0;
-    const diagnostics: Diagnostic[] = [];
-    while ((m = pattern.exec(text)) && problems < maxNumberOfProblems) {
-        problems++;
-        const diagnostic: Diagnostic = {
-            severity: DiagnosticSeverity.Warning,
-            range: {
-                start: textDocument.positionAt(m.index),
-                end: textDocument.positionAt(m.index + m[0].length),
-            },
-            message: `${m[0]} is all uppercase.`,
-            source: 'ex',
-        };
-        if (hasDiagnosticRelatedInformationCapability) {
-            diagnostic.relatedInformation = [
-                {
-                    location: {
-                        uri: textDocument.uri,
-                        range: Object.assign({}, diagnostic.range),
-                    },
-                    message: 'Spelling matters',
-                },
-                {
-                    location: {
-                        uri: textDocument.uri,
-                        range: Object.assign({}, diagnostic.range),
-                    },
-                    message: 'Particularly for names',
-                },
-            ];
-        }
-        diagnostics.push(diagnostic);
+    public constructor(uri: DocumentUri, languageId: string, version: number, content: string) {
+        this._uri = uri;
+        this._script = fsql.createScript();
+        this._script.insertTextAt(0, content);
     }
 
-    // Send the computed diagnostics to VSCode.
-    connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
+    public discard() {
+        this._script.delete();
+    }
+
+    public get uri(): string {
+        return this._uri;
+    }
+
+    public fsqlScript() {
+        return this._script;
+    }
+
+    public update(changes: TextDocumentContentChangeEvent[], version: number): void {
+        for (const c of changes) {
+            this._script.eraseTextRange(0, Number.MAX_SAFE_INTEGER);
+            this._script.insertTextAt(0, c.text);
+        }
+    }
 }
 
-// This handler provides the initial list of the completion items.
-connection.onCompletion((_textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
-    // The pass parameter contains the position of the text document in
-    // which code complete got requested. For the example we ignore this
-    // info and always provide the same completion items.
-    return [
-        {
-            label: 'TypeScript',
-            kind: CompletionItemKind.Text,
-            data: 1,
-        },
-        {
-            label: 'JavaScript',
-            kind: CompletionItemKind.Text,
-            data: 2,
-        },
-    ];
+// Create a text document manager backed by `FlatSQLDocument`
+const documents: TextDocuments<FlatSQLDocument> = new TextDocuments({
+    create: (uri: DocumentUri, languageId: string, version: number, content: string) => {
+        return new FlatSQLDocument(uri, languageId, version, content);
+    },
+    update: (document: FlatSQLDocument, changes: TextDocumentContentChangeEvent[], version: number) => {
+        if (!(document instanceof FlatSQLDocument)) {
+            throw new Error('Internal Error: unexpected document');
+        }
+        document.update(changes, version);
+        return document;
+    },
 });
 
-// This handler resolves additional information for the item selected in
-// the completion list.
-connection.onCompletionResolve((item: CompletionItem): CompletionItem => {
-    if (item.data === 1) {
-        item.detail = 'TypeScript details';
-        item.documentation = 'TypeScript documentation';
-    } else if (item.data === 2) {
-        item.detail = 'JavaScript details';
-        item.documentation = 'JavaScript documentation';
-    }
-    return item;
+// Make sure we don't leak the underlying document in WebAssembly
+documents.onDidClose(e => {
+    e.document.discard();
 });
 
 // Make the text document manager listen on the connection
 // for open, change and close text document events
 documents.listen(connection);
+
+connection.onDocumentFormatting(e => {
+    const edits: TextEdit[] = [
+        {
+            range: {
+                start: { line: 0, character: 0 },
+                end: { line: 0, character: 0 },
+            },
+            newText: '--formatted\n',
+        },
+    ];
+    return edits;
+});
 
 // Listen on the connection
 connection.listen();
