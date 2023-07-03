@@ -13,16 +13,12 @@
   integrity sha512-E09FiIft46CmH5Qnjb0wsW54/YQd69LsxeKUOWawmws1XWvyFGURnAChH0mlr7YPFR1ofwvUQfcL0J3lMxXqPA==
 
 "@akohn/flatsql-lsp@link:packages/flatsql-lsp":
-  version "0.0.1"
-  dependencies:
-    "@akohn/flatsql" "link:packages/flatsql-wasm"
-    vscode-languageserver "^8.1.0"
-    vscode-languageserver-textdocument "^1.0.8"
+  version "0.0.0"
+  uid ""
 
 "@akohn/flatsql@link:packages/flatsql-wasm":
-  version "0.0.5"
-  dependencies:
-    flatbuffers "^23.0.0"
+  version "0.0.0"
+  uid ""
 
 "@ampproject/remapping@^2.2.0":
   version "2.2.1"
@@ -6772,11 +6768,6 @@ vscode-languageserver-protocol@3.17.3:
   dependencies:
     vscode-jsonrpc "8.1.0"
     vscode-languageserver-types "3.17.3"
-
-vscode-languageserver-textdocument@^1.0.8:
-  version "1.0.8"
-  resolved "https://registry.yarnpkg.com/vscode-languageserver-textdocument/-/vscode-languageserver-textdocument-1.0.8.tgz#9eae94509cbd945ea44bca8dcfe4bb0c15bb3ac0"
-  integrity sha512-1bonkGqQs5/fxGT5UchTgjGVnfysL0O8v1AYMBjqTbWQTFn721zaPGDYFkOKtfDgFiSgXM3KwaG3FMGfW4Ed9Q==
 
 vscode-languageserver-types@3.17.3:
   version "3.17.3"
