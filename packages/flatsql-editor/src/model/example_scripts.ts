@@ -1,10 +1,9 @@
-import { Script, ScriptType, ScriptOriginType, createScript } from './script';
+import { ScriptMetadata, ScriptType, ScriptOriginType, createScriptMetadata } from './script_metadata';
 
-function example(scriptType: ScriptType, name: string, url: URL, schemaId: string | null = null): Script {
-    return createScript({
+function example(scriptType: ScriptType, name: string, url: URL, schemaId: string | null = null): ScriptMetadata {
+    return createScriptMetadata({
         scriptType,
         name,
-        content: null,
         originType: ScriptOriginType.HTTP,
         httpURL: url,
         githubAccount: null,

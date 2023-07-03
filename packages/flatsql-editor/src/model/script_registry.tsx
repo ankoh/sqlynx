@@ -3,21 +3,19 @@ import Immutable from 'immutable';
 
 import * as utils from '../utils';
 import { Action, Dispatch } from './action';
-import { Script, ScriptType, ScriptOriginType, createScript } from './script';
+import { ScriptMetadata, ScriptType, ScriptOriginType, createScriptMetadata } from './script_metadata';
 import { exampleScripts } from './example_scripts';
 
 export interface ScriptRegistry {
-    scripts: Immutable.Map<string, Script>;
+    scripts: Immutable.Map<string, ScriptMetadata>;
 }
 
 export const CREATE_BLANK_SCRIPT = Symbol('CREATE_BLANK');
 export const SAVE_SCRIPT = Symbol('SAVE_SCRIPT');
-export const SET_SCRIPT_CONTENT = Symbol('SET_SCRIPT_CONTENT');
 
 export type ScriptRegistryAction =
-    | Action<typeof SAVE_SCRIPT, Script>
-    | Action<typeof CREATE_BLANK_SCRIPT, undefined>
-    | Action<typeof SET_SCRIPT_CONTENT, [string, string]>;
+    | Action<typeof SAVE_SCRIPT, ScriptMetadata>
+    | Action<typeof CREATE_BLANK_SCRIPT, undefined>;
 
 export const generateLocalFileName = (state: ScriptRegistry): string => {
     let name: string;
@@ -27,11 +25,10 @@ export const generateLocalFileName = (state: ScriptRegistry): string => {
     return name;
 };
 
-export const generateBlankScript = (state: ScriptRegistry): Script =>
-    createScript({
+export const generateBlankScript = (state: ScriptRegistry): ScriptMetadata =>
+    createScriptMetadata({
         name: generateLocalFileName(state),
         scriptType: ScriptType.UNKNOWN,
-        content: '',
         originType: ScriptOriginType.LOCAL,
         httpURL: null,
         githubAccount: null,
@@ -39,8 +36,8 @@ export const generateBlankScript = (state: ScriptRegistry): Script =>
         schemaId: null,
     });
 
-export const forkLocal = (state: ScriptRegistry, script: Script): Script =>
-    createScript({
+export const forkLocal = (state: ScriptRegistry, script: ScriptMetadata): ScriptMetadata =>
+    createScriptMetadata({
         ...script,
         name: generateLocalFileName(state),
         originType: ScriptOriginType.LOCAL,
@@ -55,24 +52,11 @@ export const reduceScriptRegistry = (ctx: ScriptRegistry, action: ScriptRegistry
         case SAVE_SCRIPT: {
             return { ...ctx, scripts: ctx.scripts.set(action.data.scriptId, action.data) };
         }
-        case SET_SCRIPT_CONTENT: {
-            return {
-                ...ctx,
-                scripts: ctx.scripts.withMutations(m => {
-                    const [scriptId, content] = action.data;
-                    const script = m.get(scriptId);
-                    if (script) {
-                        m.set(scriptId, { ...script, content });
-                    }
-                    return script;
-                }),
-            };
-        }
     }
 };
 
 const initialScriptRegistry: ScriptRegistry = {
-    scripts: Immutable.Map<string, Script>(exampleScripts.map(s => [s.scriptId, s])),
+    scripts: Immutable.Map<string, ScriptMetadata>(exampleScripts.map(s => [s.scriptId, s])),
 };
 const scriptRegistryCtx = React.createContext<ScriptRegistry>(initialScriptRegistry);
 const scriptRegistryDispatchCtx = React.createContext<Dispatch<ScriptRegistryAction>>(() => {});
