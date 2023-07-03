@@ -10,15 +10,13 @@ export enum ScriptType {
     SCHEMA,
 }
 
-export interface Script {
+export interface ScriptMetadata {
     /// The script id
     scriptId: string;
     /// The script type
     scriptType: ScriptType;
     /// The name
     name: string;
-    /// The content
-    content: string | null;
     /// The origin type
     originType: ScriptOriginType;
     /// The http url
@@ -31,7 +29,7 @@ export interface Script {
     schemaId: string | null;
 }
 
-export function createScript(script: Omit<Script, 'scriptId'>): Script {
+export function createScriptMetadata(script: Omit<ScriptMetadata, 'scriptId'>): ScriptMetadata {
     const s = script as any;
     switch (script.originType) {
         case ScriptOriginType.HTTP:
@@ -44,7 +42,7 @@ export function createScript(script: Omit<Script, 'scriptId'>): Script {
             s.scriptId = script.name;
             break;
     }
-    return s as Script;
+    return s as ScriptMetadata;
 }
 
 export function getScriptOriginTypeName(origin: ScriptOriginType): string {
@@ -58,7 +56,7 @@ export function getScriptOriginTypeName(origin: ScriptOriginType): string {
     }
 }
 
-export function getScriptTags(script: Script): string[] {
+export function getScriptTags(script: ScriptMetadata): string[] {
     const beans = [];
     switch (script.originType) {
         case ScriptOriginType.LOCAL:
