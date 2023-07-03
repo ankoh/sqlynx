@@ -4,10 +4,10 @@
     --background_color_primary: rgb(246, 248, 250);
     --border_color_primary: rgb(208, 215, 222);
     --border_radius: 8px;
-    --tabbar_indicator_width: 3px;
-    --tabbar_indicator_color: rgb(254, 150, 0);
-    --tabbar_background: hsl(210, 24%, 92%);
-    --tabbar_background_active: hsl(210, 24%, 88%);
+    --navbar_indicator_width: 3px;
+    --navbar_indicator_color: rgb(254, 150, 0);
+    --navbar_background: hsl(210, 24%, 92%);
+    --navbar_background_active: hsl(210, 24%, 88%);
 }
 
 :root {

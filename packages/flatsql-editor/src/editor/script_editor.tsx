@@ -10,6 +10,7 @@ import { FlatSQLExtension } from './codemirror_extension';
 import iconMainScript from '../../static/svg/icons/database_search.svg';
 import iconExternalScript from '../../static/svg/icons/tables_connected.svg';
 import iconLoadExample from '../../static/svg/icons/folder_open.svg';
+import iconAccount from '../../static/svg/icons/account_circle.svg';
 
 import styles from './script_editor.module.css';
 
@@ -149,16 +150,25 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                         </div>
                     </div>
                 </div>
-                <div className={styles.tabbar}>
-                    <div className={cn(styles.tabbar_tab)}>
-                        <svg width="22px" height="22px">
-                            <use xlinkHref={`${iconMainScript}#sym`} />
-                        </svg>
+                <div className={styles.navbar}>
+                    <div className={styles.navbar_tabs}>
+                        <div className={cn(styles.navbar_tab)}>
+                            <svg width="22px" height="22px">
+                                <use xlinkHref={`${iconMainScript}#sym`} />
+                            </svg>
+                        </div>
+                        <div className={cn(styles.navbar_tab, styles.navbar_tab_active)}>
+                            <svg width="22px" height="22px">
+                                <use xlinkHref={`${iconExternalScript}#sym`} />
+                            </svg>
+                        </div>
                     </div>
-                    <div className={cn(styles.tabbar_tab, styles.tabbar_tab_active)}>
-                        <svg width="22px" height="22px">
-                            <use xlinkHref={`${iconExternalScript}#sym`} />
-                        </svg>
+                    <div className={styles.navbar_account}>
+                        <div className={styles.navbar_account_button}>
+                            <svg width="24px" height="24px">
+                                <use xlinkHref={`${iconAccount}#sym`} />
+                            </svg>
+                        </div>
                     </div>
                 </div>
                 <div className={styles.editor}>
