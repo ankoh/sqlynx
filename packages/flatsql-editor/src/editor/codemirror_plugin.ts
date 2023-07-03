@@ -2,6 +2,8 @@ import * as flatsql from '@ankoh/flatsql';
 import { EditorView, ViewUpdate, PluginValue, ViewPlugin, DecorationSet, Decoration } from '@codemirror/view';
 import { RangeSetBuilder, Facet, Text as CMText } from '@codemirror/state';
 
+import './codemirror_plugin.css';
+
 /// A configuration for a FlatSQL editor plugin.
 /// We use this configuration to inject the WebAssembly module.
 export interface FlatSQLPluginConfig {
@@ -12,6 +14,12 @@ export interface FlatSQLPluginConfig {
     /// The external script
     externalScript: flatsql.FlatSQLScript | null;
 }
+
+const Token = flatsql.proto.HighlightingTokenType;
+
+const keywordDecoration = Decoration.mark({
+    class: 'flatsql-keyword',
+});
 
 /// A FlatSQL parser plugin that parses the CodeMirror text whenever it changes
 class FlatSQLPluginValue implements PluginValue {
@@ -93,6 +101,33 @@ class FlatSQLPluginValue implements PluginValue {
         }
         this.analyzedScript = script.analyze();
         console.timeEnd('Script Analyzing');
+
+        // Build decorations
+        let builder = new RangeSetBuilder<Decoration>();
+        const scan = this.scannedScript.read(new flatsql.proto.ScannedScript());
+        const hl = scan.highlighting();
+        if (hl) {
+            const tokenOffsets = hl.tokenOffsetsArray()!;
+            const tokenTypes = hl.tokenTypesArray()!;
+            let prevOffset = 0;
+            let prevType = Token.NONE;
+            for (let i = 0; i < tokenOffsets.length; ++i) {
+                const begin = prevOffset;
+                const end = tokenOffsets[i];
+                switch (prevType) {
+                    case Token.KEYWORD:
+                        builder.add(begin, end, keywordDecoration);
+                        break;
+                    default:
+                        break;
+                }
+                prevOffset = end;
+                prevType = tokenTypes[i];
+            }
+        }
+
+        // builder.add()
+        this.decorations = builder.finish();
     }
 
     /// Apply a view update
