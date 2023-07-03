@@ -56,7 +56,7 @@
 .headerbar {
     grid-row: 1;
     grid-column: 2;
-    background-color: var(--background_color_primary);
+    background-color: var(--headerbar_background_color);
     border-radius: 0px calc(var(--border_radius) - 1px) 0px 0px;
     border-bottom: 1px solid var(--border_color_primary);
 
@@ -98,7 +98,20 @@
     border-left: 1px solid var(--border_color_primary);
 }
 
-.editor {
+.editor_with_loader {
     grid-row: 2;
     grid-column: 2;
+    display: flex;
+    flex-direction: row;
+}
+
+.editor {
+    height: 100%;
+    flex: 1;
+}
+
+.loader_container {
+    width: 240px;
+    background-color: var(--loader_background);
+    border-left: 1px solid var(--border_color_primary);
 }
