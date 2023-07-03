@@ -5,7 +5,7 @@ import cn from 'classnames';
 
 import { useBackend, useBackendResolver } from '../backend';
 import { CodeMirror } from './codemirror';
-import { FlatSQLPlugin, FlatSQLPluginConfig } from './codemirror_extension';
+import { FlatSQLPlugin, FlatSQLPluginConfig } from './codemirror_plugin';
 
 import iconMainScript from '../../static/svg/icons/database_search.svg';
 import iconExternalScript from '../../static/svg/icons/tables_connected.svg';
