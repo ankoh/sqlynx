@@ -128,10 +128,10 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         };
     }, [instance]);
 
-    if (instance) {
+    if (instance && script) {
         const config = {
             instance,
-            script: instance.createScript(),
+            script: script,
         };
         return (
             <div className={styles.container}>
