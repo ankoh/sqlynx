@@ -26,7 +26,7 @@ This encoding is compact and efficient for simple passes, but is not directly su
 make infra_macos  # or infra_linux, depending on your system
 yarn install
 
-# Building
+# Building the libraries
 make proto
 make lib
 make lib_relwithdebinfo
@@ -43,6 +43,11 @@ make analyzer_dumps
 
 # Benchmarking
 make benchmark_steps
+
+# Build the LSP & VS Code extension
+make lsp
+make vscode
+# run the VS code extension through the "Launch VSCode Plugin" launch configuration
 
 # Start editor dev server
 make editor_start
