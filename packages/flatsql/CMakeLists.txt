@@ -70,6 +70,7 @@ if(WASM)
         -Wl,--export=flatsql_script_scan \
         -Wl,--export=flatsql_script_parse \
         -Wl,--export=flatsql_script_analyze \
+        -Wl,--export=flatsql_script_pretty_print \
         -Wl,--export=flatsql_script_update_completion_index \
         -flto \
     ")

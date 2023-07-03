@@ -12,6 +12,7 @@ interface FlatSQLModuleExports {
     flatsql_script_insert_char_at: (ptr: number, offset: number, unicode: number) => void;
     flatsql_script_erase_text_range: (ptr: number, offset: number, length: number) => void;
     flatsql_script_to_string: (ptr: number) => number;
+    flatsql_script_pretty_print: (ptr: number) => number;
     flatsql_script_scan: (ptr: number) => number;
     flatsql_script_parse: (ptr: number) => number;
     flatsql_script_analyze: (ptr: number, external: number) => number;
@@ -62,6 +63,7 @@ export class FlatSQL {
                 length: number,
             ) => void,
             flatsql_script_to_string: parserExports['flatsql_script_to_string'] as (ptr: number) => number,
+            flatsql_script_pretty_print: parserExports['flatsql_script_pretty_print'] as (ptr: number) => number,
             flatsql_script_scan: parserExports['flatsql_script_scan'] as (ptr: number) => number,
             flatsql_script_parse: parserExports['flatsql_script_parse'] as (ptr: number) => number,
             flatsql_script_analyze: parserExports['flatsql_script_analyze'] as (
@@ -260,6 +262,15 @@ export class FlatSQLScript {
         const scriptPtr = this.assertScriptNotNull();
         const resultPtr = this.api.instanceExports.flatsql_script_analyze(scriptPtr, external?.scriptPtr ?? 0);
         return this.api.readResult<proto.AnalyzedScript>(resultPtr);
+    }
+    /// Pretty print the SQL string
+    public prettyPrint(): string {
+        const scriptPtr = this.assertScriptNotNull();
+        const result = this.api.instanceExports.flatsql_script_pretty_print(scriptPtr);
+        const resultBuffer = this.api.readResult(result);
+        const text = this.api.decoder.decode(resultBuffer.data);
+        resultBuffer.delete();
+        return text;
     }
     /// Update the completion index
     public updateCompletionIndex(): boolean {
