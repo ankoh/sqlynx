@@ -96,13 +96,17 @@ documents.onDidClose(e => {
 documents.listen(connection);
 
 connection.onDocumentFormatting(e => {
+    const doc = documents.get(e.textDocument.uri);
+    if (!doc) {
+        return null;
+    }
     const edits: TextEdit[] = [
         {
             range: {
                 start: { line: 0, character: 0 },
-                end: { line: 0, character: 0 },
+                end: { line: Number.MAX_VALUE, character: Number.MAX_VALUE },
             },
-            newText: '--formatted\n',
+            newText: doc.fsqlScript().prettyPrint(),
         },
     ];
     return edits;

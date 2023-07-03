@@ -166,6 +166,19 @@ extern "C" FFIResult* flatsql_script_analyze(Script* script, Script* external) {
     return result;
 }
 
+/// Get a pretty-printed version of the SQL query
+extern "C" FFIResult* flatsql_script_pretty_print(flatsql::Script* script) {
+    auto text = std::make_unique<std::string>(
+        std::string{"-- imagine the following query was formatted beautifully:\n"} + script->ToString());
+    auto result = new FFIResult();
+    result->status_code = static_cast<uint32_t>(proto::StatusCode::OK);
+    result->data_ptr = text->data();
+    result->data_length = text->length();
+    result->owner_ptr = text.release();
+    result->owner_deleter = [](void* buffer) { delete reinterpret_cast<std::string*>(buffer); };
+    return result;
+}
+
 /// Update the completion index
 extern "C" uint32_t flatsql_script_update_completion_index(Script* script) {
     return static_cast<uint32_t>(script->UpdateCompletionIndex());
