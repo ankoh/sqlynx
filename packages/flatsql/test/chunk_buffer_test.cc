@@ -1,7 +1,10 @@
 #include "flatsql/utils/chunk_buffer.h"
+
 #include "gtest/gtest.h"
 
 using namespace flatsql;
+
+namespace {
 
 TEST(ChunkBufferTest, Sequence) {
     ChunkBuffer<uint32_t> tree;
@@ -11,3 +14,5 @@ TEST(ChunkBufferTest, Sequence) {
     }
     ASSERT_EQ(tree.GetSize(), 1024);
 }
+
+}  // namespace

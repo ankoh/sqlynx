@@ -5,6 +5,8 @@
 
 using namespace flatsql;
 
+namespace {
+
 TEST(ScriptTest, ParsingBeforeScanning) {
     Script script;
     auto [scanned, status] = script.Parse();
@@ -90,3 +92,5 @@ limit 100
     ASSERT_EQ(main_script.Parse().second, proto::StatusCode::OK);
     ASSERT_EQ(main_script.Analyze(&external_script).second, proto::StatusCode::OK);
 }
+
+}  // namespace
