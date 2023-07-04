@@ -50,6 +50,38 @@ export class FlatSQLEditorState {
         }
     }
 
+    public onScriptChanged(script: flatsql.FlatSQLScript) {
+        // Scan the script
+        console.time('Script Scanning');
+        if (this.scannedScript != null) {
+            this.scannedScript.delete();
+            this.scannedScript = null;
+        }
+        this.scannedScript = script.scan();
+        console.timeEnd('Script Scanning');
+
+        // Parse the script
+        console.time('Script Parsing');
+        if (this.parsedScript != null) {
+            this.parsedScript.delete();
+            this.parsedScript = null;
+        }
+        this.parsedScript = script.parse();
+        console.timeEnd('Script Parsing');
+
+        // Parse the script
+        console.time('Script Analyzing');
+        if (this.analyzedScript != null) {
+            this.analyzedScript.delete();
+            this.analyzedScript = null;
+        }
+        this.analyzedScript = script.analyze();
+        console.timeEnd('Script Analyzing');
+
+        // Build decorations
+        this.updateDecorations();
+    }
+
     /// Update the CodeMirror decorations
     public updateDecorations() {
         if (!this.scannedScript) {
@@ -107,45 +139,12 @@ class FlatSQLEditorValue implements PluginValue {
         config.mainScript.eraseTextRange(0, Number.MAX_SAFE_INTEGER);
         config.mainScript.insertTextAt(0, text);
         // Update the script
-        this.onDocChanged(config.mainScript);
+        this.state.onScriptChanged(config.mainScript);
     }
 
     /// Destroy the plugin
     destroy() {
         this.state.destroy();
-    }
-
-    /// Did the doc change?
-    protected onDocChanged(script: flatsql.FlatSQLScript) {
-        // Scan the script
-        // console.time('Script Scanning');
-        if (this.state.scannedScript != null) {
-            this.state.scannedScript.delete();
-            this.state.scannedScript = null;
-        }
-        this.state.scannedScript = script.scan();
-        // console.timeEnd('Script Scanning');
-
-        // Parse the script
-        // console.time('Script Parsing');
-        if (this.state.parsedScript != null) {
-            this.state.parsedScript.delete();
-            this.state.parsedScript = null;
-        }
-        this.state.parsedScript = script.parse();
-        // console.timeEnd('Script Parsing');
-
-        // Parse the script
-        // console.time('Script Analyzing');
-        if (this.state.analyzedScript != null) {
-            this.state.analyzedScript.delete();
-            this.state.analyzedScript = null;
-        }
-        this.state.analyzedScript = script.analyze();
-        // console.timeEnd('Script Analyzing');
-
-        // Build decorations
-        this.state.updateDecorations();
     }
 
     /// Apply a view update
@@ -159,7 +158,7 @@ class FlatSQLEditorValue implements PluginValue {
         // Did the doc change?
         if (update.docChanged) {
             // Apply the text changes
-            // console.time('Rope Insert');
+            console.time('Rope Insert');
             update.changes.iterChanges((fromA: number, toA: number, fromB: number, toB: number, inserted: CMText) => {
                 if (toA - fromA > 0) {
                     config.mainScript.eraseTextRange(fromA, toA - fromA);
@@ -172,10 +171,10 @@ class FlatSQLEditorValue implements PluginValue {
                     }
                 }
             });
-            // console.timeEnd('Rope Insert');
+            console.timeEnd('Rope Insert');
 
             // Update the document
-            this.onDocChanged(config.mainScript);
+            this.state.onScriptChanged(config.mainScript);
             return;
         }
     }
