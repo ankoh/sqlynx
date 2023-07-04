@@ -10,6 +10,7 @@
 
 #include "flatsql/parser/grammar/enums.h"
 #include "flatsql/proto/proto_generated.h"
+#include "flatsql/testing/xml_tests.h"
 #include "pugixml.hpp"
 
 namespace flatsql::testing {
