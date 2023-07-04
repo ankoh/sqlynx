@@ -6,7 +6,7 @@ import cn from 'classnames';
 import { useBackend, useBackendResolver } from '../backend';
 import { CodeMirror } from './codemirror';
 import { FlatSQLEditor } from './editor_plugin';
-import { FlatSQLEditorContext } from './editor_context';
+import { EditorContext } from './editor_context';
 
 import iconMainScript from '../../static/svg/icons/database_search.svg';
 import iconExternalScript from '../../static/svg/icons/tables_connected.svg';
@@ -131,7 +131,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
     }, [instance]);
 
     if (instance && script) {
-        const config = new FlatSQLEditorContext(instance, script, null, (state: FlatSQLEditorContext) => {});
+        const config = new EditorContext(instance, script, null, (state: EditorContext) => {});
         return (
             <div className={styles.container}>
                 <div className={styles.headerbar}>
