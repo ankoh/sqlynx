@@ -4,6 +4,12 @@ import { RangeSetBuilder } from '@codemirror/state';
 
 type StateChangedHandler = (state: EditorContext) => void;
 
+const Token = flatsql.proto.HighlightingTokenType;
+
+const keywordDecoration = Decoration.mark({
+    class: 'flatsql-keyword',
+});
+
 /// The state of the FlatSQL editor plugin.
 /// We pass this state container to the event callback so that it can be propagated as React state.
 export class EditorContext {
@@ -38,6 +44,19 @@ export class EditorContext {
         this.analyzedScript = null;
         this.onStateChanged = onStateChanged;
         this.decorations = new RangeSetBuilder<Decoration>().finish();
+    }
+
+    public recreate(): EditorContext {
+        const c = new EditorContext(this.instance, this.mainScript, this.externalScript, this.onStateChanged);
+        c.scannedScript = this.scannedScript;
+        c.parsedScript = this.parsedScript;
+        c.analyzedScript = this.analyzedScript;
+        c.decorations = this.decorations;
+        c.onStateChanged = this.onStateChanged;
+        this.scannedScript = null;
+        this.parsedScript = null;
+        this.analyzedScript = null;
+        return c;
     }
 
     public destroy() {
@@ -118,9 +137,3 @@ export class EditorContext {
         this.decorations = builder.finish();
     }
 }
-
-const Token = flatsql.proto.HighlightingTokenType;
-
-const keywordDecoration = Decoration.mark({
-    class: 'flatsql-keyword',
-});
