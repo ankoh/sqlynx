@@ -1,7 +1,10 @@
+import * as flatsql from '@ankoh/flatsql';
 import * as React from 'react';
-import { useBackend, useBackendResolver } from '../backend';
+
 import ReactFlow, { BackgroundVariant, Background as FlowBackground } from 'reactflow';
+import { useBackend, useBackendResolver } from '../backend';
 import { ScriptEditor } from '../editor/editor';
+import { useEditorContext } from '../editor/editor_context_provider';
 
 import 'reactflow/dist/style.css';
 import styles from './canvas_page.module.css';
@@ -9,12 +12,12 @@ import styles from './canvas_page.module.css';
 import iconGitHub from '../../static/svg/icons/github.svg';
 import iconBug from '../../static/svg/icons/bug.svg';
 import iconShare from '../../static/svg/icons/link.svg';
-
 import logo from '../../static/svg/logo/logo.svg';
 
 interface Props {}
 
 export const CanvasPage: React.FC<Props> = (props: Props) => {
+    const context = useEditorContext();
     const backend = useBackend();
     const backendResolver = useBackendResolver();
     if (backend.unresolved()) {
@@ -26,6 +29,11 @@ export const CanvasPage: React.FC<Props> = (props: Props) => {
         if (!instance) return 'unknown';
         return instance!.getVersionText();
     }, [instance]);
+
+    if (context) {
+        const script = context.analyzedScript?.read(new flatsql.proto.AnalyzedScript());
+        console.log(script);
+    }
 
     return (
         <div className={styles.page}>
