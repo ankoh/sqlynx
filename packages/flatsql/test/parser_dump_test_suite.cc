@@ -9,6 +9,8 @@
 using namespace flatsql;
 using namespace flatsql::testing;
 
+namespace {
+
 struct ParserDumpTestSuite : public ::testing::TestWithParam<const ParserDumpTest*> {};
 
 TEST_P(ParserDumpTestSuite, Test) {
@@ -34,3 +36,5 @@ INSTANTIATE_TEST_SUITE_P(View, ParserDumpTestSuite, ::testing::ValuesIn(ParserDu
 INSTANTIATE_TEST_SUITE_P(SSB, ParserDumpTestSuite, ::testing::ValuesIn(ParserDumpTest::GetTests("ssb.xml")), ParserDumpTest::TestPrinter());
 INSTANTIATE_TEST_SUITE_P(TPCDS, ParserDumpTestSuite, ::testing::ValuesIn(ParserDumpTest::GetTests("tpcds.xml")), ParserDumpTest::TestPrinter());
 INSTANTIATE_TEST_SUITE_P(TPCH, ParserDumpTestSuite, ::testing::ValuesIn(ParserDumpTest::GetTests("tpch.xml")), ParserDumpTest::TestPrinter());
+
+} // namespace

@@ -7,6 +7,8 @@
 
 using namespace flatsql;
 
+namespace {
+
 void test_entries(std::initializer_list<std::string_view> entries_list,
                   std::initializer_list<std::string_view> suffixes_list) {
     std::vector<std::string_view> entries{entries_list};
@@ -59,3 +61,5 @@ TEST(SuffixTrieTest, Prefixes0) {
     test_prefix(*trie, "", {"ar", "bar", "foo", "o", "oo", "r"});
     test_prefix(*trie, "not_exists", {});
 }
+
+}  // namespace

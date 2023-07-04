@@ -11,6 +11,8 @@
 using namespace flatsql;
 using namespace flatsql::testing;
 
+namespace {
+
 struct AnalyzerDumpTestSuite : public ::testing::TestWithParam<const AnalyzerDumpTest*> {};
 
 TEST_P(AnalyzerDumpTestSuite, Test) {
@@ -50,3 +52,5 @@ TEST_P(AnalyzerDumpTestSuite, Test) {
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(Basic, AnalyzerDumpTestSuite, ::testing::ValuesIn(AnalyzerDumpTest::GetTests("basic.xml")), AnalyzerDumpTest::TestPrinter());
 INSTANTIATE_TEST_SUITE_P(TPCH, AnalyzerDumpTestSuite, ::testing::ValuesIn(AnalyzerDumpTest::GetTests("tpch.xml")), AnalyzerDumpTest::TestPrinter());
+
+}

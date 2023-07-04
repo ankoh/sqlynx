@@ -8,6 +8,8 @@ using namespace flatsql;
 
 using Token = proto::HighlightingTokenType;
 
+namespace {
+
 constexpr auto OK = static_cast<uint32_t>(proto::StatusCode::OK);
 
 static void match_tokens(const void* data, const std::vector<uint32_t>& offsets, const std::vector<Token>& types,
@@ -45,3 +47,5 @@ TEST(HighlightingTest, InsertChars) {
 
     flatsql_script_delete(script);
 }
+
+}  // namespace

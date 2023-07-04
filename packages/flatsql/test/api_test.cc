@@ -5,6 +5,8 @@
 
 using namespace flatsql;
 
+namespace {
+
 constexpr auto OK = static_cast<uint32_t>(proto::StatusCode::OK);
 
 TEST(ApiTest, TPCH_Q2) {
@@ -97,3 +99,5 @@ limit 100
     flatsql_script_delete(external_script);
     flatsql_script_delete(main_script);
 }
+
+}  // namespace
