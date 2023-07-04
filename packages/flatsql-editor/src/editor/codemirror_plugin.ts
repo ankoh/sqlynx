@@ -13,7 +13,7 @@ export interface FlatSQLEditorConfig {
     /// The external script
     externalScript: flatsql.FlatSQLScript | null;
     /// The callback to subscribe for state updates
-    onStateChanged: (state: FlatSQLEditorState) => void;
+    onStateChanged: ((state: FlatSQLEditorState) => void) | null;
 }
 
 /// The state of the FlatSQL editor plugin.
@@ -140,6 +140,10 @@ class FlatSQLEditorValue implements PluginValue {
         config.mainScript.insertTextAt(0, text);
         // Update the script
         this.state.onScriptChanged(config.mainScript);
+        // Notify users about state change
+        if (config.onStateChanged) {
+            config.onStateChanged(this.state);
+        }
     }
 
     /// Destroy the plugin
@@ -175,6 +179,10 @@ class FlatSQLEditorValue implements PluginValue {
 
             // Update the document
             this.state.onScriptChanged(config.mainScript);
+            // Notify users about state change
+            if (config.onStateChanged) {
+                config.onStateChanged(this.state);
+            }
             return;
         }
     }
