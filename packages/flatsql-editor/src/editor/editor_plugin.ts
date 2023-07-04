@@ -5,11 +5,11 @@ import { EditorContext } from './editor_context';
 import './editor_plugin.css';
 
 /// A FlatSQL parser plugin that parses the CodeMirror text whenever it changes
-class EditorPlugin implements PluginValue {
+class EditorPluginValue implements PluginValue {
     /// Construct the plugin
     constructor(readonly view: EditorView) {
         // Resolve the parser
-        const state = this.view.state.facet(FlatSQLEditor)!;
+        const state = this.view.state.facet(EditorPlugin)!;
         if (!state.instance) {
             throw new Error('FlatSQL module not set');
         }
@@ -26,19 +26,21 @@ class EditorPlugin implements PluginValue {
     }
 
     getDecorations(): RangeSet<Decoration> {
-        return this.view.state.facet(FlatSQLEditor)!.decorations;
+        const deco = this.view.state.facet(EditorPlugin)!.decorations;
+        console.log(deco);
+        return deco;
     }
 
     /// Destroy the plugin
     destroy() {
-        const state = this.view.state.facet(FlatSQLEditor)!;
+        const state = this.view.state.facet(EditorPlugin)!;
         state?.destroy();
     }
 
     /// Apply a view update
     update(update: ViewUpdate) {
         // The the extension props
-        const state = this.view.state.facet(FlatSQLEditor)!;
+        const state = this.view.state.facet(EditorPlugin)!;
         if (!state.instance) {
             console.warn('FlatSQL module not set');
             return;
@@ -76,14 +78,14 @@ class EditorPlugin implements PluginValue {
 /// Example:
 ///   const config = new FlatSQLExtensionConfig(parser);
 ///   return (<CodeMirror extensions={[ FlatSQLExtension.of(config) ]} />);
-export const FlatSQLEditor = Facet.define<EditorContext, EditorContext | null>({
+export const EditorPlugin = Facet.define<EditorContext, EditorContext | null>({
     // Just use the first config
     combine(configs) {
         return configs.length ? configs[0] : null;
     },
     // Enable the extension
     enables: _ => [
-        ViewPlugin.fromClass(EditorPlugin, {
+        ViewPlugin.fromClass(EditorPluginValue, {
             decorations: v => v.getDecorations(),
         }),
     ],
