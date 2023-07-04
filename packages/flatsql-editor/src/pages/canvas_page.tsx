@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useBackend, useBackendResolver } from '../backend';
 import ReactFlow, { BackgroundVariant, Background as FlowBackground } from 'reactflow';
-import { ScriptEditor } from '../editor/script_editor';
+import { ScriptEditor } from '../editor/editor';
 
 import 'reactflow/dist/style.css';
 import styles from './canvas_page.module.css';
