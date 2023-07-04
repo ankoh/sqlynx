@@ -5,8 +5,9 @@ import cn from 'classnames';
 
 import { useBackend, useBackendResolver } from '../backend';
 import { CodeMirror } from './codemirror';
-import { FlatSQLEditor } from './editor_plugin';
+import { EditorPlugin } from './editor_plugin';
 import { EditorContext } from './editor_context';
+import { useEditorContext, useEditorContextSetter } from './editor_context_provider';
 
 import iconMainScript from '../../static/svg/icons/database_search.svg';
 import iconExternalScript from '../../static/svg/icons/tables_connected.svg';
@@ -14,7 +15,6 @@ import iconLoadExample from '../../static/svg/icons/folder_open.svg';
 import iconAccount from '../../static/svg/icons/account_circle.svg';
 
 import styles from './editor.module.css';
-import { useEditorContextSetter } from './editor_context_provider';
 
 interface Props {}
 
@@ -113,6 +113,7 @@ create table region (
 `;
 
 export const ScriptEditor: React.FC<Props> = (props: Props) => {
+    let context = useEditorContext();
     const setContext = useEditorContextSetter();
     const backend = useBackend();
     const backendResolver = useBackendResolver();
@@ -133,7 +134,11 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
     }, [instance]);
 
     if (instance && script) {
-        const config = new EditorContext(instance, script, null, setContext);
+        if (!context) {
+            context = new EditorContext(instance, script, null, (v: EditorContext) => setContext(v.recreate()));
+            setContext(context);
+        }
+        // XXX the plugin is initialized with every update here...
         return (
             <div className={styles.container}>
                 <div className={styles.headerbar}>
@@ -178,7 +183,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                                 <CodeMirror
                                     className={styles.codemirror}
                                     value={TMP_TPCH_SCHEMA}
-                                    extensions={[FlatSQLEditor.of(config)]}
+                                    extensions={[EditorPlugin.of(context)]}
                                     width={`${s.width}px`}
                                     height={`${s.height}px`}
                                 />
