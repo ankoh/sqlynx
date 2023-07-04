@@ -2,11 +2,11 @@ import * as flatsql from '@ankoh/flatsql';
 import { DecorationSet, Decoration } from '@codemirror/view';
 import { RangeSetBuilder } from '@codemirror/state';
 
-type StateChangedHandler = (state: FlatSQLEditorContext) => void;
+type StateChangedHandler = (state: EditorContext) => void;
 
 /// The state of the FlatSQL editor plugin.
 /// We pass this state container to the event callback so that it can be propagated as React state.
-export class FlatSQLEditorContext {
+export class EditorContext {
     /// The API
     public readonly instance: flatsql.FlatSQL;
     /// The main script
