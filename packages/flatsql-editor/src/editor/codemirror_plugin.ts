@@ -5,60 +5,37 @@ import { RangeSetBuilder, Facet, Text as CMText } from '@codemirror/state';
 import './codemirror_plugin.css';
 
 /// A configuration for a FlatSQL editor plugin.
-/// We use this configuration to inject the WebAssembly module.
-export interface FlatSQLPluginConfig {
+export interface FlatSQLEditorConfig {
     /// The API
     instance: flatsql.FlatSQL;
     /// The main script
     mainScript: flatsql.FlatSQLScript;
     /// The external script
     externalScript: flatsql.FlatSQLScript | null;
+    /// The callback to subscribe for state updates
+    onStateChanged: (state: FlatSQLEditorState) => void;
 }
 
-const Token = flatsql.proto.HighlightingTokenType;
-
-const keywordDecoration = Decoration.mark({
-    class: 'flatsql-keyword',
-});
-
-/// A FlatSQL parser plugin that parses the CodeMirror text whenever it changes
-class FlatSQLPluginValue implements PluginValue {
+/// The state of the FlatSQL editor plugin.
+/// We pass this state container to the event callback so that it can be propagated as React state.
+export class FlatSQLEditorState {
     /// The scanned script
-    scannedScript: flatsql.FlatBufferRef<flatsql.proto.ScannedScript> | null;
+    public scannedScript: flatsql.FlatBufferRef<flatsql.proto.ScannedScript> | null;
     /// The parsed script
-    parsedScript: flatsql.FlatBufferRef<flatsql.proto.ParsedScript> | null;
+    public parsedScript: flatsql.FlatBufferRef<flatsql.proto.ParsedScript> | null;
     /// The analyzed script
-    analyzedScript: flatsql.FlatBufferRef<flatsql.proto.AnalyzedScript> | null;
-
+    public analyzedScript: flatsql.FlatBufferRef<flatsql.proto.AnalyzedScript> | null;
     /// The decorations
-    decorations: DecorationSet;
+    public decorations: DecorationSet;
 
-    /// Construct the plugin
-    constructor(readonly view: EditorView) {
+    constructor() {
         this.scannedScript = null;
         this.parsedScript = null;
         this.analyzedScript = null;
-
-        // Build decorations
-        let builder = new RangeSetBuilder<Decoration>();
-        this.decorations = builder.finish();
-
-        // Resolve the parser
-        const config = this.view.state.facet(FlatSQLPlugin)!;
-        if (!config.instance) {
-            console.error('FlatSQL module not set');
-            return;
-        }
-        // Replace main script content with script text
-        const text = view.state.doc.toString();
-        config.mainScript.eraseTextRange(0, Number.MAX_SAFE_INTEGER);
-        config.mainScript.insertTextAt(0, text);
-        // Update the script
-        this.onDocChanged(config.mainScript);
+        this.decorations = new RangeSetBuilder<Decoration>().finish();
     }
 
-    /// Destroy the plugin
-    destroy() {
+    public destroy() {
         if (this.scannedScript != null) {
             this.scannedScript.delete();
             this.scannedScript = null;
@@ -73,7 +50,8 @@ class FlatSQLPluginValue implements PluginValue {
         }
     }
 
-    protected updateDecoration() {
+    /// Update the CodeMirror decorations
+    public updateDecorations() {
         if (!this.scannedScript) {
             return;
         }
@@ -102,44 +80,78 @@ class FlatSQLPluginValue implements PluginValue {
         }
         this.decorations = builder.finish();
     }
+}
+
+const Token = flatsql.proto.HighlightingTokenType;
+
+const keywordDecoration = Decoration.mark({
+    class: 'flatsql-keyword',
+});
+
+/// A FlatSQL parser plugin that parses the CodeMirror text whenever it changes
+class FlatSQLEditorValue implements PluginValue {
+    /// The plugin state
+    state: FlatSQLEditorState;
+
+    /// Construct the plugin
+    constructor(readonly view: EditorView) {
+        // Resolve the parser
+        const config = this.view.state.facet(FlatSQLEditor)!;
+        if (!config.instance) {
+            throw new Error('FlatSQL module not set');
+        }
+        // Create the state container
+        this.state = new FlatSQLEditorState();
+        // Replace main script content with script text
+        const text = view.state.doc.toString();
+        config.mainScript.eraseTextRange(0, Number.MAX_SAFE_INTEGER);
+        config.mainScript.insertTextAt(0, text);
+        // Update the script
+        this.onDocChanged(config.mainScript);
+    }
+
+    /// Destroy the plugin
+    destroy() {
+        this.state.destroy();
+    }
 
     /// Did the doc change?
     protected onDocChanged(script: flatsql.FlatSQLScript) {
         // Scan the script
         // console.time('Script Scanning');
-        if (this.scannedScript != null) {
-            this.scannedScript.delete();
-            this.scannedScript = null;
+        if (this.state.scannedScript != null) {
+            this.state.scannedScript.delete();
+            this.state.scannedScript = null;
         }
-        this.scannedScript = script.scan();
+        this.state.scannedScript = script.scan();
         // console.timeEnd('Script Scanning');
 
         // Parse the script
         // console.time('Script Parsing');
-        if (this.parsedScript != null) {
-            this.parsedScript.delete();
-            this.parsedScript = null;
+        if (this.state.parsedScript != null) {
+            this.state.parsedScript.delete();
+            this.state.parsedScript = null;
         }
-        this.parsedScript = script.parse();
+        this.state.parsedScript = script.parse();
         // console.timeEnd('Script Parsing');
 
         // Parse the script
         // console.time('Script Analyzing');
-        if (this.analyzedScript != null) {
-            this.analyzedScript.delete();
-            this.analyzedScript = null;
+        if (this.state.analyzedScript != null) {
+            this.state.analyzedScript.delete();
+            this.state.analyzedScript = null;
         }
-        this.analyzedScript = script.analyze();
+        this.state.analyzedScript = script.analyze();
         // console.timeEnd('Script Analyzing');
 
         // Build decorations
-        this.updateDecoration();
+        this.state.updateDecorations();
     }
 
     /// Apply a view update
     update(update: ViewUpdate) {
         // The the extension props
-        const config = this.view.state.facet(FlatSQLPlugin)!;
+        const config = this.view.state.facet(FlatSQLEditor)!;
         if (!config.instance) {
             console.warn('FlatSQL module not set');
             return;
@@ -173,15 +185,15 @@ class FlatSQLPluginValue implements PluginValue {
 /// Example:
 ///   const config = new FlatSQLExtensionConfig(parser);
 ///   return (<CodeMirror extensions={[ FlatSQLExtension.of(config) ]} />);
-export const FlatSQLPlugin = Facet.define<FlatSQLPluginConfig, FlatSQLPluginConfig | null>({
+export const FlatSQLEditor = Facet.define<FlatSQLEditorConfig, FlatSQLEditorConfig | null>({
     // Just use the first config
     combine(configs) {
         return configs.length ? configs[0] : null;
     },
     // Enable the extension
     enables: _ => [
-        ViewPlugin.fromClass(FlatSQLPluginValue, {
-            decorations: v => v.decorations,
+        ViewPlugin.fromClass(FlatSQLEditorValue, {
+            decorations: v => v.state.decorations,
         }),
     ],
 });
