@@ -13,7 +13,8 @@ import iconExternalScript from '../../static/svg/icons/tables_connected.svg';
 import iconLoadExample from '../../static/svg/icons/folder_open.svg';
 import iconAccount from '../../static/svg/icons/account_circle.svg';
 
-import styles from './script_editor.module.css';
+import styles from './editor.module.css';
+import { useEditorContextSetter } from './editor_context_provider';
 
 interface Props {}
 
@@ -112,6 +113,7 @@ create table region (
 `;
 
 export const ScriptEditor: React.FC<Props> = (props: Props) => {
+    const setContext = useEditorContextSetter();
     const backend = useBackend();
     const backendResolver = useBackendResolver();
     if (backend.unresolved()) {
@@ -131,7 +133,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
     }, [instance]);
 
     if (instance && script) {
-        const config = new EditorContext(instance, script, null, (state: EditorContext) => {});
+        const config = new EditorContext(instance, script, null, setContext);
         return (
             <div className={styles.container}>
                 <div className={styles.headerbar}>
