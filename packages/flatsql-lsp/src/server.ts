@@ -20,7 +20,7 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 
 const fsql = await flatsql.FlatSQL.create(async (imports: WebAssembly.Imports) => {
-    const wasmPath = require.resolve('@akohn/flatsql/dist/flatsql.wasm');
+    const wasmPath = require.resolve('@ankoh/flatsql/dist/flatsql.wasm');
     const buf = await fs.promises.readFile(wasmPath);
     return await WebAssembly.instantiate(buf, imports);
 });

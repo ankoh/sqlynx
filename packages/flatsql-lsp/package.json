@@ -16,7 +16,7 @@
 	},
 	"dependencies": {
 		"vscode-languageserver": "^8.1.0",
-		"@akohn/flatsql": "link:../flatsql-wasm"
+		"@ankoh/flatsql": "link:../flatsql-wasm"
 	},
 	"devDependencies": {
 		"@types/node": "^18.0.0",
