@@ -6,7 +6,7 @@
 	"license": "MPL-2.0",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/ankohn/flatsql"
+		"url": "https://github.com/ankoh/flatsql"
 	},
 	"private": true,
 	"engines": {
@@ -31,7 +31,7 @@
 		"package": "vsce package --yarn"
 	},
 	"dependencies": {
-		"@akohn/flatsql-lsp": "link:../flatsql-lsp",
+		"@ankoh/flatsql-lsp": "link:../flatsql-lsp",
 		"vscode-languageclient": "^8.1.0"
 	},
 	"devDependencies": {

@@ -8,7 +8,7 @@ let client: LanguageClient;
 
 export function activate(context: ExtensionContext) {
     // The server is implemented in node
-    const serverModule = require.resolve('@akohn/flatsql-lsp');
+    const serverModule = require.resolve('@ankoh/flatsql-lsp');
 
     // If the extension is launched in debug mode then the debug server options are used
     // Otherwise the run options are used
