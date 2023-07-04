@@ -1,11 +1,11 @@
 import { EditorView, ViewUpdate, PluginValue, ViewPlugin, Decoration } from '@codemirror/view';
 import { RangeSet, Facet, Text as CMText } from '@codemirror/state';
-import { FlatSQLEditorContext } from './editor_context';
+import { EditorContext } from './editor_context';
 
 import './editor_plugin.css';
 
 /// A FlatSQL parser plugin that parses the CodeMirror text whenever it changes
-class FlatSQLEditorPlugin implements PluginValue {
+class EditorPlugin implements PluginValue {
     /// Construct the plugin
     constructor(readonly view: EditorView) {
         // Resolve the parser
@@ -76,14 +76,14 @@ class FlatSQLEditorPlugin implements PluginValue {
 /// Example:
 ///   const config = new FlatSQLExtensionConfig(parser);
 ///   return (<CodeMirror extensions={[ FlatSQLExtension.of(config) ]} />);
-export const FlatSQLEditor = Facet.define<FlatSQLEditorContext, FlatSQLEditorContext | null>({
+export const FlatSQLEditor = Facet.define<EditorContext, EditorContext | null>({
     // Just use the first config
     combine(configs) {
         return configs.length ? configs[0] : null;
     },
     // Enable the extension
     enables: _ => [
-        ViewPlugin.fromClass(FlatSQLEditorPlugin, {
+        ViewPlugin.fromClass(EditorPlugin, {
             decorations: v => v.getDecorations(),
         }),
     ],
