@@ -32,19 +32,19 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
         // Collect tables
         const tables = [];
         const tableCount = analyzed.tablesLength();
-        let tableName = new flatsql.proto.QualifiedTableName();
-        let table = new flatsql.proto.Table();
-        let tableColumn = new flatsql.proto.TableColumn();
+        const tmpTableName = new flatsql.proto.QualifiedTableName();
+        const tmpTable = new flatsql.proto.Table();
+        const tmpTableColumn = new flatsql.proto.TableColumn();
         for (let i = 0; i < tableCount; ++i) {
-            table = analyzed.tables(i)!;
+            const table = analyzed.tables(i, tmpTable)!;
             const columnCount = table.columnCount();
             const columnsBegin = table.columnsBegin();
             const columns = [];
             for (let j = 0; j < columnCount; ++j) {
-                tableColumn = analyzed.tableColumns(columnsBegin + j)!;
+                const tableColumn = analyzed.tableColumns(columnsBegin + j, tmpTableColumn)!;
                 columns.push(flatsql.FlatID.readName(tableColumn.columnName(), parsed));
             }
-            tableName = table.tableName(tableName)!;
+            const tableName = table.tableName(tmpTableName)!;
             tables.push({
                 name: flatsql.FlatID.readTableName(tableName, parsed),
                 columns,
