@@ -254,7 +254,6 @@ if(NOT WASM)
   add_library(flatsql_testutils
     ${CMAKE_SOURCE_DIR}/src/testing/analyzer_dump_test.cc
     ${CMAKE_SOURCE_DIR}/src/testing/parser_dump_test.cc
-    ${CMAKE_SOURCE_DIR}/src/testing/printer_dump_test.cc
     ${CMAKE_SOURCE_DIR}/src/testing/xml_tests.cc
   )
   target_link_libraries(flatsql_testutils flatsql pugixml gtest)
@@ -282,9 +281,6 @@ if(NOT WASM)
 
   add_executable(dump_analyzer tools/dump_analyzer.cc)
   target_link_libraries(dump_analyzer flatsql flatsql_testutils pugixml gtest gflags Threads::Threads)
-
-  add_executable(dump_printer tools/dump_printer.cc)
-  target_link_libraries(dump_printer flatsql flatsql_testutils pugixml gtest gflags Threads::Threads)
 
   add_executable(sql2tpl tools/sql2tpl.cc)
   target_link_libraries(sql2tpl flatsql flatsql_testutils pugixml gtest gflags Threads::Threads)
