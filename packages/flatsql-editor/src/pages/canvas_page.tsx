@@ -4,7 +4,7 @@ import * as React from 'react';
 import ReactFlow, { BackgroundVariant, Background as FlowBackground } from 'reactflow';
 import { useBackend, useBackendResolver } from '../backend';
 import { ScriptEditor } from '../editor/editor';
-import { useEditorContext } from '../editor/editor_context_provider';
+import { useEditorContext } from '../editor/editor_context';
 
 import 'reactflow/dist/style.css';
 import styles from './canvas_page.module.css';
@@ -31,7 +31,7 @@ export const CanvasPage: React.FC<Props> = (props: Props) => {
     }, [instance]);
 
     if (context) {
-        const script = context.analyzedScript?.read(new flatsql.proto.AnalyzedScript());
+        const script = context.mainAnalyzed?.read(new flatsql.proto.AnalyzedScript());
         console.log(script);
     }
 
