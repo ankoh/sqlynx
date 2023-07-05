@@ -31,44 +31,49 @@ export const CanvasPage: React.FC<Props> = (props: Props) => {
     }, [instance]);
 
     if (context) {
-        const script = context.mainAnalyzed?.read(new flatsql.proto.AnalyzedScript())!;
-        console.log(script);
-        if (script) {
+        const parsed = context.mainParsed?.read(new flatsql.proto.ParsedScript())!;
+        const analyzed = context.mainAnalyzed?.read(new flatsql.proto.AnalyzedScript())!;
+        if (analyzed) {
             // Collect tables
             const tables = [];
-            const tableCount = script.tablesLength();
+            const tableCount = analyzed.tablesLength();
+            let tableName = new flatsql.proto.QualifiedTableName();
             let table = new flatsql.proto.Table();
             let tableColumn = new flatsql.proto.TableColumn();
             for (let i = 0; i < tableCount; ++i) {
-                table = script.tables(i)!;
+                table = analyzed.tables(i)!;
                 const columnCount = table.columnCount();
                 const columnsBegin = table.columnsBegin();
                 const columns = [];
                 for (let j = 0; j < columnCount; ++j) {
-                    tableColumn = script.tableColumns(columnsBegin + j)!;
-                    columns.push(tableColumn.columnName());
+                    tableColumn = analyzed.tableColumns(columnsBegin + j)!;
+                    columns.push(flatsql.FlatID.readName(tableColumn.columnName(), parsed));
                 }
-                tables.push({ columns });
+                tableName = table.tableName(tableName)!;
+                tables.push({
+                    name: flatsql.FlatID.readTableName(tableName, parsed),
+                    columns,
+                });
             }
             console.log(tables);
 
             // Collect query edges
-            const edgeCount = script.graphEdgesLength();
+            const edgeCount = analyzed.graphEdgesLength();
             let edge = new flatsql.proto.QueryGraphEdge();
             let node = new flatsql.proto.QueryGraphEdgeNode();
             for (let i = 0; i < edgeCount; ++i) {
-                edge = script.graphEdges(i, edge)!;
+                edge = analyzed.graphEdges(i, edge)!;
                 let reader = edge?.nodesBegin()!;
                 const countLeft = edge?.nodeCountLeft()!;
                 const countRight = edge?.nodeCountRight()!;
                 let left = [],
                     right = [];
                 for (let j = 0; j < countLeft; ++j) {
-                    node = script.graphEdgeNodes(reader++, node)!;
+                    node = analyzed.graphEdgeNodes(reader++, node)!;
                     left.push(node.columnReferenceId());
                 }
                 for (let j = 0; j < countRight; ++j) {
-                    node = script.graphEdgeNodes(reader++, node)!;
+                    node = analyzed.graphEdgeNodes(reader++, node)!;
                     right.push(node.columnReferenceId());
                 }
                 console.log({
