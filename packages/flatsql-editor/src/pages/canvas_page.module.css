@@ -5,7 +5,7 @@
     background-color: var(--background_color_primary);
 }
 
-.modelgraph_container {
+.schemagraph_container {
     position: absolute;
     top: 0;
     left: 0;

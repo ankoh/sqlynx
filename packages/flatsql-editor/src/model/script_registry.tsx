@@ -50,7 +50,7 @@ export const reduceScriptRegistry = (ctx: ScriptRegistry, action: ScriptRegistry
             return { ...ctx, scripts: ctx.scripts.set(script.scriptId, script) };
         }
         case SAVE_SCRIPT: {
-            return { ...ctx, scripts: ctx.scripts.set(action.data.scriptId, action.data) };
+            return { ...ctx, scripts: ctx.scripts.set(action.value.scriptId, action.value) };
         }
     }
 };

@@ -1,10 +1,11 @@
 import * as React from 'react';
 import * as flatsql from '@ankoh/flatsql';
-import { useBackend, useBackendResolver } from '../backend';
+import { useBackend } from '../backend';
 import { DecorationSet, Decoration } from '@codemirror/view';
 import { RangeSetBuilder } from '@codemirror/state';
 import { RangeSet } from '@codemirror/state';
 import { Action, Dispatch } from '../model/action';
+import { RESULT_OK } from '../utils/result';
 
 /// The state of the FlatSQL editor plugin.
 /// We pass this state container to the event callback so that it can be propagated as React state.
@@ -222,9 +223,9 @@ const reducer = (state: EditorContext, action: EditorContextAction): EditorConte
         case INITIALIZE: {
             const s = {
                 ...state,
-                instance: action.data,
-                mainScript: action.data.createScript(),
-                schemaScript: action.data.createScript(),
+                instance: action.value,
+                mainScript: action.value.createScript(),
+                schemaScript: action.value.createScript(),
             };
             s.mainScript.insertTextAt(0, TMP_TPCH_SCHEMA);
             updateScript(s);
@@ -259,15 +260,11 @@ export const EditorContextProvider: React.FC<Props> = (props: Props) => {
     const [state, dispatch] = React.useReducer(reducer, null, () => defaultContext);
 
     const backend = useBackend();
-    const backendResolver = useBackendResolver();
-    if (backend.unresolved()) {
-        backendResolver();
-    }
     React.useEffect(() => {
-        if (backend.value?.instance && state.instance == null) {
-            dispatch({ type: INITIALIZE, data: backend.value.instance! });
+        if (backend?.type == RESULT_OK && !state.instance) {
+            dispatch({ type: INITIALIZE, value: backend.value });
         }
-    }, [backend.value?.instance && state.instance]);
+    }, [backend, state.instance]);
     return (
         <editorCtx.Provider value={state}>
             <editorCtxDispatch.Provider value={dispatch}>{props.children}</editorCtxDispatch.Provider>
