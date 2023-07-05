@@ -36,6 +36,8 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
             zoomOnScroll={false}
             zoomOnPinch={false}
             zoomOnDoubleClick={false}
+            panOnDrag={false}
+            panOnScroll={false}
             proOptions={{ hideAttribution: true }}
         >
             <FlowBackground color="#aaa" variant={BackgroundVariant.Dots} gap={16} />

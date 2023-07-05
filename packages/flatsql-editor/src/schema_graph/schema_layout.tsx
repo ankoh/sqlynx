@@ -3,6 +3,8 @@ import * as React from 'react';
 import { EditorContext } from '../editor/editor_context';
 import { Edge, Handle, Node, NodeProps, Position } from 'reactflow';
 
+import styles from './schema_layout.module.css';
+
 interface Column {
     name: string;
 }
@@ -14,11 +16,11 @@ export interface TableData {
 
 export const TableNode: React.FC<NodeProps<TableData>> = (props: NodeProps<TableData>) => {
     return (
-        <>
+        <div className={styles.table_node}>
             <Handle type="target" position={Position.Left} />
             <div>{props.data.name}</div>
             <Handle type="source" position={Position.Right} />
-        </>
+        </div>
     );
 };
 
@@ -77,6 +79,8 @@ export function layoutSchema(ctx: EditorContext): [Node<TableData>[], Edge[]] {
             right,
         });
     }
+
+    // Collect nodes and edges
     const nodes: Node<TableData>[] = [
         { id: 'node-1', type: 'table', position: { x: 200, y: 100 }, data: { name: 'foo', columns: [] } },
         { id: 'node-2', type: 'table', position: { x: 300, y: 200 }, data: { name: 'bar', columns: [] } },
