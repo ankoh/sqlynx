@@ -68,7 +68,7 @@ if(WASM)
         -Wl,--export=flatsql_script_scan \
         -Wl,--export=flatsql_script_parse \
         -Wl,--export=flatsql_script_analyze \
-        -Wl,--export=flatsql_script_pretty_print \
+        -Wl,--export=flatsql_script_format \
         -Wl,--export=flatsql_script_update_completion_index \
         -flto \
     ")
@@ -266,7 +266,7 @@ if(NOT WASM)
     ${CMAKE_SOURCE_DIR}/test/highlighting_test.cc
     ${CMAKE_SOURCE_DIR}/test/keywords_test.cc
     ${CMAKE_SOURCE_DIR}/test/parser_dump_test_suite.cc
-    ${CMAKE_SOURCE_DIR}/test/pretty_print_test_suite.cc
+    ${CMAKE_SOURCE_DIR}/test/format_test_suite.cc
     ${CMAKE_SOURCE_DIR}/test/rope_test.cc
     ${CMAKE_SOURCE_DIR}/test/script_test.cc
     ${CMAKE_SOURCE_DIR}/test/suffix_trie_test.cc
