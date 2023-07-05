@@ -6,7 +6,7 @@ import { SchemaGraph } from '../schema_graph/schema_graph';
 import { RESULT_OK } from '../utils/result';
 
 import 'reactflow/dist/style.css';
-import styles from './canvas_page.module.css';
+import styles from './editor_page.module.css';
 
 import iconGitHub from '../../static/svg/icons/github.svg';
 import iconBug from '../../static/svg/icons/bug.svg';
@@ -15,7 +15,7 @@ import logo from '../../static/svg/logo/logo.svg';
 
 interface Props {}
 
-export const CanvasPage: React.FC<Props> = (props: Props) => {
+export const EditorPage: React.FC<Props> = (props: Props) => {
     const backend = useBackend();
     const version = React.useMemo(() => {
         if (!backend || backend.type != RESULT_OK) return 'unknown';

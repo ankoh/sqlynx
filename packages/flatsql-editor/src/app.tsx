@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { BackendProvider } from './backend';
-import { CanvasPage } from './pages/canvas_page';
+import { EditorPage } from './pages/editor_page';
 import { ScriptRegistryProvider } from './model/script_registry';
 import { ScriptLoaderProvider } from './model/script_loader';
 import { EditorContextProvider } from './editor/editor_context';
@@ -26,7 +26,7 @@ root.render(
     <BrowserRouter>
         <DataProviders>
             <Routes>
-                <Route index element={<CanvasPage />} />
+                <Route index element={<EditorPage />} />
                 <Route path="*" element={<Navigate to="/" />} />
             </Routes>
         </DataProviders>
