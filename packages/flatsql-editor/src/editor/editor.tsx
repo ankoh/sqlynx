@@ -1,5 +1,4 @@
 import * as React from 'react';
-import * as flatsql from '@ankoh/flatsql';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import cn from 'classnames';
 
@@ -23,7 +22,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         return ctx.mainScript?.toString() ?? '';
     }, [ctx.mainScript]);
 
-    if (!ctx.mainScript) {
+    if (ctx.mainScript == null) {
         return <div>Loading</div>;
     }
 

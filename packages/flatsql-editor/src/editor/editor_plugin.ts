@@ -52,7 +52,7 @@ class EditorPluginValue implements PluginValue {
             // Update the document
             state.dispatchContext({
                 type: MAIN_SCRIPT_UPDATED,
-                data: undefined,
+                value: undefined,
             });
             return;
         }
