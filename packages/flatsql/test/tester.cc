@@ -10,6 +10,10 @@
 using namespace flatsql;
 using namespace flatsql::testing;
 
+std::filesystem::path source_dir;
+bool update_expecteds;
+
+DEFINE_bool(update_expecteds, false, "Update the test expectations");
 DEFINE_string(source_dir, "", "Source directory");
 
 int main(int argc, char* argv[]) {
@@ -20,7 +24,8 @@ int main(int argc, char* argv[]) {
     if (!std::filesystem::exists(FLAGS_source_dir)) {
         std::cout << "Invalid source directory: " << FLAGS_source_dir << std::endl;
     }
-    auto source_dir = std::filesystem::path{FLAGS_source_dir};
+    source_dir = std::filesystem::path{FLAGS_source_dir};
+    update_expecteds = FLAGS_update_expecteds;
     ParserDumpTest::LoadTests(source_dir);
     AnalyzerDumpTest::LoadTests(source_dir);
 

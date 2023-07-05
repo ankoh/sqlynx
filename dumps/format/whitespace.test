@@ -1,0 +1,6 @@
+# Duplicate whitespace is removed
+
+  SELECT    1  , 43    FROM   t1 ;
+----
+-- imagine the following test output:
+  SELECT    1  , 43    FROM   t1 ;
