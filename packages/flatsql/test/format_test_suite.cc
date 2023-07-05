@@ -5,16 +5,12 @@
 #include <stdexcept>
 #include <string_view>
 
-#include "flatsql/parser/parse_context.h"
-#include "flatsql/parser/scanner.h"
+#include "flatsql/proto/proto_generated.h"
 #include "flatsql/script.h"
-#include "flatsql/testing/parser_dump_test.h"
-#include "flatsql/testing/xml_tests.h"
 #include "gtest/gtest.h"
 #include "pugixml.hpp"
 
 using namespace flatsql;
-using namespace flatsql::testing;
 
 extern std::filesystem::path source_dir;
 extern bool update_expecteds;
@@ -142,14 +138,11 @@ TEST_P(FormatTestSuite, Test) {
     std::string fileContent = readFile(filePath);
     TestCase test = TestCase::parse(fileContent);
 
-    rope::Rope input{1024, test.input};
-    auto [scanned, scannedStatus] = parser::Scanner::Scan(input);
-    ASSERT_EQ(scannedStatus, proto::StatusCode::OK);
-    auto [parsed, parsedStatus] = parser::ParseContext::Parse(scanned);
-    ASSERT_EQ(parsedStatus, proto::StatusCode::OK);
-
-    // TODO: actually test something
-    std::string actual = "-- imagine the following test output:\n" + test.input;
+    Script s;
+    s.InsertTextAt(0, test.input);
+    ASSERT_EQ(s.Scan().second, proto::StatusCode::OK);
+    ASSERT_EQ(s.Parse().second, proto::StatusCode::OK);
+    std::string actual = s.Format();
 
     if (update_expecteds) {
         std::ofstream out(filePath);
