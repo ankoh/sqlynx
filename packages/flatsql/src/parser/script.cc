@@ -151,6 +151,12 @@ std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(Script* external) 
     return {analyzed_scripts.back().get(), status};
 }
 
+/// Returns the pretty-printed string for this script.
+std::string Script::Format() {
+    // TODO: actually implement formatting
+    return "formatted[" + text.ToString() + "]";
+}
+
 /// Update the completion index
 proto::StatusCode Script::UpdateCompletionIndex() {
     if (analyzed_scripts.empty()) {

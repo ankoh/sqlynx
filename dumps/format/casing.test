@@ -2,5 +2,5 @@
 
 select * From t1
 ----
--- imagine the following test output:
-select * From t1
+formatted[select * From t1
+]

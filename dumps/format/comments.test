@@ -6,9 +6,9 @@ FROM
   -- another comment
   t1
 ----
--- imagine the following test output:
--- My comment
+formatted[-- My comment
 SELECT *
 FROM
   -- another comment
   t1
+]
