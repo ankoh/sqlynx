@@ -3,7 +3,7 @@ import { BackendProvider } from './backend';
 import { CanvasPage } from './pages/canvas_page';
 import { ScriptRegistryProvider } from './model/script_registry';
 import { ScriptLoaderProvider } from './model/script_loader';
-import { EditorContextProvider } from './editor/editor_context_provider';
+import { EditorContextProvider } from './editor/editor_context';
 import { createRoot } from 'react-dom/client';
 import { Route, Routes, Navigate, BrowserRouter } from 'react-router-dom';
 
