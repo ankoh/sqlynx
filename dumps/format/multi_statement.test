@@ -1,0 +1,6 @@
+# There should be only one statement per line
+
+SELECT 1; SELECT 2; SELECT 3;
+----
+-- imagine the following test output:
+SELECT 1; SELECT 2; SELECT 3;
