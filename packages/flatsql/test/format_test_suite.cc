@@ -75,8 +75,10 @@ TestCase TestCase::parse(std::string_view str) {
         if (currentLine->starts_with("#")) {
             throw std::runtime_error("Comments are only supported at the beginning of the file");
         }
+        if (!result.input.empty()) {
+            result.input += "\n";
+        }
         result.input += *currentLine;
-        result.input += "\n";
         currentLine = getNextLine();
     }
 
@@ -85,8 +87,10 @@ TestCase TestCase::parse(std::string_view str) {
 
     // Everything after the `----` line is the expected output
     while (currentLine && currentLine != "----") {
+        if (!result.expectedOutput.empty()) {
+            result.expectedOutput += "\n";
+        }
         result.expectedOutput += *currentLine;
-        result.expectedOutput += "\n";
         currentLine = getNextLine();
     }
 
@@ -118,14 +122,15 @@ std::string TestCase::format() const {
 
     // Input and expected output
     result += input;
-    result += "----\n";
+    result += "\n----\n";
     result += expectedOutput;
+    result += "\n";
 
     return result;
 }
 
 std::string readFile(std::filesystem::path p) {
-    std::ifstream in(p);
+    std::ifstream in(p, std::ios::binary);
     std::stringstream buffer;
     buffer << in.rdbuf();
     return buffer.str();
@@ -145,7 +150,7 @@ TEST_P(FormatTestSuite, Test) {
     std::string actual = s.Format();
 
     if (update_expecteds) {
-        std::ofstream out(filePath);
+        std::ofstream out(filePath, std::ios::binary);
         test.expectedOutput = actual;
         std::string formatted = test.format();
         out.write(formatted.data(), formatted.size());

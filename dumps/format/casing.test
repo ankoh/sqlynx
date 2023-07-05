@@ -2,5 +2,4 @@
 
 select * From t1
 ----
-formatted[select * From t1
-]
+formatted[select * From t1]
