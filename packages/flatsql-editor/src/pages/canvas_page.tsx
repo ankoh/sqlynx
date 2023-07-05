@@ -31,8 +31,53 @@ export const CanvasPage: React.FC<Props> = (props: Props) => {
     }, [instance]);
 
     if (context) {
-        const script = context.mainAnalyzed?.read(new flatsql.proto.AnalyzedScript());
+        const script = context.mainAnalyzed?.read(new flatsql.proto.AnalyzedScript())!;
         console.log(script);
+        if (script) {
+            // Collect tables
+            const tables = [];
+            const tableCount = script.tablesLength();
+            let table = new flatsql.proto.Table();
+            let tableColumn = new flatsql.proto.TableColumn();
+            for (let i = 0; i < tableCount; ++i) {
+                table = script.tables(i)!;
+                const columnCount = table.columnCount();
+                const columnsBegin = table.columnsBegin();
+                const columns = [];
+                for (let j = 0; j < columnCount; ++j) {
+                    tableColumn = script.tableColumns(columnsBegin + j)!;
+                    columns.push(tableColumn.columnName());
+                }
+                tables.push({ columns });
+            }
+            console.log(tables);
+
+            // Collect query edges
+            const edgeCount = script.graphEdgesLength();
+            let edge = new flatsql.proto.QueryGraphEdge();
+            let node = new flatsql.proto.QueryGraphEdgeNode();
+            for (let i = 0; i < edgeCount; ++i) {
+                edge = script.graphEdges(i, edge)!;
+                let reader = edge?.nodesBegin()!;
+                const countLeft = edge?.nodeCountLeft()!;
+                const countRight = edge?.nodeCountRight()!;
+                let left = [],
+                    right = [];
+                for (let j = 0; j < countLeft; ++j) {
+                    node = script.graphEdgeNodes(reader++, node)!;
+                    left.push(node.columnReferenceId());
+                }
+                for (let j = 0; j < countRight; ++j) {
+                    node = script.graphEdgeNodes(reader++, node)!;
+                    right.push(node.columnReferenceId());
+                }
+                console.log({
+                    edgeId: i,
+                    left,
+                    right,
+                });
+            }
+        }
     }
 
     return (
