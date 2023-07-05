@@ -135,9 +135,9 @@ std::string readFile(std::filesystem::path p) {
     return buffer.str();
 }
 
-struct PrettyPrintTestSuite : public ::testing::TestWithParam<std::filesystem::path> {};
+struct FormatTestSuite : public ::testing::TestWithParam<std::filesystem::path> {};
 
-TEST_P(PrettyPrintTestSuite, Test) {
+TEST_P(FormatTestSuite, Test) {
     std::filesystem::path filePath = source_dir / "dumps" / "format" / GetParam();
     std::string fileContent = readFile(filePath);
     TestCase test = TestCase::parse(fileContent);
@@ -182,6 +182,6 @@ auto printFilePathTestName = [](const ::testing::TestParamInfo<std::filesystem::
 };
 
 // clang-format off
-INSTANTIATE_TEST_SUITE_P(PrettyPrint, PrettyPrintTestSuite, ::testing::ValuesIn(listTestFiles(source_dir / "dumps" / "format")), printFilePathTestName);
+INSTANTIATE_TEST_SUITE_P(Format, FormatTestSuite, ::testing::ValuesIn(listTestFiles(source_dir / "dumps" / "format")), printFilePathTestName);
 
 } // namespace

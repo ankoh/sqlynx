@@ -106,7 +106,7 @@ connection.onDocumentFormatting(e => {
                 start: { line: 0, character: 0 },
                 end: { line: Number.MAX_VALUE, character: Number.MAX_VALUE },
             },
-            newText: doc.fsqlScript().prettyPrint(),
+            newText: doc.fsqlScript().format(),
         },
     ];
     return edits;
