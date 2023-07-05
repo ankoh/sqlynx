@@ -145,7 +145,3 @@ parser_dumps:
 .PHONY: analyzer_dumps
 analyzer_dumps:
 	${LIB_DEBUG_DIR}/dump_analyzer --source_dir .
-
-.PHONY: printer_dumps
-printer_dumps:
-	${LIB_DEBUG_DIR}/dump_analyzer --source_dir .
