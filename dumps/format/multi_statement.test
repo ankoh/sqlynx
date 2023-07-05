@@ -2,5 +2,5 @@
 
 SELECT 1; SELECT 2; SELECT 3;
 ----
--- imagine the following test output:
-SELECT 1; SELECT 2; SELECT 3;
+formatted[SELECT 1; SELECT 2; SELECT 3;
+]

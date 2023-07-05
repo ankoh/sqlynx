@@ -166,6 +166,9 @@ class Script {
     std::pair<ParsedScript*, proto::StatusCode> Parse();
     /// Analyze the latest parsed script
     std::pair<AnalyzedScript*, proto::StatusCode> Analyze(Script* external = nullptr);
+    /// Returns the pretty-printed string for this script.
+    /// Return `nullopt` in case of an error.
+    std::string Format();
     /// Update the completion index
     proto::StatusCode UpdateCompletionIndex();
     /// Complete at a text offset

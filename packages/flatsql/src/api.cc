@@ -168,8 +168,7 @@ extern "C" FFIResult* flatsql_script_analyze(Script* script, Script* external) {
 
 /// Get a pretty-printed version of the SQL query
 extern "C" FFIResult* flatsql_script_format(flatsql::Script* script) {
-    auto text = std::make_unique<std::string>(
-        std::string{"-- imagine the following query was formatted beautifully:\n"} + script->ToString());
+    auto text = std::make_unique<std::string>(script->Format());
     auto result = new FFIResult();
     result->status_code = static_cast<uint32_t>(proto::StatusCode::OK);
     result->data_ptr = text->data();
