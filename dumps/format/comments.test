@@ -10,5 +10,4 @@ formatted[-- My comment
 SELECT *
 FROM
   -- another comment
-  t1
-]
+  t1]
