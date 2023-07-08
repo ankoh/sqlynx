@@ -29,7 +29,7 @@ interface FlatSQLModuleExports {
         edgeForce: number,
     ) => void;
     flatsql_schemagraph_add_repulsion: (ptr: number, x: number, y: number, force: number) => void;
-    flatsql_schemagraph_load_script: (ptr: number, script: number) => void;
+    flatsql_schemagraph_load_script: (ptr: number, script: number) => number;
 }
 
 type InstantiateWasmCallback = (stubs: WebAssembly.Imports) => PromiseLike<WebAssembly.WebAssemblyInstantiatedSource>;
@@ -173,6 +173,57 @@ export class FlatSQL {
     }
 }
 
+export class FlatID {
+    /// Mask index
+    public static maskIndex(value: number): number {
+        return value & ~(0b1 << 31);
+    }
+    /// Is a null id?
+    public static isNull(value: number): boolean {
+        return value == 0xffffffff;
+    }
+    /// Is an external id?
+    public static isExternal(value: number): boolean {
+        return value >> 31 != 0;
+    }
+    /// Read a name
+    public static readName(
+        value: number,
+        script: proto.ParsedScript,
+        external: proto.ParsedScript | null = null,
+    ): string | null {
+        if (FlatID.isNull(value)) {
+            return null;
+        }
+        if (FlatID.isExternal(value)) {
+            return external?.nameDictionary(FlatID.maskIndex(value)) ?? null;
+        } else {
+            return script.nameDictionary(FlatID.maskIndex(value)) ?? null;
+        }
+    }
+    /// Read a table name
+    public static readTableName(
+        name: proto.QualifiedTableName,
+        script: proto.ParsedScript,
+        external: proto.ParsedScript | null = null,
+    ) {
+        const database = FlatID.readName(name.databaseName(), script, external);
+        const schema = FlatID.readName(name.schemaName(), script, external);
+        const table = FlatID.readName(name.tableName(), script, external);
+        return { database, schema, table };
+    }
+    /// Read a table name
+    public static readColumnName(
+        name: proto.QualifiedColumnName,
+        script: proto.ParsedScript,
+        external: proto.ParsedScript | null = null,
+    ) {
+        const column = FlatID.readName(name.columnName(), script, external);
+        const alias = FlatID.readName(name.tableAlias(), script, external);
+        return { column, alias };
+    }
+}
+
 export class FlatBufferRef<T extends FlatBufferObject<T>> {
     /// The FlatSQL api
     api: FlatSQL;
@@ -223,11 +274,11 @@ export class FlatSQLScript {
     /// The script pointer
     scriptPtr: number | null;
 
-    public constructor(api: FlatSQL, ropePtr: number) {
+    public constructor(api: FlatSQL, graphPtr: number) {
         this.api = api;
-        this.scriptPtr = ropePtr;
+        this.scriptPtr = graphPtr;
     }
-    /// Delete a rope
+    /// Delete a graph
     public delete() {
         if (this.scriptPtr) {
             this.api.instanceExports.flatsql_script_delete(this.scriptPtr);
@@ -314,53 +365,59 @@ export class FlatSQLScript {
     }
 }
 
-export class FlatID {
-    /// Mask index
-    public static maskIndex(value: number): number {
-        return value & ~(0b1 << 31);
+export class FlatSQLSchemaGraph {
+    /// The FlatSQL api
+    api: FlatSQL;
+    /// The graph pointer
+    graphPtr: number | null;
+
+    public constructor(api: FlatSQL, graphPtr: number) {
+        this.api = api;
+        this.graphPtr = graphPtr;
     }
-    /// Is a null id?
-    public static isNull(value: number): boolean {
-        return value == 0xffffffff;
-    }
-    /// Is an external id?
-    public static isExternal(value: number): boolean {
-        return value >> 31 != 0;
-    }
-    /// Read a name
-    public static readName(
-        value: number,
-        script: proto.ParsedScript,
-        external: proto.ParsedScript | null = null,
-    ): string | null {
-        if (FlatID.isNull(value)) {
-            return null;
+    /// Delete the graph
+    public delete() {
+        if (this.graphPtr) {
+            this.api.instanceExports.flatsql_schemagraph_delete(this.graphPtr);
         }
-        if (FlatID.isExternal(value)) {
-            return external?.nameDictionary(FlatID.maskIndex(value)) ?? null;
-        } else {
-            return script.nameDictionary(FlatID.maskIndex(value)) ?? null;
+        this.graphPtr = null;
+    }
+    /// Make sure the graph is not null
+    protected assertGraphNotNull(): number {
+        if (this.graphPtr == null) {
+            throw NULL_POINTER_EXCEPTION;
         }
+        return this.graphPtr!;
     }
-    /// Read a table name
-    public static readTableName(
-        name: proto.QualifiedTableName,
-        script: proto.ParsedScript,
-        external: proto.ParsedScript | null = null,
+    /// Configure the graph
+    public configure(
+        width: number,
+        height: number,
+        gravityX: number,
+        gravityY: number,
+        gravityForce: number,
+        edgeForce: number,
     ) {
-        const database = FlatID.readName(name.databaseName(), script, external);
-        const schema = FlatID.readName(name.schemaName(), script, external);
-        const table = FlatID.readName(name.tableName(), script, external);
-        return { database, schema, table };
+        const graphPtr = this.assertGraphNotNull();
+        this.api.instanceExports.flatsql_schemagraph_configure(
+            graphPtr,
+            width,
+            height,
+            gravityX,
+            gravityY,
+            gravityForce,
+            edgeForce,
+        );
     }
-    /// Read a table name
-    public static readColumnName(
-        name: proto.QualifiedColumnName,
-        script: proto.ParsedScript,
-        external: proto.ParsedScript | null = null,
-    ) {
-        const column = FlatID.readName(name.columnName(), script, external);
-        const alias = FlatID.readName(name.tableAlias(), script, external);
-        return { column, alias };
+    /// Add a repulsion point
+    public addRepulsion(x: number, y: number, force: number) {
+        const graphPtr = this.assertGraphNotNull();
+        this.api.instanceExports.flatsql_schemagraph_add_repulsion(graphPtr, x, y, force);
+    }
+    /// Load a script
+    public loadScript(script: FlatSQLScript) {
+        const graphPtr = this.assertGraphNotNull();
+        const resultPtr = this.api.instanceExports.flatsql_schemagraph_load_script(graphPtr, script.scriptPtr);
+        return this.api.readResult<proto.SchemaGraph>(resultPtr);
     }
 }
