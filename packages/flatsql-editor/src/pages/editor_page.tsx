@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { useBackend } from '../backend';
+import { useFlatSQL } from '../flatsql_loader';
 import { ScriptEditor } from '../editor/editor';
 import { SchemaGraph } from '../schemagraph/schema_graph';
 import { RESULT_OK } from '../utils/result';
@@ -16,7 +16,7 @@ import logo from '../../static/svg/logo/logo.svg';
 interface Props {}
 
 export const EditorPage: React.FC<Props> = (props: Props) => {
-    const backend = useBackend();
+    const backend = useFlatSQL();
     const version = React.useMemo(() => {
         if (!backend || backend.type != RESULT_OK) return 'unknown';
         return backend.value.getVersionText();

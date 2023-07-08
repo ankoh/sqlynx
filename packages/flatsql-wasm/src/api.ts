@@ -145,6 +145,11 @@ export class FlatSQL {
         return new FlatSQLScript(this, scriptPtr);
     }
 
+    public createSchemaGraph(): FlatSQLSchemaGraph {
+        const graphPtr = this.instanceExports.flatsql_schemagraph_new();
+        return new FlatSQLSchemaGraph(this, graphPtr);
+    }
+
     public getVersionText(): string {
         const versionPtr = this.instanceExports.flatsql_version();
         const heapU8 = new Uint8Array(this.memory.buffer);
@@ -418,6 +423,6 @@ export class FlatSQLSchemaGraph {
     public loadScript(script: FlatSQLScript) {
         const graphPtr = this.assertGraphNotNull();
         const resultPtr = this.api.instanceExports.flatsql_schemagraph_load_script(graphPtr, script.scriptPtr);
-        return this.api.readResult<proto.SchemaGraph>(resultPtr);
+        return this.api.readResult<proto.SchemaGraphLayout>(resultPtr);
     }
 }

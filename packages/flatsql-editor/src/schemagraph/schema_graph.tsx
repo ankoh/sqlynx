@@ -1,14 +1,14 @@
 import * as React from 'react';
 import ReactFlow, { BackgroundVariant, Background as FlowBackground } from 'reactflow';
 import { TableNode, layoutSchema } from './schema_graph_layout';
-import { useEditorContext } from '../editor/editor_context';
+import { useFlatSQLState } from '../flatsql_state';
 
 interface Props {
     className?: string;
 }
 
 export const SchemaGraph: React.FC<Props> = (props: Props) => {
-    const context = useEditorContext();
+    const context = useFlatSQLState();
     const nodeTypes = React.useMemo(() => ({ table: TableNode }), []);
 
     // Render placeholder if context is not available

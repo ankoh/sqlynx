@@ -12,6 +12,6 @@ struct SchemaGraphTable {
     height: double;
 }
 
-table SchemaGraph {
+table SchemaGraphLayout {
     tables: [SchemaGraphTable];
 }
