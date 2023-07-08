@@ -1,12 +1,12 @@
 import { EditorView, ViewUpdate, PluginValue, ViewPlugin, Decoration } from '@codemirror/view';
 import { RangeSet, Facet, Text as CMText } from '@codemirror/state';
-import { EditorContext, EditorContextAction, MAIN_SCRIPT_UPDATED } from './editor_context';
+import { FlatSQLState, EditorContextAction, MAIN_SCRIPT_UPDATED } from '../flatsql_state';
 import { Dispatch } from '../model/action';
 
 import './editor_plugin.css';
 
 export interface EditorPluginProps {
-    context: EditorContext;
+    context: FlatSQLState;
     dispatchContext: Dispatch<EditorContextAction>;
 }
 
@@ -16,7 +16,7 @@ class EditorPluginValue implements PluginValue {
     constructor(readonly view: EditorView) {}
 
     getDecorations(): RangeSet<Decoration> {
-        const deco = this.view.state.facet(EditorPlugin)!.context.decorations;
+        const deco = this.view.state.facet(EditorPlugin)!.context.mainDecorations;
         return deco;
     }
 

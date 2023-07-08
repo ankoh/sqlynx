@@ -1,15 +1,15 @@
 import * as React from 'react';
 import * as flatsql from '@ankoh/flatsql';
-import { useBackend } from '../backend';
+import { useFlatSQL } from './flatsql_loader';
 import { DecorationSet, Decoration } from '@codemirror/view';
 import { RangeSetBuilder } from '@codemirror/state';
 import { RangeSet } from '@codemirror/state';
-import { Action, Dispatch } from '../model/action';
-import { RESULT_OK } from '../utils/result';
+import { Action, Dispatch } from './model/action';
+import { RESULT_OK } from './utils/result';
 
-/// The state of the FlatSQL editor plugin.
+/// The state of the FlatSQL module.
 /// We pass this state container to the event callback so that it can be propagated as React state.
-export interface EditorContext {
+export interface FlatSQLState {
     /// The API
     instance: flatsql.FlatSQL | null;
     /// The main script
@@ -22,11 +22,15 @@ export interface EditorContext {
     mainParsed: flatsql.FlatBufferRef<flatsql.proto.ParsedScript> | null;
     /// The analyzed script
     mainAnalyzed: flatsql.FlatBufferRef<flatsql.proto.AnalyzedScript> | null;
-    /// The decorations
-    decorations: DecorationSet;
+    /// The decorations for the main script
+    mainDecorations: DecorationSet;
+    /// The schema graph
+    schemaGraph: flatsql.FlatSQLSchemaGraph | null;
+    /// The schema graph
+    schemaGraphLayout: flatsql.FlatBufferRef<flatsql.proto.SchemaGraphLayout> | null;
 }
 
-function destroy(ctx: EditorContext): EditorContext {
+function destroy(ctx: FlatSQLState): FlatSQLState {
     if (ctx.mainScanned != null) {
         ctx.mainScanned.delete();
         ctx.mainScanned = null;
@@ -43,6 +47,10 @@ function destroy(ctx: EditorContext): EditorContext {
         ctx.mainScript!.delete();
         ctx.mainScript = null;
     }
+    if (ctx.schemaGraphLayout) {
+        ctx.schemaGraphLayout.delete();
+        ctx.schemaGraphLayout = null;
+    }
     if (ctx.schemaScript) {
         ctx.schemaScript.delete();
         ctx.schemaScript = null;
@@ -50,7 +58,7 @@ function destroy(ctx: EditorContext): EditorContext {
     return ctx;
 }
 
-function updateScript(ctx: EditorContext): EditorContext {
+function updateScript(ctx: FlatSQLState): FlatSQLState {
     if (!ctx.mainScript) return ctx;
     // Scan the script
     console.time('Script Scanning');
@@ -79,8 +87,17 @@ function updateScript(ctx: EditorContext): EditorContext {
     ctx.mainAnalyzed = ctx.mainScript.analyze();
     console.timeEnd('Script Analyzing');
 
+    // Build the schema graph
+    console.time('Schema Graph');
+    if (ctx.schemaGraphLayout != null) {
+        ctx.schemaGraphLayout.delete();
+        ctx.schemaGraphLayout = null;
+    }
+    // ctx.schemaGraph = ctx.
+    console.timeEnd('Script Analyzing');
+
     // Build decorations
-    ctx.decorations = buildDecorations(ctx.mainScanned);
+    ctx.mainDecorations = buildDecorations(ctx.mainScanned);
     return ctx;
 }
 
@@ -218,7 +235,7 @@ create table region (
 );
 `;
 
-const reducer = (state: EditorContext, action: EditorContextAction): EditorContext => {
+const reducer = (state: FlatSQLState, action: EditorContextAction): FlatSQLState => {
     switch (action.type) {
         case INITIALIZE: {
             const s = {
@@ -226,6 +243,7 @@ const reducer = (state: EditorContext, action: EditorContextAction): EditorConte
                 instance: action.value,
                 mainScript: action.value.createScript(),
                 schemaScript: action.value.createScript(),
+                schemaGraph: action.value.createSchemaGraph(),
             };
             s.mainScript.insertTextAt(0, TMP_TPCH_SCHEMA);
             updateScript(s);
@@ -243,34 +261,36 @@ type Props = {
     children: React.ReactElement;
 };
 
-const defaultContext: EditorContext = {
+const defaultContext: FlatSQLState = {
     instance: null,
     mainScript: null,
     schemaScript: null,
     mainScanned: null,
     mainParsed: null,
     mainAnalyzed: null,
-    decorations: new RangeSetBuilder<Decoration>().finish(),
+    schemaGraph: null,
+    schemaGraphLayout: null,
+    mainDecorations: new RangeSetBuilder<Decoration>().finish(),
 };
 
-const editorCtx = React.createContext<EditorContext>(defaultContext);
-const editorCtxDispatch = React.createContext<Dispatch<EditorContextAction>>(c => {});
+const context = React.createContext<FlatSQLState>(defaultContext);
+const contextDispatch = React.createContext<Dispatch<EditorContextAction>>(c => {});
 
-export const EditorContextProvider: React.FC<Props> = (props: Props) => {
+export const FlatSQLContextProvider: React.FC<Props> = (props: Props) => {
     const [state, dispatch] = React.useReducer(reducer, null, () => defaultContext);
 
-    const backend = useBackend();
+    const backend = useFlatSQL();
     React.useEffect(() => {
         if (backend?.type == RESULT_OK && !state.instance) {
             dispatch({ type: INITIALIZE, value: backend.value });
         }
     }, [backend, state.instance]);
     return (
-        <editorCtx.Provider value={state}>
-            <editorCtxDispatch.Provider value={dispatch}>{props.children}</editorCtxDispatch.Provider>
-        </editorCtx.Provider>
+        <context.Provider value={state}>
+            <contextDispatch.Provider value={dispatch}>{props.children}</contextDispatch.Provider>
+        </context.Provider>
     );
 };
 
-export const useEditorContext = (): EditorContext => React.useContext(editorCtx)!;
-export const useEditorContextDispatch = (): Dispatch<EditorContextAction> => React.useContext(editorCtxDispatch);
+export const useFlatSQLState = (): FlatSQLState => React.useContext(context)!;
+export const useFlatSQLDispatch = (): Dispatch<EditorContextAction> => React.useContext(contextDispatch);

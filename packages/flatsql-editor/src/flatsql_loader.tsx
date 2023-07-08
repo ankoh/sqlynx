@@ -8,10 +8,10 @@ interface Props {
     children: JSX.Element;
 }
 
-const BACKEND_CONTEXT = React.createContext<Result<flatsql.FlatSQL> | null>(null);
-export const useBackend = (): Result<flatsql.FlatSQL> => React.useContext(BACKEND_CONTEXT)!;
+const MODULE_CONTEXT = React.createContext<Result<flatsql.FlatSQL> | null>(null);
+export const useFlatSQL = (): Result<flatsql.FlatSQL> => React.useContext(MODULE_CONTEXT)!;
 
-export const BackendProvider: React.FC<Props> = (props: Props) => {
+export const FlatSQLLoader: React.FC<Props> = (props: Props) => {
     const [backend, setBackend] = React.useState<Result<flatsql.FlatSQL> | null>(null);
     React.useEffect(() => {
         (async () => {
@@ -32,5 +32,5 @@ export const BackendProvider: React.FC<Props> = (props: Props) => {
             }
         })();
     }, []);
-    return <BACKEND_CONTEXT.Provider value={backend}>{props.children}</BACKEND_CONTEXT.Provider>;
+    return <MODULE_CONTEXT.Provider value={backend}>{props.children}</MODULE_CONTEXT.Provider>;
 };

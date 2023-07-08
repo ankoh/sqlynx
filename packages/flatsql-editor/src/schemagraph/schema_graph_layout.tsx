@@ -1,6 +1,6 @@
 import * as flatsql from '@ankoh/flatsql';
 import * as React from 'react';
-import { EditorContext } from '../editor/editor_context';
+import { FlatSQLState } from '../flatsql_state';
 import { Edge, Handle, Node, NodeProps, Position } from 'reactflow';
 
 import styles from './schema_graph_layout.module.css';
@@ -24,7 +24,7 @@ export const TableNode: React.FC<NodeProps<TableData>> = (props: NodeProps<Table
     );
 };
 
-export function layoutSchema(ctx: EditorContext): [Node<TableData>[], Edge[]] {
+export function layoutSchema(ctx: FlatSQLState): [Node<TableData>[], Edge[]] {
     const parsed = ctx.mainParsed?.read(new flatsql.proto.ParsedScript());
     const analyzed = ctx.mainAnalyzed?.read(new flatsql.proto.AnalyzedScript());
     if (!parsed || !analyzed) {
