@@ -95,7 +95,7 @@ void SchemaGraph::LoadScript(flatsql::Script& script) {
     // XXX
 }
 
-flatbuffers::Offset<proto::schemagraph::SchemaGraph> SchemaGraph::Pack(flatbuffers::FlatBufferBuilder& builder) {
+flatbuffers::Offset<proto::SchemaGraph> SchemaGraph::Pack(flatbuffers::FlatBufferBuilder& builder) {
     // XXX
     return {};
 }
