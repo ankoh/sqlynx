@@ -1,6 +1,6 @@
 import * as React from 'react';
 import ReactFlow, { BackgroundVariant, Background as FlowBackground } from 'reactflow';
-import { TableNode, layoutSchema } from './schema_layout';
+import { TableNode, layoutSchema } from './schema_graph_layout';
 import { useEditorContext } from '../editor/editor_context';
 
 interface Props {
