@@ -61,7 +61,7 @@ class SchemaGraph {
     /// Load a script
     void LoadScript(flatsql::Script& script);
     /// Pack the schema graph
-    flatbuffers::Offset<proto::SchemaGraph> Pack(flatbuffers::FlatBufferBuilder& builder);
+    flatbuffers::Offset<proto::SchemaGraphLayout> Pack(flatbuffers::FlatBufferBuilder& builder);
 };
 
 }  // namespace flatsql

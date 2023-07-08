@@ -4,7 +4,7 @@ import cn from 'classnames';
 
 import { CodeMirror } from './codemirror';
 import { EditorPlugin } from './editor_plugin';
-import { useEditorContext, useEditorContextDispatch } from './editor_context';
+import { useFlatSQLState, useFlatSQLDispatch } from '../flatsql_state';
 
 import iconMainScript from '../../static/svg/icons/database_search.svg';
 import iconExternalScript from '../../static/svg/icons/tables_connected.svg';
@@ -16,8 +16,8 @@ import styles from './editor.module.css';
 interface Props {}
 
 export const ScriptEditor: React.FC<Props> = (props: Props) => {
-    const ctx = useEditorContext();
-    const ctxDispatch = useEditorContextDispatch();
+    const ctx = useFlatSQLState();
+    const ctxDispatch = useFlatSQLDispatch();
     const initialText = React.useMemo(() => {
         return ctx.mainScript?.toString() ?? '';
     }, [ctx.mainScript]);
