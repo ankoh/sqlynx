@@ -3,7 +3,7 @@ import * as React from 'react';
 import { EditorContext } from '../editor/editor_context';
 import { Edge, Handle, Node, NodeProps, Position } from 'reactflow';
 
-import styles from './schema_layout.module.css';
+import styles from './schema_graph_layout.module.css';
 
 interface Column {
     name: string;
