@@ -17,6 +17,19 @@ interface FlatSQLModuleExports {
     flatsql_script_parse: (ptr: number) => number;
     flatsql_script_analyze: (ptr: number, external: number) => number;
     flatsql_script_update_completion_index: (ptr: number) => number;
+    flatsql_schemagraph_new: () => number;
+    flatsql_schemagraph_delete: (ptr: number) => void;
+    flatsql_schemagraph_configure: (
+        ptr: number,
+        width: number,
+        height: number,
+        gravityX: number,
+        gravityY: number,
+        gravityForce: number,
+        edgeForce: number,
+    ) => void;
+    flatsql_schemagraph_add_repulsion: (ptr: number, x: number, y: number, force: number) => void;
+    flatsql_schemagraph_load_script: (ptr: number, script: number) => void;
 }
 
 type InstantiateWasmCallback = (stubs: WebAssembly.Imports) => PromiseLike<WebAssembly.WebAssemblyInstantiatedSource>;
@@ -72,6 +85,27 @@ export class FlatSQL {
             ) => number,
             flatsql_script_update_completion_index: parserExports['flatsql_script_update_completion_index'] as (
                 ptr: number,
+            ) => number,
+            flatsql_schemagraph_new: parserExports['flatsql_schemagraph_new'] as () => number,
+            flatsql_schemagraph_delete: parserExports['flatsql_schemagraph_delete'] as (ptr: number) => void,
+            flatsql_schemagraph_configure: parserExports['flatsql_schemagraph_configure'] as (
+                ptr: number,
+                width: number,
+                height: number,
+                gravityX: number,
+                gravityY: number,
+                gravityForce: number,
+                edgeForce: number,
+            ) => void,
+            flatsql_schemagraph_add_repulsion: parserExports['flatsql_schemagraph_add_repulsion'] as (
+                ptr: number,
+                x: number,
+                y: number,
+                force: number,
+            ) => void,
+            flatsql_schemagraph_load_script: parserExports['flatsql_schemagraph_load_script'] as (
+                ptr: number,
+                script: number,
             ) => number,
         };
     }
