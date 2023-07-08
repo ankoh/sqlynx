@@ -9,6 +9,7 @@
 #include "flatsql/script.h"
 #include "flatsql/text/rope.h"
 #include "flatsql/version.h"
+#include "flatsql/vis/schema_graph.h"
 
 using namespace flatsql;
 using namespace flatsql::parser;
@@ -181,6 +182,35 @@ extern "C" FFIResult* flatsql_script_format(flatsql::Script* script) {
 /// Update the completion index
 extern "C" uint32_t flatsql_script_update_completion_index(Script* script) {
     return static_cast<uint32_t>(script->UpdateCompletionIndex());
+}
+
+/// Create a schema graph
+extern "C" flatsql::SchemaGraph* flatsql_schemagraph_new() { return new flatsql::SchemaGraph(); }
+/// Delete a schema graph
+extern "C" void flatsql_schemagraph_delete(flatsql::SchemaGraph* graph) { delete graph; }
+/// Configure a schema graph
+extern "C" void flatsql_schemagraph_configure(flatsql::SchemaGraph* graph, double width, double height,
+                                              double gravity_x, double gravity_y, double gravity_force,
+                                              double edge_force) {
+    graph->Configure(width, height, gravity_x, gravity_y, gravity_force, edge_force);
+}
+/// Update a schema graph
+extern "C" FFIResult* flatsql_schemagraph_load_script(flatsql::SchemaGraph* graph, flatsql::Script* script) {
+    graph->LoadScript(*script);
+
+    // Pack a schema graph
+    flatbuffers::FlatBufferBuilder fb;
+    fb.Finish(graph->Pack(fb));
+
+    // Store the buffer
+    auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));
+    auto result = new FFIResult();
+    result->status_code = static_cast<uint32_t>(proto::StatusCode::OK);
+    result->data_ptr = detached->data();
+    result->data_length = detached->size();
+    result->owner_ptr = detached.release();
+    result->owner_deleter = [](void* buffer) { delete reinterpret_cast<flatbuffers::DetachedBuffer*>(buffer); };
+    return result;
 }
 
 #ifdef WASM

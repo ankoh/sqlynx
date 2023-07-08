@@ -70,6 +70,10 @@ if(WASM)
         -Wl,--export=flatsql_script_analyze \
         -Wl,--export=flatsql_script_format \
         -Wl,--export=flatsql_script_update_completion_index \
+        -Wl,--export=flatsql_schemagraph_new \
+        -Wl,--export=flatsql_schemagraph_delete \
+        -Wl,--export=flatsql_schemagraph_configure \
+        -Wl,--export=flatsql_schemagraph_load_script \
         -flto \
     ")
 endif()
@@ -238,7 +242,9 @@ set(LIB_SRC
   ${CMAKE_SOURCE_DIR}/src/parser/scanner.cc
   ${CMAKE_SOURCE_DIR}/src/parser/script.cc
   ${CMAKE_SOURCE_DIR}/src/utils/suffix_trie.cc
-  ${CMAKE_SOURCE_DIR}/src/utils/rope.cc)
+  ${CMAKE_SOURCE_DIR}/src/utils/rope.cc
+  ${CMAKE_SOURCE_DIR}/src/vis/schema_graph.cc
+)
 
 if(WASM)
   add_executable(flatsql ${LIB_SRC})

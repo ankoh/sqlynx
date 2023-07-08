@@ -1,0 +1,17 @@
+namespace flatsql.proto.schemagraph;
+
+struct Vertex {
+    x: double;
+    y: double;
+}
+
+struct TableLayout {
+    table_id: uint32;
+    position: Vertex;
+    width: double;
+    height: double;
+}
+
+table SchemaGraph {
+    tables: [TableLayout];
+}
