@@ -88,13 +88,13 @@ function updateScript(ctx: FlatSQLState): FlatSQLState {
     console.timeEnd('Script Analyzing');
 
     // Build the schema graph
-    console.time('Schema Graph');
+    console.time('Schema Graph Layout');
     if (ctx.schemaGraphLayout != null) {
         ctx.schemaGraphLayout.delete();
         ctx.schemaGraphLayout = null;
     }
-    // ctx.schemaGraph = ctx.
-    console.timeEnd('Script Analyzing');
+    ctx.schemaGraphLayout = ctx.schemaGraph!.loadScript(ctx.mainScript);
+    console.timeEnd('Schema Graph Layout');
 
     // Build decorations
     ctx.mainDecorations = buildDecorations(ctx.mainScanned);
@@ -268,9 +268,9 @@ const defaultContext: FlatSQLState = {
     mainScanned: null,
     mainParsed: null,
     mainAnalyzed: null,
+    mainDecorations: new RangeSetBuilder<Decoration>().finish(),
     schemaGraph: null,
     schemaGraphLayout: null,
-    mainDecorations: new RangeSetBuilder<Decoration>().finish(),
 };
 
 const context = React.createContext<FlatSQLState>(defaultContext);
