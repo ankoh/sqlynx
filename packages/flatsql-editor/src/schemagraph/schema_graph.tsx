@@ -15,17 +15,18 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
 
     // Render placeholder if context is not available
     if (!context) {
-        <ReactFlow
-            className={props.className}
-            nodes={[]}
-            edges={[]}
-            zoomOnScroll={false}
-            zoomOnPinch={false}
-            zoomOnDoubleClick={false}
-            proOptions={{ hideAttribution: true }}
-        >
-            <FlowBackground color="#aaa" variant={BackgroundVariant.Dots} gap={16} />
-        </ReactFlow>;
+        <div className={props.className}>
+            <ReactFlow
+                nodes={[]}
+                edges={[]}
+                zoomOnScroll={false}
+                zoomOnPinch={false}
+                zoomOnDoubleClick={false}
+                proOptions={{ hideAttribution: true }}
+            >
+                <FlowBackground color="#aaa" variant={BackgroundVariant.Dots} gap={16} />
+            </ReactFlow>
+        </div>;
     }
 
     const [nodes, edges] = layoutSchema(context);
