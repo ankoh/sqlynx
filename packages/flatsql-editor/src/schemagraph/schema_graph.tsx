@@ -5,6 +5,8 @@ import { useFlatSQLState } from '../flatsql_state';
 
 interface Props {
     className?: string;
+    width: number;
+    height: number;
 }
 
 export const SchemaGraph: React.FC<Props> = (props: Props) => {
@@ -28,19 +30,20 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
 
     const [nodes, edges] = layoutSchema(context);
     return (
-        <ReactFlow
-            className={props.className}
-            nodeTypes={nodeTypes}
-            nodes={nodes}
-            edges={edges}
-            zoomOnScroll={false}
-            zoomOnPinch={false}
-            zoomOnDoubleClick={false}
-            panOnDrag={false}
-            panOnScroll={false}
-            proOptions={{ hideAttribution: true }}
-        >
-            <FlowBackground color="#aaa" variant={BackgroundVariant.Dots} gap={16} />
-        </ReactFlow>
+        <div className={props.className}>
+            <ReactFlow
+                nodeTypes={nodeTypes}
+                nodes={nodes}
+                edges={edges}
+                zoomOnScroll={false}
+                zoomOnPinch={false}
+                zoomOnDoubleClick={false}
+                panOnDrag={false}
+                panOnScroll={false}
+                proOptions={{ hideAttribution: true }}
+            >
+                <FlowBackground color="#aaa" variant={BackgroundVariant.Dots} gap={16} />
+            </ReactFlow>
+        </div>
     );
 };

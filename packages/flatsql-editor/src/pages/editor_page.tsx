@@ -4,6 +4,7 @@ import { useFlatSQL } from '../flatsql_loader';
 import { ScriptEditor } from '../editor/editor';
 import { SchemaGraph } from '../schemagraph/schema_graph';
 import { RESULT_OK } from '../utils/result';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
 import 'reactflow/dist/style.css';
 import styles from './editor_page.module.css';
@@ -24,7 +25,13 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
 
     return (
         <div className={styles.page}>
-            <SchemaGraph className={styles.schemagraph_container} />
+            <div className={styles.schemagraph_container}>
+                <AutoSizer>
+                    {(s: { height: number; width: number }) => (
+                        <SchemaGraph className={styles.schemagraph_flow} width={s.width} height={s.height} />
+                    )}
+                </AutoSizer>
+            </div>
             <div className={styles.header_left_container}>
                 <img className={styles.header_logo} src={logo} />
                 <div className={styles.header_version}>Version: {version}</div>
