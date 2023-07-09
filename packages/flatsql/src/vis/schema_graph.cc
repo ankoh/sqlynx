@@ -126,6 +126,7 @@ void SchemaGraph::computeStep(size_t iteration, double& temperature) {
                 displacement[j].dy += fix_y / 2;
             } else {
                 // Otherwise we repulse using the center points
+                // XXX Repulse using corners...
                 Vector delta = table_nodes[i].position - table_nodes[j].position;
                 double distance = euclidean(delta);
                 if (distance == 0) continue;
