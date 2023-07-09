@@ -32,8 +32,20 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
         graph.LoadScript(script.analyzed_scripts.back());
     }
 
-    auto& pos = graph.GetCurrentPositions();
-    ASSERT_EQ(pos.size(), 8);
+    auto& positions = graph.GetCurrentPositions();
+    ASSERT_EQ(positions.size(), 8);
+
+    std::stringstream ss;
+    ss << "[";
+    for (size_t i = 0; i < positions.size(); ++i) {
+        if (i > 0) {
+            ss << ", ";
+        }
+        ss << "(" << positions[i].x << "," << positions[i].y << ")";
+    }
+    ss << "]";
+    ss << std::endl;
+    std::cout << ss.str() << std::endl;
 }
 
 }  // namespace
