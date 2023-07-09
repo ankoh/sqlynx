@@ -56,16 +56,15 @@ class SchemaGraph {
     void computeStep(double& temperature);
 
    public:
-    /// Constructor
-    SchemaGraph() = default;
-
+    /// Get the current positions
+    auto& GetCurrentPositions() { return current_positions; }
     /// Configure the schemagraph settings
-    void Configure(size_t iteration_count, double cooldown_factor, double cooldown_until, double width, double height,
-                   double edge_force, double gravity_x, double gravity_y, double gravity_force);
+    void Configure(size_t iteration_count, double cooldown_factor, double cooldown_until, double board_width,
+                   double board_height, double edge_force, double gravity_x, double gravity_y, double gravity_force);
     /// Add a repulsion point
     void AddRepulsion(double x, double y, double force);
     /// Load a script
-    void LoadScript(flatsql::Script& script);
+    void LoadScript(std::shared_ptr<AnalyzedScript> s);
     /// Pack the schema graph
     flatbuffers::Offset<proto::SchemaGraphLayout> Pack(flatbuffers::FlatBufferBuilder& builder);
 };

@@ -41,24 +41,34 @@ void place_on_circle(std::span<SchemaGraph::Vertex> positions, double radius, Sc
     }
 }
 /// Build adjacency map
-void load_tables(AdjacencyMap& out, AnalyzedScript& script) {
-    out.adjacency_nodes.clear();
-    out.adjacency_offsets.clear();
-    out.adjacency_offsets.reserve(script.tables.size() + 1);
+void load_tables(std::vector<SchemaGraph::Vertex>& positions, AdjacencyMap& adj, AnalyzedScript& script) {
+    positions.clear();
+    adj.adjacency_nodes.clear();
+    adj.adjacency_offsets.clear();
+    adj.adjacency_offsets.reserve(script.tables.size() + 1);
     // XXX Load dependencies
     for (size_t i = 0; i < script.tables.size(); ++i) {
-        out.adjacency_offsets.push_back(out.adjacency_nodes.size());
-        out.adjacency_nodes.push_back(0);
+        // XXX Store node dimensions
+        positions.emplace_back();
+        // XXX Store actual table dependencies
+        adj.adjacency_offsets.push_back(0);
     }
-    out.adjacency_offsets.push_back(0);
+    adj.adjacency_offsets.push_back(0);
 }
 
 }  // namespace
 
 void SchemaGraph::computeStep(double& temperature) {
+    // Resize displacement slots?
+    if (displacement.size() < current_positions.size()) {
+        displacement.resize(current_positions.size());
+    }
+    // Zero displacements
     Vector zero;
     std::fill(displacement.begin(), displacement.end(), zero);
     double edge_force_squared = edge_force * edge_force;
+
+    // XXX Repulsion should be updated more carefully using a quad tree
 
     for (size_t i = 0; i < current_positions.size(); ++i) {
         // Attraction force to center
@@ -121,14 +131,14 @@ void SchemaGraph::computeStep(double& temperature) {
     }
 }
 
-void SchemaGraph::Configure(size_t iteration_count, double cooldown_factor, double cooldown_until, double width,
-                            double height, double edge_force, double gravity_x, double gravity_y,
+void SchemaGraph::Configure(size_t iteration_count, double cooldown_factor, double cooldown_until, double board_width,
+                            double board_height, double edge_force, double gravity_x, double gravity_y,
                             double gravity_force) {
     this->iteration_count = iteration_count;
     this->cooldown_factor = cooldown_factor;
     this->cooldown_until = cooldown_until;
-    board_width = width;
-    board_height = height;
+    this->board_width = board_width;
+    this->board_height = board_height;
     gravity = {.position = {gravity_x, gravity_y}, .force = gravity_force};
     this->edge_force = edge_force;
     extra_repulsion.clear();
@@ -138,15 +148,14 @@ void SchemaGraph::AddRepulsion(double x, double y, double force) {
     extra_repulsion.push_back({.position = {x, y}, .force = force});
 }
 
-void SchemaGraph::LoadScript(flatsql::Script& s) {
-    assert(!s.analyzed_scripts.empty());
-    script = s.analyzed_scripts.back();
+void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
+    script = s;
     // Load adjacency map
-    load_tables(adjacency, *script);
-    // Compute the initial temperature
-    auto temperature = 10 * sqrt(current_positions.size());
+    load_tables(current_positions, adjacency, *script);
     // Place all positions on a circle
     place_on_circle(current_positions, 1.0, gravity.position);
+    // Compute the initial temperature
+    auto temperature = 10 * sqrt(current_positions.size());
     // Compute steps
     for (size_t i = 0; i < iteration_count; ++i) {
         computeStep(temperature);
@@ -154,7 +163,7 @@ void SchemaGraph::LoadScript(flatsql::Script& s) {
 }
 
 flatbuffers::Offset<proto::SchemaGraphLayout> SchemaGraph::Pack(flatbuffers::FlatBufferBuilder& builder) {
-    // XXX
+    // XXX Pack FlatBuffer
     return {};
 }
 

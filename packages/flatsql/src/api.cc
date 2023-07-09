@@ -202,7 +202,8 @@ extern "C" void flatsql_schemagraph_add_repulsion(flatsql::SchemaGraph* graph, d
 }
 /// Update a schema graph
 extern "C" FFIResult* flatsql_schemagraph_load_script(flatsql::SchemaGraph* graph, flatsql::Script* script) {
-    graph->LoadScript(*script);
+    assert(!script->analyzed_scripts.empty());
+    graph->LoadScript(script->analyzed_scripts.back());
 
     // Pack a schema graph
     flatbuffers::FlatBufferBuilder fb;

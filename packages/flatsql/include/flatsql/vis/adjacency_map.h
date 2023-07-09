@@ -14,8 +14,8 @@ struct AdjacencyMap {
 
     /// Get adjacent nodes for a vertex
     inline std::span<const size_t> operator[](size_t vertex_id) const {
-        assert(adjacency_offsets.size() == (adjacency_nodes.size() + 1));
         assert(vertex_id < adjacency_offsets.size());
+        assert((vertex_id + 1) < adjacency_offsets.size());
         return std::span<const size_t>{adjacency_nodes}.subspan(
             adjacency_offsets[vertex_id], adjacency_offsets[vertex_id + 1] - adjacency_offsets[vertex_id]);
     }

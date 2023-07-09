@@ -5,6 +5,7 @@
 #include "flatsql/script.h"
 #include "flatsql/text/rope.h"
 #include "flatsql/utils/suffix_trie.h"
+#include "flatsql/vis/schema_graph.h"
 
 using namespace flatsql;
 
@@ -123,8 +124,24 @@ static void index_query(benchmark::State& state) {
     }
 }
 
+static void layout_schema(benchmark::State& state) {
+    rope::Rope input_external{1024, external_script};
+
+    // Analyze external script
+    auto external_scan = parser::Scanner::Scan(input_external);
+    auto external_parsed = parser::ParseContext::Parse(external_scan.first);
+    auto external_analyzed = Analyzer::Analyze(external_parsed.first);
+
+    SchemaGraph graph;
+    for (auto _ : state) {
+        graph.Configure(10, 0.85, 1.5, 1600, 800, 15.0, 800, 300, 15.0);
+        graph.LoadScript(external_analyzed.first);
+    }
+}
+
 BENCHMARK(scan_query);
 BENCHMARK(parse_query);
 BENCHMARK(analyze_query);
 BENCHMARK(index_query);
+BENCHMARK(layout_schema);
 BENCHMARK_MAIN();
