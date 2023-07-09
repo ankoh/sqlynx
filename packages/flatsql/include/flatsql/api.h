@@ -55,9 +55,10 @@ extern "C" flatsql::SchemaGraph* flatsql_schemagraph_new();
 /// Delete a schema graph
 extern "C" void flatsql_schemagraph_delete(flatsql::SchemaGraph* graph);
 /// Configure a schema graph
-extern "C" void flatsql_schemagraph_configure(flatsql::SchemaGraph* graph, double width, double height,
-                                              double gravity_x, double gravity_y, double gravity_force,
-                                              double edgeForce);
+extern "C" void flatsql_schemagraph_configure(flatsql::SchemaGraph* graph, size_t iteration_count,
+                                              double cooldown_factor, double cooldown_until, double width,
+                                              double height, double gravity_x, double gravity_y, double gravity_force,
+                                              double edge_force);
 /// Add repulsion points
 extern "C" void flatsql_schemagraph_add_repulsion(flatsql::SchemaGraph* graph, double x, double y, double force);
 /// Update a schema graph

@@ -189,10 +189,16 @@ extern "C" flatsql::SchemaGraph* flatsql_schemagraph_new() { return new flatsql:
 /// Delete a schema graph
 extern "C" void flatsql_schemagraph_delete(flatsql::SchemaGraph* graph) { delete graph; }
 /// Configure a schema graph
-extern "C" void flatsql_schemagraph_configure(flatsql::SchemaGraph* graph, double width, double height,
-                                              double gravity_x, double gravity_y, double gravity_force,
+extern "C" void flatsql_schemagraph_configure(flatsql::SchemaGraph* graph, size_t iteration_count,
+                                              double cooldown_factor, double cooldown_until, double width,
+                                              double height, double gravity_x, double gravity_y, double gravity_force,
                                               double edge_force) {
-    graph->Configure(width, height, gravity_x, gravity_y, gravity_force, edge_force);
+    graph->Configure(iteration_count, cooldown_factor, cooldown_until, width, height, edge_force, gravity_x, gravity_y,
+                     gravity_force);
+}
+/// Add a repulsion point to the schema graph
+extern "C" void flatsql_schemagraph_add_repulsion(flatsql::SchemaGraph* graph, double x, double y, double force) {
+    graph->AddRepulsion(x, y, force);
 }
 /// Update a schema graph
 extern "C" FFIResult* flatsql_schemagraph_load_script(flatsql::SchemaGraph* graph, flatsql::Script* script) {
