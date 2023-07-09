@@ -55,7 +55,7 @@ extern "C" flatsql::SchemaGraph* flatsql_schemagraph_new();
 /// Delete a schema graph
 extern "C" void flatsql_schemagraph_delete(flatsql::SchemaGraph* graph);
 /// Configure a schema graph
-extern "C" void flatsql_schemagraph_configure(flatsql::SchemaGraph* graph, size_t iteration_count,
+extern "C" void flatsql_schemagraph_configure(flatsql::SchemaGraph* graph, size_t iteration_count, double force_scaling,
                                               double cooldown_factor, double cooldown_until, double repulsion_force,
                                               double edge_attraction_force, double gravity_x, double gravity_y,
                                               double gravity_force, double initial_radius, double board_width,

@@ -27,6 +27,8 @@ class SchemaGraph {
     struct Config {
         /// The iterations
         size_t iteration_count = 0;
+        /// The force scaling
+        double force_scaling = 0;
         /// The cooldown factor
         double cooldown_factor = 0;
         /// The cooldown until
