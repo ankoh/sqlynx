@@ -167,8 +167,9 @@ flatbuffers::Offset<proto::SchemaGraphLayout> SchemaGraph::Pack(flatbuffers::Fla
     proto::SchemaGraphLayoutT layout;
     for (size_t i = 0; i < current_positions.size(); ++i) {
         proto::SchemaGraphVertex pos{current_positions[i].x, current_positions[i].y};
-        layout.tables.emplace_back(i, pos, 100, 100);
+        layout.tables.emplace_back(i, pos, 100, 50);
     }
+
     return proto::SchemaGraphLayout::Pack(builder, &layout);
 }
 

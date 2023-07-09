@@ -1,6 +1,6 @@
 import * as React from 'react';
 import ReactFlow, { BackgroundVariant, Background as FlowBackground } from 'reactflow';
-import { TableNode, layoutSchema } from './schema_graph_layout';
+import { TableNode, layoutSchema } from './schema_graph_node';
 import { useFlatSQLState } from '../flatsql_state';
 
 interface Props {
@@ -10,11 +10,11 @@ interface Props {
 }
 
 export const SchemaGraph: React.FC<Props> = (props: Props) => {
-    const context = useFlatSQLState();
+    const state = useFlatSQLState();
     const nodeTypes = React.useMemo(() => ({ table: TableNode }), []);
 
     // Render placeholder if context is not available
-    if (!context) {
+    if (!state) {
         <div className={props.className}>
             <ReactFlow
                 nodes={[]}
@@ -29,7 +29,7 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
         </div>;
     }
 
-    const [nodes, edges] = layoutSchema(context);
+    const [nodes, edges] = layoutSchema(state);
     return (
         <div className={props.className}>
             <ReactFlow
