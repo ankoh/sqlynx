@@ -1,0 +1,4 @@
+.table_node {
+    border-radius: var(--border_radius);
+    border: 1px solid var(--border_color_primary);
+}

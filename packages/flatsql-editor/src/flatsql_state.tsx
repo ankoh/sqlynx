@@ -93,12 +93,28 @@ function updateScript(ctx: FlatSQLState): FlatSQLState {
         ctx.schemaGraphLayout.delete();
         ctx.schemaGraphLayout = null;
     }
+    ctx.schemaGraph!.configure(10, 0.85, 1.5, 1600, 800, 15.0, 800, 300, 15.0);
     ctx.schemaGraphLayout = ctx.schemaGraph!.loadScript(ctx.mainScript);
     console.timeEnd('Schema Graph Layout');
 
-    // ctx.schemaGraphLayout.
     const layout = ctx.schemaGraphLayout.read(new flatsql.proto.SchemaGraphLayout());
-    console.log(layout.tablesLength());
+    const tables = [];
+    const tableReader = new flatsql.proto.SchemaGraphTable();
+    const tablePosition = new flatsql.proto.SchemaGraphVertex();
+    for (let i = 0; i < layout.tablesLength(); ++i) {
+        const table = layout.tables(i, tableReader);
+        const pos = table!.position(tablePosition)!;
+        tables.push({
+            tableId: table!.tableId(),
+            position: {
+                x: pos.x(),
+                y: pos.y(),
+            },
+            width: table!.width(),
+            height: table!.height(),
+        });
+    }
+    console.log(tables);
 
     // Build decorations
     ctx.mainDecorations = buildDecorations(ctx.mainScanned);
