@@ -24,12 +24,18 @@ interface FlatSQLModuleExports {
         iterationCount: number,
         cooldownFactor: number,
         cooldownUntil: number,
-        boardWidth: number,
-        boardHeight: number,
-        edgeForce: number,
+        repulsionForce: number,
+        edgeAttractionForce: number,
         gravityX: number,
         gravityY: number,
         gravityForce: number,
+        initialRadius: number,
+        boardWidth: number,
+        boardHeight: number,
+        tableWidth: number,
+        tableConstantHeight: number,
+        tableColumnHeight: number,
+        tableMaxHeight: number,
     ) => void;
     flatsql_schemagraph_add_repulsion: (ptr: number, x: number, y: number, force: number) => void;
     flatsql_schemagraph_load_script: (ptr: number, script: number) => number;
@@ -373,6 +379,24 @@ export class FlatSQLScript {
     }
 }
 
+export interface FlatSQLSchemaGraphConfig {
+    iterationCount: number;
+    cooldownFactor: number;
+    cooldownUntil: number;
+    repulsionForce: number;
+    edgeAttractionForce: number;
+    gravityX: number;
+    gravityY: number;
+    gravityForce: number;
+    initialRadius: number;
+    boardWidth: number;
+    boardHeight: number;
+    tableWidth: number;
+    tableConstantHeight: number;
+    tableColumnHeight: number;
+    tableMaxHeight: number;
+}
+
 export class FlatSQLSchemaGraph {
     /// The FlatSQL api
     api: FlatSQL;
@@ -397,30 +421,27 @@ export class FlatSQLSchemaGraph {
         }
         return this.graphPtr!;
     }
+
     /// Configure the graph
-    public configure(
-        iterationCount: number,
-        cooldownFactor: number,
-        cooldownUntil: number,
-        boardWidth: number,
-        boardHeight: number,
-        edgeForce: number,
-        gravityX: number,
-        gravityY: number,
-        gravityForce: number,
-    ) {
+    public configure(config: FlatSQLSchemaGraphConfig) {
         const graphPtr = this.assertGraphNotNull();
         this.api.instanceExports.flatsql_schemagraph_configure(
             graphPtr,
-            iterationCount,
-            cooldownFactor,
-            cooldownUntil,
-            boardWidth,
-            boardHeight,
-            edgeForce,
-            gravityX,
-            gravityY,
-            gravityForce,
+            config.iterationCount,
+            config.cooldownFactor,
+            config.cooldownUntil,
+            config.repulsionForce,
+            config.edgeAttractionForce,
+            config.gravityX,
+            config.gravityY,
+            config.gravityForce,
+            config.initialRadius,
+            config.boardWidth,
+            config.boardHeight,
+            config.tableWidth,
+            config.tableConstantHeight,
+            config.tableColumnHeight,
+            config.tableMaxHeight,
         );
     }
     /// Add a repulsion point

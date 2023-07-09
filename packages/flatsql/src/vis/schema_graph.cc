@@ -67,16 +67,18 @@ void SchemaGraph::computeStep(double& temperature) {
     // Zero displacements
     Vector zero;
     std::fill(displacement.begin(), displacement.end(), zero);
-    double edge_force_squared = edge_force * edge_force;
+
+    double repulsion_squared = config.repulsion_force * config.repulsion_force;
+    double edge_attraction_squared = config.edge_attraction_force * config.edge_attraction_force;
 
     // XXX Repulsion should be updated more carefully using a quad tree
 
     for (size_t i = 0; i < current_positions.size(); ++i) {
         // Attraction force to center
-        Vector center_delta = current_positions[i] - gravity.position;
+        Vector center_delta = current_positions[i] - config.gravity.position;
         double center_distance = euclidean(center_delta);
         if (center_distance != 0) {
-            double attraction = center_distance * center_distance / gravity.force;
+            double attraction = center_distance * center_distance / config.gravity.force;
             displacement[i] = displacement[i] + (center_delta / center_distance * attraction);
         }
 
@@ -94,7 +96,7 @@ void SchemaGraph::computeStep(double& temperature) {
             Vector delta = current_positions[i] - current_positions[j];
             double distance = euclidean(delta);
             if (distance == 0) continue;
-            double repulsion = edge_force_squared / distance;
+            double repulsion = repulsion_squared / distance;
             displacement[i] = displacement[i] + (delta / distance * repulsion);
             displacement[j] = displacement[j] - (delta / distance * repulsion);
         }
@@ -104,7 +106,7 @@ void SchemaGraph::computeStep(double& temperature) {
             Vector delta = current_positions[i] - current_positions[j];
             double distance = euclidean(delta);
             if (distance == 0) continue;
-            double attraction = distance * distance / edge_force_squared;
+            double attraction = distance * distance / edge_attraction_squared;
             displacement[i] = displacement[i] + (delta / distance * attraction);
             displacement[j] = displacement[j] - (delta / distance * attraction);
         }
@@ -125,23 +127,15 @@ void SchemaGraph::computeStep(double& temperature) {
     }
 
     // Cooldown temperature
-    if (temperature > cooldown_until) {
-        temperature *= cooldown_factor;
+    if (temperature > config.cooldown_until) {
+        temperature *= config.cooldown_factor;
     } else {
-        temperature = cooldown_until;
+        temperature = config.cooldown_until;
     }
 }
 
-void SchemaGraph::Configure(size_t iteration_count, double cooldown_factor, double cooldown_until, double board_width,
-                            double board_height, double edge_force, double gravity_x, double gravity_y,
-                            double gravity_force) {
-    this->iteration_count = iteration_count;
-    this->cooldown_factor = cooldown_factor;
-    this->cooldown_until = cooldown_until;
-    this->board_width = board_width;
-    this->board_height = board_height;
-    gravity = {.position = {gravity_x, gravity_y}, .force = gravity_force};
-    this->edge_force = edge_force;
+void SchemaGraph::Configure(const Config& config) {
+    this->config = config;
     extra_repulsion.clear();
 }
 
@@ -154,11 +148,11 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
     // Load adjacency map
     load_tables(current_positions, adjacency, *script);
     // Place all positions on a circle
-    place_on_circle(current_positions, 1.0, gravity.position);
+    place_on_circle(current_positions, config.initial_radius, config.gravity.position);
     // Compute the initial temperature
     auto temperature = 10 * sqrt(current_positions.size());
     // Compute steps
-    for (size_t i = 0; i < iteration_count; ++i) {
+    for (size_t i = 0; i < config.iteration_count; ++i) {
         computeStep(temperature);
     }
 }
@@ -167,7 +161,7 @@ flatbuffers::Offset<proto::SchemaGraphLayout> SchemaGraph::Pack(flatbuffers::Fla
     proto::SchemaGraphLayoutT layout;
     for (size_t i = 0; i < current_positions.size(); ++i) {
         proto::SchemaGraphVertex pos{current_positions[i].x, current_positions[i].y};
-        layout.tables.emplace_back(i, pos, 100, 50);
+        layout.tables.emplace_back(i, pos, 100.0, 50);
     }
 
     return proto::SchemaGraphLayout::Pack(builder, &layout);
