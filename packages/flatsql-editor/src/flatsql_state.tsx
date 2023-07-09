@@ -26,6 +26,8 @@ export interface FlatSQLState {
     mainDecorations: DecorationSet;
     /// The schema graph
     schemaGraph: flatsql.FlatSQLSchemaGraph | null;
+    /// The schema graph config
+    schemaGraphConfig: flatsql.FlatSQLSchemaGraphConfig;
     /// The schema graph
     schemaGraphLayout: flatsql.FlatBufferRef<flatsql.proto.SchemaGraphLayout> | null;
 }
@@ -93,7 +95,7 @@ function updateScript(ctx: FlatSQLState): FlatSQLState {
         ctx.schemaGraphLayout.delete();
         ctx.schemaGraphLayout = null;
     }
-    ctx.schemaGraph!.configure(10, 0.85, 1.5, 1600, 800, 15.0, 800, 300, 15.0);
+    ctx.schemaGraph!.configure(ctx.schemaGraphConfig);
     ctx.schemaGraphLayout = ctx.schemaGraph!.loadScript(ctx.mainScript);
     console.timeEnd('Schema Graph Layout');
 
@@ -290,6 +292,23 @@ const defaultContext: FlatSQLState = {
     mainAnalyzed: null,
     mainDecorations: new RangeSetBuilder<Decoration>().finish(),
     schemaGraph: null,
+    schemaGraphConfig: {
+        iterationCount: 4,
+        cooldownFactor: 0.85,
+        cooldownUntil: 1.5,
+        repulsionForce: 40.0,
+        edgeAttractionForce: 50.0,
+        gravityX: 800,
+        gravityY: 200,
+        gravityForce: 300.0,
+        initialRadius: 100.0,
+        boardWidth: 1600,
+        boardHeight: 800,
+        tableWidth: 100,
+        tableConstantHeight: 24,
+        tableColumnHeight: 8,
+        tableMaxHeight: 96,
+    },
     schemaGraphLayout: null,
 };
 

@@ -190,11 +190,31 @@ extern "C" flatsql::SchemaGraph* flatsql_schemagraph_new() { return new flatsql:
 extern "C" void flatsql_schemagraph_delete(flatsql::SchemaGraph* graph) { delete graph; }
 /// Configure a schema graph
 extern "C" void flatsql_schemagraph_configure(flatsql::SchemaGraph* graph, size_t iteration_count,
-                                              double cooldown_factor, double cooldown_until, double board_width,
-                                              double board_height, double edge_force, double gravity_x,
-                                              double gravity_y, double gravity_force) {
-    graph->Configure(iteration_count, cooldown_factor, cooldown_until, board_width, board_height, edge_force, gravity_x,
-                     gravity_y, gravity_force);
+                                              double cooldown_factor, double cooldown_until, double repulsion_force,
+                                              double edge_attraction_force, double gravity_x, double gravity_y,
+                                              double gravity_force, double initial_radius, double board_width,
+                                              double board_height, double tableWidth, double tableConstantHeight,
+                                              double tableColumnHeight, double tableMaxHeight) {
+    SchemaGraph::Config config;
+    config.iteration_count = iteration_count;
+    config.cooldown_factor = cooldown_factor;
+    config.cooldown_until = cooldown_until;
+    config.repulsion_force = repulsion_force;
+    config.edge_attraction_force = edge_attraction_force;
+    config.gravity = {.position =
+                          {
+                              .x = gravity_x,
+                              .y = gravity_y,
+                          },
+                      .force = gravity_force};
+    config.initial_radius = initial_radius;
+    config.board_height = board_height;
+    config.board_width = board_width;
+    config.tableWidth = tableWidth;
+    config.tableConstantHeight = tableConstantHeight;
+    config.tableColumnHeight = tableColumnHeight;
+    config.tableMaxHeight = tableMaxHeight;
+    graph->Configure(config);
 }
 /// Add a repulsion point to the schema graph
 extern "C" void flatsql_schemagraph_add_repulsion(flatsql::SchemaGraph* graph, double x, double y, double force) {

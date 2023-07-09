@@ -27,8 +27,28 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
     ASSERT_EQ(script.Analyze().second, proto::StatusCode::OK);
 
     SchemaGraph graph;
+    SchemaGraph::Config config;
+    config.iteration_count = 10;
+    config.initial_radius = 100;
+    config.cooldown_factor = 0.85;
+    config.cooldown_until = 1.5;
+    config.repulsion_force = 15.0;
+    config.edge_attraction_force = 15.0;
+    config.gravity = {.position =
+                          {
+                              .x = 800,
+                              .y = 300,
+                          },
+                      .force = 15.0};
+    config.board_width = 1600;
+    config.board_height = 800;
+    config.tableWidth = 100;
+    config.tableConstantHeight = 24;
+    config.tableColumnHeight = 8;
+    config.tableMaxHeight = 96;
+
     for (size_t i = 0; i < 3; ++i) {
-        graph.Configure(10, 0.85, 1.5, 1600, 800, 15.0, 800, 300, 15.0);
+        graph.Configure(config);
         graph.LoadScript(script.analyzed_scripts.back());
     }
 
