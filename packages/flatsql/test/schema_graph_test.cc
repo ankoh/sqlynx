@@ -29,6 +29,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
     SchemaGraph graph;
     SchemaGraph::Config config;
     config.iteration_count = 10;
+    config.force_scaling = 1.0;
     config.initial_radius = 100;
     config.cooldown_factor = 0.85;
     config.cooldown_until = 1.5;

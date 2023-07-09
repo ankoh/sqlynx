@@ -22,6 +22,7 @@ interface FlatSQLModuleExports {
     flatsql_schemagraph_configure: (
         ptr: number,
         iterationCount: number,
+        forceScaling: number,
         cooldownFactor: number,
         cooldownUntil: number,
         repulsionForce: number,
@@ -381,6 +382,7 @@ export class FlatSQLScript {
 
 export interface FlatSQLSchemaGraphConfig {
     iterationCount: number;
+    forceScaling: number;
     cooldownFactor: number;
     cooldownUntil: number;
     repulsionForce: number;
@@ -428,6 +430,7 @@ export class FlatSQLSchemaGraph {
         this.api.instanceExports.flatsql_schemagraph_configure(
             graphPtr,
             config.iterationCount,
+            config.forceScaling,
             config.cooldownFactor,
             config.cooldownUntil,
             config.repulsionForce,
