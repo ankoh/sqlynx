@@ -23,6 +23,12 @@ class SchemaGraph {
         Vertex position;
         double force = 0;
     };
+    struct TableNode {
+        Vertex position;
+        double width = 0;
+        double height = 0;
+        TableNode(Vertex pos, double width, double height) : position(pos), width(width), height(height) {}
+    };
 
     struct Config {
         /// The iterations
@@ -66,17 +72,17 @@ class SchemaGraph {
     /// The configuration
     Config config;
 
-    /// The nodes buffer
-    std::vector<Vertex> current_positions;
+    /// The table nodes
+    std::vector<TableNode> table_nodes;
     /// The displacement
     std::vector<Vector> displacement;
 
     /// Execute a step
-    void computeStep(double& temperature);
+    void computeStep(size_t iteration, double& temperature);
 
    public:
     /// Get the current positions
-    auto& GetCurrentPositions() { return current_positions; }
+    auto& GetNodes() { return table_nodes; }
     /// Configure the schemagraph settings
     void Configure(const Config& config);
     /// Add a repulsion point
