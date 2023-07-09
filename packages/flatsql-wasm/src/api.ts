@@ -21,12 +21,15 @@ interface FlatSQLModuleExports {
     flatsql_schemagraph_delete: (ptr: number) => void;
     flatsql_schemagraph_configure: (
         ptr: number,
+        iterationCount: number,
+        cooldownFactor: number,
+        cooldownUntil: number,
         width: number,
         height: number,
+        edgeForce: number,
         gravityX: number,
         gravityY: number,
         gravityForce: number,
-        edgeForce: number,
     ) => void;
     flatsql_schemagraph_add_repulsion: (ptr: number, x: number, y: number, force: number) => void;
     flatsql_schemagraph_load_script: (ptr: number, script: number) => number;
@@ -396,22 +399,28 @@ export class FlatSQLSchemaGraph {
     }
     /// Configure the graph
     public configure(
+        iterationCount: number,
+        cooldownFactor: number,
+        cooldownUntil: number,
         width: number,
         height: number,
+        edgeForce: number,
         gravityX: number,
         gravityY: number,
         gravityForce: number,
-        edgeForce: number,
     ) {
         const graphPtr = this.assertGraphNotNull();
         this.api.instanceExports.flatsql_schemagraph_configure(
             graphPtr,
+            iterationCount,
+            cooldownFactor,
+            cooldownUntil,
             width,
             height,
+            edgeForce,
             gravityX,
             gravityY,
             gravityForce,
-            edgeForce,
         );
     }
     /// Add a repulsion point
