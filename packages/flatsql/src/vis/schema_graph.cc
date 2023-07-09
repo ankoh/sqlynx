@@ -25,9 +25,9 @@ SchemaGraph::Vector operator+(const SchemaGraph::Vector& p1, const SchemaGraph::
 SchemaGraph::Vector operator-(const SchemaGraph::Vector& p1, const SchemaGraph::Vector& p2) {
     return {p1.dx - p2.dx, p1.dy - p2.dy};
 }
-SchemaGraph::Vector operator*(const SchemaGraph::Vector& p, double v) { return {p.dx * v, p.dx * v}; }
+SchemaGraph::Vector operator*(const SchemaGraph::Vector& p, double v) { return {p.dx * v, p.dy * v}; }
 SchemaGraph::Vector operator*(double v, const SchemaGraph::Vector& p) { return p * v; }
-SchemaGraph::Vector operator/(const SchemaGraph::Vector& p, double v) { return {p.dx / v, p.dx / v}; }
+SchemaGraph::Vector operator/(const SchemaGraph::Vector& p, double v) { return {p.dx / v, p.dy / v}; }
 
 /// The euclidean distance
 double euclidean(SchemaGraph::Vector v) { return sqrt(v.dx * v.dx + v.dy * v.dy); }
@@ -68,8 +68,12 @@ void SchemaGraph::computeStep(double& temperature) {
     Vector zero;
     std::fill(displacement.begin(), displacement.end(), zero);
 
-    double repulsion_squared = config.repulsion_force * config.repulsion_force;
-    double edge_attraction_squared = config.edge_attraction_force * config.edge_attraction_force;
+    double repulsion_force = config.repulsion_force * config.force_scaling;
+    double repulsion_squared = repulsion_force;
+    double edge_attraction_force = config.edge_attraction_force * config.force_scaling;
+    double edge_attraction_squared = edge_attraction_force * config.edge_attraction_force;
+    double gravity_force = config.gravity.force * config.force_scaling;
+    double gravity_squared = gravity_force * config.gravity.force;
 
     // XXX Repulsion should be updated more carefully using a quad tree
 
@@ -78,50 +82,52 @@ void SchemaGraph::computeStep(double& temperature) {
         Vector center_delta = current_positions[i] - config.gravity.position;
         double center_distance = euclidean(center_delta);
         if (center_distance != 0) {
-            double attraction = center_distance * center_distance / config.gravity.force;
-            displacement[i] = displacement[i] + (center_delta / center_distance * attraction);
+            // Gravity becomes weaker the larger the distance, for now we just drop off linearly
+            double gravity = gravity_force / center_distance;
+            // Move point towards gravitation
+            displacement[i] = displacement[i] - (center_delta / center_distance * gravity);
         }
 
-        // Repulsion force to repulsion points
-        for (auto& v : extra_repulsion) {
-            Vector delta = current_positions[i] - v.position;
-            double distance = euclidean(delta);
-            if (distance == 0) continue;
-            double repulsion = (v.force * v.force) / distance;
-            displacement[i] = displacement[i] + (delta / distance * repulsion);
-        }
+        //     // Repulsion force to repulsion points
+        //     for (auto& v : extra_repulsion) {
+        //         Vector delta = current_positions[i] - v.position;
+        //         double distance = euclidean(delta);
+        //         if (distance == 0) continue;
+        //         double repulsion = (v.force * v.force) / distance;
+        //         displacement[i] = displacement[i] + (delta / distance * repulsion);
+        //     }
 
         // Repulsion force between vertex pairs
         for (size_t j = 0; j < current_positions.size(); ++j) {
             Vector delta = current_positions[i] - current_positions[j];
             double distance = euclidean(delta);
             if (distance == 0) continue;
-            double repulsion = repulsion_squared / distance;
-            displacement[i] = displacement[i] + (delta / distance * repulsion);
-            displacement[j] = displacement[j] - (delta / distance * repulsion);
+            double repulsion = repulsion_squared / (distance * distance);
+            displacement[i] = displacement[i] + (delta * repulsion);
+            displacement[j] = displacement[j] - (delta * repulsion);
         }
 
-        // Attraction force between edges
-        for (size_t j : adjacency[i]) {
-            Vector delta = current_positions[i] - current_positions[j];
-            double distance = euclidean(delta);
-            if (distance == 0) continue;
-            double attraction = distance * distance / edge_attraction_squared;
-            displacement[i] = displacement[i] + (delta / distance * attraction);
-            displacement[j] = displacement[j] - (delta / distance * attraction);
-        }
+        //     // Attraction force between edges
+        //     for (size_t j : adjacency[i]) {
+        //         Vector delta = current_positions[i] - current_positions[j];
+        //         double distance = euclidean(delta);
+        //         if (distance == 0) continue;
+        //         double attraction = distance * distance / edge_attraction_squared;
+        //         displacement[i] = displacement[i] + (delta / distance * attraction);
+        //         displacement[j] = displacement[j] - (delta / distance * attraction);
+        //     }
     }
 
     // Update all nodes
     for (size_t i = 0; i < current_positions.size(); ++i) {
         // Skip if difference is too small
-        double normed = euclidean(displacement[i]);
-        if (normed < 1.0) {
+        double length = euclidean(displacement[i]);
+        if (length < 1.0) {
             continue;
         }
         // Cap the displacement by temperature
-        double capped_length = std::min(normed, temperature);
-        displacement[i] = displacement[i] / normed * capped_length;
+        double capped_length = std::min(length, temperature);
+        displacement[i] = displacement[i] / length * capped_length;
         // Update the nodes
         current_positions[i] = current_positions[i] + displacement[i];
     }
