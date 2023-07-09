@@ -2,6 +2,7 @@
 
 #include <cmath>
 
+#include "flatsql/proto/proto_generated.h"
 #include "flatsql/script.h"
 #include "flatsql/vis/adjacency_map.h"
 
@@ -163,8 +164,12 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
 }
 
 flatbuffers::Offset<proto::SchemaGraphLayout> SchemaGraph::Pack(flatbuffers::FlatBufferBuilder& builder) {
-    // XXX Pack FlatBuffer
-    return {};
+    proto::SchemaGraphLayoutT layout;
+    for (size_t i = 0; i < current_positions.size(); ++i) {
+        proto::SchemaGraphVertex pos{current_positions[i].x, current_positions[i].y};
+        layout.tables.emplace_back(i, pos, 100, 100);
+    }
+    return proto::SchemaGraphLayout::Pack(builder, &layout);
 }
 
 }  // namespace flatsql
