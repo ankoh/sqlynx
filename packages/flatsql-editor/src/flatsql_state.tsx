@@ -96,6 +96,10 @@ function updateScript(ctx: FlatSQLState): FlatSQLState {
     ctx.schemaGraphLayout = ctx.schemaGraph!.loadScript(ctx.mainScript);
     console.timeEnd('Schema Graph Layout');
 
+    // ctx.schemaGraphLayout.
+    const layout = ctx.schemaGraphLayout.read(new flatsql.proto.SchemaGraphLayout());
+    console.log(layout.tablesLength());
+
     // Build decorations
     ctx.mainDecorations = buildDecorations(ctx.mainScanned);
     return ctx;
