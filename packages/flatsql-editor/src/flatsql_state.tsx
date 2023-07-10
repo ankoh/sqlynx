@@ -60,6 +60,21 @@ function destroy(ctx: FlatSQLState): FlatSQLState {
     return ctx;
 }
 
+function updateSchemaGraph(ctx: FlatSQLState): FlatSQLState {
+    if (ctx.mainScript == null) {
+        return ctx;
+    }
+    console.time('Schema Graph Layout');
+    if (ctx.schemaGraphLayout != null) {
+        ctx.schemaGraphLayout.delete();
+        ctx.schemaGraphLayout = null;
+    }
+    ctx.schemaGraph!.configure(ctx.schemaGraphConfig);
+    ctx.schemaGraphLayout = ctx.schemaGraph!.loadScript(ctx.mainScript);
+    console.timeEnd('Schema Graph Layout');
+    return ctx;
+}
+
 function updateScript(ctx: FlatSQLState): FlatSQLState {
     if (!ctx.mainScript) return ctx;
     // Scan the script
@@ -89,35 +104,8 @@ function updateScript(ctx: FlatSQLState): FlatSQLState {
     ctx.mainAnalyzed = ctx.mainScript.analyze();
     console.timeEnd('Script Analyzing');
 
-    // Build the schema graph
-    console.time('Schema Graph Layout');
-    if (ctx.schemaGraphLayout != null) {
-        ctx.schemaGraphLayout.delete();
-        ctx.schemaGraphLayout = null;
-    }
-    ctx.schemaGraph!.configure(ctx.schemaGraphConfig);
-    ctx.schemaGraphLayout = ctx.schemaGraph!.loadScript(ctx.mainScript);
-    console.timeEnd('Schema Graph Layout');
-
-    const layout = ctx.schemaGraphLayout.read(new flatsql.proto.SchemaGraphLayout());
-    const tables = [];
-    const tableReader = new flatsql.proto.SchemaGraphTable();
-    const tablePosition = new flatsql.proto.SchemaGraphVertex();
-    for (let i = 0; i < layout.tablesLength(); ++i) {
-        const table = layout.tables(i, tableReader);
-        const pos = table!.position(tablePosition)!;
-        tables.push({
-            tableId: table!.tableId(),
-            position: {
-                x: pos.x(),
-                y: pos.y(),
-            },
-            width: table!.width(),
-            height: table!.height(),
-        });
-    }
-    console.log(tables);
-
+    // Update the schema graph
+    updateSchemaGraph(ctx);
     // Build decorations
     ctx.mainDecorations = buildDecorations(ctx.mainScanned);
     return ctx;
@@ -156,11 +144,13 @@ function buildDecorations(scanned: flatsql.FlatBufferRef<flatsql.proto.ScannedSc
 }
 
 export const INITIALIZE = Symbol('INITIALIZE');
-export const MAIN_SCRIPT_UPDATED = Symbol('UPDATE_MAIN_SCRIPT');
+export const UPDATE_MAIN_SCRIPT = Symbol('UPDATE_MAIN_SCRIPT');
+export const RESIZE_SCHEMA_GRAPH = Symbol('RESIZE_EDITOR');
 export const DESTORY_SCRIPTS = Symbol('DESTORY');
 export type EditorContextAction =
     | Action<typeof INITIALIZE, flatsql.FlatSQL>
-    | Action<typeof MAIN_SCRIPT_UPDATED, undefined>
+    | Action<typeof UPDATE_MAIN_SCRIPT, undefined>
+    | Action<typeof RESIZE_SCHEMA_GRAPH, [number, number]>
     | Action<typeof DESTORY_SCRIPTS, undefined>;
 
 const TMP_TPCH_SCHEMA = `create table part (
@@ -260,20 +250,31 @@ create table region (
 const reducer = (state: FlatSQLState, action: EditorContextAction): FlatSQLState => {
     switch (action.type) {
         case INITIALIZE: {
-            const s = {
+            const s: FlatSQLState = {
                 ...state,
                 instance: action.value,
                 mainScript: action.value.createScript(),
                 schemaScript: action.value.createScript(),
                 schemaGraph: action.value.createSchemaGraph(),
             };
-            s.mainScript.insertTextAt(0, TMP_TPCH_SCHEMA);
+            s.mainScript!.insertTextAt(0, TMP_TPCH_SCHEMA);
             updateScript(s);
             return s;
         }
-        case MAIN_SCRIPT_UPDATED:
+        case UPDATE_MAIN_SCRIPT:
             console.log('MAIN_SCRIPT_UPDATED');
             return updateScript({ ...state });
+        case RESIZE_SCHEMA_GRAPH: {
+            const s: FlatSQLState = {
+                ...state,
+                schemaGraphConfig: {
+                    ...state.schemaGraphConfig,
+                    boardWidth: action.value[0],
+                    boardHeight: action.value[1],
+                },
+            };
+            return updateSchemaGraph(s);
+        }
         case DESTORY_SCRIPTS:
             return destroy({ ...state });
     }
@@ -282,6 +283,9 @@ const reducer = (state: FlatSQLState, action: EditorContextAction): FlatSQLState
 type Props = {
     children: React.ReactElement;
 };
+
+const DEFAULT_BOARD_WIDTH = 800;
+const DEFAULT_BOARD_HEIGHT = 600;
 
 const defaultContext: FlatSQLState = {
     instance: null,
@@ -299,12 +303,10 @@ const defaultContext: FlatSQLState = {
         cooldownUntil: 0.5,
         repulsionForce: 0.5,
         edgeAttractionForce: 0.5,
-        gravityX: 800,
-        gravityY: 200,
         gravityForce: 0.3,
         initialRadius: 200.0,
-        boardWidth: 1600,
-        boardHeight: 380,
+        boardWidth: DEFAULT_BOARD_WIDTH,
+        boardHeight: DEFAULT_BOARD_HEIGHT,
         tableWidth: 100,
         tableConstantHeight: 24,
         tableColumnHeight: 8,
