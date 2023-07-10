@@ -153,6 +153,7 @@ static void layout_schema(benchmark::State& state) {
     config.tableConstantHeight = 24;
     config.tableColumnHeight = 8;
     config.tableMaxHeight = 96;
+    config.tableMargin = 20;
 
     for (auto _ : state) {
         graph.Configure(config);

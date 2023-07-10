@@ -47,6 +47,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
     config.tableConstantHeight = 24;
     config.tableColumnHeight = 8;
     config.tableMaxHeight = 96;
+    config.tableMargin = 20;
 
     for (size_t i = 0; i < 3; ++i) {
         graph.Configure(config);

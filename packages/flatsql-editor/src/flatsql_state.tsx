@@ -293,7 +293,7 @@ const defaultContext: FlatSQLState = {
     mainDecorations: new RangeSetBuilder<Decoration>().finish(),
     schemaGraph: null,
     schemaGraphConfig: {
-        iterationCount: 40.0,
+        iterationCount: 50.0,
         forceScaling: 100.0,
         cooldownFactor: 0.85,
         cooldownUntil: 0.5,
@@ -309,6 +309,7 @@ const defaultContext: FlatSQLState = {
         tableConstantHeight: 24,
         tableColumnHeight: 8,
         tableMaxHeight: 96,
+        tableMargin: 0,
     },
     schemaGraphLayout: null,
 };

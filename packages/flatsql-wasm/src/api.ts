@@ -37,6 +37,7 @@ interface FlatSQLModuleExports {
         tableConstantHeight: number,
         tableColumnHeight: number,
         tableMaxHeight: number,
+        tableMargin: number,
     ) => void;
     flatsql_schemagraph_add_repulsion: (ptr: number, x: number, y: number, force: number) => void;
     flatsql_schemagraph_load_script: (ptr: number, script: number) => number;
@@ -397,6 +398,7 @@ export interface FlatSQLSchemaGraphConfig {
     tableConstantHeight: number;
     tableColumnHeight: number;
     tableMaxHeight: number;
+    tableMargin: number;
 }
 
 export class FlatSQLSchemaGraph {
@@ -445,6 +447,7 @@ export class FlatSQLSchemaGraph {
             config.tableConstantHeight,
             config.tableColumnHeight,
             config.tableMaxHeight,
+            config.tableMargin,
         );
     }
     /// Add a repulsion point

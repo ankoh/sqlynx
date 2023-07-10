@@ -57,8 +57,10 @@ class SchemaGraph {
         double tableConstantHeight = 0;
         /// The table column height
         double tableColumnHeight = 0;
-        /// The table column height
+        /// The table max height
         double tableMaxHeight = 0;
+        /// The table margin
+        double tableMargin = 0;
     };
 
    protected:
