@@ -108,31 +108,24 @@ void SchemaGraph::computeStep(size_t iteration, double& temperature) {
             // First check if there's an overlap
             auto& node_i = table_nodes[i];
             auto& node_j = table_nodes[j];
+            double body_x = (node_i.width + node_j.width) / 2;
+            double body_y = (node_i.height + node_j.height) / 2;
+            double diff_x = abs(node_i.position.x - node_j.position.x);
+            double diff_y = abs(node_i.position.y - node_j.position.y);
 
-            // Collision: Difference on both axes is less than half of the combined sizes
-            double max_x = (node_i.width + node_j.width) / 2;
-            double max_y = (node_i.height + node_j.height) / 2;
-            double have_x = abs(node_i.position.x - node_j.position.x);
-            double have_y = abs(node_i.position.y - node_j.position.y);
-            double overlap_x = max_x - have_x;
-            double overlap_y = max_y - have_y;
+            Vector undirected{abs(body_x - diff_x), abs(body_y - diff_y)};
+            Vector displace{(node_i.position.x < node_j.position.x) ? undirected.dx : -undirected.dx,
+                            (node_i.position.y < node_j.position.y) ? undirected.dy : -undirected.dy};
 
-            if ((have_x < max_x) & (have_y < max_y)) {
-                double fix_x = (node_i.position.x < node_j.position.x) ? overlap_x : -overlap_x;
-                displacement[i].dx -= fix_x / 2;
-                displacement[j].dx += fix_x / 2;
-                double fix_y = (node_i.position.y < node_j.position.y) ? overlap_y : -overlap_y;
-                displacement[i].dy -= fix_y / 2;
-                displacement[j].dy += fix_y / 2;
+            if ((diff_x < body_x) && (diff_y < body_y)) {
+                displacement[i] = displacement[i] - displace / 2;
+                displacement[j] = displacement[j] + displace / 2;
             } else {
-                // Otherwise we repulse using the center points
-                // XXX Repulse using corners...
-                Vector delta = table_nodes[i].position - table_nodes[j].position;
-                double distance = euclidean(delta);
+                double distance = euclidean(displace);
                 if (distance == 0) continue;
                 double repulsion = repulsion_squared / (distance * distance);
-                displacement[i] = displacement[i] + (delta * repulsion);
-                displacement[j] = displacement[j] - (delta * repulsion);
+                displacement[i] = displacement[i] - (displace / 2 * repulsion);
+                displacement[j] = displacement[j] + (displace / 2 * repulsion);
             }
         }
     }
