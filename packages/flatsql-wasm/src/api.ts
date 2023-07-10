@@ -39,7 +39,6 @@ interface FlatSQLModuleExports {
         tableMaxHeight: number,
         tableMargin: number,
     ) => void;
-    flatsql_schemagraph_add_repulsion: (ptr: number, x: number, y: number, force: number) => void;
     flatsql_schemagraph_load_script: (ptr: number, script: number) => number;
 }
 
@@ -107,12 +106,6 @@ export class FlatSQL {
                 gravityY: number,
                 gravityForce: number,
                 edgeForce: number,
-            ) => void,
-            flatsql_schemagraph_add_repulsion: parserExports['flatsql_schemagraph_add_repulsion'] as (
-                ptr: number,
-                x: number,
-                y: number,
-                force: number,
             ) => void,
             flatsql_schemagraph_load_script: parserExports['flatsql_schemagraph_load_script'] as (
                 ptr: number,
@@ -449,11 +442,6 @@ export class FlatSQLSchemaGraph {
             config.tableMaxHeight,
             config.tableMargin,
         );
-    }
-    /// Add a repulsion point
-    public addRepulsion(x: number, y: number, force: number) {
-        const graphPtr = this.assertGraphNotNull();
-        this.api.instanceExports.flatsql_schemagraph_add_repulsion(graphPtr, x, y, force);
     }
     /// Load a script
     public loadScript(script: FlatSQLScript) {
