@@ -43,11 +43,11 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                       .force = 15.0};
     config.board_width = 1600;
     config.board_height = 800;
-    config.tableWidth = 100;
-    config.tableConstantHeight = 24;
-    config.tableColumnHeight = 8;
-    config.tableMaxHeight = 96;
-    config.tableMargin = 20;
+    config.table_width = 100;
+    config.table_constant_height = 24;
+    config.table_column_height = 8;
+    config.table_max_height = 96;
+    config.table_margin = 20;
 
     for (size_t i = 0; i < 3; ++i) {
         graph.Configure(config);

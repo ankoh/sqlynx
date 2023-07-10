@@ -211,11 +211,11 @@ extern "C" void flatsql_schemagraph_configure(flatsql::SchemaGraph* graph, size_
     config.initial_radius = initial_radius;
     config.board_height = board_height;
     config.board_width = board_width;
-    config.tableWidth = tableWidth;
-    config.tableConstantHeight = tableConstantHeight;
-    config.tableColumnHeight = tableColumnHeight;
-    config.tableMaxHeight = tableMaxHeight;
-    config.tableMargin = tableMargin;
+    config.table_width = tableWidth;
+    config.table_constant_height = tableConstantHeight;
+    config.table_column_height = tableColumnHeight;
+    config.table_max_height = tableMaxHeight;
+    config.table_margin = tableMargin;
     graph->Configure(config);
 }
 /// Update a schema graph
