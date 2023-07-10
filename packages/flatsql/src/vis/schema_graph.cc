@@ -90,15 +90,6 @@ void SchemaGraph::computeStep(size_t iteration, double& temperature) {
         //         displacement[i] = displacement[i] + (delta / distance * attraction);
         //         displacement[j] = displacement[j] - (delta / distance * attraction);
         //     }
-
-        //     // Repulsion force to repulsion points
-        //     for (auto& v : extra_repulsion) {
-        //         Vector delta = current_positions[i] - v.position;
-        //         double distance = euclidean(delta);
-        //         if (distance == 0) continue;
-        //         double repulsion = (v.force * v.force) / distance;
-        //         displacement[i] = displacement[i] + (delta / distance * repulsion);
-        //     }
     }
 
     // Repulsion force between tables
@@ -152,14 +143,7 @@ void SchemaGraph::computeStep(size_t iteration, double& temperature) {
     }
 }
 
-void SchemaGraph::Configure(const Config& config) {
-    this->config = config;
-    extra_repulsion.clear();
-}
-
-void SchemaGraph::AddRepulsion(double x, double y, double force) {
-    extra_repulsion.push_back({.position = {x, y}, .force = force});
-}
+void SchemaGraph::Configure(const Config& config) { this->config = config; }
 
 void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
     script = s;

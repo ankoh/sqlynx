@@ -67,8 +67,6 @@ class SchemaGraph {
     /// The analyzed script (if provided)
     std::shared_ptr<AnalyzedScript> script = nullptr;
 
-    /// Extra repulsion
-    std::vector<VertexWithForce> extra_repulsion;
     /// The adjacency map
     AdjacencyMap adjacency;
     /// The configuration
@@ -87,8 +85,6 @@ class SchemaGraph {
     auto& GetNodes() { return table_nodes; }
     /// Configure the schemagraph settings
     void Configure(const Config& config);
-    /// Add a repulsion point
-    void AddRepulsion(double x, double y, double force);
     /// Load a script
     void LoadScript(std::shared_ptr<AnalyzedScript> s);
     /// Pack the schema graph
