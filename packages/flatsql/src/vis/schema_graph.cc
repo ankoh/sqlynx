@@ -34,21 +34,26 @@ double euclidean(SchemaGraph::Vector v) { return sqrt(v.dx * v.dx + v.dy * v.dy)
 /// Get the unit vector
 SchemaGraph::Vector unit_vector(SchemaGraph::Vector v) { return v / euclidean(v); }
 
-void repulse_tables(SchemaGraph::TableNode& a, SchemaGraph::TableNode& b, SchemaGraph::Config& config) {
-    // Collision: Difference on both axes is less than half of the combined sizes
-    auto max_x = (a.width + b.width) / 2;
-    auto max_y = (a.height + b.height) / 2;
-    auto have_x = abs(a.position.x - b.position.y);
-    auto have_y = abs(a.position.x - b.position.y);
-    bool collision = (have_x < max_x) & (have_y < max_y);
+#define INORDER(F) F(0), F(5), F(10), F(15), F(20), F(25), F(30), F(35),
+#define REVERSE(F) F(0), F(-5), F(-10), F(-15), F(-20), F(-25), F(-30), F(-35),
+std::array<double, 16> JIGGLE_SIN{
+#define F(V) std::sin(V * 180 / M_PI)
+    INORDER(F) REVERSE(F)
+#undef F
+};
+std::array<double, 16> JIGGLE_COS{
+#define F(V) std::cos(V * 180 / M_PI)
+    INORDER(F) REVERSE(F)
+#undef F
+};
 
-    if (collision) {
-        // Overlap on the right of a?
-        auto overlap_right = b.position.x > a.position.x;
-        // Overlap on the top of a?
-        auto overlap_top = b.position.x > a.position.x;
-    } else {
-    }
+SchemaGraph::Vector jiggle(size_t table_id, size_t iteration, SchemaGraph::Vector vec) {
+    size_t ofs = (table_id & 0b1) * 8;
+    double sin = JIGGLE_SIN[ofs + iteration & 7];
+    double cos = JIGGLE_COS[ofs + iteration & 7];
+    double x = vec.dx * cos - vec.dy * sin;
+    double y = vec.dx * sin - vec.dy * cos;
+    return {x, y};
 }
 
 }  // namespace
@@ -107,14 +112,13 @@ void SchemaGraph::computeStep(size_t iteration, double& temperature) {
     // Repulsion force between tables
     for (size_t i = 0; i < table_nodes.size(); ++i) {
         for (size_t j = i + 1; j < table_nodes.size(); ++j) {
-            // First check if there's an overlap
+            // Compute distance or overlap vector
             auto& node_i = table_nodes[i];
             auto& node_j = table_nodes[j];
             double body_x = (node_i.width + node_j.width) / 2;
             double body_y = (node_i.height + node_j.height) / 2;
             double diff_x = abs(node_i.position.x - node_j.position.x);
             double diff_y = abs(node_i.position.y - node_j.position.y);
-
             Vector undirected{abs(body_x - diff_x), abs(body_y - diff_y)};
             Vector directed{(node_i.position.x < node_j.position.x) ? undirected.dx : -undirected.dx,
                             (node_i.position.y < node_j.position.y) ? undirected.dy : -undirected.dy};
@@ -124,6 +128,7 @@ void SchemaGraph::computeStep(size_t iteration, double& temperature) {
                 displacement[i] = displacement[i] - directed / 2;
                 displacement[j] = displacement[j] + directed / 2;
             } else {
+                directed = jiggle(i, iteration, directed);
                 distance = std::max(euclidean(directed), distance);
             }
             double repulsion = repulsion_squared / distance;
