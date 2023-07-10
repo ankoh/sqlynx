@@ -27,8 +27,6 @@ interface FlatSQLModuleExports {
         cooldownUntil: number,
         repulsionForce: number,
         edgeAttractionForce: number,
-        gravityX: number,
-        gravityY: number,
         gravityForce: number,
         initialRadius: number,
         boardWidth: number,
@@ -100,12 +98,21 @@ export class FlatSQL {
             flatsql_schemagraph_delete: parserExports['flatsql_schemagraph_delete'] as (ptr: number) => void,
             flatsql_schemagraph_configure: parserExports['flatsql_schemagraph_configure'] as (
                 ptr: number,
-                width: number,
-                height: number,
-                gravityX: number,
-                gravityY: number,
+                iterationCount: number,
+                forceScaling: number,
+                cooldownFactor: number,
+                cooldownUntil: number,
+                repulsionForce: number,
+                edgeAttractionForce: number,
                 gravityForce: number,
-                edgeForce: number,
+                initialRadius: number,
+                boardWidth: number,
+                boardHeight: number,
+                tableWidth: number,
+                tableConstantHeight: number,
+                tableColumnHeight: number,
+                tableMaxHeight: number,
+                tableMargin: number,
             ) => void,
             flatsql_schemagraph_load_script: parserExports['flatsql_schemagraph_load_script'] as (
                 ptr: number,
@@ -381,8 +388,6 @@ export interface FlatSQLSchemaGraphConfig {
     cooldownUntil: number;
     repulsionForce: number;
     edgeAttractionForce: number;
-    gravityX: number;
-    gravityY: number;
     gravityForce: number;
     initialRadius: number;
     boardWidth: number;
@@ -430,8 +435,6 @@ export class FlatSQLSchemaGraph {
             config.cooldownUntil,
             config.repulsionForce,
             config.edgeAttractionForce,
-            config.gravityX,
-            config.gravityY,
             config.gravityForce,
             config.initialRadius,
             config.boardWidth,

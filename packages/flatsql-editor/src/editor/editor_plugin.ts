@@ -1,6 +1,6 @@
 import { EditorView, ViewUpdate, PluginValue, ViewPlugin, Decoration } from '@codemirror/view';
 import { RangeSet, Facet, Text as CMText } from '@codemirror/state';
-import { FlatSQLState, EditorContextAction, MAIN_SCRIPT_UPDATED } from '../flatsql_state';
+import { FlatSQLState, EditorContextAction, UPDATE_MAIN_SCRIPT } from '../flatsql_state';
 import { Dispatch } from '../model/action';
 
 import './editor_plugin.css';
@@ -51,7 +51,7 @@ class EditorPluginValue implements PluginValue {
 
             // Update the document
             state.dispatchContext({
-                type: MAIN_SCRIPT_UPDATED,
+                type: UPDATE_MAIN_SCRIPT,
                 value: undefined,
             });
             return;
