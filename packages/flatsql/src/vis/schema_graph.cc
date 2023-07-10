@@ -76,10 +76,9 @@ void SchemaGraph::computeStep(size_t iteration, double& temperature) {
         Vector center_delta = table_nodes[i].position - config.gravity.position;
         double center_distance = euclidean(center_delta);
         if (center_distance != 0) {
-            // Gravity becomes weaker the larger the distance, for now we just drop off linearly
-            double gravity = gravity_force / center_distance;
-            // Move point towards gravitation
-            displacement[i] = displacement[i] - (center_delta / center_distance * gravity);
+            // Move point towards gravitation with a constant force
+            Vector center_normal = center_delta / center_distance;
+            displacement[i] = displacement[i] - (center_normal * gravity_force);
         }
 
         //     // Attraction force between edges
@@ -118,14 +117,15 @@ void SchemaGraph::computeStep(size_t iteration, double& temperature) {
                             (node_i.position.y < node_j.position.y) ? undirected.dy : -undirected.dy};
 
             if ((diff_x < body_x) && (diff_y < body_y)) {
-                displacement[i] = displacement[i] - displace / 2;
-                displacement[j] = displacement[j] + displace / 2;
+                displacement[i] = displacement[i] - displace / 2 * 1.2;
+                displacement[j] = displacement[j] + displace / 2 * 1.2;
             } else {
                 double distance = euclidean(displace);
                 if (distance == 0) continue;
-                double repulsion = repulsion_squared / (distance * distance);
-                displacement[i] = displacement[i] - (displace / 2 * repulsion);
-                displacement[j] = displacement[j] + (displace / 2 * repulsion);
+                double repulsion = repulsion_squared / distance;
+                Vector displace_normal = displace / distance;
+                displacement[i] = displacement[i] - (displace_normal * repulsion);
+                displacement[j] = displacement[j] + (displace_normal * repulsion);
             }
         }
     }
