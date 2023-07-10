@@ -124,8 +124,8 @@ void SchemaGraph::computeStep(size_t iteration, double& temperature) {
                 if (distance == 0) continue;
                 double repulsion = repulsion_squared / distance;
                 Vector displace_normal = displace / distance;
-                displacement[i] = displacement[i] - (displace_normal * repulsion);
-                displacement[j] = displacement[j] + (displace_normal * repulsion);
+                displacement[i] = displacement[i] - (displace_normal * repulsion / 2);
+                displacement[j] = displacement[j] + (displace_normal * repulsion / 2);
             }
         }
     }
