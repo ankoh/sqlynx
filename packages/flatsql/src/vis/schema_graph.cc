@@ -113,20 +113,21 @@ void SchemaGraph::computeStep(size_t iteration, double& temperature) {
             double diff_y = abs(node_i.position.y - node_j.position.y);
 
             Vector undirected{abs(body_x - diff_x), abs(body_y - diff_y)};
-            Vector displace{(node_i.position.x < node_j.position.x) ? undirected.dx : -undirected.dx,
+            Vector directed{(node_i.position.x < node_j.position.x) ? undirected.dx : -undirected.dx,
                             (node_i.position.y < node_j.position.y) ? undirected.dy : -undirected.dy};
 
+            double distance = 0.0;
             if ((diff_x < body_x) && (diff_y < body_y)) {
-                displacement[i] = displacement[i] - displace / 2 * 1.2;
-                displacement[j] = displacement[j] + displace / 2 * 1.2;
+                displacement[i] = displacement[i] - directed / 2;
+                displacement[j] = displacement[j] + directed / 2;
+                distance = 1.0;
             } else {
-                double distance = euclidean(displace);
-                if (distance == 0) continue;
-                double repulsion = repulsion_squared / distance;
-                Vector displace_normal = displace / distance;
-                displacement[i] = displacement[i] - (displace_normal * repulsion / 2);
-                displacement[j] = displacement[j] + (displace_normal * repulsion / 2);
+                distance = std::max(euclidean(directed), 1.0);
             }
+            double repulsion = repulsion_squared / distance;
+            Vector displace_normal = directed / distance;
+            displacement[i] = displacement[i] - (displace_normal * repulsion / 2);
+            displacement[j] = displacement[j] + (displace_normal * repulsion / 2);
         }
     }
 
@@ -172,10 +173,11 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
     double angle = 2.0 * M_PI / script->tables.size();
     for (size_t i = 0; i < script->tables.size(); ++i) {
         // XXX Store node dimensions
+        double jiggle = 1 + (static_cast<double>((i & 0b1) == 0) - 0.5);
         table_nodes.emplace_back(
             Vertex{
-                config.gravity.position.x + config.initial_radius * cos(i * angle),
-                config.gravity.position.y + config.initial_radius * sin(i * angle),
+                config.gravity.position.x + config.initial_radius * cos(i * angle) * jiggle,
+                config.gravity.position.y + config.initial_radius * sin(i * angle) * jiggle,
             },
             config.tableWidth, config.tableMaxHeight);
         // XXX Store actual table dependencies
@@ -194,7 +196,8 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
 flatbuffers::Offset<proto::SchemaGraphLayout> SchemaGraph::Pack(flatbuffers::FlatBufferBuilder& builder) {
     proto::SchemaGraphLayoutT layout;
     for (size_t i = 0; i < table_nodes.size(); ++i) {
-        proto::SchemaGraphVertex pos{table_nodes[i].position.x, table_nodes[i].position.y};
+        proto::SchemaGraphVertex pos{table_nodes[i].position.x - table_nodes[i].width / 2,
+                                     table_nodes[i].position.y - table_nodes[i].height / 2};
         layout.tables.emplace_back(i, pos, table_nodes[i].width, table_nodes[i].height);
     }
 
