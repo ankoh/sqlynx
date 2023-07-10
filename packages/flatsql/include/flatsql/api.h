@@ -57,9 +57,9 @@ extern "C" void flatsql_schemagraph_delete(flatsql::SchemaGraph* graph);
 /// Configure a schema graph
 extern "C" void flatsql_schemagraph_configure(flatsql::SchemaGraph* graph, size_t iteration_count, double force_scaling,
                                               double cooldown_factor, double cooldown_until, double repulsion_force,
-                                              double edge_attraction_force, double gravity_x, double gravity_y,
-                                              double gravity_force, double initial_radius, double board_width,
-                                              double board_height, double tableWidth, double tableConstantHeight,
-                                              double tableColumnHeight, double tableMaxHeight, double tableMargin);
+                                              double edge_attraction_force, double gravity_force, double initial_radius,
+                                              double board_width, double board_height, double tableWidth,
+                                              double tableConstantHeight, double tableColumnHeight,
+                                              double tableMaxHeight, double tableMargin);
 /// Update a schema graph
 extern "C" FFIResult* flatsql_schemagraph_load_script(flatsql::SchemaGraph* graph, flatsql::Script* script);

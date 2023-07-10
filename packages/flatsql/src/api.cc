@@ -191,10 +191,10 @@ extern "C" void flatsql_schemagraph_delete(flatsql::SchemaGraph* graph) { delete
 /// Configure a schema graph
 extern "C" void flatsql_schemagraph_configure(flatsql::SchemaGraph* graph, size_t iteration_count, double force_scaling,
                                               double cooldown_factor, double cooldown_until, double repulsion_force,
-                                              double edge_attraction_force, double gravity_x, double gravity_y,
-                                              double gravity_force, double initial_radius, double board_width,
-                                              double board_height, double tableWidth, double tableConstantHeight,
-                                              double tableColumnHeight, double tableMaxHeight, double tableMargin) {
+                                              double edge_attraction_force, double gravity_force, double initial_radius,
+                                              double board_width, double board_height, double tableWidth,
+                                              double tableConstantHeight, double tableColumnHeight,
+                                              double tableMaxHeight, double tableMargin) {
     SchemaGraph::Config config;
     config.iteration_count = iteration_count;
     config.force_scaling = force_scaling;
@@ -204,8 +204,8 @@ extern "C" void flatsql_schemagraph_configure(flatsql::SchemaGraph* graph, size_
     config.edge_attraction_force = edge_attraction_force;
     config.gravity = {.position =
                           {
-                              .x = gravity_x,
-                              .y = gravity_y,
+                              .x = board_width / 2,
+                              .y = board_height / 2,
                           },
                       .force = gravity_force};
     config.initial_radius = initial_radius;

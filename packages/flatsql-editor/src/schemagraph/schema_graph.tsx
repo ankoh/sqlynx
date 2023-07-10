@@ -1,7 +1,7 @@
 import * as React from 'react';
 import ReactFlow, { BackgroundVariant, Background as FlowBackground } from 'reactflow';
 import { TableNode, layoutSchema } from './schema_graph_node';
-import { useFlatSQLState } from '../flatsql_state';
+import { RESIZE_SCHEMA_GRAPH, useFlatSQLDispatch, useFlatSQLState } from '../flatsql_state';
 
 interface Props {
     className?: string;
@@ -11,7 +11,15 @@ interface Props {
 
 export const SchemaGraph: React.FC<Props> = (props: Props) => {
     const state = useFlatSQLState();
+    const dispatch = useFlatSQLDispatch();
     const nodeTypes = React.useMemo(() => ({ table: TableNode }), []);
+
+    React.useEffect(() => {
+        dispatch({
+            type: RESIZE_SCHEMA_GRAPH,
+            value: [props.width, 0.45 * props.height],
+        });
+    }, [props.width, props.height]);
 
     // Render placeholder if context is not available
     if (!state) {
