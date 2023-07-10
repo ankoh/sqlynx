@@ -218,10 +218,6 @@ extern "C" void flatsql_schemagraph_configure(flatsql::SchemaGraph* graph, size_
     config.tableMargin = tableMargin;
     graph->Configure(config);
 }
-/// Add a repulsion point to the schema graph
-extern "C" void flatsql_schemagraph_add_repulsion(flatsql::SchemaGraph* graph, double x, double y, double force) {
-    graph->AddRepulsion(x, y, force);
-}
 /// Update a schema graph
 extern "C" FFIResult* flatsql_schemagraph_load_script(flatsql::SchemaGraph* graph, flatsql::Script* script) {
     assert(!script->analyzed_scripts.empty());

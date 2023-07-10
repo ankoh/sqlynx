@@ -309,7 +309,7 @@ const defaultContext: FlatSQLState = {
         tableConstantHeight: 24,
         tableColumnHeight: 8,
         tableMaxHeight: 96,
-        tableMargin: 0,
+        tableMargin: 4,
     },
     schemaGraphLayout: null,
 };

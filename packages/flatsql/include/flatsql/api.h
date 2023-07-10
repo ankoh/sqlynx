@@ -61,7 +61,5 @@ extern "C" void flatsql_schemagraph_configure(flatsql::SchemaGraph* graph, size_
                                               double gravity_force, double initial_radius, double board_width,
                                               double board_height, double tableWidth, double tableConstantHeight,
                                               double tableColumnHeight, double tableMaxHeight, double tableMargin);
-/// Add repulsion points
-extern "C" void flatsql_schemagraph_add_repulsion(flatsql::SchemaGraph* graph, double x, double y, double force);
 /// Update a schema graph
 extern "C" FFIResult* flatsql_schemagraph_load_script(flatsql::SchemaGraph* graph, flatsql::Script* script);
