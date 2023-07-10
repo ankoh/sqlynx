@@ -72,14 +72,14 @@ void SchemaGraph::computeStep(size_t iteration, double& temperature) {
     // XXX Repulsion should be updated more carefully using a quad tree
 
     for (size_t i = 0; i < table_nodes.size(); ++i) {
-        // Attraction force to center
-        Vector center_delta = table_nodes[i].position - config.gravity.position;
-        double center_distance = euclidean(center_delta);
-        if (center_distance != 0) {
-            // Move point towards gravitation with a constant force
-            Vector center_normal = center_delta / center_distance;
-            displacement[i] = displacement[i] - (center_normal * gravity_force);
-        }
+        auto& table_node = table_nodes[i];
+        // Gravity force to center
+        Vector center_delta = table_node.position - config.gravity.position;
+        double center_distance = std::max(euclidean(center_delta), 1.0);
+
+        // Move point towards gravitation with a constant force
+        Vector center_normal = center_delta / center_distance;
+        displacement[i] = displacement[i] - (center_normal * gravity_force);
 
         //     // Attraction force between edges
         //     for (size_t j : adjacency[i]) {
@@ -90,6 +90,18 @@ void SchemaGraph::computeStep(size_t iteration, double& temperature) {
         //         displacement[i] = displacement[i] + (delta / distance * attraction);
         //         displacement[j] = displacement[j] - (delta / distance * attraction);
         //     }
+
+        // Push back into area
+        Vector border_push;
+        Vertex north = table_node.position - Vector{0, table_node.height / 2};
+        Vertex east = table_node.position + Vector{table_node.width / 2, 0};
+        Vertex south = table_node.position + Vector{0, table_node.height / 2};
+        Vertex west = table_node.position - Vector{table_node.width / 2, 0};
+        border_push.dy += (north.y < 0) ? -north.y : 0;
+        border_push.dx -= (east.x > config.board_width) ? (east.x - config.board_width) : 0;
+        border_push.dy -= (south.y > config.board_height) ? (south.y - config.board_height) : 0;
+        border_push.dx += (west.x < 0) ? -west.x : 0;
+        displacement[i] = displacement[i] + repulsion_squared * border_push;
     }
 
     // Repulsion force between tables
