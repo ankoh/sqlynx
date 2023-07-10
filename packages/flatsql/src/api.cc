@@ -194,7 +194,7 @@ extern "C" void flatsql_schemagraph_configure(flatsql::SchemaGraph* graph, size_
                                               double edge_attraction_force, double gravity_x, double gravity_y,
                                               double gravity_force, double initial_radius, double board_width,
                                               double board_height, double tableWidth, double tableConstantHeight,
-                                              double tableColumnHeight, double tableMaxHeight) {
+                                              double tableColumnHeight, double tableMaxHeight, double tableMargin) {
     SchemaGraph::Config config;
     config.iteration_count = iteration_count;
     config.force_scaling = force_scaling;
@@ -215,6 +215,7 @@ extern "C" void flatsql_schemagraph_configure(flatsql::SchemaGraph* graph, size_
     config.tableConstantHeight = tableConstantHeight;
     config.tableColumnHeight = tableColumnHeight;
     config.tableMaxHeight = tableMaxHeight;
+    config.tableMargin = tableMargin;
     graph->Configure(config);
 }
 /// Add a repulsion point to the schema graph

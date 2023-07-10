@@ -116,13 +116,12 @@ void SchemaGraph::computeStep(size_t iteration, double& temperature) {
             Vector directed{(node_i.position.x < node_j.position.x) ? undirected.dx : -undirected.dx,
                             (node_i.position.y < node_j.position.y) ? undirected.dy : -undirected.dy};
 
-            double distance = 0.0;
+            double distance = 1.0;
             if ((diff_x < body_x) && (diff_y < body_y)) {
                 displacement[i] = displacement[i] - directed / 2;
                 displacement[j] = displacement[j] + directed / 2;
-                distance = 1.0;
             } else {
-                distance = std::max(euclidean(directed), 1.0);
+                distance = std::max(euclidean(directed), distance);
             }
             double repulsion = repulsion_squared / distance;
             Vector displace_normal = directed / distance;
@@ -179,7 +178,7 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
                 config.gravity.position.x + config.initial_radius * cos(i * angle) * jiggle,
                 config.gravity.position.y + config.initial_radius * sin(i * angle) * jiggle,
             },
-            config.tableWidth, config.tableMaxHeight);
+            config.tableWidth + config.tableMargin, config.tableMaxHeight + config.tableMargin);
         // XXX Store actual table dependencies
         adjacency.adjacency_offsets.push_back(0);
     }
@@ -196,9 +195,10 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
 flatbuffers::Offset<proto::SchemaGraphLayout> SchemaGraph::Pack(flatbuffers::FlatBufferBuilder& builder) {
     proto::SchemaGraphLayoutT layout;
     for (size_t i = 0; i < table_nodes.size(); ++i) {
-        proto::SchemaGraphVertex pos{table_nodes[i].position.x - table_nodes[i].width / 2,
-                                     table_nodes[i].position.y - table_nodes[i].height / 2};
-        layout.tables.emplace_back(i, pos, table_nodes[i].width, table_nodes[i].height);
+        proto::SchemaGraphVertex pos{table_nodes[i].position.x - table_nodes[i].width / 2 + config.tableMargin / 2,
+                                     table_nodes[i].position.y - table_nodes[i].height / 2 + config.tableMargin / 2};
+        layout.tables.emplace_back(i, pos, table_nodes[i].width - config.tableMargin,
+                                   table_nodes[i].height - config.tableMargin);
     }
 
     return proto::SchemaGraphLayout::Pack(builder, &layout);
