@@ -17,6 +17,8 @@ export interface TableData {
 }
 
 export const TableNode: React.FC<NodeProps<TableData>> = (props: NodeProps<TableData>) => {
+    //            <Handle type="target" position={Position.Left} />
+    //            <Handle type="source" position={Position.Right} />
     return (
         <div
             className={styles.table_node}
@@ -25,9 +27,7 @@ export const TableNode: React.FC<NodeProps<TableData>> = (props: NodeProps<Table
                 height: props.data.height,
             }}
         >
-            <Handle type="target" position={Position.Left} />
             <div>{props.data.name}</div>
-            <Handle type="source" position={Position.Right} />
         </div>
     );
 };
