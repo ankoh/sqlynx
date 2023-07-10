@@ -52,7 +52,7 @@ SchemaGraph::Vector jiggle(size_t table_id, size_t iteration, SchemaGraph::Vecto
     double sin = JIGGLE_SIN[ofs + iteration & 7];
     double cos = JIGGLE_COS[ofs + iteration & 7];
     double x = vec.dx * cos - vec.dy * sin;
-    double y = vec.dx * sin - vec.dy * cos;
+    double y = vec.dx * sin + vec.dy * cos;
     return {x, y};
 }
 
