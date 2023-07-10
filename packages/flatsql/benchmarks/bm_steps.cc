@@ -149,11 +149,11 @@ static void layout_schema(benchmark::State& state) {
                       .force = 15.0};
     config.board_width = 1600;
     config.board_height = 800;
-    config.tableWidth = 100;
-    config.tableConstantHeight = 24;
-    config.tableColumnHeight = 8;
-    config.tableMaxHeight = 96;
-    config.tableMargin = 20;
+    config.table_width = 100;
+    config.table_constant_height = 24;
+    config.table_column_height = 8;
+    config.table_max_height = 96;
+    config.table_margin = 20;
 
     for (auto _ : state) {
         graph.Configure(config);
