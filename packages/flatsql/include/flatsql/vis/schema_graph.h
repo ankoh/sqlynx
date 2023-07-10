@@ -52,15 +52,15 @@ class SchemaGraph {
         /// The board height
         double board_height = 0;
         /// The table width
-        double tableWidth = 0;
+        double table_width = 0;
         /// The table constant height
-        double tableConstantHeight = 0;
+        double table_constant_height = 0;
         /// The table column height
-        double tableColumnHeight = 0;
+        double table_column_height = 0;
         /// The table max height
-        double tableMaxHeight = 0;
+        double table_max_height = 0;
         /// The table margin
-        double tableMargin = 0;
+        double table_margin = 0;
     };
 
    protected:
