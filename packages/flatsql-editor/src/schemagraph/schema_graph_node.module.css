@@ -5,10 +5,14 @@
 
     display: grid;
     grid-template-rows: 100%;
-    grid-template-columns: max-content max-content auto;
+    grid-template-columns: max-content auto 32px;
+    align-items: center;
+    justify-items: center;
 }
 
 .table_icon {
+    grid-column: 1;
+    height: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -16,13 +20,28 @@
     padding-right: 6px;
     border-right: 1px solid var(--border_color_primary);
     border-radius: calc(var(--border_radius) + 1px) 0 0 calc(var(--border_radius) + 1px);
+    color: var(--color_icon);
 }
 
 .table_name {
+    grid-column: 2 / 2;
+    display: flex;
+    align-items: center;
+    padding-left: 8px;
+    font-size: 0.9rem;
+    overflow: hidden;
+    width: 100%;
+}
+
+.table_column_count {
+    grid-column: 3;
+    margin-right: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    background-color: rgba(175, 184, 193, 0.2);
+    padding: 4px 8px;
+    border-radius: 12px;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-left: 8px;
-    font-size: 0.9rem;
-    overflow: hidden;
 }
