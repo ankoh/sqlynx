@@ -8,13 +8,13 @@ import iconTableView from '../../static/svg/icons/table_border.svg';
 
 import styles from './schema_graph_node.module.css';
 
-interface Column {
+interface TableColumn {
     name: string;
 }
 
 export interface TableData {
     name: string;
-    columns: Column[];
+    columns: TableColumn[];
     width: number;
     height: number;
 }
@@ -53,11 +53,22 @@ export function layoutSchema(ctx: FlatSQLState): [Node<TableData>[], Edge[]] {
     const tmpGraphTable = new flatsql.proto.SchemaGraphTable();
     const tmpGraphVertex = new flatsql.proto.SchemaGraphVertex();
     const tmpTable = new flatsql.proto.Table();
+    const tmpTableColumn = new flatsql.proto.TableColumn();
     for (let i = 0; i < layout.tablesLength(); ++i) {
         const graphTable = layout.tables(i, tmpGraphTable);
         const position = graphTable!.position(tmpGraphVertex)!;
         const table = analyzed.tables(graphTable!.tableId(), tmpTable);
         const tableName = flatsql.FlatID.readTableName(table?.tableName()!, parsed, null);
+
+        const columns: TableColumn[] = [];
+        const columnsBegin = table!.columnsBegin();
+        for (let j = 0; j < table!.columnCount(); ++j) {
+            const column = analyzed.tableColumns(columnsBegin + j, tmpTableColumn);
+            const columnName = flatsql.FlatID.readName(column?.columnName()!, parsed, null)!;
+            columns.push({
+                name: columnName,
+            });
+        }
 
         nodes.push({
             id: i.toString(),
@@ -68,7 +79,7 @@ export function layoutSchema(ctx: FlatSQLState): [Node<TableData>[], Edge[]] {
             },
             data: {
                 name: tableName.table ?? '',
-                columns: [],
+                columns: columns,
                 width: graphTable!.width(),
                 height: graphTable!.height(),
             },
