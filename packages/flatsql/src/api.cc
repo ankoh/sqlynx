@@ -190,7 +190,7 @@ extern "C" flatsql::SchemaGraph* flatsql_schemagraph_new() { return new flatsql:
 extern "C" void flatsql_schemagraph_delete(flatsql::SchemaGraph* graph) { delete graph; }
 /// Configure a schema graph
 extern "C" void flatsql_schemagraph_configure(flatsql::SchemaGraph* graph, size_t iteration_count, double force_scaling,
-                                              double cooldown_factor, double cooldown_until, double repulsion_force,
+                                              double cooldown_factor, double repulsion_force,
                                               double edge_attraction_force, double gravity_force, double initial_radius,
                                               double board_width, double board_height, double tableWidth,
                                               double tableConstantHeight, double tableColumnHeight,
@@ -199,7 +199,6 @@ extern "C" void flatsql_schemagraph_configure(flatsql::SchemaGraph* graph, size_
     config.iteration_count = iteration_count;
     config.force_scaling = force_scaling;
     config.cooldown_factor = cooldown_factor;
-    config.cooldown_until = cooldown_until;
     config.repulsion_force = repulsion_force;
     config.edge_attraction_force = edge_attraction_force;
     config.gravity_force = gravity_force;
