@@ -306,7 +306,7 @@ const defaultContext: FlatSQLState = {
         initialRadius: 100.0,
         boardWidth: DEFAULT_BOARD_WIDTH,
         boardHeight: DEFAULT_BOARD_HEIGHT,
-        tableWidth: 160,
+        tableWidth: 180,
         tableConstantHeight: 24,
         tableColumnHeight: 8,
         tableMaxHeight: 40,
