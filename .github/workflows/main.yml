@@ -270,7 +270,7 @@ jobs:
                   name: flatsql_editor
                   path: ./page
 
-            - uses: actions/upload-pages-artifact@v1
+            - uses: actions/upload-pages-artifact@v2
               with:
                   path: ./page
 
