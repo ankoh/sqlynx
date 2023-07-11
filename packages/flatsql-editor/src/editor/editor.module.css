@@ -31,6 +31,7 @@
     border-top: 1px solid transparent;
     border-bottom: 1px solid var(--border_color_primary);
     border-left: var(--navbar_indicator_width) solid transparent;
+    color: var(--color_icon);
 }
 .navbar_tab:first-child {
     border-radius: calc(var(--border_radius) - 1px) 0px 0px 0px;
@@ -43,6 +44,7 @@
 
 .navbar_account {
     width: 100%;
+    color: var(--color_icon);
 }
 
 .navbar_account_button {
@@ -96,6 +98,7 @@
     align-items: center;
     border-radius: 0 var(--border_radius) 0 0;
     border-left: 1px solid var(--border_color_primary);
+    color: var(--color_icon);
 }
 
 .editor_with_loader {
