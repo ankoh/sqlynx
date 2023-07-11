@@ -3,6 +3,9 @@ import * as React from 'react';
 import { FlatSQLState } from '../flatsql_state';
 import { Edge, Handle, Node, NodeProps, Position } from 'reactflow';
 
+import iconTable from '../../static/svg/icons/table.svg';
+import iconTableView from '../../static/svg/icons/table_border.svg';
+
 import styles from './schema_graph_node.module.css';
 
 interface Column {
@@ -27,6 +30,11 @@ export const TableNode: React.FC<NodeProps<TableData>> = (props: NodeProps<Table
                 height: props.data.height,
             }}
         >
+            <div className={styles.table_icon}>
+                <svg width="20px" height="20px">
+                    <use xlinkHref={`${iconTable}#sym`} />
+                </svg>
+            </div>
             <div className={styles.table_name}>{props.data.name}</div>
         </div>
     );

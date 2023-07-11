@@ -5,12 +5,24 @@
 
     display: grid;
     grid-template-rows: 100%;
-    grid-template-columns: max-content auto;
+    grid-template-columns: max-content max-content auto;
+}
+
+.table_icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-left: 6px;
+    padding-right: 6px;
+    border-right: 1px solid var(--border_color_primary);
+    border-radius: calc(var(--border_radius) + 1px) 0 0 calc(var(--border_radius) + 1px);
 }
 
 .table_name {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding-left: 8px;
+    margin-left: 8px;
+    font-size: 0.9rem;
+    overflow: hidden;
 }
