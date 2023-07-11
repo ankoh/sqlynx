@@ -202,12 +202,7 @@ extern "C" void flatsql_schemagraph_configure(flatsql::SchemaGraph* graph, size_
     config.cooldown_until = cooldown_until;
     config.repulsion_force = repulsion_force;
     config.edge_attraction_force = edge_attraction_force;
-    config.gravity = {.position =
-                          {
-                              .x = board_width / 2,
-                              .y = board_height / 2,
-                          },
-                      .force = gravity_force};
+    config.gravity_force = gravity_force;
     config.initial_radius = initial_radius;
     config.board_height = board_height;
     config.board_width = board_width;

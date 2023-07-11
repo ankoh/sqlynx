@@ -67,24 +67,34 @@ void SchemaGraph::computeStep(size_t iteration, double& temperature) {
     Vector zero;
     std::fill(displacement.begin(), displacement.end(), zero);
 
+    std::array<Vertex, 3> gravity{
+        Vertex{1 * config.board_width / 4, config.board_height / 2},
+        Vertex{2 * config.board_width / 4, config.board_height / 2},
+        Vertex{3 * config.board_width / 4, config.board_height / 2},
+    };
+
     double repulsion_force = config.repulsion_force * config.force_scaling;
     double repulsion_squared = repulsion_force;
     double edge_attraction_force = config.edge_attraction_force * config.force_scaling;
     double edge_attraction_squared = edge_attraction_force * config.edge_attraction_force;
-    double gravity_force = config.gravity.force * config.force_scaling;
-    double gravity_squared = gravity_force * config.gravity.force;
+    double gravity_force = config.gravity_force * config.force_scaling;
+    double gravity_squared = gravity_force * config.gravity_force;
 
     // XXX Repulsion should be updated more carefully using a quad tree
 
+    constexpr double MIN_DISTANCE = 0.5;
+
     for (size_t i = 0; i < table_nodes.size(); ++i) {
         auto& table_node = table_nodes[i];
-        // Gravity force to center
-        Vector center_delta = table_node.position - config.gravity.position;
-        double center_distance = std::max(euclidean(center_delta), 1.0);
 
-        // Move point towards gravitation with a constant force
-        Vector center_normal = center_delta / center_distance;
-        displacement[i] = displacement[i] - (center_normal * gravity_force);
+        // Gravity attraction
+        for (auto& center : gravity) {
+            Vector delta = center - table_node.position;
+            double distance = std::max(euclidean(delta), MIN_DISTANCE);
+            Vector normal = delta / distance;
+            double attraction = gravity_squared / (distance * distance);
+            displacement[i] = displacement[i] + normal * attraction;
+        }
 
         //     // Attraction force between edges
         //     for (size_t j : adjacency[i]) {
@@ -123,7 +133,7 @@ void SchemaGraph::computeStep(size_t iteration, double& temperature) {
             Vector directed{(node_i.position.x < node_j.position.x) ? undirected.dx : -undirected.dx,
                             (node_i.position.y < node_j.position.y) ? undirected.dy : -undirected.dy};
 
-            double distance = 0.5;
+            double distance = MIN_DISTANCE;
             if ((diff_x < body_x) && (diff_y < body_y)) {
                 displacement[i] = displacement[i] - directed / 2;
                 displacement[j] = displacement[j] + directed / 2;
@@ -175,8 +185,8 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
         // XXX Store node dimensions
         table_nodes.emplace_back(
             Vertex{
-                config.gravity.position.x + config.initial_radius * cos(i * angle),
-                config.gravity.position.y + config.initial_radius * sin(i * angle),
+                config.board_width / 2 + config.initial_radius * cos(i * angle),
+                config.board_height / 2 + config.initial_radius * sin(i * angle),
             },
             config.table_width + config.table_margin, config.table_max_height + config.table_margin);
         // XXX Store actual table dependencies
