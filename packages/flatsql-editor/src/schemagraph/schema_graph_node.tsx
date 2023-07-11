@@ -36,6 +36,7 @@ export const TableNode: React.FC<NodeProps<TableData>> = (props: NodeProps<Table
                 </svg>
             </div>
             <div className={styles.table_name}>{props.data.name}</div>
+            <div className={styles.table_column_count}>{props.data.columns.length}</div>
         </div>
     );
 };

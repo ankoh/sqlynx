@@ -1,13 +1,12 @@
 <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
     <symbol id="sym" viewBox="0 0 24 24">
-        <g id="Artboard1" transform="matrix(0.880121,0,0,0.985328,0,0)">
-            <rect x="0" y="0" width="27.269" height="24.357" style="fill:none;"/>
+        <g id="Artboard1" transform="matrix(0.880121,0,0,0.985328,0,0)" fill="currentColor" >
             <g transform="matrix(1.11954,0,0,1,-1.62981,-1.80281e-15)">
                 <g transform="matrix(1.01489,0,0,1.01489,0,0)">
-                    <path d="M12,7.273L12,9.227C12,9.653 11.653,10 11.227,10L2.773,10C2.347,10 2,9.653 2,9.227L2,2.773C2,2.347 2.347,2 2.773,2L11.227,2C11.653,2 12,2.347 12,2.773L12,4.525L11,3.583L11,3L7,3L7,9L11,9L11,6.331L12,7.273Z"/>
+                    <path d="M12,7.273L12,9.227C12,9.653 11.653,10 11.227,10L2.773,10C2.347,10 2,9.653 2,9.227L2,2.773C2,2.347 2.347,2 2.773,2L11.227,2C11.653,2 12,2.347 12,2.773L12,4.525L11,3.583L11,3L7,3L7,9L11,9L11,6.331L12,7.273Z" />
                 </g>
                 <g transform="matrix(0.494064,0,0,0.923665,5.21222,0.0589331)">
-                    <rect x="3.83" y="4.057" width="6.676" height="1.099"/>
+                    <rect x="3.83" y="4.057" width="6.676" height="1.099" />
                 </g>
                 <g transform="matrix(0.494064,0,0,0.923665,5.21222,1.83499)">
                     <rect x="3.83" y="4.057" width="6.676" height="1.099"/>
@@ -54,10 +53,10 @@
                 </g>
             </g>
             <g transform="matrix(1.13621,0,0,1.01489,-1.62981,-1.80281e-15)">
-                <path d="M10.25,4.25L16.619,10.25" style="fill:none;stroke:black;stroke-width:1px;"/>
+                <path d="M10.25,4.25L16.619,10.25" style="stroke:black;stroke-width:1px;"/>
             </g>
             <g transform="matrix(1.13621,0,0,1.01489,-1.62981,-1.80281e-15)">
-                <path d="M16.619,12L10.25,18" style="fill:none;stroke:black;stroke-width:1px;"/>
+                <path d="M16.619,12L10.25,18" style="stroke:black;stroke-width:1px;"/>
             </g>
         </g>
     </symbol>
