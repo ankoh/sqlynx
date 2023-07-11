@@ -303,7 +303,7 @@ const defaultContext: FlatSQLState = {
         cooldownUntil: 0.5,
         repulsionForce: 0.4,
         edgeAttractionForce: 0.5,
-        gravityForce: 20,
+        gravityForce: 10,
         initialRadius: 100.0,
         boardWidth: DEFAULT_BOARD_WIDTH,
         boardHeight: DEFAULT_BOARD_HEIGHT,
