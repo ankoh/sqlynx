@@ -73,12 +73,12 @@ void SchemaGraph::computeStep(size_t iteration, double& temperature) {
         Vertex{3 * config.board_width / 4, config.board_height / 2},
     };
 
-    double repulsion_force = config.repulsion_force * config.force_scaling;
-    double repulsion_squared = repulsion_force;
-    double edge_attraction_force = config.edge_attraction_force * config.force_scaling;
-    double edge_attraction_squared = edge_attraction_force * config.edge_attraction_force;
-    double gravity_force = config.gravity_force * config.force_scaling;
-    double gravity_squared = gravity_force * gravity_force;
+    double repulsion_scaled = config.repulsion_force * config.force_scaling;
+    double repulsion_squared = repulsion_scaled;
+    double edge_attraction_scaled = config.edge_attraction_force * config.force_scaling;
+    double edge_attraction_squared = edge_attraction_scaled * config.edge_attraction_force;
+    double gravity_scaled = config.gravity_force * config.force_scaling;
+    double gravity_squared = gravity_scaled * gravity_scaled;
 
     // XXX Repulsion should be updated more carefully using a quad tree
 
