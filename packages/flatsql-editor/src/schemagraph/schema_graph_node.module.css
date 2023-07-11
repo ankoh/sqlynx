@@ -2,4 +2,15 @@
     border-radius: var(--border_radius);
     border: 1px solid var(--border_color_primary);
     background-color: white;
+
+    display: grid;
+    grid-template-rows: 100%;
+    grid-template-columns: max-content auto;
+}
+
+.table_name {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-left: 8px;
 }
