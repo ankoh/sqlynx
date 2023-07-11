@@ -27,7 +27,7 @@ export const TableNode: React.FC<NodeProps<TableData>> = (props: NodeProps<Table
                 height: props.data.height,
             }}
         >
-            <div>{props.data.name}</div>
+            <div className={styles.table_name}>{props.data.name}</div>
         </div>
     );
 };
@@ -41,23 +41,27 @@ export function layoutSchema(ctx: FlatSQLState): [Node<TableData>[], Edge[]] {
 
     const nodes: Node<TableData>[] = [];
     const layout = ctx.schemaGraphLayout!.read(new flatsql.proto.SchemaGraphLayout());
-    const tableReader = new flatsql.proto.SchemaGraphTable();
-    const tablePosition = new flatsql.proto.SchemaGraphVertex();
+    const tmpGraphTable = new flatsql.proto.SchemaGraphTable();
+    const tmpGraphVertex = new flatsql.proto.SchemaGraphVertex();
+    const tmpTable = new flatsql.proto.Table();
     for (let i = 0; i < layout.tablesLength(); ++i) {
-        const table = layout.tables(i, tableReader);
-        const pos = table!.position(tablePosition)!;
+        const graphTable = layout.tables(i, tmpGraphTable);
+        const position = graphTable!.position(tmpGraphVertex)!;
+        const table = analyzed.tables(graphTable!.tableId(), tmpTable);
+        const tableName = flatsql.FlatID.readTableName(table?.tableName()!, parsed, null);
+
         nodes.push({
-            id: table!.tableId().toString(),
+            id: i.toString(),
             type: 'table',
             position: {
-                x: pos.x(),
-                y: pos.y(),
+                x: position.x(),
+                y: position.y(),
             },
             data: {
-                name: table!.tableId().toString(),
+                name: tableName.table ?? '',
                 columns: [],
-                width: table!.width(),
-                height: table!.height(),
+                width: graphTable!.width(),
+                height: graphTable!.height(),
             },
         });
     }
