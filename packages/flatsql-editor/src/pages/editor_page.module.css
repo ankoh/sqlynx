@@ -71,6 +71,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    color: var(--color_icon);
 }
 
 .header_button:not(:first-child) {

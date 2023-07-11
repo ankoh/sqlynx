@@ -1,7 +1,7 @@
 :root {
     --color_primary: rgb(40, 40, 40);
     --color_version: rgb(160, 160, 160);
-    --color_icon: hsl(212, 8%, 33%);
+    --color_icon: hsl(212, 8%, 23%);
     --background_color_primary: rgb(246, 248, 250);
     --border_color_primary: rgb(208, 215, 222);
     --border_radius: 8px;
