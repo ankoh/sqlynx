@@ -78,7 +78,7 @@ void SchemaGraph::computeStep(size_t iteration, double& temperature) {
     double edge_attraction_force = config.edge_attraction_force * config.force_scaling;
     double edge_attraction_squared = edge_attraction_force * config.edge_attraction_force;
     double gravity_force = config.gravity_force * config.force_scaling;
-    double gravity_squared = gravity_force * config.gravity_force;
+    double gravity_squared = gravity_force * gravity_force;
 
     // XXX Repulsion should be updated more carefully using a quad tree
 
