@@ -300,7 +300,6 @@ const defaultContext: FlatSQLState = {
         iterationCount: 50.0,
         forceScaling: 100.0,
         cooldownFactor: 0.96,
-        cooldownUntil: 0.5,
         repulsionForce: 0.5,
         edgeAttractionForce: 0.5,
         gravityForce: 1.0,

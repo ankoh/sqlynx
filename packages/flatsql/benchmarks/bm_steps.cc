@@ -138,7 +138,6 @@ static void layout_schema(benchmark::State& state) {
     config.iteration_count = 10;
     config.force_scaling = 1.0;
     config.cooldown_factor = 0.85;
-    config.cooldown_until = 1.5;
     config.repulsion_force = 15.0;
     config.edge_attraction_force = 15.0;
     config.gravity_force = 15.0;

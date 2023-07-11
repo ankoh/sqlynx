@@ -32,7 +32,6 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
     config.force_scaling = 1.0;
     config.initial_radius = 100;
     config.cooldown_factor = 0.85;
-    config.cooldown_until = 1.5;
     config.repulsion_force = 15.0;
     config.edge_attraction_force = 15.0;
     config.gravity_force = 15.0;
