@@ -123,7 +123,7 @@ void SchemaGraph::computeStep(size_t iteration, double& temperature) {
             Vector directed{(node_i.position.x < node_j.position.x) ? undirected.dx : -undirected.dx,
                             (node_i.position.y < node_j.position.y) ? undirected.dy : -undirected.dy};
 
-            double distance = 1.0;
+            double distance = 0.5;
             if ((diff_x < body_x) && (diff_y < body_y)) {
                 displacement[i] = displacement[i] - directed / 2;
                 displacement[j] = displacement[j] + directed / 2;
@@ -173,11 +173,10 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
     double angle = 2.0 * M_PI / script->tables.size();
     for (size_t i = 0; i < script->tables.size(); ++i) {
         // XXX Store node dimensions
-        double jiggle = 1 + (static_cast<double>((i & 0b1) == 0) - 0.5);
         table_nodes.emplace_back(
             Vertex{
-                config.gravity.position.x + config.initial_radius * cos(i * angle) * jiggle,
-                config.gravity.position.y + config.initial_radius * sin(i * angle) * jiggle,
+                config.gravity.position.x + config.initial_radius * cos(i * angle),
+                config.gravity.position.y + config.initial_radius * sin(i * angle),
             },
             config.table_width + config.table_margin, config.table_max_height + config.table_margin);
         // XXX Store actual table dependencies
