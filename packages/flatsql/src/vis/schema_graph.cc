@@ -163,11 +163,7 @@ void SchemaGraph::computeStep(size_t iteration, double& temperature) {
     }
 
     // Cooldown temperature
-    if (temperature > config.cooldown_until) {
-        temperature *= config.cooldown_factor;
-    } else {
-        temperature = config.cooldown_until;
-    }
+    temperature *= config.cooldown_factor;
 }
 
 void SchemaGraph::Configure(const Config& config) { this->config = config; }

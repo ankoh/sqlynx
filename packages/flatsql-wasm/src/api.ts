@@ -24,7 +24,6 @@ interface FlatSQLModuleExports {
         iterationCount: number,
         forceScaling: number,
         cooldownFactor: number,
-        cooldownUntil: number,
         repulsionForce: number,
         edgeAttractionForce: number,
         gravityForce: number,
@@ -101,7 +100,6 @@ export class FlatSQL {
                 iterationCount: number,
                 forceScaling: number,
                 cooldownFactor: number,
-                cooldownUntil: number,
                 repulsionForce: number,
                 edgeAttractionForce: number,
                 gravityForce: number,
@@ -385,7 +383,6 @@ export interface FlatSQLSchemaGraphConfig {
     iterationCount: number;
     forceScaling: number;
     cooldownFactor: number;
-    cooldownUntil: number;
     repulsionForce: number;
     edgeAttractionForce: number;
     gravityForce: number;
@@ -432,7 +429,6 @@ export class FlatSQLSchemaGraph {
             config.iterationCount,
             config.forceScaling,
             config.cooldownFactor,
-            config.cooldownUntil,
             config.repulsionForce,
             config.edgeAttractionForce,
             config.gravityForce,
