@@ -49,8 +49,8 @@ std::array<double, 16> JIGGLE_COS{
 
 SchemaGraph::Vector jiggle(size_t table_id, size_t iteration, SchemaGraph::Vector vec) {
     size_t ofs = (table_id & 0b1) * 8;
-    double sin = JIGGLE_SIN[ofs + iteration & 7];
-    double cos = JIGGLE_COS[ofs + iteration & 7];
+    double sin = JIGGLE_SIN[(ofs + iteration) & 15];
+    double cos = JIGGLE_COS[(ofs + iteration) & 15];
     double x = vec.dx * cos - vec.dy * sin;
     double y = vec.dx * sin + vec.dy * cos;
     return {x, y};
