@@ -141,12 +141,7 @@ static void layout_schema(benchmark::State& state) {
     config.cooldown_until = 1.5;
     config.repulsion_force = 15.0;
     config.edge_attraction_force = 15.0;
-    config.gravity = {.position =
-                          {
-                              .x = 800,
-                              .y = 300,
-                          },
-                      .force = 15.0};
+    config.gravity_force = 15.0;
     config.board_width = 1600;
     config.board_height = 800;
     config.table_width = 100;

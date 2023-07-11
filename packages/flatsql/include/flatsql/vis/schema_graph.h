@@ -43,8 +43,8 @@ class SchemaGraph {
         double repulsion_force = 0;
         /// The edge force
         double edge_attraction_force = 0;
-        /// The center gravity point
-        VertexWithForce gravity;
+        /// The gravity force
+        double gravity_force = 0;
         /// The initial radius
         double initial_radius = 0;
         /// The board width
