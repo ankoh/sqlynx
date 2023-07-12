@@ -302,7 +302,7 @@ const defaultContext: FlatSQLState = {
         cooldownFactor: 0.96,
         repulsionForce: 0.5,
         edgeAttractionForce: 0.5,
-        gravityForce: 1.0,
+        gravityForce: 2.0,
         initialRadius: 100.0,
         boardWidth: DEFAULT_BOARD_WIDTH,
         boardHeight: DEFAULT_BOARD_HEIGHT,
@@ -310,7 +310,7 @@ const defaultContext: FlatSQLState = {
         tableConstantHeight: 24,
         tableColumnHeight: 8,
         tableMaxHeight: 36,
-        tableMargin: 16,
+        tableMargin: 20,
     },
     schemaGraphLayout: null,
 };
