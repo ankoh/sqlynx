@@ -34,8 +34,8 @@ double euclidean(SchemaGraph::Vector v) { return sqrt(v.dx * v.dx + v.dy * v.dy)
 /// Get the unit vector
 SchemaGraph::Vector unit_vector(SchemaGraph::Vector v) { return v / euclidean(v); }
 
-#define INORDER(F) F(0), F(10), F(20), F(30), F(40), F(50), F(60), F(70),
-#define REVERSE(F) F(0), F(-10), F(-20), F(-30), F(-40), F(-50), F(-60), F(-70),
+#define INORDER(F) F(0), F(12), F(24), F(36), F(48), F(60), F(72), F(84),
+#define REVERSE(F) F(0), F(-12), F(-24), F(-36), F(-48), F(-60), F(-72), F(-84),
 std::array<double, 16> JIGGLE_SIN{
 #define F(V) std::sin(V * 180 / M_PI)
     INORDER(F) REVERSE(F)
