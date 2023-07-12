@@ -7,7 +7,7 @@ import { EditorPlugin } from './editor_plugin';
 import { useFlatSQLState, useFlatSQLDispatch } from '../flatsql_state';
 
 import iconMainScript from '../../static/svg/icons/database_search.svg';
-import iconExternalScript from '../../static/svg/icons/tables_connected.svg';
+import iconExternalScript from '../../static/svg/icons/database.svg';
 import iconLoadExample from '../../static/svg/icons/folder_open.svg';
 import iconAccount from '../../static/svg/icons/account_circle.svg';
 
