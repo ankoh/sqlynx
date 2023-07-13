@@ -21,6 +21,8 @@
 
 .navbar_tabs {
     flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .navbar_tab {
@@ -39,10 +41,15 @@
 .navbar_tab:first-child {
     border-radius: calc(var(--border_radius) - 1px) 0px 0px 0px;
 }
-
 .navbar_tab_active {
     background-color: var(--navbar_background_active) !important;
     border-left: var(--navbar_indicator_width) solid var(--navbar_indicator_color) !important;
+}
+.navbar_tab_flex {
+    flex: 1;
+}
+.navbar_tab_icon {
+    pointer-events: none;
 }
 
 .navbar_account {

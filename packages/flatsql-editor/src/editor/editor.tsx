@@ -13,11 +13,40 @@ import iconAccount from '../../static/svg/icons/account_circle.svg';
 
 import styles from './editor.module.css';
 
+enum TabId {
+    MAIN_SCRIPT = 1,
+    EXTERNAL_SCRIPT = 2,
+    ACCOUNT = 3,
+}
+
+interface TabProps {
+    id: TabId;
+    active: TabId;
+    icon: string;
+    onClick: (event: React.MouseEvent<HTMLDivElement>) => void;
+}
+
+const Tab: React.FC<TabProps> = (props: TabProps) => (
+    <div
+        className={cn(styles.navbar_tab, {
+            [styles.navbar_tab_active]: props.id == props.active,
+        })}
+        onClick={props.onClick}
+        data-tab={props.id}
+    >
+        <svg className={styles.navbar_tab_icon} width="22px" height="22px">
+            <use xlinkHref={`${props.icon}#sym`} />
+        </svg>
+    </div>
+);
+
 interface Props {}
 
 export const ScriptEditor: React.FC<Props> = (props: Props) => {
     const ctx = useFlatSQLState();
     const ctxDispatch = useFlatSQLDispatch();
+    const [activeTab, setActiveTab] = React.useState<TabId>(TabId.MAIN_SCRIPT);
+
     const initialText = React.useMemo(() => {
         return ctx.mainScript?.toString() ?? '';
     }, [ctx.mainScript]);
@@ -25,6 +54,12 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
     if (ctx.mainScript == null) {
         return <div>Loading</div>;
     }
+
+    const onClick = (event: React.MouseEvent<HTMLDivElement>) => {
+        event.preventDefault();
+        const tab = (event.target as any).getAttribute('data-tab') as TabId;
+        setActiveTab(tab);
+    };
 
     // XXX the plugin is initialized with every update here...
     return (
@@ -44,25 +79,10 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                 </div>
             </div>
             <div className={styles.navbar}>
-                <div className={styles.navbar_tabs}>
-                    <div className={cn(styles.navbar_tab)}>
-                        <svg width="22px" height="22px">
-                            <use xlinkHref={`${iconMainScript}#sym`} />
-                        </svg>
-                    </div>
-                    <div className={cn(styles.navbar_tab, styles.navbar_tab_active)}>
-                        <svg width="22px" height="22px">
-                            <use xlinkHref={`${iconExternalScript}#sym`} />
-                        </svg>
-                    </div>
-                </div>
-                <div className={styles.navbar_account}>
-                    <div className={styles.navbar_account_button}>
-                        <svg width="24px" height="24px">
-                            <use xlinkHref={`${iconAccount}#sym`} />
-                        </svg>
-                    </div>
-                </div>
+                <Tab id={TabId.MAIN_SCRIPT} active={activeTab} icon={iconMainScript} onClick={onClick} />
+                <Tab id={TabId.EXTERNAL_SCRIPT} active={activeTab} icon={iconExternalScript} onClick={onClick} />
+                <div className={styles.navbar_tab_flex} />
+                <Tab id={TabId.ACCOUNT} active={activeTab} icon={iconAccount} onClick={onClick} />
             </div>
             <div className={styles.editor_with_loader}>
                 <div className={styles.editor}>
