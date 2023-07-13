@@ -26,7 +26,6 @@ export interface TableEdgeProps {}
 export const TableNode: React.FC<TableNodeProps> = (props: TableNodeProps) => {
     return (
         <div
-            key={props.tableId}
             className={styles.table_node}
             style={{
                 position: 'absolute',
