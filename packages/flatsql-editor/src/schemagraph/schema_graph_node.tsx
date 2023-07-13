@@ -1,7 +1,6 @@
 import * as flatsql from '@ankoh/flatsql';
 import * as React from 'react';
 import { FlatSQLState } from '../flatsql_state';
-import { Edge, Handle, Node, NodeProps, Position } from 'reactflow';
 
 import iconTable from '../../static/svg/icons/table.svg';
 import iconTableView from '../../static/svg/icons/table_border.svg';
@@ -13,6 +12,7 @@ interface TableColumn {
 }
 
 export interface TableNodeProps {
+    tableId: number;
     name: string;
     x: number;
     y: number;
@@ -21,11 +21,12 @@ export interface TableNodeProps {
     columns: TableColumn[];
 }
 
+export interface TableEdgeProps {}
+
 export const TableNode: React.FC<TableNodeProps> = (props: TableNodeProps) => {
-    //            <Handle type="target" position={Position.Left} />
-    //            <Handle type="source" position={Position.Right} />
     return (
         <div
+            key={props.tableId}
             className={styles.table_node}
             style={{
                 position: 'absolute',
@@ -46,7 +47,7 @@ export const TableNode: React.FC<TableNodeProps> = (props: TableNodeProps) => {
     );
 };
 
-export function layoutSchema(ctx: FlatSQLState): [TableNodeProps[], Edge[]] {
+export function layoutSchema(ctx: FlatSQLState): [TableNodeProps[], TableEdgeProps[]] {
     const parsed = ctx.mainParsed?.read(new flatsql.proto.ParsedScript());
     const analyzed = ctx.mainAnalyzed?.read(new flatsql.proto.AnalyzedScript());
     if (!parsed || !analyzed) {
@@ -76,6 +77,7 @@ export function layoutSchema(ctx: FlatSQLState): [TableNodeProps[], Edge[]] {
         }
 
         nodes.push({
+            tableId: i,
             name: tableName.table ?? '',
             x: position.x(),
             y: position.y(),

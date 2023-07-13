@@ -6,7 +6,6 @@ import { SchemaGraph } from '../schemagraph/schema_graph';
 import { RESULT_OK } from '../utils/result';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import 'reactflow/dist/style.css';
 import styles from './editor_page.module.css';
 
 import iconGitHub from '../../static/svg/icons/github.svg';
