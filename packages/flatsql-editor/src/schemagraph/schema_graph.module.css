@@ -1,0 +1,19 @@
+.graph_container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.graph_nodes {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.graph_background {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0px;
+    left: 0px;
+}

@@ -12,22 +12,27 @@ interface TableColumn {
     name: string;
 }
 
-export interface TableData {
+export interface TableNodeProps {
     name: string;
-    columns: TableColumn[];
+    x: number;
+    y: number;
     width: number;
     height: number;
+    columns: TableColumn[];
 }
 
-export const TableNode: React.FC<NodeProps<TableData>> = (props: NodeProps<TableData>) => {
+export const TableNode: React.FC<TableNodeProps> = (props: TableNodeProps) => {
     //            <Handle type="target" position={Position.Left} />
     //            <Handle type="source" position={Position.Right} />
     return (
         <div
             className={styles.table_node}
             style={{
-                width: props.data.width,
-                height: props.data.height,
+                position: 'absolute',
+                top: props.y,
+                left: props.x,
+                width: props.width,
+                height: props.height,
             }}
         >
             <div className={styles.table_icon}>
@@ -35,20 +40,20 @@ export const TableNode: React.FC<NodeProps<TableData>> = (props: NodeProps<Table
                     <use xlinkHref={`${iconTable}#sym`} />
                 </svg>
             </div>
-            <div className={styles.table_name}>{props.data.name}</div>
-            <div className={styles.table_column_count}>{props.data.columns.length}</div>
+            <div className={styles.table_name}>{props.name}</div>
+            <div className={styles.table_column_count}>{props.columns.length}</div>
         </div>
     );
 };
 
-export function layoutSchema(ctx: FlatSQLState): [Node<TableData>[], Edge[]] {
+export function layoutSchema(ctx: FlatSQLState): [TableNodeProps[], Edge[]] {
     const parsed = ctx.mainParsed?.read(new flatsql.proto.ParsedScript());
     const analyzed = ctx.mainAnalyzed?.read(new flatsql.proto.AnalyzedScript());
     if (!parsed || !analyzed) {
         return [[], []];
     }
 
-    const nodes: Node<TableData>[] = [];
+    const nodes: TableNodeProps[] = [];
     const layout = ctx.schemaGraphLayout!.read(new flatsql.proto.SchemaGraphLayout());
     const tmpGraphTable = new flatsql.proto.SchemaGraphTable();
     const tmpGraphVertex = new flatsql.proto.SchemaGraphVertex();
@@ -71,18 +76,12 @@ export function layoutSchema(ctx: FlatSQLState): [Node<TableData>[], Edge[]] {
         }
 
         nodes.push({
-            id: i.toString(),
-            type: 'table',
-            position: {
-                x: position.x(),
-                y: position.y(),
-            },
-            data: {
-                name: tableName.table ?? '',
-                columns: columns,
-                width: graphTable!.width(),
-                height: graphTable!.height(),
-            },
+            name: tableName.table ?? '',
+            x: position.x(),
+            y: position.y(),
+            columns: columns,
+            width: graphTable!.width(),
+            height: graphTable!.height(),
         });
     }
     console.log(nodes);
