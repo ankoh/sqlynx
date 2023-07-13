@@ -52,7 +52,7 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
             <Background />
             <div className={styles.graph_nodes}>
                 {nodes.map(n => (
-                    <TableNode {...n} />
+                    <TableNode key={n.tableId} {...n} />
                 ))}
             </div>
         </div>
