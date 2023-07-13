@@ -34,7 +34,7 @@ const Tab: React.FC<TabProps> = (props: TabProps) => (
         onClick={props.onClick}
         data-tab={props.id}
     >
-        <svg className={styles.navbar_tab_icon} width="22px" height="22px">
+        <svg className={styles.button_icon} width="22px" height="22px">
             <use xlinkHref={`${props.icon}#sym`} />
         </svg>
     </div>
@@ -46,6 +46,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
     const ctx = useFlatSQLState();
     const ctxDispatch = useFlatSQLDispatch();
     const [activeTab, setActiveTab] = React.useState<TabId>(TabId.MAIN_SCRIPT);
+    const [folderOpen, setFolderOpen] = React.useState<boolean>(false);
 
     const initialText = React.useMemo(() => {
         return ctx.mainScript?.toString() ?? '';
@@ -60,6 +61,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         const tab = (event.target as any).getAttribute('data-tab') as TabId;
         setActiveTab(tab);
     };
+    const toggleOpenFolder = () => setFolderOpen(s => !s);
 
     // XXX the plugin is initialized with every update here...
     return (
@@ -70,8 +72,8 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                 </div>
                 <div className={styles.headerbar_right}>
                     <div className={styles.example_loader_container}>
-                        <div className={styles.example_loader_button}>
-                            <svg width="20px" height="20px">
+                        <div className={styles.example_loader_button} onClick={toggleOpenFolder}>
+                            <svg className={styles.button_icon} width="20px" height="20px">
                                 <use xlinkHref={`${iconLoadExample}#sym`} />
                             </svg>
                         </div>
@@ -81,7 +83,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
             <div className={styles.navbar}>
                 <Tab id={TabId.MAIN_SCRIPT} active={activeTab} icon={iconMainScript} onClick={onClick} />
                 <Tab id={TabId.EXTERNAL_SCRIPT} active={activeTab} icon={iconExternalScript} onClick={onClick} />
-                <div className={styles.navbar_tab_flex} />
+                <div style={{ flex: 1 }} />
                 <Tab id={TabId.ACCOUNT} active={activeTab} icon={iconAccount} onClick={onClick} />
             </div>
             <div className={styles.editor_with_loader}>
@@ -103,7 +105,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                         )}
                     </AutoSizer>
                 </div>
-                <div className={styles.loader_container} />
+                <div className={styles.loader_container} style={{ display: folderOpen ? 'block' : 'none' }} />
             </div>
         </div>
     );
