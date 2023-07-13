@@ -33,12 +33,15 @@
     border-left: var(--navbar_indicator_width) solid transparent;
     color: var(--color_icon);
 }
+.navbar_tab:hover {
+    background-color: var(--action_item_hover_bg);
+}
 .navbar_tab:first-child {
     border-radius: calc(var(--border_radius) - 1px) 0px 0px 0px;
 }
 
 .navbar_tab_active {
-    background-color: var(--navbar_background_active);
+    background-color: var(--navbar_background_active) !important;
     border-left: var(--navbar_indicator_width) solid var(--navbar_indicator_color) !important;
 }
 
@@ -99,6 +102,9 @@
     border-radius: 0 var(--border_radius) 0 0;
     border-left: 1px solid var(--border_color_primary);
     color: var(--color_icon);
+}
+.example_loader_button:hover {
+    background-color: var(--action_item_hover_bg);
 }
 
 .editor_with_loader {

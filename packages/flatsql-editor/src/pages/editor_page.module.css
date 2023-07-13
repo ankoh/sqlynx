@@ -78,6 +78,10 @@
     border-left: 1px solid var(--border_color_primary);
 }
 
+.header_button:hover {
+    background-color: var(--action_item_hover_bg);
+}
+
 .header_examples {
     display: grid;
     grid-template-rows: 32px;
