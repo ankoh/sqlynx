@@ -15,6 +15,11 @@ import logo from '../../static/svg/logo/logo.svg';
 
 interface Props {}
 
+const openInNewTab = (url: string) => {
+    const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
+    if (newWindow) newWindow.opener = null;
+};
+
 export const EditorPage: React.FC<Props> = (props: Props) => {
     const backend = useFlatSQL();
     const version = React.useMemo(() => {
@@ -45,12 +50,18 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                 </div>
 
                 <div className={styles.header_button_group}>
-                    <div className={styles.header_button}>
+                    <div
+                        className={styles.header_button}
+                        onClick={() => openInNewTab('https://github.com/ankoh/flatsql/issues')}
+                    >
                         <svg width="22px" height="22px">
                             <use xlinkHref={`${iconBug}#sym`} />
                         </svg>
                     </div>
-                    <div className={styles.header_button}>
+                    <div
+                        className={styles.header_button}
+                        onClick={() => openInNewTab('https://github.com/ankoh/flatsql')}
+                    >
                         <svg width="22px" height="22px">
                             <use xlinkHref={`${iconGitHub}#sym`} />
                         </svg>
