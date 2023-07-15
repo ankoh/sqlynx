@@ -1,9 +1,12 @@
 import * as React from 'react';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import * as flatsql from '@ankoh/flatsql';
+
 import cn from 'classnames';
 
+import { Decoration, DecorationSet, EditorView } from '@codemirror/view';
+import { RangeSetBuilder } from '@codemirror/state';
 import { CodeMirror } from './codemirror';
-import { EditorPlugin } from './editor_plugin';
+import { UpdateFlatSQLDecorations, FlatSQLExtension, UpdateFlatSQLScript } from './extension';
 import { useFlatSQLState, useFlatSQLDispatch } from '../flatsql_state';
 
 import iconMainScript from '../../static/svg/icons/database_search.svg';
@@ -15,7 +18,7 @@ import styles from './editor.module.css';
 
 enum TabId {
     MAIN_SCRIPT = 1,
-    EXTERNAL_SCRIPT = 2,
+    SCHEMA_SCRIPT = 2,
     ACCOUNT = 3,
 }
 
@@ -42,28 +45,85 @@ const Tab: React.FC<TabProps> = (props: TabProps) => (
 
 interface Props {}
 
+interface ActiveScriptState {
+    script: flatsql.FlatSQLScript | null;
+    decorations: DecorationSet | null;
+}
+
 export const ScriptEditor: React.FC<Props> = (props: Props) => {
     const ctx = useFlatSQLState();
     const ctxDispatch = useFlatSQLDispatch();
     const [activeTab, setActiveTab] = React.useState<TabId>(TabId.MAIN_SCRIPT);
     const [folderOpen, setFolderOpen] = React.useState<boolean>(false);
+    const [view, setView] = React.useState<EditorView | null>(null);
 
-    const initialText = React.useMemo(() => {
-        return ctx.mainScript?.toString() ?? '';
-    }, [ctx.mainScript]);
+    const viewWasCreated = React.useCallback((view: EditorView) => setView(view), [setView]);
+    const viewWillBeDestroyed = React.useCallback((view: EditorView) => setView(null), [setView]);
+    const activeScript = React.useRef<ActiveScriptState>({
+        script: null,
+        decorations: null,
+    });
+    React.useEffect(() => {
+        // CodeMirror not set up yet?
+        if (view === null) {
+            return;
+        }
+        // Determine which script is active
+        let script: flatsql.FlatSQLScript | null = activeScript.current.script;
+        let decorations: DecorationSet | null = activeScript.current.decorations;
 
-    if (ctx.mainScript == null) {
-        return <div>Loading</div>;
-    }
+        switch (activeTab as TabId) {
+            case TabId.ACCOUNT:
+                break;
+            case TabId.MAIN_SCRIPT: {
+                script = ctx.mainScript;
+                decorations = ctx.mainDecorations;
+                break;
+            }
+            case TabId.SCHEMA_SCRIPT: {
+                script = ctx.schemaScript;
+                decorations = null;
+                break;
+            }
+        }
 
-    const onClick = (event: React.MouseEvent<HTMLDivElement>) => {
+        // Did the script change?
+        let changes = [];
+        let effects = [];
+        if (activeScript.current.script !== script) {
+            changes.push({
+                from: 0,
+                to: view.state.doc.length,
+                insert: script?.toString(),
+            });
+            effects.push(
+                UpdateFlatSQLScript.of({
+                    script,
+                    onChange: (script: flatsql.FlatSQLScript) => {},
+                }),
+            );
+            activeScript.current.script = script;
+        }
+        // Did the decorations change?
+        if (activeScript.current.decorations !== decorations) {
+            effects.push(UpdateFlatSQLDecorations.of(decorations ?? new RangeSetBuilder<Decoration>().finish()));
+            activeScript.current.decorations = decorations;
+        }
+        // Did anything change? Then update the view
+        if (changes.length > 0 || effects.length > 0) {
+            view.dispatch({ changes, effects });
+        }
+    }, [view, activeTab, ctx.schemaScript, ctx.mainScript]);
+
+    // Helper to select a tab
+    const selectTab = (event: React.MouseEvent<HTMLDivElement>) => {
         event.preventDefault();
         const tab = (event.target as any).getAttribute('data-tab') as TabId;
-        setActiveTab(tab);
+        setActiveTab(+tab);
     };
+    // Helper to toggle the folder viewer
     const toggleOpenFolder = () => setFolderOpen(s => !s);
 
-    // XXX the plugin is initialized with every update here...
     return (
         <div className={styles.container}>
             <div className={styles.headerbar}>
@@ -81,29 +141,19 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                 </div>
             </div>
             <div className={styles.navbar}>
-                <Tab id={TabId.MAIN_SCRIPT} active={activeTab} icon={iconMainScript} onClick={onClick} />
-                <Tab id={TabId.EXTERNAL_SCRIPT} active={activeTab} icon={iconExternalScript} onClick={onClick} />
+                <Tab id={TabId.MAIN_SCRIPT} active={activeTab} icon={iconMainScript} onClick={selectTab} />
+                <Tab id={TabId.SCHEMA_SCRIPT} active={activeTab} icon={iconExternalScript} onClick={selectTab} />
                 <div style={{ flex: 1 }} />
-                <Tab id={TabId.ACCOUNT} active={activeTab} icon={iconAccount} onClick={onClick} />
+                <Tab id={TabId.ACCOUNT} active={activeTab} icon={iconAccount} onClick={selectTab} />
             </div>
             <div className={styles.editor_with_loader}>
                 <div className={styles.editor}>
-                    <AutoSizer>
-                        {(s: { height: number; width: number }) => (
-                            <CodeMirror
-                                className={styles.codemirror}
-                                value={initialText}
-                                extensions={[
-                                    EditorPlugin.of({
-                                        context: ctx,
-                                        dispatchContext: ctxDispatch,
-                                    }),
-                                ]}
-                                width={`${s.width}px`}
-                                height={`${s.height}px`}
-                            />
-                        )}
-                    </AutoSizer>
+                    <CodeMirror
+                        className={styles.codemirror}
+                        extensions={[FlatSQLExtension]}
+                        viewWasCreated={viewWasCreated}
+                        viewWillBeDestroyed={viewWillBeDestroyed}
+                    />
                 </div>
                 <div className={styles.loader_container} style={{ display: folderOpen ? 'block' : 'none' }} />
             </div>
