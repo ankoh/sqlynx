@@ -136,11 +136,24 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
     // Helper to toggle the folder viewer
     const toggleOpenFolder = () => setFolderOpen(s => !s);
 
+    // Get the title of the tab
+    let tabTitle = '';
+    switch (activeTab) {
+        case TabId.MAIN_SCRIPT:
+            tabTitle = 'SQL Query';
+            break;
+        case TabId.SCHEMA_SCRIPT:
+            tabTitle = 'SQL Schema';
+            break;
+        case TabId.ACCOUNT:
+            tabTitle = 'Account';
+            break;
+    }
     return (
         <div className={styles.container}>
             <div className={styles.headerbar}>
                 <div className={styles.headerbar_left}>
-                    <div className={styles.headerbar_script_title}>SQL Schema</div>
+                    <div className={styles.headerbar_script_title}>{tabTitle}</div>
                 </div>
                 <div className={styles.headerbar_right}>
                     <div className={styles.example_loader_container}>
