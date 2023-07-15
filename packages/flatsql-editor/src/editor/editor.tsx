@@ -7,7 +7,7 @@ import { Decoration, DecorationSet, EditorView, lineNumbers } from '@codemirror/
 import { RangeSetBuilder } from '@codemirror/state';
 import { CodeMirror } from './codemirror';
 import { UpdateFlatSQLDecorations, UpdateFlatSQLScript, FlatSQLExtensions } from './extension';
-import { useFlatSQLState, useFlatSQLDispatch } from '../flatsql_state';
+import { useFlatSQLState, useFlatSQLDispatch, UPDATE_SCRIPT } from '../flatsql_state';
 
 import iconMainScript from '../../static/svg/icons/database_search.svg';
 import iconExternalScript from '../../static/svg/icons/database.svg';
@@ -63,6 +63,15 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         script: null,
         decorations: null,
     });
+    const updateScript = React.useCallback(
+        (script: flatsql.FlatSQLScript) => {
+            ctxDispatch({
+                type: UPDATE_SCRIPT,
+                value: script,
+            });
+        },
+        [ctxDispatch],
+    );
     React.useEffect(() => {
         // CodeMirror not set up yet?
         if (view === null) {
@@ -99,7 +108,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
             effects.push(
                 UpdateFlatSQLScript.of({
                     script,
-                    onChange: (script: flatsql.FlatSQLScript) => {},
+                    onChange: updateScript,
                 }),
             );
             activeScript.current.script = script;
@@ -113,7 +122,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         if (changes.length > 0 || effects.length > 0) {
             view.dispatch({ changes, effects });
         }
-    }, [view, activeTab, ctx.schemaScript, ctx.mainScript]);
+    }, [view, activeTab, ctx.schemaScript, ctx.mainScript, ctx.mainDecorations, updateScript]);
 
     // Helper to select a tab
     const selectTab = (event: React.MouseEvent<HTMLDivElement>) => {
