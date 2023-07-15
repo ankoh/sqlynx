@@ -63,6 +63,8 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         script: null,
         decorations: null,
     });
+
+    // Helper to update a script
     const updateScript = React.useCallback(
         (script: flatsql.FlatSQLScript) => {
             ctxDispatch({
@@ -72,6 +74,8 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         },
         [ctxDispatch],
     );
+
+    // Effect to update the editor context whenever the script changes
     React.useEffect(() => {
         // CodeMirror not set up yet?
         if (view === null) {
@@ -80,25 +84,24 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         // Determine which script is active
         let script: flatsql.FlatSQLScript | null = activeScript.current.script;
         let decorations: DecorationSet | null = activeScript.current.decorations;
-
         switch (activeTab as TabId) {
             case TabId.ACCOUNT:
                 break;
             case TabId.MAIN_SCRIPT: {
-                script = ctx.mainScript;
-                decorations = ctx.mainDecorations;
+                script = ctx.main.script;
+                decorations = ctx.main.decorations;
                 break;
             }
             case TabId.SCHEMA_SCRIPT: {
-                script = ctx.schemaScript;
-                decorations = null;
+                script = ctx.schema.script;
+                decorations = ctx.schema.decorations;
                 break;
             }
         }
 
         // Did the script change?
-        let changes = [];
-        let effects = [];
+        const changes = [];
+        const effects = [];
         if (activeScript.current.script !== script) {
             changes.push({
                 from: 0,
@@ -122,7 +125,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         if (changes.length > 0 || effects.length > 0) {
             view.dispatch({ changes, effects });
         }
-    }, [view, activeTab, ctx.schemaScript, ctx.mainScript, ctx.mainDecorations, updateScript]);
+    }, [view, activeTab, ctx.schema, ctx.main, updateScript]);
 
     // Helper to select a tab
     const selectTab = (event: React.MouseEvent<HTMLDivElement>) => {

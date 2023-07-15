@@ -7,112 +7,134 @@ import { RangeSet } from '@codemirror/state';
 import { Action, Dispatch } from './model/action';
 import { RESULT_OK } from './utils/result';
 
+/// The state of a FlatSQL script.
+export interface FlatSQLScriptState {
+    /// The script
+    script: flatsql.FlatSQLScript | null;
+    /// The scanned script
+    scanned: flatsql.FlatBufferRef<flatsql.proto.ScannedScript> | null;
+    /// The parsed script
+    parsed: flatsql.FlatBufferRef<flatsql.proto.ParsedScript> | null;
+    /// The analyzed script
+    analyzed: flatsql.FlatBufferRef<flatsql.proto.AnalyzedScript> | null;
+    /// The decorations
+    decorations: DecorationSet;
+}
+
 /// The state of the FlatSQL module.
 /// We pass this state container to the event callback so that it can be propagated as React state.
 export interface FlatSQLState {
     /// The API
     instance: flatsql.FlatSQL | null;
     /// The main script
-    mainScript: flatsql.FlatSQLScript | null;
-    /// The schema script
-    schemaScript: flatsql.FlatSQLScript | null;
-    /// The scanned script
-    mainScanned: flatsql.FlatBufferRef<flatsql.proto.ScannedScript> | null;
-    /// The parsed script
-    mainParsed: flatsql.FlatBufferRef<flatsql.proto.ParsedScript> | null;
-    /// The analyzed script
-    mainAnalyzed: flatsql.FlatBufferRef<flatsql.proto.AnalyzedScript> | null;
-    /// The decorations for the main script
-    mainDecorations: DecorationSet;
-    /// The schema graph
-    schemaGraph: flatsql.FlatSQLSchemaGraph | null;
-    /// The schema graph config
-    schemaGraphConfig: flatsql.FlatSQLSchemaGraphConfig;
-    /// The schema graph
-    schemaGraphLayout: flatsql.FlatBufferRef<flatsql.proto.SchemaGraphLayout> | null;
+    main: FlatSQLScriptState;
+    /// The main script
+    schema: FlatSQLScriptState;
+    /// The graph
+    graph: flatsql.FlatSQLSchemaGraph | null;
+    /// The graph layout
+    graphLayout: flatsql.FlatBufferRef<flatsql.proto.SchemaGraphLayout> | null;
+    /// The graph config
+    graphConfig: flatsql.FlatSQLSchemaGraphConfig;
 }
 
-function destroy(ctx: FlatSQLState): FlatSQLState {
-    if (ctx.mainScanned != null) {
-        ctx.mainScanned.delete();
-        ctx.mainScanned = null;
+/// Destroy a state
+function destroy(state: FlatSQLState): FlatSQLState {
+    const destroyScriptState = (state: FlatSQLScriptState) => {
+        if (state.scanned != null) {
+            state.scanned.delete();
+            state.scanned = null;
+        }
+        if (state.parsed != null) {
+            state.parsed.delete();
+            state.parsed = null;
+        }
+        if (state.analyzed != null) {
+            state.analyzed.delete();
+            state.analyzed = null;
+        }
+        if (state.script != null) {
+            state.script!.delete();
+            state.script = null;
+        }
+        return state;
+    };
+    destroyScriptState(state.main);
+    destroyScriptState(state.schema);
+    if (state.graphLayout) {
+        state.graphLayout.delete();
+        state.graphLayout = null;
     }
-    if (ctx.mainParsed != null) {
-        ctx.mainParsed.delete();
-        ctx.mainParsed = null;
-    }
-    if (ctx.mainAnalyzed != null) {
-        ctx.mainAnalyzed.delete();
-        ctx.mainAnalyzed = null;
-    }
-    if (ctx.mainScript != null) {
-        ctx.mainScript!.delete();
-        ctx.mainScript = null;
-    }
-    if (ctx.schemaGraphLayout) {
-        ctx.schemaGraphLayout.delete();
-        ctx.schemaGraphLayout = null;
-    }
-    if (ctx.schemaScript) {
-        ctx.schemaScript.delete();
-        ctx.schemaScript = null;
-    }
-    return ctx;
+    return state;
 }
 
-function updateSchemaGraph(ctx: FlatSQLState): FlatSQLState {
-    if (ctx.mainScript == null) {
-        return ctx;
+/// Compute a schema graph
+function computeSchemaGraph(state: FlatSQLState): FlatSQLState {
+    if (state.main.script == null) {
+        return state;
     }
     console.time('Schema Graph Layout');
-    if (ctx.schemaGraphLayout != null) {
-        ctx.schemaGraphLayout.delete();
-        ctx.schemaGraphLayout = null;
+    if (state.graphLayout != null) {
+        state.graphLayout.delete();
+        state.graphLayout = null;
     }
-    ctx.schemaGraph!.configure(ctx.schemaGraphConfig);
-    ctx.schemaGraphLayout = ctx.schemaGraph!.loadScript(ctx.mainScript);
+    state.graph!.configure(state.graphConfig);
+    state.graphLayout = state.graph!.loadScript(state.main.script);
     console.timeEnd('Schema Graph Layout');
-    return ctx;
+    return state;
 }
 
-function updateScript(ctx: FlatSQLState): FlatSQLState {
-    if (!ctx.mainScript) return ctx;
+/// Analyze a script
+function analyzeScript(state: FlatSQLScriptState): FlatSQLScriptState {
+    if (!state.script) return state;
     // Scan the script
     console.time('Script Scanning');
-    if (ctx.mainScanned != null) {
-        ctx.mainScanned.delete();
-        ctx.mainScanned = null;
+    if (state.scanned != null) {
+        state.scanned.delete();
+        state.scanned = null;
     }
-    ctx.mainScanned = ctx.mainScript.scan();
+    state.scanned = state.script.scan();
     console.timeEnd('Script Scanning');
 
     // Parse the script
     console.time('Script Parsing');
-    if (ctx.mainParsed != null) {
-        ctx.mainParsed.delete();
-        ctx.mainParsed = null;
+    if (state.parsed != null) {
+        state.parsed.delete();
+        state.parsed = null;
     }
-    ctx.mainParsed = ctx.mainScript.parse();
+    state.parsed = state.script.parse();
     console.timeEnd('Script Parsing');
 
     // Parse the script
     console.time('Script Analyzing');
-    if (ctx.mainAnalyzed != null) {
-        ctx.mainAnalyzed.delete();
-        ctx.mainAnalyzed = null;
+    if (state.analyzed != null) {
+        state.analyzed.delete();
+        state.analyzed = null;
     }
-    ctx.mainAnalyzed = ctx.mainScript.analyze();
+    state.analyzed = state.script.analyze();
     console.timeEnd('Script Analyzing');
 
-    // Update the schema graph
-    updateSchemaGraph(ctx);
     // Build decorations
-    ctx.mainDecorations = buildDecorations(ctx.mainScanned);
-    return ctx;
+    state.decorations = buildDecorations(state.scanned);
+    return state;
+}
+/// Update a script
+function updateScript(state: FlatSQLState, script: flatsql.FlatSQLScript): FlatSQLState {
+    if (script === state.main.script) {
+        state.main = analyzeScript(state.main);
+        computeSchemaGraph(state);
+        return state;
+    }
+    if (script === state.schema.script) {
+        state.schema = analyzeScript(state.schema);
+        computeSchemaGraph(state);
+        return state;
+    }
+    return state;
 }
 
-const Token = flatsql.proto.HighlightingTokenType;
-const keywordDecoration = Decoration.mark({
+const TokenType = flatsql.proto.HighlightingTokenType;
+const KeywordDecoration = Decoration.mark({
     class: 'flatsql-keyword',
 });
 /// Update the CodeMirror decorations
@@ -125,13 +147,13 @@ function buildDecorations(scanned: flatsql.FlatBufferRef<flatsql.proto.ScannedSc
         const tokenOffsets = hl.tokenOffsetsArray()!;
         const tokenTypes = hl.tokenTypesArray()!;
         let prevOffset = 0;
-        let prevType = Token.NONE;
+        let prevType = TokenType.NONE;
         for (let i = 0; i < tokenOffsets.length; ++i) {
             const begin = prevOffset;
             const end = tokenOffsets[i];
             switch (prevType) {
-                case Token.KEYWORD:
-                    builder.add(begin, end, keywordDecoration);
+                case TokenType.KEYWORD:
+                    builder.add(begin, end, KeywordDecoration);
                     break;
                 default:
                     break;
@@ -146,12 +168,12 @@ function buildDecorations(scanned: flatsql.FlatBufferRef<flatsql.proto.ScannedSc
 export const INITIALIZE = Symbol('INITIALIZE');
 export const UPDATE_SCRIPT = Symbol('UPDATE_SCRIPT');
 export const RESIZE_SCHEMA_GRAPH = Symbol('RESIZE_EDITOR');
-export const DESTORY_SCRIPTS = Symbol('DESTORY');
+export const DESTROY = Symbol('DESTORY');
 export type EditorContextAction =
     | Action<typeof INITIALIZE, flatsql.FlatSQL>
     | Action<typeof UPDATE_SCRIPT, flatsql.FlatSQLScript>
     | Action<typeof RESIZE_SCHEMA_GRAPH, [number, number]>
-    | Action<typeof DESTORY_SCRIPTS, undefined>;
+    | Action<typeof DESTROY, undefined>;
 
 const TMP_TPCH_SCHEMA = `create table part (
    p_partkey integer not null,
@@ -253,28 +275,31 @@ const reducer = (state: FlatSQLState, action: EditorContextAction): FlatSQLState
             const s: FlatSQLState = {
                 ...state,
                 instance: action.value,
-                mainScript: action.value.createScript(),
-                schemaScript: action.value.createScript(),
-                schemaGraph: action.value.createSchemaGraph(),
+                main: {
+                    ...state.main,
+                    script: action.value.createScript(),
+                },
+                schema: {
+                    ...state.schema,
+                    script: action.value.createScript(),
+                },
+                graph: action.value.createSchemaGraph(),
             };
-            s.mainScript!.insertTextAt(0, TMP_TPCH_SCHEMA);
-            updateScript(s);
-            return s;
+            s.main.script!.insertTextAt(0, TMP_TPCH_SCHEMA);
+            return updateScript(s, s.main.script!);
         }
         case UPDATE_SCRIPT:
-            return updateScript({ ...state });
-        case RESIZE_SCHEMA_GRAPH: {
-            const s: FlatSQLState = {
+            return updateScript({ ...state }, action.value);
+        case RESIZE_SCHEMA_GRAPH:
+            return computeSchemaGraph({
                 ...state,
-                schemaGraphConfig: {
-                    ...state.schemaGraphConfig,
+                graphConfig: {
+                    ...state.graphConfig,
                     boardWidth: action.value[0],
                     boardHeight: action.value[1],
                 },
-            };
-            return updateSchemaGraph(s);
-        }
-        case DESTORY_SCRIPTS:
+            });
+        case DESTROY:
             return destroy({ ...state });
     }
 };
@@ -288,14 +313,23 @@ const DEFAULT_BOARD_HEIGHT = 600;
 
 const defaultContext: FlatSQLState = {
     instance: null,
-    mainScript: null,
-    schemaScript: null,
-    mainScanned: null,
-    mainParsed: null,
-    mainAnalyzed: null,
-    mainDecorations: new RangeSetBuilder<Decoration>().finish(),
-    schemaGraph: null,
-    schemaGraphConfig: {
+    main: {
+        script: null,
+        scanned: null,
+        parsed: null,
+        analyzed: null,
+        decorations: new RangeSetBuilder<Decoration>().finish(),
+    },
+    schema: {
+        script: null,
+        scanned: null,
+        parsed: null,
+        analyzed: null,
+        decorations: new RangeSetBuilder<Decoration>().finish(),
+    },
+    graph: null,
+    graphLayout: null,
+    graphConfig: {
         iterationCount: 50.0,
         forceScaling: 100.0,
         cooldownFactor: 0.96,
@@ -311,7 +345,6 @@ const defaultContext: FlatSQLState = {
         tableMaxHeight: 36,
         tableMargin: 20,
     },
-    schemaGraphLayout: null,
 };
 
 const context = React.createContext<FlatSQLState>(defaultContext);
