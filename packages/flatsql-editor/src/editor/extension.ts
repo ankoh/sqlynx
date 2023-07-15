@@ -22,8 +22,6 @@ export interface FlatSQLScriptUpdate {
     // We could later think of specifying what exactly changed, but right now, we just don't care and update everything.
     onChange: (script: flatsql.FlatSQLScript) => void;
 }
-/// Marker to signal that a transaction updates the main script content
-const SCRIPT_UPDATE_MARKER = Annotation.define<boolean>();
 /// Effect to update a FlatSQL script attached to a CodeMirror editor
 export const UpdateFlatSQLScript: StateEffectType<FlatSQLScriptUpdate> = StateEffect.define<FlatSQLScriptUpdate>();
 /// An updater that mirrors CodeMirror editor changes to a FlatSQL script
@@ -39,19 +37,18 @@ const FlatSQLScriptUpdater: StateField<FlatSQLScriptUpdate> = StateField.define<
     },
     // Mirror the FlatSQL state
     update: (current: FlatSQLScriptUpdate, transaction: Transaction) => {
-        // Was this transaction scheduled by us to replace the entire script text?
-        // If yes, skip the event since this targets all other plugins.
-        if (transaction.annotation(SCRIPT_UPDATE_MARKER)) {
-            return current;
-        }
         // Check if the user reconfigured the plugin (potentially replacing the script)
         let config = current;
         for (const effect of transaction.effects) {
             // Reconfigure the FlatSQL state?
             if (effect.is(UpdateFlatSQLScript)) {
                 // Did the active script change?
+                // Bail out of applying updates since the transaction first has to switch to the new script.
                 if (current.script !== effect.value.script) {
-                    // Bail out of applying updates since we have to adjust the editor document
+                    // Warn the user if he forgot to also change the script text
+                    if (transaction.changes.length == 0) {
+                        console.warn('FlatSQL script was updated without changing the document');
+                    }
                     return effect.value;
                 }
                 // Script stayed the same, onChange callback might have changed.
