@@ -144,12 +144,12 @@ function buildDecorations(scanned: flatsql.FlatBufferRef<flatsql.proto.ScannedSc
 }
 
 export const INITIALIZE = Symbol('INITIALIZE');
-export const UPDATE_MAIN_SCRIPT = Symbol('UPDATE_MAIN_SCRIPT');
+export const UPDATE_SCRIPT = Symbol('UPDATE_SCRIPT');
 export const RESIZE_SCHEMA_GRAPH = Symbol('RESIZE_EDITOR');
 export const DESTORY_SCRIPTS = Symbol('DESTORY');
 export type EditorContextAction =
     | Action<typeof INITIALIZE, flatsql.FlatSQL>
-    | Action<typeof UPDATE_MAIN_SCRIPT, undefined>
+    | Action<typeof UPDATE_SCRIPT, flatsql.FlatSQLScript>
     | Action<typeof RESIZE_SCHEMA_GRAPH, [number, number]>
     | Action<typeof DESTORY_SCRIPTS, undefined>;
 
@@ -261,8 +261,7 @@ const reducer = (state: FlatSQLState, action: EditorContextAction): FlatSQLState
             updateScript(s);
             return s;
         }
-        case UPDATE_MAIN_SCRIPT:
-            console.log('MAIN_SCRIPT_UPDATED');
+        case UPDATE_SCRIPT:
             return updateScript({ ...state });
         case RESIZE_SCHEMA_GRAPH: {
             const s: FlatSQLState = {
