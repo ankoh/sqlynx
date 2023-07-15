@@ -47,14 +47,14 @@ export const TableNode: React.FC<TableNodeProps> = (props: TableNodeProps) => {
 };
 
 export function layoutSchema(ctx: FlatSQLState): [TableNodeProps[], TableEdgeProps[]] {
-    const parsed = ctx.mainParsed?.read(new flatsql.proto.ParsedScript());
-    const analyzed = ctx.mainAnalyzed?.read(new flatsql.proto.AnalyzedScript());
+    const parsed = ctx.main.parsed?.read(new flatsql.proto.ParsedScript());
+    const analyzed = ctx.main.analyzed?.read(new flatsql.proto.AnalyzedScript());
     if (!parsed || !analyzed) {
         return [[], []];
     }
 
     const nodes: TableNodeProps[] = [];
-    const layout = ctx.schemaGraphLayout!.read(new flatsql.proto.SchemaGraphLayout());
+    const layout = ctx.graphLayout!.read(new flatsql.proto.SchemaGraphLayout());
     const tmpGraphTable = new flatsql.proto.SchemaGraphTable();
     const tmpGraphVertex = new flatsql.proto.SchemaGraphVertex();
     const tmpTable = new flatsql.proto.Table();
