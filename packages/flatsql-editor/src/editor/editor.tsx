@@ -7,7 +7,7 @@ import { Decoration, DecorationSet, EditorView, lineNumbers } from '@codemirror/
 import { RangeSetBuilder } from '@codemirror/state';
 import { CodeMirror } from './codemirror';
 import { UpdateFlatSQLDecorations, UpdateFlatSQLScript, FlatSQLExtensions } from './extension';
-import { useFlatSQLState, useFlatSQLDispatch, UPDATE_SCRIPT } from '../flatsql_state';
+import { useFlatSQLState, useFlatSQLDispatch, UPDATE_SCRIPT } from '../flatsql_reducer';
 
 import iconMainScript from '../../static/svg/icons/database_search.svg';
 import iconExternalScript from '../../static/svg/icons/database.svg';

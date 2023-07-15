@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { TableNode, layoutSchema } from './schema_graph_node';
-import { RESIZE_SCHEMA_GRAPH, useFlatSQLDispatch, useFlatSQLState } from '../flatsql_state';
+import { RESIZE_SCHEMA_GRAPH, useFlatSQLDispatch, useFlatSQLState } from '../flatsql_reducer';
 import cn from 'classnames';
 
 import styles from './schema_graph.module.css';
