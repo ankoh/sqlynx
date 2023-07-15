@@ -121,12 +121,12 @@ function analyzeScript(state: FlatSQLScriptState): FlatSQLScriptState {
 /// Update a script
 function updateScript(state: FlatSQLState, script: flatsql.FlatSQLScript): FlatSQLState {
     if (script === state.main.script) {
-        state.main = analyzeScript(state.main);
+        state.main = analyzeScript({ ...state.main });
         computeSchemaGraph(state);
         return state;
     }
     if (script === state.schema.script) {
-        state.schema = analyzeScript(state.schema);
+        state.schema = analyzeScript({ ...state.schema });
         computeSchemaGraph(state);
         return state;
     }
