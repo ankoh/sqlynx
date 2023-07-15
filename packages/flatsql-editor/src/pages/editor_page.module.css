@@ -95,7 +95,7 @@
 }
 
 .header_version {
-    font-size: 9pt;
+    font-size: 0.9rem;
     color: var(--color_version);
     margin-top: 2px;
 }
