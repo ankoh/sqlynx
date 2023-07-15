@@ -9,3 +9,7 @@
     font-size: 11pt;
     background-color: transparent;
 }
+.cm-gutters {
+    padding-left: 8px;
+    background-color: var(--editor_gutter_bg) !important;
+}
