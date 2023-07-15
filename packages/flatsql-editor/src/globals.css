@@ -13,6 +13,7 @@
     --navbar_background_active: hsl(210, 24%, 88%);
     --navbar_indicator_color: rgb(254, 150, 0);
     --navbar_indicator_width: 3px;
+    --editor_gutter_bg: rgb(246, 248, 250);
 }
 
 :root {
