@@ -1,12 +1,4 @@
-import {
-    EditorView,
-    Decoration,
-    DecorationSet,
-    PluginValue,
-    ViewPlugin,
-    ViewUpdate,
-    lineNumbers,
-} from '@codemirror/view';
+import { EditorView, Decoration, DecorationSet, lineNumbers } from '@codemirror/view';
 import { StateField, StateEffect, StateEffectType, Text, Transaction, RangeSetBuilder } from '@codemirror/state';
 import * as flatsql from '@ankoh/flatsql';
 
