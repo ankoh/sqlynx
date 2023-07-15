@@ -3,8 +3,8 @@ import * as flatsql from '@ankoh/flatsql';
 import { useFlatSQL } from './flatsql_loader';
 import { DecorationSet, Decoration } from '@codemirror/view';
 import { RangeSetBuilder } from '@codemirror/state';
-import { RangeSet } from '@codemirror/state';
 import { Action, Dispatch } from './model/action';
+import { buildDecorations } from './editor/decorations';
 import { RESULT_OK } from './utils/result';
 
 /// The state of a FlatSQL script.
@@ -131,38 +131,6 @@ function updateScript(state: FlatSQLState, script: flatsql.FlatSQLScript): FlatS
         return state;
     }
     return state;
-}
-
-const TokenType = flatsql.proto.HighlightingTokenType;
-const KeywordDecoration = Decoration.mark({
-    class: 'flatsql-keyword',
-});
-/// Update the CodeMirror decorations
-function buildDecorations(scanned: flatsql.FlatBufferRef<flatsql.proto.ScannedScript>): RangeSet<Decoration> {
-    // Build decorations
-    let builder = new RangeSetBuilder<Decoration>();
-    const scan = scanned.read(new flatsql.proto.ScannedScript());
-    const hl = scan.highlighting();
-    if (hl && hl.tokenOffsetsArray()) {
-        const tokenOffsets = hl.tokenOffsetsArray()!;
-        const tokenTypes = hl.tokenTypesArray()!;
-        let prevOffset = 0;
-        let prevType = TokenType.NONE;
-        for (let i = 0; i < tokenOffsets.length; ++i) {
-            const begin = prevOffset;
-            const end = tokenOffsets[i];
-            switch (prevType) {
-                case TokenType.KEYWORD:
-                    builder.add(begin, end, KeywordDecoration);
-                    break;
-                default:
-                    break;
-            }
-            prevOffset = end;
-            prevType = tokenTypes[i];
-        }
-    }
-    return builder.finish();
 }
 
 export const INITIALIZE = Symbol('INITIALIZE');
