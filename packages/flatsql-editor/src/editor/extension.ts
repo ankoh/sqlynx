@@ -1,4 +1,12 @@
-import { EditorView, Decoration, DecorationSet, PluginValue, ViewPlugin, ViewUpdate } from '@codemirror/view';
+import {
+    EditorView,
+    Decoration,
+    DecorationSet,
+    PluginValue,
+    ViewPlugin,
+    ViewUpdate,
+    lineNumbers,
+} from '@codemirror/view';
 import { StateField, StateEffect, StateEffectType, Text, Transaction, RangeSetBuilder } from '@codemirror/state';
 import * as flatsql from '@ankoh/flatsql';
 
@@ -90,4 +98,4 @@ const FlatSQLDecorationUpdater: StateField<DecorationSet> = StateField.define<De
     provide: (field: StateField<DecorationSet>) => EditorView.decorations.from(field),
 });
 
-export const FlatSQLExtension = [FlatSQLScriptUpdater, FlatSQLDecorationUpdater];
+export const FlatSQLExtensions = [lineNumbers(), FlatSQLScriptUpdater, FlatSQLDecorationUpdater];
