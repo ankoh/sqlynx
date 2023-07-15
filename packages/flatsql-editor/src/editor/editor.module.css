@@ -53,6 +53,9 @@
     width: var(--navbar_indicator_width);
     background-color: var(--navbar_indicator_color);
 }
+.navbar_tab_disabled {
+    display: none !important;
+}
 
 .navbar_account {
     width: 100%;
