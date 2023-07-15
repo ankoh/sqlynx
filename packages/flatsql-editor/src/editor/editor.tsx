@@ -6,7 +6,7 @@ import cn from 'classnames';
 import { Decoration, DecorationSet, EditorView, lineNumbers } from '@codemirror/view';
 import { RangeSetBuilder } from '@codemirror/state';
 import { CodeMirror } from './codemirror';
-import { UpdateFlatSQLDecorations, FlatSQLExtension, UpdateFlatSQLScript } from './extension';
+import { UpdateFlatSQLDecorations, UpdateFlatSQLScript, FlatSQLExtensions } from './extension';
 import { useFlatSQLState, useFlatSQLDispatch } from '../flatsql_state';
 
 import iconMainScript from '../../static/svg/icons/database_search.svg';
@@ -150,7 +150,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                 <div className={styles.editor}>
                     <CodeMirror
                         className={styles.codemirror}
-                        extensions={[lineNumbers(), ...FlatSQLExtension]}
+                        extensions={FlatSQLExtensions}
                         viewWasCreated={viewWasCreated}
                         viewWillBeDestroyed={viewWillBeDestroyed}
                     />
