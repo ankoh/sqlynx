@@ -150,7 +150,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                 <div className={styles.editor}>
                     <CodeMirror
                         className={styles.codemirror}
-                        extensions={[FlatSQLExtension]}
+                        extensions={FlatSQLExtension}
                         viewWasCreated={viewWasCreated}
                         viewWillBeDestroyed={viewWillBeDestroyed}
                     />
