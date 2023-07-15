@@ -14,13 +14,15 @@ export const INITIALIZE = Symbol('INITIALIZE');
 export const UPDATE_SCRIPT = Symbol('UPDATE_SCRIPT');
 export const RESIZE_SCHEMA_GRAPH = Symbol('RESIZE_EDITOR');
 export const DESTROY = Symbol('DESTORY');
-export type EditorContextAction =
+
+export type FlatSQLAction =
     | Action<typeof INITIALIZE, flatsql.FlatSQL>
     | Action<typeof UPDATE_SCRIPT, flatsql.FlatSQLScript>
     | Action<typeof RESIZE_SCHEMA_GRAPH, [number, number]>
     | Action<typeof DESTROY, undefined>;
 
-const reducer = (state: FlatSQLState, action: EditorContextAction): FlatSQLState => {
+/// Reducer for FlatSQL actions
+const reducer = (state: FlatSQLState, action: FlatSQLAction): FlatSQLState => {
     switch (action.type) {
         case INITIALIZE: {
             const s: FlatSQLState = {
@@ -161,7 +163,7 @@ const defaultContext: FlatSQLState = {
 };
 
 const context = React.createContext<FlatSQLState>(defaultContext);
-const contextDispatch = React.createContext<Dispatch<EditorContextAction>>(c => {});
+const contextDispatch = React.createContext<Dispatch<FlatSQLAction>>(c => {});
 
 type Props = {
     children: React.ReactElement;
@@ -184,4 +186,4 @@ export const FlatSQLStateProvider: React.FC<Props> = (props: Props) => {
 };
 
 export const useFlatSQLState = (): FlatSQLState => React.useContext(context)!;
-export const useFlatSQLDispatch = (): Dispatch<EditorContextAction> => React.useContext(contextDispatch);
+export const useFlatSQLDispatch = (): Dispatch<FlatSQLAction> => React.useContext(contextDispatch);
