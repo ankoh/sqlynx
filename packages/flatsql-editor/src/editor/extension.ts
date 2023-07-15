@@ -46,7 +46,7 @@ const FlatSQLScriptUpdater: StateField<FlatSQLScriptUpdate> = StateField.define<
                 // Bail out of applying updates since the transaction first has to switch to the new script.
                 if (current.script !== effect.value.script) {
                     // Warn the user if he forgot to also change the script text
-                    if (transaction.changes.length == 0) {
+                    if (transaction.changes.empty) {
                         console.warn('FlatSQL script was updated without changing the document');
                     }
                     return effect.value;
@@ -60,7 +60,6 @@ const FlatSQLScriptUpdater: StateField<FlatSQLScriptUpdate> = StateField.define<
         if (config.script != null && transaction.docChanged) {
             transaction.changes.iterChanges(
                 (fromA: number, toA: number, fromB: number, toB: number, inserted: Text) => {
-                    console.log('SCRIPT CHANGE');
                     if (toA - fromA > 0) {
                         current.script!.eraseTextRange(fromA, toA - fromA);
                     }
@@ -103,38 +102,3 @@ const FlatSQLDecorationUpdater: StateField<DecorationSet> = StateField.define<De
 });
 
 export const FlatSQLExtension = [FlatSQLScriptUpdater, FlatSQLDecorationUpdater];
-
-// /// A FlatSQL parser plugin that parses the CodeMirror text whenever it changes
-// class EditorPluginValue implements PluginValue {
-//     /// Construct the plugin
-//     constructor(readonly view: EditorView) {}
-//
-//     getDecorations(): RangeSet<Decoration> {
-//         const deco = this.view.state.facet(EditorPlugin)!.context.mainDecorations;
-//         return deco;
-//     }
-//
-//     /// Destroy the plugin
-//     destroy() {}
-//     /// Apply a view update
-//     update(update: ViewUpdate) {
-//
-//     }
-// }
-//
-// /// A facet to setup the CodeMirror extensions.
-// /// Example:
-// ///   const config = new FlatSQLExtensionConfig(parser);
-// ///   return (<CodeMirror extensions={[ FlatSQLExtension.of(config) ]} />);
-// export const EditorPlugin = Facet.define<EditorPluginProps, EditorPluginProps | null>({
-//     // Just use the first config
-//     combine(configs) {
-//         return configs.length ? configs[0] : null;
-//     },
-//     // Enable the extension
-//     enables: _ => [
-//         ViewPlugin.fromClass(EditorPluginValue, {
-//             decorations: v => v.getDecorations(),
-//         }),
-//     ],
-// });

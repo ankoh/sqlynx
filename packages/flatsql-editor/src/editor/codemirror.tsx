@@ -31,7 +31,7 @@ export const CodeMirror: React.FC<CodeMirrorProps> = (props: CodeMirrorProps) =>
     const mount = React.useRef<ViewMountState>({
         view: null,
         node: null,
-        extensions: [],
+        extensions: props.extensions ?? [],
         viewWasCreated: props.viewWasCreated ?? null,
         viewWillBeDestroyed: props.viewWillBeDestroyed ?? null,
     });
@@ -49,7 +49,6 @@ export const CodeMirror: React.FC<CodeMirrorProps> = (props: CodeMirrorProps) =>
         }
         // Is there a view?
         if (mount.current.view !== null) {
-            console.log('WILL BE DESTROYED');
             if (props.viewWillBeDestroyed) {
                 props.viewWillBeDestroyed(mount.current.view);
             }
@@ -63,14 +62,12 @@ export const CodeMirror: React.FC<CodeMirrorProps> = (props: CodeMirrorProps) =>
         if (node === null) {
             return;
         }
-        console.log('CREATE STATE');
         // The DOM node has changed, create a new view
         mount.current.view = new EditorView({
             state: EditorState.create({ extensions: mount.current.extensions }),
             parent: node,
             root: props.root,
         });
-        console.log('WAS CREATED');
         if (props.viewWasCreated) {
             props.viewWasCreated(mount.current.view);
         }
