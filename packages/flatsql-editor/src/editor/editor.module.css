@@ -4,7 +4,7 @@
 
     display: grid;
     grid-template-columns: 48px auto;
-    grid-template-rows: 40px auto;
+    grid-template-rows: 40px calc(100% - 40px);
 }
 
 .navbar {
@@ -115,6 +115,7 @@
     grid-column: 2;
     display: flex;
     flex-direction: row;
+    height: 100%;
 }
 
 .editor {
