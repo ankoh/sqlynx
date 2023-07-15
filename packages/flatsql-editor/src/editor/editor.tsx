@@ -26,6 +26,7 @@ interface TabProps {
     id: TabId;
     active: TabId;
     icon: string;
+    disabled?: boolean;
     onClick: (event: React.MouseEvent<HTMLDivElement>) => void;
 }
 
@@ -33,6 +34,7 @@ const Tab: React.FC<TabProps> = (props: TabProps) => (
     <div
         className={cn(styles.navbar_tab, {
             [styles.navbar_tab_active]: props.id == props.active,
+            [styles.navbar_tab_disabled]: props.disabled ?? false,
         })}
         onClick={props.onClick}
         data-tab={props.id}
@@ -169,7 +171,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                 <Tab id={TabId.MAIN_SCRIPT} active={activeTab} icon={iconMainScript} onClick={selectTab} />
                 <Tab id={TabId.SCHEMA_SCRIPT} active={activeTab} icon={iconExternalScript} onClick={selectTab} />
                 <div style={{ flex: 1 }} />
-                <Tab id={TabId.ACCOUNT} active={activeTab} icon={iconAccount} onClick={selectTab} />
+                <Tab id={TabId.ACCOUNT} active={activeTab} icon={iconAccount} onClick={selectTab} disabled />
             </div>
             <div className={styles.editor_with_loader}>
                 <div className={styles.editor}>
