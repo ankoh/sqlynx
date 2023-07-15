@@ -3,7 +3,7 @@ import * as flatsql from '@ankoh/flatsql';
 
 import cn from 'classnames';
 
-import { Decoration, DecorationSet, EditorView } from '@codemirror/view';
+import { Decoration, DecorationSet, EditorView, lineNumbers } from '@codemirror/view';
 import { RangeSetBuilder } from '@codemirror/state';
 import { CodeMirror } from './codemirror';
 import { UpdateFlatSQLDecorations, FlatSQLExtension, UpdateFlatSQLScript } from './extension';
@@ -150,7 +150,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                 <div className={styles.editor}>
                     <CodeMirror
                         className={styles.codemirror}
-                        extensions={FlatSQLExtension}
+                        extensions={[lineNumbers(), ...FlatSQLExtension]}
                         viewWasCreated={viewWasCreated}
                         viewWillBeDestroyed={viewWillBeDestroyed}
                     />
