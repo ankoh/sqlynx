@@ -26,13 +26,13 @@
 }
 
 .navbar_tab {
+    position: relative;
     height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-top: 1px solid transparent;
     border-bottom: 1px solid var(--border_color_primary);
-    border-right: var(--navbar_indicator_width) solid transparent;
     color: var(--color_icon);
 }
 .navbar_tab:hover {
@@ -43,7 +43,15 @@
 }
 .navbar_tab_active {
     background-color: var(--navbar_background_active) !important;
-    border-right: var(--navbar_indicator_width) solid var(--navbar_indicator_color) !important;
+}
+.navbar_tab_active::after {
+    position: absolute;
+    top: -1px;
+    bottom: -1px;
+    right: 0;
+    content: '';
+    width: var(--navbar_indicator_width);
+    background-color: var(--navbar_indicator_color);
 }
 
 .navbar_account {
