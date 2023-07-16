@@ -20,7 +20,7 @@ export interface FlatSQLScriptState {
 /// The state of a FlatSQL analyzer
 export interface FlatSQLAnalyzerState extends FlatSQLScriptState {
     // This callback is called when the editor updates the script
-    onUpdate: (prev: FlatSQLScriptKey, next: FlatSQLAnalyzerState) => void;
+    onUpdate: (state: FlatSQLAnalyzerState) => void;
 }
 
 /// A FlatSQL script update
@@ -30,7 +30,7 @@ export interface FlatSQLScriptUpdate {
     // The currently active script
     script: flatsql.FlatSQLScript | null;
     // This callback is called when the editor updates the script
-    onUpdate: (scriptKey: FlatSQLScriptKey, next: FlatSQLAnalyzerState) => void;
+    onUpdate: (state: FlatSQLAnalyzerState) => void;
 }
 
 /// Analyze a script
@@ -111,7 +111,7 @@ export const FlatSQLAnalyzer: StateField<FlatSQLAnalyzerState> = StateField.defi
                     analyze(next);
                 }
                 // Update the state
-                next.onUpdate(effect.value.scriptKey, next);
+                next.onUpdate(next);
                 return next;
             }
         }
@@ -137,7 +137,7 @@ export const FlatSQLAnalyzer: StateField<FlatSQLAnalyzerState> = StateField.defi
             // Analyze the new script
             analyze(next);
             // Call the user update
-            next.onUpdate(next.scriptKey, next);
+            next.onUpdate(next);
             state = next;
         }
         return state;
