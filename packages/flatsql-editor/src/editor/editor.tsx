@@ -2,13 +2,13 @@ import cn from 'classnames';
 import * as React from 'react';
 import * as flatsql from '@ankoh/flatsql';
 
-import { Decoration, DecorationSet, EditorView } from '@codemirror/view';
-import { RangeSetBuilder } from '@codemirror/state';
+import { DecorationSet, EditorView } from '@codemirror/view';
 
 import { CodeMirror } from './codemirror';
 import { FlatSQLExtensions } from './flatsql_extension';
-import { FlatSQLAnalyzerState, UpdateFlatSQLScript } from './flatsql_analyzer';
+import { FlatSQLAnalyzerState, FlatSQLScriptKey, UpdateFlatSQLScript } from './flatsql_analyzer';
 import { useAppState, useAppStateDispatch, UPDATE_SCRIPT } from '../app_state_reducer';
+import { ScriptKey } from '../app_state';
 
 import iconMainScript from '../../static/svg/icons/database_search.svg';
 import iconExternalScript from '../../static/svg/icons/database.svg';
@@ -69,10 +69,10 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
 
     // Helper to update a script
     const updateScript = React.useCallback(
-        (prev: FlatSQLAnalyzerState, next: FlatSQLAnalyzerState) => {
+        (key: FlatSQLScriptKey, next: FlatSQLAnalyzerState) => {
             ctxDispatch({
                 type: UPDATE_SCRIPT,
-                value: [prev, next],
+                value: [key, next],
             });
         },
         [ctxDispatch],
@@ -85,12 +85,15 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
             return;
         }
         // Determine which script is active
+        let scriptKey: FlatSQLScriptKey = 0;
         let script: flatsql.FlatSQLScript | null = activeScript.current.script;
         switch (activeTab as TabId) {
             case TabId.MAIN_SCRIPT:
+                scriptKey = ScriptKey.MAIN_SCRIPT;
                 script = ctx.main.script;
                 break;
             case TabId.SCHEMA_SCRIPT:
+                scriptKey = ScriptKey.SCHEMA_SCRIPT;
                 script = ctx.schema.script;
                 break;
         }
@@ -108,6 +111,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                 ],
                 effects: [
                     UpdateFlatSQLScript.of({
+                        scriptKey,
                         script,
                         onUpdate: updateScript,
                     }),
