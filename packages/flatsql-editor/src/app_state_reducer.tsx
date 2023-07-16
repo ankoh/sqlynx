@@ -2,9 +2,9 @@ import * as React from 'react';
 import * as flatsql from '@ankoh/flatsql';
 
 import { useFlatSQL } from './flatsql_loader';
-import { FlatSQLScriptKey, FlatSQLScriptState, destroyScriptState } from './editor/flatsql_analyzer';
+import { FlatSQLScriptState, destroyScriptState } from './editor/flatsql_analyzer';
 import { TMP_TPCH_SCHEMA } from './model/example_scripts';
-import { AppState, ScriptKey, destroyState } from './app_state';
+import { AppState, destroyState } from './app_state';
 import { Action, Dispatch } from './model/action';
 import { RESULT_OK } from './utils/result';
 
@@ -13,9 +13,15 @@ export const UPDATE_SCRIPT = Symbol('UPDATE_SCRIPT');
 export const RESIZE_SCHEMA_GRAPH = Symbol('RESIZE_EDITOR');
 export const DESTROY = Symbol('DESTORY');
 
+/// A key to identify the target script
+export enum ScriptKey {
+    MAIN_SCRIPT = 1,
+    SCHEMA_SCRIPT = 2,
+}
+
 export type AppStateAction =
     | Action<typeof INITIALIZE, flatsql.FlatSQL>
-    | Action<typeof UPDATE_SCRIPT, [FlatSQLScriptKey, FlatSQLScriptState]>
+    | Action<typeof UPDATE_SCRIPT, FlatSQLScriptState>
     | Action<typeof RESIZE_SCHEMA_GRAPH, [number, number]>
     | Action<typeof DESTROY, undefined>;
 
@@ -40,8 +46,8 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
             return s;
         }
         case UPDATE_SCRIPT: {
-            const [key, next] = action.value;
-            switch (key) {
+            const next = action.value;
+            switch (next.scriptKey) {
                 case ScriptKey.MAIN_SCRIPT:
                     destroyScriptState(state.main);
                     return computeSchemaGraph({
