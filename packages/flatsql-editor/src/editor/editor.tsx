@@ -7,8 +7,9 @@ import { DecorationSet, EditorView } from '@codemirror/view';
 import { CodeMirror } from './codemirror';
 import { FlatSQLExtensions } from './flatsql_extension';
 import { FlatSQLScriptKey, FlatSQLAnalysisRecord, UpdateFlatSQLScript } from './flatsql_analyzer';
-import { useAppState, useAppStateDispatch, UPDATE_SCRIPT_ANALYSIS } from '../app_state_reducer';
+import { useAppState, useAppStateDispatch, UPDATE_SCRIPT_ANALYSIS, LOAD_SCRIPTS } from '../app_state_reducer';
 import { ScriptKey } from '../app_state';
+import { SSB_SCHEMA, TPCH_SCHEMA, exampleScripts } from '../script_loader/example_scripts';
 
 import iconMainScript from '../../static/svg/icons/database_search.svg';
 import iconExternalScript from '../../static/svg/icons/database.svg';
@@ -56,7 +57,7 @@ interface ActiveScriptState {
 export const ScriptEditor: React.FC<Props> = (props: Props) => {
     const ctx = useAppState();
     const ctxDispatch = useAppStateDispatch();
-    const [activeTab, setActiveTab] = React.useState<TabId>(TabId.MAIN_SCRIPT);
+    const [activeTab, setActiveTab] = React.useState<TabId>(TabId.SCHEMA_SCRIPT);
     const [folderOpen, setFolderOpen] = React.useState<boolean>(false);
     const [view, setView] = React.useState<EditorView | null>(null);
 
@@ -66,6 +67,18 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         script: null,
         decorations: null,
     });
+
+    React.useEffect(() => {
+        if (ctx.instance) {
+            ctxDispatch({
+                type: LOAD_SCRIPTS,
+                value: {
+                    [ScriptKey.MAIN_SCRIPT]: exampleScripts[2],
+                    [ScriptKey.SCHEMA_SCRIPT]: TPCH_SCHEMA,
+                },
+            });
+        }
+    }, [ctx.instance]);
 
     // Helper to update a script
     const updateScript = React.useCallback(

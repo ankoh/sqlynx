@@ -21,7 +21,7 @@ export const DESTROY = Symbol('DESTROY');
 
 export type AppStateAction =
     | Action<typeof INITIALIZE, flatsql.FlatSQL>
-    | Action<typeof LOAD_SCRIPTS, [ScriptKey, ScriptMetadata][]>
+    | Action<typeof LOAD_SCRIPTS, { [key: number]: ScriptMetadata }>
     | Action<typeof UPDATE_SCRIPT_ANALYSIS, FlatSQLAnalysisRecord>
     | Action<typeof SCRIPT_LOADING_STARTED, ScriptKey>
     | Action<typeof SCRIPT_LOADING_SUCCEEDED, [ScriptKey, string]>
@@ -118,7 +118,34 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
             };
         }
         case LOAD_SCRIPTS: {
-            return state;
+            const newState = { ...state };
+            for (const key of [ScriptKey.MAIN_SCRIPT, ScriptKey.SCHEMA_SCRIPT]) {
+                if (!action.value[key]) continue;
+                // Destroy previous analysis & script
+                const previous = state.scripts[key];
+                previous.analysis.destroy(previous.analysis);
+                previous.script?.delete();
+                // Store
+                const metadata = action.value[key];
+                newState.scripts[key] = {
+                    scriptKey: key,
+                    script: state.instance!.createScript(),
+                    metadata: metadata,
+                    loading: {
+                        status: LoadingStatus.PENDING,
+                        error: null,
+                        startedAt: null,
+                        finishedAt: null,
+                    },
+                    analysis: {
+                        scanned: null,
+                        parsed: null,
+                        analyzed: null,
+                        destroy: () => {},
+                    },
+                };
+            }
+            return newState;
         }
         case RESIZE_SCHEMA_GRAPH:
             return computeSchemaGraph({
@@ -136,7 +163,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
 
 /// Compute a schema graph
 function computeSchemaGraph(state: AppState): AppState {
-    if (state.scripts[ScriptKey.MAIN_SCRIPT].script == null) {
+    if (state.scripts[ScriptKey.SCHEMA_SCRIPT].script == null) {
         return state;
     }
     console.time('Schema Graph Layout');
@@ -145,7 +172,7 @@ function computeSchemaGraph(state: AppState): AppState {
         state.graphLayout = null;
     }
     state.graph!.configure(state.graphConfig);
-    state.graphLayout = state.graph!.loadScript(state.scripts[ScriptKey.MAIN_SCRIPT].script);
+    state.graphLayout = state.graph!.loadScript(state.scripts[ScriptKey.SCHEMA_SCRIPT].script);
     console.timeEnd('Schema Graph Layout');
     return state;
 }
