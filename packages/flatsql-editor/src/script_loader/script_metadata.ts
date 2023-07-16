@@ -11,14 +11,14 @@ export enum ScriptType {
 }
 
 export interface ScriptMetadata {
-    /// The script id
-    scriptId: string;
+    /// The pseudo script id
+    scriptPseudoId: string;
     /// The script type
     scriptType: ScriptType;
-    /// The name
-    name: string;
     /// The origin type
     originType: ScriptOriginType;
+    /// The name
+    name: string | null;
     /// The http url
     httpURL: URL | null;
     /// The github account
@@ -29,7 +29,19 @@ export interface ScriptMetadata {
     schemaId: string | null;
 }
 
-export function createScriptMetadata(script: Omit<ScriptMetadata, 'scriptId'>): ScriptMetadata {
+export function generateBlankScript(): ScriptMetadata {
+    return createScriptMetadata({
+        name: null,
+        scriptType: ScriptType.UNKNOWN,
+        originType: ScriptOriginType.LOCAL,
+        httpURL: null,
+        githubAccount: null,
+        githubGistName: null,
+        schemaId: null,
+    });
+}
+
+export function createScriptMetadata(script: Omit<ScriptMetadata, 'scriptPseudoId'>): ScriptMetadata {
     const s = script as any;
     switch (script.originType) {
         case ScriptOriginType.HTTP:

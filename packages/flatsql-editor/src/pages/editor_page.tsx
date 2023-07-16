@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { useFlatSQL } from '../flatsql_loader';
 import { ScriptEditor } from '../editor/editor';
-import { SchemaGraph } from '../schemagraph/schema_graph';
+import { SchemaGraph } from '../schema_graph/schema_graph';
 import { RESULT_OK } from '../utils/result';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
