@@ -12,7 +12,7 @@ export enum ScriptType {
 
 export interface ScriptMetadata {
     /// The pseudo script id
-    scriptPseudoId: string;
+    scriptId: string;
     /// The script type
     scriptType: ScriptType;
     /// The origin type
@@ -41,7 +41,7 @@ export function generateBlankScript(): ScriptMetadata {
     });
 }
 
-export function createScriptMetadata(script: Omit<ScriptMetadata, 'scriptPseudoId'>): ScriptMetadata {
+export function createScriptMetadata(script: Omit<ScriptMetadata, 'scriptId'>): ScriptMetadata {
     const s = script as any;
     switch (script.originType) {
         case ScriptOriginType.HTTP:

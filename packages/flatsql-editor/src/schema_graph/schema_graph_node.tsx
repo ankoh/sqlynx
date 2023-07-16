@@ -47,7 +47,7 @@ export const TableNode: React.FC<TableNodeProps> = (props: TableNodeProps) => {
 };
 
 export function layoutSchema(ctx: AppState): [TableNodeProps[], TableEdgeProps[]] {
-    const data = ctx.scripts[ScriptKey.MAIN_SCRIPT].analysis;
+    const data = ctx.scripts[ScriptKey.SCHEMA_SCRIPT].analysis;
     const parsed = data.parsed?.read(new flatsql.proto.ParsedScript());
     const analyzed = data.analyzed?.read(new flatsql.proto.AnalyzedScript());
     if (!parsed || !analyzed) {
