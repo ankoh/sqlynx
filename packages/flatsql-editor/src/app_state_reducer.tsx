@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as flatsql from '@ankoh/flatsql';
 
 import { useFlatSQL } from './flatsql_loader';
-import { FlatSQLScriptState, destroyScriptState } from './editor/flatsql_analyzer';
+import { FlatSQLScriptState } from './editor/flatsql_analyzer';
 import { TMP_TPCH_SCHEMA } from './model/example_scripts';
 import { AppState, destroyState } from './app_state';
 import { Action, Dispatch } from './model/action';
@@ -49,13 +49,13 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
             const next = action.value;
             switch (next.scriptKey) {
                 case ScriptKey.MAIN_SCRIPT:
-                    destroyScriptState(state.main);
+                    state.main.destroy(state.main);
                     return computeSchemaGraph({
                         ...state,
                         main: next,
                     });
                 case ScriptKey.SCHEMA_SCRIPT:
-                    destroyScriptState(state.schema);
+                    state.schema.destroy(state.schema);
                     return computeSchemaGraph({
                         ...state,
                         schema: next,
@@ -104,6 +104,7 @@ const defaultContext: AppState = {
         scanned: null,
         parsed: null,
         analyzed: null,
+        destroy: () => {},
     },
     schema: {
         scriptKey: 0,
@@ -111,6 +112,7 @@ const defaultContext: AppState = {
         scanned: null,
         parsed: null,
         analyzed: null,
+        destroy: () => {},
     },
     graph: null,
     graphLayout: null,
