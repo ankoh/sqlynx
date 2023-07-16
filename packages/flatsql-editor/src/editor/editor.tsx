@@ -8,7 +8,7 @@ import { CodeMirror } from './codemirror';
 import { FlatSQLExtensions } from './flatsql_extension';
 import { FlatSQLAnalyzerState, FlatSQLScriptKey, UpdateFlatSQLScript } from './flatsql_analyzer';
 import { useAppState, useAppStateDispatch, UPDATE_SCRIPT } from '../app_state_reducer';
-import { ScriptKey } from '../app_state';
+import { ScriptKey } from '../app_state_reducer';
 
 import iconMainScript from '../../static/svg/icons/database_search.svg';
 import iconExternalScript from '../../static/svg/icons/database.svg';
@@ -69,10 +69,10 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
 
     // Helper to update a script
     const updateScript = React.useCallback(
-        (key: FlatSQLScriptKey, next: FlatSQLAnalyzerState) => {
+        (next: FlatSQLAnalyzerState) => {
             ctxDispatch({
                 type: UPDATE_SCRIPT,
-                value: [key, next],
+                value: next,
             });
         },
         [ctxDispatch],
