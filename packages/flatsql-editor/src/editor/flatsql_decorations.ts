@@ -11,7 +11,6 @@ const KeywordDecoration = Decoration.mark({
     class: 'flatsql-keyword',
 });
 
-/// Build the decorations
 function buildDecorations(
     scanned: flatsql.FlatBufferRef<flatsql.proto.ScannedScript>,
     tmp: flatsql.proto.ScannedScript = new flatsql.proto.ScannedScript(),
