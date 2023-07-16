@@ -15,7 +15,9 @@ export interface FlatSQLScriptState {
     parsed: flatsql.FlatBufferRef<flatsql.proto.ParsedScript> | null;
     /// The analyzed script
     analyzed: flatsql.FlatBufferRef<flatsql.proto.AnalyzedScript> | null;
-    /// Destroy the state
+    /// Destroy the state.
+    /// The user is responsible for cleanup up FlatBufferRefs that are no longer needed.
+    /// E.g. one strategy may be to destroy the "old" state once a script with the same script key is emitted.
     destroy: (state: FlatSQLScriptState) => void;
 }
 
@@ -32,7 +34,7 @@ export interface FlatSQLScriptUpdate {
     // The currently active script
     script: flatsql.FlatSQLScript | null;
     // This callback is called when the editor updates the script
-    onUpdate: (state: FlatSQLAnalyzerState) => void;
+    onUpdate: (state: FlatSQLScriptState) => void;
 }
 
 /// Analyze a script
