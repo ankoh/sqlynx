@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as flatsql from '@ankoh/flatsql';
 
 import { useFlatSQL } from './flatsql_loader';
-import { FlatSQLAnalysisRecord } from './editor/flatsql_analyzer';
+import { FlatSQLAnalysisData, analyzeScript } from './editor/flatsql_analyzer';
 import { TMP_TPCH_SCHEMA } from './script_loader/example_scripts';
 import { AppState, ScriptKey, createDefaultState, createEmptyScript, destroyState } from './app_state';
 import { Action, Dispatch } from './utils/action';
@@ -22,7 +22,7 @@ export const DESTROY = Symbol('DESTROY');
 export type AppStateAction =
     | Action<typeof INITIALIZE, flatsql.FlatSQL>
     | Action<typeof LOAD_SCRIPTS, { [key: number]: ScriptMetadata }>
-    | Action<typeof UPDATE_SCRIPT_ANALYSIS, FlatSQLAnalysisRecord>
+    | Action<typeof UPDATE_SCRIPT_ANALYSIS, [ScriptKey, FlatSQLAnalysisData]>
     | Action<typeof SCRIPT_LOADING_STARTED, ScriptKey>
     | Action<typeof SCRIPT_LOADING_SUCCEEDED, [ScriptKey, string]>
     | Action<typeof SCRIPT_LOADING_FAILED, [ScriptKey, any]>
@@ -46,15 +46,17 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
             return newState;
         }
         case UPDATE_SCRIPT_ANALYSIS: {
-            const script = state.scripts[action.value.scriptKey];
+            const [scriptKey, data] = action.value;
+
+            const script = state.scripts[scriptKey];
             script.analysis.destroy(script.analysis);
             const newState: AppState = {
                 ...state,
                 scripts: {
                     ...state.scripts,
-                    [action.value.scriptKey]: {
+                    [scriptKey]: {
                         ...script,
-                        analysis: action.value,
+                        analysis: data,
                     },
                 },
             };
@@ -97,10 +99,13 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
         case SCRIPT_LOADING_SUCCEEDED: {
             const [scriptKey, content] = action.value;
             const data = state.scripts[scriptKey];
+            // Create the FlatSQL script and insert the text
             const script = state.instance!.createScript();
             script.insertTextAt(0, content);
+            // Analyse the script
+            const analysis = analyzeScript(script);
             // XXX Remove old?
-            return {
+            const newState = {
                 ...state,
                 scripts: {
                     ...state.scripts,
@@ -113,9 +118,11 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                             finishedAt: new Date(),
                             error: null,
                         },
+                        analysis,
                     },
                 },
             };
+            return computeSchemaGraph(newState);
         }
         case LOAD_SCRIPTS: {
             const newState = { ...state };
