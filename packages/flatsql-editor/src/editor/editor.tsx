@@ -85,7 +85,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
             return;
         }
         // Determine which script is active
-        let scriptKey: FlatSQLScriptKey = 0;
+        let scriptKey: FlatSQLScriptKey = ScriptKey.MAIN_SCRIPT;
         let script: flatsql.FlatSQLScript | null = activeScript.current.script;
         switch (activeTab as TabId) {
             case TabId.MAIN_SCRIPT:
@@ -97,7 +97,6 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                 script = ctx.schema.script;
                 break;
         }
-
         // Did the script change?
         if (activeScript.current.script !== script) {
             activeScript.current.script = script;
@@ -128,7 +127,6 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
     };
     // Helper to toggle the folder viewer
     const toggleOpenFolder = () => setFolderOpen(s => !s);
-
     // Get the title of the tab
     let tabTitle = '';
     switch (activeTab) {
