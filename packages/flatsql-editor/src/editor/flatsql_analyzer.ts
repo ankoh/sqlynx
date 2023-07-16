@@ -3,6 +3,17 @@ import { StateField, StateEffect, StateEffectType, Text, Transaction } from '@co
 
 /// A FlatSQL script key
 export type FlatSQLScriptKey = number;
+/// A FlatSQL script update
+export interface FlatSQLScriptUpdate {
+    // The currently active script
+    scriptKey: FlatSQLScriptKey;
+    // The currently active script
+    script: flatsql.FlatSQLScript | null;
+    /// The previous analysis data (if any)
+    data: FlatSQLAnalysisData;
+    // This callback is called when the editor updates the script
+    update: (scriptKey: FlatSQLScriptKey, script: flatsql.FlatSQLScript) => FlatSQLAnalysisData;
+}
 /// The state of a FlatSQL script
 export interface FlatSQLAnalysisData {
     /// The scanned script
@@ -16,55 +27,31 @@ export interface FlatSQLAnalysisData {
     /// E.g. one strategy may be to destroy the "old" state once a script with the same script key is emitted.
     destroy: (state: FlatSQLAnalysisData) => void;
 }
-/// The FlatSQL analysis record
-export interface FlatSQLAnalysisRecord extends FlatSQLAnalysisData {
-    /// The script
-    script: flatsql.FlatSQLScript | null;
-    /// The script key
-    scriptKey: FlatSQLScriptKey;
-}
-
 /// The state of a FlatSQL analyzer
-export interface FlatSQLAnalyzerState extends FlatSQLAnalysisRecord {
-    // This callback is called when the editor updates the script
-    onUpdate: (state: FlatSQLAnalyzerState) => void;
-}
-
-/// A FlatSQL script update
-export interface FlatSQLScriptUpdate {
-    // The currently active script
-    scriptKey: FlatSQLScriptKey;
-    // The currently active script
-    script: flatsql.FlatSQLScript | null;
-    // This callback is called when the editor updates the script
-    onUpdate: (state: FlatSQLAnalysisRecord) => void;
-}
+type FlatSQLAnalyzerState = FlatSQLScriptUpdate;
 
 /// Analyze a script
-function analyze(state: FlatSQLAnalyzerState): FlatSQLAnalyzerState {
-    if (!state.script) return state;
-    state.scanned = null;
-    state.parsed = null;
-    state.analyzed = null;
+export function analyzeScript(script: flatsql.FlatSQLScript): FlatSQLAnalysisData {
     // Scan the script
     console.time('Script Scanning');
-    state.scanned = state.script.scan();
+    const scanned = script.scan();
     console.timeEnd('Script Scanning');
 
     // Parse the script
     console.time('Script Parsing');
-    state.parsed = state.script.parse();
+    const parsed = script.parse();
     console.timeEnd('Script Parsing');
 
     // Parse the script
     console.time('Script Analyzing');
-    state.analyzed = state.script.analyze();
+    const analyzed = script.analyze();
     console.timeEnd('Script Analyzing');
-    return state;
+
+    return { scanned, parsed, analyzed, destroy: destroyAnalysisData };
 }
 
 /// Destory the analyzer state
-const destroyScriptState = (state: FlatSQLAnalysisData) => {
+const destroyAnalysisData = (state: FlatSQLAnalysisData) => {
     if (state.scanned != null) {
         state.scanned.delete();
         state.scanned = null;
@@ -90,11 +77,18 @@ export const FlatSQLAnalyzer: StateField<FlatSQLAnalyzerState> = StateField.defi
         const config: FlatSQLAnalyzerState = {
             scriptKey: 0,
             script: null,
-            scanned: null,
-            parsed: null,
-            analyzed: null,
-            onUpdate: () => {},
-            destroy: destroyScriptState,
+            data: {
+                scanned: null,
+                parsed: null,
+                analyzed: null,
+                destroy: destroyAnalysisData,
+            },
+            update: () => ({
+                scanned: null,
+                parsed: null,
+                analyzed: null,
+                destroy: destroyAnalysisData,
+            }),
         };
         return config;
     },
@@ -108,20 +102,13 @@ export const FlatSQLAnalyzer: StateField<FlatSQLAnalyzerState> = StateField.defi
                     console.warn('FlatSQL script was updated without changing the document');
                 }
                 // Create next state
-                const next = {
+                return {
                     ...state,
                     scriptKey: effect.value.scriptKey,
                     script: effect.value.script,
-                    onUpdate: effect.value.onUpdate,
-                    destroy: destroyScriptState,
+                    data: effect.value.data,
+                    update: effect.value.update,
                 };
-                // Analyze a script if it is not null
-                if (next.script != null) {
-                    analyze(next);
-                }
-                // Update the state
-                next.onUpdate(next);
-                return next;
             }
         }
         // Did the document change?
@@ -141,13 +128,10 @@ export const FlatSQLAnalyzer: StateField<FlatSQLAnalyzerState> = StateField.defi
                     }
                 },
             );
-            // Save the old state
-            const next = { ...state };
             // Analyze the new script
-            analyze(next);
-            // Call the user update
-            next.onUpdate(next);
-            state = next;
+            const next = { ...state };
+            next.data = next.update(next.scriptKey, next.script!);
+            return next;
         }
         return state;
     },
