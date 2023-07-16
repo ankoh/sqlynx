@@ -2,6 +2,12 @@ import * as flatsql from '@ankoh/flatsql';
 
 import { FlatSQLScriptState, destroyScriptState } from './editor/flatsql_analyzer';
 
+/// A script key
+export enum ScriptKey {
+    MAIN_SCRIPT = 1,
+    SCHEMA_SCRIPT = 2,
+}
+
 /// The state of the application.
 /// We pass this state container to the event callback so that it can be propagated as React state.
 export interface AppState {
