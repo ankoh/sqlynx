@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { TableNode, layoutSchema } from './schema_graph_node';
-import { RESIZE_SCHEMA_GRAPH, useFlatSQLDispatch, useFlatSQLState } from '../flatsql_reducer';
+import { RESIZE_SCHEMA_GRAPH, useAppStateDispatch, useAppState } from '../app_state_reducer';
 import cn from 'classnames';
 
 import styles from './schema_graph.module.css';
@@ -29,8 +29,8 @@ const Background = () => (
 );
 
 export const SchemaGraph: React.FC<Props> = (props: Props) => {
-    const state = useFlatSQLState();
-    const dispatch = useFlatSQLDispatch();
+    const state = useAppState();
+    const dispatch = useAppStateDispatch();
 
     React.useEffect(() => {
         dispatch({
