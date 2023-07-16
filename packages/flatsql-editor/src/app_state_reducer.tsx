@@ -2,9 +2,9 @@ import * as React from 'react';
 import * as flatsql from '@ankoh/flatsql';
 
 import { useFlatSQL } from './flatsql_loader';
-import { FlatSQLScriptState, destroyScriptState } from './editor/flatsql_analyzer';
+import { FlatSQLScriptKey, FlatSQLScriptState, destroyScriptState } from './editor/flatsql_analyzer';
 import { TMP_TPCH_SCHEMA } from './model/example_scripts';
-import { AppState, destroyState } from './app_state';
+import { AppState, ScriptKey, destroyState } from './app_state';
 import { Action, Dispatch } from './model/action';
 import { RESULT_OK } from './utils/result';
 
@@ -15,7 +15,7 @@ export const DESTROY = Symbol('DESTORY');
 
 export type AppStateAction =
     | Action<typeof INITIALIZE, flatsql.FlatSQL>
-    | Action<typeof UPDATE_SCRIPT, [FlatSQLScriptState, FlatSQLScriptState]>
+    | Action<typeof UPDATE_SCRIPT, [FlatSQLScriptKey, FlatSQLScriptState]>
     | Action<typeof RESIZE_SCHEMA_GRAPH, [number, number]>
     | Action<typeof DESTROY, undefined>;
 
@@ -40,20 +40,20 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
             return s;
         }
         case UPDATE_SCRIPT: {
-            const [prev, next] = action.value;
-            if (next.script === state.main.script) {
-                destroyScriptState(prev);
-                return computeSchemaGraph({
-                    ...state,
-                    main: next,
-                });
-            }
-            if (next.script === state.schema.script) {
-                destroyScriptState(prev);
-                return computeSchemaGraph({
-                    ...state,
-                    schema: next,
-                });
+            const [key, next] = action.value;
+            switch (key) {
+                case ScriptKey.MAIN_SCRIPT:
+                    destroyScriptState(state.main);
+                    return computeSchemaGraph({
+                        ...state,
+                        main: next,
+                    });
+                case ScriptKey.SCHEMA_SCRIPT:
+                    destroyScriptState(state.schema);
+                    return computeSchemaGraph({
+                        ...state,
+                        schema: next,
+                    });
             }
             return state;
         }
@@ -93,12 +93,14 @@ const DEFAULT_BOARD_HEIGHT = 600;
 const defaultContext: AppState = {
     instance: null,
     main: {
+        scriptKey: 0,
         script: null,
         scanned: null,
         parsed: null,
         analyzed: null,
     },
     schema: {
+        scriptKey: 0,
         script: null,
         scanned: null,
         parsed: null,
