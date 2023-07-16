@@ -1,6 +1,6 @@
 import * as flatsql from '@ankoh/flatsql';
 
-import { FlatSQLScriptState, destroyScriptState } from './editor/flatsql_analyzer';
+import { FlatSQLScriptState } from './editor/flatsql_analyzer';
 
 /// The state of the application
 export interface AppState {
@@ -20,8 +20,8 @@ export interface AppState {
 
 /// Destroy a state
 export function destroyState(state: AppState): AppState {
-    destroyScriptState(state.main);
-    destroyScriptState(state.schema);
+    state.main.destroy(state.main);
+    state.schema.destroy(state.schema);
     if (state.graphLayout) {
         state.graphLayout.delete();
         state.graphLayout = null;

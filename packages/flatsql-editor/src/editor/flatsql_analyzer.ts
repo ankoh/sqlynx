@@ -15,6 +15,8 @@ export interface FlatSQLScriptState {
     parsed: flatsql.FlatBufferRef<flatsql.proto.ParsedScript> | null;
     /// The analyzed script
     analyzed: flatsql.FlatBufferRef<flatsql.proto.AnalyzedScript> | null;
+    /// Destroy the state
+    destroy: (state: FlatSQLScriptState) => void;
 }
 
 /// The state of a FlatSQL analyzer
@@ -57,7 +59,7 @@ function analyze(state: FlatSQLAnalyzerState): FlatSQLAnalyzerState {
 }
 
 /// Destory the analyzer state
-export const destroyScriptState = (state: FlatSQLScriptState) => {
+const destroyScriptState = (state: FlatSQLScriptState) => {
     if (state.scanned != null) {
         state.scanned.delete();
         state.scanned = null;
@@ -87,6 +89,7 @@ export const FlatSQLAnalyzer: StateField<FlatSQLAnalyzerState> = StateField.defi
             parsed: null,
             analyzed: null,
             onUpdate: () => {},
+            destroy: destroyScriptState,
         };
         return config;
     },
@@ -105,6 +108,7 @@ export const FlatSQLAnalyzer: StateField<FlatSQLAnalyzerState> = StateField.defi
                     scriptKey: effect.value.scriptKey,
                     script: effect.value.script,
                     onUpdate: effect.value.onUpdate,
+                    destroy: destroyScriptState,
                 };
                 // Analyze a script if it is not null
                 if (next.script != null) {
