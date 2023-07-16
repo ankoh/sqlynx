@@ -6,9 +6,9 @@ import { DecorationSet, EditorView } from '@codemirror/view';
 
 import { CodeMirror } from './codemirror';
 import { FlatSQLExtensions } from './flatsql_extension';
-import { FlatSQLScriptKey, FlatSQLScriptState, UpdateFlatSQLScript } from './flatsql_analyzer';
-import { useAppState, useAppStateDispatch, UPDATE_SCRIPT } from '../app_state_reducer';
-import { ScriptKey } from '../app_state_reducer';
+import { FlatSQLScriptKey, FlatSQLAnalysisRecord, UpdateFlatSQLScript } from './flatsql_analyzer';
+import { useAppState, useAppStateDispatch, UPDATE_SCRIPT_ANALYSIS } from '../app_state_reducer';
+import { ScriptKey } from '../app_state';
 
 import iconMainScript from '../../static/svg/icons/database_search.svg';
 import iconExternalScript from '../../static/svg/icons/database.svg';
@@ -69,9 +69,9 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
 
     // Helper to update a script
     const updateScript = React.useCallback(
-        (next: FlatSQLScriptState) => {
+        (next: FlatSQLAnalysisRecord) => {
             ctxDispatch({
-                type: UPDATE_SCRIPT,
+                type: UPDATE_SCRIPT_ANALYSIS,
                 value: next,
             });
         },
@@ -86,17 +86,16 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         }
         // Determine which script is active
         let scriptKey: FlatSQLScriptKey = ScriptKey.MAIN_SCRIPT;
-        let script: flatsql.FlatSQLScript | null = activeScript.current.script;
         switch (activeTab as TabId) {
             case TabId.MAIN_SCRIPT:
                 scriptKey = ScriptKey.MAIN_SCRIPT;
-                script = ctx.main.script;
                 break;
             case TabId.SCHEMA_SCRIPT:
                 scriptKey = ScriptKey.SCHEMA_SCRIPT;
-                script = ctx.schema.script;
                 break;
         }
+        const script: flatsql.FlatSQLScript | null = ctx.scripts[scriptKey].script ?? null;
+
         // Did the script change?
         if (activeScript.current.script !== script) {
             activeScript.current.script = script;
@@ -117,7 +116,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                 ],
             });
         }
-    }, [view, activeTab, ctx.schema, ctx.main, updateScript]);
+    }, [view, activeTab, ctx.scripts[ScriptKey.MAIN_SCRIPT], ctx.scripts[ScriptKey.SCHEMA_SCRIPT], updateScript]);
 
     // Helper to select a tab
     const selectTab = (event: React.MouseEvent<HTMLDivElement>) => {

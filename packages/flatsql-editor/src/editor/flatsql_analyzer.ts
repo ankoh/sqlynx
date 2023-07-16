@@ -4,11 +4,7 @@ import { StateField, StateEffect, StateEffectType, Text, Transaction } from '@co
 /// A FlatSQL script key
 export type FlatSQLScriptKey = number;
 /// The state of a FlatSQL script
-export interface FlatSQLScriptState {
-    /// The script key
-    scriptKey: FlatSQLScriptKey;
-    /// The script
-    script: flatsql.FlatSQLScript | null;
+export interface FlatSQLAnalysisData {
     /// The scanned script
     scanned: flatsql.FlatBufferRef<flatsql.proto.ScannedScript> | null;
     /// The parsed script
@@ -18,11 +14,18 @@ export interface FlatSQLScriptState {
     /// Destroy the state.
     /// The user is responsible for cleanup up FlatBufferRefs that are no longer needed.
     /// E.g. one strategy may be to destroy the "old" state once a script with the same script key is emitted.
-    destroy: (state: FlatSQLScriptState) => void;
+    destroy: (state: FlatSQLAnalysisData) => void;
+}
+/// The FlatSQL analysis record
+export interface FlatSQLAnalysisRecord extends FlatSQLAnalysisData {
+    /// The script
+    script: flatsql.FlatSQLScript | null;
+    /// The script key
+    scriptKey: FlatSQLScriptKey;
 }
 
 /// The state of a FlatSQL analyzer
-export interface FlatSQLAnalyzerState extends FlatSQLScriptState {
+export interface FlatSQLAnalyzerState extends FlatSQLAnalysisRecord {
     // This callback is called when the editor updates the script
     onUpdate: (state: FlatSQLAnalyzerState) => void;
 }
@@ -34,7 +37,7 @@ export interface FlatSQLScriptUpdate {
     // The currently active script
     script: flatsql.FlatSQLScript | null;
     // This callback is called when the editor updates the script
-    onUpdate: (state: FlatSQLScriptState) => void;
+    onUpdate: (state: FlatSQLAnalysisRecord) => void;
 }
 
 /// Analyze a script
@@ -61,7 +64,7 @@ function analyze(state: FlatSQLAnalyzerState): FlatSQLAnalyzerState {
 }
 
 /// Destory the analyzer state
-const destroyScriptState = (state: FlatSQLScriptState) => {
+const destroyScriptState = (state: FlatSQLAnalysisData) => {
     if (state.scanned != null) {
         state.scanned.delete();
         state.scanned = null;
