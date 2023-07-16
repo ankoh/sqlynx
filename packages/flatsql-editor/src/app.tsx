@@ -1,8 +1,7 @@
 import * as React from 'react';
 import { FlatSQLLoader } from './flatsql_loader';
 import { EditorPage } from './pages/editor_page';
-import { ScriptRegistryProvider } from './model/script_registry';
-import { ScriptLoaderProvider } from './model/script_loader';
+import { ScriptLoader } from './script_loader/script_loader';
 import { AppStateProvider } from './app_state_reducer';
 import { createRoot } from 'react-dom/client';
 import { Route, Routes, Navigate, BrowserRouter } from 'react-router-dom';
@@ -13,9 +12,7 @@ import './globals.css';
 const DataProviders = (props: { children: React.ReactElement }) => (
     <FlatSQLLoader>
         <AppStateProvider>
-            <ScriptRegistryProvider>
-                <ScriptLoaderProvider>{props.children}</ScriptLoaderProvider>
-            </ScriptRegistryProvider>
+            <ScriptLoader>{props.children}</ScriptLoader>
         </AppStateProvider>
     </FlatSQLLoader>
 );

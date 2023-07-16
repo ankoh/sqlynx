@@ -2,26 +2,30 @@ import * as React from 'react';
 import * as flatsql from '@ankoh/flatsql';
 
 import { useFlatSQL } from './flatsql_loader';
-import { FlatSQLScriptState } from './editor/flatsql_analyzer';
-import { TMP_TPCH_SCHEMA } from './model/example_scripts';
-import { AppState, destroyState } from './app_state';
-import { Action, Dispatch } from './model/action';
+import { FlatSQLAnalysisRecord } from './editor/flatsql_analyzer';
+import { TMP_TPCH_SCHEMA } from './script_loader/example_scripts';
+import { AppState, ScriptKey, createDefaultState, createEmptyScript, destroyState } from './app_state';
+import { Action, Dispatch } from './utils/action';
 import { RESULT_OK } from './utils/result';
+import { ScriptMetadata } from './script_loader/script_metadata';
+import { LoadingStatus } from './script_loader/script_loader';
 
 export const INITIALIZE = Symbol('INITIALIZE');
-export const UPDATE_SCRIPT = Symbol('UPDATE_SCRIPT');
+export const LOAD_SCRIPTS = Symbol('LOAD_SCRIPTS');
+export const UPDATE_SCRIPT_ANALYSIS = Symbol('UPDATE_SCRIPT_ANALYSIS');
+export const SCRIPT_LOADING_STARTED = Symbol('SCRIPT_LOADING_STARTED');
+export const SCRIPT_LOADING_SUCCEEDED = Symbol('SCRIPT_LOADING_SUCCEEDED');
+export const SCRIPT_LOADING_FAILED = Symbol('SCRIPT_LOADING_FAILED');
 export const RESIZE_SCHEMA_GRAPH = Symbol('RESIZE_EDITOR');
-export const DESTROY = Symbol('DESTORY');
-
-/// A key to identify the target script
-export enum ScriptKey {
-    MAIN_SCRIPT = 1,
-    SCHEMA_SCRIPT = 2,
-}
+export const DESTROY = Symbol('DESTROY');
 
 export type AppStateAction =
     | Action<typeof INITIALIZE, flatsql.FlatSQL>
-    | Action<typeof UPDATE_SCRIPT, FlatSQLScriptState>
+    | Action<typeof LOAD_SCRIPTS, [ScriptKey, ScriptMetadata][]>
+    | Action<typeof UPDATE_SCRIPT_ANALYSIS, FlatSQLAnalysisRecord>
+    | Action<typeof SCRIPT_LOADING_STARTED, ScriptKey>
+    | Action<typeof SCRIPT_LOADING_SUCCEEDED, [ScriptKey, string]>
+    | Action<typeof SCRIPT_LOADING_FAILED, [ScriptKey, any]>
     | Action<typeof RESIZE_SCHEMA_GRAPH, [number, number]>
     | Action<typeof DESTROY, undefined>;
 
@@ -29,38 +33,91 @@ export type AppStateAction =
 const reducer = (state: AppState, action: AppStateAction): AppState => {
     switch (action.type) {
         case INITIALIZE: {
-            const s: AppState = {
+            const newState: AppState = {
                 ...state,
                 instance: action.value,
-                main: {
-                    ...state.main,
-                    script: action.value.createScript(),
-                },
-                schema: {
-                    ...state.schema,
-                    script: action.value.createScript(),
+                scripts: {
+                    [ScriptKey.MAIN_SCRIPT]: createEmptyScript(ScriptKey.MAIN_SCRIPT, action.value),
+                    [ScriptKey.SCHEMA_SCRIPT]: createEmptyScript(ScriptKey.SCHEMA_SCRIPT, action.value),
                 },
                 graph: action.value.createSchemaGraph(),
             };
-            s.main.script!.insertTextAt(0, TMP_TPCH_SCHEMA);
-            return s;
+            newState.scripts[ScriptKey.MAIN_SCRIPT].script!.insertTextAt(0, TMP_TPCH_SCHEMA);
+            return newState;
         }
-        case UPDATE_SCRIPT: {
-            const next = action.value;
-            switch (next.scriptKey) {
-                case ScriptKey.MAIN_SCRIPT:
-                    state.main.destroy(state.main);
-                    return computeSchemaGraph({
-                        ...state,
-                        main: next,
-                    });
-                case ScriptKey.SCHEMA_SCRIPT:
-                    state.schema.destroy(state.schema);
-                    return computeSchemaGraph({
-                        ...state,
-                        schema: next,
-                    });
-            }
+        case UPDATE_SCRIPT_ANALYSIS: {
+            const script = state.scripts[action.value.scriptKey];
+            script.analysis.destroy(script.analysis);
+            const newState: AppState = {
+                ...state,
+                scripts: {
+                    ...state.scripts,
+                    [action.value.scriptKey]: {
+                        ...script,
+                        analysis: action.value,
+                    },
+                },
+            };
+            return computeSchemaGraph(newState);
+        }
+        case SCRIPT_LOADING_STARTED:
+            return {
+                ...state,
+                scripts: {
+                    ...state.scripts,
+                    [action.value]: {
+                        ...state.scripts[action.value],
+                        loading: {
+                            status: LoadingStatus.STARTED,
+                            startedAt: new Date(),
+                            finishedAt: null,
+                            error: null,
+                        },
+                    },
+                },
+            };
+        case SCRIPT_LOADING_FAILED: {
+            const data = state.scripts[action.value[0]];
+            return {
+                ...state,
+                scripts: {
+                    ...state.scripts,
+                    [action.value[0]]: {
+                        ...data,
+                        loading: {
+                            status: LoadingStatus.FAILED,
+                            startedAt: data.loading.startedAt,
+                            finishedAt: new Date(),
+                            error: action.value[1],
+                        },
+                    },
+                },
+            };
+        }
+        case SCRIPT_LOADING_SUCCEEDED: {
+            const [scriptKey, content] = action.value;
+            const data = state.scripts[scriptKey];
+            const script = state.instance!.createScript();
+            script.insertTextAt(0, content);
+            // XXX Remove old?
+            return {
+                ...state,
+                scripts: {
+                    ...state.scripts,
+                    [scriptKey]: {
+                        ...data,
+                        script: script,
+                        loading: {
+                            status: LoadingStatus.SUCCEEDED,
+                            startedAt: data.loading.startedAt,
+                            finishedAt: new Date(),
+                            error: null,
+                        },
+                    },
+                },
+            };
+        }
+        case LOAD_SCRIPTS: {
             return state;
         }
         case RESIZE_SCHEMA_GRAPH:
@@ -79,7 +136,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
 
 /// Compute a schema graph
 function computeSchemaGraph(state: AppState): AppState {
-    if (state.main.script == null) {
+    if (state.scripts[ScriptKey.MAIN_SCRIPT].script == null) {
         return state;
     }
     console.time('Schema Graph Layout');
@@ -88,61 +145,20 @@ function computeSchemaGraph(state: AppState): AppState {
         state.graphLayout = null;
     }
     state.graph!.configure(state.graphConfig);
-    state.graphLayout = state.graph!.loadScript(state.main.script);
+    state.graphLayout = state.graph!.loadScript(state.scripts[ScriptKey.MAIN_SCRIPT].script);
     console.timeEnd('Schema Graph Layout');
     return state;
 }
 
-const DEFAULT_BOARD_WIDTH = 800;
-const DEFAULT_BOARD_HEIGHT = 600;
-
-const defaultContext: AppState = {
-    instance: null,
-    main: {
-        scriptKey: 0,
-        script: null,
-        scanned: null,
-        parsed: null,
-        analyzed: null,
-        destroy: () => {},
-    },
-    schema: {
-        scriptKey: 0,
-        script: null,
-        scanned: null,
-        parsed: null,
-        analyzed: null,
-        destroy: () => {},
-    },
-    graph: null,
-    graphLayout: null,
-    graphConfig: {
-        iterationCount: 50.0,
-        forceScaling: 100.0,
-        cooldownFactor: 0.96,
-        repulsionForce: 0.5,
-        edgeAttractionForce: 0.5,
-        gravityForce: 1.6,
-        initialRadius: 100.0,
-        boardWidth: DEFAULT_BOARD_WIDTH,
-        boardHeight: DEFAULT_BOARD_HEIGHT,
-        tableWidth: 180,
-        tableConstantHeight: 24,
-        tableColumnHeight: 8,
-        tableMaxHeight: 36,
-        tableMargin: 20,
-    },
-};
-
-const stateContext = React.createContext<AppState>(defaultContext);
-const stateDispatch = React.createContext<Dispatch<AppStateAction>>(c => {});
+const stateContext = React.createContext<AppState | null>(null);
+const stateDispatch = React.createContext<Dispatch<AppStateAction> | null>(null);
 
 type Props = {
     children: React.ReactElement;
 };
 
 export const AppStateProvider: React.FC<Props> = (props: Props) => {
-    const [state, dispatch] = React.useReducer(reducer, null, () => defaultContext);
+    const [state, dispatch] = React.useReducer(reducer, null, () => createDefaultState());
 
     const backend = useFlatSQL();
     React.useEffect(() => {
@@ -158,4 +174,4 @@ export const AppStateProvider: React.FC<Props> = (props: Props) => {
 };
 
 export const useAppState = (): AppState => React.useContext(stateContext)!;
-export const useAppStateDispatch = (): Dispatch<AppStateAction> => React.useContext(stateDispatch);
+export const useAppStateDispatch = (): Dispatch<AppStateAction> => React.useContext(stateDispatch)!;
