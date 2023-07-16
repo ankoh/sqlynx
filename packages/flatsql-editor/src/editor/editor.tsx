@@ -6,10 +6,10 @@ import { DecorationSet, EditorView } from '@codemirror/view';
 
 import { CodeMirror } from './codemirror';
 import { FlatSQLExtensions } from './flatsql_extension';
-import { FlatSQLScriptKey, FlatSQLAnalysisRecord, UpdateFlatSQLScript } from './flatsql_analyzer';
+import { FlatSQLScriptKey, UpdateFlatSQLScript, analyzeScript } from './flatsql_analyzer';
 import { useAppState, useAppStateDispatch, UPDATE_SCRIPT_ANALYSIS, LOAD_SCRIPTS } from '../app_state_reducer';
 import { ScriptKey } from '../app_state';
-import { SSB_SCHEMA, TPCH_SCHEMA, exampleScripts } from '../script_loader/example_scripts';
+import { TPCH_SCHEMA, exampleScripts } from '../script_loader/example_scripts';
 
 import iconMainScript from '../../static/svg/icons/database_search.svg';
 import iconExternalScript from '../../static/svg/icons/database.svg';
@@ -82,11 +82,14 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
 
     // Helper to update a script
     const updateScript = React.useCallback(
-        (next: FlatSQLAnalysisRecord) => {
+        (scriptKey: FlatSQLScriptKey, script: flatsql.FlatSQLScript) => {
+            // Analyze the script
+            const data = analyzeScript(script);
             ctxDispatch({
                 type: UPDATE_SCRIPT_ANALYSIS,
-                value: next,
+                value: [scriptKey, data],
             });
+            return data;
         },
         [ctxDispatch],
     );
@@ -107,24 +110,25 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                 scriptKey = ScriptKey.SCHEMA_SCRIPT;
                 break;
         }
-        const script: flatsql.FlatSQLScript | null = ctx.scripts[scriptKey].script ?? null;
+        const scriptData = ctx.scripts[scriptKey];
 
         // Did the script change?
-        if (activeScript.current.script !== script) {
-            activeScript.current.script = script;
+        if (activeScript.current.script !== scriptData.script) {
+            activeScript.current.script = scriptData.script;
             view.dispatch({
                 changes: [
                     {
                         from: 0,
                         to: view.state.doc.length,
-                        insert: script?.toString(),
+                        insert: scriptData.script?.toString(),
                     },
                 ],
                 effects: [
                     UpdateFlatSQLScript.of({
                         scriptKey,
-                        script,
-                        onUpdate: updateScript,
+                        script: scriptData.script,
+                        data: scriptData.analysis,
+                        update: updateScript,
                     }),
                 ],
             });
