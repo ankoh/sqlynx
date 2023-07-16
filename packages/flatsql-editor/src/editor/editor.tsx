@@ -1,13 +1,14 @@
+import cn from 'classnames';
 import * as React from 'react';
 import * as flatsql from '@ankoh/flatsql';
 
-import cn from 'classnames';
-
-import { Decoration, DecorationSet, EditorView, lineNumbers } from '@codemirror/view';
+import { Decoration, DecorationSet, EditorView } from '@codemirror/view';
 import { RangeSetBuilder } from '@codemirror/state';
+
 import { CodeMirror } from './codemirror';
-import { UpdateFlatSQLDecorations, UpdateFlatSQLScript, FlatSQLExtensions } from './extension';
-import { useFlatSQLState, useFlatSQLDispatch, UPDATE_SCRIPT } from '../flatsql_reducer';
+import { FlatSQLExtensions } from './flatsql_extension';
+import { FlatSQLAnalyzerState, UpdateFlatSQLScript } from './flatsql_analyzer';
+import { useAppState, useAppStateDispatch, UPDATE_SCRIPT } from '../app_state_reducer';
 
 import iconMainScript from '../../static/svg/icons/database_search.svg';
 import iconExternalScript from '../../static/svg/icons/database.svg';
@@ -53,8 +54,8 @@ interface ActiveScriptState {
 }
 
 export const ScriptEditor: React.FC<Props> = (props: Props) => {
-    const ctx = useFlatSQLState();
-    const ctxDispatch = useFlatSQLDispatch();
+    const ctx = useAppState();
+    const ctxDispatch = useAppStateDispatch();
     const [activeTab, setActiveTab] = React.useState<TabId>(TabId.MAIN_SCRIPT);
     const [folderOpen, setFolderOpen] = React.useState<boolean>(false);
     const [view, setView] = React.useState<EditorView | null>(null);
@@ -68,10 +69,10 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
 
     // Helper to update a script
     const updateScript = React.useCallback(
-        (script: flatsql.FlatSQLScript) => {
+        (prev: FlatSQLAnalyzerState, next: FlatSQLAnalyzerState) => {
             ctxDispatch({
                 type: UPDATE_SCRIPT,
-                value: script,
+                value: [prev, next],
             });
         },
         [ctxDispatch],
@@ -85,47 +86,33 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         }
         // Determine which script is active
         let script: flatsql.FlatSQLScript | null = activeScript.current.script;
-        let decorations: DecorationSet | null = activeScript.current.decorations;
         switch (activeTab as TabId) {
-            case TabId.ACCOUNT:
-                break;
-            case TabId.MAIN_SCRIPT: {
+            case TabId.MAIN_SCRIPT:
                 script = ctx.main.script;
-                decorations = ctx.main.decorations;
                 break;
-            }
-            case TabId.SCHEMA_SCRIPT: {
+            case TabId.SCHEMA_SCRIPT:
                 script = ctx.schema.script;
-                decorations = ctx.schema.decorations;
                 break;
-            }
         }
 
         // Did the script change?
-        const changes = [];
-        const effects = [];
         if (activeScript.current.script !== script) {
-            changes.push({
-                from: 0,
-                to: view.state.doc.length,
-                insert: script?.toString(),
-            });
-            effects.push(
-                UpdateFlatSQLScript.of({
-                    script,
-                    onChange: updateScript,
-                }),
-            );
             activeScript.current.script = script;
-        }
-        // Did the decorations change?
-        if (activeScript.current.decorations !== decorations) {
-            effects.push(UpdateFlatSQLDecorations.of(decorations ?? new RangeSetBuilder<Decoration>().finish()));
-            activeScript.current.decorations = decorations;
-        }
-        // Did anything change? Then update the view
-        if (changes.length > 0 || effects.length > 0) {
-            view.dispatch({ changes, effects });
+            view.dispatch({
+                changes: [
+                    {
+                        from: 0,
+                        to: view.state.doc.length,
+                        insert: script?.toString(),
+                    },
+                ],
+                effects: [
+                    UpdateFlatSQLScript.of({
+                        script,
+                        onUpdate: updateScript,
+                    }),
+                ],
+            });
         }
     }, [view, activeTab, ctx.schema, ctx.main, updateScript]);
 

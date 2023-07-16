@@ -1,3 +1,3 @@
 export * from './editor';
 export * from './codemirror';
-export * from './extension';
+export * from './flatsql_extension';

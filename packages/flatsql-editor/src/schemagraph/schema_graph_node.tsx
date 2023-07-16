@@ -1,6 +1,6 @@
 import * as flatsql from '@ankoh/flatsql';
 import * as React from 'react';
-import { FlatSQLState } from '../flatsql_state';
+import { AppState } from '../app_state';
 
 import iconTable from '../../static/svg/icons/table.svg';
 import iconTableView from '../../static/svg/icons/table_border.svg';
@@ -46,7 +46,7 @@ export const TableNode: React.FC<TableNodeProps> = (props: TableNodeProps) => {
     );
 };
 
-export function layoutSchema(ctx: FlatSQLState): [TableNodeProps[], TableEdgeProps[]] {
+export function layoutSchema(ctx: AppState): [TableNodeProps[], TableEdgeProps[]] {
     const parsed = ctx.main.parsed?.read(new flatsql.proto.ParsedScript());
     const analyzed = ctx.main.analyzed?.read(new flatsql.proto.AnalyzedScript());
     if (!parsed || !analyzed) {
