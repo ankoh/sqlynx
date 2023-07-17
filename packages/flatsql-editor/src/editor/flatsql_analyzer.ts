@@ -12,7 +12,7 @@ export interface FlatSQLScriptUpdate {
     /// The previous analysis data (if any)
     data: FlatSQLAnalysisData;
     // This callback is called when the editor updates the script
-    update: (scriptKey: FlatSQLScriptKey, script: flatsql.FlatSQLScript) => FlatSQLAnalysisData;
+    onUpdate: (scriptKey: FlatSQLScriptKey, script: FlatSQLAnalysisData) => void;
 }
 /// The state of a FlatSQL script
 export interface FlatSQLAnalysisData {
@@ -83,7 +83,7 @@ export const FlatSQLAnalyzer: StateField<FlatSQLAnalyzerState> = StateField.defi
                 analyzed: null,
                 destroy: destroyAnalysisData,
             },
-            update: () => ({
+            onUpdate: () => ({
                 scanned: null,
                 parsed: null,
                 analyzed: null,
@@ -97,17 +97,12 @@ export const FlatSQLAnalyzer: StateField<FlatSQLAnalyzerState> = StateField.defi
         // Did the user provide us with a new FlatSQL script?
         for (const effect of transaction.effects) {
             if (effect.is(UpdateFlatSQLScript) && state.script !== effect.value.script) {
-                // Warn the user if he forgot to also change the script text
-                if (transaction.changes.empty) {
-                    console.warn('FlatSQL script was updated without changing the document');
-                }
-                // Create next state
                 return {
                     ...state,
                     scriptKey: effect.value.scriptKey,
                     script: effect.value.script,
                     data: effect.value.data,
-                    update: effect.value.update,
+                    onUpdate: effect.value.onUpdate,
                 };
             }
         }
@@ -130,7 +125,8 @@ export const FlatSQLAnalyzer: StateField<FlatSQLAnalyzerState> = StateField.defi
             );
             // Analyze the new script
             const next = { ...state };
-            next.data = next.update(next.scriptKey, next.script!);
+            next.data = analyzeScript(next.script!);
+            next.onUpdate(next.scriptKey, next.data);
             return next;
         }
         return state;
