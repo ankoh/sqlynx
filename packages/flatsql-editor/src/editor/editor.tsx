@@ -6,7 +6,7 @@ import { DecorationSet, EditorView } from '@codemirror/view';
 
 import { CodeMirror } from './codemirror';
 import { FlatSQLExtensions } from './flatsql_extension';
-import { FlatSQLScriptKey, UpdateFlatSQLScript, analyzeScript } from './flatsql_analyzer';
+import { FlatSQLAnalysisData, FlatSQLScriptKey, UpdateFlatSQLScript, analyzeScript } from './flatsql_analyzer';
 import { useAppState, useAppStateDispatch, UPDATE_SCRIPT_ANALYSIS, LOAD_SCRIPTS } from '../app_state_reducer';
 import { ScriptKey } from '../app_state';
 import { TPCH_SCHEMA, exampleScripts } from '../script_loader/example_scripts';
@@ -82,14 +82,11 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
 
     // Helper to update a script
     const updateScript = React.useCallback(
-        (scriptKey: FlatSQLScriptKey, script: flatsql.FlatSQLScript) => {
-            // Analyze the script
-            const data = analyzeScript(script);
+        (scriptKey: FlatSQLScriptKey, data: FlatSQLAnalysisData) => {
             ctxDispatch({
                 type: UPDATE_SCRIPT_ANALYSIS,
                 value: [scriptKey, data],
             });
-            return data;
         },
         [ctxDispatch],
     );
@@ -128,7 +125,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                         scriptKey,
                         script: scriptData.script,
                         data: scriptData.analysis,
-                        update: updateScript,
+                        onUpdate: updateScript,
                     }),
                 ],
             });
