@@ -100,8 +100,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
             // Create the FlatSQL script and insert the text
             const script = state.instance!.createScript();
             script.insertTextAt(0, content);
-            // Analyse the script
-            const analysis = analyzeScript(script);
+            // Create new state
             // XXX Remove old?
             const newState = {
                 ...state,
@@ -116,10 +115,27 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                             finishedAt: new Date(),
                             error: null,
                         },
-                        analysis,
                     },
                 },
             };
+            switch (scriptKey) {
+                case ScriptKey.MAIN_SCRIPT: {
+                    const external = state.scripts[ScriptKey.SCHEMA_SCRIPT].script;
+                    const analysis = analyzeScript(script, external);
+                    newState.scripts[scriptKey].analysis = analysis;
+                    break;
+                }
+                case ScriptKey.SCHEMA_SCRIPT: {
+                    const externalAnalysis = analyzeScript(script, null);
+                    const mainScript = newState.scripts[ScriptKey.MAIN_SCRIPT].script;
+                    if (mainScript) {
+                        const mainAnalysis = analyzeScript(mainScript, script);
+                        newState.scripts[ScriptKey.MAIN_SCRIPT].analysis = mainAnalysis;
+                    }
+                    newState.scripts[scriptKey].analysis = externalAnalysis;
+                    break;
+                }
+            }
             return computeSchemaGraph(newState);
         }
         case LOAD_SCRIPTS: {
@@ -134,7 +150,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                 const metadata = action.value[key];
                 newState.scripts[key] = {
                     scriptKey: key,
-                    script: state.instance!.createScript(),
+                    script: null,
                     metadata: metadata,
                     loading: {
                         status: LoadingStatus.PENDING,
