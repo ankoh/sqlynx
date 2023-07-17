@@ -3,7 +3,6 @@ import * as flatsql from '@ankoh/flatsql';
 
 import { useFlatSQL } from './flatsql_loader';
 import { FlatSQLAnalysisData, analyzeScript } from './editor/flatsql_analyzer';
-import { TMP_TPCH_SCHEMA } from './script_loader/example_scripts';
 import { AppState, ScriptKey, createDefaultState, createEmptyScript, destroyState } from './app_state';
 import { Action, Dispatch } from './utils/action';
 import { RESULT_OK } from './utils/result';
@@ -42,7 +41,6 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                 },
                 graph: action.value.createSchemaGraph(),
             };
-            newState.scripts[ScriptKey.MAIN_SCRIPT].script!.insertTextAt(0, TMP_TPCH_SCHEMA);
             return newState;
         }
         case UPDATE_SCRIPT_ANALYSIS: {
