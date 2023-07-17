@@ -3,6 +3,7 @@ import * as React from 'react';
 import * as flatsql from '@ankoh/flatsql';
 
 import { DecorationSet, EditorView } from '@codemirror/view';
+import { ChangeSpec, StateEffect } from '@codemirror/state';
 
 import { CodeMirror } from './codemirror';
 import { FlatSQLExtensions } from './flatsql_extension';
@@ -51,6 +52,7 @@ interface Props {}
 
 interface ActiveScriptState {
     script: flatsql.FlatSQLScript | null;
+    external: flatsql.FlatSQLScript | null;
     decorations: DecorationSet | null;
 }
 
@@ -63,8 +65,9 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
 
     const viewWasCreated = React.useCallback((view: EditorView) => setView(view), [setView]);
     const viewWillBeDestroyed = React.useCallback((view: EditorView) => setView(null), [setView]);
-    const activeScript = React.useRef<ActiveScriptState>({
+    const active = React.useRef<ActiveScriptState>({
         script: null,
+        external: null,
         decorations: null,
     });
 
@@ -98,37 +101,57 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
             return;
         }
         // Determine which script is active
-        let scriptKey: FlatSQLScriptKey = ScriptKey.MAIN_SCRIPT;
+        let mainKey: FlatSQLScriptKey = ScriptKey.MAIN_SCRIPT;
+        let externalKey: FlatSQLScriptKey | null = null;
         switch (activeTab as TabId) {
             case TabId.MAIN_SCRIPT:
-                scriptKey = ScriptKey.MAIN_SCRIPT;
+                mainKey = ScriptKey.MAIN_SCRIPT;
+                externalKey = ScriptKey.SCHEMA_SCRIPT;
                 break;
             case TabId.SCHEMA_SCRIPT:
-                scriptKey = ScriptKey.SCHEMA_SCRIPT;
+                mainKey = ScriptKey.SCHEMA_SCRIPT;
                 break;
         }
-        const scriptData = ctx.scripts[scriptKey];
+        const mainData = ctx.scripts[mainKey];
+        const externalData = externalKey != null ? ctx.scripts[externalKey] : null;
+        const externalScript = externalData?.script ?? null;
 
         // Did the script change?
-        if (activeScript.current.script !== scriptData.script) {
-            activeScript.current.script = scriptData.script;
-            view.dispatch({
-                changes: [
-                    {
-                        from: 0,
-                        to: view.state.doc.length,
-                        insert: scriptData.script?.toString(),
-                    },
-                ],
-                effects: [
-                    UpdateFlatSQLScript.of({
-                        scriptKey,
-                        script: scriptData.script,
-                        data: scriptData.analysis,
-                        onUpdate: updateScript,
-                    }),
-                ],
+        const changes: ChangeSpec[] = [];
+        const effects: StateEffect<any>[] = [];
+        if (active.current.script !== mainData.script) {
+            active.current.script = mainData.script;
+            active.current.external = externalScript;
+            changes.push({
+                from: 0,
+                to: view.state.doc.length,
+                insert: mainData.script?.toString(),
             });
+            effects.push(
+                UpdateFlatSQLScript.of({
+                    scriptKey: mainKey,
+                    script: mainData.script,
+                    external: externalScript,
+                    data: mainData.analysis,
+                    onUpdate: updateScript,
+                }),
+            );
+        } else if (active.current.external !== externalData?.script) {
+            // Only the external script changed, no need for text changes
+            active.current.script = mainData.script;
+            active.current.external = externalScript;
+            effects.push(
+                UpdateFlatSQLScript.of({
+                    scriptKey: mainKey,
+                    script: mainData.script,
+                    external: externalScript,
+                    data: mainData.analysis,
+                    onUpdate: updateScript,
+                }),
+            );
+        }
+        if (changes.length > 0 || effects.length > 0) {
+            view.dispatch({ changes, effects });
         }
     }, [view, activeTab, ctx.scripts[ScriptKey.MAIN_SCRIPT], ctx.scripts[ScriptKey.SCHEMA_SCRIPT], updateScript]);
 

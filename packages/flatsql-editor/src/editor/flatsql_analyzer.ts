@@ -5,10 +5,12 @@ import { StateField, StateEffect, StateEffectType, Text, Transaction } from '@co
 export type FlatSQLScriptKey = number;
 /// A FlatSQL script update
 export interface FlatSQLScriptUpdate {
-    // The currently active script
+    // The key of the currently active script
     scriptKey: FlatSQLScriptKey;
-    // The currently active script
+    // The currently active script in the editor
     script: flatsql.FlatSQLScript | null;
+    // The second script
+    external: flatsql.FlatSQLScript | null;
     /// The previous analysis data (if any)
     data: FlatSQLAnalysisData;
     // This callback is called when the editor updates the script
@@ -31,7 +33,10 @@ export interface FlatSQLAnalysisData {
 type FlatSQLAnalyzerState = FlatSQLScriptUpdate;
 
 /// Analyze a script
-export function analyzeScript(script: flatsql.FlatSQLScript): FlatSQLAnalysisData {
+export function analyzeScript(
+    script: flatsql.FlatSQLScript,
+    external: flatsql.FlatSQLScript | null,
+): FlatSQLAnalysisData {
     // Scan the script
     console.time('Script Scanning');
     const scanned = script.scan();
@@ -44,7 +49,7 @@ export function analyzeScript(script: flatsql.FlatSQLScript): FlatSQLAnalysisDat
 
     // Parse the script
     console.time('Script Analyzing');
-    const analyzed = script.analyze();
+    const analyzed = script.analyze(external);
     console.timeEnd('Script Analyzing');
 
     return { scanned, parsed, analyzed, destroy: destroyAnalysisData };
@@ -77,6 +82,7 @@ export const FlatSQLAnalyzer: StateField<FlatSQLAnalyzerState> = StateField.defi
         const config: FlatSQLAnalyzerState = {
             scriptKey: 0,
             script: null,
+            external: null,
             data: {
                 scanned: null,
                 parsed: null,
@@ -101,6 +107,7 @@ export const FlatSQLAnalyzer: StateField<FlatSQLAnalyzerState> = StateField.defi
                     ...state,
                     scriptKey: effect.value.scriptKey,
                     script: effect.value.script,
+                    external: effect.value.external,
                     data: effect.value.data,
                     onUpdate: effect.value.onUpdate,
                 };
@@ -125,7 +132,7 @@ export const FlatSQLAnalyzer: StateField<FlatSQLAnalyzerState> = StateField.defi
             );
             // Analyze the new script
             const next = { ...state };
-            next.data = analyzeScript(next.script!);
+            next.data = analyzeScript(next.script!, next.external);
             next.onUpdate(next.scriptKey, next.data);
             return next;
         }
