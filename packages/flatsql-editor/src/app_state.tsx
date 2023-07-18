@@ -3,7 +3,7 @@ import * as flatsql from '@ankoh/flatsql';
 import { generateBlankScript } from './script_loader/script_metadata';
 import { LoadingStatus } from './script_loader/script_loader';
 
-import { FlatSQLAnalysisData } from './editor/flatsql_analyzer';
+import { FlatSQLScriptBuffers } from './editor/flatsql_analyzer';
 import { ScriptMetadata } from './script_loader/script_metadata';
 import { LoadingInfo } from './script_loader/script_loader';
 
@@ -36,16 +36,16 @@ export interface ScriptData {
     metadata: ScriptMetadata;
     /// The loading info
     loading: LoadingInfo;
-    /// The analysis info
-    analysis: FlatSQLAnalysisData;
+    /// The buffers
+    buffers: FlatSQLScriptBuffers;
 }
 
 /// Destroy a state
 export function destroyState(state: AppState): AppState {
     const main = state.scripts[ScriptKey.MAIN_SCRIPT];
     const schema = state.scripts[ScriptKey.SCHEMA_SCRIPT];
-    main.analysis.destroy(main.analysis);
-    schema.analysis.destroy(schema.analysis);
+    main.buffers.destroy(main.buffers);
+    schema.buffers.destroy(schema.buffers);
     if (state.graphLayout) {
         state.graphLayout.delete();
         state.graphLayout = null;
@@ -54,7 +54,7 @@ export function destroyState(state: AppState): AppState {
 }
 
 export function createDefaultScript(key: ScriptKey) {
-    return {
+    const script: ScriptData = {
         scriptKey: key,
         script: null,
         metadata: generateBlankScript(),
@@ -64,17 +64,18 @@ export function createDefaultScript(key: ScriptKey) {
             startedAt: null,
             finishedAt: null,
         },
-        analysis: {
+        buffers: {
             scanned: null,
             parsed: null,
             analyzed: null,
             destroy: () => {},
         },
     };
+    return script;
 }
 
 export function createEmptyScript(key: ScriptKey, api: flatsql.FlatSQL) {
-    return {
+    const script: ScriptData = {
         scriptKey: key,
         script: api.createScript(),
         metadata: generateBlankScript(),
@@ -84,13 +85,14 @@ export function createEmptyScript(key: ScriptKey, api: flatsql.FlatSQL) {
             startedAt: null,
             finishedAt: null,
         },
-        analysis: {
+        buffers: {
             scanned: null,
             parsed: null,
             analyzed: null,
             destroy: () => {},
         },
     };
+    return script;
 }
 
 const DEFAULT_BOARD_WIDTH = 800;
