@@ -1,17 +1,30 @@
-select   i_name,
-         brand,
-         i_price,
-         count(distinct (mod((s_w_id * s_i_id),10000))) as supplier_cnt
+select
+    p_brand,
+    p_type,
+    p_size,
+    count(distinct ps_suppkey) as supplier_cnt
 from
-        (select i_name,
-                substr(i_data, 1, 3) as brand,
-                i_price,
-                s_w_id,
-                s_i_id
-         from   stock, item
-         where  i_id = s_i_id
-                and i_data not like 'zz%'
-                and (mod((s_w_id * s_i_id),10000)) not in (select su_suppkey from supplier where su_comment like '%bad%')) as good_items
-group by i_name, brand, i_price
-order by supplier_cnt desc
-limit 100
+    partsupp,
+    part
+where
+    p_partkey = ps_partkey
+    and p_brand <> 'Brand#45'
+    and p_type not like 'MEDIUM POLISHED%'
+    and p_size in (49, 14, 23, 45, 19, 3, 36, 9)
+    and ps_suppkey not in (
+        select
+            s_suppkey
+        from
+            supplier
+        where
+            s_comment like '%Customer%Complaints%'
+    )
+group by
+    p_brand,
+    p_type,
+    p_size
+order by
+    supplier_cnt desc,
+    p_brand,
+    p_type,
+    p_size

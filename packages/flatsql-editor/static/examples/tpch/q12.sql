@@ -1,11 +1,28 @@
-select   o_ol_cnt,
-         sum(case when o_carrier_id = 1 or o_carrier_id = 2 then 1 else 0 end) as high_line_count,
-         sum(case when o_carrier_id <> 1 and o_carrier_id <> 2 then 1 else 0 end) as low_line_count
-from     "order", orderline
-where    ol_w_id = o_w_id
-         and ol_d_id = o_d_id
-         and ol_o_id = o_id
-         and o_entry_d <= ol_delivery_d
-         and ol_delivery_d < timestamp '2030-01-01 00:00:00.000000'
-group by o_ol_cnt
-order by o_ol_cnt
+select
+    l_shipmode,
+    sum(case
+        when o_orderpriority = '1-URGENT'
+            or o_orderpriority = '2-HIGH'
+            then 1
+        else 0
+    end) as high_line_count,
+    sum(case
+        when o_orderpriority <> '1-URGENT'
+            and o_orderpriority <> '2-HIGH'
+            then 1
+        else 0
+    end) as low_line_count
+from
+    orders,
+    lineitem
+where
+    o_orderkey = l_orderkey
+    and l_shipmode in ('MAIL', 'SHIP')
+    and l_commitdate < l_receiptdate
+    and l_shipdate < l_commitdate
+    and l_receiptdate >= date '1994-01-01'
+    and l_receiptdate < date '1995-01-01'
+group by
+    l_shipmode
+order by
+    l_shipmode

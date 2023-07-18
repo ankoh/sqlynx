@@ -1,19 +1,24 @@
-select   n_name,
-         sum(ol_amount) as revenue
-from     customer, "order", orderline, stock, supplier, nation, region
-where    c_id = o_c_id
-         and c_w_id = o_w_id
-         and c_d_id = o_d_id
-         and ol_o_id = o_id
-         and ol_w_id = o_w_id
-         and ol_d_id=o_d_id
-         and ol_w_id = s_w_id
-         and ol_i_id = s_i_id
-         and mod((s_w_id * s_i_id),10000) = su_suppkey
-         and ascii(substr(c_state,1,1)) = su_nationkey
-         and su_nationkey = n_nationkey
-         and n_regionkey = r_regionkey
-         and r_name = 'Europe'
-         and o_entry_d >= timestamp '2007-01-02 00:00:00.000000'
-group by n_name
-order by revenue desc
+select
+    n_name,
+    sum(l_extendedprice * (1 - l_discount)) as revenue
+from
+    customer,
+    orders,
+    lineitem,
+    supplier,
+    nation,
+    region
+where
+    c_custkey = o_custkey
+    and l_orderkey = o_orderkey
+    and l_suppkey = s_suppkey
+    and c_nationkey = s_nationkey
+    and s_nationkey = n_nationkey
+    and n_regionkey = r_regionkey
+    and r_name = 'ASIA'
+    and o_orderdate >= date '1994-01-01'
+    and o_orderdate < date '1995-01-01'
+group by
+    n_name
+order by
+    revenue desc

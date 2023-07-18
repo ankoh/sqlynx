@@ -1,5 +1,9 @@
-select  sum(ol_amount) as revenue
-from    orderline
-where   ol_delivery_d >= timestamp '1999-01-01 00:00:00.000000'
-        and ol_delivery_d < timestamp '2030-01-01 00:00:00.000000'
-        and ol_quantity between 1 and 100000
+select
+    sum(l_extendedprice * l_discount) as revenue
+from
+    lineitem
+where
+    l_shipdate >= date '1994-01-01'
+    and l_shipdate < date '1995-01-01'
+    and l_discount between 0.06 - 0.01 and 0.06 + 0.01
+    and l_quantity < 24

@@ -1,12 +1,27 @@
-select   s_i_id, sum(s_order_cnt) as ordercount
-from     stock, supplier, nation
-where    mod((s_w_id * s_i_id),10000) = su_suppkey
-         and su_nationkey = n_nationkey
-         and n_name = 'Germany'
-group by s_i_id
-having   sum(s_order_cnt) > (select sum(s_order_cnt) * .005
-                             from stock, supplier, nation
-                             where mod((s_w_id * s_i_id),10000) = su_suppkey
-                             and su_nationkey = n_nationkey
-                             and n_name = 'Germany')
-order by ordercount desc
+select
+    ps_partkey,
+    sum(ps_supplycost * ps_availqty) as "value"
+from
+    partsupp,
+    supplier,
+    nation
+where
+    ps_suppkey = s_suppkey
+    and s_nationkey = n_nationkey
+    and n_name = 'GERMANY'
+group by
+    ps_partkey having
+        sum(ps_supplycost * ps_availqty) > (
+            select
+                sum(ps_supplycost * ps_availqty) * 0.0001
+            from
+                partsupp,
+                supplier,
+                nation
+            where
+                ps_suppkey = s_suppkey
+                and s_nationkey = n_nationkey
+                and n_name = 'GERMANY'
+        )
+order by
+    "value" desc

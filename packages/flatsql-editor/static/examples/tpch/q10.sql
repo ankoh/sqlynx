@@ -1,14 +1,33 @@
-select   c_id, c_last, sum(ol_amount) as revenue, c_city, c_phone, n_name
-from     customer, "order", orderline, nation
-where    c_id = o_c_id
-         and c_w_id = o_w_id
-         and c_d_id = o_d_id
-         and ol_w_id = o_w_id
-         and ol_d_id = o_d_id
-         and ol_o_id = o_id
-         and o_entry_d >= timestamp '2030-01-02 00:00:00.000000'
-         and o_entry_d <= ol_delivery_d
-         and n_nationkey = ascii(substr(c_state,1,1))
-group by c_id, c_last, c_city, c_phone, n_name
-order by revenue desc
-limit    100
+select
+    c_custkey,
+    c_name,
+    sum(l_extendedprice * (1 - l_discount)) as revenue,
+    c_acctbal,
+    n_name,
+    c_address,
+    c_phone,
+    c_comment
+from
+    customer,
+    orders,
+    lineitem,
+    nation
+where
+    c_custkey = o_custkey
+    and l_orderkey = o_orderkey
+    and o_orderdate >= date '1993-10-01'
+    and o_orderdate < date '1994-01-01'
+    and l_returnflag = 'R'
+    and c_nationkey = n_nationkey
+group by
+    c_custkey,
+    c_name,
+    c_acctbal,
+    c_phone,
+    n_name,
+    c_address,
+    c_comment
+order by
+    revenue desc
+limit
+	20
