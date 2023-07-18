@@ -1,16 +1,37 @@
-select   su_name, su_address
-from     supplier, nation
-where    su_suppkey in
-                (select  mod(s_i_id * s_w_id, 10000)
-                from     stock, orderline
-                where    s_i_id in
-                                (select i_id
-                                 from item
-                                 where i_data like 'co%')
-                         and ol_i_id=s_i_id
-                         and ol_delivery_d > timestamp '2010-05-23 12:00:00'
-                group by s_i_id, s_w_id, s_quantity
-                having   2*s_quantity > sum(ol_quantity))
-         and su_nationkey = n_nationkey
-         and n_name = 'Germany'
-order by su_name
+select
+    s_name,
+    s_address
+from
+    supplier,
+    nation
+where
+    s_suppkey in (
+        select
+            ps_suppkey
+        from
+            partsupp
+        where
+            ps_partkey in (
+                select
+                    p_partkey
+                from
+                    part
+                where
+                    p_name like 'forest%'
+            )
+            and ps_availqty > (
+                select
+                    0.5 * sum(l_quantity)
+                from
+                    lineitem
+                where
+                    l_partkey = ps_partkey
+                    and l_suppkey = ps_suppkey
+                    and l_shipdate >= date '1994-01-01'
+                    and l_shipdate < date '1995-01-01'
+            )
+    )
+    and s_nationkey = n_nationkey
+    and n_name = 'CANADA'
+order by
+    s_name

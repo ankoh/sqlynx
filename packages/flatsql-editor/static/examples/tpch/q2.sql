@@ -1,19 +1,45 @@
-select   su_suppkey, su_name, n_name, i_id, i_name, su_address, su_phone, su_comment
-from     item, supplier, stock, nation, region,
-         (select s_i_id as m_i_id,
-                 min(s_quantity) as m_s_quantity
-         from    stock, supplier, nation, region
-         where   mod((s_w_id*s_i_id),10000)=su_suppkey
-                 and su_nationkey=n_nationkey
-                 and n_regionkey=r_regionkey
-                 and r_name like 'Europ%'
-         group by s_i_id) m
-where    i_id = s_i_id
-         and mod((s_w_id * s_i_id), 10000) = su_suppkey
-         and su_nationkey = n_nationkey
-         and n_regionkey = r_regionkey
-         and i_data like '%b'
-         and r_name like 'Europ%'
-         and i_id=m_i_id
-         and s_quantity = m_s_quantity
-order by n_name, su_name, i_id
+select
+    s_acctbal,
+    s_name,
+    n_name,
+    p_partkey,
+    p_mfgr,
+    s_address,
+    s_phone,
+    s_comment
+from
+    part,
+    supplier,
+    partsupp,
+    nation,
+    region
+where
+    p_partkey = ps_partkey
+    and s_suppkey = ps_suppkey
+    and p_size = 15
+    and p_type like '%BRASS'
+    and s_nationkey = n_nationkey
+    and n_regionkey = r_regionkey
+    and r_name = 'EUROPE'
+    and ps_supplycost = (
+        select
+            min(ps_supplycost)
+        from
+            partsupp,
+            supplier,
+            nation,
+            region
+        where
+            p_partkey = ps_partkey
+            and s_suppkey = ps_suppkey
+            and s_nationkey = n_nationkey
+            and n_regionkey = r_regionkey
+            and r_name = 'EUROPE'
+    )
+order by
+    s_acctbal desc,
+    n_name,
+    s_name,
+    p_partkey
+limit
+	100
