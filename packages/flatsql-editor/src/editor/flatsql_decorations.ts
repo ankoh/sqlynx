@@ -66,6 +66,7 @@ const DecorationBuilder: StateField<DecorationState> = StateField.define<Decorat
         const s = { ...state };
         s.scanned = analyzer.data.scanned;
         if (s.scanned) {
+            console.log('UPDATE DECORATIONS');
             s.decorations = buildDecorations(s.scanned);
         }
         return s;

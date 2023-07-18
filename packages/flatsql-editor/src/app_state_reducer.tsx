@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as flatsql from '@ankoh/flatsql';
 
 import { useFlatSQL } from './flatsql_loader';
-import { FlatSQLAnalysisData, analyzeScript } from './editor/flatsql_analyzer';
+import { FlatSQLScriptBuffers, parseAndAnalyzeScript } from './editor/flatsql_analyzer';
 import { AppState, ScriptKey, createDefaultState, createEmptyScript, destroyState } from './app_state';
 import { Action, Dispatch } from './utils/action';
 import { RESULT_OK } from './utils/result';
@@ -21,7 +21,7 @@ export const DESTROY = Symbol('DESTROY');
 export type AppStateAction =
     | Action<typeof INITIALIZE, flatsql.FlatSQL>
     | Action<typeof LOAD_SCRIPTS, { [key: number]: ScriptMetadata }>
-    | Action<typeof UPDATE_SCRIPT_ANALYSIS, [ScriptKey, FlatSQLAnalysisData]>
+    | Action<typeof UPDATE_SCRIPT_ANALYSIS, [ScriptKey, FlatSQLScriptBuffers]>
     | Action<typeof SCRIPT_LOADING_STARTED, ScriptKey>
     | Action<typeof SCRIPT_LOADING_SUCCEEDED, [ScriptKey, string]>
     | Action<typeof SCRIPT_LOADING_FAILED, [ScriptKey, any]>
@@ -44,17 +44,18 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
             return newState;
         }
         case UPDATE_SCRIPT_ANALYSIS: {
+            // Destroy the previous buffers
             const [scriptKey, data] = action.value;
-
             const script = state.scripts[scriptKey];
-            script.analysis.destroy(script.analysis);
+            script.buffers.destroy(script.buffers);
+            // Store the new buffers
             const newState: AppState = {
                 ...state,
                 scripts: {
                     ...state.scripts,
                     [scriptKey]: {
                         ...script,
-                        analysis: data,
+                        buffers: data,
                     },
                 },
             };
@@ -98,17 +99,15 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
             const [scriptKey, content] = action.value;
             const data = state.scripts[scriptKey];
             // Create the FlatSQL script and insert the text
-            const script = state.instance!.createScript();
-            script.insertTextAt(0, content);
+            const newScript = state.instance!.createScript();
+            newScript.insertTextAt(0, content);
             // Create new state
-            // XXX Remove old?
             const newState = {
                 ...state,
                 scripts: {
                     ...state.scripts,
                     [scriptKey]: {
                         ...data,
-                        script: script,
                         loading: {
                             status: LoadingStatus.SUCCEEDED,
                             startedAt: data.loading.startedAt,
@@ -118,21 +117,54 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                     },
                 },
             };
+            // Analyze newly loaded scripts
             switch (scriptKey) {
                 case ScriptKey.MAIN_SCRIPT: {
-                    const external = state.scripts[ScriptKey.SCHEMA_SCRIPT].script;
-                    const analysis = analyzeScript(script, external);
-                    newState.scripts[scriptKey].analysis = analysis;
+                    console.log('LOADED MAIN');
+                    // Destroy the old script and buffers
+                    const old = newState.scripts[ScriptKey.MAIN_SCRIPT];
+                    old.buffers.destroy(old.buffers);
+                    old.script?.delete();
+                    old.script = null;
+                    // Analyze the new script
+                    const external = newState.scripts[ScriptKey.SCHEMA_SCRIPT].script;
+                    const analysis = parseAndAnalyzeScript(newScript, external);
+                    newState.scripts[ScriptKey.MAIN_SCRIPT] = {
+                        ...newState.scripts[ScriptKey.MAIN_SCRIPT],
+                        script: newScript,
+                        buffers: analysis,
+                    };
                     break;
                 }
                 case ScriptKey.SCHEMA_SCRIPT: {
-                    const externalAnalysis = analyzeScript(script, null);
-                    const mainScript = newState.scripts[ScriptKey.MAIN_SCRIPT].script;
-                    if (mainScript) {
-                        const mainAnalysis = analyzeScript(mainScript, script);
-                        newState.scripts[ScriptKey.MAIN_SCRIPT].analysis = mainAnalysis;
+                    console.log('LOADED SCHEMA');
+                    // Destroy the old script and buffers
+                    const old = newState.scripts[ScriptKey.SCHEMA_SCRIPT];
+                    old.buffers.destroy(old.buffers);
+                    old.script?.delete();
+                    old.script = null;
+                    // Analyze the new script
+                    const schemaAnalyzed = parseAndAnalyzeScript(newScript, null);
+                    const main = newState.scripts[ScriptKey.MAIN_SCRIPT];
+                    if (main.script) {
+                        // Delete the old main analysis
+                        main.buffers.analyzed?.delete();
+                        main.buffers.analyzed = null;
+                        // Analyze the old main script with the new script as external
+                        const mainAnalyzed = main.script.analyze(newScript);
+                        newState.scripts[ScriptKey.MAIN_SCRIPT] = {
+                            ...newState.scripts[ScriptKey.MAIN_SCRIPT],
+                            buffers: {
+                                ...main.buffers,
+                                analyzed: mainAnalyzed,
+                            },
+                        };
                     }
-                    newState.scripts[scriptKey].analysis = externalAnalysis;
+                    newState.scripts[ScriptKey.SCHEMA_SCRIPT] = {
+                        ...newState.scripts[ScriptKey.SCHEMA_SCRIPT],
+                        script: newScript,
+                        buffers: schemaAnalyzed,
+                    };
                     break;
                 }
             }
@@ -144,7 +176,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                 if (!action.value[key]) continue;
                 // Destroy previous analysis & script
                 const previous = state.scripts[key];
-                previous.analysis.destroy(previous.analysis);
+                previous.buffers.destroy(previous.buffers);
                 previous.script?.delete();
                 // Store
                 const metadata = action.value[key];
@@ -158,7 +190,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                         startedAt: null,
                         finishedAt: null,
                     },
-                    analysis: {
+                    buffers: {
                         scanned: null,
                         parsed: null,
                         analyzed: null,
