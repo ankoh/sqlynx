@@ -1,19 +1,37 @@
-select   country,
-         count(*) as numcust,
-         sum(balance) as totacctbal
+select
+    cntrycode,
+    count(*) as numcust,
+    sum(c_acctbal) as totacctbal
 from
-         (select substr(c_state,1,1) as country,
-                 c_balance as balance
-          from   customer
-          where  substr(c_phone,1,1) in ('1','2','3','4','5','6','7')
-          and    c_balance > (select avg(c_balance)
-                              from   customer
-                              where  c_balance > 0.00
-                                     and substr(c_phone,1,1) in ('1','2','3','4','5','6','7'))
-          and not exists (select *
-                          from   "order"
-                          where  o_c_id = c_id
-                                 and o_w_id = c_w_id
-                                 and o_d_id = c_d_id)) as country_balance
-group by country
-order by country
+    (
+        select
+            substring(c_phone from 1 for 2) as cntrycode,
+            c_acctbal
+        from
+            customer
+        where
+            substring(c_phone from 1 for 2) in
+                ('13', '31', '23', '29', '30', '18', '17')
+            and c_acctbal > (
+                select
+                    avg(c_acctbal)
+                from
+                    customer
+                where
+                    c_acctbal > 0.00
+                    and substring(c_phone from 1 for 2) in
+                        ('13', '31', '23', '29', '30', '18', '17')
+            )
+            and not exists (
+                select
+                    *
+                from
+                    orders
+                where
+                    o_custkey = c_custkey
+            )
+    ) as custsale
+group by
+    cntrycode
+order by
+    cntrycode
