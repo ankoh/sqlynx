@@ -23,11 +23,25 @@ class SchemaGraph {
         Vertex position;
         double force = 0;
     };
-    struct TableNode {
+    struct Edge {
+        uint32_t nodes_begin = 0;
+        uint16_t node_count_left = 0;
+        uint16_t node_count_right = 0;
+        proto::ExpressionOperator expression_operator = proto::ExpressionOperator::DEFAULT;
+        Edge(uint32_t nodes_begin = 0, uint16_t node_count_left = 0, uint16_t node_count_right = 0,
+             proto::ExpressionOperator op = proto::ExpressionOperator::DEFAULT)
+            : nodes_begin(nodes_begin),
+              node_count_left(node_count_left),
+              node_count_right(node_count_right),
+              expression_operator(op) {}
+    };
+    struct Node {
+        uint32_t table_id = 0;
         Vertex position;
         double width = 0;
         double height = 0;
-        TableNode(Vertex pos, double width, double height) : position(pos), width(width), height(height) {}
+        Node(size_t table_id = 0, Vertex pos = {0.0, 0.0}, double width = 0, double height = 0.0)
+            : table_id(table_id), position(pos), width(width), height(height) {}
     };
 
     struct Config {
@@ -41,7 +55,7 @@ class SchemaGraph {
         double cooldown_until = 0;
         /// The repulsion force
         double repulsion_force = 0;
-        /// The edge force
+        /// The edge attraction force
         double edge_attraction_force = 0;
         /// The gravity force
         double gravity_force = 0;
@@ -72,8 +86,12 @@ class SchemaGraph {
     /// The configuration
     Config config;
 
-    /// The table nodes
-    std::vector<TableNode> table_nodes;
+    /// The edge nodes
+    std::vector<size_t> edge_nodes;
+    /// The edges
+    std::vector<Edge> edges;
+    /// The nodes
+    std::vector<Node> nodes;
     /// The displacement
     std::vector<Vector> displacement;
 
@@ -82,7 +100,7 @@ class SchemaGraph {
 
    public:
     /// Get the current positions
-    auto& GetNodes() { return table_nodes; }
+    auto& GetNodes() { return nodes; }
     /// Configure the schemagraph settings
     void Configure(const Config& config);
     /// Load a script
