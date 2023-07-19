@@ -2,6 +2,7 @@
 
 #include <cmath>
 
+#include "flatsql/analyzer/analyzer.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/script.h"
 #include "flatsql/vis/adjacency_map.h"
@@ -60,8 +61,8 @@ SchemaGraph::Vector jiggle(size_t table_id, size_t iteration, SchemaGraph::Vecto
 
 void SchemaGraph::computeStep(size_t iteration, double& temperature) {
     // Resize displacement slots?
-    if (displacement.size() < table_nodes.size()) {
-        displacement.resize(table_nodes.size());
+    if (displacement.size() < nodes.size()) {
+        displacement.resize(nodes.size());
     }
     // Zero displacements
     Vector zero;
@@ -84,8 +85,8 @@ void SchemaGraph::computeStep(size_t iteration, double& temperature) {
 
     constexpr double MIN_DISTANCE = 0.5;
 
-    for (size_t i = 0; i < table_nodes.size(); ++i) {
-        auto& table_node = table_nodes[i];
+    for (size_t i = 0; i < nodes.size(); ++i) {
+        auto& table_node = nodes[i];
 
         // Gravity attraction
         for (auto& center : gravity) {
@@ -120,11 +121,11 @@ void SchemaGraph::computeStep(size_t iteration, double& temperature) {
     }
 
     // Repulsion force between tables
-    for (size_t i = 0; i < table_nodes.size(); ++i) {
-        for (size_t j = i + 1; j < table_nodes.size(); ++j) {
+    for (size_t i = 0; i < nodes.size(); ++i) {
+        for (size_t j = i + 1; j < nodes.size(); ++j) {
             // Compute distance or overlap vector
-            auto& node_i = table_nodes[i];
-            auto& node_j = table_nodes[j];
+            auto& node_i = nodes[i];
+            auto& node_j = nodes[j];
             double body_x = (node_i.width + node_j.width) / 2;
             double body_y = (node_i.height + node_j.height) / 2;
             double diff_x = abs(node_i.position.x - node_j.position.x);
@@ -149,7 +150,7 @@ void SchemaGraph::computeStep(size_t iteration, double& temperature) {
     }
 
     // Update all nodes
-    for (size_t i = 0; i < table_nodes.size(); ++i) {
+    for (size_t i = 0; i < nodes.size(); ++i) {
         // Skip if difference is too small
         double length = euclidean(displacement[i]);
         if (length < 1.0) {
@@ -159,7 +160,7 @@ void SchemaGraph::computeStep(size_t iteration, double& temperature) {
         double capped_length = std::min(length, temperature);
         displacement[i] = displacement[i] / length * capped_length;
         // Update the nodes
-        table_nodes[i].position = table_nodes[i].position + displacement[i];
+        nodes[i].position = nodes[i].position + displacement[i];
     }
 
     // Cooldown temperature
@@ -170,28 +171,75 @@ void SchemaGraph::Configure(const Config& config) { this->config = config; }
 
 void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
     script = s;
-    // Load adjacency map
-    table_nodes.clear();
-    adjacency.adjacency_nodes.clear();
-    adjacency.adjacency_offsets.clear();
-    adjacency.adjacency_offsets.reserve(script->tables.size() + 1);
-    // XXX Load dependencies
-    double angle = 2.0 * M_PI / script->tables.size();
-    for (size_t i = 0; i < script->tables.size(); ++i) {
-        // XXX Store node dimensions
-        table_nodes.emplace_back(
-            Vertex{
-                config.board_width / 2 + config.initial_radius * cos(i * angle),
-                config.board_height / 2 + config.initial_radius * sin(i * angle),
-            },
-            config.table_width + config.table_margin, config.table_max_height + config.table_margin);
-        // XXX Store actual table dependencies
-        adjacency.adjacency_offsets.push_back(0);
+    // Internal and external tables
+    size_t table_count = s->tables.size();
+    if (s->external_script) {
+        table_count += s->external_script->tables.size();
     }
-    adjacency.adjacency_offsets.push_back(0);
-
+    // Load adjacency map
+    nodes.clear();
+    nodes.reserve(table_count);
+    // Get an initial position
+    double angle = 2.0 * M_PI / table_count;
+    auto get_pos = [](Config& config, double angle, Analyzer::ID id) {
+        double v = angle * id.AsIndex();
+        return Vertex{
+            config.board_width / 2 + config.initial_radius * cos(v * angle),
+            config.board_height / 2 + config.initial_radius * sin(v * angle),
+        };
+    };
+    // Load internal tables
+    for (uint32_t i = 0; i < script->tables.size(); ++i) {
+        Analyzer::ID id{i, false};
+        nodes.emplace_back(id.value, get_pos(config, angle, id), config.table_width + config.table_margin,
+                           config.table_max_height + config.table_margin);
+    }
+    // Add external tables
+    if (script->external_script) {
+        for (uint32_t i = 0; i < script->external_script->tables.size(); ++i) {
+            Analyzer::ID id{i, true};
+            nodes.emplace_back(id.value, get_pos(config, angle, id), config.table_width + config.table_margin,
+                               config.table_max_height + config.table_margin);
+        }
+    }
+    // Add edge node ids
+    edge_nodes.resize(script->graph_edge_nodes.size());
+    for (size_t i = 0; i < script->graph_edge_nodes.size(); ++i) {
+        proto::QueryGraphEdgeNode& node = script->graph_edge_nodes[i];
+        Analyzer::ID table_id = Analyzer::ID(script->column_references[node.column_reference_id()].table_id());
+        edge_nodes[i] = table_id.AsIndex() + (table_id.IsExternal() ? 0 : s->tables.size());
+    }
+    // Translate graph edges
+    edges.resize(script->graph_edges.size());
+    std::vector<std::pair<size_t, size_t>> adjacency_pairs;
+    for (size_t i = 0; i < script->graph_edges.size(); ++i) {
+        // Write edge description
+        proto::QueryGraphEdge& edge = script->graph_edges[i];
+        edges[i] = {edge.nodes_begin(), edge.node_count_left(), edge.node_count_right(), edge.expression_operator()};
+        // Emit adjacency pairs with patched node ids
+        for (size_t l = 0; l < edge.node_count_left(); ++l) {
+            size_t l_col = script->graph_edge_nodes[edge.nodes_begin() + l].column_reference_id();
+            Analyzer::ID l_table_id{script->column_references[l_col].table_id()};
+            auto l_node_id = l_table_id.AsIndex() + (l_table_id.IsExternal() ? 0 : s->tables.size());
+            // Emit pair for each right node
+            for (size_t r = 0; r < edge.node_count_right(); ++r) {
+                size_t r_col =
+                    script->graph_edge_nodes[edge.nodes_begin() + edge.node_count_left() + r].column_reference_id();
+                Analyzer::ID r_table_id{script->column_references[r_col].table_id()};
+                auto r_node_id = r_table_id.AsIndex() + (r_table_id.IsExternal() ? 0 : s->tables.size());
+                adjacency_pairs.emplace_back(l_node_id, r_node_id);
+            }
+        }
+    }
+    std::sort(adjacency_pairs.begin(), adjacency_pairs.end());
+    // Build adjacency nodes
+    adjacency.adjacency_nodes.clear();
+    adjacency.adjacency_nodes.reserve(adjacency_pairs.size());
+    adjacency.adjacency_offsets.clear();
+    adjacency.adjacency_offsets.reserve(script->graph_edges.size() + 1);
+    // XXX Emit pairs
     // Compute the initial temperature
-    auto temperature = 10 * sqrt(table_nodes.size());
+    auto temperature = 10 * sqrt(nodes.size());
     // Compute steps
     for (size_t i = 0; i < config.iteration_count; ++i) {
         computeStep(i, temperature);
@@ -200,11 +248,10 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
 
 flatbuffers::Offset<proto::SchemaGraphLayout> SchemaGraph::Pack(flatbuffers::FlatBufferBuilder& builder) {
     proto::SchemaGraphLayoutT layout;
-    for (size_t i = 0; i < table_nodes.size(); ++i) {
-        proto::SchemaGraphVertex pos{table_nodes[i].position.x - table_nodes[i].width / 2 + config.table_margin / 2,
-                                     table_nodes[i].position.y - table_nodes[i].height / 2 + config.table_margin / 2};
-        layout.tables.emplace_back(i, pos, table_nodes[i].width - config.table_margin,
-                                   table_nodes[i].height - config.table_margin);
+    for (size_t i = 0; i < nodes.size(); ++i) {
+        proto::SchemaGraphVertex pos{nodes[i].position.x - nodes[i].width / 2 + config.table_margin / 2,
+                                     nodes[i].position.y - nodes[i].height / 2 + config.table_margin / 2};
+        layout.nodes.emplace_back(i, pos, nodes[i].width - config.table_margin, nodes[i].height - config.table_margin);
     }
 
     return proto::SchemaGraphLayout::Pack(builder, &layout);
