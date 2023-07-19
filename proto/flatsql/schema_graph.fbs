@@ -1,3 +1,6 @@
+include "flatsql/analyzed_script.fbs";
+include "flatsql/sql_enums.fbs";
+
 namespace flatsql.proto;
 
 struct SchemaGraphVertex {
@@ -5,13 +8,33 @@ struct SchemaGraphVertex {
     y: double;
 }
 
-struct SchemaGraphTable {
+struct SchemaGraphEdge {
+    /// The begin of the nodes
+    nodes_begin: uint32;
+    /// The number of nodes on the left side
+    node_count_left: uint16;
+    /// The set id of nodes on the right side
+    node_count_right: uint16;
+    /// The expression operator
+    expression_operator: ExpressionOperator;
+}
+
+struct SchemaGraphNode {
+    /// The id of table
     table_id: uint32;
+    /// The position
     position: SchemaGraphVertex;
+    /// The node width
     width: double;
+    /// The node height
     height: double;
 }
 
 table SchemaGraphLayout {
-    tables: [SchemaGraphTable];
+    /// The nodes
+    nodes: [SchemaGraphNode];
+    /// The edge
+    edge_nodes: [uint32];
+    /// The edges
+    edges: [SchemaGraphEdge];
 }

@@ -56,12 +56,12 @@ export function layoutSchema(ctx: AppState): [TableNodeProps[], TableEdgeProps[]
 
     const nodes: TableNodeProps[] = [];
     const layout = ctx.graphLayout!.read(new flatsql.proto.SchemaGraphLayout());
-    const tmpGraphTable = new flatsql.proto.SchemaGraphTable();
+    const tmpGraphNode = new flatsql.proto.SchemaGraphNode();
     const tmpGraphVertex = new flatsql.proto.SchemaGraphVertex();
     const tmpTable = new flatsql.proto.Table();
     const tmpTableColumn = new flatsql.proto.TableColumn();
-    for (let i = 0; i < layout.tablesLength(); ++i) {
-        const graphTable = layout.tables(i, tmpGraphTable);
+    for (let i = 0; i < layout.nodesLength(); ++i) {
+        const graphTable = layout.nodes(i, tmpGraphNode);
         const position = graphTable!.position(tmpGraphVertex)!;
         const table = analyzed.tables(graphTable!.tableId(), tmpTable);
         const tableName = flatsql.FlatID.readTableName(table?.tableName()!, parsed, null);
