@@ -1,5 +1,6 @@
 #include "flatsql/vis/schema_graph.h"
 
+#include <algorithm>
 #include <cmath>
 
 #include "flatsql/analyzer/analyzer.h"
@@ -209,7 +210,7 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
         Analyzer::ID table_id = Analyzer::ID(script->column_references[node.column_reference_id()].table_id());
         edge_nodes[i] = table_id.AsIndex() + (table_id.IsExternal() ? 0 : s->tables.size());
     }
-    // Translate graph edges
+    // Collect adjacency pairs
     edges.resize(script->graph_edges.size());
     std::vector<std::pair<size_t, size_t>> adjacency_pairs;
     for (size_t i = 0; i < script->graph_edges.size(); ++i) {
@@ -231,13 +232,26 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
             }
         }
     }
-    std::sort(adjacency_pairs.begin(), adjacency_pairs.end());
-    // Build adjacency nodes
-    adjacency.adjacency_nodes.clear();
-    adjacency.adjacency_nodes.reserve(adjacency_pairs.size());
+    // Build adjacency map
     adjacency.adjacency_offsets.clear();
     adjacency.adjacency_offsets.reserve(script->graph_edges.size() + 1);
-    // XXX Emit pairs
+    adjacency.adjacency_nodes.clear();
+    adjacency.adjacency_nodes.reserve(adjacency_pairs.size());
+    std::sort(adjacency_pairs.begin(), adjacency_pairs.end());
+    size_t i = 0;
+    for (auto begin = adjacency_pairs.begin(); begin != adjacency_pairs.end();) {
+        while (i < begin->first) {
+            adjacency.adjacency_offsets.push_back(adjacency.adjacency_nodes.size());
+        }
+        adjacency.adjacency_offsets.push_back(adjacency.adjacency_nodes.size());
+        auto in_partition = [&](auto& adj) { return adj.first == begin->first; };
+        auto end = std::partition_point(begin + 1, adjacency_pairs.end(), in_partition);
+        for (auto iter = begin; iter != end; ++iter) {
+            adjacency.adjacency_nodes.push_back(iter->second);
+        }
+    }
+    adjacency.adjacency_offsets.push_back(adjacency.adjacency_nodes.size());
+    adjacency_pairs = {};
     // Compute the initial temperature
     auto temperature = 10 * sqrt(nodes.size());
     // Compute steps
