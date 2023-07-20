@@ -262,12 +262,29 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
 
 flatbuffers::Offset<proto::SchemaGraphLayout> SchemaGraph::Pack(flatbuffers::FlatBufferBuilder& builder) {
     proto::SchemaGraphLayoutT layout;
-    for (size_t i = 0; i < nodes.size(); ++i) {
+    layout.nodes.resize(nodes.size());
+    layout.edges.resize(edges.size());
+    layout.edge_nodes.resize(edge_nodes.size());
+    for (uint32_t i = 0; i < nodes.size(); ++i) {
         proto::SchemaGraphVertex pos{nodes[i].position.x - nodes[i].width / 2 + config.table_margin / 2,
                                      nodes[i].position.y - nodes[i].height / 2 + config.table_margin / 2};
-        layout.nodes.emplace_back(i, pos, nodes[i].width - config.table_margin, nodes[i].height - config.table_margin);
+        proto::SchemaGraphNode proto_node{i, pos, nodes[i].width - config.table_margin,
+                                          nodes[i].height - config.table_margin};
+        layout.nodes[i] = proto_node;
     }
-
+    for (uint32_t i = 0; i < edges.size(); ++i) {
+        auto& edge = edges[i];
+        proto::SchemaGraphEdge proto_edge{
+            edge.nodes_begin,
+            edge.node_count_left,
+            edge.node_count_right,
+            edge.expression_operator,
+        };
+        layout.edges[i] = proto_edge;
+    }
+    for (uint32_t i = 0; i < edge_nodes.size(); ++i) {
+        layout.edge_nodes[i] = edge_nodes[i];
+    }
     return proto::SchemaGraphLayout::Pack(builder, &layout);
 }
 
