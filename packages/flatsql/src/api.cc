@@ -21,10 +21,12 @@ __attribute__((__import_module__("env"), __import_name__("log"))) extern void lo
 extern void log(const char* text, size_t textLength) { std::cout << std::string_view{text, textLength} << std::endl; }
 #endif
 
+namespace console {
 /// Log a std::string
-void log(std::string text) { return log(text.data(), text.size()); }
+void log(std::string text) { return ::log(text.data(), text.size()); }
 /// Log a string_view
-void log(std::string_view text) { return log(text.data(), text.size()); }
+void log(std::string_view text) { return ::log(text.data(), text.size()); }
+}  // namespace console
 
 /// Get the FlatSQL version
 extern "C" FlatSQLVersion* flatsql_version() { return &flatsql::VERSION; }
