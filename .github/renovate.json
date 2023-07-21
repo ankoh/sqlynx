@@ -13,35 +13,37 @@
     "packageRules": [
         {
             "description": "Flatbuffers",
-            "matchDepNames": ["flatbuffers"],
+            "matchPackageNames": ["flatbuffers"],
             "automerge": true
         },
         {
             "description": "Js build tools",
-            "matchDepNames": ["esbuild"],
-            "depTypeList": ["devDependencies"],
+            "matchPackageNames": ["esbuild"],
             "automerge": true
         },
         {
             "description": "Webpack updates",
-            "matchDepNames": ["webpack", "webpack-cli"],
+            "matchPackagePatterns": ["^webpack", "^webpack-.*"],
             "automerge": true
         },
         {
             "description": "Typescript updates",
-            "matchDepNames": ["typescript", "typescript-plugin-css-modules", "ts-jest"],
+            "matchPackagePatterns": ["^typescript.*", "^ts-jest.*"],
+            "automerge": true
+        },
+        {
+            "description": "Jest updates",
+            "matchPackagePatterns": [".*jest.*"],
             "automerge": true
         },
         {
             "description": "Linter updates",
-            "matchDepPatterns": [".*eslint.*"],
-            "depTypeList": ["devDependencies"],
+            "matchPackagePatterns": [".*eslint.*"],
             "automerge": true
         },
         {
             "description": "Type definition updates",
-            "matchDepNames": ["@types/node", "@types/node"],
-            "depTypeList": ["devDependencies"],
+            "matchPackagePatterns": ["^@types/.*"],
             "automerge": true
         }
     ]
