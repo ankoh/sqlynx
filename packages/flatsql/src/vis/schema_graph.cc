@@ -209,7 +209,8 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
     for (size_t i = 0; i < script->graph_edge_nodes.size(); ++i) {
         proto::QueryGraphEdgeNode& node = script->graph_edge_nodes[i];
         Analyzer::ID table_id = Analyzer::ID(script->column_references[node.column_reference_id()].table_id());
-        edge_nodes[i] = table_id.AsIndex() + (table_id.IsExternal() ? 0 : s->tables.size());
+        edge_nodes[i] =
+            table_id.IsNull() ? table_id.value : (table_id.AsIndex() + (table_id.IsExternal() ? 0 : s->tables.size()));
     }
     // Collect adjacency pairs
     edges.resize(script->graph_edges.size());
@@ -221,15 +222,17 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
         // Emit adjacency pairs with patched node ids
         for (size_t l = 0; l < edge.node_count_left(); ++l) {
             size_t l_col = script->graph_edge_nodes[edge.nodes_begin() + l].column_reference_id();
-            Analyzer::ID l_table_id{script->column_references[l_col].table_id()};
-            auto l_node_id = l_table_id.AsIndex() + (l_table_id.IsExternal() ? 0 : s->tables.size());
+            Analyzer::ID l_table{script->column_references[l_col].table_id()};
+            if (l_table.IsNull()) continue;
+            auto l_node = l_table.AsIndex() + (l_table.IsExternal() ? 0 : s->tables.size());
             // Emit pair for each right node
             for (size_t r = 0; r < edge.node_count_right(); ++r) {
                 size_t r_col =
                     script->graph_edge_nodes[edge.nodes_begin() + edge.node_count_left() + r].column_reference_id();
-                Analyzer::ID r_table_id{script->column_references[r_col].table_id()};
-                auto r_node_id = r_table_id.AsIndex() + (r_table_id.IsExternal() ? 0 : s->tables.size());
-                adjacency_pairs.emplace_back(l_node_id, r_node_id);
+                Analyzer::ID r_table{script->column_references[r_col].table_id()};
+                if (r_table.IsNull()) continue;
+                auto r_node = r_table.AsIndex() + (r_table.IsExternal() ? 0 : s->tables.size());
+                adjacency_pairs.emplace_back(l_node, r_node);
             }
         }
     }

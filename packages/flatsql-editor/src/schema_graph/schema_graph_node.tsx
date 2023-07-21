@@ -87,8 +87,6 @@ export function layoutSchema(ctx: AppState): [TableNodeProps[], TableEdgeProps[]
         });
     }
 
-    console.log(layout.edgesLength());
-
     // Collect nodes and edges
     return [nodes, []];
 }
