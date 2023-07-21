@@ -14,7 +14,6 @@
         {
             "description": "Automerge flatbuffers",
             "matchDepPatterns": ["flatbuffers"],
-            "depTypeList": ["devDependencies"],
             "automerge": true
         },
         {
