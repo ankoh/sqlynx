@@ -1,15 +1,6 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-    "extends": [
-        ":dependencyDashboard",
-        ":ignoreModulesAndTests",
-        ":semanticPrefixFixDepsChoreOthers",
-        ":preserveSemverRanges",
-        "group:monorepos",
-        "group:recommended",
-        "replacements:all",
-        "workarounds:all"
-    ],
+    "extends": ["config:recommended", ":preserveSemverRanges"],
     "timezone": "Europe/Berlin",
     "baseBranches": ["main"],
     "rangeStrategy": "bump",
