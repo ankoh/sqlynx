@@ -12,7 +12,7 @@ export interface FlatSQLScriptUpdate {
     // The second script
     external: flatsql.FlatSQLScript | null;
     /// The previous analysis data (if any)
-    data: FlatSQLScriptBuffers;
+    buffers: FlatSQLScriptBuffers;
     // This callback is called when the editor updates the script
     onUpdate: (scriptKey: FlatSQLScriptKey, script: FlatSQLScriptBuffers) => void;
 }
@@ -97,7 +97,7 @@ export const FlatSQLAnalyzer: StateField<FlatSQLEditorState> = StateField.define
             scriptKey: 0,
             script: null,
             external: null,
-            data: {
+            buffers: {
                 scanned: null,
                 parsed: null,
                 analyzed: null,
@@ -116,13 +116,16 @@ export const FlatSQLAnalyzer: StateField<FlatSQLEditorState> = StateField.define
     update: (state: FlatSQLEditorState, transaction: Transaction) => {
         // Did the user provide us with a new FlatSQL script?
         for (const effect of transaction.effects) {
-            if (effect.is(UpdateFlatSQLScript) && state.script !== effect.value.script) {
+            if (
+                effect.is(UpdateFlatSQLScript) &&
+                (state.script !== effect.value.script || state.external !== effect.value.external)
+            ) {
                 return {
                     ...state,
                     scriptKey: effect.value.scriptKey,
                     script: effect.value.script,
                     external: effect.value.external,
-                    data: effect.value.data,
+                    buffers: effect.value.buffers,
                     onUpdate: effect.value.onUpdate,
                 };
             }
@@ -147,8 +150,8 @@ export const FlatSQLAnalyzer: StateField<FlatSQLEditorState> = StateField.define
             console.log('UPDATE SCRIPT');
             // Analyze the new script
             const next = { ...state };
-            next.data = parseAndAnalyzeScript(next.script!, next.external);
-            next.onUpdate(next.scriptKey, next.data);
+            next.buffers = parseAndAnalyzeScript(next.script!, next.external);
+            next.onUpdate(next.scriptKey, next.buffers);
             return next;
         }
         return state;

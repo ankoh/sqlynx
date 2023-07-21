@@ -59,12 +59,12 @@ const DecorationBuilder: StateField<DecorationState> = StateField.define<Decorat
     update: (state: DecorationState, transaction: Transaction) => {
         // Scanned program untouched?
         const analyzer = transaction.state.field(FlatSQLAnalyzer);
-        if (analyzer.data.scanned === state.scanned) {
+        if (analyzer.buffers.scanned === state.scanned) {
             return state;
         }
         // Rebuild decorations
         const s = { ...state };
-        s.scanned = analyzer.data.scanned;
+        s.scanned = analyzer.buffers.scanned;
         if (s.scanned) {
             console.log('UPDATE DECORATIONS');
             s.decorations = buildDecorations(s.scanned);
