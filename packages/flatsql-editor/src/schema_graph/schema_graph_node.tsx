@@ -50,7 +50,7 @@ export function layoutSchema(ctx: AppState): [TableNodeProps[], TableEdgeProps[]
     const data = ctx.scripts[ScriptKey.SCHEMA_SCRIPT].buffers;
     const parsed = data.parsed?.read(new flatsql.proto.ParsedScript());
     const analyzed = data.analyzed?.read(new flatsql.proto.AnalyzedScript());
-    if (!parsed || !analyzed) {
+    if (!parsed || !analyzed || !ctx.graphLayout) {
         return [[], []];
     }
 
@@ -86,6 +86,8 @@ export function layoutSchema(ctx: AppState): [TableNodeProps[], TableEdgeProps[]
             height: graphTable!.height(),
         });
     }
+
+    console.log(layout.edgesLength());
 
     // Collect nodes and edges
     return [nodes, []];

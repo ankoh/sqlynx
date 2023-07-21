@@ -8,6 +8,7 @@ import { Action, Dispatch } from './utils/action';
 import { RESULT_OK } from './utils/result';
 import { ScriptMetadata } from './script_loader/script_metadata';
 import { LoadingStatus } from './script_loader/script_loader';
+import { TPCH_SCHEMA, exampleScripts } from './script_loader/example_scripts';
 
 export const INITIALIZE = Symbol('INITIALIZE');
 export const LOAD_SCRIPTS = Symbol('LOAD_SCRIPTS');
@@ -117,56 +118,71 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                     },
                 },
             };
-            // Analyze newly loaded scripts
-            switch (scriptKey) {
-                case ScriptKey.MAIN_SCRIPT: {
-                    console.log('LOADED MAIN');
-                    // Destroy the old script and buffers
-                    const old = newState.scripts[ScriptKey.MAIN_SCRIPT];
-                    old.buffers.destroy(old.buffers);
-                    old.script?.delete();
-                    old.script = null;
-                    // Analyze the new script
-                    const external = newState.scripts[ScriptKey.SCHEMA_SCRIPT].script;
-                    const analysis = parseAndAnalyzeScript(newScript, external);
-                    newState.scripts[ScriptKey.MAIN_SCRIPT] = {
-                        ...newState.scripts[ScriptKey.MAIN_SCRIPT],
-                        script: newScript,
-                        buffers: analysis,
-                    };
-                    break;
-                }
-                case ScriptKey.SCHEMA_SCRIPT: {
-                    console.log('LOADED SCHEMA');
-                    // Destroy the old script and buffers
-                    const old = newState.scripts[ScriptKey.SCHEMA_SCRIPT];
-                    old.buffers.destroy(old.buffers);
-                    old.script?.delete();
-                    old.script = null;
-                    // Analyze the new script
-                    const schemaAnalyzed = parseAndAnalyzeScript(newScript, null);
-                    const main = newState.scripts[ScriptKey.MAIN_SCRIPT];
-                    if (main.script) {
-                        // Delete the old main analysis
-                        main.buffers.analyzed?.delete();
-                        main.buffers.analyzed = null;
-                        // Analyze the old main script with the new script as external
-                        const mainAnalyzed = main.script.analyze(newScript);
+            try {
+                // Analyze newly loaded scripts
+                switch (scriptKey) {
+                    case ScriptKey.MAIN_SCRIPT: {
+                        console.log('LOADED MAIN');
+                        // Destroy the old script and buffers
+                        const old = newState.scripts[ScriptKey.MAIN_SCRIPT];
+                        old.buffers.destroy(old.buffers);
+                        old.script?.delete();
+                        old.script = null;
+                        // Analyze the new script
+                        const external = newState.scripts[ScriptKey.SCHEMA_SCRIPT].script;
+                        const analysis = parseAndAnalyzeScript(newScript, external);
                         newState.scripts[ScriptKey.MAIN_SCRIPT] = {
                             ...newState.scripts[ScriptKey.MAIN_SCRIPT],
-                            buffers: {
-                                ...main.buffers,
-                                analyzed: mainAnalyzed,
-                            },
+                            script: newScript,
+                            buffers: analysis,
                         };
+                        break;
                     }
-                    newState.scripts[ScriptKey.SCHEMA_SCRIPT] = {
-                        ...newState.scripts[ScriptKey.SCHEMA_SCRIPT],
-                        script: newScript,
-                        buffers: schemaAnalyzed,
-                    };
-                    break;
+                    case ScriptKey.SCHEMA_SCRIPT: {
+                        console.log('LOADED SCHEMA');
+                        // Destroy the old script and buffers
+                        const old = newState.scripts[ScriptKey.SCHEMA_SCRIPT];
+                        old.buffers.destroy(old.buffers);
+                        old.script?.delete();
+                        old.script = null;
+                        // Analyze the new script
+                        const schemaAnalyzed = parseAndAnalyzeScript(newScript, null);
+                        const main = newState.scripts[ScriptKey.MAIN_SCRIPT];
+                        if (main.script) {
+                            // Delete the old main analysis
+                            main.buffers.analyzed?.delete();
+                            main.buffers.analyzed = null;
+                            // Analyze the old main script with the new script as external
+                            const mainAnalyzed = main.script.analyze(newScript);
+                            newState.scripts[ScriptKey.MAIN_SCRIPT] = {
+                                ...newState.scripts[ScriptKey.MAIN_SCRIPT],
+                                buffers: {
+                                    ...main.buffers,
+                                    analyzed: mainAnalyzed,
+                                },
+                            };
+                        }
+                        newState.scripts[ScriptKey.SCHEMA_SCRIPT] = {
+                            ...newState.scripts[ScriptKey.SCHEMA_SCRIPT],
+                            script: newScript,
+                            buffers: schemaAnalyzed,
+                        };
+                        break;
+                    }
                 }
+            } catch (e: any) {
+                console.error(e);
+                newScript.delete();
+                newState.scripts[scriptKey] = {
+                    ...newState.scripts[scriptKey],
+                    script: null,
+                    loading: {
+                        status: LoadingStatus.FAILED,
+                        startedAt: data.loading.startedAt,
+                        finishedAt: new Date(),
+                        error: e,
+                    },
+                };
             }
             return computeSchemaGraph(newState);
         }
@@ -216,7 +232,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
 
 /// Compute a schema graph
 function computeSchemaGraph(state: AppState): AppState {
-    if (state.scripts[ScriptKey.SCHEMA_SCRIPT].script == null) {
+    if (state.scripts[ScriptKey.MAIN_SCRIPT].script == null) {
         return state;
     }
     console.time('Schema Graph Layout');
@@ -225,7 +241,7 @@ function computeSchemaGraph(state: AppState): AppState {
         state.graphLayout = null;
     }
     state.graph!.configure(state.graphConfig);
-    state.graphLayout = state.graph!.loadScript(state.scripts[ScriptKey.SCHEMA_SCRIPT].script);
+    state.graphLayout = state.graph!.loadScript(state.scripts[ScriptKey.MAIN_SCRIPT].script);
     console.timeEnd('Schema Graph Layout');
     return state;
 }
@@ -239,6 +255,7 @@ type Props = {
 
 export const AppStateProvider: React.FC<Props> = (props: Props) => {
     const [state, dispatch] = React.useReducer(reducer, null, () => createDefaultState());
+    const scriptsLoaded = React.useRef<boolean>(false);
 
     const backend = useFlatSQL();
     React.useEffect(() => {
@@ -246,6 +263,21 @@ export const AppStateProvider: React.FC<Props> = (props: Props) => {
             dispatch({ type: INITIALIZE, value: backend.value });
         }
     }, [backend, state.instance]);
+
+    // TODO move this to a dedicated loader
+    React.useEffect(() => {
+        if (state.instance != null && scriptsLoaded.current == false) {
+            scriptsLoaded.current = true;
+            dispatch({
+                type: LOAD_SCRIPTS,
+                value: {
+                    [ScriptKey.MAIN_SCRIPT]: exampleScripts[2],
+                    [ScriptKey.SCHEMA_SCRIPT]: TPCH_SCHEMA,
+                },
+            });
+        }
+    }, [state.instance]);
+
     return (
         <stateContext.Provider value={state}>
             <stateDispatch.Provider value={dispatch}>{props.children}</stateDispatch.Provider>

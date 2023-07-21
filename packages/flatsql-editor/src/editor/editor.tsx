@@ -7,10 +7,9 @@ import { ChangeSpec, StateEffect } from '@codemirror/state';
 
 import { CodeMirror } from './codemirror';
 import { FlatSQLExtensions } from './flatsql_extension';
-import { FlatSQLScriptBuffers, FlatSQLScriptKey, UpdateFlatSQLScript, parseAndAnalyzeScript } from './flatsql_analyzer';
-import { useAppState, useAppStateDispatch, UPDATE_SCRIPT_ANALYSIS, LOAD_SCRIPTS } from '../app_state_reducer';
+import { FlatSQLScriptBuffers, FlatSQLScriptKey, UpdateFlatSQLScript } from './flatsql_analyzer';
+import { useAppState, useAppStateDispatch, UPDATE_SCRIPT_ANALYSIS } from '../app_state_reducer';
 import { ScriptKey } from '../app_state';
-import { TPCH_SCHEMA, exampleScripts } from '../script_loader/example_scripts';
 
 import iconMainScript from '../../static/svg/icons/database_search.svg';
 import iconExternalScript from '../../static/svg/icons/database.svg';
@@ -70,18 +69,6 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         external: null,
         decorations: null,
     });
-
-    React.useEffect(() => {
-        if (ctx.instance) {
-            ctxDispatch({
-                type: LOAD_SCRIPTS,
-                value: {
-                    [ScriptKey.MAIN_SCRIPT]: exampleScripts[2],
-                    [ScriptKey.SCHEMA_SCRIPT]: TPCH_SCHEMA,
-                },
-            });
-        }
-    }, [ctx.instance]);
 
     // Helper to update a script
     const updateScript = React.useCallback(

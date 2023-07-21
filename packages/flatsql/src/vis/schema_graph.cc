@@ -4,6 +4,7 @@
 #include <cmath>
 
 #include "flatsql/analyzer/analyzer.h"
+#include "flatsql/api.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/script.h"
 #include "flatsql/vis/adjacency_map.h"
@@ -286,6 +287,7 @@ flatbuffers::Offset<proto::SchemaGraphLayout> SchemaGraph::Pack(flatbuffers::Fla
     for (uint32_t i = 0; i < edge_nodes.size(); ++i) {
         layout.edge_nodes[i] = edge_nodes[i];
     }
+
     return proto::SchemaGraphLayout::Pack(builder, &layout);
 }
 

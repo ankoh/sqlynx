@@ -7,6 +7,11 @@
 #include "flatsql/version.h"
 #include "flatsql/vis/schema_graph.h"
 
+namespace console {
+/// Log a text to the console
+void log(std::string_view text);
+}  // namespace console
+
 /// Get the FlatSQL version
 extern "C" flatsql::FlatSQLVersion* flatsql_version();
 
