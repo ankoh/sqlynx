@@ -101,6 +101,10 @@ class SchemaGraph {
    public:
     /// Get the current positions
     auto& GetNodes() { return nodes; }
+    /// Get the edge nodes
+    auto& GetEdgeNodes() { return edge_nodes; }
+    /// Get the edges
+    auto& GetEdges() { return edges; }
     /// Configure the schemagraph settings
     void Configure(const Config& config);
     /// Load a script

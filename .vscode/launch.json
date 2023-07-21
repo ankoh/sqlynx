@@ -47,6 +47,14 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Graph Tests",
+            "program": "${workspaceFolder}/packages/flatsql/build/native/Debug/tester",
+            "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*SchemaGraphTest*"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Parser Dumps",
             "program": "${workspaceFolder}/packages/flatsql/build/native/Debug/dump_parser",
             "args": ["--source_dir=${workspaceFolder}"],
