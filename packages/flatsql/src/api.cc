@@ -82,6 +82,9 @@ static FFIResult* packError(proto::StatusCode status) {
         case proto::StatusCode::ANALYZER_INPUT_INVALID:
             message = "Analyzer input is invalid";
             break;
+        case proto::StatusCode::GRAPH_INPUT_INVALID:
+            message = "Graph input is invalid";
+            break;
         case proto::StatusCode::COMPLETION_DATA_INVALID:
             message = "Completion data is invalid";
             break;
@@ -182,8 +185,8 @@ extern "C" FFIResult* flatsql_script_format(flatsql::Script* script) {
 }
 
 /// Update the completion index
-extern "C" uint32_t flatsql_script_update_completion_index(Script* script) {
-    return static_cast<uint32_t>(script->UpdateCompletionIndex());
+extern "C" uint32_t flatsql_script_update_completion_index(Script* script, bool stable) {
+    return static_cast<uint32_t>(script->UpdateCompletionIndex(stable));
 }
 
 /// Create a schema graph
@@ -215,9 +218,13 @@ extern "C" void flatsql_schemagraph_configure(flatsql::SchemaGraph* graph, size_
     graph->Configure(config);
 }
 /// Update a schema graph
-extern "C" FFIResult* flatsql_schemagraph_load_script(flatsql::SchemaGraph* graph, flatsql::Script* script) {
-    assert(!script->analyzed_scripts.empty());
-    graph->LoadScript(script->analyzed_scripts.back());
+extern "C" FFIResult* flatsql_schemagraph_load_script(flatsql::SchemaGraph* graph, flatsql::Script* script,
+                                                      bool stable) {
+    auto analyzed = stable ? script->analyzed_scripts.stable : script->analyzed_scripts.latest;
+    if (!analyzed) {
+        return packError(proto::StatusCode::GRAPH_INPUT_INVALID);
+    }
+    graph->LoadScript(analyzed);
 
     // Pack a schema graph
     flatbuffers::FlatBufferBuilder fb;

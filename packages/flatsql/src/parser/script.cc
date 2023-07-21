@@ -19,7 +19,7 @@ std::unique_ptr<proto::StatementT> ParsedScript::Statement::Pack() {
 }
 
 /// Constructor
-ScannedScript::ScannedScript(const rope::Rope& text) : input_data(text.ToString(true)) {}
+ScannedScript::ScannedScript(const rope::Rope& text) : text_buffer(text.ToString(true)) {}
 
 /// Register a name
 size_t ScannedScript::RegisterKeywordAsName(std::string_view s, sx::Location location) {
@@ -124,31 +124,68 @@ std::string Script::ToString() { return text.ToString(); }
 std::pair<ScannedScript*, proto::StatusCode> Script::Scan() {
     auto [script, status] = parser::Scanner::Scan(text);
     scanned_script = std::move(script);
+    if (status == proto::StatusCode::OK) {
+        scanned_script->text_version = ++text_version;
+    }
     return {scanned_script.get(), status};
 }
 /// Parse a script
 std::pair<ParsedScript*, proto::StatusCode> Script::Parse() {
     auto [script, status] = parser::ParseContext::Parse(scanned_script);
     parsed_script = std::move(script);
+    if (status == proto::StatusCode::OK) {
+        parsed_script->text_version = scanned_script->text_version;
+    }
     return {parsed_script.get(), status};
 }
+
+static void updateStaggeredScripts(StaggeredAnalyzedScripts& scripts, uint32_t lifetime) {
+    assert(scripts.latest != nullptr);
+    // Latest is a better candidate than a given script?
+    // XXX More careful selection
+    auto latest_wins = [](AnalyzedScript& latest, AnalyzedScript& previous) {
+        auto latest_errors = latest.parsed_script->errors.size();
+        auto previous_errors = previous.parsed_script->errors.size();
+        return latest_errors <= previous_errors;
+    };
+    // Latest wins over cooling?
+    if (!scripts.cooling || latest_wins(*scripts.latest, *scripts.cooling)) {
+        scripts.cooling = scripts.latest;
+    }
+    // Latest wins over stable?
+    if (!scripts.stable || latest_wins(*scripts.latest, *scripts.stable)) {
+        scripts.stable = scripts.latest;
+    }
+    // Cooling is dead?
+    if ((scripts.latest->text_version - scripts.cooling->text_version) >= lifetime) {
+        scripts.cooling = scripts.latest;
+    }
+    // Stable is dead?
+    if ((scripts.latest->text_version - scripts.stable->text_version) >= lifetime) {
+        scripts.stable = scripts.cooling;
+    }
+}
+
 /// Analyze a script
-std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(Script* external) {
-    auto external_analyzed =
-        (external && !external->analyzed_scripts.empty()) ? external->analyzed_scripts.back() : nullptr;
+std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(Script* external, bool stable, uint32_t lifetime) {
+    // Get analyzed external script
+    std::shared_ptr<AnalyzedScript> external_analyzed;
+    if (external) {
+        auto stable = external->analyzed_scripts.stable;
+        external_analyzed = (stable && stable) ? stable : external->analyzed_scripts.latest;
+    }
 
     // Analyze a script
     auto [script, status] = Analyzer::Analyze(parsed_script, external_analyzed);
     if (status != proto::StatusCode::OK) {
         return {nullptr, status};
     }
-    analyzed_scripts.push_back(std::move(script));
+    script->text_version = parsed_script->text_version;
+    analyzed_scripts.latest = std::move(script);
 
-    // XXX Cleanup the old for now, replace with smarter garbage collection later
-    if (analyzed_scripts.size() > 1) {
-        analyzed_scripts.pop_front();
-    }
-    return {analyzed_scripts.back().get(), status};
+    // Update staggered analysis
+    updateStaggeredScripts(analyzed_scripts, lifetime);
+    return {analyzed_scripts.latest.get(), status};
 }
 
 /// Returns the pretty-printed string for this script.
@@ -158,11 +195,11 @@ std::string Script::Format() {
 }
 
 /// Update the completion index
-proto::StatusCode Script::UpdateCompletionIndex() {
-    if (analyzed_scripts.empty()) {
+proto::StatusCode Script::UpdateCompletionIndex(bool stable) {
+    auto& analyzed = stable ? analyzed_scripts.stable : analyzed_scripts.latest;
+    if (!analyzed) {
         return proto::StatusCode::COMPLETION_DATA_INVALID;
     }
-    auto& analyzed = analyzed_scripts.back();
     auto& parsed = analyzed->parsed_script;
     auto& scanned = parsed->scanned_script;
 

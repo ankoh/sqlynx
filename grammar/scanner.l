@@ -484,7 +484,7 @@ namespace parser {
 
 Scanner::Scanner(const rope::Rope& text): output(std::make_shared<ScannedScript>(text)) {
     // Write end-of-buffer markers
-    input_data = output->input_data;
+    input_data = output->text_buffer;
     assert(input_data.size() >= 2);
     input_data[input_data.size() - 2] = YY_END_OF_BUFFER_CHAR;
     input_data[input_data.size() - 1] = YY_END_OF_BUFFER_CHAR;

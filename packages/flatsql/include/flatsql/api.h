@@ -53,7 +53,7 @@ extern "C" FFIResult* flatsql_script_analyze(flatsql::Script* script, flatsql::S
 /// Get a pretty-printed version of the SQL query
 extern "C" FFIResult* flatsql_script_format(flatsql::Script* script);
 /// Update the completion index
-extern "C" uint32_t flatsql_script_update_completion_index(flatsql::Script* script);
+extern "C" uint32_t flatsql_script_update_completion_index(flatsql::Script* script, bool stable);
 
 /// Create schema graph
 extern "C" flatsql::SchemaGraph* flatsql_schemagraph_new();
@@ -67,4 +67,5 @@ extern "C" void flatsql_schemagraph_configure(flatsql::SchemaGraph* graph, size_
                                               double tableConstantHeight, double tableColumnHeight,
                                               double tableMaxHeight, double tableMargin);
 /// Update a schema graph
-extern "C" FFIResult* flatsql_schemagraph_load_script(flatsql::SchemaGraph* graph, flatsql::Script* script);
+extern "C" FFIResult* flatsql_schemagraph_load_script(flatsql::SchemaGraph* graph, flatsql::Script* script,
+                                                      bool stable);

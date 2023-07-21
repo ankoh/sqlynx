@@ -94,7 +94,7 @@ limit 100
     flatsql_result_delete(main_parsed);
     flatsql_result_delete(main_analyzed);
 
-    flatsql_script_update_completion_index(main_script);
+    flatsql_script_update_completion_index(main_script, false);
 
     flatsql_script_delete(external_script);
     flatsql_script_delete(main_script);
