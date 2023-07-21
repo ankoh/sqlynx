@@ -16,7 +16,7 @@ interface FlatSQLModuleExports {
     flatsql_script_scan: (ptr: number) => number;
     flatsql_script_parse: (ptr: number) => number;
     flatsql_script_analyze: (ptr: number, external: number) => number;
-    flatsql_script_update_completion_index: (ptr: number) => number;
+    flatsql_script_update_completion_index: (ptr: number, stable: boolean) => number;
     flatsql_schemagraph_new: () => number;
     flatsql_schemagraph_delete: (ptr: number) => void;
     flatsql_schemagraph_configure: (
@@ -36,7 +36,7 @@ interface FlatSQLModuleExports {
         tableMaxHeight: number,
         tableMargin: number,
     ) => void;
-    flatsql_schemagraph_load_script: (ptr: number, script: number) => number;
+    flatsql_schemagraph_load_script: (ptr: number, script: number, stable: boolean) => number;
 }
 
 type InstantiateWasmCallback = (stubs: WebAssembly.Imports) => PromiseLike<WebAssembly.WebAssemblyInstantiatedSource>;
@@ -92,6 +92,7 @@ export class FlatSQL {
             ) => number,
             flatsql_script_update_completion_index: parserExports['flatsql_script_update_completion_index'] as (
                 ptr: number,
+                stable: boolean,
             ) => number,
             flatsql_schemagraph_new: parserExports['flatsql_schemagraph_new'] as () => number,
             flatsql_schemagraph_delete: parserExports['flatsql_schemagraph_delete'] as (ptr: number) => void,
@@ -115,6 +116,7 @@ export class FlatSQL {
             flatsql_schemagraph_load_script: parserExports['flatsql_schemagraph_load_script'] as (
                 ptr: number,
                 script: number,
+                stable: boolean,
             ) => number,
         };
     }
@@ -374,7 +376,7 @@ export class FlatSQLScript {
     /// Update the completion index
     public updateCompletionIndex(): boolean {
         const scriptPtr = this.assertScriptNotNull();
-        const status = this.api.instanceExports.flatsql_script_update_completion_index(scriptPtr);
+        const status = this.api.instanceExports.flatsql_script_update_completion_index(scriptPtr, false);
         return status == proto.StatusCode.OK;
     }
 }
@@ -445,7 +447,7 @@ export class FlatSQLSchemaGraph {
     /// Load a script
     public loadScript(script: FlatSQLScript) {
         const graphPtr = this.assertGraphNotNull();
-        const resultPtr = this.api.instanceExports.flatsql_schemagraph_load_script(graphPtr, script.scriptPtr);
+        const resultPtr = this.api.instanceExports.flatsql_schemagraph_load_script(graphPtr, script.scriptPtr, false);
         return this.api.readResult<proto.SchemaGraphLayout>(resultPtr);
     }
 }
