@@ -17,33 +17,29 @@
             "automerge": true
         },
         {
-            "groupName": "Js build tools",
+            "groupName": "Esbuild",
             "matchPackageNames": ["esbuild"],
             "automerge": true
         },
         {
-            "groupName": "Webpack updates",
+            "groupName": "Webpack",
             "matchPackagePatterns": ["^webpack", "^webpack-.*"],
             "automerge": true
         },
         {
-            "groupName": "Typescript updates",
-            "matchPackagePatterns": ["^typescript.*", "^ts-jest.*"],
-            "automerge": true
-        },
-        {
-            "groupName": "Jest updates",
+            "groupName": "Jest",
+            "matchPackageNames": ["@types/jest"],
             "matchPackagePatterns": [".*jest.*"],
             "automerge": true
         },
         {
-            "groupName": "Linter updates",
+            "groupName": "Linter",
             "matchPackagePatterns": [".*eslint.*"],
             "automerge": true
         },
         {
-            "groupName": "Type definition updates",
-            "matchPackagePatterns": ["^@types/.*"],
+            "groupName": "Type definitions",
+            "matchPackagePatterns": ["^@types/(?!react).*"],
             "automerge": true
         }
     ]
