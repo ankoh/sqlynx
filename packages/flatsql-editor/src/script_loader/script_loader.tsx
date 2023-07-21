@@ -80,9 +80,9 @@ export const ScriptLoader: React.FC<Props> = (props: Props) => {
         // Are we already loading it?
         // This may happen if the user decided to load the script twice.
         // We'll just await the promise and store a duplicated script
-        const existing = state.current.scripts.get(script.metadata.scriptId);
+        const flightKey = script.scriptKey + script.metadata.scriptId;
+        const existing = state.current.scripts.get(flightKey);
         if (existing) {
-            waitForResult(script.scriptKey, existing.inflight);
             return;
         }
         // Otherwise load the url
@@ -91,7 +91,7 @@ export const ScriptLoader: React.FC<Props> = (props: Props) => {
             inflight = (async () => {
                 const response = await fetch(script.metadata.httpURL!);
                 const content = await response.text();
-                state.current.scripts.delete(script.metadata.scriptId);
+                state.current.scripts.delete(flightKey);
                 return content;
             })();
         }
@@ -101,7 +101,7 @@ export const ScriptLoader: React.FC<Props> = (props: Props) => {
             inflight: inflight ?? Promise.reject(`unsupported script type: ${script.metadata.scriptType}`),
         };
         // Register inflight request
-        state.current.scripts.set(script.metadata.scriptId, loadingState);
+        state.current.scripts.set(flightKey, loadingState);
         // Wait for result
         waitForResult(script.scriptKey, loadingState.inflight);
     };
