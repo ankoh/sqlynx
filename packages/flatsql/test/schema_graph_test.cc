@@ -96,7 +96,7 @@ TEST(SchemaGraphTest, TPCHQ2NoSchema) {
     SchemaGraph graph;
     for (size_t i = 0; i < 3; ++i) {
         graph.Configure(DEFAULT_GRAPH_CONFIG);
-        graph.LoadScript(query_script.analyzed_scripts.back());
+        graph.LoadScript(query_script.analyzed_scripts.latest);
     }
 
     auto& tables = graph.GetNodes();
@@ -123,7 +123,7 @@ TEST(SchemaGraphTest, TPCHQ2) {
     SchemaGraph graph;
     for (size_t i = 0; i < 3; ++i) {
         graph.Configure(DEFAULT_GRAPH_CONFIG);
-        graph.LoadScript(query_script.analyzed_scripts.back());
+        graph.LoadScript(query_script.analyzed_scripts.latest);
     }
 
     auto& tables = graph.GetNodes();
@@ -161,7 +161,7 @@ TEST(SchemaGraphTest, TPCHQ2ReanalyzeWithError) {
 
     SchemaGraph graph;
     graph.Configure(DEFAULT_GRAPH_CONFIG);
-    graph.LoadScript(query_script.analyzed_scripts.back());
+    graph.LoadScript(query_script.analyzed_scripts.latest);
 
     const std::string_view modifiedBuggyTpchQ2 = R"SQL(
     select
