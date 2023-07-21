@@ -29,8 +29,10 @@ using StatementID = uint32_t;
 
 class ScannedScript {
    public:
-    /// The full input data
-    std::string input_data;
+    /// The text version
+    uint64_t text_version = 0;
+    /// The copied text buffer
+    std::string text_buffer;
 
     /// The scanner errors
     std::vector<std::pair<proto::Location, std::string>> errors;
@@ -54,14 +56,14 @@ class ScannedScript {
     ScannedScript(const rope::Rope& text);
 
     /// Get the input
-    auto& GetInput() const { return input_data; }
+    auto& GetInput() const { return text_buffer; }
     /// Register a name
     size_t RegisterName(std::string_view s, sx::Location location);
     /// Register a keyword as name
     size_t RegisterKeywordAsName(std::string_view s, sx::Location location);
     /// Read a text at a location
     std::string_view ReadTextAtLocation(sx::Location loc) {
-        return std::string_view{input_data}.substr(loc.offset(), loc.length());
+        return std::string_view{text_buffer}.substr(loc.offset(), loc.length());
     }
     /// Pack syntax highlighting
     std::unique_ptr<proto::HighlightingT> PackHighlighting();
@@ -81,6 +83,8 @@ class ParsedScript {
         std::unique_ptr<proto::StatementT> Pack();
     };
 
+    /// The text version
+    uint64_t text_version = 0;
     /// The scanned script
     std::shared_ptr<ScannedScript> scanned_script;
     /// The nodes
@@ -100,6 +104,8 @@ class ParsedScript {
 
 class AnalyzedScript {
    public:
+    /// The text version
+    uint64_t text_version = 0;
     /// The parsed script
     std::shared_ptr<ParsedScript> parsed_script;
     /// The external script
@@ -132,18 +138,34 @@ struct CompletionIndex {
     std::unique_ptr<SuffixTrie> suffix_trie;
 };
 
+/// We remember three different analyzed script versions.
+/// A script is first stored in `latest`.
+/// The `quality` (as in number of errors) of every new script is compared to `cooling`.
+/// A script in `cooling` is moved to `stable` if it has fewer errors or if the `stable` script gets too old.
+struct StaggeredAnalyzedScripts {
+    // The latest script
+    std::shared_ptr<AnalyzedScript> latest;
+    // The cooling script
+    std::shared_ptr<AnalyzedScript> cooling;
+    // The stable script
+    std::shared_ptr<AnalyzedScript> stable;
+};
+
 class Script {
    public:
     /// The underlying rope
     rope::Rope text;
+    /// The text version
+    uint64_t text_version;
     /// The external script (if any)
     Script* external_script;
+
     /// The last scanned script
     std::shared_ptr<ScannedScript> scanned_script;
     /// The last parsed script
     std::shared_ptr<ParsedScript> parsed_script;
-    /// The last analyzed scripts
-    std::list<std::shared_ptr<AnalyzedScript>> analyzed_scripts;
+    /// The staggered analyzed script versions
+    StaggeredAnalyzedScripts analyzed_scripts;
     /// The completion model
     CompletionIndex completion_index;
 
@@ -165,12 +187,13 @@ class Script {
     /// Parse the latest scanned script
     std::pair<ParsedScript*, proto::StatusCode> Parse();
     /// Analyze the latest parsed script
-    std::pair<AnalyzedScript*, proto::StatusCode> Analyze(Script* external = nullptr);
+    std::pair<AnalyzedScript*, proto::StatusCode> Analyze(Script* external = nullptr, bool stable = true,
+                                                          uint32_t lifetime = 10);
     /// Returns the pretty-printed string for this script.
     /// Return `nullopt` in case of an error.
     std::string Format();
     /// Update the completion index
-    proto::StatusCode UpdateCompletionIndex();
+    proto::StatusCode UpdateCompletionIndex(bool stable);
     /// Complete at a text offset
     void CompleteAt(size_t offset);
 };
