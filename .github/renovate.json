@@ -12,37 +12,37 @@
     },
     "packageRules": [
         {
-            "description": "Flatbuffers",
+            "groupName": "Flatbuffers",
             "matchPackageNames": ["flatbuffers"],
             "automerge": true
         },
         {
-            "description": "Js build tools",
+            "groupName": "Js build tools",
             "matchPackageNames": ["esbuild"],
             "automerge": true
         },
         {
-            "description": "Webpack updates",
+            "groupName": "Webpack updates",
             "matchPackagePatterns": ["^webpack", "^webpack-.*"],
             "automerge": true
         },
         {
-            "description": "Typescript updates",
+            "groupName": "Typescript updates",
             "matchPackagePatterns": ["^typescript.*", "^ts-jest.*"],
             "automerge": true
         },
         {
-            "description": "Jest updates",
+            "groupName": "Jest updates",
             "matchPackagePatterns": [".*jest.*"],
             "automerge": true
         },
         {
-            "description": "Linter updates",
+            "groupName": "Linter updates",
             "matchPackagePatterns": [".*eslint.*"],
             "automerge": true
         },
         {
-            "description": "Type definition updates",
+            "groupName": "Type definition updates",
             "matchPackagePatterns": ["^@types/.*"],
             "automerge": true
         }
