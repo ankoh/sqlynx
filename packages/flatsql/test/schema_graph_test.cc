@@ -1,5 +1,7 @@
 #include "flatsql/vis/schema_graph.h"
 
+#include <limits>
+
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/script.h"
 #include "gtest/gtest.h"
@@ -142,6 +144,80 @@ TEST(SchemaGraphTest, TPCHQ2) {
     ss << "]";
     ss << std::endl;
     std::cout << ss.str() << std::endl;
+}
+
+TEST(SchemaGraphTest, TPCHQ2ReanalyzeWithError) {
+    Script schema_script;
+    schema_script.InsertTextAt(0, TPCH_SCHEMA);
+    ASSERT_EQ(schema_script.Scan().second, proto::StatusCode::OK);
+    ASSERT_EQ(schema_script.Parse().second, proto::StatusCode::OK);
+    ASSERT_EQ(schema_script.Analyze().second, proto::StatusCode::OK);
+
+    Script query_script;
+    query_script.InsertTextAt(0, TPCH_Q2);
+    ASSERT_EQ(query_script.Scan().second, proto::StatusCode::OK);
+    ASSERT_EQ(query_script.Parse().second, proto::StatusCode::OK);
+    ASSERT_EQ(query_script.Analyze(&schema_script).second, proto::StatusCode::OK);
+
+    SchemaGraph graph;
+    graph.Configure(DEFAULT_GRAPH_CONFIG);
+    graph.LoadScript(query_script.analyzed_scripts.back());
+
+    const std::string_view modifiedBuggyTpchQ2 = R"SQL(
+    select
+        s_acctbal,
+        s_name,
+        n_name,
+        p_partkey,
+        p_mfgr,
+        s_address,
+        s_phone,
+    from
+        part,
+        supplier,
+        partsupp,
+        nation,
+        region
+    where
+        p_partkey = ps_partkey
+        and s_suppkey = ps_suppkey
+        and p_size = 15
+        and p_type like '%BRASS'
+        and s_nationkey = n_nationkey
+        and n_regionkey = r_regionkey
+        and r_name = 'EUROPE'
+        and ps_supplycost = (
+            select
+                min(ps_supplycost)
+            from
+                partsupp,
+                supplier,
+                nation,
+                region
+            where
+                p_partkey = ps_partkey
+                and s_suppkey = ps_suppkey
+                and s_nationkey = n_nationkey
+                and n_regionkey = r_regionkey
+                and r_name = 'EUROPE'
+        )
+    order by
+        s_acctbal desc,
+        n_name,
+        s_name,
+        p_partkey
+    limit
+        100
+        )SQL";
+    query_script.EraseTextRange(0, std::numeric_limits<uint32_t>::max());
+    query_script.InsertTextAt(0, TPCH_Q2);
+
+    auto& tables = graph.GetNodes();
+    auto& edges = graph.GetEdges();
+    auto& edge_nodes = graph.GetEdgeNodes();
+    ASSERT_EQ(tables.size(), 8);
+    ASSERT_EQ(edges.size(), 9);
+    ASSERT_EQ(edge_nodes.size(), 27);
 }
 
 }  // namespace
