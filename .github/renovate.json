@@ -12,33 +12,33 @@
     },
     "packageRules": [
         {
-            "groupName": "Flatbuffers",
+            "groupName": "flatbuffers",
             "matchPackageNames": ["flatbuffers"],
             "automerge": true
         },
         {
-            "groupName": "Esbuild",
+            "groupName": "esbuild",
             "matchPackageNames": ["esbuild"],
             "automerge": true
         },
         {
-            "groupName": "Webpack",
+            "groupName": "webpack",
             "matchPackagePatterns": ["^webpack", "^webpack-.*"],
             "automerge": true
         },
         {
-            "groupName": "Jest",
+            "groupName": "jest",
             "matchPackageNames": ["@types/jest"],
             "matchPackagePatterns": [".*jest.*"],
             "automerge": true
         },
         {
-            "groupName": "Linter",
+            "groupName": "linter",
             "matchPackagePatterns": [".*eslint.*"],
             "automerge": true
         },
         {
-            "groupName": "Type definitions",
+            "groupName": "type definitions",
             "matchPackagePatterns": ["^@types/.*"],
             "excludePackagePatterns": ["^@types/react.*"],
             "automerge": true
