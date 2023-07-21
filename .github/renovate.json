@@ -12,31 +12,39 @@
     },
     "packageRules": [
         {
-            "description": "Automerge linter updates",
-            "matchDepPatterns": [".*eslint.*"],
+            "description": "Automerge flatbuffers",
+            "matchDepPatterns": ["flatbuffers"],
             "depTypeList": ["devDependencies"],
-            "groupName": "linter",
+            "automerge": true
+        },
+        {
+            "description": "Automerge js build tools",
+            "matchDepPatterns": ["esbuild"],
+            "depTypeList": ["devDependencies"],
             "automerge": true
         },
         {
             "description": "Automerge webpack updates",
             "matchDepPatterns": [".*webpack.*"],
             "depTypeList": ["devDependencies"],
-            "groupName": "webpack",
             "automerge": true
         },
         {
             "description": "Automerge typescript updates",
-            "matchDepPatterns": [".*typescript.*"],
+            "matchDepPatterns": ["typescript.*"],
             "depTypeList": ["devDependencies"],
-            "groupName": "typescript",
+            "automerge": true
+        },
+        {
+            "description": "Automerge linter updates",
+            "matchDepPatterns": [".*eslint.*"],
+            "depTypeList": ["devDependencies"],
             "automerge": true
         },
         {
             "description": "Automerge type definition updates",
             "matchDepPatterns": ["^@types/"],
             "depTypeList": ["devDependencies"],
-            "groupName": "type definitions",
             "automerge": true
         }
     ]
