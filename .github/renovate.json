@@ -39,7 +39,8 @@
         },
         {
             "groupName": "Type definitions",
-            "matchPackagePatterns": ["^@types/(?!react).*"],
+            "matchPackagePatterns": ["^@types/.*"],
+            "excludePackagePatterns": ["^@types/react.*"],
             "automerge": true
         }
     ]
