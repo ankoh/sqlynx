@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as flatsql from '@ankoh/flatsql';
 
 import { useFlatSQL } from './flatsql_loader';
-import { FlatSQLScriptBuffers, parseAndAnalyzeScript } from './editor/flatsql_analyzer';
+import { FlatSQLScriptBuffers, parseAndAnalyzeScript } from './editor/flatsql_processor';
 import { AppState, ScriptKey, createDefaultState, createEmptyScript, destroyState } from './app_state';
 import { Action, Dispatch } from './utils/action';
 import { RESULT_OK } from './utils/result';

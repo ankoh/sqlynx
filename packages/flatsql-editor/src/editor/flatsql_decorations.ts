@@ -2,7 +2,7 @@ import * as flatsql from '@ankoh/flatsql';
 import { Decoration, DecorationSet, EditorView } from '@codemirror/view';
 import { Transaction, StateField, RangeSetBuilder } from '@codemirror/state';
 
-import { FlatSQLAnalyzer } from './flatsql_analyzer';
+import { FlatSQLProcessor } from './flatsql_processor';
 
 import './flatsql_decorations.css';
 
@@ -58,7 +58,7 @@ const DecorationBuilder: StateField<DecorationState> = StateField.define<Decorat
     // Mirror the FlatSQL state
     update: (state: DecorationState, transaction: Transaction) => {
         // Scanned program untouched?
-        const analyzer = transaction.state.field(FlatSQLAnalyzer);
+        const analyzer = transaction.state.field(FlatSQLProcessor);
         if (analyzer.buffers.scanned === state.scanned) {
             return state;
         }
