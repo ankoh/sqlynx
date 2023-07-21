@@ -240,7 +240,7 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
     std::sort(adjacency_pairs.begin(), adjacency_pairs.end());
     size_t i = 0;
     for (auto begin = adjacency_pairs.begin(); begin != adjacency_pairs.end();) {
-        while (i < begin->first) {
+        for (; i < begin->first; ++i) {
             adjacency.adjacency_offsets.push_back(adjacency.adjacency_nodes.size());
         }
         adjacency.adjacency_offsets.push_back(adjacency.adjacency_nodes.size());
@@ -249,6 +249,7 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
         for (auto iter = begin; iter != end; ++iter) {
             adjacency.adjacency_nodes.push_back(iter->second);
         }
+        begin = end;
     }
     adjacency.adjacency_offsets.push_back(adjacency.adjacency_nodes.size());
     adjacency_pairs = {};

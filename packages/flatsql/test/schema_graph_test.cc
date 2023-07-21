@@ -8,7 +8,7 @@ using namespace flatsql;
 
 namespace {
 
-TEST(SchemaGraphTest, TPCH) {
+TEST(SchemaGraphTest, TPCHQ2) {
     const std::string_view tpch_schema = R"SQL(
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -19,12 +19,65 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
 create table nation (n_nationkey integer not null, n_name char(25) not null, n_regionkey integer not null, n_comment varchar(152) not null, primary key (n_nationkey));
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
     )SQL";
+    const std::string_view tpch_q2 = R"SQL(
+select
+    s_acctbal,
+    s_name,
+    n_name,
+    p_partkey,
+    p_mfgr,
+    s_address,
+    s_phone,
+    s_comment
+from
+    part,
+    supplier,
+    partsupp,
+    nation,
+    region
+where
+    p_partkey = ps_partkey
+    and s_suppkey = ps_suppkey
+    and p_size = 15
+    and p_type like '%BRASS'
+    and s_nationkey = n_nationkey
+    and n_regionkey = r_regionkey
+    and r_name = 'EUROPE'
+    and ps_supplycost = (
+        select
+            min(ps_supplycost)
+        from
+            partsupp,
+            supplier,
+            nation,
+            region
+        where
+            p_partkey = ps_partkey
+            and s_suppkey = ps_suppkey
+            and s_nationkey = n_nationkey
+            and n_regionkey = r_regionkey
+            and r_name = 'EUROPE'
+    )
+order by
+    s_acctbal desc,
+    n_name,
+    s_name,
+    p_partkey
+limit
+	100
+    )SQL";
 
-    Script script;
-    script.InsertTextAt(0, tpch_schema);
-    ASSERT_EQ(script.Scan().second, proto::StatusCode::OK);
-    ASSERT_EQ(script.Parse().second, proto::StatusCode::OK);
-    ASSERT_EQ(script.Analyze().second, proto::StatusCode::OK);
+    Script schema_script;
+    schema_script.InsertTextAt(0, tpch_schema);
+    ASSERT_EQ(schema_script.Scan().second, proto::StatusCode::OK);
+    ASSERT_EQ(schema_script.Parse().second, proto::StatusCode::OK);
+    ASSERT_EQ(schema_script.Analyze().second, proto::StatusCode::OK);
+
+    Script query_script;
+    query_script.InsertTextAt(0, tpch_q2);
+    ASSERT_EQ(query_script.Scan().second, proto::StatusCode::OK);
+    ASSERT_EQ(query_script.Parse().second, proto::StatusCode::OK);
+    ASSERT_EQ(query_script.Analyze(&schema_script).second, proto::StatusCode::OK);
 
     SchemaGraph graph;
     SchemaGraph::Config config;
@@ -45,11 +98,15 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
 
     for (size_t i = 0; i < 3; ++i) {
         graph.Configure(config);
-        graph.LoadScript(script.analyzed_scripts.back());
+        graph.LoadScript(query_script.analyzed_scripts.back());
     }
 
     auto& tables = graph.GetNodes();
+    auto& edges = graph.GetEdges();
+    auto& edge_nodes = graph.GetEdgeNodes();
     ASSERT_EQ(tables.size(), 8);
+    ASSERT_EQ(edges.size(), 9);
+    ASSERT_EQ(edge_nodes.size(), 27);
 
     std::stringstream ss;
     ss << "[";
