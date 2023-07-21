@@ -1,6 +1,6 @@
 import { lineNumbers } from '@codemirror/view';
 
 import { FlatSQLDecorations } from './flatsql_decorations';
-import { FlatSQLAnalyzer } from './flatsql_analyzer';
+import { FlatSQLProcessor } from './flatsql_processor';
 
-export const FlatSQLExtensions = [lineNumbers(), FlatSQLAnalyzer, ...FlatSQLDecorations];
+export const FlatSQLExtensions = [lineNumbers(), FlatSQLProcessor, ...FlatSQLDecorations];

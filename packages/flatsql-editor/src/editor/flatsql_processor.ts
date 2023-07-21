@@ -88,8 +88,8 @@ const destroyBuffers = (state: FlatSQLScriptBuffers) => {
 
 /// Effect to update a FlatSQL script attached to a CodeMirror editor
 export const UpdateFlatSQLScript: StateEffectType<FlatSQLScriptUpdate> = StateEffect.define<FlatSQLScriptUpdate>();
-/// An analyzer for FlatSQL scripts
-export const FlatSQLAnalyzer: StateField<FlatSQLEditorState> = StateField.define<FlatSQLEditorState>({
+/// A processor for FlatSQL scripts
+export const FlatSQLProcessor: StateField<FlatSQLEditorState> = StateField.define<FlatSQLEditorState>({
     // Create the initial state
     create: () => {
         // By default, the FlatSQL script is not configured
