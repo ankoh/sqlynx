@@ -12,37 +12,35 @@
     },
     "packageRules": [
         {
-            "description": "Automerge flatbuffers",
-            "matchDepPatterns": ["flatbuffers"],
+            "description": "Flatbuffers",
+            "matchDepNames": ["flatbuffers"],
             "automerge": true
         },
         {
-            "description": "Automerge js build tools",
-            "matchDepPatterns": ["esbuild"],
+            "description": "Js build tools",
+            "matchDepNames": ["esbuild"],
             "depTypeList": ["devDependencies"],
             "automerge": true
         },
         {
-            "description": "Automerge webpack updates",
-            "matchDepPatterns": [".*webpack.*"],
-            "depTypeList": ["devDependencies"],
+            "description": "Webpack updates",
+            "matchDepNames": ["webpack", "webpack-cli"],
             "automerge": true
         },
         {
-            "description": "Automerge typescript updates",
-            "matchDepPatterns": ["typescript.*"],
-            "depTypeList": ["devDependencies"],
+            "description": "Typescript updates",
+            "matchDepNames": ["typescript", "typescript-plugin-css-modules", "ts-jest"],
             "automerge": true
         },
         {
-            "description": "Automerge linter updates",
+            "description": "Linter updates",
             "matchDepPatterns": [".*eslint.*"],
             "depTypeList": ["devDependencies"],
             "automerge": true
         },
         {
-            "description": "Automerge type definition updates",
-            "matchDepPatterns": ["^@types/"],
+            "description": "Type definition updates",
+            "matchDepNames": ["@types/node", "@types/node"],
             "depTypeList": ["devDependencies"],
             "automerge": true
         }
