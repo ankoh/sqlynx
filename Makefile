@@ -90,8 +90,8 @@ analyzer_tests:
 rope_tests:
 	${LIB_DEBUG_DIR}/tester --source_dir . --gtest_filter="*Rope*"
 
-.PHONY: vis_tests
-vis_tests:
+.PHONY: graph_tests
+graph_tests:
 	${LIB_DEBUG_DIR}/tester --source_dir . --gtest_filter="*SchemaGraphTest*"
 
 .PHONY: completion_tests
