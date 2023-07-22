@@ -291,7 +291,7 @@ jobs:
 
             - uses: actions/download-artifact@v3
               with:
-                  name: flatsql_coverage_native_Debug
+                  name: flatsql_coverage_native_o0
                   path: ./packages/flatsql/build/coverage/
 
             - uses: actions/download-artifact@v3
