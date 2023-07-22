@@ -148,8 +148,8 @@ jobs:
 
             - uses: actions/download-artifact@v3
               with:
-                  name: flatsql_parser_wasm_Release
-                  path: ./packages/flatsql/build/wasm/Release/
+                  name: flatsql_parser_wasm_o3
+                  path: ./packages/flatsql/build/wasm/o3/
 
             - name: Setup flatc
               uses: ./.github/actions/setup-flatc
@@ -161,7 +161,7 @@ jobs:
             - name: Install npm dependencies
               shell: bash
               run: |
-                  mkdir -p ./lib/build/wasm/release ./reports
+                  mkdir -p ./lib/build/wasm/o3 ./reports
                   yarn install --frozen-lockfile
 
             - name: Build @ankoh/flatsql
@@ -205,7 +205,7 @@ jobs:
             - name: Install npm dependencies
               shell: bash
               run: |
-                  mkdir -p ./lib/build/wasm/release ./reports
+                  mkdir -p ./lib/build/wasm/o3 ./reports
                   yarn install --frozen-lockfile
 
             - name: Build @ankoh/flatsql-editor
@@ -216,7 +216,7 @@ jobs:
             - uses: actions/upload-artifact@v3
               with:
                   name: flatsql_editor
-                  path: ./packages/flatsql-editor/build/pwa/release
+                  path: ./packages/flatsql-editor/build/pwa/o3
                   retention-days: 1
 
     lsp:
