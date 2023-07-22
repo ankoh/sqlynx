@@ -141,7 +141,7 @@ export class FlatSQL {
                 clock_time_get: (_id: number, _precision: number, ptr: number) => {
                     const instance = instanceRef.instance!;
                     const buffer = new BigUint64Array(instance.memory.buffer);
-                    buffer[ptr / 8] = BigInt(Math.floor(performance.now())) * 1000000n;
+                    buffer[ptr / 8] = BigInt(Math.floor(performance.now() * 1000000));
                     return 0;
                 },
             },
