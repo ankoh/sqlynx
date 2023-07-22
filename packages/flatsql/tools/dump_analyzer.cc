@@ -64,7 +64,7 @@ static void generate_analyzer_dumps(const std::filesystem::path& source_dir) {
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(external_parsed.second) << std::endl;
                 continue;
             }
-            auto external_analyzed = Analyzer::Analyze(external_parsed.first);
+            auto external_analyzed = Analyzer::Analyze(external_parsed.first, nullptr);
             if (external_analyzed.second != proto::StatusCode::OK) {
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(external_analyzed.second) << std::endl;
                 continue;
