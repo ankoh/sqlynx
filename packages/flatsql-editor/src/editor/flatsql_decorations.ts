@@ -58,13 +58,13 @@ const DecorationBuilder: StateField<DecorationState> = StateField.define<Decorat
     // Mirror the FlatSQL state
     update: (state: DecorationState, transaction: Transaction) => {
         // Scanned program untouched?
-        const analyzer = transaction.state.field(FlatSQLProcessor);
-        if (analyzer.buffers.scanned === state.scanned) {
+        const processor = transaction.state.field(FlatSQLProcessor);
+        if (processor.processed.scanned === state.scanned) {
             return state;
         }
         // Rebuild decorations
         const s = { ...state };
-        s.scanned = analyzer.buffers.scanned;
+        s.scanned = processor.processed.scanned;
         if (s.scanned) {
             console.log('UPDATE DECORATIONS');
             s.decorations = buildDecorations(s.scanned);

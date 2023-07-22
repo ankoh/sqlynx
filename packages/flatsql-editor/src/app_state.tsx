@@ -3,7 +3,7 @@ import * as flatsql from '@ankoh/flatsql';
 import { generateBlankScript } from './script_loader/script_metadata';
 import { LoadingStatus } from './script_loader/script_loader';
 
-import { FlatSQLScriptBuffers as FlatSQLProcessedScript } from './editor/flatsql_processor';
+import { FlatSQLProcessedScript } from './editor/flatsql_processor';
 import { ScriptMetadata } from './script_loader/script_metadata';
 import { LoadingInfo } from './script_loader/script_loader';
 

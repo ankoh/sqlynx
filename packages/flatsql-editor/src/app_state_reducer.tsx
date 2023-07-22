@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as flatsql from '@ankoh/flatsql';
 
 import { useFlatSQL } from './flatsql_loader';
-import { FlatSQLScriptBuffers, parseAndAnalyzeScript } from './editor/flatsql_processor';
+import { FlatSQLProcessedScript, parseAndAnalyzeScript } from './editor/flatsql_processor';
 import { AppState, ScriptKey, createDefaultState, createEmptyScript, destroyState } from './app_state';
 import { Action, Dispatch } from './utils/action';
 import { RESULT_OK } from './utils/result';
@@ -22,7 +22,7 @@ export const DESTROY = Symbol('DESTROY');
 export type AppStateAction =
     | Action<typeof INITIALIZE, flatsql.FlatSQL>
     | Action<typeof LOAD_SCRIPTS, { [key: number]: ScriptMetadata }>
-    | Action<typeof UPDATE_SCRIPT_ANALYSIS, [ScriptKey, FlatSQLScriptBuffers]>
+    | Action<typeof UPDATE_SCRIPT_ANALYSIS, [ScriptKey, FlatSQLProcessedScript]>
     | Action<typeof SCRIPT_LOADING_STARTED, ScriptKey>
     | Action<typeof SCRIPT_LOADING_SUCCEEDED, [ScriptKey, string]>
     | Action<typeof SCRIPT_LOADING_FAILED, [ScriptKey, any]>
