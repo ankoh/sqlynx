@@ -11,7 +11,7 @@ jobs:
     lib_wasm:
         strategy:
             matrix:
-                build_type: ['Debug', 'Release']
+                build_type: ['o0', 'o3']
 
         name: Build Library / WASM / ${{ matrix.build_type }}
         runs-on: ubuntu-22.04
@@ -54,7 +54,7 @@ jobs:
     lib_native:
         strategy:
             matrix:
-                build_type: ['Debug', 'RelWithDebInfo']
+                build_type: ['o0', 'o2']
 
         name: Build Library / Native / ${{ matrix.build_type }}
         runs-on: ubuntu-22.04
@@ -98,7 +98,7 @@ jobs:
                   ${LIB_BUILD_DIR}/tester --source ${LIB_SOURCE_DIR}
 
             - name: Run benchmarks
-              if: matrix.build_type == 'RelWithDebInfo'
+              if: matrix.build_type == 'o2'
               shell: bash
               env:
                   LIB_SOURCE_DIR: ./packages/flatsql

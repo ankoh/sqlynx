@@ -9,18 +9,19 @@ PROJECT_ROOT="$(cd $(dirname "$BASH_SOURCE[0]") && cd .. && pwd)" &> /dev/null
 MODE=${1:-Fast}
 echo "MODE=${MODE}"
 
-CPP_SOURCE_DIR="${PROJECT_ROOT}/packages/flatsql"
-CPP_BUILD_DIR="${CPP_SOURCE_DIR}/build/wasm/${MODE}"
-
 CORES=$(grep -c ^processor /proc/cpuinfo 2>/dev/null || sysctl -n hw.ncpu)
 
-ADDITIONAL_FLAGS="-DCMAKE_BUILD_TYPE=Release"
+BUILD_TYPE="Release"
 case $MODE in
-  "Debug") ADDITIONAL_FLAGS="-DCMAKE_BUILD_TYPE=Debug" ;;
-  "Fast") ADDITIONAL_FLAGS="-DCMAKE_BUILD_TYPE=RelWithDebInfo" ;;
-  "Release") ADDITIONAL_FLAGS="-DCMAKE_BUILD_TYPE=Release" ;;
+  "o0") BUILD_TYPE="Debug" ;;
+  "o2") BUILD_TYPE="RelWithDebInfo" ;;
+  "o3") BUILD_TYPE="Release" ;;
    *) ;;
 esac
+ADDITIONAL_FLAGS="-DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
+
+CPP_SOURCE_DIR="${PROJECT_ROOT}/packages/flatsql"
+CPP_BUILD_DIR="${CPP_SOURCE_DIR}/build/wasm/${MODE}"
 
 INFRA_DIR="${PROJECT_ROOT}/.infra"
 WASI_SDK_PREFIX=${WASI_SDK_PREFIX:-"${INFRA_DIR}/unpacked/wasi"}
@@ -29,6 +30,7 @@ WASI_CMAKE_TOOLCHAIN=${WASI_CMAKE_TOOLCHAIN:-"${INFRA_DIR}/unpacked/wasi/share/c
 WABT_BIN=${WABT_BIN:-"${INFRA_DIR}/unpacked/wabt/bin"}
 BINARYEN_BIN=${BINARYEN_BIN:-"${INFRA_DIR}/unpacked/binaryen/bin"}
 
+echo "MODE=${MODE}"
 echo "BUILD_TYPE=${MODE}"
 echo "WASI_SDK_PREFIX=${WASI_SDK_PREFIX}"
 echo "WASI_SYSROOT=${WASI_SYSROOT}"

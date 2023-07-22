@@ -9,9 +9,9 @@ UID=${shell id -u}
 GID=${shell id -g}
 
 LIB_SOURCE_DIR="${ROOT_DIR}/packages/flatsql"
-LIB_DEBUG_DIR="${LIB_SOURCE_DIR}/build/native/Debug"
-LIB_RELEASE_DIR="${LIB_SOURCE_DIR}/build/native/Release"
-LIB_RELWITHDEBINFO_DIR="${LIB_SOURCE_DIR}/build/native/RelWithDebInfo"
+LIB_DEBUG_DIR="${LIB_SOURCE_DIR}/build/native/o0"
+LIB_RELWITHDEBINFO_DIR="${LIB_SOURCE_DIR}/build/native/o2"
+LIB_RELEASE_DIR="${LIB_SOURCE_DIR}/build/native/o3"
 LIB_COVERAGE_DIR="${LIB_SOURCE_DIR}/build/coverage"
 
 CORES=$(shell grep -c ^processor /proc/cpuinfo 2>/dev/null || sysctl -n hw.ncpu)
@@ -104,15 +104,15 @@ benchmark_steps:
 
 .PHONY: wasm_o0
 wasm_o0:
-	./scripts/build_parser_wasm.sh Debug
+	./scripts/build_parser_wasm.sh o0
 
 .PHONY: wasm_o2
 wasm_o2:
-	./scripts/build_parser_wasm.sh Fast
+	./scripts/build_parser_wasm.sh o2
 
 .PHONY: wasm_o3
 wasm_o3:
-	./scripts/build_parser_wasm.sh Release
+	./scripts/build_parser_wasm.sh o3
 
 .PHONY: jslib_o0
 jslib_o0:
