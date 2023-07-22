@@ -102,7 +102,7 @@ struct Analyzer {
 
     /// Analyze a program
     static std::pair<std::shared_ptr<AnalyzedScript>, proto::StatusCode> Analyze(
-        std::shared_ptr<ParsedScript> parsed, std::shared_ptr<AnalyzedScript> external = nullptr);
+        std::shared_ptr<ParsedScript> parsed, std::shared_ptr<AnalyzedScript> external);
 };
 
 }  // namespace flatsql
