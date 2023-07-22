@@ -156,7 +156,7 @@ class Script {
     /// The underlying rope
     rope::Rope text;
     /// The text version
-    uint64_t text_version;
+    uint64_t text_version = 0;
     /// The external script (if any)
     Script* external_script;
 
@@ -168,6 +168,11 @@ class Script {
     StaggeredAnalyzedScripts analyzed_scripts;
     /// The completion model
     CompletionIndex completion_index;
+
+    /// The memory statistics
+    proto::ScriptProcessingTimings timing_statistics;
+    /// Get memory statisics
+    std::unique_ptr<proto::ScriptMemoryStatistics> GetMemoryStatistics();
 
    public:
     /// Constructor
@@ -196,6 +201,9 @@ class Script {
     proto::StatusCode UpdateCompletionIndex(bool use_stable = true);
     /// Complete at a text offset
     void CompleteAt(size_t offset);
+
+    /// Get statisics
+    std::unique_ptr<proto::ScriptStatisticsT> GetStatistics();
 };
 
 }  // namespace flatsql

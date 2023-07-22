@@ -2,6 +2,8 @@
 
 #include <flatbuffers/flatbuffer_builder.h>
 
+#include <unordered_set>
+
 #include "flatsql/analyzer/analyzer.h"
 #include "flatsql/parser/parse_context.h"
 #include "flatsql/parser/scanner.h"
@@ -120,22 +122,96 @@ void Script::EraseTextRange(size_t char_idx, size_t count) { text.Remove(char_id
 /// Print a script as string
 std::string Script::ToString() { return text.ToString(); }
 
+/// Update memory statisics
+std::unique_ptr<proto::ScriptMemoryStatistics> Script::GetMemoryStatistics() {
+    auto memory = std::make_unique<proto::ScriptMemoryStatistics>();
+    memory->mutate_rope_bytes(text.GetStats().text_bytes);
+
+    std::unordered_set<const ScannedScript*> registered_scanned;
+    std::unordered_set<const ParsedScript*> registered_parsed;
+    std::unordered_set<const AnalyzedScript*> registered_analyzed;
+    registered_scanned.reserve(4);
+    registered_parsed.reserve(4);
+    registered_analyzed.reserve(4);
+    auto registerScript = [&](AnalyzedScript* analyzed, proto::ScriptProcessingMemoryStatistics& stats) {
+        if (!analyzed) return;
+        // Added analyzed before?
+        if (registered_analyzed.contains(analyzed)) return;
+        size_t analyzer_bytes =
+            analyzed->tables.size() * sizeof(decltype(analyzed->tables)::value_type) +
+            analyzed->table_columns.size() * sizeof(decltype(analyzed->table_columns)::value_type) +
+            analyzed->table_references.size() * sizeof(decltype(analyzed->table_references)::value_type) +
+            analyzed->column_references.size() * sizeof(decltype(analyzed->column_references)::value_type) +
+            analyzed->graph_edges.size() * sizeof(decltype(analyzed->graph_edges)::value_type) +
+            analyzed->graph_edge_nodes.size() * sizeof(decltype(analyzed->graph_edge_nodes)::value_type);
+        stats.mutate_analyzer_bytes(analyzer_bytes);
+
+        // Added parsed before?
+        ParsedScript* parsed = analyzed->parsed_script.get();
+        if (registered_parsed.contains(parsed)) return;
+        size_t parser_ast_bytes = parsed->nodes.size() * sizeof(decltype(parsed->nodes)::value_type);
+        stats.mutate_parser_ast_bytes(parser_ast_bytes);
+
+        // Added scanned before?
+        ScannedScript* scanned = parsed->scanned_script.get();
+        if (registered_scanned.contains(scanned)) return;
+        size_t scanner_dictionary_bytes =
+            scanned->name_pool.GetSize() +
+            scanned->name_dictionary.size() * sizeof(decltype(scanned->name_dictionary)::value_type);
+        stats.mutate_scanner_input_bytes(scanned->GetInput().size());
+        stats.mutate_scanner_dictionary_bytes(scanner_dictionary_bytes);
+    };
+    registerScript(analyzed_scripts.latest.get(), memory->mutable_latest_script());
+    registerScript(analyzed_scripts.cooling.get(), memory->mutable_cooling_script());
+    registerScript(analyzed_scripts.stable.get(), memory->mutable_stable_script());
+
+    if (completion_index.suffix_trie) {
+        registerScript(completion_index.analyzed_script.get(), memory->mutable_completion_index_script());
+        size_t completion_index_entries = completion_index.suffix_trie->GetEntries().size() * sizeof(SuffixTrie::Entry);
+        size_t completion_index_bytes = completion_index.suffix_trie->GetEntries().size() * sizeof(SuffixTrie::Entry);
+        memory->mutate_completion_index_entries(completion_index_entries);
+        memory->mutate_completion_index_bytes(completion_index_bytes);
+    }
+    return memory;
+}
+
+/// Get statisics
+std::unique_ptr<proto::ScriptStatisticsT> Script::GetStatistics() {
+    auto stats = std::make_unique<proto::ScriptStatisticsT>();
+    stats->memory = GetMemoryStatistics();
+    stats->timings = std::make_unique<proto::ScriptProcessingTimings>(timing_statistics);
+    return stats;
+}
+
+/// Update step timings
+static void updateStepTimings(proto::ScriptProcessingStepTimings& timings, std::chrono::duration<double> duration) {
+    timings.mutate_elapsed_last(duration.count());
+    timings.mutate_elapsed_max(std::max(timings.elapsed_max(), duration.count()));
+    timings.mutate_elapsed_min(std::min(timings.elapsed_min(), duration.count()));
+    timings.mutate_elapsed_sum(timings.elapsed_sum() + duration.count());
+    timings.mutate_measurements(timings.measurements() + 1);
+}
+
 /// Scan a script
 std::pair<ScannedScript*, proto::StatusCode> Script::Scan() {
+    auto time_start = std::chrono::steady_clock::now();
     auto [script, status] = parser::Scanner::Scan(text);
     scanned_script = std::move(script);
     if (status == proto::StatusCode::OK) {
         scanned_script->text_version = ++text_version;
     }
+    updateStepTimings(timing_statistics.mutable_scanner_timings(), std::chrono::steady_clock::now() - time_start);
     return {scanned_script.get(), status};
 }
 /// Parse a script
 std::pair<ParsedScript*, proto::StatusCode> Script::Parse() {
+    auto time_start = std::chrono::steady_clock::now();
     auto [script, status] = parser::ParseContext::Parse(scanned_script);
     parsed_script = std::move(script);
     if (status == proto::StatusCode::OK) {
         parsed_script->text_version = scanned_script->text_version;
     }
+    updateStepTimings(timing_statistics.mutable_parser_timings(), std::chrono::steady_clock::now() - time_start);
     return {parsed_script.get(), status};
 }
 
@@ -169,6 +245,8 @@ static void updateStaggeredScripts(StaggeredAnalyzedScripts& scripts, uint32_t l
 /// Analyze a script
 std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(Script* external, bool use_stable_external,
                                                               uint32_t lifetime) {
+    auto time_start = std::chrono::steady_clock::now();
+
     // Get analyzed external script
     std::shared_ptr<AnalyzedScript> external_analyzed;
     if (external) {
@@ -187,6 +265,8 @@ std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(Script* external, 
 
     // Update staggered analysis
     updateStaggeredScripts(analyzed_scripts, lifetime);
+    // Update step timings
+    updateStepTimings(timing_statistics.mutable_analyzer_timings(), std::chrono::steady_clock::now() - time_start);
     return {analyzed_scripts.latest.get(), status};
 }
 
