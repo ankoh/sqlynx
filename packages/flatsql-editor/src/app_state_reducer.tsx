@@ -47,20 +47,24 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
         case UPDATE_SCRIPT_ANALYSIS: {
             // Destroy the previous buffers
             const [scriptKey, data] = action.value;
-            const script = state.scripts[scriptKey];
-            script.buffers.destroy(script.buffers);
+            let scriptData = state.scripts[scriptKey];
+            scriptData.processed.destroy(scriptData.processed);
             // Store the new buffers
-            const newState: AppState = {
+            const newState: AppState = computeSchemaGraph({
                 ...state,
                 scripts: {
                     ...state.scripts,
                     [scriptKey]: {
-                        ...script,
-                        buffers: data,
+                        ...scriptData,
+                        processed: data,
                     },
                 },
-            };
-            return computeSchemaGraph(newState);
+            });
+            // Update statistics
+            scriptData = newState.scripts[scriptKey];
+            scriptData.statistics?.delete();
+            scriptData.statistics = newState.scripts[scriptKey].script?.getStatistics() ?? null;
+            return newState;
         }
         case SCRIPT_LOADING_STARTED:
             return {
@@ -125,7 +129,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                         console.log('LOADED MAIN');
                         // Destroy the old script and buffers
                         const old = newState.scripts[ScriptKey.MAIN_SCRIPT];
-                        old.buffers.destroy(old.buffers);
+                        old.processed.destroy(old.processed);
                         old.script?.delete();
                         old.script = null;
                         // Analyze the new script
@@ -134,7 +138,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                         newState.scripts[ScriptKey.MAIN_SCRIPT] = {
                             ...newState.scripts[ScriptKey.MAIN_SCRIPT],
                             script: newScript,
-                            buffers: analysis,
+                            processed: analysis,
                         };
                         break;
                     }
@@ -142,7 +146,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                         console.log('LOADED SCHEMA');
                         // Destroy the old script and buffers
                         const old = newState.scripts[ScriptKey.SCHEMA_SCRIPT];
-                        old.buffers.destroy(old.buffers);
+                        old.processed.destroy(old.processed);
                         old.script?.delete();
                         old.script = null;
                         // Analyze the new script
@@ -150,14 +154,14 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                         const main = newState.scripts[ScriptKey.MAIN_SCRIPT];
                         if (main.script) {
                             // Delete the old main analysis
-                            main.buffers.analyzed?.delete();
-                            main.buffers.analyzed = null;
+                            main.processed.analyzed?.delete();
+                            main.processed.analyzed = null;
                             // Analyze the old main script with the new script as external
                             const mainAnalyzed = main.script.analyze(newScript);
                             newState.scripts[ScriptKey.MAIN_SCRIPT] = {
                                 ...newState.scripts[ScriptKey.MAIN_SCRIPT],
-                                buffers: {
-                                    ...main.buffers,
+                                processed: {
+                                    ...main.processed,
                                     analyzed: mainAnalyzed,
                                 },
                             };
@@ -165,7 +169,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                         newState.scripts[ScriptKey.SCHEMA_SCRIPT] = {
                             ...newState.scripts[ScriptKey.SCHEMA_SCRIPT],
                             script: newScript,
-                            buffers: schemaAnalyzed,
+                            processed: schemaAnalyzed,
                         };
                         break;
                     }
@@ -192,7 +196,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                 if (!action.value[key]) continue;
                 // Destroy previous analysis & script
                 const previous = state.scripts[key];
-                previous.buffers.destroy(previous.buffers);
+                previous.processed.destroy(previous.processed);
                 previous.script?.delete();
                 // Store
                 const metadata = action.value[key];
@@ -206,12 +210,13 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                         startedAt: null,
                         finishedAt: null,
                     },
-                    buffers: {
+                    processed: {
                         scanned: null,
                         parsed: null,
                         analyzed: null,
                         destroy: () => {},
                     },
+                    statistics: null,
                 };
             }
             return newState;
