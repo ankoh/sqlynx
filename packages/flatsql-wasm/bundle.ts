@@ -30,13 +30,13 @@ await fs.promises.writeFile(new URL('flatsql.module.d.ts', dist), "export * from
 let wasmUrl: URL;
 switch (mode) {
     case 'o0':
-        wasmUrl = new URL('../flatsql/build/wasm/Debug/flatsql.wasm', import.meta.url);
+        wasmUrl = new URL('../flatsql/build/wasm/o0/flatsql.wasm', import.meta.url);
         break;
     case 'o2':
-        wasmUrl = new URL('../flatsql/build/wasm/Fast/flatsql.wasm', import.meta.url);
+        wasmUrl = new URL('../flatsql/build/wasm/o2/flatsql.wasm', import.meta.url);
         break;
     case 'o3':
-        wasmUrl = new URL('../flatsql/build/wasm/Release/flatsql.wasm', import.meta.url);
+        wasmUrl = new URL('../flatsql/build/wasm/o3/flatsql.wasm', import.meta.url);
         break;
     default:
         throw new Error(`unsupported mode: ${mode}`);
