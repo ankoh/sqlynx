@@ -399,10 +399,14 @@ export class FlatSQLScript {
         return status == proto.StatusCode.OK;
     }
     /// Get the script statistics
-    public getStatistics(): FlatBufferRef<proto.ScriptStatistics> {
+    public getStatistics(): proto.ScriptStatisticsT {
         const scriptPtr = this.assertScriptNotNull();
         const resultPtr = this.api.instanceExports.flatsql_script_get_statistics(scriptPtr);
-        return this.api.readResult<proto.ScriptStatistics>(resultPtr);
+        const statsBuffer = this.api.readResult<proto.ScriptStatistics>(resultPtr);
+        const stats = statsBuffer.read(new proto.ScriptStatistics());
+        const statsUnpacked = stats.unpack();
+        statsBuffer.delete();
+        return statsUnpacked;
     }
 }
 

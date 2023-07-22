@@ -50,21 +50,18 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
             let scriptData = state.scripts[scriptKey];
             scriptData.processed.destroy(scriptData.processed);
             // Store the new buffers
-            const newState: AppState = computeSchemaGraph({
+            const newState: AppState = {
                 ...state,
                 scripts: {
                     ...state.scripts,
                     [scriptKey]: {
                         ...scriptData,
                         processed: data,
+                        statistics: scriptData.script?.getStatistics() ?? null,
                     },
                 },
-            });
-            // Update statistics
-            scriptData = newState.scripts[scriptKey];
-            scriptData.statistics?.delete();
-            scriptData.statistics = newState.scripts[scriptKey].script?.getStatistics() ?? null;
-            return newState;
+            };
+            return computeSchemaGraph(newState);
         }
         case SCRIPT_LOADING_STARTED:
             return {
@@ -139,6 +136,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                             ...newState.scripts[ScriptKey.MAIN_SCRIPT],
                             script: newScript,
                             processed: analysis,
+                            statistics: newScript.getStatistics(),
                         };
                         break;
                     }
@@ -158,18 +156,22 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                             main.processed.analyzed = null;
                             // Analyze the old main script with the new script as external
                             const mainAnalyzed = main.script.analyze(newScript);
+                            const oldMain = newState.scripts[ScriptKey.MAIN_SCRIPT];
+                            oldMain.statistics = null;
                             newState.scripts[ScriptKey.MAIN_SCRIPT] = {
-                                ...newState.scripts[ScriptKey.MAIN_SCRIPT],
+                                ...oldMain,
                                 processed: {
                                     ...main.processed,
                                     analyzed: mainAnalyzed,
                                 },
+                                statistics: main.script.getStatistics(),
                             };
                         }
                         newState.scripts[ScriptKey.SCHEMA_SCRIPT] = {
                             ...newState.scripts[ScriptKey.SCHEMA_SCRIPT],
                             script: newScript,
                             processed: schemaAnalyzed,
+                            statistics: newScript.getStatistics(),
                         };
                         break;
                     }
