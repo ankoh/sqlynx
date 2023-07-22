@@ -39,8 +39,8 @@ infra_macos:
 proto:
 	./scripts/generate_proto.sh
 
-.PHONY: lib
-lib:
+.PHONY: lib_o0
+lib_o0:
 	mkdir -p ${LIB_DEBUG_DIR}
 	cmake -S ${LIB_SOURCE_DIR} -B ${LIB_DEBUG_DIR} \
 		-DCODE_COVERAGE=1 \
@@ -49,14 +49,14 @@ lib:
 	ln -sf ${LIB_DEBUG_DIR}/compile_commands.json ${LIB_SOURCE_DIR}/compile_commands.json
 	cmake --build ${LIB_DEBUG_DIR} --parallel ${CORES}
 
-.PHONY: lib_relwithdebinfo
-lib_relwithdebinfo:
+.PHONY: lib_o2
+lib_o2:
 	mkdir -p ${LIB_RELWITHDEBINFO_DIR}
 	cmake -S ${LIB_SOURCE_DIR} -B ${LIB_RELWITHDEBINFO_DIR} -DCMAKE_BUILD_TYPE=RelWithDebInfo
 	cmake --build ${LIB_RELWITHDEBINFO_DIR} --parallel ${CORES}
 
-.PHONY: lib_release
-lib_release:
+.PHONY: lib_o3
+lib_o3:
 	mkdir -p ${LIB_RELEASE_DIR}
 	cmake -S ${LIB_SOURCE_DIR} -B ${LIB_RELEASE_DIR} -DCMAKE_BUILD_TYPE=Release
 	cmake --build ${LIB_RELEASE_DIR} --parallel ${CORES}
@@ -102,29 +102,37 @@ completion_tests:
 benchmark_steps:
 	${LIB_RELWITHDEBINFO_DIR}/bm_steps
 
-.PHONY: wasm
-wasm:
-	./scripts/build_parser_wasm.sh Release
+.PHONY: wasm_o0
+wasm_o0:
+	./scripts/build_parser_wasm.sh Debug
 
-.PHONY: wasm_fast
-wasm_fast:
+.PHONY: wasm_o2
+wasm_o2:
 	./scripts/build_parser_wasm.sh Fast
 
-.PHONY: jslib
-jslib:
-	yarn workspace @ankoh/flatsql build:debug
+.PHONY: wasm_o3
+wasm_o3:
+	./scripts/build_parser_wasm.sh Release
 
-.PHONY: jslib_release
-jslib_release:
-	yarn workspace @ankoh/flatsql build:release
+.PHONY: jslib_o0
+jslib_o0:
+	yarn workspace @ankoh/flatsql build:o0
+
+.PHONY: jslib_o2
+jslib_o2:
+	yarn workspace @ankoh/flatsql build:o2
+
+.PHONY: jslib_o3
+jslib_o3:
+	yarn workspace @ankoh/flatsql build:o3
 
 .PHONY: jslib_tests
 jslib_tests:
 	yarn workspace @ankoh/flatsql test
 
-.PHONY: editor_release
-editor_release:
-	yarn workspace @ankoh/flatsql-editor pwa:build:release
+.PHONY: editor_o3
+editor_o3:
+	yarn workspace @ankoh/flatsql-editor pwa:build:o3
 
 .PHONY: editor_start
 editor_start:

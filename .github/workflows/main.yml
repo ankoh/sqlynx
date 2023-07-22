@@ -167,7 +167,7 @@ jobs:
             - name: Build @ankoh/flatsql
               shell: bash
               run: |
-                  yarn workspace @ankoh/flatsql build:release
+                  yarn workspace @ankoh/flatsql build:o3
 
             - name: Test @ankoh/flatsql
               shell: bash
@@ -211,7 +211,7 @@ jobs:
             - name: Build @ankoh/flatsql-editor
               shell: bash
               run: |
-                  yarn workspace @ankoh/flatsql-editor pwa:build:release
+                  yarn workspace @ankoh/flatsql-editor pwa:build:o3
 
             - uses: actions/upload-artifact@v3
               with:
