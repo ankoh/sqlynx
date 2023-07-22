@@ -39,7 +39,7 @@ export interface ScriptData {
     /// The processed scripts
     processed: FlatSQLProcessedScript;
     /// The statistics
-    statistics: flatsql.FlatBufferRef<flatsql.proto.ScriptStatistics> | null;
+    statistics: flatsql.proto.ScriptStatisticsT | null;
 }
 
 /// Destroy a state

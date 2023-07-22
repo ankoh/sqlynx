@@ -36,6 +36,7 @@ ${FLATC} -I ${SPEC_DIR} -o ${OUT_DIR_TS} ${SPEC_INDEX} --ts \
         --reflect-types --reflect-names \
         --gen-name-strings --gen-compare \
         --gen-mutable \
+        --gen-object-api \
         --ts-no-import-ext \
     && { echo "[ OK  ] Generate Typescript Library"; } \
     || { echo "[ ERR ] Generate Typescript Library"; exit 1; }

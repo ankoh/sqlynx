@@ -69,6 +69,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         external: null,
         decorations: null,
     });
+    const activeScriptKey = activeTab == TabId.SCHEMA_SCRIPT ? ScriptKey.SCHEMA_SCRIPT : ScriptKey.MAIN_SCRIPT;
 
     // Helper to update a script
     const updateScript = React.useCallback(
@@ -141,6 +142,13 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
             view.dispatch({ changes, effects });
         }
     }, [view, activeTab, ctx.scripts[ScriptKey.MAIN_SCRIPT], ctx.scripts[ScriptKey.SCHEMA_SCRIPT], updateScript]);
+
+    // Log statistics
+    const stats = ctx.scripts[activeScriptKey].statistics ?? null;
+    React.useEffect(() => {
+        if (stats == null) return;
+        console.log(stats);
+    }, [stats]);
 
     // Helper to select a tab
     const selectTab = (event: React.MouseEvent<HTMLDivElement>) => {
