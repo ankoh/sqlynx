@@ -11,13 +11,13 @@ export interface FlatSQLScriptUpdate {
     script: flatsql.FlatSQLScript | null;
     // The second script
     external: flatsql.FlatSQLScript | null;
-    /// The previous analysis data (if any)
-    buffers: FlatSQLScriptBuffers;
+    /// The previous processed script data (if any)
+    processed: FlatSQLProcessedScript;
     // This callback is called when the editor updates the script
-    onUpdate: (scriptKey: FlatSQLScriptKey, script: FlatSQLScriptBuffers) => void;
+    onUpdate: (scriptKey: FlatSQLScriptKey, script: FlatSQLProcessedScript) => void;
 }
 /// The FlatSQL script buffers
-export interface FlatSQLScriptBuffers {
+export interface FlatSQLProcessedScript {
     /// The scanned script
     scanned: flatsql.FlatBufferRef<flatsql.proto.ScannedScript> | null;
     /// The parsed script
@@ -27,7 +27,7 @@ export interface FlatSQLScriptBuffers {
     /// Destroy the state.
     /// The user is responsible for cleanup up FlatBufferRefs that are no longer needed.
     /// E.g. one strategy may be to destroy the "old" state once a script with the same script key is emitted.
-    destroy: (state: FlatSQLScriptBuffers) => void;
+    destroy: (state: FlatSQLProcessedScript) => void;
 }
 /// The state of a FlatSQL analyzer
 type FlatSQLEditorState = FlatSQLScriptUpdate;
@@ -36,7 +36,7 @@ type FlatSQLEditorState = FlatSQLScriptUpdate;
 export function parseAndAnalyzeScript(
     script: flatsql.FlatSQLScript,
     external: flatsql.FlatSQLScript | null,
-): FlatSQLScriptBuffers {
+): FlatSQLProcessedScript {
     // Scan the script
     console.time('Script Scanning');
     const scanned = script.scan();
@@ -57,10 +57,10 @@ export function parseAndAnalyzeScript(
 
 /// Analyze an existing script
 export function analyzeScript(
-    buffers: FlatSQLScriptBuffers,
+    buffers: FlatSQLProcessedScript,
     script: flatsql.FlatSQLScript,
     external: flatsql.FlatSQLScript | null,
-): FlatSQLScriptBuffers {
+): FlatSQLProcessedScript {
     // Analyze the script
     console.time('Script Analyzing');
     const analyzed = script.analyze(external);
@@ -70,7 +70,7 @@ export function analyzeScript(
 }
 
 /// Destory the buffers
-const destroyBuffers = (state: FlatSQLScriptBuffers) => {
+const destroyBuffers = (state: FlatSQLProcessedScript) => {
     if (state.scanned != null) {
         state.scanned.delete();
         state.scanned = null;
@@ -97,7 +97,7 @@ export const FlatSQLProcessor: StateField<FlatSQLEditorState> = StateField.defin
             scriptKey: 0,
             script: null,
             external: null,
-            buffers: {
+            processed: {
                 scanned: null,
                 parsed: null,
                 analyzed: null,
@@ -125,7 +125,7 @@ export const FlatSQLProcessor: StateField<FlatSQLEditorState> = StateField.defin
                     scriptKey: effect.value.scriptKey,
                     script: effect.value.script,
                     external: effect.value.external,
-                    buffers: effect.value.buffers,
+                    processed: effect.value.processed,
                     onUpdate: effect.value.onUpdate,
                 };
             }
@@ -150,8 +150,8 @@ export const FlatSQLProcessor: StateField<FlatSQLEditorState> = StateField.defin
             console.log('UPDATE SCRIPT');
             // Analyze the new script
             const next = { ...state };
-            next.buffers = parseAndAnalyzeScript(next.script!, next.external);
-            next.onUpdate(next.scriptKey, next.buffers);
+            next.processed = parseAndAnalyzeScript(next.script!, next.external);
+            next.onUpdate(next.scriptKey, next.processed);
             return next;
         }
         return state;

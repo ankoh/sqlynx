@@ -7,7 +7,7 @@ import { ChangeSpec, StateEffect } from '@codemirror/state';
 
 import { CodeMirror } from './codemirror';
 import { FlatSQLExtensions } from './flatsql_extension';
-import { FlatSQLScriptBuffers, FlatSQLScriptKey, UpdateFlatSQLScript } from './flatsql_processor';
+import { FlatSQLProcessedScript, FlatSQLScriptKey, UpdateFlatSQLScript } from './flatsql_processor';
 import { useAppState, useAppStateDispatch, UPDATE_SCRIPT_ANALYSIS } from '../app_state_reducer';
 import { ScriptKey } from '../app_state';
 
@@ -72,7 +72,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
 
     // Helper to update a script
     const updateScript = React.useCallback(
-        (scriptKey: FlatSQLScriptKey, data: FlatSQLScriptBuffers) => {
+        (scriptKey: FlatSQLScriptKey, data: FlatSQLProcessedScript) => {
             ctxDispatch({
                 type: UPDATE_SCRIPT_ANALYSIS,
                 value: [scriptKey, data],
@@ -119,7 +119,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                     scriptKey: mainKey,
                     script: mainData.script,
                     external: externalScript,
-                    buffers: mainData.processed,
+                    processed: mainData.processed,
                     onUpdate: updateScript,
                 }),
             );
@@ -132,7 +132,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                     scriptKey: mainKey,
                     script: mainData.script,
                     external: externalScript,
-                    buffers: mainData.processed,
+                    processed: mainData.processed,
                     onUpdate: updateScript,
                 }),
             );
