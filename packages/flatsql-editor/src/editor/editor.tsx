@@ -119,7 +119,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                     scriptKey: mainKey,
                     script: mainData.script,
                     external: externalScript,
-                    buffers: mainData.buffers,
+                    buffers: mainData.processed,
                     onUpdate: updateScript,
                 }),
             );
@@ -132,7 +132,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                     scriptKey: mainKey,
                     script: mainData.script,
                     external: externalScript,
-                    buffers: mainData.buffers,
+                    buffers: mainData.processed,
                     onUpdate: updateScript,
                 }),
             );

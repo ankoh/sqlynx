@@ -3,7 +3,7 @@ import * as flatsql from '@ankoh/flatsql';
 import { generateBlankScript } from './script_loader/script_metadata';
 import { LoadingStatus } from './script_loader/script_loader';
 
-import { FlatSQLScriptBuffers } from './editor/flatsql_processor';
+import { FlatSQLScriptBuffers as FlatSQLProcessedScript } from './editor/flatsql_processor';
 import { ScriptMetadata } from './script_loader/script_metadata';
 import { LoadingInfo } from './script_loader/script_loader';
 
@@ -36,16 +36,18 @@ export interface ScriptData {
     metadata: ScriptMetadata;
     /// The loading info
     loading: LoadingInfo;
-    /// The buffers
-    buffers: FlatSQLScriptBuffers;
+    /// The processed scripts
+    processed: FlatSQLProcessedScript;
+    /// The statistics
+    statistics: flatsql.FlatBufferRef<flatsql.proto.ScriptStatistics> | null;
 }
 
 /// Destroy a state
 export function destroyState(state: AppState): AppState {
     const main = state.scripts[ScriptKey.MAIN_SCRIPT];
     const schema = state.scripts[ScriptKey.SCHEMA_SCRIPT];
-    main.buffers.destroy(main.buffers);
-    schema.buffers.destroy(schema.buffers);
+    main.processed.destroy(main.processed);
+    schema.processed.destroy(schema.processed);
     if (state.graphLayout) {
         state.graphLayout.delete();
         state.graphLayout = null;
@@ -64,12 +66,13 @@ export function createDefaultScript(key: ScriptKey) {
             startedAt: null,
             finishedAt: null,
         },
-        buffers: {
+        processed: {
             scanned: null,
             parsed: null,
             analyzed: null,
             destroy: () => {},
         },
+        statistics: null,
     };
     return script;
 }
@@ -85,12 +88,13 @@ export function createEmptyScript(key: ScriptKey, api: flatsql.FlatSQL) {
             startedAt: null,
             finishedAt: null,
         },
-        buffers: {
+        processed: {
             scanned: null,
             parsed: null,
             analyzed: null,
             destroy: () => {},
         },
+        statistics: null,
     };
     return script;
 }
