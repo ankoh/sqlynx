@@ -14,8 +14,9 @@
         "typescript": "^5.1.6"
     },
     "scripts": {
-        "build:debug": "tsc --emitDeclarationOnly && node --loader ts-node/esm ./bundle.ts debug",
-        "build:release": "tsc --emitDeclarationOnly && node --loader ts-node/esm ./bundle.ts release",
+        "build:o0": "tsc --emitDeclarationOnly && node --loader ts-node/esm ./bundle.ts o0",
+        "build:o2": "tsc --emitDeclarationOnly && node --loader ts-node/esm ./bundle.ts o2",
+        "build:o3": "tsc --emitDeclarationOnly && node --loader ts-node/esm ./bundle.ts o3",
         "test": "node --experimental-vm-modules ./node_modules/.bin/jest",
         "test:coverage": "node --experimental-vm-modules ./node_modules/.bin/jest --coverage"
     },
