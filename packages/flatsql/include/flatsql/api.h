@@ -55,6 +55,8 @@ extern "C" FFIResult* flatsql_script_analyze(flatsql::Script* script, flatsql::S
 extern "C" FFIResult* flatsql_script_format(flatsql::Script* script);
 /// Update the completion index
 extern "C" uint32_t flatsql_script_update_completion_index(flatsql::Script* script, bool stable);
+/// Get script statistics
+extern "C" FFIResult* flatsql_script_get_statistics(flatsql::Script* script);
 
 /// Create schema graph
 extern "C" flatsql::SchemaGraph* flatsql_schemagraph_new();

@@ -1,5 +1,8 @@
 #include "flatsql/api.h"
 
+#include <flatbuffers/detached_buffer.h>
+#include <flatbuffers/flatbuffer_builder.h>
+
 #include <span>
 
 #include "flatbuffers/flatbuffers.h"
@@ -101,6 +104,16 @@ static FFIResult* packError(proto::StatusCode status) {
     return result;
 }
 
+static FFIResult* packBuffer(std::unique_ptr<flatbuffers::DetachedBuffer> detached) {
+    auto result = new FFIResult();
+    result->status_code = static_cast<uint32_t>(proto::StatusCode::OK);
+    result->data_ptr = detached->data();
+    result->data_length = detached->size();
+    result->owner_ptr = detached.release();
+    result->owner_deleter = [](void* buffer) { delete reinterpret_cast<flatbuffers::DetachedBuffer*>(buffer); };
+    return result;
+}
+
 /// Scan a script
 extern "C" FFIResult* flatsql_script_scan(Script* script) {
     // Scan the script
@@ -113,17 +126,9 @@ extern "C" FFIResult* flatsql_script_scan(Script* script) {
     flatbuffers::FlatBufferBuilder fb;
     fb.Finish(scanned->Pack(fb));
 
-    // Pack the buffer
+    // Return the buffer
     auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));
-    auto result = new FFIResult();
-    result->status_code = static_cast<uint32_t>(proto::StatusCode::OK);
-    result->data_ptr = detached->data();
-    result->data_length = detached->size();
-    result->owner_ptr = detached.release();
-    result->owner_deleter = [](void* buffer) { delete reinterpret_cast<flatbuffers::DetachedBuffer*>(buffer); };
-
-    // Store the buffer
-    return result;
+    return packBuffer(std::move(detached));
 }
 
 /// Parse a script
@@ -138,15 +143,9 @@ extern "C" FFIResult* flatsql_script_parse(Script* script) {
     flatbuffers::FlatBufferBuilder fb;
     fb.Finish(parsed->Pack(fb));
 
-    // Pack the buffer
+    // Return the buffer
     auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));
-    auto result = new FFIResult();
-    result->status_code = static_cast<uint32_t>(proto::StatusCode::OK);
-    result->data_ptr = detached->data();
-    result->data_length = detached->size();
-    result->owner_ptr = detached.release();
-    result->owner_deleter = [](void* buffer) { delete reinterpret_cast<flatbuffers::DetachedBuffer*>(buffer); };
-    return result;
+    return packBuffer(std::move(detached));
 }
 
 /// Analyze a script
@@ -162,15 +161,9 @@ extern "C" FFIResult* flatsql_script_analyze(Script* script, Script* external, b
     flatbuffers::FlatBufferBuilder fb;
     fb.Finish(analyzed->Pack(fb));
 
-    // Store the buffer
+    // Return the buffer
     auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));
-    auto result = new FFIResult();
-    result->status_code = static_cast<uint32_t>(proto::StatusCode::OK);
-    result->data_ptr = detached->data();
-    result->data_length = detached->size();
-    result->owner_ptr = detached.release();
-    result->owner_deleter = [](void* buffer) { delete reinterpret_cast<flatbuffers::DetachedBuffer*>(buffer); };
-    return result;
+    return packBuffer(std::move(detached));
 }
 
 /// Get a pretty-printed version of the SQL query
@@ -188,6 +181,18 @@ extern "C" FFIResult* flatsql_script_format(flatsql::Script* script) {
 /// Update the completion index
 extern "C" uint32_t flatsql_script_update_completion_index(Script* script, bool stable) {
     return static_cast<uint32_t>(script->UpdateCompletionIndex(stable));
+}
+
+extern "C" FFIResult* flatsql_script_get_statistics(flatsql::Script* script) {
+    auto stats = script->GetStatistics();
+
+    // Pack a schema graph
+    flatbuffers::FlatBufferBuilder fb;
+    fb.Finish(proto::ScriptStatistics::Pack(fb, stats.get()));
+
+    // Return the buffer
+    auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));
+    return packBuffer(std::move(detached));
 }
 
 /// Create a schema graph
@@ -233,13 +238,7 @@ extern "C" FFIResult* flatsql_schemagraph_load_script(flatsql::SchemaGraph* grap
 
     // Store the buffer
     auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));
-    auto result = new FFIResult();
-    result->status_code = static_cast<uint32_t>(proto::StatusCode::OK);
-    result->data_ptr = detached->data();
-    result->data_length = detached->size();
-    result->owner_ptr = detached.release();
-    result->owner_deleter = [](void* buffer) { delete reinterpret_cast<flatbuffers::DetachedBuffer*>(buffer); };
-    return result;
+    return packBuffer(std::move(detached));
 }
 
 #ifdef WASM

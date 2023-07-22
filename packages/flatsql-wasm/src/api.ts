@@ -17,6 +17,7 @@ interface FlatSQLModuleExports {
     flatsql_script_parse: (ptr: number) => number;
     flatsql_script_analyze: (ptr: number, external: number, useStableExternal: boolean, lifetime: number) => number;
     flatsql_script_update_completion_index: (ptr: number, useStable: boolean) => number;
+    flatsql_script_get_statistics: (ptr: number) => number;
     flatsql_schemagraph_new: () => number;
     flatsql_schemagraph_delete: (ptr: number) => void;
     flatsql_schemagraph_configure: (
@@ -96,6 +97,7 @@ export class FlatSQL {
                 ptr: number,
                 stable: boolean,
             ) => number,
+            flatsql_script_get_statistics: parserExports['flatsql_script_get_statistics'] as (ptr: number) => number,
             flatsql_schemagraph_new: parserExports['flatsql_schemagraph_new'] as () => number,
             flatsql_schemagraph_delete: parserExports['flatsql_schemagraph_delete'] as (ptr: number) => void,
             flatsql_schemagraph_configure: parserExports['flatsql_schemagraph_configure'] as (
@@ -136,6 +138,12 @@ export class FlatSQL {
                 fd_write: (fd: number, iovs: number) => console.error(`fd_write(${fd}, ${iovs})`),
                 fd_read: (fd: number, iovs: number) => console.error(`fd_read(${fd}, ${iovs})`),
                 fd_close: (fd: number) => console.error(`fd_close(${fd})`),
+                clock_time_get: (_id: number, _precision: number, ptr: number) => {
+                    const instance = instanceRef.instance!;
+                    const buffer = new BigUint64Array(instance.memory.buffer);
+                    buffer[ptr / 8] = BigInt(Math.floor(performance.now())) * 1000000n;
+                    return 0;
+                },
             },
             env: {
                 log: (text: number, textLength: number) => {
@@ -389,6 +397,12 @@ export class FlatSQLScript {
         const scriptPtr = this.assertScriptNotNull();
         const status = this.api.instanceExports.flatsql_script_update_completion_index(scriptPtr, useStable);
         return status == proto.StatusCode.OK;
+    }
+    /// Get the script statistics
+    public getStatistics(): FlatBufferRef<proto.ScriptStatistics> {
+        const scriptPtr = this.assertScriptNotNull();
+        const resultPtr = this.api.instanceExports.flatsql_script_get_statistics(scriptPtr);
+        return this.api.readResult<proto.ScriptStatistics>(resultPtr);
     }
 }
 
