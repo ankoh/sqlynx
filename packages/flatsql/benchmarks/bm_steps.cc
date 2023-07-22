@@ -92,7 +92,7 @@ static void analyze_query(benchmark::State& state) {
     // Analyze external script
     auto external_scan = parser::Scanner::Scan(input_external);
     auto external_parsed = parser::ParseContext::Parse(external_scan.first);
-    auto external_analyzed = Analyzer::Analyze(external_parsed.first);
+    auto external_analyzed = Analyzer::Analyze(external_parsed.first, nullptr);
 
     // Parse script
     auto main_scan = parser::Scanner::Scan(input_main);
@@ -111,12 +111,12 @@ static void index_query(benchmark::State& state) {
     // Analyze external script
     auto external_scan = parser::Scanner::Scan(input_external);
     auto external_parsed = parser::ParseContext::Parse(external_scan.first);
-    auto external_analyzed = Analyzer::Analyze(external_parsed.first);
+    auto external_analyzed = Analyzer::Analyze(external_parsed.first, nullptr);
 
     // Parse script
     auto main_scan = parser::Scanner::Scan(input_main);
     auto main_parsed = parser::ParseContext::Parse(main_scan.first);
-    auto main_analyzed = Analyzer::Analyze(main_parsed.first);
+    auto main_analyzed = Analyzer::Analyze(main_parsed.first, nullptr);
 
     for (auto _ : state) {
         auto trie = SuffixTrie::BulkLoad(main_scan.first->name_dictionary);
@@ -130,7 +130,7 @@ static void layout_schema(benchmark::State& state) {
     // Analyze external script
     auto external_scan = parser::Scanner::Scan(input_external);
     auto external_parsed = parser::ParseContext::Parse(external_scan.first);
-    auto external_analyzed = Analyzer::Analyze(external_parsed.first);
+    auto external_analyzed = Analyzer::Analyze(external_parsed.first, nullptr);
 
     SchemaGraph graph;
 

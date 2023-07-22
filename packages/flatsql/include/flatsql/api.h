@@ -49,7 +49,8 @@ extern "C" FFIResult* flatsql_script_scan(flatsql::Script* script);
 /// Parse a script
 extern "C" FFIResult* flatsql_script_parse(flatsql::Script* script);
 /// Analyze a script
-extern "C" FFIResult* flatsql_script_analyze(flatsql::Script* script, flatsql::Script* external);
+extern "C" FFIResult* flatsql_script_analyze(flatsql::Script* script, flatsql::Script* external,
+                                             bool use_stable_external, uint32_t lifetime);
 /// Get a pretty-printed version of the SQL query
 extern "C" FFIResult* flatsql_script_format(flatsql::Script* script);
 /// Update the completion index
@@ -68,4 +69,4 @@ extern "C" void flatsql_schemagraph_configure(flatsql::SchemaGraph* graph, size_
                                               double tableMaxHeight, double tableMargin);
 /// Update a schema graph
 extern "C" FFIResult* flatsql_schemagraph_load_script(flatsql::SchemaGraph* graph, flatsql::Script* script,
-                                                      bool stable);
+                                                      bool use_stable);

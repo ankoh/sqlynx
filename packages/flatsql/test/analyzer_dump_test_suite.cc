@@ -25,7 +25,7 @@ TEST_P(AnalyzerDumpTestSuite, Test) {
     ASSERT_EQ(external_scan.second, proto::StatusCode::OK);
     auto external_parsed = parser::ParseContext::Parse(external_scan.first);
     ASSERT_EQ(external_parsed.second, proto::StatusCode::OK);
-    auto external_analyzed = Analyzer::Analyze(external_parsed.first);
+    auto external_analyzed = Analyzer::Analyze(external_parsed.first, nullptr);
     ASSERT_EQ(external_analyzed.second, proto::StatusCode::OK);
 
     // Analyze script

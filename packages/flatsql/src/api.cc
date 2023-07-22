@@ -150,9 +150,10 @@ extern "C" FFIResult* flatsql_script_parse(Script* script) {
 }
 
 /// Analyze a script
-extern "C" FFIResult* flatsql_script_analyze(Script* script, Script* external) {
+extern "C" FFIResult* flatsql_script_analyze(Script* script, Script* external, bool use_stable_external,
+                                             uint32_t lifetime) {
     // Analyze the script
-    auto [analyzed, status] = script->Analyze(external);
+    auto [analyzed, status] = script->Analyze(external, use_stable_external, lifetime);
     if (status != proto::StatusCode::OK) {
         return packError(status);
     }
@@ -219,8 +220,8 @@ extern "C" void flatsql_schemagraph_configure(flatsql::SchemaGraph* graph, size_
 }
 /// Update a schema graph
 extern "C" FFIResult* flatsql_schemagraph_load_script(flatsql::SchemaGraph* graph, flatsql::Script* script,
-                                                      bool stable) {
-    auto analyzed = stable ? script->analyzed_scripts.stable : script->analyzed_scripts.latest;
+                                                      bool use_stable) {
+    auto analyzed = use_stable ? script->analyzed_scripts.stable : script->analyzed_scripts.latest;
     if (!analyzed) {
         return packError(proto::StatusCode::GRAPH_INPUT_INVALID);
     }

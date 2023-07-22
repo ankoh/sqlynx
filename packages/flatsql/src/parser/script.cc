@@ -167,12 +167,14 @@ static void updateStaggeredScripts(StaggeredAnalyzedScripts& scripts, uint32_t l
 }
 
 /// Analyze a script
-std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(Script* external, bool stable, uint32_t lifetime) {
+std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(Script* external, bool use_stable_external,
+                                                              uint32_t lifetime) {
     // Get analyzed external script
     std::shared_ptr<AnalyzedScript> external_analyzed;
     if (external) {
-        auto stable = external->analyzed_scripts.stable;
-        external_analyzed = (stable && stable) ? stable : external->analyzed_scripts.latest;
+        auto& stable_script = external->analyzed_scripts.stable;
+        auto& latest_script = external->analyzed_scripts.latest;
+        external_analyzed = (use_stable_external && stable_script) ? stable_script : latest_script;
     }
 
     // Analyze a script
@@ -195,8 +197,8 @@ std::string Script::Format() {
 }
 
 /// Update the completion index
-proto::StatusCode Script::UpdateCompletionIndex(bool stable) {
-    auto& analyzed = stable ? analyzed_scripts.stable : analyzed_scripts.latest;
+proto::StatusCode Script::UpdateCompletionIndex(bool use_stable) {
+    auto& analyzed = use_stable ? analyzed_scripts.stable : analyzed_scripts.latest;
     if (!analyzed) {
         return proto::StatusCode::COMPLETION_DATA_INVALID;
     }
