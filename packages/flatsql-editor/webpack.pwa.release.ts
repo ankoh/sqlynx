@@ -6,12 +6,12 @@ const base = configure({
     entry: {
         app: ['./src/app.tsx'],
     },
-    buildDir: path.resolve(__dirname, './build/pwa/release'),
+    buildDir: path.resolve(__dirname, './build/pwa/o3'),
     tsLoaderOptions: {
         configFile: 'tsconfig.pwa.json',
         compilerOptions: {
             sourceMap: false,
-        }
+        },
     },
     extractCss: true,
     cssIdentifier: '[hash:base64]',
