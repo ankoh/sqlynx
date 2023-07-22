@@ -4,9 +4,9 @@
     "description": "",
     "license": "MPL-2.0",
     "scripts": {
-        "pwa:start": "webpack serve --config webpack.pwa.debug.ts",
-        "pwa:build:o0": "webpack --config webpack.pwa.debug.ts",
-        "pwa:build:o3": "webpack --config webpack.pwa.release.ts",
+        "pwa:start": "webpack serve --config webpack.pwa.o0.ts",
+        "pwa:build:o0": "webpack --config webpack.pwa.o0.ts",
+        "pwa:build:o3": "webpack --config webpack.pwa.o3.ts",
         "lint": "eslint src"
     },
     "dependencies": {
