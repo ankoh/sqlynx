@@ -139,7 +139,6 @@ export const FlatSQLProcessor: StateField<FlatSQLEditorState> = StateField.defin
                     }
                 },
             );
-            console.log('UPDATE SCRIPT');
             // Analyze the new script
             const next = { ...state };
             next.processed = parseAndAnalyzeScript(next.script!, next.external);
