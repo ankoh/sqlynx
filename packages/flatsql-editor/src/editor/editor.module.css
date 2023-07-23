@@ -77,29 +77,28 @@
     border-bottom: 1px solid var(--border_color_primary);
 
     display: grid;
-    grid-template-columns: auto max-content;
+    grid-template-columns: auto max-content max-content;
     grid-template-rows: 100%;
 }
 
-.headerbar_left {
+.script_title_container {
     grid-column: 1;
     display: flex;
     flex-direction: column;
     justify-content: center;
 }
 
-.headerbar_script_title {
+.script_title {
     margin-left: 16px;
     font-size: 1rem;
 }
 
-.headerbar_right {
+.script_statistics_bar {
     grid-column: 2;
-    display: flex;
-    flex-direction: column;
 }
 
 .example_loader_container {
+    grid-column: 3;
     display: flex;
     flex-direction: row;
     height: 100%;
