@@ -2,11 +2,11 @@ namespace flatsql.proto;
 
 struct ScriptProcessingTimings {
     /// The last duration of the scanner
-    scanner_last_elapsed: uint64;
+    scanner_last_elapsed: double;
     /// The last duration of the parser
-    parser_last_elapsed: uint64;
+    parser_last_elapsed: double;
     /// The last duration of the analyzer
-    analyzer_last_elapsed: uint64;
+    analyzer_last_elapsed: double;
 }
 
 struct ScriptProcessingMemoryStatistics {

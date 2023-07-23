@@ -10,6 +10,7 @@ import { FlatSQLExtensions } from './flatsql_extension';
 import { FlatSQLProcessedScript, FlatSQLScriptKey, UpdateFlatSQLScript } from './flatsql_processor';
 import { useAppState, useAppStateDispatch, UPDATE_SCRIPT_ANALYSIS } from '../app_state_reducer';
 import { ScriptKey } from '../app_state';
+import { ScriptStatisticsBar } from './script_statistics_bar';
 
 import iconMainScript from '../../static/svg/icons/database_search.svg';
 import iconExternalScript from '../../static/svg/icons/database.svg';
@@ -70,6 +71,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         decorations: null,
     });
     const activeScriptKey = activeTab == TabId.SCHEMA_SCRIPT ? ScriptKey.SCHEMA_SCRIPT : ScriptKey.MAIN_SCRIPT;
+    const activeScriptStatistics = ctx.scripts[activeScriptKey].statistics;
 
     // Helper to update a script
     const updateScript = React.useCallback(
@@ -167,16 +169,15 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
     return (
         <div className={styles.container}>
             <div className={styles.headerbar}>
-                <div className={styles.headerbar_left}>
-                    <div className={styles.headerbar_script_title}>{tabTitle}</div>
+                <div className={styles.script_title_container}>
+                    <div className={styles.script_title}>{tabTitle}</div>
                 </div>
-                <div className={styles.headerbar_right}>
-                    <div className={styles.example_loader_container}>
-                        <div className={styles.example_loader_button} onClick={toggleOpenFolder}>
-                            <svg className={styles.button_icon} width="20px" height="20px">
-                                <use xlinkHref={`${iconLoadExample}#sym`} />
-                            </svg>
-                        </div>
+                <ScriptStatisticsBar className={styles.script_statistics_bar} stats={activeScriptStatistics} />
+                <div className={styles.example_loader_container}>
+                    <div className={styles.example_loader_button} onClick={toggleOpenFolder}>
+                        <svg className={styles.button_icon} width="20px" height="20px">
+                            <use xlinkHref={`${iconLoadExample}#sym`} />
+                        </svg>
                     </div>
                 </div>
             </div>
