@@ -38,19 +38,11 @@ export function parseAndAnalyzeScript(
     external: flatsql.FlatSQLScript | null,
 ): FlatSQLProcessedScript {
     // Scan the script
-    console.time('Script Scanning');
     const scanned = script.scan();
-    console.timeEnd('Script Scanning');
-
     // Parse the script
-    console.time('Script Parsing');
     const parsed = script.parse();
-    console.timeEnd('Script Parsing');
-
     // Parse the script
-    console.time('Script Analyzing');
     const analyzed = script.analyze(external);
-    console.timeEnd('Script Analyzing');
 
     return { scanned, parsed, analyzed, destroy: destroyBuffers };
 }

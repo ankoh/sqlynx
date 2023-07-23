@@ -242,14 +242,12 @@ function computeSchemaGraph(state: AppState): AppState {
     if (state.scripts[ScriptKey.MAIN_SCRIPT].script == null) {
         return state;
     }
-    console.time('Schema Graph Layout');
     if (state.graphLayout != null) {
         state.graphLayout.delete();
         state.graphLayout = null;
     }
     state.graph!.configure(state.graphConfig);
     state.graphLayout = state.graph!.loadScript(state.scripts[ScriptKey.MAIN_SCRIPT].script);
-    console.timeEnd('Schema Graph Layout');
     return state;
 }
 
