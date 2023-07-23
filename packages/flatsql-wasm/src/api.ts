@@ -139,10 +139,11 @@ export class FlatSQL {
                 fd_read: (fd: number, iovs: number) => console.error(`fd_read(${fd}, ${iovs})`),
                 fd_close: (fd: number) => console.error(`fd_close(${fd})`),
                 clock_time_get: (_id: number, _precision: number, ptr: number) => {
-                    console.log(`clock_time_get(${_id}, ${_precision}, ${ptr})`);
                     const instance = instanceRef.instance!;
                     const buffer = new BigUint64Array(instance.memory.buffer);
-                    buffer[ptr / 8] = BigInt(Math.floor(performance.now() * 1000 * 1000));
+                    const nowMs = performance.now();
+                    const nowNs = BigInt(Math.floor(nowMs * 1000 * 1000));
+                    buffer[ptr / 8] = nowNs;
                     return 0;
                 },
             },
