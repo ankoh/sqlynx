@@ -64,7 +64,10 @@ Parser::symbol_type Scanner::ReadIdentifier(proto::Location loc) {
         return Parser::symbol_type(k->token, k->name, loc);
     }
     // Add string to dictionary
-    std::string_view owned = all_lower ? text : output->name_pool.AllocateCopy(temp_buffer);
+    std::string_view owned = text;
+    if (!all_lower) {
+        owned = output->name_pool.AllocateCopy(temp_buffer);
+    }
     size_t id = output->RegisterName(owned, loc);
     return Parser::make_IDENT(id, loc);
 }
