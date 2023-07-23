@@ -400,7 +400,11 @@ export class FlatSQLScript {
         const status = this.api.instanceExports.flatsql_script_update_completion_index(scriptPtr, useStable);
         return status == proto.StatusCode.OK;
     }
-    /// Get the script statistics
+    /// Get the script statistics.
+    /// Timings are useless in some browsers today.
+    /// For example, Firefox rounds to millisecond precision, so all our step timings will be 0 for most input.
+    /// One way out might be COEP but we cannot easily set that with GitHub pages.
+    /// https://developer.mozilla.org/en-US/docs/Web/API/Performance_API/High_precision_timing#reduced_precision
     public getStatistics(): proto.ScriptStatisticsT {
         const scriptPtr = this.assertScriptNotNull();
         const resultPtr = this.api.instanceExports.flatsql_script_get_statistics(scriptPtr);
