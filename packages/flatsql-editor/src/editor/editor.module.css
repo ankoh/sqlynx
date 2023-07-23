@@ -93,8 +93,20 @@
     font-size: 1rem;
 }
 
-.script_statistics_bar {
+.script_statistics_container {
     grid-column: 2;
+    display: flex;
+    flex-direction: row;
+}
+.script_statistics_button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-left: 1px solid var(--border_color_primary);
+    color: var(--color_icon);
+}
+.script_statistics_button:hover {
+    background-color: var(--action_item_hover_bg);
 }
 
 .example_loader_container {
