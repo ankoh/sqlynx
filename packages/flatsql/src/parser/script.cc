@@ -106,7 +106,11 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
 }
 
 /// Constructor
-Script::Script() : text(1024), external_script(nullptr) {}
+Script::Script() : text(1024), external_script(nullptr) {
+    timing_statistics.mutable_analyzer_timings().mutate_elapsed_min(std::numeric_limits<double>::max());
+    timing_statistics.mutable_parser_timings().mutate_elapsed_min(std::numeric_limits<double>::max());
+    timing_statistics.mutable_scanner_timings().mutate_elapsed_min(std::numeric_limits<double>::max());
+}
 
 /// Insert a character at an offet
 void Script::InsertCharAt(size_t char_idx, uint32_t unicode) {
