@@ -9,6 +9,7 @@ import { RESULT_OK } from './utils/result';
 import { ScriptMetadata } from './script_loader/script_metadata';
 import { LoadingStatus } from './script_loader/script_loader';
 import { TPCH_SCHEMA, exampleScripts } from './script_loader/example_scripts';
+import Immutable from 'immutable';
 
 export const INITIALIZE = Symbol('INITIALIZE');
 export const LOAD_SCRIPTS = Symbol('LOAD_SCRIPTS');
@@ -28,6 +29,24 @@ export type AppStateAction =
     | Action<typeof SCRIPT_LOADING_FAILED, [ScriptKey, any]>
     | Action<typeof RESIZE_SCHEMA_GRAPH, [number, number]>
     | Action<typeof DESTROY, undefined>;
+
+const STATS_HISTORY_LIMIT = 20;
+function rotateStatistics(
+    log: Immutable.List<flatsql.FlatBufferRef<flatsql.proto.ScriptStatistics>>,
+    stats: flatsql.FlatBufferRef<flatsql.proto.ScriptStatistics> | null,
+) {
+    if (stats == null) {
+        return log;
+    } else {
+        return log.withMutations(m => {
+            m.push(stats);
+            if (m.size > STATS_HISTORY_LIMIT) {
+                m.first()!.delete();
+                m.shift();
+            }
+        });
+    }
+}
 
 /// Reducer for application actions
 const reducer = (state: AppState, action: AppStateAction): AppState => {
@@ -57,7 +76,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                     [scriptKey]: {
                         ...scriptData,
                         processed: data,
-                        statistics: scriptData.script?.getStatistics() ?? null,
+                        statistics: rotateStatistics(scriptData.statistics, scriptData.script?.getStatistics() ?? null),
                     },
                 },
             };
@@ -136,7 +155,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                             ...newState.scripts[ScriptKey.MAIN_SCRIPT],
                             script: newScript,
                             processed: analysis,
-                            statistics: newScript.getStatistics(),
+                            statistics: rotateStatistics(old.statistics, newScript.getStatistics() ?? null),
                         };
                         break;
                     }
@@ -157,21 +176,20 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                             // Analyze the old main script with the new script as external
                             const mainAnalyzed = main.script.analyze(newScript);
                             const oldMain = newState.scripts[ScriptKey.MAIN_SCRIPT];
-                            oldMain.statistics = null;
                             newState.scripts[ScriptKey.MAIN_SCRIPT] = {
                                 ...oldMain,
                                 processed: {
                                     ...main.processed,
                                     analyzed: mainAnalyzed,
                                 },
-                                statistics: main.script.getStatistics(),
+                                statistics: rotateStatistics(oldMain.statistics, main.script.getStatistics() ?? null),
                             };
                         }
                         newState.scripts[ScriptKey.SCHEMA_SCRIPT] = {
                             ...newState.scripts[ScriptKey.SCHEMA_SCRIPT],
                             script: newScript,
                             processed: schemaAnalyzed,
-                            statistics: newScript.getStatistics(),
+                            statistics: rotateStatistics(old.statistics, newScript.getStatistics() ?? null),
                         };
                         break;
                     }
@@ -218,7 +236,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                         analyzed: null,
                         destroy: () => {},
                     },
-                    statistics: null,
+                    statistics: Immutable.List(),
                 };
             }
             return newState;

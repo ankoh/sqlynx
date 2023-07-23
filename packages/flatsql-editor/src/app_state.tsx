@@ -1,4 +1,5 @@
 import * as flatsql from '@ankoh/flatsql';
+import Immutable from 'immutable';
 
 import { generateBlankScript } from './script_loader/script_metadata';
 import { LoadingStatus } from './script_loader/script_loader';
@@ -39,7 +40,7 @@ export interface ScriptData {
     /// The processed scripts
     processed: FlatSQLProcessedScript;
     /// The statistics
-    statistics: flatsql.proto.ScriptStatisticsT | null;
+    statistics: Immutable.List<flatsql.FlatBufferRef<flatsql.proto.ScriptStatistics>>;
 }
 
 /// Destroy a state
@@ -72,7 +73,7 @@ export function createDefaultScript(key: ScriptKey) {
             analyzed: null,
             destroy: () => {},
         },
-        statistics: null,
+        statistics: Immutable.List(),
     };
     return script;
 }
@@ -94,7 +95,7 @@ export function createEmptyScript(key: ScriptKey, api: flatsql.FlatSQL) {
             analyzed: null,
             destroy: () => {},
         },
-        statistics: null,
+        statistics: Immutable.List(),
     };
     return script;
 }

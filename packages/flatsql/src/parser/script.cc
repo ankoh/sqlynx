@@ -107,11 +107,7 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
 }
 
 /// Constructor
-Script::Script() : text(1024), external_script(nullptr) {
-    timing_statistics.mutable_analyzer_timings().mutate_elapsed_min(std::numeric_limits<uint64_t>::max());
-    timing_statistics.mutable_parser_timings().mutate_elapsed_min(std::numeric_limits<uint64_t>::max());
-    timing_statistics.mutable_scanner_timings().mutate_elapsed_min(std::numeric_limits<uint64_t>::max());
-}
+Script::Script() : text(1024), external_script(nullptr) {}
 
 /// Insert a character at an offet
 void Script::InsertCharAt(size_t char_idx, uint32_t unicode) {
@@ -188,18 +184,6 @@ std::unique_ptr<proto::ScriptStatisticsT> Script::GetStatistics() {
     return stats;
 }
 
-/// Update step timings
-static void updateStepTimings(proto::ScriptProcessingStepTimings& timings,
-                              std::chrono::steady_clock::time_point begin) {
-    auto end = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
-    timings.mutate_elapsed_last(duration.count());
-    timings.mutate_elapsed_max(std::max<uint64_t>(timings.elapsed_max(), duration.count()));
-    timings.mutate_elapsed_min(std::min<uint64_t>(timings.elapsed_min(), duration.count()));
-    timings.mutate_elapsed_sum(timings.elapsed_sum() + duration.count());
-    timings.mutate_measurements(timings.measurements() + 1);
-}
-
 /// Scan a script
 std::pair<ScannedScript*, proto::StatusCode> Script::Scan() {
     auto time_start = std::chrono::steady_clock::now();
@@ -208,7 +192,8 @@ std::pair<ScannedScript*, proto::StatusCode> Script::Scan() {
     if (status == proto::StatusCode::OK) {
         scanned_script->text_version = ++text_version;
     }
-    updateStepTimings(timing_statistics.mutable_scanner_timings(), time_start);
+    timing_statistics.mutate_scanner_last_elapsed(
+        std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - time_start).count());
     return {scanned_script.get(), status};
 }
 /// Parse a script
@@ -219,7 +204,8 @@ std::pair<ParsedScript*, proto::StatusCode> Script::Parse() {
     if (status == proto::StatusCode::OK) {
         parsed_script->text_version = scanned_script->text_version;
     }
-    updateStepTimings(timing_statistics.mutable_parser_timings(), time_start);
+    timing_statistics.mutate_parser_last_elapsed(
+        std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - time_start).count());
     return {parsed_script.get(), status};
 }
 
@@ -274,7 +260,8 @@ std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(Script* external, 
     // Update staggered analysis
     updateStaggeredScripts(analyzed_scripts, lifetime);
     // Update step timings
-    updateStepTimings(timing_statistics.mutable_analyzer_timings(), time_start);
+    timing_statistics.mutate_analyzer_last_elapsed(
+        std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - time_start).count());
     return {analyzed_scripts.latest.get(), status};
 }
 
