@@ -1,25 +1,12 @@
 namespace flatsql.proto;
 
-struct ScriptProcessingStepTimings {
-    /// The number of measurements
-    measurements: uint32;
-    /// The sum of the durations
-    elapsed_sum: uint64;
-    /// The minimum duration
-    elapsed_min: uint64;
-    /// The maximum duration
-    elapsed_max: uint64;
-    /// The last duration
-    elapsed_last: uint64;
-}
-
 struct ScriptProcessingTimings {
-    /// The scanner timings
-    scanner_timings: ScriptProcessingStepTimings;
-    /// The parser timings
-    parser_timings: ScriptProcessingStepTimings;
-    /// The analyzer timings
-    analyzer_timings: ScriptProcessingStepTimings;
+    /// The last duration of the scanner
+    scanner_last_elapsed: uint64;
+    /// The last duration of the parser
+    parser_last_elapsed: uint64;
+    /// The last duration of the analyzer
+    analyzer_last_elapsed: uint64;
 }
 
 struct ScriptProcessingMemoryStatistics {
