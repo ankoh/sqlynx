@@ -4,13 +4,13 @@ struct ScriptProcessingStepTimings {
     /// The number of measurements
     measurements: uint32;
     /// The sum of the durations
-    elapsed_sum: double;
+    elapsed_sum: uint64;
     /// The minimum duration
-    elapsed_min: double;
+    elapsed_min: uint64;
     /// The maximum duration
-    elapsed_max: double;
+    elapsed_max: uint64;
     /// The last duration
-    elapsed_last: double;
+    elapsed_last: uint64;
 }
 
 struct ScriptProcessingTimings {
