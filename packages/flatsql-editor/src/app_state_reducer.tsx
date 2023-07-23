@@ -142,7 +142,6 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                 // Analyze newly loaded scripts
                 switch (scriptKey) {
                     case ScriptKey.MAIN_SCRIPT: {
-                        console.log('LOADED MAIN');
                         // Destroy the old script and buffers
                         const old = newState.scripts[ScriptKey.MAIN_SCRIPT];
                         old.processed.destroy(old.processed);
@@ -160,7 +159,6 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                         break;
                     }
                     case ScriptKey.SCHEMA_SCRIPT: {
-                        console.log('LOADED SCHEMA');
                         // Destroy the old script and buffers
                         const old = newState.scripts[ScriptKey.SCHEMA_SCRIPT];
                         old.processed.destroy(old.processed);
