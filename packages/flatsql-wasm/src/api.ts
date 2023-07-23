@@ -405,14 +405,10 @@ export class FlatSQLScript {
     /// For example, Firefox rounds to millisecond precision, so all our step timings will be 0 for most input.
     /// One way out might be COEP but we cannot easily set that with GitHub pages.
     /// https://developer.mozilla.org/en-US/docs/Web/API/Performance_API/High_precision_timing#reduced_precision
-    public getStatistics(): proto.ScriptStatisticsT {
+    public getStatistics(): FlatBufferRef<proto.ScriptStatistics> {
         const scriptPtr = this.assertScriptNotNull();
         const resultPtr = this.api.instanceExports.flatsql_script_get_statistics(scriptPtr);
-        const statsBuffer = this.api.readResult<proto.ScriptStatistics>(resultPtr);
-        const stats = statsBuffer.read(new proto.ScriptStatistics());
-        const statsUnpacked = stats.unpack();
-        statsBuffer.delete();
-        return statsUnpacked;
+        return this.api.readResult<proto.ScriptStatistics>(resultPtr);
     }
 }
 

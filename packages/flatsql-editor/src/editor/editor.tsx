@@ -143,13 +143,6 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         }
     }, [view, activeTab, ctx.scripts[ScriptKey.MAIN_SCRIPT], ctx.scripts[ScriptKey.SCHEMA_SCRIPT], updateScript]);
 
-    // Log statistics
-    const stats = ctx.scripts[activeScriptKey].statistics ?? null;
-    React.useEffect(() => {
-        if (stats == null) return;
-        console.log(stats);
-    }, [stats]);
-
     // Helper to select a tab
     const selectTab = (event: React.MouseEvent<HTMLDivElement>) => {
         event.preventDefault();
