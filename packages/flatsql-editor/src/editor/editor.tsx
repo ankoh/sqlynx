@@ -15,6 +15,8 @@ import { ScriptStatisticsBar } from './script_statistics_bar';
 import iconMainScript from '../../static/svg/icons/database_search.svg';
 import iconExternalScript from '../../static/svg/icons/database.svg';
 import iconLoadExample from '../../static/svg/icons/folder_open.svg';
+import iconStatistics from '../../static/svg/icons/speedometer.svg';
+import iconChevronRight from '../../static/svg/icons/chevron_right.svg';
 import iconAccount from '../../static/svg/icons/account_circle.svg';
 
 import styles from './editor.module.css';
@@ -61,6 +63,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
     const ctxDispatch = useAppStateDispatch();
     const [activeTab, setActiveTab] = React.useState<TabId>(TabId.MAIN_SCRIPT);
     const [folderOpen, setFolderOpen] = React.useState<boolean>(false);
+    const [statsOpen, setStatsOpen] = React.useState<boolean>(true);
     const [view, setView] = React.useState<EditorView | null>(null);
 
     const viewWasCreated = React.useCallback((view: EditorView) => setView(view), [setView]);
@@ -151,8 +154,9 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         const tab = (event.target as any).getAttribute('data-tab') as TabId;
         setActiveTab(+tab);
     };
-    // Helper to toggle the folder viewer
+    // Helper to toggle the folder and stats
     const toggleOpenFolder = () => setFolderOpen(s => !s);
+    const toggleOpenStats = () => setStatsOpen(s => !s);
     // Get the title of the tab
     let tabTitle = '';
     switch (activeTab) {
@@ -172,7 +176,20 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                 <div className={styles.script_title_container}>
                     <div className={styles.script_title}>{tabTitle}</div>
                 </div>
-                <ScriptStatisticsBar className={styles.script_statistics_bar} stats={activeScriptStatistics} />
+                <div className={styles.script_statistics_container}>
+                    <div
+                        className={styles.script_statistics_button}
+                        onClick={toggleOpenStats}
+                        style={{
+                            width: statsOpen ? '24px' : '40px',
+                        }}
+                    >
+                        <svg className={styles.button_icon} width="20px" height="20px">
+                            <use xlinkHref={`${statsOpen ? iconChevronRight : iconStatistics}#sym`} />
+                        </svg>
+                    </div>
+                    {statsOpen && <ScriptStatisticsBar stats={activeScriptStatistics} />}
+                </div>
                 <div className={styles.example_loader_container}>
                     <div className={styles.example_loader_button} onClick={toggleOpenFolder}>
                         <svg className={styles.button_icon} width="20px" height="20px">

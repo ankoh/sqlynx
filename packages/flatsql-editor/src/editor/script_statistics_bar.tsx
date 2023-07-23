@@ -22,7 +22,7 @@ const History: React.FC<HistoryProps> = (props: HistoryProps) => {
                 key={i}
                 style={{
                     height: `${percent}%`,
-                    backgroundColor: 'var(--stats_bg)',
+                    backgroundColor: 'var(--stats_bar_fg)',
                 }}
             />,
         );
