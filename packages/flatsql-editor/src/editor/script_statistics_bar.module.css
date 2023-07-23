@@ -8,6 +8,7 @@
     position: relative;
     width: 80px;
     border-left: 1px solid var(--border_color_primary);
+    background-color: var(--stats_bg);
 }
 
 .metric_last_reading {
@@ -19,7 +20,7 @@
     font-weight: 500;
     text-align: right;
     padding: 4px;
-    color: var(--stats_fg);
+    color: var(--stats_value_fg);
 }
 
 .metric_history {
