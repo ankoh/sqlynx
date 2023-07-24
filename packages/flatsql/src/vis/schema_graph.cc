@@ -59,9 +59,14 @@ SchemaGraph::Vector jiggle(size_t table_id, size_t iteration, SchemaGraph::Vecto
     return {x, y};
 }
 
-}  // namespace
+using Config = SchemaGraph::Config;
+using Node = SchemaGraph::Node;
+using Vector = SchemaGraph::Vector;
+using Vertex = SchemaGraph::Vertex;
 
-void SchemaGraph::computeStep(size_t iteration, double& temperature) {
+template <bool nodesAsBoxes>
+void step(const Config& config, const AdjacencyMap& adjacency, std::vector<Node>& nodes,
+          std::vector<Vector>& displacement, double& temperature, size_t iteration) {
     // Resize displacement slots?
     if (displacement.size() < nodes.size()) {
         displacement.resize(nodes.size());
@@ -70,16 +75,15 @@ void SchemaGraph::computeStep(size_t iteration, double& temperature) {
     Vector zero;
     std::fill(displacement.begin(), displacement.end(), zero);
 
-    std::array<Vertex, 3> gravity{
-        Vertex{1 * config.board_width / 4, config.board_height / 2},
-        Vertex{2 * config.board_width / 4, config.board_height / 2},
-        Vertex{3 * config.board_width / 4, config.board_height / 2},
+    // The gravity points
+    std::array<Vertex, 1> gravity{
+        Vertex{config.board_width / 2, config.board_height / 2},
     };
 
     double repulsion_scaled = config.repulsion_force * config.force_scaling;
     double repulsion_squared = repulsion_scaled;
     double edge_attraction_scaled = config.edge_attraction_force * config.force_scaling;
-    double edge_attraction_squared = edge_attraction_scaled * config.edge_attraction_force;
+    double edge_attraction_squared = edge_attraction_scaled * edge_attraction_scaled;
     double gravity_scaled = config.gravity_force * config.force_scaling;
     double gravity_squared = gravity_scaled * gravity_scaled;
 
@@ -99,55 +103,78 @@ void SchemaGraph::computeStep(size_t iteration, double& temperature) {
             displacement[i] = displacement[i] + normal * attraction;
         }
 
-        //     // Attraction force between edges
-        //     for (size_t j : adjacency[i]) {
-        //         Vector delta = current_positions[i] - current_positions[j];
-        //         double distance = euclidean(delta);
-        //         if (distance == 0) continue;
-        //         double attraction = distance * distance / edge_attraction_squared;
-        //         displacement[i] = displacement[i] + (delta / distance * attraction);
-        //         displacement[j] = displacement[j] - (delta / distance * attraction);
-        //     }
+        // Attraction force between edges
+        for (size_t j : adjacency[i]) {
+            Vector delta = table_node.position - nodes[j].position;
+            double distance = euclidean(delta);
+            if (distance == 0) continue;
+            double attraction = distance / edge_attraction_scaled;
+            Vector normal = delta / distance;
+            displacement[i] = displacement[i] - normal * attraction * 0.5;
+            displacement[j] = displacement[j] + normal * attraction * 0.5;
+        }
 
         // Push back into area
-        Vector border_push;
-        Vertex north = table_node.position - Vector{0, table_node.height / 2};
-        Vertex east = table_node.position + Vector{table_node.width / 2, 0};
-        Vertex south = table_node.position + Vector{0, table_node.height / 2};
-        Vertex west = table_node.position - Vector{table_node.width / 2, 0};
-        border_push.dy += (north.y < 0) ? -north.y : 0;
-        border_push.dx -= (east.x > config.board_width) ? (east.x - config.board_width) : 0;
-        border_push.dy -= (south.y > config.board_height) ? (south.y - config.board_height) : 0;
-        border_push.dx += (west.x < 0) ? -west.x : 0;
-        displacement[i] = displacement[i] + repulsion_squared * border_push;
+        if constexpr (nodesAsBoxes) {
+            Vector border_push;
+            Vertex north = table_node.position - Vector{0, table_node.height / 2};
+            Vertex east = table_node.position + Vector{table_node.width / 2, 0};
+            Vertex south = table_node.position + Vector{0, table_node.height / 2};
+            Vertex west = table_node.position - Vector{table_node.width / 2, 0};
+            border_push.dy += (north.y < 0) ? -north.y : 0;
+            border_push.dx -= (east.x > config.board_width) ? (east.x - config.board_width) : 0;
+            border_push.dy -= (south.y > config.board_height) ? (south.y - config.board_height) : 0;
+            border_push.dx += (west.x < 0) ? -west.x : 0;
+            displacement[i] = displacement[i] + repulsion_squared * border_push;
+        } else {
+            auto pos = table_node.position;
+            Vector border_push;
+            border_push.dy += (pos.y < 0) ? -pos.y : 0;
+            border_push.dx -= (pos.x > config.board_width) ? (pos.x - config.board_width) : 0;
+            border_push.dy -= (pos.y > config.board_height) ? (pos.y - config.board_height) : 0;
+            border_push.dx += (pos.x < 0) ? -pos.x : 0;
+            displacement[i] = displacement[i] + repulsion_squared * border_push;
+        }
     }
 
     // Repulsion force between tables
     for (size_t i = 0; i < nodes.size(); ++i) {
         for (size_t j = i + 1; j < nodes.size(); ++j) {
-            // Compute distance or overlap vector
-            auto& node_i = nodes[i];
-            auto& node_j = nodes[j];
-            double body_x = (node_i.width + node_j.width) / 2;
-            double body_y = (node_i.height + node_j.height) / 2;
-            double diff_x = abs(node_i.position.x - node_j.position.x);
-            double diff_y = abs(node_i.position.y - node_j.position.y);
-            Vector undirected{abs(body_x - diff_x), abs(body_y - diff_y)};
-            Vector directed{(node_i.position.x < node_j.position.x) ? undirected.dx : -undirected.dx,
-                            (node_i.position.y < node_j.position.y) ? undirected.dy : -undirected.dy};
+            if constexpr (nodesAsBoxes) {
+                // Compute distance or overlap vector
+                auto& node_i = nodes[i];
+                auto& node_j = nodes[j];
+                double body_x = (node_i.width + node_j.width) / 2;
+                double body_y = (node_i.height + node_j.height) / 2;
+                double diff_x = abs(node_i.position.x - node_j.position.x);
+                double diff_y = abs(node_i.position.y - node_j.position.y);
+                Vector undirected{abs(body_x - diff_x), abs(body_y - diff_y)};
+                Vector directed{(node_i.position.x < node_j.position.x) ? undirected.dx : -undirected.dx,
+                                (node_i.position.y < node_j.position.y) ? undirected.dy : -undirected.dy};
 
-            double distance = MIN_DISTANCE;
-            if ((diff_x < body_x) && (diff_y < body_y)) {
-                displacement[i] = displacement[i] - directed / 2;
-                displacement[j] = displacement[j] + directed / 2;
+                double distance = MIN_DISTANCE;
+                if ((diff_x < body_x) && (diff_y < body_y)) {
+                    displacement[i] = displacement[i] - directed / 2;
+                    displacement[j] = displacement[j] + directed / 2;
+                } else {
+                    directed = jiggle(i, iteration, directed);
+                    distance = std::max(euclidean(directed), distance);
+                }
+                double repulsion = repulsion_squared / distance;
+                Vector displace_normal = directed / distance;
+                displacement[i] = displacement[i] - (displace_normal * repulsion / 2);
+                displacement[j] = displacement[j] + (displace_normal * repulsion / 2);
             } else {
-                directed = jiggle(i, iteration, directed);
-                distance = std::max(euclidean(directed), distance);
+                // Nodes are dots
+                auto& node_i = nodes[i];
+                auto& node_j = nodes[j];
+                auto diff = node_i.position - node_j.position;
+                auto distance = euclidean(diff);
+                double repulsion = repulsion_squared / distance;
+                Vector displace_normal = diff / distance;
+                displacement[i] = displacement[i] - (displace_normal * repulsion / 2);
+                displacement[j] = displacement[j] + (displace_normal * repulsion / 2);
             }
-            double repulsion = repulsion_squared / distance;
-            Vector displace_normal = directed / distance;
-            displacement[i] = displacement[i] - (displace_normal * repulsion / 2);
-            displacement[j] = displacement[j] + (displace_normal * repulsion / 2);
         }
     }
 
@@ -164,10 +191,11 @@ void SchemaGraph::computeStep(size_t iteration, double& temperature) {
         // Update the nodes
         nodes[i].position = nodes[i].position + displacement[i];
     }
-
     // Cooldown temperature
     temperature *= config.cooldown_factor;
 }
+
+}  // namespace
 
 void SchemaGraph::Configure(const Config& config) { this->config = config; }
 
@@ -257,11 +285,15 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
     }
     adjacency.adjacency_offsets.push_back(adjacency.adjacency_nodes.size());
     adjacency_pairs = {};
-    // Compute the initial temperature
+    // First, cluster nodes without boxes
     auto temperature = 10 * sqrt(nodes.size());
-    // Compute steps
-    for (size_t i = 0; i < config.iteration_count; ++i) {
-        computeStep(i, temperature);
+    for (size_t i = 0; i < config.iterations_clustering; ++i) {
+        step<false>(config, adjacency, nodes, displacement, temperature, i);
+    }
+    // Refine node positions using boxes
+    temperature = 10 * sqrt(nodes.size());
+    for (size_t i = 0; i < config.iterations_refinement; ++i) {
+        step<true>(config, adjacency, nodes, displacement, temperature, i);
     }
 }
 

@@ -22,7 +22,8 @@ interface FlatSQLModuleExports {
     flatsql_schemagraph_delete: (ptr: number) => void;
     flatsql_schemagraph_configure: (
         ptr: number,
-        iterationCount: number,
+        iterationsClustering: number,
+        iterationsRefinement: number,
         forceScaling: number,
         cooldownFactor: number,
         repulsionForce: number,
@@ -413,7 +414,8 @@ export class FlatSQLScript {
 }
 
 export interface FlatSQLSchemaGraphConfig {
-    iterationCount: number;
+    iterationsClustering: number;
+    iterationsRefinement: number;
     forceScaling: number;
     cooldownFactor: number;
     repulsionForce: number;
@@ -459,7 +461,8 @@ export class FlatSQLSchemaGraph {
         const graphPtr = this.assertGraphNotNull();
         this.api.instanceExports.flatsql_schemagraph_configure(
             graphPtr,
-            config.iterationCount,
+            config.iterationsClustering,
+            config.iterationsRefinement,
             config.forceScaling,
             config.cooldownFactor,
             config.repulsionForce,

@@ -15,7 +15,9 @@ export interface NodeLayout {
     columns: TableColumn[];
 }
 
-export interface EdgeLayout {}
+export interface EdgeLayout {
+    path: Float64Array;
+}
 
 export function layoutSchemaGraph(ctx: AppState): [NodeLayout[], EdgeLayout[]] {
     if (!ctx.graphLayout) {
@@ -104,6 +106,7 @@ export function layoutSchemaGraph(ctx: AppState): [NodeLayout[], EdgeLayout[]] {
 
     // Read edges
     const edgeNodes = layout.edgeNodesArray()!;
+    const edges: EdgeLayout[] = [];
     for (let i = 0; i < layout.edgesLength(); ++i) {
         const edge = layout.edges(i, protoEdge)!;
         const begin = edge.nodesBegin();
@@ -112,14 +115,21 @@ export function layoutSchemaGraph(ctx: AppState): [NodeLayout[], EdgeLayout[]] {
 
         // For now, just draw n^2 edges
         for (let l = 0; l < countLeft; ++l) {
-            const nodeL = edgeNodes[begin + l];
-
+            const nodeL = nodes[edgeNodes[begin + l]];
             for (let r = 0; r < countRight; ++r) {
-                const nodeR = edgeNodes[begin + l];
+                const nodeR = nodes[edgeNodes[begin + countLeft + r]];
+                const path = new Float64Array(4);
+                path[0] = nodeL.x + nodeL.width / 2;
+                path[1] = nodeL.y + nodeL.height / 2;
+                path[2] = nodeR.x + nodeR.width / 2;
+                path[3] = nodeR.y + nodeR.height / 2;
+                edges.push({
+                    path,
+                });
             }
         }
     }
 
     // Collect nodes and edges
-    return [nodes, []];
+    return [nodes, edges];
 }
