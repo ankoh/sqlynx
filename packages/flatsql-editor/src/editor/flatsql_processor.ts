@@ -54,9 +54,7 @@ export function analyzeScript(
     external: flatsql.FlatSQLScript | null,
 ): FlatSQLProcessedScript {
     // Analyze the script
-    console.time('Script Analyzing');
     const analyzed = script.analyze(external);
-    console.timeEnd('Script Analyzing');
 
     return { ...buffers, analyzed };
 }

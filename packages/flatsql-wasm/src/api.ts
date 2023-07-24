@@ -15,8 +15,8 @@ interface FlatSQLModuleExports {
     flatsql_script_format: (ptr: number) => number;
     flatsql_script_scan: (ptr: number) => number;
     flatsql_script_parse: (ptr: number) => number;
-    flatsql_script_analyze: (ptr: number, external: number, useStableExternal: boolean, lifetime: number) => number;
-    flatsql_script_update_completion_index: (ptr: number, useStable: boolean) => number;
+    flatsql_script_analyze: (ptr: number, external: number) => number;
+    flatsql_script_update_completion_index: (ptr: number) => number;
     flatsql_script_get_statistics: (ptr: number) => number;
     flatsql_schemagraph_new: () => number;
     flatsql_schemagraph_delete: (ptr: number) => void;
@@ -38,7 +38,7 @@ interface FlatSQLModuleExports {
         tableMaxHeight: number,
         tableMargin: number,
     ) => void;
-    flatsql_schemagraph_load_script: (ptr: number, script: number, stable: boolean) => number;
+    flatsql_schemagraph_load_script: (ptr: number, script: number) => number;
 }
 
 type InstantiateWasmCallback = (stubs: WebAssembly.Imports) => PromiseLike<WebAssembly.WebAssemblyInstantiatedSource>;
@@ -91,12 +91,9 @@ export class FlatSQL {
             flatsql_script_analyze: parserExports['flatsql_script_analyze'] as (
                 ptr: number,
                 external: number,
-                useStableExternal: boolean,
-                lifetime: number,
             ) => number,
             flatsql_script_update_completion_index: parserExports['flatsql_script_update_completion_index'] as (
                 ptr: number,
-                stable: boolean,
             ) => number,
             flatsql_script_get_statistics: parserExports['flatsql_script_get_statistics'] as (ptr: number) => number,
             flatsql_schemagraph_new: parserExports['flatsql_schemagraph_new'] as () => number,
@@ -121,7 +118,6 @@ export class FlatSQL {
             flatsql_schemagraph_load_script: parserExports['flatsql_schemagraph_load_script'] as (
                 ptr: number,
                 script: number,
-                stable: boolean,
             ) => number,
         };
     }
@@ -372,18 +368,9 @@ export class FlatSQLScript {
         return this.api.readResult<proto.ParsedScript>(resultPtr);
     }
     /// Analyze the script (optionally with an external script)
-    public analyze(
-        external: FlatSQLScript | null = null,
-        useStableExternal: boolean = true,
-        lifetime = 40,
-    ): FlatBufferRef<proto.AnalyzedScript> {
+    public analyze(external: FlatSQLScript | null = null): FlatBufferRef<proto.AnalyzedScript> {
         const scriptPtr = this.assertScriptNotNull();
-        const resultPtr = this.api.instanceExports.flatsql_script_analyze(
-            scriptPtr,
-            external?.scriptPtr ?? 0,
-            useStableExternal,
-            lifetime,
-        );
+        const resultPtr = this.api.instanceExports.flatsql_script_analyze(scriptPtr, external?.scriptPtr ?? 0);
         return this.api.readResult<proto.AnalyzedScript>(resultPtr);
     }
     /// Pretty print the SQL string
@@ -396,9 +383,9 @@ export class FlatSQLScript {
         return text;
     }
     /// Update the completion index
-    public updateCompletionIndex(useStable: boolean = true): boolean {
+    public updateCompletionIndex(): boolean {
         const scriptPtr = this.assertScriptNotNull();
-        const status = this.api.instanceExports.flatsql_script_update_completion_index(scriptPtr, useStable);
+        const status = this.api.instanceExports.flatsql_script_update_completion_index(scriptPtr);
         return status == proto.StatusCode.OK;
     }
     /// Get the script statistics.
@@ -481,7 +468,7 @@ export class FlatSQLSchemaGraph {
     /// Load a script
     public loadScript(script: FlatSQLScript) {
         const graphPtr = this.assertGraphNotNull();
-        const resultPtr = this.api.instanceExports.flatsql_schemagraph_load_script(graphPtr, script.scriptPtr, false);
+        const resultPtr = this.api.instanceExports.flatsql_schemagraph_load_script(graphPtr, script.scriptPtr);
         return this.api.readResult<proto.SchemaGraphLayout>(resultPtr);
     }
 }

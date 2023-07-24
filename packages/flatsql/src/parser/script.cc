@@ -209,7 +209,7 @@ std::pair<ParsedScript*, proto::StatusCode> Script::Parse() {
 }
 
 /// Analyze a script
-std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(Script* external, uint32_t lifetime) {
+std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(Script* external) {
     auto time_start = std::chrono::steady_clock::now();
 
     // Get analyzed external script
