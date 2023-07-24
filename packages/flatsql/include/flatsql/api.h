@@ -49,7 +49,7 @@ extern "C" FFIResult* flatsql_script_scan(flatsql::Script* script);
 /// Parse a script
 extern "C" FFIResult* flatsql_script_parse(flatsql::Script* script);
 /// Analyze a script
-extern "C" FFIResult* flatsql_script_analyze(flatsql::Script* script, flatsql::Script* external, uint32_t lifetime);
+extern "C" FFIResult* flatsql_script_analyze(flatsql::Script* script, flatsql::Script* external);
 /// Get a pretty-printed version of the SQL query
 extern "C" FFIResult* flatsql_script_format(flatsql::Script* script);
 /// Update the completion index

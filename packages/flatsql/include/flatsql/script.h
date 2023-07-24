@@ -138,19 +138,6 @@ struct CompletionIndex {
     std::unique_ptr<SuffixTrie> suffix_trie;
 };
 
-/// We remember three different analyzed script versions.
-/// A script is first stored in `latest`.
-/// The `quality` (as in number of errors) of every new script is compared to `cooling`.
-/// A script in `cooling` is moved to `stable` if it has fewer errors or if the `stable` script gets too old.
-struct StaggeredAnalyzedScripts {
-    // The latest script
-    std::shared_ptr<AnalyzedScript> latest;
-    // The cooling script
-    std::shared_ptr<AnalyzedScript> cooling;
-    // The stable script
-    std::shared_ptr<AnalyzedScript> stable;
-};
-
 class Script {
    public:
     /// The underlying rope
@@ -192,7 +179,7 @@ class Script {
     /// Parse the latest scanned script
     std::pair<ParsedScript*, proto::StatusCode> Parse();
     /// Analyze the latest parsed script
-    std::pair<AnalyzedScript*, proto::StatusCode> Analyze(Script* external = nullptr, uint32_t lifetime = 0);
+    std::pair<AnalyzedScript*, proto::StatusCode> Analyze(Script* external = nullptr);
     /// Returns the pretty-printed string for this script.
     /// Return `nullopt` in case of an error.
     std::string Format();

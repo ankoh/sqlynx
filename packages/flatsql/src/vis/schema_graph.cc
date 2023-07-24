@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 
 #include "flatsql/analyzer/analyzer.h"
 #include "flatsql/api.h"
@@ -98,20 +99,19 @@ void step(const Config& config, const AdjacencyMap& adjacency, std::vector<Node>
         for (auto& center : gravity) {
             Vector delta = center - table_node.position;
             double distance = std::max(euclidean(delta), MIN_DISTANCE);
+            double attraction = gravity_scaled / distance;
             Vector normal = delta / distance;
-            double attraction = gravity_squared / (distance * distance);
             displacement[i] = displacement[i] + normal * attraction;
         }
 
         // Attraction force between edges
         for (size_t j : adjacency[i]) {
             Vector delta = table_node.position - nodes[j].position;
-            double distance = euclidean(delta);
-            if (distance == 0) continue;
-            double attraction = distance / edge_attraction_scaled;
+            double distance = std::max(euclidean(delta), MIN_DISTANCE);
+            double attraction = edge_attraction_scaled * sqrt(distance);
             Vector normal = delta / distance;
-            displacement[i] = displacement[i] - normal * attraction * 0.5;
-            displacement[j] = displacement[j] + normal * attraction * 0.5;
+            displacement[i] = displacement[i] - normal * attraction / 2;
+            displacement[j] = displacement[j] + normal * attraction / 2;
         }
 
         // Push back into area
@@ -169,9 +169,10 @@ void step(const Config& config, const AdjacencyMap& adjacency, std::vector<Node>
                 auto& node_i = nodes[i];
                 auto& node_j = nodes[j];
                 auto diff = node_i.position - node_j.position;
-                auto distance = euclidean(diff);
+                double distance = std::max(euclidean(diff), distance);
                 double repulsion = repulsion_squared / distance;
                 Vector displace_normal = diff / distance;
+                displace_normal = jiggle(i, iteration, displace_normal);
                 displacement[i] = displacement[i] - (displace_normal * repulsion / 2);
                 displacement[j] = displacement[j] + (displace_normal * repulsion / 2);
             }
@@ -194,6 +195,8 @@ void step(const Config& config, const AdjacencyMap& adjacency, std::vector<Node>
     // Cooldown temperature
     temperature *= config.cooldown_factor;
 }
+
+constexpr size_t NULL_TABLE_ID = std::numeric_limits<uint32_t>::max();
 
 }  // namespace
 
@@ -238,7 +241,7 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
         proto::QueryGraphEdgeNode& node = script->graph_edge_nodes[i];
         Analyzer::ID table_id = Analyzer::ID(script->column_references[node.column_reference_id()].table_id());
         edge_nodes[i] =
-            table_id.IsNull() ? table_id.value : (table_id.AsIndex() + (table_id.IsExternal() ? 0 : s->tables.size()));
+            table_id.IsNull() ? NULL_TABLE_ID : (table_id.AsIndex() + (table_id.IsExternal() ? 0 : s->tables.size()));
     }
     // Collect adjacency pairs
     edges.resize(script->graph_edges.size());
@@ -309,19 +312,32 @@ flatbuffers::Offset<proto::SchemaGraphLayout> SchemaGraph::Pack(flatbuffers::Fla
                                           nodes[i].height - config.table_margin};
         layout.nodes[i] = proto_node;
     }
+    size_t edge_node_reader = 0;
+    size_t edge_node_writer = 0;
     for (uint32_t i = 0; i < edges.size(); ++i) {
         auto& edge = edges[i];
+        uint32_t nodes_begin = edge_node_writer;
+        for (size_t j = 0; j < edge.node_count_left; ++j) {
+            uint32_t table_id = edge_nodes[edge_node_reader++];
+            layout.edge_nodes[edge_node_writer] = table_id;
+            edge_node_writer += table_id != NULL_TABLE_ID;
+        }
+        uint16_t node_count_left = edge_node_writer - nodes_begin;
+        for (size_t j = 0; j < edge.node_count_right; ++j) {
+            uint32_t table_id = edge_nodes[edge_node_reader++];
+            layout.edge_nodes[edge_node_writer] = table_id;
+            edge_node_writer += table_id != NULL_TABLE_ID;
+        }
+        uint16_t node_count_right = edge_node_writer - (nodes_begin + node_count_left);
         proto::SchemaGraphEdge proto_edge{
-            edge.nodes_begin,
-            edge.node_count_left,
-            edge.node_count_right,
+            nodes_begin,
+            node_count_left,
+            node_count_right,
             edge.expression_operator,
         };
         layout.edges[i] = proto_edge;
     }
-    for (uint32_t i = 0; i < edge_nodes.size(); ++i) {
-        layout.edge_nodes[i] = edge_nodes[i];
-    }
+    layout.edge_nodes.erase(layout.edge_nodes.begin() + edge_node_writer, layout.edge_nodes.end());
 
     return proto::SchemaGraphLayout::Pack(builder, &layout);
 }

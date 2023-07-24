@@ -73,7 +73,7 @@ limit 100
 
     auto external_scanned = flatsql_script_scan(external_script);
     auto external_parsed = flatsql_script_parse(external_script);
-    auto external_analyzed = flatsql_script_analyze(external_script, nullptr, 40);
+    auto external_analyzed = flatsql_script_analyze(external_script, nullptr);
     ASSERT_EQ(external_scanned->status_code, OK);
     ASSERT_EQ(external_parsed->status_code, OK);
     ASSERT_EQ(external_analyzed->status_code, OK);
@@ -86,7 +86,7 @@ limit 100
 
     auto main_scanned = flatsql_script_scan(main_script);
     auto main_parsed = flatsql_script_parse(main_script);
-    auto main_analyzed = flatsql_script_analyze(main_script, external_script, 40);
+    auto main_analyzed = flatsql_script_analyze(main_script, external_script);
     ASSERT_EQ(main_scanned->status_code, OK);
     ASSERT_EQ(main_parsed->status_code, OK);
     ASSERT_EQ(main_analyzed->status_code, OK);
