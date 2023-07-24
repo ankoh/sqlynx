@@ -45,8 +45,10 @@ class SchemaGraph {
     };
 
     struct Config {
-        /// The iterations
-        size_t iteration_count = 0;
+        /// The iterations in the clustering step
+        size_t iterations_clustering = 0;
+        /// The iterations in the refinement step
+        size_t iterations_refinement = 0;
         /// The force scaling
         double force_scaling = 0;
         /// The cooldown factor
@@ -94,9 +96,6 @@ class SchemaGraph {
     std::vector<Node> nodes;
     /// The displacement
     std::vector<Vector> displacement;
-
-    /// Execute a step
-    void computeStep(size_t iteration, double& temperature);
 
    public:
     /// Get the current positions
