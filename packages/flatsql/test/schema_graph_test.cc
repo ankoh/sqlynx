@@ -11,7 +11,8 @@ using namespace flatsql;
 namespace {
 
 SchemaGraph::Config DEFAULT_GRAPH_CONFIG{
-    .iteration_count = 10,
+    .iterations_clustering = 10,
+    .iterations_refinement = 10,
     .force_scaling = 1.0,
     .initial_radius = 100,
     .cooldown_factor = 0.85,
@@ -96,7 +97,7 @@ TEST(SchemaGraphTest, TPCHQ2NoSchema) {
     SchemaGraph graph;
     for (size_t i = 0; i < 3; ++i) {
         graph.Configure(DEFAULT_GRAPH_CONFIG);
-        graph.LoadScript(query_script.analyzed_scripts.latest);
+        graph.LoadScript(query_script.analyzed_script);
     }
 
     auto& tables = graph.GetNodes();
@@ -123,7 +124,7 @@ TEST(SchemaGraphTest, TPCHQ2) {
     SchemaGraph graph;
     for (size_t i = 0; i < 3; ++i) {
         graph.Configure(DEFAULT_GRAPH_CONFIG);
-        graph.LoadScript(query_script.analyzed_scripts.latest);
+        graph.LoadScript(query_script.analyzed_script);
     }
 
     auto& tables = graph.GetNodes();
@@ -161,7 +162,7 @@ TEST(SchemaGraphTest, TPCHQ2ReanalyzeWithError) {
 
     SchemaGraph graph;
     graph.Configure(DEFAULT_GRAPH_CONFIG);
-    graph.LoadScript(query_script.analyzed_scripts.latest);
+    graph.LoadScript(query_script.analyzed_script);
 
     const std::string_view modifiedBuggyTpchQ2 = R"SQL(
     select
