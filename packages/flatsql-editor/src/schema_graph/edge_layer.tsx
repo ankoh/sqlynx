@@ -18,7 +18,7 @@ export function EdgeLayer(props: Props) {
         <svg className={props.className} viewBox={'0 0 ' + props.width + ' ' + props.height}>
             {props.edges.map((e, i) => {
                 let path = `M ${e.path[0]} ${e.path[1]} L ${e.path[2]} ${e.path[3]}`;
-                return <path key={i} d={path} stroke="black" />;
+                return <path key={i} d={path} stroke="currentcolor" />;
             })}
         </svg>
     );
