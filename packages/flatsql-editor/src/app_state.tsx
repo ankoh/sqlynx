@@ -53,6 +53,12 @@ export function destroyState(state: AppState): AppState {
         state.graphLayout.delete();
         state.graphLayout = null;
     }
+    for (const stats of main.statistics) {
+        stats.delete();
+    }
+    for (const stats of schema.statistics) {
+        stats.delete();
+    }
     return state;
 }
 
