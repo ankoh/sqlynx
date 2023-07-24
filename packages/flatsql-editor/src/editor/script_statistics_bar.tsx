@@ -52,8 +52,6 @@ export const ScriptStatisticsBar: React.FC<Props> = (props: Props) => {
     const computeTotalMemory = (mem: flatsql.proto.ScriptMemoryStatistics) => {
         let total = mem.ropeBytes() + mem.completionIndexBytes();
         total += sumProcessingMemory(mem.latestScript(protoProcessingMemory)!);
-        total += sumProcessingMemory(mem.coolingScript(protoProcessingMemory)!);
-        total += sumProcessingMemory(mem.stableScript(protoProcessingMemory)!);
         return total;
     };
 

@@ -149,10 +149,9 @@ extern "C" FFIResult* flatsql_script_parse(Script* script) {
 }
 
 /// Analyze a script
-extern "C" FFIResult* flatsql_script_analyze(Script* script, Script* external, bool use_stable_external,
-                                             uint32_t lifetime) {
+extern "C" FFIResult* flatsql_script_analyze(Script* script, Script* external, uint32_t lifetime) {
     // Analyze the script
-    auto [analyzed, status] = script->Analyze(external, use_stable_external, lifetime);
+    auto [analyzed, status] = script->Analyze(external, lifetime);
     if (status != proto::StatusCode::OK) {
         return packError(status);
     }
@@ -179,8 +178,8 @@ extern "C" FFIResult* flatsql_script_format(flatsql::Script* script) {
 }
 
 /// Update the completion index
-extern "C" uint32_t flatsql_script_update_completion_index(Script* script, bool stable) {
-    return static_cast<uint32_t>(script->UpdateCompletionIndex(stable));
+extern "C" uint32_t flatsql_script_update_completion_index(Script* script) {
+    return static_cast<uint32_t>(script->UpdateCompletionIndex());
 }
 
 extern "C" FFIResult* flatsql_script_get_statistics(flatsql::Script* script) {
@@ -226,9 +225,8 @@ extern "C" void flatsql_schemagraph_configure(flatsql::SchemaGraph* graph, size_
     graph->Configure(config);
 }
 /// Update a schema graph
-extern "C" FFIResult* flatsql_schemagraph_load_script(flatsql::SchemaGraph* graph, flatsql::Script* script,
-                                                      bool use_stable) {
-    auto analyzed = use_stable ? script->analyzed_scripts.stable : script->analyzed_scripts.latest;
+extern "C" FFIResult* flatsql_schemagraph_load_script(flatsql::SchemaGraph* graph, flatsql::Script* script) {
+    auto analyzed = script->analyzed_script;
     if (!analyzed) {
         return packError(proto::StatusCode::GRAPH_INPUT_INVALID);
     }

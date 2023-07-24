@@ -25,10 +25,6 @@ struct ScriptMemoryStatistics {
     rope_bytes: uint32;
     /// The memory statistics of the latest script
     latest_script: ScriptProcessingMemoryStatistics;
-    /// The memory statistics of the cooling script
-    cooling_script: ScriptProcessingMemoryStatistics;
-    /// The memory statistics of the stable script
-    stable_script: ScriptProcessingMemoryStatistics;
     /// The memory statistics of the script registered with the completion index
     completion_index_script: ScriptProcessingMemoryStatistics;
     /// The entries of the completion index
