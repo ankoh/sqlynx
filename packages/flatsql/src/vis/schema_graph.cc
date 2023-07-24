@@ -99,7 +99,7 @@ void step(const Config& config, const AdjacencyMap& adjacency, std::vector<Node>
         for (auto& center : gravity) {
             Vector delta = center - table_node.position;
             double distance = std::max(euclidean(delta), MIN_DISTANCE);
-            double attraction = gravity_scaled / distance;
+            double attraction = gravity_scaled;
             Vector normal = delta / distance;
             displacement[i] = displacement[i] + normal * attraction;
         }
@@ -169,7 +169,7 @@ void step(const Config& config, const AdjacencyMap& adjacency, std::vector<Node>
                 auto& node_i = nodes[i];
                 auto& node_j = nodes[j];
                 auto diff = node_i.position - node_j.position;
-                double distance = std::max(euclidean(diff), distance);
+                double distance = std::max(euclidean(diff), MIN_DISTANCE);
                 double repulsion = repulsion_squared / distance;
                 Vector displace_normal = diff / distance;
                 displace_normal = jiggle(i, iteration, displace_normal);
