@@ -286,7 +286,9 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
         }
         begin = end;
     }
-    adjacency.adjacency_offsets.push_back(adjacency.adjacency_nodes.size());
+    for (; i <= nodes.size(); ++i) {
+        adjacency.adjacency_offsets.push_back(adjacency.adjacency_nodes.size());
+    }
     adjacency_pairs = {};
     // First, cluster nodes without boxes
     auto temperature = 10 * sqrt(nodes.size());
