@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as flatsql from '@ankoh/flatsql';
 
 import { useFlatSQL } from './flatsql_loader';
-import { FlatSQLProcessedScript, parseAndAnalyzeScript } from './editor/flatsql_processor';
+import { FlatSQLProcessedScript, analyzeScript, parseAndAnalyzeScript } from './editor/flatsql_processor';
 import { AppState, ScriptKey, createDefaultState, createEmptyScript, destroyState } from './app_state';
 import { Action, Dispatch } from './utils/action';
 import { RESULT_OK } from './utils/result';
@@ -80,6 +80,18 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                     },
                 },
             };
+            // Is schema script?
+            // Then we also have to update the main script since the schema graph depends on it.
+            const mainData = newState.scripts[ScriptKey.MAIN_SCRIPT];
+            const mainScript = mainData.script;
+            if (scriptKey == ScriptKey.SCHEMA_SCRIPT && mainScript != null) {
+                const newMain = { ...mainData };
+                const external = newState.scripts[ScriptKey.SCHEMA_SCRIPT].script;
+                newMain.processed.analyzed?.delete();
+                newMain.processed = analyzeScript(mainData.processed, mainScript, external);
+                newMain.statistics = rotateStatistics(newMain.statistics, mainScript.getStatistics());
+                newState.scripts[ScriptKey.MAIN_SCRIPT] = newMain;
+            }
             return computeSchemaGraph(newState);
         }
         case SCRIPT_LOADING_STARTED:

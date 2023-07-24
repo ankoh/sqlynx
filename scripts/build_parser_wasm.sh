@@ -57,7 +57,7 @@ make \
     -j${CORES} \
     flatsql
 
-if [ ${MODE} == "Release" ]; then
+if [ ${MODE} == "o3" ]; then
     ${BINARYEN_BIN}/wasm-opt -O3 -o ${CPP_BUILD_DIR}/flatsql_opt.wasm ${CPP_BUILD_DIR}/flatsql.wasm
     ${WABT_BIN}/wasm-strip ${CPP_BUILD_DIR}/flatsql_opt.wasm
     mv ${CPP_BUILD_DIR}/flatsql_opt.wasm ${CPP_BUILD_DIR}/flatsql.wasm

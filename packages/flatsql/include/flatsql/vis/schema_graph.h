@@ -89,7 +89,7 @@ class SchemaGraph {
     Config config;
 
     /// The edge nodes
-    std::vector<size_t> edge_nodes;
+    std::vector<uint32_t> edge_nodes;
     /// The edges
     std::vector<Edge> edges;
     /// The nodes

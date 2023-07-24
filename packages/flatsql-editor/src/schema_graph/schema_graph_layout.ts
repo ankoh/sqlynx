@@ -115,14 +115,16 @@ export function layoutSchemaGraph(ctx: AppState): [NodeLayout[], EdgeLayout[]] {
 
         // For now, just draw n^2 edges
         for (let l = 0; l < countLeft; ++l) {
-            const nodeL = nodes[edgeNodes[begin + l]];
+            const li = edgeNodes[begin + l];
+            const ln = nodes[li];
             for (let r = 0; r < countRight; ++r) {
-                const nodeR = nodes[edgeNodes[begin + countLeft + r]];
+                const ri = edgeNodes[begin + countLeft + r];
+                const rn = nodes[ri];
                 const path = new Float64Array(4);
-                path[0] = nodeL.x + nodeL.width / 2;
-                path[1] = nodeL.y + nodeL.height / 2;
-                path[2] = nodeR.x + nodeR.width / 2;
-                path[3] = nodeR.y + nodeR.height / 2;
+                path[0] = ln.x + ln.width / 2;
+                path[1] = ln.y + ln.height / 2;
+                path[2] = rn.x + rn.width / 2;
+                path[3] = rn.y + rn.height / 2;
                 edges.push({
                     path,
                 });

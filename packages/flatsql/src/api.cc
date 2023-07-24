@@ -149,9 +149,9 @@ extern "C" FFIResult* flatsql_script_parse(Script* script) {
 }
 
 /// Analyze a script
-extern "C" FFIResult* flatsql_script_analyze(Script* script, Script* external, uint32_t lifetime) {
+extern "C" FFIResult* flatsql_script_analyze(Script* script, Script* external) {
     // Analyze the script
-    auto [analyzed, status] = script->Analyze(external, lifetime);
+    auto [analyzed, status] = script->Analyze(external);
     if (status != proto::StatusCode::OK) {
         return packError(status);
     }

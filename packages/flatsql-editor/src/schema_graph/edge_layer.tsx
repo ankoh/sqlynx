@@ -12,8 +12,6 @@ interface Props {
 }
 
 export function EdgeLayer(props: Props) {
-    console.log(props.edges);
-
     return (
         <svg className={props.className} viewBox={'0 0 ' + props.width + ' ' + props.height}>
             {props.edges.map((e, i) => {
