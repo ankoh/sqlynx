@@ -28,10 +28,10 @@ yarn install
 
 # Building the libraries
 make proto
-make lib
-make lib_relwithdebinfo
-make wasm_release
-make jslib_release
+make lib_o0
+make lib_o2
+make wasm_o3
+make jslib_o3
 
 # Testing
 make lib_tests
