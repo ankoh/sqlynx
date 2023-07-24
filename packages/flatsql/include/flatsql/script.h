@@ -164,8 +164,8 @@ class Script {
     std::shared_ptr<ScannedScript> scanned_script;
     /// The last parsed script
     std::shared_ptr<ParsedScript> parsed_script;
-    /// The staggered analyzed script versions
-    StaggeredAnalyzedScripts analyzed_scripts;
+    /// The last analyzed script
+    std::shared_ptr<AnalyzedScript> analyzed_script;
     /// The completion model
     CompletionIndex completion_index;
 
@@ -192,13 +192,12 @@ class Script {
     /// Parse the latest scanned script
     std::pair<ParsedScript*, proto::StatusCode> Parse();
     /// Analyze the latest parsed script
-    std::pair<AnalyzedScript*, proto::StatusCode> Analyze(Script* external = nullptr, bool use_stable_external = false,
-                                                          uint32_t lifetime = 0);
+    std::pair<AnalyzedScript*, proto::StatusCode> Analyze(Script* external = nullptr, uint32_t lifetime = 0);
     /// Returns the pretty-printed string for this script.
     /// Return `nullopt` in case of an error.
     std::string Format();
     /// Update the completion index
-    proto::StatusCode UpdateCompletionIndex(bool use_stable = true);
+    proto::StatusCode UpdateCompletionIndex();
     /// Complete at a text offset
     void CompleteAt(size_t offset);
 

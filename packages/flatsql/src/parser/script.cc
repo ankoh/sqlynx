@@ -163,9 +163,7 @@ std::unique_ptr<proto::ScriptMemoryStatistics> Script::GetMemoryStatistics() {
         stats.mutate_scanner_input_bytes(scanned->GetInput().size());
         stats.mutate_scanner_dictionary_bytes(scanner_dictionary_bytes);
     };
-    registerScript(analyzed_scripts.latest.get(), memory->mutable_latest_script());
-    registerScript(analyzed_scripts.cooling.get(), memory->mutable_cooling_script());
-    registerScript(analyzed_scripts.stable.get(), memory->mutable_stable_script());
+    registerScript(analyzed_script.get(), memory->mutable_latest_script());
 
     if (completion_index.suffix_trie) {
         registerScript(completion_index.analyzed_script.get(), memory->mutable_completion_index_script());
@@ -210,44 +208,14 @@ std::pair<ParsedScript*, proto::StatusCode> Script::Parse() {
     return {parsed_script.get(), status};
 }
 
-static void updateStaggeredScripts(StaggeredAnalyzedScripts& scripts, uint32_t lifetime) {
-    assert(scripts.latest != nullptr);
-    // Latest is a better candidate than a given script?
-    // XXX More careful selection
-    auto latest_wins = [](AnalyzedScript& latest, AnalyzedScript& previous) {
-        auto latest_errors = latest.parsed_script->errors.size();
-        auto previous_errors = previous.parsed_script->errors.size();
-        return latest_errors <= previous_errors;
-    };
-    // Latest wins over cooling?
-    if (!scripts.cooling || latest_wins(*scripts.latest, *scripts.cooling)) {
-        scripts.cooling = scripts.latest;
-    }
-    // Latest wins over stable?
-    if (!scripts.stable || latest_wins(*scripts.latest, *scripts.stable)) {
-        scripts.stable = scripts.latest;
-    }
-    // Cooling is dead?
-    if ((scripts.latest->text_version - scripts.cooling->text_version) >= lifetime) {
-        scripts.cooling = scripts.latest;
-    }
-    // Stable is dead?
-    if ((scripts.latest->text_version - scripts.stable->text_version) >= lifetime) {
-        scripts.stable = scripts.cooling;
-    }
-}
-
 /// Analyze a script
-std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(Script* external, bool use_stable_external,
-                                                              uint32_t lifetime) {
+std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(Script* external, uint32_t lifetime) {
     auto time_start = std::chrono::steady_clock::now();
 
     // Get analyzed external script
     std::shared_ptr<AnalyzedScript> external_analyzed;
     if (external) {
-        auto& stable_script = external->analyzed_scripts.stable;
-        auto& latest_script = external->analyzed_scripts.latest;
-        external_analyzed = (use_stable_external && stable_script) ? stable_script : latest_script;
+        external_analyzed = external->analyzed_script;
     }
 
     // Analyze a script
@@ -256,14 +224,12 @@ std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(Script* external, 
         return {nullptr, status};
     }
     script->text_version = parsed_script->text_version;
-    analyzed_scripts.latest = std::move(script);
+    analyzed_script = std::move(script);
 
-    // Update staggered analysis
-    updateStaggeredScripts(analyzed_scripts, lifetime);
     // Update step timings
     timing_statistics.mutate_analyzer_last_elapsed(
         std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - time_start).count());
-    return {analyzed_scripts.latest.get(), status};
+    return {analyzed_script.get(), status};
 }
 
 /// Returns the pretty-printed string for this script.
@@ -273,8 +239,8 @@ std::string Script::Format() {
 }
 
 /// Update the completion index
-proto::StatusCode Script::UpdateCompletionIndex(bool use_stable) {
-    auto& analyzed = use_stable ? analyzed_scripts.stable : analyzed_scripts.latest;
+proto::StatusCode Script::UpdateCompletionIndex() {
+    auto& analyzed = analyzed_script;
     if (!analyzed) {
         return proto::StatusCode::COMPLETION_DATA_INVALID;
     }
