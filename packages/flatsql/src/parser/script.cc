@@ -84,6 +84,7 @@ flatbuffers::Offset<proto::ParsedScript> ParsedScript::Pack(flatbuffers::FlatBuf
         err->message = msg;
         out.errors.push_back(std::move(err));
     }
+    // XXX We should not just blindy serialize all names (again) if most of them will just reference input text
     out.name_dictionary.reserve(scanned_script->name_dictionary.size());
     for (auto& [name, loc] : scanned_script->name_dictionary) {
         out.name_dictionary.emplace_back(name);
