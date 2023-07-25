@@ -22,9 +22,7 @@ SchemaGraph::Config DEFAULT_GRAPH_CONFIG{
     .board_width = 1600,
     .board_height = 800,
     .table_width = 100,
-    .table_constant_height = 24,
-    .table_column_height = 8,
-    .table_max_height = 96,
+    .table_height = 96,
     .table_margin = 20,
 };
 
