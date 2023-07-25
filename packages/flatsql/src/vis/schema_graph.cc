@@ -230,6 +230,7 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
             table_id.IsNull() ? NULL_TABLE_ID : (table_id.AsIndex() + (table_id.IsExternal() ? s->tables.size() : 0));
     }
     // Add edges
+    edges.resize(script->graph_edges.size());
     for (size_t i = 0; i < script->graph_edges.size(); ++i) {
         proto::QueryGraphEdge& edge = script->graph_edges[i];
         edges[i] = {edge.nodes_begin(), edge.node_count_left(), edge.node_count_right(), edge.expression_operator()};
@@ -237,7 +238,6 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
 
     // Collect nˆ2 adjacency pairs for now.
     // We might want to model hyper-edges differently for edge attraction in the future
-    edges.resize(script->graph_edges.size());
     std::vector<std::pair<size_t, size_t>> adjacency_pairs;
     for (size_t i = 0; i < script->graph_edges.size(); ++i) {
         proto::QueryGraphEdge& edge = script->graph_edges[i];
