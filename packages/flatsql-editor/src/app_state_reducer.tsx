@@ -257,7 +257,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                 graphConfig: {
                     ...state.graphConfig,
                     boardWidth: action.value[0],
-                    boardHeight: action.value[1],
+                    boardHeight: action.value[1] * 0.9,
                 },
             });
         case DESTROY:

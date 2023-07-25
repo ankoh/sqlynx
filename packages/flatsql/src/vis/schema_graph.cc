@@ -65,7 +65,9 @@ using Node = SchemaGraph::Node;
 using Vector = SchemaGraph::Vector;
 using Vertex = SchemaGraph::Vertex;
 
-template <bool nodesAsBoxes>
+enum class LayoutPhase { CLUSTERING, REFINEMENT };
+
+template <LayoutPhase phase>
 void step(const Config& config, const AdjacencyMap& adjacency, std::vector<Node>& nodes,
           std::vector<Vector>& displacement, double& temperature, size_t iteration) {
     // Resize displacement slots?
@@ -77,9 +79,7 @@ void step(const Config& config, const AdjacencyMap& adjacency, std::vector<Node>
     std::fill(displacement.begin(), displacement.end(), zero);
 
     // The gravity points
-    std::array<Vertex, 1> gravity{
-        Vertex{config.board_width / 2, config.board_height / 2},
-    };
+    Vertex center{config.board_width / 2, config.board_height / 2};
 
     double repulsion_scaled = config.repulsion_force * config.force_scaling;
     double repulsion_squared = repulsion_scaled;
@@ -93,20 +93,18 @@ void step(const Config& config, const AdjacencyMap& adjacency, std::vector<Node>
     constexpr double MIN_DISTANCE = 0.5;
 
     for (size_t i = 0; i < nodes.size(); ++i) {
-        auto& table_node = nodes[i];
-
-        // Gravity attraction
-        for (auto& center : gravity) {
-            Vector delta = center - table_node.position;
-            double distance = std::max(euclidean(delta), MIN_DISTANCE);
+        // Center attraction / repulsion
+        {
+            Vector center_diff = nodes[i].position - center;
+            double distance = std::max(euclidean(center_diff), MIN_DISTANCE);
             double attraction = gravity_scaled;
-            Vector normal = delta / distance;
-            displacement[i] = displacement[i] + normal * attraction;
+            Vector normal = center_diff / distance;
+            displacement[i] = displacement[i] - normal * attraction;
         }
 
         // Attraction force between edges
         for (size_t j : adjacency[i]) {
-            Vector delta = table_node.position - nodes[j].position;
+            Vector delta = nodes[i].position - nodes[j].position;
             double distance = std::max(euclidean(delta), MIN_DISTANCE);
             double attraction = edge_attraction_scaled * sqrt(distance);
             Vector normal = delta / distance;
@@ -115,32 +113,31 @@ void step(const Config& config, const AdjacencyMap& adjacency, std::vector<Node>
         }
 
         // Push back into area
-        if constexpr (nodesAsBoxes) {
+        if constexpr (phase == LayoutPhase::REFINEMENT) {
             Vector border_push;
-            Vertex north = table_node.position - Vector{0, table_node.height / 2};
-            Vertex east = table_node.position + Vector{table_node.width / 2, 0};
-            Vertex south = table_node.position + Vector{0, table_node.height / 2};
-            Vertex west = table_node.position - Vector{table_node.width / 2, 0};
+            Vertex north = nodes[i].position - Vector{0, nodes[i].height / 2};
+            Vertex east = nodes[i].position + Vector{nodes[i].width / 2, 0};
+            Vertex south = nodes[i].position + Vector{0, nodes[i].height / 2};
+            Vertex west = nodes[i].position - Vector{nodes[i].width / 2, 0};
             border_push.dy += (north.y < 0) ? -north.y : 0;
             border_push.dx -= (east.x > config.board_width) ? (east.x - config.board_width) : 0;
             border_push.dy -= (south.y > config.board_height) ? (south.y - config.board_height) : 0;
             border_push.dx += (west.x < 0) ? -west.x : 0;
             displacement[i] = displacement[i] + repulsion_squared * border_push;
         } else {
-            auto pos = table_node.position;
             Vector border_push;
-            border_push.dy += (pos.y < 0) ? -pos.y : 0;
-            border_push.dx -= (pos.x > config.board_width) ? (pos.x - config.board_width) : 0;
-            border_push.dy -= (pos.y > config.board_height) ? (pos.y - config.board_height) : 0;
-            border_push.dx += (pos.x < 0) ? -pos.x : 0;
+            border_push.dy += (nodes[i].position.y < 0) ? -nodes[i].position.y : 0;
+            border_push.dx -=
+                (nodes[i].position.x > config.board_width) ? (nodes[i].position.x - config.board_width) : 0;
+            border_push.dy -=
+                (nodes[i].position.y > config.board_height) ? (nodes[i].position.y - config.board_height) : 0;
+            border_push.dx += (nodes[i].position.x < 0) ? -nodes[i].position.x : 0;
             displacement[i] = displacement[i] + repulsion_squared * border_push;
         }
-    }
 
-    // Repulsion force between tables
-    for (size_t i = 0; i < nodes.size(); ++i) {
-        for (size_t j = i + 1; j < nodes.size(); ++j) {
-            if constexpr (nodesAsBoxes) {
+        // Repulsion force towards other tables
+        if constexpr (phase == LayoutPhase::REFINEMENT) {
+            for (size_t j = i + 1; j < nodes.size(); ++j) {
                 // Compute distance or overlap vector
                 auto& node_i = nodes[i];
                 auto& node_j = nodes[j];
@@ -157,22 +154,11 @@ void step(const Config& config, const AdjacencyMap& adjacency, std::vector<Node>
                     displacement[i] = displacement[i] - directed / 2;
                     displacement[j] = displacement[j] + directed / 2;
                 } else {
-                    directed = jiggle(i, iteration, directed);
+                    directed = jiggle(i ^ j, iteration, directed);
                     distance = std::max(euclidean(directed), distance);
                 }
                 double repulsion = repulsion_squared / distance;
                 Vector displace_normal = directed / distance;
-                displacement[i] = displacement[i] - (displace_normal * repulsion / 2);
-                displacement[j] = displacement[j] + (displace_normal * repulsion / 2);
-            } else {
-                // Nodes are dots
-                auto& node_i = nodes[i];
-                auto& node_j = nodes[j];
-                auto diff = node_i.position - node_j.position;
-                double distance = std::max(euclidean(diff), MIN_DISTANCE);
-                double repulsion = repulsion_squared / distance;
-                Vector displace_normal = diff / distance;
-                displace_normal = jiggle(i, iteration, displace_normal);
                 displacement[i] = displacement[i] - (displace_normal * repulsion / 2);
                 displacement[j] = displacement[j] + (displace_normal * repulsion / 2);
             }
@@ -214,71 +200,75 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
     nodes.reserve(table_count);
     // Get an initial position
     double angle = 2.0 * M_PI / table_count;
-    auto get_pos = [](Config& config, double angle, Analyzer::ID id) {
-        double v = angle * id.AsIndex();
+    auto get_pos = [](Config& config, double angle, size_t id) {
         return Vertex{
-            config.board_width / 2 + config.initial_radius * cos(v * angle),
-            config.board_height / 2 + config.initial_radius * sin(v * angle),
+            config.board_width / 2 + config.initial_radius * cos(id * angle),
+            config.board_height / 2 + config.initial_radius * sin(id * angle),
         };
     };
     // Load internal tables
     for (uint32_t i = 0; i < script->tables.size(); ++i) {
         Analyzer::ID id{i, false};
-        nodes.emplace_back(id.value, get_pos(config, angle, id), config.table_width + config.table_margin,
+        nodes.emplace_back(id.value, get_pos(config, angle, id.AsIndex()), config.table_width + config.table_margin,
                            config.table_max_height + config.table_margin);
     }
     // Add external tables
     if (script->external_script) {
         for (uint32_t i = 0; i < script->external_script->tables.size(); ++i) {
             Analyzer::ID id{i, true};
-            nodes.emplace_back(id.value, get_pos(config, angle, id), config.table_width + config.table_margin,
-                               config.table_max_height + config.table_margin);
+            nodes.emplace_back(id.value, get_pos(config, angle, script->tables.size() + id.AsIndex()),
+                               config.table_width + config.table_margin, config.table_max_height + config.table_margin);
         }
     }
+
     // Add edge node ids
     edge_nodes.resize(script->graph_edge_nodes.size());
     for (size_t i = 0; i < script->graph_edge_nodes.size(); ++i) {
         proto::QueryGraphEdgeNode& node = script->graph_edge_nodes[i];
         Analyzer::ID table_id = Analyzer::ID(script->column_references[node.column_reference_id()].table_id());
         edge_nodes[i] =
-            table_id.IsNull() ? NULL_TABLE_ID : (table_id.AsIndex() + (table_id.IsExternal() ? 0 : s->tables.size()));
+            table_id.IsNull() ? NULL_TABLE_ID : (table_id.AsIndex() + (table_id.IsExternal() ? s->tables.size() : 0));
     }
-    // Collect adjacency pairs
+    // Add edges
+    for (size_t i = 0; i < script->graph_edges.size(); ++i) {
+        proto::QueryGraphEdge& edge = script->graph_edges[i];
+        edges[i] = {edge.nodes_begin(), edge.node_count_left(), edge.node_count_right(), edge.expression_operator()};
+    }
+
+    // Collect nˆ2 adjacency pairs for now.
+    // We might want to model hyper-edges differently for edge attraction in the future
     edges.resize(script->graph_edges.size());
     std::vector<std::pair<size_t, size_t>> adjacency_pairs;
     for (size_t i = 0; i < script->graph_edges.size(); ++i) {
-        // Write edge description
         proto::QueryGraphEdge& edge = script->graph_edges[i];
-        edges[i] = {edge.nodes_begin(), edge.node_count_left(), edge.node_count_right(), edge.expression_operator()};
-        // Emit adjacency pairs with patched node ids
+        // Emit nˆ2 adjacency pairs with patched node ids
         for (size_t l = 0; l < edge.node_count_left(); ++l) {
-            size_t l_col = script->graph_edge_nodes[edge.nodes_begin() + l].column_reference_id();
-            Analyzer::ID l_table{script->column_references[l_col].table_id()};
-            if (l_table.IsNull()) continue;
-            auto l_node = l_table.AsIndex() + (l_table.IsExternal() ? 0 : s->tables.size());
+            size_t lcol = script->graph_edge_nodes[edge.nodes_begin() + l].column_reference_id();
+            Analyzer::ID ltid{script->column_references[lcol].table_id()};
+            if (ltid.IsNull()) continue;
+            auto ln = ltid.AsIndex() + (ltid.IsExternal() ? s->tables.size() : 0);
             // Emit pair for each right node
             for (size_t r = 0; r < edge.node_count_right(); ++r) {
-                size_t r_col =
+                size_t rcol =
                     script->graph_edge_nodes[edge.nodes_begin() + edge.node_count_left() + r].column_reference_id();
-                Analyzer::ID r_table{script->column_references[r_col].table_id()};
-                if (r_table.IsNull()) continue;
-                auto r_node = r_table.AsIndex() + (r_table.IsExternal() ? 0 : s->tables.size());
-                adjacency_pairs.emplace_back(l_node, r_node);
+                Analyzer::ID rtid{script->column_references[rcol].table_id()};
+                if (rtid.IsNull()) continue;
+                auto rn = rtid.AsIndex() + (rtid.IsExternal() ? s->tables.size() : 0);
+                adjacency_pairs.emplace_back(ln, rn);
             }
         }
     }
     // Build adjacency map
     adjacency.adjacency_offsets.clear();
-    adjacency.adjacency_offsets.reserve(script->graph_edges.size() + 1);
+    adjacency.adjacency_offsets.reserve(nodes.size() + 1);
     adjacency.adjacency_nodes.clear();
     adjacency.adjacency_nodes.reserve(adjacency_pairs.size());
     std::sort(adjacency_pairs.begin(), adjacency_pairs.end());
     size_t i = 0;
     for (auto begin = adjacency_pairs.begin(); begin != adjacency_pairs.end();) {
-        for (; i < begin->first; ++i) {
+        for (; i <= begin->first; ++i) {
             adjacency.adjacency_offsets.push_back(adjacency.adjacency_nodes.size());
         }
-        adjacency.adjacency_offsets.push_back(adjacency.adjacency_nodes.size());
         auto in_partition = [&](auto& adj) { return adj.first == begin->first; };
         auto end = std::partition_point(begin + 1, adjacency_pairs.end(), in_partition);
         for (auto iter = begin; iter != end; ++iter) {
@@ -293,12 +283,12 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
     // First, cluster nodes without boxes
     auto temperature = 10 * sqrt(nodes.size());
     for (size_t i = 0; i < config.iterations_clustering; ++i) {
-        step<false>(config, adjacency, nodes, displacement, temperature, i);
+        step<LayoutPhase::CLUSTERING>(config, adjacency, nodes, displacement, temperature, i);
     }
     // Refine node positions using boxes
     temperature = 10 * sqrt(nodes.size());
     for (size_t i = 0; i < config.iterations_refinement; ++i) {
-        step<true>(config, adjacency, nodes, displacement, temperature, i);
+        step<LayoutPhase::REFINEMENT>(config, adjacency, nodes, displacement, temperature, i);
     }
 }
 
