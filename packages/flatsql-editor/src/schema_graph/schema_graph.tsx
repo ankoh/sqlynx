@@ -33,7 +33,6 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
     }
 
     const [nodes, edges] = layoutSchemaGraph(state);
-    // console.log([nodes, edges]); XXX
     return (
         <div className={cn(styles.graph_container, props.className)}>
             <BackgroundLayer className={styles.graph_background} />
