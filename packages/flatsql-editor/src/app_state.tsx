@@ -25,6 +25,10 @@ export interface AppState {
     graphConfig: flatsql.FlatSQLSchemaGraphConfig;
     /// The graph layout
     graphLayout: flatsql.FlatBufferRef<flatsql.proto.SchemaGraphLayout> | null;
+    /// The graph debug mode
+    graphDebugMode: boolean;
+    /// The graph debug mode
+    graphDebugInfo: flatsql.FlatBufferRef<flatsql.proto.SchemaGraphDebugInfo> | null;
 }
 
 /// The script data
@@ -117,7 +121,6 @@ export function createDefaultState(): AppState {
             [ScriptKey.SCHEMA_SCRIPT]: createDefaultScript(ScriptKey.SCHEMA_SCRIPT),
         },
         graph: null,
-        graphLayout: null,
         graphConfig: {
             iterationsClustering: 10,
             iterationsRefinement: 40,
@@ -135,5 +138,8 @@ export function createDefaultState(): AppState {
             tableMaxHeight: 36,
             tableMargin: 32,
         },
+        graphLayout: null,
+        graphDebugMode: false,
+        graphDebugInfo: null,
     };
 }
