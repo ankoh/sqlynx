@@ -20,6 +20,7 @@ interface FlatSQLModuleExports {
     flatsql_script_get_statistics: (ptr: number) => number;
     flatsql_schemagraph_new: () => number;
     flatsql_schemagraph_delete: (ptr: number) => void;
+    flatsql_schemagraph_describe: (ptr: number) => number;
     flatsql_schemagraph_configure: (
         ptr: number,
         iterationsClustering: number,
@@ -98,6 +99,7 @@ export class FlatSQL {
             flatsql_script_get_statistics: parserExports['flatsql_script_get_statistics'] as (ptr: number) => number,
             flatsql_schemagraph_new: parserExports['flatsql_schemagraph_new'] as () => number,
             flatsql_schemagraph_delete: parserExports['flatsql_schemagraph_delete'] as (ptr: number) => void,
+            flatsql_schemagraph_describe: parserExports['flatsql_schemagraph_describe'] as (ptr: number) => number,
             flatsql_schemagraph_configure: parserExports['flatsql_schemagraph_configure'] as (
                 ptr: number,
                 iterationCount: number,
@@ -470,5 +472,11 @@ export class FlatSQLSchemaGraph {
         const graphPtr = this.assertGraphNotNull();
         const resultPtr = this.api.instanceExports.flatsql_schemagraph_load_script(graphPtr, script.scriptPtr);
         return this.api.readResult<proto.SchemaGraphLayout>(resultPtr);
+    }
+    /// Describe the graph
+    public describe() {
+        const graphPtr = this.assertGraphNotNull();
+        const resultPtr = this.api.instanceExports.flatsql_schemagraph_describe(graphPtr);
+        return this.api.readResult<proto.SchemaGraphDescription>(resultPtr);
     }
 }

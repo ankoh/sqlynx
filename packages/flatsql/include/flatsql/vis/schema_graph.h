@@ -108,6 +108,8 @@ class SchemaGraph {
     void Configure(const Config& config);
     /// Load a script
     void LoadScript(std::shared_ptr<AnalyzedScript> s);
+    /// Describe the schema graph
+    std::unique_ptr<proto::SchemaGraphDescriptionT> Describe() const;
     /// Pack the schema graph
     flatbuffers::Offset<proto::SchemaGraphLayout> Pack(flatbuffers::FlatBufferBuilder& builder);
 };
