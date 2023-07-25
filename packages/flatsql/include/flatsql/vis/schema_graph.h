@@ -67,14 +67,10 @@ class SchemaGraph {
         double board_width = 0;
         /// The board height
         double board_height = 0;
+        /// The table height
+        double table_height = 0;
         /// The table width
         double table_width = 0;
-        /// The table constant height
-        double table_constant_height = 0;
-        /// The table column height
-        double table_column_height = 0;
-        /// The table max height
-        double table_max_height = 0;
         /// The table margin
         double table_margin = 0;
     };

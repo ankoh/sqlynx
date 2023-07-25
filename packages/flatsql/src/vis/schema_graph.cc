@@ -210,14 +210,14 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
     for (uint32_t i = 0; i < script->tables.size(); ++i) {
         Analyzer::ID id{i, false};
         nodes.emplace_back(id.value, get_pos(config, angle, id.AsIndex()), config.table_width + config.table_margin,
-                           config.table_max_height + config.table_margin);
+                           config.table_height + config.table_margin);
     }
     // Add external tables
     if (script->external_script) {
         for (uint32_t i = 0; i < script->external_script->tables.size(); ++i) {
             Analyzer::ID id{i, true};
             nodes.emplace_back(id.value, get_pos(config, angle, script->tables.size() + id.AsIndex()),
-                               config.table_width + config.table_margin, config.table_max_height + config.table_margin);
+                               config.table_width + config.table_margin, config.table_height + config.table_margin);
         }
     }
 
