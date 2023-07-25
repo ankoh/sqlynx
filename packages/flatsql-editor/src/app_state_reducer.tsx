@@ -186,15 +186,11 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                             main.processed.analyzed?.delete();
                             main.processed.analyzed = null;
                             // Analyze the old main script with the new script as external
-                            const mainAnalyzed = main.script.analyze(newScript);
-                            const oldMain = newState.scripts[ScriptKey.MAIN_SCRIPT];
+                            const mainAnalyzed = analyzeScript(main.processed, main.script, newScript);
                             newState.scripts[ScriptKey.MAIN_SCRIPT] = {
-                                ...oldMain,
-                                processed: {
-                                    ...main.processed,
-                                    analyzed: mainAnalyzed,
-                                },
-                                statistics: rotateStatistics(oldMain.statistics, main.script.getStatistics() ?? null),
+                                ...main,
+                                processed: mainAnalyzed,
+                                statistics: rotateStatistics(main.statistics, main.script.getStatistics() ?? null),
                             };
                         }
                         newState.scripts[ScriptKey.SCHEMA_SCRIPT] = {

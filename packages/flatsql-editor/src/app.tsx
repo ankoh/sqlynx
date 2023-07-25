@@ -20,12 +20,14 @@ const DataProviders = (props: { children: React.ReactElement }) => (
 const element = document.getElementById('root');
 const root = createRoot(element!);
 root.render(
-    <BrowserRouter>
-        <DataProviders>
-            <Routes>
-                <Route index element={<EditorPage />} />
-                <Route path="*" element={<Navigate to="/" />} />
-            </Routes>
-        </DataProviders>
-    </BrowserRouter>,
+    <React.StrictMode>
+        <BrowserRouter>
+            <DataProviders>
+                <Routes>
+                    <Route index element={<EditorPage />} />
+                    <Route path="*" element={<Navigate to="/" />} />
+                </Routes>
+            </DataProviders>
+        </BrowserRouter>
+    </React.StrictMode>,
 );
