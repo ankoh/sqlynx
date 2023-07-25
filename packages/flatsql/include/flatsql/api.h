@@ -71,3 +71,5 @@ extern "C" void flatsql_schemagraph_configure(flatsql::SchemaGraph* graph, size_
                                               double tableMaxHeight, double tableMargin);
 /// Update a schema graph
 extern "C" FFIResult* flatsql_schemagraph_load_script(flatsql::SchemaGraph* graph, flatsql::Script* script);
+/// Describe a schema graph
+extern "C" FFIResult* flatsql_schemagraph_describe(flatsql::SchemaGraph* graph);

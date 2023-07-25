@@ -21,10 +21,10 @@ export interface AppState {
     scripts: { [key: number]: ScriptData };
     /// The graph
     graph: flatsql.FlatSQLSchemaGraph | null;
-    /// The graph layout
-    graphLayout: flatsql.FlatBufferRef<flatsql.proto.SchemaGraphLayout> | null;
     /// The graph config
     graphConfig: flatsql.FlatSQLSchemaGraphConfig;
+    /// The graph layout
+    graphLayout: flatsql.FlatBufferRef<flatsql.proto.SchemaGraphLayout> | null;
 }
 
 /// The script data

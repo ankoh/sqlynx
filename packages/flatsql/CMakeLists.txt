@@ -73,6 +73,7 @@ if(WASM)
         -Wl,--export=flatsql_script_get_statistics \
         -Wl,--export=flatsql_schemagraph_new \
         -Wl,--export=flatsql_schemagraph_delete \
+        -Wl,--export=flatsql_schemagraph_describe \
         -Wl,--export=flatsql_schemagraph_configure \
         -Wl,--export=flatsql_schemagraph_load_script \
         -flto \

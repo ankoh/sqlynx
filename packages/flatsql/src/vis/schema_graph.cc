@@ -334,4 +334,25 @@ flatbuffers::Offset<proto::SchemaGraphLayout> SchemaGraph::Pack(flatbuffers::Fla
     return proto::SchemaGraphLayout::Pack(builder, &layout);
 }
 
+/// Describe the schema graph
+std::unique_ptr<proto::SchemaGraphDescriptionT> SchemaGraph::Describe() const {
+    auto desc = std::make_unique<proto::SchemaGraphDescriptionT>();
+    desc->node_distances.resize(nodes.size() * nodes.size() / 2);
+    desc->node_repulsions.resize(nodes.size() * nodes.size() / 2);
+    desc->edge_attractions.resize(edge_nodes.size());
+
+    double repulsion_scaled = config.repulsion_force * config.force_scaling;
+    double repulsion_squared = repulsion_scaled;
+
+    for (size_t i = 0; i < nodes.size(); ++i) {
+        for (size_t j = i + 1; j < nodes.size(); ++j) {
+            size_t o = i * nodes.size() + j;
+            double dist = euclidean(nodes[i].position - nodes[j].position);
+            desc->node_distances[o] = dist;
+            desc->node_repulsions[o] = repulsion_squared / dist;
+        }
+    }
+    return desc;
+}
+
 }  // namespace flatsql

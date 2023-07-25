@@ -241,6 +241,20 @@ extern "C" FFIResult* flatsql_schemagraph_load_script(flatsql::SchemaGraph* grap
     return packBuffer(std::move(detached));
 }
 
+/// Describe a schema graph
+extern "C" FFIResult* flatsql_schemagraph_describe(flatsql::SchemaGraph* graph) {
+    auto desc = graph->Describe();
+
+    // Pack a schema graph
+    flatbuffers::FlatBufferBuilder fb;
+    auto ofs = proto::SchemaGraphDescription::Pack(fb, desc.get());
+    fb.Finish(ofs);
+
+    // Store the buffer
+    auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));
+    return packBuffer(std::move(detached));
+}
+
 #ifdef WASM
 extern "C" int main() { return 0; }
 #endif
