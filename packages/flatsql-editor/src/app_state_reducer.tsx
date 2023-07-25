@@ -274,11 +274,8 @@ function computeSchemaGraph(state: AppState, debug: boolean = false): AppState {
     if (state.scripts[ScriptKey.MAIN_SCRIPT].script == null) {
         return state;
     }
-    if (state.graphLayout != null) {
-        state.graphLayout.delete();
-        state.graphLayout = null;
-    }
     state.graph!.configure(state.graphConfig);
+    state.graphLayout?.delete();
     state.graphLayout = state.graph!.loadScript(state.scripts[ScriptKey.MAIN_SCRIPT].script);
     state.graphDebugMode = debug;
     if (debug) {
