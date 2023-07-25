@@ -247,7 +247,7 @@ extern "C" FFIResult* flatsql_schemagraph_describe(flatsql::SchemaGraph* graph) 
 
     // Pack a schema graph
     flatbuffers::FlatBufferBuilder fb;
-    auto ofs = proto::SchemaGraphDescription::Pack(fb, desc.get());
+    auto ofs = proto::SchemaGraphDebugInfo::Pack(fb, desc.get());
     fb.Finish(ofs);
 
     // Store the buffer

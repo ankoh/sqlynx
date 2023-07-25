@@ -30,7 +30,7 @@ struct SchemaGraphNode {
     height: double;
 }
 
-table SchemaGraphDescription {
+table SchemaGraphDebugInfo {
     /// Node distances
     node_distances: [double];
     /// Node repulsions
