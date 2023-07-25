@@ -477,6 +477,6 @@ export class FlatSQLSchemaGraph {
     public describe() {
         const graphPtr = this.assertGraphNotNull();
         const resultPtr = this.api.instanceExports.flatsql_schemagraph_describe(graphPtr);
-        return this.api.readResult<proto.SchemaGraphDescription>(resultPtr);
+        return this.api.readResult<proto.SchemaGraphDebugInfo>(resultPtr);
     }
 }
