@@ -18,6 +18,7 @@ export const SCRIPT_LOADING_STARTED = Symbol('SCRIPT_LOADING_STARTED');
 export const SCRIPT_LOADING_SUCCEEDED = Symbol('SCRIPT_LOADING_SUCCEEDED');
 export const SCRIPT_LOADING_FAILED = Symbol('SCRIPT_LOADING_FAILED');
 export const RESIZE_SCHEMA_GRAPH = Symbol('RESIZE_EDITOR');
+export const DEBUG_GRAPH_LAYOUT = Symbol('DEBUG_GRAPH_LAYOUT');
 export const DESTROY = Symbol('DESTROY');
 
 export type AppStateAction =
@@ -28,6 +29,7 @@ export type AppStateAction =
     | Action<typeof SCRIPT_LOADING_SUCCEEDED, [ScriptKey, string]>
     | Action<typeof SCRIPT_LOADING_FAILED, [ScriptKey, any]>
     | Action<typeof RESIZE_SCHEMA_GRAPH, [number, number]>
+    | Action<typeof DEBUG_GRAPH_LAYOUT, boolean>
     | Action<typeof DESTROY, undefined>;
 
 const STATS_HISTORY_LIMIT = 20;
@@ -260,13 +262,15 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                     boardHeight: action.value[1] * 0.9,
                 },
             });
+        case DEBUG_GRAPH_LAYOUT:
+            return computeSchemaGraph({ ...state }, action.value);
         case DESTROY:
             return destroyState({ ...state });
     }
 };
 
 /// Compute a schema graph
-function computeSchemaGraph(state: AppState): AppState {
+function computeSchemaGraph(state: AppState, debug: boolean = false): AppState {
     if (state.scripts[ScriptKey.MAIN_SCRIPT].script == null) {
         return state;
     }
@@ -276,6 +280,11 @@ function computeSchemaGraph(state: AppState): AppState {
     }
     state.graph!.configure(state.graphConfig);
     state.graphLayout = state.graph!.loadScript(state.scripts[ScriptKey.MAIN_SCRIPT].script);
+    state.graphDebugMode = debug;
+    if (debug) {
+        state.graphDebugInfo?.delete();
+        state.graphDebugInfo = state.graph?.describe() ?? null;
+    }
     return state;
 }
 
