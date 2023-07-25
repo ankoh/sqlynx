@@ -8,7 +8,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Analyzer Tests",
-            "program": "${workspaceFolder}/packages/flatsql/build/native/Debug/tester",
+            "program": "${workspaceFolder}/packages/flatsql/build/native/o0/tester",
             "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*Analyzer*"],
             "cwd": "${workspaceFolder}"
         },
@@ -16,7 +16,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Parser Tests",
-            "program": "${workspaceFolder}/packages/flatsql/build/native/Debug/tester",
+            "program": "${workspaceFolder}/packages/flatsql/build/native/o0/tester",
             "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*Parser*"],
             "cwd": "${workspaceFolder}"
         },
@@ -24,7 +24,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Highlighter Tests",
-            "program": "${workspaceFolder}/packages/flatsql/build/native/Debug/tester",
+            "program": "${workspaceFolder}/packages/flatsql/build/native/o0/tester",
             "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*Highlighting*"],
             "cwd": "${workspaceFolder}"
         },
@@ -32,7 +32,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Rope Tests",
-            "program": "${workspaceFolder}/packages/flatsql/build/native/Debug/tester",
+            "program": "${workspaceFolder}/packages/flatsql/build/native/o0/tester",
             "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*Rope*"],
             "cwd": "${workspaceFolder}"
         },
@@ -40,7 +40,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Suffix Trie Tests",
-            "program": "${workspaceFolder}/packages/flatsql/build/native/Debug/tester",
+            "program": "${workspaceFolder}/packages/flatsql/build/native/o0/tester",
             "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*Suffix*"],
             "cwd": "${workspaceFolder}"
         },
@@ -48,7 +48,15 @@
             "type": "lldb",
             "request": "launch",
             "name": "Graph Tests",
-            "program": "${workspaceFolder}/packages/flatsql/build/native/Debug/tester",
+            "program": "${workspaceFolder}/packages/flatsql/build/native/o0/tester",
+            "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*SchemaGraphTest*"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Graph Tests O2",
+            "program": "${workspaceFolder}/packages/flatsql/build/native/o2/tester",
             "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*SchemaGraphTest*"],
             "cwd": "${workspaceFolder}"
         },
@@ -56,7 +64,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Script Tests",
-            "program": "${workspaceFolder}/packages/flatsql/build/native/Debug/tester",
+            "program": "${workspaceFolder}/packages/flatsql/build/native/o0/tester",
             "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*ScriptTest*"],
             "cwd": "${workspaceFolder}"
         },
@@ -64,7 +72,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Parser Dumps",
-            "program": "${workspaceFolder}/packages/flatsql/build/native/Debug/dump_parser",
+            "program": "${workspaceFolder}/packages/flatsql/build/native/o0/dump_parser",
             "args": ["--source_dir=${workspaceFolder}"],
             "cwd": "${workspaceFolder}"
         },
@@ -72,7 +80,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Analyzer Dumps",
-            "program": "${workspaceFolder}/packages/flatsql/build/native/Debug/dump_analyzer",
+            "program": "${workspaceFolder}/packages/flatsql/build/native/o0/dump_analyzer",
             "args": ["--source_dir=${workspaceFolder}"],
             "cwd": "${workspaceFolder}"
         },
