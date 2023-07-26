@@ -90,7 +90,7 @@ export function EdgeLayer(props: Props) {
                 const pathText = `M ${path[0]} ${path[1]} L ${path[2]} ${path[3]}`;
                 return (
                     <g key={i}>
-                        <path d={pathText} strokeWidth="2px" stroke="currentcolor" />
+                        <path d={pathText} strokeWidth="1px" stroke="currentcolor" />
                         <circle cx={path[0]} cy={path[1]} r="6px" fill="white" />
                         <circle cx={path[0]} cy={path[1]} r="4px" fill="currentcolor" />
                         <circle cx={path[2]} cy={path[3]} r="6px" fill="white" />

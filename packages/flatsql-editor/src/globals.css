@@ -17,7 +17,7 @@
     --stats_bar_fg: hsl(210, 24%, 92%);
     --stats_bg: hsl(210deg, 28.57%, 97.25%);
     --stats_value_fg: rgb(140, 140, 140);
-    --graph_edges_fg: hsl(210deg, 12.68%, 72.16%);
+    --graph_edges_fg: hsl(210deg, 12.68%, 78.16%);
 }
 
 :root {
