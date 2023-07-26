@@ -266,15 +266,15 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
 };
 
 /// Compute a schema graph
-function computeSchemaGraph(state: AppState, debug: boolean = false): AppState {
+function computeSchemaGraph(state: AppState, debug?: boolean): AppState {
     if (state.scripts[ScriptKey.MAIN_SCRIPT].script == null) {
         return state;
     }
     state.graph!.configure(state.graphConfig);
     state.graphLayout?.delete();
     state.graphLayout = state.graph!.loadScript(state.scripts[ScriptKey.MAIN_SCRIPT].script);
-    state.graphDebugMode = debug;
-    if (debug) {
+    state.graphDebugMode = debug ?? state.graphDebugMode;
+    if (state.graphDebugMode) {
         state.graphDebugInfo?.delete();
         state.graphDebugInfo = state.graph?.describe() ?? null;
     }
