@@ -30,7 +30,7 @@ function TableNode(props: NodeLayout) {
     );
 }
 
-interface NodeLayerProps {
+interface Props {
     className?: string;
     width: number;
     height: number;
@@ -38,7 +38,7 @@ interface NodeLayerProps {
     edges: any[];
 }
 
-export function NodeLayer(props: NodeLayerProps) {
+export function NodeLayer(props: Props) {
     return (
         <div className={styles.graph_nodes}>
             {props.nodes.map(n => (
