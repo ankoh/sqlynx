@@ -126,7 +126,7 @@ export function createDefaultState(): AppState {
             iterationsRefinement: 40,
             forceScaling: 50.0,
             cooldownFactor: 0.99,
-            repulsionForce: 4.0,
+            repulsionForce: 5.0,
             edgeAttractionForce: 2.0,
             gravityForce: 1.0,
             initialRadius: 400.0,
