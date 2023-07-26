@@ -337,8 +337,9 @@ flatbuffers::Offset<proto::SchemaGraphLayout> SchemaGraph::Pack(flatbuffers::Fla
 /// Describe the schema graph
 std::unique_ptr<proto::SchemaGraphDebugInfoT> SchemaGraph::Describe() const {
     auto desc = std::make_unique<proto::SchemaGraphDebugInfoT>();
-    desc->node_distances.resize(nodes.size() * nodes.size() / 2);
-    desc->node_repulsions.resize(nodes.size() * nodes.size() / 2);
+    auto n = std::max<size_t>(nodes.size() * nodes.size() / 2, 1);
+    desc->node_distances.resize(n);
+    desc->node_repulsions.resize(n);
 
     double repulsion_scaled = config.repulsion_force * config.force_scaling;
     double repulsion_squared = repulsion_scaled;
