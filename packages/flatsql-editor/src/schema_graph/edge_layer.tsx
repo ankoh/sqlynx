@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { NodeLayout } from './schema_graph_layout';
+import { NodeLayout, PathOrientation } from './schema_graph_layout';
 import { EdgeLayout } from './schema_graph_layout';
 
 interface Props {
@@ -13,71 +13,41 @@ interface Props {
     nodeHeight: number;
 }
 
-enum PathOrientation {
-    East,
-    South,
-    West,
-    North,
-}
-
-function getPathOrientation(fromX: number, fromY: number, toX: number, toY: number): PathOrientation {
-    const diffX = toX - fromX;
-    const diffY = toY - fromY;
-    const angle = (Math.atan2(diffY, diffX) * 180) / Math.PI;
-    console.log(`${angle}`);
-    if (Math.abs(angle) <= 15) {
-        return PathOrientation.East;
-    }
-    if (Math.abs(angle) >= 165) {
-        return PathOrientation.West;
-    }
-    return angle > 0 ? PathOrientation.South : PathOrientation.North;
-}
-
-function patchPath(
-    out: Float64Array,
-    fromX: number,
-    fromY: number,
-    toX: number,
-    toY: number,
-    width: number,
-    height: number,
-): PathOrientation | null {
+function patchPath(out: Float64Array, edge: EdgeLayout, width: number, height: number) {
     out[0] = 0;
     out[1] = 0;
     out[2] = 0;
     out[3] = 0;
-    if (toX - fromX == 0 && toY - fromY == 0) {
-        return null;
+    if (edge.toX - edge.fromX == 0 && edge.toY - edge.fromY == 0) {
+        return;
     }
-    const orientation = getPathOrientation(fromX, fromY, toX, toY);
-    switch (orientation) {
+    console.log(edge);
+    switch (edge.orientation) {
         case PathOrientation.East:
-            out[0] = fromX + width / 2;
-            out[1] = fromY;
-            out[2] = toX - width / 2;
-            out[3] = toY;
+            out[0] = edge.fromX + width / 2;
+            out[1] = edge.fromY;
+            out[2] = edge.toX - width / 2;
+            out[3] = edge.toY;
             break;
         case PathOrientation.South:
-            out[0] = fromX;
-            out[1] = fromY + height / 2;
-            out[2] = toX;
-            out[3] = toY - height / 2;
+            out[0] = edge.fromX;
+            out[1] = edge.fromY + height / 2;
+            out[2] = edge.toX;
+            out[3] = edge.toY - height / 2;
             break;
         case PathOrientation.West:
-            out[0] = fromX - width / 2;
-            out[1] = fromY;
-            out[2] = toX + width / 2;
-            out[3] = toY;
+            out[0] = edge.fromX - width / 2;
+            out[1] = edge.fromY;
+            out[2] = edge.toX + width / 2;
+            out[3] = edge.toY;
             break;
         case PathOrientation.North:
-            out[0] = fromX;
-            out[1] = fromY - height / 2;
-            out[2] = toX;
-            out[3] = toY + height / 2;
+            out[0] = edge.fromX;
+            out[1] = edge.fromY - height / 2;
+            out[2] = edge.toX;
+            out[3] = edge.toY + height / 2;
             break;
     }
-    return orientation;
 }
 
 export function EdgeLayer(props: Props) {
@@ -85,8 +55,8 @@ export function EdgeLayer(props: Props) {
     return (
         <svg className={props.className} viewBox={'0 0 ' + props.boardWidth + ' ' + props.boardHeight}>
             {props.edges.map((e, i) => {
-                const orientation = patchPath(path, e.fromX, e.fromY, e.toX, e.toY, props.nodeWidth, props.nodeHeight);
-                if (orientation == null) return;
+                patchPath(path, e, props.nodeWidth, props.nodeHeight);
+                if (e.orientation == null) return;
                 const pathText = `M ${path[0]} ${path[1]} L ${path[2]} ${path[3]}`;
                 return (
                     <g key={i}>
