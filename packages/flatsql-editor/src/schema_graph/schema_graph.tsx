@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { NodeLayer } from './node_layer';
 import { EdgeLayer } from './edge_layer';
+import { DebugLayer } from './debug_layer';
 import { BackgroundLayer } from './background_layer';
-import { layoutSchemaGraph } from './schema_graph_layout';
+import { layoutDebugInfo, layoutSchemaGraph } from './schema_graph_layout';
 import { RESIZE_SCHEMA_GRAPH, useAppStateDispatch, useAppState } from '../app_state_reducer';
 import cn from 'classnames';
 
@@ -33,6 +34,7 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
     }
 
     const [nodes, edges] = layoutSchemaGraph(state);
+    const debugInfo = layoutDebugInfo(state, nodes);
     return (
         <div className={cn(styles.graph_container, props.className)}>
             <BackgroundLayer className={styles.graph_background} />
@@ -43,6 +45,9 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
                 nodes={nodes}
                 edges={edges}
             />
+            {state.graphDebugMode && (
+                <DebugLayer className={styles.graph_edges} width={props.width} height={props.height} info={debugInfo} />
+            )}
             <NodeLayer
                 className={styles.graph_nodes}
                 width={props.width}
