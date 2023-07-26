@@ -124,11 +124,11 @@ export function createDefaultState(): AppState {
         graphConfig: {
             iterationsClustering: 10,
             iterationsRefinement: 40,
-            forceScaling: 50.0,
+            forceScaling: 100.0,
             cooldownFactor: 0.99,
-            repulsionForce: 5.0,
-            edgeAttractionForce: 2.0,
-            gravityForce: 1.0,
+            repulsionForce: 10.0,
+            edgeAttractionForce: 4.0,
+            gravityForce: 2.0,
             initialRadius: 400.0,
             boardWidth: DEFAULT_BOARD_WIDTH,
             boardHeight: DEFAULT_BOARD_HEIGHT,
@@ -137,7 +137,7 @@ export function createDefaultState(): AppState {
             tableMargin: 32,
         },
         graphLayout: null,
-        graphDebugMode: true,
+        graphDebugMode: false,
         graphDebugInfo: null,
     };
 }
