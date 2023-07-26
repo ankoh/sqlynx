@@ -16,7 +16,10 @@ export interface NodeLayout {
 }
 
 export interface EdgeLayout {
-    path: Float64Array;
+    fromX: number;
+    fromY: number;
+    toX: number;
+    toY: number;
 }
 
 export function layoutSchemaGraph(ctx: AppState): [NodeLayout[], EdgeLayout[]] {
@@ -120,13 +123,11 @@ export function layoutSchemaGraph(ctx: AppState): [NodeLayout[], EdgeLayout[]] {
             for (let r = 0; r < countRight; ++r) {
                 const ri = edgeNodes[begin + countLeft + r];
                 const rn = nodes[ri];
-                const path = new Float64Array(4);
-                path[0] = ln.x + ln.width / 2;
-                path[1] = ln.y + ln.height / 2;
-                path[2] = rn.x + rn.width / 2;
-                path[3] = rn.y + rn.height / 2;
                 edges.push({
-                    path,
+                    fromX: ln.x + ln.width / 2,
+                    fromY: ln.y + ln.height / 2,
+                    toX: rn.x + rn.width / 2,
+                    toY: rn.y + rn.height / 2,
                 });
             }
         }
