@@ -343,12 +343,13 @@ std::unique_ptr<proto::SchemaGraphDebugInfoT> SchemaGraph::Describe() const {
     double repulsion_scaled = config.repulsion_force * config.force_scaling;
     double repulsion_squared = repulsion_scaled;
 
+    size_t writer = 0;
     for (size_t i = 0; i < nodes.size(); ++i) {
         for (size_t j = i + 1; j < nodes.size(); ++j) {
-            size_t o = i * nodes.size() + j;
             double dist = euclidean(nodes[i].position - nodes[j].position);
-            desc->node_distances[o] = dist;
-            desc->node_repulsions[o] = repulsion_squared / dist;
+            desc->node_distances[writer] = dist;
+            desc->node_repulsions[writer] = repulsion_squared / dist;
+            ++writer;
         }
     }
     return desc;
