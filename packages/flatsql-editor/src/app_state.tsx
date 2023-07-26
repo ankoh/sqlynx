@@ -137,7 +137,7 @@ export function createDefaultState(): AppState {
             tableMargin: 32,
         },
         graphLayout: null,
-        graphDebugMode: false,
+        graphDebugMode: true,
         graphDebugInfo: null,
     };
 }
