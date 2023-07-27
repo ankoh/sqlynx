@@ -35,10 +35,10 @@ function getPathOrientation(fromX: number, fromY: number, toX: number, toY: numb
     const diffY = toY - fromY;
     const angle = (Math.atan2(diffY, diffX) * 180) / Math.PI;
     console.log(`${angle}`);
-    if (Math.abs(angle) <= 15) {
+    if (Math.abs(angle) <= 10) {
         return PathOrientation.East;
     }
-    if (Math.abs(angle) >= 165) {
+    if (Math.abs(angle) >= 170) {
         return PathOrientation.West;
     }
     return angle > 0 ? PathOrientation.South : PathOrientation.North;
