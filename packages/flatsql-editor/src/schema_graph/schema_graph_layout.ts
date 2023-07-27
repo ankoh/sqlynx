@@ -15,13 +15,6 @@ export interface NodeLayout {
     columns: TableColumn[];
 }
 
-export enum PathOrientation {
-    East,
-    South,
-    West,
-    North,
-}
-
 export interface EdgeLayout {
     fromX: number;
     fromY: number;
@@ -30,18 +23,43 @@ export interface EdgeLayout {
     orientation: PathOrientation;
 }
 
+export enum PathOrientation {
+    West = 0,
+    WestSouth = 1,
+    SouthWest = 2,
+    South = 3,
+    SouthEast = 4,
+    EastSouth = 5,
+    East = 6,
+    EastNorth = 7,
+    NorthEast = 8,
+    North = 9,
+    NorthWest = 10,
+    WestNorth = 11,
+}
+
+export function getPathOrientationFromAngle(angle: number): PathOrientation {
+    const side = 10;
+    let i = 0;
+    i += +(angle > -180);
+    i += +(angle > -180 + side);
+    i += +(angle >= -90);
+    i += +(angle > -90);
+    i += +(angle > -side);
+    i += +(angle >= 0);
+    i += +(angle > 0);
+    i += +(angle > side);
+    i += +(angle >= 90);
+    i += +(angle > 90);
+    i += +(angle > 180 - side);
+    return i as PathOrientation;
+}
+
 function getPathOrientation(fromX: number, fromY: number, toX: number, toY: number): PathOrientation {
     const diffX = toX - fromX;
     const diffY = toY - fromY;
     const angle = (Math.atan2(diffY, diffX) * 180) / Math.PI;
-    console.log(`${angle}`);
-    if (Math.abs(angle) <= 10) {
-        return PathOrientation.East;
-    }
-    if (Math.abs(angle) >= 170) {
-        return PathOrientation.West;
-    }
-    return angle > 0 ? PathOrientation.South : PathOrientation.North;
+    return getPathOrientationFromAngle(angle);
 }
 
 export function layoutSchemaGraph(ctx: AppState): [NodeLayout[], EdgeLayout[]] {
