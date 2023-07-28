@@ -38,9 +38,6 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
     return (
         <div className={cn(styles.graph_container, props.className)}>
             <BackgroundLayer className={styles.graph_background} />
-            {state.graphDebugMode && (
-                <DebugLayer className={styles.graph_edges} width={props.width} height={props.height} info={debugInfo} />
-            )}
             <EdgeLayer
                 className={styles.graph_edges}
                 boardWidth={props.width}
@@ -57,6 +54,9 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
                 nodes={nodes}
                 edges={edges}
             />
+            {state.graphDebugMode && (
+                <DebugLayer className={styles.graph_edges} width={props.width} height={props.height} info={debugInfo} />
+            )}
         </div>
     );
 };
