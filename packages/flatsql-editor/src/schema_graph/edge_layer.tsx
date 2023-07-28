@@ -55,7 +55,7 @@ function buildBezier(path: PathBuilder, edge: EdgeLayout, width: number, height:
         return;
     }
 
-    const borderRadius = 30;
+    const borderRadius = 20;
 
     const diffX = Math.abs(edge.toX - edge.fromX);
     const diffY = Math.abs(edge.toY - edge.fromY);
