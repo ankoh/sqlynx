@@ -204,7 +204,7 @@ extern "C" void flatsql_schemagraph_configure(flatsql::SchemaGraph* graph, size_
                                               double cooldown_factor, double repulsion_force,
                                               double edge_attraction_force, double gravity_force, double initial_radius,
                                               double board_width, double board_height, double table_width,
-                                              double table_height, double table_margin) {
+                                              double table_height, double table_margin, double grid_size) {
     SchemaGraph::Config config;
     config.iterations_clustering = iterations_clustering;
     config.iterations_refinement = iterations_refinement;
@@ -219,6 +219,7 @@ extern "C" void flatsql_schemagraph_configure(flatsql::SchemaGraph* graph, size_
     config.table_width = table_width;
     config.table_height = table_height;
     config.table_margin = table_margin;
+    config.grid_size = grid_size;
     graph->Configure(config);
 }
 /// Update a schema graph

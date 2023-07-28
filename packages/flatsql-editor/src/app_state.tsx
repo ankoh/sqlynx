@@ -135,6 +135,7 @@ export function createDefaultState(): AppState {
             tableWidth: 180,
             tableHeight: 36,
             tableMargin: 32,
+            gridSize: 16,
         },
         graphLayout: null,
         graphDebugMode: false,

@@ -36,6 +36,7 @@ interface FlatSQLModuleExports {
         tableWidth: number,
         tableHeight: number,
         tableMargin: number,
+        gridSize: number,
     ) => void;
     flatsql_schemagraph_load_script: (ptr: number, script: number) => number;
 }
@@ -112,6 +113,7 @@ export class FlatSQL {
                 tableWidth: number,
                 tableHeight: number,
                 tableMargin: number,
+                gridSize: number,
             ) => void,
             flatsql_schemagraph_load_script: parserExports['flatsql_schemagraph_load_script'] as (
                 ptr: number,
@@ -412,6 +414,7 @@ export interface FlatSQLSchemaGraphConfig {
     tableWidth: number;
     tableHeight: number;
     tableMargin: number;
+    gridSize: number;
 }
 
 export class FlatSQLSchemaGraph {
@@ -457,6 +460,7 @@ export class FlatSQLSchemaGraph {
             config.tableWidth,
             config.tableHeight,
             config.tableMargin,
+            config.gridSize,
         );
     }
     /// Load a script
