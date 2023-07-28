@@ -15,7 +15,7 @@ namespace flatsql {
 namespace {
 
 constexpr size_t NULL_TABLE_ID = std::numeric_limits<uint32_t>::max();
-constexpr size_t GRID_SIZE = 8;
+constexpr size_t GRID_SIZE = 16;
 constexpr double MIN_DISTANCE = 0.5;
 
 SchemaGraph::Vertex operator+(const SchemaGraph::Vertex& p, const SchemaGraph::Vector& v) {
