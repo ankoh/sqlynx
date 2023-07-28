@@ -124,9 +124,9 @@ export function createDefaultState(): AppState {
         graphConfig: {
             iterationsClustering: 10,
             iterationsRefinement: 40,
-            forceScaling: 100.0,
+            forceScaling: 50.0,
             cooldownFactor: 0.99,
-            repulsionForce: 10.0,
+            repulsionForce: 2.0,
             edgeAttractionForce: 4.0,
             gravityForce: 2.0,
             initialRadius: 400.0,
