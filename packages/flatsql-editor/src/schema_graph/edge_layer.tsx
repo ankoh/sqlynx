@@ -50,19 +50,19 @@ class PathBuilder {
         this.path[this.i] = x;
         this.path[this.i + 1] = y;
     }
-    finishDirect(): string {
+    buildDirect(): string {
         const p = this.path;
         this.toX = p[2];
         this.toY = p[3];
         return `M ${p[0]} ${p[1]} L ${p[2]} ${p[3]}`;
     }
-    finish1Turn(): string {
+    build1Turn(): string {
         const p = this.path;
-        this.toX = p[2];
-        this.toY = p[3];
-        return `M ${p[0]} ${p[1]} L ${p[2]} ${p[3]}`;
+        this.toX = p[8];
+        this.toY = p[9];
+        return `M ${p[0]} ${p[1]} L ${p[2]} ${p[3]} Q ${p[4]} ${p[5]}, ${p[6]} ${p[7]} L ${p[8]} ${p[9]}`;
     }
-    finish2Turns(): string {
+    build2Turns(): string {
         const p = this.path;
         this.toX = p[14];
         this.toY = p[15];
@@ -75,56 +75,113 @@ function buildBezier(path: PathBuilder, edge: EdgeLayout, width: number, height:
         return;
     }
 
-    const borderRadius = 20;
+    const borderRadius = 8;
 
     const diffX = Math.abs(edge.toX - edge.fromX);
     const diffY = Math.abs(edge.toY - edge.fromY);
     const midX = diffX / 2;
     const midY = diffY / 2;
 
-    let pathText: string = '';
     switch (edge.orientation) {
+        // DIRECT
+
         case PathOrientation.North:
-        case PathOrientation.West:
         case PathOrientation.South:
         case PathOrientation.East:
+        case PathOrientation.West:
             path.begin(edge.fromX, edge.fromY);
             path.push(edge.toX, edge.toY);
-            return path.finishDirect();
+            return path.buildDirect();
+
+        // 1 TURN
+
+        case PathOrientation.NorthEast:
+            path.begin(edge.fromX, edge.fromY + height / 2);
+            path.push(edge.fromX, edge.fromY + Math.max(diffY, borderRadius) - borderRadius);
+            path.push(edge.fromX, edge.toY);
+            path.push(edge.toX - (Math.max(diffX, borderRadius) - borderRadius), edge.toY);
+            path.push(edge.toX - width / 2, edge.toY);
+            return path.build1Turn();
+
+        case PathOrientation.NorthWest:
+            path.begin(edge.fromX, edge.fromY + height / 2);
+            path.push(edge.fromX, edge.fromY + Math.max(diffY, borderRadius) - borderRadius);
+            path.push(edge.fromX, edge.toY);
+            path.push(edge.toX + (Math.max(diffX, borderRadius) - borderRadius), edge.toY);
+            path.push(edge.toX + width / 2, edge.toY);
+            return path.build1Turn();
+
+        case PathOrientation.SouthEast:
+            path.begin(edge.fromX, edge.fromY - height / 2);
+            path.push(edge.fromX, edge.fromY - Math.max(diffY, borderRadius) + borderRadius);
+            path.push(edge.fromX, edge.toY);
+            path.push(edge.toX - (Math.max(diffX, borderRadius) - borderRadius), edge.toY);
+            path.push(edge.toX - width / 2, edge.toY);
+            return path.build1Turn();
 
         case PathOrientation.SouthWest:
-        case PathOrientation.SouthEast:
-        case PathOrientation.NorthEast:
-        case PathOrientation.NorthWest:
-        case PathOrientation.WestSouth:
-        case PathOrientation.EastSouth:
+            path.begin(edge.fromX, edge.fromY - height / 2);
+            path.push(edge.fromX, edge.fromY - Math.max(diffY, borderRadius) + borderRadius);
+            path.push(edge.fromX, edge.toY);
+            path.push(edge.toX + (Math.max(diffX, borderRadius) - borderRadius), edge.toY);
+            path.push(edge.toX + width / 2, edge.toY);
+            return path.build1Turn();
+
         case PathOrientation.EastNorth:
+            path.begin(edge.fromX + width / 2, edge.fromY);
+            path.push(edge.fromX + Math.max(diffX, borderRadius) - borderRadius, edge.fromY);
+            path.push(edge.toX, edge.fromY);
+            path.push(edge.toX, edge.toY - (Math.max(diffY, borderRadius) - borderRadius));
+            path.push(edge.toX, edge.toY - height / 2);
+            return path.build1Turn();
+
+        case PathOrientation.EastSouth:
+            path.begin(edge.fromX + width / 2, edge.fromY);
+            path.push(edge.fromX + Math.max(diffX, borderRadius) - borderRadius, edge.fromY);
+            path.push(edge.toX, edge.fromY);
+            path.push(edge.toX, edge.toY + (Math.max(diffY, borderRadius) - borderRadius));
+            path.push(edge.toX, edge.toY + height / 2);
+            return path.build1Turn();
+
         case PathOrientation.WestNorth:
-            path.begin(edge.fromX, edge.fromY);
-            path.push(edge.toX, edge.toY);
-            return path.finishDirect();
+            path.begin(edge.fromX - width / 2, edge.fromY);
+            path.push(edge.fromX - Math.max(diffX, borderRadius) + borderRadius, edge.fromY);
+            path.push(edge.toX, edge.fromY);
+            path.push(edge.toX, edge.toY - (Math.max(diffY, borderRadius) - borderRadius));
+            path.push(edge.toX, edge.toY - height / 2);
+            return path.build1Turn();
+
+        case PathOrientation.WestSouth:
+            path.begin(edge.fromX - width / 2, edge.fromY);
+            path.push(edge.fromX - Math.max(diffX, borderRadius) + borderRadius, edge.fromY);
+            path.push(edge.toX, edge.fromY);
+            path.push(edge.toX, edge.toY + (Math.max(diffY, borderRadius) - borderRadius));
+            path.push(edge.toX, edge.toY + height / 2);
+            return path.build1Turn();
+
+        // 2 TURNS
 
         case PathOrientation.EastNorthEast:
-            path.begin(edge.fromX + width / 2, edge.fromY); // A
-            path.push(edge.fromX + Math.max(midX, borderRadius) - borderRadius, edge.fromY); // B
-            path.push(edge.fromX + midX, edge.fromY); // C
-            path.push(edge.fromX + midX, edge.fromY + Math.min(borderRadius, diffY / 2)); // D
-            path.push(edge.fromX + midX, edge.fromY + diffY - Math.min(borderRadius, diffY / 2)); // E
-            path.push(edge.fromX + midX, edge.toY); // F
-            path.push(edge.toX - (Math.max(midX, borderRadius) - borderRadius), edge.toY); // G
-            path.push(edge.toX - width / 2, edge.toY); // H
-            return path.finish2Turns();
+            path.begin(edge.fromX + width / 2, edge.fromY);
+            path.push(edge.fromX + Math.max(midX, borderRadius) - borderRadius, edge.fromY);
+            path.push(edge.fromX + midX, edge.fromY);
+            path.push(edge.fromX + midX, edge.fromY + Math.min(borderRadius, diffY / 2));
+            path.push(edge.fromX + midX, edge.fromY + diffY - Math.min(borderRadius, diffY / 2));
+            path.push(edge.fromX + midX, edge.toY);
+            path.push(edge.toX - (Math.max(midX, borderRadius) - borderRadius), edge.toY);
+            path.push(edge.toX - width / 2, edge.toY);
+            return path.build2Turns();
 
         case PathOrientation.SouthEastSouth:
-            path.begin(edge.fromX, edge.fromY - height / 2); // A
-            path.push(edge.fromX, edge.fromY - Math.max(midY, borderRadius) + borderRadius); // B
-            path.push(edge.fromX, edge.fromY - midY); // C
-            path.push(edge.fromX + Math.min(borderRadius, diffX / 2), edge.fromY - midY); // D
-            path.push(edge.fromX + diffX - Math.min(borderRadius, diffX / 2), edge.fromY - midY); // E
-            path.push(edge.toX, edge.fromY - midY); // F
-            path.push(edge.toX, edge.toY + (Math.max(midY, borderRadius) - borderRadius)); // G
-            path.push(edge.toX, edge.toY + height / 2); // H
-            return path.finish2Turns();
+            path.begin(edge.fromX, edge.fromY - height / 2);
+            path.push(edge.fromX, edge.fromY - Math.max(midY, borderRadius) + borderRadius);
+            path.push(edge.fromX, edge.fromY - midY);
+            path.push(edge.fromX + Math.min(borderRadius, diffX / 2), edge.fromY - midY);
+            path.push(edge.fromX + diffX - Math.min(borderRadius, diffX / 2), edge.fromY - midY);
+            path.push(edge.toX, edge.fromY - midY);
+            path.push(edge.toX, edge.toY + (Math.max(midY, borderRadius) - borderRadius));
+            path.push(edge.toX, edge.toY + height / 2);
+            return path.build2Turns();
 
         case PathOrientation.SouthWestSouth:
         case PathOrientation.NorthEastNorth:
@@ -134,7 +191,7 @@ function buildBezier(path: PathBuilder, edge: EdgeLayout, width: number, height:
         case PathOrientation.WestNorthWest:
             path.begin(edge.fromX, edge.fromY);
             path.push(edge.toX, edge.toY);
-            return path.finishDirect();
+            return path.buildDirect();
     }
 }
 
