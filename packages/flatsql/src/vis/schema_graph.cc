@@ -86,7 +86,7 @@ void step(const Config& config, const AdjacencyMap& adjacency, std::vector<Node>
     Vertex center{config.board_width / 2, config.board_height / 2};
 
     double repulsion_scaled = config.repulsion_force * config.force_scaling;
-    double repulsion_squared = repulsion_scaled;
+    double repulsion_squared = repulsion_scaled * repulsion_scaled;
     double edge_attraction_scaled = config.edge_attraction_force * config.force_scaling;
     double edge_attraction_squared = edge_attraction_scaled * edge_attraction_scaled;
     double gravity_scaled = config.gravity_force * config.force_scaling;
@@ -108,7 +108,7 @@ void step(const Config& config, const AdjacencyMap& adjacency, std::vector<Node>
         for (size_t j : adjacency[i]) {
             Vector delta = nodes[i].position - nodes[j].position;
             double distance = std::max(euclidean(delta), MIN_DISTANCE);
-            double attraction = edge_attraction_scaled * sqrt(distance);
+            double attraction = edge_attraction_scaled * distance;
             Vector normal = delta / distance;
             displacement[i] = displacement[i] - normal * attraction / 2;
             displacement[j] = displacement[j] + normal * attraction / 2;
@@ -159,7 +159,7 @@ void step(const Config& config, const AdjacencyMap& adjacency, std::vector<Node>
                     directed = jiggle(i ^ j, iteration, directed);
                     distance = std::max(euclidean(directed), distance);
                 }
-                double repulsion = repulsion_squared / distance;
+                double repulsion = repulsion_squared / (distance * distance);
                 Vector displace_normal = directed / distance;
                 displacement[i] = displacement[i] - (displace_normal * repulsion / 2);
                 displacement[j] = displacement[j] + (displace_normal * repulsion / 2);
@@ -350,14 +350,22 @@ std::unique_ptr<proto::SchemaGraphDebugInfoT> SchemaGraph::Describe() const {
     desc->node_repulsions.resize(n);
 
     double repulsion_scaled = config.repulsion_force * config.force_scaling;
-    double repulsion_squared = repulsion_scaled;
+    double repulsion_squared = repulsion_scaled * repulsion_scaled;
 
     size_t writer = 0;
     for (size_t i = 0; i < nodes.size(); ++i) {
         for (size_t j = i + 1; j < nodes.size(); ++j) {
-            double dist = euclidean(nodes[i].position - nodes[j].position);
+            auto& node_i = nodes[i];
+            auto& node_j = nodes[j];
+            double body_x = (node_i.width + node_j.width) / 2;
+            double body_y = (node_i.height + node_j.height) / 2;
+            double diff_x = abs(node_i.position.x - node_j.position.x);
+            double diff_y = abs(node_i.position.y - node_j.position.y);
+            Vector undirected{abs(body_x - diff_x), abs(body_y - diff_y)};
+            double dist = euclidean(undirected);
+
             desc->node_distances[writer] = dist;
-            desc->node_repulsions[writer] = repulsion_squared / dist;
+            desc->node_repulsions[writer] = repulsion_squared / (dist * dist);
             ++writer;
         }
     }
