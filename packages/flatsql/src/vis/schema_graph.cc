@@ -14,6 +14,10 @@ namespace flatsql {
 
 namespace {
 
+constexpr size_t NULL_TABLE_ID = std::numeric_limits<uint32_t>::max();
+constexpr size_t GRID_SIZE = 8;
+constexpr double MIN_DISTANCE = 0.5;
+
 SchemaGraph::Vertex operator+(const SchemaGraph::Vertex& p, const SchemaGraph::Vector& v) {
     return {p.x + v.dx, p.y + v.dy};
 }
@@ -89,8 +93,6 @@ void step(const Config& config, const AdjacencyMap& adjacency, std::vector<Node>
     double gravity_squared = gravity_scaled * gravity_scaled;
 
     // XXX Repulsion should be updated more carefully using a quad tree
-
-    constexpr double MIN_DISTANCE = 0.5;
 
     for (size_t i = 0; i < nodes.size(); ++i) {
         // Center attraction / repulsion
@@ -182,7 +184,12 @@ void step(const Config& config, const AdjacencyMap& adjacency, std::vector<Node>
     temperature *= config.cooldown_factor;
 }
 
-constexpr size_t NULL_TABLE_ID = std::numeric_limits<uint32_t>::max();
+static void snapToGrid(std::vector<Node>& nodes) {
+    for (auto& node : nodes) {
+        node.position.x = round(node.position.x / GRID_SIZE) * GRID_SIZE;
+        node.position.y = round(node.position.y / GRID_SIZE) * GRID_SIZE;
+    }
+}
 
 }  // namespace
 
@@ -290,6 +297,7 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
     for (size_t i = 0; i < config.iterations_refinement; ++i) {
         step<LayoutPhase::REFINEMENT>(config, adjacency, nodes, displacement, temperature, i);
     }
+    snapToGrid(nodes);
 }
 
 flatbuffers::Offset<proto::SchemaGraphLayout> SchemaGraph::Pack(flatbuffers::FlatBufferBuilder& builder) {
