@@ -20,10 +20,10 @@ export interface EdgeLayout {
     fromY: number;
     toX: number;
     toY: number;
-    orientation: PathOrientation;
+    orientation: EdgeType;
 }
 
-export enum PathOrientation {
+export enum EdgeType {
     // Angle is multiple of 90
     West = 0,
     South = 1,
@@ -51,27 +51,27 @@ export enum PathOrientation {
     WestNorthWest = 19,
 }
 
-function getPathOrientationFromAngle(angle: number): PathOrientation {
+function selectEdgeTypeFromAngle(angle: number): EdgeType {
     const sector = angle / 90; // [-2, 2[
     if (sector == Math.floor(sector)) {
-        return (sector + 2) as PathOrientation; // [0, 4[
+        return (sector + 2) as EdgeType; // [0, 4[
     } else {
-        return (Math.floor(sector) + 2 + 4) as PathOrientation; // [4, 8[
+        return (Math.floor(sector) + 2 + 4) as EdgeType; // [4, 8[
     }
 }
 
-function getPathOrientation(
+function selectEdgeType(
     fromX: number,
     fromY: number,
     toX: number,
     toY: number,
     width: number,
     height: number,
-): PathOrientation {
+): EdgeType {
     const dx = toX - fromX;
     const dy = toY - fromY;
     const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
-    let orientation = getPathOrientationFromAngle(angle);
+    let orientation = selectEdgeTypeFromAngle(angle);
     const dxBox = Math.max(Math.abs(dx), width) - width;
     const dyBox = Math.max(Math.abs(dy), height) - height;
     if (orientation >= 4) {
@@ -200,7 +200,7 @@ export function layoutSchemaGraph(ctx: AppState): [NodeLayout[], EdgeLayout[]] {
                     fromY,
                     toX,
                     toY,
-                    orientation: getPathOrientation(fromX, fromY, toX, toY, ln.width, ln.height),
+                    orientation: selectEdgeType(fromX, fromY, toX, toY, ln.width, ln.height),
                 });
             }
         }
