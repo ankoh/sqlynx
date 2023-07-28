@@ -15,7 +15,6 @@ namespace flatsql {
 namespace {
 
 constexpr size_t NULL_TABLE_ID = std::numeric_limits<uint32_t>::max();
-constexpr size_t GRID_SIZE = 16;
 constexpr double MIN_DISTANCE = 0.5;
 
 SchemaGraph::Vertex operator+(const SchemaGraph::Vertex& p, const SchemaGraph::Vector& v) {
@@ -184,10 +183,11 @@ void step(const Config& config, const AdjacencyMap& adjacency, std::vector<Node>
     temperature *= config.cooldown_factor;
 }
 
-static void snapToGrid(std::vector<Node>& nodes) {
+static void snapToGrid(const Config& config, std::vector<Node>& nodes) {
+    size_t grid_size = std::max(config.grid_size, 1.0);
     for (auto& node : nodes) {
-        node.position.x = round(node.position.x / GRID_SIZE) * GRID_SIZE;
-        node.position.y = round(node.position.y / GRID_SIZE) * GRID_SIZE;
+        node.position.x = round(node.position.x / grid_size) * grid_size;
+        node.position.y = round(node.position.y / grid_size) * grid_size;
     }
 }
 
@@ -297,7 +297,7 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
     for (size_t i = 0; i < config.iterations_refinement; ++i) {
         step<LayoutPhase::REFINEMENT>(config, adjacency, nodes, displacement, temperature, i);
     }
-    snapToGrid(nodes);
+    snapToGrid(config, nodes);
 }
 
 flatbuffers::Offset<proto::SchemaGraphLayout> SchemaGraph::Pack(flatbuffers::FlatBufferBuilder& builder) {
