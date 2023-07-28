@@ -73,6 +73,8 @@ class SchemaGraph {
         double table_width = 0;
         /// The table margin
         double table_margin = 0;
+        /// The grid size
+        double grid_size = 0;
     };
 
    protected:
