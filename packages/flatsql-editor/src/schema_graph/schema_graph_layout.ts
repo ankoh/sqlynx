@@ -24,42 +24,70 @@ export interface EdgeLayout {
 }
 
 export enum PathOrientation {
+    // Angle is multiple of 90
     West = 0,
-    WestSouth = 1,
-    SouthWest = 2,
-    South = 3,
-    SouthEast = 4,
-    EastSouth = 5,
-    East = 6,
-    EastNorth = 7,
-    NorthEast = 8,
-    North = 9,
-    NorthWest = 10,
+    South = 1,
+    East = 2,
+    North = 3,
+    // dy >= dx
+    SouthWest = 4,
+    SouthEast = 5,
+    NorthEast = 6,
+    NorthWest = 7,
+    // dx > dy
+    WestSouth = 8,
+    EastSouth = 9,
+    EastNorth = 10,
     WestNorth = 11,
+    // dy >= dx && dx < width
+    SouthWestSouth = 12,
+    SouthEastSouth = 13,
+    NorthEastNorth = 14,
+    NorthWestNorth = 15,
+    // dx > dy && dy < height
+    WestSouthWest = 16,
+    EastSouthEast = 17,
+    EastNorthEast = 18,
+    WestNorthWest = 19,
 }
 
-export function getPathOrientationFromAngle(angle: number): PathOrientation {
-    const side = 10;
-    let i = 0;
-    i += +(angle > -180);
-    i += +(angle > -180 + side);
-    i += +(angle >= -90);
-    i += +(angle > -90);
-    i += +(angle > -side);
-    i += +(angle >= 0);
-    i += +(angle > 0);
-    i += +(angle > side);
-    i += +(angle >= 90);
-    i += +(angle > 90);
-    i += +(angle > 180 - side);
-    return i as PathOrientation;
+function getPathOrientationFromAngle(angle: number): PathOrientation {
+    const sector = angle / 90; // [-2, 2[
+    if (sector == Math.floor(sector)) {
+        return (sector + 2) as PathOrientation; // [0, 4[
+    } else {
+        return (Math.floor(sector) + 2 + 4) as PathOrientation; // [4, 8[
+    }
 }
 
-function getPathOrientation(fromX: number, fromY: number, toX: number, toY: number): PathOrientation {
-    const diffX = toX - fromX;
-    const diffY = toY - fromY;
-    const angle = (Math.atan2(diffY, diffX) * 180) / Math.PI;
-    return getPathOrientationFromAngle(angle);
+function getPathOrientation(
+    fromX: number,
+    fromY: number,
+    toX: number,
+    toY: number,
+    width: number,
+    height: number,
+): PathOrientation {
+    const dx = toX - fromX;
+    const dy = toY - fromY;
+    const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+    let orientation = getPathOrientationFromAngle(angle);
+    const dxBox = Math.max(Math.abs(dx), width) - width;
+    const dyBox = Math.max(Math.abs(dy), height) - height;
+    if (orientation >= 4) {
+        if (dxBox > dyBox) {
+            orientation += 4; // [8, 12[
+            if (Math.abs(dy) < height) {
+                orientation += 8; // [16, 20[
+            }
+        } else {
+            if (Math.abs(dx) < width) {
+                orientation += 8; // [12, 16[
+            }
+        }
+    }
+    console.log(`${dx.toFixed(2)} ${dy.toFixed(2)} ${angle.toFixed(2)}: ${orientation}`);
+    return orientation;
 }
 
 export function layoutSchemaGraph(ctx: AppState): [NodeLayout[], EdgeLayout[]] {
@@ -172,7 +200,7 @@ export function layoutSchemaGraph(ctx: AppState): [NodeLayout[], EdgeLayout[]] {
                     fromY,
                     toX,
                     toY,
-                    orientation: getPathOrientation(fromX, fromY, toX, toY),
+                    orientation: getPathOrientation(fromX, fromY, toX, toY, ln.width, ln.height),
                 });
             }
         }
