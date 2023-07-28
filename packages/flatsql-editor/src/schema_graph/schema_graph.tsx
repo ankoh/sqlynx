@@ -3,7 +3,7 @@ import { NodeLayer } from './node_layer';
 import { EdgeLayer } from './edge_layer';
 import { DebugLayer } from './debug_layer';
 import { BackgroundLayer } from './background_layer';
-import { layoutDebugInfo, layoutSchemaGraph } from './schema_graph_layout';
+import { layoutDebugInfo, layoutSchemaGraph } from './graph_layout';
 import { RESIZE_SCHEMA_GRAPH, useAppStateDispatch, useAppState } from '../app_state_reducer';
 import cn from 'classnames';
 
