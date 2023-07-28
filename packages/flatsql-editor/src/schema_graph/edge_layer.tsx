@@ -234,7 +234,7 @@ function buildEdgePath(path: EdgeBuilder, edge: EdgeLayout, width: number, heigh
             path.push(edge.fromX + Math.min(r, diffX / 2), edge.fromY + midY);
             path.push(edge.fromX + diffX - Math.min(r, diffX / 2), edge.fromY + midY);
             path.push(edge.toX, edge.fromY + midY);
-            path.push(edge.toX, edge.toY - (Math.max(midY, r) + r));
+            path.push(edge.toX, edge.toY - (Math.max(midY, r) - r));
             path.push(edge.toX, edge.toY - height / 2);
             return path.build2Turns();
 
@@ -245,7 +245,7 @@ function buildEdgePath(path: EdgeBuilder, edge: EdgeLayout, width: number, heigh
             path.push(edge.fromX - Math.min(r, diffX / 2), edge.fromY + midY);
             path.push(edge.fromX - diffX + Math.min(r, diffX / 2), edge.fromY + midY);
             path.push(edge.toX, edge.fromY + midY);
-            path.push(edge.toX, edge.toY - (Math.max(midY, r) + r));
+            path.push(edge.toX, edge.toY - (Math.max(midY, r) - r));
             path.push(edge.toX, edge.toY - height / 2);
             return path.build2Turns();
     }
