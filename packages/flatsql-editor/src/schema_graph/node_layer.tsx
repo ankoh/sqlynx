@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { NodeLayout } from './schema_graph_layout';
+import { NodeLayout } from './graph_layout';
 
 import iconTable from '../../static/svg/icons/table.svg';
 import iconTableView from '../../static/svg/icons/table_border.svg';

@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { DebugInfo } from './schema_graph_layout';
+import { DebugInfo } from './graph_layout';
 
 import styles from './debug_layer.module.css';
 
