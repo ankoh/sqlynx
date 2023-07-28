@@ -77,11 +77,11 @@ function getPathOrientation(
     if (orientation >= 4) {
         if (dxBox > dyBox) {
             orientation += 4; // [8, 12[
-            if (Math.abs(dy) < height) {
+            if (Math.abs(dy) < height / 2) {
                 orientation += 8; // [16, 20[
             }
         } else {
-            if (Math.abs(dx) < width) {
+            if (Math.abs(dx) < width / 2) {
                 orientation += 8; // [12, 16[
             }
         }
