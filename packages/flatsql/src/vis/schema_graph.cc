@@ -125,15 +125,6 @@ void step(const Config& config, const AdjacencyMap& adjacency, std::vector<Node>
             border_push.dy -= (south.y > config.board_height) ? (south.y - config.board_height) : 0;
             border_push.dx += (west.x < 0) ? -west.x : 0;
             displacement[i] = displacement[i] + repulsion_squared * border_push;
-        } else {
-            Vector border_push;
-            border_push.dy += (nodes[i].position.y < 0) ? -nodes[i].position.y : 0;
-            border_push.dx -=
-                (nodes[i].position.x > config.board_width) ? (nodes[i].position.x - config.board_width) : 0;
-            border_push.dy -=
-                (nodes[i].position.y > config.board_height) ? (nodes[i].position.y - config.board_height) : 0;
-            border_push.dx += (nodes[i].position.x < 0) ? -nodes[i].position.x : 0;
-            displacement[i] = displacement[i] + repulsion_squared * border_push;
         }
 
         // Repulsion force towards other tables
