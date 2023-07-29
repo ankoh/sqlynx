@@ -1,5 +1,7 @@
 import * as flatsql from '@ankoh/flatsql';
+
 import { AppState, ScriptKey } from '../app_state';
+import { EdgePathBuilder, EdgeType, PORTS_FROM, PORTS_TO, buildEdgePath, selectEdgeType } from './graph_edges';
 
 export interface NodeLayout {
     tableId: number;
@@ -22,131 +24,20 @@ export interface EdgeLayout {
     toX: number;
     toY: number;
     type: EdgeType;
+    path: string;
 }
 
-export enum EdgeType {
-    // Angle is multiple of 90
-    West = 0,
-    South = 1,
-    East = 2,
-    North = 3,
-    // dy >= dx
-    SouthWest = 4,
-    SouthEast = 5,
-    NorthEast = 6,
-    NorthWest = 7,
-    // dx > dy
-    WestSouth = 8,
-    EastSouth = 9,
-    EastNorth = 10,
-    WestNorth = 11,
-    // dy >= dx && dx < width
-    SouthWestSouth = 12,
-    SouthEastSouth = 13,
-    NorthEastNorth = 14,
-    NorthWestNorth = 15,
-    // dx > dy && dy < height
-    WestSouthWest = 16,
-    EastSouthEast = 17,
-    EastNorthEast = 18,
-    WestNorthWest = 19,
+export interface SchemaGraphLayout {
+    nodes: NodeLayout[];
+    edges: EdgeLayout[];
 }
 
-export enum NodePort {
-    North = 0b0001,
-    East = 0b0010,
-    South = 0b0100,
-    West = 0b1000,
-}
-
-const PORTS_FROM = new Uint8Array([
-    NodePort.West,
-    NodePort.South,
-    NodePort.East,
-    NodePort.North,
-    NodePort.South,
-    NodePort.South,
-    NodePort.North,
-    NodePort.North,
-    NodePort.West,
-    NodePort.East,
-    NodePort.East,
-    NodePort.West,
-    NodePort.South,
-    NodePort.South,
-    NodePort.North,
-    NodePort.North,
-    NodePort.West,
-    NodePort.East,
-    NodePort.East,
-    NodePort.West,
-]);
-
-const PORTS_TO = new Uint8Array([
-    NodePort.East,
-    NodePort.North,
-    NodePort.West,
-    NodePort.South,
-    NodePort.East,
-    NodePort.West,
-    NodePort.West,
-    NodePort.East,
-    NodePort.North,
-    NodePort.North,
-    NodePort.South,
-    NodePort.South,
-    NodePort.North,
-    NodePort.North,
-    NodePort.South,
-    NodePort.South,
-    NodePort.East,
-    NodePort.West,
-    NodePort.West,
-    NodePort.East,
-]);
-
-function selectEdgeTypeFromAngle(angle: number): EdgeType {
-    const sector = angle / 90; // [-2, 2[
-    if (sector == Math.floor(sector)) {
-        return (sector + 2) as EdgeType; // [0, 4[
-    } else {
-        return (Math.floor(sector) + 2 + 4) as EdgeType; // [4, 8[
-    }
-}
-
-function selectEdgeType(
-    fromX: number,
-    fromY: number,
-    toX: number,
-    toY: number,
-    width: number,
-    height: number,
-): EdgeType {
-    const dx = toX - fromX;
-    const dy = toY - fromY;
-    const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
-    let orientation = selectEdgeTypeFromAngle(angle);
-    const dxBox = Math.max(Math.abs(dx), width) - width;
-    const dyBox = Math.max(Math.abs(dy), height) - height;
-    if (orientation >= 4) {
-        if (dxBox > dyBox) {
-            orientation += 4; // [8, 12[
-            if (Math.abs(dy) < height / 2) {
-                orientation += 8; // [16, 20[
-            }
-        } else {
-            if (Math.abs(dx) < width / 2) {
-                orientation += 8; // [12, 16[
-            }
-        }
-    }
-    console.log(`${dx.toFixed(2)} ${dy.toFixed(2)} ${angle.toFixed(2)}: ${orientation}`);
-    return orientation;
-}
-
-export function layoutSchemaGraph(ctx: AppState): [NodeLayout[], EdgeLayout[]] {
+export function buildSchemaGraphLayout(ctx: AppState): SchemaGraphLayout {
     if (!ctx.graphLayout) {
-        return [[], []];
+        return {
+            nodes: [],
+            edges: [],
+        };
     }
     const nodes: NodeLayout[] = [];
     const layout = ctx.graphLayout!.read(new flatsql.proto.SchemaGraphLayout());
@@ -164,7 +55,10 @@ export function layoutSchemaGraph(ctx: AppState): [NodeLayout[], EdgeLayout[]] {
     const schemaParsed = schemaProcessed.parsed?.read(new flatsql.proto.ParsedScript()) ?? null;
     const schemaAnalyzed = schemaProcessed.analyzed?.read(new flatsql.proto.AnalyzedScript()) ?? null;
     if (!mainParsed || !mainAnalyzed || !schemaParsed || !schemaAnalyzed || !ctx.graphLayout) {
-        return [[], []];
+        return {
+            nodes: [],
+            edges: [],
+        };
     }
 
     // Collect all tables in the schema script
@@ -234,6 +128,7 @@ export function layoutSchemaGraph(ctx: AppState): [NodeLayout[], EdgeLayout[]] {
     // Read edges
     const edgeNodes = layout.edgeNodesArray()!;
     const edges: EdgeLayout[] = [];
+    const edgePathBuilder = new EdgePathBuilder();
     for (let i = 0; i < layout.edgesLength(); ++i) {
         const edge = layout.edges(i, protoEdge)!;
         const begin = edge.nodesBegin();
@@ -254,71 +149,18 @@ export function layoutSchemaGraph(ctx: AppState): [NodeLayout[], EdgeLayout[]] {
                 const edgeType = selectEdgeType(fromX, fromY, toX, toY, ln.width, ln.height);
                 nodes[li].ports |= PORTS_FROM[edgeType];
                 nodes[ri].ports |= PORTS_TO[edgeType];
+                const edgePath = buildEdgePath(edgePathBuilder, edgeType, fromX, fromY, toX, toY, ln.width, ln.height, ctx.graphConfig.gridSize, 8)
                 edges.push({
                     fromX,
                     fromY,
                     toX,
                     toY,
                     type: edgeType,
+                    path: edgePath,
                 });
             }
         }
     }
 
-    // Collect nodes and edges
-    return [nodes, edges];
-}
-
-export interface DebugInfo {
-    nodeCount: number;
-    fromX: Float64Array;
-    fromY: Float64Array;
-    toX: Float64Array;
-    toY: Float64Array;
-    distance: Float64Array;
-    repulsion: Float64Array;
-}
-
-export function layoutDebugInfo(ctx: AppState, nodes: NodeLayout[]): DebugInfo {
-    if (ctx.graphDebugInfo == null) {
-        return {
-            nodeCount: 0,
-            fromX: new Float64Array(),
-            fromY: new Float64Array(),
-            toX: new Float64Array(),
-            toY: new Float64Array(),
-            distance: new Float64Array(),
-            repulsion: new Float64Array(),
-        };
-    }
-
-    const protoDebugInfo = new flatsql.proto.SchemaGraphDebugInfo();
-    const debugInfo = ctx.graphDebugInfo.read(protoDebugInfo)!;
-    const nodeDistances = debugInfo.nodeDistancesArray()!;
-    const nodeRepulsions = debugInfo.nodeRepulsionsArray()!;
-    const n = nodeDistances.length;
-
-    const out: DebugInfo = {
-        nodeCount: nodes.length,
-        fromX: new Float64Array(n),
-        fromY: new Float64Array(n),
-        toX: new Float64Array(n),
-        toY: new Float64Array(n),
-        distance: new Float64Array(n),
-        repulsion: new Float64Array(n),
-    };
-
-    let pos = 0;
-    for (let i = 0; i < nodes.length; ++i) {
-        for (let j = i + 1; j < nodes.length; ++j) {
-            const p = pos++;
-            out.fromX[p] = nodes[i].x + nodes[i].width / 2;
-            out.fromY[p] = nodes[i].y + nodes[i].height / 2;
-            out.toX[p] = nodes[j].x + nodes[j].width / 2;
-            out.toY[p] = nodes[j].y + nodes[j].height / 2;
-            out.distance[p] = nodeDistances[p];
-            out.repulsion[p] = nodeRepulsions[p];
-        }
-    }
-    return out;
+    return { nodes, edges };
 }
