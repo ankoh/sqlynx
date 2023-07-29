@@ -41,7 +41,7 @@
     margin-right: 8px;
     font-size: 0.8rem;
     font-weight: 500;
-    background-color: rgba(175, 184, 193, 0.2);
+    background-color: var(--graph_card_column_count_bg);
     padding: 4px 8px;
     border-radius: 12px;
     display: flex;
