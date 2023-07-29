@@ -85,7 +85,6 @@ function buildEdgePath(
     }
 
     const r = cornerRadius;
-
     const diffX = Math.abs(e.toX - e.fromX);
     const diffY = Math.abs(e.toY - e.fromY);
     let midX = e.fromX + (e.toX - e.fromX) / 2;
@@ -93,18 +92,18 @@ function buildEdgePath(
     midX = Math.round(midX / gridSize) * gridSize;
     midY = Math.round(midY / gridSize) * gridSize;
 
-    const midXMinusR = midX - r;
-    const midXPlusR = midX + r;
-    const midYMinusR = midY - r;
-    const midYPlusR = midY + r;
-    const fromXPlusR = e.fromX + Math.min(diffX / 2, r);
-    const fromXMinusR = e.fromX - Math.min(diffX / 2, r);
-    const fromYPlusR = e.fromY + Math.min(diffY / 2, r);
-    const fromYMinusR = e.fromY - Math.min(diffY / 2, r);
-    const toXPlusR = e.toX + Math.min(diffX / 2, r);
-    const toXMinusR = e.toX - Math.min(diffX / 2, r);
-    const toYPlusR = e.toY + Math.min(diffY / 2, r);
-    const toYMinusR = e.toY - Math.min(diffY / 2, r);
+    const midXMinusR = () => midX - Math.min(diffX / 2, r);
+    const midXPlusR = () => midX + Math.min(diffX / 2, r);
+    const midYMinusR = () => midY - Math.min(diffY / 2, r);
+    const midYPlusR = () => midY + Math.min(diffY / 2, r);
+    const fromXPlusR = () => e.fromX + Math.min(diffX / 2, r);
+    const fromXMinusR = () => e.fromX - Math.min(diffX / 2, r);
+    const fromYPlusR = () => e.fromY + Math.min(diffY / 2, r);
+    const fromYMinusR = () => e.fromY - Math.min(diffY / 2, r);
+    const toXPlusR = () => e.toX + Math.min(diffX / 2, r);
+    const toXMinusR = () => e.toX - Math.min(diffX / 2, r);
+    const toYPlusR = () => e.toY + Math.min(diffY / 2, r);
+    const toYMinusR = () => e.toY - Math.min(diffY / 2, r);
 
     switch (e.orientation) {
         // DIRECT
@@ -121,17 +120,17 @@ function buildEdgePath(
 
         case EdgeType.NorthEast:
             path.begin(e.fromX, e.fromY + height / 2);
-            path.push(e.fromX, e.fromY + Math.max(diffY, r) - r);
+            path.push(e.fromX, toYMinusR() - r);
             path.push(e.fromX, e.toY);
-            path.push(e.toX - (Math.max(diffX, r) - r), e.toY);
+            path.push(fromXPlusR(), e.toY);
             path.push(e.toX - width / 2, e.toY);
             return path.build1Turn();
 
         case EdgeType.NorthWest:
             path.begin(e.fromX, e.fromY + height / 2);
-            path.push(e.fromX, e.fromY + Math.max(diffY, r) - r);
+            path.push(e.fromX, toYMinusR());
             path.push(e.fromX, e.toY);
-            path.push(e.toX + (Math.max(diffX, r) - r), e.toY);
+            path.push(fromXMinusR(), e.toY);
             path.push(e.toX + width / 2, e.toY);
             return path.build1Turn();
 
@@ -187,89 +186,89 @@ function buildEdgePath(
 
         case EdgeType.EastNorthEast:
             path.begin(e.fromX + width / 2, e.fromY);
-            path.push(midXMinusR, e.fromY);
+            path.push(midXMinusR(), e.fromY);
             path.push(midX, e.fromY);
-            path.push(midX, fromYPlusR);
-            path.push(midX, toYMinusR);
+            path.push(midX, fromYPlusR());
+            path.push(midX, toYMinusR());
             path.push(midX, e.toY);
-            path.push(midXPlusR, e.toY);
+            path.push(midXPlusR(), e.toY);
             path.push(e.toX - width / 2, e.toY);
             return path.build2Turns();
 
         case EdgeType.EastSouthEast:
             path.begin(e.fromX + width / 2, e.fromY);
-            path.push(midXMinusR, e.fromY);
+            path.push(midXMinusR(), e.fromY);
             path.push(midX, e.fromY);
-            path.push(midX, fromYMinusR);
-            path.push(midX, toYPlusR);
+            path.push(midX, fromYMinusR());
+            path.push(midX, toYPlusR());
             path.push(midX, e.toY);
-            path.push(midXPlusR, e.toY);
+            path.push(midXPlusR(), e.toY);
             path.push(e.toX - width / 2, e.toY);
             return path.build2Turns();
 
         case EdgeType.SouthEastSouth:
             path.begin(e.fromX, e.fromY - height / 2);
-            path.push(e.fromX, midYPlusR);
+            path.push(e.fromX, midYPlusR());
             path.push(e.fromX, midY);
-            path.push(fromXPlusR, midY);
-            path.push(toXMinusR, midY);
+            path.push(fromXPlusR(), midY);
+            path.push(toXMinusR(), midY);
             path.push(e.toX, midY);
-            path.push(e.toX, midYMinusR); // XXX
+            path.push(e.toX, midYMinusR()); // XXX
             path.push(e.toX, e.toY + height / 2);
             return path.build2Turns();
 
         case EdgeType.SouthWestSouth:
             path.begin(e.fromX, e.fromY - height / 2);
-            path.push(e.fromX, midYPlusR);
+            path.push(e.fromX, midYPlusR());
             path.push(e.fromX, midY);
-            path.push(fromXMinusR, midY);
-            path.push(toXPlusR, midY);
+            path.push(fromXMinusR(), midY);
+            path.push(toXPlusR(), midY);
             path.push(e.toX, midY);
-            path.push(e.toX, midYMinusR);
+            path.push(e.toX, midYMinusR());
             path.push(e.toX, e.toY + height / 2);
             return path.build2Turns();
 
         case EdgeType.WestNorthWest:
             path.begin(e.fromX - width / 2, e.fromY);
-            path.push(midXPlusR, e.fromY);
+            path.push(midXPlusR(), e.fromY);
             path.push(midX, e.fromY);
-            path.push(midX, fromYPlusR);
-            path.push(midX, toYMinusR);
+            path.push(midX, fromYPlusR());
+            path.push(midX, toYMinusR());
             path.push(midX, e.toY);
-            path.push(midXMinusR, e.toY);
+            path.push(midXMinusR(), e.toY);
             path.push(e.toX + width / 2, e.toY);
             return path.build2Turns();
 
         case EdgeType.WestSouthWest:
             path.begin(e.fromX - width / 2, e.fromY);
-            path.push(midXPlusR, e.fromY);
+            path.push(midXPlusR(), e.fromY);
             path.push(midX, e.fromY);
-            path.push(midX, fromYMinusR);
-            path.push(midX, toYPlusR);
+            path.push(midX, fromYMinusR());
+            path.push(midX, toYPlusR());
             path.push(midX, e.toY);
-            path.push(midXMinusR, e.toY);
+            path.push(midXMinusR(), e.toY);
             path.push(e.toX + width / 2, e.toY);
             return path.build2Turns();
 
         case EdgeType.NorthEastNorth:
             path.begin(e.fromX, e.fromY + height / 2);
-            path.push(e.fromX, midYMinusR);
+            path.push(e.fromX, midYMinusR());
             path.push(e.fromX, midY);
-            path.push(fromXPlusR, midY);
-            path.push(toXMinusR, midY);
+            path.push(fromXPlusR(), midY);
+            path.push(toXMinusR(), midY);
             path.push(e.toX, midY);
-            path.push(e.toX, midYPlusR);
+            path.push(e.toX, midYPlusR());
             path.push(e.toX, e.toY - height / 2);
             return path.build2Turns();
 
         case EdgeType.NorthWestNorth:
             path.begin(e.fromX, e.fromY + height / 2);
-            path.push(e.fromX, midYMinusR);
+            path.push(e.fromX, midYMinusR());
             path.push(e.fromX, midY);
-            path.push(fromXMinusR, midY);
-            path.push(toXPlusR, midY);
+            path.push(fromXMinusR(), midY);
+            path.push(toXPlusR(), midY);
             path.push(e.toX, midY);
-            path.push(e.toX, midYPlusR);
+            path.push(e.toX, midYPlusR());
             path.push(e.toX, e.toY - height / 2);
             return path.build2Turns();
     }
