@@ -114,7 +114,6 @@ export function selectEdgeType(
             }
         }
     }
-    console.log(`${dx.toFixed(2)} ${dy.toFixed(2)} ${angle.toFixed(2)}: ${orientation}`);
     return orientation;
 }
 

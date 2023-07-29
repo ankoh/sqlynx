@@ -3,6 +3,11 @@ import * as flatsql from '@ankoh/flatsql';
 import { AppState, ScriptKey } from '../app_state';
 import { EdgePathBuilder, EdgeType, PORTS_FROM, PORTS_TO, buildEdgePath, selectEdgeType } from './graph_edges';
 
+export interface SchemaGraphLayout {
+    nodes: NodeLayout[];
+    edges: EdgeLayout[];
+}
+
 export interface NodeLayout {
     tableId: number;
     name: string;
@@ -25,11 +30,6 @@ export interface EdgeLayout {
     toY: number;
     type: EdgeType;
     path: string;
-}
-
-export interface SchemaGraphLayout {
-    nodes: NodeLayout[];
-    edges: EdgeLayout[];
 }
 
 export function buildSchemaGraphLayout(ctx: AppState): SchemaGraphLayout {
