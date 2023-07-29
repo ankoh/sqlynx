@@ -18,34 +18,20 @@ interface Props {
 class EdgeBuilder {
     path: Float64Array;
     i: number;
-    fromX: number;
-    fromY: number;
-    toX: number;
-    toY: number;
     constructor() {
         this.path = new Float64Array(16);
         this.i = 0;
-        this.fromX = 0;
-        this.fromY = 0;
-        this.toX = 0;
-        this.toY = 0;
     }
     reset() {
         for (let i = 0; i < 16; ++i) {
             this.path[i] = 0;
         }
         this.i = 0;
-        this.fromX = 0;
-        this.fromY = 0;
-        this.toX = 0;
-        this.toY = 0;
     }
     begin(x: number, y: number) {
         this.reset();
         this.path[0] = x;
         this.path[1] = y;
-        this.fromX = x;
-        this.fromY = y;
     }
     push(x: number, y: number) {
         this.i += 2;
@@ -54,20 +40,14 @@ class EdgeBuilder {
     }
     buildDirect(): string {
         const p = this.path;
-        this.toX = p[2];
-        this.toY = p[3];
         return `M ${p[0]} ${p[1]} L ${p[2]} ${p[3]}`;
     }
     build1Turn(): string {
         const p = this.path;
-        this.toX = p[8];
-        this.toY = p[9];
         return `M ${p[0]} ${p[1]} L ${p[2]} ${p[3]} Q ${p[4]} ${p[5]}, ${p[6]} ${p[7]} L ${p[8]} ${p[9]}`;
     }
     build2Turns(): string {
         const p = this.path;
-        this.toX = p[14];
-        this.toY = p[15];
         return `M ${p[0]} ${p[1]} L ${p[2]} ${p[3]} Q ${p[4]} ${p[5]}, ${p[6]} ${p[7]} L ${p[8]} ${p[9]} Q ${p[10]} ${p[11]}, ${p[12]} ${p[13]} L ${p[14]} ${p[15]}`;
     }
 }
