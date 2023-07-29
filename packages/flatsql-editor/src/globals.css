@@ -19,6 +19,7 @@
     --stats_value_fg: rgb(140, 140, 140);
     --graph_edges_bg: hsl(210deg, 12.68%, 84.16%);
     --graph_card_port_bg: hsl(210deg, 12.68%, 84.16%);
+    --graph_card_column_count_bg: hsl(210deg, 12.68%, 90.16%);
     --graph_card_bg: rgb(255, 255, 255);
     --graph_port_size: 14px;
 }
