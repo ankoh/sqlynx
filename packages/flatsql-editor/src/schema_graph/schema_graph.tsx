@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { NodeLayer } from './node_layer';
-import { EdgeLayer } from './edge_layer';
+import { EdgeHighlightingLayer, EdgeLayer } from './edge_layer';
 import { DebugLayer } from './debug_layer';
 import { BackgroundLayer } from './background_layer';
 import { buildSchemaGraphLayout } from './graph_layout';
@@ -54,6 +54,13 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
                 height={props.height}
                 nodes={graphLayout.nodes}
                 edges={graphLayout.edges}
+            />
+            <EdgeHighlightingLayer
+                className={styles.graph_edges}
+                boardWidth={props.width}
+                boardHeight={props.height}
+                edges={graphLayout.edges}
+                highlighting={{ 0: true }}
             />
             {state.graphDebugMode && (
                 <DebugLayer
