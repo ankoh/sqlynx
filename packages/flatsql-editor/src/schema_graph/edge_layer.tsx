@@ -11,6 +11,8 @@ interface Props {
     edges: EdgeLayout[];
     nodeWidth: number;
     nodeHeight: number;
+    gridSize: number;
+    cornerRadius: number;
 }
 
 class EdgeBuilder {
@@ -70,183 +72,205 @@ class EdgeBuilder {
     }
 }
 
-function buildEdgePath(path: EdgeBuilder, edge: EdgeLayout, width: number, height: number) {
-    if (edge.toX - edge.fromX == 0 && edge.toY - edge.fromY == 0) {
+function buildEdgePath(
+    path: EdgeBuilder,
+    e: EdgeLayout,
+    width: number,
+    height: number,
+    gridSize: number,
+    cornerRadius: number,
+) {
+    if (e.toX - e.fromX == 0 && e.toY - e.fromY == 0) {
         return;
     }
 
-    const r = 8;
+    const r = cornerRadius;
 
-    const diffX = Math.abs(edge.toX - edge.fromX);
-    const diffY = Math.abs(edge.toY - edge.fromY);
-    const midX = diffX / 2;
-    const midY = diffY / 2;
+    const diffX = Math.abs(e.toX - e.fromX);
+    const diffY = Math.abs(e.toY - e.fromY);
+    let midX = e.fromX + (e.toX - e.fromX) / 2;
+    let midY = e.fromY + (e.toY - e.fromY) / 2;
+    midX = Math.round(midX / gridSize) * gridSize;
+    midY = Math.round(midY / gridSize) * gridSize;
 
-    switch (edge.orientation) {
+    const midXMinusR = midX - r;
+    const midXPlusR = midX + r;
+    const midYMinusR = midY - r;
+    const midYPlusR = midY + r;
+    const fromXPlusR = e.fromX + Math.min(diffX / 2, r);
+    const fromXMinusR = e.fromX - Math.min(diffX / 2, r);
+    const fromYPlusR = e.fromY + Math.min(diffY / 2, r);
+    const fromYMinusR = e.fromY - Math.min(diffY / 2, r);
+    const toXPlusR = e.toX + Math.min(diffX / 2, r);
+    const toXMinusR = e.toX - Math.min(diffX / 2, r);
+    const toYPlusR = e.toY + Math.min(diffY / 2, r);
+    const toYMinusR = e.toY - Math.min(diffY / 2, r);
+
+    switch (e.orientation) {
         // DIRECT
 
         case EdgeType.North:
         case EdgeType.South:
         case EdgeType.East:
         case EdgeType.West:
-            path.begin(edge.fromX, edge.fromY);
-            path.push(edge.toX, edge.toY);
+            path.begin(e.fromX, e.fromY);
+            path.push(e.toX, e.toY);
             return path.buildDirect();
 
         // 1 TURN
 
         case EdgeType.NorthEast:
-            path.begin(edge.fromX, edge.fromY + height / 2);
-            path.push(edge.fromX, edge.fromY + Math.max(diffY, r) - r);
-            path.push(edge.fromX, edge.toY);
-            path.push(edge.toX - (Math.max(diffX, r) - r), edge.toY);
-            path.push(edge.toX - width / 2, edge.toY);
+            path.begin(e.fromX, e.fromY + height / 2);
+            path.push(e.fromX, e.fromY + Math.max(diffY, r) - r);
+            path.push(e.fromX, e.toY);
+            path.push(e.toX - (Math.max(diffX, r) - r), e.toY);
+            path.push(e.toX - width / 2, e.toY);
             return path.build1Turn();
 
         case EdgeType.NorthWest:
-            path.begin(edge.fromX, edge.fromY + height / 2);
-            path.push(edge.fromX, edge.fromY + Math.max(diffY, r) - r);
-            path.push(edge.fromX, edge.toY);
-            path.push(edge.toX + (Math.max(diffX, r) - r), edge.toY);
-            path.push(edge.toX + width / 2, edge.toY);
+            path.begin(e.fromX, e.fromY + height / 2);
+            path.push(e.fromX, e.fromY + Math.max(diffY, r) - r);
+            path.push(e.fromX, e.toY);
+            path.push(e.toX + (Math.max(diffX, r) - r), e.toY);
+            path.push(e.toX + width / 2, e.toY);
             return path.build1Turn();
 
         case EdgeType.SouthEast:
-            path.begin(edge.fromX, edge.fromY - height / 2);
-            path.push(edge.fromX, edge.fromY - Math.max(diffY, r) + r);
-            path.push(edge.fromX, edge.toY);
-            path.push(edge.toX - (Math.max(diffX, r) - r), edge.toY);
-            path.push(edge.toX - width / 2, edge.toY);
+            path.begin(e.fromX, e.fromY - height / 2);
+            path.push(e.fromX, e.fromY - Math.max(diffY, r) + r);
+            path.push(e.fromX, e.toY);
+            path.push(e.toX - (Math.max(diffX, r) - r), e.toY);
+            path.push(e.toX - width / 2, e.toY);
             return path.build1Turn();
 
         case EdgeType.SouthWest:
-            path.begin(edge.fromX, edge.fromY - height / 2);
-            path.push(edge.fromX, edge.fromY - Math.max(diffY, r) + r);
-            path.push(edge.fromX, edge.toY);
-            path.push(edge.toX + (Math.max(diffX, r) - r), edge.toY);
-            path.push(edge.toX + width / 2, edge.toY);
+            path.begin(e.fromX, e.fromY - height / 2);
+            path.push(e.fromX, e.fromY - Math.max(diffY, r) + r);
+            path.push(e.fromX, e.toY);
+            path.push(e.toX + (Math.max(diffX, r) - r), e.toY);
+            path.push(e.toX + width / 2, e.toY);
             return path.build1Turn();
 
         case EdgeType.EastNorth:
-            path.begin(edge.fromX + width / 2, edge.fromY);
-            path.push(edge.fromX + Math.max(diffX, r) - r, edge.fromY);
-            path.push(edge.toX, edge.fromY);
-            path.push(edge.toX, edge.toY - (Math.max(diffY, r) - r));
-            path.push(edge.toX, edge.toY - height / 2);
+            path.begin(e.fromX + width / 2, e.fromY);
+            path.push(e.fromX + Math.max(diffX, r) - r, e.fromY);
+            path.push(e.toX, e.fromY);
+            path.push(e.toX, e.toY - (Math.max(diffY, r) - r));
+            path.push(e.toX, e.toY - height / 2);
             return path.build1Turn();
 
         case EdgeType.EastSouth:
-            path.begin(edge.fromX + width / 2, edge.fromY);
-            path.push(edge.fromX + Math.max(diffX, r) - r, edge.fromY);
-            path.push(edge.toX, edge.fromY);
-            path.push(edge.toX, edge.toY + (Math.max(diffY, r) - r));
-            path.push(edge.toX, edge.toY + height / 2);
+            path.begin(e.fromX + width / 2, e.fromY);
+            path.push(e.fromX + Math.max(diffX, r) - r, e.fromY);
+            path.push(e.toX, e.fromY);
+            path.push(e.toX, e.toY + (Math.max(diffY, r) - r));
+            path.push(e.toX, e.toY + height / 2);
             return path.build1Turn();
 
         case EdgeType.WestNorth:
-            path.begin(edge.fromX - width / 2, edge.fromY);
-            path.push(edge.fromX - Math.max(diffX, r) + r, edge.fromY);
-            path.push(edge.toX, edge.fromY);
-            path.push(edge.toX, edge.toY - (Math.max(diffY, r) - r));
-            path.push(edge.toX, edge.toY - height / 2);
+            path.begin(e.fromX - width / 2, e.fromY);
+            path.push(e.fromX - Math.max(diffX, r) + r, e.fromY);
+            path.push(e.toX, e.fromY);
+            path.push(e.toX, e.toY - (Math.max(diffY, r) - r));
+            path.push(e.toX, e.toY - height / 2);
             return path.build1Turn();
 
         case EdgeType.WestSouth:
-            path.begin(edge.fromX - width / 2, edge.fromY);
-            path.push(edge.fromX - Math.max(diffX, r) + r, edge.fromY);
-            path.push(edge.toX, edge.fromY);
-            path.push(edge.toX, edge.toY + (Math.max(diffY, r) - r));
-            path.push(edge.toX, edge.toY + height / 2);
+            path.begin(e.fromX - width / 2, e.fromY);
+            path.push(e.fromX - Math.max(diffX, r) + r, e.fromY);
+            path.push(e.toX, e.fromY);
+            path.push(e.toX, e.toY + (Math.max(diffY, r) - r));
+            path.push(e.toX, e.toY + height / 2);
             return path.build1Turn();
 
         // 2 TURNS
 
         case EdgeType.EastNorthEast:
-            path.begin(edge.fromX + width / 2, edge.fromY);
-            path.push(edge.fromX + Math.max(midX, r) - r, edge.fromY);
-            path.push(edge.fromX + midX, edge.fromY);
-            path.push(edge.fromX + midX, edge.fromY + Math.min(r, diffY / 2));
-            path.push(edge.fromX + midX, edge.fromY + diffY - Math.min(r, diffY / 2));
-            path.push(edge.fromX + midX, edge.toY);
-            path.push(edge.toX - (Math.max(midX, r) - r), edge.toY);
-            path.push(edge.toX - width / 2, edge.toY);
+            path.begin(e.fromX + width / 2, e.fromY);
+            path.push(midXMinusR, e.fromY);
+            path.push(midX, e.fromY);
+            path.push(midX, fromYPlusR);
+            path.push(midX, toYMinusR);
+            path.push(midX, e.toY);
+            path.push(midXPlusR, e.toY);
+            path.push(e.toX - width / 2, e.toY);
             return path.build2Turns();
 
         case EdgeType.EastSouthEast:
-            path.begin(edge.fromX + width / 2, edge.fromY);
-            path.push(edge.fromX + Math.max(midX, r) - r, edge.fromY);
-            path.push(edge.fromX + midX, edge.fromY);
-            path.push(edge.fromX + midX, edge.fromY - Math.min(r, diffY / 2));
-            path.push(edge.fromX + midX, edge.fromY - diffY + Math.min(r, diffY / 2));
-            path.push(edge.fromX + midX, edge.toY);
-            path.push(edge.toX - (Math.max(midX, r) - r), edge.toY);
-            path.push(edge.toX - width / 2, edge.toY);
+            path.begin(e.fromX + width / 2, e.fromY);
+            path.push(midXMinusR, e.fromY);
+            path.push(midX, e.fromY);
+            path.push(midX, fromYMinusR);
+            path.push(midX, toYPlusR);
+            path.push(midX, e.toY);
+            path.push(midXPlusR, e.toY);
+            path.push(e.toX - width / 2, e.toY);
             return path.build2Turns();
 
         case EdgeType.SouthEastSouth:
-            path.begin(edge.fromX, edge.fromY - height / 2);
-            path.push(edge.fromX, edge.fromY - Math.max(midY, r) + r);
-            path.push(edge.fromX, edge.fromY - midY);
-            path.push(edge.fromX + Math.min(r, diffX / 2), edge.fromY - midY);
-            path.push(edge.fromX + diffX - Math.min(r, diffX / 2), edge.fromY - midY);
-            path.push(edge.toX, edge.fromY - midY);
-            path.push(edge.toX, edge.toY + (Math.max(midY, r) - r));
-            path.push(edge.toX, edge.toY + height / 2);
+            path.begin(e.fromX, e.fromY - height / 2);
+            path.push(e.fromX, midYPlusR);
+            path.push(e.fromX, midY);
+            path.push(fromXPlusR, midY);
+            path.push(toXMinusR, midY);
+            path.push(e.toX, midY);
+            path.push(e.toX, midYMinusR); // XXX
+            path.push(e.toX, e.toY + height / 2);
             return path.build2Turns();
 
         case EdgeType.SouthWestSouth:
-            path.begin(edge.fromX, edge.fromY - height / 2);
-            path.push(edge.fromX, edge.fromY - Math.max(midY, r) + r);
-            path.push(edge.fromX, edge.fromY - midY);
-            path.push(edge.fromX - Math.min(r, diffX / 2), edge.fromY - midY);
-            path.push(edge.fromX - diffX + Math.min(r, diffX / 2), edge.fromY - midY);
-            path.push(edge.toX, edge.fromY - midY);
-            path.push(edge.toX, edge.toY + (Math.max(midY, r) - r));
-            path.push(edge.toX, edge.toY + height / 2);
+            path.begin(e.fromX, e.fromY - height / 2);
+            path.push(e.fromX, midYPlusR);
+            path.push(e.fromX, midY);
+            path.push(fromXMinusR, midY);
+            path.push(toXPlusR, midY);
+            path.push(e.toX, midY);
+            path.push(e.toX, midYMinusR);
+            path.push(e.toX, e.toY + height / 2);
             return path.build2Turns();
 
         case EdgeType.WestNorthWest:
-            path.begin(edge.fromX - width / 2, edge.fromY);
-            path.push(edge.fromX - Math.max(midX, r) + r, edge.fromY);
-            path.push(edge.fromX - midX, edge.fromY);
-            path.push(edge.fromX - midX, edge.fromY + Math.min(r, diffY / 2));
-            path.push(edge.fromX - midX, edge.fromY + diffY - Math.min(r, diffY / 2));
-            path.push(edge.fromX - midX, edge.toY);
-            path.push(edge.toX + (Math.max(midX, r) - r), edge.toY);
-            path.push(edge.toX + width / 2, edge.toY);
+            path.begin(e.fromX - width / 2, e.fromY);
+            path.push(midXPlusR, e.fromY);
+            path.push(midX, e.fromY);
+            path.push(midX, fromYPlusR);
+            path.push(midX, toYMinusR);
+            path.push(midX, e.toY);
+            path.push(midXMinusR, e.toY);
+            path.push(e.toX + width / 2, e.toY);
             return path.build2Turns();
 
         case EdgeType.WestSouthWest:
-            path.begin(edge.fromX - width / 2, edge.fromY);
-            path.push(edge.fromX - Math.max(midX, r) + r, edge.fromY);
-            path.push(edge.fromX - midX, edge.fromY);
-            path.push(edge.fromX - midX, edge.fromY - Math.min(r, diffY / 2));
-            path.push(edge.fromX - midX, edge.fromY - diffY + Math.min(r, diffY / 2));
-            path.push(edge.fromX - midX, edge.toY);
-            path.push(edge.toX + (Math.max(midX, r) - r), edge.toY);
-            path.push(edge.toX + width / 2, edge.toY);
+            path.begin(e.fromX - width / 2, e.fromY);
+            path.push(midXPlusR, e.fromY);
+            path.push(midX, e.fromY);
+            path.push(midX, fromYMinusR);
+            path.push(midX, toYPlusR);
+            path.push(midX, e.toY);
+            path.push(midXMinusR, e.toY);
+            path.push(e.toX + width / 2, e.toY);
             return path.build2Turns();
 
         case EdgeType.NorthEastNorth:
-            path.begin(edge.fromX, edge.fromY + height / 2);
-            path.push(edge.fromX, edge.fromY + Math.max(midY, r) - r);
-            path.push(edge.fromX, edge.fromY + midY);
-            path.push(edge.fromX + Math.min(r, diffX / 2), edge.fromY + midY);
-            path.push(edge.fromX + diffX - Math.min(r, diffX / 2), edge.fromY + midY);
-            path.push(edge.toX, edge.fromY + midY);
-            path.push(edge.toX, edge.toY - (Math.max(midY, r) - r));
-            path.push(edge.toX, edge.toY - height / 2);
+            path.begin(e.fromX, e.fromY + height / 2);
+            path.push(e.fromX, midYMinusR);
+            path.push(e.fromX, midY);
+            path.push(fromXPlusR, midY);
+            path.push(toXMinusR, midY);
+            path.push(e.toX, midY);
+            path.push(e.toX, midYPlusR);
+            path.push(e.toX, e.toY - height / 2);
             return path.build2Turns();
 
         case EdgeType.NorthWestNorth:
-            path.begin(edge.fromX, edge.fromY + height / 2);
-            path.push(edge.fromX, edge.fromY + Math.max(midY, r) - r);
-            path.push(edge.fromX, edge.fromY + midY);
-            path.push(edge.fromX - Math.min(r, diffX / 2), edge.fromY + midY);
-            path.push(edge.fromX - diffX + Math.min(r, diffX / 2), edge.fromY + midY);
-            path.push(edge.toX, edge.fromY + midY);
-            path.push(edge.toX, edge.toY - (Math.max(midY, r) - r));
-            path.push(edge.toX, edge.toY - height / 2);
+            path.begin(e.fromX, e.fromY + height / 2);
+            path.push(e.fromX, midYMinusR);
+            path.push(e.fromX, midY);
+            path.push(fromXMinusR, midY);
+            path.push(toXPlusR, midY);
+            path.push(e.toX, midY);
+            path.push(e.toX, midYPlusR);
+            path.push(e.toX, e.toY - height / 2);
             return path.build2Turns();
     }
 }
@@ -256,11 +280,24 @@ export function EdgeLayer(props: Props) {
     return (
         <svg className={props.className} viewBox={'0 0 ' + props.boardWidth + ' ' + props.boardHeight}>
             {props.edges.map((e, i) => {
-                const pathText = buildEdgePath(path, e, props.nodeWidth, props.nodeHeight);
+                const pathText = buildEdgePath(
+                    path,
+                    e,
+                    props.nodeWidth,
+                    props.nodeHeight,
+                    props.gridSize,
+                    props.cornerRadius,
+                );
                 if (e.orientation == null) return;
                 return (
                     <g key={i}>
-                        <path d={pathText} strokeWidth="2px" stroke="currentcolor" fill="transparent" />
+                        <path
+                            d={pathText}
+                            strokeWidth="2px"
+                            stroke="currentcolor"
+                            fill="transparent"
+                            data-orientation={e.orientation}
+                        />
                         <circle cx={path.fromX} cy={path.fromY} r="6px" fill="white" />
                         <circle cx={path.fromX} cy={path.fromY} r="3px" fill="currentcolor" />
                         <circle cx={path.toX} cy={path.toY} r="6px" fill="white" />

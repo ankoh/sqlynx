@@ -46,6 +46,8 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
                 edges={edges}
                 nodeHeight={state.graphConfig.tableHeight}
                 nodeWidth={state.graphConfig.tableWidth}
+                gridSize={state.graphConfig.gridSize}
+                cornerRadius={8}
             />
             <NodeLayer
                 className={styles.graph_nodes}
