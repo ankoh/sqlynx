@@ -70,7 +70,7 @@ export function buildSchemaGraphLayout(state: AppState): SchemaGraphLayout {
         return {
             nodes: [],
             edges: [],
-            debugInfo
+            debugInfo,
         };
     }
 
@@ -142,6 +142,8 @@ export function buildSchemaGraphLayout(state: AppState): SchemaGraphLayout {
     const edgeNodes = layout.edgeNodesArray()!;
     const edges: EdgeLayout[] = [];
     const edgePathBuilder = new EdgePathBuilder();
+    const edgeEmitted = new Set<number>();
+
     for (let i = 0; i < layout.edgesLength(); ++i) {
         const edge = layout.edges(i, protoEdge)!;
         const begin = edge.nodesBegin();
@@ -152,9 +154,21 @@ export function buildSchemaGraphLayout(state: AppState): SchemaGraphLayout {
         for (let l = 0; l < countLeft; ++l) {
             const li = edgeNodes[begin + l];
             const ln = nodes[li];
+
             for (let r = 0; r < countRight; ++r) {
                 const ri = edgeNodes[begin + countLeft + r];
                 const rn = nodes[ri];
+
+                // Already emitted or source == target?
+                // Note that we may very well encounter self edges in SQL queries.
+                // (self-join, correlated subqueries)
+                if (li == ri || edgeEmitted.has(li * nodes.length + ri)) {
+                    continue;
+                }
+                edgeEmitted.add(li * nodes.length + ri);
+                edgeEmitted.add(ri * nodes.length + li);
+
+                // Build edge info
                 const fromX = ln.x + ln.width / 2;
                 const fromY = ln.y + ln.height / 2;
                 const toX = rn.x + rn.width / 2;
@@ -162,7 +176,18 @@ export function buildSchemaGraphLayout(state: AppState): SchemaGraphLayout {
                 const edgeType = selectEdgeType(fromX, fromY, toX, toY, ln.width, ln.height);
                 nodes[li].ports |= PORTS_FROM[edgeType];
                 nodes[ri].ports |= PORTS_TO[edgeType];
-                const edgePath = buildEdgePath(edgePathBuilder, edgeType, fromX, fromY, toX, toY, ln.width, ln.height, state.graphConfig.gridSize, 8)
+                const edgePath = buildEdgePath(
+                    edgePathBuilder,
+                    edgeType,
+                    fromX,
+                    fromY,
+                    toX,
+                    toY,
+                    ln.width,
+                    ln.height,
+                    state.graphConfig.gridSize,
+                    8,
+                );
                 edges.push({
                     fromX,
                     fromY,

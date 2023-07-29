@@ -35,13 +35,6 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
         [state.graphLayout, state.scripts[ScriptKey.MAIN_SCRIPT], state.scripts[ScriptKey.SCHEMA_SCRIPT]],
     );
 
-    // Render placeholder if context is not available
-    if (!state) {
-        <div className={props.className}>
-            <BackgroundLayer />
-        </div>;
-    }
-
     return (
         <div className={cn(styles.graph_container, props.className)}>
             <BackgroundLayer className={styles.graph_background} />

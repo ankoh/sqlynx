@@ -1,7 +1,7 @@
 import * as React from 'react';
 import cn from 'classnames';
 
-import { NodeLayout } from './graph_layout';
+import { NodeLayout, EdgeLayout } from './graph_layout';
 import { NodePort } from './graph_edges';
 
 import iconTable from '../../static/svg/icons/table.svg';
@@ -14,7 +14,7 @@ interface Props {
     width: number;
     height: number;
     nodes: NodeLayout[];
-    edges: any[];
+    edges: EdgeLayout[];
 }
 
 export function NodeLayer(props: Props) {
