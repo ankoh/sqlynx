@@ -167,7 +167,7 @@ export function buildEdgePath(
     cornerRadius: number,
 ): string {
     if (toX - fromX == 0 && toY - fromY == 0) {
-        return "";
+        return '';
     }
 
     const r = cornerRadius;
@@ -254,7 +254,7 @@ export function buildEdgePath(
 
         case EdgeType.WestNorth:
             builder.begin(fromX - width / 2, fromY);
-            builder.push(toXMinusR(), fromY);
+            builder.push(toXPlusR(), fromY);
             builder.push(toX, fromY);
             builder.push(toX, fromYPlusR());
             builder.push(toX, toY - height / 2);
