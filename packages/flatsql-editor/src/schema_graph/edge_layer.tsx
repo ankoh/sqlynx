@@ -105,7 +105,7 @@ function buildEdgePath(
     const toYPlusR = () => e.toY + Math.min(diffY / 2, r);
     const toYMinusR = () => e.toY - Math.min(diffY / 2, r);
 
-    switch (e.orientation) {
+    switch (e.type) {
         // DIRECT
 
         case EdgeType.North:
@@ -287,21 +287,15 @@ export function EdgeLayer(props: Props) {
                     props.gridSize,
                     props.cornerRadius,
                 );
-                if (e.orientation == null) return;
+                if (e.type == null) return;
                 return (
-                    <g key={i}>
-                        <path
-                            d={pathText}
-                            strokeWidth="2px"
-                            stroke="currentcolor"
-                            fill="transparent"
-                            data-orientation={e.orientation}
-                        />
-                        <circle cx={path.fromX} cy={path.fromY} r="6px" fill="white" />
-                        <circle cx={path.fromX} cy={path.fromY} r="3px" fill="currentcolor" />
-                        <circle cx={path.toX} cy={path.toY} r="6px" fill="white" />
-                        <circle cx={path.toX} cy={path.toY} r="3px" fill="currentcolor" />
-                    </g>
+                    <path
+                        key={i}
+                        d={pathText}
+                        strokeWidth="2px"
+                        stroke="currentcolor"
+                        fill="transparent"
+                    />
                 );
             })}
         </svg>

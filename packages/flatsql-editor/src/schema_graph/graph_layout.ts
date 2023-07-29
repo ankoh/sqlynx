@@ -1,10 +1,6 @@
 import * as flatsql from '@ankoh/flatsql';
 import { AppState, ScriptKey } from '../app_state';
 
-interface TableColumn {
-    name: string;
-}
-
 export interface NodeLayout {
     tableId: number;
     name: string;
@@ -13,6 +9,11 @@ export interface NodeLayout {
     width: number;
     height: number;
     columns: TableColumn[];
+    ports: number;
+}
+
+interface TableColumn {
+    name: string;
 }
 
 export interface EdgeLayout {
@@ -20,7 +21,7 @@ export interface EdgeLayout {
     fromY: number;
     toX: number;
     toY: number;
-    orientation: EdgeType;
+    type: EdgeType;
 }
 
 export enum EdgeType {
@@ -50,6 +51,59 @@ export enum EdgeType {
     EastNorthEast = 18,
     WestNorthWest = 19,
 }
+
+export enum NodePort {
+    North = 0b0001,
+    East = 0b0010,
+    South = 0b0100,
+    West = 0b1000,
+}
+
+const PORTS_FROM = new Uint8Array([
+    NodePort.West,
+    NodePort.South,
+    NodePort.East,
+    NodePort.North,
+    NodePort.South,
+    NodePort.South,
+    NodePort.North,
+    NodePort.North,
+    NodePort.West,
+    NodePort.East,
+    NodePort.East,
+    NodePort.West,
+    NodePort.South,
+    NodePort.South,
+    NodePort.North,
+    NodePort.North,
+    NodePort.West,
+    NodePort.East,
+    NodePort.East,
+    NodePort.West,
+]);
+
+const PORTS_TO = new Uint8Array([
+    NodePort.East,
+    NodePort.North,
+    NodePort.West,
+    NodePort.South,
+    NodePort.East,
+    NodePort.West,
+    NodePort.West,
+    NodePort.East,
+    NodePort.North,
+    NodePort.North,
+    NodePort.South,
+    NodePort.South,
+    NodePort.North,
+    NodePort.North,
+    NodePort.South,
+    NodePort.South,
+    NodePort.East,
+    NodePort.West,
+    NodePort.West,
+    NodePort.East,
+]);
 
 function selectEdgeTypeFromAngle(angle: number): EdgeType {
     const sector = angle / 90; // [-2, 2[
@@ -148,6 +202,7 @@ export function layoutSchemaGraph(ctx: AppState): [NodeLayout[], EdgeLayout[]] {
                 columns: columns,
                 width: node!.width(),
                 height: node!.height(),
+                ports: 0,
             });
         } else {
             // Is an table defined in the main script?
@@ -171,6 +226,7 @@ export function layoutSchemaGraph(ctx: AppState): [NodeLayout[], EdgeLayout[]] {
                 columns: columns,
                 width: node!.width(),
                 height: node!.height(),
+                ports: 0,
             });
         }
     }
@@ -195,12 +251,15 @@ export function layoutSchemaGraph(ctx: AppState): [NodeLayout[], EdgeLayout[]] {
                 const fromY = ln.y + ln.height / 2;
                 const toX = rn.x + rn.width / 2;
                 const toY = rn.y + rn.height / 2;
+                const edgeType = selectEdgeType(fromX, fromY, toX, toY, ln.width, ln.height);
+                nodes[li].ports |= PORTS_FROM[edgeType];
+                nodes[ri].ports |= PORTS_TO[edgeType];
                 edges.push({
                     fromX,
                     fromY,
                     toX,
                     toY,
-                    orientation: selectEdgeType(fromX, fromY, toX, toY, ln.width, ln.height),
+                    type: edgeType,
                 });
             }
         }

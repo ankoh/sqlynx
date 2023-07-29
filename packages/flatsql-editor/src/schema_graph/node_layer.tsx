@@ -1,6 +1,7 @@
 import * as React from 'react';
+import cn from 'classnames';
 
-import { NodeLayout } from './graph_layout';
+import { NodeLayout, NodePort } from './graph_layout';
 
 import iconTable from '../../static/svg/icons/table.svg';
 import iconTableView from '../../static/svg/icons/table_border.svg';
@@ -19,6 +20,12 @@ function TableNode(props: NodeLayout) {
                 height: props.height,
             }}
         >
+            <div className={styles.table_ports}>
+            {((props.ports & NodePort.North) != 0) && <div className={cn(styles.table_port, styles.table_port_north)} />}
+            {((props.ports & NodePort.East) != 0) && <div className={cn(styles.table_port, styles.table_port_east)} />}
+            {((props.ports & NodePort.South) != 0) && <div className={cn(styles.table_port, styles.table_port_south)} />}
+            {((props.ports & NodePort.West) != 0) && <div className={cn(styles.table_port, styles.table_port_west)} />}
+            </div>
             <div className={styles.table_icon}>
                 <svg width="20px" height="20px">
                     <use xlinkHref={`${iconTable}#sym`} />
