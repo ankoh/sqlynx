@@ -1,8 +1,64 @@
 import * as React from 'react';
+import * as flatsql from '@ankoh/flatsql';
 
-import { DebugInfo } from './graph_layout';
+import { AppState } from '../app_state';
+import { NodeLayout } from './graph_layout';
 
 import styles from './debug_layer.module.css';
+
+export interface DebugInfo {
+    nodeCount: number;
+    fromX: Float64Array;
+    fromY: Float64Array;
+    toX: Float64Array;
+    toY: Float64Array;
+    distance: Float64Array;
+    repulsion: Float64Array;
+}
+
+export function buildDebugInfo(ctx: AppState, nodes: NodeLayout[]): DebugInfo {
+    if (ctx.graphDebugInfo == null) {
+        return {
+            nodeCount: 0,
+            fromX: new Float64Array(),
+            fromY: new Float64Array(),
+            toX: new Float64Array(),
+            toY: new Float64Array(),
+            distance: new Float64Array(),
+            repulsion: new Float64Array(),
+        };
+    }
+
+    const protoDebugInfo = new flatsql.proto.SchemaGraphDebugInfo();
+    const debugInfo = ctx.graphDebugInfo.read(protoDebugInfo)!;
+    const nodeDistances = debugInfo.nodeDistancesArray()!;
+    const nodeRepulsions = debugInfo.nodeRepulsionsArray()!;
+    const n = nodeDistances.length;
+
+    const out: DebugInfo = {
+        nodeCount: nodes.length,
+        fromX: new Float64Array(n),
+        fromY: new Float64Array(n),
+        toX: new Float64Array(n),
+        toY: new Float64Array(n),
+        distance: new Float64Array(n),
+        repulsion: new Float64Array(n),
+    };
+
+    let pos = 0;
+    for (let i = 0; i < nodes.length; ++i) {
+        for (let j = i + 1; j < nodes.length; ++j) {
+            const p = pos++;
+            out.fromX[p] = nodes[i].x + nodes[i].width / 2;
+            out.fromY[p] = nodes[i].y + nodes[i].height / 2;
+            out.toX[p] = nodes[j].x + nodes[j].width / 2;
+            out.toY[p] = nodes[j].y + nodes[j].height / 2;
+            out.distance[p] = nodeDistances[p];
+            out.repulsion[p] = nodeRepulsions[p];
+        }
+    }
+    return out;
+}
 
 interface Props {
     className?: string;

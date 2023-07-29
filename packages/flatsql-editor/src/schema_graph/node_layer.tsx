@@ -1,7 +1,8 @@
 import * as React from 'react';
 import cn from 'classnames';
 
-import { NodeLayout, NodePort } from './graph_layout';
+import { NodeLayout } from './graph_layout';
+import { NodePort } from './graph_edges';
 
 import iconTable from '../../static/svg/icons/table.svg';
 import iconTableView from '../../static/svg/icons/table_border.svg';
