@@ -2,10 +2,12 @@ import * as flatsql from '@ankoh/flatsql';
 
 import { AppState, ScriptKey } from '../app_state';
 import { EdgePathBuilder, EdgeType, PORTS_FROM, PORTS_TO, buildEdgePath, selectEdgeType } from './graph_edges';
+import { DebugInfo, buildDebugInfo } from './debug_layer';
 
 export interface SchemaGraphLayout {
     nodes: NodeLayout[];
     edges: EdgeLayout[];
+    debugInfo: DebugInfo;
 }
 
 export interface NodeLayout {
@@ -32,15 +34,25 @@ export interface EdgeLayout {
     path: string;
 }
 
-export function buildSchemaGraphLayout(ctx: AppState): SchemaGraphLayout {
-    if (!ctx.graphLayout) {
+export function buildSchemaGraphLayout(state: AppState): SchemaGraphLayout {
+    let debugInfo: DebugInfo = {
+        nodeCount: 0,
+        fromX: new Float64Array(),
+        fromY: new Float64Array(),
+        toX: new Float64Array(),
+        toY: new Float64Array(),
+        distance: new Float64Array(),
+        repulsion: new Float64Array(),
+    };
+    if (!state.graphLayout) {
         return {
             nodes: [],
             edges: [],
+            debugInfo,
         };
     }
     const nodes: NodeLayout[] = [];
-    const layout = ctx.graphLayout!.read(new flatsql.proto.SchemaGraphLayout());
+    const layout = state.graphLayout!.read(new flatsql.proto.SchemaGraphLayout());
 
     const protoGraphNode = new flatsql.proto.SchemaGraphNode();
     const protoGraphVertex = new flatsql.proto.SchemaGraphVertex();
@@ -48,16 +60,17 @@ export function buildSchemaGraphLayout(ctx: AppState): SchemaGraphLayout {
     const protoTableColumn = new flatsql.proto.TableColumn();
     const protoEdge = new flatsql.proto.SchemaGraphEdge();
 
-    const mainProcessed = ctx.scripts[ScriptKey.MAIN_SCRIPT].processed;
+    const mainProcessed = state.scripts[ScriptKey.MAIN_SCRIPT].processed;
     const mainParsed = mainProcessed.parsed?.read(new flatsql.proto.ParsedScript()) ?? null;
     const mainAnalyzed = mainProcessed.analyzed?.read(new flatsql.proto.AnalyzedScript()) ?? null;
-    const schemaProcessed = ctx.scripts[ScriptKey.SCHEMA_SCRIPT].processed;
+    const schemaProcessed = state.scripts[ScriptKey.SCHEMA_SCRIPT].processed;
     const schemaParsed = schemaProcessed.parsed?.read(new flatsql.proto.ParsedScript()) ?? null;
     const schemaAnalyzed = schemaProcessed.analyzed?.read(new flatsql.proto.AnalyzedScript()) ?? null;
-    if (!mainParsed || !mainAnalyzed || !schemaParsed || !schemaAnalyzed || !ctx.graphLayout) {
+    if (!mainParsed || !mainAnalyzed || !schemaParsed || !schemaAnalyzed || !state.graphLayout) {
         return {
             nodes: [],
             edges: [],
+            debugInfo
         };
     }
 
@@ -149,7 +162,7 @@ export function buildSchemaGraphLayout(ctx: AppState): SchemaGraphLayout {
                 const edgeType = selectEdgeType(fromX, fromY, toX, toY, ln.width, ln.height);
                 nodes[li].ports |= PORTS_FROM[edgeType];
                 nodes[ri].ports |= PORTS_TO[edgeType];
-                const edgePath = buildEdgePath(edgePathBuilder, edgeType, fromX, fromY, toX, toY, ln.width, ln.height, ctx.graphConfig.gridSize, 8)
+                const edgePath = buildEdgePath(edgePathBuilder, edgeType, fromX, fromY, toX, toY, ln.width, ln.height, state.graphConfig.gridSize, 8)
                 edges.push({
                     fromX,
                     fromY,
@@ -162,5 +175,10 @@ export function buildSchemaGraphLayout(ctx: AppState): SchemaGraphLayout {
         }
     }
 
-    return { nodes, edges };
+    // Compute graph debug info
+    if (state.graphDebugInfo !== null) {
+        console.log(state);
+        debugInfo = buildDebugInfo(state, nodes);
+    }
+    return { nodes, edges, debugInfo };
 }
