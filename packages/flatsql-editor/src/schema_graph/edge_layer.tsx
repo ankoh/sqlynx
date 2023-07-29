@@ -136,49 +136,49 @@ function buildEdgePath(
 
         case EdgeType.SouthEast:
             path.begin(e.fromX, e.fromY - height / 2);
-            path.push(e.fromX, e.fromY - Math.max(diffY, r) + r);
+            path.push(e.fromX, toYPlusR());
             path.push(e.fromX, e.toY);
-            path.push(e.toX - (Math.max(diffX, r) - r), e.toY);
+            path.push(fromXPlusR(), e.toY);
             path.push(e.toX - width / 2, e.toY);
             return path.build1Turn();
 
         case EdgeType.SouthWest:
             path.begin(e.fromX, e.fromY - height / 2);
-            path.push(e.fromX, e.fromY - Math.max(diffY, r) + r);
+            path.push(e.fromX, toYPlusR());
             path.push(e.fromX, e.toY);
-            path.push(e.toX + (Math.max(diffX, r) - r), e.toY);
+            path.push(fromXMinusR(), e.toY);
             path.push(e.toX + width / 2, e.toY);
             return path.build1Turn();
 
         case EdgeType.EastNorth:
             path.begin(e.fromX + width / 2, e.fromY);
-            path.push(e.fromX + Math.max(diffX, r) - r, e.fromY);
+            path.push(toXMinusR(), e.fromY);
             path.push(e.toX, e.fromY);
-            path.push(e.toX, e.toY - (Math.max(diffY, r) - r));
+            path.push(e.toX, fromYPlusR());
             path.push(e.toX, e.toY - height / 2);
             return path.build1Turn();
 
         case EdgeType.EastSouth:
             path.begin(e.fromX + width / 2, e.fromY);
-            path.push(e.fromX + Math.max(diffX, r) - r, e.fromY);
+            path.push(toXMinusR(), e.fromY);
             path.push(e.toX, e.fromY);
-            path.push(e.toX, e.toY + (Math.max(diffY, r) - r));
+            path.push(e.toX, fromYMinusR());
             path.push(e.toX, e.toY + height / 2);
             return path.build1Turn();
 
         case EdgeType.WestNorth:
             path.begin(e.fromX - width / 2, e.fromY);
-            path.push(e.fromX - Math.max(diffX, r) + r, e.fromY);
+            path.push(toXMinusR(), e.fromY);
             path.push(e.toX, e.fromY);
-            path.push(e.toX, e.toY - (Math.max(diffY, r) - r));
+            path.push(e.toX, fromYPlusR());
             path.push(e.toX, e.toY - height / 2);
             return path.build1Turn();
 
         case EdgeType.WestSouth:
             path.begin(e.fromX - width / 2, e.fromY);
-            path.push(e.fromX - Math.max(diffX, r) + r, e.fromY);
+            path.push(toXPlusR(), e.fromY);
             path.push(e.toX, e.fromY);
-            path.push(e.toX, e.toY + (Math.max(diffY, r) - r));
+            path.push(e.toX, fromYMinusR());
             path.push(e.toX, e.toY + height / 2);
             return path.build1Turn();
 
@@ -213,7 +213,7 @@ function buildEdgePath(
             path.push(fromXPlusR(), midY);
             path.push(toXMinusR(), midY);
             path.push(e.toX, midY);
-            path.push(e.toX, midYMinusR()); // XXX
+            path.push(e.toX, midYMinusR());
             path.push(e.toX, e.toY + height / 2);
             return path.build2Turns();
 
