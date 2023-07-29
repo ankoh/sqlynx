@@ -17,20 +17,8 @@ export interface DebugInfo {
 }
 
 export function buildDebugInfo(ctx: AppState, nodes: NodeLayout[]): DebugInfo {
-    if (ctx.graphDebugInfo == null) {
-        return {
-            nodeCount: 0,
-            fromX: new Float64Array(),
-            fromY: new Float64Array(),
-            toX: new Float64Array(),
-            toY: new Float64Array(),
-            distance: new Float64Array(),
-            repulsion: new Float64Array(),
-        };
-    }
-
     const protoDebugInfo = new flatsql.proto.SchemaGraphDebugInfo();
-    const debugInfo = ctx.graphDebugInfo.read(protoDebugInfo)!;
+    const debugInfo = ctx.graphDebugInfo!.read(protoDebugInfo)!;
     const nodeDistances = debugInfo.nodeDistancesArray()!;
     const nodeRepulsions = debugInfo.nodeRepulsionsArray()!;
     const n = nodeDistances.length;
