@@ -195,11 +195,23 @@ export function buildEdgePath(
         // DIRECT
 
         case EdgeType.North:
+            builder.begin(fromX, fromY + height / 2);
+            builder.push(toX, toY - height / 2);
+            return builder.buildDirect();
+
         case EdgeType.South:
+            builder.begin(fromX, fromY - height / 2);
+            builder.push(toX, toY + height / 2);
+            return builder.buildDirect();
+
         case EdgeType.East:
+            builder.begin(fromX + height / 2, fromY);
+            builder.push(toX - height / 2, toY);
+            return builder.buildDirect();
+
         case EdgeType.West:
-            builder.begin(fromX, fromY);
-            builder.push(toX, toY);
+            builder.begin(fromX - height / 2, fromY);
+            builder.push(toX + height / 2, toY);
             return builder.buildDirect();
 
         // 1 TURN
