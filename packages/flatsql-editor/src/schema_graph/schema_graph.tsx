@@ -30,7 +30,10 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
     }, [props.width, props.height]);
 
     // Build the graph layout
-    const graphLayout = React.useMemo(() => buildSchemaGraphLayout(state), [state.graphLayout, state.scripts[ScriptKey.MAIN_SCRIPT], state.scripts[ScriptKey.SCHEMA_SCRIPT]]);
+    const graphLayout = React.useMemo(
+        () => buildSchemaGraphLayout(state),
+        [state.graphLayout, state.scripts[ScriptKey.MAIN_SCRIPT], state.scripts[ScriptKey.SCHEMA_SCRIPT]],
+    );
 
     // Render placeholder if context is not available
     if (!state) {
@@ -56,7 +59,7 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
                 edges={graphLayout.edges}
             />
             <EdgeHighlightingLayer
-                className={styles.graph_edges}
+                className={styles.graph_edge_highlighting}
                 boardWidth={props.width}
                 boardHeight={props.height}
                 edges={graphLayout.edges}
@@ -64,7 +67,7 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
             />
             {state.graphDebugMode && (
                 <DebugLayer
-                    className={styles.graph_edges}
+                    className={styles.graph_debug_info}
                     width={props.width}
                     height={props.height}
                     info={graphLayout.debugInfo}
