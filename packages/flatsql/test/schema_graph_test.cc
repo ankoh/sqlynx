@@ -14,16 +14,17 @@ SchemaGraph::Config DEFAULT_GRAPH_CONFIG{
     .iterations_clustering = 10,
     .iterations_refinement = 10,
     .force_scaling = 1.0,
-    .initial_radius = 100,
     .cooldown_factor = 0.85,
     .repulsion_force = 15.0,
     .edge_attraction_force = 15.0,
     .gravity_force = 15.0,
+    .initial_radius = 100,
     .board_width = 1600,
     .board_height = 800,
-    .table_width = 100,
     .table_height = 96,
+    .table_width = 100,
     .table_margin = 20,
+    .grid_size = 16,
 };
 
 const std::string_view TPCH_SCHEMA = R"SQL(
