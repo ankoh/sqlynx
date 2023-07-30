@@ -7,6 +7,7 @@ import { LoadingStatus } from './script_loader/script_loader';
 import { FlatSQLProcessedScript } from './editor/flatsql_processor';
 import { ScriptMetadata } from './script_loader/script_metadata';
 import { LoadingInfo } from './script_loader/script_loader';
+import { NodePort } from './schema_graph/graph_edges';
 
 /// A key to identify the target script
 export enum ScriptKey {
@@ -45,6 +46,22 @@ export interface ScriptData {
     processed: FlatSQLProcessedScript;
     /// The statistics
     statistics: Immutable.List<flatsql.FlatBufferRef<flatsql.proto.ScriptStatistics>>;
+}
+
+export interface Focus {
+    /// The focused nodes in the schema graph as (nodeId -> port bits) map
+    graphNodes: Map<number, number> | null;
+    /// The focused graph edges
+    graphEdges: Set<number> | null;
+    /// The focused table ids
+    tables: Set<number> | null;
+    /// The focused table columns as (tableId -> columnId[]) map.
+    /// Only set if specific table columns are referenced.
+    tableColumns: Map<number, number[]> | null;
+    /// The focused table reference ids
+    tableReferences: Set<number> | null;
+    /// The focused column reference ids
+    columnReferences: Set<number> | null;
 }
 
 /// Destroy a state
