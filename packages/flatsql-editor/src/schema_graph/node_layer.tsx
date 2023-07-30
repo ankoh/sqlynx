@@ -1,6 +1,7 @@
 import * as React from 'react';
 import cn from 'classnames';
 
+import { Action, Dispatch } from '../utils/action';
 import { NodeLayout, EdgeLayout } from './graph_layout';
 import { NodePort } from './graph_edges';
 
@@ -17,7 +18,68 @@ interface Props {
     edges: EdgeLayout[];
 }
 
+enum FocusEvent {
+    CLICK,
+    HOVER
+}
+
+interface FocusState {
+    event: FocusEvent | null;
+    node: number | null;
+    port: number | null;
+}
+
+const MOUSE_ENTER = Symbol('MOUSE_ENTER');
+const MOUSE_LEAVE = Symbol('MOUSE_LEAVE');
+const CLICK = Symbol('CLICK');
+
+type FocusAction =
+   | Action<typeof MOUSE_ENTER, [number, number | null]>
+   | Action<typeof MOUSE_LEAVE, [number, number | null]>
+   | Action<typeof CLICK, [number, number | null]>;
+
+const reducer = (state: FocusState, action: FocusAction): FocusState => {
+    switch (action.type) {
+        case MOUSE_ENTER: {
+            if (state.event === FocusEvent.CLICK) {
+                return state;
+            }
+            return {
+                event: FocusEvent.HOVER,
+                node: action.value[0],
+                port: action.value[1]
+            };
+        };
+        case MOUSE_LEAVE: {
+            if (state.event === FocusEvent.CLICK) {
+                return state;
+            }
+            return {
+                event: null,
+                node: null,
+                port: null
+            };
+        };
+        case CLICK: {
+            if (state.node == action.value[0] && state.port == action.value[1] && state.event == FocusEvent.CLICK) {
+                return {
+                    event: null,
+                    node: null,
+                    port: null
+                };
+            }
+            return {
+                event: FocusEvent.CLICK,
+                node: action.value[0],
+                port: action.value[1]
+            };
+        };
+    }
+};
+
 export function NodeLayer(props: Props) {
+    const [state, dispatch] = React.useReducer(reducer, null, () => ({ event: null, node: null, port: null }));
+
     const onEnterNode = React.useCallback((event: React.MouseEvent<HTMLDivElement>) => {
         const nodeId = event.currentTarget.getAttribute('data-node');
         console.log(`ENTER NODE ${nodeId}`);
