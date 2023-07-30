@@ -35,6 +35,10 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
         [state.graphLayout, state.scripts[ScriptKey.MAIN_SCRIPT], state.scripts[ScriptKey.SCHEMA_SCRIPT]],
     );
 
+    const onNodeFocusChanged = React.useCallback((node: number | null, port: number | null) => {
+        console.log(`onNodeFocusChanged: ${node} ${port}`);
+    }, []);
+
     return (
         <div className={cn(styles.graph_container, props.className)}>
             <BackgroundLayer className={styles.graph_background} />
@@ -50,6 +54,7 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
                 height={props.height}
                 nodes={graphLayout.nodes}
                 edges={graphLayout.edges}
+                onFocusChanged={onNodeFocusChanged}
             />
             <EdgeHighlightingLayer
                 className={styles.graph_edge_highlighting}
