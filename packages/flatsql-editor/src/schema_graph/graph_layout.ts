@@ -11,7 +11,7 @@ export interface SchemaGraphLayout {
 }
 
 export interface NodeLayout {
-    tableId: number;
+    graphNodeId: number;
     name: string;
     x: number;
     y: number;
@@ -26,6 +26,7 @@ interface TableColumn {
 }
 
 export interface EdgeLayout {
+    graphEdgeId: number;
     fromX: number;
     fromY: number;
     toX: number;
@@ -102,7 +103,7 @@ export function buildSchemaGraphLayout(state: AppState): SchemaGraphLayout {
                 });
             }
             nodes.push({
-                tableId: i,
+                graphNodeId: i,
                 name: tableName.table ?? '',
                 x: position.x(),
                 y: position.y(),
@@ -126,7 +127,7 @@ export function buildSchemaGraphLayout(state: AppState): SchemaGraphLayout {
                 });
             }
             nodes.push({
-                tableId: i,
+                graphNodeId: i,
                 name: tableName.table ?? '',
                 x: position.x(),
                 y: position.y(),
@@ -189,6 +190,7 @@ export function buildSchemaGraphLayout(state: AppState): SchemaGraphLayout {
                     8,
                 );
                 edges.push({
+                    graphEdgeId: i,
                     fromX,
                     fromY,
                     toX,
