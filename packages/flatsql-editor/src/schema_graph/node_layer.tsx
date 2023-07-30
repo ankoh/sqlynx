@@ -1,7 +1,7 @@
 import * as React from 'react';
 import cn from 'classnames';
 
-import { Action, Dispatch } from '../utils/action';
+import { Action } from '../utils/action';
 import { NodeLayout, EdgeLayout } from './graph_layout';
 import { NodePort } from './graph_edges';
 
@@ -21,7 +21,7 @@ interface Props {
 
 enum FocusEvent {
     CLICK,
-    HOVER
+    HOVER,
 }
 
 interface FocusState {
@@ -35,46 +35,60 @@ const MOUSE_LEAVE = Symbol('MOUSE_LEAVE');
 const CLICK = Symbol('CLICK');
 
 type FocusAction =
-   | Action<typeof MOUSE_ENTER, [number, number | null]>
-   | Action<typeof MOUSE_LEAVE, [number, number | null]>
-   | Action<typeof CLICK, [number, number | null]>;
+    | Action<typeof MOUSE_ENTER, [number, number | null]>
+    | Action<typeof MOUSE_LEAVE, [number, number | null]>
+    | Action<typeof CLICK, [number, number | null]>;
 
 const reducer = (state: FocusState, action: FocusAction): FocusState => {
     switch (action.type) {
         case MOUSE_ENTER: {
+            // Currently focused through click?
             if (state.event === FocusEvent.CLICK) {
+                return state;
+            }
+            // Node MouseEnter event but we're already in the same node?
+            if (action.value[0] === state.node && (action.value[1] === state.port || action.value[1] == null)) {
                 return state;
             }
             return {
                 event: FocusEvent.HOVER,
                 node: action.value[0],
-                port: action.value[1]
+                port: action.value[1],
             };
-        };
+        }
         case MOUSE_LEAVE: {
+            // Currently focused through click?
             if (state.event === FocusEvent.CLICK) {
                 return state;
             }
+            // Did we leave the port? Then we're still waiting for the node MouseLeave event
+            if (action.value[0] === state.node && action.value[1] === state.port && state.port != null) {
+                return {
+                    ...state,
+                    port: null,
+                };
+            }
+            // Otherwise we assume it's the MouseLeave event of the node
             return {
                 event: null,
                 node: null,
-                port: null
+                port: null,
             };
-        };
+        }
         case CLICK: {
             if (state.node == action.value[0] && state.port == action.value[1] && state.event == FocusEvent.CLICK) {
                 return {
                     event: null,
                     node: null,
-                    port: null
+                    port: null,
                 };
             }
             return {
                 event: FocusEvent.CLICK,
                 node: action.value[0],
-                port: action.value[1]
+                port: action.value[1],
             };
-        };
+        }
     }
 };
 
@@ -85,35 +99,52 @@ export function NodeLayer(props: Props) {
         props.onFocusChanged(state.node, state.port);
     }, [state.node, state.port, props.onFocusChanged]);
 
-    const onEnterNode = React.useCallback((event: React.MouseEvent<HTMLDivElement>) => {
-        const nodeId = event.currentTarget.getAttribute('data-node')!;
-        dispatch({ type: MOUSE_ENTER, value: [+nodeId, null] })
-    }, [dispatch]);
-    const onLeaveNode = React.useCallback((event: React.MouseEvent<HTMLDivElement>) => {
-        const nodeId = event.currentTarget.getAttribute('data-node')!;
-        dispatch({ type: MOUSE_LEAVE, value: [+nodeId, null] })
-    }, []);
-    const onEnterPort = React.useCallback((event: React.MouseEvent<HTMLDivElement>) => {
-        const nodeId = event.currentTarget.getAttribute('data-node')!;
-        const portId = event.currentTarget.getAttribute('data-port')!;
-        dispatch({ type: MOUSE_ENTER, value: [+nodeId, portId != null ? +portId : null] })
-    }, []);
-    const onLeavePort = React.useCallback((event: React.MouseEvent<HTMLDivElement>) => {
-        const nodeId = event.currentTarget.getAttribute('data-node')!;
-        const portId = event.currentTarget.getAttribute('data-port')!;
-        dispatch({ type: MOUSE_LEAVE, value: [+nodeId, +portId] })
-    }, []);
-    const onClickNode = React.useCallback((event: React.MouseEvent<HTMLDivElement>) => {
-        event.stopPropagation();
-        const nodeId = event.currentTarget.getAttribute('data-node')!;
-        dispatch({ type: CLICK, value: [+nodeId, null] })
-    }, []);
-    const onClickPort = React.useCallback((event: React.MouseEvent<HTMLDivElement>) => {
-        event.stopPropagation();
-        const nodeId = event.currentTarget.getAttribute('data-node')!;
-        const portId = event.currentTarget.getAttribute('data-port')!;
-        dispatch({ type: CLICK, value: [+nodeId, +portId] })
-    }, []);
+    const onEnterNode = React.useCallback(
+        (event: React.MouseEvent<HTMLDivElement>) => {
+            const nodeId = event.currentTarget.getAttribute('data-node')!;
+            dispatch({ type: MOUSE_ENTER, value: [+nodeId, null] });
+        },
+        [dispatch],
+    );
+    const onLeaveNode = React.useCallback(
+        (event: React.MouseEvent<HTMLDivElement>) => {
+            const nodeId = event.currentTarget.getAttribute('data-node')!;
+            dispatch({ type: MOUSE_LEAVE, value: [+nodeId, null] });
+        },
+        [dispatch],
+    );
+    const onEnterPort = React.useCallback(
+        (event: React.MouseEvent<HTMLDivElement>) => {
+            const nodeId = event.currentTarget.getAttribute('data-node')!;
+            const portId = event.currentTarget.getAttribute('data-port')!;
+            dispatch({ type: MOUSE_ENTER, value: [+nodeId, portId != null ? +portId : null] });
+        },
+        [dispatch],
+    );
+    const onLeavePort = React.useCallback(
+        (event: React.MouseEvent<HTMLDivElement>) => {
+            const nodeId = event.currentTarget.getAttribute('data-node')!;
+            const portId = event.currentTarget.getAttribute('data-port')!;
+            dispatch({ type: MOUSE_LEAVE, value: [+nodeId, +portId] });
+        },
+        [dispatch],
+    );
+    const onClickNode = React.useCallback(
+        (event: React.MouseEvent<HTMLDivElement>) => {
+            const nodeId = event.currentTarget.getAttribute('data-node')!;
+            dispatch({ type: CLICK, value: [+nodeId, null] });
+        },
+        [dispatch],
+    );
+    const onClickPort = React.useCallback(
+        (event: React.MouseEvent<HTMLDivElement>) => {
+            event.stopPropagation();
+            const nodeId = event.currentTarget.getAttribute('data-node')!;
+            const portId = event.currentTarget.getAttribute('data-port')!;
+            dispatch({ type: CLICK, value: [+nodeId, +portId] });
+        },
+        [dispatch],
+    );
 
     const Port = (props: { node: number; port: NodePort; className: string }) => (
         <div

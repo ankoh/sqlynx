@@ -36,7 +36,10 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
     );
 
     const onNodeFocusChanged = React.useCallback((node: number | null, port: number | null) => {
-        console.log(`onNodeFocusChanged: ${node} ${port}`);
+        console.log(`onNodeFocusChanged(${node}, ${port})`);
+    }, []);
+    const onEdgeFocusChanged = React.useCallback((edge: number | null) => {
+        console.log(`onEdgeFocusChanged(${edge})`);
     }, []);
 
     return (
@@ -47,6 +50,7 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
                 boardWidth={props.width}
                 boardHeight={props.height}
                 edges={graphLayout.edges}
+                onFocusChanged={onEdgeFocusChanged}
             />
             <NodeLayer
                 className={styles.graph_nodes}
