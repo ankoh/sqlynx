@@ -29,10 +29,6 @@ export interface EdgeLayout {
     graphEdgeId: number;
     graphNodeFromId: number;
     graphNodeToId: number;
-    fromX: number;
-    fromY: number;
-    toX: number;
-    toY: number;
     type: EdgeType;
     path: string;
 }
@@ -195,10 +191,6 @@ export function buildSchemaGraphLayout(state: AppState): SchemaGraphLayout {
                     graphEdgeId: i,
                     graphNodeFromId: li,
                     graphNodeToId: ri,
-                    fromX,
-                    fromY,
-                    toX,
-                    toY,
                     type: edgeType,
                     path: edgePath,
                 });
