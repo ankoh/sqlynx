@@ -4,7 +4,7 @@ import cn from 'classnames';
 import { Action } from '../utils/action';
 import { NodeLayout, EdgeLayout } from './graph_layout';
 import { NodePort } from './graph_edges';
-import { GraphNodeDescriptor } from '../app_state';
+import { FocusInfo, GraphNodeDescriptor } from '../app_state';
 
 import iconTable from '../../static/svg/icons/table.svg';
 import iconTableView from '../../static/svg/icons/table_border.svg';
@@ -17,7 +17,7 @@ interface Props {
     height: number;
     nodes: NodeLayout[];
     edges: EdgeLayout[];
-    focus: Map<number, number> | null;
+    focus: FocusInfo | null;
     onFocusChanged: (target: GraphNodeDescriptor | null) => void;
 }
 
@@ -169,7 +169,7 @@ export function NodeLayer(props: Props) {
     return (
         <div className={styles.graph_nodes}>
             {props.nodes.map(n => {
-                const focusedPorts = props.focus?.get(n.nodeId) ?? 0;
+                const focusedPorts = props.focus?.graphLayoutNodes?.get(n.nodeId) ?? 0;
                 return (
                     <div
                         key={n.nodeId}
