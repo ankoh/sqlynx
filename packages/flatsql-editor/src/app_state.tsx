@@ -7,7 +7,6 @@ import { LoadingStatus } from './script_loader/script_loader';
 import { FlatSQLProcessedScript } from './editor/flatsql_processor';
 import { ScriptMetadata } from './script_loader/script_metadata';
 import { LoadingInfo } from './script_loader/script_loader';
-import { NodePort } from './schema_graph/graph_edges';
 
 /// A key to identify the target script
 export enum ScriptKey {
