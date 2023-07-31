@@ -73,7 +73,7 @@
     border-radius: 50%;
     transition: background-color ease-out .12s;
 }
-.table_port::after {
+.table_port:not(.table_port_focused)::after {
     position: absolute;
     top: calc(var(--graph_port_size) / 4);
     left: calc(var(--graph_port_size) / 4);
@@ -81,6 +81,17 @@
     height: calc(var(--graph_port_size) / 2);
     content: "";
     background-color: var(--graph_card_port_bg);
+    border-radius: 50%;
+    transition: background-color ease-out .12s;
+}
+.table_port_focused::after {
+    position: absolute;
+    top: calc(var(--graph_port_size) / 4);
+    left: calc(var(--graph_port_size) / 4);
+    width: calc(var(--graph_port_size) / 2);
+    height: calc(var(--graph_port_size) / 2);
+    content: "";
+    background-color: hsl(212.44deg, 92.07%, 44.51%)!important;
     border-radius: 50%;
     transition: background-color ease-out .12s;
 }
