@@ -4,7 +4,7 @@ import cn from 'classnames';
 import { Action } from '../utils/action';
 import { NodeLayout, EdgeLayout } from './graph_layout';
 import { NodePort } from './graph_edges';
-import { NodeFocusTarget } from '../app_state_reducer';
+import { GraphNodeDescriptor } from '../app_state_reducer';
 
 import iconTable from '../../static/svg/icons/table.svg';
 import iconTableView from '../../static/svg/icons/table_border.svg';
@@ -18,7 +18,7 @@ interface Props {
     nodes: NodeLayout[];
     edges: EdgeLayout[];
     focus: Map<number, number> | null;
-    onFocusChanged: (target: NodeFocusTarget | null) => void;
+    onFocusChanged: (target: GraphNodeDescriptor | null) => void;
 }
 
 enum FocusEvent {
@@ -28,7 +28,7 @@ enum FocusEvent {
 
 interface FocusState {
     event: FocusEvent | null;
-    target: NodeFocusTarget | null;
+    target: GraphNodeDescriptor | null;
 }
 
 const MOUSE_ENTER = Symbol('MOUSE_ENTER');
@@ -36,9 +36,9 @@ const MOUSE_LEAVE = Symbol('MOUSE_LEAVE');
 const CLICK = Symbol('CLICK');
 
 type FocusAction =
-    | Action<typeof MOUSE_ENTER, NodeFocusTarget>
-    | Action<typeof MOUSE_LEAVE, NodeFocusTarget>
-    | Action<typeof CLICK, NodeFocusTarget>;
+    | Action<typeof MOUSE_ENTER, GraphNodeDescriptor>
+    | Action<typeof MOUSE_LEAVE, GraphNodeDescriptor>
+    | Action<typeof CLICK, GraphNodeDescriptor>;
 
 const reducer = (state: FocusState, action: FocusAction): FocusState => {
     switch (action.type) {
