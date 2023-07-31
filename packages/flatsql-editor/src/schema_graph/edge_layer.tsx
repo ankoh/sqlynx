@@ -2,14 +2,14 @@ import * as React from 'react';
 
 import { Action } from '../utils/action';
 import { EdgeLayout } from './graph_layout';
-import { FocusInfo, GraphEdgeDescriptor } from '../app_state';
+import { FocusInfo } from '../app_state';
 
 interface Props {
     className?: string;
     boardWidth: number;
     boardHeight: number;
     edges: EdgeLayout[];
-    onFocusChanged: (edge: GraphEdgeDescriptor | null) => void;
+    onFocusChanged: (edge: BigInt | null) => void;
 }
 
 enum FocusEvent {
@@ -19,7 +19,7 @@ enum FocusEvent {
 
 interface FocusState {
     event: FocusEvent | null;
-    target: GraphEdgeDescriptor | null;
+    target: BigInt | null;
 }
 
 const MOUSE_ENTER = Symbol('MOUSE_ENTER');
@@ -27,9 +27,9 @@ const MOUSE_LEAVE = Symbol('MOUSE_LEAVE');
 const CLICK = Symbol('CLICK');
 
 type FocusAction =
-    | Action<typeof MOUSE_ENTER, GraphEdgeDescriptor>
-    | Action<typeof MOUSE_LEAVE, GraphEdgeDescriptor>
-    | Action<typeof CLICK, GraphEdgeDescriptor>;
+    | Action<typeof MOUSE_ENTER, BigInt>
+    | Action<typeof MOUSE_LEAVE, BigInt>
+    | Action<typeof CLICK, BigInt>;
 
 const reducer = (state: FocusState, action: FocusAction): FocusState => {
     switch (action.type) {
@@ -52,7 +52,7 @@ const reducer = (state: FocusState, action: FocusAction): FocusState => {
             };
         }
         case CLICK: {
-            if (state.event == FocusEvent.CLICK && state.target?.layoutEdgeId === action.value.layoutEdgeId) {
+            if (state.event == FocusEvent.CLICK && state.target === action.value) {
                 return {
                     event: null,
                     target: null,
@@ -66,10 +66,10 @@ const reducer = (state: FocusState, action: FocusAction): FocusState => {
     }
 };
 
-function unpack(path: SVGPathElement): GraphEdgeDescriptor {
-    const graphEdge = path.getAttribute('data-graph-edge')!;
-    const layoutEdge = path.getAttribute('data-layout-edge')!;
-    return { protoEdgeId: +graphEdge, layoutEdgeId: +layoutEdge };
+function unpack(path: SVGPathElement): BigInt {
+    const graphEdge = path.getAttribute('data-from')!;
+    const layoutEdge = path.getAttribute('data-to')!;
+    return (BigInt(+graphEdge) << 32n) | BigInt(+layoutEdge);
 }
 
 export function EdgeLayer(props: Props) {
@@ -109,8 +109,8 @@ export function EdgeLayer(props: Props) {
                     stroke="currentcolor"
                     fill="transparent"
                     pointerEvents="stroke"
-                    data-graph-edge={e.edgeId}
-                    data-layout-edge={i}
+                    data-from={e.fromNode}
+                    data-to={e.toNode}
                     onMouseEnter={onEnterEdge}
                     onMouseLeave={onLeaveEdge}
                     onClick={onClickEdge}
@@ -132,7 +132,9 @@ export function EdgeHighlightingLayer(props: HighlightingProps) {
     let paths = [];
     if (props.focus) {
         for (let i = 0; i < props.edges.length; ++i) {
-            if (!props.focus.graphLayoutEdges?.has(i)) continue;
+            const edge = props.edges[i];
+            const edgeNodes = (BigInt(edge.fromNode) << 32n) | BigInt(edge.toNode);
+            if (!props.focus.graphEdgeNodes?.has(edgeNodes)) continue;
             paths.push(
                 <path
                     key={i}

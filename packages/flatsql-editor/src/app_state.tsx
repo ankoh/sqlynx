@@ -56,18 +56,11 @@ export interface GraphNodeDescriptor {
     port: number | null;
 }
 
-export interface GraphEdgeDescriptor {
-    /// The graph edge
-    protoEdgeId: number;
-    /// The layout edge
-    layoutEdgeId: number;
-}
-
 export interface FocusInfo {
     /// The layout indices in the schema graph as (nodeId -> port bits) map
-    graphLayoutNodes: Map<number, number> | null;
+    graphNodes: Map<number, number> | null;
     /// The layout indices of the focused edges
-    graphLayoutEdges: Set<number> | null;
+    graphEdgeNodes: Set<BigInt> | null;
     /// The focused table ids
     tables: Set<number> | null;
     /// The focused table columns as (tableId -> columnId[]) map.
@@ -173,8 +166,8 @@ export function createDefaultState(): AppState {
         graphDebugMode: false,
         graphDebugInfo: null,
         focus: {
-            graphLayoutNodes: null,
-            graphLayoutEdges: null,
+            graphNodes: null,
+            graphEdgeNodes: null,
             tables: null,
             tableColumns: null,
             tableReferences: null,

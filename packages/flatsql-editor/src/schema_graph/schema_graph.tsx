@@ -11,7 +11,7 @@ import {
     FOCUS_GRAPH_NODE,
     FOCUS_GRAPH_EDGE,
 } from '../app_state_reducer';
-import { ScriptKey, GraphNodeDescriptor, GraphEdgeDescriptor } from '../app_state';
+import { ScriptKey, GraphNodeDescriptor } from '../app_state';
 import cn from 'classnames';
 
 import styles from './schema_graph.module.css';
@@ -53,7 +53,7 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
 
     // Helper to change edge focus
     const onEdgeFocusChanged = React.useCallback(
-        (target: GraphEdgeDescriptor | null) => {
+        (target: BigInt | null) => {
             dispatch({
                 type: FOCUS_GRAPH_EDGE,
                 value: target,
