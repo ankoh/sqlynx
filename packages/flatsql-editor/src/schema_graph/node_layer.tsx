@@ -162,10 +162,10 @@ export function NodeLayer(props: Props) {
     return (
         <div className={styles.graph_nodes}>
             {props.nodes.map(n => {
-                const focusedPorts = props.focus?.get(n.graphNodeId) ?? 0;
+                const focusedPorts = props.focus?.get(n.nodeId) ?? 0;
                 return (
                     <div
-                        key={n.graphNodeId}
+                        key={n.nodeId}
                         className={styles.table_node}
                         style={{
                             position: 'absolute',
@@ -174,23 +174,23 @@ export function NodeLayer(props: Props) {
                             width: n.width,
                             height: n.height,
                         }}
-                        data-node={n.graphNodeId}
+                        data-node={n.nodeId}
                         onMouseEnter={onEnterNode}
                         onMouseLeave={onLeaveNode}
                         onClick={onClickNode}
                     >
                         <div className={styles.table_ports}>
                             {(n.ports & NodePort.North) != 0 && (
-                                <Port node={n.graphNodeId} port={NodePort.North} focusedPorts={focusedPorts} className={styles.table_port_north} />
+                                <Port node={n.nodeId} port={NodePort.North} focusedPorts={focusedPorts} className={styles.table_port_north} />
                             )}
                             {(n.ports & NodePort.East) != 0 && (
-                                <Port node={n.graphNodeId} port={NodePort.East} focusedPorts={focusedPorts} className={styles.table_port_east} />
+                                <Port node={n.nodeId} port={NodePort.East} focusedPorts={focusedPorts} className={styles.table_port_east} />
                             )}
                             {(n.ports & NodePort.South) != 0 && (
-                                <Port node={n.graphNodeId} port={NodePort.South} focusedPorts={focusedPorts} className={styles.table_port_south} />
+                                <Port node={n.nodeId} port={NodePort.South} focusedPorts={focusedPorts} className={styles.table_port_south} />
                             )}
                             {(n.ports & NodePort.West) != 0 && (
-                                <Port node={n.graphNodeId} port={NodePort.West} focusedPorts={focusedPorts} className={styles.table_port_west} />
+                                <Port node={n.nodeId} port={NodePort.West} focusedPorts={focusedPorts} className={styles.table_port_west} />
                             )}
                         </div>
                         <div className={styles.table_icon}>
