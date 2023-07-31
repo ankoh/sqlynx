@@ -4,6 +4,7 @@ import cn from 'classnames';
 import { Action } from '../utils/action';
 import { NodeLayout, EdgeLayout } from './graph_layout';
 import { NodePort } from './graph_edges';
+import { NodeFocusTarget } from '../app_state_reducer';
 
 import iconTable from '../../static/svg/icons/table.svg';
 import iconTableView from '../../static/svg/icons/table_border.svg';
@@ -17,7 +18,7 @@ interface Props {
     nodes: NodeLayout[];
     edges: EdgeLayout[];
     focus: Map<number, number> | null;
-    onFocusChanged: (node: number | null, port: NodePort | null) => void;
+    onFocusChanged: (target: NodeFocusTarget | null) => void;
 }
 
 enum FocusEvent {
@@ -27,8 +28,7 @@ enum FocusEvent {
 
 interface FocusState {
     event: FocusEvent | null;
-    node: number | null;
-    port: number | null;
+    target: NodeFocusTarget | null;
 }
 
 const MOUSE_ENTER = Symbol('MOUSE_ENTER');
@@ -36,9 +36,9 @@ const MOUSE_LEAVE = Symbol('MOUSE_LEAVE');
 const CLICK = Symbol('CLICK');
 
 type FocusAction =
-    | Action<typeof MOUSE_ENTER, [number, number | null]>
-    | Action<typeof MOUSE_LEAVE, [number, number | null]>
-    | Action<typeof CLICK, [number, number | null]>;
+    | Action<typeof MOUSE_ENTER, NodeFocusTarget>
+    | Action<typeof MOUSE_LEAVE, NodeFocusTarget>
+    | Action<typeof CLICK, NodeFocusTarget>;
 
 const reducer = (state: FocusState, action: FocusAction): FocusState => {
     switch (action.type) {
@@ -48,13 +48,15 @@ const reducer = (state: FocusState, action: FocusAction): FocusState => {
                 return state;
             }
             // Node MouseEnter event but we're already in the same node?
-            if (action.value[0] === state.node && (action.value[1] === state.port || action.value[1] == null)) {
+            if (
+                action.value.node === state.target?.node &&
+                (action.value.port === state.target.port || action.value.port == null)
+            ) {
                 return state;
             }
             return {
                 event: FocusEvent.HOVER,
-                node: action.value[0],
-                port: action.value[1],
+                target: action.value,
             };
         }
         case MOUSE_LEAVE: {
@@ -63,54 +65,59 @@ const reducer = (state: FocusState, action: FocusAction): FocusState => {
                 return state;
             }
             // Did we leave the port? Then we're still waiting for the node MouseLeave event
-            if (action.value[0] === state.node && action.value[1] === state.port && state.port != null) {
+            if (
+                action.value.node === state.target?.node &&
+                action.value.port === state.target.port &&
+                state.target.port != null
+            ) {
                 return {
                     ...state,
-                    port: null,
+                    target: null,
                 };
             }
             // Otherwise we assume it's the MouseLeave event of the node
             return {
                 event: null,
-                node: null,
-                port: null,
+                target: null,
             };
         }
         case CLICK: {
-            if (state.node == action.value[0] && state.port == action.value[1] && state.event == FocusEvent.CLICK) {
+            if (
+                action.value.node == state.target?.node &&
+                action.value.port == state.target.port &&
+                state.event == FocusEvent.CLICK
+            ) {
                 return {
                     event: null,
-                    node: null,
-                    port: null,
+                    target: null,
                 };
             }
             return {
                 event: FocusEvent.CLICK,
-                node: action.value[0],
-                port: action.value[1],
+                target: action.value,
             };
         }
     }
 };
 
 export function NodeLayer(props: Props) {
-    const [state, dispatch] = React.useReducer(reducer, null, () => ({ event: null, node: null, port: null }));
+    const [state, dispatch] = React.useReducer(reducer, null, () => ({ event: null, target: null, port: null }));
 
     React.useEffect(() => {
-        props.onFocusChanged(state.node, state.port);
-    }, [state.node, state.port, props.onFocusChanged]);
+        props.onFocusChanged(state.target);
+    }, [state.target, props.onFocusChanged]);
 
     const onEnterNode = React.useCallback(
         (event: React.MouseEvent<HTMLDivElement>) => {
             const nodeId = event.currentTarget.getAttribute('data-node')!;
-            dispatch({ type: MOUSE_ENTER, value: [+nodeId, null] });
+            dispatch({ type: MOUSE_ENTER, value: { node: +nodeId, port: null } });
         },
         [dispatch],
     );
     const onLeaveNode = React.useCallback(
         (event: React.MouseEvent<HTMLDivElement>) => {
             const nodeId = event.currentTarget.getAttribute('data-node')!;
-            dispatch({ type: MOUSE_LEAVE, value: [+nodeId, null] });
+            dispatch({ type: MOUSE_LEAVE, value: { node: +nodeId, port: null } });
         },
         [dispatch],
     );
@@ -118,7 +125,7 @@ export function NodeLayer(props: Props) {
         (event: React.MouseEvent<HTMLDivElement>) => {
             const nodeId = event.currentTarget.getAttribute('data-node')!;
             const portId = event.currentTarget.getAttribute('data-port')!;
-            dispatch({ type: MOUSE_ENTER, value: [+nodeId, portId != null ? +portId : null] });
+            dispatch({ type: MOUSE_ENTER, value: { node: +nodeId, port: portId != null ? +portId : null } });
         },
         [dispatch],
     );
@@ -126,14 +133,14 @@ export function NodeLayer(props: Props) {
         (event: React.MouseEvent<HTMLDivElement>) => {
             const nodeId = event.currentTarget.getAttribute('data-node')!;
             const portId = event.currentTarget.getAttribute('data-port')!;
-            dispatch({ type: MOUSE_LEAVE, value: [+nodeId, +portId] });
+            dispatch({ type: MOUSE_LEAVE, value: { node: +nodeId, port: +portId } });
         },
         [dispatch],
     );
     const onClickNode = React.useCallback(
         (event: React.MouseEvent<HTMLDivElement>) => {
             const nodeId = event.currentTarget.getAttribute('data-node')!;
-            dispatch({ type: CLICK, value: [+nodeId, null] });
+            dispatch({ type: CLICK, value: { node: +nodeId, port: null } });
         },
         [dispatch],
     );
@@ -142,7 +149,7 @@ export function NodeLayer(props: Props) {
             event.stopPropagation();
             const nodeId = event.currentTarget.getAttribute('data-node')!;
             const portId = event.currentTarget.getAttribute('data-port')!;
-            dispatch({ type: CLICK, value: [+nodeId, +portId] });
+            dispatch({ type: CLICK, value: { node: +nodeId, port: +portId } });
         },
         [dispatch],
     );
@@ -150,7 +157,7 @@ export function NodeLayer(props: Props) {
     const Port = (props: { node: number; port: NodePort; focusedPorts: number; className: string }) => (
         <div
             className={cn(styles.table_port, props.className, {
-                [styles.table_port_focused]: (props.focusedPorts & props.port) != 0
+                [styles.table_port_focused]: (props.focusedPorts & props.port) != 0,
             })}
             data-node={props.node}
             data-port={props.port}
@@ -181,16 +188,36 @@ export function NodeLayer(props: Props) {
                     >
                         <div className={styles.table_ports}>
                             {(n.ports & NodePort.North) != 0 && (
-                                <Port node={n.nodeId} port={NodePort.North} focusedPorts={focusedPorts} className={styles.table_port_north} />
+                                <Port
+                                    node={n.nodeId}
+                                    port={NodePort.North}
+                                    focusedPorts={focusedPorts}
+                                    className={styles.table_port_north}
+                                />
                             )}
                             {(n.ports & NodePort.East) != 0 && (
-                                <Port node={n.nodeId} port={NodePort.East} focusedPorts={focusedPorts} className={styles.table_port_east} />
+                                <Port
+                                    node={n.nodeId}
+                                    port={NodePort.East}
+                                    focusedPorts={focusedPorts}
+                                    className={styles.table_port_east}
+                                />
                             )}
                             {(n.ports & NodePort.South) != 0 && (
-                                <Port node={n.nodeId} port={NodePort.South} focusedPorts={focusedPorts} className={styles.table_port_south} />
+                                <Port
+                                    node={n.nodeId}
+                                    port={NodePort.South}
+                                    focusedPorts={focusedPorts}
+                                    className={styles.table_port_south}
+                                />
                             )}
                             {(n.ports & NodePort.West) != 0 && (
-                                <Port node={n.nodeId} port={NodePort.West} focusedPorts={focusedPorts} className={styles.table_port_west} />
+                                <Port
+                                    node={n.nodeId}
+                                    port={NodePort.West}
+                                    focusedPorts={focusedPorts}
+                                    className={styles.table_port_west}
+                                />
                             )}
                         </div>
                         <div className={styles.table_icon}>

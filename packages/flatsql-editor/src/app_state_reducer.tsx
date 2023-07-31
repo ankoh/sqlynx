@@ -23,6 +23,17 @@ export const RESIZE_SCHEMA_GRAPH = Symbol('RESIZE_EDITOR');
 export const DEBUG_GRAPH_LAYOUT = Symbol('DEBUG_GRAPH_LAYOUT');
 export const DESTROY = Symbol('DESTROY');
 
+export interface NodeFocusTarget {
+    node: number;
+    port: number | null;
+}
+
+export interface EdgeFocusTarget {
+    edge: number;
+    from: number;
+    to: number;
+}
+
 export type AppStateAction =
     | Action<typeof INITIALIZE, flatsql.FlatSQL>
     | Action<typeof LOAD_SCRIPTS, { [key: number]: ScriptMetadata }>
@@ -30,9 +41,9 @@ export type AppStateAction =
     | Action<typeof SCRIPT_LOADING_STARTED, ScriptKey>
     | Action<typeof SCRIPT_LOADING_SUCCEEDED, [ScriptKey, string]>
     | Action<typeof SCRIPT_LOADING_FAILED, [ScriptKey, any]>
-    | Action<typeof FOCUS_GRAPH_NODE, [number | null, number | null]>
-    | Action<typeof FOCUS_GRAPH_EDGE, number | null>
-    | Action<typeof RESIZE_SCHEMA_GRAPH, [number, number]>
+    | Action<typeof FOCUS_GRAPH_NODE, NodeFocusTarget | null> // node id, port id
+    | Action<typeof FOCUS_GRAPH_EDGE, EdgeFocusTarget | null> // edge id, source node id, target node id
+    | Action<typeof RESIZE_SCHEMA_GRAPH, [number, number]> // width, height
     | Action<typeof DEBUG_GRAPH_LAYOUT, boolean>
     | Action<typeof DESTROY, undefined>;
 
@@ -255,7 +266,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
         }
         case FOCUS_GRAPH_NODE: {
             // Unset focused node?
-            if (action.value[0] === null) {
+            if (action.value === null) {
                 // State already has cleared focus?
                 if (state.focus.graphNodes === null && state.focus.graphEdges === null) {
                     return state;
@@ -271,14 +282,14 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                 };
             }
             // Focus a node, does the set of currently focused nodes only contain the newly focused node?
-            const port = state.focus.graphNodes?.get(action.value[0]);
-            if (port !== undefined && port == action.value[1] && state.focus.graphEdges!.size == 1) {
+            const port = state.focus.graphNodes?.get(action.value.node);
+            if (port !== undefined && port == action.value.port && state.focus.graphEdges!.size == 1) {
                 // Leave the state as-is
                 return state;
             }
             // Mark node an port as focused
             const nodes = new Map<number, number>();
-            nodes.set(action.value[0], action.value[1] ?? 0);
+            nodes.set(action.value.node, action.value.port ?? 0);
             return {
                 ...state,
                 focus: {
@@ -306,12 +317,12 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                 };
             }
             // Focus an edge, does the set of currently focused edges only contain the newly focused edge?
-            if (state.focus.graphEdges?.has(action.value) && state.focus.graphNodes?.size == 1) {
+            if (state.focus.graphEdges?.has(action.value.edge) && state.focus.graphNodes?.size == 1) {
                 return state;
             }
             // Mark node an edge as focused
             const edges = new Set<number>();
-            edges.add(action.value);
+            edges.add(action.value.edge);
             return {
                 ...state,
                 focus: {
