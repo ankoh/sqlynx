@@ -205,13 +205,13 @@ export function buildEdgePath(
             return builder.buildDirect();
 
         case EdgeType.East:
-            builder.begin(fromX + height / 2, fromY);
-            builder.push(toX - height / 2, toY);
+            builder.begin(fromX + width / 2, fromY);
+            builder.push(toX - width / 2, toY);
             return builder.buildDirect();
 
         case EdgeType.West:
-            builder.begin(fromX - height / 2, fromY);
-            builder.push(toX + height / 2, toY);
+            builder.begin(fromX - width / 2, fromY);
+            builder.push(toX + width / 2, toY);
             return builder.buildDirect();
 
         // 1 TURN
