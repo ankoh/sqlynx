@@ -27,8 +27,10 @@ interface TableColumn {
 
 export interface EdgeLayout {
     edgeId: number;
-    fromNodeId: number;
-    toNodeId: number;
+    fromNode: number;
+    fromPort: number;
+    toNode: number;
+    toPort: number;
     type: EdgeType;
     path: string;
 }
@@ -173,8 +175,10 @@ export function buildSchemaGraphLayout(state: AppState): SchemaGraphLayout {
                 const toX = rn.x + rn.width / 2;
                 const toY = rn.y + rn.height / 2;
                 const edgeType = selectEdgeType(fromX, fromY, toX, toY, ln.width, ln.height);
-                nodes[li].ports |= PORTS_FROM[edgeType];
-                nodes[ri].ports |= PORTS_TO[edgeType];
+                const fromPort = PORTS_FROM[edgeType];
+                const toPort = PORTS_TO[edgeType];
+                nodes[li].ports |= fromPort;
+                nodes[ri].ports |= toPort;
                 const edgePath = buildEdgePath(
                     edgePathBuilder,
                     edgeType,
@@ -189,8 +193,10 @@ export function buildSchemaGraphLayout(state: AppState): SchemaGraphLayout {
                 );
                 edges.push({
                     edgeId: i,
-                    fromNodeId: li,
-                    toNodeId: ri,
+                    fromNode: li,
+                    fromPort,
+                    toNode: ri,
+                    toPort,
                     type: edgeType,
                     path: edgePath,
                 });
