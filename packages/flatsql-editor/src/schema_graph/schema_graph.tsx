@@ -1,11 +1,17 @@
+import * as flatsql from '@ankoh/flatsql';
 import * as React from 'react';
 import { NodeLayer } from './node_layer';
 import { EdgeHighlightingLayer, EdgeLayer } from './edge_layer';
 import { DebugLayer } from './debug_layer';
 import { BackgroundLayer } from './background_layer';
 import { buildSchemaGraphLayout } from './graph_layout';
-import { buildDebugInfo } from './debug_layer';
-import { RESIZE_SCHEMA_GRAPH, useAppStateDispatch, useAppState } from '../app_state_reducer';
+import {
+    RESIZE_SCHEMA_GRAPH,
+    useAppStateDispatch,
+    useAppState,
+    FOCUS_GRAPH_NODE,
+    FOCUS_GRAPH_EDGE,
+} from '../app_state_reducer';
 import { ScriptKey } from '../app_state';
 import cn from 'classnames';
 
@@ -35,12 +41,27 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
         [state.graphLayout, state.scripts[ScriptKey.MAIN_SCRIPT], state.scripts[ScriptKey.SCHEMA_SCRIPT]],
     );
 
-    const onNodeFocusChanged = React.useCallback((node: number | null, port: number | null) => {
-        console.log(`onNodeFocusChanged(${node}, ${port})`);
-    }, []);
-    const onEdgeFocusChanged = React.useCallback((edge: number | null) => {
-        console.log(`onEdgeFocusChanged(${edge})`);
-    }, []);
+    // Helper to change node focus
+    const onNodeFocusChanged = React.useCallback(
+        (graphNodeId: number | null, port: number | null) => {
+            dispatch({
+                type: FOCUS_GRAPH_NODE,
+                value: [graphNodeId, port],
+            });
+        },
+        [dispatch],
+    );
+
+    // Helper to change edge focus
+    const onEdgeFocusChanged = React.useCallback(
+        (graphEdgeId: number | null) => {
+            dispatch({
+                type: FOCUS_GRAPH_EDGE,
+                value: graphEdgeId,
+            });
+        },
+        [dispatch],
+    );
 
     return (
         <div className={cn(styles.graph_container, props.className)}>
