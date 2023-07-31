@@ -52,7 +52,7 @@ const reducer = (state: FocusState, action: FocusAction): FocusState => {
             };
         }
         case CLICK: {
-            if (state.target == action.value && state.event == FocusEvent.CLICK) {
+            if (state.event == FocusEvent.CLICK && state.target?.layoutEdgeId === action.value.layoutEdgeId) {
                 return {
                     event: null,
                     target: null,
