@@ -17,6 +17,8 @@ export const UPDATE_SCRIPT_ANALYSIS = Symbol('UPDATE_SCRIPT_ANALYSIS');
 export const SCRIPT_LOADING_STARTED = Symbol('SCRIPT_LOADING_STARTED');
 export const SCRIPT_LOADING_SUCCEEDED = Symbol('SCRIPT_LOADING_SUCCEEDED');
 export const SCRIPT_LOADING_FAILED = Symbol('SCRIPT_LOADING_FAILED');
+export const FOCUS_GRAPH_NODE = Symbol('FOCUS_GRAPH_NODES');
+export const FOCUS_GRAPH_EDGE = Symbol('FOCUS_GRAPH_EDGES');
 export const RESIZE_SCHEMA_GRAPH = Symbol('RESIZE_EDITOR');
 export const DEBUG_GRAPH_LAYOUT = Symbol('DEBUG_GRAPH_LAYOUT');
 export const DESTROY = Symbol('DESTROY');
@@ -28,6 +30,8 @@ export type AppStateAction =
     | Action<typeof SCRIPT_LOADING_STARTED, ScriptKey>
     | Action<typeof SCRIPT_LOADING_SUCCEEDED, [ScriptKey, string]>
     | Action<typeof SCRIPT_LOADING_FAILED, [ScriptKey, any]>
+    | Action<typeof FOCUS_GRAPH_NODE, [number | null, number | null]>
+    | Action<typeof FOCUS_GRAPH_EDGE, number | null>
     | Action<typeof RESIZE_SCHEMA_GRAPH, [number, number]>
     | Action<typeof DEBUG_GRAPH_LAYOUT, boolean>
     | Action<typeof DESTROY, undefined>;
@@ -248,6 +252,63 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                 };
             }
             return newState;
+        }
+        case FOCUS_GRAPH_NODE: {
+            if (action.value[0] === null) {
+                if (state.focus.graphNodes === null && state.focus.graphEdges === null) {
+                    return state;
+                }
+                return {
+                    ...state,
+                    focus: {
+                        ...state.focus,
+                        graphNodes: null,
+                        graphEdges: null,
+                    },
+                };
+            }
+            const port = state.focus.graphNodes?.get(action.value[0]);
+            if (port !== undefined && port == action.value[1] && state.focus.graphEdges!.size == 1) {
+                return state;
+            }
+            const nodes = new Map<number, number>();
+            nodes.set(action.value[0], action.value[1] ?? 0);
+            return {
+                ...state,
+                focus: {
+                    ...state.focus,
+                    graphNodes: nodes,
+                    graphEdges: null,
+                },
+            };
+        }
+        case FOCUS_GRAPH_EDGE: {
+            if (action.value === null) {
+                if (state.focus.graphNodes === null && state.focus.graphEdges === null) {
+                    return state;
+                }
+                return {
+                    ...state,
+                    focus: {
+                        ...state.focus,
+                        graphNodes: null,
+                        graphEdges: null,
+                    },
+                };
+            }
+            if (state.focus.graphEdges?.has(action.value) && state.focus.graphNodes?.size == 1) {
+                return state;
+            }
+            const edges = new Set<number>();
+            edges.add(action.value);
+            return {
+                ...state,
+                focus: {
+                    ...state.focus,
+                    graphNodes: null,
+                    graphEdges: edges,
+                },
+            };
         }
         case RESIZE_SCHEMA_GRAPH:
             return computeSchemaGraph({
