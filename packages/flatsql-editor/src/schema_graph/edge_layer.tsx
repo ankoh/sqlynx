@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Action } from '../utils/action';
 import { EdgeLayout } from './graph_layout';
-import { GraphEdgeDescriptor } from '../app_state_reducer';
+import { GraphEdgeDescriptor } from '../app_state';
 
 interface Props {
     className?: string;
@@ -67,12 +67,9 @@ const reducer = (state: FocusState, action: FocusAction): FocusState => {
 };
 
 function unpack(path: SVGPathElement): GraphEdgeDescriptor {
-    const edgeId = path.getAttribute('data-edge')!;
-    const fromNode = path.getAttribute('data-from-node')!;
-    const fromPort = path.getAttribute('data-from-port')!;
-    const toNode = path.getAttribute('data-to-node')!;
-    const toPort = path.getAttribute('data-to-port')!;
-    return { edge: +edgeId, fromNode: +fromNode, fromPort: +fromPort, toNode: +toNode, toPort: +toPort };
+    const graphEdge = path.getAttribute('data-graph-edge')!;
+    const layoutEdge = path.getAttribute('data-layout-edge')!;
+    return { protoEdgeId: +graphEdge, layoutEdgeId: +layoutEdge };
 }
 
 export function EdgeLayer(props: Props) {
@@ -112,11 +109,8 @@ export function EdgeLayer(props: Props) {
                     stroke="currentcolor"
                     fill="transparent"
                     pointerEvents="stroke"
-                    data-edge={e.edgeId}
-                    data-from-node={e.fromNode}
-                    data-from-port={e.fromPort}
-                    data-to-node={e.toNode}
-                    data-to-port={e.toPort}
+                    data-graph-edge={e.edgeId}
+                    data-layout-edge={i}
                     onMouseEnter={onEnterEdge}
                     onMouseLeave={onLeaveEdge}
                     onClick={onClickEdge}
@@ -138,7 +132,7 @@ export function EdgeHighlightingLayer(props: HighlightingProps) {
     let paths = [];
     if (props.focus) {
         for (let i = 0; i < props.edges.length; ++i) {
-            if (!props.focus.has(props.edges[i].edgeId)) continue;
+            if (!props.focus.has(i)) continue;
             paths.push(
                 <path
                     key={i}

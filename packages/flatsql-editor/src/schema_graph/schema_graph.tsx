@@ -10,10 +10,8 @@ import {
     useAppState,
     FOCUS_GRAPH_NODE,
     FOCUS_GRAPH_EDGE,
-    GraphEdgeDescriptor,
-    GraphNodeDescriptor,
 } from '../app_state_reducer';
-import { ScriptKey } from '../app_state';
+import { ScriptKey, GraphNodeDescriptor, GraphEdgeDescriptor } from '../app_state';
 import cn from 'classnames';
 
 import styles from './schema_graph.module.css';
@@ -80,7 +78,7 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
                 height={props.height}
                 nodes={graphLayout.nodes}
                 edges={graphLayout.edges}
-                focus={state.focus.graphNodes}
+                focus={state.focus.graphLayoutNodes}
                 onFocusChanged={onNodeFocusChanged}
             />
             <EdgeHighlightingLayer
@@ -88,7 +86,7 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
                 boardWidth={props.width}
                 boardHeight={props.height}
                 edges={graphLayout.edges}
-                focus={state.focus.graphEdges}
+                focus={state.focus.graphLayoutEdges}
             />
             {state.graphDebugMode && (
                 <DebugLayer

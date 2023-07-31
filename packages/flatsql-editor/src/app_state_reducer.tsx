@@ -3,7 +3,15 @@ import * as flatsql from '@ankoh/flatsql';
 
 import { useFlatSQL } from './flatsql_loader';
 import { FlatSQLProcessedScript, analyzeScript, parseAndAnalyzeScript } from './editor/flatsql_processor';
-import { AppState, ScriptKey, createDefaultState, createEmptyScript, destroyState } from './app_state';
+import {
+    AppState,
+    GraphNodeDescriptor,
+    GraphEdgeDescriptor,
+    ScriptKey,
+    createDefaultState,
+    createEmptyScript,
+    destroyState,
+} from './app_state';
 import { Action, Dispatch } from './utils/action';
 import { RESULT_OK } from './utils/result';
 import { ScriptMetadata } from './script_loader/script_metadata';
@@ -22,19 +30,6 @@ export const FOCUS_GRAPH_EDGE = Symbol('FOCUS_GRAPH_EDGES');
 export const RESIZE_SCHEMA_GRAPH = Symbol('RESIZE_EDITOR');
 export const DEBUG_GRAPH_LAYOUT = Symbol('DEBUG_GRAPH_LAYOUT');
 export const DESTROY = Symbol('DESTROY');
-
-export interface GraphNodeDescriptor {
-    node: number;
-    port: number | null;
-}
-
-export interface GraphEdgeDescriptor {
-    edge: number;
-    fromNode: number;
-    fromPort: number;
-    toNode: number;
-    toPort: number;
-}
 
 export type AppStateAction =
     | Action<typeof INITIALIZE, flatsql.FlatSQL>
@@ -270,7 +265,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
             // Unset focused node?
             if (action.value === null) {
                 // State already has cleared focus?
-                if (state.focus.graphNodes === null && state.focus.graphEdges === null) {
+                if (state.focus.graphLayoutNodes === null && state.focus.graphLayoutEdges === null) {
                     return state;
                 }
                 // Otherwise clear the focus state
@@ -278,26 +273,28 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                     ...state,
                     focus: {
                         ...state.focus,
-                        graphNodes: null,
-                        graphEdges: null,
+                        graphLayoutNodes: null,
+                        graphLayoutEdges: null,
                     },
                 };
             }
             // Focus a node, does the set of currently focused nodes only contain the newly focused node?
-            const port = state.focus.graphNodes?.get(action.value.node);
-            if (port !== undefined && port == action.value.port && state.focus.graphEdges!.size == 1) {
-                // Leave the state as-is
-                return state;
+            if (state.focus.graphLayoutNodes?.size == 1) {
+                const port = state.focus.graphLayoutNodes.get(action.value.protoNodeId);
+                if (port === action.value.port) {
+                    // Leave the state as-is
+                    return state;
+                }
             }
             // Mark node an port as focused
             const nodes = new Map<number, number>();
-            nodes.set(action.value.node, action.value.port ?? 0);
+            nodes.set(action.value.protoNodeId, action.value.port ?? 0);
             return {
                 ...state,
                 focus: {
                     ...state.focus,
-                    graphNodes: nodes,
-                    graphEdges: null,
+                    graphLayoutNodes: nodes,
+                    graphLayoutEdges: null,
                 },
             };
         }
@@ -305,7 +302,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
             // Unset focused edge?
             if (action.value === null) {
                 // State already has cleared focus?
-                if (state.focus.graphNodes === null && state.focus.graphEdges === null) {
+                if (state.focus.graphLayoutNodes === null && state.focus.graphLayoutEdges === null) {
                     return state;
                 }
                 // Otherwise clear the focus state
@@ -313,24 +310,24 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                     ...state,
                     focus: {
                         ...state.focus,
-                        graphNodes: null,
-                        graphEdges: null,
+                        graphLayoutNodes: null,
+                        graphLayoutEdges: null,
                     },
                 };
             }
             // Focus an edge, does the set of currently focused edges only contain the newly focused edge?
-            if (state.focus.graphEdges?.has(action.value.edge) && state.focus.graphNodes?.size == 1) {
-                return state;
+            if (state.focus.graphLayoutEdges?.size == 1) {
+                if (state.focus.graphLayoutEdges.has(action.value.layoutEdgeId)) {
+                    return state;
+                }
             }
             // Mark node an edge as focused
-            const edges = new Set<number>();
-            edges.add(action.value.edge);
             return {
                 ...state,
                 focus: {
                     ...state.focus,
-                    graphNodes: null,
-                    graphEdges: edges,
+                    graphLayoutNodes: null,
+                    graphLayoutEdges: new Set([action.value.layoutEdgeId]),
                 },
             };
         }
