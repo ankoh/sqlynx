@@ -27,6 +27,8 @@ interface TableColumn {
 
 export interface EdgeLayout {
     graphEdgeId: number;
+    graphNodeFromId: number;
+    graphNodeToId: number;
     fromX: number;
     fromY: number;
     toX: number;
@@ -191,6 +193,8 @@ export function buildSchemaGraphLayout(state: AppState): SchemaGraphLayout {
                 );
                 edges.push({
                     graphEdgeId: i,
+                    graphNodeFromId: li,
+                    graphNodeToId: ri,
                     fromX,
                     fromY,
                     toX,
