@@ -10,6 +10,8 @@ import {
     useAppState,
     FOCUS_GRAPH_NODE,
     FOCUS_GRAPH_EDGE,
+    EdgeFocusTarget,
+    NodeFocusTarget,
 } from '../app_state_reducer';
 import { ScriptKey } from '../app_state';
 import cn from 'classnames';
@@ -42,10 +44,10 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
 
     // Helper to change node focus
     const onNodeFocusChanged = React.useCallback(
-        (graphNodeId: number | null, port: number | null) => {
+        (target: NodeFocusTarget | null) => {
             dispatch({
                 type: FOCUS_GRAPH_NODE,
-                value: [graphNodeId, port],
+                value: target,
             });
         },
         [dispatch],
@@ -53,10 +55,10 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
 
     // Helper to change edge focus
     const onEdgeFocusChanged = React.useCallback(
-        (graphEdgeId: number | null) => {
+        (target: EdgeFocusTarget | null) => {
             dispatch({
                 type: FOCUS_GRAPH_EDGE,
-                value: graphEdgeId,
+                value: target,
             });
         },
         [dispatch],
