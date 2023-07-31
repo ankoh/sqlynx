@@ -30,6 +30,8 @@ export interface AppState {
     graphDebugMode: boolean;
     /// The graph debug mode
     graphDebugInfo: flatsql.FlatBufferRef<flatsql.proto.SchemaGraphDebugInfo> | null;
+    /// The focus info
+    focus: FocusInfo;
 }
 
 /// The script data
@@ -48,7 +50,7 @@ export interface ScriptData {
     statistics: Immutable.List<flatsql.FlatBufferRef<flatsql.proto.ScriptStatistics>>;
 }
 
-export interface Focus {
+export interface FocusInfo {
     /// The focused nodes in the schema graph as (nodeId -> port bits) map
     graphNodes: Map<number, number> | null;
     /// The focused graph edges
@@ -157,5 +159,13 @@ export function createDefaultState(): AppState {
         graphLayout: null,
         graphDebugMode: false,
         graphDebugInfo: null,
+        focus: {
+            graphNodes: null,
+            graphEdges: null,
+            tables: null,
+            tableColumns: null,
+            tableReferences: null,
+            columnReferences: null,
+        },
     };
 }
