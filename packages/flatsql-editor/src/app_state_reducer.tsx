@@ -254,10 +254,13 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
             return newState;
         }
         case FOCUS_GRAPH_NODE: {
+            // Unset focused node?
             if (action.value[0] === null) {
+                // State already has cleared focus?
                 if (state.focus.graphNodes === null && state.focus.graphEdges === null) {
                     return state;
                 }
+                // Otherwise clear the focus state
                 return {
                     ...state,
                     focus: {
@@ -267,10 +270,13 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                     },
                 };
             }
+            // Focus a node, does the set of currently focused nodes only contain the newly focused node?
             const port = state.focus.graphNodes?.get(action.value[0]);
             if (port !== undefined && port == action.value[1] && state.focus.graphEdges!.size == 1) {
+                // Leave the state as-is
                 return state;
             }
+            // Mark node an port as focused
             const nodes = new Map<number, number>();
             nodes.set(action.value[0], action.value[1] ?? 0);
             return {
@@ -283,10 +289,13 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
             };
         }
         case FOCUS_GRAPH_EDGE: {
+            // Unset focused edge?
             if (action.value === null) {
+                // State already has cleared focus?
                 if (state.focus.graphNodes === null && state.focus.graphEdges === null) {
                     return state;
                 }
+                // Otherwise clear the focus state
                 return {
                     ...state,
                     focus: {
@@ -296,9 +305,11 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                     },
                 };
             }
+            // Focus an edge, does the set of currently focused edges only contain the newly focused edge?
             if (state.focus.graphEdges?.has(action.value) && state.focus.graphNodes?.size == 1) {
                 return state;
             }
+            // Mark node an edge as focused
             const edges = new Set<number>();
             edges.add(action.value);
             return {
