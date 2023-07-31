@@ -8,6 +8,7 @@ interface Props {
     boardWidth: number;
     boardHeight: number;
     edges: EdgeLayout[];
+    focus: Set<number> | null;
     onFocusChanged: (edge: number | null) => void;
 }
 
