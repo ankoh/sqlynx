@@ -2,14 +2,14 @@ import * as React from 'react';
 
 import { Action } from '../utils/action';
 import { EdgeLayout } from './graph_layout';
-import { EdgeFocusTarget } from '../app_state_reducer';
+import { GraphEdgeDescriptor } from '../app_state_reducer';
 
 interface Props {
     className?: string;
     boardWidth: number;
     boardHeight: number;
     edges: EdgeLayout[];
-    onFocusChanged: (edge: EdgeFocusTarget | null) => void;
+    onFocusChanged: (edge: GraphEdgeDescriptor | null) => void;
 }
 
 enum FocusEvent {
@@ -19,7 +19,7 @@ enum FocusEvent {
 
 interface FocusState {
     event: FocusEvent | null;
-    target: EdgeFocusTarget | null;
+    target: GraphEdgeDescriptor | null;
 }
 
 const MOUSE_ENTER = Symbol('MOUSE_ENTER');
@@ -27,9 +27,9 @@ const MOUSE_LEAVE = Symbol('MOUSE_LEAVE');
 const CLICK = Symbol('CLICK');
 
 type FocusAction =
-    | Action<typeof MOUSE_ENTER, EdgeFocusTarget>
-    | Action<typeof MOUSE_LEAVE, EdgeFocusTarget>
-    | Action<typeof CLICK, EdgeFocusTarget>;
+    | Action<typeof MOUSE_ENTER, GraphEdgeDescriptor>
+    | Action<typeof MOUSE_LEAVE, GraphEdgeDescriptor>
+    | Action<typeof CLICK, GraphEdgeDescriptor>;
 
 const reducer = (state: FocusState, action: FocusAction): FocusState => {
     switch (action.type) {
@@ -66,6 +66,15 @@ const reducer = (state: FocusState, action: FocusAction): FocusState => {
     }
 };
 
+function unpack(path: SVGPathElement): GraphEdgeDescriptor {
+    const edgeId = path.getAttribute('data-edge')!;
+    const fromNode = path.getAttribute('data-from-node')!;
+    const fromPort = path.getAttribute('data-from-port')!;
+    const toNode = path.getAttribute('data-to-node')!;
+    const toPort = path.getAttribute('data-to-port')!;
+    return { edge: +edgeId, fromNode: +fromNode, fromPort: +fromPort, toNode: +toNode, toPort: +toPort };
+}
+
 export function EdgeLayer(props: Props) {
     const [state, dispatch] = React.useReducer(reducer, null, () => ({ event: null, target: null }));
 
@@ -75,26 +84,23 @@ export function EdgeLayer(props: Props) {
 
     const onEnterEdge = React.useCallback(
         (event: React.MouseEvent<SVGPathElement>) => {
-            const edgeId = event.currentTarget.getAttribute('data-edge')!;
-            const fromId = event.currentTarget.getAttribute('data-from')!;
-            const toId = event.currentTarget.getAttribute('data-to')!;
-            dispatch({ type: MOUSE_ENTER, value: { edge: +edgeId, from: +fromId, to: +toId } });
+            dispatch({ type: MOUSE_ENTER, value: unpack(event.currentTarget) });
         },
         [dispatch],
     );
-    const onLeaveEdge = React.useCallback((event: React.MouseEvent<SVGPathElement>) => {
-        const edgeId = event.currentTarget.getAttribute('data-edge')!;
-        const fromId = event.currentTarget.getAttribute('data-from')!;
-        const toId = event.currentTarget.getAttribute('data-to')!;
-        dispatch({ type: MOUSE_LEAVE, value: { edge: +edgeId, from: +fromId, to: +toId } });
-    }, []);
-    const onClickEdge = React.useCallback((event: React.MouseEvent<SVGPathElement>) => {
-        event.stopPropagation();
-        const edgeId = event.currentTarget.getAttribute('data-edge')!;
-        const fromId = event.currentTarget.getAttribute('data-from')!;
-        const toId = event.currentTarget.getAttribute('data-to')!;
-        dispatch({ type: CLICK, value: { edge: +edgeId, from: +fromId, to: +toId } });
-    }, []);
+    const onLeaveEdge = React.useCallback(
+        (event: React.MouseEvent<SVGPathElement>) => {
+            dispatch({ type: MOUSE_LEAVE, value: unpack(event.currentTarget) });
+        },
+        [dispatch],
+    );
+    const onClickEdge = React.useCallback(
+        (event: React.MouseEvent<SVGPathElement>) => {
+            event.stopPropagation();
+            dispatch({ type: CLICK, value: unpack(event.currentTarget) });
+        },
+        [dispatch],
+    );
 
     return (
         <svg className={props.className} viewBox={'0 0 ' + props.boardWidth + ' ' + props.boardHeight}>
@@ -107,8 +113,10 @@ export function EdgeLayer(props: Props) {
                     fill="transparent"
                     pointerEvents="stroke"
                     data-edge={e.edgeId}
-                    data-from={e.fromNodeId}
-                    data-to={e.toNodeId}
+                    data-from-node={e.fromNode}
+                    data-from-port={e.fromPort}
+                    data-to-node={e.toNode}
+                    data-to-port={e.toPort}
                     onMouseEnter={onEnterEdge}
                     onMouseLeave={onLeaveEdge}
                     onClick={onClickEdge}

@@ -23,15 +23,17 @@ export const RESIZE_SCHEMA_GRAPH = Symbol('RESIZE_EDITOR');
 export const DEBUG_GRAPH_LAYOUT = Symbol('DEBUG_GRAPH_LAYOUT');
 export const DESTROY = Symbol('DESTROY');
 
-export interface NodeFocusTarget {
+export interface GraphNodeDescriptor {
     node: number;
     port: number | null;
 }
 
-export interface EdgeFocusTarget {
+export interface GraphEdgeDescriptor {
     edge: number;
-    from: number;
-    to: number;
+    fromNode: number;
+    fromPort: number;
+    toNode: number;
+    toPort: number;
 }
 
 export type AppStateAction =
@@ -41,8 +43,8 @@ export type AppStateAction =
     | Action<typeof SCRIPT_LOADING_STARTED, ScriptKey>
     | Action<typeof SCRIPT_LOADING_SUCCEEDED, [ScriptKey, string]>
     | Action<typeof SCRIPT_LOADING_FAILED, [ScriptKey, any]>
-    | Action<typeof FOCUS_GRAPH_NODE, NodeFocusTarget | null> // node id, port id
-    | Action<typeof FOCUS_GRAPH_EDGE, EdgeFocusTarget | null> // edge id, source node id, target node id
+    | Action<typeof FOCUS_GRAPH_NODE, GraphNodeDescriptor | null> // node id, port id
+    | Action<typeof FOCUS_GRAPH_EDGE, GraphEdgeDescriptor | null> // edge id, source node id, target node id
     | Action<typeof RESIZE_SCHEMA_GRAPH, [number, number]> // width, height
     | Action<typeof DEBUG_GRAPH_LAYOUT, boolean>
     | Action<typeof DESTROY, undefined>;
