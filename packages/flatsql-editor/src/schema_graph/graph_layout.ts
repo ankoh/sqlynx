@@ -11,7 +11,7 @@ export interface SchemaGraphLayout {
 }
 
 export interface NodeLayout {
-    graphNodeId: number;
+    nodeId: number;
     name: string;
     x: number;
     y: number;
@@ -26,9 +26,9 @@ interface TableColumn {
 }
 
 export interface EdgeLayout {
-    graphEdgeId: number;
-    graphNodeFromId: number;
-    graphNodeToId: number;
+    edgeId: number;
+    fromNodeId: number;
+    toNodeId: number;
     type: EdgeType;
     path: string;
 }
@@ -101,7 +101,7 @@ export function buildSchemaGraphLayout(state: AppState): SchemaGraphLayout {
                 });
             }
             nodes.push({
-                graphNodeId: i,
+                nodeId: i,
                 name: tableName.table ?? '',
                 x: position.x(),
                 y: position.y(),
@@ -125,7 +125,7 @@ export function buildSchemaGraphLayout(state: AppState): SchemaGraphLayout {
                 });
             }
             nodes.push({
-                graphNodeId: i,
+                nodeId: i,
                 name: tableName.table ?? '',
                 x: position.x(),
                 y: position.y(),
@@ -188,9 +188,9 @@ export function buildSchemaGraphLayout(state: AppState): SchemaGraphLayout {
                     8,
                 );
                 edges.push({
-                    graphEdgeId: i,
-                    graphNodeFromId: li,
-                    graphNodeToId: ri,
+                    edgeId: i,
+                    fromNodeId: li,
+                    toNodeId: ri,
                     type: edgeType,
                     path: edgePath,
                 });
