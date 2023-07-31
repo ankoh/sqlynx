@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Action } from '../utils/action';
 import { EdgeLayout } from './graph_layout';
-import { GraphEdgeDescriptor } from '../app_state';
+import { FocusInfo, GraphEdgeDescriptor } from '../app_state';
 
 interface Props {
     className?: string;
@@ -125,14 +125,14 @@ interface HighlightingProps {
     boardWidth: number;
     boardHeight: number;
     edges: EdgeLayout[];
-    focus: Set<number> | null;
+    focus: FocusInfo | null;
 }
 
 export function EdgeHighlightingLayer(props: HighlightingProps) {
     let paths = [];
     if (props.focus) {
         for (let i = 0; i < props.edges.length; ++i) {
-            if (!props.focus.has(i)) continue;
+            if (!props.focus.graphLayoutEdges?.has(i)) continue;
             paths.push(
                 <path
                     key={i}
