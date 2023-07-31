@@ -169,7 +169,7 @@ export function NodeLayer(props: Props) {
     return (
         <div className={styles.graph_nodes}>
             {props.nodes.map(n => {
-                const focusedPorts = props.focus?.graphLayoutNodes?.get(n.nodeId) ?? 0;
+                const focusedPorts = props.focus?.graphNodes?.get(n.nodeId) ?? 0;
                 return (
                     <div
                         key={n.nodeId}
