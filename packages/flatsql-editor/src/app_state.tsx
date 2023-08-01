@@ -60,7 +60,7 @@ export interface FocusInfo {
     /// The layout indices in the schema graph as (nodeId -> port bits) map
     graphNodes: Map<number, number> | null;
     /// The layout indices of the focused edges
-    graphEdgeNodes: Set<BigInt> | null;
+    graphConnections: Set<BigInt> | null;
     /// The focused table ids
     tables: Set<number> | null;
     /// The focused table columns as (tableId -> columnId[]) map.
@@ -167,7 +167,7 @@ export function createDefaultState(): AppState {
         graphDebugInfo: null,
         focus: {
             graphNodes: null,
-            graphEdgeNodes: null,
+            graphConnections: null,
             tables: null,
             tableColumns: null,
             tableReferences: null,

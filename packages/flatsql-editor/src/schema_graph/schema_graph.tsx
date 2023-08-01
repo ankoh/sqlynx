@@ -42,10 +42,10 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
 
     // Helper to change node focus
     const onNodeFocusChanged = React.useCallback(
-        (target: GraphNodeDescriptor | null) => {
+        (node: GraphNodeDescriptor | null) => {
             dispatch({
                 type: FOCUS_GRAPH_NODE,
-                value: target,
+                value: node,
             });
         },
         [dispatch],
@@ -53,10 +53,10 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
 
     // Helper to change edge focus
     const onEdgeFocusChanged = React.useCallback(
-        (target: BigInt | null) => {
+        (connection: BigInt | null) => {
             dispatch({
                 type: FOCUS_GRAPH_EDGE,
-                value: target,
+                value: connection,
             });
         },
         [dispatch],

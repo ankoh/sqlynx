@@ -264,7 +264,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
             // Unset focused node?
             if (action.value === null) {
                 // State already has cleared focus?
-                if (state.focus.graphNodes === null && state.focus.graphEdgeNodes === null) {
+                if (state.focus.graphNodes === null && state.focus.graphConnections === null) {
                     return state;
                 }
                 // Otherwise clear the focus state
@@ -273,7 +273,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                     focus: {
                         ...state.focus,
                         graphNodes: null,
-                        graphEdgeNodes: null,
+                        graphConnections: null,
                     },
                 };
             }
@@ -293,7 +293,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                 focus: {
                     ...state.focus,
                     graphNodes: nodes,
-                    graphEdgeNodes: null,
+                    graphConnections: null,
                 },
             };
         }
@@ -301,7 +301,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
             // Unset focused edge?
             if (action.value === null) {
                 // State already has cleared focus?
-                if (state.focus.graphNodes === null && state.focus.graphEdgeNodes === null) {
+                if (state.focus.graphNodes === null && state.focus.graphConnections === null) {
                     return state;
                 }
                 // Otherwise clear the focus state
@@ -310,13 +310,13 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                     focus: {
                         ...state.focus,
                         graphNodes: null,
-                        graphEdgeNodes: null,
+                        graphConnections: null,
                     },
                 };
             }
             // Does the set of focused edges only contain the newly focused edge?
-            if (state.focus.graphEdgeNodes?.size == 1) {
-                if (state.focus.graphEdgeNodes.has(action.value)) {
+            if (state.focus.graphConnections?.size == 1) {
+                if (state.focus.graphConnections.has(action.value)) {
                     return state;
                 }
             }
@@ -326,7 +326,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                 focus: {
                     ...state.focus,
                     graphNodes: null,
-                    graphEdgeNodes: new Set([action.value]),
+                    graphConnections: new Set([action.value]),
                 },
             };
         }
