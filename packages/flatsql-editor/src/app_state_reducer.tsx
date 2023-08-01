@@ -5,6 +5,7 @@ import { useFlatSQL } from './flatsql_loader';
 import { FlatSQLProcessedScript, analyzeScript, parseAndAnalyzeScript } from './editor/flatsql_processor';
 import {
     AppState,
+    ConnectionId,
     GraphNodeDescriptor,
     ScriptKey,
     createDefaultState,
@@ -288,13 +289,35 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
             }
             // Mark node an port as focused
             const nodes = new Map<number, number>();
-            nodes.set(action.value.protoNodeId, action.value.port ?? 0);
+            const nodeId = action.value.protoNodeId;
+            const port = action.value.port;
+            nodes.set(nodeId, action.value.port ?? 0);
+            // Determine the focused connections
+            const connections = new Set<ConnectionId>();
+            if (action.value.port === null) {
+                // If no port is focused, find all edges reaching that node
+                for (const [conn, edge] of state.graphViewModel.edges) {
+                    if (edge.fromNode == nodeId || edge.toNode == nodeId) {
+                        connections.add(conn);
+                    }
+                }
+            } else {
+                // If a port is focused, find all edges reaching that port
+                for (const [conn, edge] of state.graphViewModel.edges) {
+                    if (
+                        (edge.fromNode == nodeId && edge.fromPort == port) ||
+                        (edge.toNode == nodeId && edge.toPort == port)
+                    ) {
+                        connections.add(conn);
+                    }
+                }
+            }
             return {
                 ...state,
                 focus: {
                     ...state.focus,
                     graphNodes: nodes,
-                    graphConnections: null,
+                    graphConnections: connections,
                 },
             };
         }
