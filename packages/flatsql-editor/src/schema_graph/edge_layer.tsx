@@ -9,7 +9,7 @@ interface Props {
     boardWidth: number;
     boardHeight: number;
     edges: EdgeLayout[];
-    onFocusChanged: (edge: BigInt | null) => void;
+    onFocusChanged: (connection: BigInt | null) => void;
 }
 
 enum FocusEvent {
@@ -134,7 +134,7 @@ export function EdgeHighlightingLayer(props: HighlightingProps) {
         for (let i = 0; i < props.edges.length; ++i) {
             const edge = props.edges[i];
             const edgeNodes = (BigInt(edge.fromNode) << 32n) | BigInt(edge.toNode);
-            if (!props.focus.graphEdgeNodes?.has(edgeNodes)) continue;
+            if (!props.focus.graphConnections?.has(edgeNodes)) continue;
             paths.push(
                 <path
                     key={i}
