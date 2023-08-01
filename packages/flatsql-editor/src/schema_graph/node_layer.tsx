@@ -2,7 +2,7 @@ import * as React from 'react';
 import cn from 'classnames';
 
 import { Action } from '../utils/action';
-import { NodeLayout, EdgeLayout } from './graph_layout';
+import { NodeViewModel, EdgeViewModel } from './graph_view_model';
 import { NodePort } from './graph_edges';
 import { ConnectionId, FocusInfo, GraphNodeDescriptor, unpackConnectionId } from '../app_state';
 
@@ -15,8 +15,8 @@ interface Props {
     className?: string;
     width: number;
     height: number;
-    nodes: NodeLayout[];
-    edges: Map<ConnectionId, EdgeLayout>;
+    nodes: NodeViewModel[];
+    edges: Map<ConnectionId, EdgeViewModel>;
     focus: FocusInfo | null;
     onFocusChanged: (target: GraphNodeDescriptor | null) => void;
 }

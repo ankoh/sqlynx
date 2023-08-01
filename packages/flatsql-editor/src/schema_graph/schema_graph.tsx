@@ -3,7 +3,7 @@ import { NodeLayer } from './node_layer';
 import { EdgeHighlightingLayer, EdgeLayer } from './edge_layer';
 import { DebugLayer } from './debug_layer';
 import { BackgroundLayer } from './background_layer';
-import { buildSchemaGraphLayout } from './graph_layout';
+import { computeSchemaGraphViewModel } from './graph_view_model';
 import {
     RESIZE_SCHEMA_GRAPH,
     useAppStateDispatch,
@@ -34,12 +34,6 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
         });
     }, [props.width, props.height]);
 
-    // Build the graph layout
-    const graphLayout = React.useMemo(
-        () => buildSchemaGraphLayout(state),
-        [state.graphLayout, state.scripts[ScriptKey.MAIN_SCRIPT], state.scripts[ScriptKey.SCHEMA_SCRIPT]],
-    );
-
     // Helper to change node focus
     const onNodeFocusChanged = React.useCallback(
         (node: GraphNodeDescriptor | null) => {
@@ -69,15 +63,15 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
                 className={styles.graph_edges}
                 boardWidth={props.width}
                 boardHeight={props.height}
-                edges={graphLayout.edges}
+                edges={state.graphViewModel.edges}
                 onFocusChanged={onEdgeFocusChanged}
             />
             <NodeLayer
                 className={styles.graph_nodes}
                 width={props.width}
                 height={props.height}
-                nodes={graphLayout.nodes}
-                edges={graphLayout.edges}
+                nodes={state.graphViewModel.nodes}
+                edges={state.graphViewModel.edges}
                 focus={state.focus}
                 onFocusChanged={onNodeFocusChanged}
             />
@@ -85,15 +79,15 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
                 className={styles.graph_edge_highlighting}
                 boardWidth={props.width}
                 boardHeight={props.height}
-                edges={graphLayout.edges}
+                edges={state.graphViewModel.edges}
                 focus={state.focus}
             />
-            {state.graphDebugMode && (
+            {state.graphViewModel.debugInfo && (
                 <DebugLayer
                     className={styles.graph_debug_info}
                     width={props.width}
                     height={props.height}
-                    info={graphLayout.debugInfo}
+                    info={state.graphViewModel.debugInfo}
                 />
             )}
         </div>
