@@ -159,7 +159,7 @@ export function buildSchemaGraphLayout(state: AppState): SchemaGraphLayout {
                 const ri = edgeNodes[begin + countLeft + r];
                 const rn = nodes[ri];
                 const connId = buildConnectionId(li, ri);
-                const connIdReverse = buildConnectionId(li, ri);
+                const connIdReverse = buildConnectionId(ri, li);
 
                 // Already emitted or source == target?
                 // Note that we may very well encounter self edges in SQL queries.
