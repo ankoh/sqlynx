@@ -53,7 +53,7 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
 
     // Helper to change edge focus
     const onEdgeFocusChanged = React.useCallback(
-        (connection: BigInt | null) => {
+        (connection: bigint | null) => {
             dispatch({
                 type: FOCUS_GRAPH_EDGE,
                 value: connection,
