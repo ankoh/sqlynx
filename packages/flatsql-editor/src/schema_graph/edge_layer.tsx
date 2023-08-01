@@ -1,14 +1,14 @@
 import * as React from 'react';
 
 import { Action } from '../utils/action';
-import { EdgeLayout } from './graph_layout';
+import { EdgeViewModel } from './graph_view_model';
 import { ConnectionId, FocusInfo, buildConnectionId } from '../app_state';
 
 interface Props {
     className?: string;
     boardWidth: number;
     boardHeight: number;
-    edges: Map<ConnectionId, EdgeLayout>;
+    edges: Map<ConnectionId, EdgeViewModel>;
     onFocusChanged: (connection: ConnectionId | null) => void;
 }
 
@@ -129,7 +129,7 @@ interface HighlightingProps {
     className?: string;
     boardWidth: number;
     boardHeight: number;
-    edges: Map<ConnectionId, EdgeLayout>;
+    edges: Map<ConnectionId, EdgeViewModel>;
     focus: FocusInfo | null;
 }
 

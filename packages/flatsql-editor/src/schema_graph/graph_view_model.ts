@@ -4,13 +4,13 @@ import { AppState, ConnectionId, ScriptKey, buildConnectionId } from '../app_sta
 import { EdgePathBuilder, EdgeType, PORTS_FROM, PORTS_TO, buildEdgePath, selectEdgeType } from './graph_edges';
 import { DebugInfo, buildDebugInfo } from './debug_layer';
 
-export interface SchemaGraphLayout {
-    nodes: NodeLayout[];
-    edges: Map<ConnectionId, EdgeLayout>;
-    debugInfo: DebugInfo;
+export interface SchemaGraphViewModel {
+    nodes: NodeViewModel[];
+    edges: Map<ConnectionId, EdgeViewModel>;
+    debugInfo: DebugInfo | null;
 }
 
-export interface NodeLayout {
+export interface NodeViewModel {
     nodeId: number;
     name: string;
     x: number;
@@ -25,7 +25,7 @@ interface TableColumn {
     name: string;
 }
 
-export interface EdgeLayout {
+export interface EdgeViewModel {
     edgeId: number;
     fromNode: number;
     fromPort: number;
@@ -35,7 +35,7 @@ export interface EdgeLayout {
     path: string;
 }
 
-export function buildSchemaGraphLayout(state: AppState): SchemaGraphLayout {
+export function computeSchemaGraphViewModel(state: AppState): SchemaGraphViewModel {
     let debugInfo: DebugInfo = {
         nodeCount: 0,
         fromX: new Float64Array(),
@@ -52,7 +52,7 @@ export function buildSchemaGraphLayout(state: AppState): SchemaGraphLayout {
             debugInfo,
         };
     }
-    const nodes: NodeLayout[] = [];
+    const nodes: NodeViewModel[] = [];
     const layout = state.graphLayout!.read(new flatsql.proto.SchemaGraphLayout());
 
     const protoGraphNode = new flatsql.proto.SchemaGraphNode();
@@ -141,7 +141,7 @@ export function buildSchemaGraphLayout(state: AppState): SchemaGraphLayout {
 
     // Read edges
     const edgeNodes = layout.edgeNodesArray()!;
-    const edges = new Map<ConnectionId, EdgeLayout>();
+    const edges = new Map<ConnectionId, EdgeViewModel>();
     const edgePathBuilder = new EdgePathBuilder();
 
     for (let i = 0; i < layout.edgesLength(); ++i) {
