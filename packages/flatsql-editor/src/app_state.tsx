@@ -56,10 +56,16 @@ export interface GraphNodeDescriptor {
     port: number | null;
 }
 
-export type ConnectionId = BigInt;
+export type ConnectionId = bigint;
 
 export function buildConnectionId(from: number, to: number): ConnectionId {
     return (BigInt(from) << 32n) | BigInt(to);
+}
+
+export function unpackConnectionId(id: ConnectionId): [number, number] {
+    const from = id >> 32n;
+    const to = id & ((1n << 32n) - 1n);
+    return [Number(from), Number(to)];
 }
 
 export interface FocusInfo {

@@ -4,7 +4,7 @@ import cn from 'classnames';
 import { Action } from '../utils/action';
 import { NodeLayout, EdgeLayout } from './graph_layout';
 import { NodePort } from './graph_edges';
-import { ConnectionId, FocusInfo, GraphNodeDescriptor } from '../app_state';
+import { ConnectionId, FocusInfo, GraphNodeDescriptor, unpackConnectionId } from '../app_state';
 
 import iconTable from '../../static/svg/icons/table.svg';
 import iconTableView from '../../static/svg/icons/table_border.svg';
@@ -166,10 +166,25 @@ export function NodeLayer(props: Props) {
             onClick={onClickPort}
         />
     );
+
+    const focusedEdgePorts = new Map<number, number>();
+    if (props.focus?.graphConnections) {
+        for (const connection of props.focus.graphConnections) {
+            const edge = props.edges.get(connection)!;
+            let ports = focusedEdgePorts.get(edge.fromNode) ?? 0;
+            ports |= edge.fromPort;
+            focusedEdgePorts.set(edge.fromNode, ports);
+            ports = focusedEdgePorts.get(edge.toNode) ?? 0;
+            ports |= edge.toPort;
+            focusedEdgePorts.set(edge.toNode, ports);
+        }
+    }
+
     return (
         <div className={styles.graph_nodes}>
             {props.nodes.map(n => {
-                const focusedPorts = props.focus?.graphNodes?.get(n.nodeId) ?? 0;
+                let focusedPorts = props.focus?.graphNodes?.get(n.nodeId) ?? 0;
+                focusedPorts |= focusedEdgePorts.get(n.nodeId) ?? 0;
                 return (
                     <div
                         key={n.nodeId}
