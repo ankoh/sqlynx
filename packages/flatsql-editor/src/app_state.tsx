@@ -56,11 +56,17 @@ export interface GraphNodeDescriptor {
     port: number | null;
 }
 
+export type ConnectionId = BigInt;
+
+export function buildConnectionId(from: number, to: number): ConnectionId {
+    return (BigInt(from) << 32n) | BigInt(to);
+}
+
 export interface FocusInfo {
     /// The layout indices in the schema graph as (nodeId -> port bits) map
     graphNodes: Map<number, number> | null;
     /// The layout indices of the focused edges
-    graphConnections: Set<BigInt> | null;
+    graphConnections: Set<ConnectionId> | null;
     /// The focused table ids
     tables: Set<number> | null;
     /// The focused table columns as (tableId -> columnId[]) map.
