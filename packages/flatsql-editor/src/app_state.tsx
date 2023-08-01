@@ -8,6 +8,9 @@ import { FlatSQLProcessedScript } from './editor/flatsql_processor';
 import { ScriptMetadata } from './script_loader/script_metadata';
 import { LoadingInfo } from './script_loader/script_loader';
 
+const DEFAULT_BOARD_WIDTH = 800;
+const DEFAULT_BOARD_HEIGHT = 600;
+
 /// A key to identify the target script
 export enum ScriptKey {
     MAIN_SCRIPT = 1,
@@ -58,20 +61,10 @@ export interface GraphNodeDescriptor {
 
 export type ConnectionId = bigint;
 
-export function buildConnectionId(from: number, to: number): ConnectionId {
-    return (BigInt(from) << 32n) | BigInt(to);
-}
-
-export function unpackConnectionId(id: ConnectionId): [number, number] {
-    const from = id >> 32n;
-    const to = id & ((1n << 32n) - 1n);
-    return [Number(from), Number(to)];
-}
-
 export interface FocusInfo {
     /// The layout indices in the schema graph as (nodeId -> port bits) map
     graphNodes: Map<number, number> | null;
-    /// The layout indices of the focused edges
+    /// The connection ids of focused edges
     graphConnections: Set<ConnectionId> | null;
     /// The focused table ids
     tables: Set<number> | null;
@@ -147,9 +140,6 @@ export function createEmptyScript(key: ScriptKey, api: flatsql.FlatSQL) {
     return script;
 }
 
-const DEFAULT_BOARD_WIDTH = 800;
-const DEFAULT_BOARD_HEIGHT = 600;
-
 export function createDefaultState(): AppState {
     return {
         instance: null,
@@ -186,4 +176,14 @@ export function createDefaultState(): AppState {
             columnReferences: null,
         },
     };
+}
+
+export function buildConnectionId(from: number, to: number): ConnectionId {
+    return (BigInt(from) << 32n) | BigInt(to);
+}
+
+export function unpackConnectionId(id: ConnectionId): [number, number] {
+    const from = id >> 32n;
+    const to = id & ((1n << 32n) - 1n);
+    return [Number(from), Number(to)];
 }
