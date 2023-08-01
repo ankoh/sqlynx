@@ -1,12 +1,12 @@
 import * as flatsql from '@ankoh/flatsql';
 
-import { AppState, ScriptKey } from '../app_state';
+import { AppState, ConnectionId, ScriptKey, buildConnectionId } from '../app_state';
 import { EdgePathBuilder, EdgeType, PORTS_FROM, PORTS_TO, buildEdgePath, selectEdgeType } from './graph_edges';
 import { DebugInfo, buildDebugInfo } from './debug_layer';
 
 export interface SchemaGraphLayout {
     nodes: NodeLayout[];
-    edges: EdgeLayout[];
+    edges: Map<ConnectionId, EdgeLayout>;
     debugInfo: DebugInfo;
 }
 
@@ -48,7 +48,7 @@ export function buildSchemaGraphLayout(state: AppState): SchemaGraphLayout {
     if (!state.graphLayout) {
         return {
             nodes: [],
-            edges: [],
+            edges: new Map(),
             debugInfo,
         };
     }
@@ -70,7 +70,7 @@ export function buildSchemaGraphLayout(state: AppState): SchemaGraphLayout {
     if (!mainParsed || !mainAnalyzed || !schemaParsed || !schemaAnalyzed || !state.graphLayout) {
         return {
             nodes: [],
-            edges: [],
+            edges: new Map(),
             debugInfo,
         };
     }
@@ -141,9 +141,8 @@ export function buildSchemaGraphLayout(state: AppState): SchemaGraphLayout {
 
     // Read edges
     const edgeNodes = layout.edgeNodesArray()!;
-    const edges: EdgeLayout[] = [];
+    const edges = new Map<ConnectionId, EdgeLayout>();
     const edgePathBuilder = new EdgePathBuilder();
-    const edgeEmitted = new Set<number>();
 
     for (let i = 0; i < layout.edgesLength(); ++i) {
         const edge = layout.edges(i, protoEdge)!;
@@ -159,15 +158,15 @@ export function buildSchemaGraphLayout(state: AppState): SchemaGraphLayout {
             for (let r = 0; r < countRight; ++r) {
                 const ri = edgeNodes[begin + countLeft + r];
                 const rn = nodes[ri];
+                const connId = buildConnectionId(li, ri);
+                const connIdReverse = buildConnectionId(li, ri);
 
                 // Already emitted or source == target?
                 // Note that we may very well encounter self edges in SQL queries.
                 // (self-join, correlated subqueries)
-                if (li == ri || edgeEmitted.has(li * nodes.length + ri)) {
+                if (li == ri || edges.has(connId) || edges.has(connIdReverse)) {
                     continue;
                 }
-                edgeEmitted.add(li * nodes.length + ri);
-                edgeEmitted.add(ri * nodes.length + li);
 
                 // Build edge info
                 const fromX = ln.x + ln.width / 2;
@@ -191,7 +190,7 @@ export function buildSchemaGraphLayout(state: AppState): SchemaGraphLayout {
                     state.graphConfig.gridSize,
                     8,
                 );
-                edges.push({
+                edges.set(connId, {
                     edgeId: i,
                     fromNode: li,
                     fromPort,

@@ -2,14 +2,14 @@ import * as React from 'react';
 
 import { Action } from '../utils/action';
 import { EdgeLayout } from './graph_layout';
-import { FocusInfo } from '../app_state';
+import { ConnectionId, FocusInfo, buildConnectionId } from '../app_state';
 
 interface Props {
     className?: string;
     boardWidth: number;
     boardHeight: number;
-    edges: EdgeLayout[];
-    onFocusChanged: (connection: BigInt | null) => void;
+    edges: Map<ConnectionId, EdgeLayout>;
+    onFocusChanged: (connection: ConnectionId | null) => void;
 }
 
 enum FocusEvent {
@@ -19,7 +19,7 @@ enum FocusEvent {
 
 interface FocusState {
     event: FocusEvent | null;
-    target: BigInt | null;
+    target: ConnectionId | null;
 }
 
 const MOUSE_ENTER = Symbol('MOUSE_ENTER');
@@ -27,9 +27,9 @@ const MOUSE_LEAVE = Symbol('MOUSE_LEAVE');
 const CLICK = Symbol('CLICK');
 
 type FocusAction =
-    | Action<typeof MOUSE_ENTER, BigInt>
-    | Action<typeof MOUSE_LEAVE, BigInt>
-    | Action<typeof CLICK, BigInt>;
+    | Action<typeof MOUSE_ENTER, ConnectionId>
+    | Action<typeof MOUSE_LEAVE, ConnectionId>
+    | Action<typeof CLICK, ConnectionId>;
 
 const reducer = (state: FocusState, action: FocusAction): FocusState => {
     switch (action.type) {
@@ -66,10 +66,10 @@ const reducer = (state: FocusState, action: FocusAction): FocusState => {
     }
 };
 
-function unpack(path: SVGPathElement): BigInt {
-    const graphEdge = path.getAttribute('data-from')!;
-    const layoutEdge = path.getAttribute('data-to')!;
-    return (BigInt(+graphEdge) << 32n) | BigInt(+layoutEdge);
+function unpack(path: SVGPathElement): ConnectionId {
+    const from = path.getAttribute('data-from')!;
+    const to = path.getAttribute('data-to')!;
+    return buildConnectionId(+from, +to);
 }
 
 export function EdgeLayer(props: Props) {
@@ -99,23 +99,28 @@ export function EdgeLayer(props: Props) {
         [dispatch],
     );
 
+    const paths = [];
+    for (const [conn, edge] of props.edges) {
+        paths.push(
+            <path
+                key={edge.edgeId}
+                d={edge.path}
+                strokeWidth="2px"
+                stroke="currentcolor"
+                fill="transparent"
+                pointerEvents="stroke"
+                data-from={edge.fromNode}
+                data-to={edge.toNode}
+                onMouseEnter={onEnterEdge}
+                onMouseLeave={onLeaveEdge}
+                onClick={onClickEdge}
+            />,
+        );
+    }
+
     return (
         <svg className={props.className} viewBox={'0 0 ' + props.boardWidth + ' ' + props.boardHeight}>
-            {props.edges.map((e, i) => (
-                <path
-                    key={i}
-                    d={e.path}
-                    strokeWidth="2px"
-                    stroke="currentcolor"
-                    fill="transparent"
-                    pointerEvents="stroke"
-                    data-from={e.fromNode}
-                    data-to={e.toNode}
-                    onMouseEnter={onEnterEdge}
-                    onMouseLeave={onLeaveEdge}
-                    onClick={onClickEdge}
-                />
-            ))}
+            {paths}
         </svg>
     );
 }
@@ -124,21 +129,19 @@ interface HighlightingProps {
     className?: string;
     boardWidth: number;
     boardHeight: number;
-    edges: EdgeLayout[];
+    edges: Map<ConnectionId, EdgeLayout>;
     focus: FocusInfo | null;
 }
 
 export function EdgeHighlightingLayer(props: HighlightingProps) {
     let paths = [];
     if (props.focus) {
-        for (let i = 0; i < props.edges.length; ++i) {
-            const edge = props.edges[i];
-            const edgeNodes = (BigInt(edge.fromNode) << 32n) | BigInt(edge.toNode);
-            if (!props.focus.graphConnections?.has(edgeNodes)) continue;
+        for (const [connection, edge] of props.edges) {
+            if (!props.focus.graphConnections?.has(connection)) continue;
             paths.push(
                 <path
-                    key={i}
-                    d={props.edges[i].path}
+                    key={edge.edgeId}
+                    d={edge.path}
                     strokeWidth="2px"
                     stroke="hsl(212.44deg, 92.07%, 44.51%)"
                     fill="transparent"
