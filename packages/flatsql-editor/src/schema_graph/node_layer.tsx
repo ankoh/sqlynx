@@ -49,7 +49,7 @@ const reducer = (state: FocusState, action: FocusAction): FocusState => {
             }
             // Node MouseEnter event but we're already in the same node?
             if (
-                action.value.protoNodeId === state.target?.protoNodeId &&
+                action.value.nodeId === state.target?.nodeId &&
                 (action.value.port === state.target.port || action.value.port == null)
             ) {
                 return state;
@@ -66,13 +66,16 @@ const reducer = (state: FocusState, action: FocusAction): FocusState => {
             }
             // Did we leave the port? Then we're still waiting for the node MouseLeave event
             if (
-                action.value.protoNodeId === state.target?.protoNodeId &&
+                action.value.nodeId === state.target?.nodeId &&
                 action.value.port === state.target.port &&
                 state.target.port != null
             ) {
                 return {
                     ...state,
-                    target: null,
+                    target: {
+                        ...state.target,
+                        port: null,
+                    },
                 };
             }
             // Otherwise we assume it's the MouseLeave event of the node
@@ -83,7 +86,7 @@ const reducer = (state: FocusState, action: FocusAction): FocusState => {
         }
         case CLICK: {
             if (
-                action.value.protoNodeId == state.target?.protoNodeId &&
+                action.value.nodeId == state.target?.nodeId &&
                 action.value.port == state.target.port &&
                 state.event == FocusEvent.CLICK
             ) {
@@ -110,14 +113,14 @@ export function NodeLayer(props: Props) {
     const onEnterNode = React.useCallback(
         (event: React.MouseEvent<HTMLDivElement>) => {
             const nodeId = event.currentTarget.getAttribute('data-node')!;
-            dispatch({ type: MOUSE_ENTER, value: { protoNodeId: +nodeId, port: null } });
+            dispatch({ type: MOUSE_ENTER, value: { nodeId: +nodeId, port: null } });
         },
         [dispatch],
     );
     const onLeaveNode = React.useCallback(
         (event: React.MouseEvent<HTMLDivElement>) => {
             const nodeId = event.currentTarget.getAttribute('data-node')!;
-            dispatch({ type: MOUSE_LEAVE, value: { protoNodeId: +nodeId, port: null } });
+            dispatch({ type: MOUSE_LEAVE, value: { nodeId: +nodeId, port: null } });
         },
         [dispatch],
     );
@@ -125,7 +128,7 @@ export function NodeLayer(props: Props) {
         (event: React.MouseEvent<HTMLDivElement>) => {
             const nodeId = event.currentTarget.getAttribute('data-node')!;
             const portId = event.currentTarget.getAttribute('data-port')!;
-            dispatch({ type: MOUSE_ENTER, value: { protoNodeId: +nodeId, port: portId != null ? +portId : null } });
+            dispatch({ type: MOUSE_ENTER, value: { nodeId: +nodeId, port: portId != null ? +portId : null } });
         },
         [dispatch],
     );
@@ -133,14 +136,14 @@ export function NodeLayer(props: Props) {
         (event: React.MouseEvent<HTMLDivElement>) => {
             const nodeId = event.currentTarget.getAttribute('data-node')!;
             const portId = event.currentTarget.getAttribute('data-port')!;
-            dispatch({ type: MOUSE_LEAVE, value: { protoNodeId: +nodeId, port: +portId } });
+            dispatch({ type: MOUSE_LEAVE, value: { nodeId: +nodeId, port: +portId } });
         },
         [dispatch],
     );
     const onClickNode = React.useCallback(
         (event: React.MouseEvent<HTMLDivElement>) => {
             const nodeId = event.currentTarget.getAttribute('data-node')!;
-            dispatch({ type: CLICK, value: { protoNodeId: +nodeId, port: null } });
+            dispatch({ type: CLICK, value: { nodeId: +nodeId, port: null } });
         },
         [dispatch],
     );
@@ -149,7 +152,7 @@ export function NodeLayer(props: Props) {
             event.stopPropagation();
             const nodeId = event.currentTarget.getAttribute('data-node')!;
             const portId = event.currentTarget.getAttribute('data-port')!;
-            dispatch({ type: CLICK, value: { protoNodeId: +nodeId, port: +portId } });
+            dispatch({ type: CLICK, value: { nodeId: +nodeId, port: +portId } });
         },
         [dispatch],
     );

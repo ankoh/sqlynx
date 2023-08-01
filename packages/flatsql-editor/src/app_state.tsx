@@ -57,7 +57,7 @@ export interface ScriptData {
 
 export interface GraphNodeDescriptor {
     /// The node
-    protoNodeId: number;
+    nodeId: number;
     /// The port
     port: number | null;
 }

@@ -281,7 +281,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
             }
             // Focus a node, does the set of currently focused nodes only contain the newly focused node?
             if (state.focus.graphNodes?.size == 1) {
-                const port = state.focus.graphNodes.get(action.value.protoNodeId);
+                const port = state.focus.graphNodes.get(action.value.nodeId);
                 if (port === action.value.port) {
                     // Leave the state as-is
                     return state;
@@ -289,7 +289,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
             }
             // Mark node an port as focused
             const nodes = new Map<number, number>();
-            const nodeId = action.value.protoNodeId;
+            const nodeId = action.value.nodeId;
             const port = action.value.port;
             nodes.set(nodeId, action.value.port ?? 0);
             // Determine the focused connections
