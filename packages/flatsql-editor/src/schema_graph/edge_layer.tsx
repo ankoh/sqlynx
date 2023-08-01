@@ -103,7 +103,7 @@ export function EdgeLayer(props: Props) {
     for (const [conn, edge] of props.edges) {
         paths.push(
             <path
-                key={edge.edgeId}
+                key={conn.toString()}
                 d={edge.path}
                 strokeWidth="2px"
                 stroke="currentcolor"
@@ -136,11 +136,11 @@ interface HighlightingProps {
 export function EdgeHighlightingLayer(props: HighlightingProps) {
     let paths = [];
     if (props.focus) {
-        for (const [connection, edge] of props.edges) {
-            if (!props.focus.graphConnections?.has(connection)) continue;
+        for (const [conn, edge] of props.edges) {
+            if (!props.focus.graphConnections?.has(conn)) continue;
             paths.push(
                 <path
-                    key={edge.edgeId}
+                    key={conn.toString()}
                     d={edge.path}
                     strokeWidth="2px"
                     stroke="hsl(212.44deg, 92.07%, 44.51%)"
