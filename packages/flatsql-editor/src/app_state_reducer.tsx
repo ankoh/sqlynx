@@ -38,7 +38,7 @@ export type AppStateAction =
     | Action<typeof SCRIPT_LOADING_SUCCEEDED, [ScriptKey, string]>
     | Action<typeof SCRIPT_LOADING_FAILED, [ScriptKey, any]>
     | Action<typeof FOCUS_GRAPH_NODE, GraphNodeDescriptor | null> // node id, port id
-    | Action<typeof FOCUS_GRAPH_EDGE, BigInt | null> // (source node id, target node id) pairs
+    | Action<typeof FOCUS_GRAPH_EDGE, bigint | null> // (source node id, target node id) pairs
     | Action<typeof RESIZE_SCHEMA_GRAPH, [number, number]> // width, height
     | Action<typeof DEBUG_GRAPH_LAYOUT, boolean>
     | Action<typeof DESTROY, undefined>;
