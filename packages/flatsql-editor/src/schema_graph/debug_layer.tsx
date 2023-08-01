@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as flatsql from '@ankoh/flatsql';
 
 import { AppState } from '../app_state';
-import { NodeLayout } from './graph_layout';
+import { NodeViewModel } from './graph_view_model';
 
 import styles from './debug_layer.module.css';
 
@@ -16,7 +16,7 @@ export interface DebugInfo {
     repulsion: Float64Array;
 }
 
-export function buildDebugInfo(ctx: AppState, nodes: NodeLayout[]): DebugInfo {
+export function buildDebugInfo(ctx: AppState, nodes: NodeViewModel[]): DebugInfo {
     const protoDebugInfo = new flatsql.proto.SchemaGraphDebugInfo();
     const debugInfo = ctx.graphDebugInfo!.read(protoDebugInfo)!;
     const nodeDistances = debugInfo.nodeDistancesArray()!;

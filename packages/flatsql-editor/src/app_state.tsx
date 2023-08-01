@@ -7,6 +7,7 @@ import { LoadingStatus } from './script_loader/script_loader';
 import { FlatSQLProcessedScript } from './editor/flatsql_processor';
 import { ScriptMetadata } from './script_loader/script_metadata';
 import { LoadingInfo } from './script_loader/script_loader';
+import { SchemaGraphViewModel } from './schema_graph/graph_view_model';
 
 const DEFAULT_BOARD_WIDTH = 800;
 const DEFAULT_BOARD_HEIGHT = 600;
@@ -32,6 +33,8 @@ export interface AppState {
     graphDebugMode: boolean;
     /// The graph debug mode
     graphDebugInfo: flatsql.FlatBufferRef<flatsql.proto.SchemaGraphDebugInfo> | null;
+    /// The graph view model
+    graphViewModel: SchemaGraphViewModel;
     /// The focus info
     focus: FocusInfo;
 }
@@ -167,6 +170,11 @@ export function createDefaultState(): AppState {
         graphLayout: null,
         graphDebugMode: false,
         graphDebugInfo: null,
+        graphViewModel: {
+            nodes: [],
+            edges: new Map(),
+            debugInfo: null,
+        },
         focus: {
             graphNodes: null,
             graphConnections: null,

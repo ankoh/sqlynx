@@ -16,6 +16,7 @@ import { RESULT_OK } from './utils/result';
 import { ScriptMetadata } from './script_loader/script_metadata';
 import { LoadingStatus } from './script_loader/script_loader';
 import { TPCH_SCHEMA, exampleScripts } from './script_loader/example_scripts';
+import { computeSchemaGraphViewModel } from './schema_graph/graph_view_model';
 import Immutable from 'immutable';
 
 export const INITIALIZE = Symbol('INITIALIZE');
@@ -359,6 +360,7 @@ function computeSchemaGraph(state: AppState, debug?: boolean): AppState {
         state.graphDebugInfo?.delete();
         state.graphDebugInfo = state.graph?.describe() ?? null;
     }
+    state.graphViewModel = computeSchemaGraphViewModel(state);
     return state;
 }
 
