@@ -252,4 +252,23 @@ proto::StatusCode Script::UpdateCompletionIndex() {
     return proto::StatusCode::OK;
 }
 
+/// Constructor
+ScriptCursor::ScriptCursor() : analyzed_script(), text_offset() {}
+
+/// Update the script cursor position
+void ScriptCursor::Update(Script& script, size_t text_offset) {
+    // Did the parsed script change?
+    if (parsed_script != script.parsed_script) {
+        parsed_script = script.parsed_script;
+
+        // XXX
+    }
+
+    // Did the analyzed script change?
+    if (analyzed_script != script.analyzed_script) {
+        analyzed_script = script.analyzed_script;
+        // XXX
+    }
+}
+
 }  // namespace flatsql
