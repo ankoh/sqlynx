@@ -98,6 +98,8 @@ class ParsedScript {
     /// Constructor
     ParsedScript(std::shared_ptr<ScannedScript> scan, parser::ParseContext&& context);
 
+    /// Resolve a node
+    size_t FindNodeAtChar(size_t text_offset);
     /// Build the script
     flatbuffers::Offset<proto::ParsedScript> Pack(flatbuffers::FlatBufferBuilder& builder);
 };
@@ -190,6 +192,29 @@ class Script {
 
     /// Get statisics
     std::unique_ptr<proto::ScriptStatisticsT> GetStatistics();
+};
+
+struct ScriptCursor {
+    /// The parsed script
+    std::shared_ptr<ParsedScript> parsed_script;
+    /// The analyzed script
+    std::shared_ptr<AnalyzedScript> analyzed_script;
+    /// The text offset
+    size_t text_offset;
+    /// The current ast node id (if any)
+    std::optional<size_t> ast_node_id;
+    /// The current statement id (if any)
+    std::optional<size_t> statement_id;
+    /// The current query edge id (if any)
+    std::optional<size_t> query_edge_id;
+    /// The current table id (if any)
+    std::optional<size_t> table_id;
+
+    /// Constructor
+    ScriptCursor();
+
+    /// Update the cursor
+    void Update(Script& script, size_t cursor_position);
 };
 
 }  // namespace flatsql
