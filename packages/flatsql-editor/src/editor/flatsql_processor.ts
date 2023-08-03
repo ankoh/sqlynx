@@ -120,6 +120,7 @@ export const FlatSQLProcessor: StateField<FlatSQLEditorState> = StateField.defin
                 };
             }
         }
+
         // Did the document change?
         if (state.script != null && transaction.docChanged) {
             // Mirror all changes to the the FlatSQL script, if the script is != null.
@@ -142,6 +143,14 @@ export const FlatSQLProcessor: StateField<FlatSQLEditorState> = StateField.defin
             next.processed = parseAndAnalyzeScript(next.script!, next.external);
             next.onUpdate(next.scriptKey, next.processed);
             return next;
+        }
+
+        // Did the selection change?
+        const prevSelection = transaction.startState.selection.asSingle();
+        const newSelection = transaction.newSelection.asSingle();
+        if (!prevSelection.eq(newSelection)) {
+            const newMain = newSelection.main;
+            console.log(`SELECTION [${newMain.from}, ${newMain.to}]`);
         }
         return state;
     },

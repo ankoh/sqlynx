@@ -1,0 +1,14 @@
+namespace flatsql.proto;
+
+struct ScriptCursor {
+    /// The text offset
+    text_offset: uint32;
+    /// The AST node id
+    ast_node_id: uint32;
+    /// The statement id
+    statement_id: uint32;
+    /// The query edge id
+    query_edge_id: uint32;
+    /// The table id
+    table_id: uint32;
+}
