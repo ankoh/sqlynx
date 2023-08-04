@@ -12,6 +12,8 @@ struct ScriptProcessingTimings {
 struct ScriptProcessingMemoryStatistics {
     /// The size of the scanner input
     scanner_input_bytes: uint32;
+    /// The size of the scanner symbols
+    scanner_symbol_bytes: uint32;
     /// The size of the scanner dictionary
     scanner_dictionary_bytes: uint32;
     /// The size of parser ast
