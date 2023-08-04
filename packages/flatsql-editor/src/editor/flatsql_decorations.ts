@@ -6,7 +6,7 @@ import { FlatSQLProcessor } from './flatsql_processor';
 
 import './flatsql_decorations.css';
 
-const TokenType = flatsql.proto.HighlightingTokenType;
+const TokenType = flatsql.proto.ScannerTokenType;
 const KeywordDecoration = Decoration.mark({
     class: 'flatsql-keyword',
 });
@@ -17,7 +17,7 @@ function buildDecorations(
 ): DecorationSet {
     const builder = new RangeSetBuilder<Decoration>();
     const scan = scanned.read(tmp);
-    const hl = scan.highlighting();
+    const hl = scan.tokens();
     if (hl && hl.tokenOffsetsArray()) {
         const tokenOffsets = hl.tokenOffsetsArray()!;
         const tokenTypes = hl.tokenTypesArray()!;

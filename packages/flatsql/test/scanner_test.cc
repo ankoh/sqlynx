@@ -6,7 +6,7 @@
 
 using namespace flatsql;
 
-using Token = proto::HighlightingTokenType;
+using Token = proto::ScannerTokenType;
 
 namespace {
 
@@ -17,17 +17,17 @@ static void match_tokens(const void* data, const std::vector<uint32_t>& offsets,
     auto scanned = flatbuffers::GetRoot<proto::ScannedScript>(data);
     proto::ScannedScriptT unpacked;
     scanned->UnPackTo(&unpacked);
-    ASSERT_EQ(unpacked.highlighting->token_offsets, offsets);
-    ASSERT_EQ(unpacked.highlighting->token_types, types);
-    ASSERT_EQ(unpacked.highlighting->token_breaks, breaks);
+    ASSERT_EQ(unpacked.tokens->token_offsets, offsets);
+    ASSERT_EQ(unpacked.tokens->token_types, types);
+    ASSERT_EQ(unpacked.tokens->token_breaks, breaks);
 }
 
-TEST(HighlightingTest, InsertChars) {
+TEST(ScannerTest, InsertChars) {
     auto script = flatsql_script_new();
     FFIResult* result = nullptr;
 
     size_t size = 0;
-    auto add_char = [&](char c, std::vector<uint32_t> offsets, std::vector<proto::HighlightingTokenType> types,
+    auto add_char = [&](char c, std::vector<uint32_t> offsets, std::vector<proto::ScannerTokenType> types,
                         std::vector<uint32_t> breaks) {
         flatsql_script_insert_char_at(script, size++, c);
         result = flatsql_script_scan(script);

@@ -371,7 +371,7 @@ table Statement {
     root_node: uint32;
 }
 
-enum HighlightingTokenType: uint8 {
+enum ScannerTokenType: uint8 {
     NONE,
     KEYWORD,
     LITERAL_INTEGER,
@@ -385,16 +385,16 @@ enum HighlightingTokenType: uint8 {
     COMMENT,
 }
 
-table Highlighting {
+table ScannerTokens {
     token_offsets: [uint32];
-    token_types: [HighlightingTokenType];
+    token_types: [ScannerTokenType];
     token_breaks: [uint32];
 }
 
 table ScannedScript {
     line_breaks: [Location];
     errors: [Error];
-    highlighting: Highlighting;
+    tokens: ScannerTokens;
     comments: [Location];
 }
 

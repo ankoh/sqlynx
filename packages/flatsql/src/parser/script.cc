@@ -63,7 +63,7 @@ flatbuffers::Offset<proto::ScannedScript> ScannedScript::Pack(flatbuffers::FlatB
         err->message = msg;
         out.errors.push_back(std::move(err));
     }
-    out.highlighting = PackHighlighting();
+    out.tokens = PackTokens();
     out.line_breaks = line_breaks;
     out.comments = comments;
     return proto::ScannedScript::Pack(builder, &out);

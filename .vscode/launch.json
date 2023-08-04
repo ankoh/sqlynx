@@ -23,9 +23,9 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Highlighter Tests",
+            "name": "Scanner Tests",
             "program": "${workspaceFolder}/packages/flatsql/build/native/o0/tester",
-            "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*Highlighting*"],
+            "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*Scanner*"],
             "cwd": "${workspaceFolder}"
         },
         {

@@ -24,7 +24,7 @@ function lowerBound<ValueType, ArrayType extends Indexable<ValueType>>(
     return begin;
 }
 
-export function findHighlightingInRange(hl: proto.Highlighting, begin: number, end: number) {
+export function findTokensInRange(hl: proto.ScannerTokens, begin: number, end: number) {
     const offsets = hl.tokenOffsetsArray();
     if ((offsets?.length ?? 0) === 0) {
         return [0, 0];
