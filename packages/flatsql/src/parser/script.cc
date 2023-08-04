@@ -49,6 +49,7 @@ size_t ScannedScript::RegisterName(std::string_view s, sx::Location location) {
 
 /// Find a token at a text offset
 std::optional<size_t> ScannedScript::FindTokenAtOffset(size_t text_offset) {
+    // Symbols are sorted by location, so we can do a binary search on the symbol buffer
     // XXX
     return std::nullopt;
 }
