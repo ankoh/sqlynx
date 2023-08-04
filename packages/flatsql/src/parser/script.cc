@@ -47,6 +47,12 @@ size_t ScannedScript::RegisterName(std::string_view s, sx::Location location) {
     return id;
 }
 
+/// Find a token at a text offset
+std::optional<size_t> ScannedScript::FindTokenAtOffset(size_t text_offset) {
+    // XXX
+    return std::nullopt;
+}
+
 flatbuffers::Offset<proto::ScannedScript> ScannedScript::Pack(flatbuffers::FlatBufferBuilder& builder) {
     proto::ScannedScriptT out;
     out.errors.reserve(errors.size());
@@ -68,6 +74,54 @@ ParsedScript::ParsedScript(std::shared_ptr<ScannedScript> scan, parser::ParseCon
       nodes(ctx.nodes.Flatten()),
       statements(std::move(ctx.statements)),
       errors(std::move(ctx.errors)) {}
+
+/// Resolve an ast node
+std::optional<std::pair<size_t, size_t>> ParsedScript::FindNodeAtOffset(size_t text_offset) {
+    // Helper to check if an offset is included in a location
+    auto includes_offset = [](const std::vector<proto::Node>& nodes, size_t node_id, size_t text_offset) {
+        return nodes[node_id].location().offset() <= text_offset &&
+               (nodes[node_id].location().offset() + nodes[node_id].location().length() < text_offset);
+    };
+    // Check all statements
+    for (size_t si = 0; si < statements.size(); ++si) {
+        // Different statement?
+        auto iter = statements[si].root;
+        if (includes_offset(nodes, iter, text_offset)) {
+            continue;
+        }
+
+        // Try to traverse down the AST
+        while (true) {
+            // Reached node without children? Then return that node
+            auto& node = nodes[iter];
+            if (node.children_count() == 0) {
+                break;
+            }
+            // Otherwise find the first child that includes the offset
+            // Children are not ordered by location but ideally, there should only be a single match.
+            std::optional<size_t> child;
+            for (size_t i = 0; i < node.children_count(); ++i) {
+                auto ci = node.children_begin_or_value() + i;
+                if (includes_offset(nodes, ci, text_offset)) {
+                    child = ci;
+                    break;
+                }
+            }
+            // Found an including child, traverse down
+            if (child.has_value()) {
+                iter = child.value();
+                continue;
+            }
+            // Otherwise none of the children included the text offset.
+            // Abort and return the current node as best match.
+            break;
+        }
+        // Return (statement, node)-pair
+        return std::make_pair(si, iter);
+    }
+    // No match found
+    return std::nullopt;
+}
 
 /// Pack the FlatBuffer
 flatbuffers::Offset<proto::ParsedScript> ParsedScript::Pack(flatbuffers::FlatBufferBuilder& builder) {

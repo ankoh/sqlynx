@@ -65,6 +65,8 @@ class ScannedScript {
     std::string_view ReadTextAtLocation(sx::Location loc) {
         return std::string_view{text_buffer}.substr(loc.offset(), loc.length());
     }
+    /// Resolve token at text offset
+    std::optional<size_t> FindTokenAtOffset(size_t text_offset);
     /// Pack syntax highlighting
     std::unique_ptr<proto::HighlightingT> PackHighlighting();
     /// Pack scanned program
@@ -98,8 +100,8 @@ class ParsedScript {
     /// Constructor
     ParsedScript(std::shared_ptr<ScannedScript> scan, parser::ParseContext&& context);
 
-    /// Resolve a node
-    size_t FindNodeAtChar(size_t text_offset);
+    /// Resolve statement and ast node at a text offset
+    std::optional<std::pair<size_t, size_t>> FindNodeAtOffset(size_t text_offset);
     /// Build the script
     flatbuffers::Offset<proto::ParsedScript> Pack(flatbuffers::FlatBufferBuilder& builder);
 };
