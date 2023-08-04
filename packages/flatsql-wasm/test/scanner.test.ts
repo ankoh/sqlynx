@@ -17,9 +17,9 @@ beforeAll(async () => {
     expect(fsql).not.toBeNull();
 });
 
-const Token = flatsql.proto.HighlightingTokenType;
+const Token = flatsql.proto.ScannerTokenType;
 
-describe('FlatSQL Highlighting', () => {
+describe('FlatSQL Scanner', () => {
     it(`Character Sequence`, () => {
         const script = fsql!.createScript();
         let tmp = new flatsql.proto.ScannedScript();
@@ -28,15 +28,15 @@ describe('FlatSQL Highlighting', () => {
         const add = (
             t: string,
             expectedOffsets: number[],
-            expectedTypes: flatsql.proto.HighlightingTokenType[],
+            expectedTypes: flatsql.proto.ScannerTokenType[],
             expectedBreaks: number[],
         ) => {
             script.insertTextAt(size++, t);
             const result = script.scan();
             const scanned = result.read(tmp);
 
-            expect(scanned.highlighting()).toBeTruthy();
-            let hl = scanned.highlighting()!;
+            expect(scanned.tokens()).toBeTruthy();
+            let hl = scanned.tokens()!;
             expect(hl.tokenOffsetsArray()).toBeTruthy();
             expect(hl.tokenTypesArray()).toBeTruthy();
             expect(Array.from(hl.tokenOffsetsArray()!)).toEqual(expectedOffsets);
@@ -61,7 +61,7 @@ describe('FlatSQL Highlighting', () => {
             const test_tokens = (
                 text: string,
                 expectedOffsets: number[],
-                expectedTypes: flatsql.proto.HighlightingTokenType[],
+                expectedTypes: flatsql.proto.ScannerTokenType[],
                 textRange: [number, number],
                 expectedFiltered: [number, number],
             ) => {
@@ -69,9 +69,9 @@ describe('FlatSQL Highlighting', () => {
                 script.insertTextAt(0, text);
                 const scanResult = script.scan();
                 const scannedScript = scanResult.read(new flatsql.proto.ScannedScript());
-                expect(scannedScript.highlighting()).toBeTruthy();
+                expect(scannedScript.tokens()).toBeTruthy();
 
-                const hl = scannedScript.highlighting();
+                const hl = scannedScript.tokens();
                 expect(hl).toBeTruthy();
                 expect(hl!.tokenOffsetsArray()).toBeTruthy();
                 expect(hl!.tokenTypesArray()).toBeTruthy();
@@ -79,7 +79,7 @@ describe('FlatSQL Highlighting', () => {
                 expect(Array.from(hl!.tokenTypesArray()!)).toEqual(expectedTypes);
 
                 const [textBegin, textEnd] = textRange;
-                const [tokenBegin, tokenEnd] = flatsql.findHighlightingInRange(hl!, textBegin, textEnd);
+                const [tokenBegin, tokenEnd] = flatsql.findTokensInRange(hl!, textBegin, textEnd);
 
                 expect([tokenBegin, tokenEnd]).toEqual(expectedFiltered);
                 script.delete();
