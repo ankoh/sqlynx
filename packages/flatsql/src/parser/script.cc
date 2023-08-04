@@ -212,10 +212,12 @@ std::unique_ptr<proto::ScriptMemoryStatistics> Script::GetMemoryStatistics() {
         // Added scanned before?
         ScannedScript* scanned = parsed->scanned_script.get();
         if (registered_scanned.contains(scanned)) return;
+        size_t scanner_symbol_bytes = scanned->symbols.GetSize() + sizeof(parser::Parser::symbol_type);
         size_t scanner_dictionary_bytes =
             scanned->name_pool.GetSize() +
             scanned->name_dictionary.size() * sizeof(decltype(scanned->name_dictionary)::value_type);
         stats.mutate_scanner_input_bytes(scanned->GetInput().size());
+        stats.mutate_scanner_symbol_bytes(scanner_symbol_bytes);
         stats.mutate_scanner_dictionary_bytes(scanner_dictionary_bytes);
     };
     registerScript(analyzed_script.get(), memory->mutable_latest_script());
