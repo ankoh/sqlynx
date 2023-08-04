@@ -237,9 +237,9 @@ set(LIB_SRC
   ${CMAKE_SOURCE_DIR}/src/analyzer/pass_manager.cc
   ${CMAKE_SOURCE_DIR}/src/api.cc
   ${CMAKE_SOURCE_DIR}/src/parser/grammar/enums.cc
-  ${CMAKE_SOURCE_DIR}/src/parser/grammar/highlighting.cc
   ${CMAKE_SOURCE_DIR}/src/parser/grammar/keywords.cc
   ${CMAKE_SOURCE_DIR}/src/parser/grammar/state.cc
+  ${CMAKE_SOURCE_DIR}/src/parser/grammar/tokens.cc
   ${CMAKE_SOURCE_DIR}/src/parser/parse_context.cc
   ${CMAKE_SOURCE_DIR}/src/parser/scanner.cc
   ${CMAKE_SOURCE_DIR}/src/parser/script.cc
@@ -271,10 +271,10 @@ if(NOT WASM)
     ${CMAKE_SOURCE_DIR}/test/api_test.cc
     ${CMAKE_SOURCE_DIR}/test/chunk_buffer_test.cc
     ${CMAKE_SOURCE_DIR}/test/format_test_suite.cc
-    ${CMAKE_SOURCE_DIR}/test/highlighting_test.cc
     ${CMAKE_SOURCE_DIR}/test/keywords_test.cc
     ${CMAKE_SOURCE_DIR}/test/parser_dump_test_suite.cc
     ${CMAKE_SOURCE_DIR}/test/rope_test.cc
+    ${CMAKE_SOURCE_DIR}/test/scanner_test.cc
     ${CMAKE_SOURCE_DIR}/test/schema_graph_test.cc
     ${CMAKE_SOURCE_DIR}/test/script_test.cc
     ${CMAKE_SOURCE_DIR}/test/suffix_trie_test.cc

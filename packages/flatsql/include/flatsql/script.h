@@ -68,7 +68,7 @@ class ScannedScript {
     /// Resolve token at text offset
     std::optional<size_t> FindTokenAtOffset(size_t text_offset);
     /// Pack syntax highlighting
-    std::unique_ptr<proto::HighlightingT> PackHighlighting();
+    std::unique_ptr<proto::ScannerTokensT> PackTokens();
     /// Pack scanned program
     flatbuffers::Offset<proto::ScannedScript> Pack(flatbuffers::FlatBufferBuilder& builder);
 };
