@@ -385,6 +385,7 @@ enum ScannerTokenType: uint8 {
     COMMENT,
 }
 
+// XXX Encode tokens as (offset, length) pairs
 table ScannerTokens {
     token_offsets: [uint32];
     token_types: [ScannerTokenType];

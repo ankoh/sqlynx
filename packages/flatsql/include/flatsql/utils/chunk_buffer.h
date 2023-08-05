@@ -112,6 +112,8 @@ template <typename T, size_t InitialSize = 1024> struct ChunkBuffer {
     auto& GetChunks() { return buffers; }
     /// Get the chunks
     auto& GetChunks() const { return buffers; }
+    /// Get the chunk offsets
+    auto& GetChunkOffsets() const { return offsets; }
     /// Get the last node
     T& GetLast() {
         assert(total_value_count > 0);

@@ -2,7 +2,9 @@
 
 #include <flatbuffers/flatbuffer_builder.h>
 
+#include <algorithm>
 #include <chrono>
+#include <optional>
 #include <unordered_set>
 
 #include "flatsql/analyzer/analyzer.h"
@@ -50,8 +52,48 @@ size_t ScannedScript::RegisterName(std::string_view s, sx::Location location) {
 /// Find a token at a text offset
 std::optional<size_t> ScannedScript::FindTokenAtOffset(size_t text_offset) {
     // Symbols are sorted by location, so we can do a binary search on the symbol buffer
-    // XXX
-    return std::nullopt;
+    auto& chunks = symbols.GetChunks();
+
+    // Find chunk that contains the text offset
+    auto iter = chunks.begin();
+    size_t iter_token_offset = 0;
+    for (; iter != chunks.end(); ++iter) {
+        size_t text_from = iter->front().location.offset();
+        size_t text_to = iter->back().location.offset() + iter->back().location.length();
+        if (text_offset < text_to) {
+            break;
+        }
+        iter_token_offset += iter->size();
+    }
+
+    // Iter hit end?
+    // That means our text offset larger than the end of the last token in the last chunk.
+    if (iter == chunks.end()) {
+        return std::nullopt;
+    }
+
+    // Otherwise we found a chunk that contains the text offset.
+    // Binary search the first token that has an end that is larger than the text offset.
+    size_t local_text_offset = text_offset - iter_token_offset;
+    auto& chunk = *iter;
+    auto token_iter = std::upper_bound(chunk.begin(), chunk.end(), local_text_offset,
+                                       [](size_t ofs, parser::Parser::symbol_type& token) {
+                                           return ofs < (token.location.offset(), token.location.length());
+                                       });
+
+    // There must be such a token, otherwise we wouldn't have stopped at that chunk
+    assert(token_iter != chunk.end());
+
+    // We found the first token that has an end > the text offset.
+    // Now check if that token starts at an offset <= the searched text offset.
+    // If not, the target text offset hit a hole.
+    if (token_iter->location.offset() >= text_offset) {
+        return std::nullopt;
+    }
+
+    // Return the global token offset
+    auto local_token_ofs = token_iter - chunk.begin();
+    return iter_token_offset + local_token_ofs;
 }
 
 flatbuffers::Offset<proto::ScannedScript> ScannedScript::Pack(flatbuffers::FlatBufferBuilder& builder) {
