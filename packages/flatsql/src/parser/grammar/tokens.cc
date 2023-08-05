@@ -36,33 +36,25 @@ static const proto::ScannerTokenType MapToken(Parser::symbol_kind_type symbol) {
 /// Pack the highlighting data
 std::unique_ptr<proto::ScannerTokensT> ScannedScript::PackTokens() {
     std::vector<uint32_t> offsets;
+    std::vector<uint32_t> lengths;
     std::vector<proto::ScannerTokenType> types;
     offsets.reserve(symbols.GetSize() * 3 / 2);
+    lengths.reserve(symbols.GetSize() * 3 / 2);
     types.reserve(symbols.GetSize() * 3 / 2);
-
-    // Emit highlighting tokens at a location.
-    // We emit 2 tokens at the begin and the end of every location and overwrite types if the offsets equal.
-    // That allows us to capture whitespace accurately for Monaco.
-    auto emit = [](std::vector<uint32_t>& offsets, std::vector<proto::ScannerTokenType>& types, proto::Location loc,
-                   proto::ScannerTokenType type) {
-        if (!offsets.empty() && offsets.back() == loc.offset()) {
-            types.back() = type;
-        } else {
-            offsets.push_back(loc.offset());
-            types.push_back(type);
-        }
-        offsets.push_back(loc.offset() + loc.length());
-        types.push_back(proto::ScannerTokenType::NONE);
-    };
 
     auto ci = 0;
     symbols.ForEachIn(0, symbols.GetSize() - 1, [&](size_t symbol_id, parser::Parser::symbol_type symbol) {
         // Emit all comments in between.
         while (ci < comments.size() && comments[ci].offset() < symbol.location.offset()) {
-            emit(offsets, types, comments[ci++], proto::ScannerTokenType::COMMENT);
+            auto& comment = comments[ci++];
+            offsets.push_back(comment.offset());
+            lengths.push_back(comment.length());
+            types.push_back(proto::ScannerTokenType::COMMENT);
         }
         // Map as standard token.
-        emit(offsets, types, symbol.location, MapToken(symbol.kind()));
+        offsets.push_back(symbol.location.offset());
+        lengths.push_back(symbol.location.length());
+        types.push_back(MapToken(symbol.kind()));
     });
 
     // Build the line breaks
@@ -77,6 +69,7 @@ std::unique_ptr<proto::ScannerTokensT> ScannedScript::PackTokens() {
     // Build highlighting
     auto hl = std::make_unique<proto::ScannerTokensT>();
     hl->token_offsets = offsets;
+    hl->token_lengths = lengths;
     hl->token_types = types;
     hl->token_breaks = breaks;
     return hl;
