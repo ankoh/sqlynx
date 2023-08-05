@@ -29,7 +29,7 @@ describe('FlatSQL Analyzer', () => {
         const ext_scanner = ext_scanner_res.read(new flatsql.proto.ScannedScript());
         const ext_parser = ext_parser_res.read(new flatsql.proto.ParsedScript());
         const ext_analyzer = ext_analyzer_res.read(new flatsql.proto.AnalyzedScript());
-        expect(ext_scanner.highlighting()?.tokenTypesArray()?.length).toBeGreaterThan(0);
+        expect(ext_scanner.tokens()?.tokenTypesArray()?.length).toBeGreaterThan(0);
         expect(ext_parser.nodesLength()).toBeGreaterThan(0);
         expect(ext_analyzer.tablesLength()).toEqual(1);
 
@@ -43,7 +43,7 @@ describe('FlatSQL Analyzer', () => {
         const main_scanner = main_scanner_res.read(new flatsql.proto.ScannedScript());
         const main_parser = main_parser_res.read(new flatsql.proto.ParsedScript());
         const main_analyzer = main_analyzer_res.read(new flatsql.proto.AnalyzedScript());
-        expect(main_scanner.highlighting()?.tokenTypesArray()?.length).toBeGreaterThan(0);
+        expect(main_scanner.tokens()?.tokenTypesArray()?.length).toBeGreaterThan(0);
         expect(main_parser.nodesLength()).toBeGreaterThan(0);
         expect(main_analyzer.tableReferencesLength()).toEqual(1);
 

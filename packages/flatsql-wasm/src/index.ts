@@ -1,3 +1,3 @@
 export * as proto from '../gen/flatsql/proto';
 export * from './api';
-export * from './highlighting';
+export * from './tokens';
