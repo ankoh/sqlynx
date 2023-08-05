@@ -20,21 +20,18 @@ function buildDecorations(
     const tokens = scan.tokens();
     if (tokens && tokens.tokenOffsetsArray()) {
         const tokenOffsets = tokens.tokenOffsetsArray()!;
+        const tokenLengths = tokens.tokenLengthsArray()!;
         const tokenTypes = tokens.tokenTypesArray()!;
-        let prevOffset = 0;
-        let prevType = TokenType.NONE;
         for (let i = 0; i < tokenOffsets.length; ++i) {
-            const begin = prevOffset;
-            const end = tokenOffsets[i];
-            switch (prevType) {
+            const offset = tokenOffsets[i];
+            const length = tokenLengths[i];
+            switch (tokenTypes[i]) {
                 case TokenType.KEYWORD:
-                    builder.add(begin, end, KeywordDecoration);
+                    builder.add(offset, offset + length, KeywordDecoration);
                     break;
                 default:
                     break;
             }
-            prevOffset = end;
-            prevType = tokenTypes[i];
         }
     }
     return builder.finish();
