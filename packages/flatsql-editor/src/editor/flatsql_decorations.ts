@@ -17,10 +17,10 @@ function buildDecorations(
 ): DecorationSet {
     const builder = new RangeSetBuilder<Decoration>();
     const scan = scanned.read(tmp);
-    const hl = scan.tokens();
-    if (hl && hl.tokenOffsetsArray()) {
-        const tokenOffsets = hl.tokenOffsetsArray()!;
-        const tokenTypes = hl.tokenTypesArray()!;
+    const tokens = scan.tokens();
+    if (tokens && tokens.tokenOffsetsArray()) {
+        const tokenOffsets = tokens.tokenOffsetsArray()!;
+        const tokenTypes = tokens.tokenTypesArray()!;
         let prevOffset = 0;
         let prevType = TokenType.NONE;
         for (let i = 0; i < tokenOffsets.length; ++i) {
