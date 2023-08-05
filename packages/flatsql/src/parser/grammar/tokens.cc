@@ -4,8 +4,8 @@
 
 namespace flatsql {
 namespace parser {
-static const proto::ScannerTokenType MapToken(Parser::symbol_kind_type symbol) {
-    switch (symbol) {
+static const proto::ScannerTokenType MapToken(Parser::symbol_type symbol, std::string_view text) {
+    switch (symbol.kind()) {
 #define X(CATEGORY, NAME, TOKEN) case Parser::symbol_kind_type::S_##TOKEN:
 #include "../../../grammar/lists/sql_column_name_keywords.list"
 #include "../../../grammar/lists/sql_reserved_keywords.list"
@@ -23,12 +23,24 @@ static const proto::ScannerTokenType MapToken(Parser::symbol_kind_type symbol) {
             return proto::ScannerTokenType::LITERAL_BINARY;
         case Parser::symbol_kind_type::S_XCONST:
             return proto::ScannerTokenType::LITERAL_HEX;
-        case Parser::symbol_kind_type::S_Op:
-            return proto::ScannerTokenType::OPERATOR;
         case Parser::symbol_kind_type::S_IDENT:
             return proto::ScannerTokenType::IDENTIFIER;
-        default:
+        case Parser::symbol_kind_type::S_Op:
+        case Parser::symbol_kind_type::S_EQUALS_GREATER:
+        case Parser::symbol_kind_type::S_GREATER_EQUALS:
+        case Parser::symbol_kind_type::S_LESS_EQUALS:
+        case Parser::symbol_kind_type::S_NOT_EQUALS:
+            return proto::ScannerTokenType::OPERATOR;
+        default: {
+            auto loc = symbol.location;
+            if (loc.length() == 1) {
+                switch (text[loc.offset()]) {
+                    case '=':
+                        return proto::ScannerTokenType::OPERATOR;
+                }
+            }
             return proto::ScannerTokenType::NONE;
+        }
     };
 };
 }  // namespace parser
@@ -54,7 +66,7 @@ std::unique_ptr<proto::ScannerTokensT> ScannedScript::PackTokens() {
         // Map as standard token.
         offsets.push_back(symbol.location.offset());
         lengths.push_back(symbol.location.length());
-        types.push_back(MapToken(symbol.kind()));
+        types.push_back(MapToken(symbol, text_buffer));
     });
 
     // Build the line breaks

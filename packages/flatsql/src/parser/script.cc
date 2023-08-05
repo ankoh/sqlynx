@@ -78,7 +78,7 @@ std::optional<size_t> ScannedScript::FindTokenAtOffset(size_t text_offset) {
     auto& chunk = *iter;
     auto token_iter = std::upper_bound(chunk.begin(), chunk.end(), local_text_offset,
                                        [](size_t ofs, parser::Parser::symbol_type& token) {
-                                           return ofs < (token.location.offset(), token.location.length());
+                                           return ofs < (token.location.offset() + token.location.length());
                                        });
 
     // There must be such a token, otherwise we wouldn't have stopped at that chunk
@@ -87,7 +87,13 @@ std::optional<size_t> ScannedScript::FindTokenAtOffset(size_t text_offset) {
     // We found the first token that has an end > the text offset.
     // Now check if that token starts at an offset <= the searched text offset.
     // If not, the target text offset hit a hole.
-    if (token_iter->location.offset() >= text_offset) {
+    if (text_offset < token_iter->location.offset()) {
+        return std::nullopt;
+    }
+
+    // Is end token?
+    if ((iter + 1) == chunks.end() && (token_iter + 1) == chunk.end()) {
+        assert(chunk.back().kind_ == parser::Parser::symbol_kind_type::S_YYEOF);
         return std::nullopt;
     }
 
