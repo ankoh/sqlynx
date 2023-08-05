@@ -78,6 +78,10 @@ lib_coverage:
 		-o ${LIB_COVERAGE_DIR} \
 		${LIB_DEBUG_DIR}/tester
 
+.PHONY: scanner_tests
+scanner_tests:
+	${LIB_DEBUG_DIR}/tester --source_dir . --gtest_filter="*Scanner*"
+
 .PHONY: parser_tests
 parser_tests:
 	${LIB_DEBUG_DIR}/tester --source_dir . --gtest_filter="*Parser*"

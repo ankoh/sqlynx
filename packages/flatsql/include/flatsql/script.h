@@ -57,6 +57,8 @@ class ScannedScript {
 
     /// Get the input
     auto& GetInput() const { return text_buffer; }
+    /// Get the tokens
+    auto& GetTokens() const { return symbols; }
     /// Register a name
     size_t RegisterName(std::string_view s, sx::Location location);
     /// Register a keyword as name
@@ -100,6 +102,8 @@ class ParsedScript {
     /// Constructor
     ParsedScript(std::shared_ptr<ScannedScript> scan, parser::ParseContext&& context);
 
+    /// Get the nodes
+    auto& GetNodes() const { return nodes; }
     /// Resolve statement and ast node at a text offset
     std::optional<std::pair<size_t, size_t>> FindNodeAtOffset(size_t text_offset);
     /// Build the script
