@@ -1,8 +1,10 @@
 namespace flatsql.proto;
 
-struct ScriptCursor {
+table ScriptCursorInfo {
     /// The text offset
     text_offset: uint32;
+    /// The scanner token id
+    scanner_token_id: uint32;
     /// The AST node id
     ast_node_id: uint32;
     /// The statement id
