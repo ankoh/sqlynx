@@ -253,6 +253,23 @@ extern "C" FFIResult* flatsql_schemagraph_describe(flatsql::SchemaGraph* graph) 
     return packBuffer(std::move(detached));
 }
 
+/// Create a new cursor
+extern "C" ScriptCursor* flatsql_cursor_new() { return new flatsql::ScriptCursor(); }
+/// Delete a cursor
+extern "C" void flatsql_cursor_delete(flatsql::ScriptCursor* cursor) { delete cursor; }
+/// Move the cursor to a script at a position
+extern "C" FFIResult* flatsql_cursor_move(flatsql::ScriptCursor* cursor, flatsql::Script* script, size_t text_offset) {
+    cursor->Move(*script, text_offset);
+
+    // Pack the cursor info
+    flatbuffers::FlatBufferBuilder fb;
+    fb.Finish(cursor->Pack(fb));
+
+    // Store the buffer
+    auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));
+    return packBuffer(std::move(detached));
+}
+
 #ifdef WASM
 extern "C" int main() { return 0; }
 #endif
