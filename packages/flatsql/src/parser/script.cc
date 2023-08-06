@@ -365,19 +365,80 @@ proto::StatusCode Script::UpdateCompletionIndex() {
 ScriptCursor::ScriptCursor() : analyzed_script(), text_offset() {}
 
 /// Update the script cursor position
-void ScriptCursor::Update(Script& script, size_t text_offset) {
+void ScriptCursor::Update(Script& script, size_t offset, bool in_external) {
     // Did the parsed script change?
     if (parsed_script != script.parsed_script) {
+        auto& scanned = script.scanned_script;
         parsed_script = script.parsed_script;
+        text_offset = offset;
 
-        // XXX
+        // Read scanner token
+        scanner_token_id = scanned->FindToken(text_offset);
+        // Read AST node
+        auto maybe_ast_node = parsed_script->FindNodeAtOffset(text_offset);
+        if (!maybe_ast_node.has_value()) {
+            statement_id = std::nullopt;
+            ast_node_id = std::nullopt;
+        } else {
+            statement_id = std::get<0>(*maybe_ast_node);
+            ast_node_id = std::get<1>(*maybe_ast_node);
+        }
     }
 
     // Did the analyzed script change?
     if (analyzed_script != script.analyzed_script) {
         analyzed_script = script.analyzed_script;
-        // XXX
+
+        if (ast_node_id.has_value()) {
+            // Collect nodes to root
+            std::unordered_set<uint32_t> cursor_path_nodes;
+            for (auto iter = *ast_node_id; iter != std::numeric_limits<uint32_t>::max();) {
+                auto& node = parsed_script->nodes[iter];
+                cursor_path_nodes.insert(iter);
+                iter = node.parent();
+            }
+
+            // References any table node?
+            table_id = std::nullopt;
+            for (auto& table : analyzed_script->tables) {
+                if (cursor_path_nodes.contains(table.ast_node_id())) {
+                    table_id = table.ast_node_id();
+                    break;
+                }
+            }
+
+            // Part of a query edge?
+            query_edge_id = std::nullopt;
+            for (size_t ei = 0; ei < analyzed_script->graph_edges.size(); ++ei) {
+                auto& edge = analyzed_script->graph_edges[ei];
+                auto nodes_begin = edge.nodes_begin();
+                for (size_t ni = 0; ni < (edge.node_count_left() + edge.node_count_right()); ++ni) {
+                    auto& edge_node = analyzed_script->graph_edge_nodes[nodes_begin + ni];
+                    auto column_ref = analyzed_script->column_references[edge_node.column_reference_id()];
+                    assert(!Analyzer::ID(column_ref.ast_node_id()).IsExternal());
+                    if (cursor_path_nodes.contains(column_ref.ast_node_id())) {
+                        query_edge_id = ei;
+                        break;
+                    }
+                }
+                if (query_edge_id.has_value()) {
+                    break;
+                }
+            }
+        }
     }
+}
+
+/// Pack the cursor info
+std::unique_ptr<proto::ScriptCursorInfoT> ScriptCursor::Pack(flatbuffers::FlatBufferBuilder& builder) {
+    auto out = std::make_unique<proto::ScriptCursorInfoT>();
+    out->text_offset = text_offset;
+    out->ast_node_id = ast_node_id.value_or(std::numeric_limits<uint32_t>::max());
+    out->query_edge_id = query_edge_id.value_or(std::numeric_limits<uint32_t>::max());
+    out->statement_id = statement_id.value_or(std::numeric_limits<uint32_t>::max());
+    out->scanner_token_id = scanner_token_id.value_or(std::numeric_limits<uint32_t>::max());
+    out->table_id = table_id.value_or(std::numeric_limits<uint32_t>::max());
+    return out;
 }
 
 }  // namespace flatsql
