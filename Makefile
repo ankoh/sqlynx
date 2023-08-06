@@ -84,7 +84,7 @@ scanner_tests:
 
 .PHONY: parser_tests
 parser_tests:
-	${LIB_DEBUG_DIR}/tester --source_dir . --gtest_filter="*Parser*"
+	${LIB_DEBUG_DIR}/tester --source_dir . --gtest_filter="*ParserTest*"
 
 .PHONY: analyzer_tests
 analyzer_tests:

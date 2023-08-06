@@ -129,13 +129,13 @@ std::optional<std::pair<size_t, size_t>> ParsedScript::FindNodeAtOffset(size_t t
     // Helper to check if an offset is included in a location
     auto includes_offset = [](const std::vector<proto::Node>& nodes, size_t node_id, size_t text_offset) {
         return nodes[node_id].location().offset() <= text_offset &&
-               (nodes[node_id].location().offset() + nodes[node_id].location().length() < text_offset);
+               ((nodes[node_id].location().offset() + nodes[node_id].location().length()) > text_offset);
     };
     // Check all statements
     for (size_t si = 0; si < statements.size(); ++si) {
         // Different statement?
         auto iter = statements[si].root;
-        if (includes_offset(nodes, iter, text_offset)) {
+        if (!includes_offset(nodes, iter, text_offset)) {
             continue;
         }
 
