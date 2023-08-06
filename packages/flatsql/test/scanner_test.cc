@@ -74,7 +74,7 @@ TEST(ScannerTest, FindTokenAtOffset) {
     // Test token at offset
     auto test_token_at_offset = [&](size_t text_offset, std::optional<size_t> expected_token_offset) {
         auto offset = script->FindTokenAtOffset(text_offset);
-        ASSERT_EQ(offset, expected_token_offset);
+        ASSERT_EQ(offset, expected_token_offset) << text_offset;
     };
 
     {
@@ -90,6 +90,7 @@ TEST(ScannerTest, FindTokenAtOffset) {
         test_token_at_offset(6, std::nullopt);
         test_token_at_offset(7, 1);
         test_token_at_offset(8, std::nullopt);
+        test_token_at_offset(9, std::nullopt);
     }
     {
         SCOPED_TRACE("select a from A where b = 1");
@@ -123,6 +124,7 @@ TEST(ScannerTest, FindTokenAtOffset) {
         test_token_at_offset(24, 6);
         test_token_at_offset(25, std::nullopt);
         test_token_at_offset(26, 7);
+        test_token_at_offset(27, std::nullopt);
     }
 }
 
