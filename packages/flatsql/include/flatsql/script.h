@@ -208,6 +208,8 @@ struct ScriptCursor {
     std::shared_ptr<AnalyzedScript> analyzed_script;
     /// The text offset
     size_t text_offset;
+    /// The current scanner token id (if any)
+    std::optional<size_t> scanner_token_id;
     /// The current ast node id (if any)
     std::optional<size_t> ast_node_id;
     /// The current statement id (if any)
@@ -221,7 +223,9 @@ struct ScriptCursor {
     ScriptCursor();
 
     /// Update the cursor
-    void Update(Script& script, size_t cursor_position);
+    void Update(Script& script, size_t cursor_position, bool in_external);
+    /// Pack the cursor info
+    std::unique_ptr<proto::ScriptCursorInfoT> Pack(flatbuffers::FlatBufferBuilder& builder);
 };
 
 }  // namespace flatsql
