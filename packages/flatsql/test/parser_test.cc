@@ -1,5 +1,6 @@
 #include <initializer_list>
 #include <optional>
+#include <sstream>
 
 #include "flatsql/api.h"
 #include "flatsql/parser/parse_context.h"

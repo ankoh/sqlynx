@@ -51,16 +51,20 @@ size_t ScannedScript::RegisterName(std::string_view s, sx::Location location) {
 }
 
 /// Find a token at a text offset
-std::optional<size_t> ScannedScript::FindTokenAtOffset(size_t text_offset) {
+size_t ScannedScript::FindToken(size_t text_offset) {
     // Symbols are sorted by location, so we can do a binary search on the symbol buffer
     auto& chunks = symbols.GetChunks();
+    // Short-circuit offset past end (+ 2 trailing YY_END_OF_BUFFER_CHAR)
+    if (text_offset + 2 >= text_buffer.size()) {
+        // Get last token (minus EOF token)
+        return std::max<size_t>(symbols.GetSize(), 2) - 2;
+    }
 
     // Find chunk that contains the text offset.
     // Chunks grow exponentially in size, so this is logarithmic in cost
     auto chunk_iter = chunks.begin();
     size_t chunk_token_offset = 0;
     for (; chunk_iter != chunks.end(); ++chunk_iter) {
-        size_t text_from = chunk_iter->front().location.offset();
         size_t text_to = chunk_iter->back().location.offset() + chunk_iter->back().location.length();
         if (text_offset < text_to) {
             break;
@@ -69,35 +73,36 @@ std::optional<size_t> ScannedScript::FindTokenAtOffset(size_t text_offset) {
     }
 
     // Iter hit end?
-    // That means our text offset larger than the end of the last token in the last chunk.
+    // Return the last token then (minus YYEOF)
     if (chunk_iter == chunks.end()) {
-        return std::nullopt;
+        return std::max<size_t>(chunk_token_offset, 2) - 2;
     }
 
     // Otherwise we found a chunk that contains the text offset.
-    // Binary search the first token that has an end that is larger than the text offset.
-    size_t local_text_offset = text_offset - chunk_token_offset;
-    auto& chunk = *chunk_iter;
-    auto token_iter = std::upper_bound(chunk.begin(), chunk.end(), local_text_offset,
-                                       [](size_t ofs, parser::Parser::symbol_type& token) {
-                                           return ofs < (token.location.offset() + token.location.length());
-                                       });
+    // Binary search the token offset.
+    auto token_iter =
+        std::lower_bound(chunk_iter->begin(), chunk_iter->end(), text_offset,
+                         [](parser::Parser::symbol_type& token, size_t ofs) { return token.location.offset() < ofs; });
 
-    // There must be such a token, otherwise we would have skipped that chunk
-    assert(token_iter != chunk.end());
+    // Offset is larger than the text offset?
+    // Then emit the previous node
+    if (token_iter->location.offset() > text_offset) {
+        // Get the previous token
+        if (token_iter != chunk_iter->begin()) {
+            // Get the previous token in the same chunk
+            --token_iter;
+        } else if (chunk_iter != chunks.begin()) {
+            // Get the previous token in this previous chunk
+            --chunk_iter;
+            chunk_token_offset -= chunk_iter->size();
+            assert(!chunk_iter->empty());
+            token_iter = (chunk_iter->begin() + chunk_iter->size() - 1);
+        }
+        // Otherwise we just emit the first token
+    }
 
-    // We found the first token that has an end > the text offset.
-    // Now check if that token starts at an offset > the searched text offset.
-    // If yes, we hit a hole.
-    if (text_offset < token_iter->location.offset()) {
-        return std::nullopt;
-    }
-    // Hit YYEOF?
-    if (token_iter->kind_ == parser::Parser::symbol_kind_type::S_YYEOF) {
-        return std::nullopt;
-    }
     // Return the global token offset
-    auto local_token_ofs = token_iter - chunk.begin();
+    auto local_token_ofs = token_iter - chunk_iter->begin();
     return chunk_token_offset + local_token_ofs;
 }
 
