@@ -28,12 +28,24 @@ TEST(ParserTest, FindNodeAtOffset) {
         script = std::move(parsed);
     };
     /// Test if ast node matches
-    auto test_node_at_offset = [&](size_t text_offset, proto::NodeType nodeType, sx::Location loc) {
-        // XXX
+    auto test_node_at_offset = [&](size_t text_offset, size_t expected_statement_id, proto::NodeType expect_node_type,
+                                   sx::Location expect_loc) {
+        auto result = script->FindNodeAtOffset(text_offset);
+        ASSERT_TRUE(result.has_value()) << "offset=" << text_offset;
+        auto [statement_id, node_id] = *result;
+        ASSERT_EQ(statement_id, expected_statement_id);
+        ASSERT_LT(node_id, script->nodes.size());
+        auto& node = script->nodes[node_id];
+        ASSERT_EQ(node.node_type(), expect_node_type);
+        ASSERT_EQ(node.location().offset(), expect_loc.offset());
+        ASSERT_EQ(node.location().length(), expect_loc.length());
     };
 
     parse("select 1");
-    test_node_at_offset(7, proto::NodeType::LITERAL_INTEGER, sx::Location(7, 1));
+    test_node_at_offset(0, 0, proto::NodeType::OBJECT_SQL_SELECT, sx::Location(0, 8));
+    test_node_at_offset(1, 0, proto::NodeType::OBJECT_SQL_SELECT, sx::Location(0, 8));
+    test_node_at_offset(2, 0, proto::NodeType::OBJECT_SQL_SELECT, sx::Location(0, 8));
+    test_node_at_offset(7, 0, proto::NodeType::LITERAL_INTEGER, sx::Location(7, 1));
 }
 
 }  // namespace
