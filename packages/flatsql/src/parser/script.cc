@@ -364,8 +364,8 @@ proto::StatusCode Script::UpdateCompletionIndex() {
 /// Constructor
 ScriptCursor::ScriptCursor() : analyzed_script(), text_offset() {}
 
-/// Update the script cursor position
-void ScriptCursor::Update(Script& script, size_t offset, bool in_external) {
+/// Move the cursor to a script at a position
+void ScriptCursor::Move(Script& script, size_t offset) {
     // Did the parsed script change?
     if (parsed_script != script.parsed_script) {
         auto& scanned = script.scanned_script;
@@ -430,7 +430,7 @@ void ScriptCursor::Update(Script& script, size_t offset, bool in_external) {
 }
 
 /// Pack the cursor info
-std::unique_ptr<proto::ScriptCursorInfoT> ScriptCursor::Pack(flatbuffers::FlatBufferBuilder& builder) {
+flatbuffers::Offset<proto::ScriptCursorInfo> ScriptCursor::Pack(flatbuffers::FlatBufferBuilder& builder) {
     auto out = std::make_unique<proto::ScriptCursorInfoT>();
     out->text_offset = text_offset;
     out->ast_node_id = ast_node_id.value_or(std::numeric_limits<uint32_t>::max());
@@ -438,7 +438,7 @@ std::unique_ptr<proto::ScriptCursorInfoT> ScriptCursor::Pack(flatbuffers::FlatBu
     out->statement_id = statement_id.value_or(std::numeric_limits<uint32_t>::max());
     out->scanner_token_id = scanner_token_id.value_or(std::numeric_limits<uint32_t>::max());
     out->table_id = table_id.value_or(std::numeric_limits<uint32_t>::max());
-    return out;
+    return proto::ScriptCursorInfo::Pack(builder, out.get());
 }
 
 }  // namespace flatsql

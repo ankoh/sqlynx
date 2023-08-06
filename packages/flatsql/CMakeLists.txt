@@ -76,6 +76,9 @@ if(WASM)
         -Wl,--export=flatsql_schemagraph_describe \
         -Wl,--export=flatsql_schemagraph_configure \
         -Wl,--export=flatsql_schemagraph_load_script \
+        -Wl,--export=flatsql_cursor_new \
+        -Wl,--export=flatsql_cursor_delete \
+        -Wl,--export=flatsql_cursor_move \
         -flto \
     ")
 endif()

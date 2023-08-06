@@ -222,10 +222,10 @@ struct ScriptCursor {
     /// Constructor
     ScriptCursor();
 
-    /// Update the cursor
-    void Update(Script& script, size_t cursor_position, bool in_external);
+    /// Move the cursor to a script at a position
+    void Move(Script& script, size_t text_offset);
     /// Pack the cursor info
-    std::unique_ptr<proto::ScriptCursorInfoT> Pack(flatbuffers::FlatBufferBuilder& builder);
+    flatbuffers::Offset<proto::ScriptCursorInfo> Pack(flatbuffers::FlatBufferBuilder& builder);
 };
 
 }  // namespace flatsql
