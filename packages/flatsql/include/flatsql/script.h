@@ -67,8 +67,9 @@ class ScannedScript {
     std::string_view ReadTextAtLocation(sx::Location loc) {
         return std::string_view{text_buffer}.substr(loc.offset(), loc.length());
     }
-    /// Resolve token at text offset
-    std::optional<size_t> FindTokenAtOffset(size_t text_offset);
+    /// Resolve token at text offset.
+    /// Returns the PREVIOUS token if there's no exact hit
+    size_t FindToken(size_t text_offset);
     /// Pack syntax tokens
     std::unique_ptr<proto::ScannerTokensT> PackTokens();
     /// Pack scanned program

@@ -72,8 +72,8 @@ TEST(ScannerTest, FindTokenAtOffset) {
         ASSERT_EQ(packed->token_types, have_types);
     };
     // Test token at offset
-    auto test_token_at_offset = [&](size_t text_offset, std::optional<size_t> expected_token_offset) {
-        auto offset = script->FindTokenAtOffset(text_offset);
+    auto test_token_at_offset = [&](size_t text_offset, size_t expected_token_offset) {
+        auto offset = script->FindToken(text_offset);
         ASSERT_EQ(offset, expected_token_offset) << text_offset;
     };
 
@@ -87,10 +87,12 @@ TEST(ScannerTest, FindTokenAtOffset) {
         test_token_at_offset(3, 0);
         test_token_at_offset(4, 0);
         test_token_at_offset(5, 0);
-        test_token_at_offset(6, std::nullopt);
+        test_token_at_offset(6, 0);
         test_token_at_offset(7, 1);
-        test_token_at_offset(8, std::nullopt);
-        test_token_at_offset(9, std::nullopt);
+        test_token_at_offset(8, 1);
+        test_token_at_offset(9, 1);
+        test_token_at_offset(10, 1);
+        test_token_at_offset(100, 1);
     }
     {
         SCOPED_TRACE("select a from A where b = 1");
@@ -103,28 +105,52 @@ TEST(ScannerTest, FindTokenAtOffset) {
         test_token_at_offset(3, 0);
         test_token_at_offset(4, 0);
         test_token_at_offset(5, 0);
-        test_token_at_offset(6, std::nullopt);
+        test_token_at_offset(6, 0);
         test_token_at_offset(7, 1);
-        test_token_at_offset(8, std::nullopt);
+        test_token_at_offset(8, 1);
         test_token_at_offset(9, 2);
         test_token_at_offset(10, 2);
         test_token_at_offset(11, 2);
         test_token_at_offset(12, 2);
-        test_token_at_offset(13, std::nullopt);
+        test_token_at_offset(13, 2);
         test_token_at_offset(14, 3);
-        test_token_at_offset(15, std::nullopt);
+        test_token_at_offset(15, 3);
         test_token_at_offset(16, 4);
         test_token_at_offset(17, 4);
         test_token_at_offset(18, 4);
         test_token_at_offset(19, 4);
         test_token_at_offset(20, 4);
-        test_token_at_offset(21, std::nullopt);
+        test_token_at_offset(21, 4);
         test_token_at_offset(22, 5);
-        test_token_at_offset(23, std::nullopt);
+        test_token_at_offset(23, 5);
         test_token_at_offset(24, 6);
-        test_token_at_offset(25, std::nullopt);
+        test_token_at_offset(25, 6);
         test_token_at_offset(26, 7);
-        test_token_at_offset(27, std::nullopt);
+        test_token_at_offset(27, 7);
+        test_token_at_offset(28, 7);
+        test_token_at_offset(30, 7);
+        test_token_at_offset(100, 7);
+    }
+}
+
+TEST(ScannerTest, FindTokenInterleaved) {
+    size_t n = 2048;
+    std::stringstream ss;
+    for (size_t i = 0; i < n; ++i) {
+        ss << (i & 7);
+        ss << " ";
+    }
+    rope::Rope buffer{128};
+    buffer.Insert(0, ss.str());
+
+    auto [scanned, scannerStatus] = parser::Scanner::Scan(buffer);
+    ASSERT_EQ(scannerStatus, proto::StatusCode::OK);
+
+    for (size_t i = 0; i < n; ++i) {
+        auto hit = scanned->FindToken(i * 2);
+        ASSERT_EQ(hit, i);
+        auto one_off = scanned->FindToken(i * 2 + 1);
+        ASSERT_EQ(one_off, i);
     }
 }
 
