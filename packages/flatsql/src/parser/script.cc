@@ -431,6 +431,10 @@ void ScriptCursor::Move(const Script& script, size_t offset) {
         for (size_t ei = 0; ei < analyzed_script->graph_edges.size(); ++ei) {
             auto& edge = analyzed_script->graph_edges[ei];
             auto nodes_begin = edge.nodes_begin();
+            if (cursor_path_nodes.contains(edge.ast_node_id())) {
+                query_edge_id = ei;
+                break;
+            }
             for (size_t ni = 0; ni < (edge.node_count_left() + edge.node_count_right()); ++ni) {
                 auto& edge_node = analyzed_script->graph_edge_nodes[nodes_begin + ni];
                 auto column_ref = analyzed_script->column_references[edge_node.column_reference_id()];
