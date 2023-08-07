@@ -80,7 +80,7 @@ lib_coverage:
 
 .PHONY: cursor_tests
 cursor_tests:
-	${LIB_DEBUG_DIR}/tester --source_dir . --gtest_filter="*ScannerTest*:*ParserTest*"
+	${LIB_DEBUG_DIR}/tester --source_dir . --gtest_filter="*ScannerTest*:*ParserTest*:*CursorTest*"
 
 .PHONY: scanner_tests
 scanner_tests:
