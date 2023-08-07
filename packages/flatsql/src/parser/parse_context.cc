@@ -43,10 +43,11 @@ NodeID ParseContext::AddNode(proto::Node node) {
     // Set parent reference
     if (node.node_type() == proto::NodeType::ARRAY ||
         static_cast<uint16_t>(node.node_type()) > static_cast<uint16_t>(proto::NodeType::OBJECT_KEYS_)) {
-        nodes.ForEachIn(node.children_begin_or_value(), node.children_count(), [](size_t node_id, proto::Node& n) {
-            n = proto::Node(n.location(), n.node_type(), n.attribute_key(), node_id, n.children_begin_or_value(),
-                            n.children_count());
-        });
+        nodes.ForEachIn(node.children_begin_or_value(), node.children_count(),
+                        [node_id](size_t child_id, proto::Node& n) {
+                            n = proto::Node(n.location(), n.node_type(), n.attribute_key(), node_id,
+                                            n.children_begin_or_value(), n.children_count());
+                        });
     }
     return node_id;
 }
