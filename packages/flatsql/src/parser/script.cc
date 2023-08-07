@@ -408,18 +408,20 @@ void ScriptCursor::Move(const Script& script, size_t offset) {
 
         // Part of a table reference node?
         table_reference_id = std::nullopt;
-        for (auto& table_ref : analyzed_script->table_references) {
+        for (size_t i = 0; i < analyzed_script->table_references.size(); ++i) {
+            auto& table_ref = analyzed_script->table_references[i];
             if (cursor_path_nodes.contains(table_ref.ast_node_id())) {
-                table_reference_id = table_ref.ast_node_id();
+                table_reference_id = i;
                 break;
             }
         }
 
         // Part of a column reference node?
         column_reference_id = std::nullopt;
-        for (auto& column_ref : analyzed_script->column_references) {
+        for (size_t i = 0; i < analyzed_script->column_references.size(); ++i) {
+            auto& column_ref = analyzed_script->column_references[i];
             if (cursor_path_nodes.contains(column_ref.ast_node_id())) {
-                column_reference_id = column_ref.ast_node_id();
+                column_reference_id = i;
                 break;
             }
         }
