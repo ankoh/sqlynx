@@ -227,7 +227,7 @@ struct ScriptCursor {
     ScriptCursor();
 
     /// Move the cursor to a script at a position
-    void Move(Script& script, size_t text_offset);
+    void Move(const Script& script, size_t text_offset);
     /// Pack the cursor info
     flatbuffers::Offset<proto::ScriptCursorInfo> Pack(flatbuffers::FlatBufferBuilder& builder);
 };
