@@ -14,6 +14,7 @@ struct ExpectedScriptCursor {
     proto::AttributeKey ast_attribute_key;
     proto::NodeType ast_node_type;
     std::optional<std::string_view> table_ref_name;
+    std::optional<std::string_view> column_ref_name;
 };
 
 std::string print_name(const Script& script, const proto::QualifiedTableName& name) {
@@ -36,7 +37,26 @@ std::string print_name(const Script& script, const proto::QualifiedTableName& na
     return out.str();
 }
 
-void test_cursor(const Script& script, size_t text_offset, ExpectedScriptCursor expected) {
+std::string print_name(const Script& script, const proto::QualifiedColumnName& name) {
+    auto& scanned = script.scanned_script;
+    auto& names = scanned->name_dictionary;
+    std::stringstream out;
+    size_t out_idx = 0;
+    auto write = [&](Analyzer::ID name_id) {
+        if (!name_id.IsNull()) {
+            auto name = scanned->name_dictionary[name_id.AsIndex()].first;
+            if (out_idx++ > 0) {
+                out << ".";
+            }
+            out << name;
+        }
+    };
+    write(Analyzer::ID(name.table_alias()));
+    write(Analyzer::ID(name.column_name()));
+    return out.str();
+}
+
+void test(const Script& script, size_t text_offset, ExpectedScriptCursor expected) {
     SCOPED_TRACE(std::string{"CURSOR "} + std::to_string(text_offset));
     ScriptCursor cursor;
     cursor.Move(script, text_offset);
@@ -65,6 +85,16 @@ void test_cursor(const Script& script, size_t text_offset, ExpectedScriptCursor 
     } else {
         ASSERT_FALSE(cursor.table_reference_id.has_value());
     }
+    // Check column reference
+    if (expected.column_ref_name.has_value()) {
+        ASSERT_TRUE(cursor.column_reference_id.has_value());
+        ASSERT_LT(*cursor.column_reference_id, script.analyzed_script->column_references.size());
+        auto& column_ref = script.analyzed_script->column_references[*cursor.column_reference_id];
+        auto column_name = print_name(script, column_ref.column_name());
+        ASSERT_EQ(column_name, expected.column_ref_name);
+    } else {
+        ASSERT_FALSE(cursor.column_reference_id.has_value());
+    }
 }
 
 TEST(CursorTest, SimpleNoExternal) {
@@ -77,39 +107,74 @@ TEST(CursorTest, SimpleNoExternal) {
     auto [analyzed, analysis_status] = script.Analyze();
     ASSERT_EQ(analysis_status, proto::StatusCode::OK);
 
-    test_cursor(script, 0,
-                {
-                    .scanner_token_text = "select",
-                    .statement_id = 0,
-                    .ast_attribute_key = proto::AttributeKey::NONE,
-                    .ast_node_type = proto::NodeType::OBJECT_SQL_SELECT,
-                });
-
-    test_cursor(script, 9,
-                {
-                    .scanner_token_text = "from",
-                    .statement_id = 0,
-                    .ast_attribute_key = proto::AttributeKey::SQL_SELECT_FROM,
-                    .ast_node_type = proto::NodeType::ARRAY,
-                });
-
-    test_cursor(script, 14,
-                {
-                    .scanner_token_text = "A",
-                    .statement_id = 0,
-                    .ast_attribute_key = proto::AttributeKey::NONE,
-                    .ast_node_type = proto::NodeType::NAME,
-                    .table_ref_name = "a",
-                });
-
-    test_cursor(script, 16,
-                {
-                    .scanner_token_text = "b",
-                    .statement_id = 0,
-                    .ast_attribute_key = proto::AttributeKey::SQL_TABLEREF_ALIAS,
-                    .ast_node_type = proto::NodeType::NAME,
-                    .table_ref_name = "a",
-                });
+    test(script, 0,
+         {
+             .scanner_token_text = "select",
+             .statement_id = 0,
+             .ast_attribute_key = proto::AttributeKey::NONE,
+             .ast_node_type = proto::NodeType::OBJECT_SQL_SELECT,
+         });
+    test(script, 9,
+         {
+             .scanner_token_text = "from",
+             .statement_id = 0,
+             .ast_attribute_key = proto::AttributeKey::SQL_SELECT_FROM,
+             .ast_node_type = proto::NodeType::ARRAY,
+         });
+    test(script, 14,
+         {
+             .scanner_token_text = "A",
+             .statement_id = 0,
+             .ast_attribute_key = proto::AttributeKey::NONE,
+             .ast_node_type = proto::NodeType::NAME,
+             .table_ref_name = "a",
+         });
+    test(script, 16,
+         {
+             .scanner_token_text = "b",
+             .statement_id = 0,
+             .ast_attribute_key = proto::AttributeKey::SQL_TABLEREF_ALIAS,
+             .ast_node_type = proto::NodeType::NAME,
+             .table_ref_name = "a",
+         });
+    test(script, 23,
+         {
+             .scanner_token_text = "where",
+             .statement_id = 0,
+             .ast_attribute_key = proto::AttributeKey::NONE,
+             .ast_node_type = proto::NodeType::OBJECT_SQL_SELECT,
+         });
+    test(script, 29,
+         {
+             .scanner_token_text = "b",
+             .statement_id = 0,
+             .ast_attribute_key = proto::AttributeKey::NONE,
+             .ast_node_type = proto::NodeType::NAME,
+             .column_ref_name = "b.x",
+         });
+    test(script, 30,
+         {
+             .scanner_token_text = ".",
+             .statement_id = 0,
+             .ast_attribute_key = proto::AttributeKey::SQL_COLUMN_REF_PATH,
+             .ast_node_type = proto::NodeType::ARRAY,
+             .column_ref_name = "b.x",
+         });
+    test(script, 31,
+         {
+             .scanner_token_text = "x",
+             .statement_id = 0,
+             .ast_attribute_key = proto::AttributeKey::NONE,
+             .ast_node_type = proto::NodeType::NAME,
+             .column_ref_name = "b.x",
+         });
+    test(script, 33,
+         {
+             .scanner_token_text = "=",
+             .statement_id = 0,
+             .ast_attribute_key = proto::AttributeKey::SQL_EXPRESSION_OPERATOR,
+             .ast_node_type = proto::NodeType::ENUM_SQL_EXPRESSION_OPERATOR,
+         });
 }
 
 }  // namespace
