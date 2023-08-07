@@ -214,10 +214,14 @@ struct ScriptCursor {
     std::optional<size_t> ast_node_id;
     /// The current statement id (if any)
     std::optional<size_t> statement_id;
-    /// The current query edge id (if any)
-    std::optional<size_t> query_edge_id;
     /// The current table id (if any)
     std::optional<size_t> table_id;
+    /// The current table reference_id (if any)
+    std::optional<size_t> table_reference_id;
+    /// The current column reference_id (if any)
+    std::optional<size_t> column_reference_id;
+    /// The current query edge id (if any)
+    std::optional<size_t> query_edge_id;
 
     /// Constructor
     ScriptCursor();
