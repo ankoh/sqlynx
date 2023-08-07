@@ -9,8 +9,12 @@ table ScriptCursorInfo {
     ast_node_id: uint32;
     /// The statement id
     statement_id: uint32;
-    /// The query edge id
-    query_edge_id: uint32;
     /// The table id
     table_id: uint32;
+    /// The table reference id
+    table_reference_id: uint32;
+    /// The column reference id
+    column_reference_id: uint32;
+    /// The query edge id
+    query_edge_id: uint32;
 }

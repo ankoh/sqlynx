@@ -362,68 +362,81 @@ proto::StatusCode Script::UpdateCompletionIndex() {
 }
 
 /// Constructor
-ScriptCursor::ScriptCursor() : analyzed_script(), text_offset() {}
+ScriptCursor::ScriptCursor() : analyzed_script(), text_offset(0) {}
 
 /// Move the cursor to a script at a position
 void ScriptCursor::Move(Script& script, size_t offset) {
     // Did the parsed script change?
-    if (parsed_script != script.parsed_script) {
-        auto& scanned = script.scanned_script;
-        parsed_script = script.parsed_script;
-        text_offset = offset;
+    auto& scanned = script.scanned_script;
+    parsed_script = script.parsed_script;
+    analyzed_script = script.analyzed_script;
+    text_offset = offset;
 
-        // Read scanner token
-        scanner_token_id = scanned->FindToken(text_offset);
-        // Read AST node
-        auto maybe_ast_node = parsed_script->FindNodeAtOffset(text_offset);
-        if (!maybe_ast_node.has_value()) {
-            statement_id = std::nullopt;
-            ast_node_id = std::nullopt;
-        } else {
-            statement_id = std::get<0>(*maybe_ast_node);
-            ast_node_id = std::get<1>(*maybe_ast_node);
-        }
+    // Read scanner token
+    scanner_token_id = scanned->FindToken(text_offset);
+    // Read AST node
+    auto maybe_ast_node = parsed_script->FindNodeAtOffset(text_offset);
+    if (!maybe_ast_node.has_value()) {
+        statement_id = std::nullopt;
+        ast_node_id = std::nullopt;
+    } else {
+        statement_id = std::get<0>(*maybe_ast_node);
+        ast_node_id = std::get<1>(*maybe_ast_node);
     }
 
-    // Did the analyzed script change?
-    if (analyzed_script != script.analyzed_script) {
-        analyzed_script = script.analyzed_script;
+    // Has ast node?
+    if (ast_node_id.has_value() && analyzed_script != nullptr) {
+        // Collect nodes to root
+        std::unordered_set<uint32_t> cursor_path_nodes;
+        for (auto iter = *ast_node_id; iter != std::numeric_limits<uint32_t>::max();) {
+            auto& node = parsed_script->nodes[iter];
+            cursor_path_nodes.insert(iter);
+            iter = node.parent();
+        }
 
-        if (ast_node_id.has_value()) {
-            // Collect nodes to root
-            std::unordered_set<uint32_t> cursor_path_nodes;
-            for (auto iter = *ast_node_id; iter != std::numeric_limits<uint32_t>::max();) {
-                auto& node = parsed_script->nodes[iter];
-                cursor_path_nodes.insert(iter);
-                iter = node.parent();
+        // Part of a table node?
+        table_id = std::nullopt;
+        for (auto& table : analyzed_script->tables) {
+            if (cursor_path_nodes.contains(table.ast_node_id())) {
+                table_id = table.ast_node_id();
+                break;
             }
+        }
 
-            // References any table node?
-            table_id = std::nullopt;
-            for (auto& table : analyzed_script->tables) {
-                if (cursor_path_nodes.contains(table.ast_node_id())) {
-                    table_id = table.ast_node_id();
+        // Part of a table reference node?
+        table_reference_id = std::nullopt;
+        for (auto& table_ref : analyzed_script->table_references) {
+            if (cursor_path_nodes.contains(table_ref.ast_node_id())) {
+                table_reference_id = table_ref.ast_node_id();
+                break;
+            }
+        }
+
+        // Part of a column reference node?
+        column_reference_id = std::nullopt;
+        for (auto& column_ref : analyzed_script->column_references) {
+            if (cursor_path_nodes.contains(column_ref.ast_node_id())) {
+                column_reference_id = column_ref.ast_node_id();
+                break;
+            }
+        }
+
+        // Part of a query edge?
+        query_edge_id = std::nullopt;
+        for (size_t ei = 0; ei < analyzed_script->graph_edges.size(); ++ei) {
+            auto& edge = analyzed_script->graph_edges[ei];
+            auto nodes_begin = edge.nodes_begin();
+            for (size_t ni = 0; ni < (edge.node_count_left() + edge.node_count_right()); ++ni) {
+                auto& edge_node = analyzed_script->graph_edge_nodes[nodes_begin + ni];
+                auto column_ref = analyzed_script->column_references[edge_node.column_reference_id()];
+                assert(!Analyzer::ID(column_ref.ast_node_id()).IsExternal());
+                if (cursor_path_nodes.contains(column_ref.ast_node_id())) {
+                    query_edge_id = ei;
                     break;
                 }
             }
-
-            // Part of a query edge?
-            query_edge_id = std::nullopt;
-            for (size_t ei = 0; ei < analyzed_script->graph_edges.size(); ++ei) {
-                auto& edge = analyzed_script->graph_edges[ei];
-                auto nodes_begin = edge.nodes_begin();
-                for (size_t ni = 0; ni < (edge.node_count_left() + edge.node_count_right()); ++ni) {
-                    auto& edge_node = analyzed_script->graph_edge_nodes[nodes_begin + ni];
-                    auto column_ref = analyzed_script->column_references[edge_node.column_reference_id()];
-                    assert(!Analyzer::ID(column_ref.ast_node_id()).IsExternal());
-                    if (cursor_path_nodes.contains(column_ref.ast_node_id())) {
-                        query_edge_id = ei;
-                        break;
-                    }
-                }
-                if (query_edge_id.has_value()) {
-                    break;
-                }
+            if (query_edge_id.has_value()) {
+                break;
             }
         }
     }
@@ -433,11 +446,13 @@ void ScriptCursor::Move(Script& script, size_t offset) {
 flatbuffers::Offset<proto::ScriptCursorInfo> ScriptCursor::Pack(flatbuffers::FlatBufferBuilder& builder) {
     auto out = std::make_unique<proto::ScriptCursorInfoT>();
     out->text_offset = text_offset;
-    out->ast_node_id = ast_node_id.value_or(std::numeric_limits<uint32_t>::max());
-    out->query_edge_id = query_edge_id.value_or(std::numeric_limits<uint32_t>::max());
-    out->statement_id = statement_id.value_or(std::numeric_limits<uint32_t>::max());
     out->scanner_token_id = scanner_token_id.value_or(std::numeric_limits<uint32_t>::max());
+    out->statement_id = statement_id.value_or(std::numeric_limits<uint32_t>::max());
+    out->ast_node_id = ast_node_id.value_or(std::numeric_limits<uint32_t>::max());
     out->table_id = table_id.value_or(std::numeric_limits<uint32_t>::max());
+    out->table_reference_id = table_reference_id.value_or(std::numeric_limits<uint32_t>::max());
+    out->column_reference_id = column_reference_id.value_or(std::numeric_limits<uint32_t>::max());
+    out->query_edge_id = query_edge_id.value_or(std::numeric_limits<uint32_t>::max());
     return proto::ScriptCursorInfo::Pack(builder, out.get());
 }
 
