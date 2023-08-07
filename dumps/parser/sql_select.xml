@@ -1680,6 +1680,62 @@
             <comments />
         </expected>
     </parser-dump>
+    <parser-dump name="select_table_ref_1">
+        <input>
+            select * from A a, B b where a.x = b.y
+        </input>
+        <expected>
+            <statements>
+                <statement type="SELECT">
+                    <node type="OBJECT_SQL_SELECT" loc="13..51" text="select * f.. a.x = b.y">
+                        <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="20..21" text="*">
+                            <node type="OBJECT_SQL_RESULT_TARGET" loc="20..21" text="*">
+                                <node key="SQL_RESULT_TARGET_STAR" type="BOOL" value="true" />
+                            </node>
+                        </node>
+                        <node key="SQL_SELECT_FROM" type="ARRAY" loc="22..35" text="from A a, B b">
+                            <node type="OBJECT_SQL_TABLEREF" loc="27..30" text="A a">
+                                <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="27..28" text="A">
+                                    <node type="NAME" loc="27..28" text="A" />
+                                </node>
+                                <node key="SQL_TABLEREF_ALIAS" type="NAME" loc="29..30" text="a" />
+                            </node>
+                            <node type="OBJECT_SQL_TABLEREF" loc="32..35" text="B b">
+                                <node key="SQL_TABLEREF_NAME" type="ARRAY" loc="32..33" text="B">
+                                    <node type="NAME" loc="32..33" text="B" />
+                                </node>
+                                <node key="SQL_TABLEREF_ALIAS" type="NAME" loc="34..35" text="b" />
+                            </node>
+                        </node>
+                        <node key="SQL_SELECT_WHERE" type="OBJECT_SQL_NARY_EXPRESSION" loc="42..51" text="a.x = b.y">
+                            <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="EQUAL" />
+                            <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="42..51" text="a.x = b.y">
+                                <node type="OBJECT_SQL_COLUMN_REF" loc="42..45" text="a.x">
+                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="42..45" text="a.x">
+                                        <node type="NAME" loc="42..43" text="a" />
+                                        <node type="NAME" loc="44..45" text="x" />
+                                    </node>
+                                </node>
+                                <node type="OBJECT_SQL_COLUMN_REF" loc="48..51" text="b.y">
+                                    <node key="SQL_COLUMN_REF_PATH" type="ARRAY" loc="48..51" text="b.y">
+                                        <node type="NAME" loc="48..49" text="b" />
+                                        <node type="NAME" loc="50..51" text="y" />
+                                    </node>
+                                </node>
+                            </node>
+                        </node>
+                    </node>
+                </statement>
+            </statements>
+            <scanner-errors />
+            <parser-errors />
+            <line-breaks>
+                <line-break loc="0..1" text="&#10;" />
+                <line-break loc="51..52" text="&#10;" />
+            </line-breaks>
+            <comments />
+        </expected>
+    </parser-dump>
     <parser-dump name="select_column_ref_expr_1">
         <input>
             select 1 into b;
