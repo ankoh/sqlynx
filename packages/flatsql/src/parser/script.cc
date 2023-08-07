@@ -365,7 +365,7 @@ proto::StatusCode Script::UpdateCompletionIndex() {
 ScriptCursor::ScriptCursor() : analyzed_script(), text_offset(0) {}
 
 /// Move the cursor to a script at a position
-void ScriptCursor::Move(Script& script, size_t offset) {
+void ScriptCursor::Move(const Script& script, size_t offset) {
     // Did the parsed script change?
     auto& scanned = script.scanned_script;
     parsed_script = script.parsed_script;
@@ -388,9 +388,12 @@ void ScriptCursor::Move(Script& script, size_t offset) {
     if (ast_node_id.has_value() && analyzed_script != nullptr) {
         // Collect nodes to root
         std::unordered_set<uint32_t> cursor_path_nodes;
-        for (auto iter = *ast_node_id; iter != std::numeric_limits<uint32_t>::max();) {
+        for (auto iter = *ast_node_id;;) {
             auto& node = parsed_script->nodes[iter];
             cursor_path_nodes.insert(iter);
+            if (iter == node.parent()) {
+                break;
+            }
             iter = node.parent();
         }
 
