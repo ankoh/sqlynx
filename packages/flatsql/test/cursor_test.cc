@@ -15,6 +15,8 @@ struct ExpectedScriptCursor {
     proto::NodeType ast_node_type;
     std::optional<std::string_view> table_ref_name;
     std::optional<std::string_view> column_ref_name;
+    std::vector<std::string> graph_from;
+    std::vector<std::string> graph_to;
 };
 
 std::string print_name(const Script& script, const proto::QualifiedTableName& name) {
@@ -95,6 +97,27 @@ void test(const Script& script, size_t text_offset, ExpectedScriptCursor expecte
     } else {
         ASSERT_FALSE(cursor.column_reference_id.has_value());
     }
+    // Check graph edge
+    if (!expected.graph_from.empty() || !expected.graph_to.empty()) {
+        ASSERT_TRUE(cursor.query_edge_id.has_value());
+        auto& edge = script.analyzed_script->graph_edges[*cursor.query_edge_id];
+        std::vector<std::string> from;
+        std::vector<std::string> to;
+        for (size_t i = 0; i < edge.node_count_left(); ++i) {
+            auto graph_node = script.analyzed_script->graph_edge_nodes[edge.nodes_begin() + i];
+            auto& col_ref = script.analyzed_script->column_references[graph_node.column_reference_id()];
+            from.push_back(print_name(script, col_ref.column_name()));
+        }
+        for (size_t i = 0; i < edge.node_count_right(); ++i) {
+            auto graph_node = script.analyzed_script->graph_edge_nodes[edge.nodes_begin() + edge.node_count_left() + i];
+            auto& col_ref = script.analyzed_script->column_references[graph_node.column_reference_id()];
+            to.push_back(print_name(script, col_ref.column_name()));
+        }
+        ASSERT_EQ(from, expected.graph_from);
+        ASSERT_EQ(to, expected.graph_to);
+    } else {
+        ASSERT_FALSE(cursor.query_edge_id.has_value());
+    }
 }
 
 TEST(CursorTest, SimpleNoExternal) {
@@ -151,6 +174,8 @@ TEST(CursorTest, SimpleNoExternal) {
              .ast_attribute_key = proto::AttributeKey::NONE,
              .ast_node_type = proto::NodeType::NAME,
              .column_ref_name = "b.x",
+             .graph_from = {"b.x"},
+             .graph_to = {"d.y"},
          });
     test(script, 30,
          {
@@ -159,6 +184,8 @@ TEST(CursorTest, SimpleNoExternal) {
              .ast_attribute_key = proto::AttributeKey::SQL_COLUMN_REF_PATH,
              .ast_node_type = proto::NodeType::ARRAY,
              .column_ref_name = "b.x",
+             .graph_from = {"b.x"},
+             .graph_to = {"d.y"},
          });
     test(script, 31,
          {
@@ -167,6 +194,8 @@ TEST(CursorTest, SimpleNoExternal) {
              .ast_attribute_key = proto::AttributeKey::NONE,
              .ast_node_type = proto::NodeType::NAME,
              .column_ref_name = "b.x",
+             .graph_from = {"b.x"},
+             .graph_to = {"d.y"},
          });
     test(script, 33,
          {
@@ -174,6 +203,8 @@ TEST(CursorTest, SimpleNoExternal) {
              .statement_id = 0,
              .ast_attribute_key = proto::AttributeKey::SQL_EXPRESSION_OPERATOR,
              .ast_node_type = proto::NodeType::ENUM_SQL_EXPRESSION_OPERATOR,
+             .graph_from = {"b.x"},
+             .graph_to = {"d.y"},
          });
 }
 
