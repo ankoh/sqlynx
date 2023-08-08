@@ -79,12 +79,12 @@ std::unique_ptr<proto::ScannerTokensT> ScannedScript::PackTokens() {
     }
 
     // Build highlighting
-    auto hl = std::make_unique<proto::ScannerTokensT>();
-    hl->token_offsets = offsets;
-    hl->token_lengths = lengths;
-    hl->token_types = types;
-    hl->token_breaks = breaks;
-    return hl;
+    auto out = std::make_unique<proto::ScannerTokensT>();
+    out->token_offsets = std::move(offsets);
+    out->token_lengths = std::move(lengths);
+    out->token_types = std::move(types);
+    out->token_breaks = std::move(breaks);
+    return out;
 }
 
 }  // namespace flatsql
