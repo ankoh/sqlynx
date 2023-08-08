@@ -23,6 +23,7 @@ import Immutable from 'immutable';
 export const INITIALIZE = Symbol('INITIALIZE');
 export const LOAD_SCRIPTS = Symbol('LOAD_SCRIPTS');
 export const UPDATE_SCRIPT_ANALYSIS = Symbol('UPDATE_SCRIPT_ANALYSIS');
+export const UPDATE_SCRIPT_CURSOR = Symbol('UPDATE_SCRIPT_CURSOR');
 export const SCRIPT_LOADING_STARTED = Symbol('SCRIPT_LOADING_STARTED');
 export const SCRIPT_LOADING_SUCCEEDED = Symbol('SCRIPT_LOADING_SUCCEEDED');
 export const SCRIPT_LOADING_FAILED = Symbol('SCRIPT_LOADING_FAILED');
@@ -36,6 +37,7 @@ export type AppStateAction =
     | Action<typeof INITIALIZE, flatsql.FlatSQL>
     | Action<typeof LOAD_SCRIPTS, { [key: number]: ScriptMetadata }>
     | Action<typeof UPDATE_SCRIPT_ANALYSIS, [ScriptKey, FlatSQLProcessedScript]>
+    | Action<typeof UPDATE_SCRIPT_CURSOR, [ScriptKey, flatsql.FlatBufferRef<flatsql.proto.ScriptCursorInfo>]>
     | Action<typeof SCRIPT_LOADING_STARTED, ScriptKey>
     | Action<typeof SCRIPT_LOADING_SUCCEEDED, [ScriptKey, string]>
     | Action<typeof SCRIPT_LOADING_FAILED, [ScriptKey, any]>
@@ -108,6 +110,28 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                 newState.scripts[ScriptKey.MAIN_SCRIPT] = newMain;
             }
             return computeSchemaGraph(newState);
+        }
+        case UPDATE_SCRIPT_CURSOR: {
+            // Destroy previous cursor
+            const [scriptKey, data] = action.value;
+            let scriptData = state.scripts[scriptKey];
+            scriptData.processed.cursor?.delete();
+            scriptData.processed.cursor = null;
+            // Store new script buffer
+            const newState: AppState = {
+                ...state,
+                scripts: {
+                    ...state.scripts,
+                    [scriptKey]: {
+                        ...scriptData,
+                        processed: {
+                            ...scriptData.processed,
+                            cursor: data,
+                        },
+                    },
+                },
+            };
+            return newState;
         }
         case SCRIPT_LOADING_STARTED:
             return {
