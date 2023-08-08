@@ -17,6 +17,7 @@ interface FlatSQLModuleExports {
     flatsql_script_parse: (ptr: number) => number;
     flatsql_script_analyze: (ptr: number, external: number) => number;
     flatsql_script_update_completion_index: (ptr: number) => number;
+    flatsql_script_read_cursor: (ptr: number, offset: number) => number;
     flatsql_script_get_statistics: (ptr: number) => number;
     flatsql_schemagraph_new: () => number;
     flatsql_schemagraph_delete: (ptr: number) => void;
@@ -39,9 +40,6 @@ interface FlatSQLModuleExports {
         gridSize: number,
     ) => void;
     flatsql_schemagraph_load_script: (ptr: number, script: number) => number;
-    flatsql_cursor_new: () => number;
-    flatsql_cursor_delete: (ptr: number) => void;
-    flatsql_cursor_move: (ptr: number, script: number, offset: number) => number;
 }
 
 type InstantiateWasmCallback = (stubs: WebAssembly.Imports) => PromiseLike<WebAssembly.WebAssemblyInstantiatedSource>;
@@ -98,6 +96,10 @@ export class FlatSQL {
             flatsql_script_update_completion_index: parserExports['flatsql_script_update_completion_index'] as (
                 ptr: number,
             ) => number,
+            flatsql_script_read_cursor: parserExports['flatsql_script_read_cursor'] as (
+                ptr: number,
+                offset: number,
+            ) => number,
             flatsql_script_get_statistics: parserExports['flatsql_script_get_statistics'] as (ptr: number) => number,
             flatsql_schemagraph_new: parserExports['flatsql_schemagraph_new'] as () => number,
             flatsql_schemagraph_delete: parserExports['flatsql_schemagraph_delete'] as (ptr: number) => void,
@@ -121,13 +123,6 @@ export class FlatSQL {
             flatsql_schemagraph_load_script: parserExports['flatsql_schemagraph_load_script'] as (
                 ptr: number,
                 script: number,
-            ) => number,
-            flatsql_cursor_new: parserExports['flatsql_cursor_new'] as () => number,
-            flatsql_cursor_delete: parserExports['flatsql_cursor_delete'] as (ptr: number) => void,
-            flatsql_cursor_move: parserExports['flatsql_cursor_move'] as (
-                ptr: number,
-                script: number,
-                offset: number,
             ) => number,
         };
     }
@@ -173,11 +168,6 @@ export class FlatSQL {
     public createScript(): FlatSQLScript {
         const scriptPtr = this.instanceExports.flatsql_script_new();
         return new FlatSQLScript(this, scriptPtr);
-    }
-
-    public createScriptCursor(): FlatSQLScriptCursor {
-        const cursorPtr = this.instanceExports.flatsql_cursor_new();
-        return new FlatSQLScriptCursor(this, cursorPtr);
     }
 
     public createSchemaGraph(): FlatSQLSchemaGraph {
@@ -403,6 +393,12 @@ export class FlatSQLScript {
         const status = this.api.instanceExports.flatsql_script_update_completion_index(scriptPtr);
         return status == proto.StatusCode.OK;
     }
+    /// Update the completion index
+    public readCursor(textOffset: number): FlatBufferRef<proto.ScriptCursorInfo> {
+        const scriptPtr = this.assertScriptNotNull();
+        const resultPtr = this.api.instanceExports.flatsql_script_read_cursor(scriptPtr, textOffset);
+        return this.api.readResult<proto.ScriptCursorInfo>(resultPtr);
+    }
     /// Get the script statistics.
     /// Timings are useless in some browsers today.
     /// For example, Firefox rounds to millisecond precision, so all our step timings will be 0 for most input.
@@ -489,37 +485,5 @@ export class FlatSQLSchemaGraph {
         const graphPtr = this.assertGraphNotNull();
         const resultPtr = this.api.instanceExports.flatsql_schemagraph_describe(graphPtr);
         return this.api.readResult<proto.SchemaGraphDebugInfo>(resultPtr);
-    }
-}
-
-export class FlatSQLScriptCursor {
-    /// The FlatSQL api
-    api: FlatSQL;
-    /// The cursor pointer
-    cursorPtr: number | null;
-
-    public constructor(api: FlatSQL, cursorPtr: number) {
-        this.api = api;
-        this.cursorPtr = cursorPtr;
-    }
-    /// Delete the graph
-    public delete() {
-        if (this.cursorPtr) {
-            this.api.instanceExports.flatsql_cursor_delete(this.cursorPtr);
-        }
-        this.cursorPtr = null;
-    }
-    /// Make sure the graph is not null
-    protected assertGraphNotNull(): number {
-        if (this.cursorPtr == null) {
-            throw NULL_POINTER_EXCEPTION;
-        }
-        return this.cursorPtr!;
-    }
-    /// Move a script cursor
-    public move(script: FlatSQLScript, textOffset: number) {
-        const graphPtr = this.assertGraphNotNull();
-        const resultPtr = this.api.instanceExports.flatsql_cursor_move(graphPtr, script.scriptPtr, textOffset);
-        return this.api.readResult<proto.ScriptCursorInfo>(resultPtr);
     }
 }

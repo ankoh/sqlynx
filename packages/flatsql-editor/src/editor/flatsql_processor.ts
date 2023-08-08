@@ -24,6 +24,8 @@ export interface FlatSQLProcessedScript {
     parsed: flatsql.FlatBufferRef<flatsql.proto.ParsedScript> | null;
     /// The analyzed script
     analyzed: flatsql.FlatBufferRef<flatsql.proto.AnalyzedScript> | null;
+    /// The cursor script
+    cursor: flatsql.FlatBufferRef<flatsql.proto.ScriptCursorInfo> | null;
     /// Destroy the state.
     /// The user is responsible for cleanup up FlatBufferRefs that are no longer needed.
     /// E.g. one strategy may be to destroy the "old" state once a script with the same script key is emitted.
@@ -36,6 +38,7 @@ type FlatSQLEditorState = FlatSQLScriptUpdate;
 export function parseAndAnalyzeScript(
     script: flatsql.FlatSQLScript,
     external: flatsql.FlatSQLScript | null,
+    textOffset: number | null = null,
 ): FlatSQLProcessedScript {
     // Scan the script
     const scanned = script.scan();
@@ -43,8 +46,12 @@ export function parseAndAnalyzeScript(
     const parsed = script.parse();
     // Parse the script
     const analyzed = script.analyze(external);
-
-    return { scanned, parsed, analyzed, destroy: destroyBuffers };
+    // Create the cursor
+    let cursor = null;
+    if (textOffset != null) {
+        cursor = script.readCursor(textOffset);
+    }
+    return { scanned, parsed, analyzed, cursor, destroy: destroyBuffers };
 }
 
 /// Analyze an existing script
@@ -73,6 +80,10 @@ const destroyBuffers = (state: FlatSQLProcessedScript) => {
         state.analyzed.delete();
         state.analyzed = null;
     }
+    if (state.cursor != null) {
+        state.cursor.delete();
+        state.cursor = null;
+    }
     return state;
 };
 
@@ -91,12 +102,14 @@ export const FlatSQLProcessor: StateField<FlatSQLEditorState> = StateField.defin
                 scanned: null,
                 parsed: null,
                 analyzed: null,
+                cursor: null,
                 destroy: destroyBuffers,
             },
             onUpdate: () => ({
                 scanned: null,
                 parsed: null,
                 analyzed: null,
+                cursor: null,
                 destroy: destroyBuffers,
             }),
         };
@@ -104,6 +117,12 @@ export const FlatSQLProcessor: StateField<FlatSQLEditorState> = StateField.defin
     },
     // Mirror the FlatSQL state
     update: (state: FlatSQLEditorState, transaction: Transaction) => {
+        // Did the selection change?
+        const prevSelection = transaction.startState.selection.asSingle();
+        const newSelection = transaction.newSelection.asSingle();
+        const cursorChanged = !prevSelection.eq(newSelection);
+        let cursor: number | null = prevSelection.main.to;
+
         // Did the user provide us with a new FlatSQL script?
         for (const effect of transaction.effects) {
             if (
@@ -122,7 +141,7 @@ export const FlatSQLProcessor: StateField<FlatSQLEditorState> = StateField.defin
         }
 
         // Did the document change?
-        if (state.script != null && transaction.docChanged) {
+        if (state.script != null && (transaction.docChanged || cursorChanged)) {
             // Mirror all changes to the the FlatSQL script, if the script is != null.
             transaction.changes.iterChanges(
                 (fromA: number, toA: number, fromB: number, toB: number, inserted: Text) => {
@@ -140,17 +159,9 @@ export const FlatSQLProcessor: StateField<FlatSQLEditorState> = StateField.defin
             );
             // Analyze the new script
             const next = { ...state };
-            next.processed = parseAndAnalyzeScript(next.script!, next.external);
+            next.processed = parseAndAnalyzeScript(next.script!, next.external, cursor);
             next.onUpdate(next.scriptKey, next.processed);
             return next;
-        }
-
-        // Did the selection change?
-        const prevSelection = transaction.startState.selection.asSingle();
-        const newSelection = transaction.newSelection.asSingle();
-        if (!prevSelection.eq(newSelection)) {
-            const newMain = newSelection.main;
-            console.log(`SELECTION [${newMain.from}, ${newMain.to}]`);
         }
         return state;
     },

@@ -255,6 +255,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                         scanned: null,
                         parsed: null,
                         analyzed: null,
+                        cursor: null,
                         destroy: () => {},
                     },
                     statistics: Immutable.List(),
