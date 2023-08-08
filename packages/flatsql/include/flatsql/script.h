@@ -147,6 +147,30 @@ struct CompletionIndex {
     std::unique_ptr<SuffixTrie> suffix_trie;
 };
 
+struct ScriptCursor {
+    /// The text offset
+    size_t text_offset = 0;
+    /// The current scanner token id (if any)
+    std::optional<size_t> scanner_token_id;
+    /// The current ast node id (if any)
+    std::optional<size_t> ast_node_id;
+    /// The current statement id (if any)
+    std::optional<size_t> statement_id;
+    /// The current table id (if any)
+    std::optional<size_t> table_id;
+    /// The current table reference_id (if any)
+    std::optional<size_t> table_reference_id;
+    /// The current column reference_id (if any)
+    std::optional<size_t> column_reference_id;
+    /// The current query edge id (if any)
+    std::optional<size_t> query_edge_id;
+
+    /// Move the cursor to a script at a position
+    ScriptCursor(const AnalyzedScript& analyzed, size_t text_offset);
+    /// Pack the cursor info
+    flatbuffers::Offset<proto::ScriptCursorInfo> Pack(flatbuffers::FlatBufferBuilder& builder);
+};
+
 class Script {
    public:
     /// The underlying rope
@@ -194,42 +218,11 @@ class Script {
     std::string Format();
     /// Update the completion index
     proto::StatusCode UpdateCompletionIndex();
-    /// Complete at a text offset
-    void CompleteAt(size_t offset);
+    /// Read cursor
+    std::unique_ptr<ScriptCursor> ReadCursor(size_t text_offset);
 
     /// Get statisics
     std::unique_ptr<proto::ScriptStatisticsT> GetStatistics();
-};
-
-struct ScriptCursor {
-    /// The parsed script
-    std::shared_ptr<ParsedScript> parsed_script;
-    /// The analyzed script
-    std::shared_ptr<AnalyzedScript> analyzed_script;
-    /// The text offset
-    size_t text_offset;
-    /// The current scanner token id (if any)
-    std::optional<size_t> scanner_token_id;
-    /// The current ast node id (if any)
-    std::optional<size_t> ast_node_id;
-    /// The current statement id (if any)
-    std::optional<size_t> statement_id;
-    /// The current table id (if any)
-    std::optional<size_t> table_id;
-    /// The current table reference_id (if any)
-    std::optional<size_t> table_reference_id;
-    /// The current column reference_id (if any)
-    std::optional<size_t> column_reference_id;
-    /// The current query edge id (if any)
-    std::optional<size_t> query_edge_id;
-
-    /// Constructor
-    ScriptCursor();
-
-    /// Move the cursor to a script at a position
-    void Move(const Script& script, size_t text_offset);
-    /// Pack the cursor info
-    flatbuffers::Offset<proto::ScriptCursorInfo> Pack(flatbuffers::FlatBufferBuilder& builder);
 };
 
 }  // namespace flatsql
