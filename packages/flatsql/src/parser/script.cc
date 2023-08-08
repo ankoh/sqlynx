@@ -361,21 +361,21 @@ proto::StatusCode Script::UpdateCompletionIndex() {
     return proto::StatusCode::OK;
 }
 
-/// Constructor
-ScriptCursor::ScriptCursor() : analyzed_script(), text_offset(0) {}
+/// Read cursor
+std::unique_ptr<ScriptCursor> Script::ReadCursor(size_t text_offset) {
+    return std::make_unique<ScriptCursor>(*analyzed_script, text_offset);
+}
 
-/// Move the cursor to a script at a position
-void ScriptCursor::Move(const Script& script, size_t offset) {
+/// Constructor
+ScriptCursor::ScriptCursor(const AnalyzedScript& analyzed, size_t text_offset) : text_offset(text_offset) {
     // Did the parsed script change?
-    auto& scanned = script.scanned_script;
-    parsed_script = script.parsed_script;
-    analyzed_script = script.analyzed_script;
-    text_offset = offset;
+    auto& parsed = *analyzed.parsed_script;
+    auto& scanned = *parsed.scanned_script;
 
     // Read scanner token
-    scanner_token_id = scanned->FindToken(text_offset);
+    scanner_token_id = scanned.FindToken(text_offset);
     // Read AST node
-    auto maybe_ast_node = parsed_script->FindNodeAtOffset(text_offset);
+    auto maybe_ast_node = parsed.FindNodeAtOffset(text_offset);
     if (!maybe_ast_node.has_value()) {
         statement_id = std::nullopt;
         ast_node_id = std::nullopt;
@@ -385,11 +385,11 @@ void ScriptCursor::Move(const Script& script, size_t offset) {
     }
 
     // Has ast node?
-    if (ast_node_id.has_value() && analyzed_script != nullptr) {
+    if (ast_node_id.has_value()) {
         // Collect nodes to root
         std::unordered_set<uint32_t> cursor_path_nodes;
         for (auto iter = *ast_node_id;;) {
-            auto& node = parsed_script->nodes[iter];
+            auto& node = parsed.nodes[iter];
             cursor_path_nodes.insert(iter);
             if (iter == node.parent()) {
                 break;
@@ -399,7 +399,7 @@ void ScriptCursor::Move(const Script& script, size_t offset) {
 
         // Part of a table node?
         table_id = std::nullopt;
-        for (auto& table : analyzed_script->tables) {
+        for (auto& table : analyzed.tables) {
             if (cursor_path_nodes.contains(table.ast_node_id())) {
                 table_id = table.ast_node_id();
                 break;
@@ -408,8 +408,8 @@ void ScriptCursor::Move(const Script& script, size_t offset) {
 
         // Part of a table reference node?
         table_reference_id = std::nullopt;
-        for (size_t i = 0; i < analyzed_script->table_references.size(); ++i) {
-            auto& table_ref = analyzed_script->table_references[i];
+        for (size_t i = 0; i < analyzed.table_references.size(); ++i) {
+            auto& table_ref = analyzed.table_references[i];
             if (cursor_path_nodes.contains(table_ref.ast_node_id())) {
                 table_reference_id = i;
                 break;
@@ -418,8 +418,8 @@ void ScriptCursor::Move(const Script& script, size_t offset) {
 
         // Part of a column reference node?
         column_reference_id = std::nullopt;
-        for (size_t i = 0; i < analyzed_script->column_references.size(); ++i) {
-            auto& column_ref = analyzed_script->column_references[i];
+        for (size_t i = 0; i < analyzed.column_references.size(); ++i) {
+            auto& column_ref = analyzed.column_references[i];
             if (cursor_path_nodes.contains(column_ref.ast_node_id())) {
                 column_reference_id = i;
                 break;
@@ -428,16 +428,16 @@ void ScriptCursor::Move(const Script& script, size_t offset) {
 
         // Part of a query edge?
         query_edge_id = std::nullopt;
-        for (size_t ei = 0; ei < analyzed_script->graph_edges.size(); ++ei) {
-            auto& edge = analyzed_script->graph_edges[ei];
+        for (size_t ei = 0; ei < analyzed.graph_edges.size(); ++ei) {
+            auto& edge = analyzed.graph_edges[ei];
             auto nodes_begin = edge.nodes_begin();
             if (cursor_path_nodes.contains(edge.ast_node_id())) {
                 query_edge_id = ei;
                 break;
             }
             for (size_t ni = 0; ni < (edge.node_count_left() + edge.node_count_right()); ++ni) {
-                auto& edge_node = analyzed_script->graph_edge_nodes[nodes_begin + ni];
-                auto column_ref = analyzed_script->column_references[edge_node.column_reference_id()];
+                auto& edge_node = analyzed.graph_edge_nodes[nodes_begin + ni];
+                auto column_ref = analyzed.column_references[edge_node.column_reference_id()];
                 assert(!Analyzer::ID(column_ref.ast_node_id()).IsExternal());
                 if (cursor_path_nodes.contains(column_ref.ast_node_id())) {
                     query_edge_id = ei;

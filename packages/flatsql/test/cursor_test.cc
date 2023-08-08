@@ -60,8 +60,7 @@ std::string print_name(const Script& script, const proto::QualifiedColumnName& n
 
 void test(const Script& script, size_t text_offset, ExpectedScriptCursor expected) {
     SCOPED_TRACE(std::string{"CURSOR "} + std::to_string(text_offset));
-    ScriptCursor cursor;
-    cursor.Move(script, text_offset);
+    ScriptCursor cursor{*script.analyzed_script, text_offset};
     // Check scanner token
     if (expected.scanner_token_text.has_value()) {
         ASSERT_TRUE(cursor.scanner_token_id.has_value());
@@ -74,7 +73,7 @@ void test(const Script& script, size_t text_offset, ExpectedScriptCursor expecte
     // Check statement id
     ASSERT_EQ(cursor.statement_id, expected.statement_id);
     // Check AST node type
-    auto& ast_node = cursor.parsed_script->nodes[*cursor.ast_node_id];
+    auto& ast_node = script.analyzed_script->parsed_script->nodes[*cursor.ast_node_id];
     ASSERT_EQ(ast_node.attribute_key(), expected.ast_attribute_key);
     ASSERT_EQ(ast_node.node_type(), expected.ast_node_type);
     // Check table reference
