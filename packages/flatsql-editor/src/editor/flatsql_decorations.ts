@@ -10,8 +10,17 @@ const TokenType = flatsql.proto.ScannerTokenType;
 const KeywordDecoration = Decoration.mark({
     class: 'flatsql-keyword',
 });
+const FocusedQueryGraphEdgeDecoration = Decoration.mark({
+    class: 'flatsql-queryedge-focus',
+});
+const FocusedTableReferenceDecoration = Decoration.mark({
+    class: 'flatsql-tableref-focus',
+});
+const FocusedColumnReferenceDecoration = Decoration.mark({
+    class: 'flatsql-colref-focus',
+});
 
-function buildDecorations(
+function buildDecorationsFromTokens(
     scanned: flatsql.FlatBufferRef<flatsql.proto.ScannedScript>,
     tmp: flatsql.proto.ScannedScript = new flatsql.proto.ScannedScript(),
 ): DecorationSet {
@@ -36,24 +45,23 @@ function buildDecorations(
     }
     return builder.finish();
 }
-
-interface DecorationState {
+interface ScannerDecorationState {
     decorations: DecorationSet;
     scanned: flatsql.FlatBufferRef<flatsql.proto.ScannedScript> | null;
 }
 
-/// An analyzer for FlatSQL scripts
-const DecorationBuilder: StateField<DecorationState> = StateField.define<DecorationState>({
+/// Decorations derived from FlatSQL scanner tokens
+const ScannerDecorationField: StateField<ScannerDecorationState> = StateField.define<ScannerDecorationState>({
     // Create the initial state
     create: () => {
-        const config: DecorationState = {
+        const config: ScannerDecorationState = {
             decorations: new RangeSetBuilder<Decoration>().finish(),
             scanned: null,
         };
         return config;
     },
     // Mirror the FlatSQL state
-    update: (state: DecorationState, transaction: Transaction) => {
+    update: (state: ScannerDecorationState, transaction: Transaction) => {
         // Scanned program untouched?
         const processor = transaction.state.field(FlatSQLProcessor);
         if (processor.processed.scanned === state.scanned) {
@@ -63,12 +71,90 @@ const DecorationBuilder: StateField<DecorationState> = StateField.define<Decorat
         const s = { ...state };
         s.scanned = processor.processed.scanned;
         if (s.scanned) {
-            s.decorations = buildDecorations(s.scanned);
+            s.decorations = buildDecorationsFromTokens(s.scanned);
         }
         return s;
     },
 });
-/// Derive the decorations from the builder
-const Decorations = EditorView.decorations.from(DecorationBuilder, state => state.decorations);
+
+function buildDecorationsFromCursor(
+    scannedBuffer: flatsql.FlatBufferRef<flatsql.proto.ScannedScript>,
+    parsedBuffer: flatsql.FlatBufferRef<flatsql.proto.ParsedScript>,
+    analyzedBuffer: flatsql.FlatBufferRef<flatsql.proto.AnalyzedScript>,
+    cursorBuffer: flatsql.FlatBufferRef<flatsql.proto.ScriptCursorInfo>,
+): DecorationSet {
+    const builder = new RangeSetBuilder<Decoration>();
+    const tmpParsed = new flatsql.proto.ParsedScript();
+    const tmpCursor = new flatsql.proto.ScriptCursorInfo();
+    const parsed = parsedBuffer.read(tmpParsed);
+    const cursor = cursorBuffer.read(tmpCursor);
+    const astNodeId = cursor.astNodeId();
+
+    if (astNodeId < parsed.nodesLength()) {
+        const node = parsed.nodes(astNodeId)!;
+        const nodeLocation = node.location()!;
+        builder.add(
+            nodeLocation.offset(),
+            nodeLocation.offset() + nodeLocation.length(),
+            FocusedTableReferenceDecoration,
+        );
+    }
+
+    return builder.finish();
+}
+
+interface CursorDecorationState {
+    decorations: DecorationSet;
+    scanned: flatsql.FlatBufferRef<flatsql.proto.ScannedScript> | null;
+    parsed: flatsql.FlatBufferRef<flatsql.proto.ParsedScript> | null;
+    analyzed: flatsql.FlatBufferRef<flatsql.proto.AnalyzedScript> | null;
+    cursor: flatsql.FlatBufferRef<flatsql.proto.ScriptCursorInfo> | null;
+}
+
+/// Decorations derived from FlatSQL cursor
+const CursorDecorationField: StateField<CursorDecorationState> = StateField.define<CursorDecorationState>({
+    // Create the initial state
+    create: () => {
+        const config: CursorDecorationState = {
+            decorations: new RangeSetBuilder<Decoration>().finish(),
+            scanned: null,
+            parsed: null,
+            analyzed: null,
+            cursor: null,
+        };
+        return config;
+    },
+    // Mirror the FlatSQL state
+    update: (state: CursorDecorationState, transaction: Transaction) => {
+        // Scanned program untouched?
+        const processor = transaction.state.field(FlatSQLProcessor);
+        if (
+            processor.processed.scanned === state.scanned &&
+            processor.processed.parsed === state.parsed &&
+            processor.processed.analyzed === state.analyzed &&
+            processor.processed.cursor === state.cursor
+        ) {
+            return state;
+        }
+        // Rebuild decorations
+        const s = { ...state };
+        s.scanned = processor.processed.scanned;
+        s.parsed = processor.processed.parsed;
+        s.analyzed = processor.processed.analyzed;
+        s.cursor = processor.processed.cursor;
+        if (s.scanned && s.parsed && s.analyzed && s.cursor) {
+            s.decorations = buildDecorationsFromCursor(s.scanned, s.parsed, s.analyzed, s.cursor);
+        }
+        return s;
+    },
+});
+
+const ScannerDecorations = EditorView.decorations.from(ScannerDecorationField, state => state.decorations);
+const CursorDecorations = EditorView.decorations.from(CursorDecorationField, state => state.decorations);
 /// Bundle the decoration extensions
-export const FlatSQLDecorations = [DecorationBuilder, Decorations];
+export const FlatSQLDecorations = [
+    ScannerDecorationField,
+    ScannerDecorations,
+    CursorDecorationField,
+    CursorDecorations,
+];

@@ -137,7 +137,7 @@ export const FlatSQLProcessor: StateField<FlatSQLEditorState> = StateField.defin
         const prevSelection = transaction.startState.selection.asSingle();
         const newSelection = transaction.newSelection.asSingle();
         const cursorChanged = !prevSelection.eq(newSelection);
-        let cursor: number | null = prevSelection.main.to;
+        let cursor: number | null = newSelection.main.to;
 
         // Did the user provide us with a new FlatSQL script?
         for (const effect of transaction.effects) {
