@@ -64,11 +64,27 @@ export function analyzeScript(
     buffers: FlatSQLProcessedScript,
     script: flatsql.FlatSQLScript,
     external: flatsql.FlatSQLScript | null,
+    textOffset: number | null = null,
 ): FlatSQLProcessedScript {
+    // Delete the old main analysis
+    const prevAnalyzed = buffers.analyzed;
+    const prevCursor = buffers.cursor;
     // Analyze the script
     const analyzed = script.analyze(external);
-
-    return { ...buffers, analyzed };
+    // Update the cursor
+    let cursor = null;
+    if (textOffset) {
+        cursor = script.readCursor(textOffset);
+    } else if (buffers.cursor) {
+        let prev = buffers.cursor.read(new flatsql.proto.ScriptCursorInfo());
+        const offset = prev.textOffset();
+        cursor = script.readCursor(offset);
+    }
+    // Delete the previous analyzed script & the cursor (if any)
+    prevAnalyzed?.delete();
+    prevCursor?.delete();
+    // Return the new script
+    return { ...buffers, analyzed, cursor };
 }
 
 /// Destory the buffers

@@ -104,7 +104,6 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
             if (scriptKey == ScriptKey.SCHEMA_SCRIPT && mainScript != null) {
                 const newMain = { ...mainData };
                 const external = newState.scripts[ScriptKey.SCHEMA_SCRIPT].script;
-                newMain.processed.analyzed?.delete();
                 newMain.processed = analyzeScript(mainData.processed, mainScript, external);
                 newMain.statistics = rotateStatistics(newMain.statistics, mainScript.getStatistics());
                 newState.scripts[ScriptKey.MAIN_SCRIPT] = newMain;
@@ -219,11 +218,9 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                         const schemaAnalyzed = parseAndAnalyzeScript(newScript, null);
                         const main = newState.scripts[ScriptKey.MAIN_SCRIPT];
                         if (main.script) {
-                            // Delete the old main analysis
-                            main.processed.analyzed?.delete();
-                            main.processed.analyzed = null;
                             // Analyze the old main script with the new script as external
                             const mainAnalyzed = analyzeScript(main.processed, main.script, newScript);
+                            // Store the new main script
                             newState.scripts[ScriptKey.MAIN_SCRIPT] = {
                                 ...main,
                                 processed: mainAnalyzed,
