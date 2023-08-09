@@ -1,3 +1,7 @@
 .flatsql-keyword {
     font-weight: 700;
 }
+
+.flatsql-tableref-focus {
+    color: red;
+}
