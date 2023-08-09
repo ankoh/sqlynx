@@ -19,7 +19,7 @@
 		"@ankoh/flatsql": "link:../flatsql-wasm"
 	},
 	"devDependencies": {
-		"@types/node": "^18.17.3",
+		"@types/node": "^18.17.4",
 		"@types/vscode": "^1.81.0",
 		"typescript": "^5.1.6"
 	}
