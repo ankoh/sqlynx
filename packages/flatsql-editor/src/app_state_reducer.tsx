@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as flatsql from '@ankoh/flatsql';
 
 import { useFlatSQL } from './flatsql_loader';
-import { FlatSQLProcessedScript, analyzeScript, parseAndAnalyzeScript } from './editor/flatsql_processor';
+import { FlatSQLScriptBuffers, analyzeScript, parseAndAnalyzeScript } from './editor/flatsql_processor';
 import {
     AppState,
     ConnectionId,
@@ -38,7 +38,7 @@ export const DESTROY = Symbol('DESTROY');
 export type AppStateAction =
     | Action<typeof INITIALIZE, flatsql.FlatSQL>
     | Action<typeof LOAD_SCRIPTS, { [key: number]: ScriptMetadata }>
-    | Action<typeof UPDATE_SCRIPT_ANALYSIS, [ScriptKey, FlatSQLProcessedScript, flatsql.proto.ScriptCursorInfoT]>
+    | Action<typeof UPDATE_SCRIPT_ANALYSIS, [ScriptKey, FlatSQLScriptBuffers, flatsql.proto.ScriptCursorInfoT]>
     | Action<typeof UPDATE_SCRIPT_CURSOR, [ScriptKey, flatsql.proto.ScriptCursorInfoT]>
     | Action<typeof SCRIPT_LOADING_STARTED, ScriptKey>
     | Action<typeof SCRIPT_LOADING_SUCCEEDED, [ScriptKey, string]>
@@ -394,7 +394,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
 
 /// Derive focus from script cursors
 function deriveScriptFocusFromCursor(
-    processed: FlatSQLProcessedScript,
+    processed: FlatSQLScriptBuffers,
     cursor: flatsql.proto.ScriptCursorInfoT,
 ): ScriptFocus {
     const focus: ScriptFocus = {
