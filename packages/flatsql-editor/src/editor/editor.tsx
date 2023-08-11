@@ -78,20 +78,20 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
 
     // Helper to update a script
     const updateScript = React.useCallback(
-        (scriptKey: FlatSQLScriptKey, data: FlatSQLProcessedScript) => {
+        (scriptKey: FlatSQLScriptKey, buffers: FlatSQLProcessedScript, cursor: flatsql.proto.ScriptCursorInfoT) => {
             ctxDispatch({
                 type: UPDATE_SCRIPT_ANALYSIS,
-                value: [scriptKey, data],
+                value: [scriptKey, buffers, cursor],
             });
         },
         [ctxDispatch],
     );
     // Helper to update a script cursor
     const updateScriptCursor = React.useCallback(
-        (scriptKey: FlatSQLScriptKey, data: flatsql.FlatBufferRef<flatsql.proto.ScriptCursorInfo>) => {
+        (scriptKey: FlatSQLScriptKey, cursor: flatsql.proto.ScriptCursorInfoT) => {
             ctxDispatch({
                 type: UPDATE_SCRIPT_CURSOR,
-                value: [scriptKey, data],
+                value: [scriptKey, cursor],
             });
         },
         [ctxDispatch],
@@ -136,6 +136,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                     script: mainData.script,
                     external: externalScript,
                     processed: mainData.processed,
+                    cursor: mainData.cursor,
                     onUpdateScript: updateScript,
                     onUpdateScriptCursor: updateScriptCursor,
                 }),
@@ -150,6 +151,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                     script: mainData.script,
                     external: externalScript,
                     processed: mainData.processed,
+                    cursor: mainData.cursor,
                     onUpdateScript: updateScript,
                     onUpdateScriptCursor: updateScriptCursor,
                 }),

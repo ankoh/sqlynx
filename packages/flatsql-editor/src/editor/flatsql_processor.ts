@@ -13,13 +13,16 @@ export interface FlatSQLScriptUpdate {
     external: flatsql.FlatSQLScript | null;
     /// The previous processed script data (if any)
     processed: FlatSQLProcessedScript;
+    /// The script cursor
+    cursor: flatsql.proto.ScriptCursorInfoT | null;
     // This callback is called when the editor updates the script
-    onUpdateScript: (scriptKey: FlatSQLScriptKey, script: FlatSQLProcessedScript) => void;
-    // This callback is called when the editor updates the cursor
-    onUpdateScriptCursor: (
+    onUpdateScript: (
         scriptKey: FlatSQLScriptKey,
-        script: flatsql.FlatBufferRef<flatsql.proto.ScriptCursorInfo>,
+        script: FlatSQLProcessedScript,
+        cursor: flatsql.proto.ScriptCursorInfoT,
     ) => void;
+    // This callback is called when the editor updates the cursor
+    onUpdateScriptCursor: (scriptKey: FlatSQLScriptKey, cursor: flatsql.proto.ScriptCursorInfoT) => void;
 }
 /// The FlatSQL script buffers
 export interface FlatSQLProcessedScript {
@@ -29,8 +32,6 @@ export interface FlatSQLProcessedScript {
     parsed: flatsql.FlatBufferRef<flatsql.proto.ParsedScript> | null;
     /// The analyzed script
     analyzed: flatsql.FlatBufferRef<flatsql.proto.AnalyzedScript> | null;
-    /// The cursor script
-    cursor: flatsql.FlatBufferRef<flatsql.proto.ScriptCursorInfo> | null;
     /// Destroy the state.
     /// The user is responsible for cleanup up FlatBufferRefs that are no longer needed.
     /// E.g. one strategy may be to destroy the "old" state once a script with the same script key is emitted.
@@ -43,7 +44,6 @@ type FlatSQLEditorState = FlatSQLScriptUpdate;
 export function parseAndAnalyzeScript(
     script: flatsql.FlatSQLScript,
     external: flatsql.FlatSQLScript | null,
-    textOffset: number | null = null,
 ): FlatSQLProcessedScript {
     // Scan the script
     const scanned = script.scan();
@@ -51,12 +51,8 @@ export function parseAndAnalyzeScript(
     const parsed = script.parse();
     // Parse the script
     const analyzed = script.analyze(external);
-    // Create the cursor
-    let cursor = null;
-    if (textOffset != null) {
-        cursor = script.readCursor(textOffset);
-    }
-    return { scanned, parsed, analyzed, cursor, destroy: destroyBuffers };
+
+    return { scanned, parsed, analyzed, destroy: destroyBuffers };
 }
 
 /// Analyze an existing script
@@ -64,27 +60,13 @@ export function analyzeScript(
     buffers: FlatSQLProcessedScript,
     script: flatsql.FlatSQLScript,
     external: flatsql.FlatSQLScript | null,
-    textOffset: number | null = null,
 ): FlatSQLProcessedScript {
-    // Delete the old main analysis
-    const prevAnalyzed = buffers.analyzed;
-    const prevCursor = buffers.cursor;
+    // Delete the old analysis
+    buffers.analyzed?.delete();
     // Analyze the script
     const analyzed = script.analyze(external);
-    // Update the cursor
-    let cursor = null;
-    if (textOffset) {
-        cursor = script.readCursor(textOffset);
-    } else if (buffers.cursor) {
-        let prev = buffers.cursor.read(new flatsql.proto.ScriptCursorInfo());
-        const offset = prev.textOffset();
-        cursor = script.readCursor(offset);
-    }
-    // Delete the previous analyzed script & the cursor (if any)
-    prevAnalyzed?.delete();
-    prevCursor?.delete();
     // Return the new script
-    return { ...buffers, analyzed, cursor };
+    return { ...buffers, analyzed };
 }
 
 /// Destory the buffers
@@ -100,10 +82,6 @@ const destroyBuffers = (state: FlatSQLProcessedScript) => {
     if (state.analyzed != null) {
         state.analyzed.delete();
         state.analyzed = null;
-    }
-    if (state.cursor != null) {
-        state.cursor.delete();
-        state.cursor = null;
     }
     return state;
 };
@@ -123,9 +101,9 @@ export const FlatSQLProcessor: StateField<FlatSQLEditorState> = StateField.defin
                 scanned: null,
                 parsed: null,
                 analyzed: null,
-                cursor: null,
                 destroy: destroyBuffers,
             },
+            cursor: null,
             onUpdateScript: () => {},
             onUpdateScriptCursor: () => {},
         };
@@ -177,20 +155,20 @@ export const FlatSQLProcessor: StateField<FlatSQLEditorState> = StateField.defin
                 );
                 // Analyze the new script
                 const next = { ...state };
-                next.processed = parseAndAnalyzeScript(next.script!, next.external, cursor);
-                next.onUpdateScript(next.scriptKey, next.processed);
+                next.processed = parseAndAnalyzeScript(next.script!, next.external);
+                const cursorBuffer = next.script!.readCursor(cursor ?? 0);
+                next.cursor = cursorBuffer.read(new flatsql.proto.ScriptCursorInfo()).unpack();
+                cursorBuffer.delete();
+                next.onUpdateScript(next.scriptKey, next.processed, next.cursor);
                 return next;
             }
             if (cursorChanged) {
                 // Update the script cursor
                 const next = { ...state };
-                const prevCursor = next.processed.cursor;
-                if (prevCursor != null) {
-                    prevCursor.delete();
-                    next.processed.cursor = null;
-                }
-                next.processed.cursor = state.script.readCursor(cursor);
-                next.onUpdateScriptCursor(next.scriptKey, next.processed.cursor);
+                const cursorBuffer = state.script!.readCursor(cursor ?? 0);
+                next.cursor = cursorBuffer.read(new flatsql.proto.ScriptCursorInfo()).unpack();
+                cursorBuffer.delete();
+                next.onUpdateScriptCursor(next.scriptKey, next.cursor);
                 return next;
             }
         }

@@ -81,14 +81,11 @@ function buildDecorationsFromCursor(
     scannedBuffer: flatsql.FlatBufferRef<flatsql.proto.ScannedScript>,
     parsedBuffer: flatsql.FlatBufferRef<flatsql.proto.ParsedScript>,
     analyzedBuffer: flatsql.FlatBufferRef<flatsql.proto.AnalyzedScript>,
-    cursorBuffer: flatsql.FlatBufferRef<flatsql.proto.ScriptCursorInfo>,
+    cursor: flatsql.proto.ScriptCursorInfoT,
 ): DecorationSet {
     const builder = new RangeSetBuilder<Decoration>();
-    const tmpParsed = new flatsql.proto.ParsedScript();
-    const tmpCursor = new flatsql.proto.ScriptCursorInfo();
-    const parsed = parsedBuffer.read(tmpParsed);
-    const cursor = cursorBuffer.read(tmpCursor);
-    const astNodeId = cursor.astNodeId();
+    const parsed = parsedBuffer.read(new flatsql.proto.ParsedScript());
+    const astNodeId = cursor.astNodeId;
 
     if (astNodeId < parsed.nodesLength()) {
         const node = parsed.nodes(astNodeId)!;
@@ -108,7 +105,7 @@ interface CursorDecorationState {
     scanned: flatsql.FlatBufferRef<flatsql.proto.ScannedScript> | null;
     parsed: flatsql.FlatBufferRef<flatsql.proto.ParsedScript> | null;
     analyzed: flatsql.FlatBufferRef<flatsql.proto.AnalyzedScript> | null;
-    cursor: flatsql.FlatBufferRef<flatsql.proto.ScriptCursorInfo> | null;
+    cursor: flatsql.proto.ScriptCursorInfoT | null;
 }
 
 /// Decorations derived from FlatSQL cursor
@@ -132,7 +129,7 @@ const CursorDecorationField: StateField<CursorDecorationState> = StateField.defi
             processor.processed.scanned === state.scanned &&
             processor.processed.parsed === state.parsed &&
             processor.processed.analyzed === state.analyzed &&
-            processor.processed.cursor === state.cursor
+            processor.cursor === state.cursor
         ) {
             return state;
         }
@@ -141,7 +138,7 @@ const CursorDecorationField: StateField<CursorDecorationState> = StateField.defi
         s.scanned = processor.processed.scanned;
         s.parsed = processor.processed.parsed;
         s.analyzed = processor.processed.analyzed;
-        s.cursor = processor.processed.cursor;
+        s.cursor = processor.cursor;
         if (s.scanned && s.parsed && s.analyzed && s.cursor) {
             s.decorations = buildDecorationsFromCursor(s.scanned, s.parsed, s.analyzed, s.cursor);
         }

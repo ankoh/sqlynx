@@ -36,7 +36,7 @@ export interface AppState {
     /// The graph view model
     graphViewModel: SchemaGraphViewModel;
     /// The focus info
-    focus: FocusInfo;
+    graphFocus: GraphFocus;
 }
 
 /// The script data
@@ -53,6 +53,10 @@ export interface ScriptData {
     processed: FlatSQLProcessedScript;
     /// The statistics
     statistics: Immutable.List<flatsql.FlatBufferRef<flatsql.proto.ScriptStatistics>>;
+    /// The cursor
+    cursor: flatsql.proto.ScriptCursorInfoT | null;
+    /// The script focus
+    focus: ScriptFocus;
 }
 
 export interface GraphNodeDescriptor {
@@ -64,20 +68,19 @@ export interface GraphNodeDescriptor {
 
 export type ConnectionId = bigint;
 
-export interface FocusInfo {
+export interface GraphFocus {
     /// The layout indices in the schema graph as (nodeId -> port bits) map
-    graphNodes: Map<number, number> | null;
+    graphNodes: Map<number, number>;
     /// The connection ids of focused edges
-    graphConnections: Set<ConnectionId> | null;
-    /// The focused table ids
-    tables: Set<number> | null;
+    graphConnections: Set<ConnectionId>;
+}
+
+export interface ScriptFocus {
+    /// The connection ids of focused edges
+    graphConnections: Set<ConnectionId>;
     /// The focused table columns as (tableId -> columnId[]) map.
     /// Only set if specific table columns are referenced.
-    tableColumns: Map<number, number[]> | null;
-    /// The focused table reference ids
-    tableReferences: Set<number> | null;
-    /// The focused column reference ids
-    columnReferences: Set<number> | null;
+    tableColumns: Map<number, number[]>;
 }
 
 /// Destroy a state
@@ -114,10 +117,14 @@ export function createDefaultScript(key: ScriptKey) {
             scanned: null,
             parsed: null,
             analyzed: null,
-            cursor: null,
             destroy: () => {},
         },
         statistics: Immutable.List(),
+        cursor: null,
+        focus: {
+            graphConnections: new Set(),
+            tableColumns: new Map(),
+        },
     };
     return script;
 }
@@ -137,8 +144,12 @@ export function createEmptyScript(key: ScriptKey, api: flatsql.FlatSQL) {
             scanned: null,
             parsed: null,
             analyzed: null,
-            cursor: null,
             destroy: () => {},
+        },
+        cursor: null,
+        focus: {
+            graphConnections: new Set(),
+            tableColumns: new Map(),
         },
         statistics: Immutable.List(),
     };
@@ -177,13 +188,9 @@ export function createDefaultState(): AppState {
             edges: new Map(),
             debugInfo: null,
         },
-        focus: {
-            graphNodes: null,
-            graphConnections: null,
-            tables: null,
-            tableColumns: null,
-            tableReferences: null,
-            columnReferences: null,
+        graphFocus: {
+            graphNodes: new Map(),
+            graphConnections: new Set(),
         },
     };
 }
