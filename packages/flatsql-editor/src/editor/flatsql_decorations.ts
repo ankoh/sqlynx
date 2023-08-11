@@ -64,12 +64,12 @@ const ScannerDecorationField: StateField<ScannerDecorationState> = StateField.de
     update: (state: ScannerDecorationState, transaction: Transaction) => {
         // Scanned program untouched?
         const processor = transaction.state.field(FlatSQLProcessor);
-        if (processor.processed.scanned === state.scanned) {
+        if (processor.scriptBuffers.scanned === state.scanned) {
             return state;
         }
         // Rebuild decorations
         const s = { ...state };
-        s.scanned = processor.processed.scanned;
+        s.scanned = processor.scriptBuffers.scanned;
         if (s.scanned) {
             s.decorations = buildDecorationsFromTokens(s.scanned);
         }
@@ -126,18 +126,18 @@ const CursorDecorationField: StateField<CursorDecorationState> = StateField.defi
         // Scanned program untouched?
         const processor = transaction.state.field(FlatSQLProcessor);
         if (
-            processor.processed.scanned === state.scanned &&
-            processor.processed.parsed === state.parsed &&
-            processor.processed.analyzed === state.analyzed &&
+            processor.scriptBuffers.scanned === state.scanned &&
+            processor.scriptBuffers.parsed === state.parsed &&
+            processor.scriptBuffers.analyzed === state.analyzed &&
             processor.cursor === state.cursor
         ) {
             return state;
         }
         // Rebuild decorations
         const s = { ...state };
-        s.scanned = processor.processed.scanned;
-        s.parsed = processor.processed.parsed;
-        s.analyzed = processor.processed.analyzed;
+        s.scanned = processor.scriptBuffers.scanned;
+        s.parsed = processor.scriptBuffers.parsed;
+        s.analyzed = processor.scriptBuffers.analyzed;
         s.cursor = processor.cursor;
         if (s.scanned && s.parsed && s.analyzed && s.cursor) {
             s.decorations = buildDecorationsFromCursor(s.scanned, s.parsed, s.analyzed, s.cursor);
