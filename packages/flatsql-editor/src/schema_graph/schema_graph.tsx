@@ -72,7 +72,7 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
                 height={props.height}
                 nodes={state.graphViewModel.nodes}
                 edges={state.graphViewModel.edges}
-                focus={state.focus}
+                focus={state.graphFocus}
                 onFocusChanged={onNodeFocusChanged}
             />
             <EdgeHighlightingLayer
@@ -80,7 +80,7 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
                 boardWidth={props.width}
                 boardHeight={props.height}
                 edges={state.graphViewModel.edges}
-                focus={state.focus}
+                focus={state.graphFocus}
             />
             {state.graphViewModel.debugInfo && (
                 <DebugLayer

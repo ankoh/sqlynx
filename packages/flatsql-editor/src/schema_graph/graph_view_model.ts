@@ -12,6 +12,7 @@ export interface SchemaGraphViewModel {
 
 export interface NodeViewModel {
     nodeId: number;
+    tableId: number;
     name: string;
     x: number;
     y: number;
@@ -29,8 +30,10 @@ export interface EdgeViewModel {
     edgeId: number;
     fromNode: number;
     fromPort: number;
+    fromTable: number;
     toNode: number;
     toPort: number;
+    toTable: number;
     type: EdgeType;
     path: string;
 }
@@ -104,6 +107,7 @@ export function computeSchemaGraphViewModel(state: AppState): SchemaGraphViewMod
             }
             nodes.push({
                 nodeId: i,
+                tableId,
                 name: tableName.table ?? '',
                 x: position.x(),
                 y: position.y(),
@@ -128,6 +132,7 @@ export function computeSchemaGraphViewModel(state: AppState): SchemaGraphViewMod
             }
             nodes.push({
                 nodeId: i,
+                tableId,
                 name: tableName.table ?? '',
                 x: position.x(),
                 y: position.y(),
@@ -194,8 +199,10 @@ export function computeSchemaGraphViewModel(state: AppState): SchemaGraphViewMod
                     edgeId: i,
                     fromNode: li,
                     fromPort,
+                    fromTable: ln.tableId,
                     toNode: ri,
                     toPort,
+                    toTable: rn.tableId,
                     type: edgeType,
                     path: edgePath,
                 });
