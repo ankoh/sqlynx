@@ -4,7 +4,7 @@ import Immutable from 'immutable';
 import { generateBlankScript } from './script_loader/script_metadata';
 import { LoadingStatus } from './script_loader/script_loader';
 
-import { FlatSQLProcessedScript } from './editor/flatsql_processor';
+import { FlatSQLScriptBuffers } from './editor/flatsql_processor';
 import { ScriptMetadata } from './script_loader/script_metadata';
 import { LoadingInfo } from './script_loader/script_loader';
 import { SchemaGraphViewModel } from './schema_graph/graph_view_model';
@@ -50,7 +50,7 @@ export interface ScriptData {
     /// The loading info
     loading: LoadingInfo;
     /// The processed scripts
-    processed: FlatSQLProcessedScript;
+    processed: FlatSQLScriptBuffers;
     /// The statistics
     statistics: Immutable.List<flatsql.FlatBufferRef<flatsql.proto.ScriptStatistics>>;
     /// The cursor

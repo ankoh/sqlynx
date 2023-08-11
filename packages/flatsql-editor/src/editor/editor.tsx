@@ -7,7 +7,7 @@ import { ChangeSpec, StateEffect } from '@codemirror/state';
 
 import { CodeMirror } from './codemirror';
 import { FlatSQLExtensions } from './flatsql_extension';
-import { FlatSQLProcessedScript, FlatSQLScriptKey, UpdateFlatSQLScript } from './flatsql_processor';
+import { FlatSQLScriptBuffers, FlatSQLScriptKey, UpdateFlatSQLScript } from './flatsql_processor';
 import { useAppState, useAppStateDispatch, UPDATE_SCRIPT_ANALYSIS, UPDATE_SCRIPT_CURSOR } from '../app_state_reducer';
 import { ScriptKey } from '../app_state';
 import { ScriptStatisticsBar } from './script_statistics_bar';
@@ -78,7 +78,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
 
     // Helper to update a script
     const updateScript = React.useCallback(
-        (scriptKey: FlatSQLScriptKey, buffers: FlatSQLProcessedScript, cursor: flatsql.proto.ScriptCursorInfoT) => {
+        (scriptKey: FlatSQLScriptKey, buffers: FlatSQLScriptBuffers, cursor: flatsql.proto.ScriptCursorInfoT) => {
             ctxDispatch({
                 type: UPDATE_SCRIPT_ANALYSIS,
                 value: [scriptKey, buffers, cursor],
@@ -135,7 +135,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                     scriptKey: mainKey,
                     script: mainData.script,
                     external: externalScript,
-                    processed: mainData.processed,
+                    scriptBuffers: mainData.processed,
                     cursor: mainData.cursor,
                     onUpdateScript: updateScript,
                     onUpdateScriptCursor: updateScriptCursor,
@@ -150,7 +150,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                     scriptKey: mainKey,
                     script: mainData.script,
                     external: externalScript,
-                    processed: mainData.processed,
+                    scriptBuffers: mainData.processed,
                     cursor: mainData.cursor,
                     onUpdateScript: updateScript,
                     onUpdateScriptCursor: updateScriptCursor,
