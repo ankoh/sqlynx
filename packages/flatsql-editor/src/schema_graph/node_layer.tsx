@@ -4,7 +4,7 @@ import cn from 'classnames';
 import { Action } from '../utils/action';
 import { NodeViewModel, EdgeViewModel } from './graph_view_model';
 import { NodePort } from './graph_edges';
-import { ConnectionId, GraphFocus, GraphNodeDescriptor, unpackConnectionId } from '../app_state';
+import { ConnectionId, FocusInfo, GraphNodeDescriptor } from '../app_state';
 
 import iconTable from '../../static/svg/icons/table.svg';
 import iconTableView from '../../static/svg/icons/table_border.svg';
@@ -17,7 +17,7 @@ interface Props {
     height: number;
     nodes: NodeViewModel[];
     edges: Map<ConnectionId, EdgeViewModel>;
-    focus: GraphFocus | null;
+    focus: FocusInfo | null;
     onFocusChanged: (target: GraphNodeDescriptor | null) => void;
 }
 

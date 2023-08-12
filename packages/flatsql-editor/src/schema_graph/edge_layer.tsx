@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Action } from '../utils/action';
 import { EdgeViewModel } from './graph_view_model';
-import { ConnectionId, GraphFocus, buildConnectionId } from '../app_state';
+import { ConnectionId, FocusInfo, buildConnectionId } from '../app_state';
 
 interface Props {
     className?: string;
@@ -130,7 +130,7 @@ interface HighlightingProps {
     boardWidth: number;
     boardHeight: number;
     edges: Map<ConnectionId, EdgeViewModel>;
-    focus: GraphFocus | null;
+    focus: FocusInfo | null;
 }
 
 export function EdgeHighlightingLayer(props: HighlightingProps) {

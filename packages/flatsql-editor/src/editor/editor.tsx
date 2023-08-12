@@ -61,6 +61,7 @@ interface ActiveScriptState {
 export const ScriptEditor: React.FC<Props> = (props: Props) => {
     const ctx = useAppState();
     const ctxDispatch = useAppStateDispatch();
+
     const [activeTab, setActiveTab] = React.useState<TabId>(TabId.MAIN_SCRIPT);
     const [folderOpen, setFolderOpen] = React.useState<boolean>(false);
     const [statsOpen, setStatsOpen] = React.useState<boolean>(true);
