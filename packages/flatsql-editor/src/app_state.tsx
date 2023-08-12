@@ -35,8 +35,8 @@ export interface AppState {
     graphDebugInfo: flatsql.FlatBufferRef<flatsql.proto.SchemaGraphDebugInfo> | null;
     /// The graph view model
     graphViewModel: SchemaGraphViewModel;
-    /// The focus info
-    graphFocus: GraphFocus;
+    /// The user focus
+    focus: FocusInfo | null;
 }
 
 /// The script data
@@ -55,8 +55,6 @@ export interface ScriptData {
     statistics: Immutable.List<flatsql.FlatBufferRef<flatsql.proto.ScriptStatistics>>;
     /// The cursor
     cursor: flatsql.proto.ScriptCursorInfoT | null;
-    /// The script focus
-    focus: ScriptFocus;
 }
 
 export interface GraphNodeDescriptor {
@@ -68,14 +66,16 @@ export interface GraphNodeDescriptor {
 
 export type ConnectionId = bigint;
 
-export interface GraphFocus {
-    /// The layout indices in the schema graph as (nodeId -> port bits) map
-    graphNodes: Map<number, number>;
-    /// The connection ids of focused edges
-    graphConnections: Set<ConnectionId>;
+export enum FocusTarget {
+    Graph,
+    Script,
 }
 
-export interface ScriptFocus {
+export interface FocusInfo {
+    /// The focused script key (if any)
+    target: FocusTarget;
+    /// The layout indices in the schema graph as (nodeId -> port bits) map
+    graphNodes: Map<number, number>;
     /// The connection ids of focused edges
     graphConnections: Set<ConnectionId>;
     /// The focused table columns as (tableId -> columnId[]) map.
@@ -121,10 +121,6 @@ export function createDefaultScript(key: ScriptKey) {
         },
         statistics: Immutable.List(),
         cursor: null,
-        focus: {
-            graphConnections: new Set(),
-            tableColumns: new Map(),
-        },
     };
     return script;
 }
@@ -146,12 +142,8 @@ export function createEmptyScript(key: ScriptKey, api: flatsql.FlatSQL) {
             analyzed: null,
             destroy: () => {},
         },
-        cursor: null,
-        focus: {
-            graphConnections: new Set(),
-            tableColumns: new Map(),
-        },
         statistics: Immutable.List(),
+        cursor: null,
     };
     return script;
 }
@@ -188,10 +180,7 @@ export function createDefaultState(): AppState {
             edges: new Map(),
             debugInfo: null,
         },
-        graphFocus: {
-            graphNodes: new Map(),
-            graphConnections: new Set(),
-        },
+        focus: null,
     };
 }
 

@@ -3,7 +3,6 @@ import { NodeLayer } from './node_layer';
 import { EdgeHighlightingLayer, EdgeLayer } from './edge_layer';
 import { DebugLayer } from './debug_layer';
 import { BackgroundLayer } from './background_layer';
-import { computeSchemaGraphViewModel } from './graph_view_model';
 import {
     RESIZE_SCHEMA_GRAPH,
     useAppStateDispatch,
@@ -11,7 +10,7 @@ import {
     FOCUS_GRAPH_NODE,
     FOCUS_GRAPH_EDGE,
 } from '../app_state_reducer';
-import { ScriptKey, GraphNodeDescriptor } from '../app_state';
+import { GraphNodeDescriptor } from '../app_state';
 import cn from 'classnames';
 
 import styles from './schema_graph.module.css';
@@ -44,7 +43,6 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
         },
         [dispatch],
     );
-
     // Helper to change edge focus
     const onEdgeFocusChanged = React.useCallback(
         (connection: bigint | null) => {
@@ -72,7 +70,7 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
                 height={props.height}
                 nodes={state.graphViewModel.nodes}
                 edges={state.graphViewModel.edges}
-                focus={state.graphFocus}
+                focus={state.focus}
                 onFocusChanged={onNodeFocusChanged}
             />
             <EdgeHighlightingLayer
@@ -80,7 +78,7 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
                 boardWidth={props.width}
                 boardHeight={props.height}
                 edges={state.graphViewModel.edges}
-                focus={state.graphFocus}
+                focus={state.focus}
             />
             {state.graphViewModel.debugInfo && (
                 <DebugLayer

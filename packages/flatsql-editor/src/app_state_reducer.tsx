@@ -6,8 +6,9 @@ import { FlatSQLScriptBuffers, analyzeScript, parseAndAnalyzeScript } from './ed
 import {
     AppState,
     ConnectionId,
+    FocusInfo,
+    FocusTarget,
     GraphNodeDescriptor,
-    ScriptFocus,
     ScriptKey,
     buildConnectionId,
     createDefaultState,
@@ -85,9 +86,9 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
         case UPDATE_SCRIPT_ANALYSIS: {
             // Destroy the previous buffers
             const [scriptKey, data, cursor] = action.value;
+            // Store the new buffers
             let scriptData = state.scripts[scriptKey];
             scriptData.processed.destroy(scriptData.processed);
-            // Store the new buffers
             const newState: AppState = {
                 ...state,
                 scripts: {
@@ -97,9 +98,9 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                         processed: data,
                         statistics: rotateStatistics(scriptData.statistics, scriptData.script?.getStatistics() ?? null),
                         cursor,
-                        focus: deriveScriptFocusFromCursor(data, cursor),
                     },
                 },
+                focus: deriveScriptFocusFromCursor(data, cursor),
             };
             // Is schema script?
             // Then we also have to update the main script since the schema graph depends on it.
@@ -117,8 +118,8 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
         case UPDATE_SCRIPT_CURSOR: {
             // Destroy previous cursor
             const [scriptKey, data] = action.value;
-            let scriptData = state.scripts[scriptKey];
             // Store new script buffer
+            let scriptData = state.scripts[scriptKey];
             const newState: AppState = {
                 ...state,
                 scripts: {
@@ -126,9 +127,9 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                     [scriptKey]: {
                         ...scriptData,
                         cursor: data,
-                        focus: deriveScriptFocusFromCursor(scriptData.processed, data),
                     },
                 },
+                focus: deriveScriptFocusFromCursor(scriptData.processed, data),
             };
             return newState;
         }
@@ -279,10 +280,6 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                         destroy: () => {},
                     },
                     cursor: null,
-                    focus: {
-                        graphConnections: new Set(),
-                        tableColumns: new Map(),
-                    },
                     statistics: Immutable.List(),
                 };
             }
@@ -292,21 +289,18 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
             // Unset focused node?
             if (action.value === null) {
                 // State already has cleared focus?
-                if (state.graphFocus.graphNodes === null && state.graphFocus.graphConnections === null) {
+                if (state.focus === null) {
                     return state;
                 }
                 // Otherwise clear the focus state
                 return {
                     ...state,
-                    graphFocus: {
-                        graphNodes: new Map(),
-                        graphConnections: new Set(),
-                    },
+                    focus: null,
                 };
             }
             // Focus a node, does the set of currently focused nodes only contain the newly focused node?
-            if (state.graphFocus.graphNodes?.size == 1) {
-                const port = state.graphFocus.graphNodes.get(action.value.nodeId);
+            if (state.focus?.graphNodes.size == 1) {
+                const port = state.focus.graphNodes.get(action.value.nodeId);
                 if (port === action.value.port) {
                     // Leave the state as-is
                     return state;
@@ -339,9 +333,11 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
             }
             return {
                 ...state,
-                graphFocus: {
+                focus: {
+                    target: FocusTarget.Graph,
                     graphNodes: nodes,
                     graphConnections: connections,
+                    tableColumns: new Map(),
                 },
             };
         }
@@ -349,30 +345,29 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
             // Unset focused edge?
             if (action.value === null) {
                 // State already has cleared focus?
-                if (state.graphFocus.graphNodes === null && state.graphFocus.graphConnections === null) {
+                if (state.focus === null) {
                     return state;
                 }
                 // Otherwise clear the focus state
                 return {
                     ...state,
-                    graphFocus: {
-                        graphNodes: new Map(),
-                        graphConnections: new Set(),
-                    },
+                    focus: null,
                 };
             }
             // Does the set of focused edges only contain the newly focused edge?
-            if (state.graphFocus.graphConnections?.size == 1) {
-                if (state.graphFocus.graphConnections.has(action.value)) {
+            if (state.focus?.graphConnections?.size == 1) {
+                if (state.focus.graphConnections.has(action.value)) {
                     return state;
                 }
             }
             // Mark edge as focused
             return {
                 ...state,
-                graphFocus: {
+                focus: {
+                    target: FocusTarget.Graph,
                     graphNodes: new Map(),
                     graphConnections: new Set([action.value]),
+                    tableColumns: new Map(),
                 },
             };
         }
@@ -396,8 +391,10 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
 function deriveScriptFocusFromCursor(
     processed: FlatSQLScriptBuffers,
     cursor: flatsql.proto.ScriptCursorInfoT,
-): ScriptFocus {
-    const focus: ScriptFocus = {
+): FocusInfo {
+    const focus: FocusInfo = {
+        target: FocusTarget.Script,
+        graphNodes: new Map(),
         graphConnections: new Set(),
         tableColumns: new Map(),
     };
@@ -431,18 +428,23 @@ function deriveScriptFocusFromCursor(
     // Focus a query graph edge?
     const edgeId = cursor.queryEdgeId;
     if (!flatsql.FlatID.isNull(edgeId)) {
-        const edge = analyzed.graphEdges(edgeId)!;
-        const begin = edge.nodesBegin();
-        const countLeft = edge.nodeCountLeft();
-        const countRight = edge.nodeCountRight();
-        for (let i = 0; i < countLeft; ++i) {
-            const li = begin + i;
-            for (let j = 0; j < countRight; ++j) {
-                const ri = begin + countLeft + j;
-                const connId = buildConnectionId(li, ri);
-                focus.graphConnections.add(connId);
-            }
-        }
+        //        const edge = analyzed.graphEdges(edgeId)!;
+        //        const begin = edge.nodesBegin();
+        //        const countLeft = edge.nodeCountLeft();
+        //        const countRight = edge.nodeCountRight();
+        //        for (let i = 0; i < countLeft; ++i) {
+        //            const ln = analyzed.graphEdgeNodes(begin + i)!;
+        //            const lc = analyzed.columnReferences(ln.columnReferenceId())!;
+        //            for (let j = 0; j < countRight; ++j) {
+        //                const rn = analyzed.graphEdgeNodes(begin + countLeft + j)!;
+        //                const rc = analyzed.columnReferences(rn.columnReferenceId())!;
+        //                console.log(
+        //                    `${ln.columnReferenceId()} ${rn.columnReferenceId()} conn(${lc.tableId()}, ${rc.tableId()})`,
+        //                );
+        //                const connId = buildConnectionId(lc.tableId(), rc.tableId());
+        //                focus.graphConnections.add(connId);
+        //            }
+        //        }
     }
     return focus;
 }
