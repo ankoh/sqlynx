@@ -22,6 +22,9 @@ std::pair<std::shared_ptr<AnalyzedScript>, proto::StatusCode> Analyzer::Analyze(
     if (parsed == nullptr) {
         return {nullptr, proto::StatusCode::ANALYZER_INPUT_INVALID};
     }
+    if (external != nullptr) {
+        assert(parsed->script_id != external->script_id);
+    }
 
     // Run analysis passes
     Analyzer az{parsed, external};

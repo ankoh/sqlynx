@@ -87,7 +87,7 @@ limit
     )SQL";
 
 TEST(SchemaGraphTest, TPCHQ2NoSchema) {
-    Script query_script;
+    Script query_script{1};
     query_script.InsertTextAt(0, TPCH_Q2);
     ASSERT_EQ(query_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(query_script.Parse().second, proto::StatusCode::OK);
@@ -108,13 +108,13 @@ TEST(SchemaGraphTest, TPCHQ2NoSchema) {
 }
 
 TEST(SchemaGraphTest, TPCHQ2) {
-    Script schema_script;
+    Script schema_script{1};
     schema_script.InsertTextAt(0, TPCH_SCHEMA);
     ASSERT_EQ(schema_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(schema_script.Parse().second, proto::StatusCode::OK);
     ASSERT_EQ(schema_script.Analyze().second, proto::StatusCode::OK);
 
-    Script query_script;
+    Script query_script{2};
     query_script.InsertTextAt(0, TPCH_Q2);
     ASSERT_EQ(query_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(query_script.Parse().second, proto::StatusCode::OK);
@@ -147,13 +147,13 @@ TEST(SchemaGraphTest, TPCHQ2) {
 }
 
 TEST(SchemaGraphTest, TPCHQ2ReanalyzeWithError) {
-    Script schema_script;
+    Script schema_script{1};
     schema_script.InsertTextAt(0, TPCH_SCHEMA);
     ASSERT_EQ(schema_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(schema_script.Parse().second, proto::StatusCode::OK);
     ASSERT_EQ(schema_script.Analyze().second, proto::StatusCode::OK);
 
-    Script query_script;
+    Script query_script{2};
     query_script.InsertTextAt(0, TPCH_Q2);
     ASSERT_EQ(query_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(query_script.Parse().second, proto::StatusCode::OK);

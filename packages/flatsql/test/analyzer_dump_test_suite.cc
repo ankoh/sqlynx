@@ -21,7 +21,7 @@ TEST_P(AnalyzerDumpTestSuite, Test) {
     rope::Rope input_main{1024, test->input_main};
 
     // Analyze schema
-    auto external_scan = parser::Scanner::Scan(input_external);
+    auto external_scan = parser::Scanner::Scan(input_external, 1);
     ASSERT_EQ(external_scan.second, proto::StatusCode::OK);
     auto external_parsed = parser::ParseContext::Parse(external_scan.first);
     ASSERT_EQ(external_parsed.second, proto::StatusCode::OK);
@@ -29,7 +29,7 @@ TEST_P(AnalyzerDumpTestSuite, Test) {
     ASSERT_EQ(external_analyzed.second, proto::StatusCode::OK);
 
     // Analyze script
-    auto main_scan = parser::Scanner::Scan(input_main);
+    auto main_scan = parser::Scanner::Scan(input_main, 2);
     ASSERT_EQ(main_scan.second, proto::StatusCode::OK);
     auto main_parsed = parser::ParseContext::Parse(main_scan.first);
     ASSERT_EQ(main_parsed.second, proto::StatusCode::OK);

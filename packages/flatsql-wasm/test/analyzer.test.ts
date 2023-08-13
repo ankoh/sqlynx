@@ -19,7 +19,7 @@ beforeAll(async () => {
 
 describe('FlatSQL Analyzer', () => {
     it(`external ref`, () => {
-        const ext_script = fsql!.createScript();
+        const ext_script = fsql!.createScript(1);
         ext_script.insertTextAt(0, 'create table foo(a int);');
 
         const ext_scanner_res = ext_script.scan();
@@ -33,7 +33,7 @@ describe('FlatSQL Analyzer', () => {
         expect(ext_parser.nodesLength()).toBeGreaterThan(0);
         expect(ext_analyzer.tablesLength()).toEqual(1);
 
-        const main_script = fsql!.createScript();
+        const main_script = fsql!.createScript(2);
         main_script.insertTextAt(0, 'select * from foo');
 
         const main_scanner_res = main_script.scan();
@@ -49,9 +49,9 @@ describe('FlatSQL Analyzer', () => {
 
         const table_ref = main_analyzer.tableReferences(0);
         const table_id = table_ref?.tableId()!;
-        expect(flatsql.FlatID.isExternal(table_id)).toEqual(true);
         expect(flatsql.FlatID.isNull(table_id)).not.toEqual(true);
-        expect(flatsql.FlatID.maskIndex(table_id)).toEqual(0);
+        expect(flatsql.FlatID.getScriptId(table_id)).toEqual(1);
+        expect(flatsql.FlatID.getIndex(table_id)).toEqual(0);
 
         ext_scanner_res.delete();
         ext_parser_res.delete();

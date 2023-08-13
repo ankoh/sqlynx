@@ -2,14 +2,14 @@ import * as React from 'react';
 
 import { Action } from '../utils/action';
 import { EdgeViewModel } from './graph_view_model';
-import { ConnectionId, FocusInfo, buildConnectionId } from '../app_state';
+import { GraphConnectionId, FocusInfo, buildGraphConnectionId } from '../app_state';
 
 interface Props {
     className?: string;
     boardWidth: number;
     boardHeight: number;
-    edges: Map<ConnectionId, EdgeViewModel>;
-    onFocusChanged: (connection: ConnectionId | null) => void;
+    edges: Map<GraphConnectionId, EdgeViewModel>;
+    onFocusChanged: (connection: GraphConnectionId | null) => void;
 }
 
 enum FocusEvent {
@@ -19,7 +19,7 @@ enum FocusEvent {
 
 interface FocusState {
     event: FocusEvent | null;
-    target: ConnectionId | null;
+    target: GraphConnectionId | null;
 }
 
 const MOUSE_ENTER = Symbol('MOUSE_ENTER');
@@ -27,9 +27,9 @@ const MOUSE_LEAVE = Symbol('MOUSE_LEAVE');
 const CLICK = Symbol('CLICK');
 
 type FocusAction =
-    | Action<typeof MOUSE_ENTER, ConnectionId>
-    | Action<typeof MOUSE_LEAVE, ConnectionId>
-    | Action<typeof CLICK, ConnectionId>;
+    | Action<typeof MOUSE_ENTER, GraphConnectionId>
+    | Action<typeof MOUSE_LEAVE, GraphConnectionId>
+    | Action<typeof CLICK, GraphConnectionId>;
 
 const reducer = (state: FocusState, action: FocusAction): FocusState => {
     switch (action.type) {
@@ -66,10 +66,9 @@ const reducer = (state: FocusState, action: FocusAction): FocusState => {
     }
 };
 
-function unpack(path: SVGPathElement): ConnectionId {
-    const from = path.getAttribute('data-from')!;
-    const to = path.getAttribute('data-to')!;
-    return buildConnectionId(+from, +to);
+function unpack(path: SVGPathElement): GraphConnectionId {
+    const from = path.getAttribute('data-edge')!;
+    return BigInt(from);
 }
 
 export function EdgeLayer(props: Props) {
@@ -101,16 +100,16 @@ export function EdgeLayer(props: Props) {
 
     const paths = [];
     for (const [conn, edge] of props.edges) {
+        const connId = conn.toString();
         paths.push(
             <path
-                key={conn.toString()}
+                key={connId}
                 d={edge.path}
                 strokeWidth="2px"
                 stroke="currentcolor"
                 fill="transparent"
                 pointerEvents="stroke"
-                data-from={edge.fromNode}
-                data-to={edge.toNode}
+                data-edge={connId}
                 onMouseEnter={onEnterEdge}
                 onMouseLeave={onLeaveEdge}
                 onClick={onClickEdge}
@@ -129,7 +128,7 @@ interface HighlightingProps {
     className?: string;
     boardWidth: number;
     boardHeight: number;
-    edges: Map<ConnectionId, EdgeViewModel>;
+    edges: Map<GraphConnectionId, EdgeViewModel>;
     focus: FocusInfo | null;
 }
 

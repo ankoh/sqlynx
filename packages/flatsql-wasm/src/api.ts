@@ -6,7 +6,7 @@ interface FlatSQLModuleExports {
     flatsql_malloc: (length: number) => number;
     flatsql_free: (ptr: number) => void;
     flatsql_result_delete: (ptr: number) => void;
-    flatsql_script_new: () => number;
+    flatsql_script_new: (id: number) => number;
     flatsql_script_delete: (ptr: number) => void;
     flatsql_script_insert_text_at: (ptr: number, offset: number, text: number, textLength: number) => void;
     flatsql_script_insert_char_at: (ptr: number, offset: number, unicode: number) => void;
@@ -67,7 +67,7 @@ export class FlatSQL {
             flatsql_malloc: parserExports['flatsql_malloc'] as (length: number) => number,
             flatsql_free: parserExports['flatsql_free'] as (ptr: number) => void,
             flatsql_result_delete: parserExports['flatsql_result_delete'] as (ptr: number) => void,
-            flatsql_script_new: parserExports['flatsql_script_new'] as () => number,
+            flatsql_script_new: parserExports['flatsql_script_new'] as (id: number) => number,
             flatsql_script_delete: parserExports['flatsql_script_delete'] as (ptr: number) => void,
             flatsql_script_insert_text_at: parserExports['flatsql_script_insert_text_at'] as (
                 ptr: number,
@@ -165,8 +165,8 @@ export class FlatSQL {
         return instanceRef.instance;
     }
 
-    public createScript(): FlatSQLScript {
-        const scriptPtr = this.instanceExports.flatsql_script_new();
+    public createScript(id: number = 1): FlatSQLScript {
+        const scriptPtr = this.instanceExports.flatsql_script_new(id);
         return new FlatSQLScript(this, scriptPtr);
     }
 
@@ -204,52 +204,52 @@ export class FlatSQL {
 }
 
 export class FlatID {
-    /// Mask index
-    public static maskIndex(value: number): number {
-        return value & ~(0b1 << 31);
-    }
     /// Is a null id?
-    public static isNull(value: number): boolean {
-        return value == 0xffffffff;
+    public static isNull(value: bigint): boolean {
+        return value == 0xffffffffn;
     }
-    /// Is an external id?
-    public static isExternal(value: number): boolean {
-        return value >> 31 != 0;
+    /// Get the script id
+    public static getScriptId(value: bigint): number {
+        return Number(value >> 32n);
+    }
+    /// Mask index
+    public static getIndex(value: bigint): number {
+        return Number(value & 0xffffffffn);
     }
     /// Read a name
     public static readName(
-        value: number,
-        script: proto.ParsedScript,
-        external: proto.ParsedScript | null = null,
+        value: bigint,
+        scripts: {
+            [context: number]: proto.ParsedScript | null;
+        },
     ): string | null {
         if (FlatID.isNull(value)) {
             return null;
         }
-        if (FlatID.isExternal(value)) {
-            return external?.nameDictionary(FlatID.maskIndex(value)) ?? null;
-        } else {
-            return script.nameDictionary(FlatID.maskIndex(value)) ?? null;
-        }
+        const key = FlatID.getScriptId(value);
+        return scripts[key]?.nameDictionary(FlatID.getIndex(value)) ?? null;
     }
     /// Read a table name
     public static readTableName(
         name: proto.QualifiedTableName,
-        script: proto.ParsedScript,
-        external: proto.ParsedScript | null = null,
+        scripts: {
+            [context: number]: proto.ParsedScript | null;
+        },
     ) {
-        const database = FlatID.readName(name.databaseName(), script, external);
-        const schema = FlatID.readName(name.schemaName(), script, external);
-        const table = FlatID.readName(name.tableName(), script, external);
+        const database = FlatID.readName(name.databaseName(), scripts);
+        const schema = FlatID.readName(name.schemaName(), scripts);
+        const table = FlatID.readName(name.tableName(), scripts);
         return { database, schema, table };
     }
     /// Read a table name
     public static readColumnName(
         name: proto.QualifiedColumnName,
-        script: proto.ParsedScript,
-        external: proto.ParsedScript | null = null,
+        scripts: {
+            [context: number]: proto.ParsedScript | null;
+        },
     ) {
-        const column = FlatID.readName(name.columnName(), script, external);
-        const alias = FlatID.readName(name.tableAlias(), script, external);
+        const column = FlatID.readName(name.columnName(), scripts);
+        const alias = FlatID.readName(name.tableAlias(), scripts);
         return { column, alias };
     }
 }

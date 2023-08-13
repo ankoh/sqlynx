@@ -206,26 +206,29 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
     };
     // Load internal tables
     for (uint32_t i = 0; i < script->tables.size(); ++i) {
-        Analyzer::ID id{i, false};
-        nodes.emplace_back(id.value, get_pos(config, angle, id.AsIndex()), config.table_width + config.table_margin,
+        Analyzer::ID id{script->script_id, i};
+        nodes.emplace_back(id, get_pos(config, angle, id.GetIndex()), config.table_width + config.table_margin,
                            config.table_height + config.table_margin);
     }
     // Add external tables
     if (script->external_script) {
         for (uint32_t i = 0; i < script->external_script->tables.size(); ++i) {
-            Analyzer::ID id{i, true};
-            nodes.emplace_back(id.value, get_pos(config, angle, script->tables.size() + id.AsIndex()),
+            Analyzer::ID id{script->external_script->script_id, i};
+            nodes.emplace_back(id, get_pos(config, angle, script->tables.size() + id.GetIndex()),
                                config.table_width + config.table_margin, config.table_height + config.table_margin);
         }
     }
+    // Helper to create a node id
+    auto create_node_id = [](Analyzer::ID id, AnalyzedScript& script) {
+        return id.GetIndex() + (id.GetScriptId() == script.script_id ? 0 : script.tables.size());
+    };
 
     // Add edge node ids
     edge_nodes.resize(script->graph_edge_nodes.size());
     for (size_t i = 0; i < script->graph_edge_nodes.size(); ++i) {
         proto::QueryGraphEdgeNode& node = script->graph_edge_nodes[i];
-        Analyzer::ID table_id = Analyzer::ID(script->column_references[node.column_reference_id()].table_id());
-        edge_nodes[i] =
-            table_id.IsNull() ? NULL_TABLE_ID : (table_id.AsIndex() + (table_id.IsExternal() ? s->tables.size() : 0));
+        Analyzer::ID table_id = Analyzer::ID(script->column_references[node.column_reference_id()].table_id(), Raw);
+        edge_nodes[i] = table_id.IsNull() ? NULL_TABLE_ID : create_node_id(table_id, *script);
     }
     // Add edges
     edges.resize(script->graph_edges.size());
@@ -242,16 +245,16 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
         // Emit nˆ2 adjacency pairs with patched node ids
         for (size_t l = 0; l < edge.node_count_left(); ++l) {
             size_t lcol = script->graph_edge_nodes[edge.nodes_begin() + l].column_reference_id();
-            Analyzer::ID ltid{script->column_references[lcol].table_id()};
+            Analyzer::ID ltid{script->column_references[lcol].table_id(), Raw};
             if (ltid.IsNull()) continue;
-            auto ln = ltid.AsIndex() + (ltid.IsExternal() ? s->tables.size() : 0);
+            auto ln = create_node_id(ltid, *s);
             // Emit pair for each right node
             for (size_t r = 0; r < edge.node_count_right(); ++r) {
                 size_t rcol =
                     script->graph_edge_nodes[edge.nodes_begin() + edge.node_count_left() + r].column_reference_id();
-                Analyzer::ID rtid{script->column_references[rcol].table_id()};
+                Analyzer::ID rtid{script->column_references[rcol].table_id(), Raw};
                 if (rtid.IsNull()) continue;
-                auto rn = rtid.AsIndex() + (rtid.IsExternal() ? s->tables.size() : 0);
+                auto rn = create_node_id(rtid, *s);
                 adjacency_pairs.emplace_back(ln, rn);
             }
         }

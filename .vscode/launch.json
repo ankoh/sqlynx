@@ -15,6 +15,14 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Cursor Tests",
+            "program": "${workspaceFolder}/packages/flatsql/build/native/o0/tester",
+            "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*ScannerTest*:*ParserTest*:*CursorTest*"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Parser Tests",
             "program": "${workspaceFolder}/packages/flatsql/build/native/o0/tester",
             "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*Parser*"],

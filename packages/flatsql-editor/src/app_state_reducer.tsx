@@ -5,12 +5,12 @@ import { useFlatSQL } from './flatsql_loader';
 import { FlatSQLScriptBuffers, analyzeScript, parseAndAnalyzeScript } from './editor/flatsql_processor';
 import {
     AppState,
-    ConnectionId,
+    GraphConnectionId,
     FocusInfo,
     FocusTarget,
     GraphNodeDescriptor,
     ScriptKey,
-    buildConnectionId,
+    buildGraphConnectionId,
     createDefaultState,
     createEmptyScript,
     destroyState,
@@ -20,7 +20,7 @@ import { RESULT_OK } from './utils/result';
 import { ScriptMetadata } from './script_loader/script_metadata';
 import { LoadingStatus } from './script_loader/script_loader';
 import { TPCH_SCHEMA, exampleScripts } from './script_loader/example_scripts';
-import { computeSchemaGraphViewModel } from './schema_graph/graph_view_model';
+import { SchemaGraphViewModel, computeSchemaGraphViewModel } from './schema_graph/graph_view_model';
 import Immutable from 'immutable';
 
 export const INITIALIZE = Symbol('INITIALIZE');
@@ -85,7 +85,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
         }
         case UPDATE_SCRIPT_ANALYSIS: {
             // Destroy the previous buffers
-            const [scriptKey, data, cursor] = action.value;
+            const [scriptKey, buffers, cursor] = action.value;
             // Store the new buffers
             let scriptData = state.scripts[scriptKey];
             scriptData.processed.destroy(scriptData.processed);
@@ -95,12 +95,12 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                     ...state.scripts,
                     [scriptKey]: {
                         ...scriptData,
-                        processed: data,
+                        processed: buffers,
                         statistics: rotateStatistics(scriptData.statistics, scriptData.script?.getStatistics() ?? null),
                         cursor,
                     },
                 },
-                focus: deriveScriptFocusFromCursor(data, cursor),
+                focus: deriveScriptFocusFromCursor(scriptKey, buffers, state.graphViewModel, cursor),
             };
             // Is schema script?
             // Then we also have to update the main script since the schema graph depends on it.
@@ -120,6 +120,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
             const [scriptKey, data] = action.value;
             // Store new script buffer
             let scriptData = state.scripts[scriptKey];
+            const scriptBuffers = scriptData.processed;
             const newState: AppState = {
                 ...state,
                 scripts: {
@@ -129,7 +130,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                         cursor: data,
                     },
                 },
-                focus: deriveScriptFocusFromCursor(scriptData.processed, data),
+                focus: deriveScriptFocusFromCursor(scriptKey, scriptBuffers, state.graphViewModel, data),
             };
             return newState;
         }
@@ -312,7 +313,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
             const port = action.value.port;
             nodes.set(nodeId, action.value.port ?? 0);
             // Determine the focused connections
-            const connections = new Set<ConnectionId>();
+            const connections = new Set<GraphConnectionId>();
             if (action.value.port === null) {
                 // If no port is focused, find all edges reaching that node
                 for (const [conn, edge] of state.graphViewModel.edges) {
@@ -389,7 +390,9 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
 
 /// Derive focus from script cursors
 function deriveScriptFocusFromCursor(
-    processed: FlatSQLScriptBuffers,
+    scriptKey: ScriptKey,
+    scriptBuffers: FlatSQLScriptBuffers,
+    graphViewModel: SchemaGraphViewModel,
     cursor: flatsql.proto.ScriptCursorInfoT,
 ): FocusInfo {
     const focus: FocusInfo = {
@@ -398,54 +401,56 @@ function deriveScriptFocusFromCursor(
         graphConnections: new Set(),
         tableColumns: new Map(),
     };
-    if (processed.analyzed == null || cursor == null) {
+    if (scriptBuffers.analyzed == null) {
         return focus;
     }
-    const analyzed = processed.analyzed.read(new flatsql.proto.AnalyzedScript());
+    const analyzed = scriptBuffers.analyzed.read(new flatsql.proto.AnalyzedScript());
 
-    // Focus a column reference?
-    const colRefId = cursor.columnReferenceId;
-    if (!flatsql.FlatID.isNull(colRefId)) {
-        const colRef = analyzed.columnReferences(colRefId)!;
-        const colId = colRef.columnId();
-        const tableId = colRef.tableId();
-        const columns = focus.tableColumns.get(tableId);
-        if (columns) {
-            columns.push(colId);
-        } else {
-            focus.tableColumns.set(tableId, [colId]);
-        }
-    }
-
-    // Focus a table reference?
-    const tableRefId = cursor.tableReferenceId;
-    if (!flatsql.FlatID.isNull(tableRefId)) {
-        const tableRef = analyzed.tableReferences(tableRefId)!;
-        const tableId = tableRef.tableId();
-        focus.tableColumns.set(tableId, []);
-    }
+    //     // Focus a column reference?
+    //     const colRefId = cursor.columnReferenceId;
+    //     if (!flatsql.FlatID.isNull(colRefId)) {
+    //         const colRef = analyzed.columnReferences(colRefId)!;
+    //         const colId = colRef.columnId();
+    //         const tableId = colRef.tableId();
+    //         if (!flatsql.FlatID.isExternal(tableId) || scriptKey == ScriptKey.MAIN_SCRIPT) {
+    //             const columns = focus.tableColumns.get(tableId);
+    //             if (columns) {
+    //                 columns.push(colId);
+    //             } else {
+    //                 focus.tableColumns.set(tableId, [colId]);
+    //             }
+    //         }
+    //     }
+    //
+    //     // Focus a table reference?
+    //     const tableRefId = cursor.tableReferenceId;
+    //     if (!flatsql.FlatID.isNull(tableRefId)) {
+    //         const tableRef = analyzed.tableReferences(tableRefId)!;
+    //         const tableId = tableRef.tableId();
+    //         focus.tableColumns.set(tableId, []);
+    //     }
 
     // Focus a query graph edge?
     const edgeId = cursor.queryEdgeId;
-    if (!flatsql.FlatID.isNull(edgeId)) {
-        //        const edge = analyzed.graphEdges(edgeId)!;
-        //        const begin = edge.nodesBegin();
-        //        const countLeft = edge.nodeCountLeft();
-        //        const countRight = edge.nodeCountRight();
-        //        for (let i = 0; i < countLeft; ++i) {
-        //            const ln = analyzed.graphEdgeNodes(begin + i)!;
-        //            const lc = analyzed.columnReferences(ln.columnReferenceId())!;
-        //            for (let j = 0; j < countRight; ++j) {
-        //                const rn = analyzed.graphEdgeNodes(begin + countLeft + j)!;
-        //                const rc = analyzed.columnReferences(rn.columnReferenceId())!;
-        //                console.log(
-        //                    `${ln.columnReferenceId()} ${rn.columnReferenceId()} conn(${lc.tableId()}, ${rc.tableId()})`,
-        //                );
-        //                const connId = buildConnectionId(lc.tableId(), rc.tableId());
-        //                focus.graphConnections.add(connId);
-        //            }
-        //        }
-    }
+    // if (!flatsql.FlatID.isNull(edgeId)) {
+    //        const edge = analyzed.graphEdges(edgeId)!;
+    //        const begin = edge.nodesBegin();
+    //        const countLeft = edge.nodeCountLeft();
+    //        const countRight = edge.nodeCountRight();
+    //        for (let i = 0; i < countLeft; ++i) {
+    //            const ln = analyzed.graphEdgeNodes(begin + i)!;
+    //            const lc = analyzed.columnReferences(ln.columnReferenceId())!;
+    //            for (let j = 0; j < countRight; ++j) {
+    //                const rn = analyzed.graphEdgeNodes(begin + countLeft + j)!;
+    //                const rc = analyzed.columnReferences(rn.columnReferenceId())!;
+    //                console.log(
+    //                    `${ln.columnReferenceId()} ${rn.columnReferenceId()} conn(${lc.tableId()}, ${rc.tableId()})`,
+    //                );
+    //                const connId = buildConnectionId(lc.tableId(), rc.tableId());
+    //                focus.graphConnections.add(connId);
+    //            }
+    //        }
+    //}
     return focus;
 }
 
