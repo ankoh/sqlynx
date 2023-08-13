@@ -22,7 +22,7 @@ export interface AppState {
     /// The API
     instance: flatsql.FlatSQL | null;
     /// The main script
-    scripts: { [key: number]: ScriptData };
+    scripts: { [context: number]: ScriptData };
     /// The graph
     graph: flatsql.FlatSQLSchemaGraph | null;
     /// The graph config
@@ -64,7 +64,7 @@ export interface GraphNodeDescriptor {
     port: number | null;
 }
 
-export type ConnectionId = bigint;
+export type GraphConnectionId = bigint;
 
 export enum FocusTarget {
     Graph,
@@ -77,7 +77,7 @@ export interface FocusInfo {
     /// The layout indices in the schema graph as (nodeId -> port bits) map
     graphNodes: Map<number, number>;
     /// The connection ids of focused edges
-    graphConnections: Set<ConnectionId>;
+    graphConnections: Set<GraphConnectionId>;
     /// The focused table columns as (tableId -> columnId[]) map.
     /// Only set if specific table columns are referenced.
     tableColumns: Map<number, number[]>;
@@ -184,11 +184,11 @@ export function createDefaultState(): AppState {
     };
 }
 
-export function buildConnectionId(from: number, to: number): ConnectionId {
+export function buildGraphConnectionId(from: number, to: number): GraphConnectionId {
     return (BigInt(from) << 32n) | BigInt(to);
 }
 
-export function unpackConnectionId(id: ConnectionId): [number, number] {
+export function unpackGraphConnectionId(id: GraphConnectionId): [number, number] {
     const from = id >> 32n;
     const to = id & ((1n << 32n) - 1n);
     return [Number(from), Number(to)];

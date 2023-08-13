@@ -39,6 +39,8 @@ class NameResolutionPass : public PassManager::LTRPass {
     ParsedScript& parsed_program;
     /// The attribute index.
     AttributeIndex& attribute_index;
+    /// The script id
+    const uint32_t script_id;
     /// The program nodes
     std::span<const proto::Node> nodes;
 
@@ -85,7 +87,7 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// Merge child states into a destination state
     proto::QualifiedColumnName ReadQualifiedColumnName(const sx::Node* column);
     /// Merge child states into a destination state
-    void CloseScope(NodeState& target, size_t node_id);
+    void CloseScope(NodeState& target, uint32_t node_id);
     /// Merge child states into a destination state
     void MergeChildStates(NodeState& dst, const sx::Node& parent);
     /// Merge child states into a destination state

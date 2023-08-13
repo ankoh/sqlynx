@@ -68,7 +68,7 @@ order by
 limit 100
     )SQL";
 
-    auto* external_script = flatsql_script_new();
+    auto* external_script = flatsql_script_new(1);
     flatsql_script_insert_text_at(external_script, 0, external_script_text.data(), external_script_text.size());
 
     auto external_scanned = flatsql_script_scan(external_script);
@@ -81,7 +81,7 @@ limit 100
     flatsql_result_delete(external_parsed);
     flatsql_result_delete(external_analyzed);
 
-    auto* main_script = flatsql_script_new();
+    auto* main_script = flatsql_script_new(2);
     flatsql_script_insert_text_at(main_script, 0, main_script_text.data(), main_script_text.size());
 
     auto main_scanned = flatsql_script_scan(main_script);

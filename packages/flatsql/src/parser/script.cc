@@ -25,7 +25,8 @@ std::unique_ptr<proto::StatementT> ParsedScript::Statement::Pack() {
 }
 
 /// Constructor
-ScannedScript::ScannedScript(const rope::Rope& text) : text_buffer(text.ToString(true)) {}
+ScannedScript::ScannedScript(const rope::Rope& text, uint32_t script_id)
+    : script_id(script_id), text_buffer(text.ToString(true)) {}
 
 /// Register a name
 size_t ScannedScript::RegisterKeywordAsName(std::string_view s, sx::Location location) {
@@ -108,6 +109,7 @@ size_t ScannedScript::FindToken(size_t text_offset) {
 
 flatbuffers::Offset<proto::ScannedScript> ScannedScript::Pack(flatbuffers::FlatBufferBuilder& builder) {
     proto::ScannedScriptT out;
+    out.script_id = script_id;
     out.errors.reserve(errors.size());
     for (auto& [loc, msg] : errors) {
         auto err = std::make_unique<proto::ErrorT>();
@@ -123,7 +125,8 @@ flatbuffers::Offset<proto::ScannedScript> ScannedScript::Pack(flatbuffers::FlatB
 
 /// Constructor
 ParsedScript::ParsedScript(std::shared_ptr<ScannedScript> scan, parser::ParseContext&& ctx)
-    : scanned_script(scan),
+    : script_id(scan->script_id),
+      scanned_script(scan),
       nodes(ctx.nodes.Flatten()),
       statements(std::move(ctx.statements)),
       errors(std::move(ctx.errors)) {}
@@ -179,6 +182,7 @@ std::optional<std::pair<size_t, size_t>> ParsedScript::FindNodeAtOffset(size_t t
 /// Pack the FlatBuffer
 flatbuffers::Offset<proto::ParsedScript> ParsedScript::Pack(flatbuffers::FlatBufferBuilder& builder) {
     proto::ParsedScriptT out;
+    out.script_id = script_id;
     out.nodes = nodes;
     out.statements.reserve(statements.size());
     for (auto& stmt : statements) {
@@ -201,10 +205,11 @@ flatbuffers::Offset<proto::ParsedScript> ParsedScript::Pack(flatbuffers::FlatBuf
 
 /// Constructor
 AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, std::shared_ptr<AnalyzedScript> external)
-    : parsed_script(std::move(parsed)), external_script(std::move(external)) {}
+    : script_id(parsed->script_id), parsed_script(std::move(parsed)), external_script(std::move(external)) {}
 // Pack an analyzed script
 flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::FlatBufferBuilder& builder) {
     proto::AnalyzedScriptT out;
+    out.script_id = script_id;
     out.tables = tables;
     out.table_columns = table_columns;
     out.table_references = table_references;
@@ -215,7 +220,9 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
 }
 
 /// Constructor
-Script::Script() : text(1024), external_script(nullptr) {}
+Script::Script(uint32_t script_id) : script_id(script_id), text(1024), external_script(nullptr) {
+    assert(allowZeroScriptId() || script_id != 0);
+}
 
 /// Insert a character at an offet
 void Script::InsertCharAt(size_t char_idx, uint32_t unicode) {
@@ -295,11 +302,8 @@ std::unique_ptr<proto::ScriptStatisticsT> Script::GetStatistics() {
 /// Scan a script
 std::pair<ScannedScript*, proto::StatusCode> Script::Scan() {
     auto time_start = std::chrono::steady_clock::now();
-    auto [script, status] = parser::Scanner::Scan(text);
+    auto [script, status] = parser::Scanner::Scan(text, script_id);
     scanned_script = std::move(script);
-    if (status == proto::StatusCode::OK) {
-        scanned_script->text_version = ++text_version;
-    }
     timing_statistics.mutate_scanner_last_elapsed(
         std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - time_start).count());
     return {scanned_script.get(), status};
@@ -309,9 +313,6 @@ std::pair<ParsedScript*, proto::StatusCode> Script::Parse() {
     auto time_start = std::chrono::steady_clock::now();
     auto [script, status] = parser::ParseContext::Parse(scanned_script);
     parsed_script = std::move(script);
-    if (status == proto::StatusCode::OK) {
-        parsed_script->text_version = scanned_script->text_version;
-    }
     timing_statistics.mutate_parser_last_elapsed(
         std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - time_start).count());
     return {parsed_script.get(), status};
@@ -325,6 +326,7 @@ std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(Script* external) 
     std::shared_ptr<AnalyzedScript> external_analyzed;
     if (external) {
         external_analyzed = external->analyzed_script;
+        assert(script_id != external->script_id);
     }
 
     // Analyze a script
@@ -332,7 +334,6 @@ std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(Script* external) 
     if (status != proto::StatusCode::OK) {
         return {nullptr, status};
     }
-    script->text_version = parsed_script->text_version;
     analyzed_script = std::move(script);
 
     // Update step timings
@@ -438,7 +439,6 @@ ScriptCursor::ScriptCursor(const AnalyzedScript& analyzed, size_t text_offset) :
             for (size_t ni = 0; ni < (edge.node_count_left() + edge.node_count_right()); ++ni) {
                 auto& edge_node = analyzed.graph_edge_nodes[nodes_begin + ni];
                 auto column_ref = analyzed.column_references[edge_node.column_reference_id()];
-                assert(!Analyzer::ID(column_ref.ast_node_id()).IsExternal());
                 if (cursor_path_nodes.contains(column_ref.ast_node_id())) {
                     query_edge_id = ei;
                     break;

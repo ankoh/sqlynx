@@ -16,7 +16,7 @@ struct ParserDumpTestSuite : public ::testing::TestWithParam<const ParserDumpTes
 TEST_P(ParserDumpTestSuite, Test) {
     auto* test = GetParam();
     rope::Rope input{1024, test->input};
-    auto [scanned, scannedStatus] = parser::Scanner::Scan(input);
+    auto [scanned, scannedStatus] = parser::Scanner::Scan(input, 2);
     ASSERT_EQ(scannedStatus, proto::StatusCode::OK);
     auto [parsed, parsedStatus] = parser::ParseContext::Parse(scanned);
     ASSERT_EQ(parsedStatus, proto::StatusCode::OK);

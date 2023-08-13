@@ -6,27 +6,27 @@ struct QualifiedTableName {
     // The node id
     ast_node_id: uint32;
     // The name of the database that owns the table 
-    database_name: uint32;
+    database_name: uint64;
     // The name of the schema that holds the table
-    schema_name: uint32;
+    schema_name: uint64;
     // The table name, always a table for now
-    table_name: uint32;
+    table_name: uint64;
 }
 
 struct QualifiedColumnName {
     // The node id
     ast_node_id: uint32;
     // The table alias, if exists
-    table_alias: uint32;
+    table_alias: uint64;
     // The column name
-    column_name: uint32;
+    column_name: uint64;
 }
 
 struct TableColumn {
     // The id of the AST node that created this column declaration
     ast_node_id: uint32;
     // The name of the column that is referenced
-    column_name: uint32;
+    column_name: uint64;
 }
 
 struct Table {
@@ -54,9 +54,9 @@ struct TableReference {
     // The name of the table that is referenced
     table_name: QualifiedTableName;
     // The alias name
-    alias_name: uint32;
+    alias_name: uint64;
     // The id of the table that is referenced
-    table_id: uint32;
+    table_id: uint64;
 }
 
 struct ColumnReference {
@@ -69,7 +69,7 @@ struct ColumnReference {
     // The column name
     column_name: QualifiedColumnName;
     // The id of the table that is referenced
-    table_id: uint32;
+    table_id: uint64;
     // The id of the column that is referenced
     column_id: uint32;
 }
@@ -93,6 +93,8 @@ struct QueryGraphEdgeNode {
 }
 
 table AnalyzedScript {
+    // The script id
+    script_id: uint32;
     // The local tables
     tables: [Table];
     // The local table columns
