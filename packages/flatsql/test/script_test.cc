@@ -8,14 +8,14 @@ using namespace flatsql;
 namespace {
 
 TEST(ScriptTest, ParsingBeforeScanning) {
-    Script script;
+    Script script{1};
     auto [scanned, status] = script.Parse();
     ASSERT_EQ(scanned, nullptr);
     ASSERT_EQ(status, proto::StatusCode::PARSER_INPUT_INVALID);
 }
 
 TEST(ScriptTest, AnalyzingBeforeParsing) {
-    Script script;
+    Script script{1};
     auto [analyzed, status] = script.Analyze();
     ASSERT_EQ(analyzed, nullptr);
     ASSERT_EQ(status, proto::StatusCode::ANALYZER_INPUT_INVALID);
@@ -80,13 +80,13 @@ order by
 limit 100
     )SQL";
 
-    Script external_script;
+    Script external_script{1};
     external_script.InsertTextAt(0, external_script_text);
     ASSERT_EQ(external_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(external_script.Parse().second, proto::StatusCode::OK);
     ASSERT_EQ(external_script.Analyze().second, proto::StatusCode::OK);
 
-    Script main_script;
+    Script main_script{2};
     main_script.InsertTextAt(0, main_script_text);
     ASSERT_EQ(main_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(main_script.Parse().second, proto::StatusCode::OK);

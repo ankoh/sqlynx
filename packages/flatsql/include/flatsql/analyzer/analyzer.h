@@ -9,33 +9,39 @@ namespace flatsql {
 
 struct NameResolutionPass;
 
+enum RawTag { Raw };
+
 struct Analyzer {
     friend class AnalyzedScript;
 
    public:
     /// An identifier
     struct ID {
+       protected:
+        /// The script id
+        uint32_t script_id;
         /// The value
         uint32_t value;
+
+       public:
         /// Constructor
-        explicit ID() : value(std::numeric_limits<uint32_t>::max()) {}
+        explicit ID() : script_id(std::numeric_limits<uint32_t>::max()), value(std::numeric_limits<uint32_t>::max()) {}
         /// Constructor
-        explicit ID(uint32_t value) : value(value) {}
-        /// Constructor
-        explicit ID(uint32_t value, bool is_external) : value(value | ((is_external ? 0b1 : 0) << 31)) {}
-        /// Mask index
-        inline uint32_t AsIndex() const {
-            assert(!IsNull());
-            return value & ~(0b1 << 31);
+        explicit ID(uint64_t raw, RawTag) : script_id(raw >> 32), value(raw & std::numeric_limits<uint32_t>::max()) {
+            assert(allowZeroScriptId() || script_id != 0);
         }
+        /// Constructor
+        explicit ID(uint32_t script_id, uint32_t value) : script_id(script_id), value(value) { assert(script_id != 0); }
+        /// Get the context identifier (e.g. script id)
+        inline uint32_t GetScriptId() const { return script_id; }
+        /// Get the index
+        inline uint32_t GetIndex() const { return value; }
         /// Is a null id?
-        inline bool IsNull() const { return value == std::numeric_limits<uint32_t>::max(); }
-        /// Is an external id?
-        inline bool IsExternal() const { return (value >> 31) != 0; }
+        inline bool IsNull() const { return GetIndex() == std::numeric_limits<uint32_t>::max(); }
+        /// Convert to 64 bit integer
+        operator uint64_t() const { return (static_cast<uint64_t>(script_id) << 32) | value; }
         /// Convert to bool
         operator bool() const { return !IsNull(); }
-        /// Convert to value
-        operator uint32_t() const { return value; }
     };
     /// A table key
     struct TableKey {

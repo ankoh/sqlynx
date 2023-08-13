@@ -21,7 +21,7 @@ struct SchemaGraphEdge {
 
 struct SchemaGraphNode {
     /// The id of table
-    table_id: uint32;
+    table_id: uint64;
     /// The position
     position: SchemaGraphVertex;
     /// The node width

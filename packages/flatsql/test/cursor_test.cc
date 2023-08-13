@@ -26,16 +26,17 @@ std::string print_name(const Script& script, const proto::QualifiedTableName& na
     size_t out_idx = 0;
     auto write = [&](Analyzer::ID name_id) {
         if (!name_id.IsNull()) {
-            auto name = scanned->name_dictionary[name_id.AsIndex()].first;
+            assert(name_id.GetScriptId() == script.script_id);
+            auto name = scanned->name_dictionary[name_id.GetIndex()].first;
             if (out_idx++ > 0) {
                 out << ".";
             }
             out << name;
         }
     };
-    write(Analyzer::ID(name.database_name()));
-    write(Analyzer::ID(name.schema_name()));
-    write(Analyzer::ID(name.table_name()));
+    write(Analyzer::ID(name.database_name(), Raw));
+    write(Analyzer::ID(name.schema_name(), Raw));
+    write(Analyzer::ID(name.table_name(), Raw));
     return out.str();
 }
 
@@ -46,15 +47,16 @@ std::string print_name(const Script& script, const proto::QualifiedColumnName& n
     size_t out_idx = 0;
     auto write = [&](Analyzer::ID name_id) {
         if (!name_id.IsNull()) {
-            auto name = scanned->name_dictionary[name_id.AsIndex()].first;
+            assert(name_id.GetScriptId() == script.script_id);
+            auto name = scanned->name_dictionary[name_id.GetIndex()].first;
             if (out_idx++ > 0) {
                 out << ".";
             }
             out << name;
         }
     };
-    write(Analyzer::ID(name.table_alias()));
-    write(Analyzer::ID(name.column_name()));
+    write(Analyzer::ID(name.table_alias(), Raw));
+    write(Analyzer::ID(name.column_name(), Raw));
     return out.str();
 }
 
@@ -120,7 +122,7 @@ void test(const Script& script, size_t text_offset, ExpectedScriptCursor expecte
 }
 
 TEST(CursorTest, SimpleNoExternal) {
-    Script script;
+    Script script{1};
     script.InsertTextAt(0, "select * from A b, C d where b.x = d.y");
     auto [scanned, scan_status] = script.Scan();
     ASSERT_EQ(scan_status, proto::StatusCode::OK);

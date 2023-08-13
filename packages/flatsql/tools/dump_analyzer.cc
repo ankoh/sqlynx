@@ -54,7 +54,7 @@ static void generate_analyzer_dumps(const std::filesystem::path& source_dir) {
             auto xml_external = test.child("external");
             std::string external_text = xml_external.child("input").last_child().value();
             rope::Rope external_rope{1024, external_text};
-            auto external_scan = parser::Scanner::Scan(external_rope);
+            auto external_scan = parser::Scanner::Scan(external_rope, 2);
             if (external_scan.second != proto::StatusCode::OK) {
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(external_scan.second) << std::endl;
                 continue;
@@ -74,7 +74,7 @@ static void generate_analyzer_dumps(const std::filesystem::path& source_dir) {
             auto xml_main = test.child("main");
             std::string main_text = xml_main.child("input").last_child().value();
             rope::Rope main_rope{1024, main_text};
-            auto main_scan = parser::Scanner::Scan(main_rope);
+            auto main_scan = parser::Scanner::Scan(main_rope, 1);
             if (main_scan.second != proto::StatusCode::OK) {
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(main_scan.second) << std::endl;
                 continue;

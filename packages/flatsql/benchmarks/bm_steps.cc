@@ -71,14 +71,14 @@ limit
 static void scan_query(benchmark::State& state) {
     rope::Rope buffer{1024, main_script};
     for (auto _ : state) {
-        auto scan = flatsql::parser::Scanner::Scan(buffer);
+        auto scan = flatsql::parser::Scanner::Scan(buffer, 0);
         benchmark::DoNotOptimize(scan);
     }
 }
 
 static void parse_query(benchmark::State& state) {
     rope::Rope buffer{1024, main_script};
-    auto scanner = flatsql::parser::Scanner::Scan(buffer);
+    auto scanner = flatsql::parser::Scanner::Scan(buffer, 0);
     for (auto _ : state) {
         auto parsed = flatsql::parser::ParseContext::Parse(scanner.first);
         benchmark::DoNotOptimize(parsed);
@@ -90,12 +90,12 @@ static void analyze_query(benchmark::State& state) {
     rope::Rope input_main{1024, main_script};
 
     // Analyze external script
-    auto external_scan = parser::Scanner::Scan(input_external);
+    auto external_scan = parser::Scanner::Scan(input_external, 0);
     auto external_parsed = parser::ParseContext::Parse(external_scan.first);
     auto external_analyzed = Analyzer::Analyze(external_parsed.first, nullptr);
 
     // Parse script
-    auto main_scan = parser::Scanner::Scan(input_main);
+    auto main_scan = parser::Scanner::Scan(input_main, 1);
     auto main_parsed = parser::ParseContext::Parse(main_scan.first);
 
     for (auto _ : state) {
@@ -109,12 +109,12 @@ static void index_query(benchmark::State& state) {
     rope::Rope input_main{1024, main_script};
 
     // Analyze external script
-    auto external_scan = parser::Scanner::Scan(input_external);
+    auto external_scan = parser::Scanner::Scan(input_external, 0);
     auto external_parsed = parser::ParseContext::Parse(external_scan.first);
     auto external_analyzed = Analyzer::Analyze(external_parsed.first, nullptr);
 
     // Parse script
-    auto main_scan = parser::Scanner::Scan(input_main);
+    auto main_scan = parser::Scanner::Scan(input_main, 1);
     auto main_parsed = parser::ParseContext::Parse(main_scan.first);
     auto main_analyzed = Analyzer::Analyze(main_parsed.first, nullptr);
 
@@ -128,7 +128,7 @@ static void layout_schema(benchmark::State& state) {
     rope::Rope input_external{1024, external_script};
 
     // Analyze external script
-    auto external_scan = parser::Scanner::Scan(input_external);
+    auto external_scan = parser::Scanner::Scan(input_external, 0);
     auto external_parsed = parser::ParseContext::Parse(external_scan.first);
     auto external_analyzed = Analyzer::Analyze(external_parsed.first, nullptr);
 

@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "flatsql/analyzer/analyzer.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/script.h"
 #include "flatsql/vis/adjacency_map.h"
@@ -36,11 +37,11 @@ class SchemaGraph {
               expression_operator(op) {}
     };
     struct Node {
-        uint32_t table_id = 0;
+        Analyzer::ID table_id;
         Vertex position;
         double width = 0;
         double height = 0;
-        Node(size_t table_id = 0, Vertex pos = {0.0, 0.0}, double width = 0, double height = 0.0)
+        Node(Analyzer::ID table_id, Vertex pos = {0.0, 0.0}, double width = 0, double height = 0.0)
             : table_id(table_id), position(pos), width(width), height(height) {}
     };
 

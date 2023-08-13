@@ -22,7 +22,7 @@ TEST(ParserTest, FindNodeAtOffset) {
     auto parse = [&](std::string_view text) {
         rope::Rope buffer{128};
         buffer.Insert(0, text);
-        auto [scanned, scannerStatus] = parser::Scanner::Scan(buffer);
+        auto [scanned, scannerStatus] = parser::Scanner::Scan(buffer, 2);
         ASSERT_EQ(scannerStatus, proto::StatusCode::OK);
         auto [parsed, parserStatus] = parser::ParseContext::Parse(scanned);
         ASSERT_EQ(parserStatus, proto::StatusCode::OK);

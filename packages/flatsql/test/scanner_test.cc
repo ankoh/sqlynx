@@ -29,7 +29,7 @@ static void match_tokens(const void* data, const std::vector<uint32_t>& offsets,
 }
 
 TEST(ScannerTest, InsertChars) {
-    auto script = flatsql_script_new();
+    auto script = flatsql_script_new(1);
     FFIResult* result = nullptr;
 
     size_t size = 0;
@@ -58,10 +58,10 @@ TEST(ScannerTest, FindTokenAtOffset) {
     std::shared_ptr<ScannedScript> script;
 
     // Helper to scan a script
-    auto scan = [&](std::string_view text) {
+    auto scan = [&](std::string_view text, uint32_t script_id) {
         rope::Rope buffer{128};
         buffer.Insert(0, text);
-        auto [scanned, status] = parser::Scanner::Scan(buffer);
+        auto [scanned, status] = parser::Scanner::Scan(buffer, script_id);
         ASSERT_EQ(status, proto::StatusCode::OK);
         script = std::move(scanned);
     };
@@ -79,7 +79,7 @@ TEST(ScannerTest, FindTokenAtOffset) {
 
     {
         SCOPED_TRACE("select 1");
-        scan("select 1");
+        scan("select 1", 1);
         test_tokens({Token::KEYWORD, Token::LITERAL_INTEGER});
         test_token_at_offset(0, 0);
         test_token_at_offset(1, 0);
@@ -96,7 +96,7 @@ TEST(ScannerTest, FindTokenAtOffset) {
     }
     {
         SCOPED_TRACE("select a from A where b = 1");
-        scan("select a from A where b = 1");
+        scan("select a from A where b = 1", 1);
         test_tokens({Token::KEYWORD, Token::IDENTIFIER, Token::KEYWORD, Token::IDENTIFIER, Token::KEYWORD,
                      Token::IDENTIFIER, Token::OPERATOR, Token::LITERAL_INTEGER});
         test_token_at_offset(0, 0);
@@ -143,7 +143,7 @@ TEST(ScannerTest, FindTokenInterleaved) {
     rope::Rope buffer{128};
     buffer.Insert(0, ss.str());
 
-    auto [scanned, scannerStatus] = parser::Scanner::Scan(buffer);
+    auto [scanned, scannerStatus] = parser::Scanner::Scan(buffer, 1);
     ASSERT_EQ(scannerStatus, proto::StatusCode::OK);
 
     for (size_t i = 0; i < n; ++i) {

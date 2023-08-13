@@ -9,6 +9,10 @@
 
 namespace flatsql {
 
+static constexpr uint32_t NULL_AST_NODE_ID = 0xFFFFFFFF;
+static constexpr uint32_t NULL_STATEMENT_ID = 0xFFFFFFFF;
+static constexpr uint32_t NULL_COLUMN_ID = 0xFFFFFFFF;
+
 /// Helper to merge two vectors
 template <typename T> static void merge(std::vector<T>& left, std::vector<T>&& right) {
     if (left.empty()) {
@@ -32,6 +36,7 @@ NameResolutionPass::NameResolutionPass(ParsedScript& parser, AttributeIndex& att
     : scanned_program(*parser.scanned_script),
       parsed_program(parser),
       attribute_index(attribute_index),
+      script_id(parser.script_id),
       nodes(parsed_program.nodes) {
     node_states.resize(nodes.size());
 }
@@ -48,7 +53,7 @@ void NameResolutionPass::RegisterExternalTables(const AnalyzedScript& external) 
 
     // Helper to remap a name id
     auto map_name = [this](const AnalyzedScript& external, NameID name) -> Analyzer::ID {
-        if (Analyzer::ID(name).IsNull()) return Analyzer::ID(name);
+        if (Analyzer::ID(external.script_id, name).IsNull()) return Analyzer::ID();
         // First check if the external id is already mapped,
         if (auto iter = external_names.find(name); iter != external_names.end()) {
             return iter->second;
@@ -57,12 +62,12 @@ void NameResolutionPass::RegisterExternalTables(const AnalyzedScript& external) 
         if (auto iter = scanned_program.name_dictionary_ids.find(
                 external.parsed_script->scanned_script->name_dictionary[name].first);
             iter != scanned_program.name_dictionary_ids.end()) {
-            Analyzer::ID mapped_id{iter->second, false};
+            Analyzer::ID mapped_id{scanned_program.script_id, iter->second};
             external_names.insert({name, mapped_id});
             return mapped_id;
         }
         // If not matching any local, create new mapping
-        Analyzer::ID mapped_id{name, true};
+        Analyzer::ID mapped_id{external.script_id, name};
         external_names.insert({name, mapped_id});
         return mapped_id;
     };
@@ -75,21 +80,21 @@ void NameResolutionPass::RegisterExternalTables(const AnalyzedScript& external) 
     external_table_ids.clear();
     external_table_ids.reserve(external_tables.size());
 
-    // Map tables
+    // Map external tables
     for (size_t table_id = 0; table_id < external_tables.size(); ++table_id) {
         auto& t = external_tables[table_id];
         proto::QualifiedTableName name = t.table_name();
         name.mutate_database_name(map_name(external, name.database_name()));
         name.mutate_schema_name(map_name(external, name.schema_name()));
         name.mutate_table_name(map_name(external, name.table_name()));
-        t.mutate_ast_node_id(Analyzer::ID());
-        t.mutate_ast_statement_id(Analyzer::ID());
-        external_table_ids.insert({name, Analyzer::ID(table_id, true)});
+        t.mutate_ast_node_id(NULL_AST_NODE_ID);
+        t.mutate_ast_statement_id(NULL_STATEMENT_ID);
+        external_table_ids.insert({name, Analyzer::ID(external.script_id, table_id)});
     }
     // Map columns
     for (auto& c : external_table_columns) {
         c.mutate_column_name(map_name(external, c.column_name()));
-        c.mutate_ast_node_id(Analyzer::ID());
+        c.mutate_ast_node_id(NULL_AST_NODE_ID);
     }
 }
 
@@ -113,7 +118,7 @@ std::span<NameID> NameResolutionPass::ReadNamePath(const sx::Node& node) {
 }
 
 proto::QualifiedTableName NameResolutionPass::ReadQualifiedTableName(const sx::Node* node) {
-    proto::QualifiedTableName name{Analyzer::ID(), Analyzer::ID(), Analyzer::ID(), Analyzer::ID()};
+    proto::QualifiedTableName name{NULL_AST_NODE_ID, Analyzer::ID(), Analyzer::ID(), Analyzer::ID()};
     if (!node) {
         return name;
     }
@@ -121,16 +126,16 @@ proto::QualifiedTableName NameResolutionPass::ReadQualifiedTableName(const sx::N
     name.mutate_ast_node_id(node - nodes.data());
     switch (name_path.size()) {
         case 3:
-            name.mutate_schema_name(name_path[0]);
-            name.mutate_database_name(name_path[1]);
-            name.mutate_table_name(name_path[2]);
+            name.mutate_schema_name(Analyzer::ID(script_id, name_path[0]));
+            name.mutate_database_name(Analyzer::ID(script_id, name_path[1]));
+            name.mutate_table_name(Analyzer::ID(script_id, name_path[2]));
             break;
         case 2:
-            name.mutate_database_name(name_path[0]);
-            name.mutate_table_name(name_path[1]);
+            name.mutate_database_name(Analyzer::ID(script_id, name_path[0]));
+            name.mutate_table_name(Analyzer::ID(script_id, name_path[1]));
             break;
         case 1:
-            name.mutate_table_name(name_path[0]);
+            name.mutate_table_name(Analyzer::ID(script_id, name_path[0]));
             break;
         default:
             break;
@@ -139,7 +144,7 @@ proto::QualifiedTableName NameResolutionPass::ReadQualifiedTableName(const sx::N
 }
 
 proto::QualifiedColumnName NameResolutionPass::ReadQualifiedColumnName(const sx::Node* node) {
-    proto::QualifiedColumnName name{Analyzer::ID(), Analyzer::ID(), Analyzer::ID()};
+    proto::QualifiedColumnName name{NULL_AST_NODE_ID, Analyzer::ID(), Analyzer::ID()};
     if (!node) {
         return name;
     }
@@ -148,11 +153,11 @@ proto::QualifiedColumnName NameResolutionPass::ReadQualifiedColumnName(const sx:
     // Build the qualified column name
     switch (name_path.size()) {
         case 2:
-            name.mutate_table_alias(name_path[0]);
-            name.mutate_column_name(name_path[1]);
+            name.mutate_table_alias(Analyzer::ID(script_id, name_path[0]));
+            name.mutate_column_name(Analyzer::ID(script_id, name_path[1]));
             break;
         case 1:
-            name.mutate_column_name(name_path[0]);
+            name.mutate_column_name(Analyzer::ID(script_id, name_path[0]));
             break;
         default:
             break;
@@ -160,20 +165,20 @@ proto::QualifiedColumnName NameResolutionPass::ReadQualifiedColumnName(const sx:
     return name;
 }
 
-void NameResolutionPass::CloseScope(NodeState& target, size_t node_id) {
+void NameResolutionPass::CloseScope(NodeState& target, uint32_t node_id) {
     target.table_columns.Clear();
     for (auto iter = target.tables.begin(); iter != target.tables.end(); ++iter) {
-        if (!Analyzer::ID(iter->ast_scope_root())) {
+        if (iter->ast_scope_root() == NULL_AST_NODE_ID) {
             iter->mutate_ast_scope_root(node_id);
         }
     }
     for (auto iter = target.table_references.begin(); iter != target.table_references.end(); ++iter) {
-        if (!Analyzer::ID(iter->ast_scope_root())) {
+        if (iter->ast_scope_root() == NULL_AST_NODE_ID) {
             iter->mutate_ast_scope_root(node_id);
         }
     }
     for (auto iter = target.column_references.begin(); iter != target.column_references.end(); ++iter) {
-        if (!Analyzer::ID(iter->ast_scope_root())) {
+        if (iter->ast_scope_root() == NULL_AST_NODE_ID) {
             iter->mutate_ast_scope_root(node_id);
         }
     }
@@ -199,15 +204,15 @@ void NameResolutionPass::ResolveNames(NodeState& state) {
     scope_tables.clear();
     size_t max_column_count = 0;
     for (auto iter = state.tables.begin(); iter != state.tables.end(); ++iter) {
-        size_t table_id = iter.GetBufferIndex();
+        Analyzer::ID table_id{script_id, static_cast<uint32_t>(iter.GetBufferIndex())};
         // Table declarations are out of scope if they have a scope root set
-        if (Analyzer::ID(iter->ast_scope_root())) {
+        if (iter->ast_scope_root() != NULL_AST_NODE_ID) {
             continue;
         }
         // Register as local table if in scope
         proto::QualifiedTableName table_name = iter->table_name();
         max_column_count += iter->column_count();
-        scope_tables.insert({table_name, Analyzer::ID(table_id, false)});
+        scope_tables.insert({table_name, table_id});
     }
 
     // Collect all columns that are in scope
@@ -215,22 +220,22 @@ void NameResolutionPass::ResolveNames(NodeState& state) {
     scope_columns.reserve(max_column_count);
     for (auto iter = state.table_references.begin(); iter != state.table_references.end(); ++iter) {
         // Table references are out of scope if they have a scope root set
-        if (Analyzer::ID(iter->ast_scope_root())) {
+        if (iter->ast_scope_root() != NULL_AST_NODE_ID) {
             continue;
         }
         // Helper to register columns from a table
         auto register_columns_from = [&](Analyzer::ID tid) {
-            if (tid.IsExternal()) {
-                proto::Table& resolved = external_tables[tid.AsIndex()];
+            if (tid.GetScriptId() == script_id) {
+                proto::Table& resolved = tables[tid.GetIndex()].value;
                 for (uint32_t cid = 0; cid < resolved.column_count(); ++cid) {
-                    proto::TableColumn& col = external_table_columns[resolved.columns_begin() + cid];
+                    proto::TableColumn& col = table_columns[resolved.columns_begin() + cid];
                     proto::QualifiedColumnName col_name{iter->ast_node_id(), iter->alias_name(), col.column_name()};
                     scope_columns.insert({col_name, {tid, cid}});
                 }
             } else {
-                proto::Table& resolved = tables[tid.AsIndex()].value;
+                proto::Table& resolved = external_tables[tid.GetIndex()];
                 for (uint32_t cid = 0; cid < resolved.column_count(); ++cid) {
-                    proto::TableColumn& col = table_columns[resolved.columns_begin() + cid];
+                    proto::TableColumn& col = external_table_columns[resolved.columns_begin() + cid];
                     proto::QualifiedColumnName col_name{iter->ast_node_id(), iter->alias_name(), col.column_name()};
                     scope_columns.insert({col_name, {tid, cid}});
                 }
@@ -239,18 +244,18 @@ void NameResolutionPass::ResolveNames(NodeState& state) {
         // Available in scope?
         if (auto tbl_iter = scope_tables.find(iter->table_name()); tbl_iter != scope_tables.end()) {
             register_columns_from(tbl_iter->second);
-            iter->mutate_table_id(Analyzer::ID(tbl_iter->second, false));
+            iter->mutate_table_id(tbl_iter->second);
         } else if (auto tbl_iter = external_table_ids.find(iter->table_name()); tbl_iter != external_table_ids.end()) {
             // Available globally
             register_columns_from(tbl_iter->second);
-            iter->mutate_table_id(Analyzer::ID(tbl_iter->second, true));
+            iter->mutate_table_id(tbl_iter->second);
         }
     }
 
     // Now scan all unresolved column refs and look them up in the map
     for (auto iter = state.column_references.begin(); iter != state.column_references.end(); ++iter) {
         // Out of scope or already resolved?
-        if (Analyzer::ID(iter->ast_scope_root()) || Analyzer::ID(iter->table_id())) {
+        if (iter->ast_scope_root() != NULL_AST_NODE_ID || !Analyzer::ID(iter->table_id(), Raw).IsNull()) {
             continue;
         }
         // Resolve the column ref
@@ -288,10 +293,11 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                     column_name = column_def_node->children_begin_or_value();
                 }
                 if (auto reused = pending_columns_free_list.PopFront()) {
-                    *reused = proto::TableColumn(node_id, column_name);
+                    *reused = proto::TableColumn(node_id, Analyzer::ID(script_id, column_name));
                     node_state.table_columns.PushBack(*reused);
                 } else {
-                    auto& node = pending_columns.Append(proto::TableColumn(node_id, column_name));
+                    auto& node =
+                        pending_columns.Append(proto::TableColumn(node_id, Analyzer::ID(script_id, column_name)));
                     node_state.table_columns.PushBack(node);
                 }
                 break;
@@ -308,10 +314,10 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 auto& n = column_references.Append(proto::ColumnReference());
                 n.buffer_index = column_references.GetSize() - 1;
                 n.value.mutate_ast_node_id(node_id);
-                n.value.mutate_ast_statement_id(Analyzer::ID());
-                n.value.mutate_ast_scope_root(Analyzer::ID());
+                n.value.mutate_ast_statement_id(NULL_STATEMENT_ID);
+                n.value.mutate_ast_scope_root(NULL_AST_NODE_ID);
                 n.value.mutate_table_id(Analyzer::ID());
-                n.value.mutate_column_id(Analyzer::ID());
+                n.value.mutate_column_id(NULL_COLUMN_ID);
                 n.value.mutable_column_name() = column_name;
                 node_state.column_references.PushBack(n);
                 // Column refs may be recursive
@@ -328,17 +334,17 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 if (auto name_node = attrs[proto::AttributeKey::SQL_TABLEREF_NAME]) {
                     auto name = ReadQualifiedTableName(name_node);
                     // Read a table alias
-                    NodeID alias = Analyzer::ID();
+                    Analyzer::ID alias = Analyzer::ID();
                     auto alias_node = attrs[proto::AttributeKey::SQL_TABLEREF_ALIAS];
                     if (alias_node && alias_node->node_type() == sx::NodeType::NAME) {
-                        alias = alias_node->children_begin_or_value();
+                        alias = Analyzer::ID(script_id, alias_node->children_begin_or_value());
                     }
                     // Add table reference
                     auto& n = table_references.Append(proto::TableReference());
                     n.buffer_index = column_references.GetSize() - 1;
                     n.value.mutate_ast_node_id(node_id);
-                    n.value.mutate_ast_statement_id(Analyzer::ID());
-                    n.value.mutate_ast_scope_root(Analyzer::ID());
+                    n.value.mutate_ast_statement_id(NULL_STATEMENT_ID);
+                    n.value.mutate_ast_scope_root(NULL_AST_NODE_ID);
                     n.value.mutate_table_id(Analyzer::ID());
                     n.value.mutable_table_name() = name;
                     n.value.mutate_alias_name(alias);
@@ -483,8 +489,8 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 auto& n = tables.Append(proto::Table());
                 n.buffer_index = tables.GetSize() - 1;
                 n.value.mutate_ast_node_id(node_id);
-                n.value.mutate_ast_statement_id(Analyzer::ID());
-                n.value.mutate_ast_scope_root(Analyzer::ID());
+                n.value.mutate_ast_statement_id(NULL_STATEMENT_ID);
+                n.value.mutate_ast_scope_root(NULL_AST_NODE_ID);
                 n.value.mutable_table_name() = table_name;
                 n.value.mutate_columns_begin(columns_begin);
                 n.value.mutate_column_count(column_count);
