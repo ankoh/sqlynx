@@ -164,17 +164,17 @@ AnalyzedScript::QualifiedColumnName NameResolutionPass::ReadQualifiedColumnName(
 void NameResolutionPass::CloseScope(NodeState& target, uint32_t node_id) {
     target.table_columns.Clear();
     for (auto iter = target.tables.begin(); iter != target.tables.end(); ++iter) {
-        if (iter->ast_scope_root == std::nullopt) {
+        if (!iter->ast_scope_root.has_value()) {
             iter->ast_scope_root = node_id;
         }
     }
     for (auto iter = target.table_references.begin(); iter != target.table_references.end(); ++iter) {
-        if (iter->ast_scope_root == std::nullopt) {
+        if (!iter->ast_scope_root.has_value()) {
             iter->ast_scope_root = node_id;
         }
     }
     for (auto iter = target.column_references.begin(); iter != target.column_references.end(); ++iter) {
-        if (iter->ast_scope_root == std::nullopt) {
+        if (!iter->ast_scope_root.has_value()) {
             iter->ast_scope_root = node_id;
         }
     }
@@ -202,7 +202,7 @@ void NameResolutionPass::ResolveNames(NodeState& state) {
     for (auto iter = state.tables.begin(); iter != state.tables.end(); ++iter) {
         FID table_id{context_id, static_cast<uint32_t>(iter.GetBufferIndex())};
         // Table declarations are out of scope if they have a scope root set
-        if (iter->ast_scope_root != std::nullopt) {
+        if (iter->ast_scope_root.has_value()) {
             continue;
         }
         // Register as local table if in scope
@@ -216,7 +216,7 @@ void NameResolutionPass::ResolveNames(NodeState& state) {
     scope_columns.reserve(max_column_count);
     for (auto iter = state.table_references.begin(); iter != state.table_references.end(); ++iter) {
         // Table references are out of scope if they have a scope root set
-        if (iter->ast_scope_root != std::nullopt) {
+        if (iter->ast_scope_root.has_value()) {
             continue;
         }
         // Helper to register columns from a table
@@ -251,7 +251,7 @@ void NameResolutionPass::ResolveNames(NodeState& state) {
     // Now scan all unresolved column refs and look them up in the map
     for (auto iter = state.column_references.begin(); iter != state.column_references.end(); ++iter) {
         // Out of scope or already resolved?
-        if (iter->ast_scope_root != std::nullopt || !iter->table_id.IsNull()) {
+        if (iter->ast_scope_root.has_value() || !iter->table_id.IsNull()) {
             continue;
         }
         // Resolve the column ref
