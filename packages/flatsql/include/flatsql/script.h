@@ -6,6 +6,7 @@
 #include <tuple>
 
 #include "ankerl/unordered_dense.h"
+#include "flatsql/context.h"
 #include "flatsql/parser/parser_generated.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/text/rope.h"
@@ -113,6 +114,128 @@ class ParsedScript {
 
 class AnalyzedScript {
    public:
+    /// A qualified table name
+    struct QualifiedTableName {
+        /// The AST node id in the target script, 0xFFFFFFFF when null
+        uint32_t ast_node_id;
+        /// The database name, may refer to different context
+        FID database_name;
+        /// The schema name, may refer to different context
+        FID schema_name;
+        /// The table name, may refer to different context
+        FID table_name;
+        /// Create FlatBuffer
+        operator proto::QualifiedTableName() {
+            return proto::QualifiedTableName{ast_node_id, database_name, schema_name, table_name};
+        }
+    };
+    /// A qualified column name
+    struct QualifiedColumnName {
+        /// The AST node id in the target script, 0xFFFFFFFF when null
+        uint32_t ast_node_id;
+        /// The table alias, may refer to different context
+        FID table_alias;
+        /// The column name, may refer to different context
+        FID column_name;
+        /// Create FlatBuffer
+        operator proto::QualifiedColumnName() {
+            return proto::QualifiedColumnName{ast_node_id, table_alias, column_name};
+        }
+    };
+    /// A table column
+    struct TableColumn {
+        /// The AST node id in the target script, 0xFFFFFFFF when null
+        uint32_t ast_node_id;
+        /// The column name, may refer to different context
+        FID column_name;
+        /// Create FlatBuffer
+        operator proto::TableColumn() { return proto::TableColumn{ast_node_id, column_name}; }
+    };
+    /// A table
+    struct Table {
+        /// The AST node id in the target script, 0xFFFFFFFF when null
+        uint32_t ast_node_id;
+        /// The AST statement id in the target script, 0xFFFFFFFF when null
+        uint32_t ast_statement_id;
+        /// The AST scope root id in the target script, 0xFFFFFFFF when null
+        uint32_t ast_scope_root;
+        /// The table name, may refer to different context
+        QualifiedTableName table_name;
+        /// The begin of the column
+        uint32_t columns_begin;
+        /// The column count
+        uint32_t column_count;
+        /// Create FlatBuffer
+        operator proto::Table() {
+            return proto::Table{ast_node_id, ast_statement_id, ast_scope_root, table_name, columns_begin, column_count};
+        }
+    };
+    /// A table reference
+    struct TableReference {
+        /// The AST node id in the target script, 0xFFFFFFFF when null
+        uint32_t ast_node_id;
+        /// The AST statement id in the target script, 0xFFFFFFFF when null
+        uint32_t ast_statement_id;
+        /// The AST scope root in the target script, 0xFFFFFFFF when null
+        uint32_t ast_scope_root;
+        /// The table name, may refer to different context
+        QualifiedTableName table_name;
+        /// The alias name, may refer to different context
+        FID alias_name;
+        /// The table id, may refer to different context
+        FID table_id;
+        /// Create FlatBuffer
+        operator proto::TableReference() {
+            return proto::TableReference{ast_node_id, ast_statement_id, ast_scope_root,
+                                         table_name,  alias_name,       table_id};
+        }
+    };
+    /// A column reference
+    struct ColumnReference {
+        /// The AST node id in the target script, 0xFFFFFFFF when null
+        uint32_t ast_node_id;
+        /// The AST statement id in the target script, 0xFFFFFFFF when null
+        uint32_t ast_statement_id;
+        /// The AST scope root in the target script, 0xFFFFFFFF when null
+        uint32_t ast_scope_root;
+        /// The column name, may refer to different context
+        QualifiedColumnName column_name;
+        /// The table id, may refer to different context
+        FID table_id;
+        /// The column index
+        uint32_t column_id;
+        /// Create FlatBuffer
+        operator proto::ColumnReference() {
+            return proto::ColumnReference{ast_node_id, ast_statement_id, ast_scope_root,
+                                          column_name, table_id,         column_id};
+        }
+    };
+    /// A query graph edge
+    struct QueryGraphEdge {
+        /// The AST node id in the target script, 0xFFFFFFFF when null
+        uint32_t ast_node_id;
+        /// The begin of the nodes
+        uint32_t nodes_begin;
+        /// The number of nodes on the left
+        uint16_t node_count_left;
+        /// The number of nodes on the right
+        uint16_t node_count_right;
+        /// The expression operator
+        proto::ExpressionOperator expression_operator;
+        /// Create FlatBuffer
+        operator proto::QueryGraphEdge() {
+            return proto::QueryGraphEdge{ast_node_id, nodes_begin, node_count_left, node_count_right,
+                                         expression_operator};
+        }
+    };
+    /// A query graph edge node
+    struct QueryGraphEdgeNode {
+        /// The column reference id
+        uint32_t column_reference_id;
+        /// Create FlatBuffer
+        operator proto::QueryGraphEdgeNode() { return proto::QueryGraphEdgeNode{column_reference_id}; }
+    };
+
     /// The context id
     const uint32_t context_id;
     /// The parsed script
@@ -120,17 +243,17 @@ class AnalyzedScript {
     /// The external script
     std::shared_ptr<AnalyzedScript> external_script;
     /// The local tables
-    std::vector<proto::Table> tables;
+    std::vector<Table> tables;
     /// The local table columns
-    std::vector<proto::TableColumn> table_columns;
+    std::vector<TableColumn> table_columns;
     /// The table references
-    std::vector<proto::TableReference> table_references;
+    std::vector<TableReference> table_references;
     /// The column references
-    std::vector<proto::ColumnReference> column_references;
+    std::vector<ColumnReference> column_references;
     /// The join edges
-    std::vector<proto::QueryGraphEdge> graph_edges;
+    std::vector<QueryGraphEdge> graph_edges;
     /// The join edge nodes
-    std::vector<proto::QueryGraphEdgeNode> graph_edge_nodes;
+    std::vector<QueryGraphEdgeNode> graph_edge_nodes;
 
    public:
     /// Constructor

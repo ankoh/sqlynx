@@ -52,24 +52,24 @@ static void writeTables(pugi::xml_node root, const AnalyzedScript& target, const
                         const AnalyzedScript* external) {
     for (auto& table_decl : target.tables) {
         auto xml_tbl = root.append_child("table");
-        assert(table_decl.ast_node_id() != 0xFFFFFFFF);
-        WriteLocation(xml_tbl, target.parsed_script->nodes[table_decl.ast_node_id()].location(),
+        assert(table_decl.ast_node_id != 0xFFFFFFFF);
+        WriteLocation(xml_tbl, target.parsed_script->nodes[table_decl.ast_node_id].location(),
                       target.parsed_script->scanned_script->GetInput());
         // Write child columns
-        for (size_t i = 0; i < table_decl.column_count(); ++i) {
-            auto table_idx = table_decl.columns_begin() + i;
+        for (size_t i = 0; i < table_decl.column_count; ++i) {
+            auto table_idx = table_decl.columns_begin + i;
             auto& column_decl = target.table_columns[table_idx];
             auto xml_col = xml_tbl.append_child("column");
-            if (FID column_name_id{column_decl.column_name(), Raw}; column_name_id) {
-                assert(!column_name_id.IsNull());
-                assert(column_name_id.GetContext() == target.context_id);
+            if (column_decl.column_name) {
+                assert(!column_decl.column_name.IsNull());
+                assert(column_decl.column_name.GetContext() == target.context_id);
                 std::string column_name{
-                    target.parsed_script->scanned_script->name_dictionary[column_name_id.GetIndex()].first};
+                    target.parsed_script->scanned_script->name_dictionary[column_decl.column_name.GetIndex()].first};
                 xml_col.append_attribute("name").set_value(column_name.c_str());
             } else {
                 xml_col.append_attribute("name").set_value("?");
             }
-            if (auto node_id = column_decl.ast_node_id(); node_id != 0xFFFFFFFF) {
+            if (auto node_id = column_decl.ast_node_id; node_id != 0xFFFFFFFF) {
                 WriteLocation(xml_col, target.parsed_script->nodes[node_id].location(),
                               target.parsed_script->scanned_script->GetInput());
             }
@@ -106,55 +106,53 @@ void AnalyzerDumpTest::EncodeScript(pugi::xml_node root, const AnalyzedScript& m
 
     // Write table references
     for (auto& ref : main.table_references) {
-        FID table_id{ref.table_id(), Raw};
-        auto tag = table_id.IsNull()                            ? "unresolved"
-                   : (table_id.GetContext() == main.context_id) ? "internal"
-                                                                : "external";
+        auto tag = ref.table_id.IsNull()                            ? "unresolved"
+                   : (ref.table_id.GetContext() == main.context_id) ? "internal"
+                                                                    : "external";
         auto xml_ref = xml_main_table_refs.append_child(tag);
-        if (FID table_id{ref.table_id(), Raw}; table_id) {
-            xml_ref.append_attribute("table").set_value(table_id.GetIndex());
+        if (ref.table_id) {
+            xml_ref.append_attribute("table").set_value(ref.table_id.GetIndex());
         }
-        assert(ref.ast_node_id() != 0xFFFFFFFF);
-        WriteLocation(xml_ref, main.parsed_script->nodes[ref.ast_node_id()].location(),
+        assert(ref.ast_node_id != 0xFFFFFFFF);
+        WriteLocation(xml_ref, main.parsed_script->nodes[ref.ast_node_id].location(),
                       main.parsed_script->scanned_script->GetInput());
     }
 
     // Write column references
     for (auto& ref : main.column_references) {
-        FID table_id{ref.table_id(), Raw};
-        auto tag = table_id.IsNull()                            ? "unresolved"
-                   : (table_id.GetContext() == main.context_id) ? "internal"
-                                                                : "external";
+        auto tag = ref.table_id.IsNull()                            ? "unresolved"
+                   : (ref.table_id.GetContext() == main.context_id) ? "internal"
+                                                                    : "external";
         auto xml_ref = xml_main_col_refs.append_child(tag);
-        if (FID table_id{ref.table_id(), Raw}; table_id) {
-            xml_ref.append_attribute("table").set_value(table_id.GetIndex());
+        if (ref.table_id) {
+            xml_ref.append_attribute("table").set_value(ref.table_id.GetIndex());
         }
-        if (ref.column_id() != 0xFFFFFFFF) {
-            xml_ref.append_attribute("column").set_value(ref.column_id());
+        if (ref.column_id != 0xFFFFFFFF) {
+            xml_ref.append_attribute("column").set_value(ref.column_id);
         }
-        assert(ref.ast_node_id() != 0xFFFFFFFF);
-        WriteLocation(xml_ref, main.parsed_script->nodes[ref.ast_node_id()].location(),
+        assert(ref.ast_node_id != 0xFFFFFFFF);
+        WriteLocation(xml_ref, main.parsed_script->nodes[ref.ast_node_id].location(),
                       main.parsed_script->scanned_script->GetInput());
     }
 
     // Write join edges
     for (auto& edge : main.graph_edges) {
         auto xml_edge = xml_main_query_graph.append_child("edge");
-        xml_edge.append_attribute("op").set_value(proto::EnumNameExpressionOperator(edge.expression_operator()));
-        WriteLocation(xml_edge, main.parsed_script->nodes[edge.ast_node_id()].location(),
+        xml_edge.append_attribute("op").set_value(proto::EnumNameExpressionOperator(edge.expression_operator));
+        WriteLocation(xml_edge, main.parsed_script->nodes[edge.ast_node_id].location(),
                       main.parsed_script->scanned_script->GetInput());
-        for (size_t i = 0; i < edge.node_count_left(); ++i) {
-            auto& node = main.graph_edge_nodes[edge.nodes_begin() + i];
+        for (size_t i = 0; i < edge.node_count_left; ++i) {
+            auto& node = main.graph_edge_nodes[edge.nodes_begin + i];
             auto xml_node = xml_edge.append_child("node");
             xml_node.append_attribute("side").set_value(0);
-            xml_node.append_attribute("ref").set_value(node.column_reference_id());
+            xml_node.append_attribute("ref").set_value(node.column_reference_id);
         }
-        for (size_t i = 0; i < edge.node_count_right(); ++i) {
-            auto& node = main.graph_edge_nodes[edge.nodes_begin() + edge.node_count_left() + i];
-            assert(!FID(main.context_id, node.column_reference_id()).IsNull());
+        for (size_t i = 0; i < edge.node_count_right; ++i) {
+            auto& node = main.graph_edge_nodes[edge.nodes_begin + edge.node_count_left + i];
+            assert(!FID(main.context_id, node.column_reference_id).IsNull());
             auto xml_node = xml_edge.append_child("node");
             xml_node.append_attribute("side").set_value(1);
-            xml_node.append_attribute("ref").set_value(node.column_reference_id());
+            xml_node.append_attribute("ref").set_value(node.column_reference_id);
         }
     }
 }
