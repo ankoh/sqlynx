@@ -18,28 +18,30 @@ struct Analyzer {
     /// An identifier
     struct ID {
        protected:
-        /// The script id
-        uint32_t script_id;
+        /// The context id
+        uint32_t context_id;
         /// The value
         uint32_t value;
 
        public:
         /// Constructor
-        explicit ID() : script_id(std::numeric_limits<uint32_t>::max()), value(std::numeric_limits<uint32_t>::max()) {}
+        explicit ID() : context_id(std::numeric_limits<uint32_t>::max()), value(std::numeric_limits<uint32_t>::max()) {}
         /// Constructor
-        explicit ID(uint64_t raw, RawTag) : script_id(raw >> 32), value(raw & std::numeric_limits<uint32_t>::max()) {
-            assert(allowZeroScriptId() || script_id != 0);
+        explicit ID(uint64_t raw, RawTag) : context_id(raw >> 32), value(raw & std::numeric_limits<uint32_t>::max()) {
+            assert(allowZeroContext() || context_id != 0);
         }
         /// Constructor
-        explicit ID(uint32_t script_id, uint32_t value) : script_id(script_id), value(value) { assert(script_id != 0); }
-        /// Get the context identifier (e.g. script id)
-        inline uint32_t GetScriptId() const { return script_id; }
+        explicit ID(uint32_t context_id, uint32_t value) : context_id(context_id), value(value) {
+            assert(context_id != 0);
+        }
+        /// Get the context identifier
+        inline uint32_t GetContext() const { return context_id; }
         /// Get the index
         inline uint32_t GetIndex() const { return value; }
         /// Is a null id?
         inline bool IsNull() const { return GetIndex() == std::numeric_limits<uint32_t>::max(); }
         /// Convert to 64 bit integer
-        operator uint64_t() const { return (static_cast<uint64_t>(script_id) << 32) | value; }
+        operator uint64_t() const { return (static_cast<uint64_t>(context_id) << 32) | value; }
         /// Convert to bool
         operator bool() const { return !IsNull(); }
     };

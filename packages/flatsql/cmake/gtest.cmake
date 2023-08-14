@@ -41,8 +41,8 @@ add_library(gmock STATIC IMPORTED)
 set_property(TARGET gmock PROPERTY IMPORTED_LOCATION ${GMOCK_LIBRARY_PATH})
 set_property(TARGET gmock APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${GTEST_INCLUDE_DIR})
 
-add_dependencies(gtest googletest)
-add_dependencies(gmock googletest)
+add_dependencies(gtest gtest_ep)
+add_dependencies(gmock gtest_ep)
 
 file(MAKE_DIRECTORY ${GTEST_INCLUDE_DIR})
 

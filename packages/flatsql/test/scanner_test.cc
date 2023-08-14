@@ -58,10 +58,10 @@ TEST(ScannerTest, FindTokenAtOffset) {
     std::shared_ptr<ScannedScript> script;
 
     // Helper to scan a script
-    auto scan = [&](std::string_view text, uint32_t script_id) {
+    auto scan = [&](std::string_view text, uint32_t context_id) {
         rope::Rope buffer{128};
         buffer.Insert(0, text);
-        auto [scanned, status] = parser::Scanner::Scan(buffer, script_id);
+        auto [scanned, status] = parser::Scanner::Scan(buffer, context_id);
         ASSERT_EQ(status, proto::StatusCode::OK);
         script = std::move(scanned);
     };

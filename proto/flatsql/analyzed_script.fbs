@@ -93,8 +93,8 @@ struct QueryGraphEdgeNode {
 }
 
 table AnalyzedScript {
-    // The script id
-    script_id: uint32;
+    // The context id
+    context_id: uint32;
     // The local tables
     tables: [Table];
     // The local table columns

@@ -394,7 +394,7 @@ table ScannerTokens {
 }
 
 table ScannedScript {
-    script_id: uint32;
+    context_id: uint32;
     line_breaks: [Location];
     errors: [Error];
     tokens: ScannerTokens;
@@ -402,7 +402,7 @@ table ScannedScript {
 }
 
 table ParsedScript {
-    script_id: uint32;
+    context_id: uint32;
     nodes: [Node];
     statements: [Statement];
     errors: [Error];

@@ -206,21 +206,21 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
     };
     // Load internal tables
     for (uint32_t i = 0; i < script->tables.size(); ++i) {
-        Analyzer::ID id{script->script_id, i};
+        Analyzer::ID id{script->context_id, i};
         nodes.emplace_back(id, get_pos(config, angle, id.GetIndex()), config.table_width + config.table_margin,
                            config.table_height + config.table_margin);
     }
     // Add external tables
     if (script->external_script) {
         for (uint32_t i = 0; i < script->external_script->tables.size(); ++i) {
-            Analyzer::ID id{script->external_script->script_id, i};
+            Analyzer::ID id{script->external_script->context_id, i};
             nodes.emplace_back(id, get_pos(config, angle, script->tables.size() + id.GetIndex()),
                                config.table_width + config.table_margin, config.table_height + config.table_margin);
         }
     }
     // Helper to create a node id
     auto create_node_id = [](Analyzer::ID id, AnalyzedScript& script) {
-        return id.GetIndex() + (id.GetScriptId() == script.script_id ? 0 : script.tables.size());
+        return id.GetIndex() + (id.GetContext() == script.context_id ? 0 : script.tables.size());
     };
 
     // Add edge node ids

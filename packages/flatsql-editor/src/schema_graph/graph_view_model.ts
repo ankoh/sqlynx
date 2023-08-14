@@ -97,7 +97,7 @@ export function computeSchemaGraphViewModel(state: AppState): SchemaGraphViewMod
         }
 
         // Is an external table?
-        const context = flatsql.FlatID.getScriptId(tableId);
+        const context = flatsql.FlatID.GetContext(tableId);
         const analyzed = analyzedScripts[context] ?? null;
 
         if (analyzed) {
