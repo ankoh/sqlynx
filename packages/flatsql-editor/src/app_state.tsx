@@ -80,7 +80,7 @@ export interface FocusInfo {
     graphConnections: Set<GraphConnectionId>;
     /// The focused table columns as (tableId -> columnId[]) map.
     /// Only set if specific table columns are referenced.
-    tableColumns: Map<number, number[]>;
+    tableColumns: Map<flatsql.QualifiedID.Value, number[]>;
 }
 
 /// Destroy a state
