@@ -33,7 +33,7 @@ describe('FlatSQL Analyzer', () => {
         expect(() => {
             const analyzed = main_script.analyze(schema_script);
             analyzed.delete();
-        }).toThrow(new Error('External context is ambiguous'));
+        }).toThrow(new Error('Collision on external context identifier'));
 
         schema_script.delete();
         main_script.delete();
