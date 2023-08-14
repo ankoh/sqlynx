@@ -14,6 +14,18 @@ TEST(ScriptTest, ParsingBeforeScanning) {
     ASSERT_EQ(status, proto::StatusCode::PARSER_INPUT_INVALID);
 }
 
+TEST(ScriptTest, ExternalContextCollision) {
+    Script schema_script{1};
+    schema_script.Scan();
+    schema_script.Parse();
+    schema_script.Analyze();
+    Script main_script{1};
+    main_script.Scan();
+    main_script.Parse();
+    auto [result, status] = main_script.Analyze(&schema_script);
+    ASSERT_EQ(status, proto::StatusCode::EXTERNAL_CONTEXT_COLLISION);
+}
+
 TEST(ScriptTest, AnalyzingBeforeParsing) {
     Script script{1};
     auto [analyzed, status] = script.Analyze();
