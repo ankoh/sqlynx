@@ -203,7 +203,7 @@ export class FlatSQL {
     }
 }
 
-export class FlatID {
+export class QualifiedID {
     /// Get the context id
     public static getContext(value: bigint): number {
         return Number(value >> 32n);
@@ -214,7 +214,7 @@ export class FlatID {
     }
     /// Is a null id?
     public static isNull(value: bigint): boolean {
-        return FlatID.getIndex(value) == 0xffffffff;
+        return QualifiedID.getIndex(value) == 0xffffffff;
     }
     /// Read a name
     public static readName(
@@ -223,11 +223,11 @@ export class FlatID {
             [context: number]: proto.ParsedScript | null;
         },
     ): string | null {
-        if (FlatID.isNull(value)) {
+        if (QualifiedID.isNull(value)) {
             return null;
         }
-        const key = FlatID.getContext(value);
-        return scripts[key]?.nameDictionary(FlatID.getIndex(value)) ?? null;
+        const key = QualifiedID.getContext(value);
+        return scripts[key]?.nameDictionary(QualifiedID.getIndex(value)) ?? null;
     }
     /// Read a table name
     public static readTableName(
@@ -236,9 +236,9 @@ export class FlatID {
             [context: number]: proto.ParsedScript | null;
         },
     ) {
-        const database = FlatID.readName(name.databaseName(), scripts);
-        const schema = FlatID.readName(name.schemaName(), scripts);
-        const table = FlatID.readName(name.tableName(), scripts);
+        const database = QualifiedID.readName(name.databaseName(), scripts);
+        const schema = QualifiedID.readName(name.schemaName(), scripts);
+        const table = QualifiedID.readName(name.tableName(), scripts);
         return { database, schema, table };
     }
     /// Read a table name
@@ -248,8 +248,8 @@ export class FlatID {
             [context: number]: proto.ParsedScript | null;
         },
     ) {
-        const column = FlatID.readName(name.columnName(), scripts);
-        const alias = FlatID.readName(name.tableAlias(), scripts);
+        const column = QualifiedID.readName(name.columnName(), scripts);
+        const alias = QualifiedID.readName(name.tableAlias(), scripts);
         return { column, alias };
     }
 }
