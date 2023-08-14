@@ -11,7 +11,7 @@ export enum ScriptType {
 }
 
 export interface ScriptMetadata {
-    /// The pseudo script id
+    /// The pseudo context id
     scriptId: string;
     /// The script type
     scriptType: ScriptType;

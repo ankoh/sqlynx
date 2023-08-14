@@ -208,8 +208,8 @@ export class FlatID {
     public static isNull(value: bigint): boolean {
         return value == 0xffffffffn;
     }
-    /// Get the script id
-    public static getScriptId(value: bigint): number {
+    /// Get the context id
+    public static GetContext(value: bigint): number {
         return Number(value >> 32n);
     }
     /// Mask index
@@ -226,7 +226,7 @@ export class FlatID {
         if (FlatID.isNull(value)) {
             return null;
         }
-        const key = FlatID.getScriptId(value);
+        const key = FlatID.GetContext(value);
         return scripts[key]?.nameDictionary(FlatID.getIndex(value)) ?? null;
     }
     /// Read a table name

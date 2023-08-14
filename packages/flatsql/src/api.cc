@@ -48,7 +48,7 @@ extern "C" void flatsql_result_delete(FFIResult* result) {
 }
 
 /// Create a script
-extern "C" Script* flatsql_script_new(uint32_t script_id) { return new Script(script_id); }
+extern "C" Script* flatsql_script_new(uint32_t context_id) { return new Script(context_id); }
 /// Delete a script
 extern "C" void flatsql_script_delete(Script* script) { delete script; }
 /// Insert char at a position

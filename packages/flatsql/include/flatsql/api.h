@@ -32,7 +32,7 @@ struct FFIResult {
 extern "C" void flatsql_result_delete(FFIResult* result);
 
 /// Create a script
-extern "C" flatsql::Script* flatsql_script_new(uint32_t script_id);
+extern "C" flatsql::Script* flatsql_script_new(uint32_t context_id);
 /// Delete a script
 extern "C" void flatsql_script_delete(flatsql::Script* script);
 /// Insert char at a position

@@ -27,7 +27,7 @@ using NodeID = uint32_t;
 using NameID = uint32_t;
 using StatementID = uint32_t;
 
-constexpr bool allowZeroScriptId() {
+constexpr bool allowZeroContext() {
 #ifdef NDEBUG
     return true;
 #else
@@ -37,8 +37,8 @@ constexpr bool allowZeroScriptId() {
 
 class ScannedScript {
    public:
-    /// The script id
-    const uint32_t script_id;
+    /// The context id
+    const uint32_t context_id;
     /// The copied text buffer
     std::string text_buffer;
 
@@ -61,7 +61,7 @@ class ScannedScript {
 
    public:
     /// Constructor
-    ScannedScript(const rope::Rope& text, uint32_t script_id = 1);
+    ScannedScript(const rope::Rope& text, uint32_t context_id = 1);
 
     /// Get the input
     auto& GetInput() const { return text_buffer; }
@@ -96,8 +96,8 @@ class ParsedScript {
         std::unique_ptr<proto::StatementT> Pack();
     };
 
-    /// The script id
-    const uint32_t script_id;
+    /// The context id
+    const uint32_t context_id;
     /// The scanned script
     std::shared_ptr<ScannedScript> scanned_script;
     /// The nodes
@@ -121,8 +121,8 @@ class ParsedScript {
 
 class AnalyzedScript {
    public:
-    /// The script id
-    const uint32_t script_id;
+    /// The context id
+    const uint32_t context_id;
     /// The parsed script
     std::shared_ptr<ParsedScript> parsed_script;
     /// The external script
@@ -181,8 +181,8 @@ struct ScriptCursor {
 
 class Script {
    public:
-    /// The script id
-    const uint32_t script_id;
+    /// The context id
+    const uint32_t context_id;
     /// The underlying rope
     rope::Rope text;
     /// The external script (if any)
@@ -204,7 +204,7 @@ class Script {
 
    public:
     /// Constructor
-    Script(uint32_t script_id = 1);
+    Script(uint32_t context_id = 1);
 
     /// Insert a unicode codepoint at an offset
     void InsertCharAt(size_t offset, uint32_t unicode);

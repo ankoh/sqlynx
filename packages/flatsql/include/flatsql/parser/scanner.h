@@ -70,7 +70,7 @@ class Scanner {
 
    protected:
     /// Constructor
-    Scanner(const rope::Rope& text, uint32_t script_id);
+    Scanner(const rope::Rope& text, uint32_t context_id);
     /// Delete the copy constructor
     Scanner(const Scanner& other) = delete;
     /// Delete the copy assignment
@@ -79,7 +79,7 @@ class Scanner {
    public:
     /// Scan input and produce all tokens
     static std::pair<std::shared_ptr<ScannedScript>, proto::StatusCode> Scan(const rope::Rope& text,
-                                                                             uint32_t script_id);
+                                                                             uint32_t context_id);
 };
 
 }  // namespace parser
