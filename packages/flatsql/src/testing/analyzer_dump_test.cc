@@ -52,8 +52,8 @@ static void writeTables(pugi::xml_node root, const AnalyzedScript& target, const
                         const AnalyzedScript* external) {
     for (auto& table_decl : target.tables) {
         auto xml_tbl = root.append_child("table");
-        assert(table_decl.ast_node_id != 0xFFFFFFFF);
-        WriteLocation(xml_tbl, target.parsed_script->nodes[table_decl.ast_node_id].location(),
+        assert(table_decl.ast_node_id.has_value());
+        WriteLocation(xml_tbl, target.parsed_script->nodes[*table_decl.ast_node_id].location(),
                       target.parsed_script->scanned_script->GetInput());
         // Write child columns
         for (size_t i = 0; i < table_decl.column_count; ++i) {
@@ -69,8 +69,8 @@ static void writeTables(pugi::xml_node root, const AnalyzedScript& target, const
             } else {
                 xml_col.append_attribute("name").set_value("?");
             }
-            if (auto node_id = column_decl.ast_node_id; node_id != 0xFFFFFFFF) {
-                WriteLocation(xml_col, target.parsed_script->nodes[node_id].location(),
+            if (auto node_id = column_decl.ast_node_id; node_id.has_value()) {
+                WriteLocation(xml_col, target.parsed_script->nodes[*node_id].location(),
                               target.parsed_script->scanned_script->GetInput());
             }
         }
@@ -113,8 +113,8 @@ void AnalyzerDumpTest::EncodeScript(pugi::xml_node root, const AnalyzedScript& m
         if (ref.table_id) {
             xml_ref.append_attribute("table").set_value(ref.table_id.GetIndex());
         }
-        assert(ref.ast_node_id != 0xFFFFFFFF);
-        WriteLocation(xml_ref, main.parsed_script->nodes[ref.ast_node_id].location(),
+        assert(ref.ast_node_id.has_value());
+        WriteLocation(xml_ref, main.parsed_script->nodes[*ref.ast_node_id].location(),
                       main.parsed_script->scanned_script->GetInput());
     }
 
@@ -127,11 +127,11 @@ void AnalyzerDumpTest::EncodeScript(pugi::xml_node root, const AnalyzedScript& m
         if (ref.table_id) {
             xml_ref.append_attribute("table").set_value(ref.table_id.GetIndex());
         }
-        if (ref.column_id != 0xFFFFFFFF) {
-            xml_ref.append_attribute("column").set_value(ref.column_id);
+        if (ref.column_id.has_value()) {
+            xml_ref.append_attribute("column").set_value(*ref.column_id);
         }
-        assert(ref.ast_node_id != 0xFFFFFFFF);
-        WriteLocation(xml_ref, main.parsed_script->nodes[ref.ast_node_id].location(),
+        assert(ref.ast_node_id.has_value());
+        WriteLocation(xml_ref, main.parsed_script->nodes[*ref.ast_node_id].location(),
                       main.parsed_script->scanned_script->GetInput());
     }
 
@@ -139,7 +139,8 @@ void AnalyzerDumpTest::EncodeScript(pugi::xml_node root, const AnalyzedScript& m
     for (auto& edge : main.graph_edges) {
         auto xml_edge = xml_main_query_graph.append_child("edge");
         xml_edge.append_attribute("op").set_value(proto::EnumNameExpressionOperator(edge.expression_operator));
-        WriteLocation(xml_edge, main.parsed_script->nodes[edge.ast_node_id].location(),
+        assert(edge.ast_node_id.has_value());
+        WriteLocation(xml_edge, main.parsed_script->nodes[*edge.ast_node_id].location(),
                       main.parsed_script->scanned_script->GetInput());
         for (size_t i = 0; i < edge.node_count_left; ++i) {
             auto& node = main.graph_edge_nodes[edge.nodes_begin + i];
