@@ -414,7 +414,7 @@ ScriptCursor::ScriptCursor(const AnalyzedScript& analyzed, size_t text_offset) :
         // Part of a table node?
         table_id = std::nullopt;
         for (auto& table : analyzed.tables) {
-            if (cursor_path_nodes.contains(table.ast_node_id)) {
+            if (table.ast_node_id.has_value() && cursor_path_nodes.contains(*table.ast_node_id)) {
                 table_id = table.ast_node_id;
                 break;
             }
@@ -424,7 +424,7 @@ ScriptCursor::ScriptCursor(const AnalyzedScript& analyzed, size_t text_offset) :
         table_reference_id = std::nullopt;
         for (size_t i = 0; i < analyzed.table_references.size(); ++i) {
             auto& table_ref = analyzed.table_references[i];
-            if (cursor_path_nodes.contains(table_ref.ast_node_id)) {
+            if (table_ref.ast_node_id.has_value() && cursor_path_nodes.contains(*table_ref.ast_node_id)) {
                 table_reference_id = i;
                 break;
             }
@@ -434,7 +434,7 @@ ScriptCursor::ScriptCursor(const AnalyzedScript& analyzed, size_t text_offset) :
         column_reference_id = std::nullopt;
         for (size_t i = 0; i < analyzed.column_references.size(); ++i) {
             auto& column_ref = analyzed.column_references[i];
-            if (cursor_path_nodes.contains(column_ref.ast_node_id)) {
+            if (column_ref.ast_node_id.has_value() && cursor_path_nodes.contains(*column_ref.ast_node_id)) {
                 column_reference_id = i;
                 break;
             }
@@ -445,14 +445,14 @@ ScriptCursor::ScriptCursor(const AnalyzedScript& analyzed, size_t text_offset) :
         for (size_t ei = 0; ei < analyzed.graph_edges.size(); ++ei) {
             auto& edge = analyzed.graph_edges[ei];
             auto nodes_begin = edge.nodes_begin;
-            if (cursor_path_nodes.contains(edge.ast_node_id)) {
+            if (edge.ast_node_id.has_value() && cursor_path_nodes.contains(*edge.ast_node_id)) {
                 query_edge_id = ei;
                 break;
             }
             for (size_t ni = 0; ni < (edge.node_count_left + edge.node_count_right); ++ni) {
                 auto& edge_node = analyzed.graph_edge_nodes[nodes_begin + ni];
                 auto column_ref = analyzed.column_references[edge_node.column_reference_id];
-                if (cursor_path_nodes.contains(column_ref.ast_node_id)) {
+                if (column_ref.ast_node_id.has_value() && cursor_path_nodes.contains(*column_ref.ast_node_id)) {
                     query_edge_id = ei;
                     break;
                 }
