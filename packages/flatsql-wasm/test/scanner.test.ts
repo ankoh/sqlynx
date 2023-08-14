@@ -21,7 +21,7 @@ const Token = flatsql.proto.ScannerTokenType;
 
 describe('FlatSQL Scanner', () => {
     it(`Character Sequence`, () => {
-        const script = fsql!.createScript();
+        const script = fsql!.createScript(1);
         let tmp = new flatsql.proto.ScannedScript();
 
         let size = 0;
@@ -69,7 +69,7 @@ describe('FlatSQL Scanner', () => {
                 textRange: [number, number],
                 expectedFiltered: [number, number],
             ) => {
-                const script = fsql!.createScript();
+                const script = fsql!.createScript(1);
                 script.insertTextAt(0, text);
                 const scanResult = script.scan();
                 const scannedScript = scanResult.read(new flatsql.proto.ScannedScript());

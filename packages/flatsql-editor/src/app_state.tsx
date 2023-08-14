@@ -128,7 +128,7 @@ export function createDefaultScript(key: ScriptKey) {
 export function createEmptyScript(key: ScriptKey, api: flatsql.FlatSQL) {
     const script: ScriptData = {
         scriptKey: key,
-        script: api.createScript(),
+        script: api.createScript(key),
         metadata: generateBlankScript(),
         loading: {
             status: LoadingStatus.SUCCEEDED,

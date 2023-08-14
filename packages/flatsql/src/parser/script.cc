@@ -219,6 +219,9 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
     for (auto& table : tables) {
         out.tables.push_back(table);
     }
+    for (auto& table_col : table_columns) {
+        out.table_columns.push_back(table_col);
+    }
     for (auto& table_ref : table_references) {
         out.table_references.push_back(table_ref);
     }

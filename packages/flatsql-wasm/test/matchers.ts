@@ -17,6 +17,7 @@ export function expectTables(
     analyzed: flatsql.proto.AnalyzedScript,
     tables: TestTable[],
 ) {
+    expect(analyzed.tablesLength()).toEqual(tables.length);
     for (let i = 0; i < tables.length; ++i) {
         const table = analyzed.tables(i)!;
         const tableName = table.tableName()!;

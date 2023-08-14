@@ -31,7 +31,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
 describe('FlatSQL TPCH Parsing', () => {
     it(`Schema`, () => {
         const text = TPCH_SCHEMA;
-        const script = fsql!.createScript();
+        const script = fsql!.createScript(1);
         script.insertTextAt(0, text);
 
         // Parse the script
@@ -159,7 +159,7 @@ order by
     p_partkey
 limit 100
         `;
-        const script = fsql!.createScript();
+        const script = fsql!.createScript(2);
         script.insertTextAt(0, text);
 
         // Parse the script
