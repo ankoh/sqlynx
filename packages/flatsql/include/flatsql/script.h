@@ -27,14 +27,6 @@ using NodeID = uint32_t;
 using NameID = uint32_t;
 using StatementID = uint32_t;
 
-constexpr bool allowZeroContext() {
-#ifdef NDEBUG
-    return true;
-#else
-    return false;
-#endif
-}
-
 class ScannedScript {
    public:
     /// The context id

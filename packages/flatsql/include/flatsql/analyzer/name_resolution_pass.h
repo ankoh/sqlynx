@@ -49,9 +49,9 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// The external table columns
     std::vector<proto::TableColumn> external_table_columns;
     /// The external name mapping
-    ankerl::unordered_dense::map<NameID, Analyzer::ID> external_names;
+    ankerl::unordered_dense::map<NameID, FID> external_names;
     /// The external table map
-    ankerl::unordered_dense::map<Analyzer::TableKey, Analyzer::ID, Analyzer::TableKey::Hasher> external_table_ids;
+    ankerl::unordered_dense::map<Analyzer::TableKey, FID, Analyzer::TableKey::Hasher> external_table_ids;
 
     /// The state of all visited nodes with yet-to-visit parents
     std::vector<NodeState> node_states;
@@ -62,9 +62,9 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// The free-list for pending table columns
     OverlayList<proto::TableColumn> pending_columns_free_list;
     /// The tables that are in scope
-    ankerl::unordered_dense::map<Analyzer::TableKey, Analyzer::ID, Analyzer::TableKey::Hasher> scope_tables;
+    ankerl::unordered_dense::map<Analyzer::TableKey, FID, Analyzer::TableKey::Hasher> scope_tables;
     /// The columns that are in scope
-    ankerl::unordered_dense::map<Analyzer::ColumnKey, std::pair<Analyzer::ID, size_t>, Analyzer::ColumnKey::Hasher>
+    ankerl::unordered_dense::map<Analyzer::ColumnKey, std::pair<FID, size_t>, Analyzer::ColumnKey::Hasher>
         scope_columns;
 
     /// The tables

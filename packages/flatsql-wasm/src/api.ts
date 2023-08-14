@@ -204,17 +204,17 @@ export class FlatSQL {
 }
 
 export class FlatID {
-    /// Is a null id?
-    public static isNull(value: bigint): boolean {
-        return value == 0xffffffffn;
-    }
     /// Get the context id
-    public static GetContext(value: bigint): number {
+    public static getContext(value: bigint): number {
         return Number(value >> 32n);
     }
     /// Mask index
     public static getIndex(value: bigint): number {
         return Number(value & 0xffffffffn);
+    }
+    /// Is a null id?
+    public static isNull(value: bigint): boolean {
+        return FlatID.getIndex(value) == 0xffffffff;
     }
     /// Read a name
     public static readName(
@@ -226,7 +226,7 @@ export class FlatID {
         if (FlatID.isNull(value)) {
             return null;
         }
-        const key = FlatID.GetContext(value);
+        const key = FlatID.getContext(value);
         return scripts[key]?.nameDictionary(FlatID.getIndex(value)) ?? null;
     }
     /// Read a table name

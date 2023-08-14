@@ -24,7 +24,7 @@ std::string print_name(const Script& script, const proto::QualifiedTableName& na
     auto& names = scanned->name_dictionary;
     std::stringstream out;
     size_t out_idx = 0;
-    auto write = [&](Analyzer::ID name_id) {
+    auto write = [&](FID name_id) {
         if (!name_id.IsNull()) {
             assert(name_id.GetContext() == script.context_id);
             auto name = scanned->name_dictionary[name_id.GetIndex()].first;
@@ -34,9 +34,9 @@ std::string print_name(const Script& script, const proto::QualifiedTableName& na
             out << name;
         }
     };
-    write(Analyzer::ID(name.database_name(), Raw));
-    write(Analyzer::ID(name.schema_name(), Raw));
-    write(Analyzer::ID(name.table_name(), Raw));
+    write(FID(name.database_name(), Raw));
+    write(FID(name.schema_name(), Raw));
+    write(FID(name.table_name(), Raw));
     return out.str();
 }
 
@@ -45,7 +45,7 @@ std::string print_name(const Script& script, const proto::QualifiedColumnName& n
     auto& names = scanned->name_dictionary;
     std::stringstream out;
     size_t out_idx = 0;
-    auto write = [&](Analyzer::ID name_id) {
+    auto write = [&](FID name_id) {
         if (!name_id.IsNull()) {
             assert(name_id.GetContext() == script.context_id);
             auto name = scanned->name_dictionary[name_id.GetIndex()].first;
@@ -55,8 +55,8 @@ std::string print_name(const Script& script, const proto::QualifiedColumnName& n
             out << name;
         }
     };
-    write(Analyzer::ID(name.table_alias(), Raw));
-    write(Analyzer::ID(name.column_name(), Raw));
+    write(FID(name.table_alias(), Raw));
+    write(FID(name.column_name(), Raw));
     return out.str();
 }
 
