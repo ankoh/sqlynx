@@ -18,6 +18,27 @@ beforeAll(async () => {
 });
 
 describe('FlatSQL Analyzer', () => {
+    it('external context collision', () => {
+        const schema_script = fsql!.createScript(1);
+        schema_script.insertTextAt(0, 'create table foo(a int);');
+        schema_script.scan().delete();
+        schema_script.parse().delete();
+        schema_script.analyze().delete();
+
+        const main_script = fsql!.createScript(1);
+        main_script.insertTextAt(0, 'select * from foo;');
+        schema_script.scan().delete();
+        schema_script.parse().delete();
+
+        expect(() => {
+            const analyzed = main_script.analyze(schema_script);
+            analyzed.delete();
+        }).toThrow(new Error('External context is ambiguous'));
+
+        schema_script.delete();
+        main_script.delete();
+    });
+
     it(`external ref`, () => {
         const ext_script = fsql!.createScript(1);
         ext_script.insertTextAt(0, 'create table foo(a int);');
@@ -56,6 +77,7 @@ describe('FlatSQL Analyzer', () => {
         ext_scanner_res.delete();
         ext_parser_res.delete();
         ext_analyzer_res.delete();
+
         main_scanner_res.delete();
         main_parser_res.delete();
         main_analyzer_res.delete();
