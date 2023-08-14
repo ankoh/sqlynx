@@ -203,22 +203,28 @@ export class FlatSQL {
     }
 }
 
-export class QualifiedID {
+export namespace QualifiedID {
+    export type Value = bigint;
+
+    /// Create the qualified id
+    export function create(context: number, value: number): bigint {
+        return (BigInt(context) << 32n) | BigInt(value);
+    }
     /// Get the context id
-    public static getContext(value: bigint): number {
+    export function getContext(value: Value): number {
         return Number(value >> 32n);
     }
     /// Mask index
-    public static getIndex(value: bigint): number {
+    export function getIndex(value: Value): number {
         return Number(value & 0xffffffffn);
     }
     /// Is a null id?
-    public static isNull(value: bigint): boolean {
+    export function isNull(value: Value): boolean {
         return QualifiedID.getIndex(value) == 0xffffffff;
     }
     /// Read a name
-    public static readName(
-        value: bigint,
+    export function readName(
+        value: Value,
         scripts: {
             [context: number]: proto.ParsedScript | null;
         },
@@ -230,7 +236,7 @@ export class QualifiedID {
         return scripts[key]?.nameDictionary(QualifiedID.getIndex(value)) ?? null;
     }
     /// Read a table name
-    public static readTableName(
+    export function readTableName(
         name: proto.QualifiedTableName,
         scripts: {
             [context: number]: proto.ParsedScript | null;
@@ -242,7 +248,7 @@ export class QualifiedID {
         return { database, schema, table };
     }
     /// Read a table name
-    public static readColumnName(
+    export function readColumnName(
         name: proto.QualifiedColumnName,
         scripts: {
             [context: number]: proto.ParsedScript | null;
