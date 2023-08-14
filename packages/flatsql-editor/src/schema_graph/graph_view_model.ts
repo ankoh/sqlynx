@@ -92,22 +92,22 @@ export function computeSchemaGraphViewModel(state: AppState): SchemaGraphViewMod
         // Table ID is null?
         // That means we couldn't resolve a table.
         // For now, just skip them.
-        if (flatsql.FlatID.isNull(tableId)) {
+        if (flatsql.QualifiedID.isNull(tableId)) {
             continue;
         }
 
         // Is an external table?
-        const context = flatsql.FlatID.GetContext(tableId);
+        const context = flatsql.QualifiedID.GetContext(tableId);
         const analyzed = analyzedScripts[context] ?? null;
 
         if (analyzed) {
-            const table = analyzed.tables(flatsql.FlatID.getIndex(tableId), tmpTable);
-            const tableName = flatsql.FlatID.readTableName(table?.tableName()!, parsedScripts);
+            const table = analyzed.tables(flatsql.QualifiedID.getIndex(tableId), tmpTable);
+            const tableName = flatsql.QualifiedID.readTableName(table?.tableName()!, parsedScripts);
             const columns: TableColumn[] = [];
             const columnsBegin = table!.columnsBegin();
             for (let j = 0; j < table!.columnCount(); ++j) {
                 const column = analyzed.tableColumns(columnsBegin + j, tmpTableColumn);
-                const columnName = flatsql.FlatID.readName(column?.columnName()!, parsedScripts)!;
+                const columnName = flatsql.QualifiedID.readName(column?.columnName()!, parsedScripts)!;
                 columns.push({
                     name: columnName,
                 });

@@ -21,9 +21,9 @@ export function expectTables(
         const table = analyzed.tables(i)!;
         const tableName = table.tableName()!;
         const parsedScripts = {
-            [parsed.scriptId()]: parsed,
+            [parsed.contextId()]: parsed,
         };
-        const resolvedName = flatsql.FlatID.readTableName(tableName, parsedScripts);
+        const resolvedName = flatsql.QualifiedID.readTableName(tableName, parsedScripts);
         expect(resolvedName).toEqual({
             database: null,
             schema: null,
@@ -32,7 +32,7 @@ export function expectTables(
         for (let j = 0; j < tables[i].columns.length; ++j) {
             expect(j).toBeLessThan(table.columnCount());
             const column = analyzed.tableColumns(table.columnsBegin() + j)!;
-            const columnName = flatsql.FlatID.readName(column.columnName(), parsedScripts);
+            const columnName = flatsql.QualifiedID.readName(column.columnName(), parsedScripts);
             expect(columnName).toEqual(tables[i].columns[j]);
         }
     }
