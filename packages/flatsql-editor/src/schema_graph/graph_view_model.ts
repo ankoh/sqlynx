@@ -97,11 +97,12 @@ export function computeSchemaGraphViewModel(state: AppState): SchemaGraphViewMod
         }
 
         // Is an external table?
-        const context = flatsql.QualifiedID.GetContext(tableId);
+        const context = flatsql.QualifiedID.getContext(tableId);
         const analyzed = analyzedScripts[context] ?? null;
 
         if (analyzed) {
-            const table = analyzed.tables(flatsql.QualifiedID.getIndex(tableId), tmpTable);
+            const tableIdx = flatsql.QualifiedID.getIndex(tableId);
+            const table = analyzed.tables(tableIdx, tmpTable);
             const tableName = flatsql.QualifiedID.readTableName(table?.tableName()!, parsedScripts);
             const columns: TableColumn[] = [];
             const columnsBegin = table!.columnsBegin();

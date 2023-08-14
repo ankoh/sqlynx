@@ -32,7 +32,7 @@ interface ExpectedCursor {
 describe('FlatSQL Cursor', () => {
     it('simple script', () => {
         const scriptText = 'select * from A b, C d where b.x = d.y';
-        const script = fsql!.createScript();
+        const script = fsql!.createScript(1);
         script.insertTextAt(0, scriptText);
 
         const scannedBuffer = script.scan();

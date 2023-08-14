@@ -165,7 +165,7 @@ export class FlatSQL {
         return instanceRef.instance;
     }
 
-    public createScript(id: number = 1): FlatSQLScript {
+    public createScript(id: number): FlatSQLScript {
         const scriptPtr = this.instanceExports.flatsql_script_new(id);
         return new FlatSQLScript(this, scriptPtr);
     }
