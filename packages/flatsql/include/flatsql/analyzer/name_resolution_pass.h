@@ -39,8 +39,8 @@ class NameResolutionPass : public PassManager::LTRPass {
     ParsedScript& parsed_program;
     /// The attribute index.
     AttributeIndex& attribute_index;
-    /// The script id
-    const uint32_t script_id;
+    /// The context id
+    const uint32_t context_id;
     /// The program nodes
     std::span<const proto::Node> nodes;
 

@@ -26,7 +26,7 @@ std::string print_name(const Script& script, const proto::QualifiedTableName& na
     size_t out_idx = 0;
     auto write = [&](Analyzer::ID name_id) {
         if (!name_id.IsNull()) {
-            assert(name_id.GetScriptId() == script.script_id);
+            assert(name_id.GetContext() == script.context_id);
             auto name = scanned->name_dictionary[name_id.GetIndex()].first;
             if (out_idx++ > 0) {
                 out << ".";
@@ -47,7 +47,7 @@ std::string print_name(const Script& script, const proto::QualifiedColumnName& n
     size_t out_idx = 0;
     auto write = [&](Analyzer::ID name_id) {
         if (!name_id.IsNull()) {
-            assert(name_id.GetScriptId() == script.script_id);
+            assert(name_id.GetContext() == script.context_id);
             auto name = scanned->name_dictionary[name_id.GetIndex()].first;
             if (out_idx++ > 0) {
                 out << ".";
