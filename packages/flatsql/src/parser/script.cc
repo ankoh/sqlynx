@@ -342,7 +342,9 @@ std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(Script* external) 
     std::shared_ptr<AnalyzedScript> external_analyzed;
     if (external) {
         external_analyzed = external->analyzed_script;
-        assert(context_id != external->context_id);
+        if (context_id == external->context_id) {
+            return {nullptr, proto::StatusCode::EXTERNAL_CONTEXT_COLLISION};
+        }
     }
 
     // Analyze a script

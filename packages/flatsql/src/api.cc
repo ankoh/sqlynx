@@ -91,6 +91,9 @@ static FFIResult* packError(proto::StatusCode status) {
         case proto::StatusCode::COMPLETION_DATA_INVALID:
             message = "Completion data is invalid";
             break;
+        case proto::StatusCode::EXTERNAL_CONTEXT_COLLISION:
+            message = "Collision on external context identifier";
+            break;
         case proto::StatusCode::OK:
             message = "";
             break;
