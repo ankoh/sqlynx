@@ -172,7 +172,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
             const [scriptKey, content] = action.value;
             const data = state.scripts[scriptKey];
             // Create the FlatSQL script and insert the text
-            const newScript = state.instance!.createScript();
+            const newScript = state.instance!.createScript(scriptKey);
             newScript.insertTextAt(0, content);
             // Create new state
             const newState = {
