@@ -301,7 +301,7 @@ flatbuffers::Offset<proto::SchemaGraphLayout> SchemaGraph::Pack(flatbuffers::Fla
     for (uint32_t i = 0; i < nodes.size(); ++i) {
         proto::SchemaGraphVertex pos{nodes[i].position.x - nodes[i].width / 2 + config.table_margin / 2,
                                      nodes[i].position.y - nodes[i].height / 2 + config.table_margin / 2};
-        proto::SchemaGraphNode proto_node{nodes[i].table_id, pos, nodes[i].width - config.table_margin,
+        proto::SchemaGraphNode proto_node{nodes[i].table_id.Pack(), pos, nodes[i].width - config.table_margin,
                                           nodes[i].height - config.table_margin};
         layout.nodes[i] = proto_node;
     }

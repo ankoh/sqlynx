@@ -27,10 +27,8 @@ struct QualifiedID {
     inline uint32_t GetIndex() const { return value; }
     /// Is a null id?
     inline bool IsNull() const { return GetIndex() == std::numeric_limits<uint32_t>::max(); }
-    /// Convert to 64 bit integer
-    operator uint64_t() const { return (static_cast<uint64_t>(context_id) << 32) | value; }
-    /// Convert to bool
-    operator bool() const { return !IsNull(); }
+    /// Is a null id?
+    inline uint64_t Pack() const { return (static_cast<uint64_t>(context_id) << 32) | value; }
 
     /// Comparison
     bool operator==(const QualifiedID& other) const { return context_id == other.context_id && value == other.value; }

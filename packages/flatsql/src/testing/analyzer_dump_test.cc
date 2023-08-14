@@ -60,8 +60,7 @@ static void writeTables(pugi::xml_node root, const AnalyzedScript& target, const
             auto table_idx = table_decl.columns_begin + i;
             auto& column_decl = target.table_columns[table_idx];
             auto xml_col = xml_tbl.append_child("column");
-            if (column_decl.column_name) {
-                assert(!column_decl.column_name.IsNull());
+            if (!column_decl.column_name.IsNull()) {
                 assert(column_decl.column_name.GetContext() == target.context_id);
                 std::string column_name{
                     target.parsed_script->scanned_script->name_dictionary[column_decl.column_name.GetIndex()].first};
@@ -110,7 +109,7 @@ void AnalyzerDumpTest::EncodeScript(pugi::xml_node root, const AnalyzedScript& m
                    : (ref.table_id.GetContext() == main.context_id) ? "internal"
                                                                     : "external";
         auto xml_ref = xml_main_table_refs.append_child(tag);
-        if (ref.table_id) {
+        if (!ref.table_id.IsNull()) {
             xml_ref.append_attribute("table").set_value(ref.table_id.GetIndex());
         }
         assert(ref.ast_node_id.has_value());
@@ -124,7 +123,7 @@ void AnalyzerDumpTest::EncodeScript(pugi::xml_node root, const AnalyzedScript& m
                    : (ref.table_id.GetContext() == main.context_id) ? "internal"
                                                                     : "external";
         auto xml_ref = xml_main_col_refs.append_child(tag);
-        if (ref.table_id) {
+        if (!ref.table_id.IsNull()) {
             xml_ref.append_attribute("table").set_value(ref.table_id.GetIndex());
         }
         if (ref.column_id.has_value()) {
