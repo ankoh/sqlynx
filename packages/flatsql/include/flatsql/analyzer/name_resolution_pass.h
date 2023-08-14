@@ -20,13 +20,13 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// We traverse the AST in a depth-first post-order, means children before parents.
     struct NodeState {
         /// The column definitions in the subtree
-        OverlayList<proto::TableColumn> table_columns;
+        OverlayList<AnalyzedScript::TableColumn> table_columns;
         /// The tables in scope
-        OverlayList<proto::Table> tables;
+        OverlayList<AnalyzedScript::Table> tables;
         /// The table references in scope
-        OverlayList<proto::TableReference> table_references;
+        OverlayList<AnalyzedScript::TableReference> table_references;
         /// The column references in scope
-        OverlayList<proto::ColumnReference> column_references;
+        OverlayList<AnalyzedScript::ColumnReference> column_references;
 
         /// Merge two states
         void Merge(NodeState&& other);
@@ -45,11 +45,11 @@ class NameResolutionPass : public PassManager::LTRPass {
     std::span<const proto::Node> nodes;
 
     /// The external tables
-    std::vector<proto::Table> external_tables;
+    std::vector<AnalyzedScript::Table> external_tables;
     /// The external table columns
-    std::vector<proto::TableColumn> external_table_columns;
+    std::vector<AnalyzedScript::TableColumn> external_table_columns;
     /// The external name mapping
-    ankerl::unordered_dense::map<NameID, FID> external_names;
+    ankerl::unordered_dense::map<FID, FID, FID::Hasher> external_names;
     /// The external table map
     ankerl::unordered_dense::map<Analyzer::TableKey, FID, Analyzer::TableKey::Hasher> external_table_ids;
 
@@ -58,9 +58,9 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// The name path buffer
     std::vector<NameID> name_path_buffer;
     /// The pending table columns
-    ChunkBuffer<OverlayList<proto::TableColumn>::Node, 16> pending_columns;
+    ChunkBuffer<OverlayList<AnalyzedScript::TableColumn>::Node, 16> pending_columns;
     /// The free-list for pending table columns
-    OverlayList<proto::TableColumn> pending_columns_free_list;
+    OverlayList<AnalyzedScript::TableColumn> pending_columns_free_list;
     /// The tables that are in scope
     ankerl::unordered_dense::map<Analyzer::TableKey, FID, Analyzer::TableKey::Hasher> scope_tables;
     /// The columns that are in scope
@@ -68,24 +68,24 @@ class NameResolutionPass : public PassManager::LTRPass {
         scope_columns;
 
     /// The tables
-    ChunkBuffer<OverlayList<proto::Table>::Node, 16> tables;
+    ChunkBuffer<OverlayList<AnalyzedScript::Table>::Node, 16> tables;
     /// The ordered table columns
-    ChunkBuffer<proto::TableColumn, 16> table_columns;
+    ChunkBuffer<AnalyzedScript::TableColumn, 16> table_columns;
     /// The table references
-    ChunkBuffer<OverlayList<proto::TableReference>::Node, 16> table_references;
+    ChunkBuffer<OverlayList<AnalyzedScript::TableReference>::Node, 16> table_references;
     /// The column references
-    ChunkBuffer<OverlayList<proto::ColumnReference>::Node, 16> column_references;
+    ChunkBuffer<OverlayList<AnalyzedScript::ColumnReference>::Node, 16> column_references;
     /// The join edges
-    ChunkBuffer<OverlayList<proto::QueryGraphEdge>::Node, 16> graph_edges;
+    ChunkBuffer<OverlayList<AnalyzedScript::QueryGraphEdge>::Node, 16> graph_edges;
     /// The join edge nodes
-    ChunkBuffer<OverlayList<proto::QueryGraphEdgeNode>::Node, 16> graph_edge_nodes;
+    ChunkBuffer<OverlayList<AnalyzedScript::QueryGraphEdgeNode>::Node, 16> graph_edge_nodes;
 
     /// Merge child states into a destination state
     std::span<NameID> ReadNamePath(const sx::Node& node);
     /// Merge child states into a destination state
-    proto::QualifiedTableName ReadQualifiedTableName(const sx::Node* node);
+    AnalyzedScript::QualifiedTableName ReadQualifiedTableName(const sx::Node* node);
     /// Merge child states into a destination state
-    proto::QualifiedColumnName ReadQualifiedColumnName(const sx::Node* column);
+    AnalyzedScript::QualifiedColumnName ReadQualifiedColumnName(const sx::Node* column);
     /// Merge child states into a destination state
     void CloseScope(NodeState& target, uint32_t node_id);
     /// Merge child states into a destination state

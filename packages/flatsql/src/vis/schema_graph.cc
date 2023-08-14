@@ -226,33 +226,32 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
     // Add edge node ids
     edge_nodes.resize(script->graph_edge_nodes.size());
     for (size_t i = 0; i < script->graph_edge_nodes.size(); ++i) {
-        proto::QueryGraphEdgeNode& node = script->graph_edge_nodes[i];
-        FID table_id{script->column_references[node.column_reference_id()].table_id(), Raw};
+        AnalyzedScript::QueryGraphEdgeNode& node = script->graph_edge_nodes[i];
+        FID table_id = script->column_references[node.column_reference_id].table_id;
         edge_nodes[i] = table_id.IsNull() ? NULL_TABLE_ID : create_node_id(table_id, *script);
     }
     // Add edges
     edges.resize(script->graph_edges.size());
     for (size_t i = 0; i < script->graph_edges.size(); ++i) {
-        proto::QueryGraphEdge& edge = script->graph_edges[i];
-        edges[i] = {edge.nodes_begin(), edge.node_count_left(), edge.node_count_right(), edge.expression_operator()};
+        AnalyzedScript::QueryGraphEdge& edge = script->graph_edges[i];
+        edges[i] = {edge.nodes_begin, edge.node_count_left, edge.node_count_right, edge.expression_operator};
     }
 
     // Collect nˆ2 adjacency pairs for now.
     // We might want to model hyper-edges differently for edge attraction in the future
     std::vector<std::pair<size_t, size_t>> adjacency_pairs;
     for (size_t i = 0; i < script->graph_edges.size(); ++i) {
-        proto::QueryGraphEdge& edge = script->graph_edges[i];
+        AnalyzedScript::QueryGraphEdge& edge = script->graph_edges[i];
         // Emit nˆ2 adjacency pairs with patched node ids
-        for (size_t l = 0; l < edge.node_count_left(); ++l) {
-            size_t lcol = script->graph_edge_nodes[edge.nodes_begin() + l].column_reference_id();
-            FID ltid{script->column_references[lcol].table_id(), Raw};
+        for (size_t l = 0; l < edge.node_count_left; ++l) {
+            size_t lcol = script->graph_edge_nodes[edge.nodes_begin + l].column_reference_id;
+            FID ltid = script->column_references[lcol].table_id;
             if (ltid.IsNull()) continue;
             auto ln = create_node_id(ltid, *s);
             // Emit pair for each right node
-            for (size_t r = 0; r < edge.node_count_right(); ++r) {
-                size_t rcol =
-                    script->graph_edge_nodes[edge.nodes_begin() + edge.node_count_left() + r].column_reference_id();
-                FID rtid{script->column_references[rcol].table_id(), Raw};
+            for (size_t r = 0; r < edge.node_count_right; ++r) {
+                size_t rcol = script->graph_edge_nodes[edge.nodes_begin + edge.node_count_left + r].column_reference_id;
+                FID rtid = script->column_references[rcol].table_id;
                 if (rtid.IsNull()) continue;
                 auto rn = create_node_id(rtid, *s);
                 adjacency_pairs.emplace_back(ln, rn);
