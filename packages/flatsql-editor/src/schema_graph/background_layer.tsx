@@ -6,9 +6,9 @@ interface Props {
 
 export function BackgroundLayer(props: Props) {
     return (
-        <svg data-testid="rf__background" className={props.className}>
+        <svg className={props.className}>
             <pattern
-                id="pattern-1undefined"
+                id="dots"
                 x="0"
                 y="0"
                 width="16"
@@ -18,7 +18,7 @@ export function BackgroundLayer(props: Props) {
             >
                 <circle cx="0.5" cy="0.5" r="0.5" fill="#aaa"></circle>
             </pattern>
-            <rect x="0" y="0" width="100%" height="100%" fill="url(#pattern-1undefined)"></rect>
+            <rect x="0" y="0" width="100%" height="100%" fill="url(#dots)"></rect>
         </svg>
     );
 }
