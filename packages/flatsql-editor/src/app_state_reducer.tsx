@@ -404,28 +404,67 @@ function deriveScriptFocusFromCursor(
         tableColumns: new Map(),
     };
 
+    const tmpAnalyzed = new flatsql.proto.AnalyzedScript();
+    let focusedTableId: flatsql.QualifiedID.Value | null = null;
+    let focusedTableColumnId: number | null = null;
+    let focusedQueryEdgeId: flatsql.QualifiedID.Value | null = null;
+    const focusedGraphConnectionId = new Set<GraphConnectionId>();
+
     // Focus a table definition?
     const tableId = flatsql.QualifiedID.create(scriptKey, cursor.tableId);
     if (!flatsql.QualifiedID.isNull(tableId)) {
-        // XXX
+        focusedTableId = tableId;
     }
 
     // Focus a column reference?
     const columnRefId = flatsql.QualifiedID.create(scriptKey, cursor.columnReferenceId);
     if (!flatsql.QualifiedID.isNull(columnRefId)) {
-        // XXX
+        const ctxKey = flatsql.QualifiedID.getContext(columnRefId);
+        const ctxData = scriptData[ctxKey];
+        if (ctxData !== undefined && ctxData.processed.analyzed !== null) {
+            const ctxAnalyzed = ctxData.processed.analyzed.read(tmpAnalyzed);
+            const columnRef = ctxAnalyzed.columnReferences(flatsql.QualifiedID.getIndex(columnRefId))!;
+            focusedTableId = columnRef.tableId();
+            focusedTableColumnId = columnRef.columnId();
+        }
     }
 
     // Focus a table reference?
     const tableRefId = flatsql.QualifiedID.create(scriptKey, cursor.tableReferenceId);
     if (!flatsql.QualifiedID.isNull(tableRefId)) {
-        // XXX
+        const ctxKey = flatsql.QualifiedID.getContext(columnRefId);
+        const ctxData = scriptData[ctxKey];
+        if (ctxData !== undefined && ctxData.processed.analyzed !== null) {
+            const ctxAnalyzed = ctxData.processed.analyzed.read(tmpAnalyzed);
+            const tableRef = ctxAnalyzed.tableReferences(flatsql.QualifiedID.getIndex(tableRefId))!;
+            focusedTableId = tableRef.tableId();
+        }
     }
 
     // Focus a query graph edge?
     const queryEdgeId = flatsql.QualifiedID.create(scriptKey, cursor.queryEdgeId);
     if (!flatsql.QualifiedID.isNull(queryEdgeId)) {
-        // XXX
+        focusedQueryEdgeId = queryEdgeId;
+        const ctxKey = flatsql.QualifiedID.getContext(columnRefId);
+        const ctxData = scriptData[ctxKey];
+
+        // Collect all graph connection ids that are associated with this query graph edge
+        const connections = new Set<GraphConnectionId>();
+        if (ctxData !== undefined && ctxData.processed.analyzed !== null) {
+            const ctxAnalyzed = ctxData.processed.analyzed.read(tmpAnalyzed);
+            const queryEdge = ctxAnalyzed.graphEdges(flatsql.QualifiedID.getIndex(queryEdgeId))!;
+            const countLeft = queryEdge.nodeCountLeft();
+            const countRight = queryEdge.nodeCountRight();
+            for (let i = 0; i < countLeft; ++i) {
+                const edgeNodeLeft = ctxAnalyzed.graphEdgeNodes(queryEdge.nodesBegin() + i)!;
+                const columnRefLeft = ctxAnalyzed.columnReferences(edgeNodeLeft.columnReferenceId());
+
+                for (let j = 0; j < countRight; ++j) {
+                    const edgeNodeRight = ctxAnalyzed.graphEdgeNodes(queryEdge.nodesBegin() + countLeft + j)!;
+                    const columnRefRight = ctxAnalyzed.columnReferences(edgeNodeLeft.columnReferenceId());
+                }
+            }
+        }
     }
     return focus;
 }
