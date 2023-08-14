@@ -43,6 +43,15 @@ proto:
 lib_o0:
 	mkdir -p ${LIB_DEBUG_DIR}
 	cmake -S ${LIB_SOURCE_DIR} -B ${LIB_DEBUG_DIR} \
+		-DCMAKE_BUILD_TYPE=Debug \
+		-DCMAKE_EXPORT_COMPILE_COMMANDS=1
+	ln -sf ${LIB_DEBUG_DIR}/compile_commands.json ${LIB_SOURCE_DIR}/compile_commands.json
+	cmake --build ${LIB_DEBUG_DIR} --parallel ${CORES}
+
+.PHONY: lib_o0
+lib_o0_cov:
+	mkdir -p ${LIB_DEBUG_DIR}
+	cmake -S ${LIB_SOURCE_DIR} -B ${LIB_DEBUG_DIR} \
 		-DCODE_COVERAGE=1 \
 		-DCMAKE_BUILD_TYPE=Debug \
 		-DCMAKE_EXPORT_COMPILE_COMMANDS=1
