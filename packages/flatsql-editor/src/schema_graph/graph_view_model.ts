@@ -12,7 +12,7 @@ export interface SchemaGraphViewModel {
 
 export interface NodeViewModel {
     nodeId: number;
-    tableId: bigint;
+    tableId: flatsql.QualifiedID.Value;
     name: string;
     x: number;
     y: number;
@@ -30,10 +30,10 @@ export interface EdgeViewModel {
     edgeId: number;
     fromNode: number;
     fromPort: number;
-    fromTable: bigint;
+    fromTable: flatsql.QualifiedID.Value;
     toNode: number;
     toPort: number;
-    toTable: bigint;
+    toTable: flatsql.QualifiedID.Value;
     type: EdgeType;
     path: string;
 }
