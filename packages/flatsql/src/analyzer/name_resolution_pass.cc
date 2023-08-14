@@ -49,8 +49,8 @@ void NameResolutionPass::RegisterExternalTables(const AnalyzedScript& external) 
     //      If not matching any local name, create new id mapping for external name
 
     // Helper to remap a name id
-    auto map_name = [this](FID name, const AnalyzedScript& external) -> FID {
-        if (name.IsNull()) return FID();
+    auto map_name = [this](QualifiedID name, const AnalyzedScript& external) -> QualifiedID {
+        if (name.IsNull()) return QualifiedID();
         // First check if the external id is already mapped,
         if (auto iter = external_names.find(name); iter != external_names.end()) {
             return iter->second;
@@ -59,7 +59,7 @@ void NameResolutionPass::RegisterExternalTables(const AnalyzedScript& external) 
         if (auto iter = scanned_program.name_dictionary_ids.find(
                 external.parsed_script->scanned_script->name_dictionary[name.GetIndex()].first);
             iter != scanned_program.name_dictionary_ids.end()) {
-            FID mapped_id{scanned_program.context_id, iter->second};
+            QualifiedID mapped_id{scanned_program.context_id, iter->second};
             external_names.insert({name, mapped_id});
             return mapped_id;
         }
@@ -85,7 +85,7 @@ void NameResolutionPass::RegisterExternalTables(const AnalyzedScript& external) 
         name.table_name = map_name(name.table_name, external);
         t.ast_node_id = std::nullopt;
         t.ast_statement_id = std::nullopt;
-        external_table_ids.insert({name, FID(external.context_id, table_id)});
+        external_table_ids.insert({name, QualifiedID(external.context_id, table_id)});
     }
     // Map columns
     for (auto& c : external_table_columns) {
@@ -114,7 +114,7 @@ std::span<NameID> NameResolutionPass::ReadNamePath(const sx::Node& node) {
 }
 
 AnalyzedScript::QualifiedTableName NameResolutionPass::ReadQualifiedTableName(const sx::Node* node) {
-    AnalyzedScript::QualifiedTableName name{std::nullopt, FID(), FID(), FID()};
+    AnalyzedScript::QualifiedTableName name{std::nullopt, QualifiedID(), QualifiedID(), QualifiedID()};
     if (!node) {
         return name;
     }
@@ -122,16 +122,16 @@ AnalyzedScript::QualifiedTableName NameResolutionPass::ReadQualifiedTableName(co
     name.ast_node_id = node - nodes.data();
     switch (name_path.size()) {
         case 3:
-            name.schema_name = FID(context_id, name_path[0]);
-            name.database_name = FID(context_id, name_path[1]);
-            name.table_name = FID(context_id, name_path[2]);
+            name.schema_name = QualifiedID(context_id, name_path[0]);
+            name.database_name = QualifiedID(context_id, name_path[1]);
+            name.table_name = QualifiedID(context_id, name_path[2]);
             break;
         case 2:
-            name.database_name = FID(context_id, name_path[0]);
-            name.table_name = FID(context_id, name_path[1]);
+            name.database_name = QualifiedID(context_id, name_path[0]);
+            name.table_name = QualifiedID(context_id, name_path[1]);
             break;
         case 1:
-            name.table_name = FID(context_id, name_path[0]);
+            name.table_name = QualifiedID(context_id, name_path[0]);
             break;
         default:
             break;
@@ -140,7 +140,7 @@ AnalyzedScript::QualifiedTableName NameResolutionPass::ReadQualifiedTableName(co
 }
 
 AnalyzedScript::QualifiedColumnName NameResolutionPass::ReadQualifiedColumnName(const sx::Node* node) {
-    AnalyzedScript::QualifiedColumnName name{std::nullopt, FID(), FID()};
+    AnalyzedScript::QualifiedColumnName name{std::nullopt, QualifiedID(), QualifiedID()};
     if (!node) {
         return name;
     }
@@ -149,11 +149,11 @@ AnalyzedScript::QualifiedColumnName NameResolutionPass::ReadQualifiedColumnName(
     // Build the qualified column name
     switch (name_path.size()) {
         case 2:
-            name.table_alias = FID(context_id, name_path[0]);
-            name.column_name = FID(context_id, name_path[1]);
+            name.table_alias = QualifiedID(context_id, name_path[0]);
+            name.column_name = QualifiedID(context_id, name_path[1]);
             break;
         case 1:
-            name.column_name = FID(context_id, name_path[0]);
+            name.column_name = QualifiedID(context_id, name_path[0]);
             break;
         default:
             break;
@@ -200,7 +200,7 @@ void NameResolutionPass::ResolveNames(NodeState& state) {
     scope_tables.clear();
     size_t max_column_count = 0;
     for (auto iter = state.tables.begin(); iter != state.tables.end(); ++iter) {
-        FID table_id{context_id, static_cast<uint32_t>(iter.GetBufferIndex())};
+        QualifiedID table_id{context_id, static_cast<uint32_t>(iter.GetBufferIndex())};
         // Table declarations are out of scope if they have a scope root set
         if (iter->ast_scope_root.has_value()) {
             continue;
@@ -220,7 +220,7 @@ void NameResolutionPass::ResolveNames(NodeState& state) {
             continue;
         }
         // Helper to register columns from a table
-        auto register_columns_from = [&](FID tid) {
+        auto register_columns_from = [&](QualifiedID tid) {
             if (tid.GetContext() == context_id) {
                 AnalyzedScript::Table& resolved = tables[tid.GetIndex()].value;
                 for (uint32_t cid = 0; cid < resolved.column_count; ++cid) {
@@ -289,11 +289,11 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                     column_name = column_def_node->children_begin_or_value();
                 }
                 if (auto reused = pending_columns_free_list.PopFront()) {
-                    *reused = AnalyzedScript::TableColumn(node_id, FID(context_id, column_name));
+                    *reused = AnalyzedScript::TableColumn(node_id, QualifiedID(context_id, column_name));
                     node_state.table_columns.PushBack(*reused);
                 } else {
-                    auto& node =
-                        pending_columns.Append(AnalyzedScript::TableColumn(node_id, FID(context_id, column_name)));
+                    auto& node = pending_columns.Append(
+                        AnalyzedScript::TableColumn(node_id, QualifiedID(context_id, column_name)));
                     node_state.table_columns.PushBack(node);
                 }
                 break;
@@ -312,7 +312,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 n.value.ast_node_id = node_id;
                 n.value.ast_statement_id = std::nullopt;
                 n.value.ast_scope_root = std::nullopt;
-                n.value.table_id = FID();
+                n.value.table_id = QualifiedID();
                 n.value.column_id = std::nullopt;
                 n.value.column_name = column_name;
                 node_state.column_references.PushBack(n);
@@ -330,10 +330,10 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 if (auto name_node = attrs[proto::AttributeKey::SQL_TABLEREF_NAME]) {
                     auto name = ReadQualifiedTableName(name_node);
                     // Read a table alias
-                    FID alias = FID();
+                    QualifiedID alias = QualifiedID();
                     auto alias_node = attrs[proto::AttributeKey::SQL_TABLEREF_ALIAS];
                     if (alias_node && alias_node->node_type() == sx::NodeType::NAME) {
-                        alias = FID(context_id, alias_node->children_begin_or_value());
+                        alias = QualifiedID(context_id, alias_node->children_begin_or_value());
                     }
                     // Add table reference
                     auto& n = table_references.Append(AnalyzedScript::TableReference());
@@ -341,7 +341,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                     n.value.ast_node_id = node_id;
                     n.value.ast_statement_id = std::nullopt;
                     n.value.ast_scope_root = std::nullopt;
-                    n.value.table_id = FID();
+                    n.value.table_id = QualifiedID();
                     n.value.table_name = name;
                     n.value.alias_name = alias;
                     node_state.table_references.PushBack(n);

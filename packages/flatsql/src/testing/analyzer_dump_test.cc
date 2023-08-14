@@ -35,7 +35,7 @@ static void quoteIdentifier(std::string& buffer, std::string_view name) {
 }
 
 // Resolve a name
-static std::string_view resolveName(const AnalyzedScript& main, const AnalyzedScript* external, FID name) {
+static std::string_view resolveName(const AnalyzedScript& main, const AnalyzedScript* external, QualifiedID name) {
     if (name.IsNull()) {
         return "null";
     }
@@ -150,7 +150,7 @@ void AnalyzerDumpTest::EncodeScript(pugi::xml_node root, const AnalyzedScript& m
         }
         for (size_t i = 0; i < edge.node_count_right; ++i) {
             auto& node = main.graph_edge_nodes[edge.nodes_begin + edge.node_count_left + i];
-            assert(!FID(main.context_id, node.column_reference_id).IsNull());
+            assert(!QualifiedID(main.context_id, node.column_reference_id).IsNull());
             auto xml_node = xml_edge.append_child("node");
             xml_node.append_attribute("side").set_value(1);
             xml_node.append_attribute("ref").set_value(node.column_reference_id);
