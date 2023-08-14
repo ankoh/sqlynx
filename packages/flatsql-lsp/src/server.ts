@@ -48,7 +48,7 @@ class FlatSQLDocument {
 
     public constructor(uri: DocumentUri, languageId: string, version: number, content: string) {
         this._uri = uri;
-        this._script = fsql.createScript();
+        this._script = fsql.createScript(0);
         this._script.insertTextAt(0, content);
     }
 
