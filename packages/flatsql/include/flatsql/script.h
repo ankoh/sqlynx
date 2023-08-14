@@ -136,8 +136,8 @@ class AnalyzedScript {
               table_name(table_name) {}
         /// Create FlatBuffer
         operator proto::QualifiedTableName() {
-            return proto::QualifiedTableName{ast_node_id.value_or(PROTO_NULL_U32), database_name, schema_name,
-                                             table_name};
+            return proto::QualifiedTableName{ast_node_id.value_or(PROTO_NULL_U32), database_name.Pack(),
+                                             schema_name.Pack(), table_name.Pack()};
         }
     };
     /// A qualified column name
@@ -154,7 +154,8 @@ class AnalyzedScript {
             : ast_node_id(ast_node_id), table_alias(table_alias), column_name(column_name) {}
         /// Create FlatBuffer
         operator proto::QualifiedColumnName() {
-            return proto::QualifiedColumnName{ast_node_id.value_or(PROTO_NULL_U32), table_alias, column_name};
+            return proto::QualifiedColumnName{ast_node_id.value_or(PROTO_NULL_U32), table_alias.Pack(),
+                                              column_name.Pack()};
         }
     };
     /// A table column
@@ -167,7 +168,9 @@ class AnalyzedScript {
         TableColumn(std::optional<uint32_t> ast_node_id = std::nullopt, QualifiedID column_name = {})
             : ast_node_id(ast_node_id), column_name(column_name) {}
         /// Create FlatBuffer
-        operator proto::TableColumn() { return proto::TableColumn{ast_node_id.value_or(PROTO_NULL_U32), column_name}; }
+        operator proto::TableColumn() {
+            return proto::TableColumn{ast_node_id.value_or(PROTO_NULL_U32), column_name.Pack()};
+        }
     };
     /// A table
     struct Table {
@@ -233,8 +236,8 @@ class AnalyzedScript {
                                          ast_statement_id.value_or(PROTO_NULL_U32),
                                          ast_scope_root.value_or(PROTO_NULL_U32),
                                          table_name,
-                                         alias_name,
-                                         table_id};
+                                         alias_name.Pack(),
+                                         table_id.Pack()};
         }
     };
     /// A column reference
@@ -268,7 +271,7 @@ class AnalyzedScript {
                                           ast_statement_id.value_or(PROTO_NULL_U32),
                                           ast_scope_root.value_or(PROTO_NULL_U32),
                                           column_name,
-                                          table_id,
+                                          table_id.Pack(),
                                           column_id.value_or(PROTO_NULL_U32)};
         }
     };
