@@ -10,10 +10,10 @@ import {
     FocusTarget,
     GraphNodeDescriptor,
     ScriptKey,
-    buildGraphConnectionId,
     createDefaultState,
     createEmptyScript,
     destroyState,
+    ScriptData,
 } from './app_state';
 import { Action, Dispatch } from './utils/action';
 import { RESULT_OK } from './utils/result';
@@ -100,8 +100,9 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
                         cursor,
                     },
                 },
-                focus: deriveScriptFocusFromCursor(scriptKey, buffers, state.graphViewModel, cursor),
+                focus: null,
             };
+            newState.focus = deriveScriptFocusFromCursor(scriptKey, newState.scripts, state.graphViewModel, cursor);
             // Is schema script?
             // Then we also have to update the main script since the schema graph depends on it.
             const mainData = newState.scripts[ScriptKey.MAIN_SCRIPT];
@@ -117,21 +118,20 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
         }
         case UPDATE_SCRIPT_CURSOR: {
             // Destroy previous cursor
-            const [scriptKey, data] = action.value;
-            // Store new script buffer
-            let scriptData = state.scripts[scriptKey];
-            const scriptBuffers = scriptData.processed;
+            const [scriptKey, cursor] = action.value;
+            // Store new cursor
             const newState: AppState = {
                 ...state,
                 scripts: {
                     ...state.scripts,
                     [scriptKey]: {
-                        ...scriptData,
-                        cursor: data,
+                        ...state.scripts[scriptKey],
+                        cursor,
                     },
                 },
-                focus: deriveScriptFocusFromCursor(scriptKey, scriptBuffers, state.graphViewModel, data),
+                focus: null,
             };
+            newState.focus = deriveScriptFocusFromCursor(scriptKey, newState.scripts, state.graphViewModel, cursor);
             return newState;
         }
         case SCRIPT_LOADING_STARTED:
@@ -391,7 +391,9 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
 /// Derive focus from script cursors
 function deriveScriptFocusFromCursor(
     scriptKey: ScriptKey,
-    scriptBuffers: FlatSQLScriptBuffers,
+    scriptData: {
+        [context: number]: ScriptData;
+    },
     graphViewModel: SchemaGraphViewModel,
     cursor: flatsql.proto.ScriptCursorInfoT,
 ): FocusInfo {
@@ -401,9 +403,6 @@ function deriveScriptFocusFromCursor(
         graphConnections: new Set(),
         tableColumns: new Map(),
     };
-    if (scriptBuffers.analyzed == null) {
-        return focus;
-    }
 
     // Focus a table definition?
     const tableId = flatsql.QualifiedID.create(scriptKey, cursor.tableId);
