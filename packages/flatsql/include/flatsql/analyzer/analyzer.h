@@ -31,7 +31,7 @@ struct Analyzer {
         struct Hasher {
             size_t operator()(const TableKey& key) const {
                 size_t hash = 0;
-                FID::Hasher hasher;
+                QualifiedID::Hasher hasher;
                 hash_combine(hash, hasher(key.name.database_name));
                 hash_combine(hash, hasher(key.name.schema_name));
                 hash_combine(hash, hasher(key.name.table_name));
@@ -55,7 +55,7 @@ struct Analyzer {
         struct Hasher {
             size_t operator()(const ColumnKey& key) const {
                 size_t hash = 0;
-                FID::Hasher hasher;
+                QualifiedID::Hasher hasher;
                 hash_combine(hash, hasher(key.name.table_alias));
                 hash_combine(hash, hasher(key.name.column_name));
                 return hash;

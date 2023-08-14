@@ -9,7 +9,7 @@
 namespace flatsql {
 
 /// A FlatBuffer identifier annotated with a context
-struct FID {
+struct QualifiedID {
    protected:
     /// The context id
     uint32_t context_id;
@@ -18,9 +18,9 @@ struct FID {
 
    public:
     /// Constructor
-    explicit FID() : context_id(std::numeric_limits<uint32_t>::max()), value(std::numeric_limits<uint32_t>::max()) {}
+    QualifiedID() : context_id(std::numeric_limits<uint32_t>::max()), value(std::numeric_limits<uint32_t>::max()) {}
     /// Constructor
-    explicit FID(uint32_t context_id, uint32_t value) : context_id(context_id), value(value) {}
+    explicit QualifiedID(uint32_t context_id, uint32_t value) : context_id(context_id), value(value) {}
     /// Get the context identifier
     inline uint32_t GetContext() const { return context_id; }
     /// Get the index
@@ -33,10 +33,10 @@ struct FID {
     operator bool() const { return !IsNull(); }
 
     /// Comparison
-    bool operator==(const FID& other) const { return context_id == other.context_id && value == other.value; }
+    bool operator==(const QualifiedID& other) const { return context_id == other.context_id && value == other.value; }
     /// A hasher
     struct Hasher {
-        size_t operator()(const FID& key) const {
+        size_t operator()(const QualifiedID& key) const {
             size_t hash = 0;
             hash_combine(hash, key.context_id);
             hash_combine(hash, key.value);

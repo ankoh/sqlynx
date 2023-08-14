@@ -2,6 +2,7 @@
 
 #include <flatbuffers/buffer.h>
 
+#include <optional>
 #include <string_view>
 #include <tuple>
 
@@ -121,11 +122,18 @@ class AnalyzedScript {
         /// The AST node id in the target script
         std::optional<uint32_t> ast_node_id;
         /// The database name, may refer to different context
-        FID database_name;
+        QualifiedID database_name;
         /// The schema name, may refer to different context
-        FID schema_name;
+        QualifiedID schema_name;
         /// The table name, may refer to different context
-        FID table_name;
+        QualifiedID table_name;
+        /// Constructor
+        QualifiedTableName(std::optional<uint32_t> ast_node_id = std::nullopt, QualifiedID database_name = {},
+                           QualifiedID schema_name = {}, QualifiedID table_name = {})
+            : ast_node_id(ast_node_id),
+              database_name(database_name),
+              schema_name(schema_name),
+              table_name(table_name) {}
         /// Create FlatBuffer
         operator proto::QualifiedTableName() {
             return proto::QualifiedTableName{ast_node_id.value_or(PROTO_NULL_U32), database_name, schema_name,
@@ -137,9 +145,13 @@ class AnalyzedScript {
         /// The AST node id in the target script
         std::optional<uint32_t> ast_node_id;
         /// The table alias, may refer to different context
-        FID table_alias;
+        QualifiedID table_alias;
         /// The column name, may refer to different context
-        FID column_name;
+        QualifiedID column_name;
+        /// Constructor
+        QualifiedColumnName(std::optional<uint32_t> ast_node_id = std::nullopt, QualifiedID table_alias = {},
+                            QualifiedID column_name = {})
+            : ast_node_id(ast_node_id), table_alias(table_alias), column_name(column_name) {}
         /// Create FlatBuffer
         operator proto::QualifiedColumnName() {
             return proto::QualifiedColumnName{ast_node_id.value_or(PROTO_NULL_U32), table_alias, column_name};
@@ -150,7 +162,10 @@ class AnalyzedScript {
         /// The AST node id in the target script
         std::optional<uint32_t> ast_node_id;
         /// The column name, may refer to different context
-        FID column_name;
+        QualifiedID column_name;
+        /// Constructor
+        TableColumn(std::optional<uint32_t> ast_node_id = std::nullopt, QualifiedID column_name = {})
+            : ast_node_id(ast_node_id), column_name(column_name) {}
         /// Create FlatBuffer
         operator proto::TableColumn() { return proto::TableColumn{ast_node_id.value_or(PROTO_NULL_U32), column_name}; }
     };
@@ -168,6 +183,16 @@ class AnalyzedScript {
         uint32_t columns_begin;
         /// The column count
         uint32_t column_count;
+        /// Constructor
+        Table(std::optional<uint32_t> ast_node_id = std::nullopt, std::optional<uint32_t> ast_statement_id = {},
+              std::optional<uint32_t> ast_scope_root = {}, QualifiedTableName table_name = {},
+              uint32_t columns_begin = 0, uint32_t column_count = 0)
+            : ast_node_id(ast_node_id),
+              ast_statement_id(ast_statement_id),
+              ast_scope_root(ast_scope_root),
+              table_name(table_name),
+              columns_begin(columns_begin),
+              column_count(column_count) {}
         /// Create FlatBuffer
         operator proto::Table() {
             return proto::Table{ast_node_id.value_or(PROTO_NULL_U32),
@@ -189,9 +214,19 @@ class AnalyzedScript {
         /// The table name, may refer to different context
         QualifiedTableName table_name;
         /// The alias name, may refer to different context
-        FID alias_name;
+        QualifiedID alias_name;
         /// The table id, may refer to different context
-        FID table_id;
+        QualifiedID table_id;
+        /// Constructor
+        TableReference(std::optional<uint32_t> ast_node_id = std::nullopt,
+                       std::optional<uint32_t> ast_statement_id = {}, std::optional<uint32_t> ast_scope_root = {},
+                       QualifiedTableName table_name = {}, QualifiedID alias_name = {}, QualifiedID table_id = {})
+            : ast_node_id(ast_node_id),
+              ast_statement_id(ast_statement_id),
+              ast_scope_root(ast_scope_root),
+              table_name(table_name),
+              alias_name(alias_name),
+              table_id(table_id) {}
         /// Create FlatBuffer
         operator proto::TableReference() {
             return proto::TableReference{ast_node_id.value_or(PROTO_NULL_U32),
@@ -213,9 +248,20 @@ class AnalyzedScript {
         /// The column name, may refer to different context
         QualifiedColumnName column_name;
         /// The table id, may refer to different context
-        FID table_id;
+        QualifiedID table_id;
         /// The column index
         std::optional<uint32_t> column_id;
+        /// Constructor
+        ColumnReference(std::optional<uint32_t> ast_node_id = std::nullopt,
+                        std::optional<uint32_t> ast_statement_id = {}, std::optional<uint32_t> ast_scope_root = {},
+                        QualifiedColumnName column_name = {}, QualifiedID table_id = {},
+                        std::optional<uint32_t> column_id = std::nullopt)
+            : ast_node_id(ast_node_id),
+              ast_statement_id(ast_statement_id),
+              ast_scope_root(ast_scope_root),
+              column_name(column_name),
+              table_id(table_id),
+              column_id(column_id) {}
         /// Create FlatBuffer
         operator proto::ColumnReference() {
             return proto::ColumnReference{ast_node_id.value_or(PROTO_NULL_U32),
@@ -238,6 +284,15 @@ class AnalyzedScript {
         uint16_t node_count_right;
         /// The expression operator
         proto::ExpressionOperator expression_operator;
+        /// Constructor
+        QueryGraphEdge(std::optional<uint32_t> ast_node_id = std::nullopt, uint32_t nodes_begin = 0,
+                       uint16_t node_count_left = 0, uint16_t node_count_right = 0,
+                       proto::ExpressionOperator op = proto::ExpressionOperator::DEFAULT)
+            : ast_node_id(ast_node_id),
+              nodes_begin(nodes_begin),
+              node_count_left(node_count_left),
+              node_count_right(node_count_right),
+              expression_operator(op) {}
         /// Create FlatBuffer
         operator proto::QueryGraphEdge() {
             return proto::QueryGraphEdge{ast_node_id.value_or(PROTO_NULL_U32), nodes_begin, node_count_left,
@@ -248,6 +303,8 @@ class AnalyzedScript {
     struct QueryGraphEdgeNode {
         /// The column reference id
         uint32_t column_reference_id;
+        /// Constructor
+        QueryGraphEdgeNode(uint32_t column_ref_id = 0) : column_reference_id(column_ref_id) {}
         /// Create FlatBuffer
         operator proto::QueryGraphEdgeNode() { return proto::QueryGraphEdgeNode{column_reference_id}; }
     };

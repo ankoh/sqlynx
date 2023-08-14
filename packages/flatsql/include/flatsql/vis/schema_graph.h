@@ -37,11 +37,11 @@ class SchemaGraph {
               expression_operator(op) {}
     };
     struct Node {
-        FID table_id;
+        QualifiedID table_id;
         Vertex position;
         double width = 0;
         double height = 0;
-        Node(FID table_id, Vertex pos = {0.0, 0.0}, double width = 0, double height = 0.0)
+        Node(QualifiedID table_id, Vertex pos = {0.0, 0.0}, double width = 0, double height = 0.0)
             : table_id(table_id), position(pos), width(width), height(height) {}
     };
 
