@@ -49,9 +49,9 @@ describe('FlatSQL Analyzer', () => {
 
         const table_ref = main_analyzer.tableReferences(0);
         const table_id = table_ref?.tableId()!;
-        expect(flatsql.FlatID.isNull(table_id)).not.toEqual(true);
-        expect(flatsql.FlatID.GetContext(table_id)).toEqual(1);
-        expect(flatsql.FlatID.getIndex(table_id)).toEqual(0);
+        expect(flatsql.QualifiedID.isNull(table_id)).not.toEqual(true);
+        expect(flatsql.QualifiedID.getContext(table_id)).toEqual(1);
+        expect(flatsql.QualifiedID.getIndex(table_id)).toEqual(0);
 
         ext_scanner_res.delete();
         ext_parser_res.delete();
