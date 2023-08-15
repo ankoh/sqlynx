@@ -2,9 +2,8 @@ import * as React from 'react';
 import cn from 'classnames';
 
 import { Action } from '../utils/action';
-import { NodeViewModel, EdgeViewModel } from './graph_view_model';
+import { NodeViewModel, EdgeViewModel, GraphConnectionId, GraphNodeDescriptor } from './graph_view_model';
 import { NodePort } from './graph_edges';
-import { GraphConnectionId, GraphNodeDescriptor } from '../state/app_state';
 import { FocusInfo } from '../state/focus';
 
 import iconTable from '../../static/svg/icons/table.svg';
