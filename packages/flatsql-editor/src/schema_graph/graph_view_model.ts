@@ -1,10 +1,10 @@
 import * as flatsql from '@ankoh/flatsql';
 
-import { AppState, GraphConnectionId, ScriptKey } from '../state/app_state';
+import { AppState, ScriptKey } from '../state/app_state';
 import { EdgePathBuilder, EdgeType, PORTS_FROM, PORTS_TO, buildEdgePath, selectEdgeType } from './graph_edges';
 import { DebugInfo, buildDebugInfo } from './debug_layer';
 
-export interface SchemaGraphViewModel {
+export interface GraphViewModel {
     nodes: NodeViewModel[];
     nodesByTable: Map<flatsql.QualifiedID.Value, number>;
     edges: Map<GraphConnectionId.Value, EdgeViewModel>;
@@ -39,7 +39,24 @@ export interface EdgeViewModel {
     path: string;
 }
 
-export function computeSchemaGraphViewModel(state: AppState): SchemaGraphViewModel {
+export interface GraphNodeDescriptor {
+    nodeId: number;
+    port: number | null;
+}
+
+export namespace GraphConnectionId {
+    export type Value = bigint;
+    export function create(from: number, to: number): Value {
+        return (BigInt(from) << 32n) | BigInt(to);
+    }
+    export function unpack(id: Value): [number, number] {
+        const from = id >> 32n;
+        const to = id & ((1n << 32n) - 1n);
+        return [Number(from), Number(to)];
+    }
+}
+
+export function computeGraphViewModel(state: AppState): GraphViewModel {
     let debugInfo: DebugInfo = {
         nodeCount: 0,
         fromX: new Float64Array(),

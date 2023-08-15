@@ -1,6 +1,6 @@
 import * as flatsql from '@ankoh/flatsql';
-import { AppState, GraphConnectionId, GraphNodeDescriptor, ScriptData, ScriptKey } from './app_state';
-import { SchemaGraphViewModel } from 'schema_graph/graph_view_model';
+import { AppState, ScriptData, ScriptKey } from './app_state';
+import { GraphConnectionId, GraphNodeDescriptor, GraphViewModel } from '../schema_graph/graph_view_model';
 
 export enum FocusTarget {
     Graph,
@@ -25,7 +25,7 @@ export function deriveScriptFocusFromCursor(
     scriptData: {
         [context: number]: ScriptData;
     },
-    graphViewModel: SchemaGraphViewModel,
+    graphViewModel: GraphViewModel,
     cursor: flatsql.proto.ScriptCursorInfoT,
 ): FocusInfo {
     const focus: FocusInfo = {
