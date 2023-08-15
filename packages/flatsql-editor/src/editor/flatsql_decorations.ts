@@ -85,16 +85,17 @@ function buildDecorationsFromCursor(
 ): DecorationSet {
     const builder = new RangeSetBuilder<Decoration>();
     const parsed = parsedBuffer.read(new flatsql.proto.ParsedScript());
-    const astNodeId = cursor.astNodeId;
+    const analyzed = analyzedBuffer.read(new flatsql.proto.AnalyzedScript());
+    const queryEdgeId = cursor.queryEdgeId;
 
-    if (astNodeId < parsed.nodesLength()) {
-        const node = parsed.nodes(astNodeId)!;
-        const nodeLocation = node.location()!;
-        builder.add(
-            nodeLocation.offset(),
-            nodeLocation.offset() + nodeLocation.length(),
-            FocusedTableReferenceDecoration,
-        );
+    if (queryEdgeId < analyzed.graphEdgesLength()) {
+        const edge = analyzed.graphEdges(queryEdgeId)!;
+        const edgeAstNodeId = edge.astNodeId();
+        if (edgeAstNodeId < parsed.nodesLength()) {
+            const edgeAstNode = parsed.nodes(edgeAstNodeId)!;
+            const location = edgeAstNode?.location()!;
+            builder.add(location.offset(), location.offset() + location.length(), FocusedQueryGraphEdgeDecoration);
+        }
     }
 
     return builder.finish();
