@@ -1,14 +1,9 @@
 import React from 'react';
 
 import { ScriptMetadata } from './script_metadata';
-import {
-    SCRIPT_LOADING_FAILED,
-    SCRIPT_LOADING_STARTED,
-    SCRIPT_LOADING_SUCCEEDED,
-    useAppState,
-    useAppStateDispatch,
-} from '../app_state_reducer';
-import { ScriptData, ScriptKey } from '../app_state';
+import { SCRIPT_LOADING_FAILED, SCRIPT_LOADING_STARTED, SCRIPT_LOADING_SUCCEEDED } from '../state/app_state_reducer';
+import { useAppState, useAppStateDispatch } from '../state/app_state_provider';
+import { ScriptData, ScriptKey } from '../state/app_state';
 
 /// The loading status
 export enum LoadingStatus {

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as flatsql from '@ankoh/flatsql';
 
-import { AppState } from '../app_state';
+import { AppState } from '../state/app_state';
 import { NodeViewModel } from './graph_view_model';
 
 import styles from './debug_layer.module.css';

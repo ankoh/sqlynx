@@ -3,14 +3,9 @@ import { NodeLayer } from './node_layer';
 import { EdgeHighlightingLayer, EdgeLayer } from './edge_layer';
 import { DebugLayer } from './debug_layer';
 import { BackgroundLayer } from './background_layer';
-import {
-    RESIZE_SCHEMA_GRAPH,
-    useAppStateDispatch,
-    useAppState,
-    FOCUS_GRAPH_NODE,
-    FOCUS_GRAPH_EDGE,
-} from '../app_state_reducer';
-import { GraphNodeDescriptor } from '../app_state';
+import { useAppStateDispatch, useAppState } from '../state/app_state_provider';
+import { FOCUS_GRAPH_EDGE, FOCUS_GRAPH_NODE, RESIZE_SCHEMA_GRAPH } from '../state/app_state_reducer';
+import { GraphNodeDescriptor } from '../state/app_state';
 import cn from 'classnames';
 
 import styles from './schema_graph.module.css';

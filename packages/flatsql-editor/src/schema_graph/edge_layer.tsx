@@ -2,7 +2,8 @@ import * as React from 'react';
 
 import { Action } from '../utils/action';
 import { EdgeViewModel } from './graph_view_model';
-import { GraphConnectionId, FocusInfo } from '../app_state';
+import { GraphConnectionId } from '../state/app_state';
+import { FocusInfo } from '../state/focus';
 
 interface Props {
     className?: string;

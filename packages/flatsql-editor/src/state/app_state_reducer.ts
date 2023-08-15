@@ -1,26 +1,19 @@
-import * as React from 'react';
 import * as flatsql from '@ankoh/flatsql';
 
-import { useFlatSQL } from './flatsql_loader';
-import { FlatSQLScriptBuffers, analyzeScript, parseAndAnalyzeScript } from './editor/flatsql_processor';
+import { FlatSQLScriptBuffers, analyzeScript, parseAndAnalyzeScript } from '../editor/flatsql_processor';
 import {
     AppState,
-    FocusInfo,
-    FocusTarget,
     GraphNodeDescriptor,
     ScriptKey,
-    createDefaultState,
     createEmptyScript,
     destroyState,
-    ScriptData,
     GraphConnectionId,
 } from './app_state';
-import { Action, Dispatch } from './utils/action';
-import { RESULT_OK } from './utils/result';
-import { ScriptMetadata } from './script_loader/script_metadata';
-import { LoadingStatus } from './script_loader/script_loader';
-import { TPCH_SCHEMA, exampleScripts } from './script_loader/example_scripts';
-import { SchemaGraphViewModel, computeSchemaGraphViewModel } from './schema_graph/graph_view_model';
+import { deriveScriptFocusFromCursor, focusGraphEdge, focusGraphNode } from './focus';
+import { Action } from '../utils/action';
+import { ScriptMetadata } from '../script_loader/script_metadata';
+import { LoadingStatus } from '../script_loader/script_loader';
+import { computeSchemaGraphViewModel } from '../schema_graph/graph_view_model';
 import Immutable from 'immutable';
 
 export const INITIALIZE = Symbol('INITIALIZE');
@@ -30,8 +23,8 @@ export const UPDATE_SCRIPT_CURSOR = Symbol('UPDATE_SCRIPT_CURSOR');
 export const SCRIPT_LOADING_STARTED = Symbol('SCRIPT_LOADING_STARTED');
 export const SCRIPT_LOADING_SUCCEEDED = Symbol('SCRIPT_LOADING_SUCCEEDED');
 export const SCRIPT_LOADING_FAILED = Symbol('SCRIPT_LOADING_FAILED');
-export const FOCUS_GRAPH_NODE = Symbol('FOCUS_GRAPH_NODES');
-export const FOCUS_GRAPH_EDGE = Symbol('FOCUS_GRAPH_EDGES');
+export const FOCUS_GRAPH_NODE = Symbol('FOCUS_GRAPH_NODE');
+export const FOCUS_GRAPH_EDGE = Symbol('FOCUS_GRAPH_EDGE');
 export const RESIZE_SCHEMA_GRAPH = Symbol('RESIZE_EDITOR');
 export const DEBUG_GRAPH_LAYOUT = Symbol('DEBUG_GRAPH_LAYOUT');
 export const DESTROY = Symbol('DESTROY');
@@ -69,7 +62,7 @@ function rotateStatistics(
 }
 
 /// Reducer for application actions
-const reducer = (state: AppState, action: AppStateAction): AppState => {
+export function reduceAppState(state: AppState, action: AppStateAction): AppState {
     switch (action.type) {
         case INITIALIZE: {
             const newState: AppState = {
@@ -286,92 +279,10 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
             }
             return newState;
         }
-        case FOCUS_GRAPH_NODE: {
-            // Unset focused node?
-            if (action.value === null) {
-                // State already has cleared focus?
-                if (state.focus === null) {
-                    return state;
-                }
-                // Otherwise clear the focus state
-                return {
-                    ...state,
-                    focus: null,
-                };
-            }
-            // Focus a node, does the set of currently focused nodes only contain the newly focused node?
-            if (state.focus?.graphNodes.size == 1) {
-                const port = state.focus.graphNodes.get(action.value.nodeId);
-                if (port === action.value.port) {
-                    // Leave the state as-is
-                    return state;
-                }
-            }
-            // Mark node an port as focused
-            const nodes = new Map<number, number>();
-            const nodeId = action.value.nodeId;
-            const port = action.value.port;
-            nodes.set(nodeId, action.value.port ?? 0);
-            // Determine the focused connections
-            const connections = new Set<GraphConnectionId.Value>();
-            if (action.value.port === null) {
-                // If no port is focused, find all edges reaching that node
-                for (const [conn, edge] of state.graphViewModel.edges) {
-                    if (edge.fromNode == nodeId || edge.toNode == nodeId) {
-                        connections.add(conn);
-                    }
-                }
-            } else {
-                // If a port is focused, find all edges reaching that port
-                for (const [conn, edge] of state.graphViewModel.edges) {
-                    if (
-                        (edge.fromNode == nodeId && edge.fromPort == port) ||
-                        (edge.toNode == nodeId && edge.toPort == port)
-                    ) {
-                        connections.add(conn);
-                    }
-                }
-            }
-            return {
-                ...state,
-                focus: {
-                    target: FocusTarget.Graph,
-                    graphNodes: nodes,
-                    graphConnections: connections,
-                    tableColumns: new Map(),
-                },
-            };
-        }
-        case FOCUS_GRAPH_EDGE: {
-            // Unset focused edge?
-            if (action.value === null) {
-                // State already has cleared focus?
-                if (state.focus === null) {
-                    return state;
-                }
-                // Otherwise clear the focus state
-                return {
-                    ...state,
-                    focus: null,
-                };
-            }
-            // Does the set of focused edges only contain the newly focused edge?
-            if (state.focus?.graphConnections?.size == 1) {
-                if (state.focus.graphConnections.has(action.value)) {
-                    return state;
-                }
-            }
-            // Mark edge as focused
-            return {
-                ...state,
-                focus: {
-                    target: FocusTarget.Graph,
-                    graphNodes: new Map(),
-                    graphConnections: new Set([action.value]),
-                    tableColumns: new Map(),
-                },
-            };
-        }
+        case FOCUS_GRAPH_NODE:
+            return focusGraphNode(state, action.value);
+        case FOCUS_GRAPH_EDGE:
+            return focusGraphEdge(state, action.value);
         case RESIZE_SCHEMA_GRAPH:
             return computeSchemaGraph({
                 ...state,
@@ -386,101 +297,6 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
         case DESTROY:
             return destroyState({ ...state });
     }
-};
-
-/// Derive focus from script cursors
-function deriveScriptFocusFromCursor(
-    scriptKey: ScriptKey,
-    scriptData: {
-        [context: number]: ScriptData;
-    },
-    graphViewModel: SchemaGraphViewModel,
-    cursor: flatsql.proto.ScriptCursorInfoT,
-): FocusInfo {
-    const focus: FocusInfo = {
-        target: FocusTarget.Script,
-        graphNodes: new Map(),
-        graphConnections: new Set(),
-        tableColumns: new Map(),
-    };
-
-    const tmpAnalyzed = new flatsql.proto.AnalyzedScript();
-    let focusedTableId: flatsql.QualifiedID.Value | null = null;
-    let focusedTableColumnId: number | null = null;
-    let focusedQueryEdgeId: flatsql.QualifiedID.Value | null = null;
-    let focusedGraphConnections = new Set<GraphConnectionId.Value>();
-
-    // Focus a table definition?
-    const tableId = flatsql.QualifiedID.create(scriptKey, cursor.tableId);
-    if (!flatsql.QualifiedID.isNull(tableId)) {
-        focusedTableId = tableId;
-    }
-
-    // Focus a column reference?
-    const columnRefId = flatsql.QualifiedID.create(scriptKey, cursor.columnReferenceId);
-    if (!flatsql.QualifiedID.isNull(columnRefId)) {
-        const ctxKey = flatsql.QualifiedID.getContext(columnRefId);
-        const ctxData = scriptData[ctxKey];
-        if (ctxData !== undefined && ctxData.processed.analyzed !== null) {
-            const ctxAnalyzed = ctxData.processed.analyzed.read(tmpAnalyzed);
-            const columnRef = ctxAnalyzed.columnReferences(flatsql.QualifiedID.getIndex(columnRefId))!;
-            focusedTableId = columnRef.tableId();
-            focusedTableColumnId = columnRef.columnId();
-        }
-    }
-
-    // Focus a table reference?
-    const tableRefId = flatsql.QualifiedID.create(scriptKey, cursor.tableReferenceId);
-    if (!flatsql.QualifiedID.isNull(tableRefId)) {
-        const ctxKey = flatsql.QualifiedID.getContext(columnRefId);
-        const ctxData = scriptData[ctxKey];
-        if (ctxData !== undefined && ctxData.processed.analyzed !== null) {
-            const ctxAnalyzed = ctxData.processed.analyzed.read(tmpAnalyzed);
-            const tableRef = ctxAnalyzed.tableReferences(flatsql.QualifiedID.getIndex(tableRefId))!;
-            focusedTableId = tableRef.tableId();
-        }
-    }
-
-    // Focus a query graph edge?
-    const queryEdgeId = flatsql.QualifiedID.create(scriptKey, cursor.queryEdgeId);
-    if (!flatsql.QualifiedID.isNull(queryEdgeId)) {
-        focusedQueryEdgeId = queryEdgeId;
-        const ctxKey = flatsql.QualifiedID.getContext(columnRefId);
-        const ctxData = scriptData[ctxKey];
-
-        // Collect all graph connection ids that are associated with this query graph edge
-        const connections = new Set<GraphConnectionId.Value>();
-        if (ctxData !== undefined && ctxData.processed.analyzed !== null) {
-            const ctxAnalyzed = ctxData.processed.analyzed.read(tmpAnalyzed);
-            const queryEdge = ctxAnalyzed.graphEdges(flatsql.QualifiedID.getIndex(queryEdgeId))!;
-            const countLeft = queryEdge.nodeCountLeft();
-            const countRight = queryEdge.nodeCountRight();
-
-            // Iterate over all nodes on the left
-            for (let i = 0; i < countLeft; ++i) {
-                const edgeNodeLeft = ctxAnalyzed.graphEdgeNodes(queryEdge.nodesBegin() + i)!;
-                const columnRefLeft = ctxAnalyzed.columnReferences(edgeNodeLeft.columnReferenceId())!;
-                const tableIdLeft = columnRefLeft.tableId();
-                const nodeLeft = graphViewModel.nodesByTable.get(tableIdLeft);
-                if (!nodeLeft) continue;
-
-                // Iterate over all nodes on the right
-                for (let j = 0; j < countRight; ++j) {
-                    const edgeNodeRight = ctxAnalyzed.graphEdgeNodes(queryEdge.nodesBegin() + countLeft + j)!;
-                    const columnRefRight = ctxAnalyzed.columnReferences(edgeNodeRight.columnReferenceId())!;
-                    const tableIdRight = columnRefRight.tableId();
-                    const nodeRight = graphViewModel.nodesByTable.get(tableIdRight);
-                    if (!nodeRight) continue;
-
-                    // Add the graph connection id
-                    connections.add(GraphConnectionId.create(nodeLeft, nodeRight));
-                    connections.add(GraphConnectionId.create(nodeRight, nodeLeft));
-                }
-            }
-        }
-        focusedGraphConnections = connections;
-    }
-    return focus;
 }
 
 /// Compute a schema graph
@@ -499,45 +315,3 @@ function computeSchemaGraph(state: AppState, debug?: boolean): AppState {
     state.graphViewModel = computeSchemaGraphViewModel(state);
     return state;
 }
-
-const stateContext = React.createContext<AppState | null>(null);
-const stateDispatch = React.createContext<Dispatch<AppStateAction> | null>(null);
-
-type Props = {
-    children: React.ReactElement;
-};
-
-export const AppStateProvider: React.FC<Props> = (props: Props) => {
-    const [state, dispatch] = React.useReducer(reducer, null, () => createDefaultState());
-    const scriptsLoaded = React.useRef<boolean>(false);
-
-    const backend = useFlatSQL();
-    React.useEffect(() => {
-        if (backend?.type == RESULT_OK && !state.instance) {
-            dispatch({ type: INITIALIZE, value: backend.value });
-        }
-    }, [backend, state.instance]);
-
-    // TODO move this to a dedicated loader
-    React.useEffect(() => {
-        if (state.instance != null && scriptsLoaded.current == false) {
-            scriptsLoaded.current = true;
-            dispatch({
-                type: LOAD_SCRIPTS,
-                value: {
-                    [ScriptKey.MAIN_SCRIPT]: exampleScripts[2],
-                    [ScriptKey.SCHEMA_SCRIPT]: TPCH_SCHEMA,
-                },
-            });
-        }
-    }, [state.instance]);
-
-    return (
-        <stateContext.Provider value={state}>
-            <stateDispatch.Provider value={dispatch}>{props.children}</stateDispatch.Provider>
-        </stateContext.Provider>
-    );
-};
-
-export const useAppState = (): AppState => React.useContext(stateContext)!;
-export const useAppStateDispatch = (): Dispatch<AppStateAction> => React.useContext(stateDispatch)!;

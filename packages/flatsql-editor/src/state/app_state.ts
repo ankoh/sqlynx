@@ -1,13 +1,14 @@
 import * as flatsql from '@ankoh/flatsql';
 import Immutable from 'immutable';
 
-import { generateBlankScript } from './script_loader/script_metadata';
-import { LoadingStatus } from './script_loader/script_loader';
+import { generateBlankScript } from '../script_loader/script_metadata';
+import { LoadingStatus } from '../script_loader/script_loader';
 
-import { FlatSQLScriptBuffers } from './editor/flatsql_processor';
-import { ScriptMetadata } from './script_loader/script_metadata';
-import { LoadingInfo } from './script_loader/script_loader';
-import { SchemaGraphViewModel } from './schema_graph/graph_view_model';
+import { FlatSQLScriptBuffers } from '../editor/flatsql_processor';
+import { ScriptMetadata } from '../script_loader/script_metadata';
+import { LoadingInfo } from '../script_loader/script_loader';
+import { SchemaGraphViewModel } from '../schema_graph/graph_view_model';
+import { FocusInfo } from './focus';
 
 const DEFAULT_BOARD_WIDTH = 800;
 const DEFAULT_BOARD_HEIGHT = 600;
@@ -62,23 +63,6 @@ export interface GraphNodeDescriptor {
     nodeId: number;
     /// The port
     port: number | null;
-}
-
-export enum FocusTarget {
-    Graph,
-    Script,
-}
-
-export interface FocusInfo {
-    /// The focused script key (if any)
-    target: FocusTarget;
-    /// The layout indices in the schema graph as (nodeId -> port bits) map
-    graphNodes: Map<number, number>;
-    /// The connection ids of focused edges
-    graphConnections: Set<GraphConnectionId.Value>;
-    /// The focused table columns as (tableId -> columnId[]) map.
-    /// Only set if specific table columns are referenced.
-    tableColumns: Map<flatsql.QualifiedID.Value, number[]>;
 }
 
 /// Destroy a state
