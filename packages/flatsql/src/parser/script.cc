@@ -385,6 +385,19 @@ std::unique_ptr<ScriptCursor> Script::ReadCursor(size_t text_offset) {
     return std::make_unique<ScriptCursor>(*analyzed_script, text_offset);
 }
 
+static bool endsCursorPath(proto::Node& n) {
+    switch (n.node_type()) {
+        case proto::NodeType::OBJECT_SQL_SELECT:
+        case proto::NodeType::OBJECT_SQL_CREATE:
+        case proto::NodeType::OBJECT_SQL_CREATE_AS:
+        case proto::NodeType::OBJECT_SQL_SELECT_EXPRESSION:
+            return true;
+        default:
+            break;
+    }
+    return false;
+}
+
 /// Constructor
 ScriptCursor::ScriptCursor(const AnalyzedScript& analyzed, size_t text_offset) : text_offset(text_offset) {
     // Did the parsed script change?
@@ -409,6 +422,9 @@ ScriptCursor::ScriptCursor(const AnalyzedScript& analyzed, size_t text_offset) :
         std::unordered_set<uint32_t> cursor_path_nodes;
         for (auto iter = *ast_node_id;;) {
             auto& node = parsed.nodes[iter];
+            if (endsCursorPath(node)) {
+                break;
+            }
             cursor_path_nodes.insert(iter);
             if (iter == node.parent()) {
                 break;
@@ -452,17 +468,6 @@ ScriptCursor::ScriptCursor(const AnalyzedScript& analyzed, size_t text_offset) :
             auto nodes_begin = edge.nodes_begin;
             if (edge.ast_node_id.has_value() && cursor_path_nodes.contains(*edge.ast_node_id)) {
                 query_edge_id = ei;
-                break;
-            }
-            for (size_t ni = 0; ni < (edge.node_count_left + edge.node_count_right); ++ni) {
-                auto& edge_node = analyzed.graph_edge_nodes[nodes_begin + ni];
-                auto column_ref = analyzed.column_references[edge_node.column_reference_id];
-                if (column_ref.ast_node_id.has_value() && cursor_path_nodes.contains(*column_ref.ast_node_id)) {
-                    query_edge_id = ei;
-                    break;
-                }
-            }
-            if (query_edge_id.has_value()) {
                 break;
             }
         }
