@@ -7,7 +7,7 @@ import { LoadingStatus } from '../script_loader/script_loader';
 import { FlatSQLScriptBuffers } from '../editor/flatsql_processor';
 import { ScriptMetadata } from '../script_loader/script_metadata';
 import { LoadingInfo } from '../script_loader/script_loader';
-import { SchemaGraphViewModel } from '../schema_graph/graph_view_model';
+import { GraphViewModel } from '../schema_graph/graph_view_model';
 import { FocusInfo } from './focus';
 
 const DEFAULT_BOARD_WIDTH = 800;
@@ -35,7 +35,7 @@ export interface AppState {
     /// The graph debug mode
     graphDebugInfo: flatsql.FlatBufferRef<flatsql.proto.SchemaGraphDebugInfo> | null;
     /// The graph view model
-    graphViewModel: SchemaGraphViewModel;
+    graphViewModel: GraphViewModel;
     /// The user focus
     focus: FocusInfo | null;
 }
@@ -56,13 +56,6 @@ export interface ScriptData {
     statistics: Immutable.List<flatsql.FlatBufferRef<flatsql.proto.ScriptStatistics>>;
     /// The cursor
     cursor: flatsql.proto.ScriptCursorInfoT | null;
-}
-
-export interface GraphNodeDescriptor {
-    /// The node
-    nodeId: number;
-    /// The port
-    port: number | null;
 }
 
 /// Destroy a state
@@ -165,18 +158,4 @@ export function createDefaultState(): AppState {
         },
         focus: null,
     };
-}
-
-export namespace GraphConnectionId {
-    export type Value = bigint;
-
-    export function create(from: number, to: number): Value {
-        return (BigInt(from) << 32n) | BigInt(to);
-    }
-
-    export function unpack(id: Value): [number, number] {
-        const from = id >> 32n;
-        const to = id & ((1n << 32n) - 1n);
-        return [Number(from), Number(to)];
-    }
 }

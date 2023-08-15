@@ -1,19 +1,12 @@
 import * as flatsql from '@ankoh/flatsql';
 
 import { FlatSQLScriptBuffers, analyzeScript, parseAndAnalyzeScript } from '../editor/flatsql_processor';
-import {
-    AppState,
-    GraphNodeDescriptor,
-    ScriptKey,
-    createEmptyScript,
-    destroyState,
-    GraphConnectionId,
-} from './app_state';
+import { AppState, ScriptKey, createEmptyScript, destroyState } from './app_state';
 import { deriveScriptFocusFromCursor, focusGraphEdge, focusGraphNode } from './focus';
 import { Action } from '../utils/action';
 import { ScriptMetadata } from '../script_loader/script_metadata';
 import { LoadingStatus } from '../script_loader/script_loader';
-import { computeSchemaGraphViewModel } from '../schema_graph/graph_view_model';
+import { GraphConnectionId, GraphNodeDescriptor, computeGraphViewModel } from '../schema_graph/graph_view_model';
 import Immutable from 'immutable';
 
 export const INITIALIZE = Symbol('INITIALIZE');
@@ -312,6 +305,6 @@ function computeSchemaGraph(state: AppState, debug?: boolean): AppState {
         state.graphDebugInfo?.delete();
         state.graphDebugInfo = state.graph?.describe() ?? null;
     }
-    state.graphViewModel = computeSchemaGraphViewModel(state);
+    state.graphViewModel = computeGraphViewModel(state);
     return state;
 }
