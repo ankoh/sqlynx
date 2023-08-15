@@ -1,6 +1,6 @@
 import * as flatsql from '@ankoh/flatsql';
 
-import { AppState, GraphConnectionId, ScriptKey } from '../app_state';
+import { AppState, GraphConnectionId, ScriptKey } from '../state/app_state';
 import { EdgePathBuilder, EdgeType, PORTS_FROM, PORTS_TO, buildEdgePath, selectEdgeType } from './graph_edges';
 import { DebugInfo, buildDebugInfo } from './debug_layer';
 
