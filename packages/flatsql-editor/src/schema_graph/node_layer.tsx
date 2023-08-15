@@ -170,24 +170,20 @@ export function NodeLayer(props: Props) {
         />
     );
 
-    const focusedEdgePorts = new Map<number, number>();
+    const connectionPorts = new Map<number, number>();
     if (props.focus?.graphConnections) {
         for (const connection of props.focus.graphConnections) {
             const edge = props.edges.get(connection)!;
-            let ports = focusedEdgePorts.get(edge.fromNode) ?? 0;
-            ports |= edge.fromPort;
-            focusedEdgePorts.set(edge.fromNode, ports);
-            ports = focusedEdgePorts.get(edge.toNode) ?? 0;
-            ports |= edge.toPort;
-            focusedEdgePorts.set(edge.toNode, ports);
+            if (!edge) continue; // May have been a duplicate
+            connectionPorts.set(edge.fromNode, (connectionPorts.get(edge.fromNode) ?? 0) | edge.fromPort);
+            connectionPorts.set(edge.toNode, (connectionPorts.get(edge.toNode) ?? 0) | edge.toPort);
         }
     }
 
     return (
         <div className={styles.graph_nodes}>
             {props.nodes.map(n => {
-                let focusedPorts = props.focus?.graphNodes?.get(n.nodeId) ?? 0;
-                focusedPorts |= focusedEdgePorts.get(n.nodeId) ?? 0;
+                const focusedPorts = connectionPorts.get(n.nodeId) ?? 0;
                 return (
                     <div
                         key={n.nodeId}
