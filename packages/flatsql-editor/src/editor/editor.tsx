@@ -8,8 +8,9 @@ import { ChangeSpec, StateEffect } from '@codemirror/state';
 import { CodeMirror } from './codemirror';
 import { FlatSQLExtensions } from './flatsql_extension';
 import { FlatSQLScriptBuffers, FlatSQLScriptKey, UpdateFlatSQLScript } from './flatsql_processor';
-import { useAppState, useAppStateDispatch, UPDATE_SCRIPT_ANALYSIS, UPDATE_SCRIPT_CURSOR } from '../app_state_reducer';
-import { ScriptKey } from '../app_state';
+import { useAppState, useAppStateDispatch } from '../state/app_state_provider';
+import { UPDATE_SCRIPT_ANALYSIS, UPDATE_SCRIPT_CURSOR } from '../state/app_state_reducer';
+import { ScriptKey } from '../state/app_state';
 import { ScriptStatisticsBar } from './script_statistics_bar';
 
 import iconMainScript from '../../static/svg/icons/database_search.svg';

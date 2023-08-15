@@ -4,7 +4,8 @@ import cn from 'classnames';
 import { Action } from '../utils/action';
 import { NodeViewModel, EdgeViewModel } from './graph_view_model';
 import { NodePort } from './graph_edges';
-import { GraphConnectionId, FocusInfo, GraphNodeDescriptor } from '../app_state';
+import { GraphConnectionId, GraphNodeDescriptor } from '../state/app_state';
+import { FocusInfo } from '../state/focus';
 
 import iconTable from '../../static/svg/icons/table.svg';
 import iconTableView from '../../static/svg/icons/table_border.svg';
