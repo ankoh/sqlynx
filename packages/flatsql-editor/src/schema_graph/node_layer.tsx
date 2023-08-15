@@ -16,7 +16,7 @@ interface Props {
     width: number;
     height: number;
     nodes: NodeViewModel[];
-    edges: Map<GraphConnectionId, EdgeViewModel>;
+    edges: Map<GraphConnectionId.Value, EdgeViewModel>;
     focus: FocusInfo | null;
     onFocusChanged: (target: GraphNodeDescriptor | null) => void;
 }
