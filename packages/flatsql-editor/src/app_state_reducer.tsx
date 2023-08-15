@@ -5,7 +5,6 @@ import { useFlatSQL } from './flatsql_loader';
 import { FlatSQLScriptBuffers, analyzeScript, parseAndAnalyzeScript } from './editor/flatsql_processor';
 import {
     AppState,
-    GraphConnectionId,
     FocusInfo,
     FocusTarget,
     GraphNodeDescriptor,
@@ -14,6 +13,7 @@ import {
     createEmptyScript,
     destroyState,
     ScriptData,
+    GraphConnectionId,
 } from './app_state';
 import { Action, Dispatch } from './utils/action';
 import { RESULT_OK } from './utils/result';
@@ -44,8 +44,8 @@ export type AppStateAction =
     | Action<typeof SCRIPT_LOADING_STARTED, ScriptKey>
     | Action<typeof SCRIPT_LOADING_SUCCEEDED, [ScriptKey, string]>
     | Action<typeof SCRIPT_LOADING_FAILED, [ScriptKey, any]>
-    | Action<typeof FOCUS_GRAPH_NODE, GraphNodeDescriptor | null> // node id, port id
-    | Action<typeof FOCUS_GRAPH_EDGE, GraphConnectionId | null> // (source node id, target node id) pairs
+    | Action<typeof FOCUS_GRAPH_NODE, GraphNodeDescriptor | null>
+    | Action<typeof FOCUS_GRAPH_EDGE, GraphConnectionId.Value | null>
     | Action<typeof RESIZE_SCHEMA_GRAPH, [number, number]> // width, height
     | Action<typeof DEBUG_GRAPH_LAYOUT, boolean>
     | Action<typeof DESTROY, undefined>;
@@ -313,7 +313,7 @@ const reducer = (state: AppState, action: AppStateAction): AppState => {
             const port = action.value.port;
             nodes.set(nodeId, action.value.port ?? 0);
             // Determine the focused connections
-            const connections = new Set<GraphConnectionId>();
+            const connections = new Set<GraphConnectionId.Value>();
             if (action.value.port === null) {
                 // If no port is focused, find all edges reaching that node
                 for (const [conn, edge] of state.graphViewModel.edges) {
@@ -408,7 +408,7 @@ function deriveScriptFocusFromCursor(
     let focusedTableId: flatsql.QualifiedID.Value | null = null;
     let focusedTableColumnId: number | null = null;
     let focusedQueryEdgeId: flatsql.QualifiedID.Value | null = null;
-    const focusedGraphConnectionId = new Set<GraphConnectionId>();
+    let focusedGraphConnections = new Set<GraphConnectionId.Value>();
 
     // Focus a table definition?
     const tableId = flatsql.QualifiedID.create(scriptKey, cursor.tableId);
@@ -449,22 +449,36 @@ function deriveScriptFocusFromCursor(
         const ctxData = scriptData[ctxKey];
 
         // Collect all graph connection ids that are associated with this query graph edge
-        const connections = new Set<GraphConnectionId>();
+        const connections = new Set<GraphConnectionId.Value>();
         if (ctxData !== undefined && ctxData.processed.analyzed !== null) {
             const ctxAnalyzed = ctxData.processed.analyzed.read(tmpAnalyzed);
             const queryEdge = ctxAnalyzed.graphEdges(flatsql.QualifiedID.getIndex(queryEdgeId))!;
             const countLeft = queryEdge.nodeCountLeft();
             const countRight = queryEdge.nodeCountRight();
+
+            // Iterate over all nodes on the left
             for (let i = 0; i < countLeft; ++i) {
                 const edgeNodeLeft = ctxAnalyzed.graphEdgeNodes(queryEdge.nodesBegin() + i)!;
-                const columnRefLeft = ctxAnalyzed.columnReferences(edgeNodeLeft.columnReferenceId());
+                const columnRefLeft = ctxAnalyzed.columnReferences(edgeNodeLeft.columnReferenceId())!;
+                const tableIdLeft = columnRefLeft.tableId();
+                const nodeLeft = graphViewModel.nodesByTable.get(tableIdLeft);
+                if (!nodeLeft) continue;
 
+                // Iterate over all nodes on the right
                 for (let j = 0; j < countRight; ++j) {
                     const edgeNodeRight = ctxAnalyzed.graphEdgeNodes(queryEdge.nodesBegin() + countLeft + j)!;
-                    const columnRefRight = ctxAnalyzed.columnReferences(edgeNodeLeft.columnReferenceId());
+                    const columnRefRight = ctxAnalyzed.columnReferences(edgeNodeRight.columnReferenceId())!;
+                    const tableIdRight = columnRefRight.tableId();
+                    const nodeRight = graphViewModel.nodesByTable.get(tableIdRight);
+                    if (!nodeRight) continue;
+
+                    // Add the graph connection id
+                    connections.add(GraphConnectionId.create(nodeLeft, nodeRight));
+                    connections.add(GraphConnectionId.create(nodeRight, nodeLeft));
                 }
             }
         }
+        focusedGraphConnections = connections;
     }
     return focus;
 }
