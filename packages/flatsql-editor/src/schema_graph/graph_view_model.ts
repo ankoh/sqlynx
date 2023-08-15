@@ -1,12 +1,13 @@
 import * as flatsql from '@ankoh/flatsql';
 
-import { AppState, GraphConnectionId, ScriptKey, buildGraphConnectionId } from '../app_state';
+import { AppState, GraphConnectionId, ScriptKey } from '../app_state';
 import { EdgePathBuilder, EdgeType, PORTS_FROM, PORTS_TO, buildEdgePath, selectEdgeType } from './graph_edges';
 import { DebugInfo, buildDebugInfo } from './debug_layer';
 
 export interface SchemaGraphViewModel {
     nodes: NodeViewModel[];
-    edges: Map<GraphConnectionId, EdgeViewModel>;
+    nodesByTable: Map<flatsql.QualifiedID.Value, number>;
+    edges: Map<GraphConnectionId.Value, EdgeViewModel>;
     debugInfo: DebugInfo | null;
 }
 
@@ -51,12 +52,14 @@ export function computeSchemaGraphViewModel(state: AppState): SchemaGraphViewMod
     if (!state.graphLayout) {
         return {
             nodes: [],
+            nodesByTable: new Map(),
             edges: new Map(),
             debugInfo,
         };
     }
     const nodes: NodeViewModel[] = [];
-    const edges = new Map<GraphConnectionId, EdgeViewModel>();
+    const nodesByTable = new Map<flatsql.QualifiedID.Value, number>();
+    const edges = new Map<GraphConnectionId.Value, EdgeViewModel>();
 
     // Collect parsed and analyzed scripts
     const mainProcessed = state.scripts[ScriptKey.MAIN_SCRIPT].processed;
@@ -73,6 +76,7 @@ export function computeSchemaGraphViewModel(state: AppState): SchemaGraphViewMod
     if (!state.graphLayout) {
         return {
             nodes: [],
+            nodesByTable: new Map(),
             edges: new Map(),
             debugInfo,
         };
@@ -124,6 +128,7 @@ export function computeSchemaGraphViewModel(state: AppState): SchemaGraphViewMod
                 height: node!.height(),
                 ports: 0,
             });
+            nodesByTable.set(tableId, i);
         }
     }
 
@@ -146,8 +151,8 @@ export function computeSchemaGraphViewModel(state: AppState): SchemaGraphViewMod
             for (let r = 0; r < countRight; ++r) {
                 const ri = edgeNodes[begin + countLeft + r];
                 const rn = nodes[ri];
-                const connId = buildGraphConnectionId(li, ri);
-                const connIdReverse = buildGraphConnectionId(ri, li);
+                const connId = GraphConnectionId.create(li, ri);
+                const connIdReverse = GraphConnectionId.create(ri, li);
 
                 // Already emitted or source == target?
                 // Note that we may very well encounter self edges in SQL queries.
@@ -198,5 +203,5 @@ export function computeSchemaGraphViewModel(state: AppState): SchemaGraphViewMod
         console.log(state);
         debugInfo = buildDebugInfo(state, nodes);
     }
-    return { nodes, edges, debugInfo };
+    return { nodes, nodesByTable, edges, debugInfo };
 }

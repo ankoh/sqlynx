@@ -2,14 +2,14 @@ import * as React from 'react';
 
 import { Action } from '../utils/action';
 import { EdgeViewModel } from './graph_view_model';
-import { GraphConnectionId, FocusInfo, buildGraphConnectionId } from '../app_state';
+import { GraphConnectionId, FocusInfo } from '../app_state';
 
 interface Props {
     className?: string;
     boardWidth: number;
     boardHeight: number;
-    edges: Map<GraphConnectionId, EdgeViewModel>;
-    onFocusChanged: (connection: GraphConnectionId | null) => void;
+    edges: Map<GraphConnectionId.Value, EdgeViewModel>;
+    onFocusChanged: (connection: GraphConnectionId.Value | null) => void;
 }
 
 enum FocusEvent {
@@ -19,7 +19,7 @@ enum FocusEvent {
 
 interface FocusState {
     event: FocusEvent | null;
-    target: GraphConnectionId | null;
+    target: GraphConnectionId.Value | null;
 }
 
 const MOUSE_ENTER = Symbol('MOUSE_ENTER');
@@ -27,9 +27,9 @@ const MOUSE_LEAVE = Symbol('MOUSE_LEAVE');
 const CLICK = Symbol('CLICK');
 
 type FocusAction =
-    | Action<typeof MOUSE_ENTER, GraphConnectionId>
-    | Action<typeof MOUSE_LEAVE, GraphConnectionId>
-    | Action<typeof CLICK, GraphConnectionId>;
+    | Action<typeof MOUSE_ENTER, GraphConnectionId.Value>
+    | Action<typeof MOUSE_LEAVE, GraphConnectionId.Value>
+    | Action<typeof CLICK, GraphConnectionId.Value>;
 
 const reducer = (state: FocusState, action: FocusAction): FocusState => {
     switch (action.type) {
@@ -66,7 +66,7 @@ const reducer = (state: FocusState, action: FocusAction): FocusState => {
     }
 };
 
-function unpack(path: SVGPathElement): GraphConnectionId {
+function unpack(path: SVGPathElement): GraphConnectionId.Value {
     const from = path.getAttribute('data-edge')!;
     return BigInt(from);
 }
@@ -128,7 +128,7 @@ interface HighlightingProps {
     className?: string;
     boardWidth: number;
     boardHeight: number;
-    edges: Map<GraphConnectionId, EdgeViewModel>;
+    edges: Map<GraphConnectionId.Value, EdgeViewModel>;
     focus: FocusInfo | null;
 }
 

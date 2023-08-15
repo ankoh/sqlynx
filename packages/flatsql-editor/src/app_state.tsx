@@ -64,8 +64,6 @@ export interface GraphNodeDescriptor {
     port: number | null;
 }
 
-export type GraphConnectionId = bigint;
-
 export enum FocusTarget {
     Graph,
     Script,
@@ -77,7 +75,7 @@ export interface FocusInfo {
     /// The layout indices in the schema graph as (nodeId -> port bits) map
     graphNodes: Map<number, number>;
     /// The connection ids of focused edges
-    graphConnections: Set<GraphConnectionId>;
+    graphConnections: Set<GraphConnectionId.Value>;
     /// The focused table columns as (tableId -> columnId[]) map.
     /// Only set if specific table columns are referenced.
     tableColumns: Map<flatsql.QualifiedID.Value, number[]>;
@@ -177,6 +175,7 @@ export function createDefaultState(): AppState {
         graphDebugInfo: null,
         graphViewModel: {
             nodes: [],
+            nodesByTable: new Map(),
             edges: new Map(),
             debugInfo: null,
         },
@@ -184,12 +183,16 @@ export function createDefaultState(): AppState {
     };
 }
 
-export function buildGraphConnectionId(from: number, to: number): GraphConnectionId {
-    return (BigInt(from) << 32n) | BigInt(to);
-}
+export namespace GraphConnectionId {
+    export type Value = bigint;
 
-export function unpackGraphConnectionId(id: GraphConnectionId): [number, number] {
-    const from = id >> 32n;
-    const to = id & ((1n << 32n) - 1n);
-    return [Number(from), Number(to)];
+    export function create(from: number, to: number): Value {
+        return (BigInt(from) << 32n) | BigInt(to);
+    }
+
+    export function unpack(id: Value): [number, number] {
+        const from = id >> 32n;
+        const to = id & ((1n << 32n) - 1n);
+        return [Number(from), Number(to)];
+    }
 }
