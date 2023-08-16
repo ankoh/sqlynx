@@ -3,7 +3,7 @@ import * as React from 'react';
 import * as flatsql from '@ankoh/flatsql';
 
 import { DecorationSet, EditorView } from '@codemirror/view';
-import { ChangeSpec, StateEffect } from '@codemirror/state';
+import { ChangeSpec, StateEffect, EditorSelection } from '@codemirror/state';
 
 import { CodeMirror } from './codemirror';
 import { FlatSQLExtensions } from './flatsql_extension';
@@ -21,6 +21,7 @@ import iconChevronRight from '../../static/svg/icons/chevron_right.svg';
 import iconAccount from '../../static/svg/icons/account_circle.svg';
 
 import styles from './editor.module.css';
+import { ScriptCursorInfoT } from '@ankoh/flatsql/dist/gen/flatsql/proto';
 
 enum TabId {
     MAIN_SCRIPT = 1,
@@ -57,6 +58,7 @@ interface ActiveScriptState {
     script: flatsql.FlatSQLScript | null;
     external: flatsql.FlatSQLScript | null;
     decorations: DecorationSet | null;
+    cursor: ScriptCursorInfoT | null;
 }
 
 export const ScriptEditor: React.FC<Props> = (props: Props) => {
@@ -74,6 +76,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         script: null,
         external: null,
         decorations: null,
+        cursor: null,
     });
     const activeScriptKey = activeTab == TabId.SCHEMA_SCRIPT ? ScriptKey.SCHEMA_SCRIPT : ScriptKey.MAIN_SCRIPT;
     const activeScriptStatistics = ctx.scripts[activeScriptKey].statistics;
@@ -81,6 +84,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
     // Helper to update a script
     const updateScript = React.useCallback(
         (scriptKey: FlatSQLScriptKey, buffers: FlatSQLScriptBuffers, cursor: flatsql.proto.ScriptCursorInfoT) => {
+            active.current.cursor = cursor;
             ctxDispatch({
                 type: UPDATE_SCRIPT_ANALYSIS,
                 value: [scriptKey, buffers, cursor],
@@ -91,6 +95,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
     // Helper to update a script cursor
     const updateScriptCursor = React.useCallback(
         (scriptKey: FlatSQLScriptKey, cursor: flatsql.proto.ScriptCursorInfoT) => {
+            active.current.cursor = cursor;
             ctxDispatch({
                 type: UPDATE_SCRIPT_CURSOR,
                 value: [scriptKey, cursor],
@@ -159,8 +164,13 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                 }),
             );
         }
-        if (changes.length > 0 || effects.length > 0) {
-            view.dispatch({ changes, effects });
+        let selection: EditorSelection | null = null;
+        if (active.current.cursor !== mainData.cursor) {
+            active.current.cursor = mainData.cursor;
+            selection = EditorSelection.create([EditorSelection.cursor(mainData.cursor?.textOffset ?? 0)]);
+        }
+        if (changes.length > 0 || effects.length > 0 || selection !== null) {
+            view.dispatch({ changes, effects, selection: selection ?? undefined });
         }
     }, [view, activeTab, ctx.scripts[ScriptKey.MAIN_SCRIPT], ctx.scripts[ScriptKey.SCHEMA_SCRIPT], updateScript]);
 
