@@ -71,6 +71,16 @@ export function focusGraphNode(state: AppState, target: GraphNodeDescriptor | nu
         // Otherwise clear the focus state
         return {
             ...state,
+            scripts: {
+                [ScriptKey.MAIN_SCRIPT]: {
+                    ...state.scripts[ScriptKey.MAIN_SCRIPT],
+                    cursor: null,
+                },
+                [ScriptKey.SCHEMA_SCRIPT]: {
+                    ...state.scripts[ScriptKey.SCHEMA_SCRIPT],
+                    cursor: null,
+                },
+            },
             focus: null,
         };
     }
@@ -106,6 +116,16 @@ export function focusGraphNode(state: AppState, target: GraphNodeDescriptor | nu
     }
     return {
         ...state,
+        scripts: {
+            [ScriptKey.MAIN_SCRIPT]: {
+                ...state.scripts[ScriptKey.MAIN_SCRIPT],
+                cursor: null,
+            },
+            [ScriptKey.SCHEMA_SCRIPT]: {
+                ...state.scripts[ScriptKey.SCHEMA_SCRIPT],
+                cursor: null,
+            },
+        },
         focus: {
             graphConnections: newConnections,
         },
@@ -122,6 +142,16 @@ export function focusGraphEdge(state: AppState, conn: GraphConnectionId.Value | 
         // Otherwise clear the focus state
         return {
             ...state,
+            scripts: {
+                [ScriptKey.MAIN_SCRIPT]: {
+                    ...state.scripts[ScriptKey.MAIN_SCRIPT],
+                    cursor: null,
+                },
+                [ScriptKey.SCHEMA_SCRIPT]: {
+                    ...state.scripts[ScriptKey.SCHEMA_SCRIPT],
+                    cursor: null,
+                },
+            },
             focus: null,
         };
     }
@@ -134,6 +164,16 @@ export function focusGraphEdge(state: AppState, conn: GraphConnectionId.Value | 
     // Mark edge as focused
     return {
         ...state,
+        scripts: {
+            [ScriptKey.MAIN_SCRIPT]: {
+                ...state.scripts[ScriptKey.MAIN_SCRIPT],
+                cursor: null,
+            },
+            [ScriptKey.SCHEMA_SCRIPT]: {
+                ...state.scripts[ScriptKey.SCHEMA_SCRIPT],
+                cursor: null,
+            },
+        },
         focus: {
             graphConnections: new Set([conn]),
         },
