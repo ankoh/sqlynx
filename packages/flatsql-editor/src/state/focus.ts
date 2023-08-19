@@ -51,8 +51,8 @@ export function deriveScriptFocusFromCursor(
                     if (nodeRight === undefined) continue;
 
                     // Add the graph connection id
-                    connections.add(GraphConnectionId.create(nodeLeft, nodeRight));
-                    connections.add(GraphConnectionId.create(nodeRight, nodeLeft));
+                    connections.add(GraphConnectionId.create(nodeLeft.nodeId, nodeRight.nodeId));
+                    connections.add(GraphConnectionId.create(nodeRight.nodeId, nodeLeft.nodeId));
                 }
             }
         }
@@ -91,8 +91,9 @@ export function focusGraphNode(state: AppState, target: GraphNodeDescriptor | nu
 
     if (target.port === null) {
         // If no port is focused, find all edges reaching that node
-        for (const [conn, edge] of state.graphViewModel.edges) {
-            if (edge.fromNode == target.nodeId || edge.toNode == target.nodeId) {
+        for (const conn of state.graphViewModel.edges.keys()) {
+            const [fromNode, toNode] = GraphConnectionId.unpack(conn);
+            if (fromNode == target.nodeId || toNode == target.nodeId) {
                 newConnections.add(conn);
                 allInPrev &&= prevConnections.has(conn);
             }
@@ -100,9 +101,10 @@ export function focusGraphNode(state: AppState, target: GraphNodeDescriptor | nu
     } else {
         // If a port is focused, find all edges reaching that port
         for (const [conn, edge] of state.graphViewModel.edges) {
+            const [fromNode, toNode] = GraphConnectionId.unpack(conn);
             if (
-                (edge.fromNode == target.nodeId && edge.fromPort == target.port) ||
-                (edge.toNode == target.nodeId && edge.toPort == target.port)
+                (fromNode == target.nodeId && edge.fromPort == target.port) ||
+                (toNode == target.nodeId && edge.toPort == target.port)
             ) {
                 newConnections.add(conn);
                 allInPrev &&= prevConnections.has(conn);
@@ -161,6 +163,16 @@ export function focusGraphEdge(state: AppState, conn: GraphConnectionId.Value | 
             return state;
         }
     }
+    // Get the nodes
+    const vm = state.graphViewModel.edges.get(conn);
+    if (!vm) {
+        console.warn(`unknown graph edge with id: ${conn}`);
+        return state;
+    }
+    const key = flatsql.QualifiedID.getContext(vm.queryEdgeId);
+    const analyzed = state.scripts[key].processed.analyzed?.read(new flatsql.proto.AnalyzedScript());
+    const edge = analyzed?.graphEdges(flatsql.QualifiedID.getIndex(vm.queryEdgeId));
+
     // Mark edge as focused
     return {
         ...state,

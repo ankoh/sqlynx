@@ -6,7 +6,7 @@ import { DebugInfo, buildDebugInfo } from './debug_layer';
 
 export interface GraphViewModel {
     nodes: NodeViewModel[];
-    nodesByTable: Map<flatsql.QualifiedID.Value, number>;
+    nodesByTable: Map<flatsql.QualifiedID.Value, NodeViewModel>;
     edges: Map<GraphConnectionId.Value, EdgeViewModel>;
     debugInfo: DebugInfo | null;
 }
@@ -28,13 +28,12 @@ interface TableColumn {
 }
 
 export interface EdgeViewModel {
-    edgeId: number;
-    fromNode: number;
-    fromPort: number;
+    connectionId: GraphConnectionId.Value;
+    queryEdgeId: flatsql.QualifiedID.Value;
     fromTable: flatsql.QualifiedID.Value;
-    toNode: number;
-    toPort: number;
+    fromPort: number;
     toTable: flatsql.QualifiedID.Value;
+    toPort: number;
     type: EdgeType;
     path: string;
 }
@@ -74,8 +73,8 @@ export function computeGraphViewModel(state: AppState): GraphViewModel {
             debugInfo,
         };
     }
-    const nodes: NodeViewModel[] = [];
-    const nodesByTable = new Map<flatsql.QualifiedID.Value, number>();
+    const nodes = [];
+    const nodesByTable = new Map<flatsql.QualifiedID.Value, NodeViewModel>();
     const edges = new Map<GraphConnectionId.Value, EdgeViewModel>();
 
     // Collect parsed and analyzed scripts
@@ -98,15 +97,15 @@ export function computeGraphViewModel(state: AppState): GraphViewModel {
             debugInfo,
         };
     }
-    const tmpGraphNode = new flatsql.proto.SchemaGraphNode();
+    const tmpGraphTableNode = new flatsql.proto.SchemaGraphTableNode();
     const tmpGraphVertex = new flatsql.proto.SchemaGraphVertex();
     const tmpTable = new flatsql.proto.Table();
     const tmpTableColumn = new flatsql.proto.TableColumn();
 
     // Collect all tables in the schema script
     const layout = state.graphLayout!.read(new flatsql.proto.SchemaGraphLayout());
-    for (let i = 0; i < layout.nodesLength(); ++i) {
-        const node = layout.nodes(i, tmpGraphNode);
+    for (let nodeId = 0; nodeId < layout.tableNodesLength(); ++nodeId) {
+        const node = layout.tableNodes(nodeId, tmpGraphTableNode);
         const position = node!.position(tmpGraphVertex)!;
         const tableId = node!.tableId();
 
@@ -134,8 +133,8 @@ export function computeGraphViewModel(state: AppState): GraphViewModel {
                     name: columnName,
                 });
             }
-            nodes.push({
-                nodeId: i,
+            const viewModel: NodeViewModel = {
+                nodeId,
                 tableId,
                 name: tableName.table ?? '',
                 x: position.x(),
@@ -144,50 +143,62 @@ export function computeGraphViewModel(state: AppState): GraphViewModel {
                 width: node!.width(),
                 height: node!.height(),
                 ports: 0,
-            });
-            nodesByTable.set(tableId, i);
+            };
+            nodes.push(viewModel);
+            nodesByTable.set(tableId, viewModel);
         }
     }
 
     // Read edges
-    const edgeNodes = layout.edgeNodesArray()!;
+    const tmpGraphEdge = new flatsql.proto.SchemaGraphEdge();
+    const tmpGraphEdgeNode1 = new flatsql.proto.SchemaGraphEdgeNode();
+    const tmpGraphEdgeNode2 = new flatsql.proto.SchemaGraphEdgeNode();
     const edgePathBuilder = new EdgePathBuilder();
-    const protoEdge = new flatsql.proto.SchemaGraphEdge();
 
     for (let i = 0; i < layout.edgesLength(); ++i) {
-        const edge = layout.edges(i, protoEdge)!;
+        const edge = layout.edges(i, tmpGraphEdge)!;
         const begin = edge.nodesBegin();
         const countLeft = edge.nodeCountLeft();
         const countRight = edge.nodeCountRight();
 
         // For now, just draw n^2 edges
         for (let l = 0; l < countLeft; ++l) {
-            const li = edgeNodes[begin + l];
-            const ln = nodes[li];
+            const leftEdgeNode = layout.edgeNodes(begin + l, tmpGraphEdgeNode1)!;
+            const leftTableId = leftEdgeNode.tableId();
+            if (flatsql.QualifiedID.isNull(leftTableId)) {
+                continue;
+            }
+            const leftNode = nodesByTable.get(leftTableId)!;
 
             for (let r = 0; r < countRight; ++r) {
-                const ri = edgeNodes[begin + countLeft + r];
-                const rn = nodes[ri];
-                const connId = GraphConnectionId.create(li, ri);
-                const connIdReverse = GraphConnectionId.create(ri, li);
+                const rightEdgeNode = layout.edgeNodes(begin + countLeft + r, tmpGraphEdgeNode2)!;
+                const rightTableId = rightEdgeNode.tableId();
+                if (flatsql.QualifiedID.isNull(rightTableId)) {
+                    continue;
+                }
+                const rightNode = nodesByTable.get(rightTableId)!;
+
+                // Connection ids are composed out of the node indices
+                const conn = GraphConnectionId.create(leftNode.nodeId, rightNode.nodeId);
+                const connFlipped = GraphConnectionId.create(rightNode.nodeId, leftNode.nodeId);
 
                 // Already emitted or source == target?
                 // Note that we may very well encounter self edges in SQL queries.
                 // (self-join, correlated subqueries)
-                if (li == ri || edges.has(connId) || edges.has(connIdReverse)) {
+                if (leftNode.nodeId == rightNode.nodeId || edges.has(conn) || edges.has(connFlipped)) {
                     continue;
                 }
 
                 // Build edge info
-                const fromX = ln.x + ln.width / 2;
-                const fromY = ln.y + ln.height / 2;
-                const toX = rn.x + rn.width / 2;
-                const toY = rn.y + rn.height / 2;
-                const edgeType = selectEdgeType(fromX, fromY, toX, toY, ln.width, ln.height);
+                const fromX = leftNode.x + leftNode.width / 2;
+                const fromY = leftNode.y + leftNode.height / 2;
+                const toX = rightNode.x + rightNode.width / 2;
+                const toY = rightNode.y + rightNode.height / 2;
+                const edgeType = selectEdgeType(fromX, fromY, toX, toY, leftNode.width, leftNode.height);
                 const fromPort = PORTS_FROM[edgeType];
                 const toPort = PORTS_TO[edgeType];
-                nodes[li].ports |= fromPort;
-                nodes[ri].ports |= toPort;
+                leftNode.ports |= fromPort;
+                rightNode.ports |= toPort;
                 const edgePath = buildEdgePath(
                     edgePathBuilder,
                     edgeType,
@@ -195,19 +206,18 @@ export function computeGraphViewModel(state: AppState): GraphViewModel {
                     fromY,
                     toX,
                     toY,
-                    ln.width,
-                    ln.height,
+                    leftNode.width,
+                    leftNode.height,
                     state.graphConfig.gridSize,
                     8,
                 );
-                edges.set(connId, {
-                    edgeId: i,
-                    fromNode: li,
+                edges.set(conn, {
+                    connectionId: conn,
+                    queryEdgeId: edge.queryEdgeId(),
                     fromPort,
-                    fromTable: ln.tableId,
-                    toNode: ri,
+                    fromTable: leftNode.tableId,
                     toPort,
-                    toTable: rn.tableId,
+                    toTable: rightNode.tableId,
                     type: edgeType,
                     path: edgePath,
                 });
@@ -220,5 +230,7 @@ export function computeGraphViewModel(state: AppState): GraphViewModel {
         console.log(state);
         debugInfo = buildDebugInfo(state, nodes);
     }
+    console.log(nodesByTable);
+    console.log(edges);
     return { nodes, nodesByTable, edges, debugInfo };
 }
