@@ -1,3 +1,4 @@
+import * as flatsql from '@ankoh/flatsql';
 import * as React from 'react';
 import cn from 'classnames';
 
@@ -170,20 +171,20 @@ export function NodeLayer(props: Props) {
         />
     );
 
-    const connectionPorts = new Map<number, number>();
+    const connectionPorts = new Map<flatsql.QualifiedID.Value, number>();
     if (props.focus?.graphConnections) {
         for (const connection of props.focus.graphConnections) {
             const edge = props.edges.get(connection)!;
             if (!edge) continue; // May have been a duplicate
-            connectionPorts.set(edge.fromNode, (connectionPorts.get(edge.fromNode) ?? 0) | edge.fromPort);
-            connectionPorts.set(edge.toNode, (connectionPorts.get(edge.toNode) ?? 0) | edge.toPort);
+            connectionPorts.set(edge.fromTable, (connectionPorts.get(edge.fromTable) ?? 0) | edge.fromPort);
+            connectionPorts.set(edge.toTable, (connectionPorts.get(edge.toTable) ?? 0) | edge.toPort);
         }
     }
 
     return (
         <div className={styles.graph_nodes}>
             {props.nodes.map(n => {
-                const focusedPorts = connectionPorts.get(n.nodeId) ?? 0;
+                const focusedPorts = connectionPorts.get(n.tableId) ?? 0;
                 return (
                     <div
                         key={n.nodeId}

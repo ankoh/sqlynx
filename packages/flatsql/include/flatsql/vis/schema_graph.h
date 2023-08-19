@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "flatsql/analyzer/analyzer.h"
+#include "flatsql/context.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/script.h"
 #include "flatsql/vis/adjacency_map.h"
@@ -25,16 +26,30 @@ class SchemaGraph {
         double force = 0;
     };
     struct Edge {
+        QualifiedID edge_id;
+        QualifiedID ast_node_id;
         uint32_t nodes_begin = 0;
         uint16_t node_count_left = 0;
         uint16_t node_count_right = 0;
         proto::ExpressionOperator expression_operator = proto::ExpressionOperator::DEFAULT;
-        Edge(uint32_t nodes_begin = 0, uint16_t node_count_left = 0, uint16_t node_count_right = 0,
+        Edge(QualifiedID edge_id = {}, QualifiedID ast_node_id = {}, uint32_t nodes_begin = 0,
+             uint16_t node_count_left = 0, uint16_t node_count_right = 0,
              proto::ExpressionOperator op = proto::ExpressionOperator::DEFAULT)
-            : nodes_begin(nodes_begin),
+            : edge_id(edge_id),
+              ast_node_id(ast_node_id),
+              nodes_begin(nodes_begin),
               node_count_left(node_count_left),
               node_count_right(node_count_right),
               expression_operator(op) {}
+    };
+    struct EdgeNode {
+        QualifiedID column_reference_id;
+        QualifiedID ast_node_id;
+        QualifiedID table_id;
+        std::optional<uint32_t> node_id;
+        EdgeNode(QualifiedID col_ref = {}, QualifiedID ast_node_id = {}, QualifiedID table_id = {},
+                 std::optional<uint32_t> node_id = 0)
+            : column_reference_id(col_ref), ast_node_id(ast_node_id), table_id(table_id), node_id(node_id) {}
     };
     struct Node {
         QualifiedID table_id;
@@ -88,7 +103,7 @@ class SchemaGraph {
     Config config;
 
     /// The edge nodes
-    std::vector<uint32_t> edge_nodes;
+    std::vector<EdgeNode> edge_nodes;
     /// The edges
     std::vector<Edge> edges;
     /// The nodes

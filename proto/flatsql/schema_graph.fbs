@@ -9,6 +9,10 @@ struct SchemaGraphVertex {
 }
 
 struct SchemaGraphEdge {
+    /// The edge id of the analyzer query graph
+    query_edge_id: uint64;
+    /// The ast node id
+    ast_node_id: uint64;
     /// The begin of the nodes
     nodes_begin: uint32;
     /// The number of nodes on the left side
@@ -19,7 +23,16 @@ struct SchemaGraphEdge {
     expression_operator: ExpressionOperator;
 }
 
-struct SchemaGraphNode {
+struct SchemaGraphEdgeNode {
+    /// The table id
+    table_id: uint64;
+    /// The column reference id
+    column_reference_id: uint64;
+    /// The ast node id
+    ast_node_id: uint64;
+}
+
+struct SchemaGraphTableNode {
     /// The id of table
     table_id: uint64;
     /// The position
@@ -38,10 +51,10 @@ table SchemaGraphDebugInfo {
 }
 
 table SchemaGraphLayout {
-    /// The nodes
-    nodes: [SchemaGraphNode];
+    /// The table nodes
+    table_nodes: [SchemaGraphTableNode];
     /// The edge
-    edge_nodes: [uint32];
+    edge_nodes: [SchemaGraphEdgeNode];
     /// The edges
     edges: [SchemaGraphEdge];
 }
