@@ -91,23 +91,21 @@ export function focusGraphNode(state: AppState, target: GraphNodeDescriptor | nu
 
     if (target.port === null) {
         // If no port is focused, find all edges reaching that node
-        for (const conn of state.graphViewModel.edges.keys()) {
-            const [fromNode, toNode] = GraphConnectionId.unpack(conn);
-            if (fromNode == target.nodeId || toNode == target.nodeId) {
-                newConnections.add(conn);
-                allInPrev &&= prevConnections.has(conn);
+        for (const edge of state.graphViewModel.edges.values()) {
+            if (edge.fromNode == target.nodeId || edge.toNode == target.nodeId) {
+                newConnections.add(edge.connectionId);
+                allInPrev &&= prevConnections.has(edge.connectionId);
             }
         }
     } else {
         // If a port is focused, find all edges reaching that port
-        for (const [conn, edge] of state.graphViewModel.edges) {
-            const [fromNode, toNode] = GraphConnectionId.unpack(conn);
+        for (const edge of state.graphViewModel.edges.values()) {
             if (
-                (fromNode == target.nodeId && edge.fromPort == target.port) ||
-                (toNode == target.nodeId && edge.toPort == target.port)
+                (edge.fromNode == target.nodeId && edge.fromPort == target.port) ||
+                (edge.toNode == target.nodeId && edge.toPort == target.port)
             ) {
-                newConnections.add(conn);
-                allInPrev &&= prevConnections.has(conn);
+                newConnections.add(edge.connectionId);
+                allInPrev &&= prevConnections.has(edge.connectionId);
             }
         }
     }
