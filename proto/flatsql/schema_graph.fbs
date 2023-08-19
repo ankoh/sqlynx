@@ -30,6 +30,8 @@ struct SchemaGraphEdgeNode {
     column_reference_id: uint64;
     /// The ast node id
     ast_node_id: uint64;
+    /// The node id
+    node_id: uint32;
 }
 
 struct SchemaGraphTableNode {

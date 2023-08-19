@@ -30,8 +30,10 @@ interface TableColumn {
 export interface EdgeViewModel {
     connectionId: GraphConnectionId.Value;
     queryEdgeIds: flatsql.QualifiedID.Value[];
+    fromNode: number;
     fromTable: flatsql.QualifiedID.Value;
     fromPort: number;
+    toNode: number;
     toTable: flatsql.QualifiedID.Value;
     toPort: number;
     type: EdgeType;
@@ -221,8 +223,10 @@ export function computeGraphViewModel(state: AppState): GraphViewModel {
                 edges.set(conn, {
                     connectionId: conn,
                     queryEdgeIds: [edge.queryEdgeId()],
+                    fromNode: leftNode.nodeId,
                     fromPort,
                     fromTable: leftNode.tableId,
+                    toNode: rightNode.nodeId,
                     toPort,
                     toTable: rightNode.tableId,
                     type: edgeType,

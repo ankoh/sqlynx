@@ -327,6 +327,7 @@ flatbuffers::Offset<proto::SchemaGraphLayout> SchemaGraph::Pack(flatbuffers::Fla
                 edge_node.table_id.Pack(),
                 edge_node.column_reference_id.Pack(),
                 edge_node.ast_node_id.Pack(),
+                edge_node.node_id.value_or(-1),
             };
             edge_node_writer += edge_node.node_id.has_value();
         }
@@ -337,6 +338,7 @@ flatbuffers::Offset<proto::SchemaGraphLayout> SchemaGraph::Pack(flatbuffers::Fla
                 edge_node.table_id.Pack(),
                 edge_node.column_reference_id.Pack(),
                 edge_node.ast_node_id.Pack(),
+                edge_node.node_id.value_or(-1),
             };
             edge_node_writer += edge_node.node_id.has_value();
         }
