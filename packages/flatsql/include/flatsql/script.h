@@ -307,7 +307,7 @@ class AnalyzedScript {
         /// The column reference id
         uint32_t column_reference_id;
         /// Constructor
-        QueryGraphEdgeNode(uint32_t node_id = 0, uint32_t column_ref_id = 0) : column_reference_id(column_ref_id) {}
+        QueryGraphEdgeNode(uint32_t column_ref_id = 0) : column_reference_id(column_ref_id) {}
         /// Create FlatBuffer
         operator proto::QueryGraphEdgeNode() { return proto::QueryGraphEdgeNode{column_reference_id}; }
     };
