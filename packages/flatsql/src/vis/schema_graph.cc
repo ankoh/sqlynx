@@ -6,6 +6,7 @@
 
 #include "flatsql/analyzer/analyzer.h"
 #include "flatsql/api.h"
+#include "flatsql/context.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/script.h"
 #include "flatsql/vis/adjacency_map.h"
@@ -227,14 +228,24 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
     edge_nodes.resize(script->graph_edge_nodes.size());
     for (size_t i = 0; i < script->graph_edge_nodes.size(); ++i) {
         AnalyzedScript::QueryGraphEdgeNode& node = script->graph_edge_nodes[i];
+        QualifiedID column_reference_id{script->context_id, node.column_reference_id};
+        auto& col_ref = script->column_references[node.column_reference_id];
+        QualifiedID ast_node_id =
+            col_ref.ast_node_id.has_value() ? QualifiedID{script->context_id, *col_ref.ast_node_id} : QualifiedID{};
         QualifiedID table_id = script->column_references[node.column_reference_id].table_id;
-        edge_nodes[i] = table_id.IsNull() ? NULL_TABLE_ID : create_node_id(table_id, *script);
+        uint32_t node_id = table_id.IsNull() ? NULL_TABLE_ID : create_node_id(table_id, *script);
+        edge_nodes[i] = EdgeNode{column_reference_id, ast_node_id, table_id, node_id};
     }
     // Add edges
     edges.resize(script->graph_edges.size());
-    for (size_t i = 0; i < script->graph_edges.size(); ++i) {
+    for (uint32_t i = 0; i < script->graph_edges.size(); ++i) {
         AnalyzedScript::QueryGraphEdge& edge = script->graph_edges[i];
-        edges[i] = {edge.nodes_begin, edge.node_count_left, edge.node_count_right, edge.expression_operator};
+        edges[i] = {QualifiedID{s->context_id, i},
+                    edge.ast_node_id.has_value() ? QualifiedID{s->context_id, *edge.ast_node_id} : QualifiedID{},
+                    edge.nodes_begin,
+                    edge.node_count_left,
+                    edge.node_count_right,
+                    edge.expression_operator};
     }
 
     // Collect nˆ2 adjacency pairs for now.
@@ -295,15 +306,15 @@ void SchemaGraph::LoadScript(std::shared_ptr<AnalyzedScript> s) {
 
 flatbuffers::Offset<proto::SchemaGraphLayout> SchemaGraph::Pack(flatbuffers::FlatBufferBuilder& builder) {
     proto::SchemaGraphLayoutT layout;
-    layout.nodes.resize(nodes.size());
+    layout.table_nodes.resize(nodes.size());
     layout.edges.resize(edges.size());
     layout.edge_nodes.resize(edge_nodes.size());
     for (uint32_t i = 0; i < nodes.size(); ++i) {
         proto::SchemaGraphVertex pos{nodes[i].position.x - nodes[i].width / 2 + config.table_margin / 2,
                                      nodes[i].position.y - nodes[i].height / 2 + config.table_margin / 2};
-        proto::SchemaGraphNode proto_node{nodes[i].table_id.Pack(), pos, nodes[i].width - config.table_margin,
-                                          nodes[i].height - config.table_margin};
-        layout.nodes[i] = proto_node;
+        proto::SchemaGraphTableNode proto_node{nodes[i].table_id.Pack(), pos, nodes[i].width - config.table_margin,
+                                               nodes[i].height - config.table_margin};
+        layout.table_nodes[i] = proto_node;
     }
     size_t edge_node_reader = 0;
     size_t edge_node_writer = 0;
@@ -311,22 +322,28 @@ flatbuffers::Offset<proto::SchemaGraphLayout> SchemaGraph::Pack(flatbuffers::Fla
         auto& edge = edges[i];
         uint32_t nodes_begin = edge_node_writer;
         for (size_t j = 0; j < edge.node_count_left; ++j) {
-            uint32_t table_id = edge_nodes[edge_node_reader++];
-            layout.edge_nodes[edge_node_writer] = table_id;
-            edge_node_writer += table_id != NULL_TABLE_ID;
+            auto& edge_node = edge_nodes[edge_node_reader++];
+            layout.edge_nodes[edge_node_writer] = proto::SchemaGraphEdgeNode{
+                edge_node.table_id.Pack(),
+                edge_node.column_reference_id.Pack(),
+                edge_node.ast_node_id.Pack(),
+            };
+            edge_node_writer += edge_node.node_id.has_value();
         }
         uint16_t node_count_left = edge_node_writer - nodes_begin;
         for (size_t j = 0; j < edge.node_count_right; ++j) {
-            uint32_t table_id = edge_nodes[edge_node_reader++];
-            layout.edge_nodes[edge_node_writer] = table_id;
-            edge_node_writer += table_id != NULL_TABLE_ID;
+            auto& edge_node = edge_nodes[edge_node_reader++];
+            layout.edge_nodes[edge_node_writer] = proto::SchemaGraphEdgeNode{
+                edge_node.table_id.Pack(),
+                edge_node.column_reference_id.Pack(),
+                edge_node.ast_node_id.Pack(),
+            };
+            edge_node_writer += edge_node.node_id.has_value();
         }
         uint16_t node_count_right = edge_node_writer - (nodes_begin + node_count_left);
         proto::SchemaGraphEdge proto_edge{
-            nodes_begin,
-            node_count_left,
-            node_count_right,
-            edge.expression_operator,
+            edge.edge_id.Pack(), edge.ast_node_id.Pack(), nodes_begin,
+            node_count_left,     node_count_right,        edge.expression_operator,
         };
         layout.edges[i] = proto_edge;
     }
