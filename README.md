@@ -52,3 +52,21 @@ make vscode
 # Start editor dev server
 make editor_start
 ```
+
+### Incremental parsing with Tree-sitter?
+
+Tree-sitter is a great parser framework and I recommend everyone to try it out.
+It gives you flexible incremental parsing without much hassle and is a perfect fit for many editors.
+
+FlatSQL was built for specific database systems.
+The systems Hyper, Umbra, NoisePage, AlloyDB and DuckDB all use Bison parsers derived from the PostgreSQL grammar.
+The PostgreSQL grammar stood the test of time and established itself as de-facto reference for SQL syntax.
+Staying close to PostgreSQL simplifies building frontends for these database systems without worrying too much about grammar differences.
+FlatSQL builds around a carefully optimized and very fast PostgreSQL parser to provide lightweight semantic analysis passes, running on every single keystroke.
+
+FlatSQL is still doing work in `O(text-length)` with every input event, as opposed to `O(change-size)` by Tree-sitter.
+Yet, FlatSQL analyzes most input in well under a millisecond in your browser, even when replacing the entire text.
+After all, the parser is not the only component that has to be tuned for fast analysis passes, incremental parsing alone "only" gives you a head-start for the AST update.
+FlatSQL maintains B+-tree ropes, dictionary-encodes SQL object names in-flight, performs efficient post-order DFS traversals through linear scans over a compact AST representation and maintains identifier suffixes in lightweight adaptive radix trees.
+
+Analyzing TPC-DS Q1 takes around 50 microseconds and you should not notice FlatSQL for queries up to 50 times that text size.
