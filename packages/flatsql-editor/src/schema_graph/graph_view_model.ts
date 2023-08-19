@@ -29,7 +29,7 @@ interface TableColumn {
 
 export interface EdgeViewModel {
     connectionId: GraphConnectionId.Value;
-    queryEdgeId: flatsql.QualifiedID.Value;
+    queryEdgeIds: flatsql.QualifiedID.Value[];
     fromTable: flatsql.QualifiedID.Value;
     fromPort: number;
     toTable: flatsql.QualifiedID.Value;
@@ -182,10 +182,17 @@ export function computeGraphViewModel(state: AppState): GraphViewModel {
                 const conn = GraphConnectionId.create(leftNode.nodeId, rightNode.nodeId);
                 const connFlipped = GraphConnectionId.create(rightNode.nodeId, leftNode.nodeId);
 
-                // Already emitted or source == target?
+                // Source == target?
                 // Note that we may very well encounter self edges in SQL queries.
                 // (self-join, correlated subqueries)
-                if (leftNode.nodeId == rightNode.nodeId || edges.has(conn) || edges.has(connFlipped)) {
+                if (leftNode.nodeId == rightNode.nodeId) {
+                    continue;
+                }
+
+                // Already emitted?
+                const prev = edges.get(conn) ?? edges.get(connFlipped);
+                if (prev !== undefined) {
+                    prev.queryEdgeIds.push(edge.queryEdgeId());
                     continue;
                 }
 
@@ -213,7 +220,7 @@ export function computeGraphViewModel(state: AppState): GraphViewModel {
                 );
                 edges.set(conn, {
                     connectionId: conn,
-                    queryEdgeId: edge.queryEdgeId(),
+                    queryEdgeIds: [edge.queryEdgeId()],
                     fromPort,
                     fromTable: leftNode.tableId,
                     toPort,

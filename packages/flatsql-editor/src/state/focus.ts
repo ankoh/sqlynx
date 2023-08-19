@@ -169,9 +169,9 @@ export function focusGraphEdge(state: AppState, conn: GraphConnectionId.Value | 
         console.warn(`unknown graph edge with id: ${conn}`);
         return state;
     }
-    const key = flatsql.QualifiedID.getContext(vm.queryEdgeId);
-    const analyzed = state.scripts[key].processed.analyzed?.read(new flatsql.proto.AnalyzedScript());
-    const edge = analyzed?.graphEdges(flatsql.QualifiedID.getIndex(vm.queryEdgeId));
+    // const key = flatsql.QualifiedID.getContext(vm.queryEdgeId);
+    // const analyzed = state.scripts[key].processed.analyzed?.read(new flatsql.proto.AnalyzedScript());
+    // const edge = analyzed?.graphEdges(flatsql.QualifiedID.getIndex(vm.queryEdgeId));
 
     // Mark edge as focused
     return {
