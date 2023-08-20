@@ -140,10 +140,11 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
             effects.push(
                 UpdateFlatSQLScript.of({
                     scriptKey: mainKey,
-                    script: mainData.script,
-                    external: externalScript,
+                    mainScript: mainData.script,
+                    externalScript: externalScript,
                     scriptBuffers: mainData.processed,
-                    cursor: mainData.cursor,
+                    scriptCursor: mainData.cursor,
+                    focusedColumnRefs: ctx.focus?.columnRefs ?? null,
                     onUpdateScript: updateScript,
                     onUpdateScriptCursor: updateScriptCursor,
                 }),
@@ -152,18 +153,19 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
             // Only the external script changed, no need for text changes
             active.current.script = mainData.script;
             active.current.external = externalScript;
-            effects.push(
-                UpdateFlatSQLScript.of({
-                    scriptKey: mainKey,
-                    script: mainData.script,
-                    external: externalScript,
-                    scriptBuffers: mainData.processed,
-                    cursor: mainData.cursor,
-                    onUpdateScript: updateScript,
-                    onUpdateScriptCursor: updateScriptCursor,
-                }),
-            );
         }
+        effects.push(
+            UpdateFlatSQLScript.of({
+                scriptKey: mainKey,
+                mainScript: mainData.script,
+                externalScript: externalScript,
+                scriptBuffers: mainData.processed,
+                scriptCursor: mainData.cursor,
+                focusedColumnRefs: ctx.focus?.columnRefs ?? null,
+                onUpdateScript: updateScript,
+                onUpdateScriptCursor: updateScriptCursor,
+            }),
+        );
         let selection: EditorSelection | null = null;
         if (active.current.cursor !== mainData.cursor) {
             active.current.cursor = mainData.cursor;
