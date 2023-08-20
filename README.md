@@ -53,6 +53,8 @@ make vscode
 make editor_start
 ```
 
+---
+
 ### Incremental parsing with Tree-sitter?
 
 Tree-sitter is a great parser framework and I recommend everyone to try it out.
