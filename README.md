@@ -64,7 +64,7 @@ FlatSQL was built for specific database systems.
 The systems Hyper, Umbra, NoisePage, AlloyDB and DuckDB all use Bison parsers derived from the PostgreSQL grammar.
 The PostgreSQL grammar stood the test of time and established itself as de-facto reference for SQL syntax.
 Staying close to PostgreSQL simplifies building frontends for these database systems without worrying too much about grammar differences.
-FlatSQL builds around a carefully optimized and very fast PostgreSQL parser to provide lightweight semantic analysis passes, running on every single keystroke.
+FlatSQL builds around a carefully optimized and very fast parser based on the PostgreSQL-grammar to provide lightweight semantic analysis passes, running on every single keystroke.
 
 FlatSQL is still doing work in `O(text-length)` with every input event, as opposed to `O(change-size)` by Tree-sitter.
 Yet, FlatSQL analyzes most input in well under a millisecond in your browser, even when replacing the entire text.
