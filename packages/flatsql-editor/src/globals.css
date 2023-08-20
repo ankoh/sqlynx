@@ -14,13 +14,17 @@
     --navbar_indicator_color: rgb(254, 150, 0);
     --navbar_indicator_width: 3px;
     --editor_gutter_bg: rgb(246, 248, 250);
+    --editor_colref_bg: hsl(210, 24%, 88%);
+    --editor_queryedge_bg: hsl(210, 24%, 88%);
     --stats_bar_fg: hsl(210, 24%, 92%);
     --stats_bg: hsl(210deg, 28.57%, 97.25%);
     --stats_value_fg: rgb(140, 140, 140);
     --graph_edges_bg: hsl(210deg, 12.68%, 84.16%);
+    --graph_edge_focus_color: hsl(212.44deg, 92.07%, 44.51%);
     --graph_card_port_bg: hsl(210deg, 12.68%, 84.16%);
     --graph_card_column_count_bg: hsl(210deg, 12.68%, 90.16%);
     --graph_card_bg: rgb(255, 255, 255);
+    --graph_card_focus_fg: hsl(212.44deg, 92.07%, 44.51%);
     --graph_port_size: 14px;
 }
 
