@@ -6,3 +6,13 @@
     color: hsl(212.44deg, 92.07%, 44.51%) !important;
     font-weight: 700;
 }
+
+.flatsql-tableref-focus {
+    color: hsl(212.44deg, 92.07%, 44.51%) !important;
+    font-weight: 700;
+}
+
+.flatsql-colref-focus {
+    color: hsl(212.44deg, 92.07%, 44.51%) !important;
+    font-weight: 700;
+}
