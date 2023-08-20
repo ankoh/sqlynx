@@ -29,7 +29,8 @@ interface TableColumn {
 
 export interface EdgeViewModel {
     connectionId: GraphConnectionId.Value;
-    queryEdgeIds: flatsql.QualifiedID.Value[];
+    queryEdges: Set<flatsql.QualifiedID.Value>;
+    columnRefs: Set<flatsql.QualifiedID.Value>;
     fromNode: number;
     fromTable: flatsql.QualifiedID.Value;
     fromPort: number;
@@ -194,7 +195,9 @@ export function computeGraphViewModel(state: AppState): GraphViewModel {
                 // Already emitted?
                 const prev = edges.get(conn) ?? edges.get(connFlipped);
                 if (prev !== undefined) {
-                    prev.queryEdgeIds.push(edge.queryEdgeId());
+                    prev.queryEdges.add(edge.queryEdgeId());
+                    prev.columnRefs.add(leftEdgeNode.columnReferenceId());
+                    prev.columnRefs.add(rightEdgeNode.columnReferenceId());
                     continue;
                 }
 
@@ -222,7 +225,8 @@ export function computeGraphViewModel(state: AppState): GraphViewModel {
                 );
                 edges.set(conn, {
                     connectionId: conn,
-                    queryEdgeIds: [edge.queryEdgeId()],
+                    queryEdges: new Set([edge.queryEdgeId()]),
+                    columnRefs: new Set([leftEdgeNode.columnReferenceId(), rightEdgeNode.columnReferenceId()]),
                     fromNode: leftNode.nodeId,
                     fromPort,
                     fromTable: leftNode.tableId,
@@ -241,7 +245,5 @@ export function computeGraphViewModel(state: AppState): GraphViewModel {
         console.log(state);
         debugInfo = buildDebugInfo(state, nodes);
     }
-    console.log(nodesByTable);
-    console.log(edges);
     return { nodes, nodesByTable, edges, debugInfo };
 }
