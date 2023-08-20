@@ -8,13 +8,15 @@ export interface FlatSQLScriptUpdate {
     // The key of the currently active script
     scriptKey: FlatSQLScriptKey;
     // The currently active script in the editor
-    script: flatsql.FlatSQLScript | null;
+    mainScript: flatsql.FlatSQLScript | null;
     // The second script
-    external: flatsql.FlatSQLScript | null;
+    externalScript: flatsql.FlatSQLScript | null;
     /// The previous processed script buffers (if any)
     scriptBuffers: FlatSQLScriptBuffers;
     /// The script cursor
-    cursor: flatsql.proto.ScriptCursorInfoT | null;
+    scriptCursor: flatsql.proto.ScriptCursorInfoT | null;
+    /// The script cursor
+    focusedColumnRefs: Set<flatsql.QualifiedID.Value> | null;
     // This callback is called when the editor updates the script
     onUpdateScript: (
         scriptKey: FlatSQLScriptKey,
@@ -96,15 +98,16 @@ export const FlatSQLProcessor: StateField<FlatSQLEditorState> = StateField.defin
         // By default, the FlatSQL script is not configured
         const config: FlatSQLEditorState = {
             scriptKey: 0,
-            script: null,
-            external: null,
+            mainScript: null,
+            externalScript: null,
             scriptBuffers: {
                 scanned: null,
                 parsed: null,
                 analyzed: null,
                 destroy: destroyBuffers,
             },
-            cursor: null,
+            scriptCursor: null,
+            focusedColumnRefs: null,
             onUpdateScript: () => {},
             onUpdateScriptCursor: () => {},
         };
@@ -116,63 +119,73 @@ export const FlatSQLProcessor: StateField<FlatSQLEditorState> = StateField.defin
         const prevSelection = transaction.startState.selection.asSingle();
         const newSelection = transaction.newSelection.asSingle();
         const cursorChanged = !prevSelection.eq(newSelection);
-        let cursor: number | null = newSelection.main.to;
+        let selection: number | null = newSelection.main.to;
+        let next: FlatSQLEditorState = state;
+
+        const copyIfNotReplaced = () => {
+            next = next === state ? { ...state } : state;
+        };
 
         // Did the user provide us with a new FlatSQL script?
         for (const effect of transaction.effects) {
-            if (
-                effect.is(UpdateFlatSQLScript) &&
-                (state.script !== effect.value.script || state.external !== effect.value.external)
-            ) {
-                return {
+            // FlatSQL update effect?
+            if (effect.is(UpdateFlatSQLScript)) {
+                next = {
                     ...state,
                     scriptKey: effect.value.scriptKey,
-                    script: effect.value.script,
-                    external: effect.value.external,
+                    mainScript: effect.value.mainScript,
+                    externalScript: effect.value.externalScript,
                     scriptBuffers: effect.value.scriptBuffers,
+                    scriptCursor: effect.value.scriptCursor,
+                    focusedColumnRefs: effect.value.focusedColumnRefs,
                     onUpdateScript: effect.value.onUpdateScript,
                     onUpdateScriptCursor: effect.value.onUpdateScriptCursor,
                 };
+
+                // Entire script changed?
+                if (state.mainScript !== next.mainScript || state.externalScript !== next.externalScript) {
+                    return next;
+                }
             }
         }
 
         // Did the document change?
-        if (state.script != null) {
+        if (next.mainScript != null) {
+            // Mirror all changes to the the FlatSQL script, if the script is != null.
             if (transaction.docChanged) {
-                // Mirror all changes to the the FlatSQL script, if the script is != null.
+                copyIfNotReplaced();
                 transaction.changes.iterChanges(
                     (fromA: number, toA: number, fromB: number, toB: number, inserted: Text) => {
                         if (toA - fromA > 0) {
-                            state.script!.eraseTextRange(fromA, toA - fromA);
+                            next.mainScript!.eraseTextRange(fromA, toA - fromA);
                         }
                         if (inserted.length > 0) {
                             let writer = fromB;
                             for (const text of inserted.iter()) {
-                                state.script!.insertTextAt(writer, text);
+                                next.mainScript!.insertTextAt(writer, text);
                                 writer += text.length;
                             }
                         }
                     },
                 );
                 // Analyze the new script
-                const next = { ...state };
-                next.scriptBuffers = parseAndAnalyzeScript(next.script!, next.external);
-                const cursorBuffer = next.script!.readCursor(cursor ?? 0);
-                next.cursor = cursorBuffer.read(new flatsql.proto.ScriptCursorInfo()).unpack();
+                next.scriptBuffers = parseAndAnalyzeScript(next.mainScript!, next.externalScript);
+                const cursorBuffer = next.mainScript!.readCursor(selection ?? 0);
+                next.scriptCursor = cursorBuffer.read(new flatsql.proto.ScriptCursorInfo()).unpack();
                 cursorBuffer.delete();
-                next.onUpdateScript(next.scriptKey, next.scriptBuffers, next.cursor);
+                next.onUpdateScript(next.scriptKey, next.scriptBuffers, next.scriptCursor);
                 return next;
             }
+            // Update the script cursor
             if (cursorChanged) {
-                // Update the script cursor
-                const next = { ...state };
-                const cursorBuffer = state.script!.readCursor(cursor ?? 0);
-                next.cursor = cursorBuffer.read(new flatsql.proto.ScriptCursorInfo()).unpack();
+                copyIfNotReplaced();
+                const cursorBuffer = next.mainScript!.readCursor(selection ?? 0);
+                next.scriptCursor = cursorBuffer.read(new flatsql.proto.ScriptCursorInfo()).unpack();
                 cursorBuffer.delete();
-                next.onUpdateScriptCursor(next.scriptKey, next.cursor);
+                next.onUpdateScriptCursor(next.scriptKey, next.scriptCursor);
                 return next;
             }
         }
-        return state;
+        return next;
     },
 });

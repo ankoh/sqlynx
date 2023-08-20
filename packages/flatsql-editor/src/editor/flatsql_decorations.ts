@@ -2,7 +2,7 @@ import * as flatsql from '@ankoh/flatsql';
 import { Decoration, DecorationSet, EditorView } from '@codemirror/view';
 import { Transaction, StateField, RangeSetBuilder } from '@codemirror/state';
 
-import { FlatSQLProcessor } from './flatsql_processor';
+import { FlatSQLProcessor, FlatSQLScriptBuffers, FlatSQLScriptKey } from './flatsql_processor';
 
 import './flatsql_decorations.css';
 
@@ -47,7 +47,7 @@ function buildDecorationsFromTokens(
 }
 interface ScannerDecorationState {
     decorations: DecorationSet;
-    scanned: flatsql.FlatBufferRef<flatsql.proto.ScannedScript> | null;
+    scriptBuffers: FlatSQLScriptBuffers;
 }
 
 /// Decorations derived from FlatSQL scanner tokens
@@ -56,7 +56,12 @@ const ScannerDecorationField: StateField<ScannerDecorationState> = StateField.de
     create: () => {
         const config: ScannerDecorationState = {
             decorations: new RangeSetBuilder<Decoration>().finish(),
-            scanned: null,
+            scriptBuffers: {
+                scanned: null,
+                parsed: null,
+                analyzed: null,
+                destroy: () => {},
+            },
         };
         return config;
     },
@@ -64,95 +69,137 @@ const ScannerDecorationField: StateField<ScannerDecorationState> = StateField.de
     update: (state: ScannerDecorationState, transaction: Transaction) => {
         // Scanned program untouched?
         const processor = transaction.state.field(FlatSQLProcessor);
-        if (processor.scriptBuffers.scanned === state.scanned) {
+        if (processor.scriptBuffers.scanned === state.scriptBuffers.scanned) {
             return state;
         }
         // Rebuild decorations
         const s = { ...state };
-        s.scanned = processor.scriptBuffers.scanned;
-        if (s.scanned) {
-            s.decorations = buildDecorationsFromTokens(s.scanned);
+        s.scriptBuffers.scanned = processor.scriptBuffers.scanned;
+        if (s.scriptBuffers.scanned) {
+            s.decorations = buildDecorationsFromTokens(s.scriptBuffers.scanned);
         }
         return s;
     },
 });
 
+interface DecorationInfo {
+    from: number;
+    to: number;
+    decoration: Decoration;
+}
+
 function buildDecorationsFromCursor(
-    scannedBuffer: flatsql.FlatBufferRef<flatsql.proto.ScannedScript>,
-    parsedBuffer: flatsql.FlatBufferRef<flatsql.proto.ParsedScript>,
-    analyzedBuffer: flatsql.FlatBufferRef<flatsql.proto.AnalyzedScript>,
-    cursor: flatsql.proto.ScriptCursorInfoT,
+    scriptKey: FlatSQLScriptKey | null,
+    scriptBuffers: FlatSQLScriptBuffers,
+    scriptCursor: flatsql.proto.ScriptCursorInfoT | null,
+    focusedColumnRefs: Set<flatsql.QualifiedID.Value> | null,
 ): DecorationSet {
     const builder = new RangeSetBuilder<Decoration>();
-    const parsed = parsedBuffer.read(new flatsql.proto.ParsedScript());
-    const analyzed = analyzedBuffer.read(new flatsql.proto.AnalyzedScript());
-    const queryEdgeId = cursor.queryEdgeId;
+    const parsed = scriptBuffers.parsed?.read(new flatsql.proto.ParsedScript()) ?? null;
+    const analyzed = scriptBuffers.analyzed?.read(new flatsql.proto.AnalyzedScript()) ?? null;
+    const queryEdgeId = scriptCursor?.queryEdgeId ?? null;
+    const decorations: DecorationInfo[] = [];
 
-    if (queryEdgeId < analyzed.graphEdgesLength()) {
+    if (parsed === null || analyzed === null) {
+        return builder.finish();
+    }
+    if (queryEdgeId !== null && queryEdgeId < analyzed.graphEdgesLength()) {
         const edge = analyzed.graphEdges(queryEdgeId)!;
         const edgeAstNodeId = edge.astNodeId();
         if (edgeAstNodeId < parsed.nodesLength()) {
             const edgeAstNode = parsed.nodes(edgeAstNodeId)!;
             const location = edgeAstNode?.location()!;
-            builder.add(location.offset(), location.offset() + location.length(), FocusedQueryGraphEdgeDecoration);
+            decorations.push({
+                from: location.offset(),
+                to: location.offset() + location.length(),
+                decoration: FocusedQueryGraphEdgeDecoration,
+            });
         }
     }
-
+    const tmpRef = new flatsql.proto.ColumnReference();
+    const tmpNode = new flatsql.proto.Node();
+    const tmpLoc = new flatsql.proto.Location();
+    if (focusedColumnRefs !== null) {
+        for (const refId of focusedColumnRefs) {
+            const context = flatsql.QualifiedID.getContext(refId);
+            const index = flatsql.QualifiedID.getIndex(refId);
+            if (context !== scriptKey) {
+                continue;
+            }
+            const columnRef = analyzed.columnReferences(index, tmpRef)!;
+            const astNodeId = columnRef.astNodeId()!;
+            const astNode = parsed.nodes(astNodeId, tmpNode)!;
+            const loc = astNode.location(tmpLoc)!;
+            decorations.push({
+                from: loc.offset(),
+                to: loc.offset() + loc.length(),
+                decoration: FocusedColumnReferenceDecoration,
+            });
+        }
+    }
+    decorations.sort((l: DecorationInfo, r: DecorationInfo) => {
+        return l.from - r.to;
+    });
+    for (const deco of decorations) {
+        builder.add(deco.from, deco.to, deco.decoration);
+    }
     return builder.finish();
 }
 
-interface CursorDecorationState {
+interface FocusDecorationState {
+    scriptKey: FlatSQLScriptKey | null;
     decorations: DecorationSet;
-    scanned: flatsql.FlatBufferRef<flatsql.proto.ScannedScript> | null;
-    parsed: flatsql.FlatBufferRef<flatsql.proto.ParsedScript> | null;
-    analyzed: flatsql.FlatBufferRef<flatsql.proto.AnalyzedScript> | null;
-    cursor: flatsql.proto.ScriptCursorInfoT | null;
+    scriptBuffers: FlatSQLScriptBuffers;
+    scriptCursor: flatsql.proto.ScriptCursorInfoT | null;
+    focusedColumnRefs: Set<flatsql.QualifiedID.Value> | null;
 }
 
 /// Decorations derived from FlatSQL cursor
-const CursorDecorationField: StateField<CursorDecorationState> = StateField.define<CursorDecorationState>({
+const FocusDecorationField: StateField<FocusDecorationState> = StateField.define<FocusDecorationState>({
     // Create the initial state
     create: () => {
-        const config: CursorDecorationState = {
+        const config: FocusDecorationState = {
+            scriptKey: null,
             decorations: new RangeSetBuilder<Decoration>().finish(),
-            scanned: null,
-            parsed: null,
-            analyzed: null,
-            cursor: null,
+            scriptBuffers: {
+                scanned: null,
+                parsed: null,
+                analyzed: null,
+                destroy: () => {},
+            },
+            scriptCursor: null,
+            focusedColumnRefs: null,
         };
         return config;
     },
     // Mirror the FlatSQL state
-    update: (state: CursorDecorationState, transaction: Transaction) => {
+    update: (state: FocusDecorationState, transaction: Transaction) => {
         // Scanned program untouched?
         const processor = transaction.state.field(FlatSQLProcessor);
         if (
-            processor.scriptBuffers.scanned === state.scanned &&
-            processor.scriptBuffers.parsed === state.parsed &&
-            processor.scriptBuffers.analyzed === state.analyzed &&
-            processor.cursor === state.cursor
+            processor.scriptKey === state.scriptKey &&
+            processor.scriptBuffers.scanned === state.scriptBuffers.scanned &&
+            processor.scriptBuffers.parsed === state.scriptBuffers.parsed &&
+            processor.scriptBuffers.analyzed === state.scriptBuffers.analyzed &&
+            processor.scriptCursor === state.scriptCursor &&
+            processor.focusedColumnRefs === state.focusedColumnRefs
         ) {
             return state;
         }
         // Rebuild decorations
         const s = { ...state };
-        s.scanned = processor.scriptBuffers.scanned;
-        s.parsed = processor.scriptBuffers.parsed;
-        s.analyzed = processor.scriptBuffers.analyzed;
-        s.cursor = processor.cursor;
-        if (s.scanned && s.parsed && s.analyzed && s.cursor) {
-            s.decorations = buildDecorationsFromCursor(s.scanned, s.parsed, s.analyzed, s.cursor);
-        }
+        s.scriptKey = processor.scriptKey;
+        s.scriptBuffers.scanned = processor.scriptBuffers.scanned;
+        s.scriptBuffers.parsed = processor.scriptBuffers.parsed;
+        s.scriptBuffers.analyzed = processor.scriptBuffers.analyzed;
+        s.scriptCursor = processor.scriptCursor;
+        s.focusedColumnRefs = processor.focusedColumnRefs;
+        s.decorations = buildDecorationsFromCursor(s.scriptKey, s.scriptBuffers, s.scriptCursor, s.focusedColumnRefs);
         return s;
     },
 });
 
 const ScannerDecorations = EditorView.decorations.from(ScannerDecorationField, state => state.decorations);
-const CursorDecorations = EditorView.decorations.from(CursorDecorationField, state => state.decorations);
+const FocusDecorations = EditorView.decorations.from(FocusDecorationField, state => state.decorations);
 /// Bundle the decoration extensions
-export const FlatSQLDecorations = [
-    ScannerDecorationField,
-    ScannerDecorations,
-    CursorDecorationField,
-    CursorDecorations,
-];
+export const FlatSQLDecorations = [ScannerDecorationField, ScannerDecorations, FocusDecorationField, FocusDecorations];
