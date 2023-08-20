@@ -142,7 +142,7 @@ export function EdgeHighlightingLayer(props: HighlightingProps) {
                     key={conn.toString()}
                     d={edge.path}
                     strokeWidth="2px"
-                    stroke="hsl(212.44deg, 92.07%, 44.51%)"
+                    stroke="var(--graph_edge_focus_color)"
                     fill="transparent"
                 />,
             );

@@ -7,6 +7,7 @@ import { NodeViewModel, EdgeViewModel, GraphConnectionId, GraphNodeDescriptor } 
 import { NodePort } from './graph_edges';
 import { FocusInfo } from '../state/focus';
 
+import iconEye from '../../static/svg/icons/eye.svg';
 import iconTable from '../../static/svg/icons/table.svg';
 import iconTableView from '../../static/svg/icons/table_border.svg';
 
@@ -188,7 +189,9 @@ export function NodeLayer(props: Props) {
                 return (
                     <div
                         key={n.nodeId}
-                        className={styles.table_node}
+                        className={cn(styles.table_node, {
+                            [styles.table_node_focused]: focusedPorts != 0,
+                        })}
                         style={{
                             position: 'absolute',
                             top: n.y,
@@ -235,7 +238,11 @@ export function NodeLayer(props: Props) {
                                 />
                             )}
                         </div>
-                        <div className={styles.table_icon}>
+                        <div
+                            className={cn(styles.table_icon, {
+                                [styles.table_icon_focused]: focusedPorts != 0,
+                            })}
+                        >
                             <svg width="20px" height="20px">
                                 <use xlinkHref={`${iconTable}#sym`} />
                             </svg>
