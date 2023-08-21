@@ -93,6 +93,7 @@ function buildDecorationsFromCursor(
     scriptBuffers: FlatSQLScriptBuffers,
     scriptCursor: flatsql.proto.ScriptCursorInfoT | null,
     focusedColumnRefs: Set<flatsql.QualifiedID.Value> | null,
+    focusedTableRefs: Set<flatsql.QualifiedID.Value> | null,
 ): DecorationSet {
     const builder = new RangeSetBuilder<Decoration>();
     const parsed = scriptBuffers.parsed?.read(new flatsql.proto.ParsedScript()) ?? null;
@@ -116,9 +117,12 @@ function buildDecorationsFromCursor(
             });
         }
     }
-    const tmpRef = new flatsql.proto.ColumnReference();
+    const tmpColRef = new flatsql.proto.ColumnReference();
+    const tmpTblRef = new flatsql.proto.TableReference();
     const tmpNode = new flatsql.proto.Node();
     const tmpLoc = new flatsql.proto.Location();
+
+    // Build decorations for column refs
     if (focusedColumnRefs !== null) {
         for (const refId of focusedColumnRefs) {
             const context = flatsql.QualifiedID.getContext(refId);
@@ -126,7 +130,7 @@ function buildDecorationsFromCursor(
             if (context !== scriptKey) {
                 continue;
             }
-            const columnRef = analyzed.columnReferences(index, tmpRef)!;
+            const columnRef = analyzed.columnReferences(index, tmpColRef)!;
             const astNodeId = columnRef.astNodeId()!;
             const astNode = parsed.nodes(astNodeId, tmpNode)!;
             const loc = astNode.location(tmpLoc)!;
@@ -134,6 +138,26 @@ function buildDecorationsFromCursor(
                 from: loc.offset(),
                 to: loc.offset() + loc.length(),
                 decoration: FocusedColumnReferenceDecoration,
+            });
+        }
+    }
+
+    // Build decorations for table refs
+    if (focusedTableRefs !== null) {
+        for (const refId of focusedTableRefs) {
+            const context = flatsql.QualifiedID.getContext(refId);
+            const index = flatsql.QualifiedID.getIndex(refId);
+            if (context !== scriptKey) {
+                continue;
+            }
+            const columnRef = analyzed.tableReferences(index, tmpTblRef)!;
+            const astNodeId = columnRef.astNodeId()!;
+            const astNode = parsed.nodes(astNodeId, tmpNode)!;
+            const loc = astNode.location(tmpLoc)!;
+            decorations.push({
+                from: loc.offset(),
+                to: loc.offset() + loc.length(),
+                decoration: FocusedTableReferenceDecoration,
             });
         }
     }
@@ -152,6 +176,7 @@ interface FocusDecorationState {
     scriptBuffers: FlatSQLScriptBuffers;
     scriptCursor: flatsql.proto.ScriptCursorInfoT | null;
     focusedColumnRefs: Set<flatsql.QualifiedID.Value> | null;
+    focusedTableRefs: Set<flatsql.QualifiedID.Value> | null;
 }
 
 /// Decorations derived from FlatSQL cursor
@@ -169,6 +194,7 @@ const FocusDecorationField: StateField<FocusDecorationState> = StateField.define
             },
             scriptCursor: null,
             focusedColumnRefs: null,
+            focusedTableRefs: null,
         };
         return config;
     },
@@ -182,7 +208,8 @@ const FocusDecorationField: StateField<FocusDecorationState> = StateField.define
             processor.scriptBuffers.parsed === state.scriptBuffers.parsed &&
             processor.scriptBuffers.analyzed === state.scriptBuffers.analyzed &&
             processor.scriptCursor === state.scriptCursor &&
-            processor.focusedColumnRefs === state.focusedColumnRefs
+            processor.focusedColumnRefs === state.focusedColumnRefs &&
+            processor.focusedTableRefs === state.focusedTableRefs
         ) {
             return state;
         }
@@ -194,7 +221,14 @@ const FocusDecorationField: StateField<FocusDecorationState> = StateField.define
         s.scriptBuffers.analyzed = processor.scriptBuffers.analyzed;
         s.scriptCursor = processor.scriptCursor;
         s.focusedColumnRefs = processor.focusedColumnRefs;
-        s.decorations = buildDecorationsFromCursor(s.scriptKey, s.scriptBuffers, s.scriptCursor, s.focusedColumnRefs);
+        s.focusedTableRefs = processor.focusedTableRefs;
+        s.decorations = buildDecorationsFromCursor(
+            s.scriptKey,
+            s.scriptBuffers,
+            s.scriptCursor,
+            s.focusedColumnRefs,
+            s.focusedTableRefs,
+        );
         return s;
     },
 });
