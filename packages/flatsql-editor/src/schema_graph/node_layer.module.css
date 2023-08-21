@@ -93,7 +93,7 @@
     width: calc(var(--graph_port_size) / 2);
     height: calc(var(--graph_port_size) / 2);
     content: '';
-    background-color: hsl(212.44deg, 92.07%, 44.51%) !important;
+    background-color: var(--graph_card_focus_fg) !important;
     border-radius: 50%;
     transition: background-color ease-out 0.12s;
 }
