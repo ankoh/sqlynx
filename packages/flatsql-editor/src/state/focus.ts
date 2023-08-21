@@ -7,6 +7,8 @@ export interface FocusInfo {
     graphConnections: Set<GraphConnectionId.Value>;
     /// The column references
     columnRefs: Set<flatsql.QualifiedID.Value>;
+    /// The column references
+    tableRefs: Set<flatsql.QualifiedID.Value>;
 }
 
 /// Derive focus from script cursors
@@ -21,6 +23,7 @@ export function deriveScriptFocusFromCursor(
     const focus: FocusInfo = {
         graphConnections: new Set(),
         columnRefs: new Set(),
+        tableRefs: new Set(),
     };
     const tmpAnalyzed = new flatsql.proto.AnalyzedScript();
 
@@ -118,12 +121,14 @@ export function focusGraphNode(state: AppState, target: GraphNodeDescriptor | nu
         return state;
     }
 
-    // Find all column refs that are referencing that table
+    // Find all column and table refs that are referencing that table
     const columnRefs: Set<flatsql.QualifiedID.Value> = new Set();
+    const tableRefs: Set<flatsql.QualifiedID.Value> = new Set();
     const targetTableId = state.graphViewModel.nodes[target.nodeId].tableId;
     if (!flatsql.QualifiedID.isNull(targetTableId)) {
         const tmpAnalyzed = new flatsql.proto.AnalyzedScript();
         const tmpColRef = new flatsql.proto.ColumnReference();
+        const tmpTblRef = new flatsql.proto.TableReference();
         for (const key of [ScriptKey.MAIN_SCRIPT, ScriptKey.SCHEMA_SCRIPT]) {
             const analyzed = state.scripts[key].processed.analyzed?.read(tmpAnalyzed);
             if (!analyzed) continue;
@@ -133,8 +138,15 @@ export function focusGraphNode(state: AppState, target: GraphNodeDescriptor | nu
                     columnRefs.add(flatsql.QualifiedID.create(key, refId));
                 }
             }
+            for (let refId = 0; refId < analyzed.tableReferencesLength(); ++refId) {
+                const tblRef = analyzed.tableReferences(refId, tmpTblRef)!;
+                if (tblRef.tableId() == targetTableId) {
+                    tableRefs.add(flatsql.QualifiedID.create(key, refId));
+                }
+            }
         }
     }
+
     // Clear cursor and update focus
     return {
         ...state,
@@ -151,6 +163,7 @@ export function focusGraphNode(state: AppState, target: GraphNodeDescriptor | nu
         focus: {
             graphConnections: newConnections,
             columnRefs,
+            tableRefs,
         },
     };
 }
@@ -206,6 +219,7 @@ export function focusGraphEdge(state: AppState, conn: GraphConnectionId.Value | 
         focus: {
             graphConnections: new Set([conn]),
             columnRefs: edgeVM.columnRefs,
+            tableRefs: new Set(),
         },
     };
 }

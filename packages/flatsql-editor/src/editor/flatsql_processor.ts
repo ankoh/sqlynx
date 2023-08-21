@@ -15,8 +15,10 @@ export interface FlatSQLScriptUpdate {
     scriptBuffers: FlatSQLScriptBuffers;
     /// The script cursor
     scriptCursor: flatsql.proto.ScriptCursorInfoT | null;
-    /// The script cursor
+    /// The focused column references
     focusedColumnRefs: Set<flatsql.QualifiedID.Value> | null;
+    /// The focused table references
+    focusedTableRefs: Set<flatsql.QualifiedID.Value> | null;
     // This callback is called when the editor updates the script
     onUpdateScript: (
         scriptKey: FlatSQLScriptKey,
@@ -108,6 +110,7 @@ export const FlatSQLProcessor: StateField<FlatSQLEditorState> = StateField.defin
             },
             scriptCursor: null,
             focusedColumnRefs: null,
+            focusedTableRefs: null,
             onUpdateScript: () => {},
             onUpdateScriptCursor: () => {},
         };
@@ -132,14 +135,7 @@ export const FlatSQLProcessor: StateField<FlatSQLEditorState> = StateField.defin
             if (effect.is(UpdateFlatSQLScript)) {
                 next = {
                     ...state,
-                    scriptKey: effect.value.scriptKey,
-                    mainScript: effect.value.mainScript,
-                    externalScript: effect.value.externalScript,
-                    scriptBuffers: effect.value.scriptBuffers,
-                    scriptCursor: effect.value.scriptCursor,
-                    focusedColumnRefs: effect.value.focusedColumnRefs,
-                    onUpdateScript: effect.value.onUpdateScript,
-                    onUpdateScriptCursor: effect.value.onUpdateScriptCursor,
+                    ...effect.value,
                 };
 
                 // Entire script changed?

@@ -17,8 +17,17 @@
 }
 
 .flatsql-tableref-focus {
-    color: hsl(212.44deg, 92.07%, 44.51%) !important;
-    font-weight: 700;
+    position: relative;
+}
+.flatsql-tableref-focus::before {
+    position: absolute;
+    content: '';
+    width: calc(100% + 8px);
+    height: calc(100% + 4px);
+    top: -2px;
+    left: -4px;
+    background-color: var(--editor_queryedge_bg);
+    z-index: -1;
 }
 
 .flatsql-colref-focus {
