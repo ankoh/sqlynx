@@ -5,6 +5,8 @@ import { GraphConnectionId, GraphNodeDescriptor, GraphViewModel } from '../schem
 export interface FocusInfo {
     /// The connection ids of focused edges
     graphConnections: Set<GraphConnectionId.Value>;
+    /// The table ids
+    tableIds: Set<flatsql.QualifiedID.Value>;
     /// The column references
     columnRefs: Set<flatsql.QualifiedID.Value>;
     /// The column references
@@ -22,6 +24,7 @@ export function deriveScriptFocusFromCursor(
 ): FocusInfo {
     const focus: FocusInfo = {
         graphConnections: new Set(),
+        tableIds: new Set(),
         columnRefs: new Set(),
         tableRefs: new Set(),
     };
@@ -63,7 +66,82 @@ export function deriveScriptFocusFromCursor(
             }
         }
         focus.graphConnections = connections;
+        return focus;
     }
+
+    // Helper to derive focus from a table id
+    const deriveFocusFromTableId = (tableId: flatsql.QualifiedID.Value): FocusInfo => {
+        const context = flatsql.QualifiedID.getContext(tableId);
+        const data = scriptData[context];
+        const analyzed = data.processed.analyzed?.read(new flatsql.proto.AnalyzedScript());
+        if (!analyzed) {
+            return {
+                tableRefs: new Set(),
+                tableIds: new Set(),
+                columnRefs: new Set(),
+                graphConnections: new Set(),
+            };
+        }
+        // Find all column and table refs that are referencing that table
+        const tableIds: Set<flatsql.QualifiedID.Value> = new Set();
+        const columnRefs: Set<flatsql.QualifiedID.Value> = new Set();
+        const tableRefs: Set<flatsql.QualifiedID.Value> = new Set();
+        if (!flatsql.QualifiedID.isNull(tableId)) {
+            tableIds.add(tableId);
+            const tmpColRef = new flatsql.proto.ColumnReference();
+            const tmpTblRef = new flatsql.proto.TableReference();
+            for (const key of [ScriptKey.MAIN_SCRIPT, ScriptKey.SCHEMA_SCRIPT]) {
+                if (!analyzed) continue;
+                for (let refId = 0; refId < analyzed.columnReferencesLength(); ++refId) {
+                    const colRef = analyzed.columnReferences(refId, tmpColRef)!;
+                    if (colRef.tableId() == tableId) {
+                        columnRefs.add(flatsql.QualifiedID.create(key, refId));
+                    }
+                }
+                for (let refId = 0; refId < analyzed.tableReferencesLength(); ++refId) {
+                    const tblRef = analyzed.tableReferences(refId, tmpTblRef)!;
+                    if (tblRef.tableId() == tableId) {
+                        tableRefs.add(flatsql.QualifiedID.create(key, refId));
+                    }
+                }
+            }
+        }
+        return {
+            graphConnections: new Set(),
+            tableIds,
+            tableRefs,
+            columnRefs,
+        };
+    };
+
+    // Focus a table ref?
+    const tableRefId = flatsql.QualifiedID.create(scriptKey, cursor.tableReferenceId);
+    if (!flatsql.QualifiedID.isNull(tableRefId)) {
+        const ctxData = scriptData[scriptKey];
+        const analyzed = ctxData.processed.analyzed?.read(tmpAnalyzed);
+        if (analyzed) {
+            const tableRef = analyzed.tableReferences(cursor.tableReferenceId)!;
+            const tableId = tableRef.tableId();
+            const focus = deriveFocusFromTableId(tableId);
+            focus.tableRefs.add(tableRefId);
+            return focus;
+        }
+    }
+
+    // Focus a column ref?
+    const columnRefId = flatsql.QualifiedID.create(scriptKey, cursor.columnReferenceId);
+    if (!flatsql.QualifiedID.isNull(columnRefId)) {
+        const ctxData = scriptData[scriptKey];
+        const analyzed = ctxData.processed.analyzed?.read(tmpAnalyzed);
+        if (analyzed) {
+            const colRef = analyzed.columnReferences(cursor.columnReferenceId)!;
+            const tableId = colRef.tableId();
+            const focus = deriveFocusFromTableId(tableId);
+            focus.columnRefs.add(columnRefId);
+            return focus;
+        }
+    }
+
     return focus;
 }
 
@@ -122,10 +200,12 @@ export function focusGraphNode(state: AppState, target: GraphNodeDescriptor | nu
     }
 
     // Find all column and table refs that are referencing that table
+    const tableIds: Set<flatsql.QualifiedID.Value> = new Set();
     const columnRefs: Set<flatsql.QualifiedID.Value> = new Set();
     const tableRefs: Set<flatsql.QualifiedID.Value> = new Set();
     const targetTableId = state.graphViewModel.nodes[target.nodeId].tableId;
     if (!flatsql.QualifiedID.isNull(targetTableId)) {
+        tableIds.add(targetTableId);
         const tmpAnalyzed = new flatsql.proto.AnalyzedScript();
         const tmpColRef = new flatsql.proto.ColumnReference();
         const tmpTblRef = new flatsql.proto.TableReference();
@@ -162,6 +242,7 @@ export function focusGraphNode(state: AppState, target: GraphNodeDescriptor | nu
         },
         focus: {
             graphConnections: newConnections,
+            tableIds,
             columnRefs,
             tableRefs,
         },
@@ -218,6 +299,7 @@ export function focusGraphEdge(state: AppState, conn: GraphConnectionId.Value | 
         },
         focus: {
             graphConnections: new Set([conn]),
+            tableIds: new Set(),
             columnRefs: edgeVM.columnRefs,
             tableRefs: new Set(),
         },
