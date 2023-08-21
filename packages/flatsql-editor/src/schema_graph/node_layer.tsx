@@ -186,11 +186,12 @@ export function NodeLayer(props: Props) {
         <div className={styles.graph_nodes}>
             {props.nodes.map(n => {
                 const focusedPorts = connectionPorts.get(n.tableId) ?? 0;
+                const isFocused = focusedPorts != 0 || (props.focus?.tableIds.has(n.tableId) ?? false);
                 return (
                     <div
                         key={n.nodeId}
                         className={cn(styles.table_node, {
-                            [styles.table_node_focused]: focusedPorts != 0,
+                            [styles.table_node_focused]: isFocused,
                         })}
                         style={{
                             position: 'absolute',
@@ -240,7 +241,7 @@ export function NodeLayer(props: Props) {
                         </div>
                         <div
                             className={cn(styles.table_icon, {
-                                [styles.table_icon_focused]: focusedPorts != 0,
+                                [styles.table_icon_focused]: isFocused,
                             })}
                         >
                             <svg width="20px" height="20px">
