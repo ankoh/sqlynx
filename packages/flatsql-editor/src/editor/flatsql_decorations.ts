@@ -162,7 +162,7 @@ function buildDecorationsFromCursor(
         }
     }
     decorations.sort((l: DecorationInfo, r: DecorationInfo) => {
-        return l.from - r.to;
+        return l.from - r.from;
     });
     for (const deco of decorations) {
         builder.add(deco.from, deco.to, deco.decoration);
