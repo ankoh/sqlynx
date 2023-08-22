@@ -71,17 +71,6 @@ export function deriveScriptFocusFromCursor(
 
     // Helper to derive focus from a table id
     const deriveFocusFromTableId = (tableId: flatsql.QualifiedID.Value): FocusInfo => {
-        const context = flatsql.QualifiedID.getContext(tableId);
-        const data = scriptData[context];
-        const analyzed = data.processed.analyzed?.read(new flatsql.proto.AnalyzedScript());
-        if (!analyzed) {
-            return {
-                tableRefs: new Set(),
-                tableIds: new Set(),
-                columnRefs: new Set(),
-                graphConnections: new Set(),
-            };
-        }
         // Find all column and table refs that are referencing that table
         const tableIds: Set<flatsql.QualifiedID.Value> = new Set();
         const columnRefs: Set<flatsql.QualifiedID.Value> = new Set();
@@ -91,6 +80,7 @@ export function deriveScriptFocusFromCursor(
             const tmpColRef = new flatsql.proto.ColumnReference();
             const tmpTblRef = new flatsql.proto.TableReference();
             for (const key of [ScriptKey.MAIN_SCRIPT, ScriptKey.SCHEMA_SCRIPT]) {
+                const analyzed = scriptData[key].processed.analyzed?.read(new flatsql.proto.AnalyzedScript());
                 if (!analyzed) continue;
                 for (let refId = 0; refId < analyzed.columnReferencesLength(); ++refId) {
                     const colRef = analyzed.columnReferences(refId, tmpColRef)!;
