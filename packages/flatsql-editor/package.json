@@ -31,7 +31,7 @@
     "devDependencies": {
         "@types/flatbuffers": "^1.10.0",
         "@types/fontfaceobserver": "^2.1.0",
-        "@types/jest": "^29.5.3",
+        "@types/jest": "^29.5.4",
         "@types/react": "^18.2.20",
         "@types/react-dom": "^18.2.7",
         "@types/react-test-renderer": "^18.0.0",
