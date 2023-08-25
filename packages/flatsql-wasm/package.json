@@ -11,7 +11,7 @@
         "esbuild": "^0.19.2",
         "jest": "^29.6.4",
         "ts-jest": "^29.1.1",
-        "typescript": "^5.1.6"
+        "typescript": "^5.2.2"
     },
     "scripts": {
         "build:o0": "tsc --emitDeclarationOnly && node --loader ts-node/esm ./bundle.ts o0",
