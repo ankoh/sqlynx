@@ -19,6 +19,8 @@ struct Keyword {
     /// The category
     KeywordCategory category;
 
+    /// Get a span with all keywords
+    static std::span<const Keyword> GetKeywords();
     /// Find a keyword
     static const Keyword* Find(std::string_view text);
     /// Get the length of a keyword known at compile-time
