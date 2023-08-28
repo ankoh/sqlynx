@@ -1,7 +1,7 @@
 namespace flatsql.proto;
 
-enum CompletionCategory {
-    KEYWORD = 1,
+enum CompletionCategory: uint8 {
+    KEYWORD = 0,
     TABLE_NAME = 2,
     COLUMN_NAME = 3,
 }
@@ -14,7 +14,7 @@ table CompletionOption {
     /// The completion
     text: string;
     /// The score
-    score: f64;
+    score: double;
 }
 
 table Completion {
@@ -23,5 +23,5 @@ table Completion {
     /// The token that gets completed
     scanner_token_id: uint32;
     /// The completion entries
-    entries: [ScriptCompletionOption];
+    entries: [CompletionOption];
 }
