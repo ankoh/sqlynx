@@ -4,10 +4,12 @@
 
 #include <algorithm>
 #include <chrono>
+#include <memory>
 #include <optional>
 #include <unordered_set>
 
 #include "flatsql/analyzer/analyzer.h"
+#include "flatsql/analyzer/completion.h"
 #include "flatsql/parser/parse_context.h"
 #include "flatsql/parser/parser_generated.h"
 #include "flatsql/parser/scanner.h"
@@ -297,12 +299,18 @@ std::unique_ptr<proto::ScriptMemoryStatistics> Script::GetMemoryStatistics() {
     };
     registerScript(analyzed_script.get(), memory->mutable_latest_script());
 
-    if (completion_index.suffix_trie) {
-        registerScript(completion_index.analyzed_script.get(), memory->mutable_completion_index_script());
-        size_t completion_index_entries = completion_index.suffix_trie->GetEntries().size() * sizeof(SuffixTrie::Entry);
-        size_t completion_index_bytes = completion_index.suffix_trie->GetEntries().size() * sizeof(SuffixTrie::Entry);
-        memory->mutate_completion_index_entries(completion_index_entries);
-        memory->mutate_completion_index_bytes(completion_index_bytes);
+    if (completion_index) {
+        if (completion_index->analyzed_script) {
+            registerScript(completion_index->analyzed_script.get(), memory->mutable_completion_index_script());
+        }
+        if (completion_index->suffix_trie) {
+            size_t completion_index_entries =
+                completion_index->suffix_trie->GetEntries().size() * sizeof(SuffixTrie::Entry);
+            size_t completion_index_bytes =
+                completion_index->suffix_trie->GetEntries().size() * sizeof(SuffixTrie::Entry);
+            memory->mutate_completion_index_entries(completion_index_entries);
+            memory->mutate_completion_index_bytes(completion_index_bytes);
+        }
     }
     return memory;
 }
@@ -375,8 +383,9 @@ proto::StatusCode Script::UpdateCompletionIndex() {
     auto& parsed = analyzed->parsed_script;
     auto& scanned = parsed->scanned_script;
 
-    completion_index.analyzed_script = analyzed;
-    completion_index.suffix_trie = SuffixTrie::BulkLoad(scanned->name_dictionary);
+    completion_index = std::make_unique<CompletionIndex>();
+    completion_index->analyzed_script = analyzed;
+    completion_index->suffix_trie = SuffixTrie::BulkLoad(scanned->name_dictionary);
     return proto::StatusCode::OK;
 }
 

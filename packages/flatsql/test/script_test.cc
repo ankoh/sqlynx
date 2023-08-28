@@ -1,5 +1,6 @@
 #include "flatsql/script.h"
 
+#include "flatsql/analyzer/completion.h"
 #include "flatsql/proto/proto_generated.h"
 #include "gtest/gtest.h"
 
