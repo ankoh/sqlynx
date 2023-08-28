@@ -22,6 +22,7 @@ class ParseContext;
 }  // namespace parser
 
 class Analyzer;
+struct CompletionIndex;
 
 using Key = proto::AttributeKey;
 using Location = proto::Location;
@@ -339,13 +340,6 @@ class AnalyzedScript {
     flatbuffers::Offset<proto::AnalyzedScript> Pack(flatbuffers::FlatBufferBuilder& builder);
 };
 
-struct CompletionIndex {
-    /// The analyzed script
-    std::shared_ptr<AnalyzedScript> analyzed_script;
-    /// The suffix trie
-    std::unique_ptr<SuffixTrie> suffix_trie;
-};
-
 struct ScriptCursor {
     /// The text offset
     size_t text_offset = 0;
@@ -386,7 +380,7 @@ class Script {
     /// The last analyzed script
     std::shared_ptr<AnalyzedScript> analyzed_script;
     /// The completion model
-    CompletionIndex completion_index;
+    std::unique_ptr<CompletionIndex> completion_index;
 
     /// The memory statistics
     proto::ScriptProcessingTimings timing_statistics;
