@@ -231,6 +231,7 @@ set(LIB_SRC
   ${CMAKE_SOURCE_DIR}/src/analyzer/name_resolution_pass.cc
   ${CMAKE_SOURCE_DIR}/src/analyzer/pass_manager.cc
   ${CMAKE_SOURCE_DIR}/src/api.cc
+  ${CMAKE_SOURCE_DIR}/src/completion.cc
   ${CMAKE_SOURCE_DIR}/src/parser/grammar/enums.cc
   ${CMAKE_SOURCE_DIR}/src/parser/grammar/keywords.cc
   ${CMAKE_SOURCE_DIR}/src/parser/grammar/state.cc
@@ -238,8 +239,8 @@ set(LIB_SRC
   ${CMAKE_SOURCE_DIR}/src/parser/parse_context.cc
   ${CMAKE_SOURCE_DIR}/src/parser/scanner.cc
   ${CMAKE_SOURCE_DIR}/src/parser/script.cc
-  ${CMAKE_SOURCE_DIR}/src/utils/suffix_trie.cc
   ${CMAKE_SOURCE_DIR}/src/utils/rope.cc
+  ${CMAKE_SOURCE_DIR}/src/utils/suffix_trie.cc
   ${CMAKE_SOURCE_DIR}/src/vis/schema_graph.cc
 )
 
