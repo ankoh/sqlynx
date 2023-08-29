@@ -133,10 +133,33 @@ struct SuffixTrie {
     /// Iterates through the entries in the map that match a given prefix.
     void IteratePrefix(std::string_view prefix, IterationCallback callback, ContextType context);
 
+    /// Bulkload a suffix trie from entries
+    static std::unique_ptr<SuffixTrie> BulkLoad(std::vector<Entry> entries);
+    /// Bulkload a suffix trie from mapped names
+    template <typename ValueType, typename GetStringFn>
+    static std::unique_ptr<SuffixTrie> BulkLoad(std::span<ValueType> values, GetStringFn getString) {
+        std::vector<Entry> entries;
+        {
+            ChunkBuffer<Entry, 256> entries_chunked;
+            for (auto &value : values) {
+                auto text = getString(value);
+                for (size_t offset = 0; offset < text.size(); ++offset) {
+                    entries_chunked.Append(Entry{.suffix = text.substr(offset), .value = nullptr});
+                }
+            }
+            entries = entries_chunked.Flatten();
+        }
+        std::sort(entries.begin(), entries.end(), [](Entry &l, Entry &r) { return l.suffix < r.suffix; });
+        return BulkLoad(std::move(entries));
+    }
     /// Bulkload a suffix trie from a name dictionary
-    static std::unique_ptr<SuffixTrie> BulkLoad(std::span<std::string_view> names);
-    /// Bulkload a suffix trie from a name dictionary
-    static std::unique_ptr<SuffixTrie> BulkLoad(std::span<std::pair<std::string_view, proto::Location>> names);
+    static inline std::unique_ptr<SuffixTrie> BulkLoad(std::span<std::pair<std::string_view, proto::Location>> names) {
+        return BulkLoad(names, [&](auto &name) { return std::get<0>(name); });
+    }
+    /// Bulkload a suffix trie from names
+    static inline std::unique_ptr<SuffixTrie> BulkLoad(std::span<std::string_view> names) {
+        return BulkLoad(names, [&](auto &name) { return name; });
+    }
 };
 
 }  // namespace flatsql
