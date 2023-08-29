@@ -413,7 +413,7 @@ class Script {
     /// Analyze the latest parsed script
     std::pair<AnalyzedScript*, proto::StatusCode> Analyze(Script* external = nullptr);
     /// Update the completion index
-    proto::StatusCode ReIndex();
+    proto::StatusCode Reindex();
     /// Move the cursor
     const ScriptCursor& MoveCursor(size_t text_offset);
     /// Get statisics
