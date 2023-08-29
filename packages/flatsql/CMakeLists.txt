@@ -59,11 +59,11 @@ if(WASM)
         -Wl,--export=flatsql_script_insert_char_at \
         -Wl,--export=flatsql_script_erase_text_range \
         -Wl,--export=flatsql_script_to_string \
+        -Wl,--export=flatsql_script_format \
         -Wl,--export=flatsql_script_scan \
         -Wl,--export=flatsql_script_parse \
         -Wl,--export=flatsql_script_analyze \
-        -Wl,--export=flatsql_script_format \
-        -Wl,--export=flatsql_script_update_completion_index \
+        -Wl,--export=flatsql_script_reindex \
         -Wl,--export=flatsql_script_read_cursor \
         -Wl,--export=flatsql_script_get_statistics \
         -Wl,--export=flatsql_schemagraph_new \

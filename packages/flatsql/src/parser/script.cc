@@ -375,7 +375,7 @@ std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(Script* external) 
 }
 
 /// Update the completion index
-proto::StatusCode Script::UpdateCompletionIndex() {
+proto::StatusCode Script::ReIndex() {
     if (!analyzed_script) {
         return proto::StatusCode::COMPLETION_DATA_INVALID;
     }
