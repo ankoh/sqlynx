@@ -7,6 +7,7 @@
 #include <tuple>
 
 #include "ankerl/unordered_dense.h"
+#include "flatsql/analyzer/completion.h"
 #include "flatsql/context.h"
 #include "flatsql/parser/parser_generated.h"
 #include "flatsql/proto/proto_generated.h"
@@ -379,8 +380,11 @@ class Script {
     std::shared_ptr<ParsedScript> parsed_script;
     /// The last analyzed script
     std::shared_ptr<AnalyzedScript> analyzed_script;
-    /// The completion model
-    std::unique_ptr<CompletionIndex> completion_index;
+
+    /// The completion index
+    std::optional<CompletionIndex> completion_index;
+    /// The last cursor
+    std::optional<ScriptCursor> cursor;
 
     /// The memory statistics
     proto::ScriptProcessingTimings timing_statistics;
@@ -406,16 +410,15 @@ class Script {
     std::pair<ParsedScript*, proto::StatusCode> Parse();
     /// Analyze the latest parsed script
     std::pair<AnalyzedScript*, proto::StatusCode> Analyze(Script* external = nullptr);
-    /// Returns the pretty-printed string for this script.
-    /// Return `nullopt` in case of an error.
-    std::string Format();
     /// Update the completion index
     proto::StatusCode UpdateCompletionIndex();
-    /// Read cursor
-    std::unique_ptr<ScriptCursor> ReadCursor(size_t text_offset);
-
+    /// Move the cursor
+    const ScriptCursor& MoveCursor(size_t text_offset);
     /// Get statisics
     std::unique_ptr<proto::ScriptStatisticsT> GetStatistics();
+
+    /// Returns the pretty-printed string for this script
+    std::string Format();
 };
 
 }  // namespace flatsql
