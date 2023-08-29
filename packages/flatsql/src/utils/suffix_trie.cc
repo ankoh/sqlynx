@@ -178,31 +178,12 @@ static_assert(std::string_view("ab\0", 3) < std::string_view("abA"));
 static_assert(std::string_view("ab\0", 3) < std::string_view("ab0"));
 static_assert(std::string_view("ab\0", 3) < std::string_view("ab\0a", 4));
 
-std::unique_ptr<SuffixTrie> SuffixTrie::BulkLoad(std::span<std::string_view> keys) {
-    std::vector<std::pair<std::string_view, proto::Location>> entries;
-    entries.reserve(keys.size());
-    for (auto k : keys) {
-        entries.emplace_back(k, proto::Location(0, 0));
-    }
-    return BulkLoad(entries);
-}
+std::unique_ptr<SuffixTrie> SuffixTrie::BulkLoad(std::vector<Entry> entries) {
+    assert(std::is_sorted(entries.begin(), entries.end(), [&](auto &l, auto &r) { return l.suffix < r.suffix; }));
 
-std::unique_ptr<SuffixTrie> SuffixTrie::BulkLoad(std::span<std::pair<std::string_view, proto::Location>> names) {
+    // Create trie
     auto trie = std::make_unique<SuffixTrie>();
-
-    /// Collect all suffixes
-    {
-        ChunkBuffer<Entry, 256> entries_chunked;
-        for (auto [name, loc] : names) {
-            for (size_t offset = 0; offset < name.size(); ++offset) {
-                entries_chunked.Append(Entry{.suffix = name.substr(offset), .value = nullptr});
-            }
-        }
-        trie->entries = entries_chunked.Flatten();
-    }
-    std::sort(trie->entries.begin(), trie->entries.end(), [](Entry &l, Entry &r) { return l.suffix < r.suffix; });
-
-    // Nothing to do?
+    trie->entries = std::move(entries);
     if (trie->entries.empty()) {
         return trie;
     }
