@@ -382,10 +382,8 @@ proto::StatusCode Script::UpdateCompletionIndex() {
     }
     auto& parsed = analyzed->parsed_script;
     auto& scanned = parsed->scanned_script;
-
-    completion_index = std::make_unique<CompletionIndex>();
-    completion_index->analyzed_script = analyzed;
-    completion_index->suffix_trie = SuffixTrie::BulkLoad(scanned->name_dictionary);
+    auto trie = SuffixTrie::BulkLoad(scanned->name_dictionary);
+    completion_index = std::make_unique<CompletionIndex>(std::move(trie), std::move(analyzed));
     return proto::StatusCode::OK;
 }
 
