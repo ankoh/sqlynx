@@ -376,21 +376,16 @@ std::string Script::Format() {
 
 /// Update the completion index
 proto::StatusCode Script::UpdateCompletionIndex() {
-    auto& analyzed = analyzed_script;
-    if (!analyzed) {
+    if (!analyzed_script) {
         return proto::StatusCode::COMPLETION_DATA_INVALID;
     }
-    auto& parsed = analyzed->parsed_script;
-    auto& scanned = parsed->scanned_script;
-    auto trie = SuffixTrie::BulkLoad(scanned->name_dictionary);
-    completion_index = std::make_unique<CompletionIndex>(std::move(trie), std::move(analyzed));
+    auto trie = SuffixTrie::BulkLoad(scanned_script->name_dictionary);
+    completion_index.emplace(std::move(trie), analyzed_script);
     return proto::StatusCode::OK;
 }
 
-/// Read cursor
-std::unique_ptr<ScriptCursor> Script::ReadCursor(size_t text_offset) {
-    return std::make_unique<ScriptCursor>(*analyzed_script, text_offset);
-}
+/// Move the cursor to a offset
+const ScriptCursor& Script::MoveCursor(size_t text_offset) { return cursor.emplace(*analyzed_script, text_offset); }
 
 static bool endsCursorPath(proto::Node& n) {
     switch (n.node_type()) {
