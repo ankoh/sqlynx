@@ -403,6 +403,8 @@ class Script {
     void EraseTextRange(size_t offset, size_t count);
     /// Print a script as string
     std::string ToString();
+    /// Returns the pretty-printed string for this script
+    std::string Format();
 
     /// Parse the latest scanned script
     std::pair<ScannedScript*, proto::StatusCode> Scan();
@@ -416,9 +418,6 @@ class Script {
     const ScriptCursor& MoveCursor(size_t text_offset);
     /// Get statisics
     std::unique_ptr<proto::ScriptStatisticsT> GetStatistics();
-
-    /// Returns the pretty-printed string for this script
-    std::string Format();
 };
 
 }  // namespace flatsql
