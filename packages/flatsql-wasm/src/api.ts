@@ -16,7 +16,7 @@ interface FlatSQLModuleExports {
     flatsql_script_scan: (ptr: number) => number;
     flatsql_script_parse: (ptr: number) => number;
     flatsql_script_analyze: (ptr: number, external: number) => number;
-    flatsql_script_update_completion_index: (ptr: number) => number;
+    flatsql_script_reindex: (ptr: number) => number;
     flatsql_script_read_cursor: (ptr: number, offset: number) => number;
     flatsql_script_get_statistics: (ptr: number) => number;
     flatsql_schemagraph_new: () => number;
@@ -93,9 +93,7 @@ export class FlatSQL {
                 ptr: number,
                 external: number,
             ) => number,
-            flatsql_script_update_completion_index: parserExports['flatsql_script_update_completion_index'] as (
-                ptr: number,
-            ) => number,
+            flatsql_script_reindex: parserExports['flatsql_script_reindex'] as (ptr: number) => number,
             flatsql_script_read_cursor: parserExports['flatsql_script_read_cursor'] as (
                 ptr: number,
                 offset: number,
@@ -393,13 +391,13 @@ export class FlatSQLScript {
         resultBuffer.delete();
         return text;
     }
-    /// Update the completion index
-    public updateCompletionIndex(): boolean {
+    /// Update the index
+    public reindex(): boolean {
         const scriptPtr = this.assertScriptNotNull();
-        const status = this.api.instanceExports.flatsql_script_update_completion_index(scriptPtr);
+        const status = this.api.instanceExports.flatsql_script_reindex(scriptPtr);
         return status == proto.StatusCode.OK;
     }
-    /// Update the completion index
+    /// Read the cursor
     public readCursor(textOffset: number): FlatBufferRef<proto.ScriptCursorInfo> {
         const scriptPtr = this.assertScriptNotNull();
         const resultPtr = this.api.instanceExports.flatsql_script_read_cursor(scriptPtr, textOffset);

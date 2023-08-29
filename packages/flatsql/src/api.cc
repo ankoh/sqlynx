@@ -181,10 +181,8 @@ extern "C" FFIResult* flatsql_script_format(flatsql::Script* script) {
     return result;
 }
 
-/// Update the completion index
-extern "C" uint32_t flatsql_script_update_completion_index(Script* script) {
-    return static_cast<uint32_t>(script->UpdateCompletionIndex());
-}
+/// Reindex the script
+extern "C" uint32_t flatsql_script_reindex(Script* script) { return static_cast<uint32_t>(script->ReIndex()); }
 
 /// Move the cursor to a script at a position
 extern "C" FFIResult* flatsql_script_read_cursor(flatsql::Script* script, size_t text_offset) {
