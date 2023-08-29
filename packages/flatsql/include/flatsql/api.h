@@ -52,8 +52,8 @@ extern "C" FFIResult* flatsql_script_parse(flatsql::Script* script);
 extern "C" FFIResult* flatsql_script_analyze(flatsql::Script* script, flatsql::Script* external);
 /// Get a pretty-printed version of the SQL query
 extern "C" FFIResult* flatsql_script_format(flatsql::Script* script);
-/// Update the completion index
-extern "C" uint32_t flatsql_script_update_completion_index(flatsql::Script* script);
+/// Update the script index
+extern "C" uint32_t flatsql_script_reindex(flatsql::Script* script);
 /// Get script statistics
 extern "C" FFIResult* flatsql_script_get_statistics(flatsql::Script* script);
 

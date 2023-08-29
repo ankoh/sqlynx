@@ -178,8 +178,8 @@ limit 100
         expect(analyzedScript.columnReferencesLength()).toBeGreaterThan(0);
         expect(analyzedScript.graphEdgesLength()).toEqual(9);
 
-        // Update the completion idnex
-        expect(script.updateCompletionIndex()).toEqual(true);
+        // Reindex for completions
+        expect(script.reindex()).toEqual(true);
 
         analyzerResult.delete();
         parserResult.delete();
