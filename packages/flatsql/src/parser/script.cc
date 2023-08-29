@@ -256,6 +256,12 @@ void Script::EraseTextRange(size_t char_idx, size_t count) { text.Remove(char_id
 /// Print a script as string
 std::string Script::ToString() { return text.ToString(); }
 
+/// Returns the pretty-printed string for this script.
+std::string Script::Format() {
+    // TODO: actually implement formatting
+    return "formatted[" + text.ToString() + "]";
+}
+
 /// Update memory statisics
 std::unique_ptr<proto::ScriptMemoryStatistics> Script::GetMemoryStatistics() {
     auto memory = std::make_unique<proto::ScriptMemoryStatistics>();
@@ -366,12 +372,6 @@ std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(Script* external) 
     timing_statistics.mutate_analyzer_last_elapsed(
         std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - time_start).count());
     return {analyzed_script.get(), status};
-}
-
-/// Returns the pretty-printed string for this script.
-std::string Script::Format() {
-    // TODO: actually implement formatting
-    return "formatted[" + text.ToString() + "]";
 }
 
 /// Update the completion index
