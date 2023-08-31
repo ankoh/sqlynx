@@ -15,8 +15,6 @@ namespace flatsql {
 /// A suffix trie indexing immutable suffixes as bulk-loaded adaptive radix tree.
 struct SuffixTrie {
    public:
-    using ContextType = void *;
-
     struct Node;
     struct LeafNode;
 
@@ -33,6 +31,8 @@ struct SuffixTrie {
         Entry(std::string_view suffix = "", uint64_t value_id = 0, uint64_t category_id = 0)
             : suffix(suffix), value_id(value_id), category_id(category_id) {}
     };
+
+    using ContextType = void *;
     using IterationCallback = void (*)(ContextType context, std::span<Entry>);
 
     /// A node type
