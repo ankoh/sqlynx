@@ -1,6 +1,7 @@
 #include "flatsql/analyzer/completion.h"
 
 #include "flatsql/parser/grammar/keywords.h"
+#include "flatsql/proto/proto_generated.h"
 #include "flatsql/script.h"
 #include "flatsql/utils/suffix_trie.h"
 
@@ -25,7 +26,9 @@ const CompletionIndex& CompletionIndex::Keywords() {
     }
     // If not, load keywords
     auto keywords = parser::Keyword::GetKeywords();
-    auto trie = SuffixTrie::BulkLoad(keywords, [](const parser::Keyword& keyword) { return keyword.name; });
+    auto trie = SuffixTrie::BulkLoad(keywords, [&](uint64_t i, const parser::Keyword& keyword) {
+        return SuffixTrie::Entry{keyword.name, i, static_cast<uint64_t>(proto::CompletionCategory::KEYWORD)};
+    });
     index = std::make_unique<CompletionIndex>(std::move(trie));
     return *index;
 }
