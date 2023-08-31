@@ -386,6 +386,8 @@ proto::StatusCode Script::Reindex() {
 
 /// Move the cursor to a offset
 const ScriptCursor& Script::MoveCursor(size_t text_offset) { return cursor.emplace(*analyzed_script, text_offset); }
+/// Complete at the cursor
+std::unique_ptr<proto::CompletionT> Script::CompleteAtCursor() { return nullptr; }
 
 static bool endsCursorPath(proto::Node& n) {
     switch (n.node_type()) {
