@@ -38,6 +38,6 @@
 		"@types/node": "^18.17.12",
 		"@types/vscode": "^1.81.0",
 		"typescript": "^5.2.2",
-		"@vscode/vsce": "^2.20.1"
+		"@vscode/vsce": "^2.21.0"
 	}
 }
