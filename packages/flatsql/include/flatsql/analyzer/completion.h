@@ -17,6 +17,8 @@ struct CompletionIndex {
 
     /// Construct completion index from script
     static std::unique_ptr<CompletionIndex> Build(std::shared_ptr<AnalyzedScript> script);
+    /// Get the static keyword index
+    static const CompletionIndex& Keywords();
 };
 
 }  // namespace flatsql

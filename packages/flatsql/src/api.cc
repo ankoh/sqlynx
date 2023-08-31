@@ -269,5 +269,8 @@ extern "C" FFIResult* flatsql_schemagraph_describe(flatsql::SchemaGraph* graph) 
 }
 
 #ifdef WASM
-extern "C" int main() { return 0; }
+extern "C" int main() {
+    flatsql::CompletionIndex::Keywords();
+    return 0;
+}
 #endif
