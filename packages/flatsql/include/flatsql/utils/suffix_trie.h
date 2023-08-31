@@ -15,7 +15,6 @@ namespace flatsql {
 /// A suffix trie indexing immutable suffixes as bulk-loaded adaptive radix tree.
 struct SuffixTrie {
    public:
-    using ValueType = void *;
     using ContextType = void *;
 
     struct Node;
@@ -23,10 +22,16 @@ struct SuffixTrie {
 
     /// An entry in the trie
     struct Entry {
-        /// The key
+        /// The suffix
         std::string_view suffix;
         /// The value
-        ValueType value;
+        uint64_t value_id;
+        /// The category
+        uint64_t category_id;
+
+        /// Constructor
+        Entry(std::string_view suffix = "", uint64_t value_id = 0, uint64_t category_id = 0)
+            : suffix(suffix), value_id(value_id), category_id(category_id) {}
     };
     using IterationCallback = void (*)(ContextType context, std::span<Entry>);
 
@@ -136,15 +141,19 @@ struct SuffixTrie {
     /// Bulkload a suffix trie from entries
     static std::unique_ptr<SuffixTrie> BulkLoad(std::vector<Entry> entries);
     /// Bulkload a suffix trie from mapped names
-    template <typename ValueType, typename GetStringFn>
-    static std::unique_ptr<SuffixTrie> BulkLoad(std::span<ValueType> values, GetStringFn getString) {
+    template <typename ValueType, typename GetEntryFn>
+    static std::unique_ptr<SuffixTrie> BulkLoad(std::span<ValueType> values, GetEntryFn getEntry) {
         std::vector<Entry> entries;
         {
             ChunkBuffer<Entry, 256> entries_chunked;
-            for (auto &value : values) {
-                auto text = getString(value);
+            for (size_t i = 0; i < values.size(); ++i) {
+                auto &value = values[i];
+                Entry entry = getEntry(i, value);
+                auto text = entry.suffix;
                 for (size_t offset = 0; offset < text.size(); ++offset) {
-                    entries_chunked.Append(Entry{.suffix = text.substr(offset), .value = nullptr});
+                    Entry copy = entry;
+                    copy.suffix = text.substr(offset);
+                    entries_chunked.Append(copy);
                 }
             }
             entries = entries_chunked.Flatten();
@@ -154,11 +163,11 @@ struct SuffixTrie {
     }
     /// Bulkload a suffix trie from a name dictionary
     static inline std::unique_ptr<SuffixTrie> BulkLoad(std::span<std::pair<std::string_view, proto::Location>> names) {
-        return BulkLoad(names, [&](auto &name) { return std::get<0>(name); });
+        return BulkLoad(names, [&](uint64_t i, auto &name) { return Entry{std::get<0>(name), i}; });
     }
     /// Bulkload a suffix trie from names
     static inline std::unique_ptr<SuffixTrie> BulkLoad(std::span<std::string_view> names) {
-        return BulkLoad(names, [&](auto &name) { return name; });
+        return BulkLoad(names, [&](uint64_t i, auto &name) { return Entry{name, i}; });
     }
 };
 

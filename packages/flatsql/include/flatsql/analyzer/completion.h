@@ -1,5 +1,6 @@
 #pragma once
 
+#include "flatsql/proto/proto_generated.h"
 #include "flatsql/utils/suffix_trie.h"
 
 namespace flatsql {
