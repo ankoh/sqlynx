@@ -416,6 +416,8 @@ class Script {
     proto::StatusCode Reindex();
     /// Move the cursor
     const ScriptCursor& MoveCursor(size_t text_offset);
+    /// Complete at the cursor
+    std::unique_ptr<proto::CompletionT> CompleteAtCursor();
     /// Get statisics
     std::unique_ptr<proto::ScriptStatisticsT> GetStatistics();
 };
