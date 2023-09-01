@@ -9,6 +9,7 @@
 #include "ankerl/unordered_dense.h"
 #include "flatsql/analyzer/completion.h"
 #include "flatsql/context.h"
+#include "flatsql/parser/names.h"
 #include "flatsql/parser/parser_generated.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/text/rope.h"
@@ -33,6 +34,16 @@ using StatementID = uint32_t;
 
 class ScannedScript {
    public:
+    /// The name entry
+    struct Name {
+        /// The text
+        std::string_view text;
+        /// The location
+        sx::Location location;
+        /// The tags
+        NameTagBitmap tags;
+    };
+
     /// The context id
     const uint32_t context_id;
     /// The copied text buffer
@@ -50,7 +61,7 @@ class ScannedScript {
     /// The name dictionary ids
     ankerl::unordered_dense::map<std::string_view, NameID> name_dictionary_ids;
     /// The name dictionary locations
-    std::vector<std::pair<std::string_view, sx::Location>> name_dictionary;
+    std::vector<Name> name_dictionary;
 
     /// All symbols
     ChunkBuffer<parser::Parser::symbol_type> symbols;
@@ -64,9 +75,9 @@ class ScannedScript {
     /// Get the tokens
     auto& GetTokens() const { return symbols; }
     /// Register a name
-    size_t RegisterName(std::string_view s, sx::Location location);
+    size_t RegisterName(std::string_view s, sx::Location location, sx::NameTag tag = sx::NameTag::NONE);
     /// Register a keyword as name
-    size_t RegisterKeywordAsName(std::string_view s, sx::Location location);
+    size_t RegisterKeywordAsName(std::string_view s, sx::Location location, sx::NameTag tag = sx::NameTag::NONE);
     /// Read a text at a location
     std::string_view ReadTextAtLocation(sx::Location loc) {
         return std::string_view{text_buffer}.substr(loc.offset(), loc.length());

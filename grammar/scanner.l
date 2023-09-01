@@ -538,7 +538,7 @@ Scanner::Scanner(const rope::Rope& text, uint32_t context_id): output(std::make_
 
     // Always encode the empty string with identifier 0
     output->name_dictionary_ids.insert({"", 0});
-    output->name_dictionary.push_back({"", sx::Location(0, 0)});
+    output->name_dictionary.push_back({"", sx::Location(0, 0), sx::NameTag::KEYWORD});
 }
 
 }

@@ -385,7 +385,6 @@ enum ScannerTokenType: uint8 {
     COMMENT,
 }
 
-// XXX Encode tokens as (offset, length) pairs
 table ScannerTokens {
     token_offsets: [uint32];
     token_lengths: [uint32];
@@ -401,10 +400,18 @@ table ScannedScript {
     comments: [Location];
 }
 
+enum NameTag: uint64 {
+    NONE = 0,
+    KEYWORD = 1,
+    TABLE_NAME = 2,
+    COLUMN_NAME = 4,
+}
+
 table ParsedScript {
     context_id: uint32;
     nodes: [Node];
     statements: [Statement];
     errors: [Error];
     name_dictionary: [string];
+    name_tags: [uint64];
 }
