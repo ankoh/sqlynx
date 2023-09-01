@@ -57,7 +57,7 @@ void NameResolutionPass::RegisterExternalTables(const AnalyzedScript& external) 
         }
         // If not, get name string and lookup local name
         if (auto iter = scanned_program.name_dictionary_ids.find(
-                external.parsed_script->scanned_script->name_dictionary[name.GetIndex()].first);
+                external.parsed_script->scanned_script->name_dictionary[name.GetIndex()].text);
             iter != scanned_program.name_dictionary_ids.end()) {
             QualifiedID mapped_id{scanned_program.context_id, iter->second};
             external_names.insert({name, mapped_id});

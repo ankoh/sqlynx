@@ -1,16 +1,10 @@
 namespace flatsql.proto;
 
-enum CompletionCategory: uint8 {
-    KEYWORD = 0,
-    TABLE_NAME = 2,
-    COLUMN_NAME = 3,
-}
-
 table CompletionOption {
     // The context id
     context_id: uint32;
-    /// The category
-    category: CompletionCategory;
+    /// The tags
+    tags: uint64;
     /// The completion
     text: string;
     /// The score
