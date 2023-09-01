@@ -12,7 +12,9 @@ namespace {
 void test_entries(std::initializer_list<std::string_view> entries_list,
                   std::initializer_list<std::string_view> suffixes_list) {
     std::vector<std::string_view> entries{entries_list};
-    auto trie = SuffixTrie::BulkLoad(entries);
+    auto trie = SuffixTrie::BulkLoad(entries, [&](size_t i, auto& name) {
+        return SuffixTrie::Entry{name, i, proto::NameTag::NONE};
+    });
     std::vector<std::string_view> have;
     for (auto& entry : trie->GetEntries()) {
         have.push_back(entry.suffix);
@@ -49,7 +51,9 @@ void test_prefix(SuffixTrie& trie, std::string_view prefix, std::initializer_lis
 TEST(SuffixTrieTest, Prefixes0) {
     std::vector<std::string_view> entries;
     entries = {"foo", "bar"};
-    auto trie = SuffixTrie::BulkLoad(entries);
+    auto trie = SuffixTrie::BulkLoad(entries, [&](size_t i, auto& name) {
+        return SuffixTrie::Entry{name, i, proto::NameTag::NONE};
+    });
     test_prefix(*trie, "f", {"foo"});
     test_prefix(*trie, "fo", {"foo"});
     test_prefix(*trie, "foo", {"foo"});

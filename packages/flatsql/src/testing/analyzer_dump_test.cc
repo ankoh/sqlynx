@@ -41,9 +41,9 @@ static std::string_view resolveName(const AnalyzedScript& main, const AnalyzedSc
     }
     if (name.GetContext() != main.context_id) {
         assert(external != nullptr);
-        return external->parsed_script->scanned_script->name_dictionary[name.GetIndex()].first;
+        return external->parsed_script->scanned_script->name_dictionary[name.GetIndex()].text;
     } else {
-        return main.parsed_script->scanned_script->name_dictionary[name.GetIndex()].first;
+        return main.parsed_script->scanned_script->name_dictionary[name.GetIndex()].text;
     }
 }
 
@@ -63,7 +63,7 @@ static void writeTables(pugi::xml_node root, const AnalyzedScript& target, const
             if (!column_decl.column_name.IsNull()) {
                 assert(column_decl.column_name.GetContext() == target.context_id);
                 std::string column_name{
-                    target.parsed_script->scanned_script->name_dictionary[column_decl.column_name.GetIndex()].first};
+                    target.parsed_script->scanned_script->name_dictionary[column_decl.column_name.GetIndex()].text};
                 xml_col.append_attribute("name").set_value(column_name.c_str());
             } else {
                 xml_col.append_attribute("name").set_value("?");

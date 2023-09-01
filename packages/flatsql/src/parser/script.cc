@@ -31,25 +31,27 @@ ScannedScript::ScannedScript(const rope::Rope& text, uint32_t context_id)
     : context_id(context_id), text_buffer(text.ToString(true)) {}
 
 /// Register a name
-size_t ScannedScript::RegisterKeywordAsName(std::string_view s, sx::Location location) {
+size_t ScannedScript::RegisterKeywordAsName(std::string_view s, sx::Location location, sx::NameTag tag) {
     auto iter = name_dictionary_ids.find(s);
     if (iter != name_dictionary_ids.end()) {
+        name_dictionary[iter->second].tags |= tag;
         return iter->second;
     }
     auto id = name_dictionary.size();
     name_dictionary_ids.insert({s, id});
-    name_dictionary.push_back({s, location});
+    name_dictionary.push_back({s, location, tag});
     return id;
 }
 /// Register a name
-size_t ScannedScript::RegisterName(std::string_view s, sx::Location location) {
+size_t ScannedScript::RegisterName(std::string_view s, sx::Location location, sx::NameTag tag) {
     auto iter = name_dictionary_ids.find(s);
     if (iter != name_dictionary_ids.end()) {
+        name_dictionary[iter->second].tags |= tag;
         return iter->second;
     }
     auto id = name_dictionary.size();
     name_dictionary_ids.insert({s, id});
-    name_dictionary.push_back({s, location});
+    name_dictionary.push_back({s, location, tag});
     return id;
 }
 
@@ -199,8 +201,10 @@ flatbuffers::Offset<proto::ParsedScript> ParsedScript::Pack(flatbuffers::FlatBuf
     }
     // XXX We should not just blindy serialize all names (again) if most of them will just reference input text
     out.name_dictionary.reserve(scanned_script->name_dictionary.size());
-    for (auto& [name, loc] : scanned_script->name_dictionary) {
-        out.name_dictionary.emplace_back(name);
+    out.name_tags.reserve(scanned_script->name_dictionary.size());
+    for (auto& name : scanned_script->name_dictionary) {
+        out.name_dictionary.emplace_back(name.text);
+        out.name_tags.emplace_back(name.tags);
     }
     return proto::ParsedScript::Pack(builder, &out);
 }
@@ -379,7 +383,9 @@ proto::StatusCode Script::Reindex() {
     if (!analyzed_script) {
         return proto::StatusCode::COMPLETION_DATA_INVALID;
     }
-    auto trie = SuffixTrie::BulkLoad(scanned_script->name_dictionary);
+    auto trie = SuffixTrie::BulkLoad(scanned_script->name_dictionary, [&](size_t i, const ScannedScript::Name& name) {
+        return SuffixTrie::Entry{name.text, i, name.tags};
+    });
     completion_index.emplace(std::move(trie), analyzed_script);
     return proto::StatusCode::OK;
 }

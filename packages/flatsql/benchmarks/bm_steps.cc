@@ -1,5 +1,6 @@
 #include "benchmark/benchmark.h"
 #include "flatsql/analyzer/analyzer.h"
+#include "flatsql/parser/names.h"
 #include "flatsql/parser/parse_context.h"
 #include "flatsql/parser/scanner.h"
 #include "flatsql/script.h"
@@ -119,7 +120,10 @@ static void index_query(benchmark::State& state) {
     auto main_analyzed = Analyzer::Analyze(main_parsed.first, nullptr);
 
     for (auto _ : state) {
-        auto trie = SuffixTrie::BulkLoad(main_scan.first->name_dictionary);
+        std::span<const ScannedScript::Name> names{main_scan.first->name_dictionary};
+        auto trie = SuffixTrie::BulkLoad(names, [&](size_t i, auto& name) {
+            return SuffixTrie::Entry{name.text, i, proto::NameTag::KEYWORD};
+        });
         benchmark::DoNotOptimize(trie);
     }
 }
