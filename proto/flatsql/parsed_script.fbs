@@ -403,8 +403,11 @@ table ScannedScript {
 enum NameTag: uint8 {
     NONE = 0,
     KEYWORD = 1,
-    TABLE_NAME = 2,
-    COLUMN_NAME = 4,
+    SCHEMA_NAME = 2,
+    DATABASE_NAME = 4,
+    TABLE_NAME = 8,
+    TABLE_ALIAS = 16,
+    COLUMN_NAME = 32,
 }
 
 table ParsedScript {
