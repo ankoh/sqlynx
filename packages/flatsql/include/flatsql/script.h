@@ -75,9 +75,11 @@ class ScannedScript {
     /// Get the tokens
     auto& GetTokens() const { return symbols; }
     /// Register a name
-    size_t RegisterName(std::string_view s, sx::Location location, sx::NameTag tag = sx::NameTag::NONE);
+    NameID RegisterName(std::string_view s, sx::Location location, sx::NameTag tag = sx::NameTag::NONE);
     /// Register a keyword as name
-    size_t RegisterKeywordAsName(std::string_view s, sx::Location location, sx::NameTag tag = sx::NameTag::NONE);
+    NameID RegisterKeywordAsName(std::string_view s, sx::Location location, sx::NameTag tag = sx::NameTag::NONE);
+    /// Tag a name
+    void TagName(NameID name, sx::NameTag tag);
     /// Read a text at a location
     std::string_view ReadTextAtLocation(sx::Location loc) {
         return std::string_view{text_buffer}.substr(loc.offset(), loc.length());
