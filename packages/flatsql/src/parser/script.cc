@@ -31,7 +31,7 @@ ScannedScript::ScannedScript(const rope::Rope& text, uint32_t context_id)
     : context_id(context_id), text_buffer(text.ToString(true)) {}
 
 /// Register a name
-size_t ScannedScript::RegisterKeywordAsName(std::string_view s, sx::Location location, sx::NameTag tag) {
+NameID ScannedScript::RegisterKeywordAsName(std::string_view s, sx::Location location, sx::NameTag tag) {
     auto iter = name_dictionary_ids.find(s);
     if (iter != name_dictionary_ids.end()) {
         name_dictionary[iter->second].tags |= tag;
@@ -43,7 +43,7 @@ size_t ScannedScript::RegisterKeywordAsName(std::string_view s, sx::Location loc
     return id;
 }
 /// Register a name
-size_t ScannedScript::RegisterName(std::string_view s, sx::Location location, sx::NameTag tag) {
+NameID ScannedScript::RegisterName(std::string_view s, sx::Location location, sx::NameTag tag) {
     auto iter = name_dictionary_ids.find(s);
     if (iter != name_dictionary_ids.end()) {
         name_dictionary[iter->second].tags |= tag;
@@ -53,6 +53,11 @@ size_t ScannedScript::RegisterName(std::string_view s, sx::Location location, sx
     name_dictionary_ids.insert({s, id});
     name_dictionary.push_back({s, location, tag});
     return id;
+}
+/// Tag a name
+void ScannedScript::TagName(NameID name_id, sx::NameTag tag) {
+    assert(name_id <= name_dictionary.size());
+    name_dictionary[name_id].tags |= tag;
 }
 
 /// Find a token at a text offset
