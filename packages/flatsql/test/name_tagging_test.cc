@@ -56,10 +56,10 @@ TEST(NameTaggingTest, Select1) {
     rope::Rope buffer{128};
 
     ASSERT_NO_FATAL_FAILURE(analyze(analyzed, buffer, 0, "select 1"));
-    test_name_tags(*analyzed, {{"", NameTags()}});
+    ASSERT_NO_FATAL_FAILURE(test_name_tags(*analyzed, {{"", NameTags()}}));
 
     ASSERT_NO_FATAL_FAILURE(analyze(analyzed, buffer, 0, "select foo"));
-    test_name_tags(*analyzed, {{"", NameTags()}, {"foo", proto::NameTag::COLUMN_NAME}});
+    ASSERT_NO_FATAL_FAILURE(test_name_tags(*analyzed, {{"", NameTags()}, {"foo", proto::NameTag::COLUMN_NAME}}));
 }
 
 }  // namespace
