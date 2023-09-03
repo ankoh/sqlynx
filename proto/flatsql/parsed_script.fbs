@@ -400,7 +400,7 @@ table ScannedScript {
     comments: [Location];
 }
 
-enum NameTag: uint64 {
+enum NameTag: uint8 {
     NONE = 0,
     KEYWORD = 1,
     TABLE_NAME = 2,
