@@ -41,7 +41,7 @@ class ScannedScript {
         /// The location
         sx::Location location;
         /// The tags
-        NameTagBitmap tags;
+        NameTags tags;
     };
 
     /// The context id
