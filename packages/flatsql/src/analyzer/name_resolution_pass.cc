@@ -122,15 +122,21 @@ AnalyzedScript::QualifiedTableName NameResolutionPass::ReadQualifiedTableName(co
     name.ast_node_id = node - nodes.data();
     switch (name_path.size()) {
         case 3:
+            scanned_program.TagName(name_path[0], sx::NameTag::SCHEMA_NAME);
+            scanned_program.TagName(name_path[1], sx::NameTag::DATABASE_NAME);
+            scanned_program.TagName(name_path[2], sx::NameTag::TABLE_NAME);
             name.schema_name = QualifiedID(context_id, name_path[0]);
             name.database_name = QualifiedID(context_id, name_path[1]);
             name.table_name = QualifiedID(context_id, name_path[2]);
             break;
         case 2:
+            scanned_program.TagName(name_path[0], sx::NameTag::DATABASE_NAME);
+            scanned_program.TagName(name_path[1], sx::NameTag::TABLE_NAME);
             name.database_name = QualifiedID(context_id, name_path[0]);
             name.table_name = QualifiedID(context_id, name_path[1]);
             break;
         case 1:
+            scanned_program.TagName(name_path[0], sx::NameTag::TABLE_NAME);
             name.table_name = QualifiedID(context_id, name_path[0]);
             break;
         default:
@@ -149,10 +155,13 @@ AnalyzedScript::QualifiedColumnName NameResolutionPass::ReadQualifiedColumnName(
     // Build the qualified column name
     switch (name_path.size()) {
         case 2:
+            scanned_program.TagName(name_path[0], sx::NameTag::TABLE_ALIAS);
+            scanned_program.TagName(name_path[1], sx::NameTag::COLUMN_NAME);
             name.table_alias = QualifiedID(context_id, name_path[0]);
             name.column_name = QualifiedID(context_id, name_path[1]);
             break;
         case 1:
+            scanned_program.TagName(name_path[0], sx::NameTag::COLUMN_NAME);
             name.column_name = QualifiedID(context_id, name_path[0]);
             break;
         default:
@@ -287,6 +296,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 NameID column_name;
                 if (column_def_node && column_def_node->node_type() == sx::NodeType::NAME) {
                     column_name = column_def_node->children_begin_or_value();
+                    scanned_program.TagName(column_name, sx::NameTag::COLUMN_NAME);
                 }
                 if (auto reused = pending_columns_free_list.PopFront()) {
                     *reused = AnalyzedScript::TableColumn(node_id, QualifiedID(context_id, column_name));
@@ -333,7 +343,9 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                     QualifiedID alias = QualifiedID();
                     auto alias_node = attrs[proto::AttributeKey::SQL_TABLEREF_ALIAS];
                     if (alias_node && alias_node->node_type() == sx::NodeType::NAME) {
-                        alias = QualifiedID(context_id, alias_node->children_begin_or_value());
+                        auto alias_name = alias_node->children_begin_or_value();
+                        alias = QualifiedID(context_id, alias_name);
+                        scanned_program.TagName(alias_name, sx::NameTag::TABLE_ALIAS);
                     }
                     // Add table reference
                     auto& n = table_references.Append(AnalyzedScript::TableReference());
