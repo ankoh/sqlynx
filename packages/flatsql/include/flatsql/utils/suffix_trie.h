@@ -26,10 +26,10 @@ struct SuffixTrie {
         /// The value
         uint64_t value_id;
         /// The tags
-        NameTagBitmap tags;
+        NameTags tags;
 
         /// Constructor
-        Entry(std::string_view suffix = "", uint64_t value_id = 0, NameTagBitmap tags = 0)
+        Entry(std::string_view suffix = "", uint64_t value_id = 0, NameTags tags = 0)
             : suffix(suffix), value_id(value_id), tags(tags) {}
     };
 
