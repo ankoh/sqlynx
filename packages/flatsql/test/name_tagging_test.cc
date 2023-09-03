@@ -60,7 +60,9 @@ TEST_P(TestNameTags, Test) {
     ASSERT_EQ(scanned->name_dictionary.size(), GetParam().expected.size()) << dump(scanned->name_dictionary);
     size_t i = 0;
     for (auto [name, tags] : GetParam().expected) {
-        auto& have = scanned->name_dictionary[i++];
+        SCOPED_TRACE(i);
+        size_t current = i++;
+        auto& have = scanned->name_dictionary[current];
         ASSERT_EQ(have.text, name);
         ASSERT_EQ(static_cast<uint64_t>(have.tags), static_cast<uint64_t>(tags));
     }
@@ -97,6 +99,23 @@ std::vector<NameTaggingTest> TESTS_SIMPLE{
          {"foo", NameTags(proto::NameTag::TABLE_ALIAS)},
          {"bar", NameTags(proto::NameTag::COLUMN_NAME)},
          {"the", NameTags(proto::NameTag::TABLE_NAME)},
+     }},
+    {"select_foo_bar_from_the_real_foo",
+     "select foo.bar from the.real foo",
+     {
+         {"foo", NameTags(proto::NameTag::TABLE_ALIAS)},
+         {"bar", NameTags(proto::NameTag::COLUMN_NAME)},
+         {"the", NameTags(proto::NameTag::DATABASE_NAME)},
+         {"real", NameTags(proto::NameTag::TABLE_NAME)},
+     }},
+    {"select_foo_bar_from_the_actually_real_foo",
+     "select foo.bar from the.actually.real foo",
+     {
+         {"foo", NameTags(proto::NameTag::TABLE_ALIAS)},
+         {"bar", NameTags(proto::NameTag::COLUMN_NAME)},
+         {"the", NameTags(proto::NameTag::SCHEMA_NAME)},
+         {"actually", NameTags(proto::NameTag::DATABASE_NAME)},
+         {"real", NameTags(proto::NameTag::TABLE_NAME)},
      }},
 };
 
