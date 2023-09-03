@@ -53,6 +53,7 @@ TEST_P(TestNameTags, Test) {
     ASSERT_EQ(scan_status, proto::StatusCode::OK);
     auto [parsed, parser_status] = parser::ParseContext::Parse(scanned);
     ASSERT_EQ(parser_status, proto::StatusCode::OK);
+    ASSERT_TRUE(parsed->errors.empty());
     auto [analyzed, analyzer_status] = Analyzer::Analyze(parsed, nullptr);
     ASSERT_EQ(analyzer_status, proto::StatusCode::OK);
 
@@ -67,12 +68,35 @@ TEST_P(TestNameTags, Test) {
 
 std::vector<NameTaggingTest> TESTS_SIMPLE{
     {"select_1", "select 1", {}},
-    {"select_foo", "select foo", {{"foo", NameTags() | proto::NameTag::COLUMN_NAME}}},
+    {"select_foo", "select foo", {{"foo", NameTags(proto::NameTag::COLUMN_NAME)}}},
     {"select_foo_from_bar",
      "select foo from bar",
      {
-         {"foo", NameTags() | proto::NameTag::COLUMN_NAME},
-         {"bar", NameTags() | proto::NameTag::TABLE_NAME},
+         {"foo", NameTags(proto::NameTag::COLUMN_NAME)},
+         {"bar", NameTags(proto::NameTag::TABLE_NAME)},
+     }},
+    {"select_foo_from_foo",
+     "select foo from foo",
+     {
+         {"foo", NameTags(proto::NameTag::COLUMN_NAME) | proto::NameTag::TABLE_NAME},
+     }},
+    {"select_foo_from_foo_foo",
+     "select foo from foo foo",
+     {
+         {"foo", NameTags(proto::NameTag::COLUMN_NAME) | proto::NameTag::TABLE_NAME | proto::NameTag::TABLE_ALIAS},
+     }},
+    {"select_foo_from_foo_bar",
+     "select foo from foo bar",
+     {
+         {"foo", NameTags(proto::NameTag::COLUMN_NAME) | proto::NameTag::TABLE_NAME},
+         {"bar", NameTags(proto::NameTag::TABLE_ALIAS)},
+     }},
+    {"select_foo_bar_from_the_foo",
+     "select foo.bar from the foo",
+     {
+         {"foo", NameTags(proto::NameTag::TABLE_ALIAS)},
+         {"bar", NameTags(proto::NameTag::COLUMN_NAME)},
+         {"the", NameTags(proto::NameTag::TABLE_NAME)},
      }},
 };
 
