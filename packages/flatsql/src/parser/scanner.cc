@@ -6,6 +6,7 @@
 #include "flatsql/parser/parse_context.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/script.h"
+#include "flatsql/utils/string_conversion.h"
 #include "flatsql/utils/string_trimming.h"
 
 using Parser = flatsql::parser::Parser;
@@ -56,7 +57,7 @@ Parser::symbol_type Scanner::ReadIdentifier(proto::Location loc) {
     temp_buffer = text;
     bool all_lower = true;
     for (size_t i = 0; i < temp_buffer.size(); ++i) {
-        temp_buffer[i] = ::tolower(temp_buffer[i]);
+        temp_buffer[i] = tolower_fuzzy(temp_buffer[i]);
         all_lower &= temp_buffer[i] == text[i];
     }
     // Check if it's a keyword
