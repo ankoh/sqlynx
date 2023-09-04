@@ -14,7 +14,7 @@ namespace flatsql {
 size_t SuffixTrie::Node::Match(StringView prefix) {
     size_t limit = std::min<size_t>(key.size(), prefix.size());
     size_t i = 0;
-    for (; i < limit && tolower(key[i]) == tolower(prefix[i]); ++i)
+    for (; i < limit && lookup_lower(key[i]) == lookup_lower(prefix[i]); ++i)
         ;
     return i;
 }
@@ -39,7 +39,7 @@ SuffixTrie::InnerNode256::InnerNode256(StringView partial) : Node(NodeType::Inne
 }
 
 SuffixTrie::Node *SuffixTrie::InnerNode4::Find(unsigned char c) {
-    c = tolower(c);
+    c = lookup_lower(c);
     size_t scratch[4];
     size_t *writer = scratch;
     *writer = 0;
@@ -53,7 +53,7 @@ SuffixTrie::Node *SuffixTrie::InnerNode4::Find(unsigned char c) {
 }
 
 SuffixTrie::Node *SuffixTrie::InnerNode16::Find(unsigned char c) {
-    c = tolower(c);
+    c = lookup_lower(c);
     size_t scratch[16];
     size_t *writer = scratch;
     for (size_t i = 0; i < 16; ++i) {
@@ -211,9 +211,9 @@ std::unique_ptr<SuffixTrie> SuffixTrie::BulkLoad(std::vector<Entry> entries) {
                 begin = end;
                 partition_keys.push_back(SUFFIX_END_MARKER);
             } else {
-                unsigned char key = tolower(begin->suffix[prefix_begin]);
+                unsigned char key = lookup_lower(begin->suffix[prefix_begin]);
                 auto end = std::partition_point(begin, nodes.end(), [key, prefix_begin](Entry &e) {
-                    return e.suffix.size() <= prefix_begin || tolower(e.suffix[prefix_begin]) == key;
+                    return e.suffix.size() <= prefix_begin || lookup_lower(e.suffix[prefix_begin]) == key;
                 });
 
                 // We use \0 as the end marker to exploit the default string comparison.
@@ -238,7 +238,7 @@ std::unique_ptr<SuffixTrie> SuffixTrie::BulkLoad(std::vector<Entry> entries) {
     auto common_prefix = [](StringView left, StringView right) {
         size_t limit = std::min(left.size(), right.size());
         size_t prefix_len = 0;
-        for (; prefix_len < limit && tolower(left[prefix_len]) == tolower(right[prefix_len]); ++prefix_len)
+        for (; prefix_len < limit && lookup_lower(left[prefix_len]) == lookup_lower(right[prefix_len]); ++prefix_len)
             ;
         return left.substr(0, prefix_len);
     };
@@ -270,7 +270,7 @@ std::unique_ptr<SuffixTrie> SuffixTrie::BulkLoad(std::vector<Entry> entries) {
             // That means we either hit the end or there are only string left with \0 as next character
             auto suffix = partition[0].suffix;
             LeafNode &node = trie->leaf_nodes.Append(LeafNode(suffix, partition));
-            partitions[suffix.size() <= depth ? SUFFIX_END_MARKER : tolower(suffix[depth])] = {};
+            partitions[suffix.size() <= depth ? SUFFIX_END_MARKER : lookup_lower(suffix[depth])] = {};
             this_ref = &node;
 
         } else if (partition_count <= 4) {
