@@ -53,7 +53,7 @@ TEST_P(TestNameTags, Test) {
     ASSERT_EQ(scan_status, proto::StatusCode::OK);
     auto [parsed, parser_status] = parser::ParseContext::Parse(scanned);
     ASSERT_EQ(parser_status, proto::StatusCode::OK);
-    ASSERT_TRUE(parsed->errors.empty());
+    ASSERT_TRUE(parsed->errors.empty()) << parsed->errors[0].second;
     auto [analyzed, analyzer_status] = Analyzer::Analyze(parsed, nullptr);
     ASSERT_EQ(analyzer_status, proto::StatusCode::OK);
 
@@ -117,7 +117,9 @@ std::vector<NameTaggingTest> TESTS_SIMPLE{
          {"actually", NameTags(proto::NameTag::DATABASE_NAME)},
          {"real", NameTags(proto::NameTag::TABLE_NAME)},
      }},
-};
+    {"quoted_identifier",
+     "select * from \"SomeQuotedString\"",
+     {{"SomeQuotedString", NameTags(proto::NameTag::TABLE_NAME)}}}};
 
 INSTANTIATE_TEST_SUITE_P(SimpleNameTagging, TestNameTags, ::testing::ValuesIn(TESTS_SIMPLE), NameTaggingTestPrinter());
 

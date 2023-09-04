@@ -122,22 +122,22 @@ AnalyzedScript::QualifiedTableName NameResolutionPass::ReadQualifiedTableName(co
     name.ast_node_id = node - nodes.data();
     switch (name_path.size()) {
         case 3:
-            scanned_program.TagName(name_path[0], sx::NameTag::SCHEMA_NAME);
-            scanned_program.TagName(name_path[1], sx::NameTag::DATABASE_NAME);
-            scanned_program.TagName(name_path[2], sx::NameTag::TABLE_NAME);
             name.schema_name = QualifiedID(context_id, name_path[0]);
             name.database_name = QualifiedID(context_id, name_path[1]);
             name.table_name = QualifiedID(context_id, name_path[2]);
+            scanned_program.TagName(name_path[0], sx::NameTag::SCHEMA_NAME);
+            scanned_program.TagName(name_path[1], sx::NameTag::DATABASE_NAME);
+            scanned_program.TagName(name_path[2], sx::NameTag::TABLE_NAME);
             break;
         case 2:
-            scanned_program.TagName(name_path[0], sx::NameTag::DATABASE_NAME);
-            scanned_program.TagName(name_path[1], sx::NameTag::TABLE_NAME);
             name.database_name = QualifiedID(context_id, name_path[0]);
             name.table_name = QualifiedID(context_id, name_path[1]);
+            scanned_program.TagName(name_path[0], sx::NameTag::DATABASE_NAME);
+            scanned_program.TagName(name_path[1], sx::NameTag::TABLE_NAME);
             break;
         case 1:
-            scanned_program.TagName(name_path[0], sx::NameTag::TABLE_NAME);
             name.table_name = QualifiedID(context_id, name_path[0]);
+            scanned_program.TagName(name_path[0], sx::NameTag::TABLE_NAME);
             break;
         default:
             break;
