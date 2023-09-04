@@ -6,7 +6,7 @@
 #include "flatsql/parser/parse_context.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/script.h"
-#include "flatsql/utils/string.h"
+#include "flatsql/utils/string_trimming.h"
 
 using Parser = flatsql::parser::Parser;
 

@@ -8,7 +8,7 @@
 #include "flatsql/parser/parser_generated.h"
 #include "flatsql/parser/scanner.h"
 #include "flatsql/proto/proto_generated.h"
-#include "flatsql/utils/string.h"
+#include "flatsql/utils/string_trimming.h"
 
 namespace flatsql {
 namespace parser {
