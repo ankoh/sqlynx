@@ -34,7 +34,7 @@ template <typename Fn> inline std::string_view trim_view(std::string_view s, Fn 
     return trim_view_left(trim_view_right(s, keepChar), keepChar);
 }
 
-extern std::array<unsigned char, 256> LOWER_LOOKUP_TABLE;
+extern const std::array<unsigned char, 256> LOWER_LOOKUP_TABLE;
 inline unsigned char lookup_lower(unsigned char c) { return LOWER_LOOKUP_TABLE[c]; }
 
 inline int memicmp_lookup(const void *_s1, const void *_s2, size_t len) {
