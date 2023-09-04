@@ -28,8 +28,8 @@ struct CompletionIndex;
 
 using Key = proto::AttributeKey;
 using Location = proto::Location;
-using NodeID = uint32_t;
 using NameID = uint32_t;
+using NodeID = uint32_t;
 using StatementID = uint32_t;
 
 class ScannedScript {
