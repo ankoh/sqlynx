@@ -10,7 +10,7 @@
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/text/rope.h"
 #include "flatsql/utils/chunk_buffer.h"
-#include "flatsql/utils/string.h"
+#include "flatsql/utils/string_conversion.h"
 
 namespace flatsql {
 
@@ -106,7 +106,7 @@ struct SuffixTrie {
         /// Constructor
         InnerNode48(StringView partial);
         /// Find a child
-        inline Node *Find(unsigned char c) { return c == 0 ? nullptr : children[child_ids[lookup_lower(c)]]; }
+        inline Node *Find(unsigned char c) { return c == 0 ? nullptr : children[child_ids[tolower_fuzzy(c)]]; }
     };
     /// Full node with 256 children
     struct InnerNode256 : public Node {
@@ -116,7 +116,7 @@ struct SuffixTrie {
         /// Constructor
         InnerNode256(StringView partial);
         /// Find a child
-        inline Node *Find(unsigned char c) { return children[lookup_lower(c)]; }
+        inline Node *Find(unsigned char c) { return children[tolower_fuzzy(c)]; }
     };
 
    protected:
