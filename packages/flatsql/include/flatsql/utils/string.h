@@ -1,11 +1,12 @@
 #pragma once
 
+#include <strings.h>
+
 #include <algorithm>
 #include <cstddef>
 #include <string>
 
 namespace flatsql {
-namespace parser {
 
 inline bool is_no_quote(unsigned char c) { return c != '\''; }
 inline bool is_no_double_quote(unsigned char c) { return c != '\"'; }
@@ -33,5 +34,19 @@ template <typename Fn> static inline std::string_view trim_view(std::string_view
     return trim_view_left(trim_view_right(s, keepChar), keepChar);
 }
 
-}  // namespace parser
+struct ci_char_traits : public std::char_traits<char> {
+    static bool eq(char c1, char c2) { return tolower(c1) == tolower(c2); }
+    static bool ne(char c1, char c2) { return tolower(c1) != tolower(c2); }
+    static bool lt(char c1, char c2) { return tolower(c1) < tolower(c2); }
+    static int compare(const char *s1, const char *s2, size_t n) { return strncasecmp(s1, s2, n); }
+    static const char *find(const char *s, int n, char a) {
+        while (n-- > 0 && tolower(*s) != tolower(a)) {
+            ++s;
+        }
+        return s;
+    }
+};
+
+using ci_string_view = std::basic_string_view<char, ci_char_traits>;
+
 }  // namespace flatsql

@@ -10,6 +10,7 @@
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/text/rope.h"
 #include "flatsql/utils/chunk_buffer.h"
+#include "flatsql/utils/string.h"
 
 namespace flatsql {
 
@@ -18,19 +19,23 @@ struct SuffixTrie {
    public:
     struct Node;
     struct LeafNode;
+    using StringView = ci_string_view;
 
     /// An entry in the trie
     struct Entry {
         /// The suffix
-        std::string_view suffix;
+        StringView suffix;
         /// The name id
         size_t value_id;
         /// The name tags
         NameTags tags;
 
         /// Constructor
-        Entry(std::string_view suffix = "", size_t value_id = 0, NameTags tags = 0)
+        Entry(StringView suffix = "", size_t value_id = 0, NameTags tags = 0)
             : suffix(suffix), value_id(value_id), tags(tags) {}
+        /// Constructor
+        Entry(std::string_view suffix, size_t value_id = 0, NameTags tags = 0)
+            : suffix(suffix.data(), suffix.length()), value_id(value_id), tags(tags) {}
     };
 
     using ContextType = void *;
@@ -50,12 +55,12 @@ struct SuffixTrie {
         /// The node type
         NodeType node_type;
         /// The key (partial for inner nodes, full for leafs)
-        std::string_view key;
+        StringView key;
 
         /// Constructor
-        Node(NodeType type, std::string_view key) : node_type(type), key(key) {}
+        Node(NodeType type, StringView key) : node_type(type), key(key) {}
         /// Checks if a leaf matches a prefix
-        size_t Match(std::string_view prefix);
+        size_t Match(StringView prefix);
     };
     /// Represents a leaf. These are of arbitrary size, as they include the key.
     struct LeafNode : public Node {
@@ -63,7 +68,7 @@ struct SuffixTrie {
         std::span<Entry> entries;
 
         /// Constructor
-        LeafNode(std::string_view key, std::span<Entry> entries) : Node(NodeType::LeafNode, key), entries(entries) {}
+        LeafNode(StringView key, std::span<Entry> entries) : Node(NodeType::LeafNode, key), entries(entries) {}
     };
     /// Small node with only 4 children
     struct InnerNode4 : public Node {
@@ -73,7 +78,7 @@ struct SuffixTrie {
         std::array<Node *, 4> children;
 
         /// Constructor
-        InnerNode4(std::string_view partial);
+        InnerNode4(StringView partial);
         /// Find a child
         Node *Find(unsigned char c);
     };
@@ -85,7 +90,7 @@ struct SuffixTrie {
         std::array<Node *, 16> children;
 
         /// Constructor
-        InnerNode16(std::string_view partial);
+        InnerNode16(StringView partial);
         /// Find a child
         Node *Find(unsigned char c);
     };
@@ -99,9 +104,9 @@ struct SuffixTrie {
         uint8_t num_children = 0;
 
         /// Constructor
-        InnerNode48(std::string_view partial);
+        InnerNode48(StringView partial);
         /// Find a child
-        inline Node *Find(unsigned char c) { return c == 0 ? nullptr : children[child_ids[c]]; }
+        inline Node *Find(unsigned char c) { return c == 0 ? nullptr : children[child_ids[tolower(c)]]; }
     };
     /// Full node with 256 children
     struct InnerNode256 : public Node {
@@ -109,9 +114,9 @@ struct SuffixTrie {
         std::array<Node *, 256> children;
 
         /// Constructor
-        InnerNode256(std::string_view partial);
+        InnerNode256(StringView partial);
         /// Find a child
-        inline Node *Find(unsigned char c) { return children[c]; }
+        inline Node *Find(unsigned char c) { return children[tolower(c)]; }
     };
 
    protected:
@@ -137,7 +142,7 @@ struct SuffixTrie {
     /// Access entries
     auto &GetEntries() const { return entries; }
     /// Iterates through the entries in the map that match a given prefix.
-    void IteratePrefix(std::string_view prefix, IterationCallback callback, ContextType context);
+    void IteratePrefix(StringView prefix, IterationCallback callback, ContextType context);
 
     /// Bulkload a suffix trie from entries
     static std::unique_ptr<SuffixTrie> BulkLoad(std::vector<Entry> entries);
