@@ -119,24 +119,23 @@ static void index_query_sorting(benchmark::State& state) {
     auto main_parsed = parser::ParseContext::Parse(main_scan.first);
     auto main_analyzed = Analyzer::Analyze(main_parsed.first, nullptr);
 
-    for (auto _ : state) {
-        std::span<const ScannedScript::Name> names{main_scan.first->name_dictionary};
-        std::vector<SuffixTrie::Entry> entries;
-        {
-            ChunkBuffer<SuffixTrie::Entry, 256> entries_chunked;
-            for (size_t i = 0; i < names.size(); ++i) {
-                auto& value = names[i];
-                SuffixTrie::Entry entry = SuffixTrie::Entry{value.text, i, proto::NameTag::KEYWORD};
-                auto text = entry.suffix;
-                for (size_t offset = 0; offset < text.size(); ++offset) {
-                    auto copy = entry;
-                    copy.suffix = text.substr(offset);
-                    entries_chunked.Append(copy);
-                }
-            }
-            entries = entries_chunked.Flatten();
+    // Collect entries
+    std::span<const ScannedScript::Name> names{main_scan.first->name_dictionary};
+    std::vector<SuffixTrie::Entry> entries;
+    for (size_t i = 0; i < names.size(); ++i) {
+        auto& value = names[i];
+        SuffixTrie::Entry entry = SuffixTrie::Entry{value.text, i, proto::NameTag::KEYWORD};
+        auto text = entry.suffix;
+        for (size_t offset = 0; offset < text.size(); ++offset) {
+            auto copy = entry;
+            copy.suffix = text.substr(offset);
+            entries.push_back(copy);
         }
-        std::sort(entries.begin(), entries.end(),
+    }
+
+    for (auto _ : state) {
+        std::vector<SuffixTrie::Entry> copy = entries;
+        std::sort(copy.begin(), copy.end(),
                   [](SuffixTrie::Entry& l, SuffixTrie::Entry& r) { return l.suffix < r.suffix; });
         benchmark::DoNotOptimize(entries);
     }
@@ -156,21 +155,18 @@ static void index_query_bulkloading(benchmark::State& state) {
     auto main_parsed = parser::ParseContext::Parse(main_scan.first);
     auto main_analyzed = Analyzer::Analyze(main_parsed.first, nullptr);
 
+    // Collect entries
     std::span<const ScannedScript::Name> names{main_scan.first->name_dictionary};
     std::vector<SuffixTrie::Entry> entries;
-    {
-        ChunkBuffer<SuffixTrie::Entry, 256> entries_chunked;
-        for (size_t i = 0; i < names.size(); ++i) {
-            auto& value = names[i];
-            SuffixTrie::Entry entry = SuffixTrie::Entry{value.text, i, proto::NameTag::KEYWORD};
-            auto text = entry.suffix;
-            for (size_t offset = 0; offset < text.size(); ++offset) {
-                auto copy = entry;
-                copy.suffix = text.substr(offset);
-                entries_chunked.Append(copy);
-            }
+    for (size_t i = 0; i < names.size(); ++i) {
+        auto& value = names[i];
+        SuffixTrie::Entry entry = SuffixTrie::Entry{value.text, i, proto::NameTag::KEYWORD};
+        auto text = entry.suffix;
+        for (size_t offset = 0; offset < text.size(); ++offset) {
+            auto copy = entry;
+            copy.suffix = text.substr(offset);
+            entries.push_back(copy);
         }
-        entries = entries_chunked.Flatten();
     }
     std::sort(entries.begin(), entries.end(),
               [](SuffixTrie::Entry& l, SuffixTrie::Entry& r) { return l.suffix < r.suffix; });
