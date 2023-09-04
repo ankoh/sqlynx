@@ -75,7 +75,6 @@ Parser::symbol_type Scanner::ReadIdentifier(proto::Location loc) {
 Parser::symbol_type Scanner::ReadDoubleQuotedIdentifier(proto::Location loc) {
     auto text = GetInputData().substr(loc.offset(), loc.length());
     // Trim spaces & quotes
-    temp_buffer = text;
     auto trimmed = trim_view_right(text, is_no_space);
     trimmed = trim_view(trimmed, is_no_double_quote);
     // Add string to dictionary
