@@ -105,7 +105,7 @@ static void analyze_query(benchmark::State& state) {
     }
 }
 
-static void index_query(benchmark::State& state) {
+static void index_query_sorting(benchmark::State& state) {
     rope::Rope input_external{1024, external_script};
     rope::Rope input_main{1024, main_script};
 
@@ -121,9 +121,63 @@ static void index_query(benchmark::State& state) {
 
     for (auto _ : state) {
         std::span<const ScannedScript::Name> names{main_scan.first->name_dictionary};
-        auto trie = SuffixTrie::BulkLoad(names, [&](size_t i, auto& name) {
-            return SuffixTrie::Entry{name.text, i, proto::NameTag::KEYWORD};
-        });
+        std::vector<SuffixTrie::Entry> entries;
+        {
+            ChunkBuffer<SuffixTrie::Entry, 256> entries_chunked;
+            for (size_t i = 0; i < names.size(); ++i) {
+                auto& value = names[i];
+                SuffixTrie::Entry entry = SuffixTrie::Entry{value.text, i, proto::NameTag::KEYWORD};
+                auto text = entry.suffix;
+                for (size_t offset = 0; offset < text.size(); ++offset) {
+                    auto copy = entry;
+                    copy.suffix = text.substr(offset);
+                    entries_chunked.Append(copy);
+                }
+            }
+            entries = entries_chunked.Flatten();
+        }
+        std::sort(entries.begin(), entries.end(),
+                  [](SuffixTrie::Entry& l, SuffixTrie::Entry& r) { return l.suffix < r.suffix; });
+        benchmark::DoNotOptimize(entries);
+    }
+}
+
+static void index_query_bulkloading(benchmark::State& state) {
+    rope::Rope input_external{1024, external_script};
+    rope::Rope input_main{1024, main_script};
+
+    // Analyze external script
+    auto external_scan = parser::Scanner::Scan(input_external, 0);
+    auto external_parsed = parser::ParseContext::Parse(external_scan.first);
+    auto external_analyzed = Analyzer::Analyze(external_parsed.first, nullptr);
+
+    // Parse script
+    auto main_scan = parser::Scanner::Scan(input_main, 1);
+    auto main_parsed = parser::ParseContext::Parse(main_scan.first);
+    auto main_analyzed = Analyzer::Analyze(main_parsed.first, nullptr);
+
+    std::span<const ScannedScript::Name> names{main_scan.first->name_dictionary};
+    std::vector<SuffixTrie::Entry> entries;
+    {
+        ChunkBuffer<SuffixTrie::Entry, 256> entries_chunked;
+        for (size_t i = 0; i < names.size(); ++i) {
+            auto& value = names[i];
+            SuffixTrie::Entry entry = SuffixTrie::Entry{value.text, i, proto::NameTag::KEYWORD};
+            auto text = entry.suffix;
+            for (size_t offset = 0; offset < text.size(); ++offset) {
+                auto copy = entry;
+                copy.suffix = text.substr(offset);
+                entries_chunked.Append(copy);
+            }
+        }
+        entries = entries_chunked.Flatten();
+    }
+    std::sort(entries.begin(), entries.end(),
+              [](SuffixTrie::Entry& l, SuffixTrie::Entry& r) { return l.suffix < r.suffix; });
+
+    for (auto _ : state) {
+        std::span<const ScannedScript::Name> names{main_scan.first->name_dictionary};
+        auto trie = SuffixTrie::BulkLoad(entries);
         benchmark::DoNotOptimize(trie);
     }
 }
@@ -161,6 +215,7 @@ static void layout_schema(benchmark::State& state) {
 BENCHMARK(scan_query);
 BENCHMARK(parse_query);
 BENCHMARK(analyze_query);
-BENCHMARK(index_query);
+BENCHMARK(index_query_sorting);
+BENCHMARK(index_query_bulkloading);
 BENCHMARK(layout_schema);
 BENCHMARK_MAIN();
