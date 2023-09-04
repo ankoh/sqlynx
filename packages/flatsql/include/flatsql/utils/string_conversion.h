@@ -32,6 +32,6 @@ struct fuzzy_ci_char_traits : public std::char_traits<char> {
         return s;
     }
 };
-using ci_string_view = std::basic_string_view<char, fuzzy_ci_char_traits>;
+using fuzzy_ci_string_view = std::basic_string_view<char, fuzzy_ci_char_traits>;
 
 }  // namespace flatsql

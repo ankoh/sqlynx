@@ -19,7 +19,7 @@ struct SuffixTrie {
    public:
     struct Node;
     struct LeafNode;
-    using StringView = ci_string_view;
+    using StringView = fuzzy_ci_string_view;
 
     /// An entry in the trie
     struct Entry {
