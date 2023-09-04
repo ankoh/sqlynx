@@ -106,7 +106,7 @@ struct SuffixTrie {
         /// Constructor
         InnerNode48(StringView partial);
         /// Find a child
-        inline Node *Find(unsigned char c) { return c == 0 ? nullptr : children[child_ids[tolower(c)]]; }
+        inline Node *Find(unsigned char c) { return c == 0 ? nullptr : children[child_ids[lookup_lower(c)]]; }
     };
     /// Full node with 256 children
     struct InnerNode256 : public Node {
@@ -116,7 +116,7 @@ struct SuffixTrie {
         /// Constructor
         InnerNode256(StringView partial);
         /// Find a child
-        inline Node *Find(unsigned char c) { return children[tolower(c)]; }
+        inline Node *Find(unsigned char c) { return children[lookup_lower(c)]; }
     };
 
    protected:
