@@ -26,7 +26,7 @@ const CompletionIndex& CompletionIndex::Keywords() {
     }
     // If not, load keywords
     auto keywords = parser::Keyword::GetKeywords();
-    auto trie = SuffixTrie::BulkLoad(keywords, [&](uint64_t i, const parser::Keyword& keyword) {
+    auto trie = SuffixTrie::BulkLoad(keywords, [&](size_t i, const parser::Keyword& keyword) {
         return SuffixTrie::Entry{keyword.name, i, proto::NameTag::KEYWORD};
     });
     index = std::make_unique<CompletionIndex>(std::move(trie));

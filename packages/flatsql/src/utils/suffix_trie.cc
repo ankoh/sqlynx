@@ -11,34 +11,35 @@
 
 namespace flatsql {
 
-size_t SuffixTrie::Node::Match(std::string_view prefix) {
+size_t SuffixTrie::Node::Match(StringView prefix) {
     size_t limit = std::min<size_t>(key.size(), prefix.size());
     size_t i = 0;
-    for (; i < limit && key[i] == prefix[i]; ++i)
+    for (; i < limit && tolower(key[i]) == tolower(prefix[i]); ++i)
         ;
     return i;
 }
 
-SuffixTrie::InnerNode4::InnerNode4(std::string_view partial) : Node(NodeType::InnerNode4, partial) {
+SuffixTrie::InnerNode4::InnerNode4(StringView partial) : Node(NodeType::InnerNode4, partial) {
     std::memset(child_keys.data(), 0, child_keys.size() * sizeof(unsigned char));
     std::memset(children.data(), 0, children.size() * sizeof(void *));
 }
 
-SuffixTrie::InnerNode16::InnerNode16(std::string_view partial) : Node(NodeType::InnerNode16, partial) {
+SuffixTrie::InnerNode16::InnerNode16(StringView partial) : Node(NodeType::InnerNode16, partial) {
     std::memset(child_keys.data(), 0, child_keys.size() * sizeof(unsigned char));
     std::memset(children.data(), 0, children.size() * sizeof(void *));
 }
 
-SuffixTrie::InnerNode48::InnerNode48(std::string_view partial) : Node(NodeType::InnerNode48, partial) {
+SuffixTrie::InnerNode48::InnerNode48(StringView partial) : Node(NodeType::InnerNode48, partial) {
     std::memset(child_ids.data(), 0, child_ids.size() * sizeof(unsigned char));
     std::memset(children.data(), 0, children.size() * sizeof(void *));
 }
 
-SuffixTrie::InnerNode256::InnerNode256(std::string_view partial) : Node(NodeType::InnerNode256, partial) {
+SuffixTrie::InnerNode256::InnerNode256(StringView partial) : Node(NodeType::InnerNode256, partial) {
     std::memset(children.data(), 0, children.size() * sizeof(void *));
 }
 
 SuffixTrie::Node *SuffixTrie::InnerNode4::Find(unsigned char c) {
+    c = tolower(c);
     size_t scratch[4];
     size_t *writer = scratch;
     *writer = 0;
@@ -52,6 +53,7 @@ SuffixTrie::Node *SuffixTrie::InnerNode4::Find(unsigned char c) {
 }
 
 SuffixTrie::Node *SuffixTrie::InnerNode16::Find(unsigned char c) {
+    c = tolower(c);
     size_t scratch[16];
     size_t *writer = scratch;
     for (size_t i = 0; i < 16; ++i) {
@@ -120,7 +122,7 @@ void SuffixTrie::VisitAll(Node *n, IterationCallback callback, ContextType conte
     }
 }
 
-void SuffixTrie::IteratePrefix(std::string_view query, IterationCallback callback, ContextType context) {
+void SuffixTrie::IteratePrefix(StringView query, IterationCallback callback, ContextType context) {
     Node *node = root;
     size_t depth = 0;
     while (node) {
@@ -173,6 +175,7 @@ void SuffixTrie::IteratePrefix(std::string_view query, IterationCallback callbac
 }
 
 constexpr unsigned char SUFFIX_END_MARKER = '\0';
+// Apple lacks memicmp
 static_assert(std::string_view("ab") < std::string_view("ab\0", 3));
 static_assert(std::string_view("ab\0", 3) < std::string_view("abA"));
 static_assert(std::string_view("ab\0", 3) < std::string_view("ab0"));
@@ -208,9 +211,9 @@ std::unique_ptr<SuffixTrie> SuffixTrie::BulkLoad(std::vector<Entry> entries) {
                 begin = end;
                 partition_keys.push_back(SUFFIX_END_MARKER);
             } else {
-                unsigned char key = begin->suffix[prefix_begin];
+                unsigned char key = tolower(begin->suffix[prefix_begin]);
                 auto end = std::partition_point(begin, nodes.end(), [key, prefix_begin](Entry &e) {
-                    return e.suffix.size() <= prefix_begin || e.suffix[prefix_begin] == key;
+                    return e.suffix.size() <= prefix_begin || tolower(e.suffix[prefix_begin]) == key;
                 });
 
                 // We use \0 as the end marker to exploit the default string comparison.
@@ -232,10 +235,10 @@ std::unique_ptr<SuffixTrie> SuffixTrie::BulkLoad(std::vector<Entry> entries) {
     };
 
     // Get the common prefix between two strings
-    auto common_prefix = [](std::string_view left, std::string_view right) {
+    auto common_prefix = [](StringView left, StringView right) {
         size_t limit = std::min(left.size(), right.size());
         size_t prefix_len = 0;
-        for (; prefix_len < limit && left[prefix_len] == right[prefix_len]; ++prefix_len)
+        for (; prefix_len < limit && tolower(left[prefix_len]) == tolower(right[prefix_len]); ++prefix_len)
             ;
         return left.substr(0, prefix_len);
     };
@@ -250,11 +253,11 @@ std::unique_ptr<SuffixTrie> SuffixTrie::BulkLoad(std::vector<Entry> entries) {
         assert(!partition.empty());
 
         // Find a shared prefix among the entries (if there is any)
-        std::string_view first_suffix = partition.front().suffix;
-        std::string_view first = first_suffix.size() <= depth ? "\0" : first_suffix.substr(depth);
-        std::string_view last_suffix = partition.back().suffix;
-        std::string_view last = last_suffix.size() <= depth ? "\0" : last_suffix.substr(depth);
-        std::string_view partial = common_prefix(first, last);
+        StringView first_suffix = partition.front().suffix;
+        StringView first = first_suffix.size() <= depth ? "\0" : first_suffix.substr(depth);
+        StringView last_suffix = partition.back().suffix;
+        StringView last = last_suffix.size() <= depth ? "\0" : last_suffix.substr(depth);
+        StringView partial = common_prefix(first, last);
         depth += partial.size();
 
         // Partition all entries
@@ -267,7 +270,7 @@ std::unique_ptr<SuffixTrie> SuffixTrie::BulkLoad(std::vector<Entry> entries) {
             // That means we either hit the end or there are only string left with \0 as next character
             auto suffix = partition[0].suffix;
             LeafNode &node = trie->leaf_nodes.Append(LeafNode(suffix, partition));
-            partitions[suffix.size() <= depth ? SUFFIX_END_MARKER : suffix[depth]] = {};
+            partitions[suffix.size() <= depth ? SUFFIX_END_MARKER : tolower(suffix[depth])] = {};
             this_ref = &node;
 
         } else if (partition_count <= 4) {
