@@ -23,13 +23,13 @@ struct SuffixTrie {
     struct Entry {
         /// The suffix
         std::string_view suffix;
-        /// The value
-        uint64_t value_id;
-        /// The tags
+        /// The name id
+        size_t value_id;
+        /// The name tags
         NameTags tags;
 
         /// Constructor
-        Entry(std::string_view suffix = "", uint64_t value_id = 0, NameTags tags = 0)
+        Entry(std::string_view suffix = "", size_t value_id = 0, NameTags tags = 0)
             : suffix(suffix), value_id(value_id), tags(tags) {}
     };
 
