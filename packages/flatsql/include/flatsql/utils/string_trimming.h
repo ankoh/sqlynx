@@ -1,9 +1,6 @@
 #pragma once
 
-#include <strings.h>
-
 #include <algorithm>
-#include <cstddef>
 #include <string>
 
 namespace flatsql {
@@ -33,33 +30,5 @@ template <typename Fn> inline std::string_view trim_view_right(std::string_view 
 template <typename Fn> inline std::string_view trim_view(std::string_view s, Fn keepChar) {
     return trim_view_left(trim_view_right(s, keepChar), keepChar);
 }
-
-extern const std::array<unsigned char, 256> LOWER_LOOKUP_TABLE;
-inline unsigned char lookup_lower(unsigned char c) { return LOWER_LOOKUP_TABLE[c]; }
-
-inline int memicmp_lookup(const void *_s1, const void *_s2, size_t len) {
-    auto *s1 = static_cast<const unsigned char *>(_s1);
-    auto *s2 = static_cast<const unsigned char *>(_s2);
-    for (; len > 0; --len, ++s1, ++s2) {
-        auto c1 = lookup_lower(*s1);
-        auto c2 = lookup_lower(*s2);
-        if (c1 != c2) return c1 - c2;
-    }
-    return 0;
-}
-
-struct ci_char_traits : public std::char_traits<char> {
-    static bool eq(char c1, char c2) { return lookup_lower(c1) == lookup_lower(c2); }
-    static bool ne(char c1, char c2) { return lookup_lower(c1) != lookup_lower(c2); }
-    static bool lt(char c1, char c2) { return lookup_lower(c1) < lookup_lower(c2); }
-    static int compare(const char *s1, const char *s2, size_t n) { return memicmp_lookup(s1, s2, n); }
-    static const char *find(const char *s, int n, char a) {
-        while (n-- > 0 && lookup_lower(*s) != lookup_lower(a)) {
-            ++s;
-        }
-        return s;
-    }
-};
-using ci_string_view = std::basic_string_view<char, ci_char_traits>;
 
 }  // namespace flatsql

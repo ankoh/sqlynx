@@ -240,7 +240,7 @@ set(LIB_SRC
   ${CMAKE_SOURCE_DIR}/src/parser/scanner.cc
   ${CMAKE_SOURCE_DIR}/src/parser/script.cc
   ${CMAKE_SOURCE_DIR}/src/utils/rope.cc
-  ${CMAKE_SOURCE_DIR}/src/utils/string.cc
+  ${CMAKE_SOURCE_DIR}/src/utils/string_conversion.cc
   ${CMAKE_SOURCE_DIR}/src/utils/suffix_trie.cc
   ${CMAKE_SOURCE_DIR}/src/vis/schema_graph.cc
 )
