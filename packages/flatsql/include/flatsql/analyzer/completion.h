@@ -34,7 +34,7 @@ namespace flatsql {
 /// any information except that we are in a potential table_ref. We therefore need a way to prefer table names even
 /// though we don't have any information to narrow them down further. Thus the "tagging" of names in the name
 /// dictionaries. However, for a query like `SELECT bar FROM f`, we know of an unresolved column ref that lets a table
-/// with name `foo` score even higher than other table names.
+/// with name `foo` containing such a column score even higher than other table names.
 
 struct CompletionState {
     /// XXX
