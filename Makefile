@@ -115,13 +115,13 @@ graph_tests:
 completion_tests:
 	${LIB_DEBUG_DIR}/tester --source_dir . --gtest_filter="*Suffix*"
 
-.PHONY: benchmark_steps
-benchmark_steps:
-	${LIB_RELWITHDEBINFO_DIR}/bm_steps
+.PHONY: benchmark_pipeline
+benchmark_pipeline:
+	${LIB_RELWITHDEBINFO_DIR}/benchmark_pipeline
 
 .PHONY: benchmark_layout
 benchmark_layout:
-	${LIB_RELWITHDEBINFO_DIR}/bm_layout
+	${LIB_RELWITHDEBINFO_DIR}/benchmark_layout
 
 .PHONY: wasm_o0
 wasm_o0:
