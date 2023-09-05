@@ -72,7 +72,7 @@ Here are timings for TPC-DS Q1 on my laptop. All steps run single-threaded on a 
 FlatSQL spends **5us** with scanning, **8us** with parsing, **12us** with analyzing and **5us** with building the completion index.
 
 ```
-Running /Users/andre.kohn/Repositories/flatsql/packages/flatsql/build/native/o2/bm_steps
+Running /Users/andre.kohn/Repositories/flatsql/packages/flatsql/build/native/o2/benchmark_pipeline
 Run on (10 X 24.1209 MHz CPU s)
 CPU Caches:
   L1 Data 64 KiB
