@@ -695,7 +695,6 @@ static void reindex_bulkloading(benchmark::State& state) {
               [](SuffixTrie::Entry& l, SuffixTrie::Entry& r) { return l.suffix < r.suffix; });
 
     for (auto _ : state) {
-        std::span<const ScannedScript::Name> names{main_scan.first->name_dictionary};
         auto trie = SuffixTrie::BulkLoad(entries);
         benchmark::DoNotOptimize(trie);
     }
