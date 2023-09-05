@@ -16,7 +16,8 @@ namespace flatsql {
 ///     - If we are in a SELECT clause, column names score higher.
 ///     - ... other rules that make sense
 /// 2) We then collect ALL the names that we found using the suffix lookup.
-///     - We store them as QualifiedIDs in a hash table since we have to deduplicate them anyway.
+///     - We create a dense hash-table and reserve space for min(suffix_count, name_dictionary_size) entries.
+///     - We store all names as QualifiedIDs in the hash table since we have to deduplicate them anyway.
 ///     - We use the name tags to add a first score based on the score function.
 /// 3) We then discover all other relevant names using the cursor
 ///     - We find all table refs that belong to our statement id.
