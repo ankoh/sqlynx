@@ -16,7 +16,7 @@ jobs:
         name: Build Library / WASM / ${{ matrix.build_type }}
         runs-on: ubuntu-22.04
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
               with:
                   submodules: 'recursive'
                   fetch-depth: 0
@@ -59,7 +59,7 @@ jobs:
         name: Build Library / Native / ${{ matrix.build_type }}
         runs-on: ubuntu-22.04
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
               with:
                   submodules: 'recursive'
                   fetch-depth: 0
@@ -141,7 +141,7 @@ jobs:
         needs:
             - lib_wasm
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
               with:
                   submodules: 'recursive'
                   fetch-depth: 0
@@ -192,7 +192,7 @@ jobs:
         needs:
             - lib_js
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
               with:
                   submodules: 'recursive'
                   fetch-depth: 0
@@ -225,7 +225,7 @@ jobs:
         needs:
             - lib_js
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
               with:
                   submodules: 'recursive'
                   fetch-depth: 0
@@ -284,7 +284,7 @@ jobs:
             - lib_native
             - editor
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
               with:
                   submodules: 'recursive'
                   fetch-depth: 0
