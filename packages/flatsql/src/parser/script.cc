@@ -315,17 +315,14 @@ std::unique_ptr<proto::ScriptMemoryStatistics> Script::GetMemoryStatistics() {
     registerScript(analyzed_script.get(), memory->mutable_latest_script());
 
     if (completion_index) {
-        if (completion_index->analyzed_script) {
-            registerScript(completion_index->analyzed_script.get(), memory->mutable_completion_index_script());
+        if (auto& script = completion_index->GetScript()) {
+            registerScript(script.get(), memory->mutable_completion_index_script());
         }
-        if (completion_index->suffix_trie) {
-            size_t completion_index_entries =
-                completion_index->suffix_trie->GetEntries().size() * sizeof(SuffixTrie::Entry);
-            size_t completion_index_bytes =
-                completion_index->suffix_trie->GetEntries().size() * sizeof(SuffixTrie::Entry);
-            memory->mutate_completion_index_entries(completion_index_entries);
-            memory->mutate_completion_index_bytes(completion_index_bytes);
-        }
+        auto& entries = completion_index->GetEntries();
+        size_t completion_index_entries = entries.size() * sizeof(CompletionIndex::Entry);
+        size_t completion_index_bytes = entries.size() * sizeof(SuffixTrie::Entry);
+        memory->mutate_completion_index_entries(completion_index_entries);
+        memory->mutate_completion_index_bytes(completion_index_bytes);
     }
     return memory;
 }
@@ -386,19 +383,35 @@ std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(Script* external) 
 /// Update the completion index
 proto::StatusCode Script::Reindex() {
     if (!analyzed_script) {
-        return proto::StatusCode::COMPLETION_DATA_INVALID;
+        return proto::StatusCode::REINDEXING_MISSES_ANALYSIS;
     }
-    auto trie = SuffixTrie::BulkLoad(scanned_script->name_dictionary, [&](size_t i, const ScannedScript::Name& name) {
-        return SuffixTrie::Entry{name.text, i, name.tags};
-    });
-    completion_index.emplace(std::move(trie), analyzed_script);
+    auto [index, status] = CompletionIndex::Build(analyzed_script);
+    // Reindexing failed, keep the old index
+    if (status != proto::StatusCode::OK) {
+        return status;
+    }
+    completion_index = std::move(index);
     return proto::StatusCode::OK;
 }
 
 /// Move the cursor to a offset
 const ScriptCursor& Script::MoveCursor(size_t text_offset) { return cursor.emplace(*analyzed_script, text_offset); }
 /// Complete at the cursor
-std::unique_ptr<proto::CompletionT> Script::CompleteAtCursor() { return nullptr; }
+std::pair<std::unique_ptr<proto::CompletionT>, proto::StatusCode> Script::CompleteAtCursor() {
+    if (!cursor.has_value()) {
+        return {nullptr, proto::StatusCode::COMPLETION_MISSES_CURSOR};
+    }
+    if (!cursor->scanner_token_id.has_value()) {
+        return {nullptr, proto::StatusCode::COMPLETION_MISSES_SCANNER_TOKEN};
+    }
+    auto& tokens = scanned_script->GetTokens();
+    auto& token = tokens[*cursor->scanner_token_id];
+    auto token_text = scanned_script->ReadTextAtLocation(token.location);
+
+    auto& keyword_index = CompletionIndex::Keywords();
+
+    return {nullptr, proto::StatusCode::OK};
+}
 
 static bool endsCursorPath(proto::Node& n) {
     switch (n.node_type()) {
