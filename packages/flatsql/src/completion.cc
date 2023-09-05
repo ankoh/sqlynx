@@ -10,6 +10,27 @@ namespace flatsql {
 CompletionIndex::CompletionIndex(std::vector<Entry> entries, std::shared_ptr<AnalyzedScript> script)
     : entries(std::move(entries)), script(std::move(script)) {}
 
+/// Find all entries that share a prefix
+std::span<CompletionIndex::Entry> CompletionIndex::FindEntriesWithPrefix(CompletionIndex::StringView prefix) {
+    auto begin = std::lower_bound(entries.begin(), entries.end(), prefix,
+                                  [](Entry& entry, StringView prefix) { return entry.suffix < prefix; });
+    auto end = std::upper_bound(begin, entries.end(), prefix, [](StringView prefix, Entry& entry) {
+        return prefix < entry.suffix && !entry.suffix.starts_with(prefix);
+    });
+    return {begin, static_cast<size_t>(end - begin)};
+}
+
+/// Get completions at a script cursor
+proto::StatusCode CompletionIndex::CompleteAt(const ScriptCursor& cursor, CompletionState& state) {
+    // Find all matching entries
+    StringView prefix{cursor.text.data(), cursor.text.length()};
+    std::span<Entry> entries = FindEntriesWithPrefix(prefix);
+
+    // Now score these entries and store them in the state
+
+    return proto::StatusCode::OK;
+}
+
 const CompletionIndex& CompletionIndex::Keywords() {
     static std::unique_ptr<const CompletionIndex> index = nullptr;
     // Already initialized?
