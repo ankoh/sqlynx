@@ -69,6 +69,31 @@ FlatSQL builds around a carefully optimized and very fast parser based on the Po
 FlatSQL is still doing work in `O(text-length)` with every input event, as opposed to `O(change-size)` by Tree-sitter.
 Yet, FlatSQL analyzes most input in well under a millisecond in your browser, even when replacing the entire text.
 After all, the parser is not the only component that has to be tuned for fast analysis passes, incremental parsing alone "only" gives you a head-start for the AST update.
-FlatSQL maintains B+-tree ropes, dictionary-encodes SQL object names in-flight, performs efficient post-order DFS traversals through linear scans over a compact AST representation and maintains identifier suffixes in lightweight adaptive radix trees.
+FlatSQL maintains B+-tree ropes, dictionary-encodes and tags SQL object names in-flight, performs efficient post-order DFS traversals through linear scans over a compact AST representation and maintains identifier suffixes in lightweight case-insensitive adaptive radix trees.
 
-Analyzing TPC-DS Q1 takes around 50 microseconds and you should not notice FlatSQL for queries up to 50 times that text size.
+Analyzing TPC-DS Q1 takes less than 50 microseconds and you should not notice FlatSQL for queries up to 50 times that text size.
+
+---
+
+### What does "fast" mean in numbers
+
+Here are timings for TPC-DS Q1 on my laptop. All steps run single-threaded on a M1Max at ~3GHz.
+FlatSQL spends 5us with scanning, **8us** with parsing, **12us** with analyzing, and sporadically **9us** (3.8us + 5us) with rebuilding the adaptive radix suffix trie.
+
+```
+Running /Users/andre.kohn/Repositories/flatsql/packages/flatsql/build/native/o2/bm_steps
+Run on (10 X 24.0575 MHz CPU s)
+CPU Caches:
+  L1 Data 64 KiB
+  L1 Instruction 128 KiB
+  L2 Unified 4096 KiB (x10)
+Load Average: 2.84, 3.42, 3.64
+------------------------------------------------------------------
+Benchmark                        Time             CPU   Iterations
+------------------------------------------------------------------
+scan_query                    5120 ns         5117 ns       114954
+parse_query                   8396 ns         8395 ns        83388
+analyze_query                12038 ns        12038 ns        59555
+reindex_sorting               3823 ns         3823 ns       182659
+reindex_bulkloading           5076 ns         5076 ns       136772
+```
