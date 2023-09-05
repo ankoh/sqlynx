@@ -22,36 +22,29 @@ This encoding is compact and efficient for simple passes, but is not directly su
 ### Building
 
 ```
-# Setup
-make infra_macos  # or infra_linux, depending on your system
-yarn install
+make infra_macos          # Install dependencies to .infra, `infra_linux` for linux
+yarn install              # Install npm packages
 
-# Building the libraries
-make proto
-make core_native_o0
-make core_native_o2
-make core_wasm_o3
-make core_js_o3
+make proto                # Generate flatbuffers
+make core_native_o0       # Unoptimized native core library
+make core_native_o2       # Optimized native core library with debug symbols
+make core_wasm_o3         # Optimized wasm core library
+make core_js_o3           # Js bundle with wasm module and js glue code
 
-# Tests
-make core_native_tests
-make core_js_tests
+make core_native_tests    # Native tests
+make core_js_tests        # Js tests using the wasm module
 
-# Update dumps
-make parser_dumps
-make analyzer_dumps
+make parser_dumps         # Update parser dumps in dumps/parser
+make analyzer_dumps       # Update analyzer dumps in dumps/analyzer
 
-# Benchmarks
-make benchmark_pipeline
-make benchmark_layout
+make benchmark_pipeline   # Benchmark the processing pipeline
+make benchmark_layout     # Benchmark the schema graph layout
 
-# Build the LSP & VS Code extension
-make lsp
-make vscode
+make lsp                  # Build the lsp library
+make vscode               # Build the vscode extension
 # run the VS code extension through the "Launch VSCode Plugin" launch configuration
 
-# Start editor dev server
-make editor_start
+make editor_start         # Start the dev server for the editor
 ```
 
 ---
