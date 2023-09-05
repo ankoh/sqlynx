@@ -26,13 +26,13 @@ make infra_macos          # Install dependencies to .infra, `infra_linux` for li
 yarn install              # Install npm packages
 
 make proto                # Generate flatbuffers
-make core_native_o0       # Unoptimized native core library
-make core_native_o2       # Optimized native core library with debug symbols
-make core_wasm_o3         # Optimized wasm core library
-make core_js_o3           # Js bundle with wasm module and js glue code
+make core_native_o0       # Build unoptimized native core library
+make core_native_o2       # Build optimized native core library with debug symbols
+make core_wasm_o3         # Build optimized wasm core library
+make core_js_o3           # Build js bundle with wasm module and js api
 
-make core_native_tests    # Native tests
-make core_js_tests        # Js tests using the wasm module
+make core_native_tests    # Run native tests
+make core_js_tests        # Run js tests using the wasm module
 
 make parser_dumps         # Update parser dumps in dumps/parser
 make analyzer_dumps       # Update analyzer dumps in dumps/analyzer
