@@ -28,6 +28,13 @@ namespace flatsql {
 /// 4) We lookup each of the names discovered in 3) in our map and add additional score
 /// 5) We then construct a max-heap to determine the top-k names with highest score
 /// 6) Those are returned to the user
+///
+/// One may argue that the scoring in 2) and 4) are slightly redundant:
+/// The reason why we split the two is the way people write SQL. For a prefix like `SELECT * FROM f`, we rarely have
+/// any information except that we are in a potential table_ref. We therefore need a way to prefer table names even
+/// though we don't have any information to narrow them down further. Thus the "tagging" of names in the name
+/// dictionaries. However, for a query like `SELECT bar FROM f`, we know of an unresolved column ref that lets a table
+/// with name `foo` score even higher than other table names.
 
 struct CompletionState {
     /// XXX
