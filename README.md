@@ -71,8 +71,6 @@ Yet, FlatSQL analyzes most input in well under a millisecond in your browser, ev
 After all, the parser is not the only component that has to be tuned for fast analysis passes, incremental parsing alone "only" gives you a head-start for the AST update.
 FlatSQL maintains B+-tree ropes, dictionary-encodes and tags SQL object names in-flight, performs efficient post-order DFS traversals through linear scans over a compact AST representation and maintains identifier suffixes in lightweight case-insensitive adaptive radix trees.
 
-Analyzing TPC-DS Q1 takes less than 50 microseconds and you should not notice FlatSQL for queries up to 50 times that text size.
-
 ---
 
 ### What does "fast" mean in numbers
