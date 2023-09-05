@@ -77,7 +77,7 @@ Analyzing TPC-DS Q1 takes less than 50 microseconds and you should not notice Fl
 
 ### What does "fast" mean in numbers
 
-Here are timings for TPC-DS Q1 on my laptop. All steps run single-threaded on a M1Max at ~3GHz.
+Here are timings for TPC-DS Q1 on my laptop. All steps run single-threaded on a M1Max.
 FlatSQL spends **5us** with scanning, **8us** with parsing, **12us** with analyzing, and sporadically **9us** (3.8us + 5us) with rebuilding the adaptive radix suffix trie.
 
 ```
