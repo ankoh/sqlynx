@@ -28,21 +28,22 @@ yarn install
 
 # Building the libraries
 make proto
-make lib_o0
-make lib_o2
-make wasm_o3
-make jslib_o3
+make core_native_o0
+make core_native_o2
+make core_wasm_o3
+make core_js_o3
 
-# Testing
-make lib_tests
-make jslib_tests
+# Tests
+make core_native_tests
+make core_js_tests
 
 # Update dumps
 make parser_dumps
 make analyzer_dumps
 
-# Benchmarking
-make benchmark_steps
+# Benchmarks
+make benchmark_pipeline
+make benchmark_layout
 
 # Build the LSP & VS Code extension
 make lsp
