@@ -1,16 +1,16 @@
 runs:
-  using: "composite"
-  steps:
-    - name: Download WABT
-      run: |-
-        export WABT_VERSION=1.0.32
-        curl -Lo ${{ github.action_path }}/wabt.zip https://github.com/WebAssembly/wabt/releases/download/${WABT_VERSION}/wabt-${WABT_VERSION}-ubuntu.tar.gz
-        mkdir -p /opt/wabt
-        tar xf ${{ github.action_path }}/wabt.zip -C /opt/wabt --strip-components 1
-      shell: bash
+    using: 'composite'
+    steps:
+        - name: Download WABT
+          run: |-
+              export WABT_VERSION=1.0.33
+              curl -Lo ${{ github.action_path }}/wabt.zip https://github.com/WebAssembly/wabt/releases/download/${WABT_VERSION}/wabt-${WABT_VERSION}-ubuntu.tar.gz
+              mkdir -p /opt/wabt
+              tar xf ${{ github.action_path }}/wabt.zip -C /opt/wabt --strip-components 1
+          shell: bash
 
-    - name: List WABT folder
-      run: |-
-        ls /opt/wabt
-        ls /opt/wabt/bin
-      shell: bash
+        - name: List WABT folder
+          run: |-
+              ls /opt/wabt
+              ls /opt/wabt/bin
+          shell: bash
