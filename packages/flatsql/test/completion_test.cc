@@ -8,7 +8,7 @@ namespace {
 
 TEST(CompletionTest, KeywordSuffixCount) {
     auto& keywords = CompletionIndex::Keywords();
-    ASSERT_EQ(keywords.suffix_trie->GetEntries().size(), 2875);
+    ASSERT_EQ(keywords.GetEntries().size(), 2875);
 }
 
 }  // namespace

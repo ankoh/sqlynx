@@ -89,8 +89,14 @@ static FFIResult* packError(proto::StatusCode status) {
         case proto::StatusCode::GRAPH_INPUT_INVALID:
             message = "Graph input is invalid";
             break;
-        case proto::StatusCode::COMPLETION_DATA_INVALID:
-            message = "Completion data is invalid";
+        case proto::StatusCode::COMPLETION_MISSES_CURSOR:
+            message = "Completion requires a script cursor";
+            break;
+        case proto::StatusCode::COMPLETION_MISSES_SCANNER_TOKEN:
+            message = "Completion requires a scanner token";
+            break;
+        case proto::StatusCode::REINDEXING_MISSES_ANALYSIS:
+            message = "Reindexing requires an analyzed script";
             break;
         case proto::StatusCode::EXTERNAL_CONTEXT_COLLISION:
             message = "Collision on external context identifier";

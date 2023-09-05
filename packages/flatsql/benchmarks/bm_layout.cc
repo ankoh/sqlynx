@@ -1,10 +1,8 @@
 #include "benchmark/benchmark.h"
 #include "flatsql/analyzer/analyzer.h"
-#include "flatsql/analyzer/completion.h"
 #include "flatsql/parser/names.h"
 #include "flatsql/parser/parse_context.h"
 #include "flatsql/parser/scanner.h"
-#include "flatsql/proto/proto_generated.h"
 #include "flatsql/script.h"
 #include "flatsql/text/rope.h"
 #include "flatsql/utils/suffix_trie.h"
@@ -594,60 +592,36 @@ order by c_customer_id
 limit 100;
 )SQL";
 
-static void scan_query(benchmark::State& state) {
-    rope::Rope buffer{1024, main_script};
-    for (auto _ : state) {
-        auto scan = flatsql::parser::Scanner::Scan(buffer, 0);
-        benchmark::DoNotOptimize(scan);
-    }
-}
-
-static void parse_query(benchmark::State& state) {
-    rope::Rope buffer{1024, main_script};
-    auto scanner = flatsql::parser::Scanner::Scan(buffer, 0);
-    for (auto _ : state) {
-        auto parsed = flatsql::parser::ParseContext::Parse(scanner.first);
-        benchmark::DoNotOptimize(parsed);
-    }
-}
-
-static void analyze_query(benchmark::State& state) {
+static void layout_schema(benchmark::State& state) {
     rope::Rope input_external{1024, external_script};
-    rope::Rope input_main{1024, main_script};
 
     // Analyze external script
     auto external_scan = parser::Scanner::Scan(input_external, 0);
     auto external_parsed = parser::ParseContext::Parse(external_scan.first);
     auto external_analyzed = Analyzer::Analyze(external_parsed.first, nullptr);
 
-    // Parse script
-    auto main_scan = parser::Scanner::Scan(input_main, 1);
-    auto main_parsed = parser::ParseContext::Parse(main_scan.first);
+    SchemaGraph graph;
+
+    SchemaGraph::Config config;
+    config.iterations_clustering = 10;
+    config.iterations_refinement = 40;
+    config.force_scaling = 10.0;
+    config.cooldown_factor = 0.99;
+    config.repulsion_force = 3.0;
+    config.edge_attraction_force = 2.0;
+    config.gravity_force = 1.0;
+    config.board_width = 1600;
+    config.board_height = 800;
+    config.table_width = 180;
+    config.table_height = 36;
+    config.table_margin = 32;
+    config.grid_size = 32;
 
     for (auto _ : state) {
-        auto main_analyzed = Analyzer::Analyze(main_parsed.first, external_analyzed.first);
-        benchmark::DoNotOptimize(main_analyzed);
+        graph.Configure(config);
+        graph.LoadScript(external_analyzed.first);
     }
 }
 
-static void index_query(benchmark::State& state) {
-    rope::Rope input_external{1024, external_script};
-    rope::Rope input_main{1024, main_script};
-
-    // Parse script
-    auto main_scan = parser::Scanner::Scan(input_main, 1);
-    auto main_parsed = parser::ParseContext::Parse(main_scan.first);
-    auto [main_analyzed, status] = Analyzer::Analyze(main_parsed.first, nullptr);
-    assert(status == proto::StatusCode::OK);
-
-    for (auto _ : state) {
-        auto index = CompletionIndex::Build(main_analyzed);
-        benchmark::DoNotOptimize(index);
-    }
-}
-
-BENCHMARK(scan_query);
-BENCHMARK(parse_query);
-BENCHMARK(analyze_query);
-BENCHMARK(index_query);
+BENCHMARK(layout_schema);
 BENCHMARK_MAIN();
