@@ -39,8 +39,8 @@ infra_macos:
 proto:
 	./scripts/generate_proto.sh
 
-.PHONY: lib_o0
-lib_o0:
+.PHONY: core_native_o0
+core_native_o0:
 	mkdir -p ${LIB_DEBUG_DIR}
 	cmake -S ${LIB_SOURCE_DIR} -B ${LIB_DEBUG_DIR} \
 		-DCMAKE_BUILD_TYPE=Debug \
@@ -48,8 +48,8 @@ lib_o0:
 	ln -sf ${LIB_DEBUG_DIR}/compile_commands.json ${LIB_SOURCE_DIR}/compile_commands.json
 	cmake --build ${LIB_DEBUG_DIR} --parallel ${CORES}
 
-.PHONY: lib_o0
-lib_o0_cov:
+.PHONY: core_native_o0_cov
+core_native_o0_cov:
 	mkdir -p ${LIB_DEBUG_DIR}
 	cmake -S ${LIB_SOURCE_DIR} -B ${LIB_DEBUG_DIR} \
 		-DCODE_COVERAGE=1 \
@@ -58,24 +58,24 @@ lib_o0_cov:
 	ln -sf ${LIB_DEBUG_DIR}/compile_commands.json ${LIB_SOURCE_DIR}/compile_commands.json
 	cmake --build ${LIB_DEBUG_DIR} --parallel ${CORES}
 
-.PHONY: lib_o2
-lib_o2:
+.PHONY: core_native_o2
+core_native_o2:
 	mkdir -p ${LIB_RELWITHDEBINFO_DIR}
 	cmake -S ${LIB_SOURCE_DIR} -B ${LIB_RELWITHDEBINFO_DIR} -DCMAKE_BUILD_TYPE=RelWithDebInfo
 	cmake --build ${LIB_RELWITHDEBINFO_DIR} --parallel ${CORES}
 
-.PHONY: lib_o3
-lib_o3:
+.PHONY: core_native_o3
+core_native_o3:
 	mkdir -p ${LIB_RELEASE_DIR}
 	cmake -S ${LIB_SOURCE_DIR} -B ${LIB_RELEASE_DIR} -DCMAKE_BUILD_TYPE=Release
 	cmake --build ${LIB_RELEASE_DIR} --parallel ${CORES}
 
-.PHONY: lib_tests
-lib_tests:
+.PHONY: core_native_tests
+core_native_tests:
 	${LIB_DEBUG_DIR}/tester --source_dir .
 
-.PHONY: lib_coverage
-lib_coverage:
+.PHONY: core_native_coverage
+core_native_coverage:
 	${LLVM_PROFDATA} merge -output=default.prof -instr default.profraw
 	${LLVM_COV} show \
 		--instr-profile default.prof \
@@ -87,34 +87,6 @@ lib_coverage:
 		-o ${LIB_COVERAGE_DIR} \
 		${LIB_DEBUG_DIR}/tester
 
-.PHONY: cursor_tests
-cursor_tests:
-	${LIB_DEBUG_DIR}/tester --source_dir . --gtest_filter="*ScannerTest*:*ParserTest*:*CursorTest*"
-
-.PHONY: scanner_tests
-scanner_tests:
-	${LIB_DEBUG_DIR}/tester --source_dir . --gtest_filter="*Scanner*"
-
-.PHONY: parser_tests
-parser_tests:
-	${LIB_DEBUG_DIR}/tester --source_dir . --gtest_filter="*Parser*"
-
-.PHONY: analyzer_tests
-analyzer_tests:
-	${LIB_DEBUG_DIR}/tester --source_dir . --gtest_filter="*Analyzer*"
-
-.PHONY: rope_tests
-rope_tests:
-	${LIB_DEBUG_DIR}/tester --source_dir . --gtest_filter="*Rope*"
-
-.PHONY: graph_tests
-graph_tests:
-	${LIB_DEBUG_DIR}/tester --source_dir . --gtest_filter="*SchemaGraphTest*"
-
-.PHONY: completion_tests
-completion_tests:
-	${LIB_DEBUG_DIR}/tester --source_dir . --gtest_filter="*Suffix*"
-
 .PHONY: benchmark_pipeline
 benchmark_pipeline:
 	${LIB_RELWITHDEBINFO_DIR}/benchmark_pipeline
@@ -123,32 +95,32 @@ benchmark_pipeline:
 benchmark_layout:
 	${LIB_RELWITHDEBINFO_DIR}/benchmark_layout
 
-.PHONY: wasm_o0
-wasm_o0:
+.PHONY: core_wasm_o0
+core_wasm_o0:
 	./scripts/build_parser_wasm.sh o0
 
-.PHONY: wasm_o2
-wasm_o2:
+.PHONY: core_wasm_o2
+core_wasm_o2:
 	./scripts/build_parser_wasm.sh o2
 
-.PHONY: wasm_o3
-wasm_o3:
+.PHONY: core_wasm_o3
+core_wasm_o3:
 	./scripts/build_parser_wasm.sh o3
 
-.PHONY: jslib_o0
-jslib_o0:
+.PHONY: core_js_o0
+core_js_o0:
 	yarn workspace @ankoh/flatsql build:o0
 
-.PHONY: jslib_o2
-jslib_o2:
+.PHONY: core_js_o2
+core_js_o2:
 	yarn workspace @ankoh/flatsql build:o2
 
-.PHONY: jslib_o3
-jslib_o3:
+.PHONY: core_js_o3
+core_js_o3:
 	yarn workspace @ankoh/flatsql build:o3
 
-.PHONY: jslib_tests
-jslib_tests:
+.PHONY: core_js_tests
+core_js_tests:
 	yarn workspace @ankoh/flatsql test
 
 .PHONY: editor_o3
