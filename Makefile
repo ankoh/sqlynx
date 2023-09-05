@@ -119,6 +119,10 @@ completion_tests:
 benchmark_steps:
 	${LIB_RELWITHDEBINFO_DIR}/bm_steps
 
+.PHONY: benchmark_layout
+benchmark_layout:
+	${LIB_RELWITHDEBINFO_DIR}/bm_layout
+
 .PHONY: wasm_o0
 wasm_o0:
 	./scripts/build_parser_wasm.sh o0

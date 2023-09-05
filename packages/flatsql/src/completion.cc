@@ -7,16 +7,8 @@
 
 namespace flatsql {
 
-CompletionIndex::CompletionIndex(std::unique_ptr<SuffixTrie> trie, std::shared_ptr<AnalyzedScript> script)
-    : suffix_trie(std::move(trie)), analyzed_script(std::move(script)) {}
-
-std::unique_ptr<CompletionIndex> CompletionIndex::Build(std::shared_ptr<AnalyzedScript> script) {
-    auto& parsed = script->parsed_script;
-    auto& scanned = parsed->scanned_script;
-    auto& names = scanned->name_dictionary;
-    auto trie = SuffixTrie::BulkLoad(names, [&](size_t i, auto& name) { return SuffixTrie::Entry{name.text, 0, 0}; });
-    return std::make_unique<CompletionIndex>(std::move(trie), std::move(script));
-}
+CompletionIndex::CompletionIndex(std::vector<Entry> entries, std::shared_ptr<AnalyzedScript> script)
+    : entries(std::move(entries)), script(std::move(script)) {}
 
 const CompletionIndex& CompletionIndex::Keywords() {
     static std::unique_ptr<const CompletionIndex> index = nullptr;
@@ -26,11 +18,56 @@ const CompletionIndex& CompletionIndex::Keywords() {
     }
     // If not, load keywords
     auto keywords = parser::Keyword::GetKeywords();
-    auto trie = SuffixTrie::BulkLoad(keywords, [&](size_t i, const parser::Keyword& keyword) {
-        return SuffixTrie::Entry{keyword.name, i, proto::NameTag::KEYWORD};
-    });
-    index = std::make_unique<CompletionIndex>(std::move(trie));
+
+    // Collect the entries
+    std::vector<Entry> entries;
+    {
+        ChunkBuffer<Entry, 256> entries_chunked;
+        for (size_t i = 0; i < keywords.size(); ++i) {
+            auto& keyword = keywords[i];
+            Entry entry{keyword.name, i, proto::NameTag::KEYWORD};
+            auto text = entry.suffix;
+            for (size_t offset = 0; offset < text.size(); ++offset) {
+                Entry copy = entry;
+                copy.suffix = text.substr(offset);
+                entries_chunked.Append(copy);
+            }
+        }
+        entries = entries_chunked.Flatten();
+    }
+    std::sort(entries.begin(), entries.end(), [](Entry& l, Entry& r) { return l.suffix < r.suffix; });
+
+    // Build the index
+    index = std::make_unique<CompletionIndex>(std::move(entries));
     return *index;
+}
+
+/// Construct completion index from script
+std::pair<std::unique_ptr<CompletionIndex>, proto::StatusCode> CompletionIndex::Build(
+    std::shared_ptr<AnalyzedScript> script) {
+    auto& scanned = script->parsed_script->scanned_script;
+    auto& names = scanned->name_dictionary;
+
+    // Collect the entries
+    std::vector<Entry> entries;
+    {
+        ChunkBuffer<Entry, 256> entries_chunked;
+        for (size_t i = 0; i < names.size(); ++i) {
+            auto& name = names[i];
+            Entry entry{name.text, i, name.tags};
+            auto text = entry.suffix;
+            for (size_t offset = 0; offset < text.size(); ++offset) {
+                Entry copy = entry;
+                copy.suffix = text.substr(offset);
+                entries_chunked.Append(copy);
+            }
+        }
+        entries = entries_chunked.Flatten();
+    }
+    std::sort(entries.begin(), entries.end(), [](Entry& l, Entry& r) { return l.suffix < r.suffix; });
+
+    auto index = std::make_unique<CompletionIndex>(std::move(entries), std::move(script));
+    return {std::move(index), proto::StatusCode::OK};
 }
 
 }  // namespace flatsql

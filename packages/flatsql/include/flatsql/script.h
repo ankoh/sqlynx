@@ -7,7 +7,6 @@
 #include <tuple>
 
 #include "ankerl/unordered_dense.h"
-#include "flatsql/analyzer/completion.h"
 #include "flatsql/context.h"
 #include "flatsql/parser/names.h"
 #include "flatsql/parser/parser_generated.h"
@@ -24,7 +23,7 @@ class ParseContext;
 }  // namespace parser
 
 class Analyzer;
-struct CompletionIndex;
+class CompletionIndex;
 
 using Key = proto::AttributeKey;
 using Location = proto::Location;
@@ -357,6 +356,8 @@ class AnalyzedScript {
 struct ScriptCursor {
     /// The text offset
     size_t text_offset = 0;
+    /// The text offset
+    std::string_view text;
     /// The current scanner token id (if any)
     std::optional<size_t> scanner_token_id;
     /// The current ast node id (if any)
@@ -395,7 +396,7 @@ class Script {
     std::shared_ptr<AnalyzedScript> analyzed_script;
 
     /// The completion index
-    std::optional<CompletionIndex> completion_index;
+    std::unique_ptr<CompletionIndex> completion_index;
     /// The last cursor
     std::optional<ScriptCursor> cursor;
 
@@ -430,7 +431,7 @@ class Script {
     /// Move the cursor
     const ScriptCursor& MoveCursor(size_t text_offset);
     /// Complete at the cursor
-    std::unique_ptr<proto::CompletionT> CompleteAtCursor();
+    std::pair<std::unique_ptr<proto::CompletionT>, proto::StatusCode> CompleteAtCursor();
     /// Get statisics
     std::unique_ptr<proto::ScriptStatisticsT> GetStatistics();
 };
