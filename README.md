@@ -76,21 +76,21 @@ FlatSQL maintains B+-tree ropes, dictionary-encodes and tags SQL object names in
 ### What does "fast" mean in numbers
 
 Here are timings for TPC-DS Q1 on my laptop. All steps run single-threaded on a M1Max.
-FlatSQL spends **5us** with scanning, **8us** with parsing, **12us** with analyzing and **4us** with rebuilding the completion index.
+FlatSQL spends **5us** with scanning, **8us** with parsing, **12us** with analyzing and **5us** with building the completion index.
 
 ```
 Running /Users/andre.kohn/Repositories/flatsql/packages/flatsql/build/native/o2/bm_steps
-Run on (10 X 24.0575 MHz CPU s)
+Run on (10 X 24.1209 MHz CPU s)
 CPU Caches:
   L1 Data 64 KiB
   L1 Instruction 128 KiB
   L2 Unified 4096 KiB (x10)
-Load Average: 2.84, 3.42, 3.64
-------------------------------------------------------------------
-Benchmark                        Time             CPU   Iterations
-------------------------------------------------------------------
-scan_query                    5120 ns         5117 ns       114954
-parse_query                   8396 ns         8395 ns        83388
-analyze_query                12038 ns        12038 ns        59555
-index_query                   3823 ns         3823 ns       182659
+Load Average: 6.73, 4.68, 3.56
+--------------------------------------------------------
+Benchmark              Time             CPU   Iterations
+--------------------------------------------------------
+scan_query          5171 ns         5169 ns       109632
+parse_query         8414 ns         8414 ns        83443
+analyze_query      11926 ns        11925 ns        58638
+index_query         4602 ns         4602 ns       150386
 ```
