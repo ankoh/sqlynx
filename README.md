@@ -42,7 +42,6 @@ make benchmark_layout     # Benchmark the schema graph layout
 
 make lsp                  # Build the lsp library
 make vscode               # Build the vscode extension
-# run the VS code extension through the "Launch VSCode Plugin" launch configuration
 
 make editor_start         # Start the dev server for the editor
 ```
