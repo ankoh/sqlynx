@@ -283,11 +283,11 @@ if(NOT WASM)
   add_executable(tester test/tester.cc ${TEST_SRC})
   target_link_libraries(tester flatsql flatsql_testutils pugixml gtest gmock gflags Threads::Threads)
 
-  add_executable(bm_steps benchmarks/bm_steps.cc)
-  target_link_libraries(bm_steps flatsql benchmark gtest gflags Threads::Threads)
+  add_executable(benchmark_pipeline benchmarks/benchmark_pipeline.cc)
+  target_link_libraries(benchmark_pipeline flatsql flatsql_testutils benchmark gtest gflags Threads::Threads)
 
-  add_executable(bm_layout benchmarks/bm_layout.cc)
-  target_link_libraries(bm_layout flatsql benchmark gtest gflags Threads::Threads)
+  add_executable(benchmark_layout benchmarks/benchmark_layout.cc)
+  target_link_libraries(benchmark_layout flatsql flatsql_testutils benchmark gtest gflags Threads::Threads)
 
   add_executable(dump_parser tools/dump_parser.cc)
   target_link_libraries(dump_parser flatsql flatsql_testutils pugixml gtest gflags Threads::Threads)
