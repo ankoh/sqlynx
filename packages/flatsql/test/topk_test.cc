@@ -34,8 +34,7 @@ struct TopKTestPrinter {
 };
 struct TopKTestSuite : public ::testing::TestWithParam<TopKTest> {};
 
-std::vector<size_t> getTopK(std::vector<Entry> entries) {
-    std::sort(entries.begin(), entries.end(), [](auto& l, auto& r) { return l.score > r.score; });
+std::vector<size_t> getTopK(const std::vector<Entry>& entries) {
     std::vector<ValueType> values;
     values.reserve(entries.size());
     for (auto& entry : entries) {
@@ -52,7 +51,7 @@ TEST_P(TopKTestSuite, Test) {
     for (auto& entry : param.entries) {
         heap.Insert(entry.value, entry.score);
     }
-    auto values = getTopK(heap.GetEntries());
+    auto values = getTopK(heap.Finish());
 
     // Test values
     ASSERT_EQ(values, param.expected);
@@ -66,13 +65,13 @@ static auto TESTS = ::testing::ValuesIn({
                  Entry(0, 10),
                  Entry(1, 20),
              },
-             {1, 0}),
+             {0, 1}),
     TopKTest("swap_2", 4,
              {
                  Entry(0, 20),
                  Entry(1, 10),
              },
-             {0, 1}),
+             {1, 0}),
     TopKTest("capacity_reached", 4,
              {
                  Entry(0, 50),
@@ -80,7 +79,7 @@ static auto TESTS = ::testing::ValuesIn({
                  Entry(2, 30),
                  Entry(3, 20),
              },
-             {0, 1, 2, 3}),
+             {3, 2, 1, 0}),
     TopKTest("capacity_exceeded_1", 4,
              {
                  Entry(0, 50),
@@ -89,7 +88,7 @@ static auto TESTS = ::testing::ValuesIn({
                  Entry(3, 20),
                  Entry(4, 10),
              },
-             {0, 1, 2, 3}),
+             {3, 2, 1, 0}),
 });
 
 INSTANTIATE_TEST_SUITE_P(TopKBasics, TopKTestSuite, TESTS, TopKTestPrinter());
@@ -100,10 +99,10 @@ TEST(TopKTests, AscendingSequence) {
         heap.Insert(i, i * 10);
     }
 
-    auto values = getTopK(heap.GetEntries());
+    auto values = getTopK(heap.Finish());
     ASSERT_EQ(values.size(), 10);
 
-    std::vector<size_t> expected{999, 998, 997, 996, 995, 994, 993, 992, 991, 990};
+    std::vector<size_t> expected{990, 991, 992, 993, 994, 995, 996, 997, 998, 999};
     ASSERT_EQ(values, expected);
 }
 
@@ -113,10 +112,10 @@ TEST(TopKTests, DescendingSequence) {
         heap.Insert(i, 1000 * 10 - i * 10);
     }
 
-    auto values = getTopK(heap.GetEntries());
+    auto values = getTopK(heap.Finish());
     ASSERT_EQ(values.size(), 10);
 
-    std::vector<size_t> expected{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    std::vector<size_t> expected{9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
     ASSERT_EQ(values, expected);
 }
 

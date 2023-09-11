@@ -10,44 +10,44 @@ namespace flatsql {
 
 namespace {
 
-static constexpr std::array<std::pair<proto::NameTag, double>, 8> NAME_SCORE_TABLE_REF{{
-    {proto::NameTag::NONE, 0.0},
-    {proto::NameTag::KEYWORD, 10.0},
-    {proto::NameTag::SCHEMA_NAME, 20.0},
-    {proto::NameTag::DATABASE_NAME, 20.0},
-    {proto::NameTag::TABLE_NAME, 20.0},
-    {proto::NameTag::TABLE_ALIAS, 0.0},
-    {proto::NameTag::COLUMN_NAME, 0.0},
+static constexpr std::array<std::pair<proto::NameTag, Completion::ScoreValueType>, 8> NAME_SCORE_TABLE_REF{{
+    {proto::NameTag::NONE, 0},
+    {proto::NameTag::KEYWORD, 10},
+    {proto::NameTag::SCHEMA_NAME, 20},
+    {proto::NameTag::DATABASE_NAME, 20},
+    {proto::NameTag::TABLE_NAME, 20},
+    {proto::NameTag::TABLE_ALIAS, 0},
+    {proto::NameTag::COLUMN_NAME, 0},
 }};
 
-static constexpr std::array<std::pair<proto::NameTag, double>, 8> NAME_SCORE_COLUMN_REF{{
-    {proto::NameTag::NONE, 0.0},
-    {proto::NameTag::KEYWORD, 10.0},
-    {proto::NameTag::SCHEMA_NAME, 0.0},
-    {proto::NameTag::DATABASE_NAME, 0.0},
-    {proto::NameTag::TABLE_NAME, 0.0},
-    {proto::NameTag::TABLE_ALIAS, 20.0},
-    {proto::NameTag::COLUMN_NAME, 0.0},
+static constexpr std::array<std::pair<proto::NameTag, Completion::ScoreValueType>, 8> NAME_SCORE_COLUMN_REF{{
+    {proto::NameTag::NONE, 0},
+    {proto::NameTag::KEYWORD, 10},
+    {proto::NameTag::SCHEMA_NAME, 0},
+    {proto::NameTag::DATABASE_NAME, 0},
+    {proto::NameTag::TABLE_NAME, 0},
+    {proto::NameTag::TABLE_ALIAS, 20},
+    {proto::NameTag::COLUMN_NAME, 0},
 }};
 
-static constexpr std::array<std::pair<proto::NameTag, double>, 8> NAME_SCORE_EXPRESSION{{
-    {proto::NameTag::NONE, 0.0},
-    {proto::NameTag::KEYWORD, 10.0},
-    {proto::NameTag::SCHEMA_NAME, 0.0},
-    {proto::NameTag::DATABASE_NAME, 0.0},
-    {proto::NameTag::TABLE_NAME, 0.0},
-    {proto::NameTag::TABLE_ALIAS, 20.0},
-    {proto::NameTag::COLUMN_NAME, 30.0},
+static constexpr std::array<std::pair<proto::NameTag, Completion::ScoreValueType>, 8> NAME_SCORE_EXPRESSION{{
+    {proto::NameTag::NONE, 0},
+    {proto::NameTag::KEYWORD, 10},
+    {proto::NameTag::SCHEMA_NAME, 0},
+    {proto::NameTag::DATABASE_NAME, 0},
+    {proto::NameTag::TABLE_NAME, 0},
+    {proto::NameTag::TABLE_ALIAS, 20},
+    {proto::NameTag::COLUMN_NAME, 30},
 }};
 
-static constexpr std::array<std::pair<proto::NameTag, double>, 8> NAME_SCORE_FROM_CLAUSE{{
-    {proto::NameTag::NONE, 0.0},
-    {proto::NameTag::KEYWORD, 10.0},
-    {proto::NameTag::SCHEMA_NAME, 20.0},
-    {proto::NameTag::DATABASE_NAME, 20.0},
-    {proto::NameTag::TABLE_NAME, 20.0},
-    {proto::NameTag::TABLE_ALIAS, 0.0},
-    {proto::NameTag::COLUMN_NAME, 0.0},
+static constexpr std::array<std::pair<proto::NameTag, Completion::ScoreValueType>, 8> NAME_SCORE_FROM_CLAUSE{{
+    {proto::NameTag::NONE, 0},
+    {proto::NameTag::KEYWORD, 10},
+    {proto::NameTag::SCHEMA_NAME, 20},
+    {proto::NameTag::DATABASE_NAME, 20},
+    {proto::NameTag::TABLE_NAME, 20},
+    {proto::NameTag::TABLE_ALIAS, 0},
+    {proto::NameTag::COLUMN_NAME, 0},
 }};
 
 }  // namespace
@@ -80,6 +80,14 @@ void Completion::FindCandidates(const CompletionIndex& index, std::string_view c
                                         }});
         }
     }
+}
+
+std::vector<TopKHeap<QualifiedID, Completion::ScoreValueType>::Entry> Completion::SelectTopN(size_t n) {
+    TopKHeap<QualifiedID, ScoreValueType> top{n};
+    for (auto& [key, value] : candidates) {
+        top.Insert(key, value.score);
+    }
+    return top.Finish();
 }
 
 std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(const ScriptCursor& cursor,

@@ -23,9 +23,7 @@ template <typename ValueType, typename ScoreType> struct TopKHeap {
 
    public:
     /// Constructor
-    TopKHeap(size_t capacity) { entries.reserve(capacity); }
-    /// Get the entries
-    auto& GetEntries() const { return entries; }
+    TopKHeap(size_t capacity = 10) { entries.reserve(capacity); }
     /// Helper to move the last element up the heap
     void FixHeap() {
         size_t i = 0;
@@ -63,6 +61,11 @@ template <typename ValueType, typename ScoreType> struct TopKHeap {
                 FixHeap();
             }
         }
+    }
+    /// Finish the entries
+    std::vector<Entry> Finish() {
+        std::sort(entries.begin(), entries.end(), [](auto& l, auto& r) { return l.score < r.score; });
+        return std::move(entries);
     }
 };
 
