@@ -139,6 +139,8 @@ std::string readFile(std::filesystem::path p) {
 
 struct FormatTestSuite : public ::testing::TestWithParam<std::filesystem::path> {};
 
+void operator<<(std::ostream& out, const std::filesystem::path& p) { out << p; }
+
 TEST_P(FormatTestSuite, Test) {
     std::filesystem::path filePath = source_dir / "dumps" / "format" / GetParam();
     std::string fileContent = readFile(filePath);

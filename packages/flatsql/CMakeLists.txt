@@ -279,6 +279,7 @@ if(NOT WASM)
     ${CMAKE_SOURCE_DIR}/test/schema_graph_test.cc
     ${CMAKE_SOURCE_DIR}/test/script_test.cc
     ${CMAKE_SOURCE_DIR}/test/suffix_trie_test.cc
+    ${CMAKE_SOURCE_DIR}/test/topk_test.cc
   )
   add_executable(tester test/tester.cc ${TEST_SRC})
   target_link_libraries(tester flatsql flatsql_testutils pugixml gtest gmock gflags Threads::Threads)

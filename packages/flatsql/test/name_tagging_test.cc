@@ -37,6 +37,8 @@ struct NameTaggingTest {
         : title(title), script(script), expected(expected) {}
 };
 
+void operator<<(std::ostream& out, const NameTaggingTest& p) { out << p.title; }
+
 struct NameTaggingTestPrinter {
     std::string operator()(const ::testing::TestParamInfo<NameTaggingTest>& info) const {
         return std::string{info.param.title};

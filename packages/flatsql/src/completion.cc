@@ -1,5 +1,6 @@
 #include "flatsql/analyzer/completion.h"
 
+#include "flatsql/context.h"
 #include "flatsql/parser/grammar/keywords.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/script.h"
@@ -7,28 +8,112 @@
 
 namespace flatsql {
 
+namespace {
+
+static constexpr std::array<std::pair<proto::NameTag, double>, 8> NAME_SCORE_TABLE_REF{{
+    {proto::NameTag::NONE, 0.0},
+    {proto::NameTag::KEYWORD, 10.0},
+    {proto::NameTag::SCHEMA_NAME, 20.0},
+    {proto::NameTag::DATABASE_NAME, 20.0},
+    {proto::NameTag::TABLE_NAME, 20.0},
+    {proto::NameTag::TABLE_ALIAS, 0.0},
+    {proto::NameTag::COLUMN_NAME, 0.0},
+}};
+
+static constexpr std::array<std::pair<proto::NameTag, double>, 8> NAME_SCORE_COLUMN_REF{{
+    {proto::NameTag::NONE, 0.0},
+    {proto::NameTag::KEYWORD, 10.0},
+    {proto::NameTag::SCHEMA_NAME, 0.0},
+    {proto::NameTag::DATABASE_NAME, 0.0},
+    {proto::NameTag::TABLE_NAME, 0.0},
+    {proto::NameTag::TABLE_ALIAS, 20.0},
+    {proto::NameTag::COLUMN_NAME, 0.0},
+}};
+
+static constexpr std::array<std::pair<proto::NameTag, double>, 8> NAME_SCORE_EXPRESSION{{
+    {proto::NameTag::NONE, 0.0},
+    {proto::NameTag::KEYWORD, 10.0},
+    {proto::NameTag::SCHEMA_NAME, 0.0},
+    {proto::NameTag::DATABASE_NAME, 0.0},
+    {proto::NameTag::TABLE_NAME, 0.0},
+    {proto::NameTag::TABLE_ALIAS, 20.0},
+    {proto::NameTag::COLUMN_NAME, 30.0},
+}};
+
+static constexpr std::array<std::pair<proto::NameTag, double>, 8> NAME_SCORE_FROM_CLAUSE{{
+    {proto::NameTag::NONE, 0.0},
+    {proto::NameTag::KEYWORD, 10.0},
+    {proto::NameTag::SCHEMA_NAME, 20.0},
+    {proto::NameTag::DATABASE_NAME, 20.0},
+    {proto::NameTag::TABLE_NAME, 20.0},
+    {proto::NameTag::TABLE_ALIAS, 0.0},
+    {proto::NameTag::COLUMN_NAME, 0.0},
+}};
+
+}  // namespace
+
+void Completion::FindCandidates(const CompletionIndex& index, std::string_view cursor_text,
+                                const std::array<std::pair<proto::NameTag, ScoreValueType>, 8>& scoring_table) {
+    std::span<const CompletionIndex::Entry> entries = index.FindEntriesWithPrefix(cursor_text);
+
+    for (auto& entry : entries) {
+        auto name_id = QualifiedID(index.GetScript()->context_id, entry.value_id);
+        auto candidate_text =
+            index.GetScript()->parsed_script->scanned_script->name_dictionary[name_id.GetIndex()].text;
+
+        // Determine score
+        ScoreValueType score = 0;
+        for (auto [tag, tag_score] : scoring_table) {
+            score = std::max(score, entry.tags.contains(tag) ? tag_score : 0);
+        }
+        // Do we know the candidate already?
+        if (auto iter = candidates.find(name_id); iter != candidates.end()) {
+            // Update the score if it is higher
+            iter->second.score = std::max(iter->second.score, score);
+            iter->second.tags |= entry.tags;
+        } else {
+            // Otherwise store as new candidate
+            candidates.insert({name_id, Candidate{
+                                            .tags = entry.tags,
+                                            .text = {candidate_text.data(), candidate_text.size()},
+                                            .score = score,
+                                        }});
+        }
+    }
+}
+
+std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(const ScriptCursor& cursor,
+                                                                              const CompletionIndex& main,
+                                                                              const CompletionIndex* external) {
+    auto completion = std::make_unique<Completion>();
+
+    // Is a table ref?
+    if (cursor.table_reference_id.has_value()) {
+        // XXX
+    }
+
+    // Is a column ref?
+    if (cursor.column_reference_id.has_value()) {
+        // XXX
+    }
+
+    // XXX
+
+    return {std::move(completion), proto::StatusCode::OK};
+}
+
 CompletionIndex::CompletionIndex(std::vector<Entry> entries, std::shared_ptr<AnalyzedScript> script)
     : entries(std::move(entries)), script(std::move(script)) {}
 
 /// Find all entries that share a prefix
-std::span<CompletionIndex::Entry> CompletionIndex::FindEntriesWithPrefix(CompletionIndex::StringView prefix) {
+std::span<const CompletionIndex::Entry> CompletionIndex::FindEntriesWithPrefix(
+    CompletionIndex::StringView prefix) const {
     auto begin = std::lower_bound(entries.begin(), entries.end(), prefix,
-                                  [](Entry& entry, StringView prefix) { return entry.suffix < prefix; });
-    auto end = std::upper_bound(begin, entries.end(), prefix, [](StringView prefix, Entry& entry) {
+                                  [](const Entry& entry, StringView prefix) { return entry.suffix < prefix; });
+    auto end = std::upper_bound(begin, entries.end(), prefix, [](StringView prefix, const Entry& entry) {
         return prefix < entry.suffix && !entry.suffix.starts_with(prefix);
     });
     return {begin, static_cast<size_t>(end - begin)};
-}
-
-/// Get completions at a script cursor
-proto::StatusCode CompletionIndex::CompleteAt(const ScriptCursor& cursor, CompletionState& state) {
-    // Find all matching entries
-    StringView prefix{cursor.text.data(), cursor.text.length()};
-    std::span<Entry> entries = FindEntriesWithPrefix(prefix);
-
-    // Now score these entries and store them in the state
-
-    return proto::StatusCode::OK;
 }
 
 const CompletionIndex& CompletionIndex::Keywords() {
