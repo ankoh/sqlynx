@@ -7,6 +7,7 @@
 #include "flatsql/script.h"
 #include "flatsql/utils/string_conversion.h"
 #include "flatsql/utils/suffix_trie.h"
+#include "flatsql/utils/topk.h"
 
 namespace flatsql {
 
@@ -52,8 +53,6 @@ struct Completion {
     };
     /// The candidate map
     ankerl::unordered_dense::map<QualifiedID, Candidate, QualifiedID::Hasher> candidates;
-    /// The max heap with the top N elements
-    /// XXX
 
     /// Find the candidates in a completion index
     void FindCandidates(const CompletionIndex& index, std::string_view cursor_text,
@@ -61,7 +60,7 @@ struct Completion {
     /// Find candidates in the AST
     void FindCandidates(const ScriptCursor& cursor);
     /// Select the top n elements
-    void SelectTopN(size_t n);
+    std::vector<TopKHeap<QualifiedID, ScoreValueType>::Entry> SelectTopN(size_t n);
 
     /// Pack the completion result
     flatbuffers::Offset<proto::Completion> Pack(flatbuffers::FlatBufferBuilder& builder);
