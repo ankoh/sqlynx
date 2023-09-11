@@ -15,11 +15,18 @@ struct NameTags {
     NameTags(ValueType value = 0) : value(value) {}
     /// Constructor
     NameTags(proto::NameTag value) : value(static_cast<ValueType>(value)) {}
+    /// Contains a name tag
+    bool contains(proto::NameTag tag) const { return (value & static_cast<ValueType>(tag)) != 0; }
     /// Get the value
     operator ValueType() const { return value; }
     /// Tag a name
     NameTags& operator|=(proto::NameTag tag) {
         value |= static_cast<ValueType>(tag);
+        return *this;
+    }
+    /// Tag a name
+    NameTags& operator|=(NameTags tags) {
+        value |= tags.value;
         return *this;
     }
     /// Tag a name

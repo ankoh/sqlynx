@@ -427,7 +427,8 @@ static bool endsCursorPath(proto::Node& n) {
 }
 
 /// Constructor
-ScriptCursor::ScriptCursor(const AnalyzedScript& analyzed, size_t text_offset) : text_offset(text_offset) {
+ScriptCursor::ScriptCursor(const AnalyzedScript& analyzed, size_t text_offset)
+    : script(analyzed), text_offset(text_offset) {
     // Did the parsed script change?
     auto& parsed = *analyzed.parsed_script;
     auto& scanned = *parsed.scanned_script;

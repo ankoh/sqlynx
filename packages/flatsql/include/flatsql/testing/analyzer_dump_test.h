@@ -42,4 +42,6 @@ struct AnalyzerDumpTest {
     static std::vector<const AnalyzerDumpTest*> GetTests(std::string_view filename);
 };
 
+extern void operator<<(std::ostream& out, const AnalyzerDumpTest& p);
+
 }  // namespace flatsql::testing

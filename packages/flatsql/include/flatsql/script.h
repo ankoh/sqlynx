@@ -354,6 +354,8 @@ class AnalyzedScript {
 };
 
 struct ScriptCursor {
+    /// The analyzed script
+    const AnalyzedScript& script;
     /// The text offset
     size_t text_offset = 0;
     /// The text offset

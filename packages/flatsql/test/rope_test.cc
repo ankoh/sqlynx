@@ -691,6 +691,10 @@ struct RopeFuzzerTestPrinter {
     }
 };
 
+void operator<<(std::ostream& out, const RopeFuzzerTest& p) {
+    out << p.page_size << "_" << p.interaction_count << "_" << p.max_bytes << "_" << p.force_bulk << "_" << p.seed;
+}
+
 std::vector<RopeFuzzerTest> generateTestSeries(size_t page_size, size_t interaction_count, size_t max_bytes,
                                                size_t test_count, bool force_bulk = false) {
     std::vector<RopeFuzzerTest> tests;
