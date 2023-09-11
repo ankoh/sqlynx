@@ -33,10 +33,18 @@ template <typename ValueType, typename ScoreType> struct TopKHeap {
             size_t li = 2 * i + 1;
             size_t ri = 2 * i + 2;
             size_t best = i;
-            // if (li < entries.size() && entries[li].score <) }
-            break;
+            if (li < entries.size() && entries[li].score < entries[best].score) {
+                best = li;
+            }
+            if (ri < entries.size() && entries[ri].score < entries[best].score) {
+                best = ri;
+            }
+            if (best == i) {
+                break;
+            }
+            std::swap(entries[i], entries[best]);
+            i = best;
         }
-        // XXX
     }
     /// Insert an entry
     void Insert(ValueType value, ScoreType score) {
