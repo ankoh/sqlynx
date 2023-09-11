@@ -35,4 +35,6 @@ struct ParserDumpTest {
     static std::vector<const ParserDumpTest*> GetTests(std::string_view filename);
 };
 
+extern void operator<<(std::ostream& out, const ParserDumpTest& p);
+
 }  // namespace flatsql::testing

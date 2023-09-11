@@ -1,8 +1,8 @@
 namespace flatsql.proto;
 
 table CompletionCandidates {
-    // The context id
-    context_id: uint32;
+    // The name id
+    name_id: uint64;
     /// The tags
     tags: uint64;
     /// The completion

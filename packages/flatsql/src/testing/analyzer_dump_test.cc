@@ -78,6 +78,8 @@ static void writeTables(pugi::xml_node root, const AnalyzedScript& target, const
 
 namespace testing {
 
+void operator<<(std::ostream& out, const AnalyzerDumpTest& p) { out << p.name; }
+
 void AnalyzerDumpTest::EncodeScript(pugi::xml_node root, const AnalyzedScript& main, const AnalyzedScript* external) {
     // Unpack modules
     auto* stmt_type_tt = proto::StatementTypeTypeTable();

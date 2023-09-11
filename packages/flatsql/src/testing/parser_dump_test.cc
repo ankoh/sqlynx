@@ -15,6 +15,8 @@
 
 namespace flatsql::testing {
 
+void operator<<(std::ostream& out, const ParserDumpTest& p) { out << p.name; }
+
 /// Encode yaml
 void ParserDumpTest::EncodeScript(pugi::xml_node root, const ScannedScript& scanned, const ParsedScript& parsed,
                                   std::string_view text) {
