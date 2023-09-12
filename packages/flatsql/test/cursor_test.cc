@@ -63,7 +63,7 @@ std::string print_name(const Script& script, const AnalyzedScript::QualifiedColu
 
 void test(const Script& script, size_t text_offset, ExpectedScriptCursor expected) {
     SCOPED_TRACE(std::string{"CURSOR "} + std::to_string(text_offset));
-    ScriptCursor cursor{*script.analyzed_script, text_offset};
+    ScriptCursor cursor{script.analyzed_script, text_offset};
     // Check scanner token
     if (expected.scanner_token_text.has_value()) {
         ASSERT_TRUE(cursor.scanner_token_id.has_value());

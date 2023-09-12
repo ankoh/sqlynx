@@ -355,7 +355,7 @@ class AnalyzedScript {
 
 struct ScriptCursor {
     /// The analyzed script
-    const AnalyzedScript& script;
+    std::shared_ptr<AnalyzedScript> script;
     /// The text offset
     size_t text_offset = 0;
     /// The text offset
@@ -376,7 +376,7 @@ struct ScriptCursor {
     std::optional<size_t> query_edge_id;
 
     /// Move the cursor to a script at a position
-    ScriptCursor(const AnalyzedScript& analyzed, size_t text_offset);
+    ScriptCursor(std::shared_ptr<AnalyzedScript> analyzed, size_t text_offset);
     /// Pack the cursor info
     flatbuffers::Offset<proto::ScriptCursorInfo> Pack(flatbuffers::FlatBufferBuilder& builder);
 };

@@ -395,7 +395,7 @@ proto::StatusCode Script::Reindex() {
 }
 
 /// Move the cursor to a offset
-const ScriptCursor& Script::MoveCursor(size_t text_offset) { return cursor.emplace(*analyzed_script, text_offset); }
+const ScriptCursor& Script::MoveCursor(size_t text_offset) { return cursor.emplace(analyzed_script, text_offset); }
 /// Complete at the cursor
 std::pair<std::unique_ptr<proto::CompletionT>, proto::StatusCode> Script::CompleteAtCursor() {
     if (!cursor.has_value()) {
@@ -427,10 +427,10 @@ static bool endsCursorPath(proto::Node& n) {
 }
 
 /// Constructor
-ScriptCursor::ScriptCursor(const AnalyzedScript& analyzed, size_t text_offset)
-    : script(analyzed), text_offset(text_offset) {
+ScriptCursor::ScriptCursor(std::shared_ptr<AnalyzedScript> analyzed, size_t text_offset)
+    : script(std::move(analyzed)), text_offset(text_offset) {
     // Did the parsed script change?
-    auto& parsed = *analyzed.parsed_script;
+    auto& parsed = *script->parsed_script;
     auto& scanned = *parsed.scanned_script;
 
     // Read scanner token
@@ -463,7 +463,7 @@ ScriptCursor::ScriptCursor(const AnalyzedScript& analyzed, size_t text_offset)
 
         // Part of a table node?
         table_id = std::nullopt;
-        for (auto& table : analyzed.tables) {
+        for (auto& table : script->tables) {
             if (table.ast_node_id.has_value() && cursor_path_nodes.contains(*table.ast_node_id)) {
                 table_id = table.ast_node_id;
                 break;
@@ -472,8 +472,8 @@ ScriptCursor::ScriptCursor(const AnalyzedScript& analyzed, size_t text_offset)
 
         // Part of a table reference node?
         table_reference_id = std::nullopt;
-        for (size_t i = 0; i < analyzed.table_references.size(); ++i) {
-            auto& table_ref = analyzed.table_references[i];
+        for (size_t i = 0; i < script->table_references.size(); ++i) {
+            auto& table_ref = script->table_references[i];
             if (table_ref.ast_node_id.has_value() && cursor_path_nodes.contains(*table_ref.ast_node_id)) {
                 table_reference_id = i;
                 break;
@@ -482,8 +482,8 @@ ScriptCursor::ScriptCursor(const AnalyzedScript& analyzed, size_t text_offset)
 
         // Part of a column reference node?
         column_reference_id = std::nullopt;
-        for (size_t i = 0; i < analyzed.column_references.size(); ++i) {
-            auto& column_ref = analyzed.column_references[i];
+        for (size_t i = 0; i < script->column_references.size(); ++i) {
+            auto& column_ref = script->column_references[i];
             if (column_ref.ast_node_id.has_value() && cursor_path_nodes.contains(*column_ref.ast_node_id)) {
                 column_reference_id = i;
                 break;
@@ -492,8 +492,8 @@ ScriptCursor::ScriptCursor(const AnalyzedScript& analyzed, size_t text_offset)
 
         // Part of a query edge?
         query_edge_id = std::nullopt;
-        for (size_t ei = 0; ei < analyzed.graph_edges.size(); ++ei) {
-            auto& edge = analyzed.graph_edges[ei];
+        for (size_t ei = 0; ei < script->graph_edges.size(); ++ei) {
+            auto& edge = script->graph_edges[ei];
             auto nodes_begin = edge.nodes_begin;
             if (edge.ast_node_id.has_value() && cursor_path_nodes.contains(*edge.ast_node_id)) {
                 query_edge_id = ei;
