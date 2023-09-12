@@ -403,20 +403,17 @@ std::pair<const ScriptCursor*, proto::StatusCode> Script::MoveCursor(size_t text
     return {cursor.get(), status};
 }
 /// Complete at the cursor
-std::pair<std::unique_ptr<proto::CompletionT>, proto::StatusCode> Script::CompleteAtCursor() {
+std::pair<std::unique_ptr<Completion>, proto::StatusCode> Script::CompleteAtCursor() {
+    // Fail if the user forgot to move the cursor
     if (cursor == nullptr) {
         return {nullptr, proto::StatusCode::COMPLETION_MISSES_CURSOR};
     }
+    // Fail if the scanner is not associated with a scanner token
     if (!cursor->scanner_token_id.has_value()) {
         return {nullptr, proto::StatusCode::COMPLETION_MISSES_SCANNER_TOKEN};
     }
-    auto& tokens = scanned_script->GetTokens();
-    auto& token = tokens[*cursor->scanner_token_id];
-    auto token_text = scanned_script->ReadTextAtLocation(token.location);
-
-    auto& keyword_index = CompletionIndex::Keywords();
-
-    return {nullptr, proto::StatusCode::OK};
+    // Compute the completion
+    return Completion::Compute(*cursor);
 }
 
 static bool endsCursorPath(proto::Node& n) {

@@ -24,6 +24,7 @@ class ParseContext;
 
 class Analyzer;
 class CompletionIndex;
+class Completion;
 
 using Key = proto::AttributeKey;
 using Location = proto::Location;
@@ -438,7 +439,7 @@ class Script {
     /// Move the cursor
     std::pair<const ScriptCursor*, proto::StatusCode> MoveCursor(size_t text_offset);
     /// Complete at the cursor
-    std::pair<std::unique_ptr<proto::CompletionT>, proto::StatusCode> CompleteAtCursor();
+    std::pair<std::unique_ptr<Completion>, proto::StatusCode> CompleteAtCursor();
     /// Get statisics
     std::unique_ptr<proto::ScriptStatisticsT> GetStatistics();
 };

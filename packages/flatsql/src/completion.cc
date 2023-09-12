@@ -10,7 +10,19 @@ namespace flatsql {
 
 namespace {
 
-static constexpr std::array<std::pair<proto::NameTag, Completion::ScoreValueType>, 8> NAME_SCORE_TABLE_REF{{
+using ScoringTable = std::array<std::pair<proto::NameTag, Completion::ScoreValueType>, 8>;
+
+static constexpr ScoringTable NAME_SCORE_DEFAULTS{{
+    {proto::NameTag::NONE, 0},
+    {proto::NameTag::KEYWORD, 10},
+    {proto::NameTag::SCHEMA_NAME, 10},
+    {proto::NameTag::DATABASE_NAME, 10},
+    {proto::NameTag::TABLE_NAME, 10},
+    {proto::NameTag::TABLE_ALIAS, 10},
+    {proto::NameTag::COLUMN_NAME, 10},
+}};
+
+static constexpr ScoringTable NAME_SCORE_TABLE_REF{{
     {proto::NameTag::NONE, 0},
     {proto::NameTag::KEYWORD, 10},
     {proto::NameTag::SCHEMA_NAME, 20},
@@ -20,41 +32,20 @@ static constexpr std::array<std::pair<proto::NameTag, Completion::ScoreValueType
     {proto::NameTag::COLUMN_NAME, 0},
 }};
 
-static constexpr std::array<std::pair<proto::NameTag, Completion::ScoreValueType>, 8> NAME_SCORE_COLUMN_REF{{
+static constexpr ScoringTable NAME_SCORE_COLUMN_REF{{
     {proto::NameTag::NONE, 0},
     {proto::NameTag::KEYWORD, 10},
     {proto::NameTag::SCHEMA_NAME, 0},
     {proto::NameTag::DATABASE_NAME, 0},
     {proto::NameTag::TABLE_NAME, 0},
     {proto::NameTag::TABLE_ALIAS, 20},
-    {proto::NameTag::COLUMN_NAME, 0},
-}};
-
-static constexpr std::array<std::pair<proto::NameTag, Completion::ScoreValueType>, 8> NAME_SCORE_EXPRESSION{{
-    {proto::NameTag::NONE, 0},
-    {proto::NameTag::KEYWORD, 10},
-    {proto::NameTag::SCHEMA_NAME, 0},
-    {proto::NameTag::DATABASE_NAME, 0},
-    {proto::NameTag::TABLE_NAME, 0},
-    {proto::NameTag::TABLE_ALIAS, 20},
-    {proto::NameTag::COLUMN_NAME, 30},
-}};
-
-static constexpr std::array<std::pair<proto::NameTag, Completion::ScoreValueType>, 8> NAME_SCORE_FROM_CLAUSE{{
-    {proto::NameTag::NONE, 0},
-    {proto::NameTag::KEYWORD, 10},
-    {proto::NameTag::SCHEMA_NAME, 20},
-    {proto::NameTag::DATABASE_NAME, 20},
-    {proto::NameTag::TABLE_NAME, 20},
-    {proto::NameTag::TABLE_ALIAS, 0},
     {proto::NameTag::COLUMN_NAME, 0},
 }};
 
 }  // namespace
 
-void Completion::FindCandidatesInIndex(const CompletionIndex& index, std::string_view cursor_text,
-                                       const std::array<std::pair<proto::NameTag, ScoreValueType>, 8>& scoring_table) {
-    std::span<const CompletionIndex::Entry> entries = index.FindEntriesWithPrefix(cursor_text);
+void Completion::FindCandidatesInIndex(CandidateMap& candidates, const CompletionIndex& index) {
+    std::span<const CompletionIndex::Entry> entries = index.FindEntriesWithPrefix(cursor.text);
 
     for (auto& entry : entries) {
         auto name_id = QualifiedID(index.GetScript()->context_id, entry.value_id);
@@ -82,58 +73,58 @@ void Completion::FindCandidatesInIndex(const CompletionIndex& index, std::string
     }
 }
 
-void Completion::FindCandidatesInIndexes(
-    const ScriptCursor& cursor, const std::array<std::pair<proto::NameTag, ScoreValueType>, 8>& scoring_table) {
+void Completion::FindCandidatesInIndexes(CandidateMap& candidates) {
     // Find candidates among keywords
     auto& keywords = CompletionIndex::Keywords();
-    FindCandidatesInIndex(keywords, cursor.text, scoring_table);
+    FindCandidatesInIndex(candidates, keywords);
     // Find candidates in name dictionary of main script
     if (auto& index = cursor.script.completion_index) {
-        FindCandidatesInIndex(*index, cursor.text, scoring_table);
+        FindCandidatesInIndex(candidates, *index);
     }
     // Find candidates in name dictionary of external script
     if (cursor.script.external_script && cursor.script.external_script->completion_index) {
         auto& index = cursor.script.external_script->completion_index;
-        FindCandidatesInIndex(*index, cursor.text, scoring_table);
+        FindCandidatesInIndex(candidates, *index);
     }
 }
 
-void Completion::FindCandidatesInAST(const ScriptCursor& cursor) {
+void Completion::FindCandidatesInAST(CandidateMap& candidates) {
     /// XXX Discover candidates around the cursor
 }
 
-std::vector<TopKHeap<QualifiedID, Completion::ScoreValueType>::Entry> Completion::SelectTopN(size_t n) {
-    TopKHeap<QualifiedID, ScoreValueType> top{n};
+void Completion::SelectTopN(CandidateMap& candidates) {
     for (auto& [key, value] : candidates) {
-        top.Insert(key, value.score);
+        result_heap.Insert(key, value.score);
     }
-    return top.Finish();
+}
+
+Completion::Completion(const ScriptCursor& cursor,
+                       const std::array<std::pair<proto::NameTag, ScoreValueType>, 8>& scoring_table, size_t k)
+    : cursor(cursor), scoring_table(scoring_table), result_heap(k) {}
+
+flatbuffers::Offset<proto::Completion> Completion::Pack(flatbuffers::FlatBufferBuilder& builder) {
+    proto::CompletionBuilder completion{builder};
+    // XXX
+    return completion.Finish();
 }
 
 std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(const ScriptCursor& cursor) {
-    auto completion = std::make_unique<Completion>();
-
-    // XXX should we attach the completion index to the analyzed script?
-    //     how to resolve the external completion index, given only the main script cursor?
-    // Options:
-    // A) Script cursor gets script ref
-    // B) Analyzed script gets completion index, semantically unsound?
-
-    // auto& main_script = cursor.script;
-    // auto& external_script = cursor.script->external_script;
-    // assert(!!main_script);
-
+    // Determine scoring table
+    auto* scoring_table = &NAME_SCORE_DEFAULTS;
     // Is a table ref?
     if (cursor.table_reference_id.has_value()) {
-        // XXX
+        scoring_table = &NAME_SCORE_TABLE_REF;
     }
-
     // Is a column ref?
     if (cursor.column_reference_id.has_value()) {
-        // XXX
+        scoring_table = &NAME_SCORE_COLUMN_REF;
     }
-
-    // XXX
+    // Create completion
+    auto completion = std::make_unique<Completion>(cursor, *scoring_table, 40);
+    CandidateMap candidates;
+    completion->FindCandidatesInIndexes(candidates);
+    completion->FindCandidatesInAST(candidates);
+    completion->SelectTopN(candidates);
 
     return {std::move(completion), proto::StatusCode::OK};
 }
