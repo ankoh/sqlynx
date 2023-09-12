@@ -82,6 +82,10 @@ void Completion::FindCandidates(const CompletionIndex& index, std::string_view c
     }
 }
 
+void Completion::FindCandidatesAroundCursor(const ScriptCursor& cursor) {
+    /// XXX Discover candidates around the cursor
+}
+
 std::vector<TopKHeap<QualifiedID, Completion::ScoreValueType>::Entry> Completion::SelectTopN(size_t n) {
     TopKHeap<QualifiedID, ScoreValueType> top{n};
     for (auto& [key, value] : candidates) {
@@ -90,10 +94,12 @@ std::vector<TopKHeap<QualifiedID, Completion::ScoreValueType>::Entry> Completion
     return top.Finish();
 }
 
-std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(const ScriptCursor& cursor,
-                                                                              const CompletionIndex& main,
-                                                                              const CompletionIndex* external) {
+std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(const ScriptCursor& cursor) {
     auto completion = std::make_unique<Completion>();
+
+    // auto& main_script = cursor.script;
+    // auto& external_script = cursor.script->external_script;
+    // assert(!!main_script);
 
     // Is a table ref?
     if (cursor.table_reference_id.has_value()) {
