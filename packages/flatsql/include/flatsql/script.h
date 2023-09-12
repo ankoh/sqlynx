@@ -353,9 +353,11 @@ class AnalyzedScript {
     flatbuffers::Offset<proto::AnalyzedScript> Pack(flatbuffers::FlatBufferBuilder& builder);
 };
 
+class Script;
+
 struct ScriptCursor {
-    /// The analyzed script
-    std::shared_ptr<AnalyzedScript> script;
+    /// The script
+    const Script& script;
     /// The text offset
     size_t text_offset = 0;
     /// The text offset
@@ -376,9 +378,12 @@ struct ScriptCursor {
     std::optional<size_t> query_edge_id;
 
     /// Move the cursor to a script at a position
-    ScriptCursor(std::shared_ptr<AnalyzedScript> analyzed, size_t text_offset);
+    ScriptCursor(const Script& script, size_t text_offset);
     /// Pack the cursor info
-    flatbuffers::Offset<proto::ScriptCursorInfo> Pack(flatbuffers::FlatBufferBuilder& builder);
+    flatbuffers::Offset<proto::ScriptCursorInfo> Pack(flatbuffers::FlatBufferBuilder& builder) const;
+
+    /// Create a script cursor
+    static std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> Create(const Script& script, size_t text_offset);
 };
 
 class Script {
@@ -400,7 +405,7 @@ class Script {
     /// The completion index
     std::unique_ptr<CompletionIndex> completion_index;
     /// The last cursor
-    std::optional<ScriptCursor> cursor;
+    std::unique_ptr<ScriptCursor> cursor;
 
     /// The memory statistics
     proto::ScriptProcessingTimings timing_statistics;
@@ -431,7 +436,7 @@ class Script {
     /// Update the completion index
     proto::StatusCode Reindex();
     /// Move the cursor
-    const ScriptCursor& MoveCursor(size_t text_offset);
+    std::pair<const ScriptCursor*, proto::StatusCode> MoveCursor(size_t text_offset);
     /// Complete at the cursor
     std::pair<std::unique_ptr<proto::CompletionT>, proto::StatusCode> CompleteAtCursor();
     /// Get statisics

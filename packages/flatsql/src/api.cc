@@ -192,11 +192,14 @@ extern "C" uint32_t flatsql_script_reindex(Script* script) { return static_cast<
 
 /// Move the cursor to a script at a position
 extern "C" FFIResult* flatsql_script_read_cursor(flatsql::Script* script, size_t text_offset) {
-    ScriptCursor cursor{script->analyzed_script, text_offset};
+    auto [cursor, status] = script->MoveCursor(text_offset);
+    if (status != proto::StatusCode::OK) {
+        return packError(status);
+    }
 
     // Pack the cursor info
     flatbuffers::FlatBufferBuilder fb;
-    fb.Finish(cursor.Pack(fb));
+    fb.Finish(cursor->Pack(fb));
 
     // Store the buffer
     auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));

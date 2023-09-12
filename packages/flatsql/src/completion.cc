@@ -97,6 +97,12 @@ std::vector<TopKHeap<QualifiedID, Completion::ScoreValueType>::Entry> Completion
 std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(const ScriptCursor& cursor) {
     auto completion = std::make_unique<Completion>();
 
+    // XXX should we attach the completion index to the analyzed script?
+    //     how to resolve the external completion index, given only the main script cursor?
+    // Options:
+    // A) Script cursor gets script ref
+    // B) Analyzed script gets completion index, semantically unsound?
+
     // auto& main_script = cursor.script;
     // auto& external_script = cursor.script->external_script;
     // assert(!!main_script);
