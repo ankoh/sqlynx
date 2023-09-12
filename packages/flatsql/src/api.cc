@@ -192,7 +192,7 @@ extern "C" uint32_t flatsql_script_reindex(Script* script) { return static_cast<
 
 /// Move the cursor to a script at a position
 extern "C" FFIResult* flatsql_script_read_cursor(flatsql::Script* script, size_t text_offset) {
-    ScriptCursor cursor{*script->analyzed_script, text_offset};
+    ScriptCursor cursor{script->analyzed_script, text_offset};
 
     // Pack the cursor info
     flatbuffers::FlatBufferBuilder fb;
