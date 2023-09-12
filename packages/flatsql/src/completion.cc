@@ -4,6 +4,7 @@
 
 #include "flatsql/context.h"
 #include "flatsql/parser/grammar/keywords.h"
+#include "flatsql/parser/names.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/script.h"
 #include "flatsql/utils/suffix_trie.h"
@@ -107,15 +108,39 @@ Completion::Completion(const ScriptCursor& cursor,
 flatbuffers::Offset<proto::Completion> Completion::Pack(flatbuffers::FlatBufferBuilder& builder) {
     auto& entries = result_heap.Finish();
 
+    // Collect completion index
+    std::unordered_map<size_t, std::reference_wrapper<const CompletionIndex>> context_index_map;
+    context_index_map.insert({0, CompletionIndex::Keywords()});
+    context_index_map.insert({cursor.script.context_id, *cursor.script.completion_index});
+    if (auto external = cursor.script.external_script) {
+        context_index_map.insert({external->context_id, *cursor.script.external_script->completion_index});
+    }
+
     // Pack candidates
     std::vector<flatbuffers::Offset<proto::CompletionCandidate>> candidates;
     candidates.reserve(entries.size());
     for (auto& entry : entries) {
+        NameTags tags;
+        std::optional<flatbuffers::Offset<flatbuffers::String>> text;
+
+        // Resolve entry in name dictionary
+        auto context_id = entry.value.GetContext();
+        auto index_id = entry.value.GetIndex();
+        if (auto iter = context_index_map.find(entry.value.GetContext()); iter != context_index_map.end()) {
+            auto& index = iter->second.get();
+            auto& scanned = index.GetScript()->parsed_script->scanned_script;
+            auto& name = scanned->name_dictionary[index_id];
+            text = builder.CreateString(name.text);
+            tags = name.tags;
+        }
+
+        // Build completion candidate
         proto::CompletionCandidateBuilder candidateBuilder{builder};
-        // XXX
-        // candidateBuilder.add_name_id();
-        // candidateBuilder.add_tags();
-        // candidateBuilder.add_text();
+        candidateBuilder.add_name_id(entry.value.Pack());
+        candidateBuilder.add_tags(tags.value);
+        if (text.has_value()) {
+            candidateBuilder.add_text(text.value());
+        }
         candidateBuilder.add_score(entry.score);
         candidates.push_back(candidateBuilder.Finish());
     }
