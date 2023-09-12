@@ -1,5 +1,7 @@
 #include "flatsql/analyzer/completion.h"
 
+#include <flatbuffers/buffer.h>
+
 #include "flatsql/context.h"
 #include "flatsql/parser/grammar/keywords.h"
 #include "flatsql/proto/proto_generated.h"
@@ -103,9 +105,28 @@ Completion::Completion(const ScriptCursor& cursor,
     : cursor(cursor), scoring_table(scoring_table), result_heap(k) {}
 
 flatbuffers::Offset<proto::Completion> Completion::Pack(flatbuffers::FlatBufferBuilder& builder) {
-    proto::CompletionBuilder completion{builder};
-    // XXX
-    return completion.Finish();
+    auto& entries = result_heap.Finish();
+
+    // Pack candidates
+    std::vector<flatbuffers::Offset<proto::CompletionCandidate>> candidates;
+    candidates.reserve(entries.size());
+    for (auto& entry : entries) {
+        proto::CompletionCandidateBuilder candidateBuilder{builder};
+        // XXX
+        // candidateBuilder.add_name_id();
+        // candidateBuilder.add_tags();
+        // candidateBuilder.add_text();
+        candidateBuilder.add_score(entry.score);
+        candidates.push_back(candidateBuilder.Finish());
+    }
+    auto candidatesOfs = builder.CreateVector(candidates);
+
+    // Pack completion table
+    proto::CompletionBuilder completionBuilder{builder};
+    completionBuilder.add_text_offset(cursor.text_offset);
+    completionBuilder.add_scanner_token_id(cursor.scanner_token_id.value_or(0));
+    completionBuilder.add_candidates(candidatesOfs);
+    return completionBuilder.Finish();
 }
 
 std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(const ScriptCursor& cursor) {
