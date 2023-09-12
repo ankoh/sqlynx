@@ -66,7 +66,7 @@ FlatSQL maintains B+-tree ropes, dictionary-encodes and tags SQL object names in
 
 ---
 
-### What does "fast" mean in numbers
+### What does "fast" mean in numbers?
 
 Here are timings for TPC-DS Q1 on my laptop. All steps run single-threaded on a M1Max.
 FlatSQL spends **5us** with scanning, **8us** with parsing, **12us** with analyzing and **5us** with building the completion index.
