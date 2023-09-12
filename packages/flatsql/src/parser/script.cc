@@ -395,10 +395,16 @@ proto::StatusCode Script::Reindex() {
 }
 
 /// Move the cursor to a offset
-const ScriptCursor& Script::MoveCursor(size_t text_offset) { return cursor.emplace(analyzed_script, text_offset); }
+std::pair<const ScriptCursor*, proto::StatusCode> Script::MoveCursor(size_t text_offset) {
+    auto [maybe_cursor, status] = ScriptCursor::Create(*this, text_offset);
+    if (status == proto::StatusCode::OK) {
+        cursor = std::move(maybe_cursor);
+    }
+    return {cursor.get(), status};
+}
 /// Complete at the cursor
 std::pair<std::unique_ptr<proto::CompletionT>, proto::StatusCode> Script::CompleteAtCursor() {
-    if (!cursor.has_value()) {
+    if (cursor == nullptr) {
         return {nullptr, proto::StatusCode::COMPLETION_MISSES_CURSOR};
     }
     if (!cursor->scanner_token_id.has_value()) {
@@ -426,30 +432,35 @@ static bool endsCursorPath(proto::Node& n) {
     return false;
 }
 
+ScriptCursor::ScriptCursor(const Script& script, size_t text_offset) : script(script), text_offset(text_offset) {}
+
 /// Constructor
-ScriptCursor::ScriptCursor(std::shared_ptr<AnalyzedScript> analyzed, size_t text_offset)
-    : script(std::move(analyzed)), text_offset(text_offset) {
+std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> ScriptCursor::Create(const Script& script,
+                                                                                 size_t text_offset) {
+    auto cursor = std::make_unique<ScriptCursor>(script, text_offset);
+
     // Did the parsed script change?
-    auto& parsed = *script->parsed_script;
+    auto& analyzed = script.analyzed_script;
+    auto& parsed = *analyzed->parsed_script;
     auto& scanned = *parsed.scanned_script;
 
     // Read scanner token
-    scanner_token_id = scanned.FindToken(text_offset);
+    cursor->scanner_token_id = scanned.FindToken(text_offset);
     // Read AST node
     auto maybe_ast_node = parsed.FindNodeAtOffset(text_offset);
     if (!maybe_ast_node.has_value()) {
-        statement_id = std::nullopt;
-        ast_node_id = std::nullopt;
+        cursor->statement_id = std::nullopt;
+        cursor->ast_node_id = std::nullopt;
     } else {
-        statement_id = std::get<0>(*maybe_ast_node);
-        ast_node_id = std::get<1>(*maybe_ast_node);
+        cursor->statement_id = std::get<0>(*maybe_ast_node);
+        cursor->ast_node_id = std::get<1>(*maybe_ast_node);
     }
 
     // Has ast node?
-    if (ast_node_id.has_value()) {
+    if (cursor->ast_node_id.has_value()) {
         // Collect nodes to root
         std::unordered_set<uint32_t> cursor_path_nodes;
-        for (auto iter = *ast_node_id;;) {
+        for (auto iter = *cursor->ast_node_id;;) {
             auto& node = parsed.nodes[iter];
             if (endsCursorPath(node)) {
                 break;
@@ -462,49 +473,50 @@ ScriptCursor::ScriptCursor(std::shared_ptr<AnalyzedScript> analyzed, size_t text
         }
 
         // Part of a table node?
-        table_id = std::nullopt;
-        for (auto& table : script->tables) {
+        cursor->table_id = std::nullopt;
+        for (auto& table : analyzed->tables) {
             if (table.ast_node_id.has_value() && cursor_path_nodes.contains(*table.ast_node_id)) {
-                table_id = table.ast_node_id;
+                cursor->table_id = table.ast_node_id;
                 break;
             }
         }
 
         // Part of a table reference node?
-        table_reference_id = std::nullopt;
-        for (size_t i = 0; i < script->table_references.size(); ++i) {
-            auto& table_ref = script->table_references[i];
+        cursor->table_reference_id = std::nullopt;
+        for (size_t i = 0; i < analyzed->table_references.size(); ++i) {
+            auto& table_ref = analyzed->table_references[i];
             if (table_ref.ast_node_id.has_value() && cursor_path_nodes.contains(*table_ref.ast_node_id)) {
-                table_reference_id = i;
+                cursor->table_reference_id = i;
                 break;
             }
         }
 
         // Part of a column reference node?
-        column_reference_id = std::nullopt;
-        for (size_t i = 0; i < script->column_references.size(); ++i) {
-            auto& column_ref = script->column_references[i];
+        cursor->column_reference_id = std::nullopt;
+        for (size_t i = 0; i < analyzed->column_references.size(); ++i) {
+            auto& column_ref = analyzed->column_references[i];
             if (column_ref.ast_node_id.has_value() && cursor_path_nodes.contains(*column_ref.ast_node_id)) {
-                column_reference_id = i;
+                cursor->column_reference_id = i;
                 break;
             }
         }
 
         // Part of a query edge?
-        query_edge_id = std::nullopt;
-        for (size_t ei = 0; ei < script->graph_edges.size(); ++ei) {
-            auto& edge = script->graph_edges[ei];
+        cursor->query_edge_id = std::nullopt;
+        for (size_t ei = 0; ei < analyzed->graph_edges.size(); ++ei) {
+            auto& edge = analyzed->graph_edges[ei];
             auto nodes_begin = edge.nodes_begin;
             if (edge.ast_node_id.has_value() && cursor_path_nodes.contains(*edge.ast_node_id)) {
-                query_edge_id = ei;
+                cursor->query_edge_id = ei;
                 break;
             }
         }
     }
+    return {std::move(cursor), proto::StatusCode::OK};
 }
 
 /// Pack the cursor info
-flatbuffers::Offset<proto::ScriptCursorInfo> ScriptCursor::Pack(flatbuffers::FlatBufferBuilder& builder) {
+flatbuffers::Offset<proto::ScriptCursorInfo> ScriptCursor::Pack(flatbuffers::FlatBufferBuilder& builder) const {
     auto out = std::make_unique<proto::ScriptCursorInfoT>();
     out->text_offset = text_offset;
     out->scanner_token_id = scanner_token_id.value_or(std::numeric_limits<uint32_t>::max());
