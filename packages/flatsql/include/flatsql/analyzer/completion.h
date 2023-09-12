@@ -51,19 +51,23 @@ struct Completion {
         /// The score
         ScoreValueType score;
     };
+
+   protected:
     /// The candidate map
     ankerl::unordered_dense::map<QualifiedID, Candidate, QualifiedID::Hasher> candidates;
 
     /// Find the candidates in a completion index
-    void FindCandidates(const CompletionIndex& index, std::string_view cursor_text,
-                        const std::array<std::pair<proto::NameTag, ScoreValueType>, 8>& scoring_table);
+    void FindCandidatesInIndex(const CompletionIndex& index, std::string_view cursor_text,
+                               const std::array<std::pair<proto::NameTag, ScoreValueType>, 8>& scoring_table);
+    /// Find the candidates in completion indexes
+    void FindCandidatesInIndexes(const ScriptCursor& cursor,
+                                 const std::array<std::pair<proto::NameTag, ScoreValueType>, 8>& scoring_table);
     /// Find candidates in the AST around the script cursor
-    void FindCandidatesAroundCursor(const ScriptCursor& cursor);
+    void FindCandidatesInAST(const ScriptCursor& cursor);
+
+   public:
     /// Select the top n elements
     std::vector<TopKHeap<QualifiedID, ScoreValueType>::Entry> SelectTopN(size_t n);
-
-    /// Pack the completion result
-    flatbuffers::Offset<proto::Completion> Pack(flatbuffers::FlatBufferBuilder& builder);
 
     // Compute completion at a cursor
     static std::pair<std::unique_ptr<Completion>, proto::StatusCode> Compute(const ScriptCursor& cursor);

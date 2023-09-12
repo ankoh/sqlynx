@@ -52,8 +52,8 @@ static constexpr std::array<std::pair<proto::NameTag, Completion::ScoreValueType
 
 }  // namespace
 
-void Completion::FindCandidates(const CompletionIndex& index, std::string_view cursor_text,
-                                const std::array<std::pair<proto::NameTag, ScoreValueType>, 8>& scoring_table) {
+void Completion::FindCandidatesInIndex(const CompletionIndex& index, std::string_view cursor_text,
+                                       const std::array<std::pair<proto::NameTag, ScoreValueType>, 8>& scoring_table) {
     std::span<const CompletionIndex::Entry> entries = index.FindEntriesWithPrefix(cursor_text);
 
     for (auto& entry : entries) {
@@ -82,7 +82,23 @@ void Completion::FindCandidates(const CompletionIndex& index, std::string_view c
     }
 }
 
-void Completion::FindCandidatesAroundCursor(const ScriptCursor& cursor) {
+void Completion::FindCandidatesInIndexes(
+    const ScriptCursor& cursor, const std::array<std::pair<proto::NameTag, ScoreValueType>, 8>& scoring_table) {
+    // Find candidates among keywords
+    auto& keywords = CompletionIndex::Keywords();
+    FindCandidatesInIndex(keywords, cursor.text, scoring_table);
+    // Find candidates in name dictionary of main script
+    if (auto& index = cursor.script.completion_index) {
+        FindCandidatesInIndex(*index, cursor.text, scoring_table);
+    }
+    // Find candidates in name dictionary of external script
+    if (cursor.script.external_script && cursor.script.external_script->completion_index) {
+        auto& index = cursor.script.external_script->completion_index;
+        FindCandidatesInIndex(*index, cursor.text, scoring_table);
+    }
+}
+
+void Completion::FindCandidatesInAST(const ScriptCursor& cursor) {
     /// XXX Discover candidates around the cursor
 }
 
