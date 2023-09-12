@@ -1,6 +1,6 @@
 namespace flatsql.proto;
 
-table CompletionCandidates {
+table CompletionCandidate {
     // The name id
     name_id: uint64;
     /// The tags
@@ -8,7 +8,7 @@ table CompletionCandidates {
     /// The completion
     text: string;
     /// The score
-    score: double;
+    score: uint32;
 }
 
 table Completion {
@@ -17,5 +17,5 @@ table Completion {
     /// The token that gets completed
     scanner_token_id: uint32;
     /// The completion candidates
-    candidates: [CompletionCandidates];
+    candidates: [CompletionCandidate];
 }
