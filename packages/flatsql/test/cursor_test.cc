@@ -61,48 +61,49 @@ std::string print_name(const Script& script, const AnalyzedScript::QualifiedColu
     return out.str();
 }
 
-void test(const Script& script, size_t text_offset, ExpectedScriptCursor expected) {
+void test(Script& script, size_t text_offset, ExpectedScriptCursor expected) {
     SCOPED_TRACE(std::string{"CURSOR "} + std::to_string(text_offset));
-    ScriptCursor cursor{script.analyzed_script, text_offset};
+    auto [cursor, status] = script.MoveCursor(text_offset);
+    ASSERT_EQ(status, proto::StatusCode::OK);
     // Check scanner token
     if (expected.scanner_token_text.has_value()) {
-        ASSERT_TRUE(cursor.scanner_token_id.has_value());
-        auto token = script.scanned_script->GetTokens()[*cursor.scanner_token_id];
+        ASSERT_TRUE(cursor->scanner_token_id.has_value());
+        auto token = script.scanned_script->GetTokens()[*cursor->scanner_token_id];
         auto token_text = script.scanned_script->ReadTextAtLocation(token.location);
         ASSERT_EQ(token_text, *expected.scanner_token_text);
     } else {
-        ASSERT_FALSE(cursor.scanner_token_id.has_value());
+        ASSERT_FALSE(cursor->scanner_token_id.has_value());
     }
     // Check statement id
-    ASSERT_EQ(cursor.statement_id, expected.statement_id);
+    ASSERT_EQ(cursor->statement_id, expected.statement_id);
     // Check AST node type
-    auto& ast_node = script.analyzed_script->parsed_script->nodes[*cursor.ast_node_id];
+    auto& ast_node = script.analyzed_script->parsed_script->nodes[*cursor->ast_node_id];
     ASSERT_EQ(ast_node.attribute_key(), expected.ast_attribute_key);
     ASSERT_EQ(ast_node.node_type(), expected.ast_node_type);
     // Check table reference
     if (expected.table_ref_name.has_value()) {
-        ASSERT_TRUE(cursor.table_reference_id.has_value());
-        ASSERT_LT(*cursor.table_reference_id, script.analyzed_script->table_references.size());
-        auto& table_ref = script.analyzed_script->table_references[*cursor.table_reference_id];
+        ASSERT_TRUE(cursor->table_reference_id.has_value());
+        ASSERT_LT(*cursor->table_reference_id, script.analyzed_script->table_references.size());
+        auto& table_ref = script.analyzed_script->table_references[*cursor->table_reference_id];
         auto table_name = print_name(script, table_ref.table_name);
         ASSERT_EQ(table_name, expected.table_ref_name);
     } else {
-        ASSERT_FALSE(cursor.table_reference_id.has_value());
+        ASSERT_FALSE(cursor->table_reference_id.has_value());
     }
     // Check column reference
     if (expected.column_ref_name.has_value()) {
-        ASSERT_TRUE(cursor.column_reference_id.has_value());
-        ASSERT_LT(*cursor.column_reference_id, script.analyzed_script->column_references.size());
-        auto& column_ref = script.analyzed_script->column_references[*cursor.column_reference_id];
+        ASSERT_TRUE(cursor->column_reference_id.has_value());
+        ASSERT_LT(*cursor->column_reference_id, script.analyzed_script->column_references.size());
+        auto& column_ref = script.analyzed_script->column_references[*cursor->column_reference_id];
         auto column_name = print_name(script, column_ref.column_name);
         ASSERT_EQ(column_name, expected.column_ref_name);
     } else {
-        ASSERT_FALSE(cursor.column_reference_id.has_value());
+        ASSERT_FALSE(cursor->column_reference_id.has_value());
     }
     // Check graph edge
     if (!expected.graph_from.empty() || !expected.graph_to.empty()) {
-        ASSERT_TRUE(cursor.query_edge_id.has_value());
-        auto& edge = script.analyzed_script->graph_edges[*cursor.query_edge_id];
+        ASSERT_TRUE(cursor->query_edge_id.has_value());
+        auto& edge = script.analyzed_script->graph_edges[*cursor->query_edge_id];
         std::vector<std::string> from;
         std::vector<std::string> to;
         for (size_t i = 0; i < edge.node_count_left; ++i) {
@@ -118,7 +119,7 @@ void test(const Script& script, size_t text_offset, ExpectedScriptCursor expecte
         ASSERT_EQ(from, expected.graph_from);
         ASSERT_EQ(to, expected.graph_to);
     } else {
-        ASSERT_FALSE(cursor.query_edge_id.has_value());
+        ASSERT_FALSE(cursor->query_edge_id.has_value());
     }
 }
 
