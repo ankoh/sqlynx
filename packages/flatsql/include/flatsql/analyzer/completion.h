@@ -51,24 +51,33 @@ struct Completion {
         /// The score
         ScoreValueType score;
     };
+    /// A hash-map for candidates
+    using CandidateMap = ankerl::unordered_dense::map<QualifiedID, Candidate, QualifiedID::Hasher>;
 
    protected:
-    /// The candidate map
-    ankerl::unordered_dense::map<QualifiedID, Candidate, QualifiedID::Hasher> candidates;
+    /// The script cursor
+    const ScriptCursor& cursor;
+    /// The scoring table
+    const std::array<std::pair<proto::NameTag, ScoreValueType>, 8>& scoring_table;
+    /// The result heap, holding up to k entries
+    TopKHeap<QualifiedID, ScoreValueType> result_heap;
 
     /// Find the candidates in a completion index
-    void FindCandidatesInIndex(const CompletionIndex& index, std::string_view cursor_text,
-                               const std::array<std::pair<proto::NameTag, ScoreValueType>, 8>& scoring_table);
+    void FindCandidatesInIndex(CandidateMap& candidates, const CompletionIndex& index);
     /// Find the candidates in completion indexes
-    void FindCandidatesInIndexes(const ScriptCursor& cursor,
-                                 const std::array<std::pair<proto::NameTag, ScoreValueType>, 8>& scoring_table);
+    void FindCandidatesInIndexes(CandidateMap& candidates);
     /// Find candidates in the AST around the script cursor
-    void FindCandidatesInAST(const ScriptCursor& cursor);
+    void FindCandidatesInAST(CandidateMap& candidates);
+    /// Select the top n elements
+    void SelectTopN(CandidateMap& candidates);
 
    public:
-    /// Select the top n elements
-    std::vector<TopKHeap<QualifiedID, ScoreValueType>::Entry> SelectTopN(size_t n);
+    /// Constructor
+    Completion(const ScriptCursor& cursor,
+               const std::array<std::pair<proto::NameTag, ScoreValueType>, 8>& scoring_table, size_t k);
 
+    /// Pack the completion result
+    flatbuffers::Offset<proto::Completion> Pack(flatbuffers::FlatBufferBuilder& builder);
     // Compute completion at a cursor
     static std::pair<std::unique_ptr<Completion>, proto::StatusCode> Compute(const ScriptCursor& cursor);
 };

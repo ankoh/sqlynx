@@ -64,9 +64,9 @@ template <typename ValueType, typename ScoreType> struct TopKHeap {
         }
     }
     /// Finish the entries
-    std::vector<Entry> Finish() {
+    std::vector<Entry>& Finish() {
         std::sort(entries.begin(), entries.end(), [](auto& l, auto& r) { return l.score < r.score; });
-        return std::move(entries);
+        return entries;
     }
 };
 
