@@ -10,7 +10,7 @@
 	},
 	"private": true,
 	"engines": {
-		"vscode": "^1.82.0"
+		"vscode": "^1.82.1"
 	},
 	"activationEvents": [
 		"onLanguage:sql"
