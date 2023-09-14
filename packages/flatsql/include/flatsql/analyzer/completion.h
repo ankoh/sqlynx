@@ -44,10 +44,12 @@ struct Completion {
 
     /// The completion candidates
     struct Candidate {
-        /// The tag bitmap
-        NameTags tags;
-        /// The text
-        std::string_view text;
+        /// The name id
+        std::string_view name_text;
+        /// The name id
+        QualifiedID name_id;
+        /// The name tags
+        NameTags name_tags;
         /// The score
         ScoreValueType score;
     };
@@ -60,7 +62,7 @@ struct Completion {
     /// The scoring table
     const std::array<std::pair<proto::NameTag, ScoreValueType>, 8>& scoring_table;
     /// The result heap, holding up to k entries
-    TopKHeap<QualifiedID, ScoreValueType> result_heap;
+    TopKHeap<Candidate, ScoreValueType> result_heap;
 
     /// Find the candidates in a completion index
     void FindCandidatesInIndex(CandidateMap& candidates, const CompletionIndex& index);
@@ -91,16 +93,18 @@ class CompletionIndex {
         /// The suffix
         StringView suffix;
         /// The name id
-        size_t value_id;
+        std::string_view name_text;
+        /// The name id
+        QualifiedID name_id;
         /// The name tags
-        NameTags tags;
+        NameTags name_tags;
 
         /// Constructor
-        Entry(StringView suffix = "", size_t value_id = 0, NameTags tags = 0)
-            : suffix(suffix), value_id(value_id), tags(tags) {}
+        Entry(StringView suffix = "", std::string_view name_text = {}, QualifiedID name_id = {}, NameTags tags = 0)
+            : suffix(suffix), name_text(name_text), name_id(name_id), name_tags(tags) {}
         /// Constructor
-        Entry(std::string_view suffix, size_t value_id = 0, NameTags tags = 0)
-            : suffix(suffix.data(), suffix.length()), value_id(value_id), tags(tags) {}
+        Entry(std::string_view suffix, std::string_view name_text = {}, QualifiedID name_id = {}, NameTags tags = 0)
+            : suffix(suffix.data(), suffix.length()), name_text(name_text), name_id(name_id), name_tags(tags) {}
     };
 
     /// Constructor

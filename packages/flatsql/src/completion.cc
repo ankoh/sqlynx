@@ -51,27 +51,24 @@ void Completion::FindCandidatesInIndex(CandidateMap& candidates, const Completio
     std::span<const CompletionIndex::Entry> entries = index.FindEntriesWithPrefix(cursor.text);
 
     for (auto& entry : entries) {
-        auto name_id = QualifiedID(index.GetScript()->context_id, entry.value_id);
-        auto candidate_text =
-            index.GetScript()->parsed_script->scanned_script->name_dictionary[name_id.GetIndex()].text;
-
         // Determine score
         ScoreValueType score = 0;
         for (auto [tag, tag_score] : scoring_table) {
-            score = std::max(score, entry.tags.contains(tag) ? tag_score : 0);
+            score = std::max(score, entry.name_tags.contains(tag) ? tag_score : 0);
         }
         // Do we know the candidate already?
-        if (auto iter = candidates.find(name_id); iter != candidates.end()) {
+        if (auto iter = candidates.find(entry.name_id); iter != candidates.end()) {
             // Update the score if it is higher
             iter->second.score = std::max(iter->second.score, score);
-            iter->second.tags |= entry.tags;
+            iter->second.name_tags |= entry.name_tags;
         } else {
             // Otherwise store as new candidate
-            candidates.insert({name_id, Candidate{
-                                            .tags = entry.tags,
-                                            .text = {candidate_text.data(), candidate_text.size()},
-                                            .score = score,
-                                        }});
+            candidates.insert({entry.name_id, Candidate{
+                                                  .name_text = entry.name_text,
+                                                  .name_id = entry.name_id,
+                                                  .name_tags = entry.name_tags,
+                                                  .score = score,
+                                              }});
         }
     }
 }
@@ -97,7 +94,7 @@ void Completion::FindCandidatesInAST(CandidateMap& candidates) {
 
 void Completion::SelectTopN(CandidateMap& candidates) {
     for (auto& [key, value] : candidates) {
-        result_heap.Insert(key, value.score);
+        result_heap.Insert(value, value.score);
     }
 }
 
@@ -108,39 +105,15 @@ Completion::Completion(const ScriptCursor& cursor,
 flatbuffers::Offset<proto::Completion> Completion::Pack(flatbuffers::FlatBufferBuilder& builder) {
     auto& entries = result_heap.Finish();
 
-    // Collect completion index
-    std::unordered_map<size_t, std::reference_wrapper<const CompletionIndex>> context_index_map;
-    context_index_map.insert({0, CompletionIndex::Keywords()});
-    context_index_map.insert({cursor.script.context_id, *cursor.script.completion_index});
-    if (auto external = cursor.script.external_script) {
-        context_index_map.insert({external->context_id, *cursor.script.external_script->completion_index});
-    }
-
     // Pack candidates
     std::vector<flatbuffers::Offset<proto::CompletionCandidate>> candidates;
     candidates.reserve(entries.size());
     for (auto& entry : entries) {
-        NameTags tags;
-        std::optional<flatbuffers::Offset<flatbuffers::String>> text;
-
-        // Resolve entry in name dictionary
-        auto context_id = entry.value.GetContext();
-        auto index_id = entry.value.GetIndex();
-        if (auto iter = context_index_map.find(entry.value.GetContext()); iter != context_index_map.end()) {
-            auto& index = iter->second.get();
-            auto& scanned = index.GetScript()->parsed_script->scanned_script;
-            auto& name = scanned->name_dictionary[index_id];
-            text = builder.CreateString(name.text);
-            tags = name.tags;
-        }
-
-        // Build completion candidate
+        auto text_offset = builder.CreateString(entry.value.name_text);
         proto::CompletionCandidateBuilder candidateBuilder{builder};
-        candidateBuilder.add_name_id(entry.value.Pack());
-        candidateBuilder.add_tags(tags.value);
-        if (text.has_value()) {
-            candidateBuilder.add_text(text.value());
-        }
+        candidateBuilder.add_name_id(entry.value.name_id.Pack());
+        candidateBuilder.add_text(text_offset);
+        candidateBuilder.add_tags(entry.value.name_tags);
         candidateBuilder.add_score(entry.score);
         candidates.push_back(candidateBuilder.Finish());
     }
@@ -204,7 +177,8 @@ const CompletionIndex& CompletionIndex::Keywords() {
         ChunkBuffer<Entry, 256> entries_chunked;
         for (size_t i = 0; i < keywords.size(); ++i) {
             auto& keyword = keywords[i];
-            Entry entry{keyword.name, i, proto::NameTag::KEYWORD};
+            QualifiedID name_id{QualifiedID::KEYWORD_CONTEXT_ID, static_cast<uint32_t>(i)};
+            Entry entry{keyword.name, keyword.name, name_id, proto::NameTag::KEYWORD};
             auto text = entry.suffix;
             for (size_t offset = 0; offset < text.size(); ++offset) {
                 Entry copy = entry;
@@ -233,7 +207,8 @@ std::pair<std::unique_ptr<CompletionIndex>, proto::StatusCode> CompletionIndex::
         ChunkBuffer<Entry, 256> entries_chunked;
         for (size_t i = 0; i < names.size(); ++i) {
             auto& name = names[i];
-            Entry entry{name.text, i, name.tags};
+            QualifiedID name_id{script->context_id, static_cast<uint32_t>(i)};
+            Entry entry{name.text, name.text, name_id, name.tags};
             auto text = entry.suffix;
             for (size_t offset = 0; offset < text.size(); ++offset) {
                 Entry copy = entry;

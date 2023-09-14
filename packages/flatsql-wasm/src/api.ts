@@ -163,8 +163,11 @@ export class FlatSQL {
         return instanceRef.instance;
     }
 
-    public createScript(id: number): FlatSQLScript {
-        const scriptPtr = this.instanceExports.flatsql_script_new(id);
+    public createScript(context: number): FlatSQLScript {
+        if (context == 0xffffffff) {
+            throw new Error('context id 0xFFFFFFFF is reserved');
+        }
+        const scriptPtr = this.instanceExports.flatsql_script_new(context);
         return new FlatSQLScript(this, scriptPtr);
     }
 
@@ -206,6 +209,9 @@ export namespace QualifiedID {
 
     /// Create the qualified id
     export function create(context: number, value: number): bigint {
+        if (context == 0xffffffff) {
+            throw new Error('context id 0xFFFFFFFF is reserved');
+        }
         return (BigInt(context) << 32n) | BigInt(value);
     }
     /// Get the context id
