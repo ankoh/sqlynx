@@ -4,9 +4,9 @@ table CompletionCandidate {
     // The name id
     name_id: uint64;
     /// The tags
-    tags: uint64;
+    name_tags: uint64;
     /// The completion
-    text: string;
+    name_text: string;
     /// The score
     score: uint32;
 }
