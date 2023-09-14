@@ -10,6 +10,8 @@ namespace flatsql {
 
 /// A FlatBuffer identifier annotated with a context
 struct QualifiedID {
+    constexpr static uint32_t KEYWORD_CONTEXT_ID = 0xFFFFFFFF;
+
    protected:
     /// The context id
     uint32_t context_id;
