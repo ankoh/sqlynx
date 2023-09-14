@@ -413,7 +413,7 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Script::CompleteAtCurs
         return {nullptr, proto::StatusCode::COMPLETION_MISSES_SCANNER_TOKEN};
     }
     // Compute the completion
-    return Completion::Compute(*cursor);
+    return Completion::Compute(*cursor, 40);
 }
 
 static bool endsCursorPath(proto::Node& n) {

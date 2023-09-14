@@ -121,7 +121,7 @@ flatbuffers::Offset<proto::Completion> Completion::Pack(flatbuffers::FlatBufferB
     return completionBuilder.Finish();
 }
 
-std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(const ScriptCursor& cursor) {
+std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(const ScriptCursor& cursor, size_t k) {
     // Determine scoring table
     auto* scoring_table = &NAME_SCORE_DEFAULTS;
     // Is a table ref?
@@ -133,7 +133,7 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(co
         scoring_table = &NAME_SCORE_COLUMN_REF;
     }
     // Create completion
-    auto completion = std::make_unique<Completion>(cursor, *scoring_table, 40);
+    auto completion = std::make_unique<Completion>(cursor, *scoring_table, k);
     CandidateMap candidates;
     completion->FindCandidatesInIndexes(candidates);
     completion->FindCandidatesInAST(candidates);
