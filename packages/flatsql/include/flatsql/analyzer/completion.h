@@ -79,7 +79,7 @@ struct Completion {
     /// Pack the completion result
     flatbuffers::Offset<proto::Completion> Pack(flatbuffers::FlatBufferBuilder& builder);
     // Compute completion at a cursor
-    static std::pair<std::unique_ptr<Completion>, proto::StatusCode> Compute(const ScriptCursor& cursor);
+    static std::pair<std::unique_ptr<Completion>, proto::StatusCode> Compute(const ScriptCursor& cursor, size_t k);
 };
 
 class CompletionIndex {
