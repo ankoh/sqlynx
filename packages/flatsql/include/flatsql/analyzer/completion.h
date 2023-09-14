@@ -45,9 +45,9 @@ struct Completion {
     /// The completion candidates
     struct Candidate {
         /// The name id
-        std::string_view name_text;
-        /// The name id
         QualifiedID name_id;
+        /// The name id
+        std::string_view name_text;
         /// The name tags
         NameTags name_tags;
         /// The score
@@ -70,8 +70,6 @@ struct Completion {
     void FindCandidatesInIndexes(CandidateMap& candidates);
     /// Find candidates in the AST around the script cursor
     void FindCandidatesInAST(CandidateMap& candidates);
-    /// Select the top n elements
-    void SelectTopN(CandidateMap& candidates);
 
    public:
     /// Constructor

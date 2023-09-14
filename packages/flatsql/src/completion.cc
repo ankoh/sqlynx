@@ -92,12 +92,6 @@ void Completion::FindCandidatesInAST(CandidateMap& candidates) {
     /// XXX Discover candidates around the cursor
 }
 
-void Completion::SelectTopN(CandidateMap& candidates) {
-    for (auto& [key, value] : candidates) {
-        result_heap.Insert(value, value.score);
-    }
-}
-
 Completion::Completion(const ScriptCursor& cursor,
                        const std::array<std::pair<proto::NameTag, ScoreValueType>, 8>& scoring_table, size_t k)
     : cursor(cursor), scoring_table(scoring_table), result_heap(k) {}
@@ -112,8 +106,8 @@ flatbuffers::Offset<proto::Completion> Completion::Pack(flatbuffers::FlatBufferB
         auto text_offset = builder.CreateString(entry.value.name_text);
         proto::CompletionCandidateBuilder candidateBuilder{builder};
         candidateBuilder.add_name_id(entry.value.name_id.Pack());
-        candidateBuilder.add_text(text_offset);
-        candidateBuilder.add_tags(entry.value.name_tags);
+        candidateBuilder.add_name_tags(entry.value.name_tags);
+        candidateBuilder.add_name_text(text_offset);
         candidateBuilder.add_score(entry.score);
         candidates.push_back(candidateBuilder.Finish());
     }
@@ -143,8 +137,10 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(co
     CandidateMap candidates;
     completion->FindCandidatesInIndexes(candidates);
     completion->FindCandidatesInAST(candidates);
-    completion->SelectTopN(candidates);
-
+    // Insert all candidates into the top-k heap
+    for (auto& [key, value] : candidates) {
+        completion->result_heap.Insert(value, value.score);
+    }
     return {std::move(completion), proto::StatusCode::OK};
 }
 
