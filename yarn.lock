@@ -332,10 +332,10 @@
   resolved "https://registry.yarnpkg.com/@codemirror/state/-/state-6.2.1.tgz#6dc8d8e5abb26b875e3164191872d69a5e85bd73"
   integrity sha512-RupHSZ8+OjNT38zU9fKH2sv+Dnlr8Eb8sl4NOnnqz95mCFTZUaiRP8Xv5MeeaG0px2b8Bnfe7YGwCV3nsBhbuw==
 
-"@codemirror/view@^6.18.1":
-  version "6.18.1"
-  resolved "https://registry.yarnpkg.com/@codemirror/view/-/view-6.18.1.tgz#816782f19354a688b6dc33b30ab25570003f1089"
-  integrity sha512-xcsXcMkIMd7l3WZEWoc4ljteAiqzxb5gVerRxk5132p5cLix6rTydWTQjsj2oxORepfsrwy1fC4r20iMa9plrg==
+"@codemirror/view@^6.19.0":
+  version "6.19.0"
+  resolved "https://registry.yarnpkg.com/@codemirror/view/-/view-6.19.0.tgz#24b35e3797626a1b944ecd0a921126f669b2728d"
+  integrity sha512-XqNIfW/3GaaF+T7Q1jBcRLCPm1NbrR2DBxrXacSt1FG+rNsdsNn3/azAfgpUoJ7yy4xgd8xTPa3AlL+y0lMizQ==
   dependencies:
     "@codemirror/state" "^6.1.4"
     style-mod "^4.1.0"
