@@ -34,24 +34,28 @@ ScannedScript::ScannedScript(const rope::Rope& text, uint32_t context_id)
 NameID ScannedScript::RegisterKeywordAsName(std::string_view s, sx::Location location, sx::NameTag tag) {
     auto iter = name_dictionary_ids.find(s);
     if (iter != name_dictionary_ids.end()) {
-        name_dictionary[iter->second].tags |= tag;
+        auto& name = name_dictionary[iter->second];
+        name.tags |= tag;
+        name.occurrences += 1;
         return iter->second;
     }
     auto id = name_dictionary.size();
     name_dictionary_ids.insert({s, id});
-    name_dictionary.push_back({s, location, tag});
+    name_dictionary.push_back(Name{.text = s, .location = location, .tags = tag, .occurrences = 1});
     return id;
 }
 /// Register a name
 NameID ScannedScript::RegisterName(std::string_view s, sx::Location location, sx::NameTag tag) {
     auto iter = name_dictionary_ids.find(s);
     if (iter != name_dictionary_ids.end()) {
-        name_dictionary[iter->second].tags |= tag;
+        auto& name = name_dictionary[iter->second];
+        name.tags |= tag;
+        name.occurrences += 1;
         return iter->second;
     }
     auto id = name_dictionary.size();
     name_dictionary_ids.insert({s, id});
-    name_dictionary.push_back({s, location, tag});
+    name_dictionary.push_back(Name{.text = s, .location = location, .tags = tag, .occurrences = 1});
     return id;
 }
 /// Tag a name
@@ -373,6 +377,7 @@ std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(Script* external) 
         return {nullptr, status};
     }
     analyzed_script = std::move(script);
+    external_script = external;
 
     // Update step timings
     timing_statistics.mutate_analyzer_last_elapsed(
@@ -443,6 +448,11 @@ std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> ScriptCursor::Create
 
     // Read scanner token
     cursor->scanner_token_id = scanned.FindToken(text_offset);
+    if (cursor->scanner_token_id) {
+        auto& token = scanned.GetTokens()[*cursor->scanner_token_id];
+        cursor->text = scanned.ReadTextAtLocation(token.location);
+    }
+
     // Read AST node
     auto maybe_ast_node = parsed.FindNodeAtOffset(text_offset);
     if (!maybe_ast_node.has_value()) {
