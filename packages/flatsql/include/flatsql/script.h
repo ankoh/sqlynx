@@ -42,6 +42,8 @@ class ScannedScript {
         sx::Location location;
         /// The tags
         NameTags tags;
+        /// The number of occurrences
+        size_t occurrences = 0;
     };
 
     /// The context id

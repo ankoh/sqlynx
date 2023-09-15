@@ -68,6 +68,8 @@ template <typename ValueType, typename ScoreType> struct TopKHeap {
         std::sort(entries.begin(), entries.end(), [](auto& l, auto& r) { return l.score < r.score; });
         return entries;
     }
+    /// Get the heap entries
+    auto& GetEntries() const { return entries; }
 };
 
 }  // namespace flatsql

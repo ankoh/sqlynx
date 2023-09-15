@@ -174,7 +174,7 @@ const CompletionIndex& CompletionIndex::Keywords() {
         for (size_t i = 0; i < keywords.size(); ++i) {
             auto& keyword = keywords[i];
             QualifiedID name_id{QualifiedID::KEYWORD_CONTEXT_ID, static_cast<uint32_t>(i)};
-            Entry entry{keyword.name, keyword.name, name_id, proto::NameTag::KEYWORD};
+            Entry entry{keyword.name, keyword.name, name_id, proto::NameTag::KEYWORD, 0};
             auto text = entry.suffix;
             for (size_t offset = 0; offset < text.size(); ++offset) {
                 Entry copy = entry;
@@ -204,7 +204,7 @@ std::pair<std::unique_ptr<CompletionIndex>, proto::StatusCode> CompletionIndex::
         for (size_t i = 0; i < names.size(); ++i) {
             auto& name = names[i];
             QualifiedID name_id{script->context_id, static_cast<uint32_t>(i)};
-            Entry entry{name.text, name.text, name_id, name.tags};
+            Entry entry{name.text, name.text, name_id, name.tags, name.occurrences};
             auto text = entry.suffix;
             for (size_t offset = 0; offset < text.size(); ++offset) {
                 Entry copy = entry;
