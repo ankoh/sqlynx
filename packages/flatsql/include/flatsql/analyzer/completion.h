@@ -52,6 +52,8 @@ struct Completion {
         NameTags name_tags;
         /// The score
         ScoreValueType score;
+        /// The hit count
+        size_t count;
     };
     /// A hash-map for candidates
     using CandidateMap = ankerl::unordered_dense::map<QualifiedID, Candidate, QualifiedID::Hasher>;
@@ -76,6 +78,8 @@ struct Completion {
     Completion(const ScriptCursor& cursor,
                const std::array<std::pair<proto::NameTag, ScoreValueType>, 8>& scoring_table, size_t k);
 
+    /// Get the result heap
+    auto& GetHeap() const { return result_heap; }
     /// Pack the completion result
     flatbuffers::Offset<proto::Completion> Pack(flatbuffers::FlatBufferBuilder& builder);
     // Compute completion at a cursor
@@ -96,13 +100,21 @@ class CompletionIndex {
         QualifiedID name_id;
         /// The name tags
         NameTags name_tags;
+        /// The number of occurrences
+        size_t occurrences;
 
         /// Constructor
-        Entry(StringView suffix = "", std::string_view name_text = {}, QualifiedID name_id = {}, NameTags tags = 0)
-            : suffix(suffix), name_text(name_text), name_id(name_id), name_tags(tags) {}
+        Entry(StringView suffix = "", std::string_view name_text = {}, QualifiedID name_id = {}, NameTags tags = 0,
+              size_t occurrences = 0)
+            : suffix(suffix), name_text(name_text), name_id(name_id), name_tags(tags), occurrences(occurrences) {}
         /// Constructor
-        Entry(std::string_view suffix, std::string_view name_text = {}, QualifiedID name_id = {}, NameTags tags = 0)
-            : suffix(suffix.data(), suffix.length()), name_text(name_text), name_id(name_id), name_tags(tags) {}
+        Entry(std::string_view suffix, std::string_view name_text = {}, QualifiedID name_id = {}, NameTags tags = 0,
+              size_t occurrences = 0)
+            : suffix(suffix.data(), suffix.length()),
+              name_text(name_text),
+              name_id(name_id),
+              name_tags(tags),
+              occurrences(occurrences) {}
     };
 
     /// Constructor

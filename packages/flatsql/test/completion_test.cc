@@ -33,12 +33,14 @@ SELECT s_co
     ASSERT_EQ(external_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(external_script.Parse().second, proto::StatusCode::OK);
     ASSERT_EQ(external_script.Analyze().second, proto::StatusCode::OK);
+    ASSERT_EQ(external_script.Reindex(), proto::StatusCode::OK);
 
     Script main_script{2};
     main_script.InsertTextAt(0, main_script_text);
     ASSERT_EQ(main_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(main_script.Parse().second, proto::StatusCode::OK);
     ASSERT_EQ(main_script.Analyze(&external_script).second, proto::StatusCode::OK);
+    ASSERT_EQ(main_script.Reindex(), proto::StatusCode::OK);
 
     // Move the cursor
     auto cursor_ofs = main_script_text.find("s_co");
@@ -49,6 +51,17 @@ SELECT s_co
     // Compute completion
     auto [completion, status] = main_script.CompleteAtCursor();
     ASSERT_EQ(status, proto::StatusCode::OK);
+    auto& heap = completion->GetHeap();
+    auto entries = heap.GetEntries();
+
+    std::vector<std::string> names;
+    for (auto& entry : entries) {
+        names.emplace_back(entry.value.name_text);
+    }
+    std::vector<std::string> expected_names{
+        "s_co",  // XXX Get rid of the scanner token of the cursor if it only occurs once
+        "s_comment", "ps_comment"};
+    ASSERT_EQ(names, expected_names);
 }
 
 }  // namespace
