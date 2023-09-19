@@ -32,7 +32,7 @@
         "@types/flatbuffers": "^1.10.1",
         "@types/fontfaceobserver": "^2.1.1",
         "@types/jest": "^29.5.5",
-        "@types/react": "^18.2.21",
+        "@types/react": "^18.2.22",
         "@types/react-dom": "^18.2.7",
         "@types/react-test-renderer": "^18.0.1",
         "@typescript-eslint/eslint-plugin": "^6.7.2",
