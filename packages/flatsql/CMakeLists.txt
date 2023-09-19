@@ -258,6 +258,7 @@ target_link_libraries(flatsql flatsql_version flatbuffers frozen ankerl utf8proc
 if(NOT WASM)
   add_library(flatsql_testutils
     ${CMAKE_SOURCE_DIR}/src/testing/analyzer_dump_test.cc
+    ${CMAKE_SOURCE_DIR}/src/testing/completion_dump_test.cc
     ${CMAKE_SOURCE_DIR}/src/testing/parser_dump_test.cc
     ${CMAKE_SOURCE_DIR}/src/testing/xml_tests.cc
   )
@@ -267,6 +268,7 @@ if(NOT WASM)
     ${CMAKE_SOURCE_DIR}/test/analyzer_dump_test_suite.cc
     ${CMAKE_SOURCE_DIR}/test/api_test.cc
     ${CMAKE_SOURCE_DIR}/test/chunk_buffer_test.cc
+    ${CMAKE_SOURCE_DIR}/test/completion_dump_test_suite.cc
     ${CMAKE_SOURCE_DIR}/test/completion_test.cc
     ${CMAKE_SOURCE_DIR}/test/cursor_test.cc
     ${CMAKE_SOURCE_DIR}/test/format_test_suite.cc
@@ -295,6 +297,9 @@ if(NOT WASM)
 
   add_executable(dump_analyzer tools/dump_analyzer.cc)
   target_link_libraries(dump_analyzer flatsql flatsql_testutils pugixml gtest gflags Threads::Threads)
+
+  add_executable(dump_completion tools/dump_completion.cc)
+  target_link_libraries(dump_completion flatsql flatsql_testutils pugixml gtest gflags Threads::Threads)
 
   add_executable(sql2tpl tools/sql2tpl.cc)
   target_link_libraries(sql2tpl flatsql flatsql_testutils pugixml gtest gflags Threads::Threads)
