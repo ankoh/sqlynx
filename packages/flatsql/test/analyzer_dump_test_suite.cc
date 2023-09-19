@@ -38,8 +38,10 @@ TEST_P(AnalyzerDumpTestSuite, Test) {
 
     // Encode the program
     pugi::xml_document out;
-    auto xml_external = out.append_child("external");
-    auto xml_main = out.append_child("main");
+    auto xml_external = out.append_child("script");
+    xml_external.append_attribute("context").set_value("external");
+    auto xml_main = out.append_child("script");
+    xml_main.append_attribute("context").set_value("main");
     AnalyzerDumpTest::EncodeScript(out, *main_analyzed.first, external_analyzed.first.get());
 
     // Test the XMLs
