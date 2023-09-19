@@ -1,0 +1,17 @@
+<completion-dumps>
+    <completion-dump name="empty">
+        <script context="external" />
+        <script context="main" />
+        <cursor context="main">
+            <search index="3">
+                fooo
+            </search>
+        </cursor>
+        <completions limit="20">
+            <entry text="fooo" score="10" occurrences="4">
+                <tag value="SCHEMA_NAME" />
+                <tag value="DATABASE_NAME" />
+            </entry>
+        </completions>
+    </completion-dump>
+</completion-dumps>

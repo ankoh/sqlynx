@@ -150,3 +150,7 @@ parser_dumps:
 .PHONY: analyzer_dumps
 analyzer_dumps:
 	${LIB_DEBUG_DIR}/dump_analyzer --source_dir .
+
+.PHONY: completion_dumps
+completion_dumps:
+	${LIB_DEBUG_DIR}/dump_completion --source_dir .
