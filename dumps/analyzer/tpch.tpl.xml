@@ -1,7 +1,7 @@
 <analyzer-dumps>
     <analyzer-dump name="tpch_schema">
-        <external />
-        <main>
+        <script context="external" />  
+        <script context="main">  
             <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -12,10 +12,10 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
 create table nation (n_nationkey integer not null, n_name char(25) not null, n_regionkey integer not null, n_comment varchar(152) not null, primary key (n_nationkey));
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="tpch_2">
-        <external>
+        <script context="external">  
             <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -26,8 +26,8 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
 create table nation (n_nationkey integer not null, n_name char(25) not null, n_regionkey integer not null, n_comment varchar(152) not null, primary key (n_nationkey));
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
 select
         s_acctbal,
@@ -75,17 +75,17 @@ order by
 limit
 	100
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="tpch_3">
-        <external>
+        <script context="external">  
             <input>
 create table customer (c_custkey integer not null, c_name varchar(25) not null, c_address varchar(40) not null, c_nationkey integer not null, c_phone char(15) not null, c_acctbal decimal(12,2) not null, c_mktsegment char(10) not null, c_comment varchar(117) not null, primary key (c_custkey));
 create table orders (o_orderkey integer not null, o_custkey integer not null, o_orderstatus char(1) not null, o_totalprice decimal(12,2) not null, o_orderdate date not null, o_orderpriority char(15) not null, o_clerk char(15) not null, o_shippriority integer not null, o_comment varchar(79) not null, primary key (o_orderkey));
 create table lineitem (l_orderkey integer not null, l_partkey integer not null, l_suppkey integer not null, l_linenumber integer not null, l_quantity decimal(12,2) not null, l_extendedprice decimal(12,2) not null, l_discount decimal(12,2) not null, l_tax decimal(12,2) not null, l_returnflag char(1) not null, l_linestatus char(1) not null, l_shipdate date not null, l_commitdate date not null, l_receiptdate date not null, l_shipinstruct char(25) not null, l_shipmode char(10) not null, l_comment varchar(44) not null, primary key (l_orderkey,l_linenumber));
             </input>
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
 select
         l_orderkey,
@@ -112,16 +112,16 @@ order by
 limit
 	10
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="tpch_4">
-        <external>
+        <script context="external">  
             <input>
 create table lineitem (l_orderkey integer not null, l_partkey integer not null, l_suppkey integer not null, l_linenumber integer not null, l_quantity decimal(12,2) not null, l_extendedprice decimal(12,2) not null, l_discount decimal(12,2) not null, l_tax decimal(12,2) not null, l_returnflag char(1) not null, l_linestatus char(1) not null, l_shipdate date not null, l_commitdate date not null, l_receiptdate date not null, l_shipinstruct char(25) not null, l_shipmode char(10) not null, l_comment varchar(44) not null, primary key (l_orderkey,l_linenumber));
 create table orders (o_orderkey integer not null, o_custkey integer not null, o_orderstatus char(1) not null, o_totalprice decimal(12,2) not null, o_orderdate date not null, o_orderpriority char(15) not null, o_clerk char(15) not null, o_shippriority integer not null, o_comment varchar(79) not null, primary key (o_orderkey));
             </input>
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
 select
         o_orderpriority,
@@ -145,10 +145,10 @@ group by
 order by
         o_orderpriority
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="tpch_5">
-        <external>
+        <script context="external">  
             <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -159,8 +159,8 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
 create table nation (n_nationkey integer not null, n_name char(25) not null, n_regionkey integer not null, n_comment varchar(152) not null, primary key (n_nationkey));
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
 select
         n_name,
@@ -187,15 +187,15 @@ group by
 order by
         revenue desc
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="tpch_6">
-        <external>
+        <script context="external">  
             <input>
 create table lineitem (l_orderkey integer not null, l_partkey integer not null, l_suppkey integer not null, l_linenumber integer not null, l_quantity decimal(12,2) not null, l_extendedprice decimal(12,2) not null, l_discount decimal(12,2) not null, l_tax decimal(12,2) not null, l_returnflag char(1) not null, l_linestatus char(1) not null, l_shipdate date not null, l_commitdate date not null, l_receiptdate date not null, l_shipinstruct char(25) not null, l_shipmode char(10) not null, l_comment varchar(44) not null, primary key (l_orderkey,l_linenumber));
             </input>
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
 select
         sum(l_extendedprice * l_discount) as revenue
@@ -207,10 +207,10 @@ where
         and l_discount between 0.06 - 0.01 and 0.06 + 0.01
         and l_quantity &#60; 24
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="tpch_7">
-        <external>
+        <script context="external">  
             <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -221,8 +221,8 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
 create table nation (n_nationkey integer not null, n_name char(25) not null, n_regionkey integer not null, n_comment varchar(152) not null, primary key (n_nationkey));
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
 select
         supp_nation,
@@ -264,10 +264,10 @@ order by
         cust_nation,
         l_year
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="tpch_8">
-        <external>
+        <script context="external">  
             <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -278,8 +278,8 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
 create table nation (n_nationkey integer not null, n_name char(25) not null, n_regionkey integer not null, n_comment varchar(152) not null, primary key (n_nationkey));
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
 select
         o_year,
@@ -319,10 +319,10 @@ group by
 order by
         o_year
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="tpch_9">
-        <external>
+        <script context="external">  
             <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -333,8 +333,8 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
 create table nation (n_nationkey integer not null, n_name char(25) not null, n_regionkey integer not null, n_comment varchar(152) not null, primary key (n_nationkey));
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
 select
         nation,
@@ -369,10 +369,10 @@ order by
         nation,
         o_year desc
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="tpch_10">
-        <external>
+        <script context="external">  
             <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -383,8 +383,8 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
 create table nation (n_nationkey integer not null, n_name char(25) not null, n_regionkey integer not null, n_comment varchar(152) not null, primary key (n_nationkey));
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
 select
         c_custkey,
@@ -420,17 +420,17 @@ order by
 limit
 	20
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="tpch_11">
-        <external>
+        <script context="external">  
             <input>
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
 create table partsupp (ps_partkey integer not null, ps_suppkey integer not null, ps_availqty integer not null, ps_supplycost decimal(12,2) not null, ps_comment varchar(199) not null, primary key (ps_partkey,ps_suppkey));
 create table nation (n_nationkey integer not null, n_name char(25) not null, n_regionkey integer not null, n_comment varchar(152) not null, primary key (n_nationkey));
             </input>
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
 select
         ps_partkey,
@@ -460,10 +460,10 @@ group by
 order by
         "value" desc
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="tpch_12">
-        <external>
+        <script context="external">  
             <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -474,8 +474,8 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
 create table nation (n_nationkey integer not null, n_name char(25) not null, n_regionkey integer not null, n_comment varchar(152) not null, primary key (n_nationkey));
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
 select
         l_shipmode,
@@ -506,16 +506,16 @@ group by
 order by
         l_shipmode
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="tpch_13">
-        <external>
+        <script context="external">  
             <input>
 create table customer (c_custkey integer not null, c_name varchar(25) not null, c_address varchar(40) not null, c_nationkey integer not null, c_phone char(15) not null, c_acctbal decimal(12,2) not null, c_mktsegment char(10) not null, c_comment varchar(117) not null, primary key (c_custkey));
 create table orders (o_orderkey integer not null, o_custkey integer not null, o_orderstatus char(1) not null, o_totalprice decimal(12,2) not null, o_orderdate date not null, o_orderpriority char(15) not null, o_clerk char(15) not null, o_shippriority integer not null, o_comment varchar(79) not null, primary key (o_orderkey));
             </input>
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
 select
         c_count,
@@ -538,10 +538,10 @@ order by
         custdist desc,
         c_count desc
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="tpch_14">
-        <external>
+        <script context="external">  
             <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -552,8 +552,8 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
 create table nation (n_nationkey integer not null, n_name char(25) not null, n_regionkey integer not null, n_comment varchar(152) not null, primary key (n_nationkey));
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
 select
         100.00 * sum(case
@@ -569,10 +569,10 @@ where
         and l_shipdate &#62;= date '1995-09-01'
         and l_shipdate &#60; date '1995-10-01'
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="tpch_15">
-        <external>
+        <script context="external">  
             <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -583,8 +583,8 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
 create table nation (n_nationkey integer not null, n_name char(25) not null, n_regionkey integer not null, n_comment varchar(152) not null, primary key (n_nationkey));
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
 with revenue as (
 	select
@@ -617,10 +617,10 @@ where
 order by
 	s_suppkey
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="tpch_16">
-        <external>
+        <script context="external">  
             <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -631,8 +631,8 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
 create table nation (n_nationkey integer not null, n_name char(25) not null, n_regionkey integer not null, n_comment varchar(152) not null, primary key (n_nationkey));
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
 select
         p_brand,
@@ -665,16 +665,16 @@ order by
         p_type,
         p_size
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="tpch_17">
-        <external>
+        <script context="external">  
             <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table lineitem (l_orderkey integer not null, l_partkey integer not null, l_suppkey integer not null, l_linenumber integer not null, l_quantity decimal(12,2) not null, l_extendedprice decimal(12,2) not null, l_discount decimal(12,2) not null, l_tax decimal(12,2) not null, l_returnflag char(1) not null, l_linestatus char(1) not null, l_shipdate date not null, l_commitdate date not null, l_receiptdate date not null, l_shipinstruct char(25) not null, l_shipmode char(10) not null, l_comment varchar(44) not null, primary key (l_orderkey,l_linenumber));
             </input>
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
 select
         sum(l_extendedprice) / 7.0 as avg_yearly
@@ -694,10 +694,10 @@ where
                         l_partkey = p_partkey
         )
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="tpch_18">
-        <external>
+        <script context="external">  
             <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -708,8 +708,8 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
 create table nation (n_nationkey integer not null, n_name char(25) not null, n_regionkey integer not null, n_comment varchar(152) not null, primary key (n_nationkey));
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
 select
         c_name,
@@ -746,10 +746,10 @@ order by
 limit
 	100
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="tpch_19">
-        <external>
+        <script context="external">  
             <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -760,8 +760,8 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
 create table nation (n_nationkey integer not null, n_name char(25) not null, n_regionkey integer not null, n_comment varchar(152) not null, primary key (n_nationkey));
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
 select
         sum(l_extendedprice* (1 - l_discount)) as revenue
@@ -799,10 +799,10 @@ where
                 and l_shipinstruct = 'DELIVER IN PERSON'
         )
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="tpch_20">
-        <external>
+        <script context="external">  
             <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -813,8 +813,8 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
 create table nation (n_nationkey integer not null, n_name char(25) not null, n_regionkey integer not null, n_comment varchar(152) not null, primary key (n_nationkey));
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
 select
         s_name,
@@ -854,10 +854,10 @@ where
 order by
         s_name
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="tpch_21">
-        <external>
+        <script context="external">  
             <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -868,8 +868,8 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
 create table nation (n_nationkey integer not null, n_name char(25) not null, n_regionkey integer not null, n_comment varchar(152) not null, primary key (n_nationkey));
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
 select
         s_name,
@@ -913,10 +913,10 @@ order by
 limit
 	100
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="tpch_22">
-        <external>
+        <script context="external">  
             <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -927,8 +927,8 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
 create table nation (n_nationkey integer not null, n_name char(25) not null, n_regionkey integer not null, n_comment varchar(152) not null, primary key (n_nationkey));
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
 select
         cntrycode,
@@ -968,6 +968,6 @@ group by
 order by
         cntrycode
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
 </analyzer-dumps>

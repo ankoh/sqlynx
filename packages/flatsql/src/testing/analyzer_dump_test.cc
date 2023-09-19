@@ -86,8 +86,8 @@ void AnalyzerDumpTest::EncodeScript(pugi::xml_node root, const AnalyzedScript& m
     auto* node_type_tt = proto::NodeTypeTypeTable();
 
     // Get xml elements
-    auto xml_external = root.child("external");
-    auto xml_main = root.child("main");
+    auto xml_external = root.find_child_by_attribute("script", "context", "external");
+    auto xml_main = root.find_child_by_attribute("script", "context", "main");
 
     auto xml_external_tables = xml_external.append_child("tables");
     auto xml_main_tables = xml_main.append_child("tables");
@@ -194,8 +194,8 @@ void AnalyzerDumpTest::LoadTests(std::filesystem::path& source_dir) {
             // Create test
             tests.emplace_back();
             auto& t = tests.back();
-            auto xml_external = test.child("external");
-            auto xml_main = test.child("main");
+            auto xml_external = test.find_child_by_attribute("script", "context", "external");
+            auto xml_main = test.find_child_by_attribute("script", "context", "main");
             t.name = test.attribute("name").as_string();
             t.input_external = xml_external.child("input").last_child().value();
             t.input_main = xml_main.child("input").last_child().value();

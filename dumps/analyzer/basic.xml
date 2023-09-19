@@ -1,19 +1,19 @@
 <analyzer-dumps>
     <analyzer-dump name="empty">
-        <external>
+        <script context="external">
             <input />
             <tables />
-        </external>
-        <main>
+        </script>
+        <script context="main">
             <input />
             <tables />
             <table-references />
             <column-references />
             <query-graph />
-        </main>
+        </script>
     </analyzer-dump>
     <analyzer-dump name="refs_0">
-        <external>
+        <script context="external">
             <input>
                 create table A (a int, b int);
                 create table B (d int, e int);
@@ -28,8 +28,8 @@
                     <column name="e" loc="87..92" text="e int" />
                 </table>
             </tables>
-        </external>
-        <main>
+        </script>
+        <script context="main">
             <input>
                 select * from A, B where a = b;
             </input>
@@ -48,10 +48,10 @@
                     <node side="1" ref="1" />
                 </edge>
             </query-graph>
-        </main>
+        </script>
     </analyzer-dump>
     <analyzer-dump name="edges_0">
-        <external>
+        <script context="external">
             <input>
                 create table A (a int, b int);
                 create table B (d int, e int);
@@ -66,8 +66,8 @@
                     <column name="e" loc="87..92" text="e int" />
                 </table>
             </tables>
-        </external>
-        <main>
+        </script>
+        <script context="main">
             <input>
                 select * from A, B where a + d = e;
             </input>
@@ -88,10 +88,10 @@
                     <node side="1" ref="2" />
                 </edge>
             </query-graph>
-        </main>
+        </script>
     </analyzer-dump>
     <analyzer-dump name="edges_1">
-        <external>
+        <script context="external">
             <input>
                 create table A (a int, b int);
                 create table B (d int, e int);
@@ -106,8 +106,8 @@
                     <column name="e" loc="87..92" text="e int" />
                 </table>
             </tables>
-        </external>
-        <main>
+        </script>
+        <script context="main">
             <input>
                 select * from A, B where a = d and b = e;
             </input>
@@ -132,10 +132,10 @@
                     <node side="1" ref="3" />
                 </edge>
             </query-graph>
-        </main>
+        </script>
     </analyzer-dump>
     <analyzer-dump name="edges_2">
-        <external>
+        <script context="external">
             <input>
                 create table A (a int, b int);
                 create table B (d int, e int);
@@ -150,8 +150,8 @@
                     <column name="e" loc="87..92" text="e int" />
                 </table>
             </tables>
-        </external>
-        <main>
+        </script>
+        <script context="main">
             <input>
                 select * from A, B where (a = d and b = e) or (a = d and d = 42);
             </input>
@@ -183,10 +183,10 @@
                     <node side="1" ref="5" />
                 </edge>
             </query-graph>
-        </main>
+        </script>
     </analyzer-dump>
     <analyzer-dump name="edges_3">
-        <external>
+        <script context="external">
             <input>
                 create table A (a int, b int);
                 create table B (d int, e int);
@@ -201,8 +201,8 @@
                     <column name="e" loc="87..92" text="e int" />
                 </table>
             </tables>
-        </external>
-        <main>
+        </script>
+        <script context="main">
             <input>
                 select * from A, B where a = (d + 42);
             </input>
@@ -221,10 +221,10 @@
                     <node side="1" ref="0" />
                 </edge>
             </query-graph>
-        </main>
+        </script>
     </analyzer-dump>
     <analyzer-dump name="edges_4">
-        <external>
+        <script context="external">
             <input>
                 create table A (a int, b int);
                 create table B (d int, e int);
@@ -239,8 +239,8 @@
                     <column name="e" loc="87..92" text="e int" />
                 </table>
             </tables>
-        </external>
-        <main>
+        </script>
+        <script context="main">
             <input>
                 select * from A join B on (a = b);
             </input>
@@ -259,10 +259,10 @@
                     <node side="1" ref="1" />
                 </edge>
             </query-graph>
-        </main>
+        </script>
     </analyzer-dump>
     <analyzer-dump name="unresolved_0">
-        <external>
+        <script context="external">
             <input>
                 create table A (a int, b int);
                 create table B (d int, e int);
@@ -277,8 +277,8 @@
                     <column name="e" loc="87..92" text="e int" />
                 </table>
             </tables>
-        </external>
-        <main>
+        </script>
+        <script context="main">
             <input>
                 select * from A, C where a = c;
             </input>
@@ -297,10 +297,10 @@
                     <node side="1" ref="1" />
                 </edge>
             </query-graph>
-        </main>
+        </script>
     </analyzer-dump>
     <analyzer-dump name="unresolved_1">
-        <external>
+        <script context="external">
             <input>
                 create table A (a int, b int);
                 create table B (d int, e int);
@@ -315,8 +315,8 @@
                     <column name="e" loc="87..92" text="e int" />
                 </table>
             </tables>
-        </external>
-        <main>
+        </script>
+        <script context="main">
             <input>
                 select * from A, B where a = c;
             </input>
@@ -335,14 +335,14 @@
                     <node side="1" ref="1" />
                 </edge>
             </query-graph>
-        </main>
+        </script>
     </analyzer-dump>
     <analyzer-dump name="unresolved_2">
-        <external>
+        <script context="external">
             <input />
             <tables />
-        </external>
-        <main>
+        </script>
+        <script context="main">
             <input>
                 select * from A;
             </input>
@@ -352,14 +352,14 @@
             </table-references>
             <column-references />
             <query-graph />
-        </main>
+        </script>
     </analyzer-dump>
     <analyzer-dump name="unresolved_3">
-        <external>
+        <script context="external">
             <input />
             <tables />
-        </external>
-        <main>
+        </script>
+        <script context="main">
             <input>
                 select * from A, B where c = d;
             </input>
@@ -378,10 +378,10 @@
                     <node side="1" ref="1" />
                 </edge>
             </query-graph>
-        </main>
+        </script>
     </analyzer-dump>
     <analyzer-dump name="nesting_1">
-        <external>
+        <script context="external">
             <input>
                 create table A (a int, b int);
                 create table B (d int, e int);
@@ -396,8 +396,8 @@
                     <column name="e" loc="87..92" text="e int" />
                 </table>
             </tables>
-        </external>
-        <main>
+        </script>
+        <script context="main">
             <input>
                 select * from A where not exists (select * from B where a = d);
             </input>
@@ -416,10 +416,10 @@
                     <node side="1" ref="1" />
                 </edge>
             </query-graph>
-        </main>
+        </script>
     </analyzer-dump>
     <analyzer-dump name="nesting_2">
-        <external>
+        <script context="external">
             <input>
                 create table A (a int, b int);
                 create table B (d int, e int);
@@ -434,8 +434,8 @@
                     <column name="e" loc="87..92" text="e int" />
                 </table>
             </tables>
-        </external>
-        <main>
+        </script>
+        <script context="main">
             <input>
                 select * from A where not exists (select * from A, B where a = d);
             </input>
@@ -455,6 +455,6 @@
                     <node side="1" ref="1" />
                 </edge>
             </query-graph>
-        </main>
+        </script>
     </analyzer-dump>
 </analyzer-dumps>
