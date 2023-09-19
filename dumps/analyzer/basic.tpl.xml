@@ -1,160 +1,160 @@
 <analyzer-dumps>
     <analyzer-dump name="empty">
-        <external>
+        <script context="external">  
             <input />
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input />
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="refs_0">
-        <external>
+        <script context="external">  
             <input>
                 create table A (a int, b int);
                 create table B (d int, e int);
             </input>
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
                 select * from A, B where a = b;
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="edges_0">
-        <external>
+        <script context="external">  
             <input>
                 create table A (a int, b int);
                 create table B (d int, e int);
             </input>
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
                 select * from A, B where a + d = e;
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="edges_1">
-        <external>
+        <script context="external">  
             <input>
                 create table A (a int, b int);
                 create table B (d int, e int);
             </input>
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
                 select * from A, B where a = d and b = e;
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="edges_2">
-        <external>
+        <script context="external">  
             <input>
                 create table A (a int, b int);
                 create table B (d int, e int);
             </input>
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
                 select * from A, B where (a = d and b = e) or (a = d and d = 42);
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="edges_3">
-        <external>
+        <script context="external">  
             <input>
                 create table A (a int, b int);
                 create table B (d int, e int);
             </input>
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
                 select * from A, B where a = (d + 42);
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="edges_4">
-        <external>
+        <script context="external">  
             <input>
                 create table A (a int, b int);
                 create table B (d int, e int);
             </input>
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
                 select * from A join B on (a = b);
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="unresolved_0">
-        <external>
+        <script context="external">  
             <input>
                 create table A (a int, b int);
                 create table B (d int, e int);
             </input>
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
                 select * from A, C where a = c;
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="unresolved_1">
-        <external>
+        <script context="external">  
             <input>
                 create table A (a int, b int);
                 create table B (d int, e int);
             </input>
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
                 select * from A, B where a = c;
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="unresolved_2">
-        <external>
+        <script context="external">  
             <input />
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
                 select * from A;
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="unresolved_3">
-        <external>
+        <script context="external">  
             <input />
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
                 select * from A, B where c = d;
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="nesting_1">
-        <external>
+        <script context="external">  
             <input>
                 create table A (a int, b int);
                 create table B (d int, e int);
             </input>
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
                 select * from A where not exists (select * from B where a = d);
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
     <analyzer-dump name="nesting_2">
-        <external>
+        <script context="external">  
             <input>
                 create table A (a int, b int);
                 create table B (d int, e int);
             </input>
-        </external>
-        <main>
+        </script>  
+        <script context="main">  
             <input>
                 select * from A where not exists (select * from A, B where a = d);
             </input>
-        </main>
+        </script>  
     </analyzer-dump>
 </analyzer-dumps>
