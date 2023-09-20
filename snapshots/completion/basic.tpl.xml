@@ -3,8 +3,20 @@
         <script context="external" />
         <script context="main" />
         <cursor context="main">
-            <search index="0" />
+            <search text="" index="0" />
         </cursor>
-        <completions limit="20" />
+        <completions limit="10" />
+    </completion-snapshot>
+    <completion-snapshot name="empty">
+        <script context="external">
+            create table foo(a int);
+        </script>
+        <script context="main">
+            select * from fo
+        </script>
+        <cursor context="main">
+            <search text="fo" index="2" />
+        </cursor>
+        <completions limit="10" />
     </completion-snapshot>
 </completion-snapshots>

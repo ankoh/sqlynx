@@ -30,6 +30,26 @@ std::vector<const CompletionSnapshotTest*> CompletionSnapshotTest::GetTests(std:
     return tests;
 }
 
+/// Encode a script
+void CompletionSnapshotTest::EncodeCompletion(pugi::xml_node root, const Completion& completion) {
+    for (auto& entry : completion.GetHeap().GetEntries()) {
+        auto xml_entry = root.append_child("entry");
+        std::string text{entry.value.name_text};
+        xml_entry.append_attribute("value").set_value(text.c_str());
+        xml_entry.append_attribute("score").set_value(entry.value.score);
+        xml_entry.append_attribute("count").set_value(entry.value.count);
+        std::stringstream tags;
+        size_t i = 0;
+        entry.value.name_tags.ForEach([&](proto::NameTag tag) {
+            if (i++ > 0) {
+                tags << ",";
+            }
+            tags << proto::EnumNameNameTag(tag);
+        });
+        xml_entry.append_attribute("tags").set_value(tags.str().c_str());
+    }
+}
+
 /// Get the grammar tests
 void CompletionSnapshotTest::LoadTests(std::filesystem::path& source_dir) {
     auto snapshots_dir = source_dir / "snapshots" / "completion";
@@ -73,8 +93,8 @@ void CompletionSnapshotTest::LoadTests(std::filesystem::path& source_dir) {
             auto xml_cursor = test.child("cursor");
             auto xml_cursor_search = xml_cursor.child("search");
             t.cursor_context = xml_cursor.attribute("context").value();
+            t.cursor_search_string = xml_cursor_search.attribute("text").value();
             t.cursor_search_index = xml_cursor_search.attribute("index").as_int();
-            t.cursor_search_string = xml_cursor_search.last_child().value();
 
             // Read the expected completions
             auto completions = test.child("completions");
