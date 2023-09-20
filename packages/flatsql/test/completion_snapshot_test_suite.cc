@@ -29,11 +29,13 @@ TEST_P(CompletionSnapshotTestSuite, Test) {
     ASSERT_EQ(external_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(external_script.Parse().second, proto::StatusCode::OK);
     ASSERT_EQ(external_script.Analyze().second, proto::StatusCode::OK);
+    ASSERT_EQ(external_script.Reindex(), proto::StatusCode::OK);
 
     // Analyze main script
     ASSERT_EQ(main_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(main_script.Parse().second, proto::StatusCode::OK);
     ASSERT_EQ(main_script.Analyze(&external_script).second, proto::StatusCode::OK);
+    ASSERT_EQ(main_script.Reindex(), proto::StatusCode::OK);
 
     size_t search_pos = 0;
     Script* target_script = nullptr;
@@ -55,9 +57,16 @@ TEST_P(CompletionSnapshotTestSuite, Test) {
 
     // Move cursor and get completion
     target_script->MoveCursor(cursor_pos);
-    auto [completion, completion_status] = target_script->CompleteAtCursor();
+    auto [completion, completion_status] = target_script->CompleteAtCursor(test->completion_limit);
     ASSERT_EQ(completion_status, proto::StatusCode::OK);
     ASSERT_NE(completion, nullptr);
+
+    pugi::xml_document out;
+    auto completions = out.append_child("completions");
+    completions.append_attribute("limit").set_value(test->completion_limit);
+    CompletionSnapshotTest::EncodeCompletion(completions, *completion);
+
+    ASSERT_TRUE(Matches(out, test->completions));
 }
 
 // clang-format off
