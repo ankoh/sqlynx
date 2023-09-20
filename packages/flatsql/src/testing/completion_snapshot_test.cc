@@ -32,15 +32,16 @@ std::vector<const CompletionSnapshotTest*> CompletionSnapshotTest::GetTests(std:
 
 /// Encode a script
 void CompletionSnapshotTest::EncodeCompletion(pugi::xml_node root, const Completion& completion) {
-    for (auto& entry : completion.GetHeap().GetEntries()) {
+    auto entries = completion.GetHeap().GetEntries();
+    for (auto iter = entries.rbegin(); iter != entries.rend(); ++iter) {
         auto xml_entry = root.append_child("entry");
-        std::string text{entry.value.name_text};
+        std::string text{iter->value.name_text};
         xml_entry.append_attribute("value").set_value(text.c_str());
-        xml_entry.append_attribute("score").set_value(entry.value.score);
-        xml_entry.append_attribute("count").set_value(entry.value.count);
+        xml_entry.append_attribute("score").set_value(iter->value.score);
+        xml_entry.append_attribute("count").set_value(iter->value.count);
         std::stringstream tags;
         size_t i = 0;
-        entry.value.name_tags.ForEach([&](proto::NameTag tag) {
+        iter->value.name_tags.ForEach([&](proto::NameTag tag) {
             if (i++ > 0) {
                 tags << ",";
             }
