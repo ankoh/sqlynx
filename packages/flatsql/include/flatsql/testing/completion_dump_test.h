@@ -26,10 +26,12 @@ struct CompletionDumpTest {
     std::string input_external;
     /// The script
     std::string input_main;
+    /// The cursor context
+    std::string cursor_context;
     /// The search string for the cursor
     std::string cursor_search_string;
     /// The search index for the cursor
-    std::string cursor_search_index;
+    size_t cursor_search_index;
     /// The completion limit
     size_t completion_limit;
     /// The completions

@@ -3,15 +3,8 @@
         <script context="external" />
         <script context="main" />
         <cursor context="main">
-            <search index="3">
-                fooo
-            </search>
+            <search index="0" />
         </cursor>
-        <completions limit="20">
-            <entry text="fooo" score="10" occurrences="4">
-                <tag value="SCHEMA_NAME" />
-                <tag value="DATABASE_NAME" />
-            </entry>
-        </completions>
+        <completions limit="20" />
     </completion-dump>
 </completion-dumps>
