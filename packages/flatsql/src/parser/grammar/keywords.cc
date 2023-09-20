@@ -28,7 +28,7 @@ constexpr frozen::unordered_map<frozen::string, Keyword, KEYWORD_COUNT> KEYWORD_
 constexpr size_t GetCompletionWeight(std::string_view text) {
 #define X(NAME, WEIGHT) \
     if (text == NAME) return WEIGHT;
-    X("and", 20)
+    X("and", 50)
     X("as", 20)
     X("between", 20)
     X("bigint", 20)
@@ -43,20 +43,20 @@ constexpr size_t GetCompletionWeight(std::string_view text) {
     X("exists", 20)
     X("float", 20)
     X("following", 20)
-    X("from", 20)
+    X("from", 50)
     X("group", 20)
     X("in", 20)
     X("integer", 20)
     X("like", 20)
     X("limit", 20)
     X("not", 20)
-    X("null", 20)
+    X("null", 50)
     X("order", 20)
     X("partition", 20)
     X("preceeding", 20)
     X("precision", 20)
     X("rows", 20)
-    X("select", 20)
+    X("select", 50)
     X("sum", 20)
     X("table", 20)
     X("time", 20)
@@ -65,7 +65,7 @@ constexpr size_t GetCompletionWeight(std::string_view text) {
     X("varchar", 20)
     X("view", 20)
     X("when", 20)
-    X("where", 20)
+    X("where", 50)
 #undef X
     return 0;
 };
