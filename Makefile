@@ -145,4 +145,4 @@ vscode_package:
 
 .PHONY: snapshots
 snapshots:
-	${LIB_DEBUG_DIR}/snapshot --source_dir .
+	${LIB_DEBUG_DIR}/snapshotter --source_dir .

@@ -5,7 +5,7 @@
             selec
         </script>
         <cursor context="main">
-            <search index="2">ec</search>
+            <search index="5">selec</search>
         </cursor>
         <completions limit="20" />
     </completion-snapshot>
