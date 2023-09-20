@@ -292,8 +292,8 @@ if(NOT WASM)
   add_executable(benchmark_layout benchmarks/benchmark_layout.cc)
   target_link_libraries(benchmark_layout flatsql flatsql_testutils benchmark gtest gflags Threads::Threads)
 
-  add_executable(snapshot tools/snapshot.cc)
-  target_link_libraries(snapshot flatsql flatsql_testutils pugixml gtest gflags Threads::Threads)
+  add_executable(snapshotter tools/snapshotter.cc)
+  target_link_libraries(snapshotter flatsql flatsql_testutils pugixml gtest gflags Threads::Threads)
 
   add_executable(sql2tpl tools/sql2tpl.cc)
   target_link_libraries(sql2tpl flatsql flatsql_testutils pugixml gtest gflags Threads::Threads)
