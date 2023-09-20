@@ -39,6 +39,15 @@ struct NameTags {
         value &= ~static_cast<ValueType>(tag);
         return *this;
     }
+
+    template <typename Fn> void ForEach(Fn f) const {
+        for (auto tag = proto::NameTag::KEYWORD; tag <= proto::NameTag::MAX;
+             tag = static_cast<proto::NameTag>(static_cast<uint8_t>(tag) << 1)) {
+            if (contains(tag)) {
+                f(tag);
+            }
+        }
+    }
 };
 static_assert(std::is_trivially_copyable<NameTags::ValueType>::value);
 static_assert(sizeof(NameTags::ValueType) == sizeof(NameTags));

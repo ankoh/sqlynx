@@ -408,7 +408,7 @@ std::pair<const ScriptCursor*, proto::StatusCode> Script::MoveCursor(size_t text
     return {cursor.get(), status};
 }
 /// Complete at the cursor
-std::pair<std::unique_ptr<Completion>, proto::StatusCode> Script::CompleteAtCursor() {
+std::pair<std::unique_ptr<Completion>, proto::StatusCode> Script::CompleteAtCursor(size_t limit) {
     // Fail if the user forgot to move the cursor
     if (cursor == nullptr) {
         return {nullptr, proto::StatusCode::COMPLETION_MISSES_CURSOR};
@@ -418,7 +418,7 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Script::CompleteAtCurs
         return {nullptr, proto::StatusCode::COMPLETION_MISSES_SCANNER_TOKEN};
     }
     // Compute the completion
-    return Completion::Compute(*cursor, 40);
+    return Completion::Compute(*cursor, limit);
 }
 
 static bool endsCursorPath(proto::Node& n) {

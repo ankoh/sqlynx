@@ -18,11 +18,11 @@ using ScoringTable = std::array<std::pair<proto::NameTag, Completion::ScoreValue
 static constexpr ScoringTable NAME_SCORE_DEFAULTS{{
     {proto::NameTag::NONE, 0},
     {proto::NameTag::KEYWORD, 10},
-    {proto::NameTag::SCHEMA_NAME, 10},
-    {proto::NameTag::DATABASE_NAME, 10},
-    {proto::NameTag::TABLE_NAME, 10},
-    {proto::NameTag::TABLE_ALIAS, 10},
-    {proto::NameTag::COLUMN_NAME, 10},
+    {proto::NameTag::SCHEMA_NAME, 20},
+    {proto::NameTag::DATABASE_NAME, 20},
+    {proto::NameTag::TABLE_NAME, 20},
+    {proto::NameTag::TABLE_ALIAS, 20},
+    {proto::NameTag::COLUMN_NAME, 20},
 }};
 
 static constexpr ScoringTable NAME_SCORE_TABLE_REF{{
@@ -141,6 +141,7 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(co
     for (auto& [key, value] : candidates) {
         completion->result_heap.Insert(value, value.score);
     }
+    completion->result_heap.Finish();
     return {std::move(completion), proto::StatusCode::OK};
 }
 
