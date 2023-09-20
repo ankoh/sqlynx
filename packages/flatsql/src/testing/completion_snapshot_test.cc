@@ -87,7 +87,6 @@ void CompletionSnapshotTest::LoadTests(std::filesystem::path& source_dir) {
             t.name = test.attribute("name").as_string();
             t.input_external = xml_external.last_child().value();
             t.input_main = xml_main.last_child().value();
-            std::cout << "SCRIPT MAIN: " << t.input_main << std::endl;
 
             // Read the cursor
             auto xml_cursor = test.child("cursor");
