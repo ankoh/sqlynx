@@ -68,7 +68,16 @@ void CompletionDumpTest::LoadTests(std::filesystem::path& source_dir) {
             t.input_external = xml_external.child("input").last_child().value();
             t.input_main = xml_main.child("input").last_child().value();
 
-            // XXX
+            // Read the cursor
+            auto xml_cursor = test.child("cursor");
+            auto xml_cursor_search = xml_cursor.child("search");
+            t.cursor_search_index = xml_cursor_search.attribute("index").as_int();
+            t.cursor_search_string = xml_cursor_search.value();
+
+            // Read the expected completions
+            auto completions = test.child("completions");
+            t.completion_limit = completions.attribute("limit").as_int();
+            t.completions.append_copy(completions);
         }
 
         std::cout << "[ SETUP    ] " << filename << ": " << tests.size() << " tests" << std::endl;
