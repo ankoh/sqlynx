@@ -142,7 +142,7 @@ struct FormatTestSuite : public ::testing::TestWithParam<std::filesystem::path> 
 void operator<<(std::ostream& out, const std::filesystem::path& p) { out << p; }
 
 TEST_P(FormatTestSuite, Test) {
-    std::filesystem::path filePath = source_dir / "dumps" / "format" / GetParam();
+    std::filesystem::path filePath = source_dir / "snapshots" / "format" / GetParam();
     std::string fileContent = readFile(filePath);
     TestCase test = TestCase::parse(fileContent);
 
@@ -183,6 +183,6 @@ auto printFilePathTestName = [](const ::testing::TestParamInfo<std::filesystem::
 };
 
 // clang-format off
-INSTANTIATE_TEST_SUITE_P(Format, FormatTestSuite, ::testing::ValuesIn(listTestFiles(source_dir / "dumps" / "format")), printFilePathTestName);
+INSTANTIATE_TEST_SUITE_P(Format, FormatTestSuite, ::testing::ValuesIn(listTestFiles(source_dir / "snapshots" / "format")), printFilePathTestName);
 
 } // namespace

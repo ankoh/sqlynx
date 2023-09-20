@@ -1,0 +1,878 @@
+<parser-snapshots>
+    <parser-snapshot name="select_null">
+        <input>
+            select null 
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_iconst_1">
+        <input>
+            select 1
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_fconst_1e04">
+        <input>
+            select 1e-04
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_bconst_b1010">
+        <input>
+            select b'1010'
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_sconst_string">
+        <input>
+            select string
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_sconst_string_latin1">
+        <input>
+            select äöü
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_sconst_string_unicode_plane1">
+        <input>
+            select 📈
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_1_gt_2">
+        <input>
+            select 1 > 2
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_sconst_quotes">
+        <input>
+            select 'foo'
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_sconst_quotes_nested_quote">
+        <input>
+            select '''foo'''
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_sconst_quotes_nested_dquote">
+        <input>
+            select '"foo"'
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_iconst_1_ident">
+        <input>
+            select 1 "foo"
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="comments_cstyle">
+        <input>
+            /* foo */
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="comments_cstyle_nested">
+        <input>
+            /* foo /* bar */ */
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_iconst_list">
+        <input>
+            select 1, 2
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_from_1rel">
+        <input>
+            select a from b
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_from_1rel_indirect1">
+        <input>
+            select a from b.c
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_from_1rel_indirect1_noinherit">
+        <input>
+            select a from only b.c
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_from_1rel_indirect1_alias">
+        <input>
+            select a from b.c as d
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_from_2rel">
+        <input>
+            select a from b, c
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_from_into_2rel">
+        <input>
+            select a into b from c, d
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_from_1rel_group1">
+        <input>
+            select a from b group by 1
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_from_1rel_window_empty">
+        <input>
+            select a from b window c as ()
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_from_1rel_window_partition1">
+        <input>
+            select a from b window c as (partition by d)
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_from_1rel_window_partition1_rows_unbounded">
+        <input>
+            select a from b
+            window c as (partition by d rows between unbounded preceding and unbounded following)
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_from_1rel_window_partition1_rows_1preceding_current">
+        <input>
+            select a from b
+            window c as (partition by d rows between 1 preceding and current row)
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_from_1rel_2windows">
+        <input>
+            select a from b
+            window c as (partition by d range between current row and 1 following),
+                    e as (partition by f)
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_distinct_from_1rel">
+        <input>
+            select distinct a from b
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_distinct_on_from_1rel">
+        <input>
+            select distinct on (a) a from b
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_all_from_1rel">
+        <input>
+            select all from b
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="values_1">
+        <input>
+            values (1)
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="values_1_2">
+        <input>
+            values (1), (2);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="values_12_34">
+        <input>
+            values (1, 2), (3, 4)
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="table_a">
+        <input>
+            TABLE a
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="union_select1_select2">
+        <input>
+            SELECT 1 UNION SELECT 2
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="union_all_select1_select2">
+        <input>
+            SELECT 1 UNION ALL SELECT 2
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="union_distinct_select1_select2">
+        <input>
+            SELECT 1 UNION DISTINCT SELECT 2
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="intersect_select1_select2">
+        <input>
+            SELECT 1 INTERSECT SELECT 2
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="with_1cte_select2">
+        <input>
+            WITH a AS (SELECT 1) SELECT 2
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="with_2ctes_select3">
+        <input>
+            WITH a AS (SELECT 1), b AS (SELECT 2) SELECT 3
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="with_recursive_2ctes_select3">
+        <input>
+            WITH RECURSIVE a AS (SELECT 1), b AS (SELECT 2) SELECT 3
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_a_orderby_b">
+        <input>
+            select a order by b
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_a_orderby_b_c">
+        <input>
+            select a order by b, c
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_a_orderby_b_c_directions">
+        <input>
+            select a order by b asc, c desc
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_a_orderby_b_c_directions_nulls">
+        <input>
+            select a order by b asc nulls first, c desc nulls last
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_table_ref">
+        <input>
+            select 1 into b;
+            select 1 from b;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_table_ref_1">
+        <input>
+            select * from A a, B b where a.x = b.y
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_column_ref_expr_1">
+        <input>
+            select 1 into b;
+            select c from b where c = $a + 1
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_column_ref_expr_2">
+        <input>
+            select * into countries_joined from country1_weather c1, country2_weather c2 where c1.month = c2.month and c2.month = $month
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_generate_series">
+        <input>
+            select v into a FROM generate_series(0, 10000) as t(v);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_functable">
+        <input>
+            select * from somefunc('somearg') foo;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_funcconst_1">
+        <input>
+            select somefunc 'foo';
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_funcconst_2">
+        <input>
+            select somefunc(1) 'foo';
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_const_typename_cast">
+        <input>
+            select integer '1';
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_const_interval_1">
+        <input>
+            select interval '90' minute to second;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_const_interval_2">
+        <input>
+            select interval '90' hour;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_const_interval_3">
+        <input>
+            select interval 1 hour;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="sql_datetime_type_1">
+        <input>
+            select cast('1' as timestamp with time zone);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="sql_datetime_type_2">
+        <input>
+            select cast('1' as timestamp (2) with time zone);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="sql_datetime_type_3">
+        <input>
+            select cast('1' as time with time zone);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="sql_datetime_type_4">
+        <input>
+            select cast('1' as time (2) with time zone);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="sql_interval_type_1">
+        <input>
+            select cast('1' as interval year);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="sql_interval_type_2">
+        <input>
+            select cast('1' as interval(2));
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="sql_generic_type_1">
+        <input>
+            select cast('1' as sometype);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="sql_bit_type_1">
+        <input>
+            select cast('1' as bit);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="sql_bit_type_2">
+        <input>
+            select cast('1' as bit(2));
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="sql_bit_type_3">
+        <input>
+            select cast('1' as bit varying(2));
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_operators_1">
+        <input>
+            select 1 operator(someschema.+) 2;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_between_1">
+        <input>
+            select 1 between 0 and 3;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_between_2">
+        <input>
+            select 1 between asymmetric 0 and 3;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_between_3">
+        <input>
+            select 1 not between 0 and 3;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_between_4">
+        <input>
+            select 1 not between asymmetric 0 and 3;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_between_5">
+        <input>
+            select 1 between symmetric 0 and 3;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_between_6">
+        <input>
+            select 1 not between symmetric 0 and 3;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_attimezone_1">
+        <input>
+            select '2001-02-16 20:38:40' at time zone 'mst';
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_typecast_1">
+        <input>
+            select 1::integer;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_collate_1">
+        <input>
+            select 1 collate foo;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_overlaps_1">
+        <input>
+            select (date '2021-01-10', date '2021-02-01') overlaps (date '2021-01-20', date '2021-02-10');
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_distinct_1">
+        <input>
+            select a is distinct from b;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_distinct_2">
+        <input>
+            select a is not distinct from b;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_isof_1">
+        <input>
+            select a is of (integer);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_isof_2">
+        <input>
+            select a is not of (integer);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_case_1">
+        <input>
+            select case a
+                when 1 then 2
+                when 2 then 3
+            end;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_case_2">
+        <input>
+            select case a
+                when 1 then 2
+                else  3
+            end;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_param_2">
+        <input>
+            select $1 from c
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_func_1">
+        <input>
+            select somefunc(1)
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_func_2">
+        <input>
+            select somefunc(1) over (partition by c)
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_func_3">
+        <input>
+            select somefunc(1) within group (order by c)
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_func_4">
+        <input>
+            select somefunc(1) filter (where a = b)
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_select_1">
+        <input>
+            select (select 1)
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_select_2">
+        <input>
+            select (select a from b).foo
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_select_3">
+        <input>
+            select exists (select a)
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_indirection_1">
+        <input>
+            select (a).foo
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_in_1">
+        <input>
+            select a in (select 1)
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_in_2">
+        <input>
+            select a in (2, 3)
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_subquery_1">
+        <input>
+            select a like all (select 1);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_subquery_2">
+        <input>
+            select a like any (select 1);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_subquery_3">
+        <input>
+            select a like some (select 1);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_subquery_4">
+        <input>
+            select a like some (foo('bar'));
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_default">
+        <input>
+            select somefunc(default);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_1">
+        <input>
+            select current_date;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_2">
+        <input>
+            select current_time;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_3">
+        <input>
+            select current_timestamp;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_4">
+        <input>
+            select localtime;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_5">
+        <input>
+            select localtimestamp;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_7">
+        <input>
+            select current_time(42);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_8">
+        <input>
+            select current_timestamp(42);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_9">
+        <input>
+            select localtime(42);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_10">
+        <input>
+            select localtimestamp(42);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_11">
+        <input>
+            select current_role;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_12">
+        <input>
+            select current_user;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_13">
+        <input>
+            select session_user;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_14">
+        <input>
+            select user;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_15">
+        <input>
+            select current_catalog;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_16">
+        <input>
+            select current_schema;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_17">
+        <input>
+            select cast(1 as integer);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_18">
+        <input>
+            select treat(1 as integer);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_19">
+        <input>
+            select nullif(a, 1);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_20">
+        <input>
+            select coalesce(a, b);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_21">
+        <input>
+            select trim(both 'foo');
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_22">
+        <input>
+            select trim(both from 'foo');
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_23">
+        <input>
+            select trim(both ' \n' from 'foo');
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_24">
+        <input>
+            select trim(both ' \n' from 'foo', 'bar');
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_25">
+        <input>
+            select trim(leading from 'foo');
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_26">
+        <input>
+            select trim(trailing from 'foo');
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_27">
+        <input>
+            select trim('foo');
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_28">
+        <input>
+            select extract(day from a) from foo;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_28_1">
+        <input>
+            select extract(year from timestamp '2016-12-31 13:30:15');
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_29">
+        <input>
+            select substring('foobar' from 1 for 2);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_30">
+        <input>
+            select substring('foobar' from 1);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_31">
+        <input>
+            select substring('foobar' for 1);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_32">
+        <input>
+            select substring('foobar', 1, 4);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_33">
+        <input>
+            select substring('foobar', 1);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_34">
+        <input>
+            select position('bar' in 'foobar');
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_knownfunc_35">
+        <input>
+            SELECT overlay('foooooooooooooooooo' placing 'bar' from 3);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_table_func_1">
+        <input>
+            SELECT * FROM generate_series(1);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_table_func_2">
+        <input>
+            SELECT * FROM generate_series(1) WITH ORDINALITY;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_table_func_3">
+        <input>
+            SELECT * FROM ROWS FROM (generate_series(1), generate_series(2));
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_table_func_4">
+        <input>
+            SELECT * FROM ROWS FROM (generate_series(1) as (a integer), generate_series(2) as (a integer));
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_table_func_5">
+        <input>
+            SELECT * FROM
+                ROWS FROM (
+                    generate_series(1) as (a varchar collate "de_DE"),
+                    generate_series(2) as (a varchar collate "de_DE")
+                );
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_sample_1">
+        <input>
+            SELECT * FROM tbl USING SAMPLE 5;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_sample_2">
+        <input>
+            SELECT * FROM tbl USING SAMPLE 10%;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_sample_3">
+        <input>
+            SELECT * FROM tbl USING SAMPLE 10 PERCENT (bernoulli);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_sample_4">
+        <input>
+            SELECT * FROM tbl USING SAMPLE reservoir(50 ROWS) REPEATABLE (100);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_sample_5">
+        <input>
+            SELECT * FROM tbl USING SAMPLE 10% (system, 377);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_sample_6">
+        <input>
+            SELECT * FROM tbl TABLESAMPLE RESERVOIR(20%), tbl2 WHERE tbl.i=tbl2.i;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_sample_7">
+        <input>
+            SELECT * FROM tbl, tbl2 WHERE tbl.i=tbl2.i USING SAMPLE RESERVOIR(20%);
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_join_1">
+        <input>
+            SELECT * FROM a INNER JOIN b ON c = d
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_join_2">
+        <input>
+            SELECT * FROM a JOIN b ON c = d
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_join_3">
+        <input>
+            SELECT * FROM a CROSS JOIN b
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_join_4">
+        <input>
+            SELECT * FROM a NATURAL JOIN b
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_join_5">
+        <input>
+            SELECT * FROM a LEFT OUTER JOIN b ON c = d
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_join_6">
+        <input>
+            SELECT * FROM a LEFT JOIN b ON foo = d
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_join_7">
+        <input>
+            SELECT * FROM a RIGHT JOIN b ON c = d
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_join_8">
+        <input>
+            SELECT * FROM a FULL OUTER JOIN b ON c = d
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_join_9">
+        <input>
+            SELECT * FROM a INNER JOIN b USING (c, d)
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_row_locking_1">
+        <input>
+            SELECT * FROM (SELECT * FROM mytable FOR UPDATE) ss WHERE col1 = 5;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_row_locking_2">
+        <input>
+            SELECT * FROM (SELECT * FROM mytable FOR NO KEY UPDATE) ss WHERE col1 = 5;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_row_locking_3">
+        <input>
+            SELECT * FROM (SELECT * FROM mytable FOR SHARE) ss WHERE col1 = 5;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_row_locking_4">
+        <input>
+            SELECT * FROM (SELECT * FROM mytable FOR KEY SHARE) ss WHERE col1 = 5;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_row_locking_5">
+        <input>
+            SELECT * FROM (SELECT * FROM mytable FOR READ ONLY) ss WHERE col1 = 5;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_row_locking_6">
+        <input>
+            SELECT * FROM (SELECT * FROM mytable FOR UPDATE OF foo) ss WHERE col1 = 5;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_row_locking_7">
+        <input>
+            SELECT * FROM (SELECT * FROM mytable FOR UPDATE OF foo NOWAIT) ss WHERE col1 = 5;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_limit_1">
+        <input>
+            SELECT * FROM foo LIMIT 42
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_limit_2">
+        <input>
+            SELECT * FROM foo LIMIT 42 OFFSET 21
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_limit_3">
+        <input>
+            SELECT * FROM foo LIMIT ALL
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_limit_4">
+        <input>
+            SELECT * FROM foo LIMIT ALL OFFSET 21
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_limit_5">
+        <input>
+            SELECT * FROM foo FETCH FIRST 42 ROWS ONLY
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_limit_6">
+        <input>
+            SELECT * FROM foo FETCH FIRST 1 ROW ONLY
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_limit_7">
+        <input>
+            SELECT * FROM foo FETCH NEXT 1 ROW ONLY
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_limit_8">
+        <input>
+            SELECT * FROM foo LIMIT ALL, 21
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="select_alias_1">
+        <input>
+            select v into a FROM somefunc() as t(a integer);
+        </input>
+    </parser-snapshot>
+</parser-snapshots>

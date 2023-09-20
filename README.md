@@ -34,8 +34,8 @@ make core_js_o3           # Build js bundle with wasm module and js api
 make core_native_tests    # Run native tests
 make core_js_tests        # Run js tests using the wasm module
 
-make parser_dumps         # Update parser dumps in dumps/parser
-make analyzer_dumps       # Update analyzer dumps in dumps/analyzer
+make parser_snapshots         # Update parser snapshots in snapshots/parser
+make analyzer_snapshots       # Update analyzer snapshots in snapshots/analyzer
 
 make benchmark_pipeline   # Benchmark the processing pipeline
 make benchmark_layout     # Benchmark the schema graph layout

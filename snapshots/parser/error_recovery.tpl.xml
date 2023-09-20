@@ -1,0 +1,43 @@
+<parser-snapshots>
+    <parser-snapshot name="recovery_stmts_0">
+        <input>
+            SELEC 1;
+            SELECT 1;
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="recovery_expr_0">
+        <input>
+            SELECT * FROM A WHERE x + (something invalid)
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="recovery_interactive_1">
+        <input>
+            SELECT a. FROM A
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="recovery_interactive_2">
+        <input>
+            SELECT a FROM
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="recovery_interactive_3">
+        <input>
+            SELECT a FRO
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="recovery_interactive_4">
+        <input>
+            SELECT  FROM A
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="recovery_interactive_5">
+        <input>
+            SELECT * FROM A WHER
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="recovery_interactive_6">
+        <input>
+            SELECT * FROM A WHERE
+        </input>
+    </parser-snapshot>
+</parser-snapshots>

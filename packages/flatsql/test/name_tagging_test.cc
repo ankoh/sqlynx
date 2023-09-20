@@ -13,7 +13,7 @@ using namespace flatsql;
 
 namespace {
 
-std::string dump(std::span<const ScannedScript::Name> names) {
+std::string snapshot(std::span<const ScannedScript::Name> names) {
     std::stringstream out;
     size_t i = 0;
     out << "[";
@@ -59,7 +59,7 @@ TEST_P(TestNameTags, Test) {
     auto [analyzed, analyzer_status] = Analyzer::Analyze(parsed, nullptr);
     ASSERT_EQ(analyzer_status, proto::StatusCode::OK);
 
-    ASSERT_EQ(scanned->name_dictionary.size(), GetParam().expected.size()) << dump(scanned->name_dictionary);
+    ASSERT_EQ(scanned->name_dictionary.size(), GetParam().expected.size()) << snapshot(scanned->name_dictionary);
     size_t i = 0;
     for (auto [name, tags] : GetParam().expected) {
         SCOPED_TRACE(i);

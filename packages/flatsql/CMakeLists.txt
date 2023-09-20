@@ -257,24 +257,24 @@ target_link_libraries(flatsql flatsql_version flatbuffers frozen ankerl utf8proc
 # Tester
 if(NOT WASM)
   add_library(flatsql_testutils
-    ${CMAKE_SOURCE_DIR}/src/testing/analyzer_dump_test.cc
-    ${CMAKE_SOURCE_DIR}/src/testing/completion_dump_test.cc
-    ${CMAKE_SOURCE_DIR}/src/testing/parser_dump_test.cc
+    ${CMAKE_SOURCE_DIR}/src/testing/analyzer_snapshot_test.cc
+    ${CMAKE_SOURCE_DIR}/src/testing/completion_snapshot_test.cc
+    ${CMAKE_SOURCE_DIR}/src/testing/parser_snapshot_test.cc
     ${CMAKE_SOURCE_DIR}/src/testing/xml_tests.cc
   )
   target_link_libraries(flatsql_testutils flatsql pugixml gtest)
 
   set(TEST_SRC
-    ${CMAKE_SOURCE_DIR}/test/analyzer_dump_test_suite.cc
+    ${CMAKE_SOURCE_DIR}/test/analyzer_snapshot_test_suite.cc
     ${CMAKE_SOURCE_DIR}/test/api_test.cc
     ${CMAKE_SOURCE_DIR}/test/chunk_buffer_test.cc
-    ${CMAKE_SOURCE_DIR}/test/completion_dump_test_suite.cc
+    ${CMAKE_SOURCE_DIR}/test/completion_snapshot_test_suite.cc
     ${CMAKE_SOURCE_DIR}/test/completion_test.cc
     ${CMAKE_SOURCE_DIR}/test/cursor_test.cc
     ${CMAKE_SOURCE_DIR}/test/format_test_suite.cc
     ${CMAKE_SOURCE_DIR}/test/keywords_test.cc
     ${CMAKE_SOURCE_DIR}/test/name_tagging_test.cc
-    ${CMAKE_SOURCE_DIR}/test/parser_dump_test_suite.cc
+    ${CMAKE_SOURCE_DIR}/test/parser_snapshot_test_suite.cc
     ${CMAKE_SOURCE_DIR}/test/parser_test.cc
     ${CMAKE_SOURCE_DIR}/test/rope_test.cc
     ${CMAKE_SOURCE_DIR}/test/scanner_test.cc
@@ -292,14 +292,8 @@ if(NOT WASM)
   add_executable(benchmark_layout benchmarks/benchmark_layout.cc)
   target_link_libraries(benchmark_layout flatsql flatsql_testutils benchmark gtest gflags Threads::Threads)
 
-  add_executable(dump_parser tools/dump_parser.cc)
-  target_link_libraries(dump_parser flatsql flatsql_testutils pugixml gtest gflags Threads::Threads)
-
-  add_executable(dump_analyzer tools/dump_analyzer.cc)
-  target_link_libraries(dump_analyzer flatsql flatsql_testutils pugixml gtest gflags Threads::Threads)
-
-  add_executable(dump_completion tools/dump_completion.cc)
-  target_link_libraries(dump_completion flatsql flatsql_testutils pugixml gtest gflags Threads::Threads)
+  add_executable(snapshot tools/snapshot.cc)
+  target_link_libraries(snapshot flatsql flatsql_testutils pugixml gtest gflags Threads::Threads)
 
   add_executable(sql2tpl tools/sql2tpl.cc)
   target_link_libraries(sql2tpl flatsql flatsql_testutils pugixml gtest gflags Threads::Threads)

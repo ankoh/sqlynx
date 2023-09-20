@@ -1,0 +1,10 @@
+<completion-snapshots>
+    <completion-snapshot name="empty">
+        <script context="external" />
+        <script context="main" />
+        <cursor context="main">
+            <search index="0" />
+        </cursor>
+        <completions limit="20" />
+    </completion-snapshot>
+</completion-snapshots>

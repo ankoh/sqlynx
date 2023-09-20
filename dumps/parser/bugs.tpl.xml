@@ -1,7 +1,0 @@
-<parser-dumps>
-    <parser-dump name="regr_minus_interval">
-        <input>
-            select date '1998-12-01' - interval '90' day
-        </input>
-    </parser-dump>
-</parser-dumps>
