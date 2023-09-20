@@ -7,16 +7,16 @@
             <search text="s" index="1" />
         </cursor>
         <completions limit="10">
-            <entry value="names" score="10" count="0" tags="KEYWORD" />
-            <entry value="returns" score="10" count="0" tags="KEYWORD" />
             <entry value="views" score="10" count="0" tags="KEYWORD" />
-            <entry value="xmlexists" score="10" count="0" tags="KEYWORD" />
-            <entry value="rows" score="10" count="0" tags="KEYWORD" />
-            <entry value="indexes" score="10" count="0" tags="KEYWORD" />
             <entry value="class" score="10" count="0" tags="KEYWORD" />
             <entry value="characteristics" score="10" count="0" tags="KEYWORD" />
-            <entry value="depends" score="10" count="0" tags="KEYWORD" />
-            <entry value="xmlnamespaces" score="10" count="0" tags="KEYWORD" />
+            <entry value="precision" score="30" count="0" tags="KEYWORD" />
+            <entry value="case" score="30" count="0" tags="KEYWORD" />
+            <entry value="select" score="30" count="0" tags="KEYWORD" />
+            <entry value="timestamp" score="30" count="0" tags="KEYWORD" />
+            <entry value="exists" score="30" count="0" tags="KEYWORD" />
+            <entry value="as" score="30" count="0" tags="KEYWORD" />
+            <entry value="rows" score="30" count="0" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="se">
@@ -27,16 +27,16 @@
             <search text="se" index="2" />
         </cursor>
         <completions limit="10">
-            <entry value="false" score="10" count="0" tags="KEYWORD" />
-            <entry value="case" score="10" count="0" tags="KEYWORD" />
             <entry value="database" score="10" count="0" tags="KEYWORD" />
-            <entry value="else" score="10" count="0" tags="KEYWORD" />
             <entry value="xmlparse" score="10" count="0" tags="KEYWORD" />
+            <entry value="else" score="10" count="0" tags="KEYWORD" />
+            <entry value="analyse" score="10" count="0" tags="KEYWORD" />
             <entry value="release" score="10" count="0" tags="KEYWORD" />
             <entry value="verbose" score="10" count="0" tags="KEYWORD" />
             <entry value="close" score="10" count="0" tags="KEYWORD" />
-            <entry value="analyse" score="10" count="0" tags="KEYWORD" />
             <entry value="search" score="10" count="0" tags="KEYWORD" />
+            <entry value="select" score="30" count="0" tags="KEYWORD" />
+            <entry value="case" score="30" count="0" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="sel">
@@ -48,7 +48,7 @@
         </cursor>
         <completions limit="10">
             <entry value="sel" score="0" count="0" tags="" />
-            <entry value="select" score="10" count="0" tags="KEYWORD" />
+            <entry value="select" score="30" count="0" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="selec">
@@ -60,7 +60,7 @@
         </cursor>
         <completions limit="10">
             <entry value="selec" score="0" count="0" tags="" />
-            <entry value="select" score="10" count="0" tags="KEYWORD" />
+            <entry value="select" score="30" count="0" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
 </completion-snapshots>
