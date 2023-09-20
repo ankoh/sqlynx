@@ -1,5 +1,6 @@
 #include "flatsql/parser/grammar/keywords.h"
 
+#include "flatsql/analyzer/completion.h"
 #include "frozen/string.h"
 #include "frozen/unordered_map.h"
 
@@ -16,7 +17,7 @@ constexpr size_t KEYWORD_COUNT = 0
     ;
 
 constexpr frozen::unordered_map<frozen::string, Keyword, KEYWORD_COUNT> KEYWORD_MAP = {
-#define X(CATEGORY, NAME, TOKEN) {NAME, Keyword{NAME, Parser::token::FQL_##TOKEN, KeywordCategory::CATEGORY}},
+#define X(CATEGORY, NAME, TOKEN) {NAME, Keyword{NAME, Parser::token::FQL_##TOKEN, KeywordCategory::CATEGORY, 0}},
 #include "../../../grammar/lists/sql_column_name_keywords.list"
 #include "../../../grammar/lists/sql_reserved_keywords.list"
 #include "../../../grammar/lists/sql_type_func_keywords.list"
@@ -24,9 +25,54 @@ constexpr frozen::unordered_map<frozen::string, Keyword, KEYWORD_COUNT> KEYWORD_
 #undef X
 };
 
+constexpr size_t GetCompletionWeight(std::string_view text) {
+#define X(NAME, WEIGHT) \
+    if (text == NAME) return WEIGHT;
+    X("and", 20)
+    X("as", 20)
+    X("between", 20)
+    X("bigint", 20)
+    X("by", 20)
+    X("case", 20)
+    X("char", 20)
+    X("count", 20)
+    X("create", 20)
+    X("date", 20)
+    X("double", 20)
+    X("end", 20)
+    X("exists", 20)
+    X("float", 20)
+    X("following", 20)
+    X("from", 20)
+    X("group", 20)
+    X("in", 20)
+    X("integer", 20)
+    X("like", 20)
+    X("limit", 20)
+    X("not", 20)
+    X("null", 20)
+    X("order", 20)
+    X("partition", 20)
+    X("preceeding", 20)
+    X("precision", 20)
+    X("rows", 20)
+    X("select", 20)
+    X("sum", 20)
+    X("table", 20)
+    X("time", 20)
+    X("timestamp", 20)
+    X("tinyint", 20)
+    X("varchar", 20)
+    X("view", 20)
+    X("when", 20)
+    X("where", 20)
+#undef X
+    return 0;
+};
+
 const constexpr std::array<Keyword, KEYWORD_COUNT> SortKeywords() {
     std::array<Keyword, KEYWORD_COUNT> keywords{
-#define X(CATEGORY, NAME, TOKEN) Keyword{NAME, Parser::token::FQL_##TOKEN, KeywordCategory::CATEGORY},
+#define X(CATEGORY, NAME, TOKEN) Keyword{NAME, Parser::token::FQL_##TOKEN, KeywordCategory::CATEGORY, 0},
 #include "../../../grammar/lists/sql_column_name_keywords.list"
 #include "../../../grammar/lists/sql_reserved_keywords.list"
 #include "../../../grammar/lists/sql_type_func_keywords.list"
@@ -34,6 +80,9 @@ const constexpr std::array<Keyword, KEYWORD_COUNT> SortKeywords() {
 #undef X
     };
     std::sort(keywords.begin(), keywords.end(), [](auto& l, auto& r) { return l.name < r.name; });
+    for (auto& keyword : keywords) {
+        keyword.completion_weight = GetCompletionWeight(keyword.name);
+    }
     return keywords;
 };
 static const std::array<Keyword, KEYWORD_COUNT> SORTED_KEYWORDS = SortKeywords();
