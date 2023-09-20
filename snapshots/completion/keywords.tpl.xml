@@ -1,12 +1,42 @@
 <completion-snapshots>
+    <completion-snapshot name="s">
+        <script context="external" />
+        <script context="main">
+            s
+        </script>
+        <cursor context="main">
+            <search text="s" index="1" />
+        </cursor>
+        <completions limit="10" />
+    </completion-snapshot>
+    <completion-snapshot name="se">
+        <script context="external" />
+        <script context="main">
+            se
+        </script>
+        <cursor context="main">
+            <search text="se" index="2" />
+        </cursor>
+        <completions limit="10" />
+    </completion-snapshot>
+    <completion-snapshot name="sel">
+        <script context="external" />
+        <script context="main">
+            sel
+        </script>
+        <cursor context="main">
+            <search text="sel" index="3" />
+        </cursor>
+        <completions limit="10" />
+    </completion-snapshot>
     <completion-snapshot name="selec">
         <script context="external" />
         <script context="main">
             selec
         </script>
         <cursor context="main">
-            <search index="5">selec</search>
+            <search text="selec" index="5" />
         </cursor>
-        <completions limit="20" />
+        <completions limit="10" />
     </completion-snapshot>
 </completion-snapshots>

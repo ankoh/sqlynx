@@ -35,26 +35,23 @@ TEST_P(CompletionSnapshotTestSuite, Test) {
     ASSERT_EQ(main_script.Parse().second, proto::StatusCode::OK);
     ASSERT_EQ(main_script.Analyze(&external_script).second, proto::StatusCode::OK);
 
-    size_t cursor_pos = 0;
+    size_t search_pos = 0;
     Script* target_script = nullptr;
 
     if (test->cursor_context == "main") {
-        auto search_pos = test->input_main.find(test->cursor_search_string);
-        ASSERT_NE(search_pos, std::string::npos);
-        auto cursor_pos = search_pos + test->cursor_search_index;
-        ASSERT_LE(cursor_pos, test->input_main.size()) << test->input_main;
+        search_pos = test->input_main.find(test->cursor_search_string);
         target_script = &main_script;
 
     } else if (test->cursor_context == "external") {
-        auto search_pos = test->input_external.find(test->cursor_search_string);
-        ASSERT_NE(search_pos, std::string::npos);
-        auto cursor_pos = search_pos + test->cursor_search_index;
-        ASSERT_LE(cursor_pos, test->input_external.size());
+        search_pos = test->input_external.find(test->cursor_search_string);
         target_script = &external_script;
 
     } else {
         FAIL() << "unexpected cursor context " << test->cursor_context;
     }
+    auto cursor_pos = search_pos + test->cursor_search_index;
+    ASSERT_NE(search_pos, std::string::npos);
+    ASSERT_LE(cursor_pos, test->input_main.size()) << test->input_main;
 
     // Move cursor and get completion
     target_script->MoveCursor(cursor_pos);
