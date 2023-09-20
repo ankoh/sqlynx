@@ -2,6 +2,7 @@
 
 #include "flatsql/parser/parse_context.h"
 #include "flatsql/testing/analyzer_dump_test.h"
+#include "flatsql/testing/completion_dump_test.h"
 #include "flatsql/testing/parser_dump_test.h"
 #include "gflags/gflags.h"
 #include "gtest/gtest.h"
@@ -28,6 +29,7 @@ int main(int argc, char* argv[]) {
     update_expecteds = FLAGS_update_expecteds;
     ParserDumpTest::LoadTests(source_dir);
     AnalyzerDumpTest::LoadTests(source_dir);
+    CompletionDumpTest::LoadTests(source_dir);
 
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

@@ -71,6 +71,7 @@ void CompletionDumpTest::LoadTests(std::filesystem::path& source_dir) {
             // Read the cursor
             auto xml_cursor = test.child("cursor");
             auto xml_cursor_search = xml_cursor.child("search");
+            t.cursor_context = xml_cursor.attribute("context").value();
             t.cursor_search_index = xml_cursor_search.attribute("index").as_int();
             t.cursor_search_string = xml_cursor_search.value();
 
