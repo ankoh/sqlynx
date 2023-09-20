@@ -102,19 +102,27 @@ class CompletionIndex {
         NameTags name_tags;
         /// The number of occurrences
         size_t occurrences;
+        /// The completion weight
+        size_t completion_weight;
 
         /// Constructor
         Entry(StringView suffix = "", std::string_view name_text = {}, QualifiedID name_id = {}, NameTags tags = 0,
-              size_t occurrences = 0)
-            : suffix(suffix), name_text(name_text), name_id(name_id), name_tags(tags), occurrences(occurrences) {}
+              size_t occurrences = 0, size_t completion_weight = 0)
+            : suffix(suffix),
+              name_text(name_text),
+              name_id(name_id),
+              name_tags(tags),
+              occurrences(occurrences),
+              completion_weight(completion_weight) {}
         /// Constructor
         Entry(std::string_view suffix, std::string_view name_text = {}, QualifiedID name_id = {}, NameTags tags = 0,
-              size_t occurrences = 0)
+              size_t occurrences = 0, size_t completion_weight = 0)
             : suffix(suffix.data(), suffix.length()),
               name_text(name_text),
               name_id(name_id),
               name_tags(tags),
-              occurrences(occurrences) {}
+              occurrences(occurrences),
+              completion_weight(completion_weight) {}
     };
 
     /// Constructor

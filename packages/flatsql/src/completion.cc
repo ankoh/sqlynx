@@ -18,30 +18,30 @@ using ScoringTable = std::array<std::pair<proto::NameTag, Completion::ScoreValue
 static constexpr ScoringTable NAME_SCORE_DEFAULTS{{
     {proto::NameTag::NONE, 0},
     {proto::NameTag::KEYWORD, 10},
-    {proto::NameTag::SCHEMA_NAME, 20},
-    {proto::NameTag::DATABASE_NAME, 20},
-    {proto::NameTag::TABLE_NAME, 20},
-    {proto::NameTag::TABLE_ALIAS, 20},
-    {proto::NameTag::COLUMN_NAME, 20},
+    {proto::NameTag::SCHEMA_NAME, 100},
+    {proto::NameTag::DATABASE_NAME, 100},
+    {proto::NameTag::TABLE_NAME, 100},
+    {proto::NameTag::TABLE_ALIAS, 100},
+    {proto::NameTag::COLUMN_NAME, 100},
 }};
 
 static constexpr ScoringTable NAME_SCORE_TABLE_REF{{
     {proto::NameTag::NONE, 0},
     {proto::NameTag::KEYWORD, 10},
-    {proto::NameTag::SCHEMA_NAME, 20},
-    {proto::NameTag::DATABASE_NAME, 20},
-    {proto::NameTag::TABLE_NAME, 20},
+    {proto::NameTag::SCHEMA_NAME, 100},
+    {proto::NameTag::DATABASE_NAME, 100},
+    {proto::NameTag::TABLE_NAME, 100},
     {proto::NameTag::TABLE_ALIAS, 0},
     {proto::NameTag::COLUMN_NAME, 0},
 }};
 
 static constexpr ScoringTable NAME_SCORE_COLUMN_REF{{
     {proto::NameTag::NONE, 0},
-    {proto::NameTag::KEYWORD, 10},
+    {proto::NameTag::KEYWORD, 100},
     {proto::NameTag::SCHEMA_NAME, 0},
     {proto::NameTag::DATABASE_NAME, 0},
     {proto::NameTag::TABLE_NAME, 0},
-    {proto::NameTag::TABLE_ALIAS, 20},
+    {proto::NameTag::TABLE_ALIAS, 100},
     {proto::NameTag::COLUMN_NAME, 0},
 }};
 
@@ -56,6 +56,7 @@ void Completion::FindCandidatesInIndex(CandidateMap& candidates, const Completio
         for (auto [tag, tag_score] : scoring_table) {
             score = std::max(score, entry.name_tags.contains(tag) ? tag_score : 0);
         }
+        score += entry.completion_weight;
         // Do we know the candidate already?
         if (auto iter = candidates.find(entry.name_id); iter != candidates.end()) {
             // Update the score if it is higher
@@ -75,8 +76,8 @@ void Completion::FindCandidatesInIndex(CandidateMap& candidates, const Completio
 
 void Completion::FindCandidatesInIndexes(CandidateMap& candidates) {
     // Find candidates among keywords
-    auto& keywords = CompletionIndex::Keywords();
-    FindCandidatesInIndex(candidates, keywords);
+    auto& keyword_index = CompletionIndex::Keywords();
+    FindCandidatesInIndex(candidates, keyword_index);
     // Find candidates in name dictionary of main script
     if (auto& index = cursor.script.completion_index) {
         FindCandidatesInIndex(candidates, *index);
@@ -167,7 +168,6 @@ const CompletionIndex& CompletionIndex::Keywords() {
     }
     // If not, load keywords
     auto keywords = parser::Keyword::GetKeywords();
-
     // Collect the entries
     std::vector<Entry> entries;
     {
@@ -175,7 +175,7 @@ const CompletionIndex& CompletionIndex::Keywords() {
         for (size_t i = 0; i < keywords.size(); ++i) {
             auto& keyword = keywords[i];
             QualifiedID name_id{QualifiedID::KEYWORD_CONTEXT_ID, static_cast<uint32_t>(i)};
-            Entry entry{keyword.name, keyword.name, name_id, proto::NameTag::KEYWORD, 0};
+            Entry entry{keyword.name, keyword.name, name_id, proto::NameTag::KEYWORD, 0, keyword.completion_weight};
             auto text = entry.suffix;
             for (size_t offset = 0; offset < text.size(); ++offset) {
                 Entry copy = entry;
@@ -186,7 +186,6 @@ const CompletionIndex& CompletionIndex::Keywords() {
         entries = entries_chunked.Flatten();
     }
     std::sort(entries.begin(), entries.end(), [](Entry& l, Entry& r) { return l.suffix < r.suffix; });
-
     // Build the index
     index = std::make_unique<CompletionIndex>(std::move(entries));
     return *index;
