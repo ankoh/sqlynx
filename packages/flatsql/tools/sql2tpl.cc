@@ -1,7 +1,6 @@
 #include <filesystem>
-#include <iostream>
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 
 #include "gflags/gflags.h"
@@ -28,10 +27,9 @@ int main(int argc, char* argv[]) {
     }
     std::ofstream out{FLAGS_output_file};
 
-
     // Create XML doc
     pugi::xml_document doc;
-    auto xml_dumps = doc.append_child("parser-dumps");
+    auto xml_snapshots = doc.append_child("parser-snapshots");
 
     // Iterate over all file in the input directory
     for (auto& p : std::filesystem::directory_iterator(source_dir)) {
@@ -41,7 +39,7 @@ int main(int argc, char* argv[]) {
 
         // Get test name
         auto path = p.path();
-        auto dump_name = path.replace_extension().filename().string();
+        auto snapshot_name = path.replace_extension().filename().string();
 
         // Read file stream
         std::ifstream in(p.path(), std::ios::in | std::ios::binary);
@@ -51,12 +49,12 @@ int main(int argc, char* argv[]) {
         }
         std::stringstream inBuffer;
         inBuffer << in.rdbuf();
-        auto dump_input = inBuffer.str();
+        auto snapshot_input = inBuffer.str();
 
-        // Append an AST dump
-        auto xml_dump = xml_dumps.append_child("parser-dump");
-        xml_dump.append_attribute("name").set_value(dump_name.c_str());
-        xml_dump.append_child("input").text().set(dump_input.c_str());
+        // Append an AST snapshot
+        auto xml_snapshot = xml_snapshots.append_child("parser-snapshot");
+        xml_snapshot.append_attribute("name").set_value(snapshot_name.c_str());
+        xml_snapshot.append_child("input").text().set(snapshot_input.c_str());
     }
 
     // Write the document to the file

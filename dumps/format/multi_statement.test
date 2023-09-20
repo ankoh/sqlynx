@@ -1,5 +1,0 @@
-# There should be only one statement per line
-
-SELECT 1; SELECT 2; SELECT 3;
-----
-formatted[SELECT 1; SELECT 2; SELECT 3;]

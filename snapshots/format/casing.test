@@ -1,0 +1,5 @@
+# Test that SQL keywords are uppercased
+
+select * From t1
+----
+formatted[select * From t1]
