@@ -143,14 +143,6 @@ vscode:
 vscode_package:
 	yarn workspace flatsql-vscode package
 
-.PHONY: parser_dumps
-parser_dumps:
-	${LIB_DEBUG_DIR}/dump_parser --source_dir .
-
-.PHONY: analyzer_dumps
-analyzer_dumps:
-	${LIB_DEBUG_DIR}/dump_analyzer --source_dir .
-
-.PHONY: completion_dumps
-completion_dumps:
-	${LIB_DEBUG_DIR}/dump_completion --source_dir .
+.PHONY: snapshots
+snapshots:
+	${LIB_DEBUG_DIR}/snapshot --source_dir .

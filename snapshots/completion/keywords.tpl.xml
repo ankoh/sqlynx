@@ -1,0 +1,12 @@
+<completion-snapshots>
+    <completion-snapshot name="selec">
+        <script context="external" />
+        <script context="main">
+            selec
+        </script>
+        <cursor context="main">
+            <search index="5">selec</search>
+        </cursor>
+        <completions limit="20" />
+    </completion-snapshot>
+</completion-snapshots>

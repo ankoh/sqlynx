@@ -79,16 +79,8 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Parser Dumps",
-            "program": "${workspaceFolder}/packages/flatsql/build/native/o0/dump_parser",
-            "args": ["--source_dir=${workspaceFolder}"],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Analyzer Dumps",
-            "program": "${workspaceFolder}/packages/flatsql/build/native/o0/dump_analyzer",
+            "name": "Snapshots",
+            "program": "${workspaceFolder}/packages/flatsql/build/native/o0/snapshots",
             "args": ["--source_dir=${workspaceFolder}"],
             "cwd": "${workspaceFolder}"
         },

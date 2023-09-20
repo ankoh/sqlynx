@@ -1,5 +1,0 @@
-# Duplicate whitespace is removed
-
-  SELECT    1  , 43    FROM   t1 ;
-----
-formatted[  SELECT    1  , 43    FROM   t1 ;]
