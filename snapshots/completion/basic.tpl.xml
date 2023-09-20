@@ -1,6 +1,5 @@
 <completion-snapshots>
     <completion-snapshot name="empty">
-        <script context="external" />
         <script context="main" />
         <cursor context="main">
             <search text="" index="0" />

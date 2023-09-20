@@ -1,6 +1,5 @@
 <completion-snapshots>
     <completion-snapshot name="s">
-        <script context="external" />
         <script context="main">
             s
         </script>
@@ -10,7 +9,6 @@
         <completions limit="10" />
     </completion-snapshot>
     <completion-snapshot name="se">
-        <script context="external" />
         <script context="main">
             se
         </script>
@@ -20,7 +18,6 @@
         <completions limit="10" />
     </completion-snapshot>
     <completion-snapshot name="sel">
-        <script context="external" />
         <script context="main">
             sel
         </script>
@@ -30,7 +27,6 @@
         <completions limit="10" />
     </completion-snapshot>
     <completion-snapshot name="selec">
-        <script context="external" />
         <script context="main">
             selec
         </script>
