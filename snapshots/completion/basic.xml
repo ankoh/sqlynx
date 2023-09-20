@@ -7,7 +7,7 @@
         </cursor>
         <completions limit="10" />
     </completion-snapshot>
-    <completion-snapshot name="empty">
+    <completion-snapshot name="simple_table">
         <script context="external">
             create table foo(a int);
         </script>
