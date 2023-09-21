@@ -51,25 +51,26 @@ void Completion::FindCandidatesInIndex(CandidateMap& candidates, const Completio
     std::span<const CompletionIndex::Entry> entries = index.FindEntriesWithPrefix(cursor.text);
 
     for (auto& entry : entries) {
+        auto& entry_data = *entry.data;
         // Determine score
         ScoreValueType score = 0;
         for (auto [tag, tag_score] : scoring_table) {
-            score = std::max(score, entry.name_tags.contains(tag) ? tag_score : 0);
+            score = std::max(score, entry_data.name_tags.contains(tag) ? tag_score : 0);
         }
-        score += entry.completion_weight;
+        score += entry_data.weight;
         // Do we know the candidate already?
-        if (auto iter = candidates.find(entry.name_id); iter != candidates.end()) {
+        if (auto iter = candidates.find(entry_data.name_id); iter != candidates.end()) {
             // Update the score if it is higher
             iter->second.score = std::max(iter->second.score, score);
-            iter->second.name_tags |= entry.name_tags;
+            iter->second.name_tags |= entry_data.name_tags;
         } else {
             // Otherwise store as new candidate
-            candidates.insert({entry.name_id, Candidate{
-                                                  .name_text = entry.name_text,
-                                                  .name_id = entry.name_id,
-                                                  .name_tags = entry.name_tags,
-                                                  .score = score,
-                                              }});
+            candidates.insert({entry_data.name_id, Candidate{
+                                                       .name_text = entry_data.name_text,
+                                                       .name_id = entry_data.name_id,
+                                                       .name_tags = entry_data.name_tags,
+                                                       .score = score,
+                                                   }});
         }
     }
 }
@@ -146,8 +147,9 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(co
     return {std::move(completion), proto::StatusCode::OK};
 }
 
-CompletionIndex::CompletionIndex(std::vector<Entry> entries, std::shared_ptr<AnalyzedScript> script)
-    : entries(std::move(entries)), script(std::move(script)) {}
+CompletionIndex::CompletionIndex(ChunkBuffer<EntryData, 256> entry_data, std::vector<Entry> entries,
+                                 std::shared_ptr<AnalyzedScript> script)
+    : entry_data(std::move(entry_data)), entries(std::move(entries)), script(std::move(script)) {}
 
 /// Find all entries that share a prefix
 std::span<const CompletionIndex::Entry> CompletionIndex::FindEntriesWithPrefix(
@@ -169,25 +171,28 @@ const CompletionIndex& CompletionIndex::Keywords() {
     // If not, load keywords
     auto keywords = parser::Keyword::GetKeywords();
     // Collect the entries
+    ChunkBuffer<EntryData, 256> entry_data_chunked;
     std::vector<Entry> entries;
     {
         ChunkBuffer<Entry, 256> entries_chunked;
         for (size_t i = 0; i < keywords.size(); ++i) {
             auto& keyword = keywords[i];
             QualifiedID name_id{QualifiedID::KEYWORD_CONTEXT_ID, static_cast<uint32_t>(i)};
-            Entry entry{keyword.name, keyword.name, name_id, proto::NameTag::KEYWORD, 0, keyword.completion_weight};
-            auto text = entry.suffix;
-            for (size_t offset = 0; offset < text.size(); ++offset) {
-                Entry copy = entry;
-                copy.suffix = text.substr(offset);
-                entries_chunked.Append(copy);
+            auto& entry_data = entry_data_chunked.Append(
+                EntryData{keyword.name, name_id, proto::NameTag::KEYWORD, 0, keyword.completion_weight});
+            for (size_t offset = 0; offset < entry_data.name_text.size(); ++offset) {
+                auto suffix = entry_data.name_text.substr(offset);
+                entries_chunked.Append(Entry{
+                    .suffix = {suffix.data(), suffix.size()},
+                    .data = &entry_data,
+                });
             }
         }
         entries = entries_chunked.Flatten();
     }
     std::sort(entries.begin(), entries.end(), [](Entry& l, Entry& r) { return l.suffix < r.suffix; });
     // Build the index
-    index = std::make_unique<CompletionIndex>(std::move(entries));
+    index = std::make_unique<CompletionIndex>(std::move(entry_data_chunked), std::move(entries));
     return *index;
 }
 
@@ -198,25 +203,28 @@ std::pair<std::unique_ptr<CompletionIndex>, proto::StatusCode> CompletionIndex::
     auto& names = scanned->name_dictionary;
 
     // Collect the entries
+    ChunkBuffer<EntryData, 256> entry_data_chunked;
     std::vector<Entry> entries;
     {
         ChunkBuffer<Entry, 256> entries_chunked;
         for (size_t i = 0; i < names.size(); ++i) {
             auto& name = names[i];
             QualifiedID name_id{script->context_id, static_cast<uint32_t>(i)};
-            Entry entry{name.text, name.text, name_id, name.tags, name.occurrences};
-            auto text = entry.suffix;
-            for (size_t offset = 0; offset < text.size(); ++offset) {
-                Entry copy = entry;
-                copy.suffix = text.substr(offset);
-                entries_chunked.Append(copy);
+            auto& entry_data = entry_data_chunked.Append(EntryData{name.text, name_id, name.tags, name.occurrences});
+            for (size_t offset = 0; offset < entry_data.name_text.size(); ++offset) {
+                auto suffix = entry_data.name_text.substr(offset);
+                entries_chunked.Append(Entry{
+                    .suffix = {suffix.data(), suffix.size()},
+                    .data = &entry_data,
+                });
             }
         }
         entries = entries_chunked.Flatten();
     }
     std::sort(entries.begin(), entries.end(), [](Entry& l, Entry& r) { return l.suffix < r.suffix; });
 
-    auto index = std::make_unique<CompletionIndex>(std::move(entries), std::move(script));
+    auto index =
+        std::make_unique<CompletionIndex>(std::move(entry_data_chunked), std::move(entries), std::move(script));
     return {std::move(index), proto::StatusCode::OK};
 }
 
