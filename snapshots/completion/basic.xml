@@ -19,7 +19,6 @@
         <completions limit="10">
             <entry value="foo" score="100" count="0" tags="TABLE_NAME" />
             <entry value="fo" score="100" count="0" tags="TABLE_NAME" />
-            <entry value="following" score="30" count="0" tags="KEYWORD" />
             <entry value="forward" score="10" count="0" tags="KEYWORD" />
             <entry value="transform" score="10" count="0" tags="KEYWORD" />
             <entry value="xmlforest" score="10" count="0" tags="KEYWORD" />
@@ -27,6 +26,7 @@
             <entry value="before" score="10" count="0" tags="KEYWORD" />
             <entry value="force" score="10" count="0" tags="KEYWORD" />
             <entry value="for" score="10" count="0" tags="KEYWORD" />
+            <entry value="following" score="10" count="0" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
 </completion-snapshots>
