@@ -91,9 +91,7 @@ class CompletionIndex {
     using StringView = fuzzy_ci_string_view;
 
     /// An entry in the trie
-    struct Entry {
-        /// The suffix
-        StringView suffix;
+    struct EntryData {
         /// The name id
         std::string_view name_text;
         /// The name id
@@ -102,33 +100,36 @@ class CompletionIndex {
         NameTags name_tags;
         /// The number of occurrences
         size_t occurrences;
-        /// The completion weight
-        size_t completion_weight;
+        /// The weight of the entry
+        /// Weight adds "preference" to entries in a completion index.
+        /// For example, when entering "se", a keyword like "select" should be returned before "false" independent of
+        /// the context.
+        size_t weight;
 
         /// Constructor
-        Entry(StringView suffix = "", std::string_view name_text = {}, QualifiedID name_id = {}, NameTags tags = 0,
-              size_t occurrences = 0, size_t completion_weight = 0)
-            : suffix(suffix),
-              name_text(name_text),
-              name_id(name_id),
-              name_tags(tags),
-              occurrences(occurrences),
-              completion_weight(completion_weight) {}
+        EntryData(std::string_view name_text = {}, QualifiedID name_id = {}, NameTags tags = 0, size_t occurrences = 0,
+                  size_t weight = 0)
+            : name_text(name_text), name_id(name_id), name_tags(tags), occurrences(occurrences), weight(weight) {}
         /// Constructor
-        Entry(std::string_view suffix, std::string_view name_text = {}, QualifiedID name_id = {}, NameTags tags = 0,
-              size_t occurrences = 0, size_t completion_weight = 0)
-            : suffix(suffix.data(), suffix.length()),
-              name_text(name_text),
-              name_id(name_id),
-              name_tags(tags),
-              occurrences(occurrences),
-              completion_weight(completion_weight) {}
+        EntryData(std::string_view suffix, std::string_view name_text = {}, QualifiedID name_id = {}, NameTags tags = 0,
+                  size_t occurrences = 0, size_t weight = 0)
+            : name_text(name_text), name_id(name_id), name_tags(tags), occurrences(occurrences), weight(weight) {}
+    };
+
+    struct Entry {
+        /// The suffix
+        StringView suffix;
+        /// The entry
+        EntryData* data;
     };
 
     /// Constructor
-    CompletionIndex(std::vector<Entry> entries, std::shared_ptr<AnalyzedScript> script = nullptr);
+    CompletionIndex(ChunkBuffer<EntryData, 256> entry_data, std::vector<Entry> entries,
+                    std::shared_ptr<AnalyzedScript> script = nullptr);
 
    protected:
+    /// The entry data
+    ChunkBuffer<EntryData, 256> entry_data;
     /// The entries sorted by suffix
     std::vector<Entry> entries;
     /// The analyzed script
