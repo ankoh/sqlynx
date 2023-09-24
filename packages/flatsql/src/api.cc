@@ -7,7 +7,7 @@
 
 #include "flatbuffers/flatbuffers.h"
 #include "flatsql/analyzer/completion.h"
-#include "flatsql/parser/parse_context.h"
+#include "flatsql/parser/parser.h"
 #include "flatsql/parser/scanner.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/script.h"

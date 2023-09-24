@@ -1,7 +1,7 @@
 #include "benchmark/benchmark.h"
 #include "flatsql/analyzer/analyzer.h"
 #include "flatsql/parser/names.h"
-#include "flatsql/parser/parse_context.h"
+#include "flatsql/parser/parser.h"
 #include "flatsql/parser/scanner.h"
 #include "flatsql/script.h"
 #include "flatsql/text/rope.h"
@@ -597,7 +597,7 @@ static void layout_schema(benchmark::State& state) {
 
     // Analyze external script
     auto external_scan = parser::Scanner::Scan(input_external, 0);
-    auto external_parsed = parser::ParseContext::Parse(external_scan.first);
+    auto external_parsed = parser::Parser::Parse(external_scan.first);
     auto external_analyzed = Analyzer::Analyze(external_parsed.first, nullptr);
 
     SchemaGraph graph;

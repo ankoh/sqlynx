@@ -1,5 +1,5 @@
 #include "flatsql/analyzer/analyzer.h"
-#include "flatsql/parser/parse_context.h"
+#include "flatsql/parser/parser.h"
 #include "flatsql/parser/scanner.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/script.h"
@@ -23,7 +23,7 @@ TEST_P(AnalyzerSnapshotTestSuite, Test) {
     // Analyze schema
     auto external_scan = parser::Scanner::Scan(input_external, 1);
     ASSERT_EQ(external_scan.second, proto::StatusCode::OK);
-    auto external_parsed = parser::ParseContext::Parse(external_scan.first);
+    auto external_parsed = parser::Parser::Parse(external_scan.first);
     ASSERT_EQ(external_parsed.second, proto::StatusCode::OK);
     auto external_analyzed = Analyzer::Analyze(external_parsed.first, nullptr);
     ASSERT_EQ(external_analyzed.second, proto::StatusCode::OK);
@@ -31,7 +31,7 @@ TEST_P(AnalyzerSnapshotTestSuite, Test) {
     // Analyze script
     auto main_scan = parser::Scanner::Scan(input_main, 2);
     ASSERT_EQ(main_scan.second, proto::StatusCode::OK);
-    auto main_parsed = parser::ParseContext::Parse(main_scan.first);
+    auto main_parsed = parser::Parser::Parse(main_scan.first);
     ASSERT_EQ(main_parsed.second, proto::StatusCode::OK);
     auto main_analyzed = Analyzer::Analyze(main_parsed.first, external_analyzed.first);
     ASSERT_EQ(main_analyzed.second, proto::StatusCode::OK);

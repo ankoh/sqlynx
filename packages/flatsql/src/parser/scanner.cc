@@ -3,7 +3,7 @@
 #include <regex>
 
 #include "flatsql/parser/grammar/keywords.h"
-#include "flatsql/parser/parse_context.h"
+#include "flatsql/parser/parser.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/script.h"
 #include "flatsql/utils/string_conversion.h"

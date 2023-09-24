@@ -351,7 +351,7 @@ std::pair<ScannedScript*, proto::StatusCode> Script::Scan() {
 /// Parse a script
 std::pair<ParsedScript*, proto::StatusCode> Script::Parse() {
     auto time_start = std::chrono::steady_clock::now();
-    auto [script, status] = parser::ParseContext::Parse(scanned_script);
+    auto [script, status] = parser::Parser::Parse(scanned_script);
     parsed_script = std::move(script);
     timing_statistics.mutate_parser_last_elapsed(
         std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - time_start).count());

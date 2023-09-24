@@ -1,4 +1,4 @@
-#include "flatsql/parser/parse_context.h"
+#include "flatsql/parser/parser.h"
 #include "flatsql/parser/scanner.h"
 #include "flatsql/script.h"
 #include "flatsql/testing/parser_snapshot_test.h"
@@ -18,7 +18,7 @@ TEST_P(ParserSnapshotTestSuite, Test) {
     rope::Rope input{1024, test->input};
     auto [scanned, scannedStatus] = parser::Scanner::Scan(input, 2);
     ASSERT_EQ(scannedStatus, proto::StatusCode::OK);
-    auto [parsed, parsedStatus] = parser::ParseContext::Parse(scanned);
+    auto [parsed, parsedStatus] = parser::Parser::Parse(scanned);
     ASSERT_EQ(parsedStatus, proto::StatusCode::OK);
 
     pugi::xml_document out;

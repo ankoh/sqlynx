@@ -1,9 +1,10 @@
+#include "flatsql/parser/parser.h"
+
 #include <initializer_list>
 #include <optional>
 #include <sstream>
 
 #include "flatsql/api.h"
-#include "flatsql/parser/parse_context.h"
 #include "flatsql/parser/scanner.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/script.h"
@@ -24,7 +25,7 @@ TEST(ParserTest, FindNodeAtOffset) {
         buffer.Insert(0, text);
         auto [scanned, scannerStatus] = parser::Scanner::Scan(buffer, 2);
         ASSERT_EQ(scannerStatus, proto::StatusCode::OK);
-        auto [parsed, parserStatus] = parser::ParseContext::Parse(scanned);
+        auto [parsed, parserStatus] = parser::Parser::Parse(scanned);
         ASSERT_EQ(parserStatus, proto::StatusCode::OK);
         script = std::move(parsed);
     };
