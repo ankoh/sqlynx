@@ -65,13 +65,22 @@ void ScannedScript::TagName(NameID name_id, sx::NameTag tag) {
 }
 
 /// Find a token at a text offset
-size_t ScannedScript::FindToken(size_t text_offset) {
+ScannedScript::TokenPosition ScannedScript::FindToken(size_t text_offset) {
     // Symbols are sorted by location, so we can do a binary search on the symbol buffer
     auto& chunks = symbols.GetChunks();
+    // Helper to return last token (minus EOF token)
+    auto last = [&]() -> TokenPosition {
+        assert(!chunks.empty());
+        assert(!chunks.back().empty());
+        auto chunk_id = chunks.size() - 1;
+        auto local_token_ofs = std::max<size_t>(chunks.back().size(), 1) - 1;
+        auto global_token_ofs = std::max<size_t>(symbols.GetSize(), 1) - 1;
+        return {.chunk_id = chunk_id, .index_in_chunk = local_token_ofs, .index = global_token_ofs};
+    };
+
     // Short-circuit offset past end (+ 2 trailing YY_END_OF_BUFFER_CHAR)
     if (text_offset + 2 >= text_buffer.size()) {
-        // Get last token (minus EOF token)
-        return std::max<size_t>(symbols.GetSize(), 2) - 2;
+        return last();
     }
 
     // Find chunk that contains the text offset.
@@ -89,7 +98,7 @@ size_t ScannedScript::FindToken(size_t text_offset) {
     // Iter hit end?
     // Return the last token then (minus YYEOF)
     if (chunk_iter == chunks.end()) {
-        return std::max<size_t>(chunk_token_offset, 2) - 2;
+        return last();
     }
 
     // Otherwise we found a chunk that contains the text offset.
@@ -117,7 +126,49 @@ size_t ScannedScript::FindToken(size_t text_offset) {
 
     // Return the global token offset
     auto local_token_ofs = token_iter - chunk_iter->begin();
-    return chunk_token_offset + local_token_ofs;
+    auto global_token_ofs = chunk_token_offset + local_token_ofs;
+    return {.chunk_id = static_cast<size_t>(chunk_iter - chunks.begin()),
+            .index_in_chunk = static_cast<size_t>(local_token_ofs),
+            .index = global_token_ofs};
+}
+
+/// Truncate the tokens and add a marker at the offset
+ScannedScript::ReplacedSymbols ScannedScript::TruncateWithMarker(size_t offset, parser::Parser::symbol_type marker) {
+    auto& chunks = symbols.GetChunks();
+    auto edit = FindToken(offset);
+    assert(edit.chunk_id < symbols.GetChunks().size());
+    assert(edit.index_in_chunk < symbols.GetChunks()[edit.chunk_id].size());
+
+    size_t current_chunk_id = edit.chunk_id;
+    size_t current_chunk_offset = edit.index_in_chunk;
+    size_t next_chunk_id = current_chunk_id;
+    size_t next_chunk_offset = current_chunk_offset + 1;
+
+    // Next symbol not in chunk?
+    if (next_chunk_offset >= chunks[edit.chunk_id].size()) {
+        // Is there a next chunk? Pick the first symbol there
+        if ((edit.chunk_id + 1) < chunks.size()) {
+            ++next_chunk_id;
+            next_chunk_offset = 0;
+            assert(!chunks[next_chunk_id].empty());
+        } else {
+            // Otherwise we push another new EOF token
+            chunks.back().push_back(parser::Parser::make_EOF({static_cast<uint32_t>(GetInput().size()), 0}));
+        }
+    }
+
+    // Save current and next symbol for restoring
+    auto& current = chunks[current_chunk_id][current_chunk_offset];
+    auto& next = chunks[next_chunk_id][next_chunk_offset];
+    ReplacedSymbols mod{current, next};
+    mod.symbol_0.move(current);
+    mod.symbol_1.move(next);
+
+    // Write completion and EOF back into symbols
+    auto new_next = parser::Parser::make_EOF({static_cast<uint32_t>(offset), 0});
+    current.move(marker);
+    next.move(new_next);
+    return mod;
 }
 
 flatbuffers::Offset<proto::ScannedScript> ScannedScript::Pack(flatbuffers::FlatBufferBuilder& builder) {
@@ -447,7 +498,7 @@ std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> ScriptCursor::Create
     auto& scanned = *parsed.scanned_script;
 
     // Read scanner token
-    cursor->scanner_token_id = scanned.FindToken(text_offset);
+    cursor->scanner_token_id = scanned.FindTokenIndex(text_offset);
     if (cursor->scanner_token_id) {
         auto& token = scanned.GetTokens()[*cursor->scanner_token_id];
         cursor->text = scanned.ReadTextAtLocation(token.location);
