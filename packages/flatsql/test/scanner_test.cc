@@ -73,7 +73,7 @@ TEST(ScannerTest, FindTokenAtOffset) {
     };
     // Test token at offset
     auto test_token_at_offset = [&](size_t text_offset, size_t expected_token_offset) {
-        auto offset = script->FindTokenIndex(text_offset);
+        auto offset = script->FindToken(text_offset);
         ASSERT_EQ(offset, expected_token_offset) << text_offset;
     };
 
@@ -89,10 +89,10 @@ TEST(ScannerTest, FindTokenAtOffset) {
         test_token_at_offset(5, 0);
         test_token_at_offset(6, 0);
         test_token_at_offset(7, 1);
-        test_token_at_offset(8, 2);
-        test_token_at_offset(9, 2);
-        test_token_at_offset(10, 2);
-        test_token_at_offset(100, 2);
+        test_token_at_offset(8, 1);
+        test_token_at_offset(9, 1);
+        test_token_at_offset(10, 1);
+        test_token_at_offset(100, 1);
     }
     {
         SCOPED_TRACE("select a from A where b = 1");
@@ -126,10 +126,10 @@ TEST(ScannerTest, FindTokenAtOffset) {
         test_token_at_offset(24, 6);
         test_token_at_offset(25, 6);
         test_token_at_offset(26, 7);
-        test_token_at_offset(27, 8);
-        test_token_at_offset(28, 8);
-        test_token_at_offset(30, 8);
-        test_token_at_offset(100, 8);
+        test_token_at_offset(27, 7);
+        test_token_at_offset(28, 7);
+        test_token_at_offset(30, 7);
+        test_token_at_offset(100, 7);
     }
 }
 
@@ -147,9 +147,9 @@ TEST(ScannerTest, FindTokenInterleaved) {
     ASSERT_EQ(scannerStatus, proto::StatusCode::OK);
 
     for (size_t i = 0; i < n; ++i) {
-        auto hit = scanned->FindTokenIndex(i * 2);
+        auto hit = scanned->FindToken(i * 2);
         ASSERT_EQ(hit, i);
-        auto one_off = scanned->FindTokenIndex(i * 2 + 1);
+        auto one_off = scanned->FindToken(i * 2 + 1);
         ASSERT_EQ(one_off, i);
     }
 }

@@ -74,7 +74,6 @@ using namespace flatsql::parser;
 %token              TYPECAST DOT_DOT COLON_EQUALS EQUALS_GREATER
 %token              LESS_EQUALS GREATER_EQUALS NOT_EQUALS
 
-%token COMPLETION
 %token EOF 0
 
 /*
