@@ -1,6 +1,6 @@
 #include "flatsql/parser/grammar/state.h"
 
-#include "flatsql/parser/parse_context.h"
+#include "flatsql/parser/parser.h"
 
 namespace flatsql {
 namespace parser {

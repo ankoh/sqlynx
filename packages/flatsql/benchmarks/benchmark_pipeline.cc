@@ -2,7 +2,7 @@
 #include "flatsql/analyzer/analyzer.h"
 #include "flatsql/analyzer/completion.h"
 #include "flatsql/parser/names.h"
-#include "flatsql/parser/parse_context.h"
+#include "flatsql/parser/parser.h"
 #include "flatsql/parser/scanner.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/script.h"
@@ -606,7 +606,7 @@ static void parse_query(benchmark::State& state) {
     rope::Rope buffer{1024, main_script};
     auto scanner = flatsql::parser::Scanner::Scan(buffer, 0);
     for (auto _ : state) {
-        auto parsed = flatsql::parser::ParseContext::Parse(scanner.first);
+        auto parsed = flatsql::parser::Parser::Parse(scanner.first);
         benchmark::DoNotOptimize(parsed);
     }
 }
@@ -617,12 +617,12 @@ static void analyze_query(benchmark::State& state) {
 
     // Analyze external script
     auto external_scan = parser::Scanner::Scan(input_external, 0);
-    auto external_parsed = parser::ParseContext::Parse(external_scan.first);
+    auto external_parsed = parser::Parser::Parse(external_scan.first);
     auto external_analyzed = Analyzer::Analyze(external_parsed.first, nullptr);
 
     // Parse script
     auto main_scan = parser::Scanner::Scan(input_main, 1);
-    auto main_parsed = parser::ParseContext::Parse(main_scan.first);
+    auto main_parsed = parser::Parser::Parse(main_scan.first);
 
     for (auto _ : state) {
         auto main_analyzed = Analyzer::Analyze(main_parsed.first, external_analyzed.first);
@@ -636,7 +636,7 @@ static void index_query(benchmark::State& state) {
 
     // Parse script
     auto main_scan = parser::Scanner::Scan(input_main, 1);
-    auto main_parsed = parser::ParseContext::Parse(main_scan.first);
+    auto main_parsed = parser::Parser::Parse(main_scan.first);
     auto [main_analyzed, status] = Analyzer::Analyze(main_parsed.first, nullptr);
     assert(status == proto::StatusCode::OK);
 

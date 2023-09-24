@@ -7,7 +7,7 @@
 
 #include "flatbuffers/flatbuffers.h"
 #include "flatsql/analyzer/analyzer.h"
-#include "flatsql/parser/parse_context.h"
+#include "flatsql/parser/parser.h"
 #include "flatsql/parser/scanner.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/script.h"
@@ -64,7 +64,7 @@ static void generate_parser_snapshots(const std::filesystem::path& source_dir) {
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(scanned.second) << std::endl;
                 continue;
             }
-            auto [parsed, parserError] = parser::ParseContext::Parse(scanned.first);
+            auto [parsed, parserError] = parser::Parser::Parse(scanned.first);
 
             /// Write output
             auto expected = test.append_child("expected");
@@ -119,7 +119,7 @@ static void generate_analyzer_snapshots(const std::filesystem::path& source_dir)
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(external_scan.second) << std::endl;
                 continue;
             }
-            auto external_parsed = parser::ParseContext::Parse(external_scan.first);
+            auto external_parsed = parser::Parser::Parse(external_scan.first);
             if (external_parsed.second != proto::StatusCode::OK) {
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(external_parsed.second) << std::endl;
                 continue;
@@ -139,7 +139,7 @@ static void generate_analyzer_snapshots(const std::filesystem::path& source_dir)
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(main_scan.second) << std::endl;
                 continue;
             }
-            auto main_parsed = parser::ParseContext::Parse(main_scan.first);
+            auto main_parsed = parser::Parser::Parse(main_scan.first);
             if (main_parsed.second != proto::StatusCode::OK) {
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(main_parsed.second) << std::endl;
                 continue;
