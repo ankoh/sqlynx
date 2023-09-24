@@ -28,6 +28,7 @@ namespace parser {
 
 class ParseContext {
     friend class ::flatsql::ParsedScript;
+    friend class ::flatsql::parser::Parser;
 
    protected:
     /// The scanner
@@ -107,11 +108,6 @@ class ParseContext {
     void AddError(proto::Location loc, const std::string& message);
     /// Add a statement
     void AddStatement(proto::Node node);
-
-    /// Parse a module
-    static std::pair<std::shared_ptr<ParsedScript>, proto::StatusCode> Parse(std::shared_ptr<ScannedScript> in,
-                                                                             bool trace_scanning = false,
-                                                                             bool trace_parsing = false);
 };
 
 }  // namespace parser

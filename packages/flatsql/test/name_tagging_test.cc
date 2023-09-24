@@ -3,7 +3,7 @@
 #include "flatsql/analyzer/analyzer.h"
 #include "flatsql/api.h"
 #include "flatsql/parser/names.h"
-#include "flatsql/parser/parse_context.h"
+#include "flatsql/parser/parser.h"
 #include "flatsql/parser/scanner.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/script.h"
@@ -53,7 +53,7 @@ TEST_P(TestNameTags, Test) {
 
     auto [scanned, scan_status] = parser::Scanner::Scan(buffer, 0);
     ASSERT_EQ(scan_status, proto::StatusCode::OK);
-    auto [parsed, parser_status] = parser::ParseContext::Parse(scanned);
+    auto [parsed, parser_status] = parser::Parser::Parse(scanned);
     ASSERT_EQ(parser_status, proto::StatusCode::OK);
     ASSERT_TRUE(parsed->errors.empty()) << parsed->errors[0].second;
     auto [analyzed, analyzer_status] = Analyzer::Analyze(parsed, nullptr);
