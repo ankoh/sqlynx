@@ -2,7 +2,6 @@
 
 #include <flatbuffers/buffer.h>
 
-#include <memory>
 #include <optional>
 #include <string_view>
 #include <tuple>
@@ -34,8 +33,6 @@ using NodeID = uint32_t;
 using StatementID = uint32_t;
 
 class ScannedScript {
-    friend struct TemporaryModification;
-
    public:
     /// The name entry
     struct Name {
@@ -47,28 +44,6 @@ class ScannedScript {
         NameTags tags;
         /// The number of occurrences
         size_t occurrences = 0;
-    };
-
-    struct ReplacedSymbols {
-        /// The output [0]
-        parser::Parser::symbol_type& out_0;
-        /// The output [1]
-        parser::Parser::symbol_type& out_1;
-        /// The symbol [0]
-        parser::Parser::symbol_type symbol_0;
-        /// The symbol [1]
-        parser::Parser::symbol_type symbol_1;
-
-        /// Constructor
-        ReplacedSymbols(ReplacedSymbols&&) = default;
-        /// Constructor
-        ReplacedSymbols(parser::Parser::symbol_type& out_0, parser::Parser::symbol_type& out_1)
-            : out_0(out_0), out_1(out_1) {}
-        /// Destructor
-        ~ReplacedSymbols() {
-            out_0.move(symbol_0);
-            out_1.move(symbol_1);
-        }
     };
 
     /// The context id
@@ -111,24 +86,9 @@ class ScannedScript {
     std::string_view ReadTextAtLocation(sx::Location loc) {
         return std::string_view{text_buffer}.substr(loc.offset(), loc.length());
     }
-    /// A token position
-    struct TokenPosition {
-        // The chunk index
-        size_t chunk_id;
-        // The offset in chunk
-        size_t index_in_chunk;
-        // The global index
-        size_t index;
-    };
-    /// Resolve token
-    TokenPosition FindToken(size_t text_offset);
     /// Resolve token at text offset.
     /// Returns the PREVIOUS token if there's no exact hit
-    inline size_t FindTokenIndex(size_t text_offset) { return FindToken(text_offset).index; }
-    /// Truncate the tokens and add a marker at the offset.
-    /// We use this method to replace a token with a completion marker and then inspect the bison state to find
-    /// expected follow-up tokens.
-    ReplacedSymbols TruncateWithMarker(size_t offset, parser::Parser::symbol_type marker);
+    size_t FindToken(size_t text_offset);
     /// Pack syntax tokens
     std::unique_ptr<proto::ScannerTokensT> PackTokens();
     /// Pack scanned program
