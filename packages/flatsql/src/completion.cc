@@ -66,8 +66,8 @@ void Completion::FindCandidatesInIndex(CandidateMap& candidates, const Completio
         } else {
             // Otherwise store as new candidate
             candidates.insert({entry_data.name_id, Candidate{
-                                                       .name_text = entry_data.name_text,
                                                        .name_id = entry_data.name_id,
+                                                       .name_text = entry_data.name_text,
                                                        .name_tags = entry_data.name_tags,
                                                        .score = score,
                                                    }});
