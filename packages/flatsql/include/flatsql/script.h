@@ -10,7 +10,7 @@
 #include "ankerl/unordered_dense.h"
 #include "flatsql/context.h"
 #include "flatsql/parser/names.h"
-#include "flatsql/parser/parser_generated.h"
+#include "flatsql/parser/parser.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/text/rope.h"
 #include "flatsql/utils/bits.h"

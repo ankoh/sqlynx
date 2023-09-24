@@ -9,7 +9,7 @@
 #include <charconv>
 #include "flatsql/parser/grammar/keywords.h"
 #include "flatsql/parser/grammar/location.h"
-#include "flatsql/parser/parser_generated.h"
+#include "flatsql/parser/parser.h"
 #include "flatsql/parser/scanner.h"
 
 // ISO C++17 does not allow 'register' storage class specifier
