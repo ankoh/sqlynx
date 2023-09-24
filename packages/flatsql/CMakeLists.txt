@@ -215,12 +215,18 @@ endif()
 # Generate parser & scanner
 add_custom_command(
   OUTPUT ${SCANNER_OUT} ${PARSER_OUT} ${PARSER_HEADER_OUT}
-  COMMAND
-  ${BISON_EXECUTABLE} --defines=${PARSER_HEADER_OUT} --output=${PARSER_OUT}
-  --report=state --report-file=${CMAKE_BINARY_DIR}/bison.log ${GRAMMAR_OUT}
-  COMMAND ${FLEX_EXECUTABLE} --outfile=${SCANNER_OUT} -F -8
-  ${GRAMMAR_SOURCE_DIR}/scanner.l
-  DEPENDS ${GRAMMAR_OUT} ${GRAMMAR_SOURCE_DIR}/scanner.l)
+  COMMAND ${FLEX_EXECUTABLE}
+    --outfile=${SCANNER_OUT} -F -8
+    ${GRAMMAR_SOURCE_DIR}/scanner.l
+  COMMAND ${BISON_EXECUTABLE}
+    --defines=${PARSER_HEADER_OUT}
+    --output=${PARSER_OUT}
+    --report=state
+    --report-file=${CMAKE_BINARY_DIR}/bison.log
+    ${GRAMMAR_OUT}
+  COMMAND sed -e "s/private:/protected:/g" ${PARSER_HEADER_OUT} > ${PARSER_HEADER_OUT}.mod
+  COMMAND ${CMAKE_COMMAND} -E rename ${PARSER_HEADER_OUT}.mod ${PARSER_HEADER_OUT}
+  DEPENDS ${GRAMMAR_SOURCE_DIR}/scanner.l ${GRAMMAR_KEYWORDS} ${GRAMMAR_RULES} ${GRAMMAR_TYPES} ${GRAMMAR_OUT})
 
 # ---------------------------------------------------------------------------
 # Module
@@ -237,6 +243,7 @@ set(LIB_SRC
   ${CMAKE_SOURCE_DIR}/src/parser/grammar/state.cc
   ${CMAKE_SOURCE_DIR}/src/parser/grammar/tokens.cc
   ${CMAKE_SOURCE_DIR}/src/parser/parse_context.cc
+  ${CMAKE_SOURCE_DIR}/src/parser/parser_extension.cc
   ${CMAKE_SOURCE_DIR}/src/parser/scanner.cc
   ${CMAKE_SOURCE_DIR}/src/parser/script.cc
   ${CMAKE_SOURCE_DIR}/src/utils/rope.cc
