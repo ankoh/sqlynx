@@ -3,7 +3,7 @@
 #include <initializer_list>
 #include <string_view>
 
-#include "flatsql/parser/parser_generated.h"
+#include "flatsql/parser/parser.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/script.h"
 #include "flatsql/text/rope.h"
