@@ -2,7 +2,7 @@
 
 #include <string_view>
 
-#include "flatsql/parser/parser_generated.h"
+#include "flatsql/parser/parser.h"
 
 namespace flatsql {
 namespace parser {

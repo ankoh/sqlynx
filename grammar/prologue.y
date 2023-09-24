@@ -2,7 +2,7 @@
 %require "3.3"
 
 %define api.namespace {flatsql::parser}
-%define api.parser.class {Parser}
+%define api.parser.class {ParserBase}
 %define api.token.constructor
 %define api.token.prefix {FQL_}
 %define api.value.type variant

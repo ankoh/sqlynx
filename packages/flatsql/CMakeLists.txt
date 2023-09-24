@@ -243,7 +243,7 @@ set(LIB_SRC
   ${CMAKE_SOURCE_DIR}/src/parser/grammar/state.cc
   ${CMAKE_SOURCE_DIR}/src/parser/grammar/tokens.cc
   ${CMAKE_SOURCE_DIR}/src/parser/parse_context.cc
-  ${CMAKE_SOURCE_DIR}/src/parser/parser_extension.cc
+  ${CMAKE_SOURCE_DIR}/src/parser/parser.cc
   ${CMAKE_SOURCE_DIR}/src/parser/scanner.cc
   ${CMAKE_SOURCE_DIR}/src/parser/script.cc
   ${CMAKE_SOURCE_DIR}/src/utils/rope.cc
