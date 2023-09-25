@@ -14,7 +14,8 @@
 using namespace flatsql;
 using namespace flatsql::parser;
 
-using Token = proto::ScannerTokenType;
+using ScannerToken = proto::ScannerTokenType;
+using ParserSymbol = Parser::symbol_kind_type;
 
 namespace {
 
@@ -54,10 +55,9 @@ TEST(ParserTest, FindNodeAtOffset) {
 
 struct ExpectedToken {
     size_t token_id;
-    parser::Parser::symbol_kind_type symbol_type;
+    ParserSymbol symbol_type;
 
-    ExpectedToken(size_t token_id, parser::Parser::symbol_kind_type symbol_type)
-        : token_id(token_id), symbol_type(symbol_type) {}
+    ExpectedToken(size_t token_id, ParserSymbol symbol_type) : token_id(token_id), symbol_type(symbol_type) {}
 };
 
 struct CompletionTest {
@@ -65,10 +65,10 @@ struct CompletionTest {
     std::string_view script;
     size_t token_count;
     ExpectedToken token;
-    std::vector<Parser::symbol_kind_type> expected_symbols;
+    std::vector<ParserSymbol> expected_symbols;
 
     CompletionTest(std::string_view title, std::string_view script, size_t token_count, ExpectedToken token,
-                   std::initializer_list<Parser::symbol_kind_type> expected_symbols)
+                   std::initializer_list<ParserSymbol> expected_symbols)
         : title(title),
           script(script),
           token_count(token_count),
@@ -105,36 +105,36 @@ std::vector<CompletionTest> TESTS{
     {"empty",
      "",
      1,
-     {0, parser::Parser::symbol_kind_type::S_YYEOF},
+     {0, ParserSymbol::S_YYEOF},
      {
-         Parser::symbol_kind_type::S_YYEOF, Parser::symbol_kind_type::S_WITH_LA, Parser::symbol_kind_type::S_VALUES,
-         Parser::symbol_kind_type::S_CREATE_P, Parser::symbol_kind_type::S_SELECT, Parser::symbol_kind_type::S_TABLE,
-         Parser::symbol_kind_type::S_WITH, Parser::symbol_kind_type::S_SET, Parser::symbol_kind_type::S_471_ /* ( */
+         ParserSymbol::S_YYEOF, Parser::symbol_kind_type::S_WITH_LA, Parser::symbol_kind_type::S_VALUES,
+         ParserSymbol::S_CREATE_P, Parser::symbol_kind_type::S_SELECT, Parser::symbol_kind_type::S_TABLE,
+         ParserSymbol::S_WITH, Parser::symbol_kind_type::S_SET, Parser::symbol_kind_type::S_471_ /* ( */
      }},
     {"group",
      "select * from region group",
      6,
-     {4, parser::Parser::symbol_kind_type::S_GROUP_P},
+     {4, ParserSymbol::S_GROUP_P},
      {
-         parser::Parser::symbol_kind_type::S_SCONST, parser::Parser::symbol_kind_type::S_PARAM,
-         parser::Parser::symbol_kind_type::S_COLON_EQUALS, parser::Parser::symbol_kind_type::S_EQUALS_GREATER,
-         parser::Parser::symbol_kind_type::S_471_,  // '('
-         parser::Parser::symbol_kind_type::S_475_,  // '$'
-         parser::Parser::symbol_kind_type::S_476_   // '?',
+         ParserSymbol::S_SCONST, parser::Parser::symbol_kind_type::S_PARAM, ParserSymbol::S_COLON_EQUALS,
+         parser::Parser::symbol_kind_type::S_EQUALS_GREATER,
+         ParserSymbol::S_471_,  // '('
+         ParserSymbol::S_475_,  // '$'
+         ParserSymbol::S_476_   // '?',
      }},
     {"group_by_eof",
      "select * from region group",
      6,
-     {5, parser::Parser::symbol_kind_type::S_YYEOF},
+     {5, ParserSymbol::S_YYEOF},
      {
-         parser::Parser::symbol_kind_type::S_BY,
+         ParserSymbol::S_BY,
      }},
     {"group_by",
      "select * from region group by",
      7,
-     {5, parser::Parser::symbol_kind_type::S_BY},
+     {5, ParserSymbol::S_BY},
      {
-         parser::Parser::symbol_kind_type::S_BY,
+         ParserSymbol::S_BY,
      }}
     //
 };

@@ -11,14 +11,14 @@
 
 using namespace flatsql;
 
-using Token = proto::ScannerTokenType;
+using ScannerToken = proto::ScannerTokenType;
 
 namespace {
 
 constexpr auto OK = static_cast<uint32_t>(proto::StatusCode::OK);
 
 static void match_tokens(const void* data, const std::vector<uint32_t>& offsets, const std::vector<uint32_t>& lengths,
-                         const std::vector<Token>& types, const std::vector<uint32_t>& breaks) {
+                         const std::vector<ScannerToken>& types, const std::vector<uint32_t>& breaks) {
     auto scanned = flatbuffers::GetRoot<proto::ScannedScript>(data);
     proto::ScannedScriptT unpacked;
     scanned->UnPackTo(&unpacked);
@@ -42,14 +42,14 @@ TEST(ScannerTest, InsertChars) {
         flatsql_result_delete(result);
     };
 
-    add_char('s', {0}, {1}, {Token::IDENTIFIER}, {});
-    add_char('e', {0}, {2}, {Token::IDENTIFIER}, {});
-    add_char('l', {0}, {3}, {Token::IDENTIFIER}, {});
-    add_char('e', {0}, {4}, {Token::IDENTIFIER}, {});
-    add_char('c', {0}, {5}, {Token::IDENTIFIER}, {});
-    add_char('t', {0}, {6}, {Token::KEYWORD}, {});
-    add_char('\n', {0}, {6}, {Token::KEYWORD}, {1});
-    add_char('1', {0, 7}, {6, 1}, {Token::KEYWORD, Token::LITERAL_INTEGER}, {1});
+    add_char('s', {0}, {1}, {ScannerToken::IDENTIFIER}, {});
+    add_char('e', {0}, {2}, {ScannerToken::IDENTIFIER}, {});
+    add_char('l', {0}, {3}, {ScannerToken::IDENTIFIER}, {});
+    add_char('e', {0}, {4}, {ScannerToken::IDENTIFIER}, {});
+    add_char('c', {0}, {5}, {ScannerToken::IDENTIFIER}, {});
+    add_char('t', {0}, {6}, {ScannerToken::KEYWORD}, {});
+    add_char('\n', {0}, {6}, {ScannerToken::KEYWORD}, {1});
+    add_char('1', {0, 7}, {6, 1}, {ScannerToken::KEYWORD, ScannerToken::LITERAL_INTEGER}, {1});
 
     flatsql_script_delete(script);
 }
@@ -80,7 +80,7 @@ TEST(ScannerTest, FindTokenAtOffset) {
     {
         SCOPED_TRACE("select 1");
         scan("select 1", 1);
-        test_tokens({Token::KEYWORD, Token::LITERAL_INTEGER});
+        test_tokens({ScannerToken::KEYWORD, ScannerToken::LITERAL_INTEGER});
         test_token_at_offset(0, 0);
         test_token_at_offset(1, 0);
         test_token_at_offset(2, 0);
@@ -97,8 +97,9 @@ TEST(ScannerTest, FindTokenAtOffset) {
     {
         SCOPED_TRACE("select a from A where b = 1");
         scan("select a from A where b = 1", 1);
-        test_tokens({Token::KEYWORD, Token::IDENTIFIER, Token::KEYWORD, Token::IDENTIFIER, Token::KEYWORD,
-                     Token::IDENTIFIER, Token::OPERATOR, Token::LITERAL_INTEGER});
+        test_tokens({ScannerToken::KEYWORD, ScannerToken::IDENTIFIER, ScannerToken::KEYWORD, ScannerToken::IDENTIFIER,
+                     ScannerToken::KEYWORD, ScannerToken::IDENTIFIER, ScannerToken::OPERATOR,
+                     ScannerToken::LITERAL_INTEGER});
         test_token_at_offset(0, 0);
         test_token_at_offset(1, 0);
         test_token_at_offset(2, 0);
