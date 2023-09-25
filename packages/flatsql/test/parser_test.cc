@@ -61,9 +61,7 @@ TEST(ParserTest, CompleteGroupBy) {
     ASSERT_EQ(scan->GetTokens().GetSize(), 7);
     ASSERT_EQ(scan->ReadTextAtLocation(scan->GetTokens()[5].location), "by");
 
-    ParseContext ctx{*scan};
-    Parser parser{ctx};
-    auto result = parser.CompleteAt(5);
+    auto result = parser::Parser::CompleteAt(*scan, 5);
     std::vector<Parser::symbol_kind_type> expected{Parser::symbol_kind_type::S_BY};
     ASSERT_EQ(result, expected);
 }
@@ -77,9 +75,7 @@ TEST(ParserTest, CompleteGroupByEOF) {
     ASSERT_EQ(scan->GetTokens().GetSize(), 6);
     ASSERT_EQ(scan->ReadTextAtLocation(scan->GetTokens()[4].location), "group");
 
-    ParseContext ctx{*scan};
-    Parser parser{ctx};
-    auto result = parser.CompleteAt(5);
+    auto result = parser::Parser::CompleteAt(*scan, 5);
     std::vector<Parser::symbol_kind_type> expected{Parser::symbol_kind_type::S_BY};
     ASSERT_EQ(result, expected);
 }
@@ -93,9 +89,7 @@ TEST(ParserTest, CompleteEmpty) {
     ASSERT_EQ(scan->GetTokens().GetSize(), 1);
     auto token = scan->GetTokens()[0];
 
-    ParseContext ctx{*scan};
-    Parser parser{ctx};
-    auto result = parser.CompleteAt(0);
+    auto result = parser::Parser::CompleteAt(*scan, 0);
     std::vector<Parser::symbol_kind_type> expected{
         Parser::symbol_kind_type::S_YYEOF,  Parser::symbol_kind_type::S_WITH_LA,
         Parser::symbol_kind_type::S_VALUES, Parser::symbol_kind_type::S_CREATE_P,
