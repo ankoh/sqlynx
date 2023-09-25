@@ -27,6 +27,7 @@ namespace sx = flatsql::proto;
 
 namespace flatsql { namespace parser { class ParseContext;  }}
 
+#define YYRHSLOC(Rhs, K) ((Rhs)[K].location)
 #define YYLLOC_DEFAULT(Cur, Rhs, N) { \
     if (N) { \
         uint32_t o = YYRHSLOC(Rhs, 1).offset(); \
