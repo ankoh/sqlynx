@@ -59,8 +59,7 @@ TEST(ParserTest, CompleteGroupBy) {
     auto [scan, scan_status] = Scanner::Scan(buffer, 1);
     ASSERT_EQ(scan_status, proto::StatusCode::OK);
     ASSERT_EQ(scan->GetTokens().GetSize(), 7);
-    auto token = scan->GetTokens()[5];
-    ASSERT_EQ(scan->ReadTextAtLocation(token.location), "by");
+    ASSERT_EQ(scan->ReadTextAtLocation(scan->GetTokens()[5].location), "by");
 
     ParseContext ctx{*scan};
     Parser parser{ctx};
@@ -76,13 +75,33 @@ TEST(ParserTest, CompleteGroupByEOF) {
     auto [scan, scan_status] = Scanner::Scan(buffer, 1);
     ASSERT_EQ(scan_status, proto::StatusCode::OK);
     ASSERT_EQ(scan->GetTokens().GetSize(), 6);
-    auto token = scan->GetTokens()[4];
-    ASSERT_EQ(scan->ReadTextAtLocation(token.location), "group");
+    ASSERT_EQ(scan->ReadTextAtLocation(scan->GetTokens()[4].location), "group");
 
     ParseContext ctx{*scan};
     Parser parser{ctx};
     auto result = parser.CompleteAt(5);
     std::vector<Parser::symbol_kind_type> expected{Parser::symbol_kind_type::S_BY};
+    ASSERT_EQ(result, expected);
+}
+
+TEST(ParserTest, CompleteEmpty) {
+    rope::Rope buffer{128};
+    buffer.Insert(0, R"SQL()SQL");
+
+    auto [scan, scan_status] = Scanner::Scan(buffer, 1);
+    ASSERT_EQ(scan_status, proto::StatusCode::OK);
+    ASSERT_EQ(scan->GetTokens().GetSize(), 1);
+    auto token = scan->GetTokens()[0];
+
+    ParseContext ctx{*scan};
+    Parser parser{ctx};
+    auto result = parser.CompleteAt(0);
+    std::vector<Parser::symbol_kind_type> expected{
+        Parser::symbol_kind_type::S_YYEOF,  Parser::symbol_kind_type::S_WITH_LA,
+        Parser::symbol_kind_type::S_VALUES, Parser::symbol_kind_type::S_CREATE_P,
+        Parser::symbol_kind_type::S_SELECT, Parser::symbol_kind_type::S_TABLE,
+        Parser::symbol_kind_type::S_WITH,   Parser::symbol_kind_type::S_SET,
+        Parser::symbol_kind_type::S_471_ /* ( */};
     ASSERT_EQ(result, expected);
 }
 
