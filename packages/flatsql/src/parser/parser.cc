@@ -9,7 +9,7 @@ void flatsql::parser::ParserBase::error(const location_type& loc, const std::str
     ctx.AddError(loc, message);
 }
 
-int Parser::CompleteAt(size_t token) {
+int Parser::CompleteAt(size_t target_index) {
     // Helper to print a symbol
     auto yy_print = [this](const auto& yysym) {
         if (yysym.empty()) {
@@ -39,6 +39,7 @@ int Parser::CompleteAt(size_t token) {
         }
     };
 
+    size_t token_index = 0;
     int yyn;
     /// Length of the RHS of the rule being reduced.
     int yylen = 0;
@@ -80,7 +81,17 @@ int Parser::CompleteAt(size_t token) {
 
         // Read a lookahead token.
         if (yyla.empty()) {
-            symbol_type yylookahead(ctx.NextSymbol());  // yynext
+            // Get the next symbol
+            auto next_symbol = ctx.NextSymbol();
+            // Did we reach the target index?
+            if (token_index++ == target_index) {
+                // Lookup the expected symbols if we would replace the target token
+                // XXX
+                std::cout << "--------> Foo" << std::endl;
+                return 0;
+            }
+            // Store symbol as lookahead
+            symbol_type yylookahead(std::move(next_symbol));
             yyla.move(yylookahead);
         }
         // YY_SYMBOL_PRINT("Next token is", yyla);
