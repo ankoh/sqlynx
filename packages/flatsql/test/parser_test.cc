@@ -12,6 +12,7 @@
 #include "gtest/gtest.h"
 
 using namespace flatsql;
+using namespace flatsql::parser;
 
 using Token = proto::ScannerTokenType;
 
@@ -24,9 +25,9 @@ TEST(ParserTest, FindNodeAtOffset) {
     auto parse = [&](std::string_view text) {
         rope::Rope buffer{128};
         buffer.Insert(0, text);
-        auto [scanned, scannerStatus] = parser::Scanner::Scan(buffer, 2);
+        auto [scanned, scannerStatus] = Scanner::Scan(buffer, 2);
         ASSERT_EQ(scannerStatus, proto::StatusCode::OK);
-        auto [parsed, parserStatus] = parser::Parser::Parse(scanned);
+        auto [parsed, parserStatus] = Parser::Parse(scanned);
         ASSERT_EQ(parserStatus, proto::StatusCode::OK);
         script = std::move(parsed);
     };
@@ -51,21 +52,38 @@ TEST(ParserTest, FindNodeAtOffset) {
     test_node_at_offset(7, 0, proto::NodeType::LITERAL_INTEGER, sx::Location(7, 1));
 }
 
-TEST(ParserTest, Completion) {
+TEST(ParserTest, CompleteGroupBy) {
     rope::Rope buffer{128};
-    buffer.Insert(0, R"SQL(
-        select *
-        from region, nation
-        where r_regionkey = n_regionkey
-    )SQL");
-    auto [scan, scan_status] = parser::Scanner::Scan(buffer, 1);
-    ASSERT_EQ(scan_status, proto::StatusCode::OK);
-    ASSERT_EQ(scan->GetTokens().GetSize(), 11);
+    buffer.Insert(0, R"SQL(select * from region group by)SQL");
 
-    parser::ParseContext ctx{*scan};
-    parser::Parser parser{ctx};
-    auto result = parser.CompleteAt(9);
-    ASSERT_EQ(result, 0);
+    auto [scan, scan_status] = Scanner::Scan(buffer, 1);
+    ASSERT_EQ(scan_status, proto::StatusCode::OK);
+    ASSERT_EQ(scan->GetTokens().GetSize(), 7);
+    auto token = scan->GetTokens()[5];
+    ASSERT_EQ(scan->ReadTextAtLocation(token.location), "by");
+
+    ParseContext ctx{*scan};
+    Parser parser{ctx};
+    auto result = parser.CompleteAt(5);
+    std::vector<Parser::symbol_kind_type> expected{Parser::symbol_kind_type::S_BY};
+    ASSERT_EQ(result, expected);
+}
+
+TEST(ParserTest, CompleteGroupByEOF) {
+    rope::Rope buffer{128};
+    buffer.Insert(0, R"SQL(select * from region group)SQL");
+
+    auto [scan, scan_status] = Scanner::Scan(buffer, 1);
+    ASSERT_EQ(scan_status, proto::StatusCode::OK);
+    ASSERT_EQ(scan->GetTokens().GetSize(), 6);
+    auto token = scan->GetTokens()[4];
+    ASSERT_EQ(scan->ReadTextAtLocation(token.location), "group");
+
+    ParseContext ctx{*scan};
+    Parser parser{ctx};
+    auto result = parser.CompleteAt(5);
+    std::vector<Parser::symbol_kind_type> expected{Parser::symbol_kind_type::S_BY};
+    ASSERT_EQ(result, expected);
 }
 
 }  // namespace

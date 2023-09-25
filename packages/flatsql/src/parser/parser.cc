@@ -9,9 +9,35 @@ void flatsql::parser::ParserBase::error(const location_type& loc, const std::str
     ctx.AddError(loc, message);
 }
 
-int Parser::CompleteAt(size_t target_index) {
+/// Collect all expected symbols
+std::vector<Parser::symbol_kind_type> Parser::CollectExpectedSymbols() {
+    std::vector<Parser::symbol_kind_type> expected;
+
+    // Actual number of expected tokens
+    const int yyn = yypact_[+yystack_[0].state];
+    if (!yy_pact_value_is_default_(yyn)) {
+        /* Start YYX at -YYN if negative to avoid negative indexes in
+            YYCHECK.  In other words, skip the first -YYN actions for
+            this state because they are default actions.  */
+        const int yyxbegin = yyn < 0 ? -yyn : 0;
+        // Stay within bounds of both yycheck and yytname.
+        const int yychecklim = yylast_ - yyn + 1;
+        const int yyxend = yychecklim < YYNTOKENS ? yychecklim : YYNTOKENS;
+        for (int yyx = yyxbegin; yyx < yyxend; ++yyx)
+            if (yycheck_[yyx + yyn] == yyx && yyx != symbol_kind::S_YYerror &&
+                !yy_table_value_is_error_(yytable_[yyx + yyn])) {
+                expected.push_back(YY_CAST(symbol_kind_type, yyx));
+            }
+    }
+    return expected;
+}
+
+std::vector<Parser::symbol_kind_type> Parser::CompleteAt(size_t target_index) {
+#define DEBUG_COMPLETE_AT 0
+
     // Helper to print a symbol
     auto yy_print = [this](const auto& yysym) {
+#if DEBUG_COMPLETE_AT == 1
         if (yysym.empty()) {
             std::cout << "empty symbol";
         } else {
@@ -19,15 +45,19 @@ int Parser::CompleteAt(size_t target_index) {
             std::cout << (yykind < YYNTOKENS ? "token" : "nterm") << ' ' << yysym.name() << " ("
                       << yysym.location.offset() << ": " << yysym.location.length() << ')';
         }
+#endif
     };
     // Helper to print a symbol with a prefix
     auto yy_symbol_print = [this, &yy_print](std::string_view prefix, const auto& sym) {
+#if DEBUG_COMPLETE_AT == 1
         std::cout << prefix << " ";
         yy_print(sym);
         std::cout << std::endl;
+#endif
     };
     // Helper to print a reduction
     auto yy_reduce_print = [this, &yy_print](int yyrule) {
+#if DEBUG_COMPLETE_AT == 1
         int yynrhs = yyr2_[yyrule];
         // Print the symbols being reduced, and their result.
         std::cout << "Reducing stack by rule " << yyrule - 1 << ":\n";
@@ -37,6 +67,7 @@ int Parser::CompleteAt(size_t target_index) {
             yy_print(yystack_[(yynrhs) - (yyi + 1)]);
             std::cout << std::endl;
         }
+#endif
     };
 
     size_t token_index = 0;
@@ -86,9 +117,7 @@ int Parser::CompleteAt(size_t target_index) {
             // Did we reach the target index?
             if (token_index++ == target_index) {
                 // Lookup the expected symbols if we would replace the target token
-                // XXX
-                std::cout << "--------> Foo" << std::endl;
-                return 0;
+                return CollectExpectedSymbols();
             }
             // Store symbol as lookahead
             symbol_type yylookahead(std::move(next_symbol));
@@ -275,7 +304,7 @@ int Parser::CompleteAt(size_t target_index) {
             yypop_();
         }
 
-        return yyresult;
+        return {};
     }
 }
 
