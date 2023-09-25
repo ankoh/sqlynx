@@ -5,6 +5,7 @@
 #include <sstream>
 
 #include "flatsql/api.h"
+#include "flatsql/parser/parse_context.h"
 #include "flatsql/parser/scanner.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/script.h"
@@ -48,6 +49,23 @@ TEST(ParserTest, FindNodeAtOffset) {
     test_node_at_offset(1, 0, proto::NodeType::OBJECT_SQL_SELECT, sx::Location(0, 8));
     test_node_at_offset(2, 0, proto::NodeType::OBJECT_SQL_SELECT, sx::Location(0, 8));
     test_node_at_offset(7, 0, proto::NodeType::LITERAL_INTEGER, sx::Location(7, 1));
+}
+
+TEST(ParserTest, Completion) {
+    rope::Rope buffer{128};
+    buffer.Insert(0, R"SQL(
+        select *
+        from region, nation
+        where r_regionkey = n_regionkey
+    )SQL");
+    auto [scan, scan_status] = parser::Scanner::Scan(buffer, 1);
+    ASSERT_EQ(scan_status, proto::StatusCode::OK);
+    ASSERT_EQ(scan->GetTokens().GetSize(), 11);
+
+    parser::ParseContext ctx{*scan};
+    parser::Parser parser{ctx};
+    auto result = parser.CompleteAt(9);
+    ASSERT_EQ(result, 0);
 }
 
 }  // namespace

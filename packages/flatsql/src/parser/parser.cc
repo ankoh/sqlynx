@@ -9,9 +9,7 @@ void flatsql::parser::ParserBase::error(const location_type& loc, const std::str
     ctx.AddError(loc, message);
 }
 
-int Parser::CompleteAt(std::shared_ptr<ScannedScript> in, size_t token) {
-    ParseContext ctx{*in};
-
+int Parser::CompleteAt(size_t token) {
     // Helper to print a symbol
     auto yy_print = [this](const auto& yysym) {
         if (yysym.empty()) {
