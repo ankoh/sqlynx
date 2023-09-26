@@ -11,8 +11,9 @@ void flatsql::parser::ParserBase::error(const location_type& loc, const std::str
 
 /// Collect all expected symbols
 std::vector<Parser::symbol_kind_type> Parser::CollectExpectedSymbols() {
-    // Actual number of expected tokens
     std::vector<symbol_kind_type> expected;
+
+    // Actual number of expected tokens
     const int yyn = yypact_[+yystack_[0].state];
     if (!yy_pact_value_is_default_(yyn)) {
         /* Start YYX at -YYN if negative to avoid negative indexes in
@@ -32,7 +33,7 @@ std::vector<Parser::symbol_kind_type> Parser::CollectExpectedSymbols() {
 }
 
 #define DEBUG_COMPLETE_AT 0
-std::vector<Parser::symbol_kind_type> Parser::ParseUntil(size_t target_index) {
+std::vector<Parser::symbol_kind_type> Parser::CollectExpectedSymbolsAt(size_t target_index) {
     // Helper to print a symbol
     auto yy_print = [this](const auto& yysym) {
 #if DEBUG_COMPLETE_AT == 1
@@ -278,10 +279,10 @@ yyreturn:
     return expected_symbols;
 }
 
-std::vector<Parser::symbol_kind_type> Parser::CompleteAt(ScannedScript& scanned, size_t token) {
+std::vector<Parser::symbol_kind_type> Parser::ParseUntil(ScannedScript& scanned, size_t token) {
     ParseContext ctx{scanned};
     flatsql::parser::Parser parser(ctx);
-    auto expected = parser.ParseUntil(token);
+    auto expected = parser.CollectExpectedSymbolsAt(token);
     return expected;
 }
 

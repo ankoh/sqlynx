@@ -441,7 +441,7 @@ class Script {
     /// Move the cursor
     std::pair<const ScriptCursor*, proto::StatusCode> MoveCursor(size_t text_offset);
     /// Complete at the cursor
-    std::pair<std::unique_ptr<Completion>, proto::StatusCode> CompleteAtCursor(size_t limit = 40);
+    std::pair<std::unique_ptr<Completion>, proto::StatusCode> CompleteAtCursor(size_t limit = 40) const;
     /// Get statisics
     std::unique_ptr<proto::ScriptStatisticsT> GetStatistics();
 };
