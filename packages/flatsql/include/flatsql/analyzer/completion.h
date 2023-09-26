@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ankerl/unordered_dense.h"
+#include "flatsql/analyzer/completion_index.h"
 #include "flatsql/context.h"
 #include "flatsql/parser/names.h"
 #include "flatsql/proto/proto_generated.h"
@@ -13,26 +14,29 @@ namespace flatsql {
 
 /// For now, we want the completion to work as follows:
 ///
-/// 1) We first derive a score function for the current cursor.
+/// 1) We first resolve the current scanner position and collect all symbols the parser would have expected.
+///    All symbols that are NOT identifiers are written directly into the result heap,
+///    If IDENT is NOT INCLUDED in the expected symbols, we stop the completion and return the the result heap.
+/// 2) We then derive a score function for the current cursor.
 ///     - If we are in a TABLE_REF clause, database/schema/table names score higher based on the path length.
 ///     - If we are in an COLUMN_REF, column names score higher.
 ///     - If we are in a SELECT clause, column names score higher.
 ///     - ... other rules that make sense
-/// 2) We then collect ALL the names that we found using the suffix lookup.
+/// 3) We then collect ALL the names that we found using the suffix lookup.
 ///     - We create a dense hash-table and reserve space for min(suffix_count, name_dictionary_size) entries.
 ///     - We store all names as QualifiedIDs in the hash table since we have to deduplicate them anyway.
 ///     - We use the name tags to add a first score based on the score function.
-/// 3) We then discover all other relevant names using the cursor
+/// 4) We then discover all other relevant names using the cursor
 ///     - We find all table refs that belong to our statement id.
 ///     - For these table refs, we find all column names.
 ///     - We find all possible table names for unresolved column refs.
 ///     - For these table refs, we find all column names.
 ///     - We find all column aliases of that statement id
-/// 4) We lookup each of the names discovered in 3) in our map and add additional score
-/// 5) We then construct a max-heap to determine the top-k names with highest score
-/// 6) Those are returned to the user
+/// 5) We lookup each of the names discovered in 3) in our map and add additional score
+/// 6) We then construct a max-heap to determine the top-k names with highest score
+/// 7) Those are returned to the user
 ///
-/// One may argue that the scoring in 2) and 4) are slightly redundant:
+/// One may argue that the scoring in 3) and 4) are slightly redundant:
 /// The reason why we split the two is the way people write SQL. For a prefix like `SELECT * FROM f`, we don't have
 /// any information except that we are in a potential table_ref. We therefore need a way to prefer table names even
 /// though we don't have any information to narrow them down further. Thus the "tagging" of names in the name
@@ -44,11 +48,9 @@ struct Completion {
 
     /// The completion candidates
     struct Candidate {
-        /// The name id
-        QualifiedID name_id;
-        /// The name id
+        /// The name text
         std::string_view name_text;
-        /// The name tags
+        /// The name tags (if any)
         NameTags name_tags;
         /// The score
         ScoreValueType score;
@@ -63,15 +65,21 @@ struct Completion {
     const ScriptCursor& cursor;
     /// The scoring table
     const std::array<std::pair<proto::NameTag, ScoreValueType>, 8>& scoring_table;
+    /// The hash-map to deduplicate names found in the completion indexes
+    CandidateMap pending_candidates;
     /// The result heap, holding up to k entries
     TopKHeap<Candidate, ScoreValueType> result_heap;
 
+    /// Resolve the expected symbols
+    void FindCandidatesInGrammar(bool& expected_identifier);
     /// Find the candidates in a completion index
-    void FindCandidatesInIndex(CandidateMap& candidates, const CompletionIndex& index);
+    void FindCandidatesInIndex(const CompletionIndex& index);
     /// Find the candidates in completion indexes
-    void FindCandidatesInIndexes(CandidateMap& candidates);
+    void FindCandidatesInIndexes();
     /// Find candidates in the AST around the script cursor
-    void FindCandidatesInAST(CandidateMap& candidates);
+    void FindCandidatesInAST();
+    /// Flush pending candidates and finish the result heap
+    void FlushCandidatesAndFinish();
 
    public:
     /// Constructor
@@ -84,73 +92,6 @@ struct Completion {
     flatbuffers::Offset<proto::Completion> Pack(flatbuffers::FlatBufferBuilder& builder);
     // Compute completion at a cursor
     static std::pair<std::unique_ptr<Completion>, proto::StatusCode> Compute(const ScriptCursor& cursor, size_t k);
-};
-
-class CompletionIndex {
-   public:
-    using StringView = fuzzy_ci_string_view;
-
-    /// An entry in the trie
-    struct EntryData {
-        /// The name id
-        std::string_view name_text;
-        /// The name id
-        QualifiedID name_id;
-        /// The name tags
-        NameTags name_tags;
-        /// The number of occurrences
-        size_t occurrences;
-        /// The weight of the entry
-        /// Weight adds "preference" to entries in a completion index.
-        /// For example, when entering "se", a keyword like "select" should be returned before "false" independent of
-        /// the context.
-        size_t weight;
-
-        /// Constructor
-        EntryData(std::string_view name_text = {}, QualifiedID name_id = {}, NameTags tags = 0, size_t occurrences = 0,
-                  size_t weight = 0)
-            : name_text(name_text), name_id(name_id), name_tags(tags), occurrences(occurrences), weight(weight) {}
-        /// Constructor
-        EntryData(std::string_view suffix, std::string_view name_text = {}, QualifiedID name_id = {}, NameTags tags = 0,
-                  size_t occurrences = 0, size_t weight = 0)
-            : name_text(name_text), name_id(name_id), name_tags(tags), occurrences(occurrences), weight(weight) {}
-    };
-
-    struct Entry {
-        /// The suffix
-        StringView suffix;
-        /// The entry
-        EntryData* data;
-    };
-
-    /// Constructor
-    CompletionIndex(ChunkBuffer<EntryData, 256> entry_data, std::vector<Entry> entries,
-                    std::shared_ptr<AnalyzedScript> script = nullptr);
-
-   protected:
-    /// The entry data
-    ChunkBuffer<EntryData, 256> entry_data;
-    /// The entries sorted by suffix
-    std::vector<Entry> entries;
-    /// The analyzed script
-    std::shared_ptr<AnalyzedScript> script;
-
-   public:
-    /// Get the entries
-    const auto& GetEntries() const { return entries; }
-    /// Get the script
-    const auto& GetScript() const { return script; }
-    /// Find all entries that share a prefix
-    std::span<const Entry> FindEntriesWithPrefix(StringView prefix) const;
-    /// Find all entries that share a prefix
-    inline std::span<const Entry> FindEntriesWithPrefix(std::string_view prefix) const {
-        return FindEntriesWithPrefix(StringView{prefix.data(), prefix.length()});
-    }
-
-    /// Construct completion index from script
-    static std::pair<std::unique_ptr<CompletionIndex>, proto::StatusCode> Build(std::shared_ptr<AnalyzedScript> script);
-    /// Get the static keyword index
-    static const CompletionIndex& Keywords();
 };
 
 }  // namespace flatsql
