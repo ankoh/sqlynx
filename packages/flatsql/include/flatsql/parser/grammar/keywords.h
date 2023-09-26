@@ -18,11 +18,11 @@ struct Keyword {
     Parser::token::token_kind_type token;
     /// The category
     KeywordCategory category;
-    /// The completion weight
-    size_t completion_weight;
 
     /// Get a span with all keywords
     static std::span<const Keyword> GetKeywords();
+    /// Get a keyword name
+    static std::string_view GetKeywordName(Parser::token::token_kind_type token);
     /// Find a keyword
     static const Keyword* Find(std::string_view text);
     /// Get the length of a keyword known at compile-time

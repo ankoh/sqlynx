@@ -97,7 +97,7 @@ TEST_P(CompletionTestSuite, Test) {
     ASSERT_LT(param.token.token_id, scan->GetTokens().GetSize());
     ASSERT_EQ(scan->GetTokens()[param.token.token_id].kind_, param.token.symbol_type);
 
-    auto result = parser::Parser::CompleteAt(*scan, param.token.token_id);
+    auto result = parser::Parser::ParseUntil(*scan, param.token.token_id);
     ASSERT_EQ(result, param.expected_symbols);
 }
 

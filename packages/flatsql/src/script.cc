@@ -10,6 +10,7 @@
 
 #include "flatsql/analyzer/analyzer.h"
 #include "flatsql/analyzer/completion.h"
+#include "flatsql/analyzer/completion_index.h"
 #include "flatsql/parser/parse_context.h"
 #include "flatsql/parser/parser.h"
 #include "flatsql/parser/scanner.h"
@@ -408,7 +409,7 @@ std::pair<const ScriptCursor*, proto::StatusCode> Script::MoveCursor(size_t text
     return {cursor.get(), status};
 }
 /// Complete at the cursor
-std::pair<std::unique_ptr<Completion>, proto::StatusCode> Script::CompleteAtCursor(size_t limit) {
+std::pair<std::unique_ptr<Completion>, proto::StatusCode> Script::CompleteAtCursor(size_t limit) const {
     // Fail if the user forgot to move the cursor
     if (cursor == nullptr) {
         return {nullptr, proto::StatusCode::COMPLETION_MISSES_CURSOR};
