@@ -45,6 +45,7 @@ namespace flatsql {
 
 struct Completion {
     using ScoreValueType = uint32_t;
+    using ScoringTable = std::array<std::pair<proto::NameTag, ScoreValueType>, 8>;
 
     /// The completion candidates
     struct Candidate {
@@ -64,7 +65,7 @@ struct Completion {
     /// The script cursor
     const ScriptCursor& cursor;
     /// The scoring table
-    const std::array<std::pair<proto::NameTag, ScoreValueType>, 8>& scoring_table;
+    const ScoringTable& scoring_table;
     /// The hash-map to deduplicate names found in the completion indexes
     CandidateMap pending_candidates;
     /// The result heap, holding up to k entries
@@ -78,13 +79,12 @@ struct Completion {
     void FindCandidatesInIndexes();
     /// Find candidates in the AST around the script cursor
     void FindCandidatesInAST();
-    /// Flush pending candidates and finish the result heap
+    /// Flush pending candidates and finish the results
     void FlushCandidatesAndFinish();
 
    public:
     /// Constructor
-    Completion(const ScriptCursor& cursor,
-               const std::array<std::pair<proto::NameTag, ScoreValueType>, 8>& scoring_table, size_t k);
+    Completion(const ScriptCursor& cursor, size_t k);
 
     /// Get the result heap
     auto& GetHeap() const { return result_heap; }
