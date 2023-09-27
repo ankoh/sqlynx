@@ -15,7 +15,7 @@
 		"watch": "tsc -b -w"
 	},
 	"dependencies": {
-		"vscode-languageserver": "^8.1.0",
+		"vscode-languageserver": "^9.0.1",
 		"@ankoh/flatsql": "link:../flatsql-wasm"
 	},
 	"devDependencies": {
