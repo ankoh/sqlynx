@@ -49,9 +49,8 @@ static constexpr ScoringTable NAME_SCORE_COLUMN_REF{{
 
 }  // namespace
 
-/// Find the expected symbols
-void Completion::FindCandidatesInGrammar(bool& expected_identifier) {
-    expected_identifier = false;
+void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
+    expects_identifier = false;
 
     // Get the cursor completions at a cursor
     auto token_id = cursor.scanner_token_id.value_or(0);
@@ -61,7 +60,7 @@ void Completion::FindCandidatesInGrammar(bool& expected_identifier) {
     for (auto& sym : expected_symbols) {
         switch (sym) {
             case parser::Parser::symbol_kind_type::S_IDENT:
-                expected_identifier = true;
+                expects_identifier = true;
                 break;
             default:
                 break;
@@ -113,31 +112,13 @@ void Completion::FindCandidatesInAST() {
 }
 
 void Completion::FlushCandidatesAndFinish() {
-    for (auto& [key, value] : pending_candidates) {
-        result_heap.Insert(value, value.score);
+    for (auto& [key, candidate] : pending_candidates) {
+        result_heap.Insert(candidate, candidate.score);
     }
     result_heap.Finish();
 }
 
-Completion::Completion(const ScriptCursor& cursor,
-                       const std::array<std::pair<proto::NameTag, ScoreValueType>, 8>& scoring_table, size_t k)
-    : cursor(cursor), scoring_table(scoring_table), result_heap(k) {}
-
-std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(const ScriptCursor& cursor, size_t k) {
-    // Get the cursor completions at a cursor
-    auto token_id = cursor.scanner_token_id.value_or(0);
-    auto& scanned = *cursor.script.scanned_script;
-    auto expected_symbols = parser::Parser::ParseUntil(scanned, token_id);
-
-    for (auto& sym : expected_symbols) {
-        switch (sym) {
-            case parser::Parser::symbol_kind_type::S_IDENT:
-                break;
-            default:
-                break;
-        }
-    }
-
+static const Completion::ScoringTable& selectScoringTable(const ScriptCursor& cursor) {
     // Determine scoring table
     auto* scoring_table = &NAME_SCORE_DEFAULTS;
     // Is a table ref?
@@ -148,10 +129,20 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(co
     if (cursor.column_reference_id.has_value()) {
         scoring_table = &NAME_SCORE_COLUMN_REF;
     }
-    // Create completion
-    auto completion = std::make_unique<Completion>(cursor, *scoring_table, k);
-    completion->FindCandidatesInIndexes();
-    completion->FindCandidatesInAST();
+    return *scoring_table;
+}
+
+Completion::Completion(const ScriptCursor& cursor, size_t k)
+    : cursor(cursor), scoring_table(selectScoringTable(cursor)), result_heap(k) {}
+
+std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(const ScriptCursor& cursor, size_t k) {
+    auto completion = std::make_unique<Completion>(cursor, k);
+    bool expects_identifier = false;
+    completion->FindCandidatesInGrammar(expects_identifier);
+    if (expects_identifier) {
+        completion->FindCandidatesInIndexes();
+        completion->FindCandidatesInAST();
+    }
     completion->FlushCandidatesAndFinish();
     return {std::move(completion), proto::StatusCode::OK};
 }
