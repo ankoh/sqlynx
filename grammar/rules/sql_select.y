@@ -1854,7 +1854,7 @@ sql_subquery_op:
 
 sql_any_operator:
     sql_all_op                        { $$ = ctx.List({ std::move($1) }); }
-  | sql_col_id '.' sql_any_operator   {
+  | sql_col_id DOT sql_any_operator   {
       $3->push_front($1);
       $$ = std::move($3);
     }
@@ -2081,8 +2081,8 @@ sql_columnref:
     ;
 
 sql_indirection_el:
-    '.' sql_attr_name       { $$ = $2; }
-  | '.' '*'                 { $$ = Operator(@2); }
+    DOT sql_attr_name       { $$ = $2; }
+  | DOT '*'                 { $$ = Operator(@2); }
   | '[' sql_a_expr ']'      { $$ = IndirectionIndex(ctx, @$, ctx.Expression(std::move($2))); }
   | '[' sql_opt_slice_bound ':' sql_opt_slice_bound ']'     { $$ = IndirectionIndex(ctx, @$, $2, $4); }
     ;
@@ -2305,8 +2305,8 @@ sql_any_name:
     ;
 
 sql_attrs:
-    '.' sql_attr_name           { $$ = ctx.List({ $2 }); }
-  | sql_attrs '.' sql_attr_name { $1->push_back($3); $$ = std::move($1); }
+    DOT sql_attr_name           { $$ = ctx.List({ $2 }); }
+  | sql_attrs DOT sql_attr_name { $1->push_back($3); $$ = std::move($1); }
     ;
 
 sql_opt_name_list:

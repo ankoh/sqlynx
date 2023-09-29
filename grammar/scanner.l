@@ -224,6 +224,7 @@ identifier      {ident_start}{ident_cont}*
 /* Assorted special-case operators and operator-like tokens */
 typecast        "::"
 dot_dot         \.\.
+dot             \.
 colon_equals    ":="
 
 /*
@@ -349,6 +350,7 @@ std::string_view input = ctx.GetInputData();
 
 {typecast}          { return Parser::make_TYPECAST(loc); }
 {dot_dot}           { return Parser::make_DOT_DOT(loc); }
+{dot}               { return Parser::make_DOT(loc); }
 {colon_equals}      { return Parser::make_COLON_EQUALS(loc); }
 {equals_greater}    { return Parser::make_EQUALS_GREATER(loc); }
 {less_equals}       { return Parser::make_LESS_EQUALS(loc); }

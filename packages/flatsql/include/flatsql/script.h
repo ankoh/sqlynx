@@ -86,9 +86,27 @@ class ScannedScript {
     std::string_view ReadTextAtLocation(sx::Location loc) {
         return std::string_view{text_buffer}.substr(loc.offset(), loc.length());
     }
-    /// Resolve token at text offset.
-    /// Returns the PREVIOUS token if there's no exact hit
-    size_t FindToken(size_t text_offset);
+    /// A location info
+    struct LocationInfo {
+        /// The insert mode
+        enum InsertMode {
+            NEW_TOKEN = 0,
+            EXTEND_TOKEN = 1,
+            TOKEN_AFTER_DOT = 2,
+        };
+        /// The text offset
+        size_t text_offset;
+        /// The last scanner token that does not have a begin greater than the text offset
+        size_t token_id;
+        /// If we would insert at this position, what mode would it be?
+        InsertMode mode;
+
+        /// Constructor
+        LocationInfo(size_t text_offset, size_t token_id, InsertMode mode)
+            : text_offset(text_offset), token_id(token_id), mode(mode) {}
+    };
+    /// Find token at text offset
+    LocationInfo FindToken(size_t text_offset);
     /// Pack syntax tokens
     std::unique_ptr<proto::ScannerTokensT> PackTokens();
     /// Pack scanned program
@@ -365,8 +383,8 @@ struct ScriptCursor {
     size_t text_offset = 0;
     /// The text offset
     std::string_view text;
-    /// The current scanner token id (if any)
-    std::optional<size_t> scanner_token_id;
+    /// The current scanner location (if any)
+    std::optional<ScannedScript::LocationInfo> scanner_location;
     /// The current ast node id (if any)
     std::optional<size_t> ast_node_id;
     /// The current statement id (if any)

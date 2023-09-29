@@ -53,7 +53,8 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
     expects_identifier = false;
 
     // Get the cursor completions at a cursor
-    auto token_id = cursor.scanner_token_id.value_or(0);
+    // auto token_id = cursor.scanner_token_id.value_or(0); XXX
+    auto token_id = 0;
     auto& scanned = *cursor.script.scanned_script;
     auto expected_symbols = parser::Parser::ParseUntil(scanned, token_id);
 
@@ -166,7 +167,7 @@ flatbuffers::Offset<proto::Completion> Completion::Pack(flatbuffers::FlatBufferB
     // Pack completion table
     proto::CompletionBuilder completionBuilder{builder};
     completionBuilder.add_text_offset(cursor.text_offset);
-    completionBuilder.add_scanner_token_id(cursor.scanner_token_id.value_or(0));
+    // completionBuilder.add_scanner_token_id(cursor.scanner_token_id.value_or(0)); XXX
     completionBuilder.add_candidates(candidatesOfs);
     return completionBuilder.Finish();
 }
