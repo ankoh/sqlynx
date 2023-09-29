@@ -66,59 +66,73 @@ void ScannedScript::TagName(NameID name_id, sx::NameTag tag) {
 }
 
 /// Find a token at a text offset
-size_t ScannedScript::FindToken(size_t text_offset) {
-    // Symbols are sorted by location, so we can do a binary search on the symbol buffer
+ScannedScript::LocationInfo ScannedScript::FindToken(size_t text_offset) {
+    using InsertMode = ScannedScript::LocationInfo::InsertMode;
     auto& chunks = symbols.GetChunks();
-    // Short-circuit offset past end (+ 2 trailing YY_END_OF_BUFFER_CHAR)
-    if (text_offset + 2 >= text_buffer.size()) {
-        // Get last token (minus EOF token)
-        return std::max<size_t>(symbols.GetSize(), 2) - 2;
-    }
+
+    // Helper to determine the insert mode
+    auto get_insert_mode = [&](size_t text_offset, size_t chunk_id, size_t chunk_token_id) {
+        if (chunk_id >= chunks.size()) {
+            std::cout << "chunk out of bounds" << std::endl;
+            return InsertMode::NEW_TOKEN;
+        }
+        auto& chunk = chunks[chunk_id];
+        auto& token = chunk[chunk_token_id];
+        auto token_begin = token.location.offset();
+        auto token_end = token.location.offset() + token.location.length();
+
+        // Text location in token
+        if (text_offset >= token_begin && (text_offset <= token_end)) {
+            // .... ....
+            //      ^ offset 5, length 4
+            //
+            return InsertMode::EXTEND_TOKEN;
+        }
+
+        // Immediately following a dot?
+        if (token_end == text_offset && token.kind_ == parser::Parser::symbol_kind_type::S_DOT) {
+            return InsertMode::TOKEN_AFTER_DOT;
+        }
+
+        // At the end
+        if (token_end >= (std::max<size_t>(text_buffer.size(), 2) - 2)) {
+            return InsertMode::EXTEND_TOKEN;
+        }
+        return InsertMode::NEW_TOKEN;
+    };
 
     // Find chunk that contains the text offset.
     // Chunks grow exponentially in size, so this is logarithmic in cost
     auto chunk_iter = chunks.begin();
-    size_t chunk_token_offset = 0;
+    size_t chunk_token_base_id = 0;
     for (; chunk_iter != chunks.end(); ++chunk_iter) {
-        size_t text_to = chunk_iter->back().location.offset() + chunk_iter->back().location.length();
-        if (text_offset < text_to) {
+        size_t text_from = chunk_iter->front().location.offset();
+        if (text_from > text_offset) {
             break;
         }
-        chunk_token_offset += chunk_iter->size();
+        chunk_token_base_id += chunk_iter->size();
     }
 
-    // Iter hit end?
-    // Return the last token then (minus YYEOF)
-    if (chunk_iter == chunks.end()) {
-        return std::max<size_t>(chunk_token_offset, 2) - 2;
+    // Get previous chunk
+    if (chunk_iter > chunks.begin()) {
+        --chunk_iter;
+        chunk_token_base_id -= chunk_iter->size();
     }
 
     // Otherwise we found a chunk that contains the text offset.
     // Binary search the token offset.
     auto token_iter =
-        std::lower_bound(chunk_iter->begin(), chunk_iter->end(), text_offset,
-                         [](parser::Parser::symbol_type& token, size_t ofs) { return token.location.offset() < ofs; });
-
-    // Offset is larger than the text offset?
-    // Then emit the previous node
-    if (token_iter->location.offset() > text_offset) {
-        // Get the previous token
-        if (token_iter != chunk_iter->begin()) {
-            // Get the previous token in the same chunk
-            --token_iter;
-        } else if (chunk_iter != chunks.begin()) {
-            // Get the previous token in this previous chunk
-            --chunk_iter;
-            chunk_token_offset -= chunk_iter->size();
-            assert(!chunk_iter->empty());
-            token_iter = (chunk_iter->begin() + chunk_iter->size() - 1);
-        }
-        // Otherwise we just emit the first token
+        std::upper_bound(chunk_iter->begin(), chunk_iter->end(), text_offset,
+                         [](size_t ofs, parser::Parser::symbol_type& token) { return ofs < token.location.offset(); });
+    if (token_iter > chunk_iter->begin()) {
+        --token_iter;
     }
+    auto chunk_token_id = token_iter - chunk_iter->begin();
 
     // Return the global token offset
-    auto local_token_ofs = token_iter - chunk_iter->begin();
-    return chunk_token_offset + local_token_ofs;
+    auto token_id = chunk_token_base_id + chunk_token_id;
+    auto mode = get_insert_mode(text_offset, chunk_iter - chunks.begin(), chunk_token_id);
+    return {text_offset, token_id, mode};
 }
 
 flatbuffers::Offset<proto::ScannedScript> ScannedScript::Pack(flatbuffers::FlatBufferBuilder& builder) {
@@ -415,7 +429,7 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Script::CompleteAtCurs
         return {nullptr, proto::StatusCode::COMPLETION_MISSES_CURSOR};
     }
     // Fail if the scanner is not associated with a scanner token
-    if (!cursor->scanner_token_id.has_value()) {
+    if (!cursor->scanner_location.has_value()) {
         return {nullptr, proto::StatusCode::COMPLETION_MISSES_SCANNER_TOKEN};
     }
     // Compute the completion
@@ -448,9 +462,9 @@ std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> ScriptCursor::Create
     auto& scanned = *parsed.scanned_script;
 
     // Read scanner token
-    cursor->scanner_token_id = scanned.FindToken(text_offset);
-    if (cursor->scanner_token_id) {
-        auto& token = scanned.GetTokens()[*cursor->scanner_token_id];
+    cursor->scanner_location = scanned.FindToken(text_offset);
+    if (cursor->scanner_location) {
+        auto& token = scanned.GetTokens()[cursor->scanner_location->token_id];
         cursor->text = scanned.ReadTextAtLocation(token.location);
     }
 
@@ -527,7 +541,10 @@ std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> ScriptCursor::Create
 flatbuffers::Offset<proto::ScriptCursorInfo> ScriptCursor::Pack(flatbuffers::FlatBufferBuilder& builder) const {
     auto out = std::make_unique<proto::ScriptCursorInfoT>();
     out->text_offset = text_offset;
-    out->scanner_token_id = scanner_token_id.value_or(std::numeric_limits<uint32_t>::max());
+    out->scanner_token_id = std::numeric_limits<uint32_t>::max();
+    if (scanner_location) {
+        out->scanner_token_id = scanner_location->token_id;
+    }
     out->statement_id = statement_id.value_or(std::numeric_limits<uint32_t>::max());
     out->ast_node_id = ast_node_id.value_or(std::numeric_limits<uint32_t>::max());
     out->table_id = table_id.value_or(std::numeric_limits<uint32_t>::max());
