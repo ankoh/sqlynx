@@ -16,7 +16,7 @@ opt_vararg_field:
     ;
 
 vararg_key_path:
-    vararg_key_path '.' vararg_key  { $1->push_back($3); $$ = std::move($1); }
+    vararg_key_path DOT vararg_key  { $1->push_back($3); $$ = std::move($1); }
   | vararg_key                      { $$ = ctx.List({ $1 }); }
 
 vararg_key:

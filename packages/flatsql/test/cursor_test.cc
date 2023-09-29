@@ -67,12 +67,12 @@ void test(Script& script, size_t text_offset, ExpectedScriptCursor expected) {
     ASSERT_EQ(status, proto::StatusCode::OK);
     // Check scanner token
     if (expected.scanner_token_text.has_value()) {
-        ASSERT_TRUE(cursor->scanner_token_id.has_value());
-        auto token = script.scanned_script->GetTokens()[*cursor->scanner_token_id];
+        ASSERT_TRUE(cursor->scanner_location.has_value());
+        auto token = script.scanned_script->GetTokens()[cursor->scanner_location->token_id];
         auto token_text = script.scanned_script->ReadTextAtLocation(token.location);
         ASSERT_EQ(token_text, *expected.scanner_token_text);
     } else {
-        ASSERT_FALSE(cursor->scanner_token_id.has_value());
+        ASSERT_FALSE(cursor->scanner_location.has_value());
     }
     // Check statement id
     ASSERT_EQ(cursor->statement_id, expected.statement_id);

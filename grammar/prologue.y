@@ -72,7 +72,7 @@ using namespace flatsql::parser;
 %token              Op
 %token              FCONST BCONST XCONST
 %token              ICONST PARAM
-%token              TYPECAST DOT_DOT COLON_EQUALS EQUALS_GREATER
+%token              TYPECAST DOT DOT_DOT COLON_EQUALS EQUALS_GREATER
 %token              LESS_EQUALS GREATER_EQUALS NOT_EQUALS
 
 %token EOF 0

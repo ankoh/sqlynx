@@ -72,27 +72,29 @@ TEST(ScannerTest, FindTokenAtOffset) {
         ASSERT_EQ(packed->token_types, have_types);
     };
     // Test token at offset
-    auto test_token_at_offset = [&](size_t text_offset, size_t expected_token_offset) {
-        auto offset = script->FindToken(text_offset);
-        ASSERT_EQ(offset, expected_token_offset) << text_offset;
+    auto test_token_at_offset = [&](size_t text_offset, size_t exp_token_id, size_t exp_insert_mode) {
+        auto location = script->FindToken(text_offset);
+        ASSERT_EQ(location.token_id, exp_token_id) << text_offset;
+        ASSERT_EQ(location.mode, exp_insert_mode) << text_offset;
     };
+    using InsertMode = ScannedScript::LocationInfo::InsertMode;
 
     {
         SCOPED_TRACE("select 1");
         scan("select 1", 1);
         test_tokens({ScannerToken::KEYWORD, ScannerToken::LITERAL_INTEGER});
-        test_token_at_offset(0, 0);
-        test_token_at_offset(1, 0);
-        test_token_at_offset(2, 0);
-        test_token_at_offset(3, 0);
-        test_token_at_offset(4, 0);
-        test_token_at_offset(5, 0);
-        test_token_at_offset(6, 0);
-        test_token_at_offset(7, 1);
-        test_token_at_offset(8, 1);
-        test_token_at_offset(9, 1);
-        test_token_at_offset(10, 1);
-        test_token_at_offset(100, 1);
+        test_token_at_offset(0, 0, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(1, 0, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(2, 0, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(3, 0, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(4, 0, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(5, 0, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(6, 0, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(7, 1, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(8, 2, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(9, 2, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(10, 2, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(100, 2, InsertMode::EXTEND_TOKEN);
     }
     {
         SCOPED_TRACE("select a from A where b = 1");
@@ -100,37 +102,37 @@ TEST(ScannerTest, FindTokenAtOffset) {
         test_tokens({ScannerToken::KEYWORD, ScannerToken::IDENTIFIER, ScannerToken::KEYWORD, ScannerToken::IDENTIFIER,
                      ScannerToken::KEYWORD, ScannerToken::IDENTIFIER, ScannerToken::OPERATOR,
                      ScannerToken::LITERAL_INTEGER});
-        test_token_at_offset(0, 0);
-        test_token_at_offset(1, 0);
-        test_token_at_offset(2, 0);
-        test_token_at_offset(3, 0);
-        test_token_at_offset(4, 0);
-        test_token_at_offset(5, 0);
-        test_token_at_offset(6, 0);
-        test_token_at_offset(7, 1);
-        test_token_at_offset(8, 1);
-        test_token_at_offset(9, 2);
-        test_token_at_offset(10, 2);
-        test_token_at_offset(11, 2);
-        test_token_at_offset(12, 2);
-        test_token_at_offset(13, 2);
-        test_token_at_offset(14, 3);
-        test_token_at_offset(15, 3);
-        test_token_at_offset(16, 4);
-        test_token_at_offset(17, 4);
-        test_token_at_offset(18, 4);
-        test_token_at_offset(19, 4);
-        test_token_at_offset(20, 4);
-        test_token_at_offset(21, 4);
-        test_token_at_offset(22, 5);
-        test_token_at_offset(23, 5);
-        test_token_at_offset(24, 6);
-        test_token_at_offset(25, 6);
-        test_token_at_offset(26, 7);
-        test_token_at_offset(27, 7);
-        test_token_at_offset(28, 7);
-        test_token_at_offset(30, 7);
-        test_token_at_offset(100, 7);
+        test_token_at_offset(0, 0, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(1, 0, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(2, 0, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(3, 0, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(4, 0, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(5, 0, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(6, 0, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(7, 1, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(8, 1, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(9, 2, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(10, 2, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(11, 2, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(12, 2, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(13, 2, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(14, 3, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(15, 3, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(16, 4, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(17, 4, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(18, 4, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(19, 4, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(20, 4, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(21, 4, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(22, 5, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(23, 5, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(24, 6, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(25, 6, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(26, 7, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(27, 8, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(28, 8, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(30, 8, InsertMode::EXTEND_TOKEN);
+        test_token_at_offset(100, 8, InsertMode::EXTEND_TOKEN);
     }
 }
 
@@ -149,9 +151,9 @@ TEST(ScannerTest, FindTokenInterleaved) {
 
     for (size_t i = 0; i < n; ++i) {
         auto hit = scanned->FindToken(i * 2);
-        ASSERT_EQ(hit, i);
+        ASSERT_EQ(hit.token_id, i);
         auto one_off = scanned->FindToken(i * 2 + 1);
-        ASSERT_EQ(one_off, i);
+        ASSERT_EQ(one_off.token_id, i);
     }
 }
 
