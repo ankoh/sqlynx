@@ -77,8 +77,20 @@ TEST(ScannerTest, FindTokenAtOffset) {
         ASSERT_EQ(location.token_id, exp_token_id) << text_offset;
         ASSERT_EQ(location.relative, exp_insert_mode) << text_offset;
     };
-    using Relative = ScannedScript::LocationInfo::RelativePosition;
 
+    using Relative = ScannedScript::LocationInfo::RelativePosition;
+    {
+        SCOPED_TRACE("empty");
+        scan("", 0);
+        test_tokens({});
+        test_token(0, 0, Relative::NEW_TOKEN);
+    }
+    {
+        SCOPED_TRACE("only space");
+        scan("    ", 0);
+        test_tokens({});
+        test_token(0, 0, Relative::NEW_TOKEN);
+    }
     {
         SCOPED_TRACE("select 1");
         scan("select 1", 1);
@@ -95,6 +107,11 @@ TEST(ScannerTest, FindTokenAtOffset) {
         test_token(9, 1, Relative::END_OF_TOKEN);
         test_token(10, 1, Relative::END_OF_TOKEN);
         test_token(100, 1, Relative::END_OF_TOKEN);
+    }
+    {
+        SCOPED_TRACE("select 1, trailing space");
+        test_tokens({ScannerToken::KEYWORD, ScannerToken::LITERAL_INTEGER});
+        test_token(8, 1, Relative::END_OF_TOKEN);
     }
     {
         SCOPED_TRACE("select a from A where b = 1");
