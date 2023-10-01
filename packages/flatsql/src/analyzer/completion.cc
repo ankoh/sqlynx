@@ -58,13 +58,24 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
     auto& scanned = *cursor.script.scanned_script;
     auto expected_symbols = parser::Parser::ParseUntil(scanned, token_id);
 
-    for (auto& sym : expected_symbols) {
+    for (parser::Parser::symbol_kind_type sym : expected_symbols) {
         switch (sym) {
             case parser::Parser::symbol_kind_type::S_IDENT:
                 expects_identifier = true;
                 break;
-            default:
+            default: {
+                auto name = parser::Keyword::GetKeywordName(sym);
+                if (!name.empty()) {
+                    Candidate candidate{
+                        .name_tags = NameTags{proto::NameTag::KEYWORD},
+                        .name_text = name,
+                        .score = 0,
+                        .count = 0,
+                    };
+                    result_heap.Insert(candidate, 0);
+                }
                 break;
+            }
         }
     }
 }
