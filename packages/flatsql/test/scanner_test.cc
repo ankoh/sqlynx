@@ -72,29 +72,29 @@ TEST(ScannerTest, FindTokenAtOffset) {
         ASSERT_EQ(packed->token_types, have_types);
     };
     // Test token at offset
-    auto test_token_at_offset = [&](size_t text_offset, size_t exp_token_id, size_t exp_insert_mode) {
+    auto test_token = [&](size_t text_offset, size_t exp_token_id, size_t exp_insert_mode) {
         auto location = script->FindToken(text_offset);
         ASSERT_EQ(location.token_id, exp_token_id) << text_offset;
-        ASSERT_EQ(location.mode, exp_insert_mode) << text_offset;
+        ASSERT_EQ(location.relative, exp_insert_mode) << text_offset;
     };
-    using InsertMode = ScannedScript::LocationInfo::InsertMode;
+    using Relative = ScannedScript::LocationInfo::RelativePosition;
 
     {
         SCOPED_TRACE("select 1");
         scan("select 1", 1);
         test_tokens({ScannerToken::KEYWORD, ScannerToken::LITERAL_INTEGER});
-        test_token_at_offset(0, 0, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(1, 0, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(2, 0, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(3, 0, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(4, 0, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(5, 0, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(6, 0, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(7, 1, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(8, 2, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(9, 2, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(10, 2, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(100, 2, InsertMode::EXTEND_TOKEN);
+        test_token(0, 0, Relative::BEGIN_OF_TOKEN);
+        test_token(1, 0, Relative::MID_OF_TOKEN);
+        test_token(2, 0, Relative::MID_OF_TOKEN);
+        test_token(3, 0, Relative::MID_OF_TOKEN);
+        test_token(4, 0, Relative::MID_OF_TOKEN);
+        test_token(5, 0, Relative::MID_OF_TOKEN);
+        test_token(6, 0, Relative::END_OF_TOKEN);
+        test_token(7, 1, Relative::BEGIN_OF_TOKEN);
+        test_token(8, 1, Relative::END_OF_TOKEN);
+        test_token(9, 1, Relative::END_OF_TOKEN);
+        test_token(10, 1, Relative::END_OF_TOKEN);
+        test_token(100, 1, Relative::END_OF_TOKEN);
     }
     {
         SCOPED_TRACE("select a from A where b = 1");
@@ -102,37 +102,37 @@ TEST(ScannerTest, FindTokenAtOffset) {
         test_tokens({ScannerToken::KEYWORD, ScannerToken::IDENTIFIER, ScannerToken::KEYWORD, ScannerToken::IDENTIFIER,
                      ScannerToken::KEYWORD, ScannerToken::IDENTIFIER, ScannerToken::OPERATOR,
                      ScannerToken::LITERAL_INTEGER});
-        test_token_at_offset(0, 0, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(1, 0, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(2, 0, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(3, 0, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(4, 0, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(5, 0, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(6, 0, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(7, 1, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(8, 1, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(9, 2, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(10, 2, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(11, 2, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(12, 2, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(13, 2, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(14, 3, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(15, 3, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(16, 4, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(17, 4, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(18, 4, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(19, 4, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(20, 4, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(21, 4, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(22, 5, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(23, 5, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(24, 6, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(25, 6, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(26, 7, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(27, 8, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(28, 8, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(30, 8, InsertMode::EXTEND_TOKEN);
-        test_token_at_offset(100, 8, InsertMode::EXTEND_TOKEN);
+        test_token(0, 0, Relative::BEGIN_OF_TOKEN);
+        test_token(1, 0, Relative::MID_OF_TOKEN);
+        test_token(2, 0, Relative::MID_OF_TOKEN);
+        test_token(3, 0, Relative::MID_OF_TOKEN);
+        test_token(4, 0, Relative::MID_OF_TOKEN);
+        test_token(5, 0, Relative::MID_OF_TOKEN);
+        test_token(6, 0, Relative::END_OF_TOKEN);
+        test_token(7, 1, Relative::BEGIN_OF_TOKEN);
+        test_token(8, 1, Relative::END_OF_TOKEN);
+        test_token(9, 2, Relative::BEGIN_OF_TOKEN);
+        test_token(10, 2, Relative::MID_OF_TOKEN);
+        test_token(11, 2, Relative::MID_OF_TOKEN);
+        test_token(12, 2, Relative::MID_OF_TOKEN);
+        test_token(13, 2, Relative::END_OF_TOKEN);
+        test_token(14, 3, Relative::BEGIN_OF_TOKEN);
+        test_token(15, 3, Relative::END_OF_TOKEN);
+        test_token(16, 4, Relative::BEGIN_OF_TOKEN);
+        test_token(17, 4, Relative::MID_OF_TOKEN);
+        test_token(18, 4, Relative::MID_OF_TOKEN);
+        test_token(19, 4, Relative::MID_OF_TOKEN);
+        test_token(20, 4, Relative::MID_OF_TOKEN);
+        test_token(21, 4, Relative::END_OF_TOKEN);
+        test_token(22, 5, Relative::BEGIN_OF_TOKEN);
+        test_token(23, 5, Relative::END_OF_TOKEN);
+        test_token(24, 6, Relative::BEGIN_OF_TOKEN);
+        test_token(25, 6, Relative::END_OF_TOKEN);
+        test_token(26, 7, Relative::BEGIN_OF_TOKEN);
+        test_token(27, 7, Relative::END_OF_TOKEN);
+        test_token(28, 7, Relative::END_OF_TOKEN);
+        test_token(30, 7, Relative::END_OF_TOKEN);
+        test_token(100, 7, Relative::END_OF_TOKEN);
     }
 }
 
