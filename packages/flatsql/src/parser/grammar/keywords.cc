@@ -27,7 +27,8 @@ constexpr int64_t KEYWORD_MAX_ID = std::max<int64_t>({
 constexpr size_t KEYWORD_NAME_COUNT = KEYWORD_MAX_ID + 1;
 
 constexpr frozen::unordered_map<frozen::string, Keyword, KEYWORD_COUNT> KEYWORD_MAP = {
-#define X(CATEGORY, NAME, TOKEN) {NAME, Keyword{NAME, Parser::token::FQL_##TOKEN, KeywordCategory::CATEGORY}},
+#define X(CATEGORY, NAME, TOKEN) \
+    {NAME, Keyword{NAME, Parser::token::FQL_##TOKEN, Parser::symbol_kind_type::S_##TOKEN, KeywordCategory::CATEGORY}},
 #include "../../../grammar/lists/sql_column_name_keywords.list"
 #include "../../../grammar/lists/sql_reserved_keywords.list"
 #include "../../../grammar/lists/sql_type_func_keywords.list"
@@ -35,21 +36,23 @@ constexpr frozen::unordered_map<frozen::string, Keyword, KEYWORD_COUNT> KEYWORD_
 #undef X
 };
 
-static constexpr std::array<std::string_view, KEYWORD_NAME_COUNT> GetKeywordNames() {
+static constexpr std::array<std::string_view, KEYWORD_NAME_COUNT> GetKeywordSymbolNames() {
     std::array<std::string_view, KEYWORD_NAME_COUNT> keywords;
     for (auto& [key, value] : KEYWORD_MAP) {
-        int64_t i = static_cast<int64_t>(value.token);
+        int64_t i = static_cast<int64_t>(value.parser_symbol);
         if (i >= 0) {
             keywords[i] = value.name;
         }
     }
     return keywords;
 }
-static const std::array<std::string_view, KEYWORD_NAME_COUNT> KEYWORD_NAMES = GetKeywordNames();
+
+static const std::array<std::string_view, KEYWORD_NAME_COUNT> KEYWORD_SYMBOL_NAMES = GetKeywordSymbolNames();
 
 const constexpr std::array<Keyword, KEYWORD_COUNT> SortKeywords() {
     std::array<Keyword, KEYWORD_COUNT> keywords{
-#define X(CATEGORY, NAME, TOKEN) Keyword{NAME, Parser::token::FQL_##TOKEN, KeywordCategory::CATEGORY},
+#define X(CATEGORY, NAME, TOKEN) \
+    Keyword{NAME, Parser::token::FQL_##TOKEN, Parser::symbol_kind_type::S_##TOKEN, KeywordCategory::CATEGORY},
 #include "../../../grammar/lists/sql_column_name_keywords.list"
 #include "../../../grammar/lists/sql_reserved_keywords.list"
 #include "../../../grammar/lists/sql_type_func_keywords.list"
@@ -73,8 +76,12 @@ constexpr size_t MAX_KEYWORD_LENGTH = std::max<size_t>({
 /// Get sorted keywords
 std::span<const Keyword> Keyword::GetKeywords() { return {SORTED_KEYWORDS.begin(), SORTED_KEYWORDS.size()}; }
 /// Get a keyword name
-std::string_view Keyword::GetKeywordName(Parser::token::token_kind_type token) {
-    return KEYWORD_NAMES[std::max<int64_t>(0, static_cast<int64_t>(token))];
+std::string_view Keyword::GetKeywordName(Parser::symbol_kind_type sym) {
+    auto sym_id = static_cast<int64_t>(sym);
+    if (sym_id >= 0 && sym_id < (KEYWORD_MAX_ID + 1)) {
+        return KEYWORD_SYMBOL_NAMES[sym_id];
+    }
+    return "";
 }
 /// Find a keyword
 const Keyword* Keyword::Find(std::string_view text) {
