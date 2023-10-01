@@ -67,8 +67,8 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
                 auto name = parser::Keyword::GetKeywordName(sym);
                 if (!name.empty()) {
                     Candidate candidate{
-                        .name_tags = NameTags{proto::NameTag::KEYWORD},
                         .name_text = name,
+                        .name_tags = NameTags{proto::NameTag::KEYWORD},
                         .score = 0,
                         .count = 0,
                     };
