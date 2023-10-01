@@ -62,7 +62,7 @@ Parser::symbol_type Scanner::ReadIdentifier(proto::Location loc) {
     }
     // Check if it's a keyword
     if (auto k = Keyword::Find(temp_buffer); !!k) {
-        return Parser::symbol_type(k->token, k->name, loc);
+        return Parser::symbol_type(k->scanner_token, k->name, loc);
     }
     // Add string to dictionary
     std::string_view owned = text;
