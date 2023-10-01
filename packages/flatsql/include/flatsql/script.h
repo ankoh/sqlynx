@@ -89,21 +89,23 @@ class ScannedScript {
     /// A location info
     struct LocationInfo {
         /// The insert mode
-        enum InsertMode {
+        enum RelativePosition {
             NEW_TOKEN = 0,
-            EXTEND_TOKEN = 1,
-            TOKEN_AFTER_DOT = 2,
+            BEGIN_OF_TOKEN = 1,
+            MID_OF_TOKEN = 2,
+            END_OF_TOKEN = 3,
+            BEGIN_OF_TOKEN_AFTER_DOT = 3,
         };
         /// The text offset
         size_t text_offset;
         /// The last scanner token that does not have a begin greater than the text offset
         size_t token_id;
         /// If we would insert at this position, what mode would it be?
-        InsertMode mode;
+        RelativePosition relative;
 
         /// Constructor
-        LocationInfo(size_t text_offset, size_t token_id, InsertMode mode)
-            : text_offset(text_offset), token_id(token_id), mode(mode) {}
+        LocationInfo(size_t text_offset, size_t token_id, RelativePosition mode)
+            : text_offset(text_offset), token_id(token_id), relative(mode) {}
     };
     /// Find token at text offset
     LocationInfo FindToken(size_t text_offset);

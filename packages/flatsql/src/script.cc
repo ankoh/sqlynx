@@ -67,38 +67,39 @@ void ScannedScript::TagName(NameID name_id, sx::NameTag tag) {
 
 /// Find a token at a text offset
 ScannedScript::LocationInfo ScannedScript::FindToken(size_t text_offset) {
-    using InsertMode = ScannedScript::LocationInfo::InsertMode;
+    using RelativePosition = ScannedScript::LocationInfo::RelativePosition;
     auto& chunks = symbols.GetChunks();
+    auto user_text_end = std::max<size_t>(text_buffer.size(), 2) - 2;
+    text_offset = std::min<size_t>(user_text_end, text_offset);
 
     // Helper to determine the insert mode
     auto get_insert_mode = [&](size_t text_offset, size_t chunk_id, size_t chunk_token_id) {
         if (chunk_id >= chunks.size()) {
-            std::cout << "chunk out of bounds" << std::endl;
-            return InsertMode::NEW_TOKEN;
+            return RelativePosition::NEW_TOKEN;
         }
         auto& chunk = chunks[chunk_id];
         auto& token = chunk[chunk_token_id];
         auto token_begin = token.location.offset();
         auto token_end = token.location.offset() + token.location.length();
 
-        // Text location in token
-        if (text_offset >= token_begin && (text_offset <= token_end)) {
-            // .... ....
-            //      ^ offset 5, length 4
-            //
-            return InsertMode::EXTEND_TOKEN;
+        // Begin of the token?
+        if (text_offset == token_begin) {
+            return RelativePosition::BEGIN_OF_TOKEN;
         }
-
-        // Immediately following a dot?
-        if (token_end == text_offset && token.kind_ == parser::Parser::symbol_kind_type::S_DOT) {
-            return InsertMode::TOKEN_AFTER_DOT;
+        // End of the token?
+        if (text_offset == token_end) {
+            // Following a dot?
+            if (token.kind_ == parser::Parser::symbol_kind_type::S_DOT) {
+                return RelativePosition::BEGIN_OF_TOKEN_AFTER_DOT;
+            } else {
+                return RelativePosition::END_OF_TOKEN;
+            }
         }
-
-        // At the end
-        if (token_end >= (std::max<size_t>(text_buffer.size(), 2) - 2)) {
-            return InsertMode::EXTEND_TOKEN;
+        // Mid of the token?
+        if (text_offset > token_begin && (text_offset < token_end)) {
+            return RelativePosition::MID_OF_TOKEN;
         }
-        return InsertMode::NEW_TOKEN;
+        return RelativePosition::NEW_TOKEN;
     };
 
     // Find chunk that contains the text offset.
@@ -128,11 +129,30 @@ ScannedScript::LocationInfo ScannedScript::FindToken(size_t text_offset) {
         --token_iter;
     }
     auto chunk_token_id = token_iter - chunk_iter->begin();
+    auto global_token_id = chunk_token_base_id + chunk_token_id;
+    assert(symbols.GetSize() >= 1);
+
+    // Hit EOF? Get last token before EOF (if there is one)
+    if ((*chunk_iter)[chunk_token_id].kind_ == parser::Parser::symbol_kind::S_YYEOF) {
+        if (chunk_token_id == 0) {
+            if (chunk_iter > chunks.begin()) {
+                --global_token_id;
+                --chunk_iter;
+                chunk_token_id = chunk_iter->size() - 1;
+            } else {
+                // Very first token is EOF token?
+                // Special case empty script buffer
+                return {0, 0, RelativePosition::NEW_TOKEN};
+            }
+        } else {
+            --global_token_id;
+            --chunk_token_id;
+        }
+    }
 
     // Return the global token offset
-    auto token_id = chunk_token_base_id + chunk_token_id;
     auto mode = get_insert_mode(text_offset, chunk_iter - chunks.begin(), chunk_token_id);
-    return {text_offset, token_id, mode};
+    return {text_offset, global_token_id, mode};
 }
 
 flatbuffers::Offset<proto::ScannedScript> ScannedScript::Pack(flatbuffers::FlatBufferBuilder& builder) {
