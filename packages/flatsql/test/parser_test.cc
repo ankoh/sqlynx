@@ -109,7 +109,7 @@ std::vector<CompletionTest> TESTS{
      {
          ParserSymbol::S_YYEOF, Parser::symbol_kind_type::S_WITH_LA, Parser::symbol_kind_type::S_VALUES,
          ParserSymbol::S_CREATE_P, Parser::symbol_kind_type::S_SELECT, Parser::symbol_kind_type::S_TABLE,
-         ParserSymbol::S_WITH, Parser::symbol_kind_type::S_SET, Parser::symbol_kind_type::S_471_ /* ( */
+         ParserSymbol::S_WITH, Parser::symbol_kind_type::S_SET, Parser::symbol_kind_type::S_472_ /* ( */
      }},
     {"group",
      "select * from region group",
@@ -118,9 +118,9 @@ std::vector<CompletionTest> TESTS{
      {
          ParserSymbol::S_SCONST, parser::Parser::symbol_kind_type::S_PARAM, ParserSymbol::S_COLON_EQUALS,
          parser::Parser::symbol_kind_type::S_EQUALS_GREATER,
-         ParserSymbol::S_471_,  // '('
-         ParserSymbol::S_475_,  // '$'
-         ParserSymbol::S_476_   // '?',
+         ParserSymbol::S_472_,  // '('
+         ParserSymbol::S_476_,  // '$'
+         ParserSymbol::S_477_   // '?',
      }},
     {"group_by_eof",
      "select * from region group",

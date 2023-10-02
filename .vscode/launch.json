@@ -39,6 +39,14 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Completion Tests",
+            "program": "${workspaceFolder}/packages/flatsql/build/native/o0/tester",
+            "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*Completion*"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Rope Tests",
             "program": "${workspaceFolder}/packages/flatsql/build/native/o0/tester",
             "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*Rope*"],
