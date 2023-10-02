@@ -61,6 +61,7 @@ void Completion::FindCandidatesInGrammar() {
     auto& scanned = *cursor.script.scanned_script;
     auto expected_symbols = parser::Parser::ParseUntil(scanned, location->symbol_id);
 
+    // Helper to determine the score of a cursor symbol
     auto get_score = [&](const ScannedScript::LocationInfo& loc, std::string_view keyword_text) {
         fuzzy_ci_string_view ci_keyword_text{keyword_text.data(), keyword_text.size()};
         using Relative = ScannedScript::LocationInfo::RelativePosition;
@@ -78,6 +79,7 @@ void Completion::FindCandidatesInGrammar() {
         }
     };
 
+    // Add all expected symbols to the result heap
     for (parser::Parser::symbol_kind_type sym : expected_symbols) {
         auto name = parser::Keyword::GetKeywordName(sym);
         if (!name.empty()) {
@@ -107,14 +109,15 @@ void Completion::FindCandidatesInIndex(const CompletionIndex& index) {
         if (auto iter = pending_candidates.find(entry_data.name_id); iter != pending_candidates.end()) {
             // Update the score if it is higher
             iter->second.score = std::max(iter->second.score, score);
+            iter->second.count += entry_data.occurrences;
             iter->second.name_tags |= entry_data.name_tags;
         } else {
             // Otherwise store as new candidate
-            pending_candidates.insert({entry_data.name_id, Candidate{
-                                                               .name_text = entry_data.name_text,
-                                                               .name_tags = entry_data.name_tags,
-                                                               .score = score,
-                                                           }});
+            Candidate candidate{.name_text = entry_data.name_text,
+                                .name_tags = entry_data.name_tags,
+                                .score = score,
+                                .count = entry.data->occurrences};
+            pending_candidates.insert({entry_data.name_id, candidate});
         }
     }
 }
@@ -136,9 +139,27 @@ void Completion::FindCandidatesInAST() {
 }
 
 void Completion::FlushCandidatesAndFinish() {
+    // Find name if under cursor (if any)
+    QualifiedID current_symbol_name;
+    if (auto& location = cursor.scanner_location; location.has_value()) {
+        auto& scanned = *cursor.script.scanned_script;
+        auto text = scanned.ReadTextAtLocation(location->symbol.location);
+        auto name_id = scanned.FindName(text);
+        if (name_id.has_value()) {
+            current_symbol_name = QualifiedID{scanned.context_id, *name_id};
+        }
+    }
+
+    // Insert all pending candidates into the heap
     for (auto& [key, candidate] : pending_candidates) {
+        // Omit candidate if it occurs only once is located at the cursor
+        if (current_symbol_name == key && candidate.count == 1) {
+            continue;
+        }
         result_heap.Insert(candidate, candidate.score);
     }
+
+    // Finish the heap
     result_heap.Finish();
 }
 

@@ -58,10 +58,7 @@ SELECT s_co
     for (auto& entry : entries) {
         names.emplace_back(entry.value.name_text);
     }
-    std::vector<std::string> expected_names{
-        "all", "distinct",
-        "s_co",  // XXX Get rid of the scanner token of the cursor if it only occurs once
-        "s_comment", "ps_comment"};
+    std::vector<std::string> expected_names{"all", "distinct", "s_comment", "ps_comment"};
     ASSERT_EQ(names, expected_names);
 }
 

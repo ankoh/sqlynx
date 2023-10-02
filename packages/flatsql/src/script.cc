@@ -45,6 +45,16 @@ NameID ScannedScript::RegisterKeywordAsName(std::string_view s, sx::Location loc
     name_dictionary.push_back(Name{.text = s, .location = location, .tags = tag, .occurrences = 1});
     return id;
 }
+
+/// Find a name
+std::optional<NameID> ScannedScript::FindName(std::string_view s) {
+    auto iter = name_dictionary_ids.find(s);
+    if (iter != name_dictionary_ids.end()) {
+        return iter->second;
+    }
+    return std::nullopt;
+}
+
 /// Register a name
 NameID ScannedScript::RegisterName(std::string_view s, sx::Location location, sx::NameTag tag) {
     auto iter = name_dictionary_ids.find(s);
