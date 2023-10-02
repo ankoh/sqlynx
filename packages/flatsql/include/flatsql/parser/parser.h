@@ -15,11 +15,11 @@ class Parser : public ParserBase {
     /// Collect all expected symbols
     std::vector<symbol_kind_type> CollectExpectedSymbols();
     /// Parse until a token and return expected symbols
-    std::vector<symbol_kind_type> CollectExpectedSymbolsAt(size_t token);
+    std::vector<symbol_kind_type> CollectExpectedSymbolsAt(size_t symbol_id);
 
    public:
     /// Complete at a token
-    static std::vector<Parser::symbol_kind_type> ParseUntil(ScannedScript& in, size_t token);
+    static std::vector<Parser::symbol_kind_type> ParseUntil(ScannedScript& in, size_t symbol_id);
     /// Parse a module
     static std::pair<std::shared_ptr<ParsedScript>, proto::StatusCode> Parse(std::shared_ptr<ScannedScript> in,
                                                                              bool trace_scanning = false,

@@ -23,17 +23,18 @@ std::vector<Parser::symbol_kind_type> Parser::CollectExpectedSymbols() {
         // Stay within bounds of both yycheck and yytname.
         const int yychecklim = yylast_ - yyn + 1;
         const int yyxend = yychecklim < YYNTOKENS ? yychecklim : YYNTOKENS;
-        for (int yyx = yyxbegin; yyx < yyxend; ++yyx)
+        for (int yyx = yyxbegin; yyx < yyxend; ++yyx) {
             if (yycheck_[yyx + yyn] == yyx && yyx != symbol_kind::S_YYerror &&
                 !yy_table_value_is_error_(yytable_[yyx + yyn])) {
                 expected.push_back(YY_CAST(symbol_kind_type, yyx));
             }
+        }
     }
     return expected;
 }
 
 #define DEBUG_COMPLETE_AT 0
-std::vector<Parser::symbol_kind_type> Parser::CollectExpectedSymbolsAt(size_t target_index) {
+std::vector<Parser::symbol_kind_type> Parser::CollectExpectedSymbolsAt(size_t target_symbol_id) {
     // Helper to print a symbol
     auto yy_print = [this](const auto& yysym) {
 #if DEBUG_COMPLETE_AT == 1
@@ -71,8 +72,8 @@ std::vector<Parser::symbol_kind_type> Parser::CollectExpectedSymbolsAt(size_t ta
 
     // The expected symbols
     std::vector<Parser::symbol_kind_type> expected_symbols;
-    // The current token index
-    size_t token_index = 0;
+    // The current symbol index
+    size_t current_symbol_id = 0;
     // The next symbol id
     int yyn;
     // The length of the RHS of the rule being reduced
@@ -110,7 +111,7 @@ yybackup:
         // Get the next symbol
         auto next_symbol = ctx.NextSymbol();
         // Did we reach the target index?
-        if (token_index++ == target_index) {
+        if (current_symbol_id++ == target_symbol_id) {
             // Lookup the expected symbols if we would replace the target token
             expected_symbols = CollectExpectedSymbols();
             goto yyreturn;
@@ -279,10 +280,10 @@ yyreturn:
     return expected_symbols;
 }
 
-std::vector<Parser::symbol_kind_type> Parser::ParseUntil(ScannedScript& scanned, size_t token) {
+std::vector<Parser::symbol_kind_type> Parser::ParseUntil(ScannedScript& scanned, size_t symbol_id) {
     ParseContext ctx{scanned};
     flatsql::parser::Parser parser(ctx);
-    auto expected = parser.CollectExpectedSymbolsAt(token);
+    auto expected = parser.CollectExpectedSymbolsAt(symbol_id);
     return expected;
 }
 
