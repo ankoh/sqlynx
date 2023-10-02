@@ -53,9 +53,7 @@ static constexpr Completion::ScoreValueType KEYWORD_EXPECTED_AND_SUBSTRING_SCORE
 
 }  // namespace
 
-void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
-    expects_identifier = false;
-
+void Completion::FindCandidatesInGrammar() {
     auto& location = cursor.scanner_location;
     if (!location.has_value()) {
         return;
@@ -81,23 +79,15 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
     };
 
     for (parser::Parser::symbol_kind_type sym : expected_symbols) {
-        switch (sym) {
-            case parser::Parser::symbol_kind_type::S_IDENT:
-                expects_identifier = true;
-                break;
-            default: {
-                auto name = parser::Keyword::GetKeywordName(sym);
-                if (!name.empty()) {
-                    Candidate candidate{
-                        .name_text = name,
-                        .name_tags = NameTags{proto::NameTag::KEYWORD},
-                        .score = get_score(*location, name),
-                        .count = 0,
-                    };
-                    result_heap.Insert(candidate, candidate.score);
-                }
-                break;
-            }
+        auto name = parser::Keyword::GetKeywordName(sym);
+        if (!name.empty()) {
+            Candidate candidate{
+                .name_text = name,
+                .name_tags = NameTags{proto::NameTag::KEYWORD},
+                .score = get_score(*location, name),
+                .count = 0,
+            };
+            result_heap.Insert(candidate, candidate.score);
         }
     }
 }
@@ -171,12 +161,9 @@ Completion::Completion(const ScriptCursor& cursor, size_t k)
 
 std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(const ScriptCursor& cursor, size_t k) {
     auto completion = std::make_unique<Completion>(cursor, k);
-    bool expects_identifier = false;
-    completion->FindCandidatesInGrammar(expects_identifier);
-    if (expects_identifier) {
-        completion->FindCandidatesInIndexes();
-        completion->FindCandidatesInAST();
-    }
+    completion->FindCandidatesInGrammar();
+    completion->FindCandidatesInIndexes();
+    completion->FindCandidatesInAST();
     completion->FlushCandidatesAndFinish();
     return {std::move(completion), proto::StatusCode::OK};
 }
