@@ -68,7 +68,7 @@ void test(Script& script, size_t text_offset, ExpectedScriptCursor expected) {
     // Check scanner token
     if (expected.scanner_token_text.has_value()) {
         ASSERT_TRUE(cursor->scanner_location.has_value());
-        auto token = script.scanned_script->GetTokens()[cursor->scanner_location->token_id];
+        auto token = script.scanned_script->GetSymbols()[cursor->scanner_location->symbol_id];
         auto token_text = script.scanned_script->ReadTextAtLocation(token.location);
         ASSERT_EQ(token_text, *expected.scanner_token_text);
     } else {
