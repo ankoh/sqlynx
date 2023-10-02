@@ -24,8 +24,7 @@
             <search text="fo" index="2" />
         </cursor>
         <completions limit="10">
-            <entry value="foo" score="100" count="0" tags="TABLE_NAME" />
-            <entry value="fo" score="100" count="0" tags="TABLE_NAME" />
+            <entry value="foo" score="100" count="1" tags="TABLE_NAME" />
             <entry value="force" score="50" count="0" tags="KEYWORD" />
             <entry value="before" score="50" count="0" tags="KEYWORD" />
             <entry value="xmlforest" score="50" count="0" tags="KEYWORD" />
@@ -34,6 +33,7 @@
             <entry value="transform" score="50" count="0" tags="KEYWORD" />
             <entry value="coalesce" score="0" count="0" tags="KEYWORD" />
             <entry value="character" score="0" count="0" tags="KEYWORD" />
+            <entry value="bit" score="0" count="0" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
 </completion-snapshots>
