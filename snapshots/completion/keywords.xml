@@ -10,6 +10,7 @@
             <entry value="set" score="50" count="0" tags="KEYWORD" />
             <entry value="select" score="50" count="0" tags="KEYWORD" />
             <entry value="values" score="50" count="0" tags="KEYWORD" />
+            <entry value="s" score="0" count="0" tags="" />
             <entry value="with" score="0" count="0" tags="KEYWORD" />
             <entry value="table" score="0" count="0" tags="KEYWORD" />
             <entry value="create" score="0" count="0" tags="KEYWORD" />
@@ -25,6 +26,7 @@
         <completions limit="10">
             <entry value="set" score="50" count="0" tags="KEYWORD" />
             <entry value="select" score="50" count="0" tags="KEYWORD" />
+            <entry value="se" score="0" count="0" tags="" />
             <entry value="with" score="0" count="0" tags="KEYWORD" />
             <entry value="table" score="0" count="0" tags="KEYWORD" />
             <entry value="create" score="0" count="0" tags="KEYWORD" />
@@ -40,6 +42,7 @@
         </cursor>
         <completions limit="10">
             <entry value="select" score="50" count="0" tags="KEYWORD" />
+            <entry value="sel" score="0" count="0" tags="" />
             <entry value="set" score="0" count="0" tags="KEYWORD" />
             <entry value="with" score="0" count="0" tags="KEYWORD" />
             <entry value="table" score="0" count="0" tags="KEYWORD" />
@@ -56,6 +59,7 @@
         </cursor>
         <completions limit="10">
             <entry value="select" score="50" count="0" tags="KEYWORD" />
+            <entry value="selec" score="0" count="0" tags="" />
             <entry value="set" score="0" count="0" tags="KEYWORD" />
             <entry value="with" score="0" count="0" tags="KEYWORD" />
             <entry value="table" score="0" count="0" tags="KEYWORD" />

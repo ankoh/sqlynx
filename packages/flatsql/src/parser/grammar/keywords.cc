@@ -16,19 +16,20 @@ constexpr size_t KEYWORD_COUNT = 0
 #undef X
     ;
 
-constexpr int64_t KEYWORD_MAX_ID = std::max<int64_t>({
-#define X(CATEGORY, NAME, TOKEN) static_cast<int64_t>(Parser::token::FQL_##TOKEN),
+constexpr int64_t KEYWORD_MAX_SYMBOL_ID = std::max<int64_t>({
+#define X(CATEGORY, NAME, KEYWORD) static_cast<int64_t>(Parser::symbol_kind_type::S_##KEYWORD),
 #include "../../../grammar/lists/sql_column_name_keywords.list"
 #include "../../../grammar/lists/sql_reserved_keywords.list"
 #include "../../../grammar/lists/sql_type_func_keywords.list"
 #include "../../../grammar/lists/sql_unreserved_keywords.list"
 #undef X
     0});
-constexpr size_t KEYWORD_NAME_COUNT = KEYWORD_MAX_ID + 1;
+constexpr size_t KEYWORD_SYMBOL_COUNT = KEYWORD_MAX_SYMBOL_ID + 1;
 
 constexpr frozen::unordered_map<frozen::string, Keyword, KEYWORD_COUNT> KEYWORD_MAP = {
-#define X(CATEGORY, NAME, TOKEN) \
-    {NAME, Keyword{NAME, Parser::token::FQL_##TOKEN, Parser::symbol_kind_type::S_##TOKEN, KeywordCategory::CATEGORY}},
+#define X(CATEGORY, NAME, KEYWORD) \
+    {NAME,                         \
+     Keyword{NAME, Parser::token::FQL_##KEYWORD, Parser::symbol_kind_type::S_##KEYWORD, KeywordCategory::CATEGORY}},
 #include "../../../grammar/lists/sql_column_name_keywords.list"
 #include "../../../grammar/lists/sql_reserved_keywords.list"
 #include "../../../grammar/lists/sql_type_func_keywords.list"
@@ -36,8 +37,8 @@ constexpr frozen::unordered_map<frozen::string, Keyword, KEYWORD_COUNT> KEYWORD_
 #undef X
 };
 
-static constexpr std::array<std::string_view, KEYWORD_NAME_COUNT> GetKeywordSymbolNames() {
-    std::array<std::string_view, KEYWORD_NAME_COUNT> keywords;
+static constexpr std::array<std::string_view, KEYWORD_SYMBOL_COUNT> GetKeywordSymbolNames() {
+    std::array<std::string_view, KEYWORD_SYMBOL_COUNT> keywords;
     for (auto& [key, value] : KEYWORD_MAP) {
         int64_t i = static_cast<int64_t>(value.parser_symbol);
         if (i >= 0) {
@@ -46,8 +47,7 @@ static constexpr std::array<std::string_view, KEYWORD_NAME_COUNT> GetKeywordSymb
     }
     return keywords;
 }
-
-static const std::array<std::string_view, KEYWORD_NAME_COUNT> KEYWORD_SYMBOL_NAMES = GetKeywordSymbolNames();
+static const std::array<std::string_view, KEYWORD_SYMBOL_COUNT> KEYWORD_SYMBOL_NAMES = GetKeywordSymbolNames();
 
 const constexpr std::array<Keyword, KEYWORD_COUNT> SortKeywords() {
     std::array<Keyword, KEYWORD_COUNT> keywords{
@@ -78,7 +78,7 @@ std::span<const Keyword> Keyword::GetKeywords() { return {SORTED_KEYWORDS.begin(
 /// Get a keyword name
 std::string_view Keyword::GetKeywordName(Parser::symbol_kind_type sym) {
     auto sym_id = static_cast<int64_t>(sym);
-    if (sym_id >= 0 && sym_id < (KEYWORD_MAX_ID + 1)) {
+    if (sym_id >= 0 && sym_id < KEYWORD_SYMBOL_COUNT) {
         return KEYWORD_SYMBOL_NAMES[sym_id];
     }
     return "";
