@@ -93,9 +93,9 @@ TEST_P(CompletionTestSuite, Test) {
 
     auto [scan, scan_status] = Scanner::Scan(buffer, 1);
     ASSERT_EQ(scan_status, proto::StatusCode::OK);
-    ASSERT_EQ(scan->GetTokens().GetSize(), param.token_count);
-    ASSERT_LT(param.token.token_id, scan->GetTokens().GetSize());
-    ASSERT_EQ(scan->GetTokens()[param.token.token_id].kind_, param.token.symbol_type);
+    ASSERT_EQ(scan->GetSymbols().GetSize(), param.token_count);
+    ASSERT_LT(param.token.token_id, scan->GetSymbols().GetSize());
+    ASSERT_EQ(scan->GetSymbols()[param.token.token_id].kind_, param.token.symbol_type);
 
     auto result = parser::Parser::ParseUntil(*scan, param.token.token_id);
     ASSERT_EQ(result, param.expected_symbols);

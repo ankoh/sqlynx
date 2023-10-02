@@ -75,7 +75,7 @@ class ScannedScript {
     /// Get the input
     auto& GetInput() const { return text_buffer; }
     /// Get the tokens
-    auto& GetTokens() const { return symbols; }
+    auto& GetSymbols() const { return symbols; }
     /// Register a name
     NameID RegisterName(std::string_view s, sx::Location location, sx::NameTag tag = sx::NameTag::NONE);
     /// Register a keyword as name
@@ -89,26 +89,43 @@ class ScannedScript {
     /// A location info
     struct LocationInfo {
         /// The insert mode
-        enum RelativePosition {
-            NEW_TOKEN = 0,
-            BEGIN_OF_TOKEN = 1,
-            MID_OF_TOKEN = 2,
-            END_OF_TOKEN = 3,
-            BEGIN_OF_TOKEN_AFTER_DOT = 3,
+        enum class RelativePosition {
+            NEW_SYMBOL = 0,
+            BEGIN_OF_SYMBOL = 1,
+            MID_OF_SYMBOL = 2,
+            END_OF_SYMBOL = 3,
         };
         /// The text offset
         size_t text_offset;
-        /// The last scanner token that does not have a begin greater than the text offset
-        size_t token_id;
+        /// The last scanner symbol that does not have a begin greater than the text offset
+        size_t symbol_id;
+        /// The symbol
+        parser::Parser::symbol_type& symbol;
+        /// The previous symbol (if any)
+        std::optional<std::reference_wrapper<parser::Parser::symbol_type>> previous_symbol;
         /// If we would insert at this position, what mode would it be?
-        RelativePosition relative;
+        RelativePosition relative_pos;
 
         /// Constructor
-        LocationInfo(size_t text_offset, size_t token_id, RelativePosition mode)
-            : text_offset(text_offset), token_id(token_id), relative(mode) {}
+        LocationInfo(size_t text_offset, size_t token_id, parser::Parser::symbol_type& symbol,
+                     std::optional<std::reference_wrapper<parser::Parser::symbol_type>> previous_symbol,
+                     RelativePosition mode)
+            : text_offset(text_offset),
+              symbol_id(token_id),
+              symbol(symbol),
+              previous_symbol(previous_symbol),
+              relative_pos(mode) {}
+
+        bool previousSymbolIsDot() const {
+            if (!previous_symbol.has_value()) {
+                return false;
+            } else {
+                return previous_symbol.value().get().kind_ == parser::Parser::symbol_kind_type::S_DOT;
+            }
+        }
     };
     /// Find token at text offset
-    LocationInfo FindToken(size_t text_offset);
+    LocationInfo FindSymbol(size_t text_offset);
     /// Pack syntax tokens
     std::unique_ptr<proto::ScannerTokensT> PackTokens();
     /// Pack scanned program
