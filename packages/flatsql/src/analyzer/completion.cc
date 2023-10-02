@@ -52,11 +52,24 @@ static constexpr ScoringTable NAME_SCORE_COLUMN_REF{{
 void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
     expects_identifier = false;
 
-    // Get the cursor completions at a cursor
-    // auto token_id = cursor.scanner_token_id.value_or(0); XXX
-    auto token_id = 0;
+    auto& location = cursor.scanner_location;
+    if (!location.has_value()) {
+        return;
+    }
     auto& scanned = *cursor.script.scanned_script;
-    auto expected_symbols = parser::Parser::ParseUntil(scanned, token_id);
+    auto expected_symbols = parser::Parser::ParseUntil(scanned, location->symbol_id);
+
+    auto get_score = [&](std::string_view name) {
+        using Relative = ScannedScript::LocationInfo::RelativePosition;
+        switch (location->relative_pos) {
+            case Relative::NEW_SYMBOL:
+                break;
+            case Relative::BEGIN_OF_SYMBOL:
+            case Relative::MID_OF_SYMBOL:
+            case Relative::END_OF_SYMBOL:
+                break;
+        }
+    };
 
     for (parser::Parser::symbol_kind_type sym : expected_symbols) {
         switch (sym) {

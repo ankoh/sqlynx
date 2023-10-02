@@ -72,46 +72,46 @@ TEST(ScannerTest, FindTokenAtOffset) {
         ASSERT_EQ(packed->token_types, have_types);
     };
     // Test token at offset
-    auto test_token = [&](size_t text_offset, size_t exp_token_id, size_t exp_insert_mode) {
-        auto location = script->FindToken(text_offset);
-        ASSERT_EQ(location.token_id, exp_token_id) << text_offset;
-        ASSERT_EQ(location.relative, exp_insert_mode) << text_offset;
+    using Relative = ScannedScript::LocationInfo::RelativePosition;
+    auto test_symbol = [&](size_t text_offset, size_t exp_token_id, Relative relative) {
+        auto location = script->FindSymbol(text_offset);
+        ASSERT_EQ(location.symbol_id, exp_token_id) << text_offset;
+        ASSERT_EQ(location.relative_pos, relative) << text_offset;
     };
 
-    using Relative = ScannedScript::LocationInfo::RelativePosition;
     {
         SCOPED_TRACE("empty");
         scan("", 0);
         test_tokens({});
-        test_token(0, 0, Relative::NEW_TOKEN);
+        test_symbol(0, 0, Relative::NEW_SYMBOL);
     }
     {
         SCOPED_TRACE("only space");
         scan("    ", 0);
         test_tokens({});
-        test_token(0, 0, Relative::NEW_TOKEN);
+        test_symbol(0, 0, Relative::NEW_SYMBOL);
     }
     {
         SCOPED_TRACE("select 1");
         scan("select 1", 1);
         test_tokens({ScannerToken::KEYWORD, ScannerToken::LITERAL_INTEGER});
-        test_token(0, 0, Relative::BEGIN_OF_TOKEN);
-        test_token(1, 0, Relative::MID_OF_TOKEN);
-        test_token(2, 0, Relative::MID_OF_TOKEN);
-        test_token(3, 0, Relative::MID_OF_TOKEN);
-        test_token(4, 0, Relative::MID_OF_TOKEN);
-        test_token(5, 0, Relative::MID_OF_TOKEN);
-        test_token(6, 0, Relative::END_OF_TOKEN);
-        test_token(7, 1, Relative::BEGIN_OF_TOKEN);
-        test_token(8, 1, Relative::END_OF_TOKEN);
-        test_token(9, 1, Relative::END_OF_TOKEN);
-        test_token(10, 1, Relative::END_OF_TOKEN);
-        test_token(100, 1, Relative::END_OF_TOKEN);
+        test_symbol(0, 0, Relative::BEGIN_OF_SYMBOL);
+        test_symbol(1, 0, Relative::MID_OF_SYMBOL);
+        test_symbol(2, 0, Relative::MID_OF_SYMBOL);
+        test_symbol(3, 0, Relative::MID_OF_SYMBOL);
+        test_symbol(4, 0, Relative::MID_OF_SYMBOL);
+        test_symbol(5, 0, Relative::MID_OF_SYMBOL);
+        test_symbol(6, 0, Relative::END_OF_SYMBOL);
+        test_symbol(7, 1, Relative::BEGIN_OF_SYMBOL);
+        test_symbol(8, 1, Relative::END_OF_SYMBOL);
+        test_symbol(9, 1, Relative::END_OF_SYMBOL);
+        test_symbol(10, 1, Relative::END_OF_SYMBOL);
+        test_symbol(100, 1, Relative::END_OF_SYMBOL);
     }
     {
         SCOPED_TRACE("select 1, trailing space");
         test_tokens({ScannerToken::KEYWORD, ScannerToken::LITERAL_INTEGER});
-        test_token(8, 1, Relative::END_OF_TOKEN);
+        test_symbol(8, 1, Relative::END_OF_SYMBOL);
     }
     {
         SCOPED_TRACE("select a from A where b = 1");
@@ -119,37 +119,37 @@ TEST(ScannerTest, FindTokenAtOffset) {
         test_tokens({ScannerToken::KEYWORD, ScannerToken::IDENTIFIER, ScannerToken::KEYWORD, ScannerToken::IDENTIFIER,
                      ScannerToken::KEYWORD, ScannerToken::IDENTIFIER, ScannerToken::OPERATOR,
                      ScannerToken::LITERAL_INTEGER});
-        test_token(0, 0, Relative::BEGIN_OF_TOKEN);
-        test_token(1, 0, Relative::MID_OF_TOKEN);
-        test_token(2, 0, Relative::MID_OF_TOKEN);
-        test_token(3, 0, Relative::MID_OF_TOKEN);
-        test_token(4, 0, Relative::MID_OF_TOKEN);
-        test_token(5, 0, Relative::MID_OF_TOKEN);
-        test_token(6, 0, Relative::END_OF_TOKEN);
-        test_token(7, 1, Relative::BEGIN_OF_TOKEN);
-        test_token(8, 1, Relative::END_OF_TOKEN);
-        test_token(9, 2, Relative::BEGIN_OF_TOKEN);
-        test_token(10, 2, Relative::MID_OF_TOKEN);
-        test_token(11, 2, Relative::MID_OF_TOKEN);
-        test_token(12, 2, Relative::MID_OF_TOKEN);
-        test_token(13, 2, Relative::END_OF_TOKEN);
-        test_token(14, 3, Relative::BEGIN_OF_TOKEN);
-        test_token(15, 3, Relative::END_OF_TOKEN);
-        test_token(16, 4, Relative::BEGIN_OF_TOKEN);
-        test_token(17, 4, Relative::MID_OF_TOKEN);
-        test_token(18, 4, Relative::MID_OF_TOKEN);
-        test_token(19, 4, Relative::MID_OF_TOKEN);
-        test_token(20, 4, Relative::MID_OF_TOKEN);
-        test_token(21, 4, Relative::END_OF_TOKEN);
-        test_token(22, 5, Relative::BEGIN_OF_TOKEN);
-        test_token(23, 5, Relative::END_OF_TOKEN);
-        test_token(24, 6, Relative::BEGIN_OF_TOKEN);
-        test_token(25, 6, Relative::END_OF_TOKEN);
-        test_token(26, 7, Relative::BEGIN_OF_TOKEN);
-        test_token(27, 7, Relative::END_OF_TOKEN);
-        test_token(28, 7, Relative::END_OF_TOKEN);
-        test_token(30, 7, Relative::END_OF_TOKEN);
-        test_token(100, 7, Relative::END_OF_TOKEN);
+        test_symbol(0, 0, Relative::BEGIN_OF_SYMBOL);
+        test_symbol(1, 0, Relative::MID_OF_SYMBOL);
+        test_symbol(2, 0, Relative::MID_OF_SYMBOL);
+        test_symbol(3, 0, Relative::MID_OF_SYMBOL);
+        test_symbol(4, 0, Relative::MID_OF_SYMBOL);
+        test_symbol(5, 0, Relative::MID_OF_SYMBOL);
+        test_symbol(6, 0, Relative::END_OF_SYMBOL);
+        test_symbol(7, 1, Relative::BEGIN_OF_SYMBOL);
+        test_symbol(8, 1, Relative::END_OF_SYMBOL);
+        test_symbol(9, 2, Relative::BEGIN_OF_SYMBOL);
+        test_symbol(10, 2, Relative::MID_OF_SYMBOL);
+        test_symbol(11, 2, Relative::MID_OF_SYMBOL);
+        test_symbol(12, 2, Relative::MID_OF_SYMBOL);
+        test_symbol(13, 2, Relative::END_OF_SYMBOL);
+        test_symbol(14, 3, Relative::BEGIN_OF_SYMBOL);
+        test_symbol(15, 3, Relative::END_OF_SYMBOL);
+        test_symbol(16, 4, Relative::BEGIN_OF_SYMBOL);
+        test_symbol(17, 4, Relative::MID_OF_SYMBOL);
+        test_symbol(18, 4, Relative::MID_OF_SYMBOL);
+        test_symbol(19, 4, Relative::MID_OF_SYMBOL);
+        test_symbol(20, 4, Relative::MID_OF_SYMBOL);
+        test_symbol(21, 4, Relative::END_OF_SYMBOL);
+        test_symbol(22, 5, Relative::BEGIN_OF_SYMBOL);
+        test_symbol(23, 5, Relative::END_OF_SYMBOL);
+        test_symbol(24, 6, Relative::BEGIN_OF_SYMBOL);
+        test_symbol(25, 6, Relative::END_OF_SYMBOL);
+        test_symbol(26, 7, Relative::BEGIN_OF_SYMBOL);
+        test_symbol(27, 7, Relative::END_OF_SYMBOL);
+        test_symbol(28, 7, Relative::END_OF_SYMBOL);
+        test_symbol(30, 7, Relative::END_OF_SYMBOL);
+        test_symbol(100, 7, Relative::END_OF_SYMBOL);
     }
 }
 
@@ -167,10 +167,10 @@ TEST(ScannerTest, FindTokenInterleaved) {
     ASSERT_EQ(scannerStatus, proto::StatusCode::OK);
 
     for (size_t i = 0; i < n; ++i) {
-        auto hit = scanned->FindToken(i * 2);
-        ASSERT_EQ(hit.token_id, i);
-        auto one_off = scanned->FindToken(i * 2 + 1);
-        ASSERT_EQ(one_off.token_id, i);
+        auto hit = scanned->FindSymbol(i * 2);
+        ASSERT_EQ(hit.symbol_id, i);
+        auto one_off = scanned->FindSymbol(i * 2 + 1);
+        ASSERT_EQ(one_off.symbol_id, i);
     }
 }
 
