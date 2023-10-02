@@ -9,6 +9,7 @@
 #include "flatsql/parser/parser.h"
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/script.h"
+#include "flatsql/utils/string_conversion.h"
 #include "flatsql/utils/suffix_trie.h"
 
 namespace flatsql {
@@ -47,6 +48,9 @@ static constexpr ScoringTable NAME_SCORE_COLUMN_REF{{
     {proto::NameTag::COLUMN_NAME, 0},
 }};
 
+static constexpr Completion::ScoreValueType KEYWORD_EXPECTED_SCORE = 0;
+static constexpr Completion::ScoreValueType KEYWORD_EXPECTED_AND_SUBSTRING_SCORE = 50;
+
 }  // namespace
 
 void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
@@ -59,15 +63,20 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
     auto& scanned = *cursor.script.scanned_script;
     auto expected_symbols = parser::Parser::ParseUntil(scanned, location->symbol_id);
 
-    auto get_score = [&](std::string_view name) {
+    auto get_score = [&](const ScannedScript::LocationInfo& loc, std::string_view keyword_text) {
+        fuzzy_ci_string_view ci_keyword_text{keyword_text.data(), keyword_text.size()};
         using Relative = ScannedScript::LocationInfo::RelativePosition;
         switch (location->relative_pos) {
             case Relative::NEW_SYMBOL:
-                break;
-            case Relative::BEGIN_OF_SYMBOL:
-            case Relative::MID_OF_SYMBOL:
-            case Relative::END_OF_SYMBOL:
-                break;
+                return KEYWORD_EXPECTED_SCORE;
+            default:
+                auto symbol_text = scanned.ReadTextAtLocation(loc.symbol.location);
+                fuzzy_ci_string_view ci_symbol_text{symbol_text.data(), symbol_text.size()};
+                if (auto pos = ci_keyword_text.find(ci_symbol_text, 0); pos != fuzzy_ci_string_view::npos) {
+                    return KEYWORD_EXPECTED_AND_SUBSTRING_SCORE;
+                } else {
+                    return KEYWORD_EXPECTED_SCORE;
+                }
         }
     };
 
@@ -82,7 +91,7 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
                     Candidate candidate{
                         .name_text = name,
                         .name_tags = NameTags{proto::NameTag::KEYWORD},
-                        .score = 0,
+                        .score = get_score(*location, name),
                         .count = 0,
                     };
                     result_heap.Insert(candidate, 0);
