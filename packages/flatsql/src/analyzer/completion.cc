@@ -94,7 +94,7 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
                         .score = get_score(*location, name),
                         .count = 0,
                     };
-                    result_heap.Insert(candidate, 0);
+                    result_heap.Insert(candidate, candidate.score);
                 }
                 break;
             }

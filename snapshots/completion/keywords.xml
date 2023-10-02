@@ -8,11 +8,11 @@
         </cursor>
         <completions limit="10">
             <entry value="set" score="50" count="0" tags="KEYWORD" />
+            <entry value="select" score="50" count="0" tags="KEYWORD" />
+            <entry value="values" score="50" count="0" tags="KEYWORD" />
             <entry value="with" score="0" count="0" tags="KEYWORD" />
             <entry value="table" score="0" count="0" tags="KEYWORD" />
-            <entry value="select" score="50" count="0" tags="KEYWORD" />
             <entry value="create" score="0" count="0" tags="KEYWORD" />
-            <entry value="values" score="50" count="0" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="se">
@@ -24,9 +24,9 @@
         </cursor>
         <completions limit="10">
             <entry value="set" score="50" count="0" tags="KEYWORD" />
+            <entry value="select" score="50" count="0" tags="KEYWORD" />
             <entry value="with" score="0" count="0" tags="KEYWORD" />
             <entry value="table" score="0" count="0" tags="KEYWORD" />
-            <entry value="select" score="50" count="0" tags="KEYWORD" />
             <entry value="create" score="0" count="0" tags="KEYWORD" />
             <entry value="values" score="0" count="0" tags="KEYWORD" />
         </completions>
@@ -39,10 +39,10 @@
             <search text="sel" index="3" />
         </cursor>
         <completions limit="10">
+            <entry value="select" score="50" count="0" tags="KEYWORD" />
             <entry value="set" score="0" count="0" tags="KEYWORD" />
             <entry value="with" score="0" count="0" tags="KEYWORD" />
             <entry value="table" score="0" count="0" tags="KEYWORD" />
-            <entry value="select" score="50" count="0" tags="KEYWORD" />
             <entry value="create" score="0" count="0" tags="KEYWORD" />
             <entry value="values" score="0" count="0" tags="KEYWORD" />
         </completions>
@@ -55,10 +55,10 @@
             <search text="selec" index="5" />
         </cursor>
         <completions limit="10">
+            <entry value="select" score="50" count="0" tags="KEYWORD" />
             <entry value="set" score="0" count="0" tags="KEYWORD" />
             <entry value="with" score="0" count="0" tags="KEYWORD" />
             <entry value="table" score="0" count="0" tags="KEYWORD" />
-            <entry value="select" score="50" count="0" tags="KEYWORD" />
             <entry value="create" score="0" count="0" tags="KEYWORD" />
             <entry value="values" score="0" count="0" tags="KEYWORD" />
         </completions>

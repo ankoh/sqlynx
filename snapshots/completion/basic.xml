@@ -26,14 +26,14 @@
         <completions limit="10">
             <entry value="foo" score="100" count="0" tags="TABLE_NAME" />
             <entry value="fo" score="100" count="0" tags="TABLE_NAME" />
-            <entry value="exists" score="0" count="0" tags="KEYWORD" />
+            <entry value="force" score="50" count="0" tags="KEYWORD" />
+            <entry value="before" score="50" count="0" tags="KEYWORD" />
+            <entry value="xmlforest" score="50" count="0" tags="KEYWORD" />
+            <entry value="forward" score="50" count="0" tags="KEYWORD" />
+            <entry value="following" score="50" count="0" tags="KEYWORD" />
+            <entry value="transform" score="50" count="0" tags="KEYWORD" />
             <entry value="coalesce" score="0" count="0" tags="KEYWORD" />
             <entry value="character" score="0" count="0" tags="KEYWORD" />
-            <entry value="char" score="0" count="0" tags="KEYWORD" />
-            <entry value="decimal" score="0" count="0" tags="KEYWORD" />
-            <entry value="bit" score="0" count="0" tags="KEYWORD" />
-            <entry value="dec" score="0" count="0" tags="KEYWORD" />
-            <entry value="boolean" score="0" count="0" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
 </completion-snapshots>
