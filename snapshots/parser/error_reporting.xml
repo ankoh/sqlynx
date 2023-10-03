@@ -1,0 +1,19 @@
+<parser-snapshots>
+    <parser-snapshot name="error_reporting_0">
+        <input>
+            select * from foo select
+        </input>
+        <expected>
+            <statements />
+            <scanner-errors />
+            <parser-errors>
+                <error message="syntax error, unexpected SELECT, expecting FETCH or FOR or LIMIT or OFFSET" loc="31..37" text="select" />
+            </parser-errors>
+            <line-breaks>
+                <line-break loc="0..1" text="&#10;" />
+                <line-break loc="37..38" text="&#10;" />
+            </line-breaks>
+            <comments />
+        </expected>
+    </parser-snapshot>
+</parser-snapshots>

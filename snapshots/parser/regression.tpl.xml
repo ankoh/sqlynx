@@ -1,0 +1,12 @@
+<parser-snapshots>
+    <parser-snapshot name="group_by_eof_1">
+        <input>
+            select * from foo group
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="group_by_eof_2">
+        <input>
+            select * from foo group b
+        </input>
+    </parser-snapshot>
+</parser-snapshots>

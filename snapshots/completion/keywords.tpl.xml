@@ -6,7 +6,7 @@
         <cursor context="main">
             <search text="s" index="1" />
         </cursor>
-        <completions limit="10" />
+        <completions limit="3" />
     </completion-snapshot>
     <completion-snapshot name="se">
         <script context="main">
@@ -15,7 +15,7 @@
         <cursor context="main">
             <search text="se" index="2" />
         </cursor>
-        <completions limit="10" />
+        <completions limit="3" />
     </completion-snapshot>
     <completion-snapshot name="sel">
         <script context="main">
@@ -24,7 +24,7 @@
         <cursor context="main">
             <search text="sel" index="3" />
         </cursor>
-        <completions limit="10" />
+        <completions limit="3" />
     </completion-snapshot>
     <completion-snapshot name="selec">
         <script context="main">
@@ -33,6 +33,42 @@
         <cursor context="main">
             <search text="selec" index="5" />
         </cursor>
-        <completions limit="10" />
+        <completions limit="3" />
+    </completion-snapshot>
+    <completion-snapshot name="gr">
+        <script context="main">
+            select * from foo gr
+        </script>
+        <cursor context="main">
+            <search text="gr" index="1" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
+    <completion-snapshot name="group">
+        <script context="main">
+            select * from foo group
+        </script>
+        <cursor context="main">
+            <search text="group" index="4" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
+    <completion-snapshot name="group_b">
+        <script context="main">
+            select * from foo group b
+        </script>
+        <cursor context="main">
+            <search text="b" index="1" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
+    <completion-snapshot name="group_eof">
+        <script context="main">
+            select * from foo group xx
+        </script>
+        <cursor context="main">
+            <search text="xx" index="0" />
+        </cursor>
+        <completions limit="3" />
     </completion-snapshot>
 </completion-snapshots>

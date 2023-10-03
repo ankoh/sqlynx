@@ -62,6 +62,9 @@ class ParseContext {
     auto& GetProgram() { return program; };
     /// Get next symbol
     inline Parser::symbol_type NextSymbol() {
+        if (symbol_iterator.IsAtEnd()) {
+            return parser::Parser::make_EOF({static_cast<uint32_t>(program.text_buffer.size()), 0});
+        }
         Parser::symbol_type sym = *symbol_iterator;
         ++symbol_iterator;
         return sym;

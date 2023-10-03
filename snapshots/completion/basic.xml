@@ -4,13 +4,10 @@
         <cursor context="main">
             <search text="" index="0" />
         </cursor>
-        <completions limit="10">
-            <entry value="set" score="0" count="0" tags="KEYWORD" />
-            <entry value="with" score="0" count="0" tags="KEYWORD" />
-            <entry value="table" score="0" count="0" tags="KEYWORD" />
-            <entry value="select" score="0" count="0" tags="KEYWORD" />
-            <entry value="create" score="0" count="0" tags="KEYWORD" />
-            <entry value="values" score="0" count="0" tags="KEYWORD" />
+        <completions limit="3">
+            <entry value="select" score="50" count="0" tags="KEYWORD" />
+            <entry value="with" score="40" count="0" tags="KEYWORD" />
+            <entry value="set" score="40" count="0" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="simple_table">
@@ -23,17 +20,10 @@
         <cursor context="main">
             <search text="fo" index="2" />
         </cursor>
-        <completions limit="10">
+        <completions limit="3">
             <entry value="foo" score="100" count="1" tags="TABLE_NAME" />
-            <entry value="force" score="50" count="0" tags="KEYWORD" />
-            <entry value="before" score="50" count="0" tags="KEYWORD" />
-            <entry value="xmlforest" score="50" count="0" tags="KEYWORD" />
-            <entry value="forward" score="50" count="0" tags="KEYWORD" />
-            <entry value="following" score="50" count="0" tags="KEYWORD" />
-            <entry value="transform" score="50" count="0" tags="KEYWORD" />
-            <entry value="coalesce" score="0" count="0" tags="KEYWORD" />
-            <entry value="character" score="0" count="0" tags="KEYWORD" />
-            <entry value="bit" score="0" count="0" tags="KEYWORD" />
+            <entry value="for" score="70" count="0" tags="KEYWORD" />
+            <entry value="foreign" score="40" count="0" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
 </completion-snapshots>

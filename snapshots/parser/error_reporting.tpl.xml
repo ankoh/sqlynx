@@ -1,0 +1,7 @@
+<parser-snapshots>
+    <parser-snapshot name="error_reporting_0">
+        <input>
+            select * from foo select
+        </input>
+    </parser-snapshot>
+</parser-snapshots>

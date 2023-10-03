@@ -49,7 +49,43 @@ static constexpr ScoringTable NAME_SCORE_COLUMN_REF{{
 }};
 
 static constexpr Completion::ScoreValueType KEYWORD_EXPECTED_SCORE = 0;
-static constexpr Completion::ScoreValueType KEYWORD_EXPECTED_AND_SUBSTRING_SCORE = 50;
+static constexpr Completion::ScoreValueType KEYWORD_EXPECTED_NON_DEFAULT_ACTION = 30;
+static constexpr Completion::ScoreValueType KEYWORD_EXPECTED_SUBSTRING_MODIFIER = 10;
+static constexpr Completion::ScoreValueType KEYWORD_EXPECTED_PREFIX_MODIFIER = 40;
+
+static constexpr Completion::ScoreValueType GetKeywordPrevalence(parser::Parser::symbol_kind_type keyword) {
+    switch (keyword) {
+        case parser::Parser::symbol_kind_type::S_AND:
+        case parser::Parser::symbol_kind_type::S_FROM:
+        case parser::Parser::symbol_kind_type::S_GROUP_P:
+        case parser::Parser::symbol_kind_type::S_SELECT:
+        case parser::Parser::symbol_kind_type::S_WHERE:
+            return 20;
+        case parser::Parser::symbol_kind_type::S_AS:
+        case parser::Parser::symbol_kind_type::S_ASC_P:
+        case parser::Parser::symbol_kind_type::S_BY:
+        case parser::Parser::symbol_kind_type::S_CASE:
+        case parser::Parser::symbol_kind_type::S_CAST:
+        case parser::Parser::symbol_kind_type::S_DESC_P:
+        case parser::Parser::symbol_kind_type::S_END_P:
+        case parser::Parser::symbol_kind_type::S_LIKE:
+        case parser::Parser::symbol_kind_type::S_LIMIT:
+        case parser::Parser::symbol_kind_type::S_OFFSET:
+        case parser::Parser::symbol_kind_type::S_OR:
+        case parser::Parser::symbol_kind_type::S_ORDER:
+        case parser::Parser::symbol_kind_type::S_SET:
+        case parser::Parser::symbol_kind_type::S_THEN:
+        case parser::Parser::symbol_kind_type::S_WHEN:
+        case parser::Parser::symbol_kind_type::S_WITH:
+            return 10;
+        case parser::Parser::symbol_kind_type::S_BETWEEN:
+        case parser::Parser::symbol_kind_type::S_DAY_P:
+        case parser::Parser::symbol_kind_type::S_PARTITION:
+        case parser::Parser::symbol_kind_type::S_SETOF:
+        default:
+            return 0;
+    }
+}
 
 }  // namespace
 
@@ -62,30 +98,40 @@ void Completion::FindCandidatesInGrammar() {
     auto expected_symbols = parser::Parser::ParseUntil(scanned, location->symbol_id);
 
     // Helper to determine the score of a cursor symbol
-    auto get_score = [&](const ScannedScript::LocationInfo& loc, std::string_view keyword_text) {
+    auto get_score = [&](const ScannedScript::LocationInfo& loc, parser::Parser::ExpectedSymbol expected,
+                         std::string_view keyword_text) {
         fuzzy_ci_string_view ci_keyword_text{keyword_text.data(), keyword_text.size()};
         using Relative = ScannedScript::LocationInfo::RelativePosition;
+        auto score = KEYWORD_EXPECTED_SCORE;
+        score += GetKeywordPrevalence(expected.symbol);
+        if (!expected.throughDefault) {
+            score += KEYWORD_EXPECTED_NON_DEFAULT_ACTION;
+        }
         switch (location->relative_pos) {
             case Relative::NEW_SYMBOL:
-                return KEYWORD_EXPECTED_SCORE;
+                return score;
             default:
                 fuzzy_ci_string_view ci_symbol_text{cursor.text.data(), cursor.text.size()};
+                // Is substring?
                 if (auto pos = ci_keyword_text.find(ci_symbol_text, 0); pos != fuzzy_ci_string_view::npos) {
-                    return KEYWORD_EXPECTED_AND_SUBSTRING_SCORE;
-                } else {
-                    return KEYWORD_EXPECTED_SCORE;
+                    if (pos == 0) {
+                        score += KEYWORD_EXPECTED_PREFIX_MODIFIER;
+                    } else {
+                        score += KEYWORD_EXPECTED_SUBSTRING_MODIFIER;
+                    }
                 }
+                return score;
         }
     };
 
     // Add all expected symbols to the result heap
-    for (parser::Parser::symbol_kind_type sym : expected_symbols) {
-        auto name = parser::Keyword::GetKeywordName(sym);
+    for (auto& expected : expected_symbols) {
+        auto name = parser::Keyword::GetKeywordName(expected.symbol);
         if (!name.empty()) {
             Candidate candidate{
                 .name_text = name,
                 .name_tags = NameTags{proto::NameTag::KEYWORD},
-                .score = get_score(*location, name),
+                .score = get_score(*location, expected, name),
                 .count = 0,
             };
             result_heap.Insert(candidate, candidate.score);
