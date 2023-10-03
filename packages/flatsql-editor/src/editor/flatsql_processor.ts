@@ -166,7 +166,7 @@ export const FlatSQLProcessor: StateField<FlatSQLEditorState> = StateField.defin
                 );
                 // Analyze the new script
                 next.scriptBuffers = parseAndAnalyzeScript(next.mainScript!, next.externalScript);
-                const cursorBuffer = next.mainScript!.readCursor(selection ?? 0);
+                const cursorBuffer = next.mainScript!.moveCursor(selection ?? 0);
                 next.scriptCursor = cursorBuffer.read(new flatsql.proto.ScriptCursorInfo()).unpack();
                 cursorBuffer.delete();
                 next.onUpdateScript(next.scriptKey, next.scriptBuffers, next.scriptCursor);
@@ -175,7 +175,7 @@ export const FlatSQLProcessor: StateField<FlatSQLEditorState> = StateField.defin
             // Update the script cursor
             if (cursorChanged) {
                 copyIfNotReplaced();
-                const cursorBuffer = next.mainScript!.readCursor(selection ?? 0);
+                const cursorBuffer = next.mainScript!.moveCursor(selection ?? 0);
                 next.scriptCursor = cursorBuffer.read(new flatsql.proto.ScriptCursorInfo()).unpack();
                 cursorBuffer.delete();
                 next.onUpdateScriptCursor(next.scriptKey, next.scriptCursor);
