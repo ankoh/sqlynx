@@ -93,6 +93,14 @@
             "cwd": "${workspaceFolder}"
         },
         {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Benchmarks",
+            "program": "${workspaceFolder}/packages/flatsql/build/native/o0/benchmark_pipeline",
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
             "type": "extensionHost",
             "request": "launch",
             "name": "Launch VSCode Plugin",
