@@ -51,7 +51,7 @@ static constexpr ScoringTable NAME_SCORE_COLUMN_REF{{
 static constexpr Completion::ScoreValueType KEYWORD_EXPECTED_SCORE = 0;
 static constexpr Completion::ScoreValueType KEYWORD_EXPECTED_NON_DEFAULT_ACTION = 30;
 static constexpr Completion::ScoreValueType KEYWORD_EXPECTED_SUBSTRING_MODIFIER = 10;
-static constexpr Completion::ScoreValueType KEYWORD_EXPECTED_PREFIX_MODIFIER = 40;
+static constexpr Completion::ScoreValueType KEYWORD_EXPECTED_PREFIX_MODIFIER = 20;
 
 static constexpr Completion::ScoreValueType GetKeywordPrevalence(parser::Parser::symbol_kind_type keyword) {
     switch (keyword) {
@@ -60,7 +60,7 @@ static constexpr Completion::ScoreValueType GetKeywordPrevalence(parser::Parser:
         case parser::Parser::symbol_kind_type::S_GROUP_P:
         case parser::Parser::symbol_kind_type::S_SELECT:
         case parser::Parser::symbol_kind_type::S_WHERE:
-            return 20;
+            return 30;
         case parser::Parser::symbol_kind_type::S_AS:
         case parser::Parser::symbol_kind_type::S_ASC_P:
         case parser::Parser::symbol_kind_type::S_BY:
