@@ -8,6 +8,7 @@
 #include "flatsql/proto/proto_generated.h"
 #include "flatsql/script.h"
 #include "flatsql/testing/xml_tests.h"
+#include "flatsql/utils/string_trimming.h"
 #include "gtest/gtest.h"
 
 namespace flatsql {
@@ -88,6 +89,8 @@ void CompletionSnapshotTest::LoadTests(std::filesystem::path& source_dir) {
             t.name = test.attribute("name").as_string();
             t.input_external = xml_external.last_child().value();
             t.input_main = xml_main.last_child().value();
+            trim(t.input_external, flatsql::is_no_space);
+            trim(t.input_main, flatsql::is_no_space);
 
             // Read the cursor
             auto xml_cursor = test.child("cursor");

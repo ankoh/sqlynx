@@ -56,8 +56,8 @@ describe('FlatSQL Cursor', () => {
 
             expect(node.attributeKey()).toEqual(expected.astAttributeKey);
             expect(node.nodeType()).toEqual(expected.astNodeType);
-            const tokenOffset = scannerTokenOffsets[cursor.scannerTokenId()];
-            const tokenLength = scannerTokenLengths[cursor.scannerTokenId()];
+            const tokenOffset = scannerTokenOffsets[cursor.scannerSymbolId()];
+            const tokenLength = scannerTokenLengths[cursor.scannerSymbolId()];
             expect(scriptText.substring(tokenOffset, tokenOffset + tokenLength)).toEqual('select');
 
             cursorBuffer.delete();

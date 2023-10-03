@@ -164,6 +164,7 @@ ScannedScript::LocationInfo ScannedScript::FindSymbol(size_t text_offset) {
                 --global_symbol_id;
                 --chunk_iter;
                 chunk_symbol_id = chunk_iter->size() - 1;
+                symbol_iter = chunk_iter->begin() + chunk_symbol_id;
             } else {
                 // Very first token is EOF token?
                 // Special case empty script buffer
@@ -172,6 +173,7 @@ ScannedScript::LocationInfo ScannedScript::FindSymbol(size_t text_offset) {
         } else {
             --global_symbol_id;
             --chunk_symbol_id;
+            --symbol_iter;
         }
     }
 
@@ -587,9 +589,11 @@ std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> ScriptCursor::Create
 flatbuffers::Offset<proto::ScriptCursorInfo> ScriptCursor::Pack(flatbuffers::FlatBufferBuilder& builder) const {
     auto out = std::make_unique<proto::ScriptCursorInfoT>();
     out->text_offset = text_offset;
-    out->scanner_token_id = std::numeric_limits<uint32_t>::max();
+    out->scanner_symbol_id = std::numeric_limits<uint32_t>::max();
+    out->scanner_relative_position = proto::RelativeSymbolPosition::NEW_SYMBOL;
     if (scanner_location) {
-        out->scanner_token_id = scanner_location->symbol_id;
+        out->scanner_symbol_id = scanner_location->symbol_id;
+        out->scanner_relative_position = static_cast<proto::RelativeSymbolPosition>(scanner_location->relative_pos);
     }
     out->statement_id = statement_id.value_or(std::numeric_limits<uint32_t>::max());
     out->ast_node_id = ast_node_id.value_or(std::numeric_limits<uint32_t>::max());
