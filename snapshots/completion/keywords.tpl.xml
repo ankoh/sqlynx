@@ -62,6 +62,33 @@
         </cursor>
         <completions limit="3" />
     </completion-snapshot>
+    <completion-snapshot name="select_from_eof">
+        <script context="main">
+            select * from a xx
+        </script>
+        <cursor context="main">
+            <search text="xx" index="0" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
+    <completion-snapshot name="select_from_w">
+        <script context="main">
+            select * from a w
+        </script>
+        <cursor context="main">
+            <search text="w" index="1" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
+    <completion-snapshot name="select_from_wh">
+        <script context="main">
+            select * from a wh
+        </script>
+        <cursor context="main">
+            <search text="wh" index="2" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
     <completion-snapshot name="selec">
         <script context="main">
             selec
