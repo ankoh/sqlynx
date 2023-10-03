@@ -599,20 +599,20 @@ static void scan_query(benchmark::State& state) {
     main.InsertTextAt(0, main_script);
 
     for (auto _ : state) {
-        auto main_scan = main.Scan();
-        benchmark::DoNotOptimize(main_scan);
+        auto scan = main.Scan();
+        benchmark::DoNotOptimize(scan);
     }
 }
 
 static void parse_query(benchmark::State& state) {
     Script main{1};
     main.InsertTextAt(0, main_script);
-    auto main_scan = main.Scan();
-    assert(main_scan.second == proto::StatusCode::OK);
+    auto scan = main.Scan();
+    assert(scan.second == proto::StatusCode::OK);
 
     for (auto _ : state) {
-        auto main_parsed = main.Parse();
-        benchmark::DoNotOptimize(main_parsed);
+        auto parsed = main.Parse();
+        benchmark::DoNotOptimize(parsed);
     }
 }
 
