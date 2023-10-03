@@ -48,7 +48,7 @@ describe('FlatSQL Cursor', () => {
         const scannerTokenLengths = scannerTokens.tokenLengthsArray()!;
 
         const test = (script: flatsql.FlatSQLScript, offset: number, expected: ExpectedCursor) => {
-            const cursorBuffer = script.readCursor(0);
+            const cursorBuffer = script.moveCursor(0);
             const cursor = cursorBuffer.read(tmpCursor);
 
             expect(cursor.textOffset()).toEqual(offset);

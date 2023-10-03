@@ -56,6 +56,10 @@ extern "C" FFIResult* flatsql_script_format(flatsql::Script* script);
 extern "C" uint32_t flatsql_script_reindex(flatsql::Script* script);
 /// Get script statistics
 extern "C" FFIResult* flatsql_script_get_statistics(flatsql::Script* script);
+/// Move the cursor in a script to a position
+extern "C" FFIResult* flatsql_script_move_cursor(flatsql::Script* script, size_t text_offset);
+/// Complete at a cursor in the script
+extern "C" FFIResult* flatsql_script_complete_at_cursor(flatsql::Script* script, size_t limit);
 
 /// Create schema graph
 extern "C" flatsql::SchemaGraph* flatsql_schemagraph_new();

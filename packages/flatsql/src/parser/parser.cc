@@ -9,6 +9,10 @@ void flatsql::parser::ParserBase::error(const location_type& loc, const std::str
     ctx.AddError(loc, message);
 }
 
+template <typename Base> static void destroy(std::string_view msg, flatsql::parser::Parser::basic_symbol<Base>& yysym) {
+    // See yy_destroy_
+}
+
 /// Collect all expected symbols
 std::vector<Parser::symbol_kind_type> Parser::CollectExpectedSymbols() {
     std::vector<symbol_kind_type> expected;
@@ -217,7 +221,7 @@ yyerrlab:
         if (yyla.kind() == symbol_kind::S_YYEOF) {
             goto yyabortlab;
         } else if (!yyla.empty()) {
-            yy_destroy_("Error: discarding", yyla);
+            destroy("Error: discarding", yyla);
             yyla.clear();
         }
     }
@@ -242,7 +246,7 @@ yyerrlab1:
         if (yystack_.size() == 1) goto yyabortlab;
 
         yyerror_range[1].location = yystack_[0].location;
-        yy_destroy_("Error: popping", yystack_[0]);
+        destroy("Error: popping", yystack_[0]);
         yypop_();
         // YY_STACK_PRINT();
     }
@@ -267,14 +271,14 @@ yyabortlab:
     goto yyreturn;
 
 yyreturn:
-    if (!yyla.empty()) yy_destroy_("Cleanup: discarding lookahead", yyla);
+    if (!yyla.empty()) destroy("Cleanup: discarding lookahead", yyla);
 
     // Do not reclaim the symbols of the rule whose action triggered
     // this YYABORT or YYACCEPT.
     yypop_(yylen);
     // YY_STACK_PRINT();
     while (1 < yystack_.size()) {
-        yy_destroy_("Cleanup: popping", yystack_[0]);
+        destroy("Cleanup: popping", yystack_[0]);
         yypop_();
     }
     return expected_symbols;
