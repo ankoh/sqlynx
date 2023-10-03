@@ -31,11 +31,10 @@ make core_native_o2       # Build optimized native core library with debug symbo
 make core_wasm_o3         # Build optimized wasm core library
 make core_js_o3           # Build js bundle with wasm module and js api
 
+
 make core_native_tests    # Run native tests
 make core_js_tests        # Run js tests using the wasm module
-
-make parser_snapshots         # Update parser snapshots in snapshots/parser
-make analyzer_snapshots       # Update analyzer snapshots in snapshots/analyzer
+make snapshots            # Update parser snapshots
 
 make benchmark_pipeline   # Benchmark the processing pipeline
 make benchmark_layout     # Benchmark the schema graph layout
