@@ -69,8 +69,7 @@ void Completion::FindCandidatesInGrammar() {
             case Relative::NEW_SYMBOL:
                 return KEYWORD_EXPECTED_SCORE;
             default:
-                auto symbol_text = scanned.ReadTextAtLocation(loc.symbol.location);
-                fuzzy_ci_string_view ci_symbol_text{symbol_text.data(), symbol_text.size()};
+                fuzzy_ci_string_view ci_symbol_text{cursor.text.data(), cursor.text.size()};
                 if (auto pos = ci_keyword_text.find(ci_symbol_text, 0); pos != fuzzy_ci_string_view::npos) {
                     return KEYWORD_EXPECTED_AND_SUBSTRING_SCORE;
                 } else {
@@ -143,8 +142,7 @@ void Completion::FlushCandidatesAndFinish() {
     QualifiedID current_symbol_name;
     if (auto& location = cursor.scanner_location; location.has_value()) {
         auto& scanned = *cursor.script.scanned_script;
-        auto text = scanned.ReadTextAtLocation(location->symbol.location);
-        auto name_id = scanned.FindName(text);
+        auto name_id = scanned.FindName(cursor.text);
         if (name_id.has_value()) {
             current_symbol_name = QualifiedID{scanned.context_id, *name_id};
         }
@@ -195,12 +193,12 @@ flatbuffers::Offset<proto::Completion> Completion::Pack(flatbuffers::FlatBufferB
     // Pack candidates
     std::vector<flatbuffers::Offset<proto::CompletionCandidate>> candidates;
     candidates.reserve(entries.size());
-    for (auto& entry : entries) {
-        auto text_offset = builder.CreateString(entry.value.name_text);
+    for (auto iter = entries.rbegin(); iter != entries.rend(); ++iter) {
+        auto text_offset = builder.CreateString(iter->value.name_text);
         proto::CompletionCandidateBuilder candidateBuilder{builder};
-        candidateBuilder.add_name_tags(entry.value.name_tags);
+        candidateBuilder.add_name_tags(iter->value.name_tags);
         candidateBuilder.add_name_text(text_offset);
-        candidateBuilder.add_score(entry.score);
+        candidateBuilder.add_score(iter->score);
         candidates.push_back(candidateBuilder.Finish());
     }
     auto candidatesOfs = builder.CreateVector(candidates);

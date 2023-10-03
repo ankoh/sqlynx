@@ -82,7 +82,7 @@ export function reduceAppState(state: AppState, action: AppStateAction): AppStat
                     [scriptKey]: {
                         ...scriptData,
                         processed: buffers,
-                        statistics: rotateStatistics(scriptData.statistics, scriptData.script?.moveCursor() ?? null),
+                        statistics: rotateStatistics(scriptData.statistics, scriptData.script?.getStatistics() ?? null),
                         cursor,
                     },
                 },
@@ -97,7 +97,7 @@ export function reduceAppState(state: AppState, action: AppStateAction): AppStat
                 const newMain = { ...mainData };
                 const external = newState.scripts[ScriptKey.SCHEMA_SCRIPT].script;
                 newMain.processed = analyzeScript(mainData.processed, mainScript, external);
-                newMain.statistics = rotateStatistics(newMain.statistics, mainScript.moveCursor());
+                newMain.statistics = rotateStatistics(newMain.statistics, mainScript.getStatistics());
                 newState.scripts[ScriptKey.MAIN_SCRIPT] = newMain;
             }
             return computeSchemaGraph(newState);
@@ -192,7 +192,7 @@ export function reduceAppState(state: AppState, action: AppStateAction): AppStat
                             ...newState.scripts[ScriptKey.MAIN_SCRIPT],
                             script: newScript,
                             processed: analysis,
-                            statistics: rotateStatistics(old.statistics, newScript.moveCursor() ?? null),
+                            statistics: rotateStatistics(old.statistics, newScript.getStatistics() ?? null),
                         };
                         break;
                     }
@@ -212,14 +212,14 @@ export function reduceAppState(state: AppState, action: AppStateAction): AppStat
                             newState.scripts[ScriptKey.MAIN_SCRIPT] = {
                                 ...main,
                                 processed: mainAnalyzed,
-                                statistics: rotateStatistics(main.statistics, main.script.moveCursor() ?? null),
+                                statistics: rotateStatistics(main.statistics, main.script.getStatistics() ?? null),
                             };
                         }
                         newState.scripts[ScriptKey.SCHEMA_SCRIPT] = {
                             ...newState.scripts[ScriptKey.SCHEMA_SCRIPT],
                             script: newScript,
                             processed: schemaAnalyzed,
-                            statistics: rotateStatistics(old.statistics, newScript.moveCursor() ?? null),
+                            statistics: rotateStatistics(old.statistics, newScript.getStatistics() ?? null),
                         };
                         break;
                     }
