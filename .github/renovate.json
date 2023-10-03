@@ -49,7 +49,7 @@
                 "vscode",
                 "@vscode/vsce",
                 "vscode-languageserver",
-                "vscode-languageclient",
+                "vscode-languageclient"
             ],
             "automerge": true
         }
