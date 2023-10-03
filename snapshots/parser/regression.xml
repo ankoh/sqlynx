@@ -1,0 +1,36 @@
+<parser-snapshots>
+    <parser-snapshot name="group_by_eof_1">
+        <input>
+            select * from foo group
+        </input>
+        <expected>
+            <statements />
+            <scanner-errors />
+            <parser-errors>
+                <error message="syntax error, unexpected EOF, expecting BY" loc="45..46" text="" />
+            </parser-errors>
+            <line-breaks>
+                <line-break loc="0..1" text="&#10;" />
+                <line-break loc="36..37" text="&#10;" />
+            </line-breaks>
+            <comments />
+        </expected>
+    </parser-snapshot>
+    <parser-snapshot name="group_by_eof_2">
+        <input>
+            select * from foo group b
+        </input>
+        <expected>
+            <statements />
+            <scanner-errors />
+            <parser-errors>
+                <error message="syntax error, unexpected identifier literal, expecting BY" loc="37..38" text="b" />
+            </parser-errors>
+            <line-breaks>
+                <line-break loc="0..1" text="&#10;" />
+                <line-break loc="38..39" text="&#10;" />
+            </line-breaks>
+            <comments />
+        </expected>
+    </parser-snapshot>
+</parser-snapshots>

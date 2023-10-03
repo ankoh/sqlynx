@@ -14,8 +14,8 @@ template <typename Base> static void destroy(std::string_view msg, flatsql::pars
 }
 
 /// Collect all expected symbols
-std::vector<Parser::symbol_kind_type> Parser::CollectExpectedSymbols() {
-    std::vector<symbol_kind_type> expected;
+std::vector<Parser::ExpectedSymbol> Parser::CollectExpectedSymbols() {
+    std::vector<Parser::ExpectedSymbol> expected;
 
     // Actual number of expected tokens
     const int yyn = yypact_[+yystack_[0].state];
@@ -28,9 +28,15 @@ std::vector<Parser::symbol_kind_type> Parser::CollectExpectedSymbols() {
         const int yychecklim = yylast_ - yyn + 1;
         const int yyxend = yychecklim < YYNTOKENS ? yychecklim : YYNTOKENS;
         for (int yyx = yyxbegin; yyx < yyxend; ++yyx) {
-            if (yycheck_[yyx + yyn] == yyx && yyx != symbol_kind::S_YYerror &&
-                !yy_table_value_is_error_(yytable_[yyx + yyn])) {
-                expected.push_back(YY_CAST(symbol_kind_type, yyx));
+            if (yyx == symbol_kind::S_YYerror) {
+                continue;
+            }
+            bool is_default_action = yycheck_[yyx + yyn] != yyx;
+            if (is_default_action) {
+                expected.emplace_back(YY_CAST(symbol_kind_type, yyx), true);
+            }
+            if (!is_default_action && !yy_table_value_is_error_(yytable_[yyx + yyn])) {
+                expected.emplace_back(YY_CAST(symbol_kind_type, yyx), false);
             }
         }
     }
@@ -38,7 +44,7 @@ std::vector<Parser::symbol_kind_type> Parser::CollectExpectedSymbols() {
 }
 
 #define DEBUG_COMPLETE_AT 0
-std::vector<Parser::symbol_kind_type> Parser::CollectExpectedSymbolsAt(size_t target_symbol_id) {
+std::vector<Parser::ExpectedSymbol> Parser::CollectExpectedSymbolsAt(size_t target_symbol_id) {
     // Helper to print a symbol
     auto yy_print = [this](const auto& yysym) {
 #if DEBUG_COMPLETE_AT == 1
@@ -75,9 +81,11 @@ std::vector<Parser::symbol_kind_type> Parser::CollectExpectedSymbolsAt(size_t ta
     };
 
     // The expected symbols
-    std::vector<Parser::symbol_kind_type> expected_symbols;
+    std::vector<Parser::ExpectedSymbol> expected_symbols;
     // The current symbol index
-    size_t current_symbol_id = 0;
+    size_t next_symbol_id = 0;
+    // Reached the completion point?
+    bool reached_completion_point = false;
     // The next symbol id
     int yyn;
     // The length of the RHS of the rule being reduced
@@ -115,10 +123,10 @@ yybackup:
         // Get the next symbol
         auto next_symbol = ctx.NextSymbol();
         // Did we reach the target index?
-        if (current_symbol_id++ == target_symbol_id) {
-            // Lookup the expected symbols if we would replace the target token
-            expected_symbols = CollectExpectedSymbols();
-            goto yyreturn;
+        if (next_symbol_id++ >= target_symbol_id) {
+            auto completion_marker = parser::Parser::make_COMPLETE_HERE(next_symbol.location);
+            next_symbol.move(completion_marker);
+            reached_completion_point = true;
         }
         // Store symbol as lookahead
         symbol_type yylookahead(std::move(next_symbol));
@@ -204,6 +212,12 @@ yyreduce:
     goto yynewstate;
 
 yyerrlab:
+    // Collect expected symbols at the completion point
+    if (reached_completion_point) {
+        expected_symbols = CollectExpectedSymbols();
+        goto yyabortlab;
+    }
+
     // If not already recovering from an error, report this error.
     if (!yyerrstatus_) {
         ++yynerrs_;
@@ -284,7 +298,7 @@ yyreturn:
     return expected_symbols;
 }
 
-std::vector<Parser::symbol_kind_type> Parser::ParseUntil(ScannedScript& scanned, size_t symbol_id) {
+std::vector<Parser::ExpectedSymbol> Parser::ParseUntil(ScannedScript& scanned, size_t symbol_id) {
     ParseContext ctx{scanned};
     flatsql::parser::Parser parser(ctx);
     auto expected = parser.CollectExpectedSymbolsAt(symbol_id);

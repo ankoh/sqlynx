@@ -18,34 +18,39 @@ beforeAll(async () => {
 });
 
 describe('FlatSQL Completion', () => {
-    it('manually', () => {
-        const script = fsql!.createScript(1);
-        script.insertTextAt(0, 'selec');
-        script.scan().delete();
-        script.parse().delete();
-        script.analyze().delete();
-        script.reindex();
+    describe('single script prefix', () => {
+        const test = (text: string, cursor_offset: number, expected: string[]) => {
+            const script = fsql!.createScript(1);
+            script.insertTextAt(0, text);
+            script.scan().delete();
+            script.parse().delete();
+            script.analyze().delete();
+            script.reindex();
+            script.moveCursor(cursor_offset).delete();
 
-        const cursorBuffer = script.moveCursor(5);
-        const cursor = cursorBuffer.read(new flatsql.proto.ScriptCursorInfo());
-        expect(cursor.scannerSymbolId()).toEqual(0);
-        expect(cursor.scannerRelativePosition()).toEqual(flatsql.proto.RelativeSymbolPosition.END_OF_SYMBOL);
+            const completionBuffer = script.completeAtCursor(10);
+            const completion = completionBuffer.read(new flatsql.proto.Completion());
 
-        const completionBuffer = script.completeAtCursor(10);
-        const completion = completionBuffer.read(new flatsql.proto.Completion());
-        expect(completion.scannerTokenId()).toEqual(0);
-        expect(completion.textOffset()).toEqual(5);
+            let candidates: string[] = [];
+            for (let i = 0; i < completion.candidatesLength(); ++i) {
+                const candidate = completion.candidates(i)!;
+                candidates.push(candidate.nameText()!);
+            }
+            expect(candidates).toEqual(expected);
+        };
 
-        let candidates: string[] = [];
-        let scores: number[] = [];
-        for (let i = 0; i < completion.candidatesLength(); ++i) {
-            const candidate = completion.candidates(i)!;
-            candidates.push(candidate.nameText()!);
-            scores.push(candidate.score());
-        }
-        expect(candidates).toEqual(['select', 'set', 'with', 'table', 'create', 'values']);
-        expect(scores).toEqual([50, 0, 0, 0, 0, 0]);
-
-        script.delete();
+        it('s', () =>
+            test('s', 1, [
+                'select',
+                'set',
+                'setof',
+                'values',
+                'substring',
+                'session_user',
+                'smallint',
+                'symmetric',
+                'some',
+                'with',
+            ]));
     });
 });

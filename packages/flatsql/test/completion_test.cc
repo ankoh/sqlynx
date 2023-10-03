@@ -55,10 +55,11 @@ SELECT s_co
     auto entries = heap.GetEntries();
 
     std::vector<std::string> names;
-    for (auto& entry : entries) {
-        names.emplace_back(entry.value.name_text);
+    for (auto iter = entries.rbegin(); iter != entries.rend(); ++iter) {
+        names.emplace_back(iter->value.name_text);
     }
-    std::vector<std::string> expected_names{"all", "distinct", "s_comment", "ps_comment"};
+    std::vector<std::string> expected_names{"s_comment", "ps_comment", "group", "where", "from",
+                                            "order",     "limit",      "with",  "cast",  "case"};
     ASSERT_EQ(names, expected_names);
 }
 
