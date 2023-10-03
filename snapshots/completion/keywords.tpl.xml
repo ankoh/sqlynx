@@ -26,6 +26,42 @@
         </cursor>
         <completions limit="3" />
     </completion-snapshot>
+    <completion-snapshot name="select_star">
+        <script context="main">
+            select *
+        </script>
+        <cursor context="main">
+            <search text="*" index="1" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
+    <completion-snapshot name="select_f">
+        <script context="main">
+            select * f
+        </script>
+        <cursor context="main">
+            <search text="f" index="1" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
+    <completion-snapshot name="select_fr">
+        <script context="main">
+            select * fr
+        </script>
+        <cursor context="main">
+            <search text="fr" index="2" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
+    <completion-snapshot name="select_from">
+        <script context="main">
+            select * from
+        </script>
+        <cursor context="main">
+            <search text="fr" index="4" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
     <completion-snapshot name="selec">
         <script context="main">
             selec
