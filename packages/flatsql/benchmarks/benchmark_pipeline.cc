@@ -595,54 +595,121 @@ limit 100;
 )SQL";
 
 static void scan_query(benchmark::State& state) {
-    rope::Rope buffer{1024, main_script};
+    Script main{1};
+    main.InsertTextAt(0, main_script);
+
     for (auto _ : state) {
-        auto scan = flatsql::parser::Scanner::Scan(buffer, 0);
-        benchmark::DoNotOptimize(scan);
+        auto main_scan = main.Scan();
+        benchmark::DoNotOptimize(main_scan);
     }
 }
 
 static void parse_query(benchmark::State& state) {
-    rope::Rope buffer{1024, main_script};
-    auto scanner = flatsql::parser::Scanner::Scan(buffer, 0);
+    Script main{1};
+    main.InsertTextAt(0, main_script);
+    auto main_scan = main.Scan();
+    assert(main_scan.second == proto::StatusCode::OK);
+
     for (auto _ : state) {
-        auto parsed = flatsql::parser::Parser::Parse(scanner.first);
-        benchmark::DoNotOptimize(parsed);
+        auto main_parsed = main.Parse();
+        benchmark::DoNotOptimize(main_parsed);
     }
 }
 
 static void analyze_query(benchmark::State& state) {
-    rope::Rope input_external{1024, external_script};
-    rope::Rope input_main{1024, main_script};
+    Script main{1};
+    Script external{2};
+    main.InsertTextAt(0, main_script);
+    external.InsertTextAt(0, external_script);
 
-    // Analyze external script
-    auto external_scan = parser::Scanner::Scan(input_external, 0);
-    auto external_parsed = parser::Parser::Parse(external_scan.first);
-    auto external_analyzed = Analyzer::Analyze(external_parsed.first, nullptr);
+    auto ext_scan = external.Scan();
+    auto ext_parsed = external.Parse();
+    auto ext_analyzed = external.Analyze();
+    assert(ext_scan.second == proto::StatusCode::OK);
+    assert(ext_parsed.second == proto::StatusCode::OK);
+    assert(ext_analyzed.second == proto::StatusCode::OK);
 
-    // Parse script
-    auto main_scan = parser::Scanner::Scan(input_main, 1);
-    auto main_parsed = parser::Parser::Parse(main_scan.first);
+    auto main_scan = main.Scan();
+    auto main_parsed = main.Parse();
+    auto main_analyzed = main.Analyze();
+    assert(main_scan.second == proto::StatusCode::OK);
+    assert(main_parsed.second == proto::StatusCode::OK);
+    assert(main_analyzed.second == proto::StatusCode::OK);
 
     for (auto _ : state) {
-        auto main_analyzed = Analyzer::Analyze(main_parsed.first, external_analyzed.first);
+        auto ext_analyzed = main.Analyze(&external);
         benchmark::DoNotOptimize(main_analyzed);
     }
 }
 
 static void index_query(benchmark::State& state) {
-    rope::Rope input_external{1024, external_script};
-    rope::Rope input_main{1024, main_script};
+    Script main{1};
+    Script external{2};
+    main.InsertTextAt(0, main_script);
+    external.InsertTextAt(0, external_script);
 
-    // Parse script
-    auto main_scan = parser::Scanner::Scan(input_main, 1);
-    auto main_parsed = parser::Parser::Parse(main_scan.first);
-    auto [main_analyzed, status] = Analyzer::Analyze(main_parsed.first, nullptr);
-    assert(status == proto::StatusCode::OK);
+    auto scan = main.Scan();
+    auto parsed = main.Parse();
+    auto analyzed = main.Analyze();
+    assert(analyzed.second == proto::StatusCode::OK);
 
     for (auto _ : state) {
-        auto index = CompletionIndex::Build(main_analyzed);
+        auto index = main.Reindex();
         benchmark::DoNotOptimize(index);
+    }
+}
+
+static void move_cursor(benchmark::State& state) {
+    Script main;
+    main.InsertTextAt(0, main_script);
+
+    auto scanned = main.Scan();
+    auto parsed = main.Parse();
+    auto analyzed = main.Analyze();
+    auto index = main.Reindex();
+
+    std::string_view text = ",customer";
+    auto text_offset = main.scanned_script->text_buffer.find(text);
+    text_offset += text.size();
+    auto cursor = main.MoveCursor(text_offset);
+
+    assert(scanned.second == proto::StatusCode::OK);
+    assert(parsed.second == proto::StatusCode::OK);
+    assert(analyzed.second == proto::StatusCode::OK);
+    assert(index == proto::StatusCode::OK);
+    assert(cursor.second == proto::StatusCode::OK);
+
+    for (auto _ : state) {
+        auto cursor = main.MoveCursor(text_offset);
+        benchmark::DoNotOptimize(cursor);
+    }
+}
+
+static void complete_cursor(benchmark::State& state) {
+    Script main;
+
+    std::string_view text = ",customer";
+    main.InsertTextAt(0, text);
+    auto scanned = main.Scan();
+    auto parsed = main.Parse();
+    auto analyzed = main.Analyze();
+    auto index = main.Reindex();
+
+    auto text_offset = main.scanned_script->text_buffer.find(text);
+    text_offset += text.size();
+    auto cursor = main.MoveCursor(text_offset);
+    auto completion = main.CompleteAtCursor(10);
+
+    assert(scanned.second == proto::StatusCode::OK);
+    assert(parsed.second == proto::StatusCode::OK);
+    assert(analyzed.second == proto::StatusCode::OK);
+    assert(index == proto::StatusCode::OK);
+    assert(completion.second == proto::StatusCode::OK);
+    assert(completion.first != nullptr);
+
+    for (auto _ : state) {
+        auto completion = main.CompleteAtCursor(text_offset);
+        benchmark::DoNotOptimize(completion);
     }
 }
 
@@ -650,4 +717,6 @@ BENCHMARK(scan_query);
 BENCHMARK(parse_query);
 BENCHMARK(analyze_query);
 BENCHMARK(index_query);
+BENCHMARK(move_cursor);
+BENCHMARK(complete_cursor);
 BENCHMARK_MAIN();
