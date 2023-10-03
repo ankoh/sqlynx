@@ -4,7 +4,7 @@
         <cursor context="main">
             <search text="" index="0" />
         </cursor>
-        <completions limit="10" />
+        <completions limit="3" />
     </completion-snapshot>
     <completion-snapshot name="simple_table">
         <script context="external">
@@ -16,6 +16,6 @@
         <cursor context="main">
             <search text="fo" index="2" />
         </cursor>
-        <completions limit="10" />
+        <completions limit="3" />
     </completion-snapshot>
 </completion-snapshots>

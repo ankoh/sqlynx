@@ -88,7 +88,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Snapshots",
-            "program": "${workspaceFolder}/packages/flatsql/build/native/o0/snapshots",
+            "program": "${workspaceFolder}/packages/flatsql/build/native/o0/snapshotter",
             "args": ["--source_dir=${workspaceFolder}"],
             "cwd": "${workspaceFolder}"
         },

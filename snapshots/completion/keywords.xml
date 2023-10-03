@@ -6,13 +6,10 @@
         <cursor context="main">
             <search text="s" index="1" />
         </cursor>
-        <completions limit="10">
-            <entry value="set" score="50" count="0" tags="KEYWORD" />
-            <entry value="select" score="50" count="0" tags="KEYWORD" />
-            <entry value="values" score="50" count="0" tags="KEYWORD" />
-            <entry value="with" score="0" count="0" tags="KEYWORD" />
-            <entry value="table" score="0" count="0" tags="KEYWORD" />
-            <entry value="create" score="0" count="0" tags="KEYWORD" />
+        <completions limit="3">
+            <entry value="select" score="90" count="0" tags="KEYWORD" />
+            <entry value="set" score="80" count="0" tags="KEYWORD" />
+            <entry value="smallint" score="40" count="0" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="se">
@@ -22,13 +19,10 @@
         <cursor context="main">
             <search text="se" index="2" />
         </cursor>
-        <completions limit="10">
-            <entry value="set" score="50" count="0" tags="KEYWORD" />
-            <entry value="select" score="50" count="0" tags="KEYWORD" />
-            <entry value="with" score="0" count="0" tags="KEYWORD" />
-            <entry value="table" score="0" count="0" tags="KEYWORD" />
-            <entry value="create" score="0" count="0" tags="KEYWORD" />
-            <entry value="values" score="0" count="0" tags="KEYWORD" />
+        <completions limit="3">
+            <entry value="select" score="90" count="0" tags="KEYWORD" />
+            <entry value="set" score="80" count="0" tags="KEYWORD" />
+            <entry value="setof" score="40" count="0" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="sel">
@@ -38,13 +32,10 @@
         <cursor context="main">
             <search text="sel" index="3" />
         </cursor>
-        <completions limit="10">
-            <entry value="select" score="50" count="0" tags="KEYWORD" />
-            <entry value="set" score="0" count="0" tags="KEYWORD" />
-            <entry value="with" score="0" count="0" tags="KEYWORD" />
-            <entry value="table" score="0" count="0" tags="KEYWORD" />
-            <entry value="create" score="0" count="0" tags="KEYWORD" />
-            <entry value="values" score="0" count="0" tags="KEYWORD" />
+        <completions limit="3">
+            <entry value="select" score="90" count="0" tags="KEYWORD" />
+            <entry value="with" score="40" count="0" tags="KEYWORD" />
+            <entry value="set" score="40" count="0" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="selec">
@@ -54,13 +45,62 @@
         <cursor context="main">
             <search text="selec" index="5" />
         </cursor>
-        <completions limit="10">
-            <entry value="select" score="50" count="0" tags="KEYWORD" />
-            <entry value="set" score="0" count="0" tags="KEYWORD" />
-            <entry value="with" score="0" count="0" tags="KEYWORD" />
-            <entry value="table" score="0" count="0" tags="KEYWORD" />
-            <entry value="create" score="0" count="0" tags="KEYWORD" />
-            <entry value="values" score="0" count="0" tags="KEYWORD" />
+        <completions limit="3">
+            <entry value="select" score="90" count="0" tags="KEYWORD" />
+            <entry value="with" score="40" count="0" tags="KEYWORD" />
+            <entry value="set" score="40" count="0" tags="KEYWORD" />
+        </completions>
+    </completion-snapshot>
+    <completion-snapshot name="gr">
+        <script context="main">
+            select * from foo gr
+        </script>
+        <cursor context="main">
+            <search text="gr" index="1" />
+        </cursor>
+        <completions limit="3">
+            <entry value="group" score="60" count="0" tags="KEYWORD" />
+            <entry value="grant" score="40" count="0" tags="KEYWORD" />
+            <entry value="grouping" score="40" count="0" tags="KEYWORD" />
+        </completions>
+    </completion-snapshot>
+    <completion-snapshot name="group">
+        <script context="main">
+            select * from foo group
+        </script>
+        <cursor context="main">
+            <search text="group" index="4" />
+        </cursor>
+        <completions limit="3">
+            <entry value="group" score="60" count="0" tags="KEYWORD" />
+            <entry value="grouping" score="40" count="0" tags="KEYWORD" />
+            <entry value="limit" score="40" count="0" tags="KEYWORD" />
+        </completions>
+    </completion-snapshot>
+    <completion-snapshot name="group_b">
+        <script context="main">
+            select * from foo group b
+        </script>
+        <cursor context="main">
+            <search text="b" index="1" />
+        </cursor>
+        <completions limit="3">
+            <entry value="by" score="80" count="0" tags="KEYWORD" />
+            <entry value="bit" score="40" count="0" tags="KEYWORD" />
+            <entry value="bigint" score="40" count="0" tags="KEYWORD" />
+        </completions>
+    </completion-snapshot>
+    <completion-snapshot name="group_eof">
+        <script context="main">
+            select * from foo group xx
+        </script>
+        <cursor context="main">
+            <search text="xx" index="0" />
+        </cursor>
+        <completions limit="3">
+            <entry value="by" score="40" count="0" tags="KEYWORD" />
+            <entry value="from" score="20" count="0" tags="KEYWORD" />
+            <entry value="and" score="20" count="0" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
 </completion-snapshots>
