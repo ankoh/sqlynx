@@ -17,7 +17,8 @@ interface FlatSQLModuleExports {
     flatsql_script_parse: (ptr: number) => number;
     flatsql_script_analyze: (ptr: number, external: number) => number;
     flatsql_script_reindex: (ptr: number) => number;
-    flatsql_script_read_cursor: (ptr: number, offset: number) => number;
+    flatsql_script_move_cursor: (ptr: number, offset: number) => number;
+    flatsql_script_complete_at_cursor: (ptr: number) => number;
     flatsql_script_get_statistics: (ptr: number) => number;
     flatsql_schemagraph_new: () => number;
     flatsql_schemagraph_delete: (ptr: number) => void;
@@ -94,11 +95,14 @@ export class FlatSQL {
                 external: number,
             ) => number,
             flatsql_script_reindex: parserExports['flatsql_script_reindex'] as (ptr: number) => number,
-            flatsql_script_read_cursor: parserExports['flatsql_script_read_cursor'] as (
+            flatsql_script_get_statistics: parserExports['flatsql_script_get_statistics'] as (ptr: number) => number,
+            flatsql_script_move_cursor: parserExports['flatsql_script_move_cursor'] as (
                 ptr: number,
                 offset: number,
             ) => number,
-            flatsql_script_get_statistics: parserExports['flatsql_script_get_statistics'] as (ptr: number) => number,
+            flatsql_script_complete_at_cursor: parserExports['flatsql_script_complete_at_cursor'] as (
+                ptr: number,
+            ) => number,
             flatsql_schemagraph_new: parserExports['flatsql_schemagraph_new'] as () => number,
             flatsql_schemagraph_delete: parserExports['flatsql_schemagraph_delete'] as (ptr: number) => void,
             flatsql_schemagraph_describe: parserExports['flatsql_schemagraph_describe'] as (ptr: number) => number,
@@ -403,11 +407,17 @@ export class FlatSQLScript {
         const status = this.api.instanceExports.flatsql_script_reindex(scriptPtr);
         return status == proto.StatusCode.OK;
     }
-    /// Read the cursor
-    public readCursor(textOffset: number): FlatBufferRef<proto.ScriptCursorInfo> {
+    /// Move the cursor
+    public moveCursor(textOffset: number): FlatBufferRef<proto.ScriptCursorInfo> {
         const scriptPtr = this.assertScriptNotNull();
-        const resultPtr = this.api.instanceExports.flatsql_script_read_cursor(scriptPtr, textOffset);
+        const resultPtr = this.api.instanceExports.flatsql_script_move_cursor(scriptPtr, textOffset);
         return this.api.readResult<proto.ScriptCursorInfo>(resultPtr);
+    }
+    /// Complete at the cursor position
+    public completeAtCursor(): FlatBufferRef<proto.Completion> {
+        const scriptPtr = this.assertScriptNotNull();
+        const resultPtr = this.api.instanceExports.flatsql_script_complete_at_cursor(scriptPtr);
+        return this.api.readResult<proto.Completion>(resultPtr);
     }
     /// Get the script statistics.
     /// Timings are useless in some browsers today.

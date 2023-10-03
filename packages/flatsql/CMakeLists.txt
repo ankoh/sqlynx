@@ -64,8 +64,9 @@ if(WASM)
         -Wl,--export=flatsql_script_parse \
         -Wl,--export=flatsql_script_analyze \
         -Wl,--export=flatsql_script_reindex \
-        -Wl,--export=flatsql_script_read_cursor \
         -Wl,--export=flatsql_script_get_statistics \
+        -Wl,--export=flatsql_script_move_cursor \
+        -Wl,--export=flatsql_script_complete_at_cursor \
         -Wl,--export=flatsql_schemagraph_new \
         -Wl,--export=flatsql_schemagraph_delete \
         -Wl,--export=flatsql_schemagraph_describe \

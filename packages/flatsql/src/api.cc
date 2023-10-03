@@ -191,7 +191,7 @@ extern "C" FFIResult* flatsql_script_format(flatsql::Script* script) {
 extern "C" uint32_t flatsql_script_reindex(Script* script) { return static_cast<uint32_t>(script->Reindex()); }
 
 /// Move the cursor to a script at a position
-extern "C" FFIResult* flatsql_script_read_cursor(flatsql::Script* script, size_t text_offset) {
+extern "C" FFIResult* flatsql_script_move_cursor(flatsql::Script* script, size_t text_offset) {
     auto [cursor, status] = script->MoveCursor(text_offset);
     if (status != proto::StatusCode::OK) {
         return packError(status);
@@ -200,6 +200,21 @@ extern "C" FFIResult* flatsql_script_read_cursor(flatsql::Script* script, size_t
     // Pack the cursor info
     flatbuffers::FlatBufferBuilder fb;
     fb.Finish(cursor->Pack(fb));
+
+    // Store the buffer
+    auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));
+    return packBuffer(std::move(detached));
+}
+
+extern "C" FFIResult* flatsql_script_complete_at_cursor(flatsql::Script* script, size_t limit) {
+    auto [completion, status] = script->CompleteAtCursor(limit);
+    if (status != proto::StatusCode::OK) {
+        return packError(status);
+    }
+
+    // Pack the completion
+    flatbuffers::FlatBufferBuilder fb;
+    fb.Finish(completion->Pack(fb));
 
     // Store the buffer
     auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));
