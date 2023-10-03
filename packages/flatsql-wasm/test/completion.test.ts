@@ -40,17 +40,6 @@ describe('FlatSQL Completion', () => {
         };
 
         it('s', () =>
-            test('s', 1, [
-                'select',
-                'set',
-                'setof',
-                'values',
-                'substring',
-                'session_user',
-                'smallint',
-                'symmetric',
-                'some',
-                'with',
-            ]));
+            test('s', 1, ['select', 'set', 'values', 'with', 'and', 'group', 'create', 'where', 'from', 'table']));
     });
 });
