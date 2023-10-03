@@ -10,7 +10,7 @@
 	},
 	"private": true,
 	"engines": {
-		"vscode": "^1.82.2"
+		"vscode": "^1.82.3"
 	},
 	"activationEvents": [
 		"onLanguage:sql"
@@ -38,6 +38,6 @@
 		"@types/node": "^18.18.3",
 		"@types/vscode": "^1.82.0",
 		"typescript": "^5.2.2",
-		"@vscode/vsce": "^2.21.0"
+		"@vscode/vsce": "^2.21.1"
 	}
 }
