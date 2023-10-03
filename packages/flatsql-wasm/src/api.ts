@@ -18,7 +18,7 @@ interface FlatSQLModuleExports {
     flatsql_script_analyze: (ptr: number, external: number) => number;
     flatsql_script_reindex: (ptr: number) => number;
     flatsql_script_move_cursor: (ptr: number, offset: number) => number;
-    flatsql_script_complete_at_cursor: (ptr: number) => number;
+    flatsql_script_complete_at_cursor: (ptr: number, limit: number) => number;
     flatsql_script_get_statistics: (ptr: number) => number;
     flatsql_schemagraph_new: () => number;
     flatsql_schemagraph_delete: (ptr: number) => void;
@@ -102,6 +102,7 @@ export class FlatSQL {
             ) => number,
             flatsql_script_complete_at_cursor: parserExports['flatsql_script_complete_at_cursor'] as (
                 ptr: number,
+                limit: number,
             ) => number,
             flatsql_schemagraph_new: parserExports['flatsql_schemagraph_new'] as () => number,
             flatsql_schemagraph_delete: parserExports['flatsql_schemagraph_delete'] as (ptr: number) => void,
@@ -414,9 +415,9 @@ export class FlatSQLScript {
         return this.api.readResult<proto.ScriptCursorInfo>(resultPtr);
     }
     /// Complete at the cursor position
-    public completeAtCursor(): FlatBufferRef<proto.Completion> {
+    public completeAtCursor(limit: number): FlatBufferRef<proto.Completion> {
         const scriptPtr = this.assertScriptNotNull();
-        const resultPtr = this.api.instanceExports.flatsql_script_complete_at_cursor(scriptPtr);
+        const resultPtr = this.api.instanceExports.flatsql_script_complete_at_cursor(scriptPtr, limit);
         return this.api.readResult<proto.Completion>(resultPtr);
     }
     /// Get the script statistics.
