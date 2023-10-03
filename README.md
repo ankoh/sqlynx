@@ -73,17 +73,19 @@ FlatSQL spends **5us** with scanning, **8us** with parsing, **12us** with analyz
 
 ```
 Running /Users/andre.kohn/Repositories/flatsql/packages/flatsql/build/native/o2/benchmark_pipeline
-Run on (10 X 24.1209 MHz CPU s)
+Run on (10 X 24.0063 MHz CPU s)
 CPU Caches:
   L1 Data 64 KiB
   L1 Instruction 128 KiB
   L2 Unified 4096 KiB (x10)
-Load Average: 6.73, 4.68, 3.56
---------------------------------------------------------
-Benchmark              Time             CPU   Iterations
---------------------------------------------------------
-scan_query          5171 ns         5169 ns       109632
-parse_query         8414 ns         8414 ns        83443
-analyze_query      11926 ns        11925 ns        58638
-index_query         4602 ns         4602 ns       150386
+Load Average: 6.20, 4.57, 4.23
+----------------------------------------------------------
+Benchmark                Time             CPU   Iterations
+----------------------------------------------------------
+scan_query            5024 ns         5024 ns       112954
+parse_query           8377 ns         8374 ns        82910
+analyze_query        12332 ns        12331 ns        56191
+index_query           4964 ns         4963 ns       141555
+move_cursor           82.9 ns         82.9 ns      8355914
+complete_cursor       5002 ns         5001 ns       137250
 ```
