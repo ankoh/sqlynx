@@ -39,7 +39,6 @@ describe('FlatSQL Completion', () => {
             expect(candidates).toEqual(expected);
         };
 
-        it('s', () =>
-            test('s', 1, ['select', 'set', 'values', 'with', 'and', 'group', 'create', 'where', 'from', 'table']));
+        it('s', () => test('s', 1, ['select', 'set', 'with', 'values', 'table', 'create']));
     });
 });
