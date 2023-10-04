@@ -2,6 +2,7 @@ import * as flatsql from '@ankoh/flatsql';
 
 import { CompletionContext, CompletionResult, Completion } from '@codemirror/autocomplete';
 import { FlatSQLProcessor } from './flatsql_processor';
+import { getNameTagName, unpackNameTags } from '../utils';
 
 function updateCompletions(
     _current: CompletionResult,
@@ -25,9 +26,13 @@ export async function completeFlatSQL(context: CompletionContext): Promise<Compl
         const candidateObj = new flatsql.proto.CompletionCandidate();
         for (let i = 0; i < completion.candidatesLength(); ++i) {
             const candidate = completion.candidates(i, candidateObj)!;
+            let tagDetail: string | undefined = undefined;
+            for (const tag of unpackNameTags(candidate.nameTags())) {
+                tagDetail = getNameTagName(tag);
+            }
             options.push({
                 label: candidate.nameText() ?? '',
-                type: 'keyword',
+                detail: tagDetail,
             });
         }
         offset = processor.scriptCursor.scannerSymbolOffset;
