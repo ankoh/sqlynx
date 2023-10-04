@@ -12,6 +12,8 @@ table ScriptCursorInfo {
     text_offset: uint32;
     /// The scanner symbol id
     scanner_symbol_id: uint32;
+    /// The offset of the scanner symbol
+    scanner_symbol_offset: uint32;
     /// The relative position
     scanner_relative_position: RelativeSymbolPosition;
     /// The AST node id
