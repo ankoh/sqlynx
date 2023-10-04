@@ -7,7 +7,7 @@
             <statements />
             <scanner-errors />
             <parser-errors>
-                <error message="syntax error, unexpected INTERVAL, expecting FETCH or FOR or LIMIT or OFFSET" loc="40..48" text="interval" />
+                <error message="syntax error, unexpected INTERVAL" loc="40..48" text="interval" />
             </parser-errors>
             <line-breaks>
                 <line-break loc="0..1" text="&#10;" />

@@ -17,27 +17,10 @@ template <typename Base> static void destroy(std::string_view msg, flatsql::pars
 std::vector<Parser::ExpectedSymbol> Parser::CollectExpectedSymbols() {
     std::vector<Parser::ExpectedSymbol> expected;
 
-    // Actual number of expected tokens
-    const int yyn = yypact_[+yystack_[0].state];
-    if (!yy_pact_value_is_default_(yyn)) {
-        /* Start YYX at -YYN if negative to avoid negative indexes in
-            YYCHECK.  In other words, skip the first -YYN actions for
-            this state because they are default actions.  */
-        const int yyxbegin = yyn < 0 ? -yyn : 0;
-        // Stay within bounds of both yycheck and yytname.
-        const int yychecklim = yylast_ - yyn + 1;
-        const int yyxend = yychecklim < YYNTOKENS ? yychecklim : YYNTOKENS;
-        for (int yyx = yyxbegin; yyx < yyxend; ++yyx) {
-            if (yyx == symbol_kind::S_YYerror) {
-                continue;
-            }
-            bool is_default_action = yycheck_[yyx + yyn] != yyx;
-            if (is_default_action) {
-                expected.emplace_back(YY_CAST(symbol_kind_type, yyx), true);
-            }
-            if (!is_default_action && !yy_table_value_is_error_(yytable_[yyx + yyn])) {
-                expected.emplace_back(YY_CAST(symbol_kind_type, yyx), false);
-            }
+    for (int yyx = 0; yyx < YYNTOKENS; ++yyx) {
+        symbol_kind_type yysym = YY_CAST(symbol_kind_type, yyx);
+        if (yysym != symbol_kind::S_YYerror && yysym != symbol_kind::S_YYUNDEF && yy_lac_check_(yysym)) {
+            expected.emplace_back(yysym);
         }
     }
     return expected;
@@ -86,6 +69,7 @@ std::vector<Parser::ExpectedSymbol> Parser::CollectExpectedSymbolsAt(size_t targ
     size_t next_symbol_id = 0;
     // Reached the completion point?
     bool reached_completion_point = false;
+
     // The next symbol id
     int yyn;
     // The length of the RHS of the rule being reduced
@@ -100,6 +84,10 @@ std::vector<Parser::ExpectedSymbol> Parser::CollectExpectedSymbolsAt(size_t targ
     stack_symbol_type yyerror_range[3];
     /// The return value of parse ()
     int yyresult;
+
+    // Discard the LAC context in case there still is one left from a
+    // previous invocation.
+    yy_lac_discard_("init");
 
     // Initialize the stack. The initial state will be set in
     // yynewstate, since the latter expects the semantical and the
@@ -146,6 +134,7 @@ yybackup:
     // to detect an error, take that action.
     yyn += yyla.kind();
     if (yyn < 0 || yylast_ < yyn || yycheck_[yyn] != yyla.kind()) {
+        if (!yy_lac_establish_(yyla.kind())) goto yyerrlab;
         goto yydefault;
     }
 
@@ -153,6 +142,8 @@ yybackup:
     yyn = yytable_[yyn];
     if (yyn <= 0) {
         if (yy_table_value_is_error_(yyn)) goto yyerrlab;
+        if (!yy_lac_establish_(yyla.kind())) goto yyerrlab;
+
         yyn = -yyn;
         goto yyreduce;
     }
@@ -162,6 +153,7 @@ yybackup:
 
     // Shift the lookahead token.
     yypush_("Shifting", state_type(yyn), YY_MOVE(yyla));
+    yy_lac_discard_("shift");
     goto yynewstate;
 
 yydefault:
@@ -271,6 +263,7 @@ yyerrlab1:
         YYLLOC_DEFAULT(error_token.location, yyerror_range, 2);
 
         // Shift the error token.
+        yy_lac_discard_("error recovery");
         error_token.state = state_type(yyn);
         yypush_("Shifting", YY_MOVE(error_token));
     }

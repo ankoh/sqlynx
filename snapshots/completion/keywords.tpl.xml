@@ -134,4 +134,31 @@
         </cursor>
         <completions limit="3" />
     </completion-snapshot>
+    <completion-snapshot name="from_o">
+        <script context="main">
+            select * from foo o
+        </script>
+        <cursor context="main">
+            <search text="foo o" index="5" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
+    <completion-snapshot name="from_or">
+        <script context="main">
+            select * from foo or
+        </script>
+        <cursor context="main">
+            <search text="or" index="1" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
+    <completion-snapshot name="from_order">
+        <script context="main">
+            select * from foo order
+        </script>
+        <cursor context="main">
+            <search text="order" index="5" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
 </completion-snapshots>

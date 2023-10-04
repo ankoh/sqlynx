@@ -7,7 +7,7 @@
             <statements />
             <scanner-errors />
             <parser-errors>
-                <error message="syntax error, unexpected SELECT, expecting FETCH or FOR or LIMIT or OFFSET" loc="31..37" text="select" />
+                <error message="syntax error, unexpected SELECT" loc="31..37" text="select" />
             </parser-errors>
             <line-breaks>
                 <line-break loc="0..1" text="&#10;" />
