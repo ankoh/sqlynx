@@ -18,7 +18,8 @@ export async function completeFlatSQL(context: CompletionContext): Promise<Compl
     const processor = context.state.field(FlatSQLProcessor);
     const options: Completion[] = [];
 
-    if (processor.mainScript !== null) {
+    let offset = context.pos;
+    if (processor.mainScript !== null && processor.scriptCursor !== null) {
         const completionBuffer = processor.mainScript.completeAtCursor(10);
         const completion = completionBuffer.read(new flatsql.proto.Completion());
         const candidateObj = new flatsql.proto.CompletionCandidate();
@@ -29,10 +30,11 @@ export async function completeFlatSQL(context: CompletionContext): Promise<Compl
                 type: 'keyword',
             });
         }
+        offset = processor.scriptCursor.scannerSymbolOffset;
     }
 
     return {
-        from: context.pos,
+        from: offset,
         options,
         filter: false,
         update: updateCompletions,
