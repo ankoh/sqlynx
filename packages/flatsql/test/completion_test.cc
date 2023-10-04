@@ -59,7 +59,7 @@ SELECT s_co
         names.emplace_back(iter->value.name_text);
     }
     std::vector<std::string> expected_names{"s_comment", "ps_comment", "group", "where", "order",
-                                            "from",      "limit",      "with",  "cast",  "case"};
+                                            "from",      "limit",      "like",  "cast",  "case"};
     ASSERT_EQ(names, expected_names);
 }
 
