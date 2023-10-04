@@ -592,8 +592,10 @@ flatbuffers::Offset<proto::ScriptCursorInfo> ScriptCursor::Pack(flatbuffers::Fla
     out->scanner_symbol_id = std::numeric_limits<uint32_t>::max();
     out->scanner_relative_position = proto::RelativeSymbolPosition::NEW_SYMBOL;
     if (scanner_location) {
+        auto symbol_offset = script.scanned_script->symbols[scanner_location->symbol_id].location.offset();
         out->scanner_symbol_id = scanner_location->symbol_id;
         out->scanner_relative_position = static_cast<proto::RelativeSymbolPosition>(scanner_location->relative_pos);
+        out->scanner_symbol_offset = symbol_offset;
     }
     out->statement_id = statement_id.value_or(std::numeric_limits<uint32_t>::max());
     out->ast_node_id = ast_node_id.value_or(std::numeric_limits<uint32_t>::max());
