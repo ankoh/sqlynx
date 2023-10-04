@@ -55,6 +55,8 @@ export function parseAndAnalyzeScript(
     const parsed = script.parse();
     // Parse the script
     const analyzed = script.analyze(external);
+    // Parse the script
+    script.reindex();
 
     return { scanned, parsed, analyzed, destroy: destroyBuffers };
 }
