@@ -13,16 +13,7 @@ class Parser : public ParserBase {
     using ParserBase::ParserBase;
 
    public:
-    /// An expected symbol
-    struct ExpectedSymbol {
-        /// The symbol
-        Parser::symbol_kind_type symbol;
-        /// Expected through default action?
-        bool throughDefault;
-        /// Constructor
-        ExpectedSymbol(Parser::symbol_kind_type sym, bool throughDefault)
-            : symbol(sym), throughDefault(throughDefault) {}
-    };
+    using ExpectedSymbol = Parser::symbol_kind_type;
 
    protected:
     /// Collect all expected symbols

@@ -72,7 +72,7 @@ struct Completion {
     TopKHeap<Candidate, ScoreValueType> result_heap;
 
     /// Resolve the expected symbols
-    void FindCandidatesInGrammar();
+    void FindCandidatesInGrammar(bool& expects_identifier);
     /// Find the candidates in a completion index
     void FindCandidatesInIndex(const CompletionIndex& index);
     /// Find the candidates in completion indexes
