@@ -63,7 +63,7 @@
             </statements>
             <scanner-errors />
             <parser-errors>
-                <error message="syntax error, unexpected identifier literal, expecting ','" loc="50..57" text="invalid" />
+                <error message="syntax error, unexpected identifier literal" loc="50..57" text="invalid" />
             </parser-errors>
             <line-breaks>
                 <line-break loc="0..1" text="&#10;" />

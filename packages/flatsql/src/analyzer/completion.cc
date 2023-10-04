@@ -49,7 +49,6 @@ static constexpr ScoringTable NAME_SCORE_COLUMN_REF{{
 }};
 
 static constexpr Completion::ScoreValueType KEYWORD_EXPECTED_SCORE = 0;
-static constexpr Completion::ScoreValueType KEYWORD_EXPECTED_NON_DEFAULT_ACTION = 30;
 static constexpr Completion::ScoreValueType KEYWORD_EXPECTED_SUBSTRING_MODIFIER = 10;
 static constexpr Completion::ScoreValueType KEYWORD_EXPECTED_PREFIX_MODIFIER = 20;
 
@@ -58,6 +57,7 @@ static constexpr Completion::ScoreValueType GetKeywordPrevalence(parser::Parser:
         case parser::Parser::symbol_kind_type::S_AND:
         case parser::Parser::symbol_kind_type::S_FROM:
         case parser::Parser::symbol_kind_type::S_GROUP_P:
+        case parser::Parser::symbol_kind_type::S_ORDER:
         case parser::Parser::symbol_kind_type::S_SELECT:
         case parser::Parser::symbol_kind_type::S_WHERE:
             return 30;
@@ -72,7 +72,6 @@ static constexpr Completion::ScoreValueType GetKeywordPrevalence(parser::Parser:
         case parser::Parser::symbol_kind_type::S_LIMIT:
         case parser::Parser::symbol_kind_type::S_OFFSET:
         case parser::Parser::symbol_kind_type::S_OR:
-        case parser::Parser::symbol_kind_type::S_ORDER:
         case parser::Parser::symbol_kind_type::S_SET:
         case parser::Parser::symbol_kind_type::S_THEN:
         case parser::Parser::symbol_kind_type::S_WHEN:
@@ -89,7 +88,7 @@ static constexpr Completion::ScoreValueType GetKeywordPrevalence(parser::Parser:
 
 }  // namespace
 
-void Completion::FindCandidatesInGrammar() {
+void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
     auto& location = cursor.scanner_location;
     if (!location.has_value()) {
         return;
@@ -103,10 +102,7 @@ void Completion::FindCandidatesInGrammar() {
         fuzzy_ci_string_view ci_keyword_text{keyword_text.data(), keyword_text.size()};
         using Relative = ScannedScript::LocationInfo::RelativePosition;
         auto score = KEYWORD_EXPECTED_SCORE;
-        score += GetKeywordPrevalence(expected.symbol);
-        if (!expected.throughDefault) {
-            score += KEYWORD_EXPECTED_NON_DEFAULT_ACTION;
-        }
+        score += GetKeywordPrevalence(expected);
         switch (location->relative_pos) {
             case Relative::NEW_SYMBOL:
                 return score;
@@ -126,7 +122,10 @@ void Completion::FindCandidatesInGrammar() {
 
     // Add all expected symbols to the result heap
     for (auto& expected : expected_symbols) {
-        auto name = parser::Keyword::GetKeywordName(expected.symbol);
+        if (expected == parser::Parser::symbol_kind_type::S_IDENT) {
+            expects_identifier = true;
+        }
+        auto name = parser::Keyword::GetKeywordName(expected);
         if (!name.empty()) {
             Candidate candidate{
                 .name_text = name,
@@ -226,9 +225,12 @@ Completion::Completion(const ScriptCursor& cursor, size_t k)
 
 std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(const ScriptCursor& cursor, size_t k) {
     auto completion = std::make_unique<Completion>(cursor, k);
-    completion->FindCandidatesInGrammar();
-    completion->FindCandidatesInIndexes();
-    completion->FindCandidatesInAST();
+    bool expects_identifier = false;
+    completion->FindCandidatesInGrammar(expects_identifier);
+    if (expects_identifier) {
+        completion->FindCandidatesInIndexes();
+        completion->FindCandidatesInAST();
+    }
     completion->FlushCandidatesAndFinish();
     return {std::move(completion), proto::StatusCode::OK};
 }

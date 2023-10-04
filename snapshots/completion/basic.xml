@@ -5,9 +5,9 @@
             <search text="" index="0" />
         </cursor>
         <completions limit="3">
-            <entry value="select" score="60" count="0" tags="KEYWORD" />
-            <entry value="with" score="40" count="0" tags="KEYWORD" />
-            <entry value="set" score="40" count="0" tags="KEYWORD" />
+            <entry value="select" score="30" count="0" tags="KEYWORD" />
+            <entry value="with" score="10" count="0" tags="KEYWORD" />
+            <entry value="set" score="10" count="0" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="simple_table">
@@ -22,8 +22,8 @@
         </cursor>
         <completions limit="3">
             <entry value="foo" score="100" count="1" tags="TABLE_NAME" />
-            <entry value="for" score="50" count="0" tags="KEYWORD" />
-            <entry value="limit" score="40" count="0" tags="KEYWORD" />
+            <entry value="group" score="30" count="0" tags="KEYWORD" />
+            <entry value="order" score="30" count="0" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
 </completion-snapshots>

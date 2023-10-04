@@ -7,6 +7,7 @@
 %define api.token.prefix {FQL_}
 %define api.value.type variant
 %define parse.error verbose
+%define parse.lac full
 
 %locations
 %define api.location.type {proto::Location}
