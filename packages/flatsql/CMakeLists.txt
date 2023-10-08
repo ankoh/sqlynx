@@ -289,6 +289,7 @@ if(NOT WASM)
     ${CMAKE_SOURCE_DIR}/test/rope_test.cc
     ${CMAKE_SOURCE_DIR}/test/scanner_test.cc
     ${CMAKE_SOURCE_DIR}/test/schema_graph_test.cc
+    ${CMAKE_SOURCE_DIR}/test/schema_grid_test.cc
     ${CMAKE_SOURCE_DIR}/test/script_test.cc
     ${CMAKE_SOURCE_DIR}/test/suffix_trie_test.cc
     ${CMAKE_SOURCE_DIR}/test/topk_test.cc
