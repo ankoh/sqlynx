@@ -252,6 +252,7 @@ set(LIB_SRC
   ${CMAKE_SOURCE_DIR}/src/utils/string_conversion.cc
   ${CMAKE_SOURCE_DIR}/src/utils/suffix_trie.cc
   ${CMAKE_SOURCE_DIR}/src/vis/schema_graph.cc
+  ${CMAKE_SOURCE_DIR}/src/vis/schema_grid.cc
 )
 
 if(WASM)
