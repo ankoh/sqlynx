@@ -36,8 +36,21 @@ struct IndexedBinaryHeap {
    public:
     /// Constructor
     IndexedBinaryHeap() = default;
+    /// Constructor
+    IndexedBinaryHeap(std::vector<ValueType> input) : entries(std::move(input)) {
+        entry_positions.reserve(entries.size());
+        for (ValueType& entry : entries) {
+            auto key = entry.GetKey();
+            entry_positions.insert({key, entry_positions.size()});
+        }
+    }
     /// Heap is empty?
     bool IsEmpty() const { return entries.empty(); }
+    /// Clear the heap
+    void Clear() {
+        entries.clear();
+        entry_positions.clear();
+    }
     /// Push an element downwards
     void PushDown(size_t i = 0) {
         assert(i < entries.size());
