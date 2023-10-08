@@ -1,5 +1,7 @@
 #include "flatsql/vis/schema_grid.h"
 
+#include "flatsql/script.h"
+
 namespace flatsql {
 
 namespace {
@@ -9,6 +11,27 @@ constexpr size_t NULL_TABLE_ID = std::numeric_limits<uint32_t>::max();
 uint32_t GetScore(double distance, uint8_t neighbor_peers) { return distance; }
 
 }  // namespace
+
+SchemaGrid::SchemaGrid() {}
+
+void SchemaGrid::Clear() {
+    script = nullptr;
+    adjacency.adjacency_nodes.clear();
+    adjacency.adjacency_offsets.clear();
+    edge_nodes.clear();
+    edges.clear();
+    nodes.clear();
+    cells_by_position.clear();
+    cells_by_table.clear();
+    free_cells.clear();
+    free_cells.clear();
+    unplaced_nodes.Clear();
+}
+
+void SchemaGrid::Configure(const SchemaGrid::Config& c) {
+    Clear();
+    config = c;
+}
 
 void SchemaGrid::PrepareLayout() {
     // Internal and external tables
@@ -107,10 +130,22 @@ void SchemaGrid::PrepareLayout() {
         adjacency.adjacency_offsets.push_back(adjacency.adjacency_nodes.size());
     }
     adjacency_pairs = {};
+
+    // Collect unplaced nodes
+    std::vector<Node::Ref> node_refs;
+    node_refs.reserve(nodes.size());
+    for (auto& node : nodes) {
+        node_refs.emplace_back(node);
+    }
+    unplaced_nodes = {std::move(node_refs)};
+
+    // Add free cell
+    free_cells.emplace_back(Position{0, 0}, 0);
 }
 
 void SchemaGrid::ComputeLayout() {
     // Reserve hashmap for peer positions
+    Position center{0, 0};
     std::unordered_set<Position, Position::Hasher> peer_positions;
     peer_positions.reserve(30);
 
@@ -166,6 +201,7 @@ void SchemaGrid::ComputeLayout() {
 
         // Store the table in the cell
         cells_by_table.insert({unplaced->table_id, best_cell});
+        unplaced.node->placed_cell = best_cell;
 
         // For all neighbors, check if they are already present in all_cells
         for (size_t peer : peers) {
@@ -176,6 +212,7 @@ void SchemaGrid::ComputeLayout() {
             }
             // For all peers, check if they are pending and increase their placed peer count
             if (auto value = unplaced_nodes.Find(nodes[peer].table_id)) {
+                assert(value != nullptr);
                 value->node->placed_peers += 1;
                 unplaced_nodes.PullUp(value);
             }
@@ -184,7 +221,7 @@ void SchemaGrid::ComputeLayout() {
         // Helper to add free cell
         auto add_free_cell = [&](Position pos) {
             if (auto iter = cells_by_position.find(pos); iter != cells_by_position.end()) {
-                free_cells.emplace_back(pos, pos.distance_to(grid_center));
+                free_cells.emplace_back(pos, pos.distance_to(center));
             }
         };
         add_free_cell(best_cell.position.east());
@@ -198,6 +235,12 @@ void SchemaGrid::ComputeLayout() {
     // XXX
     // Get all unplaced nodes without peers
     // auto remaining_unplaced = unplaced_nodes.Flush();
+}
+
+void SchemaGrid::LoadScript(std::shared_ptr<AnalyzedScript> s) {
+    script = s;
+    PrepareLayout();
+    ComputeLayout();
 }
 
 }  // namespace flatsql

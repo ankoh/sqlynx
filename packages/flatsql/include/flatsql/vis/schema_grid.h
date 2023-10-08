@@ -15,6 +15,7 @@
 namespace flatsql {
 
 class SchemaGrid {
+   public:
     /// The coordinates
     struct Position {
         /// The grid column
@@ -53,6 +54,29 @@ class SchemaGrid {
             }
         };
     };
+    /// A config
+    struct Config {
+        /// The table height
+        double table_height = 0;
+        /// The table width
+        double table_width = 0;
+        /// The grid cell width
+        double grid_cell_width = 0;
+        /// The grid cell width
+        double grid_cell_height = 0;
+    };
+    /// A node
+    struct Node;
+    /// A grid cell
+    struct Cell {
+        /// The position
+        Position position;
+        /// The distance to the center
+        double distance_to_center;
+        /// Constructor
+        Cell(Position pos = Position{0, 0}, double dist = 0.0, Node* node = nullptr)
+            : position(pos), distance_to_center(dist) {}
+    };
     /// A node that is placed on the grid
     struct Node {
         /// The node id
@@ -63,6 +87,8 @@ class SchemaGrid {
         uint32_t total_peers;
         /// The number of peers that are already placed
         uint32_t placed_peers;
+        /// The placed cell
+        std::optional<Cell> placed_cell;
         /// Constructor
         Node(size_t node_id, QualifiedID table_id, uint32_t total_peers)
             : node_id(node_id), table_id(table_id), total_peers(total_peers) {}
@@ -70,6 +96,8 @@ class SchemaGrid {
         /// A ptr to a node
         struct Ref {
             Node* node;
+            /// Constructor
+            Ref(Node& n) : node(&n) {}
             /// Get the heap key
             QualifiedID GetKey() const { return node->table_id; }
 
@@ -119,30 +147,16 @@ class SchemaGrid {
         std::optional<uint32_t> node_id;
         /// Constructor
         EdgeNode(QualifiedID col_ref = {}, QualifiedID ast_node_id = {}, QualifiedID table_id = {},
-                 std::optional<uint32_t> node_id = 0)
+                 std::optional<uint32_t> node_id = std::nullopt)
             : column_reference_id(col_ref), ast_node_id(ast_node_id), table_id(table_id), node_id(node_id) {}
-    };
-    /// A grid cell
-    struct Cell {
-        /// The position
-        Position position;
-        /// The distance to the center
-        double distance_to_center;
-        /// Constructor
-        Cell(Position pos = Position{0, 0}, double dist = 0.0) : position(pos), distance_to_center(dist) {}
     };
 
     /// The analyzed script (if provided)
     std::shared_ptr<AnalyzedScript> script = nullptr;
-
-    /// The grid cell height
-    size_t grid_cell_height;
-    /// The grid cell width
-    size_t grid_cell_width;
-    /// The costs for a step in the grid
-    size_t grid_step_costs;
-    /// The grid center
-    Position grid_center;
+    /// The configuration
+    Config config;
+    /// The adjacency map
+    AdjacencyMap adjacency;
 
     /// The edge nodes
     std::vector<EdgeNode> edge_nodes;
@@ -150,8 +164,6 @@ class SchemaGrid {
     std::vector<Edge> edges;
     /// The nodes
     std::vector<Node> nodes;
-    /// The adjacency map
-    AdjacencyMap adjacency;
 
     /// The grid cells by position
     std::unordered_map<Position, Cell, Position::Hasher> cells_by_position;
@@ -162,13 +174,32 @@ class SchemaGrid {
     /// The unplaced nodes, sorted by [placed_peers, total_peers]
     IndexedBinaryHeap<Node::Ref, QualifiedID, QualifiedID::Hasher, BinaryHeapType::MaxHeap> unplaced_nodes;
 
+    /// Reset the grid
+    void Clear();
     /// Prepare layouting and create unplaced nodes
     void PrepareLayout();
     /// Compute the node layout
     void ComputeLayout();
 
+   public:
+    /// Constructor
+    SchemaGrid();
+
+    /// Get the current positions
+    auto& GetNodes() { return nodes; }
+    /// Get the edge nodes
+    auto& GetEdgeNodes() { return edge_nodes; }
+    /// Get the edges
+    auto& GetEdges() { return edges; }
+
+    /// Configure the schemagraph settings
+    void Configure(const Config& config);
     /// Load a script
     void LoadScript(std::shared_ptr<AnalyzedScript> s);
+    /// Describe the schema graph
+    std::unique_ptr<proto::SchemaGraphDebugInfoT> Describe() const;
+    /// Pack the schema graph
+    flatbuffers::Offset<proto::SchemaGraphLayout> Pack(flatbuffers::FlatBufferBuilder& builder);
 };
 
 }  // namespace flatsql
