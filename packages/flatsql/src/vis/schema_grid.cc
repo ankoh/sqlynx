@@ -213,7 +213,7 @@ void SchemaGrid::ComputeLayout() {
         for (size_t peer : peers) {
             // Lookup their positions via cells_by_position
             auto peer_cell_iter = cells_by_table.find(nodes[peer].table_id);
-            if (peer_cell_iter != cells_by_table.end()) {
+            if (peer_cell_iter == cells_by_table.end()) {
                 continue;
             }
             // For all peers, check if they are pending and increase their placed peer count

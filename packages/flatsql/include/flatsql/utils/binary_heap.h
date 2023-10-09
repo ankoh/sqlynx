@@ -27,7 +27,7 @@ struct IndexedBinaryHeap {
         assert(i < entries.size());
         assert(j < entries.size());
         KeyType key_i = entries[i].GetKey();
-        KeyType key_j = entries[i].GetKey();
+        KeyType key_j = entries[j].GetKey();
         std::swap(entries[i], entries[j]);
         entry_positions.insert({key_i, j});
         entry_positions.insert({key_j, i});
@@ -53,7 +53,7 @@ struct IndexedBinaryHeap {
         entry_positions.clear();
     }
     /// Helper to compare two values with respect to the heap type
-    bool OrderedBefore(ValueType& l, ValueType& r) {
+    constexpr bool OrderedBefore(ValueType& l, ValueType& r) {
         if constexpr (heap_type == BinaryHeapType::MinHeap) {
             return l < r;
         } else {
@@ -101,13 +101,13 @@ struct IndexedBinaryHeap {
         if (entries.empty()) {
             return std::nullopt;
         } else if (entries.size() == 1) {
-            auto value = entries.back();
+            ValueType value = entries.back();
             entries.pop_back();
             entry_positions.erase(value.GetKey());
             return {value};
         } else {
             Swap(0, entries.size() - 1);
-            auto value = entries.back();
+            ValueType value = entries.back();
             entries.pop_back();
             PushDown();
             entry_positions.erase(value.GetKey());
