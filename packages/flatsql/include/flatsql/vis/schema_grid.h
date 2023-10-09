@@ -91,7 +91,7 @@ class SchemaGrid {
         std::optional<Cell> placed_cell;
         /// Constructor
         Node(size_t node_id, QualifiedID table_id, uint32_t total_peers)
-            : node_id(node_id), table_id(table_id), total_peers(total_peers) {}
+            : node_id(node_id), table_id(table_id), total_peers(total_peers), placed_peers(0) {}
 
         /// A ptr to a node
         struct Ref {
@@ -170,7 +170,7 @@ class SchemaGrid {
     /// The grid cells by table
     std::unordered_map<QualifiedID, Cell, QualifiedID::Hasher> cells_by_table;
     /// The free cells
-    std::vector<Cell> free_cells;
+    std::list<Cell> free_cells;
     /// The unplaced nodes, sorted by [placed_peers, total_peers]
     IndexedBinaryHeap<Node::Ref, QualifiedID, QualifiedID::Hasher, BinaryHeapType::MaxHeap> unplaced_nodes;
 
