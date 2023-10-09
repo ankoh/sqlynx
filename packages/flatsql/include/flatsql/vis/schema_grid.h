@@ -23,22 +23,22 @@ class SchemaGrid {
         /// The grid row
         int32_t row;
         /// Constructor
-        Position(int32_t x, int32_t y) : column(x), row(y) {}
+        constexpr Position(int32_t x = 0, int32_t y = 0) : column(x), row(y) {}
 
         /// Get neighbor north-west
-        Position north_west() const { return {column + 1, row - 1}; }
+        constexpr Position north_west() const { return {column + 1, row - 1}; }
         /// Get neighbor north-east
-        Position north_east() const { return {column - 1, row - 1}; }
+        constexpr Position north_east() const { return {column - 1, row - 1}; }
         /// Get neighbor south-east
-        Position south_east() const { return {column - 1, row + 1}; }
+        constexpr Position south_east() const { return {column - 1, row + 1}; }
         /// Get neighbor south-west
-        Position south_west() const { return {column + 1, row + 1}; }
+        constexpr Position south_west() const { return {column + 1, row + 1}; }
         /// Get neighbor west
-        Position west() const { return {column + 2, row}; }
+        constexpr Position west() const { return {column + 2, row}; }
         /// Get neighbor east
-        Position east() const { return {column - 2, row}; }
+        constexpr Position east() const { return {column - 2, row}; }
         // Get distance to a point
-        double distance_to(Position pos) {
+        constexpr double distance_to(Position pos) {
             return std::sqrt(std::pow(static_cast<double>(column) - static_cast<double>(pos.column), 2) +
                              std::pow(static_cast<double>(row) - static_cast<double>(pos.row), 2));
         }
@@ -76,6 +76,15 @@ class SchemaGrid {
         /// Constructor
         Cell(Position pos = Position{0, 0}, double dist = 0.0, Node* node = nullptr)
             : position(pos), distance_to_center(dist) {}
+    };
+    /// An occupied cell
+    struct OccupiedCell : public Cell {
+        /// The node id
+        size_t node_id;
+        /// The score
+        double score;
+        /// Constructor
+        OccupiedCell(Cell cell, size_t node_id, double score) : Cell(cell), node_id(node_id), score(score) {}
     };
     /// A node that is placed on the grid
     struct Node {
@@ -168,7 +177,7 @@ class SchemaGrid {
     /// The grid cells by position
     std::unordered_map<Position, Cell, Position::Hasher> cells_by_position;
     /// The grid cells by table
-    std::unordered_map<QualifiedID, Cell, QualifiedID::Hasher> cells_by_table;
+    std::unordered_map<QualifiedID, OccupiedCell, QualifiedID::Hasher> cells_by_table;
     /// The free cells
     std::list<Cell> free_cells;
     /// The unplaced nodes, sorted by [placed_peers, total_peers]
