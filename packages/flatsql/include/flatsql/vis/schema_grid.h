@@ -27,7 +27,7 @@ class SchemaGrid {
         /// The grid cell width
         double grid_cell_height = 0;
     };
-    /// The coordinates
+    /// The position
     struct Position {
         /// The grid column
         int32_t column;
@@ -54,7 +54,7 @@ class SchemaGrid {
                              std::pow(static_cast<double>(row) - static_cast<double>(pos.row), 2));
         }
         /// Equality comparison
-        bool operator==(const Position& other) const { return column == other.column && row == other.row; }
+        constexpr bool operator==(const Position& other) const { return column == other.column && row == other.row; }
         /// A hasher
         struct Hasher {
             size_t operator()(const Position& pos) const {
@@ -78,10 +78,13 @@ class SchemaGrid {
     struct OccupiedCell : public Cell {
         /// The node id
         size_t node_id;
+        /// The total peer count
+        size_t total_peers;
         /// The score
         double score;
         /// Constructor
-        OccupiedCell(Cell cell, size_t node_id, double score) : Cell(cell), node_id(node_id), score(score) {}
+        OccupiedCell(Cell cell, size_t node_id, size_t peer_count, double score)
+            : Cell(cell), node_id(node_id), total_peers(peer_count), score(score) {}
     };
     /// A node that is placed on the grid
     struct Node {
@@ -163,7 +166,6 @@ class SchemaGrid {
     Config config;
     /// The adjacency map
     AdjacencyMap adjacency;
-
     /// The edge nodes
     std::vector<EdgeNode> edge_nodes;
     /// The edges
