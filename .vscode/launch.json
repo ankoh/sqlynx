@@ -63,6 +63,14 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Grid Tests",
+            "program": "${workspaceFolder}/packages/flatsql/build/native/o0/tester",
+            "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*SchemaGridTest*"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Graph Tests",
             "program": "${workspaceFolder}/packages/flatsql/build/native/o0/tester",
             "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*SchemaGraphTest*"],

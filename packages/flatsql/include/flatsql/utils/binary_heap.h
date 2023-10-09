@@ -14,7 +14,7 @@ concept IsComparable = requires(const ValueType& l, const ValueType& r) {
 
 enum class BinaryHeapType { MinHeap, MaxHeap };
 
-template <typename ValueType, typename KeyType, typename KeyHasher, BinaryHeapType Type>
+template <typename ValueType, typename KeyType, typename KeyHasher, BinaryHeapType heap_type>
     requires HasGetKeyFunction<ValueType, KeyType> && IsComparable<ValueType>
 struct IndexedBinaryHeap {
     /// The entries
@@ -38,6 +38,7 @@ struct IndexedBinaryHeap {
     IndexedBinaryHeap() = default;
     /// Constructor
     IndexedBinaryHeap(std::vector<ValueType> input) : entries(std::move(input)) {
+        std::sort(entries.begin(), entries.end(), [&](auto& l, auto& r) { return OrderedBefore(l, r); });
         entry_positions.reserve(entries.size());
         for (ValueType& entry : entries) {
             auto key = entry.GetKey();
@@ -51,6 +52,14 @@ struct IndexedBinaryHeap {
         entries.clear();
         entry_positions.clear();
     }
+    /// Helper to compare two values with respect to the heap type
+    bool OrderedBefore(ValueType& l, ValueType& r) {
+        if constexpr (heap_type == BinaryHeapType::MinHeap) {
+            return l < r;
+        } else {
+            return r < l;
+        }
+    }
     /// Push an element downwards
     void PushDown(size_t i = 0) {
         assert(i < entries.size());
@@ -58,10 +67,10 @@ struct IndexedBinaryHeap {
             size_t li = 2 * i + 1;
             size_t ri = 2 * i + 2;
             size_t best = i;
-            if (li < entries.size() && entries[li] < entries[best]) {
+            if (li < entries.size() && OrderedBefore(entries[li], entries[best])) {
                 best = li;
             }
-            if (ri < entries.size() && entries[ri] < entries[best]) {
+            if (ri < entries.size() && OrderedBefore(entries[ri], entries[best])) {
                 best = ri;
             }
             if (best == i) {
@@ -78,7 +87,7 @@ struct IndexedBinaryHeap {
         assert(i < entries.size());
         while (i != 0) {
             size_t parent = i / 2;
-            if (entries[parent] < entries[i]) {
+            if (OrderedBefore(entries[parent], entries[i])) {
                 return;
             }
             Swap(i, parent);
@@ -94,12 +103,14 @@ struct IndexedBinaryHeap {
         } else if (entries.size() == 1) {
             auto value = entries.back();
             entries.pop_back();
+            entry_positions.erase(value.GetKey());
             return {value};
         } else {
             Swap(0, entries.size() - 1);
             auto value = entries.back();
             entries.pop_back();
             PushDown();
+            entry_positions.erase(value.GetKey());
             return {value};
         }
     }

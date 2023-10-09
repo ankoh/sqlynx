@@ -140,7 +140,10 @@ void SchemaGrid::PrepareLayout() {
     unplaced_nodes = {std::move(node_refs)};
 
     // Add free cell
-    free_cells.emplace_back(Position{0, 0}, 0);
+    Position center_cell_pos{0, 0};
+    Cell center_cell{center_cell_pos, 0};
+    free_cells.push_back(center_cell);
+    cells_by_position.insert({center_cell_pos, center_cell});
 }
 
 void SchemaGrid::ComputeLayout() {
@@ -172,13 +175,13 @@ void SchemaGrid::ComputeLayout() {
 
         // Track the best cell
         uint32_t best_cell_score = 0;
-        Cell best_cell;
+        std::list<Cell>::iterator best_cell = free_cells.end();
 
         // Check all free cells
         assert(!free_cells.empty());
-        for (auto free_cell : free_cells) {
+        for (auto iter = free_cells.begin(); iter != free_cells.end(); ++iter) {
             // Check if free_pos's neighbor positions are in the hash set
-            auto free_pos = free_cell.position;
+            auto free_pos = iter->position;
 
             // Count neighbor peers
             uint8_t neighbor_peers = 0;
@@ -190,18 +193,21 @@ void SchemaGrid::ComputeLayout() {
             neighbor_peers += peer_positions.contains(free_pos.south_west());
 
             // Compute a score of the cell, respecting the distance to the cell and the matching peer count
-            auto cell_score = GetScore(free_cell.distance_to_center, neighbor_peers);
+            auto cell_score = GetScore(iter->distance_to_center, neighbor_peers);
 
             // Check if the cell outperforms the best currently found cell
-            if (cell_score > best_cell_score) {
+            if (cell_score >= best_cell_score) {
                 best_cell_score = cell_score;
-                best_cell = free_cell;
+                best_cell = iter;
             }
         }
 
         // Store the table in the cell
-        cells_by_table.insert({unplaced->table_id, best_cell});
-        unplaced.node->placed_cell = best_cell;
+        assert(best_cell != free_cells.end());
+        auto chosen_cell = *best_cell;
+        free_cells.erase(best_cell);
+        cells_by_table.insert({unplaced->table_id, chosen_cell});
+        unplaced.node->placed_cell = chosen_cell;
 
         // For all neighbors, check if they are already present in all_cells
         for (size_t peer : peers) {
@@ -220,16 +226,17 @@ void SchemaGrid::ComputeLayout() {
 
         // Helper to add free cell
         auto add_free_cell = [&](Position pos) {
-            if (auto iter = cells_by_position.find(pos); iter != cells_by_position.end()) {
+            if (auto iter = cells_by_position.find(pos); iter == cells_by_position.end()) {
                 free_cells.emplace_back(pos, pos.distance_to(center));
+                cells_by_position.insert({pos, Cell{pos, pos.distance_to(Position{0, 0})}});
             }
         };
-        add_free_cell(best_cell.position.east());
-        add_free_cell(best_cell.position.west());
-        add_free_cell(best_cell.position.north_east());
-        add_free_cell(best_cell.position.north_west());
-        add_free_cell(best_cell.position.south_east());
-        add_free_cell(best_cell.position.south_west());
+        add_free_cell(chosen_cell.position.east());
+        add_free_cell(chosen_cell.position.west());
+        add_free_cell(chosen_cell.position.north_east());
+        add_free_cell(chosen_cell.position.north_west());
+        add_free_cell(chosen_cell.position.south_east());
+        add_free_cell(chosen_cell.position.south_west());
     }
 
     // XXX
