@@ -211,7 +211,7 @@ void SchemaGrid::ComputeLayout() {
         // Store the table in the cell
         assert(best_cell_score.has_value());
         assert(best_cell != free_cells.end());
-        OccupiedCell chosen_cell{*best_cell, unplaced->node_id, *best_cell_score};
+        OccupiedCell chosen_cell{*best_cell, unplaced->node_id, unplaced->total_peers, *best_cell_score};
         free_cells.erase(best_cell);
         cells_by_table.insert({unplaced->table_id, chosen_cell});
         unplaced.node->placed_cell = chosen_cell;
