@@ -112,7 +112,7 @@ TEST(SchemaGridTest, TPCHQ2) {
         if (i > 0) {
             ss << ", ";
         }
-        ss << "(" << cell.position.row << "," << cell.position.column << ")";
+        ss << "(" << cell.position.row << "," << cell.position.column << "," << cell.distance_to_center << ")";
     }
     ss << "]";
     ss << std::endl;
