@@ -83,8 +83,8 @@ class SchemaGrid {
         /// The score
         double score;
         /// Constructor
-        OccupiedCell(Cell cell, size_t node_id, size_t peer_count, double score)
-            : Cell(cell), node_id(node_id), total_peers(peer_count), score(score) {}
+        OccupiedCell(Cell cell, size_t node_id, size_t total_peers, double score)
+            : Cell(cell), node_id(node_id), total_peers(total_peers), score(score) {}
     };
     /// A node that is placed on the grid
     struct Node {
@@ -204,8 +204,6 @@ class SchemaGrid {
     void Configure(const Config& config);
     /// Load a script
     void LoadScript(std::shared_ptr<AnalyzedScript> s);
-    /// Describe the schema graph
-    std::unique_ptr<proto::SchemaGraphDebugInfoT> Describe() const;
     /// Pack the schema graph
     flatbuffers::Offset<proto::SchemaGraphLayout> Pack(flatbuffers::FlatBufferBuilder& builder);
 };

@@ -258,4 +258,57 @@ void SchemaGrid::LoadScript(std::shared_ptr<AnalyzedScript> s) {
     ComputeLayout();
 }
 
+flatbuffers::Offset<proto::SchemaGraphLayout> SchemaGrid::Pack(flatbuffers::FlatBufferBuilder& builder) {
+    proto::SchemaGraphLayoutT layout;
+    layout.table_nodes.resize(nodes.size());
+    layout.edges.resize(edges.size());
+    layout.edge_nodes.resize(edge_nodes.size());
+    for (uint32_t i = 0; i < nodes.size(); ++i) {
+        auto cell = nodes[i].placed_cell;
+        assert(!cell.has_value());
+        auto& placed_cell = *cell;
+        auto x = placed_cell.position.column * config.grid_cell_width;
+        auto y = placed_cell.position.row * config.grid_cell_height;
+        proto::SchemaGraphVertex pos{x - config.grid_cell_width / 2, y - config.grid_cell_height / 2};
+        proto::SchemaGraphTableNode proto_node{nodes[i].table_id.Pack(), pos, config.table_width, config.table_height};
+        layout.table_nodes[i] = proto_node;
+    }
+    size_t edge_node_reader = 0;
+    size_t edge_node_writer = 0;
+    for (uint32_t i = 0; i < edges.size(); ++i) {
+        auto& edge = edges[i];
+        uint32_t nodes_begin = edge_node_writer;
+        for (size_t j = 0; j < edge.node_count_left; ++j) {
+            auto& edge_node = edge_nodes[edge_node_reader++];
+            layout.edge_nodes[edge_node_writer] = proto::SchemaGraphEdgeNode{
+                edge_node.table_id.Pack(),
+                edge_node.column_reference_id.Pack(),
+                edge_node.ast_node_id.Pack(),
+                edge_node.node_id.value_or(-1),
+            };
+            edge_node_writer += edge_node.node_id.has_value();
+        }
+        uint16_t node_count_left = edge_node_writer - nodes_begin;
+        for (size_t j = 0; j < edge.node_count_right; ++j) {
+            auto& edge_node = edge_nodes[edge_node_reader++];
+            layout.edge_nodes[edge_node_writer] = proto::SchemaGraphEdgeNode{
+                edge_node.table_id.Pack(),
+                edge_node.column_reference_id.Pack(),
+                edge_node.ast_node_id.Pack(),
+                edge_node.node_id.value_or(-1),
+            };
+            edge_node_writer += edge_node.node_id.has_value();
+        }
+        uint16_t node_count_right = edge_node_writer - (nodes_begin + node_count_left);
+        proto::SchemaGraphEdge proto_edge{
+            edge.edge_id.Pack(), edge.ast_node_id.Pack(), nodes_begin,
+            node_count_left,     node_count_right,        edge.expression_operator,
+        };
+        layout.edges[i] = proto_edge;
+    }
+    layout.edge_nodes.erase(layout.edge_nodes.begin() + edge_node_writer, layout.edge_nodes.end());
+
+    return proto::SchemaGraphLayout::Pack(builder, &layout);
+}
+
 }  // namespace flatsql
