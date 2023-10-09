@@ -1,5 +1,7 @@
 #include "flatsql/vis/schema_grid.h"
 
+#include <limits>
+
 #include "flatsql/script.h"
 
 namespace flatsql {
@@ -7,8 +9,12 @@ namespace flatsql {
 namespace {
 
 constexpr size_t NULL_TABLE_ID = std::numeric_limits<uint32_t>::max();
+
 /// Get the score
-uint32_t GetScore(double distance, uint8_t neighbor_peers) { return distance; }
+constexpr double GetScore(double distance, uint8_t neighbor_count) {
+    SchemaGrid::Position base;
+    return -1.0 * distance + (static_cast<double>(neighbor_count) * (base.distance_to(base.north_east())));
+}
 
 }  // namespace
 
@@ -174,7 +180,7 @@ void SchemaGrid::ComputeLayout() {
         }
 
         // Track the best cell
-        uint32_t best_cell_score = 0;
+        std::optional<double> best_cell_score = std::nullopt;
         std::list<Cell>::iterator best_cell = free_cells.end();
 
         // Check all free cells
@@ -193,18 +199,19 @@ void SchemaGrid::ComputeLayout() {
             neighbor_peers += peer_positions.contains(free_pos.south_west());
 
             // Compute a score of the cell, respecting the distance to the cell and the matching peer count
-            auto cell_score = GetScore(iter->distance_to_center, neighbor_peers);
+            double cell_score = GetScore(iter->distance_to_center, neighbor_peers);
 
             // Check if the cell outperforms the best currently found cell
-            if (cell_score >= best_cell_score) {
+            if (!best_cell_score.has_value() || cell_score > *best_cell_score) {
                 best_cell_score = cell_score;
                 best_cell = iter;
             }
         }
 
         // Store the table in the cell
+        assert(best_cell_score.has_value());
         assert(best_cell != free_cells.end());
-        auto chosen_cell = *best_cell;
+        OccupiedCell chosen_cell{*best_cell, unplaced->node_id, *best_cell_score};
         free_cells.erase(best_cell);
         cells_by_table.insert({unplaced->table_id, chosen_cell});
         unplaced.node->placed_cell = chosen_cell;
@@ -227,8 +234,9 @@ void SchemaGrid::ComputeLayout() {
         // Helper to add free cell
         auto add_free_cell = [&](Position pos) {
             if (auto iter = cells_by_position.find(pos); iter == cells_by_position.end()) {
-                free_cells.emplace_back(pos, pos.distance_to(center));
-                cells_by_position.insert({pos, Cell{pos, pos.distance_to(Position{0, 0})}});
+                auto dist_to_center = pos.distance_to(center);
+                free_cells.emplace_back(pos, dist_to_center);
+                cells_by_position.insert({pos, Cell{pos, dist_to_center}});
             }
         };
         add_free_cell(chosen_cell.position.east());
