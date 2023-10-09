@@ -16,6 +16,17 @@ namespace flatsql {
 
 class SchemaGrid {
    public:
+    /// A config
+    struct Config {
+        /// The table height
+        double table_height = 0;
+        /// The table width
+        double table_width = 0;
+        /// The grid cell width
+        double grid_cell_width = 0;
+        /// The grid cell width
+        double grid_cell_height = 0;
+    };
     /// The coordinates
     struct Position {
         /// The grid column
@@ -54,19 +65,6 @@ class SchemaGrid {
             }
         };
     };
-    /// A config
-    struct Config {
-        /// The table height
-        double table_height = 0;
-        /// The table width
-        double table_width = 0;
-        /// The grid cell width
-        double grid_cell_width = 0;
-        /// The grid cell width
-        double grid_cell_height = 0;
-    };
-    /// A node
-    struct Node;
     /// A grid cell
     struct Cell {
         /// The position
@@ -74,8 +72,7 @@ class SchemaGrid {
         /// The distance to the center
         double distance_to_center;
         /// Constructor
-        Cell(Position pos = Position{0, 0}, double dist = 0.0, Node* node = nullptr)
-            : position(pos), distance_to_center(dist) {}
+        Cell(Position pos = Position{0, 0}, double dist = 0.0) : position(pos), distance_to_center(dist) {}
     };
     /// An occupied cell
     struct OccupiedCell : public Cell {
