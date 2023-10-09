@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cassert>
+#include <cmath>
 #include <queue>
 #include <span>
 #include <unordered_set>
