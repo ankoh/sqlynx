@@ -2,19 +2,20 @@ import * as React from 'react';
 import { NodeLayer } from './node_layer';
 import { EdgeHighlightingLayer, EdgeLayer } from './edge_layer';
 import { GraphNodeDescriptor } from './graph_view_model';
+import AutoSizer from 'react-virtualized-auto-sizer';
 import { useAppStateDispatch, useAppState } from '../state/app_state_provider';
 import { FOCUS_GRAPH_EDGE, FOCUS_GRAPH_NODE, RESIZE_SCHEMA_GRAPH } from '../state/app_state_reducer';
 import cn from 'classnames';
 
 import styles from './schema_graph.module.css';
 
-interface Props {
+interface GraphProps {
     className?: string;
     width: number;
     height: number;
 }
 
-export const SchemaGraph: React.FC<Props> = (props: Props) => {
+export const SchemaGraph: React.FC<GraphProps> = (props: GraphProps) => {
     const state = useAppState();
     const dispatch = useAppStateDispatch();
 
@@ -72,6 +73,23 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
                 edges={state.graphViewModel.edges}
                 focus={state.focus}
             />
+        </div>
+    );
+};
+
+interface GraphWithControlsProps {
+    className?: string;
+}
+
+export const SchemaGraphWithControls: React.FC<GraphWithControlsProps> = (props: GraphWithControlsProps) => {
+    return (
+        <div className={cn(styles.graph_controls_container, props.className)}>
+            <AutoSizer>
+                {(s: { height: number; width: number }) => (
+                    <SchemaGraph className={styles.schemagraph} width={s.width} height={s.height} />
+                )}
+            </AutoSizer>
+            <div className={styles.graph_controls_header}>Schema</div>
         </div>
     );
 };
