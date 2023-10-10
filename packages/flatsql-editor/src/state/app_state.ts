@@ -131,7 +131,7 @@ export function createDefaultState(): AppState {
             boardWidth: DEFAULT_BOARD_WIDTH,
             boardHeight: DEFAULT_BOARD_HEIGHT,
             cellWidth: 120,
-            cellHeight: 64,
+            cellHeight: 56,
             tableWidth: 180,
             tableHeight: 36,
         },
