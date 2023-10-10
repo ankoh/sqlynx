@@ -6,7 +6,7 @@
 #include "flatsql/script.h"
 #include "flatsql/text/rope.h"
 #include "flatsql/utils/suffix_trie.h"
-#include "flatsql/vis/schema_graph.h"
+#include "flatsql/vis/schema_grid.h"
 
 using namespace flatsql;
 
@@ -600,22 +600,15 @@ static void layout_schema(benchmark::State& state) {
     auto external_parsed = parser::Parser::Parse(external_scan.first);
     auto external_analyzed = Analyzer::Analyze(external_parsed.first, nullptr);
 
-    SchemaGraph graph;
+    SchemaGrid graph;
 
-    SchemaGraph::Config config;
-    config.iterations_clustering = 10;
-    config.iterations_refinement = 40;
-    config.force_scaling = 10.0;
-    config.cooldown_factor = 0.99;
-    config.repulsion_force = 3.0;
-    config.edge_attraction_force = 2.0;
-    config.gravity_force = 1.0;
+    SchemaGrid::Config config;
     config.board_width = 1600;
     config.board_height = 800;
+    config.cell_width = 120;
+    config.cell_height = 48;
     config.table_width = 180;
     config.table_height = 36;
-    config.table_margin = 32;
-    config.grid_size = 32;
 
     for (auto _ : state) {
         graph.Configure(config);
