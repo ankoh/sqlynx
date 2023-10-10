@@ -29,12 +29,21 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
 
     return (
         <div className={styles.page}>
-            <div className={styles.schemagraph_container}>
-                <AutoSizer>
-                    {(s: { height: number; width: number }) => (
-                        <SchemaGraph className={styles.schemagraph_flow} width={s.width} height={s.height} />
-                    )}
-                </AutoSizer>
+            <div className={styles.body_container}>
+                <div className={styles.schemagraph_container}>
+                    <div className={styles.schemagraph_card}>
+                        <AutoSizer>
+                            {(s: { height: number; width: number }) => (
+                                <SchemaGraph className={styles.schemagraph} width={s.width} height={s.height} />
+                            )}
+                        </AutoSizer>
+                    </div>
+                </div>
+                <div className={styles.editor_container}>
+                    <div className={styles.editor_card}>
+                        <ScriptEditor />
+                    </div>
+                </div>
             </div>
             <div className={styles.header_left_container}>
                 <img className={styles.header_logo} src={logo} />
@@ -66,11 +75,6 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                             <use xlinkHref={`${iconGitHub}#sym`} />
                         </svg>
                     </div>
-                </div>
-            </div>
-            <div className={styles.editor_container} style={{ height: '60%' }}>
-                <div className={styles.editor_card}>
-                    <ScriptEditor />
                 </div>
             </div>
         </div>

@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { NodeLayer } from './node_layer';
 import { EdgeHighlightingLayer, EdgeLayer } from './edge_layer';
-import { BackgroundLayer } from './background_layer';
 import { GraphNodeDescriptor } from './graph_view_model';
 import { useAppStateDispatch, useAppState } from '../state/app_state_provider';
 import { FOCUS_GRAPH_EDGE, FOCUS_GRAPH_NODE, RESIZE_SCHEMA_GRAPH } from '../state/app_state_reducer';
@@ -23,7 +22,7 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
     React.useEffect(() => {
         dispatch({
             type: RESIZE_SCHEMA_GRAPH,
-            value: [props.width, 0.4 * props.height],
+            value: [props.width, props.height],
         });
     }, [props.width, props.height]);
 
@@ -50,7 +49,6 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
 
     return (
         <div className={cn(styles.graph_container, props.className)}>
-            <BackgroundLayer className={styles.graph_background} />
             <EdgeLayer
                 className={styles.graph_edges}
                 boardWidth={props.width}

@@ -1,7 +1,7 @@
 :root {
     --action_item_hover_bg: rgba(208, 215, 222, 0.32);
     --action_item_hover_border: rgba(0, 0, 0, 0);
-    --background_color_primary: rgb(246, 248, 250);
+    --background_color_primary: rgb(253, 253, 253);
     --border_color_primary: rgb(208, 215, 222);
     --border_radius: 8px;
     --color_icon: hsl(212, 8%, 23%);
@@ -19,6 +19,7 @@
     --stats_bar_fg: hsl(210, 24%, 92%);
     --stats_bg: hsl(210deg, 28.57%, 97.25%);
     --stats_value_fg: rgb(140, 140, 140);
+    --graph_bg: hsl(210, 29%, 97%);
     --graph_node_bg: white;
     --graph_node_inactive_bg: hsl(210deg, 12.68%, 95.16%);
     --graph_edges_bg: hsl(210deg, 12.68%, 84.16%);
