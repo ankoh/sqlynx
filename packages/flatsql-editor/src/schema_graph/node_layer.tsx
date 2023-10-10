@@ -187,11 +187,13 @@ export function NodeLayer(props: Props) {
             {props.nodes.map(n => {
                 const focusedPorts = connectionPorts.get(n.tableId) ?? 0;
                 const isFocused = focusedPorts != 0 || (props.focus?.tableIds.has(n.tableId) ?? false);
+                const isInactive = n.peerCount == 0;
                 return (
                     <div
                         key={n.nodeId}
                         className={cn(styles.table_node, {
                             [styles.table_node_focused]: isFocused,
+                            [styles.table_node_inactive]: isInactive,
                         })}
                         style={{
                             position: 'absolute',
