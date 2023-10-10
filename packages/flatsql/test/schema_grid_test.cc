@@ -12,10 +12,12 @@ using namespace flatsql;
 namespace {
 
 SchemaGrid::Config DEFAULT_GRAPH_CONFIG{
-    .table_height = 96,
+    .board_height = 0,
+    .board_width = 0,
+    .cell_width = 104,
+    .cell_height = 200,
     .table_width = 100,
-    .grid_cell_height = 104,
-    .grid_cell_width = 200,
+    .table_height = 96,
 };
 
 const std::string_view TPCH_SCHEMA = R"SQL(

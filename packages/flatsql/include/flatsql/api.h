@@ -5,7 +5,7 @@
 
 #include "flatsql/script.h"
 #include "flatsql/version.h"
-#include "flatsql/vis/schema_graph.h"
+#include "flatsql/vis/schema_grid.h"
 
 namespace console {
 /// Log a text to the console
@@ -62,17 +62,12 @@ extern "C" FFIResult* flatsql_script_move_cursor(flatsql::Script* script, size_t
 extern "C" FFIResult* flatsql_script_complete_at_cursor(flatsql::Script* script, size_t limit);
 
 /// Create schema graph
-extern "C" flatsql::SchemaGraph* flatsql_schemagraph_new();
+extern "C" flatsql::SchemaGrid* flatsql_schemagraph_new();
 /// Delete a schema graph
-extern "C" void flatsql_schemagraph_delete(flatsql::SchemaGraph* graph);
+extern "C" void flatsql_schemagraph_delete(flatsql::SchemaGrid* graph);
 /// Configure a schema graph
-extern "C" void flatsql_schemagraph_configure(flatsql::SchemaGraph* graph, size_t iterations_clustering,
-                                              size_t iterations_refinement, double force_scaling,
-                                              double cooldown_factor, double repulsion_force,
-                                              double edge_attraction_force, double gravity_force, double initial_radius,
-                                              double board_width, double board_height, double table_width,
-                                              double table_height, double table_margin, double grid_size);
+extern "C" void flatsql_schemagraph_configure(flatsql::SchemaGrid* graph, double board_width, double board_height,
+                                              double cell_width, double cell_height, double table_width,
+                                              double table_height);
 /// Update a schema graph
-extern "C" FFIResult* flatsql_schemagraph_load_script(flatsql::SchemaGraph* graph, flatsql::Script* script);
-/// Describe a schema graph
-extern "C" FFIResult* flatsql_schemagraph_describe(flatsql::SchemaGraph* graph);
+extern "C" FFIResult* flatsql_schemagraph_load_script(flatsql::SchemaGrid* graph, flatsql::Script* script);

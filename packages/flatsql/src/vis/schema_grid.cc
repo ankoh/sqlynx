@@ -263,13 +263,16 @@ flatbuffers::Offset<proto::SchemaGraphLayout> SchemaGrid::Pack(flatbuffers::Flat
     layout.table_nodes.resize(nodes.size());
     layout.edges.resize(edges.size());
     layout.edge_nodes.resize(edge_nodes.size());
+
+    auto center_x = config.board_width / 2;
+    auto center_y = config.board_height / 2;
     for (uint32_t i = 0; i < nodes.size(); ++i) {
         auto cell = nodes[i].placed_cell;
         assert(!cell.has_value());
         auto& placed_cell = *cell;
-        auto x = placed_cell.position.column * config.grid_cell_width;
-        auto y = placed_cell.position.row * config.grid_cell_height;
-        proto::SchemaGraphVertex pos{x - config.grid_cell_width / 2, y - config.grid_cell_height / 2};
+        auto x = center_x + placed_cell.position.column * config.cell_width;
+        auto y = center_y + placed_cell.position.row * config.cell_height;
+        proto::SchemaGraphVertex pos{x - config.cell_width / 2, y - config.cell_height / 2};
         proto::SchemaGraphTableNode proto_node{nodes[i].table_id.Pack(), pos, config.table_width, config.table_height};
         layout.table_nodes[i] = proto_node;
     }

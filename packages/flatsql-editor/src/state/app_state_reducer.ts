@@ -300,11 +300,6 @@ function computeSchemaGraph(state: AppState, debug?: boolean): AppState {
     state.graph!.configure(state.graphConfig);
     state.graphLayout?.delete();
     state.graphLayout = state.graph!.loadScript(state.scripts[ScriptKey.MAIN_SCRIPT].script);
-    state.graphDebugMode = debug ?? state.graphDebugMode;
-    if (state.graphDebugMode) {
-        state.graphDebugInfo?.delete();
-        state.graphDebugInfo = state.graph?.describe() ?? null;
-    }
     state.graphViewModel = computeGraphViewModel(state);
     return state;
 }

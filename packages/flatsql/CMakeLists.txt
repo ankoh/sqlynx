@@ -69,7 +69,6 @@ if(WASM)
         -Wl,--export=flatsql_script_complete_at_cursor \
         -Wl,--export=flatsql_schemagraph_new \
         -Wl,--export=flatsql_schemagraph_delete \
-        -Wl,--export=flatsql_schemagraph_describe \
         -Wl,--export=flatsql_schemagraph_configure \
         -Wl,--export=flatsql_schemagraph_load_script \
         -flto \
@@ -295,13 +294,13 @@ if(NOT WASM)
     ${CMAKE_SOURCE_DIR}/test/topk_test.cc
   )
   add_executable(tester test/tester.cc ${TEST_SRC})
-  target_link_libraries(tester flatsql flatsql_testutils pugixml gtest gmock gflags Threads::Threads)
+  target_link_libraries(tester flatsql_testutils pugixml gtest gmock gflags Threads::Threads)
 
   add_executable(benchmark_pipeline benchmarks/benchmark_pipeline.cc)
-  target_link_libraries(benchmark_pipeline flatsql flatsql_testutils benchmark gtest gflags Threads::Threads)
+  target_link_libraries(benchmark_pipeline flatsql_testutils benchmark gtest gflags Threads::Threads)
 
   add_executable(benchmark_layout benchmarks/benchmark_layout.cc)
-  target_link_libraries(benchmark_layout flatsql flatsql_testutils benchmark gtest gflags Threads::Threads)
+  target_link_libraries(benchmark_layout flatsql_testutils benchmark gtest gflags Threads::Threads)
 
   add_executable(snapshotter tools/snapshotter.cc)
   target_link_libraries(snapshotter flatsql flatsql_testutils pugixml gtest gflags Threads::Threads)

@@ -30,10 +30,6 @@ export interface AppState {
     graphConfig: flatsql.FlatSQLSchemaGraphConfig;
     /// The graph layout
     graphLayout: flatsql.FlatBufferRef<flatsql.proto.SchemaGraphLayout> | null;
-    /// The graph debug mode
-    graphDebugMode: boolean;
-    /// The graph debug mode
-    graphDebugInfo: flatsql.FlatBufferRef<flatsql.proto.SchemaGraphDebugInfo> | null;
     /// The graph view model
     graphViewModel: GraphViewModel;
     /// The user focus
@@ -132,29 +128,18 @@ export function createDefaultState(): AppState {
         },
         graph: null,
         graphConfig: {
-            iterationsClustering: 10,
-            iterationsRefinement: 40,
-            forceScaling: 10.0,
-            cooldownFactor: 0.99,
-            repulsionForce: 3.0,
-            edgeAttractionForce: 2.0,
-            gravityForce: 1.0,
-            initialRadius: 400.0,
             boardWidth: DEFAULT_BOARD_WIDTH,
             boardHeight: DEFAULT_BOARD_HEIGHT,
+            cellWidth: 120,
+            cellHeight: 56,
             tableWidth: 180,
             tableHeight: 36,
-            tableMargin: 32,
-            gridSize: 16,
         },
         graphLayout: null,
-        graphDebugMode: false,
-        graphDebugInfo: null,
         graphViewModel: {
             nodes: [],
             nodesByTable: new Map(),
             edges: new Map(),
-            debugInfo: null,
         },
         focus: null,
     };

@@ -19,14 +19,18 @@ class SchemaGrid {
    public:
     /// A config
     struct Config {
+        /// The table width
+        double board_width = 0;
+        /// The table height
+        double board_height = 0;
+        /// The cell width
+        double cell_width = 0;
+        /// The cell width
+        double cell_height = 0;
         /// The table height
         double table_height = 0;
         /// The table width
         double table_width = 0;
-        /// The grid cell width
-        double grid_cell_width = 0;
-        /// The grid cell width
-        double grid_cell_height = 0;
     };
     /// The position
     struct Position {
