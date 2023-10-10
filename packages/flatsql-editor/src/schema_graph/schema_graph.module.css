@@ -1,11 +1,12 @@
 .graph_container {
-    position: relative;
+    position: absolute;
     width: 100%;
     height: 100%;
+    overflow: scroll;
 }
 
 .graph_nodes {
-    position: relative;
+    position: absolute;
     width: 100%;
     height: 100%;
 }
@@ -43,4 +44,18 @@
     width: 100%;
     height: 100%;
     pointer-events: none;
+}
+
+.graph_controls_container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.graph_controls_header {
+    position: absolute;
+    top: 12px;
+    left: 16px;
+    font-size: 1rem;
+    color: var(--graph_title_fg);
 }
