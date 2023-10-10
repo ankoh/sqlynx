@@ -23,7 +23,7 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
     React.useEffect(() => {
         dispatch({
             type: RESIZE_SCHEMA_GRAPH,
-            value: [props.width, 0.45 * props.height],
+            value: [props.width, 0.4 * props.height],
         });
     }, [props.width, props.height]);
 

@@ -68,7 +68,7 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                     </div>
                 </div>
             </div>
-            <div className={styles.editor_container} style={{ height: '55%' }}>
+            <div className={styles.editor_container} style={{ height: '60%' }}>
                 <div className={styles.editor_card}>
                     <ScriptEditor />
                 </div>
