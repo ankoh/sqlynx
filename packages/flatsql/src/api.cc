@@ -13,7 +13,7 @@
 #include "flatsql/script.h"
 #include "flatsql/text/rope.h"
 #include "flatsql/version.h"
-#include "flatsql/vis/schema_graph.h"
+#include "flatsql/vis/schema_grid.h"
 
 using namespace flatsql;
 using namespace flatsql::parser;
@@ -234,35 +234,24 @@ extern "C" FFIResult* flatsql_script_get_statistics(flatsql::Script* script) {
 }
 
 /// Create a schema graph
-extern "C" flatsql::SchemaGraph* flatsql_schemagraph_new() { return new flatsql::SchemaGraph(); }
+extern "C" flatsql::SchemaGrid* flatsql_schemagraph_new() { return new flatsql::SchemaGrid(); }
 /// Delete a schema graph
-extern "C" void flatsql_schemagraph_delete(flatsql::SchemaGraph* graph) { delete graph; }
+extern "C" void flatsql_schemagraph_delete(flatsql::SchemaGrid* graph) { delete graph; }
 /// Configure a schema graph
-extern "C" void flatsql_schemagraph_configure(flatsql::SchemaGraph* graph, size_t iterations_clustering,
-                                              size_t iterations_refinement, double force_scaling,
-                                              double cooldown_factor, double repulsion_force,
-                                              double edge_attraction_force, double gravity_force, double initial_radius,
-                                              double board_width, double board_height, double table_width,
-                                              double table_height, double table_margin, double grid_size) {
-    SchemaGraph::Config config;
-    config.iterations_clustering = iterations_clustering;
-    config.iterations_refinement = iterations_refinement;
-    config.force_scaling = force_scaling;
-    config.cooldown_factor = cooldown_factor;
-    config.repulsion_force = repulsion_force;
-    config.edge_attraction_force = edge_attraction_force;
-    config.gravity_force = gravity_force;
-    config.initial_radius = initial_radius;
+extern "C" void flatsql_schemagraph_configure(flatsql::SchemaGrid* graph, double board_width, double board_height,
+                                              double cell_width, double cell_height, double table_width,
+                                              double table_height) {
+    SchemaGrid::Config config;
     config.board_width = board_width;
     config.board_height = board_height;
+    config.cell_width = cell_width;
+    config.cell_height = cell_height;
     config.table_width = table_width;
     config.table_height = table_height;
-    config.table_margin = table_margin;
-    config.grid_size = grid_size;
     graph->Configure(config);
 }
 /// Update a schema graph
-extern "C" FFIResult* flatsql_schemagraph_load_script(flatsql::SchemaGraph* graph, flatsql::Script* script) {
+extern "C" FFIResult* flatsql_schemagraph_load_script(flatsql::SchemaGrid* graph, flatsql::Script* script) {
     auto analyzed = script->analyzed_script;
     if (!analyzed) {
         return packError(proto::StatusCode::GRAPH_INPUT_INVALID);
@@ -272,20 +261,6 @@ extern "C" FFIResult* flatsql_schemagraph_load_script(flatsql::SchemaGraph* grap
     // Pack a schema graph
     flatbuffers::FlatBufferBuilder fb;
     fb.Finish(graph->Pack(fb));
-
-    // Store the buffer
-    auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));
-    return packBuffer(std::move(detached));
-}
-
-/// Describe a schema graph
-extern "C" FFIResult* flatsql_schemagraph_describe(flatsql::SchemaGraph* graph) {
-    auto desc = graph->Describe();
-
-    // Pack a schema graph
-    flatbuffers::FlatBufferBuilder fb;
-    auto ofs = proto::SchemaGraphDebugInfo::Pack(fb, desc.get());
-    fb.Finish(ofs);
 
     // Store the buffer
     auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));

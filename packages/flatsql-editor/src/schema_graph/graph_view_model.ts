@@ -2,13 +2,11 @@ import * as flatsql from '@ankoh/flatsql';
 
 import { AppState, ScriptKey } from '../state/app_state';
 import { EdgePathBuilder, EdgeType, PORTS_FROM, PORTS_TO, buildEdgePath, selectEdgeType } from './graph_edges';
-import { DebugInfo, buildDebugInfo } from './debug_layer';
 
 export interface GraphViewModel {
     nodes: NodeViewModel[];
     nodesByTable: Map<flatsql.QualifiedID.Value, NodeViewModel>;
     edges: Map<GraphConnectionId.Value, EdgeViewModel>;
-    debugInfo: DebugInfo | null;
 }
 
 export interface NodeViewModel {
@@ -59,21 +57,11 @@ export namespace GraphConnectionId {
 }
 
 export function computeGraphViewModel(state: AppState): GraphViewModel {
-    let debugInfo: DebugInfo = {
-        nodeCount: 0,
-        fromX: new Float64Array(),
-        fromY: new Float64Array(),
-        toX: new Float64Array(),
-        toY: new Float64Array(),
-        distance: new Float64Array(),
-        repulsion: new Float64Array(),
-    };
     if (!state.graphLayout) {
         return {
             nodes: [],
             nodesByTable: new Map(),
             edges: new Map(),
-            debugInfo,
         };
     }
     const nodes = [];
@@ -97,7 +85,6 @@ export function computeGraphViewModel(state: AppState): GraphViewModel {
             nodes: [],
             nodesByTable: new Map(),
             edges: new Map(),
-            debugInfo,
         };
     }
     const tmpGraphTableNode = new flatsql.proto.SchemaGraphTableNode();
@@ -220,7 +207,8 @@ export function computeGraphViewModel(state: AppState): GraphViewModel {
                     toY,
                     leftNode.width,
                     leftNode.height,
-                    state.graphConfig.gridSize,
+                    state.graphConfig.cellWidth,
+                    state.graphConfig.cellHeight,
                     8,
                 );
                 edges.set(conn, {
@@ -240,10 +228,5 @@ export function computeGraphViewModel(state: AppState): GraphViewModel {
         }
     }
 
-    // Compute graph debug info
-    if (state.graphDebugInfo !== null) {
-        console.log(state);
-        debugInfo = buildDebugInfo(state, nodes);
-    }
-    return { nodes, nodesByTable, edges, debugInfo };
+    return { nodes, nodesByTable, edges };
 }
