@@ -8,7 +8,7 @@
 #include "flatsql/script.h"
 #include "flatsql/text/rope.h"
 #include "flatsql/utils/suffix_trie.h"
-#include "flatsql/vis/schema_graph.h"
+#include "flatsql/vis/schema_grid.h"
 
 using namespace flatsql;
 
@@ -713,10 +713,35 @@ static void complete_cursor(benchmark::State& state) {
     }
 }
 
+static void compute_layout(benchmark::State& state) {
+    rope::Rope input_external{1024, external_script};
+
+    // Analyze external script
+    auto external_scan = parser::Scanner::Scan(input_external, 0);
+    auto external_parsed = parser::Parser::Parse(external_scan.first);
+    auto external_analyzed = Analyzer::Analyze(external_parsed.first, nullptr);
+
+    SchemaGrid graph;
+
+    SchemaGrid::Config config;
+    config.board_width = 1600;
+    config.board_height = 800;
+    config.cell_width = 120;
+    config.cell_height = 48;
+    config.table_width = 180;
+    config.table_height = 36;
+
+    for (auto _ : state) {
+        graph.Configure(config);
+        graph.LoadScript(external_analyzed.first);
+    }
+}
+
 BENCHMARK(scan_query);
 BENCHMARK(parse_query);
 BENCHMARK(analyze_query);
 BENCHMARK(index_query);
 BENCHMARK(move_cursor);
 BENCHMARK(complete_cursor);
+BENCHMARK(compute_layout);
 BENCHMARK_MAIN();
