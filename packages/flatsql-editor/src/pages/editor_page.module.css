@@ -5,43 +5,6 @@
     background-color: var(--background_color_primary);
 }
 
-.schemagraph_container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    height: 100%;
-}
-
-.schemagraph_flow {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    height: 100%;
-}
-
-@media only screen and (max-width: 1000px) {
-    .editor_container {
-        position: absolute;
-        bottom: 0;
-        width: 96%;
-        left: 2%;
-    }
-}
-@media only screen and (min-width: 1000px) {
-    .editor_container {
-        position: absolute;
-        bottom: 0;
-        width: 960px;
-        left: calc(50% - 480px);
-    }
-}
-
 .header_left_container {
     position: absolute;
     top: 16px;
@@ -98,6 +61,67 @@
     font-size: 0.9rem;
     color: var(--color_version);
     margin-top: 2px;
+}
+
+@media only screen and (max-width: 1000px) {
+    .body_container {
+        position: absolute;
+        top: 80px;
+        bottom: 0;
+        right: 2%;
+        left: 2%;
+
+        display: grid;
+        grid-template-rows: auto 67%;
+        grid-template-columns: 100%;
+        row-gap: 32px;
+    }
+}
+@media only screen and (min-width: 1000px) {
+    .body_container {
+        position: absolute;
+        top: 80px;
+        bottom: 0;
+        width: 960px;
+        left: calc(50% - 480px);
+
+        display: grid;
+        grid-template-rows: auto 67%;
+        grid-template-columns: 100%;
+        row-gap: 32px;
+    }
+}
+
+.schemagraph_container {
+    grid-row: 1;
+    width: 100%;
+    height: 100%;
+}
+
+.schemagraph_card {
+    position: relative;
+    box-sizing: border-box;
+    border: 1px solid var(--border_color_primary);
+    border-radius: var(--border_radius);
+    background-color: var(--graph_bg);
+    width: 100%;
+    height: 100%;
+}
+
+.schemagraph {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+}
+
+.editor_container {
+    grid-row: 2;
+    position: relative;
 }
 
 .editor_card {
