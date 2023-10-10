@@ -39,7 +39,7 @@ class SchemaGrid {
         /// The grid row
         int32_t row;
         /// Constructor
-        constexpr Position(int32_t x = 0, int32_t y = 0) : column(x), row(y) {}
+        constexpr Position(int32_t column = 0, int32_t row = 0) : column(column), row(row) {}
 
         /// Get neighbor north-west
         constexpr Position north_west() const { return {column + 1, row - 1}; }

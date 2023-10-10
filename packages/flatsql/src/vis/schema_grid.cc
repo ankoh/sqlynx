@@ -147,11 +147,21 @@ void SchemaGrid::PrepareLayout() {
     }
     unplaced_nodes = {std::move(node_refs)};
 
-    // Add free cell
-    Position center_cell_pos{0, 0};
-    Cell center_cell{center_cell_pos, 0};
-    free_cells.push_back(center_cell);
-    cells_by_position.insert({center_cell_pos, center_cell});
+    // Add first free cell
+    if (nodes.size() == 1) {
+        // Center cell if there's only a single node
+        Position initial_cell_pos{0, 0};
+        Cell initial_cell{initial_cell_pos, 0};
+        free_cells.push_back(initial_cell);
+        cells_by_position.insert({initial_cell_pos, initial_cell});
+    } else {
+        // Move cell slightly to the left with more than one node (s.t. the next node will be placed to the right)
+        // This breaks the visual pattern that everything builds around a single table.
+        Position initial_cell_pos{-1, 0};
+        Cell initial_cell{initial_cell_pos, 0};
+        free_cells.push_back(initial_cell);
+        cells_by_position.insert({initial_cell_pos, initial_cell});
+    }
 }
 
 void SchemaGrid::ComputeLayout() {
