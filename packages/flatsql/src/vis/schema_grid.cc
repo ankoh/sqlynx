@@ -63,7 +63,7 @@ void SchemaGrid::PrepareLayout() {
         }
     }
     // Helper to create a node id
-    auto create_node_id = [](QualifiedID id, AnalyzedScript& script) {
+    auto resolve_node_id = [](QualifiedID id, AnalyzedScript& script) {
         return id.GetIndex() + (id.GetContext() == script.context_id ? 0 : script.tables.size());
     };
     // Add edge node ids
@@ -76,7 +76,7 @@ void SchemaGrid::PrepareLayout() {
         QualifiedID ast_node_id =
             col_ref.ast_node_id.has_value() ? QualifiedID{script->context_id, *col_ref.ast_node_id} : QualifiedID{};
         QualifiedID table_id = script->column_references[node.column_reference_id].table_id;
-        uint32_t node_id = table_id.IsNull() ? NULL_TABLE_ID : create_node_id(table_id, *script);
+        uint32_t node_id = table_id.IsNull() ? NULL_TABLE_ID : resolve_node_id(table_id, *script);
         edge_nodes[i] = EdgeNode{column_reference_id, ast_node_id, table_id, node_id};
     }
     // Add edges
@@ -101,14 +101,16 @@ void SchemaGrid::PrepareLayout() {
             size_t lcol = script->graph_edge_nodes[edge.nodes_begin + l].column_reference_id;
             QualifiedID ltid = script->column_references[lcol].table_id;
             if (ltid.IsNull()) continue;
-            auto ln = create_node_id(ltid, *script);
+            auto ln = resolve_node_id(ltid, *script);
             // Emit pair for each right node
             for (size_t r = 0; r < edge.node_count_right; ++r) {
                 size_t rcol = script->graph_edge_nodes[edge.nodes_begin + edge.node_count_left + r].column_reference_id;
                 QualifiedID rtid = script->column_references[rcol].table_id;
                 if (rtid.IsNull()) continue;
-                auto rn = create_node_id(rtid, *script);
+                auto rn = resolve_node_id(rtid, *script);
                 adjacency_pairs.emplace_back(ln, rn);
+                nodes[ln].total_peers += 1;
+                nodes[rn].total_peers += 1;
             }
         }
     }
