@@ -2,13 +2,17 @@
     position: relative;
     border-radius: var(--border_radius);
     border: 1px solid var(--border_color_primary);
-    background-color: white;
+    background-color: var(--graph_node_bg);
 
     display: grid;
     grid-template-rows: 100%;
     grid-template-columns: max-content auto max-content;
     align-items: center;
     justify-items: center;
+}
+
+.table_node_inactive {
+    background-color: var(--graph_node_inactive_bg);
 }
 
 .table_icon {

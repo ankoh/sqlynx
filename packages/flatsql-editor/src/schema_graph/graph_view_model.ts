@@ -19,6 +19,7 @@ export interface NodeViewModel {
     height: number;
     columns: TableColumn[];
     ports: number;
+    peerCount: number;
 }
 
 interface TableColumn {
@@ -133,6 +134,7 @@ export function computeGraphViewModel(state: AppState): GraphViewModel {
                 width: node!.width(),
                 height: node!.height(),
                 ports: 0,
+                peerCount: 0,
             };
             nodes.push(viewModel);
             nodesByTable.set(tableId, viewModel);
@@ -167,6 +169,8 @@ export function computeGraphViewModel(state: AppState): GraphViewModel {
                     continue;
                 }
                 const rightNode = nodesByTable.get(rightTableId)!;
+                leftNode.peerCount += 1;
+                rightNode.peerCount += 1;
 
                 // Connection ids are composed out of the node indices
                 const conn = GraphConnectionId.create(leftNode.nodeId, rightNode.nodeId);
