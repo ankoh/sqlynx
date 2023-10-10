@@ -163,7 +163,8 @@ export function buildEdgePath(
     toY: number,
     width: number,
     height: number,
-    gridSize: number,
+    gridCellWidth: number,
+    gridCellHeight: number,
     cornerRadius: number,
 ): string {
     if (toX - fromX == 0 && toY - fromY == 0) {
@@ -175,8 +176,8 @@ export function buildEdgePath(
     const diffY = Math.abs(toY - fromY);
     let midX = fromX + (toX - fromX) / 2;
     let midY = fromY + (toY - fromY) / 2;
-    midX = Math.round(midX / gridSize) * gridSize;
-    midY = Math.round(midY / gridSize) * gridSize;
+    midX = Math.round(midX / gridCellWidth) * gridCellWidth;
+    midY = Math.round(midY / gridCellHeight) * gridCellHeight;
 
     const midXMinusR = () => midX - Math.min(diffX / 2, r);
     const midXPlusR = () => midX + Math.min(diffX / 2, r);

@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { NodeLayer } from './node_layer';
 import { EdgeHighlightingLayer, EdgeLayer } from './edge_layer';
-import { DebugLayer } from './debug_layer';
 import { BackgroundLayer } from './background_layer';
 import { GraphNodeDescriptor } from './graph_view_model';
 import { useAppStateDispatch, useAppState } from '../state/app_state_provider';
@@ -75,14 +74,6 @@ export const SchemaGraph: React.FC<Props> = (props: Props) => {
                 edges={state.graphViewModel.edges}
                 focus={state.focus}
             />
-            {state.graphViewModel.debugInfo && (
-                <DebugLayer
-                    className={styles.graph_debug_info}
-                    width={props.width}
-                    height={props.height}
-                    info={state.graphViewModel.debugInfo}
-                />
-            )}
         </div>
     );
 };

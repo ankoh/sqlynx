@@ -25,20 +25,12 @@ interface FlatSQLModuleExports {
     flatsql_schemagraph_describe: (ptr: number) => number;
     flatsql_schemagraph_configure: (
         ptr: number,
-        iterationsClustering: number,
-        iterationsRefinement: number,
-        forceScaling: number,
-        cooldownFactor: number,
-        repulsionForce: number,
-        edgeAttractionForce: number,
-        gravityForce: number,
-        initialRadius: number,
         boardWidth: number,
         boardHeight: number,
+        cellWidth: number,
+        cellHeight: number,
         tableWidth: number,
         tableHeight: number,
-        tableMargin: number,
-        gridSize: number,
     ) => void;
     flatsql_schemagraph_load_script: (ptr: number, script: number) => number;
 }
@@ -109,19 +101,12 @@ export class FlatSQL {
             flatsql_schemagraph_describe: parserExports['flatsql_schemagraph_describe'] as (ptr: number) => number,
             flatsql_schemagraph_configure: parserExports['flatsql_schemagraph_configure'] as (
                 ptr: number,
-                iterationCount: number,
-                forceScaling: number,
-                cooldownFactor: number,
-                repulsionForce: number,
-                edgeAttractionForce: number,
-                gravityForce: number,
-                initialRadius: number,
                 boardWidth: number,
                 boardHeight: number,
+                cellWidth: number,
+                cellHeight: number,
                 tableWidth: number,
                 tableHeight: number,
-                tableMargin: number,
-                gridSize: number,
             ) => void,
             flatsql_schemagraph_load_script: parserExports['flatsql_schemagraph_load_script'] as (
                 ptr: number,
@@ -433,20 +418,12 @@ export class FlatSQLScript {
 }
 
 export interface FlatSQLSchemaGraphConfig {
-    iterationsClustering: number;
-    iterationsRefinement: number;
-    forceScaling: number;
-    cooldownFactor: number;
-    repulsionForce: number;
-    edgeAttractionForce: number;
-    gravityForce: number;
-    initialRadius: number;
     boardWidth: number;
     boardHeight: number;
+    cellWidth: number;
+    cellHeight: number;
     tableWidth: number;
     tableHeight: number;
-    tableMargin: number;
-    gridSize: number;
 }
 
 export class FlatSQLSchemaGraph {
@@ -479,20 +456,12 @@ export class FlatSQLSchemaGraph {
         const graphPtr = this.assertGraphNotNull();
         this.api.instanceExports.flatsql_schemagraph_configure(
             graphPtr,
-            config.iterationsClustering,
-            config.iterationsRefinement,
-            config.forceScaling,
-            config.cooldownFactor,
-            config.repulsionForce,
-            config.edgeAttractionForce,
-            config.gravityForce,
-            config.initialRadius,
             config.boardWidth,
             config.boardHeight,
+            config.cellWidth,
+            config.cellHeight,
             config.tableWidth,
             config.tableHeight,
-            config.tableMargin,
-            config.gridSize,
         );
     }
     /// Load a script
@@ -500,11 +469,5 @@ export class FlatSQLSchemaGraph {
         const graphPtr = this.assertGraphNotNull();
         const resultPtr = this.api.instanceExports.flatsql_schemagraph_load_script(graphPtr, script.scriptPtr);
         return this.api.readResult<proto.SchemaGraphLayout>(resultPtr);
-    }
-    /// Describe the graph
-    public describe() {
-        const graphPtr = this.assertGraphNotNull();
-        const resultPtr = this.api.instanceExports.flatsql_schemagraph_describe(graphPtr);
-        return this.api.readResult<proto.SchemaGraphDebugInfo>(resultPtr);
     }
 }
