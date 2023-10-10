@@ -282,7 +282,7 @@ export function reduceAppState(state: AppState, action: AppStateAction): AppStat
                 graphConfig: {
                     ...state.graphConfig,
                     boardWidth: action.value[0],
-                    boardHeight: action.value[1] * 0.9,
+                    boardHeight: action.value[1],
                 },
             });
         case DEBUG_GRAPH_LAYOUT:
