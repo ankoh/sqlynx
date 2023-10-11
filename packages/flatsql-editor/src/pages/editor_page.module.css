@@ -5,7 +5,7 @@
     background-color: var(--background_color_primary);
 
     display: grid;
-    grid-template-rows: 72px calc(100% - 80px);
+    grid-template-rows: 72px calc(100% - 72px);
     grid-template-columns: 100%;
     align-items: middle;
     justify-content: middle;
