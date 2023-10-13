@@ -1,0 +1,81 @@
+.content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: rgb(25, 28, 31);
+}
+
+.list_container {
+    width: 100%;
+    height: 100px;
+    flex: 1 0 auto;
+}
+
+.list {
+    outline: none;
+    padding: 0px 0px;
+}
+
+.row {
+    padding: 4px 24px 4px 16px;
+    display: grid;
+    grid-template-columns: 40px 1fr 1fr 40px 120px;
+    grid-column-gap: 8px;
+    font-size: 75%;
+    border-bottom: 1px solid hsl(210deg, 12%, 16%);
+}
+
+.row_focused {
+    background-color: black;
+}
+
+.row_level {
+    display: grid;
+    align-items: center;
+    font-weight: 700;
+}
+
+.row_origin {
+    display: grid;
+    align-items: center;
+}
+
+.row_topic {
+    display: grid;
+    align-items: center;
+}
+
+.row_event {
+    display: grid;
+    align-items: center;
+}
+
+.row_timestamp {
+    display: grid;
+    align-items: center;
+    text-align: right;
+    color: var(--log_timestamp_color);
+}
+
+.expand_icon {
+    display: grid;
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+    color: white;
+}
+
+.detail_container {
+    padding: 8px 8px 8px 16px;
+    width: 100%;
+    background: black;
+    border-bottom: 1px solid hsl(210deg, 12%, 16%);
+    display: grid;
+    font-size: 75%;
+    text-align: left;
+    white-space: pre-wrap;
+    overflow-y: auto;
+    font-family: 'RobotoMono';
+}

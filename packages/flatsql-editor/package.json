@@ -13,7 +13,11 @@
         "@ankoh/flatsql": "link:../flatsql-wasm",
         "@codemirror/autocomplete": "^6.9.2",
         "@codemirror/view": "^6.21.3",
+        "@octokit/graphql": "^7.0.2",
         "@popperjs/core": "^2.11.8",
+        "@react-hook/resize-observer": "^1.2.6",
+        "@types/react-window": "^1.8.6",
+        "axios": "^1.5.1",
         "bootstrap": "^5.3.2",
         "classnames": "^2.3.2",
         "copy-to-clipboard": "^3.3.3",
@@ -27,7 +31,8 @@
         "react-popper": "^2.3.0",
         "react-resizable": "^3.0.5",
         "react-router-dom": "^6.16.0",
-        "react-virtualized-auto-sizer": "^1.0.20"
+        "react-virtualized-auto-sizer": "^1.0.20",
+        "react-window": "^1.8.9"
     },
     "devDependencies": {
         "@types/flatbuffers": "^1.10.1",

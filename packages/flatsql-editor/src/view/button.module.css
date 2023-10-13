@@ -1,0 +1,61 @@
+.buttonset {
+    display: flex;
+    flex-direction: row;
+    align-items: end;
+}
+
+.button {
+    position: relative;
+
+    display: grid;
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box;
+
+    color: var(--button_fg);
+}
+
+.button.disabled {
+    color: rgb(170, 170, 170);
+}
+
+.button.active,
+.button.hover_invert:hover:not(.disabled) {
+    background-color: var(--button_hover_bg);
+    color: var(--button_hover_fg);
+}
+.button.hover_lighten:hover:not(.disabled) {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: var(--button_fg);
+}
+.button.hover_darken:hover:not(.disabled) {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--button_fg);
+}
+
+.button_inverted {
+    display: grid;
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box;
+
+    color: var(--button_fg_inverted);
+}
+
+.button_inverted.disabled {
+    color: rgb(170, 170, 170);
+}
+
+.button_inverted.active,
+.button_inverted.hover_invert:hover:not(.disabled) {
+    background-color: var(--button_hover_bg_inverted);
+    color: var(--button_hover_fg_inverted);
+}
+.button_inverted.hover_lighten:hover:not(.disabled) {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: var(--button_fg_inverted);
+}
+.button_inverted.hover_darken:hover:not(.disabled) {
+    background-color: rgba(0, 0, 0, 0.1);
+    color: var(--button_fg_inverted);
+}

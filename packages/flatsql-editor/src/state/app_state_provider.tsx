@@ -4,7 +4,7 @@ import { useFlatSQL } from '../flatsql_loader';
 import { AppState, ScriptKey, createDefaultState } from './app_state';
 import { Dispatch } from '../utils/action';
 import { RESULT_OK } from '../utils/result';
-import { TPCH_SCHEMA, exampleScripts } from '../script_loader/example_scripts';
+import { TPCH_SCHEMA, exampleScripts } from '../scripts/example_scripts';
 import { AppStateAction, INITIALIZE, LOAD_SCRIPTS, reduceAppState } from './app_state_reducer';
 
 const stateContext = React.createContext<AppState | null>(null);

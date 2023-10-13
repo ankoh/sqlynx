@@ -7,10 +7,10 @@
     grid-template-rows: 40px calc(100% - 40px);
 }
 
-.navbar {
+.editortabs {
     grid-row: 1 / span 2;
     grid-column: 1;
-    background-color: var(--navbar_background);
+    background-color: var(--editortabs_background);
     border-radius: calc(var(--border_radius) - 1px) 0px 0px 0px;
     border-right: 1px solid var(--border_color_primary);
 
@@ -19,13 +19,13 @@
     height: 100%;
 }
 
-.navbar_tabs {
+.editortabs_tabs {
     flex: 1;
     display: flex;
     flex-direction: column;
 }
 
-.navbar_tab {
+.editortabs_tab {
     position: relative;
     height: 40px;
     display: flex;
@@ -35,33 +35,33 @@
     border-bottom: 1px solid var(--border_color_primary);
     color: var(--color_icon);
 }
-.navbar_tab:hover {
+.editortabs_tab:hover {
     background-color: var(--action_item_hover_bg);
 }
-.navbar_tab:first-child {
+.editortabs_tab:first-child {
     border-radius: calc(var(--border_radius) - 1px) 0px 0px 0px;
 }
-.navbar_tab_active {
-    background-color: var(--navbar_background_active) !important;
+.editortabs_tab_active {
+    background-color: var(--editortabs_background_active) !important;
 }
-.navbar_tab_active::after {
+.editortabs_tab_active::after {
     position: absolute;
     top: -1px;
     bottom: -1px;
     right: 0;
     content: '';
-    width: var(--navbar_indicator_width);
-    background-color: var(--navbar_indicator_color);
+    width: var(--editortabs_indicator_width);
+    background-color: var(--editortabs_indicator_color);
 }
-.navbar_tab_disabled {
+.editortabs_tab_disabled {
     display: none !important;
 }
 
-.navbar_account {
+.editortabs_account {
     width: 100%;
     color: var(--color_icon);
 }
-.navbar_account_button {
+.editortabs_account_button {
     width: 100%;
     height: 40px;
     display: flex;
@@ -72,7 +72,7 @@
 .headerbar {
     grid-row: 1;
     grid-column: 2;
-    background-color: var(--headerbar_background_color);
+    background-color: var(--editor_header_bg);
     border-radius: 0px calc(var(--border_radius) - 1px) 0px 0px;
     border-bottom: 1px solid var(--border_color_primary);
 

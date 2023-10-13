@@ -1,6 +1,6 @@
 import * as flatsql from '@ankoh/flatsql';
 import { AppState, ScriptData, ScriptKey } from './app_state';
-import { GraphConnectionId, GraphNodeDescriptor, GraphViewModel } from '../schema_graph/graph_view_model';
+import { GraphConnectionId, GraphNodeDescriptor, GraphViewModel } from '../view/schema/graph_view_model';
 
 export interface FocusInfo {
     /// The connection ids of focused edges

@@ -4,3 +4,4 @@ export * from './name_tags';
 export * from './random';
 export * from './resolvable';
 export * from './result';
+export * from './time';

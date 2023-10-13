@@ -2,7 +2,7 @@ import * as flatsql from '@ankoh/flatsql';
 
 import { CompletionContext, CompletionResult, Completion } from '@codemirror/autocomplete';
 import { FlatSQLProcessor } from './flatsql_processor';
-import { getNameTagName, unpackNameTags } from '../utils';
+import { getNameTagName, unpackNameTags } from '../../utils';
 
 function updateCompletions(
     _current: CompletionResult,

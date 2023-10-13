@@ -1,0 +1,38 @@
+.system_button {
+    height: 100%;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.system_toggle {
+    display: grid;
+    width: 100%;
+    height: 100%;
+}
+
+.system_toggle:hover {
+    background-color: var(--system_bg_active);
+    color: var(--system_fg_active);
+}
+
+.system_icon {
+    justify-self: center;
+    align-self: center;
+}
+
+@media only screen and (max-width: 600px) {
+    .system_icon {
+        width: 18px;
+        height: 18px;
+    }
+}
+
+.system_panel {
+    z-index: 1000;
+    position: absolute;
+    left: 64px;
+    bottom: 0px;
+    max-width: calc(100% - 40px);
+    max-height: calc(100% - 40px);
+    height: 400px;
+}

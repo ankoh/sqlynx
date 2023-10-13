@@ -1,13 +1,12 @@
 import * as flatsql from '@ankoh/flatsql';
 import Immutable from 'immutable';
 
-import { generateBlankScript } from '../script_loader/script_metadata';
-import { LoadingStatus } from '../script_loader/script_loader';
+import { generateBlankScript, ScriptMetadata } from '../scripts/script_metadata';
+import { LoadingStatus } from '../scripts/script_loader';
 
-import { FlatSQLScriptBuffers } from '../editor/flatsql_processor';
-import { ScriptMetadata } from '../script_loader/script_metadata';
-import { LoadingInfo } from '../script_loader/script_loader';
-import { GraphViewModel } from '../schema_graph/graph_view_model';
+import { FlatSQLScriptBuffers } from '../view/editor/flatsql_processor';
+import { GraphViewModel } from '../view/schema/graph_view_model';
+import { LoadingInfo } from '../scripts/script_loader';
 import { FocusInfo } from './focus';
 
 const DEFAULT_BOARD_WIDTH = 800;
