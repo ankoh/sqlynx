@@ -8,7 +8,7 @@ on:
             - 'main'
 
 jobs:
-    lib_wasm:
+    core_wasm:
         strategy:
             matrix:
                 build_type: ['o0', 'o3']
@@ -51,7 +51,7 @@ jobs:
                   path: ./packages/flatsql/build/wasm/${{ matrix.build_type }}/flatsql.wasm
                   retention-days: 1
 
-    lib_native:
+    core_native:
         strategy:
             matrix:
                 build_type: ['o0', 'o2']
@@ -77,66 +77,66 @@ jobs:
             - name: Compile library
               shell: bash
               env:
-                  LIB_SOURCE_DIR: ./packages/flatsql
-                  LIB_BUILD_DIR: ./packages/flatsql/build/native/${{ matrix.build_type }}
+                  core_SOURCE_DIR: ./packages/flatsql
+                  core_BUILD_DIR: ./packages/flatsql/build/native/${{ matrix.build_type }}
               run: |
-                  cmake -S ${LIB_SOURCE_DIR} -B ${LIB_BUILD_DIR} \
+                  cmake -S ${core_SOURCE_DIR} -B ${core_BUILD_DIR} \
                   -DCMAKE_C_COMPILER=${{env.LLVM_PATH}}/bin/clang \
                   -DCMAKE_CXX_COMPILER=${{env.LLVM_PATH}}/bin/clang++ \
                   -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
                   -DCMAKE_EXPORT_COMPILE_COMMANDS=1 \
                   -DCODE_COVERAGE=1
-                  ln -sf ${LIB_BUILD_DIR}/compile_commands.json ${LIB_SOURCE_DIR}/compile_commands.json
-                  cmake --build ${LIB_BUILD_DIR} --parallel $(nproc --all)
+                  ln -sf ${core_BUILD_DIR}/compile_commands.json ${core_SOURCE_DIR}/compile_commands.json
+                  cmake --build ${core_BUILD_DIR} --parallel $(nproc --all)
 
             - name: Test library
               shell: bash
               env:
-                  LIB_SOURCE_DIR: ./packages/flatsql
-                  LIB_BUILD_DIR: ./packages/flatsql/build/native/${{ matrix.build_type }}
+                  core_SOURCE_DIR: ./packages/flatsql
+                  core_BUILD_DIR: ./packages/flatsql/build/native/${{ matrix.build_type }}
               run: |
-                  ${LIB_BUILD_DIR}/tester --source ${LIB_SOURCE_DIR}
+                  ${core_BUILD_DIR}/tester --source ${core_SOURCE_DIR}
 
             - name: Run pipeline benchmarks
               if: matrix.build_type == 'o2'
               shell: bash
               env:
-                  LIB_SOURCE_DIR: ./packages/flatsql
-                  LIB_BUILD_DIR: ./packages/flatsql/build/native/${{ matrix.build_type }}
+                  core_SOURCE_DIR: ./packages/flatsql
+                  core_BUILD_DIR: ./packages/flatsql/build/native/${{ matrix.build_type }}
               run: |
-                  ${LIB_BUILD_DIR}/benchmark_pipeline
+                  ${core_BUILD_DIR}/benchmark_pipeline
 
             - name: Run layout benchmarks
               if: matrix.build_type == 'o2'
               shell: bash
               env:
-                  LIB_SOURCE_DIR: ./packages/flatsql
-                  LIB_BUILD_DIR: ./packages/flatsql/build/native/${{ matrix.build_type }}
+                  core_SOURCE_DIR: ./packages/flatsql
+                  core_BUILD_DIR: ./packages/flatsql/build/native/${{ matrix.build_type }}
               run: |
-                  ${LIB_BUILD_DIR}/benchmark_layout
+                  ${core_BUILD_DIR}/benchmark_layout
 
             - name: Merge coverage data
               shell: bash
               env:
-                  LIB_COVERAGE_DIR: ./packages/flatsql/build/coverage
+                  core_COVERAGE_DIR: ./packages/flatsql/build/coverage
               run: |
-                  mkdir -p ${LIB_COVERAGE_DIR}
-                  ${{env.LLVM_PATH}}/bin/llvm-profdata merge -output=${LIB_COVERAGE_DIR}/coverage.prof -instr default.profraw
+                  mkdir -p ${core_COVERAGE_DIR}
+                  ${{env.LLVM_PATH}}/bin/llvm-profdata merge -output=${core_COVERAGE_DIR}/coverage.prof -instr default.profraw
 
             - name: Build coverage report
               shell: bash
               env:
-                  LIB_BUILD_DIR: ./packages/flatsql/build/native/${{ matrix.build_type }}
-                  LIB_COVERAGE_DIR: ./packages/flatsql/build/coverage
+                  core_BUILD_DIR: ./packages/flatsql/build/native/${{ matrix.build_type }}
+                  core_COVERAGE_DIR: ./packages/flatsql/build/coverage
               run: |
                   ${{env.LLVM_PATH}}/bin/llvm-cov export \
-                  --instr-profile ${LIB_COVERAGE_DIR}/coverage.prof \
+                  --instr-profile ${core_COVERAGE_DIR}/coverage.prof \
                   --format lcov \
                   --ignore-filename-regex='.*/build/native/${{ matrix.build_type }}/.*' \
                   --ignore-filename-regex='.*/utf8proc/.*' \
                   --ignore-filename-regex='.*/proto/proto_generated.h' \
                   --ignore-filename-regex='.*/.*\.list' \
-                  ${LIB_BUILD_DIR}/tester > ${LIB_COVERAGE_DIR}/lcov.info
+                  ${core_BUILD_DIR}/tester > ${core_COVERAGE_DIR}/lcov.info
 
             - uses: actions/upload-artifact@v3
               with:
@@ -144,11 +144,11 @@ jobs:
                   path: ./packages/flatsql/build/coverage/lcov.info
                   retention-days: 1
 
-    lib_js:
+    core_js:
         name: Build Library / Javascript
         runs-on: ubuntu-22.04
         needs:
-            - lib_wasm
+            - core_wasm
         steps:
             - uses: actions/checkout@v4
               with:
@@ -195,11 +195,11 @@ jobs:
                   path: ./packages/flatsql-wasm/coverage/lcov.info
                   retention-days: 1
 
-    editor:
-        name: Build Editor
+    pwa:
+        name: Build Application
         runs-on: ubuntu-22.04
         needs:
-            - lib_js
+            - core_js
         steps:
             - uses: actions/checkout@v4
               with:
@@ -224,15 +224,62 @@ jobs:
 
             - uses: actions/upload-artifact@v3
               with:
-                  name: flatsql_editor
+                  name: flatsql_app
                   path: ./packages/flatsql-app/build/pwa/o3
                   retention-days: 1
+
+    platform:
+        name: Platform node-${{ matrix.node_version }}-${{ matrix.system.target }}-${{ matrix.system.os }}
+        runs-on: ${{ matrix.system.os }}
+        needs: pwa
+        strategy:
+            fail-fast: false
+            matrix:
+                node_version:
+                    - 16
+                system:
+                    - os: ubuntu-22.04
+                      target: x86_64-unknown-linux-gnu
+        steps:
+            - uses: actions/checkout@v3
+
+            - name: Setup Cargo Cache
+              uses: actions/cache@v3
+              with:
+                  path: |
+                      ~/.cargo/bin/
+                      ~/.cargo/registry/index/
+                      ~/.cargo/registry/cache/
+                      ~/.cargo/git/db/
+                      target/
+                  key: ${{ runner.os }}-cargo-native-${{ hashFiles('Cargo.lock') }}
+                  restore-keys: ${{ runner.os }}-cargo-native-
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: ${{ matrix.node_version }}
+                  registry-url: 'https://registry.npmjs.org'
+
+            - name: Setup Rust
+              uses: actions-rs/toolchain@v1
+              with:
+                  profile: minimal
+                  toolchain: stable
+                  target: ${{ matrix.system.target }}
+                  override: true
+
+            - name: Install npm dependencies
+              run: yarn install
+
+            - name: Build platform module
+              run: yarn workspace @ankoh/flatsql-platform build:release
 
     lsp:
         name: Build and Package Language Server
         runs-on: ubuntu-22.04
         needs:
-            - lib_js
+            - core_js
         steps:
             - uses: actions/checkout@v4
               with:
@@ -265,10 +312,10 @@ jobs:
         if: github.ref == 'refs/heads/main'
         runs-on: ubuntu-22.04
         needs:
-            - editor
+            - pwa
             # Most test cases are in the native library. Don't update
             # the deployed webpage if the native tests failed.
-            - lib_native
+            - core_native
         permissions:
             contents: read
             pages: write
@@ -276,7 +323,7 @@ jobs:
         steps:
             - uses: actions/download-artifact@v3
               with:
-                  name: flatsql_editor
+                  name: flatsql_app
                   path: ./page
 
             - uses: actions/upload-pages-artifact@v2
@@ -289,9 +336,9 @@ jobs:
         name: Build Coverage Report
         runs-on: ubuntu-22.04
         needs:
-            - lib_js
-            - lib_native
-            - editor
+            - core_js
+            - core_native
+            - pwa
         steps:
             - uses: actions/checkout@v4
               with:
