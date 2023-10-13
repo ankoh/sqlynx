@@ -131,6 +131,18 @@ app_o3:
 app_start:
 	yarn workspace @ankoh/flatsql-app pwa:start
 
+.PHONY: platform_build_o0
+platform_build_o0:
+	yarn workspace @ankoh/flatsql-platform build:o0
+
+.PHONY: platform_build_o3
+platform_build_o3:
+	yarn workspace @ankoh/flatsql-platform build:o3
+
+.PHONY: platform_test
+platform_test:
+	yarn workspace @ankoh/flatsql-platform test
+
 .PHONY: lsp
 lsp:
 	yarn workspace @ankoh/flatsql-lsp build

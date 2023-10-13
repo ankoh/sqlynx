@@ -4,7 +4,8 @@
         "packages/flatsql-app",
         "packages/flatsql-wasm",
         "packages/flatsql-vscode",
-        "packages/flatsql-lsp"
+        "packages/flatsql-lsp",
+        "packages/flatsql-platform"
     ],
     "packages": {
         "ts-node": "^10.9.1"
@@ -12,5 +13,5 @@
     "browserslist": [
         "last 1 version",
         "> 1%"
-    ]
+    ]    
 }
