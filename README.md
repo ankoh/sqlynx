@@ -45,7 +45,7 @@ make benchmark_layout     # Benchmark the schema graph layout
 make lsp                  # Build the lsp library
 make vscode               # Build the vscode extension
 
-make editor_start         # Start the dev server for the editor
+make app_start            # Start the dev server for the PWA
 ```
 
 ---
