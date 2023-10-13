@@ -36,11 +36,8 @@ make core_native_tests    # Run native tests
 make core_wasm_o3         # Build optimized wasm core library
 make core_js_o3           # Build js bundle with wasm module and js api
 make core_js_tests        # Run js tests using the wasm module
-
-make snapshots            # Update parser snapshots
-
+make snapshots            # Update snapshots
 make benchmark_pipeline   # Benchmark the processing pipeline
-make benchmark_layout     # Benchmark the schema graph layout
 
 make lsp                  # Build the lsp library
 make vscode               # Build the vscode extension
