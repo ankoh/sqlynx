@@ -8,17 +8,16 @@ import { ChangeSpec, StateEffect, EditorSelection } from '@codemirror/state';
 import { CodeMirror } from './codemirror';
 import { FlatSQLExtensions } from './flatsql_extension';
 import { FlatSQLScriptBuffers, FlatSQLScriptKey, UpdateFlatSQLScript } from './flatsql_processor';
-import { useAppState, useAppStateDispatch } from '../state/app_state_provider';
-import { UPDATE_SCRIPT_ANALYSIS, UPDATE_SCRIPT_CURSOR } from '../state/app_state_reducer';
-import { ScriptKey } from '../state/app_state';
+import { useAppState, useAppStateDispatch } from '../../state/app_state_provider';
+import { UPDATE_SCRIPT_ANALYSIS, UPDATE_SCRIPT_CURSOR } from '../../state/app_state_reducer';
+import { ScriptKey } from '../../state/app_state';
 import { ScriptStatisticsBar } from './script_statistics_bar';
 
-import iconMainScript from '../../static/svg/icons/database_search.svg';
-import iconExternalScript from '../../static/svg/icons/database.svg';
-import iconLoadExample from '../../static/svg/icons/folder_open.svg';
-import iconStatistics from '../../static/svg/icons/speedometer.svg';
-import iconChevronRight from '../../static/svg/icons/chevron_right.svg';
-import iconAccount from '../../static/svg/icons/account_circle.svg';
+import iconMainScript from '../../../static/svg/icons/database_search.svg';
+import iconExternalScript from '../../../static/svg/icons/table_multiple.svg';
+import iconStatistics from '../../../static/svg/icons/speedometer.svg';
+import iconChevronRight from '../../../static/svg/icons/chevron_right.svg';
+import iconAccount from '../../../static/svg/icons/account_circle.svg';
 
 import styles from './editor.module.css';
 import { ScriptCursorInfoT } from '@ankoh/flatsql/dist/gen/flatsql/proto';
@@ -39,14 +38,14 @@ interface TabProps {
 
 const Tab: React.FC<TabProps> = (props: TabProps) => (
     <div
-        className={cn(styles.navbar_tab, {
-            [styles.navbar_tab_active]: props.id == props.active,
-            [styles.navbar_tab_disabled]: props.disabled ?? false,
+        className={cn(styles.editortabs_tab, {
+            [styles.editortabs_tab_active]: props.id == props.active,
+            [styles.editortabs_tab_disabled]: props.disabled ?? false,
         })}
         onClick={props.onClick}
         data-tab={props.id}
     >
-        <svg className={styles.button_icon} width="22px" height="22px">
+        <svg className={styles.button_icon} width="20px" height="20px">
             <use xlinkHref={`${props.icon}#sym`} />
         </svg>
     </div>
@@ -66,8 +65,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
     const ctxDispatch = useAppStateDispatch();
 
     const [activeTab, setActiveTab] = React.useState<TabId>(TabId.MAIN_SCRIPT);
-    const [folderOpen, setFolderOpen] = React.useState<boolean>(false);
-    const [statsOpen, setStatsOpen] = React.useState<boolean>(true);
+    const [statsOpen, setStatsOpen] = React.useState<boolean>(false);
     const [view, setView] = React.useState<EditorView | null>(null);
 
     const viewWasCreated = React.useCallback((view: EditorView) => setView(view), [setView]);
@@ -185,7 +183,6 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         setActiveTab(+tab);
     };
     // Helper to toggle the folder and stats
-    const toggleOpenFolder = () => setFolderOpen(s => !s);
     const toggleOpenStats = () => setStatsOpen(s => !s);
     // Get the title of the tab
     let tabTitle = '';
@@ -220,15 +217,8 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                     </div>
                     {statsOpen && <ScriptStatisticsBar stats={activeScriptStatistics} />}
                 </div>
-                <div className={styles.example_loader_container}>
-                    <div className={styles.example_loader_button} onClick={toggleOpenFolder}>
-                        <svg className={styles.button_icon} width="20px" height="20px">
-                            <use xlinkHref={`${iconLoadExample}#sym`} />
-                        </svg>
-                    </div>
-                </div>
             </div>
-            <div className={styles.navbar}>
+            <div className={styles.editortabs}>
                 <Tab id={TabId.MAIN_SCRIPT} active={activeTab} icon={iconMainScript} onClick={selectTab} />
                 <Tab id={TabId.SCHEMA_SCRIPT} active={activeTab} icon={iconExternalScript} onClick={selectTab} />
                 <div style={{ flex: 1 }} />
@@ -243,7 +233,6 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                         viewWillBeDestroyed={viewWillBeDestroyed}
                     />
                 </div>
-                <div className={styles.loader_container} style={{ display: folderOpen ? 'block' : 'none' }} />
             </div>
         </div>
     );

@@ -1,12 +1,12 @@
 import * as flatsql from '@ankoh/flatsql';
 
-import { FlatSQLScriptBuffers, analyzeScript, parseAndAnalyzeScript } from '../editor/flatsql_processor';
+import { FlatSQLScriptBuffers, analyzeScript, parseAndAnalyzeScript } from '../view/editor/flatsql_processor';
 import { AppState, ScriptKey, createEmptyScript, destroyState } from './app_state';
 import { deriveScriptFocusFromCursor, focusGraphEdge, focusGraphNode } from './focus';
 import { Action } from '../utils/action';
-import { ScriptMetadata } from '../script_loader/script_metadata';
-import { LoadingStatus } from '../script_loader/script_loader';
-import { GraphConnectionId, GraphNodeDescriptor, computeGraphViewModel } from '../schema_graph/graph_view_model';
+import { ScriptMetadata } from '../scripts/script_metadata';
+import { LoadingStatus } from '../scripts/script_loader';
+import { GraphConnectionId, GraphNodeDescriptor, computeGraphViewModel } from '../view/schema/graph_view_model';
 import Immutable from 'immutable';
 
 export const INITIALIZE = Symbol('INITIALIZE');

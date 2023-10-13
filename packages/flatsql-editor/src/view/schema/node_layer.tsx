@@ -2,14 +2,14 @@ import * as flatsql from '@ankoh/flatsql';
 import * as React from 'react';
 import cn from 'classnames';
 
-import { Action } from '../utils/action';
+import { Action } from '../../utils/action';
 import { NodeViewModel, EdgeViewModel, GraphConnectionId, GraphNodeDescriptor } from './graph_view_model';
 import { NodePort } from './graph_edges';
-import { FocusInfo } from '../state/focus';
+import { FocusInfo } from '../../state/focus';
 
-import iconEye from '../../static/svg/icons/eye.svg';
-import iconTable from '../../static/svg/icons/table.svg';
-import iconTableView from '../../static/svg/icons/table_border.svg';
+import iconEye from '../../../static/svg/icons/eye.svg';
+import iconTable from '../../../static/svg/icons/table.svg';
+import iconTableView from '../../../static/svg/icons/table_border.svg';
 
 import styles from './node_layer.module.css';
 
