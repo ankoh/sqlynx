@@ -124,12 +124,12 @@ core_js_tests:
 	yarn workspace @ankoh/flatsql test
 
 .PHONY: editor_o3
-editor_o3:
-	yarn workspace @ankoh/flatsql-editor pwa:build:o3
+app_o3:
+	yarn workspace @ankoh/flatsql-app pwa:build:o3
 
 .PHONY: editor_start
-editor_start:
-	yarn workspace @ankoh/flatsql-editor pwa:start
+app_start:
+	yarn workspace @ankoh/flatsql-app pwa:start
 
 .PHONY: lsp
 lsp:
