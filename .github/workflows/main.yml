@@ -155,6 +155,10 @@ jobs:
                 system:
                     - os: ubuntu-22.04
                       target: x86_64-unknown-linux-gnu
+                    - os: windows-2022
+                      target: x86_64-pc-windows-msvc
+                    - os: macos-12
+                      target: x86_64-apple-darwin
         steps:
             - uses: actions/checkout@v3
 
@@ -187,8 +191,14 @@ jobs:
             - name: Install npm dependencies
               run: yarn install --frozen-lockfile
 
-            - name: Build platform module
+            - name: Build Platform / o0
+              run: yarn workspace @ankoh/flatsql-platform build:o0
+
+            - name: Build Platform / o3
               run: yarn workspace @ankoh/flatsql-platform build:o3
+
+            - name: Test Platform
+              run: yarn workspace @ankoh/flatsql-platform test
 
     core_js:
         name: Build Library / Javascript
