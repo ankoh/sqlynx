@@ -273,7 +273,7 @@ jobs:
               run: yarn install --frozen-lockfile
 
             - name: Build platform module
-              run: yarn workspace @ankoh/flatsql-platform build:release
+              run: yarn workspace @ankoh/flatsql-platform build:o3
 
     lsp:
         name: Build and Package Language Server
