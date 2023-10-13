@@ -195,8 +195,8 @@ jobs:
                   path: ./packages/flatsql-wasm/coverage/lcov.info
                   retention-days: 1
 
-    pwa:
-        name: Build Application
+    web_app:
+        name: Build Web App
         runs-on: ubuntu-22.04
         needs:
             - core_js
@@ -228,15 +228,15 @@ jobs:
                   path: ./packages/flatsql-app/build/pwa/o3
                   retention-days: 1
 
-    platform:
-        name: Platform node-${{ matrix.node_version }}-${{ matrix.system.target }}-${{ matrix.system.os }}
+    native_app:
+        name: Build Native App ${{ matrix.node_version }}-${{ matrix.system.target }}-${{ matrix.system.os }}
         runs-on: ${{ matrix.system.os }}
-        needs: pwa
+        needs: web_app
         strategy:
             fail-fast: false
             matrix:
                 node_version:
-                    - 16
+                    - 18
                 system:
                     - os: ubuntu-22.04
                       target: x86_64-unknown-linux-gnu
@@ -270,7 +270,7 @@ jobs:
                   override: true
 
             - name: Install npm dependencies
-              run: yarn install
+              run: yarn install --frozen-lockfile
 
             - name: Build platform module
               run: yarn workspace @ankoh/flatsql-platform build:release
@@ -312,7 +312,8 @@ jobs:
         if: github.ref == 'refs/heads/main'
         runs-on: ubuntu-22.04
         needs:
-            - pwa
+            - web_app
+            - native_app
             # Most test cases are in the native library. Don't update
             # the deployed webpage if the native tests failed.
             - core_native
@@ -338,7 +339,8 @@ jobs:
         needs:
             - core_js
             - core_native
-            - pwa
+            - web_app
+            - native_app
         steps:
             - uses: actions/checkout@v4
               with:
