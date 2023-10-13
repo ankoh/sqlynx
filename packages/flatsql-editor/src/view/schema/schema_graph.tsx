@@ -3,8 +3,8 @@ import { NodeLayer } from './node_layer';
 import { EdgeHighlightingLayer, EdgeLayer } from './edge_layer';
 import { GraphNodeDescriptor } from './graph_view_model';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { useAppStateDispatch, useAppState } from '../state/app_state_provider';
-import { FOCUS_GRAPH_EDGE, FOCUS_GRAPH_NODE, RESIZE_SCHEMA_GRAPH } from '../state/app_state_reducer';
+import { useAppStateDispatch, useAppState } from '../../state/app_state_provider';
+import { FOCUS_GRAPH_EDGE, FOCUS_GRAPH_NODE, RESIZE_SCHEMA_GRAPH } from '../../state/app_state_reducer';
 import cn from 'classnames';
 
 import styles from './schema_graph.module.css';

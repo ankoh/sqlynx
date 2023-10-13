@@ -5,28 +5,66 @@
     --border_color_primary: rgb(208, 215, 222);
     --border_radius: 8px;
     --color_icon: hsl(212, 8%, 23%);
-    --color_primary: rgb(40, 40, 40);
+    --color_primary: hsl(212, 8%, 23%);
     --color_version: rgb(160, 160, 160);
-    --headerbar_background_color: hsl(210, 29%, 97%);
+
+    --button_bar_bg: hsla(210deg 12% 95%);
+    --button_bar_border_color: hsl(210deg, 4%, 85%);
+    --button_fg: hsl(210, 24%, 32%);
+    --button_fg_inverted: rgb(255, 255, 255);
+    --button_hover_fg: rgb(255, 255, 255);
+    --button_hover_fg_inverted: hsl(210, 24%, 32%);
+    --button_hover_bg: hsl(210deg, 12%, 16%);
+    --button_hover_bg_inverted: hsl(210deg, 12%, 6%);
+
+    --nav_bar_bg: hsl(210, 24%, 92%);
+    --nav_bar_button_margin: 4px;
+    --nav_bar_logo_fg: hsl(210, 24%, 32%);
+    --nav_bar_logo_bg: transparent;
+    --nav_bar_width: 48px;
+    --nav_bar_height: 48px;
+    --nav_bar_border: 1px solid var(--border_color_primary);
+    --nav_tab_bg: hsl(210, 24%, 92%);
+    --nav_tab_bg_active: hsl(210, 24%, 88%);
+    --nav_tab_fg: hsl(210, 24%, 32%);
+    --nav_tab_fg_active: hsl(210, 24%, 32%);
+    --nav_tab_border: 1px solid black;
+    --nav_tab_indicator_color: rgb(254, 150, 0);
+    --nav_tab_indicator_width: 3px;
+
+    --system_bg: transparent;
+    --system_bg_active: transparent;
+    --system_fg: hsl(210, 24%, 32%);
+    --system_fg_active: hsl(210, 24%, 32%);
+    --system_panel_bg: hsl(210deg, 12%, 16%);
+    --system_panel_border_radius: 8px;
+    --system_subtitle_color: rgba(255, 255, 255, 0.6);
+    --system_subtitle_fontsize: 90%;
+
+    --log_timestamp_color: rgba(255, 255, 255, 0.6);
+
+    --editortabs_background: hsl(210, 24%, 92%);
+    --editortabs_background_active: hsl(210, 24%, 88%);
+    --editortabs_indicator_color: rgb(254, 150, 0);
+    --editortabs_indicator_width: 3px;
+
     --loader_background: rgb(246, 248, 250);
-    --navbar_background: hsl(210, 24%, 92%);
-    --navbar_background_active: hsl(210, 24%, 88%);
-    --navbar_indicator_color: rgb(254, 150, 0);
-    --navbar_indicator_width: 3px;
+    --editor_header_bg: hsl(210, 29%, 97%);
     --editor_gutter_bg: rgb(246, 248, 250);
     --editor_colref_bg: hsl(210, 24%, 88%);
     --editor_queryedge_bg: hsl(210, 24%, 88%);
     --stats_bar_fg: hsl(210, 24%, 92%);
     --stats_bg: hsl(210deg, 28.57%, 97.25%);
     --stats_value_fg: rgb(140, 140, 140);
+
     --graph_title_fg: rgb(0, 0, 0);
     --graph_bg: hsl(210, 29%, 97%);
     --graph_node_bg: white;
-    --graph_node_inactive_bg: hsl(210deg, 12.68%, 95.16%);
+    --graph_node_inactive_bg: hsl(210, 24%, 94%);
     --graph_edges_bg: hsl(210deg, 12.68%, 84.16%);
     --graph_edge_focus_color: hsl(212.44deg, 92.07%, 44.51%);
     --graph_card_port_bg: hsl(210deg, 12.68%, 84.16%);
-    --graph_card_column_count_bg: hsl(210deg, 12.68%, 90.16%);
+    --graph_card_column_count_bg: rgb(0, 0, 0, 0.05);
     --graph_card_bg: rgb(255, 255, 255);
     --graph_card_focus_fg: hsl(212.44deg, 92.07%, 44.51%);
     --graph_port_size: 14px;
@@ -39,4 +77,10 @@
 
 * {
     box-sizing: border-box;
+}
+
+body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
 }

@@ -1,16 +1,15 @@
 import * as React from 'react';
 
-import { useFlatSQL } from '../flatsql_loader';
+import { useFlatSQL } from '../../flatsql_loader';
 import { ScriptEditor } from '../editor/editor';
-import { SchemaGraphWithControls } from '../schema_graph/schema_graph';
-import { RESULT_OK } from '../utils/result';
+import { SchemaGraphWithControls } from '../../view/schema/schema_graph';
+import { RESULT_OK } from '../../utils/result';
 
 import styles from './editor_page.module.css';
 
-import iconGitHub from '../../static/svg/icons/github.svg';
-import iconBug from '../../static/svg/icons/bug.svg';
-import iconShare from '../../static/svg/icons/link.svg';
-import logo from '../../static/svg/logo/logo.svg';
+import iconGitHub from '../../../static/svg/icons/github.svg';
+import iconBug from '../../../static/svg/icons/bug.svg';
+import iconShare from '../../../static/svg/icons/link.svg';
 
 interface Props {}
 
@@ -21,22 +20,21 @@ const openInNewTab = (url: string) => {
 
 export const EditorPage: React.FC<Props> = (props: Props) => {
     const backend = useFlatSQL();
-    const version = React.useMemo(() => {
-        if (!backend || backend.type != RESULT_OK) return 'unknown';
-        return backend.value.getVersionText();
-    }, [backend]);
+    // const version = React.useMemo(() => {
+    //     if (!backend || backend.type != RESULT_OK) return 'unknown';
+    //     return backend.value.getVersionText();
+    // }, [backend]);
 
     return (
         <div className={styles.page}>
             <div className={styles.header_container}>
                 <div className={styles.header_left_container}>
-                    <img className={styles.header_logo} src={logo} />
-                    <div className={styles.header_version}>Version: {version}</div>
+                    <div className={styles.page_title}>SQL Editor</div>
                 </div>
                 <div className={styles.header_right_container}>
                     <div className={styles.header_button_group}>
                         <div className={styles.header_button}>
-                            <svg width="22px" height="22px">
+                            <svg width="20px" height="20px">
                                 <use xlinkHref={`${iconShare}#sym`} />
                             </svg>
                         </div>
@@ -47,7 +45,7 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                             className={styles.header_button}
                             onClick={() => openInNewTab('https://github.com/ankoh/flatsql/issues')}
                         >
-                            <svg width="22px" height="22px">
+                            <svg width="20px" height="20px">
                                 <use xlinkHref={`${iconBug}#sym`} />
                             </svg>
                         </div>
@@ -55,7 +53,7 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                             className={styles.header_button}
                             onClick={() => openInNewTab('https://github.com/ankoh/flatsql')}
                         >
-                            <svg width="22px" height="22px">
+                            <svg width="20px" height="20px">
                                 <use xlinkHref={`${iconGitHub}#sym`} />
                             </svg>
                         </div>

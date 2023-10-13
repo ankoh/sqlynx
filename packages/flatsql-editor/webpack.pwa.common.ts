@@ -2,6 +2,7 @@ import CopyWebpackPlugin from 'copy-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
+import childProcess from 'child_process';
 import * as webpack from 'webpack';
 import * as webpackDevServer from 'webpack-dev-server';
 import path from 'path';
@@ -17,7 +18,29 @@ interface ConfigParams {
     tsLoaderOptions?: any;
     extractCss: boolean;
     cssIdentifier: string;
+    githubOAuthClientID: string;
+    githubOAuthRedirect: string;
 }
+
+/// IMPORTANT
+///
+/// We use a dedicated tiny html file for the OAuth callback to not inflate the whole app in the popup.
+/// However the EXACT OAuth callback URI has to be configured in the GitHub web interface.
+/// If we would load the file using webpacks [contenthash], we would get cache busting but could break OAuth for our users without really noticing it.
+//
+/// We therefore use an explicit version file.
+/// If you don't change the version file, you don't have to change the redirect URI but an updated file won't bust the CDN cache.
+/// If you change the version file, you have to change the redirect URI and get cache busting automatically.
+const GITHUB_OAUTH_VERSION_FILE = path.resolve(__dirname, './src/github/github_oauth.html.version');
+export const GITHUB_OAUTH_VERSION = childProcess.execSync(`cat ${GITHUB_OAUTH_VERSION_FILE}`).toString().trim();
+
+/// We support dynamic configurations of DashQL via a dedicated config file.
+/// The app loads this file at startup which allows us to adjust certain settings dynamically.
+///
+/// By default, the name of this config file includes the content hash for our own cache-busting.
+/// A more "generic" build of DashQL should set this path to 'static/config.json'.
+/// For example, we may want to provide a docker image for on-premise deployments that mounts a user-provided config.
+const CONFIG_PATH = 'static/config.[contenthash].json';
 
 export function configure(params: ConfigParams): Partial<Configuration> {
     return {
@@ -88,6 +111,20 @@ export function configure(params: ConfigParams): Partial<Configuration> {
                         filename: 'static/img/[name].[contenthash][ext]',
                     },
                 },
+                {
+                    test: /.*\/static\/config\.json$/i,
+                    type: 'asset/resource',
+                    generator: {
+                        filename: CONFIG_PATH,
+                    },
+                },
+                {
+                    test: /.*github_oauth\.html$/,
+                    type: 'asset/resource',
+                    generator: {
+                        filename: `static/html/[name].${GITHUB_OAUTH_VERSION}[ext]`,
+                    },
+                },
             ],
         },
         optimization: {
@@ -113,6 +150,11 @@ export function configure(params: ConfigParams): Partial<Configuration> {
             new HtmlWebpackPlugin({
                 template: './static/index.html',
                 filename: './index.html',
+            }),
+            new webpack.DefinePlugin({
+                'process.env.ENV_BROWSER': true,
+                'process.env.GITHUB_OAUTH_CLIENT_ID': JSON.stringify(params.githubOAuthClientID),
+                'process.env.GITHUB_OAUTH_REDIRECT': JSON.stringify(params.githubOAuthRedirect),
             }),
             new MiniCssExtractPlugin({
                 filename: './static/css/[id].[contenthash].css',

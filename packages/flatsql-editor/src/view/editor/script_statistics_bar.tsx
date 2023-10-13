@@ -3,7 +3,7 @@ import * as flatsql from '@ankoh/flatsql';
 import React from 'react';
 import Immutable from 'immutable';
 
-import { formatBytes, formatNanoseconds } from '../utils/format';
+import { formatBytes, formatNanoseconds } from '../../utils/format';
 
 import styles from './script_statistics_bar.module.css';
 
