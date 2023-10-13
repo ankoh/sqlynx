@@ -1,10 +1,13 @@
-<img src="/misc/logo.svg" height="24">
-
-[![Main](https://github.com/ankoh/flatsql/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/ankoh/flatsql/actions/workflows/main.yml)
-[![Renovate](https://github.com/ankoh/flatsql/actions/workflows/renovate.yml/badge.svg)](https://github.com/ankoh/flatsql/actions/workflows/renovate.yml)
-[![Coverage](https://coveralls.io/repos/github/ankoh/flatsql/badge.svg?branch=main)](https://coveralls.io/github/ankoh/flatsql?branch=main)
-[![License](misc/badge_mpl2.svg?raw=true)](https://opensource.org/licenses/MPL-2.0)
-[![Status](misc/badge_wip.svg?raw=true)](https://github.com/ankoh/flatsql/commits/main)
+<p align="center">
+  <img src="https://github.com/ankoh/dashql/blob/92c1d353f6dad17a427e2d3326d518eb5871fe50/packages/core/static/favicons/android-chrome-512x512.png" width=100 style="padding: 8px; background: black;">
+</p>
+<p align="center">
+  <a href="https://github.com/ankoh/flatsql/actions/workflows/main.yml"><img src="https://github.com/ankoh/flatsql/actions/workflows/main.yml/badge.svg?branch=main" /></a>
+  <a href="https://github.com/ankoh/flatsql/actions/workflows/renovate.yml"><img src="https://github.com/ankoh/flatsql/actions/workflows/renovate.yml/badge.svg" /></a>
+  <a href="https://coveralls.io/github/ankoh/flatsql?branch=main"><img src="https://coveralls.io/repos/github/ankoh/flatsql/badge.svg?branch=main" /></a>
+  <a href="https://opensource.org/licenses/MPL-2.0"><img src="misc/badge_mpl2.svg?raw=true" /></a>
+  <a href="https://github.com/ankoh/flatsql/commits/main"><img src="misc/badge_wip.svg?raw=true" /></a>
+</p>
 
 ---
 
