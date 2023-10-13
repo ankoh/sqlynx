@@ -145,7 +145,7 @@ jobs:
                   retention-days: 1
 
     platform:
-        name: Build Platform / ${{ matrix.node_version }}-${{ matrix.system.target }}-${{ matrix.system.os }}
+        name: Build Platform / ${{ matrix.system.os }} / ${{ matrix.system.target }} / ${{ matrix.node_version }}
         runs-on: ${{ matrix.system.os }}
         strategy:
             fail-fast: false
