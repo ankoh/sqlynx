@@ -144,7 +144,7 @@ jobs:
                   path: ./packages/flatsql/build/coverage/lcov.info
                   retention-days: 1
 
-    platform_native:
+    platform:
         name: Build Platform / ${{ matrix.node_version }}-${{ matrix.system.target }}-${{ matrix.system.os }}
         runs-on: ${{ matrix.system.os }}
         strategy:
@@ -241,7 +241,7 @@ jobs:
                   path: ./packages/flatsql-wasm/coverage/lcov.info
                   retention-days: 1
 
-    web_app:
+    pwa:
         name: Build App / Web
         runs-on: ubuntu-22.04
         needs:
@@ -311,8 +311,8 @@ jobs:
         if: github.ref == 'refs/heads/main'
         runs-on: ubuntu-22.04
         needs:
-            - web_app
-            - platform_native
+            - pwa
+            - platform
             # Most test cases are in the native library. Don't update
             # the deployed webpage if the native tests failed.
             - core_native
@@ -338,8 +338,8 @@ jobs:
         needs:
             - core_js
             - core_native
-            - platform_native
-            - web_app
+            - platform
+            - pwa
         steps:
             - uses: actions/checkout@v4
               with:
