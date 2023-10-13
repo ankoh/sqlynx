@@ -196,7 +196,7 @@ jobs:
                   retention-days: 1
 
     web_app:
-        name: Build Web App
+        name: Build App / Web
         runs-on: ubuntu-22.04
         needs:
             - core_js
@@ -229,7 +229,7 @@ jobs:
                   retention-days: 1
 
     native_app:
-        name: Build Native App ${{ matrix.node_version }}-${{ matrix.system.target }}-${{ matrix.system.os }}
+        name: Build App / Native / ${{ matrix.node_version }}-${{ matrix.system.target }}-${{ matrix.system.os }}
         runs-on: ${{ matrix.system.os }}
         needs: web_app
         strategy:
