@@ -144,6 +144,52 @@ jobs:
                   path: ./packages/flatsql/build/coverage/lcov.info
                   retention-days: 1
 
+    platform_native:
+        name: Build Platform / ${{ matrix.node_version }}-${{ matrix.system.target }}-${{ matrix.system.os }}
+        runs-on: ${{ matrix.system.os }}
+        strategy:
+            fail-fast: false
+            matrix:
+                node_version:
+                    - 18
+                system:
+                    - os: ubuntu-22.04
+                      target: x86_64-unknown-linux-gnu
+        steps:
+            - uses: actions/checkout@v3
+
+            - name: Setup Cargo Cache
+              uses: actions/cache@v3
+              with:
+                  path: |
+                      ~/.cargo/bin/
+                      ~/.cargo/registry/index/
+                      ~/.cargo/registry/cache/
+                      ~/.cargo/git/db/
+                      target/
+                  key: ${{ runner.os }}-cargo-native-${{ hashFiles('Cargo.lock') }}
+                  restore-keys: ${{ runner.os }}-cargo-native-
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: ${{ matrix.node_version }}
+                  registry-url: 'https://registry.npmjs.org'
+
+            - name: Setup Rust
+              uses: actions-rs/toolchain@v1
+              with:
+                  profile: minimal
+                  toolchain: stable
+                  target: ${{ matrix.system.target }}
+                  override: true
+
+            - name: Install npm dependencies
+              run: yarn install --frozen-lockfile
+
+            - name: Build platform module
+              run: yarn workspace @ankoh/flatsql-platform build:o3
+
     core_js:
         name: Build Library / Javascript
         runs-on: ubuntu-22.04
@@ -228,53 +274,6 @@ jobs:
                   path: ./packages/flatsql-app/build/pwa/o3
                   retention-days: 1
 
-    native_app:
-        name: Build App / Native / ${{ matrix.node_version }}-${{ matrix.system.target }}-${{ matrix.system.os }}
-        runs-on: ${{ matrix.system.os }}
-        needs: web_app
-        strategy:
-            fail-fast: false
-            matrix:
-                node_version:
-                    - 18
-                system:
-                    - os: ubuntu-22.04
-                      target: x86_64-unknown-linux-gnu
-        steps:
-            - uses: actions/checkout@v3
-
-            - name: Setup Cargo Cache
-              uses: actions/cache@v3
-              with:
-                  path: |
-                      ~/.cargo/bin/
-                      ~/.cargo/registry/index/
-                      ~/.cargo/registry/cache/
-                      ~/.cargo/git/db/
-                      target/
-                  key: ${{ runner.os }}-cargo-native-${{ hashFiles('Cargo.lock') }}
-                  restore-keys: ${{ runner.os }}-cargo-native-
-
-            - name: Setup Node.js
-              uses: actions/setup-node@v3
-              with:
-                  node-version: ${{ matrix.node_version }}
-                  registry-url: 'https://registry.npmjs.org'
-
-            - name: Setup Rust
-              uses: actions-rs/toolchain@v1
-              with:
-                  profile: minimal
-                  toolchain: stable
-                  target: ${{ matrix.system.target }}
-                  override: true
-
-            - name: Install npm dependencies
-              run: yarn install --frozen-lockfile
-
-            - name: Build platform module
-              run: yarn workspace @ankoh/flatsql-platform build:o3
-
     lsp:
         name: Build and Package Language Server
         runs-on: ubuntu-22.04
@@ -313,7 +312,7 @@ jobs:
         runs-on: ubuntu-22.04
         needs:
             - web_app
-            - native_app
+            - platform_native
             # Most test cases are in the native library. Don't update
             # the deployed webpage if the native tests failed.
             - core_native
@@ -339,8 +338,8 @@ jobs:
         needs:
             - core_js
             - core_native
+            - platform_native
             - web_app
-            - native_app
         steps:
             - uses: actions/checkout@v4
               with:
