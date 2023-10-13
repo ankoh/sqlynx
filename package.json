@@ -1,7 +1,7 @@
 {
     "private": true,
     "workspaces": [
-        "packages/flatsql-editor",
+        "packages/flatsql-app",
         "packages/flatsql-wasm",
         "packages/flatsql-vscode",
         "packages/flatsql-lsp"

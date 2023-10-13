@@ -217,15 +217,15 @@ jobs:
                   mkdir -p ./lib/build/wasm/o3 ./reports
                   yarn install --frozen-lockfile
 
-            - name: Build @ankoh/flatsql-editor
+            - name: Build @ankoh/flatsql-app
               shell: bash
               run: |
-                  yarn workspace @ankoh/flatsql-editor pwa:build:o3
+                  yarn workspace @ankoh/flatsql-app pwa:build:o3
 
             - uses: actions/upload-artifact@v3
               with:
                   name: flatsql_editor
-                  path: ./packages/flatsql-editor/build/pwa/o3
+                  path: ./packages/flatsql-app/build/pwa/o3
                   retention-days: 1
 
     lsp:
