@@ -9,13 +9,16 @@ import cn from 'classnames';
 
 import styles from './schema_graph.module.css';
 
+import icon_graph_align from '../../../static/svg/icons/graph_align.svg';
+import icon_graph_minus from '../../../static/svg/icons/graph_minus.svg';
+import icon_graph_plus from '../../../static/svg/icons/graph_plus.svg';
+
 interface GraphProps {
-    className?: string;
     width: number;
     height: number;
 }
 
-export const SchemaGraph: React.FC<GraphProps> = (props: GraphProps) => {
+export const SchemaGraphBoard: React.FC<GraphProps> = (props: GraphProps) => {
     const state = useAppState();
     const dispatch = useAppStateDispatch();
 
@@ -49,7 +52,7 @@ export const SchemaGraph: React.FC<GraphProps> = (props: GraphProps) => {
     );
 
     return (
-        <div className={cn(styles.graph_container, props.className)}>
+        <div className={styles.graph_board}>
             <EdgeLayer
                 className={styles.graph_edges}
                 boardWidth={props.width}
@@ -81,15 +84,32 @@ interface GraphWithControlsProps {
     className?: string;
 }
 
-export const SchemaGraphWithControls: React.FC<GraphWithControlsProps> = (props: GraphWithControlsProps) => {
+export const SchemaGraph: React.FC<GraphWithControlsProps> = (props: GraphWithControlsProps) => {
     return (
-        <div className={cn(styles.graph_controls_container, props.className)}>
-            <AutoSizer>
-                {(s: { height: number; width: number }) => (
-                    <SchemaGraph className={styles.schemagraph} width={s.width} height={s.height} />
-                )}
-            </AutoSizer>
-            <div className={styles.graph_controls_header}>Schema</div>
+        <div className={cn(styles.graph_container, props.className)}>
+            <div className={styles.graph_board_container}>
+                <AutoSizer>
+                    {(s: { height: number; width: number }) => <SchemaGraphBoard width={s.width} height={s.height} />}
+                </AutoSizer>
+            </div>
+            <div className={styles.graph_title}>Schema</div>
+            <div className={styles.graph_controls}>
+                <div className={styles.graph_control_button}>
+                    <svg width="12px" height="12px">
+                        <use xlinkHref={`${icon_graph_plus}#sym`} />
+                    </svg>
+                </div>
+                <div className={styles.graph_control_button}>
+                    <svg width="12px" height="12px">
+                        <use xlinkHref={`${icon_graph_minus}#sym`} />
+                    </svg>
+                </div>
+                <div className={styles.graph_control_button}>
+                    <svg width="12px" height="12px">
+                        <use xlinkHref={`${icon_graph_align}#sym`} />
+                    </svg>
+                </div>
+            </div>
         </div>
     );
 };

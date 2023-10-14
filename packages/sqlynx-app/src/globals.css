@@ -68,6 +68,7 @@
     --graph_card_bg: rgb(255, 255, 255);
     --graph_card_focus_fg: hsl(212.44deg, 92.07%, 44.51%);
     --graph_port_size: 14px;
+    --graph_control_hover_bg: rgba(208, 215, 222, 0.32);
 }
 
 :root {
