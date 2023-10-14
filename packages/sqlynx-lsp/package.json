@@ -1,0 +1,26 @@
+{
+	"name": "@ankoh/sqlynx-lsp",
+	"version": "0.0.1",
+	"description": "Language server for sqlynx",
+	"license": "MPL-2.0",
+	"private": true,
+	"engines": {
+		"node": "*"
+	},
+	"main": "./dist/server",
+	"type": "module",
+	"scripts": {
+		"vscode:prepublish": "yarn run build",
+		"build": "tsc -b",
+		"watch": "tsc -b -w"
+	},
+	"dependencies": {
+		"vscode-languageserver": "^9.0.1",
+		"@ankoh/sqlynx": "link:../sqlynx-wasm"
+	},
+	"devDependencies": {
+		"@types/node": "^18.18.5",
+		"@types/vscode": "^1.83.0",
+		"typescript": "^5.2.2"
+	}
+}

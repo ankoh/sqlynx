@@ -1,0 +1,35 @@
+{
+    "name": "@ankoh/sqlynx-platform",
+    "version": "0.1.0",
+    "description": "",
+    "main": "./dist/index.node",
+    "private": true,
+    "scripts": {
+      "build": "cargo-cp-artifact -nc ./dist/index.node -- cargo build --message-format=json-render-diagnostics -p sqlynx-platform",
+      "build:o0": "npm run build --",
+      "build:o3": "npm run build -- --release",
+      "test": "cargo test"
+    },
+    "dependencies": {
+      "@mapbox/node-pre-gyp": "^1.0.8"
+    },
+    "devDependencies": {
+      "cargo-cp-artifact": "^0.1"
+    },
+    "os": [
+      "darwin",
+      "linux",
+      "win32"
+    ],
+    "cpu": [
+      "x64",
+      "arm64"
+    ],
+    "binary": {
+      "module_name": "sqlynx-platform",
+      "module_path": "dist",
+      "host": "https://github.com/ankoh/sqlynx/releases/download/",
+      "package_name": "{module_name}-v{version}-{node_abi}-{platform}-{arch}-{libc}.tar.gz",
+      "remote_path": "v{version}"
+    }
+}

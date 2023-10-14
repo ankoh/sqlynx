@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// FlatSQL Objects
+// SQLynx Objects
 
 varargs:
     '(' vararg_fields ')'  { $$ = std::move($2); }

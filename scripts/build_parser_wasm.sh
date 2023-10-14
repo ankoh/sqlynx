@@ -20,7 +20,7 @@ case $MODE in
 esac
 ADDITIONAL_FLAGS="-DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
 
-CPP_SOURCE_DIR="${PROJECT_ROOT}/packages/flatsql"
+CPP_SOURCE_DIR="${PROJECT_ROOT}/packages/sqlynx"
 CPP_BUILD_DIR="${CPP_SOURCE_DIR}/build/wasm/${MODE}"
 
 INFRA_DIR="${PROJECT_ROOT}/.infra"
@@ -40,7 +40,7 @@ echo "BINARYEN_BIN=${BINARYEN_BIN}"
 
 mkdir -p ${CPP_BUILD_DIR}
 
-rm -f ${CPP_BUILD_DIR}/flatsql.wasm
+rm -f ${CPP_BUILD_DIR}/sqlynx.wasm
 
 set -x
 cmake \
@@ -55,10 +55,10 @@ cmake \
 make \
     -C"${CPP_BUILD_DIR}" \
     -j${CORES} \
-    flatsql
+    sqlynx
 
 if [ ${MODE} == "o3" ]; then
-    ${BINARYEN_BIN}/wasm-opt -O3 -o ${CPP_BUILD_DIR}/flatsql_opt.wasm ${CPP_BUILD_DIR}/flatsql.wasm
-    ${WABT_BIN}/wasm-strip ${CPP_BUILD_DIR}/flatsql_opt.wasm
-    mv ${CPP_BUILD_DIR}/flatsql_opt.wasm ${CPP_BUILD_DIR}/flatsql.wasm
+    ${BINARYEN_BIN}/wasm-opt -O3 -o ${CPP_BUILD_DIR}/sqlynx_opt.wasm ${CPP_BUILD_DIR}/sqlynx.wasm
+    ${WABT_BIN}/wasm-strip ${CPP_BUILD_DIR}/sqlynx_opt.wasm
+    mv ${CPP_BUILD_DIR}/sqlynx_opt.wasm ${CPP_BUILD_DIR}/sqlynx.wasm
 fi

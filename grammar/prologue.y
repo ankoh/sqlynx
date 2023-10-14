@@ -1,7 +1,7 @@
 %skeleton "lalr1.cc"
 %require "3.3"
 
-%define api.namespace {flatsql::parser}
+%define api.namespace {sqlynx::parser}
 %define api.parser.class {ParserBase}
 %define api.token.constructor
 %define api.token.prefix {FQL_}
@@ -12,7 +12,7 @@
 %locations
 %define api.location.type {proto::Location}
 
-%parse-param    { flatsql::parser::ParseContext& ctx }
+%parse-param    { sqlynx::parser::ParseContext& ctx }
 
 // ---------------------------------------------------------------------------
 // HEADER
@@ -21,12 +21,12 @@
 #include <string>
 #include <cstdlib>
 #include <utility>
-#include "flatsql/parser/grammar/state.h"
-#include "flatsql/proto/proto_generated.h"
+#include "sqlynx/parser/grammar/state.h"
+#include "sqlynx/proto/proto_generated.h"
 
-namespace sx = flatsql::proto;
+namespace sx = sqlynx::proto;
 
-namespace flatsql { namespace parser { class ParseContext;  }}
+namespace sqlynx { namespace parser { class ParseContext;  }}
 
 #define YYRHSLOC(Rhs, K) ((Rhs)[K].location)
 #define YYLLOC_DEFAULT(Cur, Rhs, N) { \
@@ -46,16 +46,16 @@ namespace flatsql { namespace parser { class ParseContext;  }}
 // IMPLEMENTATION
 
 %code {
-#include "flatsql/parser/grammar/enums.h"
-#include "flatsql/parser/grammar/location.h"
-#include "flatsql/parser/grammar/nodes.h"
-#include "flatsql/parser/scanner.h"
-#include "flatsql/parser/parse_context.h"
+#include "sqlynx/parser/grammar/enums.h"
+#include "sqlynx/parser/grammar/location.h"
+#include "sqlynx/parser/grammar/nodes.h"
+#include "sqlynx/parser/scanner.h"
+#include "sqlynx/parser/parse_context.h"
 
 #undef yylex
 #define yylex ctx.NextSymbol
 
-using namespace flatsql::parser;
+using namespace sqlynx::parser;
 }
 
 // ---------------------------------------------------------------------------

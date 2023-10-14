@@ -1,0 +1,45 @@
+.sqlynx-keyword {
+    font-weight: 700;
+}
+
+.sqlynx-queryedge-focus {
+    position: relative;
+}
+.sqlynx-queryedge-focus::before {
+    position: absolute;
+    content: '';
+    width: calc(100% + 8px);
+    height: calc(100% + 4px);
+    top: -2px;
+    left: -4px;
+    background-color: var(--editor_queryedge_bg);
+    z-index: -1;
+}
+
+.sqlynx-tableref-focus {
+    position: relative;
+}
+.sqlynx-tableref-focus::before {
+    position: absolute;
+    content: '';
+    width: calc(100% + 8px);
+    height: calc(100% + 4px);
+    top: -2px;
+    left: -4px;
+    background-color: var(--editor_queryedge_bg);
+    z-index: -1;
+}
+
+.sqlynx-colref-focus {
+    position: relative;
+}
+.sqlynx-colref-focus::before {
+    position: absolute;
+    content: '';
+    width: calc(100% + 8px);
+    height: calc(100% + 4px);
+    top: -2px;
+    left: -4px;
+    background-color: var(--editor_colref_bg);
+    z-index: -1;
+}

@@ -1,8 +1,0 @@
-include "flatsql/analyzed_script.fbs";
-include "flatsql/completion.fbs";
-include "flatsql/parsed_script.fbs";
-include "flatsql/schema_graph.fbs";
-include "flatsql/script_statistics.fbs";
-include "flatsql/script_cursor.fbs";
-include "flatsql/sql_enums.fbs";
-include "flatsql/status.fbs";
