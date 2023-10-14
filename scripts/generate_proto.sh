@@ -13,10 +13,10 @@ ${FLATC} --version \
     || { echo "[ ERR ] Command: flatc"; exit 1; }
 
 SPEC_DIR="${PROJECT_ROOT}/proto/"
-SPEC_INDEX="${SPEC_DIR}/flatsql/proto.fbs"
+SPEC_INDEX="${SPEC_DIR}/sqlynx/proto.fbs"
 
-OUT_DIR_CPP="${PROJECT_ROOT}/packages/flatsql/include/flatsql/proto"
-OUT_DIR_TS="${PROJECT_ROOT}/packages/flatsql-wasm/gen"
+OUT_DIR_CPP="${PROJECT_ROOT}/packages/sqlynx/include/sqlynx/proto"
+OUT_DIR_TS="${PROJECT_ROOT}/packages/sqlynx-wasm/gen"
 
 rm -rf ${OUT_DIR_CPP}/*
 rm -rf ${OUT_DIR_TS}/*
@@ -42,7 +42,7 @@ ${FLATC} -I ${SPEC_DIR} -o ${OUT_DIR_TS} ${SPEC_INDEX} --ts \
     || { echo "[ ERR ] Generate Typescript Library"; exit 1; }
 
 
-TS_OUT_PROTO_BASE="${OUT_DIR_TS}/flatsql/proto"
+TS_OUT_PROTO_BASE="${OUT_DIR_TS}/sqlynx/proto"
 TS_OUT_PROTO_DIRS=`ls ${TS_OUT_PROTO_BASE}/`
 TS_OUT_PROTO_IDX="${TS_OUT_PROTO_BASE}/../proto.ts"
 if [ -f ${TS_OUT_PROTO_IDX} ]; then

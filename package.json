@@ -1,11 +1,11 @@
 {
     "private": true,
     "workspaces": [
-        "packages/flatsql-app",
-        "packages/flatsql-wasm",
-        "packages/flatsql-vscode",
-        "packages/flatsql-lsp",
-        "packages/flatsql-platform"
+        "packages/sqlynx-app",
+        "packages/sqlynx-wasm",
+        "packages/sqlynx-vscode",
+        "packages/sqlynx-lsp",
+        "packages/sqlynx-platform"
     ],
     "packages": {
         "ts-node": "^10.9.1"

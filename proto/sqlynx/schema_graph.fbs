@@ -1,0 +1,62 @@
+include "sqlynx/analyzed_script.fbs";
+include "sqlynx/sql_enums.fbs";
+
+namespace sqlynx.proto;
+
+struct SchemaGraphVertex {
+    x: double;
+    y: double;
+}
+
+struct SchemaGraphEdge {
+    /// The edge id of the analyzer query graph
+    query_edge_id: uint64;
+    /// The ast node id
+    ast_node_id: uint64;
+    /// The begin of the nodes
+    nodes_begin: uint32;
+    /// The number of nodes on the left side
+    node_count_left: uint16;
+    /// The set id of nodes on the right side
+    node_count_right: uint16;
+    /// The expression operator
+    expression_operator: ExpressionOperator;
+}
+
+struct SchemaGraphEdgeNode {
+    /// The table id
+    table_id: uint64;
+    /// The column reference id
+    column_reference_id: uint64;
+    /// The ast node id
+    ast_node_id: uint64;
+    /// The node id
+    node_id: uint32;
+}
+
+struct SchemaGraphTableNode {
+    /// The id of table
+    table_id: uint64;
+    /// The position
+    position: SchemaGraphVertex;
+    /// The node width
+    width: double;
+    /// The node height
+    height: double;
+}
+
+table SchemaGraphDebugInfo {
+    /// Node distances
+    node_distances: [double];
+    /// Node repulsions
+    node_repulsions: [double];
+}
+
+table SchemaGraphLayout {
+    /// The table nodes
+    table_nodes: [SchemaGraphTableNode];
+    /// The edge
+    edge_nodes: [SchemaGraphEdgeNode];
+    /// The edges
+    edges: [SchemaGraphEdge];
+}

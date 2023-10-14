@@ -1041,7 +1041,7 @@ sql_bit:
 
 // ConstBit is like Bit except "BIT" defaults to unspecified length
 // See notes for ConstCharacter, which addresses same issue for "CHAR"
-// Andre: XXX Relevant for FlatSQL?
+// Andre: XXX Relevant for SQLynx?
 
 sql_const_bit:
     sql_bit_with_length     { $$ = std::move($1); }

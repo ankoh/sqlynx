@@ -8,7 +8,7 @@ ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 UID=${shell id -u}
 GID=${shell id -g}
 
-LIB_SOURCE_DIR="${ROOT_DIR}/packages/flatsql"
+LIB_SOURCE_DIR="${ROOT_DIR}/packages/sqlynx"
 LIB_DEBUG_DIR="${LIB_SOURCE_DIR}/build/native/o0"
 LIB_RELWITHDEBINFO_DIR="${LIB_SOURCE_DIR}/build/native/o2"
 LIB_RELEASE_DIR="${LIB_SOURCE_DIR}/build/native/o3"
@@ -109,51 +109,51 @@ core_wasm_o3:
 
 .PHONY: core_js_o0
 core_js_o0:
-	yarn workspace @ankoh/flatsql build:o0
+	yarn workspace @ankoh/sqlynx build:o0
 
 .PHONY: core_js_o2
 core_js_o2:
-	yarn workspace @ankoh/flatsql build:o2
+	yarn workspace @ankoh/sqlynx build:o2
 
 .PHONY: core_js_o3
 core_js_o3:
-	yarn workspace @ankoh/flatsql build:o3
+	yarn workspace @ankoh/sqlynx build:o3
 
 .PHONY: core_js_tests
 core_js_tests:
-	yarn workspace @ankoh/flatsql test
+	yarn workspace @ankoh/sqlynx test
 
 .PHONY: editor_o3
 app_o3:
-	yarn workspace @ankoh/flatsql-app pwa:build:o3
+	yarn workspace @ankoh/sqlynx-app pwa:build:o3
 
 .PHONY: editor_start
 app_start:
-	yarn workspace @ankoh/flatsql-app pwa:start
+	yarn workspace @ankoh/sqlynx-app pwa:start
 
 .PHONY: platform_build_o0
 platform_build_o0:
-	yarn workspace @ankoh/flatsql-platform build:o0
+	yarn workspace @ankoh/sqlynx-platform build:o0
 
 .PHONY: platform_build_o3
 platform_build_o3:
-	yarn workspace @ankoh/flatsql-platform build:o3
+	yarn workspace @ankoh/sqlynx-platform build:o3
 
 .PHONY: platform_test
 platform_test:
-	yarn workspace @ankoh/flatsql-platform test
+	yarn workspace @ankoh/sqlynx-platform test
 
 .PHONY: lsp
 lsp:
-	yarn workspace @ankoh/flatsql-lsp build
+	yarn workspace @ankoh/sqlynx-lsp build
 
 .PHONY: vscode
 vscode:
-	yarn workspace flatsql-vscode build
+	yarn workspace sqlynx-vscode build
 
 .PHONY: vscode_package
 vscode_package:
-	yarn workspace flatsql-vscode package
+	yarn workspace sqlynx-vscode package
 
 .PHONY: snapshots
 snapshots:

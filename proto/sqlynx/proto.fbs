@@ -1,0 +1,8 @@
+include "sqlynx/analyzed_script.fbs";
+include "sqlynx/completion.fbs";
+include "sqlynx/parsed_script.fbs";
+include "sqlynx/schema_graph.fbs";
+include "sqlynx/script_statistics.fbs";
+include "sqlynx/script_cursor.fbs";
+include "sqlynx/sql_enums.fbs";
+include "sqlynx/status.fbs";

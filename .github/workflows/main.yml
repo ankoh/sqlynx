@@ -47,8 +47,8 @@ jobs:
 
             - uses: actions/upload-artifact@v3
               with:
-                  name: flatsql_parser_wasm_${{ matrix.build_type }}
-                  path: ./packages/flatsql/build/wasm/${{ matrix.build_type }}/flatsql.wasm
+                  name: sqlynx_parser_wasm_${{ matrix.build_type }}
+                  path: ./packages/sqlynx/build/wasm/${{ matrix.build_type }}/sqlynx.wasm
                   retention-days: 1
 
     core_native:
@@ -77,8 +77,8 @@ jobs:
             - name: Compile library
               shell: bash
               env:
-                  core_SOURCE_DIR: ./packages/flatsql
-                  core_BUILD_DIR: ./packages/flatsql/build/native/${{ matrix.build_type }}
+                  core_SOURCE_DIR: ./packages/sqlynx
+                  core_BUILD_DIR: ./packages/sqlynx/build/native/${{ matrix.build_type }}
               run: |
                   cmake -S ${core_SOURCE_DIR} -B ${core_BUILD_DIR} \
                   -DCMAKE_C_COMPILER=${{env.LLVM_PATH}}/bin/clang \
@@ -92,8 +92,8 @@ jobs:
             - name: Test library
               shell: bash
               env:
-                  core_SOURCE_DIR: ./packages/flatsql
-                  core_BUILD_DIR: ./packages/flatsql/build/native/${{ matrix.build_type }}
+                  core_SOURCE_DIR: ./packages/sqlynx
+                  core_BUILD_DIR: ./packages/sqlynx/build/native/${{ matrix.build_type }}
               run: |
                   ${core_BUILD_DIR}/tester --source ${core_SOURCE_DIR}
 
@@ -101,8 +101,8 @@ jobs:
               if: matrix.build_type == 'o2'
               shell: bash
               env:
-                  core_SOURCE_DIR: ./packages/flatsql
-                  core_BUILD_DIR: ./packages/flatsql/build/native/${{ matrix.build_type }}
+                  core_SOURCE_DIR: ./packages/sqlynx
+                  core_BUILD_DIR: ./packages/sqlynx/build/native/${{ matrix.build_type }}
               run: |
                   ${core_BUILD_DIR}/benchmark_pipeline
 
@@ -110,15 +110,15 @@ jobs:
               if: matrix.build_type == 'o2'
               shell: bash
               env:
-                  core_SOURCE_DIR: ./packages/flatsql
-                  core_BUILD_DIR: ./packages/flatsql/build/native/${{ matrix.build_type }}
+                  core_SOURCE_DIR: ./packages/sqlynx
+                  core_BUILD_DIR: ./packages/sqlynx/build/native/${{ matrix.build_type }}
               run: |
                   ${core_BUILD_DIR}/benchmark_layout
 
             - name: Merge coverage data
               shell: bash
               env:
-                  core_COVERAGE_DIR: ./packages/flatsql/build/coverage
+                  core_COVERAGE_DIR: ./packages/sqlynx/build/coverage
               run: |
                   mkdir -p ${core_COVERAGE_DIR}
                   ${{env.LLVM_PATH}}/bin/llvm-profdata merge -output=${core_COVERAGE_DIR}/coverage.prof -instr default.profraw
@@ -126,8 +126,8 @@ jobs:
             - name: Build coverage report
               shell: bash
               env:
-                  core_BUILD_DIR: ./packages/flatsql/build/native/${{ matrix.build_type }}
-                  core_COVERAGE_DIR: ./packages/flatsql/build/coverage
+                  core_BUILD_DIR: ./packages/sqlynx/build/native/${{ matrix.build_type }}
+                  core_COVERAGE_DIR: ./packages/sqlynx/build/coverage
               run: |
                   ${{env.LLVM_PATH}}/bin/llvm-cov export \
                   --instr-profile ${core_COVERAGE_DIR}/coverage.prof \
@@ -140,8 +140,8 @@ jobs:
 
             - uses: actions/upload-artifact@v3
               with:
-                  name: flatsql_coverage_native_${{ matrix.build_type }}
-                  path: ./packages/flatsql/build/coverage/lcov.info
+                  name: sqlynx_coverage_native_${{ matrix.build_type }}
+                  path: ./packages/sqlynx/build/coverage/lcov.info
                   retention-days: 1
 
     platform:
@@ -192,13 +192,13 @@ jobs:
               run: yarn install --frozen-lockfile
 
             - name: Build Platform / o0
-              run: yarn workspace @ankoh/flatsql-platform build:o0
+              run: yarn workspace @ankoh/sqlynx-platform build:o0
 
             - name: Build Platform / o3
-              run: yarn workspace @ankoh/flatsql-platform build:o3
+              run: yarn workspace @ankoh/sqlynx-platform build:o3
 
             - name: Test Platform
-              run: yarn workspace @ankoh/flatsql-platform test
+              run: yarn workspace @ankoh/sqlynx-platform test
 
     core_js:
         name: Build Library / Javascript
@@ -213,8 +213,8 @@ jobs:
 
             - uses: actions/download-artifact@v3
               with:
-                  name: flatsql_parser_wasm_o3
-                  path: ./packages/flatsql/build/wasm/o3/
+                  name: sqlynx_parser_wasm_o3
+                  path: ./packages/sqlynx/build/wasm/o3/
 
             - name: Setup flatc
               uses: ./.github/actions/setup-flatc
@@ -229,26 +229,26 @@ jobs:
                   mkdir -p ./lib/build/wasm/o3 ./reports
                   yarn install --frozen-lockfile
 
-            - name: Build @ankoh/flatsql
+            - name: Build @ankoh/sqlynx
               shell: bash
               run: |
-                  yarn workspace @ankoh/flatsql build:o3
+                  yarn workspace @ankoh/sqlynx build:o3
 
-            - name: Test @ankoh/flatsql
+            - name: Test @ankoh/sqlynx
               shell: bash
               run: |
-                  yarn workspace @ankoh/flatsql test:coverage
+                  yarn workspace @ankoh/sqlynx test:coverage
 
             - uses: actions/upload-artifact@v3
               with:
-                  name: flatsql_jslib
-                  path: ./packages/flatsql-wasm/dist
+                  name: sqlynx_jslib
+                  path: ./packages/sqlynx-wasm/dist
                   retention-days: 1
 
             - uses: actions/upload-artifact@v3
               with:
-                  name: flatsql_coverage_js
-                  path: ./packages/flatsql-wasm/coverage/lcov.info
+                  name: sqlynx_coverage_js
+                  path: ./packages/sqlynx-wasm/coverage/lcov.info
                   retention-days: 1
 
     pwa:
@@ -264,8 +264,8 @@ jobs:
 
             - uses: actions/download-artifact@v3
               with:
-                  name: flatsql_jslib
-                  path: ./packages/flatsql-wasm/dist
+                  name: sqlynx_jslib
+                  path: ./packages/sqlynx-wasm/dist
 
             - name: Install npm dependencies
               shell: bash
@@ -273,15 +273,15 @@ jobs:
                   mkdir -p ./lib/build/wasm/o3 ./reports
                   yarn install --frozen-lockfile
 
-            - name: Build @ankoh/flatsql-app
+            - name: Build @ankoh/sqlynx-app
               shell: bash
               run: |
-                  yarn workspace @ankoh/flatsql-app pwa:build:o3
+                  yarn workspace @ankoh/sqlynx-app pwa:build:o3
 
             - uses: actions/upload-artifact@v3
               with:
-                  name: flatsql_app
-                  path: ./packages/flatsql-app/build/pwa/o3
+                  name: sqlynx_app
+                  path: ./packages/sqlynx-app/build/pwa/o3
                   retention-days: 1
 
     lsp:
@@ -297,23 +297,23 @@ jobs:
 
             - uses: actions/download-artifact@v3
               with:
-                  name: flatsql_jslib
-                  path: ./packages/flatsql-wasm/dist
+                  name: sqlynx_jslib
+                  path: ./packages/sqlynx-wasm/dist
 
             - name: Install npm dependencies
               shell: bash
               run: |
                   yarn install --frozen-lockfile
 
-            - name: Build @ankoh/flatsql-lsp
+            - name: Build @ankoh/sqlynx-lsp
               shell: bash
               run: |
-                  yarn workspace @ankoh/flatsql-lsp build
+                  yarn workspace @ankoh/sqlynx-lsp build
 
             - uses: actions/upload-artifact@v3
               with:
-                  name: flatsql_lsp
-                  path: ./packages/flatsql-lsp/dist/
+                  name: sqlynx_lsp
+                  path: ./packages/sqlynx-lsp/dist/
                   retention-days: 1
 
     pages:
@@ -333,7 +333,7 @@ jobs:
         steps:
             - uses: actions/download-artifact@v3
               with:
-                  name: flatsql_app
+                  name: sqlynx_app
                   path: ./page
 
             - uses: actions/upload-pages-artifact@v2
@@ -358,13 +358,13 @@ jobs:
 
             - uses: actions/download-artifact@v3
               with:
-                  name: flatsql_coverage_native_o0
-                  path: ./packages/flatsql/build/coverage/
+                  name: sqlynx_coverage_native_o0
+                  path: ./packages/sqlynx/build/coverage/
 
             - uses: actions/download-artifact@v3
               with:
-                  name: flatsql_coverage_js
-                  path: ./packages/flatsql-wasm/coverage/
+                  name: sqlynx_coverage_js
+                  path: ./packages/sqlynx-wasm/coverage/
 
             - name: Upload coverage report
               uses: coverallsapp/github-action@v2

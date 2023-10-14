@@ -20,13 +20,13 @@
     "@jridgewell/gen-mapping" "^0.3.0"
     "@jridgewell/trace-mapping" "^0.3.9"
 
-"@ankoh/flatsql-lsp@link:packages/flatsql-lsp":
+"@ankoh/sqlynx-lsp@link:packages/sqlynx-lsp":
   version "0.0.1"
   dependencies:
-    "@ankoh/flatsql" "link:packages/flatsql-wasm"
+    "@ankoh/sqlynx" "link:packages/sqlynx-wasm"
     vscode-languageserver "^9.0.1"
 
-"@ankoh/flatsql@link:packages/flatsql-wasm":
+"@ankoh/sqlynx@link:packages/sqlynx-wasm":
   version "0.0.5"
   dependencies:
     flatbuffers "^23.5.26"

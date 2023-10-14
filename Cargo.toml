@@ -2,7 +2,7 @@
 resolver = "2"
 
 members = [
-    "packages/flatsql-platform",
+    "packages/sqlynx-platform",
 ]
 
 [profile.release]
