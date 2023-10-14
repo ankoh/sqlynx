@@ -1,0 +1,6 @@
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <symbol id="sym" viewBox="0 0 32 5">
+        <path fill="currentColor" d="M0 0h32v4.2H0z"></path>
+    </symbol>
+    <use xlink:href="#sym" />
+</svg>

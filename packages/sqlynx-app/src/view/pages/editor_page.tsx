@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { useSQLynx } from '../../sqlynx_loader';
 import { ScriptEditor } from '../editor/editor';
-import { SchemaGraphWithControls } from '../../view/schema/schema_graph';
+import { SchemaGraph } from '../../view/schema/schema_graph';
 import { RESULT_OK } from '../../utils/result';
 
 import styles from './editor_page.module.css';
@@ -62,7 +62,7 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
             </div>
             <div className={styles.body_container}>
                 <div className={styles.schemagraph_container}>
-                    <SchemaGraphWithControls className={styles.schemagraph_card} />
+                    <SchemaGraph className={styles.schemagraph_card} />
                 </div>
                 <div className={styles.editor_container}>
                     <div className={styles.editor_card}>
