@@ -111,8 +111,8 @@
     }
     .tab.active::after {
         position: absolute;
-        top: -1px;
-        bottom: -1px;
+        top: 0;
+        bottom: 0;
         right: 0;
         content: '';
         width: var(--nav_tab_indicator_width);
