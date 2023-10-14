@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/ankoh/dashql/blob/92c1d353f6dad17a427e2d3326d518eb5871fe50/packages/core/static/favicons/android-chrome-512x512.png" width=88 style="padding: 8px; background: black;">
+  <img src="misc/logo.png" width=88>
 </p>
 <p align="center">
   <a href="https://github.com/ankoh/flatsql/actions/workflows/main.yml"><img src="https://github.com/ankoh/flatsql/actions/workflows/main.yml/badge.svg?branch=main" /></a>
