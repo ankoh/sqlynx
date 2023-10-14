@@ -162,18 +162,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a26ae43d7bcc3b814de94796a5e736d4029efb0ee900c12e2d54c993ad1a1e07"
 
 [[package]]
-name = "sqlynx-platform"
-version = "0.1.0"
-dependencies = [
- "bytes",
- "neon",
- "once_cell",
- "prost",
- "tokio",
- "tonic",
-]
-
-[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -676,6 +664,18 @@ checksum = "4031e820eb552adee9295814c0ced9e5cf38ddf1e8b7d566d6de8e2538ea989e"
 dependencies = [
  "libc",
  "windows-sys",
+]
+
+[[package]]
+name = "sqlynx-platform"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "neon",
+ "once_cell",
+ "prost",
+ "tokio",
+ "tonic",
 ]
 
 [[package]]
