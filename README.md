@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="misc/logo.png" width=140>
+  <img src="misc/logo.png" width=100>
 </p>
 <p align="center">
   <a href="https://github.com/ankoh/flatsql/actions/workflows/main.yml"><img src="https://github.com/ankoh/flatsql/actions/workflows/main.yml/badge.svg?branch=main" /></a>
