@@ -80,13 +80,11 @@ export const SchemaGraphBoard: React.FC<GraphProps> = (props: GraphProps) => {
     );
 };
 
-interface GraphWithControlsProps {
-    className?: string;
-}
+interface GraphWithControlsProps {}
 
 export const SchemaGraph: React.FC<GraphWithControlsProps> = (props: GraphWithControlsProps) => {
     return (
-        <div className={cn(styles.graph_container, props.className)}>
+        <div className={styles.graph_container}>
             <div className={styles.graph_board_container}>
                 <AutoSizer>
                     {(s: { height: number; width: number }) => <SchemaGraphBoard width={s.width} height={s.height} />}

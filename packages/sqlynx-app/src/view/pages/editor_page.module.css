@@ -119,33 +119,6 @@
     margin-top: 2px;
 }
 
-.schemagraph_container {
-    grid-row: 1;
-    width: 100%;
-    height: 100%;
-}
-
-.schemagraph_card {
-    position: relative;
-    box-sizing: border-box;
-    border: 1px solid var(--border_color_primary);
-    border-radius: var(--border_radius);
-    background-color: var(--graph_bg);
-    width: 100%;
-    height: 100%;
-}
-
-.schemagraph {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-}
-
 .editor_container {
     grid-row: 2;
     position: relative;
