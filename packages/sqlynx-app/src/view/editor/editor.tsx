@@ -38,9 +38,9 @@ interface TabProps {
 
 const Tab: React.FC<TabProps> = (props: TabProps) => (
     <div
-        className={cn(styles.editortabs_tab, {
-            [styles.editortabs_tab_active]: props.id == props.active,
-            [styles.editortabs_tab_disabled]: props.disabled ?? false,
+        className={cn(styles.tab, {
+            [styles.tab_active]: props.id == props.active,
+            [styles.tab_disabled]: props.disabled ?? false,
         })}
         onClick={props.onClick}
         data-tab={props.id}
@@ -218,7 +218,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                     {statsOpen && <ScriptStatisticsBar stats={activeScriptStatistics} />}
                 </div>
             </div>
-            <div className={styles.editortabs}>
+            <div className={styles.tabs}>
                 <Tab id={TabId.MAIN_SCRIPT} active={activeTab} icon={iconMainScript} onClick={selectTab} />
                 <Tab id={TabId.SCHEMA_SCRIPT} active={activeTab} icon={iconExternalScript} onClick={selectTab} />
                 <div style={{ flex: 1 }} />

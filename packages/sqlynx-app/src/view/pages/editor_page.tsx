@@ -3,13 +3,14 @@ import * as React from 'react';
 import { useSQLynx } from '../../sqlynx_loader';
 import { ScriptEditor } from '../editor/editor';
 import { SchemaGraph } from '../../view/schema/schema_graph';
-import { RESULT_OK } from '../../utils/result';
+import { TabCard } from '../../view/tab_card';
 
 import styles from './editor_page.module.css';
 
 import iconGitHub from '../../../static/svg/icons/github.svg';
 import iconBug from '../../../static/svg/icons/bug.svg';
 import iconShare from '../../../static/svg/icons/link.svg';
+import iconTablesConnected from '../../../static/svg/icons/tables_connected.svg';
 
 interface Props {}
 
@@ -61,9 +62,14 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                 </div>
             </div>
             <div className={styles.body_container}>
-                <div className={styles.schemagraph_container}>
-                    <SchemaGraph className={styles.schemagraph_card} />
-                </div>
+                <TabCard
+                    selectedTab={1}
+                    tabs={[[1, iconTablesConnected]]}
+                    tabProps={{}}
+                    tabRenderers={{
+                        [1]: props => <SchemaGraph />,
+                    }}
+                />
                 <div className={styles.editor_container}>
                     <div className={styles.editor_card}>
                         <ScriptEditor />
