@@ -17,6 +17,7 @@
     grid-column: 1;
     background-color: var(--editortabs_background);
     border-right: 1px solid var(--border_color_primary);
+    border-radius: calc(var(--border_radius) - 1px) 0px 0px calc(var(--border_radius) - 1px);
 }
 
 .tab {
