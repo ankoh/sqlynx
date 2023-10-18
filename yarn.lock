@@ -1145,15 +1145,15 @@
     "@types/qs" "*"
     "@types/serve-static" "*"
 
-"@types/flatbuffers@^1.10.1":
-  version "1.10.1"
-  resolved "https://registry.yarnpkg.com/@types/flatbuffers/-/flatbuffers-1.10.1.tgz#e90c4d76d07f11186ab59a17d76f256a76c2542f"
-  integrity sha512-Ljv5jhGc+SwSKZLuj9zkXkQXby6oX4VYWFgYIZqeXPvxzdgyBqJN9+u7d406XDow7ohulSxB8XhosLXN1dANKQ==
+"@types/flatbuffers@^1.10.2":
+  version "1.10.2"
+  resolved "https://registry.yarnpkg.com/@types/flatbuffers/-/flatbuffers-1.10.2.tgz#2f53f10e48d198f5a50776434489fb4837775854"
+  integrity sha512-kdf6SlDXrW8LvG9Sw0S5y6Goy4qvJUlDLilqV4ZMNVUyP0Oz0jjriac8bDM66YupE4qKyjK2RPzfi05ku/OFiQ==
 
-"@types/fontfaceobserver@^2.1.1":
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/@types/fontfaceobserver/-/fontfaceobserver-2.1.1.tgz#8953914e602d571b3d675d0e061a95bf5f2a029a"
-  integrity sha512-ur2vdKw6m/2Ks1LHFCZxjgXyiXDwM9iThH+vQ4pBoxvoU06UhZ/j+vHnE8eKwsRooBRdGrkNBXSZ4k92JANhAQ==
+"@types/fontfaceobserver@^2.1.2":
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/@types/fontfaceobserver/-/fontfaceobserver-2.1.2.tgz#540482cffc5da400fe6a479777180ca6bbbeb11c"
+  integrity sha512-QPTBzwHoy3KFaj6702gqqw9YpooQbN0biSBGyVUKvYzeIwpqJeZrzSx+HVzndy9Vsp2ZmvsTVs4k/evcySQC3A==
 
 "@types/graceful-fs@^4.1.3":
   version "4.1.6"
