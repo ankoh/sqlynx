@@ -76,5 +76,5 @@
 .graph_edge_highlighting {
     grid-row: 1;
     grid-column: 1;
-    pointer-events: none;
+    /*    pointer-events: none; */
 }
