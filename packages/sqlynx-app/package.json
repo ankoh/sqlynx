@@ -32,7 +32,8 @@
         "react-resizable": "^3.0.5",
         "react-router-dom": "^6.17.0",
         "react-virtualized-auto-sizer": "^1.0.20",
-        "react-window": "^1.8.9"
+        "react-window": "^1.8.9",
+        "react-zoom-pan-pinch": "^3.2.0"
     },
     "devDependencies": {
         "@types/flatbuffers": "^1.10.2",

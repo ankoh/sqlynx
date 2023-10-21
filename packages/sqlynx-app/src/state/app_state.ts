@@ -139,6 +139,14 @@ export function createDefaultState(): AppState {
             nodes: [],
             nodesByTable: new Map(),
             edges: new Map(),
+            boundaries: {
+                minX: 0,
+                maxX: 0,
+                minY: 0,
+                maxY: 0,
+                totalWidth: 0,
+                totalHeight: 0,
+            },
         },
         focus: null,
     };

@@ -3,7 +3,7 @@ import * as React from 'react';
 import cn from 'classnames';
 
 import { Action } from '../../utils/action';
-import { NodeViewModel, EdgeViewModel, GraphConnectionId, GraphNodeDescriptor } from './graph_view_model';
+import { NodeViewModel, EdgeViewModel, GraphConnectionId, GraphNodeDescriptor, Boundaries } from './graph_view_model';
 import { NodePort } from './graph_edges';
 import { FocusInfo } from '../../state/focus';
 
@@ -13,6 +13,7 @@ import styles from './node_layer.module.css';
 
 interface Props {
     className?: string;
+    bounds: Boundaries;
     nodes: NodeViewModel[];
     edges: Map<GraphConnectionId.Value, EdgeViewModel>;
     focus: FocusInfo | null;
@@ -177,7 +178,6 @@ export function NodeLayer(props: Props) {
             connectionPorts.set(edge.toTable, (connectionPorts.get(edge.toTable) ?? 0) | edge.toPort);
         }
     }
-
     return (
         <div className={props.className}>
             {props.nodes.map(n => {
@@ -193,8 +193,8 @@ export function NodeLayer(props: Props) {
                         })}
                         style={{
                             position: 'absolute',
-                            top: n.y,
-                            left: n.x,
+                            top: n.y - props.bounds.minY,
+                            left: n.x - props.bounds.minX,
                             width: n.width,
                             height: n.height,
                         }}

@@ -4,8 +4,8 @@ import { EdgeHighlightingLayer, EdgeLayer } from './edge_layer';
 import { GraphNodeDescriptor } from './graph_view_model';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { useAppStateDispatch, useAppState } from '../../state/app_state_provider';
-import { useBoardControls } from './board_controls';
 import { FOCUS_GRAPH_EDGE, FOCUS_GRAPH_NODE, RESIZE_SCHEMA_GRAPH } from '../../state/app_state_reducer';
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 
 import styles from './schema_graph.module.css';
 
@@ -13,22 +13,11 @@ import icon_graph_align from '../../../static/svg/icons/graph_align.svg';
 import icon_graph_minus from '../../../static/svg/icons/graph_minus.svg';
 import icon_graph_plus from '../../../static/svg/icons/graph_plus.svg';
 
-interface BoardProps {
-    width: number;
-    height: number;
-}
+interface SchemaGraphViewProps {}
 
-export const SchemaGraphBoard: React.FC<BoardProps> = (props: BoardProps) => {
+const SchemaGraphView: React.FC<SchemaGraphViewProps> = (props: SchemaGraphViewProps) => {
     const state = useAppState();
     const dispatch = useAppStateDispatch();
-
-    // Recompute the schema graph if the graph dimensions change
-    React.useEffect(() => {
-        dispatch({
-            type: RESIZE_SCHEMA_GRAPH,
-            value: [props.width, props.height],
-        });
-    }, [props.width, props.height]);
 
     // Helper to change node focus
     const onNodeFocusChanged = React.useCallback(
@@ -51,16 +40,22 @@ export const SchemaGraphBoard: React.FC<BoardProps> = (props: BoardProps) => {
         [dispatch],
     );
     return (
-        <>
+        <div
+            className={styles.graph_view}
+            style={{
+                width: state.graphViewModel.boundaries.totalWidth,
+                height: state.graphViewModel.boundaries.totalHeight,
+            }}
+        >
             <EdgeLayer
                 className={styles.graph_edges}
-                boardWidth={props.width}
-                boardHeight={props.height}
+                bounds={state.graphViewModel.boundaries}
                 edges={state.graphViewModel.edges}
                 onFocusChanged={onEdgeFocusChanged}
             />
             <NodeLayer
                 className={styles.graph_nodes}
+                bounds={state.graphViewModel.boundaries}
                 nodes={state.graphViewModel.nodes}
                 edges={state.graphViewModel.edges}
                 focus={state.focus}
@@ -68,29 +63,49 @@ export const SchemaGraphBoard: React.FC<BoardProps> = (props: BoardProps) => {
             />
             <EdgeHighlightingLayer
                 className={styles.graph_edge_highlighting}
-                boardWidth={props.width}
-                boardHeight={props.height}
+                bounds={state.graphViewModel.boundaries}
                 edges={state.graphViewModel.edges}
                 focus={state.focus}
             />
-        </>
+        </div>
+    );
+};
+
+interface SchemaGraphBoardProps {
+    width: number;
+    height: number;
+}
+
+const SchemaGraphBoard: React.FC<SchemaGraphBoardProps> = (props: SchemaGraphBoardProps) => {
+    const dispatch = useAppStateDispatch();
+
+    // Recompute the schema graph if the graph dimension hints change
+    React.useEffect(() => {
+        dispatch({
+            type: RESIZE_SCHEMA_GRAPH,
+            value: [props.width, props.height],
+        });
+    }, [props.width, props.height]);
+
+    return (
+        <TransformWrapper>
+            <TransformComponent>
+                <div className={styles.graph_board} style={{ width: props.width, height: props.height }}>
+                    <SchemaGraphView />
+                </div>
+            </TransformComponent>
+        </TransformWrapper>
     );
 };
 
 interface GraphWithControlsProps {}
 
 export const SchemaGraph: React.FC<GraphWithControlsProps> = (props: GraphWithControlsProps) => {
-    const [boardRef] = useBoardControls();
-
     return (
         <div className={styles.graph_container}>
             <div className={styles.graph_board_container}>
                 <AutoSizer>
-                    {(s: { height: number; width: number }) => (
-                        <div ref={boardRef} className={styles.graph_board}>
-                            <SchemaGraphBoard width={s.width} height={s.height} />
-                        </div>
-                    )}
+                    {(s: { height: number; width: number }) => <SchemaGraphBoard height={s.height} width={s.width} />}
                 </AutoSizer>
             </div>
             <div className={styles.graph_title}>Schema</div>
