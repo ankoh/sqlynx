@@ -276,8 +276,8 @@ flatbuffers::Offset<proto::SchemaGraphLayout> SchemaGrid::Pack(flatbuffers::Flat
     layout.edges.resize(edges.size());
     layout.edge_nodes.resize(edge_nodes.size());
 
-    auto center_x = config.board_width / 2;
-    auto center_y = config.board_height / 2;
+    auto center_x = 0;
+    auto center_y = 0;
     for (uint32_t i = 0; i < nodes.size(); ++i) {
         auto cell = nodes[i].placed_cell;
         assert(!cell.has_value());

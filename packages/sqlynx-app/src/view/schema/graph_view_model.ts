@@ -3,10 +3,20 @@ import * as sqlynx from '@ankoh/sqlynx';
 import { AppState, ScriptKey } from '../../state/app_state';
 import { EdgePathBuilder, EdgeType, PORTS_FROM, PORTS_TO, buildEdgePath, selectEdgeType } from './graph_edges';
 
+export interface Boundaries {
+    minX: number;
+    maxX: number;
+    minY: number;
+    maxY: number;
+    totalWidth: number;
+    totalHeight: number;
+}
+
 export interface GraphViewModel {
     nodes: NodeViewModel[];
     nodesByTable: Map<sqlynx.QualifiedID.Value, NodeViewModel>;
     edges: Map<GraphConnectionId.Value, EdgeViewModel>;
+    boundaries: Boundaries;
 }
 
 export interface NodeViewModel {
@@ -58,11 +68,20 @@ export namespace GraphConnectionId {
 }
 
 export function computeGraphViewModel(state: AppState): GraphViewModel {
+    const boundaries: Boundaries = {
+        minX: 0,
+        maxX: 0,
+        minY: 0,
+        maxY: 0,
+        totalWidth: 0,
+        totalHeight: 0,
+    };
     if (!state.graphLayout) {
         return {
             nodes: [],
             nodesByTable: new Map(),
             edges: new Map(),
+            boundaries,
         };
     }
     const nodes = [];
@@ -86,6 +105,7 @@ export function computeGraphViewModel(state: AppState): GraphViewModel {
             nodes: [],
             nodesByTable: new Map(),
             edges: new Map(),
+            boundaries,
         };
     }
     const tmpGraphTableNode = new sqlynx.proto.SchemaGraphTableNode();
@@ -138,6 +158,10 @@ export function computeGraphViewModel(state: AppState): GraphViewModel {
             };
             nodes.push(viewModel);
             nodesByTable.set(tableId, viewModel);
+            boundaries.minX = Math.min(boundaries.minX, viewModel.x);
+            boundaries.maxX = Math.max(boundaries.maxX, viewModel.x + viewModel.width);
+            boundaries.minY = Math.min(boundaries.minY, viewModel.y);
+            boundaries.maxY = Math.max(boundaries.maxY, viewModel.y + viewModel.height);
         }
     }
 
@@ -232,5 +256,7 @@ export function computeGraphViewModel(state: AppState): GraphViewModel {
         }
     }
 
-    return { nodes, nodesByTable, edges };
+    boundaries.totalWidth = boundaries.maxX - boundaries.minX;
+    boundaries.totalHeight = boundaries.maxY - boundaries.minY;
+    return { nodes, nodesByTable, edges, boundaries };
 }

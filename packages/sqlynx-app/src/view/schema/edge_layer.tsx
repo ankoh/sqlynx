@@ -1,13 +1,12 @@
 import * as React from 'react';
 
 import { Action } from '../../utils/action';
-import { EdgeViewModel, GraphConnectionId } from './graph_view_model';
+import { EdgeViewModel, GraphConnectionId, Boundaries } from './graph_view_model';
 import { FocusInfo } from '../../state/focus';
 
 interface Props {
     className?: string;
-    boardWidth: number;
-    boardHeight: number;
+    bounds: Boundaries;
     edges: Map<GraphConnectionId.Value, EdgeViewModel>;
     onFocusChanged: (connection: GraphConnectionId.Value | null) => void;
 }
@@ -116,9 +115,11 @@ export function EdgeLayer(props: Props) {
             />,
         );
     }
-
     return (
-        <svg className={props.className} viewBox={'0 0 ' + props.boardWidth + ' ' + props.boardHeight}>
+        <svg
+            className={props.className}
+            viewBox={`${props.bounds.minX} ${props.bounds.minY} ${props.bounds.totalWidth} ${props.bounds.totalHeight}`}
+        >
             {paths}
         </svg>
     );
@@ -126,8 +127,7 @@ export function EdgeLayer(props: Props) {
 
 interface HighlightingProps {
     className?: string;
-    boardWidth: number;
-    boardHeight: number;
+    bounds: Boundaries;
     edges: Map<GraphConnectionId.Value, EdgeViewModel>;
     focus: FocusInfo | null;
 }
@@ -149,7 +149,10 @@ export function EdgeHighlightingLayer(props: HighlightingProps) {
         }
     }
     return (
-        <svg className={props.className} viewBox={'0 0 ' + props.boardWidth + ' ' + props.boardHeight}>
+        <svg
+            className={props.className}
+            viewBox={`${props.bounds.minX} ${props.bounds.minY} ${props.bounds.totalWidth} ${props.bounds.totalHeight}`}
+        >
             {paths}
         </svg>
     );
