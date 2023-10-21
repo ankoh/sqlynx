@@ -4,8 +4,8 @@ import { EdgeHighlightingLayer, EdgeLayer } from './edge_layer';
 import { GraphNodeDescriptor } from './graph_view_model';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { useAppStateDispatch, useAppState } from '../../state/app_state_provider';
+import { useBoardControls } from './board_controls';
 import { FOCUS_GRAPH_EDGE, FOCUS_GRAPH_NODE, RESIZE_SCHEMA_GRAPH } from '../../state/app_state_reducer';
-import cn from 'classnames';
 
 import styles from './schema_graph.module.css';
 
@@ -13,12 +13,12 @@ import icon_graph_align from '../../../static/svg/icons/graph_align.svg';
 import icon_graph_minus from '../../../static/svg/icons/graph_minus.svg';
 import icon_graph_plus from '../../../static/svg/icons/graph_plus.svg';
 
-interface GraphProps {
+interface BoardProps {
     width: number;
     height: number;
 }
 
-export const SchemaGraphBoard: React.FC<GraphProps> = (props: GraphProps) => {
+export const SchemaGraphBoard: React.FC<BoardProps> = (props: BoardProps) => {
     const state = useAppState();
     const dispatch = useAppStateDispatch();
 
@@ -50,9 +50,8 @@ export const SchemaGraphBoard: React.FC<GraphProps> = (props: GraphProps) => {
         },
         [dispatch],
     );
-
     return (
-        <div className={styles.graph_board}>
+        <>
             <EdgeLayer
                 className={styles.graph_edges}
                 boardWidth={props.width}
@@ -62,8 +61,6 @@ export const SchemaGraphBoard: React.FC<GraphProps> = (props: GraphProps) => {
             />
             <NodeLayer
                 className={styles.graph_nodes}
-                width={props.width}
-                height={props.height}
                 nodes={state.graphViewModel.nodes}
                 edges={state.graphViewModel.edges}
                 focus={state.focus}
@@ -76,18 +73,24 @@ export const SchemaGraphBoard: React.FC<GraphProps> = (props: GraphProps) => {
                 edges={state.graphViewModel.edges}
                 focus={state.focus}
             />
-        </div>
+        </>
     );
 };
 
 interface GraphWithControlsProps {}
 
 export const SchemaGraph: React.FC<GraphWithControlsProps> = (props: GraphWithControlsProps) => {
+    const [boardRef] = useBoardControls();
+
     return (
         <div className={styles.graph_container}>
             <div className={styles.graph_board_container}>
                 <AutoSizer>
-                    {(s: { height: number; width: number }) => <SchemaGraphBoard width={s.width} height={s.height} />}
+                    {(s: { height: number; width: number }) => (
+                        <div ref={boardRef} className={styles.graph_board}>
+                            <SchemaGraphBoard width={s.width} height={s.height} />
+                        </div>
+                    )}
                 </AutoSizer>
             </div>
             <div className={styles.graph_title}>Schema</div>

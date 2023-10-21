@@ -15,7 +15,7 @@
     position: absolute;
     width: 100%;
     height: 100%;
-    overflow: auto;
+    overflow: hidden;
 }
 
 .graph_controls {
@@ -71,15 +71,6 @@
     width: 100%;
     height: 100%;
     color: var(--graph_edges_bg);
-}
-
-.graph_debug_info {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
 }
 
 .graph_edge_highlighting {
