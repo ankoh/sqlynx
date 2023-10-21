@@ -5,7 +5,10 @@ import { Resolvable, ResolvableStatus } from '../utils/resolvable';
 
 export interface AppFeatures {
     userAccount?: boolean;
-    systemInfo?: boolean;
+    appInfo?: boolean;
+    logViewer?: boolean;
+    connectionManager?: boolean;
+    urlSharing?: boolean;
 }
 
 export interface AppConfig {

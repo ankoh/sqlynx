@@ -41,7 +41,9 @@ export const NavBar = (): React.ReactElement => {
             </Link>
             <div className={styles.tabs}>
                 <Tab route="/" location={location.pathname} icon={icon_explorer} />
-                <Tab route="/databases" location={location.pathname} icon={icon_connection} />
+                {appConfig?.value?.features?.connectionManager && (
+                    <Tab route="/databases" location={location.pathname} icon={icon_connection} />
+                )}
             </div>
             {appConfig?.value?.features?.userAccount && (
                 <Link className={styles.account} to="/account">
