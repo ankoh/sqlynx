@@ -57,17 +57,19 @@ export const SystemBar: React.FC<Props> = (props: Props) => {
     const toggleTab = (tab: number): void => setExpanded(expanded == tab ? null : tab);
     return (
         <div className={props.className}>
-            <SystemPanel
-                systemID={1}
-                expandedPanel={expanded}
-                onClick={toggleTab.bind(this)}
-                icon={icon_log}
-                preferredHeight="400px"
-                preferredWidth="500px"
-            >
-                <RefreshingLogViewer onClose={() => toggleTab(1)} />
-            </SystemPanel>
-            {appConfig?.value?.features?.systemInfo && (
+            {appConfig?.value?.features?.logViewer && (
+                <SystemPanel
+                    systemID={1}
+                    expandedPanel={expanded}
+                    onClick={toggleTab.bind(this)}
+                    icon={icon_log}
+                    preferredHeight="400px"
+                    preferredWidth="500px"
+                >
+                    <RefreshingLogViewer onClose={() => toggleTab(1)} />
+                </SystemPanel>
+            )}
+            {appConfig?.value?.features?.appInfo && (
                 <SystemPanel
                     systemID={2}
                     expandedPanel={expanded}

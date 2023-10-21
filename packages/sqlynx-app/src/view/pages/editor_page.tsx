@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { useSQLynx } from '../../sqlynx_loader';
+import { useAppConfig } from '../../state/app_config';
 import { ScriptEditor } from '../editor/editor';
 import { SchemaGraph } from '../../view/schema/schema_graph';
 import { TabCard } from '../../view/tab_card';
@@ -20,6 +21,7 @@ const openInNewTab = (url: string) => {
 };
 
 export const EditorPage: React.FC<Props> = (props: Props) => {
+    const appConfig = useAppConfig();
     const backend = useSQLynx();
     // const version = React.useMemo(() => {
     //     if (!backend || backend.type != RESULT_OK) return 'unknown';
@@ -33,14 +35,15 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                     <div className={styles.page_title}>SQL Editor</div>
                 </div>
                 <div className={styles.header_right_container}>
-                    <div className={styles.header_button_group}>
-                        <div className={styles.header_button}>
-                            <svg width="20px" height="20px">
-                                <use xlinkHref={`${iconShare}#sym`} />
-                            </svg>
+                    {appConfig?.value?.features?.connectionManager && (
+                        <div className={styles.header_button_group}>
+                            <div className={styles.header_button}>
+                                <svg width="20px" height="20px">
+                                    <use xlinkHref={`${iconShare}#sym`} />
+                                </svg>
+                            </div>
                         </div>
-                    </div>
-
+                    )}
                     <div className={styles.header_button_group}>
                         <div
                             className={styles.header_button}

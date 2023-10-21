@@ -40,7 +40,7 @@ export const GITHUB_OAUTH_VERSION = childProcess.execSync(`cat ${GITHUB_OAUTH_VE
 /// By default, the name of this config file includes the content hash for our own cache-busting.
 /// A more "generic" build of DashQL should set this path to 'static/config.json'.
 /// For example, we may want to provide a docker image for on-premise deployments that mounts a user-provided config.
-const CONFIG_PATH = 'static/config.[contenthash].json';
+const CONFIG_PATH = 'config.[contenthash].json';
 
 export function configure(params: ConfigParams): Partial<Configuration> {
     return {

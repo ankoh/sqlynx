@@ -1,6 +1,9 @@
 {
     "features": {
         "userAccount": false,
-        "systemInfo": true
+        "appInfo": false,
+        "logViewer": false,
+        "connectionManager": false,
+        "urlSharing": false,
     }
 }
