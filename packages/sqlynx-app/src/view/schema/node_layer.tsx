@@ -7,16 +7,12 @@ import { NodeViewModel, EdgeViewModel, GraphConnectionId, GraphNodeDescriptor } 
 import { NodePort } from './graph_edges';
 import { FocusInfo } from '../../state/focus';
 
-import iconEye from '../../../static/svg/icons/eye.svg';
 import iconTable from '../../../static/svg/icons/table.svg';
-import iconTableView from '../../../static/svg/icons/table_border.svg';
 
 import styles from './node_layer.module.css';
 
 interface Props {
     className?: string;
-    width: number;
-    height: number;
     nodes: NodeViewModel[];
     edges: Map<GraphConnectionId.Value, EdgeViewModel>;
     focus: FocusInfo | null;
@@ -183,7 +179,7 @@ export function NodeLayer(props: Props) {
     }
 
     return (
-        <div className={styles.graph_nodes}>
+        <div className={props.className}>
             {props.nodes.map(n => {
                 const focusedPorts = connectionPorts.get(n.tableId) ?? 0;
                 const isFocused = focusedPorts != 0 || (props.focus?.tableIds.has(n.tableId) ?? false);
