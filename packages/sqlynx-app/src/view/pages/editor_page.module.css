@@ -45,13 +45,13 @@
         grid-row: 2;
         height: 100%;
         width: 960px;
-        padding-top: 20px;
+        padding-top: 24px;
         margin: auto;
 
         display: grid;
         grid-template-rows: auto 67%;
         grid-template-columns: 100%;
-        row-gap: 20px;
+        row-gap: 24px;
     }
 }
 

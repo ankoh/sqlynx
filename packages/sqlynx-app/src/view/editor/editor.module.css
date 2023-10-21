@@ -27,7 +27,7 @@
     justify-content: center;
     border-top: 1px solid transparent;
     border-bottom: 1px solid var(--border_color_primary);
-    color: var(--color_icon);
+    color: var(--button_fg);
 }
 .tab:hover {
     background-color: var(--action_item_hover_bg);
