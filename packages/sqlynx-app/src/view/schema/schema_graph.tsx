@@ -88,7 +88,18 @@ const SchemaGraphBoard: React.FC<SchemaGraphBoardProps> = (props: SchemaGraphBoa
     }, [props.width, props.height]);
 
     return (
-        <TransformWrapper>
+        <TransformWrapper
+            initialScale={1}
+            minScale={0.7}
+            maxScale={1}
+            centerZoomedOut={true}
+            panning={{
+                disabled: false,
+            }}
+            pinch={{
+                disabled: false,
+            }}
+        >
             <TransformComponent>
                 <div className={styles.graph_board} style={{ width: props.width, height: props.height }}>
                     <SchemaGraphView />
@@ -99,7 +110,6 @@ const SchemaGraphBoard: React.FC<SchemaGraphBoardProps> = (props: SchemaGraphBoa
 };
 
 interface GraphWithControlsProps {}
-
 export const SchemaGraph: React.FC<GraphWithControlsProps> = (props: GraphWithControlsProps) => {
     return (
         <div className={styles.graph_container}>
