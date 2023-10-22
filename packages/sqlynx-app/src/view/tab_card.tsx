@@ -10,7 +10,7 @@ interface TabRenderers {
 }
 
 interface Props {
-    tabs: [number, URL][];
+    tabs: [number, string][];
     tabRenderers: TabRenderers;
     tabProps: TabProps;
     selectedTab: number;
@@ -20,7 +20,7 @@ export const TabCard: React.FC<Props> = (props: Props) => {
     return (
         <div className={styles.container}>
             <div className={styles.tabs}>
-                {props.tabs.map((tab: [number, URL]) => (
+                {props.tabs.map((tab: [number, string]) => (
                     <div
                         key={tab[0]}
                         className={cn(styles.tab, {
@@ -28,7 +28,7 @@ export const TabCard: React.FC<Props> = (props: Props) => {
                         })}
                     >
                         <svg width="20px" height="20px">
-                            <use xlinkHref={`${tab[1]}#sym`} />
+                            <use xlinkHref={tab[1]} />
                         </svg>
                     </div>
                 ))}

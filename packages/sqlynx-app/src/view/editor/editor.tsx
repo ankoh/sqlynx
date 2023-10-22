@@ -13,11 +13,7 @@ import { UPDATE_SCRIPT_ANALYSIS, UPDATE_SCRIPT_CURSOR } from '../../state/app_st
 import { ScriptKey } from '../../state/app_state';
 import { ScriptStatisticsBar } from './script_statistics_bar';
 
-import iconMainScript from '../../../static/svg/icons/database_search.svg';
-import iconExternalScript from '../../../static/svg/icons/table_multiple.svg';
-import iconStatistics from '../../../static/svg/icons/speedometer.svg';
-import iconChevronRight from '../../../static/svg/icons/chevron_right.svg';
-import iconAccount from '../../../static/svg/icons/account_circle.svg';
+import icons from '../../../static/svg/icons.generated.svg';
 
 import styles from './editor.module.css';
 import { ScriptCursorInfoT } from '@ankoh/sqlynx/dist/gen/sqlynx/proto';
@@ -46,7 +42,7 @@ const Tab: React.FC<TabProps> = (props: TabProps) => (
         data-tab={props.id}
     >
         <svg className={styles.button_icon} width="20px" height="20px">
-            <use xlinkHref={`${props.icon}#sym`} />
+            <use xlinkHref={props.icon} />
         </svg>
     </div>
 );
@@ -212,17 +208,23 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                         }}
                     >
                         <svg className={styles.button_icon} width="20px" height="20px">
-                            <use xlinkHref={`${statsOpen ? iconChevronRight : iconStatistics}#sym`} />
+                            <use xlinkHref={`${icons}${statsOpen ? '#chevron_right' : '#speedometer'}`} />
                         </svg>
                     </div>
                     {statsOpen && <ScriptStatisticsBar stats={activeScriptStatistics} />}
                 </div>
             </div>
             <div className={styles.tabs}>
-                <Tab id={TabId.MAIN_SCRIPT} active={activeTab} icon={iconMainScript} onClick={selectTab} />
-                <Tab id={TabId.SCHEMA_SCRIPT} active={activeTab} icon={iconExternalScript} onClick={selectTab} />
+                <Tab id={TabId.MAIN_SCRIPT} active={activeTab} icon={`${icons}#database_search`} onClick={selectTab} />
+                <Tab id={TabId.SCHEMA_SCRIPT} active={activeTab} icon={`${icons}#table_multiple`} onClick={selectTab} />
                 <div style={{ flex: 1 }} />
-                <Tab id={TabId.ACCOUNT} active={activeTab} icon={iconAccount} onClick={selectTab} disabled />
+                <Tab
+                    id={TabId.ACCOUNT}
+                    active={activeTab}
+                    icon={`${icons}#account_circle`}
+                    onClick={selectTab}
+                    disabled
+                />
             </div>
             <div className={styles.editor_with_loader}>
                 <div className={styles.editor}>
