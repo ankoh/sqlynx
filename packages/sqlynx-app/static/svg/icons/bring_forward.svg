@@ -1,6 +1,6 @@
 <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <symbol id="sym" viewBox="0 0 24 24">
+    <symbol id="bring_forward" viewBox="0 0 24 24">
         <path fill="currentColor" d="M2,2H16V16H2V2M22,8V22H8V18H10V20H20V10H18V8H22Z" />
     </symbol>
-    <use xlink:href="#sym" />
+    <use xlink:href="#bring_forward" />
 </svg>

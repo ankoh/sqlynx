@@ -1,6 +1,6 @@
 <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <symbol id="sym" viewBox="0 0 24 24">
+    <symbol id="histogram_chart" viewBox="0 0 24 24">
         <path fill="currentColor" d="M3,3H5V13H9V7H13V11H17V15H21V21H3V3Z" />
     </symbol>
-    <use xlink:href="#sym" />
+    <use xlink:href="#histogram_chart" />
 </svg>
