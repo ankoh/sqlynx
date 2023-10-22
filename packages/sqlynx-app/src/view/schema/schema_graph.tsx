@@ -98,11 +98,32 @@ const SchemaGraphBoard: React.FC<SchemaGraphBoardProps> = (props: SchemaGraphBoa
                 disabled: false,
             }}
         >
-            <TransformComponent>
-                <div className={styles.graph_board} style={{ width: props.width, height: props.height }}>
-                    <SchemaGraphView />
-                </div>
-            </TransformComponent>
+            {({ zoomIn, zoomOut, resetTransform, ...rest }) => (
+                <>
+                    <TransformComponent>
+                        <div className={styles.graph_board} style={{ width: props.width, height: props.height }}>
+                            <SchemaGraphView />
+                        </div>
+                    </TransformComponent>
+                    <div className={styles.graph_controls}>
+                        <div className={styles.graph_control_button} onClick={() => zoomIn()}>
+                            <svg width="12px" height="12px">
+                                <use xlinkHref={`${icons}#graph_plus`} />
+                            </svg>
+                        </div>
+                        <div className={styles.graph_control_button} onClick={() => zoomOut()}>
+                            <svg width="12px" height="12px">
+                                <use xlinkHref={`${icons}#graph_minus`} />
+                            </svg>
+                        </div>
+                        <div className={styles.graph_control_button} onClick={() => resetTransform()}>
+                            <svg width="12px" height="12px">
+                                <use xlinkHref={`${icons}#graph_align`} />
+                            </svg>
+                        </div>
+                    </div>
+                </>
+            )}
         </TransformWrapper>
     );
 };
@@ -117,23 +138,6 @@ export const SchemaGraph: React.FC<GraphWithControlsProps> = (props: GraphWithCo
                 </AutoSizer>
             </div>
             <div className={styles.graph_title}>Schema</div>
-            <div className={styles.graph_controls}>
-                <div className={styles.graph_control_button}>
-                    <svg width="12px" height="12px">
-                        <use xlinkHref={`${icons}#graph_plus`} />
-                    </svg>
-                </div>
-                <div className={styles.graph_control_button}>
-                    <svg width="12px" height="12px">
-                        <use xlinkHref={`${icons}#graph_minus`} />
-                    </svg>
-                </div>
-                <div className={styles.graph_control_button}>
-                    <svg width="12px" height="12px">
-                        <use xlinkHref={`${icons}#graph_plus`} />
-                    </svg>
-                </div>
-            </div>
         </div>
     );
 };
