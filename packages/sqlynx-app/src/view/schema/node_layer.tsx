@@ -7,7 +7,7 @@ import { NodeViewModel, EdgeViewModel, GraphConnectionId, GraphNodeDescriptor, B
 import { NodePort } from './graph_edges';
 import { FocusInfo } from '../../state/focus';
 
-import icons from '../../../static/svg/icons.generated.svg';
+import icons from '../../../static/svg/symbols.generated.svg';
 
 import styles from './node_layer.module.css';
 

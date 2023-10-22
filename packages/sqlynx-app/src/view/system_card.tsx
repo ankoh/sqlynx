@@ -3,7 +3,7 @@ import styles from './system_card.module.css';
 import classNames from 'classnames';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import icons from '../../static/svg/icons.generated.svg';
+import icons from '../../static/svg/symbols.generated.svg';
 
 interface Props {
     className?: string;

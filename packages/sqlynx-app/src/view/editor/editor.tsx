@@ -13,7 +13,7 @@ import { UPDATE_SCRIPT_ANALYSIS, UPDATE_SCRIPT_CURSOR } from '../../state/app_st
 import { ScriptKey } from '../../state/app_state';
 import { ScriptStatisticsBar } from './script_statistics_bar';
 
-import icons from '../../../static/svg/icons.generated.svg';
+import icons from '../../../static/svg/symbols.generated.svg';
 
 import styles from './editor.module.css';
 import { ScriptCursorInfoT } from '@ankoh/sqlynx/dist/gen/sqlynx/proto';

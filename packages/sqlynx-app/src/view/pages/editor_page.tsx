@@ -7,7 +7,7 @@ import { SchemaGraph } from '../../view/schema/schema_graph';
 import { TabCard } from '../../view/tab_card';
 
 import styles from './editor_page.module.css';
-import icons from '../../../static/svg/icons.generated.svg';
+import icons from '../../../static/svg/symbols.generated.svg';
 
 interface Props {}
 

@@ -9,7 +9,7 @@ import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 
 import styles from './schema_graph.module.css';
 
-import icons from '../../../static/svg/icons.generated.svg';
+import icons from '../../../static/svg/symbols.generated.svg';
 
 interface SchemaGraphViewProps {}
 
