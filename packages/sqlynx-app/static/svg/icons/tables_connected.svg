@@ -1,5 +1,5 @@
 <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <symbol id="sym" viewBox="0 0 24 24">
+    <symbol id="tables_connected" viewBox="0 0 24 24">
         <g id="Artboard1" transform="matrix(0.880121,0,0,0.985328,0,0)" fill="currentColor" >
             <g transform="matrix(1.11954,0,0,1,-1.62981,-1.80281e-15)">
                 <g transform="matrix(1.01489,0,0,1.01489,0,0)">
@@ -60,5 +60,5 @@
             </g>
         </g>
     </symbol>
-    <use xlink:href="#sym" />
+    <use xlink:href="#tables_connected" />
 </svg>
