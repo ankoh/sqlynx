@@ -8,8 +8,7 @@ import { HoverMode, LinkButton } from './button';
 
 import styles from './navbar.module.css';
 
-import logo from '../../static/svg/logo/logo.svg';
-import icons from '../../static/svg/icons.generated.svg';
+import symbols from '../../static/svg/symbols.generated.svg';
 
 const Tab = (props: { route: string; alt?: string; location: string; icon: string }) => (
     <div
@@ -34,13 +33,13 @@ export const NavBar = (): React.ReactElement => {
         <div className={styles.navbar}>
             <Link className={styles.logo} to="/">
                 <svg width="30px" height="30px">
-                    <use xlinkHref={`${logo}#logo`} />
+                    <use xlinkHref={`${symbols}#logo`} />
                 </svg>
             </Link>
             <div className={styles.tabs}>
-                <Tab route="/" location={location.pathname} icon={`${icons}#file_document_multiple`} />
+                <Tab route="/" location={location.pathname} icon={`${symbols}#file_document_multiple`} />
                 {appConfig?.value?.features?.connectionManager && (
-                    <Tab route="/databases" location={location.pathname} icon={`${icons}#connection`} />
+                    <Tab route="/databases" location={location.pathname} icon={`${symbols}#connection`} />
                 )}
             </div>
             {appConfig?.value?.features?.userAccount && (
@@ -49,7 +48,7 @@ export const NavBar = (): React.ReactElement => {
                         <img className={styles.avatar} width="32px" height="32px" src={ghProfile!.avatarUrl} />
                     ) : (
                         <svg className={styles.avatar} width="26px" height="26px">
-                            <use xlinkHref={`${icons}#folder_account`} />
+                            <use xlinkHref={`${symbols}#folder_account`} />
                         </svg>
                     )}
                 </Link>

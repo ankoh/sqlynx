@@ -5,7 +5,7 @@ import { Button, HoverMode } from './button';
 
 import styles from './systembar.module.css';
 
-import icons from '../../static/svg/icons.generated.svg';
+import icons from '../../static/svg/symbols.generated.svg';
 
 interface SystemPanelProps {
     icon: string;
