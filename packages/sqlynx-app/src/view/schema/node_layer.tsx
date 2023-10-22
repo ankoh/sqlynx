@@ -7,7 +7,7 @@ import { NodeViewModel, EdgeViewModel, GraphConnectionId, GraphNodeDescriptor, B
 import { NodePort } from './graph_edges';
 import { FocusInfo } from '../../state/focus';
 
-import iconTable from '../../../static/svg/icons/table.svg';
+import icons from '../../../static/svg/icons.generated.svg';
 
 import styles from './node_layer.module.css';
 
@@ -243,7 +243,7 @@ export function NodeLayer(props: Props) {
                             })}
                         >
                             <svg width="20px" height="20px">
-                                <use xlinkHref={`${iconTable}#sym`} />
+                                <use xlinkHref={`${icons}#table`} />
                             </svg>
                         </div>
                         <div className={styles.table_name}>{n.name}</div>

@@ -9,9 +9,7 @@ import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 
 import styles from './schema_graph.module.css';
 
-import icon_graph_align from '../../../static/svg/icons/graph_align.svg';
-import icon_graph_minus from '../../../static/svg/icons/graph_minus.svg';
-import icon_graph_plus from '../../../static/svg/icons/graph_plus.svg';
+import icons from '../../../static/svg/icons.generated.svg';
 
 interface SchemaGraphViewProps {}
 
@@ -122,17 +120,17 @@ export const SchemaGraph: React.FC<GraphWithControlsProps> = (props: GraphWithCo
             <div className={styles.graph_controls}>
                 <div className={styles.graph_control_button}>
                     <svg width="12px" height="12px">
-                        <use xlinkHref={`${icon_graph_plus}#sym`} />
+                        <use xlinkHref={`${icons}#graph_plus`} />
                     </svg>
                 </div>
                 <div className={styles.graph_control_button}>
                     <svg width="12px" height="12px">
-                        <use xlinkHref={`${icon_graph_minus}#sym`} />
+                        <use xlinkHref={`${icons}#graph_minus`} />
                     </svg>
                 </div>
                 <div className={styles.graph_control_button}>
                     <svg width="12px" height="12px">
-                        <use xlinkHref={`${icon_graph_align}#sym`} />
+                        <use xlinkHref={`${icons}#graph_plus`} />
                     </svg>
                 </div>
             </div>

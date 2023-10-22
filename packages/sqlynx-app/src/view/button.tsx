@@ -34,9 +34,6 @@ export const Button: React.FC<ButtonProps> = (props: ButtonProps) => (
         {props.children}
     </div>
 );
-// <svg width={props.width} height={props.height}>
-//     <use xlinkHref={`${props.icon}#sym`} />
-// </svg>
 
 type LinkProps = {
     className?: string;

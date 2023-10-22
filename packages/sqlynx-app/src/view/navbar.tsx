@@ -9,9 +9,7 @@ import { HoverMode, LinkButton } from './button';
 import styles from './navbar.module.css';
 
 import logo from '../../static/svg/logo/logo.svg';
-import icon_explorer from '../../static/svg/icons/file_document_multiple.svg';
-import icon_account from '../../static/svg/icons/folder_account.svg';
-import icon_connection from '../../static/svg/icons/connection.svg';
+import icons from '../../static/svg/icons.generated.svg';
 
 const Tab = (props: { route: string; alt?: string; location: string; icon: string }) => (
     <div
@@ -22,7 +20,7 @@ const Tab = (props: { route: string; alt?: string; location: string; icon: strin
     >
         <LinkButton className={styles.tab_link} to={props.route} hover={HoverMode.Darken}>
             <svg width="20px" height="20px">
-                <use xlinkHref={`${props.icon}#sym`} />
+                <use xlinkHref={props.icon} />
             </svg>
         </LinkButton>
     </div>
@@ -36,13 +34,13 @@ export const NavBar = (): React.ReactElement => {
         <div className={styles.navbar}>
             <Link className={styles.logo} to="/">
                 <svg width="30px" height="30px">
-                    <use xlinkHref={`${logo}#sym`} />
+                    <use xlinkHref={`${logo}#logo`} />
                 </svg>
             </Link>
             <div className={styles.tabs}>
-                <Tab route="/" location={location.pathname} icon={icon_explorer} />
+                <Tab route="/" location={location.pathname} icon={`${icons}#file_document_multiple`} />
                 {appConfig?.value?.features?.connectionManager && (
-                    <Tab route="/databases" location={location.pathname} icon={icon_connection} />
+                    <Tab route="/databases" location={location.pathname} icon={`${icons}#connection`} />
                 )}
             </div>
             {appConfig?.value?.features?.userAccount && (
@@ -51,7 +49,7 @@ export const NavBar = (): React.ReactElement => {
                         <img className={styles.avatar} width="32px" height="32px" src={ghProfile!.avatarUrl} />
                     ) : (
                         <svg className={styles.avatar} width="26px" height="26px">
-                            <use xlinkHref={`${icon_account}#sym`} />
+                            <use xlinkHref={`${icons}#folder_account`} />
                         </svg>
                     )}
                 </Link>

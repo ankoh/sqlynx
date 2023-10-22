@@ -5,8 +5,7 @@ import { Button, HoverMode } from './button';
 
 import styles from './systembar.module.css';
 
-import icon_log from '../../static/svg/icons/log.svg';
-import icon_info from '../../static/svg/icons/info.svg';
+import icons from '../../static/svg/icons.generated.svg';
 
 interface SystemPanelProps {
     icon: string;
@@ -28,7 +27,7 @@ const SystemPanel: React.FC<SystemPanelProps> = (props: SystemPanelProps) => {
                 onClick={() => props.onClick(props.systemID)}
             >
                 <svg className={styles.system_icon} width="20px" height="20px">
-                    <use xlinkHref={`${props.icon}#sym`} />
+                    <use xlinkHref={props.icon} />
                 </svg>
             </Button>
             {expanded && (
@@ -62,7 +61,7 @@ export const SystemBar: React.FC<Props> = (props: Props) => {
                     systemID={1}
                     expandedPanel={expanded}
                     onClick={toggleTab.bind(this)}
-                    icon={icon_log}
+                    icon={`${icons}#log`}
                     preferredHeight="400px"
                     preferredWidth="500px"
                 >
@@ -74,7 +73,7 @@ export const SystemBar: React.FC<Props> = (props: Props) => {
                     systemID={2}
                     expandedPanel={expanded}
                     onClick={toggleTab.bind(this)}
-                    icon={icon_info}
+                    icon={`${icons}#info`}
                     preferredHeight="400px"
                     preferredWidth="400px"
                 >

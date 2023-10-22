@@ -7,11 +7,7 @@ import { SchemaGraph } from '../../view/schema/schema_graph';
 import { TabCard } from '../../view/tab_card';
 
 import styles from './editor_page.module.css';
-
-import iconGitHub from '../../../static/svg/icons/github.svg';
-import iconBug from '../../../static/svg/icons/bug.svg';
-import iconShare from '../../../static/svg/icons/link.svg';
-import iconTablesConnected from '../../../static/svg/icons/tables_connected.svg';
+import icons from '../../../static/svg/icons.generated.svg';
 
 interface Props {}
 
@@ -39,7 +35,7 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                         <div className={styles.header_button_group}>
                             <div className={styles.header_button}>
                                 <svg width="20px" height="20px">
-                                    <use xlinkHref={`${iconShare}#sym`} />
+                                    <use xlinkHref={`${icons}#link`} />
                                 </svg>
                             </div>
                         </div>
@@ -50,7 +46,7 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                             onClick={() => openInNewTab('https://github.com/ankoh/sqlynx/issues')}
                         >
                             <svg width="20px" height="20px">
-                                <use xlinkHref={`${iconBug}#sym`} />
+                                <use xlinkHref={`${icons}#bug`} />
                             </svg>
                         </div>
                         <div
@@ -58,7 +54,7 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                             onClick={() => openInNewTab('https://github.com/ankoh/sqlynx')}
                         >
                             <svg width="20px" height="20px">
-                                <use xlinkHref={`${iconGitHub}#sym`} />
+                                <use xlinkHref={`${icons}#github`} />
                             </svg>
                         </div>
                     </div>
@@ -67,7 +63,7 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
             <div className={styles.body_container}>
                 <TabCard
                     selectedTab={1}
-                    tabs={[[1, iconTablesConnected]]}
+                    tabs={[[1, `${icons}#tables_connected`]]}
                     tabProps={{}}
                     tabRenderers={{
                         [1]: props => <SchemaGraph />,

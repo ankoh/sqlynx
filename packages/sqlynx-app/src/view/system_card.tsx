@@ -3,7 +3,7 @@ import styles from './system_card.module.css';
 import classNames from 'classnames';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import icon_close from '../../static/svg/icons/close.svg';
+import icons from '../../static/svg/icons.generated.svg';
 
 interface Props {
     className?: string;
@@ -24,7 +24,7 @@ export const SystemCard: React.FC<Props> = (props: Props) => (
                 <motion.div className={styles.header_title}>{props.title}</motion.div>
                 <motion.div className={styles.close} onClick={props.onClose}>
                     <svg width="20px" height="20px">
-                        <use xlinkHref={`${icon_close}#sym`} />
+                        <use xlinkHref={`${icons}#close`} />
                     </svg>
                 </motion.div>
             </motion.div>
