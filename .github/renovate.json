@@ -12,11 +12,6 @@
     },
     "packageRules": [
         {
-            "groupName": "react-zoom-pan-pinch",
-            "matchPackageNames": ["react-zoom-pan-pinch"],
-            "enabled": false
-        },
-        {
             "groupName": "flatbuffers",
             "matchPackageNames": ["flatbuffers"],
             "automerge": true
