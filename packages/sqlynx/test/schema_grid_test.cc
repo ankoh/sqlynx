@@ -2,22 +2,22 @@
 
 #include <limits>
 
+#include "gtest/gtest.h"
 #include "sqlynx/analyzer/completion.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
-#include "gtest/gtest.h"
 
 using namespace sqlynx;
 
 namespace {
 
 SchemaGrid::Config DEFAULT_GRAPH_CONFIG{
-    .board_height = 0,
     .board_width = 0,
+    .board_height = 0,
     .cell_width = 104,
     .cell_height = 200,
-    .table_width = 100,
     .table_height = 96,
+    .table_width = 100,
 };
 
 const std::string_view TPCH_SCHEMA = R"SQL(
