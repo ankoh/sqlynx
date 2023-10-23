@@ -90,13 +90,7 @@ class ScannedScript {
     }
     /// A location info
     struct LocationInfo {
-        /// The insert mode
-        enum class RelativePosition {
-            NEW_SYMBOL = 0,
-            BEGIN_OF_SYMBOL = 1,
-            MID_OF_SYMBOL = 2,
-            END_OF_SYMBOL = 3,
-        };
+        using RelativePosition = sqlynx::proto::RelativeSymbolPosition;
         /// The text offset
         size_t text_offset;
         /// The last scanner symbol that does not have a begin greater than the text offset
@@ -107,16 +101,19 @@ class ScannedScript {
         std::optional<std::reference_wrapper<parser::Parser::symbol_type>> previous_symbol;
         /// If we would insert at this position, what mode would it be?
         RelativePosition relative_pos;
+        /// At EOF?
+        bool at_eof;
 
         /// Constructor
         LocationInfo(size_t text_offset, size_t token_id, parser::Parser::symbol_type& symbol,
                      std::optional<std::reference_wrapper<parser::Parser::symbol_type>> previous_symbol,
-                     RelativePosition mode)
+                     RelativePosition mode, bool at_eof)
             : text_offset(text_offset),
               symbol_id(token_id),
               symbol(symbol),
               previous_symbol(previous_symbol),
-              relative_pos(mode) {}
+              relative_pos(mode),
+              at_eof(at_eof) {}
 
         bool previousSymbolIsDot() const {
             if (!previous_symbol.has_value()) {

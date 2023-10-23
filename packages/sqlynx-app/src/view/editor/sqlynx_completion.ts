@@ -21,21 +21,28 @@ export async function completeSQLynx(context: CompletionContext): Promise<Comple
 
     let offset = context.pos;
     if (processor.mainScript !== null && processor.scriptCursor !== null) {
-        const completionBuffer = processor.mainScript.completeAtCursor(10);
-        const completion = completionBuffer.read(new sqlynx.proto.Completion());
-        const candidateObj = new sqlynx.proto.CompletionCandidate();
-        for (let i = 0; i < completion.candidatesLength(); ++i) {
-            const candidate = completion.candidates(i, candidateObj)!;
-            let tagDetail: string | undefined = undefined;
-            for (const tag of unpackNameTags(candidate.nameTags())) {
-                tagDetail = getNameTagName(tag);
+        const relativePos = processor.scriptCursor.scannerRelativePosition;
+        const performCompletion =
+            relativePos == sqlynx.proto.RelativeSymbolPosition.BEGIN_OF_SYMBOL ||
+            relativePos == sqlynx.proto.RelativeSymbolPosition.MID_OF_SYMBOL ||
+            relativePos == sqlynx.proto.RelativeSymbolPosition.END_OF_SYMBOL;
+        if (performCompletion) {
+            const completionBuffer = processor.mainScript.completeAtCursor(10);
+            const completion = completionBuffer.read(new sqlynx.proto.Completion());
+            const candidateObj = new sqlynx.proto.CompletionCandidate();
+            for (let i = 0; i < completion.candidatesLength(); ++i) {
+                const candidate = completion.candidates(i, candidateObj)!;
+                let tagDetail: string | undefined = undefined;
+                for (const tag of unpackNameTags(candidate.nameTags())) {
+                    tagDetail = getNameTagName(tag);
+                }
+                options.push({
+                    label: candidate.nameText() ?? '',
+                    detail: tagDetail,
+                });
             }
-            options.push({
-                label: candidate.nameText() ?? '',
-                detail: tagDetail,
-            });
+            offset = processor.scriptCursor.scannerSymbolOffset;
         }
-        offset = processor.scriptCursor.scannerSymbolOffset;
     }
 
     return {

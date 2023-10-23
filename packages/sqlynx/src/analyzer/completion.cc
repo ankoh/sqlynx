@@ -94,7 +94,15 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
         return;
     }
     auto& scanned = *cursor.script.scanned_script;
-    auto expected_symbols = parser::Parser::ParseUntil(scanned, location->symbol_id);
+
+    // Do we try to complete the current symbol or the next one?
+    std::vector<parser::Parser::ExpectedSymbol> expected_symbols;
+    if (location->relative_pos == ScannedScript::LocationInfo::RelativePosition::NEW_SYMBOL_AFTER &&
+        !location->at_eof) {
+        expected_symbols = parser::Parser::ParseUntil(scanned, location->symbol_id + 1);
+    } else {
+        expected_symbols = parser::Parser::ParseUntil(scanned, location->symbol_id);
+    }
 
     // Helper to determine the score of a cursor symbol
     auto get_score = [&](const ScannedScript::LocationInfo& loc, parser::Parser::ExpectedSymbol expected,
@@ -104,10 +112,15 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
         auto score = KEYWORD_EXPECTED_SCORE;
         score += GetKeywordPrevalence(expected);
         switch (location->relative_pos) {
-            case Relative::NEW_SYMBOL:
+            case Relative::NEW_SYMBOL_AFTER:
+            case Relative::NEW_SYMBOL_BEFORE:
                 return score;
-            default:
-                fuzzy_ci_string_view ci_symbol_text{cursor.text.data(), cursor.text.size()};
+            case Relative::BEGIN_OF_SYMBOL:
+            case Relative::MID_OF_SYMBOL:
+            case Relative::END_OF_SYMBOL: {
+                auto symbol_ofs = location->symbol.location.offset();
+                auto symbol_prefix = std::max<uint32_t>(location->text_offset, symbol_ofs) - symbol_ofs;
+                fuzzy_ci_string_view ci_symbol_text{cursor.text.data(), symbol_prefix};
                 // Is substring?
                 if (auto pos = ci_keyword_text.find(ci_symbol_text, 0); pos != fuzzy_ci_string_view::npos) {
                     if (pos == 0) {
@@ -117,6 +130,7 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
                     }
                 }
                 return score;
+            }
         }
     };
 
@@ -139,6 +153,7 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
 }
 
 void Completion::FindCandidatesInIndex(const CompletionIndex& index) {
+    using Relative = ScannedScript::LocationInfo::RelativePosition;
     std::span<const CompletionIndex::Entry> entries = index.FindEntriesWithPrefix(cursor.text);
 
     for (auto& entry : entries) {
@@ -149,6 +164,24 @@ void Completion::FindCandidatesInIndex(const CompletionIndex& index) {
             score = std::max(score, entry_data.name_tags.contains(tag) ? tag_score : 0);
         }
         score += entry_data.weight;
+        // Is a prefix?
+        auto& location = cursor.scanner_location;
+        switch (location->relative_pos) {
+            case Relative::BEGIN_OF_SYMBOL:
+            case Relative::MID_OF_SYMBOL:
+            case Relative::END_OF_SYMBOL: {
+                auto symbol_ofs = location->symbol.location.offset();
+                auto symbol_prefix = std::max<uint32_t>(location->text_offset, symbol_ofs) - symbol_ofs;
+                fuzzy_ci_string_view ci_prefix_text{cursor.text.data(), symbol_prefix};
+                fuzzy_ci_string_view ci_entry_text{entry.data->name_text.data(), entry.data->name_text.size()};
+                if (auto pos = ci_entry_text.find(ci_prefix_text, 0); pos == 0) {
+                    score += KEYWORD_EXPECTED_PREFIX_MODIFIER;
+                }
+                break;
+            }
+            default:
+                break;
+        }
         // Do we know the candidate already?
         if (auto iter = pending_candidates.find(entry_data.name_id); iter != pending_candidates.end()) {
             // Update the score if it is higher
@@ -254,7 +287,6 @@ flatbuffers::Offset<proto::Completion> Completion::Pack(flatbuffers::FlatBufferB
     // Pack completion table
     proto::CompletionBuilder completionBuilder{builder};
     completionBuilder.add_text_offset(cursor.text_offset);
-    // completionBuilder.add_scanner_token_id(cursor.scanner_token_id.value_or(0)); XXX
     completionBuilder.add_candidates(candidatesOfs);
     return completionBuilder.Finish();
 }

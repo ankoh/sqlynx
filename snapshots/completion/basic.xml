@@ -4,11 +4,7 @@
         <cursor context="main">
             <search text="" index="0" />
         </cursor>
-        <completions limit="3">
-            <entry value="select" score="30" count="0" tags="KEYWORD" />
-            <entry value="with" score="10" count="0" tags="KEYWORD" />
-            <entry value="set" score="10" count="0" tags="KEYWORD" />
-        </completions>
+        <completions limit="3" />
     </completion-snapshot>
     <completion-snapshot name="simple_table">
         <script context="external">
