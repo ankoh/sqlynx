@@ -98,9 +98,9 @@
             <search text="xx" index="0" />
         </cursor>
         <completions limit="3">
-            <entry value="group" score="30" count="0" tags="KEYWORD" />
-            <entry value="order" score="30" count="0" tags="KEYWORD" />
-            <entry value="where" score="30" count="0" tags="KEYWORD" />
+            <entry value="group" score="50" count="0" tags="KEYWORD" />
+            <entry value="order" score="50" count="0" tags="KEYWORD" />
+            <entry value="where" score="50" count="0" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="select_from_w">
@@ -187,7 +187,7 @@
             <search text="xx" index="0" />
         </cursor>
         <completions limit="3">
-            <entry value="by" score="10" count="0" tags="KEYWORD" />
+            <entry value="by" score="30" count="0" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="from_o">
@@ -212,8 +212,8 @@
         </cursor>
         <completions limit="3">
             <entry value="order" score="50" count="0" tags="KEYWORD" />
-            <entry value="group" score="30" count="0" tags="KEYWORD" />
-            <entry value="where" score="30" count="0" tags="KEYWORD" />
+            <entry value="group" score="40" count="0" tags="KEYWORD" />
+            <entry value="offset" score="30" count="0" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="from_order">

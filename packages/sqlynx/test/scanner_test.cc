@@ -3,11 +3,11 @@
 #include <initializer_list>
 #include <optional>
 
+#include "gtest/gtest.h"
 #include "sqlynx/api.h"
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
-#include "gtest/gtest.h"
 
 using namespace sqlynx;
 
@@ -83,13 +83,13 @@ TEST(ScannerTest, FindTokenAtOffset) {
         SCOPED_TRACE("empty");
         scan("", 0);
         test_tokens({});
-        test_symbol(0, 0, Relative::NEW_SYMBOL);
+        test_symbol(0, 0, Relative::NEW_SYMBOL_BEFORE);
     }
     {
         SCOPED_TRACE("only space");
         scan("    ", 0);
         test_tokens({});
-        test_symbol(0, 0, Relative::NEW_SYMBOL);
+        test_symbol(0, 0, Relative::NEW_SYMBOL_BEFORE);
     }
     {
         SCOPED_TRACE("select 1");
