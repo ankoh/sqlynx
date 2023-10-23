@@ -1,10 +1,11 @@
 namespace sqlynx.proto;
 
 enum RelativeSymbolPosition: uint8 {
-    NEW_SYMBOL = 0,
-    BEGIN_OF_SYMBOL = 1,
-    MID_OF_SYMBOL = 2,
-    END_OF_SYMBOL = 3,
+    NEW_SYMBOL_BEFORE = 0,
+    NEW_SYMBOL_AFTER = 1,
+    BEGIN_OF_SYMBOL = 2,
+    MID_OF_SYMBOL = 3,
+    END_OF_SYMBOL = 4,
 }
 
 table ScriptCursorInfo {
@@ -14,6 +15,8 @@ table ScriptCursorInfo {
     scanner_symbol_id: uint32;
     /// The offset of the scanner symbol
     scanner_symbol_offset: uint32;
+    /// The kind of the scanner symbol
+    scanner_symbol_kind: uint32;
     /// The relative position
     scanner_relative_position: RelativeSymbolPosition;
     /// The AST node id

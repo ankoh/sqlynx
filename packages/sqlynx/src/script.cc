@@ -104,13 +104,17 @@ ScannedScript::LocationInfo ScannedScript::FindSymbol(size_t text_offset) {
     // Helper to determine the insert mode
     auto get_relative_position = [&](size_t text_offset, size_t chunk_id, size_t chunk_symbol_id) -> RelativePosition {
         if (chunk_id >= chunks.size()) {
-            return RelativePosition::NEW_SYMBOL;
+            return RelativePosition::NEW_SYMBOL_AFTER;
         }
         auto& chunk = chunks[chunk_id];
         auto symbol = chunk[chunk_symbol_id];
         auto symbol_begin = symbol.location.offset();
         auto symbol_end = symbol.location.offset() + symbol.location.length();
 
+        // Before the symbol?
+        if (text_offset < symbol_begin) {
+            return RelativePosition::NEW_SYMBOL_BEFORE;
+        }
         // Begin of the token?
         if (text_offset == symbol_begin) {
             return RelativePosition::BEGIN_OF_SYMBOL;
@@ -123,7 +127,7 @@ ScannedScript::LocationInfo ScannedScript::FindSymbol(size_t text_offset) {
         if (text_offset > symbol_begin && (text_offset < symbol_end)) {
             return RelativePosition::MID_OF_SYMBOL;
         }
-        return RelativePosition::NEW_SYMBOL;
+        return RelativePosition::NEW_SYMBOL_AFTER;
     };
 
     // Find chunk that contains the text offset.
@@ -168,7 +172,7 @@ ScannedScript::LocationInfo ScannedScript::FindSymbol(size_t text_offset) {
             } else {
                 // Very first token is EOF token?
                 // Special case empty script buffer
-                return {0, 0, *symbol_iter, std::nullopt, RelativePosition::NEW_SYMBOL};
+                return {0, 0, *symbol_iter, std::nullopt, RelativePosition::NEW_SYMBOL_BEFORE, true};
             }
         } else {
             --global_symbol_id;
@@ -180,7 +184,9 @@ ScannedScript::LocationInfo ScannedScript::FindSymbol(size_t text_offset) {
     // Return the global token offset
     auto prev_symbol = get_prev_symbol(chunk_iter - chunks.begin(), chunk_symbol_id);
     auto relative_pos = get_relative_position(text_offset, chunk_iter - chunks.begin(), chunk_symbol_id);
-    return {text_offset, global_symbol_id, *symbol_iter, prev_symbol, relative_pos};
+    assert(symbols.GetSize() >= 1);  // + EOF
+    bool at_eof = (global_symbol_id + 1) >= symbols.GetSize();
+    return {text_offset, global_symbol_id, *symbol_iter, prev_symbol, relative_pos, at_eof};
 }
 
 flatbuffers::Offset<proto::ScannedScript> ScannedScript::Pack(flatbuffers::FlatBufferBuilder& builder) {
@@ -590,12 +596,16 @@ flatbuffers::Offset<proto::ScriptCursorInfo> ScriptCursor::Pack(flatbuffers::Fla
     auto out = std::make_unique<proto::ScriptCursorInfoT>();
     out->text_offset = text_offset;
     out->scanner_symbol_id = std::numeric_limits<uint32_t>::max();
-    out->scanner_relative_position = proto::RelativeSymbolPosition::NEW_SYMBOL;
+    out->scanner_relative_position = proto::RelativeSymbolPosition::NEW_SYMBOL_AFTER;
+    out->scanner_symbol_offset = 0;
+    out->scanner_symbol_kind = 0;
     if (scanner_location) {
-        auto symbol_offset = script.scanned_script->symbols[scanner_location->symbol_id].location.offset();
+        auto& symbol = script.scanned_script->symbols[scanner_location->symbol_id];
+        auto symbol_offset = symbol.location.offset();
         out->scanner_symbol_id = scanner_location->symbol_id;
         out->scanner_relative_position = static_cast<proto::RelativeSymbolPosition>(scanner_location->relative_pos);
         out->scanner_symbol_offset = symbol_offset;
+        out->scanner_symbol_kind = static_cast<uint32_t>(symbol.kind_);
     }
     out->statement_id = statement_id.value_or(std::numeric_limits<uint32_t>::max());
     out->ast_node_id = ast_node_id.value_or(std::numeric_limits<uint32_t>::max());

@@ -12,8 +12,6 @@ table CompletionCandidate {
 table Completion {
     /// The text offset
     text_offset: uint32;
-    /// The token that gets completed
-    scanner_token_id: uint32;
     /// The completion candidates
     candidates: [CompletionCandidate];
 }
