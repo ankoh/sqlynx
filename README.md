@@ -15,7 +15,7 @@ SQLynx is a library for creating and analyzing a compact version of the PostgreS
 It builds around a Bison parser that materializes AST Nodes into a single Flatbuffer vector.
 It can be compiled to WebAssembly and has been originally built for lightweight SQL instrumentation, running on every user keystroke in DashQL.
 
-_Each AST node is packed into [24 bytes](https://github.com/ankoh/sqlynx/blob/a42476e170538a4050511259763a3e4d08b989ac/proto/sqlynx/program.fbs#L355-L361) and references matched substrings in the original script text.
+_Each AST node is packed into [24 bytes](https://github.com/ankoh/sqlynx/blob/b38e952afcd3367c91ea18f068ed58183dc59683/proto/sqlynx/parsed_script.fbs#L355-L361) and references matched substrings in the original script text.
 This encoding is compact and efficient for simple passes, but is not directly suited for a full semantic analysis._
 
 <img src="misc/ast.png?raw=true" width="680px">
