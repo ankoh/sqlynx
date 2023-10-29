@@ -1,7 +1,7 @@
 #include "sqlynx/analyzer/completion.h"
 
-#include "sqlynx/proto/proto_generated.h"
 #include "gtest/gtest.h"
+#include "sqlynx/proto/proto_generated.h"
 
 using namespace sqlynx;
 
@@ -56,10 +56,10 @@ SELECT s_co
 
     std::vector<std::string> names;
     for (auto iter = entries.rbegin(); iter != entries.rend(); ++iter) {
-        names.emplace_back(iter->value.name_text);
+        names.emplace_back(iter->name_text);
     }
-    std::vector<std::string> expected_names{"s_comment", "ps_comment", "group", "where", "order",
-                                            "from",      "limit",      "like",  "cast",  "case"};
+    std::vector<std::string> expected_names{"s_comment", "ps_comment", "where",  "order", "group",
+                                            "from",      "set",        "offset", "limit", "like"};
     ASSERT_EQ(names, expected_names);
 }
 

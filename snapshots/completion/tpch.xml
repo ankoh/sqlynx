@@ -17,9 +17,9 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
             <search text="ke" index="2" />
         </cursor>
         <completions limit="3">
-            <entry value="l_orderkey" score="36" in-scope="true" tags="COLUMN_NAME" />
-            <entry value="l_partkey" score="36" in-scope="true" tags="COLUMN_NAME" />
             <entry value="l_suppkey" score="36" in-scope="true" tags="COLUMN_NAME" />
+            <entry value="l_partkey" score="36" in-scope="true" tags="COLUMN_NAME" />
+            <entry value="l_orderkey" score="36" in-scope="true" tags="COLUMN_NAME" />
         </completions>
     </completion-snapshot>
 </completion-snapshots>

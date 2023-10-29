@@ -22,8 +22,8 @@
         </cursor>
         <completions limit="3">
             <entry value="foo" score="40" in-scope="false" tags="TABLE_NAME" />
-            <entry value="for" score="20" in-scope="false" tags="KEYWORD" />
-            <entry value="following" score="20" in-scope="false" tags="KEYWORD" />
+            <entry value="forward" score="20" in-scope="false" tags="KEYWORD" />
+            <entry value="force" score="20" in-scope="false" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
 </completion-snapshots>

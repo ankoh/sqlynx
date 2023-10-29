@@ -35,13 +35,13 @@ void CompletionSnapshotTest::EncodeCompletion(pugi::xml_node root, const Complet
     auto entries = completion.GetHeap().GetEntries();
     for (auto iter = entries.rbegin(); iter != entries.rend(); ++iter) {
         auto xml_entry = root.append_child("entry");
-        std::string text{iter->value.name_text};
+        std::string text{iter->name_text.data(), iter->name_text.size()};
         xml_entry.append_attribute("value").set_value(text.c_str());
-        xml_entry.append_attribute("score").set_value(iter->score);
-        xml_entry.append_attribute("in-scope").set_value(iter->value.in_statement);
+        xml_entry.append_attribute("score").set_value(iter->GetScore());
+        xml_entry.append_attribute("in-scope").set_value(iter->in_statement);
         std::stringstream tags;
         size_t i = 0;
-        iter->value.name_tags.ForEach([&](proto::NameTag tag) {
+        iter->name_tags.ForEach([&](proto::NameTag tag) {
             if (i++ > 0) {
                 tags << ",";
             }

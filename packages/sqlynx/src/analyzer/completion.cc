@@ -144,12 +144,12 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
         auto name = parser::Keyword::GetKeywordName(expected);
         if (!name.empty()) {
             Candidate candidate{
-                .name_text = name,
+                .name_text = name.data(),
                 .name_tags = NameTags{proto::NameTag::KEYWORD},
                 .score = get_score(*location, expected, name),
                 .in_statement = false,
             };
-            result_heap.Insert(candidate, candidate.score);
+            result_heap.Insert(candidate);
         }
     }
 }
@@ -286,7 +286,7 @@ void Completion::FlushCandidatesAndFinish() {
             continue;
         }
         // Adjust the score
-        result_heap.Insert(candidate, candidate.GetScore());
+        result_heap.Insert(candidate);
     }
 
     // Finish the heap
@@ -329,12 +329,12 @@ flatbuffers::Offset<proto::Completion> Completion::Pack(flatbuffers::FlatBufferB
     std::vector<flatbuffers::Offset<proto::CompletionCandidate>> candidates;
     candidates.reserve(entries.size());
     for (auto iter = entries.rbegin(); iter != entries.rend(); ++iter) {
-        auto text_offset = builder.CreateString(iter->value.name_text);
+        auto text_offset = builder.CreateString(iter->name_text);
         proto::CompletionCandidateBuilder candidateBuilder{builder};
-        candidateBuilder.add_name_tags(iter->value.name_tags);
+        candidateBuilder.add_name_tags(iter->name_tags);
         candidateBuilder.add_name_text(text_offset);
-        candidateBuilder.add_score(iter->score);
-        candidateBuilder.add_in_statement(iter->value.in_statement);
+        candidateBuilder.add_score(iter->GetScore());
+        candidateBuilder.add_in_statement(iter->in_statement);
         candidates.push_back(candidateBuilder.Finish());
     }
     auto candidatesOfs = builder.CreateVector(candidates);
