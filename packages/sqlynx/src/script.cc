@@ -213,7 +213,10 @@ ParsedScript::ParsedScript(std::shared_ptr<ScannedScript> scan, parser::ParseCon
       scanned_script(scan),
       nodes(ctx.nodes.Flatten()),
       statements(std::move(ctx.statements)),
-      errors(std::move(ctx.errors)) {}
+      errors(std::move(ctx.errors)) {
+    assert(std::is_sorted(statements.begin(), statements.end(),
+                          [](auto& l, auto& r) { return l.nodes_begin < r.nodes_begin; }));
+}
 
 /// Resolve an ast node
 std::optional<std::pair<size_t, size_t>> ParsedScript::FindNodeAtOffset(size_t text_offset) {
