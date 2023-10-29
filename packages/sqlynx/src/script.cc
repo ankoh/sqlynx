@@ -227,8 +227,7 @@ std::optional<std::pair<size_t, size_t>> ParsedScript::FindNodeAtOffset(size_t t
     // offset
     size_t statement_id = 0;
     for (; statement_id < statements.size(); ++statement_id) {
-        auto begin = nodes[statements[statement_id].root].location().offset();
-        if (begin > text_offset) {
+        if (nodes[statements[statement_id].root].location().offset() > text_offset) {
             break;
         }
     }
@@ -236,10 +235,8 @@ std::optional<std::pair<size_t, size_t>> ParsedScript::FindNodeAtOffset(size_t t
     if (statement_id == 0) {
         return std::nullopt;
     }
-    // Get predecessor
-    --statement_id;
     // Traverse down the AST
-    auto iter = statements[statement_id].root;
+    auto iter = statements[--statement_id].root;
     while (true) {
         // Reached node without children? Then return that node
         auto& node = nodes[iter];
@@ -253,21 +250,23 @@ std::optional<std::pair<size_t, size_t>> ParsedScript::FindNodeAtOffset(size_t t
         for (size_t i = 0; i < node.children_count(); ++i) {
             auto ci = node.children_begin_or_value() + i;
             auto node_begin = nodes[ci].location().offset();
-            auto node_end = nodes[ci].location().length();
+            auto node_end = node_begin + nodes[ci].location().length();
             // Includes the offset?
-            if (node_begin <= text_offset) {
-                if (node_end > text_offset) {
-                    child = ci;
-                    break;
-                }
-                if (node_end > closest_end) {
-                    closest_child = ci;
-                    closest_end = node_end;
-                }
+            // Note that we want an exact match here since AST nodes will include "holes".
+            // For example, a select clause does not emit a node for a FROM keyword.
+            // It would be misleading if we'd return the closest node that is materialized in the AST.
+            if (node_begin <= text_offset && node_end > text_offset) {
+                child = ci;
+                break;
             }
         }
+        if (!child.has_value()) {
+            // None of the children included the text offset.
+            // Abort and return the current node as best match.
+            break;
+        }
         // Traverse down
-        iter = child.value_or(closest_child);
+        iter = *child;
     }
     // Return (statement, node)-pair
     return std::make_pair(statement_id, iter);
