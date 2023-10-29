@@ -80,11 +80,14 @@ struct Completion {
 
         /// Get the score
         inline ScoreValueType GetScore() const { return score + (in_statement ? SAME_STATEMENT_SCORE_MODIFIER : 0); }
-        /// Is less?
+        /// Is less in the min-heap?
+        /// We want to kick a candidate A before candidate B if
+        ///     1) the score of A is less than the score of B
+        ///     2) the name of A is lexicographically larger than B
         bool operator<(const Candidate& other) const {
             auto l = GetScore();
             auto r = other.GetScore();
-            return (l < r) || (l == r && (fuzzy_ci_string_view{name_text.data(), name_text.size()} <
+            return (l < r) || (l == r && (fuzzy_ci_string_view{name_text.data(), name_text.size()} >
                                           fuzzy_ci_string_view{other.name_text.data(), other.name_text.size()}));
         }
     };

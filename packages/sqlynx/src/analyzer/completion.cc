@@ -288,6 +288,7 @@ void Completion::FlushCandidatesAndFinish() {
         // Adjust the score
         result_heap.Insert(candidate);
     }
+    pending_candidates.clear();
 
     // Finish the heap
     result_heap.Finish();
@@ -323,7 +324,7 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(co
 }
 
 flatbuffers::Offset<proto::Completion> Completion::Pack(flatbuffers::FlatBufferBuilder& builder) {
-    auto& entries = result_heap.Finish();
+    auto& entries = result_heap.GetEntries();
 
     // Pack candidates
     std::vector<flatbuffers::Offset<proto::CompletionCandidate>> candidates;
