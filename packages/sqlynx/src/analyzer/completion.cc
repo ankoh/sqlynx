@@ -27,13 +27,13 @@ static constexpr Completion::ScoreValueType KEYWORD_VERY_POPULAR = 3;
 static constexpr Completion::ScoreValueType KEYWORD_POPULAR = 2;
 static constexpr Completion::ScoreValueType KEYWORD_DEFAULT = 0;
 
-static constexpr Completion::ScoreValueType IS_IN_SCOPE_SCORE_MODIFIER = 1;
+static constexpr Completion::ScoreValueType IS_IN_STATEMENT_SCORE_MODIFIER = 1;
 static constexpr Completion::ScoreValueType IS_SUBSTRING_SCORE_MODIFIER = 15;
 static constexpr Completion::ScoreValueType IS_PREFIX_SCORE_MODIFIER = 20;
 
 static_assert(IS_PREFIX_SCORE_MODIFIER > IS_SUBSTRING_SCORE_MODIFIER,
               "Begin a prefix weighs more than being a substring");
-static_assert(IS_IN_SCOPE_SCORE_MODIFIER < KEYWORD_POPULAR,
+static_assert(IS_IN_STATEMENT_SCORE_MODIFIER < KEYWORD_POPULAR,
               "Being in scope doesn't outweigh a popular keyword of similar likelyhood without also being a substring");
 static_assert((NAME_UNLIKELY + IS_SUBSTRING_SCORE_MODIFIER) > NAME_LIKELY,
               "An unlikely name that is a substring outweighs a likely name");
@@ -167,8 +167,7 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
                 .name_text = name,
                 .name_tags = NameTags{proto::NameTag::KEYWORD},
                 .score = get_score(*location, expected, name),
-                .occurences_in_script = 0,
-                .in_statement_scope = false,
+                .in_statement = false,
             };
             result_heap.Insert(candidate, candidate.score);
         }
@@ -211,7 +210,6 @@ void Completion::FindCandidatesInIndex(const CompletionIndex& index) {
         if (auto iter = pending_candidates.find(entry_data.name_id); iter != pending_candidates.end()) {
             // Update the score if it is higher
             iter->second.score = std::max(iter->second.score, score);
-            iter->second.occurences_in_script = std::max(iter->second.occurences_in_script, entry_data.occurrences);
             iter->second.name_tags |= entry_data.name_tags;
         } else {
             // Otherwise store as new candidate
@@ -219,8 +217,7 @@ void Completion::FindCandidatesInIndex(const CompletionIndex& index) {
                 .name_text = entry_data.name_text,
                 .name_tags = entry_data.name_tags,
                 .score = score,
-                .occurences_in_script = entry.data->occurrences,
-                .in_statement_scope = false,
+                .in_statement = false,
             };
             pending_candidates.insert({entry_data.name_id, candidate});
         }
@@ -253,7 +250,7 @@ void Completion::FindCandidatesInAST() {
     // Helper to mark a name as in-scope
     auto mark_as_in_scope = [this](QualifiedID name) {
         if (auto iter = pending_candidates.find(name); iter != pending_candidates.end()) {
-            iter->second.in_statement_scope = true;
+            iter->second.in_statement = true;
         }
     };
 
@@ -304,11 +301,11 @@ void Completion::FlushCandidatesAndFinish() {
     // Insert all pending candidates into the heap
     for (auto& [key, candidate] : pending_candidates) {
         // Omit candidate if it occurs only once and is located at the cursor
-        if (current_symbol_name == key && candidate.occurences_in_script == 1) {
+        if (current_symbol_name == key) {
             continue;
         }
         // Adjust the score
-        auto score = candidate.score + (candidate.in_statement_scope ? IS_IN_SCOPE_SCORE_MODIFIER : 0);
+        auto score = candidate.score + (candidate.in_statement ? IS_IN_STATEMENT_SCORE_MODIFIER : 0);
         result_heap.Insert(candidate, score);
     }
 
@@ -357,6 +354,7 @@ flatbuffers::Offset<proto::Completion> Completion::Pack(flatbuffers::FlatBufferB
         candidateBuilder.add_name_tags(iter->value.name_tags);
         candidateBuilder.add_name_text(text_offset);
         candidateBuilder.add_score(iter->score);
+        candidateBuilder.add_in_statement(iter->value.in_statement);
         candidates.push_back(candidateBuilder.Finish());
     }
     auto candidatesOfs = builder.CreateVector(candidates);

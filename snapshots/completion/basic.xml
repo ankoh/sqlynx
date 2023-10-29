@@ -5,9 +5,9 @@
             <search text="" index="0" />
         </cursor>
         <completions limit="3">
-            <entry value="select" score="3" count="0" in-scope="false" tags="KEYWORD" />
-            <entry value="with" score="2" count="0" in-scope="false" tags="KEYWORD" />
-            <entry value="set" score="2" count="0" in-scope="false" tags="KEYWORD" />
+            <entry value="select" score="3" in-scope="false" tags="KEYWORD" />
+            <entry value="with" score="2" in-scope="false" tags="KEYWORD" />
+            <entry value="set" score="2" in-scope="false" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="simple_table">
@@ -21,9 +21,9 @@
             <search text="fo" index="2" />
         </cursor>
         <completions limit="3">
-            <entry value="foo" score="40" count="1" in-scope="false" tags="TABLE_NAME" />
-            <entry value="for" score="20" count="0" in-scope="false" tags="KEYWORD" />
-            <entry value="following" score="20" count="0" in-scope="false" tags="KEYWORD" />
+            <entry value="foo" score="40" in-scope="false" tags="TABLE_NAME" />
+            <entry value="for" score="20" in-scope="false" tags="KEYWORD" />
+            <entry value="following" score="20" in-scope="false" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
 </completion-snapshots>

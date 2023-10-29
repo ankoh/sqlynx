@@ -7,6 +7,8 @@ table CompletionCandidate {
     name_tags: uint64;
     /// The score
     score: uint32;
+    /// Is the candidate in statement?
+    in_statement: bool;
 }
 
 table Completion {
