@@ -25,7 +25,7 @@ order by
         </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="150">
                     <node type="OBJECT_SQL_SELECT" loc="1..555" text="select&#10;   ..linestatus">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="12..387" text="l_returnfl..ount_order">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="12..24" text="l_returnflag">
@@ -356,7 +356,7 @@ limit
         </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="206">
                     <node type="OBJECT_SQL_SELECT" loc="1..1094" text="select&#10;   ..limit&#10;&#09;100">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="16..147" text="s_acctbal,.. s_comment">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="16..25" text="s_acctbal">
@@ -788,7 +788,7 @@ limit
         </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="119">
                     <node type="OBJECT_SQL_SELECT" loc="1..518" text="select&#10;   ..&#10;limit&#10;&#09;10">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="16..131" text="l_orderkey..ippriority">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="16..26" text="l_orderkey">
@@ -1046,7 +1046,7 @@ order by
         </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="81">
                     <node type="OBJECT_SQL_SELECT" loc="1..502" text="select&#10;   ..erpriority">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="16..64" text="o_orderpri..rder_count">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="16..31" text="o_orderpriority">
@@ -1244,7 +1244,7 @@ order by
         </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="141">
                     <node type="OBJECT_SQL_SELECT" loc="1..579" text="select&#10;   ..venue desc">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="16..82" text="n_name,&#10;  ..as revenue">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="16..22" text="n_name">
@@ -1528,7 +1528,7 @@ where
         </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="68">
                     <node type="OBJECT_SQL_SELECT" loc="1..258" text="select&#10;   ..ntity &lt; 24">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="16..60" text="sum(l_exte..as revenue">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="16..60" text="sum(l_exte..as revenue">
@@ -1702,7 +1702,7 @@ order by
         </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="220">
                     <node type="OBJECT_SQL_SELECT" loc="1..1338" text="select&#10;   ..    l_year">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="16..96" text="supp_natio..as revenue">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="16..27" text="supp_nation">
@@ -2151,7 +2151,7 @@ order by
         </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="208">
                     <node type="OBJECT_SQL_SELECT" loc="1..1319" text="select&#10;   ..    o_year">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="16..154" text="o_year,&#10;  .. mkt_share">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="16..22" text="o_year">
@@ -2577,7 +2577,7 @@ order by
         </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="170">
                     <node type="OBJECT_SQL_SELECT" loc="1..1014" text="select&#10;   .._year desc">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="16..73" text="nation,&#10;  ..sum_profit">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="16..22" text="nation">
@@ -2941,7 +2941,7 @@ limit
         </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="163">
                     <node type="OBJECT_SQL_SELECT" loc="1..666" text="select&#10;   ..&#10;limit&#10;&#09;20">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="16..191" text="c_custkey,.. c_comment">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="16..25" text="c_custkey">
@@ -3287,7 +3287,7 @@ order by
         </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="149">
                     <node type="OBJECT_SQL_SELECT" loc="1..836" text="select&#10;   ..alue&quot; desc">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="16..79" text="ps_partkey..as &quot;value&quot;">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="16..26" text="ps_partkey">
@@ -3609,7 +3609,7 @@ order by
         </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="141">
                     <node type="OBJECT_SQL_SELECT" loc="1..791" text="select&#10;   ..l_shipmode">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="16..444" text="l_shipmode..line_count">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="16..26" text="l_shipmode">
@@ -3905,7 +3905,7 @@ order by
         </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="85">
                     <node type="OBJECT_SQL_SELECT" loc="1..545" text="select&#10;   ..count desc">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="16..53" text="c_count,&#10; ..s custdist">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="16..23" text="c_count">
@@ -4097,7 +4097,7 @@ where
         </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="97">
                     <node type="OBJECT_SQL_SELECT" loc="1..393" text="select&#10;   ..995-10-01'">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="16..234" text="100.00 * s..mo_revenue">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="16..234" text="100.00 * s..mo_revenue">
@@ -4316,7 +4316,7 @@ order by
         </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="131">
                     <node type="OBJECT_SQL_SELECT" loc="1..447" text="with reven..&#09;s_suppkey">
                         <node key="SQL_SELECT_WITH_CTES" type="ARRAY" loc="6..231" text="revenue as..l_suppkey)">
                             <node type="OBJECT_SQL_CTE" loc="6..231" text="revenue as..l_suppkey)">
@@ -4615,7 +4615,7 @@ order by
         </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="131">
                     <node type="OBJECT_SQL_SELECT" loc="1..693" text="select&#10;   ..    p_size">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="16..107" text="p_brand,&#10; ..pplier_cnt">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="16..23" text="p_brand">
@@ -4893,7 +4893,7 @@ where
         </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="84">
                     <node type="OBJECT_SQL_SELECT" loc="1..425" text="select&#10;   ..&#10;        )">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="16..56" text="sum(l_exte..avg_yearly">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="16..56" text="sum(l_exte..avg_yearly">
@@ -5101,7 +5101,7 @@ limit
         </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="134">
                     <node type="OBJECT_SQL_SELECT" loc="1..701" text="select&#10;   ..limit&#10;&#09;100">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="16..129" text="c_name,&#10;  .._quantity)">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="16..22" text="c_name">
@@ -5413,7 +5413,7 @@ where
         </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="248">
                     <node type="OBJECT_SQL_SELECT" loc="1..1311" text="select&#10;   ..&#10;        )">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="16..65" text="sum(l_exte..as revenue">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="16..65" text="sum(l_exte..as revenue">
@@ -5891,7 +5891,7 @@ order by
         </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="152">
                     <node type="OBJECT_SQL_SELECT" loc="1..1257" text="select&#10;   ..    s_name">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="16..41" text="s_name,&#10;  .. s_address">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="16..22" text="s_name">
@@ -6243,7 +6243,7 @@ limit
         </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="185">
                     <node type="OBJECT_SQL_SELECT" loc="1..1045" text="select&#10;   ..limit&#10;&#09;100">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="16..51" text="s_name,&#10;  ..as numwait">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="16..22" text="s_name">
@@ -6635,7 +6635,7 @@ order by
         </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="151">
                     <node type="OBJECT_SQL_SELECT" loc="1..1365" text="select&#10;   .. cntrycode">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="16..92" text="cntrycode,..totacctbal">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="16..25" text="cntrycode">

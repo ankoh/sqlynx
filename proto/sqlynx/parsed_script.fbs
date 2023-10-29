@@ -369,6 +369,8 @@ table Error {
 table Statement {
     statement_type: StatementType;
     root_node: uint32;
+    nodes_begin: uint32;
+    node_count: uint32;
 }
 
 enum ScannerTokenType: uint8 {

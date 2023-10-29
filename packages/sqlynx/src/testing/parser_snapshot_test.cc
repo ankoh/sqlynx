@@ -1,3 +1,5 @@
+#include "sqlynx/testing/parser_snapshot_test.h"
+
 #include <cstdint>
 #include <fstream>
 #include <iostream>
@@ -6,11 +8,10 @@
 #include <stack>
 #include <unordered_set>
 
+#include "pugixml.hpp"
 #include "sqlynx/parser/grammar/enums.h"
 #include "sqlynx/proto/proto_generated.h"
-#include "sqlynx/testing/parser_snapshot_test.h"
 #include "sqlynx/testing/xml_tests.h"
-#include "pugixml.hpp"
 
 namespace sqlynx::testing {
 
@@ -34,6 +35,8 @@ void ParserSnapshotTest::EncodeScript(pugi::xml_node root, const ScannedScript& 
 
         auto stmt = stmts.append_child("statement");
         stmt.append_attribute("type") = stmt_type_tt->names[static_cast<uint16_t>(s.type)];
+        stmt.append_attribute("begin") = s.nodes_begin;
+        stmt.append_attribute("count") = s.node_count;
 
         std::vector<std::tuple<pugi::xml_node, const proto::Node*>> pending;
         pending.push_back({stmt.append_child("node"), &nodes[s.root]});

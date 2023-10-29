@@ -6,7 +6,7 @@ opt_statement_list:
 
 statement_list:
     statement_list ';' opt_statement  { ctx.AddStatement($3); }
-  | error                             { yyclearin; }
+  | error                             { ctx.ResetStatement(); yyclearin; }
   | statement                         { ctx.AddStatement($1); }
     ;
 

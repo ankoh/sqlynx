@@ -5,7 +5,7 @@
         </input>
         <expected>
             <statements>
-                <statement type="SET">
+                <statement type="SET" begin="0" count="4">
                     <node type="OBJECT_EXT_SET" loc="13..35" text="SET variab.. = 'value'">
                         <node key="EXT_SET_VARARGS" type="OBJECT_EXT_VARARG_FIELD" loc="17..35" text="variable = 'value'">
                             <node key="EXT_VARARG_FIELD_KEY" type="NAME" loc="17..25" text="variable" />
@@ -36,7 +36,7 @@
         </input>
         <expected>
             <statements>
-                <statement type="SET">
+                <statement type="SET" begin="0" count="22">
                     <node type="OBJECT_EXT_SET" loc="13..211" text="SET variab..         )">
                         <node key="EXT_SET_VARARGS" type="OBJECT_EXT_VARARG_FIELD" loc="17..211" text="variable =..         )">
                             <node key="EXT_VARARG_FIELD_KEY" type="NAME" loc="17..25" text="variable" />
@@ -97,7 +97,7 @@
         </input>
         <expected>
             <statements>
-                <statement type="SET">
+                <statement type="SET" begin="0" count="17">
                     <node type="OBJECT_EXT_SET" loc="13..115" text="SET variab..         )">
                         <node key="EXT_SET_VARARGS" type="OBJECT_EXT_VARARG_FIELD" loc="17..115" text="variable =..         )">
                             <node key="EXT_VARARG_FIELD_KEY" type="NAME" loc="17..25" text="variable" />

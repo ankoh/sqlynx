@@ -5,7 +5,7 @@
         </input>
         <expected>
             <statements>
-                <statement type="CREATE_TABLE_AS">
+                <statement type="CREATE_TABLE_AS" begin="0" count="7">
                     <node type="OBJECT_SQL_CREATE_AS" loc="13..41" text="create tab..s select 1">
                         <node key="SQL_CREATE_AS_NAME" type="ARRAY" loc="26..29" text="foo">
                             <node type="NAME" loc="26..29" text="foo" />
@@ -35,7 +35,7 @@
         </input>
         <expected>
             <statements>
-                <statement type="CREATE_TABLE">
+                <statement type="CREATE_TABLE" begin="0" count="8">
                     <node type="OBJECT_SQL_CREATE" loc="13..41" text="create tab..a integer)">
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY" loc="26..29" text="foo">
                             <node type="NAME" loc="26..29" text="foo" />
@@ -66,7 +66,7 @@
         </input>
         <expected>
             <statements>
-                <statement type="CREATE_TABLE">
+                <statement type="CREATE_TABLE" begin="0" count="13">
                     <node type="OBJECT_SQL_CREATE" loc="13..52" text="create tab..b tinyint)">
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY" loc="26..29" text="foo">
                             <node type="NAME" loc="26..29" text="foo" />
@@ -105,7 +105,7 @@
         </input>
         <expected>
             <statements>
-                <statement type="CREATE_TABLE">
+                <statement type="CREATE_TABLE" begin="0" count="13">
                     <node type="OBJECT_SQL_CREATE" loc="13..52" text="create tab..b varchar)">
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY" loc="26..29" text="foo">
                             <node type="NAME" loc="26..29" text="foo" />
@@ -144,7 +144,7 @@
         </input>
         <expected>
             <statements>
-                <statement type="CREATE_TABLE">
+                <statement type="CREATE_TABLE" begin="0" count="14">
                     <node type="OBJECT_SQL_CREATE" loc="13..66" text="create tab..b varchar)">
                         <node key="SQL_CREATE_TABLE_IF_NOT_EXISTS" type="BOOL" value="true" />
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY" loc="40..43" text="foo">
@@ -184,7 +184,7 @@
         </input>
         <expected>
             <statements>
-                <statement type="CREATE_TABLE">
+                <statement type="CREATE_TABLE" begin="0" count="13">
                     <node type="OBJECT_SQL_CREATE" loc="13..52" text="create tab..b varchar)">
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY" loc="26..29" text="foo">
                             <node type="NAME" loc="26..29" text="foo" />
@@ -223,7 +223,7 @@
         </input>
         <expected>
             <statements>
-                <statement type="CREATE_TABLE">
+                <statement type="CREATE_TABLE" begin="0" count="10">
                     <node type="OBJECT_SQL_CREATE" loc="13..52" text="create tab..eferrable)">
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY" loc="26..29" text="foo">
                             <node type="NAME" loc="26..29" text="foo" />
@@ -257,7 +257,7 @@
         </input>
         <expected>
             <statements>
-                <statement type="CREATE_TABLE">
+                <statement type="CREATE_TABLE" begin="0" count="13">
                     <node type="OBJECT_SQL_CREATE" loc="13..57" text="create tab..e &quot;de_DE&quot;)">
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY" loc="26..29" text="foo">
                             <node type="NAME" loc="26..29" text="foo" />
@@ -296,7 +296,7 @@
         </input>
         <expected>
             <statements>
-                <statement type="CREATE_TABLE">
+                <statement type="CREATE_TABLE" begin="0" count="9">
                     <node type="OBJECT_SQL_CREATE" loc="13..51" text="create tem..a integer)">
                         <node key="SQL_CREATE_TABLE_TEMP" type="ENUM_SQL_TEMP_TYPE" value="LOCAL" />
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY" loc="36..39" text="foo">
@@ -328,7 +328,7 @@
         </input>
         <expected>
             <statements>
-                <statement type="CREATE_TABLE">
+                <statement type="CREATE_TABLE" begin="0" count="12">
                     <node type="OBJECT_SQL_CREATE" loc="13..66" text="create tab..'thing2'))">
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY" loc="26..29" text="foo">
                             <node type="NAME" loc="26..29" text="foo" />
@@ -365,7 +365,7 @@
         </input>
         <expected>
             <statements>
-                <statement type="CREATE_TABLE">
+                <statement type="CREATE_TABLE" begin="0" count="12">
                     <node type="OBJECT_SQL_CREATE" loc="13..63" text="create tab.. not null)">
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY" loc="26..29" text="foo">
                             <node type="NAME" loc="26..29" text="foo" />
@@ -402,7 +402,7 @@
         </input>
         <expected>
             <statements>
-                <statement type="CREATE_TABLE">
+                <statement type="CREATE_TABLE" begin="0" count="11">
                     <node type="OBJECT_SQL_CREATE" loc="13..53" text="create tab..imary key)">
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY" loc="26..29" text="foo">
                             <node type="NAME" loc="26..29" text="foo" />
@@ -438,7 +438,7 @@
         </input>
         <expected>
             <statements>
-                <statement type="CREATE_TABLE">
+                <statement type="CREATE_TABLE" begin="0" count="14">
                     <node type="OBJECT_SQL_CREATE" loc="13..61" text="create tab..efault 42)">
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY" loc="26..29" text="foo">
                             <node type="NAME" loc="26..29" text="foo" />
