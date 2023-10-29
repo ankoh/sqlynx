@@ -8,6 +8,7 @@ import { ChangeSpec, StateEffect, EditorSelection } from '@codemirror/state';
 import { CodeMirror } from './codemirror';
 import { SQLynxExtensions } from './sqlynx_extension';
 import { SQLynxScriptBuffers, SQLynxScriptKey, UpdateSQLynxScript } from './sqlynx_processor';
+import { useAppConfig } from '../../state/app_config';
 import { useAppState, useAppStateDispatch } from '../../state/app_state_provider';
 import { UPDATE_SCRIPT_ANALYSIS, UPDATE_SCRIPT_CURSOR } from '../../state/app_state_reducer';
 import { ScriptKey } from '../../state/app_state';
@@ -59,6 +60,7 @@ interface ActiveScriptState {
 export const ScriptEditor: React.FC<Props> = (props: Props) => {
     const ctx = useAppState();
     const ctxDispatch = useAppStateDispatch();
+    const config = useAppConfig();
 
     const [activeTab, setActiveTab] = React.useState<TabId>(TabId.MAIN_SCRIPT);
     const [statsOpen, setStatsOpen] = React.useState<boolean>(false);
@@ -133,6 +135,9 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
             });
             effects.push(
                 UpdateSQLynxScript.of({
+                    config: {
+                        showCompletionDetails: config?.value?.features?.completionDetails ?? false,
+                    },
                     scriptKey: mainKey,
                     mainScript: mainData.script,
                     externalScript: externalScript,
@@ -151,6 +156,9 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         }
         effects.push(
             UpdateSQLynxScript.of({
+                config: {
+                    showCompletionDetails: config?.value?.features?.completionDetails ?? false,
+                },
                 scriptKey: mainKey,
                 mainScript: mainData.script,
                 externalScript: externalScript,

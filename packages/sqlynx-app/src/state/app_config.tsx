@@ -9,11 +9,11 @@ export interface AppFeatures {
     logViewer?: boolean;
     connectionManager?: boolean;
     urlSharing?: boolean;
+    completionDetails?: boolean;
 }
 
 export interface AppConfig {
     features?: AppFeatures;
-    program?: string;
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
@@ -40,7 +40,7 @@ export const AppConfigResolver: React.FC<Props> = (props: Props) => {
             try {
                 const resp = await axios.get(config_url as string);
                 if (isAppConfig(resp.data)) {
-                    setConfig(c => c.completeWith(resp.data as AppConfig));
+                    setConfig(c => c.completeWith(resp.data));
                 } else {
                     setConfig(c => c.failWith(new Error('invalid app config')));
                 }

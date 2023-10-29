@@ -1,10 +1,16 @@
 import * as sqlynx from '@ankoh/sqlynx';
 import { StateField, StateEffect, StateEffectType, Text, Transaction } from '@codemirror/state';
 
+/// The configuration of the SQLynx config
+export interface SQLynxProcessorConfig {
+    showCompletionDetails: boolean;
+}
 /// A SQLynx script key
 export type SQLynxScriptKey = number;
 /// A SQLynx script update
 export interface SQLynxScriptUpdate {
+    // The config
+    config: SQLynxProcessorConfig;
     // The key of the currently active script
     scriptKey: SQLynxScriptKey;
     // The currently active script in the editor
@@ -101,6 +107,9 @@ export const SQLynxProcessor: StateField<SQLynxEditorState> = StateField.define<
     create: () => {
         // By default, the SQLynx script is not configured
         const config: SQLynxEditorState = {
+            config: {
+                showCompletionDetails: false,
+            },
             scriptKey: 0,
             mainScript: null,
             externalScript: null,
