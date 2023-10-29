@@ -96,7 +96,7 @@ create table region (
         </input>
         <expected>
             <statements>
-                <statement type="CREATE_TABLE">
+                <statement type="CREATE_TABLE" begin="0" count="87">
                     <node type="OBJECT_SQL_CREATE" loc="1..341" text="create tab..partkey)&#10;)">
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY" loc="14..18" text="part">
                             <node type="NAME" loc="14..18" text="part" />
@@ -234,7 +234,7 @@ create table region (
                         </node>
                     </node>
                 </statement>
-                <statement type="CREATE_TABLE">
+                <statement type="CREATE_TABLE" begin="87" count="69">
                     <node type="OBJECT_SQL_CREATE" loc="344..627" text="create tab..suppkey)&#10;)">
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY" loc="357..365" text="supplier">
                             <node type="NAME" loc="357..365" text="supplier" />
@@ -344,7 +344,7 @@ create table region (
                         </node>
                     </node>
                 </statement>
-                <statement type="CREATE_TABLE">
+                <statement type="CREATE_TABLE" begin="156" count="50">
                     <node type="OBJECT_SQL_CREATE" loc="630..869" text="create tab..suppkey)&#10;)">
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY" loc="643..651" text="partsupp">
                             <node type="NAME" loc="643..651" text="partsupp" />
@@ -424,7 +424,7 @@ create table region (
                         </node>
                     </node>
                 </statement>
-                <statement type="CREATE_TABLE">
+                <statement type="CREATE_TABLE" begin="206" count="78">
                     <node type="OBJECT_SQL_CREATE" loc="872..1193" text="create tab..custkey)&#10;)">
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY" loc="885..893" text="customer">
                             <node type="NAME" loc="885..893" text="customer" />
@@ -548,7 +548,7 @@ create table region (
                         </node>
                     </node>
                 </statement>
-                <statement type="CREATE_TABLE">
+                <statement type="CREATE_TABLE" begin="284" count="84">
                     <node type="OBJECT_SQL_CREATE" loc="1196..1554" text="create tab..rderkey)&#10;)">
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY" loc="1209..1215" text="orders">
                             <node type="NAME" loc="1209..1215" text="orders" />
@@ -682,7 +682,7 @@ create table region (
                         </node>
                     </node>
                 </statement>
-                <statement type="CREATE_TABLE">
+                <statement type="CREATE_TABLE" begin="368" count="150">
                     <node type="OBJECT_SQL_CREATE" loc="1557..2168" text="create tab..enumber)&#10;)">
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY" loc="1570..1578" text="lineitem">
                             <node type="NAME" loc="1570..1578" text="lineitem" />
@@ -919,7 +919,7 @@ create table region (
                         </node>
                     </node>
                 </statement>
-                <statement type="CREATE_TABLE">
+                <statement type="CREATE_TABLE" begin="518" count="40">
                     <node type="OBJECT_SQL_CREATE" loc="2171..2354" text="create tab..tionkey)&#10;)">
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY" loc="2184..2190" text="nation">
                             <node type="NAME" loc="2184..2190" text="nation" />
@@ -984,7 +984,7 @@ create table region (
                         </node>
                     </node>
                 </statement>
-                <statement type="CREATE_TABLE">
+                <statement type="CREATE_TABLE" begin="558" count="33">
                     <node type="OBJECT_SQL_CREATE" loc="2357..2507" text="create tab..gionkey)&#10;)">
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY" loc="2370..2376" text="region">
                             <node type="NAME" loc="2370..2376" text="region" />
@@ -1152,7 +1152,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
         </input>
         <expected>
             <statements>
-                <statement type="CREATE_TABLE">
+                <statement type="CREATE_TABLE" begin="0" count="87">
                     <node type="OBJECT_SQL_CREATE" loc="1..309" text="create tab.._partkey))">
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY" loc="14..18" text="part">
                             <node type="NAME" loc="14..18" text="part" />
@@ -1290,7 +1290,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         </node>
                     </node>
                 </statement>
-                <statement type="CREATE_TABLE">
+                <statement type="CREATE_TABLE" begin="87" count="69">
                     <node type="OBJECT_SQL_CREATE" loc="311..568" text="create tab.._suppkey))">
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY" loc="324..332" text="supplier">
                             <node type="NAME" loc="324..332" text="supplier" />
@@ -1400,7 +1400,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         </node>
                     </node>
                 </statement>
-                <statement type="CREATE_TABLE">
+                <statement type="CREATE_TABLE" begin="156" count="50">
                     <node type="OBJECT_SQL_CREATE" loc="570..789" text="create tab.._suppkey))">
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY" loc="583..591" text="partsupp">
                             <node type="NAME" loc="583..591" text="partsupp" />
@@ -1480,7 +1480,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         </node>
                     </node>
                 </statement>
-                <statement type="CREATE_TABLE">
+                <statement type="CREATE_TABLE" begin="206" count="78">
                     <node type="OBJECT_SQL_CREATE" loc="791..1083" text="create tab.._custkey))">
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY" loc="804..812" text="customer">
                             <node type="NAME" loc="804..812" text="customer" />
@@ -1604,7 +1604,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         </node>
                     </node>
                 </statement>
-                <statement type="CREATE_TABLE">
+                <statement type="CREATE_TABLE" begin="284" count="84">
                     <node type="OBJECT_SQL_CREATE" loc="1085..1411" text="create tab..orderkey))">
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY" loc="1098..1104" text="orders">
                             <node type="NAME" loc="1098..1104" text="orders" />
@@ -1738,7 +1738,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         </node>
                     </node>
                 </statement>
-                <statement type="CREATE_TABLE">
+                <statement type="CREATE_TABLE" begin="368" count="150">
                     <node type="OBJECT_SQL_CREATE" loc="1413..1971" text="create tab..nenumber))">
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY" loc="1426..1434" text="lineitem">
                             <node type="NAME" loc="1426..1434" text="lineitem" />
@@ -1975,7 +1975,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         </node>
                     </node>
                 </statement>
-                <statement type="CREATE_TABLE">
+                <statement type="CREATE_TABLE" begin="518" count="40">
                     <node type="OBJECT_SQL_CREATE" loc="1973..2139" text="create tab..ationkey))">
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY" loc="1986..1992" text="nation">
                             <node type="NAME" loc="1986..1992" text="nation" />
@@ -2040,7 +2040,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         </node>
                     </node>
                 </statement>
-                <statement type="CREATE_TABLE">
+                <statement type="CREATE_TABLE" begin="558" count="33">
                     <node type="OBJECT_SQL_CREATE" loc="2141..2277" text="create tab..egionkey))">
                         <node key="SQL_CREATE_TABLE_NAME" type="ARRAY" loc="2154..2160" text="region">
                             <node type="NAME" loc="2154..2160" text="region" />

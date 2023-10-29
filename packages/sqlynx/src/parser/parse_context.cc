@@ -228,9 +228,17 @@ void ParseContext::AddStatement(proto::Node node) {
             assert(false);
     }
     current_statement.type = stmt_type;
+    current_statement.node_count = nodes.GetSize() - current_statement.nodes_begin;
     statements.push_back(std::move(current_statement));
-    current_statement = {};
+    current_statement = {
+        .type = proto::StatementType::NONE,
+        .root = std::numeric_limits<uint32_t>::max(),
+        .nodes_begin = nodes.GetSize(),
+        .node_count = 0,
+    };
 }
+
+void ParseContext::ResetStatement() { current_statement.nodes_begin = nodes.GetSize(); }
 
 /// Add an error
 void ParseContext::AddError(proto::Location loc, const std::string& message) { errors.push_back({loc, message}); }

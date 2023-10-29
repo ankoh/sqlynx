@@ -6,7 +6,7 @@
         </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="4">
                     <node type="OBJECT_SQL_SELECT" loc="34..42" text="SELECT 1">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="41..42" text="1">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="41..42" text="1">
@@ -34,7 +34,7 @@
         </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="14">
                     <node type="OBJECT_SQL_SELECT" loc="13..58" text="SELECT * F..g invalid)">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="20..21" text="*">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="20..21" text="*">
@@ -78,7 +78,7 @@
         </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="8">
                     <node type="OBJECT_SQL_SELECT" loc="13..29" text="SELECT a. FROM A">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="20..29" text="a. FROM A">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="20..29" text="a. FROM A">
@@ -109,7 +109,7 @@
         </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="6">
                     <node type="OBJECT_SQL_SELECT" loc="13..26" text="SELECT a FROM">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="20..21" text="a">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="20..21" text="a">
@@ -138,7 +138,7 @@
         </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="7">
                     <node type="OBJECT_SQL_SELECT" loc="13..25" text="SELECT a FRO">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="20..25" text="a FRO">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="20..25" text="a FRO">
@@ -168,7 +168,7 @@
         </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="5">
                     <node type="OBJECT_SQL_SELECT" loc="13..27" text="SELECT  FROM A">
                         <node key="SQL_SELECT_FROM" type="ARRAY" loc="21..27" text="FROM A">
                             <node type="OBJECT_SQL_TABLEREF" loc="26..27" text="A">
@@ -195,7 +195,7 @@
         </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="9">
                     <node type="OBJECT_SQL_SELECT" loc="13..33" text="SELECT * F..ROM A WHER">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="20..21" text="*">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="20..21" text="*">
@@ -228,7 +228,7 @@
         </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="8">
                     <node type="OBJECT_SQL_SELECT" loc="13..34" text="SELECT * F..OM A WHERE">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="20..21" text="*">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="20..21" text="*">

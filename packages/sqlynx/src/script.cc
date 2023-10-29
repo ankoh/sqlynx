@@ -24,6 +24,8 @@ std::unique_ptr<proto::StatementT> ParsedScript::Statement::Pack() {
     auto stmt = std::make_unique<proto::StatementT>();
     stmt->statement_type = type;
     stmt->root_node = root;
+    stmt->nodes_begin = nodes_begin;
+    stmt->node_count = node_count;
     return stmt;
 }
 

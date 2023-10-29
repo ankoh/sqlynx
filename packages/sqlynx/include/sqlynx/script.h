@@ -140,6 +140,10 @@ class ParsedScript {
         proto::StatementType type = proto::StatementType::NONE;
         /// The root node
         NodeID root = std::numeric_limits<uint32_t>::max();
+        /// The begin of the nodes
+        size_t nodes_begin = 0;
+        /// The node count
+        size_t node_count = 0;
         /// Get as flatbuffer object
         std::unique_ptr<proto::StatementT> Pack();
     };

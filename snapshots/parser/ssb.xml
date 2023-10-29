@@ -10,7 +10,7 @@ and lo_quantity &lt; 25
 </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="59">
                     <node type="OBJECT_SQL_SELECT" loc="0..176" text="select sum..ntity &lt; 25">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="7..51" text="sum(lo_ext..as revenue">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..51" text="sum(lo_ext..as revenue">
@@ -135,7 +135,7 @@ and lo_quantity between 26 and 35
 </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="60">
                     <node type="OBJECT_SQL_SELECT" loc="0..199" text="select sum.. 26 and 35">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="7..51" text="sum(lo_ext..as revenue">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..51" text="sum(lo_ext..as revenue">
@@ -262,7 +262,7 @@ and lo_quantity between 26 and 35
 </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="67">
                     <node type="OBJECT_SQL_SELECT" loc="0..213" text="select sum.. 26 and 35">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="7..51" text="sum(lo_ext..as revenue">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..51" text="sum(lo_ext..as revenue">
@@ -403,7 +403,7 @@ order by d_year, p_brand1
 </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="96">
                     <node type="OBJECT_SQL_SELECT" loc="0..268" text="select sum.., p_brand1">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="7..40" text="sum(lo_rev.., p_brand1">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..22" text="sum(lo_revenue)">
@@ -600,7 +600,7 @@ order by d_year, p_brand1
 </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="97">
                     <node type="OBJECT_SQL_SELECT" loc="0..287" text="select sum.., p_brand1">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="7..40" text="sum(lo_rev.., p_brand1">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..22" text="sum(lo_revenue)">
@@ -798,7 +798,7 @@ order by d_year, p_brand1
 </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="96">
                     <node type="OBJECT_SQL_SELECT" loc="0..267" text="select sum.., p_brand1">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="7..40" text="sum(lo_rev.., p_brand1">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..22" text="sum(lo_revenue)">
@@ -994,7 +994,7 @@ order by d_year asc, revenue desc
 </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="122">
                     <node type="OBJECT_SQL_SELECT" loc="0..341" text="select c_n..venue desc">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="7..61" text="c_nation, ..as revenue">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..15" text="c_nation">
@@ -1231,7 +1231,7 @@ order by d_year asc, revenue desc
 </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="122">
                     <node type="OBJECT_SQL_SELECT" loc="0..351" text="select c_c..venue desc">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="7..57" text="c_city, s_..as revenue">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..13" text="c_city">
@@ -1471,7 +1471,7 @@ order by d_year asc, revenue desc
 </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="142">
                     <node type="OBJECT_SQL_SELECT" loc="0..387" text="select c_c..venue desc">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="7..57" text="c_city, s_..as revenue">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..13" text="c_city">
@@ -1745,7 +1745,7 @@ order by d_year asc, revenue desc
 </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="135">
                     <node type="OBJECT_SQL_SELECT" loc="0..377" text="select c_c..venue desc">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="7..57" text="c_city, s_..as revenue">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..13" text="c_city">
@@ -2007,7 +2007,7 @@ order by d_year, c_nation
 </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="132">
                     <node type="OBJECT_SQL_SELECT" loc="0..374" text="select d_y.., c_nation">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="7..66" text="d_year, c_.. as profit">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..13" text="d_year">
@@ -2267,7 +2267,7 @@ order by d_year, s_nation, p_category
 </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="162">
                     <node type="OBJECT_SQL_SELECT" loc="0..447" text="select d_y..p_category">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="7..78" text="d_year, s_.. as profit">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..13" text="d_year">
@@ -2577,7 +2577,7 @@ order by d_year, s_city, p_brand1
 </input>
         <expected>
             <statements>
-                <statement type="SELECT">
+                <statement type="SELECT" begin="0" count="152">
                     <node type="OBJECT_SQL_SELECT" loc="0..423" text="select d_y.., p_brand1">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="7..74" text="d_year, s_.. as profit">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="7..13" text="d_year">

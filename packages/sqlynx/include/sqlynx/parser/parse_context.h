@@ -111,6 +111,8 @@ class ParseContext {
     void AddError(proto::Location loc, const std::string& message);
     /// Add a statement
     void AddStatement(proto::Node node);
+    /// Reset a statement
+    void ResetStatement();
 };
 
 }  // namespace parser

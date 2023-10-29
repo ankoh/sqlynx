@@ -5,7 +5,7 @@
         </input>
         <expected>
             <statements>
-                <statement type="CREATE_VIEW">
+                <statement type="CREATE_VIEW" begin="0" count="7">
                     <node type="OBJECT_SQL_VIEW" loc="13..40" text="create vie..s select 1">
                         <node key="SQL_VIEW_NAME" type="ARRAY" loc="25..28" text="foo">
                             <node type="NAME" loc="25..28" text="foo" />
