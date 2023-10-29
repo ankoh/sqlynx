@@ -32,13 +32,20 @@ export async function completeSQLynx(context: CompletionContext): Promise<Comple
             const candidateObj = new sqlynx.proto.CompletionCandidate();
             for (let i = 0; i < completion.candidatesLength(); ++i) {
                 const candidate = completion.candidates(i, candidateObj)!;
-                let tagDetail: string | undefined = undefined;
+                let tagName: string | undefined = undefined;
                 for (const tag of unpackNameTags(candidate.nameTags())) {
-                    tagDetail = getNameTagName(tag);
+                    tagName = getNameTagName(tag);
+                    break;
+                }
+                let candidateDetail = tagName;
+                if (processor.config.showCompletionDetails) {
+                    const score = candidate.score();
+                    const inStatment = candidate.inStatement();
+                    candidateDetail = `${candidateDetail}, score=${score}, local=${inStatment}`;
                 }
                 options.push({
                     label: candidate.nameText() ?? '',
-                    detail: tagDetail,
+                    detail: candidateDetail,
                 });
             }
             offset = processor.scriptCursor.scannerSymbolOffset;
