@@ -20,54 +20,34 @@ namespace {
 
 using ScoringTable = std::array<std::pair<proto::NameTag, Completion::ScoreValueType>, 8>;
 
-static constexpr Completion::ScoreValueType NAME_UNLIKELY = 10;
-static constexpr Completion::ScoreValueType NAME_LIKELY = 20;
-
-static constexpr Completion::ScoreValueType KEYWORD_VERY_POPULAR = 3;
-static constexpr Completion::ScoreValueType KEYWORD_POPULAR = 2;
-static constexpr Completion::ScoreValueType KEYWORD_DEFAULT = 0;
-
-static constexpr Completion::ScoreValueType IS_IN_STATEMENT_SCORE_MODIFIER = 1;
-static constexpr Completion::ScoreValueType IS_SUBSTRING_SCORE_MODIFIER = 15;
-static constexpr Completion::ScoreValueType IS_PREFIX_SCORE_MODIFIER = 20;
-
-static_assert(IS_PREFIX_SCORE_MODIFIER > IS_SUBSTRING_SCORE_MODIFIER,
-              "Begin a prefix weighs more than being a substring");
-static_assert(IS_IN_STATEMENT_SCORE_MODIFIER < KEYWORD_POPULAR,
-              "Being in scope doesn't outweigh a popular keyword of similar likelyhood without also being a substring");
-static_assert((NAME_UNLIKELY + IS_SUBSTRING_SCORE_MODIFIER) > NAME_LIKELY,
-              "An unlikely name that is a substring outweighs a likely name");
-static_assert((NAME_UNLIKELY + KEYWORD_VERY_POPULAR) < NAME_LIKELY,
-              "A very likely keyword prevalance doesn't outweighing a likely tag");
-
 static constexpr ScoringTable NAME_SCORE_DEFAULTS{{
     {proto::NameTag::NONE, 0},
-    {proto::NameTag::KEYWORD, NAME_UNLIKELY},
-    {proto::NameTag::SCHEMA_NAME, NAME_LIKELY},
-    {proto::NameTag::DATABASE_NAME, NAME_LIKELY},
-    {proto::NameTag::TABLE_NAME, NAME_LIKELY},
-    {proto::NameTag::TABLE_ALIAS, NAME_LIKELY},
-    {proto::NameTag::COLUMN_NAME, NAME_LIKELY},
+    {proto::NameTag::KEYWORD, Completion::TAG_UNLIKELY},
+    {proto::NameTag::SCHEMA_NAME, Completion::TAG_LIKELY},
+    {proto::NameTag::DATABASE_NAME, Completion::TAG_LIKELY},
+    {proto::NameTag::TABLE_NAME, Completion::TAG_LIKELY},
+    {proto::NameTag::TABLE_ALIAS, Completion::TAG_LIKELY},
+    {proto::NameTag::COLUMN_NAME, Completion::TAG_LIKELY},
 }};
 
 static constexpr ScoringTable NAME_SCORE_TABLE_REF{{
     {proto::NameTag::NONE, 0},
-    {proto::NameTag::KEYWORD, NAME_UNLIKELY},
-    {proto::NameTag::SCHEMA_NAME, NAME_LIKELY},
-    {proto::NameTag::DATABASE_NAME, NAME_LIKELY},
-    {proto::NameTag::TABLE_NAME, NAME_LIKELY},
-    {proto::NameTag::TABLE_ALIAS, NAME_UNLIKELY},
-    {proto::NameTag::COLUMN_NAME, NAME_UNLIKELY},
+    {proto::NameTag::KEYWORD, Completion::TAG_UNLIKELY},
+    {proto::NameTag::SCHEMA_NAME, Completion::TAG_LIKELY},
+    {proto::NameTag::DATABASE_NAME, Completion::TAG_LIKELY},
+    {proto::NameTag::TABLE_NAME, Completion::TAG_LIKELY},
+    {proto::NameTag::TABLE_ALIAS, Completion::TAG_UNLIKELY},
+    {proto::NameTag::COLUMN_NAME, Completion::TAG_UNLIKELY},
 }};
 
 static constexpr ScoringTable NAME_SCORE_COLUMN_REF{{
     {proto::NameTag::NONE, 0},
-    {proto::NameTag::KEYWORD, NAME_LIKELY},
-    {proto::NameTag::SCHEMA_NAME, NAME_UNLIKELY},
-    {proto::NameTag::DATABASE_NAME, NAME_UNLIKELY},
-    {proto::NameTag::TABLE_NAME, NAME_UNLIKELY},
-    {proto::NameTag::TABLE_ALIAS, NAME_LIKELY},
-    {proto::NameTag::COLUMN_NAME, NAME_UNLIKELY},
+    {proto::NameTag::KEYWORD, Completion::TAG_LIKELY},
+    {proto::NameTag::SCHEMA_NAME, Completion::TAG_UNLIKELY},
+    {proto::NameTag::DATABASE_NAME, Completion::TAG_UNLIKELY},
+    {proto::NameTag::TABLE_NAME, Completion::TAG_UNLIKELY},
+    {proto::NameTag::TABLE_ALIAS, Completion::TAG_LIKELY},
+    {proto::NameTag::COLUMN_NAME, Completion::TAG_UNLIKELY},
 }};
 
 /// We use a prevalence score to rank keywords by popularity.
@@ -82,7 +62,7 @@ static constexpr Completion::ScoreValueType GetKeywordPrevalenceScore(parser::Pa
         case parser::Parser::symbol_kind_type::S_ORDER:
         case parser::Parser::symbol_kind_type::S_SELECT:
         case parser::Parser::symbol_kind_type::S_WHERE:
-            return KEYWORD_VERY_POPULAR;
+            return Completion::KEYWORD_VERY_POPULAR;
         case parser::Parser::symbol_kind_type::S_AS:
         case parser::Parser::symbol_kind_type::S_ASC_P:
         case parser::Parser::symbol_kind_type::S_BY:
@@ -98,13 +78,13 @@ static constexpr Completion::ScoreValueType GetKeywordPrevalenceScore(parser::Pa
         case parser::Parser::symbol_kind_type::S_THEN:
         case parser::Parser::symbol_kind_type::S_WHEN:
         case parser::Parser::symbol_kind_type::S_WITH:
-            return KEYWORD_POPULAR;
+            return Completion::KEYWORD_POPULAR;
         case parser::Parser::symbol_kind_type::S_BETWEEN:
         case parser::Parser::symbol_kind_type::S_DAY_P:
         case parser::Parser::symbol_kind_type::S_PARTITION:
         case parser::Parser::symbol_kind_type::S_SETOF:
         default:
-            return KEYWORD_DEFAULT;
+            return Completion::KEYWORD_DEFAULT;
     }
 }
 
@@ -146,9 +126,9 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
                 // Is substring?
                 if (auto pos = ci_keyword_text.find(ci_symbol_text, 0); pos != fuzzy_ci_string_view::npos) {
                     if (pos == 0) {
-                        score += IS_PREFIX_SCORE_MODIFIER;
+                        score += PREFIX_SCORE_MODIFIER;
                     } else {
-                        score += IS_SUBSTRING_SCORE_MODIFIER;
+                        score += SUBSTRING_SCORE_MODIFIER;
                     }
                 }
                 return score;
@@ -197,9 +177,9 @@ void Completion::FindCandidatesInIndex(const CompletionIndex& index) {
                 fuzzy_ci_string_view ci_prefix_text{cursor.text.data(), symbol_prefix};
                 fuzzy_ci_string_view ci_entry_text{entry.data->name_text.data(), entry.data->name_text.size()};
                 if (auto pos = ci_entry_text.find(ci_prefix_text, 0); pos == 0) {
-                    score += IS_PREFIX_SCORE_MODIFIER;
+                    score += PREFIX_SCORE_MODIFIER;
                 } else {
-                    score += IS_SUBSTRING_SCORE_MODIFIER;
+                    score += SUBSTRING_SCORE_MODIFIER;
                 }
                 break;
             }
@@ -306,8 +286,7 @@ void Completion::FlushCandidatesAndFinish() {
             continue;
         }
         // Adjust the score
-        auto score = candidate.score + (candidate.in_statement ? IS_IN_STATEMENT_SCORE_MODIFIER : 0);
-        result_heap.Insert(candidate, score);
+        result_heap.Insert(candidate, candidate.GetScore());
     }
 
     // Finish the heap

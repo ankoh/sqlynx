@@ -1,3 +1,5 @@
+#include "gtest/gtest.h"
+#include "pugixml.hpp"
 #include "sqlynx/analyzer/analyzer.h"
 #include "sqlynx/analyzer/completion.h"
 #include "sqlynx/parser/parser.h"
@@ -6,8 +8,6 @@
 #include "sqlynx/script.h"
 #include "sqlynx/testing/completion_snapshot_test.h"
 #include "sqlynx/testing/xml_tests.h"
-#include "gtest/gtest.h"
-#include "pugixml.hpp"
 
 using namespace sqlynx;
 using namespace sqlynx::testing;
@@ -71,6 +71,7 @@ TEST_P(CompletionSnapshotTestSuite, Test) {
 
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(Basic, CompletionSnapshotTestSuite, ::testing::ValuesIn(CompletionSnapshotTest::GetTests("basic.xml")), CompletionSnapshotTest::TestPrinter());
+INSTANTIATE_TEST_SUITE_P(TPCH, CompletionSnapshotTestSuite, ::testing::ValuesIn(CompletionSnapshotTest::GetTests("tpch.xml")), CompletionSnapshotTest::TestPrinter());
 INSTANTIATE_TEST_SUITE_P(Keywords, CompletionSnapshotTestSuite, ::testing::ValuesIn(CompletionSnapshotTest::GetTests("keywords.xml")), CompletionSnapshotTest::TestPrinter());
 
 }

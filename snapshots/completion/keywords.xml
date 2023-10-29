@@ -198,7 +198,7 @@
             <search text="foo o" index="5" />
         </cursor>
         <completions limit="3">
-            <entry value="foo" score="35" in-scope="false" tags="TABLE_NAME" />
+            <entry value="foo" score="36" in-scope="true" tags="TABLE_NAME" />
             <entry value="order" score="23" in-scope="false" tags="KEYWORD" />
             <entry value="offset" score="22" in-scope="false" tags="KEYWORD" />
         </completions>

@@ -35,12 +35,12 @@
             </input>
             <tables />
             <table-references>
-                <external table="0" loc="31..32" text="A" />
-                <external table="1" loc="34..35" text="B" />
+                <external table="0" stmt="0" loc="31..32" text="A" />
+                <external table="1" stmt="0" loc="34..35" text="B" />
             </table-references>
             <column-references>
-                <external table="0" column="0" loc="42..43" text="a" />
-                <external table="0" column="1" loc="46..47" text="b" />
+                <external table="0" column="0" stmt="0" loc="42..43" text="a" />
+                <external table="0" column="1" stmt="0" loc="46..47" text="b" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="42..47" text="a = b">
@@ -73,13 +73,13 @@
             </input>
             <tables />
             <table-references>
-                <external table="0" loc="31..32" text="A" />
-                <external table="1" loc="34..35" text="B" />
+                <external table="0" stmt="0" loc="31..32" text="A" />
+                <external table="1" stmt="0" loc="34..35" text="B" />
             </table-references>
             <column-references>
-                <external table="0" column="0" loc="42..43" text="a" />
-                <external table="1" column="0" loc="46..47" text="d" />
-                <external table="1" column="1" loc="50..51" text="e" />
+                <external table="0" column="0" stmt="0" loc="42..43" text="a" />
+                <external table="1" column="0" stmt="0" loc="46..47" text="d" />
+                <external table="1" column="1" stmt="0" loc="50..51" text="e" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="42..51" text="a + d = e">
@@ -113,14 +113,14 @@
             </input>
             <tables />
             <table-references>
-                <external table="0" loc="31..32" text="A" />
-                <external table="1" loc="34..35" text="B" />
+                <external table="0" stmt="0" loc="31..32" text="A" />
+                <external table="1" stmt="0" loc="34..35" text="B" />
             </table-references>
             <column-references>
-                <external table="0" column="0" loc="42..43" text="a" />
-                <external table="1" column="0" loc="46..47" text="d" />
-                <external table="0" column="1" loc="52..53" text="b" />
-                <external table="1" column="1" loc="56..57" text="e" />
+                <external table="0" column="0" stmt="0" loc="42..43" text="a" />
+                <external table="1" column="0" stmt="0" loc="46..47" text="d" />
+                <external table="0" column="1" stmt="0" loc="52..53" text="b" />
+                <external table="1" column="1" stmt="0" loc="56..57" text="e" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="42..47" text="a = d">
@@ -157,17 +157,17 @@
             </input>
             <tables />
             <table-references>
-                <external table="0" loc="31..32" text="A" />
-                <external table="1" loc="34..35" text="B" />
+                <external table="0" stmt="0" loc="31..32" text="A" />
+                <external table="1" stmt="0" loc="34..35" text="B" />
             </table-references>
             <column-references>
-                <external table="0" column="0" loc="43..44" text="a" />
-                <external table="1" column="0" loc="47..48" text="d" />
-                <external table="0" column="1" loc="53..54" text="b" />
-                <external table="1" column="1" loc="57..58" text="e" />
-                <external table="0" column="0" loc="64..65" text="a" />
-                <external table="1" column="0" loc="68..69" text="d" />
-                <external table="1" column="0" loc="74..75" text="d" />
+                <external table="0" column="0" stmt="0" loc="43..44" text="a" />
+                <external table="1" column="0" stmt="0" loc="47..48" text="d" />
+                <external table="0" column="1" stmt="0" loc="53..54" text="b" />
+                <external table="1" column="1" stmt="0" loc="57..58" text="e" />
+                <external table="0" column="0" stmt="0" loc="64..65" text="a" />
+                <external table="1" column="0" stmt="0" loc="68..69" text="d" />
+                <external table="1" column="0" stmt="0" loc="74..75" text="d" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="43..48" text="a = d">
@@ -208,12 +208,12 @@
             </input>
             <tables />
             <table-references>
-                <external table="0" loc="31..32" text="A" />
-                <external table="1" loc="34..35" text="B" />
+                <external table="0" stmt="0" loc="31..32" text="A" />
+                <external table="1" stmt="0" loc="34..35" text="B" />
             </table-references>
             <column-references>
-                <external table="1" column="0" loc="47..48" text="d" />
-                <external table="0" column="0" loc="42..43" text="a" />
+                <external table="1" column="0" stmt="0" loc="47..48" text="d" />
+                <external table="0" column="0" stmt="0" loc="42..43" text="a" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="42..54" text="a = (d + 42)">
@@ -246,12 +246,12 @@
             </input>
             <tables />
             <table-references>
-                <external table="0" loc="31..32" text="A" />
-                <external table="1" loc="38..39" text="B" />
+                <external table="0" stmt="0" loc="31..32" text="A" />
+                <external table="1" stmt="0" loc="38..39" text="B" />
             </table-references>
             <column-references>
-                <external table="0" column="0" loc="44..45" text="a" />
-                <external table="0" column="1" loc="48..49" text="b" />
+                <external table="0" column="0" stmt="0" loc="44..45" text="a" />
+                <external table="0" column="1" stmt="0" loc="48..49" text="b" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="44..49" text="a = b">
@@ -284,12 +284,12 @@
             </input>
             <tables />
             <table-references>
-                <external table="0" loc="31..32" text="A" />
-                <unresolved loc="34..35" text="C" />
+                <external table="0" stmt="0" loc="31..32" text="A" />
+                <unresolved stmt="0" loc="34..35" text="C" />
             </table-references>
             <column-references>
-                <external table="0" column="0" loc="42..43" text="a" />
-                <unresolved loc="46..47" text="c" />
+                <external table="0" column="0" stmt="0" loc="42..43" text="a" />
+                <unresolved stmt="0" loc="46..47" text="c" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="42..47" text="a = c">
@@ -322,12 +322,12 @@
             </input>
             <tables />
             <table-references>
-                <external table="0" loc="31..32" text="A" />
-                <external table="1" loc="34..35" text="B" />
+                <external table="0" stmt="0" loc="31..32" text="A" />
+                <external table="1" stmt="0" loc="34..35" text="B" />
             </table-references>
             <column-references>
-                <external table="0" column="0" loc="42..43" text="a" />
-                <unresolved loc="46..47" text="c" />
+                <external table="0" column="0" stmt="0" loc="42..43" text="a" />
+                <unresolved stmt="0" loc="46..47" text="c" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="42..47" text="a = c">
@@ -348,7 +348,7 @@
             </input>
             <tables />
             <table-references>
-                <unresolved loc="31..32" text="A" />
+                <unresolved stmt="0" loc="31..32" text="A" />
             </table-references>
             <column-references />
             <query-graph />
@@ -365,12 +365,12 @@
             </input>
             <tables />
             <table-references>
-                <unresolved loc="31..32" text="A" />
-                <unresolved loc="34..35" text="B" />
+                <unresolved stmt="0" loc="31..32" text="A" />
+                <unresolved stmt="0" loc="34..35" text="B" />
             </table-references>
             <column-references>
-                <unresolved loc="42..43" text="c" />
-                <unresolved loc="46..47" text="d" />
+                <unresolved stmt="0" loc="42..43" text="c" />
+                <unresolved stmt="0" loc="46..47" text="d" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="42..47" text="c = d">
@@ -403,12 +403,12 @@
             </input>
             <tables />
             <table-references>
-                <external table="1" loc="65..66" text="B" />
-                <external table="0" loc="31..32" text="A" />
+                <external table="1" stmt="0" loc="65..66" text="B" />
+                <external table="0" stmt="0" loc="31..32" text="A" />
             </table-references>
             <column-references>
-                <external table="0" column="0" loc="73..74" text="a" />
-                <external table="1" column="0" loc="77..78" text="d" />
+                <external table="0" column="0" stmt="0" loc="73..74" text="a" />
+                <external table="1" column="0" stmt="0" loc="77..78" text="d" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="73..78" text="a = d">
@@ -441,13 +441,13 @@
             </input>
             <tables />
             <table-references>
-                <external table="0" loc="65..66" text="A" />
-                <external table="1" loc="68..69" text="B" />
-                <external table="0" loc="31..32" text="A" />
+                <external table="0" stmt="0" loc="65..66" text="A" />
+                <external table="1" stmt="0" loc="68..69" text="B" />
+                <external table="0" stmt="0" loc="31..32" text="A" />
             </table-references>
             <column-references>
-                <external table="0" column="0" loc="76..77" text="a" />
-                <external table="1" column="0" loc="80..81" text="d" />
+                <external table="0" column="0" stmt="0" loc="76..77" text="a" />
+                <external table="1" column="0" stmt="0" loc="80..81" text="d" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="76..81" text="a = d">

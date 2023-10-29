@@ -47,6 +47,26 @@ struct Completion {
     using ScoreValueType = uint32_t;
     using ScoringTable = std::array<std::pair<proto::NameTag, ScoreValueType>, 8>;
 
+    static constexpr ScoreValueType TAG_UNLIKELY = 10;
+    static constexpr ScoreValueType TAG_LIKELY = 20;
+    static constexpr ScoreValueType KEYWORD_VERY_POPULAR = 3;
+    static constexpr ScoreValueType KEYWORD_POPULAR = 2;
+    static constexpr ScoreValueType KEYWORD_DEFAULT = 0;
+
+    static constexpr ScoreValueType SUBSTRING_SCORE_MODIFIER = 15;
+    static constexpr ScoreValueType PREFIX_SCORE_MODIFIER = 20;
+    static constexpr ScoreValueType SAME_STATEMENT_SCORE_MODIFIER = 1;
+
+    static_assert(PREFIX_SCORE_MODIFIER > SUBSTRING_SCORE_MODIFIER,
+                  "Begin a prefix weighs more than being a substring");
+    static_assert(SAME_STATEMENT_SCORE_MODIFIER < KEYWORD_POPULAR,
+                  "Being in the same statement doesn't outweigh a popular keyword of similar likelyhood without also "
+                  "being a substring");
+    static_assert((TAG_UNLIKELY + SUBSTRING_SCORE_MODIFIER) > TAG_LIKELY,
+                  "An unlikely name that is a substring outweighs a likely name");
+    static_assert((TAG_UNLIKELY + KEYWORD_VERY_POPULAR) < TAG_LIKELY,
+                  "A very likely keyword prevalance doesn't outweighing a likely tag");
+
     /// The completion candidates
     struct Candidate {
         /// The name text
@@ -57,6 +77,8 @@ struct Completion {
         ScoreValueType score;
         /// Is a name in the statement scope?
         bool in_statement;
+        /// Get the score
+        inline ScoreValueType GetScore() const { return score + (in_statement ? SAME_STATEMENT_SCORE_MODIFIER : 0); }
     };
     /// A hash-map for candidates
     using CandidateMap = ankerl::unordered_dense::map<QualifiedID, Candidate, QualifiedID::Hasher>;
