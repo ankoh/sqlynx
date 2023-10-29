@@ -83,7 +83,7 @@ void NameResolutionPass::RegisterExternalTables(const AnalyzedScript& external) 
         name.database_name = map_name(name.database_name, external);
         name.schema_name = map_name(name.schema_name, external);
         name.table_name = map_name(name.table_name, external);
-        t.ast_node_id = std::nullopt;
+        t.ast_node_id = std::nullopt;  // Clear ast node to not mix up node ids
         t.ast_statement_id = std::nullopt;
         external_table_ids.insert({name, QualifiedID(external.context_id, table_id)});
     }
@@ -537,7 +537,46 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
 }
 
 /// Finish the analysis pass
-void NameResolutionPass::Finish() {}
+void NameResolutionPass::Finish() {
+    // Bail out if there are no statements
+    if (parsed_program.statements.empty()) {
+        return;
+    }
+    // Helper to assign statement ids
+    auto assign_statment_ids = [&](auto& chunks) {
+        uint32_t statement_id = 0;
+        size_t statement_begin = parsed_program.statements[0].nodes_begin;
+        size_t statement_end = statement_begin + parsed_program.statements[0].node_count;
+        for (auto& chunk : chunks) {
+            for (auto& ref : chunk) {
+                // Node ids should only be missing for external tables.
+                // Assert that we only store table_refs of internal tables.
+                assert(ref.value.ast_node_id.has_value());
+                // Get the location
+                auto ast_node_id = ref.value.ast_node_id.value();
+                // Search first statement that might include the node
+                while (statement_end <= ast_node_id && statement_id < parsed_program.statements.size()) {
+                    ++statement_id;
+                    statement_begin = parsed_program.statements[statement_id].nodes_begin;
+                    statement_end = statement_begin + parsed_program.statements[statement_id].node_count;
+                }
+                // There is none?
+                // Abort, all other refs won't match either
+                if (statement_id == parsed_program.statements.size()) {
+                    break;
+                }
+                // The statement includes the node?
+                if (statement_begin <= ast_node_id) {
+                    ref.value.ast_statement_id = statement_id;
+                    continue;
+                }
+                // Otherwise lthe ast_node does not belong to a statement, check next one
+            }
+        }
+    };
+    assign_statment_ids(table_references.GetChunks());
+    assign_statment_ids(column_references.GetChunks());
+}
 
 /// Export an analyzed program
 void NameResolutionPass::Export(AnalyzedScript& program) {

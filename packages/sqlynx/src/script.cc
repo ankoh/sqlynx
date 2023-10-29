@@ -220,50 +220,57 @@ ParsedScript::ParsedScript(std::shared_ptr<ScannedScript> scan, parser::ParseCon
 
 /// Resolve an ast node
 std::optional<std::pair<size_t, size_t>> ParsedScript::FindNodeAtOffset(size_t text_offset) {
-    // Helper to check if an offset is included in a location
-    auto includes_offset = [](const std::vector<proto::Node>& nodes, size_t node_id, size_t text_offset) {
-        return nodes[node_id].location().offset() <= text_offset &&
-               ((nodes[node_id].location().offset() + nodes[node_id].location().length()) > text_offset);
-    };
-    // Check all statements
-    for (size_t si = 0; si < statements.size(); ++si) {
-        // Different statement?
-        auto iter = statements[si].root;
-        if (!includes_offset(nodes, iter, text_offset)) {
-            continue;
+    if (statements.empty()) {
+        return std::nullopt;
+    }
+    // Find statement that includes the text offset by searching the predecessor of the first statement after the text
+    // offset
+    size_t statement_id = 0;
+    for (; statement_id < statements.size(); ++statement_id) {
+        auto begin = nodes[statements[statement_id].root].location().offset();
+        if (begin > text_offset) {
+            break;
         }
-
-        // Try to traverse down the AST
-        while (true) {
-            // Reached node without children? Then return that node
-            auto& node = nodes[iter];
-            if (node.children_count() == 0) {
-                break;
-            }
-            // Otherwise find the first child that includes the offset
-            // Children are not ordered by location but ideally, there should only be a single match.
-            std::optional<size_t> child;
-            for (size_t i = 0; i < node.children_count(); ++i) {
-                auto ci = node.children_begin_or_value() + i;
-                if (includes_offset(nodes, ci, text_offset)) {
+    }
+    // First statement and begins > text_offset, bail out
+    if (statement_id == 0) {
+        return std::nullopt;
+    }
+    // Get predecessor
+    --statement_id;
+    // Traverse down the AST
+    auto iter = statements[statement_id].root;
+    while (true) {
+        // Reached node without children? Then return that node
+        auto& node = nodes[iter];
+        if (node.children_count() == 0) {
+            break;
+        }
+        // Otherwise find the first child that includes the offset
+        // Children are not ordered by location but ideally, there should only be a single match.
+        std::optional<size_t> child;
+        size_t closest_child = 0, closest_end = 0;
+        for (size_t i = 0; i < node.children_count(); ++i) {
+            auto ci = node.children_begin_or_value() + i;
+            auto node_begin = nodes[ci].location().offset();
+            auto node_end = nodes[ci].location().length();
+            // Includes the offset?
+            if (node_begin <= text_offset) {
+                if (node_end > text_offset) {
                     child = ci;
                     break;
                 }
+                if (node_end > closest_end) {
+                    closest_child = ci;
+                    closest_end = node_end;
+                }
             }
-            // Found an including child, traverse down
-            if (child.has_value()) {
-                iter = child.value();
-                continue;
-            }
-            // Otherwise none of the children included the text offset.
-            // Abort and return the current node as best match.
-            break;
         }
-        // Return (statement, node)-pair
-        return std::make_pair(si, iter);
+        // Traverse down
+        iter = child.value_or(closest_child);
     }
-    // No match found
-    return std::nullopt;
+    // Return (statement, node)-pair
+    return std::make_pair(statement_id, iter);
 }
 
 /// Pack the FlatBuffer

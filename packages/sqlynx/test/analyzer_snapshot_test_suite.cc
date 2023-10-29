@@ -1,3 +1,5 @@
+#include "gtest/gtest.h"
+#include "pugixml.hpp"
 #include "sqlynx/analyzer/analyzer.h"
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/parser/scanner.h"
@@ -5,8 +7,6 @@
 #include "sqlynx/script.h"
 #include "sqlynx/testing/analyzer_snapshot_test.h"
 #include "sqlynx/testing/xml_tests.h"
-#include "gtest/gtest.h"
-#include "pugixml.hpp"
 
 using namespace sqlynx;
 using namespace sqlynx::testing;
@@ -53,6 +53,7 @@ TEST_P(AnalyzerSnapshotTestSuite, Test) {
 
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(Basic, AnalyzerSnapshotTestSuite, ::testing::ValuesIn(AnalyzerSnapshotTest::GetTests("basic.xml")), AnalyzerSnapshotTest::TestPrinter());
+INSTANTIATE_TEST_SUITE_P(Multiple, AnalyzerSnapshotTestSuite, ::testing::ValuesIn(AnalyzerSnapshotTest::GetTests("multiple.xml")), AnalyzerSnapshotTest::TestPrinter());
 INSTANTIATE_TEST_SUITE_P(TPCH, AnalyzerSnapshotTestSuite, ::testing::ValuesIn(AnalyzerSnapshotTest::GetTests("tpch.xml")), AnalyzerSnapshotTest::TestPrinter());
 
 }

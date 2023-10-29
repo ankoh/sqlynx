@@ -1,0 +1,31 @@
+<analyzer-snapshots>
+    <analyzer-snapshot name="multi_0">
+        <script context="external">  
+            <input>
+                create table A (a int, b int);
+                create table B (d int, e int);
+            </input>
+        </script>  
+        <script context="main">  
+            <input>
+                select * from A, B where a = b;
+                select * from B, C where d = c;
+            </input>
+        </script>  
+    </analyzer-snapshot>
+    <analyzer-snapshot name="multi_recovery_0">
+        <script context="external">  
+            <input>
+                create table A (a int, b int);
+                create table B (d int, e int);
+            </input>
+        </script>  
+        <script context="main">  
+            <input>
+                select * from A, B where a = b;
+                selec;
+                select * from B, C where d = c;
+            </input>
+        </script>  
+    </analyzer-snapshot>
+</analyzer-snapshots>

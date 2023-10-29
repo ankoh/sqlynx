@@ -1,13 +1,14 @@
+#include "sqlynx/testing/analyzer_snapshot_test.h"
+
 #include <algorithm>
 #include <fstream>
 #include <limits>
 
+#include "gtest/gtest.h"
 #include "sqlynx/analyzer/analyzer.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
-#include "sqlynx/testing/analyzer_snapshot_test.h"
 #include "sqlynx/testing/xml_tests.h"
-#include "gtest/gtest.h"
 
 namespace sqlynx {
 
@@ -114,6 +115,9 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node root, const AnalyzedScrip
         if (!ref.table_id.IsNull()) {
             xml_ref.append_attribute("table").set_value(ref.table_id.GetIndex());
         }
+        if (ref.ast_statement_id.has_value()) {
+            xml_ref.append_attribute("stmt").set_value(*ref.ast_statement_id);
+        }
         assert(ref.ast_node_id.has_value());
         WriteLocation(xml_ref, main.parsed_script->nodes[*ref.ast_node_id].location(),
                       main.parsed_script->scanned_script->GetInput());
@@ -130,6 +134,9 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node root, const AnalyzedScrip
         }
         if (ref.column_id.has_value()) {
             xml_ref.append_attribute("column").set_value(*ref.column_id);
+        }
+        if (ref.ast_statement_id.has_value()) {
+            xml_ref.append_attribute("stmt").set_value(*ref.ast_statement_id);
         }
         assert(ref.ast_node_id.has_value());
         WriteLocation(xml_ref, main.parsed_script->nodes[*ref.ast_node_id].location(),
