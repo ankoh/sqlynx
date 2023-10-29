@@ -51,12 +51,14 @@ struct Completion {
     struct Candidate {
         /// The name text
         std::string_view name_text;
-        /// The name tags (if any)
+        /// The name tags
         NameTags name_tags;
-        /// The score
+        /// The name score
         ScoreValueType score;
-        /// The hit count
-        size_t count;
+        /// The number of times we hit this name
+        size_t occurences_in_script;
+        /// Is a name in the statement scope?
+        bool in_statement_scope;
     };
     /// A hash-map for candidates
     using CandidateMap = ankerl::unordered_dense::map<QualifiedID, Candidate, QualifiedID::Hasher>;

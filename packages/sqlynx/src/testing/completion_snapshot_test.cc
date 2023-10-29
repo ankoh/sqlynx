@@ -4,11 +4,11 @@
 #include <fstream>
 #include <limits>
 
+#include "gtest/gtest.h"
 #include "sqlynx/analyzer/analyzer.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
 #include "sqlynx/testing/xml_tests.h"
-#include "gtest/gtest.h"
 
 namespace sqlynx {
 namespace testing {
@@ -38,7 +38,8 @@ void CompletionSnapshotTest::EncodeCompletion(pugi::xml_node root, const Complet
         std::string text{iter->value.name_text};
         xml_entry.append_attribute("value").set_value(text.c_str());
         xml_entry.append_attribute("score").set_value(iter->value.score);
-        xml_entry.append_attribute("count").set_value(iter->value.count);
+        xml_entry.append_attribute("count").set_value(iter->value.occurences_in_script);
+        xml_entry.append_attribute("in-scope").set_value(iter->value.in_statement_scope);
         std::stringstream tags;
         size_t i = 0;
         iter->value.name_tags.ForEach([&](proto::NameTag tag) {
