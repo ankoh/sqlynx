@@ -1,9 +1,9 @@
+#include "gtest/gtest.h"
 #include "sqlynx/analyzer/analyzer.h"
 #include "sqlynx/analyzer/completion.h"
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
-#include "gtest/gtest.h"
 
 using namespace sqlynx;
 
@@ -78,8 +78,9 @@ void test(Script& script, size_t text_offset, ExpectedScriptCursor expected) {
     ASSERT_EQ(cursor->statement_id, expected.statement_id);
     // Check AST node type
     auto& ast_node = script.analyzed_script->parsed_script->nodes[*cursor->ast_node_id];
-    ASSERT_EQ(ast_node.attribute_key(), expected.ast_attribute_key);
-    ASSERT_EQ(ast_node.node_type(), expected.ast_node_type);
+    ASSERT_EQ(ast_node.attribute_key(), expected.ast_attribute_key)
+        << proto::EnumNameAttributeKey(ast_node.attribute_key());
+    ASSERT_EQ(ast_node.node_type(), expected.ast_node_type) << proto::EnumNameNodeType(ast_node.node_type());
     // Check table reference
     if (expected.table_ref_name.has_value()) {
         ASSERT_TRUE(cursor->table_reference_id.has_value());
