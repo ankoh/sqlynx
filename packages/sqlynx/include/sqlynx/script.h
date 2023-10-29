@@ -2,6 +2,7 @@
 
 #include <flatbuffers/buffer.h>
 
+#include <functional>
 #include <optional>
 #include <string_view>
 #include <tuple>
@@ -388,6 +389,11 @@ class AnalyzedScript {
     /// Constructor
     AnalyzedScript(std::shared_ptr<ParsedScript> parsed, std::shared_ptr<AnalyzedScript> external);
 
+    /// Get a table by id
+    std::optional<
+        std::pair<std::reference_wrapper<const AnalyzedScript::Table>, std::span<const AnalyzedScript::TableColumn>>>
+    FindTable(QualifiedID table_id) const;
+
     /// Build the program
     flatbuffers::Offset<proto::AnalyzedScript> Pack(flatbuffers::FlatBufferBuilder& builder);
 };
@@ -454,6 +460,11 @@ class Script {
    public:
     /// Constructor
     Script(uint32_t context_id = 1);
+
+    /// Get a table by id
+    std::optional<
+        std::pair<std::reference_wrapper<const AnalyzedScript::Table>, std::span<const AnalyzedScript::TableColumn>>>
+    FindTable(QualifiedID table_id) const;
 
     /// Insert a unicode codepoint at an offset
     void InsertCharAt(size_t offset, uint32_t unicode);

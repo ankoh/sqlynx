@@ -290,6 +290,19 @@ flatbuffers::Offset<proto::ParsedScript> ParsedScript::Pack(flatbuffers::FlatBuf
 /// Constructor
 AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, std::shared_ptr<AnalyzedScript> external)
     : context_id(parsed->context_id), parsed_script(std::move(parsed)), external_script(std::move(external)) {}
+
+/// Find a table by id
+std::optional<
+    std::pair<std::reference_wrapper<const AnalyzedScript::Table>, std::span<const AnalyzedScript::TableColumn>>>
+AnalyzedScript::FindTable(QualifiedID table_id) const {
+    if (table_id.GetContext() != context_id || table_id.GetIndex() >= tables.size()) {
+        return std::nullopt;
+    }
+    auto& table = tables[table_id.GetIndex()];
+    auto columns = std::span{table_columns}.subspan(table.columns_begin, table.column_count);
+    return std::make_pair(table, columns);
+}
+
 // Pack an analyzed script
 flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::FlatBufferBuilder& builder) {
     proto::AnalyzedScriptT out;
@@ -323,6 +336,20 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
 
 /// Constructor
 Script::Script(uint32_t context_id) : context_id(context_id), text(1024), external_script(nullptr) {}
+
+/// Get a table by id
+std::optional<
+    std::pair<std::reference_wrapper<const AnalyzedScript::Table>, std::span<const AnalyzedScript::TableColumn>>>
+Script::FindTable(QualifiedID table_id) const {
+    if (analyzed_script && analyzed_script->context_id == table_id.GetContext()) {
+        return analyzed_script->FindTable(table_id);
+    }
+    if (external_script && external_script->analyzed_script &&
+        external_script->analyzed_script->context_id == table_id.GetContext()) {
+        return external_script->analyzed_script->FindTable(table_id);
+    }
+    return std::nullopt;
+}
 
 /// Insert a character at an offet
 void Script::InsertCharAt(size_t char_idx, uint32_t unicode) {

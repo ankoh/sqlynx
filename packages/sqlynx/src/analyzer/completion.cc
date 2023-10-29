@@ -2,6 +2,8 @@
 
 #include <flatbuffers/buffer.h>
 
+#include <unordered_map>
+
 #include "sqlynx/analyzer/completion_index.h"
 #include "sqlynx/context.h"
 #include "sqlynx/parser/grammar/keywords.h"
@@ -18,41 +20,61 @@ namespace {
 
 using ScoringTable = std::array<std::pair<proto::NameTag, Completion::ScoreValueType>, 8>;
 
+static constexpr Completion::ScoreValueType NAME_UNLIKELY = 10;
+static constexpr Completion::ScoreValueType NAME_LIKELY = 20;
+
+static constexpr Completion::ScoreValueType KEYWORD_VERY_POPULAR = 3;
+static constexpr Completion::ScoreValueType KEYWORD_POPULAR = 2;
+static constexpr Completion::ScoreValueType KEYWORD_DEFAULT = 0;
+
+static constexpr Completion::ScoreValueType IS_IN_SCOPE_SCORE_MODIFIER = 1;
+static constexpr Completion::ScoreValueType IS_SUBSTRING_SCORE_MODIFIER = 15;
+static constexpr Completion::ScoreValueType IS_PREFIX_SCORE_MODIFIER = 20;
+
+static_assert(IS_PREFIX_SCORE_MODIFIER > IS_SUBSTRING_SCORE_MODIFIER,
+              "Begin a prefix weighs more than being a substring");
+static_assert(IS_IN_SCOPE_SCORE_MODIFIER < KEYWORD_POPULAR,
+              "Being in scope doesn't outweigh a popular keyword of similar likelyhood without also being a substring");
+static_assert((NAME_UNLIKELY + IS_SUBSTRING_SCORE_MODIFIER) > NAME_LIKELY,
+              "An unlikely name that is a substring outweighs a likely name");
+static_assert((NAME_UNLIKELY + KEYWORD_VERY_POPULAR) < NAME_LIKELY,
+              "A very likely keyword prevalance doesn't outweighing a likely tag");
+
 static constexpr ScoringTable NAME_SCORE_DEFAULTS{{
     {proto::NameTag::NONE, 0},
-    {proto::NameTag::KEYWORD, 10},
-    {proto::NameTag::SCHEMA_NAME, 100},
-    {proto::NameTag::DATABASE_NAME, 100},
-    {proto::NameTag::TABLE_NAME, 100},
-    {proto::NameTag::TABLE_ALIAS, 100},
-    {proto::NameTag::COLUMN_NAME, 100},
+    {proto::NameTag::KEYWORD, NAME_UNLIKELY},
+    {proto::NameTag::SCHEMA_NAME, NAME_LIKELY},
+    {proto::NameTag::DATABASE_NAME, NAME_LIKELY},
+    {proto::NameTag::TABLE_NAME, NAME_LIKELY},
+    {proto::NameTag::TABLE_ALIAS, NAME_LIKELY},
+    {proto::NameTag::COLUMN_NAME, NAME_LIKELY},
 }};
 
 static constexpr ScoringTable NAME_SCORE_TABLE_REF{{
     {proto::NameTag::NONE, 0},
-    {proto::NameTag::KEYWORD, 10},
-    {proto::NameTag::SCHEMA_NAME, 100},
-    {proto::NameTag::DATABASE_NAME, 100},
-    {proto::NameTag::TABLE_NAME, 100},
-    {proto::NameTag::TABLE_ALIAS, 0},
-    {proto::NameTag::COLUMN_NAME, 0},
+    {proto::NameTag::KEYWORD, NAME_UNLIKELY},
+    {proto::NameTag::SCHEMA_NAME, NAME_LIKELY},
+    {proto::NameTag::DATABASE_NAME, NAME_LIKELY},
+    {proto::NameTag::TABLE_NAME, NAME_LIKELY},
+    {proto::NameTag::TABLE_ALIAS, NAME_UNLIKELY},
+    {proto::NameTag::COLUMN_NAME, NAME_UNLIKELY},
 }};
 
 static constexpr ScoringTable NAME_SCORE_COLUMN_REF{{
     {proto::NameTag::NONE, 0},
-    {proto::NameTag::KEYWORD, 100},
-    {proto::NameTag::SCHEMA_NAME, 0},
-    {proto::NameTag::DATABASE_NAME, 0},
-    {proto::NameTag::TABLE_NAME, 0},
-    {proto::NameTag::TABLE_ALIAS, 100},
-    {proto::NameTag::COLUMN_NAME, 0},
+    {proto::NameTag::KEYWORD, NAME_LIKELY},
+    {proto::NameTag::SCHEMA_NAME, NAME_UNLIKELY},
+    {proto::NameTag::DATABASE_NAME, NAME_UNLIKELY},
+    {proto::NameTag::TABLE_NAME, NAME_UNLIKELY},
+    {proto::NameTag::TABLE_ALIAS, NAME_LIKELY},
+    {proto::NameTag::COLUMN_NAME, NAME_UNLIKELY},
 }};
 
-static constexpr Completion::ScoreValueType KEYWORD_EXPECTED_SCORE = 0;
-static constexpr Completion::ScoreValueType KEYWORD_EXPECTED_SUBSTRING_MODIFIER = 10;
-static constexpr Completion::ScoreValueType KEYWORD_EXPECTED_PREFIX_MODIFIER = 20;
-
-static constexpr Completion::ScoreValueType GetKeywordPrevalence(parser::Parser::symbol_kind_type keyword) {
+/// We use a prevalence score to rank keywords by popularity.
+/// It is much more likely that a user wants to complete certain keywords than others.
+/// The added score is chosen so small that it only influences the ranking among similarly ranked keywords.
+/// (i.e., being prefix, substring or in-scope outweighs the prevalence score)
+static constexpr Completion::ScoreValueType GetKeywordPrevalenceScore(parser::Parser::symbol_kind_type keyword) {
     switch (keyword) {
         case parser::Parser::symbol_kind_type::S_AND:
         case parser::Parser::symbol_kind_type::S_FROM:
@@ -60,7 +82,7 @@ static constexpr Completion::ScoreValueType GetKeywordPrevalence(parser::Parser:
         case parser::Parser::symbol_kind_type::S_ORDER:
         case parser::Parser::symbol_kind_type::S_SELECT:
         case parser::Parser::symbol_kind_type::S_WHERE:
-            return 30;
+            return KEYWORD_VERY_POPULAR;
         case parser::Parser::symbol_kind_type::S_AS:
         case parser::Parser::symbol_kind_type::S_ASC_P:
         case parser::Parser::symbol_kind_type::S_BY:
@@ -76,13 +98,13 @@ static constexpr Completion::ScoreValueType GetKeywordPrevalence(parser::Parser:
         case parser::Parser::symbol_kind_type::S_THEN:
         case parser::Parser::symbol_kind_type::S_WHEN:
         case parser::Parser::symbol_kind_type::S_WITH:
-            return 10;
+            return KEYWORD_POPULAR;
         case parser::Parser::symbol_kind_type::S_BETWEEN:
         case parser::Parser::symbol_kind_type::S_DAY_P:
         case parser::Parser::symbol_kind_type::S_PARTITION:
         case parser::Parser::symbol_kind_type::S_SETOF:
         default:
-            return 0;
+            return KEYWORD_DEFAULT;
     }
 }
 
@@ -109,8 +131,8 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
                          std::string_view keyword_text) {
         fuzzy_ci_string_view ci_keyword_text{keyword_text.data(), keyword_text.size()};
         using Relative = ScannedScript::LocationInfo::RelativePosition;
-        auto score = KEYWORD_EXPECTED_SCORE;
-        score += GetKeywordPrevalence(expected);
+        auto score = scoring_table[static_cast<size_t>(proto::NameTag::NONE)].second;
+        score += GetKeywordPrevalenceScore(expected);
         switch (location->relative_pos) {
             case Relative::NEW_SYMBOL_AFTER:
             case Relative::NEW_SYMBOL_BEFORE:
@@ -124,9 +146,9 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
                 // Is substring?
                 if (auto pos = ci_keyword_text.find(ci_symbol_text, 0); pos != fuzzy_ci_string_view::npos) {
                     if (pos == 0) {
-                        score += KEYWORD_EXPECTED_PREFIX_MODIFIER;
+                        score += IS_PREFIX_SCORE_MODIFIER;
                     } else {
-                        score += KEYWORD_EXPECTED_SUBSTRING_MODIFIER;
+                        score += IS_SUBSTRING_SCORE_MODIFIER;
                     }
                 }
                 return score;
@@ -145,7 +167,8 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
                 .name_text = name,
                 .name_tags = NameTags{proto::NameTag::KEYWORD},
                 .score = get_score(*location, expected, name),
-                .count = 0,
+                .occurences_in_script = 0,
+                .in_statement_scope = false,
             };
             result_heap.Insert(candidate, candidate.score);
         }
@@ -175,7 +198,9 @@ void Completion::FindCandidatesInIndex(const CompletionIndex& index) {
                 fuzzy_ci_string_view ci_prefix_text{cursor.text.data(), symbol_prefix};
                 fuzzy_ci_string_view ci_entry_text{entry.data->name_text.data(), entry.data->name_text.size()};
                 if (auto pos = ci_entry_text.find(ci_prefix_text, 0); pos == 0) {
-                    score += KEYWORD_EXPECTED_PREFIX_MODIFIER;
+                    score += IS_PREFIX_SCORE_MODIFIER;
+                } else {
+                    score += IS_SUBSTRING_SCORE_MODIFIER;
                 }
                 break;
             }
@@ -186,14 +211,17 @@ void Completion::FindCandidatesInIndex(const CompletionIndex& index) {
         if (auto iter = pending_candidates.find(entry_data.name_id); iter != pending_candidates.end()) {
             // Update the score if it is higher
             iter->second.score = std::max(iter->second.score, score);
-            iter->second.count += entry_data.occurrences;
+            iter->second.occurences_in_script = std::max(iter->second.occurences_in_script, entry_data.occurrences);
             iter->second.name_tags |= entry_data.name_tags;
         } else {
             // Otherwise store as new candidate
-            Candidate candidate{.name_text = entry_data.name_text,
-                                .name_tags = entry_data.name_tags,
-                                .score = score,
-                                .count = entry.data->occurrences};
+            Candidate candidate{
+                .name_text = entry_data.name_text,
+                .name_tags = entry_data.name_tags,
+                .score = score,
+                .occurences_in_script = entry.data->occurrences,
+                .in_statement_scope = false,
+            };
             pending_candidates.insert({entry_data.name_id, candidate});
         }
     }
@@ -212,7 +240,54 @@ void Completion::FindCandidatesInIndexes() {
 }
 
 void Completion::FindCandidatesInAST() {
-    /// XXX Discover candidates around the cursor
+    // Right now, we're just collecting all table and column refs with the same statement id.
+    // We could later make this scope-aware (s.t. table refs in CTEs dont bump the score of completions in the main
+    // clauses)
+
+    // Bail out if there's no statement id
+    if (!cursor.statement_id.has_value()) {
+        return;
+    }
+    auto statement_id = *cursor.statement_id;
+
+    // Helper to mark a name as in-scope
+    auto mark_as_in_scope = [this](QualifiedID name) {
+        if (auto iter = pending_candidates.find(name); iter != pending_candidates.end()) {
+            iter->second.in_statement_scope = true;
+        }
+    };
+
+    for (auto& table_ref : cursor.script.analyzed_script->table_references) {
+        // The table ref is not part of a statement id?
+        // Skip then, we're currently using the statement id as very coarse-granular alternative to naming scopes.
+        // TODO: We should remember a fine-granular scope union-find as output of the name resolution pass.
+        if (!table_ref.ast_statement_id.has_value() || table_ref.ast_statement_id.value() != statement_id) {
+            continue;
+        }
+        // Mark the table alias as in-scope
+        if (!table_ref.alias_name.IsNull()) {
+            mark_as_in_scope(table_ref.alias_name);
+        }
+        // Add all column names of the table
+        if (auto maybe_table = cursor.script.FindTable(table_ref.table_id)) {
+            auto& [table, table_columns] = *maybe_table;
+            for (auto& table_column : table_columns) {
+                mark_as_in_scope(table_column.column_name);
+            }
+        }
+    }
+
+    // Collect column references in the statement
+    for (auto& column_ref : cursor.script.analyzed_script->column_references) {
+        if (!column_ref.ast_statement_id.has_value() || column_ref.ast_statement_id.value() != statement_id) {
+            continue;
+        }
+        mark_as_in_scope(column_ref.column_name.column_name);
+    }
+
+    // TODO: For unresolved columns, bump the score of tables that contain that column.
+    //       Problem: We expose such an index from name resolution and building that index ad-hoc suffers from name id
+    //       mapping.
 }
 
 void Completion::FlushCandidatesAndFinish() {
@@ -228,11 +303,13 @@ void Completion::FlushCandidatesAndFinish() {
 
     // Insert all pending candidates into the heap
     for (auto& [key, candidate] : pending_candidates) {
-        // Omit candidate if it occurs only once is located at the cursor
-        if (current_symbol_name == key && candidate.count == 1) {
+        // Omit candidate if it occurs only once and is located at the cursor
+        if (current_symbol_name == key && candidate.occurences_in_script == 1) {
             continue;
         }
-        result_heap.Insert(candidate, candidate.score);
+        // Adjust the score
+        auto score = candidate.score + (candidate.in_statement_scope ? IS_IN_SCOPE_SCORE_MODIFIER : 0);
+        result_heap.Insert(candidate, score);
     }
 
     // Finish the heap
