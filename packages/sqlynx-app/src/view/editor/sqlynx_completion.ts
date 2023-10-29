@@ -39,9 +39,7 @@ export async function completeSQLynx(context: CompletionContext): Promise<Comple
                 }
                 let candidateDetail = tagName;
                 if (processor.config.showCompletionDetails) {
-                    const score = candidate.score();
-                    const inStatment = candidate.inStatement();
-                    candidateDetail = `${candidateDetail}, score=${score}, local=${inStatment}`;
+                    candidateDetail = `${candidateDetail}, score=${candidate.score()}, local=${candidate.inStatement()}`;
                 }
                 options.push({
                     label: candidate.nameText() ?? '',
