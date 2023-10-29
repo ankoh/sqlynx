@@ -261,10 +261,11 @@ void Completion::FindCandidatesInAST() {
         if (!table_ref.ast_statement_id.has_value() || table_ref.ast_statement_id.value() != statement_id) {
             continue;
         }
-        // Mark the table alias as in-scope
-        if (!table_ref.alias_name.IsNull()) {
-            mark_as_in_scope(table_ref.alias_name);
-        }
+        mark_as_in_scope(table_ref.table_name.database_name);
+        mark_as_in_scope(table_ref.table_name.schema_name);
+        mark_as_in_scope(table_ref.table_name.table_name);
+        mark_as_in_scope(table_ref.alias_name);
+
         // Add all column names of the table
         if (auto maybe_table = cursor.script.FindTable(table_ref.table_id)) {
             auto& [table, table_columns] = *maybe_table;
