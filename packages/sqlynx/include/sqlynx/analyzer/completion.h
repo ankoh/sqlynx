@@ -77,8 +77,16 @@ struct Completion {
         ScoreValueType score;
         /// Is a name in the statement scope?
         bool in_statement;
+
         /// Get the score
         inline ScoreValueType GetScore() const { return score + (in_statement ? SAME_STATEMENT_SCORE_MODIFIER : 0); }
+        /// Is less?
+        bool operator<(const Candidate& other) const {
+            auto l = GetScore();
+            auto r = other.GetScore();
+            return (l < r) || (l == r && (fuzzy_ci_string_view{name_text.data(), name_text.size()} <
+                                          fuzzy_ci_string_view{other.name_text.data(), other.name_text.size()}));
+        }
     };
     /// A hash-map for candidates
     using CandidateMap = ankerl::unordered_dense::map<QualifiedID, Candidate, QualifiedID::Hasher>;
@@ -91,7 +99,7 @@ struct Completion {
     /// The hash-map to deduplicate names found in the completion indexes
     CandidateMap pending_candidates;
     /// The result heap, holding up to k entries
-    TopKHeap<Candidate, ScoreValueType> result_heap;
+    TopKHeap<Candidate> result_heap;
 
     /// Resolve the expected symbols
     void FindCandidatesInGrammar(bool& expects_identifier);

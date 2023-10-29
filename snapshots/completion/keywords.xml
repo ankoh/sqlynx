@@ -46,9 +46,9 @@
             <search text="*" index="1" />
         </cursor>
         <completions limit="3">
-            <entry value="group" score="3" in-scope="false" tags="KEYWORD" />
-            <entry value="from" score="3" in-scope="false" tags="KEYWORD" />
+            <entry value="where" score="3" in-scope="false" tags="KEYWORD" />
             <entry value="order" score="3" in-scope="false" tags="KEYWORD" />
+            <entry value="group" score="3" in-scope="false" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="select_f">
@@ -73,7 +73,7 @@
         </cursor>
         <completions limit="3">
             <entry value="from" score="23" in-scope="false" tags="KEYWORD" />
-            <entry value="group" score="3" in-scope="false" tags="KEYWORD" />
+            <entry value="where" score="3" in-scope="false" tags="KEYWORD" />
             <entry value="order" score="3" in-scope="false" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
@@ -86,7 +86,7 @@
         </cursor>
         <completions limit="3">
             <entry value="from" score="23" in-scope="false" tags="KEYWORD" />
-            <entry value="group" score="3" in-scope="false" tags="KEYWORD" />
+            <entry value="where" score="3" in-scope="false" tags="KEYWORD" />
             <entry value="order" score="3" in-scope="false" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
@@ -98,9 +98,9 @@
             <search text="xx" index="0" />
         </cursor>
         <completions limit="3">
-            <entry value="group" score="23" in-scope="false" tags="KEYWORD" />
-            <entry value="order" score="23" in-scope="false" tags="KEYWORD" />
             <entry value="where" score="23" in-scope="false" tags="KEYWORD" />
+            <entry value="order" score="23" in-scope="false" tags="KEYWORD" />
+            <entry value="group" score="23" in-scope="false" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="select_from_w">
@@ -112,8 +112,8 @@
         </cursor>
         <completions limit="3">
             <entry value="where" score="23" in-scope="false" tags="KEYWORD" />
-            <entry value="window" score="20" in-scope="false" tags="KEYWORD" />
-            <entry value="whitespace" score="20" in-scope="false" tags="KEYWORD" />
+            <entry value="write" score="20" in-scope="false" tags="KEYWORD" />
+            <entry value="wrapper" score="20" in-scope="false" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="select_from_wh">
@@ -126,7 +126,7 @@
         <completions limit="3">
             <entry value="where" score="23" in-scope="false" tags="KEYWORD" />
             <entry value="whitespace" score="20" in-scope="false" tags="KEYWORD" />
-            <entry value="group" score="3" in-scope="false" tags="KEYWORD" />
+            <entry value="order" score="3" in-scope="false" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="selec">
@@ -152,7 +152,7 @@
         <completions limit="3">
             <entry value="group" score="23" in-scope="false" tags="KEYWORD" />
             <entry value="grouping" score="20" in-scope="false" tags="KEYWORD" />
-            <entry value="generated" score="20" in-scope="false" tags="KEYWORD" />
+            <entry value="granted" score="20" in-scope="false" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="group">
@@ -165,7 +165,7 @@
         <completions limit="3">
             <entry value="group" score="23" in-scope="false" tags="KEYWORD" />
             <entry value="grouping" score="20" in-scope="false" tags="KEYWORD" />
-            <entry value="order" score="3" in-scope="false" tags="KEYWORD" />
+            <entry value="where" score="3" in-scope="false" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="group_b">
@@ -213,7 +213,7 @@
         <completions limit="3">
             <entry value="order" score="23" in-scope="false" tags="KEYWORD" />
             <entry value="offset" score="22" in-scope="false" tags="KEYWORD" />
-            <entry value="overlay" score="20" in-scope="false" tags="KEYWORD" />
+            <entry value="owner" score="20" in-scope="false" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="from_order">
@@ -225,8 +225,8 @@
         </cursor>
         <completions limit="3">
             <entry value="order" score="23" in-scope="false" tags="KEYWORD" />
-            <entry value="group" score="3" in-scope="false" tags="KEYWORD" />
             <entry value="where" score="3" in-scope="false" tags="KEYWORD" />
+            <entry value="group" score="3" in-scope="false" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
 </completion-snapshots>

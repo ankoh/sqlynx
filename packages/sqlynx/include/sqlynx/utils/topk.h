@@ -6,21 +6,10 @@
 
 namespace sqlynx {
 
-template <typename ValueType, typename ScoreType> struct TopKHeap {
-   public:
-    /// An entry
-    struct Entry {
-        /// The heap value
-        ValueType value;
-        /// The heap score
-        ScoreType score;
-        /// Constructor
-        Entry(ValueType value, ScoreType score) : value(value), score(score) {}
-    };
-
+template <typename ValueType> struct TopKHeap {
    protected:
     /// The min-heap entries
-    std::vector<Entry> entries;
+    std::vector<ValueType> entries;
 
    public:
     /// Constructor
@@ -32,10 +21,10 @@ template <typename ValueType, typename ScoreType> struct TopKHeap {
             size_t li = 2 * i + 1;
             size_t ri = 2 * i + 2;
             size_t best = i;
-            if (li < entries.size() && entries[li].score < entries[best].score) {
+            if (li < entries.size() && entries[li] < entries[best]) {
                 best = li;
             }
-            if (ri < entries.size() && entries[ri].score < entries[best].score) {
+            if (ri < entries.size() && entries[ri] < entries[best]) {
                 best = ri;
             }
             if (best == i) {
@@ -46,26 +35,25 @@ template <typename ValueType, typename ScoreType> struct TopKHeap {
         }
     }
     /// Insert an entry
-    void Insert(ValueType value, ScoreType score) {
+    void Insert(ValueType value) {
         assert(entries.capacity() > 0);
         // Check if the heap has space
         if (entries.size() < entries.capacity()) {
-            entries.push_back(Entry{value, score});
+            entries.push_back(std::move(value));
             if (entries.size() == entries.capacity()) {
-                std::sort(entries.begin(), entries.end(), [](Entry& l, Entry& r) { return l.score < r.score; });
+                std::sort(entries.begin(), entries.end());
             }
         } else {
             auto& min = entries.front();
-            if (min.score < score) {
-                min.score = score;
-                min.value = value;
+            if (min < value) {
+                min = std::move(value);
                 FixHeap();
             }
         }
     }
     /// Finish the entries
-    std::vector<Entry>& Finish() {
-        std::sort(entries.begin(), entries.end(), [](auto& l, auto& r) { return l.score < r.score; });
+    std::vector<ValueType>& Finish() {
+        std::sort(entries.begin(), entries.end());
         return entries;
     }
     /// Get the heap entries

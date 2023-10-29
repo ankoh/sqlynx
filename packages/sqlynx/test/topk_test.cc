@@ -7,8 +7,18 @@
 namespace {
 
 using ValueType = size_t;
-using ScoreType = uint32_t;
-using Entry = sqlynx::TopKHeap<ValueType, ScoreType>::Entry;
+using ScoreType = size_t;
+
+struct Entry {
+    /// The value
+    ValueType value;
+    /// The score
+    ScoreType score;
+    /// Constructor
+    Entry(ValueType value, ScoreType score) : value(value), score(score) {}
+    /// Operator
+    bool operator<(const Entry& entry) const { return score < entry.score; }
+};
 
 struct TopKTest {
     /// The name
@@ -45,11 +55,11 @@ std::vector<size_t> getTopK(const std::vector<Entry>& entries) {
 
 TEST_P(TopKTestSuite, Test) {
     auto& param = GetParam();
-    sqlynx::TopKHeap<ValueType, ScoreType> heap{param.k};
+    sqlynx::TopKHeap<Entry> heap{param.k};
 
     // Insert heap values
     for (auto& entry : param.entries) {
-        heap.Insert(entry.value, entry.score);
+        heap.Insert(entry);
     }
     auto values = getTopK(heap.Finish());
 
@@ -94,9 +104,9 @@ static auto TESTS = ::testing::ValuesIn({
 INSTANTIATE_TEST_SUITE_P(TopKBasics, TopKTestSuite, TESTS, TopKTestPrinter());
 
 TEST(TopKTests, AscendingSequence) {
-    sqlynx::TopKHeap<size_t, uint32_t> heap{10};
+    sqlynx::TopKHeap<Entry> heap{10};
     for (size_t i = 0; i < 1000; ++i) {
-        heap.Insert(i, i * 10);
+        heap.Insert(Entry{i, i * 10});
     }
 
     auto values = getTopK(heap.Finish());
@@ -107,9 +117,9 @@ TEST(TopKTests, AscendingSequence) {
 }
 
 TEST(TopKTests, DescendingSequence) {
-    sqlynx::TopKHeap<size_t, uint32_t> heap{10};
+    sqlynx::TopKHeap<Entry> heap{10};
     for (size_t i = 0; i < 1000; ++i) {
-        heap.Insert(i, 1000 * 10 - i * 10);
+        heap.Insert(Entry{i, 1000 * 10 - i * 10});
     }
 
     auto values = getTopK(heap.Finish());
