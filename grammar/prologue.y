@@ -6,6 +6,7 @@
 %define api.token.constructor
 %define api.token.prefix {FQL_}
 %define api.value.type variant
+%define api.token.raw true
 %define parse.error verbose
 %define parse.lac full
 
@@ -76,6 +77,11 @@ using namespace sqlynx::parser;
 %token         TYPECAST DOT DOT_DOT COLON_EQUALS EQUALS_GREATER
 %token         LESS_EQUALS GREATER_EQUALS NOT_EQUALS
 %token         COMPLETE_HERE
+
+%token         LRB RRB LSB RSB STAR COMMA COLON QUESTION_MARK DOLLAR SEMICOLON
+%token         MINUS PLUS DIVIDE MODULO
+%token         LESS_THAN GREATER_THAN EQUALS
+%token         CIRCUMFLEX
 
 %token EOF 0
 
