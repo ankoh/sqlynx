@@ -4,9 +4,9 @@
 %left        INTERSECT
 %left        OR
 %left        AND
-%right        NOT
+%right       NOT
 %nonassoc    IS ISNULL NOTNULL    /* IS sets precedence for IS NULL, etc */
-%nonassoc    '<' '>' '=' LESS_EQUALS GREATER_EQUALS NOT_EQUALS
+%nonassoc    LESS_THAN GREATER_THAN EQUALS LESS_EQUALS GREATER_EQUALS NOT_EQUALS
 %nonassoc    BETWEEN IN_P GLOB LIKE ILIKE SIMILAR NOT_LA
 %nonassoc    ESCAPE            /* ESCAPE must be just above LIKE/ILIKE/SIMILAR */
 %left        POSTFIXOP        /* dummy for postfix Op rules */
@@ -24,7 +24,7 @@
  * postfix-operator problems.
  *
  * To support CUBE and ROLLUP in GROUP BY without reserving them, we give them
- * an explicit priority lower than '(', so that a rule with CUBE '(' will shift
+ * an explicit priority lower than LRB, so that a rule with CUBE LRB will shift
  * rather than reducing a conflicting rule that takes CUBE as a function name.
  * Using the same precedence as IDENT seems right for the reasons given above.
  *
@@ -40,17 +40,17 @@
 %nonassoc   UNBOUNDED        /* ideally should have same precedence as IDENT */
 %nonassoc   IDENT GENERATED NULL_P PARTITION RANGE ROWS PRECEDING FOLLOWING CUBE ROLLUP
 %left       Op OPERATOR        /* multi-character ops and user-defined operators */
-%left       '+' '-'
-%left       '*' '/' '%'
-%left       '^'
+%left       PLUS MINUS
+%left       STAR DIVIDE MODULO
+%left       CIRCUMFLEX
 /* Unary Operators */
 %left       AT                /* sets precedence for AT TIME ZONE */
 %left       COLLATE
 %right      UMINUS
-%left       '[' ']'
-%left       '(' ')'
+%left       LSB RSB
+%left       LRB RRB
 %left       TYPECAST
-%left       '.'
+%left       DOT
 
 /*
  * These might seem to be low-precedence, but actually they are not part

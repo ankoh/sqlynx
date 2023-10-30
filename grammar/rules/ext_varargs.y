@@ -2,16 +2,16 @@
 // SQLynx Objects
 
 varargs:
-    '(' vararg_fields ')'  { $$ = std::move($2); }
+    LRB vararg_fields RRB  { $$ = std::move($2); }
     ;
 
 vararg_fields:
-    vararg_fields ',' opt_vararg_field  { $1->push_back($3); $$ = std::move($1); }
+    vararg_fields COMMA opt_vararg_field  { $1->push_back($3); $$ = std::move($1); }
   | opt_vararg_field                    { $$ = ctx.List({$1}); }
     ;
 
 opt_vararg_field:
-    vararg_key_path '=' vararg_value { $$ = VarArgField(ctx, @$, std::move($1), $3); }
+    vararg_key_path EQUALS vararg_value { $$ = VarArgField(ctx, @$, std::move($1), $3); }
   | %empty                           { $$ = Null(); }
     ;
 
@@ -38,16 +38,16 @@ vararg_value:
   | sql_func_expr             { $$ = $1; }
   | sql_columnref             { $$ = $1; }
   | sql_a_expr_const          { $$ = ctx.Expression(std::move($1)); }
-  | '+' sql_a_expr_const %prec UMINUS   { $$ = ctx.Expression(std::move($2)); }
-  | '-' sql_a_expr_const %prec UMINUS   { $$ = Negate(ctx, @$, @1, ctx.Expression(std::move($2))); }
+  | PLUS sql_a_expr_const %prec UMINUS   { $$ = ctx.Expression(std::move($2)); }
+  | MINUS sql_a_expr_const %prec UMINUS   { $$ = Negate(ctx, @$, @1, ctx.Expression(std::move($2))); }
     ;
 
 vararg_array:
-    vararg_array ',' vararg_value   { $1->push_back($3); $$ = std::move($1); }
+    vararg_array COMMA vararg_value   { $1->push_back($3); $$ = std::move($1); }
   | vararg_value                    { $$ = ctx.List({$1}); }
   | %empty                          { $$ = ctx.List(); }
     ;
 
 vararg_array_brackets:
-    '[' vararg_array ']'            { $$ = std::move($2); }
+    LSB vararg_array RSB            { $$ = std::move($2); }
     ;

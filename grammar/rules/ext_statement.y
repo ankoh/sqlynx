@@ -5,7 +5,7 @@ opt_statement_list:
   | %empty
 
 statement_list:
-    statement_list ';' opt_statement  { ctx.AddStatement($3); }
+    statement_list SEMICOLON opt_statement  { ctx.AddStatement($3); }
   | error                             { ctx.ResetStatement(); yyclearin; }
   | statement                         { ctx.AddStatement($1); }
     ;
