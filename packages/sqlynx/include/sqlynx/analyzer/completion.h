@@ -12,37 +12,6 @@
 
 namespace sqlynx {
 
-/// For now, we want the completion to work as follows:
-///
-/// 1) We first resolve the current scanner position and collect all symbols the parser would have expected.
-///    All symbols that are NOT identifiers are written directly into the result heap,
-///    If IDENT is NOT INCLUDED in the expected symbols, we stop the completion and return the the result heap.
-/// 2) We then derive a score function for the current cursor.
-///     - If we are in a TABLE_REF clause, database/schema/table names score higher based on the path length.
-///     - If we are in an COLUMN_REF, column names score higher.
-///     - If we are in a SELECT clause, column names score higher.
-///     - ... other rules that make sense
-/// 3) We then collect ALL the names that we found using the suffix lookup.
-///     - We create a dense hash-table and reserve space for min(suffix_count, name_dictionary_size) entries.
-///     - We store all names as QualifiedIDs in the hash table since we have to deduplicate them anyway.
-///     - We use the name tags to add a first score based on the score function.
-/// 4) We then discover all other relevant names using the cursor
-///     - We find all table refs that belong to our statement id.
-///     - For these table refs, we find all column names.
-///     - We find all possible table names for unresolved column refs.
-///     - For these table refs, we find all column names.
-///     - We find all column aliases of that statement id
-/// 5) We lookup each of the names discovered in 3) in our map and add additional score
-/// 6) We then construct a max-heap to determine the top-k names with highest score
-/// 7) Those are returned to the user
-///
-/// One may argue that the scoring in 3) and 4) are slightly redundant:
-/// The reason why we split the two is the way people write SQL. For a prefix like `SELECT * FROM f`, we don't have
-/// any information except that we are in a potential table_ref. We therefore need a way to prefer table names even
-/// though we don't have any information to narrow them down further. Thus the "tagging" of names in the name
-/// dictionaries. However, for a query like `SELECT bar FROM f`, we know of an unresolved column ref that lets a table
-/// with name `foo` containing such a column score even higher than other table names.
-
 struct Completion {
     using ScoreValueType = uint32_t;
     using ScoringTable = std::array<std::pair<proto::NameTag, ScoreValueType>, 8>;
