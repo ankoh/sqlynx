@@ -39,7 +39,7 @@ export async function completeSQLynx(context: CompletionContext): Promise<Comple
                 }
                 let candidateDetail = tagName;
                 if (processor.config.showCompletionDetails) {
-                    candidateDetail = `${candidateDetail}, score=${candidate.score()}, local=${candidate.inStatement()}`;
+                    candidateDetail = `${candidateDetail}, score=${candidate.score()}, scope=${candidate.inStatement()}`;
                 }
                 options.push({
                     label: candidate.nameText() ?? '',
