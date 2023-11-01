@@ -263,11 +263,14 @@ raw_colon       \:
 raw_plus        \+
 raw_minus       \-
 raw_star        \*
+raw_divide      \/
 raw_modulo      \%
 raw_circumflex  \^
 raw_less_than   \<
 raw_greater_than \>
 raw_equals      \=
+raw_question_mark \?
+raw_dollar      \$
 
 op_chars        [\~\!\@\#\^\&\|\`\+\-\*\/\%\<\>\=]
 operator        {op_chars}+
@@ -384,12 +387,15 @@ std::string_view input = ctx.GetInputData();
 {raw_colon}         { return Parser::make_COLON(loc); }
 {raw_plus}          { return Parser::make_PLUS(loc); }
 {raw_minus}         { return Parser::make_MINUS(loc); }
+{raw_divide}        { return Parser::make_DIVIDE(loc); }
 {raw_star}          { return Parser::make_STAR(loc); }
 {raw_modulo}        { return Parser::make_MODULO(loc); }
 {raw_circumflex}    { return Parser::make_CIRCUMFLEX(loc); }
 {raw_less_than}     { return Parser::make_LESS_THAN(loc); }
 {raw_greater_than}  { return Parser::make_GREATER_THAN(loc); }
 {raw_equals}        { return Parser::make_EQUALS(loc); }
+{raw_question_mark} { return Parser::make_QUESTION_MARK(loc); }
+{raw_dollar}        { return Parser::make_DOLLAR(loc); }
 
 {operator}      {
                     /*
@@ -508,7 +514,7 @@ std::string_view input = ctx.GetInputData();
 
 {identifier}    { return ctx.ReadIdentifier(loc); }
 
-{other}         { return Parser::symbol_type(yytext[0], loc); }
+{other}         { return Parser::make_RAW_CHAR(loc); }
 
 <<EOF>>         { return Parser::make_EOF(loc); }
 %%

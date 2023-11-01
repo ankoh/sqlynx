@@ -82,6 +82,7 @@ using namespace sqlynx::parser;
 %token         MINUS PLUS DIVIDE MODULO
 %token         LESS_THAN GREATER_THAN EQUALS
 %token         CIRCUMFLEX
+%token         RAW_CHAR
 
 %token EOF 0
 
