@@ -88,6 +88,32 @@ static constexpr Completion::ScoreValueType GetKeywordPrevalenceScore(parser::Pa
     }
 }
 
+bool doNotCompleteAfter(parser::Parser::symbol_type& sym) {
+    switch (sym.kind_) {
+        case parser::Parser::symbol_kind_type::S_COMMA:
+        case parser::Parser::symbol_kind_type::S_LRB:
+        case parser::Parser::symbol_kind_type::S_RRB:
+        case parser::Parser::symbol_kind_type::S_LSB:
+        case parser::Parser::symbol_kind_type::S_RSB:
+        case parser::Parser::symbol_kind_type::S_DOT:
+        case parser::Parser::symbol_kind_type::S_SEMICOLON:
+        case parser::Parser::symbol_kind_type::S_COLON:
+        case parser::Parser::symbol_kind_type::S_PLUS:
+        case parser::Parser::symbol_kind_type::S_MINUS:
+        case parser::Parser::symbol_kind_type::S_STAR:
+        case parser::Parser::symbol_kind_type::S_DIVIDE:
+        case parser::Parser::symbol_kind_type::S_MODULO:
+        case parser::Parser::symbol_kind_type::S_QUESTION_MARK:
+        case parser::Parser::symbol_kind_type::S_CIRCUMFLEX:
+        case parser::Parser::symbol_kind_type::S_LESS_THAN:
+        case parser::Parser::symbol_kind_type::S_GREATER_THAN:
+        case parser::Parser::symbol_kind_type::S_EQUALS:
+            return true;
+        default:
+            return false;
+    }
+}
+
 }  // namespace
 
 void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
@@ -97,6 +123,10 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
     }
     auto& scanned = *cursor.script.scanned_script;
 
+    // Stop completion?
+    if (doNotCompleteAfter(location->symbol)) {
+        return;
+    }
     // Do we try to complete the current symbol or the next one?
     std::vector<parser::Parser::ExpectedSymbol> expected_symbols;
     if (location->relative_pos == ScannedScript::LocationInfo::RelativePosition::NEW_SYMBOL_AFTER &&

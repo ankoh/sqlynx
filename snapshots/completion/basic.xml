@@ -26,4 +26,16 @@
             <entry value="for" score="20" in-scope="false" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
+    <completion-snapshot name="special_character_completion">
+        <script context="external">
+            create table foo(a int);
+        </script>
+        <script context="main">
+            select * from ( foo );
+        </script>
+        <cursor context="main">
+            <search text="from (" index="6" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
 </completion-snapshots>
