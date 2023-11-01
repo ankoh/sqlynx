@@ -3,6 +3,7 @@
 #include <flatbuffers/buffer.h>
 
 #include <unordered_map>
+#include <unordered_set>
 
 #include "sqlynx/analyzer/completion_index.h"
 #include "sqlynx/context.h"
@@ -246,6 +247,75 @@ void Completion::FindCandidatesInIndexes() {
     }
 }
 
+void Completion::FindTablesForUnresolvedColumns() {
+    if (!cursor.statement_id.has_value() || !cursor.script.analyzed_script) {
+        return;
+    }
+    auto statement_id = *cursor.statement_id;
+    std::unordered_set<QualifiedID, QualifiedID::Hasher> table_names;
+
+    // Collect all unresolved columns in the current script
+    auto& column_refs = cursor.script.analyzed_script->column_references;
+    std::unordered_set<NameID> unresolved_columns;
+    for (auto& column_ref : column_refs) {
+        if (column_ref.table_id.IsNull()) {
+            auto name = column_ref.column_name;
+            if (name.table_alias.IsNull()) {
+                unresolved_columns.insert(name.column_name.GetIndex());
+            }
+        }
+    }
+
+    // Now try to find tables that contain these column names.
+    // Start with tables defined in the same script.
+    std::span<AnalyzedScript::TableColumn> own_columns{cursor.script.analyzed_script->table_columns};
+    for (auto& table : cursor.script.analyzed_script->tables) {
+        for (auto& column : own_columns.subspan(table.columns_begin, table.column_count)) {
+            if (unresolved_columns.contains(column.column_name.GetIndex())) {
+                table_names.insert(table.table_name.table_name);
+                table_names.insert(table.table_name.schema_name);
+                table_names.insert(table.table_name.database_name);
+                break;
+            }
+        }
+    }
+
+    // Has external script?
+    if (auto* external = cursor.script.external_script; external && external->analyzed_script) {
+        std::span<AnalyzedScript::TableColumn> external_columns{external->analyzed_script->table_columns};
+        auto& own_names = cursor.script.scanned_script->GetNameDictionary();
+
+        // Map unresolved column names to external name dictionary
+        std::unordered_set<NameID> unresolved_external_columns;
+        for (auto column : unresolved_columns) {
+            auto own_name = own_names[column].text;
+            auto external_name_id = external->scanned_script->FindName(own_name);
+            if (external_name_id.has_value()) {
+                unresolved_external_columns.insert(*external_name_id);
+            }
+        }
+        if (!unresolved_external_columns.empty()) {
+            // Lookup unresolved external columns
+            for (auto& table : external->analyzed_script->tables) {
+                for (auto& column : external_columns.subspan(table.columns_begin, table.column_count)) {
+                    if (unresolved_external_columns.contains(column.column_name.GetIndex())) {
+                        table_names.insert(table.table_name.table_name);
+                        table_names.insert(table.table_name.schema_name);
+                        table_names.insert(table.table_name.database_name);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    // Adjust the score
+    for (auto table_name : table_names) {
+        if (auto iter = pending_candidates.find(table_name); iter != pending_candidates.end()) {
+            iter->second.score += RESOLVING_TABLE_SCORE_MODIFIER;
+        }
+    }
+}
+
 void Completion::FindCandidatesInAST() {
     // Right now, we're just collecting all table and column refs with the same statement id.
     // We could later make this scope-aware (s.t. table refs in CTEs dont bump the score of completions in the main
@@ -348,6 +418,7 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(co
     if (expects_identifier) {
         completion->FindCandidatesInIndexes();
         completion->FindCandidatesInAST();
+        completion->FindTablesForUnresolvedColumns();
     }
     completion->FlushCandidatesAndFinish();
     return {std::move(completion), proto::StatusCode::OK};

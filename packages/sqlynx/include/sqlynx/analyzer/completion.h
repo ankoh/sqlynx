@@ -24,11 +24,12 @@ struct Completion {
 
     static constexpr ScoreValueType SUBSTRING_SCORE_MODIFIER = 15;
     static constexpr ScoreValueType PREFIX_SCORE_MODIFIER = 20;
-    static constexpr ScoreValueType SAME_STATEMENT_SCORE_MODIFIER = 1;
+    static constexpr ScoreValueType STATEMENT_SCOPE_SCORE_MODIFIER = 1;
+    static constexpr ScoreValueType RESOLVING_TABLE_SCORE_MODIFIER = 2;
 
     static_assert(PREFIX_SCORE_MODIFIER > SUBSTRING_SCORE_MODIFIER,
                   "Begin a prefix weighs more than being a substring");
-    static_assert(SAME_STATEMENT_SCORE_MODIFIER < KEYWORD_POPULAR,
+    static_assert(STATEMENT_SCOPE_SCORE_MODIFIER < KEYWORD_POPULAR,
                   "Being in the same statement doesn't outweigh a popular keyword of similar likelyhood without also "
                   "being a substring");
     static_assert((TAG_UNLIKELY + SUBSTRING_SCORE_MODIFIER) > TAG_LIKELY,
@@ -48,7 +49,7 @@ struct Completion {
         bool in_statement;
 
         /// Get the score
-        inline ScoreValueType GetScore() const { return score + (in_statement ? SAME_STATEMENT_SCORE_MODIFIER : 0); }
+        inline ScoreValueType GetScore() const { return score + (in_statement ? STATEMENT_SCOPE_SCORE_MODIFIER : 0); }
         /// Is less in the min-heap?
         /// We want to kick a candidate A before candidate B if
         ///     1) the score of A is less than the score of B
@@ -79,6 +80,8 @@ struct Completion {
     void FindCandidatesInIndex(const CompletionIndex& index);
     /// Find the candidates in completion indexes
     void FindCandidatesInIndexes();
+    /// Find tables that contain column names that are still unresolved in the current statement
+    void FindTablesForUnresolvedColumns();
     /// Find candidates in the AST around the script cursor
     void FindCandidatesInAST();
     /// Flush pending candidates and finish the results

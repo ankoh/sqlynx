@@ -6,7 +6,7 @@
         </cursor>
         <completions limit="3" />
     </completion-snapshot>
-    <completion-snapshot name="simple_table">
+    <completion-snapshot name="complete_table_name">
         <script context="external">
             create table foo(a int);
         </script>
@@ -18,7 +18,7 @@
         </cursor>
         <completions limit="3" />
     </completion-snapshot>
-    <completion-snapshot name="special_character_completion">
+    <completion-snapshot name="dont_complete_at_lrb">
         <script context="external">
             create table foo(a int);
         </script>
@@ -27,6 +27,20 @@
         </script>
         <cursor context="main">
             <search text="from (" index="6" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
+    <completion-snapshot name="table_name_resolving_column">
+        <script context="external">
+create table table1(attr1 integer);
+create table table2(attr2 integer);
+create table table3(attr3 integer);
+        </script>
+        <script context="main">
+            select attr2 from tab
+        </script>
+        <cursor context="main">
+            <search text="tab" index="3" />
         </cursor>
         <completions limit="3" />
     </completion-snapshot>
