@@ -77,6 +77,8 @@ class ScannedScript {
     auto& GetInput() const { return text_buffer; }
     /// Get the tokens
     auto& GetSymbols() const { return symbols; }
+    /// Get the name dictionary
+    auto& GetNameDictionary() const { return name_dictionary; }
     /// Find a name
     std::optional<NameID> FindName(std::string_view s);
     /// Register a name

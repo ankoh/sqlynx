@@ -10,7 +10,7 @@
             <entry value="with" score="2" in-scope="false" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
-    <completion-snapshot name="simple_table">
+    <completion-snapshot name="complete_table_name">
         <script context="external">
             create table foo(a int);
         </script>
@@ -26,7 +26,7 @@
             <entry value="for" score="20" in-scope="false" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
-    <completion-snapshot name="special_character_completion">
+    <completion-snapshot name="dont_complete_at_lrb">
         <script context="external">
             create table foo(a int);
         </script>
@@ -37,5 +37,23 @@
             <search text="from (" index="6" />
         </cursor>
         <completions limit="3" />
+    </completion-snapshot>
+    <completion-snapshot name="table_name_resolving_column">
+        <script context="external">
+create table table1(attr1 integer);
+create table table2(attr2 integer);
+create table table3(attr3 integer);
+        </script>
+        <script context="main">
+            select attr2 from tab
+        </script>
+        <cursor context="main">
+            <search text="tab" index="3" />
+        </cursor>
+        <completions limit="3">
+            <entry value="table2" score="42" in-scope="false" tags="TABLE_NAME" />
+            <entry value="table1" score="40" in-scope="false" tags="TABLE_NAME" />
+            <entry value="table3" score="40" in-scope="false" tags="TABLE_NAME" />
+        </completions>
     </completion-snapshot>
 </completion-snapshots>
