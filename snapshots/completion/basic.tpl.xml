@@ -18,4 +18,16 @@
         </cursor>
         <completions limit="3" />
     </completion-snapshot>
+    <completion-snapshot name="special_character_completion">
+        <script context="external">
+            create table foo(a int);
+        </script>
+        <script context="main">
+            select * from ( foo );
+        </script>
+        <cursor context="main">
+            <search text="from (" index="6" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
 </completion-snapshots>

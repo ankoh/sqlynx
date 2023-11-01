@@ -45,11 +45,7 @@
         <cursor context="main">
             <search text="*" index="1" />
         </cursor>
-        <completions limit="3">
-            <entry value="from" score="3" in-scope="false" tags="KEYWORD" />
-            <entry value="group" score="3" in-scope="false" tags="KEYWORD" />
-            <entry value="order" score="3" in-scope="false" tags="KEYWORD" />
-        </completions>
+        <completions limit="3" />
     </completion-snapshot>
     <completion-snapshot name="select_f">
         <script context="main">
