@@ -45,13 +45,6 @@ struct SchemaGraphTableNode {
     height: double;
 }
 
-table SchemaGraphDebugInfo {
-    /// Node distances
-    node_distances: [double];
-    /// Node repulsions
-    node_repulsions: [double];
-}
-
 table SchemaGraphLayout {
     /// The table nodes
     table_nodes: [SchemaGraphTableNode];
