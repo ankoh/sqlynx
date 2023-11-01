@@ -9,6 +9,7 @@
 #include <charconv>
 #include "sqlynx/parser/grammar/keywords.h"
 #include "sqlynx/parser/grammar/location.h"
+#include "sqlynx/parser/grammar/raw.h"
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/parser/scanner.h"
 
@@ -222,9 +223,9 @@ ident_cont      [A-Za-z\200-\377_0-9\$]
 identifier      {ident_start}{ident_cont}*
 
 /* Assorted special-case operators and operator-like tokens */
-typecast        "::"
-dot_dot         \.\.
-dot             \.
+raw_typecast    "::"
+raw_dot_dot     \.\.
+raw_dot         \.
 colon_equals    ":="
 
 /*
@@ -251,7 +252,23 @@ not_equals      "!="
  * If you change either set, adjust the character lists appearing in the
  * rule for "operator"!
  */
-self            [,()\[\].;\:\+\-\*\/\%\^\<\>\=]
+
+raw_comma       \,
+raw_lrb         \(
+raw_rrb         \)
+raw_lsb         \[
+raw_rsb         \]
+raw_semicolon   \;
+raw_colon       \:
+raw_plus        \+
+raw_minus       \-
+raw_star        \*
+raw_modulo      \%
+raw_circumflex  \^
+raw_less_than   \<
+raw_greater_than \>
+raw_equals      \=
+
 op_chars        [\~\!\@\#\^\&\|\`\+\-\*\/\%\<\>\=]
 operator        {op_chars}+
 
@@ -348,16 +365,31 @@ std::string_view input = ctx.GetInputData();
                 }
 <xd><<EOF>>     { ctx.AddError(Loc({ ext_begin, loc }), "unterminated delimited identifier"); BEGIN(INITIAL); }
 
-{typecast}          { return Parser::make_TYPECAST(loc); }
-{dot_dot}           { return Parser::make_DOT_DOT(loc); }
-{dot}               { return Parser::make_DOT(loc); }
+{raw_typecast}      { return Parser::make_TYPECAST(loc); }
+{raw_dot_dot}       { return Parser::make_DOT_DOT(loc); }
+{raw_dot}           { return Parser::make_DOT(loc); }
 {colon_equals}      { return Parser::make_COLON_EQUALS(loc); }
 {equals_greater}    { return Parser::make_EQUALS_GREATER(loc); }
 {less_equals}       { return Parser::make_LESS_EQUALS(loc); }
 {greater_equals}    { return Parser::make_GREATER_EQUALS(loc); }
 {less_greater}      { return Parser::make_NOT_EQUALS(loc); }
 {not_equals}        { return Parser::make_NOT_EQUALS(loc); }
-{self}              { return Parser::symbol_type(yytext[0], loc); }
+
+{raw_comma}         { return Parser::make_COMMA(loc); }
+{raw_lrb}           { return Parser::make_LRB(loc); }
+{raw_rrb}           { return Parser::make_RRB(loc); }
+{raw_lsb}           { return Parser::make_LSB(loc); }
+{raw_rsb}           { return Parser::make_RSB(loc); }
+{raw_semicolon}     { return Parser::make_SEMICOLON(loc); }
+{raw_colon}         { return Parser::make_COLON(loc); }
+{raw_plus}          { return Parser::make_PLUS(loc); }
+{raw_minus}         { return Parser::make_MINUS(loc); }
+{raw_star}          { return Parser::make_STAR(loc); }
+{raw_modulo}        { return Parser::make_MODULO(loc); }
+{raw_circumflex}    { return Parser::make_CIRCUMFLEX(loc); }
+{raw_less_than}     { return Parser::make_LESS_THAN(loc); }
+{raw_greater_than}  { return Parser::make_GREATER_THAN(loc); }
+{raw_equals}        { return Parser::make_EQUALS(loc); }
 
 {operator}      {
                     /*
@@ -432,7 +464,7 @@ std::string_view input = ctx.GetInputData();
                          */
                         if (nchars == 1 &&
                             strchr(",()[].;:+-*/%^<>=?", yytext[0])) {
-                            return Parser::symbol_type(yytext[0], loc);
+                            return matchSpecialCharacter(yytext[0], loc);
                         }
                         /*
                          * Likewise, if what we have left is two chars, and
