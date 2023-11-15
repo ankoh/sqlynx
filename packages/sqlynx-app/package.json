@@ -23,7 +23,7 @@
         "copy-to-clipboard": "^3.3.3",
         "flatbuffers": "^23.5.26",
         "fontfaceobserver": "^2.3.0",
-        "framer-motion": "^10.16.4",
+        "framer-motion": "^10.16.5",
         "immutable": "^4.3.4",
         "react": "^18.2.0",
         "react-bootstrap": "^2.9.1",
