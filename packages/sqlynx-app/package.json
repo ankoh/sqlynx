@@ -17,7 +17,7 @@
         "@popperjs/core": "^2.11.8",
         "@react-hook/resize-observer": "^1.2.6",
         "@types/react-window": "^1.8.7",
-        "axios": "^1.6.0",
+        "axios": "^1.6.2",
         "bootstrap": "^5.3.2",
         "classnames": "^2.3.2",
         "copy-to-clipboard": "^3.3.3",
