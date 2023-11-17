@@ -19,7 +19,7 @@
 		"@ankoh/sqlynx": "link:../sqlynx-wasm"
 	},
 	"devDependencies": {
-		"@types/node": "^20.9.0",
+		"@types/node": "^20.9.1",
 		"@types/vscode": "^1.84.1",
 		"typescript": "^5.2.2"
 	}
