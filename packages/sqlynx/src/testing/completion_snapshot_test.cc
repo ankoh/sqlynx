@@ -34,6 +34,12 @@ std::vector<const CompletionSnapshotTest*> CompletionSnapshotTest::GetTests(std:
 void CompletionSnapshotTest::EncodeCompletion(pugi::xml_node root, const Completion& completion) {
     auto entries = completion.GetHeap().GetEntries();
     auto ctxName = proto::EnumNameCompletionStrategy(completion.GetStrategy());
+    if (auto node_id = completion.GetCursor().ast_node_id) {
+        root.append_attribute("symbol").set_value(
+            proto::EnumNameNodeType(completion.GetCursor().script.parsed_script->nodes[*node_id].node_type()));
+    }
+    root.append_attribute("relative")
+        .set_value(proto::EnumNameRelativeSymbolPosition(completion.GetCursor().scanner_location->relative_pos));
     root.append_attribute("strategy").set_value(ctxName);
     for (auto iter = entries.rbegin(); iter != entries.rend(); ++iter) {
         auto xml_entry = root.append_child("entry");

@@ -29,7 +29,6 @@ export async function completeSQLynx(context: CompletionContext): Promise<Comple
         if (performCompletion) {
             const completionBuffer = processor.mainScript.completeAtCursor(32);
             const completion = completionBuffer.read(new sqlynx.proto.Completion());
-            console.log(`strategy: ${completion.strategy()}`);
             const candidateObj = new sqlynx.proto.CompletionCandidate();
             for (let i = 0; i < completion.candidatesLength(); ++i) {
                 const candidate = completion.candidates(i, candidateObj)!;
