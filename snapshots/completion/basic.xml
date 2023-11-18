@@ -56,4 +56,22 @@ create table table3(attr3 integer);
             <entry value="table3" score="40" in-scope="false" tags="TABLE_NAME" />
         </completions>
     </completion-snapshot>
+    <completion-snapshot name="remap_external_names">
+        <script context="external">
+            create table external_name1(external_name2 int);
+        </script>
+        <script context="main">
+            select external_name2 from external_name1 where external_
+        </script>
+        <cursor context="main">
+            <search text="where external_" index="15" />
+        </cursor>
+        <completions limit="5">
+            <entry value="external_name1" score="41" in-scope="true" tags="TABLE_NAME" />
+            <entry value="external_name2" score="41" in-scope="true" tags="COLUMN_NAME" />
+            <entry value="group" score="3" in-scope="false" tags="KEYWORD" />
+            <entry value="order" score="3" in-scope="false" tags="KEYWORD" />
+            <entry value="by" score="2" in-scope="false" tags="KEYWORD" />
+        </completions>
+    </completion-snapshot>
 </completion-snapshots>

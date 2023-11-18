@@ -185,52 +185,83 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
     }
 }
 
-void Completion::FindCandidatesInIndex(const CompletionIndex& index) {
+QualifiedID Completion::RemapExternalName(QualifiedID name_id) {
+    if (auto text = cursor.script.external_script->FindName(name_id); !text.empty()) {
+        if (auto mapped_id = cursor.script.FindNameId(text); !mapped_id.IsNull()) {
+            return mapped_id;
+        }
+    }
+    return name_id;
+}
+
+void findCandidatesInIndex(Completion& completion, const Script& script, bool isExternalScript) {
     using Relative = ScannedScript::LocationInfo::RelativePosition;
-    std::span<const CompletionIndex::Entry> entries = index.FindEntriesWithPrefix(cursor.text);
+    auto& cursor = completion.GetCursor();
+    auto& scoring_table = completion.GetScoringTable();
+    auto& pending_candidates = completion.GetPendingCandidates();
+
+    // Get the current cursor prefix
+    auto& location = cursor.scanner_location;
+    auto symbol_ofs = location->symbol.location.offset();
+    auto symbol_prefix = std::max<uint32_t>(location->text_offset, symbol_ofs) - symbol_ofs;
+    std::string_view prefix_text{cursor.text.data(), symbol_prefix};
+    fuzzy_ci_string_view ci_prefix_text{cursor.text.data(), symbol_prefix};
+
+    // Fall back to the full word if the cursor prefix is empty
+    auto search_text = prefix_text;
+    if (search_text.empty()) {
+        search_text = cursor.text;
+    }
+
+    // Find all suffixes for the cursor prefix
+    auto& index = script.completion_index;
+    assert(index != nullptr);
+    std::span<const CompletionIndex::Entry> entries = index->FindEntriesWithPrefix(search_text);
 
     for (auto& entry : entries) {
         auto& entry_data = *entry.data;
         // Determine score
-        ScoreValueType score = 0;
+        Completion::ScoreValueType score = 0;
         for (auto [tag, tag_score] : scoring_table) {
             score = std::max(score, entry_data.name_tags.contains(tag) ? tag_score : 0);
         }
         score += entry_data.weight;
         // Is a prefix?
-        auto& location = cursor.scanner_location;
         switch (location->relative_pos) {
             case Relative::BEGIN_OF_SYMBOL:
             case Relative::MID_OF_SYMBOL:
             case Relative::END_OF_SYMBOL: {
-                auto symbol_ofs = location->symbol.location.offset();
-                auto symbol_prefix = std::max<uint32_t>(location->text_offset, symbol_ofs) - symbol_ofs;
-                fuzzy_ci_string_view ci_prefix_text{cursor.text.data(), symbol_prefix};
                 fuzzy_ci_string_view ci_entry_text{entry.data->name_text.data(), entry.data->name_text.size()};
                 if (auto pos = ci_entry_text.find(ci_prefix_text, 0); pos == 0) {
-                    score += PREFIX_SCORE_MODIFIER;
+                    score += Completion::PREFIX_SCORE_MODIFIER;
                 } else {
-                    score += SUBSTRING_SCORE_MODIFIER;
+                    score += Completion::SUBSTRING_SCORE_MODIFIER;
                 }
                 break;
             }
             default:
                 break;
         }
+        // Remap the name id (if necessary)
+        auto name_id = entry_data.name_id;
+        if (isExternalScript) {
+            name_id = completion.RemapExternalName(name_id);
+        }
+
         // Do we know the candidate already?
-        if (auto iter = pending_candidates.find(entry_data.name_id); iter != pending_candidates.end()) {
+        if (auto iter = pending_candidates.find(name_id); iter != pending_candidates.end()) {
             // Update the score if it is higher
             iter->second.score = std::max(iter->second.score, score);
             iter->second.name_tags |= entry_data.name_tags;
         } else {
             // Otherwise store as new candidate
-            Candidate candidate{
+            Completion::Candidate candidate{
                 .name_text = entry_data.name_text,
                 .name_tags = entry_data.name_tags,
                 .score = score,
                 .in_statement = false,
             };
-            pending_candidates.insert({entry_data.name_id, candidate});
+            pending_candidates.insert({name_id, candidate});
         }
     }
 }
@@ -238,12 +269,12 @@ void Completion::FindCandidatesInIndex(const CompletionIndex& index) {
 void Completion::FindCandidatesInIndexes() {
     // Find candidates in name dictionary of main script
     if (auto& index = cursor.script.completion_index) {
-        FindCandidatesInIndex(*index);
+        findCandidatesInIndex(*this, cursor.script, false);
     }
     // Find candidates in name dictionary of external script
     if (cursor.script.external_script && cursor.script.external_script->completion_index) {
         auto& index = cursor.script.external_script->completion_index;
-        FindCandidatesInIndex(*index);
+        findCandidatesInIndex(*this, *cursor.script.external_script, true);
     }
 }
 
@@ -286,22 +317,22 @@ void Completion::FindTablesForUnresolvedColumns() {
         auto& own_names = cursor.script.scanned_script->GetNameDictionary();
 
         // Map unresolved column names to external name dictionary
-        std::unordered_set<NameID> unresolved_external_columns;
+        std::unordered_set<QualifiedID, QualifiedID::Hasher> unresolved_external_columns;
         for (auto column : unresolved_columns) {
             auto own_name = own_names[column].text;
-            auto external_name_id = external->scanned_script->FindName(own_name);
-            if (external_name_id.has_value()) {
-                unresolved_external_columns.insert(*external_name_id);
+            auto external_name_id = external->FindNameId(own_name);
+            if (!external_name_id.IsNull()) {
+                unresolved_external_columns.insert(external_name_id);
             }
         }
         if (!unresolved_external_columns.empty()) {
             // Lookup unresolved external columns
             for (auto& table : external->analyzed_script->tables) {
                 for (auto& column : external_columns.subspan(table.columns_begin, table.column_count)) {
-                    if (unresolved_external_columns.contains(column.column_name.GetIndex())) {
-                        table_names.insert(table.table_name.table_name);
-                        table_names.insert(table.table_name.schema_name);
-                        table_names.insert(table.table_name.database_name);
+                    if (unresolved_external_columns.contains(column.column_name)) {
+                        table_names.insert(RemapExternalName(table.table_name.table_name));
+                        table_names.insert(RemapExternalName(table.table_name.schema_name));
+                        table_names.insert(RemapExternalName(table.table_name.database_name));
                         break;
                     }
                 }
@@ -372,11 +403,7 @@ void Completion::FlushCandidatesAndFinish() {
     // Find name if under cursor (if any)
     QualifiedID current_symbol_name;
     if (auto& location = cursor.scanner_location; location.has_value()) {
-        auto& scanned = *cursor.script.scanned_script;
-        auto name_id = scanned.FindName(cursor.text);
-        if (name_id.has_value()) {
-            current_symbol_name = QualifiedID{scanned.context_id, *name_id};
-        }
+        current_symbol_name = cursor.script.FindNameId(cursor.text);
     }
 
     // Insert all pending candidates into the heap

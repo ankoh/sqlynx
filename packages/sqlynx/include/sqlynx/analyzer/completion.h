@@ -76,8 +76,6 @@ struct Completion {
 
     /// Resolve the expected symbols
     void FindCandidatesInGrammar(bool& expects_identifier);
-    /// Find the candidates in a completion index
-    void FindCandidatesInIndex(const CompletionIndex& index);
     /// Find the candidates in completion indexes
     void FindCandidatesInIndexes();
     /// Find tables that contain column names that are still unresolved in the current statement
@@ -91,8 +89,18 @@ struct Completion {
     /// Constructor
     Completion(const ScriptCursor& cursor, size_t k);
 
+    /// Get the cursor
+    auto& GetCursor() const { return cursor; }
+    /// Get the scoring table
+    auto& GetScoringTable() const { return scoring_table; }
+    /// Get the pending candidates
+    auto& GetPendingCandidates() { return pending_candidates; }
     /// Get the result heap
     auto& GetHeap() const { return result_heap; }
+
+    /// Remap an external name id
+    QualifiedID RemapExternalName(QualifiedID name);
+
     /// Pack the completion result
     flatbuffers::Offset<proto::Completion> Pack(flatbuffers::FlatBufferBuilder& builder);
     // Compute completion at a cursor

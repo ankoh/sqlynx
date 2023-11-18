@@ -79,8 +79,6 @@ class ScannedScript {
     auto& GetSymbols() const { return symbols; }
     /// Get the name dictionary
     auto& GetNameDictionary() const { return name_dictionary; }
-    /// Find a name
-    std::optional<NameID> FindName(std::string_view s);
     /// Register a name
     NameID RegisterName(std::string_view s, sx::Location location, sx::NameTag tag = sx::NameTag::NONE);
     /// Register a keyword as name
@@ -467,6 +465,10 @@ class Script {
     /// Constructor
     Script(uint32_t context_id = 1);
 
+    /// Get a name by id
+    std::string_view FindName(QualifiedID name_id) const;
+    /// Get a name by id
+    QualifiedID FindNameId(std::string_view name_text) const;
     /// Get a table by id
     std::optional<
         std::pair<std::reference_wrapper<const AnalyzedScript::Table>, std::span<const AnalyzedScript::TableColumn>>>
