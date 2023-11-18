@@ -4,7 +4,7 @@
         <cursor context="main">
             <search text="" index="0" />
         </cursor>
-        <completions limit="3" strategy="DEFAULT">
+        <completions limit="3" relative="NEW_SYMBOL_BEFORE" strategy="DEFAULT">
             <entry value="select" score="3" in-scope="false" tags="KEYWORD" />
             <entry value="set" score="2" in-scope="false" tags="KEYWORD" />
             <entry value="with" score="2" in-scope="false" tags="KEYWORD" />
@@ -20,7 +20,7 @@
         <cursor context="main">
             <search text="fo" index="2" />
         </cursor>
-        <completions limit="3" strategy="DEFAULT">
+        <completions limit="3" symbol="NAME" relative="END_OF_SYMBOL" strategy="TABLE_REF">
             <entry value="foo" score="40" in-scope="false" tags="TABLE_NAME" />
             <entry value="following" score="20" in-scope="false" tags="KEYWORD" />
             <entry value="for" score="20" in-scope="false" tags="KEYWORD" />
@@ -36,7 +36,7 @@
         <cursor context="main">
             <search text="from (" index="6" />
         </cursor>
-        <completions limit="3" strategy="DEFAULT" />
+        <completions limit="3" relative="END_OF_SYMBOL" strategy="DEFAULT" />
     </completion-snapshot>
     <completion-snapshot name="table_name_resolving_column">
         <script context="external">
@@ -50,7 +50,7 @@ create table table3(attr3 integer);
         <cursor context="main">
             <search text="tab" index="3" />
         </cursor>
-        <completions limit="3" strategy="DEFAULT">
+        <completions limit="3" symbol="NAME" relative="END_OF_SYMBOL" strategy="TABLE_REF">
             <entry value="table2" score="42" in-scope="false" tags="TABLE_NAME" />
             <entry value="table1" score="40" in-scope="false" tags="TABLE_NAME" />
             <entry value="table3" score="40" in-scope="false" tags="TABLE_NAME" />
@@ -66,12 +66,30 @@ create table table3(attr3 integer);
         <cursor context="main">
             <search text="where external_" index="14" />
         </cursor>
-        <completions limit="5" strategy="COLUMN_REF">
+        <completions limit="5" symbol="NAME" relative="MID_OF_SYMBOL" strategy="COLUMN_REF">
             <entry value="external_name2" score="41" in-scope="true" tags="COLUMN_NAME" />
             <entry value="external_name1" score="31" in-scope="true" tags="TABLE_NAME" />
             <entry value="external" score="20" in-scope="false" tags="KEYWORD" />
             <entry value="group" score="3" in-scope="false" tags="KEYWORD" />
             <entry value="order" score="3" in-scope="false" tags="KEYWORD" />
+        </completions>
+    </completion-snapshot>
+    <completion-snapshot name="remap_external_names_eof">
+        <script context="external">
+            create table external_name1(external_name2 int);
+        </script>
+        <script context="main">
+            select external_name2 from external_name1 where external_
+        </script>
+        <cursor context="main">
+            <search text="where external_" index="15" />
+        </cursor>
+        <completions limit="5" symbol="NAME" relative="END_OF_SYMBOL" strategy="COLUMN_REF">
+            <entry value="external_name2" score="41" in-scope="true" tags="COLUMN_NAME" />
+            <entry value="external_name1" score="31" in-scope="true" tags="TABLE_NAME" />
+            <entry value="group" score="3" in-scope="false" tags="KEYWORD" />
+            <entry value="order" score="3" in-scope="false" tags="KEYWORD" />
+            <entry value="by" score="2" in-scope="false" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
 </completion-snapshots>

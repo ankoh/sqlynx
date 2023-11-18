@@ -6,7 +6,7 @@
         <cursor context="main">
             <search text="s" index="1" />
         </cursor>
-        <completions limit="3" strategy="DEFAULT">
+        <completions limit="3" relative="END_OF_SYMBOL" strategy="DEFAULT">
             <entry value="select" score="23" in-scope="false" tags="KEYWORD" />
             <entry value="set" score="22" in-scope="false" tags="KEYWORD" />
             <entry value="values" score="15" in-scope="false" tags="KEYWORD" />
@@ -19,7 +19,7 @@
         <cursor context="main">
             <search text="se" index="2" />
         </cursor>
-        <completions limit="3" strategy="DEFAULT">
+        <completions limit="3" relative="END_OF_SYMBOL" strategy="DEFAULT">
             <entry value="select" score="23" in-scope="false" tags="KEYWORD" />
             <entry value="set" score="22" in-scope="false" tags="KEYWORD" />
             <entry value="with" score="2" in-scope="false" tags="KEYWORD" />
@@ -32,7 +32,7 @@
         <cursor context="main">
             <search text="sel" index="3" />
         </cursor>
-        <completions limit="3" strategy="DEFAULT">
+        <completions limit="3" relative="END_OF_SYMBOL" strategy="DEFAULT">
             <entry value="select" score="23" in-scope="false" tags="KEYWORD" />
             <entry value="set" score="2" in-scope="false" tags="KEYWORD" />
             <entry value="with" score="2" in-scope="false" tags="KEYWORD" />
@@ -45,7 +45,7 @@
         <cursor context="main">
             <search text="*" index="1" />
         </cursor>
-        <completions limit="3" strategy="DEFAULT" />
+        <completions limit="3" symbol="BOOL" relative="END_OF_SYMBOL" strategy="DEFAULT" />
     </completion-snapshot>
     <completion-snapshot name="select_f">
         <script context="main">
@@ -54,7 +54,7 @@
         <cursor context="main">
             <search text="f" index="1" />
         </cursor>
-        <completions limit="3" strategy="DEFAULT">
+        <completions limit="3" relative="END_OF_SYMBOL" strategy="DEFAULT">
             <entry value="from" score="23" in-scope="false" tags="KEYWORD" />
             <entry value="fetch" score="20" in-scope="false" tags="KEYWORD" />
             <entry value="for" score="20" in-scope="false" tags="KEYWORD" />
@@ -67,7 +67,7 @@
         <cursor context="main">
             <search text="fr" index="2" />
         </cursor>
-        <completions limit="3" strategy="DEFAULT">
+        <completions limit="3" relative="END_OF_SYMBOL" strategy="DEFAULT">
             <entry value="from" score="23" in-scope="false" tags="KEYWORD" />
             <entry value="group" score="3" in-scope="false" tags="KEYWORD" />
             <entry value="order" score="3" in-scope="false" tags="KEYWORD" />
@@ -80,7 +80,7 @@
         <cursor context="main">
             <search text="fr" index="4" />
         </cursor>
-        <completions limit="3" strategy="DEFAULT">
+        <completions limit="3" symbol="OBJECT_SQL_SELECT" relative="END_OF_SYMBOL" strategy="DEFAULT">
             <entry value="from" score="23" in-scope="false" tags="KEYWORD" />
             <entry value="group" score="3" in-scope="false" tags="KEYWORD" />
             <entry value="order" score="3" in-scope="false" tags="KEYWORD" />
@@ -93,7 +93,7 @@
         <cursor context="main">
             <search text="xx" index="0" />
         </cursor>
-        <completions limit="3" strategy="TABLE_REF">
+        <completions limit="3" symbol="NAME" relative="BEGIN_OF_SYMBOL" strategy="TABLE_REF">
             <entry value="group" score="23" in-scope="false" tags="KEYWORD" />
             <entry value="order" score="23" in-scope="false" tags="KEYWORD" />
             <entry value="where" score="23" in-scope="false" tags="KEYWORD" />
@@ -106,7 +106,7 @@
         <cursor context="main">
             <search text="w" index="1" />
         </cursor>
-        <completions limit="3" strategy="DEFAULT">
+        <completions limit="3" symbol="NAME" relative="END_OF_SYMBOL" strategy="TABLE_REF">
             <entry value="where" score="23" in-scope="false" tags="KEYWORD" />
             <entry value="whitespace" score="20" in-scope="false" tags="KEYWORD" />
             <entry value="window" score="20" in-scope="false" tags="KEYWORD" />
@@ -119,7 +119,7 @@
         <cursor context="main">
             <search text="wh" index="2" />
         </cursor>
-        <completions limit="3" strategy="DEFAULT">
+        <completions limit="3" symbol="NAME" relative="END_OF_SYMBOL" strategy="TABLE_REF">
             <entry value="where" score="23" in-scope="false" tags="KEYWORD" />
             <entry value="whitespace" score="20" in-scope="false" tags="KEYWORD" />
             <entry value="group" score="3" in-scope="false" tags="KEYWORD" />
@@ -132,7 +132,7 @@
         <cursor context="main">
             <search text="selec" index="5" />
         </cursor>
-        <completions limit="3" strategy="DEFAULT">
+        <completions limit="3" relative="END_OF_SYMBOL" strategy="DEFAULT">
             <entry value="select" score="23" in-scope="false" tags="KEYWORD" />
             <entry value="set" score="2" in-scope="false" tags="KEYWORD" />
             <entry value="with" score="2" in-scope="false" tags="KEYWORD" />
@@ -145,7 +145,7 @@
         <cursor context="main">
             <search text="gr" index="1" />
         </cursor>
-        <completions limit="3" strategy="TABLE_REF">
+        <completions limit="3" symbol="NAME" relative="MID_OF_SYMBOL" strategy="TABLE_REF">
             <entry value="group" score="23" in-scope="false" tags="KEYWORD" />
             <entry value="generated" score="20" in-scope="false" tags="KEYWORD" />
             <entry value="global" score="20" in-scope="false" tags="KEYWORD" />
@@ -158,7 +158,7 @@
         <cursor context="main">
             <search text="group" index="4" />
         </cursor>
-        <completions limit="3" strategy="DEFAULT">
+        <completions limit="3" relative="MID_OF_SYMBOL" strategy="DEFAULT">
             <entry value="group" score="23" in-scope="false" tags="KEYWORD" />
             <entry value="grouping" score="20" in-scope="false" tags="KEYWORD" />
             <entry value="order" score="3" in-scope="false" tags="KEYWORD" />
@@ -171,7 +171,7 @@
         <cursor context="main">
             <search text="b" index="1" />
         </cursor>
-        <completions limit="3" strategy="DEFAULT">
+        <completions limit="3" relative="END_OF_SYMBOL" strategy="DEFAULT">
             <entry value="by" score="22" in-scope="false" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
@@ -182,7 +182,7 @@
         <cursor context="main">
             <search text="xx" index="0" />
         </cursor>
-        <completions limit="3" strategy="DEFAULT">
+        <completions limit="3" relative="BEGIN_OF_SYMBOL" strategy="DEFAULT">
             <entry value="by" score="22" in-scope="false" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
@@ -193,7 +193,7 @@
         <cursor context="main">
             <search text="foo o" index="5" />
         </cursor>
-        <completions limit="3" strategy="DEFAULT">
+        <completions limit="3" symbol="NAME" relative="END_OF_SYMBOL" strategy="TABLE_REF">
             <entry value="foo" score="36" in-scope="true" tags="TABLE_NAME" />
             <entry value="order" score="23" in-scope="false" tags="KEYWORD" />
             <entry value="offset" score="22" in-scope="false" tags="KEYWORD" />
@@ -206,7 +206,7 @@
         <cursor context="main">
             <search text="or" index="1" />
         </cursor>
-        <completions limit="3" strategy="DEFAULT">
+        <completions limit="3" relative="MID_OF_SYMBOL" strategy="DEFAULT">
             <entry value="order" score="23" in-scope="false" tags="KEYWORD" />
             <entry value="offset" score="22" in-scope="false" tags="KEYWORD" />
             <entry value="object" score="20" in-scope="false" tags="KEYWORD" />
@@ -219,7 +219,7 @@
         <cursor context="main">
             <search text="order" index="5" />
         </cursor>
-        <completions limit="3" strategy="DEFAULT">
+        <completions limit="3" relative="END_OF_SYMBOL" strategy="DEFAULT">
             <entry value="order" score="23" in-scope="false" tags="KEYWORD" />
             <entry value="group" score="3" in-scope="false" tags="KEYWORD" />
             <entry value="where" score="3" in-scope="false" tags="KEYWORD" />

@@ -5,6 +5,6 @@
         "logViewer": false,
         "connectionManager": false,
         "urlSharing": false,
-        "completionDetails": true
+        "completionDetails": false
     }
 }

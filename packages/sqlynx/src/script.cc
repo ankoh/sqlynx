@@ -254,8 +254,9 @@ std::optional<std::pair<size_t, size_t>> ParsedScript::FindNodeAtOffset(size_t t
     if (statement_id == 0) {
         return std::nullopt;
     }
+    --statement_id;
     // Traverse down the AST
-    auto iter = statements[--statement_id].root;
+    auto iter = statements[statement_id].root;
     while (true) {
         // Reached node without children? Then return that node
         auto& node = nodes[iter];
@@ -264,8 +265,8 @@ std::optional<std::pair<size_t, size_t>> ParsedScript::FindNodeAtOffset(size_t t
         }
         // Otherwise find the first child that includes the offset
         // Children are not ordered by location but ideally, there should only be a single match.
-        std::optional<size_t> child;
-        size_t closest_child = 0, closest_end = 0;
+        std::optional<size_t> child_exact;
+        std::optional<size_t> child_end_plus_1;
         for (size_t i = 0; i < node.children_count(); ++i) {
             auto ci = node.children_begin_or_value() + i;
             auto node_begin = nodes[ci].location().offset();
@@ -274,11 +275,15 @@ std::optional<std::pair<size_t, size_t>> ParsedScript::FindNodeAtOffset(size_t t
             // Note that we want an exact match here since AST nodes will include "holes".
             // For example, a select clause does not emit a node for a FROM keyword.
             // It would be misleading if we'd return the closest node that is materialized in the AST.
-            if (node_begin <= text_offset && node_end > text_offset) {
-                child = ci;
-                break;
+            if (node_begin <= text_offset) {
+                if (node_end > text_offset) {
+                    child_exact = ci;
+                } else if (node_end == text_offset) {
+                    child_end_plus_1 = ci;
+                }
             }
         }
+        auto child = child_exact.has_value() ? child_exact : child_end_plus_1;
         if (!child.has_value()) {
             // None of the children included the text offset.
             // Abort and return the current node as best match.
@@ -286,6 +291,8 @@ std::optional<std::pair<size_t, size_t>> ParsedScript::FindNodeAtOffset(size_t t
         }
         // Traverse down
         iter = *child;
+        child_exact.reset();
+        child_end_plus_1.reset();
     }
     // Return (statement, node)-pair
     return std::make_pair(statement_id, iter);

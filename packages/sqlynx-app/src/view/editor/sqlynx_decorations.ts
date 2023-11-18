@@ -130,6 +130,10 @@ function buildDecorationsFromCursor(
             if (context !== scriptKey) {
                 continue;
             }
+            // XXX invalidate focused table refs at write front
+            if (index >= analyzed.columnReferencesLength()) {
+                continue;
+            }
             const columnRef = analyzed.columnReferences(index, tmpColRef)!;
             const astNodeId = columnRef.astNodeId()!;
             const astNode = parsed.nodes(astNodeId, tmpNode)!;
@@ -148,6 +152,10 @@ function buildDecorationsFromCursor(
             const context = sqlynx.QualifiedID.getContext(refId);
             const index = sqlynx.QualifiedID.getIndex(refId);
             if (context !== scriptKey) {
+                continue;
+            }
+            // XXX invalidate focused table refs at write front
+            if (index >= analyzed.tableReferencesLength()) {
                 continue;
             }
             const columnRef = analyzed.tableReferences(index, tmpTblRef)!;

@@ -56,4 +56,16 @@ create table table3(attr3 integer);
         </cursor>
         <completions limit="5" />
     </completion-snapshot>
+    <completion-snapshot name="remap_external_names_eof">
+        <script context="external">
+            create table external_name1(external_name2 int);
+        </script>
+        <script context="main">
+            select external_name2 from external_name1 where external_
+        </script>
+        <cursor context="main">
+            <search text="where external_" index="15" />
+        </cursor>
+        <completions limit="5" />
+    </completion-snapshot>
 </completion-snapshots>
