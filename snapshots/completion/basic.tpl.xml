@@ -52,7 +52,7 @@ create table table3(attr3 integer);
             select external_name2 from external_name1 where external_
         </script>
         <cursor context="main">
-            <search text="where external_" index="15" />
+            <search text="where external_" index="14" />
         </cursor>
         <completions limit="5" />
     </completion-snapshot>

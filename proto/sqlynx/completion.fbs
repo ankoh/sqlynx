@@ -11,7 +11,15 @@ table CompletionCandidate {
     in_statement: bool;
 }
 
+enum CompletionStrategy: uint8 {
+    DEFAULT,
+    TABLE_REF,
+    COLUMN_REF
+}
+
 table Completion {
+    /// The strategy
+    strategy: CompletionStrategy;
     /// The text offset
     text_offset: uint32;
     /// The completion candidates
