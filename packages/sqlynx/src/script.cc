@@ -11,10 +11,12 @@
 #include "sqlynx/analyzer/analyzer.h"
 #include "sqlynx/analyzer/completion.h"
 #include "sqlynx/analyzer/completion_index.h"
+#include "sqlynx/context.h"
 #include "sqlynx/parser/parse_context.h"
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/parser/scanner.h"
 #include "sqlynx/proto/proto_generated.h"
+#include "sqlynx/utils/string_conversion.h"
 #include "sqlynx/utils/suffix_trie.h"
 
 namespace sqlynx {
@@ -49,12 +51,29 @@ NameID ScannedScript::RegisterKeywordAsName(std::string_view s, sx::Location loc
 }
 
 /// Find a name
-std::optional<NameID> ScannedScript::FindName(std::string_view s) {
-    auto iter = name_dictionary_ids.find(s);
-    if (iter != name_dictionary_ids.end()) {
-        return iter->second;
+QualifiedID Script::FindNameId(std::string_view s) const {
+    auto iter = scanned_script->name_dictionary_ids.find(s);
+    if (iter != scanned_script->name_dictionary_ids.end()) {
+        return QualifiedID{context_id, iter->second};
     }
-    return std::nullopt;
+    if (external_script) {
+        auto iter = external_script->scanned_script->name_dictionary_ids.find(s);
+        if (iter != external_script->scanned_script->name_dictionary_ids.end()) {
+            return QualifiedID{external_script->context_id, iter->second};
+        }
+    }
+    return {};
+}
+
+/// Find a name
+std::string_view Script::FindName(QualifiedID name) const {
+    if (name.GetContext() == context_id) {
+        return scanned_script->name_dictionary[name.GetIndex()].text;
+    }
+    if (external_script && name.GetContext() == external_script->context_id) {
+        return external_script->scanned_script->name_dictionary[name.GetIndex()].text;
+    }
+    return "";
 }
 
 /// Register a name
