@@ -212,4 +212,24 @@ TEST(CursorTest, SimpleNoExternal) {
          });
 }
 
+TEST(CursorTest, TableRef) {
+    Script script{1};
+    script.InsertTextAt(0, "select r_regionkey from region, n");
+    auto [scanned, scan_status] = script.Scan();
+    ASSERT_EQ(scan_status, proto::StatusCode::OK);
+    auto [parsed, parse_status] = script.Parse();
+    ASSERT_EQ(parse_status, proto::StatusCode::OK);
+    auto [analyzed, analysis_status] = script.Analyze();
+    ASSERT_EQ(analysis_status, proto::StatusCode::OK);
+
+    test(script, 32,
+         {
+             .scanner_token_text = "n",
+             .statement_id = 0,
+             .ast_attribute_key = proto::AttributeKey::NONE,
+             .ast_node_type = proto::NodeType::NAME,
+             .table_ref_name = "n",
+         });
+}
+
 }  // namespace

@@ -22,7 +22,7 @@ namespace {
 using ScoringTable = std::array<std::pair<proto::NameTag, Completion::ScoreValueType>, 8>;
 
 static constexpr ScoringTable NAME_SCORE_DEFAULTS{{
-    {proto::NameTag::NONE, 0},
+    {proto::NameTag::NONE, Completion::TAG_IGNORE},
     {proto::NameTag::KEYWORD, Completion::TAG_UNLIKELY},
     {proto::NameTag::SCHEMA_NAME, Completion::TAG_LIKELY},
     {proto::NameTag::DATABASE_NAME, Completion::TAG_LIKELY},
@@ -32,7 +32,7 @@ static constexpr ScoringTable NAME_SCORE_DEFAULTS{{
 }};
 
 static constexpr ScoringTable NAME_SCORE_TABLE_REF{{
-    {proto::NameTag::NONE, 0},
+    {proto::NameTag::NONE, Completion::TAG_IGNORE},
     {proto::NameTag::KEYWORD, Completion::TAG_UNLIKELY},
     {proto::NameTag::SCHEMA_NAME, Completion::TAG_LIKELY},
     {proto::NameTag::DATABASE_NAME, Completion::TAG_LIKELY},
@@ -42,13 +42,13 @@ static constexpr ScoringTable NAME_SCORE_TABLE_REF{{
 }};
 
 static constexpr ScoringTable NAME_SCORE_COLUMN_REF{{
-    {proto::NameTag::NONE, 0},
+    {proto::NameTag::NONE, Completion::TAG_IGNORE},
     {proto::NameTag::KEYWORD, Completion::TAG_LIKELY},
     {proto::NameTag::SCHEMA_NAME, Completion::TAG_UNLIKELY},
     {proto::NameTag::DATABASE_NAME, Completion::TAG_UNLIKELY},
     {proto::NameTag::TABLE_NAME, Completion::TAG_UNLIKELY},
     {proto::NameTag::TABLE_ALIAS, Completion::TAG_LIKELY},
-    {proto::NameTag::COLUMN_NAME, Completion::TAG_UNLIKELY},
+    {proto::NameTag::COLUMN_NAME, Completion::TAG_LIKELY},
 }};
 
 /// We use a prevalence score to rank keywords by popularity.
@@ -421,22 +421,31 @@ void Completion::FlushCandidatesAndFinish() {
     result_heap.Finish();
 }
 
-static const Completion::ScoringTable& selectScoringTable(const ScriptCursor& cursor) {
-    // Determine scoring table
-    auto* scoring_table = &NAME_SCORE_DEFAULTS;
+static proto::CompletionStrategy selectStrategy(const ScriptCursor& cursor) {
     // Is a table ref?
     if (cursor.table_reference_id.has_value()) {
-        scoring_table = &NAME_SCORE_TABLE_REF;
+        return proto::CompletionStrategy::TABLE_REF;
     }
     // Is a column ref?
     if (cursor.column_reference_id.has_value()) {
-        scoring_table = &NAME_SCORE_COLUMN_REF;
+        return proto::CompletionStrategy::COLUMN_REF;
     }
-    return *scoring_table;
+    return proto::CompletionStrategy::DEFAULT;
+}
+
+static const Completion::ScoringTable& selectScoringTable(proto::CompletionStrategy strategy) {
+    switch (strategy) {
+        case proto::CompletionStrategy::DEFAULT:
+            return NAME_SCORE_DEFAULTS;
+        case proto::CompletionStrategy::TABLE_REF:
+            return NAME_SCORE_TABLE_REF;
+        case proto::CompletionStrategy::COLUMN_REF:
+            return NAME_SCORE_COLUMN_REF;
+    }
 }
 
 Completion::Completion(const ScriptCursor& cursor, size_t k)
-    : cursor(cursor), scoring_table(selectScoringTable(cursor)), result_heap(k) {}
+    : cursor(cursor), strategy(selectStrategy(cursor)), scoring_table(selectScoringTable(strategy)), result_heap(k) {}
 
 std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(const ScriptCursor& cursor, size_t k) {
     auto completion = std::make_unique<Completion>(cursor, k);
@@ -470,6 +479,7 @@ flatbuffers::Offset<proto::Completion> Completion::Pack(flatbuffers::FlatBufferB
 
     // Pack completion table
     proto::CompletionBuilder completionBuilder{builder};
+    completionBuilder.add_strategy(strategy);
     completionBuilder.add_text_offset(cursor.text_offset);
     completionBuilder.add_candidates(candidatesOfs);
     return completionBuilder.Finish();

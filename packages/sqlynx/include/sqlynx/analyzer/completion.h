@@ -16,6 +16,7 @@ struct Completion {
     using ScoreValueType = uint32_t;
     using ScoringTable = std::array<std::pair<proto::NameTag, ScoreValueType>, 8>;
 
+    static constexpr ScoreValueType TAG_IGNORE = 0;
     static constexpr ScoreValueType TAG_UNLIKELY = 10;
     static constexpr ScoreValueType TAG_LIKELY = 20;
     static constexpr ScoreValueType KEYWORD_VERY_POPULAR = 3;
@@ -67,6 +68,8 @@ struct Completion {
    protected:
     /// The script cursor
     const ScriptCursor& cursor;
+    /// The completion strategy
+    const proto::CompletionStrategy strategy;
     /// The scoring table
     const ScoringTable& scoring_table;
     /// The hash-map to deduplicate names found in the completion indexes
@@ -91,6 +94,8 @@ struct Completion {
 
     /// Get the cursor
     auto& GetCursor() const { return cursor; }
+    /// Get the completion strategy
+    auto& GetStrategy() const { return strategy; }
     /// Get the scoring table
     auto& GetScoringTable() const { return scoring_table; }
     /// Get the pending candidates

@@ -33,6 +33,8 @@ std::vector<const CompletionSnapshotTest*> CompletionSnapshotTest::GetTests(std:
 /// Encode a script
 void CompletionSnapshotTest::EncodeCompletion(pugi::xml_node root, const Completion& completion) {
     auto entries = completion.GetHeap().GetEntries();
+    auto ctxName = proto::EnumNameCompletionStrategy(completion.GetStrategy());
+    root.append_attribute("strategy").set_value(ctxName);
     for (auto iter = entries.rbegin(); iter != entries.rend(); ++iter) {
         auto xml_entry = root.append_child("entry");
         std::string text{iter->name_text.data(), iter->name_text.size()};
