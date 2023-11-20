@@ -185,8 +185,8 @@ TEST(CursorTest, SimpleNoExternal) {
          {
              .scanner_token_text = ".",
              .statement_id = 0,
-             .ast_attribute_key = proto::AttributeKey::SQL_COLUMN_REF_PATH,
-             .ast_node_type = proto::NodeType::ARRAY,
+             .ast_attribute_key = proto::AttributeKey::NONE,
+             .ast_node_type = proto::NodeType::NAME,
              .column_ref_name = "b.x",
              .graph_from = {"b.x"},
              .graph_to = {"d.y"},
@@ -205,8 +205,8 @@ TEST(CursorTest, SimpleNoExternal) {
          {
              .scanner_token_text = "=",
              .statement_id = 0,
-             .ast_attribute_key = proto::AttributeKey::SQL_EXPRESSION_OPERATOR,
-             .ast_node_type = proto::NodeType::ENUM_SQL_EXPRESSION_OPERATOR,
+             .ast_attribute_key = proto::AttributeKey::SQL_EXPRESSION_ARGS,
+             .ast_node_type = proto::NodeType::ARRAY,
              .graph_from = {"b.x"},
              .graph_to = {"d.y"},
          });
