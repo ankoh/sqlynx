@@ -14,7 +14,8 @@ def parse(path):
         for sym in root.findall('.//{http://www.w3.org/2000/svg}symbol', namespaces):
             out.append(sym)
 
-parse("./packages/sqlynx-app/static/svg/logo/logo.svg")
+for logo_path in glob.glob("./packages/sqlynx-app/static/svg/logo/*.svg"):
+    parse(logo_path)
 for icon_path in glob.glob("./packages/sqlynx-app/static/svg/icons/*.svg"):
     parse(icon_path)
             
