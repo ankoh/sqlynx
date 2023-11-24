@@ -39,7 +39,7 @@ export const NavBar = (): React.ReactElement => {
             <div className={styles.tabs}>
                 <Tab route="/" location={location.pathname} icon={`${symbols}#file_document_multiple`} />
                 {appConfig?.value?.features?.connectionManager && (
-                    <Tab route="/databases" location={location.pathname} icon={`${symbols}#connection`} />
+                    <Tab route="/connections" location={location.pathname} icon={`${symbols}#connection`} />
                 )}
             </div>
             {appConfig?.value?.features?.userAccount && (

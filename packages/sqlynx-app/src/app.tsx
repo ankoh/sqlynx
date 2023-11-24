@@ -2,6 +2,7 @@ import * as React from 'react';
 import { SQLynxLoader } from './sqlynx_loader';
 import { withNavBar } from './view/navbar';
 import { EditorPage } from './view/pages/editor_page';
+import { ConnectionManagerPage } from './view/pages/connection_manager_page';
 import { ScriptLoader } from './scripts/script_loader';
 import { AppStateProvider } from './state/app_state_provider';
 import { GitHubAuthProvider, GitHubProfileProvider } from './github';
@@ -31,6 +32,7 @@ const DataProviders = (props: { children: React.ReactElement }) => (
 );
 
 const Editor = withNavBar(EditorPage);
+const ConnectionManager = withNavBar(ConnectionManagerPage);
 
 const element = document.getElementById('root');
 const root = createRoot(element!);
@@ -40,6 +42,7 @@ root.render(
             <DataProviders>
                 <Routes>
                     <Route index element={<Editor />} />
+                    <Route path="/connections" element={<ConnectionManager />} />
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
             </DataProviders>
