@@ -3,7 +3,7 @@
         "userAccount": false,
         "appInfo": false,
         "logViewer": false,
-        "connectionManager": false,
+        "connectionManager": true,
         "urlSharing": false,
         "completionDetails": false
     }
