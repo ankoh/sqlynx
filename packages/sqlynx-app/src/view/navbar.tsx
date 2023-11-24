@@ -33,7 +33,7 @@ export const NavBar = (): React.ReactElement => {
         <div className={styles.navbar}>
             <Link className={styles.logo} to="/">
                 <svg width="30px" height="30px">
-                    <use xlinkHref={`${symbols}#logo`} />
+                    <use xlinkHref={`${symbols}#sqlynx`} />
                 </svg>
             </Link>
             <div className={styles.tabs}>
