@@ -117,7 +117,6 @@ export const SalesforceAuthProvider: React.FC<Props> = (props: Props) => {
                     return {
                         ...s,
                         pendingAuth: null,
-                        expectedAuthSig: null,
                         openAuthWindow: null,
                     };
                 });
@@ -140,7 +139,6 @@ export const SalesforceAuthProvider: React.FC<Props> = (props: Props) => {
             setState(s => ({
                 ...s,
                 pendingAuth: null,
-                expectedAuthSig: null,
                 openAuthWindow: null,
                 error: 'could not open oauth window',
             }));
@@ -172,7 +170,6 @@ export const SalesforceAuthProvider: React.FC<Props> = (props: Props) => {
             );
 
             // Construct the URI
-            const authSig = utils.generateRandomString(20);
             const p = [
                 `client_id=${params.clientId}`,
                 `redirect_uri=${params.oauthRedirect}`,
