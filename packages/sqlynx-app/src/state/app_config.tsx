@@ -7,7 +7,7 @@ export interface AppFeatures {
     userAccount?: boolean;
     appInfo?: boolean;
     logViewer?: boolean;
-    connectionManager?: boolean;
+    connections?: boolean;
     urlSharing?: boolean;
     completionDetails?: boolean;
 }

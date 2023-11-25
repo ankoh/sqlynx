@@ -31,7 +31,7 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                     <div className={styles.page_title}>SQL Editor</div>
                 </div>
                 <div className={styles.header_right_container}>
-                    {appConfig?.value?.features?.connectionManager && (
+                    {appConfig?.value?.features?.connections && (
                         <div className={styles.header_button_group}>
                             <div className={styles.header_button}>
                                 <svg width="20px" height="20px">

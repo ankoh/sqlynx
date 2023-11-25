@@ -76,8 +76,35 @@
     height: 100%;
 
     display: grid;
-    grid-template-columns: auto;
+    grid-template-columns: 100%;
+    grid-template-rows: 48px 100%;
+}
+
+.card_header_container {
+    display: grid;
+    grid-template-columns: 64px auto;
     grid-template-rows: 100%;
 
-    padding: 8px 16px;
+    background-color: var(--editortabs_background);
+    border-bottom: 1px solid var(--border_color_primary);
+    border-radius: calc(var(--border_radius) - 1px) calc(var(--border_radius) - 1px) 0px 0px;
+}
+
+.platform_logo {
+    grid-row: 1;
+    grid-column: 1;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.platform_name {
+    grid-row: 1;
+    grid-column: 2;
+
+    font-size: 1.1rem;
+
+    display: flex;
+    align-items: center;
 }
