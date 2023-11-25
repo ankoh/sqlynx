@@ -7,6 +7,7 @@ import { OAuthCallbackPage } from './view/pages/oauth_callback_page';
 import { ScriptLoader } from './scripts/script_loader';
 import { AppStateProvider } from './state/app_state_provider';
 import { GitHubAuthProvider, GitHubProfileProvider } from './github';
+import { SalesforceAuthProvider } from './auth/salesforce_auth';
 import { LogProvider } from './state';
 import { AppConfigResolver } from './state/app_config';
 
@@ -19,15 +20,17 @@ import './globals.css';
 const DataProviders = (props: { children: React.ReactElement }) => (
     <AppConfigResolver>
         <LogProvider>
-            <GitHubAuthProvider>
-                <GitHubProfileProvider>
-                    <SQLynxLoader>
-                        <AppStateProvider>
-                            <ScriptLoader>{props.children}</ScriptLoader>
-                        </AppStateProvider>
-                    </SQLynxLoader>
-                </GitHubProfileProvider>
-            </GitHubAuthProvider>
+            <SalesforceAuthProvider>
+                <GitHubAuthProvider>
+                    <GitHubProfileProvider>
+                        <SQLynxLoader>
+                            <AppStateProvider>
+                                <ScriptLoader>{props.children}</ScriptLoader>
+                            </AppStateProvider>
+                        </SQLynxLoader>
+                    </GitHubProfileProvider>
+                </GitHubAuthProvider>
+            </SalesforceAuthProvider>
         </LogProvider>
     </AppConfigResolver>
 );
