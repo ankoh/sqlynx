@@ -15,9 +15,14 @@ export const ConnectionsPage: React.FC<Props> = (props: Props) => {
             </div>
             <div className={styles.body_container}>
                 <div className={styles.card_container}>
-                    <svg width="32px" height="32px">
-                        <use xlinkHref={`${symbols}#salesforce-notext`} />
-                    </svg>
+                    <div className={styles.card_header_container}>
+                        <div className={styles.platform_logo}>
+                            <svg width="32px" height="32px">
+                                <use xlinkHref={`${symbols}#salesforce-notext`} />
+                            </svg>
+                        </div>
+                        <div className={styles.platform_name}>Salesforce Data Cloud</div>
+                    </div>
                 </div>
             </div>
         </div>
