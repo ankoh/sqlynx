@@ -3,6 +3,7 @@ import { SQLynxLoader } from './sqlynx_loader';
 import { withNavBar } from './view/navbar';
 import { EditorPage } from './view/pages/editor_page';
 import { ConnectionsPage } from './view/pages/connections_page';
+import { OAuthCallbackPage } from './view/pages/oauth_callback_page';
 import { ScriptLoader } from './scripts/script_loader';
 import { AppStateProvider } from './state/app_state_provider';
 import { GitHubAuthProvider, GitHubProfileProvider } from './github';
@@ -33,6 +34,7 @@ const DataProviders = (props: { children: React.ReactElement }) => (
 
 const Editor = withNavBar(EditorPage);
 const Connections = withNavBar(ConnectionsPage);
+const OAuthCallback = withNavBar(OAuthCallbackPage);
 
 const element = document.getElementById('root');
 const root = createRoot(element!);
@@ -43,6 +45,7 @@ root.render(
                 <Routes>
                     <Route index element={<Editor />} />
                     <Route path="/connections" element={<Connections />} />
+                    <Route path="/oauth2/callback" element={<OAuthCallback />} />
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
             </DataProviders>
