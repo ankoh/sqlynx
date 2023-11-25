@@ -30,7 +30,6 @@
     .body_container {
         grid-row: 2;
         height: 100%;
-        padding-top: 20px;
         margin-right: 2%;
         margin-left: 2%;
     }
@@ -40,7 +39,6 @@
         grid-row: 2;
         height: 100%;
         width: 960px;
-        padding-top: 24px;
         margin: auto;
     }
 }
@@ -57,6 +55,8 @@
 }
 
 .card_container {
+    margin-top: 24px;
+
     position: relative;
     box-sizing: border-box;
     border: 1px solid var(--border_color_primary);
