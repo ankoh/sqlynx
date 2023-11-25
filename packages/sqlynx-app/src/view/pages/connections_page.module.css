@@ -61,7 +61,7 @@
     box-sizing: border-box;
     border: 1px solid var(--border_color_primary);
     border-radius: var(--border_radius);
-    background-color: var(--graph_bg);
+    background-color: var(--connections_card_background);
     width: 100%;
 
     display: grid;
@@ -74,7 +74,7 @@
     grid-template-columns: 64px auto;
     grid-template-rows: 100%;
 
-    background-color: var(--editortabs_background);
+    background-color: var(--connections_card_header_background);
     border-bottom: 1px solid var(--border_color_primary);
     border-radius: calc(var(--border_radius) - 1px) calc(var(--border_radius) - 1px) 0px 0px;
 }
