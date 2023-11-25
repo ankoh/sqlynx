@@ -23,6 +23,9 @@ export const ConnectionsPage: React.FC<Props> = (props: Props) => {
                         </div>
                         <div className={styles.platform_name}>Salesforce Data Cloud</div>
                     </div>
+                    <div className={styles.card_body_container}>
+                        <button>Test</button>
+                    </div>
                 </div>
             </div>
         </div>
