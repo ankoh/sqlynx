@@ -3,6 +3,7 @@
 import React from 'react';
 import './oauth_callback.html';
 import * as utils from '../utils';
+import getPkce from 'oauth-pkce';
 
 // Docs: https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oauth_web_server_flow.htm&type=5
 
@@ -26,8 +27,10 @@ type AccessToken = {
 type State = {
     /// The popup window URL
     pendingAuth: string | null;
-    /// The expected oauth state
-    expectedAuthSig: string | null;
+    /// The PKCE challenge
+    pkceChallengeValue: string | null;
+    /// The PKCE challenge
+    pkceChallengeVerifier: string | null;
     /// The popup window
     openAuthWindow: Window | null;
     /// The authentication error
@@ -67,7 +70,8 @@ const apiClientCtx = React.createContext<SalesforceAPIClient | null>(null);
 export const SalesforceAuthProvider: React.FC<Props> = (props: Props) => {
     const [state, setState] = React.useState<State>({
         pendingAuth: null,
-        expectedAuthSig: null,
+        pkceChallengeValue: null,
+        pkceChallengeVerifier: null,
         openAuthWindow: null,
         authCode: null,
         authError: null,
@@ -151,15 +155,29 @@ export const SalesforceAuthProvider: React.FC<Props> = (props: Props) => {
 
     // Login function initiated the OAuth login
     const login = React.useCallback(
-        (params: AuthParams) => {
+        async (params: AuthParams) => {
             if (!isMountedRef.current) return;
+
+            // Generate PKCE challenge
+            const pkceChallenge = await new Promise<{ codeVerifier: string; codeChallenge: string }>(
+                (resolve, reject) => {
+                    getPkce(42, (error, { verifier, challenge }) => {
+                        if (error != null) {
+                            reject(error);
+                        } else {
+                            resolve({ codeVerifier: verifier, codeChallenge: challenge });
+                        }
+                    });
+                },
+            );
 
             // Construct the URI
             const authSig = utils.generateRandomString(20);
             const p = [
                 `client_id=${params.clientId}`,
                 `redirect_uri=${params.oauthRedirect}`,
-                `code_challenge=${authSig}`,
+                `code_challenge=${pkceChallenge.codeChallenge}`,
+                `code_challange_method=S256`,
                 `response_type=code`,
             ].join('&');
             const url = `${params.instanceUrl}/services/oauth2/authorize?${p}`;
@@ -169,8 +187,9 @@ export const SalesforceAuthProvider: React.FC<Props> = (props: Props) => {
                 if (s.pendingAuth || s.openAuthWindow) return s;
                 return {
                     pendingAuth: url,
-                    expectedAuthSig: authSig,
                     openAuthWindow: null,
+                    pkceChallengeValue: pkceChallenge.codeChallenge,
+                    pkceChallengeVerifier: pkceChallenge.codeVerifier,
                     authError: null,
                     authCode: null,
                     accessToken: null,
@@ -187,7 +206,8 @@ export const SalesforceAuthProvider: React.FC<Props> = (props: Props) => {
             if (s.openAuthWindow) s.openAuthWindow.close();
             return {
                 pendingAuth: null,
-                expectedAuthSig: null,
+                pkceChallengeValue: null,
+                pkceChallengeVerifier: null,
                 openAuthWindow: null,
                 authError: null,
                 authCode: null,
