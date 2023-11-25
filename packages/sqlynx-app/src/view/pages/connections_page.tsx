@@ -8,6 +8,18 @@ interface SalesforceConnectionCardProps {}
 export const SalesforceConnectionCard: React.FC<SalesforceConnectionCardProps> = (
     props: SalesforceConnectionCardProps,
 ) => {
+    const connectClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+        const title = `WINDOW TITLE`;
+        const instance_url = `https://trialorgfarmforu-16f.test2.my.pc-rnd.salesforce.com`;
+        const client_id = `3MVG9GS4BiwvuHvgBoJxvy6gBq99_Ptg8FHx1QqO0bcDgy3lYc3x1b3nLPXGDQzYlYYMOwqo_j12QdTgAvAZD`;
+        const redirect_uri = `http://localhost:9002/oauth2/callback`;
+        const response_type = `code`;
+        const code_challenge = `XXXXXX`;
+        const url = `${instance_url}/services/oauth2/authorize?client_id=${client_id}&redirect_uri=${redirect_uri}&response_type=${response_type}&code_challenge=${code_challenge}`;
+        console.log(url);
+        const _popup = window.open(url, title, `width=500px,height=400px,left=80px,top=80px`);
+    };
+
     return (
         <div className={styles.card_container}>
             <div className={styles.card_header_container}>
@@ -19,7 +31,7 @@ export const SalesforceConnectionCard: React.FC<SalesforceConnectionCardProps> =
                 <div className={styles.platform_name}>Salesforce Data Cloud</div>
             </div>
             <div className={styles.card_body_container}>
-                <button>Test</button>
+                <button onClick={connectClick}>Test</button>
             </div>
         </div>
     );

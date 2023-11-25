@@ -8,10 +8,15 @@ interface Props {}
 
 export const OAuthCallbackPage: React.FC<Props> = (props: Props) => {
     const [searchParams, _setSearchParams] = useSearchParams();
-    const flatParams = new Map();
-    for (const [key, value] of searchParams.entries()) {
-        flatParams.set(key, value);
-    }
-    console.log(flatParams);
-    return <div className={styles.container}>Oauth Callback Page</div>;
+    return (
+        <div className={styles.container}>
+            {[...searchParams.entries()].map(([key, value]) => {
+                return (
+                    <div>
+                        {key}: {value}
+                    </div>
+                );
+            })}
+        </div>
+    );
 };

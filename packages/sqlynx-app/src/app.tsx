@@ -34,7 +34,7 @@ const DataProviders = (props: { children: React.ReactElement }) => (
 
 const Editor = withNavBar(EditorPage);
 const Connections = withNavBar(ConnectionsPage);
-const OAuthCallback = withNavBar(OAuthCallbackPage);
+const OAuthCallback = OAuthCallbackPage;
 
 const element = document.getElementById('root');
 const root = createRoot(element!);
@@ -45,7 +45,7 @@ root.render(
                 <Routes>
                     <Route index element={<Editor />} />
                     <Route path="/connections" element={<Connections />} />
-                    <Route path="/oauth2/callback" element={<OAuthCallback />} />
+                    <Route path="/oauth2/callback" element={<OAuthCallbackPage />} />
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
             </DataProviders>
