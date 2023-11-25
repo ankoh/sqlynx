@@ -57,6 +57,9 @@
     --stats_bg: hsl(210deg, 28.57%, 97.25%);
     --stats_value_fg: rgb(140, 140, 140);
 
+    --connections_card_background: hsl(210, 29%, 97%);
+    --connections_card_header_background: hsl(210, 24%, 92%);
+
     --graph_title_fg: rgb(0, 0, 0);
     --graph_bg: hsl(210, 29%, 97%);
     --graph_node_bg: white;
