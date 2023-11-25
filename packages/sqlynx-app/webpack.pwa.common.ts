@@ -25,14 +25,14 @@ interface ConfigParams {
 /// IMPORTANT
 ///
 /// We use a dedicated tiny html file for the OAuth callback to not inflate the whole app in the popup.
-/// However the EXACT OAuth callback URI has to be configured in the GitHub web interface.
+/// However the EXACT OAuth callback URI has to be configured in the apps web interface.
 /// If we would load the file using webpacks [contenthash], we would get cache busting but could break OAuth for our users without really noticing it.
 //
 /// We therefore use an explicit version file.
 /// If you don't change the version file, you don't have to change the redirect URI but an updated file won't bust the CDN cache.
 /// If you change the version file, you have to change the redirect URI and get cache busting automatically.
-const GITHUB_OAUTH_VERSION_FILE = path.resolve(__dirname, './src/github/github_oauth.html.version');
-export const GITHUB_OAUTH_VERSION = childProcess.execSync(`cat ${GITHUB_OAUTH_VERSION_FILE}`).toString().trim();
+const OAUTH_CALLBACK_VERSION_FILE = path.resolve(__dirname, './src/auth/oauth_callback.html.version');
+export const OAUTH_CALLBACK_VERSION = childProcess.execSync(`cat ${OAUTH_CALLBACK_VERSION_FILE}`).toString().trim();
 
 /// We support dynamic configurations of DashQL via a dedicated config file.
 /// The app loads this file at startup which allows us to adjust certain settings dynamically.
@@ -119,10 +119,10 @@ export function configure(params: ConfigParams): Partial<Configuration> {
                     },
                 },
                 {
-                    test: /.*github_oauth\.html$/,
+                    test: /.*oauth_callback\.html$/,
                     type: 'asset/resource',
                     generator: {
-                        filename: `static/html/[name].${GITHUB_OAUTH_VERSION}[ext]`,
+                        filename: `static/html/[name].${OAUTH_CALLBACK_VERSION}[ext]`,
                     },
                 },
             ],
