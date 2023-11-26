@@ -16,7 +16,6 @@ export const SalesforceConnectionCard: React.FC<SalesforceConnectionCardProps> =
             oauthRedirect: new URL('http://localhost:9002/oauth2/callback'),
             instanceUrl: new URL('https://trialorgfarmforu-16f.test2.my.pc-rnd.salesforce.com'),
             clientId: '3MVG9GS4BiwvuHvgBoJxvy6gBq99_Ptg8FHx1QqO0bcDgy3lYc3x1b3nLPXGDQzYlYYMOwqo_j12QdTgAvAZD',
-            clientSecret: 'XXX',
         });
     }, []);
 

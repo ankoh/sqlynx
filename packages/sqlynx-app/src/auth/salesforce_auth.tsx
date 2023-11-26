@@ -5,7 +5,9 @@ import './oauth_callback.html';
 import * as utils from '../utils';
 import getPkce from 'oauth-pkce';
 
-// Docs: https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oauth_web_server_flow.htm&type=5
+// Docs:
+//  - User Agent Flow:  https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oauth_user_agent_flow.htm&type=5
+//  - Web Server Flow: https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oauth_web_server_flow.htm&type=5
 
 const OAUTH_POPUP_NAME = 'SQLynx OAuth';
 const OAUTH_POPUP_SETTINGS = 'toolbar=no, menubar=no, width=600, height=700, top=100, left=100';
@@ -48,8 +50,6 @@ type AuthParams = {
     instanceUrl: URL;
     /// The client id
     clientId: string;
-    /// The client secret
-    clientSecret: string;
 };
 
 export interface SalesforceAccountAuth {
