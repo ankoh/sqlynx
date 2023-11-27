@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import symbols from '../../../static/svg/symbols.generated.svg';
 import styles from './connections_page.module.css';
-import { useSalesforceAuth } from '../../auth/salesforce_auth';
+import { useSalesforceAuth } from '../../connectors/salesforce_auth';
 
 interface SalesforceConnectionCardProps {}
 

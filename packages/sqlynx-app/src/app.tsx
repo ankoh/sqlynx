@@ -7,7 +7,7 @@ import { OAuthCallbackPage } from './view/pages/oauth_callback_page';
 import { ScriptLoader } from './scripts/script_loader';
 import { AppStateProvider } from './state/app_state_provider';
 import { GitHubAuthProvider, GitHubProfileProvider } from './github';
-import { SalesforceAuthProvider } from './auth/salesforce_auth';
+import { SalesforceAuthProvider } from './connectors/salesforce_auth';
 import { LogProvider } from './state';
 import { AppConfigResolver } from './state/app_config';
 
