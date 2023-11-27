@@ -6,8 +6,9 @@ import { ConnectionsPage } from './view/pages/connections_page';
 import { OAuthCallbackPage } from './view/pages/oauth_callback_page';
 import { ScriptLoader } from './scripts/script_loader';
 import { AppStateProvider } from './state/app_state_provider';
-import { GitHubAuthProvider, GitHubProfileProvider } from './github';
 import { SalesforceAuthProvider } from './connectors/salesforce_auth';
+import { SalesforceUserInfoProvider } from './connectors/salesforce_userinfo';
+import { GitHubAuthProvider, GitHubProfileProvider } from './github';
 import { LogProvider } from './state';
 import { AppConfigResolver } from './state/app_config';
 
@@ -21,15 +22,17 @@ const DataProviders = (props: { children: React.ReactElement }) => (
     <AppConfigResolver>
         <LogProvider>
             <SalesforceAuthProvider>
-                <GitHubAuthProvider>
-                    <GitHubProfileProvider>
-                        <SQLynxLoader>
-                            <AppStateProvider>
-                                <ScriptLoader>{props.children}</ScriptLoader>
-                            </AppStateProvider>
-                        </SQLynxLoader>
-                    </GitHubProfileProvider>
-                </GitHubAuthProvider>
+                <SalesforceUserInfoProvider>
+                    <GitHubAuthProvider>
+                        <GitHubProfileProvider>
+                            <SQLynxLoader>
+                                <AppStateProvider>
+                                    <ScriptLoader>{props.children}</ScriptLoader>
+                                </AppStateProvider>
+                            </SQLynxLoader>
+                        </GitHubProfileProvider>
+                    </GitHubAuthProvider>
+                </SalesforceUserInfoProvider>
             </SalesforceAuthProvider>
         </LogProvider>
     </AppConfigResolver>

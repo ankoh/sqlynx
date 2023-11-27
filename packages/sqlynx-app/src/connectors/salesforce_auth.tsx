@@ -1,8 +1,10 @@
 // Copyright (c) 2020 The DashQL Authors
 
 import React from 'react';
-import './oauth_callback.html';
 import getPkce from 'oauth-pkce';
+import { AccessToken, SalesforceAPIClient } from './salesforce_api';
+
+import './oauth_callback.html';
 
 // We use the web-server OAuth Flow with or without consumer secret.
 //
@@ -37,21 +39,12 @@ import getPkce from 'oauth-pkce';
 const OAUTH_POPUP_NAME = 'SQLynx OAuth';
 const OAUTH_POPUP_SETTINGS = 'toolbar=no, menubar=no, width=600, height=700, top=100, left=100';
 
-type Props = {
+interface Props {
     /// The children
     children: React.ReactElement;
-};
+}
 
-type AccessToken = {
-    /// The token
-    token: string | null;
-    /// The token type
-    tokenType: string | null;
-    /// The scope
-    scope: string | null;
-};
-
-type State = {
+interface AuthState {
     /// The auth params
     authParams: AuthParams | null;
     /// The popup window URL
@@ -68,9 +61,9 @@ type State = {
     authCode: string | null;
     /// The github access token
     accessToken: AccessToken | null;
-};
+}
 
-type AuthParams = {
+interface AuthParams {
     /// The oauth redirect
     oauthRedirect: URL;
     /// The base URL
@@ -80,7 +73,7 @@ type AuthParams = {
     /// The client secret.
     /// This is meant for client secrets that the users enters ad-hoc.
     clientSecret: string | null;
-};
+}
 
 export interface SalesforceAccountAuth {
     /// Login into an account
@@ -89,16 +82,11 @@ export interface SalesforceAccountAuth {
     logout: () => void;
 }
 
-export interface SalesforceAPIClient {
-    /// Is authenticated?
-    isAuthenticated: boolean;
-}
-
 const accountAuthCtx = React.createContext<SalesforceAccountAuth | null>(null);
 const apiClientCtx = React.createContext<SalesforceAPIClient | null>(null);
 
 export const SalesforceAuthProvider: React.FC<Props> = (props: Props) => {
-    const [state, setState] = React.useState<State>({
+    const [state, setState] = React.useState<AuthState>({
         authParams: null,
         pendingAuth: null,
         pkceChallengeValue: null,
@@ -108,13 +96,6 @@ export const SalesforceAuthProvider: React.FC<Props> = (props: Props) => {
         authError: null,
         accessToken: null,
     });
-
-    // Maintain mount flag
-    const isMountedRef = React.useRef<boolean>(true);
-    React.useEffect(() => {
-        isMountedRef.current = true;
-        return () => void (isMountedRef.current = false);
-    }, []);
 
     // Register a receive for the oauth code from the window
     React.useEffect(() => {
@@ -126,7 +107,6 @@ export const SalesforceAuthProvider: React.FC<Props> = (props: Props) => {
             }
             const code = params.get('code');
             if (!code) return;
-            if (!isMountedRef.current) return;
             setState(s => {
                 console.log(`oauth code=${code}`);
                 return {
@@ -189,8 +169,6 @@ export const SalesforceAuthProvider: React.FC<Props> = (props: Props) => {
     // Login function initiated the OAuth login
     const login = React.useCallback(
         async (params: AuthParams) => {
-            if (!isMountedRef.current) return;
-
             // Generate PKCE challenge
             const pkceChallenge = await new Promise<{ codeVerifier: string; codeChallenge: string }>(
                 (resolve, reject) => {
@@ -235,46 +213,50 @@ export const SalesforceAuthProvider: React.FC<Props> = (props: Props) => {
     // Get the access token
     React.useEffect(() => {
         if (!state.authCode || !state.authParams) return;
+        const abortController = new AbortController();
         (async () => {
-            const searchParams: Record<string, string> = {
-                grant_type: 'authorization_code',
-                code: state.authCode!,
-                redirect_uri: state.authParams!.oauthRedirect.toString(),
-                client_id: state.authParams!.clientId,
-                code_verifier: state.pkceChallengeVerifier!,
-                format: 'json',
-            };
-            if (state.authParams!.clientSecret !== null) {
-                searchParams.client_secret = state.authParams!.clientSecret;
-            }
-            // Get the access token
-            const response = await fetch(`${state.authParams!.instanceUrl.toString()}services/oauth2/token`, {
-                method: 'POST',
-                headers: new Headers({
-                    Accept: 'application/json',
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                }),
-                body: new URLSearchParams(searchParams),
-            });
-            const responseBody = await response.json();
-            console.log(responseBody);
+            try {
+                const searchParams: Record<string, string> = {
+                    grant_type: 'authorization_code',
+                    code: state.authCode!,
+                    redirect_uri: state.authParams!.oauthRedirect.toString(),
+                    client_id: state.authParams!.clientId,
+                    code_verifier: state.pkceChallengeVerifier!,
+                    format: 'json',
+                };
+                if (state.authParams!.clientSecret !== null) {
+                    searchParams.client_secret = state.authParams!.clientSecret;
+                }
+                // Get the access token
+                const response = await fetch(`${state.authParams!.instanceUrl.toString()}services/oauth2/token`, {
+                    method: 'POST',
+                    headers: new Headers({
+                        Accept: 'application/json',
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    }),
+                    body: new URLSearchParams(searchParams),
+                    signal: abortController.signal,
+                });
+                const responseBody = await response.json();
 
-            // No longer mounted?
-            if (!isMountedRef.current) return;
-            setState(s => ({
-                ...s,
-                accessToken: {
-                    token: '',
-                    tokenType: '',
-                    scope: '',
-                },
-            }));
+                // No longer mounted?
+                setState(s => ({
+                    ...s,
+                    accessToken: responseBody as AccessToken,
+                }));
+            } catch (error: any) {
+                if (error.name === 'AbortError') {
+                    return;
+                } else {
+                    throw error;
+                }
+            }
         })();
+        return () => abortController.abort();
     }, [state.authCode]);
 
     // Logout function that clears any pending login
     const logout = React.useCallback(() => {
-        if (!isMountedRef.current) return;
         setState(s => {
             if (s.openAuthWindow) s.openAuthWindow.close();
             return {
@@ -300,17 +282,10 @@ export const SalesforceAuthProvider: React.FC<Props> = (props: Props) => {
     );
 
     // Build the graphql client
-    const apiClient = React.useMemo<SalesforceAPIClient>(() => {
-        if (state.accessToken) {
-            return {
-                isAuthenticated: true,
-            };
-        } else {
-            return {
-                isAuthenticated: false,
-            };
-        }
-    }, [state.accessToken]);
+    const apiClient = React.useMemo<SalesforceAPIClient>(
+        () => new SalesforceAPIClient(state.accessToken),
+        [state.accessToken],
+    );
 
     return (
         <accountAuthCtx.Provider value={auth}>
