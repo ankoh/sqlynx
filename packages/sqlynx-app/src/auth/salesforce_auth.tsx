@@ -4,10 +4,35 @@ import React from 'react';
 import './oauth_callback.html';
 import getPkce from 'oauth-pkce';
 
+// We use the web-server OAuth Flow with or without consumer secret.
+//
+// !! Don't embed a client secret of a connected Salesforce App !!
+//
+// For untrusted clients, like this SPA, the web server OAuth flow can be configure to NOT require a consumer secret but
+// still use PKCE. PKCE makes this more preferrable than the alternative user-agent flow for untrusted clients since it
+// ensures that the application that starts the authentication flow is the same one that finishes it.
+// (Salesforce discourages the user-agent flow, see https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oauth_user_agent_flow.htm&type=5)
+//
+// Make sure this is checked (should be by default):
+//      Setup > App Manager > Your App > "Require Proof Key for Code Exchange (PKCE)"
+// Uncheck this:
+//      Setup > App Manager > Your App > "Require Secret for Web Server Flow"
+// What you'll likely need as well:
+//      Setup > CORS > Enable CORS for OAuth endpoints
+//      Setup > CORS > Allowed Origins List > Add your Origin
+//
 // Docs:
-//  - Headless: https://help.salesforce.com/s/articleView?language=en_US&id=sf.remoteaccess_authcodecreds_singlepageapp.htm&type=5
 //  - Web Server Flow: https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oauth_web_server_flow.htm&type=5
-//  - User Agent Flow:  https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oauth_user_agent_flow.htm&type=5
+//  - User Agent Flow: https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oauth_user_agent_flow.htm&type=5
+//  - PKCE: https://oauth.net/2/pkce/
+//
+// PKCE flow:
+//  1. Client creates the code_verifier. (RFC 7636, Section 4.1)
+//  2. Client creates the code_challenge by transforming the code_verifier using S256 encryption. (RFC 7636, Section 4.2)
+//  3. Client sends the code_challenge and code_challenge_method with the initial authorization request. (RFC 7636, Section 4.3)
+//  4. Server responds with an authorization_code. (RFC 7636, Section 4.4)
+//  5. Client sends authorization_code and code_verifier to the token endpoint. (RFC 7636, Section 4.5)
+//  6. Server transforms the code_verifier using the code_challenge_method from the initial authorization request and checks the result against the code_challenge. If the value of both strings match, then the server has verified that the requests came from the same client and will issue an access_token. (RFC 7636, Section 4.6)
 
 const OAUTH_POPUP_NAME = 'SQLynx OAuth';
 const OAUTH_POPUP_SETTINGS = 'toolbar=no, menubar=no, width=600, height=700, top=100, left=100';
@@ -54,7 +79,6 @@ type AuthParams = {
     clientId: string;
     /// The client secret.
     /// This is meant for client secrets that the users enters ad-hoc.
-    /// Don't embed a client secret of a shared app here.
     clientSecret: string | null;
 };
 
