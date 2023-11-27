@@ -13,9 +13,10 @@ export const SalesforceConnectionCard: React.FC<SalesforceConnectionCardProps> =
 
     const onClick = React.useCallback(() => {
         login({
-            oauthRedirect: new URL('http://localhost:9002/oauth2/callback'),
+            oauthRedirect: new URL('http://localhost:9002/static/html/oauth_callback.2.html'),
             instanceUrl: new URL('https://trialorgfarmforu-16f.test2.my.pc-rnd.salesforce.com'),
             clientId: '3MVG9GS4BiwvuHvgBoJxvy6gBq99_Ptg8FHx1QqO0bcDgy3lYc3x1b3nLPXGDQzYlYYMOwqo_j12QdTgAvAZD',
+            clientSecret: null,
         });
     }, []);
 

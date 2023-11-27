@@ -2,12 +2,12 @@
 
 import React from 'react';
 import './oauth_callback.html';
-import * as utils from '../utils';
 import getPkce from 'oauth-pkce';
 
 // Docs:
-//  - User Agent Flow:  https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oauth_user_agent_flow.htm&type=5
+//  - Headless: https://help.salesforce.com/s/articleView?language=en_US&id=sf.remoteaccess_authcodecreds_singlepageapp.htm&type=5
 //  - Web Server Flow: https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oauth_web_server_flow.htm&type=5
+//  - User Agent Flow:  https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oauth_user_agent_flow.htm&type=5
 
 const OAUTH_POPUP_NAME = 'SQLynx OAuth';
 const OAUTH_POPUP_SETTINGS = 'toolbar=no, menubar=no, width=600, height=700, top=100, left=100';
@@ -27,6 +27,8 @@ type AccessToken = {
 };
 
 type State = {
+    /// The auth params
+    authParams: AuthParams | null;
     /// The popup window URL
     pendingAuth: string | null;
     /// The PKCE challenge
@@ -50,6 +52,10 @@ type AuthParams = {
     instanceUrl: URL;
     /// The client id
     clientId: string;
+    /// The client secret.
+    /// This is meant for client secrets that the users enters ad-hoc.
+    /// Don't embed a client secret of a shared app here.
+    clientSecret: string | null;
 };
 
 export interface SalesforceAccountAuth {
@@ -69,6 +75,7 @@ const apiClientCtx = React.createContext<SalesforceAPIClient | null>(null);
 
 export const SalesforceAuthProvider: React.FC<Props> = (props: Props) => {
     const [state, setState] = React.useState<State>({
+        authParams: null,
         pendingAuth: null,
         pkceChallengeValue: null,
         pkceChallengeVerifier: null,
@@ -89,6 +96,10 @@ export const SalesforceAuthProvider: React.FC<Props> = (props: Props) => {
     React.useEffect(() => {
         const handler = (event: any) => {
             const params = new URLSearchParams(event?.data);
+            if (params.has('error')) {
+                console.error(params.toString());
+                return;
+            }
             const code = params.get('code');
             if (!code) return;
             if (!isMountedRef.current) return;
@@ -170,19 +181,20 @@ export const SalesforceAuthProvider: React.FC<Props> = (props: Props) => {
             );
 
             // Construct the URI
-            const p = [
+            const paramParts = [
                 `client_id=${params.clientId}`,
                 `redirect_uri=${params.oauthRedirect}`,
                 `code_challenge=${pkceChallenge.codeChallenge}`,
                 `code_challange_method=S256`,
                 `response_type=code`,
             ].join('&');
-            const url = `${params.instanceUrl}/services/oauth2/authorize?${p}`;
+            const url = `${params.instanceUrl}/services/oauth2/authorize?${paramParts}`;
 
             // Set the pending popup URL
             setState(s => {
                 if (s.pendingAuth || s.openAuthWindow) return s;
                 return {
+                    authParams: params,
                     pendingAuth: url,
                     openAuthWindow: null,
                     pkceChallengeValue: pkceChallenge.codeChallenge,
@@ -196,12 +208,55 @@ export const SalesforceAuthProvider: React.FC<Props> = (props: Props) => {
         [setState],
     );
 
+    // Get the access token
+    React.useEffect(() => {
+        if (!state.authCode || !state.authParams) return;
+        (async () => {
+            const searchParams: Record<string, string> = {
+                grant_type: 'authorization_code',
+                code: state.authCode!,
+                redirect_uri: state.authParams!.oauthRedirect.toString(),
+                client_id: state.authParams!.clientId,
+                code_verifier: state.pkceChallengeVerifier!,
+                // format: 'urlencoded'
+                format: 'json',
+            };
+            if (state.authParams!.clientSecret !== null) {
+                searchParams.client_secret = state.authParams!.clientSecret;
+            }
+            // Get the access token
+            const response = await fetch(`${state.authParams!.instanceUrl.toString()}services/oauth2/token`, {
+                method: 'POST',
+                headers: new Headers({
+                    Accept: 'application/json',
+                    // Accept: 'application/x-www-form-urlencoded',
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                }),
+                body: new URLSearchParams(searchParams),
+            });
+            const responseBody = await response.json();
+            console.log(responseBody);
+
+            // No longer mounted?
+            if (!isMountedRef.current) return;
+            setState(s => ({
+                ...s,
+                accessToken: {
+                    token: '',
+                    tokenType: '',
+                    scope: '',
+                },
+            }));
+        })();
+    }, [state.authCode]);
+
     // Logout function that clears any pending login
     const logout = React.useCallback(() => {
         if (!isMountedRef.current) return;
         setState(s => {
             if (s.openAuthWindow) s.openAuthWindow.close();
             return {
+                authParams: null,
                 pendingAuth: null,
                 pkceChallengeValue: null,
                 pkceChallengeVerifier: null,
