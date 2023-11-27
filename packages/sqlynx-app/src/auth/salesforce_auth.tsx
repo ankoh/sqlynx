@@ -11,7 +11,7 @@ import getPkce from 'oauth-pkce';
 // For untrusted clients, like this SPA, the web server OAuth flow can be configure to NOT require a consumer secret but
 // still use PKCE. PKCE makes this more preferrable than the alternative user-agent flow for untrusted clients since it
 // ensures that the application that starts the authentication flow is the same one that finishes it.
-// (Salesforce discourages the user-agent flow, see https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oauth_user_agent_flow.htm&type=5)
+// (Salesforce discourages using the user-agent flow, see https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oauth_user_agent_flow.htm&type=5)
 //
 // Make sure this is checked (should be by default):
 //      Setup > App Manager > Your App > "Require Proof Key for Code Exchange (PKCE)"
