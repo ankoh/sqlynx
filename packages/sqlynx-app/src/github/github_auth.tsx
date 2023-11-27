@@ -1,7 +1,7 @@
 // Copyright (c) 2020 The DashQL Authors
 
 import React from 'react';
-import '../auth/oauth_callback.html';
+import '../connectors/oauth_callback.html';
 import { graphql } from '@octokit/graphql';
 import * as utils from '../utils';
 
