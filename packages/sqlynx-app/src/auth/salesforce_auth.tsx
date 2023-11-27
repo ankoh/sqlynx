@@ -242,7 +242,6 @@ export const SalesforceAuthProvider: React.FC<Props> = (props: Props) => {
                 redirect_uri: state.authParams!.oauthRedirect.toString(),
                 client_id: state.authParams!.clientId,
                 code_verifier: state.pkceChallengeVerifier!,
-                // format: 'urlencoded'
                 format: 'json',
             };
             if (state.authParams!.clientSecret !== null) {
@@ -253,7 +252,6 @@ export const SalesforceAuthProvider: React.FC<Props> = (props: Props) => {
                 method: 'POST',
                 headers: new Headers({
                     Accept: 'application/json',
-                    // Accept: 'application/x-www-form-urlencoded',
                     'Content-Type': 'application/x-www-form-urlencoded',
                 }),
                 body: new URLSearchParams(searchParams),
