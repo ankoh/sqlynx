@@ -11,8 +11,8 @@
     },
     "dependencies": {
         "@ankoh/sqlynx": "link:../sqlynx-wasm",
-        "@codemirror/autocomplete": "^6.11.0",
-        "@codemirror/view": "^6.22.0",
+        "@codemirror/autocomplete": "^6.11.1",
+        "@codemirror/view": "^6.22.1",
         "@octokit/graphql": "^7.0.2",
         "@popperjs/core": "^2.11.8",
         "@react-hook/resize-observer": "^1.2.6",
