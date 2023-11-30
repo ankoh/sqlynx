@@ -79,7 +79,7 @@ export function readUserInformation(obj: any): UserInformation {
         locale: obj.locale ?? null,
         name: obj.name ?? null,
         nickname: obj.nickname ?? null,
-        organizationId: obj.organization_d ?? null,
+        organizationId: obj.organization_id ?? null,
         photos: obj.photos ?? null,
         picture: obj.picture ?? null,
         preferredUsername: obj.preferred_username ?? null,
