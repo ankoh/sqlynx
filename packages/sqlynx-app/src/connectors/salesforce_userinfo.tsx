@@ -50,4 +50,4 @@ export function SalesforceUserInfoProvider(props: Props) {
     return <userInfoCtx.Provider value={state.userInfo}>{props.children}</userInfoCtx.Provider>;
 }
 
-export const useCurrentUserInfo = (): SalesforceUserInformation | null => React.useContext(userInfoCtx);
+export const useSalesforceUserInfo = (): SalesforceUserInformation | null => React.useContext(userInfoCtx);
