@@ -238,11 +238,13 @@ export const SalesforceAuthProvider: React.FC<Props> = (props: Props) => {
                     signal: abortController.signal,
                 });
                 const responseBody = await response.json();
+                const accessToken = readAccessToken(responseBody);
+                console.log(accessToken);
 
                 // No longer mounted?
                 setState(s => ({
                     ...s,
-                    accessToken: readAccessToken(responseBody),
+                    accessToken,
                 }));
             } catch (error: any) {
                 if (error.name === 'AbortError') {
