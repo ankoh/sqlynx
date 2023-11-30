@@ -68,7 +68,7 @@ export interface UserInformation {
 
 export function readUserInformation(obj: any): UserInformation {
     return {
-        active: obj.any ?? null,
+        active: obj.active ?? null,
         email: obj.email ?? null,
         emailVerified: obj.email_verified ?? null,
         familyName: obj.family_name ?? null,
