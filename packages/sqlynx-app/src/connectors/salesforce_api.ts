@@ -1,24 +1,39 @@
 export interface AccessToken {
     /// The OAuth token
-    access_token: string;
+    accessToken: string | null;
     /// The instance url
-    api_instance_url: string;
+    apiInstanceUrl: string | null;
     /// An identity URL that can be used to identify the user and to query
-    id: string;
+    id: string | null;
     /// A signed data structure that contains authenticated user attributes
-    id_token: string;
+    idToken: string | null;
     /// A URL indicating the instance of the user’s org
-    instance_url: string;
+    instanceUrl: string | null;
     /// Time stamp of when the signature was created in milliseconds
-    issued_at: string;
+    issuedAt: string | null;
     /// Token obtained from the web server, user-agent, or hybrid app token flow
-    refresh_token?: string;
+    refreshToken: string | null;
     /// The scopes associated with the access token.
-    scope: string;
+    scope: string | null;
     /// Base64-encoded HMAC-SHA256 signature
-    signature: string;
+    signature: string | null;
     /// A Bearer token type
-    token_type: string;
+    tokenType: string | null;
+}
+
+export function readAccessToken(obj: any): AccessToken {
+    return {
+        accessToken: obj.access_token ?? null,
+        apiInstanceUrl: obj.api_instance_url ?? null,
+        id: obj.id ?? null,
+        idToken: obj.id_token ?? null,
+        instanceUrl: obj.instance_url ?? null,
+        issuedAt: obj.issued_at ?? null,
+        refreshToken: obj.refresh_token ?? null,
+        scope: obj.scope ?? null,
+        signature: obj.signature ?? null,
+        tokenType: obj.token_type ?? null,
+    };
 }
 
 export interface UserInformation {
@@ -49,6 +64,10 @@ export interface UserInformation {
     zoneinfo: string;
 }
 
+// export function readerUserInformation(): AccessToken {
+//
+// }
+
 export class SalesforceAPIClient {
     protected access: AccessToken | null;
 
@@ -71,8 +90,8 @@ export class SalesforceAPIClient {
         const access = this.throwIfNotAuthenticated();
         const params = new URLSearchParams();
         params.set('format', 'json');
-        params.set('access_token', access.access_token);
-        const response = await fetch(`${access.instance_url}/services/oauth2/userinfo?${params.toString()}`, {
+        params.set('access_token', access.accessToken ?? '');
+        const response = await fetch(`${access.instanceUrl}/services/oauth2/userinfo?${params.toString()}`, {
             signal: cancel,
         });
         const responseJson = await response.json();
