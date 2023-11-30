@@ -2,7 +2,7 @@
 
 import React from 'react';
 import getPkce from 'oauth-pkce';
-import { AccessToken, SalesforceAPIClient } from './salesforce_api';
+import { AccessToken, SalesforceAPIClient, readAccessToken } from './salesforce_api';
 
 import './oauth_callback.html';
 
@@ -242,7 +242,7 @@ export const SalesforceAuthProvider: React.FC<Props> = (props: Props) => {
                 // No longer mounted?
                 setState(s => ({
                     ...s,
-                    accessToken: responseBody as AccessToken,
+                    accessToken: readAccessToken(responseBody),
                 }));
             } catch (error: any) {
                 if (error.name === 'AbortError') {
