@@ -36,37 +36,62 @@ export function readAccessToken(obj: any): AccessToken {
     };
 }
 
-export interface UserInformation {
-    active: boolean;
-    email: string;
-    email_verified: boolean;
-    family_name: string;
-    given_name: string;
-    is_app_installed: boolean;
-    is_salesforce_integration_user: boolean;
-    language: string;
-    locale: string;
-    name: string;
-    nickname: string;
-    organization_id: string;
-    photos: {
-        picture: string;
-        thumbnail: string;
-    };
-    picture: string;
-    preferred_username: string;
-    profile: string;
-    sub: string;
-    updated_at: string;
-    user_id: string;
-    user_type: string;
-    utcOffset: number;
-    zoneinfo: string;
+export interface UserInformationPhotos {
+    picture: string | null;
+    thumbnail: string | null;
 }
 
-// export function readerUserInformation(): AccessToken {
-//
-// }
+export interface UserInformation {
+    active: boolean | null;
+    email: string | null;
+    emailVerified: boolean | null;
+    familyName: string | null;
+    givenName: string | null;
+    isAppInstalled: boolean | null;
+    isSalesforceIntegrationUser: boolean | null;
+    language: string | null;
+    locale: string | null;
+    name: string | null;
+    nickname: string | null;
+    organizationId: string | null;
+    photos: UserInformationPhotos | null;
+    picture: string | null;
+    preferredUsername: string | null;
+    profile: string | null;
+    sub: string | null;
+    updatedAt: string | null;
+    userId: string | null;
+    userType: string | null;
+    utcOffset: number | null;
+    zoneinfo: string | null;
+}
+
+export function readUserInformation(obj: any): UserInformation {
+    return {
+        active: obj.any ?? null,
+        email: obj.email ?? null,
+        emailVerified: obj.email_verified ?? null,
+        familyName: obj.family_name ?? null,
+        givenName: obj.given_name ?? null,
+        isAppInstalled: obj.is_app_installed ?? null,
+        isSalesforceIntegrationUser: obj.is_salesforce_integration_user ?? null,
+        language: obj.language ?? null,
+        locale: obj.locale ?? null,
+        name: obj.name ?? null,
+        nickname: obj.nickname ?? null,
+        organizationId: obj.organization_d ?? null,
+        photos: obj.photos ?? null,
+        picture: obj.picture ?? null,
+        preferredUsername: obj.preferred_username ?? null,
+        profile: obj.profile ?? null,
+        sub: obj.sub ?? null,
+        updatedAt: obj.updated_at ?? null,
+        userId: obj.user_id ?? null,
+        userType: obj.user_type ?? null,
+        utcOffset: obj.utcOffset ?? null,
+        zoneinfo: obj.zoneinfo ?? null,
+    };
+}
 
 export class SalesforceAPIClient {
     protected access: AccessToken | null;
@@ -95,7 +120,8 @@ export class SalesforceAPIClient {
             signal: cancel,
         });
         const responseJson = await response.json();
-        console.log(responseJson);
-        return responseJson as UserInformation;
+        const responseInfo = readUserInformation(responseJson);
+        console.log(responseInfo);
+        return responseInfo;
     }
 }
