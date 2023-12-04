@@ -6,7 +6,7 @@ import { ConnectionsPage } from './view/pages/connections_page';
 import { OAuthCallbackPage } from './view/pages/oauth_callback_page';
 import { ScriptLoader } from './scripts/script_loader';
 import { AppStateProvider } from './state/app_state_provider';
-import { SalesforceAuthProvider } from './connectors/salesforce_auth';
+import { SalesforceAuthProvider } from './connectors/salesforce_auth_client';
 import { SalesforceUserInfoProvider } from './connectors/salesforce_userinfo';
 import { GitHubAuthProvider, GitHubProfileProvider } from './github';
 import { LogProvider } from './state';

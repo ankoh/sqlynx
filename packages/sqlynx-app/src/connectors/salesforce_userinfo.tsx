@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useSalesforceAPI } from './salesforce_auth';
+import { useSalesforceAPIClient } from './salesforce_auth_client';
 
 interface SalesforceUserInformation {}
 
@@ -17,7 +17,7 @@ export function SalesforceUserInfoProvider(props: Props) {
     const [state, setState] = React.useState<State>({
         userInfo: null,
     });
-    const api = useSalesforceAPI();
+    const api = useSalesforceAPIClient();
     React.useEffect(() => {
         // Clear old user info whenever the api changes
         setState(s => ({
@@ -25,7 +25,7 @@ export function SalesforceUserInfoProvider(props: Props) {
             profile: null,
         }));
         // Not authenticated?
-        if (!api.isAuthenticated) return;
+        if (!api.isAuthenticated()) return;
 
         // Fetch new user information
         const cancellation = new AbortController();

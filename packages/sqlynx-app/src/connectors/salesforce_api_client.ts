@@ -1,3 +1,5 @@
+import { sleep } from '../utils/sleep';
+
 export interface AccessToken {
     /// The OAuth token
     accessToken: string | null;
@@ -93,14 +95,21 @@ export function readUserInformation(obj: any): UserInformation {
     };
 }
 
-export class SalesforceAPIClient {
+export interface SalesforceAPIClientInterface {
+    /// Is authenticated?
+    isAuthenticated(): boolean;
+    /// Get the user information
+    getUserInfo(cancel: AbortSignal): Promise<UserInformation>;
+}
+
+export class SalesforceAPIClient implements SalesforceAPIClientInterface {
     protected access: AccessToken | null;
 
     constructor(token: AccessToken | null) {
         this.access = token;
     }
 
-    public get isAuthenticated() {
+    public isAuthenticated() {
         return this.access != null;
     }
 
@@ -123,5 +132,54 @@ export class SalesforceAPIClient {
         const responseInfo = readUserInformation(responseJson);
         console.log(responseInfo);
         return responseInfo;
+    }
+}
+
+export class MockSalesforceAPIClient implements SalesforceAPIClientInterface {
+    authenticated: boolean;
+
+    constructor(authenticated: boolean) {
+        this.authenticated = authenticated;
+    }
+    isAuthenticated(): boolean {
+        return this.authenticated;
+    }
+    protected throwIfNotAuthenticated() {
+        if (!this.authenticated) {
+            throw new Error('not authenticated');
+        }
+    }
+    async getUserInfo(_cancel: AbortSignal): Promise<UserInformation> {
+        this.throwIfNotAuthenticated();
+        /// Wait for 1 second to simulate initial loading
+        await sleep(1000);
+        // Construct a dummy user information
+        return {
+            active: true,
+            email: 'test@salesforce.com',
+            emailVerified: true,
+            familyName: 'John',
+            givenName: 'Does',
+            isAppInstalled: true,
+            isSalesforceIntegrationUser: false,
+            language: 'en/us',
+            locale: 'en/us',
+            name: 'Doe',
+            nickname: 'John',
+            organizationId: 'aswerwetaz',
+            photos: {
+                picture: '',
+                thumbnail: '',
+            },
+            picture: '',
+            preferredUsername: 'john.doe',
+            profile: '',
+            sub: '',
+            updatedAt: '',
+            userId: '',
+            userType: '',
+            utcOffset: 1,
+            zoneinfo: '',
+        };
     }
 }

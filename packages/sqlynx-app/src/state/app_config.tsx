@@ -12,8 +12,17 @@ export interface AppFeatures {
     completionDetails?: boolean;
 }
 
+export interface SalesforceConnectorConfig {
+    mockAuth?: boolean;
+}
+
+export interface ConnectorConfigs {
+    salesforce?: SalesforceConnectorConfig;
+}
+
 export interface AppConfig {
     features?: AppFeatures;
+    connectors?: ConnectorConfigs;
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
