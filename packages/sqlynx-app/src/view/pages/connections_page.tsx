@@ -3,6 +3,7 @@ import * as React from 'react';
 import symbols from '../../../static/svg/symbols.generated.svg';
 import styles from './connections_page.module.css';
 import { useSalesforceAuthClient } from '../../connectors/salesforce_auth_client';
+import { useSalesforceUserInfo } from '../../connectors/salesforce_userinfo';
 
 interface SalesforceConnectionCardProps {}
 
@@ -10,6 +11,7 @@ export const SalesforceConnectionCard: React.FC<SalesforceConnectionCardProps> =
     props: SalesforceConnectionCardProps,
 ) => {
     const { login } = useSalesforceAuthClient();
+    const userInfo = useSalesforceUserInfo();
 
     const onClick = React.useCallback(() => {
         login({
@@ -32,6 +34,7 @@ export const SalesforceConnectionCard: React.FC<SalesforceConnectionCardProps> =
             </div>
             <div className={styles.card_body_container}>
                 <button onClick={onClick}>Test</button>
+                {userInfo && <div>{userInfo.email}</div>}
             </div>
         </div>
     );

@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { useSalesforceAPIClient } from './salesforce_auth_client';
-
-interface SalesforceUserInformation {}
+import { SalesforceUserInformation } from './salesforce_api_client';
 
 interface Props {
     children: React.ReactElement;
