@@ -2,7 +2,15 @@
 
 import React from 'react';
 import getPkce from 'oauth-pkce';
-import { AccessToken, SalesforceAPIClient, readAccessToken } from './salesforce_api';
+import {
+    AccessToken,
+    MockSalesforceAPIClient,
+    SalesforceAPIClient,
+    SalesforceAPIClientInterface,
+    readAccessToken,
+} from './salesforce_api_client';
+import { sleep } from '../utils/sleep';
+import { useAppConfig } from '../state/app_config';
 
 import './oauth_callback.html';
 
@@ -75,17 +83,17 @@ interface AuthParams {
     clientSecret: string | null;
 }
 
-export interface SalesforceAccountAuth {
+export interface SalesforceAccountAuthClient {
     /// Login into an account
-    login: (config: AuthParams) => void;
+    login(config: AuthParams): void;
     /// Logout of an account
-    logout: () => void;
+    logout(): void;
 }
 
-const accountAuthCtx = React.createContext<SalesforceAccountAuth | null>(null);
-const apiClientCtx = React.createContext<SalesforceAPIClient | null>(null);
+const accountAuthCtx = React.createContext<SalesforceAccountAuthClient | null>(null);
+const apiClientCtx = React.createContext<SalesforceAPIClientInterface | null>(null);
 
-export const SalesforceAuthProvider: React.FC<Props> = (props: Props) => {
+export const SalesforceAuthProviderImpl: React.FC<Props> = (props: Props) => {
     const [state, setState] = React.useState<AuthState>({
         authParams: null,
         pendingAuth: null,
@@ -276,7 +284,7 @@ export const SalesforceAuthProvider: React.FC<Props> = (props: Props) => {
 
     // Build the account login methods
     const auth = React.useMemo(
-        (): SalesforceAccountAuth => ({
+        (): SalesforceAccountAuthClient => ({
             login,
             logout,
         }),
@@ -296,5 +304,37 @@ export const SalesforceAuthProvider: React.FC<Props> = (props: Props) => {
     );
 };
 
-export const useSalesforceAuth = (): SalesforceAccountAuth => React.useContext(accountAuthCtx)!;
-export const useSalesforceAPI = (): SalesforceAPIClient => React.useContext(apiClientCtx)!;
+export const SalesforceAuthProviderMock: React.FC<Props> = (props: Props) => {
+    const [client, setClient] = React.useState<SalesforceAPIClientInterface>(new MockSalesforceAPIClient(false));
+    const auth: SalesforceAccountAuthClient = {
+        login: (config: AuthParams) => {
+            const impl = async () => {
+                sleep(1000);
+                setClient(new MockSalesforceAPIClient(true));
+            };
+            impl();
+        },
+        logout() {
+            setClient(new MockSalesforceAPIClient(false));
+        },
+    };
+    return (
+        <accountAuthCtx.Provider value={auth}>
+            <apiClientCtx.Provider value={client}>{props.children}</apiClientCtx.Provider>
+        </accountAuthCtx.Provider>
+    );
+};
+
+export const SalesforceAuthProvider: React.FC<Props> = (props: Props) => {
+    const config = useAppConfig();
+    if (config == null || config.unresolved()) {
+        return undefined;
+    } else if (config.value!.connectors?.salesforce?.mockAuth) {
+        return <SalesforceAuthProviderMock>{props.children}</SalesforceAuthProviderMock>;
+    } else {
+        return <SalesforceAuthProviderImpl>{props.children}</SalesforceAuthProviderImpl>;
+    }
+};
+
+export const useSalesforceAuthClient = (): SalesforceAccountAuthClient => React.useContext(accountAuthCtx)!;
+export const useSalesforceAPIClient = (): SalesforceAPIClientInterface => React.useContext(apiClientCtx)!;

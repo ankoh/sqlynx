@@ -6,5 +6,10 @@
         "connections": true,
         "urlSharing": false,
         "completionDetails": false
+    },
+    "connectors": {
+        "salesforce": {
+            "mockAuth": true
+        }
     }
 }

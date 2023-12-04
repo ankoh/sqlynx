@@ -2,14 +2,14 @@ import * as React from 'react';
 
 import symbols from '../../../static/svg/symbols.generated.svg';
 import styles from './connections_page.module.css';
-import { useSalesforceAuth } from '../../connectors/salesforce_auth';
+import { useSalesforceAuthClient } from '../../connectors/salesforce_auth_client';
 
 interface SalesforceConnectionCardProps {}
 
 export const SalesforceConnectionCard: React.FC<SalesforceConnectionCardProps> = (
     props: SalesforceConnectionCardProps,
 ) => {
-    const { login } = useSalesforceAuth();
+    const { login } = useSalesforceAuthClient();
 
     const onClick = React.useCallback(() => {
         login({
