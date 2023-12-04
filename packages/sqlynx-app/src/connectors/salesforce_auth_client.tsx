@@ -3,7 +3,7 @@
 import React from 'react';
 import getPkce from 'oauth-pkce';
 import {
-    AccessToken,
+    SalesforceAccessToken,
     MockSalesforceAPIClient,
     SalesforceAPIClient,
     SalesforceAPIClientInterface,
@@ -68,7 +68,7 @@ interface AuthState {
     /// The code
     authCode: string | null;
     /// The github access token
-    accessToken: AccessToken | null;
+    accessToken: SalesforceAccessToken | null;
 }
 
 interface AuthParams {

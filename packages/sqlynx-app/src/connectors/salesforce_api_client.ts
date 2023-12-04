@@ -1,6 +1,6 @@
 import { sleep } from '../utils/sleep';
 
-export interface AccessToken {
+export interface SalesforceAccessToken {
     /// The OAuth token
     accessToken: string | null;
     /// The instance url
@@ -23,7 +23,7 @@ export interface AccessToken {
     tokenType: string | null;
 }
 
-export function readAccessToken(obj: any): AccessToken {
+export function readAccessToken(obj: any): SalesforceAccessToken {
     return {
         accessToken: obj.access_token ?? null,
         apiInstanceUrl: obj.api_instance_url ?? null,
@@ -43,7 +43,7 @@ export interface UserInformationPhotos {
     thumbnail: string | null;
 }
 
-export interface UserInformation {
+export interface SalesforceUserInformation {
     active: boolean | null;
     email: string | null;
     emailVerified: boolean | null;
@@ -68,7 +68,7 @@ export interface UserInformation {
     zoneinfo: string | null;
 }
 
-export function readUserInformation(obj: any): UserInformation {
+export function readUserInformation(obj: any): SalesforceUserInformation {
     return {
         active: obj.active ?? null,
         email: obj.email ?? null,
@@ -99,13 +99,13 @@ export interface SalesforceAPIClientInterface {
     /// Is authenticated?
     isAuthenticated(): boolean;
     /// Get the user information
-    getUserInfo(cancel: AbortSignal): Promise<UserInformation>;
+    getUserInfo(cancel: AbortSignal): Promise<SalesforceUserInformation>;
 }
 
 export class SalesforceAPIClient implements SalesforceAPIClientInterface {
-    protected access: AccessToken | null;
+    protected access: SalesforceAccessToken | null;
 
-    constructor(token: AccessToken | null) {
+    constructor(token: SalesforceAccessToken | null) {
         this.access = token;
     }
 
@@ -113,14 +113,14 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
         return this.access != null;
     }
 
-    protected throwIfNotAuthenticated(): AccessToken {
+    protected throwIfNotAuthenticated(): SalesforceAccessToken {
         if (this.access == null) {
             throw new Error('not authenticated');
         }
         return this.access;
     }
 
-    public async getUserInfo(cancel: AbortSignal): Promise<UserInformation> {
+    public async getUserInfo(cancel: AbortSignal): Promise<SalesforceUserInformation> {
         const access = this.throwIfNotAuthenticated();
         const params = new URLSearchParams();
         params.set('format', 'json');
@@ -149,7 +149,7 @@ export class MockSalesforceAPIClient implements SalesforceAPIClientInterface {
             throw new Error('not authenticated');
         }
     }
-    async getUserInfo(_cancel: AbortSignal): Promise<UserInformation> {
+    async getUserInfo(_cancel: AbortSignal): Promise<SalesforceUserInformation> {
         this.throwIfNotAuthenticated();
         /// Wait for 1 second to simulate initial loading
         await sleep(1000);
