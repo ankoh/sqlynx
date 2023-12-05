@@ -340,7 +340,7 @@ jobs:
               with:
                   path: ./page
 
-            - uses: actions/deploy-pages@v2
+            - uses: actions/deploy-pages@v3
 
     coverage:
         name: Build Coverage Report
