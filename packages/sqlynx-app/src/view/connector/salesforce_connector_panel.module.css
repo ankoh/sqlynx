@@ -1,15 +1,20 @@
+.auth_container {
+    padding: 16px;
+}
+
 .userinfo_profile {
     display: grid;
     justify-items: center;
     align-items: center;
 
-    grid-template-rows: 56px;
-    grid-template-columns: 64px max-content auto;
+    grid-template-rows: auto;
+    grid-template-columns: 48px max-content auto;
+    padding-left: 16px;
 }
 .userinfo_profile_picture_container {
-    height: 40px;
     grid-row: 1;
     grid-column: 1;
+    height: 40px;
 }
 .userinfo_profile_picture {
     height: 100%;
@@ -22,7 +27,9 @@
     display: grid;
     grid-template-rows: 50% 50%;
     grid-template-columns: 100%;
-    margin-left: 8px;
+    border-right: 1px solid var(--border_color_primary);
+
+    padding: 16px 16px 16px 16px;
 }
 
 .userinfo_profile_name {
