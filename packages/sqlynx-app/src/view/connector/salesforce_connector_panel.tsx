@@ -1,5 +1,8 @@
 import * as React from 'react';
 
+import { TextInput, FormControl } from '@primer/react';
+import { CopyIcon } from '@primer/octicons-react';
+
 import { useAppConfig } from '../../state/app_config';
 import { SalesforceAuthParams, useSalesforceAuthClient } from '../../connectors/salesforce_auth_client';
 import { useSalesforceUserInfo } from '../../connectors/salesforce_userinfo';
@@ -17,23 +20,54 @@ const ERROR_MISSING_INSTANCE_URL = 'Missing Salesforce instance URL';
 const ERROR_MISSING_CLIENT_ID = 'Missing Salesforce client id';
 const ERROR_MISSING_OAUTH_CONFIG = 'Missing Salesforce OAuth config';
 
-interface SalesforceUserInfoProps {
+interface AccessInfoProps {
     userInfo: SalesforceUserInformation;
 }
 
-const SalesforceUserInfo: React.FC<SalesforceUserInfoProps> = (props: SalesforceUserInfoProps) => {
+const AccessInfo: React.FC<AccessInfoProps> = (props: AccessInfoProps) => {
+    const CopyAction = () => (
+        <TextInput.Action
+            onClick={() => {
+                alert('clear input')
+            }}
+            icon={CopyIcon}
+            aria-label="Clear input"
+        />
+    );
+    const UserInfoLabel = (props: { name: string }) => (
+        <FormControl disabled sx={{marginTop: '8px'}}>
+            <FormControl.Label>{props.name}</FormControl.Label>
+            <TextInput block trailingAction={CopyAction()} />
+        </FormControl>
+    );
+    const PasswordBox = (props: { name: string }) => (
+        <FormControl disabled sx={{marginTop: '8px'}}>
+            <FormControl.Label>{props.name}</FormControl.Label>
+            <TextInput block type="password" trailingAction={CopyAction()} />
+        </FormControl>
+    );
     return (
         <div>
-            <div className={panelStyle.userinfo_profile}>
-                <div className={panelStyle.userinfo_profile_picture_container}>
-                    <img
-                        className={panelStyle.userinfo_profile_picture}
-                        src={props.userInfo.photos!.picture ?? SalesforceDummyAccount}
-                    />
+            <div className={panelStyle.authinfo_container}>
+                <div className={panelStyle.userinfo_container}>
+                    <div className={panelStyle.userinfo_profile_container}>
+                        <img
+                            className={panelStyle.userinfo_profile_picture}
+                            src={props.userInfo.photos!.picture ?? SalesforceDummyAccount}
+                        />
+                    </div>
+                    <div className={panelStyle.userinfo_profile_who}>
+                        <div className={panelStyle.userinfo_profile_name}>{props.userInfo.name}</div>
+                        <div className={panelStyle.userinfo_profile_email}>{props.userInfo.email}</div>
+                    </div>
                 </div>
-                <div className={panelStyle.userinfo_profile_who}>
-                    <div className={panelStyle.userinfo_profile_name}>{props.userInfo.name}</div>
-                    <div className={panelStyle.userinfo_profile_email}>{props.userInfo.email}</div>
+                <div className={panelStyle.authinfo_oauth}>
+                    <UserInfoLabel name="API Instance URL" />
+                    <PasswordBox name="Core Access Token" />
+                </div>
+                <div className={panelStyle.authinfo_dc}>
+                    <UserInfoLabel name="Data Cloud Instance URL" />
+                    <PasswordBox name="Data Cloud Access Token" />
                 </div>
             </div>
         </div>
@@ -62,7 +96,7 @@ const SalesforceAuthFlow: React.FC<SalesforceAuthFlowProps> = (props: Salesforce
                     <button onClick={onClick}>Test</button>
                 </div>
             )}
-            {userInfo && <SalesforceUserInfo userInfo={userInfo} />}
+            {userInfo && <AccessInfo userInfo={userInfo} />}
         </>
     );
 };

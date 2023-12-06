@@ -1,4 +1,6 @@
 import * as React from 'react';
+import { ThemeProvider } from '@primer/react';
+
 import { SQLynxLoader } from './sqlynx_loader';
 import { withNavBar } from './view/navbar';
 import { EditorPage } from './view/pages/editor_page';
@@ -19,23 +21,25 @@ import '../static/fonts/fonts.module.css';
 import './globals.css';
 
 const DataProviders = (props: { children: React.ReactElement }) => (
-    <AppConfigResolver>
-        <LogProvider>
-            <SalesforceAuthProvider>
-                <SalesforceUserInfoProvider>
-                    <GitHubAuthProvider>
-                        <GitHubProfileProvider>
-                            <SQLynxLoader>
-                                <AppStateProvider>
-                                    <ScriptLoader>{props.children}</ScriptLoader>
-                                </AppStateProvider>
-                            </SQLynxLoader>
-                        </GitHubProfileProvider>
-                    </GitHubAuthProvider>
-                </SalesforceUserInfoProvider>
-            </SalesforceAuthProvider>
-        </LogProvider>
-    </AppConfigResolver>
+    <ThemeProvider>
+        <AppConfigResolver>
+            <LogProvider>
+                <SalesforceAuthProvider>
+                    <SalesforceUserInfoProvider>
+                        <GitHubAuthProvider>
+                            <GitHubProfileProvider>
+                                <SQLynxLoader>
+                                    <AppStateProvider>
+                                        <ScriptLoader>{props.children}</ScriptLoader>
+                                    </AppStateProvider>
+                                </SQLynxLoader>
+                            </GitHubProfileProvider>
+                        </GitHubAuthProvider>
+                    </SalesforceUserInfoProvider>
+                </SalesforceAuthProvider>
+            </LogProvider>
+        </AppConfigResolver>
+    </ThemeProvider>
 );
 
 const Editor = withNavBar(EditorPage);
