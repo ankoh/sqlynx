@@ -31,8 +31,11 @@ const SalesforceUserInfo: React.FC<SalesforceUserInfoProps> = (props: Salesforce
                         src={props.userInfo.photos!.picture ?? SalesforceDummyAccount}
                     />
                 </div>
+                <div className={panelStyle.userinfo_profile_who}>
+                    <div className={panelStyle.userinfo_profile_name}>{props.userInfo.name}</div>
+                    <div className={panelStyle.userinfo_profile_email}>{props.userInfo.email}</div>
+                </div>
             </div>
-            {props.userInfo.email}
         </div>
     );
 };
@@ -53,10 +56,10 @@ const SalesforceAuthFlow: React.FC<SalesforceAuthFlowProps> = (props: Salesforce
         }
     }, [authClient, props.params]);
     return (
-        <div>
-            <button onClick={onClick}>Test</button>
+        <>
+            {!userInfo && <button onClick={onClick}>Test</button>}
             {userInfo && <SalesforceUserInfo userInfo={userInfo} />}
-        </div>
+        </>
     );
 };
 
