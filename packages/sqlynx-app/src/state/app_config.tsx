@@ -1,5 +1,4 @@
 import React from 'react';
-import axios from 'axios';
 import config_url from '../../static/config.json';
 import { Maybe, MaybeStatus } from '../utils/maybe';
 
@@ -49,9 +48,10 @@ export const AppConfigResolver: React.FC<Props> = (props: Props) => {
         started.current = true;
         const resolve = async (): Promise<void> => {
             try {
-                const resp = await axios.get(config_url as string);
-                if (isAppConfig(resp.data)) {
-                    setConfig(c => c.completeWith(resp.data));
+                const resp = await fetch(config_url as string);
+                const body = await resp.json();
+                if (isAppConfig(body)) {
+                    setConfig(c => c.completeWith(body));
                 } else {
                     setConfig(c => c.failWith(new Error('invalid app config')));
                 }
