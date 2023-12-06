@@ -57,7 +57,11 @@ const SalesforceAuthFlow: React.FC<SalesforceAuthFlowProps> = (props: Salesforce
     }, [authClient, props.params]);
     return (
         <>
-            {!userInfo && <button onClick={onClick}>Test</button>}
+            {!userInfo && (
+                <div className={panelStyle.auth_container}>
+                    <button onClick={onClick}>Test</button>
+                </div>
+            )}
             {userInfo && <SalesforceUserInfo userInfo={userInfo} />}
         </>
     );
