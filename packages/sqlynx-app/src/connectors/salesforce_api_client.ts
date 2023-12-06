@@ -1,5 +1,7 @@
 import { sleep } from '../utils/sleep';
 
+import SalesforceDummyAccount from '../../static/img/salesforce_account_placeholder.png';
+
 export interface SalesforceAccessToken {
     /// The OAuth token
     accessToken: string | null;
@@ -159,27 +161,27 @@ export class MockSalesforceAPIClient implements SalesforceAPIClientInterface {
             email: 'test@salesforce.com',
             emailVerified: true,
             familyName: 'John',
-            givenName: 'Does',
+            givenName: 'Doe',
             isAppInstalled: true,
             isSalesforceIntegrationUser: false,
-            language: 'en/us',
-            locale: 'en/us',
-            name: 'Doe',
-            nickname: 'John',
-            organizationId: 'aswerwetaz',
+            language: 'en_US',
+            locale: 'en_US',
+            name: 'John Doe',
+            nickname: 'User17006129999744530151',
+            organizationId: '00DRZ01110039JE2AY',
             photos: {
-                picture: '',
-                thumbnail: '',
+                picture: SalesforceDummyAccount,
+                thumbnail: null,
             },
             picture: '',
-            preferredUsername: 'john.doe',
+            preferredUsername: 'epic.john.doe@salesforce.com',
             profile: '',
             sub: '',
             updatedAt: '',
-            userId: '',
-            userType: '',
-            utcOffset: 1,
-            zoneinfo: '',
+            userId: '005RZ0000002ZbBYAU',
+            userType: 'STANDARD',
+            utcOffset: -28800000,
+            zoneinfo: 'America/Los_Angeles',
         };
     }
 }

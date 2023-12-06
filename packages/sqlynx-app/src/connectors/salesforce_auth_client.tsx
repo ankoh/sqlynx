@@ -54,7 +54,7 @@ interface Props {
 
 interface AuthState {
     /// The auth params
-    authParams: AuthParams | null;
+    authParams: SalesforceAuthParams | null;
     /// The popup window URL
     pendingAuth: string | null;
     /// The PKCE challenge
@@ -71,7 +71,7 @@ interface AuthState {
     accessToken: SalesforceAccessToken | null;
 }
 
-interface AuthParams {
+export interface SalesforceAuthParams {
     /// The oauth redirect
     oauthRedirect: URL;
     /// The base URL
@@ -85,7 +85,7 @@ interface AuthParams {
 
 export interface SalesforceAccountAuthClient {
     /// Login into an account
-    login(config: AuthParams): void;
+    login(config: SalesforceAuthParams): void;
     /// Logout of an account
     logout(): void;
 }
@@ -176,7 +176,7 @@ export const SalesforceAuthProviderImpl: React.FC<Props> = (props: Props) => {
 
     // Login function initiated the OAuth login
     const login = React.useCallback(
-        async (params: AuthParams) => {
+        async (params: SalesforceAuthParams) => {
             // Generate PKCE challenge
             const pkceChallenge = await new Promise<{ codeVerifier: string; codeChallenge: string }>(
                 (resolve, reject) => {
@@ -307,7 +307,7 @@ export const SalesforceAuthProviderImpl: React.FC<Props> = (props: Props) => {
 export const SalesforceAuthProviderMock: React.FC<Props> = (props: Props) => {
     const [client, setClient] = React.useState<SalesforceAPIClientInterface>(new MockSalesforceAPIClient(false));
     const auth: SalesforceAccountAuthClient = {
-        login: (config: AuthParams) => {
+        login: (config: SalesforceAuthParams) => {
             const impl = async () => {
                 sleep(1000);
                 setClient(new MockSalesforceAPIClient(true));
@@ -327,7 +327,7 @@ export const SalesforceAuthProviderMock: React.FC<Props> = (props: Props) => {
 
 export const SalesforceAuthProvider: React.FC<Props> = (props: Props) => {
     const config = useAppConfig();
-    if (config == null || config.unresolved()) {
+    if (config == null || !config.isResolved()) {
         return undefined;
     } else if (config.value!.connectors?.salesforce?.mockAuth) {
         return <SalesforceAuthProviderMock>{props.children}</SalesforceAuthProviderMock>;

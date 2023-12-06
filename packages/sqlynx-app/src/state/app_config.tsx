@@ -1,7 +1,7 @@
 import React from 'react';
 import axios from 'axios';
 import config_url from '../../static/config.json';
-import { Resolvable, ResolvableStatus } from '../utils/resolvable';
+import { Maybe, MaybeStatus } from '../utils/maybe';
 
 export interface AppFeatures {
     userAccount?: boolean;
@@ -14,6 +14,10 @@ export interface AppFeatures {
 
 export interface SalesforceConnectorConfig {
     mockAuth?: boolean;
+    oauthRedirect?: string;
+    instanceUrl?: string;
+    clientId?: string;
+    clientSecret?: string;
 }
 
 export interface ConnectorConfigs {
@@ -31,7 +35,7 @@ export function isAppConfig(object: any): object is AppConfig {
     //return object.program !== undefined;
 }
 
-const configCtx = React.createContext<Resolvable<AppConfig> | null>(null);
+const configCtx = React.createContext<Maybe<AppConfig> | null>(null);
 const reconfigureCtx = React.createContext<((config: AppConfig) => void) | null>(null);
 
 type Props = {
@@ -39,9 +43,7 @@ type Props = {
 };
 
 export const AppConfigResolver: React.FC<Props> = (props: Props) => {
-    const [config, setConfig] = React.useState<Resolvable<AppConfig>>(
-        new Resolvable<AppConfig, null>(ResolvableStatus.NONE, null),
-    );
+    const [config, setConfig] = React.useState<Maybe<AppConfig>>(new Maybe<AppConfig, null>(MaybeStatus.NONE, null));
     const started = React.useRef<boolean>(false);
     if (!started.current) {
         started.current = true;
@@ -67,5 +69,5 @@ export const AppConfigResolver: React.FC<Props> = (props: Props) => {
     );
 };
 
-export const useAppConfig = (): Resolvable<AppConfig> => React.useContext(configCtx)!;
+export const useAppConfig = (): Maybe<AppConfig> => React.useContext(configCtx)!;
 export const useAppReconfigure = (): ((config: AppConfig) => void) => React.useContext(reconfigureCtx)!;
