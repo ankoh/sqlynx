@@ -14,7 +14,9 @@ export const ConnectionsPage: React.FC<PageProps> = (props: PageProps) => {
                 </div>
             </div>
             <div className={styles.body_container}>
-                <SalesforceConnectorPanel />
+                <div className={styles.card_container}>
+                    <SalesforceConnectorPanel />
+                </div>
             </div>
         </div>
     );
