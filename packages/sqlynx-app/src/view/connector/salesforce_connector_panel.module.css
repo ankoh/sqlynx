@@ -1,14 +1,39 @@
 .userinfo_profile {
     display: grid;
-    justify-content: center;
+    justify-items: center;
     align-items: center;
+
+    grid-template-rows: 56px;
+    grid-template-columns: 64px max-content auto;
 }
 .userinfo_profile_picture_container {
-    height: 48px;
+    height: 40px;
+    grid-row: 1;
+    grid-column: 1;
 }
 .userinfo_profile_picture {
     height: 100%;
     border-radius: 50%;
     overflow: hidden;
     border: 1px solid rgb(113, 119, 124);
+}
+
+.userinfo_profile_who {
+    display: grid;
+    grid-template-rows: 50% 50%;
+    grid-template-columns: 100%;
+    margin-left: 8px;
+}
+
+.userinfo_profile_name {
+    grid-row: 1;
+    grid-column: 1;
+    font-weight: 500;
+}
+
+.userinfo_profile_email {
+    grid-row: 2;
+    grid-column: 1;
+    font-family: 'RobotoMono';
+    margin-top: 1px;
 }
