@@ -84,7 +84,7 @@ export const SalesforceConnectorPanel: React.FC<ConnectorPanelProps> = (props: C
     const appConfig = useAppConfig();
     const userInfo = useSalesforceUserInfo();
     return (
-        <div className={pageStyle.card_container}>
+        <>
             <div className={pageStyle.card_header_container}>
                 <div className={pageStyle.platform_logo}>
                     <svg width="32px" height="32px">
@@ -96,6 +96,6 @@ export const SalesforceConnectorPanel: React.FC<ConnectorPanelProps> = (props: C
             <div className={pageStyle.card_body_container}>
                 {userInfo && appConfig ? <SalesforceUserInfo userInfo={userInfo} /> : <SalesforceAuthFlow />}
             </div>
-        </div>
+        </>
     );
 };
