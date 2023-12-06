@@ -5,23 +5,70 @@ import { SalesforceAuthParams, useSalesforceAuthClient } from '../../connectors/
 import { useSalesforceUserInfo } from '../../connectors/salesforce_userinfo';
 import { SalesforceUserInformation } from '../../connectors/salesforce_api_client';
 
+import SalesforceDummyAccount from '../../../static/img/salesforce_account_placeholder.png';
+
 import symbols from '../../../static/svg/symbols.generated.svg';
 
+import panelStyle from './salesforce_connector_panel.module.css';
 import pageStyle from '../pages/connections_page.module.css';
 
-const ERROR_MISSING_OAUTH_REDIRECT = new Error('missing Salesforce OAuth redirect URL');
-const ERROR_MISSING_INSTANCE_URL = new Error('missing Salesforce instance URL');
-const ERROR_MISSING_CLIENT_ID = new Error('missing Salesforce client id');
-const ERROR_MISSING_OAUTH_CONFIG = new Error('missing Salesforce OAuth config');
+const ERROR_MISSING_OAUTH_REDIRECT = 'Missing Salesforce OAuth redirect URL';
+const ERROR_MISSING_INSTANCE_URL = 'Missing Salesforce instance URL';
+const ERROR_MISSING_CLIENT_ID = 'Missing Salesforce client id';
+const ERROR_MISSING_OAUTH_CONFIG = 'Missing Salesforce OAuth config';
+
+interface SalesforceUserInfoProps {
+    userInfo: SalesforceUserInformation;
+}
+
+const SalesforceUserInfo: React.FC<SalesforceUserInfoProps> = (props: SalesforceUserInfoProps) => {
+    return (
+        <div>
+            <div className={panelStyle.userinfo_profile}>
+                <div className={panelStyle.userinfo_profile_picture_container}>
+                    <img
+                        className={panelStyle.userinfo_profile_picture}
+                        src={props.userInfo.photos!.picture ?? SalesforceDummyAccount}
+                    />
+                </div>
+            </div>
+            {props.userInfo.email}
+        </div>
+    );
+};
 
 interface SalesforceAuthFlowProps {
-    userAuthParams?: SalesforceAuthParams;
+    params: SalesforceAuthParams;
+    setError: (error: string) => void;
 }
 
 const SalesforceAuthFlow: React.FC<SalesforceAuthFlowProps> = (props: SalesforceAuthFlowProps) => {
-    const appConfig = useAppConfig();
+    const userInfo = useSalesforceUserInfo();
     const authClient = useSalesforceAuthClient();
-    const [authError, setAuthError] = React.useState<Error | null>(null);
+    const onClick = React.useCallback(() => {
+        try {
+            authClient.login(props.params);
+        } catch (e: any) {
+            props.setError(e);
+        }
+    }, [authClient, props.params]);
+    return (
+        <div>
+            <button onClick={onClick}>Test</button>
+            {userInfo && <SalesforceUserInfo userInfo={userInfo} />}
+        </div>
+    );
+};
+
+interface SalesforceConnectorPanelProps {
+    userAuthParams?: SalesforceAuthParams;
+}
+
+export const SalesforceConnectorPanel: React.FC<SalesforceConnectorPanelProps> = (
+    props: SalesforceConnectorPanelProps,
+) => {
+    const appConfig = useAppConfig();
+    const [error, setError] = React.useState<string | null>(null);
 
     // Select auth parameters
     const authParams = React.useMemo(() => {
@@ -32,11 +79,11 @@ const SalesforceAuthFlow: React.FC<SalesforceAuthFlowProps> = (props: Salesforce
             const connectorConfig = appConfig.value?.connectors?.salesforce;
             if (connectorConfig !== undefined) {
                 if (!connectorConfig.oauthRedirect) {
-                    setAuthError(e => ERROR_MISSING_OAUTH_REDIRECT);
+                    setError(ERROR_MISSING_OAUTH_REDIRECT);
                 } else if (!connectorConfig.instanceUrl) {
-                    setAuthError(ERROR_MISSING_INSTANCE_URL);
+                    setError(ERROR_MISSING_INSTANCE_URL);
                 } else if (!connectorConfig.clientId) {
-                    setAuthError(ERROR_MISSING_CLIENT_ID);
+                    setError(ERROR_MISSING_CLIENT_ID);
                 } else {
                     authParams = {
                         oauthRedirect: new URL(connectorConfig.oauthRedirect),
@@ -46,43 +93,12 @@ const SalesforceAuthFlow: React.FC<SalesforceAuthFlowProps> = (props: Salesforce
                     };
                 }
             } else {
-                setAuthError(ERROR_MISSING_OAUTH_CONFIG);
+                setError(ERROR_MISSING_OAUTH_CONFIG);
             }
         }
         return authParams;
     }, [props.userAuthParams, appConfig]);
 
-    // Authentication handler
-    const onClick = React.useCallback(() => {
-        // AuthParams are always set here
-        if (authParams) {
-            authClient.login(authParams!);
-        }
-    }, [appConfig.value, authParams]);
-
-    if (authError != null) {
-        return <div>{authError.message}</div>;
-    }
-    if (!authParams) {
-        return <div />;
-    } else {
-        return <button onClick={onClick}>Test</button>;
-    }
-};
-
-interface SalesforceUserInfoProps {
-    userInfo: SalesforceUserInformation;
-}
-
-const SalesforceUserInfo: React.FC<SalesforceUserInfoProps> = (props: SalesforceUserInfoProps) => {
-    return <div>{props.userInfo.email}</div>;
-};
-
-interface ConnectorPanelProps {}
-
-export const SalesforceConnectorPanel: React.FC<ConnectorPanelProps> = (props: ConnectorPanelProps) => {
-    const appConfig = useAppConfig();
-    const userInfo = useSalesforceUserInfo();
     return (
         <>
             <div className={pageStyle.card_header_container}>
@@ -94,7 +110,7 @@ export const SalesforceConnectorPanel: React.FC<ConnectorPanelProps> = (props: C
                 <div className={pageStyle.platform_name}>Salesforce Data Cloud</div>
             </div>
             <div className={pageStyle.card_body_container}>
-                {userInfo && appConfig ? <SalesforceUserInfo userInfo={userInfo} /> : <SalesforceAuthFlow />}
+                {error ? <div>{error}</div> : <SalesforceAuthFlow params={authParams!} setError={setError} />}
             </div>
         </>
     );

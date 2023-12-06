@@ -154,7 +154,7 @@ export class MockSalesforceAPIClient implements SalesforceAPIClientInterface {
     async getUserInfo(_cancel: AbortSignal): Promise<SalesforceUserInformation> {
         this.throwIfNotAuthenticated();
         /// Wait for 1 second to simulate initial loading
-        await sleep(1000);
+        await sleep(200);
         // Construct a dummy user information
         return {
             active: true,
