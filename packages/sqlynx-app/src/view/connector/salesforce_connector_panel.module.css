@@ -1,0 +1,14 @@
+.userinfo_profile {
+    display: grid;
+    justify-content: center;
+    align-items: center;
+}
+.userinfo_profile_picture_container {
+    height: 48px;
+}
+.userinfo_profile_picture {
+    height: 100%;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 1px solid rgb(113, 119, 124);
+}

@@ -309,7 +309,7 @@ export const SalesforceAuthProviderMock: React.FC<Props> = (props: Props) => {
     const auth: SalesforceAccountAuthClient = {
         login: (config: SalesforceAuthParams) => {
             const impl = async () => {
-                sleep(1000);
+                sleep(200);
                 setClient(new MockSalesforceAPIClient(true));
             };
             impl();
