@@ -28,11 +28,10 @@
     margin-right: 16px;
 }
 .userinfo_profile_container {
-    margin-top: 8px;
     margin-left: 28px;
 }
 .userinfo_profile_picture {
-    height: 40px;
+    height: 36px;
     border-radius: 50%;
     overflow: hidden;
     border: 1px solid rgb(113, 119, 124);
