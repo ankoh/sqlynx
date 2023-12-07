@@ -6,6 +6,7 @@ import Immutable from 'immutable';
 import { formatBytes, formatNanoseconds } from '../../utils/format';
 
 import styles from './script_statistics_bar.module.css';
+import classNames from 'classnames';
 
 interface HistoryProps {
     data: Float64Array;
@@ -78,7 +79,7 @@ export const ScriptStatisticsBar: React.FC<Props> = (props: Props) => {
     }
 
     return (
-        <div className={styles.container}>
+        <div className={classNames(props.className, styles.container)}>
             <div className={styles.metric_container}>
                 <History data={elapsedHistory} maximum={maxTotalElapsed} />
                 <div className={styles.metric_last_reading}>{formatNanoseconds(lastTotalElapsed)}</div>

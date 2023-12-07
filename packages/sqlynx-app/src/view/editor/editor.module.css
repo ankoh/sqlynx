@@ -77,20 +77,15 @@
 
 .script_statistics_container {
     grid-column: 2;
-    display: flex;
-    flex-direction: row;
-}
-.script_statistics_button {
-    display: flex;
+    display: grid;
+    grid-template-rows: 100%;
+    grid-template-columns: max-content max-content;
     justify-content: center;
     align-items: center;
-    border-left: 1px solid var(--border_color_primary);
-    color: var(--color_icon);
 }
-.script_statistics_button:hover {
-    background-color: var(--action_item_hover_bg);
+.script_statistics_toggle {
+    margin-right: 4px;
 }
-
 .button_icon {
     pointer-events: none;
 }
