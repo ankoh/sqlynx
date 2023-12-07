@@ -1,7 +1,9 @@
 import cn from 'classnames';
+
 import * as React from 'react';
 import * as sqlynx from '@ankoh/sqlynx';
 
+import { IconButton } from '@primer/react';
 import { DecorationSet, EditorView } from '@codemirror/view';
 import { ChangeSpec, StateEffect, EditorSelection } from '@codemirror/state';
 
@@ -201,6 +203,13 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
             tabTitle = 'Account';
             break;
     }
+
+    const StatsIcon: React.ElementType<any> = () => (
+        <svg className={styles.button_icon} width="20px" height="20px">
+            <use xlinkHref={`${icons}${statsOpen ? '#chevron_right' : '#speedometer'}`} />
+        </svg>
+    );
+
     return (
         <div className={styles.container}>
             <div className={styles.headerbar}>
@@ -208,17 +217,13 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                     <div className={styles.script_title}>{tabTitle}</div>
                 </div>
                 <div className={styles.script_statistics_container}>
-                    <div
-                        className={styles.script_statistics_button}
+                    <IconButton
+                        className={styles.script_statistics_toggle}
+                        variant="invisible"
+                        icon={StatsIcon}
+                        aria-labelledby="stats"
                         onClick={toggleOpenStats}
-                        style={{
-                            width: statsOpen ? '24px' : '40px',
-                        }}
-                    >
-                        <svg className={styles.button_icon} width="20px" height="20px">
-                            <use xlinkHref={`${icons}${statsOpen ? '#chevron_right' : '#speedometer'}`} />
-                        </svg>
-                    </div>
+                    />
                     {statsOpen && <ScriptStatisticsBar stats={activeScriptStatistics} />}
                 </div>
             </div>
