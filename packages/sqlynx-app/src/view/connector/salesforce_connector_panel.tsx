@@ -4,7 +4,11 @@ import { TextInput, FormControl, Button, IconButton } from '@primer/react';
 import { CopyIcon, InfoIcon } from '@primer/octicons-react';
 
 import { useAppConfig } from '../../state/app_config';
-import { SalesforceAuthParams, useSalesforceAuthClient } from '../../connectors/salesforce_auth_client';
+import {
+    SalesforceAuthParams,
+    useSalesforceAccessToken,
+    useSalesforceAuthClient,
+} from '../../connectors/salesforce_auth_client';
 import { useSalesforceUserInfo } from '../../connectors/salesforce_userinfo';
 
 import SalesforceDummyAccount from '../../../static/img/salesforce_account_placeholder.png';
@@ -27,6 +31,7 @@ const SalesforceAuthFlow: React.FC<SalesforceAuthFlowProps> = (props: Salesforce
     const appConfig = useAppConfig();
     const userInfo = useSalesforceUserInfo();
     const authClient = useSalesforceAuthClient();
+    const accessToken = useSalesforceAccessToken();
     const [error, setError] = React.useState<string | null>(null);
 
     // Select auth parameters
@@ -78,23 +83,28 @@ const SalesforceAuthFlow: React.FC<SalesforceAuthFlowProps> = (props: Salesforce
             aria-label="Clear input"
         />
     );
-    const MutableTextBox = (props: { name: string; caption: string; value: string }) => (
+    const MutableTextBox = (props: {
+        name: string;
+        caption: string;
+        value: string | null;
+        onChange: React.ChangeEventHandler<HTMLInputElement>;
+    }) => (
         <FormControl sx={{ marginTop: '8px' }}>
             <FormControl.Label>{props.name}</FormControl.Label>
-            <TextInput block trailingAction={CopyAction()} value={props.value} />
+            <TextInput block trailingAction={CopyAction()} value={props.value ?? 'null'} onChange={props.onChange} />
             <FormControl.Caption>{props.caption}</FormControl.Caption>
         </FormControl>
     );
-    const ImmutableTextBox = (props: { name: string; value: string }) => (
+    const ImmutableTextBox = (props: { name: string; value: string | null }) => (
         <FormControl disabled sx={{ marginTop: '8px' }}>
             <FormControl.Label>{props.name}</FormControl.Label>
-            <TextInput block trailingAction={CopyAction()} />
+            <TextInput block trailingAction={CopyAction()} value={props.value ?? 'null'} readOnly />
         </FormControl>
     );
-    const ImmutableSecretBox = (props: { name: string; value: string }) => (
+    const ImmutableSecretBox = (props: { name: string; value: string | null }) => (
         <FormControl disabled sx={{ marginTop: '8px' }}>
             <FormControl.Label>{props.name}</FormControl.Label>
-            <TextInput block type="password" trailingAction={CopyAction()} />
+            <TextInput block type="password" trailingAction={CopyAction()} value={props.value ?? 'null'} readOnly />
         </FormControl>
     );
     return (
@@ -104,11 +114,13 @@ const SalesforceAuthFlow: React.FC<SalesforceAuthFlowProps> = (props: Salesforce
                     name="Instance URL"
                     caption="URL of the Salesforce Instance"
                     value={authParams?.instanceUrl.toString() ?? ''}
+                    onChange={() => {}}
                 />
                 <MutableTextBox
                     name="App Consumer Key"
                     caption="Setup > Apps > App Manager > View > Manage Consumer Details"
                     value={authParams?.clientId ?? ''}
+                    onChange={() => {}}
                 />
                 <Button sx={{ marginTop: '28px' }} onClick={onClick} disabled={userInfo != null}>
                     Connect
@@ -132,8 +144,8 @@ const SalesforceAuthFlow: React.FC<SalesforceAuthFlowProps> = (props: Salesforce
                         </div>
                     </div>
                     <div className={panelStyle.auth_info_oauth}>
-                        <ImmutableTextBox name="API Instance URL" value="" />
-                        <ImmutableSecretBox name="Core Access Token" value="" />
+                        <ImmutableTextBox name="API Instance URL" value={accessToken?.apiInstanceUrl ?? 'null'} />
+                        <ImmutableSecretBox name="Core Access Token" value={accessToken?.accessToken ?? 'null'} />
                     </div>
                     <div className={panelStyle.auth_info_dc}>
                         <ImmutableTextBox name="Data Cloud Instance URL" value="" />
@@ -161,9 +173,11 @@ export const SalesforceConnectorPanel: React.FC<SalesforceConnectorPanelProps> =
                         <use xlinkHref={`${symbols}#salesforce-notext`} />
                     </svg>
                 </div>
-                <div className={pageStyle.platform_name}>Salesforce Data Cloud</div>
+                <div className={pageStyle.platform_name} id="connector-sf-data-cloud">
+                    Salesforce Data Cloud
+                </div>
                 <div className={pageStyle.platform_info}>
-                    <IconButton variant="invisible" icon={InfoIcon} aria-labelledby="info" />
+                    <IconButton variant="invisible" icon={InfoIcon} aria-labelledby="connector-sf-data-cloud" />
                 </div>
             </div>
             <div className={pageStyle.card_body_container}>
