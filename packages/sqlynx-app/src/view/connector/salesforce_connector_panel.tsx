@@ -78,20 +78,20 @@ const SalesforceAuthFlow: React.FC<SalesforceAuthFlowProps> = (props: Salesforce
             aria-label="Clear input"
         />
     );
-    const MutableTextBox = (props: { name: string; caption: string }) => (
+    const MutableTextBox = (props: { name: string; caption: string; value: string }) => (
         <FormControl sx={{ marginTop: '8px' }}>
             <FormControl.Label>{props.name}</FormControl.Label>
-            <TextInput block trailingAction={CopyAction()} />
+            <TextInput block trailingAction={CopyAction()} value={props.value} />
             <FormControl.Caption>{props.caption}</FormControl.Caption>
         </FormControl>
     );
-    const ImmutableTextBox = (props: { name: string }) => (
+    const ImmutableTextBox = (props: { name: string; value: string }) => (
         <FormControl disabled sx={{ marginTop: '8px' }}>
             <FormControl.Label>{props.name}</FormControl.Label>
             <TextInput block trailingAction={CopyAction()} />
         </FormControl>
     );
-    const ImmutableSecretBox = (props: { name: string }) => (
+    const ImmutableSecretBox = (props: { name: string; value: string }) => (
         <FormControl disabled sx={{ marginTop: '8px' }}>
             <FormControl.Label>{props.name}</FormControl.Label>
             <TextInput block type="password" trailingAction={CopyAction()} />
@@ -100,10 +100,15 @@ const SalesforceAuthFlow: React.FC<SalesforceAuthFlowProps> = (props: Salesforce
     return (
         <div className={panelStyle.auth_container}>
             <div className={panelStyle.auth_config_container}>
-                <MutableTextBox name="Instance URL" caption="URL of the Salesforce Instance" />
+                <MutableTextBox
+                    name="Instance URL"
+                    caption="URL of the Salesforce Instance"
+                    value={authParams?.instanceUrl.toString() ?? ''}
+                />
                 <MutableTextBox
                     name="App Consumer Key"
                     caption="Setup > Apps > App Manager > View > Manage Consumer Details"
+                    value={authParams?.clientId ?? ''}
                 />
                 <Button sx={{ marginTop: '28px' }} onClick={onClick} disabled={userInfo != null}>
                     Connect
@@ -127,12 +132,12 @@ const SalesforceAuthFlow: React.FC<SalesforceAuthFlowProps> = (props: Salesforce
                         </div>
                     </div>
                     <div className={panelStyle.auth_info_oauth}>
-                        <ImmutableTextBox name="API Instance URL" />
-                        <ImmutableSecretBox name="Core Access Token" />
+                        <ImmutableTextBox name="API Instance URL" value="" />
+                        <ImmutableSecretBox name="Core Access Token" value="" />
                     </div>
                     <div className={panelStyle.auth_info_dc}>
-                        <ImmutableTextBox name="Data Cloud Instance URL" />
-                        <ImmutableSecretBox name="Data Cloud Access Token" />
+                        <ImmutableTextBox name="Data Cloud Instance URL" value="" />
+                        <ImmutableSecretBox name="Data Cloud Access Token" value="" />
                     </div>
                 </div>
             )}
