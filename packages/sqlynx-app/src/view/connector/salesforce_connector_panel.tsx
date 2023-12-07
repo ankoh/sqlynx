@@ -68,8 +68,8 @@ const SalesforceAuthFlow: React.FC<SalesforceAuthFlowProps> = (props: Salesforce
         <div className={panelStyle.auth_container}>
             <div className={panelStyle.auth_config_container}>
                 <MutableTextBox name="Instance URL" caption='URL of the Salesforce Instance' />
-                <MutableTextBox name="Client ID" caption='Salesforce Setup > Managed Apps > Details' />
-                <Button sx={{marginTop: '10px'}} onClick={onClick}>Login</Button>
+                <MutableTextBox name="Connected App ID" caption='Salesforce Setup > Managed Apps > Details' />
+                <Button sx={{marginTop: '10px'}} onClick={onClick} disabled={userInfo != null}>Connect</Button>
             </div>
             {userInfo && (
                 <div className={panelStyle.auth_info_container}>
