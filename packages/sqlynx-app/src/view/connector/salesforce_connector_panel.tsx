@@ -58,7 +58,6 @@ const SalesforceAuthFlow: React.FC<SalesforceAuthFlowProps> = (props: Salesforce
         return authParams;
     }, [props.userAuthParams, appConfig]);
 
-    
     const onClick = React.useCallback(() => {
         if (!authParams) {
             // XXX setError not configured
@@ -73,29 +72,27 @@ const SalesforceAuthFlow: React.FC<SalesforceAuthFlowProps> = (props: Salesforce
     const CopyAction = () => (
         <TextInput.Action
             onClick={() => {
-                alert('clear input')
+                alert('clear input');
             }}
             icon={CopyIcon}
             aria-label="Clear input"
         />
     );
-    const MutableTextBox = (props: { name: string, caption: string }) => (
-        <FormControl sx={{marginTop: '8px'}}>
+    const MutableTextBox = (props: { name: string; caption: string }) => (
+        <FormControl sx={{ marginTop: '8px' }}>
             <FormControl.Label>{props.name}</FormControl.Label>
             <TextInput block trailingAction={CopyAction()} />
-            <FormControl.Caption>
-                {props.caption}
-            </FormControl.Caption>
+            <FormControl.Caption>{props.caption}</FormControl.Caption>
         </FormControl>
     );
     const ImmutableTextBox = (props: { name: string }) => (
-        <FormControl disabled sx={{marginTop: '8px'}}>
+        <FormControl disabled sx={{ marginTop: '8px' }}>
             <FormControl.Label>{props.name}</FormControl.Label>
             <TextInput block trailingAction={CopyAction()} />
         </FormControl>
     );
     const ImmutableSecretBox = (props: { name: string }) => (
-        <FormControl disabled sx={{marginTop: '8px'}}>
+        <FormControl disabled sx={{ marginTop: '8px' }}>
             <FormControl.Label>{props.name}</FormControl.Label>
             <TextInput block type="password" trailingAction={CopyAction()} />
         </FormControl>
@@ -103,9 +100,14 @@ const SalesforceAuthFlow: React.FC<SalesforceAuthFlowProps> = (props: Salesforce
     return (
         <div className={panelStyle.auth_container}>
             <div className={panelStyle.auth_config_container}>
-                <MutableTextBox name="Instance URL" caption='URL of the Salesforce Instance' />
-                <MutableTextBox name="App Consumer Key" caption='Setup / Apps / App Manager / View / Manage Consumer Details' />
-                <Button sx={{marginTop: '28px'}} onClick={onClick} disabled={userInfo != null}>Connect</Button>
+                <MutableTextBox name="Instance URL" caption="URL of the Salesforce Instance" />
+                <MutableTextBox
+                    name="App Consumer Key"
+                    caption="Setup > Apps > App Manager > View > Manage Consumer Details"
+                />
+                <Button sx={{ marginTop: '28px' }} onClick={onClick} disabled={userInfo != null}>
+                    Connect
+                </Button>
             </div>
             {userInfo && (
                 <div className={panelStyle.auth_info_container}>
@@ -121,7 +123,7 @@ const SalesforceAuthFlow: React.FC<SalesforceAuthFlowProps> = (props: Salesforce
                             <div className={panelStyle.userinfo_profile_email}>{userInfo.email}</div>
                         </div>
                         <div className={panelStyle.auth_info_actions}>
-                            <Button variant='danger'>Disconnect</Button>
+                            <Button variant="danger">Disconnect</Button>
                         </div>
                     </div>
                     <div className={panelStyle.auth_info_oauth}>
@@ -156,7 +158,7 @@ export const SalesforceConnectorPanel: React.FC<SalesforceConnectorPanelProps> =
                 </div>
                 <div className={pageStyle.platform_name}>Salesforce Data Cloud</div>
                 <div className={pageStyle.platform_info}>
-                    <IconButton variant='invisible' icon={InfoIcon} aria-labelledby="info" />
+                    <IconButton variant="invisible" icon={InfoIcon} aria-labelledby="info" />
                 </div>
             </div>
             <div className={pageStyle.card_body_container}>
