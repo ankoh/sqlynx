@@ -44,15 +44,6 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                     <div className={styles.page_title}>SQL Editor</div>
                 </div>
                 <div className={styles.header_right_container}>
-                    {appConfig?.value?.features?.urlSharing && (
-                        <div className={styles.header_button_group}>
-                            <div className={styles.header_button}>
-                                <svg width="20px" height="20px">
-                                    <use xlinkHref={`${icons}#link`} />
-                                </svg>
-                            </div>
-                        </div>
-                    )}
                     <ButtonGroup>
                         <IconButton sx={{ width: '40px' }} icon={BugIcon} aria-labelledby="create-github-issue" />
                         <IconButton

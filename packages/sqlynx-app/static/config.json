@@ -4,7 +4,6 @@
         "appInfo": false,
         "logViewer": false,
         "connections": true,
-        "urlSharing": false,
         "completionDetails": false
     },
     "connectors": {
