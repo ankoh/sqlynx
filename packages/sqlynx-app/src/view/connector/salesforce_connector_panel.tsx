@@ -150,7 +150,7 @@ export const SalesforceConnectorPanel: React.FC<SalesforceConnectorPanelProps> =
         <>
             <div className={pageStyle.card_header_container}>
                 <div className={pageStyle.platform_logo}>
-                    <svg width="32px" height="32px">
+                    <svg width="28px" height="28px">
                         <use xlinkHref={`${symbols}#salesforce-notext`} />
                     </svg>
                 </div>

@@ -15,7 +15,7 @@ export const HyperGrpcConnectorPanel: React.FC<HyperGrpcConnectorPanelProps> = (
         <>
             <div className={pageStyle.card_header_container}>
                 <div className={pageStyle.platform_logo}>
-                    <svg width="28px" height="28px">
+                    <svg width="24px" height="24px">
                         <use xlinkHref={`${symbols}#hyper`} />
                     </svg>
                 </div>
