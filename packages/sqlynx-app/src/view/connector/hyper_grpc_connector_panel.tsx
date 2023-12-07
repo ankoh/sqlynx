@@ -23,10 +23,10 @@ export const HyperGrpcConnectorPanel: React.FC<HyperGrpcConnectorPanelProps> = (
             aria-label="Clear input"
         />
     );
-    const MutableTextBox = (props: { name: string; caption: string }) => (
+    const MutableTextBox = (props: { name: string; caption: string; value: string }) => (
         <FormControl sx={{ marginTop: '8px' }}>
             <FormControl.Label>{props.name}</FormControl.Label>
-            <TextInput block trailingAction={CopyAction()} />
+            <TextInput block trailingAction={CopyAction()} value={props.value} />
             <FormControl.Caption>{props.caption}</FormControl.Caption>
         </FormControl>
     );
@@ -62,7 +62,11 @@ export const HyperGrpcConnectorPanel: React.FC<HyperGrpcConnectorPanelProps> = (
                         </FormControl.Caption>
                     </FormControl>
                     <div className={panelStyle.auto_config_protocol_settings}>
-                        <MutableTextBox name="Endpoint" caption="Endpoint of the gRPC service as 'https://host:port'" />
+                        <MutableTextBox
+                            name="Endpoint"
+                            caption="Endpoint of the gRPC service as '<https://host:port>'"
+                            value="https://127.0.0.1:8443"
+                        />
                     </div>
                     <div className={panelStyle.auth_config_connect}>
                         <Button sx={{ marginTop: '28px' }}>Connect</Button>
