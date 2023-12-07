@@ -32,6 +32,11 @@
         height: 100%;
         margin-right: 2%;
         margin-left: 2%;
+
+        display: flex;
+        flex-direction: column;
+        padding-top: 24px;
+        row-gap: 24px;;
     }
 }
 @media only screen and (min-width: 1200px) {
@@ -40,6 +45,11 @@
         height: 100%;
         width: 960px;
         margin: auto;
+       
+        display: flex;
+        flex-direction: column;
+        padding-top: 24px;
+        row-gap: 24px;
     }
 }
 
@@ -55,8 +65,6 @@
 }
 
 .card_container {
-    margin-top: 24px;
-
     position: relative;
     box-sizing: border-box;
     border: 1px solid var(--border_color_primary);
@@ -77,6 +85,9 @@
     background-color: var(--connections_card_header_background);
     border-bottom: 1px solid var(--border_color_primary);
     border-radius: calc(var(--border_radius) - 1px) calc(var(--border_radius) - 1px) 0px 0px;
+}
+.card_body_container {
+    min-height: 48px;
 }
 
 .platform_logo {
