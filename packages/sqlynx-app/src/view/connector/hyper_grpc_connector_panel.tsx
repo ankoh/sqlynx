@@ -57,7 +57,9 @@ export const HyperGrpcConnectorPanel: React.FC<HyperGrpcConnectorPanelProps> = (
                                 gRPC Web
                             </SegmentedControl.Button>
                         </SegmentedControl>
-                        <FormControl.Caption>Use gRPC over HTTP 1.1</FormControl.Caption>
+                        <FormControl.Caption>
+                            {selectedProtocol === 0 ? 'gRPC through Electron' : 'gRPC-Web through Browser'}
+                        </FormControl.Caption>
                     </FormControl>
                     <div className={panelStyle.auto_config_protocol_settings}>
                         <MutableTextBox name="Endpoint" caption="Endpoint of the gRPC service <host:port>" />
