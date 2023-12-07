@@ -130,6 +130,10 @@ app_o3:
 .PHONY: editor_start
 app_start:
 	yarn workspace @ankoh/sqlynx-app pwa:start
+	
+.PHONY: svg_symbols
+svg_symbols:
+	python3 ./scripts/generate_svg_symbols.py
 
 .PHONY: platform_build_o0
 platform_build_o0:

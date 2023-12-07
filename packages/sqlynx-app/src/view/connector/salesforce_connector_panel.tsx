@@ -20,20 +20,56 @@ const ERROR_MISSING_CLIENT_ID = 'Missing Salesforce client id';
 const ERROR_MISSING_OAUTH_CONFIG = 'Missing Salesforce OAuth config';
 
 interface SalesforceAuthFlowProps {
-    params: SalesforceAuthParams;
-    setError: (error: string) => void;
+    userAuthParams?: SalesforceAuthParams;
 }
 
 const SalesforceAuthFlow: React.FC<SalesforceAuthFlowProps> = (props: SalesforceAuthFlowProps) => {
+    const appConfig = useAppConfig();
     const userInfo = useSalesforceUserInfo();
     const authClient = useSalesforceAuthClient();
-    const onClick = React.useCallback(() => {
-        try {
-            authClient.login(props.params);
-        } catch (e: any) {
-            props.setError(e);
+    const [error, setError] = React.useState<string | null>(null);
+
+    // Select auth parameters
+    const authParams = React.useMemo(() => {
+        let authParams: SalesforceAuthParams | null = null;
+        if (props.userAuthParams !== undefined) {
+            authParams = props.userAuthParams;
+        } else {
+            const connectorConfig = appConfig.value?.connectors?.salesforce;
+            if (connectorConfig !== undefined) {
+                if (!connectorConfig.oauthRedirect) {
+                    setError(ERROR_MISSING_OAUTH_REDIRECT);
+                } else if (!connectorConfig.instanceUrl) {
+                    setError(ERROR_MISSING_INSTANCE_URL);
+                } else if (!connectorConfig.clientId) {
+                    setError(ERROR_MISSING_CLIENT_ID);
+                } else {
+                    authParams = {
+                        oauthRedirect: new URL(connectorConfig.oauthRedirect),
+                        instanceUrl: new URL(connectorConfig.instanceUrl),
+                        clientId: connectorConfig.clientId,
+                        clientSecret: connectorConfig.clientSecret ?? null,
+                    };
+                }
+            } else {
+                setError(ERROR_MISSING_OAUTH_CONFIG);
+            }
         }
-    }, [authClient, props.params]);
+        return authParams;
+    }, [props.userAuthParams, appConfig]);
+
+    
+    const onClick = React.useCallback(() => {
+        if (!authParams) {
+            // XXX setError not configured
+            return;
+        }
+        try {
+            authClient.login(authParams!);
+        } catch (e: any) {
+            setError(e);
+        }
+    }, [authClient, authParams]);
     const CopyAction = () => (
         <TextInput.Action
             onClick={() => {
@@ -68,8 +104,8 @@ const SalesforceAuthFlow: React.FC<SalesforceAuthFlowProps> = (props: Salesforce
         <div className={panelStyle.auth_container}>
             <div className={panelStyle.auth_config_container}>
                 <MutableTextBox name="Instance URL" caption='URL of the Salesforce Instance' />
-                <MutableTextBox name="Client ID" caption='Salesforce Setup > Managed Apps > [Your App] > Details' />
-                <Button sx={{marginTop: '10px'}} onClick={onClick} disabled={userInfo != null}>Connect</Button>
+                <MutableTextBox name="App Consumer Key" caption='Setup / Apps / App Manager / View / Manage Consumer Details' />
+                <Button sx={{marginTop: '28px'}} onClick={onClick} disabled={userInfo != null}>Connect</Button>
             </div>
             {userInfo && (
                 <div className={panelStyle.auth_info_container}>
@@ -98,6 +134,7 @@ const SalesforceAuthFlow: React.FC<SalesforceAuthFlowProps> = (props: Salesforce
                     </div>
                 </div>
             )}
+            {error && <div>{error}</div>}
         </div>
     );
 };
@@ -109,38 +146,6 @@ interface SalesforceConnectorPanelProps {
 export const SalesforceConnectorPanel: React.FC<SalesforceConnectorPanelProps> = (
     props: SalesforceConnectorPanelProps,
 ) => {
-    const appConfig = useAppConfig();
-    const [error, setError] = React.useState<string | null>(null);
-
-    // Select auth parameters
-    const authParams = React.useMemo(() => {
-        let authParams: SalesforceAuthParams | null = null;
-        if (props.userAuthParams !== undefined) {
-            authParams = props.userAuthParams;
-        } else {
-            const connectorConfig = appConfig.value?.connectors?.salesforce;
-            if (connectorConfig !== undefined) {
-                if (!connectorConfig.oauthRedirect) {
-                    setError(ERROR_MISSING_OAUTH_REDIRECT);
-                } else if (!connectorConfig.instanceUrl) {
-                    setError(ERROR_MISSING_INSTANCE_URL);
-                } else if (!connectorConfig.clientId) {
-                    setError(ERROR_MISSING_CLIENT_ID);
-                } else {
-                    authParams = {
-                        oauthRedirect: new URL(connectorConfig.oauthRedirect),
-                        instanceUrl: new URL(connectorConfig.instanceUrl),
-                        clientId: connectorConfig.clientId,
-                        clientSecret: connectorConfig.clientSecret ?? null,
-                    };
-                }
-            } else {
-                setError(ERROR_MISSING_OAUTH_CONFIG);
-            }
-        }
-        return authParams;
-    }, [props.userAuthParams, appConfig]);
-
     return (
         <>
             <div className={pageStyle.card_header_container}>
@@ -155,7 +160,7 @@ export const SalesforceConnectorPanel: React.FC<SalesforceConnectorPanelProps> =
                 </div>
             </div>
             <div className={pageStyle.card_body_container}>
-                {error ? <div>{error}</div> : <SalesforceAuthFlow params={authParams!} setError={setError} />}
+                <SalesforceAuthFlow userAuthParams={props.userAuthParams} />
             </div>
         </>
     );
