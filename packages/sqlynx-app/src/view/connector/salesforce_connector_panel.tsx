@@ -1,7 +1,7 @@
 import * as React from 'react';
 
-import { TextInput, FormControl, Button } from '@primer/react';
-import { CopyIcon } from '@primer/octicons-react';
+import { TextInput, FormControl, Button, IconButton } from '@primer/react';
+import { CopyIcon, InfoIcon } from '@primer/octicons-react';
 
 import { useAppConfig } from '../../state/app_config';
 import { SalesforceAuthParams, useSalesforceAuthClient } from '../../connectors/salesforce_auth_client';
@@ -150,6 +150,9 @@ export const SalesforceConnectorPanel: React.FC<SalesforceConnectorPanelProps> =
                     </svg>
                 </div>
                 <div className={pageStyle.platform_name}>Salesforce Data Cloud</div>
+                <div className={pageStyle.platform_info}>
+                    <IconButton variant='invisible' icon={InfoIcon} aria-labelledby="info" />
+                </div>
             </div>
             <div className={pageStyle.card_body_container}>
                 {error ? <div>{error}</div> : <SalesforceAuthFlow params={authParams!} setError={setError} />}
