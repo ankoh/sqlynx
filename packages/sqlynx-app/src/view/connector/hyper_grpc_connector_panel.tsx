@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { TextInput, FormControl, Button, IconButton, SegmentedControl } from '@primer/react';
-import { CopyIcon } from '@primer/octicons-react';
+import { CopyIcon, InfoIcon } from '@primer/octicons-react';
 
 import symbols from '../../../static/svg/symbols.generated.svg';
 
@@ -40,7 +40,7 @@ export const HyperGrpcConnectorPanel: React.FC<HyperGrpcConnectorPanelProps> = (
                 </div>
                 <div className={pageStyle.platform_name}>Hyper Database</div>
                 <div className={pageStyle.platform_info}>
-                    <IconButton variant="invisible" icon={CopyIcon} aria-labelledby="info" />
+                    <IconButton variant="invisible" icon={InfoIcon} aria-labelledby="info" />
                 </div>
             </div>
             <div className={pageStyle.card_body_container}>
