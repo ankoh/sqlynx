@@ -67,9 +67,9 @@ export const HyperGrpcConnectorPanel: React.FC<HyperGrpcConnectorPanelProps> = (
                             caption="Endpoint of the gRPC service as '<https://host:port>'"
                             value="https://127.0.0.1:8443"
                         />
-                    </div>
-                    <div className={panelStyle.auth_config_connect}>
-                        <Button sx={{ marginTop: '28px' }}>Connect</Button>
+                        <div className={panelStyle.auth_config_connect}>
+                            <Button sx={{ marginTop: '28px' }}>Connect</Button>
+                        </div>
                     </div>
                 </div>
             </div>
