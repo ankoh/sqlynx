@@ -91,6 +91,7 @@ export interface SalesforceAccountAuthClient {
 }
 
 const accountAuthCtx = React.createContext<SalesforceAccountAuthClient | null>(null);
+const accessTokenCtx = React.createContext<SalesforceAccessToken | null>(null);
 const apiClientCtx = React.createContext<SalesforceAPIClientInterface | null>(null);
 
 export const SalesforceAuthProviderImpl: React.FC<Props> = (props: Props) => {
@@ -299,7 +300,9 @@ export const SalesforceAuthProviderImpl: React.FC<Props> = (props: Props) => {
 
     return (
         <accountAuthCtx.Provider value={auth}>
-            <apiClientCtx.Provider value={apiClient}>{props.children}</apiClientCtx.Provider>
+            <accessTokenCtx.Provider value={state.accessToken}>
+                <apiClientCtx.Provider value={apiClient}>{props.children}</apiClientCtx.Provider>
+            </accessTokenCtx.Provider>
         </accountAuthCtx.Provider>
     );
 };
@@ -337,4 +340,5 @@ export const SalesforceAuthProvider: React.FC<Props> = (props: Props) => {
 };
 
 export const useSalesforceAuthClient = (): SalesforceAccountAuthClient => React.useContext(accountAuthCtx)!;
+export const useSalesforceAccessToken = (): SalesforceAccessToken => React.useContext(accessTokenCtx)!;
 export const useSalesforceAPIClient = (): SalesforceAPIClientInterface => React.useContext(apiClientCtx)!;

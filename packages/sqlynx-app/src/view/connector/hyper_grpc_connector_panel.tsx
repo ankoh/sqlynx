@@ -23,10 +23,15 @@ export const HyperGrpcConnectorPanel: React.FC<HyperGrpcConnectorPanelProps> = (
             aria-label="Clear input"
         />
     );
-    const MutableTextBox = (props: { name: string; caption: string; value: string }) => (
+    const MutableTextBox = (props: {
+        name: string;
+        caption: string;
+        value: string;
+        onChange: React.ChangeEventHandler<HTMLInputElement>;
+    }) => (
         <FormControl sx={{ marginTop: '8px' }}>
             <FormControl.Label>{props.name}</FormControl.Label>
-            <TextInput block trailingAction={CopyAction()} value={props.value} />
+            <TextInput block trailingAction={CopyAction()} value={props.value} onChange={props.onChange} />
             <FormControl.Caption>{props.caption}</FormControl.Caption>
         </FormControl>
     );
@@ -38,17 +43,21 @@ export const HyperGrpcConnectorPanel: React.FC<HyperGrpcConnectorPanelProps> = (
                         <use xlinkHref={`${symbols}#hyper`} />
                     </svg>
                 </div>
-                <div className={pageStyle.platform_name}>Hyper Database</div>
+                <div className={pageStyle.platform_name} aria-labelledby="connector-hyper-database">
+                    Hyper Database
+                </div>
                 <div className={pageStyle.platform_info}>
-                    <IconButton variant="invisible" icon={InfoIcon} aria-labelledby="info" />
+                    <IconButton variant="invisible" icon={InfoIcon} aria-labelledby="connector-hyper-database" />
                 </div>
             </div>
             <div className={pageStyle.card_body_container}>
                 <div className={panelStyle.auth_config_container}>
                     <FormControl sx={{ marginTop: '8px' }}>
-                        <FormControl.Label>Protocol</FormControl.Label>
+                        <FormControl.Label id="protocol-selector" as="span">
+                            Protocol
+                        </FormControl.Label>
                         <SegmentedControl
-                            aria-labelledby="protocol"
+                            aria-labelledby="protocol-selector"
                             onChange={selectProtocol}
                             sx={{ marginTop: '4px' }}
                         >
@@ -66,6 +75,7 @@ export const HyperGrpcConnectorPanel: React.FC<HyperGrpcConnectorPanelProps> = (
                             name="Endpoint"
                             caption="Endpoint of the gRPC service as '<https://host:port>'"
                             value="https://127.0.0.1:8443"
+                            onChange={() => {}}
                         />
                         <div className={panelStyle.auth_config_connect}>
                             <Button sx={{ marginTop: '28px' }}>Connect</Button>
