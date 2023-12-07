@@ -1,12 +1,11 @@
 import * as React from 'react';
 
-import { TextInput, FormControl } from '@primer/react';
+import { TextInput, FormControl, Button } from '@primer/react';
 import { CopyIcon } from '@primer/octicons-react';
 
 import { useAppConfig } from '../../state/app_config';
 import { SalesforceAuthParams, useSalesforceAuthClient } from '../../connectors/salesforce_auth_client';
 import { useSalesforceUserInfo } from '../../connectors/salesforce_userinfo';
-import { SalesforceUserInformation } from '../../connectors/salesforce_api_client';
 
 import SalesforceDummyAccount from '../../../static/img/salesforce_account_placeholder.png';
 
@@ -19,60 +18,6 @@ const ERROR_MISSING_OAUTH_REDIRECT = 'Missing Salesforce OAuth redirect URL';
 const ERROR_MISSING_INSTANCE_URL = 'Missing Salesforce instance URL';
 const ERROR_MISSING_CLIENT_ID = 'Missing Salesforce client id';
 const ERROR_MISSING_OAUTH_CONFIG = 'Missing Salesforce OAuth config';
-
-interface AccessInfoProps {
-    userInfo: SalesforceUserInformation;
-}
-
-const AccessInfo: React.FC<AccessInfoProps> = (props: AccessInfoProps) => {
-    const CopyAction = () => (
-        <TextInput.Action
-            onClick={() => {
-                alert('clear input')
-            }}
-            icon={CopyIcon}
-            aria-label="Clear input"
-        />
-    );
-    const UserInfoLabel = (props: { name: string }) => (
-        <FormControl disabled sx={{marginTop: '8px'}}>
-            <FormControl.Label>{props.name}</FormControl.Label>
-            <TextInput block trailingAction={CopyAction()} />
-        </FormControl>
-    );
-    const PasswordBox = (props: { name: string }) => (
-        <FormControl disabled sx={{marginTop: '8px'}}>
-            <FormControl.Label>{props.name}</FormControl.Label>
-            <TextInput block type="password" trailingAction={CopyAction()} />
-        </FormControl>
-    );
-    return (
-        <div>
-            <div className={panelStyle.authinfo_container}>
-                <div className={panelStyle.userinfo_container}>
-                    <div className={panelStyle.userinfo_profile_container}>
-                        <img
-                            className={panelStyle.userinfo_profile_picture}
-                            src={props.userInfo.photos!.picture ?? SalesforceDummyAccount}
-                        />
-                    </div>
-                    <div className={panelStyle.userinfo_profile_who}>
-                        <div className={panelStyle.userinfo_profile_name}>{props.userInfo.name}</div>
-                        <div className={panelStyle.userinfo_profile_email}>{props.userInfo.email}</div>
-                    </div>
-                </div>
-                <div className={panelStyle.authinfo_oauth}>
-                    <UserInfoLabel name="API Instance URL" />
-                    <PasswordBox name="Core Access Token" />
-                </div>
-                <div className={panelStyle.authinfo_dc}>
-                    <UserInfoLabel name="Data Cloud Instance URL" />
-                    <PasswordBox name="Data Cloud Access Token" />
-                </div>
-            </div>
-        </div>
-    );
-};
 
 interface SalesforceAuthFlowProps {
     params: SalesforceAuthParams;
@@ -89,15 +34,71 @@ const SalesforceAuthFlow: React.FC<SalesforceAuthFlowProps> = (props: Salesforce
             props.setError(e);
         }
     }, [authClient, props.params]);
+    const CopyAction = () => (
+        <TextInput.Action
+            onClick={() => {
+                alert('clear input')
+            }}
+            icon={CopyIcon}
+            aria-label="Clear input"
+        />
+    );
+    const MutableTextBox = (props: { name: string, caption: string }) => (
+        <FormControl sx={{marginTop: '8px'}}>
+            <FormControl.Label>{props.name}</FormControl.Label>
+            <TextInput block trailingAction={CopyAction()} />
+            <FormControl.Caption>
+                {props.caption}
+            </FormControl.Caption>
+        </FormControl>
+    );
+    const ImmutableTextBox = (props: { name: string }) => (
+        <FormControl disabled sx={{marginTop: '8px'}}>
+            <FormControl.Label>{props.name}</FormControl.Label>
+            <TextInput block trailingAction={CopyAction()} />
+        </FormControl>
+    );
+    const ImmutableSecretBox = (props: { name: string }) => (
+        <FormControl disabled sx={{marginTop: '8px'}}>
+            <FormControl.Label>{props.name}</FormControl.Label>
+            <TextInput block type="password" trailingAction={CopyAction()} />
+        </FormControl>
+    );
     return (
-        <>
-            {!userInfo && (
-                <div className={panelStyle.auth_container}>
-                    <button onClick={onClick}>Test</button>
+        <div className={panelStyle.auth_container}>
+            <div className={panelStyle.auth_config_container}>
+                <MutableTextBox name="Instance URL" caption='URL of the Salesforce Instance' />
+                <MutableTextBox name="Client ID" caption='Salesforce Setup > Managed Apps > Details' />
+                <Button sx={{marginTop: '10px'}} onClick={onClick}>Login</Button>
+            </div>
+            {userInfo && (
+                <div className={panelStyle.auth_info_container}>
+                    <div className={panelStyle.auth_info_header}>
+                        <div className={panelStyle.userinfo_profile_container}>
+                            <img
+                                className={panelStyle.userinfo_profile_picture}
+                                src={userInfo.photos!.picture ?? SalesforceDummyAccount}
+                            />
+                        </div>
+                        <div className={panelStyle.userinfo_profile_who}>
+                            <div className={panelStyle.userinfo_profile_name}>{userInfo.name}</div>
+                            <div className={panelStyle.userinfo_profile_email}>{userInfo.email}</div>
+                        </div>
+                        <div className={panelStyle.auth_info_actions}>
+                            <Button variant='danger'>Disconnect</Button>
+                        </div>
+                    </div>
+                    <div className={panelStyle.auth_info_oauth}>
+                        <ImmutableTextBox name="API Instance URL" />
+                        <ImmutableSecretBox name="Core Access Token" />
+                    </div>
+                    <div className={panelStyle.auth_info_dc}>
+                        <ImmutableTextBox name="Data Cloud Instance URL" />
+                        <ImmutableSecretBox name="Data Cloud Access Token" />
+                    </div>
                 </div>
             )}
-            {userInfo && <AccessInfo userInfo={userInfo} />}
-        </>
+        </div>
     );
 };
 
