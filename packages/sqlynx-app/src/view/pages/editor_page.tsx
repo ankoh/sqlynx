@@ -1,5 +1,7 @@
 import * as React from 'react';
 
+import { ButtonGroup, IconButton } from '@primer/react';
+
 import { useSQLynx } from '../../sqlynx_loader';
 import { useAppConfig } from '../../state/app_config';
 import { ScriptEditor } from '../editor/editor';
@@ -24,6 +26,17 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
     //     return backend.value.getVersionText();
     // }, [backend]);
 
+    const BugIcon = () => (
+        <svg width="20px" height="20px">
+            <use xlinkHref={`${icons}#bug`} />
+        </svg>
+    );
+    const GitHubIcon = () => (
+        <svg width="20px" height="20px">
+            <use xlinkHref={`${icons}#github`} />
+        </svg>
+    );
+
     return (
         <div className={styles.page}>
             <div className={styles.header_container}>
@@ -31,7 +44,7 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                     <div className={styles.page_title}>SQL Editor</div>
                 </div>
                 <div className={styles.header_right_container}>
-                    {appConfig?.value?.features?.connections && (
+                    {appConfig?.value?.features?.urlSharing && (
                         <div className={styles.header_button_group}>
                             <div className={styles.header_button}>
                                 <svg width="20px" height="20px">
@@ -40,24 +53,14 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                             </div>
                         </div>
                     )}
-                    <div className={styles.header_button_group}>
-                        <div
-                            className={styles.header_button}
-                            onClick={() => openInNewTab('https://github.com/ankoh/sqlynx/issues')}
-                        >
-                            <svg width="20px" height="20px">
-                                <use xlinkHref={`${icons}#bug`} />
-                            </svg>
-                        </div>
-                        <div
-                            className={styles.header_button}
-                            onClick={() => openInNewTab('https://github.com/ankoh/sqlynx')}
-                        >
-                            <svg width="20px" height="20px">
-                                <use xlinkHref={`${icons}#github`} />
-                            </svg>
-                        </div>
-                    </div>
+                    <ButtonGroup>
+                        <IconButton sx={{ width: '40px' }} icon={BugIcon} aria-labelledby="create-github-issue" />
+                        <IconButton
+                            sx={{ width: '40px' }}
+                            icon={GitHubIcon}
+                            aria-labelledby="visit-github-repository"
+                        />
+                    </ButtonGroup>
                 </div>
             </div>
             <div className={styles.body_container}>
