@@ -43,10 +43,12 @@ const OAUTH_POPUP_SETTINGS = 'toolbar=no, menubar=no, width=600, height=700, top
 export interface SalesforceAuthState {
     /// The auth params
     authParams: SalesforceAuthParams | null;
+    /// The auth is requested?
+    authRequested: boolean;
+    /// The auth has been started?
+    authStarted: boolean;
     /// The authentication error
     authError: string | null;
-    /// The pending auth
-    pendingAuth: boolean;
     /// The PKCE challenge
     pkceChallengeValue: string | null;
     /// The PKCE challenge
@@ -57,6 +59,10 @@ export interface SalesforceAuthState {
     coreAuthCode: string | null;
     /// The github access token
     coreAccessToken: SalesforceAccessToken | null;
+    /// The data cloud instance Url
+    dataCloudInstanceUrl: string | null;
+    /// The data cloud access token
+    dataCloudAccessToken: string | null;
 }
 
 export interface SalesforceAuthParams {
@@ -96,12 +102,15 @@ function reduceAuthState(state: SalesforceAuthState, action: SalesforceAuthActio
             return {
                 authParams: action.value,
                 authError: null,
-                pendingAuth: true,
+                authRequested: true,
+                authStarted: false,
                 pkceChallengeValue: null,
                 pkceChallengeVerifier: null,
                 openAuthWindow: null,
                 coreAuthCode: null,
                 coreAccessToken: null,
+                dataCloudInstanceUrl: null,
+                dataCloudAccessToken: null,
             };
         case GENERATED_PKCE_CHALLENGE:
             return {
@@ -112,14 +121,14 @@ function reduceAuthState(state: SalesforceAuthState, action: SalesforceAuthActio
         case AUTH_WINDOW_OPENED:
             return {
                 ...state,
-                pendingAuth: false,
+                authStarted: true,
                 openAuthWindow: action.value,
             };
         case AUTH_WINDOW_CLOSED:
             if (!state.openAuthWindow) return state;
             return {
                 ...state,
-                pendingAuth: false,
+                authStarted: true,
                 openAuthWindow: null,
             };
         case AUTH_FAILED:
@@ -140,13 +149,16 @@ function reduceAuthState(state: SalesforceAuthState, action: SalesforceAuthActio
         case DISCONNECT:
             return {
                 authParams: state.authParams,
+                authRequested: false,
+                authStarted: false,
                 authError: null,
-                pendingAuth: false,
                 pkceChallengeValue: null,
                 pkceChallengeVerifier: null,
                 openAuthWindow: null,
                 coreAuthCode: null,
                 coreAccessToken: null,
+                dataCloudInstanceUrl: null,
+                dataCloudAccessToken: null,
             };
     }
 }
@@ -163,13 +175,16 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
     const [state, dispatch] = React.useReducer(reduceAuthState, null, () => ({
         authParams: null,
         authError: null,
-        pendingAuth: false,
+        authRequested: false,
+        authStarted: false,
         pendingAuthPopup: null,
         pkceChallengeValue: null,
         pkceChallengeVerifier: null,
         openAuthWindow: null,
         coreAuthCode: null,
         coreAccessToken: null,
+        dataCloudInstanceUrl: null,
+        dataCloudAccessToken: null,
     }));
 
     // Register a receive for the oauth code from the window
@@ -243,7 +258,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
 
     // Effect to open the auth window when there is a pending auth
     React.useEffect(() => {
-        if (!state.pendingAuth || state.authError || state.openAuthWindow || !state.pkceChallengeValue) return;
+        if (!state.authRequested || state.authError || state.openAuthWindow || !state.pkceChallengeValue) return;
 
         // Construct the URI
         const params = state.authParams!;
@@ -266,7 +281,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
         }
         popup.focus();
         dispatch({ type: AUTH_WINDOW_OPENED, value: popup });
-    }, [state.pendingAuth, state.authError, state.openAuthWindow, state.pkceChallengeValue]);
+    }, [state.authRequested, state.authError, state.openAuthWindow, state.pkceChallengeValue]);
 
     // Effect to get the core access token
     React.useEffect(() => {

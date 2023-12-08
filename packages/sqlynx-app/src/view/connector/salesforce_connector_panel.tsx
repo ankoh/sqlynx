@@ -97,18 +97,30 @@ const SalesforceAuthFlowPanel: React.FC<SalesforceAuthFlowProps> = (props: Sales
             <FormControl.Caption>{props.caption}</FormControl.Caption>
         </FormControl>
     );
-    const ImmutableTextBox = (props: { name: string; value: string | null }) => (
-        <FormControl disabled sx={{ marginTop: '8px' }}>
-            <FormControl.Label>{props.name}</FormControl.Label>
-            <TextInput block trailingAction={CopyAction()} value={props.value ?? 'null'} readOnly />
-        </FormControl>
+    const LoadingTextBox = (props: { name: string }) => (
+        <div className={panelStyle.skeleton_text_box}>
+            <div className={panelStyle.skeleton_label}>{props.name}</div>
+            <Skeleton className={panelStyle.skeleton_bar} count={1} height={'100%'} />
+        </div>
     );
-    const ImmutableSecretBox = (props: { name: string; value: string | null }) => (
-        <FormControl disabled sx={{ marginTop: '8px' }}>
-            <FormControl.Label>{props.name}</FormControl.Label>
-            <TextInput block type="password" trailingAction={CopyAction()} value={props.value ?? 'null'} readOnly />
-        </FormControl>
-    );
+    const ImmutableTextBox = (props: { name: string; value: string | null }) =>
+        props.value == null ? (
+            <LoadingTextBox name={props.name} />
+        ) : (
+            <FormControl disabled sx={{ marginTop: '8px' }}>
+                <FormControl.Label>{props.name}</FormControl.Label>
+                <TextInput block trailingAction={CopyAction()} value={props.value ?? 'null'} readOnly />
+            </FormControl>
+        );
+    const ImmutableSecretBox = (props: { name: string; value: string | null }) =>
+        props.value == null ? (
+            <LoadingTextBox name={props.name} />
+        ) : (
+            <FormControl disabled sx={{ marginTop: '8px' }}>
+                <FormControl.Label>{props.name}</FormControl.Label>
+                <TextInput block type="password" trailingAction={CopyAction()} value={props.value ?? 'null'} readOnly />
+            </FormControl>
+        );
     return (
         <div className={panelStyle.auth_container}>
             <div className={panelStyle.auth_config_container}>
@@ -128,7 +140,7 @@ const SalesforceAuthFlowPanel: React.FC<SalesforceAuthFlowProps> = (props: Sales
                     Connect
                 </Button>
             </div>
-            {(auth.coreAccessToken || userInfo) && (
+            {auth.authStarted && (
                 <div className={panelStyle.auth_info_container}>
                     <div className={panelStyle.auth_info_header}>
                         <div className={panelStyle.userinfo_profile_container}>
@@ -152,16 +164,16 @@ const SalesforceAuthFlowPanel: React.FC<SalesforceAuthFlowProps> = (props: Sales
                     <div className={panelStyle.auth_info_oauth}>
                         <ImmutableTextBox
                             name="API Instance URL"
-                            value={auth.coreAccessToken?.apiInstanceUrl ?? 'null'}
+                            value={auth.coreAccessToken?.apiInstanceUrl ?? null}
                         />
                         <ImmutableSecretBox
                             name="Core Access Token"
-                            value={auth.coreAccessToken?.accessToken ?? 'null'}
+                            value={auth.coreAccessToken?.accessToken ?? null}
                         />
                     </div>
                     <div className={panelStyle.auth_info_dc}>
-                        <ImmutableTextBox name="Data Cloud Instance URL" value="" />
-                        <ImmutableSecretBox name="Data Cloud Access Token" value="" />
+                        <ImmutableTextBox name="Data Cloud Instance URL" value={auth.dataCloudInstanceUrl} />
+                        <ImmutableSecretBox name="Data Cloud Instance URL" value={auth.dataCloudAccessToken} />
                     </div>
                 </div>
             )}
