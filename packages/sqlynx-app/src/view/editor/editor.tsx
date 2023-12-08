@@ -50,7 +50,9 @@ const Tab: React.FC<TabProps> = (props: TabProps) => (
     </div>
 );
 
-interface Props {}
+interface Props {
+    className?: string;
+}
 
 interface ActiveScriptState {
     script: sqlynx.SQLynxScript | null;
@@ -211,7 +213,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
     );
 
     return (
-        <div className={styles.container}>
+        <div className={cn(props.className, styles.container)}>
             <div className={styles.headerbar}>
                 <div className={styles.script_title_container}>
                     <div className={styles.script_title}>{tabTitle}</div>

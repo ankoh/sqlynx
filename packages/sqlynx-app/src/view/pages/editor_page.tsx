@@ -29,6 +29,76 @@ const SalesforceIcon = () => (
         <use xlinkHref={`${icons}#salesforce-notext`} />
     </svg>
 );
+const ActionsPanel = (props: { icon: React.ReactElement; name: string }) => (
+    <div className={styles.action_container}>
+        <ActionList className={styles.data_actions}>
+            <ActionList.Item>
+                <ActionList.LeadingVisual>{props.icon}</ActionList.LeadingVisual>
+                {props.name}
+                <ActionList.TrailingVisual>
+                    <TriangleDownIcon />
+                </ActionList.TrailingVisual>
+            </ActionList.Item>
+            <ActionList.Divider />
+            <ActionList.Item>
+                <ActionList.LeadingVisual>
+                    <PaperAirplaneIcon />
+                </ActionList.LeadingVisual>
+                Execute Query
+                <ActionList.TrailingVisual>⌘ + E</ActionList.TrailingVisual>
+            </ActionList.Item>
+            <ActionList.Item>
+                <ActionList.LeadingVisual>
+                    <SyncIcon />
+                </ActionList.LeadingVisual>
+                Refresh Schema
+                <ActionList.TrailingVisual>⌘ + R</ActionList.TrailingVisual>
+            </ActionList.Item>
+            <ActionList.Divider />
+            <ActionList.Item>
+                <ActionList.LeadingVisual>
+                    <LinkIcon />
+                </ActionList.LeadingVisual>
+                Save Query as Link
+                <ActionList.TrailingVisual>⌘ + L</ActionList.TrailingVisual>
+            </ActionList.Item>
+            <ActionList.Item>
+                <ActionList.LeadingVisual>
+                    <DownloadIcon />
+                </ActionList.LeadingVisual>
+                Save Query as .sql
+                <ActionList.TrailingVisual>⌘ + S</ActionList.TrailingVisual>
+            </ActionList.Item>
+            <ActionList.Item>
+                <ActionList.LeadingVisual>
+                    <DownloadIcon />
+                </ActionList.LeadingVisual>
+                Save Results as .arrow
+                <ActionList.TrailingVisual>⌘ + A</ActionList.TrailingVisual>
+            </ActionList.Item>
+        </ActionList>
+        <ActionList className={styles.project_actions}>
+            <ActionList.Item>
+                <ActionList.LeadingVisual>
+                    <GitHubIcon />
+                </ActionList.LeadingVisual>
+                Open-source project
+            </ActionList.Item>
+            <ActionList.Item>
+                <ActionList.LeadingVisual>
+                    <GitHubIcon />
+                </ActionList.LeadingVisual>
+                Report a bug
+            </ActionList.Item>
+            <ActionList.Item>
+                <ActionList.LeadingVisual>
+                    <GitHubIcon />
+                </ActionList.LeadingVisual>
+                View discussions
+            </ActionList.Item>
+        </ActionList>
+    </div>
+);
 
 const connections = [
     { icon: SalesforceIcon, name: 'No Database' },
@@ -38,12 +108,6 @@ const connections = [
 
 export const EditorPage: React.FC<Props> = (props: Props) => {
     const appConfig = useAppConfig();
-    const backend = useSQLynx();
-    // const version = React.useMemo(() => {
-    //     if (!backend || backend.type != RESULT_OK) return 'unknown';
-    //     return backend.value.getVersionText();
-    // }, [backend]);
-
     const [selectedConnIdx, selectConn] = React.useState(1);
     const selectedConn = connections[selectedConnIdx];
 
@@ -68,6 +132,7 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
             </div>
             <div className={styles.body_container}>
                 <TabCard
+                    className={styles.output_card}
                     selectedTab={1}
                     tabs={[[1, `${icons}#tables_connected`]]}
                     tabProps={{}}
@@ -75,81 +140,11 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                         [1]: props => <SchemaGraph />,
                     }}
                 />
-                <div className={styles.editor_container}>
-                    <div className={styles.editor_card}>
-                        <ScriptEditor />
-                    </div>
-                </div>
+                <ScriptEditor className={styles.editor_card} />
+                {appConfig.value?.features?.editorActions && (
+                    <ActionsPanel icon={selectedConn.icon()} name={selectedConn.name} />
+                )}
             </div>
-            {appConfig.value?.features?.editorActions && (
-                <div className={styles.action_panel}>
-                    <ActionList>
-                        <ActionList.Item>
-                            <ActionList.LeadingVisual>{selectedConn.icon()}</ActionList.LeadingVisual>
-                            Salesforce Data Cloud
-                            <ActionList.TrailingVisual>
-                                <TriangleDownIcon />
-                            </ActionList.TrailingVisual>
-                        </ActionList.Item>
-                        <ActionList.Divider />
-                        <ActionList.Item>
-                            <ActionList.LeadingVisual>
-                                <PaperAirplaneIcon />
-                            </ActionList.LeadingVisual>
-                            Execute Query
-                            <ActionList.TrailingVisual>⌘ + E</ActionList.TrailingVisual>
-                        </ActionList.Item>
-                        <ActionList.Item>
-                            <ActionList.LeadingVisual>
-                                <SyncIcon />
-                            </ActionList.LeadingVisual>
-                            Refresh Schema
-                            <ActionList.TrailingVisual>⌘ + R</ActionList.TrailingVisual>
-                        </ActionList.Item>
-                        <ActionList.Divider />
-                        <ActionList.Item>
-                            <ActionList.LeadingVisual>
-                                <LinkIcon />
-                            </ActionList.LeadingVisual>
-                            Save Query as Link
-                            <ActionList.TrailingVisual>⌘ + L</ActionList.TrailingVisual>
-                        </ActionList.Item>
-                        <ActionList.Item>
-                            <ActionList.LeadingVisual>
-                                <DownloadIcon />
-                            </ActionList.LeadingVisual>
-                            Save Query as .sql
-                            <ActionList.TrailingVisual>⌘ + S</ActionList.TrailingVisual>
-                        </ActionList.Item>
-                        <ActionList.Item>
-                            <ActionList.LeadingVisual>
-                                <DownloadIcon />
-                            </ActionList.LeadingVisual>
-                            Save Results as .arrow
-                            <ActionList.TrailingVisual>⌘ + A</ActionList.TrailingVisual>
-                        </ActionList.Item>
-                        <ActionList.Divider />
-                        <ActionList.Item>
-                            <ActionList.LeadingVisual>
-                                <GitHubIcon />
-                            </ActionList.LeadingVisual>
-                            Visit project on GitHub
-                        </ActionList.Item>
-                        <ActionList.Item>
-                            <ActionList.LeadingVisual>
-                                <GitHubIcon />
-                            </ActionList.LeadingVisual>
-                            Report a bug on GitHub
-                        </ActionList.Item>
-                        <ActionList.Item>
-                            <ActionList.LeadingVisual>
-                                <GitHubIcon />
-                            </ActionList.LeadingVisual>
-                            Discuss with us on GitHub
-                        </ActionList.Item>
-                    </ActionList>
-                </div>
-            )}
         </div>
     );
 };
