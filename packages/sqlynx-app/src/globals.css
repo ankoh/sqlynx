@@ -72,6 +72,11 @@
     --graph_card_focus_fg: hsl(212.44deg, 92.07%, 44.51%);
     --graph_port_size: 14px;
     --graph_control_hover_bg: rgba(208, 215, 222, 0.32);
+
+    --skeleton_base_color: hsl(210, 29%, 97%);
+    --skeleton_highlight_color: hsl(210, 29%, 94%);
+    --skeleton_animation_duration: 1.5s;
+    --skeleton_animation_direction: normal;
 }
 
 :root {
