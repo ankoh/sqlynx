@@ -258,7 +258,14 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
 
     // Effect to open the auth window when there is a pending auth
     React.useEffect(() => {
-        if (!state.authRequested || state.authError || state.openAuthWindow || !state.pkceChallengeValue) return;
+        if (
+            !state.authRequested ||
+            state.authStarted ||
+            state.authError ||
+            state.openAuthWindow ||
+            !state.pkceChallengeValue
+        )
+            return;
 
         // Construct the URI
         const params = state.authParams!;
