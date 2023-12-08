@@ -8,8 +8,7 @@ import { ConnectionsPage } from './view/pages/connections_page';
 import { OAuthCallbackPage } from './view/pages/oauth_callback_page';
 import { ScriptLoader } from './scripts/script_loader';
 import { AppStateProvider } from './state/app_state_provider';
-import { SalesforceAuthProvider } from './connectors/salesforce_auth_client';
-import { SalesforceUserInfoProvider } from './connectors/salesforce_userinfo';
+import { SalesforceApiProvider } from './connectors/salesforce_api_provider';
 import { GitHubAuthProvider, GitHubProfileProvider } from './github';
 import { LogProvider } from './state';
 import { AppConfigResolver } from './state/app_config';
@@ -24,19 +23,17 @@ const DataProviders = (props: { children: React.ReactElement }) => (
     <ThemeProvider>
         <AppConfigResolver>
             <LogProvider>
-                <SalesforceAuthProvider>
-                    <SalesforceUserInfoProvider>
-                        <GitHubAuthProvider>
-                            <GitHubProfileProvider>
-                                <SQLynxLoader>
-                                    <AppStateProvider>
-                                        <ScriptLoader>{props.children}</ScriptLoader>
-                                    </AppStateProvider>
-                                </SQLynxLoader>
-                            </GitHubProfileProvider>
-                        </GitHubAuthProvider>
-                    </SalesforceUserInfoProvider>
-                </SalesforceAuthProvider>
+                <SalesforceApiProvider>
+                    <GitHubAuthProvider>
+                        <GitHubProfileProvider>
+                            <SQLynxLoader>
+                                <AppStateProvider>
+                                    <ScriptLoader>{props.children}</ScriptLoader>
+                                </AppStateProvider>
+                            </SQLynxLoader>
+                        </GitHubProfileProvider>
+                    </GitHubAuthProvider>
+                </SalesforceApiProvider>
             </LogProvider>
         </AppConfigResolver>
     </ThemeProvider>

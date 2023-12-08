@@ -25,21 +25,6 @@ export interface SalesforceAccessToken {
     tokenType: string | null;
 }
 
-export function readAccessToken(obj: any): SalesforceAccessToken {
-    return {
-        accessToken: obj.access_token ?? null,
-        apiInstanceUrl: obj.api_instance_url ?? null,
-        id: obj.id ?? null,
-        idToken: obj.id_token ?? null,
-        instanceUrl: obj.instance_url ?? null,
-        issuedAt: obj.issued_at ?? null,
-        refreshToken: obj.refresh_token ?? null,
-        scope: obj.scope ?? null,
-        signature: obj.signature ?? null,
-        tokenType: obj.token_type ?? null,
-    };
-}
-
 export interface UserInformationPhotos {
     picture: string | null;
     thumbnail: string | null;
@@ -70,6 +55,21 @@ export interface SalesforceUserInformation {
     zoneinfo: string | null;
 }
 
+export function readAccessToken(obj: any): SalesforceAccessToken {
+    return {
+        accessToken: obj.access_token ?? null,
+        apiInstanceUrl: obj.api_instance_url ?? null,
+        id: obj.id ?? null,
+        idToken: obj.id_token ?? null,
+        instanceUrl: obj.instance_url ?? null,
+        issuedAt: obj.issued_at ?? null,
+        refreshToken: obj.refresh_token ?? null,
+        scope: obj.scope ?? null,
+        signature: obj.signature ?? null,
+        tokenType: obj.token_type ?? null,
+    };
+}
+
 export function readUserInformation(obj: any): SalesforceUserInformation {
     return {
         active: obj.active ?? null,
@@ -98,32 +98,11 @@ export function readUserInformation(obj: any): SalesforceUserInformation {
 }
 
 export interface SalesforceAPIClientInterface {
-    /// Is authenticated?
-    isAuthenticated(): boolean;
-    /// Get the user information
-    getUserInfo(cancel: AbortSignal): Promise<SalesforceUserInformation>;
+    getUserInfo(access: SalesforceAccessToken, cancel: AbortSignal): Promise<SalesforceUserInformation>;
 }
 
 export class SalesforceAPIClient implements SalesforceAPIClientInterface {
-    protected access: SalesforceAccessToken | null;
-
-    constructor(token: SalesforceAccessToken | null) {
-        this.access = token;
-    }
-
-    public isAuthenticated() {
-        return this.access != null;
-    }
-
-    protected throwIfNotAuthenticated(): SalesforceAccessToken {
-        if (this.access == null) {
-            throw new Error('not authenticated');
-        }
-        return this.access;
-    }
-
-    public async getUserInfo(cancel: AbortSignal): Promise<SalesforceUserInformation> {
-        const access = this.throwIfNotAuthenticated();
+    public async getUserInfo(access: SalesforceAccessToken, cancel: AbortSignal): Promise<SalesforceUserInformation> {
         const params = new URLSearchParams();
         params.set('format', 'json');
         params.set('access_token', access.accessToken ?? '');
@@ -137,22 +116,8 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
     }
 }
 
-export class MockSalesforceAPIClient implements SalesforceAPIClientInterface {
-    authenticated: boolean;
-
-    constructor(authenticated: boolean) {
-        this.authenticated = authenticated;
-    }
-    isAuthenticated(): boolean {
-        return this.authenticated;
-    }
-    protected throwIfNotAuthenticated() {
-        if (!this.authenticated) {
-            throw new Error('not authenticated');
-        }
-    }
-    async getUserInfo(_cancel: AbortSignal): Promise<SalesforceUserInformation> {
-        this.throwIfNotAuthenticated();
+export class SalesforceAPIClientMock implements SalesforceAPIClientInterface {
+    async getUserInfo(_access: SalesforceAccessToken, _cancel: AbortSignal): Promise<SalesforceUserInformation> {
         /// Wait for 1 second to simulate initial loading
         await sleep(200);
         // Construct a dummy user information
