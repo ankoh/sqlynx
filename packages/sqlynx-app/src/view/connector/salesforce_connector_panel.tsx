@@ -9,6 +9,7 @@ import {
     useSalesforceAuthState,
     useSalesforceAuthFlow,
     CONNECT,
+    DISCONNECT,
 } from '../../connectors/salesforce_auth_flow';
 import { useSalesforceUserInfo } from '../../connectors/salesforce_userinfo_resolver';
 import { Skeleton } from '../../view/skeleton';
@@ -65,17 +66,17 @@ const SalesforceAuthFlowPanel: React.FC<SalesforceAuthFlowProps> = (props: Sales
         return authParams;
     }, [props.userAuthParams, appConfig]);
 
-    const onClick = React.useCallback(() => {
+    const connect = React.useCallback(() => {
         if (!authParams) {
             // XXX setError not configured
             return;
         }
-        try {
-            authFlow({ type: CONNECT, value: authParams });
-        } catch (e: any) {
-            setError(e);
-        }
+        authFlow({ type: CONNECT, value: authParams });
     }, [authParams]);
+    const disconnect = React.useCallback(() => {
+        authFlow({ type: DISCONNECT, value: null });
+    }, [authParams]);
+
     const CopyAction = () => (
         <TextInput.Action
             onClick={() => {
@@ -136,7 +137,7 @@ const SalesforceAuthFlowPanel: React.FC<SalesforceAuthFlowProps> = (props: Sales
                     value={authParams?.clientId ?? ''}
                     onChange={() => {}}
                 />
-                <Button sx={{ marginTop: '28px' }} onClick={onClick} disabled={userInfo != null}>
+                <Button sx={{ marginTop: '28px' }} onClick={connect} disabled={auth.authRequested}>
                     Connect
                 </Button>
             </div>
@@ -158,7 +159,9 @@ const SalesforceAuthFlowPanel: React.FC<SalesforceAuthFlowProps> = (props: Sales
                             </div>
                         </div>
                         <div className={panelStyle.auth_info_actions}>
-                            <Button variant="danger">Disconnect</Button>
+                            <Button variant="danger" onClick={disconnect}>
+                                Disconnect
+                            </Button>
                         </div>
                     </div>
                     <div className={panelStyle.auth_info_oauth}>
