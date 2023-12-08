@@ -45,14 +45,14 @@ const ActionsPanel = (props: { icon: React.ReactElement; name: string }) => (
                     <PaperAirplaneIcon />
                 </ActionList.LeadingVisual>
                 Execute Query
-                <ActionList.TrailingVisual>⌘ + E</ActionList.TrailingVisual>
+                <ActionList.TrailingVisual>Ctrl + E</ActionList.TrailingVisual>
             </ActionList.Item>
             <ActionList.Item>
                 <ActionList.LeadingVisual>
                     <SyncIcon />
                 </ActionList.LeadingVisual>
                 Refresh Schema
-                <ActionList.TrailingVisual>⌘ + R</ActionList.TrailingVisual>
+                <ActionList.TrailingVisual>Ctrl + R</ActionList.TrailingVisual>
             </ActionList.Item>
             <ActionList.Divider />
             <ActionList.Item>
@@ -60,21 +60,21 @@ const ActionsPanel = (props: { icon: React.ReactElement; name: string }) => (
                     <LinkIcon />
                 </ActionList.LeadingVisual>
                 Save Query as Link
-                <ActionList.TrailingVisual>⌘ + L</ActionList.TrailingVisual>
+                <ActionList.TrailingVisual>Ctrl + L</ActionList.TrailingVisual>
             </ActionList.Item>
             <ActionList.Item>
                 <ActionList.LeadingVisual>
                     <DownloadIcon />
                 </ActionList.LeadingVisual>
                 Save Query as .sql
-                <ActionList.TrailingVisual>⌘ + S</ActionList.TrailingVisual>
+                <ActionList.TrailingVisual>Ctrl + S</ActionList.TrailingVisual>
             </ActionList.Item>
             <ActionList.Item>
                 <ActionList.LeadingVisual>
                     <DownloadIcon />
                 </ActionList.LeadingVisual>
                 Save Results as .arrow
-                <ActionList.TrailingVisual>⌘ + A</ActionList.TrailingVisual>
+                <ActionList.TrailingVisual>Ctrl + A</ActionList.TrailingVisual>
             </ActionList.Item>
         </ActionList>
         <ActionList className={styles.project_actions}>
