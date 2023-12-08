@@ -151,10 +151,10 @@ const SalesforceAuthFlowPanel: React.FC<SalesforceAuthFlowProps> = (props: Sales
                         </div>
                         <div className={panelStyle.userinfo_profile_who}>
                             <div className={panelStyle.userinfo_profile_name}>
-                                {userInfo?.name || <Skeleton width={128} />}
+                                {userInfo?.name || <Skeleton width={128} height={16} count={1} />}
                             </div>
                             <div className={panelStyle.userinfo_profile_email}>
-                                {userInfo?.email || <Skeleton width={256} />}
+                                {userInfo?.email || <Skeleton width={256} height={16} count={1} />}
                             </div>
                         </div>
                         <div className={panelStyle.auth_info_actions}>
