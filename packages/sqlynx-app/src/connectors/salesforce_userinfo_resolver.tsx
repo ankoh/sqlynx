@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { useSalesforceAPIClient } from './salesforce_auth_client';
+import { useSalesforceAuthState } from './salesforce_auth_flow';
+import { useSalesforceApi } from './salesforce_api_provider';
 import { SalesforceUserInformation } from './salesforce_api_client';
 
 interface Props {
@@ -12,11 +13,12 @@ interface State {
 
 const userInfoCtx = React.createContext<SalesforceUserInformation | null>(null);
 
-export function SalesforceUserInfoProvider(props: Props) {
+export function SalesforceUserInfoResolver(props: Props) {
     const [state, setState] = React.useState<State>({
         userInfo: null,
     });
-    const api = useSalesforceAPIClient();
+    const auth = useSalesforceAuthState();
+    const api = useSalesforceApi();
     React.useEffect(() => {
         // Clear old user info whenever the api changes
         setState(s => ({
@@ -24,13 +26,14 @@ export function SalesforceUserInfoProvider(props: Props) {
             profile: null,
         }));
         // Not authenticated?
-        if (!api.isAuthenticated()) return;
+        if (!auth.coreAccessToken) return;
+        const coreAccessToken = auth.coreAccessToken;
 
         // Fetch new user information
         const cancellation = new AbortController();
         (async () => {
             try {
-                const result = await api.getUserInfo(cancellation.signal);
+                const result = await api.getUserInfo(coreAccessToken, cancellation.signal);
                 setState(s => ({
                     ...s,
                     userInfo: result,

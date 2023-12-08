@@ -6,10 +6,11 @@ import { CopyIcon, InfoIcon } from '@primer/octicons-react';
 import { useAppConfig } from '../../state/app_config';
 import {
     SalesforceAuthParams,
-    useSalesforceAccessToken,
-    useSalesforceAuthClient,
-} from '../../connectors/salesforce_auth_client';
-import { useSalesforceUserInfo } from '../../connectors/salesforce_userinfo';
+    useSalesforceAuthState,
+    useSalesforceAuthFlow,
+    CONNECT,
+} from '../../connectors/salesforce_auth_flow';
+import { useSalesforceUserInfo } from '../../connectors/salesforce_userinfo_resolver';
 
 import SalesforceDummyAccount from '../../../static/img/salesforce_account_placeholder.png';
 
@@ -27,11 +28,11 @@ interface SalesforceAuthFlowProps {
     userAuthParams?: SalesforceAuthParams;
 }
 
-const SalesforceAuthFlow: React.FC<SalesforceAuthFlowProps> = (props: SalesforceAuthFlowProps) => {
+const SalesforceAuthFlowPanel: React.FC<SalesforceAuthFlowProps> = (props: SalesforceAuthFlowProps) => {
     const appConfig = useAppConfig();
     const userInfo = useSalesforceUserInfo();
-    const authClient = useSalesforceAuthClient();
-    const accessToken = useSalesforceAccessToken();
+    const authFlow = useSalesforceAuthFlow();
+    const auth = useSalesforceAuthState();
     const [error, setError] = React.useState<string | null>(null);
 
     // Select auth parameters
@@ -69,11 +70,11 @@ const SalesforceAuthFlow: React.FC<SalesforceAuthFlowProps> = (props: Salesforce
             return;
         }
         try {
-            authClient.login(authParams!);
+            authFlow({ type: CONNECT, value: authParams });
         } catch (e: any) {
             setError(e);
         }
-    }, [authClient, authParams]);
+    }, [authParams]);
     const CopyAction = () => (
         <TextInput.Action
             onClick={() => {
@@ -144,8 +145,14 @@ const SalesforceAuthFlow: React.FC<SalesforceAuthFlowProps> = (props: Salesforce
                         </div>
                     </div>
                     <div className={panelStyle.auth_info_oauth}>
-                        <ImmutableTextBox name="API Instance URL" value={accessToken?.apiInstanceUrl ?? 'null'} />
-                        <ImmutableSecretBox name="Core Access Token" value={accessToken?.accessToken ?? 'null'} />
+                        <ImmutableTextBox
+                            name="API Instance URL"
+                            value={auth.coreAccessToken?.apiInstanceUrl ?? 'null'}
+                        />
+                        <ImmutableSecretBox
+                            name="Core Access Token"
+                            value={auth.coreAccessToken?.accessToken ?? 'null'}
+                        />
                     </div>
                     <div className={panelStyle.auth_info_dc}>
                         <ImmutableTextBox name="Data Cloud Instance URL" value="" />
@@ -181,7 +188,7 @@ export const SalesforceConnectorPanel: React.FC<SalesforceConnectorPanelProps> =
                 </div>
             </div>
             <div className={pageStyle.card_body_container}>
-                <SalesforceAuthFlow userAuthParams={props.userAuthParams} />
+                <SalesforceAuthFlowPanel userAuthParams={props.userAuthParams} />
             </div>
         </>
     );
