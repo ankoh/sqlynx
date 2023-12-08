@@ -11,6 +11,7 @@ import {
     CONNECT,
 } from '../../connectors/salesforce_auth_flow';
 import { useSalesforceUserInfo } from '../../connectors/salesforce_userinfo_resolver';
+import { Skeleton } from '../../view/skeleton';
 
 import SalesforceDummyAccount from '../../../static/img/salesforce_account_placeholder.png';
 
@@ -127,18 +128,22 @@ const SalesforceAuthFlowPanel: React.FC<SalesforceAuthFlowProps> = (props: Sales
                     Connect
                 </Button>
             </div>
-            {userInfo && (
+            {(auth.coreAccessToken || userInfo) && (
                 <div className={panelStyle.auth_info_container}>
                     <div className={panelStyle.auth_info_header}>
                         <div className={panelStyle.userinfo_profile_container}>
                             <img
                                 className={panelStyle.userinfo_profile_picture}
-                                src={userInfo.photos!.picture ?? SalesforceDummyAccount}
+                                src={userInfo?.photos?.picture ?? SalesforceDummyAccount}
                             />
                         </div>
                         <div className={panelStyle.userinfo_profile_who}>
-                            <div className={panelStyle.userinfo_profile_name}>{userInfo.name}</div>
-                            <div className={panelStyle.userinfo_profile_email}>{userInfo.email}</div>
+                            <div className={panelStyle.userinfo_profile_name}>
+                                {userInfo?.name || <Skeleton width={128} />}
+                            </div>
+                            <div className={panelStyle.userinfo_profile_email}>
+                                {userInfo?.email || <Skeleton width={256} />}
+                            </div>
                         </div>
                         <div className={panelStyle.auth_info_actions}>
                             <Button variant="danger">Disconnect</Button>

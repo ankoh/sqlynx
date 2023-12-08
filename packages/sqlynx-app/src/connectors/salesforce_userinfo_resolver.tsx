@@ -47,7 +47,7 @@ export function SalesforceUserInfoResolver(props: Props) {
             }
         })();
         return () => cancellation.abort();
-    }, [api]);
+    }, [api, auth.coreAccessToken]);
 
     return <userInfoCtx.Provider value={state.userInfo}>{props.children}</userInfoCtx.Provider>;
 }

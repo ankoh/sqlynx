@@ -212,7 +212,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
 
     // Effect to generate PKCE challenge
     React.useEffect(() => {
-        if (!state.pkceChallengeValue) return;
+        if (state.pkceChallengeValue) return;
         const cancellation = { triggered: false };
         (async () => {
             // Generate PKCE challenge
@@ -239,7 +239,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
         return () => {
             cancellation.triggered = true;
         };
-    }, [state.pkceChallengeValue]);
+    }, [state.authParams, state.pkceChallengeValue]);
 
     // Effect to open the auth window when there is a pending auth
     React.useEffect(() => {

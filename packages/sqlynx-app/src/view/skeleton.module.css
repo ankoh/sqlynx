@@ -1,0 +1,49 @@
+@keyframes react_loading_skeleton_animation {
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+.react_loading_skeleton {
+    background-color: var(--skeleton_base_color);
+
+    width: 100%;
+    border-radius: 0.25rem;
+    display: inline-flex;
+    line-height: 1;
+
+    position: relative;
+    user-select: none;
+    overflow: hidden;
+    z-index: 1; /* Necessary for overflow: hidden to work correctly in Safari */
+}
+
+.react_loading_skeleton::after {
+    content: ' ';
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background-repeat: no-repeat;
+    background-image: linear-gradient(
+        90deg,
+        var(--skeleton_base_color),
+        var(--skeleton_highlight_color),
+        var(--skeleton_base_color)
+    );
+    transform: translateX(-100%);
+
+    animation-name: react_loading_skeleton_animation;
+    animation-direction: var(--skeleton_animation_direction);
+    animation-duration: var(--skeleton_animation_duration);
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+}
+
+@media (prefers-reduced-motion) {
+    .react_loading_skeleton {
+        --pseudo-element-display: none; /* Disable animation */
+    }
+}
