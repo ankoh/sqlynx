@@ -10,6 +10,7 @@ interface TabRenderers {
 }
 
 interface Props {
+    className?: string;
     tabs: [number, string][];
     tabRenderers: TabRenderers;
     tabProps: TabProps;
@@ -18,7 +19,7 @@ interface Props {
 
 export const TabCard: React.FC<Props> = (props: Props) => {
     return (
-        <div className={styles.container}>
+        <div className={cn(props.className, styles.container)}>
             <div className={styles.tabs}>
                 {props.tabs.map((tab: [number, string]) => (
                     <div
