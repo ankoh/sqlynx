@@ -55,6 +55,15 @@
         grid-template-columns: 100%;
         row-gap: 24px;
     }
+
+    .action_panel {
+        position: absolute;
+        top: calc(48px + 24px);
+        right: 24px;
+        border-radius: 8px;
+        border: 1px solid var(--border_color_primary);
+        background-color: white;
+    }
 }
 
 .header_left_container {
@@ -90,18 +99,4 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-}
-
-.action_panel {
-    position: absolute;
-    bottom: 32px;
-    right: -32px;
-    padding: 8px;
-    border-radius: 8px;
-    border: 1px solid var(--border_color_primary);
-    background-color: white;
-
-    display: grid;
-    grid-template-columns: max-content max-content;
-    column-gap: 16px;
 }

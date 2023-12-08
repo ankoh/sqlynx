@@ -5,7 +5,7 @@
         "logViewer": false,
         "connections": true,
         "completionDetails": false,
-        "editorActions": false
+        "editorActions": true
     },
     "connectors": {
         "salesforce": {

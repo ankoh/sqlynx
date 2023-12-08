@@ -77,6 +77,8 @@
     --skeleton_highlight_color: hsl(210, 29%, 94%);
     --skeleton_animation_duration: 1.5s;
     --skeleton_animation_direction: normal;
+
+    --salesforce_logo_bg: rgb(0, 161, 224);
 }
 
 :root {
