@@ -187,44 +187,6 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
         dataCloudAccessToken: null,
     }));
 
-    // Register a receive for the oauth code from the window
-    React.useEffect(() => {
-        const handler = (event: any) => {
-            const params = new URLSearchParams(event?.data);
-            if (params.has('error')) {
-                console.error(params.toString());
-                return;
-            }
-            const code = params.get('code');
-            if (!code) return;
-            dispatch({
-                type: RECEIVED_AUTH_CODE,
-                value: code,
-            });
-        };
-        window.addEventListener('message', handler);
-        return () => {
-            window.removeEventListener('message', handler);
-        };
-    }, [dispatch]);
-
-    // Effect to forget about the auth window when it closes
-    React.useEffect(() => {
-        if (!state.openAuthWindow) return () => {};
-        const loop = setInterval(function () {
-            if (state.openAuthWindow?.closed) {
-                clearInterval(loop);
-                dispatch({
-                    type: AUTH_WINDOW_CLOSED,
-                    value: null,
-                });
-            }
-        }, 1000);
-        return () => {
-            clearInterval(loop);
-        };
-    }, [state.openAuthWindow]);
-
     // Effect to generate PKCE challenge
     React.useEffect(() => {
         if (state.pkceChallengeValue) return;
@@ -258,14 +220,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
 
     // Effect to open the auth window when there is a pending auth
     React.useEffect(() => {
-        if (
-            !state.authRequested ||
-            state.authStarted ||
-            state.authError ||
-            state.openAuthWindow ||
-            !state.pkceChallengeValue
-        )
-            return;
+        if (!state.authRequested || state.authStarted || state.authError || !state.pkceChallengeValue) return;
 
         // Construct the URI
         const params = state.authParams!;
@@ -289,6 +244,44 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
         popup.focus();
         dispatch({ type: AUTH_WINDOW_OPENED, value: popup });
     }, [state.authRequested, state.authError, state.openAuthWindow, state.pkceChallengeValue]);
+
+    // Effect to forget about the auth window when it closes
+    React.useEffect(() => {
+        if (!state.openAuthWindow) return () => {};
+        const loop = setInterval(function () {
+            if (state.openAuthWindow?.closed) {
+                clearInterval(loop);
+                dispatch({
+                    type: AUTH_WINDOW_CLOSED,
+                    value: null,
+                });
+            }
+        }, 1000);
+        return () => {
+            clearInterval(loop);
+        };
+    }, [state.openAuthWindow]);
+
+    // Register a receive for the oauth code from the window
+    React.useEffect(() => {
+        const handler = (event: any) => {
+            const params = new URLSearchParams(event?.data);
+            if (params.has('error')) {
+                console.error(params.toString());
+                return;
+            }
+            const code = params.get('code');
+            if (!code) return;
+            dispatch({
+                type: RECEIVED_AUTH_CODE,
+                value: code,
+            });
+        };
+        window.addEventListener('message', handler);
+        return () => {
+            window.removeEventListener('message', handler);
+        };
+    }, [dispatch]);
 
     // Effect to get the core access token
     React.useEffect(() => {
