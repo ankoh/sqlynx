@@ -4,7 +4,8 @@
         "appInfo": false,
         "logViewer": false,
         "connections": true,
-        "completionDetails": false
+        "completionDetails": false,
+        "editorActions": false
     },
     "connectors": {
         "salesforce": {

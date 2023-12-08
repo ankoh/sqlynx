@@ -28,6 +28,7 @@
 
 @media only screen and (max-width: 1200px) {
     .body_container {
+        position: relative;
         grid-row: 2;
         height: 100%;
         padding-top: 20px;
@@ -42,6 +43,7 @@
 }
 @media only screen and (min-width: 1200px) {
     .body_container {
+        position: relative;
         grid-row: 2;
         height: 100%;
         width: 960px;
@@ -88,4 +90,18 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
+}
+
+.action_panel {
+    position: absolute;
+    bottom: 32px;
+    right: -32px;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid var(--border_color_primary);
+    background-color: white;
+
+    display: grid;
+    grid-template-columns: max-content max-content;
+    column-gap: 16px;
 }
