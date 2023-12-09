@@ -114,7 +114,7 @@ const SalesforceAuthFlowPanel: React.FC<SalesforceAuthFlowProps> = (props: Sales
         props.value == null ? (
             <LoadingTextBox name={props.name} />
         ) : (
-            <FormControl sx={{ marginTop: '8px' }}>
+            <FormControl>
                 <FormControl.Label>{props.name}</FormControl.Label>
                 <TextInput block trailingAction={CopyAction()} value={props.value ?? 'null'} readOnly />
             </FormControl>
@@ -123,7 +123,7 @@ const SalesforceAuthFlowPanel: React.FC<SalesforceAuthFlowProps> = (props: Sales
         props.value == null ? (
             <LoadingTextBox name={props.name} />
         ) : (
-            <FormControl sx={{ marginTop: '8px' }}>
+            <FormControl>
                 <FormControl.Label>{props.name}</FormControl.Label>
                 <TextInput block type="password" trailingAction={CopyAction()} value={props.value ?? 'null'} readOnly />
             </FormControl>

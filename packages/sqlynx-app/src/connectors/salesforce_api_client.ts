@@ -141,7 +141,6 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
         });
         const responseJson = await response.json();
         const responseInfo = readUserInformation(responseJson);
-        console.log(responseInfo);
         return responseInfo;
     }
 }
