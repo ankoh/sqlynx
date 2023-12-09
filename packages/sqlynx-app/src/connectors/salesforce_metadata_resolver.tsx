@@ -27,13 +27,12 @@ export function SalesforceMetadataResolver(props: Props) {
         }));
         // Not authenticated?
         if (!auth.dataCloudAccessToken) return;
-        const dataCloudAccessToken = auth.dataCloudAccessToken;
-
         // Fetch new user information
+        const dataCloudAccessToken = auth.dataCloudAccessToken;
         const cancellation = new AbortController();
         (async () => {
             try {
-                const result = await api.getMetadata(dataCloudAccessToken, cancellation.signal);
+                const result = await api.getDataCloudMetadata(dataCloudAccessToken, cancellation.signal);
                 setState({
                     metadata: result,
                 });

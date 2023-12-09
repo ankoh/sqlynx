@@ -8,9 +8,31 @@ import {
 } from './salesforce_api_client';
 
 import SalesforceDummyAccount from '../../static/img/salesforce_account_placeholder.png';
+import { SalesforceAuthParams } from './salesforce_auth_state';
 
 export class SalesforceAPIClientMock implements SalesforceAPIClientInterface {
-    async getUserInfo(_access: SalesforceCoreAccessToken, _cancel: AbortSignal): Promise<SalesforceUserInfo> {
+    public async getCoreAccessToken(
+        _authParams: SalesforceAuthParams,
+        _authCode: string,
+        _pkceVerifier: string,
+        _cancel: AbortSignal,
+    ): Promise<SalesforceCoreAccessToken> {
+        await sleep(200);
+        return {
+            accessToken: '',
+            apiInstanceUrl: 'https://localhost',
+            id: '',
+            idToken: '',
+            instanceUrl: '',
+            issuedAt: '',
+            refreshToken: '',
+            scope: '',
+            signature: '',
+            tokenType: '',
+        };
+    }
+
+    async getCoreUserInfo(_access: SalesforceCoreAccessToken, _cancel: AbortSignal): Promise<SalesforceUserInfo> {
         await sleep(200);
         return {
             active: true,
@@ -40,7 +62,24 @@ export class SalesforceAPIClientMock implements SalesforceAPIClientInterface {
             zoneinfo: 'America/Los_Angeles',
         };
     }
-    public async getMetadata(
+
+    public async getDataCloudAccessToken(
+        _access: SalesforceCoreAccessToken,
+        _cancel: AbortSignal,
+    ): Promise<SalesforceDataCloudAccessToken> {
+        await sleep(200);
+        const expiresAt = new Date();
+        expiresAt.setSeconds(expiresAt.getSeconds() + 7200);
+        return {
+            accessToken: '',
+            instanceUrl: new URL('http://localhost'),
+            expiresAt: expiresAt,
+            issuedTokenType: '',
+            tokenType: '',
+        };
+    }
+
+    public async getDataCloudMetadata(
         _access: SalesforceDataCloudAccessToken,
         _cancel: AbortSignal,
     ): Promise<SalesforceMetadata> {

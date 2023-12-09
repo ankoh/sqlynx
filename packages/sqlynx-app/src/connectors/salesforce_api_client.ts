@@ -1,14 +1,16 @@
+import { SalesforceAuthParams } from './salesforce_auth_state';
+
 export interface SalesforceCoreAccessToken {
     /// The OAuth token
-    accessToken: string | null;
+    accessToken: string;
+    /// A URL indicating the instance of the user’s org
+    instanceUrl: string;
     /// The instance url
     apiInstanceUrl: string | null;
     /// An identity URL that can be used to identify the user and to query
     id: string | null;
     /// A signed data structure that contains authenticated user attributes
     idToken: string | null;
-    /// A URL indicating the instance of the user’s org
-    instanceUrl: string | null;
     /// Time stamp of when the signature was created in milliseconds
     issuedAt: string | null;
     /// Token obtained from the web server, user-agent, or hybrid app token flow
@@ -23,11 +25,11 @@ export interface SalesforceCoreAccessToken {
 
 export interface SalesforceDataCloudAccessToken {
     /// The access token
-    accessToken: string | null;
-    /// The expiration time
-    expiresAt: Date | null;
+    accessToken: string;
     /// The instance URL
-    instanceUrl: URL | null;
+    instanceUrl: URL;
+    /// The expiration time
+    expiresAt: Date;
     /// The issued token type
     issuedTokenType: string;
     /// The token type
@@ -116,10 +118,19 @@ export function readDataCloudAccessToken(obj: any): SalesforceDataCloudAccessTok
         console.log(urlString);
         return new URL(urlString);
     };
+    if (!obj.access_token) {
+        throw new Error('missing expires_in');
+    }
+    if (!obj.expires_in) {
+        throw new Error('missing expires_in');
+    }
+    if (!obj.instance_url) {
+        throw new Error('missing instance_url');
+    }
     return {
-        accessToken: obj.access_token ?? null,
-        expiresAt: obj.expires_in ? expiration : null,
-        instanceUrl: obj.instance_url ? prependProtoIfMissing(obj.instance_url) : null,
+        accessToken: obj.access_token,
+        instanceUrl: prependProtoIfMissing(obj.instance_url),
+        expiresAt: obj.expires_in,
         issuedTokenType: obj.issued_token_type ?? null,
         tokenType: obj.token_type ?? null,
     };
@@ -153,12 +164,76 @@ export function readUserInformation(obj: any): SalesforceUserInfo {
 }
 
 export interface SalesforceAPIClientInterface {
-    getUserInfo(access: SalesforceCoreAccessToken, cancel: AbortSignal): Promise<SalesforceUserInfo>;
-    getMetadata(access: SalesforceDataCloudAccessToken, cancel: AbortSignal): Promise<SalesforceMetadata>;
+    getCoreAccessToken(
+        params: SalesforceAuthParams,
+        authCode: string,
+        pkceVerifier: string,
+        cancel: AbortSignal,
+    ): Promise<SalesforceCoreAccessToken>;
+    getCoreUserInfo(access: SalesforceCoreAccessToken, cancel: AbortSignal): Promise<SalesforceUserInfo>;
+    getDataCloudAccessToken(
+        access: SalesforceCoreAccessToken,
+        cancel: AbortSignal,
+    ): Promise<SalesforceDataCloudAccessToken>;
+    getDataCloudMetadata(access: SalesforceDataCloudAccessToken, cancel: AbortSignal): Promise<SalesforceMetadata>;
 }
 
 export class SalesforceAPIClient implements SalesforceAPIClientInterface {
-    public async getUserInfo(access: SalesforceCoreAccessToken, cancel: AbortSignal): Promise<SalesforceUserInfo> {
+    public async getCoreAccessToken(
+        authParams: SalesforceAuthParams,
+        authCode: string,
+        pkceVerifier: string,
+        cancel: AbortSignal,
+    ): Promise<SalesforceCoreAccessToken> {
+        const params: Record<string, string> = {
+            grant_type: 'authorization_code',
+            code: authCode!,
+            redirect_uri: authParams.oauthRedirect.toString(),
+            client_id: authParams.clientId,
+            code_verifier: pkceVerifier,
+            format: 'json',
+        };
+        if (authParams.clientSecret !== null) {
+            params.client_secret = authParams.clientSecret;
+        }
+        // Get the access token
+        const response = await fetch(`${authParams.instanceUrl}/services/oauth2/token`, {
+            method: 'POST',
+            headers: new Headers({
+                Accept: 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded',
+            }),
+            body: new URLSearchParams(params),
+            signal: cancel,
+        });
+        const responseBody = await response.json();
+        return readCoreAccessToken(responseBody);
+    }
+
+    public async getDataCloudAccessToken(
+        access: SalesforceCoreAccessToken,
+        cancel: AbortSignal,
+    ): Promise<SalesforceDataCloudAccessToken> {
+        const params: Record<string, string> = {
+            grant_type: 'urn:salesforce:grant-type:external:cdp',
+            subject_token: access.accessToken!,
+            subject_token_type: 'urn:ietf:params:oauth:token-type:access_token',
+        };
+        // Get the data cloud access token
+        const response = await fetch(`${access.instanceUrl}/services/a360/token`, {
+            method: 'POST',
+            headers: new Headers({
+                Accept: 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded',
+            }),
+            body: new URLSearchParams(params),
+            signal: cancel,
+        });
+        const responseBody = await response.json();
+        return readDataCloudAccessToken(responseBody);
+    }
+
+    public async getCoreUserInfo(access: SalesforceCoreAccessToken, cancel: AbortSignal): Promise<SalesforceUserInfo> {
         const params = new URLSearchParams();
         params.set('format', 'json');
         params.set('access_token', access.accessToken ?? '');
@@ -170,7 +245,10 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
         return responseInfo;
     }
 
-    public async getMetadata(access: SalesforceDataCloudAccessToken, cancel: AbortSignal): Promise<SalesforceMetadata> {
+    public async getDataCloudMetadata(
+        access: SalesforceDataCloudAccessToken,
+        cancel: AbortSignal,
+    ): Promise<SalesforceMetadata> {
         const params = new URLSearchParams();
         console.log(access.instanceUrl);
         const response = await fetch(`${access.instanceUrl}api/v1/metadata?${params.toString()}`, {
