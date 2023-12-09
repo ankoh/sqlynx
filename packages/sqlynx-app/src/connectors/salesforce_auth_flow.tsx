@@ -1,7 +1,6 @@
 import React from 'react';
 import getPkce from 'oauth-pkce';
 import { Dispatch } from '../utils/action';
-import { readCoreAccessToken, readDataCloudAccessToken } from './salesforce_api_client';
 
 import './oauth_callback.html';
 import {
@@ -18,6 +17,7 @@ import {
     SalesforceAuthState,
     reduceAuthState,
 } from './salesforce_auth_state';
+import { useSalesforceApi } from './salesforce_api_provider';
 
 // We use the web-server OAuth Flow with or without consumer secret.
 //
@@ -72,6 +72,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
         dataCloudInstanceUrl: null,
         dataCloudAccessToken: null,
     }));
+    const api = useSalesforceApi();
 
     // Effect to generate PKCE challenge
     React.useEffect(() => {
@@ -171,37 +172,23 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
 
     // Effect to get the core access token
     React.useEffect(() => {
-        if (!state.coreAuthCode || !state.authParams || state.authError) return;
+        if (!state.coreAuthCode || !state.authParams || !state.pkceChallengeVerifier || state.authError) return;
         const abortController = new AbortController();
+        const authParams = state.authParams;
+        const authCode = state.coreAuthCode;
+        const pkceChallengeVerifier = state.pkceChallengeVerifier;
         (async () => {
             try {
-                const params: Record<string, string> = {
-                    grant_type: 'authorization_code',
-                    code: state.coreAuthCode!,
-                    redirect_uri: state.authParams!.oauthRedirect.toString(),
-                    client_id: state.authParams!.clientId,
-                    code_verifier: state.pkceChallengeVerifier!,
-                    format: 'json',
-                };
-                if (state.authParams!.clientSecret !== null) {
-                    params.client_secret = state.authParams!.clientSecret;
-                }
-                // Get the access token
-                const response = await fetch(`${state.authParams!.instanceUrl.toString()}services/oauth2/token`, {
-                    method: 'POST',
-                    headers: new Headers({
-                        Accept: 'application/json',
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    }),
-                    body: new URLSearchParams(params),
-                    signal: abortController.signal,
-                });
-                const responseBody = await response.json();
-                const accessToken = readCoreAccessToken(responseBody);
-                console.log(accessToken);
+                const token = await api.getCoreAccessToken(
+                    authParams,
+                    authCode,
+                    pkceChallengeVerifier,
+                    abortController.signal,
+                );
+                console.log(token);
                 dispatch({
                     type: RECEIVED_CORE_AUTH_TOKEN,
-                    value: accessToken,
+                    value: token,
                 });
             } catch (error: any) {
                 if (error.name === 'AbortError') {
@@ -215,36 +202,20 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
             }
         })();
         return () => abortController.abort();
-    }, [state.coreAuthCode]);
+    }, [state.coreAuthCode, state.pkceChallengeVerifier]);
 
     // Effect to get the data cloud access token
     React.useEffect(() => {
         if (!state.coreAccessToken?.accessToken || !state.authParams || state.authError) return;
         const abortController = new AbortController();
-        const coreAccessToken = state.coreAccessToken.accessToken;
+        const coreAccessToken = state.coreAccessToken;
         (async () => {
             try {
-                const params: Record<string, string> = {
-                    grant_type: 'urn:salesforce:grant-type:external:cdp',
-                    subject_token: coreAccessToken,
-                    subject_token_type: 'urn:ietf:params:oauth:token-type:access_token',
-                };
-                // Get the data cloud access token
-                const response = await fetch(`${state.authParams!.instanceUrl.toString()}services/a360/token`, {
-                    method: 'POST',
-                    headers: new Headers({
-                        Accept: 'application/json',
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    }),
-                    body: new URLSearchParams(params),
-                    signal: abortController.signal,
-                });
-                const responseBody = await response.json();
-                const accessToken = readDataCloudAccessToken(responseBody);
-                console.log(accessToken);
+                const token = await api.getDataCloudAccessToken(coreAccessToken, abortController.signal);
+                console.log(token);
                 dispatch({
                     type: RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
-                    value: accessToken,
+                    value: token,
                 });
             } catch (error: any) {
                 if (error.name === 'AbortError') {

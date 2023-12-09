@@ -27,13 +27,12 @@ export function SalesforceUserInfoResolver(props: Props) {
         }));
         // Not authenticated?
         if (!auth.coreAccessToken) return;
-        const coreAccessToken = auth.coreAccessToken;
-
         // Fetch new user information
+        const coreAccessToken = auth.coreAccessToken;
         const cancellation = new AbortController();
         (async () => {
             try {
-                const result = await api.getUserInfo(coreAccessToken, cancellation.signal);
+                const result = await api.getCoreUserInfo(coreAccessToken, cancellation.signal);
                 setState(s => ({
                     ...s,
                     userInfo: result,

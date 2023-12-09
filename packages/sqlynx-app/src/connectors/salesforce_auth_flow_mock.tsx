@@ -12,6 +12,7 @@ import {
     SalesforceAuthAction,
     SalesforceAuthState,
     reduceAuthState,
+    GENERATED_PKCE_CHALLENGE,
 } from './salesforce_auth_state';
 
 interface Props {
@@ -61,6 +62,11 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
     React.useEffect(() => {
         if (state.authRequested) return;
         (async () => {
+            sleep(200);
+            dispatch({
+                type: GENERATED_PKCE_CHALLENGE,
+                value: ['foo', 'bar'],
+            });
             sleep(200);
             dispatch({
                 type: RECEIVED_CORE_AUTH_CODE,
