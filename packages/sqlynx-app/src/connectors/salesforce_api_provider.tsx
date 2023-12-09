@@ -3,6 +3,7 @@ import { SalesforceAPIClientMock, SalesforceAPIClient, SalesforceAPIClientInterf
 import { useAppConfig } from '../state/app_config';
 import { SalesforceAuthFlow } from './salesforce_auth_flow';
 import { SalesforceUserInfoResolver } from './salesforce_userinfo_resolver';
+import { SalesforceMetadataResolver } from './salesforce_metadata_resolver';
 
 const API_CLIENT_CTX = React.createContext<SalesforceAPIClientInterface | null>(null);
 
@@ -23,7 +24,9 @@ export const SalesforceApiProvider: React.FC<Props> = (props: Props) => {
     return (
         <API_CLIENT_CTX.Provider value={api}>
             <SalesforceAuthFlow>
-                <SalesforceUserInfoResolver>{props.children}</SalesforceUserInfoResolver>
+                <SalesforceUserInfoResolver>
+                    <SalesforceMetadataResolver>{props.children}</SalesforceMetadataResolver>
+                </SalesforceUserInfoResolver>
             </SalesforceAuthFlow>
         </API_CLIENT_CTX.Provider>
     );

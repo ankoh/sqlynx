@@ -31,7 +31,7 @@ export interface SalesforceDataCloudAccessToken {
     /// The expiration time
     expiresAt: Date | null;
     /// The instance URL
-    instanceURL: URL | null;
+    instanceUrl: URL | null;
     /// The issued token type
     issuedTokenType: string;
     /// The token type
@@ -68,6 +68,8 @@ export interface SalesforceUserInformation {
     zoneinfo: string | null;
 }
 
+export interface SalesforceDataCloudMetadata {}
+
 export function readCoreAccessToken(obj: any): SalesforceCoreAccessToken {
     return {
         accessToken: obj.access_token ?? null,
@@ -88,10 +90,17 @@ export function readDataCloudAccessToken(obj: any): SalesforceDataCloudAccessTok
     if (obj.expires_in) {
         expiration.setSeconds(expiration.getSeconds() + obj.expires_in);
     }
+    const prependProtoIfMissing = (urlString: string) => {
+        if (!urlString.startsWith('https:')) {
+            urlString = `https://${urlString}`;
+        }
+        console.log(urlString);
+        return new URL(urlString);
+    };
     return {
         accessToken: obj.access_token ?? null,
         expiresAt: obj.expires_in ? expiration : null,
-        instanceURL: obj.instance_url ?? null,
+        instanceUrl: obj.instance_url ? prependProtoIfMissing(obj.instance_url) : null,
         issuedTokenType: obj.issued_token_type ?? null,
         tokenType: obj.token_type ?? null,
     };
@@ -126,6 +135,7 @@ export function readUserInformation(obj: any): SalesforceUserInformation {
 
 export interface SalesforceAPIClientInterface {
     getUserInfo(access: SalesforceCoreAccessToken, cancel: AbortSignal): Promise<SalesforceUserInformation>;
+    getMetadata(access: SalesforceDataCloudAccessToken, cancel: AbortSignal): Promise<SalesforceDataCloudMetadata>;
 }
 
 export class SalesforceAPIClient implements SalesforceAPIClientInterface {
@@ -142,6 +152,23 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
         const responseJson = await response.json();
         const responseInfo = readUserInformation(responseJson);
         return responseInfo;
+    }
+
+    public async getMetadata(
+        access: SalesforceDataCloudAccessToken,
+        cancel: AbortSignal,
+    ): Promise<SalesforceDataCloudMetadata> {
+        const params = new URLSearchParams();
+        console.log(access.instanceUrl);
+        const response = await fetch(`${access.instanceUrl}api/v1/metadata?${params.toString()}`, {
+            headers: {
+                authorization: `Bearer ${access.accessToken}`,
+            },
+            signal: cancel,
+        });
+        const responseJson = await response.json();
+        console.log(responseJson);
+        return {};
     }
 }
 
@@ -177,5 +204,11 @@ export class SalesforceAPIClientMock implements SalesforceAPIClientInterface {
             utcOffset: -28800000,
             zoneinfo: 'America/Los_Angeles',
         };
+    }
+    public async getMetadata(
+        _access: SalesforceDataCloudAccessToken,
+        _cancel: AbortSignal,
+    ): Promise<SalesforceDataCloudMetadata> {
+        return {};
     }
 }

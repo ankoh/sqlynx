@@ -183,7 +183,7 @@ const SalesforceAuthFlowPanel: React.FC<SalesforceAuthFlowProps> = (props: Sales
                     <div className={panelStyle.auth_info_dc}>
                         <ImmutableTextBox
                             name="Data Cloud Instance URL"
-                            value={auth.dataCloudAccessToken?.instanceURL?.toString() ?? null}
+                            value={auth.dataCloudAccessToken?.instanceUrl?.toString() ?? null}
                         />
                         <ImmutableSecretBox
                             name="Data Cloud Access Token"
