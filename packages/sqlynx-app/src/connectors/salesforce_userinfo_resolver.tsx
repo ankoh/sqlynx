@@ -1,17 +1,17 @@
 import * as React from 'react';
 import { useSalesforceAuthState } from './salesforce_auth_flow';
 import { useSalesforceApi } from './salesforce_api_provider';
-import { SalesforceUserInformation } from './salesforce_api_client';
+import { SalesforceUserInfo } from './salesforce_api_client';
 
 interface Props {
     children: React.ReactElement;
 }
 
 interface State {
-    userInfo: SalesforceUserInformation | null;
+    userInfo: SalesforceUserInfo | null;
 }
 
-const userInfoCtx = React.createContext<SalesforceUserInformation | null>(null);
+const userInfoCtx = React.createContext<SalesforceUserInfo | null>(null);
 
 export function SalesforceUserInfoResolver(props: Props) {
     const [state, setState] = React.useState<State>({
@@ -52,4 +52,4 @@ export function SalesforceUserInfoResolver(props: Props) {
     return <userInfoCtx.Provider value={state.userInfo}>{props.children}</userInfoCtx.Provider>;
 }
 
-export const useSalesforceUserInfo = (): SalesforceUserInformation | null => React.useContext(userInfoCtx);
+export const useSalesforceUserInfo = (): SalesforceUserInfo | null => React.useContext(userInfoCtx);
