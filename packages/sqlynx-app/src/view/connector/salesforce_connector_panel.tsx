@@ -11,7 +11,7 @@ import {
     CONNECT,
     DISCONNECT,
     AUTH_FAILED,
-} from '../../connectors/salesforce_auth_flow';
+} from '../../connectors/salesforce_auth_state';
 import { useSalesforceUserInfo } from '../../connectors/salesforce_userinfo_resolver';
 import { Skeleton } from '../../view/skeleton';
 

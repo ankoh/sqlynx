@@ -1,16 +1,23 @@
-// Copyright (c) 2020 The DashQL Authors
-
 import React from 'react';
 import getPkce from 'oauth-pkce';
-import { Action, Dispatch } from '../utils/action';
-import {
-    SalesforceCoreAccessToken,
-    SalesforceDataCloudAccessToken,
-    readCoreAccessToken,
-    readDataCloudAccessToken,
-} from './salesforce_api_client';
+import { Dispatch } from '../utils/action';
+import { readCoreAccessToken, readDataCloudAccessToken } from './salesforce_api_client';
 
 import './oauth_callback.html';
+import {
+    AUTH_FAILED,
+    OAUTH_WINDOW_CLOSED,
+    OAUTH_WINDOW_OPENED,
+    GENERATED_PKCE_CHALLENGE,
+    RECEIVED_CORE_AUTH_CODE,
+    RECEIVED_CORE_AUTH_TOKEN,
+    RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
+    AUTH_FLOW_DISPATCH_CTX,
+    AUTH_FLOW_STATE_CTX,
+    SalesforceAuthAction,
+    SalesforceAuthState,
+    reduceAuthState,
+} from './salesforce_auth_state';
 
 // We use the web-server OAuth Flow with or without consumer secret.
 //
@@ -44,135 +51,6 @@ import './oauth_callback.html';
 
 const OAUTH_POPUP_NAME = 'SQLynx OAuth';
 const OAUTH_POPUP_SETTINGS = 'toolbar=no, menubar=no, width=600, height=700, top=100, left=100';
-
-export interface SalesforceAuthState {
-    /// The auth params
-    authParams: SalesforceAuthParams | null;
-    /// The auth is requested?
-    authRequested: boolean;
-    /// The auth has been started?
-    authStarted: boolean;
-    /// The authentication error
-    authError: string | null;
-    /// The PKCE challenge
-    pkceChallengeValue: string | null;
-    /// The PKCE challenge
-    pkceChallengeVerifier: string | null;
-    /// The popup window
-    openAuthWindow: Window | null;
-    /// The code
-    coreAuthCode: string | null;
-    /// The github access token
-    coreAccessToken: SalesforceCoreAccessToken | null;
-    /// The data cloud access token
-    dataCloudAccessToken: SalesforceDataCloudAccessToken | null;
-}
-
-export interface SalesforceAuthParams {
-    /// The oauth redirect
-    oauthRedirect: URL;
-    /// The base URL
-    instanceUrl: URL;
-    /// The client id
-    clientId: string;
-    /// The client secret.
-    /// This is meant for client secrets that the users enters ad-hoc.
-    clientSecret: string | null;
-}
-
-export const CONNECT = Symbol('CONNECT');
-export const DISCONNECT = Symbol('DISCONNECT');
-export const AUTH_FAILED = Symbol('AUTH_FAILED');
-const GENERATED_PKCE_CHALLENGE = Symbol('GENERATED_PKCE_CHALLENGE');
-const AUTH_WINDOW_CLOSED = Symbol('AUTH_WINDOW_CLOSED');
-const AUTH_WINDOW_OPENED = Symbol('AUTH_WINDOW_OPENED');
-const RECEIVED_AUTH_CODE = Symbol('RECEIVED_AUTH_CODE');
-const RECEIVED_CORE_ACCESS_TOKEN = Symbol('RECEIVED_CORE_ACCESS_TOKEN');
-const RECEIVED_DATA_CLOUD_ACCESS_TOKEN = Symbol('RECEIVED_DATA_CLOUD_ACCESS_TOKEN');
-
-export type SalesforceAuthAction =
-    | Action<typeof CONNECT, SalesforceAuthParams>
-    | Action<typeof DISCONNECT, null>
-    | Action<typeof AUTH_WINDOW_OPENED, Window>
-    | Action<typeof AUTH_WINDOW_CLOSED, null>
-    | Action<typeof AUTH_FAILED, string>
-    | Action<typeof GENERATED_PKCE_CHALLENGE, [string, string]>
-    | Action<typeof RECEIVED_AUTH_CODE, string>
-    | Action<typeof RECEIVED_CORE_ACCESS_TOKEN, SalesforceCoreAccessToken>
-    | Action<typeof RECEIVED_DATA_CLOUD_ACCESS_TOKEN, SalesforceDataCloudAccessToken>;
-
-function reduceAuthState(state: SalesforceAuthState, action: SalesforceAuthAction): SalesforceAuthState {
-    switch (action.type) {
-        case CONNECT:
-            return {
-                authParams: action.value,
-                authError: null,
-                authRequested: true,
-                authStarted: false,
-                pkceChallengeValue: null,
-                pkceChallengeVerifier: null,
-                openAuthWindow: null,
-                coreAuthCode: null,
-                coreAccessToken: null,
-                dataCloudAccessToken: null,
-            };
-        case GENERATED_PKCE_CHALLENGE:
-            return {
-                ...state,
-                pkceChallengeValue: action.value[0],
-                pkceChallengeVerifier: action.value[1],
-            };
-        case AUTH_WINDOW_OPENED:
-            return {
-                ...state,
-                authStarted: true,
-                openAuthWindow: action.value,
-            };
-        case AUTH_WINDOW_CLOSED:
-            if (!state.openAuthWindow) return state;
-            return {
-                ...state,
-                authStarted: true,
-                openAuthWindow: null,
-            };
-        case AUTH_FAILED:
-            return {
-                ...state,
-                authError: action.value,
-            };
-        case RECEIVED_AUTH_CODE:
-            return {
-                ...state,
-                coreAuthCode: action.value,
-            };
-        case RECEIVED_CORE_ACCESS_TOKEN:
-            return {
-                ...state,
-                coreAccessToken: action.value,
-            };
-        case RECEIVED_DATA_CLOUD_ACCESS_TOKEN:
-            return {
-                ...state,
-                dataCloudAccessToken: action.value,
-            };
-        case DISCONNECT:
-            return {
-                authParams: state.authParams,
-                authRequested: false,
-                authStarted: false,
-                authError: null,
-                pkceChallengeValue: null,
-                pkceChallengeVerifier: null,
-                openAuthWindow: null,
-                coreAuthCode: null,
-                coreAccessToken: null,
-                dataCloudAccessToken: null,
-            };
-    }
-}
-
-const AUTH_STATE = React.createContext<SalesforceAuthState | null>(null);
-const AUTH_DISPATCH = React.createContext<Dispatch<SalesforceAuthAction> | null>(null);
 
 interface Props {
     /// The children
@@ -250,7 +128,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
             return;
         }
         popup.focus();
-        dispatch({ type: AUTH_WINDOW_OPENED, value: popup });
+        dispatch({ type: OAUTH_WINDOW_OPENED, value: popup });
     }, [state.authRequested, state.authError, state.openAuthWindow, state.pkceChallengeValue]);
 
     // Effect to forget about the auth window when it closes
@@ -260,7 +138,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
             if (state.openAuthWindow?.closed) {
                 clearInterval(loop);
                 dispatch({
-                    type: AUTH_WINDOW_CLOSED,
+                    type: OAUTH_WINDOW_CLOSED,
                     value: null,
                 });
             }
@@ -281,7 +159,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
             const code = params.get('code');
             if (!code) return;
             dispatch({
-                type: RECEIVED_AUTH_CODE,
+                type: RECEIVED_CORE_AUTH_CODE,
                 value: code,
             });
         };
@@ -320,8 +198,9 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
                 });
                 const responseBody = await response.json();
                 const accessToken = readCoreAccessToken(responseBody);
+                console.log(accessToken);
                 dispatch({
-                    type: RECEIVED_CORE_ACCESS_TOKEN,
+                    type: RECEIVED_CORE_AUTH_TOKEN,
                     value: accessToken,
                 });
             } catch (error: any) {
@@ -362,6 +241,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
                 });
                 const responseBody = await response.json();
                 const accessToken = readDataCloudAccessToken(responseBody);
+                console.log(accessToken);
                 dispatch({
                     type: RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
                     value: accessToken,
@@ -381,11 +261,11 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
     }, [state.coreAccessToken]);
 
     return (
-        <AUTH_DISPATCH.Provider value={dispatch}>
-            <AUTH_STATE.Provider value={state}>{props.children}</AUTH_STATE.Provider>
-        </AUTH_DISPATCH.Provider>
+        <AUTH_FLOW_DISPATCH_CTX.Provider value={dispatch}>
+            <AUTH_FLOW_STATE_CTX.Provider value={state}>{props.children}</AUTH_FLOW_STATE_CTX.Provider>
+        </AUTH_FLOW_DISPATCH_CTX.Provider>
     );
 };
 
-export const useSalesforceAuthState = (): SalesforceAuthState => React.useContext(AUTH_STATE)!;
-export const useSalesforceAuthFlow = (): Dispatch<SalesforceAuthAction> => React.useContext(AUTH_DISPATCH)!;
+export const useSalesforceAuthState = (): SalesforceAuthState => React.useContext(AUTH_FLOW_STATE_CTX)!;
+export const useSalesforceAuthFlow = (): Dispatch<SalesforceAuthAction> => React.useContext(AUTH_FLOW_DISPATCH_CTX)!;
