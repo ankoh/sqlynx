@@ -3,7 +3,12 @@
 import React from 'react';
 import getPkce from 'oauth-pkce';
 import { Action, Dispatch } from '../utils/action';
-import { SalesforceAccessToken, readAccessToken } from './salesforce_api_client';
+import {
+    SalesforceCoreAccessToken,
+    SalesforceDataCloudAccessToken,
+    readCoreAccessToken,
+    readDataCloudAccessToken,
+} from './salesforce_api_client';
 
 import './oauth_callback.html';
 
@@ -58,11 +63,9 @@ export interface SalesforceAuthState {
     /// The code
     coreAuthCode: string | null;
     /// The github access token
-    coreAccessToken: SalesforceAccessToken | null;
-    /// The data cloud instance Url
-    dataCloudInstanceUrl: string | null;
+    coreAccessToken: SalesforceCoreAccessToken | null;
     /// The data cloud access token
-    dataCloudAccessToken: string | null;
+    dataCloudAccessToken: SalesforceDataCloudAccessToken | null;
 }
 
 export interface SalesforceAuthParams {
@@ -85,6 +88,7 @@ const AUTH_WINDOW_CLOSED = Symbol('AUTH_WINDOW_CLOSED');
 const AUTH_WINDOW_OPENED = Symbol('AUTH_WINDOW_OPENED');
 const RECEIVED_AUTH_CODE = Symbol('RECEIVED_AUTH_CODE');
 const RECEIVED_CORE_ACCESS_TOKEN = Symbol('RECEIVED_CORE_ACCESS_TOKEN');
+const RECEIVED_DATA_CLOUD_ACCESS_TOKEN = Symbol('RECEIVED_DATA_CLOUD_ACCESS_TOKEN');
 
 export type SalesforceAuthAction =
     | Action<typeof CONNECT, SalesforceAuthParams>
@@ -94,7 +98,8 @@ export type SalesforceAuthAction =
     | Action<typeof AUTH_FAILED, string>
     | Action<typeof GENERATED_PKCE_CHALLENGE, [string, string]>
     | Action<typeof RECEIVED_AUTH_CODE, string>
-    | Action<typeof RECEIVED_CORE_ACCESS_TOKEN, SalesforceAccessToken>;
+    | Action<typeof RECEIVED_CORE_ACCESS_TOKEN, SalesforceCoreAccessToken>
+    | Action<typeof RECEIVED_DATA_CLOUD_ACCESS_TOKEN, SalesforceDataCloudAccessToken>;
 
 function reduceAuthState(state: SalesforceAuthState, action: SalesforceAuthAction): SalesforceAuthState {
     switch (action.type) {
@@ -109,7 +114,6 @@ function reduceAuthState(state: SalesforceAuthState, action: SalesforceAuthActio
                 openAuthWindow: null,
                 coreAuthCode: null,
                 coreAccessToken: null,
-                dataCloudInstanceUrl: null,
                 dataCloudAccessToken: null,
             };
         case GENERATED_PKCE_CHALLENGE:
@@ -146,6 +150,11 @@ function reduceAuthState(state: SalesforceAuthState, action: SalesforceAuthActio
                 ...state,
                 coreAccessToken: action.value,
             };
+        case RECEIVED_DATA_CLOUD_ACCESS_TOKEN:
+            return {
+                ...state,
+                dataCloudAccessToken: action.value,
+            };
         case DISCONNECT:
             return {
                 authParams: state.authParams,
@@ -157,7 +166,6 @@ function reduceAuthState(state: SalesforceAuthState, action: SalesforceAuthActio
                 openAuthWindow: null,
                 coreAuthCode: null,
                 coreAccessToken: null,
-                dataCloudInstanceUrl: null,
                 dataCloudAccessToken: null,
             };
     }
@@ -311,10 +319,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
                     signal: abortController.signal,
                 });
                 const responseBody = await response.json();
-                const accessToken = readAccessToken(responseBody);
-                console.log(accessToken);
-
-                // No longer mounted?
+                const accessToken = readCoreAccessToken(responseBody);
                 dispatch({
                     type: RECEIVED_CORE_ACCESS_TOKEN,
                     value: accessToken,
@@ -356,8 +361,11 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
                     signal: abortController.signal,
                 });
                 const responseBody = await response.json();
-                const accessToken = readAccessToken(responseBody);
-                console.log(accessToken);
+                const accessToken = readDataCloudAccessToken(responseBody);
+                dispatch({
+                    type: RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
+                    value: accessToken,
+                });
             } catch (error: any) {
                 if (error.name === 'AbortError') {
                     return;
