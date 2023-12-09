@@ -10,6 +10,7 @@ import {
     useSalesforceAuthFlow,
     CONNECT,
     DISCONNECT,
+    AUTH_FAILED,
 } from '../../connectors/salesforce_auth_flow';
 import { useSalesforceUserInfo } from '../../connectors/salesforce_userinfo_resolver';
 import { Skeleton } from '../../view/skeleton';
@@ -35,7 +36,12 @@ const SalesforceAuthFlowPanel: React.FC<SalesforceAuthFlowProps> = (props: Sales
     const userInfo = useSalesforceUserInfo();
     const authFlow = useSalesforceAuthFlow();
     const auth = useSalesforceAuthState();
-    const [error, setError] = React.useState<string | null>(null);
+
+    const setError = (msg: string) =>
+        authFlow({
+            type: AUTH_FAILED,
+            value: msg,
+        });
 
     // Select auth parameters
     const authParams = React.useMemo(() => {
@@ -180,7 +186,7 @@ const SalesforceAuthFlowPanel: React.FC<SalesforceAuthFlowProps> = (props: Sales
                     </div>
                 </div>
             )}
-            {error && <div>{error}</div>}
+            {auth.authError && <div className={panelStyle.auth_error}>{auth.authError}</div>}
         </div>
     );
 };

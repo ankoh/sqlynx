@@ -79,6 +79,11 @@
     column-gap: 16px;
 }
 
+.auth_error {
+    border-top: 1px solid var(--border_color_primary);
+    padding: 8px 16px 8px 16px;
+}
+
 .skeleton_title {
 }
 
