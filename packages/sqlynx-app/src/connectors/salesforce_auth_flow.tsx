@@ -79,10 +79,10 @@ export interface SalesforceAuthParams {
 
 export const CONNECT = Symbol('CONNECT');
 export const DISCONNECT = Symbol('DISCONNECT');
+export const AUTH_FAILED = Symbol('AUTH_FAILED');
 const GENERATED_PKCE_CHALLENGE = Symbol('GENERATED_PKCE_CHALLENGE');
 const AUTH_WINDOW_CLOSED = Symbol('AUTH_WINDOW_CLOSED');
 const AUTH_WINDOW_OPENED = Symbol('AUTH_WINDOW_OPENED');
-const AUTH_FAILED = Symbol('AUTH_FAILED');
 const RECEIVED_AUTH_CODE = Symbol('RECEIVED_AUTH_CODE');
 const RECEIVED_CORE_ACCESS_TOKEN = Symbol('RECEIVED_CORE_ACCESS_TOKEN');
 
@@ -285,11 +285,11 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
 
     // Effect to get the core access token
     React.useEffect(() => {
-        if (!state.coreAuthCode || !state.authParams) return;
+        if (!state.coreAuthCode || !state.authParams || state.authError) return;
         const abortController = new AbortController();
         (async () => {
             try {
-                const searchParams: Record<string, string> = {
+                const params: Record<string, string> = {
                     grant_type: 'authorization_code',
                     code: state.coreAuthCode!,
                     redirect_uri: state.authParams!.oauthRedirect.toString(),
@@ -298,7 +298,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
                     format: 'json',
                 };
                 if (state.authParams!.clientSecret !== null) {
-                    searchParams.client_secret = state.authParams!.clientSecret;
+                    params.client_secret = state.authParams!.clientSecret;
                 }
                 // Get the access token
                 const response = await fetch(`${state.authParams!.instanceUrl.toString()}services/oauth2/token`, {
@@ -307,7 +307,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
                         Accept: 'application/json',
                         'Content-Type': 'application/x-www-form-urlencoded',
                     }),
-                    body: new URLSearchParams(searchParams),
+                    body: new URLSearchParams(params),
                     signal: abortController.signal,
                 });
                 const responseBody = await response.json();
@@ -322,13 +322,55 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
             } catch (error: any) {
                 if (error.name === 'AbortError') {
                     return;
-                } else {
-                    throw error;
+                } else if (error instanceof Error) {
+                    dispatch({
+                        type: AUTH_FAILED,
+                        value: error.message,
+                    });
                 }
             }
         })();
         return () => abortController.abort();
     }, [state.coreAuthCode]);
+
+    // Effect to get the data cloud access token
+    React.useEffect(() => {
+        if (!state.coreAccessToken?.accessToken || !state.authParams || state.authError) return;
+        const abortController = new AbortController();
+        const coreAccessToken = state.coreAccessToken.accessToken;
+        (async () => {
+            try {
+                const params: Record<string, string> = {
+                    grant_type: 'urn:salesforce:grant-type:external:cdp',
+                    subject_token: coreAccessToken,
+                    subject_token_type: 'urn:ietf:params:oauth:token-type:access_token',
+                };
+                // Get the data cloud access token
+                const response = await fetch(`${state.authParams!.instanceUrl.toString()}services/a360/token`, {
+                    method: 'POST',
+                    headers: new Headers({
+                        Accept: 'application/json',
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    }),
+                    body: new URLSearchParams(params),
+                    signal: abortController.signal,
+                });
+                const responseBody = await response.json();
+                const accessToken = readAccessToken(responseBody);
+                console.log(accessToken);
+            } catch (error: any) {
+                if (error.name === 'AbortError') {
+                    return;
+                } else if (error instanceof Error) {
+                    dispatch({
+                        type: AUTH_FAILED,
+                        value: error.message,
+                    });
+                }
+            }
+        })();
+        return () => abortController.abort();
+    }, [state.coreAccessToken]);
 
     return (
         <AUTH_DISPATCH.Provider value={dispatch}>
