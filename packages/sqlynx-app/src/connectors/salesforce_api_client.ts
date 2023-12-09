@@ -2,7 +2,7 @@ import { sleep } from '../utils/sleep';
 
 import SalesforceDummyAccount from '../../static/img/salesforce_account_placeholder.png';
 
-export interface SalesforceAccessToken {
+export interface SalesforceCoreAccessToken {
     /// The OAuth token
     accessToken: string | null;
     /// The instance url
@@ -23,6 +23,19 @@ export interface SalesforceAccessToken {
     signature: string | null;
     /// A Bearer token type
     tokenType: string | null;
+}
+
+export interface SalesforceDataCloudAccessToken {
+    /// The access token
+    accessToken: string | null;
+    /// The expiration time
+    expiresAt: Date | null;
+    /// The instance URL
+    instanceURL: URL | null;
+    /// The issued token type
+    issuedTokenType: string;
+    /// The token type
+    tokenType: string;
 }
 
 export interface UserInformationPhotos {
@@ -55,7 +68,7 @@ export interface SalesforceUserInformation {
     zoneinfo: string | null;
 }
 
-export function readAccessToken(obj: any): SalesforceAccessToken {
+export function readCoreAccessToken(obj: any): SalesforceCoreAccessToken {
     return {
         accessToken: obj.access_token ?? null,
         apiInstanceUrl: obj.api_instance_url ?? null,
@@ -66,6 +79,20 @@ export function readAccessToken(obj: any): SalesforceAccessToken {
         refreshToken: obj.refresh_token ?? null,
         scope: obj.scope ?? null,
         signature: obj.signature ?? null,
+        tokenType: obj.token_type ?? null,
+    };
+}
+
+export function readDataCloudAccessToken(obj: any): SalesforceDataCloudAccessToken {
+    const expiration = new Date();
+    if (obj.expires_in) {
+        expiration.setSeconds(expiration.getSeconds() + obj.expires_in);
+    }
+    return {
+        accessToken: obj.access_token ?? null,
+        expiresAt: obj.expires_in ? expiration : null,
+        instanceURL: obj.instance_url ?? null,
+        issuedTokenType: obj.issued_token_type ?? null,
         tokenType: obj.token_type ?? null,
     };
 }
@@ -98,11 +125,14 @@ export function readUserInformation(obj: any): SalesforceUserInformation {
 }
 
 export interface SalesforceAPIClientInterface {
-    getUserInfo(access: SalesforceAccessToken, cancel: AbortSignal): Promise<SalesforceUserInformation>;
+    getUserInfo(access: SalesforceCoreAccessToken, cancel: AbortSignal): Promise<SalesforceUserInformation>;
 }
 
 export class SalesforceAPIClient implements SalesforceAPIClientInterface {
-    public async getUserInfo(access: SalesforceAccessToken, cancel: AbortSignal): Promise<SalesforceUserInformation> {
+    public async getUserInfo(
+        access: SalesforceCoreAccessToken,
+        cancel: AbortSignal,
+    ): Promise<SalesforceUserInformation> {
         const params = new URLSearchParams();
         params.set('format', 'json');
         params.set('access_token', access.accessToken ?? '');
@@ -117,7 +147,7 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
 }
 
 export class SalesforceAPIClientMock implements SalesforceAPIClientInterface {
-    async getUserInfo(_access: SalesforceAccessToken, _cancel: AbortSignal): Promise<SalesforceUserInformation> {
+    async getUserInfo(_access: SalesforceCoreAccessToken, _cancel: AbortSignal): Promise<SalesforceUserInformation> {
         /// Wait for 1 second to simulate initial loading
         await sleep(200);
         // Construct a dummy user information
