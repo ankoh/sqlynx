@@ -38,12 +38,12 @@ export interface SalesforceDataCloudAccessToken {
     tokenType: string;
 }
 
-export interface UserInformationPhotos {
+export interface SalesforceUserInfoPhotos {
     picture: string | null;
     thumbnail: string | null;
 }
 
-export interface SalesforceUserInformation {
+export interface SalesforceUserInfo {
     active: boolean | null;
     email: string | null;
     emailVerified: boolean | null;
@@ -56,7 +56,7 @@ export interface SalesforceUserInformation {
     name: string | null;
     nickname: string | null;
     organizationId: string | null;
-    photos: UserInformationPhotos | null;
+    photos: SalesforceUserInfoPhotos | null;
     picture: string | null;
     preferredUsername: string | null;
     profile: string | null;
@@ -68,7 +68,30 @@ export interface SalesforceUserInformation {
     zoneinfo: string | null;
 }
 
-export interface SalesforceDataCloudMetadata {}
+export interface SalesforceMetadataEntityField {
+    name: string;
+    displayName: string;
+    type: string;
+    businessType: string;
+}
+
+export interface SalesforceMetadataPrimaryKey {
+    indexOrder: string;
+    name: string;
+    displayName: string;
+}
+
+export interface SalesforceMetadataEntity {
+    name: string;
+    displayName: string;
+    category: string;
+    fields: SalesforceMetadataEntityField[];
+    primaryKeys: SalesforceMetadataPrimaryKey[];
+}
+
+export interface SalesforceMetadata {
+    metadata: SalesforceMetadataEntity[];
+}
 
 export function readCoreAccessToken(obj: any): SalesforceCoreAccessToken {
     return {
@@ -106,7 +129,7 @@ export function readDataCloudAccessToken(obj: any): SalesforceDataCloudAccessTok
     };
 }
 
-export function readUserInformation(obj: any): SalesforceUserInformation {
+export function readUserInformation(obj: any): SalesforceUserInfo {
     return {
         active: obj.active ?? null,
         email: obj.email ?? null,
@@ -134,15 +157,12 @@ export function readUserInformation(obj: any): SalesforceUserInformation {
 }
 
 export interface SalesforceAPIClientInterface {
-    getUserInfo(access: SalesforceCoreAccessToken, cancel: AbortSignal): Promise<SalesforceUserInformation>;
-    getMetadata(access: SalesforceDataCloudAccessToken, cancel: AbortSignal): Promise<SalesforceDataCloudMetadata>;
+    getUserInfo(access: SalesforceCoreAccessToken, cancel: AbortSignal): Promise<SalesforceUserInfo>;
+    getMetadata(access: SalesforceDataCloudAccessToken, cancel: AbortSignal): Promise<SalesforceMetadata>;
 }
 
 export class SalesforceAPIClient implements SalesforceAPIClientInterface {
-    public async getUserInfo(
-        access: SalesforceCoreAccessToken,
-        cancel: AbortSignal,
-    ): Promise<SalesforceUserInformation> {
+    public async getUserInfo(access: SalesforceCoreAccessToken, cancel: AbortSignal): Promise<SalesforceUserInfo> {
         const params = new URLSearchParams();
         params.set('format', 'json');
         params.set('access_token', access.accessToken ?? '');
@@ -154,10 +174,7 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
         return responseInfo;
     }
 
-    public async getMetadata(
-        access: SalesforceDataCloudAccessToken,
-        cancel: AbortSignal,
-    ): Promise<SalesforceDataCloudMetadata> {
+    public async getMetadata(access: SalesforceDataCloudAccessToken, cancel: AbortSignal): Promise<SalesforceMetadata> {
         const params = new URLSearchParams();
         console.log(access.instanceUrl);
         const response = await fetch(`${access.instanceUrl}api/v1/metadata?${params.toString()}`, {
@@ -168,12 +185,12 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
         });
         const responseJson = await response.json();
         console.log(responseJson);
-        return {};
+        return responseJson as SalesforceMetadata;
     }
 }
 
 export class SalesforceAPIClientMock implements SalesforceAPIClientInterface {
-    async getUserInfo(_access: SalesforceCoreAccessToken, _cancel: AbortSignal): Promise<SalesforceUserInformation> {
+    async getUserInfo(_access: SalesforceCoreAccessToken, _cancel: AbortSignal): Promise<SalesforceUserInfo> {
         /// Wait for 1 second to simulate initial loading
         await sleep(200);
         // Construct a dummy user information
@@ -208,7 +225,9 @@ export class SalesforceAPIClientMock implements SalesforceAPIClientInterface {
     public async getMetadata(
         _access: SalesforceDataCloudAccessToken,
         _cancel: AbortSignal,
-    ): Promise<SalesforceDataCloudMetadata> {
-        return {};
+    ): Promise<SalesforceMetadata> {
+        return {
+            metadata: [],
+        };
     }
 }

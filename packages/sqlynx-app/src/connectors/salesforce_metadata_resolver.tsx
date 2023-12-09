@@ -1,17 +1,17 @@
 import * as React from 'react';
 import { useSalesforceAuthState } from './salesforce_auth_flow';
 import { useSalesforceApi } from './salesforce_api_provider';
-import { SalesforceDataCloudMetadata } from './salesforce_api_client';
+import { SalesforceMetadata } from './salesforce_api_client';
 
 interface Props {
     children: React.ReactElement;
 }
 
 interface State {
-    metadata: SalesforceDataCloudMetadata | null;
+    metadata: SalesforceMetadata | null;
 }
 
-const metadataCtx = React.createContext<SalesforceDataCloudMetadata | null>(null);
+const metadataCtx = React.createContext<SalesforceMetadata | null>(null);
 
 export function SalesforceMetadataResolver(props: Props) {
     const [state, setState] = React.useState<State>({
@@ -51,4 +51,4 @@ export function SalesforceMetadataResolver(props: Props) {
     return <metadataCtx.Provider value={state.metadata}>{props.children}</metadataCtx.Provider>;
 }
 
-export const useSalesforceMetadata = (): SalesforceDataCloudMetadata | null => React.useContext(metadataCtx);
+export const useSalesforceMetadata = (): SalesforceMetadata | null => React.useContext(metadataCtx);
