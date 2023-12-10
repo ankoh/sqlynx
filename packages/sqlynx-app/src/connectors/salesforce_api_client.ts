@@ -1,4 +1,4 @@
-import { SalesforceAuthParams } from './salesforce_auth_state';
+import { SalesforceAuthConfig, SalesforceAuthParams } from './salesforce_auth_state';
 
 export interface SalesforceCoreAccessToken {
     /// The OAuth token
@@ -165,7 +165,8 @@ export function readUserInformation(obj: any): SalesforceUserInfo {
 
 export interface SalesforceConnectorInterface {
     getCoreAccessToken(
-        params: SalesforceAuthParams,
+        authConfig: SalesforceAuthConfig,
+        authParams: SalesforceAuthParams,
         authCode: string,
         pkceVerifier: string,
         cancel: AbortSignal,
@@ -180,6 +181,7 @@ export interface SalesforceConnectorInterface {
 
 export class SalesforceAPIClient implements SalesforceConnectorInterface {
     public async getCoreAccessToken(
+        authConfig: SalesforceAuthConfig,
         authParams: SalesforceAuthParams,
         authCode: string,
         pkceVerifier: string,
@@ -188,12 +190,12 @@ export class SalesforceAPIClient implements SalesforceConnectorInterface {
         const params: Record<string, string> = {
             grant_type: 'authorization_code',
             code: authCode!,
-            redirect_uri: authParams.oauthRedirect.toString(),
+            redirect_uri: authConfig.oauthRedirect.toString(),
             client_id: authParams.clientId,
             code_verifier: pkceVerifier,
             format: 'json',
         };
-        if (authParams.clientSecret !== null) {
+        if (authParams.clientSecret && authParams.clientSecret !== null) {
             params.client_secret = authParams.clientSecret;
         }
         // Get the access token

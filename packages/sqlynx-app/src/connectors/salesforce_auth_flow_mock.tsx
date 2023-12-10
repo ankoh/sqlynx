@@ -1,7 +1,5 @@
 import React from 'react';
-import { Dispatch } from '../utils/action';
 import { sleep } from '../utils/sleep';
-import { SalesforceCoreAccessToken, SalesforceDataCloudAccessToken } from './salesforce_api_client';
 
 import {
     RECEIVED_CORE_AUTH_CODE,
@@ -11,64 +9,52 @@ import {
     AUTH_FLOW_STATE_CTX,
     reduceAuthState,
     GENERATED_PKCE_CHALLENGE,
+    AUTH_FLOW_DEFAULT_STATE,
 } from './salesforce_auth_state';
 import { useSalesforceConnector } from './salesforce_connector';
+import { useAppConfig } from '../state/app_config';
 
 interface Props {
     children: React.ReactElement;
 }
 
 export const SalesforceAuthFlowMock: React.FC<Props> = (props: Props) => {
-    const [state, dispatch] = React.useReducer(reduceAuthState, null, () => ({
-        authParams: null,
-        authError: null,
-        authRequested: false,
-        authStarted: false,
-        pendingAuthPopup: null,
-        pkceChallengeValue: null,
-        pkceChallengeVerifier: null,
-        openAuthWindow: null,
-        coreAuthCode: null,
-        coreAccessToken: null,
-        dataCloudInstanceUrl: null,
-        dataCloudAccessToken: null,
-    }));
-    const api = useSalesforceConnector();
-
-    const authParams = {
-        oauthRedirect: new URL('http://localhost'),
-        instanceUrl: new URL('http://localhost'),
-        clientId: 'core-client-id',
-        clientSecret: null,
-    };
-    const pkceChallenge = 'pkce-challenge';
-    const pkceChallengeVerfifier = 'pkce-challenge-verifier';
+    const config = useAppConfig();
+    const connector = useSalesforceConnector();
+    const connectorConfig = config.value?.connectors?.salesforce ?? null;
+    const [state, dispatch] = React.useReducer(reduceAuthState, AUTH_FLOW_DEFAULT_STATE);
 
     // Effect to get the core access token
     React.useEffect(() => {
-        if (!state.authRequested) return;
+        if (!connectorConfig?.auth || !state.authParams || !state.authRequested) return;
         const abort = new AbortController();
+        const pkceChallenge = config.value?.connectors?.salesforce?.mock?.pkceChallenge ?? {
+            value: 'pkce-challenge',
+            verifier: 'pkce-verifier',
+        };
+        const authParams = state.authParams;
         (async () => {
             dispatch({
                 type: GENERATED_PKCE_CHALLENGE,
-                value: [pkceChallenge, pkceChallengeVerfifier],
+                value: pkceChallenge,
             });
             await sleep(200);
             dispatch({
                 type: RECEIVED_CORE_AUTH_CODE,
                 value: 'core-access-auth-code',
             });
-            const coreAccess = await api.getCoreAccessToken(
+            const coreAccess = await connector.getCoreAccessToken(
+                connectorConfig.auth,
                 authParams,
                 'core-access-code',
-                pkceChallengeVerfifier,
+                pkceChallenge.verifier,
                 abort.signal,
             );
             dispatch({
                 type: RECEIVED_CORE_AUTH_TOKEN,
                 value: coreAccess,
             });
-            const dataCloudAccess = await api.getDataCloudAccessToken(coreAccess, abort.signal);
+            const dataCloudAccess = await connector.getDataCloudAccessToken(coreAccess, abort.signal);
             dispatch({
                 type: RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
                 value: dataCloudAccess,

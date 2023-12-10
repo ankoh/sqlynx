@@ -1,6 +1,7 @@
 import React from 'react';
-import config_url from '../../static/config.json';
+import CONFIG_URL from '../../static/config.json';
 import { Maybe, MaybeStatus } from '../utils/maybe';
+import { ConnectorConfigs, readConnectorConfigs } from './connector_configs';
 
 export interface AppFeatures {
     userAccount?: boolean;
@@ -11,27 +12,16 @@ export interface AppFeatures {
     editorActions?: boolean;
 }
 
-export interface SalesforceConnectorConfig {
-    mockAuth?: boolean;
-    oauthRedirect?: string;
-    instanceUrl?: string;
-    clientId?: string;
-    clientSecret?: string;
-}
-
-export interface ConnectorConfigs {
-    salesforce?: SalesforceConnectorConfig;
-}
-
 export interface AppConfig {
     features?: AppFeatures;
     connectors?: ConnectorConfigs;
 }
 
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export function isAppConfig(object: any): object is AppConfig {
-    return true;
-    //return object.program !== undefined;
+export function readAppConfig(object: any): AppConfig {
+    if (object.connectors) {
+        object.connectors = readConnectorConfigs(object.connectors);
+    }
+    return object as AppConfig;
 }
 
 const configCtx = React.createContext<Maybe<AppConfig> | null>(null);
@@ -48,14 +38,12 @@ export const AppConfigResolver: React.FC<Props> = (props: Props) => {
         started.current = true;
         const resolve = async (): Promise<void> => {
             try {
-                const resp = await fetch(config_url as string);
+                const resp = await fetch(CONFIG_URL as string);
                 const body = await resp.json();
-                if (isAppConfig(body)) {
-                    setConfig(c => c.completeWith(body));
-                } else {
-                    setConfig(c => c.failWith(new Error('invalid app config')));
-                }
+                const config = readAppConfig(body);
+                setConfig(c => c.completeWith(config));
             } catch (e: any) {
+                console.error(e);
                 setConfig(c => c.failWith(e));
             }
         };

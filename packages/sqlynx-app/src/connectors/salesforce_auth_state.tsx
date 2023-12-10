@@ -1,6 +1,7 @@
 import React from 'react';
 import { Action, Dispatch } from '../utils/action';
 import { SalesforceCoreAccessToken, SalesforceDataCloudAccessToken } from './salesforce_api_client';
+import { PKCEChallenge } from '../utils/pkce';
 
 export interface SalesforceAuthState {
     /// The auth params
@@ -12,9 +13,7 @@ export interface SalesforceAuthState {
     /// The authentication error
     authError: string | null;
     /// The PKCE challenge
-    pkceChallengeValue: string | null;
-    /// The PKCE challenge
-    pkceChallengeVerifier: string | null;
+    pkceChallenge: PKCEChallenge | null;
     /// The popup window
     openAuthWindow: Window | null;
     /// The code
@@ -25,11 +24,14 @@ export interface SalesforceAuthState {
     dataCloudAccessToken: SalesforceDataCloudAccessToken | null;
 }
 
-export interface SalesforceAuthParams {
+export interface SalesforceAuthConfig {
     /// The oauth redirect
-    oauthRedirect: URL;
+    oauthRedirect: string;
+}
+
+export interface SalesforceAuthParams {
     /// The base URL
-    instanceUrl: URL;
+    instanceUrl: string;
     /// The client id
     clientId: string;
     /// The client secret.
@@ -37,6 +39,19 @@ export interface SalesforceAuthParams {
     clientSecret: string | null;
 }
 
+export const AUTH_FLOW_DEFAULT_STATE: SalesforceAuthState = {
+    authParams: null,
+    authError: null,
+    authRequested: false,
+    authStarted: false,
+    pkceChallenge: null,
+    openAuthWindow: null,
+    coreAuthCode: null,
+    coreAccessToken: null,
+    dataCloudAccessToken: null,
+};
+
+export const CONFIGURE = Symbol('CONFIGURE');
 export const CONNECT = Symbol('CONNECT');
 export const DISCONNECT = Symbol('DISCONNECT');
 export const AUTH_FAILED = Symbol('AUTH_FAILED');
@@ -48,26 +63,38 @@ export const RECEIVED_CORE_AUTH_TOKEN = Symbol('RECEIVED_CORE_ACCESS_TOKEN');
 export const RECEIVED_DATA_CLOUD_ACCESS_TOKEN = Symbol('RECEIVED_DATA_CLOUD_ACCESS_TOKEN');
 
 export type SalesforceAuthAction =
+    | Action<typeof CONFIGURE, SalesforceAuthParams>
     | Action<typeof CONNECT, SalesforceAuthParams>
     | Action<typeof DISCONNECT, null>
     | Action<typeof OAUTH_WINDOW_OPENED, Window>
     | Action<typeof OAUTH_WINDOW_CLOSED, null>
     | Action<typeof AUTH_FAILED, string>
-    | Action<typeof GENERATED_PKCE_CHALLENGE, [string, string]>
+    | Action<typeof GENERATED_PKCE_CHALLENGE, PKCEChallenge>
     | Action<typeof RECEIVED_CORE_AUTH_CODE, string>
     | Action<typeof RECEIVED_CORE_AUTH_TOKEN, SalesforceCoreAccessToken>
     | Action<typeof RECEIVED_DATA_CLOUD_ACCESS_TOKEN, SalesforceDataCloudAccessToken>;
 
 export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAuthAction): SalesforceAuthState {
     switch (action.type) {
+        case CONFIGURE:
+            return {
+                authParams: action.value,
+                authError: null,
+                authRequested: false,
+                authStarted: false,
+                pkceChallenge: null,
+                openAuthWindow: null,
+                coreAuthCode: null,
+                coreAccessToken: null,
+                dataCloudAccessToken: null,
+            };
         case CONNECT:
             return {
                 authParams: action.value,
                 authError: null,
                 authRequested: true,
                 authStarted: false,
-                pkceChallengeValue: null,
-                pkceChallengeVerifier: null,
+                pkceChallenge: null,
                 openAuthWindow: null,
                 coreAuthCode: null,
                 coreAccessToken: null,
@@ -76,8 +103,7 @@ export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAu
         case GENERATED_PKCE_CHALLENGE:
             return {
                 ...state,
-                pkceChallengeValue: action.value[0],
-                pkceChallengeVerifier: action.value[1],
+                pkceChallenge: action.value,
             };
         case OAUTH_WINDOW_OPENED:
             return {
@@ -120,8 +146,7 @@ export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAu
                 authRequested: false,
                 authStarted: false,
                 authError: null,
-                pkceChallengeValue: null,
-                pkceChallengeVerifier: null,
+                pkceChallenge: null,
                 openAuthWindow: null,
                 coreAuthCode: null,
                 coreAccessToken: null,

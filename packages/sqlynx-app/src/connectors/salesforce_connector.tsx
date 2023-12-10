@@ -17,8 +17,8 @@ export const SalesforceConnector: React.FC<Props> = (props: Props) => {
     const config = useAppConfig();
     if (config == null || !config.isResolved()) {
         return undefined;
-    } else if (config.value!.connectors?.salesforce?.mockAuth) {
-        const api = new SalesforceAPIClientMock();
+    } else if (config.value?.connectors?.salesforce?.mock?.enabled) {
+        const api = new SalesforceAPIClientMock(config.value!.connectors?.salesforce?.mock);
         return (
             <CONNECTOR_CTX.Provider value={api}>
                 <SalesforceAuthFlowMock>

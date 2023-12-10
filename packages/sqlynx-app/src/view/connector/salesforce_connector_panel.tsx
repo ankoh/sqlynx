@@ -4,15 +4,15 @@ import { TextInput, FormControl, Button, IconButton } from '@primer/react';
 import { CopyIcon, InfoIcon } from '@primer/octicons-react';
 
 import { useAppConfig } from '../../state/app_config';
+import { useSalesforceUserInfo } from '../../connectors/salesforce_userinfo_resolver';
 import {
     SalesforceAuthParams,
     useSalesforceAuthState,
     useSalesforceAuthFlow,
     CONNECT,
     DISCONNECT,
-    AUTH_FAILED,
+    CONFIGURE,
 } from '../../connectors/salesforce_auth_state';
-import { useSalesforceUserInfo } from '../../connectors/salesforce_userinfo_resolver';
 import { Skeleton } from '../../view/skeleton';
 
 import SalesforceDummyAccount from '../../../static/img/salesforce_account_placeholder.png';
@@ -22,66 +22,29 @@ import symbols from '../../../static/svg/symbols.generated.svg';
 import panelStyle from './salesforce_connector_panel.module.css';
 import pageStyle from '../pages/connections_page.module.css';
 
-const ERROR_MISSING_OAUTH_REDIRECT = 'Missing Salesforce OAuth redirect URL';
-const ERROR_MISSING_INSTANCE_URL = 'Missing Salesforce instance URL';
-const ERROR_MISSING_CLIENT_ID = 'Missing Salesforce client id';
-const ERROR_MISSING_OAUTH_CONFIG = 'Missing Salesforce OAuth config';
-
-interface SalesforceAuthFlowProps {
-    userAuthParams?: SalesforceAuthParams;
-}
+interface SalesforceAuthFlowProps {}
 
 const SalesforceAuthFlowPanel: React.FC<SalesforceAuthFlowProps> = (props: SalesforceAuthFlowProps) => {
     const appConfig = useAppConfig();
-    const userInfo = useSalesforceUserInfo();
+    const authState = useSalesforceAuthState();
     const authFlow = useSalesforceAuthFlow();
-    const auth = useSalesforceAuthState();
+    const userInfo = useSalesforceUserInfo();
 
-    const setError = (msg: string) =>
-        authFlow({
-            type: AUTH_FAILED,
-            value: msg,
-        });
-
-    // Select auth parameters
-    const authParams = React.useMemo(() => {
-        let authParams: SalesforceAuthParams | null = null;
-        if (props.userAuthParams !== undefined) {
-            authParams = props.userAuthParams;
-        } else {
-            const connectorConfig = appConfig.value?.connectors?.salesforce;
-            if (connectorConfig !== undefined) {
-                if (!connectorConfig.oauthRedirect) {
-                    setError(ERROR_MISSING_OAUTH_REDIRECT);
-                } else if (!connectorConfig.instanceUrl) {
-                    setError(ERROR_MISSING_INSTANCE_URL);
-                } else if (!connectorConfig.clientId) {
-                    setError(ERROR_MISSING_CLIENT_ID);
-                } else {
-                    authParams = {
-                        oauthRedirect: new URL(connectorConfig.oauthRedirect),
-                        instanceUrl: new URL(connectorConfig.instanceUrl),
-                        clientId: connectorConfig.clientId,
-                        clientSecret: connectorConfig.clientSecret ?? null,
-                    };
-                }
-            } else {
-                setError(ERROR_MISSING_OAUTH_CONFIG);
-            }
+    // Initialize auth parameters, if missing
+    React.useEffect(() => {
+        if (authState.authParams != null) return;
+        const defaultApp = appConfig.value?.connectors?.salesforce?.defaultApp;
+        if (defaultApp) {
+            authFlow({ type: CONFIGURE, value: defaultApp });
         }
-        return authParams;
-    }, [props.userAuthParams, appConfig]);
+    }, [authState.authParams, appConfig.value]);
 
     const connect = React.useCallback(() => {
-        if (!authParams) {
-            // XXX setError not configured
-            return;
+        if (authState.authParams) {
+            authFlow({ type: CONNECT, value: authState.authParams });
         }
-        authFlow({ type: CONNECT, value: authParams });
-    }, [authParams]);
-    const disconnect = React.useCallback(() => {
-        authFlow({ type: DISCONNECT, value: null });
-    }, [authParams]);
+    }, [authFlow, authState.authParams]);
+    const disconnect = React.useCallback(() => authFlow({ type: DISCONNECT, value: null }), [authFlow]);
 
     const CopyAction = () => (
         <TextInput.Action
@@ -134,20 +97,20 @@ const SalesforceAuthFlowPanel: React.FC<SalesforceAuthFlowProps> = (props: Sales
                 <MutableTextBox
                     name="Instance URL"
                     caption="URL of the Salesforce Instance"
-                    value={authParams?.instanceUrl.toString() ?? ''}
+                    value={authState.authParams?.instanceUrl ?? ''}
                     onChange={() => {}}
                 />
                 <MutableTextBox
                     name="App Consumer Key"
                     caption="Setup > Apps > App Manager > View > Manage Consumer Details"
-                    value={authParams?.clientId ?? ''}
+                    value={authState.authParams?.clientId ?? ''}
                     onChange={() => {}}
                 />
-                <Button sx={{ marginTop: '28px' }} onClick={connect} disabled={auth.authRequested}>
+                <Button sx={{ marginTop: '28px' }} onClick={connect} disabled={authState.authRequested}>
                     Connect
                 </Button>
             </div>
-            {auth.authStarted && (
+            {authState.authStarted && (
                 <div className={panelStyle.auth_info_container}>
                     <div className={panelStyle.auth_info_header}>
                         <div className={panelStyle.userinfo_profile_container}>
@@ -173,36 +136,34 @@ const SalesforceAuthFlowPanel: React.FC<SalesforceAuthFlowProps> = (props: Sales
                     <div className={panelStyle.auth_info_oauth}>
                         <ImmutableTextBox
                             name="API Instance URL"
-                            value={auth.coreAccessToken?.apiInstanceUrl ?? null}
+                            value={authState.coreAccessToken?.apiInstanceUrl ?? null}
                         />
                         <ImmutableSecretBox
                             name="Core Access Token"
-                            value={auth.coreAccessToken?.accessToken ?? null}
+                            value={authState.coreAccessToken?.accessToken ?? null}
                         />
                     </div>
                     <div className={panelStyle.auth_info_dc}>
                         <ImmutableTextBox
                             name="Data Cloud Instance URL"
-                            value={auth.dataCloudAccessToken?.instanceUrl?.toString() ?? null}
+                            value={authState.dataCloudAccessToken?.instanceUrl?.toString() ?? null}
                         />
                         <ImmutableSecretBox
                             name="Data Cloud Access Token"
-                            value={auth.dataCloudAccessToken?.accessToken?.toString() ?? null}
+                            value={authState.dataCloudAccessToken?.accessToken?.toString() ?? null}
                         />
                     </div>
                 </div>
             )}
-            {auth.authError && <div className={panelStyle.auth_error}>{auth.authError}</div>}
+            {authState.authError && <div className={panelStyle.auth_error}>{authState.authError}</div>}
         </div>
     );
 };
 
-interface SalesforceConnectorPanelProps {
-    userAuthParams?: SalesforceAuthParams;
-}
+interface SalesforceConnectorPanelProps {}
 
 export const SalesforceConnectorPanel: React.FC<SalesforceConnectorPanelProps> = (
-    props: SalesforceConnectorPanelProps,
+    _props: SalesforceConnectorPanelProps,
 ) => {
     return (
         <>
@@ -220,7 +181,7 @@ export const SalesforceConnectorPanel: React.FC<SalesforceConnectorPanelProps> =
                 </div>
             </div>
             <div className={pageStyle.card_body_container}>
-                <SalesforceAuthFlowPanel userAuthParams={props.userAuthParams} />
+                <SalesforceAuthFlowPanel />
             </div>
         </>
     );
