@@ -9,18 +9,16 @@ import {
     RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
     AUTH_FLOW_DISPATCH_CTX,
     AUTH_FLOW_STATE_CTX,
-    SalesforceAuthAction,
-    SalesforceAuthState,
     reduceAuthState,
     GENERATED_PKCE_CHALLENGE,
 } from './salesforce_auth_state';
+import { useSalesforceConnector } from './salesforce_connector';
 
 interface Props {
-    /// The children
     children: React.ReactElement;
 }
 
-export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
+export const SalesforceAuthFlowMock: React.FC<Props> = (props: Props) => {
     const [state, dispatch] = React.useReducer(reduceAuthState, null, () => ({
         authParams: null,
         authError: null,
@@ -35,55 +33,48 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
         dataCloudInstanceUrl: null,
         dataCloudAccessToken: null,
     }));
+    const api = useSalesforceConnector();
 
-    const coreAccessToken: SalesforceCoreAccessToken = {
-        accessToken: '',
-        apiInstanceUrl: '',
-        id: '',
-        idToken: '',
-        instanceUrl: '',
-        issuedAt: '',
-        refreshToken: '',
-        scope: '',
-        signature: '',
-        tokenType: '',
+    const authParams = {
+        oauthRedirect: new URL('http://localhost'),
+        instanceUrl: new URL('http://localhost'),
+        clientId: 'core-client-id',
+        clientSecret: null,
     };
-    const expiresAt = new Date();
-    expiresAt.setSeconds(expiresAt.getSeconds() + 7200);
-    const dataCloudAccessToken: SalesforceDataCloudAccessToken = {
-        accessToken: '',
-        expiresAt: expiresAt,
-        instanceUrl: new URL('https://localhost'),
-        issuedTokenType: '',
-        tokenType: '',
-    };
+    const pkceChallenge = 'pkce-challenge';
+    const pkceChallengeVerfifier = 'pkce-challenge-verifier';
 
     // Effect to get the core access token
     React.useEffect(() => {
-        if (state.authRequested) return;
+        if (!state.authRequested) return;
+        const abort = new AbortController();
         (async () => {
-            sleep(200);
             dispatch({
                 type: GENERATED_PKCE_CHALLENGE,
-                value: ['foo', 'bar'],
+                value: [pkceChallenge, pkceChallengeVerfifier],
             });
-            sleep(200);
+            await sleep(200);
             dispatch({
                 type: RECEIVED_CORE_AUTH_CODE,
-                value: '',
+                value: 'core-access-auth-code',
             });
-            sleep(200);
+            const coreAccess = await api.getCoreAccessToken(
+                authParams,
+                'core-access-code',
+                pkceChallengeVerfifier,
+                abort.signal,
+            );
             dispatch({
                 type: RECEIVED_CORE_AUTH_TOKEN,
-                value: coreAccessToken,
+                value: coreAccess,
             });
-            sleep(200);
+            const dataCloudAccess = await api.getDataCloudAccessToken(coreAccess, abort.signal);
             dispatch({
                 type: RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
-                value: dataCloudAccessToken,
+                value: dataCloudAccess,
             });
         })();
-    }, [state.coreAuthCode]);
+    }, [state.authRequested, state.coreAuthCode]);
 
     return (
         <AUTH_FLOW_DISPATCH_CTX.Provider value={dispatch}>
@@ -91,6 +82,3 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
         </AUTH_FLOW_DISPATCH_CTX.Provider>
     );
 };
-
-export const useSalesforceAuthState = (): SalesforceAuthState => React.useContext(AUTH_FLOW_STATE_CTX)!;
-export const useSalesforceAuthFlow = (): Dispatch<SalesforceAuthAction> => React.useContext(AUTH_FLOW_DISPATCH_CTX)!;

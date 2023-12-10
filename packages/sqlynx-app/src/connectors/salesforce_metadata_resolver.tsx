@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { useSalesforceAuthState } from './salesforce_auth_flow';
-import { useSalesforceApi } from './salesforce_api_provider';
+import { useSalesforceAuthState } from './salesforce_auth_state';
+import { useSalesforceConnector } from './salesforce_connector';
 import { SalesforceMetadata } from './salesforce_api_client';
 
 interface Props {
@@ -18,7 +18,7 @@ export function SalesforceMetadataResolver(props: Props) {
         metadata: null,
     });
     const auth = useSalesforceAuthState();
-    const api = useSalesforceApi();
+    const api = useSalesforceConnector();
     React.useEffect(() => {
         // Clear old user info whenever the api changes
         setState(s => ({
