@@ -1,6 +1,6 @@
 import { sleep } from '../utils/sleep';
 import {
-    SalesforceAPIClientInterface,
+    SalesforceConnectorInterface,
     SalesforceCoreAccessToken,
     SalesforceDataCloudAccessToken,
     SalesforceMetadata,
@@ -10,7 +10,7 @@ import {
 import SalesforceDummyAccount from '../../static/img/salesforce_account_placeholder.png';
 import { SalesforceAuthParams } from './salesforce_auth_state';
 
-export class SalesforceAPIClientMock implements SalesforceAPIClientInterface {
+export class SalesforceAPIClientMock implements SalesforceConnectorInterface {
     public async getCoreAccessToken(
         _authParams: SalesforceAuthParams,
         _authCode: string,
@@ -19,16 +19,16 @@ export class SalesforceAPIClientMock implements SalesforceAPIClientInterface {
     ): Promise<SalesforceCoreAccessToken> {
         await sleep(200);
         return {
-            accessToken: '',
+            accessToken: 'core-access-token',
             apiInstanceUrl: 'https://localhost',
-            id: '',
-            idToken: '',
-            instanceUrl: '',
-            issuedAt: '',
-            refreshToken: '',
-            scope: '',
-            signature: '',
-            tokenType: '',
+            id: 'core-access-id',
+            idToken: 'core-access-id-token',
+            instanceUrl: 'core-access-instance-url',
+            issuedAt: 'core-access-issued-at',
+            refreshToken: 'core-access-refresh-token',
+            scope: 'core-access-scope',
+            signature: 'core-access-signature',
+            tokenType: 'core-access-token-type',
         };
     }
 
@@ -71,11 +71,11 @@ export class SalesforceAPIClientMock implements SalesforceAPIClientInterface {
         const expiresAt = new Date();
         expiresAt.setSeconds(expiresAt.getSeconds() + 7200);
         return {
-            accessToken: '',
+            accessToken: 'data-cloud-access-token',
             instanceUrl: new URL('http://localhost'),
             expiresAt: expiresAt,
-            issuedTokenType: '',
-            tokenType: '',
+            issuedTokenType: 'data-cloud-issued-token-type',
+            tokenType: 'data-cloud-token-type',
         };
     }
 

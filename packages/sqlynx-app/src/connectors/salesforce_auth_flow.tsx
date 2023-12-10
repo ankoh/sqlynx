@@ -13,11 +13,9 @@ import {
     RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
     AUTH_FLOW_DISPATCH_CTX,
     AUTH_FLOW_STATE_CTX,
-    SalesforceAuthAction,
-    SalesforceAuthState,
     reduceAuthState,
 } from './salesforce_auth_state';
-import { useSalesforceApi } from './salesforce_api_provider';
+import { useSalesforceConnector } from './salesforce_connector';
 
 // We use the web-server OAuth Flow with or without consumer secret.
 //
@@ -72,7 +70,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
         dataCloudInstanceUrl: null,
         dataCloudAccessToken: null,
     }));
-    const api = useSalesforceApi();
+    const api = useSalesforceConnector();
 
     // Effect to generate PKCE challenge
     React.useEffect(() => {
@@ -237,6 +235,3 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
         </AUTH_FLOW_DISPATCH_CTX.Provider>
     );
 };
-
-export const useSalesforceAuthState = (): SalesforceAuthState => React.useContext(AUTH_FLOW_STATE_CTX)!;
-export const useSalesforceAuthFlow = (): Dispatch<SalesforceAuthAction> => React.useContext(AUTH_FLOW_DISPATCH_CTX)!;

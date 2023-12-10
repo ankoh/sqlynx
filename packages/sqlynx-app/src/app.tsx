@@ -8,7 +8,7 @@ import { ConnectionsPage } from './view/pages/connections_page';
 import { OAuthCallbackPage } from './view/pages/oauth_callback_page';
 import { ScriptLoader } from './scripts/script_loader';
 import { AppStateProvider } from './state/app_state_provider';
-import { SalesforceApiProvider } from './connectors/salesforce_api_provider';
+import { SalesforceConnector } from './connectors/salesforce_connector';
 import { GitHubAuthProvider, GitHubProfileProvider } from './github';
 import { LogProvider } from './state';
 import { AppConfigResolver } from './state/app_config';
@@ -23,7 +23,7 @@ const DataProviders = (props: { children: React.ReactElement }) => (
     <ThemeProvider>
         <AppConfigResolver>
             <LogProvider>
-                <SalesforceApiProvider>
+                <SalesforceConnector>
                     <GitHubAuthProvider>
                         <GitHubProfileProvider>
                             <SQLynxLoader>
@@ -33,7 +33,7 @@ const DataProviders = (props: { children: React.ReactElement }) => (
                             </SQLynxLoader>
                         </GitHubProfileProvider>
                     </GitHubAuthProvider>
-                </SalesforceApiProvider>
+                </SalesforceConnector>
             </LogProvider>
         </AppConfigResolver>
     </ThemeProvider>

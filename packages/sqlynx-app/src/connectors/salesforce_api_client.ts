@@ -163,7 +163,7 @@ export function readUserInformation(obj: any): SalesforceUserInfo {
     };
 }
 
-export interface SalesforceAPIClientInterface {
+export interface SalesforceConnectorInterface {
     getCoreAccessToken(
         params: SalesforceAuthParams,
         authCode: string,
@@ -178,7 +178,7 @@ export interface SalesforceAPIClientInterface {
     getDataCloudMetadata(access: SalesforceDataCloudAccessToken, cancel: AbortSignal): Promise<SalesforceMetadata>;
 }
 
-export class SalesforceAPIClient implements SalesforceAPIClientInterface {
+export class SalesforceAPIClient implements SalesforceConnectorInterface {
     public async getCoreAccessToken(
         authParams: SalesforceAuthParams,
         authCode: string,
