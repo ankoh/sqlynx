@@ -17,7 +17,7 @@ export class Maybe<Value, Progress = null, Err = Error> {
     }
 
     public isResolved(): boolean {
-        return this.status != MaybeStatus.NONE;
+        return this.status == MaybeStatus.COMPLETED || this.status == MaybeStatus.FAILED;
     }
     public completeWith(value: Value): Maybe<Value, Progress, Err> {
         return new Maybe(MaybeStatus.COMPLETED, value, this.error);

@@ -1,6 +1,4 @@
 import React from 'react';
-import getPkce from 'oauth-pkce';
-import { Dispatch } from '../utils/action';
 
 import './oauth_callback.html';
 import {
@@ -14,8 +12,11 @@ import {
     AUTH_FLOW_DISPATCH_CTX,
     AUTH_FLOW_STATE_CTX,
     reduceAuthState,
+    AUTH_FLOW_DEFAULT_STATE,
 } from './salesforce_auth_state';
 import { useSalesforceConnector } from './salesforce_connector';
+import { useAppConfig } from '../state/app_config';
+import { generatePKCEChallenge } from '../utils/pkce';
 
 // We use the web-server OAuth Flow with or without consumer secret.
 //
@@ -56,63 +57,50 @@ interface Props {
 }
 
 export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
-    const [state, dispatch] = React.useReducer(reduceAuthState, null, () => ({
-        authParams: null,
-        authError: null,
-        authRequested: false,
-        authStarted: false,
-        pendingAuthPopup: null,
-        pkceChallengeValue: null,
-        pkceChallengeVerifier: null,
-        openAuthWindow: null,
-        coreAuthCode: null,
-        coreAccessToken: null,
-        dataCloudInstanceUrl: null,
-        dataCloudAccessToken: null,
-    }));
-    const api = useSalesforceConnector();
+    const appConfig = useAppConfig();
+    const connector = useSalesforceConnector();
+    const connectorConfig = appConfig.value?.connectors?.salesforce ?? null;
+    const [state, dispatch] = React.useReducer(reduceAuthState, AUTH_FLOW_DEFAULT_STATE);
 
-    // Effect to generate PKCE challenge
+    // Effect to generate PKCE challenge, regenerate whenever auth params change
     React.useEffect(() => {
-        if (state.pkceChallengeValue) return;
+        if (state.pkceChallenge) return;
         const cancellation = { triggered: false };
         (async () => {
             // Generate PKCE challenge
-            const pkceChallenge = await new Promise<{ codeVerifier: string; codeChallenge: string }>(
-                (resolve, reject) => {
-                    getPkce(42, (error, { verifier, challenge }) => {
-                        if (error != null) {
-                            reject(error);
-                        } else {
-                            resolve({ codeVerifier: verifier, codeChallenge: challenge });
-                        }
-                    });
-                },
-            );
+            const pkceChallenge = await generatePKCEChallenge();
             if (cancellation.triggered) return;
 
             // Set the pending popup URL
             dispatch({
                 type: GENERATED_PKCE_CHALLENGE,
-                value: [pkceChallenge.codeChallenge, pkceChallenge.codeVerifier],
+                value: pkceChallenge,
             });
         })();
 
         return () => {
             cancellation.triggered = true;
         };
-    }, [state.authParams, state.pkceChallengeValue]);
+    }, [state.authParams, state.pkceChallenge]);
 
     // Effect to open the auth window when there is a pending auth
     React.useEffect(() => {
-        if (!state.authRequested || state.authStarted || state.authError || !state.pkceChallengeValue) return;
+        if (
+            !connectorConfig ||
+            !state.authParams ||
+            !state.authRequested ||
+            state.authStarted ||
+            state.authError ||
+            !state.pkceChallenge
+        )
+            return;
 
         // Construct the URI
         const params = state.authParams!;
         const paramParts = [
             `client_id=${params.clientId}`,
-            `redirect_uri=${params.oauthRedirect}`,
-            `code_challenge=${state.pkceChallengeValue}`,
+            `redirect_uri=${connectorConfig.auth.oauthRedirect}`,
+            `code_challenge=${state.pkceChallenge.value}`,
             `code_challange_method=S256`,
             `response_type=code`,
         ].join('&');
@@ -128,7 +116,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
         }
         popup.focus();
         dispatch({ type: OAUTH_WINDOW_OPENED, value: popup });
-    }, [state.authRequested, state.authError, state.openAuthWindow, state.pkceChallengeValue]);
+    }, [state.authRequested, state.authError, state.openAuthWindow, state.pkceChallenge]);
 
     // Effect to forget about the auth window when it closes
     React.useEffect(() => {
@@ -170,17 +158,19 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
 
     // Effect to get the core access token
     React.useEffect(() => {
-        if (!state.coreAuthCode || !state.authParams || !state.pkceChallengeVerifier || state.authError) return;
+        if (!connectorConfig || !state.coreAuthCode || !state.authParams || !state.pkceChallenge || state.authError)
+            return;
         const abortController = new AbortController();
         const authParams = state.authParams;
         const authCode = state.coreAuthCode;
-        const pkceChallengeVerifier = state.pkceChallengeVerifier;
+        const pkceChallenge = state.pkceChallenge;
         (async () => {
             try {
-                const token = await api.getCoreAccessToken(
+                const token = await connector.getCoreAccessToken(
+                    connectorConfig.auth,
                     authParams,
                     authCode,
-                    pkceChallengeVerifier,
+                    pkceChallenge.verifier,
                     abortController.signal,
                 );
                 console.log(token);
@@ -200,7 +190,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
             }
         })();
         return () => abortController.abort();
-    }, [state.coreAuthCode, state.pkceChallengeVerifier]);
+    }, [connectorConfig, state.coreAuthCode, state.authParams, state.pkceChallenge, state.authError]);
 
     // Effect to get the data cloud access token
     React.useEffect(() => {
@@ -209,7 +199,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
         const coreAccessToken = state.coreAccessToken;
         (async () => {
             try {
-                const token = await api.getDataCloudAccessToken(coreAccessToken, abortController.signal);
+                const token = await connector.getDataCloudAccessToken(coreAccessToken, abortController.signal);
                 console.log(token);
                 dispatch({
                     type: RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
