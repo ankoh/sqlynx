@@ -326,19 +326,7 @@ flatbuffers::Offset<proto::ParsedScript> ParsedScript::Pack(flatbuffers::FlatBuf
 
 /// Constructor
 AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, std::shared_ptr<AnalyzedScript> external)
-    : context_id(parsed->context_id), parsed_script(std::move(parsed)), external_script(std::move(external)) {}
-
-/// Find a table by id
-std::optional<
-    std::pair<std::reference_wrapper<const AnalyzedScript::Table>, std::span<const AnalyzedScript::TableColumn>>>
-AnalyzedScript::FindTable(QualifiedID table_id) const {
-    if (table_id.GetContext() != context_id || table_id.GetIndex() >= tables.size()) {
-        return std::nullopt;
-    }
-    auto& table = tables[table_id.GetIndex()];
-    auto columns = std::span{table_columns}.subspan(table.columns_begin, table.column_count);
-    return std::make_pair(table, columns);
-}
+    : Schema(parsed->context_id), parsed_script(std::move(parsed)), external_script(std::move(external)) {}
 
 // Pack an analyzed script
 flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::FlatBufferBuilder& builder) {
