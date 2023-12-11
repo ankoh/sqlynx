@@ -40,39 +40,21 @@ NameResolutionPass::NameResolutionPass(ParsedScript& parser, AttributeIndex& att
 
 /// Register external tables from an analyzed program
 void NameResolutionPass::RegisterExternalTables(const AnalyzedScript& external) {
-    // Use a map for external names and assign them new ids.
-    // We don't map (external string -> new string) but instead just track (external id -> new id).
-    //
-    // For each external id:
-    //      Check if the external id is already mapped,
-    //      If not, get string and lookup local string id.
-    //      If not matching any local name, create new id mapping for external name
-
-    // Helper to remap a name id
+    // Helper to remap an external name id
     auto map_name = [this](QualifiedID name, const AnalyzedScript& external) -> QualifiedID {
         if (name.IsNull()) return QualifiedID();
-        // First check if the external id is already mapped,
-        if (auto iter = external_names.find(name); iter != external_names.end()) {
-            return iter->second;
-        }
-        // If not, get name string and lookup local name
         if (auto iter = scanned_program.name_dictionary_ids.find(
                 external.parsed_script->scanned_script->name_dictionary[name.GetIndex()].text);
             iter != scanned_program.name_dictionary_ids.end()) {
             QualifiedID mapped_id{scanned_program.context_id, iter->second};
-            external_names.insert({name, mapped_id});
             return mapped_id;
         }
-        // If not matching any local, create new mapping
-        external_names.insert({name, name});
         return name;
     };
 
     // Copy all over
     external_tables = external.tables;
     external_table_columns = external.table_columns;
-    external_names.clear();
-    external_names.reserve(external.parsed_script->scanned_script->name_dictionary_ids.size());
     external_table_ids.clear();
     external_table_ids.reserve(external_tables.size());
 
