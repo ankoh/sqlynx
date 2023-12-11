@@ -48,8 +48,6 @@ class NameResolutionPass : public PassManager::LTRPass {
     std::vector<AnalyzedScript::Table> external_tables;
     /// The external table columns
     std::vector<AnalyzedScript::TableColumn> external_table_columns;
-    /// The external name mapping
-    ankerl::unordered_dense::map<QualifiedID, QualifiedID, QualifiedID::Hasher> external_names;
     /// The external table map
     ankerl::unordered_dense::map<Analyzer::TableKey, QualifiedID, Analyzer::TableKey::Hasher> external_table_ids;
 
