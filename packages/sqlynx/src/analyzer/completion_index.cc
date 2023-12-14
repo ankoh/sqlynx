@@ -8,6 +8,7 @@
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
+#include "sqlynx/utils/string_conversion.h"
 #include "sqlynx/utils/suffix_trie.h"
 
 namespace sqlynx {
@@ -17,11 +18,11 @@ CompletionIndex::CompletionIndex(ChunkBuffer<EntryData, 256> entry_data, std::ve
     : entry_data(std::move(entry_data)), entries(std::move(entries)), script(std::move(script)) {}
 
 /// Find all entries that share a prefix
-std::span<const CompletionIndex::Entry> CompletionIndex::FindEntriesWithPrefix(
-    CompletionIndex::StringView prefix) const {
-    auto begin = std::lower_bound(entries.begin(), entries.end(), prefix,
-                                  [](const Entry& entry, StringView prefix) { return entry.suffix < prefix; });
-    auto end = std::upper_bound(begin, entries.end(), prefix, [](StringView prefix, const Entry& entry) {
+std::span<const CompletionIndex::Entry> CompletionIndex::FindEntriesWithPrefix(fuzzy_ci_string_view prefix) const {
+    auto begin =
+        std::lower_bound(entries.begin(), entries.end(), prefix,
+                         [](const Entry& entry, fuzzy_ci_string_view prefix) { return entry.suffix < prefix; });
+    auto end = std::upper_bound(begin, entries.end(), prefix, [](fuzzy_ci_string_view prefix, const Entry& entry) {
         return prefix < entry.suffix && !entry.suffix.starts_with(prefix);
     });
     return {begin, static_cast<size_t>(end - begin)};
@@ -44,7 +45,7 @@ const CompletionIndex& CompletionIndex::Keywords() {
             auto& keyword = keywords[i];
             QualifiedID name_id{QualifiedID::KEYWORD_CONTEXT_ID, static_cast<uint32_t>(i)};
             auto& entry_data =
-                entry_data_chunked.Append(EntryData{keyword.name, name_id, proto::NameTag::KEYWORD, 0, 0});
+                entry_data_chunked.Append(EntryData{keyword.name, keyword.name, proto::NameTag::KEYWORD, 0, 0});
             for (size_t offset = 0; offset < entry_data.name_text.size(); ++offset) {
                 auto suffix = entry_data.name_text.substr(offset);
                 entries_chunked.Append(Entry{
@@ -75,7 +76,7 @@ std::pair<std::unique_ptr<CompletionIndex>, proto::StatusCode> CompletionIndex::
         for (size_t i = 0; i < names.size(); ++i) {
             auto& name = names[i];
             QualifiedID name_id{script->context_id, static_cast<uint32_t>(i)};
-            auto& entry_data = entry_data_chunked.Append(EntryData{name.text, name_id, name.tags, name.occurrences});
+            auto& entry_data = entry_data_chunked.Append(EntryData{name.text, name.text, name.tags, name.occurrences});
             for (size_t offset = 0; offset < entry_data.name_text.size(); ++offset) {
                 auto suffix = entry_data.name_text.substr(offset);
                 entries_chunked.Append(Entry{

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <flatbuffers/buffer.h>
+#include <flatbuffers/flatbuffer_builder.h>
 
 #include <functional>
 #include <optional>
@@ -31,55 +32,47 @@ class Schema {
         /// The AST node id in the target script
         std::optional<uint32_t> ast_node_id;
         /// The database name, may refer to different context
-        QualifiedID database_name;
+        std::string_view database_name;
         /// The schema name, may refer to different context
-        QualifiedID schema_name;
+        std::string_view schema_name;
         /// The table name, may refer to different context
-        QualifiedID table_name;
+        std::string_view table_name;
         /// Constructor
-        QualifiedTableName(std::optional<uint32_t> ast_node_id = std::nullopt, QualifiedID database_name = {},
-                           QualifiedID schema_name = {}, QualifiedID table_name = {})
+        QualifiedTableName(std::optional<uint32_t> ast_node_id = std::nullopt, std::string_view database_name = {},
+                           std::string_view schema_name = {}, std::string_view table_name = {})
             : ast_node_id(ast_node_id),
               database_name(database_name),
               schema_name(schema_name),
               table_name(table_name) {}
-        /// Create FlatBuffer
-        operator proto::QualifiedTableName() {
-            return proto::QualifiedTableName{ast_node_id.value_or(PROTO_NULL_U32), database_name.Pack(),
-                                             schema_name.Pack(), table_name.Pack()};
-        }
+        /// Pack as FlatBuffer
+        flatbuffers::Offset<proto::QualifiedTableName> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
     /// A qualified column name
     struct QualifiedColumnName {
         /// The AST node id in the target script
         std::optional<uint32_t> ast_node_id;
         /// The table alias, may refer to different context
-        QualifiedID table_alias;
+        std::string_view table_alias;
         /// The column name, may refer to different context
-        QualifiedID column_name;
+        std::string_view column_name;
         /// Constructor
-        QualifiedColumnName(std::optional<uint32_t> ast_node_id = std::nullopt, QualifiedID table_alias = {},
-                            QualifiedID column_name = {})
+        QualifiedColumnName(std::optional<uint32_t> ast_node_id = std::nullopt, std::string_view table_alias = {},
+                            std::string_view column_name = {})
             : ast_node_id(ast_node_id), table_alias(table_alias), column_name(column_name) {}
-        /// Create FlatBuffer
-        operator proto::QualifiedColumnName() {
-            return proto::QualifiedColumnName{ast_node_id.value_or(PROTO_NULL_U32), table_alias.Pack(),
-                                              column_name.Pack()};
-        }
+        /// Pack as FlatBuffer
+        flatbuffers::Offset<proto::QualifiedColumnName> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
     /// A table column
     struct TableColumn {
         /// The AST node id in the target script
         std::optional<uint32_t> ast_node_id;
         /// The column name, may refer to different context
-        QualifiedID column_name;
+        std::string_view column_name;
         /// Constructor
-        TableColumn(std::optional<uint32_t> ast_node_id = std::nullopt, QualifiedID column_name = {})
+        TableColumn(std::optional<uint32_t> ast_node_id = std::nullopt, std::string_view column_name = {})
             : ast_node_id(ast_node_id), column_name(column_name) {}
-        /// Create FlatBuffer
-        operator proto::TableColumn() {
-            return proto::TableColumn{ast_node_id.value_or(PROTO_NULL_U32), column_name.Pack()};
-        }
+        /// Pack as FlatBuffer
+        flatbuffers::Offset<proto::TableColumn> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
     /// A table
     struct Table {
@@ -105,15 +98,8 @@ class Schema {
               table_name(table_name),
               columns_begin(columns_begin),
               column_count(column_count) {}
-        /// Create FlatBuffer
-        operator proto::Table() {
-            return proto::Table{ast_node_id.value_or(PROTO_NULL_U32),
-                                ast_statement_id.value_or(PROTO_NULL_U32),
-                                ast_scope_root.value_or(PROTO_NULL_U32),
-                                table_name,
-                                columns_begin,
-                                column_count};
-        }
+        /// Pack as FlatBuffer
+        flatbuffers::Offset<proto::Table> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
 
     /// The context id

@@ -2,34 +2,34 @@ include "sqlynx/sql_enums.fbs";
 
 namespace sqlynx.proto;
 
-struct QualifiedTableName {
+table QualifiedTableName {
     // The node id
     ast_node_id: uint32;
     // The name of the database that owns the table 
-    database_name: uint64;
+    database_name: string;
     // The name of the schema that holds the table
-    schema_name: uint64;
+    schema_name: string;
     // The table name, always a table for now
-    table_name: uint64;
+    table_name: string;
 }
 
-struct QualifiedColumnName {
+table QualifiedColumnName {
     // The node id
     ast_node_id: uint32;
     // The table alias, if exists
-    table_alias: uint64;
+    table_alias: string;
     // The column name
-    column_name: uint64;
+    column_name: string;
 }
 
-struct TableColumn {
+table TableColumn {
     // The id of the AST node that created this column declaration
     ast_node_id: uint32;
     // The name of the column that is referenced
-    column_name: uint64;
+    column_name: string;
 }
 
-struct Table {
+table Table {
     // The id of the AST node that created this table declaration.
     ast_node_id: uint32;
     // The id of the statement that created the table declaration
@@ -44,7 +44,7 @@ struct Table {
     column_count: uint32;
 }
 
-struct TableReference {
+table TableReference {
     // The id of the AST node that created this table reference
     ast_node_id: uint32;
     // The id of the statement that contains the table reference
@@ -54,12 +54,12 @@ struct TableReference {
     // The name of the table that is referenced
     table_name: QualifiedTableName;
     // The alias name
-    alias_name: uint64;
+    alias_name: string;
     // The id of the table that is referenced
     table_id: uint64;
 }
 
-struct ColumnReference {
+table ColumnReference {
     // The id of the AST node that created this column reference
     ast_node_id: uint32;
     // The id of the statement that contains the column reference

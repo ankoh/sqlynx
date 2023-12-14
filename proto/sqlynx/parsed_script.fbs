@@ -417,6 +417,4 @@ table ParsedScript {
     nodes: [Node];
     statements: [Statement];
     errors: [Error];
-    name_dictionary: [string];
-    name_tags: [uint64];
 }
