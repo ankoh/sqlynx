@@ -314,49 +314,81 @@ flatbuffers::Offset<proto::ParsedScript> ParsedScript::Pack(flatbuffers::FlatBuf
         err->message = msg;
         out.errors.push_back(std::move(err));
     }
-    // XXX We should not just blindy serialize all names (again) if most of them will just reference input text
-    out.name_dictionary.reserve(scanned_script->name_dictionary.size());
-    out.name_tags.reserve(scanned_script->name_dictionary.size());
-    for (auto& name : scanned_script->name_dictionary) {
-        out.name_dictionary.emplace_back(name.text);
-        out.name_tags.emplace_back(name.tags);
-    }
     return proto::ParsedScript::Pack(builder, &out);
+}
+
+/// Pack as FlatBuffer
+flatbuffers::Offset<proto::TableReference> AnalyzedScript::TableReference::Pack(
+    flatbuffers::FlatBufferBuilder& builder) const {
+    auto table_name_ofs = table_name.Pack(builder);
+    auto alias_name_ofs = builder.CreateString(alias_name);
+    proto::TableReferenceBuilder out{builder};
+    out.add_ast_node_id(ast_node_id.value_or(std::numeric_limits<uint32_t>::max()));
+    out.add_ast_scope_root(ast_scope_root.value_or(std::numeric_limits<uint32_t>::max()));
+    out.add_ast_statement_id(ast_statement_id.value_or(std::numeric_limits<uint32_t>::max()));
+    out.add_table_name(table_name_ofs);
+    out.add_alias_name(alias_name_ofs);
+    out.add_table_id(table_id.Pack());
+    return out.Finish();
+}
+
+/// Pack as FlatBuffer
+flatbuffers::Offset<proto::ColumnReference> AnalyzedScript::ColumnReference::Pack(
+    flatbuffers::FlatBufferBuilder& builder) const {
+    auto column_name_ofs = column_name.Pack(builder);
+    proto::ColumnReferenceBuilder out{builder};
+    out.add_ast_node_id(ast_node_id.value_or(std::numeric_limits<uint32_t>::max()));
+    out.add_ast_scope_root(ast_scope_root.value_or(std::numeric_limits<uint32_t>::max()));
+    out.add_ast_statement_id(ast_statement_id.value_or(std::numeric_limits<uint32_t>::max()));
+    out.add_column_name(column_name_ofs);
+    out.add_table_id(table_id.Pack());
+    out.add_column_id(column_id.value_or(std::numeric_limits<uint32_t>::max()));
+    return out.Finish();
 }
 
 /// Constructor
 AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, std::shared_ptr<AnalyzedScript> external)
     : Schema(parsed->context_id), parsed_script(std::move(parsed)), external_script(std::move(external)) {}
 
+template <typename In, typename Out>
+static flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Out>>> PackVector(
+    flatbuffers::FlatBufferBuilder& builder, const std::vector<In>& elems) {
+    std::vector<flatbuffers::Offset<Out>> offsets;
+    for (auto& elem : elems) {
+        offsets.push_back(elem.Pack(builder));
+    }
+    return builder.CreateVector(offsets);
+};
+
 // Pack an analyzed script
 flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::FlatBufferBuilder& builder) {
-    proto::AnalyzedScriptT out;
-    out.context_id = context_id;
-    out.tables.reserve(tables.size());
-    out.table_columns.reserve(table_columns.size());
-    out.table_references.reserve(table_references.size());
-    out.column_references.reserve(column_references.size());
-    out.graph_edges.reserve(graph_edges.size());
-    out.graph_edge_nodes.reserve(graph_edge_nodes.size());
-    for (auto& table : tables) {
-        out.tables.push_back(table);
+    auto tables_ofs = PackVector<Schema::Table, proto::Table>(builder, tables);
+    auto table_columns_ofs = PackVector<Schema::TableColumn, proto::TableColumn>(builder, table_columns);
+    auto table_references_ofs =
+        PackVector<AnalyzedScript::TableReference, proto::TableReference>(builder, table_references);
+    auto column_references_ofs =
+        PackVector<AnalyzedScript::ColumnReference, proto::ColumnReference>(builder, column_references);
+    proto::QueryGraphEdge* graph_edges_ofs_writer;
+    proto::QueryGraphEdgeNode* graph_edge_nodes_ofs_writer;
+    auto graph_edges_ofs = builder.CreateUninitializedVectorOfStructs(graph_edges.size(), &graph_edges_ofs_writer);
+    auto graph_edge_nodes_ofs =
+        builder.CreateUninitializedVectorOfStructs(graph_edge_nodes.size(), &graph_edge_nodes_ofs_writer);
+    for (size_t i = 0; i < graph_edges.size(); ++i) {
+        graph_edges_ofs_writer[i] = graph_edges[i];
     }
-    for (auto& table_col : table_columns) {
-        out.table_columns.push_back(table_col);
+    for (size_t i = 0; i < graph_edge_nodes.size(); ++i) {
+        graph_edge_nodes_ofs_writer[i] = graph_edge_nodes[i];
     }
-    for (auto& table_ref : table_references) {
-        out.table_references.push_back(table_ref);
-    }
-    for (auto& column_ref : column_references) {
-        out.column_references.push_back(column_ref);
-    }
-    for (auto& graph_edge : graph_edges) {
-        out.graph_edges.push_back(graph_edge);
-    }
-    for (auto& graph_edge_node : graph_edge_nodes) {
-        out.graph_edge_nodes.push_back(graph_edge_node);
-    }
-    return proto::AnalyzedScript::Pack(builder, &out);
+
+    proto::AnalyzedScriptBuilder out{builder};
+    out.add_context_id(context_id);
+    out.add_tables(tables_ofs);
+    out.add_table_columns(table_columns_ofs);
+    out.add_table_references(table_references_ofs);
+    out.add_column_references(column_references_ofs);
+    out.add_graph_edges(graph_edges_ofs);
+    out.add_graph_edge_nodes(graph_edge_nodes_ofs);
+    return out.Finish();
 }
 
 /// Constructor

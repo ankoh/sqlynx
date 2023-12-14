@@ -185,28 +185,21 @@ class AnalyzedScript : public Schema {
         /// The table name, may refer to different context
         QualifiedTableName table_name;
         /// The alias name, may refer to different context
-        QualifiedID alias_name;
+        std::string_view alias_name;
         /// The table id, may refer to different context
         QualifiedID table_id;
         /// Constructor
         TableReference(std::optional<uint32_t> ast_node_id = std::nullopt,
                        std::optional<uint32_t> ast_statement_id = {}, std::optional<uint32_t> ast_scope_root = {},
-                       QualifiedTableName table_name = {}, QualifiedID alias_name = {}, QualifiedID table_id = {})
+                       QualifiedTableName table_name = {}, std::string_view alias_name = {}, QualifiedID table_id = {})
             : ast_node_id(ast_node_id),
               ast_statement_id(ast_statement_id),
               ast_scope_root(ast_scope_root),
               table_name(table_name),
               alias_name(alias_name),
               table_id(table_id) {}
-        /// Create FlatBuffer
-        operator proto::TableReference() {
-            return proto::TableReference{ast_node_id.value_or(PROTO_NULL_U32),
-                                         ast_statement_id.value_or(PROTO_NULL_U32),
-                                         ast_scope_root.value_or(PROTO_NULL_U32),
-                                         table_name,
-                                         alias_name.Pack(),
-                                         table_id.Pack()};
-        }
+        /// Pack as FlatBuffer
+        flatbuffers::Offset<proto::TableReference> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
     /// A column reference
     struct ColumnReference {
@@ -233,15 +226,8 @@ class AnalyzedScript : public Schema {
               column_name(column_name),
               table_id(table_id),
               column_id(column_id) {}
-        /// Create FlatBuffer
-        operator proto::ColumnReference() {
-            return proto::ColumnReference{ast_node_id.value_or(PROTO_NULL_U32),
-                                          ast_statement_id.value_or(PROTO_NULL_U32),
-                                          ast_scope_root.value_or(PROTO_NULL_U32),
-                                          column_name,
-                                          table_id.Pack(),
-                                          column_id.value_or(PROTO_NULL_U32)};
-        }
+        /// Pack as FlatBuffer
+        flatbuffers::Offset<proto::ColumnReference> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
     /// A query graph edge
     struct QueryGraphEdge {

@@ -12,14 +12,12 @@ namespace sqlynx {
 
 class CompletionIndex {
    public:
-    using StringView = fuzzy_ci_string_view;
-
     /// An entry in the trie
     struct EntryData {
-        /// The name id
+        /// The suffix text
+        std::string_view suffix_text;
+        /// The name text
         std::string_view name_text;
-        /// The name id
-        QualifiedID name_id;
         /// The name tags
         NameTags name_tags;
         /// The number of occurrences
@@ -31,18 +29,18 @@ class CompletionIndex {
         size_t weight;
 
         /// Constructor
-        EntryData(std::string_view name_text = {}, QualifiedID name_id = {}, NameTags tags = 0, size_t occurrences = 0,
-                  size_t weight = 0)
-            : name_text(name_text), name_id(name_id), name_tags(tags), occurrences(occurrences), weight(weight) {}
-        /// Constructor
-        EntryData(std::string_view suffix, std::string_view name_text = {}, QualifiedID name_id = {}, NameTags tags = 0,
+        EntryData(std::string_view suffix_text, std::string_view name_text = {}, NameTags tags = 0,
                   size_t occurrences = 0, size_t weight = 0)
-            : name_text(name_text), name_id(name_id), name_tags(tags), occurrences(occurrences), weight(weight) {}
+            : suffix_text(suffix_text),
+              name_text(name_text),
+              name_tags(tags),
+              occurrences(occurrences),
+              weight(weight) {}
     };
 
     struct Entry {
         /// The suffix
-        StringView suffix;
+        fuzzy_ci_string_view suffix;
         /// The entry
         EntryData* data;
     };
@@ -65,10 +63,10 @@ class CompletionIndex {
     /// Get the script
     const auto& GetScript() const { return script; }
     /// Find all entries that share a prefix
-    std::span<const Entry> FindEntriesWithPrefix(StringView prefix) const;
+    std::span<const Entry> FindEntriesWithPrefix(fuzzy_ci_string_view prefix) const;
     /// Find all entries that share a prefix
     inline std::span<const Entry> FindEntriesWithPrefix(std::string_view prefix) const {
-        return FindEntriesWithPrefix(StringView{prefix.data(), prefix.length()});
+        return FindEntriesWithPrefix(fuzzy_ci_string_view{prefix.data(), prefix.length()});
     }
 
     /// Construct completion index from script
