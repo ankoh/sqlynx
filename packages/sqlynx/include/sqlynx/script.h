@@ -48,6 +48,8 @@ class ScannedScript {
         size_t occurrences = 0;
         /// Return the name text
         operator std::string_view() { return text; }
+        /// Return the name text
+        void operator|=(proto::NameTag tag) { tags |= tag; }
     };
 
     /// The context id

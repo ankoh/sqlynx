@@ -105,19 +105,19 @@ AnalyzedScript::QualifiedTableName NameResolutionPass::ReadQualifiedTableName(co
             name.database_name = name_path[0].get();
             name.schema_name = name_path[1].get();
             name.table_name = name_path[2].get();
-            name_path[0].get().tags |= sx::NameTag::DATABASE_NAME;
-            name_path[1].get().tags |= sx::NameTag::SCHEMA_NAME;
-            name_path[2].get().tags |= sx::NameTag::TABLE_NAME;
+            name_path[0].get() |= sx::NameTag::DATABASE_NAME;
+            name_path[1].get() |= sx::NameTag::SCHEMA_NAME;
+            name_path[2].get() |= sx::NameTag::TABLE_NAME;
             break;
         case 2:
             name.schema_name = name_path[0].get();
             name.table_name = name_path[1].get();
-            name_path[0].get().tags |= sx::NameTag::SCHEMA_NAME;
-            name_path[1].get().tags |= sx::NameTag::TABLE_NAME;
+            name_path[0].get() |= sx::NameTag::SCHEMA_NAME;
+            name_path[1].get() |= sx::NameTag::TABLE_NAME;
             break;
         case 1:
             name.table_name = name_path[0].get();
-            name_path[0].get().tags |= sx::NameTag::TABLE_NAME;
+            name_path[0].get() |= sx::NameTag::TABLE_NAME;
             break;
         default:
             break;
@@ -137,12 +137,12 @@ AnalyzedScript::QualifiedColumnName NameResolutionPass::ReadQualifiedColumnName(
         case 2:
             name.table_alias = name_path[0].get();
             name.column_name = name_path[1].get();
-            name_path[0].get().tags |= sx::NameTag::TABLE_ALIAS;
-            name_path[1].get().tags |= sx::NameTag::COLUMN_NAME;
+            name_path[0].get() |= sx::NameTag::TABLE_ALIAS;
+            name_path[1].get() |= sx::NameTag::COLUMN_NAME;
             break;
         case 1:
             name.column_name = name_path[0].get();
-            name_path[0].get().tags |= sx::NameTag::COLUMN_NAME;
+            name_path[0].get() |= sx::NameTag::COLUMN_NAME;
             break;
         default:
             break;
@@ -276,7 +276,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 std::string_view column_name_str;
                 if (column_def_node && column_def_node->node_type() == sx::NodeType::NAME) {
                     auto& name = scanned_program.ReadName(column_def_node->children_begin_or_value());
-                    name.tags |= sx::NameTag::COLUMN_NAME;
+                    name |= sx::NameTag::COLUMN_NAME;
                     column_name_str = name;
                 }
                 if (auto reused = pending_columns_free_list.PopFront()) {
@@ -324,7 +324,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                     auto alias_node = attrs[proto::AttributeKey::SQL_TABLEREF_ALIAS];
                     if (alias_node && alias_node->node_type() == sx::NodeType::NAME) {
                         auto& alias = scanned_program.ReadName(alias_node->children_begin_or_value());
-                        alias.tags |= sx::NameTag::TABLE_ALIAS;
+                        alias |= sx::NameTag::TABLE_ALIAS;
                         alias_str = alias;
                     }
                     // Add table reference
