@@ -46,6 +46,8 @@ class ScannedScript {
         NameTags tags;
         /// The number of occurrences
         size_t occurrences = 0;
+        /// Return the name text
+        operator std::string_view() { return text; }
     };
 
     /// The context id
@@ -84,8 +86,8 @@ class ScannedScript {
     NameID RegisterName(std::string_view s, sx::Location location, sx::NameTag tag = sx::NameTag::NONE);
     /// Register a keyword as name
     NameID RegisterKeywordAsName(std::string_view s, sx::Location location, sx::NameTag tag = sx::NameTag::NONE);
-    /// Tag a name
-    void TagName(NameID name, sx::NameTag tag);
+    /// Read a name
+    Name& ReadName(NameID name);
     /// Read a text at a location
     std::string_view ReadTextAtLocation(sx::Location loc) {
         return std::string_view{text_buffer}.substr(loc.offset(), loc.length());
