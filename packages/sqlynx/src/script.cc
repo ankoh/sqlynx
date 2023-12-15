@@ -90,11 +90,6 @@ NameID ScannedScript::RegisterName(std::string_view s, sx::Location location, sx
     name_dictionary.push_back(Name{.text = s, .location = location, .tags = tag, .occurrences = 1});
     return id;
 }
-/// Tag a name
-void ScannedScript::TagName(NameID name_id, sx::NameTag tag) {
-    assert(name_id <= name_dictionary.size());
-    name_dictionary[name_id].tags |= tag;
-}
 
 /// Find a token at a text offset
 ScannedScript::LocationInfo ScannedScript::FindSymbol(size_t text_offset) {

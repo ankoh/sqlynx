@@ -54,7 +54,7 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// The state of all visited nodes with yet-to-visit parents
     std::vector<NodeState> node_states;
     /// The name path buffer
-    std::vector<NameID> name_path_buffer;
+    std::vector<std::reference_wrapper<ScannedScript::Name>> name_path_buffer;
     /// The pending table columns
     ChunkBuffer<OverlayList<AnalyzedScript::TableColumn>::Node, 16> pending_columns;
     /// The free-list for pending table columns
@@ -79,7 +79,7 @@ class NameResolutionPass : public PassManager::LTRPass {
     ChunkBuffer<OverlayList<AnalyzedScript::QueryGraphEdgeNode>::Node, 16> graph_edge_nodes;
 
     /// Merge child states into a destination state
-    std::span<NameID> ReadNamePath(const sx::Node& node);
+    std::span<std::reference_wrapper<ScannedScript::Name>> ReadNamePath(const sx::Node& node);
     /// Merge child states into a destination state
     AnalyzedScript::QualifiedTableName ReadQualifiedTableName(const sx::Node* node);
     /// Merge child states into a destination state
