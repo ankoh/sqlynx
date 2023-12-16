@@ -4,12 +4,12 @@
 #include "sqlynx/context.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/schema.h"
-#include "sqlynx/script.h"
 #include "sqlynx/utils/attribute_index.h"
 
 namespace sqlynx {
 
 struct NameResolutionPass;
+class AnalyzedScript;
 
 struct Analyzer {
     friend class AnalyzedScript;
@@ -18,11 +18,11 @@ struct Analyzer {
     /// A table key
     struct TableKey {
         /// The name
-        AnalyzedScript::QualifiedTableName name;
+        Schema::QualifiedTableName name;
         /// Constructor
-        TableKey(AnalyzedScript::QualifiedTableName name) : name(name) {}
+        TableKey(Schema::QualifiedTableName name) : name(name) {}
         /// The derefence operator
-        const AnalyzedScript::QualifiedTableName& operator*() { return name; }
+        const Schema::QualifiedTableName& operator*() { return name; }
         /// Equality operator
         bool operator==(const TableKey& other) const {
             return name.database_name == other.name.database_name && name.schema_name == other.name.schema_name &&
@@ -43,11 +43,11 @@ struct Analyzer {
     /// A column key
     struct ColumnKey {
         /// The name
-        AnalyzedScript::QualifiedColumnName name;
+        Schema::QualifiedColumnName name;
         /// Constructor
-        ColumnKey(AnalyzedScript::QualifiedColumnName name) : name(name) {}
+        ColumnKey(Schema::QualifiedColumnName name) : name(name) {}
         /// The derefence operator
-        const AnalyzedScript::QualifiedColumnName& operator*() { return name; }
+        const Schema::QualifiedColumnName& operator*() { return name; }
         /// Equality operator
         bool operator==(const ColumnKey& other) const {
             return name.table_alias == other.name.table_alias && name.column_name == other.name.column_name;
