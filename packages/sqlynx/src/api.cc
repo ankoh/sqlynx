@@ -10,6 +10,7 @@
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/parser/scanner.h"
 #include "sqlynx/proto/proto_generated.h"
+#include "sqlynx/schema.h"
 #include "sqlynx/script.h"
 #include "sqlynx/text/rope.h"
 #include "sqlynx/version.h"
@@ -159,9 +160,9 @@ extern "C" FFIResult* sqlynx_script_parse(Script* script) {
 }
 
 /// Analyze a script
-extern "C" FFIResult* sqlynx_script_analyze(Script* script, Script* external) {
+extern "C" FFIResult* sqlynx_script_analyze(Script* script, const SchemaSearchPath* search_path) {
     // Analyze the script
-    auto [analyzed, status] = script->Analyze(external);
+    auto [analyzed, status] = script->Analyze(search_path);
     if (status != proto::StatusCode::OK) {
         return packError(status);
     }
