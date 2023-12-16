@@ -3,6 +3,7 @@
 #include "sqlynx/analyzer/pass_manager.h"
 #include "sqlynx/context.h"
 #include "sqlynx/proto/proto_generated.h"
+#include "sqlynx/schema.h"
 #include "sqlynx/script.h"
 #include "sqlynx/utils/attribute_index.h"
 
@@ -31,7 +32,7 @@ struct Analyzer {
         struct Hasher {
             size_t operator()(const TableKey& key) const {
                 size_t hash = 0;
-                QualifiedID::Hasher hasher;
+                std::hash<std::string_view> hasher;
                 hash_combine(hash, hasher(key.name.database_name));
                 hash_combine(hash, hasher(key.name.schema_name));
                 hash_combine(hash, hasher(key.name.table_name));
@@ -55,7 +56,7 @@ struct Analyzer {
         struct Hasher {
             size_t operator()(const ColumnKey& key) const {
                 size_t hash = 0;
-                QualifiedID::Hasher hasher;
+                std::hash<std::string_view> hasher;
                 hash_combine(hash, hasher(key.name.table_alias));
                 hash_combine(hash, hasher(key.name.column_name));
                 return hash;
@@ -66,8 +67,8 @@ struct Analyzer {
    protected:
     /// The parsed program
     std::shared_ptr<ParsedScript> parsed_program;
-    /// The external script
-    std::shared_ptr<AnalyzedScript> external_script;
+    /// The schema search path
+    SchemaSearchPath schema_search_path;
     /// The attribute index
     AttributeIndex attribute_index;
     /// The pass manager
@@ -77,11 +78,11 @@ struct Analyzer {
 
    public:
     /// Constructor
-    Analyzer(std::shared_ptr<ParsedScript> parsed, std::shared_ptr<AnalyzedScript> external);
+    Analyzer(std::shared_ptr<ParsedScript> parsed, SchemaSearchPath schema_search_path);
 
     /// Analyze a program
     static std::pair<std::shared_ptr<AnalyzedScript>, proto::StatusCode> Analyze(
-        std::shared_ptr<ParsedScript> parsed, std::shared_ptr<AnalyzedScript> external);
+        std::shared_ptr<ParsedScript> parsed, const SchemaSearchPath& schema_search_path);
 };
 
 }  // namespace sqlynx

@@ -51,19 +51,19 @@ void SchemaGrid::PrepareLayout() {
     // Load internal tables
     for (uint32_t i = 0; i < script->tables.size(); ++i) {
         size_t node_id = nodes.size();
-        QualifiedID table_id{script->context_id, i};
+        ContextObjectID table_id{script->context_id, i};
         nodes.emplace_back(node_id, table_id, 0);
     }
     // Add external tables
     if (script->external_script) {
         for (uint32_t i = 0; i < script->external_script->tables.size(); ++i) {
             size_t node_id = nodes.size();
-            QualifiedID table_id{script->external_script->context_id, i};
+            ContextObjectID table_id{script->external_script->context_id, i};
             nodes.emplace_back(node_id, table_id, 0);
         }
     }
     // Helper to create a node id
-    auto resolve_node_id = [](QualifiedID id, AnalyzedScript& script) {
+    auto resolve_node_id = [](ContextObjectID id, AnalyzedScript& script) {
         return id.GetIndex() + (id.GetContext() == script.context_id ? 0 : script.tables.size());
     };
     // Add edge node ids
@@ -71,11 +71,12 @@ void SchemaGrid::PrepareLayout() {
     edge_nodes.resize(script->graph_edge_nodes.size());
     for (size_t i = 0; i < script->graph_edge_nodes.size(); ++i) {
         AnalyzedScript::QueryGraphEdgeNode& node = script->graph_edge_nodes[i];
-        QualifiedID column_reference_id{script->context_id, node.column_reference_id};
+        ContextObjectID column_reference_id{script->context_id, node.column_reference_id};
         auto& col_ref = script->column_references[node.column_reference_id];
-        QualifiedID ast_node_id =
-            col_ref.ast_node_id.has_value() ? QualifiedID{script->context_id, *col_ref.ast_node_id} : QualifiedID{};
-        QualifiedID table_id = script->column_references[node.column_reference_id].table_id;
+        ContextObjectID ast_node_id = col_ref.ast_node_id.has_value()
+                                          ? ContextObjectID{script->context_id, *col_ref.ast_node_id}
+                                          : ContextObjectID{};
+        ContextObjectID table_id = script->column_references[node.column_reference_id].table_id;
         uint32_t node_id = table_id.IsNull() ? NULL_TABLE_ID : resolve_node_id(table_id, *script);
         edge_nodes[i] = EdgeNode{column_reference_id, ast_node_id, table_id, node_id};
     }
@@ -84,12 +85,13 @@ void SchemaGrid::PrepareLayout() {
     edges.resize(script->graph_edges.size());
     for (uint32_t i = 0; i < script->graph_edges.size(); ++i) {
         AnalyzedScript::QueryGraphEdge& edge = script->graph_edges[i];
-        edges[i] = {QualifiedID{script->context_id, i},
-                    edge.ast_node_id.has_value() ? QualifiedID{script->context_id, *edge.ast_node_id} : QualifiedID{},
-                    edge.nodes_begin,
-                    edge.node_count_left,
-                    edge.node_count_right,
-                    edge.expression_operator};
+        edges[i] = {
+            ContextObjectID{script->context_id, i},
+            edge.ast_node_id.has_value() ? ContextObjectID{script->context_id, *edge.ast_node_id} : ContextObjectID{},
+            edge.nodes_begin,
+            edge.node_count_left,
+            edge.node_count_right,
+            edge.expression_operator};
     }
     // Collect nˆ2 adjacency pairs for now.
     // We might want to model hyper-edges differently for edge attraction in the future
@@ -99,13 +101,13 @@ void SchemaGrid::PrepareLayout() {
         // Emit nˆ2 adjacency pairs with patched node ids
         for (size_t l = 0; l < edge.node_count_left; ++l) {
             size_t lcol = script->graph_edge_nodes[edge.nodes_begin + l].column_reference_id;
-            QualifiedID ltid = script->column_references[lcol].table_id;
+            ContextObjectID ltid = script->column_references[lcol].table_id;
             if (ltid.IsNull()) continue;
             auto ln = resolve_node_id(ltid, *script);
             // Emit pair for each right node
             for (size_t r = 0; r < edge.node_count_right; ++r) {
                 size_t rcol = script->graph_edge_nodes[edge.nodes_begin + edge.node_count_left + r].column_reference_id;
-                QualifiedID rtid = script->column_references[rcol].table_id;
+                ContextObjectID rtid = script->column_references[rcol].table_id;
                 if (rtid.IsNull()) continue;
                 auto rn = resolve_node_id(rtid, *script);
                 adjacency_pairs.emplace_back(ln, rn);

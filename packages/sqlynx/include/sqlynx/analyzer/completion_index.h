@@ -14,14 +14,10 @@ class CompletionIndex {
    public:
     /// An entry in the trie
     struct EntryData {
+        /// The name
+        const ScannedScript::Name name;
         /// The suffix text
-        std::string_view suffix_text;
-        /// The name text
-        std::string_view name_text;
-        /// The name tags
-        NameTags name_tags;
-        /// The number of occurrences
-        size_t occurrences;
+        std::string_view name_suffix;
         /// The weight of the entry
         /// Weight adds "preference" to entries in a completion index.
         /// For example, when entering "se", a keyword like "select" should be returned before "false" independent of
@@ -29,13 +25,8 @@ class CompletionIndex {
         size_t weight;
 
         /// Constructor
-        EntryData(std::string_view suffix_text, std::string_view name_text = {}, NameTags tags = 0,
-                  size_t occurrences = 0, size_t weight = 0)
-            : suffix_text(suffix_text),
-              name_text(name_text),
-              name_tags(tags),
-              occurrences(occurrences),
-              weight(weight) {}
+        EntryData(const ScannedScript::Name& name, std::string_view name_suffix = {}, size_t weight = 0)
+            : name(name), name_suffix(name_suffix), weight(weight) {}
     };
 
     struct Entry {

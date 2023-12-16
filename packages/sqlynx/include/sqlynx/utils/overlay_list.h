@@ -13,7 +13,7 @@ template <typename T> struct OverlayList {
     struct Node {
         /// The next node in the list
         Node* next = nullptr;
-        /// The index in the underlying buffer
+        /// The index in the underlying buffer, only used for debugging
         size_t buffer_index = 0;
         /// The value
         T value;

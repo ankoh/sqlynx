@@ -43,11 +43,10 @@ const CompletionIndex& CompletionIndex::Keywords() {
         ChunkBuffer<Entry, 256> entries_chunked;
         for (size_t i = 0; i < keywords.size(); ++i) {
             auto& keyword = keywords[i];
-            QualifiedID name_id{QualifiedID::KEYWORD_CONTEXT_ID, static_cast<uint32_t>(i)};
-            auto& entry_data =
-                entry_data_chunked.Append(EntryData{keyword.name, keyword.name, proto::NameTag::KEYWORD, 0, 0});
-            for (size_t offset = 0; offset < entry_data.name_text.size(); ++offset) {
-                auto suffix = entry_data.name_text.substr(offset);
+            ScannedScript::Name keyword_as_name{keyword.name, sx::Location(), {proto::NameTag::KEYWORD}, 0};
+            auto& entry_data = entry_data_chunked.Append(EntryData{keyword_as_name, keyword_as_name.text, 0});
+            for (size_t offset = 0; offset < entry_data.name.text.size(); ++offset) {
+                auto suffix = entry_data.name.text.substr(offset);
                 entries_chunked.Append(Entry{
                     .suffix = {suffix.data(), suffix.size()},
                     .data = &entry_data,
@@ -74,11 +73,9 @@ std::pair<std::unique_ptr<CompletionIndex>, proto::StatusCode> CompletionIndex::
     {
         ChunkBuffer<Entry, 256> entries_chunked;
         for (size_t i = 0; i < names.size(); ++i) {
-            auto& name = names[i];
-            QualifiedID name_id{script->context_id, static_cast<uint32_t>(i)};
-            auto& entry_data = entry_data_chunked.Append(EntryData{name.text, name.text, name.tags, name.occurrences});
-            for (size_t offset = 0; offset < entry_data.name_text.size(); ++offset) {
-                auto suffix = entry_data.name_text.substr(offset);
+            auto& entry_data = entry_data_chunked.Append(EntryData{names[i], names[i].text, 0});
+            for (size_t offset = 0; offset < entry_data.name.text.size(); ++offset) {
+                auto suffix = entry_data.name.text.substr(offset);
                 entries_chunked.Append(Entry{
                     .suffix = {suffix.data(), suffix.size()},
                     .data = &entry_data,

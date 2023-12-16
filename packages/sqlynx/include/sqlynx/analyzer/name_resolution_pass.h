@@ -15,19 +15,38 @@
 namespace sqlynx {
 
 class NameResolutionPass : public PassManager::LTRPass {
-   public:
-    /// The name resolution pass works as follows:
-    /// We traverse the AST in a depth-first post-order, means children before parents.
+   protected:
+    /// A naming scope
+    struct NameScope {
+        /// The scope root
+        size_t ast_scope_root;
+        /// The parent scope
+        NameScope* parent_scope;
+        /// The child scopes
+        OverlayList<NameScope> child_scopes;
+    };
+    /// A CRTP wrapper to attach a naming scope
+    template <typename Inner> struct WithScope : public Inner {
+        /// The scope where there object is defined (table, table column, table reference, column reference)
+        NameScope* scope;
+        /// Constructor
+        template <typename... Args> WithScope(Args... args) : Inner(std::forward(args...)), scope(nullptr) {}
+    };
+    /// A node state during name resolution
     struct NodeState {
+        /// The child scopes
+        OverlayList<NameScope> child_scopes;
         /// The column definitions in the subtree
         OverlayList<AnalyzedScript::TableColumn> table_columns;
         /// The tables in scope
-        OverlayList<AnalyzedScript::Table> tables;
+        OverlayList<WithScope<AnalyzedScript::Table>> tables;
         /// The table references in scope
-        OverlayList<AnalyzedScript::TableReference> table_references;
+        OverlayList<WithScope<AnalyzedScript::TableReference>> table_references;
         /// The column references in scope
-        OverlayList<AnalyzedScript::ColumnReference> column_references;
+        OverlayList<WithScope<AnalyzedScript::ColumnReference>> column_references;
 
+        /// Clear a node state
+        void Clear();
         /// Merge two states
         void Merge(NodeState&& other);
     };
@@ -37,46 +56,44 @@ class NameResolutionPass : public PassManager::LTRPass {
     ScannedScript& scanned_program;
     /// The parsed program
     ParsedScript& parsed_program;
-    /// The attribute index.
-    AttributeIndex& attribute_index;
     /// The context id
     const uint32_t context_id;
+    /// The current database name
+    const std::string_view local_database_name;
+    /// The current schema name
+    const std::string_view local_schema_name;
+    /// The schema search path
+    const SchemaSearchPath& schema_search_path;
+    /// The attribute index.
+    AttributeIndex& attribute_index;
+
     /// The program nodes
     std::span<const proto::Node> nodes;
 
-    /// The external tables
-    std::vector<AnalyzedScript::Table> external_tables;
-    /// The external table columns
-    std::vector<AnalyzedScript::TableColumn> external_table_columns;
-    /// The external table map
-    ankerl::unordered_dense::map<Analyzer::TableKey, QualifiedID, Analyzer::TableKey::Hasher> external_table_ids;
-
     /// The state of all visited nodes with yet-to-visit parents
     std::vector<NodeState> node_states;
-    /// The name path buffer
-    std::vector<std::reference_wrapper<ScannedScript::Name>> name_path_buffer;
-    /// The pending table columns
-    ChunkBuffer<OverlayList<AnalyzedScript::TableColumn>::Node, 16> pending_columns;
-    /// The free-list for pending table columns
-    OverlayList<AnalyzedScript::TableColumn> pending_columns_free_list;
-    /// The tables that are in scope
-    ankerl::unordered_dense::map<Analyzer::TableKey, QualifiedID, Analyzer::TableKey::Hasher> scope_tables;
-    /// The columns that are in scope
-    ankerl::unordered_dense::map<Analyzer::ColumnKey, std::pair<QualifiedID, size_t>, Analyzer::ColumnKey::Hasher>
-        scope_columns;
-
+    /// The naming scopes
+    ChunkBuffer<OverlayList<NameScope>::Node, 16> name_scopes;
     /// The tables
-    ChunkBuffer<OverlayList<AnalyzedScript::Table>::Node, 16> tables;
+    ChunkBuffer<OverlayList<WithScope<AnalyzedScript::Table>>::Node, 16> tables;
+    /// The table references
+    ChunkBuffer<OverlayList<WithScope<AnalyzedScript::TableReference>>::Node, 16> table_references;
+    /// The column references
+    ChunkBuffer<OverlayList<WithScope<AnalyzedScript::ColumnReference>>::Node, 16> column_references;
+
     /// The ordered table columns
     ChunkBuffer<AnalyzedScript::TableColumn, 16> table_columns;
-    /// The table references
-    ChunkBuffer<OverlayList<AnalyzedScript::TableReference>::Node, 16> table_references;
-    /// The column references
-    ChunkBuffer<OverlayList<AnalyzedScript::ColumnReference>::Node, 16> column_references;
     /// The join edges
-    ChunkBuffer<OverlayList<AnalyzedScript::QueryGraphEdge>::Node, 16> graph_edges;
+    ChunkBuffer<AnalyzedScript::QueryGraphEdge, 16> graph_edges;
     /// The join edge nodes
-    ChunkBuffer<OverlayList<AnalyzedScript::QueryGraphEdgeNode>::Node, 16> graph_edge_nodes;
+    ChunkBuffer<AnalyzedScript::QueryGraphEdgeNode, 16> graph_edge_nodes;
+
+    /// The temporary name path buffer
+    std::vector<std::reference_wrapper<ScannedScript::Name>> name_path_buffer;
+    /// The temporary pending table columns
+    ChunkBuffer<OverlayList<AnalyzedScript::TableColumn>::Node, 16> pending_columns;
+    /// The temporary free-list for pending table columns
+    OverlayList<AnalyzedScript::TableColumn> pending_columns_free_list;
 
     /// Merge child states into a destination state
     std::span<std::reference_wrapper<ScannedScript::Name>> ReadNamePath(const sx::Node& node);
@@ -84,21 +101,17 @@ class NameResolutionPass : public PassManager::LTRPass {
     AnalyzedScript::QualifiedTableName ReadQualifiedTableName(const sx::Node* node);
     /// Merge child states into a destination state
     AnalyzedScript::QualifiedColumnName ReadQualifiedColumnName(const sx::Node* column);
-    /// Merge child states into a destination state
-    void CloseScope(NodeState& target, uint32_t node_id);
+    /// Create a naming scope under that node
+    NameScope& CreateScope(NodeState& target, uint32_t scope_root_node);
     /// Merge child states into a destination state
     void MergeChildStates(NodeState& dst, const sx::Node& parent);
     /// Merge child states into a destination state
     void MergeChildStates(NodeState& dst, std::initializer_list<const proto::Node*> children);
-    /// Resolve names in the given state
-    void ResolveNames(NodeState& state);
 
    public:
     /// Constructor
-    NameResolutionPass(ParsedScript& parser, AttributeIndex& attribute_index);
-
-    /// Register external tables from analyzed program
-    void RegisterExternalTables(const AnalyzedScript& program);
+    NameResolutionPass(ParsedScript& parser, const SchemaSearchPath& schema_search_path,
+                       AttributeIndex& attribute_index);
 
     /// Prepare the analysis pass
     void Prepare() override;
