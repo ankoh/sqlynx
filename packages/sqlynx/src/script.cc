@@ -16,6 +16,7 @@
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/parser/scanner.h"
 #include "sqlynx/proto/proto_generated.h"
+#include "sqlynx/schema.h"
 #include "sqlynx/utils/string_conversion.h"
 #include "sqlynx/utils/suffix_trie.h"
 
@@ -48,32 +49,6 @@ NameID ScannedScript::RegisterKeywordAsName(std::string_view s, sx::Location loc
     name_dictionary_ids.insert({s, id});
     name_dictionary.push_back(Name{.text = s, .location = location, .tags = tag, .occurrences = 1});
     return id;
-}
-
-/// Find a name
-QualifiedID Script::FindNameId(std::string_view s) const {
-    auto iter = scanned_script->name_dictionary_ids.find(s);
-    if (iter != scanned_script->name_dictionary_ids.end()) {
-        return QualifiedID{context_id, iter->second};
-    }
-    if (external_script) {
-        auto iter = external_script->scanned_script->name_dictionary_ids.find(s);
-        if (iter != external_script->scanned_script->name_dictionary_ids.end()) {
-            return QualifiedID{external_script->context_id, iter->second};
-        }
-    }
-    return {};
-}
-
-/// Find a name
-std::string_view Script::FindName(QualifiedID name) const {
-    if (name.GetContext() == context_id) {
-        return scanned_script->name_dictionary[name.GetIndex()].text;
-    }
-    if (external_script && name.GetContext() == external_script->context_id) {
-        return external_script->scanned_script->name_dictionary[name.GetIndex()].text;
-    }
-    return "";
 }
 
 /// Register a name
@@ -312,6 +287,45 @@ flatbuffers::Offset<proto::ParsedScript> ParsedScript::Pack(flatbuffers::FlatBuf
     return proto::ParsedScript::Pack(builder, &out);
 }
 
+flatbuffers::Offset<proto::QualifiedTableName> AnalyzedScript::QualifiedTableName::Pack(
+    flatbuffers::FlatBufferBuilder& builder) const {
+    flatbuffers::Offset<flatbuffers::String> database_name_ofs;
+    flatbuffers::Offset<flatbuffers::String> schema_name_ofs;
+    flatbuffers::Offset<flatbuffers::String> table_name_ofs;
+    if (!database_name.empty()) {
+        database_name_ofs = builder.CreateString(database_name);
+    }
+    if (!schema_name.empty()) {
+        schema_name_ofs = builder.CreateString(schema_name);
+    }
+    if (!table_name.empty()) {
+        table_name_ofs = builder.CreateString(table_name);
+    }
+    proto::QualifiedTableNameBuilder out{builder};
+    out.add_ast_node_id(ast_node_id.value_or(PROTO_NULL_U32));
+    out.add_database_name(database_name_ofs);
+    out.add_schema_name(schema_name_ofs);
+    out.add_table_name(table_name_ofs);
+    return out.Finish();
+}
+
+flatbuffers::Offset<proto::QualifiedColumnName> AnalyzedScript::QualifiedColumnName::Pack(
+    flatbuffers::FlatBufferBuilder& builder) const {
+    flatbuffers::Offset<flatbuffers::String> table_alias_ofs;
+    flatbuffers::Offset<flatbuffers::String> column_name_ofs;
+    if (!table_alias.empty()) {
+        table_alias_ofs = builder.CreateString(table_alias);
+    }
+    if (!column_name.empty()) {
+        column_name_ofs = builder.CreateString(column_name);
+    }
+    proto::QualifiedColumnNameBuilder out{builder};
+    out.add_ast_node_id(ast_node_id.value_or(PROTO_NULL_U32));
+    out.add_table_alias(table_alias_ofs);
+    out.add_column_name(column_name_ofs);
+    return out.Finish();
+}
+
 /// Pack as FlatBuffer
 flatbuffers::Offset<proto::TableReference> AnalyzedScript::TableReference::Pack(
     flatbuffers::FlatBufferBuilder& builder) const {
@@ -323,7 +337,7 @@ flatbuffers::Offset<proto::TableReference> AnalyzedScript::TableReference::Pack(
     out.add_ast_statement_id(ast_statement_id.value_or(std::numeric_limits<uint32_t>::max()));
     out.add_table_name(table_name_ofs);
     out.add_alias_name(alias_name_ofs);
-    out.add_table_id(table_id.Pack());
+    out.add_table_id(resolved_table_id.Pack());
     return out.Finish();
 }
 
@@ -342,8 +356,11 @@ flatbuffers::Offset<proto::ColumnReference> AnalyzedScript::ColumnReference::Pac
 }
 
 /// Constructor
-AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, std::shared_ptr<AnalyzedScript> external)
-    : Schema(parsed->context_id), parsed_script(std::move(parsed)), external_script(std::move(external)) {}
+AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, std::string database_name, std::string schema_name,
+                               SchemaSearchPath schema_search_path)
+    : Schema(parsed->context_id, std::move(database_name), std::move(schema_name)),
+      parsed_script(std::move(parsed)),
+      schema_search_path(std::move(schema_search_path)) {}
 
 template <typename In, typename Out>
 static flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Out>>> PackVector(
@@ -357,6 +374,14 @@ static flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Out>>> PackVe
 
 // Pack an analyzed script
 flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::FlatBufferBuilder& builder) {
+    flatbuffers::Offset<flatbuffers::String> database_name_ofs;
+    if (!database_name.empty()) {
+        database_name_ofs = builder.CreateString(database_name);
+    }
+    flatbuffers::Offset<flatbuffers::String> schema_name_ofs;
+    if (!schema_name.empty()) {
+        schema_name_ofs = builder.CreateString(schema_name);
+    }
     auto tables_ofs = PackVector<Schema::Table, proto::Table>(builder, tables);
     auto table_columns_ofs = PackVector<Schema::TableColumn, proto::TableColumn>(builder, table_columns);
     auto table_references_ofs =
@@ -387,21 +412,7 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
 }
 
 /// Constructor
-Script::Script(uint32_t context_id) : context_id(context_id), text(1024), external_script(nullptr) {}
-
-/// Get a table by id
-std::optional<
-    std::pair<std::reference_wrapper<const AnalyzedScript::Table>, std::span<const AnalyzedScript::TableColumn>>>
-Script::FindTable(QualifiedID table_id) const {
-    if (analyzed_script && analyzed_script->context_id == table_id.GetContext()) {
-        return analyzed_script->FindTable(table_id);
-    }
-    if (external_script && external_script->analyzed_script &&
-        external_script->analyzed_script->context_id == table_id.GetContext()) {
-        return external_script->analyzed_script->FindTable(table_id);
-    }
-    return std::nullopt;
-}
+Script::Script(uint32_t context_id) : context_id(context_id), text(1024) {}
 
 /// Insert a character at an offet
 void Script::InsertCharAt(size_t char_idx, uint32_t unicode) {
@@ -439,8 +450,8 @@ std::unique_ptr<proto::ScriptMemoryStatistics> Script::GetMemoryStatistics() {
         // Added analyzed before?
         if (registered_analyzed.contains(analyzed)) return;
         size_t analyzer_bytes =
-            analyzed->tables.size() * sizeof(decltype(analyzed->tables)::value_type) +
-            analyzed->table_columns.size() * sizeof(decltype(analyzed->table_columns)::value_type) +
+            analyzed->GetTables().size() * sizeof(Schema::Table) +
+            analyzed->GetTableColumns().size() * sizeof(Schema::TableColumn) +
             analyzed->table_references.size() * sizeof(decltype(analyzed->table_references)::value_type) +
             analyzed->column_references.size() * sizeof(decltype(analyzed->column_references)::value_type) +
             analyzed->graph_edges.size() * sizeof(decltype(analyzed->graph_edges)::value_type) +
@@ -507,25 +518,15 @@ std::pair<ParsedScript*, proto::StatusCode> Script::Parse() {
 }
 
 /// Analyze a script
-std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(Script* external) {
+std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(const SchemaSearchPath* schema_search_path) {
     auto time_start = std::chrono::steady_clock::now();
 
-    // Get analyzed external script
-    std::shared_ptr<AnalyzedScript> external_analyzed;
-    if (external) {
-        external_analyzed = external->analyzed_script;
-        if (context_id == external->context_id) {
-            return {nullptr, proto::StatusCode::EXTERNAL_CONTEXT_COLLISION};
-        }
-    }
-
     // Analyze a script
-    auto [script, status] = Analyzer::Analyze(parsed_script, external_analyzed);
+    auto [script, status] = Analyzer::Analyze(parsed_script, *schema_search_path);
     if (status != proto::StatusCode::OK) {
         return {nullptr, status};
     }
     analyzed_script = std::move(script);
-    external_script = external;
 
     // Update step timings
     timing_statistics.mutate_analyzer_last_elapsed(
@@ -629,7 +630,7 @@ std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> ScriptCursor::Create
 
         // Part of a table node?
         cursor->table_id = std::nullopt;
-        for (auto& table : analyzed->tables) {
+        for (auto& table : analyzed->GetTables()) {
             if (table.ast_node_id.has_value() && cursor_path_nodes.contains(*table.ast_node_id)) {
                 cursor->table_id = table.ast_node_id;
                 break;

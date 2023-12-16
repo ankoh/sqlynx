@@ -40,8 +40,8 @@ struct Completion {
 
     /// The completion candidates
     struct Candidate {
-        /// The name text
-        std::string_view name_text;
+        /// The name
+        ScannedScript::Name name;
         /// The name tags
         NameTags name_tags;
         /// The name score
@@ -58,12 +58,12 @@ struct Completion {
         bool operator<(const Candidate& other) const {
             auto l = GetScore();
             auto r = other.GetScore();
-            return (l < r) || (l == r && (fuzzy_ci_string_view{name_text.data(), name_text.size()} >
-                                          fuzzy_ci_string_view{other.name_text.data(), other.name_text.size()}));
+            return (l < r) || (l == r && (fuzzy_ci_string_view{name.text.data(), name.text.size()} >
+                                          fuzzy_ci_string_view{other.name.text.data(), other.name.text.size()}));
         }
     };
     /// A hash-map for candidates
-    using CandidateMap = ankerl::unordered_dense::map<QualifiedID, Candidate, QualifiedID::Hasher>;
+    using CandidateMap = ankerl::unordered_dense::map<std::string_view, Candidate>;
 
    protected:
     /// The script cursor
@@ -102,9 +102,6 @@ struct Completion {
     auto& GetPendingCandidates() { return pending_candidates; }
     /// Get the result heap
     auto& GetHeap() const { return result_heap; }
-
-    /// Remap an external name id
-    QualifiedID RemapExternalName(QualifiedID name);
 
     /// Pack the completion result
     flatbuffers::Offset<proto::Completion> Pack(flatbuffers::FlatBufferBuilder& builder);

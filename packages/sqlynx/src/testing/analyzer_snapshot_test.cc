@@ -35,7 +35,7 @@ static void quoteIdentifier(std::string& buffer, std::string_view name) {
 }
 
 // Resolve a name
-static std::string_view resolveName(const AnalyzedScript& main, const AnalyzedScript* external, QualifiedID name) {
+static std::string_view resolveName(const AnalyzedScript& main, const AnalyzedScript* external, ContextObjectID name) {
     if (name.IsNull()) {
         return "null";
     }
@@ -108,12 +108,12 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node root, const AnalyzedScrip
 
     // Write table references
     for (auto& ref : main.table_references) {
-        auto tag = ref.table_id.IsNull()                            ? "unresolved"
-                   : (ref.table_id.GetContext() == main.context_id) ? "internal"
-                                                                    : "external";
+        auto tag = ref.resolved_table_id.IsNull()                            ? "unresolved"
+                   : (ref.resolved_table_id.GetContext() == main.context_id) ? "internal"
+                                                                             : "external";
         auto xml_ref = xml_main_table_refs.append_child(tag);
-        if (!ref.table_id.IsNull()) {
-            xml_ref.append_attribute("table").set_value(ref.table_id.GetIndex());
+        if (!ref.resolved_table_id.IsNull()) {
+            xml_ref.append_attribute("table").set_value(ref.resolved_table_id.GetIndex());
         }
         if (ref.ast_statement_id.has_value()) {
             xml_ref.append_attribute("stmt").set_value(*ref.ast_statement_id);
@@ -158,7 +158,7 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node root, const AnalyzedScrip
         }
         for (size_t i = 0; i < edge.node_count_right; ++i) {
             auto& node = main.graph_edge_nodes[edge.nodes_begin + edge.node_count_left + i];
-            assert(!QualifiedID(main.context_id, node.column_reference_id).IsNull());
+            assert(!ContextObjectID(main.context_id, node.column_reference_id).IsNull());
             auto xml_node = xml_edge.append_child("node");
             xml_node.append_attribute("side").set_value(1);
             xml_node.append_attribute("ref").set_value(node.column_reference_id);

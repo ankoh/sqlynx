@@ -23,54 +23,32 @@ template <typename T> static void merge(std::vector<T>& left, std::vector<T>&& r
 
 /// Merge two node states
 void NameResolutionPass::NodeState::Merge(NodeState&& other) {
+    child_scopes.Append(std::move(other.child_scopes));
     tables.Append(std::move(other.tables));
     table_columns.Append(std::move(other.table_columns));
     table_references.Append(std::move(other.table_references));
     column_references.Append(std::move(other.column_references));
 }
 
-/// Constructor
-NameResolutionPass::NameResolutionPass(ParsedScript& parser, AttributeIndex& attribute_index)
-    : scanned_program(*parser.scanned_script),
-      parsed_program(parser),
-      attribute_index(attribute_index),
-      context_id(parser.context_id),
-      nodes(parsed_program.nodes) {
-    node_states.resize(nodes.size());
+/// Clear a node state
+void NameResolutionPass::NodeState::Clear() {
+    child_scopes.Clear();
+    tables.Clear();
+    table_columns.Clear();
+    table_references.Clear();
+    column_references.Clear();
 }
 
-/// Register external tables from an analyzed program
-void NameResolutionPass::RegisterExternalTables(const AnalyzedScript& external) {
-    // Helper to remap an external name id
-    auto map_name = [this](QualifiedID name, const AnalyzedScript& external) -> QualifiedID {
-        if (name.IsNull()) return QualifiedID();
-        if (auto iter = scanned_program.name_dictionary_ids.find(
-                external.parsed_script->scanned_script->name_dictionary[name.GetIndex()].text);
-            iter != scanned_program.name_dictionary_ids.end()) {
-            QualifiedID mapped_id{scanned_program.context_id, iter->second};
-            return mapped_id;
-        }
-        return name;
-    };
-
-    // Copy all over
-    external_tables = external.tables;
-    external_table_columns = external.table_columns;
-    external_table_ids.clear();
-    external_table_ids.reserve(external_tables.size());
-
-    // Map external tables
-    for (size_t table_id = 0; table_id < external_tables.size(); ++table_id) {
-        auto& t = external_tables[table_id];
-        AnalyzedScript::QualifiedTableName name = t.table_name;
-        t.ast_node_id = std::nullopt;  // Clear ast node to not mix up node ids
-        t.ast_statement_id = std::nullopt;
-        external_table_ids.insert({name, QualifiedID(external.context_id, table_id)});
-    }
-    // Map columns
-    for (auto& c : external_table_columns) {
-        c.ast_node_id = std::nullopt;
-    }
+/// Constructor
+NameResolutionPass::NameResolutionPass(ParsedScript& parser, const SchemaSearchPath& schema_search_path,
+                                       AttributeIndex& attribute_index)
+    : scanned_program(*parser.scanned_script),
+      parsed_program(parser),
+      context_id(parser.context_id),
+      schema_search_path(schema_search_path),
+      attribute_index(attribute_index),
+      nodes(parsed_program.nodes) {
+    node_states.resize(nodes.size());
 }
 
 std::span<std::reference_wrapper<ScannedScript::Name>> NameResolutionPass::ReadNamePath(const sx::Node& node) {
@@ -150,23 +128,29 @@ AnalyzedScript::QualifiedColumnName NameResolutionPass::ReadQualifiedColumnName(
     return name;
 }
 
-void NameResolutionPass::CloseScope(NodeState& target, uint32_t node_id) {
-    target.table_columns.Clear();
-    for (auto iter = target.tables.begin(); iter != target.tables.end(); ++iter) {
-        if (!iter->ast_scope_root.has_value()) {
-            iter->ast_scope_root = node_id;
-        }
+NameResolutionPass::NameScope& NameResolutionPass::CreateScope(NodeState& target, uint32_t scope_root) {
+    auto& scope = name_scopes.Append(
+        NameScope{.ast_scope_root = scope_root, .parent_scope = nullptr, .child_scopes = target.child_scopes});
+    for (auto& child_scope : target.child_scopes) {
+        child_scope.parent_scope = &scope.value;
     }
-    for (auto iter = target.table_references.begin(); iter != target.table_references.end(); ++iter) {
-        if (!iter->ast_scope_root.has_value()) {
-            iter->ast_scope_root = node_id;
-        }
+    for (auto& ref : target.tables) {
+        ref.scope = &scope.value;
+        ref.ast_scope_root = scope_root;
     }
-    for (auto iter = target.column_references.begin(); iter != target.column_references.end(); ++iter) {
-        if (!iter->ast_scope_root.has_value()) {
-            iter->ast_scope_root = node_id;
-        }
+    for (auto& ref : target.column_references) {
+        ref.scope = &scope.value;
+        ref.ast_scope_root = scope_root;
     }
+    for (auto& ref : target.table_references) {
+        ref.scope = &scope.value;
+        ref.ast_scope_root = scope_root;
+    }
+    // Clear the target since we're starting a new scope now
+    target.Clear();
+    // Remember the child scope
+    target.child_scopes.PushBack(scope);
+    return scope.value;
 }
 
 void NameResolutionPass::MergeChildStates(NodeState& dst, std::initializer_list<const proto::Node*> children) {
@@ -184,73 +168,65 @@ void NameResolutionPass::MergeChildStates(NodeState& dst, const proto::Node& par
     }
 }
 
-void NameResolutionPass::ResolveNames(NodeState& state) {
-    // Build a map with all table names that are in scope
-    scope_tables.clear();
-    size_t max_column_count = 0;
-    for (auto iter = state.tables.begin(); iter != state.tables.end(); ++iter) {
-        QualifiedID table_id{context_id, static_cast<uint32_t>(iter.GetBufferIndex())};
-        // Table declarations are out of scope if they have a scope root set
-        if (iter->ast_scope_root.has_value()) {
-            continue;
-        }
-        // Register as local table if in scope
-        AnalyzedScript::QualifiedTableName table_name = iter->table_name;
-        max_column_count += iter->column_count;
-        scope_tables.insert({table_name, table_id});
-    }
-
-    // Collect all columns that are in scope
-    scope_columns.clear();
-    scope_columns.reserve(max_column_count);
-    for (auto iter = state.table_references.begin(); iter != state.table_references.end(); ++iter) {
-        // Table references are out of scope if they have a scope root set
-        if (iter->ast_scope_root.has_value()) {
-            continue;
-        }
-        // Helper to register columns from a table
-        auto register_columns_from = [&](QualifiedID tid) {
-            if (tid.GetContext() == context_id) {
-                AnalyzedScript::Table& resolved = tables[tid.GetIndex()].value;
-                for (uint32_t cid = 0; cid < resolved.column_count; ++cid) {
-                    AnalyzedScript::TableColumn& col = table_columns[resolved.columns_begin + cid];
-                    AnalyzedScript::QualifiedColumnName col_name{iter->ast_node_id, iter->alias_name, col.column_name};
-                    scope_columns.insert({col_name, {tid, cid}});
-                }
-            } else {
-                AnalyzedScript::Table& resolved = external_tables[tid.GetIndex()];
-                for (uint32_t cid = 0; cid < resolved.column_count; ++cid) {
-                    AnalyzedScript::TableColumn& col = external_table_columns[resolved.columns_begin + cid];
-                    AnalyzedScript::QualifiedColumnName col_name{iter->ast_node_id, iter->alias_name, col.column_name};
-                    scope_columns.insert({col_name, {tid, cid}});
-                }
-            }
-        };
-        // Available in scope?
-        if (auto tbl_iter = scope_tables.find(iter->table_name); tbl_iter != scope_tables.end()) {
-            register_columns_from(tbl_iter->second);
-            iter->table_id = tbl_iter->second;
-        } else if (auto tbl_iter = external_table_ids.find(iter->table_name); tbl_iter != external_table_ids.end()) {
-            // Available globally
-            register_columns_from(tbl_iter->second);
-            iter->table_id = tbl_iter->second;
-        }
-    }
-
-    // Now scan all unresolved column refs and look them up in the map
-    for (auto iter = state.column_references.begin(); iter != state.column_references.end(); ++iter) {
-        // Out of scope or already resolved?
-        if (iter->ast_scope_root.has_value() || !iter->table_id.IsNull()) {
-            continue;
-        }
-        // Resolve the column ref
-        if (auto column_iter = scope_columns.find(iter->column_name); column_iter != scope_columns.end()) {
-            auto [tid, cid] = column_iter->second;
-            iter->table_id = tid;
-            iter->column_id = cid;
-        }
-    }
-}
+// void NameResolutionPass::ResolveNames(NodeState& state) {
+//     // Build a map with all table names that are in scope
+//     scope_tables.clear();
+//     size_t max_column_count = 0;
+//     for (auto iter = state.tables.begin(); iter != state.tables.end(); ++iter) {
+//         // Table declarations are out of scope if they have a scope root set
+//         if (iter->ast_scope_root.has_value()) {
+//             continue;
+//         }
+//         // Register as local table if in scope
+//         Schema::QualifiedTableName table_name{iter->ast_node_id, local_database_name, local_schema_name,
+//                                               iter->table_name};
+//         max_column_count += iter->column_count;
+//         scope_tables.insert({table_name, ContextObjectID{context_id, static_cast<uint32_t>(iter.GetBufferIndex())}});
+//     }
+//
+//     // Collect all columns that are in scope
+//     scope_columns.clear();
+//     scope_columns.reserve(max_column_count);
+//     for (auto iter = state.table_references.begin(); iter != state.table_references.end(); ++iter) {
+//         // Table references are out of scope if they have a scope root set
+//         if (iter->ast_scope_root.has_value()) {
+//             continue;
+//         }
+//         // Available in scope?
+//         if (auto table_iter = scope_tables.find(iter->table_name); table_iter != scope_tables.end()) {
+//             auto table_id = table_iter->second;
+//             Schema::Table& resolved = tables[table_id.GetIndex()].value;
+//             for (uint32_t cid = 0; cid < resolved.column_count; ++cid) {
+//                 Schema::TableColumn& col = table_columns[resolved.columns_begin + cid];
+//                 Schema::QualifiedColumnName col_name{iter->ast_node_id, iter->alias_name, col.column_name};
+//                 scope_columns.insert({col_name, {table_id, cid}});
+//             }
+//             iter->resolved_table_id = table_iter->second;
+//         } else if (auto resolved = schema_search_path.ResolveTable(iter->table_name)) {
+//             auto& tbl = resolved.value();
+//             for (size_t cid = 0; cid < tbl.table_columns.size(); ++cid) {
+//                 const Schema::TableColumn& col = tbl.table_columns[cid];
+//                 Schema::QualifiedColumnName col_name{iter->ast_node_id, iter->alias_name, col.column_name};
+//                 scope_columns.insert({col_name, {tbl.table_id, cid}});
+//             }
+//             iter->resolved_table_id = tbl.table_id;
+//         }
+//     }
+//
+//     // Now scan all unresolved column refs and look them up in the map
+//     for (auto iter = state.column_references.begin(); iter != state.column_references.end(); ++iter) {
+//         // Out of scope or already resolved?
+//         if (iter->ast_scope_root.has_value() || !iter->table_id.IsNull()) {
+//             continue;
+//         }
+//         // Resolve the column ref
+//         if (auto column_iter = scope_columns.find(iter->column_name); column_iter != scope_columns.end()) {
+//             auto [tid, cid] = column_iter->second;
+//             iter->table_id = tid;
+//             iter->column_id = cid;
+//         }
+//     }
+// }
 
 /// Prepare the analysis pass
 void NameResolutionPass::Prepare() {}
@@ -297,12 +273,12 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 auto column_ref_node = attrs[proto::AttributeKey::SQL_COLUMN_REF_PATH];
                 auto column_name = ReadQualifiedColumnName(column_ref_node);
                 // Add column reference
-                auto& n = column_references.Append(AnalyzedScript::ColumnReference());
+                auto& n = column_references.Append(WithScope<AnalyzedScript::ColumnReference>());
                 n.buffer_index = column_references.GetSize() - 1;
                 n.value.ast_node_id = node_id;
                 n.value.ast_statement_id = std::nullopt;
                 n.value.ast_scope_root = std::nullopt;
-                n.value.table_id = QualifiedID();
+                n.value.table_id = ContextObjectID();
                 n.value.column_id = std::nullopt;
                 n.value.column_name = column_name;
                 node_state.column_references.PushBack(n);
@@ -328,12 +304,12 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                         alias_str = alias;
                     }
                     // Add table reference
-                    auto& n = table_references.Append(AnalyzedScript::TableReference());
+                    auto& n = table_references.Append(WithScope<AnalyzedScript::TableReference>());
                     n.buffer_index = column_references.GetSize() - 1;
                     n.value.ast_node_id = node_id;
                     n.value.ast_statement_id = std::nullopt;
                     n.value.ast_scope_root = std::nullopt;
-                    n.value.table_id = QualifiedID();
+                    n.value.resolved_table_id = ContextObjectID();
                     n.value.table_name = name;
                     n.value.alias_name = alias_str;
                     node_state.table_references.PushBack(n);
@@ -451,7 +427,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
             // Finish select statement
             case proto::NodeType::OBJECT_SQL_SELECT: {
                 MergeChildStates(node_state, node);
-                ResolveNames(node_state);
+                CreateScope(node_state, node_id);
                 break;
             }
 
@@ -464,27 +440,27 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 auto table_name = ReadQualifiedTableName(name_node);
                 // Merge child states
                 MergeChildStates(node_state, {elements_node});
-                // Resolve all names in the merged state, likely a noop but just to be sure
-                ResolveNames(node_state);
+                // Create the scope
+                CreateScope(node_state, node_id);
                 // Collect all columns
+                size_t table_id = tables.GetSize();
                 size_t columns_begin = table_columns.GetSize();
                 size_t column_count = node_state.table_columns.GetSize();
-                for (auto table_col : node_state.table_columns) {
+                for (auto& table_col : node_state.table_columns) {
+                    table_col.table_id = table_id;
                     table_columns.Append(table_col);
                 }
                 pending_columns_free_list.Append(std::move(node_state.table_columns));
                 // Build the table
-                auto& n = tables.Append(AnalyzedScript::Table());
+                auto& n = tables.Append(WithScope<AnalyzedScript::Table>());
                 n.buffer_index = tables.GetSize() - 1;
                 n.value.ast_node_id = node_id;
                 n.value.ast_statement_id = std::nullopt;
                 n.value.ast_scope_root = std::nullopt;
-                n.value.table_name = table_name;
+                n.value.table_name = table_name.table_name;
                 n.value.columns_begin = columns_begin;
                 n.value.column_count = column_count;
                 node_state.tables.PushBack(n);
-                // Close the scope
-                CloseScope(node_state, node_id);
                 break;
             }
 
@@ -561,11 +537,12 @@ void NameResolutionPass::Finish() {
 /// Export an analyzed program
 void NameResolutionPass::Export(AnalyzedScript& program) {
     program.table_columns = table_columns.Flatten();
+    program.graph_edges = graph_edges.Flatten();
+    program.graph_edge_nodes = graph_edge_nodes.Flatten();
+
     program.tables.reserve(tables.GetSize());
     program.table_references.reserve(table_references.GetSize());
     program.column_references.reserve(column_references.GetSize());
-    program.graph_edges.reserve(graph_edges.GetSize());
-    program.graph_edge_nodes.reserve(graph_edge_nodes.GetSize());
     for (auto& chunk : tables.GetChunks()) {
         for (auto& table : chunk) {
             program.tables.push_back(std::move(table.value));
@@ -579,16 +556,6 @@ void NameResolutionPass::Export(AnalyzedScript& program) {
     for (auto& chunk : column_references.GetChunks()) {
         for (auto& ref : chunk) {
             program.column_references.push_back(std::move(ref.value));
-        }
-    }
-    for (auto& chunk : graph_edges.GetChunks()) {
-        for (auto& ref : chunk) {
-            program.graph_edges.push_back(std::move(ref.value));
-        }
-    }
-    for (auto& chunk : graph_edge_nodes.GetChunks()) {
-        for (auto& ref : chunk) {
-            program.graph_edge_nodes.push_back(std::move(ref.value));
         }
     }
 }

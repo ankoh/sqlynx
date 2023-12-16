@@ -56,7 +56,7 @@ SELECT s_co
 
     std::vector<std::string> names;
     for (auto iter = entries.rbegin(); iter != entries.rend(); ++iter) {
-        names.emplace_back(iter->name_text);
+        names.emplace_back(iter->full_name_text);
     }
     std::vector<std::string> expected_names{"s_comment", "ps_comment", "from", "group", "order",
                                             "where",     "by",         "case", "cast",  "like"};

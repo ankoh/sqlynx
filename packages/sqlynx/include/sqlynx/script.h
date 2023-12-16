@@ -8,6 +8,7 @@
 #include <tuple>
 
 #include "ankerl/unordered_dense.h"
+#include "sqlynx/analyzer/analyzer.h"
 #include "sqlynx/context.h"
 #include "sqlynx/parser/names.h"
 #include "sqlynx/parser/parser.h"
@@ -177,6 +178,8 @@ class ParsedScript {
 };
 
 class AnalyzedScript : public Schema {
+    friend class NameResolutionPass;
+
    public:
     /// A table reference
     struct TableReference {
@@ -191,17 +194,18 @@ class AnalyzedScript : public Schema {
         /// The alias name, may refer to different context
         std::string_view alias_name;
         /// The table id, may refer to different context
-        QualifiedID table_id;
+        ContextObjectID resolved_table_id;
         /// Constructor
         TableReference(std::optional<uint32_t> ast_node_id = std::nullopt,
                        std::optional<uint32_t> ast_statement_id = {}, std::optional<uint32_t> ast_scope_root = {},
-                       QualifiedTableName table_name = {}, std::string_view alias_name = {}, QualifiedID table_id = {})
+                       QualifiedTableName table_name = {}, std::string_view alias_name = {},
+                       ContextObjectID table_id = {})
             : ast_node_id(ast_node_id),
               ast_statement_id(ast_statement_id),
               ast_scope_root(ast_scope_root),
               table_name(table_name),
               alias_name(alias_name),
-              table_id(table_id) {}
+              resolved_table_id(table_id) {}
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::TableReference> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
@@ -216,13 +220,13 @@ class AnalyzedScript : public Schema {
         /// The column name, may refer to different context
         QualifiedColumnName column_name;
         /// The table id, may refer to different context
-        QualifiedID table_id;
+        ContextObjectID table_id;
         /// The column index
         std::optional<uint32_t> column_id;
         /// Constructor
         ColumnReference(std::optional<uint32_t> ast_node_id = std::nullopt,
                         std::optional<uint32_t> ast_statement_id = {}, std::optional<uint32_t> ast_scope_root = {},
-                        QualifiedColumnName column_name = {}, QualifiedID table_id = {},
+                        QualifiedColumnName column_name = {}, ContextObjectID table_id = {},
                         std::optional<uint32_t> column_id = std::nullopt)
             : ast_node_id(ast_node_id),
               ast_statement_id(ast_statement_id),
@@ -272,8 +276,8 @@ class AnalyzedScript : public Schema {
 
     /// The parsed script
     std::shared_ptr<ParsedScript> parsed_script;
-    /// The external script
-    std::shared_ptr<AnalyzedScript> external_script;
+    /// The schema search path
+    SchemaSearchPath schema_search_path;
     /// The table references
     std::vector<TableReference> table_references;
     /// The column references
@@ -285,7 +289,8 @@ class AnalyzedScript : public Schema {
 
    public:
     /// Constructor
-    AnalyzedScript(std::shared_ptr<ParsedScript> parsed, std::shared_ptr<AnalyzedScript> external);
+    AnalyzedScript(std::shared_ptr<ParsedScript> parsed, std::string database_name, std::string schema_name,
+                   SchemaSearchPath schema_dependencies);
 
     /// Build the program
     flatbuffers::Offset<proto::AnalyzedScript> Pack(flatbuffers::FlatBufferBuilder& builder);
@@ -328,10 +333,13 @@ class Script {
    public:
     /// The context id
     const uint32_t context_id;
+    /// The database name
+    const std::string database_name;
+    /// The schema name
+    const std::string schema_name;
+
     /// The underlying rope
     rope::Rope text;
-    /// The external script (if any)
-    Script* external_script;
 
     /// The last scanned script
     std::shared_ptr<ScannedScript> scanned_script;
@@ -354,14 +362,6 @@ class Script {
     /// Constructor
     Script(uint32_t context_id = 1);
 
-    /// Get a name by id
-    std::string_view FindName(QualifiedID name_id) const;
-    /// Get a name by id
-    QualifiedID FindNameId(std::string_view name_text) const;
-    /// Get a table by id
-    std::optional<std::pair<std::reference_wrapper<const Schema::Table>, std::span<const Schema::TableColumn>>>
-    FindTable(QualifiedID table_id) const;
-
     /// Insert a unicode codepoint at an offset
     void InsertCharAt(size_t offset, uint32_t unicode);
     /// Insert a text at an offset
@@ -378,9 +378,10 @@ class Script {
     /// Parse the latest scanned script
     std::pair<ParsedScript*, proto::StatusCode> Parse();
     /// Analyze the latest parsed script
-    std::pair<AnalyzedScript*, proto::StatusCode> Analyze(Script* external = nullptr);
+    std::pair<AnalyzedScript*, proto::StatusCode> Analyze(const SchemaSearchPath* search_path = nullptr);
     /// Update the completion index
     proto::StatusCode Reindex();
+
     /// Move the cursor
     std::pair<const ScriptCursor*, proto::StatusCode> MoveCursor(size_t text_offset);
     /// Complete at the cursor
