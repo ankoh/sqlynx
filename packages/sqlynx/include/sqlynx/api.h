@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "sqlynx/schema.h"
 #include "sqlynx/script.h"
 #include "sqlynx/version.h"
 #include "sqlynx/vis/schema_grid.h"
@@ -49,7 +50,7 @@ extern "C" FFIResult* sqlynx_script_scan(sqlynx::Script* script);
 /// Parse a script
 extern "C" FFIResult* sqlynx_script_parse(sqlynx::Script* script);
 /// Analyze a script
-extern "C" FFIResult* sqlynx_script_analyze(sqlynx::Script* script, sqlynx::Script* external);
+extern "C" FFIResult* sqlynx_script_analyze(sqlynx::Script* script, const sqlynx::SchemaSearchPath* external);
 /// Get a pretty-printed version of the SQL query
 extern "C" FFIResult* sqlynx_script_format(sqlynx::Script* script);
 /// Update the script index
