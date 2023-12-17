@@ -125,15 +125,15 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node root, const AnalyzedScrip
 
     // Write column references
     for (auto& ref : main.column_references) {
-        auto tag = ref.table_id.IsNull()                            ? "unresolved"
-                   : (ref.table_id.GetContext() == main.context_id) ? "internal"
-                                                                    : "external";
+        auto tag = ref.resolved_table_id.IsNull()                            ? "unresolved"
+                   : (ref.resolved_table_id.GetContext() == main.context_id) ? "internal"
+                                                                             : "external";
         auto xml_ref = xml_main_col_refs.append_child(tag);
-        if (!ref.table_id.IsNull()) {
-            xml_ref.append_attribute("table").set_value(ref.table_id.GetIndex());
+        if (!ref.resolved_table_id.IsNull()) {
+            xml_ref.append_attribute("table").set_value(ref.resolved_table_id.GetIndex());
         }
-        if (ref.column_id.has_value()) {
-            xml_ref.append_attribute("column").set_value(*ref.column_id);
+        if (ref.resolved_column_id.has_value()) {
+            xml_ref.append_attribute("column").set_value(*ref.resolved_column_id);
         }
         if (ref.ast_statement_id.has_value()) {
             xml_ref.append_attribute("stmt").set_value(*ref.ast_statement_id);

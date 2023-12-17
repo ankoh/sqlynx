@@ -76,7 +76,7 @@ void SchemaGrid::PrepareLayout() {
         ContextObjectID ast_node_id = col_ref.ast_node_id.has_value()
                                           ? ContextObjectID{script->context_id, *col_ref.ast_node_id}
                                           : ContextObjectID{};
-        ContextObjectID table_id = script->column_references[node.column_reference_id].table_id;
+        ContextObjectID table_id = script->column_references[node.column_reference_id].resolved_table_id;
         uint32_t node_id = table_id.IsNull() ? NULL_TABLE_ID : resolve_node_id(table_id, *script);
         edge_nodes[i] = EdgeNode{column_reference_id, ast_node_id, table_id, node_id};
     }
@@ -101,13 +101,13 @@ void SchemaGrid::PrepareLayout() {
         // Emit nˆ2 adjacency pairs with patched node ids
         for (size_t l = 0; l < edge.node_count_left; ++l) {
             size_t lcol = script->graph_edge_nodes[edge.nodes_begin + l].column_reference_id;
-            ContextObjectID ltid = script->column_references[lcol].table_id;
+            ContextObjectID ltid = script->column_references[lcol].resolved_table_id;
             if (ltid.IsNull()) continue;
             auto ln = resolve_node_id(ltid, *script);
             // Emit pair for each right node
             for (size_t r = 0; r < edge.node_count_right; ++r) {
                 size_t rcol = script->graph_edge_nodes[edge.nodes_begin + edge.node_count_left + r].column_reference_id;
-                ContextObjectID rtid = script->column_references[rcol].table_id;
+                ContextObjectID rtid = script->column_references[rcol].resolved_table_id;
                 if (rtid.IsNull()) continue;
                 auto rn = resolve_node_id(rtid, *script);
                 adjacency_pairs.emplace_back(ln, rn);

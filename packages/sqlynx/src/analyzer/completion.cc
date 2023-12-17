@@ -274,7 +274,7 @@ void Completion::FindTablesForUnresolvedColumns() {
     auto& column_refs = cursor.script.analyzed_script->column_references;
     std::unordered_set<std::string_view> unresolved_columns;
     for (auto& column_ref : column_refs) {
-        if (column_ref.table_id.IsNull()) {
+        if (column_ref.resolved_table_id.IsNull()) {
             auto name = column_ref.column_name;
             if (!name.table_alias.empty()) {
                 unresolved_columns.insert(name.column_name);
