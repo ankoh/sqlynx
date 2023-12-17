@@ -220,9 +220,9 @@ class AnalyzedScript : public Schema {
         /// The column name, may refer to different context
         QualifiedColumnName column_name;
         /// The table id, may refer to different context
-        ContextObjectID table_id;
+        ContextObjectID resolved_table_id;
         /// The column index
-        std::optional<uint32_t> column_id;
+        std::optional<uint32_t> resolved_column_id;
         /// Constructor
         ColumnReference(std::optional<uint32_t> ast_node_id = std::nullopt,
                         std::optional<uint32_t> ast_statement_id = {}, std::optional<uint32_t> ast_scope_root = {},
@@ -232,8 +232,8 @@ class AnalyzedScript : public Schema {
               ast_statement_id(ast_statement_id),
               ast_scope_root(ast_scope_root),
               column_name(column_name),
-              table_id(table_id),
-              column_id(column_id) {}
+              resolved_table_id(table_id),
+              resolved_column_id(column_id) {}
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::ColumnReference> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };

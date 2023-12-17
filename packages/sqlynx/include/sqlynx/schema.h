@@ -65,41 +65,40 @@ class Schema {
     };
     /// A table column
     struct TableColumn {
-        /// The table id (if assigned)
-        std::optional<size_t> table_id;
         /// The AST node id in the target script
         std::optional<uint32_t> ast_node_id;
         /// The column name, may refer to different context
         std::string_view column_name;
         /// Constructor
         TableColumn(std::optional<uint32_t> ast_node_id, std::string_view column_name = {})
-            : ast_node_id(ast_node_id), column_name(column_name), table_id(-1) {}
+            : ast_node_id(ast_node_id), column_name(column_name) {}
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::TableColumn> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
     /// A table
     struct Table {
-        /// The table that contains the column
-        std::optional<size_t> table_id;
         /// The AST node id in the target script
         std::optional<uint32_t> ast_node_id;
         /// The AST statement id in the target script
         std::optional<uint32_t> ast_statement_id;
         /// The AST scope root id in the target script
         std::optional<uint32_t> ast_scope_root;
+        /// The table id
+        ContextObjectID table_id;
         /// The table name, may refer to different context
-        std::string_view table_name;
+        QualifiedTableName table_name;
         /// The begin of the column
         uint32_t columns_begin;
         /// The column count
         uint32_t column_count;
         /// Constructor
-        Table(std::optional<uint32_t> ast_node_id = std::nullopt, std::optional<uint32_t> ast_statement_id = {},
-              std::optional<uint32_t> ast_scope_root = {}, std::string_view table_name = {}, uint32_t columns_begin = 0,
-              uint32_t column_count = 0)
+        Table(ContextObjectID table_id = {}, std::optional<uint32_t> ast_node_id = std::nullopt,
+              std::optional<uint32_t> ast_statement_id = {}, std::optional<uint32_t> ast_scope_root = {},
+              QualifiedTableName table_name = {}, uint32_t columns_begin = 0, uint32_t column_count = 0)
             : ast_node_id(ast_node_id),
               ast_statement_id(ast_statement_id),
               ast_scope_root(ast_scope_root),
+              table_id(table_id),
               table_name(table_name),
               columns_begin(columns_begin),
               column_count(column_count) {}

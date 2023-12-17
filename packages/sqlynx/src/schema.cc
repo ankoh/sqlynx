@@ -16,10 +16,7 @@ flatbuffers::Offset<proto::TableColumn> Schema::TableColumn::Pack(flatbuffers::F
 }
 
 flatbuffers::Offset<proto::Table> Schema::Table::Pack(flatbuffers::FlatBufferBuilder& builder) const {
-    flatbuffers::Offset<flatbuffers::String> table_name_ofs;
-    if (!table_name.empty()) {
-        table_name_ofs = builder.CreateString(table_name);
-    }
+    auto table_name_ofs = table_name.Pack(builder);
     proto::TableBuilder out{builder};
     out.add_ast_node_id(ast_node_id.value_or(PROTO_NULL_U32));
     out.add_ast_statement_id(ast_statement_id.value_or(PROTO_NULL_U32));
