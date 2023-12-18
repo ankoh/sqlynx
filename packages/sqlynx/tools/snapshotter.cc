@@ -6,15 +6,16 @@
 #include <vector>
 
 #include "flatbuffers/flatbuffers.h"
+#include "gflags/gflags.h"
 #include "sqlynx/analyzer/analyzer.h"
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/parser/scanner.h"
 #include "sqlynx/proto/proto_generated.h"
+#include "sqlynx/schema.h"
 #include "sqlynx/script.h"
 #include "sqlynx/testing/analyzer_snapshot_test.h"
 #include "sqlynx/testing/completion_snapshot_test.h"
 #include "sqlynx/testing/parser_snapshot_test.h"
-#include "gflags/gflags.h"
 
 using namespace sqlynx;
 using namespace sqlynx::testing;
@@ -144,7 +145,9 @@ static void generate_analyzer_snapshots(const std::filesystem::path& source_dir)
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(main_parsed.second) << std::endl;
                 continue;
             }
-            auto main_analyzed = Analyzer::Analyze(main_parsed.first, external_analyzed.first);
+            SchemaSearchPath search_path;
+            search_path.PushBack(external_analyzed.first);
+            auto main_analyzed = Analyzer::Analyze(main_parsed.first, &search_path);
             if (main_analyzed.second != proto::StatusCode::OK) {
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(main_analyzed.second) << std::endl;
                 continue;
@@ -213,10 +216,6 @@ static void generate_completion_snapshots(const std::filesystem::path& source_di
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(external_analyzed.second) << std::endl;
                 continue;
             }
-            if (auto status = external_script.Reindex(); status != proto::StatusCode::OK) {
-                std::cout << "  ERROR " << proto::EnumNameStatusCode(status) << std::endl;
-                continue;
-            };
 
             // Prepare the main script
             auto xml_main = test.find_child_by_attribute("script", "context", "main");
@@ -233,15 +232,13 @@ static void generate_completion_snapshots(const std::filesystem::path& source_di
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(main_parsed.second) << std::endl;
                 continue;
             }
-            auto main_analyzed = main_script.Analyze(&external_script);
+            SchemaSearchPath search_path;
+            search_path.PushBack(external_script.analyzed_script);
+            auto main_analyzed = main_script.Analyze(&search_path);
             if (main_analyzed.second != proto::StatusCode::OK) {
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(main_analyzed.second) << std::endl;
                 continue;
             }
-            if (auto status = main_script.Reindex(); status != proto::StatusCode::OK) {
-                std::cout << "  ERROR " << proto::EnumNameStatusCode(status) << std::endl;
-                continue;
-            };
 
             auto xml_cursor = test.child("cursor");
             std::string cursor_context = xml_cursor.attribute("context").value();

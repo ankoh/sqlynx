@@ -15,19 +15,22 @@ Analyzer::Analyzer(std::shared_ptr<ParsedScript> parsed, SchemaSearchPath schema
       name_resolution(std::make_unique<NameResolutionPass>(*parsed, this->schema_search_path, attribute_index)) {}
 
 std::pair<std::shared_ptr<AnalyzedScript>, proto::StatusCode> Analyzer::Analyze(
-    std::shared_ptr<ParsedScript> parsed, std::string database_name, std::string schema_name,
-    const SchemaSearchPath& schema_search_path) {
+    std::shared_ptr<ParsedScript> parsed, const SchemaSearchPath* schema_search_path, std::string database_name,
+    std::string schema_name) {
     if (parsed == nullptr) {
         return {nullptr, proto::StatusCode::ANALYZER_INPUT_INVALID};
     }
     // Run analysis passes
-    auto search_path_snapshot = schema_search_path.CreateSnapshot();
+    SchemaSearchPath search_path_snapshot;
+    if (schema_search_path) {
+        search_path_snapshot = schema_search_path->CreateSnapshot();
+    }
     Analyzer az{parsed, search_path_snapshot};
     az.pass_manager.Execute(*az.name_resolution);
 
     // Build program
     auto program =
-        std::make_shared<AnalyzedScript>(parsed, database_name, schema_name, std::move(search_path_snapshot));
+        std::make_shared<AnalyzedScript>(parsed, std::move(search_path_snapshot), database_name, schema_name);
     az.name_resolution->Export(*program);
     return {program, proto::StatusCode::OK};
 }

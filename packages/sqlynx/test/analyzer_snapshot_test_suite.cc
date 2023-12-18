@@ -4,6 +4,7 @@
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/parser/scanner.h"
 #include "sqlynx/proto/proto_generated.h"
+#include "sqlynx/schema.h"
 #include "sqlynx/script.h"
 #include "sqlynx/testing/analyzer_snapshot_test.h"
 #include "sqlynx/testing/xml_tests.h"
@@ -33,7 +34,9 @@ TEST_P(AnalyzerSnapshotTestSuite, Test) {
     ASSERT_EQ(main_scan.second, proto::StatusCode::OK);
     auto main_parsed = parser::Parser::Parse(main_scan.first);
     ASSERT_EQ(main_parsed.second, proto::StatusCode::OK);
-    auto main_analyzed = Analyzer::Analyze(main_parsed.first, external_analyzed.first);
+    SchemaSearchPath search_path;
+    search_path.PushBack(external_analyzed.first);
+    auto main_analyzed = Analyzer::Analyze(main_parsed.first, &search_path);
     ASSERT_EQ(main_analyzed.second, proto::StatusCode::OK);
 
     // Encode the program

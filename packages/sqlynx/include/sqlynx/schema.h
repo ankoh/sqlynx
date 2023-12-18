@@ -221,6 +221,9 @@ class SchemaSearchPath {
 
     /// Get the schemas
     auto& GetSchemas() const { return schemas; }
+    /// Push a schema
+    void PushBack(std::shared_ptr<Schema> schema) { schemas.push_back(schema); }
+
     /// Resolve a schema by id
     std::shared_ptr<Schema> ResolveSchema(uint32_t context_id) const;
     /// Resolve a table by id

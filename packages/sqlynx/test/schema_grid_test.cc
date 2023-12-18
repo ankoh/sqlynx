@@ -5,6 +5,7 @@
 #include "gtest/gtest.h"
 #include "sqlynx/analyzer/completion.h"
 #include "sqlynx/proto/proto_generated.h"
+#include "sqlynx/schema.h"
 #include "sqlynx/script.h"
 
 using namespace sqlynx;
@@ -90,7 +91,9 @@ TEST(SchemaGridTest, TPCHQ2) {
     query_script.InsertTextAt(0, TPCH_Q2);
     ASSERT_EQ(query_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(query_script.Parse().second, proto::StatusCode::OK);
-    ASSERT_EQ(query_script.Analyze(&schema_script).second, proto::StatusCode::OK);
+    SchemaSearchPath search_path;
+    search_path.PushBack(schema_script.analyzed_script);
+    ASSERT_EQ(query_script.Analyze(&search_path).second, proto::StatusCode::OK);
 
     SchemaGrid grid;
     for (size_t i = 0; i < 3; ++i) {

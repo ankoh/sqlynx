@@ -1,7 +1,7 @@
 #include "sqlynx/api.h"
 
-#include "sqlynx/proto/proto_generated.h"
 #include "gtest/gtest.h"
+#include "sqlynx/proto/proto_generated.h"
 
 using namespace sqlynx;
 
@@ -81,12 +81,17 @@ limit 100
     sqlynx_result_delete(external_parsed);
     sqlynx_result_delete(external_analyzed);
 
+    auto* search_path = sqlynx_search_path_new();
+    auto search_path_insertion = sqlynx_search_path_insert_script(search_path, 0, external_script);
+    ASSERT_EQ(search_path_insertion->status_code, OK);
+    sqlynx_result_delete(search_path_insertion);
+
     auto* main_script = sqlynx_script_new(2);
     sqlynx_script_insert_text_at(main_script, 0, main_script_text.data(), main_script_text.size());
 
     auto main_scanned = sqlynx_script_scan(main_script);
     auto main_parsed = sqlynx_script_parse(main_script);
-    auto main_analyzed = sqlynx_script_analyze(main_script, external_script);
+    auto main_analyzed = sqlynx_script_analyze(main_script, search_path);
     ASSERT_EQ(main_scanned->status_code, OK);
     ASSERT_EQ(main_parsed->status_code, OK);
     ASSERT_EQ(main_analyzed->status_code, OK);
@@ -94,8 +99,7 @@ limit 100
     sqlynx_result_delete(main_parsed);
     sqlynx_result_delete(main_analyzed);
 
-    sqlynx_script_reindex(main_script);
-
+    sqlynx_search_path_delete(search_path);
     sqlynx_script_delete(external_script);
     sqlynx_script_delete(main_script);
 }
