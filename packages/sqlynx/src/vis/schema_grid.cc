@@ -2,6 +2,7 @@
 
 #include <limits>
 
+#include "sqlynx/context.h"
 #include "sqlynx/script.h"
 
 namespace sqlynx {
@@ -42,42 +43,40 @@ void SchemaGrid::Configure(const SchemaGrid::Config& c) {
 void SchemaGrid::PrepareLayout() {
     // Internal and external tables
     size_t table_count = script->GetTables().size();
-    if (script->external_script) {
-        table_count += script->external_script->tables.size();
+    for (auto& schema : script->GetSchemaSearchPath().GetSchemas()) {
+        table_count += schema->GetTables().size();
     }
     // Load adjacency map
     assert(nodes.empty());
     nodes.reserve(table_count);
     // Load internal tables
-    for (uint32_t i = 0; i < script->GetTables().size(); ++i) {
-        size_t node_id = nodes.size();
-        ContextObjectID table_id{script->context_id, i};
-        nodes.emplace_back(node_id, table_id, 0);
+    std::unordered_map<ContextObjectID, size_t, ContextObjectID::Hasher> nodes_by_table_id;
+    for (auto& table : script->GetTables()) {
+        nodes_by_table_id.insert({table.table_id, nodes.size()});
+        nodes.emplace_back(nodes.size(), table.table_id, 0);
     }
     // Add external tables
-    if (script->external_script) {
-        for (uint32_t i = 0; i < script->GetTables()->tables.size(); ++i) {
-            size_t node_id = nodes.size();
-            ContextObjectID table_id{script->external_script->context_id, i};
-            nodes.emplace_back(node_id, table_id, 0);
+    for (auto& schema : script->GetSchemaSearchPath().GetSchemas()) {
+        for (auto& table : schema->GetTables()) {
+            nodes_by_table_id.insert({table.table_id, nodes.size()});
+            nodes.emplace_back(nodes.size(), table.table_id, 0);
         }
     }
-    // Helper to create a node id
-    auto resolve_node_id = [](ContextObjectID id, AnalyzedScript& script) {
-        return id.GetIndex() + (id.GetContext() == script.context_id ? 0 : script.tables.size());
-    };
     // Add edge node ids
     assert(edge_nodes.empty());
     edge_nodes.resize(script->graph_edge_nodes.size());
     for (size_t i = 0; i < script->graph_edge_nodes.size(); ++i) {
         AnalyzedScript::QueryGraphEdgeNode& node = script->graph_edge_nodes[i];
-        ContextObjectID column_reference_id{script->context_id, node.column_reference_id};
+        ContextObjectID column_reference_id{script->GetContextId(), node.column_reference_id};
         auto& col_ref = script->column_references[node.column_reference_id];
         ContextObjectID ast_node_id = col_ref.ast_node_id.has_value()
-                                          ? ContextObjectID{script->context_id, *col_ref.ast_node_id}
+                                          ? ContextObjectID{script->GetContextId(), *col_ref.ast_node_id}
                                           : ContextObjectID{};
         ContextObjectID table_id = script->column_references[node.column_reference_id].resolved_table_id;
-        uint32_t node_id = table_id.IsNull() ? NULL_TABLE_ID : resolve_node_id(table_id, *script);
+        uint32_t node_id = std::numeric_limits<uint32_t>::max();
+        if (auto iter = nodes_by_table_id.find(table_id); iter != nodes_by_table_id.end()) {
+            node_id = iter->second;
+        }
         edge_nodes[i] = EdgeNode{column_reference_id, ast_node_id, table_id, node_id};
     }
     // Add edges
@@ -85,13 +84,13 @@ void SchemaGrid::PrepareLayout() {
     edges.resize(script->graph_edges.size());
     for (uint32_t i = 0; i < script->graph_edges.size(); ++i) {
         AnalyzedScript::QueryGraphEdge& edge = script->graph_edges[i];
-        edges[i] = {
-            ContextObjectID{script->context_id, i},
-            edge.ast_node_id.has_value() ? ContextObjectID{script->context_id, *edge.ast_node_id} : ContextObjectID{},
-            edge.nodes_begin,
-            edge.node_count_left,
-            edge.node_count_right,
-            edge.expression_operator};
+        edges[i] = {ContextObjectID{script->GetContextId(), i},
+                    edge.ast_node_id.has_value() ? ContextObjectID{script->GetContextId(), *edge.ast_node_id}
+                                                 : ContextObjectID{},
+                    edge.nodes_begin,
+                    edge.node_count_left,
+                    edge.node_count_right,
+                    edge.expression_operator};
     }
     // Collect nˆ2 adjacency pairs for now.
     // We might want to model hyper-edges differently for edge attraction in the future
@@ -102,14 +101,21 @@ void SchemaGrid::PrepareLayout() {
         for (size_t l = 0; l < edge.node_count_left; ++l) {
             size_t lcol = script->graph_edge_nodes[edge.nodes_begin + l].column_reference_id;
             ContextObjectID ltid = script->column_references[lcol].resolved_table_id;
-            if (ltid.IsNull()) continue;
-            auto ln = resolve_node_id(ltid, *script);
+            auto iter = nodes_by_table_id.find(ltid);
+            if (iter == nodes_by_table_id.end()) {
+                continue;
+            }
+            auto ln = iter->second;
             // Emit pair for each right node
             for (size_t r = 0; r < edge.node_count_right; ++r) {
                 size_t rcol = script->graph_edge_nodes[edge.nodes_begin + edge.node_count_left + r].column_reference_id;
                 ContextObjectID rtid = script->column_references[rcol].resolved_table_id;
                 if (rtid.IsNull()) continue;
-                auto rn = resolve_node_id(rtid, *script);
+                auto iter = nodes_by_table_id.find(rtid);
+                if (iter == nodes_by_table_id.end()) {
+                    continue;
+                }
+                auto rn = iter->second;
                 adjacency_pairs.emplace_back(ln, rn);
                 nodes[ln].total_peers += 1;
                 nodes[rn].total_peers += 1;

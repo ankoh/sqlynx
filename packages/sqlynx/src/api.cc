@@ -96,9 +96,6 @@ static FFIResult* packError(proto::StatusCode status) {
         case proto::StatusCode::COMPLETION_MISSES_SCANNER_TOKEN:
             message = "Completion requires a scanner token";
             break;
-        case proto::StatusCode::REINDEXING_MISSES_ANALYSIS:
-            message = "Reindexing requires an analyzed script";
-            break;
         case proto::StatusCode::EXTERNAL_CONTEXT_COLLISION:
             message = "Collision on external context identifier";
             break;
@@ -187,9 +184,6 @@ extern "C" FFIResult* sqlynx_script_format(sqlynx::Script* script) {
     result->owner_deleter = [](void* buffer) { delete reinterpret_cast<std::string*>(buffer); };
     return result;
 }
-
-/// Reindex the script
-extern "C" uint32_t sqlynx_script_reindex(Script* script) { return static_cast<uint32_t>(script->Reindex()); }
 
 /// Move the cursor to a script at a position
 extern "C" FFIResult* sqlynx_script_move_cursor(sqlynx::Script* script, size_t text_offset) {

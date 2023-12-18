@@ -268,6 +268,8 @@ class AnalyzedScript : public Schema {
 
     /// Get the schema search path
     auto& GetSchemaSearchPath() const { return schema_search_path; }
+    /// Get the name search index
+    btree::multimap<fuzzy_ci_string_view, std::reference_wrapper<const NameInfo>> GetNameSearchIndex() const override;
 
     /// Build the program
     flatbuffers::Offset<proto::AnalyzedScript> Pack(flatbuffers::FlatBufferBuilder& builder);

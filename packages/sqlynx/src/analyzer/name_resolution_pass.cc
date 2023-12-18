@@ -148,7 +148,7 @@ NameResolutionPass::NameScope& NameResolutionPass::CreateScope(NodeState& target
         NameScope{.ast_scope_root = scope_root, .parent_scope = nullptr, .child_scopes = target.child_scopes});
     for (auto& child_scope : target.child_scopes) {
         child_scope.parent_scope = &scope.value;
-        root_scopes.erase(child_scope);
+        root_scopes.erase(&child_scope);
     }
     for (auto& ref : target.column_references) {
         ref.ast_scope_root = scope_root;
@@ -160,7 +160,7 @@ NameResolutionPass::NameScope& NameResolutionPass::CreateScope(NodeState& target
     target.Clear();
     // Remember the child scope
     target.child_scopes.PushBack(scope);
-    root_scopes.insert(scope.value);
+    root_scopes.insert(&scope.value);
     return scope.value;
 }
 
@@ -169,14 +169,14 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
         // TODO Matches a view or CTE?
 
         // Table ref points to own table?
-        auto iter = out.tables_by_name.find(table_ref.table_name);
-        if (iter != out.tables_by_name.end()) {
+        auto iter = staging.tables_by_name.find(table_ref.table_name);
+        if (iter != staging.tables_by_name.end()) {
             auto& table = iter->second.get();
-            auto table_columns = std::span{out.table_columns}.subspan(table.columns_begin, table.column_count);
+            auto table_columns = std::span{staging.table_columns}.subspan(table.columns_begin, table.column_count);
 
             // Remember resolved table
             Schema::ResolvedTable resolved_table{.table = table, .table_columns = table_columns};
-            scope.resolved_table_references.insert({table_ref, resolved_table});
+            scope.resolved_table_references.insert({&table_ref, resolved_table});
             table_ref.resolved_table_id = table.table_id;
 
             // Remember all available columns
@@ -197,7 +197,7 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
         // Otherwise consult the external search path
         if (auto resolved = schema_search_path.ResolveTable(table_ref.table_name)) {
             // Remember resolved table
-            scope.resolved_table_references.insert({table_ref, *resolved});
+            scope.resolved_table_references.insert({&table_ref, *resolved});
             table_ref.resolved_table_id = resolved->table.table_id;
 
             // Collect all available columns
@@ -271,7 +271,7 @@ void NameResolutionPass::ResolveNames() {
     // Recursively traverse down the scopes
     std::stack<std::reference_wrapper<NameScope>> pending_scopes;
     for (auto& scope : root_scopes) {
-        pending_scopes.push(scope);
+        pending_scopes.push(*scope);
     }
     while (!pending_scopes.empty()) {
         auto& top = pending_scopes.top();
@@ -550,9 +550,9 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
 
 /// Finish the analysis pass
 void NameResolutionPass::Finish() {
-    out.tables = tables.Flatten();
-    out.table_columns = table_columns.Flatten();
-    out.tables_by_name.reserve(out.tables.size());
+    staging.tables = tables.Flatten();
+    staging.table_columns = table_columns.Flatten();
+    staging.tables_by_name.reserve(staging.tables.size());
 
     // Resolve all names
     ResolveNames();

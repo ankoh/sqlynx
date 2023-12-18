@@ -362,6 +362,12 @@ AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, std::string
       parsed_script(std::move(parsed)),
       schema_search_path(std::move(schema_search_path)) {}
 
+/// Get the name search index
+btree::multimap<fuzzy_ci_string_view, std::reference_wrapper<const Schema::NameInfo>>
+AnalyzedScript::GetNameSearchIndex() const {
+    return parsed_script->scanned_script->name_search_index;
+}
+
 template <typename In, typename Out>
 static flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Out>>> PackVector(
     flatbuffers::FlatBufferBuilder& builder, const std::vector<In>& elems) {
@@ -516,7 +522,7 @@ std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(const SchemaSearch
     auto time_start = std::chrono::steady_clock::now();
 
     // Analyze a script
-    auto [script, status] = Analyzer::Analyze(parsed_script, *schema_search_path);
+    auto [script, status] = Analyzer::Analyze(parsed_script, database_name, schema_name, *schema_search_path);
     if (status != proto::StatusCode::OK) {
         return {nullptr, status};
     }
