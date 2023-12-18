@@ -9,6 +9,7 @@
 #include "sqlynx/context.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
+#include "sqlynx/utils/overlay_list.h"
 
 namespace sqlynx {
 
@@ -147,7 +148,7 @@ NameResolutionPass::NameScope& NameResolutionPass::CreateScope(NodeState& target
         NameScope{.ast_scope_root = scope_root, .parent_scope = nullptr, .child_scopes = target.child_scopes});
     for (auto& child_scope : target.child_scopes) {
         child_scope.parent_scope = &scope.value;
-        root_scopes.erase(&child_scope);
+        root_scopes.erase(child_scope);
     }
     for (auto& ref : target.column_references) {
         ref.ast_scope_root = scope_root;
@@ -159,13 +160,13 @@ NameResolutionPass::NameScope& NameResolutionPass::CreateScope(NodeState& target
     target.Clear();
     // Remember the child scope
     target.child_scopes.PushBack(scope);
-    root_scopes.insert(&scope.value);
+    root_scopes.insert(scope.value);
     return scope.value;
 }
 
 void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
-    for (auto& table_ref : scope.table_references) {
-        // TODO Matches a view or cte?
+    for (auto& table_ref : scope.unresolved_table_references) {
+        // TODO Matches a view or CTE?
 
         // Table ref points to own table?
         auto iter = out.tables_by_name.find(table_ref.table_name);
@@ -179,12 +180,16 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
             table_ref.resolved_table_id = table.table_id;
 
             // Remember all available columns
-            for (auto& column : table_columns) {
-                scope.resolved_table_columns.push_back(
-                    ResolvedTableColumn{.alias_name = table_ref.alias_name,
-                                        .column_name = column.column_name,
-                                        .table = table,
-                                        .table_reference_id = table_ref.table_reference_id});
+            std::vector<ResolvedTableColumn>& columns = table_ref.alias_name.empty()
+                                                            ? scope.resolved_table_columns_without_alias
+                                                            : scope.resolved_table_columns_with_alias;
+            for (size_t i = 0; i < table_columns.size(); ++i) {
+                auto& column = table_columns[i];
+                columns.push_back(ResolvedTableColumn{.alias_name = table_ref.alias_name,
+                                                      .column_name = column.column_name,
+                                                      .table = table,
+                                                      .column_id = i,
+                                                      .table_reference_id = table_ref.table_reference_id});
             }
             continue;
         }
@@ -196,12 +201,16 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
             table_ref.resolved_table_id = resolved->table.table_id;
 
             // Collect all available columns
-            for (auto& column : resolved->table_columns) {
-                scope.resolved_table_columns.push_back(
-                    ResolvedTableColumn{.alias_name = table_ref.alias_name,
-                                        .column_name = column.column_name,
-                                        .table = resolved->table,
-                                        .table_reference_id = table_ref.table_reference_id});
+            std::vector<ResolvedTableColumn>& columns = table_ref.alias_name.empty()
+                                                            ? scope.resolved_table_columns_without_alias
+                                                            : scope.resolved_table_columns_with_alias;
+            for (size_t i = 0; i < resolved->table_columns.size(); ++i) {
+                auto& column = resolved->table_columns[i];
+                columns.push_back(ResolvedTableColumn{.alias_name = table_ref.alias_name,
+                                                      .column_name = column.column_name,
+                                                      .table = resolved->table,
+                                                      .column_id = i,
+                                                      .table_reference_id = table_ref.table_reference_id});
             }
             continue;
         }
@@ -212,6 +221,7 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
 
 void NameResolutionPass::ResolveColumnRefsInScope(NameScope& scope, ColumnRefsByAlias& refs_by_alias,
                                                   ColumnRefsByName& refs_by_name) {
+    // Build a small dictionary with all column refs in this scope
     refs_by_alias.clear();
     refs_by_name.clear();
     for (auto& column_ref : scope.column_references) {
@@ -221,109 +231,60 @@ void NameResolutionPass::ResolveColumnRefsInScope(NameScope& scope, ColumnRefsBy
             refs_by_name.insert({column_ref.column_name.table_alias, column_ref});
         }
     }
-    // XXX
+    // Resolve refs in the scope upwards
+    for (auto target_scope = &scope; target_scope != nullptr; target_scope = target_scope->parent_scope) {
+        // Scan resolved table columns with an alias
+        if (!refs_by_alias.empty()) {
+            for (auto& resolved : target_scope->resolved_table_columns_with_alias) {
+                auto [begin, end] = refs_by_alias.equal_range(resolved.alias_name);
+                for (auto iter = begin; iter != end; ++iter) {
+                    auto& column_ref = iter->second.get();
+                    column_ref.resolved_table_id = resolved.table.table_id;
+                    column_ref.resolved_column_id = resolved.column_id;
+                    refs_by_alias.erase(iter);
+                }
+            }
+        }
+
+        // Scan resolved table columns with an alias
+        if (!refs_by_name.empty()) {
+            for (auto& resolved : target_scope->resolved_table_columns_without_alias) {
+                auto [begin, end] = refs_by_name.equal_range(resolved.alias_name);
+                for (auto iter = begin; iter != end; ++iter) {
+                    auto& column_ref = iter->second.get();
+                    column_ref.resolved_table_id = resolved.table.table_id;
+                    column_ref.resolved_column_id = resolved.column_id;
+                    refs_by_name.erase(iter);
+                }
+            }
+        }
+    }
 }
 
 void NameResolutionPass::ResolveNames() {
-    //    // Register tables by name.
-    //    // Check each table ref and check if we can find a table by name.
-    //    ankerl::unordered_dense::map<Schema::QualifiedTableName, OverlayList<WithScope<AnalyzedScript::Table>>>
-    //        local_tables_by_name;
-    //    local_tables_by_name.reserve(tables.GetSize());
-    //    for (auto& chunk : tables.GetChunks()) {
-    //        for (auto& table : chunk) {
-    //            table.next = nullptr;
-    //            local_tables_by_name[table.value.table_name].PushBack(table);
-    //        }
-    //    }
-    //
-    //    for (auto& table_ref : table_references) {
-    //        auto iter = local_tables_by_name.find(table_ref.value.table_name);
-    //        if (iter != local_tables_by_name.end()) {
-    //            for (auto& candidate : iter->second) {
-    //                // Check if in scope
-    //                if (table_ref.value.IsInScopeOf(candidate)) {
-    //                    // XXX
-    //                }
-    //            }
-    //        } else {
-    //            // Register as unresolved
-    //        }
-    //    }
-    //
-    //    // XXX Consult the schema search path for each unresolved table ref
-    //
-    //    // Index table refs by alias.
-    //    // Check each column ref and check if we can find an alias in the same scope.
-    //    ankerl::unordered_dense::map<std::string_view, Ref<WithScope<AnalyzedScript::TableReference>>>
-    //    table_refs_by_alias;
-    //
-    //    // No more leftover column refs? Then return early.
-}
+    // Create column ref maps
+    ColumnRefsByAlias tmp_refs_by_alias;
+    ColumnRefsByAlias tmp_refs_by_name;
+    tmp_refs_by_alias.reserve(column_references.GetSize());
+    tmp_refs_by_name.reserve(column_references.GetSize());
 
-// void NameResolutionPass::ResolveNames(NodeState& state) {
-//     // Build a map with all table names that are in scope
-//     scope_tables.clear();
-//     size_t max_column_count = 0;
-//     for (auto iter = state.tables.begin(); iter != state.tables.end(); ++iter) {
-//         // Table declarations are out of scope if they have a scope root set
-//         if (iter->ast_scope_root.has_value()) {
-//             continue;
-//         }
-//         // Register as local table if in scope
-//         Schema::QualifiedTableName table_name{iter->ast_node_id, local_database_name, local_schema_name,
-//                                               iter->table_name};
-//         max_column_count += iter->column_count;
-//         scope_tables.insert({table_name, ContextObjectID{context_id, static_cast<uint32_t>(iter.GetBufferIndex())}});
-//     }
-//
-//     // Collect all columns that are in scope
-//     scope_columns.clear();
-//     scope_columns.reserve(max_column_count);
-//     for (auto iter = state.table_references.begin(); iter != state.table_references.end(); ++iter) {
-//         // Table references are out of scope if they have a scope root set
-//         if (iter->ast_scope_root.has_value()) {
-//             continue;
-//         }
-//         // Available in scope?
-//         if (auto table_iter = scope_tables.find(iter->table_name); table_iter != scope_tables.end()) {
-//             auto table_id = table_iter->second;
-//             Schema::Table& resolved = tables[table_id.GetIndex()].value;
-//             for (uint32_t cid = 0; cid < resolved.column_count; ++cid) {
-//                 Schema::TableColumn& col = table_columns[resolved.columns_begin + cid];
-//                 Schema::QualifiedColumnName col_name{iter->ast_node_id, iter->alias_name, col.column_name};
-//                 scope_columns.insert({col_name, {table_id, cid}});
-//             }
-//             iter->resolved_table_id = table_iter->second;
-//         } else if (auto resolved = schema_search_path.ResolveTable(iter->table_name)) {
-//             auto& tbl = resolved.value();
-//             for (size_t cid = 0; cid < tbl.table_columns.size(); ++cid) {
-//                 const Schema::TableColumn& col = tbl.table_columns[cid];
-//                 Schema::QualifiedColumnName col_name{iter->ast_node_id, iter->alias_name, col.column_name};
-//                 scope_columns.insert({col_name, {tbl.table_id, cid}});
-//             }
-//             iter->resolved_table_id = tbl.table_id;
-//         }
-//     }
-//
-//     // Now scan all unresolved column refs and look them up in the map
-//     for (auto iter = state.column_references.begin(); iter != state.column_references.end(); ++iter) {
-//         // Out of scope or already resolved?
-//         if (iter->ast_scope_root.has_value() || !iter->table_id.IsNull()) {
-//             continue;
-//         }
-//         // Resolve the column ref
-//         if (auto column_iter = scope_columns.find(iter->column_name); column_iter != scope_columns.end()) {
-//             auto [tid, cid] = column_iter->second;
-//             iter->table_id = tid;
-//             iter->column_id = cid;
-//         }
-//     }
-// }
+    // Recursively traverse down the scopes
+    std::stack<std::reference_wrapper<NameScope>> pending_scopes;
+    for (auto& scope : root_scopes) {
+        pending_scopes.push(scope);
+    }
+    while (!pending_scopes.empty()) {
+        auto& top = pending_scopes.top();
+        pending_scopes.pop();
+        ResolveColumnRefsInScope(top, tmp_refs_by_alias, tmp_refs_by_name);
+        for (auto& child_scope : top.get().child_scopes) {
+            pending_scopes.push(child_scope);
+        }
+    }
+}
 
 /// Prepare the analysis pass
 void NameResolutionPass::Prepare() {}
-
 /// Visit a chunk of nodes
 void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
     // Scan nodes in morsel
@@ -589,44 +550,50 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
 
 /// Finish the analysis pass
 void NameResolutionPass::Finish() {
+    out.tables = tables.Flatten();
+    out.table_columns = table_columns.Flatten();
+    out.tables_by_name.reserve(out.tables.size());
+
+    // Resolve all names
+    ResolveNames();
+
     // Bail out if there are no statements
-    if (parsed_program.statements.empty()) {
-        return;
-    }
-    // Helper to assign statement ids
-    auto assign_statment_ids = [&](auto& chunks) {
-        uint32_t statement_id = 0;
-        size_t statement_begin = parsed_program.statements[0].nodes_begin;
-        size_t statement_end = statement_begin + parsed_program.statements[0].node_count;
-        for (auto& chunk : chunks) {
-            for (auto& ref : chunk) {
-                // Node ids should only be missing for external tables.
-                // Assert that we only store table_refs of internal tables.
-                assert(ref.value.ast_node_id.has_value());
-                // Get the location
-                auto ast_node_id = ref.value.ast_node_id.value();
-                // Search first statement that might include the node
-                while (statement_end <= ast_node_id && statement_id < parsed_program.statements.size()) {
-                    ++statement_id;
-                    statement_begin = parsed_program.statements[statement_id].nodes_begin;
-                    statement_end = statement_begin + parsed_program.statements[statement_id].node_count;
+    if (!parsed_program.statements.empty()) {
+        // Helper to assign statement ids
+        auto assign_statment_ids = [&](auto& chunks) {
+            uint32_t statement_id = 0;
+            size_t statement_begin = parsed_program.statements[0].nodes_begin;
+            size_t statement_end = statement_begin + parsed_program.statements[0].node_count;
+            for (auto& chunk : chunks) {
+                for (auto& ref : chunk) {
+                    // Node ids should only be missing for external tables.
+                    // Assert that we only store table_refs of internal tables.
+                    assert(ref.value.ast_node_id.has_value());
+                    // Get the location
+                    auto ast_node_id = ref.value.ast_node_id.value();
+                    // Search first statement that might include the node
+                    while (statement_end <= ast_node_id && statement_id < parsed_program.statements.size()) {
+                        ++statement_id;
+                        statement_begin = parsed_program.statements[statement_id].nodes_begin;
+                        statement_end = statement_begin + parsed_program.statements[statement_id].node_count;
+                    }
+                    // There is none?
+                    // Abort, all other refs won't match either
+                    if (statement_id == parsed_program.statements.size()) {
+                        break;
+                    }
+                    // The statement includes the node?
+                    if (statement_begin <= ast_node_id) {
+                        ref.value.ast_statement_id = statement_id;
+                        continue;
+                    }
+                    // Otherwise lthe ast_node does not belong to a statement, check next one
                 }
-                // There is none?
-                // Abort, all other refs won't match either
-                if (statement_id == parsed_program.statements.size()) {
-                    break;
-                }
-                // The statement includes the node?
-                if (statement_begin <= ast_node_id) {
-                    ref.value.ast_statement_id = statement_id;
-                    continue;
-                }
-                // Otherwise lthe ast_node does not belong to a statement, check next one
             }
-        }
-    };
-    assign_statment_ids(table_references.GetChunks());
-    assign_statment_ids(column_references.GetChunks());
+        };
+        assign_statment_ids(table_references.GetChunks());
+        assign_statment_ids(column_references.GetChunks());
+    }
 }
 
 /// Export an analyzed program

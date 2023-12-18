@@ -26,6 +26,8 @@ class NameResolutionPass : public PassManager::LTRPass {
         std::string_view column_name;
         /// The table
         const Schema::Table& table;
+        /// The column id
+        size_t column_id;
         /// The table reference id
         ContextObjectID table_reference_id;
     };
@@ -37,15 +39,17 @@ class NameResolutionPass : public PassManager::LTRPass {
         NameScope* parent_scope;
         /// The child scopes
         OverlayList<NameScope> child_scopes;
-        /// The table references in scope
-        OverlayList<AnalyzedScript::TableReference> table_references;
         /// The column references in scope
         OverlayList<AnalyzedScript::ColumnReference> column_references;
+        /// The table references in scope
+        OverlayList<AnalyzedScript::TableReference> unresolved_table_references;
         /// The resolved table references
-        ankerl::unordered_dense::map<std::reference_wrapper<AnalyzedScript::TableReference>, Schema::ResolvedTable>
+        std::unordered_multimap<std::reference_wrapper<AnalyzedScript::TableReference>, Schema::ResolvedTable>
             resolved_table_references;
-        /// The resolved table columns
-        std::vector<ResolvedTableColumn> resolved_table_columns;
+        /// The resolved table columns with an alias
+        std::vector<ResolvedTableColumn> resolved_table_columns_with_alias;
+        /// The resolved table columns without a table alias
+        std::vector<ResolvedTableColumn> resolved_table_columns_without_alias;
     };
     /// A node state during name resolution
     struct NodeState {
@@ -94,7 +98,7 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// The naming scopes
     ChunkBuffer<OverlayList<NameScope>::Node, 16> name_scopes;
     /// The root scopes
-    ankerl::unordered_dense::set<NameScope*> root_scopes;
+    ankerl::unordered_dense::set<std::reference_wrapper<NameScope>> root_scopes;
     /// The table references
     ChunkBuffer<OverlayList<AnalyzedScript::TableReference>::Node, 16> table_references;
     /// The column references
