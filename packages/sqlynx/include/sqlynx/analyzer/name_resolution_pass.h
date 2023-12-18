@@ -8,6 +8,7 @@
 
 #include "sqlynx/analyzer/analyzer.h"
 #include "sqlynx/analyzer/pass_manager.h"
+#include "sqlynx/context.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
 #include "sqlynx/utils/attribute_index.h"
@@ -19,10 +20,14 @@ class NameResolutionPass : public PassManager::LTRPass {
    protected:
     /// A resolved table column
     struct ResolvedTableColumn {
-        /// The table alias
-        std::string_view table_alias;
+        /// The alias name
+        std::string_view alias_name;
         /// The column name
         std::string_view column_name;
+        /// The table
+        const Schema::Table& table;
+        /// The table reference id
+        ContextObjectID table_reference_id;
     };
     /// A naming scope
     struct NameScope {
@@ -39,9 +44,8 @@ class NameResolutionPass : public PassManager::LTRPass {
         /// The resolved table references
         ankerl::unordered_dense::map<std::reference_wrapper<AnalyzedScript::TableReference>, Schema::ResolvedTable>
             resolved_table_references;
-        /// The columns that were resolved through table references
-        ankerl::unordered_dense::map<ResolvedTableColumn, std::reference_wrapper<AnalyzedScript::TableReference>>
-            resolved_columns;
+        /// The resolved table columns
+        std::vector<ResolvedTableColumn> resolved_table_columns;
     };
     /// A node state during name resolution
     struct NodeState {

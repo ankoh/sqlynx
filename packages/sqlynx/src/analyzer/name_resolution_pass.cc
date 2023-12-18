@@ -174,18 +174,17 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
             auto table_columns = std::span{out.table_columns}.subspan(table.columns_begin, table.column_count);
 
             // Remember resolved table
-            Schema::ResolvedTable resolved_table{
-                .table_id = table.table_id, .table = table, .table_columns = table_columns};
+            Schema::ResolvedTable resolved_table{.table = table, .table_columns = table_columns};
             scope.resolved_table_references.insert({table_ref, resolved_table});
             table_ref.resolved_table_id = table.table_id;
 
-            // Register all columns
+            // Remember all available columns
             for (auto& column : table_columns) {
-                ResolvedTableColumn resolved_column{
-                    .table_alias = table_ref.alias_name,
-                    .column_name = column.column_name,
-                };
-                scope.resolved_columns.insert({resolved_column, table_ref});
+                scope.resolved_table_columns.push_back(
+                    ResolvedTableColumn{.alias_name = table_ref.alias_name,
+                                        .column_name = column.column_name,
+                                        .table = table,
+                                        .table_reference_id = table_ref.table_reference_id});
             }
             continue;
         }
@@ -194,15 +193,15 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
         if (auto resolved = schema_search_path.ResolveTable(table_ref.table_name)) {
             // Remember resolved table
             scope.resolved_table_references.insert({table_ref, *resolved});
-            table_ref.resolved_table_id = resolved->table_id;
+            table_ref.resolved_table_id = resolved->table.table_id;
 
-            // Register all columns
+            // Collect all available columns
             for (auto& column : resolved->table_columns) {
-                ResolvedTableColumn resolved_column{
-                    .table_alias = table_ref.alias_name,
-                    .column_name = column.column_name,
-                };
-                scope.resolved_columns.insert({resolved_column, table_ref});
+                scope.resolved_table_columns.push_back(
+                    ResolvedTableColumn{.alias_name = table_ref.alias_name,
+                                        .column_name = column.column_name,
+                                        .table = resolved->table,
+                                        .table_reference_id = table_ref.table_reference_id});
             }
             continue;
         }
@@ -369,6 +368,8 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 // Add column reference
                 auto& n = column_references.Append(AnalyzedScript::ColumnReference());
                 n.buffer_index = column_references.GetSize() - 1;
+                n.value.column_reference_id =
+                    ContextObjectID{context_id, static_cast<uint32_t>(column_references.GetSize() - 1)};
                 n.value.ast_node_id = node_id;
                 n.value.ast_statement_id = std::nullopt;
                 n.value.ast_scope_root = std::nullopt;
@@ -399,7 +400,9 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                     }
                     // Add table reference
                     auto& n = table_references.Append(AnalyzedScript::TableReference());
-                    n.buffer_index = column_references.GetSize() - 1;
+                    n.buffer_index = table_references.GetSize() - 1;
+                    n.value.table_reference_id =
+                        ContextObjectID{context_id, static_cast<uint32_t>(table_references.GetSize() - 1)};
                     n.value.ast_node_id = node_id;
                     n.value.ast_statement_id = std::nullopt;
                     n.value.ast_scope_root = std::nullopt;

@@ -183,6 +183,8 @@ class AnalyzedScript : public Schema {
    public:
     /// A table reference
     struct TableReference {
+        /// The table reference id
+        ContextObjectID table_reference_id;
         /// The AST node id in the target script
         std::optional<uint32_t> ast_node_id;
         /// The AST statement id in the target script
@@ -195,22 +197,14 @@ class AnalyzedScript : public Schema {
         std::string_view alias_name;
         /// The table id, may refer to different context
         ContextObjectID resolved_table_id;
-        /// Constructor
-        TableReference(std::optional<uint32_t> ast_node_id = std::nullopt,
-                       std::optional<uint32_t> ast_statement_id = {}, std::optional<uint32_t> ast_scope_root = {},
-                       QualifiedTableName table_name = {}, std::string_view alias_name = {},
-                       ContextObjectID table_id = {})
-            : ast_node_id(ast_node_id),
-              ast_statement_id(ast_statement_id),
-              ast_scope_root(ast_scope_root),
-              table_name(table_name),
-              alias_name(alias_name),
-              resolved_table_id(table_id) {}
+
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::TableReference> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
     /// A column reference
     struct ColumnReference {
+        /// The table reference id
+        ContextObjectID column_reference_id;
         /// The AST node id in the target script
         std::optional<uint32_t> ast_node_id;
         /// The AST statement id in the target script
@@ -223,17 +217,7 @@ class AnalyzedScript : public Schema {
         ContextObjectID resolved_table_id;
         /// The column index
         std::optional<uint32_t> resolved_column_id;
-        /// Constructor
-        ColumnReference(std::optional<uint32_t> ast_node_id = std::nullopt,
-                        std::optional<uint32_t> ast_statement_id = {}, std::optional<uint32_t> ast_scope_root = {},
-                        QualifiedColumnName column_name = {}, ContextObjectID table_id = {},
-                        std::optional<uint32_t> column_id = std::nullopt)
-            : ast_node_id(ast_node_id),
-              ast_statement_id(ast_statement_id),
-              ast_scope_root(ast_scope_root),
-              column_name(column_name),
-              resolved_table_id(table_id),
-              resolved_column_id(column_id) {}
+
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::ColumnReference> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
