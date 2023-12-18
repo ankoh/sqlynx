@@ -56,7 +56,7 @@ table TableReference {
     // The alias name
     alias_name: string;
     // The id of the table that is referenced
-    table_id: uint64;
+    resolved_table_id: uint64;
 }
 
 table ColumnReference {
@@ -69,9 +69,11 @@ table ColumnReference {
     // The column name
     column_name: QualifiedColumnName;
     // The id of the table that is referenced
-    table_id: uint64;
+    resolved_table_reference_id: uint64;
+    // The id of the table that is referenced
+    resolved_table_id: uint64;
     // The id of the column that is referenced
-    column_id: uint32;
+    resolved_column_id: uint32;
 }
 
 struct QueryGraphEdge {
