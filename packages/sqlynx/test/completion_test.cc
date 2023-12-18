@@ -2,15 +2,11 @@
 
 #include "gtest/gtest.h"
 #include "sqlynx/proto/proto_generated.h"
+#include "sqlynx/schema.h"
 
 using namespace sqlynx;
 
 namespace {
-
-TEST(CompletionTest, KeywordSuffixCount) {
-    auto& keywords = NameSuffixIndex::Keywords();
-    ASSERT_EQ(keywords.GetEntries().size(), 2875);
-}
 
 const std::string_view TPCH_SCHEMA = R"SQL(
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
@@ -33,14 +29,14 @@ SELECT s_co
     ASSERT_EQ(external_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(external_script.Parse().second, proto::StatusCode::OK);
     ASSERT_EQ(external_script.Analyze().second, proto::StatusCode::OK);
-    ASSERT_EQ(external_script.Reindex(), proto::StatusCode::OK);
 
     Script main_script{2};
     main_script.InsertTextAt(0, main_script_text);
     ASSERT_EQ(main_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(main_script.Parse().second, proto::StatusCode::OK);
-    ASSERT_EQ(main_script.Analyze(&external_script).second, proto::StatusCode::OK);
-    ASSERT_EQ(main_script.Reindex(), proto::StatusCode::OK);
+    SchemaSearchPath search_path;
+    search_path.PushBack(external_script.analyzed_script);
+    ASSERT_EQ(main_script.Analyze(&search_path).second, proto::StatusCode::OK);
 
     // Move the cursor
     auto cursor_ofs = main_script_text.find("s_co");
@@ -56,7 +52,7 @@ SELECT s_co
 
     std::vector<std::string> names;
     for (auto iter = entries.rbegin(); iter != entries.rend(); ++iter) {
-        names.emplace_back(iter->full_name_text);
+        names.emplace_back(iter->name.text);
     }
     std::vector<std::string> expected_names{"s_comment", "ps_comment", "from", "group", "order",
                                             "where",     "by",         "case", "cast",  "like"};

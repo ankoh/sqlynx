@@ -43,7 +43,7 @@ void CompletionSnapshotTest::EncodeCompletion(pugi::xml_node root, const Complet
     root.append_attribute("strategy").set_value(ctxName);
     for (auto iter = entries.rbegin(); iter != entries.rend(); ++iter) {
         auto xml_entry = root.append_child("entry");
-        std::string text{iter->full_name_text.data(), iter->full_name_text.size()};
+        std::string text{iter->name.text.data(), iter->name.text.size()};
         xml_entry.append_attribute("value").set_value(text.c_str());
         xml_entry.append_attribute("score").set_value(iter->GetScore());
         xml_entry.append_attribute("in-scope").set_value(iter->near_cursor);

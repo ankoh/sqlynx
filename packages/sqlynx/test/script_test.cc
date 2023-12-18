@@ -1,8 +1,9 @@
 #include "sqlynx/script.h"
 
+#include "gtest/gtest.h"
 #include "sqlynx/analyzer/completion.h"
 #include "sqlynx/proto/proto_generated.h"
-#include "gtest/gtest.h"
+#include "sqlynx/schema.h"
 
 using namespace sqlynx;
 
@@ -23,7 +24,10 @@ TEST(ScriptTest, ExternalContextCollision) {
     Script main_script{1};
     main_script.Scan();
     main_script.Parse();
-    auto [result, status] = main_script.Analyze(&schema_script);
+
+    SchemaSearchPath search_path;
+    search_path.PushBack(schema_script.analyzed_script);
+    auto [result, status] = main_script.Analyze(&search_path);
     ASSERT_EQ(status, proto::StatusCode::EXTERNAL_CONTEXT_COLLISION);
 }
 
@@ -103,7 +107,9 @@ limit 100
     main_script.InsertTextAt(0, main_script_text);
     ASSERT_EQ(main_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(main_script.Parse().second, proto::StatusCode::OK);
-    ASSERT_EQ(main_script.Analyze(&external_script).second, proto::StatusCode::OK);
+    SchemaSearchPath search_path;
+    search_path.PushBack(external_script.analyzed_script);
+    ASSERT_EQ(main_script.Analyze(&search_path).second, proto::StatusCode::OK);
 }
 
 }  // namespace

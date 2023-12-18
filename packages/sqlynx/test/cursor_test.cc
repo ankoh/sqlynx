@@ -25,10 +25,8 @@ std::string print_name(const Script& script, const AnalyzedScript::QualifiedTabl
     auto& names = scanned->name_dictionary;
     std::stringstream out;
     size_t out_idx = 0;
-    auto write = [&](ContextObjectID name_id) {
-        if (!name_id.IsNull()) {
-            assert(name_id.GetContext() == script.context_id);
-            auto name = scanned->name_dictionary[name_id.GetIndex()].text;
+    auto write = [&](std::string_view name) {
+        if (!name.empty()) {
             if (out_idx++ > 0) {
                 out << ".";
             }
@@ -46,10 +44,8 @@ std::string print_name(const Script& script, const AnalyzedScript::QualifiedColu
     auto& names = scanned->name_dictionary;
     std::stringstream out;
     size_t out_idx = 0;
-    auto write = [&](ContextObjectID name_id) {
-        if (!name_id.IsNull()) {
-            assert(name_id.GetContext() == script.context_id);
-            auto name = scanned->name_dictionary[name_id.GetIndex()].text;
+    auto write = [&](std::string_view name) {
+        if (!name.empty()) {
             if (out_idx++ > 0) {
                 out << ".";
             }

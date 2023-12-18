@@ -5,6 +5,7 @@
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/parser/scanner.h"
 #include "sqlynx/proto/proto_generated.h"
+#include "sqlynx/schema.h"
 #include "sqlynx/script.h"
 #include "sqlynx/text/rope.h"
 #include "sqlynx/utils/suffix_trie.h"
@@ -629,6 +630,9 @@ static void analyze_query(benchmark::State& state) {
     assert(ext_parsed.second == proto::StatusCode::OK);
     assert(ext_analyzed.second == proto::StatusCode::OK);
 
+    SchemaSearchPath search_path;
+    search_path.PushBack(external.analyzed_script);
+
     auto main_scan = main.Scan();
     auto main_parsed = main.Parse();
     auto main_analyzed = main.Analyze();
@@ -637,7 +641,7 @@ static void analyze_query(benchmark::State& state) {
     assert(main_analyzed.second == proto::StatusCode::OK);
 
     for (auto _ : state) {
-        auto ext_analyzed = main.Analyze(&external);
+        auto ext_analyzed = main.Analyze(&search_path);
         benchmark::DoNotOptimize(main_analyzed);
     }
 }
@@ -654,7 +658,6 @@ static void index_query(benchmark::State& state) {
     assert(analyzed.second == proto::StatusCode::OK);
 
     for (auto _ : state) {
-        auto index = main.Reindex();
         benchmark::DoNotOptimize(index);
     }
 }
@@ -666,7 +669,6 @@ static void move_cursor(benchmark::State& state) {
     auto scanned = main.Scan();
     auto parsed = main.Parse();
     auto analyzed = main.Analyze();
-    auto index = main.Reindex();
 
     std::string_view text = ",customer";
     auto text_offset = main.scanned_script->text_buffer.find(text);
@@ -676,7 +678,6 @@ static void move_cursor(benchmark::State& state) {
     assert(scanned.second == proto::StatusCode::OK);
     assert(parsed.second == proto::StatusCode::OK);
     assert(analyzed.second == proto::StatusCode::OK);
-    assert(index == proto::StatusCode::OK);
     assert(cursor.second == proto::StatusCode::OK);
 
     for (auto _ : state) {
@@ -693,7 +694,6 @@ static void complete_cursor(benchmark::State& state) {
     auto scanned = main.Scan();
     auto parsed = main.Parse();
     auto analyzed = main.Analyze();
-    auto index = main.Reindex();
 
     auto text_offset = main.scanned_script->text_buffer.find(text);
     text_offset += text.size();
@@ -703,7 +703,6 @@ static void complete_cursor(benchmark::State& state) {
     assert(scanned.second == proto::StatusCode::OK);
     assert(parsed.second == proto::StatusCode::OK);
     assert(analyzed.second == proto::StatusCode::OK);
-    assert(index == proto::StatusCode::OK);
     assert(completion.second == proto::StatusCode::OK);
     assert(completion.first != nullptr);
 
@@ -719,7 +718,7 @@ static void compute_layout(benchmark::State& state) {
     // Analyze external script
     auto external_scan = parser::Scanner::Scan(input_external, 0);
     auto external_parsed = parser::Parser::Parse(external_scan.first);
-    auto external_analyzed = Analyzer::Analyze(external_parsed.first, nullptr);
+    auto external_analyzed = Analyzer::Analyze(external_parsed.first);
 
     SchemaGrid graph;
 

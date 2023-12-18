@@ -3,6 +3,7 @@
 #include "sqlynx/parser/names.h"
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/parser/scanner.h"
+#include "sqlynx/schema.h"
 #include "sqlynx/script.h"
 #include "sqlynx/text/rope.h"
 #include "sqlynx/utils/suffix_trie.h"
@@ -598,7 +599,7 @@ static void layout_schema(benchmark::State& state) {
     // Analyze external script
     auto external_scan = parser::Scanner::Scan(input_external, 0);
     auto external_parsed = parser::Parser::Parse(external_scan.first);
-    auto external_analyzed = Analyzer::Analyze(external_parsed.first, nullptr);
+    auto external_analyzed = Analyzer::Analyze(external_parsed.first);
 
     SchemaGrid graph;
 

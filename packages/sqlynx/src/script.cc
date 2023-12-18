@@ -35,6 +35,9 @@ std::unique_ptr<proto::StatementT> ParsedScript::Statement::Pack() {
 ScannedScript::ScannedScript(const rope::Rope& text, uint32_t context_id)
     : context_id(context_id), text_buffer(text.ToString(true)) {}
 
+/// Read a name
+Schema::NameInfo& ScannedScript::ReadName(NameID name) { return name_dictionary[name]; }
+
 /// Register a name
 NameID ScannedScript::RegisterKeywordAsName(std::string_view s, sx::Location location, sx::NameTag tag) {
     auto iter = name_dictionary_ids.find(s);
@@ -356,8 +359,8 @@ flatbuffers::Offset<proto::ColumnReference> AnalyzedScript::ColumnReference::Pac
 }
 
 /// Constructor
-AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, std::string database_name, std::string schema_name,
-                               SchemaSearchPath schema_search_path)
+AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, SchemaSearchPath schema_search_path,
+                               std::string database_name, std::string schema_name)
     : Schema(parsed->context_id, std::move(database_name), std::move(schema_name)),
       parsed_script(std::move(parsed)),
       schema_search_path(std::move(schema_search_path)) {}
@@ -522,7 +525,7 @@ std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(const SchemaSearch
     auto time_start = std::chrono::steady_clock::now();
 
     // Analyze a script
-    auto [script, status] = Analyzer::Analyze(parsed_script, database_name, schema_name, *schema_search_path);
+    auto [script, status] = Analyzer::Analyze(parsed_script, schema_search_path, database_name, schema_name);
     if (status != proto::StatusCode::OK) {
         return {nullptr, status};
     }

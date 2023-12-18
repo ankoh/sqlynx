@@ -263,8 +263,8 @@ class AnalyzedScript : public Schema {
 
    public:
     /// Constructor
-    AnalyzedScript(std::shared_ptr<ParsedScript> parsed, std::string database_name, std::string schema_name,
-                   SchemaSearchPath schema_dependencies);
+    AnalyzedScript(std::shared_ptr<ParsedScript> parsed, SchemaSearchPath search_path, std::string database_name,
+                   std::string schema_name);
 
     /// Get the schema search path
     auto& GetSchemaSearchPath() const { return schema_search_path; }

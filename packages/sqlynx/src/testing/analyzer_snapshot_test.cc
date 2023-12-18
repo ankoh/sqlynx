@@ -39,7 +39,7 @@ static std::string_view resolveName(const AnalyzedScript& main, const AnalyzedSc
     if (name.IsNull()) {
         return "null";
     }
-    if (name.GetContext() != main.context_id) {
+    if (name.GetContext() != main.GetContextId()) {
         assert(external != nullptr);
         return external->parsed_script->scanned_script->name_dictionary[name.GetIndex()].text;
     } else {
@@ -50,7 +50,7 @@ static std::string_view resolveName(const AnalyzedScript& main, const AnalyzedSc
 /// Write all table declarations
 static void writeTables(pugi::xml_node root, const AnalyzedScript& target, const AnalyzedScript& main,
                         const AnalyzedScript* external) {
-    for (auto& table_decl : target.tables) {
+    for (auto& table_decl : target.GetTables()) {
         auto xml_tbl = root.append_child("table");
         assert(table_decl.ast_node_id.has_value());
         WriteLocation(xml_tbl, target.parsed_script->nodes[*table_decl.ast_node_id].location(),
@@ -58,12 +58,10 @@ static void writeTables(pugi::xml_node root, const AnalyzedScript& target, const
         // Write child columns
         for (size_t i = 0; i < table_decl.column_count; ++i) {
             auto table_idx = table_decl.columns_begin + i;
-            auto& column_decl = target.table_columns[table_idx];
+            auto& column_decl = target.GetTableColumns()[table_idx];
             auto xml_col = xml_tbl.append_child("column");
-            if (!column_decl.column_name.IsNull()) {
-                assert(column_decl.column_name.GetContext() == target.context_id);
-                std::string column_name{
-                    target.parsed_script->scanned_script->name_dictionary[column_decl.column_name.GetIndex()].text};
+            if (!column_decl.column_name.empty()) {
+                std::string column_name{column_decl.column_name};
                 xml_col.append_attribute("name").set_value(column_name.c_str());
             } else {
                 xml_col.append_attribute("name").set_value("?");
@@ -102,15 +100,15 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node root, const AnalyzedScrip
     }
 
     // Write local declarations
-    for (auto& table_decl : main.tables) {
+    for (auto& table_decl : main.GetTables()) {
         writeTables(xml_main_tables, main, main, external);
     }
 
     // Write table references
     for (auto& ref : main.table_references) {
-        auto tag = ref.resolved_table_id.IsNull()                            ? "unresolved"
-                   : (ref.resolved_table_id.GetContext() == main.context_id) ? "internal"
-                                                                             : "external";
+        auto tag = ref.resolved_table_id.IsNull()                                ? "unresolved"
+                   : (ref.resolved_table_id.GetContext() == main.GetContextId()) ? "internal"
+                                                                                 : "external";
         auto xml_ref = xml_main_table_refs.append_child(tag);
         if (!ref.resolved_table_id.IsNull()) {
             xml_ref.append_attribute("table").set_value(ref.resolved_table_id.GetIndex());
@@ -125,9 +123,9 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node root, const AnalyzedScrip
 
     // Write column references
     for (auto& ref : main.column_references) {
-        auto tag = ref.resolved_table_id.IsNull()                            ? "unresolved"
-                   : (ref.resolved_table_id.GetContext() == main.context_id) ? "internal"
-                                                                             : "external";
+        auto tag = ref.resolved_table_id.IsNull()                                ? "unresolved"
+                   : (ref.resolved_table_id.GetContext() == main.GetContextId()) ? "internal"
+                                                                                 : "external";
         auto xml_ref = xml_main_col_refs.append_child(tag);
         if (!ref.resolved_table_id.IsNull()) {
             xml_ref.append_attribute("table").set_value(ref.resolved_table_id.GetIndex());
@@ -158,7 +156,7 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node root, const AnalyzedScrip
         }
         for (size_t i = 0; i < edge.node_count_right; ++i) {
             auto& node = main.graph_edge_nodes[edge.nodes_begin + edge.node_count_left + i];
-            assert(!ContextObjectID(main.context_id, node.column_reference_id).IsNull());
+            assert(!ContextObjectID(main.GetContextId(), node.column_reference_id).IsNull());
             auto xml_node = xml_edge.append_child("node");
             xml_node.append_attribute("side").set_value(1);
             xml_node.append_attribute("ref").set_value(node.column_reference_id);

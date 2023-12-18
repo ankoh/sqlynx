@@ -32,6 +32,18 @@ struct FFIResult {
 /// Delete a result
 extern "C" void sqlynx_result_delete(FFIResult* result);
 
+/// Create a schema search path
+extern "C" sqlynx::SchemaSearchPath* sqlynx_search_path_new();
+/// Create a schema search path
+extern "C" void sqlynx_search_path_delete(sqlynx::SchemaSearchPath* search_path);
+/// Erase entry in the schema search path
+extern "C" FFIResult* sqlynx_search_path_erase(sqlynx::SchemaSearchPath* path, size_t index);
+/// Insert a script in the schema search path
+extern "C" FFIResult* sqlynx_search_path_insert_script(sqlynx::SchemaSearchPath* path, size_t index,
+                                                       sqlynx::Script* script);
+/// Update a script in the schema search path
+extern "C" FFIResult* sqlynx_search_path_update_script(sqlynx::SchemaSearchPath* path, sqlynx::Script* script);
+
 /// Create a script
 extern "C" sqlynx::Script* sqlynx_script_new(uint32_t context_id);
 /// Delete a script
@@ -50,11 +62,9 @@ extern "C" FFIResult* sqlynx_script_scan(sqlynx::Script* script);
 /// Parse a script
 extern "C" FFIResult* sqlynx_script_parse(sqlynx::Script* script);
 /// Analyze a script
-extern "C" FFIResult* sqlynx_script_analyze(sqlynx::Script* script, const sqlynx::SchemaSearchPath* external);
+extern "C" FFIResult* sqlynx_script_analyze(sqlynx::Script* script, const sqlynx::SchemaSearchPath* search_path);
 /// Get a pretty-printed version of the SQL query
 extern "C" FFIResult* sqlynx_script_format(sqlynx::Script* script);
-/// Update the script index
-extern "C" uint32_t sqlynx_script_reindex(sqlynx::Script* script);
 /// Get script statistics
 extern "C" FFIResult* sqlynx_script_get_statistics(sqlynx::Script* script);
 /// Move the cursor in a script to a position

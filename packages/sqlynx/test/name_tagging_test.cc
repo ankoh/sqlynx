@@ -7,13 +7,14 @@
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/parser/scanner.h"
 #include "sqlynx/proto/proto_generated.h"
+#include "sqlynx/schema.h"
 #include "sqlynx/script.h"
 
 using namespace sqlynx;
 
 namespace {
 
-std::string snapshot(std::span<const ScannedScript::SourceName> names) {
+std::string snapshot(std::span<const Schema::NameInfo> names) {
     std::stringstream out;
     size_t i = 0;
     out << "[";
@@ -56,7 +57,7 @@ TEST_P(TestNameTags, Test) {
     auto [parsed, parser_status] = parser::Parser::Parse(scanned);
     ASSERT_EQ(parser_status, proto::StatusCode::OK);
     ASSERT_TRUE(parsed->errors.empty()) << parsed->errors[0].second;
-    auto [analyzed, analyzer_status] = Analyzer::Analyze(parsed, nullptr);
+    auto [analyzed, analyzer_status] = Analyzer::Analyze(parsed);
     ASSERT_EQ(analyzer_status, proto::StatusCode::OK);
 
     ASSERT_EQ(scanned->name_dictionary.size(), GetParam().expected.size()) << snapshot(scanned->name_dictionary);

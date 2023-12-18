@@ -5,11 +5,11 @@
 #include <stdexcept>
 #include <string_view>
 
+#include "gtest/gtest.h"
+#include "pugixml.hpp"
 #include "sqlynx/analyzer/completion.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
-#include "gtest/gtest.h"
-#include "pugixml.hpp"
 
 using namespace sqlynx;
 

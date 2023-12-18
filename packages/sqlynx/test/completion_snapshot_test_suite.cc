@@ -5,6 +5,7 @@
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/parser/scanner.h"
 #include "sqlynx/proto/proto_generated.h"
+#include "sqlynx/schema.h"
 #include "sqlynx/script.h"
 #include "sqlynx/testing/completion_snapshot_test.h"
 #include "sqlynx/testing/xml_tests.h"
@@ -29,13 +30,13 @@ TEST_P(CompletionSnapshotTestSuite, Test) {
     ASSERT_EQ(external_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(external_script.Parse().second, proto::StatusCode::OK);
     ASSERT_EQ(external_script.Analyze().second, proto::StatusCode::OK);
-    ASSERT_EQ(external_script.Reindex(), proto::StatusCode::OK);
 
     // Analyze main script
+    SchemaSearchPath search_path;
+    search_path.PushBack(external_script.analyzed_script);
     ASSERT_EQ(main_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(main_script.Parse().second, proto::StatusCode::OK);
-    ASSERT_EQ(main_script.Analyze(&external_script).second, proto::StatusCode::OK);
-    ASSERT_EQ(main_script.Reindex(), proto::StatusCode::OK);
+    ASSERT_EQ(main_script.Analyze(&search_path).second, proto::StatusCode::OK);
 
     size_t search_pos = 0;
     Script* target_script = nullptr;
