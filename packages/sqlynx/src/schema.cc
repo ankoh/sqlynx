@@ -36,7 +36,18 @@ std::optional<Schema::ResolvedTable> Schema::ResolveTable(ContextObjectID table_
     }
     auto& table = tables[table_id.GetIndex()];
     auto columns = std::span<const TableColumn>{table_columns}.subspan(table.columns_begin, table.column_count);
-    return ResolvedTable{table_id, table, columns};
+    return ResolvedTable{database_name, schema_name, table, columns};
+}
+
+std::optional<Schema::ResolvedTable> Schema::ResolveTable(ContextObjectID table_id,
+                                                          const SchemaSearchPath& search_path) const {
+    if (context_id == table_id.GetContext()) {
+        auto& table = tables[table_id.GetIndex()];
+        auto columns = std::span<const TableColumn>{table_columns}.subspan(table.columns_begin, table.column_count);
+        return ResolvedTable{database_name, schema_name, table, columns};
+    } else {
+        return search_path.ResolveTable(table_id);
+    }
 }
 
 std::optional<Schema::ResolvedTable> Schema::ResolveTable(std::string_view table_name) const {
@@ -44,25 +55,62 @@ std::optional<Schema::ResolvedTable> Schema::ResolveTable(std::string_view table
     if (iter == tables_by_name.end()) {
         return std::nullopt;
     }
-    assert(iter->second < tables.size());
-    auto& table = tables[iter->second];
+    auto& table = iter->second.get();
     auto columns = std::span<const TableColumn>{table_columns}.subspan(table.columns_begin, table.column_count);
-    ContextObjectID table_id{context_id, static_cast<uint32_t>(iter->second)};
-    return ResolvedTable{table_id, table, columns};
+    return ResolvedTable{database_name, schema_name, table, columns};
 }
 
-std::span<Schema::ResolvedTableColumn> Schema::ResolveTableColumn(std::string_view table_column,
-                                                                  std::vector<Schema::ResolvedTableColumn>& tmp) const {
-    tmp.clear();
+std::optional<Schema::ResolvedTable> Schema::ResolveTable(QualifiedTableName table_name,
+                                                          const SchemaSearchPath& search_path) const {
+    if (table_name.database_name == database_name && table_name.schema_name == schema_name) {
+        if (auto resolved = ResolveTable(table_name.table_name)) {
+            return resolved;
+        } else {
+            return std::nullopt;
+        }
+    } else {
+        return search_path.ResolveTable(table_name);
+    }
+}
+
+void Schema::ResolveTableColumn(std::string_view table_column, std::vector<Schema::ResolvedTableColumn>& out) const {
     auto [begin, end] = table_columns_by_name.equal_range(table_column);
     for (auto iter = begin; iter != end; ++iter) {
-        assert(iter->second < table_columns.size());
-        auto& column = table_columns[iter->second];
-        auto& table = tables[column.table_id];
-        auto columns = std::span<const TableColumn>{table_columns}.subspan(table.columns_begin, table.column_count);
-        auto column_id = &column - columns.data();
-        ContextObjectID table_id{context_id, static_cast<uint32_t>(iter->second)};
-        tmp.push_back(ResolvedTableColumn{table_id, table, columns, static_cast<size_t>(column_id)});
+        auto& [table, column] = iter->second;
+        auto columns =
+            std::span<const TableColumn>{table_columns}.subspan(table.get().columns_begin, table.get().column_count);
+        auto column_id = &column.get() - columns.data();
+        out.push_back(ResolvedTableColumn{database_name, schema_name, table, columns, static_cast<size_t>(column_id)});
     }
-    return tmp;
+}
+
+void Schema::ResolveTableColumn(std::string_view table_column, const SchemaSearchPath& search_path,
+                                std::vector<Schema::ResolvedTableColumn>& tmp) const {
+    search_path.ResolveTableColumn(table_column, tmp);
+    ResolveTableColumn(table_column, search_path, tmp);
+}
+
+std::optional<Schema::ResolvedTable> SchemaSearchPath::ResolveTable(ContextObjectID table_id) const {
+    for (auto& schema : schemas) {
+        if (schema->GetContextId() == table_id.GetContext()) {
+            return schema->ResolveTable(table_id);
+        }
+    }
+    return std::nullopt;
+}
+std::optional<Schema::ResolvedTable> SchemaSearchPath::ResolveTable(Schema::QualifiedTableName table_name) const {
+    for (auto& schema : schemas) {
+        if (schema->GetDatabaseName() == schema->GetDatabaseName() &&
+            schema->GetSchemaName() == schema->GetSchemaName()) {
+            return schema->ResolveTable(table_name.table_name);
+        }
+    }
+    return std::nullopt;
+}
+
+void SchemaSearchPath::ResolveTableColumn(std::string_view table_column,
+                                          std::vector<Schema::ResolvedTableColumn>& out) const {
+    for (auto& schema : schemas) {
+        schema->ResolveTableColumn(table_column, out);
+    }
 }

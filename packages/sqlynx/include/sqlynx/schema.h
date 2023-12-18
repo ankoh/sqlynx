@@ -16,18 +16,36 @@
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/text/rope.h"
 #include "sqlynx/utils/bits.h"
+#include "sqlynx/utils/btree/map.h"
 #include "sqlynx/utils/hash.h"
+#include "sqlynx/utils/string_conversion.h"
 #include "sqlynx/utils/string_pool.h"
-#include "sqlynx/utils/suffix_trie.h"
 
 namespace sqlynx {
 
 constexpr uint32_t PROTO_NULL_U32 = std::numeric_limits<uint32_t>::max();
 
+class SchemaSearchPath;
+
 /// A schema stores database metadata.
 /// It is used as a virtual container to expose table and column information to the analyzer.
 class Schema {
    public:
+    /// The name info
+    struct NameInfo {
+        /// The text
+        std::string_view text;
+        /// The location
+        sx::Location location;
+        /// The tags
+        NameTags tags;
+        /// The number of occurrences
+        size_t occurrences = 0;
+        /// Return the name text
+        operator std::string_view() { return text; }
+        /// Return the name text
+        void operator|=(proto::NameTag tag) { tags |= tag; }
+    };
     /// A qualified table name
     struct QualifiedTableName {
         /// The AST node id in the target script
@@ -107,6 +125,10 @@ class Schema {
     };
     /// A resolved table
     struct ResolvedTable {
+        /// The database name
+        std::string_view database_name;
+        /// The schema name
+        std::string_view schema_name;
         /// The table
         const Table& table;
         /// The table columns
@@ -130,9 +152,11 @@ class Schema {
     /// The local table columns
     std::vector<TableColumn> table_columns;
     /// The tables, indexed by name
-    std::unordered_multimap<std::string_view, size_t> tables_by_name;
+    std::unordered_multimap<std::string_view, std::reference_wrapper<Table>> tables_by_name;
     /// The table columns, indexed by the name
-    std::unordered_multimap<std::string_view, size_t> table_columns_by_name;
+    std::unordered_multimap<std::string_view,
+                            std::pair<std::reference_wrapper<Table>, std::reference_wrapper<TableColumn>>>
+        table_columns_by_name;
 
    public:
     /// Construcutor
@@ -149,24 +173,26 @@ class Schema {
     /// Get the tables
     std::span<const TableColumn> GetTableColumns() const { return table_columns; }
 
+    /// Get the name search index
+    virtual btree::multimap<fuzzy_ci_string_view, std::reference_wrapper<const NameInfo>> GetNameSearchIndex()
+        const = 0;
+
     /// Resolve a table by id
     std::optional<ResolvedTable> ResolveTable(ContextObjectID table_id) const;
+    /// Resolve a table by id
+    std::optional<ResolvedTable> ResolveTable(ContextObjectID table_id, const SchemaSearchPath& search_path) const;
     /// Resolve a table by name
     std::optional<ResolvedTable> ResolveTable(std::string_view table_name) const;
+    /// Resolve a table by name
+    std::optional<ResolvedTable> ResolveTable(QualifiedTableName table_name, const SchemaSearchPath& search_path) const;
     /// Find table columns by name
-    std::span<ResolvedTableColumn> ResolveTableColumn(std::string_view table_column,
-                                                      std::vector<ResolvedTableColumn>& tmp) const;
+    void ResolveTableColumn(std::string_view table_column, std::vector<ResolvedTableColumn>& out) const;
+    /// Find table columns by name
+    void ResolveTableColumn(std::string_view table_column, const SchemaSearchPath& search_path,
+                            std::vector<ResolvedTableColumn>& out) const;
 };
 
 class SchemaSearchPath {
-   public:
-    template <typename Inner> struct Qualified : public Inner {
-        /// The database name
-        std::string_view database_name;
-        /// The schema name
-        std::string_view schema_name;
-    };
-
    protected:
     /// The schemas
     std::vector<std::shared_ptr<Schema>> schemas;
@@ -177,8 +203,14 @@ class SchemaSearchPath {
     /// We can later think about only extracting the real dependencies
     SchemaSearchPath CreateSnapshot() const { return {*this}; }
 
+    /// Get the schemas
+    auto& GetSchemas() const { return schemas; }
     /// Resolve a table by id
-    std::optional<Qualified<Schema::ResolvedTable>> ResolveTable(Schema::QualifiedTableName table_name) const;
+    std::optional<Schema::ResolvedTable> ResolveTable(ContextObjectID table_id) const;
+    /// Resolve a table by id
+    std::optional<Schema::ResolvedTable> ResolveTable(Schema::QualifiedTableName table_name) const;
+    /// Find table columns by name
+    void ResolveTableColumn(std::string_view table_column, std::vector<Schema::ResolvedTableColumn>& out) const;
 };
 
 }  // namespace sqlynx

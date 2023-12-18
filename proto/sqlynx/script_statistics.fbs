@@ -15,7 +15,11 @@ struct ScriptProcessingMemoryStatistics {
     /// The size of the scanner symbols
     scanner_symbol_bytes: uint32;
     /// The size of the scanner dictionary
-    scanner_dictionary_bytes: uint32;
+    scanner_name_dictionary_bytes: uint32;
+    /// The number of entries in the name index
+    scanner_name_search_index_size: uint32;
+    /// The size of the name index
+    scanner_name_search_index_bytes: uint32;
     /// The size of parser ast
     parser_ast_bytes: uint32;
     /// The size of the analyzer output
@@ -27,12 +31,6 @@ struct ScriptMemoryStatistics {
     rope_bytes: uint32;
     /// The memory statistics of the latest script
     latest_script: ScriptProcessingMemoryStatistics;
-    /// The memory statistics of the script registered with the completion index
-    completion_index_script: ScriptProcessingMemoryStatistics;
-    /// The entries of the completion index
-    completion_index_entries: uint32;
-    /// The bytes of the completion index
-    completion_index_bytes: uint32;
 }
 
 table ScriptStatistics {

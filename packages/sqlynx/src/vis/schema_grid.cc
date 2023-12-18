@@ -41,7 +41,7 @@ void SchemaGrid::Configure(const SchemaGrid::Config& c) {
 
 void SchemaGrid::PrepareLayout() {
     // Internal and external tables
-    size_t table_count = script->tables.size();
+    size_t table_count = script->GetTables().size();
     if (script->external_script) {
         table_count += script->external_script->tables.size();
     }
@@ -49,14 +49,14 @@ void SchemaGrid::PrepareLayout() {
     assert(nodes.empty());
     nodes.reserve(table_count);
     // Load internal tables
-    for (uint32_t i = 0; i < script->tables.size(); ++i) {
+    for (uint32_t i = 0; i < script->GetTables().size(); ++i) {
         size_t node_id = nodes.size();
         ContextObjectID table_id{script->context_id, i};
         nodes.emplace_back(node_id, table_id, 0);
     }
     // Add external tables
     if (script->external_script) {
-        for (uint32_t i = 0; i < script->external_script->tables.size(); ++i) {
+        for (uint32_t i = 0; i < script->GetTables()->tables.size(); ++i) {
             size_t node_id = nodes.size();
             ContextObjectID table_id{script->external_script->context_id, i};
             nodes.emplace_back(node_id, table_id, 0);

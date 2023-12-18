@@ -8,7 +8,6 @@
 #include <tuple>
 
 #include "ankerl/unordered_dense.h"
-#include "sqlynx/analyzer/analyzer.h"
 #include "sqlynx/context.h"
 #include "sqlynx/parser/names.h"
 #include "sqlynx/parser/parser.h"
@@ -16,6 +15,7 @@
 #include "sqlynx/schema.h"
 #include "sqlynx/text/rope.h"
 #include "sqlynx/utils/bits.h"
+#include "sqlynx/utils/btree/map.h"
 #include "sqlynx/utils/hash.h"
 #include "sqlynx/utils/string_pool.h"
 #include "sqlynx/utils/suffix_trie.h"
@@ -26,7 +26,7 @@ class ParseContext;
 }  // namespace parser
 
 class Analyzer;
-class CompletionIndex;
+class NameSuffixIndex;
 class Completion;
 
 using Key = proto::AttributeKey;
@@ -37,22 +37,6 @@ using StatementID = uint32_t;
 
 class ScannedScript {
    public:
-    /// The name entry
-    struct Name {
-        /// The text
-        std::string_view text;
-        /// The location
-        sx::Location location;
-        /// The tags
-        NameTags tags;
-        /// The number of occurrences
-        size_t occurrences = 0;
-        /// Return the name text
-        operator std::string_view() { return text; }
-        /// Return the name text
-        void operator|=(proto::NameTag tag) { tags |= tag; }
-    };
-
     /// The context id
     const uint32_t context_id;
     /// The copied text buffer
@@ -70,7 +54,9 @@ class ScannedScript {
     /// The name dictionary ids
     ankerl::unordered_dense::map<std::string_view, NameID> name_dictionary_ids;
     /// The name dictionary locations
-    std::vector<Name> name_dictionary;
+    std::vector<Schema::NameInfo> name_dictionary;
+    /// The name search index
+    btree::multimap<fuzzy_ci_string_view, std::reference_wrapper<const Schema::NameInfo>> name_search_index;
 
     /// All symbols
     ChunkBuffer<parser::Parser::symbol_type> symbols;
@@ -85,12 +71,14 @@ class ScannedScript {
     auto& GetSymbols() const { return symbols; }
     /// Get the name dictionary
     auto& GetNameDictionary() const { return name_dictionary; }
+    /// Get the name search index
+    auto& GetNameSearchIndex() const { return name_search_index; }
     /// Register a name
     NameID RegisterName(std::string_view s, sx::Location location, sx::NameTag tag = sx::NameTag::NONE);
     /// Register a keyword as name
     NameID RegisterKeywordAsName(std::string_view s, sx::Location location, sx::NameTag tag = sx::NameTag::NONE);
     /// Read a name
-    Name& ReadName(NameID name);
+    Schema::NameInfo& ReadName(NameID name);
     /// Read a text at a location
     std::string_view ReadTextAtLocation(sx::Location loc) {
         return std::string_view{text_buffer}.substr(loc.offset(), loc.length());
@@ -213,9 +201,11 @@ class AnalyzedScript : public Schema {
         std::optional<uint32_t> ast_scope_root;
         /// The column name, may refer to different context
         QualifiedColumnName column_name;
-        /// The table id, may refer to different context
+        /// The resolved table reference id in the current context
+        std::optional<uint32_t> resolved_table_reference_id;
+        /// The resolved table id, may refer to different context
         ContextObjectID resolved_table_id;
-        /// The column index
+        /// The resolved column index
         std::optional<uint32_t> resolved_column_id;
 
         /// Pack as FlatBuffer
@@ -276,6 +266,9 @@ class AnalyzedScript : public Schema {
     AnalyzedScript(std::shared_ptr<ParsedScript> parsed, std::string database_name, std::string schema_name,
                    SchemaSearchPath schema_dependencies);
 
+    /// Get the schema search path
+    auto& GetSchemaSearchPath() const { return schema_search_path; }
+
     /// Build the program
     flatbuffers::Offset<proto::AnalyzedScript> Pack(flatbuffers::FlatBufferBuilder& builder);
 };
@@ -332,8 +325,6 @@ class Script {
     /// The last analyzed script
     std::shared_ptr<AnalyzedScript> analyzed_script;
 
-    /// The completion index
-    std::unique_ptr<CompletionIndex> completion_index;
     /// The last cursor
     std::unique_ptr<ScriptCursor> cursor;
 
@@ -363,8 +354,6 @@ class Script {
     std::pair<ParsedScript*, proto::StatusCode> Parse();
     /// Analyze the latest parsed script
     std::pair<AnalyzedScript*, proto::StatusCode> Analyze(const SchemaSearchPath* search_path = nullptr);
-    /// Update the completion index
-    proto::StatusCode Reindex();
 
     /// Move the cursor
     std::pair<const ScriptCursor*, proto::StatusCode> MoveCursor(size_t text_offset);

@@ -51,7 +51,7 @@ NameResolutionPass::NameResolutionPass(ParsedScript& parser, const SchemaSearchP
     node_states.resize(nodes.size());
 }
 
-std::span<std::reference_wrapper<ScannedScript::Name>> NameResolutionPass::ReadNamePath(const sx::Node& node) {
+std::span<std::reference_wrapper<Schema::NameInfo>> NameResolutionPass::ReadNamePath(const sx::Node& node) {
     if (node.node_type() != proto::NodeType::ARRAY) {
         return {};
     }
@@ -65,7 +65,7 @@ std::span<std::reference_wrapper<ScannedScript::Name>> NameResolutionPass::ReadN
             name_path_buffer.clear();
             break;
         }
-        auto name = scanned_program.ReadName(child.children_begin_or_value());
+        auto& name = scanned_program.ReadName(child.children_begin_or_value());
         name_path_buffer.push_back(name);
     }
     return std::span{name_path_buffer};

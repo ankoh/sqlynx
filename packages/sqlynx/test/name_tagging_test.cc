@@ -1,5 +1,6 @@
 #include <initializer_list>
 
+#include "gtest/gtest.h"
 #include "sqlynx/analyzer/analyzer.h"
 #include "sqlynx/api.h"
 #include "sqlynx/parser/names.h"
@@ -7,13 +8,12 @@
 #include "sqlynx/parser/scanner.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
-#include "gtest/gtest.h"
 
 using namespace sqlynx;
 
 namespace {
 
-std::string snapshot(std::span<const ScannedScript::Name> names) {
+std::string snapshot(std::span<const ScannedScript::SourceName> names) {
     std::stringstream out;
     size_t i = 0;
     out << "[";
