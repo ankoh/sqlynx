@@ -8,7 +8,7 @@ using namespace sqlynx;
 namespace {
 
 TEST(CompletionTest, KeywordSuffixCount) {
-    auto& keywords = CompletionIndex::Keywords();
+    auto& keywords = NameSuffixIndex::Keywords();
     ASSERT_EQ(keywords.GetEntries().size(), 2875);
 }
 

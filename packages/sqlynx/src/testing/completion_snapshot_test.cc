@@ -46,10 +46,10 @@ void CompletionSnapshotTest::EncodeCompletion(pugi::xml_node root, const Complet
         std::string text{iter->full_name_text.data(), iter->full_name_text.size()};
         xml_entry.append_attribute("value").set_value(text.c_str());
         xml_entry.append_attribute("score").set_value(iter->GetScore());
-        xml_entry.append_attribute("in-scope").set_value(iter->in_statement);
+        xml_entry.append_attribute("in-scope").set_value(iter->near_cursor);
         std::stringstream tags;
         size_t i = 0;
-        iter->name_tags.ForEach([&](proto::NameTag tag) {
+        iter->combined_tags.ForEach([&](proto::NameTag tag) {
             if (i++ > 0) {
                 tags << ",";
             }

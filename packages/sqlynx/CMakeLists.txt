@@ -235,7 +235,6 @@ set(LIB_SRC
   ${PARSER_OUT}
   ${CMAKE_SOURCE_DIR}/src/analyzer/analyzer.cc
   ${CMAKE_SOURCE_DIR}/src/analyzer/completion.cc
-  ${CMAKE_SOURCE_DIR}/src/analyzer/completion_index.cc
   ${CMAKE_SOURCE_DIR}/src/analyzer/name_resolution_pass.cc
   ${CMAKE_SOURCE_DIR}/src/analyzer/pass_manager.cc
   ${CMAKE_SOURCE_DIR}/src/api.cc

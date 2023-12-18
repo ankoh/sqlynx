@@ -5,7 +5,6 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "sqlynx/analyzer/completion_index.h"
 #include "sqlynx/context.h"
 #include "sqlynx/parser/grammar/keywords.h"
 #include "sqlynx/parser/names.h"
@@ -175,17 +174,19 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
         auto name = parser::Keyword::GetKeywordName(expected);
         if (!name.empty()) {
             Candidate candidate{
-                .name = ScannedScript::Name{name, sx::Location(), {proto::NameTag::KEYWORD}, 0},
-                .name_tags = NameTags{proto::NameTag::KEYWORD},
+                .name = Schema::NameInfo{name, sx::Location(), {proto::NameTag::KEYWORD}, 0},
+                .combined_tags = NameTags{proto::NameTag::KEYWORD},
                 .score = get_score(*location, expected, name),
-                .in_statement = false,
+                .near_cursor = false,
             };
             result_heap.Insert(candidate);
         }
     }
 }
 
-void findCandidatesInIndex(Completion& completion, const Script& script, bool isExternalScript) {
+void findCandidatesInIndex(
+    Completion& completion,
+    const btree::multimap<fuzzy_ci_string_view, std::reference_wrapper<const Schema::NameInfo>>& index) {
     using Relative = ScannedScript::LocationInfo::RelativePosition;
     auto& cursor = completion.GetCursor();
     auto& scoring_table = completion.GetScoringTable();
@@ -199,67 +200,64 @@ void findCandidatesInIndex(Completion& completion, const Script& script, bool is
     fuzzy_ci_string_view ci_prefix_text{cursor.text.data(), symbol_prefix};
 
     // Fall back to the full word if the cursor prefix is empty
-    auto search_text = prefix_text;
+    auto search_text = ci_prefix_text;
     if (search_text.empty()) {
-        search_text = cursor.text;
+        search_text = {cursor.text.data(), cursor.text.size()};
     }
 
     // Find all suffixes for the cursor prefix
-    auto& index = script.completion_index;
-    assert(index != nullptr);
-    std::span<const CompletionIndex::Entry> entries = index->FindEntriesWithPrefix(search_text);
+    auto search_lb = index.lower_bound(search_text);
+    auto search_ub = index.upper_bound(search_text);
 
-    for (auto& entry : entries) {
-        auto& entry_data = *entry.data;
+    for (auto iter = search_lb; iter != search_ub; ++iter) {
+        auto& name_info = iter->second.get();
         // Determine score
         Completion::ScoreValueType score = 0;
         for (auto [tag, tag_score] : scoring_table) {
-            score = std::max(score, entry_data.name.tags.contains(tag) ? tag_score : 0);
+            score = std::max(score, name_info.tags.contains(tag) ? tag_score : 0);
         }
-        score += entry_data.weight;
         // Is a prefix?
         switch (location->relative_pos) {
             case Relative::BEGIN_OF_SYMBOL:
             case Relative::MID_OF_SYMBOL:
-            case Relative::END_OF_SYMBOL: {
-                fuzzy_ci_string_view ci_entry_text{entry.data->name.text.data(), entry.data->name.text.size()};
-                if (auto pos = ci_entry_text.find(ci_prefix_text, 0); pos == 0) {
+            case Relative::END_OF_SYMBOL:
+                if (fuzzy_ci_string_view{name_info.text.data(), name_info.text.size()}.starts_with(ci_prefix_text)) {
                     score += Completion::PREFIX_SCORE_MODIFIER;
                 } else {
                     score += Completion::SUBSTRING_SCORE_MODIFIER;
                 }
                 break;
-            }
             default:
                 break;
         }
         // Do we know the candidate already?
-        if (auto iter = pending_candidates.find(entry_data.name.text); iter != pending_candidates.end()) {
+        if (auto iter = pending_candidates.find(name_info.text); iter != pending_candidates.end()) {
             // Update the score if it is higher
             iter->second.score = std::max(iter->second.score, score);
-            iter->second.name_tags |= entry_data.name.tags;
+            iter->second.combined_tags |= name_info.tags;
         } else {
             // Otherwise store as new candidate
             Completion::Candidate candidate{
-                .name = entry_data.name,
-                .name_tags = entry_data.name.tags,
+                .name = name_info,
+                .combined_tags = name_info.tags,
                 .score = score,
-                .in_statement = false,
+                .near_cursor = false,
             };
-            pending_candidates.insert({entry_data.name.text, candidate});
+            pending_candidates.insert({name_info.text, candidate});
         }
     }
 }
 
 void Completion::FindCandidatesInIndexes() {
     // Find candidates in name dictionary of main script
-    if (auto& index = cursor.script.completion_index) {
-        findCandidatesInIndex(*this, cursor.script, false);
+    if (auto& scanned = cursor.script.scanned_script) {
+        findCandidatesInIndex(*this, scanned->name_search_index);
     }
     // Find candidates in name dictionary of external script
-    if (cursor.script.external_script && cursor.script.external_script->completion_index) {
-        auto& index = cursor.script.external_script->completion_index;
-        findCandidatesInIndex(*this, *cursor.script.external_script, true);
+    if (auto& analyzed = cursor.script.analyzed_script) {
+        for (auto& schema : analyzed->schema_search_path.GetSchemas()) {
+            findCandidatesInIndex(*this, schema->GetNameSearchIndex());
+        }
     }
 }
 
@@ -267,64 +265,26 @@ void Completion::FindTablesForUnresolvedColumns() {
     if (!cursor.statement_id.has_value() || !cursor.script.analyzed_script) {
         return;
     }
-    auto statement_id = *cursor.statement_id;
-    std::unordered_set<std::string_view> table_names;
+    auto& analyzed_script = *cursor.script.analyzed_script;
+    auto& schema_search_path = analyzed_script.schema_search_path;
 
     // Collect all unresolved columns in the current script
-    auto& column_refs = cursor.script.analyzed_script->column_references;
-    std::unordered_set<std::string_view> unresolved_columns;
-    for (auto& column_ref : column_refs) {
+    std::vector<Schema::ResolvedTableColumn> table_columns;
+    for (auto& column_ref : analyzed_script.column_references) {
+        // Is unresolved?
         if (column_ref.resolved_table_id.IsNull()) {
-            auto name = column_ref.column_name;
-            if (!name.table_alias.empty()) {
-                unresolved_columns.insert(name.column_name);
-            }
+            auto& column_name = column_ref.column_name.column_name;
+            cursor.script.analyzed_script->ResolveTableColumn(column_name, schema_search_path, table_columns);
         }
     }
 
-    // Now try to find tables that contain these column names.
-    // Start with tables defined in the same script.
-    std::span<AnalyzedScript::TableColumn> own_columns{cursor.script.analyzed_script->table_columns};
-    for (auto& table : cursor.script.analyzed_script->tables) {
-        for (auto& column : own_columns.subspan(table.columns_begin, table.column_count)) {
-            if (unresolved_columns.contains(column.column_name)) {
-                table_names.insert(table.table_name.table_name);
-                table_names.insert(table.table_name.schema_name);
-                table_names.insert(table.table_name.database_name);
-                break;
-            }
-        }
-    }
-
-    // Has external script?
-    if (auto* external = cursor.script.external_script; external && external->analyzed_script) {
-        std::span<AnalyzedScript::TableColumn> external_columns{external->analyzed_script->table_columns};
-
-        // Map unresolved column names to external name dictionary
-        std::unordered_set<std::string_view> unresolved_external_columns;
-        for (auto column : unresolved_columns) {
-            auto external_name_id = external->FindNameId(own_name);
-            if (!external_name_id.IsNull()) {
-                unresolved_external_columns.insert(external_name_id);
-            }
-        }
-        if (!unresolved_external_columns.empty()) {
-            // Lookup unresolved external columns
-            for (auto& table : external->analyzed_script->tables) {
-                for (auto& column : external_columns.subspan(table.columns_begin, table.column_count)) {
-                    if (unresolved_external_columns.contains(column.column_name)) {
-                        table_names.insert(table.table_name.table_name);
-                        table_names.insert(table.table_name.schema_name);
-                        table_names.insert(table.table_name.database_name);
-                        break;
-                    }
-                }
-            }
-        }
-    }
-    // Adjust the score
-    for (auto table_name : table_names) {
-        if (auto iter = pending_candidates.find(table_name); iter != pending_candidates.end()) {
+    // Now find the distinct table names that contain these columns
+    std::unordered_set<std::string_view> visited;
+    for (auto& table_col : table_columns) {
+        auto table_name = table_col.table.table_name.table_name;
+        if (auto iter = pending_candidates.find(table_name);
+            iter != pending_candidates.end() && !visited.contains(table_name)) {
+            visited.insert(table_name);
             iter->second.score += RESOLVING_TABLE_SCORE_MODIFIER;
         }
     }
@@ -342,9 +302,9 @@ void Completion::FindCandidatesInAST() {
     auto statement_id = *cursor.statement_id;
 
     // Helper to mark a name as in-scope
-    auto mark_as_in_scope = [this](std::string_view name) {
+    auto mark_as_near = [this](std::string_view name) {
         if (auto iter = pending_candidates.find(name); iter != pending_candidates.end()) {
-            iter->second.in_statement = true;
+            iter->second.near_cursor = true;
         }
     };
 
@@ -355,16 +315,15 @@ void Completion::FindCandidatesInAST() {
         if (!table_ref.ast_statement_id.has_value() || table_ref.ast_statement_id.value() != statement_id) {
             continue;
         }
-        mark_as_in_scope(table_ref.table_name.database_name);
-        mark_as_in_scope(table_ref.table_name.schema_name);
-        mark_as_in_scope(table_ref.table_name.table_name);
-        mark_as_in_scope(table_ref.alias_name);
+        mark_as_near(table_ref.table_name.database_name);
+        mark_as_near(table_ref.table_name.schema_name);
+        mark_as_near(table_ref.table_name.table_name);
+        mark_as_near(table_ref.alias_name);
 
         // Add all column names of the table
-        if (auto maybe_table = cursor.script.FindTable(table_ref.table_id)) {
-            auto& [table, table_columns] = *maybe_table;
-            for (auto& table_column : table_columns) {
-                mark_as_in_scope(table_column.column_name);
+        if (auto resolved = cursor.script.analyzed_script->ResolveTable(table_ref.resolved_table_id)) {
+            for (auto& table_column : resolved->table_columns) {
+                mark_as_near(table_column.column_name);
             }
         }
     }
@@ -374,7 +333,7 @@ void Completion::FindCandidatesInAST() {
         if (!column_ref.ast_statement_id.has_value() || column_ref.ast_statement_id.value() != statement_id) {
             continue;
         }
-        mark_as_in_scope(column_ref.column_name.column_name);
+        mark_as_near(column_ref.column_name.column_name);
     }
 
     // TODO: For unresolved columns, bump the score of tables that contain that column.
@@ -466,10 +425,10 @@ flatbuffers::Offset<proto::Completion> Completion::Pack(flatbuffers::FlatBufferB
     for (auto iter = entries.rbegin(); iter != entries.rend(); ++iter) {
         auto text_offset = builder.CreateString(iter->name.text);
         proto::CompletionCandidateBuilder candidateBuilder{builder};
-        candidateBuilder.add_name_tags(iter->name_tags);
         candidateBuilder.add_name_text(text_offset);
+        candidateBuilder.add_combined_tags(iter->combined_tags);
         candidateBuilder.add_score(iter->GetScore());
-        candidateBuilder.add_in_statement(iter->in_statement);
+        candidateBuilder.add_near_cursor(iter->near_cursor);
         candidates.push_back(candidateBuilder.Finish());
     }
     auto candidatesOfs = builder.CreateVector(candidates);

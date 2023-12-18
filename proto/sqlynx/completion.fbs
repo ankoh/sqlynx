@@ -3,12 +3,12 @@ namespace sqlynx.proto;
 table CompletionCandidate {
     /// The completion
     name_text: string;
-    /// The tags
-    name_tags: uint64;
+    /// The combined tags
+    combined_tags: uint64;
     /// The score
     score: uint32;
-    /// Is the candidate in statement?
-    in_statement: bool;
+    /// Is near the cursor?
+    near_cursor: bool;
 }
 
 enum CompletionStrategy: uint8 {

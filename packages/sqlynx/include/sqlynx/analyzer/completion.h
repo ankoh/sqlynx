@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ankerl/unordered_dense.h"
-#include "sqlynx/analyzer/completion_index.h"
 #include "sqlynx/context.h"
 #include "sqlynx/parser/names.h"
 #include "sqlynx/proto/proto_generated.h"
@@ -41,16 +40,16 @@ struct Completion {
     /// The completion candidates
     struct Candidate {
         /// The name
-        ScannedScript::Name name;
+        Schema::NameInfo name;
         /// The name tags
-        NameTags name_tags;
+        NameTags combined_tags;
         /// The name score
         ScoreValueType score;
-        /// Is a name in the statement scope?
-        bool in_statement;
+        /// Is a name located near the cursor (in the AST)?
+        bool near_cursor;
 
         /// Get the score
-        inline ScoreValueType GetScore() const { return score + (in_statement ? STATEMENT_SCOPE_SCORE_MODIFIER : 0); }
+        inline ScoreValueType GetScore() const { return score + (near_cursor ? STATEMENT_SCOPE_SCORE_MODIFIER : 0); }
         /// Is less in the min-heap?
         /// We want to kick a candidate A before candidate B if
         ///     1) the score of A is less than the score of B

@@ -10,7 +10,6 @@
 
 #include "sqlynx/analyzer/analyzer.h"
 #include "sqlynx/analyzer/completion.h"
-#include "sqlynx/analyzer/completion_index.h"
 #include "sqlynx/context.h"
 #include "sqlynx/parser/parse_context.h"
 #include "sqlynx/parser/parser.h"
@@ -47,7 +46,7 @@ NameID ScannedScript::RegisterKeywordAsName(std::string_view s, sx::Location loc
     }
     auto id = name_dictionary.size();
     name_dictionary_ids.insert({s, id});
-    name_dictionary.push_back(Name{.text = s, .location = location, .tags = tag, .occurrences = 1});
+    name_dictionary.push_back(Schema::NameInfo{.text = s, .location = location, .tags = tag, .occurrences = 1});
     return id;
 }
 
@@ -62,7 +61,7 @@ NameID ScannedScript::RegisterName(std::string_view s, sx::Location location, sx
     }
     auto id = name_dictionary.size();
     name_dictionary_ids.insert({s, id});
-    name_dictionary.push_back(Name{.text = s, .location = location, .tags = tag, .occurrences = 1});
+    name_dictionary.push_back(Schema::NameInfo{.text = s, .location = location, .tags = tag, .occurrences = 1});
     return id;
 }
 
@@ -337,7 +336,7 @@ flatbuffers::Offset<proto::TableReference> AnalyzedScript::TableReference::Pack(
     out.add_ast_statement_id(ast_statement_id.value_or(std::numeric_limits<uint32_t>::max()));
     out.add_table_name(table_name_ofs);
     out.add_alias_name(alias_name_ofs);
-    out.add_table_id(resolved_table_id.Pack());
+    out.add_resolved_table_id(resolved_table_id.Pack());
     return out.Finish();
 }
 
@@ -350,8 +349,9 @@ flatbuffers::Offset<proto::ColumnReference> AnalyzedScript::ColumnReference::Pac
     out.add_ast_scope_root(ast_scope_root.value_or(std::numeric_limits<uint32_t>::max()));
     out.add_ast_statement_id(ast_statement_id.value_or(std::numeric_limits<uint32_t>::max()));
     out.add_column_name(column_name_ofs);
-    out.add_table_id(resolved_table_id.Pack());
-    out.add_column_id(resolved_column_id.value_or(std::numeric_limits<uint32_t>::max()));
+    out.add_resolved_table_reference_id(resolved_table_reference_id.value_or(std::numeric_limits<uint32_t>::max()));
+    out.add_resolved_table_id(resolved_table_id.Pack());
+    out.add_resolved_column_id(resolved_column_id.value_or(std::numeric_limits<uint32_t>::max()));
     return out.Finish();
 }
 
@@ -468,25 +468,19 @@ std::unique_ptr<proto::ScriptMemoryStatistics> Script::GetMemoryStatistics() {
         ScannedScript* scanned = parsed->scanned_script.get();
         if (registered_scanned.contains(scanned)) return;
         size_t scanner_symbol_bytes = scanned->symbols.GetSize() + sizeof(parser::Parser::symbol_type);
+        size_t scanner_name_search_index_bytes =
+            scanned->name_search_index.size() * scanned->name_search_index.average_bytes_per_value();
+        size_t scanner_name_search_index_size = scanned->name_search_index.size();
         size_t scanner_dictionary_bytes =
             scanned->name_pool.GetSize() +
             scanned->name_dictionary.size() * sizeof(decltype(scanned->name_dictionary)::value_type);
         stats.mutate_scanner_input_bytes(scanned->GetInput().size());
         stats.mutate_scanner_symbol_bytes(scanner_symbol_bytes);
-        stats.mutate_scanner_dictionary_bytes(scanner_dictionary_bytes);
+        stats.mutate_scanner_name_dictionary_bytes(scanner_dictionary_bytes);
+        stats.mutate_scanner_name_search_index_size(scanner_name_search_index_size);
+        stats.mutate_scanner_name_search_index_bytes(scanner_name_search_index_bytes);
     };
     registerScript(analyzed_script.get(), memory->mutable_latest_script());
-
-    if (completion_index) {
-        if (auto& script = completion_index->GetScript()) {
-            registerScript(script.get(), memory->mutable_completion_index_script());
-        }
-        auto& entries = completion_index->GetEntries();
-        size_t completion_index_entries = entries.size() * sizeof(CompletionIndex::Entry);
-        size_t completion_index_bytes = entries.size() * sizeof(SuffixTrie::Entry);
-        memory->mutate_completion_index_entries(completion_index_entries);
-        memory->mutate_completion_index_bytes(completion_index_bytes);
-    }
     return memory;
 }
 
@@ -534,20 +528,6 @@ std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(const SchemaSearch
     return {analyzed_script.get(), status};
 }
 
-/// Update the completion index
-proto::StatusCode Script::Reindex() {
-    if (!analyzed_script) {
-        return proto::StatusCode::REINDEXING_MISSES_ANALYSIS;
-    }
-    auto [index, status] = CompletionIndex::Build(analyzed_script);
-    // Reindexing failed, keep the old index
-    if (status != proto::StatusCode::OK) {
-        return status;
-    }
-    completion_index = std::move(index);
-    return proto::StatusCode::OK;
-}
-
 /// Move the cursor to a offset
 std::pair<const ScriptCursor*, proto::StatusCode> Script::MoveCursor(size_t text_offset) {
     auto [maybe_cursor, status] = ScriptCursor::Create(*this, text_offset);
@@ -592,79 +572,77 @@ std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> ScriptCursor::Create
 
     // Did the parsed script change?
     auto& analyzed = script.analyzed_script;
-    auto& parsed = *analyzed->parsed_script;
-    auto& scanned = *parsed.scanned_script;
 
     // Read scanner token
-    cursor->scanner_location.emplace(scanned.FindSymbol(text_offset));
-    if (cursor->scanner_location) {
-        auto& token = scanned.GetSymbols()[cursor->scanner_location->symbol_id];
-        cursor->text = scanned.ReadTextAtLocation(token.location);
+    if (script.scanned_script) {
+        cursor->scanner_location.emplace(script.scanned_script->FindSymbol(text_offset));
+        if (cursor->scanner_location) {
+            auto& token = script.scanned_script->GetSymbols()[cursor->scanner_location->symbol_id];
+            cursor->text = script.scanned_script->ReadTextAtLocation(token.location);
+        }
     }
 
     // Read AST node
-    auto maybe_ast_node = parsed.FindNodeAtOffset(text_offset);
-    if (!maybe_ast_node.has_value()) {
-        cursor->statement_id = std::nullopt;
-        cursor->ast_node_id = std::nullopt;
-    } else {
-        cursor->statement_id = std::get<0>(*maybe_ast_node);
-        cursor->ast_node_id = std::get<1>(*maybe_ast_node);
-    }
+    if (script.parsed_script) {
+        auto maybe_ast_node = script.parsed_script->FindNodeAtOffset(text_offset);
+        if (!maybe_ast_node.has_value()) {
+            cursor->statement_id = std::nullopt;
+            cursor->ast_node_id = std::nullopt;
+        } else {
+            cursor->statement_id = std::get<0>(*maybe_ast_node);
+            cursor->ast_node_id = std::get<1>(*maybe_ast_node);
 
-    // Has ast node?
-    if (cursor->ast_node_id.has_value()) {
-        // Collect nodes to root
-        std::unordered_set<uint32_t> cursor_path_nodes;
-        for (auto iter = *cursor->ast_node_id;;) {
-            auto& node = parsed.nodes[iter];
-            if (endsCursorPath(node)) {
-                break;
+            // Collect nodes to root
+            std::unordered_set<uint32_t> cursor_path_nodes;
+            for (auto iter = *cursor->ast_node_id;;) {
+                auto& node = script.parsed_script->nodes[iter];
+                if (endsCursorPath(node)) {
+                    break;
+                }
+                cursor_path_nodes.insert(iter);
+                if (iter == node.parent()) {
+                    break;
+                }
+                iter = node.parent();
             }
-            cursor_path_nodes.insert(iter);
-            if (iter == node.parent()) {
-                break;
-            }
-            iter = node.parent();
-        }
 
-        // Part of a table node?
-        cursor->table_id = std::nullopt;
-        for (auto& table : analyzed->GetTables()) {
-            if (table.ast_node_id.has_value() && cursor_path_nodes.contains(*table.ast_node_id)) {
-                cursor->table_id = table.ast_node_id;
-                break;
-            }
-        }
+            // Analyzed and analyzed is same version?
+            if (analyzed && analyzed->parsed_script == script.parsed_script) {
+                // Part of a table node?
+                for (auto& table : analyzed->GetTables()) {
+                    if (table.ast_node_id.has_value() && cursor_path_nodes.contains(*table.ast_node_id)) {
+                        cursor->table_id = table.ast_node_id;
+                        break;
+                    }
+                }
 
-        // Part of a table reference node?
-        cursor->table_reference_id = std::nullopt;
-        for (size_t i = 0; i < analyzed->table_references.size(); ++i) {
-            auto& table_ref = analyzed->table_references[i];
-            if (table_ref.ast_node_id.has_value() && cursor_path_nodes.contains(*table_ref.ast_node_id)) {
-                cursor->table_reference_id = i;
-                break;
-            }
-        }
+                // Part of a table reference node?
+                for (size_t i = 0; i < analyzed->table_references.size(); ++i) {
+                    auto& table_ref = analyzed->table_references[i];
+                    if (table_ref.ast_node_id.has_value() && cursor_path_nodes.contains(*table_ref.ast_node_id)) {
+                        cursor->table_reference_id = i;
+                        break;
+                    }
+                }
 
-        // Part of a column reference node?
-        cursor->column_reference_id = std::nullopt;
-        for (size_t i = 0; i < analyzed->column_references.size(); ++i) {
-            auto& column_ref = analyzed->column_references[i];
-            if (column_ref.ast_node_id.has_value() && cursor_path_nodes.contains(*column_ref.ast_node_id)) {
-                cursor->column_reference_id = i;
-                break;
-            }
-        }
+                // Part of a column reference node?
+                for (size_t i = 0; i < analyzed->column_references.size(); ++i) {
+                    auto& column_ref = analyzed->column_references[i];
+                    if (column_ref.ast_node_id.has_value() && cursor_path_nodes.contains(*column_ref.ast_node_id)) {
+                        cursor->column_reference_id = i;
+                        break;
+                    }
+                }
 
-        // Part of a query edge?
-        cursor->query_edge_id = std::nullopt;
-        for (size_t ei = 0; ei < analyzed->graph_edges.size(); ++ei) {
-            auto& edge = analyzed->graph_edges[ei];
-            auto nodes_begin = edge.nodes_begin;
-            if (edge.ast_node_id.has_value() && cursor_path_nodes.contains(*edge.ast_node_id)) {
-                cursor->query_edge_id = ei;
-                break;
+                // Part of a query edge?
+                for (size_t ei = 0; ei < analyzed->graph_edges.size(); ++ei) {
+                    auto& edge = analyzed->graph_edges[ei];
+                    auto nodes_begin = edge.nodes_begin;
+                    if (edge.ast_node_id.has_value() && cursor_path_nodes.contains(*edge.ast_node_id)) {
+                        cursor->query_edge_id = ei;
+                        break;
+                    }
+                }
             }
         }
     }
