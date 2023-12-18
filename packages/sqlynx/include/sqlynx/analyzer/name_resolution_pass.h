@@ -44,8 +44,7 @@ class NameResolutionPass : public PassManager::LTRPass {
         /// The table references in scope
         OverlayList<AnalyzedScript::TableReference> unresolved_table_references;
         /// The resolved table references
-        std::unordered_multimap<std::reference_wrapper<AnalyzedScript::TableReference>, Schema::ResolvedTable>
-            resolved_table_references;
+        std::unordered_map<const AnalyzedScript::TableReference*, Schema::ResolvedTable> resolved_table_references;
         /// The resolved table columns with an alias
         std::vector<ResolvedTableColumn> resolved_table_columns_with_alias;
         /// The resolved table columns without a table alias
@@ -67,14 +66,15 @@ class NameResolutionPass : public PassManager::LTRPass {
         /// Merge two states
         void Merge(NodeState&& other);
     };
-    /// The output
-    struct Output {
+    /// The staging output
+    struct StagingOutput {
         /// The tables
         std::vector<AnalyzedScript::Table> tables;
         /// The tables
         std::vector<AnalyzedScript::TableColumn> table_columns;
         /// The tables by name
-        ankerl::unordered_dense::map<Schema::QualifiedTableName, std::reference_wrapper<AnalyzedScript::Table>>
+        ankerl::unordered_dense::map<Schema::QualifiedTableName, std::reference_wrapper<AnalyzedScript::Table>,
+                                     Schema::QualifiedTableName::Hasher>
             tables_by_name;
     };
 
@@ -98,7 +98,7 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// The naming scopes
     ChunkBuffer<OverlayList<NameScope>::Node, 16> name_scopes;
     /// The root scopes
-    ankerl::unordered_dense::set<std::reference_wrapper<NameScope>> root_scopes;
+    ankerl::unordered_dense::set<NameScope*> root_scopes;
     /// The table references
     ChunkBuffer<OverlayList<AnalyzedScript::TableReference>::Node, 16> table_references;
     /// The column references
@@ -121,7 +121,7 @@ class NameResolutionPass : public PassManager::LTRPass {
     OverlayList<AnalyzedScript::TableColumn> pending_columns_free_list;
 
     /// The output of the name resolution pass
-    Output out;
+    StagingOutput staging;
 
     /// Merge child states into a destination state
     std::span<std::reference_wrapper<Schema::NameInfo>> ReadNamePath(const sx::Node& node);

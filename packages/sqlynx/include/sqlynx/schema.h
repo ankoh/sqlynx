@@ -65,6 +65,22 @@ class Schema {
               table_name(table_name) {}
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::QualifiedTableName> Pack(flatbuffers::FlatBufferBuilder& builder) const;
+        /// Comparison
+        bool operator==(const QualifiedTableName& other) const {
+            return ast_node_id == other.ast_node_id && database_name == other.database_name &&
+                   schema_name == other.schema_name && table_name == other.table_name;
+        }
+        /// A hasher
+        struct Hasher {
+            size_t operator()(const QualifiedTableName& key) const {
+                size_t hash = 0;
+                hash_combine(hash, key.ast_node_id);
+                hash_combine(hash, key.database_name);
+                hash_combine(hash, key.schema_name);
+                hash_combine(hash, key.table_name);
+                return hash;
+            }
+        };
     };
     /// A qualified column name
     struct QualifiedColumnName {
@@ -88,7 +104,7 @@ class Schema {
         /// The column name, may refer to different context
         std::string_view column_name;
         /// Constructor
-        TableColumn(std::optional<uint32_t> ast_node_id, std::string_view column_name = {})
+        TableColumn(std::optional<uint32_t> ast_node_id = {}, std::string_view column_name = {})
             : ast_node_id(ast_node_id), column_name(column_name) {}
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::TableColumn> Pack(flatbuffers::FlatBufferBuilder& builder) const;
@@ -205,6 +221,8 @@ class SchemaSearchPath {
 
     /// Get the schemas
     auto& GetSchemas() const { return schemas; }
+    /// Resolve a schema by id
+    std::shared_ptr<Schema> ResolveSchema(uint32_t context_id) const;
     /// Resolve a table by id
     std::optional<Schema::ResolvedTable> ResolveTable(ContextObjectID table_id) const;
     /// Resolve a table by id

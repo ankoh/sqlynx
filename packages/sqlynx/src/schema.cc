@@ -90,6 +90,16 @@ void Schema::ResolveTableColumn(std::string_view table_column, const SchemaSearc
     ResolveTableColumn(table_column, search_path, tmp);
 }
 
+/// Resolve a schema by id
+std::shared_ptr<Schema> SchemaSearchPath::ResolveSchema(uint32_t context_id) const {
+    for (auto& schema : schemas) {
+        if (schema->GetContextId() == context_id) {
+            return schema;
+        }
+    }
+    return nullptr;
+}
+
 std::optional<Schema::ResolvedTable> SchemaSearchPath::ResolveTable(ContextObjectID table_id) const {
     for (auto& schema : schemas) {
         if (schema->GetContextId() == table_id.GetContext()) {
