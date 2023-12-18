@@ -172,17 +172,38 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
         if (iter != out.tables_by_name.end()) {
             auto& table = iter->second.get();
             auto table_columns = std::span{out.table_columns}.subspan(table.columns_begin, table.column_count);
+
+            // Remember resolved table
             Schema::ResolvedTable resolved_table{
                 .table_id = table.table_id, .table = table, .table_columns = table_columns};
             scope.resolved_table_references.insert({table_ref, resolved_table});
             table_ref.resolved_table_id = table.table_id;
+
+            // Register all columns
+            for (auto& column : table_columns) {
+                ResolvedTableColumn resolved_column{
+                    .table_alias = table_ref.alias_name,
+                    .column_name = column.column_name,
+                };
+                scope.resolved_columns.insert({resolved_column, table_ref});
+            }
             continue;
         }
 
         // Otherwise consult the external search path
         if (auto resolved = schema_search_path.ResolveTable(table_ref.table_name)) {
+            // Remember resolved table
             scope.resolved_table_references.insert({table_ref, *resolved});
             table_ref.resolved_table_id = resolved->table_id;
+
+            // Register all columns
+            for (auto& column : resolved->table_columns) {
+                ResolvedTableColumn resolved_column{
+                    .table_alias = table_ref.alias_name,
+                    .column_name = column.column_name,
+                };
+                scope.resolved_columns.insert({resolved_column, table_ref});
+            }
             continue;
         }
 
