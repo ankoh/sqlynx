@@ -1,6 +1,7 @@
 #include "sqlynx/schema.h"
 
 #include "sqlynx/proto/proto_generated.h"
+#include "sqlynx/script.h"
 
 using namespace sqlynx;
 
@@ -88,6 +89,27 @@ void Schema::ResolveTableColumn(std::string_view table_column, const SchemaSearc
                                 std::vector<Schema::ResolvedTableColumn>& tmp) const {
     search_path.ResolveTableColumn(table_column, tmp);
     ResolveTableColumn(table_column, search_path, tmp);
+}
+
+/// Insert a script
+void SchemaSearchPath::InsertScript(size_t idx, Script& script) {
+    if (!script.analyzed_script) {
+        return;
+    }
+    schemas.insert(schemas.begin() + idx, script.analyzed_script);
+}
+
+/// Update a script
+void SchemaSearchPath::UpdateScript(Script& script) {
+    if (!script.analyzed_script) {
+        return;
+    }
+    for (auto iter = schemas.begin(); iter != schemas.end(); ++iter) {
+        if ((*iter)->GetContextId() == script.context_id) {
+            *iter = script.analyzed_script;
+            break;
+        }
+    }
 }
 
 /// Resolve a schema by id

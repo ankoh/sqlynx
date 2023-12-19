@@ -26,6 +26,7 @@ namespace sqlynx {
 constexpr uint32_t PROTO_NULL_U32 = std::numeric_limits<uint32_t>::max();
 
 class SchemaSearchPath;
+class Script;
 
 /// A schema stores database metadata.
 /// It is used as a virtual container to expose table and column information to the analyzer.
@@ -223,6 +224,12 @@ class SchemaSearchPath {
     auto& GetSchemas() const { return schemas; }
     /// Push a schema
     void PushBack(std::shared_ptr<Schema> schema) { schemas.push_back(schema); }
+    /// Erase an element
+    void Erase(size_t idx) { schemas.erase(schemas.begin() + idx); }
+    /// Insert a script
+    void InsertScript(size_t idx, Script& script);
+    /// Updatel a script
+    void UpdateScript(Script& script);
 
     /// Resolve a schema by id
     std::shared_ptr<Schema> ResolveSchema(uint32_t context_id) const;
