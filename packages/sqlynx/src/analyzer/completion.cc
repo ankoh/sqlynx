@@ -174,7 +174,11 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
         auto name = parser::Keyword::GetKeywordName(expected);
         if (!name.empty()) {
             Candidate candidate{
-                .name = Schema::NameInfo{name, sx::Location(), {proto::NameTag::KEYWORD}, 0},
+                .name = Schema::NameInfo{.name_id = static_cast<uint32_t>(expected),
+                                         .text = name,
+                                         .location = sx::Location(),
+                                         .tags = {proto::NameTag::KEYWORD},
+                                         .occurrences = 0},
                 .combined_tags = NameTags{proto::NameTag::KEYWORD},
                 .score = get_score(*location, expected, name),
                 .near_cursor = false,

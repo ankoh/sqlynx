@@ -41,9 +41,9 @@ static std::string_view resolveName(const AnalyzedScript& main, const AnalyzedSc
     }
     if (name.GetContext() != main.GetContextId()) {
         assert(external != nullptr);
-        return external->parsed_script->scanned_script->name_dictionary[name.GetIndex()].text;
+        return external->parsed_script->scanned_script->ReadName(name.GetIndex()).text;
     } else {
-        return main.parsed_script->scanned_script->name_dictionary[name.GetIndex()].text;
+        return main.parsed_script->scanned_script->ReadName(name.GetIndex()).text;
     }
 }
 

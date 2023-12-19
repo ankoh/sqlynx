@@ -51,10 +51,12 @@ class ScannedScript {
 
     /// The name pool
     StringPool<1024> name_pool;
-    /// The name dictionary ids
-    ankerl::unordered_dense::map<std::string_view, NameID> name_dictionary_ids;
     /// The name dictionary locations
-    std::vector<Schema::NameInfo> name_dictionary;
+    ChunkBuffer<Schema::NameInfo, 32> names;
+    /// The name infos by name id
+    ankerl::unordered_dense::map<NameID, std::reference_wrapper<Schema::NameInfo>> names_by_id;
+    /// The name infos by text
+    ankerl::unordered_dense::map<std::string_view, std::reference_wrapper<Schema::NameInfo>> names_by_text;
     /// The name search index
     btree::multimap<fuzzy_ci_string_view, std::reference_wrapper<const Schema::NameInfo>> name_search_index;
 
@@ -70,7 +72,7 @@ class ScannedScript {
     /// Get the tokens
     auto& GetSymbols() const { return symbols; }
     /// Get the name dictionary
-    auto& GetNameDictionary() const { return name_dictionary; }
+    auto& GetNameDictionary() const { return names; }
     /// Get the name search index
     auto& GetNameSearchIndex() const { return name_search_index; }
     /// Register a name
