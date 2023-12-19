@@ -53,6 +53,11 @@ if(WASM)
         -Wl,--export=sqlynx_malloc \
         -Wl,--export=sqlynx_free \
         -Wl,--export=sqlynx_result_delete \
+        -Wl,--export=sqlynx_search_path_new \
+        -Wl,--export=sqlynx_search_path_delete \
+        -Wl,--export=sqlynx_search_path_erase_at \
+        -Wl,--export=sqlynx_search_path_insert_script_at \
+        -Wl,--export=sqlynx_search_path_update_script \
         -Wl,--export=sqlynx_script_new \
         -Wl,--export=sqlynx_script_delete \
         -Wl,--export=sqlynx_script_insert_text_at \
@@ -63,7 +68,6 @@ if(WASM)
         -Wl,--export=sqlynx_script_scan \
         -Wl,--export=sqlynx_script_parse \
         -Wl,--export=sqlynx_script_analyze \
-        -Wl,--export=sqlynx_script_reindex \
         -Wl,--export=sqlynx_script_get_statistics \
         -Wl,--export=sqlynx_script_move_cursor \
         -Wl,--export=sqlynx_script_complete_at_cursor \
