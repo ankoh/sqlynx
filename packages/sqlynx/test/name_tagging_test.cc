@@ -14,15 +14,17 @@ using namespace sqlynx;
 
 namespace {
 
-std::string snapshot(std::span<const Schema::NameInfo> names) {
+std::string snapshot(const decltype(ScannedScript::names)& names) {
     std::stringstream out;
     size_t i = 0;
     out << "[";
-    for (auto& name : names) {
-        if (i++ > 0) {
-            out << ", ";
+    for (auto& name_chunk : names.GetChunks()) {
+        for (auto& name : name_chunk) {
+            if (i++ > 0) {
+                out << ", ";
+            }
+            out << name.text;
         }
-        out << name.text;
     }
     out << "]";
     return out.str();
@@ -60,12 +62,12 @@ TEST_P(TestNameTags, Test) {
     auto [analyzed, analyzer_status] = Analyzer::Analyze(parsed);
     ASSERT_EQ(analyzer_status, proto::StatusCode::OK);
 
-    ASSERT_EQ(scanned->name_dictionary.size(), GetParam().expected.size()) << snapshot(scanned->name_dictionary);
+    ASSERT_EQ(scanned->names.GetSize(), GetParam().expected.size()) << snapshot(scanned->names);
     size_t i = 0;
     for (auto [name, tags] : GetParam().expected) {
         SCOPED_TRACE(i);
         size_t current = i++;
-        auto& have = scanned->name_dictionary[current];
+        auto& have = scanned->ReadName(current);
         ASSERT_EQ(have.text, name);
         ASSERT_EQ(static_cast<uint64_t>(have.tags), static_cast<uint64_t>(tags));
     }

@@ -32,8 +32,12 @@ class Script;
 /// It is used as a virtual container to expose table and column information to the analyzer.
 class Schema {
    public:
+    using NameID = uint32_t;
+
     /// The name info
     struct NameInfo {
+        /// The unique name id within the schema
+        NameID name_id;
         /// The text
         std::string_view text;
         /// The location

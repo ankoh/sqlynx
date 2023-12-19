@@ -33,39 +33,57 @@ std::unique_ptr<proto::StatementT> ParsedScript::Statement::Pack() {
 
 /// Constructor
 ScannedScript::ScannedScript(const rope::Rope& text, uint32_t context_id)
-    : context_id(context_id), text_buffer(text.ToString(true)) {}
+    : context_id(context_id), text_buffer(text.ToString(true)) {
+    names_by_text.reserve(64);
+    names_by_id.reserve(64);
+}
 
 /// Read a name
-Schema::NameInfo& ScannedScript::ReadName(NameID name) { return name_dictionary[name]; }
+Schema::NameInfo& ScannedScript::ReadName(NameID name) {
+    assert(names_by_id.contains(name));
+    return names_by_id.at(name).get();
+}
 
 /// Register a name
 NameID ScannedScript::RegisterKeywordAsName(std::string_view s, sx::Location location, sx::NameTag tag) {
-    auto iter = name_dictionary_ids.find(s);
-    if (iter != name_dictionary_ids.end()) {
-        auto& name = name_dictionary[iter->second];
+    auto iter = names_by_text.find(s);
+    if (iter != names_by_text.end()) {
+        auto& name = iter->second.get();
         name.tags |= tag;
         name.occurrences += 1;
-        return iter->second;
+        return name.name_id;
     }
-    auto id = name_dictionary.size();
-    name_dictionary_ids.insert({s, id});
-    name_dictionary.push_back(Schema::NameInfo{.text = s, .location = location, .tags = tag, .occurrences = 1});
-    return id;
+    NameID name_id = names.GetSize();
+    auto& name = names.Append(
+        Schema::NameInfo{.name_id = name_id, .text = s, .location = location, .tags = tag, .occurrences = 1});
+    names_by_text.insert({s, name});
+    names_by_id.insert({name_id, name});
+    for (size_t i = 1; i < s.size(); ++i) {
+        auto suffix = s.substr(s.size() - i);
+        name_search_index.insert({{suffix.data(), s.size()}, name});
+    }
+    return name_id;
 }
 
 /// Register a name
 NameID ScannedScript::RegisterName(std::string_view s, sx::Location location, sx::NameTag tag) {
-    auto iter = name_dictionary_ids.find(s);
-    if (iter != name_dictionary_ids.end()) {
-        auto& name = name_dictionary[iter->second];
+    auto iter = names_by_text.find(s);
+    if (iter != names_by_text.end()) {
+        auto& name = iter->second.get();
         name.tags |= tag;
         name.occurrences += 1;
-        return iter->second;
+        return name.name_id;
     }
-    auto id = name_dictionary.size();
-    name_dictionary_ids.insert({s, id});
-    name_dictionary.push_back(Schema::NameInfo{.text = s, .location = location, .tags = tag, .occurrences = 1});
-    return id;
+    NameID name_id = names.GetSize();
+    auto& name = names.Append(
+        Schema::NameInfo{.name_id = name_id, .text = s, .location = location, .tags = tag, .occurrences = 1});
+    names_by_text.insert({s, name});
+    names_by_id.insert({name_id, name});
+    for (size_t i = 1; i < s.size(); ++i) {
+        auto suffix = s.substr(s.size() - i);
+        name_search_index.insert({{suffix.data(), s.size()}, name});
+    }
+    return name_id;
 }
 
 /// Find a token at a text offset
@@ -75,7 +93,7 @@ ScannedScript::LocationInfo ScannedScript::FindSymbol(size_t text_offset) {
     auto user_text_end = std::max<size_t>(text_buffer.size(), 2) - 2;
     text_offset = std::min<size_t>(user_text_end, text_offset);
 
-    // Helper to get the previous symbol (if there is one)
+    // Helper to get the previous symbol (if there is one) auto get_prev_symbol =
     auto get_prev_symbol =
         [&](size_t chunk_id,
             size_t chunk_symbol_id) -> std::optional<std::reference_wrapper<parser::Parser::symbol_type>> {
@@ -480,9 +498,10 @@ std::unique_ptr<proto::ScriptMemoryStatistics> Script::GetMemoryStatistics() {
         size_t scanner_name_search_index_bytes =
             scanned->name_search_index.size() * scanned->name_search_index.average_bytes_per_value();
         size_t scanner_name_search_index_size = scanned->name_search_index.size();
-        size_t scanner_dictionary_bytes =
-            scanned->name_pool.GetSize() +
-            scanned->name_dictionary.size() * sizeof(decltype(scanned->name_dictionary)::value_type);
+        size_t scanner_dictionary_bytes = scanned->name_pool.GetSize() +
+                                          scanned->names.GetSize() * sizeof(Schema::NameInfo) +
+                                          scanned->names_by_id.size() * sizeof(std::pair<NameID, void*>) +
+                                          scanned->names_by_text.size() * sizeof(std::pair<std::string_view, void*>);
         stats.mutate_scanner_input_bytes(scanned->GetInput().size());
         stats.mutate_scanner_symbol_bytes(scanner_symbol_bytes);
         stats.mutate_scanner_name_dictionary_bytes(scanner_dictionary_bytes);

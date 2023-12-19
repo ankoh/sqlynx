@@ -22,7 +22,6 @@ struct ExpectedScriptCursor {
 
 std::string print_name(const Script& script, const AnalyzedScript::QualifiedTableName& name) {
     auto& scanned = script.scanned_script;
-    auto& names = scanned->name_dictionary;
     std::stringstream out;
     size_t out_idx = 0;
     auto write = [&](std::string_view name) {
@@ -41,7 +40,6 @@ std::string print_name(const Script& script, const AnalyzedScript::QualifiedTabl
 
 std::string print_name(const Script& script, const AnalyzedScript::QualifiedColumnName& name) {
     auto& scanned = script.scanned_script;
-    auto& names = scanned->name_dictionary;
     std::stringstream out;
     size_t out_idx = 0;
     auto write = [&](std::string_view name) {

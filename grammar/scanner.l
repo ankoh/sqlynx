@@ -571,10 +571,6 @@ Scanner::Scanner(const rope::Rope& text, uint32_t context_id): output(std::make_
     sqlynx_yy_switch_to_buffer(yyb, yyg);
     // Set scanner ref
     sqlynx_yyset_extra(this, yyg);
-
-    // Reserve space for the string dictionary
-    output->name_dictionary_ids.reserve(128);
-    output->name_dictionary.reserve(128);
 }
 
 }
