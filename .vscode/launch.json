@@ -9,7 +9,7 @@
             "request": "launch",
             "name": "Analyzer Tests",
             "program": "${workspaceFolder}/packages/sqlynx/build/native/o0/tester",
-            "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*Analyzer*"],
+            "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*AnalyzerSnap*tpch_22"],
             "cwd": "${workspaceFolder}"
         },
         {
