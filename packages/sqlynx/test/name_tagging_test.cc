@@ -110,7 +110,7 @@ std::vector<NameTaggingTest> TESTS_SIMPLE{
      {
          {"foo", NameTags(proto::NameTag::TABLE_ALIAS)},
          {"bar", NameTags(proto::NameTag::COLUMN_NAME)},
-         {"the", NameTags(proto::NameTag::DATABASE_NAME)},
+         {"the", NameTags(proto::NameTag::SCHEMA_NAME)},
          {"real", NameTags(proto::NameTag::TABLE_NAME)},
      }},
     {"select_foo_bar_from_the_actually_real_foo",
@@ -118,8 +118,8 @@ std::vector<NameTaggingTest> TESTS_SIMPLE{
      {
          {"foo", NameTags(proto::NameTag::TABLE_ALIAS)},
          {"bar", NameTags(proto::NameTag::COLUMN_NAME)},
-         {"the", NameTags(proto::NameTag::SCHEMA_NAME)},
-         {"actually", NameTags(proto::NameTag::DATABASE_NAME)},
+         {"the", NameTags(proto::NameTag::DATABASE_NAME)},
+         {"actually", NameTags(proto::NameTag::SCHEMA_NAME)},
          {"real", NameTags(proto::NameTag::TABLE_NAME)},
      }},
     {"quoted_identifier",
