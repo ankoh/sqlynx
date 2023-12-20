@@ -108,6 +108,9 @@ static FFIResult* packError(proto::StatusCode status) {
         case proto::StatusCode::GRAPH_INPUT_INVALID:
             message = "Graph input is invalid";
             break;
+        case proto::StatusCode::SCHEMA_SEARCH_PATH_INPUT_INVALID:
+            message = "Schema search path input is invalid";
+            break;
         case proto::StatusCode::COMPLETION_MISSES_CURSOR:
             message = "Completion requires a script cursor";
             break;

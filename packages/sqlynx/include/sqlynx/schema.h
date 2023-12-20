@@ -226,13 +226,13 @@ class SchemaSearchPath {
     auto& GetSchemaByContextId() const { return schema_by_context_id; }
 
     /// Push a schema
-    void PushBack(std::shared_ptr<Schema> schema);
+    proto::StatusCode PushBack(std::shared_ptr<Schema> schema);
     /// Insert a script
-    void InsertScript(size_t idx, Script& script);
+    proto::StatusCode InsertScript(size_t idx, Script& script);
     /// Update a script
-    void UpdateScript(Script& script);
+    proto::StatusCode UpdateScript(Script& script);
     /// Erase a script
-    void EraseScript(Script& script);
+    proto::StatusCode EraseScript(Script& script);
 
     /// Resolve a schema by id
     std::shared_ptr<Schema> ResolveSchema(uint32_t context_id) const;

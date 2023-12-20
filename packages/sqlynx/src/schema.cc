@@ -91,25 +91,27 @@ void Schema::ResolveTableColumn(std::string_view table_column, const SchemaSearc
     ResolveTableColumn(table_column, search_path, tmp);
 }
 
-void SchemaSearchPath::PushBack(std::shared_ptr<Schema> schema) {
+proto::StatusCode SchemaSearchPath::PushBack(std::shared_ptr<Schema> schema) {
     auto iter = schema_by_context_id.find(schema->GetContextId());
     if (iter != schema_by_context_id.end() && &iter->second.get() != schema.get()) {
-        // XXX Return error
+        return proto::StatusCode::EXTERNAL_CONTEXT_COLLISION;
     }
     schema_by_context_id.insert({schema->GetContextId(), *schema});
     schemas.push_back(schema);
+    return proto::StatusCode::OK;
 }
 
-void SchemaSearchPath::InsertScript(size_t idx, Script& script) {
+proto::StatusCode SchemaSearchPath::InsertScript(size_t idx, Script& script) {
     if (!script.analyzed_script) {
-        return;
+        return proto::StatusCode::SCHEMA_SEARCH_PATH_INPUT_INVALID;
     }
     schemas.insert(schemas.begin() + idx, script.analyzed_script);
+    return proto::StatusCode::OK;
 }
 
-void SchemaSearchPath::UpdateScript(Script& script) {
+proto::StatusCode SchemaSearchPath::UpdateScript(Script& script) {
     if (!script.analyzed_script) {
-        return;
+        return proto::StatusCode::SCHEMA_SEARCH_PATH_INPUT_INVALID;
     }
     for (auto iter = schemas.begin(); iter != schemas.end(); ++iter) {
         if ((*iter)->GetContextId() == script.context_id) {
@@ -117,9 +119,10 @@ void SchemaSearchPath::UpdateScript(Script& script) {
             break;
         }
     }
+    return proto::StatusCode::OK;
 }
 
-void SchemaSearchPath::EraseScript(Script& script) {
+proto::StatusCode SchemaSearchPath::EraseScript(Script& script) {
     for (auto iter = schemas.begin(); iter != schemas.end(); ++iter) {
         if ((*iter)->GetContextId() == script.context_id) {
             schema_by_context_id.erase((*iter)->GetContextId());
@@ -127,6 +130,7 @@ void SchemaSearchPath::EraseScript(Script& script) {
             break;
         }
     }
+    return proto::StatusCode::OK;
 }
 
 std::shared_ptr<Schema> SchemaSearchPath::ResolveSchema(uint32_t context_id) const {
