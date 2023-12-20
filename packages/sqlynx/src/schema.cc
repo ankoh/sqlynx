@@ -88,7 +88,7 @@ void Schema::ResolveTableColumn(std::string_view table_column, std::vector<Schem
 void Schema::ResolveTableColumn(std::string_view table_column, const SchemaSearchPath& search_path,
                                 std::vector<Schema::ResolvedTableColumn>& tmp) const {
     search_path.ResolveTableColumn(table_column, tmp);
-    ResolveTableColumn(table_column, search_path, tmp);
+    ResolveTableColumn(table_column, tmp);
 }
 
 proto::StatusCode SchemaSearchPath::PushBack(std::shared_ptr<Schema> schema) {
