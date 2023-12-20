@@ -8,6 +8,7 @@
 
 #include "sqlynx/context.h"
 #include "sqlynx/proto/proto_generated.h"
+#include "sqlynx/schema.h"
 #include "sqlynx/script.h"
 #include "sqlynx/utils/overlay_list.h"
 
@@ -156,6 +157,8 @@ NameResolutionPass::NameScope& NameResolutionPass::CreateScope(NodeState& target
     for (auto& ref : target.table_references) {
         ref.ast_scope_root = scope_root;
     }
+    scope.value.table_references = target.table_references;
+    scope.value.column_references = target.column_references;
     // Clear the target since we're starting a new scope now
     target.Clear();
     // Remember the child scope
@@ -165,7 +168,7 @@ NameResolutionPass::NameScope& NameResolutionPass::CreateScope(NodeState& target
 }
 
 void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
-    for (auto& table_ref : scope.unresolved_table_references) {
+    for (auto& table_ref : scope.table_references) {
         // TODO Matches a view or CTE?
 
         // Table ref points to own table?
@@ -180,37 +183,44 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
             table_ref.resolved_table_id = table.table_id;
 
             // Remember all available columns
-            std::vector<ResolvedTableColumn>& columns = table_ref.alias_name.empty()
-                                                            ? scope.resolved_table_columns_without_alias
-                                                            : scope.resolved_table_columns_with_alias;
             for (size_t i = 0; i < table_columns.size(); ++i) {
                 auto& column = table_columns[i];
-                columns.push_back(ResolvedTableColumn{.alias_name = table_ref.alias_name,
-                                                      .column_name = column.column_name,
-                                                      .table = table,
-                                                      .column_id = i,
-                                                      .table_reference_id = table_ref.table_reference_id});
+                scope.resolved_table_columns.insert(
+                    {Schema::QualifiedColumnName::Key{table_ref.alias_name, column.column_name},
+                     ResolvedTableColumn{.alias_name = table_ref.alias_name,
+                                         .column_name = column.column_name,
+                                         .table = table,
+                                         .column_id = i,
+                                         .table_reference_id = table_ref.table_reference_id}});
             }
             continue;
         }
 
+        // Normalize table name for search path lookup
+        Schema::QualifiedTableName normalized_table_name = table_ref.table_name;
+        if (normalized_table_name.database_name.empty()) {
+            normalized_table_name.database_name = DEFAULT_DATABASE_NAME;
+        }
+        if (normalized_table_name.schema_name.empty()) {
+            normalized_table_name.schema_name = DEFAULT_SCHEMA_NAME;
+        }
+
         // Otherwise consult the external search path
-        if (auto resolved = schema_search_path.ResolveTable(table_ref.table_name)) {
+        if (auto resolved = schema_search_path.ResolveTable(normalized_table_name)) {
             // Remember resolved table
             scope.resolved_table_references.insert({&table_ref, *resolved});
             table_ref.resolved_table_id = resolved->table.table_id;
 
             // Collect all available columns
-            std::vector<ResolvedTableColumn>& columns = table_ref.alias_name.empty()
-                                                            ? scope.resolved_table_columns_without_alias
-                                                            : scope.resolved_table_columns_with_alias;
             for (size_t i = 0; i < resolved->table_columns.size(); ++i) {
                 auto& column = resolved->table_columns[i];
-                columns.push_back(ResolvedTableColumn{.alias_name = table_ref.alias_name,
-                                                      .column_name = column.column_name,
-                                                      .table = resolved->table,
-                                                      .column_id = i,
-                                                      .table_reference_id = table_ref.table_reference_id});
+                scope.resolved_table_columns.insert(
+                    {Schema::QualifiedColumnName::Key{table_ref.alias_name, column.column_name},
+                     ResolvedTableColumn{.alias_name = table_ref.alias_name,
+                                         .column_name = column.column_name,
+                                         .table = resolved->table,
+                                         .column_id = i,
+                                         .table_reference_id = table_ref.table_reference_id}});
             }
             continue;
         }
@@ -221,41 +231,25 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
 
 void NameResolutionPass::ResolveColumnRefsInScope(NameScope& scope, ColumnRefsByAlias& refs_by_alias,
                                                   ColumnRefsByName& refs_by_name) {
-    // Build a small dictionary with all column refs in this scope
-    refs_by_alias.clear();
-    refs_by_name.clear();
+    std::list<std::reference_wrapper<AnalyzedScript::ColumnReference>> unresolved_columns;
     for (auto& column_ref : scope.column_references) {
-        if (column_ref.column_name.table_alias.empty()) {
-            refs_by_alias.insert({column_ref.column_name.column_name, column_ref});
-        } else {
-            refs_by_name.insert({column_ref.column_name.table_alias, column_ref});
-        }
+        unresolved_columns.push_back(column_ref);
     }
     // Resolve refs in the scope upwards
     for (auto target_scope = &scope; target_scope != nullptr; target_scope = target_scope->parent_scope) {
-        // Scan resolved table columns with an alias
-        if (!refs_by_alias.empty()) {
-            for (auto& resolved : target_scope->resolved_table_columns_with_alias) {
-                auto [begin, end] = refs_by_alias.equal_range(resolved.alias_name);
-                for (auto iter = begin; iter != end; ++iter) {
-                    auto& column_ref = iter->second.get();
-                    column_ref.resolved_table_id = resolved.table.table_id;
-                    column_ref.resolved_column_id = resolved.column_id;
-                    refs_by_alias.erase(iter);
-                }
-            }
-        }
-
-        // Scan resolved table columns with an alias
-        if (!refs_by_name.empty()) {
-            for (auto& resolved : target_scope->resolved_table_columns_without_alias) {
-                auto [begin, end] = refs_by_name.equal_range(resolved.alias_name);
-                for (auto iter = begin; iter != end; ++iter) {
-                    auto& column_ref = iter->second.get();
-                    column_ref.resolved_table_id = resolved.table.table_id;
-                    column_ref.resolved_column_id = resolved.column_id;
-                    refs_by_name.erase(iter);
-                }
+        for (auto column_ref_iter = unresolved_columns.begin(); column_ref_iter != unresolved_columns.end();) {
+            auto& column_ref = column_ref_iter->get();
+            auto& column_name = column_ref.column_name;
+            auto resolved_iter =
+                target_scope->resolved_table_columns.find({column_name.table_alias, column_name.column_name});
+            if (resolved_iter != target_scope->resolved_table_columns.end()) {
+                auto& resolved = resolved_iter->second;
+                column_ref.resolved_table_id = resolved.table.table_id;
+                column_ref.resolved_column_id = resolved.column_id;
+                auto dead_iter = column_ref_iter++;
+                unresolved_columns.erase(dead_iter);
+            } else {
+                ++column_ref_iter;
             }
         }
     }
@@ -276,6 +270,7 @@ void NameResolutionPass::ResolveNames() {
     while (!pending_scopes.empty()) {
         auto& top = pending_scopes.top();
         pending_scopes.pop();
+        ResolveTableRefsInScope(top);
         ResolveColumnRefsInScope(top, tmp_refs_by_alias, tmp_refs_by_name);
         for (auto& child_scope : top.get().child_scopes) {
             pending_scopes.push(child_scope);
@@ -498,8 +493,6 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 auto table_name = ReadQualifiedTableName(name_node);
                 // Merge child states
                 MergeChildStates(node_state, {elements_node});
-                // Create the scope
-                CreateScope(node_state, node_id);
                 // Collect all columns
                 size_t table_id = tables.GetSize();
                 size_t columns_begin = table_columns.GetSize();
@@ -508,6 +501,8 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                     table_columns.Append(table_col);
                 }
                 pending_columns_free_list.Append(std::move(node_state.table_columns));
+                // Create the scope
+                CreateScope(node_state, node_id);
                 // Build the table
                 auto& n = tables.Append(AnalyzedScript::Table());
                 n.table_id = ContextObjectID{context_id, static_cast<uint32_t>(tables.GetSize() - 1)};
@@ -618,6 +613,14 @@ void NameResolutionPass::Export(AnalyzedScript& program) {
     for (auto& chunk : column_references.GetChunks()) {
         for (auto& ref : chunk) {
             program.column_references.push_back(std::move(ref.value));
+        }
+    }
+
+    for (auto& table : program.tables) {
+        program.tables_by_name.insert({table.table_name.table_name, table});
+        for (size_t column_id = 0; column_id < table.column_count; ++column_id) {
+            auto& column = program.table_columns[column_id];
+            program.table_columns_by_name.insert({column.column_name, {table, column}});
         }
     }
 }

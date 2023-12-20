@@ -132,8 +132,8 @@ std::optional<Schema::ResolvedTable> SchemaSearchPath::ResolveTable(ContextObjec
 }
 std::optional<Schema::ResolvedTable> SchemaSearchPath::ResolveTable(Schema::QualifiedTableName table_name) const {
     for (auto& schema : schemas) {
-        if (schema->GetDatabaseName() == schema->GetDatabaseName() &&
-            schema->GetSchemaName() == schema->GetSchemaName()) {
+        if (schema->GetDatabaseName() == table_name.database_name &&
+            schema->GetSchemaName() == table_name.schema_name) {
             return schema->ResolveTable(table_name.table_name);
         }
     }

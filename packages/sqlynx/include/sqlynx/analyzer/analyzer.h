@@ -83,7 +83,8 @@ struct Analyzer {
     /// Analyze a program
     static std::pair<std::shared_ptr<AnalyzedScript>, proto::StatusCode> Analyze(
         std::shared_ptr<ParsedScript> parsed, const SchemaSearchPath* schema_search_path = nullptr,
-        std::string database_name = "sqlynx", std::string schema_name = "default");
+        std::string database_name = std::string{DEFAULT_DATABASE_NAME},
+        std::string schema_name = std::string{DEFAULT_SCHEMA_NAME});
 };
 
 }  // namespace sqlynx
