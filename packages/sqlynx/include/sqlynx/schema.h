@@ -23,6 +23,9 @@
 
 namespace sqlynx {
 
+constexpr std::string_view DEFAULT_DATABASE_NAME = "sqlynx";
+constexpr std::string_view DEFAULT_SCHEMA_NAME = "default";
+
 constexpr uint32_t PROTO_NULL_U32 = std::numeric_limits<uint32_t>::max();
 
 class SchemaSearchPath;
@@ -51,8 +54,10 @@ class Schema {
         /// Return the name text
         void operator|=(proto::NameTag tag) { tags |= tag; }
     };
+    /// A key for a qualified table name
     /// A qualified table name
     struct QualifiedTableName {
+        using Key = std::tuple<std::string_view, std::string_view, std::string_view>;
         /// The AST node id in the target script
         std::optional<uint32_t> ast_node_id;
         /// The database name, may refer to different context
@@ -70,25 +75,12 @@ class Schema {
               table_name(table_name) {}
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::QualifiedTableName> Pack(flatbuffers::FlatBufferBuilder& builder) const;
-        /// Comparison
-        bool operator==(const QualifiedTableName& other) const {
-            return ast_node_id == other.ast_node_id && database_name == other.database_name &&
-                   schema_name == other.schema_name && table_name == other.table_name;
-        }
-        /// A hasher
-        struct Hasher {
-            size_t operator()(const QualifiedTableName& key) const {
-                size_t hash = 0;
-                hash_combine(hash, key.ast_node_id);
-                hash_combine(hash, key.database_name);
-                hash_combine(hash, key.schema_name);
-                hash_combine(hash, key.table_name);
-                return hash;
-            }
-        };
+        /// Construct a key
+        operator Key() { return {database_name, schema_name, table_name}; }
     };
     /// A qualified column name
     struct QualifiedColumnName {
+        using Key = std::pair<std::string_view, std::string_view>;
         /// The AST node id in the target script
         std::optional<uint32_t> ast_node_id;
         /// The table alias, may refer to different context
@@ -101,6 +93,8 @@ class Schema {
             : ast_node_id(ast_node_id), table_alias(table_alias), column_name(column_name) {}
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::QualifiedColumnName> Pack(flatbuffers::FlatBufferBuilder& builder) const;
+        /// Construct a key
+        operator Key() { return {table_alias, column_name}; }
     };
     /// A table column
     struct TableColumn {

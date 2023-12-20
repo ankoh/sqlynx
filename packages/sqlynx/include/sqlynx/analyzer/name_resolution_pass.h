@@ -12,6 +12,7 @@
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
 #include "sqlynx/utils/attribute_index.h"
+#include "sqlynx/utils/hash.h"
 #include "sqlynx/utils/overlay_list.h"
 
 namespace sqlynx {
@@ -42,13 +43,11 @@ class NameResolutionPass : public PassManager::LTRPass {
         /// The column references in scope
         OverlayList<AnalyzedScript::ColumnReference> column_references;
         /// The table references in scope
-        OverlayList<AnalyzedScript::TableReference> unresolved_table_references;
+        OverlayList<AnalyzedScript::TableReference> table_references;
         /// The resolved table references
         std::unordered_map<const AnalyzedScript::TableReference*, Schema::ResolvedTable> resolved_table_references;
-        /// The resolved table columns with an alias
-        std::vector<ResolvedTableColumn> resolved_table_columns_with_alias;
-        /// The resolved table columns without a table alias
-        std::vector<ResolvedTableColumn> resolved_table_columns_without_alias;
+        /// The resolved table columns
+        std::unordered_map<Schema::QualifiedColumnName::Key, ResolvedTableColumn, TupleHasher> resolved_table_columns;
     };
     /// A node state during name resolution
     struct NodeState {
@@ -73,8 +72,8 @@ class NameResolutionPass : public PassManager::LTRPass {
         /// The tables
         std::vector<AnalyzedScript::TableColumn> table_columns;
         /// The tables by name
-        ankerl::unordered_dense::map<Schema::QualifiedTableName, std::reference_wrapper<AnalyzedScript::Table>,
-                                     Schema::QualifiedTableName::Hasher>
+        ankerl::unordered_dense::map<Schema::QualifiedTableName::Key, std::reference_wrapper<AnalyzedScript::Table>,
+                                     TupleHasher>
             tables_by_name;
     };
 
