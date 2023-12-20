@@ -91,7 +91,15 @@ void Schema::ResolveTableColumn(std::string_view table_column, const SchemaSearc
     ResolveTableColumn(table_column, search_path, tmp);
 }
 
-/// Insert a script
+void SchemaSearchPath::PushBack(std::shared_ptr<Schema> schema) {
+    auto iter = schema_by_context_id.find(schema->GetContextId());
+    if (iter != schema_by_context_id.end() && &iter->second.get() != schema.get()) {
+        // XXX Return error
+    }
+    schema_by_context_id.insert({schema->GetContextId(), *schema});
+    schemas.push_back(schema);
+}
+
 void SchemaSearchPath::InsertScript(size_t idx, Script& script) {
     if (!script.analyzed_script) {
         return;
@@ -99,7 +107,6 @@ void SchemaSearchPath::InsertScript(size_t idx, Script& script) {
     schemas.insert(schemas.begin() + idx, script.analyzed_script);
 }
 
-/// Update a script
 void SchemaSearchPath::UpdateScript(Script& script) {
     if (!script.analyzed_script) {
         return;
@@ -112,7 +119,16 @@ void SchemaSearchPath::UpdateScript(Script& script) {
     }
 }
 
-/// Resolve a schema by id
+void SchemaSearchPath::EraseScript(Script& script) {
+    for (auto iter = schemas.begin(); iter != schemas.end(); ++iter) {
+        if ((*iter)->GetContextId() == script.context_id) {
+            schema_by_context_id.erase((*iter)->GetContextId());
+            schemas.erase(iter);
+            break;
+        }
+    }
+}
+
 std::shared_ptr<Schema> SchemaSearchPath::ResolveSchema(uint32_t context_id) const {
     for (auto& schema : schemas) {
         if (schema->GetContextId() == context_id) {

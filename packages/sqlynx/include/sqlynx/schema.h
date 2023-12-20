@@ -211,6 +211,8 @@ class SchemaSearchPath {
    protected:
     /// The schemas
     std::vector<std::shared_ptr<Schema>> schemas;
+    /// The external contexts
+    std::unordered_map<uint32_t, std::reference_wrapper<Schema>> schema_by_context_id;
 
    public:
     /// Create a copy of the schema search path.
@@ -220,14 +222,17 @@ class SchemaSearchPath {
 
     /// Get the schemas
     auto& GetSchemas() const { return schemas; }
+    /// Get the schemas
+    auto& GetSchemaByContextId() const { return schema_by_context_id; }
+
     /// Push a schema
-    void PushBack(std::shared_ptr<Schema> schema) { schemas.push_back(schema); }
-    /// Erase an element
-    void Erase(size_t idx) { schemas.erase(schemas.begin() + idx); }
+    void PushBack(std::shared_ptr<Schema> schema);
     /// Insert a script
     void InsertScript(size_t idx, Script& script);
-    /// Updatel a script
+    /// Update a script
     void UpdateScript(Script& script);
+    /// Erase a script
+    void EraseScript(Script& script);
 
     /// Resolve a schema by id
     std::shared_ptr<Schema> ResolveSchema(uint32_t context_id) const;

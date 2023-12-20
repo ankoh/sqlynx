@@ -55,9 +55,9 @@ if(WASM)
         -Wl,--export=sqlynx_result_delete \
         -Wl,--export=sqlynx_search_path_new \
         -Wl,--export=sqlynx_search_path_delete \
-        -Wl,--export=sqlynx_search_path_erase_at \
         -Wl,--export=sqlynx_search_path_insert_script_at \
         -Wl,--export=sqlynx_search_path_update_script \
+        -Wl,--export=sqlynx_search_path_erase_script \
         -Wl,--export=sqlynx_script_new \
         -Wl,--export=sqlynx_script_delete \
         -Wl,--export=sqlynx_script_insert_text_at \
