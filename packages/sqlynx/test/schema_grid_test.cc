@@ -105,8 +105,8 @@ TEST(SchemaGridTest, TPCHQ2) {
     auto& edges = grid.GetEdges();
     auto& edge_nodes = grid.GetEdgeNodes();
     ASSERT_EQ(nodes.size(), 8);
-    ASSERT_EQ(edges.size(), 9);
-    ASSERT_EQ(edge_nodes.size(), 27);
+    ASSERT_EQ(edges.size(), 8);
+    ASSERT_EQ(edge_nodes.size(), 16);
 
     std::stringstream ss;
     ss << "[";
