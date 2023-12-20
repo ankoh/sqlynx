@@ -858,19 +858,6 @@ limit
                     <node side="0" ref="16" />
                     <node side="1" ref="17" />
                 </edge>
-                <edge op="EQUAL" loc="481..1000" text="ps_supplyc..&#10;        )">
-                    <node side="0" ref="29" />
-                    <node side="1" ref="19" />
-                    <node side="1" ref="20" />
-                    <node side="1" ref="21" />
-                    <node side="1" ref="22" />
-                    <node side="1" ref="23" />
-                    <node side="1" ref="24" />
-                    <node side="1" ref="25" />
-                    <node side="1" ref="26" />
-                    <node side="1" ref="27" />
-                    <node side="1" ref="28" />
-                </edge>
             </query-graph>
         </script>
     </analyzer-snapshot>
@@ -2191,17 +2178,6 @@ order by
                     <node side="0" ref="15" />
                     <node side="1" ref="16" />
                 </edge>
-                <edge op="GREATER_THAN" loc="293..806" text="sum(ps_sup..         )">
-                    <node side="0" ref="9" />
-                    <node side="0" ref="10" />
-                    <node side="1" ref="11" />
-                    <node side="1" ref="12" />
-                    <node side="1" ref="13" />
-                    <node side="1" ref="14" />
-                    <node side="1" ref="15" />
-                    <node side="1" ref="16" />
-                    <node side="1" ref="17" />
-                </edge>
             </query-graph>
         </script>
     </analyzer-snapshot>
@@ -2732,10 +2708,6 @@ order by
                     <node side="0" ref="11" />
                     <node side="1" ref="12" />
                 </edge>
-                <edge op="EQUAL" loc="358..427" text="total_reve..revenue&#10;&#09;)">
-                    <node side="0" ref="14" />
-                    <node side="1" ref="13" />
-                </edge>
             </query-graph>
         </script>
     </analyzer-snapshot>
@@ -2982,12 +2954,6 @@ where
                 <edge op="EQUAL" loc="107..128" text="p_partkey .. l_partkey">
                     <node side="0" ref="1" />
                     <node side="1" ref="2" />
-                </edge>
-                <edge op="LESS_THAN" loc="210..425" text="l_quantity..&#10;        )">
-                    <node side="0" ref="8" />
-                    <node side="1" ref="5" />
-                    <node side="1" ref="6" />
-                    <node side="1" ref="7" />
                 </edge>
             </query-graph>
         </script>
@@ -3515,16 +3481,6 @@ order by
                     <node side="0" ref="9" />
                     <node side="1" ref="10" />
                 </edge>
-                <edge op="GREATER_THAN" loc="608..1155" text="ps_availqt..         )">
-                    <node side="0" ref="13" />
-                    <node side="1" ref="6" />
-                    <node side="1" ref="7" />
-                    <node side="1" ref="8" />
-                    <node side="1" ref="9" />
-                    <node side="1" ref="10" />
-                    <node side="1" ref="11" />
-                    <node side="1" ref="12" />
-                </edge>
                 <edge op="EQUAL" loc="1178..1203" text="s_nationke.._nationkey">
                     <node side="0" ref="15" />
                     <node side="1" ref="16" />
@@ -3883,7 +3839,7 @@ order by
             </table-references>
             <column-references>
                 <unresolved stmt="0" loc="16..25" text="cntrycode" />
-                <external table="3" column="5" stmt="0" loc="68..77" text="c_acctbal" />
+                <unresolved stmt="0" loc="68..77" text="c_acctbal" />
                 <external table="3" column="4" stmt="0" loc="165..172" text="c_phone" />
                 <external table="3" column="5" stmt="0" loc="225..234" text="c_acctbal" />
                 <external table="3" column="4" stmt="0" loc="345..352" text="c_phone" />
@@ -3900,12 +3856,6 @@ order by
                 <edge op="EQUAL" loc="1242..1263" text="o_custkey .. c_custkey">
                     <node side="0" ref="9" />
                     <node side="1" ref="10" />
-                </edge>
-                <edge op="GREATER_THAN" loc="473..957" text="c_acctbal ..         )">
-                    <node side="0" ref="8" />
-                    <node side="1" ref="5" />
-                    <node side="1" ref="6" />
-                    <node side="1" ref="7" />
                 </edge>
             </query-graph>
         </script>
