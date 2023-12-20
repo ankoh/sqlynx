@@ -53,8 +53,6 @@ extern "C" void sqlynx_result_delete(FFIResult* result) {
 extern "C" sqlynx::SchemaSearchPath* sqlynx_search_path_new() { return new sqlynx::SchemaSearchPath(); }
 /// Create a schema search path
 extern "C" void sqlynx_search_path_delete(sqlynx::SchemaSearchPath* search_path) { delete search_path; }
-/// Erase entry in the schema search path
-extern "C" void sqlynx_search_path_erase_at(sqlynx::SchemaSearchPath* path, size_t index) { path->Erase(index); }
 /// Insert a script in the schema search path
 extern "C" void sqlynx_search_path_insert_script_at(sqlynx::SchemaSearchPath* path, size_t index,
                                                     sqlynx::Script* script) {
@@ -63,6 +61,10 @@ extern "C" void sqlynx_search_path_insert_script_at(sqlynx::SchemaSearchPath* pa
 /// Update a script in the schema search path
 extern "C" void sqlynx_search_path_update_script(sqlynx::SchemaSearchPath* path, sqlynx::Script* script) {
     path->UpdateScript(*script);
+}
+/// Erase entry in the schema search path
+extern "C" void sqlynx_search_path_erase_script(sqlynx::SchemaSearchPath* path, sqlynx::Script* script) {
+    path->EraseScript(*script);
 }
 
 /// Create a script

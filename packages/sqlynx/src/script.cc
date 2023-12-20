@@ -543,6 +543,13 @@ std::pair<ParsedScript*, proto::StatusCode> Script::Parse() {
 std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(const SchemaSearchPath* schema_search_path) {
     auto time_start = std::chrono::steady_clock::now();
 
+    // Check if the external context id is unique
+    if (schema_search_path) {
+        if (schema_search_path->GetSchemaByContextId().contains(context_id)) {
+            return {nullptr, proto::StatusCode::EXTERNAL_CONTEXT_COLLISION};
+        }
+    }
+
     // Analyze a script
     auto [script, status] = Analyzer::Analyze(parsed_script, schema_search_path, database_name, schema_name);
     if (status != proto::StatusCode::OK) {
