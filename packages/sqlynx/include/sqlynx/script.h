@@ -36,6 +36,8 @@ using NodeID = uint32_t;
 using StatementID = uint32_t;
 
 class ScannedScript {
+    friend class Script;
+
    public:
     /// The context id
     const uint32_t context_id;
@@ -57,11 +59,12 @@ class ScannedScript {
     ankerl::unordered_dense::map<NameID, std::reference_wrapper<Schema::NameInfo>> names_by_id;
     /// The name infos by text
     ankerl::unordered_dense::map<std::string_view, std::reference_wrapper<Schema::NameInfo>> names_by_text;
-    /// The name search index
-    btree::multimap<fuzzy_ci_string_view, std::reference_wrapper<const Schema::NameInfo>> name_search_index;
-
     /// All symbols
     ChunkBuffer<parser::Parser::symbol_type> symbols;
+
+   protected:
+    /// The name search index
+    btree::multimap<fuzzy_ci_string_view, std::reference_wrapper<const Schema::NameInfo>> name_search_index;
 
    public:
     /// Constructor
@@ -73,8 +76,7 @@ class ScannedScript {
     auto& GetSymbols() const { return symbols; }
     /// Get the name dictionary
     auto& GetNameDictionary() const { return names; }
-    /// Get the name search index
-    auto& GetNameSearchIndex() const { return name_search_index; }
+
     /// Register a name
     NameID RegisterName(std::string_view s, sx::Location location, sx::NameTag tag = sx::NameTag::NONE);
     /// Register a keyword as name
@@ -85,6 +87,9 @@ class ScannedScript {
     std::string_view ReadTextAtLocation(sx::Location loc) {
         return std::string_view{text_buffer}.substr(loc.offset(), loc.length());
     }
+    /// Get the name search index
+    const decltype(name_search_index)& BuildNameSearchIndex();
+
     /// A location info
     struct LocationInfo {
         using RelativePosition = sqlynx::proto::RelativeSymbolPosition;
@@ -271,7 +276,7 @@ class AnalyzedScript : public Schema {
     /// Get the schema search path
     auto& GetSchemaSearchPath() const { return schema_search_path; }
     /// Get the name search index
-    btree::multimap<fuzzy_ci_string_view, std::reference_wrapper<const NameInfo>> GetNameSearchIndex() const override;
+    const btree::multimap<fuzzy_ci_string_view, std::reference_wrapper<const NameInfo>>& BuildNameSearchIndex();
 
     /// Build the program
     flatbuffers::Offset<proto::AnalyzedScript> Pack(flatbuffers::FlatBufferBuilder& builder);
