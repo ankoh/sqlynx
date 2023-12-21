@@ -26,7 +26,7 @@ TEST_P(AnalyzerSnapshotTestSuite, Test) {
     ASSERT_EQ(external_scan.second, proto::StatusCode::OK);
     auto external_parsed = parser::Parser::Parse(external_scan.first);
     ASSERT_EQ(external_parsed.second, proto::StatusCode::OK);
-    auto external_analyzed = Analyzer::Analyze(external_parsed.first, nullptr);
+    auto external_analyzed = Analyzer::Analyze(external_parsed.first, DEFAULT_DATABASE_NAME, DEFAULT_SCHEMA_NAME);
     ASSERT_EQ(external_analyzed.second, proto::StatusCode::OK);
 
     // Analyze script
@@ -36,7 +36,7 @@ TEST_P(AnalyzerSnapshotTestSuite, Test) {
     ASSERT_EQ(main_parsed.second, proto::StatusCode::OK);
     SchemaSearchPath search_path;
     search_path.PushBack(external_analyzed.first);
-    auto main_analyzed = Analyzer::Analyze(main_parsed.first, &search_path);
+    auto main_analyzed = Analyzer::Analyze(main_parsed.first, DEFAULT_DATABASE_NAME, DEFAULT_SCHEMA_NAME, &search_path);
     ASSERT_EQ(main_analyzed.second, proto::StatusCode::OK);
 
     // Encode the program

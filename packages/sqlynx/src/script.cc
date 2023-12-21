@@ -79,9 +79,9 @@ NameID ScannedScript::RegisterName(std::string_view s, sx::Location location, sx
         Schema::NameInfo{.name_id = name_id, .text = s, .location = location, .tags = tag, .occurrences = 1});
     names_by_text.insert({s, name});
     names_by_id.insert({name_id, name});
-    for (size_t i = 1; i < s.size(); ++i) {
+    for (size_t i = 1; i <= s.size(); ++i) {
         auto suffix = s.substr(s.size() - i);
-        name_search_index.insert({{suffix.data(), s.size()}, name});
+        name_search_index.insert({{suffix.data(), suffix.size()}, name});
     }
     return name_id;
 }
@@ -378,8 +378,8 @@ flatbuffers::Offset<proto::ColumnReference> AnalyzedScript::ColumnReference::Pac
 
 /// Constructor
 AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, SchemaSearchPath schema_search_path,
-                               std::string database_name, std::string schema_name)
-    : Schema(parsed->context_id, std::move(database_name), std::move(schema_name)),
+                               std::string_view database_name, std::string_view schema_name)
+    : Schema(parsed->context_id, database_name, schema_name),
       parsed_script(std::move(parsed)),
       schema_search_path(std::move(schema_search_path)) {}
 
@@ -439,7 +439,8 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
 }
 
 /// Constructor
-Script::Script(uint32_t context_id) : context_id(context_id), text(1024) {}
+Script::Script(uint32_t context_id)
+    : context_id(context_id), text(1024), database_name(DEFAULT_DATABASE_NAME), schema_name(DEFAULT_SCHEMA_NAME) {}
 
 /// Insert a character at an offet
 void Script::InsertCharAt(size_t char_idx, uint32_t unicode) {
@@ -551,7 +552,7 @@ std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(const SchemaSearch
     }
 
     // Analyze a script
-    auto [script, status] = Analyzer::Analyze(parsed_script, schema_search_path, database_name, schema_name);
+    auto [script, status] = Analyzer::Analyze(parsed_script, database_name, schema_name, schema_search_path);
     if (status != proto::StatusCode::OK) {
         return {nullptr, status};
     }

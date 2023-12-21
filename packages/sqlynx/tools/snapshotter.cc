@@ -147,7 +147,8 @@ static void generate_analyzer_snapshots(const std::filesystem::path& source_dir)
             }
             SchemaSearchPath search_path;
             search_path.PushBack(external_analyzed.first);
-            auto main_analyzed = Analyzer::Analyze(main_parsed.first, &search_path);
+            auto main_analyzed =
+                Analyzer::Analyze(main_parsed.first, DEFAULT_DATABASE_NAME, DEFAULT_SCHEMA_NAME, &search_path);
             if (main_analyzed.second != proto::StatusCode::OK) {
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(main_analyzed.second) << std::endl;
                 continue;

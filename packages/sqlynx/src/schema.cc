@@ -28,8 +28,8 @@ flatbuffers::Offset<proto::Table> Schema::Table::Pack(flatbuffers::FlatBufferBui
     return out.Finish();
 }
 
-Schema::Schema(uint32_t context_id, std::string database_name, std::string schema_name)
-    : context_id(context_id), database_name(std::move(database_name)), schema_name(std::move(schema_name)) {}
+Schema::Schema(uint32_t context_id, std::string_view database_name, std::string_view schema_name)
+    : context_id(context_id), database_name(database_name), schema_name(schema_name) {}
 
 std::optional<Schema::ResolvedTable> Schema::ResolveTable(ContextObjectID table_id) const {
     if (table_id.GetContext() != context_id || table_id.GetIndex() >= tables.size()) {
@@ -70,6 +70,12 @@ std::optional<Schema::ResolvedTable> Schema::ResolveTable(QualifiedTableName tab
             return std::nullopt;
         }
     } else {
+        if (table_name.database_name.empty()) {
+            table_name.database_name = database_name;
+        }
+        if (table_name.schema_name.empty()) {
+            table_name.schema_name = schema_name;
+        }
         return search_path.ResolveTable(table_name);
     }
 }

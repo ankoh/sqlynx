@@ -41,11 +41,14 @@ void NameResolutionPass::NodeState::Clear() {
 }
 
 /// Constructor
-NameResolutionPass::NameResolutionPass(ParsedScript& parser, const SchemaSearchPath& schema_search_path,
+NameResolutionPass::NameResolutionPass(ParsedScript& parser, std::string_view database_name,
+                                       std::string_view schema_name, const SchemaSearchPath& schema_search_path,
                                        AttributeIndex& attribute_index)
     : scanned_program(*parser.scanned_script),
       parsed_program(parser),
       context_id(parser.context_id),
+      database_name(database_name),
+      schema_name(schema_name),
       schema_search_path(schema_search_path),
       attribute_index(attribute_index),
       nodes(parsed_program.nodes) {
@@ -196,17 +199,17 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
             continue;
         }
 
-        // Normalize table name for search path lookup
-        Schema::QualifiedTableName normalized_table_name = table_ref.table_name;
-        if (normalized_table_name.database_name.empty()) {
-            normalized_table_name.database_name = DEFAULT_DATABASE_NAME;
+        // Qualify table name for search path lookup
+        Schema::QualifiedTableName qualified_table_name = table_ref.table_name;
+        if (qualified_table_name.database_name.empty()) {
+            qualified_table_name.database_name = database_name;
         }
-        if (normalized_table_name.schema_name.empty()) {
-            normalized_table_name.schema_name = DEFAULT_SCHEMA_NAME;
+        if (qualified_table_name.schema_name.empty()) {
+            qualified_table_name.schema_name = schema_name;
         }
 
         // Otherwise consult the external search path
-        if (auto resolved = schema_search_path.ResolveTable(normalized_table_name)) {
+        if (auto resolved = schema_search_path.ResolveTable(qualified_table_name)) {
             // Remember resolved table
             scope.resolved_table_references.insert({&table_ref, *resolved});
             table_ref.resolved_table_id = resolved->table.table_id;
@@ -271,6 +274,8 @@ void NameResolutionPass::ResolveNames() {
         auto& top = pending_scopes.top();
         pending_scopes.pop();
         ResolveTableRefsInScope(top);
+        tmp_refs_by_alias.clear();
+        tmp_refs_by_name.clear();
         ResolveColumnRefsInScope(top, tmp_refs_by_alias, tmp_refs_by_name);
         for (auto& child_scope : top.get().child_scopes) {
             pending_scopes.push(child_scope);
@@ -548,6 +553,9 @@ void NameResolutionPass::Finish() {
     staging.tables = tables.Flatten();
     staging.table_columns = table_columns.Flatten();
     staging.tables_by_name.reserve(staging.tables.size());
+    for (auto& table : staging.tables) {
+        staging.tables_by_name.insert({table.table_name, table});
+    }
 
     // Resolve all names
     ResolveNames();
@@ -619,7 +627,7 @@ void NameResolutionPass::Export(AnalyzedScript& program) {
     for (auto& table : program.tables) {
         program.tables_by_name.insert({table.table_name.table_name, table});
         for (size_t column_id = 0; column_id < table.column_count; ++column_id) {
-            auto& column = program.table_columns[column_id];
+            auto& column = program.table_columns[table.columns_begin + column_id];
             program.table_columns_by_name.insert({column.column_name, {table, column}});
         }
     }

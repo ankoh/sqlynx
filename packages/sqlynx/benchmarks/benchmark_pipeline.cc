@@ -646,22 +646,6 @@ static void analyze_query(benchmark::State& state) {
     }
 }
 
-static void index_query(benchmark::State& state) {
-    Script main{1};
-    Script external{2};
-    main.InsertTextAt(0, main_script);
-    external.InsertTextAt(0, external_script);
-
-    auto scan = main.Scan();
-    auto parsed = main.Parse();
-    auto analyzed = main.Analyze();
-    assert(analyzed.second == proto::StatusCode::OK);
-
-    for (auto _ : state) {
-        benchmark::DoNotOptimize(index);
-    }
-}
-
 static void move_cursor(benchmark::State& state) {
     Script main;
     main.InsertTextAt(0, main_script);
@@ -739,7 +723,6 @@ static void compute_layout(benchmark::State& state) {
 BENCHMARK(scan_query);
 BENCHMARK(parse_query);
 BENCHMARK(analyze_query);
-BENCHMARK(index_query);
 BENCHMARK(move_cursor);
 BENCHMARK(complete_cursor);
 BENCHMARK(compute_layout);
