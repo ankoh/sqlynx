@@ -65,12 +65,12 @@ extern "C" sqlynx::SchemaSearchPath* sqlynx_search_path_new();
 /// Create a schema search path
 extern "C" void sqlynx_search_path_delete(sqlynx::SchemaSearchPath* search_path);
 /// Insert a script in the schema search path
-extern "C" void sqlynx_search_path_insert_script_at(sqlynx::SchemaSearchPath* path, size_t index,
-                                                    sqlynx::Script* script);
+extern "C" FFIResult* sqlynx_search_path_insert_script_at(sqlynx::SchemaSearchPath* path, size_t index,
+                                                          sqlynx::Script* script);
 /// Update a script in the schema search path
-extern "C" void sqlynx_search_path_update_script(sqlynx::SchemaSearchPath* path, sqlynx::Script* script);
+extern "C" FFIResult* sqlynx_search_path_update_script(sqlynx::SchemaSearchPath* path, sqlynx::Script* script);
 /// Erase script in the schema search path
-extern "C" void sqlynx_search_path_erase_script(sqlynx::SchemaSearchPath* path, sqlynx::Script* script);
+extern "C" FFIResult* sqlynx_search_path_erase_script(sqlynx::SchemaSearchPath* path, sqlynx::Script* script);
 
 /// Create schema graph
 extern "C" sqlynx::SchemaGrid* sqlynx_schemagraph_new();

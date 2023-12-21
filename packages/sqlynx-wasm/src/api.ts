@@ -6,6 +6,7 @@ interface SQLynxModuleExports {
     sqlynx_malloc: (length: number) => number;
     sqlynx_free: (ptr: number) => void;
     sqlynx_result_delete: (ptr: number) => void;
+
     sqlynx_script_new: (id: number) => number;
     sqlynx_script_delete: (ptr: number) => void;
     sqlynx_script_insert_text_at: (ptr: number, offset: number, text: number, textLength: number) => void;
@@ -15,11 +16,17 @@ interface SQLynxModuleExports {
     sqlynx_script_format: (ptr: number) => number;
     sqlynx_script_scan: (ptr: number) => number;
     sqlynx_script_parse: (ptr: number) => number;
-    sqlynx_script_analyze: (ptr: number, external: number) => number;
-    sqlynx_script_reindex: (ptr: number) => number;
+    sqlynx_script_analyze: (ptr: number, path_ptr: number) => number;
     sqlynx_script_move_cursor: (ptr: number, offset: number) => number;
     sqlynx_script_complete_at_cursor: (ptr: number, limit: number) => number;
     sqlynx_script_get_statistics: (ptr: number) => number;
+
+    sqlynx_search_path_new: () => number;
+    sqlynx_search_path_delete: (ptr: number) => number;
+    sqlynx_search_path_insert_script_at: (path_ptr: number, index: number, script_ptr: number) => number;
+    sqlynx_search_path_update_script: (path_ptr: number, script_ptr: number) => number;
+    sqlynx_search_path_erase_script: (path_ptr: number, script_ptr: number) => number;
+
     sqlynx_schemagraph_new: () => number;
     sqlynx_schemagraph_delete: (ptr: number) => void;
     sqlynx_schemagraph_describe: (ptr: number) => number;
@@ -60,6 +67,7 @@ export class SQLynx {
             sqlynx_malloc: parserExports['sqlynx_malloc'] as (length: number) => number,
             sqlynx_free: parserExports['sqlynx_free'] as (ptr: number) => void,
             sqlynx_result_delete: parserExports['sqlynx_result_delete'] as (ptr: number) => void,
+
             sqlynx_script_new: parserExports['sqlynx_script_new'] as (id: number) => number,
             sqlynx_script_delete: parserExports['sqlynx_script_delete'] as (ptr: number) => void,
             sqlynx_script_insert_text_at: parserExports['sqlynx_script_insert_text_at'] as (
@@ -83,7 +91,6 @@ export class SQLynx {
             sqlynx_script_scan: parserExports['sqlynx_script_scan'] as (ptr: number) => number,
             sqlynx_script_parse: parserExports['sqlynx_script_parse'] as (ptr: number) => number,
             sqlynx_script_analyze: parserExports['sqlynx_script_analyze'] as (ptr: number, external: number) => number,
-            sqlynx_script_reindex: parserExports['sqlynx_script_reindex'] as (ptr: number) => number,
             sqlynx_script_get_statistics: parserExports['sqlynx_script_get_statistics'] as (ptr: number) => number,
             sqlynx_script_move_cursor: parserExports['sqlynx_script_move_cursor'] as (
                 ptr: number,
@@ -93,6 +100,23 @@ export class SQLynx {
                 ptr: number,
                 limit: number,
             ) => number,
+
+            sqlynx_search_path_new: parserExports['sqlynx_search_path_new'] as () => number,
+            sqlynx_search_path_delete: parserExports['sqlynx_search_path_delete'] as (ptr: number) => number,
+            sqlynx_search_path_insert_script_at: parserExports['sqlynx_search_path_insert_script_at'] as (
+                path_ptr: number,
+                index: number,
+                script_ptr: number,
+            ) => number,
+            sqlynx_search_path_update_script: parserExports['sqlynx_search_path_update_script'] as (
+                path_ptr: number,
+                script_ptr: number,
+            ) => number,
+            sqlynx_search_path_erase_script: parserExports['sqlynx_search_path_erase_script'] as (
+                path_ptr: number,
+                script_ptr: number,
+            ) => number,
+
             sqlynx_schemagraph_new: parserExports['sqlynx_schemagraph_new'] as () => number,
             sqlynx_schemagraph_delete: parserExports['sqlynx_schemagraph_delete'] as (ptr: number) => void,
             sqlynx_schemagraph_describe: parserExports['sqlynx_schemagraph_describe'] as (ptr: number) => number,
@@ -158,6 +182,11 @@ export class SQLynx {
         return new SQLynxScript(this, scriptPtr);
     }
 
+    public createSchemaSearchPath(): SQLynxSchemaSearchPath {
+        const pathPtr = this.instanceExports.sqlynx_search_path_new();
+        return new SQLynxSchemaSearchPath(this, pathPtr);
+    }
+
     public createSchemaGraph(): SQLynxSchemaGraph {
         const graphPtr = this.instanceExports.sqlynx_schemagraph_new();
         return new SQLynxSchemaGraph(this, graphPtr);
@@ -212,42 +241,6 @@ export namespace QualifiedID {
     /// Is a null id?
     export function isNull(value: Value): boolean {
         return QualifiedID.getIndex(value) == 0xffffffff;
-    }
-    /// Read a name
-    export function readName(
-        value: Value,
-        scripts: {
-            [context: number]: proto.ParsedScript | null;
-        },
-    ): string | null {
-        if (QualifiedID.isNull(value)) {
-            return null;
-        }
-        const key = QualifiedID.getContext(value);
-        return scripts[key]?.nameDictionary(QualifiedID.getIndex(value)) ?? null;
-    }
-    /// Read a table name
-    export function readTableName(
-        name: proto.QualifiedTableName,
-        scripts: {
-            [context: number]: proto.ParsedScript | null;
-        },
-    ) {
-        const database = QualifiedID.readName(name.databaseName(), scripts);
-        const schema = QualifiedID.readName(name.schemaName(), scripts);
-        const table = QualifiedID.readName(name.tableName(), scripts);
-        return { database, schema, table };
-    }
-    /// Read a table name
-    export function readColumnName(
-        name: proto.QualifiedColumnName,
-        scripts: {
-            [context: number]: proto.ParsedScript | null;
-        },
-    ) {
-        const column = QualifiedID.readName(name.columnName(), scripts);
-        const alias = QualifiedID.readName(name.tableAlias(), scripts);
-        return { column, alias };
     }
 }
 
@@ -370,9 +363,12 @@ export class SQLynxScript {
         return this.api.readResult<proto.ParsedScript>(resultPtr);
     }
     /// Analyze the script (optionally with an external script)
-    public analyze(external: SQLynxScript | null = null): FlatBufferRef<proto.AnalyzedScript> {
+    public analyze(searchPath: SQLynxSchemaSearchPath | null = null): FlatBufferRef<proto.AnalyzedScript> {
         const scriptPtr = this.assertScriptNotNull();
-        const resultPtr = this.api.instanceExports.sqlynx_script_analyze(scriptPtr, external?.scriptPtr ?? 0);
+        const resultPtr = this.api.instanceExports.sqlynx_script_analyze(
+            scriptPtr,
+            searchPath == null ? 0 : searchPath.pathPtr,
+        );
         return this.api.readResult<proto.AnalyzedScript>(resultPtr);
     }
     /// Pretty print the SQL string
@@ -383,12 +379,6 @@ export class SQLynxScript {
         const text = this.api.decoder.decode(resultBuffer.data);
         resultBuffer.delete();
         return text;
-    }
-    /// Update the index
-    public reindex(): boolean {
-        const scriptPtr = this.assertScriptNotNull();
-        const status = this.api.instanceExports.sqlynx_script_reindex(scriptPtr);
-        return status == proto.StatusCode.OK;
     }
     /// Move the cursor
     public moveCursor(textOffset: number): FlatBufferRef<proto.ScriptCursorInfo> {
@@ -411,6 +401,29 @@ export class SQLynxScript {
         const scriptPtr = this.assertScriptNotNull();
         const resultPtr = this.api.instanceExports.sqlynx_script_get_statistics(scriptPtr);
         return this.api.readResult<proto.ScriptStatistics>(resultPtr);
+    }
+}
+
+export class SQLynxSchemaSearchPath {
+    /// The SQLynx api
+    api: SQLynx;
+    /// The graph pointer
+    pathPtr: number | null;
+
+    public constructor(api: SQLynx, pathPtr: number) {
+        this.api = api;
+        this.pathPtr = pathPtr;
+    }
+    /// Delete the graph
+    public delete() {
+        if (this.pathPtr) {
+            this.api.instanceExports.sqlynx_search_path_delete(this.pathPtr);
+        }
+        this.pathPtr = null;
+    }
+    /// Append script
+    public pushScript(_script: SQLynxScript) {
+        /// XXX Append a script
     }
 }
 

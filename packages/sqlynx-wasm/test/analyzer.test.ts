@@ -7,79 +7,86 @@ import fs from 'fs';
 const distPath = path.resolve(__dirname, '../dist');
 const wasmPath = path.resolve(distPath, './sqlynx.wasm');
 
-let fsql: sqlynx.SQLynx | null = null;
+let lnx: sqlynx.SQLynx | null = null;
 
 beforeAll(async () => {
-    fsql = await sqlynx.SQLynx.create(async (imports: WebAssembly.Imports) => {
+    lnx = await sqlynx.SQLynx.create(async (imports: WebAssembly.Imports) => {
         const buf = await fs.promises.readFile(wasmPath);
         return await WebAssembly.instantiate(buf, imports);
     });
-    expect(fsql).not.toBeNull();
+    expect(lnx).not.toBeNull();
 });
 
 describe('SQLynx Analyzer', () => {
     it('external context collision', () => {
-        const schema_script = fsql!.createScript(1);
-        schema_script.insertTextAt(0, 'create table foo(a int);');
-        schema_script.scan().delete();
-        schema_script.parse().delete();
-        schema_script.analyze().delete();
+        const schemaScript = lnx!.createScript(1);
+        schemaScript.insertTextAt(0, 'create table foo(a int);');
+        schemaScript.scan().delete();
+        schemaScript.parse().delete();
+        schemaScript.analyze().delete();
 
-        const main_script = fsql!.createScript(1);
-        main_script.insertTextAt(0, 'select * from foo;');
-        schema_script.scan().delete();
-        schema_script.parse().delete();
+        const mainScript = lnx!.createScript(1);
+        mainScript.insertTextAt(0, 'select * from foo;');
+        schemaScript.scan().delete();
+        schemaScript.parse().delete();
+
+        const searchPath = lnx!.createSchemaSearchPath();
+        searchPath.pushScript(schemaScript);
 
         expect(() => {
-            const analyzed = main_script.analyze(schema_script);
+            const analyzed = mainScript.analyze(searchPath);
             analyzed.delete();
         }).toThrow(new Error('Collision on external context identifier'));
 
-        schema_script.delete();
-        main_script.delete();
+        searchPath.delete();
+        schemaScript.delete();
+        mainScript.delete();
     });
 
     it(`external ref`, () => {
-        const ext_script = fsql!.createScript(1);
-        ext_script.insertTextAt(0, 'create table foo(a int);');
+        const extScript = lnx!.createScript(1);
+        extScript.insertTextAt(0, 'create table foo(a int);');
 
-        const ext_scanner_res = ext_script.scan();
-        const ext_parser_res = ext_script.parse();
-        const ext_analyzer_res = ext_script.analyze();
+        const extScannerRes = extScript.scan();
+        const extParserRes = extScript.parse();
+        const extAnalyzerRes = extScript.analyze();
 
-        const ext_scanner = ext_scanner_res.read(new sqlynx.proto.ScannedScript());
-        const ext_parser = ext_parser_res.read(new sqlynx.proto.ParsedScript());
-        const ext_analyzer = ext_analyzer_res.read(new sqlynx.proto.AnalyzedScript());
-        expect(ext_scanner.tokens()?.tokenTypesArray()?.length).toBeGreaterThan(0);
-        expect(ext_parser.nodesLength()).toBeGreaterThan(0);
-        expect(ext_analyzer.tablesLength()).toEqual(1);
+        const extScanner = extScannerRes.read(new sqlynx.proto.ScannedScript());
+        const extParser = extParserRes.read(new sqlynx.proto.ParsedScript());
+        const extAnalyzer = extAnalyzerRes.read(new sqlynx.proto.AnalyzedScript());
+        expect(extScanner.tokens()?.tokenTypesArray()?.length).toBeGreaterThan(0);
+        expect(extParser.nodesLength()).toBeGreaterThan(0);
+        expect(extAnalyzer.tablesLength()).toEqual(1);
 
-        const main_script = fsql!.createScript(2);
-        main_script.insertTextAt(0, 'select * from foo');
+        const mainScript = lnx!.createScript(2);
+        mainScript.insertTextAt(0, 'select * from foo');
 
-        const main_scanner_res = main_script.scan();
-        const main_parser_res = main_script.parse();
-        const main_analyzer_res = main_script.analyze(ext_script);
+        const searchPath = lnx!.createSchemaSearchPath();
+        searchPath.pushScript(extScript);
 
-        const main_scanner = main_scanner_res.read(new sqlynx.proto.ScannedScript());
-        const main_parser = main_parser_res.read(new sqlynx.proto.ParsedScript());
-        const main_analyzer = main_analyzer_res.read(new sqlynx.proto.AnalyzedScript());
-        expect(main_scanner.tokens()?.tokenTypesArray()?.length).toBeGreaterThan(0);
-        expect(main_parser.nodesLength()).toBeGreaterThan(0);
-        expect(main_analyzer.tableReferencesLength()).toEqual(1);
+        const mainScannerRes = mainScript.scan();
+        const mainParserRes = mainScript.parse();
+        const mainAnalyzerRes = mainScript.analyze(searchPath);
 
-        const table_ref = main_analyzer.tableReferences(0);
-        const table_id = table_ref?.tableId()!;
-        expect(sqlynx.QualifiedID.isNull(table_id)).not.toEqual(true);
-        expect(sqlynx.QualifiedID.getContext(table_id)).toEqual(1);
-        expect(sqlynx.QualifiedID.getIndex(table_id)).toEqual(0);
+        const mainScanner = mainScannerRes.read(new sqlynx.proto.ScannedScript());
+        const mainParser = mainParserRes.read(new sqlynx.proto.ParsedScript());
+        const mainAnalyzer = mainAnalyzerRes.read(new sqlynx.proto.AnalyzedScript());
+        expect(mainScanner.tokens()?.tokenTypesArray()?.length).toBeGreaterThan(0);
+        expect(mainParser.nodesLength()).toBeGreaterThan(0);
+        expect(mainAnalyzer.tableReferencesLength()).toEqual(1);
 
-        ext_scanner_res.delete();
-        ext_parser_res.delete();
-        ext_analyzer_res.delete();
+        const tableRef = mainAnalyzer.tableReferences(0);
+        const tableName = tableRef?.tableName()!;
+        expect(tableName.tableName()).toEqual('foo');
 
-        main_scanner_res.delete();
-        main_parser_res.delete();
-        main_analyzer_res.delete();
+        searchPath.delete();
+
+        extScannerRes.delete();
+        extParserRes.delete();
+        extAnalyzerRes.delete();
+
+        mainScannerRes.delete();
+        mainParserRes.delete();
+        mainAnalyzerRes.delete();
     });
 });

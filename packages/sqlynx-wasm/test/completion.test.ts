@@ -25,7 +25,6 @@ describe('SQLynx Completion', () => {
             script.scan().delete();
             script.parse().delete();
             script.analyze().delete();
-            script.reindex();
             script.moveCursor(cursor_offset).delete();
 
             const completionBuffer = script.completeAtCursor(10);

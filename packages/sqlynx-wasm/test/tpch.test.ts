@@ -176,10 +176,7 @@ limit 100
         expect(analyzedScript.tablesLength()).toEqual(0);
         expect(analyzedScript.tableReferencesLength()).toBeGreaterThan(0);
         expect(analyzedScript.columnReferencesLength()).toBeGreaterThan(0);
-        expect(analyzedScript.graphEdgesLength()).toEqual(9);
-
-        // Reindex for completions
-        expect(script.reindex()).toEqual(true);
+        expect(analyzedScript.graphEdgesLength()).toEqual(8);
 
         analyzerResult.delete();
         parserResult.delete();
