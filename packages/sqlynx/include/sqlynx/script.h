@@ -62,10 +62,6 @@ class ScannedScript {
     /// All symbols
     ChunkBuffer<parser::Parser::symbol_type> symbols;
 
-   protected:
-    /// The name search index
-    Schema::NameSearchIndex name_search_index;
-
    public:
     /// Constructor
     ScannedScript(const rope::Rope& text, uint32_t context_id = 1);
@@ -87,8 +83,6 @@ class ScannedScript {
     std::string_view ReadTextAtLocation(sx::Location loc) {
         return std::string_view{text_buffer}.substr(loc.offset(), loc.length());
     }
-    /// Get the name search index
-    const Schema::NameSearchIndex& GetNameSearchIndex();
 
     /// A location info
     struct LocationInfo {
@@ -173,6 +167,7 @@ class ParsedScript {
 };
 
 class AnalyzedScript : public Schema {
+    friend class Script;
     friend class NameResolutionPass;
 
    public:

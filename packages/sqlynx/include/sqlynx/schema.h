@@ -174,6 +174,8 @@ class Schema {
     std::unordered_multimap<std::string_view,
                             std::pair<std::reference_wrapper<Table>, std::reference_wrapper<TableColumn>>>
         table_columns_by_name;
+    /// The name search index
+    std::optional<Schema::NameSearchIndex> name_search_index;
 
    public:
     /// Construcutor
