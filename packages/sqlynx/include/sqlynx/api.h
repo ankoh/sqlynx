@@ -32,18 +32,6 @@ struct FFIResult {
 /// Delete a result
 extern "C" void sqlynx_result_delete(FFIResult* result);
 
-/// Create a schema search path
-extern "C" sqlynx::SchemaSearchPath* sqlynx_search_path_new();
-/// Create a schema search path
-extern "C" void sqlynx_search_path_delete(sqlynx::SchemaSearchPath* search_path);
-/// Insert a script in the schema search path
-extern "C" void sqlynx_search_path_insert_script_at(sqlynx::SchemaSearchPath* path, size_t index,
-                                                    sqlynx::Script* script);
-/// Update a script in the schema search path
-extern "C" void sqlynx_search_path_update_script(sqlynx::SchemaSearchPath* path, sqlynx::Script* script);
-/// Erase script in the schema search path
-extern "C" void sqlynx_search_path_erase_script(sqlynx::SchemaSearchPath* path, sqlynx::Script* script);
-
 /// Create a script
 extern "C" sqlynx::Script* sqlynx_script_new(uint32_t context_id);
 /// Delete a script
@@ -71,6 +59,18 @@ extern "C" FFIResult* sqlynx_script_get_statistics(sqlynx::Script* script);
 extern "C" FFIResult* sqlynx_script_move_cursor(sqlynx::Script* script, size_t text_offset);
 /// Complete at a cursor in the script
 extern "C" FFIResult* sqlynx_script_complete_at_cursor(sqlynx::Script* script, size_t limit);
+
+/// Create a schema search path
+extern "C" sqlynx::SchemaSearchPath* sqlynx_search_path_new();
+/// Create a schema search path
+extern "C" void sqlynx_search_path_delete(sqlynx::SchemaSearchPath* search_path);
+/// Insert a script in the schema search path
+extern "C" void sqlynx_search_path_insert_script_at(sqlynx::SchemaSearchPath* path, size_t index,
+                                                    sqlynx::Script* script);
+/// Update a script in the schema search path
+extern "C" void sqlynx_search_path_update_script(sqlynx::SchemaSearchPath* path, sqlynx::Script* script);
+/// Erase script in the schema search path
+extern "C" void sqlynx_search_path_erase_script(sqlynx::SchemaSearchPath* path, sqlynx::Script* script);
 
 /// Create schema graph
 extern "C" sqlynx::SchemaGrid* sqlynx_schemagraph_new();
