@@ -16,14 +16,14 @@ struct ScriptProcessingMemoryStatistics {
     scanner_symbol_bytes: uint32;
     /// The size of the scanner dictionary
     scanner_name_dictionary_bytes: uint32;
-    /// The number of entries in the name index
-    scanner_name_search_index_size: uint32;
-    /// The size of the name index
-    scanner_name_search_index_bytes: uint32;
     /// The size of parser ast
     parser_ast_bytes: uint32;
-    /// The size of the analyzer output
-    analyzer_bytes: uint32;
+    /// The size of the analyzed script
+    analyzer_description_bytes: uint32;
+    /// The number of entries in the name index
+    analyzer_name_index_size: uint32;
+    /// The size of the name index
+    analyzer_name_index_bytes: uint32;
 }
 
 struct ScriptMemoryStatistics {

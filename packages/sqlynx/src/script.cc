@@ -43,21 +43,6 @@ Schema::NameInfo& ScannedScript::ReadName(NameID name) {
     assert(names_by_id.contains(name));
     return names_by_id.at(name).get();
 }
-/// Get the name search index
-const Schema::NameSearchIndex& ScannedScript::GetNameSearchIndex() {
-    if (name_search_index.empty() && names.GetSize() > 0) {
-        for (auto& names_chunk : names.GetChunks()) {
-            for (auto& name : names_chunk) {
-                auto s = name.text;
-                for (size_t i = 1; i <= s.size(); ++i) {
-                    auto suffix = s.substr(s.size() - i);
-                    name_search_index.insert({{suffix.data(), suffix.size()}, name});
-                }
-            }
-        }
-    }
-    return name_search_index;
-}
 
 /// Register a name
 NameID ScannedScript::RegisterKeywordAsName(std::string_view s, sx::Location location, sx::NameTag tag) {
@@ -392,7 +377,20 @@ AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, SchemaSearc
 
 /// Get the name search index
 const Schema::NameSearchIndex& AnalyzedScript::GetNameSearchIndex() {
-    return parsed_script->scanned_script->GetNameSearchIndex();
+    if (!name_search_index.has_value()) {
+        auto& index = name_search_index.emplace();
+        auto& names = parsed_script->scanned_script->names;
+        for (auto& names_chunk : names.GetChunks()) {
+            for (auto& name : names_chunk) {
+                auto s = name.text;
+                for (size_t i = 1; i <= s.size(); ++i) {
+                    auto suffix = s.substr(s.size() - i);
+                    index.insert({{suffix.data(), suffix.size()}, name});
+                }
+            }
+        }
+    }
+    return name_search_index.value();
 }
 
 template <typename In, typename Out>
@@ -483,14 +481,22 @@ std::unique_ptr<proto::ScriptMemoryStatistics> Script::GetMemoryStatistics() {
         if (!analyzed) return;
         // Added analyzed before?
         if (registered_analyzed.contains(analyzed)) return;
-        size_t analyzer_bytes =
+        size_t analyzer_description_bytes =
             analyzed->GetTables().size() * sizeof(Schema::Table) +
             analyzed->GetTableColumns().size() * sizeof(Schema::TableColumn) +
             analyzed->table_references.size() * sizeof(decltype(analyzed->table_references)::value_type) +
             analyzed->column_references.size() * sizeof(decltype(analyzed->column_references)::value_type) +
             analyzed->graph_edges.size() * sizeof(decltype(analyzed->graph_edges)::value_type) +
             analyzed->graph_edge_nodes.size() * sizeof(decltype(analyzed->graph_edge_nodes)::value_type);
-        stats.mutate_analyzer_bytes(analyzer_bytes);
+        size_t analyzer_name_index_bytes = 0;
+        size_t analyzer_name_search_index_size = 0;
+        if (auto& index = analyzed->name_search_index) {
+            analyzer_name_index_bytes = index->size() * index->average_bytes_per_value();
+            analyzer_name_search_index_size = index->size();
+        }
+        stats.mutate_analyzer_description_bytes(analyzer_description_bytes);
+        stats.mutate_analyzer_name_index_size(analyzer_name_search_index_size);
+        stats.mutate_analyzer_name_index_bytes(analyzer_name_index_bytes);
 
         // Added parsed before?
         ParsedScript* parsed = analyzed->parsed_script.get();
@@ -502,9 +508,6 @@ std::unique_ptr<proto::ScriptMemoryStatistics> Script::GetMemoryStatistics() {
         ScannedScript* scanned = parsed->scanned_script.get();
         if (registered_scanned.contains(scanned)) return;
         size_t scanner_symbol_bytes = scanned->symbols.GetSize() + sizeof(parser::Parser::symbol_type);
-        size_t scanner_name_search_index_bytes =
-            scanned->name_search_index.size() * scanned->name_search_index.average_bytes_per_value();
-        size_t scanner_name_search_index_size = scanned->name_search_index.size();
         size_t scanner_dictionary_bytes = scanned->name_pool.GetSize() +
                                           scanned->names.GetSize() * sizeof(Schema::NameInfo) +
                                           scanned->names_by_id.size() * sizeof(std::pair<NameID, void*>) +
@@ -512,8 +515,6 @@ std::unique_ptr<proto::ScriptMemoryStatistics> Script::GetMemoryStatistics() {
         stats.mutate_scanner_input_bytes(scanned->GetInput().size());
         stats.mutate_scanner_symbol_bytes(scanner_symbol_bytes);
         stats.mutate_scanner_name_dictionary_bytes(scanner_dictionary_bytes);
-        stats.mutate_scanner_name_search_index_size(scanner_name_search_index_size);
-        stats.mutate_scanner_name_search_index_bytes(scanner_name_search_index_bytes);
     };
     registerScript(analyzed_script.get(), memory->mutable_latest_script());
     return memory;
