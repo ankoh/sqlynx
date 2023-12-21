@@ -24,12 +24,12 @@ struct Completion {
 
     static constexpr ScoreValueType SUBSTRING_SCORE_MODIFIER = 15;
     static constexpr ScoreValueType PREFIX_SCORE_MODIFIER = 20;
-    static constexpr ScoreValueType STATEMENT_SCOPE_SCORE_MODIFIER = 1;
+    static constexpr ScoreValueType NEAR_CURSOR_SCORE_MODIFIER = 1;
     static constexpr ScoreValueType RESOLVING_TABLE_SCORE_MODIFIER = 2;
 
     static_assert(PREFIX_SCORE_MODIFIER > SUBSTRING_SCORE_MODIFIER,
                   "Begin a prefix weighs more than being a substring");
-    static_assert(STATEMENT_SCOPE_SCORE_MODIFIER < KEYWORD_POPULAR,
+    static_assert(NEAR_CURSOR_SCORE_MODIFIER < KEYWORD_POPULAR,
                   "Being in the same statement doesn't outweigh a popular keyword of similar likelyhood without also "
                   "being a substring");
     static_assert((TAG_UNLIKELY + SUBSTRING_SCORE_MODIFIER) > TAG_LIKELY,
@@ -39,6 +39,7 @@ struct Completion {
 
     /// The completion candidates
     struct Candidate {
+        /// The schema containing the candidate
         /// The name
         Schema::NameInfo name;
         /// The name tags
@@ -47,9 +48,11 @@ struct Completion {
         ScoreValueType score;
         /// Is a name located near the cursor (in the AST)?
         bool near_cursor;
+        /// Is external?
+        bool external;
 
         /// Get the score
-        inline ScoreValueType GetScore() const { return score + (near_cursor ? STATEMENT_SCOPE_SCORE_MODIFIER : 0); }
+        inline ScoreValueType GetScore() const { return score + (near_cursor ? NEAR_CURSOR_SCORE_MODIFIER : 0); }
         /// Is less in the min-heap?
         /// We want to kick a candidate A before candidate B if
         ///     1) the score of A is less than the score of B

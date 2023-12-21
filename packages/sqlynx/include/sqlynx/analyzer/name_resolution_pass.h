@@ -84,6 +84,10 @@ class NameResolutionPass : public PassManager::LTRPass {
     ParsedScript& parsed_program;
     /// The context id
     const uint32_t context_id;
+    /// The database name
+    const std::string_view database_name;
+    /// The schema name
+    const std::string_view schema_name;
     /// The schema search path
     const SchemaSearchPath& schema_search_path;
     /// The attribute index.
@@ -150,8 +154,8 @@ class NameResolutionPass : public PassManager::LTRPass {
 
    public:
     /// Constructor
-    NameResolutionPass(ParsedScript& parser, const SchemaSearchPath& schema_search_path,
-                       AttributeIndex& attribute_index);
+    NameResolutionPass(ParsedScript& parser, std::string_view database_name, std::string_view schema_name,
+                       const SchemaSearchPath& schema_search_path, AttributeIndex& attribute_index);
 
     /// Prepare the analysis pass
     void Prepare() override;

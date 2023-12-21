@@ -175,7 +175,7 @@ class Schema {
 
    public:
     /// Construcutor
-    Schema(uint32_t context_id, std::string database_name, std::string schema_name);
+    Schema(uint32_t context_id, std::string_view database_name, std::string_view schema_name);
 
     /// Get the context id
     uint32_t GetContextId() const { return context_id; }

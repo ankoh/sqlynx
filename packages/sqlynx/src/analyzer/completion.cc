@@ -182,6 +182,7 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
                 .combined_tags = NameTags{proto::NameTag::KEYWORD},
                 .score = get_score(*location, expected, name),
                 .near_cursor = false,
+                .external = false,
             };
             result_heap.Insert(candidate);
         }
@@ -190,7 +191,7 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
 
 void findCandidatesInIndex(
     Completion& completion,
-    const btree::multimap<fuzzy_ci_string_view, std::reference_wrapper<const Schema::NameInfo>>& index) {
+    const btree::multimap<fuzzy_ci_string_view, std::reference_wrapper<const Schema::NameInfo>>& index, bool external) {
     using Relative = ScannedScript::LocationInfo::RelativePosition;
     auto& cursor = completion.GetCursor();
     auto& scoring_table = completion.GetScoringTable();
@@ -210,10 +211,8 @@ void findCandidatesInIndex(
     }
 
     // Find all suffixes for the cursor prefix
-    auto search_lb = index.lower_bound(search_text);
-    auto search_ub = index.upper_bound(search_text);
-
-    for (auto iter = search_lb; iter != search_ub; ++iter) {
+    for (auto iter = index.lower_bound(search_text); iter != index.end() && iter->first.starts_with(search_text);
+         ++iter) {
         auto& name_info = iter->second.get();
         // Determine score
         Completion::ScoreValueType score = 0;
@@ -246,6 +245,7 @@ void findCandidatesInIndex(
                 .combined_tags = name_info.tags,
                 .score = score,
                 .near_cursor = false,
+                .external = external,
             };
             pending_candidates.insert({name_info.text, candidate});
         }
@@ -255,12 +255,12 @@ void findCandidatesInIndex(
 void Completion::FindCandidatesInIndexes() {
     // Find candidates in name dictionary of main script
     if (auto& scanned = cursor.script.scanned_script) {
-        findCandidatesInIndex(*this, scanned->name_search_index);
+        findCandidatesInIndex(*this, scanned->name_search_index, false);
     }
     // Find candidates in name dictionary of external script
     if (auto& analyzed = cursor.script.analyzed_script) {
         for (auto& schema : analyzed->schema_search_path.GetSchemas()) {
-            findCandidatesInIndex(*this, schema->GetNameSearchIndex());
+            findCandidatesInIndex(*this, schema->GetNameSearchIndex(), true);
         }
     }
 }
@@ -312,7 +312,8 @@ void Completion::FindCandidatesInAST() {
         }
     };
 
-    for (auto& table_ref : cursor.script.analyzed_script->table_references) {
+    auto& analyzed = cursor.script.analyzed_script;
+    for (auto& table_ref : analyzed->table_references) {
         // The table ref is not part of a statement id?
         // Skip then, we're currently using the statement id as very coarse-granular alternative to naming scopes.
         // TODO: We should remember a fine-granular scope union-find as output of the name resolution pass.
@@ -325,7 +326,7 @@ void Completion::FindCandidatesInAST() {
         mark_as_near(table_ref.alias_name);
 
         // Add all column names of the table
-        if (auto resolved = cursor.script.analyzed_script->ResolveTable(table_ref.resolved_table_id)) {
+        if (auto resolved = analyzed->ResolveTable(table_ref.resolved_table_id, analyzed->schema_search_path)) {
             for (auto& table_column : resolved->table_columns) {
                 mark_as_near(table_column.column_name);
             }
@@ -346,14 +347,14 @@ void Completion::FindCandidatesInAST() {
 }
 
 void Completion::FlushCandidatesAndFinish() {
+    // Helper to check if two locations overlap.
+    // Two ranges overlap if the sum of their widths exceeds the (max - min).
     auto intersects = [](const sx::Location& l, const sx::Location& r) {
         auto l_begin = l.offset();
         auto l_end = l_begin + l.length();
         auto r_begin = r.offset();
         auto r_end = r_begin + r.length();
-
-        // Two ranges overlap if the sum of their widths exceeds the (max - min)
-        auto min = std::max(l_begin, r_begin);
+        auto min = std::min(l_begin, r_begin);
         auto max = std::max(l_end, r_end);
         auto l_width = l_end - l_begin;
         auto r_width = r_end - r_begin;
@@ -363,16 +364,16 @@ void Completion::FlushCandidatesAndFinish() {
     // Find name if under cursor (if any)
     sx::Location current_symbol_location;
     if (auto& location = cursor.scanner_location; location.has_value()) {
-        // XXX
+        current_symbol_location = location->symbol.location;
     }
 
     // Insert all pending candidates into the heap
     for (auto& [key, candidate] : pending_candidates) {
         // Omit candidate if it occurs only once and is located under the cursor
-        if (candidate.name.occurrences == 1 && intersects(candidate.name.location, current_symbol_location)) {
+        if (candidate.name.occurrences == 1 && !candidate.external &&
+            intersects(candidate.name.location, current_symbol_location)) {
             continue;
         }
-        // Remember candidate
         result_heap.Insert(candidate);
     }
     pending_candidates.clear();
