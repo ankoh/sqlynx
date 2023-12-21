@@ -33,66 +33,13 @@ void log(std::string text) { return ::log(text.data(), text.size()); }
 void log(std::string_view text) { return ::log(text.data(), text.size()); }
 }  // namespace console
 
-/// Get the SQLynx version
-extern "C" SQLynxVersion* sqlynx_version() { return &sqlynx::VERSION; }
-
-/// Allocate memory
-extern "C" std::byte* sqlynx_malloc(size_t length) { return new std::byte[length]; }
-/// Delete memory
-extern "C" void sqlynx_free(void* buffer) { delete[] reinterpret_cast<std::byte*>(buffer); }
-
-/// Delete a result
-extern "C" void sqlynx_result_delete(FFIResult* result) {
-    result->owner_deleter(result->owner_ptr);
-    result->owner_ptr = nullptr;
-    result->owner_deleter = nullptr;
-    delete result;
-}
-
-/// Create a schema search path
-extern "C" sqlynx::SchemaSearchPath* sqlynx_search_path_new() { return new sqlynx::SchemaSearchPath(); }
-/// Create a schema search path
-extern "C" void sqlynx_search_path_delete(sqlynx::SchemaSearchPath* search_path) { delete search_path; }
-/// Insert a script in the schema search path
-extern "C" void sqlynx_search_path_insert_script_at(sqlynx::SchemaSearchPath* path, size_t index,
-                                                    sqlynx::Script* script) {
-    path->InsertScript(index, *script);
-}
-/// Update a script in the schema search path
-extern "C" void sqlynx_search_path_update_script(sqlynx::SchemaSearchPath* path, sqlynx::Script* script) {
-    path->UpdateScript(*script);
-}
-/// Erase entry in the schema search path
-extern "C" void sqlynx_search_path_erase_script(sqlynx::SchemaSearchPath* path, sqlynx::Script* script) {
-    path->EraseScript(*script);
-}
-
-/// Create a script
-extern "C" Script* sqlynx_script_new(uint32_t context_id) { return new Script(context_id); }
-/// Delete a script
-extern "C" void sqlynx_script_delete(Script* script) { delete script; }
-/// Insert char at a position
-extern "C" void sqlynx_script_insert_char_at(Script* script, size_t offset, uint32_t unicode) {
-    script->InsertCharAt(offset, unicode);
-}
-/// Insert text at a position
-extern "C" void sqlynx_script_insert_text_at(Script* script, size_t offset, const char* text_ptr, size_t text_length) {
-    std::string_view text{text_ptr, text_length};
-    script->InsertTextAt(offset, text);
-}
-/// Erase a text range
-extern "C" void sqlynx_script_erase_text_range(Script* script, size_t offset, size_t count) {
-    script->EraseTextRange(offset, count);
-}
-/// Get the script content as string
-extern "C" FFIResult* sqlynx_script_to_string(Script* script) {
-    auto text = std::make_unique<std::string>(std::move(script->ToString()));
+static FFIResult* packOK() {
     auto result = new FFIResult();
     result->status_code = static_cast<uint32_t>(proto::StatusCode::OK);
-    result->data_ptr = text->data();
-    result->data_length = text->length();
-    result->owner_ptr = text.release();
-    result->owner_deleter = [](void* buffer) { delete reinterpret_cast<std::string*>(buffer); };
+    result->data_ptr = nullptr;
+    result->data_length = 0;
+    result->owner_ptr = nullptr;
+    result->owner_deleter = [](void*) {};
     return result;
 }
 
@@ -130,6 +77,51 @@ static FFIResult* packError(proto::StatusCode status) {
     result->data_length = message.size();
     result->owner_ptr = nullptr;
     result->owner_deleter = [](void*) {};
+    return result;
+}
+
+/// Get the SQLynx version
+extern "C" SQLynxVersion* sqlynx_version() { return &sqlynx::VERSION; }
+
+/// Allocate memory
+extern "C" std::byte* sqlynx_malloc(size_t length) { return new std::byte[length]; }
+/// Delete memory
+extern "C" void sqlynx_free(void* buffer) { delete[] reinterpret_cast<std::byte*>(buffer); }
+
+/// Delete a result
+extern "C" void sqlynx_result_delete(FFIResult* result) {
+    result->owner_deleter(result->owner_ptr);
+    result->owner_ptr = nullptr;
+    result->owner_deleter = nullptr;
+    delete result;
+}
+
+/// Create a script
+extern "C" Script* sqlynx_script_new(uint32_t context_id) { return new Script(context_id); }
+/// Delete a script
+extern "C" void sqlynx_script_delete(Script* script) { delete script; }
+/// Insert char at a position
+extern "C" void sqlynx_script_insert_char_at(Script* script, size_t offset, uint32_t unicode) {
+    script->InsertCharAt(offset, unicode);
+}
+/// Insert text at a position
+extern "C" void sqlynx_script_insert_text_at(Script* script, size_t offset, const char* text_ptr, size_t text_length) {
+    std::string_view text{text_ptr, text_length};
+    script->InsertTextAt(offset, text);
+}
+/// Erase a text range
+extern "C" void sqlynx_script_erase_text_range(Script* script, size_t offset, size_t count) {
+    script->EraseTextRange(offset, count);
+}
+/// Get the script content as string
+extern "C" FFIResult* sqlynx_script_to_string(Script* script) {
+    auto text = std::make_unique<std::string>(std::move(script->ToString()));
+    auto result = new FFIResult();
+    result->status_code = static_cast<uint32_t>(proto::StatusCode::OK);
+    result->data_ptr = text->data();
+    result->data_length = text->length();
+    result->owner_ptr = text.release();
+    result->owner_deleter = [](void* buffer) { delete reinterpret_cast<std::string*>(buffer); };
     return result;
 }
 
@@ -249,6 +241,36 @@ extern "C" FFIResult* sqlynx_script_get_statistics(sqlynx::Script* script) {
     return packBuffer(std::move(detached));
 }
 
+/// Create a schema search path
+extern "C" sqlynx::SchemaSearchPath* sqlynx_search_path_new() { return new sqlynx::SchemaSearchPath(); }
+/// Create a schema search path
+extern "C" void sqlynx_search_path_delete(sqlynx::SchemaSearchPath* search_path) { delete search_path; }
+/// Insert a script in the schema search path
+extern "C" FFIResult* sqlynx_search_path_insert_script_at(sqlynx::SchemaSearchPath* path, size_t index,
+                                                          sqlynx::Script* script) {
+    auto status = path->InsertScript(index, *script);
+    if (status != proto::StatusCode::OK) {
+        return packError(status);
+    }
+    return packOK();
+}
+/// Update a script in the schema search path
+extern "C" FFIResult* sqlynx_search_path_update_script(sqlynx::SchemaSearchPath* path, sqlynx::Script* script) {
+    auto status = path->UpdateScript(*script);
+    if (status != proto::StatusCode::OK) {
+        return packError(status);
+    }
+    return packOK();
+}
+/// Erase entry in the schema search path
+extern "C" FFIResult* sqlynx_search_path_erase_script(sqlynx::SchemaSearchPath* path, sqlynx::Script* script) {
+    auto status = path->EraseScript(*script);
+    if (status != proto::StatusCode::OK) {
+        return packError(status);
+    }
+    return packOK();
+}
+
 /// Create a schema graph
 extern "C" sqlynx::SchemaGrid* sqlynx_schemagraph_new() { return new sqlynx::SchemaGrid(); }
 /// Delete a schema graph
@@ -284,8 +306,5 @@ extern "C" FFIResult* sqlynx_schemagraph_load_script(sqlynx::SchemaGrid* graph, 
 }
 
 #ifdef WASM
-extern "C" int main() {
-    sqlynx::CompletionIndex::Keywords();
-    return 0;
-}
+extern "C" int main() { return 0; }
 #endif

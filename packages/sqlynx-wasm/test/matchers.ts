@@ -13,7 +13,7 @@ export function table(name: string, columns: string[] = []): TestTable {
 }
 
 export function expectTables(
-    parsed: sqlynx.proto.ParsedScript,
+    _parsed: sqlynx.proto.ParsedScript,
     analyzed: sqlynx.proto.AnalyzedScript,
     tables: TestTable[],
 ) {
@@ -21,19 +21,11 @@ export function expectTables(
     for (let i = 0; i < tables.length; ++i) {
         const table = analyzed.tables(i)!;
         const tableName = table.tableName()!;
-        const parsedScripts = {
-            [parsed.contextId()]: parsed,
-        };
-        const resolvedName = sqlynx.QualifiedID.readTableName(tableName, parsedScripts);
-        expect(resolvedName).toEqual({
-            database: null,
-            schema: null,
-            table: tables[i].name,
-        });
+        expect(tableName.tableName()).toEqual(tables[i].name);
         for (let j = 0; j < tables[i].columns.length; ++j) {
             expect(j).toBeLessThan(table.columnCount());
             const column = analyzed.tableColumns(table.columnsBegin() + j)!;
-            const columnName = sqlynx.QualifiedID.readName(column.columnName(), parsedScripts);
+            const columnName = column.columnName();
             expect(columnName).toEqual(tables[i].columns[j]);
         }
     }
