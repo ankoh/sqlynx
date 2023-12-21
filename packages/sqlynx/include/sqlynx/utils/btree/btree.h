@@ -1324,7 +1324,7 @@ template <typename Params> class btree : public Params::key_compare {
         // Returns the number of bytes per value on a leaf node that is 75%
         // full. Experimentally, this matches up nicely with the computed number of
         // bytes per value in trees that had their values inserted in random order.
-        return sizeof(leaf_fields) / (kNodeValues * 0.75);
+        return sizeof(leaf_fields) / (static_cast<double>(kNodeValues) * 0.75);
     }
 
     // The fullness of the btree. Computed as the number of elements in the btree
