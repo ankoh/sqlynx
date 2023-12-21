@@ -336,7 +336,7 @@ jobs:
                   name: sqlynx_app
                   path: ./page
 
-            - uses: actions/upload-pages-artifact@v2
+            - uses: actions/upload-pages-artifact@v3
               with:
                   path: ./page
 
