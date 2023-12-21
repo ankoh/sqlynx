@@ -44,8 +44,7 @@ Schema::NameInfo& ScannedScript::ReadName(NameID name) {
     return names_by_id.at(name).get();
 }
 /// Get the name search index
-const btree::multimap<fuzzy_ci_string_view, std::reference_wrapper<const Schema::NameInfo>>&
-ScannedScript::BuildNameSearchIndex() {
+const Schema::NameSearchIndex& ScannedScript::GetNameSearchIndex() {
     if (name_search_index.empty() && names.GetSize() > 0) {
         for (auto& names_chunk : names.GetChunks()) {
             for (auto& name : names_chunk) {
@@ -392,9 +391,8 @@ AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, SchemaSearc
       schema_search_path(std::move(schema_search_path)) {}
 
 /// Get the name search index
-const btree::multimap<fuzzy_ci_string_view, std::reference_wrapper<const Schema::NameInfo>>&
-AnalyzedScript::BuildNameSearchIndex() {
-    return parsed_script->scanned_script->BuildNameSearchIndex();
+const Schema::NameSearchIndex& AnalyzedScript::GetNameSearchIndex() {
+    return parsed_script->scanned_script->GetNameSearchIndex();
 }
 
 template <typename In, typename Out>

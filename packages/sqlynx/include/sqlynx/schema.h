@@ -54,6 +54,8 @@ class Schema {
         /// Return the name text
         void operator|=(proto::NameTag tag) { tags |= tag; }
     };
+    using NameSearchIndex = btree::multimap<fuzzy_ci_string_view, std::reference_wrapper<const Schema::NameInfo>>;
+
     /// A key for a qualified table name
     /// A qualified table name
     struct QualifiedTableName {
@@ -172,8 +174,6 @@ class Schema {
     std::unordered_multimap<std::string_view,
                             std::pair<std::reference_wrapper<Table>, std::reference_wrapper<TableColumn>>>
         table_columns_by_name;
-    /// The name search index
-    btree::multimap<fuzzy_ci_string_view, std::reference_wrapper<const Schema::NameInfo>> name_search_index;
 
    public:
     /// Construcutor
@@ -191,7 +191,7 @@ class Schema {
     std::span<const TableColumn> GetTableColumns() const { return table_columns; }
 
     /// Get the name search index
-    virtual const decltype(name_search_index)& BuildNameSearchIndex() = 0;
+    virtual const NameSearchIndex& GetNameSearchIndex() = 0;
 
     /// Resolve a table by id
     std::optional<ResolvedTable> ResolveTable(ContextObjectID table_id) const;
