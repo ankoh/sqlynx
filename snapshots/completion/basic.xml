@@ -5,9 +5,9 @@
             <search text="" index="0" />
         </cursor>
         <completions limit="3" relative="NEW_SYMBOL_BEFORE" strategy="DEFAULT">
-            <entry value="select" score="3" in-scope="false" tags="KEYWORD" />
-            <entry value="set" score="2" in-scope="false" tags="KEYWORD" />
-            <entry value="with" score="2" in-scope="false" tags="KEYWORD" />
+            <entry value="select" score="3" near="false" tags="KEYWORD" />
+            <entry value="set" score="2" near="false" tags="KEYWORD" />
+            <entry value="with" score="2" near="false" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="complete_table_name">
@@ -21,9 +21,9 @@
             <search text="fo" index="2" />
         </cursor>
         <completions limit="3" symbol="NAME" relative="END_OF_SYMBOL" strategy="TABLE_REF">
-            <entry value="foo" score="40" in-scope="false" tags="TABLE_NAME" />
-            <entry value="following" score="20" in-scope="false" tags="KEYWORD" />
-            <entry value="for" score="20" in-scope="false" tags="KEYWORD" />
+            <entry value="foo" score="40" near="false" tags="TABLE_NAME" />
+            <entry value="following" score="20" near="false" tags="KEYWORD" />
+            <entry value="for" score="20" near="false" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="dont_complete_at_lrb">
@@ -51,9 +51,9 @@ create table table3(attr3 integer);
             <search text="tab" index="3" />
         </cursor>
         <completions limit="3" symbol="NAME" relative="END_OF_SYMBOL" strategy="TABLE_REF">
-            <entry value="table2" score="42" in-scope="false" tags="TABLE_NAME" />
-            <entry value="table1" score="40" in-scope="false" tags="TABLE_NAME" />
-            <entry value="table3" score="40" in-scope="false" tags="TABLE_NAME" />
+            <entry value="table2" score="42" near="false" tags="TABLE_NAME" />
+            <entry value="table1" score="40" near="false" tags="TABLE_NAME" />
+            <entry value="table3" score="40" near="false" tags="TABLE_NAME" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="remap_external_names">
@@ -67,11 +67,11 @@ create table table3(attr3 integer);
             <search text="where external_" index="14" />
         </cursor>
         <completions limit="5" symbol="NAME" relative="MID_OF_SYMBOL" strategy="COLUMN_REF">
-            <entry value="external_name2" score="41" in-scope="true" tags="COLUMN_NAME" />
-            <entry value="external_name1" score="31" in-scope="true" tags="TABLE_NAME" />
-            <entry value="external" score="20" in-scope="false" tags="KEYWORD" />
-            <entry value="group" score="3" in-scope="false" tags="KEYWORD" />
-            <entry value="order" score="3" in-scope="false" tags="KEYWORD" />
+            <entry value="external_name2" score="41" near="true" tags="COLUMN_NAME" />
+            <entry value="external_name1" score="31" near="true" tags="TABLE_NAME" />
+            <entry value="external" score="20" near="false" tags="KEYWORD" />
+            <entry value="group" score="3" near="false" tags="KEYWORD" />
+            <entry value="order" score="3" near="false" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="remap_external_names_eof">
@@ -85,11 +85,11 @@ create table table3(attr3 integer);
             <search text="where external_" index="15" />
         </cursor>
         <completions limit="5" symbol="NAME" relative="END_OF_SYMBOL" strategy="COLUMN_REF">
-            <entry value="external_name2" score="41" in-scope="true" tags="COLUMN_NAME" />
-            <entry value="external_name1" score="31" in-scope="true" tags="TABLE_NAME" />
-            <entry value="group" score="3" in-scope="false" tags="KEYWORD" />
-            <entry value="order" score="3" in-scope="false" tags="KEYWORD" />
-            <entry value="by" score="2" in-scope="false" tags="KEYWORD" />
+            <entry value="external_name2" score="41" near="true" tags="COLUMN_NAME" />
+            <entry value="external_name1" score="31" near="true" tags="TABLE_NAME" />
+            <entry value="group" score="3" near="false" tags="KEYWORD" />
+            <entry value="order" score="3" near="false" tags="KEYWORD" />
+            <entry value="by" score="2" near="false" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
 </completion-snapshots>

@@ -125,7 +125,8 @@ static void generate_analyzer_snapshots(const std::filesystem::path& source_dir)
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(external_parsed.second) << std::endl;
                 continue;
             }
-            auto external_analyzed = Analyzer::Analyze(external_parsed.first, nullptr);
+            auto external_analyzed =
+                Analyzer::Analyze(external_parsed.first, DEFAULT_DATABASE_NAME, DEFAULT_SCHEMA_NAME, nullptr);
             if (external_analyzed.second != proto::StatusCode::OK) {
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(external_analyzed.second) << std::endl;
                 continue;
