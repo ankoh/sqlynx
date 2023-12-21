@@ -36,13 +36,13 @@ extern "C" void sqlynx_result_delete(FFIResult* result);
 extern "C" sqlynx::SchemaSearchPath* sqlynx_search_path_new();
 /// Create a schema search path
 extern "C" void sqlynx_search_path_delete(sqlynx::SchemaSearchPath* search_path);
-/// Erase entry in the schema search path
-extern "C" void sqlynx_search_path_erase_at(sqlynx::SchemaSearchPath* path, size_t index);
 /// Insert a script in the schema search path
 extern "C" void sqlynx_search_path_insert_script_at(sqlynx::SchemaSearchPath* path, size_t index,
                                                     sqlynx::Script* script);
 /// Update a script in the schema search path
 extern "C" void sqlynx_search_path_update_script(sqlynx::SchemaSearchPath* path, sqlynx::Script* script);
+/// Erase script in the schema search path
+extern "C" void sqlynx_search_path_erase_script(sqlynx::SchemaSearchPath* path, sqlynx::Script* script);
 
 /// Create a script
 extern "C" sqlynx::Script* sqlynx_script_new(uint32_t context_id);
