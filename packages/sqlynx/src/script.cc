@@ -43,6 +43,22 @@ Schema::NameInfo& ScannedScript::ReadName(NameID name) {
     assert(names_by_id.contains(name));
     return names_by_id.at(name).get();
 }
+/// Get the name search index
+const btree::multimap<fuzzy_ci_string_view, std::reference_wrapper<const Schema::NameInfo>>&
+ScannedScript::BuildNameSearchIndex() {
+    if (name_search_index.empty() && names.GetSize() > 0) {
+        for (auto& names_chunk : names.GetChunks()) {
+            for (auto& name : names_chunk) {
+                auto s = name.text;
+                for (size_t i = 1; i <= s.size(); ++i) {
+                    auto suffix = s.substr(s.size() - i);
+                    name_search_index.insert({{suffix.data(), suffix.size()}, name});
+                }
+            }
+        }
+    }
+    return name_search_index;
+}
 
 /// Register a name
 NameID ScannedScript::RegisterKeywordAsName(std::string_view s, sx::Location location, sx::NameTag tag) {
@@ -58,10 +74,6 @@ NameID ScannedScript::RegisterKeywordAsName(std::string_view s, sx::Location loc
         Schema::NameInfo{.name_id = name_id, .text = s, .location = location, .tags = tag, .occurrences = 1});
     names_by_text.insert({s, name});
     names_by_id.insert({name_id, name});
-    for (size_t i = 1; i < s.size(); ++i) {
-        auto suffix = s.substr(s.size() - i);
-        name_search_index.insert({{suffix.data(), suffix.size()}, name});
-    }
     return name_id;
 }
 
@@ -79,10 +91,6 @@ NameID ScannedScript::RegisterName(std::string_view s, sx::Location location, sx
         Schema::NameInfo{.name_id = name_id, .text = s, .location = location, .tags = tag, .occurrences = 1});
     names_by_text.insert({s, name});
     names_by_id.insert({name_id, name});
-    for (size_t i = 1; i <= s.size(); ++i) {
-        auto suffix = s.substr(s.size() - i);
-        name_search_index.insert({{suffix.data(), suffix.size()}, name});
-    }
     return name_id;
 }
 
@@ -384,9 +392,9 @@ AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, SchemaSearc
       schema_search_path(std::move(schema_search_path)) {}
 
 /// Get the name search index
-btree::multimap<fuzzy_ci_string_view, std::reference_wrapper<const Schema::NameInfo>>
-AnalyzedScript::GetNameSearchIndex() const {
-    return parsed_script->scanned_script->name_search_index;
+const btree::multimap<fuzzy_ci_string_view, std::reference_wrapper<const Schema::NameInfo>>&
+AnalyzedScript::BuildNameSearchIndex() {
+    return parsed_script->scanned_script->BuildNameSearchIndex();
 }
 
 template <typename In, typename Out>

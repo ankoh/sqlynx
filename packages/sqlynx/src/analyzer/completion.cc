@@ -253,14 +253,12 @@ void findCandidatesInIndex(
 }
 
 void Completion::FindCandidatesInIndexes() {
-    // Find candidates in name dictionary of main script
-    if (auto& scanned = cursor.script.scanned_script) {
-        findCandidatesInIndex(*this, scanned->name_search_index, false);
-    }
-    // Find candidates in name dictionary of external script
     if (auto& analyzed = cursor.script.analyzed_script) {
+        // Find candidates in name dictionary of main script
+        findCandidatesInIndex(*this, analyzed->BuildNameSearchIndex(), false);
+        // Find candidates in name dictionary of external script
         for (auto& schema : analyzed->schema_search_path.GetSchemas()) {
-            findCandidatesInIndex(*this, schema->GetNameSearchIndex(), true);
+            findCandidatesInIndex(*this, schema->BuildNameSearchIndex(), true);
         }
     }
 }
