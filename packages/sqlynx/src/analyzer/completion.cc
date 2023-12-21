@@ -255,10 +255,10 @@ void findCandidatesInIndex(
 void Completion::FindCandidatesInIndexes() {
     if (auto& analyzed = cursor.script.analyzed_script) {
         // Find candidates in name dictionary of main script
-        findCandidatesInIndex(*this, analyzed->BuildNameSearchIndex(), false);
+        findCandidatesInIndex(*this, analyzed->GetNameSearchIndex(), false);
         // Find candidates in name dictionary of external script
         for (auto& schema : analyzed->schema_search_path.GetSchemas()) {
-            findCandidatesInIndex(*this, schema->BuildNameSearchIndex(), true);
+            findCandidatesInIndex(*this, schema->GetNameSearchIndex(), true);
         }
     }
 }

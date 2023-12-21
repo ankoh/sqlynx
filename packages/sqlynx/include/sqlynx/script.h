@@ -64,7 +64,7 @@ class ScannedScript {
 
    protected:
     /// The name search index
-    btree::multimap<fuzzy_ci_string_view, std::reference_wrapper<const Schema::NameInfo>> name_search_index;
+    Schema::NameSearchIndex name_search_index;
 
    public:
     /// Constructor
@@ -88,7 +88,7 @@ class ScannedScript {
         return std::string_view{text_buffer}.substr(loc.offset(), loc.length());
     }
     /// Get the name search index
-    const decltype(name_search_index)& BuildNameSearchIndex();
+    const Schema::NameSearchIndex& GetNameSearchIndex();
 
     /// A location info
     struct LocationInfo {
@@ -276,8 +276,7 @@ class AnalyzedScript : public Schema {
     /// Get the schema search path
     auto& GetSchemaSearchPath() const { return schema_search_path; }
     /// Get the name search index
-    const btree::multimap<fuzzy_ci_string_view, std::reference_wrapper<const NameInfo>>& BuildNameSearchIndex();
-
+    const Schema::NameSearchIndex& GetNameSearchIndex() override;
     /// Build the program
     flatbuffers::Offset<proto::AnalyzedScript> Pack(flatbuffers::FlatBufferBuilder& builder);
 };
