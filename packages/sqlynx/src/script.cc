@@ -60,7 +60,7 @@ NameID ScannedScript::RegisterKeywordAsName(std::string_view s, sx::Location loc
     names_by_id.insert({name_id, name});
     for (size_t i = 1; i < s.size(); ++i) {
         auto suffix = s.substr(s.size() - i);
-        name_search_index.insert({{suffix.data(), s.size()}, name});
+        name_search_index.insert({{suffix.data(), suffix.size()}, name});
     }
     return name_id;
 }
