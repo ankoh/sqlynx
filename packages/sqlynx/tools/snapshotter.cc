@@ -147,7 +147,7 @@ static void generate_analyzer_snapshots(const std::filesystem::path& source_dir)
                 continue;
             }
             SchemaRegistry registry;
-            registry.InsertScript(0, external_script);
+            registry.AddScript(external_script, 0);
             auto main_analyzed = main_script.Analyze(&registry);
             if (main_analyzed.second != proto::StatusCode::OK) {
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(main_analyzed.second) << std::endl;
@@ -234,7 +234,7 @@ static void generate_completion_snapshots(const std::filesystem::path& source_di
                 continue;
             }
             SchemaRegistry registry;
-            registry.InsertScript(0, external_script);
+            registry.AddScript(external_script, 0);
             auto main_analyzed = main_script.Analyze(&registry);
             if (main_analyzed.second != proto::StatusCode::OK) {
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(main_analyzed.second) << std::endl;

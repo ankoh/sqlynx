@@ -36,7 +36,7 @@ SELECT s_co
     ASSERT_EQ(main_script.Parse().second, proto::StatusCode::OK);
 
     SchemaRegistry registry;
-    registry.InsertScript(0, external_script);
+    registry.AddScript(external_script, 0);
     ASSERT_EQ(main_script.Analyze(&registry).second, proto::StatusCode::OK);
 
     // Move the cursor

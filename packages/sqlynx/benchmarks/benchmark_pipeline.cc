@@ -631,7 +631,7 @@ static void analyze_query(benchmark::State& state) {
     assert(ext_analyzed.second == proto::StatusCode::OK);
 
     SchemaRegistry registry;
-    registry.InsertScript(0, external);
+    registry.AddScript(external, 0);
 
     auto main_scan = main.Scan();
     auto main_parsed = main.Parse();

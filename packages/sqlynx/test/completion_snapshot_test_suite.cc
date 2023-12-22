@@ -33,7 +33,7 @@ TEST_P(CompletionSnapshotTestSuite, Test) {
 
     // Analyze main script
     SchemaRegistry registry;
-    registry.InsertScript(0, external_script);
+    registry.AddScript(external_script, 0);
     ASSERT_EQ(main_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(main_script.Parse().second, proto::StatusCode::OK);
     ASSERT_EQ(main_script.Analyze(&registry).second, proto::StatusCode::OK);

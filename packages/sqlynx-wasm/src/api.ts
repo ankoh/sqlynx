@@ -23,7 +23,7 @@ interface SQLynxModuleExports {
 
     sqlynx_schema_registry_new: () => number;
     sqlynx_schema_registry_delete: (ptr: number) => number;
-    sqlynx_schema_registry_insert_script_at: (path_ptr: number, index: number, script_ptr: number) => number;
+    sqlynx_schema_registry_add_script: (path_ptr: number, script_ptr: number, rank: number) => number;
     sqlynx_schema_registry_update_script: (path_ptr: number, script_ptr: number) => number;
     sqlynx_schema_registry_erase_script: (path_ptr: number, script_ptr: number) => number;
 
@@ -102,7 +102,7 @@ export class SQLynx {
 
             sqlynx_schema_registry_new: parserExports['sqlynx_schema_registry_new'] as () => number,
             sqlynx_schema_registry_delete: parserExports['sqlynx_schema_registry_delete'] as (ptr: number) => number,
-            sqlynx_schema_registry_insert_script_at: parserExports['sqlynx_schema_registry_insert_script_at'] as (
+            sqlynx_schema_registry_add_script: parserExports['sqlynx_schema_registry_add_script'] as (
                 path_ptr: number,
                 index: number,
                 script_ptr: number,
@@ -180,7 +180,7 @@ export class SQLynx {
         return new SQLynxScript(this, scriptPtr);
     }
 
-    public createSchemaSearchPath(): SQLynxSchemaRegistry {
+    public createSchemaRegistry(): SQLynxSchemaRegistry {
         const pathPtr = this.instanceExports.sqlynx_schema_registry_new();
         return new SQLynxSchemaRegistry(this, pathPtr);
     }
@@ -382,7 +382,7 @@ export class SQLynxScript {
         const scriptPtr = this.assertNotNull();
         const resultPtr = this.api.instanceExports.sqlynx_script_analyze(
             scriptPtr,
-            searchPath == null ? 0 : searchPath.pathPtr,
+            searchPath == null ? 0 : searchPath.registryPtr,
         );
         return this.api.readFlatBufferResult<proto.AnalyzedScript>(resultPtr);
     }
@@ -423,38 +423,38 @@ export class SQLynxSchemaRegistry {
     /// The SQLynx api
     api: SQLynx;
     /// The graph pointer
-    pathPtr: number | null;
+    registryPtr: number | null;
 
     public constructor(api: SQLynx, pathPtr: number) {
         this.api = api;
-        this.pathPtr = pathPtr;
+        this.registryPtr = pathPtr;
     }
     /// Delete the graph
     public delete() {
-        if (this.pathPtr) {
-            this.api.instanceExports.sqlynx_schema_registry_delete(this.pathPtr);
+        if (this.registryPtr) {
+            this.api.instanceExports.sqlynx_schema_registry_delete(this.registryPtr);
         }
-        this.pathPtr = null;
+        this.registryPtr = null;
     }
     /// Make sure the search path is not null
     protected assertNotNull(): number {
-        if (this.pathPtr == null) {
+        if (this.registryPtr == null) {
             throw NULL_POINTER_EXCEPTION;
         }
-        return this.pathPtr!;
+        return this.registryPtr!;
     }
     /// Append a script in the search path
-    public insertScriptAt(at: number, script: SQLynxScript) {
-        const path_ptr = this.assertNotNull();
-        const script_ptr = script.assertNotNull();
-        const result = this.api.instanceExports.sqlynx_schema_registry_insert_script_at(path_ptr, at, script_ptr);
+    public addScript(script: SQLynxScript, rank: number) {
+        const registryPtr = this.assertNotNull();
+        const scriptPtr = script.assertNotNull();
+        const result = this.api.instanceExports.sqlynx_schema_registry_add_script(registryPtr, scriptPtr, rank);
         this.api.readStatusResult(result);
     }
     /// Update a script in the search path
     public updateScript(script: SQLynxScript) {
-        const path_ptr = this.assertNotNull();
-        const script_ptr = script.assertNotNull();
-        const result = this.api.instanceExports.sqlynx_schema_registry_update_script(path_ptr, script_ptr);
+        const registryPtr = this.assertNotNull();
+        const scriptPtr = script.assertNotNull();
+        const result = this.api.instanceExports.sqlynx_schema_registry_update_script(registryPtr, scriptPtr);
         this.api.readStatusResult(result);
     }
 }

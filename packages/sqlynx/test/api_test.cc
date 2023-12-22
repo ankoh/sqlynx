@@ -82,7 +82,7 @@ limit 100
     sqlynx_result_delete(external_analyzed);
 
     auto* registry = sqlynx_schema_registry_new();
-    sqlynx_schema_registry_insert_script_at(registry, 0, external_script);
+    sqlynx_schema_registry_add_script(registry, external_script, 0);
 
     auto* main_script = sqlynx_script_new(2);
     sqlynx_script_insert_text_at(main_script, 0, main_script_text.data(), main_script_text.size());

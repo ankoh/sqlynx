@@ -26,7 +26,7 @@ TEST(ScriptTest, ExternalContextCollision) {
     main_script.Parse();
 
     SchemaRegistry registry;
-    registry.InsertScript(0, schema_script);
+    registry.AddScript(schema_script, 0);
     auto [result, status] = main_script.Analyze(&registry);
     ASSERT_EQ(status, proto::StatusCode::EXTERNAL_CONTEXT_COLLISION);
 }
@@ -107,9 +107,9 @@ limit 100
     main_script.InsertTextAt(0, main_script_text);
     ASSERT_EQ(main_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(main_script.Parse().second, proto::StatusCode::OK);
-    SchemaRegistry search_path;
-    search_path.InsertScript(0, external_script);
-    ASSERT_EQ(main_script.Analyze(&search_path).second, proto::StatusCode::OK);
+    SchemaRegistry registry;
+    registry.AddScript(external_script, 0);
+    ASSERT_EQ(main_script.Analyze(&registry).second, proto::StatusCode::OK);
 }
 
 }  // namespace

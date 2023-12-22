@@ -5,6 +5,7 @@
 
 #include <functional>
 #include <limits>
+#include <map>
 #include <optional>
 #include <string_view>
 #include <tuple>
@@ -30,6 +31,7 @@ constexpr uint32_t PROTO_NULL_U32 = std::numeric_limits<uint32_t>::max();
 
 class SchemaRegistry;
 class Script;
+class AnalyzedScript;
 
 /// A schema stores database metadata.
 /// It is used as a virtual container to expose table and column information to the analyzer.
@@ -212,11 +214,24 @@ class Schema {
 };
 
 class SchemaRegistry {
+   public:
+    using Rank = uint32_t;
+
    protected:
+    /// A schema backed by an analyzed script
+    struct ScriptEntry {
+        /// The analyzed script
+        std::shared_ptr<AnalyzedScript> script;
+        /// The current rank
+        Rank rank;
+    };
+
+    /// The scripts
+    std::unordered_map<ContextID, ScriptEntry> scripts;
     /// The schemas
-    std::vector<std::shared_ptr<Schema>> schemas;
-    /// The external contexts
-    std::unordered_map<uint32_t, std::reference_wrapper<Schema>> schema_by_context_id;
+    std::unordered_map<ContextID, std::reference_wrapper<Schema>> schemas;
+    /// The ranked schemas
+    std::multiset<std::pair<Rank, Schema*>> ranked_schemas;
 
    public:
     /// Create a copy of the schema search path.
@@ -225,19 +240,17 @@ class SchemaRegistry {
     SchemaRegistry CreateSnapshot() const { return {*this}; }
 
     /// Get the schemas
-    auto& GetSchemas() const { return schemas; }
-    /// Get the schemas
-    auto& GetSchemaByContextId() const { return schema_by_context_id; }
+    auto& GetRankedSchemas() const { return ranked_schemas; }
+    /// Get the scripts
+    auto& GetScripts() const { return scripts; }
 
-    /// Insert a script
-    proto::StatusCode InsertScript(size_t idx, Script& script);
+    /// Add a script
+    proto::StatusCode AddScript(Script& script, Rank rank);
     /// Update a script
     proto::StatusCode UpdateScript(Script& script);
     /// Erase a script
     proto::StatusCode EraseScript(Script& script);
 
-    /// Resolve a schema by id
-    std::shared_ptr<Schema> ResolveSchema(uint32_t context_id) const;
     /// Resolve a table by id
     std::optional<Schema::ResolvedTable> ResolveTable(ContextObjectID table_id) const;
     /// Resolve a table by id

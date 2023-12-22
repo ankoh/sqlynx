@@ -60,16 +60,16 @@ extern "C" FFIResult* sqlynx_script_move_cursor(sqlynx::Script* script, size_t t
 /// Complete at a cursor in the script
 extern "C" FFIResult* sqlynx_script_complete_at_cursor(sqlynx::Script* script, size_t limit);
 
-/// Create a schema search path
+/// Create a schema registry
 extern "C" sqlynx::SchemaRegistry* sqlynx_schema_registry_new();
-/// Create a schema search path
+/// Create a schema registry
 extern "C" void sqlynx_schema_registry_delete(sqlynx::SchemaRegistry* registry);
-/// Insert a script in the schema search path
-extern "C" FFIResult* sqlynx_schema_registry_insert_script_at(sqlynx::SchemaRegistry* path, size_t index,
-                                                              sqlynx::Script* script);
-/// Update a script in the schema search path
+/// Add a script to the schema registry
+extern "C" FFIResult* sqlynx_schema_registry_add_script(sqlynx::SchemaRegistry* path, sqlynx::Script* script,
+                                                        size_t rank);
+/// Update a script in the schema registry
 extern "C" FFIResult* sqlynx_schema_registry_update_script(sqlynx::SchemaRegistry* path, sqlynx::Script* script);
-/// Erase script in the schema search path
+/// Erase script in the schema registry
 extern "C" FFIResult* sqlynx_schema_registry_erase_script(sqlynx::SchemaRegistry* path, sqlynx::Script* script);
 
 /// Create schema graph

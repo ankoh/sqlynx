@@ -59,7 +59,7 @@ if(WASM)
         -Wl,--export=sqlynx_schema_layout_load_script \
         -Wl,--export=sqlynx_schema_registry_new \
         -Wl,--export=sqlynx_schema_registry_delete \
-        -Wl,--export=sqlynx_schema_registry_insert_script_at \
+        -Wl,--export=sqlynx_schema_registry_add_script \
         -Wl,--export=sqlynx_schema_registry_update_script \
         -Wl,--export=sqlynx_schema_registry_erase_script \
         -Wl,--export=sqlynx_script_new \

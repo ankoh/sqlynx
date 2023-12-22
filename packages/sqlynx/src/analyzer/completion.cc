@@ -257,7 +257,7 @@ void Completion::FindCandidatesInIndexes() {
         // Find candidates in name dictionary of main script
         findCandidatesInIndex(*this, analyzed->GetNameSearchIndex(), false);
         // Find candidates in name dictionary of external script
-        for (auto& schema : analyzed->schema_registry.GetSchemas()) {
+        for (auto& [rank, schema] : analyzed->schema_registry.GetRankedSchemas()) {
             findCandidatesInIndex(*this, schema->GetNameSearchIndex(), true);
         }
     }

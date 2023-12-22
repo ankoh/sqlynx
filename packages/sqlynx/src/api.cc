@@ -58,6 +58,9 @@ static FFIResult* packError(proto::StatusCode status) {
         case proto::StatusCode::SCHEMA_REGISTRY_SCRIPT_NOT_ANALYZED:
             message = "Unanalyzed scripts cannot be added to the schema registry";
             break;
+        case proto::StatusCode::SCHEMA_REGISTRY_SCRIPT_UNKNOWN:
+            message = "Script is missing in schema registry";
+            break;
         case proto::StatusCode::COMPLETION_MISSES_CURSOR:
             message = "Completion requires a script cursor";
             break;
@@ -241,20 +244,20 @@ extern "C" FFIResult* sqlynx_script_get_statistics(sqlynx::Script* script) {
     return packBuffer(std::move(detached));
 }
 
-/// Create a schema search path
+/// Create a schema registry
 extern "C" sqlynx::SchemaRegistry* sqlynx_schema_registry_new() { return new sqlynx::SchemaRegistry(); }
-/// Create a schema search path
-extern "C" void sqlynx_schema_registry_delete(sqlynx::SchemaRegistry* search_path) { delete search_path; }
-/// Insert a script in the schema search path
-extern "C" FFIResult* sqlynx_schema_registry_insert_script_at(sqlynx::SchemaRegistry* path, size_t index,
-                                                              sqlynx::Script* script) {
-    auto status = path->InsertScript(index, *script);
+/// Create a schema registry
+extern "C" void sqlynx_schema_registry_delete(sqlynx::SchemaRegistry* registry) { delete registry; }
+/// Add a script in the schema registry
+extern "C" FFIResult* sqlynx_schema_registry_add_script(sqlynx::SchemaRegistry* path, sqlynx::Script* script,
+                                                        size_t rank) {
+    auto status = path->AddScript(*script, rank);
     if (status != proto::StatusCode::OK) {
         return packError(status);
     }
     return packOK();
 }
-/// Update a script in the schema search path
+/// Update a script in the schema registry
 extern "C" FFIResult* sqlynx_schema_registry_update_script(sqlynx::SchemaRegistry* path, sqlynx::Script* script) {
     auto status = path->UpdateScript(*script);
     if (status != proto::StatusCode::OK) {
@@ -262,7 +265,7 @@ extern "C" FFIResult* sqlynx_schema_registry_update_script(sqlynx::SchemaRegistr
     }
     return packOK();
 }
-/// Erase entry in the schema search path
+/// Erase entry in the schema registry
 extern "C" FFIResult* sqlynx_schema_registry_erase_script(sqlynx::SchemaRegistry* path, sqlynx::Script* script) {
     auto status = path->EraseScript(*script);
     if (status != proto::StatusCode::OK) {
