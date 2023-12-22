@@ -3,12 +3,12 @@ include "sqlynx/sql_enums.fbs";
 
 namespace sqlynx.proto;
 
-struct SchemaGraphVertex {
+struct SchemaLayoutVertex {
     x: double;
     y: double;
 }
 
-struct SchemaGraphEdge {
+struct SchemaLayoutEdge {
     /// The edge id of the analyzer query graph
     query_edge_id: uint64;
     /// The ast node id
@@ -23,7 +23,7 @@ struct SchemaGraphEdge {
     expression_operator: ExpressionOperator;
 }
 
-struct SchemaGraphEdgeNode {
+struct SchemaLayoutEdgeNode {
     /// The table id
     table_id: uint64;
     /// The column reference id
@@ -34,22 +34,22 @@ struct SchemaGraphEdgeNode {
     node_id: uint32;
 }
 
-struct SchemaGraphTableNode {
+struct SchemaLayoutTableNode {
     /// The id of table
     table_id: uint64;
     /// The position
-    position: SchemaGraphVertex;
+    position: SchemaLayoutVertex;
     /// The node width
     width: double;
     /// The node height
     height: double;
 }
 
-table SchemaGraphLayout {
+table SchemaLayout {
     /// The table nodes
-    table_nodes: [SchemaGraphTableNode];
+    table_nodes: [SchemaLayoutTableNode];
     /// The edge
-    edge_nodes: [SchemaGraphEdgeNode];
+    edge_nodes: [SchemaLayoutEdgeNode];
     /// The edges
-    edges: [SchemaGraphEdge];
+    edges: [SchemaLayoutEdge];
 }

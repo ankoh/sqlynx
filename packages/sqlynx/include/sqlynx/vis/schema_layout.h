@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "sqlynx/context.h"
+#include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
 #include "sqlynx/utils/binary_heap.h"
 #include "sqlynx/utils/chunk_buffer.h"
@@ -210,7 +211,7 @@ class SchemaGrid {
     /// Load a script
     void LoadScript(std::shared_ptr<AnalyzedScript> s);
     /// Pack the schema graph
-    flatbuffers::Offset<proto::SchemaGraphLayout> Pack(flatbuffers::FlatBufferBuilder& builder);
+    flatbuffers::Offset<proto::SchemaLayout> Pack(flatbuffers::FlatBufferBuilder& builder);
 };
 
 }  // namespace sqlynx

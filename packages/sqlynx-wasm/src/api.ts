@@ -189,9 +189,9 @@ export class SQLynx {
         return new SQLynxSchemaSearchPath(this, pathPtr);
     }
 
-    public createSchemaGraph(): SQLynxSchemaGraph {
+    public createSchemaLayout(): SQLynxSchemaLayout {
         const graphPtr = this.instanceExports.sqlynx_schema_layout_new();
-        return new SQLynxSchemaGraph(this, graphPtr);
+        return new SQLynxSchemaLayout(this, graphPtr);
     }
 
     public getVersionText(): string {
@@ -463,7 +463,7 @@ export class SQLynxSchemaSearchPath {
     }
 }
 
-export interface SQLynxSchemaGraphConfig {
+export interface SQLynxSchemaLayoutConfig {
     boardWidth: number;
     boardHeight: number;
     cellWidth: number;
@@ -472,7 +472,7 @@ export interface SQLynxSchemaGraphConfig {
     tableHeight: number;
 }
 
-export class SQLynxSchemaGraph {
+export class SQLynxSchemaLayout {
     /// The SQLynx api
     api: SQLynx;
     /// The graph pointer
@@ -497,7 +497,7 @@ export class SQLynxSchemaGraph {
         return this.graphPtr!;
     }
     /// Configure the graph
-    public configure(config: SQLynxSchemaGraphConfig) {
+    public configure(config: SQLynxSchemaLayoutConfig) {
         const graphPtr = this.assertNotNull();
         this.api.instanceExports.sqlynx_schema_layout_configure(
             graphPtr,
@@ -513,6 +513,6 @@ export class SQLynxSchemaGraph {
     public loadScript(script: SQLynxScript) {
         const graphPtr = this.assertNotNull();
         const resultPtr = this.api.instanceExports.sqlynx_schema_layout_load_script(graphPtr, script.scriptPtr);
-        return this.api.readFlatBufferResult<proto.SchemaGraphLayout>(resultPtr);
+        return this.api.readFlatBufferResult<proto.SchemaLayout>(resultPtr);
     }
 }

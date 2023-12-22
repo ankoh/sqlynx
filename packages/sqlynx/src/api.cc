@@ -14,7 +14,7 @@
 #include "sqlynx/script.h"
 #include "sqlynx/text/rope.h"
 #include "sqlynx/version.h"
-#include "sqlynx/vis/schema_grid.h"
+#include "sqlynx/vis/schema_layout.h"
 
 using namespace sqlynx;
 using namespace sqlynx::parser;

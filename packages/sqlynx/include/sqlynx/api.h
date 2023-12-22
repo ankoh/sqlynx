@@ -6,7 +6,7 @@
 #include "sqlynx/schema.h"
 #include "sqlynx/script.h"
 #include "sqlynx/version.h"
-#include "sqlynx/vis/schema_grid.h"
+#include "sqlynx/vis/schema_layout.h"
 
 namespace console {
 /// Log a text to the console

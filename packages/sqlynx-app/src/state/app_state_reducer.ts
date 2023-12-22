@@ -65,7 +65,7 @@ export function reduceAppState(state: AppState, action: AppStateAction): AppStat
                     [ScriptKey.MAIN_SCRIPT]: createEmptyScript(ScriptKey.MAIN_SCRIPT, action.value),
                     [ScriptKey.SCHEMA_SCRIPT]: createEmptyScript(ScriptKey.SCHEMA_SCRIPT, action.value),
                 },
-                graph: action.value.createSchemaGraph(),
+                graph: action.value.createSchemaLayout(),
             };
             return newState;
         }

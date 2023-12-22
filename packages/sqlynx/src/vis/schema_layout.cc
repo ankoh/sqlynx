@@ -1,4 +1,4 @@
-#include "sqlynx/vis/schema_grid.h"
+#include "sqlynx/vis/schema_layout.h"
 
 #include <limits>
 
@@ -278,8 +278,8 @@ void SchemaGrid::LoadScript(std::shared_ptr<AnalyzedScript> s) {
     ComputeLayout();
 }
 
-flatbuffers::Offset<proto::SchemaGraphLayout> SchemaGrid::Pack(flatbuffers::FlatBufferBuilder& builder) {
-    proto::SchemaGraphLayoutT layout;
+flatbuffers::Offset<proto::SchemaLayout> SchemaGrid::Pack(flatbuffers::FlatBufferBuilder& builder) {
+    proto::SchemaLayoutT layout;
     layout.table_nodes.resize(nodes.size());
     layout.edges.resize(edges.size());
     layout.edge_nodes.resize(edge_nodes.size());
@@ -292,8 +292,8 @@ flatbuffers::Offset<proto::SchemaGraphLayout> SchemaGrid::Pack(flatbuffers::Flat
         auto& placed_cell = *cell;
         auto x = center_x + placed_cell.position.column * config.cell_width;
         auto y = center_y + placed_cell.position.row * config.cell_height;
-        proto::SchemaGraphVertex pos{x - config.cell_width / 2, y - config.cell_height / 2};
-        proto::SchemaGraphTableNode proto_node{nodes[i].table_id.Pack(), pos, config.table_width, config.table_height};
+        proto::SchemaLayoutVertex pos{x - config.cell_width / 2, y - config.cell_height / 2};
+        proto::SchemaLayoutTableNode proto_node{nodes[i].table_id.Pack(), pos, config.table_width, config.table_height};
         layout.table_nodes[i] = proto_node;
     }
     size_t edge_node_reader = 0;
@@ -303,7 +303,7 @@ flatbuffers::Offset<proto::SchemaGraphLayout> SchemaGrid::Pack(flatbuffers::Flat
         uint32_t nodes_begin = edge_node_writer;
         for (size_t j = 0; j < edge.node_count_left; ++j) {
             auto& edge_node = edge_nodes[edge_node_reader++];
-            layout.edge_nodes[edge_node_writer] = proto::SchemaGraphEdgeNode{
+            layout.edge_nodes[edge_node_writer] = proto::SchemaLayoutEdgeNode{
                 edge_node.table_id.Pack(),
                 edge_node.column_reference_id.Pack(),
                 edge_node.ast_node_id.Pack(),
@@ -314,7 +314,7 @@ flatbuffers::Offset<proto::SchemaGraphLayout> SchemaGrid::Pack(flatbuffers::Flat
         uint16_t node_count_left = edge_node_writer - nodes_begin;
         for (size_t j = 0; j < edge.node_count_right; ++j) {
             auto& edge_node = edge_nodes[edge_node_reader++];
-            layout.edge_nodes[edge_node_writer] = proto::SchemaGraphEdgeNode{
+            layout.edge_nodes[edge_node_writer] = proto::SchemaLayoutEdgeNode{
                 edge_node.table_id.Pack(),
                 edge_node.column_reference_id.Pack(),
                 edge_node.ast_node_id.Pack(),
@@ -323,7 +323,7 @@ flatbuffers::Offset<proto::SchemaGraphLayout> SchemaGrid::Pack(flatbuffers::Flat
             edge_node_writer += edge_node.node_id.has_value();
         }
         uint16_t node_count_right = edge_node_writer - (nodes_begin + node_count_left);
-        proto::SchemaGraphEdge proto_edge{
+        proto::SchemaLayoutEdge proto_edge{
             edge.edge_id.Pack(), edge.ast_node_id.Pack(), nodes_begin,
             node_count_left,     node_count_right,        edge.expression_operator,
         };
@@ -331,7 +331,7 @@ flatbuffers::Offset<proto::SchemaGraphLayout> SchemaGrid::Pack(flatbuffers::Flat
     }
     layout.edge_nodes.erase(layout.edge_nodes.begin() + edge_node_writer, layout.edge_nodes.end());
 
-    return proto::SchemaGraphLayout::Pack(builder, &layout);
+    return proto::SchemaLayout::Pack(builder, &layout);
 }
 
 }  // namespace sqlynx
