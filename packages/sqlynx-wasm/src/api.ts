@@ -29,7 +29,6 @@ interface SQLynxModuleExports {
 
     sqlynx_schema_layout_new: () => number;
     sqlynx_schema_layout_delete: (ptr: number) => void;
-    sqlynx_schema_layout_describe: (ptr: number) => number;
     sqlynx_schema_layout_configure: (
         ptr: number,
         boardWidth: number,
@@ -121,7 +120,6 @@ export class SQLynx {
 
             sqlynx_schema_layout_new: parserExports['sqlynx_schema_layout_new'] as () => number,
             sqlynx_schema_layout_delete: parserExports['sqlynx_schema_layout_delete'] as (ptr: number) => void,
-            sqlynx_schema_layout_describe: parserExports['sqlynx_schema_layout_describe'] as (ptr: number) => number,
             sqlynx_schema_layout_configure: parserExports['sqlynx_schema_layout_configure'] as (
                 ptr: number,
                 boardWidth: number,
