@@ -34,9 +34,10 @@ SELECT s_co
     main_script.InsertTextAt(0, main_script_text);
     ASSERT_EQ(main_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(main_script.Parse().second, proto::StatusCode::OK);
-    SchemaSearchPath search_path;
-    search_path.InsertScript(0, external_script);
-    ASSERT_EQ(main_script.Analyze(&search_path).second, proto::StatusCode::OK);
+
+    SchemaRegistry registry;
+    registry.InsertScript(0, external_script);
+    ASSERT_EQ(main_script.Analyze(&registry).second, proto::StatusCode::OK);
 
     // Move the cursor
     auto cursor_ofs = main_script_text.find("s_co");

@@ -369,11 +369,11 @@ flatbuffers::Offset<proto::ColumnReference> AnalyzedScript::ColumnReference::Pac
 }
 
 /// Constructor
-AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, SchemaSearchPath schema_search_path,
+AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, SchemaRegistry registry,
                                std::string_view database_name, std::string_view schema_name)
     : Schema(parsed->context_id, database_name, schema_name),
       parsed_script(std::move(parsed)),
-      schema_search_path(std::move(schema_search_path)) {}
+      schema_registry(std::move(registry)) {}
 
 /// Get the name search index
 const Schema::NameSearchIndex& AnalyzedScript::GetNameSearchIndex() {
@@ -548,18 +548,18 @@ std::pair<ParsedScript*, proto::StatusCode> Script::Parse() {
 }
 
 /// Analyze a script
-std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(const SchemaSearchPath* schema_search_path) {
+std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(const SchemaRegistry* schema_registry) {
     auto time_start = std::chrono::steady_clock::now();
 
     // Check if the external context id is unique
-    if (schema_search_path) {
-        if (schema_search_path->GetSchemaByContextId().contains(context_id)) {
+    if (schema_registry) {
+        if (schema_registry->GetSchemaByContextId().contains(context_id)) {
             return {nullptr, proto::StatusCode::EXTERNAL_CONTEXT_COLLISION};
         }
     }
 
     // Analyze a script
-    auto [script, status] = Analyzer::Analyze(parsed_script, database_name, schema_name, schema_search_path);
+    auto [script, status] = Analyzer::Analyze(parsed_script, database_name, schema_name, schema_registry);
     if (status != proto::StatusCode::OK) {
         return {nullptr, status};
     }

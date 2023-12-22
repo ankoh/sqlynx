@@ -257,7 +257,7 @@ void Completion::FindCandidatesInIndexes() {
         // Find candidates in name dictionary of main script
         findCandidatesInIndex(*this, analyzed->GetNameSearchIndex(), false);
         // Find candidates in name dictionary of external script
-        for (auto& schema : analyzed->schema_search_path.GetSchemas()) {
+        for (auto& schema : analyzed->schema_registry.GetSchemas()) {
             findCandidatesInIndex(*this, schema->GetNameSearchIndex(), true);
         }
     }
@@ -268,7 +268,7 @@ void Completion::FindTablesForUnresolvedColumns() {
         return;
     }
     auto& analyzed_script = *cursor.script.analyzed_script;
-    auto& schema_search_path = analyzed_script.schema_search_path;
+    auto& schema_registry = analyzed_script.schema_registry;
 
     // Collect all unresolved columns in the current script
     std::vector<Schema::ResolvedTableColumn> table_columns;
@@ -276,7 +276,7 @@ void Completion::FindTablesForUnresolvedColumns() {
         // Is unresolved?
         if (column_ref.resolved_table_id.IsNull()) {
             auto& column_name = column_ref.column_name.column_name;
-            cursor.script.analyzed_script->ResolveTableColumn(column_name, schema_search_path, table_columns);
+            cursor.script.analyzed_script->ResolveTableColumn(column_name, schema_registry, table_columns);
         }
     }
 
@@ -324,7 +324,7 @@ void Completion::FindCandidatesInAST() {
         mark_as_near(table_ref.alias_name);
 
         // Add all column names of the table
-        if (auto resolved = analyzed->ResolveTable(table_ref.resolved_table_id, analyzed->schema_search_path)) {
+        if (auto resolved = analyzed->ResolveTable(table_ref.resolved_table_id, analyzed->schema_registry)) {
             for (auto& table_column : resolved->table_columns) {
                 mark_as_near(table_column.column_name);
             }

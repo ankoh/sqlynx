@@ -146,9 +146,9 @@ static void generate_analyzer_snapshots(const std::filesystem::path& source_dir)
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(main_parsed.second) << std::endl;
                 continue;
             }
-            SchemaSearchPath search_path;
-            search_path.InsertScript(0, external_script);
-            auto main_analyzed = main_script.Analyze(&search_path);
+            SchemaRegistry registry;
+            registry.InsertScript(0, external_script);
+            auto main_analyzed = main_script.Analyze(&registry);
             if (main_analyzed.second != proto::StatusCode::OK) {
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(main_analyzed.second) << std::endl;
                 continue;
@@ -233,9 +233,9 @@ static void generate_completion_snapshots(const std::filesystem::path& source_di
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(main_parsed.second) << std::endl;
                 continue;
             }
-            SchemaSearchPath search_path;
-            search_path.InsertScript(0, external_script);
-            auto main_analyzed = main_script.Analyze(&search_path);
+            SchemaRegistry registry;
+            registry.InsertScript(0, external_script);
+            auto main_analyzed = main_script.Analyze(&registry);
             if (main_analyzed.second != proto::StatusCode::OK) {
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(main_analyzed.second) << std::endl;
                 continue;

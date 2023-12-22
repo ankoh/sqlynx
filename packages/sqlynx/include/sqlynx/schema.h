@@ -28,7 +28,7 @@ constexpr std::string_view DEFAULT_SCHEMA_NAME = "default";
 
 constexpr uint32_t PROTO_NULL_U32 = std::numeric_limits<uint32_t>::max();
 
-class SchemaSearchPath;
+class SchemaRegistry;
 class Script;
 
 /// A schema stores database metadata.
@@ -198,19 +198,20 @@ class Schema {
     /// Resolve a table by id
     std::optional<ResolvedTable> ResolveTable(ContextObjectID table_id) const;
     /// Resolve a table by id
-    std::optional<ResolvedTable> ResolveTable(ContextObjectID table_id, const SchemaSearchPath& search_path) const;
+    std::optional<ResolvedTable> ResolveTable(ContextObjectID table_id, const SchemaRegistry& schema_registry) const;
     /// Resolve a table by name
     std::optional<ResolvedTable> ResolveTable(std::string_view table_name) const;
     /// Resolve a table by name
-    std::optional<ResolvedTable> ResolveTable(QualifiedTableName table_name, const SchemaSearchPath& search_path) const;
+    std::optional<ResolvedTable> ResolveTable(QualifiedTableName table_name,
+                                              const SchemaRegistry& schema_registry) const;
     /// Find table columns by name
     void ResolveTableColumn(std::string_view table_column, std::vector<ResolvedTableColumn>& out) const;
     /// Find table columns by name
-    void ResolveTableColumn(std::string_view table_column, const SchemaSearchPath& search_path,
+    void ResolveTableColumn(std::string_view table_column, const SchemaRegistry& schema_registry,
                             std::vector<ResolvedTableColumn>& out) const;
 };
 
-class SchemaSearchPath {
+class SchemaRegistry {
    protected:
     /// The schemas
     std::vector<std::shared_ptr<Schema>> schemas;
@@ -221,7 +222,7 @@ class SchemaSearchPath {
     /// Create a copy of the schema search path.
     /// Every analyzed script has a lifetime dependency on the schema search path that was used to analyze it.
     /// We can later think about only extracting the real dependencies
-    SchemaSearchPath CreateSnapshot() const { return {*this}; }
+    SchemaRegistry CreateSnapshot() const { return {*this}; }
 
     /// Get the schemas
     auto& GetSchemas() const { return schemas; }

@@ -32,11 +32,11 @@ TEST_P(CompletionSnapshotTestSuite, Test) {
     ASSERT_EQ(external_script.Analyze().second, proto::StatusCode::OK);
 
     // Analyze main script
-    SchemaSearchPath search_path;
-    search_path.InsertScript(0, external_script);
+    SchemaRegistry registry;
+    registry.InsertScript(0, external_script);
     ASSERT_EQ(main_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(main_script.Parse().second, proto::StatusCode::OK);
-    ASSERT_EQ(main_script.Analyze(&search_path).second, proto::StatusCode::OK);
+    ASSERT_EQ(main_script.Analyze(&registry).second, proto::StatusCode::OK);
 
     size_t search_pos = 0;
     Script* target_script = nullptr;

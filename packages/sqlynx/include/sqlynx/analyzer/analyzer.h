@@ -71,8 +71,8 @@ struct Analyzer {
     const std::string_view database_name;
     /// The database name
     const std::string_view schema_name;
-    /// The schema search path
-    SchemaSearchPath schema_search_path;
+    /// The schema registry
+    SchemaRegistry schema_registry;
     /// The attribute index
     AttributeIndex attribute_index;
     /// The pass manager
@@ -83,12 +83,12 @@ struct Analyzer {
    public:
     /// Constructor
     Analyzer(std::shared_ptr<ParsedScript> parsed, std::string_view database_name, std::string_view schema_name,
-             SchemaSearchPath schema_search_path);
+             SchemaRegistry schema_registry);
 
     /// Analyze a program
     static std::pair<std::shared_ptr<AnalyzedScript>, proto::StatusCode> Analyze(
         std::shared_ptr<ParsedScript> parsed, std::string_view database_name = DEFAULT_DATABASE_NAME,
-        std::string_view schema_name = DEFAULT_SCHEMA_NAME, const SchemaSearchPath* schema_search_path = nullptr);
+        std::string_view schema_name = DEFAULT_SCHEMA_NAME, const SchemaRegistry* schema_registry = nullptr);
 };
 
 }  // namespace sqlynx

@@ -21,11 +21,11 @@ interface SQLynxModuleExports {
     sqlynx_script_complete_at_cursor: (ptr: number, limit: number) => number;
     sqlynx_script_get_statistics: (ptr: number) => number;
 
-    sqlynx_schema_search_path_new: () => number;
-    sqlynx_schema_search_path_delete: (ptr: number) => number;
-    sqlynx_schema_search_path_insert_script_at: (path_ptr: number, index: number, script_ptr: number) => number;
-    sqlynx_schema_search_path_update_script: (path_ptr: number, script_ptr: number) => number;
-    sqlynx_schema_search_path_erase_script: (path_ptr: number, script_ptr: number) => number;
+    sqlynx_schema_registry_new: () => number;
+    sqlynx_schema_registry_delete: (ptr: number) => number;
+    sqlynx_schema_registry_insert_script_at: (path_ptr: number, index: number, script_ptr: number) => number;
+    sqlynx_schema_registry_update_script: (path_ptr: number, script_ptr: number) => number;
+    sqlynx_schema_registry_erase_script: (path_ptr: number, script_ptr: number) => number;
 
     sqlynx_schema_layout_new: () => number;
     sqlynx_schema_layout_delete: (ptr: number) => void;
@@ -100,20 +100,18 @@ export class SQLynx {
                 limit: number,
             ) => number,
 
-            sqlynx_schema_search_path_new: parserExports['sqlynx_schema_search_path_new'] as () => number,
-            sqlynx_schema_search_path_delete: parserExports['sqlynx_schema_search_path_delete'] as (
-                ptr: number,
-            ) => number,
-            sqlynx_schema_search_path_insert_script_at: parserExports['sqlynx_schema_search_path_insert_script_at'] as (
+            sqlynx_schema_registry_new: parserExports['sqlynx_schema_registry_new'] as () => number,
+            sqlynx_schema_registry_delete: parserExports['sqlynx_schema_registry_delete'] as (ptr: number) => number,
+            sqlynx_schema_registry_insert_script_at: parserExports['sqlynx_schema_registry_insert_script_at'] as (
                 path_ptr: number,
                 index: number,
                 script_ptr: number,
             ) => number,
-            sqlynx_schema_search_path_update_script: parserExports['sqlynx_schema_search_path_update_script'] as (
+            sqlynx_schema_registry_update_script: parserExports['sqlynx_schema_registry_update_script'] as (
                 path_ptr: number,
                 script_ptr: number,
             ) => number,
-            sqlynx_schema_search_path_erase_script: parserExports['sqlynx_schema_search_path_erase_script'] as (
+            sqlynx_schema_registry_erase_script: parserExports['sqlynx_schema_registry_erase_script'] as (
                 path_ptr: number,
                 script_ptr: number,
             ) => number,
@@ -182,9 +180,9 @@ export class SQLynx {
         return new SQLynxScript(this, scriptPtr);
     }
 
-    public createSchemaSearchPath(): SQLynxSchemaSearchPath {
-        const pathPtr = this.instanceExports.sqlynx_schema_search_path_new();
-        return new SQLynxSchemaSearchPath(this, pathPtr);
+    public createSchemaSearchPath(): SQLynxSchemaRegistry {
+        const pathPtr = this.instanceExports.sqlynx_schema_registry_new();
+        return new SQLynxSchemaRegistry(this, pathPtr);
     }
 
     public createSchemaLayout(): SQLynxSchemaLayout {
@@ -380,7 +378,7 @@ export class SQLynxScript {
         return this.api.readFlatBufferResult<proto.ParsedScript>(resultPtr);
     }
     /// Analyze the script (optionally with an external script)
-    public analyze(searchPath: SQLynxSchemaSearchPath | null = null): FlatBufferRef<proto.AnalyzedScript> {
+    public analyze(searchPath: SQLynxSchemaRegistry | null = null): FlatBufferRef<proto.AnalyzedScript> {
         const scriptPtr = this.assertNotNull();
         const resultPtr = this.api.instanceExports.sqlynx_script_analyze(
             scriptPtr,
@@ -421,7 +419,7 @@ export class SQLynxScript {
     }
 }
 
-export class SQLynxSchemaSearchPath {
+export class SQLynxSchemaRegistry {
     /// The SQLynx api
     api: SQLynx;
     /// The graph pointer
@@ -434,7 +432,7 @@ export class SQLynxSchemaSearchPath {
     /// Delete the graph
     public delete() {
         if (this.pathPtr) {
-            this.api.instanceExports.sqlynx_schema_search_path_delete(this.pathPtr);
+            this.api.instanceExports.sqlynx_schema_registry_delete(this.pathPtr);
         }
         this.pathPtr = null;
     }
@@ -449,14 +447,14 @@ export class SQLynxSchemaSearchPath {
     public insertScriptAt(at: number, script: SQLynxScript) {
         const path_ptr = this.assertNotNull();
         const script_ptr = script.assertNotNull();
-        const result = this.api.instanceExports.sqlynx_schema_search_path_insert_script_at(path_ptr, at, script_ptr);
+        const result = this.api.instanceExports.sqlynx_schema_registry_insert_script_at(path_ptr, at, script_ptr);
         this.api.readStatusResult(result);
     }
     /// Update a script in the search path
     public updateScript(script: SQLynxScript) {
         const path_ptr = this.assertNotNull();
         const script_ptr = script.assertNotNull();
-        const result = this.api.instanceExports.sqlynx_schema_search_path_update_script(path_ptr, script_ptr);
+        const result = this.api.instanceExports.sqlynx_schema_registry_update_script(path_ptr, script_ptr);
         this.api.readStatusResult(result);
     }
 }

@@ -1,6 +1,7 @@
 include "sqlynx/analyzed_script.fbs";
 include "sqlynx/completion.fbs";
 include "sqlynx/parsed_script.fbs";
+include "sqlynx/schema_descriptor.fbs";
 include "sqlynx/schema_layout.fbs";
 include "sqlynx/script_statistics.fbs";
 include "sqlynx/script_cursor.fbs";
