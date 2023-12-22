@@ -14,9 +14,9 @@ export interface SQLynxScriptUpdate {
     // The key of the currently active script
     scriptKey: SQLynxScriptKey;
     // The currently active script in the editor
-    mainScript: sqlynx.SQLynxScript | null;
-    // The second script
-    externalScript: sqlynx.SQLynxScript | null;
+    targetScript: sqlynx.SQLynxScript | null;
+    // The schema script
+    schemaSearchPath: sqlynx.SQLynxSchemaSearchPath | null;
     /// The previous processed script buffers (if any)
     scriptBuffers: SQLynxScriptBuffers;
     /// The script cursor
@@ -53,16 +53,14 @@ type SQLynxEditorState = SQLynxScriptUpdate;
 /// Analyze a new script
 export function parseAndAnalyzeScript(
     script: sqlynx.SQLynxScript,
-    external: sqlynx.SQLynxScript | null,
+    searchPath: sqlynx.SQLynxSchemaSearchPath | null,
 ): SQLynxScriptBuffers {
     // Scan the script
     const scanned = script.scan();
     // Parse the script
     const parsed = script.parse();
-    // Parse the script
-    const analyzed = script.analyze(external);
-    // Parse the script
-    script.reindex();
+    // Analyze the script
+    const analyzed = script.analyze(searchPath);
 
     return { scanned, parsed, analyzed, destroy: destroyBuffers };
 }
@@ -71,12 +69,12 @@ export function parseAndAnalyzeScript(
 export function analyzeScript(
     buffers: SQLynxScriptBuffers,
     script: sqlynx.SQLynxScript,
-    external: sqlynx.SQLynxScript | null,
+    searchPath: sqlynx.SQLynxSchemaSearchPath | null,
 ): SQLynxScriptBuffers {
     // Delete the old analysis
     buffers.analyzed?.delete();
     // Analyze the script
-    const analyzed = script.analyze(external);
+    const analyzed = script.analyze(searchPath);
     // Return the new script
     return { ...buffers, analyzed };
 }
@@ -111,8 +109,8 @@ export const SQLynxProcessor: StateField<SQLynxEditorState> = StateField.define<
                 showCompletionDetails: false,
             },
             scriptKey: 0,
-            mainScript: null,
-            externalScript: null,
+            targetScript: null,
+            schemaSearchPath: null,
             scriptBuffers: {
                 scanned: null,
                 parsed: null,
@@ -150,34 +148,34 @@ export const SQLynxProcessor: StateField<SQLynxEditorState> = StateField.define<
                 };
 
                 // Entire script changed?
-                if (state.mainScript !== next.mainScript || state.externalScript !== next.externalScript) {
+                if (state.targetScript !== next.targetScript || state.schemaSearchPath !== next.schemaSearchPath) {
                     return next;
                 }
             }
         }
 
         // Did the document change?
-        if (next.mainScript != null) {
+        if (next.targetScript != null) {
             // Mirror all changes to the the SQLynx script, if the script is != null.
             if (transaction.docChanged) {
                 copyIfNotReplaced();
                 transaction.changes.iterChanges(
                     (fromA: number, toA: number, fromB: number, toB: number, inserted: Text) => {
                         if (toA - fromA > 0) {
-                            next.mainScript!.eraseTextRange(fromA, toA - fromA);
+                            next.targetScript!.eraseTextRange(fromA, toA - fromA);
                         }
                         if (inserted.length > 0) {
                             let writer = fromB;
                             for (const text of inserted.iter()) {
-                                next.mainScript!.insertTextAt(writer, text);
+                                next.targetScript!.insertTextAt(writer, text);
                                 writer += text.length;
                             }
                         }
                     },
                 );
                 // Analyze the new script
-                next.scriptBuffers = parseAndAnalyzeScript(next.mainScript!, next.externalScript);
-                const cursorBuffer = next.mainScript!.moveCursor(selection ?? 0);
+                next.scriptBuffers = parseAndAnalyzeScript(next.targetScript!, next.schemaSearchPath);
+                const cursorBuffer = next.targetScript!.moveCursor(selection ?? 0);
                 next.scriptCursor = cursorBuffer.read(new sqlynx.proto.ScriptCursorInfo()).unpack();
                 cursorBuffer.delete();
                 next.onUpdateScript(next.scriptKey, next.scriptBuffers, next.scriptCursor);
@@ -186,7 +184,7 @@ export const SQLynxProcessor: StateField<SQLynxEditorState> = StateField.define<
             // Update the script cursor
             if (cursorChanged) {
                 copyIfNotReplaced();
-                const cursorBuffer = next.mainScript!.moveCursor(selection ?? 0);
+                const cursorBuffer = next.targetScript!.moveCursor(selection ?? 0);
                 next.scriptCursor = cursorBuffer.read(new sqlynx.proto.ScriptCursorInfo()).unpack();
                 cursorBuffer.delete();
                 next.onUpdateScriptCursor(next.scriptKey, next.scriptCursor);

@@ -47,7 +47,7 @@ export function deriveScriptFocusFromCursor(
             for (let i = 0; i < countLeft; ++i) {
                 const edgeNodeLeft = ctxAnalyzed.graphEdgeNodes(queryEdge.nodesBegin() + i)!;
                 const columnRefLeft = ctxAnalyzed.columnReferences(edgeNodeLeft.columnReferenceId())!;
-                const tableIdLeft = columnRefLeft.tableId();
+                const tableIdLeft = columnRefLeft.resolvedTableId();
                 const nodeLeft = graphViewModel.nodesByTable.get(tableIdLeft);
                 if (nodeLeft === undefined) continue;
 
@@ -55,7 +55,7 @@ export function deriveScriptFocusFromCursor(
                 for (let j = 0; j < countRight; ++j) {
                     const edgeNodeRight = ctxAnalyzed.graphEdgeNodes(queryEdge.nodesBegin() + countLeft + j)!;
                     const columnRefRight = ctxAnalyzed.columnReferences(edgeNodeRight.columnReferenceId())!;
-                    const tableIdRight = columnRefRight.tableId();
+                    const tableIdRight = columnRefRight.resolvedTableId();
                     const nodeRight = graphViewModel.nodesByTable.get(tableIdRight);
                     if (nodeRight === undefined) continue;
 
@@ -84,13 +84,13 @@ export function deriveScriptFocusFromCursor(
                 if (!analyzed) continue;
                 for (let refId = 0; refId < analyzed.columnReferencesLength(); ++refId) {
                     const colRef = analyzed.columnReferences(refId, tmpColRef)!;
-                    if (colRef.tableId() == tableId) {
+                    if (colRef.resolvedTableId() == tableId) {
                         columnRefs.add(sqlynx.QualifiedID.create(key, refId));
                     }
                 }
                 for (let refId = 0; refId < analyzed.tableReferencesLength(); ++refId) {
                     const tblRef = analyzed.tableReferences(refId, tmpTblRef)!;
-                    if (tblRef.tableId() == tableId) {
+                    if (tblRef.resolvedTableId() == tableId) {
                         tableRefs.add(sqlynx.QualifiedID.create(key, refId));
                     }
                 }
@@ -111,7 +111,7 @@ export function deriveScriptFocusFromCursor(
         const analyzed = ctxData.processed.analyzed?.read(tmpAnalyzed);
         if (analyzed) {
             const tableRef = analyzed.tableReferences(cursor.tableReferenceId)!;
-            const tableId = tableRef.tableId();
+            const tableId = tableRef.resolvedTableId();
             const focus = deriveFocusFromTableId(tableId);
             focus.tableRefs.add(tableRefId);
             return focus;
@@ -125,7 +125,7 @@ export function deriveScriptFocusFromCursor(
         const analyzed = ctxData.processed.analyzed?.read(tmpAnalyzed);
         if (analyzed) {
             const colRef = analyzed.columnReferences(cursor.columnReferenceId)!;
-            const tableId = colRef.tableId();
+            const tableId = colRef.resolvedTableId();
             const focus = deriveFocusFromTableId(tableId);
             focus.columnRefs.add(columnRefId);
             return focus;
@@ -204,13 +204,13 @@ export function focusGraphNode(state: AppState, target: GraphNodeDescriptor | nu
             if (!analyzed) continue;
             for (let refId = 0; refId < analyzed.columnReferencesLength(); ++refId) {
                 const colRef = analyzed.columnReferences(refId, tmpColRef)!;
-                if (colRef.tableId() == targetTableId) {
+                if (colRef.resolvedTableId() == targetTableId) {
                     columnRefs.add(sqlynx.QualifiedID.create(key, refId));
                 }
             }
             for (let refId = 0; refId < analyzed.tableReferencesLength(); ++refId) {
                 const tblRef = analyzed.tableReferences(refId, tmpTblRef)!;
-                if (tblRef.tableId() == targetTableId) {
+                if (tblRef.resolvedTableId() == targetTableId) {
                     tableRefs.add(sqlynx.QualifiedID.create(key, refId));
                 }
             }

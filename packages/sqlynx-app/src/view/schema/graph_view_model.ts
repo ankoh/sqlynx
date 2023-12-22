@@ -134,12 +134,12 @@ export function computeGraphViewModel(state: AppState): GraphViewModel {
         if (analyzed) {
             const tableIdx = sqlynx.QualifiedID.getIndex(tableId);
             const table = analyzed.tables(tableIdx, tmpTable);
-            const tableName = sqlynx.QualifiedID.readTableName(table?.tableName()!, parsedScripts);
+            const tableName = table?.tableName();
             const columns: TableColumn[] = [];
             const columnsBegin = table!.columnsBegin();
             for (let j = 0; j < table!.columnCount(); ++j) {
                 const column = analyzed.tableColumns(columnsBegin + j, tmpTableColumn);
-                const columnName = sqlynx.QualifiedID.readName(column?.columnName()!, parsedScripts)!;
+                const columnName = column?.columnName()!;
                 columns.push({
                     name: columnName,
                 });
@@ -147,7 +147,7 @@ export function computeGraphViewModel(state: AppState): GraphViewModel {
             const viewModel: NodeViewModel = {
                 nodeId,
                 tableId,
-                name: tableName.table ?? '',
+                name: tableName?.tableName() ?? '',
                 x: position.x(),
                 y: position.y(),
                 columns: columns,

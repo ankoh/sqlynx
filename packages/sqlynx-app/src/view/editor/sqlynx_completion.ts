@@ -20,26 +20,26 @@ export async function completeSQLynx(context: CompletionContext): Promise<Comple
     const options: Completion[] = [];
 
     let offset = context.pos;
-    if (processor.mainScript !== null && processor.scriptCursor !== null) {
+    if (processor.targetScript !== null && processor.scriptCursor !== null) {
         const relativePos = processor.scriptCursor.scannerRelativePosition;
         const performCompletion =
             relativePos == sqlynx.proto.RelativeSymbolPosition.BEGIN_OF_SYMBOL ||
             relativePos == sqlynx.proto.RelativeSymbolPosition.MID_OF_SYMBOL ||
             relativePos == sqlynx.proto.RelativeSymbolPosition.END_OF_SYMBOL;
         if (performCompletion) {
-            const completionBuffer = processor.mainScript.completeAtCursor(32);
+            const completionBuffer = processor.targetScript.completeAtCursor(32);
             const completion = completionBuffer.read(new sqlynx.proto.Completion());
             const candidateObj = new sqlynx.proto.CompletionCandidate();
             for (let i = 0; i < completion.candidatesLength(); ++i) {
                 const candidate = completion.candidates(i, candidateObj)!;
                 let tagName: string | undefined = undefined;
-                for (const tag of unpackNameTags(candidate.nameTags())) {
+                for (const tag of unpackNameTags(candidate.combinedTags())) {
                     tagName = getNameTagName(tag);
                     break;
                 }
                 let candidateDetail = tagName;
                 if (processor.config.showCompletionDetails) {
-                    candidateDetail = `${candidateDetail}, score=${candidate.score()}, scope=${candidate.inStatement()}`;
+                    candidateDetail = `${candidateDetail}, score=${candidate.score()}, near=${candidate.nearCursor()}`;
                 }
                 options.push({
                     label: candidate.nameText() ?? '',

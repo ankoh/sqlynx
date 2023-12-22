@@ -49,9 +49,13 @@ export const ScriptStatisticsBar: React.FC<Props> = (props: Props) => {
     const computeTotalElapsed = (timings: sqlynx.proto.ScriptProcessingTimings) =>
         timings.scannerLastElapsed() + timings.parserLastElapsed() + timings.analyzerLastElapsed();
     const sumProcessingMemory = (mem: sqlynx.proto.ScriptProcessingMemoryStatistics) =>
-        mem.scannerInputBytes() + mem.scannerDictionaryBytes() + mem.parserAstBytes() + mem.analyzerBytes();
+        mem.scannerInputBytes() +
+        mem.scannerNameDictionaryBytes() +
+        mem.parserAstBytes() +
+        mem.analyzerDescriptionBytes() +
+        mem.analyzerNameIndexBytes();
     const computeTotalMemory = (mem: sqlynx.proto.ScriptMemoryStatistics) => {
-        let total = mem.ropeBytes() + mem.completionIndexBytes();
+        let total = mem.ropeBytes();
         total += sumProcessingMemory(mem.latestScript(protoProcessingMemory)!);
         return total;
     };
