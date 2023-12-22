@@ -7,7 +7,7 @@
 #include "sqlynx/script.h"
 #include "sqlynx/text/rope.h"
 #include "sqlynx/utils/suffix_trie.h"
-#include "sqlynx/vis/schema_grid.h"
+#include "sqlynx/vis/schema_layout.h"
 
 using namespace sqlynx;
 

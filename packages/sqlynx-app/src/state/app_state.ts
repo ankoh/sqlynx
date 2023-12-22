@@ -26,11 +26,11 @@ export interface AppState {
     /// The schema search path
     schemaSearchPath: sqlynx.SQLynxSchemaSearchPath | null;
     /// The graph
-    graph: sqlynx.SQLynxSchemaGraph | null;
+    graph: sqlynx.SQLynxSchemaLayout | null;
     /// The graph config
-    graphConfig: sqlynx.SQLynxSchemaGraphConfig;
+    graphConfig: sqlynx.SQLynxSchemaLayoutConfig;
     /// The graph layout
-    graphLayout: sqlynx.FlatBufferRef<sqlynx.proto.SchemaGraphLayout> | null;
+    graphLayout: sqlynx.FlatBufferRef<sqlynx.proto.SchemaLayout> | null;
     /// The graph view model
     graphViewModel: GraphViewModel;
     /// The user focus

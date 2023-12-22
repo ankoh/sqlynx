@@ -1,4 +1,4 @@
-#include "sqlynx/vis/schema_grid.h"
+#include "sqlynx/vis/schema_layout.h"
 
 #include <limits>
 
