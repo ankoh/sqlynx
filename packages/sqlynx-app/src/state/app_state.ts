@@ -23,6 +23,8 @@ export interface AppState {
     instance: sqlynx.SQLynx | null;
     /// The main script
     scripts: { [context: number]: ScriptData };
+    /// The schema search path
+    schemaSearchPath: sqlynx.SQLynxSchemaSearchPath | null;
     /// The graph
     graph: sqlynx.SQLynxSchemaGraph | null;
     /// The graph config
@@ -59,6 +61,10 @@ export function destroyState(state: AppState): AppState {
     const schema = state.scripts[ScriptKey.SCHEMA_SCRIPT];
     main.processed.destroy(main.processed);
     schema.processed.destroy(schema.processed);
+    if (state.schemaSearchPath) {
+        state.schemaSearchPath.delete();
+        state.schemaSearchPath = null;
+    }
     if (state.graphLayout) {
         state.graphLayout.delete();
         state.graphLayout = null;
@@ -125,6 +131,7 @@ export function createDefaultState(): AppState {
             [ScriptKey.MAIN_SCRIPT]: createDefaultScript(ScriptKey.MAIN_SCRIPT),
             [ScriptKey.SCHEMA_SCRIPT]: createDefaultScript(ScriptKey.SCHEMA_SCRIPT),
         },
+        schemaSearchPath: null,
         graph: null,
         graphConfig: {
             boardWidth: DEFAULT_BOARD_WIDTH,

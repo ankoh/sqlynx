@@ -23,7 +23,6 @@ interface SQLynxModuleExports {
 
     sqlynx_search_path_new: () => number;
     sqlynx_search_path_delete: (ptr: number) => number;
-    sqlynx_search_path_append_script: (path_ptr: number, script_ptr: number) => number;
     sqlynx_search_path_insert_script_at: (path_ptr: number, index: number, script_ptr: number) => number;
     sqlynx_search_path_update_script: (path_ptr: number, script_ptr: number) => number;
     sqlynx_search_path_erase_script: (path_ptr: number, script_ptr: number) => number;
@@ -104,10 +103,6 @@ export class SQLynx {
 
             sqlynx_search_path_new: parserExports['sqlynx_search_path_new'] as () => number,
             sqlynx_search_path_delete: parserExports['sqlynx_search_path_delete'] as (ptr: number) => number,
-            sqlynx_search_path_append_script: parserExports['sqlynx_search_path_append_script'] as (
-                path_ptr: number,
-                script_ptr: number,
-            ) => number,
             sqlynx_search_path_insert_script_at: parserExports['sqlynx_search_path_insert_script_at'] as (
                 path_ptr: number,
                 index: number,
@@ -450,11 +445,18 @@ export class SQLynxSchemaSearchPath {
         }
         return this.pathPtr!;
     }
-    /// Append a script
-    public pushScript(script: SQLynxScript) {
+    /// Append a script in the search path
+    public insertScriptAt(at: number, script: SQLynxScript) {
         const path_ptr = this.assertNotNull();
         const script_ptr = script.assertNotNull();
-        const result = this.api.instanceExports.sqlynx_search_path_append_script(path_ptr, script_ptr);
+        const result = this.api.instanceExports.sqlynx_search_path_insert_script_at(path_ptr, at, script_ptr);
+        this.api.readStatusResult(result);
+    }
+    /// Update a script in the search path
+    public updateScript(script: SQLynxScript) {
+        const path_ptr = this.assertNotNull();
+        const script_ptr = script.assertNotNull();
+        const result = this.api.instanceExports.sqlynx_search_path_update_script(path_ptr, script_ptr);
         this.api.readStatusResult(result);
     }
 }

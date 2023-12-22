@@ -95,8 +95,7 @@ export function reduceAppState(state: AppState, action: AppStateAction): AppStat
             const mainScript = mainData.script;
             if (scriptKey == ScriptKey.SCHEMA_SCRIPT && mainScript != null) {
                 const newMain = { ...mainData };
-                const external = newState.scripts[ScriptKey.SCHEMA_SCRIPT].script;
-                newMain.processed = analyzeScript(mainData.processed, mainScript, external);
+                newMain.processed = analyzeScript(mainData.processed, mainScript, newState.schemaSearchPath);
                 newMain.statistics = rotateStatistics(newMain.statistics, mainScript.getStatistics());
                 newState.scripts[ScriptKey.MAIN_SCRIPT] = newMain;
             }
@@ -186,8 +185,7 @@ export function reduceAppState(state: AppState, action: AppStateAction): AppStat
                         old.script?.delete();
                         old.script = null;
                         // Analyze the new script
-                        const external = newState.scripts[ScriptKey.SCHEMA_SCRIPT].script;
-                        const analysis = parseAndAnalyzeScript(newScript, external);
+                        const analysis = parseAndAnalyzeScript(newScript, newState.schemaSearchPath);
                         newState.scripts[ScriptKey.MAIN_SCRIPT] = {
                             ...newState.scripts[ScriptKey.MAIN_SCRIPT],
                             script: newScript,
@@ -202,12 +200,20 @@ export function reduceAppState(state: AppState, action: AppStateAction): AppStat
                         old.processed.destroy(old.processed);
                         old.script?.delete();
                         old.script = null;
-                        // Analyze the new script
+                        // Analyze the new schema script
                         const schemaAnalyzed = parseAndAnalyzeScript(newScript, null);
+                        // Update or create the search path
+                        let schemaSearchPath = newState.schemaSearchPath;
+                        if (!schemaSearchPath) {
+                            schemaSearchPath = newState.instance!.createSchemaSearchPath();
+                            schemaSearchPath.insertScriptAt(0, newScript);
+                        } else {
+                            schemaSearchPath.updateScript(newScript);
+                        }
                         const main = newState.scripts[ScriptKey.MAIN_SCRIPT];
                         if (main.script) {
                             // Analyze the old main script with the new script as external
-                            const mainAnalyzed = analyzeScript(main.processed, main.script, newScript);
+                            const mainAnalyzed = analyzeScript(main.processed, main.script, schemaSearchPath);
                             // Store the new main script
                             newState.scripts[ScriptKey.MAIN_SCRIPT] = {
                                 ...main,
@@ -221,6 +227,7 @@ export function reduceAppState(state: AppState, action: AppStateAction): AppStat
                             processed: schemaAnalyzed,
                             statistics: rotateStatistics(old.statistics, newScript.getStatistics() ?? null),
                         };
+                        newState.schemaSearchPath = schemaSearchPath;
                         break;
                     }
                 }

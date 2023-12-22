@@ -55,8 +55,8 @@ interface Props {
 }
 
 interface ActiveScriptState {
-    script: sqlynx.SQLynxScript | null;
-    external: sqlynx.SQLynxScript | null;
+    targetScript: sqlynx.SQLynxScript | null;
+    schemaScript: sqlynx.SQLynxScript | null;
     decorations: DecorationSet | null;
     cursor: ScriptCursorInfoT | null;
 }
@@ -73,8 +73,8 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
     const viewWasCreated = React.useCallback((view: EditorView) => setView(view), [setView]);
     const viewWillBeDestroyed = React.useCallback((view: EditorView) => setView(null), [setView]);
     const active = React.useRef<ActiveScriptState>({
-        script: null,
-        external: null,
+        targetScript: null,
+        schemaScript: null,
         decorations: null,
         cursor: null,
     });
@@ -111,63 +111,63 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
             return;
         }
         // Determine which script is active
-        let mainKey: SQLynxScriptKey = ScriptKey.MAIN_SCRIPT;
-        let externalKey: SQLynxScriptKey | null = null;
+        let targetKey: SQLynxScriptKey = ScriptKey.MAIN_SCRIPT;
+        let schemaKey: SQLynxScriptKey | null = null;
         switch (activeTab as TabId) {
             case TabId.MAIN_SCRIPT:
-                mainKey = ScriptKey.MAIN_SCRIPT;
-                externalKey = ScriptKey.SCHEMA_SCRIPT;
+                targetKey = ScriptKey.MAIN_SCRIPT;
+                schemaKey = ScriptKey.SCHEMA_SCRIPT;
                 break;
             case TabId.SCHEMA_SCRIPT:
-                mainKey = ScriptKey.SCHEMA_SCRIPT;
+                targetKey = ScriptKey.SCHEMA_SCRIPT;
                 break;
         }
-        const mainData = ctx.scripts[mainKey];
-        const externalData = externalKey != null ? ctx.scripts[externalKey] : null;
-        const externalScript = externalData?.script ?? null;
+        const targetScriptData = ctx.scripts[targetKey];
+        const schemaScriptData = schemaKey != null ? ctx.scripts[schemaKey] : null;
+        const schemaScript = schemaScriptData?.script ?? null;
 
         // Did the script change?
         const changes: ChangeSpec[] = [];
         const effects: StateEffect<any>[] = [];
-        if (active.current.script !== mainData.script) {
-            active.current.script = mainData.script;
-            active.current.external = externalScript;
+        if (active.current.targetScript !== targetScriptData.script) {
+            active.current.targetScript = targetScriptData.script;
+            active.current.schemaScript = schemaScript;
             changes.push({
                 from: 0,
                 to: view.state.doc.length,
-                insert: mainData.script?.toString(),
+                insert: targetScriptData.script?.toString(),
             });
             effects.push(
                 UpdateSQLynxScript.of({
                     config: {
                         showCompletionDetails: config?.value?.features?.completionDetails ?? false,
                     },
-                    scriptKey: mainKey,
-                    mainScript: mainData.script,
-                    externalScript: externalScript,
-                    scriptBuffers: mainData.processed,
-                    scriptCursor: mainData.cursor,
+                    scriptKey: targetKey,
+                    targetScript: targetScriptData.script,
+                    schemaSearchPath: ctx.schemaSearchPath,
+                    scriptBuffers: targetScriptData.processed,
+                    scriptCursor: targetScriptData.cursor,
                     focusedColumnRefs: ctx.focus?.columnRefs ?? null,
                     focusedTableRefs: ctx.focus?.tableRefs ?? null,
                     onUpdateScript: updateScript,
                     onUpdateScriptCursor: updateScriptCursor,
                 }),
             );
-        } else if (active.current.external !== externalData?.script) {
+        } else if (active.current.schemaScript !== schemaScriptData?.script) {
             // Only the external script changed, no need for text changes
-            active.current.script = mainData.script;
-            active.current.external = externalScript;
+            active.current.targetScript = targetScriptData.script;
+            active.current.schemaScript = schemaScript;
         }
         effects.push(
             UpdateSQLynxScript.of({
                 config: {
                     showCompletionDetails: config?.value?.features?.completionDetails ?? false,
                 },
-                scriptKey: mainKey,
-                mainScript: mainData.script,
-                externalScript: externalScript,
-                scriptBuffers: mainData.processed,
-                scriptCursor: mainData.cursor,
+                scriptKey: targetKey,
+                targetScript: targetScriptData.script,
+                schemaSearchPath: ctx.schemaSearchPath,
+                scriptBuffers: targetScriptData.processed,
+                scriptCursor: targetScriptData.cursor,
                 focusedColumnRefs: ctx.focus?.columnRefs ?? null,
                 focusedTableRefs: ctx.focus?.tableRefs ?? null,
                 onUpdateScript: updateScript,
@@ -175,14 +175,21 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
             }),
         );
         let selection: EditorSelection | null = null;
-        if (active.current.cursor !== mainData.cursor) {
-            active.current.cursor = mainData.cursor;
-            selection = EditorSelection.create([EditorSelection.cursor(mainData.cursor?.textOffset ?? 0)]);
+        if (active.current.cursor !== targetScriptData.cursor) {
+            active.current.cursor = targetScriptData.cursor;
+            selection = EditorSelection.create([EditorSelection.cursor(targetScriptData.cursor?.textOffset ?? 0)]);
         }
         if (changes.length > 0 || effects.length > 0 || selection !== null) {
             view.dispatch({ changes, effects, selection: selection ?? undefined });
         }
-    }, [view, activeTab, ctx.scripts[ScriptKey.MAIN_SCRIPT], ctx.scripts[ScriptKey.SCHEMA_SCRIPT], updateScript]);
+    }, [
+        view,
+        activeTab,
+        ctx.scripts[ScriptKey.MAIN_SCRIPT],
+        ctx.scripts[ScriptKey.SCHEMA_SCRIPT],
+        ctx.schemaSearchPath,
+        updateScript,
+    ]);
 
     // Helper to select a tab
     const selectTab = (event: React.MouseEvent<HTMLDivElement>) => {

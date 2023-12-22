@@ -245,14 +245,6 @@ extern "C" FFIResult* sqlynx_script_get_statistics(sqlynx::Script* script) {
 extern "C" sqlynx::SchemaSearchPath* sqlynx_search_path_new() { return new sqlynx::SchemaSearchPath(); }
 /// Create a schema search path
 extern "C" void sqlynx_search_path_delete(sqlynx::SchemaSearchPath* search_path) { delete search_path; }
-/// Append a script to the schema search path
-extern "C" FFIResult* sqlynx_search_path_append_script(sqlynx::SchemaSearchPath* path, sqlynx::Script* script) {
-    auto status = path->AppendScript(*script);
-    if (status != proto::StatusCode::OK) {
-        return packError(status);
-    }
-    return packOK();
-}
 /// Insert a script in the schema search path
 extern "C" FFIResult* sqlynx_search_path_insert_script_at(sqlynx::SchemaSearchPath* path, size_t index,
                                                           sqlynx::Script* script) {
