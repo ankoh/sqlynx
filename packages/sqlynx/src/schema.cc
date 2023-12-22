@@ -115,6 +115,7 @@ proto::StatusCode SchemaSearchPath::InsertScript(size_t idx, Script& script) {
     if (!script.analyzed_script) {
         return proto::StatusCode::SCHEMA_SEARCH_PATH_SCRIPT_NOT_ANALYZED;
     }
+    idx = std::min(idx, schemas.size());
     schemas.insert(schemas.begin() + idx, script.analyzed_script);
     return proto::StatusCode::OK;
 }
