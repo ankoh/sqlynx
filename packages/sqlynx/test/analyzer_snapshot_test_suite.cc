@@ -36,9 +36,10 @@ TEST_P(AnalyzerSnapshotTestSuite, Test) {
     ASSERT_EQ(main_scan.second, proto::StatusCode::OK);
     auto main_parsed = main_script.Parse();
     ASSERT_EQ(main_parsed.second, proto::StatusCode::OK);
-    SchemaSearchPath search_path;
-    search_path.InsertScript(0, external_script);
-    auto main_analyzed = main_script.Analyze(&search_path);
+
+    SchemaRegistry registry;
+    registry.InsertScript(0, external_script);
+    auto main_analyzed = main_script.Analyze(&registry);
     ASSERT_EQ(main_analyzed.second, proto::StatusCode::OK);
 
     // Encode the program

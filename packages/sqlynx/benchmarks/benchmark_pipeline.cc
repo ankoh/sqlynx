@@ -630,8 +630,8 @@ static void analyze_query(benchmark::State& state) {
     assert(ext_parsed.second == proto::StatusCode::OK);
     assert(ext_analyzed.second == proto::StatusCode::OK);
 
-    SchemaSearchPath search_path;
-    search_path.InsertScript(0, external);
+    SchemaRegistry registry;
+    registry.InsertScript(0, external);
 
     auto main_scan = main.Scan();
     auto main_parsed = main.Parse();
@@ -639,7 +639,7 @@ static void analyze_query(benchmark::State& state) {
     assert(main_parsed.second == proto::StatusCode::OK);
 
     for (auto _ : state) {
-        auto main_analyzed = main.Analyze(&search_path);
+        auto main_analyzed = main.Analyze(&registry);
         benchmark::DoNotOptimize(main_analyzed);
     }
 }

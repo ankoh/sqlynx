@@ -253,7 +253,7 @@ class AnalyzedScript : public Schema {
     /// The parsed script
     std::shared_ptr<ParsedScript> parsed_script;
     /// The schema search path
-    SchemaSearchPath schema_search_path;
+    SchemaRegistry schema_registry;
     /// The table references
     std::vector<TableReference> table_references;
     /// The column references
@@ -265,11 +265,11 @@ class AnalyzedScript : public Schema {
 
    public:
     /// Constructor
-    AnalyzedScript(std::shared_ptr<ParsedScript> parsed, SchemaSearchPath search_path, std::string_view database_name,
+    AnalyzedScript(std::shared_ptr<ParsedScript> parsed, SchemaRegistry registry, std::string_view database_name,
                    std::string_view schema_name);
 
     /// Get the schema search path
-    auto& GetSchemaSearchPath() const { return schema_search_path; }
+    auto& GetSchemaSearchPath() const { return schema_registry; }
     /// Get the name search index
     const Schema::NameSearchIndex& GetNameSearchIndex() override;
     /// Build the program
@@ -356,7 +356,7 @@ class Script {
     /// Parse the latest scanned script
     std::pair<ParsedScript*, proto::StatusCode> Parse();
     /// Analyze the latest parsed script
-    std::pair<AnalyzedScript*, proto::StatusCode> Analyze(const SchemaSearchPath* search_path = nullptr);
+    std::pair<AnalyzedScript*, proto::StatusCode> Analyze(const SchemaRegistry* registry = nullptr);
 
     /// Move the cursor
     std::pair<const ScriptCursor*, proto::StatusCode> MoveCursor(size_t text_offset);

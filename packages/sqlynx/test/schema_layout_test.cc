@@ -91,9 +91,10 @@ TEST(SchemaGridTest, TPCHQ2) {
     query_script.InsertTextAt(0, TPCH_Q2);
     ASSERT_EQ(query_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(query_script.Parse().second, proto::StatusCode::OK);
-    SchemaSearchPath search_path;
-    search_path.InsertScript(0, schema_script);
-    ASSERT_EQ(query_script.Analyze(&search_path).second, proto::StatusCode::OK);
+
+    SchemaRegistry registry;
+    registry.InsertScript(0, schema_script);
+    ASSERT_EQ(query_script.Analyze(&registry).second, proto::StatusCode::OK);
 
     SchemaGrid grid;
     for (size_t i = 0; i < 3; ++i) {

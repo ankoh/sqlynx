@@ -55,8 +55,8 @@ static FFIResult* packError(proto::StatusCode status) {
         case proto::StatusCode::GRAPH_INPUT_NOT_ANALYZED:
             message = "Graph input is not analyzed";
             break;
-        case proto::StatusCode::SCHEMA_SEARCH_PATH_SCRIPT_NOT_ANALYZED:
-            message = "Unanalyzed scripts cannot be added to the schema search path";
+        case proto::StatusCode::SCHEMA_REGISTRY_SCRIPT_NOT_ANALYZED:
+            message = "Unanalyzed scripts cannot be added to the schema registry";
             break;
         case proto::StatusCode::COMPLETION_MISSES_CURSOR:
             message = "Completion requires a script cursor";
@@ -170,9 +170,9 @@ extern "C" FFIResult* sqlynx_script_parse(Script* script) {
 }
 
 /// Analyze a script
-extern "C" FFIResult* sqlynx_script_analyze(Script* script, const SchemaSearchPath* search_path) {
+extern "C" FFIResult* sqlynx_script_analyze(Script* script, const SchemaRegistry* registry) {
     // Analyze the script
-    auto [analyzed, status] = script->Analyze(search_path);
+    auto [analyzed, status] = script->Analyze(registry);
     if (status != proto::StatusCode::OK) {
         return packError(status);
     }
@@ -242,12 +242,12 @@ extern "C" FFIResult* sqlynx_script_get_statistics(sqlynx::Script* script) {
 }
 
 /// Create a schema search path
-extern "C" sqlynx::SchemaSearchPath* sqlynx_schema_search_path_new() { return new sqlynx::SchemaSearchPath(); }
+extern "C" sqlynx::SchemaRegistry* sqlynx_schema_registry_new() { return new sqlynx::SchemaRegistry(); }
 /// Create a schema search path
-extern "C" void sqlynx_schema_search_path_delete(sqlynx::SchemaSearchPath* search_path) { delete search_path; }
+extern "C" void sqlynx_schema_registry_delete(sqlynx::SchemaRegistry* search_path) { delete search_path; }
 /// Insert a script in the schema search path
-extern "C" FFIResult* sqlynx_schema_search_path_insert_script_at(sqlynx::SchemaSearchPath* path, size_t index,
-                                                                 sqlynx::Script* script) {
+extern "C" FFIResult* sqlynx_schema_registry_insert_script_at(sqlynx::SchemaRegistry* path, size_t index,
+                                                              sqlynx::Script* script) {
     auto status = path->InsertScript(index, *script);
     if (status != proto::StatusCode::OK) {
         return packError(status);
@@ -255,7 +255,7 @@ extern "C" FFIResult* sqlynx_schema_search_path_insert_script_at(sqlynx::SchemaS
     return packOK();
 }
 /// Update a script in the schema search path
-extern "C" FFIResult* sqlynx_schema_search_path_update_script(sqlynx::SchemaSearchPath* path, sqlynx::Script* script) {
+extern "C" FFIResult* sqlynx_schema_registry_update_script(sqlynx::SchemaRegistry* path, sqlynx::Script* script) {
     auto status = path->UpdateScript(*script);
     if (status != proto::StatusCode::OK) {
         return packError(status);
@@ -263,7 +263,7 @@ extern "C" FFIResult* sqlynx_schema_search_path_update_script(sqlynx::SchemaSear
     return packOK();
 }
 /// Erase entry in the schema search path
-extern "C" FFIResult* sqlynx_schema_search_path_erase_script(sqlynx::SchemaSearchPath* path, sqlynx::Script* script) {
+extern "C" FFIResult* sqlynx_schema_registry_erase_script(sqlynx::SchemaRegistry* path, sqlynx::Script* script) {
     auto status = path->EraseScript(*script);
     if (status != proto::StatusCode::OK) {
         return packError(status);

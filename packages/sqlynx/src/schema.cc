@@ -41,13 +41,13 @@ std::optional<Schema::ResolvedTable> Schema::ResolveTable(ContextObjectID table_
 }
 
 std::optional<Schema::ResolvedTable> Schema::ResolveTable(ContextObjectID table_id,
-                                                          const SchemaSearchPath& search_path) const {
+                                                          const SchemaRegistry& registry) const {
     if (context_id == table_id.GetContext()) {
         auto& table = tables[table_id.GetIndex()];
         auto columns = std::span<const TableColumn>{table_columns}.subspan(table.columns_begin, table.column_count);
         return ResolvedTable{database_name, schema_name, table, columns};
     } else {
-        return search_path.ResolveTable(table_id);
+        return registry.ResolveTable(table_id);
     }
 }
 
@@ -62,7 +62,7 @@ std::optional<Schema::ResolvedTable> Schema::ResolveTable(std::string_view table
 }
 
 std::optional<Schema::ResolvedTable> Schema::ResolveTable(QualifiedTableName table_name,
-                                                          const SchemaSearchPath& search_path) const {
+                                                          const SchemaRegistry& registry) const {
     if (table_name.database_name == database_name && table_name.schema_name == schema_name) {
         if (auto resolved = ResolveTable(table_name.table_name)) {
             return resolved;
@@ -76,7 +76,7 @@ std::optional<Schema::ResolvedTable> Schema::ResolveTable(QualifiedTableName tab
         if (table_name.schema_name.empty()) {
             table_name.schema_name = schema_name;
         }
-        return search_path.ResolveTable(table_name);
+        return registry.ResolveTable(table_name);
     }
 }
 
@@ -91,15 +91,15 @@ void Schema::ResolveTableColumn(std::string_view table_column, std::vector<Schem
     }
 }
 
-void Schema::ResolveTableColumn(std::string_view table_column, const SchemaSearchPath& search_path,
+void Schema::ResolveTableColumn(std::string_view table_column, const SchemaRegistry& registry,
                                 std::vector<Schema::ResolvedTableColumn>& tmp) const {
-    search_path.ResolveTableColumn(table_column, tmp);
+    registry.ResolveTableColumn(table_column, tmp);
     ResolveTableColumn(table_column, tmp);
 }
 
-proto::StatusCode SchemaSearchPath::InsertScript(size_t idx, Script& script) {
+proto::StatusCode SchemaRegistry::InsertScript(size_t idx, Script& script) {
     if (!script.analyzed_script) {
-        return proto::StatusCode::SCHEMA_SEARCH_PATH_SCRIPT_NOT_ANALYZED;
+        return proto::StatusCode::SCHEMA_REGISTRY_SCRIPT_NOT_ANALYZED;
     }
     auto& schema = script.analyzed_script;
     auto iter = schema_by_context_id.find(schema->GetContextId());
@@ -112,9 +112,9 @@ proto::StatusCode SchemaSearchPath::InsertScript(size_t idx, Script& script) {
     return proto::StatusCode::OK;
 }
 
-proto::StatusCode SchemaSearchPath::UpdateScript(Script& script) {
+proto::StatusCode SchemaRegistry::UpdateScript(Script& script) {
     if (!script.analyzed_script) {
-        return proto::StatusCode::SCHEMA_SEARCH_PATH_SCRIPT_NOT_ANALYZED;
+        return proto::StatusCode::SCHEMA_REGISTRY_SCRIPT_NOT_ANALYZED;
     }
     for (auto iter = schemas.begin(); iter != schemas.end(); ++iter) {
         if ((*iter)->GetContextId() == script.context_id) {
@@ -125,7 +125,7 @@ proto::StatusCode SchemaSearchPath::UpdateScript(Script& script) {
     return proto::StatusCode::OK;
 }
 
-proto::StatusCode SchemaSearchPath::EraseScript(Script& script) {
+proto::StatusCode SchemaRegistry::EraseScript(Script& script) {
     for (auto iter = schemas.begin(); iter != schemas.end(); ++iter) {
         if ((*iter)->GetContextId() == script.context_id) {
             schema_by_context_id.erase((*iter)->GetContextId());
@@ -136,7 +136,7 @@ proto::StatusCode SchemaSearchPath::EraseScript(Script& script) {
     return proto::StatusCode::OK;
 }
 
-std::shared_ptr<Schema> SchemaSearchPath::ResolveSchema(uint32_t context_id) const {
+std::shared_ptr<Schema> SchemaRegistry::ResolveSchema(uint32_t context_id) const {
     for (auto& schema : schemas) {
         if (schema->GetContextId() == context_id) {
             return schema;
@@ -145,7 +145,7 @@ std::shared_ptr<Schema> SchemaSearchPath::ResolveSchema(uint32_t context_id) con
     return nullptr;
 }
 
-std::optional<Schema::ResolvedTable> SchemaSearchPath::ResolveTable(ContextObjectID table_id) const {
+std::optional<Schema::ResolvedTable> SchemaRegistry::ResolveTable(ContextObjectID table_id) const {
     for (auto& schema : schemas) {
         if (schema->GetContextId() == table_id.GetContext()) {
             return schema->ResolveTable(table_id);
@@ -153,7 +153,7 @@ std::optional<Schema::ResolvedTable> SchemaSearchPath::ResolveTable(ContextObjec
     }
     return std::nullopt;
 }
-std::optional<Schema::ResolvedTable> SchemaSearchPath::ResolveTable(Schema::QualifiedTableName table_name) const {
+std::optional<Schema::ResolvedTable> SchemaRegistry::ResolveTable(Schema::QualifiedTableName table_name) const {
     for (auto& schema : schemas) {
         if (schema->GetDatabaseName() == table_name.database_name &&
             schema->GetSchemaName() == table_name.schema_name) {
@@ -163,8 +163,8 @@ std::optional<Schema::ResolvedTable> SchemaSearchPath::ResolveTable(Schema::Qual
     return std::nullopt;
 }
 
-void SchemaSearchPath::ResolveTableColumn(std::string_view table_column,
-                                          std::vector<Schema::ResolvedTableColumn>& out) const {
+void SchemaRegistry::ResolveTableColumn(std::string_view table_column,
+                                        std::vector<Schema::ResolvedTableColumn>& out) const {
     for (auto& schema : schemas) {
         schema->ResolveTableColumn(table_column, out);
     }

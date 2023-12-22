@@ -42,14 +42,14 @@ void NameResolutionPass::NodeState::Clear() {
 
 /// Constructor
 NameResolutionPass::NameResolutionPass(ParsedScript& parser, std::string_view database_name,
-                                       std::string_view schema_name, const SchemaSearchPath& schema_search_path,
+                                       std::string_view schema_name, const SchemaRegistry& schema_registry,
                                        AttributeIndex& attribute_index)
     : scanned_program(*parser.scanned_script),
       parsed_program(parser),
       context_id(parser.context_id),
       database_name(database_name),
       schema_name(schema_name),
-      schema_search_path(schema_search_path),
+      schema_registry(schema_registry),
       attribute_index(attribute_index),
       nodes(parsed_program.nodes) {
     node_states.resize(nodes.size());
@@ -209,7 +209,7 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
         }
 
         // Otherwise consult the external search path
-        if (auto resolved = schema_search_path.ResolveTable(qualified_table_name)) {
+        if (auto resolved = schema_registry.ResolveTable(qualified_table_name)) {
             // Remember resolved table
             scope.resolved_table_references.insert({&table_ref, *resolved});
             table_ref.resolved_table_id = resolved->table.table_id;
