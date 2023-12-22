@@ -228,8 +228,6 @@ class SchemaSearchPath {
     /// Get the schemas
     auto& GetSchemaByContextId() const { return schema_by_context_id; }
 
-    /// Append a script
-    proto::StatusCode AppendScript(Script& script);
     /// Insert a script
     proto::StatusCode InsertScript(size_t idx, Script& script);
     /// Update a script

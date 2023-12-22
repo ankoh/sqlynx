@@ -92,7 +92,7 @@ TEST(SchemaGridTest, TPCHQ2) {
     ASSERT_EQ(query_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(query_script.Parse().second, proto::StatusCode::OK);
     SchemaSearchPath search_path;
-    search_path.PushBack(schema_script.analyzed_script);
+    search_path.InsertScript(0, schema_script);
     ASSERT_EQ(query_script.Analyze(&search_path).second, proto::StatusCode::OK);
 
     SchemaGrid grid;

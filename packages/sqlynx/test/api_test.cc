@@ -81,8 +81,8 @@ limit 100
     sqlynx_result_delete(external_parsed);
     sqlynx_result_delete(external_analyzed);
 
-    auto* search_path = sqlynx_search_path_new();
-    sqlynx_search_path_insert_script_at(search_path, 0, external_script);
+    auto* search_path = sqlynx_schema_search_path_new();
+    sqlynx_schema_search_path_insert_script_at(search_path, 0, external_script);
 
     auto* main_script = sqlynx_script_new(2);
     sqlynx_script_insert_text_at(main_script, 0, main_script_text.data(), main_script_text.size());
@@ -97,7 +97,7 @@ limit 100
     sqlynx_result_delete(main_parsed);
     sqlynx_result_delete(main_analyzed);
 
-    sqlynx_search_path_delete(search_path);
+    sqlynx_schema_search_path_delete(search_path);
     sqlynx_script_delete(external_script);
     sqlynx_script_delete(main_script);
 }

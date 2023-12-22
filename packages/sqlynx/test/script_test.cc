@@ -26,7 +26,7 @@ TEST(ScriptTest, ExternalContextCollision) {
     main_script.Parse();
 
     SchemaSearchPath search_path;
-    search_path.AppendScript(schema_script);
+    search_path.InsertScript(0, schema_script);
     auto [result, status] = main_script.Analyze(&search_path);
     ASSERT_EQ(status, proto::StatusCode::EXTERNAL_CONTEXT_COLLISION);
 }
@@ -108,7 +108,7 @@ limit 100
     ASSERT_EQ(main_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(main_script.Parse().second, proto::StatusCode::OK);
     SchemaSearchPath search_path;
-    search_path.AppendScript(external_script);
+    search_path.InsertScript(0, external_script);
     ASSERT_EQ(main_script.Analyze(&search_path).second, proto::StatusCode::OK);
 }
 

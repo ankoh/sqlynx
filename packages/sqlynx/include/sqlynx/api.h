@@ -61,24 +61,24 @@ extern "C" FFIResult* sqlynx_script_move_cursor(sqlynx::Script* script, size_t t
 extern "C" FFIResult* sqlynx_script_complete_at_cursor(sqlynx::Script* script, size_t limit);
 
 /// Create a schema search path
-extern "C" sqlynx::SchemaSearchPath* sqlynx_search_path_new();
+extern "C" sqlynx::SchemaSearchPath* sqlynx_schema_search_path_new();
 /// Create a schema search path
-extern "C" void sqlynx_search_path_delete(sqlynx::SchemaSearchPath* search_path);
+extern "C" void sqlynx_schema_search_path_delete(sqlynx::SchemaSearchPath* search_path);
 /// Insert a script in the schema search path
-extern "C" FFIResult* sqlynx_search_path_insert_script_at(sqlynx::SchemaSearchPath* path, size_t index,
-                                                          sqlynx::Script* script);
+extern "C" FFIResult* sqlynx_schema_search_path_insert_script_at(sqlynx::SchemaSearchPath* path, size_t index,
+                                                                 sqlynx::Script* script);
 /// Update a script in the schema search path
-extern "C" FFIResult* sqlynx_search_path_update_script(sqlynx::SchemaSearchPath* path, sqlynx::Script* script);
+extern "C" FFIResult* sqlynx_schema_search_path_pudate_script(sqlynx::SchemaSearchPath* path, sqlynx::Script* script);
 /// Erase script in the schema search path
-extern "C" FFIResult* sqlynx_search_path_erase_script(sqlynx::SchemaSearchPath* path, sqlynx::Script* script);
+extern "C" FFIResult* sqlynx_schema_search_path_erase_script(sqlynx::SchemaSearchPath* path, sqlynx::Script* script);
 
 /// Create schema graph
-extern "C" sqlynx::SchemaGrid* sqlynx_schemagraph_new();
+extern "C" sqlynx::SchemaGrid* sqlynx_schema_layout_new();
 /// Delete a schema graph
-extern "C" void sqlynx_schemagraph_delete(sqlynx::SchemaGrid* graph);
+extern "C" void sqlynx_schema_layout_delete(sqlynx::SchemaGrid* graph);
 /// Configure a schema graph
-extern "C" void sqlynx_schemagraph_configure(sqlynx::SchemaGrid* graph, double board_width, double board_height,
-                                             double cell_width, double cell_height, double table_width,
-                                             double table_height);
+extern "C" void sqlynx_schema_layout_configure(sqlynx::SchemaGrid* graph, double board_width, double board_height,
+                                               double cell_width, double cell_height, double table_width,
+                                               double table_height);
 /// Update a schema graph
-extern "C" FFIResult* sqlynx_schemagraph_load_script(sqlynx::SchemaGrid* graph, sqlynx::Script* script);
+extern "C" FFIResult* sqlynx_schema_layout_load_script(sqlynx::SchemaGrid* graph, sqlynx::Script* script);
