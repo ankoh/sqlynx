@@ -97,7 +97,7 @@ void Schema::ResolveTableColumn(std::string_view table_column, const SchemaSearc
     ResolveTableColumn(table_column, tmp);
 }
 
-proto::StatusCode SchemaSearchPath::AppendScript(Script& script) {
+proto::StatusCode SchemaSearchPath::InsertScript(size_t idx, Script& script) {
     if (!script.analyzed_script) {
         return proto::StatusCode::SCHEMA_SEARCH_PATH_SCRIPT_NOT_ANALYZED;
     }
@@ -107,16 +107,8 @@ proto::StatusCode SchemaSearchPath::AppendScript(Script& script) {
         return proto::StatusCode::EXTERNAL_CONTEXT_COLLISION;
     }
     schema_by_context_id.insert({schema->GetContextId(), *schema});
-    schemas.push_back(schema);
-    return proto::StatusCode::OK;
-}
-
-proto::StatusCode SchemaSearchPath::InsertScript(size_t idx, Script& script) {
-    if (!script.analyzed_script) {
-        return proto::StatusCode::SCHEMA_SEARCH_PATH_SCRIPT_NOT_ANALYZED;
-    }
     idx = std::min(idx, schemas.size());
-    schemas.insert(schemas.begin() + idx, script.analyzed_script);
+    schemas.insert(schemas.begin() + idx, schema);
     return proto::StatusCode::OK;
 }
 

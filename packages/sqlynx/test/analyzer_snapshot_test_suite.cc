@@ -18,25 +18,27 @@ struct AnalyzerSnapshotTestSuite : public ::testing::TestWithParam<const Analyze
 
 TEST_P(AnalyzerSnapshotTestSuite, Test) {
     auto* test = GetParam();
-    rope::Rope input_external{1024, test->input_external};
-    rope::Rope input_main{1024, test->input_main};
+    Script external_script{2};
+    Script main_script{1};
+    external_script.InsertTextAt(0, test->input_external);
+    main_script.InsertTextAt(0, test->input_main);
 
     // Analyze schema
-    auto external_scan = parser::Scanner::Scan(input_external, 1);
+    auto external_scan = external_script.Scan();
     ASSERT_EQ(external_scan.second, proto::StatusCode::OK);
-    auto external_parsed = parser::Parser::Parse(external_scan.first);
+    auto external_parsed = external_script.Parse();
     ASSERT_EQ(external_parsed.second, proto::StatusCode::OK);
-    auto external_analyzed = Analyzer::Analyze(external_parsed.first, DEFAULT_DATABASE_NAME, DEFAULT_SCHEMA_NAME);
+    auto external_analyzed = external_script.Analyze();
     ASSERT_EQ(external_analyzed.second, proto::StatusCode::OK);
 
     // Analyze script
-    auto main_scan = parser::Scanner::Scan(input_main, 2);
+    auto main_scan = main_script.Scan();
     ASSERT_EQ(main_scan.second, proto::StatusCode::OK);
-    auto main_parsed = parser::Parser::Parse(main_scan.first);
+    auto main_parsed = main_script.Parse();
     ASSERT_EQ(main_parsed.second, proto::StatusCode::OK);
     SchemaSearchPath search_path;
-    search_path.PushBack(external_analyzed.first);
-    auto main_analyzed = Analyzer::Analyze(main_parsed.first, DEFAULT_DATABASE_NAME, DEFAULT_SCHEMA_NAME, &search_path);
+    search_path.InsertScript(0, external_script);
+    auto main_analyzed = main_script.Analyze(&search_path);
     ASSERT_EQ(main_analyzed.second, proto::StatusCode::OK);
 
     // Encode the program
@@ -45,7 +47,7 @@ TEST_P(AnalyzerSnapshotTestSuite, Test) {
     xml_external.append_attribute("context").set_value("external");
     auto xml_main = out.append_child("script");
     xml_main.append_attribute("context").set_value("main");
-    AnalyzerSnapshotTest::EncodeScript(out, *main_analyzed.first, external_analyzed.first.get());
+    AnalyzerSnapshotTest::EncodeScript(out, *main_analyzed.first, external_analyzed.first);
 
     // Test the XMLs
     ASSERT_TRUE(Matches(xml_main.child("tables"), test->tables));

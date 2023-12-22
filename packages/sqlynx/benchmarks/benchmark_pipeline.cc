@@ -631,17 +631,15 @@ static void analyze_query(benchmark::State& state) {
     assert(ext_analyzed.second == proto::StatusCode::OK);
 
     SchemaSearchPath search_path;
-    search_path.PushBack(external.analyzed_script);
+    search_path.InsertScript(0, external);
 
     auto main_scan = main.Scan();
     auto main_parsed = main.Parse();
-    auto main_analyzed = main.Analyze();
     assert(main_scan.second == proto::StatusCode::OK);
     assert(main_parsed.second == proto::StatusCode::OK);
-    assert(main_analyzed.second == proto::StatusCode::OK);
 
     for (auto _ : state) {
-        auto ext_analyzed = main.Analyze(&search_path);
+        auto main_analyzed = main.Analyze(&search_path);
         benchmark::DoNotOptimize(main_analyzed);
     }
 }

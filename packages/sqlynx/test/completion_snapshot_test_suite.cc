@@ -33,7 +33,7 @@ TEST_P(CompletionSnapshotTestSuite, Test) {
 
     // Analyze main script
     SchemaSearchPath search_path;
-    search_path.PushBack(external_script.analyzed_script);
+    search_path.InsertScript(0, external_script);
     ASSERT_EQ(main_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(main_script.Parse().second, proto::StatusCode::OK);
     ASSERT_EQ(main_script.Analyze(&search_path).second, proto::StatusCode::OK);

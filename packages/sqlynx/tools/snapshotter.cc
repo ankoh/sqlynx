@@ -114,19 +114,19 @@ static void generate_analyzer_snapshots(const std::filesystem::path& source_dir)
             // Read the external script
             auto xml_external = test.find_child_by_attribute("script", "context", "external");
             std::string external_text = xml_external.child("input").last_child().value();
-            rope::Rope external_rope{1024, external_text};
-            auto external_scan = parser::Scanner::Scan(external_rope, 2);
+            Script external_script{2};
+            external_script.InsertTextAt(0, external_text);
+            auto external_scan = external_script.Scan();
             if (external_scan.second != proto::StatusCode::OK) {
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(external_scan.second) << std::endl;
                 continue;
             }
-            auto external_parsed = parser::Parser::Parse(external_scan.first);
+            auto external_parsed = external_script.Parse();
             if (external_parsed.second != proto::StatusCode::OK) {
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(external_parsed.second) << std::endl;
                 continue;
             }
-            auto external_analyzed =
-                Analyzer::Analyze(external_parsed.first, DEFAULT_DATABASE_NAME, DEFAULT_SCHEMA_NAME, nullptr);
+            auto external_analyzed = external_script.Analyze();
             if (external_analyzed.second != proto::StatusCode::OK) {
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(external_analyzed.second) << std::endl;
                 continue;
@@ -135,28 +135,27 @@ static void generate_analyzer_snapshots(const std::filesystem::path& source_dir)
             /// Read the script
             auto xml_main = test.find_child_by_attribute("script", "context", "main");
             std::string main_text = xml_main.child("input").last_child().value();
-            rope::Rope main_rope{1024, main_text};
-            auto main_scan = parser::Scanner::Scan(main_rope, 1);
+            Script main_script{1};
+            auto main_scan = main_script.Scan();
             if (main_scan.second != proto::StatusCode::OK) {
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(main_scan.second) << std::endl;
                 continue;
             }
-            auto main_parsed = parser::Parser::Parse(main_scan.first);
+            auto main_parsed = main_script.Parse();
             if (main_parsed.second != proto::StatusCode::OK) {
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(main_parsed.second) << std::endl;
                 continue;
             }
             SchemaSearchPath search_path;
-            search_path.PushBack(external_analyzed.first);
-            auto main_analyzed =
-                Analyzer::Analyze(main_parsed.first, DEFAULT_DATABASE_NAME, DEFAULT_SCHEMA_NAME, &search_path);
+            search_path.InsertScript(0, external_script);
+            auto main_analyzed = main_script.Analyze(&search_path);
             if (main_analyzed.second != proto::StatusCode::OK) {
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(main_analyzed.second) << std::endl;
                 continue;
             }
 
             // Encode a program
-            AnalyzerSnapshotTest::EncodeScript(test, *main_analyzed.first, external_analyzed.first.get());
+            AnalyzerSnapshotTest::EncodeScript(test, *main_analyzed.first, external_analyzed.first);
         }
 
         // Write xml document
@@ -235,7 +234,7 @@ static void generate_completion_snapshots(const std::filesystem::path& source_di
                 continue;
             }
             SchemaSearchPath search_path;
-            search_path.PushBack(external_script.analyzed_script);
+            search_path.InsertScript(0, external_script);
             auto main_analyzed = main_script.Analyze(&search_path);
             if (main_analyzed.second != proto::StatusCode::OK) {
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(main_analyzed.second) << std::endl;
