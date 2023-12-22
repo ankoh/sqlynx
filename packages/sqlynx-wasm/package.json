@@ -18,6 +18,7 @@
         "build:o2": "tsc --emitDeclarationOnly && node --loader ts-node/esm ./bundle.ts o2",
         "build:o3": "tsc --emitDeclarationOnly && node --loader ts-node/esm ./bundle.ts o3",
         "test": "node --experimental-vm-modules ./node_modules/.bin/jest",
+        "test:debug": "node --experimental-vm-modules --inspect-brk ./node_modules/.bin/jest",
         "test:coverage": "node --experimental-vm-modules ./node_modules/.bin/jest --coverage"
     },
     "files": [

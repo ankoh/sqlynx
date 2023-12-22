@@ -22,7 +22,7 @@ std::pair<std::shared_ptr<AnalyzedScript>, proto::StatusCode> Analyzer::Analyze(
     std::shared_ptr<ParsedScript> parsed, std::string_view database_name, std::string_view schema_name,
     const SchemaSearchPath* schema_search_path) {
     if (parsed == nullptr) {
-        return {nullptr, proto::StatusCode::ANALYZER_INPUT_INVALID};
+        return {nullptr, proto::StatusCode::ANALYZER_INPUT_NOT_PARSED};
     }
     // Run analysis passes
     SchemaSearchPath search_path_snapshot;

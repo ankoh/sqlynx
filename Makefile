@@ -123,6 +123,10 @@ core_js_o3:
 core_js_tests:
 	yarn workspace @ankoh/sqlynx test
 
+.PHONY: core_js_debug
+core_js_tests_debug:
+	yarn workspace @ankoh/sqlynx test:debug
+
 .PHONY: editor_o3
 app_o3:
 	yarn workspace @ankoh/sqlynx-app pwa:build:o3

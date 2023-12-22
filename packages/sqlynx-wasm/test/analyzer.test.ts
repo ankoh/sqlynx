@@ -27,8 +27,8 @@ describe('SQLynx Analyzer', () => {
 
         const mainScript = lnx!.createScript(1);
         mainScript.insertTextAt(0, 'select * from foo;');
-        schemaScript.scan().delete();
-        schemaScript.parse().delete();
+        mainScript.scan().delete();
+        mainScript.parse().delete();
 
         const searchPath = lnx!.createSchemaSearchPath();
         searchPath.pushScript(schemaScript);

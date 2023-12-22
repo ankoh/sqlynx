@@ -46,17 +46,17 @@ static FFIResult* packOK() {
 static FFIResult* packError(proto::StatusCode status) {
     std::string_view message;
     switch (status) {
-        case proto::StatusCode::PARSER_INPUT_INVALID:
-            message = "Parser input is invalid";
+        case proto::StatusCode::PARSER_INPUT_NOT_SCANNED:
+            message = "Parser input is not scanned";
             break;
-        case proto::StatusCode::ANALYZER_INPUT_INVALID:
-            message = "Analyzer input is invalid";
+        case proto::StatusCode::ANALYZER_INPUT_NOT_PARSED:
+            message = "Analyzer input is not parsed";
             break;
-        case proto::StatusCode::GRAPH_INPUT_INVALID:
-            message = "Graph input is invalid";
+        case proto::StatusCode::GRAPH_INPUT_NOT_ANALYZED:
+            message = "Graph input is not analyzed";
             break;
-        case proto::StatusCode::SCHEMA_SEARCH_PATH_INPUT_INVALID:
-            message = "Schema search path input is invalid";
+        case proto::StatusCode::SCHEMA_SEARCH_PATH_SCRIPT_NOT_ANALYZED:
+            message = "Unanalyzed scripts cannot be added to the schema search path";
             break;
         case proto::StatusCode::COMPLETION_MISSES_CURSOR:
             message = "Completion requires a script cursor";
@@ -245,6 +245,14 @@ extern "C" FFIResult* sqlynx_script_get_statistics(sqlynx::Script* script) {
 extern "C" sqlynx::SchemaSearchPath* sqlynx_search_path_new() { return new sqlynx::SchemaSearchPath(); }
 /// Create a schema search path
 extern "C" void sqlynx_search_path_delete(sqlynx::SchemaSearchPath* search_path) { delete search_path; }
+/// Append a script to the schema search path
+extern "C" FFIResult* sqlynx_search_path_append_script(sqlynx::SchemaSearchPath* path, sqlynx::Script* script) {
+    auto status = path->AppendScript(*script);
+    if (status != proto::StatusCode::OK) {
+        return packError(status);
+    }
+    return packOK();
+}
 /// Insert a script in the schema search path
 extern "C" FFIResult* sqlynx_search_path_insert_script_at(sqlynx::SchemaSearchPath* path, size_t index,
                                                           sqlynx::Script* script) {
@@ -292,7 +300,7 @@ extern "C" void sqlynx_schemagraph_configure(sqlynx::SchemaGrid* graph, double b
 extern "C" FFIResult* sqlynx_schemagraph_load_script(sqlynx::SchemaGrid* graph, sqlynx::Script* script) {
     auto analyzed = script->analyzed_script;
     if (!analyzed) {
-        return packError(proto::StatusCode::GRAPH_INPUT_INVALID);
+        return packError(proto::StatusCode::GRAPH_INPUT_NOT_ANALYZED);
     }
     graph->LoadScript(analyzed);
 

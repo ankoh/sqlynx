@@ -301,7 +301,7 @@ std::vector<Parser::ExpectedSymbol> Parser::ParseUntil(ScannedScript& scanned, s
 std::pair<std::shared_ptr<ParsedScript>, proto::StatusCode> Parser::Parse(std::shared_ptr<ScannedScript> scanned,
                                                                           bool trace_scanning, bool trace_parsing) {
     if (scanned == nullptr) {
-        return {nullptr, proto::StatusCode::PARSER_INPUT_INVALID};
+        return {nullptr, proto::StatusCode::PARSER_INPUT_NOT_SCANNED};
     }
 
     // Parse the tokens

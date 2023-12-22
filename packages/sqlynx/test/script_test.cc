@@ -13,7 +13,7 @@ TEST(ScriptTest, ParsingBeforeScanning) {
     Script script{1};
     auto [scanned, status] = script.Parse();
     ASSERT_EQ(scanned, nullptr);
-    ASSERT_EQ(status, proto::StatusCode::PARSER_INPUT_INVALID);
+    ASSERT_EQ(status, proto::StatusCode::PARSER_INPUT_NOT_SCANNED);
 }
 
 TEST(ScriptTest, ExternalContextCollision) {
@@ -26,7 +26,7 @@ TEST(ScriptTest, ExternalContextCollision) {
     main_script.Parse();
 
     SchemaSearchPath search_path;
-    search_path.PushBack(schema_script.analyzed_script);
+    search_path.AppendScript(schema_script);
     auto [result, status] = main_script.Analyze(&search_path);
     ASSERT_EQ(status, proto::StatusCode::EXTERNAL_CONTEXT_COLLISION);
 }
@@ -35,7 +35,7 @@ TEST(ScriptTest, AnalyzingBeforeParsing) {
     Script script{1};
     auto [analyzed, status] = script.Analyze();
     ASSERT_EQ(analyzed, nullptr);
-    ASSERT_EQ(status, proto::StatusCode::ANALYZER_INPUT_INVALID);
+    ASSERT_EQ(status, proto::StatusCode::ANALYZER_INPUT_NOT_PARSED);
 }
 
 TEST(ScriptTest, TPCH_Q2) {
@@ -108,7 +108,7 @@ limit 100
     ASSERT_EQ(main_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(main_script.Parse().second, proto::StatusCode::OK);
     SchemaSearchPath search_path;
-    search_path.PushBack(external_script.analyzed_script);
+    search_path.AppendScript(external_script);
     ASSERT_EQ(main_script.Analyze(&search_path).second, proto::StatusCode::OK);
 }
 
