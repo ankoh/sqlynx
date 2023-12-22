@@ -23,6 +23,7 @@ interface SQLynxModuleExports {
 
     sqlynx_search_path_new: () => number;
     sqlynx_search_path_delete: (ptr: number) => number;
+    sqlynx_search_path_append_script: (path_ptr: number, script_ptr: number) => number;
     sqlynx_search_path_insert_script_at: (path_ptr: number, index: number, script_ptr: number) => number;
     sqlynx_search_path_update_script: (path_ptr: number, script_ptr: number) => number;
     sqlynx_search_path_erase_script: (path_ptr: number, script_ptr: number) => number;
@@ -103,6 +104,10 @@ export class SQLynx {
 
             sqlynx_search_path_new: parserExports['sqlynx_search_path_new'] as () => number,
             sqlynx_search_path_delete: parserExports['sqlynx_search_path_delete'] as (ptr: number) => number,
+            sqlynx_search_path_append_script: parserExports['sqlynx_search_path_append_script'] as (
+                path_ptr: number,
+                script_ptr: number,
+            ) => number,
             sqlynx_search_path_insert_script_at: parserExports['sqlynx_search_path_insert_script_at'] as (
                 path_ptr: number,
                 index: number,
@@ -202,7 +207,7 @@ export class SQLynx {
         return this.decoder.decode(dataArray);
     }
 
-    public readResult<T extends FlatBufferObject<T>>(resultPtr: number) {
+    public readFlatBufferResult<T extends FlatBufferObject<T>>(resultPtr: number) {
         const heapU8 = new Uint8Array(this.memory.buffer);
         const resultPtrU32 = resultPtr / 4;
         const heapU32 = new Uint32Array(this.memory.buffer);
@@ -211,6 +216,23 @@ export class SQLynx {
         const dataPtr = heapU32[resultPtrU32 + 2];
         if (statusCode == proto.StatusCode.OK) {
             return new FlatBufferRef<T>(this, resultPtr, dataPtr, dataLength);
+        } else {
+            const dataArray = heapU8.subarray(dataPtr, dataPtr + dataLength);
+            const error = this.decoder.decode(dataArray);
+            this.instanceExports.sqlynx_result_delete(resultPtr);
+            throw new Error(error);
+        }
+    }
+
+    public readStatusResult(resultPtr: number) {
+        const heapU8 = new Uint8Array(this.memory.buffer);
+        const resultPtrU32 = resultPtr / 4;
+        const heapU32 = new Uint32Array(this.memory.buffer);
+        const statusCode = heapU32[resultPtrU32];
+        const dataLength = heapU32[resultPtrU32 + 1];
+        const dataPtr = heapU32[resultPtrU32 + 2];
+        if (statusCode == proto.StatusCode.OK) {
+            this.instanceExports.sqlynx_result_delete(resultPtr);
         } else {
             const dataArray = heapU8.subarray(dataPtr, dataPtr + dataLength);
             const error = this.decoder.decode(dataArray);
@@ -306,7 +328,7 @@ export class SQLynxScript {
         this.scriptPtr = null;
     }
     /// Make sure the script is not null
-    protected assertScriptNotNull(): number {
+    public assertNotNull(): number {
         if (this.scriptPtr == null) {
             throw NULL_POINTER_EXCEPTION;
         }
@@ -314,7 +336,7 @@ export class SQLynxScript {
     }
     /// Insert text at an offset
     public insertTextAt(offset: number, text: string) {
-        const scriptPtr = this.assertScriptNotNull();
+        const scriptPtr = this.assertNotNull();
         // Short-circuit inserting texts of length 1
         if (text.length == 1) {
             this.api.instanceExports.sqlynx_script_insert_char_at(scriptPtr, offset, text.charCodeAt(0));
@@ -337,60 +359,60 @@ export class SQLynxScript {
     }
     /// Earse a range of characters
     public eraseTextRange(offset: number, length: number) {
-        const scriptPtr = this.assertScriptNotNull();
+        const scriptPtr = this.assertNotNull();
         // Insert into rope
         this.api.instanceExports.sqlynx_script_erase_text_range(scriptPtr, offset, length);
     }
     /// Convert a rope to a string
     public toString(): string {
-        const scriptPtr = this.assertScriptNotNull();
+        const scriptPtr = this.assertNotNull();
         const result = this.api.instanceExports.sqlynx_script_to_string(scriptPtr);
-        const resultBuffer = this.api.readResult(result);
+        const resultBuffer = this.api.readFlatBufferResult(result);
         const text = this.api.decoder.decode(resultBuffer.data);
         resultBuffer.delete();
         return text;
     }
     /// Parse the script
     public scan(): FlatBufferRef<proto.ScannedScript> {
-        const scriptPtr = this.assertScriptNotNull();
+        const scriptPtr = this.assertNotNull();
         const resultPtr = this.api.instanceExports.sqlynx_script_scan(scriptPtr);
-        return this.api.readResult<proto.ScannedScript>(resultPtr);
+        return this.api.readFlatBufferResult<proto.ScannedScript>(resultPtr);
     }
     /// Parse the script
     public parse(): FlatBufferRef<proto.ParsedScript> {
-        const scriptPtr = this.assertScriptNotNull();
+        const scriptPtr = this.assertNotNull();
         const resultPtr = this.api.instanceExports.sqlynx_script_parse(scriptPtr);
-        return this.api.readResult<proto.ParsedScript>(resultPtr);
+        return this.api.readFlatBufferResult<proto.ParsedScript>(resultPtr);
     }
     /// Analyze the script (optionally with an external script)
     public analyze(searchPath: SQLynxSchemaSearchPath | null = null): FlatBufferRef<proto.AnalyzedScript> {
-        const scriptPtr = this.assertScriptNotNull();
+        const scriptPtr = this.assertNotNull();
         const resultPtr = this.api.instanceExports.sqlynx_script_analyze(
             scriptPtr,
             searchPath == null ? 0 : searchPath.pathPtr,
         );
-        return this.api.readResult<proto.AnalyzedScript>(resultPtr);
+        return this.api.readFlatBufferResult<proto.AnalyzedScript>(resultPtr);
     }
     /// Pretty print the SQL string
     public format(): string {
-        const scriptPtr = this.assertScriptNotNull();
+        const scriptPtr = this.assertNotNull();
         const result = this.api.instanceExports.sqlynx_script_format(scriptPtr);
-        const resultBuffer = this.api.readResult(result);
+        const resultBuffer = this.api.readFlatBufferResult(result);
         const text = this.api.decoder.decode(resultBuffer.data);
         resultBuffer.delete();
         return text;
     }
     /// Move the cursor
     public moveCursor(textOffset: number): FlatBufferRef<proto.ScriptCursorInfo> {
-        const scriptPtr = this.assertScriptNotNull();
+        const scriptPtr = this.assertNotNull();
         const resultPtr = this.api.instanceExports.sqlynx_script_move_cursor(scriptPtr, textOffset);
-        return this.api.readResult<proto.ScriptCursorInfo>(resultPtr);
+        return this.api.readFlatBufferResult<proto.ScriptCursorInfo>(resultPtr);
     }
     /// Complete at the cursor position
     public completeAtCursor(limit: number): FlatBufferRef<proto.Completion> {
-        const scriptPtr = this.assertScriptNotNull();
+        const scriptPtr = this.assertNotNull();
         const resultPtr = this.api.instanceExports.sqlynx_script_complete_at_cursor(scriptPtr, limit);
-        return this.api.readResult<proto.Completion>(resultPtr);
+        return this.api.readFlatBufferResult<proto.Completion>(resultPtr);
     }
     /// Get the script statistics.
     /// Timings are useless in some browsers today.
@@ -398,9 +420,9 @@ export class SQLynxScript {
     /// One way out might be COEP but we cannot easily set that with GitHub pages.
     /// https://developer.mozilla.org/en-US/docs/Web/API/Performance_API/High_precision_timing#reduced_precision
     public getStatistics(): FlatBufferRef<proto.ScriptStatistics> {
-        const scriptPtr = this.assertScriptNotNull();
+        const scriptPtr = this.assertNotNull();
         const resultPtr = this.api.instanceExports.sqlynx_script_get_statistics(scriptPtr);
-        return this.api.readResult<proto.ScriptStatistics>(resultPtr);
+        return this.api.readFlatBufferResult<proto.ScriptStatistics>(resultPtr);
     }
 }
 
@@ -421,9 +443,19 @@ export class SQLynxSchemaSearchPath {
         }
         this.pathPtr = null;
     }
-    /// Append script
-    public pushScript(_script: SQLynxScript) {
-        /// XXX Append a script
+    /// Make sure the search path is not null
+    protected assertNotNull(): number {
+        if (this.pathPtr == null) {
+            throw NULL_POINTER_EXCEPTION;
+        }
+        return this.pathPtr!;
+    }
+    /// Append a script
+    public pushScript(script: SQLynxScript) {
+        const path_ptr = this.assertNotNull();
+        const script_ptr = script.assertNotNull();
+        const result = this.api.instanceExports.sqlynx_search_path_append_script(path_ptr, script_ptr);
+        this.api.readStatusResult(result);
     }
 }
 
@@ -454,16 +486,15 @@ export class SQLynxSchemaGraph {
         this.graphPtr = null;
     }
     /// Make sure the graph is not null
-    protected assertGraphNotNull(): number {
+    public assertNotNull(): number {
         if (this.graphPtr == null) {
             throw NULL_POINTER_EXCEPTION;
         }
         return this.graphPtr!;
     }
-
     /// Configure the graph
     public configure(config: SQLynxSchemaGraphConfig) {
-        const graphPtr = this.assertGraphNotNull();
+        const graphPtr = this.assertNotNull();
         this.api.instanceExports.sqlynx_schemagraph_configure(
             graphPtr,
             config.boardWidth,
@@ -476,8 +507,8 @@ export class SQLynxSchemaGraph {
     }
     /// Load a script
     public loadScript(script: SQLynxScript) {
-        const graphPtr = this.assertGraphNotNull();
+        const graphPtr = this.assertNotNull();
         const resultPtr = this.api.instanceExports.sqlynx_schemagraph_load_script(graphPtr, script.scriptPtr);
-        return this.api.readResult<proto.SchemaGraphLayout>(resultPtr);
+        return this.api.readFlatBufferResult<proto.SchemaGraphLayout>(resultPtr);
     }
 }

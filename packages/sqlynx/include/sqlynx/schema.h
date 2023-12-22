@@ -228,8 +228,8 @@ class SchemaSearchPath {
     /// Get the schemas
     auto& GetSchemaByContextId() const { return schema_by_context_id; }
 
-    /// Push a schema
-    proto::StatusCode PushBack(std::shared_ptr<Schema> schema);
+    /// Append a script
+    proto::StatusCode AppendScript(Script& script);
     /// Insert a script
     proto::StatusCode InsertScript(size_t idx, Script& script);
     /// Update a script

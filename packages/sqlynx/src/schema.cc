@@ -97,7 +97,11 @@ void Schema::ResolveTableColumn(std::string_view table_column, const SchemaSearc
     ResolveTableColumn(table_column, tmp);
 }
 
-proto::StatusCode SchemaSearchPath::PushBack(std::shared_ptr<Schema> schema) {
+proto::StatusCode SchemaSearchPath::AppendScript(Script& script) {
+    if (!script.analyzed_script) {
+        return proto::StatusCode::SCHEMA_SEARCH_PATH_SCRIPT_NOT_ANALYZED;
+    }
+    auto& schema = script.analyzed_script;
     auto iter = schema_by_context_id.find(schema->GetContextId());
     if (iter != schema_by_context_id.end() && &iter->second.get() != schema.get()) {
         return proto::StatusCode::EXTERNAL_CONTEXT_COLLISION;
@@ -109,7 +113,7 @@ proto::StatusCode SchemaSearchPath::PushBack(std::shared_ptr<Schema> schema) {
 
 proto::StatusCode SchemaSearchPath::InsertScript(size_t idx, Script& script) {
     if (!script.analyzed_script) {
-        return proto::StatusCode::SCHEMA_SEARCH_PATH_INPUT_INVALID;
+        return proto::StatusCode::SCHEMA_SEARCH_PATH_SCRIPT_NOT_ANALYZED;
     }
     schemas.insert(schemas.begin() + idx, script.analyzed_script);
     return proto::StatusCode::OK;
@@ -117,7 +121,7 @@ proto::StatusCode SchemaSearchPath::InsertScript(size_t idx, Script& script) {
 
 proto::StatusCode SchemaSearchPath::UpdateScript(Script& script) {
     if (!script.analyzed_script) {
-        return proto::StatusCode::SCHEMA_SEARCH_PATH_INPUT_INVALID;
+        return proto::StatusCode::SCHEMA_SEARCH_PATH_SCRIPT_NOT_ANALYZED;
     }
     for (auto iter = schemas.begin(); iter != schemas.end(); ++iter) {
         if ((*iter)->GetContextId() == script.context_id) {
