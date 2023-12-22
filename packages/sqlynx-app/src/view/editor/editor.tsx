@@ -144,7 +144,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                     },
                     scriptKey: targetKey,
                     targetScript: targetScriptData.script,
-                    schemaSearchPath: ctx.schemaSearchPath,
+                    schemaRegistry: ctx.schemaRegistry,
                     scriptBuffers: targetScriptData.processed,
                     scriptCursor: targetScriptData.cursor,
                     focusedColumnRefs: ctx.focus?.columnRefs ?? null,
@@ -165,7 +165,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                 },
                 scriptKey: targetKey,
                 targetScript: targetScriptData.script,
-                schemaSearchPath: ctx.schemaSearchPath,
+                schemaRegistry: ctx.schemaRegistry,
                 scriptBuffers: targetScriptData.processed,
                 scriptCursor: targetScriptData.cursor,
                 focusedColumnRefs: ctx.focus?.columnRefs ?? null,
@@ -187,7 +187,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         activeTab,
         ctx.scripts[ScriptKey.MAIN_SCRIPT],
         ctx.scripts[ScriptKey.SCHEMA_SCRIPT],
-        ctx.schemaSearchPath,
+        ctx.schemaRegistry,
         updateScript,
     ]);
 

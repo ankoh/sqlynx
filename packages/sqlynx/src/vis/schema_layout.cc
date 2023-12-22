@@ -43,7 +43,7 @@ void SchemaGrid::Configure(const SchemaGrid::Config& c) {
 void SchemaGrid::PrepareLayout() {
     // Internal and external tables
     size_t table_count = script->GetTables().size();
-    for (auto& schema : script->GetSchemaSearchPath().GetSchemas()) {
+    for (auto& [rank, schema] : script->GetSchemaRegistry().GetRankedSchemas()) {
         table_count += schema->GetTables().size();
     }
     // Load adjacency map
@@ -56,7 +56,7 @@ void SchemaGrid::PrepareLayout() {
         nodes.emplace_back(nodes.size(), table.table_id, 0);
     }
     // Add external tables
-    for (auto& schema : script->GetSchemaSearchPath().GetSchemas()) {
+    for (auto& [rank, schema] : script->GetSchemaRegistry().GetRankedSchemas()) {
         for (auto& table : schema->GetTables()) {
             nodes_by_table_id.insert({table.table_id, nodes.size()});
             nodes.emplace_back(nodes.size(), table.table_id, 0);

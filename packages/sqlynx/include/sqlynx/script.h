@@ -268,8 +268,8 @@ class AnalyzedScript : public Schema {
     AnalyzedScript(std::shared_ptr<ParsedScript> parsed, SchemaRegistry registry, std::string_view database_name,
                    std::string_view schema_name);
 
-    /// Get the schema search path
-    auto& GetSchemaSearchPath() const { return schema_registry; }
+    /// Get the schema registry
+    auto& GetSchemaRegistry() const { return schema_registry; }
     /// Get the name search index
     const Schema::NameSearchIndex& GetNameSearchIndex() override;
     /// Build the program
@@ -339,6 +339,9 @@ class Script {
    public:
     /// Constructor
     Script(uint32_t context_id = 1);
+
+    /// Get the context id
+    auto GetContextId() const { return context_id; }
 
     /// Insert a unicode codepoint at an offset
     void InsertCharAt(size_t offset, uint32_t unicode);

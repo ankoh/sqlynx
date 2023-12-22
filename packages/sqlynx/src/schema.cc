@@ -97,18 +97,18 @@ void Schema::ResolveTableColumn(std::string_view table_column, const SchemaRegis
     ResolveTableColumn(table_column, tmp);
 }
 
-proto::StatusCode SchemaRegistry::InsertScript(size_t idx, Script& script) {
+proto::StatusCode SchemaRegistry::AddScript(Script& script, Rank rank) {
     if (!script.analyzed_script) {
         return proto::StatusCode::SCHEMA_REGISTRY_SCRIPT_NOT_ANALYZED;
     }
     auto& schema = script.analyzed_script;
-    auto iter = schema_by_context_id.find(schema->GetContextId());
-    if (iter != schema_by_context_id.end() && &iter->second.get() != schema.get()) {
+    auto iter = scripts.find(schema->GetContextId());
+    if (iter != scripts.end() && iter->second.script.get() != schema.get()) {
         return proto::StatusCode::EXTERNAL_CONTEXT_COLLISION;
     }
-    schema_by_context_id.insert({schema->GetContextId(), *schema});
-    idx = std::min(idx, schemas.size());
-    schemas.insert(schemas.begin() + idx, schema);
+    scripts.insert({schema->GetContextId(), {.script = schema, .rank = rank}});
+    schemas.insert({schema->GetContextId(), *schema});
+    ranked_schemas.insert({rank, schema.get()});
     return proto::StatusCode::OK;
 }
 
@@ -116,48 +116,37 @@ proto::StatusCode SchemaRegistry::UpdateScript(Script& script) {
     if (!script.analyzed_script) {
         return proto::StatusCode::SCHEMA_REGISTRY_SCRIPT_NOT_ANALYZED;
     }
-    for (auto iter = schemas.begin(); iter != schemas.end(); ++iter) {
-        if ((*iter)->GetContextId() == script.context_id) {
-            *iter = script.analyzed_script;
-            break;
-        }
+    auto iter = scripts.find(script.GetContextId());
+    if (iter == scripts.end()) {
+        return proto::StatusCode::SCHEMA_REGISTRY_SCRIPT_UNKNOWN;
     }
+    iter->second.script = script.analyzed_script;
     return proto::StatusCode::OK;
 }
 
 proto::StatusCode SchemaRegistry::EraseScript(Script& script) {
-    for (auto iter = schemas.begin(); iter != schemas.end(); ++iter) {
-        if ((*iter)->GetContextId() == script.context_id) {
-            schema_by_context_id.erase((*iter)->GetContextId());
-            schemas.erase(iter);
-            break;
-        }
+    auto iter = scripts.find(script.context_id);
+    if (iter == scripts.end()) {
+        return proto::StatusCode::SCHEMA_REGISTRY_SCRIPT_UNKNOWN;
     }
+    auto rank = iter->second.rank;
+    ranked_schemas.erase({rank, iter->second.script.get()});
+    scripts.erase(iter);
+    schemas.erase(script.context_id);
     return proto::StatusCode::OK;
 }
 
-std::shared_ptr<Schema> SchemaRegistry::ResolveSchema(uint32_t context_id) const {
-    for (auto& schema : schemas) {
-        if (schema->GetContextId() == context_id) {
-            return schema;
-        }
-    }
-    return nullptr;
-}
-
 std::optional<Schema::ResolvedTable> SchemaRegistry::ResolveTable(ContextObjectID table_id) const {
-    for (auto& schema : schemas) {
-        if (schema->GetContextId() == table_id.GetContext()) {
-            return schema->ResolveTable(table_id);
-        }
+    if (auto iter = schemas.find(table_id.GetContext()); iter != schemas.end()) {
+        return iter->second.get().ResolveTable(table_id);
     }
     return std::nullopt;
 }
 std::optional<Schema::ResolvedTable> SchemaRegistry::ResolveTable(Schema::QualifiedTableName table_name) const {
-    for (auto& schema : schemas) {
-        if (schema->GetDatabaseName() == table_name.database_name &&
-            schema->GetSchemaName() == table_name.schema_name) {
-            return schema->ResolveTable(table_name.table_name);
+    if (auto iter = ranked_schemas.begin(); iter != ranked_schemas.end()) {
+        auto& schema = *iter->second;
+        if (schema.GetDatabaseName() == table_name.database_name && schema.GetSchemaName() == table_name.schema_name) {
+            return schema.ResolveTable(table_name.table_name);
         }
     }
     return std::nullopt;
@@ -165,7 +154,7 @@ std::optional<Schema::ResolvedTable> SchemaRegistry::ResolveTable(Schema::Qualif
 
 void SchemaRegistry::ResolveTableColumn(std::string_view table_column,
                                         std::vector<Schema::ResolvedTableColumn>& out) const {
-    for (auto& schema : schemas) {
-        schema->ResolveTableColumn(table_column, out);
+    if (auto iter = ranked_schemas.begin(); iter != ranked_schemas.end()) {
+        iter->second->ResolveTableColumn(table_column, out);
     }
 }

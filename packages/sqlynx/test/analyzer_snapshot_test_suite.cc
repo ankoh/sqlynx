@@ -38,7 +38,7 @@ TEST_P(AnalyzerSnapshotTestSuite, Test) {
     ASSERT_EQ(main_parsed.second, proto::StatusCode::OK);
 
     SchemaRegistry registry;
-    registry.InsertScript(0, external_script);
+    registry.AddScript(external_script, 0);
     auto main_analyzed = main_script.Analyze(&registry);
     ASSERT_EQ(main_analyzed.second, proto::StatusCode::OK);
 

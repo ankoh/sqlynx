@@ -16,7 +16,7 @@ export interface SQLynxScriptUpdate {
     // The currently active script in the editor
     targetScript: sqlynx.SQLynxScript | null;
     // The schema script
-    schemaSearchPath: sqlynx.SQLynxSchemaSearchPath | null;
+    schemaRegistry: sqlynx.SQLynxSchemaRegistry | null;
     /// The previous processed script buffers (if any)
     scriptBuffers: SQLynxScriptBuffers;
     /// The script cursor
@@ -53,14 +53,14 @@ type SQLynxEditorState = SQLynxScriptUpdate;
 /// Analyze a new script
 export function parseAndAnalyzeScript(
     script: sqlynx.SQLynxScript,
-    searchPath: sqlynx.SQLynxSchemaSearchPath | null,
+    registry: sqlynx.SQLynxSchemaRegistry | null,
 ): SQLynxScriptBuffers {
     // Scan the script
     const scanned = script.scan();
     // Parse the script
     const parsed = script.parse();
     // Analyze the script
-    const analyzed = script.analyze(searchPath);
+    const analyzed = script.analyze(registry);
 
     return { scanned, parsed, analyzed, destroy: destroyBuffers };
 }
@@ -69,12 +69,12 @@ export function parseAndAnalyzeScript(
 export function analyzeScript(
     buffers: SQLynxScriptBuffers,
     script: sqlynx.SQLynxScript,
-    searchPath: sqlynx.SQLynxSchemaSearchPath | null,
+    registry: sqlynx.SQLynxSchemaRegistry | null,
 ): SQLynxScriptBuffers {
     // Delete the old analysis
     buffers.analyzed?.delete();
     // Analyze the script
-    const analyzed = script.analyze(searchPath);
+    const analyzed = script.analyze(registry);
     // Return the new script
     return { ...buffers, analyzed };
 }
@@ -110,7 +110,7 @@ export const SQLynxProcessor: StateField<SQLynxEditorState> = StateField.define<
             },
             scriptKey: 0,
             targetScript: null,
-            schemaSearchPath: null,
+            schemaRegistry: null,
             scriptBuffers: {
                 scanned: null,
                 parsed: null,
@@ -148,7 +148,7 @@ export const SQLynxProcessor: StateField<SQLynxEditorState> = StateField.define<
                 };
 
                 // Entire script changed?
-                if (state.targetScript !== next.targetScript || state.schemaSearchPath !== next.schemaSearchPath) {
+                if (state.targetScript !== next.targetScript || state.schemaRegistry !== next.schemaRegistry) {
                     return next;
                 }
             }
@@ -174,7 +174,7 @@ export const SQLynxProcessor: StateField<SQLynxEditorState> = StateField.define<
                     },
                 );
                 // Analyze the new script
-                next.scriptBuffers = parseAndAnalyzeScript(next.targetScript!, next.schemaSearchPath);
+                next.scriptBuffers = parseAndAnalyzeScript(next.targetScript!, next.schemaRegistry);
                 const cursorBuffer = next.targetScript!.moveCursor(selection ?? 0);
                 next.scriptCursor = cursorBuffer.read(new sqlynx.proto.ScriptCursorInfo()).unpack();
                 cursorBuffer.delete();

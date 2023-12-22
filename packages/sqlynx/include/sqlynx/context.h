@@ -8,9 +8,11 @@
 
 namespace sqlynx {
 
+using ContextID = uint32_t;
+
 /// A FlatBuffer identifier annotated with a context
 struct ContextObjectID {
-    constexpr static uint32_t KEYWORD_CONTEXT_ID = 0xFFFFFFFF;
+    constexpr static ContextID KEYWORD_CONTEXT_ID = 0xFFFFFFFF;
 
    protected:
     /// The context id

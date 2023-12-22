@@ -93,7 +93,7 @@ TEST(SchemaGridTest, TPCHQ2) {
     ASSERT_EQ(query_script.Parse().second, proto::StatusCode::OK);
 
     SchemaRegistry registry;
-    registry.InsertScript(0, schema_script);
+    registry.AddScript(schema_script, 0);
     ASSERT_EQ(query_script.Analyze(&registry).second, proto::StatusCode::OK);
 
     SchemaGrid grid;
