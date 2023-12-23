@@ -211,7 +211,7 @@ jobs:
                   submodules: 'recursive'
                   fetch-depth: 0
 
-            - uses: actions/download-artifact@v3
+            - uses: actions/download-artifact@v4
               with:
                   name: sqlynx_parser_wasm_o3
                   path: ./packages/sqlynx/build/wasm/o3/
@@ -262,7 +262,7 @@ jobs:
                   submodules: 'recursive'
                   fetch-depth: 0
 
-            - uses: actions/download-artifact@v3
+            - uses: actions/download-artifact@v4
               with:
                   name: sqlynx_jslib
                   path: ./packages/sqlynx-wasm/dist
@@ -295,7 +295,7 @@ jobs:
                   submodules: 'recursive'
                   fetch-depth: 0
 
-            - uses: actions/download-artifact@v3
+            - uses: actions/download-artifact@v4
               with:
                   name: sqlynx_jslib
                   path: ./packages/sqlynx-wasm/dist
@@ -331,7 +331,7 @@ jobs:
             pages: write
             id-token: write
         steps:
-            - uses: actions/download-artifact@v3
+            - uses: actions/download-artifact@v4
               with:
                   name: sqlynx_app
                   path: ./page
@@ -356,12 +356,12 @@ jobs:
                   submodules: 'recursive'
                   fetch-depth: 0
 
-            - uses: actions/download-artifact@v3
+            - uses: actions/download-artifact@v4
               with:
                   name: sqlynx_coverage_native_o0
                   path: ./packages/sqlynx/build/coverage/
 
-            - uses: actions/download-artifact@v3
+            - uses: actions/download-artifact@v4
               with:
                   name: sqlynx_coverage_js
                   path: ./packages/sqlynx-wasm/coverage/
