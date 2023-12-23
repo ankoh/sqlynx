@@ -1,6 +1,6 @@
 <completion-snapshots>
     <completion-snapshot name="column_name_in_scope">
-        <script context="external">
+        <script id="2">
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
 create table partsupp (ps_partkey integer not null, ps_suppkey integer not null, ps_availqty integer not null, ps_supplycost decimal(12,2) not null, ps_comment varchar(199) not null, primary key (ps_partkey,ps_suppkey));
@@ -10,10 +10,10 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
 create table nation (n_nationkey integer not null, n_name char(25) not null, n_regionkey integer not null, n_comment varchar(152) not null, primary key (n_nationkey));
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
         </script>
-        <script context="main">
+        <script id="1">
             select * from lineitem where ke
         </script>
-        <cursor context="main">
+        <cursor script="1">
             <search text="ke" index="2" />
         </cursor>
         <completions limit="3" symbol="NAME" relative="END_OF_SYMBOL" strategy="COLUMN_REF">

@@ -45,9 +45,9 @@ TEST_P(AnalyzerSnapshotTestSuite, Test) {
     // Encode the program
     pugi::xml_document out;
     auto xml_external = out.append_child("script");
-    xml_external.append_attribute("context").set_value("external");
+    xml_external.append_attribute("id").set_value("2");
     auto xml_main = out.append_child("script");
-    xml_main.append_attribute("context").set_value("main");
+    xml_main.append_attribute("id").set_value("1");
     AnalyzerSnapshotTest::EncodeScript(out, *main_analyzed.first, external_analyzed.first);
 
     // Test the XMLs

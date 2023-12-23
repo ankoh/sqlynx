@@ -111,9 +111,12 @@ static void generate_analyzer_snapshots(const std::filesystem::path& source_dir)
             auto name = test.attribute("name").as_string();
             std::cout << "  TEST " << name << std::endl;
 
-            // Read the external script
-            auto xml_external = test.find_child_by_attribute("script", "context", "external");
+            auto xml_main = test.find_child_by_attribute("script", "id", "1");
+            auto xml_external = test.find_child_by_attribute("script", "id", "2");
+            std::string main_text = xml_main.child("input").last_child().value();
             std::string external_text = xml_external.child("input").last_child().value();
+
+            // Read the external script
             Script external_script{2};
             external_script.InsertTextAt(0, external_text);
             auto external_scan = external_script.Scan();
@@ -133,8 +136,6 @@ static void generate_analyzer_snapshots(const std::filesystem::path& source_dir)
             }
 
             /// Read the script
-            auto xml_main = test.find_child_by_attribute("script", "context", "main");
-            std::string main_text = xml_main.child("input").last_child().value();
             Script main_script{1};
             main_script.InsertTextAt(0, main_text);
             auto main_scan = main_script.Scan();
@@ -198,9 +199,12 @@ static void generate_completion_snapshots(const std::filesystem::path& source_di
             auto name = test.attribute("name").as_string();
             std::cout << "  TEST " << name << std::endl;
 
-            // Prepare the external script
-            auto xml_external = test.find_child_by_attribute("script", "context", "external");
+            auto xml_main = test.find_child_by_attribute("script", "id", "1");
+            auto xml_external = test.find_child_by_attribute("script", "id", "2");
+            std::string main_text = xml_main.last_child().value();
             std::string external_text = xml_external.last_child().value();
+
+            // Prepare the external script
             Script external_script{1};
             external_script.InsertTextAt(0, external_text);
             auto external_scan = external_script.Scan();
@@ -220,8 +224,6 @@ static void generate_completion_snapshots(const std::filesystem::path& source_di
             }
 
             // Prepare the main script
-            auto xml_main = test.find_child_by_attribute("script", "context", "main");
-            std::string main_text = xml_main.last_child().value();
             Script main_script{2};
             main_script.InsertTextAt(0, main_text);
             auto main_scan = main_script.Scan();
@@ -243,7 +245,7 @@ static void generate_completion_snapshots(const std::filesystem::path& source_di
             }
 
             auto xml_cursor = test.child("cursor");
-            std::string cursor_context = xml_cursor.attribute("context").value();
+            std::string cursor_script = xml_cursor.attribute("script").value();
             auto xml_cursor_search = xml_cursor.child("search");
             auto cursor_search_text = xml_cursor_search.attribute("text").value();
             auto cursor_search_index = xml_cursor_search.attribute("index").as_int();
@@ -252,18 +254,18 @@ static void generate_completion_snapshots(const std::filesystem::path& source_di
             Script* target_script = nullptr;
             std::string_view target_text;
 
-            if (cursor_context == "main") {
+            if (cursor_script == "1") {
                 search_pos = main_text.find(cursor_search_text);
                 target_script = &main_script;
                 target_text = main_text;
 
-            } else if (cursor_context == "external") {
+            } else if (cursor_script == "2") {
                 search_pos = external_text.find(cursor_search_text);
                 target_script = &external_script;
                 target_text = external_text;
 
             } else {
-                std::cout << "  ERROR invalid cursor context `" << cursor_context << "`" << std::endl;
+                std::cout << "  ERROR invalid cursor target `" << cursor_script << "`" << std::endl;
                 continue;
             }
 

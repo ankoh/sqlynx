@@ -41,16 +41,16 @@ TEST_P(CompletionSnapshotTestSuite, Test) {
     size_t search_pos = 0;
     Script* target_script = nullptr;
 
-    if (test->cursor_context == "main") {
+    if (test->cursor_script == "1") {
         search_pos = test->input_main.find(test->cursor_search_string);
         target_script = &main_script;
 
-    } else if (test->cursor_context == "external") {
+    } else if (test->cursor_script == "2") {
         search_pos = test->input_external.find(test->cursor_search_string);
         target_script = &external_script;
 
     } else {
-        FAIL() << "unexpected cursor context " << test->cursor_context;
+        FAIL() << "unexpected cursor target " << test->cursor_script;
     }
     auto cursor_pos = search_pos + test->cursor_search_index;
     ASSERT_NE(search_pos, std::string::npos);
