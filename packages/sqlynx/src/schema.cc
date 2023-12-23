@@ -104,7 +104,7 @@ proto::StatusCode SchemaRegistry::AddScript(Script& script, Rank rank) {
     auto& schema = script.analyzed_script;
     auto iter = scripts.find(schema->GetOrigin());
     if (iter != scripts.end() && iter->second.script.get() != schema.get()) {
-        return proto::StatusCode::EXTERNAL_CONTEXT_COLLISION;
+        return proto::StatusCode::ORIGIN_ID_COLLISION;
     }
     scripts.insert({schema->GetOrigin(), {.script = schema, .rank = rank}});
     schemas.insert({schema->GetOrigin(), *schema});

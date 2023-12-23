@@ -67,8 +67,8 @@ static FFIResult* packError(proto::StatusCode status) {
         case proto::StatusCode::COMPLETION_MISSES_SCANNER_TOKEN:
             message = "Completion requires a scanner token";
             break;
-        case proto::StatusCode::EXTERNAL_CONTEXT_COLLISION:
-            message = "Collision on external context identifier";
+        case proto::StatusCode::ORIGIN_ID_COLLISION:
+            message = "Collision on origin identifier";
             break;
         case proto::StatusCode::OK:
             message = "";
