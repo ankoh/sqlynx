@@ -554,7 +554,7 @@ std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(const SchemaRegist
     // Check if the external context id is unique
     if (schema_registry) {
         if (schema_registry->GetScripts().contains(origin_id)) {
-            return {nullptr, proto::StatusCode::EXTERNAL_CONTEXT_COLLISION};
+            return {nullptr, proto::StatusCode::ORIGIN_ID_COLLISION};
         }
     }
 
