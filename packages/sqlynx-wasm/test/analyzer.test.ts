@@ -36,7 +36,7 @@ describe('SQLynx Analyzer', () => {
         expect(() => {
             const analyzed = mainScript.analyze(searchPath);
             analyzed.delete();
-        }).toThrow(new Error('Collision on external context identifier'));
+        }).toThrow(new Error('Collision on origin identifier'));
 
         searchPath.delete();
         schemaScript.delete();
