@@ -68,7 +68,7 @@ SQLynx maintains B+-tree ropes, dictionary-encodes and tags SQL object names in-
 ### What does "fast" mean in numbers?
 
 Here are timings for TPC-DS Q1 on my laptop. All steps run single-threaded on a M1Max.
-SQLynx spends **5us** with scanning, **10us** with parsing, **12us** with analyzing and **5us** with building the completion index.
+SQLynx spends **5us** with scanning, **10us** with parsing, and **15us** with analyzing.
 
 ```
 Run on (10 X 24.1324 MHz CPU s)
