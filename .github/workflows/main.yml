@@ -45,7 +45,7 @@ jobs:
               run: |
                   ./scripts/build_parser_wasm.sh ${{ matrix.build_type }}
 
-            - uses: actions/upload-artifact@v3
+            - uses: actions/upload-artifact@v4
               with:
                   name: sqlynx_parser_wasm_${{ matrix.build_type }}
                   path: ./packages/sqlynx/build/wasm/${{ matrix.build_type }}/sqlynx.wasm
@@ -138,7 +138,7 @@ jobs:
                   --ignore-filename-regex='.*/.*\.list' \
                   ${core_BUILD_DIR}/tester > ${core_COVERAGE_DIR}/lcov.info
 
-            - uses: actions/upload-artifact@v3
+            - uses: actions/upload-artifact@v4
               with:
                   name: sqlynx_coverage_native_${{ matrix.build_type }}
                   path: ./packages/sqlynx/build/coverage/lcov.info
@@ -239,13 +239,13 @@ jobs:
               run: |
                   yarn workspace @ankoh/sqlynx test:coverage
 
-            - uses: actions/upload-artifact@v3
+            - uses: actions/upload-artifact@v4
               with:
                   name: sqlynx_jslib
                   path: ./packages/sqlynx-wasm/dist
                   retention-days: 1
 
-            - uses: actions/upload-artifact@v3
+            - uses: actions/upload-artifact@v4
               with:
                   name: sqlynx_coverage_js
                   path: ./packages/sqlynx-wasm/coverage/lcov.info
@@ -278,7 +278,7 @@ jobs:
               run: |
                   yarn workspace @ankoh/sqlynx-app pwa:build:o3
 
-            - uses: actions/upload-artifact@v3
+            - uses: actions/upload-artifact@v4
               with:
                   name: sqlynx_app
                   path: ./packages/sqlynx-app/build/pwa/o3
@@ -310,7 +310,7 @@ jobs:
               run: |
                   yarn workspace @ankoh/sqlynx-lsp build
 
-            - uses: actions/upload-artifact@v3
+            - uses: actions/upload-artifact@v4
               with:
                   name: sqlynx_lsp
                   path: ./packages/sqlynx-lsp/dist/
