@@ -136,6 +136,7 @@ static void generate_analyzer_snapshots(const std::filesystem::path& source_dir)
             auto xml_main = test.find_child_by_attribute("script", "context", "main");
             std::string main_text = xml_main.child("input").last_child().value();
             Script main_script{1};
+            main_script.InsertTextAt(0, main_text);
             auto main_scan = main_script.Scan();
             if (main_scan.second != proto::StatusCode::OK) {
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(main_scan.second) << std::endl;
