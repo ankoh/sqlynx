@@ -71,20 +71,19 @@ Here are timings for TPC-DS Q1 on my laptop. All steps run single-threaded on a 
 SQLynx spends **5us** with scanning, **10us** with parsing, **12us** with analyzing and **5us** with building the completion index.
 
 ```
-Run on (10 X 24.1194 MHz CPU s)
+Run on (10 X 24.1324 MHz CPU s)
 CPU Caches:
   L1 Data 64 KiB
   L1 Instruction 128 KiB
   L2 Unified 4096 KiB (x10)
-Load Average: 4.82, 4.40, 3.82
+Load Average: 10.72, 6.78, 5.17
 ----------------------------------------------------------
 Benchmark                Time             CPU   Iterations
 ----------------------------------------------------------
-scan_query            5037 ns         5032 ns       125372
-parse_query          10199 ns        10193 ns        68720
-analyze_query        12504 ns        12502 ns        54143
-index_query           4994 ns         4990 ns       138274
-move_cursor           77.1 ns         77.1 ns      9054105
-complete_cursor       6121 ns         6121 ns       111378
-compute_layout       11091 ns        11090 ns        62143
+scan_query            5367 ns         5349 ns       100176
+parse_query          10602 ns        10542 ns        64493
+analyze_query        15533 ns        15495 ns        45057
+move_cursor            435 ns          434 ns      1623384
+complete_cursor       6200 ns         6173 ns       111914
+compute_layout       13414 ns        13377 ns        53352
 ```
