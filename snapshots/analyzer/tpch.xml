@@ -15,7 +15,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
             <tables>
-                <table loc="1..309" text="create tab.._partkey))">
+                <table name="part" loc="1..309" text="create tab.._partkey))">
                     <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
                     <column name="p_name" loc="48..75" text="p_name var..) not null" />
                     <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
@@ -26,7 +26,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
                     <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
                 </table>
-                <table loc="311..568" text="create tab.._suppkey))">
+                <table name="supplier" loc="311..568" text="create tab.._suppkey))">
                     <column name="s_suppkey" loc="334..360" text="s_suppkey ..r not null" />
                     <column name="s_name" loc="362..386" text="s_name cha..) not null" />
                     <column name="s_address" loc="388..418" text="s_address ..) not null" />
@@ -35,14 +35,14 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="s_acctbal" loc="477..509" text="s_acctbal ..) not null" />
                     <column name="s_comment" loc="511..542" text="s_comment ..) not null" />
                 </table>
-                <table loc="570..789" text="create tab.._suppkey))">
+                <table name="partsupp" loc="570..789" text="create tab.._suppkey))">
                     <column name="ps_partkey" loc="593..620" text="ps_partkey..r not null" />
                     <column name="ps_suppkey" loc="622..649" text="ps_suppkey..r not null" />
                     <column name="ps_availqty" loc="651..679" text="ps_availqt..r not null" />
                     <column name="ps_supplycost" loc="681..717" text="ps_supplyc..) not null" />
                     <column name="ps_comment" loc="719..751" text="ps_comment..) not null" />
                 </table>
-                <table loc="791..1083" text="create tab.._custkey))">
+                <table name="customer" loc="791..1083" text="create tab.._custkey))">
                     <column name="c_custkey" loc="814..840" text="c_custkey ..r not null" />
                     <column name="c_name" loc="842..869" text="c_name var..) not null" />
                     <column name="c_address" loc="871..901" text="c_address ..) not null" />
@@ -52,7 +52,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="c_mktsegment" loc="994..1024" text="c_mktsegme..) not null" />
                     <column name="c_comment" loc="1026..1057" text="c_comment ..) not null" />
                 </table>
-                <table loc="1085..1411" text="create tab..orderkey))">
+                <table name="orders" loc="1085..1411" text="create tab..orderkey))">
                     <column name="o_orderkey" loc="1106..1133" text="o_orderkey..r not null" />
                     <column name="o_custkey" loc="1135..1161" text="o_custkey ..r not null" />
                     <column name="o_orderstatus" loc="1163..1193" text="o_ordersta..) not null" />
@@ -63,7 +63,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="o_shippriority" loc="1321..1352" text="o_shipprio..r not null" />
                     <column name="o_comment" loc="1354..1384" text="o_comment ..) not null" />
                 </table>
-                <table loc="1413..1971" text="create tab..nenumber))">
+                <table name="lineitem" loc="1413..1971" text="create tab..nenumber))">
                     <column name="l_orderkey" loc="1436..1463" text="l_orderkey..r not null" />
                     <column name="l_partkey" loc="1465..1491" text="l_partkey ..r not null" />
                     <column name="l_suppkey" loc="1493..1519" text="l_suppkey ..r not null" />
@@ -81,18 +81,18 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="l_shipmode" loc="1871..1899" text="l_shipmode..) not null" />
                     <column name="l_comment" loc="1901..1931" text="l_comment ..) not null" />
                 </table>
-                <table loc="1973..2139" text="create tab..ationkey))">
+                <table name="nation" loc="1973..2139" text="create tab..ationkey))">
                     <column name="n_nationkey" loc="1994..2022" text="n_nationke..r not null" />
                     <column name="n_name" loc="2024..2048" text="n_name cha..) not null" />
                     <column name="n_regionkey" loc="2050..2078" text="n_regionke..r not null" />
                     <column name="n_comment" loc="2080..2111" text="n_comment ..) not null" />
                 </table>
-                <table loc="2141..2277" text="create tab..egionkey))">
+                <table name="region" loc="2141..2277" text="create tab..egionkey))">
                     <column name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     <column name="r_name" loc="2192..2216" text="r_name cha..) not null" />
                     <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
                 </table>
-                <table loc="1..309" text="create tab.._partkey))">
+                <table name="part" loc="1..309" text="create tab.._partkey))">
                     <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
                     <column name="p_name" loc="48..75" text="p_name var..) not null" />
                     <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
@@ -103,7 +103,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
                     <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
                 </table>
-                <table loc="311..568" text="create tab.._suppkey))">
+                <table name="supplier" loc="311..568" text="create tab.._suppkey))">
                     <column name="s_suppkey" loc="334..360" text="s_suppkey ..r not null" />
                     <column name="s_name" loc="362..386" text="s_name cha..) not null" />
                     <column name="s_address" loc="388..418" text="s_address ..) not null" />
@@ -112,14 +112,14 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="s_acctbal" loc="477..509" text="s_acctbal ..) not null" />
                     <column name="s_comment" loc="511..542" text="s_comment ..) not null" />
                 </table>
-                <table loc="570..789" text="create tab.._suppkey))">
+                <table name="partsupp" loc="570..789" text="create tab.._suppkey))">
                     <column name="ps_partkey" loc="593..620" text="ps_partkey..r not null" />
                     <column name="ps_suppkey" loc="622..649" text="ps_suppkey..r not null" />
                     <column name="ps_availqty" loc="651..679" text="ps_availqt..r not null" />
                     <column name="ps_supplycost" loc="681..717" text="ps_supplyc..) not null" />
                     <column name="ps_comment" loc="719..751" text="ps_comment..) not null" />
                 </table>
-                <table loc="791..1083" text="create tab.._custkey))">
+                <table name="customer" loc="791..1083" text="create tab.._custkey))">
                     <column name="c_custkey" loc="814..840" text="c_custkey ..r not null" />
                     <column name="c_name" loc="842..869" text="c_name var..) not null" />
                     <column name="c_address" loc="871..901" text="c_address ..) not null" />
@@ -129,7 +129,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="c_mktsegment" loc="994..1024" text="c_mktsegme..) not null" />
                     <column name="c_comment" loc="1026..1057" text="c_comment ..) not null" />
                 </table>
-                <table loc="1085..1411" text="create tab..orderkey))">
+                <table name="orders" loc="1085..1411" text="create tab..orderkey))">
                     <column name="o_orderkey" loc="1106..1133" text="o_orderkey..r not null" />
                     <column name="o_custkey" loc="1135..1161" text="o_custkey ..r not null" />
                     <column name="o_orderstatus" loc="1163..1193" text="o_ordersta..) not null" />
@@ -140,7 +140,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="o_shippriority" loc="1321..1352" text="o_shipprio..r not null" />
                     <column name="o_comment" loc="1354..1384" text="o_comment ..) not null" />
                 </table>
-                <table loc="1413..1971" text="create tab..nenumber))">
+                <table name="lineitem" loc="1413..1971" text="create tab..nenumber))">
                     <column name="l_orderkey" loc="1436..1463" text="l_orderkey..r not null" />
                     <column name="l_partkey" loc="1465..1491" text="l_partkey ..r not null" />
                     <column name="l_suppkey" loc="1493..1519" text="l_suppkey ..r not null" />
@@ -158,18 +158,18 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="l_shipmode" loc="1871..1899" text="l_shipmode..) not null" />
                     <column name="l_comment" loc="1901..1931" text="l_comment ..) not null" />
                 </table>
-                <table loc="1973..2139" text="create tab..ationkey))">
+                <table name="nation" loc="1973..2139" text="create tab..ationkey))">
                     <column name="n_nationkey" loc="1994..2022" text="n_nationke..r not null" />
                     <column name="n_name" loc="2024..2048" text="n_name cha..) not null" />
                     <column name="n_regionkey" loc="2050..2078" text="n_regionke..r not null" />
                     <column name="n_comment" loc="2080..2111" text="n_comment ..) not null" />
                 </table>
-                <table loc="2141..2277" text="create tab..egionkey))">
+                <table name="region" loc="2141..2277" text="create tab..egionkey))">
                     <column name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     <column name="r_name" loc="2192..2216" text="r_name cha..) not null" />
                     <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
                 </table>
-                <table loc="1..309" text="create tab.._partkey))">
+                <table name="part" loc="1..309" text="create tab.._partkey))">
                     <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
                     <column name="p_name" loc="48..75" text="p_name var..) not null" />
                     <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
@@ -180,7 +180,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
                     <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
                 </table>
-                <table loc="311..568" text="create tab.._suppkey))">
+                <table name="supplier" loc="311..568" text="create tab.._suppkey))">
                     <column name="s_suppkey" loc="334..360" text="s_suppkey ..r not null" />
                     <column name="s_name" loc="362..386" text="s_name cha..) not null" />
                     <column name="s_address" loc="388..418" text="s_address ..) not null" />
@@ -189,14 +189,14 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="s_acctbal" loc="477..509" text="s_acctbal ..) not null" />
                     <column name="s_comment" loc="511..542" text="s_comment ..) not null" />
                 </table>
-                <table loc="570..789" text="create tab.._suppkey))">
+                <table name="partsupp" loc="570..789" text="create tab.._suppkey))">
                     <column name="ps_partkey" loc="593..620" text="ps_partkey..r not null" />
                     <column name="ps_suppkey" loc="622..649" text="ps_suppkey..r not null" />
                     <column name="ps_availqty" loc="651..679" text="ps_availqt..r not null" />
                     <column name="ps_supplycost" loc="681..717" text="ps_supplyc..) not null" />
                     <column name="ps_comment" loc="719..751" text="ps_comment..) not null" />
                 </table>
-                <table loc="791..1083" text="create tab.._custkey))">
+                <table name="customer" loc="791..1083" text="create tab.._custkey))">
                     <column name="c_custkey" loc="814..840" text="c_custkey ..r not null" />
                     <column name="c_name" loc="842..869" text="c_name var..) not null" />
                     <column name="c_address" loc="871..901" text="c_address ..) not null" />
@@ -206,7 +206,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="c_mktsegment" loc="994..1024" text="c_mktsegme..) not null" />
                     <column name="c_comment" loc="1026..1057" text="c_comment ..) not null" />
                 </table>
-                <table loc="1085..1411" text="create tab..orderkey))">
+                <table name="orders" loc="1085..1411" text="create tab..orderkey))">
                     <column name="o_orderkey" loc="1106..1133" text="o_orderkey..r not null" />
                     <column name="o_custkey" loc="1135..1161" text="o_custkey ..r not null" />
                     <column name="o_orderstatus" loc="1163..1193" text="o_ordersta..) not null" />
@@ -217,7 +217,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="o_shippriority" loc="1321..1352" text="o_shipprio..r not null" />
                     <column name="o_comment" loc="1354..1384" text="o_comment ..) not null" />
                 </table>
-                <table loc="1413..1971" text="create tab..nenumber))">
+                <table name="lineitem" loc="1413..1971" text="create tab..nenumber))">
                     <column name="l_orderkey" loc="1436..1463" text="l_orderkey..r not null" />
                     <column name="l_partkey" loc="1465..1491" text="l_partkey ..r not null" />
                     <column name="l_suppkey" loc="1493..1519" text="l_suppkey ..r not null" />
@@ -235,18 +235,18 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="l_shipmode" loc="1871..1899" text="l_shipmode..) not null" />
                     <column name="l_comment" loc="1901..1931" text="l_comment ..) not null" />
                 </table>
-                <table loc="1973..2139" text="create tab..ationkey))">
+                <table name="nation" loc="1973..2139" text="create tab..ationkey))">
                     <column name="n_nationkey" loc="1994..2022" text="n_nationke..r not null" />
                     <column name="n_name" loc="2024..2048" text="n_name cha..) not null" />
                     <column name="n_regionkey" loc="2050..2078" text="n_regionke..r not null" />
                     <column name="n_comment" loc="2080..2111" text="n_comment ..) not null" />
                 </table>
-                <table loc="2141..2277" text="create tab..egionkey))">
+                <table name="region" loc="2141..2277" text="create tab..egionkey))">
                     <column name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     <column name="r_name" loc="2192..2216" text="r_name cha..) not null" />
                     <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
                 </table>
-                <table loc="1..309" text="create tab.._partkey))">
+                <table name="part" loc="1..309" text="create tab.._partkey))">
                     <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
                     <column name="p_name" loc="48..75" text="p_name var..) not null" />
                     <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
@@ -257,7 +257,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
                     <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
                 </table>
-                <table loc="311..568" text="create tab.._suppkey))">
+                <table name="supplier" loc="311..568" text="create tab.._suppkey))">
                     <column name="s_suppkey" loc="334..360" text="s_suppkey ..r not null" />
                     <column name="s_name" loc="362..386" text="s_name cha..) not null" />
                     <column name="s_address" loc="388..418" text="s_address ..) not null" />
@@ -266,14 +266,14 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="s_acctbal" loc="477..509" text="s_acctbal ..) not null" />
                     <column name="s_comment" loc="511..542" text="s_comment ..) not null" />
                 </table>
-                <table loc="570..789" text="create tab.._suppkey))">
+                <table name="partsupp" loc="570..789" text="create tab.._suppkey))">
                     <column name="ps_partkey" loc="593..620" text="ps_partkey..r not null" />
                     <column name="ps_suppkey" loc="622..649" text="ps_suppkey..r not null" />
                     <column name="ps_availqty" loc="651..679" text="ps_availqt..r not null" />
                     <column name="ps_supplycost" loc="681..717" text="ps_supplyc..) not null" />
                     <column name="ps_comment" loc="719..751" text="ps_comment..) not null" />
                 </table>
-                <table loc="791..1083" text="create tab.._custkey))">
+                <table name="customer" loc="791..1083" text="create tab.._custkey))">
                     <column name="c_custkey" loc="814..840" text="c_custkey ..r not null" />
                     <column name="c_name" loc="842..869" text="c_name var..) not null" />
                     <column name="c_address" loc="871..901" text="c_address ..) not null" />
@@ -283,7 +283,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="c_mktsegment" loc="994..1024" text="c_mktsegme..) not null" />
                     <column name="c_comment" loc="1026..1057" text="c_comment ..) not null" />
                 </table>
-                <table loc="1085..1411" text="create tab..orderkey))">
+                <table name="orders" loc="1085..1411" text="create tab..orderkey))">
                     <column name="o_orderkey" loc="1106..1133" text="o_orderkey..r not null" />
                     <column name="o_custkey" loc="1135..1161" text="o_custkey ..r not null" />
                     <column name="o_orderstatus" loc="1163..1193" text="o_ordersta..) not null" />
@@ -294,7 +294,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="o_shippriority" loc="1321..1352" text="o_shipprio..r not null" />
                     <column name="o_comment" loc="1354..1384" text="o_comment ..) not null" />
                 </table>
-                <table loc="1413..1971" text="create tab..nenumber))">
+                <table name="lineitem" loc="1413..1971" text="create tab..nenumber))">
                     <column name="l_orderkey" loc="1436..1463" text="l_orderkey..r not null" />
                     <column name="l_partkey" loc="1465..1491" text="l_partkey ..r not null" />
                     <column name="l_suppkey" loc="1493..1519" text="l_suppkey ..r not null" />
@@ -312,18 +312,18 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="l_shipmode" loc="1871..1899" text="l_shipmode..) not null" />
                     <column name="l_comment" loc="1901..1931" text="l_comment ..) not null" />
                 </table>
-                <table loc="1973..2139" text="create tab..ationkey))">
+                <table name="nation" loc="1973..2139" text="create tab..ationkey))">
                     <column name="n_nationkey" loc="1994..2022" text="n_nationke..r not null" />
                     <column name="n_name" loc="2024..2048" text="n_name cha..) not null" />
                     <column name="n_regionkey" loc="2050..2078" text="n_regionke..r not null" />
                     <column name="n_comment" loc="2080..2111" text="n_comment ..) not null" />
                 </table>
-                <table loc="2141..2277" text="create tab..egionkey))">
+                <table name="region" loc="2141..2277" text="create tab..egionkey))">
                     <column name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     <column name="r_name" loc="2192..2216" text="r_name cha..) not null" />
                     <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
                 </table>
-                <table loc="1..309" text="create tab.._partkey))">
+                <table name="part" loc="1..309" text="create tab.._partkey))">
                     <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
                     <column name="p_name" loc="48..75" text="p_name var..) not null" />
                     <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
@@ -334,7 +334,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
                     <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
                 </table>
-                <table loc="311..568" text="create tab.._suppkey))">
+                <table name="supplier" loc="311..568" text="create tab.._suppkey))">
                     <column name="s_suppkey" loc="334..360" text="s_suppkey ..r not null" />
                     <column name="s_name" loc="362..386" text="s_name cha..) not null" />
                     <column name="s_address" loc="388..418" text="s_address ..) not null" />
@@ -343,14 +343,14 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="s_acctbal" loc="477..509" text="s_acctbal ..) not null" />
                     <column name="s_comment" loc="511..542" text="s_comment ..) not null" />
                 </table>
-                <table loc="570..789" text="create tab.._suppkey))">
+                <table name="partsupp" loc="570..789" text="create tab.._suppkey))">
                     <column name="ps_partkey" loc="593..620" text="ps_partkey..r not null" />
                     <column name="ps_suppkey" loc="622..649" text="ps_suppkey..r not null" />
                     <column name="ps_availqty" loc="651..679" text="ps_availqt..r not null" />
                     <column name="ps_supplycost" loc="681..717" text="ps_supplyc..) not null" />
                     <column name="ps_comment" loc="719..751" text="ps_comment..) not null" />
                 </table>
-                <table loc="791..1083" text="create tab.._custkey))">
+                <table name="customer" loc="791..1083" text="create tab.._custkey))">
                     <column name="c_custkey" loc="814..840" text="c_custkey ..r not null" />
                     <column name="c_name" loc="842..869" text="c_name var..) not null" />
                     <column name="c_address" loc="871..901" text="c_address ..) not null" />
@@ -360,7 +360,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="c_mktsegment" loc="994..1024" text="c_mktsegme..) not null" />
                     <column name="c_comment" loc="1026..1057" text="c_comment ..) not null" />
                 </table>
-                <table loc="1085..1411" text="create tab..orderkey))">
+                <table name="orders" loc="1085..1411" text="create tab..orderkey))">
                     <column name="o_orderkey" loc="1106..1133" text="o_orderkey..r not null" />
                     <column name="o_custkey" loc="1135..1161" text="o_custkey ..r not null" />
                     <column name="o_orderstatus" loc="1163..1193" text="o_ordersta..) not null" />
@@ -371,7 +371,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="o_shippriority" loc="1321..1352" text="o_shipprio..r not null" />
                     <column name="o_comment" loc="1354..1384" text="o_comment ..) not null" />
                 </table>
-                <table loc="1413..1971" text="create tab..nenumber))">
+                <table name="lineitem" loc="1413..1971" text="create tab..nenumber))">
                     <column name="l_orderkey" loc="1436..1463" text="l_orderkey..r not null" />
                     <column name="l_partkey" loc="1465..1491" text="l_partkey ..r not null" />
                     <column name="l_suppkey" loc="1493..1519" text="l_suppkey ..r not null" />
@@ -389,18 +389,18 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="l_shipmode" loc="1871..1899" text="l_shipmode..) not null" />
                     <column name="l_comment" loc="1901..1931" text="l_comment ..) not null" />
                 </table>
-                <table loc="1973..2139" text="create tab..ationkey))">
+                <table name="nation" loc="1973..2139" text="create tab..ationkey))">
                     <column name="n_nationkey" loc="1994..2022" text="n_nationke..r not null" />
                     <column name="n_name" loc="2024..2048" text="n_name cha..) not null" />
                     <column name="n_regionkey" loc="2050..2078" text="n_regionke..r not null" />
                     <column name="n_comment" loc="2080..2111" text="n_comment ..) not null" />
                 </table>
-                <table loc="2141..2277" text="create tab..egionkey))">
+                <table name="region" loc="2141..2277" text="create tab..egionkey))">
                     <column name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     <column name="r_name" loc="2192..2216" text="r_name cha..) not null" />
                     <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
                 </table>
-                <table loc="1..309" text="create tab.._partkey))">
+                <table name="part" loc="1..309" text="create tab.._partkey))">
                     <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
                     <column name="p_name" loc="48..75" text="p_name var..) not null" />
                     <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
@@ -411,7 +411,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
                     <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
                 </table>
-                <table loc="311..568" text="create tab.._suppkey))">
+                <table name="supplier" loc="311..568" text="create tab.._suppkey))">
                     <column name="s_suppkey" loc="334..360" text="s_suppkey ..r not null" />
                     <column name="s_name" loc="362..386" text="s_name cha..) not null" />
                     <column name="s_address" loc="388..418" text="s_address ..) not null" />
@@ -420,14 +420,14 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="s_acctbal" loc="477..509" text="s_acctbal ..) not null" />
                     <column name="s_comment" loc="511..542" text="s_comment ..) not null" />
                 </table>
-                <table loc="570..789" text="create tab.._suppkey))">
+                <table name="partsupp" loc="570..789" text="create tab.._suppkey))">
                     <column name="ps_partkey" loc="593..620" text="ps_partkey..r not null" />
                     <column name="ps_suppkey" loc="622..649" text="ps_suppkey..r not null" />
                     <column name="ps_availqty" loc="651..679" text="ps_availqt..r not null" />
                     <column name="ps_supplycost" loc="681..717" text="ps_supplyc..) not null" />
                     <column name="ps_comment" loc="719..751" text="ps_comment..) not null" />
                 </table>
-                <table loc="791..1083" text="create tab.._custkey))">
+                <table name="customer" loc="791..1083" text="create tab.._custkey))">
                     <column name="c_custkey" loc="814..840" text="c_custkey ..r not null" />
                     <column name="c_name" loc="842..869" text="c_name var..) not null" />
                     <column name="c_address" loc="871..901" text="c_address ..) not null" />
@@ -437,7 +437,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="c_mktsegment" loc="994..1024" text="c_mktsegme..) not null" />
                     <column name="c_comment" loc="1026..1057" text="c_comment ..) not null" />
                 </table>
-                <table loc="1085..1411" text="create tab..orderkey))">
+                <table name="orders" loc="1085..1411" text="create tab..orderkey))">
                     <column name="o_orderkey" loc="1106..1133" text="o_orderkey..r not null" />
                     <column name="o_custkey" loc="1135..1161" text="o_custkey ..r not null" />
                     <column name="o_orderstatus" loc="1163..1193" text="o_ordersta..) not null" />
@@ -448,7 +448,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="o_shippriority" loc="1321..1352" text="o_shipprio..r not null" />
                     <column name="o_comment" loc="1354..1384" text="o_comment ..) not null" />
                 </table>
-                <table loc="1413..1971" text="create tab..nenumber))">
+                <table name="lineitem" loc="1413..1971" text="create tab..nenumber))">
                     <column name="l_orderkey" loc="1436..1463" text="l_orderkey..r not null" />
                     <column name="l_partkey" loc="1465..1491" text="l_partkey ..r not null" />
                     <column name="l_suppkey" loc="1493..1519" text="l_suppkey ..r not null" />
@@ -466,18 +466,18 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="l_shipmode" loc="1871..1899" text="l_shipmode..) not null" />
                     <column name="l_comment" loc="1901..1931" text="l_comment ..) not null" />
                 </table>
-                <table loc="1973..2139" text="create tab..ationkey))">
+                <table name="nation" loc="1973..2139" text="create tab..ationkey))">
                     <column name="n_nationkey" loc="1994..2022" text="n_nationke..r not null" />
                     <column name="n_name" loc="2024..2048" text="n_name cha..) not null" />
                     <column name="n_regionkey" loc="2050..2078" text="n_regionke..r not null" />
                     <column name="n_comment" loc="2080..2111" text="n_comment ..) not null" />
                 </table>
-                <table loc="2141..2277" text="create tab..egionkey))">
+                <table name="region" loc="2141..2277" text="create tab..egionkey))">
                     <column name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     <column name="r_name" loc="2192..2216" text="r_name cha..) not null" />
                     <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
                 </table>
-                <table loc="1..309" text="create tab.._partkey))">
+                <table name="part" loc="1..309" text="create tab.._partkey))">
                     <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
                     <column name="p_name" loc="48..75" text="p_name var..) not null" />
                     <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
@@ -488,7 +488,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
                     <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
                 </table>
-                <table loc="311..568" text="create tab.._suppkey))">
+                <table name="supplier" loc="311..568" text="create tab.._suppkey))">
                     <column name="s_suppkey" loc="334..360" text="s_suppkey ..r not null" />
                     <column name="s_name" loc="362..386" text="s_name cha..) not null" />
                     <column name="s_address" loc="388..418" text="s_address ..) not null" />
@@ -497,14 +497,14 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="s_acctbal" loc="477..509" text="s_acctbal ..) not null" />
                     <column name="s_comment" loc="511..542" text="s_comment ..) not null" />
                 </table>
-                <table loc="570..789" text="create tab.._suppkey))">
+                <table name="partsupp" loc="570..789" text="create tab.._suppkey))">
                     <column name="ps_partkey" loc="593..620" text="ps_partkey..r not null" />
                     <column name="ps_suppkey" loc="622..649" text="ps_suppkey..r not null" />
                     <column name="ps_availqty" loc="651..679" text="ps_availqt..r not null" />
                     <column name="ps_supplycost" loc="681..717" text="ps_supplyc..) not null" />
                     <column name="ps_comment" loc="719..751" text="ps_comment..) not null" />
                 </table>
-                <table loc="791..1083" text="create tab.._custkey))">
+                <table name="customer" loc="791..1083" text="create tab.._custkey))">
                     <column name="c_custkey" loc="814..840" text="c_custkey ..r not null" />
                     <column name="c_name" loc="842..869" text="c_name var..) not null" />
                     <column name="c_address" loc="871..901" text="c_address ..) not null" />
@@ -514,7 +514,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="c_mktsegment" loc="994..1024" text="c_mktsegme..) not null" />
                     <column name="c_comment" loc="1026..1057" text="c_comment ..) not null" />
                 </table>
-                <table loc="1085..1411" text="create tab..orderkey))">
+                <table name="orders" loc="1085..1411" text="create tab..orderkey))">
                     <column name="o_orderkey" loc="1106..1133" text="o_orderkey..r not null" />
                     <column name="o_custkey" loc="1135..1161" text="o_custkey ..r not null" />
                     <column name="o_orderstatus" loc="1163..1193" text="o_ordersta..) not null" />
@@ -525,7 +525,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="o_shippriority" loc="1321..1352" text="o_shipprio..r not null" />
                     <column name="o_comment" loc="1354..1384" text="o_comment ..) not null" />
                 </table>
-                <table loc="1413..1971" text="create tab..nenumber))">
+                <table name="lineitem" loc="1413..1971" text="create tab..nenumber))">
                     <column name="l_orderkey" loc="1436..1463" text="l_orderkey..r not null" />
                     <column name="l_partkey" loc="1465..1491" text="l_partkey ..r not null" />
                     <column name="l_suppkey" loc="1493..1519" text="l_suppkey ..r not null" />
@@ -543,18 +543,18 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="l_shipmode" loc="1871..1899" text="l_shipmode..) not null" />
                     <column name="l_comment" loc="1901..1931" text="l_comment ..) not null" />
                 </table>
-                <table loc="1973..2139" text="create tab..ationkey))">
+                <table name="nation" loc="1973..2139" text="create tab..ationkey))">
                     <column name="n_nationkey" loc="1994..2022" text="n_nationke..r not null" />
                     <column name="n_name" loc="2024..2048" text="n_name cha..) not null" />
                     <column name="n_regionkey" loc="2050..2078" text="n_regionke..r not null" />
                     <column name="n_comment" loc="2080..2111" text="n_comment ..) not null" />
                 </table>
-                <table loc="2141..2277" text="create tab..egionkey))">
+                <table name="region" loc="2141..2277" text="create tab..egionkey))">
                     <column name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     <column name="r_name" loc="2192..2216" text="r_name cha..) not null" />
                     <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
                 </table>
-                <table loc="1..309" text="create tab.._partkey))">
+                <table name="part" loc="1..309" text="create tab.._partkey))">
                     <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
                     <column name="p_name" loc="48..75" text="p_name var..) not null" />
                     <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
@@ -565,7 +565,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
                     <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
                 </table>
-                <table loc="311..568" text="create tab.._suppkey))">
+                <table name="supplier" loc="311..568" text="create tab.._suppkey))">
                     <column name="s_suppkey" loc="334..360" text="s_suppkey ..r not null" />
                     <column name="s_name" loc="362..386" text="s_name cha..) not null" />
                     <column name="s_address" loc="388..418" text="s_address ..) not null" />
@@ -574,14 +574,14 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="s_acctbal" loc="477..509" text="s_acctbal ..) not null" />
                     <column name="s_comment" loc="511..542" text="s_comment ..) not null" />
                 </table>
-                <table loc="570..789" text="create tab.._suppkey))">
+                <table name="partsupp" loc="570..789" text="create tab.._suppkey))">
                     <column name="ps_partkey" loc="593..620" text="ps_partkey..r not null" />
                     <column name="ps_suppkey" loc="622..649" text="ps_suppkey..r not null" />
                     <column name="ps_availqty" loc="651..679" text="ps_availqt..r not null" />
                     <column name="ps_supplycost" loc="681..717" text="ps_supplyc..) not null" />
                     <column name="ps_comment" loc="719..751" text="ps_comment..) not null" />
                 </table>
-                <table loc="791..1083" text="create tab.._custkey))">
+                <table name="customer" loc="791..1083" text="create tab.._custkey))">
                     <column name="c_custkey" loc="814..840" text="c_custkey ..r not null" />
                     <column name="c_name" loc="842..869" text="c_name var..) not null" />
                     <column name="c_address" loc="871..901" text="c_address ..) not null" />
@@ -591,7 +591,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="c_mktsegment" loc="994..1024" text="c_mktsegme..) not null" />
                     <column name="c_comment" loc="1026..1057" text="c_comment ..) not null" />
                 </table>
-                <table loc="1085..1411" text="create tab..orderkey))">
+                <table name="orders" loc="1085..1411" text="create tab..orderkey))">
                     <column name="o_orderkey" loc="1106..1133" text="o_orderkey..r not null" />
                     <column name="o_custkey" loc="1135..1161" text="o_custkey ..r not null" />
                     <column name="o_orderstatus" loc="1163..1193" text="o_ordersta..) not null" />
@@ -602,7 +602,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="o_shippriority" loc="1321..1352" text="o_shipprio..r not null" />
                     <column name="o_comment" loc="1354..1384" text="o_comment ..) not null" />
                 </table>
-                <table loc="1413..1971" text="create tab..nenumber))">
+                <table name="lineitem" loc="1413..1971" text="create tab..nenumber))">
                     <column name="l_orderkey" loc="1436..1463" text="l_orderkey..r not null" />
                     <column name="l_partkey" loc="1465..1491" text="l_partkey ..r not null" />
                     <column name="l_suppkey" loc="1493..1519" text="l_suppkey ..r not null" />
@@ -620,13 +620,13 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="l_shipmode" loc="1871..1899" text="l_shipmode..) not null" />
                     <column name="l_comment" loc="1901..1931" text="l_comment ..) not null" />
                 </table>
-                <table loc="1973..2139" text="create tab..ationkey))">
+                <table name="nation" loc="1973..2139" text="create tab..ationkey))">
                     <column name="n_nationkey" loc="1994..2022" text="n_nationke..r not null" />
                     <column name="n_name" loc="2024..2048" text="n_name cha..) not null" />
                     <column name="n_regionkey" loc="2050..2078" text="n_regionke..r not null" />
                     <column name="n_comment" loc="2080..2111" text="n_comment ..) not null" />
                 </table>
-                <table loc="2141..2277" text="create tab..egionkey))">
+                <table name="region" loc="2141..2277" text="create tab..egionkey))">
                     <column name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     <column name="r_name" loc="2192..2216" text="r_name cha..) not null" />
                     <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
@@ -650,7 +650,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
             <tables>
-                <table loc="1..309" text="create tab.._partkey))">
+                <table name="part" loc="1..309" text="create tab.._partkey))">
                     <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
                     <column name="p_name" loc="48..75" text="p_name var..) not null" />
                     <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
@@ -661,7 +661,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
                     <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
                 </table>
-                <table loc="311..568" text="create tab.._suppkey))">
+                <table name="supplier" loc="311..568" text="create tab.._suppkey))">
                     <column name="s_suppkey" loc="334..360" text="s_suppkey ..r not null" />
                     <column name="s_name" loc="362..386" text="s_name cha..) not null" />
                     <column name="s_address" loc="388..418" text="s_address ..) not null" />
@@ -670,14 +670,14 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="s_acctbal" loc="477..509" text="s_acctbal ..) not null" />
                     <column name="s_comment" loc="511..542" text="s_comment ..) not null" />
                 </table>
-                <table loc="570..789" text="create tab.._suppkey))">
+                <table name="partsupp" loc="570..789" text="create tab.._suppkey))">
                     <column name="ps_partkey" loc="593..620" text="ps_partkey..r not null" />
                     <column name="ps_suppkey" loc="622..649" text="ps_suppkey..r not null" />
                     <column name="ps_availqty" loc="651..679" text="ps_availqt..r not null" />
                     <column name="ps_supplycost" loc="681..717" text="ps_supplyc..) not null" />
                     <column name="ps_comment" loc="719..751" text="ps_comment..) not null" />
                 </table>
-                <table loc="791..1083" text="create tab.._custkey))">
+                <table name="customer" loc="791..1083" text="create tab.._custkey))">
                     <column name="c_custkey" loc="814..840" text="c_custkey ..r not null" />
                     <column name="c_name" loc="842..869" text="c_name var..) not null" />
                     <column name="c_address" loc="871..901" text="c_address ..) not null" />
@@ -687,7 +687,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="c_mktsegment" loc="994..1024" text="c_mktsegme..) not null" />
                     <column name="c_comment" loc="1026..1057" text="c_comment ..) not null" />
                 </table>
-                <table loc="1085..1411" text="create tab..orderkey))">
+                <table name="orders" loc="1085..1411" text="create tab..orderkey))">
                     <column name="o_orderkey" loc="1106..1133" text="o_orderkey..r not null" />
                     <column name="o_custkey" loc="1135..1161" text="o_custkey ..r not null" />
                     <column name="o_orderstatus" loc="1163..1193" text="o_ordersta..) not null" />
@@ -698,7 +698,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="o_shippriority" loc="1321..1352" text="o_shipprio..r not null" />
                     <column name="o_comment" loc="1354..1384" text="o_comment ..) not null" />
                 </table>
-                <table loc="1413..1971" text="create tab..nenumber))">
+                <table name="lineitem" loc="1413..1971" text="create tab..nenumber))">
                     <column name="l_orderkey" loc="1436..1463" text="l_orderkey..r not null" />
                     <column name="l_partkey" loc="1465..1491" text="l_partkey ..r not null" />
                     <column name="l_suppkey" loc="1493..1519" text="l_suppkey ..r not null" />
@@ -716,13 +716,13 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="l_shipmode" loc="1871..1899" text="l_shipmode..) not null" />
                     <column name="l_comment" loc="1901..1931" text="l_comment ..) not null" />
                 </table>
-                <table loc="1973..2139" text="create tab..ationkey))">
+                <table name="nation" loc="1973..2139" text="create tab..ationkey))">
                     <column name="n_nationkey" loc="1994..2022" text="n_nationke..r not null" />
                     <column name="n_name" loc="2024..2048" text="n_name cha..) not null" />
                     <column name="n_regionkey" loc="2050..2078" text="n_regionke..r not null" />
                     <column name="n_comment" loc="2080..2111" text="n_comment ..) not null" />
                 </table>
-                <table loc="2141..2277" text="create tab..egionkey))">
+                <table name="region" loc="2141..2277" text="create tab..egionkey))">
                     <column name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     <column name="r_name" loc="2192..2216" text="r_name cha..) not null" />
                     <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
@@ -869,7 +869,7 @@ create table orders (o_orderkey integer not null, o_custkey integer not null, o_
 create table lineitem (l_orderkey integer not null, l_partkey integer not null, l_suppkey integer not null, l_linenumber integer not null, l_quantity decimal(12,2) not null, l_extendedprice decimal(12,2) not null, l_discount decimal(12,2) not null, l_tax decimal(12,2) not null, l_returnflag char(1) not null, l_linestatus char(1) not null, l_shipdate date not null, l_commitdate date not null, l_receiptdate date not null, l_shipinstruct char(25) not null, l_shipmode char(10) not null, l_comment varchar(44) not null, primary key (l_orderkey,l_linenumber));
             </input>
             <tables>
-                <table loc="1..293" text="create tab.._custkey))">
+                <table name="customer" loc="1..293" text="create tab.._custkey))">
                     <column name="c_custkey" loc="24..50" text="c_custkey ..r not null" />
                     <column name="c_name" loc="52..79" text="c_name var..) not null" />
                     <column name="c_address" loc="81..111" text="c_address ..) not null" />
@@ -879,7 +879,7 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
                     <column name="c_mktsegment" loc="204..234" text="c_mktsegme..) not null" />
                     <column name="c_comment" loc="236..267" text="c_comment ..) not null" />
                 </table>
-                <table loc="295..621" text="create tab..orderkey))">
+                <table name="orders" loc="295..621" text="create tab..orderkey))">
                     <column name="o_orderkey" loc="316..343" text="o_orderkey..r not null" />
                     <column name="o_custkey" loc="345..371" text="o_custkey ..r not null" />
                     <column name="o_orderstatus" loc="373..403" text="o_ordersta..) not null" />
@@ -890,7 +890,7 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
                     <column name="o_shippriority" loc="531..562" text="o_shipprio..r not null" />
                     <column name="o_comment" loc="564..594" text="o_comment ..) not null" />
                 </table>
-                <table loc="623..1181" text="create tab..nenumber))">
+                <table name="lineitem" loc="623..1181" text="create tab..nenumber))">
                     <column name="l_orderkey" loc="646..673" text="l_orderkey..r not null" />
                     <column name="l_partkey" loc="675..701" text="l_partkey ..r not null" />
                     <column name="l_suppkey" loc="703..729" text="l_suppkey ..r not null" />
@@ -981,7 +981,7 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
 create table orders (o_orderkey integer not null, o_custkey integer not null, o_orderstatus char(1) not null, o_totalprice decimal(12,2) not null, o_orderdate date not null, o_orderpriority char(15) not null, o_clerk char(15) not null, o_shippriority integer not null, o_comment varchar(79) not null, primary key (o_orderkey));
             </input>
             <tables>
-                <table loc="1..559" text="create tab..nenumber))">
+                <table name="lineitem" loc="1..559" text="create tab..nenumber))">
                     <column name="l_orderkey" loc="24..51" text="l_orderkey..r not null" />
                     <column name="l_partkey" loc="53..79" text="l_partkey ..r not null" />
                     <column name="l_suppkey" loc="81..107" text="l_suppkey ..r not null" />
@@ -999,7 +999,7 @@ create table orders (o_orderkey integer not null, o_custkey integer not null, o_
                     <column name="l_shipmode" loc="459..487" text="l_shipmode..) not null" />
                     <column name="l_comment" loc="489..519" text="l_comment ..) not null" />
                 </table>
-                <table loc="561..887" text="create tab..orderkey))">
+                <table name="orders" loc="561..887" text="create tab..orderkey))">
                     <column name="o_orderkey" loc="582..609" text="o_orderkey..r not null" />
                     <column name="o_custkey" loc="611..637" text="o_custkey ..r not null" />
                     <column name="o_orderstatus" loc="639..669" text="o_ordersta..) not null" />
@@ -1077,7 +1077,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
             <tables>
-                <table loc="1..309" text="create tab.._partkey))">
+                <table name="part" loc="1..309" text="create tab.._partkey))">
                     <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
                     <column name="p_name" loc="48..75" text="p_name var..) not null" />
                     <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
@@ -1088,7 +1088,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
                     <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
                 </table>
-                <table loc="311..568" text="create tab.._suppkey))">
+                <table name="supplier" loc="311..568" text="create tab.._suppkey))">
                     <column name="s_suppkey" loc="334..360" text="s_suppkey ..r not null" />
                     <column name="s_name" loc="362..386" text="s_name cha..) not null" />
                     <column name="s_address" loc="388..418" text="s_address ..) not null" />
@@ -1097,14 +1097,14 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="s_acctbal" loc="477..509" text="s_acctbal ..) not null" />
                     <column name="s_comment" loc="511..542" text="s_comment ..) not null" />
                 </table>
-                <table loc="570..789" text="create tab.._suppkey))">
+                <table name="partsupp" loc="570..789" text="create tab.._suppkey))">
                     <column name="ps_partkey" loc="593..620" text="ps_partkey..r not null" />
                     <column name="ps_suppkey" loc="622..649" text="ps_suppkey..r not null" />
                     <column name="ps_availqty" loc="651..679" text="ps_availqt..r not null" />
                     <column name="ps_supplycost" loc="681..717" text="ps_supplyc..) not null" />
                     <column name="ps_comment" loc="719..751" text="ps_comment..) not null" />
                 </table>
-                <table loc="791..1083" text="create tab.._custkey))">
+                <table name="customer" loc="791..1083" text="create tab.._custkey))">
                     <column name="c_custkey" loc="814..840" text="c_custkey ..r not null" />
                     <column name="c_name" loc="842..869" text="c_name var..) not null" />
                     <column name="c_address" loc="871..901" text="c_address ..) not null" />
@@ -1114,7 +1114,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="c_mktsegment" loc="994..1024" text="c_mktsegme..) not null" />
                     <column name="c_comment" loc="1026..1057" text="c_comment ..) not null" />
                 </table>
-                <table loc="1085..1411" text="create tab..orderkey))">
+                <table name="orders" loc="1085..1411" text="create tab..orderkey))">
                     <column name="o_orderkey" loc="1106..1133" text="o_orderkey..r not null" />
                     <column name="o_custkey" loc="1135..1161" text="o_custkey ..r not null" />
                     <column name="o_orderstatus" loc="1163..1193" text="o_ordersta..) not null" />
@@ -1125,7 +1125,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="o_shippriority" loc="1321..1352" text="o_shipprio..r not null" />
                     <column name="o_comment" loc="1354..1384" text="o_comment ..) not null" />
                 </table>
-                <table loc="1413..1971" text="create tab..nenumber))">
+                <table name="lineitem" loc="1413..1971" text="create tab..nenumber))">
                     <column name="l_orderkey" loc="1436..1463" text="l_orderkey..r not null" />
                     <column name="l_partkey" loc="1465..1491" text="l_partkey ..r not null" />
                     <column name="l_suppkey" loc="1493..1519" text="l_suppkey ..r not null" />
@@ -1143,13 +1143,13 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="l_shipmode" loc="1871..1899" text="l_shipmode..) not null" />
                     <column name="l_comment" loc="1901..1931" text="l_comment ..) not null" />
                 </table>
-                <table loc="1973..2139" text="create tab..ationkey))">
+                <table name="nation" loc="1973..2139" text="create tab..ationkey))">
                     <column name="n_nationkey" loc="1994..2022" text="n_nationke..r not null" />
                     <column name="n_name" loc="2024..2048" text="n_name cha..) not null" />
                     <column name="n_regionkey" loc="2050..2078" text="n_regionke..r not null" />
                     <column name="n_comment" loc="2080..2111" text="n_comment ..) not null" />
                 </table>
-                <table loc="2141..2277" text="create tab..egionkey))">
+                <table name="region" loc="2141..2277" text="create tab..egionkey))">
                     <column name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     <column name="r_name" loc="2192..2216" text="r_name cha..) not null" />
                     <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
@@ -1248,7 +1248,7 @@ order by
 create table lineitem (l_orderkey integer not null, l_partkey integer not null, l_suppkey integer not null, l_linenumber integer not null, l_quantity decimal(12,2) not null, l_extendedprice decimal(12,2) not null, l_discount decimal(12,2) not null, l_tax decimal(12,2) not null, l_returnflag char(1) not null, l_linestatus char(1) not null, l_shipdate date not null, l_commitdate date not null, l_receiptdate date not null, l_shipinstruct char(25) not null, l_shipmode char(10) not null, l_comment varchar(44) not null, primary key (l_orderkey,l_linenumber));
             </input>
             <tables>
-                <table loc="1..559" text="create tab..nenumber))">
+                <table name="lineitem" loc="1..559" text="create tab..nenumber))">
                     <column name="l_orderkey" loc="24..51" text="l_orderkey..r not null" />
                     <column name="l_partkey" loc="53..79" text="l_partkey ..r not null" />
                     <column name="l_suppkey" loc="81..107" text="l_suppkey ..r not null" />
@@ -1308,7 +1308,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
             <tables>
-                <table loc="1..309" text="create tab.._partkey))">
+                <table name="part" loc="1..309" text="create tab.._partkey))">
                     <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
                     <column name="p_name" loc="48..75" text="p_name var..) not null" />
                     <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
@@ -1319,7 +1319,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
                     <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
                 </table>
-                <table loc="311..568" text="create tab.._suppkey))">
+                <table name="supplier" loc="311..568" text="create tab.._suppkey))">
                     <column name="s_suppkey" loc="334..360" text="s_suppkey ..r not null" />
                     <column name="s_name" loc="362..386" text="s_name cha..) not null" />
                     <column name="s_address" loc="388..418" text="s_address ..) not null" />
@@ -1328,14 +1328,14 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="s_acctbal" loc="477..509" text="s_acctbal ..) not null" />
                     <column name="s_comment" loc="511..542" text="s_comment ..) not null" />
                 </table>
-                <table loc="570..789" text="create tab.._suppkey))">
+                <table name="partsupp" loc="570..789" text="create tab.._suppkey))">
                     <column name="ps_partkey" loc="593..620" text="ps_partkey..r not null" />
                     <column name="ps_suppkey" loc="622..649" text="ps_suppkey..r not null" />
                     <column name="ps_availqty" loc="651..679" text="ps_availqt..r not null" />
                     <column name="ps_supplycost" loc="681..717" text="ps_supplyc..) not null" />
                     <column name="ps_comment" loc="719..751" text="ps_comment..) not null" />
                 </table>
-                <table loc="791..1083" text="create tab.._custkey))">
+                <table name="customer" loc="791..1083" text="create tab.._custkey))">
                     <column name="c_custkey" loc="814..840" text="c_custkey ..r not null" />
                     <column name="c_name" loc="842..869" text="c_name var..) not null" />
                     <column name="c_address" loc="871..901" text="c_address ..) not null" />
@@ -1345,7 +1345,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="c_mktsegment" loc="994..1024" text="c_mktsegme..) not null" />
                     <column name="c_comment" loc="1026..1057" text="c_comment ..) not null" />
                 </table>
-                <table loc="1085..1411" text="create tab..orderkey))">
+                <table name="orders" loc="1085..1411" text="create tab..orderkey))">
                     <column name="o_orderkey" loc="1106..1133" text="o_orderkey..r not null" />
                     <column name="o_custkey" loc="1135..1161" text="o_custkey ..r not null" />
                     <column name="o_orderstatus" loc="1163..1193" text="o_ordersta..) not null" />
@@ -1356,7 +1356,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="o_shippriority" loc="1321..1352" text="o_shipprio..r not null" />
                     <column name="o_comment" loc="1354..1384" text="o_comment ..) not null" />
                 </table>
-                <table loc="1413..1971" text="create tab..nenumber))">
+                <table name="lineitem" loc="1413..1971" text="create tab..nenumber))">
                     <column name="l_orderkey" loc="1436..1463" text="l_orderkey..r not null" />
                     <column name="l_partkey" loc="1465..1491" text="l_partkey ..r not null" />
                     <column name="l_suppkey" loc="1493..1519" text="l_suppkey ..r not null" />
@@ -1374,13 +1374,13 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="l_shipmode" loc="1871..1899" text="l_shipmode..) not null" />
                     <column name="l_comment" loc="1901..1931" text="l_comment ..) not null" />
                 </table>
-                <table loc="1973..2139" text="create tab..ationkey))">
+                <table name="nation" loc="1973..2139" text="create tab..ationkey))">
                     <column name="n_nationkey" loc="1994..2022" text="n_nationke..r not null" />
                     <column name="n_name" loc="2024..2048" text="n_name cha..) not null" />
                     <column name="n_regionkey" loc="2050..2078" text="n_regionke..r not null" />
                     <column name="n_comment" loc="2080..2111" text="n_comment ..) not null" />
                 </table>
-                <table loc="2141..2277" text="create tab..egionkey))">
+                <table name="region" loc="2141..2277" text="create tab..egionkey))">
                     <column name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     <column name="r_name" loc="2192..2216" text="r_name cha..) not null" />
                     <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
@@ -1507,7 +1507,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
             <tables>
-                <table loc="1..309" text="create tab.._partkey))">
+                <table name="part" loc="1..309" text="create tab.._partkey))">
                     <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
                     <column name="p_name" loc="48..75" text="p_name var..) not null" />
                     <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
@@ -1518,7 +1518,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
                     <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
                 </table>
-                <table loc="311..568" text="create tab.._suppkey))">
+                <table name="supplier" loc="311..568" text="create tab.._suppkey))">
                     <column name="s_suppkey" loc="334..360" text="s_suppkey ..r not null" />
                     <column name="s_name" loc="362..386" text="s_name cha..) not null" />
                     <column name="s_address" loc="388..418" text="s_address ..) not null" />
@@ -1527,14 +1527,14 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="s_acctbal" loc="477..509" text="s_acctbal ..) not null" />
                     <column name="s_comment" loc="511..542" text="s_comment ..) not null" />
                 </table>
-                <table loc="570..789" text="create tab.._suppkey))">
+                <table name="partsupp" loc="570..789" text="create tab.._suppkey))">
                     <column name="ps_partkey" loc="593..620" text="ps_partkey..r not null" />
                     <column name="ps_suppkey" loc="622..649" text="ps_suppkey..r not null" />
                     <column name="ps_availqty" loc="651..679" text="ps_availqt..r not null" />
                     <column name="ps_supplycost" loc="681..717" text="ps_supplyc..) not null" />
                     <column name="ps_comment" loc="719..751" text="ps_comment..) not null" />
                 </table>
-                <table loc="791..1083" text="create tab.._custkey))">
+                <table name="customer" loc="791..1083" text="create tab.._custkey))">
                     <column name="c_custkey" loc="814..840" text="c_custkey ..r not null" />
                     <column name="c_name" loc="842..869" text="c_name var..) not null" />
                     <column name="c_address" loc="871..901" text="c_address ..) not null" />
@@ -1544,7 +1544,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="c_mktsegment" loc="994..1024" text="c_mktsegme..) not null" />
                     <column name="c_comment" loc="1026..1057" text="c_comment ..) not null" />
                 </table>
-                <table loc="1085..1411" text="create tab..orderkey))">
+                <table name="orders" loc="1085..1411" text="create tab..orderkey))">
                     <column name="o_orderkey" loc="1106..1133" text="o_orderkey..r not null" />
                     <column name="o_custkey" loc="1135..1161" text="o_custkey ..r not null" />
                     <column name="o_orderstatus" loc="1163..1193" text="o_ordersta..) not null" />
@@ -1555,7 +1555,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="o_shippriority" loc="1321..1352" text="o_shipprio..r not null" />
                     <column name="o_comment" loc="1354..1384" text="o_comment ..) not null" />
                 </table>
-                <table loc="1413..1971" text="create tab..nenumber))">
+                <table name="lineitem" loc="1413..1971" text="create tab..nenumber))">
                     <column name="l_orderkey" loc="1436..1463" text="l_orderkey..r not null" />
                     <column name="l_partkey" loc="1465..1491" text="l_partkey ..r not null" />
                     <column name="l_suppkey" loc="1493..1519" text="l_suppkey ..r not null" />
@@ -1573,13 +1573,13 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="l_shipmode" loc="1871..1899" text="l_shipmode..) not null" />
                     <column name="l_comment" loc="1901..1931" text="l_comment ..) not null" />
                 </table>
-                <table loc="1973..2139" text="create tab..ationkey))">
+                <table name="nation" loc="1973..2139" text="create tab..ationkey))">
                     <column name="n_nationkey" loc="1994..2022" text="n_nationke..r not null" />
                     <column name="n_name" loc="2024..2048" text="n_name cha..) not null" />
                     <column name="n_regionkey" loc="2050..2078" text="n_regionke..r not null" />
                     <column name="n_comment" loc="2080..2111" text="n_comment ..) not null" />
                 </table>
-                <table loc="2141..2277" text="create tab..egionkey))">
+                <table name="region" loc="2141..2277" text="create tab..egionkey))">
                     <column name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     <column name="r_name" loc="2192..2216" text="r_name cha..) not null" />
                     <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
@@ -1711,7 +1711,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
             <tables>
-                <table loc="1..309" text="create tab.._partkey))">
+                <table name="part" loc="1..309" text="create tab.._partkey))">
                     <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
                     <column name="p_name" loc="48..75" text="p_name var..) not null" />
                     <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
@@ -1722,7 +1722,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
                     <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
                 </table>
-                <table loc="311..568" text="create tab.._suppkey))">
+                <table name="supplier" loc="311..568" text="create tab.._suppkey))">
                     <column name="s_suppkey" loc="334..360" text="s_suppkey ..r not null" />
                     <column name="s_name" loc="362..386" text="s_name cha..) not null" />
                     <column name="s_address" loc="388..418" text="s_address ..) not null" />
@@ -1731,14 +1731,14 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="s_acctbal" loc="477..509" text="s_acctbal ..) not null" />
                     <column name="s_comment" loc="511..542" text="s_comment ..) not null" />
                 </table>
-                <table loc="570..789" text="create tab.._suppkey))">
+                <table name="partsupp" loc="570..789" text="create tab.._suppkey))">
                     <column name="ps_partkey" loc="593..620" text="ps_partkey..r not null" />
                     <column name="ps_suppkey" loc="622..649" text="ps_suppkey..r not null" />
                     <column name="ps_availqty" loc="651..679" text="ps_availqt..r not null" />
                     <column name="ps_supplycost" loc="681..717" text="ps_supplyc..) not null" />
                     <column name="ps_comment" loc="719..751" text="ps_comment..) not null" />
                 </table>
-                <table loc="791..1083" text="create tab.._custkey))">
+                <table name="customer" loc="791..1083" text="create tab.._custkey))">
                     <column name="c_custkey" loc="814..840" text="c_custkey ..r not null" />
                     <column name="c_name" loc="842..869" text="c_name var..) not null" />
                     <column name="c_address" loc="871..901" text="c_address ..) not null" />
@@ -1748,7 +1748,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="c_mktsegment" loc="994..1024" text="c_mktsegme..) not null" />
                     <column name="c_comment" loc="1026..1057" text="c_comment ..) not null" />
                 </table>
-                <table loc="1085..1411" text="create tab..orderkey))">
+                <table name="orders" loc="1085..1411" text="create tab..orderkey))">
                     <column name="o_orderkey" loc="1106..1133" text="o_orderkey..r not null" />
                     <column name="o_custkey" loc="1135..1161" text="o_custkey ..r not null" />
                     <column name="o_orderstatus" loc="1163..1193" text="o_ordersta..) not null" />
@@ -1759,7 +1759,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="o_shippriority" loc="1321..1352" text="o_shipprio..r not null" />
                     <column name="o_comment" loc="1354..1384" text="o_comment ..) not null" />
                 </table>
-                <table loc="1413..1971" text="create tab..nenumber))">
+                <table name="lineitem" loc="1413..1971" text="create tab..nenumber))">
                     <column name="l_orderkey" loc="1436..1463" text="l_orderkey..r not null" />
                     <column name="l_partkey" loc="1465..1491" text="l_partkey ..r not null" />
                     <column name="l_suppkey" loc="1493..1519" text="l_suppkey ..r not null" />
@@ -1777,13 +1777,13 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="l_shipmode" loc="1871..1899" text="l_shipmode..) not null" />
                     <column name="l_comment" loc="1901..1931" text="l_comment ..) not null" />
                 </table>
-                <table loc="1973..2139" text="create tab..ationkey))">
+                <table name="nation" loc="1973..2139" text="create tab..ationkey))">
                     <column name="n_nationkey" loc="1994..2022" text="n_nationke..r not null" />
                     <column name="n_name" loc="2024..2048" text="n_name cha..) not null" />
                     <column name="n_regionkey" loc="2050..2078" text="n_regionke..r not null" />
                     <column name="n_comment" loc="2080..2111" text="n_comment ..) not null" />
                 </table>
-                <table loc="2141..2277" text="create tab..egionkey))">
+                <table name="region" loc="2141..2277" text="create tab..egionkey))">
                     <column name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     <column name="r_name" loc="2192..2216" text="r_name cha..) not null" />
                     <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
@@ -1903,7 +1903,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
             <tables>
-                <table loc="1..309" text="create tab.._partkey))">
+                <table name="part" loc="1..309" text="create tab.._partkey))">
                     <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
                     <column name="p_name" loc="48..75" text="p_name var..) not null" />
                     <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
@@ -1914,7 +1914,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
                     <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
                 </table>
-                <table loc="311..568" text="create tab.._suppkey))">
+                <table name="supplier" loc="311..568" text="create tab.._suppkey))">
                     <column name="s_suppkey" loc="334..360" text="s_suppkey ..r not null" />
                     <column name="s_name" loc="362..386" text="s_name cha..) not null" />
                     <column name="s_address" loc="388..418" text="s_address ..) not null" />
@@ -1923,14 +1923,14 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="s_acctbal" loc="477..509" text="s_acctbal ..) not null" />
                     <column name="s_comment" loc="511..542" text="s_comment ..) not null" />
                 </table>
-                <table loc="570..789" text="create tab.._suppkey))">
+                <table name="partsupp" loc="570..789" text="create tab.._suppkey))">
                     <column name="ps_partkey" loc="593..620" text="ps_partkey..r not null" />
                     <column name="ps_suppkey" loc="622..649" text="ps_suppkey..r not null" />
                     <column name="ps_availqty" loc="651..679" text="ps_availqt..r not null" />
                     <column name="ps_supplycost" loc="681..717" text="ps_supplyc..) not null" />
                     <column name="ps_comment" loc="719..751" text="ps_comment..) not null" />
                 </table>
-                <table loc="791..1083" text="create tab.._custkey))">
+                <table name="customer" loc="791..1083" text="create tab.._custkey))">
                     <column name="c_custkey" loc="814..840" text="c_custkey ..r not null" />
                     <column name="c_name" loc="842..869" text="c_name var..) not null" />
                     <column name="c_address" loc="871..901" text="c_address ..) not null" />
@@ -1940,7 +1940,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="c_mktsegment" loc="994..1024" text="c_mktsegme..) not null" />
                     <column name="c_comment" loc="1026..1057" text="c_comment ..) not null" />
                 </table>
-                <table loc="1085..1411" text="create tab..orderkey))">
+                <table name="orders" loc="1085..1411" text="create tab..orderkey))">
                     <column name="o_orderkey" loc="1106..1133" text="o_orderkey..r not null" />
                     <column name="o_custkey" loc="1135..1161" text="o_custkey ..r not null" />
                     <column name="o_orderstatus" loc="1163..1193" text="o_ordersta..) not null" />
@@ -1951,7 +1951,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="o_shippriority" loc="1321..1352" text="o_shipprio..r not null" />
                     <column name="o_comment" loc="1354..1384" text="o_comment ..) not null" />
                 </table>
-                <table loc="1413..1971" text="create tab..nenumber))">
+                <table name="lineitem" loc="1413..1971" text="create tab..nenumber))">
                     <column name="l_orderkey" loc="1436..1463" text="l_orderkey..r not null" />
                     <column name="l_partkey" loc="1465..1491" text="l_partkey ..r not null" />
                     <column name="l_suppkey" loc="1493..1519" text="l_suppkey ..r not null" />
@@ -1969,13 +1969,13 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="l_shipmode" loc="1871..1899" text="l_shipmode..) not null" />
                     <column name="l_comment" loc="1901..1931" text="l_comment ..) not null" />
                 </table>
-                <table loc="1973..2139" text="create tab..ationkey))">
+                <table name="nation" loc="1973..2139" text="create tab..ationkey))">
                     <column name="n_nationkey" loc="1994..2022" text="n_nationke..r not null" />
                     <column name="n_name" loc="2024..2048" text="n_name cha..) not null" />
                     <column name="n_regionkey" loc="2050..2078" text="n_regionke..r not null" />
                     <column name="n_comment" loc="2080..2111" text="n_comment ..) not null" />
                 </table>
-                <table loc="2141..2277" text="create tab..egionkey))">
+                <table name="region" loc="2141..2277" text="create tab..egionkey))">
                     <column name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     <column name="r_name" loc="2192..2216" text="r_name cha..) not null" />
                     <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
@@ -2077,7 +2077,7 @@ create table partsupp (ps_partkey integer not null, ps_suppkey integer not null,
 create table nation (n_nationkey integer not null, n_name char(25) not null, n_regionkey integer not null, n_comment varchar(152) not null, primary key (n_nationkey));
             </input>
             <tables>
-                <table loc="1..258" text="create tab.._suppkey))">
+                <table name="supplier" loc="1..258" text="create tab.._suppkey))">
                     <column name="s_suppkey" loc="24..50" text="s_suppkey ..r not null" />
                     <column name="s_name" loc="52..76" text="s_name cha..) not null" />
                     <column name="s_address" loc="78..108" text="s_address ..) not null" />
@@ -2086,14 +2086,14 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
                     <column name="s_acctbal" loc="167..199" text="s_acctbal ..) not null" />
                     <column name="s_comment" loc="201..232" text="s_comment ..) not null" />
                 </table>
-                <table loc="260..479" text="create tab.._suppkey))">
+                <table name="partsupp" loc="260..479" text="create tab.._suppkey))">
                     <column name="ps_partkey" loc="283..310" text="ps_partkey..r not null" />
                     <column name="ps_suppkey" loc="312..339" text="ps_suppkey..r not null" />
                     <column name="ps_availqty" loc="341..369" text="ps_availqt..r not null" />
                     <column name="ps_supplycost" loc="371..407" text="ps_supplyc..) not null" />
                     <column name="ps_comment" loc="409..441" text="ps_comment..) not null" />
                 </table>
-                <table loc="481..647" text="create tab..ationkey))">
+                <table name="nation" loc="481..647" text="create tab..ationkey))">
                     <column name="n_nationkey" loc="502..530" text="n_nationke..r not null" />
                     <column name="n_name" loc="532..556" text="n_name cha..) not null" />
                     <column name="n_regionkey" loc="558..586" text="n_regionke..r not null" />
@@ -2194,7 +2194,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
             <tables>
-                <table loc="1..309" text="create tab.._partkey))">
+                <table name="part" loc="1..309" text="create tab.._partkey))">
                     <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
                     <column name="p_name" loc="48..75" text="p_name var..) not null" />
                     <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
@@ -2205,7 +2205,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
                     <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
                 </table>
-                <table loc="311..568" text="create tab.._suppkey))">
+                <table name="supplier" loc="311..568" text="create tab.._suppkey))">
                     <column name="s_suppkey" loc="334..360" text="s_suppkey ..r not null" />
                     <column name="s_name" loc="362..386" text="s_name cha..) not null" />
                     <column name="s_address" loc="388..418" text="s_address ..) not null" />
@@ -2214,14 +2214,14 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="s_acctbal" loc="477..509" text="s_acctbal ..) not null" />
                     <column name="s_comment" loc="511..542" text="s_comment ..) not null" />
                 </table>
-                <table loc="570..789" text="create tab.._suppkey))">
+                <table name="partsupp" loc="570..789" text="create tab.._suppkey))">
                     <column name="ps_partkey" loc="593..620" text="ps_partkey..r not null" />
                     <column name="ps_suppkey" loc="622..649" text="ps_suppkey..r not null" />
                     <column name="ps_availqty" loc="651..679" text="ps_availqt..r not null" />
                     <column name="ps_supplycost" loc="681..717" text="ps_supplyc..) not null" />
                     <column name="ps_comment" loc="719..751" text="ps_comment..) not null" />
                 </table>
-                <table loc="791..1083" text="create tab.._custkey))">
+                <table name="customer" loc="791..1083" text="create tab.._custkey))">
                     <column name="c_custkey" loc="814..840" text="c_custkey ..r not null" />
                     <column name="c_name" loc="842..869" text="c_name var..) not null" />
                     <column name="c_address" loc="871..901" text="c_address ..) not null" />
@@ -2231,7 +2231,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="c_mktsegment" loc="994..1024" text="c_mktsegme..) not null" />
                     <column name="c_comment" loc="1026..1057" text="c_comment ..) not null" />
                 </table>
-                <table loc="1085..1411" text="create tab..orderkey))">
+                <table name="orders" loc="1085..1411" text="create tab..orderkey))">
                     <column name="o_orderkey" loc="1106..1133" text="o_orderkey..r not null" />
                     <column name="o_custkey" loc="1135..1161" text="o_custkey ..r not null" />
                     <column name="o_orderstatus" loc="1163..1193" text="o_ordersta..) not null" />
@@ -2242,7 +2242,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="o_shippriority" loc="1321..1352" text="o_shipprio..r not null" />
                     <column name="o_comment" loc="1354..1384" text="o_comment ..) not null" />
                 </table>
-                <table loc="1413..1971" text="create tab..nenumber))">
+                <table name="lineitem" loc="1413..1971" text="create tab..nenumber))">
                     <column name="l_orderkey" loc="1436..1463" text="l_orderkey..r not null" />
                     <column name="l_partkey" loc="1465..1491" text="l_partkey ..r not null" />
                     <column name="l_suppkey" loc="1493..1519" text="l_suppkey ..r not null" />
@@ -2260,13 +2260,13 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="l_shipmode" loc="1871..1899" text="l_shipmode..) not null" />
                     <column name="l_comment" loc="1901..1931" text="l_comment ..) not null" />
                 </table>
-                <table loc="1973..2139" text="create tab..ationkey))">
+                <table name="nation" loc="1973..2139" text="create tab..ationkey))">
                     <column name="n_nationkey" loc="1994..2022" text="n_nationke..r not null" />
                     <column name="n_name" loc="2024..2048" text="n_name cha..) not null" />
                     <column name="n_regionkey" loc="2050..2078" text="n_regionke..r not null" />
                     <column name="n_comment" loc="2080..2111" text="n_comment ..) not null" />
                 </table>
-                <table loc="2141..2277" text="create tab..egionkey))">
+                <table name="region" loc="2141..2277" text="create tab..egionkey))">
                     <column name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     <column name="r_name" loc="2192..2216" text="r_name cha..) not null" />
                     <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
@@ -2350,7 +2350,7 @@ create table customer (c_custkey integer not null, c_name varchar(25) not null, 
 create table orders (o_orderkey integer not null, o_custkey integer not null, o_orderstatus char(1) not null, o_totalprice decimal(12,2) not null, o_orderdate date not null, o_orderpriority char(15) not null, o_clerk char(15) not null, o_shippriority integer not null, o_comment varchar(79) not null, primary key (o_orderkey));
             </input>
             <tables>
-                <table loc="1..293" text="create tab.._custkey))">
+                <table name="customer" loc="1..293" text="create tab.._custkey))">
                     <column name="c_custkey" loc="24..50" text="c_custkey ..r not null" />
                     <column name="c_name" loc="52..79" text="c_name var..) not null" />
                     <column name="c_address" loc="81..111" text="c_address ..) not null" />
@@ -2360,7 +2360,7 @@ create table orders (o_orderkey integer not null, o_custkey integer not null, o_
                     <column name="c_mktsegment" loc="204..234" text="c_mktsegme..) not null" />
                     <column name="c_comment" loc="236..267" text="c_comment ..) not null" />
                 </table>
-                <table loc="295..621" text="create tab..orderkey))">
+                <table name="orders" loc="295..621" text="create tab..orderkey))">
                     <column name="o_orderkey" loc="316..343" text="o_orderkey..r not null" />
                     <column name="o_custkey" loc="345..371" text="o_custkey ..r not null" />
                     <column name="o_orderstatus" loc="373..403" text="o_ordersta..) not null" />
@@ -2434,7 +2434,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
             <tables>
-                <table loc="1..309" text="create tab.._partkey))">
+                <table name="part" loc="1..309" text="create tab.._partkey))">
                     <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
                     <column name="p_name" loc="48..75" text="p_name var..) not null" />
                     <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
@@ -2445,7 +2445,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
                     <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
                 </table>
-                <table loc="311..568" text="create tab.._suppkey))">
+                <table name="supplier" loc="311..568" text="create tab.._suppkey))">
                     <column name="s_suppkey" loc="334..360" text="s_suppkey ..r not null" />
                     <column name="s_name" loc="362..386" text="s_name cha..) not null" />
                     <column name="s_address" loc="388..418" text="s_address ..) not null" />
@@ -2454,14 +2454,14 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="s_acctbal" loc="477..509" text="s_acctbal ..) not null" />
                     <column name="s_comment" loc="511..542" text="s_comment ..) not null" />
                 </table>
-                <table loc="570..789" text="create tab.._suppkey))">
+                <table name="partsupp" loc="570..789" text="create tab.._suppkey))">
                     <column name="ps_partkey" loc="593..620" text="ps_partkey..r not null" />
                     <column name="ps_suppkey" loc="622..649" text="ps_suppkey..r not null" />
                     <column name="ps_availqty" loc="651..679" text="ps_availqt..r not null" />
                     <column name="ps_supplycost" loc="681..717" text="ps_supplyc..) not null" />
                     <column name="ps_comment" loc="719..751" text="ps_comment..) not null" />
                 </table>
-                <table loc="791..1083" text="create tab.._custkey))">
+                <table name="customer" loc="791..1083" text="create tab.._custkey))">
                     <column name="c_custkey" loc="814..840" text="c_custkey ..r not null" />
                     <column name="c_name" loc="842..869" text="c_name var..) not null" />
                     <column name="c_address" loc="871..901" text="c_address ..) not null" />
@@ -2471,7 +2471,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="c_mktsegment" loc="994..1024" text="c_mktsegme..) not null" />
                     <column name="c_comment" loc="1026..1057" text="c_comment ..) not null" />
                 </table>
-                <table loc="1085..1411" text="create tab..orderkey))">
+                <table name="orders" loc="1085..1411" text="create tab..orderkey))">
                     <column name="o_orderkey" loc="1106..1133" text="o_orderkey..r not null" />
                     <column name="o_custkey" loc="1135..1161" text="o_custkey ..r not null" />
                     <column name="o_orderstatus" loc="1163..1193" text="o_ordersta..) not null" />
@@ -2482,7 +2482,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="o_shippriority" loc="1321..1352" text="o_shipprio..r not null" />
                     <column name="o_comment" loc="1354..1384" text="o_comment ..) not null" />
                 </table>
-                <table loc="1413..1971" text="create tab..nenumber))">
+                <table name="lineitem" loc="1413..1971" text="create tab..nenumber))">
                     <column name="l_orderkey" loc="1436..1463" text="l_orderkey..r not null" />
                     <column name="l_partkey" loc="1465..1491" text="l_partkey ..r not null" />
                     <column name="l_suppkey" loc="1493..1519" text="l_suppkey ..r not null" />
@@ -2500,13 +2500,13 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="l_shipmode" loc="1871..1899" text="l_shipmode..) not null" />
                     <column name="l_comment" loc="1901..1931" text="l_comment ..) not null" />
                 </table>
-                <table loc="1973..2139" text="create tab..ationkey))">
+                <table name="nation" loc="1973..2139" text="create tab..ationkey))">
                     <column name="n_nationkey" loc="1994..2022" text="n_nationke..r not null" />
                     <column name="n_name" loc="2024..2048" text="n_name cha..) not null" />
                     <column name="n_regionkey" loc="2050..2078" text="n_regionke..r not null" />
                     <column name="n_comment" loc="2080..2111" text="n_comment ..) not null" />
                 </table>
-                <table loc="2141..2277" text="create tab..egionkey))">
+                <table name="region" loc="2141..2277" text="create tab..egionkey))">
                     <column name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     <column name="r_name" loc="2192..2216" text="r_name cha..) not null" />
                     <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
@@ -2566,7 +2566,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
             <tables>
-                <table loc="1..309" text="create tab.._partkey))">
+                <table name="part" loc="1..309" text="create tab.._partkey))">
                     <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
                     <column name="p_name" loc="48..75" text="p_name var..) not null" />
                     <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
@@ -2577,7 +2577,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
                     <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
                 </table>
-                <table loc="311..568" text="create tab.._suppkey))">
+                <table name="supplier" loc="311..568" text="create tab.._suppkey))">
                     <column name="s_suppkey" loc="334..360" text="s_suppkey ..r not null" />
                     <column name="s_name" loc="362..386" text="s_name cha..) not null" />
                     <column name="s_address" loc="388..418" text="s_address ..) not null" />
@@ -2586,14 +2586,14 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="s_acctbal" loc="477..509" text="s_acctbal ..) not null" />
                     <column name="s_comment" loc="511..542" text="s_comment ..) not null" />
                 </table>
-                <table loc="570..789" text="create tab.._suppkey))">
+                <table name="partsupp" loc="570..789" text="create tab.._suppkey))">
                     <column name="ps_partkey" loc="593..620" text="ps_partkey..r not null" />
                     <column name="ps_suppkey" loc="622..649" text="ps_suppkey..r not null" />
                     <column name="ps_availqty" loc="651..679" text="ps_availqt..r not null" />
                     <column name="ps_supplycost" loc="681..717" text="ps_supplyc..) not null" />
                     <column name="ps_comment" loc="719..751" text="ps_comment..) not null" />
                 </table>
-                <table loc="791..1083" text="create tab.._custkey))">
+                <table name="customer" loc="791..1083" text="create tab.._custkey))">
                     <column name="c_custkey" loc="814..840" text="c_custkey ..r not null" />
                     <column name="c_name" loc="842..869" text="c_name var..) not null" />
                     <column name="c_address" loc="871..901" text="c_address ..) not null" />
@@ -2603,7 +2603,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="c_mktsegment" loc="994..1024" text="c_mktsegme..) not null" />
                     <column name="c_comment" loc="1026..1057" text="c_comment ..) not null" />
                 </table>
-                <table loc="1085..1411" text="create tab..orderkey))">
+                <table name="orders" loc="1085..1411" text="create tab..orderkey))">
                     <column name="o_orderkey" loc="1106..1133" text="o_orderkey..r not null" />
                     <column name="o_custkey" loc="1135..1161" text="o_custkey ..r not null" />
                     <column name="o_orderstatus" loc="1163..1193" text="o_ordersta..) not null" />
@@ -2614,7 +2614,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="o_shippriority" loc="1321..1352" text="o_shipprio..r not null" />
                     <column name="o_comment" loc="1354..1384" text="o_comment ..) not null" />
                 </table>
-                <table loc="1413..1971" text="create tab..nenumber))">
+                <table name="lineitem" loc="1413..1971" text="create tab..nenumber))">
                     <column name="l_orderkey" loc="1436..1463" text="l_orderkey..r not null" />
                     <column name="l_partkey" loc="1465..1491" text="l_partkey ..r not null" />
                     <column name="l_suppkey" loc="1493..1519" text="l_suppkey ..r not null" />
@@ -2632,13 +2632,13 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="l_shipmode" loc="1871..1899" text="l_shipmode..) not null" />
                     <column name="l_comment" loc="1901..1931" text="l_comment ..) not null" />
                 </table>
-                <table loc="1973..2139" text="create tab..ationkey))">
+                <table name="nation" loc="1973..2139" text="create tab..ationkey))">
                     <column name="n_nationkey" loc="1994..2022" text="n_nationke..r not null" />
                     <column name="n_name" loc="2024..2048" text="n_name cha..) not null" />
                     <column name="n_regionkey" loc="2050..2078" text="n_regionke..r not null" />
                     <column name="n_comment" loc="2080..2111" text="n_comment ..) not null" />
                 </table>
-                <table loc="2141..2277" text="create tab..egionkey))">
+                <table name="region" loc="2141..2277" text="create tab..egionkey))">
                     <column name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     <column name="r_name" loc="2192..2216" text="r_name cha..) not null" />
                     <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
@@ -2724,7 +2724,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
             <tables>
-                <table loc="1..309" text="create tab.._partkey))">
+                <table name="part" loc="1..309" text="create tab.._partkey))">
                     <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
                     <column name="p_name" loc="48..75" text="p_name var..) not null" />
                     <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
@@ -2735,7 +2735,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
                     <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
                 </table>
-                <table loc="311..568" text="create tab.._suppkey))">
+                <table name="supplier" loc="311..568" text="create tab.._suppkey))">
                     <column name="s_suppkey" loc="334..360" text="s_suppkey ..r not null" />
                     <column name="s_name" loc="362..386" text="s_name cha..) not null" />
                     <column name="s_address" loc="388..418" text="s_address ..) not null" />
@@ -2744,14 +2744,14 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="s_acctbal" loc="477..509" text="s_acctbal ..) not null" />
                     <column name="s_comment" loc="511..542" text="s_comment ..) not null" />
                 </table>
-                <table loc="570..789" text="create tab.._suppkey))">
+                <table name="partsupp" loc="570..789" text="create tab.._suppkey))">
                     <column name="ps_partkey" loc="593..620" text="ps_partkey..r not null" />
                     <column name="ps_suppkey" loc="622..649" text="ps_suppkey..r not null" />
                     <column name="ps_availqty" loc="651..679" text="ps_availqt..r not null" />
                     <column name="ps_supplycost" loc="681..717" text="ps_supplyc..) not null" />
                     <column name="ps_comment" loc="719..751" text="ps_comment..) not null" />
                 </table>
-                <table loc="791..1083" text="create tab.._custkey))">
+                <table name="customer" loc="791..1083" text="create tab.._custkey))">
                     <column name="c_custkey" loc="814..840" text="c_custkey ..r not null" />
                     <column name="c_name" loc="842..869" text="c_name var..) not null" />
                     <column name="c_address" loc="871..901" text="c_address ..) not null" />
@@ -2761,7 +2761,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="c_mktsegment" loc="994..1024" text="c_mktsegme..) not null" />
                     <column name="c_comment" loc="1026..1057" text="c_comment ..) not null" />
                 </table>
-                <table loc="1085..1411" text="create tab..orderkey))">
+                <table name="orders" loc="1085..1411" text="create tab..orderkey))">
                     <column name="o_orderkey" loc="1106..1133" text="o_orderkey..r not null" />
                     <column name="o_custkey" loc="1135..1161" text="o_custkey ..r not null" />
                     <column name="o_orderstatus" loc="1163..1193" text="o_ordersta..) not null" />
@@ -2772,7 +2772,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="o_shippriority" loc="1321..1352" text="o_shipprio..r not null" />
                     <column name="o_comment" loc="1354..1384" text="o_comment ..) not null" />
                 </table>
-                <table loc="1413..1971" text="create tab..nenumber))">
+                <table name="lineitem" loc="1413..1971" text="create tab..nenumber))">
                     <column name="l_orderkey" loc="1436..1463" text="l_orderkey..r not null" />
                     <column name="l_partkey" loc="1465..1491" text="l_partkey ..r not null" />
                     <column name="l_suppkey" loc="1493..1519" text="l_suppkey ..r not null" />
@@ -2790,13 +2790,13 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="l_shipmode" loc="1871..1899" text="l_shipmode..) not null" />
                     <column name="l_comment" loc="1901..1931" text="l_comment ..) not null" />
                 </table>
-                <table loc="1973..2139" text="create tab..ationkey))">
+                <table name="nation" loc="1973..2139" text="create tab..ationkey))">
                     <column name="n_nationkey" loc="1994..2022" text="n_nationke..r not null" />
                     <column name="n_name" loc="2024..2048" text="n_name cha..) not null" />
                     <column name="n_regionkey" loc="2050..2078" text="n_regionke..r not null" />
                     <column name="n_comment" loc="2080..2111" text="n_comment ..) not null" />
                 </table>
-                <table loc="2141..2277" text="create tab..egionkey))">
+                <table name="region" loc="2141..2277" text="create tab..egionkey))">
                     <column name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     <column name="r_name" loc="2192..2216" text="r_name cha..) not null" />
                     <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
@@ -2878,7 +2878,7 @@ create table part (p_partkey integer not null, p_name varchar(55) not null, p_mf
 create table lineitem (l_orderkey integer not null, l_partkey integer not null, l_suppkey integer not null, l_linenumber integer not null, l_quantity decimal(12,2) not null, l_extendedprice decimal(12,2) not null, l_discount decimal(12,2) not null, l_tax decimal(12,2) not null, l_returnflag char(1) not null, l_linestatus char(1) not null, l_shipdate date not null, l_commitdate date not null, l_receiptdate date not null, l_shipinstruct char(25) not null, l_shipmode char(10) not null, l_comment varchar(44) not null, primary key (l_orderkey,l_linenumber));
             </input>
             <tables>
-                <table loc="1..309" text="create tab.._partkey))">
+                <table name="part" loc="1..309" text="create tab.._partkey))">
                     <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
                     <column name="p_name" loc="48..75" text="p_name var..) not null" />
                     <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
@@ -2889,7 +2889,7 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
                     <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
                     <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
                 </table>
-                <table loc="311..869" text="create tab..nenumber))">
+                <table name="lineitem" loc="311..869" text="create tab..nenumber))">
                     <column name="l_orderkey" loc="334..361" text="l_orderkey..r not null" />
                     <column name="l_partkey" loc="363..389" text="l_partkey ..r not null" />
                     <column name="l_suppkey" loc="391..417" text="l_suppkey ..r not null" />
@@ -2971,7 +2971,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
             <tables>
-                <table loc="1..309" text="create tab.._partkey))">
+                <table name="part" loc="1..309" text="create tab.._partkey))">
                     <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
                     <column name="p_name" loc="48..75" text="p_name var..) not null" />
                     <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
@@ -2982,7 +2982,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
                     <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
                 </table>
-                <table loc="311..568" text="create tab.._suppkey))">
+                <table name="supplier" loc="311..568" text="create tab.._suppkey))">
                     <column name="s_suppkey" loc="334..360" text="s_suppkey ..r not null" />
                     <column name="s_name" loc="362..386" text="s_name cha..) not null" />
                     <column name="s_address" loc="388..418" text="s_address ..) not null" />
@@ -2991,14 +2991,14 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="s_acctbal" loc="477..509" text="s_acctbal ..) not null" />
                     <column name="s_comment" loc="511..542" text="s_comment ..) not null" />
                 </table>
-                <table loc="570..789" text="create tab.._suppkey))">
+                <table name="partsupp" loc="570..789" text="create tab.._suppkey))">
                     <column name="ps_partkey" loc="593..620" text="ps_partkey..r not null" />
                     <column name="ps_suppkey" loc="622..649" text="ps_suppkey..r not null" />
                     <column name="ps_availqty" loc="651..679" text="ps_availqt..r not null" />
                     <column name="ps_supplycost" loc="681..717" text="ps_supplyc..) not null" />
                     <column name="ps_comment" loc="719..751" text="ps_comment..) not null" />
                 </table>
-                <table loc="791..1083" text="create tab.._custkey))">
+                <table name="customer" loc="791..1083" text="create tab.._custkey))">
                     <column name="c_custkey" loc="814..840" text="c_custkey ..r not null" />
                     <column name="c_name" loc="842..869" text="c_name var..) not null" />
                     <column name="c_address" loc="871..901" text="c_address ..) not null" />
@@ -3008,7 +3008,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="c_mktsegment" loc="994..1024" text="c_mktsegme..) not null" />
                     <column name="c_comment" loc="1026..1057" text="c_comment ..) not null" />
                 </table>
-                <table loc="1085..1411" text="create tab..orderkey))">
+                <table name="orders" loc="1085..1411" text="create tab..orderkey))">
                     <column name="o_orderkey" loc="1106..1133" text="o_orderkey..r not null" />
                     <column name="o_custkey" loc="1135..1161" text="o_custkey ..r not null" />
                     <column name="o_orderstatus" loc="1163..1193" text="o_ordersta..) not null" />
@@ -3019,7 +3019,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="o_shippriority" loc="1321..1352" text="o_shipprio..r not null" />
                     <column name="o_comment" loc="1354..1384" text="o_comment ..) not null" />
                 </table>
-                <table loc="1413..1971" text="create tab..nenumber))">
+                <table name="lineitem" loc="1413..1971" text="create tab..nenumber))">
                     <column name="l_orderkey" loc="1436..1463" text="l_orderkey..r not null" />
                     <column name="l_partkey" loc="1465..1491" text="l_partkey ..r not null" />
                     <column name="l_suppkey" loc="1493..1519" text="l_suppkey ..r not null" />
@@ -3037,13 +3037,13 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="l_shipmode" loc="1871..1899" text="l_shipmode..) not null" />
                     <column name="l_comment" loc="1901..1931" text="l_comment ..) not null" />
                 </table>
-                <table loc="1973..2139" text="create tab..ationkey))">
+                <table name="nation" loc="1973..2139" text="create tab..ationkey))">
                     <column name="n_nationkey" loc="1994..2022" text="n_nationke..r not null" />
                     <column name="n_name" loc="2024..2048" text="n_name cha..) not null" />
                     <column name="n_regionkey" loc="2050..2078" text="n_regionke..r not null" />
                     <column name="n_comment" loc="2080..2111" text="n_comment ..) not null" />
                 </table>
-                <table loc="2141..2277" text="create tab..egionkey))">
+                <table name="region" loc="2141..2277" text="create tab..egionkey))">
                     <column name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     <column name="r_name" loc="2192..2216" text="r_name cha..) not null" />
                     <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
@@ -3142,7 +3142,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
             <tables>
-                <table loc="1..309" text="create tab.._partkey))">
+                <table name="part" loc="1..309" text="create tab.._partkey))">
                     <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
                     <column name="p_name" loc="48..75" text="p_name var..) not null" />
                     <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
@@ -3153,7 +3153,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
                     <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
                 </table>
-                <table loc="311..568" text="create tab.._suppkey))">
+                <table name="supplier" loc="311..568" text="create tab.._suppkey))">
                     <column name="s_suppkey" loc="334..360" text="s_suppkey ..r not null" />
                     <column name="s_name" loc="362..386" text="s_name cha..) not null" />
                     <column name="s_address" loc="388..418" text="s_address ..) not null" />
@@ -3162,14 +3162,14 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="s_acctbal" loc="477..509" text="s_acctbal ..) not null" />
                     <column name="s_comment" loc="511..542" text="s_comment ..) not null" />
                 </table>
-                <table loc="570..789" text="create tab.._suppkey))">
+                <table name="partsupp" loc="570..789" text="create tab.._suppkey))">
                     <column name="ps_partkey" loc="593..620" text="ps_partkey..r not null" />
                     <column name="ps_suppkey" loc="622..649" text="ps_suppkey..r not null" />
                     <column name="ps_availqty" loc="651..679" text="ps_availqt..r not null" />
                     <column name="ps_supplycost" loc="681..717" text="ps_supplyc..) not null" />
                     <column name="ps_comment" loc="719..751" text="ps_comment..) not null" />
                 </table>
-                <table loc="791..1083" text="create tab.._custkey))">
+                <table name="customer" loc="791..1083" text="create tab.._custkey))">
                     <column name="c_custkey" loc="814..840" text="c_custkey ..r not null" />
                     <column name="c_name" loc="842..869" text="c_name var..) not null" />
                     <column name="c_address" loc="871..901" text="c_address ..) not null" />
@@ -3179,7 +3179,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="c_mktsegment" loc="994..1024" text="c_mktsegme..) not null" />
                     <column name="c_comment" loc="1026..1057" text="c_comment ..) not null" />
                 </table>
-                <table loc="1085..1411" text="create tab..orderkey))">
+                <table name="orders" loc="1085..1411" text="create tab..orderkey))">
                     <column name="o_orderkey" loc="1106..1133" text="o_orderkey..r not null" />
                     <column name="o_custkey" loc="1135..1161" text="o_custkey ..r not null" />
                     <column name="o_orderstatus" loc="1163..1193" text="o_ordersta..) not null" />
@@ -3190,7 +3190,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="o_shippriority" loc="1321..1352" text="o_shipprio..r not null" />
                     <column name="o_comment" loc="1354..1384" text="o_comment ..) not null" />
                 </table>
-                <table loc="1413..1971" text="create tab..nenumber))">
+                <table name="lineitem" loc="1413..1971" text="create tab..nenumber))">
                     <column name="l_orderkey" loc="1436..1463" text="l_orderkey..r not null" />
                     <column name="l_partkey" loc="1465..1491" text="l_partkey ..r not null" />
                     <column name="l_suppkey" loc="1493..1519" text="l_suppkey ..r not null" />
@@ -3208,13 +3208,13 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="l_shipmode" loc="1871..1899" text="l_shipmode..) not null" />
                     <column name="l_comment" loc="1901..1931" text="l_comment ..) not null" />
                 </table>
-                <table loc="1973..2139" text="create tab..ationkey))">
+                <table name="nation" loc="1973..2139" text="create tab..ationkey))">
                     <column name="n_nationkey" loc="1994..2022" text="n_nationke..r not null" />
                     <column name="n_name" loc="2024..2048" text="n_name cha..) not null" />
                     <column name="n_regionkey" loc="2050..2078" text="n_regionke..r not null" />
                     <column name="n_comment" loc="2080..2111" text="n_comment ..) not null" />
                 </table>
-                <table loc="2141..2277" text="create tab..egionkey))">
+                <table name="region" loc="2141..2277" text="create tab..egionkey))">
                     <column name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     <column name="r_name" loc="2192..2216" text="r_name cha..) not null" />
                     <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
@@ -3324,7 +3324,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
             <tables>
-                <table loc="1..309" text="create tab.._partkey))">
+                <table name="part" loc="1..309" text="create tab.._partkey))">
                     <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
                     <column name="p_name" loc="48..75" text="p_name var..) not null" />
                     <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
@@ -3335,7 +3335,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
                     <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
                 </table>
-                <table loc="311..568" text="create tab.._suppkey))">
+                <table name="supplier" loc="311..568" text="create tab.._suppkey))">
                     <column name="s_suppkey" loc="334..360" text="s_suppkey ..r not null" />
                     <column name="s_name" loc="362..386" text="s_name cha..) not null" />
                     <column name="s_address" loc="388..418" text="s_address ..) not null" />
@@ -3344,14 +3344,14 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="s_acctbal" loc="477..509" text="s_acctbal ..) not null" />
                     <column name="s_comment" loc="511..542" text="s_comment ..) not null" />
                 </table>
-                <table loc="570..789" text="create tab.._suppkey))">
+                <table name="partsupp" loc="570..789" text="create tab.._suppkey))">
                     <column name="ps_partkey" loc="593..620" text="ps_partkey..r not null" />
                     <column name="ps_suppkey" loc="622..649" text="ps_suppkey..r not null" />
                     <column name="ps_availqty" loc="651..679" text="ps_availqt..r not null" />
                     <column name="ps_supplycost" loc="681..717" text="ps_supplyc..) not null" />
                     <column name="ps_comment" loc="719..751" text="ps_comment..) not null" />
                 </table>
-                <table loc="791..1083" text="create tab.._custkey))">
+                <table name="customer" loc="791..1083" text="create tab.._custkey))">
                     <column name="c_custkey" loc="814..840" text="c_custkey ..r not null" />
                     <column name="c_name" loc="842..869" text="c_name var..) not null" />
                     <column name="c_address" loc="871..901" text="c_address ..) not null" />
@@ -3361,7 +3361,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="c_mktsegment" loc="994..1024" text="c_mktsegme..) not null" />
                     <column name="c_comment" loc="1026..1057" text="c_comment ..) not null" />
                 </table>
-                <table loc="1085..1411" text="create tab..orderkey))">
+                <table name="orders" loc="1085..1411" text="create tab..orderkey))">
                     <column name="o_orderkey" loc="1106..1133" text="o_orderkey..r not null" />
                     <column name="o_custkey" loc="1135..1161" text="o_custkey ..r not null" />
                     <column name="o_orderstatus" loc="1163..1193" text="o_ordersta..) not null" />
@@ -3372,7 +3372,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="o_shippriority" loc="1321..1352" text="o_shipprio..r not null" />
                     <column name="o_comment" loc="1354..1384" text="o_comment ..) not null" />
                 </table>
-                <table loc="1413..1971" text="create tab..nenumber))">
+                <table name="lineitem" loc="1413..1971" text="create tab..nenumber))">
                     <column name="l_orderkey" loc="1436..1463" text="l_orderkey..r not null" />
                     <column name="l_partkey" loc="1465..1491" text="l_partkey ..r not null" />
                     <column name="l_suppkey" loc="1493..1519" text="l_suppkey ..r not null" />
@@ -3390,13 +3390,13 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="l_shipmode" loc="1871..1899" text="l_shipmode..) not null" />
                     <column name="l_comment" loc="1901..1931" text="l_comment ..) not null" />
                 </table>
-                <table loc="1973..2139" text="create tab..ationkey))">
+                <table name="nation" loc="1973..2139" text="create tab..ationkey))">
                     <column name="n_nationkey" loc="1994..2022" text="n_nationke..r not null" />
                     <column name="n_name" loc="2024..2048" text="n_name cha..) not null" />
                     <column name="n_regionkey" loc="2050..2078" text="n_regionke..r not null" />
                     <column name="n_comment" loc="2080..2111" text="n_comment ..) not null" />
                 </table>
-                <table loc="2141..2277" text="create tab..egionkey))">
+                <table name="region" loc="2141..2277" text="create tab..egionkey))">
                     <column name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     <column name="r_name" loc="2192..2216" text="r_name cha..) not null" />
                     <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
@@ -3501,7 +3501,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
             <tables>
-                <table loc="1..309" text="create tab.._partkey))">
+                <table name="part" loc="1..309" text="create tab.._partkey))">
                     <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
                     <column name="p_name" loc="48..75" text="p_name var..) not null" />
                     <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
@@ -3512,7 +3512,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
                     <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
                 </table>
-                <table loc="311..568" text="create tab.._suppkey))">
+                <table name="supplier" loc="311..568" text="create tab.._suppkey))">
                     <column name="s_suppkey" loc="334..360" text="s_suppkey ..r not null" />
                     <column name="s_name" loc="362..386" text="s_name cha..) not null" />
                     <column name="s_address" loc="388..418" text="s_address ..) not null" />
@@ -3521,14 +3521,14 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="s_acctbal" loc="477..509" text="s_acctbal ..) not null" />
                     <column name="s_comment" loc="511..542" text="s_comment ..) not null" />
                 </table>
-                <table loc="570..789" text="create tab.._suppkey))">
+                <table name="partsupp" loc="570..789" text="create tab.._suppkey))">
                     <column name="ps_partkey" loc="593..620" text="ps_partkey..r not null" />
                     <column name="ps_suppkey" loc="622..649" text="ps_suppkey..r not null" />
                     <column name="ps_availqty" loc="651..679" text="ps_availqt..r not null" />
                     <column name="ps_supplycost" loc="681..717" text="ps_supplyc..) not null" />
                     <column name="ps_comment" loc="719..751" text="ps_comment..) not null" />
                 </table>
-                <table loc="791..1083" text="create tab.._custkey))">
+                <table name="customer" loc="791..1083" text="create tab.._custkey))">
                     <column name="c_custkey" loc="814..840" text="c_custkey ..r not null" />
                     <column name="c_name" loc="842..869" text="c_name var..) not null" />
                     <column name="c_address" loc="871..901" text="c_address ..) not null" />
@@ -3538,7 +3538,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="c_mktsegment" loc="994..1024" text="c_mktsegme..) not null" />
                     <column name="c_comment" loc="1026..1057" text="c_comment ..) not null" />
                 </table>
-                <table loc="1085..1411" text="create tab..orderkey))">
+                <table name="orders" loc="1085..1411" text="create tab..orderkey))">
                     <column name="o_orderkey" loc="1106..1133" text="o_orderkey..r not null" />
                     <column name="o_custkey" loc="1135..1161" text="o_custkey ..r not null" />
                     <column name="o_orderstatus" loc="1163..1193" text="o_ordersta..) not null" />
@@ -3549,7 +3549,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="o_shippriority" loc="1321..1352" text="o_shipprio..r not null" />
                     <column name="o_comment" loc="1354..1384" text="o_comment ..) not null" />
                 </table>
-                <table loc="1413..1971" text="create tab..nenumber))">
+                <table name="lineitem" loc="1413..1971" text="create tab..nenumber))">
                     <column name="l_orderkey" loc="1436..1463" text="l_orderkey..r not null" />
                     <column name="l_partkey" loc="1465..1491" text="l_partkey ..r not null" />
                     <column name="l_suppkey" loc="1493..1519" text="l_suppkey ..r not null" />
@@ -3567,13 +3567,13 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="l_shipmode" loc="1871..1899" text="l_shipmode..) not null" />
                     <column name="l_comment" loc="1901..1931" text="l_comment ..) not null" />
                 </table>
-                <table loc="1973..2139" text="create tab..ationkey))">
+                <table name="nation" loc="1973..2139" text="create tab..ationkey))">
                     <column name="n_nationkey" loc="1994..2022" text="n_nationke..r not null" />
                     <column name="n_name" loc="2024..2048" text="n_name cha..) not null" />
                     <column name="n_regionkey" loc="2050..2078" text="n_regionke..r not null" />
                     <column name="n_comment" loc="2080..2111" text="n_comment ..) not null" />
                 </table>
-                <table loc="2141..2277" text="create tab..egionkey))">
+                <table name="region" loc="2141..2277" text="create tab..egionkey))">
                     <column name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     <column name="r_name" loc="2192..2216" text="r_name cha..) not null" />
                     <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
@@ -3712,7 +3712,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
             <tables>
-                <table loc="1..309" text="create tab.._partkey))">
+                <table name="part" loc="1..309" text="create tab.._partkey))">
                     <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
                     <column name="p_name" loc="48..75" text="p_name var..) not null" />
                     <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
@@ -3723,7 +3723,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
                     <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
                 </table>
-                <table loc="311..568" text="create tab.._suppkey))">
+                <table name="supplier" loc="311..568" text="create tab.._suppkey))">
                     <column name="s_suppkey" loc="334..360" text="s_suppkey ..r not null" />
                     <column name="s_name" loc="362..386" text="s_name cha..) not null" />
                     <column name="s_address" loc="388..418" text="s_address ..) not null" />
@@ -3732,14 +3732,14 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="s_acctbal" loc="477..509" text="s_acctbal ..) not null" />
                     <column name="s_comment" loc="511..542" text="s_comment ..) not null" />
                 </table>
-                <table loc="570..789" text="create tab.._suppkey))">
+                <table name="partsupp" loc="570..789" text="create tab.._suppkey))">
                     <column name="ps_partkey" loc="593..620" text="ps_partkey..r not null" />
                     <column name="ps_suppkey" loc="622..649" text="ps_suppkey..r not null" />
                     <column name="ps_availqty" loc="651..679" text="ps_availqt..r not null" />
                     <column name="ps_supplycost" loc="681..717" text="ps_supplyc..) not null" />
                     <column name="ps_comment" loc="719..751" text="ps_comment..) not null" />
                 </table>
-                <table loc="791..1083" text="create tab.._custkey))">
+                <table name="customer" loc="791..1083" text="create tab.._custkey))">
                     <column name="c_custkey" loc="814..840" text="c_custkey ..r not null" />
                     <column name="c_name" loc="842..869" text="c_name var..) not null" />
                     <column name="c_address" loc="871..901" text="c_address ..) not null" />
@@ -3749,7 +3749,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="c_mktsegment" loc="994..1024" text="c_mktsegme..) not null" />
                     <column name="c_comment" loc="1026..1057" text="c_comment ..) not null" />
                 </table>
-                <table loc="1085..1411" text="create tab..orderkey))">
+                <table name="orders" loc="1085..1411" text="create tab..orderkey))">
                     <column name="o_orderkey" loc="1106..1133" text="o_orderkey..r not null" />
                     <column name="o_custkey" loc="1135..1161" text="o_custkey ..r not null" />
                     <column name="o_orderstatus" loc="1163..1193" text="o_ordersta..) not null" />
@@ -3760,7 +3760,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="o_shippriority" loc="1321..1352" text="o_shipprio..r not null" />
                     <column name="o_comment" loc="1354..1384" text="o_comment ..) not null" />
                 </table>
-                <table loc="1413..1971" text="create tab..nenumber))">
+                <table name="lineitem" loc="1413..1971" text="create tab..nenumber))">
                     <column name="l_orderkey" loc="1436..1463" text="l_orderkey..r not null" />
                     <column name="l_partkey" loc="1465..1491" text="l_partkey ..r not null" />
                     <column name="l_suppkey" loc="1493..1519" text="l_suppkey ..r not null" />
@@ -3778,13 +3778,13 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="l_shipmode" loc="1871..1899" text="l_shipmode..) not null" />
                     <column name="l_comment" loc="1901..1931" text="l_comment ..) not null" />
                 </table>
-                <table loc="1973..2139" text="create tab..ationkey))">
+                <table name="nation" loc="1973..2139" text="create tab..ationkey))">
                     <column name="n_nationkey" loc="1994..2022" text="n_nationke..r not null" />
                     <column name="n_name" loc="2024..2048" text="n_name cha..) not null" />
                     <column name="n_regionkey" loc="2050..2078" text="n_regionke..r not null" />
                     <column name="n_comment" loc="2080..2111" text="n_comment ..) not null" />
                 </table>
-                <table loc="2141..2277" text="create tab..egionkey))">
+                <table name="region" loc="2141..2277" text="create tab..egionkey))">
                     <column name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     <column name="r_name" loc="2192..2216" text="r_name cha..) not null" />
                     <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />

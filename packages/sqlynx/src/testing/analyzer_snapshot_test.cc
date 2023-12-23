@@ -52,6 +52,8 @@ static void writeTables(pugi::xml_node root, const AnalyzedScript& target, const
                         const AnalyzedScript* external) {
     for (auto& table_decl : target.GetTables()) {
         auto xml_tbl = root.append_child("table");
+        std::string table_name{table_decl.table_name.table_name};
+        xml_tbl.append_attribute("name").set_value(table_name.c_str());
         assert(table_decl.ast_node_id.has_value());
         WriteLocation(xml_tbl, target.parsed_script->nodes[*table_decl.ast_node_id].location(),
                       target.parsed_script->scanned_script->GetInput());
