@@ -2,7 +2,7 @@
 
 #include <limits>
 
-#include "sqlynx/context.h"
+#include "sqlynx/origin.h"
 #include "sqlynx/script.h"
 
 namespace sqlynx {
@@ -50,7 +50,7 @@ void SchemaGrid::PrepareLayout() {
     assert(nodes.empty());
     nodes.reserve(table_count);
     // Load internal tables
-    std::unordered_map<ContextObjectID, size_t, ContextObjectID::Hasher> nodes_by_table_id;
+    std::unordered_map<GlobalObjectID, size_t, GlobalObjectID::Hasher> nodes_by_table_id;
     for (auto& table : script->GetTables()) {
         nodes_by_table_id.insert({table.table_id, nodes.size()});
         nodes.emplace_back(nodes.size(), table.table_id, 0);
@@ -67,12 +67,12 @@ void SchemaGrid::PrepareLayout() {
     edge_nodes.resize(script->graph_edge_nodes.size());
     for (size_t i = 0; i < script->graph_edge_nodes.size(); ++i) {
         AnalyzedScript::QueryGraphEdgeNode& node = script->graph_edge_nodes[i];
-        ContextObjectID column_reference_id{script->GetContextId(), node.column_reference_id};
+        GlobalObjectID column_reference_id{script->GetOrigin(), node.column_reference_id};
         auto& col_ref = script->column_references[node.column_reference_id];
-        ContextObjectID ast_node_id = col_ref.ast_node_id.has_value()
-                                          ? ContextObjectID{script->GetContextId(), *col_ref.ast_node_id}
-                                          : ContextObjectID{};
-        ContextObjectID table_id = script->column_references[node.column_reference_id].resolved_table_id;
+        GlobalObjectID ast_node_id = col_ref.ast_node_id.has_value()
+                                         ? GlobalObjectID{script->GetOrigin(), *col_ref.ast_node_id}
+                                         : GlobalObjectID{};
+        GlobalObjectID table_id = script->column_references[node.column_reference_id].resolved_table_id;
         uint32_t node_id = std::numeric_limits<uint32_t>::max();
         if (auto iter = nodes_by_table_id.find(table_id); iter != nodes_by_table_id.end()) {
             node_id = iter->second;
@@ -84,13 +84,13 @@ void SchemaGrid::PrepareLayout() {
     edges.resize(script->graph_edges.size());
     for (uint32_t i = 0; i < script->graph_edges.size(); ++i) {
         AnalyzedScript::QueryGraphEdge& edge = script->graph_edges[i];
-        edges[i] = {ContextObjectID{script->GetContextId(), i},
-                    edge.ast_node_id.has_value() ? ContextObjectID{script->GetContextId(), *edge.ast_node_id}
-                                                 : ContextObjectID{},
-                    edge.nodes_begin,
-                    edge.node_count_left,
-                    edge.node_count_right,
-                    edge.expression_operator};
+        edges[i] = {
+            GlobalObjectID{script->GetOrigin(), i},
+            edge.ast_node_id.has_value() ? GlobalObjectID{script->GetOrigin(), *edge.ast_node_id} : GlobalObjectID{},
+            edge.nodes_begin,
+            edge.node_count_left,
+            edge.node_count_right,
+            edge.expression_operator};
     }
     // Collect nˆ2 adjacency pairs for now.
     // We might want to model hyper-edges differently for edge attraction in the future
@@ -100,7 +100,7 @@ void SchemaGrid::PrepareLayout() {
         // Emit nˆ2 adjacency pairs with patched node ids
         for (size_t l = 0; l < edge.node_count_left; ++l) {
             size_t lcol = script->graph_edge_nodes[edge.nodes_begin + l].column_reference_id;
-            ContextObjectID ltid = script->column_references[lcol].resolved_table_id;
+            GlobalObjectID ltid = script->column_references[lcol].resolved_table_id;
             auto iter = nodes_by_table_id.find(ltid);
             if (iter == nodes_by_table_id.end()) {
                 continue;
@@ -109,7 +109,7 @@ void SchemaGrid::PrepareLayout() {
             // Emit pair for each right node
             for (size_t r = 0; r < edge.node_count_right; ++r) {
                 size_t rcol = script->graph_edge_nodes[edge.nodes_begin + edge.node_count_left + r].column_reference_id;
-                ContextObjectID rtid = script->column_references[rcol].resolved_table_id;
+                GlobalObjectID rtid = script->column_references[rcol].resolved_table_id;
                 if (rtid.IsNull()) continue;
                 auto iter = nodes_by_table_id.find(rtid);
                 if (iter == nodes_by_table_id.end()) {

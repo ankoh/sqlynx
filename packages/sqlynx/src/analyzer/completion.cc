@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "sqlynx/context.h"
+#include "sqlynx/origin.h"
 #include "sqlynx/parser/grammar/keywords.h"
 #include "sqlynx/parser/names.h"
 #include "sqlynx/parser/parser.h"

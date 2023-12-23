@@ -2,6 +2,7 @@
 
 #include <regex>
 
+#include "sqlynx/origin.h"
 #include "sqlynx/parser/grammar/keywords.h"
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/proto/proto_generated.h"
@@ -103,8 +104,7 @@ Parser::symbol_type Scanner::ReadBitStringLiteral(proto::Location loc) {
 }
 
 /// Scan input and produce all tokens
-std::pair<std::shared_ptr<ScannedScript>, proto::StatusCode> Scanner::Scan(const rope::Rope& text,
-                                                                           uint32_t context_id) {
+std::pair<std::shared_ptr<ScannedScript>, proto::StatusCode> Scanner::Scan(const rope::Rope& text, OriginID origin_id) {
     // Function to get next token
     auto next = [](void* scanner_state_ptr, std::optional<Parser::symbol_type>& lookahead_symbol) {
         // Have lookahead?
@@ -175,7 +175,7 @@ std::pair<std::shared_ptr<ScannedScript>, proto::StatusCode> Scanner::Scan(const
     };
 
     // Create the scanner
-    Scanner scanner{text, context_id};
+    Scanner scanner{text, origin_id};
     // Collect all tokens until we hit EOF
     std::optional<Parser::symbol_type> lookahead_symbol;
     while (true) {
