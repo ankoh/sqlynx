@@ -395,7 +395,7 @@ table ScannerTokens {
 }
 
 table ScannedScript {
-    context_id: uint32;
+    origin_id: uint32;
     line_breaks: [Location];
     errors: [Error];
     tokens: ScannerTokens;
@@ -413,7 +413,7 @@ enum NameTag: uint8 {
 }
 
 table ParsedScript {
-    context_id: uint32;
+    origin_id: uint32;
     nodes: [Node];
     statements: [Statement];
     errors: [Error];

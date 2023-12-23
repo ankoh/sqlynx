@@ -8,7 +8,7 @@
 
 #include "sqlynx/analyzer/analyzer.h"
 #include "sqlynx/analyzer/pass_manager.h"
-#include "sqlynx/context.h"
+#include "sqlynx/origin.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
 #include "sqlynx/utils/attribute_index.h"
@@ -30,7 +30,7 @@ class NameResolutionPass : public PassManager::LTRPass {
         /// The column id
         size_t column_id;
         /// The table reference id
-        ContextObjectID table_reference_id;
+        GlobalObjectID table_reference_id;
     };
     /// A naming scope
     struct NameScope {
@@ -83,7 +83,7 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// The parsed program
     ParsedScript& parsed_program;
     /// The context id
-    const uint32_t context_id;
+    const OriginID origin_id;
     /// The database name
     const std::string_view database_name;
     /// The schema name

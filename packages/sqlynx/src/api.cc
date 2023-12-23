@@ -100,7 +100,7 @@ extern "C" void sqlynx_result_delete(FFIResult* result) {
 }
 
 /// Create a script
-extern "C" Script* sqlynx_script_new(uint32_t context_id) { return new Script(context_id); }
+extern "C" Script* sqlynx_script_new(uint32_t origin_id) { return new Script(origin_id); }
 /// Delete a script
 extern "C" void sqlynx_script_delete(Script* script) { delete script; }
 /// Insert char at a position

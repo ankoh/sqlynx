@@ -8,7 +8,7 @@
 #include <tuple>
 
 #include "ankerl/unordered_dense.h"
-#include "sqlynx/context.h"
+#include "sqlynx/origin.h"
 #include "sqlynx/parser/names.h"
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/proto/proto_generated.h"
@@ -39,8 +39,8 @@ class ScannedScript {
     friend class Script;
 
    public:
-    /// The context id
-    const uint32_t context_id;
+    /// The origin id
+    const OriginID origin_id;
     /// The copied text buffer
     std::string text_buffer;
 
@@ -64,7 +64,7 @@ class ScannedScript {
 
    public:
     /// Constructor
-    ScannedScript(const rope::Rope& text, uint32_t context_id = 1);
+    ScannedScript(const rope::Rope& text, OriginID origin_id = 1);
 
     /// Get the input
     auto& GetInput() const { return text_buffer; }
@@ -143,8 +143,8 @@ class ParsedScript {
         std::unique_ptr<proto::StatementT> Pack();
     };
 
-    /// The context id
-    const uint32_t context_id;
+    /// The origin id
+    const OriginID origin_id;
     /// The scanned script
     std::shared_ptr<ScannedScript> scanned_script;
     /// The nodes
@@ -174,7 +174,7 @@ class AnalyzedScript : public Schema {
     /// A table reference
     struct TableReference {
         /// The table reference id
-        ContextObjectID table_reference_id;
+        GlobalObjectID table_reference_id;
         /// The AST node id in the target script
         std::optional<uint32_t> ast_node_id;
         /// The AST statement id in the target script
@@ -186,7 +186,7 @@ class AnalyzedScript : public Schema {
         /// The alias name, may refer to different context
         std::string_view alias_name;
         /// The table id, may refer to different context
-        ContextObjectID resolved_table_id;
+        GlobalObjectID resolved_table_id;
 
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::TableReference> Pack(flatbuffers::FlatBufferBuilder& builder) const;
@@ -194,7 +194,7 @@ class AnalyzedScript : public Schema {
     /// A column reference
     struct ColumnReference {
         /// The table reference id
-        ContextObjectID column_reference_id;
+        GlobalObjectID column_reference_id;
         /// The AST node id in the target script
         std::optional<uint32_t> ast_node_id;
         /// The AST statement id in the target script
@@ -206,7 +206,7 @@ class AnalyzedScript : public Schema {
         /// The resolved table reference id in the current context
         std::optional<uint32_t> resolved_table_reference_id;
         /// The resolved table id, may refer to different context
-        ContextObjectID resolved_table_id;
+        GlobalObjectID resolved_table_id;
         /// The resolved column index
         std::optional<uint32_t> resolved_column_id;
 
@@ -311,8 +311,8 @@ struct ScriptCursor {
 
 class Script {
    public:
-    /// The context id
-    const uint32_t context_id;
+    /// The origin id
+    const OriginID origin_id;
     /// The database name
     const std::string database_name;
     /// The schema name
@@ -338,10 +338,10 @@ class Script {
 
    public:
     /// Constructor
-    Script(uint32_t context_id = 1);
+    Script(OriginID origin_id = 1);
 
-    /// Get the context id
-    auto GetContextId() const { return context_id; }
+    /// Get the origin
+    auto GetOrigin() const { return origin_id; }
 
     /// Insert a unicode codepoint at an offset
     void InsertCharAt(size_t offset, uint32_t unicode);

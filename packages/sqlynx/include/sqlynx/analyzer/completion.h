@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ankerl/unordered_dense.h"
-#include "sqlynx/context.h"
+#include "sqlynx/origin.h"
 #include "sqlynx/parser/names.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
