@@ -1,69 +1,69 @@
 <completion-snapshots>
     <completion-snapshot name="empty">
-        <script context="main" />
-        <cursor context="main">
+        <script id="1" />
+        <cursor script="1">
             <search text="" index="0" />
         </cursor>
         <completions limit="3" />
     </completion-snapshot>
     <completion-snapshot name="complete_table_name">
-        <script context="external">
+        <script id="2">
             create table foo(a int);
         </script>
-        <script context="main">
+        <script id="1">
             select * from fo
         </script>
-        <cursor context="main">
+        <cursor script="1">
             <search text="fo" index="2" />
         </cursor>
         <completions limit="3" />
     </completion-snapshot>
     <completion-snapshot name="dont_complete_at_lrb">
-        <script context="external">
+        <script id="2">
             create table foo(a int);
         </script>
-        <script context="main">
+        <script id="1">
             select * from ( foo );
         </script>
-        <cursor context="main">
+        <cursor script="1">
             <search text="from (" index="6" />
         </cursor>
         <completions limit="3" />
     </completion-snapshot>
     <completion-snapshot name="table_name_resolving_column">
-        <script context="external">
+        <script id="2">
 create table table1(attr1 integer);
 create table table2(attr2 integer);
 create table table3(attr3 integer);
         </script>
-        <script context="main">
+        <script id="1">
             select attr2 from tab
         </script>
-        <cursor context="main">
+        <cursor script="1">
             <search text="tab" index="3" />
         </cursor>
         <completions limit="3" />
     </completion-snapshot>
     <completion-snapshot name="remap_external_names">
-        <script context="external">
+        <script id="2">
             create table external_name1(external_name2 int);
         </script>
-        <script context="main">
+        <script id="1">
             select external_name2 from external_name1 where external_
         </script>
-        <cursor context="main">
+        <cursor script="1">
             <search text="where external_" index="14" />
         </cursor>
         <completions limit="5" />
     </completion-snapshot>
     <completion-snapshot name="remap_external_names_eof">
-        <script context="external">
+        <script id="2">
             create table external_name1(external_name2 int);
         </script>
-        <script context="main">
+        <script id="1">
             select external_name2 from external_name1 where external_
         </script>
-        <cursor context="main">
+        <cursor script="1">
             <search text="where external_" index="15" />
         </cursor>
         <completions limit="5" />

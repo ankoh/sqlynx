@@ -1,157 +1,157 @@
 <analyzer-snapshots>
     <analyzer-snapshot name="empty">
-        <script context="external">  
+        <script id="2">  
             <input />
         </script>  
-        <script context="main">  
+        <script id="1">  
             <input />
         </script>  
     </analyzer-snapshot>
     <analyzer-snapshot name="refs_0">
-        <script context="external">  
+        <script id="2">  
             <input>
                 create table A (a int, b int);
                 create table B (d int, e int);
             </input>
         </script>  
-        <script context="main">  
+        <script id="1">  
             <input>
                 select * from A, B where a = b;
             </input>
         </script>  
     </analyzer-snapshot>
     <analyzer-snapshot name="edges_0">
-        <script context="external">  
+        <script id="2">  
             <input>
                 create table A (a int, b int);
                 create table B (d int, e int);
             </input>
         </script>  
-        <script context="main">  
+        <script id="1">  
             <input>
                 select * from A, B where a + d = e;
             </input>
         </script>  
     </analyzer-snapshot>
     <analyzer-snapshot name="edges_1">
-        <script context="external">  
+        <script id="2">  
             <input>
                 create table A (a int, b int);
                 create table B (d int, e int);
             </input>
         </script>  
-        <script context="main">  
+        <script id="1">  
             <input>
                 select * from A, B where a = d and b = e;
             </input>
         </script>  
     </analyzer-snapshot>
     <analyzer-snapshot name="edges_2">
-        <script context="external">  
+        <script id="2">  
             <input>
                 create table A (a int, b int);
                 create table B (d int, e int);
             </input>
         </script>  
-        <script context="main">  
+        <script id="1">  
             <input>
                 select * from A, B where (a = d and b = e) or (a = d and d = 42);
             </input>
         </script>  
     </analyzer-snapshot>
     <analyzer-snapshot name="edges_3">
-        <script context="external">  
+        <script id="2">  
             <input>
                 create table A (a int, b int);
                 create table B (d int, e int);
             </input>
         </script>  
-        <script context="main">  
+        <script id="1">  
             <input>
                 select * from A, B where a = (d + 42);
             </input>
         </script>  
     </analyzer-snapshot>
     <analyzer-snapshot name="edges_4">
-        <script context="external">  
+        <script id="2">  
             <input>
                 create table A (a int, b int);
                 create table B (d int, e int);
             </input>
         </script>  
-        <script context="main">  
+        <script id="1">  
             <input>
                 select * from A join B on (a = b);
             </input>
         </script>  
     </analyzer-snapshot>
     <analyzer-snapshot name="unresolved_0">
-        <script context="external">  
+        <script id="2">  
             <input>
                 create table A (a int, b int);
                 create table B (d int, e int);
             </input>
         </script>  
-        <script context="main">  
+        <script id="1">  
             <input>
                 select * from A, C where a = c;
             </input>
         </script>  
     </analyzer-snapshot>
     <analyzer-snapshot name="unresolved_1">
-        <script context="external">  
+        <script id="2">  
             <input>
                 create table A (a int, b int);
                 create table B (d int, e int);
             </input>
         </script>  
-        <script context="main">  
+        <script id="1">  
             <input>
                 select * from A, B where a = c;
             </input>
         </script>  
     </analyzer-snapshot>
     <analyzer-snapshot name="unresolved_2">
-        <script context="external">  
+        <script id="2">  
             <input />
         </script>  
-        <script context="main">  
+        <script id="1">  
             <input>
                 select * from A;
             </input>
         </script>  
     </analyzer-snapshot>
     <analyzer-snapshot name="unresolved_3">
-        <script context="external">  
+        <script id="2">  
             <input />
         </script>  
-        <script context="main">  
+        <script id="1">  
             <input>
                 select * from A, B where c = d;
             </input>
         </script>  
     </analyzer-snapshot>
     <analyzer-snapshot name="nesting_1">
-        <script context="external">  
+        <script id="2">  
             <input>
                 create table A (a int, b int);
                 create table B (d int, e int);
             </input>
         </script>  
-        <script context="main">  
+        <script id="1">  
             <input>
                 select * from A where not exists (select * from B where a = d);
             </input>
         </script>  
     </analyzer-snapshot>
     <analyzer-snapshot name="nesting_2">
-        <script context="external">  
+        <script id="2">  
             <input>
                 create table A (a int, b int);
                 create table B (d int, e int);
             </input>
         </script>  
-        <script context="main">  
+        <script id="1">  
             <input>
                 select * from A where not exists (select * from A, B where a = d);
             </input>

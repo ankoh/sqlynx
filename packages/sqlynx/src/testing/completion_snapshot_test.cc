@@ -91,8 +91,8 @@ void CompletionSnapshotTest::LoadTests(std::filesystem::path& source_dir) {
             // Create test
             tests.emplace_back();
             auto& t = tests.back();
-            auto xml_external = test.find_child_by_attribute("script", "context", "external");
-            auto xml_main = test.find_child_by_attribute("script", "context", "main");
+            auto xml_external = test.find_child_by_attribute("script", "id", "2");
+            auto xml_main = test.find_child_by_attribute("script", "id", "1");
             t.name = test.attribute("name").as_string();
             t.input_external = xml_external.last_child().value();
             t.input_main = xml_main.last_child().value();
@@ -100,7 +100,7 @@ void CompletionSnapshotTest::LoadTests(std::filesystem::path& source_dir) {
             // Read the cursor
             auto xml_cursor = test.child("cursor");
             auto xml_cursor_search = xml_cursor.child("search");
-            t.cursor_context = xml_cursor.attribute("context").value();
+            t.cursor_script = xml_cursor.attribute("script").value();
             t.cursor_search_string = xml_cursor_search.attribute("text").value();
             t.cursor_search_index = xml_cursor_search.attribute("index").as_int();
 

@@ -4,11 +4,11 @@
 #include <string>
 #include <unordered_map>
 
+#include "gtest/gtest.h"
+#include "pugixml.hpp"
 #include "sqlynx/analyzer/completion.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
-#include "gtest/gtest.h"
-#include "pugixml.hpp"
 
 namespace sqlynx::testing {
 
@@ -26,8 +26,8 @@ struct CompletionSnapshotTest {
     std::string input_external;
     /// The script
     std::string input_main;
-    /// The cursor context
-    std::string cursor_context;
+    /// The cursor script
+    std::string cursor_script;
     /// The search string for the cursor
     std::string cursor_search_string;
     /// The search index for the cursor
