@@ -1,21 +1,5 @@
 <analyzer-snapshots>
     <analyzer-snapshot name="multi_0">
-        <script id="2">
-            <input>
-                create table A (a int, b int);
-                create table B (d int, e int);
-            </input>
-            <tables>
-                <table name="a" loc="17..46" text="create tab..nt, b int)">
-                    <column name="a" loc="33..38" text="a int" />
-                    <column name="b" loc="40..45" text="b int" />
-                </table>
-                <table name="b" loc="64..93" text="create tab..nt, e int)">
-                    <column name="d" loc="80..85" text="d int" />
-                    <column name="e" loc="87..92" text="e int" />
-                </table>
-            </tables>
-        </script>
         <script id="1">
             <input>
                 select * from A, B where a = b;
@@ -45,8 +29,6 @@
                 </edge>
             </query-graph>
         </script>
-    </analyzer-snapshot>
-    <analyzer-snapshot name="multi_recovery_0">
         <script id="2">
             <input>
                 create table A (a int, b int);
@@ -63,6 +45,8 @@
                 </table>
             </tables>
         </script>
+    </analyzer-snapshot>
+    <analyzer-snapshot name="multi_recovery_0">
         <script id="1">
             <input>
                 select * from A, B where a = b;
@@ -92,6 +76,22 @@
                     <node side="1" ref="3" />
                 </edge>
             </query-graph>
+        </script>
+        <script id="2">
+            <input>
+                create table A (a int, b int);
+                create table B (d int, e int);
+            </input>
+            <tables>
+                <table name="a" loc="17..46" text="create tab..nt, b int)">
+                    <column name="a" loc="33..38" text="a int" />
+                    <column name="b" loc="40..45" text="b int" />
+                </table>
+                <table name="b" loc="64..93" text="create tab..nt, e int)">
+                    <column name="d" loc="80..85" text="d int" />
+                    <column name="e" loc="87..92" text="e int" />
+                </table>
+            </tables>
         </script>
     </analyzer-snapshot>
 </analyzer-snapshots>

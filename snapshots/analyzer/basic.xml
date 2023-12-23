@@ -1,9 +1,5 @@
 <analyzer-snapshots>
     <analyzer-snapshot name="empty">
-        <script id="2">
-            <input />
-            <tables />
-        </script>
         <script id="1">
             <input />
             <tables />
@@ -11,24 +7,12 @@
             <column-references />
             <query-graph />
         </script>
+        <script id="2">
+            <input />
+            <tables />
+        </script>
     </analyzer-snapshot>
     <analyzer-snapshot name="refs_0">
-        <script id="2">
-            <input>
-                create table A (a int, b int);
-                create table B (d int, e int);
-            </input>
-            <tables>
-                <table name="a" loc="17..46" text="create tab..nt, b int)">
-                    <column name="a" loc="33..38" text="a int" />
-                    <column name="b" loc="40..45" text="b int" />
-                </table>
-                <table name="b" loc="64..93" text="create tab..nt, e int)">
-                    <column name="d" loc="80..85" text="d int" />
-                    <column name="e" loc="87..92" text="e int" />
-                </table>
-            </tables>
-        </script>
         <script id="1">
             <input>
                 select * from A, B where a = b;
@@ -49,8 +33,6 @@
                 </edge>
             </query-graph>
         </script>
-    </analyzer-snapshot>
-    <analyzer-snapshot name="edges_0">
         <script id="2">
             <input>
                 create table A (a int, b int);
@@ -67,6 +49,8 @@
                 </table>
             </tables>
         </script>
+    </analyzer-snapshot>
+    <analyzer-snapshot name="edges_0">
         <script id="1">
             <input>
                 select * from A, B where a + d = e;
@@ -89,8 +73,6 @@
                 </edge>
             </query-graph>
         </script>
-    </analyzer-snapshot>
-    <analyzer-snapshot name="edges_1">
         <script id="2">
             <input>
                 create table A (a int, b int);
@@ -107,6 +89,8 @@
                 </table>
             </tables>
         </script>
+    </analyzer-snapshot>
+    <analyzer-snapshot name="edges_1">
         <script id="1">
             <input>
                 select * from A, B where a = d and b = e;
@@ -133,8 +117,6 @@
                 </edge>
             </query-graph>
         </script>
-    </analyzer-snapshot>
-    <analyzer-snapshot name="edges_2">
         <script id="2">
             <input>
                 create table A (a int, b int);
@@ -151,6 +133,8 @@
                 </table>
             </tables>
         </script>
+    </analyzer-snapshot>
+    <analyzer-snapshot name="edges_2">
         <script id="1">
             <input>
                 select * from A, B where (a = d and b = e) or (a = d and d = 42);
@@ -184,8 +168,6 @@
                 </edge>
             </query-graph>
         </script>
-    </analyzer-snapshot>
-    <analyzer-snapshot name="edges_3">
         <script id="2">
             <input>
                 create table A (a int, b int);
@@ -202,6 +184,8 @@
                 </table>
             </tables>
         </script>
+    </analyzer-snapshot>
+    <analyzer-snapshot name="edges_3">
         <script id="1">
             <input>
                 select * from A, B where a = (d + 42);
@@ -222,8 +206,6 @@
                 </edge>
             </query-graph>
         </script>
-    </analyzer-snapshot>
-    <analyzer-snapshot name="edges_4">
         <script id="2">
             <input>
                 create table A (a int, b int);
@@ -240,6 +222,8 @@
                 </table>
             </tables>
         </script>
+    </analyzer-snapshot>
+    <analyzer-snapshot name="edges_4">
         <script id="1">
             <input>
                 select * from A join B on (a = b);
@@ -260,8 +244,6 @@
                 </edge>
             </query-graph>
         </script>
-    </analyzer-snapshot>
-    <analyzer-snapshot name="unresolved_0">
         <script id="2">
             <input>
                 create table A (a int, b int);
@@ -278,6 +260,8 @@
                 </table>
             </tables>
         </script>
+    </analyzer-snapshot>
+    <analyzer-snapshot name="unresolved_0">
         <script id="1">
             <input>
                 select * from A, C where a = c;
@@ -298,8 +282,6 @@
                 </edge>
             </query-graph>
         </script>
-    </analyzer-snapshot>
-    <analyzer-snapshot name="unresolved_1">
         <script id="2">
             <input>
                 create table A (a int, b int);
@@ -316,6 +298,8 @@
                 </table>
             </tables>
         </script>
+    </analyzer-snapshot>
+    <analyzer-snapshot name="unresolved_1">
         <script id="1">
             <input>
                 select * from A, B where a = c;
@@ -336,12 +320,24 @@
                 </edge>
             </query-graph>
         </script>
+        <script id="2">
+            <input>
+                create table A (a int, b int);
+                create table B (d int, e int);
+            </input>
+            <tables>
+                <table name="a" loc="17..46" text="create tab..nt, b int)">
+                    <column name="a" loc="33..38" text="a int" />
+                    <column name="b" loc="40..45" text="b int" />
+                </table>
+                <table name="b" loc="64..93" text="create tab..nt, e int)">
+                    <column name="d" loc="80..85" text="d int" />
+                    <column name="e" loc="87..92" text="e int" />
+                </table>
+            </tables>
+        </script>
     </analyzer-snapshot>
     <analyzer-snapshot name="unresolved_2">
-        <script id="2">
-            <input />
-            <tables />
-        </script>
         <script id="1">
             <input>
                 select * from A;
@@ -353,12 +349,12 @@
             <column-references />
             <query-graph />
         </script>
-    </analyzer-snapshot>
-    <analyzer-snapshot name="unresolved_3">
         <script id="2">
             <input />
             <tables />
         </script>
+    </analyzer-snapshot>
+    <analyzer-snapshot name="unresolved_3">
         <script id="1">
             <input>
                 select * from A, B where c = d;
@@ -379,24 +375,12 @@
                 </edge>
             </query-graph>
         </script>
+        <script id="2">
+            <input />
+            <tables />
+        </script>
     </analyzer-snapshot>
     <analyzer-snapshot name="nesting_1">
-        <script id="2">
-            <input>
-                create table A (a int, b int);
-                create table B (d int, e int);
-            </input>
-            <tables>
-                <table name="a" loc="17..46" text="create tab..nt, b int)">
-                    <column name="a" loc="33..38" text="a int" />
-                    <column name="b" loc="40..45" text="b int" />
-                </table>
-                <table name="b" loc="64..93" text="create tab..nt, e int)">
-                    <column name="d" loc="80..85" text="d int" />
-                    <column name="e" loc="87..92" text="e int" />
-                </table>
-            </tables>
-        </script>
         <script id="1">
             <input>
                 select * from A where not exists (select * from B where a = d);
@@ -417,8 +401,6 @@
                 </edge>
             </query-graph>
         </script>
-    </analyzer-snapshot>
-    <analyzer-snapshot name="nesting_2">
         <script id="2">
             <input>
                 create table A (a int, b int);
@@ -435,6 +417,8 @@
                 </table>
             </tables>
         </script>
+    </analyzer-snapshot>
+    <analyzer-snapshot name="nesting_2">
         <script id="1">
             <input>
                 select * from A where not exists (select * from A, B where a = d);
@@ -455,6 +439,22 @@
                     <node side="1" ref="1" />
                 </edge>
             </query-graph>
+        </script>
+        <script id="2">
+            <input>
+                create table A (a int, b int);
+                create table B (d int, e int);
+            </input>
+            <tables>
+                <table name="a" loc="17..46" text="create tab..nt, b int)">
+                    <column name="a" loc="33..38" text="a int" />
+                    <column name="b" loc="40..45" text="b int" />
+                </table>
+                <table name="b" loc="64..93" text="create tab..nt, e int)">
+                    <column name="d" loc="80..85" text="d int" />
+                    <column name="e" loc="87..92" text="e int" />
+                </table>
+            </tables>
         </script>
     </analyzer-snapshot>
 </analyzer-snapshots>
