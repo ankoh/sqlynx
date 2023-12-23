@@ -87,9 +87,9 @@ class Schema {
         using Key = std::pair<std::string_view, std::string_view>;
         /// The AST node id in the target script
         std::optional<uint32_t> ast_node_id;
-        /// The table alias, may refer to different context
+        /// The table alias
         std::string_view table_alias;
-        /// The column name, may refer to different context
+        /// The column name
         std::string_view column_name;
         /// Constructor
         QualifiedColumnName(std::optional<uint32_t> ast_node_id = std::nullopt, std::string_view table_alias = {},
@@ -104,7 +104,7 @@ class Schema {
     struct TableColumn {
         /// The AST node id in the target script
         std::optional<uint32_t> ast_node_id;
-        /// The column name, may refer to different context
+        /// The column name
         std::string_view column_name;
         /// Constructor
         TableColumn(std::optional<uint32_t> ast_node_id = {}, std::string_view column_name = {})
@@ -122,7 +122,7 @@ class Schema {
         std::optional<uint32_t> ast_statement_id;
         /// The AST scope root id in the target script
         std::optional<uint32_t> ast_scope_root;
-        /// The table name, may refer to different context
+        /// The table name
         QualifiedTableName table_name;
         /// The begin of the column
         uint32_t columns_begin;
