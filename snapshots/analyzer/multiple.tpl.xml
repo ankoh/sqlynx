@@ -1,31 +1,35 @@
 <analyzer-snapshots>
     <analyzer-snapshot name="multi_0">
-        <script id="1">  
+        <script>  
             <input>
                 select * from A, B where a = b;
                 select * from B, C where d = c;
             </input>
         </script>  
-        <script id="2">  
-            <input>
-                create table A (a int, b int);
-                create table B (d int, e int);
-            </input>
-        </script>  
+        <registry>
+            <script>  
+                <input>
+                    create table A (a int, b int);
+                    create table B (d int, e int);
+                </input>
+            </script>  
+        </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="multi_recovery_0">
-        <script id="1">  
+        <script>  
             <input>
                 select * from A, B where a = b;
                 selec;
                 select * from B, C where d = c;
             </input>
         </script>  
-        <script id="2">  
-            <input>
-                create table A (a int, b int);
-                create table B (d int, e int);
-            </input>
-        </script>  
+        <registry>
+            <script>  
+                <input>
+                    create table A (a int, b int);
+                    create table B (d int, e int);
+                </input>
+            </script>  
+        </registry>
     </analyzer-snapshot>
 </analyzer-snapshots>

@@ -1,6 +1,6 @@
 <analyzer-snapshots>
     <analyzer-snapshot name="multi_0">
-        <script id="1">
+        <script>
             <input>
                 select * from A, B where a = b;
                 select * from B, C where d = c;
@@ -29,25 +29,30 @@
                 </edge>
             </query-graph>
         </script>
-        <script id="2">
-            <input>
-                create table A (a int, b int);
-                create table B (d int, e int);
-            </input>
-            <tables>
-                <table name="a" loc="17..46" text="create tab..nt, b int)">
-                    <column name="a" loc="33..38" text="a int" />
-                    <column name="b" loc="40..45" text="b int" />
-                </table>
-                <table name="b" loc="64..93" text="create tab..nt, e int)">
-                    <column name="d" loc="80..85" text="d int" />
-                    <column name="e" loc="87..92" text="e int" />
-                </table>
-            </tables>
-        </script>
+        <registry>
+            <script>
+                <input>
+                    create table A (a int, b int);
+                    create table B (d int, e int);
+                </input>
+                <tables>
+                    <table name="a" loc="21..50" text="create tab..nt, b int)">
+                        <column name="a" loc="37..42" text="a int" />
+                        <column name="b" loc="44..49" text="b int" />
+                    </table>
+                    <table name="b" loc="72..101" text="create tab..nt, e int)">
+                        <column name="d" loc="88..93" text="d int" />
+                        <column name="e" loc="95..100" text="e int" />
+                    </table>
+                </tables>
+                <table-references />
+                <column-references />
+                <query-graph />
+            </script>
+        </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="multi_recovery_0">
-        <script id="1">
+        <script>
             <input>
                 select * from A, B where a = b;
                 selec;
@@ -77,21 +82,26 @@
                 </edge>
             </query-graph>
         </script>
-        <script id="2">
-            <input>
-                create table A (a int, b int);
-                create table B (d int, e int);
-            </input>
-            <tables>
-                <table name="a" loc="17..46" text="create tab..nt, b int)">
-                    <column name="a" loc="33..38" text="a int" />
-                    <column name="b" loc="40..45" text="b int" />
-                </table>
-                <table name="b" loc="64..93" text="create tab..nt, e int)">
-                    <column name="d" loc="80..85" text="d int" />
-                    <column name="e" loc="87..92" text="e int" />
-                </table>
-            </tables>
-        </script>
+        <registry>
+            <script>
+                <input>
+                    create table A (a int, b int);
+                    create table B (d int, e int);
+                </input>
+                <tables>
+                    <table name="a" loc="21..50" text="create tab..nt, b int)">
+                        <column name="a" loc="37..42" text="a int" />
+                        <column name="b" loc="44..49" text="b int" />
+                    </table>
+                    <table name="b" loc="72..101" text="create tab..nt, e int)">
+                        <column name="d" loc="88..93" text="d int" />
+                        <column name="e" loc="95..100" text="e int" />
+                    </table>
+                </tables>
+                <table-references />
+                <column-references />
+                <query-graph />
+            </script>
+        </registry>
     </analyzer-snapshot>
 </analyzer-snapshots>
