@@ -48,8 +48,7 @@ static std::string_view resolveName(const AnalyzedScript& main, const AnalyzedSc
 }
 
 /// Write all table declarations
-static void writeTables(pugi::xml_node root, const AnalyzedScript& target, const AnalyzedScript& main,
-                        const AnalyzedScript* external) {
+static void writeTables(pugi::xml_node root, const AnalyzedScript& target) {
     for (auto& table_decl : target.GetTables()) {
         auto xml_tbl = root.append_child("table");
         std::string table_name{table_decl.table_name.table_name};
@@ -80,38 +79,26 @@ namespace testing {
 
 void operator<<(std::ostream& out, const AnalyzerSnapshotTest& p) { out << p.name; }
 
-void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node root, const AnalyzedScript& main,
-                                        const AnalyzedScript* external) {
+void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript& script, bool is_main) {
     // Unpack modules
     auto* stmt_type_tt = proto::StatementTypeTypeTable();
     auto* node_type_tt = proto::NodeTypeTypeTable();
 
     // Get xml elements
-    auto xml_external = root.find_child_by_attribute("script", "id", "2");
-    auto xml_main = root.find_child_by_attribute("script", "id", "1");
-
-    auto xml_external_tables = xml_external.append_child("tables");
-    auto xml_main_tables = xml_main.append_child("tables");
-    auto xml_main_table_refs = xml_main.append_child("table-references");
-    auto xml_main_col_refs = xml_main.append_child("column-references");
-    auto xml_main_query_graph = xml_main.append_child("query-graph");
-
-    // Write external tables (if there are any)
-    if (external) {
-        writeTables(xml_external_tables, *external, main, external);
-    }
+    auto tables_node = out.append_child("tables");
+    auto table_refs_node = out.append_child("table-references");
+    auto col_refs_node = out.append_child("column-references");
+    auto query_graph_node = out.append_child("query-graph");
 
     // Write local declarations
-    for (auto& table_decl : main.GetTables()) {
-        writeTables(xml_main_tables, main, main, external);
-    }
+    writeTables(tables_node, script);
 
     // Write table references
-    for (auto& ref : main.table_references) {
-        auto tag = ref.resolved_table_id.IsNull()                            ? "unresolved"
-                   : (ref.resolved_table_id.GetOrigin() == main.GetOrigin()) ? "internal"
-                                                                             : "external";
-        auto xml_ref = xml_main_table_refs.append_child(tag);
+    for (auto& ref : script.table_references) {
+        auto tag = ref.resolved_table_id.IsNull()                                         ? "unresolved"
+                   : (is_main && ref.resolved_table_id.GetOrigin() == script.GetOrigin()) ? "internal"
+                                                                                          : "external";
+        auto xml_ref = table_refs_node.append_child(tag);
         if (!ref.resolved_table_id.IsNull()) {
             xml_ref.append_attribute("table").set_value(ref.resolved_table_id.GetIndex());
         }
@@ -119,16 +106,16 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node root, const AnalyzedScrip
             xml_ref.append_attribute("stmt").set_value(*ref.ast_statement_id);
         }
         assert(ref.ast_node_id.has_value());
-        WriteLocation(xml_ref, main.parsed_script->nodes[*ref.ast_node_id].location(),
-                      main.parsed_script->scanned_script->GetInput());
+        WriteLocation(xml_ref, script.parsed_script->nodes[*ref.ast_node_id].location(),
+                      script.parsed_script->scanned_script->GetInput());
     }
 
     // Write column references
-    for (auto& ref : main.column_references) {
-        auto tag = ref.resolved_table_id.IsNull()                            ? "unresolved"
-                   : (ref.resolved_table_id.GetOrigin() == main.GetOrigin()) ? "internal"
-                                                                             : "external";
-        auto xml_ref = xml_main_col_refs.append_child(tag);
+    for (auto& ref : script.column_references) {
+        auto tag = ref.resolved_table_id.IsNull()                                         ? "unresolved"
+                   : (is_main && ref.resolved_table_id.GetOrigin() == script.GetOrigin()) ? "internal"
+                                                                                          : "external";
+        auto xml_ref = col_refs_node.append_child(tag);
         if (!ref.resolved_table_id.IsNull()) {
             xml_ref.append_attribute("table").set_value(ref.resolved_table_id.GetIndex());
         }
@@ -139,26 +126,26 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node root, const AnalyzedScrip
             xml_ref.append_attribute("stmt").set_value(*ref.ast_statement_id);
         }
         assert(ref.ast_node_id.has_value());
-        WriteLocation(xml_ref, main.parsed_script->nodes[*ref.ast_node_id].location(),
-                      main.parsed_script->scanned_script->GetInput());
+        WriteLocation(xml_ref, script.parsed_script->nodes[*ref.ast_node_id].location(),
+                      script.parsed_script->scanned_script->GetInput());
     }
 
     // Write join edges
-    for (auto& edge : main.graph_edges) {
-        auto xml_edge = xml_main_query_graph.append_child("edge");
+    for (auto& edge : script.graph_edges) {
+        auto xml_edge = query_graph_node.append_child("edge");
         xml_edge.append_attribute("op").set_value(proto::EnumNameExpressionOperator(edge.expression_operator));
         assert(edge.ast_node_id.has_value());
-        WriteLocation(xml_edge, main.parsed_script->nodes[*edge.ast_node_id].location(),
-                      main.parsed_script->scanned_script->GetInput());
+        WriteLocation(xml_edge, script.parsed_script->nodes[*edge.ast_node_id].location(),
+                      script.parsed_script->scanned_script->GetInput());
         for (size_t i = 0; i < edge.node_count_left; ++i) {
-            auto& node = main.graph_edge_nodes[edge.nodes_begin + i];
+            auto& node = script.graph_edge_nodes[edge.nodes_begin + i];
             auto xml_node = xml_edge.append_child("node");
             xml_node.append_attribute("side").set_value(0);
             xml_node.append_attribute("ref").set_value(node.column_reference_id);
         }
         for (size_t i = 0; i < edge.node_count_right; ++i) {
-            auto& node = main.graph_edge_nodes[edge.nodes_begin + edge.node_count_left + i];
-            assert(!GlobalObjectID(main.GetOrigin(), node.column_reference_id).IsNull());
+            auto& node = script.graph_edge_nodes[edge.nodes_begin + edge.node_count_left + i];
+            assert(!GlobalObjectID(script.GetOrigin(), node.column_reference_id).IsNull());
             auto xml_node = xml_edge.append_child("node");
             xml_node.append_attribute("side").set_value(1);
             xml_node.append_attribute("ref").set_value(node.column_reference_id);
@@ -197,21 +184,32 @@ void AnalyzerSnapshotTest::LoadTests(std::filesystem::path& source_dir) {
 
         // Read tests
         std::vector<AnalyzerSnapshotTest> tests;
-        for (auto test : root.children()) {
-            // Create test
+        for (auto test_nodes : root.children()) {
             tests.emplace_back();
-            auto& t = tests.back();
-            auto xml_external = test.find_child_by_attribute("script", "id", "2");
-            auto xml_main = test.find_child_by_attribute("script", "id", "1");
-            t.name = test.attribute("name").as_string();
-            t.input_external = xml_external.child("input").last_child().value();
-            t.input_main = xml_main.child("input").last_child().value();
+            auto& test = tests.back();
+            test.name = test_nodes.attribute("name").as_string();
 
-            // Read xml elements
-            t.tables.append_copy(xml_main.child("tables"));
-            t.table_references.append_copy(xml_main.child("table-references"));
-            t.column_references.append_copy(xml_main.child("column-references"));
-            t.graph_edges.append_copy(xml_main.child("query-graph"));
+            auto main_node = test_nodes.child("script");
+            test.script.input = main_node.child("input").last_child().value();
+            test.script.tables.append_copy(main_node.child("tables"));
+            test.script.table_references.append_copy(main_node.child("table-references"));
+            test.script.column_references.append_copy(main_node.child("column-references"));
+            test.script.graph_edges.append_copy(main_node.child("query-graph"));
+
+            for (auto entry_node : test_nodes.child("registry").children()) {
+                test.registry.emplace_back();
+                auto& entry = test.registry.back();
+                std::string entry_name = entry_node.name();
+                if (entry_name == "script") {
+                    entry.input = entry_node.child("input").last_child().value();
+                    entry.tables.append_copy(entry_node.child("tables"));
+                    entry.table_references.append_copy(entry_node.child("table-references"));
+                    entry.column_references.append_copy(entry_node.child("column-references"));
+                    entry.graph_edges.append_copy(entry_node.child("query-graph"));
+                } else {
+                    std::cout << "[    ERROR ] unknown test element " << entry_name << std::endl;
+                }
+            }
         }
 
         std::cout << "[ SETUP    ] " << filename << ": " << tests.size() << " tests" << std::endl;
