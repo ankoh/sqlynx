@@ -77,7 +77,7 @@ static void writeTables(pugi::xml_node root, const AnalyzedScript& target) {
 
 namespace testing {
 
-void AnalyzerSnapshotTest::ReadRegistry(const std::vector<TestScript>& spec, pugi::xml_node registry_node,
+void AnalyzerSnapshotTest::ReadRegistry(const std::vector<TestScript>& spec, pugi::xml_node& node,
                                         SchemaRegistry& registry, std::vector<std::unique_ptr<Script>>& scripts) {
     for (size_t i = 0; i < spec.size(); ++i) {
         auto& entry = spec[i];
@@ -94,7 +94,7 @@ void AnalyzerSnapshotTest::ReadRegistry(const std::vector<TestScript>& spec, pug
 
         registry.AddScript(script, i);
 
-        auto script_node = registry_node.append_child("script");
+        auto script_node = node.append_child("script");
         AnalyzerSnapshotTest::EncodeScript(script_node, *script.analyzed_script, false);
 
         ASSERT_TRUE(Matches(script_node.child("tables"), entry.tables));
@@ -102,6 +102,25 @@ void AnalyzerSnapshotTest::ReadRegistry(const std::vector<TestScript>& spec, pug
         ASSERT_TRUE(Matches(script_node.child("column-references"), entry.column_references));
         ASSERT_TRUE(Matches(script_node.child("query-graph"), entry.graph_edges));
     }
+}
+
+void AnalyzerSnapshotTest::ReadScript(const TestScript& spec, const SchemaRegistry& registry, pugi::xml_node& node,
+                                      Script& script) {
+    script.InsertTextAt(0, spec.input);
+
+    auto scan = script.Scan();
+    ASSERT_EQ(scan.second, proto::StatusCode::OK);
+    auto parsed = script.Parse();
+    ASSERT_EQ(parsed.second, proto::StatusCode::OK);
+    auto analyzed = script.Analyze(&registry);
+    ASSERT_EQ(analyzed.second, proto::StatusCode::OK) << proto::EnumNameStatusCode(analyzed.second);
+
+    AnalyzerSnapshotTest::EncodeScript(node, *script.analyzed_script, true);
+
+    ASSERT_TRUE(Matches(node.child("tables"), spec.tables));
+    ASSERT_TRUE(Matches(node.child("table-references"), spec.table_references));
+    ASSERT_TRUE(Matches(node.child("column-references"), spec.column_references));
+    ASSERT_TRUE(Matches(node.child("query-graph"), spec.graph_edges));
 }
 
 void operator<<(std::ostream& out, const AnalyzerSnapshotTest& p) { out << p.name; }
