@@ -44,4 +44,44 @@
             </script>
         </registry>
     </analyzer-snapshot>
+    <analyzer-snapshot name="cross_first_schema_wins">
+        <script id="0">
+            <input>
+                select * from db1.schema1.A where a = 1;
+                select * from db1.schema1.A where c = 1;
+            </input>
+            <table-references>
+                <external schema="1" table="0" stmt="0" loc="31..44" text="db1.schema1.A" />
+                <external schema="1" table="0" stmt="1" loc="88..101" text="db1.schema1.A" />
+            </table-references>
+            <column-references>
+                <external schema="1" table="0" column="0" stmt="0" loc="51..52" text="a" />
+                <unresolved stmt="1" loc="108..109" text="c" />
+            </column-references>
+        </script>
+        <registry>
+            <script id="1" database="db1" schema="schema1">
+                <input>
+                    create table A (a int, b int);
+                </input>
+                <tables>
+                    <table name="a" loc="21..50" text="create tab..nt, b int)">
+                        <column name="a" loc="37..42" text="a int" />
+                        <column name="b" loc="44..49" text="b int" />
+                    </table>
+                </tables>
+            </script>
+            <script id="2" database="db1" schema="schema1">
+                <input>
+                    create table A (c int, d int);
+                </input>
+                <tables>
+                    <table name="a" loc="21..50" text="create tab..nt, d int)">
+                        <column name="c" loc="37..42" text="c int" />
+                        <column name="d" loc="44..49" text="d int" />
+                    </table>
+                </tables>
+            </script>
+        </registry>
+    </analyzer-snapshot>
 </analyzer-snapshots>
