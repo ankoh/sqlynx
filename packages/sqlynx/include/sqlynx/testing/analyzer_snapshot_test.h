@@ -46,6 +46,9 @@ struct AnalyzerSnapshotTest {
     /// The entries
     std::vector<TestScript> registry;
 
+    /// Read a registry
+    static void ReadRegistry(const std::vector<TestScript>& spec, pugi::xml_node registry_node,
+                             SchemaRegistry& registry, std::vector<std::unique_ptr<Script>>& scripts);
     /// Encode a script
     static void EncodeScript(pugi::xml_node out, const AnalyzedScript& script, bool is_main);
     /// Get the grammar tests
