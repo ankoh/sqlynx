@@ -2,10 +2,6 @@
     <analyzer-snapshot name="empty">
         <script id="0">
             <input />
-            <tables />
-            <table-references />
-            <column-references />
-            <query-graph />
         </script>
         <registry />
     </analyzer-snapshot>
@@ -14,7 +10,6 @@
             <input>
                 select * from A, B where a = b;
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
                 <external schema="1" table="1" stmt="0" loc="34..35" text="B" />
@@ -46,9 +41,6 @@
                         <column name="e" loc="95..100" text="e int" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
@@ -57,7 +49,6 @@
             <input>
                 select * from A, B where a + d = e;
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
                 <external schema="1" table="1" stmt="0" loc="34..35" text="B" />
@@ -91,9 +82,6 @@
                         <column name="e" loc="95..100" text="e int" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
@@ -102,7 +90,6 @@
             <input>
                 select * from A, B where a = d and b = e;
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
                 <external schema="1" table="1" stmt="0" loc="34..35" text="B" />
@@ -140,9 +127,6 @@
                         <column name="e" loc="95..100" text="e int" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
@@ -151,7 +135,6 @@
             <input>
                 select * from A, B where (a = d and b = e) or (a = d and d = 42);
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
                 <external schema="1" table="1" stmt="0" loc="34..35" text="B" />
@@ -196,9 +179,6 @@
                         <column name="e" loc="95..100" text="e int" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
@@ -207,7 +187,6 @@
             <input>
                 select * from A, B where a = (d + 42);
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
                 <external schema="1" table="1" stmt="0" loc="34..35" text="B" />
@@ -239,9 +218,6 @@
                         <column name="e" loc="95..100" text="e int" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
@@ -250,7 +226,6 @@
             <input>
                 select * from A join B on (a = b);
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
                 <external schema="1" table="1" stmt="0" loc="38..39" text="B" />
@@ -282,9 +257,6 @@
                         <column name="e" loc="95..100" text="e int" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
@@ -293,7 +265,6 @@
             <input>
                 select * from A, C where a = c;
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
                 <unresolved stmt="0" loc="34..35" text="C" />
@@ -325,9 +296,6 @@
                         <column name="e" loc="95..100" text="e int" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
@@ -336,7 +304,6 @@
             <input>
                 select * from A, B where a = c;
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
                 <external schema="1" table="1" stmt="0" loc="34..35" text="B" />
@@ -368,9 +335,6 @@
                         <column name="e" loc="95..100" text="e int" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
@@ -379,20 +343,13 @@
             <input>
                 select * from A;
             </input>
-            <tables />
             <table-references>
                 <unresolved stmt="0" loc="31..32" text="A" />
             </table-references>
-            <column-references />
-            <query-graph />
         </script>
         <registry>
             <script id="1">
                 <input />
-                <tables />
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
@@ -401,7 +358,6 @@
             <input>
                 select * from A, B where c = d;
             </input>
-            <tables />
             <table-references>
                 <unresolved stmt="0" loc="31..32" text="A" />
                 <unresolved stmt="0" loc="34..35" text="B" />
@@ -420,10 +376,6 @@
         <registry>
             <script id="1">
                 <input />
-                <tables />
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
@@ -432,7 +384,6 @@
             <input>
                 select * from A where not exists (select * from B where a = d);
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="1" stmt="0" loc="65..66" text="B" />
                 <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
@@ -464,9 +415,6 @@
                         <column name="e" loc="95..100" text="e int" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
@@ -475,7 +423,6 @@
             <input>
                 select * from A where not exists (select * from A, B where a = d);
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="65..66" text="A" />
                 <external schema="1" table="1" stmt="0" loc="68..69" text="B" />
@@ -508,9 +455,6 @@
                         <column name="e" loc="95..100" text="e int" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>

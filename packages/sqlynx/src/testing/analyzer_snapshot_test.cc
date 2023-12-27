@@ -84,75 +84,81 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
     auto* stmt_type_tt = proto::StatementTypeTypeTable();
     auto* node_type_tt = proto::NodeTypeTypeTable();
 
-    // Get xml elements
-    auto tables_node = out.append_child("tables");
-    auto table_refs_node = out.append_child("table-references");
-    auto col_refs_node = out.append_child("column-references");
-    auto query_graph_node = out.append_child("query-graph");
-
     out.prepend_attribute("id").set_value(script.GetOrigin());
 
     // Write local declarations
-    writeTables(tables_node, script);
+    if (!script.GetTables().empty()) {
+        auto tables_node = out.append_child("tables");
+        writeTables(tables_node, script);
+    }
 
     // Write table references
-    for (auto& ref : script.table_references) {
-        auto tag = ref.resolved_table_id.IsNull()                                         ? "unresolved"
-                   : (is_main && ref.resolved_table_id.GetOrigin() == script.GetOrigin()) ? "internal"
-                                                                                          : "external";
-        auto xml_ref = table_refs_node.append_child(tag);
-        if (!ref.resolved_table_id.IsNull()) {
-            xml_ref.append_attribute("schema").set_value(ref.resolved_table_id.GetOrigin());
-            xml_ref.append_attribute("table").set_value(ref.resolved_table_id.GetIndex());
+    if (!script.table_references.empty()) {
+        auto table_refs_node = out.append_child("table-references");
+        for (auto& ref : script.table_references) {
+            auto tag = ref.resolved_table_id.IsNull()                                         ? "unresolved"
+                       : (is_main && ref.resolved_table_id.GetOrigin() == script.GetOrigin()) ? "internal"
+                                                                                              : "external";
+            auto xml_ref = table_refs_node.append_child(tag);
+            if (!ref.resolved_table_id.IsNull()) {
+                xml_ref.append_attribute("schema").set_value(ref.resolved_table_id.GetOrigin());
+                xml_ref.append_attribute("table").set_value(ref.resolved_table_id.GetIndex());
+            }
+            if (ref.ast_statement_id.has_value()) {
+                xml_ref.append_attribute("stmt").set_value(*ref.ast_statement_id);
+            }
+            assert(ref.ast_node_id.has_value());
+            WriteLocation(xml_ref, script.parsed_script->nodes[*ref.ast_node_id].location(),
+                          script.parsed_script->scanned_script->GetInput());
         }
-        if (ref.ast_statement_id.has_value()) {
-            xml_ref.append_attribute("stmt").set_value(*ref.ast_statement_id);
-        }
-        assert(ref.ast_node_id.has_value());
-        WriteLocation(xml_ref, script.parsed_script->nodes[*ref.ast_node_id].location(),
-                      script.parsed_script->scanned_script->GetInput());
     }
 
     // Write column references
-    for (auto& ref : script.column_references) {
-        auto tag = ref.resolved_table_id.IsNull()                                         ? "unresolved"
-                   : (is_main && ref.resolved_table_id.GetOrigin() == script.GetOrigin()) ? "internal"
-                                                                                          : "external";
-        auto xml_ref = col_refs_node.append_child(tag);
-        if (!ref.resolved_table_id.IsNull()) {
-            xml_ref.append_attribute("schema").set_value(ref.resolved_table_id.GetOrigin());
-            xml_ref.append_attribute("table").set_value(ref.resolved_table_id.GetIndex());
+    if (!script.column_references.empty()) {
+        auto col_refs_node = out.append_child("column-references");
+        for (auto& ref : script.column_references) {
+            auto tag = ref.resolved_table_id.IsNull()                                         ? "unresolved"
+                       : (is_main && ref.resolved_table_id.GetOrigin() == script.GetOrigin()) ? "internal"
+                                                                                              : "external";
+            auto xml_ref = col_refs_node.append_child(tag);
+            if (!ref.resolved_table_id.IsNull()) {
+                xml_ref.append_attribute("schema").set_value(ref.resolved_table_id.GetOrigin());
+                xml_ref.append_attribute("table").set_value(ref.resolved_table_id.GetIndex());
+            }
+            if (ref.resolved_column_id.has_value()) {
+                xml_ref.append_attribute("column").set_value(*ref.resolved_column_id);
+            }
+            if (ref.ast_statement_id.has_value()) {
+                xml_ref.append_attribute("stmt").set_value(*ref.ast_statement_id);
+            }
+            assert(ref.ast_node_id.has_value());
+            WriteLocation(xml_ref, script.parsed_script->nodes[*ref.ast_node_id].location(),
+                          script.parsed_script->scanned_script->GetInput());
         }
-        if (ref.resolved_column_id.has_value()) {
-            xml_ref.append_attribute("column").set_value(*ref.resolved_column_id);
-        }
-        if (ref.ast_statement_id.has_value()) {
-            xml_ref.append_attribute("stmt").set_value(*ref.ast_statement_id);
-        }
-        assert(ref.ast_node_id.has_value());
-        WriteLocation(xml_ref, script.parsed_script->nodes[*ref.ast_node_id].location(),
-                      script.parsed_script->scanned_script->GetInput());
     }
 
     // Write join edges
-    for (auto& edge : script.graph_edges) {
-        auto xml_edge = query_graph_node.append_child("edge");
-        xml_edge.append_attribute("op").set_value(proto::EnumNameExpressionOperator(edge.expression_operator));
-        assert(edge.ast_node_id.has_value());
-        WriteLocation(xml_edge, script.parsed_script->nodes[*edge.ast_node_id].location(),
-                      script.parsed_script->scanned_script->GetInput());
-        for (size_t i = 0; i < edge.node_count_left; ++i) {
-            auto& node = script.graph_edge_nodes[edge.nodes_begin + i];
-            auto xml_node = xml_edge.append_child("node");
-            xml_node.append_attribute("side").set_value(0);
-            xml_node.append_attribute("ref").set_value(node.column_reference_id);
-        }
-        for (size_t i = 0; i < edge.node_count_right; ++i) {
-            auto& node = script.graph_edge_nodes[edge.nodes_begin + edge.node_count_left + i];
-            assert(!GlobalObjectID(script.GetOrigin(), node.column_reference_id).IsNull());
-            auto xml_node = xml_edge.append_child("node");
-            xml_node.append_attribute("side").set_value(1);
-            xml_node.append_attribute("ref").set_value(node.column_reference_id);
+    if (!script.graph_edges.empty()) {
+        auto query_graph_node = out.append_child("query-graph");
+        for (auto& edge : script.graph_edges) {
+            auto xml_edge = query_graph_node.append_child("edge");
+            xml_edge.append_attribute("op").set_value(proto::EnumNameExpressionOperator(edge.expression_operator));
+            assert(edge.ast_node_id.has_value());
+            WriteLocation(xml_edge, script.parsed_script->nodes[*edge.ast_node_id].location(),
+                          script.parsed_script->scanned_script->GetInput());
+            for (size_t i = 0; i < edge.node_count_left; ++i) {
+                auto& node = script.graph_edge_nodes[edge.nodes_begin + i];
+                auto xml_node = xml_edge.append_child("node");
+                xml_node.append_attribute("side").set_value(0);
+                xml_node.append_attribute("ref").set_value(node.column_reference_id);
+            }
+            for (size_t i = 0; i < edge.node_count_right; ++i) {
+                auto& node = script.graph_edge_nodes[edge.nodes_begin + edge.node_count_left + i];
+                assert(!GlobalObjectID(script.GetOrigin(), node.column_reference_id).IsNull());
+                auto xml_node = xml_edge.append_child("node");
+                xml_node.append_attribute("side").set_value(1);
+                xml_node.append_attribute("ref").set_value(node.column_reference_id);
+            }
         }
     }
 }
