@@ -1,6 +1,6 @@
 <analyzer-snapshots>
     <analyzer-snapshot name="tpch_schema">
-        <script>
+        <script id="0">
             <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -97,7 +97,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
         <registry />
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_2">
-        <script>
+        <script id="0">
             <input>
 select
         s_acctbal,
@@ -147,51 +147,51 @@ limit
             </input>
             <tables />
             <table-references>
-                <external table="2" stmt="0" loc="610..618" text="partsupp" />
-                <external table="1" stmt="0" loc="644..652" text="supplier" />
-                <external table="6" stmt="0" loc="678..684" text="nation" />
-                <external table="7" stmt="0" loc="710..716" text="region" />
-                <external table="0" stmt="0" loc="161..165" text="part" />
-                <external table="1" stmt="0" loc="175..183" text="supplier" />
-                <external table="2" stmt="0" loc="193..201" text="partsupp" />
-                <external table="6" stmt="0" loc="211..217" text="nation" />
-                <external table="7" stmt="0" loc="227..233" text="region" />
+                <external schema="1" table="2" stmt="0" loc="610..618" text="partsupp" />
+                <external schema="1" table="1" stmt="0" loc="644..652" text="supplier" />
+                <external schema="1" table="6" stmt="0" loc="678..684" text="nation" />
+                <external schema="1" table="7" stmt="0" loc="710..716" text="region" />
+                <external schema="1" table="0" stmt="0" loc="161..165" text="part" />
+                <external schema="1" table="1" stmt="0" loc="175..183" text="supplier" />
+                <external schema="1" table="2" stmt="0" loc="193..201" text="partsupp" />
+                <external schema="1" table="6" stmt="0" loc="211..217" text="nation" />
+                <external schema="1" table="7" stmt="0" loc="227..233" text="region" />
             </table-references>
             <column-references>
-                <external table="1" column="5" stmt="0" loc="16..25" text="s_acctbal" />
-                <external table="1" column="1" stmt="0" loc="35..41" text="s_name" />
-                <external table="6" column="1" stmt="0" loc="51..57" text="n_name" />
-                <external table="0" column="0" stmt="0" loc="67..76" text="p_partkey" />
-                <external table="0" column="2" stmt="0" loc="86..92" text="p_mfgr" />
-                <external table="1" column="2" stmt="0" loc="102..111" text="s_address" />
-                <external table="1" column="4" stmt="0" loc="121..128" text="s_phone" />
-                <external table="1" column="6" stmt="0" loc="138..147" text="s_comment" />
-                <external table="0" column="0" stmt="0" loc="248..257" text="p_partkey" />
-                <external table="2" column="0" stmt="0" loc="260..270" text="ps_partkey" />
-                <external table="1" column="0" stmt="0" loc="283..292" text="s_suppkey" />
-                <external table="2" column="1" stmt="0" loc="295..305" text="ps_suppkey" />
-                <external table="0" column="5" stmt="0" loc="318..324" text="p_size" />
-                <external table="0" column="4" stmt="0" loc="342..348" text="p_type" />
-                <external table="1" column="3" stmt="0" loc="375..386" text="s_nationkey" />
-                <external table="6" column="0" stmt="0" loc="389..400" text="n_nationkey" />
-                <external table="6" column="2" stmt="0" loc="413..424" text="n_regionkey" />
-                <external table="7" column="0" stmt="0" loc="427..438" text="r_regionkey" />
-                <external table="7" column="1" stmt="0" loc="451..457" text="r_name" />
-                <external table="2" column="3" stmt="0" loc="550..563" text="ps_supplycost" />
-                <external table="0" column="0" stmt="0" loc="763..772" text="p_partkey" />
-                <external table="2" column="0" stmt="0" loc="775..785" text="ps_partkey" />
-                <external table="1" column="0" stmt="0" loc="814..823" text="s_suppkey" />
-                <external table="2" column="1" stmt="0" loc="826..836" text="ps_suppkey" />
-                <external table="1" column="3" stmt="0" loc="865..876" text="s_nationkey" />
-                <external table="6" column="0" stmt="0" loc="879..890" text="n_nationkey" />
-                <external table="6" column="2" stmt="0" loc="919..930" text="n_regionkey" />
-                <external table="7" column="0" stmt="0" loc="933..944" text="r_regionkey" />
-                <external table="7" column="1" stmt="0" loc="973..979" text="r_name" />
-                <external table="2" column="3" stmt="0" loc="481..494" text="ps_supplycost" />
-                <external table="1" column="5" stmt="0" loc="1018..1027" text="s_acctbal" />
-                <external table="6" column="1" stmt="0" loc="1042..1048" text="n_name" />
-                <external table="1" column="1" stmt="0" loc="1058..1064" text="s_name" />
-                <external table="0" column="0" stmt="0" loc="1074..1083" text="p_partkey" />
+                <external schema="1" table="1" column="5" stmt="0" loc="16..25" text="s_acctbal" />
+                <external schema="1" table="1" column="1" stmt="0" loc="35..41" text="s_name" />
+                <external schema="1" table="6" column="1" stmt="0" loc="51..57" text="n_name" />
+                <external schema="1" table="0" column="0" stmt="0" loc="67..76" text="p_partkey" />
+                <external schema="1" table="0" column="2" stmt="0" loc="86..92" text="p_mfgr" />
+                <external schema="1" table="1" column="2" stmt="0" loc="102..111" text="s_address" />
+                <external schema="1" table="1" column="4" stmt="0" loc="121..128" text="s_phone" />
+                <external schema="1" table="1" column="6" stmt="0" loc="138..147" text="s_comment" />
+                <external schema="1" table="0" column="0" stmt="0" loc="248..257" text="p_partkey" />
+                <external schema="1" table="2" column="0" stmt="0" loc="260..270" text="ps_partkey" />
+                <external schema="1" table="1" column="0" stmt="0" loc="283..292" text="s_suppkey" />
+                <external schema="1" table="2" column="1" stmt="0" loc="295..305" text="ps_suppkey" />
+                <external schema="1" table="0" column="5" stmt="0" loc="318..324" text="p_size" />
+                <external schema="1" table="0" column="4" stmt="0" loc="342..348" text="p_type" />
+                <external schema="1" table="1" column="3" stmt="0" loc="375..386" text="s_nationkey" />
+                <external schema="1" table="6" column="0" stmt="0" loc="389..400" text="n_nationkey" />
+                <external schema="1" table="6" column="2" stmt="0" loc="413..424" text="n_regionkey" />
+                <external schema="1" table="7" column="0" stmt="0" loc="427..438" text="r_regionkey" />
+                <external schema="1" table="7" column="1" stmt="0" loc="451..457" text="r_name" />
+                <external schema="1" table="2" column="3" stmt="0" loc="550..563" text="ps_supplycost" />
+                <external schema="1" table="0" column="0" stmt="0" loc="763..772" text="p_partkey" />
+                <external schema="1" table="2" column="0" stmt="0" loc="775..785" text="ps_partkey" />
+                <external schema="1" table="1" column="0" stmt="0" loc="814..823" text="s_suppkey" />
+                <external schema="1" table="2" column="1" stmt="0" loc="826..836" text="ps_suppkey" />
+                <external schema="1" table="1" column="3" stmt="0" loc="865..876" text="s_nationkey" />
+                <external schema="1" table="6" column="0" stmt="0" loc="879..890" text="n_nationkey" />
+                <external schema="1" table="6" column="2" stmt="0" loc="919..930" text="n_regionkey" />
+                <external schema="1" table="7" column="0" stmt="0" loc="933..944" text="r_regionkey" />
+                <external schema="1" table="7" column="1" stmt="0" loc="973..979" text="r_name" />
+                <external schema="1" table="2" column="3" stmt="0" loc="481..494" text="ps_supplycost" />
+                <external schema="1" table="1" column="5" stmt="0" loc="1018..1027" text="s_acctbal" />
+                <external schema="1" table="6" column="1" stmt="0" loc="1042..1048" text="n_name" />
+                <external schema="1" table="1" column="1" stmt="0" loc="1058..1064" text="s_name" />
+                <external schema="1" table="0" column="0" stmt="0" loc="1074..1083" text="p_partkey" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="763..785" text="p_partkey ..ps_partkey">
@@ -229,7 +229,7 @@ limit
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -326,7 +326,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_3">
-        <script>
+        <script id="0">
             <input>
 select
         l_orderkey,
@@ -355,28 +355,28 @@ limit
             </input>
             <tables />
             <table-references>
-                <external table="0" stmt="0" loc="145..153" text="customer" />
-                <external table="1" stmt="0" loc="163..169" text="orders" />
-                <external table="2" stmt="0" loc="179..187" text="lineitem" />
+                <external schema="1" table="0" stmt="0" loc="145..153" text="customer" />
+                <external schema="1" table="1" stmt="0" loc="163..169" text="orders" />
+                <external schema="1" table="2" stmt="0" loc="179..187" text="lineitem" />
             </table-references>
             <column-references>
-                <external table="2" column="0" stmt="0" loc="16..26" text="l_orderkey" />
-                <external table="2" column="6" stmt="0" loc="63..73" text="l_discount" />
-                <external table="2" column="5" stmt="0" loc="40..55" text="l_extendedprice" />
-                <external table="1" column="4" stmt="0" loc="96..107" text="o_orderdate" />
-                <external table="1" column="7" stmt="0" loc="117..131" text="o_shippriority" />
-                <external table="0" column="6" stmt="0" loc="202..214" text="c_mktsegment" />
-                <external table="0" column="0" stmt="0" loc="240..249" text="c_custkey" />
-                <external table="1" column="1" stmt="0" loc="252..261" text="o_custkey" />
-                <external table="2" column="0" stmt="0" loc="274..284" text="l_orderkey" />
-                <external table="1" column="0" stmt="0" loc="287..297" text="o_orderkey" />
-                <external table="1" column="4" stmt="0" loc="310..321" text="o_orderdate" />
-                <external table="2" column="10" stmt="0" loc="354..364" text="l_shipdate" />
-                <external table="2" column="0" stmt="0" loc="402..412" text="l_orderkey" />
-                <external table="1" column="4" stmt="0" loc="422..433" text="o_orderdate" />
-                <external table="1" column="7" stmt="0" loc="443..457" text="o_shippriority" />
+                <external schema="1" table="2" column="0" stmt="0" loc="16..26" text="l_orderkey" />
+                <external schema="1" table="2" column="6" stmt="0" loc="63..73" text="l_discount" />
+                <external schema="1" table="2" column="5" stmt="0" loc="40..55" text="l_extendedprice" />
+                <external schema="1" table="1" column="4" stmt="0" loc="96..107" text="o_orderdate" />
+                <external schema="1" table="1" column="7" stmt="0" loc="117..131" text="o_shippriority" />
+                <external schema="1" table="0" column="6" stmt="0" loc="202..214" text="c_mktsegment" />
+                <external schema="1" table="0" column="0" stmt="0" loc="240..249" text="c_custkey" />
+                <external schema="1" table="1" column="1" stmt="0" loc="252..261" text="o_custkey" />
+                <external schema="1" table="2" column="0" stmt="0" loc="274..284" text="l_orderkey" />
+                <external schema="1" table="1" column="0" stmt="0" loc="287..297" text="o_orderkey" />
+                <external schema="1" table="1" column="4" stmt="0" loc="310..321" text="o_orderdate" />
+                <external schema="1" table="2" column="10" stmt="0" loc="354..364" text="l_shipdate" />
+                <external schema="1" table="2" column="0" stmt="0" loc="402..412" text="l_orderkey" />
+                <external schema="1" table="1" column="4" stmt="0" loc="422..433" text="o_orderdate" />
+                <external schema="1" table="1" column="7" stmt="0" loc="443..457" text="o_shippriority" />
                 <unresolved stmt="0" loc="475..482" text="revenue" />
-                <external table="1" column="4" stmt="0" loc="497..508" text="o_orderdate" />
+                <external schema="1" table="1" column="4" stmt="0" loc="497..508" text="o_orderdate" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="240..261" text="c_custkey .. o_custkey">
@@ -390,7 +390,7 @@ limit
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
 create table customer (c_custkey integer not null, c_name varchar(25) not null, c_address varchar(40) not null, c_nationkey integer not null, c_phone char(15) not null, c_acctbal decimal(12,2) not null, c_mktsegment char(10) not null, c_comment varchar(117) not null, primary key (c_custkey));
 create table orders (o_orderkey integer not null, o_custkey integer not null, o_orderstatus char(1) not null, o_totalprice decimal(12,2) not null, o_orderdate date not null, o_orderpriority char(15) not null, o_clerk char(15) not null, o_shippriority integer not null, o_comment varchar(79) not null, primary key (o_orderkey));
@@ -444,7 +444,7 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_4">
-        <script>
+        <script id="0">
             <input>
 select
         o_orderpriority,
@@ -470,19 +470,19 @@ order by
             </input>
             <tables />
             <table-references>
-                <external table="0" stmt="0" loc="291..299" text="lineitem" />
-                <external table="1" stmt="0" loc="78..84" text="orders" />
+                <external schema="1" table="0" stmt="0" loc="291..299" text="lineitem" />
+                <external schema="1" table="1" stmt="0" loc="78..84" text="orders" />
             </table-references>
             <column-references>
-                <external table="1" column="5" stmt="0" loc="16..31" text="o_orderpriority" />
-                <external table="1" column="4" stmt="0" loc="99..110" text="o_orderdate" />
-                <external table="1" column="4" stmt="0" loc="144..155" text="o_orderdate" />
-                <external table="0" column="0" stmt="0" loc="346..356" text="l_orderkey" />
-                <external table="1" column="0" stmt="0" loc="359..369" text="o_orderkey" />
-                <external table="0" column="11" stmt="0" loc="398..410" text="l_commitdate" />
-                <external table="0" column="12" stmt="0" loc="413..426" text="l_receiptdate" />
-                <external table="1" column="5" stmt="0" loc="454..469" text="o_orderpriority" />
-                <external table="1" column="5" stmt="0" loc="487..502" text="o_orderpriority" />
+                <external schema="1" table="1" column="5" stmt="0" loc="16..31" text="o_orderpriority" />
+                <external schema="1" table="1" column="4" stmt="0" loc="99..110" text="o_orderdate" />
+                <external schema="1" table="1" column="4" stmt="0" loc="144..155" text="o_orderdate" />
+                <external schema="1" table="0" column="0" stmt="0" loc="346..356" text="l_orderkey" />
+                <external schema="1" table="1" column="0" stmt="0" loc="359..369" text="o_orderkey" />
+                <external schema="1" table="0" column="11" stmt="0" loc="398..410" text="l_commitdate" />
+                <external schema="1" table="0" column="12" stmt="0" loc="413..426" text="l_receiptdate" />
+                <external schema="1" table="1" column="5" stmt="0" loc="454..469" text="o_orderpriority" />
+                <external schema="1" table="1" column="5" stmt="0" loc="487..502" text="o_orderpriority" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="346..369" text="l_orderkey..o_orderkey">
@@ -496,7 +496,7 @@ order by
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
 create table lineitem (l_orderkey integer not null, l_partkey integer not null, l_suppkey integer not null, l_linenumber integer not null, l_quantity decimal(12,2) not null, l_extendedprice decimal(12,2) not null, l_discount decimal(12,2) not null, l_tax decimal(12,2) not null, l_returnflag char(1) not null, l_linestatus char(1) not null, l_shipdate date not null, l_commitdate date not null, l_receiptdate date not null, l_shipinstruct char(25) not null, l_shipmode char(10) not null, l_comment varchar(44) not null, primary key (l_orderkey,l_linenumber));
 create table orders (o_orderkey integer not null, o_custkey integer not null, o_orderstatus char(1) not null, o_totalprice decimal(12,2) not null, o_orderdate date not null, o_orderpriority char(15) not null, o_clerk char(15) not null, o_shippriority integer not null, o_comment varchar(79) not null, primary key (o_orderkey));
@@ -539,7 +539,7 @@ create table orders (o_orderkey integer not null, o_custkey integer not null, o_
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_5">
-        <script>
+        <script id="0">
             <input>
 select
         n_name,
@@ -568,33 +568,33 @@ order by
             </input>
             <tables />
             <table-references>
-                <external table="3" stmt="0" loc="96..104" text="customer" />
-                <external table="4" stmt="0" loc="114..120" text="orders" />
-                <external table="5" stmt="0" loc="130..138" text="lineitem" />
-                <external table="1" stmt="0" loc="148..156" text="supplier" />
-                <external table="6" stmt="0" loc="166..172" text="nation" />
-                <external table="7" stmt="0" loc="182..188" text="region" />
+                <external schema="1" table="3" stmt="0" loc="96..104" text="customer" />
+                <external schema="1" table="4" stmt="0" loc="114..120" text="orders" />
+                <external schema="1" table="5" stmt="0" loc="130..138" text="lineitem" />
+                <external schema="1" table="1" stmt="0" loc="148..156" text="supplier" />
+                <external schema="1" table="6" stmt="0" loc="166..172" text="nation" />
+                <external schema="1" table="7" stmt="0" loc="182..188" text="region" />
             </table-references>
             <column-references>
-                <external table="6" column="1" stmt="0" loc="16..22" text="n_name" />
-                <external table="5" column="6" stmt="0" loc="59..69" text="l_discount" />
-                <external table="5" column="5" stmt="0" loc="36..51" text="l_extendedprice" />
-                <external table="3" column="0" stmt="0" loc="203..212" text="c_custkey" />
-                <external table="4" column="1" stmt="0" loc="215..224" text="o_custkey" />
-                <external table="5" column="0" stmt="0" loc="237..247" text="l_orderkey" />
-                <external table="4" column="0" stmt="0" loc="250..260" text="o_orderkey" />
-                <external table="5" column="2" stmt="0" loc="273..282" text="l_suppkey" />
-                <external table="1" column="0" stmt="0" loc="285..294" text="s_suppkey" />
-                <external table="3" column="3" stmt="0" loc="307..318" text="c_nationkey" />
-                <external table="1" column="3" stmt="0" loc="321..332" text="s_nationkey" />
-                <external table="1" column="3" stmt="0" loc="345..356" text="s_nationkey" />
-                <external table="6" column="0" stmt="0" loc="359..370" text="n_nationkey" />
-                <external table="6" column="2" stmt="0" loc="383..394" text="n_regionkey" />
-                <external table="7" column="0" stmt="0" loc="397..408" text="r_regionkey" />
-                <external table="7" column="1" stmt="0" loc="421..427" text="r_name" />
-                <external table="4" column="4" stmt="0" loc="449..460" text="o_orderdate" />
-                <external table="4" column="4" stmt="0" loc="494..505" text="o_orderdate" />
-                <external table="6" column="1" stmt="0" loc="543..549" text="n_name" />
+                <external schema="1" table="6" column="1" stmt="0" loc="16..22" text="n_name" />
+                <external schema="1" table="5" column="6" stmt="0" loc="59..69" text="l_discount" />
+                <external schema="1" table="5" column="5" stmt="0" loc="36..51" text="l_extendedprice" />
+                <external schema="1" table="3" column="0" stmt="0" loc="203..212" text="c_custkey" />
+                <external schema="1" table="4" column="1" stmt="0" loc="215..224" text="o_custkey" />
+                <external schema="1" table="5" column="0" stmt="0" loc="237..247" text="l_orderkey" />
+                <external schema="1" table="4" column="0" stmt="0" loc="250..260" text="o_orderkey" />
+                <external schema="1" table="5" column="2" stmt="0" loc="273..282" text="l_suppkey" />
+                <external schema="1" table="1" column="0" stmt="0" loc="285..294" text="s_suppkey" />
+                <external schema="1" table="3" column="3" stmt="0" loc="307..318" text="c_nationkey" />
+                <external schema="1" table="1" column="3" stmt="0" loc="321..332" text="s_nationkey" />
+                <external schema="1" table="1" column="3" stmt="0" loc="345..356" text="s_nationkey" />
+                <external schema="1" table="6" column="0" stmt="0" loc="359..370" text="n_nationkey" />
+                <external schema="1" table="6" column="2" stmt="0" loc="383..394" text="n_regionkey" />
+                <external schema="1" table="7" column="0" stmt="0" loc="397..408" text="r_regionkey" />
+                <external schema="1" table="7" column="1" stmt="0" loc="421..427" text="r_name" />
+                <external schema="1" table="4" column="4" stmt="0" loc="449..460" text="o_orderdate" />
+                <external schema="1" table="4" column="4" stmt="0" loc="494..505" text="o_orderdate" />
+                <external schema="1" table="6" column="1" stmt="0" loc="543..549" text="n_name" />
                 <unresolved stmt="0" loc="567..574" text="revenue" />
             </column-references>
             <query-graph>
@@ -625,7 +625,7 @@ order by
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -722,7 +722,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_6">
-        <script>
+        <script id="0">
             <input>
 select
         sum(l_extendedprice * l_discount) as revenue
@@ -736,20 +736,20 @@ where
             </input>
             <tables />
             <table-references>
-                <external table="0" stmt="0" loc="74..82" text="lineitem" />
+                <external schema="1" table="0" stmt="0" loc="74..82" text="lineitem" />
             </table-references>
             <column-references>
-                <external table="0" column="5" stmt="0" loc="20..35" text="l_extendedprice" />
-                <external table="0" column="6" stmt="0" loc="38..48" text="l_discount" />
-                <external table="0" column="10" stmt="0" loc="97..107" text="l_shipdate" />
-                <external table="0" column="10" stmt="0" loc="141..151" text="l_shipdate" />
-                <external table="0" column="6" stmt="0" loc="184..194" text="l_discount" />
-                <external table="0" column="4" stmt="0" loc="243..253" text="l_quantity" />
+                <external schema="1" table="0" column="5" stmt="0" loc="20..35" text="l_extendedprice" />
+                <external schema="1" table="0" column="6" stmt="0" loc="38..48" text="l_discount" />
+                <external schema="1" table="0" column="10" stmt="0" loc="97..107" text="l_shipdate" />
+                <external schema="1" table="0" column="10" stmt="0" loc="141..151" text="l_shipdate" />
+                <external schema="1" table="0" column="6" stmt="0" loc="184..194" text="l_discount" />
+                <external schema="1" table="0" column="4" stmt="0" loc="243..253" text="l_quantity" />
             </column-references>
             <query-graph />
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
 create table lineitem (l_orderkey integer not null, l_partkey integer not null, l_suppkey integer not null, l_linenumber integer not null, l_quantity decimal(12,2) not null, l_extendedprice decimal(12,2) not null, l_discount decimal(12,2) not null, l_tax decimal(12,2) not null, l_returnflag char(1) not null, l_linestatus char(1) not null, l_shipdate date not null, l_commitdate date not null, l_receiptdate date not null, l_shipinstruct char(25) not null, l_shipmode char(10) not null, l_comment varchar(44) not null, primary key (l_orderkey,l_linenumber));
                 </input>
@@ -780,7 +780,7 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_7">
-        <script>
+        <script id="0">
             <input>
 select
         supp_nation,
@@ -824,38 +824,38 @@ order by
             </input>
             <tables />
             <table-references>
-                <external table="1" stmt="0" loc="414..422" text="supplier" />
-                <external table="5" stmt="0" loc="448..456" text="lineitem" />
-                <external table="4" stmt="0" loc="482..488" text="orders" />
-                <external table="3" stmt="0" loc="514..522" text="customer" />
-                <external table="6" stmt="0" loc="548..557" text="nation n1" />
-                <external table="6" stmt="0" loc="583..592" text="nation n2" />
+                <external schema="1" table="1" stmt="0" loc="414..422" text="supplier" />
+                <external schema="1" table="5" stmt="0" loc="448..456" text="lineitem" />
+                <external schema="1" table="4" stmt="0" loc="482..488" text="orders" />
+                <external schema="1" table="3" stmt="0" loc="514..522" text="customer" />
+                <external schema="1" table="6" stmt="0" loc="548..557" text="nation n1" />
+                <external schema="1" table="6" stmt="0" loc="583..592" text="nation n2" />
             </table-references>
             <column-references>
                 <unresolved stmt="0" loc="16..27" text="supp_nation" />
                 <unresolved stmt="0" loc="37..48" text="cust_nation" />
                 <unresolved stmt="0" loc="58..64" text="l_year" />
                 <unresolved stmt="0" loc="78..84" text="volume" />
-                <external table="6" column="1" stmt="0" loc="159..168" text="n1.n_name" />
-                <external table="6" column="1" stmt="0" loc="209..218" text="n2.n_name" />
-                <external table="5" column="10" stmt="0" loc="277..287" text="l_shipdate" />
-                <external table="5" column="6" stmt="0" loc="347..357" text="l_discount" />
-                <external table="5" column="5" stmt="0" loc="324..339" text="l_extendedprice" />
-                <external table="1" column="0" stmt="0" loc="639..648" text="s_suppkey" />
-                <external table="5" column="2" stmt="0" loc="651..660" text="l_suppkey" />
-                <external table="4" column="0" stmt="0" loc="689..699" text="o_orderkey" />
-                <external table="5" column="0" stmt="0" loc="702..712" text="l_orderkey" />
-                <external table="3" column="0" stmt="0" loc="741..750" text="c_custkey" />
-                <external table="4" column="1" stmt="0" loc="753..762" text="o_custkey" />
-                <external table="1" column="3" stmt="0" loc="791..802" text="s_nationkey" />
-                <external table="6" column="0" stmt="0" loc="805..819" text="n1.n_nationkey" />
-                <external table="3" column="3" stmt="0" loc="848..859" text="c_nationkey" />
-                <external table="6" column="0" stmt="0" loc="862..876" text="n2.n_nationkey" />
-                <external table="6" column="1" stmt="0" loc="940..949" text="n1.n_name" />
-                <external table="6" column="1" stmt="0" loc="965..974" text="n2.n_name" />
-                <external table="6" column="1" stmt="0" loc="1024..1033" text="n1.n_name" />
-                <external table="6" column="1" stmt="0" loc="1050..1059" text="n2.n_name" />
-                <external table="5" column="10" stmt="0" loc="1126..1136" text="l_shipdate" />
+                <external schema="1" table="6" column="1" stmt="0" loc="159..168" text="n1.n_name" />
+                <external schema="1" table="6" column="1" stmt="0" loc="209..218" text="n2.n_name" />
+                <external schema="1" table="5" column="10" stmt="0" loc="277..287" text="l_shipdate" />
+                <external schema="1" table="5" column="6" stmt="0" loc="347..357" text="l_discount" />
+                <external schema="1" table="5" column="5" stmt="0" loc="324..339" text="l_extendedprice" />
+                <external schema="1" table="1" column="0" stmt="0" loc="639..648" text="s_suppkey" />
+                <external schema="1" table="5" column="2" stmt="0" loc="651..660" text="l_suppkey" />
+                <external schema="1" table="4" column="0" stmt="0" loc="689..699" text="o_orderkey" />
+                <external schema="1" table="5" column="0" stmt="0" loc="702..712" text="l_orderkey" />
+                <external schema="1" table="3" column="0" stmt="0" loc="741..750" text="c_custkey" />
+                <external schema="1" table="4" column="1" stmt="0" loc="753..762" text="o_custkey" />
+                <external schema="1" table="1" column="3" stmt="0" loc="791..802" text="s_nationkey" />
+                <external schema="1" table="6" column="0" stmt="0" loc="805..819" text="n1.n_nationkey" />
+                <external schema="1" table="3" column="3" stmt="0" loc="848..859" text="c_nationkey" />
+                <external schema="1" table="6" column="0" stmt="0" loc="862..876" text="n2.n_nationkey" />
+                <external schema="1" table="6" column="1" stmt="0" loc="940..949" text="n1.n_name" />
+                <external schema="1" table="6" column="1" stmt="0" loc="965..974" text="n2.n_name" />
+                <external schema="1" table="6" column="1" stmt="0" loc="1024..1033" text="n1.n_name" />
+                <external schema="1" table="6" column="1" stmt="0" loc="1050..1059" text="n2.n_name" />
+                <external schema="1" table="5" column="10" stmt="0" loc="1126..1136" text="l_shipdate" />
                 <unresolved stmt="0" loc="1224..1235" text="supp_nation" />
                 <unresolved stmt="0" loc="1245..1256" text="cust_nation" />
                 <unresolved stmt="0" loc="1266..1272" text="l_year" />
@@ -887,7 +887,7 @@ order by
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -984,7 +984,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_8">
-        <script>
+        <script id="0">
             <input>
 select
         o_year,
@@ -1026,41 +1026,41 @@ order by
             </input>
             <tables />
             <table-references>
-                <external table="0" stmt="0" loc="418..422" text="part" />
-                <external table="1" stmt="0" loc="448..456" text="supplier" />
-                <external table="5" stmt="0" loc="482..490" text="lineitem" />
-                <external table="4" stmt="0" loc="516..522" text="orders" />
-                <external table="3" stmt="0" loc="548..556" text="customer" />
-                <external table="6" stmt="0" loc="582..591" text="nation n1" />
-                <external table="6" stmt="0" loc="617..626" text="nation n2" />
-                <external table="7" stmt="0" loc="652..658" text="region" />
+                <external schema="1" table="0" stmt="0" loc="418..422" text="part" />
+                <external schema="1" table="1" stmt="0" loc="448..456" text="supplier" />
+                <external schema="1" table="5" stmt="0" loc="482..490" text="lineitem" />
+                <external schema="1" table="4" stmt="0" loc="516..522" text="orders" />
+                <external schema="1" table="3" stmt="0" loc="548..556" text="customer" />
+                <external schema="1" table="6" stmt="0" loc="582..591" text="nation n1" />
+                <external schema="1" table="6" stmt="0" loc="617..626" text="nation n2" />
+                <external schema="1" table="7" stmt="0" loc="652..658" text="region" />
             </table-references>
             <column-references>
                 <unresolved stmt="0" loc="16..22" text="o_year" />
                 <unresolved stmt="0" loc="62..68" text="nation" />
                 <unresolved stmt="0" loc="85..91" text="volume" />
                 <unresolved stmt="0" loc="134..140" text="volume" />
-                <external table="4" column="4" stmt="0" loc="235..246" text="o_orderdate" />
-                <external table="5" column="6" stmt="0" loc="306..316" text="l_discount" />
-                <external table="5" column="5" stmt="0" loc="283..298" text="l_extendedprice" />
-                <external table="6" column="1" stmt="0" loc="353..362" text="n2.n_name" />
-                <external table="0" column="0" stmt="0" loc="705..714" text="p_partkey" />
-                <external table="5" column="1" stmt="0" loc="717..726" text="l_partkey" />
-                <external table="1" column="0" stmt="0" loc="755..764" text="s_suppkey" />
-                <external table="5" column="2" stmt="0" loc="767..776" text="l_suppkey" />
-                <external table="5" column="0" stmt="0" loc="805..815" text="l_orderkey" />
-                <external table="4" column="0" stmt="0" loc="818..828" text="o_orderkey" />
-                <external table="4" column="1" stmt="0" loc="857..866" text="o_custkey" />
-                <external table="3" column="0" stmt="0" loc="869..878" text="c_custkey" />
-                <external table="3" column="3" stmt="0" loc="907..918" text="c_nationkey" />
-                <external table="6" column="0" stmt="0" loc="921..935" text="n1.n_nationkey" />
-                <external table="6" column="2" stmt="0" loc="964..978" text="n1.n_regionkey" />
-                <external table="7" column="0" stmt="0" loc="981..992" text="r_regionkey" />
-                <external table="7" column="1" stmt="0" loc="1021..1027" text="r_name" />
-                <external table="1" column="3" stmt="0" loc="1068..1079" text="s_nationkey" />
-                <external table="6" column="0" stmt="0" loc="1082..1096" text="n2.n_nationkey" />
-                <external table="4" column="4" stmt="0" loc="1125..1136" text="o_orderdate" />
-                <external table="0" column="4" stmt="0" loc="1213..1219" text="p_type" />
+                <external schema="1" table="4" column="4" stmt="0" loc="235..246" text="o_orderdate" />
+                <external schema="1" table="5" column="6" stmt="0" loc="306..316" text="l_discount" />
+                <external schema="1" table="5" column="5" stmt="0" loc="283..298" text="l_extendedprice" />
+                <external schema="1" table="6" column="1" stmt="0" loc="353..362" text="n2.n_name" />
+                <external schema="1" table="0" column="0" stmt="0" loc="705..714" text="p_partkey" />
+                <external schema="1" table="5" column="1" stmt="0" loc="717..726" text="l_partkey" />
+                <external schema="1" table="1" column="0" stmt="0" loc="755..764" text="s_suppkey" />
+                <external schema="1" table="5" column="2" stmt="0" loc="767..776" text="l_suppkey" />
+                <external schema="1" table="5" column="0" stmt="0" loc="805..815" text="l_orderkey" />
+                <external schema="1" table="4" column="0" stmt="0" loc="818..828" text="o_orderkey" />
+                <external schema="1" table="4" column="1" stmt="0" loc="857..866" text="o_custkey" />
+                <external schema="1" table="3" column="0" stmt="0" loc="869..878" text="c_custkey" />
+                <external schema="1" table="3" column="3" stmt="0" loc="907..918" text="c_nationkey" />
+                <external schema="1" table="6" column="0" stmt="0" loc="921..935" text="n1.n_nationkey" />
+                <external schema="1" table="6" column="2" stmt="0" loc="964..978" text="n1.n_regionkey" />
+                <external schema="1" table="7" column="0" stmt="0" loc="981..992" text="r_regionkey" />
+                <external schema="1" table="7" column="1" stmt="0" loc="1021..1027" text="r_name" />
+                <external schema="1" table="1" column="3" stmt="0" loc="1068..1079" text="s_nationkey" />
+                <external schema="1" table="6" column="0" stmt="0" loc="1082..1096" text="n2.n_nationkey" />
+                <external schema="1" table="4" column="4" stmt="0" loc="1125..1136" text="o_orderdate" />
+                <external schema="1" table="0" column="4" stmt="0" loc="1213..1219" text="p_type" />
                 <unresolved stmt="0" loc="1289..1295" text="o_year" />
                 <unresolved stmt="0" loc="1313..1319" text="o_year" />
             </column-references>
@@ -1096,7 +1096,7 @@ order by
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -1193,7 +1193,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_9">
-        <script>
+        <script id="0">
             <input>
 select
         nation,
@@ -1230,36 +1230,36 @@ order by
             </input>
             <tables />
             <table-references>
-                <external table="0" stmt="0" loc="363..367" text="part" />
-                <external table="1" stmt="0" loc="393..401" text="supplier" />
-                <external table="5" stmt="0" loc="427..435" text="lineitem" />
-                <external table="2" stmt="0" loc="461..469" text="partsupp" />
-                <external table="4" stmt="0" loc="495..501" text="orders" />
-                <external table="6" stmt="0" loc="527..533" text="nation" />
+                <external schema="1" table="0" stmt="0" loc="363..367" text="part" />
+                <external schema="1" table="1" stmt="0" loc="393..401" text="supplier" />
+                <external schema="1" table="5" stmt="0" loc="427..435" text="lineitem" />
+                <external schema="1" table="2" stmt="0" loc="461..469" text="partsupp" />
+                <external schema="1" table="4" stmt="0" loc="495..501" text="orders" />
+                <external schema="1" table="6" stmt="0" loc="527..533" text="nation" />
             </table-references>
             <column-references>
                 <unresolved stmt="0" loc="16..22" text="nation" />
                 <unresolved stmt="0" loc="32..38" text="o_year" />
                 <unresolved stmt="0" loc="52..58" text="amount" />
-                <external table="6" column="1" stmt="0" loc="136..142" text="n_name" />
-                <external table="4" column="4" stmt="0" loc="196..207" text="o_orderdate" />
-                <external table="5" column="6" stmt="0" loc="267..277" text="l_discount" />
-                <external table="5" column="5" stmt="0" loc="244..259" text="l_extendedprice" />
-                <external table="2" column="3" stmt="0" loc="281..294" text="ps_supplycost" />
-                <external table="5" column="4" stmt="0" loc="297..307" text="l_quantity" />
-                <external table="1" column="0" stmt="0" loc="580..589" text="s_suppkey" />
-                <external table="5" column="2" stmt="0" loc="592..601" text="l_suppkey" />
-                <external table="2" column="1" stmt="0" loc="630..640" text="ps_suppkey" />
-                <external table="5" column="2" stmt="0" loc="643..652" text="l_suppkey" />
-                <external table="2" column="0" stmt="0" loc="681..691" text="ps_partkey" />
-                <external table="5" column="1" stmt="0" loc="694..703" text="l_partkey" />
-                <external table="0" column="0" stmt="0" loc="732..741" text="p_partkey" />
-                <external table="5" column="1" stmt="0" loc="744..753" text="l_partkey" />
-                <external table="4" column="0" stmt="0" loc="782..792" text="o_orderkey" />
-                <external table="5" column="0" stmt="0" loc="795..805" text="l_orderkey" />
-                <external table="1" column="3" stmt="0" loc="834..845" text="s_nationkey" />
-                <external table="6" column="0" stmt="0" loc="848..859" text="n_nationkey" />
-                <external table="0" column="1" stmt="0" loc="888..894" text="p_name" />
+                <external schema="1" table="6" column="1" stmt="0" loc="136..142" text="n_name" />
+                <external schema="1" table="4" column="4" stmt="0" loc="196..207" text="o_orderdate" />
+                <external schema="1" table="5" column="6" stmt="0" loc="267..277" text="l_discount" />
+                <external schema="1" table="5" column="5" stmt="0" loc="244..259" text="l_extendedprice" />
+                <external schema="1" table="2" column="3" stmt="0" loc="281..294" text="ps_supplycost" />
+                <external schema="1" table="5" column="4" stmt="0" loc="297..307" text="l_quantity" />
+                <external schema="1" table="1" column="0" stmt="0" loc="580..589" text="s_suppkey" />
+                <external schema="1" table="5" column="2" stmt="0" loc="592..601" text="l_suppkey" />
+                <external schema="1" table="2" column="1" stmt="0" loc="630..640" text="ps_suppkey" />
+                <external schema="1" table="5" column="2" stmt="0" loc="643..652" text="l_suppkey" />
+                <external schema="1" table="2" column="0" stmt="0" loc="681..691" text="ps_partkey" />
+                <external schema="1" table="5" column="1" stmt="0" loc="694..703" text="l_partkey" />
+                <external schema="1" table="0" column="0" stmt="0" loc="732..741" text="p_partkey" />
+                <external schema="1" table="5" column="1" stmt="0" loc="744..753" text="l_partkey" />
+                <external schema="1" table="4" column="0" stmt="0" loc="782..792" text="o_orderkey" />
+                <external schema="1" table="5" column="0" stmt="0" loc="795..805" text="l_orderkey" />
+                <external schema="1" table="1" column="3" stmt="0" loc="834..845" text="s_nationkey" />
+                <external schema="1" table="6" column="0" stmt="0" loc="848..859" text="n_nationkey" />
+                <external schema="1" table="0" column="1" stmt="0" loc="888..894" text="p_name" />
                 <unresolved stmt="0" loc="947..953" text="nation" />
                 <unresolved stmt="0" loc="963..969" text="o_year" />
                 <unresolved stmt="0" loc="987..993" text="nation" />
@@ -1293,7 +1293,7 @@ order by
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -1390,7 +1390,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_10">
-        <script>
+        <script id="0">
             <input>
 select
         c_custkey,
@@ -1428,37 +1428,37 @@ limit
             </input>
             <tables />
             <table-references>
-                <external table="3" stmt="0" loc="205..213" text="customer" />
-                <external table="4" stmt="0" loc="223..229" text="orders" />
-                <external table="5" stmt="0" loc="239..247" text="lineitem" />
-                <external table="6" stmt="0" loc="257..263" text="nation" />
+                <external schema="1" table="3" stmt="0" loc="205..213" text="customer" />
+                <external schema="1" table="4" stmt="0" loc="223..229" text="orders" />
+                <external schema="1" table="5" stmt="0" loc="239..247" text="lineitem" />
+                <external schema="1" table="6" stmt="0" loc="257..263" text="nation" />
             </table-references>
             <column-references>
-                <external table="3" column="0" stmt="0" loc="16..25" text="c_custkey" />
-                <external table="3" column="1" stmt="0" loc="35..41" text="c_name" />
-                <external table="5" column="6" stmt="0" loc="78..88" text="l_discount" />
-                <external table="5" column="5" stmt="0" loc="55..70" text="l_extendedprice" />
-                <external table="3" column="5" stmt="0" loc="111..120" text="c_acctbal" />
-                <external table="6" column="1" stmt="0" loc="130..136" text="n_name" />
-                <external table="3" column="2" stmt="0" loc="146..155" text="c_address" />
-                <external table="3" column="4" stmt="0" loc="165..172" text="c_phone" />
-                <external table="3" column="7" stmt="0" loc="182..191" text="c_comment" />
-                <external table="3" column="0" stmt="0" loc="278..287" text="c_custkey" />
-                <external table="4" column="1" stmt="0" loc="290..299" text="o_custkey" />
-                <external table="5" column="0" stmt="0" loc="312..322" text="l_orderkey" />
-                <external table="4" column="0" stmt="0" loc="325..335" text="o_orderkey" />
-                <external table="4" column="4" stmt="0" loc="348..359" text="o_orderdate" />
-                <external table="4" column="4" stmt="0" loc="393..404" text="o_orderdate" />
-                <external table="5" column="8" stmt="0" loc="437..449" text="l_returnflag" />
-                <external table="3" column="3" stmt="0" loc="468..479" text="c_nationkey" />
-                <external table="6" column="0" stmt="0" loc="482..493" text="n_nationkey" />
-                <external table="3" column="0" stmt="0" loc="511..520" text="c_custkey" />
-                <external table="3" column="1" stmt="0" loc="530..536" text="c_name" />
-                <external table="3" column="5" stmt="0" loc="546..555" text="c_acctbal" />
-                <external table="3" column="4" stmt="0" loc="565..572" text="c_phone" />
-                <external table="6" column="1" stmt="0" loc="582..588" text="n_name" />
-                <external table="3" column="2" stmt="0" loc="598..607" text="c_address" />
-                <external table="3" column="7" stmt="0" loc="617..626" text="c_comment" />
+                <external schema="1" table="3" column="0" stmt="0" loc="16..25" text="c_custkey" />
+                <external schema="1" table="3" column="1" stmt="0" loc="35..41" text="c_name" />
+                <external schema="1" table="5" column="6" stmt="0" loc="78..88" text="l_discount" />
+                <external schema="1" table="5" column="5" stmt="0" loc="55..70" text="l_extendedprice" />
+                <external schema="1" table="3" column="5" stmt="0" loc="111..120" text="c_acctbal" />
+                <external schema="1" table="6" column="1" stmt="0" loc="130..136" text="n_name" />
+                <external schema="1" table="3" column="2" stmt="0" loc="146..155" text="c_address" />
+                <external schema="1" table="3" column="4" stmt="0" loc="165..172" text="c_phone" />
+                <external schema="1" table="3" column="7" stmt="0" loc="182..191" text="c_comment" />
+                <external schema="1" table="3" column="0" stmt="0" loc="278..287" text="c_custkey" />
+                <external schema="1" table="4" column="1" stmt="0" loc="290..299" text="o_custkey" />
+                <external schema="1" table="5" column="0" stmt="0" loc="312..322" text="l_orderkey" />
+                <external schema="1" table="4" column="0" stmt="0" loc="325..335" text="o_orderkey" />
+                <external schema="1" table="4" column="4" stmt="0" loc="348..359" text="o_orderdate" />
+                <external schema="1" table="4" column="4" stmt="0" loc="393..404" text="o_orderdate" />
+                <external schema="1" table="5" column="8" stmt="0" loc="437..449" text="l_returnflag" />
+                <external schema="1" table="3" column="3" stmt="0" loc="468..479" text="c_nationkey" />
+                <external schema="1" table="6" column="0" stmt="0" loc="482..493" text="n_nationkey" />
+                <external schema="1" table="3" column="0" stmt="0" loc="511..520" text="c_custkey" />
+                <external schema="1" table="3" column="1" stmt="0" loc="530..536" text="c_name" />
+                <external schema="1" table="3" column="5" stmt="0" loc="546..555" text="c_acctbal" />
+                <external schema="1" table="3" column="4" stmt="0" loc="565..572" text="c_phone" />
+                <external schema="1" table="6" column="1" stmt="0" loc="582..588" text="n_name" />
+                <external schema="1" table="3" column="2" stmt="0" loc="598..607" text="c_address" />
+                <external schema="1" table="3" column="7" stmt="0" loc="617..626" text="c_comment" />
                 <unresolved stmt="0" loc="644..651" text="revenue" />
             </column-references>
             <query-graph>
@@ -1477,7 +1477,7 @@ limit
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -1574,7 +1574,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_11">
-        <script>
+        <script id="0">
             <input>
 select
         ps_partkey,
@@ -1606,32 +1606,32 @@ order by
             </input>
             <tables />
             <table-references>
-                <external table="1" stmt="0" loc="496..504" text="partsupp" />
-                <external table="0" stmt="0" loc="538..546" text="supplier" />
-                <external table="2" stmt="0" loc="580..586" text="nation" />
-                <external table="1" stmt="0" loc="93..101" text="partsupp" />
-                <external table="0" stmt="0" loc="111..119" text="supplier" />
-                <external table="2" stmt="0" loc="129..135" text="nation" />
+                <external schema="1" table="1" stmt="0" loc="496..504" text="partsupp" />
+                <external schema="1" table="0" stmt="0" loc="538..546" text="supplier" />
+                <external schema="1" table="2" stmt="0" loc="580..586" text="nation" />
+                <external schema="1" table="1" stmt="0" loc="93..101" text="partsupp" />
+                <external schema="1" table="0" stmt="0" loc="111..119" text="supplier" />
+                <external schema="1" table="2" stmt="0" loc="129..135" text="nation" />
             </table-references>
             <column-references>
-                <external table="1" column="0" stmt="0" loc="16..26" text="ps_partkey" />
-                <external table="1" column="3" stmt="0" loc="40..53" text="ps_supplycost" />
-                <external table="1" column="2" stmt="0" loc="56..67" text="ps_availqty" />
-                <external table="1" column="1" stmt="0" loc="150..160" text="ps_suppkey" />
-                <external table="0" column="0" stmt="0" loc="163..172" text="s_suppkey" />
-                <external table="0" column="3" stmt="0" loc="185..196" text="s_nationkey" />
-                <external table="2" column="0" stmt="0" loc="199..210" text="n_nationkey" />
-                <external table="2" column="1" stmt="0" loc="223..229" text="n_name" />
-                <external table="1" column="0" stmt="0" loc="259..269" text="ps_partkey" />
-                <external table="1" column="3" stmt="0" loc="297..310" text="ps_supplycost" />
-                <external table="1" column="2" stmt="0" loc="313..324" text="ps_availqty" />
-                <external table="1" column="3" stmt="0" loc="397..410" text="ps_supplycost" />
-                <external table="1" column="2" stmt="0" loc="413..424" text="ps_availqty" />
-                <external table="1" column="1" stmt="0" loc="649..659" text="ps_suppkey" />
-                <external table="0" column="0" stmt="0" loc="662..671" text="s_suppkey" />
-                <external table="0" column="3" stmt="0" loc="708..719" text="s_nationkey" />
-                <external table="2" column="0" stmt="0" loc="722..733" text="n_nationkey" />
-                <external table="2" column="1" stmt="0" loc="770..776" text="n_name" />
+                <external schema="1" table="1" column="0" stmt="0" loc="16..26" text="ps_partkey" />
+                <external schema="1" table="1" column="3" stmt="0" loc="40..53" text="ps_supplycost" />
+                <external schema="1" table="1" column="2" stmt="0" loc="56..67" text="ps_availqty" />
+                <external schema="1" table="1" column="1" stmt="0" loc="150..160" text="ps_suppkey" />
+                <external schema="1" table="0" column="0" stmt="0" loc="163..172" text="s_suppkey" />
+                <external schema="1" table="0" column="3" stmt="0" loc="185..196" text="s_nationkey" />
+                <external schema="1" table="2" column="0" stmt="0" loc="199..210" text="n_nationkey" />
+                <external schema="1" table="2" column="1" stmt="0" loc="223..229" text="n_name" />
+                <external schema="1" table="1" column="0" stmt="0" loc="259..269" text="ps_partkey" />
+                <external schema="1" table="1" column="3" stmt="0" loc="297..310" text="ps_supplycost" />
+                <external schema="1" table="1" column="2" stmt="0" loc="313..324" text="ps_availqty" />
+                <external schema="1" table="1" column="3" stmt="0" loc="397..410" text="ps_supplycost" />
+                <external schema="1" table="1" column="2" stmt="0" loc="413..424" text="ps_availqty" />
+                <external schema="1" table="1" column="1" stmt="0" loc="649..659" text="ps_suppkey" />
+                <external schema="1" table="0" column="0" stmt="0" loc="662..671" text="s_suppkey" />
+                <external schema="1" table="0" column="3" stmt="0" loc="708..719" text="s_nationkey" />
+                <external schema="1" table="2" column="0" stmt="0" loc="722..733" text="n_nationkey" />
+                <external schema="1" table="2" column="1" stmt="0" loc="770..776" text="n_name" />
                 <unresolved stmt="0" loc="824..831" text="&quot;value&quot;" />
             </column-references>
             <query-graph>
@@ -1654,7 +1654,7 @@ order by
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
 create table partsupp (ps_partkey integer not null, ps_suppkey integer not null, ps_availqty integer not null, ps_supplycost decimal(12,2) not null, ps_comment varchar(199) not null, primary key (ps_partkey,ps_suppkey));
@@ -1691,7 +1691,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_12">
-        <script>
+        <script id="0">
             <input>
 select
         l_shipmode,
@@ -1724,26 +1724,26 @@ order by
             </input>
             <tables />
             <table-references>
-                <external table="4" stmt="0" loc="458..464" text="orders" />
-                <external table="5" stmt="0" loc="474..482" text="lineitem" />
+                <external schema="1" table="4" stmt="0" loc="458..464" text="orders" />
+                <external schema="1" table="5" stmt="0" loc="474..482" text="lineitem" />
             </table-references>
             <column-references>
-                <external table="5" column="14" stmt="0" loc="16..26" text="l_shipmode" />
-                <external table="4" column="5" stmt="0" loc="66..81" text="o_orderpriority" />
-                <external table="4" column="5" stmt="0" loc="122..137" text="o_orderpriority" />
-                <external table="4" column="5" stmt="0" loc="274..289" text="o_orderpriority" />
-                <external table="4" column="5" stmt="0" loc="332..347" text="o_orderpriority" />
-                <external table="4" column="0" stmt="0" loc="497..507" text="o_orderkey" />
-                <external table="5" column="0" stmt="0" loc="510..520" text="l_orderkey" />
-                <external table="5" column="14" stmt="0" loc="533..543" text="l_shipmode" />
-                <external table="5" column="11" stmt="0" loc="576..588" text="l_commitdate" />
-                <external table="5" column="12" stmt="0" loc="591..604" text="l_receiptdate" />
-                <external table="5" column="10" stmt="0" loc="617..627" text="l_shipdate" />
-                <external table="5" column="11" stmt="0" loc="630..642" text="l_commitdate" />
-                <external table="5" column="12" stmt="0" loc="655..668" text="l_receiptdate" />
-                <external table="5" column="12" stmt="0" loc="702..715" text="l_receiptdate" />
-                <external table="5" column="14" stmt="0" loc="753..763" text="l_shipmode" />
-                <external table="5" column="14" stmt="0" loc="781..791" text="l_shipmode" />
+                <external schema="1" table="5" column="14" stmt="0" loc="16..26" text="l_shipmode" />
+                <external schema="1" table="4" column="5" stmt="0" loc="66..81" text="o_orderpriority" />
+                <external schema="1" table="4" column="5" stmt="0" loc="122..137" text="o_orderpriority" />
+                <external schema="1" table="4" column="5" stmt="0" loc="274..289" text="o_orderpriority" />
+                <external schema="1" table="4" column="5" stmt="0" loc="332..347" text="o_orderpriority" />
+                <external schema="1" table="4" column="0" stmt="0" loc="497..507" text="o_orderkey" />
+                <external schema="1" table="5" column="0" stmt="0" loc="510..520" text="l_orderkey" />
+                <external schema="1" table="5" column="14" stmt="0" loc="533..543" text="l_shipmode" />
+                <external schema="1" table="5" column="11" stmt="0" loc="576..588" text="l_commitdate" />
+                <external schema="1" table="5" column="12" stmt="0" loc="591..604" text="l_receiptdate" />
+                <external schema="1" table="5" column="10" stmt="0" loc="617..627" text="l_shipdate" />
+                <external schema="1" table="5" column="11" stmt="0" loc="630..642" text="l_commitdate" />
+                <external schema="1" table="5" column="12" stmt="0" loc="655..668" text="l_receiptdate" />
+                <external schema="1" table="5" column="12" stmt="0" loc="702..715" text="l_receiptdate" />
+                <external schema="1" table="5" column="14" stmt="0" loc="753..763" text="l_shipmode" />
+                <external schema="1" table="5" column="14" stmt="0" loc="781..791" text="l_shipmode" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="497..520" text="o_orderkey..l_orderkey">
@@ -1761,7 +1761,7 @@ order by
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -1858,7 +1858,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_13">
-        <script>
+        <script id="0">
             <input>
 select
         c_count,
@@ -1883,17 +1883,17 @@ order by
             </input>
             <tables />
             <table-references>
-                <external table="0" stmt="0" loc="222..230" text="customer" />
-                <external table="1" stmt="0" loc="247..253" text="orders" />
+                <external schema="1" table="0" stmt="0" loc="222..230" text="customer" />
+                <external schema="1" table="1" stmt="0" loc="247..253" text="orders" />
             </table-references>
             <column-references>
                 <unresolved stmt="0" loc="16..23" text="c_count" />
-                <external table="0" column="0" stmt="0" loc="116..125" text="c_custkey" />
-                <external table="1" column="0" stmt="0" loc="157..167" text="o_orderkey" />
-                <external table="0" column="0" stmt="0" loc="289..298" text="c_custkey" />
-                <external table="1" column="1" stmt="0" loc="301..310" text="o_custkey" />
-                <external table="1" column="8" stmt="0" loc="347..356" text="o_comment" />
-                <external table="0" column="0" stmt="0" loc="436..445" text="c_custkey" />
+                <external schema="1" table="0" column="0" stmt="0" loc="116..125" text="c_custkey" />
+                <external schema="1" table="1" column="0" stmt="0" loc="157..167" text="o_orderkey" />
+                <external schema="1" table="0" column="0" stmt="0" loc="289..298" text="c_custkey" />
+                <external schema="1" table="1" column="1" stmt="0" loc="301..310" text="o_custkey" />
+                <external schema="1" table="1" column="8" stmt="0" loc="347..356" text="o_comment" />
+                <external schema="1" table="0" column="0" stmt="0" loc="436..445" text="c_custkey" />
                 <unresolved stmt="0" loc="485..492" text="c_count" />
                 <unresolved stmt="0" loc="510..518" text="custdist" />
                 <unresolved stmt="0" loc="533..540" text="c_count" />
@@ -1906,7 +1906,7 @@ order by
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
 create table customer (c_custkey integer not null, c_name varchar(25) not null, c_address varchar(40) not null, c_nationkey integer not null, c_phone char(15) not null, c_acctbal decimal(12,2) not null, c_mktsegment char(10) not null, c_comment varchar(117) not null, primary key (c_custkey));
 create table orders (o_orderkey integer not null, o_custkey integer not null, o_orderstatus char(1) not null, o_totalprice decimal(12,2) not null, o_orderdate date not null, o_orderpriority char(15) not null, o_clerk char(15) not null, o_shippriority integer not null, o_comment varchar(79) not null, primary key (o_orderkey));
@@ -1941,7 +1941,7 @@ create table orders (o_orderkey integer not null, o_custkey integer not null, o_
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_14">
-        <script>
+        <script id="0">
             <input>
 select
         100.00 * sum(case
@@ -1959,19 +1959,19 @@ where
             </input>
             <tables />
             <table-references>
-                <external table="5" stmt="0" loc="248..256" text="lineitem" />
-                <external table="0" stmt="0" loc="266..270" text="part" />
+                <external schema="1" table="5" stmt="0" loc="248..256" text="lineitem" />
+                <external schema="1" table="0" stmt="0" loc="266..270" text="part" />
             </table-references>
             <column-references>
-                <external table="0" column="4" stmt="0" loc="55..61" text="p_type" />
-                <external table="5" column="6" stmt="0" loc="128..138" text="l_discount" />
-                <external table="5" column="5" stmt="0" loc="105..120" text="l_extendedprice" />
-                <external table="5" column="6" stmt="0" loc="205..215" text="l_discount" />
-                <external table="5" column="5" stmt="0" loc="182..197" text="l_extendedprice" />
-                <external table="5" column="1" stmt="0" loc="285..294" text="l_partkey" />
-                <external table="0" column="0" stmt="0" loc="297..306" text="p_partkey" />
-                <external table="5" column="10" stmt="0" loc="319..329" text="l_shipdate" />
-                <external table="5" column="10" stmt="0" loc="363..373" text="l_shipdate" />
+                <external schema="1" table="0" column="4" stmt="0" loc="55..61" text="p_type" />
+                <external schema="1" table="5" column="6" stmt="0" loc="128..138" text="l_discount" />
+                <external schema="1" table="5" column="5" stmt="0" loc="105..120" text="l_extendedprice" />
+                <external schema="1" table="5" column="6" stmt="0" loc="205..215" text="l_discount" />
+                <external schema="1" table="5" column="5" stmt="0" loc="182..197" text="l_extendedprice" />
+                <external schema="1" table="5" column="1" stmt="0" loc="285..294" text="l_partkey" />
+                <external schema="1" table="0" column="0" stmt="0" loc="297..306" text="p_partkey" />
+                <external schema="1" table="5" column="10" stmt="0" loc="319..329" text="l_shipdate" />
+                <external schema="1" table="5" column="10" stmt="0" loc="363..373" text="l_shipdate" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="285..306" text="l_partkey .. p_partkey">
@@ -1981,7 +1981,7 @@ where
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -2078,7 +2078,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_15">
-        <script>
+        <script id="0">
             <input>
 with revenue as (
 	select
@@ -2113,28 +2113,28 @@ order by
             </input>
             <tables />
             <table-references>
-                <external table="5" stmt="0" loc="122..130" text="lineitem" />
+                <external schema="1" table="5" stmt="0" loc="122..130" text="lineitem" />
                 <unresolved stmt="0" loc="417..424" text="revenue" />
-                <external table="1" stmt="0" loc="303..311" text="supplier" />
+                <external schema="1" table="1" stmt="0" loc="303..311" text="supplier" />
                 <unresolved stmt="0" loc="314..321" text="revenue" />
             </table-references>
             <column-references>
-                <external table="5" column="2" stmt="0" loc="29..38" text="l_suppkey" />
-                <external table="5" column="6" stmt="0" loc="84..94" text="l_discount" />
-                <external table="5" column="5" stmt="0" loc="61..76" text="l_extendedprice" />
-                <external table="5" column="10" stmt="0" loc="140..150" text="l_shipdate" />
-                <external table="5" column="10" stmt="0" loc="178..188" text="l_shipdate" />
-                <external table="5" column="2" stmt="0" loc="221..230" text="l_suppkey" />
-                <external table="1" column="0" stmt="0" loc="240..249" text="s_suppkey" />
-                <external table="1" column="1" stmt="0" loc="252..258" text="s_name" />
-                <external table="1" column="2" stmt="0" loc="261..270" text="s_address" />
-                <external table="1" column="4" stmt="0" loc="273..280" text="s_phone" />
+                <external schema="1" table="5" column="2" stmt="0" loc="29..38" text="l_suppkey" />
+                <external schema="1" table="5" column="6" stmt="0" loc="84..94" text="l_discount" />
+                <external schema="1" table="5" column="5" stmt="0" loc="61..76" text="l_extendedprice" />
+                <external schema="1" table="5" column="10" stmt="0" loc="140..150" text="l_shipdate" />
+                <external schema="1" table="5" column="10" stmt="0" loc="178..188" text="l_shipdate" />
+                <external schema="1" table="5" column="2" stmt="0" loc="221..230" text="l_suppkey" />
+                <external schema="1" table="1" column="0" stmt="0" loc="240..249" text="s_suppkey" />
+                <external schema="1" table="1" column="1" stmt="0" loc="252..258" text="s_name" />
+                <external schema="1" table="1" column="2" stmt="0" loc="261..270" text="s_address" />
+                <external schema="1" table="1" column="4" stmt="0" loc="273..280" text="s_phone" />
                 <unresolved stmt="0" loc="283..296" text="total_revenue" />
-                <external table="1" column="0" stmt="0" loc="329..338" text="s_suppkey" />
+                <external schema="1" table="1" column="0" stmt="0" loc="329..338" text="s_suppkey" />
                 <unresolved stmt="0" loc="341..352" text="supplier_no" />
                 <unresolved stmt="0" loc="392..405" text="total_revenue" />
                 <unresolved stmt="0" loc="358..371" text="total_revenue" />
-                <external table="1" column="0" stmt="0" loc="438..447" text="s_suppkey" />
+                <external schema="1" table="1" column="0" stmt="0" loc="438..447" text="s_suppkey" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="329..352" text="s_suppkey ..upplier_no">
@@ -2144,7 +2144,7 @@ order by
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -2241,7 +2241,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_16">
-        <script>
+        <script id="0">
             <input>
 select
         p_brand,
@@ -2276,30 +2276,30 @@ order by
             </input>
             <tables />
             <table-references>
-                <external table="1" stmt="0" loc="449..457" text="supplier" />
-                <external table="2" stmt="0" loc="121..129" text="partsupp" />
-                <external table="0" stmt="0" loc="139..143" text="part" />
+                <external schema="1" table="1" stmt="0" loc="449..457" text="supplier" />
+                <external schema="1" table="2" stmt="0" loc="121..129" text="partsupp" />
+                <external schema="1" table="0" stmt="0" loc="139..143" text="part" />
             </table-references>
             <column-references>
-                <external table="0" column="3" stmt="0" loc="16..23" text="p_brand" />
-                <external table="0" column="4" stmt="0" loc="33..39" text="p_type" />
-                <external table="0" column="5" stmt="0" loc="49..55" text="p_size" />
-                <external table="2" column="1" stmt="0" loc="80..90" text="ps_suppkey" />
-                <external table="0" column="0" stmt="0" loc="158..167" text="p_partkey" />
-                <external table="2" column="0" stmt="0" loc="170..180" text="ps_partkey" />
-                <external table="0" column="3" stmt="0" loc="193..200" text="p_brand" />
-                <external table="0" column="4" stmt="0" loc="227..233" text="p_type" />
-                <external table="0" column="5" stmt="0" loc="274..280" text="p_size" />
-                <external table="1" column="0" stmt="0" loc="394..403" text="s_suppkey" />
-                <external table="1" column="6" stmt="0" loc="504..513" text="s_comment" />
-                <external table="2" column="1" stmt="0" loc="327..337" text="ps_suppkey" />
-                <external table="0" column="3" stmt="0" loc="570..577" text="p_brand" />
-                <external table="0" column="4" stmt="0" loc="587..593" text="p_type" />
-                <external table="0" column="5" stmt="0" loc="603..609" text="p_size" />
+                <external schema="1" table="0" column="3" stmt="0" loc="16..23" text="p_brand" />
+                <external schema="1" table="0" column="4" stmt="0" loc="33..39" text="p_type" />
+                <external schema="1" table="0" column="5" stmt="0" loc="49..55" text="p_size" />
+                <external schema="1" table="2" column="1" stmt="0" loc="80..90" text="ps_suppkey" />
+                <external schema="1" table="0" column="0" stmt="0" loc="158..167" text="p_partkey" />
+                <external schema="1" table="2" column="0" stmt="0" loc="170..180" text="ps_partkey" />
+                <external schema="1" table="0" column="3" stmt="0" loc="193..200" text="p_brand" />
+                <external schema="1" table="0" column="4" stmt="0" loc="227..233" text="p_type" />
+                <external schema="1" table="0" column="5" stmt="0" loc="274..280" text="p_size" />
+                <external schema="1" table="1" column="0" stmt="0" loc="394..403" text="s_suppkey" />
+                <external schema="1" table="1" column="6" stmt="0" loc="504..513" text="s_comment" />
+                <external schema="1" table="2" column="1" stmt="0" loc="327..337" text="ps_suppkey" />
+                <external schema="1" table="0" column="3" stmt="0" loc="570..577" text="p_brand" />
+                <external schema="1" table="0" column="4" stmt="0" loc="587..593" text="p_type" />
+                <external schema="1" table="0" column="5" stmt="0" loc="603..609" text="p_size" />
                 <unresolved stmt="0" loc="627..639" text="supplier_cnt" />
-                <external table="0" column="3" stmt="0" loc="654..661" text="p_brand" />
-                <external table="0" column="4" stmt="0" loc="671..677" text="p_type" />
-                <external table="0" column="5" stmt="0" loc="687..693" text="p_size" />
+                <external schema="1" table="0" column="3" stmt="0" loc="654..661" text="p_brand" />
+                <external schema="1" table="0" column="4" stmt="0" loc="671..677" text="p_type" />
+                <external schema="1" table="0" column="5" stmt="0" loc="687..693" text="p_size" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="158..180" text="p_partkey ..ps_partkey">
@@ -2309,7 +2309,7 @@ order by
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -2406,7 +2406,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_17">
-        <script>
+        <script id="0">
             <input>
 select
         sum(l_extendedprice) / 7.0 as avg_yearly
@@ -2428,20 +2428,20 @@ where
             </input>
             <tables />
             <table-references>
-                <external table="1" stmt="0" loc="339..347" text="lineitem" />
-                <external table="1" stmt="0" loc="70..78" text="lineitem" />
-                <external table="0" stmt="0" loc="88..92" text="part" />
+                <external schema="1" table="1" stmt="0" loc="339..347" text="lineitem" />
+                <external schema="1" table="1" stmt="0" loc="70..78" text="lineitem" />
+                <external schema="1" table="0" stmt="0" loc="88..92" text="part" />
             </table-references>
             <column-references>
-                <external table="1" column="5" stmt="0" loc="20..35" text="l_extendedprice" />
-                <external table="0" column="0" stmt="0" loc="107..116" text="p_partkey" />
-                <external table="1" column="1" stmt="0" loc="119..128" text="l_partkey" />
-                <external table="0" column="3" stmt="0" loc="141..148" text="p_brand" />
-                <external table="0" column="6" stmt="0" loc="174..185" text="p_container" />
-                <external table="1" column="4" stmt="0" loc="282..292" text="l_quantity" />
-                <external table="1" column="1" stmt="0" loc="394..403" text="l_partkey" />
-                <external table="0" column="0" stmt="0" loc="406..415" text="p_partkey" />
-                <external table="1" column="4" stmt="0" loc="210..220" text="l_quantity" />
+                <external schema="1" table="1" column="5" stmt="0" loc="20..35" text="l_extendedprice" />
+                <external schema="1" table="0" column="0" stmt="0" loc="107..116" text="p_partkey" />
+                <external schema="1" table="1" column="1" stmt="0" loc="119..128" text="l_partkey" />
+                <external schema="1" table="0" column="3" stmt="0" loc="141..148" text="p_brand" />
+                <external schema="1" table="0" column="6" stmt="0" loc="174..185" text="p_container" />
+                <external schema="1" table="1" column="4" stmt="0" loc="282..292" text="l_quantity" />
+                <external schema="1" table="1" column="1" stmt="0" loc="394..403" text="l_partkey" />
+                <external schema="1" table="0" column="0" stmt="0" loc="406..415" text="p_partkey" />
+                <external schema="1" table="1" column="4" stmt="0" loc="210..220" text="l_quantity" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="394..415" text="l_partkey .. p_partkey">
@@ -2455,7 +2455,7 @@ where
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table lineitem (l_orderkey integer not null, l_partkey integer not null, l_suppkey integer not null, l_linenumber integer not null, l_quantity decimal(12,2) not null, l_extendedprice decimal(12,2) not null, l_discount decimal(12,2) not null, l_tax decimal(12,2) not null, l_returnflag char(1) not null, l_linestatus char(1) not null, l_shipdate date not null, l_commitdate date not null, l_receiptdate date not null, l_shipinstruct char(25) not null, l_shipmode char(10) not null, l_comment varchar(44) not null, primary key (l_orderkey,l_linenumber));
@@ -2498,7 +2498,7 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_18">
-        <script>
+        <script id="0">
             <input>
 select
         c_name,
@@ -2537,33 +2537,33 @@ limit
             </input>
             <tables />
             <table-references>
-                <external table="5" stmt="0" loc="319..327" text="lineitem" />
-                <external table="3" stmt="0" loc="143..151" text="customer" />
-                <external table="4" stmt="0" loc="161..167" text="orders" />
-                <external table="5" stmt="0" loc="177..185" text="lineitem" />
+                <external schema="1" table="5" stmt="0" loc="319..327" text="lineitem" />
+                <external schema="1" table="3" stmt="0" loc="143..151" text="customer" />
+                <external schema="1" table="4" stmt="0" loc="161..167" text="orders" />
+                <external schema="1" table="5" stmt="0" loc="177..185" text="lineitem" />
             </table-references>
             <column-references>
-                <external table="3" column="1" stmt="0" loc="16..22" text="c_name" />
-                <external table="3" column="0" stmt="0" loc="32..41" text="c_custkey" />
-                <external table="4" column="0" stmt="0" loc="51..61" text="o_orderkey" />
-                <external table="4" column="4" stmt="0" loc="71..82" text="o_orderdate" />
-                <external table="4" column="3" stmt="0" loc="92..104" text="o_totalprice" />
-                <external table="5" column="4" stmt="0" loc="118..128" text="l_quantity" />
-                <external table="5" column="0" stmt="0" loc="263..273" text="l_orderkey" />
-                <external table="5" column="0" stmt="0" loc="377..387" text="l_orderkey" />
-                <external table="5" column="4" stmt="0" loc="431..441" text="l_quantity" />
-                <external table="4" column="0" stmt="0" loc="200..210" text="o_orderkey" />
-                <external table="3" column="0" stmt="0" loc="471..480" text="c_custkey" />
-                <external table="4" column="1" stmt="0" loc="483..492" text="o_custkey" />
-                <external table="4" column="0" stmt="0" loc="505..515" text="o_orderkey" />
-                <external table="5" column="0" stmt="0" loc="518..528" text="l_orderkey" />
-                <external table="3" column="1" stmt="0" loc="546..552" text="c_name" />
-                <external table="3" column="0" stmt="0" loc="562..571" text="c_custkey" />
-                <external table="4" column="0" stmt="0" loc="581..591" text="o_orderkey" />
-                <external table="4" column="4" stmt="0" loc="601..612" text="o_orderdate" />
-                <external table="4" column="3" stmt="0" loc="622..634" text="o_totalprice" />
-                <external table="4" column="3" stmt="0" loc="652..664" text="o_totalprice" />
-                <external table="4" column="4" stmt="0" loc="679..690" text="o_orderdate" />
+                <external schema="1" table="3" column="1" stmt="0" loc="16..22" text="c_name" />
+                <external schema="1" table="3" column="0" stmt="0" loc="32..41" text="c_custkey" />
+                <external schema="1" table="4" column="0" stmt="0" loc="51..61" text="o_orderkey" />
+                <external schema="1" table="4" column="4" stmt="0" loc="71..82" text="o_orderdate" />
+                <external schema="1" table="4" column="3" stmt="0" loc="92..104" text="o_totalprice" />
+                <external schema="1" table="5" column="4" stmt="0" loc="118..128" text="l_quantity" />
+                <external schema="1" table="5" column="0" stmt="0" loc="263..273" text="l_orderkey" />
+                <external schema="1" table="5" column="0" stmt="0" loc="377..387" text="l_orderkey" />
+                <external schema="1" table="5" column="4" stmt="0" loc="431..441" text="l_quantity" />
+                <external schema="1" table="4" column="0" stmt="0" loc="200..210" text="o_orderkey" />
+                <external schema="1" table="3" column="0" stmt="0" loc="471..480" text="c_custkey" />
+                <external schema="1" table="4" column="1" stmt="0" loc="483..492" text="o_custkey" />
+                <external schema="1" table="4" column="0" stmt="0" loc="505..515" text="o_orderkey" />
+                <external schema="1" table="5" column="0" stmt="0" loc="518..528" text="l_orderkey" />
+                <external schema="1" table="3" column="1" stmt="0" loc="546..552" text="c_name" />
+                <external schema="1" table="3" column="0" stmt="0" loc="562..571" text="c_custkey" />
+                <external schema="1" table="4" column="0" stmt="0" loc="581..591" text="o_orderkey" />
+                <external schema="1" table="4" column="4" stmt="0" loc="601..612" text="o_orderdate" />
+                <external schema="1" table="4" column="3" stmt="0" loc="622..634" text="o_totalprice" />
+                <external schema="1" table="4" column="3" stmt="0" loc="652..664" text="o_totalprice" />
+                <external schema="1" table="4" column="4" stmt="0" loc="679..690" text="o_orderdate" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="471..492" text="c_custkey .. o_custkey">
@@ -2577,7 +2577,7 @@ limit
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -2674,7 +2674,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_19">
-        <script>
+        <script id="0">
             <input>
 select
         sum(l_extendedprice* (1 - l_discount)) as revenue
@@ -2714,39 +2714,39 @@ where
             </input>
             <tables />
             <table-references>
-                <external table="5" stmt="0" loc="79..87" text="lineitem" />
-                <external table="0" stmt="0" loc="97..101" text="part" />
+                <external schema="1" table="5" stmt="0" loc="79..87" text="lineitem" />
+                <external schema="1" table="0" stmt="0" loc="97..101" text="part" />
             </table-references>
             <column-references>
-                <external table="5" column="6" stmt="0" loc="42..52" text="l_discount" />
-                <external table="5" column="5" stmt="0" loc="20..35" text="l_extendedprice" />
-                <external table="0" column="0" stmt="0" loc="134..143" text="p_partkey" />
-                <external table="5" column="1" stmt="0" loc="146..155" text="l_partkey" />
-                <external table="0" column="3" stmt="0" loc="176..183" text="p_brand" />
-                <external table="0" column="6" stmt="0" loc="217..228" text="p_container" />
-                <external table="5" column="4" stmt="0" loc="295..305" text="l_quantity" />
-                <external table="5" column="4" stmt="0" loc="315..325" text="l_quantity" />
-                <external table="0" column="5" stmt="0" loc="356..362" text="p_size" />
-                <external table="5" column="14" stmt="0" loc="399..409" text="l_shipmode" />
-                <external table="5" column="13" stmt="0" loc="452..466" text="l_shipinstruct" />
-                <external table="0" column="0" stmt="0" loc="536..545" text="p_partkey" />
-                <external table="5" column="1" stmt="0" loc="548..557" text="l_partkey" />
-                <external table="0" column="3" stmt="0" loc="578..585" text="p_brand" />
-                <external table="0" column="6" stmt="0" loc="619..630" text="p_container" />
-                <external table="5" column="4" stmt="0" loc="700..710" text="l_quantity" />
-                <external table="5" column="4" stmt="0" loc="721..731" text="l_quantity" />
-                <external table="0" column="5" stmt="0" loc="763..769" text="p_size" />
-                <external table="5" column="14" stmt="0" loc="807..817" text="l_shipmode" />
-                <external table="5" column="13" stmt="0" loc="860..874" text="l_shipinstruct" />
-                <external table="0" column="0" stmt="0" loc="944..953" text="p_partkey" />
-                <external table="5" column="1" stmt="0" loc="956..965" text="l_partkey" />
-                <external table="0" column="3" stmt="0" loc="986..993" text="p_brand" />
-                <external table="0" column="6" stmt="0" loc="1027..1038" text="p_container" />
-                <external table="5" column="4" stmt="0" loc="1105..1115" text="l_quantity" />
-                <external table="5" column="4" stmt="0" loc="1126..1136" text="l_quantity" />
-                <external table="0" column="5" stmt="0" loc="1168..1174" text="p_size" />
-                <external table="5" column="14" stmt="0" loc="1212..1222" text="l_shipmode" />
-                <external table="5" column="13" stmt="0" loc="1265..1279" text="l_shipinstruct" />
+                <external schema="1" table="5" column="6" stmt="0" loc="42..52" text="l_discount" />
+                <external schema="1" table="5" column="5" stmt="0" loc="20..35" text="l_extendedprice" />
+                <external schema="1" table="0" column="0" stmt="0" loc="134..143" text="p_partkey" />
+                <external schema="1" table="5" column="1" stmt="0" loc="146..155" text="l_partkey" />
+                <external schema="1" table="0" column="3" stmt="0" loc="176..183" text="p_brand" />
+                <external schema="1" table="0" column="6" stmt="0" loc="217..228" text="p_container" />
+                <external schema="1" table="5" column="4" stmt="0" loc="295..305" text="l_quantity" />
+                <external schema="1" table="5" column="4" stmt="0" loc="315..325" text="l_quantity" />
+                <external schema="1" table="0" column="5" stmt="0" loc="356..362" text="p_size" />
+                <external schema="1" table="5" column="14" stmt="0" loc="399..409" text="l_shipmode" />
+                <external schema="1" table="5" column="13" stmt="0" loc="452..466" text="l_shipinstruct" />
+                <external schema="1" table="0" column="0" stmt="0" loc="536..545" text="p_partkey" />
+                <external schema="1" table="5" column="1" stmt="0" loc="548..557" text="l_partkey" />
+                <external schema="1" table="0" column="3" stmt="0" loc="578..585" text="p_brand" />
+                <external schema="1" table="0" column="6" stmt="0" loc="619..630" text="p_container" />
+                <external schema="1" table="5" column="4" stmt="0" loc="700..710" text="l_quantity" />
+                <external schema="1" table="5" column="4" stmt="0" loc="721..731" text="l_quantity" />
+                <external schema="1" table="0" column="5" stmt="0" loc="763..769" text="p_size" />
+                <external schema="1" table="5" column="14" stmt="0" loc="807..817" text="l_shipmode" />
+                <external schema="1" table="5" column="13" stmt="0" loc="860..874" text="l_shipinstruct" />
+                <external schema="1" table="0" column="0" stmt="0" loc="944..953" text="p_partkey" />
+                <external schema="1" table="5" column="1" stmt="0" loc="956..965" text="l_partkey" />
+                <external schema="1" table="0" column="3" stmt="0" loc="986..993" text="p_brand" />
+                <external schema="1" table="0" column="6" stmt="0" loc="1027..1038" text="p_container" />
+                <external schema="1" table="5" column="4" stmt="0" loc="1105..1115" text="l_quantity" />
+                <external schema="1" table="5" column="4" stmt="0" loc="1126..1136" text="l_quantity" />
+                <external schema="1" table="0" column="5" stmt="0" loc="1168..1174" text="p_size" />
+                <external schema="1" table="5" column="14" stmt="0" loc="1212..1222" text="l_shipmode" />
+                <external schema="1" table="5" column="13" stmt="0" loc="1265..1279" text="l_shipinstruct" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="134..155" text="p_partkey .. l_partkey">
@@ -2764,7 +2764,7 @@ where
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -2861,7 +2861,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_20">
-        <script>
+        <script id="0">
             <input>
 select
         s_name,
@@ -2903,32 +2903,32 @@ order by
             </input>
             <tables />
             <table-references>
-                <external table="0" stmt="0" loc="449..453" text="part" />
-                <external table="5" stmt="0" loc="802..810" text="lineitem" />
-                <external table="2" stmt="0" loc="212..220" text="partsupp" />
-                <external table="1" stmt="0" loc="55..63" text="supplier" />
-                <external table="6" stmt="0" loc="73..79" text="nation" />
+                <external schema="1" table="0" stmt="0" loc="449..453" text="part" />
+                <external schema="1" table="5" stmt="0" loc="802..810" text="lineitem" />
+                <external schema="1" table="2" stmt="0" loc="212..220" text="partsupp" />
+                <external schema="1" table="1" stmt="0" loc="55..63" text="supplier" />
+                <external schema="1" table="6" stmt="0" loc="73..79" text="nation" />
             </table-references>
             <column-references>
-                <external table="1" column="1" stmt="0" loc="16..22" text="s_name" />
-                <external table="1" column="2" stmt="0" loc="32..41" text="s_address" />
-                <external table="2" column="1" stmt="0" loc="156..166" text="ps_suppkey" />
-                <external table="0" column="0" stmt="0" loc="362..371" text="p_partkey" />
-                <external table="0" column="1" stmt="0" loc="532..538" text="p_name" />
-                <external table="2" column="0" stmt="0" loc="267..277" text="ps_partkey" />
-                <external table="5" column="4" stmt="0" loc="713..723" text="l_quantity" />
-                <external table="5" column="1" stmt="0" loc="889..898" text="l_partkey" />
-                <external table="2" column="0" stmt="0" loc="901..911" text="ps_partkey" />
-                <external table="5" column="2" stmt="0" loc="956..965" text="l_suppkey" />
-                <external table="2" column="1" stmt="0" loc="968..978" text="ps_suppkey" />
-                <external table="5" column="10" stmt="0" loc="1023..1033" text="l_shipdate" />
-                <external table="5" column="10" stmt="0" loc="1099..1109" text="l_shipdate" />
-                <external table="2" column="2" stmt="0" loc="608..619" text="ps_availqty" />
-                <external table="1" column="0" stmt="0" loc="94..103" text="s_suppkey" />
-                <external table="1" column="3" stmt="0" loc="1178..1189" text="s_nationkey" />
-                <external table="6" column="0" stmt="0" loc="1192..1203" text="n_nationkey" />
-                <external table="6" column="1" stmt="0" loc="1216..1222" text="n_name" />
-                <external table="1" column="1" stmt="0" loc="1251..1257" text="s_name" />
+                <external schema="1" table="1" column="1" stmt="0" loc="16..22" text="s_name" />
+                <external schema="1" table="1" column="2" stmt="0" loc="32..41" text="s_address" />
+                <external schema="1" table="2" column="1" stmt="0" loc="156..166" text="ps_suppkey" />
+                <external schema="1" table="0" column="0" stmt="0" loc="362..371" text="p_partkey" />
+                <external schema="1" table="0" column="1" stmt="0" loc="532..538" text="p_name" />
+                <external schema="1" table="2" column="0" stmt="0" loc="267..277" text="ps_partkey" />
+                <external schema="1" table="5" column="4" stmt="0" loc="713..723" text="l_quantity" />
+                <external schema="1" table="5" column="1" stmt="0" loc="889..898" text="l_partkey" />
+                <external schema="1" table="2" column="0" stmt="0" loc="901..911" text="ps_partkey" />
+                <external schema="1" table="5" column="2" stmt="0" loc="956..965" text="l_suppkey" />
+                <external schema="1" table="2" column="1" stmt="0" loc="968..978" text="ps_suppkey" />
+                <external schema="1" table="5" column="10" stmt="0" loc="1023..1033" text="l_shipdate" />
+                <external schema="1" table="5" column="10" stmt="0" loc="1099..1109" text="l_shipdate" />
+                <external schema="1" table="2" column="2" stmt="0" loc="608..619" text="ps_availqty" />
+                <external schema="1" table="1" column="0" stmt="0" loc="94..103" text="s_suppkey" />
+                <external schema="1" table="1" column="3" stmt="0" loc="1178..1189" text="s_nationkey" />
+                <external schema="1" table="6" column="0" stmt="0" loc="1192..1203" text="n_nationkey" />
+                <external schema="1" table="6" column="1" stmt="0" loc="1216..1222" text="n_name" />
+                <external schema="1" table="1" column="1" stmt="0" loc="1251..1257" text="s_name" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="889..911" text="l_partkey ..ps_partkey">
@@ -2946,7 +2946,7 @@ order by
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -3043,7 +3043,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_21">
-        <script>
+        <script id="0">
             <input>
 select
         s_name,
@@ -3089,38 +3089,38 @@ limit
             </input>
             <tables />
             <table-references>
-                <external table="5" stmt="0" loc="399..410" text="lineitem l2" />
-                <external table="5" stmt="0" loc="673..684" text="lineitem l3" />
-                <external table="1" stmt="0" loc="65..73" text="supplier" />
-                <external table="5" stmt="0" loc="83..94" text="lineitem l1" />
-                <external table="4" stmt="0" loc="104..110" text="orders" />
-                <external table="6" stmt="0" loc="120..126" text="nation" />
+                <external schema="1" table="5" stmt="0" loc="399..410" text="lineitem l2" />
+                <external schema="1" table="5" stmt="0" loc="673..684" text="lineitem l3" />
+                <external schema="1" table="1" stmt="0" loc="65..73" text="supplier" />
+                <external schema="1" table="5" stmt="0" loc="83..94" text="lineitem l1" />
+                <external schema="1" table="4" stmt="0" loc="104..110" text="orders" />
+                <external schema="1" table="6" stmt="0" loc="120..126" text="nation" />
             </table-references>
             <column-references>
-                <external table="1" column="1" stmt="0" loc="16..22" text="s_name" />
-                <external table="1" column="0" stmt="0" loc="141..150" text="s_suppkey" />
-                <external table="5" column="2" stmt="0" loc="153..165" text="l1.l_suppkey" />
-                <external table="4" column="0" stmt="0" loc="178..188" text="o_orderkey" />
-                <external table="5" column="0" stmt="0" loc="191..204" text="l1.l_orderkey" />
-                <external table="4" column="2" stmt="0" loc="217..230" text="o_orderstatus" />
-                <external table="5" column="12" stmt="0" loc="249..265" text="l1.l_receiptdate" />
-                <external table="5" column="11" stmt="0" loc="268..283" text="l1.l_commitdate" />
-                <external table="5" column="0" stmt="0" loc="457..470" text="l2.l_orderkey" />
-                <external table="5" column="0" stmt="0" loc="473..486" text="l1.l_orderkey" />
-                <external table="5" column="2" stmt="0" loc="515..527" text="l2.l_suppkey" />
-                <external table="5" column="2" stmt="0" loc="531..543" text="l1.l_suppkey" />
-                <external table="5" column="0" stmt="0" loc="731..744" text="l3.l_orderkey" />
-                <external table="5" column="0" stmt="0" loc="747..760" text="l1.l_orderkey" />
-                <external table="5" column="2" stmt="0" loc="789..801" text="l3.l_suppkey" />
-                <external table="5" column="2" stmt="0" loc="805..817" text="l1.l_suppkey" />
-                <external table="5" column="12" stmt="0" loc="846..862" text="l3.l_receiptdate" />
-                <external table="5" column="11" stmt="0" loc="865..880" text="l3.l_commitdate" />
-                <external table="1" column="3" stmt="0" loc="903..914" text="s_nationkey" />
-                <external table="6" column="0" stmt="0" loc="917..928" text="n_nationkey" />
-                <external table="6" column="1" stmt="0" loc="941..947" text="n_name" />
-                <external table="1" column="1" stmt="0" loc="982..988" text="s_name" />
+                <external schema="1" table="1" column="1" stmt="0" loc="16..22" text="s_name" />
+                <external schema="1" table="1" column="0" stmt="0" loc="141..150" text="s_suppkey" />
+                <external schema="1" table="5" column="2" stmt="0" loc="153..165" text="l1.l_suppkey" />
+                <external schema="1" table="4" column="0" stmt="0" loc="178..188" text="o_orderkey" />
+                <external schema="1" table="5" column="0" stmt="0" loc="191..204" text="l1.l_orderkey" />
+                <external schema="1" table="4" column="2" stmt="0" loc="217..230" text="o_orderstatus" />
+                <external schema="1" table="5" column="12" stmt="0" loc="249..265" text="l1.l_receiptdate" />
+                <external schema="1" table="5" column="11" stmt="0" loc="268..283" text="l1.l_commitdate" />
+                <external schema="1" table="5" column="0" stmt="0" loc="457..470" text="l2.l_orderkey" />
+                <external schema="1" table="5" column="0" stmt="0" loc="473..486" text="l1.l_orderkey" />
+                <external schema="1" table="5" column="2" stmt="0" loc="515..527" text="l2.l_suppkey" />
+                <external schema="1" table="5" column="2" stmt="0" loc="531..543" text="l1.l_suppkey" />
+                <external schema="1" table="5" column="0" stmt="0" loc="731..744" text="l3.l_orderkey" />
+                <external schema="1" table="5" column="0" stmt="0" loc="747..760" text="l1.l_orderkey" />
+                <external schema="1" table="5" column="2" stmt="0" loc="789..801" text="l3.l_suppkey" />
+                <external schema="1" table="5" column="2" stmt="0" loc="805..817" text="l1.l_suppkey" />
+                <external schema="1" table="5" column="12" stmt="0" loc="846..862" text="l3.l_receiptdate" />
+                <external schema="1" table="5" column="11" stmt="0" loc="865..880" text="l3.l_commitdate" />
+                <external schema="1" table="1" column="3" stmt="0" loc="903..914" text="s_nationkey" />
+                <external schema="1" table="6" column="0" stmt="0" loc="917..928" text="n_nationkey" />
+                <external schema="1" table="6" column="1" stmt="0" loc="941..947" text="n_name" />
+                <external schema="1" table="1" column="1" stmt="0" loc="982..988" text="s_name" />
                 <unresolved stmt="0" loc="1006..1013" text="numwait" />
-                <external table="1" column="1" stmt="0" loc="1028..1034" text="s_name" />
+                <external schema="1" table="1" column="1" stmt="0" loc="1028..1034" text="s_name" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="457..486" text="l2.l_order..l_orderkey">
@@ -3162,7 +3162,7 @@ limit
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -3259,7 +3259,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_22">
-        <script>
+        <script id="0">
             <input>
 select
         cntrycode,
@@ -3301,22 +3301,22 @@ order by
             </input>
             <tables />
             <table-references>
-                <external table="3" stmt="0" loc="658..666" text="customer" />
-                <external table="4" stmt="0" loc="1157..1163" text="orders" />
-                <external table="3" stmt="0" loc="280..288" text="customer" />
+                <external schema="1" table="3" stmt="0" loc="658..666" text="customer" />
+                <external schema="1" table="4" stmt="0" loc="1157..1163" text="orders" />
+                <external schema="1" table="3" stmt="0" loc="280..288" text="customer" />
             </table-references>
             <column-references>
                 <unresolved stmt="0" loc="16..25" text="cntrycode" />
                 <unresolved stmt="0" loc="68..77" text="c_acctbal" />
-                <external table="3" column="4" stmt="0" loc="165..172" text="c_phone" />
-                <external table="3" column="5" stmt="0" loc="225..234" text="c_acctbal" />
-                <external table="3" column="4" stmt="0" loc="345..352" text="c_phone" />
-                <external table="3" column="5" stmt="0" loc="570..579" text="c_acctbal" />
-                <external table="3" column="5" stmt="0" loc="745..754" text="c_acctbal" />
-                <external table="3" column="4" stmt="0" loc="816..823" text="c_phone" />
-                <external table="3" column="5" stmt="0" loc="473..482" text="c_acctbal" />
-                <external table="4" column="1" stmt="0" loc="1242..1251" text="o_custkey" />
-                <external table="3" column="0" stmt="0" loc="1254..1263" text="c_custkey" />
+                <external schema="1" table="3" column="4" stmt="0" loc="165..172" text="c_phone" />
+                <external schema="1" table="3" column="5" stmt="0" loc="225..234" text="c_acctbal" />
+                <external schema="1" table="3" column="4" stmt="0" loc="345..352" text="c_phone" />
+                <external schema="1" table="3" column="5" stmt="0" loc="570..579" text="c_acctbal" />
+                <external schema="1" table="3" column="5" stmt="0" loc="745..754" text="c_acctbal" />
+                <external schema="1" table="3" column="4" stmt="0" loc="816..823" text="c_phone" />
+                <external schema="1" table="3" column="5" stmt="0" loc="473..482" text="c_acctbal" />
+                <external schema="1" table="4" column="1" stmt="0" loc="1242..1251" text="o_custkey" />
+                <external schema="1" table="3" column="0" stmt="0" loc="1254..1263" text="c_custkey" />
                 <unresolved stmt="0" loc="1329..1338" text="cntrycode" />
                 <unresolved stmt="0" loc="1356..1365" text="cntrycode" />
             </column-references>
@@ -3328,7 +3328,7 @@ order by
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));

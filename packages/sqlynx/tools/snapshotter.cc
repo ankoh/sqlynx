@@ -127,7 +127,7 @@ static void generate_analyzer_snapshots(const std::filesystem::path& source_dir)
                         schema_name.emplace(schema.value());
                     }
                     registry_scripts.push_back(
-                        std::make_unique<Script>(++entry_id, std::move(database_name), std::move(schema_name)));
+                        std::make_unique<Script>(entry_id++, std::move(database_name), std::move(schema_name)));
 
                     auto& script = *registry_scripts.back();
                     script.InsertTextAt(0, input);

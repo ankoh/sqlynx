@@ -1,21 +1,21 @@
 <analyzer-snapshots>
     <analyzer-snapshot name="multi_0">
-        <script>
+        <script id="0">
             <input>
                 select * from A, B where a = b;
                 select * from B, C where d = c;
             </input>
             <tables />
             <table-references>
-                <external table="0" stmt="0" loc="31..32" text="A" />
-                <external table="1" stmt="0" loc="34..35" text="B" />
-                <external table="1" stmt="1" loc="79..80" text="B" />
+                <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
+                <external schema="1" table="1" stmt="0" loc="34..35" text="B" />
+                <external schema="1" table="1" stmt="1" loc="79..80" text="B" />
                 <unresolved stmt="1" loc="82..83" text="C" />
             </table-references>
             <column-references>
-                <external table="0" column="0" stmt="0" loc="42..43" text="a" />
-                <external table="0" column="1" stmt="0" loc="46..47" text="b" />
-                <external table="1" column="0" stmt="1" loc="90..91" text="d" />
+                <external schema="1" table="0" column="0" stmt="0" loc="42..43" text="a" />
+                <external schema="1" table="0" column="1" stmt="0" loc="46..47" text="b" />
+                <external schema="1" table="1" column="0" stmt="1" loc="90..91" text="d" />
                 <unresolved stmt="1" loc="94..95" text="c" />
             </column-references>
             <query-graph>
@@ -30,7 +30,7 @@
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
                     create table A (a int, b int);
                     create table B (d int, e int);
@@ -52,7 +52,7 @@
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="multi_recovery_0">
-        <script>
+        <script id="0">
             <input>
                 select * from A, B where a = b;
                 selec;
@@ -60,15 +60,15 @@
             </input>
             <tables />
             <table-references>
-                <external table="0" stmt="0" loc="31..32" text="A" />
-                <external table="1" stmt="0" loc="34..35" text="B" />
-                <external table="1" stmt="1" loc="102..103" text="B" />
+                <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
+                <external schema="1" table="1" stmt="0" loc="34..35" text="B" />
+                <external schema="1" table="1" stmt="1" loc="102..103" text="B" />
                 <unresolved stmt="1" loc="105..106" text="C" />
             </table-references>
             <column-references>
-                <external table="0" column="0" stmt="0" loc="42..43" text="a" />
-                <external table="0" column="1" stmt="0" loc="46..47" text="b" />
-                <external table="1" column="0" stmt="1" loc="113..114" text="d" />
+                <external schema="1" table="0" column="0" stmt="0" loc="42..43" text="a" />
+                <external schema="1" table="0" column="1" stmt="0" loc="46..47" text="b" />
+                <external schema="1" table="1" column="0" stmt="1" loc="113..114" text="d" />
                 <unresolved stmt="1" loc="117..118" text="c" />
             </column-references>
             <query-graph>
@@ -83,7 +83,7 @@
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
                     create table A (a int, b int);
                     create table B (d int, e int);

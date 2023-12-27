@@ -1,6 +1,6 @@
 <analyzer-snapshots>
     <analyzer-snapshot name="empty">
-        <script>
+        <script id="0">
             <input />
             <tables />
             <table-references />
@@ -10,18 +10,18 @@
         <registry />
     </analyzer-snapshot>
     <analyzer-snapshot name="refs_0">
-        <script>
+        <script id="0">
             <input>
                 select * from A, B where a = b;
             </input>
             <tables />
             <table-references>
-                <external table="0" stmt="0" loc="31..32" text="A" />
-                <external table="1" stmt="0" loc="34..35" text="B" />
+                <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
+                <external schema="1" table="1" stmt="0" loc="34..35" text="B" />
             </table-references>
             <column-references>
-                <external table="0" column="0" stmt="0" loc="42..43" text="a" />
-                <external table="0" column="1" stmt="0" loc="46..47" text="b" />
+                <external schema="1" table="0" column="0" stmt="0" loc="42..43" text="a" />
+                <external schema="1" table="0" column="1" stmt="0" loc="46..47" text="b" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="42..47" text="a = b">
@@ -31,7 +31,7 @@
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
                     create table A (a int, b int);
                     create table B (d int, e int);
@@ -53,19 +53,19 @@
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="edges_0">
-        <script>
+        <script id="0">
             <input>
                 select * from A, B where a + d = e;
             </input>
             <tables />
             <table-references>
-                <external table="0" stmt="0" loc="31..32" text="A" />
-                <external table="1" stmt="0" loc="34..35" text="B" />
+                <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
+                <external schema="1" table="1" stmt="0" loc="34..35" text="B" />
             </table-references>
             <column-references>
-                <external table="0" column="0" stmt="0" loc="42..43" text="a" />
-                <external table="1" column="0" stmt="0" loc="46..47" text="d" />
-                <external table="1" column="1" stmt="0" loc="50..51" text="e" />
+                <external schema="1" table="0" column="0" stmt="0" loc="42..43" text="a" />
+                <external schema="1" table="1" column="0" stmt="0" loc="46..47" text="d" />
+                <external schema="1" table="1" column="1" stmt="0" loc="50..51" text="e" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="42..51" text="a + d = e">
@@ -76,7 +76,7 @@
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
                     create table A (a int, b int);
                     create table B (d int, e int);
@@ -98,20 +98,20 @@
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="edges_1">
-        <script>
+        <script id="0">
             <input>
                 select * from A, B where a = d and b = e;
             </input>
             <tables />
             <table-references>
-                <external table="0" stmt="0" loc="31..32" text="A" />
-                <external table="1" stmt="0" loc="34..35" text="B" />
+                <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
+                <external schema="1" table="1" stmt="0" loc="34..35" text="B" />
             </table-references>
             <column-references>
-                <external table="0" column="0" stmt="0" loc="42..43" text="a" />
-                <external table="1" column="0" stmt="0" loc="46..47" text="d" />
-                <external table="0" column="1" stmt="0" loc="52..53" text="b" />
-                <external table="1" column="1" stmt="0" loc="56..57" text="e" />
+                <external schema="1" table="0" column="0" stmt="0" loc="42..43" text="a" />
+                <external schema="1" table="1" column="0" stmt="0" loc="46..47" text="d" />
+                <external schema="1" table="0" column="1" stmt="0" loc="52..53" text="b" />
+                <external schema="1" table="1" column="1" stmt="0" loc="56..57" text="e" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="42..47" text="a = d">
@@ -125,7 +125,7 @@
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
                     create table A (a int, b int);
                     create table B (d int, e int);
@@ -147,23 +147,23 @@
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="edges_2">
-        <script>
+        <script id="0">
             <input>
                 select * from A, B where (a = d and b = e) or (a = d and d = 42);
             </input>
             <tables />
             <table-references>
-                <external table="0" stmt="0" loc="31..32" text="A" />
-                <external table="1" stmt="0" loc="34..35" text="B" />
+                <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
+                <external schema="1" table="1" stmt="0" loc="34..35" text="B" />
             </table-references>
             <column-references>
-                <external table="0" column="0" stmt="0" loc="43..44" text="a" />
-                <external table="1" column="0" stmt="0" loc="47..48" text="d" />
-                <external table="0" column="1" stmt="0" loc="53..54" text="b" />
-                <external table="1" column="1" stmt="0" loc="57..58" text="e" />
-                <external table="0" column="0" stmt="0" loc="64..65" text="a" />
-                <external table="1" column="0" stmt="0" loc="68..69" text="d" />
-                <external table="1" column="0" stmt="0" loc="74..75" text="d" />
+                <external schema="1" table="0" column="0" stmt="0" loc="43..44" text="a" />
+                <external schema="1" table="1" column="0" stmt="0" loc="47..48" text="d" />
+                <external schema="1" table="0" column="1" stmt="0" loc="53..54" text="b" />
+                <external schema="1" table="1" column="1" stmt="0" loc="57..58" text="e" />
+                <external schema="1" table="0" column="0" stmt="0" loc="64..65" text="a" />
+                <external schema="1" table="1" column="0" stmt="0" loc="68..69" text="d" />
+                <external schema="1" table="1" column="0" stmt="0" loc="74..75" text="d" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="43..48" text="a = d">
@@ -181,7 +181,7 @@
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
                     create table A (a int, b int);
                     create table B (d int, e int);
@@ -203,18 +203,18 @@
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="edges_3">
-        <script>
+        <script id="0">
             <input>
                 select * from A, B where a = (d + 42);
             </input>
             <tables />
             <table-references>
-                <external table="0" stmt="0" loc="31..32" text="A" />
-                <external table="1" stmt="0" loc="34..35" text="B" />
+                <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
+                <external schema="1" table="1" stmt="0" loc="34..35" text="B" />
             </table-references>
             <column-references>
-                <external table="1" column="0" stmt="0" loc="47..48" text="d" />
-                <external table="0" column="0" stmt="0" loc="42..43" text="a" />
+                <external schema="1" table="1" column="0" stmt="0" loc="47..48" text="d" />
+                <external schema="1" table="0" column="0" stmt="0" loc="42..43" text="a" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="42..54" text="a = (d + 42)">
@@ -224,7 +224,7 @@
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
                     create table A (a int, b int);
                     create table B (d int, e int);
@@ -246,18 +246,18 @@
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="edges_4">
-        <script>
+        <script id="0">
             <input>
                 select * from A join B on (a = b);
             </input>
             <tables />
             <table-references>
-                <external table="0" stmt="0" loc="31..32" text="A" />
-                <external table="1" stmt="0" loc="38..39" text="B" />
+                <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
+                <external schema="1" table="1" stmt="0" loc="38..39" text="B" />
             </table-references>
             <column-references>
-                <external table="0" column="0" stmt="0" loc="44..45" text="a" />
-                <external table="0" column="1" stmt="0" loc="48..49" text="b" />
+                <external schema="1" table="0" column="0" stmt="0" loc="44..45" text="a" />
+                <external schema="1" table="0" column="1" stmt="0" loc="48..49" text="b" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="44..49" text="a = b">
@@ -267,7 +267,7 @@
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
                     create table A (a int, b int);
                     create table B (d int, e int);
@@ -289,17 +289,17 @@
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="unresolved_0">
-        <script>
+        <script id="0">
             <input>
                 select * from A, C where a = c;
             </input>
             <tables />
             <table-references>
-                <external table="0" stmt="0" loc="31..32" text="A" />
+                <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
                 <unresolved stmt="0" loc="34..35" text="C" />
             </table-references>
             <column-references>
-                <external table="0" column="0" stmt="0" loc="42..43" text="a" />
+                <external schema="1" table="0" column="0" stmt="0" loc="42..43" text="a" />
                 <unresolved stmt="0" loc="46..47" text="c" />
             </column-references>
             <query-graph>
@@ -310,7 +310,7 @@
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
                     create table A (a int, b int);
                     create table B (d int, e int);
@@ -332,17 +332,17 @@
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="unresolved_1">
-        <script>
+        <script id="0">
             <input>
                 select * from A, B where a = c;
             </input>
             <tables />
             <table-references>
-                <external table="0" stmt="0" loc="31..32" text="A" />
-                <external table="1" stmt="0" loc="34..35" text="B" />
+                <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
+                <external schema="1" table="1" stmt="0" loc="34..35" text="B" />
             </table-references>
             <column-references>
-                <external table="0" column="0" stmt="0" loc="42..43" text="a" />
+                <external schema="1" table="0" column="0" stmt="0" loc="42..43" text="a" />
                 <unresolved stmt="0" loc="46..47" text="c" />
             </column-references>
             <query-graph>
@@ -353,7 +353,7 @@
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
                     create table A (a int, b int);
                     create table B (d int, e int);
@@ -375,7 +375,7 @@
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="unresolved_2">
-        <script>
+        <script id="0">
             <input>
                 select * from A;
             </input>
@@ -387,7 +387,7 @@
             <query-graph />
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input />
                 <tables />
                 <table-references />
@@ -397,7 +397,7 @@
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="unresolved_3">
-        <script>
+        <script id="0">
             <input>
                 select * from A, B where c = d;
             </input>
@@ -418,7 +418,7 @@
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input />
                 <tables />
                 <table-references />
@@ -428,18 +428,18 @@
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="nesting_1">
-        <script>
+        <script id="0">
             <input>
                 select * from A where not exists (select * from B where a = d);
             </input>
             <tables />
             <table-references>
-                <external table="1" stmt="0" loc="65..66" text="B" />
-                <external table="0" stmt="0" loc="31..32" text="A" />
+                <external schema="1" table="1" stmt="0" loc="65..66" text="B" />
+                <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
             </table-references>
             <column-references>
-                <external table="0" column="0" stmt="0" loc="73..74" text="a" />
-                <external table="1" column="0" stmt="0" loc="77..78" text="d" />
+                <external schema="1" table="0" column="0" stmt="0" loc="73..74" text="a" />
+                <external schema="1" table="1" column="0" stmt="0" loc="77..78" text="d" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="73..78" text="a = d">
@@ -449,7 +449,7 @@
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
                     create table A (a int, b int);
                     create table B (d int, e int);
@@ -471,19 +471,19 @@
         </registry>
     </analyzer-snapshot>
     <analyzer-snapshot name="nesting_2">
-        <script>
+        <script id="0">
             <input>
                 select * from A where not exists (select * from A, B where a = d);
             </input>
             <tables />
             <table-references>
-                <external table="0" stmt="0" loc="65..66" text="A" />
-                <external table="1" stmt="0" loc="68..69" text="B" />
-                <external table="0" stmt="0" loc="31..32" text="A" />
+                <external schema="1" table="0" stmt="0" loc="65..66" text="A" />
+                <external schema="1" table="1" stmt="0" loc="68..69" text="B" />
+                <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
             </table-references>
             <column-references>
-                <external table="0" column="0" stmt="0" loc="76..77" text="a" />
-                <external table="1" column="0" stmt="0" loc="80..81" text="d" />
+                <external schema="1" table="0" column="0" stmt="0" loc="76..77" text="a" />
+                <external schema="1" table="1" column="0" stmt="0" loc="80..81" text="d" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="76..81" text="a = d">
@@ -493,7 +493,7 @@
             </query-graph>
         </script>
         <registry>
-            <script>
+            <script id="1">
                 <input>
                     create table A (a int, b int);
                     create table B (d int, e int);
