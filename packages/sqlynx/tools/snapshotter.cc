@@ -77,6 +77,53 @@ static void generate_parser_snapshots(const std::filesystem::path& source_dir) {
     }
 }
 
+static std::unique_ptr<Script> read_script(pugi::xml_node node, size_t entry_id,
+                                           const SchemaRegistry* registry = nullptr) {
+    auto input = node.child("input").last_child().value();
+    std::optional<std::string> database_name, schema_name;
+    if (auto db = node.attribute("database")) {
+        database_name.emplace(db.value());
+    }
+    if (auto schema = node.attribute("schema")) {
+        schema_name.emplace(schema.value());
+    }
+    auto script = std::make_unique<Script>(entry_id, std::move(database_name), std::move(schema_name));
+    script->InsertTextAt(0, input);
+    auto scanned = script->Scan();
+    if (scanned.second != proto::StatusCode::OK) {
+        std::cout << "  ERROR " << proto::EnumNameStatusCode(scanned.second) << std::endl;
+        return nullptr;
+    }
+    auto parsed = script->Parse();
+    if (parsed.second != proto::StatusCode::OK) {
+        std::cout << "  ERROR " << proto::EnumNameStatusCode(parsed.second) << std::endl;
+        return nullptr;
+    }
+    auto analyzed = script->Analyze(registry);
+    if (analyzed.second != proto::StatusCode::OK) {
+        std::cout << "  ERROR " << proto::EnumNameStatusCode(analyzed.second) << std::endl;
+        return nullptr;
+    }
+    return script;
+}
+
+static SchemaRegistry read_registry(pugi::xml_node registry_node,
+                                    std::vector<std::unique_ptr<Script>>& registry_scripts, size_t& entry_id) {
+    SchemaRegistry registry;
+    for (auto entry_node : registry_node.children()) {
+        std::string entry_name = entry_node.name();
+
+        if (entry_name == "script") {
+            auto external_id = entry_id++;
+            auto script = read_script(entry_node, external_id);
+            registry.AddScript(*script, external_id);
+            AnalyzerSnapshotTest::EncodeScript(entry_node, *script->analyzed_script, false);
+            registry_scripts.push_back(std::move(script));
+        }
+    }
+    return std::move(registry);
+}
+
 static void generate_analyzer_snapshots(const std::filesystem::path& source_dir) {
     auto snapshot_dir = source_dir / "snapshots" / "analyzer";
     for (auto& p : std::filesystem::directory_iterator(snapshot_dir)) {
@@ -110,78 +157,13 @@ static void generate_analyzer_snapshots(const std::filesystem::path& source_dir)
             auto name = test_node.attribute("name").as_string();
             std::cout << "  TEST " << name << std::endl;
 
-            // Load registry
-            SchemaRegistry registry;
             std::vector<std::unique_ptr<Script>> registry_scripts;
             size_t entry_id = 1;
-            for (auto entry_node : test_node.child("registry").children()) {
-                std::string entry_name = entry_node.name();
-
-                if (entry_name == "script") {
-                    auto input = entry_node.child("input").last_child().value();
-                    std::optional<std::string> database_name, schema_name;
-                    if (auto db = entry_node.attribute("database")) {
-                        database_name.emplace(db.value());
-                    }
-                    if (auto schema = entry_node.attribute("schema")) {
-                        schema_name.emplace(schema.value());
-                    }
-                    registry_scripts.push_back(
-                        std::make_unique<Script>(entry_id++, std::move(database_name), std::move(schema_name)));
-
-                    auto& script = *registry_scripts.back();
-                    script.InsertTextAt(0, input);
-                    auto scanned = script.Scan();
-                    if (scanned.second != proto::StatusCode::OK) {
-                        std::cout << "  ERROR " << proto::EnumNameStatusCode(scanned.second) << std::endl;
-                        continue;
-                    }
-                    auto parsed = script.Parse();
-                    if (parsed.second != proto::StatusCode::OK) {
-                        std::cout << "  ERROR " << proto::EnumNameStatusCode(parsed.second) << std::endl;
-                        continue;
-                    }
-                    auto analyzed = script.Analyze();
-                    if (analyzed.second != proto::StatusCode::OK) {
-                        std::cout << "  ERROR " << proto::EnumNameStatusCode(analyzed.second) << std::endl;
-                        continue;
-                    }
-
-                    registry.AddScript(script, entry_id);
-                    AnalyzerSnapshotTest::EncodeScript(entry_node, *script.analyzed_script, false);
-                }
-            }
-
-            // Load main script
+            auto registry = read_registry(test_node.child("registry"), registry_scripts, entry_id);
             auto main_node = test_node.child("script");
-            std::string main_text = main_node.child("input").last_child().value();
-            std::optional<std::string> main_database_name, main_schema_name;
-            if (auto db = main_node.attribute("database")) {
-                main_database_name.emplace(db.value());
-            }
-            if (auto schema = main_node.attribute("schema")) {
-                main_schema_name.emplace(schema.value());
-            }
+            auto main_script = read_script(main_node, 0, &registry);
 
-            Script main_script{0, std::move(main_database_name), std::move(main_schema_name)};
-            main_script.InsertTextAt(0, main_text);
-            auto main_scan = main_script.Scan();
-            if (main_scan.second != proto::StatusCode::OK) {
-                std::cout << "  ERROR " << proto::EnumNameStatusCode(main_scan.second) << std::endl;
-                continue;
-            }
-            auto main_parsed = main_script.Parse();
-            if (main_parsed.second != proto::StatusCode::OK) {
-                std::cout << "  ERROR " << proto::EnumNameStatusCode(main_parsed.second) << std::endl;
-                continue;
-            }
-            auto main_analyzed = main_script.Analyze(&registry);
-            if (main_analyzed.second != proto::StatusCode::OK) {
-                std::cout << "  ERROR " << proto::EnumNameStatusCode(main_analyzed.second) << std::endl;
-                continue;
-            }
-
-            AnalyzerSnapshotTest::EncodeScript(main_node, *main_analyzed.first, true);
+            AnalyzerSnapshotTest::EncodeScript(main_node, *main_script->analyzed_script, true);
         }
 
         // Write xml document
