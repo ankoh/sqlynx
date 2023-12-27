@@ -191,13 +191,13 @@ void AnalyzerSnapshotTest::LoadTests(std::filesystem::path& source_dir) {
 
             {
                 auto main_node = test_nodes.child("script");
-                test.script.input = main_node.child("input").last_child().value();
                 if (auto db = main_node.attribute("database")) {
                     test.script.database_name.emplace(db.value());
                 }
                 if (auto schema = main_node.attribute("schema")) {
                     test.script.schema_name.emplace(schema.value());
                 }
+                test.script.input = main_node.child("input").last_child().value();
                 test.script.tables.append_copy(main_node.child("tables"));
                 test.script.table_references.append_copy(main_node.child("table-references"));
                 test.script.column_references.append_copy(main_node.child("column-references"));
@@ -209,13 +209,13 @@ void AnalyzerSnapshotTest::LoadTests(std::filesystem::path& source_dir) {
                 auto& entry = test.registry.back();
                 std::string entry_name = entry_node.name();
                 if (entry_name == "script") {
-                    entry.input = entry_node.child("input").last_child().value();
                     if (auto db = entry_node.attribute("database")) {
                         entry.database_name.emplace(db.value());
                     }
                     if (auto schema = entry_node.attribute("schema")) {
                         entry.schema_name.emplace(schema.value());
                     }
+                    entry.input = entry_node.child("input").last_child().value();
                     entry.tables.append_copy(entry_node.child("tables"));
                     entry.table_references.append_copy(entry_node.child("table-references"));
                     entry.column_references.append_copy(entry_node.child("column-references"));

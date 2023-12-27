@@ -143,7 +143,7 @@ std::optional<Schema::ResolvedTable> SchemaRegistry::ResolveTable(GlobalObjectID
     return std::nullopt;
 }
 std::optional<Schema::ResolvedTable> SchemaRegistry::ResolveTable(Schema::QualifiedTableName table_name) const {
-    if (auto iter = ranked_schemas.begin(); iter != ranked_schemas.end()) {
+    for (auto iter = ranked_schemas.begin(); iter != ranked_schemas.end(); ++iter) {
         auto& schema = *iter->second;
         if (schema.GetDatabaseName() == table_name.database_name && schema.GetSchemaName() == table_name.schema_name) {
             return schema.ResolveTable(table_name.table_name);
