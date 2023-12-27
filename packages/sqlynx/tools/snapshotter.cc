@@ -201,81 +201,24 @@ static void generate_completion_snapshots(const std::filesystem::path& source_di
         auto root = doc.child("completion-snapshots");
 
         for (auto test : root.children()) {
-            // Copy expected
             auto name = test.attribute("name").as_string();
             std::cout << "  TEST " << name << std::endl;
 
-            auto xml_main = test.find_child_by_attribute("script", "id", "1");
-            auto xml_external = test.find_child_by_attribute("script", "id", "2");
-            std::string main_text = xml_main.last_child().value();
-            std::string external_text = xml_external.last_child().value();
+            std::vector<std::unique_ptr<Script>> registry_scripts;
+            size_t entry_id = 1;
+            auto registry = read_registry(test.child("registry"), registry_scripts, entry_id);
+            auto main_node = test.child("script");
+            auto main_script = read_script(main_node, 0, &registry);
+            AnalyzerSnapshotTest::EncodeScript(main_node, *main_script->analyzed_script, true);
 
-            // Prepare the external script
-            Script external_script{1};
-            external_script.InsertTextAt(0, external_text);
-            auto external_scan = external_script.Scan();
-            if (external_scan.second != proto::StatusCode::OK) {
-                std::cout << "  ERROR " << proto::EnumNameStatusCode(external_scan.second) << std::endl;
-                continue;
-            }
-            auto external_parsed = external_script.Parse();
-            if (external_parsed.second != proto::StatusCode::OK) {
-                std::cout << "  ERROR " << proto::EnumNameStatusCode(external_parsed.second) << std::endl;
-                continue;
-            }
-            auto external_analyzed = external_script.Analyze();
-            if (external_analyzed.second != proto::StatusCode::OK) {
-                std::cout << "  ERROR " << proto::EnumNameStatusCode(external_analyzed.second) << std::endl;
-                continue;
-            }
+            auto cursor_node = test.child("cursor");
+            auto cursor_search_node = cursor_node.child("search");
+            auto cursor_search_text = cursor_search_node.attribute("text").value();
+            auto cursor_search_index = cursor_search_node.attribute("index").as_int();
 
-            // Prepare the main script
-            Script main_script{2};
-            main_script.InsertTextAt(0, main_text);
-            auto main_scan = main_script.Scan();
-            if (main_scan.second != proto::StatusCode::OK) {
-                std::cout << "  ERROR " << proto::EnumNameStatusCode(main_scan.second) << std::endl;
-                continue;
-            }
-            auto main_parsed = main_script.Parse();
-            if (main_parsed.second != proto::StatusCode::OK) {
-                std::cout << "  ERROR " << proto::EnumNameStatusCode(main_parsed.second) << std::endl;
-                continue;
-            }
-            SchemaRegistry registry;
-            registry.AddScript(external_script, 0);
-            auto main_analyzed = main_script.Analyze(&registry);
-            if (main_analyzed.second != proto::StatusCode::OK) {
-                std::cout << "  ERROR " << proto::EnumNameStatusCode(main_analyzed.second) << std::endl;
-                continue;
-            }
-
-            auto xml_cursor = test.child("cursor");
-            std::string cursor_script = xml_cursor.attribute("script").value();
-            auto xml_cursor_search = xml_cursor.child("search");
-            auto cursor_search_text = xml_cursor_search.attribute("text").value();
-            auto cursor_search_index = xml_cursor_search.attribute("index").as_int();
-
-            size_t search_pos = 0;
-            Script* target_script = nullptr;
-            std::string_view target_text;
-
-            if (cursor_script == "1") {
-                search_pos = main_text.find(cursor_search_text);
-                target_script = &main_script;
-                target_text = main_text;
-
-            } else if (cursor_script == "2") {
-                search_pos = external_text.find(cursor_search_text);
-                target_script = &external_script;
-                target_text = external_text;
-
-            } else {
-                std::cout << "  ERROR invalid cursor target `" << cursor_script << "`" << std::endl;
-                continue;
-            }
-
-            if (search_pos == std::string::npos) {
+            std::string_view target_text = main_script->scanned_script->GetInput();
+            auto search_pos = target_text.find(cursor_search_text);
+            if (search_pos == std::string_view::npos) {
                 std::cout << "  ERROR couldn't locate cursor `" << cursor_search_text << "`" << std::endl;
                 continue;
             }
@@ -286,18 +229,18 @@ static void generate_completion_snapshots(const std::filesystem::path& source_di
                 continue;
             }
 
-            auto xml_completions = test.child("completions");
-            auto limit = xml_completions.attribute("limit").as_int(100);
+            auto completions_node = test.child("completions");
+            auto limit = completions_node.attribute("limit").as_int(100);
 
-            target_script->MoveCursor(cursor_pos);
-            auto [completion, completion_status] = target_script->CompleteAtCursor(limit);
+            main_script->MoveCursor(cursor_pos);
+            auto [completion, completion_status] = main_script->CompleteAtCursor(limit);
             if (completion_status != proto::StatusCode::OK) {
                 std::cout << "  ERROR " << proto::EnumNameStatusCode(completion_status) << std::endl;
                 continue;
             }
 
             // Encode the completion
-            CompletionSnapshotTest::EncodeCompletion(xml_completions, *completion);
+            CompletionSnapshotTest::EncodeCompletion(completions_node, *completion);
         }
 
         // Write xml document
