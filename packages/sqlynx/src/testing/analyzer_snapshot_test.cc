@@ -77,11 +77,13 @@ static void writeTables(pugi::xml_node root, const AnalyzedScript& target) {
 
 namespace testing {
 
-void AnalyzerSnapshotTest::ReadRegistry(const std::vector<TestScript>& spec, pugi::xml_node& node,
-                                        SchemaRegistry& registry, std::vector<std::unique_ptr<Script>>& scripts) {
-    for (size_t i = 0; i < spec.size(); ++i) {
-        auto& entry = spec[i];
-        scripts.push_back(std::make_unique<Script>(i + 1, entry.database_name, entry.schema_name));
+void AnalyzerSnapshotTest::TestRegistrySnapshot(const std::vector<AnalysisSnapshot>& snaps, pugi::xml_node& node,
+                                                SchemaRegistry& registry, std::vector<std::unique_ptr<Script>>& scripts,
+                                                size_t& entry_ids) {
+    for (size_t i = 0; i < snaps.size(); ++i) {
+        auto& entry = snaps[i];
+        auto entry_id = entry_ids++;
+        scripts.push_back(std::make_unique<Script>(entry_id, entry.database_name, entry.schema_name));
 
         auto& script = *scripts.back();
         script.InsertTextAt(0, entry.input);
@@ -92,7 +94,7 @@ void AnalyzerSnapshotTest::ReadRegistry(const std::vector<TestScript>& spec, pug
         auto analyzed = script.Analyze();
         ASSERT_EQ(analyzed.second, proto::StatusCode::OK);
 
-        registry.AddScript(script, i);
+        registry.AddScript(script, entry_id);
 
         auto script_node = node.append_child("script");
         AnalyzerSnapshotTest::EncodeScript(script_node, *script.analyzed_script, false);
@@ -104,9 +106,9 @@ void AnalyzerSnapshotTest::ReadRegistry(const std::vector<TestScript>& spec, pug
     }
 }
 
-void AnalyzerSnapshotTest::ReadScript(const TestScript& spec, const SchemaRegistry& registry, pugi::xml_node& node,
-                                      Script& script) {
-    script.InsertTextAt(0, spec.input);
+void AnalyzerSnapshotTest::TestMainScriptSnapshot(const AnalysisSnapshot& snap, const SchemaRegistry& registry,
+                                                  pugi::xml_node& node, Script& script, size_t entry_id) {
+    script.InsertTextAt(entry_id, snap.input);
 
     auto scan = script.Scan();
     ASSERT_EQ(scan.second, proto::StatusCode::OK);
@@ -117,10 +119,10 @@ void AnalyzerSnapshotTest::ReadScript(const TestScript& spec, const SchemaRegist
 
     AnalyzerSnapshotTest::EncodeScript(node, *script.analyzed_script, true);
 
-    ASSERT_TRUE(Matches(node.child("tables"), spec.tables));
-    ASSERT_TRUE(Matches(node.child("table-references"), spec.table_references));
-    ASSERT_TRUE(Matches(node.child("column-references"), spec.column_references));
-    ASSERT_TRUE(Matches(node.child("query-graph"), spec.graph_edges));
+    ASSERT_TRUE(Matches(node.child("tables"), snap.tables));
+    ASSERT_TRUE(Matches(node.child("table-references"), snap.table_references));
+    ASSERT_TRUE(Matches(node.child("column-references"), snap.column_references));
+    ASSERT_TRUE(Matches(node.child("query-graph"), snap.graph_edges));
 }
 
 void operator<<(std::ostream& out, const AnalyzerSnapshotTest& p) { out << p.name; }
