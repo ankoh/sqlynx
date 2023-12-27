@@ -19,8 +19,8 @@ struct AnalyzerSnapshotTest {
             return std::string{info.param->name};
         }
     };
-    /// A script
-    struct AnalysisSnapshot {
+    /// A snapshot of a script analysis
+    struct ScriptAnalysisSnapshot {
         /// The origin id
         ExternalID external_id;
         /// The database name
@@ -42,16 +42,16 @@ struct AnalyzerSnapshotTest {
     /// The name
     std::string name;
     /// The main script
-    AnalysisSnapshot script;
+    ScriptAnalysisSnapshot script;
     /// The entries
-    std::vector<AnalysisSnapshot> registry;
+    std::vector<ScriptAnalysisSnapshot> registry;
 
     /// Read a registry
-    static void TestRegistrySnapshot(const std::vector<AnalysisSnapshot>& snaps, pugi::xml_node& registry_node,
+    static void TestRegistrySnapshot(const std::vector<ScriptAnalysisSnapshot>& snaps, pugi::xml_node& registry_node,
                                      SchemaRegistry& registry, std::vector<std::unique_ptr<Script>>& scripts,
                                      size_t& entry_ids);
     /// Read a registry
-    static void TestMainScriptSnapshot(const AnalysisSnapshot& snap, const SchemaRegistry& registry,
+    static void TestMainScriptSnapshot(const ScriptAnalysisSnapshot& snap, const SchemaRegistry& registry,
                                        pugi::xml_node& node, Script& script, size_t entry_id);
     /// Encode a script
     static void EncodeScript(pugi::xml_node out, const AnalyzedScript& script, bool is_main);
