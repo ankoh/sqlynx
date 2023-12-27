@@ -1,0 +1,21 @@
+<analyzer-snapshots>
+    <analyzer-snapshot name="cross_0">
+        <script>  
+            <input>
+                select * from db1.schema1.A, db2.schema2.B where a = c;
+            </input>
+        </script>  
+        <registry>
+            <script database="db1" schema="schema1">
+                <input>
+                    create table A (a int, b int);
+                </input>
+            </script>  
+            <script database="db2" schema="schema2">
+                <input>
+                    create table B (c int, d int);
+                </input>
+            </script>  
+        </registry>
+    </analyzer-snapshot>
+</analyzer-snapshots>
