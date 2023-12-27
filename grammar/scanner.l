@@ -522,7 +522,7 @@ std::string_view input = ctx.GetInputData();
 namespace sqlynx {
 namespace parser {
 
-Scanner::Scanner(const rope::Rope& text, uint32_t origin_id): output(std::make_shared<ScannedScript>(text, origin_id)) {
+Scanner::Scanner(const rope::Rope& text, uint32_t external_id): output(std::make_shared<ScannedScript>(text, external_id)) {
     // Write end-of-buffer markers
     input_data = output->text_buffer;
     assert(input_data.size() >= 2);

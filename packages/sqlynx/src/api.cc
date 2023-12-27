@@ -67,8 +67,8 @@ static FFIResult* packError(proto::StatusCode status) {
         case proto::StatusCode::COMPLETION_MISSES_SCANNER_TOKEN:
             message = "Completion requires a scanner token";
             break;
-        case proto::StatusCode::ORIGIN_ID_COLLISION:
-            message = "Collision on origin identifier";
+        case proto::StatusCode::EXTERNAL_ID_COLLISION:
+            message = "Collision on external identifier";
             break;
         case proto::StatusCode::OK:
             message = "";
@@ -100,7 +100,7 @@ extern "C" void sqlynx_result_delete(FFIResult* result) {
 }
 
 /// Create a script
-extern "C" Script* sqlynx_script_new(uint32_t origin_id, const char* database_name_ptr, size_t database_name_length,
+extern "C" Script* sqlynx_script_new(uint32_t external_id, const char* database_name_ptr, size_t database_name_length,
                                      const char* schema_name_ptr, size_t schema_name_length) {
     std::optional<std::string> database_name, schema_name;
     if (database_name_ptr != nullptr) {
@@ -109,7 +109,7 @@ extern "C" Script* sqlynx_script_new(uint32_t origin_id, const char* database_na
     if (schema_name_ptr != nullptr) {
         schema_name.emplace(schema_name_ptr, schema_name_length);
     }
-    return new Script(origin_id, std::move(database_name), std::move(schema_name));
+    return new Script(external_id, std::move(database_name), std::move(schema_name));
 }
 /// Delete a script
 extern "C" void sqlynx_script_delete(Script* script) { delete script; }

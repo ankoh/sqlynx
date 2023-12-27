@@ -6,7 +6,7 @@
 #include <optional>
 #include <stack>
 
-#include "sqlynx/origin.h"
+#include "sqlynx/external.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/schema.h"
 #include "sqlynx/script.h"
@@ -46,7 +46,7 @@ NameResolutionPass::NameResolutionPass(ParsedScript& parser, std::string_view da
                                        AttributeIndex& attribute_index)
     : scanned_program(*parser.scanned_script),
       parsed_program(parser),
-      origin_id(parser.origin_id),
+      external_id(parser.external_id),
       database_name(database_name),
       schema_name(schema_name),
       schema_registry(schema_registry),
@@ -330,11 +330,11 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 auto& n = column_references.Append(AnalyzedScript::ColumnReference());
                 n.buffer_index = column_references.GetSize() - 1;
                 n.value.column_reference_id =
-                    GlobalObjectID{origin_id, static_cast<uint32_t>(column_references.GetSize() - 1)};
+                    ExternalObjectID{external_id, static_cast<uint32_t>(column_references.GetSize() - 1)};
                 n.value.ast_node_id = node_id;
                 n.value.ast_statement_id = std::nullopt;
                 n.value.ast_scope_root = std::nullopt;
-                n.value.resolved_table_id = GlobalObjectID();
+                n.value.resolved_table_id = ExternalObjectID();
                 n.value.resolved_column_id = std::nullopt;
                 n.value.column_name = column_name;
                 node_state.column_references.PushBack(n);
@@ -363,11 +363,11 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                     auto& n = table_references.Append(AnalyzedScript::TableReference());
                     n.buffer_index = table_references.GetSize() - 1;
                     n.value.table_reference_id =
-                        GlobalObjectID{origin_id, static_cast<uint32_t>(table_references.GetSize() - 1)};
+                        ExternalObjectID{external_id, static_cast<uint32_t>(table_references.GetSize() - 1)};
                     n.value.ast_node_id = node_id;
                     n.value.ast_statement_id = std::nullopt;
                     n.value.ast_scope_root = std::nullopt;
-                    n.value.resolved_table_id = GlobalObjectID();
+                    n.value.resolved_table_id = ExternalObjectID();
                     n.value.table_name = name;
                     n.value.alias_name = alias_str;
                     node_state.table_references.PushBack(n);
@@ -510,7 +510,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 CreateScope(node_state, node_id);
                 // Build the table
                 auto& n = tables.Append(AnalyzedScript::Table());
-                n.table_id = GlobalObjectID{origin_id, static_cast<uint32_t>(tables.GetSize() - 1)};
+                n.table_id = ExternalObjectID{external_id, static_cast<uint32_t>(tables.GetSize() - 1)};
                 n.ast_node_id = node_id;
                 n.ast_statement_id = std::nullopt;
                 n.ast_scope_root = std::nullopt;

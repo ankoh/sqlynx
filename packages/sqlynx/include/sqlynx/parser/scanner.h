@@ -5,7 +5,7 @@
 #include <string_view>
 #include <unordered_set>
 
-#include "sqlynx/origin.h"
+#include "sqlynx/external.h"
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
@@ -71,7 +71,7 @@ class Scanner {
 
    protected:
     /// Constructor
-    Scanner(const rope::Rope& text, OriginID origin_id);
+    Scanner(const rope::Rope& text, ExternalID external_id);
     /// Delete the copy constructor
     Scanner(const Scanner& other) = delete;
     /// Delete the copy assignment
@@ -80,7 +80,7 @@ class Scanner {
    public:
     /// Scan input and produce all tokens
     static std::pair<std::shared_ptr<ScannedScript>, proto::StatusCode> Scan(const rope::Rope& text,
-                                                                             uint32_t origin_id);
+                                                                             uint32_t external_id);
 };
 
 }  // namespace parser

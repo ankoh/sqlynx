@@ -6,7 +6,7 @@
 
 #include "gtest/gtest.h"
 #include "pugixml.hpp"
-#include "sqlynx/origin.h"
+#include "sqlynx/external.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
 
@@ -22,7 +22,7 @@ struct AnalyzerSnapshotTest {
     /// A script
     struct TestScript {
         /// The origin id
-        OriginID origin_id;
+        ExternalID external_id;
         /// The database name
         std::optional<std::string> database_name;
         /// The schema name

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "sqlynx/analyzer/pass_manager.h"
-#include "sqlynx/origin.h"
+#include "sqlynx/external.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/schema.h"
 #include "sqlynx/utils/attribute_index.h"

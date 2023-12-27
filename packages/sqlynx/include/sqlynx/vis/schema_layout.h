@@ -7,7 +7,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include "sqlynx/origin.h"
+#include "sqlynx/external.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
 #include "sqlynx/utils/binary_heap.h"
@@ -97,7 +97,7 @@ class SchemaGrid {
         /// The node id
         size_t node_id;
         /// The table id
-        GlobalObjectID table_id;
+        ExternalObjectID table_id;
         /// The total number of peers
         uint32_t total_peers;
         /// The number of peers that are already placed
@@ -105,7 +105,7 @@ class SchemaGrid {
         /// The placed cell
         std::optional<Cell> placed_cell;
         /// Constructor
-        Node(size_t node_id, GlobalObjectID table_id, uint32_t total_peers)
+        Node(size_t node_id, ExternalObjectID table_id, uint32_t total_peers)
             : node_id(node_id), table_id(table_id), total_peers(total_peers), placed_peers(0) {}
 
         /// A ptr to a node
@@ -114,7 +114,7 @@ class SchemaGrid {
             /// Constructor
             Ref(Node& n) : node(&n) {}
             /// Get the heap key
-            GlobalObjectID GetKey() const { return node->table_id; }
+            ExternalObjectID GetKey() const { return node->table_id; }
 
             Node& operator*() const { return *node; }
             Node* operator->() const { return node; }
@@ -128,9 +128,9 @@ class SchemaGrid {
     /// An edge
     struct Edge {
         /// The edge id
-        GlobalObjectID edge_id;
+        ExternalObjectID edge_id;
         /// The AST node id
-        GlobalObjectID ast_node_id;
+        ExternalObjectID ast_node_id;
         /// The begin of the nodes
         uint32_t nodes_begin = 0;
         /// The source node count
@@ -140,7 +140,7 @@ class SchemaGrid {
         /// The expression operator
         proto::ExpressionOperator expression_operator = proto::ExpressionOperator::DEFAULT;
         /// Constructor
-        Edge(GlobalObjectID edge_id = {}, GlobalObjectID ast_node_id = {}, uint32_t nodes_begin = 0,
+        Edge(ExternalObjectID edge_id = {}, ExternalObjectID ast_node_id = {}, uint32_t nodes_begin = 0,
              uint16_t node_count_left = 0, uint16_t node_count_right = 0,
              proto::ExpressionOperator op = proto::ExpressionOperator::DEFAULT)
             : edge_id(edge_id),
@@ -153,15 +153,15 @@ class SchemaGrid {
     /// An edge node
     struct EdgeNode {
         /// The column reference id
-        GlobalObjectID column_reference_id;
+        ExternalObjectID column_reference_id;
         /// The AST node id
-        GlobalObjectID ast_node_id;
+        ExternalObjectID ast_node_id;
         /// The table id
-        GlobalObjectID table_id;
+        ExternalObjectID table_id;
         /// The node id
         std::optional<uint32_t> node_id;
         /// Constructor
-        EdgeNode(GlobalObjectID col_ref = {}, GlobalObjectID ast_node_id = {}, GlobalObjectID table_id = {},
+        EdgeNode(ExternalObjectID col_ref = {}, ExternalObjectID ast_node_id = {}, ExternalObjectID table_id = {},
                  std::optional<uint32_t> node_id = std::nullopt)
             : column_reference_id(col_ref), ast_node_id(ast_node_id), table_id(table_id), node_id(node_id) {}
     };
@@ -182,11 +182,11 @@ class SchemaGrid {
     /// The grid cells by position
     std::unordered_map<Position, Cell, Position::Hasher> cells_by_position;
     /// The grid cells by table
-    std::unordered_map<GlobalObjectID, OccupiedCell, GlobalObjectID::Hasher> cells_by_table;
+    std::unordered_map<ExternalObjectID, OccupiedCell, ExternalObjectID::Hasher> cells_by_table;
     /// The free cells
     std::list<Cell> free_cells;
     /// The unplaced nodes, sorted by [placed_peers, total_peers]
-    IndexedBinaryHeap<Node::Ref, GlobalObjectID, GlobalObjectID::Hasher, BinaryHeapType::MaxHeap> unplaced_nodes;
+    IndexedBinaryHeap<Node::Ref, ExternalObjectID, ExternalObjectID::Hasher, BinaryHeapType::MaxHeap> unplaced_nodes;
 
     /// Reset the grid
     void Clear();

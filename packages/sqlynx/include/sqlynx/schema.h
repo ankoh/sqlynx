@@ -11,7 +11,7 @@
 #include <tuple>
 
 #include "ankerl/unordered_dense.h"
-#include "sqlynx/origin.h"
+#include "sqlynx/external.h"
 #include "sqlynx/parser/names.h"
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/proto/proto_generated.h"
@@ -115,7 +115,7 @@ class Schema {
     /// A table
     struct Table {
         /// The table id
-        GlobalObjectID table_id;
+        ExternalObjectID table_id;
         /// The AST node id in the target script
         std::optional<uint32_t> ast_node_id;
         /// The AST statement id in the target script
@@ -129,7 +129,7 @@ class Schema {
         /// The column count
         uint32_t column_count;
         /// Constructor
-        Table(GlobalObjectID table_id = {}, std::optional<uint32_t> ast_node_id = std::nullopt,
+        Table(ExternalObjectID table_id = {}, std::optional<uint32_t> ast_node_id = std::nullopt,
               std::optional<uint32_t> ast_statement_id = {}, std::optional<uint32_t> ast_scope_root = {},
               QualifiedTableName table_name = {}, uint32_t columns_begin = 0, uint32_t column_count = 0)
             : table_id(table_id),
@@ -161,7 +161,7 @@ class Schema {
 
    protected:
     /// The context id
-    const OriginID origin_id;
+    const ExternalID external_id;
     /// The database name (if any)
     const std::string database_name;
     /// The schema name (if any)
@@ -181,10 +181,10 @@ class Schema {
 
    public:
     /// Construcutor
-    Schema(uint32_t origin_id, std::string_view database_name, std::string_view schema_name);
+    Schema(uint32_t external_id, std::string_view database_name, std::string_view schema_name);
 
     /// Get the origin
-    uint32_t GetOrigin() const { return origin_id; }
+    uint32_t GetExternalID() const { return external_id; }
     /// Get the database name
     std::string_view GetDatabaseName() const { return database_name; }
     /// Get the schema name
@@ -198,9 +198,9 @@ class Schema {
     virtual const NameSearchIndex& GetNameSearchIndex() = 0;
 
     /// Resolve a table by id
-    std::optional<ResolvedTable> ResolveTable(GlobalObjectID table_id) const;
+    std::optional<ResolvedTable> ResolveTable(ExternalObjectID table_id) const;
     /// Resolve a table by id
-    std::optional<ResolvedTable> ResolveTable(GlobalObjectID table_id, const SchemaRegistry& schema_registry) const;
+    std::optional<ResolvedTable> ResolveTable(ExternalObjectID table_id, const SchemaRegistry& schema_registry) const;
     /// Resolve a table by name
     std::optional<ResolvedTable> ResolveTable(std::string_view table_name) const;
     /// Resolve a table by name
@@ -227,9 +227,9 @@ class SchemaRegistry {
     };
 
     /// The scripts
-    std::unordered_map<OriginID, ScriptEntry> scripts;
+    std::unordered_map<ExternalID, ScriptEntry> scripts;
     /// The schemas
-    std::unordered_map<OriginID, std::reference_wrapper<Schema>> schemas;
+    std::unordered_map<ExternalID, std::reference_wrapper<Schema>> schemas;
     /// The ranked schemas
     std::multiset<std::pair<Rank, Schema*>> ranked_schemas;
 
@@ -252,7 +252,7 @@ class SchemaRegistry {
     proto::StatusCode EraseScript(Script& script);
 
     /// Resolve a table by id
-    std::optional<Schema::ResolvedTable> ResolveTable(GlobalObjectID table_id) const;
+    std::optional<Schema::ResolvedTable> ResolveTable(ExternalObjectID table_id) const;
     /// Resolve a table by id
     std::optional<Schema::ResolvedTable> ResolveTable(Schema::QualifiedTableName table_name) const;
     /// Find table columns by name

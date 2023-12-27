@@ -16,7 +16,7 @@ TEST(ScriptTest, ParsingBeforeScanning) {
     ASSERT_EQ(status, proto::StatusCode::PARSER_INPUT_NOT_SCANNED);
 }
 
-TEST(ScriptTest, OriginIDCollision) {
+TEST(ScriptTest, ExternalIDIDCollision) {
     Script schema_script{1};
     schema_script.Scan();
     schema_script.Parse();
@@ -28,7 +28,7 @@ TEST(ScriptTest, OriginIDCollision) {
     SchemaRegistry registry;
     registry.AddScript(schema_script, 0);
     auto [result, status] = main_script.Analyze(&registry);
-    ASSERT_EQ(status, proto::StatusCode::ORIGIN_ID_COLLISION);
+    ASSERT_EQ(status, proto::StatusCode::EXTERNAL_ID_COLLISION);
 }
 
 TEST(ScriptTest, AnalyzingBeforeParsing) {

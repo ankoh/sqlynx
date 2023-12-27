@@ -33,7 +33,7 @@ struct FFIResult {
 extern "C" void sqlynx_result_delete(FFIResult* result);
 
 /// Create a script
-extern "C" sqlynx::Script* sqlynx_script_new(uint32_t origin_id, const char* database_name_ptr,
+extern "C" sqlynx::Script* sqlynx_script_new(uint32_t external_id, const char* database_name_ptr,
                                              size_t database_name_length, const char* schema_name_ptr,
                                              size_t schema_name_length);
 /// Delete a script
