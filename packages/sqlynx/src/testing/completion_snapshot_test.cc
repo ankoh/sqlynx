@@ -87,27 +87,60 @@ void CompletionSnapshotTest::LoadTests(std::filesystem::path& source_dir) {
 
         // Read tests
         std::vector<CompletionSnapshotTest> tests;
-        for (auto test : root.children()) {
-            // Create test
+        for (auto test_node : root.children()) {
             tests.emplace_back();
-            auto& t = tests.back();
-            auto xml_external = test.find_child_by_attribute("script", "id", "2");
-            auto xml_main = test.find_child_by_attribute("script", "id", "1");
-            t.name = test.attribute("name").as_string();
-            t.input_external = xml_external.last_child().value();
-            t.input_main = xml_main.last_child().value();
+            auto& test = tests.back();
+            test.name = test_node.attribute("name").as_string();
+
+            // Read main script
+            {
+                auto main_node = test_node.child("script");
+                if (auto db = main_node.attribute("database")) {
+                    test.script.database_name.emplace(db.value());
+                }
+                if (auto schema = main_node.attribute("schema")) {
+                    test.script.schema_name.emplace(schema.value());
+                }
+                test.script.input = main_node.child("input").last_child().value();
+                test.script.tables.append_copy(main_node.child("tables"));
+                test.script.table_references.append_copy(main_node.child("table-references"));
+                test.script.column_references.append_copy(main_node.child("column-references"));
+                test.script.graph_edges.append_copy(main_node.child("query-graph"));
+            }
+
+            // Read registry
+            for (auto entry_node : test_node.child("registry").children()) {
+                test.registry.emplace_back();
+                auto& entry = test.registry.back();
+                std::string entry_name = entry_node.name();
+                if (entry_name == "script") {
+                    if (auto db = entry_node.attribute("database")) {
+                        entry.database_name.emplace(db.value());
+                    }
+                    if (auto schema = entry_node.attribute("schema")) {
+                        entry.schema_name.emplace(schema.value());
+                    }
+                    entry.input = entry_node.child("input").last_child().value();
+                    entry.tables.append_copy(entry_node.child("tables"));
+                    entry.table_references.append_copy(entry_node.child("table-references"));
+                    entry.column_references.append_copy(entry_node.child("column-references"));
+                    entry.graph_edges.append_copy(entry_node.child("query-graph"));
+                } else {
+                    std::cout << "[    ERROR ] unknown test element " << entry_name << std::endl;
+                }
+            }
 
             // Read the cursor
-            auto xml_cursor = test.child("cursor");
+            auto xml_cursor = test_node.child("cursor");
             auto xml_cursor_search = xml_cursor.child("search");
-            t.cursor_script = xml_cursor.attribute("script").value();
-            t.cursor_search_string = xml_cursor_search.attribute("text").value();
-            t.cursor_search_index = xml_cursor_search.attribute("index").as_int();
+            test.cursor_script = xml_cursor.attribute("script").value();
+            test.cursor_search_string = xml_cursor_search.attribute("text").value();
+            test.cursor_search_index = xml_cursor_search.attribute("index").as_int();
 
             // Read the expected completions
-            auto completions = test.child("completions");
-            t.completion_limit = completions.attribute("limit").as_int();
-            t.completions.append_copy(completions);
+            auto completions = test_node.child("completions");
+            test.completion_limit = completions.attribute("limit").as_int();
+            test.completions.append_copy(completions);
         }
 
         std::cout << "[ SETUP    ] " << filename << ": " << tests.size() << " tests" << std::endl;

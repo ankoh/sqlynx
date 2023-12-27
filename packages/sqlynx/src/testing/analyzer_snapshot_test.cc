@@ -194,13 +194,14 @@ void AnalyzerSnapshotTest::LoadTests(std::filesystem::path& source_dir) {
 
         // Read tests
         std::vector<AnalyzerSnapshotTest> tests;
-        for (auto test_nodes : root.children()) {
+        for (auto test_node : root.children()) {
             tests.emplace_back();
             auto& test = tests.back();
-            test.name = test_nodes.attribute("name").as_string();
+            test.name = test_node.attribute("name").as_string();
 
+            // Read main script
             {
-                auto main_node = test_nodes.child("script");
+                auto main_node = test_node.child("script");
                 if (auto db = main_node.attribute("database")) {
                     test.script.database_name.emplace(db.value());
                 }
@@ -214,7 +215,8 @@ void AnalyzerSnapshotTest::LoadTests(std::filesystem::path& source_dir) {
                 test.script.graph_edges.append_copy(main_node.child("query-graph"));
             }
 
-            for (auto entry_node : test_nodes.child("registry").children()) {
+            // Read registry
+            for (auto entry_node : test_node.child("registry").children()) {
                 test.registry.emplace_back();
                 auto& entry = test.registry.back();
                 std::string entry_name = entry_node.name();

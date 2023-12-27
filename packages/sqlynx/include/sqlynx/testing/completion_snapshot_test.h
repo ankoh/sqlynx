@@ -9,6 +9,7 @@
 #include "sqlynx/analyzer/completion.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
+#include "sqlynx/testing/analyzer_snapshot_test.h"
 
 namespace sqlynx::testing {
 
@@ -22,10 +23,10 @@ struct CompletionSnapshotTest {
 
     /// The name
     std::string name;
-    /// The schema
-    std::string input_external;
-    /// The script
-    std::string input_main;
+    /// The main script
+    AnalyzerSnapshotTest::TestScript script;
+    /// The entries
+    std::vector<AnalyzerSnapshotTest::TestScript> registry;
     /// The cursor script
     std::string cursor_script;
     /// The search string for the cursor
