@@ -18,7 +18,7 @@ beforeAll(async () => {
 });
 
 describe('SQLynx Analyzer', () => {
-    it('external context collision', () => {
+    it('external identifier collision', () => {
         const schemaScript = lnx!.createScript(1);
         schemaScript.insertTextAt(0, 'create table foo(a int);');
         schemaScript.scan().delete();
@@ -36,7 +36,7 @@ describe('SQLynx Analyzer', () => {
         expect(() => {
             const analyzed = mainScript.analyze(searchPath);
             analyzed.delete();
-        }).toThrow(new Error('Collision on origin identifier'));
+        }).toThrow(new Error('Collision on external identifier'));
 
         searchPath.delete();
         schemaScript.delete();
