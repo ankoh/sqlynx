@@ -119,7 +119,15 @@ static void generate_analyzer_snapshots(const std::filesystem::path& source_dir)
 
                 if (entry_name == "script") {
                     auto input = entry_node.child("input").last_child().value();
-                    registry_scripts.push_back(std::make_unique<Script>(++entry_id));
+                    std::optional<std::string> database_name, schema_name;
+                    if (auto db = entry_node.attribute("database")) {
+                        database_name.emplace(db.value());
+                    }
+                    if (auto schema = entry_node.attribute("schema")) {
+                        schema_name.emplace(schema.value());
+                    }
+                    registry_scripts.push_back(
+                        std::make_unique<Script>(++entry_id, std::move(database_name), std::move(schema_name)));
 
                     auto& script = *registry_scripts.back();
                     script.InsertTextAt(0, input);
@@ -147,8 +155,10 @@ static void generate_analyzer_snapshots(const std::filesystem::path& source_dir)
             // Load main script
             auto main_node = test_node.child("script");
             std::string main_text = main_node.child("input").last_child().value();
+            auto database_name = main_node.attribute("database").value();
+            auto schema_name = main_node.attribute("schema").value();
 
-            Script main_script{0};
+            Script main_script{0, database_name, schema_name};
             main_script.InsertTextAt(0, main_text);
             auto main_scan = main_script.Scan();
             if (main_scan.second != proto::StatusCode::OK) {

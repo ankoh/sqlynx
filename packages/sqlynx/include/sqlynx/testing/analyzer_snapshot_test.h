@@ -23,6 +23,10 @@ struct AnalyzerSnapshotTest {
     struct TestScript {
         /// The origin id
         OriginID origin_id;
+        /// The database name
+        std::optional<std::string> database_name;
+        /// The schema name
+        std::optional<std::string> schema_name;
         /// The script
         std::string input;
         /// The tables
