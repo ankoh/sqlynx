@@ -1,9 +1,11 @@
 <completion-snapshots>
     <completion-snapshot name="s">
-        <script id="1">
-            s
+        <script id="0">
+            <input>
+                s
+            </input>
         </script>
-        <cursor script="1">
+        <cursor>
             <search text="s" index="1" />
         </cursor>
         <completions limit="3" relative="END_OF_SYMBOL" strategy="DEFAULT">
@@ -13,10 +15,12 @@
         </completions>
     </completion-snapshot>
     <completion-snapshot name="se">
-        <script id="1">
-            se
+        <script id="0">
+            <input>
+                se
+            </input>
         </script>
-        <cursor script="1">
+        <cursor>
             <search text="se" index="2" />
         </cursor>
         <completions limit="3" relative="END_OF_SYMBOL" strategy="DEFAULT">
@@ -26,10 +30,12 @@
         </completions>
     </completion-snapshot>
     <completion-snapshot name="sel">
-        <script id="1">
-            sel
+        <script id="0">
+            <input>
+                sel
+            </input>
         </script>
-        <cursor script="1">
+        <cursor>
             <search text="sel" index="3" />
         </cursor>
         <completions limit="3" relative="END_OF_SYMBOL" strategy="DEFAULT">
@@ -39,19 +45,23 @@
         </completions>
     </completion-snapshot>
     <completion-snapshot name="select_star">
-        <script id="1">
-            select *
+        <script id="0">
+            <input>
+                select *
+            </input>
         </script>
-        <cursor script="1">
+        <cursor>
             <search text="*" index="1" />
         </cursor>
         <completions limit="3" symbol="BOOL" relative="END_OF_SYMBOL" strategy="DEFAULT" />
     </completion-snapshot>
     <completion-snapshot name="select_f">
-        <script id="1">
-            select * f
+        <script id="0">
+            <input>
+                select * f
+            </input>
         </script>
-        <cursor script="1">
+        <cursor>
             <search text="f" index="1" />
         </cursor>
         <completions limit="3" relative="END_OF_SYMBOL" strategy="DEFAULT">
@@ -61,10 +71,12 @@
         </completions>
     </completion-snapshot>
     <completion-snapshot name="select_fr">
-        <script id="1">
-            select * fr
+        <script id="0">
+            <input>
+                select * fr
+            </input>
         </script>
-        <cursor script="1">
+        <cursor>
             <search text="fr" index="2" />
         </cursor>
         <completions limit="3" relative="END_OF_SYMBOL" strategy="DEFAULT">
@@ -74,10 +86,12 @@
         </completions>
     </completion-snapshot>
     <completion-snapshot name="select_from">
-        <script id="1">
-            select * from
+        <script id="0">
+            <input>
+                select * from
+            </input>
         </script>
-        <cursor script="1">
+        <cursor>
             <search text="fr" index="4" />
         </cursor>
         <completions limit="3" symbol="OBJECT_SQL_SELECT" relative="END_OF_SYMBOL" strategy="DEFAULT">
@@ -87,10 +101,15 @@
         </completions>
     </completion-snapshot>
     <completion-snapshot name="select_from_eof">
-        <script id="1">
-            select * from a xx
+        <script id="0">
+            <input>
+                select * from a xx
+            </input>
+            <table-references>
+                <unresolved stmt="0" loc="31..35" text="a xx" />
+            </table-references>
         </script>
-        <cursor script="1">
+        <cursor>
             <search text="xx" index="0" />
         </cursor>
         <completions limit="3" symbol="NAME" relative="BEGIN_OF_SYMBOL" strategy="TABLE_REF">
@@ -100,10 +119,15 @@
         </completions>
     </completion-snapshot>
     <completion-snapshot name="select_from_w">
-        <script id="1">
-            select * from a w
+        <script id="0">
+            <input>
+                select * from a w
+            </input>
+            <table-references>
+                <unresolved stmt="0" loc="31..34" text="a w" />
+            </table-references>
         </script>
-        <cursor script="1">
+        <cursor>
             <search text="w" index="1" />
         </cursor>
         <completions limit="3" symbol="NAME" relative="END_OF_SYMBOL" strategy="TABLE_REF">
@@ -113,10 +137,15 @@
         </completions>
     </completion-snapshot>
     <completion-snapshot name="select_from_wh">
-        <script id="1">
-            select * from a wh
+        <script id="0">
+            <input>
+                select * from a wh
+            </input>
+            <table-references>
+                <unresolved stmt="0" loc="31..35" text="a wh" />
+            </table-references>
         </script>
-        <cursor script="1">
+        <cursor>
             <search text="wh" index="2" />
         </cursor>
         <completions limit="3" symbol="NAME" relative="END_OF_SYMBOL" strategy="TABLE_REF">
@@ -126,10 +155,12 @@
         </completions>
     </completion-snapshot>
     <completion-snapshot name="selec">
-        <script id="1">
-            selec
+        <script id="0">
+            <input>
+                selec
+            </input>
         </script>
-        <cursor script="1">
+        <cursor>
             <search text="selec" index="5" />
         </cursor>
         <completions limit="3" relative="END_OF_SYMBOL" strategy="DEFAULT">
@@ -139,10 +170,15 @@
         </completions>
     </completion-snapshot>
     <completion-snapshot name="gr">
-        <script id="1">
-            select * from foo gr
+        <script id="0">
+            <input>
+                select * from foo gr
+            </input>
+            <table-references>
+                <unresolved stmt="0" loc="31..37" text="foo gr" />
+            </table-references>
         </script>
-        <cursor script="1">
+        <cursor>
             <search text="gr" index="1" />
         </cursor>
         <completions limit="3" symbol="NAME" relative="MID_OF_SYMBOL" strategy="TABLE_REF">
@@ -152,10 +188,12 @@
         </completions>
     </completion-snapshot>
     <completion-snapshot name="group">
-        <script id="1">
-            select * from foo group
+        <script id="0">
+            <input>
+                select * from foo group
+            </input>
         </script>
-        <cursor script="1">
+        <cursor>
             <search text="group" index="4" />
         </cursor>
         <completions limit="3" relative="MID_OF_SYMBOL" strategy="DEFAULT">
@@ -165,10 +203,12 @@
         </completions>
     </completion-snapshot>
     <completion-snapshot name="group_b">
-        <script id="1">
-            select * from foo group b
+        <script id="0">
+            <input>
+                select * from foo group b
+            </input>
         </script>
-        <cursor script="1">
+        <cursor>
             <search text="b" index="1" />
         </cursor>
         <completions limit="3" relative="END_OF_SYMBOL" strategy="DEFAULT">
@@ -176,10 +216,12 @@
         </completions>
     </completion-snapshot>
     <completion-snapshot name="group_eof">
-        <script id="1">
-            select * from foo group xx
+        <script id="0">
+            <input>
+                select * from foo group xx
+            </input>
         </script>
-        <cursor script="1">
+        <cursor>
             <search text="xx" index="0" />
         </cursor>
         <completions limit="3" relative="BEGIN_OF_SYMBOL" strategy="DEFAULT">
@@ -187,10 +229,15 @@
         </completions>
     </completion-snapshot>
     <completion-snapshot name="from_o">
-        <script id="1">
-            select * from foo o
+        <script id="0">
+            <input>
+                select * from foo o
+            </input>
+            <table-references>
+                <unresolved stmt="0" loc="31..36" text="foo o" />
+            </table-references>
         </script>
-        <cursor script="1">
+        <cursor>
             <search text="foo o" index="5" />
         </cursor>
         <completions limit="3" symbol="NAME" relative="END_OF_SYMBOL" strategy="TABLE_REF">
@@ -200,10 +247,12 @@
         </completions>
     </completion-snapshot>
     <completion-snapshot name="from_or">
-        <script id="1">
-            select * from foo or
+        <script id="0">
+            <input>
+                select * from foo or
+            </input>
         </script>
-        <cursor script="1">
+        <cursor>
             <search text="or" index="1" />
         </cursor>
         <completions limit="3" relative="MID_OF_SYMBOL" strategy="DEFAULT">
@@ -213,10 +262,15 @@
         </completions>
     </completion-snapshot>
     <completion-snapshot name="from_order">
-        <script id="1">
-            select * from foo order
+        <script id="0">
+            <input>
+                select * from foo order
+            </input>
+            <table-references>
+                <unresolved loc="31..34" text="foo" />
+            </table-references>
         </script>
-        <cursor script="1">
+        <cursor>
             <search text="order" index="5" />
         </cursor>
         <completions limit="3" relative="END_OF_SYMBOL" strategy="DEFAULT">
