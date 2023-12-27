@@ -341,7 +341,7 @@ class Script {
     Script(ExternalID external_id = 1, std::optional<std::string> database_name = std::nullopt,
            std::optional<std::string> schema_name = std::nullopt);
 
-    /// Get the origin
+    /// Get the external id
     auto GetExternalID() const { return external_id; }
 
     /// Insert a unicode codepoint at an offset
