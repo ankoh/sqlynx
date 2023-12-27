@@ -24,52 +24,17 @@ TEST_P(CompletionSnapshotTestSuite, Test) {
     auto main_node = out.append_child("script");
     auto registry_node = out.append_child("registry");
 
-    // Read the registry
+    // Read registry
     SchemaRegistry registry;
     std::vector<std::unique_ptr<Script>> registry_scripts;
-    for (size_t i = 0; i < test->registry.size(); ++i) {
-        auto& entry = test->registry[i];
-        registry_scripts.push_back(std::make_unique<Script>(i + 1, entry.database_name, entry.schema_name));
+    ASSERT_NO_FATAL_FAILURE(
+        AnalyzerSnapshotTest::ReadRegistry(test->registry, registry_node, registry, registry_scripts));
 
-        auto& script = *registry_scripts.back();
-        script.InsertTextAt(0, entry.input);
-        auto scanned = script.Scan();
-        ASSERT_EQ(scanned.second, proto::StatusCode::OK);
-        auto parsed = script.Parse();
-        ASSERT_EQ(parsed.second, proto::StatusCode::OK);
-        auto analyzed = script.Analyze();
-        ASSERT_EQ(analyzed.second, proto::StatusCode::OK);
-
-        registry.AddScript(script, i);
-
-        auto script_node = registry_node.append_child("script");
-        AnalyzerSnapshotTest::EncodeScript(script_node, *script.analyzed_script, false);
-
-        ASSERT_TRUE(Matches(script_node.child("tables"), entry.tables));
-        ASSERT_TRUE(Matches(script_node.child("table-references"), entry.table_references));
-        ASSERT_TRUE(Matches(script_node.child("column-references"), entry.column_references));
-        ASSERT_TRUE(Matches(script_node.child("query-graph"), entry.graph_edges));
-    }
-
-    auto& main_entry = test->script;
+    // Read main script
     Script main_script{0};
-    main_script.InsertTextAt(0, main_entry.input);
+    ASSERT_NO_FATAL_FAILURE(AnalyzerSnapshotTest::ReadScript(test->script, registry, main_node, main_script));
 
-    // Analyze main script
-    auto main_scan = main_script.Scan();
-    ASSERT_EQ(main_scan.second, proto::StatusCode::OK);
-    auto main_parsed = main_script.Parse();
-    ASSERT_EQ(main_parsed.second, proto::StatusCode::OK);
-    auto main_analyzed = main_script.Analyze(&registry);
-    ASSERT_EQ(main_analyzed.second, proto::StatusCode::OK) << proto::EnumNameStatusCode(main_analyzed.second);
-
-    AnalyzerSnapshotTest::EncodeScript(main_node, *main_script.analyzed_script, true);
-
-    ASSERT_TRUE(Matches(main_node.child("tables"), main_entry.tables));
-    ASSERT_TRUE(Matches(main_node.child("table-references"), main_entry.table_references));
-    ASSERT_TRUE(Matches(main_node.child("column-references"), main_entry.column_references));
-    ASSERT_TRUE(Matches(main_node.child("query-graph"), main_entry.graph_edges));
-
+    // Determine cursor position
     std::string_view target_text = main_script.scanned_script->GetInput();
     auto search_pos = target_text.find(test->cursor_search_string);
     auto cursor_pos = search_pos + test->cursor_search_index;
