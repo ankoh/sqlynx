@@ -7,7 +7,13 @@ interface SQLynxModuleExports {
     sqlynx_free: (ptr: number) => void;
     sqlynx_result_delete: (ptr: number) => void;
 
-    sqlynx_script_new: (id: number) => number;
+    sqlynx_script_new: (
+        id: number,
+        db_name_ptr: number,
+        db_name_length: number,
+        schema_name_ptr: number,
+        schema_name_length: number,
+    ) => number;
     sqlynx_script_delete: (ptr: number) => void;
     sqlynx_script_insert_text_at: (ptr: number, offset: number, text: number, textLength: number) => void;
     sqlynx_script_insert_char_at: (ptr: number, offset: number, unicode: number) => void;
@@ -67,7 +73,13 @@ export class SQLynx {
             sqlynx_free: parserExports['sqlynx_free'] as (ptr: number) => void,
             sqlynx_result_delete: parserExports['sqlynx_result_delete'] as (ptr: number) => void,
 
-            sqlynx_script_new: parserExports['sqlynx_script_new'] as (id: number) => number,
+            sqlynx_script_new: parserExports['sqlynx_script_new'] as (
+                id: number,
+                db_name_ptr: number,
+                db_name_length: number,
+                schema_name_ptr: number,
+                schema_name_length: number,
+            ) => number,
             sqlynx_script_delete: parserExports['sqlynx_script_delete'] as (ptr: number) => void,
             sqlynx_script_insert_text_at: parserExports['sqlynx_script_insert_text_at'] as (
                 ptr: number,
@@ -172,11 +184,56 @@ export class SQLynx {
         return instanceRef.instance;
     }
 
-    public createScript(context: number): SQLynxScript {
+    public allocateString(text: string): [number, number] {
+        // Empty strings are passed as null pointer
+        if (text.length == 0) {
+            return [0, 0];
+        }
+        // To convert a JavaScript string s, the output space needed for full conversion is never less
+        // than s.length bytes and never greater than s.length * 3 bytes.
+        const textBegin = this.instanceExports.sqlynx_malloc(text.length * 3);
+        const textBuffer = new Uint8Array(this.memory.buffer).subarray(textBegin, textBegin + text.length * 3);
+        const textEncoded = this.encoder.encodeInto(text, textBuffer);
+        // Nothing written?
+        if (textEncoded.written == undefined || textEncoded.written == 0) {
+            this.instanceExports.sqlynx_free(textBegin);
+            throw new Error(`failed to allocate a string of size ${text.length}`);
+        }
+        return [textBegin, textEncoded.written];
+    }
+
+    public createScript(
+        context: number,
+        databaseName: string | null = null,
+        schemaName: string | null = null,
+    ): SQLynxScript {
         if (context == 0xffffffff) {
             throw new Error('context id 0xFFFFFFFF is reserved');
         }
-        const scriptPtr = this.instanceExports.sqlynx_script_new(context);
+        let databaseNamePtr = 0,
+            databaseNameLength = 0,
+            schemaNamePtr = 0,
+            schemaNameLength = 0;
+        if (databaseName != null) {
+            [databaseNamePtr, databaseNameLength] = this.allocateString(databaseName);
+        }
+        if (schemaName != null) {
+            try {
+                [schemaNamePtr, schemaNameLength] = this.allocateString(schemaName);
+            } catch (e: any) {
+                this.instanceExports.sqlynx_free(databaseNamePtr);
+                throw e;
+            }
+        }
+        const scriptPtr = this.instanceExports.sqlynx_script_new(
+            context,
+            databaseNamePtr,
+            databaseNameLength,
+            schemaNamePtr,
+            schemaNameLength,
+        );
+        this.instanceExports.sqlynx_free(schemaNamePtr);
+        this.instanceExports.sqlynx_free(databaseNamePtr);
         return new SQLynxScript(this, scriptPtr);
     }
 
@@ -337,16 +394,9 @@ export class SQLynxScript {
         }
         // To convert a JavaScript string s, the output space needed for full conversion is never less
         // than s.length bytes and never greater than s.length * 3 bytes.
-        const textBegin = this.api.instanceExports.sqlynx_malloc(text.length * 3);
-        const textBuffer = new Uint8Array(this.api.memory.buffer).subarray(textBegin, textBegin + text.length * 3);
-        const textEncoded = this.api.encoder.encodeInto(text, textBuffer);
-        // Nothing written?
-        if (textEncoded.written == undefined || textEncoded.written == 0) {
-            this.api.instanceExports.sqlynx_free(textBegin);
-            return;
-        }
+        const [textBegin, textLength] = this.api.allocateString(text);
         // Insert into rope
-        this.api.instanceExports.sqlynx_script_insert_text_at(scriptPtr, offset, textBegin, textEncoded.written);
+        this.api.instanceExports.sqlynx_script_insert_text_at(scriptPtr, offset, textBegin, textLength);
         // Delete text buffer
         this.api.instanceExports.sqlynx_free(textBegin);
     }
