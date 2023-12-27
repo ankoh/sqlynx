@@ -1,0 +1,54 @@
+<analyzer-snapshots>
+    <analyzer-snapshot name="cross_0">
+        <script>
+            <input>
+                select * from db1.schema1.A, db2.schema2.B where a = c;
+            </input>
+            <tables />
+            <table-references>
+                <external table="0" stmt="0" loc="31..44" text="db1.schema1.A" />
+                <unresolved stmt="0" loc="46..59" text="db2.schema2.B" />
+            </table-references>
+            <column-references>
+                <external table="0" column="0" stmt="0" loc="66..67" text="a" />
+                <unresolved stmt="0" loc="70..71" text="c" />
+            </column-references>
+            <query-graph>
+                <edge op="EQUAL" loc="66..71" text="a = c">
+                    <node side="0" ref="0" />
+                    <node side="1" ref="1" />
+                </edge>
+            </query-graph>
+        </script>
+        <registry>
+            <script database="db1" schema="schema1">
+                <input>
+                    create table A (a int, b int);
+                </input>
+                <tables>
+                    <table name="a" loc="21..50" text="create tab..nt, b int)">
+                        <column name="a" loc="37..42" text="a int" />
+                        <column name="b" loc="44..49" text="b int" />
+                    </table>
+                </tables>
+                <table-references />
+                <column-references />
+                <query-graph />
+            </script>
+            <script database="db2" schema="schema2">
+                <input>
+                    create table B (c int, d int);
+                </input>
+                <tables>
+                    <table name="b" loc="21..50" text="create tab..nt, d int)">
+                        <column name="c" loc="37..42" text="c int" />
+                        <column name="d" loc="44..49" text="d int" />
+                    </table>
+                </tables>
+                <table-references />
+                <column-references />
+                <query-graph />
+            </script>
+        </registry>
+    </analyzer-snapshot>
+</analyzer-snapshots>
