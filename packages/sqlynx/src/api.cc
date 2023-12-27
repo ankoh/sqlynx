@@ -102,12 +102,12 @@ extern "C" void sqlynx_result_delete(FFIResult* result) {
 /// Create a script
 extern "C" Script* sqlynx_script_new(uint32_t external_id, const char* database_name_ptr, size_t database_name_length,
                                      const char* schema_name_ptr, size_t schema_name_length) {
-    std::optional<std::string> database_name, schema_name;
+    std::string database_name, schema_name;
     if (database_name_ptr != nullptr) {
-        database_name.emplace(database_name_ptr, database_name_length);
+        database_name = {database_name_ptr, database_name_length};
     }
     if (schema_name_ptr != nullptr) {
-        schema_name.emplace(schema_name_ptr, schema_name_length);
+        schema_name = {schema_name_ptr, schema_name_length};
     }
     return new Script(external_id, std::move(database_name), std::move(schema_name));
 }

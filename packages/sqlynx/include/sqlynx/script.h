@@ -338,8 +338,7 @@ class Script {
 
    public:
     /// Constructor
-    Script(ExternalID external_id = 1, std::optional<std::string> database_name = std::nullopt,
-           std::optional<std::string> schema_name = std::nullopt);
+    Script(ExternalID external_id = 1, std::string database_name = "", std::string schema_name = "");
 
     /// Get the external id
     auto GetExternalID() const { return external_id; }

@@ -80,12 +80,12 @@ static void generate_parser_snapshots(const std::filesystem::path& source_dir) {
 static std::unique_ptr<Script> read_script(pugi::xml_node node, size_t entry_id,
                                            const SchemaRegistry* registry = nullptr) {
     auto input = node.child("input").last_child().value();
-    std::optional<std::string> database_name, schema_name;
+    std::string database_name, schema_name;
     if (auto db = node.attribute("database")) {
-        database_name.emplace(db.value());
+        database_name = db.value();
     }
     if (auto schema = node.attribute("schema")) {
-        schema_name.emplace(schema.value());
+        schema_name = schema.value();
     }
     auto script = std::make_unique<Script>(entry_id, std::move(database_name), std::move(schema_name));
     script->InsertTextAt(0, input);

@@ -31,7 +31,7 @@ TEST_P(AnalyzerSnapshotTestSuite, Test) {
                                                                        registry_scripts, entry_id));
 
     // Read main script
-    Script main_script{0};
+    Script main_script{0, test->script.database_name, test->script.schema_name};
     ASSERT_NO_FATAL_FAILURE(
         AnalyzerSnapshotTest::TestMainScriptSnapshot(test->script, registry, main_node, main_script, 0));
 }

@@ -24,9 +24,9 @@ struct AnalyzerSnapshotTest {
         /// The origin id
         ExternalID external_id;
         /// The database name
-        std::optional<std::string> database_name;
+        std::string database_name;
         /// The schema name
-        std::optional<std::string> schema_name;
+        std::string schema_name;
         /// The script
         std::string input;
         /// The tables

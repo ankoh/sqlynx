@@ -24,9 +24,6 @@
 
 namespace sqlynx {
 
-constexpr std::string_view DEFAULT_DATABASE_NAME = "sqlynx";
-constexpr std::string_view DEFAULT_SCHEMA_NAME = "default";
-
 constexpr uint32_t PROTO_NULL_U32 = std::numeric_limits<uint32_t>::max();
 
 class SchemaRegistry;

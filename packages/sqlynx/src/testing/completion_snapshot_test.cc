@@ -96,10 +96,10 @@ void CompletionSnapshotTest::LoadTests(std::filesystem::path& source_dir) {
             {
                 auto main_node = test_node.child("script");
                 if (auto db = main_node.attribute("database")) {
-                    test.script.database_name.emplace(db.value());
+                    test.script.database_name = db.value();
                 }
                 if (auto schema = main_node.attribute("schema")) {
-                    test.script.schema_name.emplace(schema.value());
+                    test.script.schema_name = schema.value();
                 }
                 test.script.input = main_node.child("input").last_child().value();
                 test.script.tables.append_copy(main_node.child("tables"));
@@ -115,10 +115,10 @@ void CompletionSnapshotTest::LoadTests(std::filesystem::path& source_dir) {
                 std::string entry_name = entry_node.name();
                 if (entry_name == "script") {
                     if (auto db = entry_node.attribute("database")) {
-                        entry.database_name.emplace(db.value());
+                        entry.database_name = db.value();
                     }
                     if (auto schema = entry_node.attribute("schema")) {
-                        entry.schema_name.emplace(schema.value());
+                        entry.schema_name = schema.value();
                     }
                     entry.input = entry_node.child("input").last_child().value();
                     entry.tables.append_copy(entry_node.child("tables"));
