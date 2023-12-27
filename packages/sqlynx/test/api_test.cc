@@ -68,7 +68,7 @@ order by
 limit 100
     )SQL";
 
-    auto* external_script = sqlynx_script_new(1);
+    auto* external_script = sqlynx_script_new(1, nullptr, 0, nullptr, 0);
     sqlynx_script_insert_text_at(external_script, 0, external_script_text.data(), external_script_text.size());
 
     auto external_scanned = sqlynx_script_scan(external_script);
@@ -84,7 +84,7 @@ limit 100
     auto* registry = sqlynx_schema_registry_new();
     sqlynx_schema_registry_add_script(registry, external_script, 0);
 
-    auto* main_script = sqlynx_script_new(2);
+    auto* main_script = sqlynx_script_new(2, nullptr, 0, nullptr, 0);
     sqlynx_script_insert_text_at(main_script, 0, main_script_text.data(), main_script_text.size());
 
     auto main_scanned = sqlynx_script_scan(main_script);

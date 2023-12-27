@@ -443,8 +443,11 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
 }
 
 /// Constructor
-Script::Script(uint32_t origin_id)
-    : origin_id(origin_id), text(1024), database_name(DEFAULT_DATABASE_NAME), schema_name(DEFAULT_SCHEMA_NAME) {}
+Script::Script(uint32_t origin_id, std::optional<std::string> database_name, std::optional<std::string> schema_name)
+    : origin_id(origin_id),
+      text(1024),
+      database_name(database_name.value_or(std::string{DEFAULT_DATABASE_NAME})),
+      schema_name(schema_name.value_or(std::string{DEFAULT_SCHEMA_NAME})) {}
 
 /// Insert a character at an offet
 void Script::InsertCharAt(size_t char_idx, uint32_t unicode) {

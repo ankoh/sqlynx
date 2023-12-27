@@ -338,7 +338,8 @@ class Script {
 
    public:
     /// Constructor
-    Script(OriginID origin_id = 1);
+    Script(OriginID origin_id = 1, std::optional<std::string> database_name = std::nullopt,
+           std::optional<std::string> schema_name = std::nullopt);
 
     /// Get the origin
     auto GetOrigin() const { return origin_id; }

@@ -100,7 +100,17 @@ extern "C" void sqlynx_result_delete(FFIResult* result) {
 }
 
 /// Create a script
-extern "C" Script* sqlynx_script_new(uint32_t origin_id) { return new Script(origin_id); }
+extern "C" Script* sqlynx_script_new(uint32_t origin_id, const char* database_name_ptr, size_t database_name_length,
+                                     const char* schema_name_ptr, size_t schema_name_length) {
+    std::optional<std::string> database_name, schema_name;
+    if (database_name_ptr != nullptr) {
+        database_name.emplace(database_name_ptr, database_name_length);
+    }
+    if (schema_name_ptr != nullptr) {
+        schema_name.emplace(schema_name_ptr, schema_name_length);
+    }
+    return new Script(origin_id, std::move(database_name), std::move(schema_name));
+}
 /// Delete a script
 extern "C" void sqlynx_script_delete(Script* script) { delete script; }
 /// Insert char at a position
