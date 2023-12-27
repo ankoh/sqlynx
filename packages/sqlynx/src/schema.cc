@@ -28,11 +28,11 @@ flatbuffers::Offset<proto::Table> Schema::Table::Pack(flatbuffers::FlatBufferBui
     return out.Finish();
 }
 
-Schema::Schema(uint32_t origin_id, std::string_view database_name, std::string_view schema_name)
-    : origin_id(origin_id), database_name(database_name), schema_name(schema_name) {}
+Schema::Schema(uint32_t external_id, std::string_view database_name, std::string_view schema_name)
+    : external_id(external_id), database_name(database_name), schema_name(schema_name) {}
 
-std::optional<Schema::ResolvedTable> Schema::ResolveTable(GlobalObjectID table_id) const {
-    if (table_id.GetOrigin() != origin_id || table_id.GetIndex() >= tables.size()) {
+std::optional<Schema::ResolvedTable> Schema::ResolveTable(ExternalObjectID table_id) const {
+    if (table_id.GetExternalId() != external_id || table_id.GetIndex() >= tables.size()) {
         return std::nullopt;
     }
     auto& table = tables[table_id.GetIndex()];
@@ -40,9 +40,9 @@ std::optional<Schema::ResolvedTable> Schema::ResolveTable(GlobalObjectID table_i
     return ResolvedTable{database_name, schema_name, table, columns};
 }
 
-std::optional<Schema::ResolvedTable> Schema::ResolveTable(GlobalObjectID table_id,
+std::optional<Schema::ResolvedTable> Schema::ResolveTable(ExternalObjectID table_id,
                                                           const SchemaRegistry& registry) const {
-    if (origin_id == table_id.GetOrigin()) {
+    if (external_id == table_id.GetExternalId()) {
         auto& table = tables[table_id.GetIndex()];
         auto columns = std::span<const TableColumn>{table_columns}.subspan(table.columns_begin, table.column_count);
         return ResolvedTable{database_name, schema_name, table, columns};
@@ -102,12 +102,12 @@ proto::StatusCode SchemaRegistry::AddScript(Script& script, Rank rank) {
         return proto::StatusCode::SCHEMA_REGISTRY_SCRIPT_NOT_ANALYZED;
     }
     auto& schema = script.analyzed_script;
-    auto iter = scripts.find(schema->GetOrigin());
+    auto iter = scripts.find(schema->GetExternalID());
     if (iter != scripts.end() && iter->second.script.get() != schema.get()) {
-        return proto::StatusCode::ORIGIN_ID_COLLISION;
+        return proto::StatusCode::EXTERNAL_ID_COLLISION;
     }
-    scripts.insert({schema->GetOrigin(), {.script = schema, .rank = rank}});
-    schemas.insert({schema->GetOrigin(), *schema});
+    scripts.insert({schema->GetExternalID(), {.script = schema, .rank = rank}});
+    schemas.insert({schema->GetExternalID(), *schema});
     ranked_schemas.insert({rank, schema.get()});
     return proto::StatusCode::OK;
 }
@@ -116,7 +116,7 @@ proto::StatusCode SchemaRegistry::UpdateScript(Script& script) {
     if (!script.analyzed_script) {
         return proto::StatusCode::SCHEMA_REGISTRY_SCRIPT_NOT_ANALYZED;
     }
-    auto iter = scripts.find(script.GetOrigin());
+    auto iter = scripts.find(script.GetExternalID());
     if (iter == scripts.end()) {
         return proto::StatusCode::SCHEMA_REGISTRY_SCRIPT_UNKNOWN;
     }
@@ -125,19 +125,19 @@ proto::StatusCode SchemaRegistry::UpdateScript(Script& script) {
 }
 
 proto::StatusCode SchemaRegistry::EraseScript(Script& script) {
-    auto iter = scripts.find(script.origin_id);
+    auto iter = scripts.find(script.external_id);
     if (iter == scripts.end()) {
         return proto::StatusCode::SCHEMA_REGISTRY_SCRIPT_UNKNOWN;
     }
     auto rank = iter->second.rank;
     ranked_schemas.erase({rank, iter->second.script.get()});
     scripts.erase(iter);
-    schemas.erase(script.origin_id);
+    schemas.erase(script.external_id);
     return proto::StatusCode::OK;
 }
 
-std::optional<Schema::ResolvedTable> SchemaRegistry::ResolveTable(GlobalObjectID table_id) const {
-    if (auto iter = schemas.find(table_id.GetOrigin()); iter != schemas.end()) {
+std::optional<Schema::ResolvedTable> SchemaRegistry::ResolveTable(ExternalObjectID table_id) const {
+    if (auto iter = schemas.find(table_id.GetExternalId()); iter != schemas.end()) {
         return iter->second.get().ResolveTable(table_id);
     }
     return std::nullopt;

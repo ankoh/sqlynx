@@ -5,7 +5,7 @@
 
 #include "gtest/gtest.h"
 #include "sqlynx/api.h"
-#include "sqlynx/origin.h"
+#include "sqlynx/external.h"
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
@@ -59,10 +59,10 @@ TEST(ScannerTest, FindTokenAtOffset) {
     std::shared_ptr<ScannedScript> script;
 
     // Helper to scan a script
-    auto scan = [&](std::string_view text, OriginID origin_id) {
+    auto scan = [&](std::string_view text, ExternalID external_id) {
         rope::Rope buffer{128};
         buffer.Insert(0, text);
-        auto [scanned, status] = parser::Scanner::Scan(buffer, origin_id);
+        auto [scanned, status] = parser::Scanner::Scan(buffer, external_id);
         ASSERT_EQ(status, proto::StatusCode::OK);
         script = std::move(scanned);
     };

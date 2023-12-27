@@ -96,7 +96,7 @@ struct QueryGraphEdgeNode {
 
 table AnalyzedScript {
     // The origin id
-    origin_id: uint32;
+    external_id: uint32;
     // The database name
     database_name: string;
     // The schema name

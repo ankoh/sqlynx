@@ -10,7 +10,7 @@
 
 #include "sqlynx/analyzer/analyzer.h"
 #include "sqlynx/analyzer/completion.h"
-#include "sqlynx/origin.h"
+#include "sqlynx/external.h"
 #include "sqlynx/parser/parse_context.h"
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/parser/scanner.h"
@@ -32,8 +32,8 @@ std::unique_ptr<proto::StatementT> ParsedScript::Statement::Pack() {
 }
 
 /// Constructor
-ScannedScript::ScannedScript(const rope::Rope& text, uint32_t origin_id)
-    : origin_id(origin_id), text_buffer(text.ToString(true)) {
+ScannedScript::ScannedScript(const rope::Rope& text, uint32_t external_id)
+    : external_id(external_id), text_buffer(text.ToString(true)) {
     names_by_text.reserve(64);
     names_by_id.reserve(64);
 }
@@ -194,7 +194,7 @@ ScannedScript::LocationInfo ScannedScript::FindSymbol(size_t text_offset) {
 
 flatbuffers::Offset<proto::ScannedScript> ScannedScript::Pack(flatbuffers::FlatBufferBuilder& builder) {
     proto::ScannedScriptT out;
-    out.origin_id = origin_id;
+    out.external_id = external_id;
     out.errors.reserve(errors.size());
     for (auto& [loc, msg] : errors) {
         auto err = std::make_unique<proto::ErrorT>();
@@ -210,7 +210,7 @@ flatbuffers::Offset<proto::ScannedScript> ScannedScript::Pack(flatbuffers::FlatB
 
 /// Constructor
 ParsedScript::ParsedScript(std::shared_ptr<ScannedScript> scan, parser::ParseContext&& ctx)
-    : origin_id(scan->origin_id),
+    : external_id(scan->external_id),
       scanned_script(scan),
       nodes(ctx.nodes.Flatten()),
       statements(std::move(ctx.statements)),
@@ -283,7 +283,7 @@ std::optional<std::pair<size_t, size_t>> ParsedScript::FindNodeAtOffset(size_t t
 /// Pack the FlatBuffer
 flatbuffers::Offset<proto::ParsedScript> ParsedScript::Pack(flatbuffers::FlatBufferBuilder& builder) {
     proto::ParsedScriptT out;
-    out.origin_id = origin_id;
+    out.external_id = external_id;
     out.nodes = nodes;
     out.statements.reserve(statements.size());
     for (auto& stmt : statements) {
@@ -371,7 +371,7 @@ flatbuffers::Offset<proto::ColumnReference> AnalyzedScript::ColumnReference::Pac
 /// Constructor
 AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, SchemaRegistry registry,
                                std::string_view database_name, std::string_view schema_name)
-    : Schema(parsed->origin_id, database_name, schema_name),
+    : Schema(parsed->external_id, database_name, schema_name),
       parsed_script(std::move(parsed)),
       schema_registry(std::move(registry)) {}
 
@@ -432,7 +432,7 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
     }
 
     proto::AnalyzedScriptBuilder out{builder};
-    out.add_origin_id(origin_id);
+    out.add_external_id(external_id);
     out.add_tables(tables_ofs);
     out.add_table_columns(table_columns_ofs);
     out.add_table_references(table_references_ofs);
@@ -443,8 +443,8 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
 }
 
 /// Constructor
-Script::Script(uint32_t origin_id, std::optional<std::string> database_name, std::optional<std::string> schema_name)
-    : origin_id(origin_id),
+Script::Script(uint32_t external_id, std::optional<std::string> database_name, std::optional<std::string> schema_name)
+    : external_id(external_id),
       text(1024),
       database_name(database_name.value_or(std::string{DEFAULT_DATABASE_NAME})),
       schema_name(schema_name.value_or(std::string{DEFAULT_SCHEMA_NAME})) {}
@@ -534,7 +534,7 @@ std::unique_ptr<proto::ScriptStatisticsT> Script::GetStatistics() {
 /// Scan a script
 std::pair<ScannedScript*, proto::StatusCode> Script::Scan() {
     auto time_start = std::chrono::steady_clock::now();
-    auto [script, status] = parser::Scanner::Scan(text, origin_id);
+    auto [script, status] = parser::Scanner::Scan(text, external_id);
     scanned_script = std::move(script);
     timing_statistics.mutate_scanner_last_elapsed(
         std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - time_start).count());
@@ -556,8 +556,8 @@ std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(const SchemaRegist
 
     // Check if the external context id is unique
     if (schema_registry) {
-        if (schema_registry->GetScripts().contains(origin_id)) {
-            return {nullptr, proto::StatusCode::ORIGIN_ID_COLLISION};
+        if (schema_registry->GetScripts().contains(external_id)) {
+            return {nullptr, proto::StatusCode::EXTERNAL_ID_COLLISION};
         }
     }
 
