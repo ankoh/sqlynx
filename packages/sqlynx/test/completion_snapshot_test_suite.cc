@@ -27,12 +27,14 @@ TEST_P(CompletionSnapshotTestSuite, Test) {
     // Read registry
     SchemaRegistry registry;
     std::vector<std::unique_ptr<Script>> registry_scripts;
-    ASSERT_NO_FATAL_FAILURE(
-        AnalyzerSnapshotTest::ReadRegistry(test->registry, registry_node, registry, registry_scripts));
+    size_t entry_id = 1;
+    ASSERT_NO_FATAL_FAILURE(AnalyzerSnapshotTest::TestRegistrySnapshot(test->registry, registry_node, registry,
+                                                                       registry_scripts, entry_id));
 
     // Read main script
     Script main_script{0};
-    ASSERT_NO_FATAL_FAILURE(AnalyzerSnapshotTest::ReadScript(test->script, registry, main_node, main_script));
+    ASSERT_NO_FATAL_FAILURE(
+        AnalyzerSnapshotTest::TestMainScriptSnapshot(test->script, registry, main_node, main_script, 0));
 
     // Determine cursor position
     std::string_view target_text = main_script.scanned_script->GetInput();
