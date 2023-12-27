@@ -144,9 +144,21 @@ std::optional<Schema::ResolvedTable> SchemaRegistry::ResolveTable(ExternalObject
 }
 std::optional<Schema::ResolvedTable> SchemaRegistry::ResolveTable(Schema::QualifiedTableName table_name) const {
     for (auto iter = ranked_schemas.begin(); iter != ranked_schemas.end(); ++iter) {
-        auto& schema = *iter->second;
-        if (schema.GetDatabaseName() == table_name.database_name && schema.GetSchemaName() == table_name.schema_name) {
-            return schema.ResolveTable(table_name.table_name);
+        auto& candidate = *iter->second;
+        if (candidate.GetDatabaseName().empty()) {
+            if (candidate.GetSchemaName().empty()) {
+                if (auto resolved = candidate.ResolveTable(table_name.table_name); resolved.has_value()) {
+                    return resolved;
+                }
+            } else if (candidate.GetSchemaName() == table_name.schema_name) {
+                if (auto resolved = candidate.ResolveTable(table_name.table_name); resolved.has_value()) {
+                    return resolved;
+                }
+            }
+        } else if (candidate.GetDatabaseName() == table_name.database_name &&
+                   candidate.GetSchemaName() == table_name.schema_name) {
+            // Stop search at exact match
+            return candidate.ResolveTable(table_name.table_name);
         }
     }
     return std::nullopt;

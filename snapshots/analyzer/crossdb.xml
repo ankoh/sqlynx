@@ -124,4 +124,56 @@
             </script>
         </registry>
     </analyzer-snapshot>
+    <analyzer-snapshot name="cross_empty_database">
+        <script id="0" database="db1" schema="schema1">
+            <input>
+                select * from A where a = 1;
+            </input>
+            <table-references>
+                <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
+            </table-references>
+            <column-references>
+                <external schema="1" table="0" column="0" stmt="0" loc="39..40" text="a" />
+            </column-references>
+        </script>
+        <registry>
+            <script id="1" schema="schema1">
+                <input>
+                    create table A (a int, b int);
+                </input>
+                <tables>
+                    <table name="a" loc="21..50" text="create tab..nt, b int)">
+                        <column name="a" loc="37..42" text="a int" />
+                        <column name="b" loc="44..49" text="b int" />
+                    </table>
+                </tables>
+            </script>
+        </registry>
+    </analyzer-snapshot>
+    <analyzer-snapshot name="cross_empty_schema">
+        <script id="0" database="db1" schema="schema1">
+            <input>
+                select * from A where a = 1;
+            </input>
+            <table-references>
+                <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
+            </table-references>
+            <column-references>
+                <external schema="1" table="0" column="0" stmt="0" loc="39..40" text="a" />
+            </column-references>
+        </script>
+        <registry>
+            <script id="1">
+                <input>
+                    create table A (a int, b int);
+                </input>
+                <tables>
+                    <table name="a" loc="21..50" text="create tab..nt, b int)">
+                        <column name="a" loc="37..42" text="a int" />
+                        <column name="b" loc="44..49" text="b int" />
+                    </table>
+                </tables>
+            </script>
+        </registry>
+    </analyzer-snapshot>
 </analyzer-snapshots>
