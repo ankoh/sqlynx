@@ -7,11 +7,11 @@
             <tables />
             <table-references>
                 <external table="0" stmt="0" loc="31..44" text="db1.schema1.A" />
-                <unresolved stmt="0" loc="46..59" text="db2.schema2.B" />
+                <external table="0" stmt="0" loc="46..59" text="db2.schema2.B" />
             </table-references>
             <column-references>
                 <external table="0" column="0" stmt="0" loc="66..67" text="a" />
-                <unresolved stmt="0" loc="70..71" text="c" />
+                <external table="0" column="0" stmt="0" loc="70..71" text="c" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="66..71" text="a = c">
