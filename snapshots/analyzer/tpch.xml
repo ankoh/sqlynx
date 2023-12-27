@@ -90,9 +90,6 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
                 </table>
             </tables>
-            <table-references />
-            <column-references />
-            <query-graph />
         </script>
         <registry />
     </analyzer-snapshot>
@@ -145,7 +142,6 @@ order by
 limit
 	100
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="2" stmt="0" loc="610..618" text="partsupp" />
                 <external schema="1" table="1" stmt="0" loc="644..652" text="supplier" />
@@ -319,9 +315,6 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
@@ -353,7 +346,6 @@ order by
 limit
 	10
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="145..153" text="customer" />
                 <external schema="1" table="1" stmt="0" loc="163..169" text="orders" />
@@ -437,9 +429,6 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
                         <column name="l_comment" loc="1111..1141" text="l_comment ..) not null" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
@@ -468,7 +457,6 @@ group by
 order by
         o_orderpriority
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="291..299" text="lineitem" />
                 <external schema="1" table="1" stmt="0" loc="78..84" text="orders" />
@@ -532,9 +520,6 @@ create table orders (o_orderkey integer not null, o_custkey integer not null, o_
                         <column name="o_comment" loc="830..860" text="o_comment ..) not null" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
@@ -566,7 +551,6 @@ group by
 order by
         revenue desc
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="3" stmt="0" loc="96..104" text="customer" />
                 <external schema="1" table="4" stmt="0" loc="114..120" text="orders" />
@@ -715,9 +699,6 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
@@ -734,7 +715,6 @@ where
         and l_discount between 0.06 - 0.01 and 0.06 + 0.01
         and l_quantity &lt; 24
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="74..82" text="lineitem" />
             </table-references>
@@ -746,7 +726,6 @@ where
                 <external schema="1" table="0" column="6" stmt="0" loc="184..194" text="l_discount" />
                 <external schema="1" table="0" column="4" stmt="0" loc="243..253" text="l_quantity" />
             </column-references>
-            <query-graph />
         </script>
         <registry>
             <script id="1">
@@ -773,9 +752,6 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
                         <column name="l_comment" loc="489..519" text="l_comment ..) not null" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
@@ -822,7 +798,6 @@ order by
         cust_nation,
         l_year
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="1" stmt="0" loc="414..422" text="supplier" />
                 <external schema="1" table="5" stmt="0" loc="448..456" text="lineitem" />
@@ -977,9 +952,6 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
@@ -1024,7 +996,6 @@ group by
 order by
         o_year
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="418..422" text="part" />
                 <external schema="1" table="1" stmt="0" loc="448..456" text="supplier" />
@@ -1186,9 +1157,6 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
@@ -1228,7 +1196,6 @@ order by
         nation,
         o_year desc
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="363..367" text="part" />
                 <external schema="1" table="1" stmt="0" loc="393..401" text="supplier" />
@@ -1383,9 +1350,6 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
@@ -1426,7 +1390,6 @@ order by
 limit
 	20
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="3" stmt="0" loc="205..213" text="customer" />
                 <external schema="1" table="4" stmt="0" loc="223..229" text="orders" />
@@ -1567,9 +1530,6 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
@@ -1604,7 +1564,6 @@ group by
 order by
         "value" desc
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="1" stmt="0" loc="496..504" text="partsupp" />
                 <external schema="1" table="0" stmt="0" loc="538..546" text="supplier" />
@@ -1684,9 +1643,6 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
                         <column name="n_comment" loc="588..619" text="n_comment ..) not null" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
@@ -1722,7 +1678,6 @@ group by
 order by
         l_shipmode
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="4" stmt="0" loc="458..464" text="orders" />
                 <external schema="1" table="5" stmt="0" loc="474..482" text="lineitem" />
@@ -1851,9 +1806,6 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
@@ -1881,7 +1833,6 @@ order by
         custdist desc,
         c_count desc
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="222..230" text="customer" />
                 <external schema="1" table="1" stmt="0" loc="247..253" text="orders" />
@@ -1934,9 +1885,6 @@ create table orders (o_orderkey integer not null, o_custkey integer not null, o_
                         <column name="o_comment" loc="564..594" text="o_comment ..) not null" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
@@ -1957,7 +1905,6 @@ where
         and l_shipdate &gt;= date '1995-09-01'
         and l_shipdate &lt; date '1995-10-01'
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="5" stmt="0" loc="248..256" text="lineitem" />
                 <external schema="1" table="0" stmt="0" loc="266..270" text="part" />
@@ -2071,9 +2018,6 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
@@ -2111,7 +2055,6 @@ where
 order by
 	s_suppkey
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="5" stmt="0" loc="122..130" text="lineitem" />
                 <unresolved stmt="0" loc="417..424" text="revenue" />
@@ -2234,9 +2177,6 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
@@ -2274,7 +2214,6 @@ order by
         p_type,
         p_size
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="1" stmt="0" loc="449..457" text="supplier" />
                 <external schema="1" table="2" stmt="0" loc="121..129" text="partsupp" />
@@ -2399,9 +2338,6 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
@@ -2426,7 +2362,6 @@ where
                         l_partkey = p_partkey
         )
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="1" stmt="0" loc="339..347" text="lineitem" />
                 <external schema="1" table="1" stmt="0" loc="70..78" text="lineitem" />
@@ -2491,9 +2426,6 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
                         <column name="l_comment" loc="799..829" text="l_comment ..) not null" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
@@ -2535,7 +2467,6 @@ order by
 limit
 	100
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="5" stmt="0" loc="319..327" text="lineitem" />
                 <external schema="1" table="3" stmt="0" loc="143..151" text="customer" />
@@ -2667,9 +2598,6 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
@@ -2712,7 +2640,6 @@ where
                 and l_shipinstruct = 'DELIVER IN PERSON'
         )
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="5" stmt="0" loc="79..87" text="lineitem" />
                 <external schema="1" table="0" stmt="0" loc="97..101" text="part" />
@@ -2854,9 +2781,6 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
@@ -2901,7 +2825,6 @@ where
 order by
         s_name
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="449..453" text="part" />
                 <external schema="1" table="5" stmt="0" loc="802..810" text="lineitem" />
@@ -3036,9 +2959,6 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
@@ -3087,7 +3007,6 @@ order by
 limit
 	100
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="5" stmt="0" loc="399..410" text="lineitem l2" />
                 <external schema="1" table="5" stmt="0" loc="673..684" text="lineitem l3" />
@@ -3252,9 +3171,6 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
@@ -3299,7 +3215,6 @@ group by
 order by
         cntrycode
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="3" stmt="0" loc="658..666" text="customer" />
                 <external schema="1" table="4" stmt="0" loc="1157..1163" text="orders" />
@@ -3418,9 +3333,6 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>

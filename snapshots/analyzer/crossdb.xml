@@ -4,7 +4,6 @@
             <input>
                 select * from db1.schema1.A, db2.schema2.B where a = c;
             </input>
-            <tables />
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..44" text="db1.schema1.A" />
                 <external schema="2" table="0" stmt="0" loc="46..59" text="db2.schema2.B" />
@@ -31,9 +30,6 @@
                         <column name="b" loc="44..49" text="b int" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
             <script id="2" database="db2" schema="schema2">
                 <input>
@@ -45,9 +41,6 @@
                         <column name="d" loc="44..49" text="d int" />
                     </table>
                 </tables>
-                <table-references />
-                <column-references />
-                <query-graph />
             </script>
         </registry>
     </analyzer-snapshot>
