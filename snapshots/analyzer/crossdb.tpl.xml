@@ -18,4 +18,24 @@
             </script>  
         </registry>
     </analyzer-snapshot>
+    <analyzer-snapshot name="cross_first_schema_wins">
+        <script>  
+            <input>
+                select * from db1.schema1.A where a = 1;
+                select * from db1.schema1.A where c = 1;
+            </input>
+        </script>  
+        <registry>
+            <script database="db1" schema="schema1">
+                <input>
+                    create table A (a int, b int);
+                </input>
+            </script>  
+            <script database="db1" schema="schema1">
+                <input>
+                    create table A (c int, d int);
+                </input>
+            </script>  
+        </registry>
+    </analyzer-snapshot>
 </analyzer-snapshots>
