@@ -87,8 +87,8 @@ struct Analyzer {
 
     /// Analyze a program
     static std::pair<std::shared_ptr<AnalyzedScript>, proto::StatusCode> Analyze(
-        std::shared_ptr<ParsedScript> parsed, std::string_view database_name = DEFAULT_DATABASE_NAME,
-        std::string_view schema_name = DEFAULT_SCHEMA_NAME, const SchemaRegistry* schema_registry = nullptr);
+        std::shared_ptr<ParsedScript> parsed, std::string_view database_name = "", std::string_view schema_name = "",
+        const SchemaRegistry* schema_registry = nullptr);
 };
 
 }  // namespace sqlynx

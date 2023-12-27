@@ -155,10 +155,15 @@ static void generate_analyzer_snapshots(const std::filesystem::path& source_dir)
             // Load main script
             auto main_node = test_node.child("script");
             std::string main_text = main_node.child("input").last_child().value();
-            auto database_name = main_node.attribute("database").value();
-            auto schema_name = main_node.attribute("schema").value();
+            std::optional<std::string> main_database_name, main_schema_name;
+            if (auto db = main_node.attribute("database")) {
+                main_database_name.emplace(db.value());
+            }
+            if (auto schema = main_node.attribute("schema")) {
+                main_schema_name.emplace(schema.value());
+            }
 
-            Script main_script{0, database_name, schema_name};
+            Script main_script{0, std::move(main_database_name), std::move(main_schema_name)};
             main_script.InsertTextAt(0, main_text);
             auto main_scan = main_script.Scan();
             if (main_scan.second != proto::StatusCode::OK) {
