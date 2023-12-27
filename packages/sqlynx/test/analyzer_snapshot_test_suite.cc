@@ -28,7 +28,7 @@ TEST_P(AnalyzerSnapshotTestSuite, Test) {
     std::vector<std::unique_ptr<Script>> registry_scripts;
     for (size_t i = 0; i < test->registry.size(); ++i) {
         auto& entry = test->registry[i];
-        registry_scripts.push_back(std::make_unique<Script>(i + 1));
+        registry_scripts.push_back(std::make_unique<Script>(i + 1, entry.database_name, entry.schema_name));
 
         auto& script = *registry_scripts.back();
         script.InsertTextAt(0, entry.input);
