@@ -1,5 +1,5 @@
 <analyzer-snapshots>
-    <analyzer-snapshot name="cross_0">
+    <analyzer-snapshot name="cross_two_schemas">
         <script>  
             <input>
                 select * from db1.schema1.A, db2.schema2.B where a = c;
@@ -36,6 +36,26 @@
                     create table A (c int, d int);
                 </input>
             </script>  
+        </registry>
+    </analyzer-snapshot>
+    <analyzer-snapshot name="cross_same_schema">
+        <script database="db1" schema="schema1">
+            <input>
+                select * from A where a = 1;
+                select * from B where a = 1;
+            </input>
+        </script>  
+        <registry>
+            <script database="db1" schema="schema1">
+                <input>
+                    create table A (a int, b int);
+                </input>
+            </script>
+            <script database="db1" schema="schema2">
+                <input>
+                    create table B (a int, b int);
+                </input>
+            </script>
         </registry>
     </analyzer-snapshot>
 </analyzer-snapshots>
