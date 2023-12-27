@@ -90,6 +90,8 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
     auto col_refs_node = out.append_child("column-references");
     auto query_graph_node = out.append_child("query-graph");
 
+    out.prepend_attribute("id").set_value(script.GetOrigin());
+
     // Write local declarations
     writeTables(tables_node, script);
 
@@ -100,6 +102,7 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
                                                                                           : "external";
         auto xml_ref = table_refs_node.append_child(tag);
         if (!ref.resolved_table_id.IsNull()) {
+            xml_ref.append_attribute("schema").set_value(ref.resolved_table_id.GetOrigin());
             xml_ref.append_attribute("table").set_value(ref.resolved_table_id.GetIndex());
         }
         if (ref.ast_statement_id.has_value()) {
@@ -117,6 +120,7 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
                                                                                           : "external";
         auto xml_ref = col_refs_node.append_child(tag);
         if (!ref.resolved_table_id.IsNull()) {
+            xml_ref.append_attribute("schema").set_value(ref.resolved_table_id.GetOrigin());
             xml_ref.append_attribute("table").set_value(ref.resolved_table_id.GetIndex());
         }
         if (ref.resolved_column_id.has_value()) {
