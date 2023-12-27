@@ -20,54 +20,73 @@ struct CompletionSnapshotTestSuite : public ::testing::TestWithParam<const Compl
 TEST_P(CompletionSnapshotTestSuite, Test) {
     auto* test = GetParam();
 
-    // Create scripts
-    Script external_script{1};
-    Script main_script{2};
-    external_script.InsertTextAt(0, test->input_external);
-    main_script.InsertTextAt(0, test->input_main);
+    pugi::xml_document out;
+    auto main_node = out.append_child("script");
+    auto registry_node = out.append_child("registry");
 
-    // Analyze external script
-    ASSERT_EQ(external_script.Scan().second, proto::StatusCode::OK);
-    ASSERT_EQ(external_script.Parse().second, proto::StatusCode::OK);
-    ASSERT_EQ(external_script.Analyze().second, proto::StatusCode::OK);
+    // Read the registry
+    SchemaRegistry registry;
+    std::vector<std::unique_ptr<Script>> registry_scripts;
+    for (size_t i = 0; i < test->registry.size(); ++i) {
+        auto& entry = test->registry[i];
+        registry_scripts.push_back(std::make_unique<Script>(i + 1, entry.database_name, entry.schema_name));
+
+        auto& script = *registry_scripts.back();
+        script.InsertTextAt(0, entry.input);
+        auto scanned = script.Scan();
+        ASSERT_EQ(scanned.second, proto::StatusCode::OK);
+        auto parsed = script.Parse();
+        ASSERT_EQ(parsed.second, proto::StatusCode::OK);
+        auto analyzed = script.Analyze();
+        ASSERT_EQ(analyzed.second, proto::StatusCode::OK);
+
+        registry.AddScript(script, i);
+
+        auto script_node = registry_node.append_child("script");
+        AnalyzerSnapshotTest::EncodeScript(script_node, *script.analyzed_script, false);
+
+        ASSERT_TRUE(Matches(script_node.child("tables"), entry.tables));
+        ASSERT_TRUE(Matches(script_node.child("table-references"), entry.table_references));
+        ASSERT_TRUE(Matches(script_node.child("column-references"), entry.column_references));
+        ASSERT_TRUE(Matches(script_node.child("query-graph"), entry.graph_edges));
+    }
+
+    auto& main_entry = test->script;
+    Script main_script{0};
+    main_script.InsertTextAt(0, main_entry.input);
 
     // Analyze main script
-    SchemaRegistry registry;
-    registry.AddScript(external_script, 0);
-    ASSERT_EQ(main_script.Scan().second, proto::StatusCode::OK);
-    ASSERT_EQ(main_script.Parse().second, proto::StatusCode::OK);
-    ASSERT_EQ(main_script.Analyze(&registry).second, proto::StatusCode::OK);
+    auto main_scan = main_script.Scan();
+    ASSERT_EQ(main_scan.second, proto::StatusCode::OK);
+    auto main_parsed = main_script.Parse();
+    ASSERT_EQ(main_parsed.second, proto::StatusCode::OK);
+    auto main_analyzed = main_script.Analyze(&registry);
+    ASSERT_EQ(main_analyzed.second, proto::StatusCode::OK) << proto::EnumNameStatusCode(main_analyzed.second);
 
-    size_t search_pos = 0;
-    Script* target_script = nullptr;
+    AnalyzerSnapshotTest::EncodeScript(main_node, *main_script.analyzed_script, true);
 
-    if (test->cursor_script == "1") {
-        search_pos = test->input_main.find(test->cursor_search_string);
-        target_script = &main_script;
+    ASSERT_TRUE(Matches(main_node.child("tables"), main_entry.tables));
+    ASSERT_TRUE(Matches(main_node.child("table-references"), main_entry.table_references));
+    ASSERT_TRUE(Matches(main_node.child("column-references"), main_entry.column_references));
+    ASSERT_TRUE(Matches(main_node.child("query-graph"), main_entry.graph_edges));
 
-    } else if (test->cursor_script == "2") {
-        search_pos = test->input_external.find(test->cursor_search_string);
-        target_script = &external_script;
-
-    } else {
-        FAIL() << "unexpected cursor target " << test->cursor_script;
-    }
+    std::string_view target_text = main_script.scanned_script->GetInput();
+    auto search_pos = target_text.find(test->cursor_search_string);
     auto cursor_pos = search_pos + test->cursor_search_index;
     ASSERT_NE(search_pos, std::string::npos);
-    ASSERT_LE(cursor_pos, test->input_main.size()) << test->input_main;
+    ASSERT_LE(cursor_pos, target_text.size());
 
     // Move cursor and get completion
-    target_script->MoveCursor(cursor_pos);
-    auto [completion, completion_status] = target_script->CompleteAtCursor(test->completion_limit);
+    main_script.MoveCursor(cursor_pos);
+    auto [completion, completion_status] = main_script.CompleteAtCursor(test->completion_limit);
     ASSERT_EQ(completion_status, proto::StatusCode::OK);
     ASSERT_NE(completion, nullptr);
 
-    pugi::xml_document out;
     auto completions = out.append_child("completions");
     completions.append_attribute("limit").set_value(test->completion_limit);
     CompletionSnapshotTest::EncodeCompletion(completions, *completion);
 
-    ASSERT_TRUE(Matches(out, test->completions));
+    ASSERT_TRUE(Matches(out.child("completions"), test->completions));
 }
 
 // clang-format off
