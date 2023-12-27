@@ -77,6 +77,33 @@ static void writeTables(pugi::xml_node root, const AnalyzedScript& target) {
 
 namespace testing {
 
+void AnalyzerSnapshotTest::ReadRegistry(const std::vector<TestScript>& spec, pugi::xml_node registry_node,
+                                        SchemaRegistry& registry, std::vector<std::unique_ptr<Script>>& scripts) {
+    for (size_t i = 0; i < spec.size(); ++i) {
+        auto& entry = spec[i];
+        scripts.push_back(std::make_unique<Script>(i + 1, entry.database_name, entry.schema_name));
+
+        auto& script = *scripts.back();
+        script.InsertTextAt(0, entry.input);
+        auto scanned = script.Scan();
+        ASSERT_EQ(scanned.second, proto::StatusCode::OK);
+        auto parsed = script.Parse();
+        ASSERT_EQ(parsed.second, proto::StatusCode::OK);
+        auto analyzed = script.Analyze();
+        ASSERT_EQ(analyzed.second, proto::StatusCode::OK);
+
+        registry.AddScript(script, i);
+
+        auto script_node = registry_node.append_child("script");
+        AnalyzerSnapshotTest::EncodeScript(script_node, *script.analyzed_script, false);
+
+        ASSERT_TRUE(Matches(script_node.child("tables"), entry.tables));
+        ASSERT_TRUE(Matches(script_node.child("table-references"), entry.table_references));
+        ASSERT_TRUE(Matches(script_node.child("column-references"), entry.column_references));
+        ASSERT_TRUE(Matches(script_node.child("query-graph"), entry.graph_edges));
+    }
+}
+
 void operator<<(std::ostream& out, const AnalyzerSnapshotTest& p) { out << p.name; }
 
 void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript& script, bool is_main) {
