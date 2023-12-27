@@ -23,11 +23,13 @@ TEST_P(AnalyzerSnapshotTestSuite, Test) {
     auto main_node = out.append_child("script");
     auto registry_node = out.append_child("registry");
 
+    // Read registry
     SchemaRegistry registry;
     std::vector<std::unique_ptr<Script>> registry_scripts;
     ASSERT_NO_FATAL_FAILURE(
         AnalyzerSnapshotTest::ReadRegistry(test->registry, registry_node, registry, registry_scripts));
 
+    // Read main script
     Script main_script{0};
     ASSERT_NO_FATAL_FAILURE(AnalyzerSnapshotTest::ReadScript(test->script, registry, main_node, main_script));
 }
