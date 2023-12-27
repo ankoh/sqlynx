@@ -77,7 +77,7 @@ static void writeTables(pugi::xml_node root, const AnalyzedScript& target) {
 
 namespace testing {
 
-void AnalyzerSnapshotTest::TestRegistrySnapshot(const std::vector<AnalysisSnapshot>& snaps, pugi::xml_node& node,
+void AnalyzerSnapshotTest::TestRegistrySnapshot(const std::vector<ScriptAnalysisSnapshot>& snaps, pugi::xml_node& node,
                                                 SchemaRegistry& registry, std::vector<std::unique_ptr<Script>>& scripts,
                                                 size_t& entry_ids) {
     for (size_t i = 0; i < snaps.size(); ++i) {
@@ -106,7 +106,7 @@ void AnalyzerSnapshotTest::TestRegistrySnapshot(const std::vector<AnalysisSnapsh
     }
 }
 
-void AnalyzerSnapshotTest::TestMainScriptSnapshot(const AnalysisSnapshot& snap, const SchemaRegistry& registry,
+void AnalyzerSnapshotTest::TestMainScriptSnapshot(const ScriptAnalysisSnapshot& snap, const SchemaRegistry& registry,
                                                   pugi::xml_node& node, Script& script, size_t entry_id) {
     script.InsertTextAt(entry_id, snap.input);
 
