@@ -61,6 +61,15 @@ static FFIResult* packError(proto::StatusCode status) {
         case proto::StatusCode::SCHEMA_REGISTRY_SCRIPT_UNKNOWN:
             message = "Script is missing in schema registry";
             break;
+        case proto::StatusCode::SCHEMA_REGISTRY_DESCRIPTOR_TABLES_NULL:
+            message = "Schema descriptor field `tables` is null or empty";
+            break;
+        case proto::StatusCode::SCHEMA_REGISTRY_DESCRIPTOR_TABLE_NAME_EMPTY:
+            message = "Table name in schema descriptor is null or empty";
+            break;
+        case proto::StatusCode::SCHEMA_REGISTRY_DESCRIPTOR_TABLE_NAME_COLLISION:
+            message = "Schema descriptor contains a duplicate table name";
+            break;
         case proto::StatusCode::COMPLETION_MISSES_CURSOR:
             message = "Completion requires a script cursor";
             break;
