@@ -56,7 +56,7 @@ SQLynx was built for specific database systems.
 The systems Hyper, Umbra, NoisePage, AlloyDB and DuckDB all use Bison parsers derived from the PostgreSQL grammar.
 The PostgreSQL grammar stood the test of time and established itself as de-facto reference for SQL syntax.
 Staying close to PostgreSQL simplifies building frontends for these database systems without worrying too much about grammar differences.
-SQLynx builds around a carefully optimized and very fast parser based on the PostgreSQL-grammar to provide lightweight semantic analysis passes, running on every single keystroke.
+SQLynx builds around a carefully optimized and very fast parser based on the PostgreSQL-grammar and provides lightweight semantic analysis passes, running on every single keystroke.
 
 SQLynx is still doing work in `O(text-length)` with every input event, as opposed to `O(change-size)` by Tree-sitter.
 Yet, SQLynx analyzes most input in well under a millisecond in your browser, even when replacing the entire text.
@@ -68,7 +68,7 @@ SQLynx maintains B+-tree ropes, dictionary-encodes and tags SQL object names in-
 ### What does "fast" mean in numbers?
 
 Here are timings for TPC-DS Q1 on my laptop. All steps run single-threaded on a M1Max.
-SQLynx spends **5us** with scanning, **10us** with parsing, and **15us** with analyzing.
+SQLynx spends **5us** with scanning, **10us** with parsing, and **15us** with analyzing, leaving plenty of time for Javascript to reflect changes in the UI.
 
 ```
 Run on (10 X 24.1324 MHz CPU s)
