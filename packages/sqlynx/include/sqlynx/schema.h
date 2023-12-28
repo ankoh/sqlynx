@@ -178,10 +178,10 @@ class Schema {
 
    public:
     /// Construcutor
-    Schema(uint32_t external_id, std::string_view database_name, std::string_view schema_name);
+    Schema(ExternalID external_id, std::string_view database_name, std::string_view schema_name);
 
-    /// Get the origin
-    uint32_t GetExternalID() const { return external_id; }
+    /// Get the external id
+    ExternalID GetExternalID() const { return external_id; }
     /// Get the database name
     std::string_view GetDatabaseName() const { return database_name; }
     /// Get the schema name
@@ -210,6 +210,26 @@ class Schema {
                             std::vector<ResolvedTableColumn>& out) const;
 };
 
+class ExternalSchema : public Schema {
+   protected:
+    /// A schema descriptors
+    struct Descriptor {
+        /// The descriptor
+        const proto::SchemaDescriptor& descriptor;
+        /// The descriptor buffer
+        std::unique_ptr<std::byte[]> descriptor_buffer;
+    };
+    /// The schema descriptors
+    std::vector<Descriptor> descriptor_buffers;
+
+   public:
+    /// Construcutor
+    ExternalSchema(ExternalID external_id, std::string_view database_name, std::string_view schema_name);
+    /// Insert a table
+    proto::StatusCode InsertTables(const proto::SchemaDescriptor& descriptor,
+                                   std::unique_ptr<std::byte[]> descriptor_buffer);
+};
+
 class SchemaRegistry {
    public:
     using Rank = uint32_t;
@@ -223,8 +243,8 @@ class SchemaRegistry {
         Rank rank;
     };
 
-    /// The scripts
-    std::unordered_map<ExternalID, ScriptEntry> scripts;
+    /// The script entries
+    std::unordered_map<ExternalID, ScriptEntry> script_entries;
     /// The schemas
     std::unordered_map<ExternalID, std::reference_wrapper<Schema>> schemas;
     /// The ranked schemas
@@ -239,7 +259,7 @@ class SchemaRegistry {
     /// Get the schemas
     auto& GetRankedSchemas() const { return ranked_schemas; }
     /// Get the scripts
-    auto& GetScripts() const { return scripts; }
+    auto& GetScripts() const { return script_entries; }
 
     /// Add a script
     proto::StatusCode AddScript(Script& script, Rank rank);
