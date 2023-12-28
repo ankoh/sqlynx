@@ -247,6 +247,14 @@ class SchemaRegistry {
     proto::StatusCode UpdateScript(Script& script);
     /// Drop a script
     void DropScript(Script& script);
+    /// Add a schema
+    proto::StatusCode AddSchema(ExternalID external_id, Rank rank, std::string_view database_name,
+                                std::string_view schema_name);
+    /// Drop a schema
+    proto::StatusCode DropSchema(ExternalID external_id);
+    /// Insert schema tables as serialized FlatBuffer
+    proto::StatusCode InsertSchemaTables(ExternalID external_id, std::span<std::byte> descriptor_data,
+                                         std::unique_ptr<std::byte[]> descriptor_buffer);
 
     /// Resolve a table by id
     std::optional<Schema::ResolvedTable> ResolveTable(ExternalObjectID table_id) const;
