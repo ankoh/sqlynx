@@ -9,6 +9,13 @@ namespace {
 
 constexpr auto OK = static_cast<uint32_t>(proto::StatusCode::OK);
 
+std::pair<std::string_view, std::unique_ptr<char[]>> copyText(std::string_view text) {
+    auto buffer = std::unique_ptr<char[]>(new char[text.size()]);
+    memcpy(buffer.get(), text.data(), text.size());
+    std::string_view buffer_text{buffer.get(), text.size()};
+    return {buffer_text, std::move(buffer)};
+}
+
 TEST(ApiTest, TPCH_Q2) {
     const std::string_view external_script_text = R"SQL(
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
@@ -69,7 +76,8 @@ limit 100
     )SQL";
 
     auto* external_script = sqlynx_script_new(1, nullptr, 0, nullptr, 0);
-    sqlynx_script_insert_text_at(external_script, 0, external_script_text.data(), external_script_text.size());
+    auto [external_text, external_text_buffer] = copyText(external_script_text);
+    sqlynx_script_insert_text_at(external_script, 0, external_text_buffer.release(), external_text.size());
 
     auto external_scanned = sqlynx_script_scan(external_script);
     auto external_parsed = sqlynx_script_parse(external_script);
@@ -85,7 +93,8 @@ limit 100
     sqlynx_schema_registry_add_script(registry, external_script, 0);
 
     auto* main_script = sqlynx_script_new(2, nullptr, 0, nullptr, 0);
-    sqlynx_script_insert_text_at(main_script, 0, main_script_text.data(), main_script_text.size());
+    auto [main_text, main_text_buffer] = copyText(external_script_text);
+    sqlynx_script_insert_text_at(main_script, 0, main_text_buffer.release(), main_text.size());
 
     auto main_scanned = sqlynx_script_scan(main_script);
     auto main_parsed = sqlynx_script_parse(main_script);
