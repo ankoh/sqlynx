@@ -124,16 +124,15 @@ proto::StatusCode SchemaRegistry::UpdateScript(Script& script) {
     return proto::StatusCode::OK;
 }
 
-proto::StatusCode SchemaRegistry::EraseScript(Script& script) {
+void SchemaRegistry::DropScript(Script& script) {
     auto iter = scripts.find(script.external_id);
     if (iter == scripts.end()) {
-        return proto::StatusCode::SCHEMA_REGISTRY_SCRIPT_UNKNOWN;
+        return;
     }
     auto rank = iter->second.rank;
     ranked_schemas.erase({rank, iter->second.script.get()});
     scripts.erase(iter);
     schemas.erase(script.external_id);
-    return proto::StatusCode::OK;
 }
 
 std::optional<Schema::ResolvedTable> SchemaRegistry::ResolveTable(ExternalObjectID table_id) const {
