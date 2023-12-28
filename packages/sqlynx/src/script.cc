@@ -443,7 +443,7 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
 }
 
 /// Constructor
-Script::Script(uint32_t external_id, std::string database_name, std::string schema_name)
+Script::Script(uint32_t external_id, std::string_view database_name, std::string_view schema_name)
     : external_id(external_id), text(1024), database_name(database_name), schema_name(schema_name) {}
 
 /// Insert a character at an offet
