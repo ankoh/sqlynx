@@ -292,7 +292,7 @@ export class SQLynx {
     }
 }
 
-export namespace QualifiedID {
+export namespace ExternalID {
     export type Value = bigint;
 
     /// Create the qualified id
@@ -312,7 +312,7 @@ export namespace QualifiedID {
     }
     /// Is a null id?
     export function isNull(value: Value): boolean {
-        return QualifiedID.getIndex(value) == 0xffffffff;
+        return ExternalID.getIndex(value) == 0xffffffff;
     }
 }
 

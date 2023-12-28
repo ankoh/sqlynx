@@ -14,14 +14,14 @@ export interface Boundaries {
 
 export interface GraphViewModel {
     nodes: NodeViewModel[];
-    nodesByTable: Map<sqlynx.QualifiedID.Value, NodeViewModel>;
+    nodesByTable: Map<sqlynx.ExternalID.Value, NodeViewModel>;
     edges: Map<GraphConnectionId.Value, EdgeViewModel>;
     boundaries: Boundaries;
 }
 
 export interface NodeViewModel {
     nodeId: number;
-    tableId: sqlynx.QualifiedID.Value;
+    tableId: sqlynx.ExternalID.Value;
     name: string;
     x: number;
     y: number;
@@ -38,13 +38,13 @@ interface TableColumn {
 
 export interface EdgeViewModel {
     connectionId: GraphConnectionId.Value;
-    queryEdges: Set<sqlynx.QualifiedID.Value>;
-    columnRefs: Set<sqlynx.QualifiedID.Value>;
+    queryEdges: Set<sqlynx.ExternalID.Value>;
+    columnRefs: Set<sqlynx.ExternalID.Value>;
     fromNode: number;
-    fromTable: sqlynx.QualifiedID.Value;
+    fromTable: sqlynx.ExternalID.Value;
     fromPort: number;
     toNode: number;
-    toTable: sqlynx.QualifiedID.Value;
+    toTable: sqlynx.ExternalID.Value;
     toPort: number;
     type: EdgeType;
     path: string;
@@ -85,7 +85,7 @@ export function computeGraphViewModel(state: AppState): GraphViewModel {
         };
     }
     const nodes = [];
-    const nodesByTable = new Map<sqlynx.QualifiedID.Value, NodeViewModel>();
+    const nodesByTable = new Map<sqlynx.ExternalID.Value, NodeViewModel>();
     const edges = new Map<GraphConnectionId.Value, EdgeViewModel>();
 
     // Collect parsed and analyzed scripts
@@ -123,16 +123,16 @@ export function computeGraphViewModel(state: AppState): GraphViewModel {
         // Table ID is null?
         // That means we couldn't resolve a table.
         // For now, just skip them.
-        if (sqlynx.QualifiedID.isNull(tableId)) {
+        if (sqlynx.ExternalID.isNull(tableId)) {
             continue;
         }
 
         // Is an external table?
-        const context = sqlynx.QualifiedID.getContext(tableId);
+        const context = sqlynx.ExternalID.getContext(tableId);
         const analyzed = analyzedScripts[context] ?? null;
 
         if (analyzed) {
-            const tableIdx = sqlynx.QualifiedID.getIndex(tableId);
+            const tableIdx = sqlynx.ExternalID.getIndex(tableId);
             const table = analyzed.tables(tableIdx, tmpTable);
             const tableName = table?.tableName();
             const columns: TableColumn[] = [];
@@ -181,7 +181,7 @@ export function computeGraphViewModel(state: AppState): GraphViewModel {
         for (let l = 0; l < countLeft; ++l) {
             const leftEdgeNode = layout.edgeNodes(begin + l, tmpGraphEdgeNode1)!;
             const leftTableId = leftEdgeNode.tableId();
-            if (sqlynx.QualifiedID.isNull(leftTableId)) {
+            if (sqlynx.ExternalID.isNull(leftTableId)) {
                 continue;
             }
             const leftNode = nodesByTable.get(leftTableId)!;
@@ -189,7 +189,7 @@ export function computeGraphViewModel(state: AppState): GraphViewModel {
             for (let r = 0; r < countRight; ++r) {
                 const rightEdgeNode = layout.edgeNodes(begin + countLeft + r, tmpGraphEdgeNode2)!;
                 const rightTableId = rightEdgeNode.tableId();
-                if (sqlynx.QualifiedID.isNull(rightTableId)) {
+                if (sqlynx.ExternalID.isNull(rightTableId)) {
                     continue;
                 }
                 const rightNode = nodesByTable.get(rightTableId)!;
