@@ -22,16 +22,32 @@ interface SQLynxModuleExports {
     sqlynx_script_format: (ptr: number) => number;
     sqlynx_script_scan: (ptr: number) => number;
     sqlynx_script_parse: (ptr: number) => number;
-    sqlynx_script_analyze: (ptr: number, path_ptr: number) => number;
+    sqlynx_script_analyze: (ptr: number, registry_ptr: number) => number;
     sqlynx_script_move_cursor: (ptr: number, offset: number) => number;
     sqlynx_script_complete_at_cursor: (ptr: number, limit: number) => number;
     sqlynx_script_get_statistics: (ptr: number) => number;
 
     sqlynx_schema_registry_new: () => number;
     sqlynx_schema_registry_delete: (ptr: number) => number;
-    sqlynx_schema_registry_add_script: (path_ptr: number, script_ptr: number, rank: number) => number;
-    sqlynx_schema_registry_update_script: (path_ptr: number, script_ptr: number) => number;
-    sqlynx_schema_registry_erase_script: (path_ptr: number, script_ptr: number) => number;
+    sqlynx_schema_registry_add_script: (registry_ptr: number, script_ptr: number, rank: number) => number;
+    sqlynx_schema_registry_update_script: (registry_ptr: number, script_ptr: number) => number;
+    sqlynx_schema_registry_drop_script: (registry_ptr: number, script_ptr: number) => void;
+    sqlynx_schema_registry_add_schema: (
+        registry_ptr: number,
+        external_id: number,
+        rank: number,
+        database_name_ptr: number,
+        database_name_size: number,
+        schema_name_ptr: number,
+        schema_name_size: number,
+    ) => number;
+    sqlynx_schema_registry_drop_schema: (registry_ptr: number, external_id: number) => void;
+    sqlynx_schema_registry_insert_schema_tables: (
+        registry_ptr: number,
+        external_id: number,
+        data_ptr: number,
+        data_size: number,
+    ) => number;
 
     sqlynx_schema_layout_new: () => number;
     sqlynx_schema_layout_delete: (ptr: number) => void;
@@ -64,73 +80,90 @@ export class SQLynx {
         this.encoder = new TextEncoder();
         this.decoder = new TextDecoder();
         this.instance = instance;
-        const parserExports = instance.exports;
-        const parserMemory = parserExports['memory'] as unknown as WebAssembly.Memory;
-        this.memory = parserMemory;
+        this.memory = instance.exports['memory'] as unknown as WebAssembly.Memory;
         this.instanceExports = {
-            sqlynx_version: parserExports['sqlynx_version'] as () => number,
-            sqlynx_malloc: parserExports['sqlynx_malloc'] as (length: number) => number,
-            sqlynx_free: parserExports['sqlynx_free'] as (ptr: number) => void,
-            sqlynx_result_delete: parserExports['sqlynx_result_delete'] as (ptr: number) => void,
+            sqlynx_version: instance.exports['sqlynx_version'] as () => number,
+            sqlynx_malloc: instance.exports['sqlynx_malloc'] as (length: number) => number,
+            sqlynx_free: instance.exports['sqlynx_free'] as (ptr: number) => void,
+            sqlynx_result_delete: instance.exports['sqlynx_result_delete'] as (ptr: number) => void,
 
-            sqlynx_script_new: parserExports['sqlynx_script_new'] as (
+            sqlynx_script_new: instance.exports['sqlynx_script_new'] as (
                 id: number,
                 db_name_ptr: number,
                 db_name_length: number,
                 schema_name_ptr: number,
                 schema_name_length: number,
             ) => number,
-            sqlynx_script_delete: parserExports['sqlynx_script_delete'] as (ptr: number) => void,
-            sqlynx_script_insert_text_at: parserExports['sqlynx_script_insert_text_at'] as (
+            sqlynx_script_delete: instance.exports['sqlynx_script_delete'] as (ptr: number) => void,
+            sqlynx_script_insert_text_at: instance.exports['sqlynx_script_insert_text_at'] as (
                 ptr: number,
                 offset: number,
                 textPtr: number,
                 textLength: number,
             ) => void,
-            sqlynx_script_insert_char_at: parserExports['sqlynx_script_insert_char_at'] as (
+            sqlynx_script_insert_char_at: instance.exports['sqlynx_script_insert_char_at'] as (
                 ptr: number,
                 offset: number,
                 character: number,
             ) => void,
-            sqlynx_script_erase_text_range: parserExports['sqlynx_script_erase_text_range'] as (
+            sqlynx_script_erase_text_range: instance.exports['sqlynx_script_erase_text_range'] as (
                 ptr: number,
                 offset: number,
                 length: number,
             ) => void,
-            sqlynx_script_to_string: parserExports['sqlynx_script_to_string'] as (ptr: number) => number,
-            sqlynx_script_format: parserExports['sqlynx_script_format'] as (ptr: number) => number,
-            sqlynx_script_scan: parserExports['sqlynx_script_scan'] as (ptr: number) => number,
-            sqlynx_script_parse: parserExports['sqlynx_script_parse'] as (ptr: number) => number,
-            sqlynx_script_analyze: parserExports['sqlynx_script_analyze'] as (ptr: number, external: number) => number,
-            sqlynx_script_get_statistics: parserExports['sqlynx_script_get_statistics'] as (ptr: number) => number,
-            sqlynx_script_move_cursor: parserExports['sqlynx_script_move_cursor'] as (
+            sqlynx_script_to_string: instance.exports['sqlynx_script_to_string'] as (ptr: number) => number,
+            sqlynx_script_format: instance.exports['sqlynx_script_format'] as (ptr: number) => number,
+            sqlynx_script_scan: instance.exports['sqlynx_script_scan'] as (ptr: number) => number,
+            sqlynx_script_parse: instance.exports['sqlynx_script_parse'] as (ptr: number) => number,
+            sqlynx_script_analyze: instance.exports['sqlynx_script_analyze'] as (
+                ptr: number,
+                external: number,
+            ) => number,
+            sqlynx_script_get_statistics: instance.exports['sqlynx_script_get_statistics'] as (ptr: number) => number,
+            sqlynx_script_move_cursor: instance.exports['sqlynx_script_move_cursor'] as (
                 ptr: number,
                 offset: number,
             ) => number,
-            sqlynx_script_complete_at_cursor: parserExports['sqlynx_script_complete_at_cursor'] as (
+            sqlynx_script_complete_at_cursor: instance.exports['sqlynx_script_complete_at_cursor'] as (
                 ptr: number,
                 limit: number,
             ) => number,
 
-            sqlynx_schema_registry_new: parserExports['sqlynx_schema_registry_new'] as () => number,
-            sqlynx_schema_registry_delete: parserExports['sqlynx_schema_registry_delete'] as (ptr: number) => number,
-            sqlynx_schema_registry_add_script: parserExports['sqlynx_schema_registry_add_script'] as (
-                path_ptr: number,
+            sqlynx_schema_registry_new: instance.exports['sqlynx_schema_registry_new'] as () => number,
+            sqlynx_schema_registry_delete: instance.exports['sqlynx_schema_registry_delete'] as (ptr: number) => number,
+            sqlynx_schema_registry_add_script: instance.exports['sqlynx_schema_registry_add_script'] as (
+                registry_ptr: number,
                 index: number,
                 script_ptr: number,
             ) => number,
-            sqlynx_schema_registry_update_script: parserExports['sqlynx_schema_registry_update_script'] as (
-                path_ptr: number,
+            sqlynx_schema_registry_update_script: instance.exports['sqlynx_schema_registry_update_script'] as (
+                registry_ptr: number,
                 script_ptr: number,
             ) => number,
-            sqlynx_schema_registry_erase_script: parserExports['sqlynx_schema_registry_erase_script'] as (
-                path_ptr: number,
+            sqlynx_schema_registry_drop_script: instance.exports['sqlynx_schema_registry_drop_script'] as (
+                registry_ptr: number,
                 script_ptr: number,
+            ) => void,
+            sqlynx_schema_registry_add_schema: instance.exports['sqlynx_schema_registry_add_schema'] as (
+                registry_ptr: number,
+                rank: number,
+                external_id: number,
+                database_name_ptr: number,
+                database_name_size: number,
+                schema_name_ptr: number,
+                schema_name_size: number,
             ) => number,
+            sqlynx_schema_registry_drop_schema: instance.exports['sqlynx_schema_registry_drop_schema'] as (
+                registry_ptr: number,
+                external_id: number,
+            ) => void,
+            sqlynx_schema_registry_insert_schema_tables: instance.exports[
+                'sqlynx_schema_registry_insert_schema_tables'
+            ] as (registry_ptr: number, external_id: number, data_ptr: number, data_size: number) => number,
 
-            sqlynx_schema_layout_new: parserExports['sqlynx_schema_layout_new'] as () => number,
-            sqlynx_schema_layout_delete: parserExports['sqlynx_schema_layout_delete'] as (ptr: number) => void,
-            sqlynx_schema_layout_configure: parserExports['sqlynx_schema_layout_configure'] as (
+            sqlynx_schema_layout_new: instance.exports['sqlynx_schema_layout_new'] as () => number,
+            sqlynx_schema_layout_delete: instance.exports['sqlynx_schema_layout_delete'] as (ptr: number) => void,
+            sqlynx_schema_layout_configure: instance.exports['sqlynx_schema_layout_configure'] as (
                 ptr: number,
                 boardWidth: number,
                 boardHeight: number,
@@ -139,7 +172,7 @@ export class SQLynx {
                 tableWidth: number,
                 tableHeight: number,
             ) => void,
-            sqlynx_schema_layout_load_script: parserExports['sqlynx_schema_layout_load_script'] as (
+            sqlynx_schema_layout_load_script: instance.exports['sqlynx_schema_layout_load_script'] as (
                 ptr: number,
                 script: number,
             ) => number,
@@ -184,7 +217,7 @@ export class SQLynx {
         return instanceRef.instance;
     }
 
-    public allocateString(text: string): [number, number] {
+    public copyString(text: string): [number, number] {
         // Empty strings are passed as null pointer
         if (text.length == 0) {
             return [0, 0];
@@ -192,14 +225,31 @@ export class SQLynx {
         // To convert a JavaScript string s, the output space needed for full conversion is never less
         // than s.length bytes and never greater than s.length * 3 bytes.
         const textBegin = this.instanceExports.sqlynx_malloc(text.length * 3);
-        const textBuffer = new Uint8Array(this.memory.buffer).subarray(textBegin, textBegin + text.length * 3);
-        const textEncoded = this.encoder.encodeInto(text, textBuffer);
-        // Nothing written?
-        if (textEncoded.written == undefined || textEncoded.written == 0) {
-            this.instanceExports.sqlynx_free(textBegin);
+        // Allocation failed?
+        if (textBegin == 0) {
             throw new Error(`failed to allocate a string of size ${text.length}`);
         }
+        // Encode as UTF-8
+        const textBuffer = new Uint8Array(this.memory.buffer).subarray(textBegin, textBegin + text.length * 3);
+        const textEncoded = this.encoder.encodeInto(text, textBuffer);
+        if (textEncoded.written == undefined || textEncoded.written == 0) {
+            this.instanceExports.sqlynx_free(textBegin);
+            throw new Error(`failed to encode a string of size ${text.length}`);
+        }
         return [textBegin, textEncoded.written];
+    }
+
+    public copyBuffer(src: Uint8Array): [number, number] {
+        if (src.length == 0) {
+            return [0, 0];
+        }
+        const ptr = this.instanceExports.sqlynx_malloc(src.length);
+        if (ptr == 0) {
+            throw new Error(`failed to allocate a buffer of size ${src.length}`);
+        }
+        const dst = new Uint8Array(this.memory.buffer).subarray(ptr, src.length);
+        dst.set(src);
+        return [ptr, src.length];
     }
 
     public createScript(
@@ -215,11 +265,11 @@ export class SQLynx {
             schemaNamePtr = 0,
             schemaNameLength = 0;
         if (databaseName != null) {
-            [databaseNamePtr, databaseNameLength] = this.allocateString(databaseName);
+            [databaseNamePtr, databaseNameLength] = this.copyString(databaseName);
         }
         if (schemaName != null) {
             try {
-                [schemaNamePtr, schemaNameLength] = this.allocateString(schemaName);
+                [schemaNamePtr, schemaNameLength] = this.copyString(schemaName);
             } catch (e: any) {
                 this.instanceExports.sqlynx_free(databaseNamePtr);
                 throw e;
@@ -227,13 +277,11 @@ export class SQLynx {
         }
         const scriptPtr = this.instanceExports.sqlynx_script_new(
             context,
-            databaseNamePtr,
+            databaseNamePtr, // pass ownership over buffer
             databaseNameLength,
-            schemaNamePtr,
+            schemaNamePtr, // pass ownership over buffer
             schemaNameLength,
         );
-        this.instanceExports.sqlynx_free(schemaNamePtr);
-        this.instanceExports.sqlynx_free(databaseNamePtr);
         return new SQLynxScript(this, scriptPtr);
     }
 
@@ -394,11 +442,9 @@ export class SQLynxScript {
         }
         // To convert a JavaScript string s, the output space needed for full conversion is never less
         // than s.length bytes and never greater than s.length * 3 bytes.
-        const [textBegin, textLength] = this.api.allocateString(text);
+        const [textBegin, textLength] = this.api.copyString(text);
         // Insert into rope
         this.api.instanceExports.sqlynx_script_insert_text_at(scriptPtr, offset, textBegin, textLength);
-        // Delete text buffer
-        this.api.instanceExports.sqlynx_free(textBegin);
     }
     /// Earse a range of characters
     public eraseTextRange(offset: number, length: number) {
@@ -493,19 +539,80 @@ export class SQLynxSchemaRegistry {
         }
         return this.registryPtr!;
     }
-    /// Append a script in the search path
+    /// Add a script in the registry
     public addScript(script: SQLynxScript, rank: number) {
         const registryPtr = this.assertNotNull();
         const scriptPtr = script.assertNotNull();
         const result = this.api.instanceExports.sqlynx_schema_registry_add_script(registryPtr, scriptPtr, rank);
         this.api.readStatusResult(result);
     }
-    /// Update a script in the search path
+    /// Update a script from the registry
+    public dropScript(script: SQLynxScript) {
+        const registryPtr = this.assertNotNull();
+        const scriptPtr = script.assertNotNull();
+        this.api.instanceExports.sqlynx_schema_registry_drop_script(registryPtr, scriptPtr);
+    }
+    /// Update a script in the registry
     public updateScript(script: SQLynxScript) {
         const registryPtr = this.assertNotNull();
         const scriptPtr = script.assertNotNull();
         const result = this.api.instanceExports.sqlynx_schema_registry_update_script(registryPtr, scriptPtr);
         this.api.readStatusResult(result);
+    }
+    /// Add an external schema
+    public addSchema(id: number, rank: number, databaseName: string | null, schemaName: string | null) {
+        const registryPtr = this.assertNotNull();
+        let databaseNamePtr = 0,
+            databaseNameLength = 0,
+            schemaNamePtr = 0,
+            schemaNameLength = 0;
+        if (databaseName != null) {
+            [databaseNamePtr, databaseNameLength] = this.api.copyString(databaseName);
+        }
+        if (schemaName != null) {
+            try {
+                [schemaNamePtr, schemaNameLength] = this.api.copyString(schemaName);
+            } catch (e: any) {
+                this.api.instanceExports.sqlynx_free(databaseNamePtr);
+                throw e;
+            }
+        }
+        const result = this.api.instanceExports.sqlynx_schema_registry_add_schema(
+            registryPtr,
+            id,
+            rank,
+            databaseNamePtr, // pass ownership over name buffer
+            databaseNameLength,
+            schemaNamePtr, // pass ownership over name buffer
+            schemaNameLength,
+        );
+        this.api.readStatusResult(result);
+    }
+    /// Drop an external schema
+    public dropSchema(id: number) {
+        const registryPtr = this.assertNotNull();
+        this.api.instanceExports.sqlynx_schema_registry_drop_script(registryPtr, id);
+    }
+    /// Insert tables of an external schema.
+    /// Fails if one of the tables already exists in the external schema.
+    public insertSchemaTables(id: number, buffer: Uint8Array) {
+        const registryPtr = this.assertNotNull();
+        const [bufferPtr, bufferLength] = this.api.copyBuffer(buffer);
+        const result = this.api.instanceExports.sqlynx_schema_registry_insert_schema_tables(
+            registryPtr,
+            id,
+            bufferPtr, // pass ownership over buffer
+            bufferLength,
+        );
+        this.api.readStatusResult(result);
+    }
+    /// Insert tables of an external schema
+    public insertSchemaTablesT(id: number, descriptor: proto.SchemaDescriptorT) {
+        const builder = new flatbuffers.Builder();
+        const descriptorOffset = descriptor.pack(builder);
+        builder.finish(descriptorOffset);
+        const buffer = builder.asUint8Array();
+        this.insertSchemaTables(id, buffer);
     }
 }
 

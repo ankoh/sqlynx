@@ -89,7 +89,7 @@ extern "C" SQLynxVersion* sqlynx_version() { return &sqlynx::VERSION; }
 /// Allocate memory
 extern "C" std::byte* sqlynx_malloc(size_t length) { return new std::byte[length]; }
 /// Delete memory
-extern "C" void sqlynx_free(void* buffer) { delete[] reinterpret_cast<std::byte*>(buffer); }
+extern "C" void sqlynx_free(const void* buffer) { delete[] reinterpret_cast<const std::byte*>(buffer); }
 
 /// Delete a result
 extern "C" void sqlynx_result_delete(FFIResult* result) {
@@ -109,6 +109,8 @@ extern "C" Script* sqlynx_script_new(uint32_t external_id, const char* database_
     if (schema_name_ptr != nullptr) {
         schema_name = {schema_name_ptr, schema_name_length};
     }
+    sqlynx_free(database_name_ptr);
+    sqlynx_free(schema_name_ptr);
     return new Script(external_id, std::move(database_name), std::move(schema_name));
 }
 /// Delete a script
@@ -121,6 +123,7 @@ extern "C" void sqlynx_script_insert_char_at(Script* script, size_t offset, uint
 extern "C" void sqlynx_script_insert_text_at(Script* script, size_t offset, const char* text_ptr, size_t text_length) {
     std::string_view text{text_ptr, text_length};
     script->InsertTextAt(offset, text);
+    sqlynx_free(text_ptr);
 }
 /// Erase a text range
 extern "C" void sqlynx_script_erase_text_range(Script* script, size_t offset, size_t count) {
@@ -259,29 +262,39 @@ extern "C" sqlynx::SchemaRegistry* sqlynx_schema_registry_new() { return new sql
 /// Create a schema registry
 extern "C" void sqlynx_schema_registry_delete(sqlynx::SchemaRegistry* registry) { delete registry; }
 /// Add a script in the schema registry
-extern "C" FFIResult* sqlynx_schema_registry_add_script(sqlynx::SchemaRegistry* path, sqlynx::Script* script,
+extern "C" FFIResult* sqlynx_schema_registry_add_script(sqlynx::SchemaRegistry* registry, sqlynx::Script* script,
                                                         size_t rank) {
-    auto status = path->AddScript(*script, rank);
+    auto status = registry->AddScript(*script, rank);
     if (status != proto::StatusCode::OK) {
         return packError(status);
     }
     return packOK();
 }
 /// Update a script in the schema registry
-extern "C" FFIResult* sqlynx_schema_registry_update_script(sqlynx::SchemaRegistry* path, sqlynx::Script* script) {
-    auto status = path->UpdateScript(*script);
+extern "C" FFIResult* sqlynx_schema_registry_update_script(sqlynx::SchemaRegistry* registry, sqlynx::Script* script) {
+    auto status = registry->UpdateScript(*script);
     if (status != proto::StatusCode::OK) {
         return packError(status);
     }
     return packOK();
 }
-/// Erase entry in the schema registry
-extern "C" FFIResult* sqlynx_schema_registry_erase_script(sqlynx::SchemaRegistry* path, sqlynx::Script* script) {
-    auto status = path->EraseScript(*script);
-    if (status != proto::StatusCode::OK) {
-        return packError(status);
-    }
-    return packOK();
+/// Drop entry in the schema registry
+extern "C" void sqlynx_schema_registry_drop_script(sqlynx::SchemaRegistry* registry, sqlynx::Script* script) {
+    registry->DropScript(*script);
+}
+/// Add an external schema in the schema registry
+extern "C" FFIResult* sqlynx_schema_registry_add_schema(sqlynx::SchemaRegistry* registry, size_t external_id,
+                                                        size_t rank, const char* database_name_ptr,
+                                                        size_t database_name_length, const char* schema_name_ptr,
+                                                        size_t schema_name_length) {
+    return nullptr;
+}
+/// Drop an external schema
+extern "C" void sqlynx_schema_registry_drop_schema(sqlynx::SchemaRegistry* registry, size_t external_id) {}
+/// Insert tables into an external schema
+extern "C" FFIResult* sqlynx_schema_registry_insert_schema_tables(sqlynx::SchemaRegistry* registry, size_t external_id,
+                                                                  const void* data_ptr, size_t data_size) {
+    return nullptr;
 }
 
 /// Create a schema graph

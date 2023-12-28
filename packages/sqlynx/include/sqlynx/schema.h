@@ -245,8 +245,8 @@ class SchemaRegistry {
     proto::StatusCode AddScript(Script& script, Rank rank);
     /// Update a script
     proto::StatusCode UpdateScript(Script& script);
-    /// Erase a script
-    proto::StatusCode EraseScript(Script& script);
+    /// Drop a script
+    void DropScript(Script& script);
 
     /// Resolve a table by id
     std::optional<Schema::ResolvedTable> ResolveTable(ExternalObjectID table_id) const;

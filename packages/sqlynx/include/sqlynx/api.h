@@ -19,7 +19,7 @@ extern "C" sqlynx::SQLynxVersion* sqlynx_version();
 /// Allocate memory
 extern "C" std::byte* sqlynx_malloc(size_t length);
 /// Delete memory
-extern "C" void sqlynx_free(void* buffer);
+extern "C" void sqlynx_free(const void* buffer);
 
 /// A managed FFI result container
 struct FFIResult {
@@ -67,12 +67,22 @@ extern "C" sqlynx::SchemaRegistry* sqlynx_schema_registry_new();
 /// Create a schema registry
 extern "C" void sqlynx_schema_registry_delete(sqlynx::SchemaRegistry* registry);
 /// Add a script to the schema registry
-extern "C" FFIResult* sqlynx_schema_registry_add_script(sqlynx::SchemaRegistry* path, sqlynx::Script* script,
+extern "C" FFIResult* sqlynx_schema_registry_add_script(sqlynx::SchemaRegistry* registry, sqlynx::Script* script,
                                                         size_t rank);
 /// Update a script in the schema registry
-extern "C" FFIResult* sqlynx_schema_registry_update_script(sqlynx::SchemaRegistry* path, sqlynx::Script* script);
-/// Erase script in the schema registry
-extern "C" FFIResult* sqlynx_schema_registry_erase_script(sqlynx::SchemaRegistry* path, sqlynx::Script* script);
+extern "C" FFIResult* sqlynx_schema_registry_update_script(sqlynx::SchemaRegistry* registry, sqlynx::Script* script);
+/// Drop script from the schema registry
+extern "C" void sqlynx_schema_registry_drop_script(sqlynx::SchemaRegistry* registry, sqlynx::Script* script);
+/// Add an external schema in the schema registry
+extern "C" FFIResult* sqlynx_schema_registry_add_schema(sqlynx::SchemaRegistry* registry, size_t external_id,
+                                                        size_t rank, const char* database_name_ptr,
+                                                        size_t database_name_length, const char* schema_name_ptr,
+                                                        size_t schema_name_length);
+/// Drop an external schema
+extern "C" void sqlynx_schema_registry_drop_schema(sqlynx::SchemaRegistry* registry, size_t external_id);
+/// Insert tables into an external schema
+extern "C" FFIResult* sqlynx_schema_registry_insert_schema_tables(sqlynx::SchemaRegistry* registry, size_t external_id,
+                                                                  const void* data_ptr, size_t data_size);
 
 /// Create schema graph
 extern "C" sqlynx::SchemaGrid* sqlynx_schema_layout_new();

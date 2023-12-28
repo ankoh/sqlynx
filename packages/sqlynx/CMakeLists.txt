@@ -61,7 +61,10 @@ if(WASM)
         -Wl,--export=sqlynx_schema_registry_delete \
         -Wl,--export=sqlynx_schema_registry_add_script \
         -Wl,--export=sqlynx_schema_registry_update_script \
-        -Wl,--export=sqlynx_schema_registry_erase_script \
+        -Wl,--export=sqlynx_schema_registry_drop_script \
+        -Wl,--export=sqlynx_schema_registry_add_schema \
+        -Wl,--export=sqlynx_schema_registry_drop_schema \
+        -Wl,--export=sqlynx_schema_registry_insert_schema_tables \
         -Wl,--export=sqlynx_script_new \
         -Wl,--export=sqlynx_script_delete \
         -Wl,--export=sqlynx_script_insert_text_at \

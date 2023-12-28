@@ -1,14 +1,14 @@
 namespace sqlynx.proto;
 
 table SchemaDescriptor {
+    database_name: string;
+    schema_name: string;
     tables: [SchemaTable];
-    table_columns: [SchemaTableColumn];
 }
 
 table SchemaTable {
     table_name: string;
-    columns_begin: uint32;
-    column_count: uint32;
+    columns: [SchemaTableColumn];
 }
 
 table SchemaTableColumn {
