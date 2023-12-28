@@ -92,8 +92,8 @@ function buildDecorationsFromCursor(
     scriptKey: SQLynxScriptKey | null,
     scriptBuffers: SQLynxScriptBuffers,
     scriptCursor: sqlynx.proto.ScriptCursorInfoT | null,
-    focusedColumnRefs: Set<sqlynx.QualifiedID.Value> | null,
-    focusedTableRefs: Set<sqlynx.QualifiedID.Value> | null,
+    focusedColumnRefs: Set<sqlynx.ExternalID.Value> | null,
+    focusedTableRefs: Set<sqlynx.ExternalID.Value> | null,
 ): DecorationSet {
     const builder = new RangeSetBuilder<Decoration>();
     const parsed = scriptBuffers.parsed?.read(new sqlynx.proto.ParsedScript()) ?? null;
@@ -125,8 +125,8 @@ function buildDecorationsFromCursor(
     // Build decorations for column refs
     if (focusedColumnRefs !== null) {
         for (const refId of focusedColumnRefs) {
-            const context = sqlynx.QualifiedID.getContext(refId);
-            const index = sqlynx.QualifiedID.getIndex(refId);
+            const context = sqlynx.ExternalID.getContext(refId);
+            const index = sqlynx.ExternalID.getIndex(refId);
             if (context !== scriptKey) {
                 continue;
             }
@@ -149,8 +149,8 @@ function buildDecorationsFromCursor(
     // Build decorations for table refs
     if (focusedTableRefs !== null) {
         for (const refId of focusedTableRefs) {
-            const context = sqlynx.QualifiedID.getContext(refId);
-            const index = sqlynx.QualifiedID.getIndex(refId);
+            const context = sqlynx.ExternalID.getContext(refId);
+            const index = sqlynx.ExternalID.getIndex(refId);
             if (context !== scriptKey) {
                 continue;
             }
@@ -183,8 +183,8 @@ interface FocusDecorationState {
     decorations: DecorationSet;
     scriptBuffers: SQLynxScriptBuffers;
     scriptCursor: sqlynx.proto.ScriptCursorInfoT | null;
-    focusedColumnRefs: Set<sqlynx.QualifiedID.Value> | null;
-    focusedTableRefs: Set<sqlynx.QualifiedID.Value> | null;
+    focusedColumnRefs: Set<sqlynx.ExternalID.Value> | null;
+    focusedTableRefs: Set<sqlynx.ExternalID.Value> | null;
 }
 
 /// Decorations derived from SQLynx cursor
