@@ -106,21 +106,21 @@ static std::unique_ptr<Script> read_script(pugi::xml_node node, size_t entry_id,
     return script;
 }
 
-static Catalog read_catalog(pugi::xml_node catalog_node, std::vector<std::unique_ptr<Script>>& catalog_scripts,
-                            size_t& entry_id) {
-    Catalog catalog;
+static std::unique_ptr<Catalog> read_catalog(pugi::xml_node catalog_node,
+                                             std::vector<std::unique_ptr<Script>>& catalog_scripts, size_t& entry_id) {
+    auto catalog = std::make_unique<Catalog>();
     for (auto entry_node : catalog_node.children()) {
         std::string entry_name = entry_node.name();
 
         if (entry_name == "script") {
             auto external_id = entry_id++;
             auto script = read_script(entry_node, external_id);
-            catalog.AddScript(*script, external_id);
+            catalog->AddScript(*script, external_id);
             AnalyzerSnapshotTest::EncodeScript(entry_node, *script->analyzed_script, false);
             catalog_scripts.push_back(std::move(script));
         }
     }
-    return std::move(catalog);
+    return catalog;
 }
 
 static void generate_analyzer_snapshots(const std::filesystem::path& source_dir) {
@@ -160,7 +160,7 @@ static void generate_analyzer_snapshots(const std::filesystem::path& source_dir)
             size_t entry_id = 1;
             auto catalog = read_catalog(test_node.child("catalog"), catalog_scripts, entry_id);
             auto main_node = test_node.child("script");
-            auto main_script = read_script(main_node, 0, &catalog);
+            auto main_script = read_script(main_node, 0, catalog.get());
 
             AnalyzerSnapshotTest::EncodeScript(main_node, *main_script->analyzed_script, true);
         }
@@ -207,7 +207,7 @@ static void generate_completion_snapshots(const std::filesystem::path& source_di
             size_t entry_id = 1;
             auto catalog = read_catalog(test.child("catalog"), catalog_scripts, entry_id);
             auto main_node = test.child("script");
-            auto main_script = read_script(main_node, 0, &catalog);
+            auto main_script = read_script(main_node, 0, catalog.get());
             AnalyzerSnapshotTest::EncodeScript(main_node, *main_script->analyzed_script, true);
 
             auto cursor_node = test.child("cursor");

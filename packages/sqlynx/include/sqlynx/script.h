@@ -252,8 +252,10 @@ class AnalyzedScript : public CatalogEntry {
 
     /// The parsed script
     std::shared_ptr<ParsedScript> parsed_script;
-    /// The schema search path
-    Catalog catalog;
+    /// The catalog
+    const Catalog& catalog;
+    /// The catalog version
+    Catalog::Version catalog_version;
     /// The table references
     std::vector<TableReference> table_references;
     /// The column references
@@ -265,7 +267,7 @@ class AnalyzedScript : public CatalogEntry {
 
    public:
     /// Constructor
-    AnalyzedScript(std::shared_ptr<ParsedScript> parsed, Catalog registry, std::string_view database_name,
+    AnalyzedScript(std::shared_ptr<ParsedScript> parsed, const Catalog& catalog, std::string_view database_name,
                    std::string_view schema_name);
 
     /// Get the catalog
@@ -339,6 +341,10 @@ class Script {
    public:
     /// Constructor
     Script(ExternalID external_id = 1, std::string_view database_name = "", std::string_view schema_name = "");
+    /// Scripts must not be copied
+    Script(const Script& other) = delete;
+    /// Scripts must not be copy-assigned
+    Script& operator=(const Script& other) = delete;
 
     /// Get the external id
     auto GetExternalID() const { return external_id; }
