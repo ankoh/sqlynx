@@ -1,11 +1,11 @@
 #include "benchmark/benchmark.h"
 #include "sqlynx/analyzer/analyzer.h"
 #include "sqlynx/analyzer/completion.h"
+#include "sqlynx/catalog.h"
 #include "sqlynx/parser/names.h"
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/parser/scanner.h"
 #include "sqlynx/proto/proto_generated.h"
-#include "sqlynx/schema.h"
 #include "sqlynx/script.h"
 #include "sqlynx/text/rope.h"
 #include "sqlynx/utils/suffix_trie.h"
@@ -630,8 +630,8 @@ static void analyze_query(benchmark::State& state) {
     assert(ext_parsed.second == proto::StatusCode::OK);
     assert(ext_analyzed.second == proto::StatusCode::OK);
 
-    SchemaRegistry registry;
-    registry.AddScript(external, 0);
+    Catalog catalog;
+    catalog.AddScript(external, 0);
 
     auto main_scan = main.Scan();
     auto main_parsed = main.Parse();
@@ -639,7 +639,7 @@ static void analyze_query(benchmark::State& state) {
     assert(main_parsed.second == proto::StatusCode::OK);
 
     for (auto _ : state) {
-        auto main_analyzed = main.Analyze(&registry);
+        auto main_analyzed = main.Analyze(&catalog);
         benchmark::DoNotOptimize(main_analyzed);
     }
 }

@@ -57,14 +57,14 @@ if(WASM)
         -Wl,--export=sqlynx_schema_layout_delete \
         -Wl,--export=sqlynx_schema_layout_configure \
         -Wl,--export=sqlynx_schema_layout_load_script \
-        -Wl,--export=sqlynx_schema_registry_new \
-        -Wl,--export=sqlynx_schema_registry_delete \
-        -Wl,--export=sqlynx_schema_registry_add_script \
-        -Wl,--export=sqlynx_schema_registry_update_script \
-        -Wl,--export=sqlynx_schema_registry_drop_script \
-        -Wl,--export=sqlynx_schema_registry_add_schema \
-        -Wl,--export=sqlynx_schema_registry_drop_schema \
-        -Wl,--export=sqlynx_schema_registry_insert_schema_tables \
+        -Wl,--export=sqlynx_catalog_new \
+        -Wl,--export=sqlynx_catalog_delete \
+        -Wl,--export=sqlynx_catalog_add_script \
+        -Wl,--export=sqlynx_catalog_update_script \
+        -Wl,--export=sqlynx_catalog_drop_script \
+        -Wl,--export=sqlynx_catalog_add_schema \
+        -Wl,--export=sqlynx_catalog_drop_schema \
+        -Wl,--export=sqlynx_catalog_insert_schema_tables \
         -Wl,--export=sqlynx_script_new \
         -Wl,--export=sqlynx_script_delete \
         -Wl,--export=sqlynx_script_insert_text_at \
@@ -252,7 +252,7 @@ set(LIB_SRC
   ${CMAKE_SOURCE_DIR}/src/parser/parse_context.cc
   ${CMAKE_SOURCE_DIR}/src/parser/parser.cc
   ${CMAKE_SOURCE_DIR}/src/parser/scanner.cc
-  ${CMAKE_SOURCE_DIR}/src/schema.cc
+  ${CMAKE_SOURCE_DIR}/src/catalog.cc
   ${CMAKE_SOURCE_DIR}/src/script.cc
   ${CMAKE_SOURCE_DIR}/src/utils/rope.cc
   ${CMAKE_SOURCE_DIR}/src/utils/string_conversion.cc

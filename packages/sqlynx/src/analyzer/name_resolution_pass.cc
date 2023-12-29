@@ -6,9 +6,9 @@
 #include <optional>
 #include <stack>
 
+#include "sqlynx/catalog.h"
 #include "sqlynx/external.h"
 #include "sqlynx/proto/proto_generated.h"
-#include "sqlynx/schema.h"
 #include "sqlynx/script.h"
 #include "sqlynx/utils/overlay_list.h"
 
@@ -42,20 +42,20 @@ void NameResolutionPass::NodeState::Clear() {
 
 /// Constructor
 NameResolutionPass::NameResolutionPass(ParsedScript& parser, std::string_view database_name,
-                                       std::string_view schema_name, const SchemaRegistry& schema_registry,
+                                       std::string_view schema_name, const Catalog& catalog,
                                        AttributeIndex& attribute_index)
     : scanned_program(*parser.scanned_script),
       parsed_program(parser),
       external_id(parser.external_id),
       database_name(database_name),
       schema_name(schema_name),
-      schema_registry(schema_registry),
+      catalog(catalog),
       attribute_index(attribute_index),
       nodes(parsed_program.nodes) {
     node_states.resize(nodes.size());
 }
 
-std::span<std::reference_wrapper<Schema::NameInfo>> NameResolutionPass::ReadNamePath(const sx::Node& node) {
+std::span<std::reference_wrapper<CatalogEntry::NameInfo>> NameResolutionPass::ReadNamePath(const sx::Node& node) {
     if (node.node_type() != proto::NodeType::ARRAY) {
         return {};
     }
@@ -187,7 +187,7 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
             auto table_columns = std::span{out.table_columns}.subspan(table.columns_begin, table.column_count);
 
             // Remember resolved table
-            Schema::ResolvedTable resolved_table{.table = table, .table_columns = table_columns};
+            CatalogEntry::ResolvedTable resolved_table{.table = table, .table_columns = table_columns};
             scope.resolved_table_references.insert({&table_ref, resolved_table});
             table_ref.resolved_table_id = table.table_id;
 
@@ -195,7 +195,7 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
             for (size_t i = 0; i < table_columns.size(); ++i) {
                 auto& column = table_columns[i];
                 scope.resolved_table_columns.insert(
-                    {Schema::QualifiedColumnName::Key{table_ref.alias_name, column.column_name},
+                    {CatalogEntry::QualifiedColumnName::Key{table_ref.alias_name, column.column_name},
                      ResolvedTableColumn{.alias_name = table_ref.alias_name,
                                          .column_name = column.column_name,
                                          .table = table,
@@ -206,7 +206,7 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
         }
 
         // Qualify table name for search path lookup
-        Schema::QualifiedTableName qualified_table_name = table_ref.table_name;
+        CatalogEntry::QualifiedTableName qualified_table_name = table_ref.table_name;
         if (qualified_table_name.database_name.empty()) {
             qualified_table_name.database_name = database_name;
         }
@@ -215,7 +215,7 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
         }
 
         // Otherwise consult the external search path
-        if (auto resolved = schema_registry.ResolveTable(qualified_table_name)) {
+        if (auto resolved = catalog.ResolveTable(qualified_table_name)) {
             // Remember resolved table
             scope.resolved_table_references.insert({&table_ref, *resolved});
             table_ref.resolved_table_id = resolved->table.table_id;
@@ -224,7 +224,7 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
             for (size_t i = 0; i < resolved->table_columns.size(); ++i) {
                 auto& column = resolved->table_columns[i];
                 scope.resolved_table_columns.insert(
-                    {Schema::QualifiedColumnName::Key{table_ref.alias_name, column.column_name},
+                    {CatalogEntry::QualifiedColumnName::Key{table_ref.alias_name, column.column_name},
                      ResolvedTableColumn{.alias_name = table_ref.alias_name,
                                          .column_name = column.column_name,
                                          .table = resolved->table,

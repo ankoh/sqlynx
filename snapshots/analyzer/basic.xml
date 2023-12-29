@@ -3,7 +3,7 @@
         <script id="0">
             <input />
         </script>
-        <registry />
+        <catalog />
     </analyzer-snapshot>
     <analyzer-snapshot name="refs_0">
         <script id="0">
@@ -25,7 +25,7 @@
                 </edge>
             </query-graph>
         </script>
-        <registry>
+        <catalog>
             <script id="1">
                 <input>
                     create table A (a int, b int);
@@ -42,7 +42,7 @@
                     </table>
                 </tables>
             </script>
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="edges_0">
         <script id="0">
@@ -66,7 +66,7 @@
                 </edge>
             </query-graph>
         </script>
-        <registry>
+        <catalog>
             <script id="1">
                 <input>
                     create table A (a int, b int);
@@ -83,7 +83,7 @@
                     </table>
                 </tables>
             </script>
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="edges_1">
         <script id="0">
@@ -111,7 +111,7 @@
                 </edge>
             </query-graph>
         </script>
-        <registry>
+        <catalog>
             <script id="1">
                 <input>
                     create table A (a int, b int);
@@ -128,7 +128,7 @@
                     </table>
                 </tables>
             </script>
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="edges_2">
         <script id="0">
@@ -163,7 +163,7 @@
                 </edge>
             </query-graph>
         </script>
-        <registry>
+        <catalog>
             <script id="1">
                 <input>
                     create table A (a int, b int);
@@ -180,7 +180,7 @@
                     </table>
                 </tables>
             </script>
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="edges_3">
         <script id="0">
@@ -202,7 +202,7 @@
                 </edge>
             </query-graph>
         </script>
-        <registry>
+        <catalog>
             <script id="1">
                 <input>
                     create table A (a int, b int);
@@ -219,7 +219,7 @@
                     </table>
                 </tables>
             </script>
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="edges_4">
         <script id="0">
@@ -241,7 +241,7 @@
                 </edge>
             </query-graph>
         </script>
-        <registry>
+        <catalog>
             <script id="1">
                 <input>
                     create table A (a int, b int);
@@ -258,7 +258,7 @@
                     </table>
                 </tables>
             </script>
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="unresolved_0">
         <script id="0">
@@ -280,7 +280,7 @@
                 </edge>
             </query-graph>
         </script>
-        <registry>
+        <catalog>
             <script id="1">
                 <input>
                     create table A (a int, b int);
@@ -297,7 +297,7 @@
                     </table>
                 </tables>
             </script>
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="unresolved_1">
         <script id="0">
@@ -319,7 +319,7 @@
                 </edge>
             </query-graph>
         </script>
-        <registry>
+        <catalog>
             <script id="1">
                 <input>
                     create table A (a int, b int);
@@ -336,7 +336,7 @@
                     </table>
                 </tables>
             </script>
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="unresolved_2">
         <script id="0">
@@ -347,11 +347,11 @@
                 <unresolved stmt="0" loc="31..32" text="A" />
             </table-references>
         </script>
-        <registry>
+        <catalog>
             <script id="1">
                 <input />
             </script>
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="unresolved_3">
         <script id="0">
@@ -373,11 +373,11 @@
                 </edge>
             </query-graph>
         </script>
-        <registry>
+        <catalog>
             <script id="1">
                 <input />
             </script>
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="nesting_1">
         <script id="0">
@@ -399,7 +399,7 @@
                 </edge>
             </query-graph>
         </script>
-        <registry>
+        <catalog>
             <script id="1">
                 <input>
                     create table A (a int, b int);
@@ -416,7 +416,7 @@
                     </table>
                 </tables>
             </script>
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="nesting_2">
         <script id="0">
@@ -439,7 +439,7 @@
                 </edge>
             </query-graph>
         </script>
-        <registry>
+        <catalog>
             <script id="1">
                 <input>
                     create table A (a int, b int);
@@ -456,6 +456,6 @@
                     </table>
                 </tables>
             </script>
-        </registry>
+        </catalog>
     </analyzer-snapshot>
 </analyzer-snapshots>

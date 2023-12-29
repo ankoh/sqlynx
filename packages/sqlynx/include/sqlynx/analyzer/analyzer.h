@@ -1,9 +1,9 @@
 #pragma once
 
 #include "sqlynx/analyzer/pass_manager.h"
+#include "sqlynx/catalog.h"
 #include "sqlynx/external.h"
 #include "sqlynx/proto/proto_generated.h"
-#include "sqlynx/schema.h"
 #include "sqlynx/utils/attribute_index.h"
 
 namespace sqlynx {
@@ -18,11 +18,11 @@ struct Analyzer {
     /// A table key
     struct TableKey {
         /// The name
-        Schema::QualifiedTableName name;
+        CatalogEntry::QualifiedTableName name;
         /// Constructor
-        TableKey(Schema::QualifiedTableName name) : name(name) {}
+        TableKey(CatalogEntry::QualifiedTableName name) : name(name) {}
         /// The derefence operator
-        const Schema::QualifiedTableName& operator*() { return name; }
+        const CatalogEntry::QualifiedTableName& operator*() { return name; }
         /// Equality operator
         bool operator==(const TableKey& other) const {
             return name.database_name == other.name.database_name && name.schema_name == other.name.schema_name &&
@@ -43,11 +43,11 @@ struct Analyzer {
     /// A column key
     struct ColumnKey {
         /// The name
-        Schema::QualifiedColumnName name;
+        CatalogEntry::QualifiedColumnName name;
         /// Constructor
-        ColumnKey(Schema::QualifiedColumnName name) : name(name) {}
+        ColumnKey(CatalogEntry::QualifiedColumnName name) : name(name) {}
         /// The derefence operator
-        const Schema::QualifiedColumnName& operator*() { return name; }
+        const CatalogEntry::QualifiedColumnName& operator*() { return name; }
         /// Equality operator
         bool operator==(const ColumnKey& other) const {
             return name.table_alias == other.name.table_alias && name.column_name == other.name.column_name;
@@ -71,8 +71,8 @@ struct Analyzer {
     const std::string_view database_name;
     /// The database name
     const std::string_view schema_name;
-    /// The schema registry
-    SchemaRegistry schema_registry;
+    /// The catalog
+    const Catalog& catalog;
     /// The attribute index
     AttributeIndex attribute_index;
     /// The pass manager
@@ -83,12 +83,13 @@ struct Analyzer {
    public:
     /// Constructor
     Analyzer(std::shared_ptr<ParsedScript> parsed, std::string_view database_name, std::string_view schema_name,
-             SchemaRegistry schema_registry);
+             const Catalog& catalog);
 
     /// Analyze a program
-    static std::pair<std::shared_ptr<AnalyzedScript>, proto::StatusCode> Analyze(
-        std::shared_ptr<ParsedScript> parsed, std::string_view database_name = "", std::string_view schema_name = "",
-        const SchemaRegistry* schema_registry = nullptr);
+    static std::pair<std::shared_ptr<AnalyzedScript>, proto::StatusCode> Analyze(std::shared_ptr<ParsedScript> parsed,
+                                                                                 std::string_view database_name = "",
+                                                                                 std::string_view schema_name = "",
+                                                                                 const Catalog* catalog = nullptr);
 };
 
 }  // namespace sqlynx

@@ -3,7 +3,7 @@
         <script>  
             <input />
         </script>  
-        <registry />
+        <catalog />
     </analyzer-snapshot>
     <analyzer-snapshot name="refs_0">
         <script>  
@@ -11,14 +11,14 @@
                 select * from A, B where a = b;
             </input>
         </script>  
-        <registry>
+        <catalog>
             <script>  
                 <input>
                     create table A (a int, b int);
                     create table B (d int, e int);
                 </input>
             </script>  
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="edges_0">
         <script>
@@ -26,14 +26,14 @@
                 select * from A, B where a + d = e;
             </input>
         </script>  
-        <registry>
+        <catalog>
             <script>  
                 <input>
                     create table A (a int, b int);
                     create table B (d int, e int);
                 </input>
             </script>  
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="edges_1">
         <script>  
@@ -41,14 +41,14 @@
                 select * from A, B where a = d and b = e;
             </input>
         </script>  
-        <registry>
+        <catalog>
             <script>  
                 <input>
                     create table A (a int, b int);
                     create table B (d int, e int);
                 </input>
             </script>  
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="edges_2">
         <script>  
@@ -56,14 +56,14 @@
                 select * from A, B where (a = d and b = e) or (a = d and d = 42);
             </input>
         </script>  
-        <registry>
+        <catalog>
             <script>  
                 <input>
                     create table A (a int, b int);
                     create table B (d int, e int);
                 </input>
             </script>
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="edges_3">
         <script>  
@@ -71,14 +71,14 @@
                 select * from A, B where a = (d + 42);
             </input>
         </script>  
-        <registry>
+        <catalog>
             <script>  
                 <input>
                     create table A (a int, b int);
                     create table B (d int, e int);
                 </input>
             </script>
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="edges_4">
         <script>  
@@ -86,14 +86,14 @@
                 select * from A join B on (a = b);
             </input>
         </script>  
-        <registry>
+        <catalog>
             <script>  
                 <input>
                     create table A (a int, b int);
                     create table B (d int, e int);
                 </input>
             </script>
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="unresolved_0">
         <script>  
@@ -101,14 +101,14 @@
                 select * from A, C where a = c;
             </input>
         </script>  
-        <registry>
+        <catalog>
             <script>
                 <input>
                     create table A (a int, b int);
                     create table B (d int, e int);
                 </input>
             </script>
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="unresolved_1">
         <script>  
@@ -116,14 +116,14 @@
                 select * from A, B where a = c;
             </input>
         </script>
-        <registry>
+        <catalog>
             <script>
                 <input>
                     create table A (a int, b int);
                     create table B (d int, e int);
                 </input>
             </script>
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="unresolved_2">
         <script>  
@@ -131,11 +131,11 @@
                 select * from A;
             </input>
         </script>
-        <registry>
+        <catalog>
             <script>
                 <input />
             </script>
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="unresolved_3">
         <script>
@@ -143,11 +143,11 @@
                 select * from A, B where c = d;
             </input>
         </script>
-        <registry>
+        <catalog>
             <script>
                 <input />
             </script>
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="nesting_1">
         <script>  
@@ -155,14 +155,14 @@
                 select * from A where not exists (select * from B where a = d);
             </input>
         </script>
-        <registry>
+        <catalog>
             <script>
                 <input>
                     create table A (a int, b int);
                     create table B (d int, e int);
                 </input>
             </script>
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="nesting_2">
         <script>  
@@ -170,13 +170,13 @@
                 select * from A where not exists (select * from A, B where a = d);
             </input>
         </script>  
-        <registry>
+        <catalog>
             <script>
                 <input>
                     create table A (a int, b int);
                     create table B (d int, e int);
                 </input>
             </script>
-        </registry>
+        </catalog>
     </analyzer-snapshot>
 </analyzer-snapshots>

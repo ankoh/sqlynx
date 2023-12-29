@@ -2,8 +2,8 @@
 
 #include "gtest/gtest.h"
 #include "sqlynx/analyzer/completion.h"
+#include "sqlynx/catalog.h"
 #include "sqlynx/proto/proto_generated.h"
-#include "sqlynx/schema.h"
 
 using namespace sqlynx;
 
@@ -25,9 +25,9 @@ TEST(ScriptTest, ExternalIDIDCollision) {
     main_script.Scan();
     main_script.Parse();
 
-    SchemaRegistry registry;
-    registry.AddScript(schema_script, 0);
-    auto [result, status] = main_script.Analyze(&registry);
+    Catalog catalog;
+    catalog.AddScript(schema_script, 0);
+    auto [result, status] = main_script.Analyze(&catalog);
     ASSERT_EQ(status, proto::StatusCode::EXTERNAL_ID_COLLISION);
 }
 
@@ -107,9 +107,9 @@ limit 100
     main_script.InsertTextAt(0, main_script_text);
     ASSERT_EQ(main_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(main_script.Parse().second, proto::StatusCode::OK);
-    SchemaRegistry registry;
-    registry.AddScript(external_script, 0);
-    ASSERT_EQ(main_script.Analyze(&registry).second, proto::StatusCode::OK);
+    Catalog catalog;
+    catalog.AddScript(external_script, 0);
+    ASSERT_EQ(main_script.Analyze(&catalog).second, proto::StatusCode::OK);
 }
 
 }  // namespace

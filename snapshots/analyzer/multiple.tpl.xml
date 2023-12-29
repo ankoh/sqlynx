@@ -6,14 +6,14 @@
                 select * from B, C where d = c;
             </input>
         </script>  
-        <registry>
+        <catalog>
             <script>  
                 <input>
                     create table A (a int, b int);
                     create table B (d int, e int);
                 </input>
             </script>  
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="multi_recovery_0">
         <script>  
@@ -23,13 +23,13 @@
                 select * from B, C where d = c;
             </input>
         </script>  
-        <registry>
+        <catalog>
             <script>  
                 <input>
                     create table A (a int, b int);
                     create table B (d int, e int);
                 </input>
             </script>  
-        </registry>
+        </catalog>
     </analyzer-snapshot>
 </analyzer-snapshots>

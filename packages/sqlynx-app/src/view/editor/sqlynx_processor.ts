@@ -16,7 +16,7 @@ export interface SQLynxScriptUpdate {
     // The currently active script in the editor
     targetScript: sqlynx.SQLynxScript | null;
     // The schema script
-    schemaRegistry: sqlynx.SQLynxSchemaRegistry | null;
+    schemaRegistry: sqlynx.SQLynxCatalog | null;
     /// The previous processed script buffers (if any)
     scriptBuffers: SQLynxScriptBuffers;
     /// The script cursor
@@ -53,7 +53,7 @@ type SQLynxEditorState = SQLynxScriptUpdate;
 /// Analyze a new script
 export function parseAndAnalyzeScript(
     script: sqlynx.SQLynxScript,
-    registry: sqlynx.SQLynxSchemaRegistry | null,
+    catalog: sqlynx.SQLynxCatalog | null,
 ): SQLynxScriptBuffers {
     // Scan the script
     const scanned = script.scan();
@@ -69,7 +69,7 @@ export function parseAndAnalyzeScript(
 export function analyzeScript(
     buffers: SQLynxScriptBuffers,
     script: sqlynx.SQLynxScript,
-    registry: sqlynx.SQLynxSchemaRegistry | null,
+    catalog: sqlynx.SQLynxCatalog | null,
 ): SQLynxScriptBuffers {
     // Delete the old analysis
     buffers.analyzed?.delete();

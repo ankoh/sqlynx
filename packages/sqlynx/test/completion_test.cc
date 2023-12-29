@@ -1,8 +1,8 @@
 #include "sqlynx/analyzer/completion.h"
 
 #include "gtest/gtest.h"
+#include "sqlynx/catalog.h"
 #include "sqlynx/proto/proto_generated.h"
-#include "sqlynx/schema.h"
 
 using namespace sqlynx;
 
@@ -35,9 +35,9 @@ SELECT s_co
     ASSERT_EQ(main_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(main_script.Parse().second, proto::StatusCode::OK);
 
-    SchemaRegistry registry;
-    registry.AddScript(external_script, 0);
-    ASSERT_EQ(main_script.Analyze(&registry).second, proto::StatusCode::OK);
+    Catalog catalog;
+    catalog.AddScript(external_script, 0);
+    ASSERT_EQ(main_script.Analyze(&catalog).second, proto::StatusCode::OK);
 
     // Move the cursor
     auto cursor_ofs = main_script_text.find("s_co");

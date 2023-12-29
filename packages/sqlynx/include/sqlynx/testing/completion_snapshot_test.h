@@ -25,8 +25,8 @@ struct CompletionSnapshotTest {
     std::string name;
     /// The main script
     AnalyzerSnapshotTest::ScriptAnalysisSnapshot script;
-    /// The entries
-    std::vector<AnalyzerSnapshotTest::ScriptAnalysisSnapshot> registry;
+    /// The catalog
+    std::vector<AnalyzerSnapshotTest::ScriptAnalysisSnapshot> catalog;
     /// The cursor script
     std::string cursor_script;
     /// The search string for the cursor

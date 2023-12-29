@@ -108,10 +108,10 @@ void CompletionSnapshotTest::LoadTests(std::filesystem::path& source_dir) {
                 test.script.graph_edges.append_copy(main_node.child("query-graph"));
             }
 
-            // Read registry
-            for (auto entry_node : test_node.child("registry").children()) {
-                test.registry.emplace_back();
-                auto& entry = test.registry.back();
+            // Read catalog
+            for (auto entry_node : test_node.child("catalog").children()) {
+                test.catalog.emplace_back();
+                auto& entry = test.catalog.back();
                 std::string entry_name = entry_node.name();
                 if (entry_name == "script") {
                     if (auto db = entry_node.attribute("database")) {

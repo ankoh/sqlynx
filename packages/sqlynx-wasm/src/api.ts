@@ -22,18 +22,18 @@ interface SQLynxModuleExports {
     sqlynx_script_format: (ptr: number) => number;
     sqlynx_script_scan: (ptr: number) => number;
     sqlynx_script_parse: (ptr: number) => number;
-    sqlynx_script_analyze: (ptr: number, registry_ptr: number) => number;
+    sqlynx_script_analyze: (ptr: number, catalog_ptr: number) => number;
     sqlynx_script_move_cursor: (ptr: number, offset: number) => number;
     sqlynx_script_complete_at_cursor: (ptr: number, limit: number) => number;
     sqlynx_script_get_statistics: (ptr: number) => number;
 
-    sqlynx_schema_registry_new: () => number;
-    sqlynx_schema_registry_delete: (ptr: number) => number;
-    sqlynx_schema_registry_add_script: (registry_ptr: number, script_ptr: number, rank: number) => number;
-    sqlynx_schema_registry_update_script: (registry_ptr: number, script_ptr: number) => number;
-    sqlynx_schema_registry_drop_script: (registry_ptr: number, script_ptr: number) => void;
-    sqlynx_schema_registry_add_schema: (
-        registry_ptr: number,
+    sqlynx_catalog_new: () => number;
+    sqlynx_catalog_delete: (ptr: number) => number;
+    sqlynx_catalog_add_script: (catalog_ptr: number, script_ptr: number, rank: number) => number;
+    sqlynx_catalog_update_script: (catalog_ptr: number, script_ptr: number) => number;
+    sqlynx_catalog_drop_script: (catalog_ptr: number, script_ptr: number) => void;
+    sqlynx_catalog_add_schema: (
+        catalog_ptr: number,
         external_id: number,
         rank: number,
         database_name_ptr: number,
@@ -41,9 +41,9 @@ interface SQLynxModuleExports {
         schema_name_ptr: number,
         schema_name_size: number,
     ) => number;
-    sqlynx_schema_registry_drop_schema: (registry_ptr: number, external_id: number) => void;
-    sqlynx_schema_registry_insert_schema_tables: (
-        registry_ptr: number,
+    sqlynx_catalog_drop_schema: (catalog_ptr: number, external_id: number) => void;
+    sqlynx_catalog_insert_schema_tables: (
+        catalog_ptr: number,
         external_id: number,
         data_ptr: number,
         data_size: number,
@@ -129,23 +129,23 @@ export class SQLynx {
                 limit: number,
             ) => number,
 
-            sqlynx_schema_registry_new: instance.exports['sqlynx_schema_registry_new'] as () => number,
-            sqlynx_schema_registry_delete: instance.exports['sqlynx_schema_registry_delete'] as (ptr: number) => number,
-            sqlynx_schema_registry_add_script: instance.exports['sqlynx_schema_registry_add_script'] as (
-                registry_ptr: number,
+            sqlynx_catalog_new: instance.exports['sqlynx_catalog_new'] as () => number,
+            sqlynx_catalog_delete: instance.exports['sqlynx_catalog_delete'] as (ptr: number) => number,
+            sqlynx_catalog_add_script: instance.exports['sqlynx_catalog_add_script'] as (
+                catalog_ptr: number,
                 index: number,
                 script_ptr: number,
             ) => number,
-            sqlynx_schema_registry_update_script: instance.exports['sqlynx_schema_registry_update_script'] as (
-                registry_ptr: number,
+            sqlynx_catalog_update_script: instance.exports['sqlynx_catalog_update_script'] as (
+                catalog_ptr: number,
                 script_ptr: number,
             ) => number,
-            sqlynx_schema_registry_drop_script: instance.exports['sqlynx_schema_registry_drop_script'] as (
-                registry_ptr: number,
+            sqlynx_catalog_drop_script: instance.exports['sqlynx_catalog_drop_script'] as (
+                catalog_ptr: number,
                 script_ptr: number,
             ) => void,
-            sqlynx_schema_registry_add_schema: instance.exports['sqlynx_schema_registry_add_schema'] as (
-                registry_ptr: number,
+            sqlynx_catalog_add_schema: instance.exports['sqlynx_catalog_add_schema'] as (
+                catalog_ptr: number,
                 rank: number,
                 external_id: number,
                 database_name_ptr: number,
@@ -153,13 +153,16 @@ export class SQLynx {
                 schema_name_ptr: number,
                 schema_name_size: number,
             ) => number,
-            sqlynx_schema_registry_drop_schema: instance.exports['sqlynx_schema_registry_drop_schema'] as (
-                registry_ptr: number,
+            sqlynx_catalog_drop_schema: instance.exports['sqlynx_catalog_drop_schema'] as (
+                catalog_ptr: number,
                 external_id: number,
             ) => void,
-            sqlynx_schema_registry_insert_schema_tables: instance.exports[
-                'sqlynx_schema_registry_insert_schema_tables'
-            ] as (registry_ptr: number, external_id: number, data_ptr: number, data_size: number) => number,
+            sqlynx_catalog_insert_schema_tables: instance.exports['sqlynx_catalog_insert_schema_tables'] as (
+                catalog_ptr: number,
+                external_id: number,
+                data_ptr: number,
+                data_size: number,
+            ) => number,
 
             sqlynx_schema_layout_new: instance.exports['sqlynx_schema_layout_new'] as () => number,
             sqlynx_schema_layout_delete: instance.exports['sqlynx_schema_layout_delete'] as (ptr: number) => void,
@@ -285,9 +288,9 @@ export class SQLynx {
         return new SQLynxScript(this, scriptPtr);
     }
 
-    public createSchemaRegistry(): SQLynxSchemaRegistry {
-        const pathPtr = this.instanceExports.sqlynx_schema_registry_new();
-        return new SQLynxSchemaRegistry(this, pathPtr);
+    public createCatalog(): SQLynxCatalog {
+        const pathPtr = this.instanceExports.sqlynx_catalog_new();
+        return new SQLynxCatalog(this, pathPtr);
     }
 
     public createSchemaLayout(): SQLynxSchemaLayout {
@@ -474,7 +477,7 @@ export class SQLynxScript {
         return this.api.readFlatBufferResult<proto.ParsedScript>(resultPtr);
     }
     /// Analyze the script (optionally with an external script)
-    public analyze(searchPath: SQLynxSchemaRegistry | null = null): FlatBufferRef<proto.AnalyzedScript> {
+    public analyze(searchPath: SQLynxCatalog | null = null): FlatBufferRef<proto.AnalyzedScript> {
         const scriptPtr = this.assertNotNull();
         const resultPtr = this.api.instanceExports.sqlynx_script_analyze(
             scriptPtr,
@@ -515,7 +518,7 @@ export class SQLynxScript {
     }
 }
 
-export class SQLynxSchemaRegistry {
+export class SQLynxCatalog {
     /// The SQLynx api
     api: SQLynx;
     /// The graph pointer
@@ -528,7 +531,7 @@ export class SQLynxSchemaRegistry {
     /// Delete the graph
     public delete() {
         if (this.registryPtr) {
-            this.api.instanceExports.sqlynx_schema_registry_delete(this.registryPtr);
+            this.api.instanceExports.sqlynx_catalog_delete(this.registryPtr);
         }
         this.registryPtr = null;
     }
@@ -543,20 +546,20 @@ export class SQLynxSchemaRegistry {
     public addScript(script: SQLynxScript, rank: number) {
         const registryPtr = this.assertNotNull();
         const scriptPtr = script.assertNotNull();
-        const result = this.api.instanceExports.sqlynx_schema_registry_add_script(registryPtr, scriptPtr, rank);
+        const result = this.api.instanceExports.sqlynx_catalog_add_script(registryPtr, scriptPtr, rank);
         this.api.readStatusResult(result);
     }
     /// Update a script from the registry
     public dropScript(script: SQLynxScript) {
         const registryPtr = this.assertNotNull();
         const scriptPtr = script.assertNotNull();
-        this.api.instanceExports.sqlynx_schema_registry_drop_script(registryPtr, scriptPtr);
+        this.api.instanceExports.sqlynx_catalog_drop_script(registryPtr, scriptPtr);
     }
     /// Update a script in the registry
     public updateScript(script: SQLynxScript) {
         const registryPtr = this.assertNotNull();
         const scriptPtr = script.assertNotNull();
-        const result = this.api.instanceExports.sqlynx_schema_registry_update_script(registryPtr, scriptPtr);
+        const result = this.api.instanceExports.sqlynx_catalog_update_script(registryPtr, scriptPtr);
         this.api.readStatusResult(result);
     }
     /// Add an external schema
@@ -577,7 +580,7 @@ export class SQLynxSchemaRegistry {
                 throw e;
             }
         }
-        const result = this.api.instanceExports.sqlynx_schema_registry_add_schema(
+        const result = this.api.instanceExports.sqlynx_catalog_add_schema(
             registryPtr,
             id,
             rank,
@@ -591,14 +594,14 @@ export class SQLynxSchemaRegistry {
     /// Drop an external schema
     public dropSchema(id: number) {
         const registryPtr = this.assertNotNull();
-        this.api.instanceExports.sqlynx_schema_registry_drop_script(registryPtr, id);
+        this.api.instanceExports.sqlynx_catalog_drop_script(registryPtr, id);
     }
     /// Insert tables of an external schema.
     /// Fails if one of the tables already exists in the external schema.
     public insertSchemaTables(id: number, buffer: Uint8Array) {
         const registryPtr = this.assertNotNull();
         const [bufferPtr, bufferLength] = this.api.copyBuffer(buffer);
-        const result = this.api.instanceExports.sqlynx_schema_registry_insert_schema_tables(
+        const result = this.api.instanceExports.sqlynx_catalog_insert_schema_tables(
             registryPtr,
             id,
             bufferPtr, // pass ownership over buffer

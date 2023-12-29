@@ -26,7 +26,7 @@ class NameResolutionPass : public PassManager::LTRPass {
         /// The column name
         std::string_view column_name;
         /// The table
-        const Schema::Table& table;
+        const CatalogEntry::Table& table;
         /// The column id
         size_t column_id;
         /// The table reference id
@@ -45,9 +45,11 @@ class NameResolutionPass : public PassManager::LTRPass {
         /// The table references in scope
         OverlayList<AnalyzedScript::TableReference> table_references;
         /// The resolved table references
-        std::unordered_map<const AnalyzedScript::TableReference*, Schema::ResolvedTable> resolved_table_references;
+        std::unordered_map<const AnalyzedScript::TableReference*, CatalogEntry::ResolvedTable>
+            resolved_table_references;
         /// The resolved table columns
-        std::unordered_map<Schema::QualifiedColumnName::Key, ResolvedTableColumn, TupleHasher> resolved_table_columns;
+        std::unordered_map<CatalogEntry::QualifiedColumnName::Key, ResolvedTableColumn, TupleHasher>
+            resolved_table_columns;
     };
     /// A node state during name resolution
     struct NodeState {
@@ -72,7 +74,8 @@ class NameResolutionPass : public PassManager::LTRPass {
         /// The tables
         std::vector<AnalyzedScript::TableColumn> table_columns;
         /// The tables by name
-        std::unordered_map<Schema::QualifiedTableName::Key, std::reference_wrapper<AnalyzedScript::Table>, TupleHasher>
+        std::unordered_map<CatalogEntry::QualifiedTableName::Key, std::reference_wrapper<AnalyzedScript::Table>,
+                           TupleHasher>
             tables_by_name;
     };
 
@@ -87,8 +90,8 @@ class NameResolutionPass : public PassManager::LTRPass {
     const std::string_view database_name;
     /// The schema name
     const std::string_view schema_name;
-    /// The schema registry
-    const SchemaRegistry& schema_registry;
+    /// The catalog
+    const Catalog& catalog;
     /// The attribute index.
     AttributeIndex& attribute_index;
     /// The program nodes
@@ -116,7 +119,7 @@ class NameResolutionPass : public PassManager::LTRPass {
     ChunkBuffer<AnalyzedScript::QueryGraphEdgeNode, 16> graph_edge_nodes;
 
     /// The temporary name path buffer
-    std::vector<std::reference_wrapper<Schema::NameInfo>> name_path_buffer;
+    std::vector<std::reference_wrapper<CatalogEntry::NameInfo>> name_path_buffer;
     /// The temporary pending table columns
     ChunkBuffer<OverlayList<AnalyzedScript::TableColumn>::Node, 16> pending_columns;
     /// The temporary free-list for pending table columns
@@ -126,7 +129,7 @@ class NameResolutionPass : public PassManager::LTRPass {
     StagingOutput out;
 
     /// Merge child states into a destination state
-    std::span<std::reference_wrapper<Schema::NameInfo>> ReadNamePath(const sx::Node& node);
+    std::span<std::reference_wrapper<CatalogEntry::NameInfo>> ReadNamePath(const sx::Node& node);
     /// Merge child states into a destination state
     AnalyzedScript::QualifiedTableName ReadQualifiedTableName(const sx::Node* node);
     /// Merge child states into a destination state
@@ -156,7 +159,7 @@ class NameResolutionPass : public PassManager::LTRPass {
    public:
     /// Constructor
     NameResolutionPass(ParsedScript& parser, std::string_view database_name, std::string_view schema_name,
-                       const SchemaRegistry& registry, AttributeIndex& attribute_index);
+                       const Catalog& registry, AttributeIndex& attribute_index);
 
     /// Prepare the analysis pass
     void Prepare() override;

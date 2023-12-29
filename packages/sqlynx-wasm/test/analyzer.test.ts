@@ -30,7 +30,7 @@ describe('SQLynx Analyzer', () => {
         mainScript.scan().delete();
         mainScript.parse().delete();
 
-        const searchPath = lnx!.createSchemaRegistry();
+        const searchPath = lnx!.createCatalog();
         searchPath.addScript(schemaScript, 0);
 
         expect(() => {
@@ -61,7 +61,7 @@ describe('SQLynx Analyzer', () => {
         const mainScript = lnx!.createScript(2);
         mainScript.insertTextAt(0, 'select * from foo');
 
-        const searchPath = lnx!.createSchemaRegistry();
+        const searchPath = lnx!.createCatalog();
         searchPath.addScript(extScript, 0);
 
         const mainScannerRes = mainScript.scan();

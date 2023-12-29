@@ -205,7 +205,7 @@ export function reduceAppState(state: AppState, action: AppStateAction): AppStat
                         // Update or create the search path
                         let registry = newState.schemaRegistry;
                         if (!registry) {
-                            registry = newState.instance!.createSchemaRegistry();
+                            registry = newState.instance!.createCatalog();
                             registry.addScript(newScript, 0);
                         } else {
                             registry.updateScript(newScript);

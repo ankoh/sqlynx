@@ -12,7 +12,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
         </script>
-        <registry />
+        <catalog />
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_2">
         <script>
@@ -64,7 +64,7 @@ limit
 	100
             </input>
         </script>  
-        <registry>
+        <catalog>
             <script>
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
@@ -77,7 +77,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
             </script>  
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_3">
         <script>  
@@ -108,7 +108,7 @@ limit
 	10
             </input>
         </script>  
-        <registry>
+        <catalog>
             <script>  
                 <input>
 create table customer (c_custkey integer not null, c_name varchar(25) not null, c_address varchar(40) not null, c_nationkey integer not null, c_phone char(15) not null, c_acctbal decimal(12,2) not null, c_mktsegment char(10) not null, c_comment varchar(117) not null, primary key (c_custkey));
@@ -116,7 +116,7 @@ create table orders (o_orderkey integer not null, o_custkey integer not null, o_
 create table lineitem (l_orderkey integer not null, l_partkey integer not null, l_suppkey integer not null, l_linenumber integer not null, l_quantity decimal(12,2) not null, l_extendedprice decimal(12,2) not null, l_discount decimal(12,2) not null, l_tax decimal(12,2) not null, l_returnflag char(1) not null, l_linestatus char(1) not null, l_shipdate date not null, l_commitdate date not null, l_receiptdate date not null, l_shipinstruct char(25) not null, l_shipmode char(10) not null, l_comment varchar(44) not null, primary key (l_orderkey,l_linenumber));
                 </input>
             </script>  
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_4">
         <script>  
@@ -144,14 +144,14 @@ order by
         o_orderpriority
             </input>
         </script>  
-        <registry>
+        <catalog>
             <script>  
                 <input>
 create table lineitem (l_orderkey integer not null, l_partkey integer not null, l_suppkey integer not null, l_linenumber integer not null, l_quantity decimal(12,2) not null, l_extendedprice decimal(12,2) not null, l_discount decimal(12,2) not null, l_tax decimal(12,2) not null, l_returnflag char(1) not null, l_linestatus char(1) not null, l_shipdate date not null, l_commitdate date not null, l_receiptdate date not null, l_shipinstruct char(25) not null, l_shipmode char(10) not null, l_comment varchar(44) not null, primary key (l_orderkey,l_linenumber));
 create table orders (o_orderkey integer not null, o_custkey integer not null, o_orderstatus char(1) not null, o_totalprice decimal(12,2) not null, o_orderdate date not null, o_orderpriority char(15) not null, o_clerk char(15) not null, o_shippriority integer not null, o_comment varchar(79) not null, primary key (o_orderkey));
                 </input>
             </script>  
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_5">
         <script>  
@@ -182,7 +182,7 @@ order by
         revenue desc
             </input>
         </script>  
-        <registry>
+        <catalog>
             <script>  
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
@@ -195,7 +195,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
             </script>  
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_6">
         <script>  
@@ -211,13 +211,13 @@ where
         and l_quantity &#60; 24
             </input>
         </script>  
-        <registry>
+        <catalog>
             <script>  
                 <input>
 create table lineitem (l_orderkey integer not null, l_partkey integer not null, l_suppkey integer not null, l_linenumber integer not null, l_quantity decimal(12,2) not null, l_extendedprice decimal(12,2) not null, l_discount decimal(12,2) not null, l_tax decimal(12,2) not null, l_returnflag char(1) not null, l_linestatus char(1) not null, l_shipdate date not null, l_commitdate date not null, l_receiptdate date not null, l_shipinstruct char(25) not null, l_shipmode char(10) not null, l_comment varchar(44) not null, primary key (l_orderkey,l_linenumber));
                 </input>
             </script>  
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_7">
         <script>  
@@ -263,7 +263,7 @@ order by
         l_year
             </input>
         </script>  
-        <registry>
+        <catalog>
             <script>  
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
@@ -276,7 +276,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
             </script>  
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_8">
         <script>  
@@ -320,7 +320,7 @@ order by
         o_year
             </input>
         </script>  
-        <registry>
+        <catalog>
             <script>  
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
@@ -333,7 +333,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
             </script>  
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_9">
         <script>  
@@ -372,7 +372,7 @@ order by
         o_year desc
             </input>
         </script>  
-        <registry>
+        <catalog>
             <script>  
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
@@ -385,7 +385,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
             </script>  
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_10">
         <script>  
@@ -425,7 +425,7 @@ limit
 	20
             </input>
         </script>
-        <registry>
+        <catalog>
             <script>  
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
@@ -438,7 +438,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
             </script>  
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_11">
         <script>  
@@ -472,7 +472,7 @@ order by
         "value" desc
             </input>
         </script>
-        <registry>
+        <catalog>
             <script>  
                 <input>
 create table supplier (s_suppkey integer not null, s_name char(25) not null, s_address varchar(40) not null, s_nationkey integer not null, s_phone char(15) not null, s_acctbal decimal(12,2) not null, s_comment varchar(101) not null, primary key (s_suppkey));
@@ -480,7 +480,7 @@ create table partsupp (ps_partkey integer not null, ps_suppkey integer not null,
 create table nation (n_nationkey integer not null, n_name char(25) not null, n_regionkey integer not null, n_comment varchar(152) not null, primary key (n_nationkey));
                 </input>
             </script>  
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_12">
         <script>  
@@ -515,7 +515,7 @@ order by
         l_shipmode
             </input>
         </script>
-        <registry>
+        <catalog>
             <script>  
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
@@ -528,7 +528,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
             </script>  
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_13">
         <script>  
@@ -555,14 +555,14 @@ order by
         c_count desc
             </input>
         </script>  
-        <registry>
+        <catalog>
             <script>  
                 <input>
 create table customer (c_custkey integer not null, c_name varchar(25) not null, c_address varchar(40) not null, c_nationkey integer not null, c_phone char(15) not null, c_acctbal decimal(12,2) not null, c_mktsegment char(10) not null, c_comment varchar(117) not null, primary key (c_custkey));
 create table orders (o_orderkey integer not null, o_custkey integer not null, o_orderstatus char(1) not null, o_totalprice decimal(12,2) not null, o_orderdate date not null, o_orderpriority char(15) not null, o_clerk char(15) not null, o_shippriority integer not null, o_comment varchar(79) not null, primary key (o_orderkey));
                 </input>
             </script>  
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_14">
         <script>  
@@ -582,7 +582,7 @@ where
         and l_shipdate &#60; date '1995-10-01'
             </input>
         </script>  
-        <registry>
+        <catalog>
             <script>  
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
@@ -595,7 +595,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
             </script>  
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_15">
         <script>  
@@ -632,7 +632,7 @@ order by
 	s_suppkey
             </input>
         </script>  
-        <registry>
+        <catalog>
             <script>  
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
@@ -645,7 +645,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
             </script>  
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_16">
         <script>  
@@ -682,7 +682,7 @@ order by
         p_size
             </input>
         </script>
-        <registry>
+        <catalog>
             <script>  
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
@@ -695,7 +695,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
             </script>  
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_17">
         <script>  
@@ -719,14 +719,14 @@ where
         )
             </input>
         </script>  
-        <registry>
+        <catalog>
             <script>  
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
 create table lineitem (l_orderkey integer not null, l_partkey integer not null, l_suppkey integer not null, l_linenumber integer not null, l_quantity decimal(12,2) not null, l_extendedprice decimal(12,2) not null, l_discount decimal(12,2) not null, l_tax decimal(12,2) not null, l_returnflag char(1) not null, l_linestatus char(1) not null, l_shipdate date not null, l_commitdate date not null, l_receiptdate date not null, l_shipinstruct char(25) not null, l_shipmode char(10) not null, l_comment varchar(44) not null, primary key (l_orderkey,l_linenumber));
                 </input>
             </script>
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_18">
         <script>  
@@ -767,7 +767,7 @@ limit
 	100
             </input>
         </script>  
-        <registry>
+        <catalog>
             <script>  
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
@@ -780,7 +780,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
             </script>  
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_19">
         <script>  
@@ -822,7 +822,7 @@ where
         )
             </input>
         </script>  
-        <registry>
+        <catalog>
             <script>  
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
@@ -835,7 +835,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
             </script>  
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_20">
         <script>  
@@ -879,7 +879,7 @@ order by
         s_name
             </input>
         </script>  
-        <registry>
+        <catalog>
             <script>  
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
@@ -892,7 +892,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
             </script>  
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_21">
         <script>  
@@ -940,7 +940,7 @@ limit
 	100
             </input>
         </script>  
-        <registry>
+        <catalog>
             <script>  
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
@@ -953,7 +953,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
             </script>  
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="tpch_22">
         <script>  
@@ -997,7 +997,7 @@ order by
         cntrycode
             </input>
         </script>  
-        <registry>
+        <catalog>
             <script>  
                 <input>
 create table part (p_partkey integer not null, p_name varchar(55) not null, p_mfgr char(25) not null, p_brand char(10) not null, p_type varchar(25) not null, p_size integer not null, p_container char(10) not null, p_retailprice decimal(12,2) not null, p_comment varchar(23) not null, primary key (p_partkey));
@@ -1010,6 +1010,6 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
             </script>  
-        </registry>
+        </catalog>
     </analyzer-snapshot>
 </analyzer-snapshots>

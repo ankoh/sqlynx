@@ -78,7 +78,7 @@ static void writeTables(pugi::xml_node root, const AnalyzedScript& target) {
 namespace testing {
 
 void AnalyzerSnapshotTest::TestRegistrySnapshot(const std::vector<ScriptAnalysisSnapshot>& snaps, pugi::xml_node& node,
-                                                SchemaRegistry& registry, std::vector<std::unique_ptr<Script>>& scripts,
+                                                Catalog& catalog, std::vector<std::unique_ptr<Script>>& scripts,
                                                 size_t& entry_ids) {
     for (size_t i = 0; i < snaps.size(); ++i) {
         auto& entry = snaps[i];
@@ -94,7 +94,7 @@ void AnalyzerSnapshotTest::TestRegistrySnapshot(const std::vector<ScriptAnalysis
         auto analyzed = script.Analyze();
         ASSERT_EQ(analyzed.second, proto::StatusCode::OK);
 
-        registry.AddScript(script, entry_id);
+        catalog.AddScript(script, entry_id);
 
         auto script_node = node.append_child("script");
         AnalyzerSnapshotTest::EncodeScript(script_node, *script.analyzed_script, false);
@@ -106,7 +106,7 @@ void AnalyzerSnapshotTest::TestRegistrySnapshot(const std::vector<ScriptAnalysis
     }
 }
 
-void AnalyzerSnapshotTest::TestMainScriptSnapshot(const ScriptAnalysisSnapshot& snap, const SchemaRegistry& registry,
+void AnalyzerSnapshotTest::TestMainScriptSnapshot(const ScriptAnalysisSnapshot& snap, const Catalog& catalog,
                                                   pugi::xml_node& node, Script& script, size_t entry_id) {
     script.InsertTextAt(entry_id, snap.input);
 
@@ -114,7 +114,7 @@ void AnalyzerSnapshotTest::TestMainScriptSnapshot(const ScriptAnalysisSnapshot& 
     ASSERT_EQ(scan.second, proto::StatusCode::OK);
     auto parsed = script.Parse();
     ASSERT_EQ(parsed.second, proto::StatusCode::OK);
-    auto analyzed = script.Analyze(&registry);
+    auto analyzed = script.Analyze(&catalog);
     ASSERT_EQ(analyzed.second, proto::StatusCode::OK) << proto::EnumNameStatusCode(analyzed.second);
 
     AnalyzerSnapshotTest::EncodeScript(node, *script.analyzed_script, true);
@@ -263,10 +263,10 @@ void AnalyzerSnapshotTest::LoadTests(std::filesystem::path& source_dir) {
                 test.script.graph_edges.append_copy(main_node.child("query-graph"));
             }
 
-            // Read registry
-            for (auto entry_node : test_node.child("registry").children()) {
-                test.registry.emplace_back();
-                auto& entry = test.registry.back();
+            // Read catalog
+            for (auto entry_node : test_node.child("catalog").children()) {
+                test.catalog.emplace_back();
+                auto& entry = test.catalog.back();
                 std::string entry_name = entry_node.name();
                 if (entry_name == "script") {
                     if (auto db = entry_node.attribute("database")) {

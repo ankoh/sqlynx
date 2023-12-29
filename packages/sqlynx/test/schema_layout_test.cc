@@ -4,8 +4,8 @@
 
 #include "gtest/gtest.h"
 #include "sqlynx/analyzer/completion.h"
+#include "sqlynx/catalog.h"
 #include "sqlynx/proto/proto_generated.h"
-#include "sqlynx/schema.h"
 #include "sqlynx/script.h"
 
 using namespace sqlynx;
@@ -92,9 +92,9 @@ TEST(SchemaGridTest, TPCHQ2) {
     ASSERT_EQ(query_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(query_script.Parse().second, proto::StatusCode::OK);
 
-    SchemaRegistry registry;
-    registry.AddScript(schema_script, 0);
-    ASSERT_EQ(query_script.Analyze(&registry).second, proto::StatusCode::OK);
+    Catalog catalog;
+    catalog.AddScript(schema_script, 0);
+    ASSERT_EQ(query_script.Analyze(&catalog).second, proto::StatusCode::OK);
 
     SchemaGrid grid;
     for (size_t i = 0; i < 3; ++i) {

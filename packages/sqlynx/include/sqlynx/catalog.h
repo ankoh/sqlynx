@@ -28,14 +28,14 @@ namespace sqlynx {
 
 constexpr uint32_t PROTO_NULL_U32 = std::numeric_limits<uint32_t>::max();
 
-class SchemaRegistry;
+class Catalog;
 class Script;
 class AnalyzedScript;
 
 /// A schema stores database metadata.
 /// It is used as a virtual container to expose table and column information to the analyzer.
-class Schema {
-    friend class SchemaRegistry;
+class CatalogEntry {
+    friend class Catalog;
     friend class Script;
     friend class ScriptCursor;
 
@@ -59,7 +59,7 @@ class Schema {
         /// Return the name text
         void operator|=(proto::NameTag tag) { tags |= tag; }
     };
-    using NameSearchIndex = btree::multimap<fuzzy_ci_string_view, std::reference_wrapper<const Schema::NameInfo>>;
+    using NameSearchIndex = btree::multimap<fuzzy_ci_string_view, std::reference_wrapper<const CatalogEntry::NameInfo>>;
 
     /// A key for a qualified table name
     /// A qualified table name
@@ -176,11 +176,11 @@ class Schema {
                             std::pair<std::reference_wrapper<Table>, std::reference_wrapper<TableColumn>>>
         table_columns_by_name;
     /// The name search index
-    std::optional<Schema::NameSearchIndex> name_search_index;
+    std::optional<CatalogEntry::NameSearchIndex> name_search_index;
 
    public:
     /// Construcutor
-    Schema(ExternalID external_id, std::string_view database_name, std::string_view schema_name);
+    CatalogEntry(ExternalID external_id, std::string_view database_name, std::string_view schema_name);
 
     /// Get the external id
     ExternalID GetExternalID() const { return external_id; }
@@ -201,20 +201,19 @@ class Schema {
     /// Resolve a table by id
     std::optional<ResolvedTable> ResolveTable(ExternalObjectID table_id) const;
     /// Resolve a table by id
-    std::optional<ResolvedTable> ResolveTable(ExternalObjectID table_id, const SchemaRegistry& schema_registry) const;
+    std::optional<ResolvedTable> ResolveTable(ExternalObjectID table_id, const Catalog& catalog) const;
     /// Resolve a table by name
     std::optional<ResolvedTable> ResolveTable(QualifiedTableName table_name) const;
     /// Resolve a table by name
-    std::optional<ResolvedTable> ResolveTable(QualifiedTableName table_name,
-                                              const SchemaRegistry& schema_registry) const;
+    std::optional<ResolvedTable> ResolveTable(QualifiedTableName table_name, const Catalog& catalog) const;
     /// Find table columns by name
     void ResolveTableColumn(std::string_view table_column, std::vector<ResolvedTableColumn>& out) const;
     /// Find table columns by name
-    void ResolveTableColumn(std::string_view table_column, const SchemaRegistry& schema_registry,
+    void ResolveTableColumn(std::string_view table_column, const Catalog& catalog,
                             std::vector<ResolvedTableColumn>& out) const;
 };
 
-class ExternalSchema : public Schema {
+class ExternalSchema : public CatalogEntry {
    protected:
     /// A schema descriptors
     struct Descriptor {
@@ -234,12 +233,12 @@ class ExternalSchema : public Schema {
                                    std::unique_ptr<std::byte[]> descriptor_buffer);
 };
 
-class SchemaRegistry {
+class Catalog {
    public:
     using Rank = uint32_t;
 
    protected:
-    /// A schema backed by an analyzed script
+    /// A catalog entry backed by an analyzed script
     struct ScriptEntry {
         /// The analyzed script
         std::shared_ptr<AnalyzedScript> script;
@@ -248,27 +247,34 @@ class SchemaRegistry {
         /// The registered schema names
         std::unordered_set<std::pair<std::string_view, std::string_view>, TupleHasher> schema_names;
     };
+    /// The catalog version.
+    /// Every modification bumps the version counter, the analyzer reads the version counter which protects all refs.
+    uint64_t version;
     /// The schemas
-    std::unordered_map<ExternalID, Schema*> schemas;
+    std::unordered_map<ExternalID, CatalogEntry*> entries;
     /// The script entries
     std::unordered_map<ExternalID, ScriptEntry> script_entries;
     /// The schemas ordered by <rank>
-    btree::set<std::tuple<Rank, ExternalID>> schemas_ranked;
+    btree::set<std::tuple<Rank, ExternalID>> entries_ranked;
     /// The schemas ordered by <database, schema, rank>
-    btree::set<std::tuple<std::string_view, std::string_view, Rank, ExternalID>> schema_names_ranked;
+    btree::set<std::tuple<std::string_view, std::string_view, Rank, ExternalID>> entry_names_ranked;
 
    public:
-    /// Create a copy of the schema search path.
-    /// Every analyzed script has a lifetime dependency on the schema search path that was used to analyze it.
-    /// We can later think about only extracting the real dependencies
-    SchemaRegistry CreateSnapshot() const { return {*this}; }
+    /// Get the current version of the registry
+    uint64_t GetVersion() const { return version; }
 
     /// Contains and external id?
-    bool Contains(ExternalID id) const { return schemas.contains(id); }
-    /// Get the schemas
+    bool Contains(ExternalID id) const { return entries.contains(id); }
+    /// Iterate all entries in arbitrary order
+    template <typename Fn> void Iterate(Fn f) const {
+        for (auto& [_entry_id, entry] : entries) {
+            f(*entry);
+        }
+    }
+    /// Iterate entries in ranked order
     template <typename Fn> void IterateRanked(Fn f) const {
-        for (auto& [rank, id] : schemas_ranked) {
-            auto* schema = schemas.at(id);
+        for (auto& [rank, id] : entries_ranked) {
+            auto* schema = entries.at(id);
             f(*schema, rank);
         }
     }
@@ -289,11 +295,11 @@ class SchemaRegistry {
                                          std::unique_ptr<std::byte[]> descriptor_buffer);
 
     /// Resolve a table by id
-    std::optional<Schema::ResolvedTable> ResolveTable(ExternalObjectID table_id) const;
+    std::optional<CatalogEntry::ResolvedTable> ResolveTable(ExternalObjectID table_id) const;
     /// Resolve a table by id
-    std::optional<Schema::ResolvedTable> ResolveTable(Schema::QualifiedTableName table_name) const;
+    std::optional<CatalogEntry::ResolvedTable> ResolveTable(CatalogEntry::QualifiedTableName table_name) const;
     /// Find table columns by name
-    void ResolveTableColumn(std::string_view table_column, std::vector<Schema::ResolvedTableColumn>& out) const;
+    void ResolveTableColumn(std::string_view table_column, std::vector<CatalogEntry::ResolvedTableColumn>& out) const;
 };
 
 }  // namespace sqlynx

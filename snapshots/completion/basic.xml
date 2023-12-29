@@ -1,7 +1,7 @@
 <completion-snapshots>
     <completion-snapshot name="empty">
         <script id="0" />
-        <registry />
+        <catalog />
         <cursor>
             <search text="" index="0" />
         </cursor>
@@ -20,7 +20,7 @@
                 <unresolved stmt="0" loc="31..33" text="fo" />
             </table-references>
         </script>
-        <registry>
+        <catalog>
             <script id="1">
                 <input>
                     create table foo(a int);
@@ -31,7 +31,7 @@
                     </table>
                 </tables>
             </script>
-        </registry>
+        </catalog>
         <cursor>
             <search text="fo" index="2" />
         </cursor>
@@ -47,7 +47,7 @@
                 select * from ( foo );
             </input>
         </script>
-        <registry>
+        <catalog>
             <script id="1">
                 <input>
                     create table foo(a int);
@@ -58,7 +58,7 @@
                     </table>
                 </tables>
             </script>
-        </registry>
+        </catalog>
         <cursor>
             <search text="from (" index="6" />
         </cursor>
@@ -76,7 +76,7 @@
                 <unresolved stmt="0" loc="24..29" text="attr2" />
             </column-references>
         </script>
-        <registry>
+        <catalog>
             <script id="1">
                 <input>
 create table table1(attr1 integer);
@@ -95,7 +95,7 @@ create table table3(attr3 integer);
                     </table>
                 </tables>
             </script>
-        </registry>
+        </catalog>
         <cursor>
             <search text="tab" index="3" />
         </cursor>
@@ -118,7 +118,7 @@ create table table3(attr3 integer);
                 <unresolved stmt="0" loc="65..74" text="external_" />
             </column-references>
         </script>
-        <registry>
+        <catalog>
             <script id="1">
                 <input>
                     create table external_name1(external_name2 int);
@@ -129,7 +129,7 @@ create table table3(attr3 integer);
                     </table>
                 </tables>
             </script>
-        </registry>
+        </catalog>
         <cursor script="1">
             <search text="where external_" index="14" />
         </cursor>
@@ -154,7 +154,7 @@ create table table3(attr3 integer);
                 <unresolved stmt="0" loc="65..74" text="external_" />
             </column-references>
         </script>
-        <registry>
+        <catalog>
             <script id="1">
                 <input>
                     create table external_name1(external_name2 int);
@@ -165,7 +165,7 @@ create table table3(attr3 integer);
                     </table>
                 </tables>
             </script>
-        </registry>
+        </catalog>
         <cursor>
             <search text="where external_" index="15" />
         </cursor>

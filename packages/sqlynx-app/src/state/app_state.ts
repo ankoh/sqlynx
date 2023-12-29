@@ -23,8 +23,8 @@ export interface AppState {
     instance: sqlynx.SQLynx | null;
     /// The main script
     scripts: { [context: number]: ScriptData };
-    /// The schema registry
-    schemaRegistry: sqlynx.SQLynxSchemaRegistry | null;
+    /// The catalog
+    schemaRegistry: sqlynx.SQLynxCatalog | null;
     /// The graph
     graph: sqlynx.SQLynxSchemaLayout | null;
     /// The graph config

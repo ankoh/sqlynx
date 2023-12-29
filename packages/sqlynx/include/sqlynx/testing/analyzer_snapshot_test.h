@@ -44,14 +44,14 @@ struct AnalyzerSnapshotTest {
     /// The main script
     ScriptAnalysisSnapshot script;
     /// The entries
-    std::vector<ScriptAnalysisSnapshot> registry;
+    std::vector<ScriptAnalysisSnapshot> catalog;
 
     /// Read a registry
     static void TestRegistrySnapshot(const std::vector<ScriptAnalysisSnapshot>& snaps, pugi::xml_node& registry_node,
-                                     SchemaRegistry& registry, std::vector<std::unique_ptr<Script>>& scripts,
+                                     Catalog& registry, std::vector<std::unique_ptr<Script>>& scripts,
                                      size_t& entry_ids);
     /// Read a registry
-    static void TestMainScriptSnapshot(const ScriptAnalysisSnapshot& snap, const SchemaRegistry& registry,
+    static void TestMainScriptSnapshot(const ScriptAnalysisSnapshot& snap, const Catalog& registry,
                                        pugi::xml_node& node, Script& script, size_t entry_id);
     /// Encode a script
     static void EncodeScript(pugi::xml_node out, const AnalyzedScript& script, bool is_main);

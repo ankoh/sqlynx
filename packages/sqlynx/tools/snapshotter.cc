@@ -8,10 +8,10 @@
 #include "flatbuffers/flatbuffers.h"
 #include "gflags/gflags.h"
 #include "sqlynx/analyzer/analyzer.h"
+#include "sqlynx/catalog.h"
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/parser/scanner.h"
 #include "sqlynx/proto/proto_generated.h"
-#include "sqlynx/schema.h"
 #include "sqlynx/script.h"
 #include "sqlynx/testing/analyzer_snapshot_test.h"
 #include "sqlynx/testing/completion_snapshot_test.h"
@@ -77,8 +77,7 @@ static void generate_parser_snapshots(const std::filesystem::path& source_dir) {
     }
 }
 
-static std::unique_ptr<Script> read_script(pugi::xml_node node, size_t entry_id,
-                                           const SchemaRegistry* registry = nullptr) {
+static std::unique_ptr<Script> read_script(pugi::xml_node node, size_t entry_id, const Catalog* catalog = nullptr) {
     auto input = node.child("input").last_child().value();
     std::string database_name, schema_name;
     if (auto db = node.attribute("database")) {
@@ -99,7 +98,7 @@ static std::unique_ptr<Script> read_script(pugi::xml_node node, size_t entry_id,
         std::cout << "  ERROR " << proto::EnumNameStatusCode(parsed.second) << std::endl;
         return nullptr;
     }
-    auto analyzed = script->Analyze(registry);
+    auto analyzed = script->Analyze(catalog);
     if (analyzed.second != proto::StatusCode::OK) {
         std::cout << "  ERROR " << proto::EnumNameStatusCode(analyzed.second) << std::endl;
         return nullptr;
@@ -107,21 +106,21 @@ static std::unique_ptr<Script> read_script(pugi::xml_node node, size_t entry_id,
     return script;
 }
 
-static SchemaRegistry read_registry(pugi::xml_node registry_node,
-                                    std::vector<std::unique_ptr<Script>>& registry_scripts, size_t& entry_id) {
-    SchemaRegistry registry;
-    for (auto entry_node : registry_node.children()) {
+static Catalog read_catalog(pugi::xml_node catalog_node, std::vector<std::unique_ptr<Script>>& catalog_scripts,
+                            size_t& entry_id) {
+    Catalog catalog;
+    for (auto entry_node : catalog_node.children()) {
         std::string entry_name = entry_node.name();
 
         if (entry_name == "script") {
             auto external_id = entry_id++;
             auto script = read_script(entry_node, external_id);
-            registry.AddScript(*script, external_id);
+            catalog.AddScript(*script, external_id);
             AnalyzerSnapshotTest::EncodeScript(entry_node, *script->analyzed_script, false);
-            registry_scripts.push_back(std::move(script));
+            catalog_scripts.push_back(std::move(script));
         }
     }
-    return std::move(registry);
+    return std::move(catalog);
 }
 
 static void generate_analyzer_snapshots(const std::filesystem::path& source_dir) {
@@ -157,11 +156,11 @@ static void generate_analyzer_snapshots(const std::filesystem::path& source_dir)
             auto name = test_node.attribute("name").as_string();
             std::cout << "  TEST " << name << std::endl;
 
-            std::vector<std::unique_ptr<Script>> registry_scripts;
+            std::vector<std::unique_ptr<Script>> catalog_scripts;
             size_t entry_id = 1;
-            auto registry = read_registry(test_node.child("registry"), registry_scripts, entry_id);
+            auto catalog = read_catalog(test_node.child("catalog"), catalog_scripts, entry_id);
             auto main_node = test_node.child("script");
-            auto main_script = read_script(main_node, 0, &registry);
+            auto main_script = read_script(main_node, 0, &catalog);
 
             AnalyzerSnapshotTest::EncodeScript(main_node, *main_script->analyzed_script, true);
         }
@@ -204,11 +203,11 @@ static void generate_completion_snapshots(const std::filesystem::path& source_di
             auto name = test.attribute("name").as_string();
             std::cout << "  TEST " << name << std::endl;
 
-            std::vector<std::unique_ptr<Script>> registry_scripts;
+            std::vector<std::unique_ptr<Script>> catalog_scripts;
             size_t entry_id = 1;
-            auto registry = read_registry(test.child("registry"), registry_scripts, entry_id);
+            auto catalog = read_catalog(test.child("catalog"), catalog_scripts, entry_id);
             auto main_node = test.child("script");
-            auto main_script = read_script(main_node, 0, &registry);
+            auto main_script = read_script(main_node, 0, &catalog);
             AnalyzerSnapshotTest::EncodeScript(main_node, *main_script->analyzed_script, true);
 
             auto cursor_node = test.child("cursor");
