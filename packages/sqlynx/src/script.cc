@@ -482,8 +482,8 @@ std::unique_ptr<proto::ScriptMemoryStatistics> Script::GetMemoryStatistics() {
         // Added analyzed before?
         if (registered_analyzed.contains(analyzed)) return;
         size_t analyzer_description_bytes =
-            analyzed->GetTables().size() * sizeof(Schema::Table) +
-            analyzed->GetTableColumns().size() * sizeof(Schema::TableColumn) +
+            analyzed->tables.size() * sizeof(Schema::Table) +
+            analyzed->table_columns.size() * sizeof(Schema::TableColumn) +
             analyzed->table_references.size() * sizeof(decltype(analyzed->table_references)::value_type) +
             analyzed->column_references.size() * sizeof(decltype(analyzed->column_references)::value_type) +
             analyzed->graph_edges.size() * sizeof(decltype(analyzed->graph_edges)::value_type) +
@@ -553,7 +553,7 @@ std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(const SchemaRegist
 
     // Check if the external context id is unique
     if (schema_registry) {
-        if (schema_registry->GetScripts().contains(external_id)) {
+        if (schema_registry->Contains(external_id)) {
             return {nullptr, proto::StatusCode::EXTERNAL_ID_COLLISION};
         }
     }
@@ -652,7 +652,7 @@ std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> ScriptCursor::Create
             // Analyzed and analyzed is same version?
             if (analyzed && analyzed->parsed_script == script.parsed_script) {
                 // Part of a table node?
-                for (auto& table : analyzed->GetTables()) {
+                for (auto& table : analyzed->tables) {
                     if (table.ast_node_id.has_value() && cursor_path_nodes.contains(*table.ast_node_id)) {
                         cursor->table_id = table.ast_node_id;
                         break;

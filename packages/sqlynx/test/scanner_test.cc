@@ -30,7 +30,7 @@ static void match_tokens(const void* data, const std::vector<uint32_t>& offsets,
 }
 
 TEST(ScannerTest, InsertChars) {
-    auto script = sqlynx_script_new(1, nullptr, 0, nullptr, 0);
+    auto script = sqlynx_script_new(1);
     FFIResult* result = nullptr;
 
     size_t size = 0;
