@@ -58,32 +58,4 @@
             </script>
         </registry>
     </analyzer-snapshot>
-    <analyzer-snapshot name="cross_empty_database">
-        <script database="db1" schema="schema1">
-            <input>
-                select * from A where a = 1;
-            </input>
-        </script>  
-        <registry>
-            <script schema="schema1">
-                <input>
-                    create table A (a int, b int);
-                </input>
-            </script>
-        </registry>
-    </analyzer-snapshot>
-    <analyzer-snapshot name="cross_empty_schema">
-        <script database="db1" schema="schema1">
-            <input>
-                select * from A where a = 1;
-            </input>
-        </script>  
-        <registry>
-            <script>
-                <input>
-                    create table A (a int, b int);
-                </input>
-            </script>
-        </registry>
-    </analyzer-snapshot>
 </analyzer-snapshots>

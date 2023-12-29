@@ -72,8 +72,7 @@ class NameResolutionPass : public PassManager::LTRPass {
         /// The tables
         std::vector<AnalyzedScript::TableColumn> table_columns;
         /// The tables by name
-        ankerl::unordered_dense::map<Schema::QualifiedTableName::Key, std::reference_wrapper<AnalyzedScript::Table>,
-                                     TupleHasher>
+        std::unordered_map<Schema::QualifiedTableName::Key, std::reference_wrapper<AnalyzedScript::Table>, TupleHasher>
             tables_by_name;
     };
 
@@ -124,7 +123,7 @@ class NameResolutionPass : public PassManager::LTRPass {
     OverlayList<AnalyzedScript::TableColumn> pending_columns_free_list;
 
     /// The output of the name resolution pass
-    StagingOutput staging;
+    StagingOutput out;
 
     /// Merge child states into a destination state
     std::span<std::reference_wrapper<Schema::NameInfo>> ReadNamePath(const sx::Node& node);
@@ -132,6 +131,8 @@ class NameResolutionPass : public PassManager::LTRPass {
     AnalyzedScript::QualifiedTableName ReadQualifiedTableName(const sx::Node* node);
     /// Merge child states into a destination state
     AnalyzedScript::QualifiedColumnName ReadQualifiedColumnName(const sx::Node* column);
+    /// Qualify a table name
+    AnalyzedScript::QualifiedTableName QualifyTableName(AnalyzedScript::QualifiedTableName name) const;
 
     /// Merge child states into a destination state
     void MergeChildStates(NodeState& dst, const sx::Node& parent);

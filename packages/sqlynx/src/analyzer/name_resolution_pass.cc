@@ -132,6 +132,12 @@ AnalyzedScript::QualifiedColumnName NameResolutionPass::ReadQualifiedColumnName(
     return name;
 }
 
+AnalyzedScript::QualifiedTableName NameResolutionPass::QualifyTableName(AnalyzedScript::QualifiedTableName name) const {
+    name.database_name = name.database_name.empty() ? database_name : name.database_name;
+    name.schema_name = name.schema_name.empty() ? schema_name : name.schema_name;
+    return name;
+}
+
 void NameResolutionPass::MergeChildStates(NodeState& dst, std::initializer_list<const proto::Node*> children) {
     for (const proto::Node* child : children) {
         if (!child) continue;
@@ -175,10 +181,10 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
         // TODO Matches a view or CTE?
 
         // Table ref points to own table?
-        auto iter = staging.tables_by_name.find(table_ref.table_name);
-        if (iter != staging.tables_by_name.end()) {
+        auto iter = out.tables_by_name.find(QualifyTableName(table_ref.table_name));
+        if (iter != out.tables_by_name.end()) {
             auto& table = iter->second.get();
-            auto table_columns = std::span{staging.table_columns}.subspan(table.columns_begin, table.column_count);
+            auto table_columns = std::span{out.table_columns}.subspan(table.columns_begin, table.column_count);
 
             // Remember resolved table
             Schema::ResolvedTable resolved_table{.table = table, .table_columns = table_columns};
@@ -496,6 +502,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 const proto::Node* elements_node = attrs[proto::AttributeKey::SQL_CREATE_TABLE_ELEMENTS];
                 // Read the name
                 auto table_name = ReadQualifiedTableName(name_node);
+                table_name = QualifyTableName(table_name);
                 // Merge child states
                 MergeChildStates(node_state, {elements_node});
                 // Collect all columns
@@ -550,11 +557,11 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
 
 /// Finish the analysis pass
 void NameResolutionPass::Finish() {
-    staging.tables = tables.Flatten();
-    staging.table_columns = table_columns.Flatten();
-    staging.tables_by_name.reserve(staging.tables.size());
-    for (auto& table : staging.tables) {
-        staging.tables_by_name.insert({table.table_name, table});
+    out.tables = tables.Flatten();
+    out.table_columns = table_columns.Flatten();
+    out.tables_by_name.reserve(out.tables.size());
+    for (auto& table : out.tables) {
+        out.tables_by_name.insert({table.table_name, table});
     }
 
     // Resolve all names
@@ -601,31 +608,25 @@ void NameResolutionPass::Finish() {
 
 /// Export an analyzed program
 void NameResolutionPass::Export(AnalyzedScript& program) {
+    program.tables = std::move(out.tables);
     program.table_columns = table_columns.Flatten();
+    program.tables_by_name = std::move(out.tables_by_name);
     program.graph_edges = graph_edges.Flatten();
     program.graph_edge_nodes = graph_edge_nodes.Flatten();
 
-    program.tables.reserve(tables.GetSize());
     program.table_references.reserve(table_references.GetSize());
-    program.column_references.reserve(column_references.GetSize());
-    for (auto& chunk : tables.GetChunks()) {
-        for (auto& table : chunk) {
-            program.tables.push_back(std::move(table));
-        }
-    }
     for (auto& chunk : table_references.GetChunks()) {
         for (auto& ref : chunk) {
             program.table_references.push_back(std::move(ref.value));
         }
     }
+    program.column_references.reserve(column_references.GetSize());
     for (auto& chunk : column_references.GetChunks()) {
         for (auto& ref : chunk) {
             program.column_references.push_back(std::move(ref.value));
         }
     }
-
     for (auto& table : program.tables) {
-        program.tables_by_name.insert({table.table_name.table_name, table});
         for (size_t column_id = 0; column_id < table.column_count; ++column_id) {
             auto& column = program.table_columns[table.columns_begin + column_id];
             program.table_columns_by_name.insert({column.column_name, {table, column}});

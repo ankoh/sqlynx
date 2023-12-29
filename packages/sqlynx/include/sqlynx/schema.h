@@ -9,6 +9,7 @@
 #include <optional>
 #include <string_view>
 #include <tuple>
+#include <unordered_set>
 
 #include "ankerl/unordered_dense.h"
 #include "sqlynx/external.h"
@@ -18,6 +19,7 @@
 #include "sqlynx/text/rope.h"
 #include "sqlynx/utils/bits.h"
 #include "sqlynx/utils/btree/map.h"
+#include "sqlynx/utils/btree/set.h"
 #include "sqlynx/utils/hash.h"
 #include "sqlynx/utils/string_conversion.h"
 #include "sqlynx/utils/string_pool.h"
@@ -33,6 +35,10 @@ class AnalyzedScript;
 /// A schema stores database metadata.
 /// It is used as a virtual container to expose table and column information to the analyzer.
 class Schema {
+    friend class SchemaRegistry;
+    friend class Script;
+    friend class ScriptCursor;
+
    public:
     using NameID = uint32_t;
 
@@ -141,10 +147,6 @@ class Schema {
     };
     /// A resolved table
     struct ResolvedTable {
-        /// The database name
-        std::string_view database_name;
-        /// The schema name
-        std::string_view schema_name;
         /// The table
         const Table& table;
         /// The table columns
@@ -159,16 +161,16 @@ class Schema {
    protected:
     /// The context id
     const ExternalID external_id;
-    /// The database name (if any)
-    const std::string database_name;
-    /// The schema name (if any)
-    const std::string schema_name;
+    /// The default database name
+    const std::string_view database_name;
+    /// The default schema name
+    const std::string_view schema_name;
     /// The local tables
     std::vector<Table> tables;
     /// The local table columns
     std::vector<TableColumn> table_columns;
     /// The tables, indexed by name
-    std::unordered_multimap<std::string_view, std::reference_wrapper<Table>> tables_by_name;
+    std::unordered_map<QualifiedTableName::Key, std::reference_wrapper<Table>, TupleHasher> tables_by_name;
     /// The table columns, indexed by the name
     std::unordered_multimap<std::string_view,
                             std::pair<std::reference_wrapper<Table>, std::reference_wrapper<TableColumn>>>
@@ -182,14 +184,16 @@ class Schema {
 
     /// Get the external id
     ExternalID GetExternalID() const { return external_id; }
-    /// Get the database name
-    std::string_view GetDatabaseName() const { return database_name; }
-    /// Get the schema name
-    std::string_view GetSchemaName() const { return schema_name; }
     /// Get the tables
-    std::span<const Table> GetTables() const { return tables; }
-    /// Get the tables
-    std::span<const TableColumn> GetTableColumns() const { return table_columns; }
+    auto& GetTables() const { return tables; }
+    /// Get the table columns
+    auto& GetTableColumns() const { return table_columns; }
+    /// Get the qualified name
+    QualifiedTableName QualifyTableName(QualifiedTableName name) const {
+        name.database_name = name.database_name.empty() ? database_name : name.database_name;
+        name.schema_name = name.schema_name.empty() ? database_name : name.schema_name;
+        return name;
+    }
 
     /// Get the name search index
     virtual const NameSearchIndex& GetNameSearchIndex() = 0;
@@ -199,7 +203,7 @@ class Schema {
     /// Resolve a table by id
     std::optional<ResolvedTable> ResolveTable(ExternalObjectID table_id, const SchemaRegistry& schema_registry) const;
     /// Resolve a table by name
-    std::optional<ResolvedTable> ResolveTable(std::string_view table_name) const;
+    std::optional<ResolvedTable> ResolveTable(QualifiedTableName table_name) const;
     /// Resolve a table by name
     std::optional<ResolvedTable> ResolveTable(QualifiedTableName table_name,
                                               const SchemaRegistry& schema_registry) const;
@@ -224,7 +228,7 @@ class ExternalSchema : public Schema {
 
    public:
     /// Construcutor
-    ExternalSchema(ExternalID external_id, std::string_view database_name, std::string_view schema_name);
+    ExternalSchema(ExternalID external_id);
     /// Insert a table
     proto::StatusCode InsertTables(const proto::SchemaDescriptor& descriptor,
                                    std::unique_ptr<std::byte[]> descriptor_buffer);
@@ -241,14 +245,17 @@ class SchemaRegistry {
         std::shared_ptr<AnalyzedScript> script;
         /// The current rank
         Rank rank;
+        /// The registered schema names
+        std::unordered_set<std::pair<std::string_view, std::string_view>, TupleHasher> schema_names;
     };
-
+    /// The schemas
+    std::unordered_map<ExternalID, Schema*> schemas;
     /// The script entries
     std::unordered_map<ExternalID, ScriptEntry> script_entries;
-    /// The schemas
-    std::unordered_map<ExternalID, std::reference_wrapper<Schema>> schemas;
-    /// The ranked schemas
-    std::multiset<std::pair<Rank, Schema*>> ranked_schemas;
+    /// The schemas ordered by <rank>
+    btree::set<std::tuple<Rank, ExternalID>> schemas_ranked;
+    /// The schemas ordered by <database, schema, rank>
+    btree::set<std::tuple<std::string_view, std::string_view, Rank, ExternalID>> schema_names_ranked;
 
    public:
     /// Create a copy of the schema search path.
@@ -256,10 +263,15 @@ class SchemaRegistry {
     /// We can later think about only extracting the real dependencies
     SchemaRegistry CreateSnapshot() const { return {*this}; }
 
+    /// Contains and external id?
+    bool Contains(ExternalID id) const { return schemas.contains(id); }
     /// Get the schemas
-    auto& GetRankedSchemas() const { return ranked_schemas; }
-    /// Get the scripts
-    auto& GetScripts() const { return script_entries; }
+    template <typename Fn> void IterateRanked(Fn f) const {
+        for (auto& [rank, id] : schemas_ranked) {
+            auto* schema = schemas.at(id);
+            f(*schema, rank);
+        }
+    }
 
     /// Add a script
     proto::StatusCode AddScript(Script& script, Rank rank);

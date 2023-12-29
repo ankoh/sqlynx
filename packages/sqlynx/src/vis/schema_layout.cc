@@ -3,6 +3,7 @@
 #include <limits>
 
 #include "sqlynx/external.h"
+#include "sqlynx/schema.h"
 #include "sqlynx/script.h"
 
 namespace sqlynx {
@@ -43,9 +44,8 @@ void SchemaGrid::Configure(const SchemaGrid::Config& c) {
 void SchemaGrid::PrepareLayout() {
     // Internal and external tables
     size_t table_count = script->GetTables().size();
-    for (auto& [rank, schema] : script->GetSchemaRegistry().GetRankedSchemas()) {
-        table_count += schema->GetTables().size();
-    }
+    script->GetSchemaRegistry().IterateRanked(
+        [&](Schema& schema, size_t _rank) { table_count += schema.GetTables().size(); });
     // Load adjacency map
     assert(nodes.empty());
     nodes.reserve(table_count);
@@ -56,12 +56,12 @@ void SchemaGrid::PrepareLayout() {
         nodes.emplace_back(nodes.size(), table.table_id, 0);
     }
     // Add external tables
-    for (auto& [rank, schema] : script->GetSchemaRegistry().GetRankedSchemas()) {
-        for (auto& table : schema->GetTables()) {
+    script->GetSchemaRegistry().IterateRanked([&](Schema& schema, size_t _rank) {
+        for (auto& table : schema.GetTables()) {
             nodes_by_table_id.insert({table.table_id, nodes.size()});
             nodes.emplace_back(nodes.size(), table.table_id, 0);
         }
-    }
+    });
     // Add edge node ids
     assert(edge_nodes.empty());
     edge_nodes.resize(script->graph_edge_nodes.size());

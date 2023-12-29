@@ -2,6 +2,7 @@
 
 #include <flatbuffers/buffer.h>
 
+#include "sqlynx/external.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
 
@@ -30,7 +31,7 @@ flatbuffers::Offset<proto::Table> Schema::Table::Pack(flatbuffers::FlatBufferBui
     return out.Finish();
 }
 
-Schema::Schema(uint32_t external_id, std::string_view database_name, std::string_view schema_name)
+Schema::Schema(ExternalID external_id, std::string_view database_name, std::string_view schema_name)
     : external_id(external_id), database_name(database_name), schema_name(schema_name) {}
 
 std::optional<Schema::ResolvedTable> Schema::ResolveTable(ExternalObjectID table_id) const {
@@ -39,7 +40,7 @@ std::optional<Schema::ResolvedTable> Schema::ResolveTable(ExternalObjectID table
     }
     auto& table = tables[table_id.GetIndex()];
     auto columns = std::span<const TableColumn>{table_columns}.subspan(table.columns_begin, table.column_count);
-    return ResolvedTable{database_name, schema_name, table, columns};
+    return ResolvedTable{table, columns};
 }
 
 std::optional<Schema::ResolvedTable> Schema::ResolveTable(ExternalObjectID table_id,
@@ -47,38 +48,29 @@ std::optional<Schema::ResolvedTable> Schema::ResolveTable(ExternalObjectID table
     if (external_id == table_id.GetExternalId()) {
         auto& table = tables[table_id.GetIndex()];
         auto columns = std::span<const TableColumn>{table_columns}.subspan(table.columns_begin, table.column_count);
-        return ResolvedTable{database_name, schema_name, table, columns};
+        return ResolvedTable{table, columns};
     } else {
         return registry.ResolveTable(table_id);
     }
 }
 
-std::optional<Schema::ResolvedTable> Schema::ResolveTable(std::string_view table_name) const {
-    auto iter = tables_by_name.find(table_name);
+std::optional<Schema::ResolvedTable> Schema::ResolveTable(QualifiedTableName name) const {
+    auto iter = tables_by_name.find(name);
     if (iter == tables_by_name.end()) {
         return std::nullopt;
     }
     auto& table = iter->second.get();
     auto columns = std::span<const TableColumn>{table_columns}.subspan(table.columns_begin, table.column_count);
-    return ResolvedTable{database_name, schema_name, table, columns};
+    return ResolvedTable{table, columns};
 }
 
-std::optional<Schema::ResolvedTable> Schema::ResolveTable(QualifiedTableName table_name,
+std::optional<Schema::ResolvedTable> Schema::ResolveTable(QualifiedTableName name,
                                                           const SchemaRegistry& registry) const {
-    if (table_name.database_name == database_name && table_name.schema_name == schema_name) {
-        if (auto resolved = ResolveTable(table_name.table_name)) {
-            return resolved;
-        } else {
-            return std::nullopt;
-        }
+    name = QualifyTableName(name);
+    if (auto resolved = ResolveTable(name)) {
+        return resolved;
     } else {
-        if (table_name.database_name.empty()) {
-            table_name.database_name = database_name;
-        }
-        if (table_name.schema_name.empty()) {
-            table_name.schema_name = schema_name;
-        }
-        return registry.ResolveTable(table_name);
+        return registry.ResolveTable(name);
     }
 }
 
@@ -89,25 +81,27 @@ void Schema::ResolveTableColumn(std::string_view table_column, std::vector<Schem
         auto columns =
             std::span<const TableColumn>{table_columns}.subspan(table.get().columns_begin, table.get().column_count);
         auto column_id = &column.get() - columns.data();
-        out.push_back(ResolvedTableColumn{database_name, schema_name, table, columns, static_cast<size_t>(column_id)});
+        out.push_back(ResolvedTableColumn{table, columns, static_cast<size_t>(column_id)});
     }
 }
 
-ExternalSchema::ExternalSchema(ExternalID external_id, std::string_view database_name, std::string_view schema_name)
-    : Schema(external_id, database_name, schema_name) {}
+ExternalSchema::ExternalSchema(ExternalID external_id) : Schema(external_id, "", "") {}
 
 proto::StatusCode ExternalSchema::InsertTables(const proto::SchemaDescriptor& descriptor,
                                                std::unique_ptr<std::byte[]> descriptor_buffer) {
     if (!descriptor.tables()) {
         return proto::StatusCode::SCHEMA_REGISTRY_DESCRIPTOR_TABLES_NULL;
     }
+    std::string_view database_name =
+        descriptor.database_name() == nullptr ? "" : descriptor.database_name()->string_view();
+    std::string_view schema_name = descriptor.schema_name() == nullptr ? "" : descriptor.schema_name()->string_view();
     for (auto* table : *descriptor.tables()) {
         auto table_name_ptr = table->table_name();
         if (!table_name_ptr || table_name_ptr->size() == 0) {
             return proto::StatusCode::SCHEMA_REGISTRY_DESCRIPTOR_TABLE_NAME_EMPTY;
         }
-        std::string_view table_name = table_name_ptr->string_view();
-        if (tables_by_name.contains(table_name)) {
+        QualifiedTableName::Key table_name_key{database_name, schema_name, table_name_ptr->string_view()};
+        if (tables_by_name.contains(table_name_key)) {
             return proto::StatusCode::SCHEMA_REGISTRY_DESCRIPTOR_TABLE_NAME_COLLISION;
         }
     }
@@ -126,14 +120,23 @@ proto::StatusCode SchemaRegistry::AddScript(Script& script, Rank rank) {
     if (!script.analyzed_script) {
         return proto::StatusCode::SCHEMA_REGISTRY_SCRIPT_NOT_ANALYZED;
     }
-    auto& schema = script.analyzed_script;
-    auto iter = script_entries.find(schema->GetExternalID());
-    if (iter != script_entries.end() && iter->second.script.get() != schema.get()) {
+    Schema& schema = *script.analyzed_script;
+    auto iter = script_entries.find(schema.GetExternalID());
+    if (iter != script_entries.end() && iter->second.script.get() != &schema) {
         return proto::StatusCode::EXTERNAL_ID_COLLISION;
     }
-    script_entries.insert({schema->GetExternalID(), {.script = schema, .rank = rank}});
-    schemas.insert({schema->GetExternalID(), *schema});
-    ranked_schemas.insert({rank, schema.get()});
+    std::unordered_set<std::pair<std::string_view, std::string_view>, TupleHasher> schema_names;
+    for (auto& table : schema.tables) {
+        auto name = schema.QualifyTableName(table.table_name);
+        schema_names.insert({name.database_name, name.schema_name});
+    }
+    for (auto& [db_name, schema_name] : schema_names) {
+        schema_names_ranked.insert({db_name, schema_name, rank, schema.GetExternalID()});
+    }
+    script_entries.insert({schema.GetExternalID(),
+                           {.script = script.analyzed_script, .rank = rank, .schema_names = std::move(schema_names)}});
+    schemas_ranked.insert({rank, schema.GetExternalID()});
+    schemas.insert({schema.GetExternalID(), &schema});
     return proto::StatusCode::OK;
 }
 
@@ -141,23 +144,60 @@ proto::StatusCode SchemaRegistry::UpdateScript(Script& script) {
     if (!script.analyzed_script) {
         return proto::StatusCode::SCHEMA_REGISTRY_SCRIPT_NOT_ANALYZED;
     }
-    auto iter = script_entries.find(script.GetExternalID());
-    if (iter == script_entries.end()) {
+    auto script_iter = script_entries.find(script.GetExternalID());
+    if (script_iter == script_entries.end()) {
         return proto::StatusCode::SCHEMA_REGISTRY_SCRIPT_UNKNOWN;
     }
-    iter->second.script = script.analyzed_script;
+    // Script stayed the same? Nothing to do then
+    if (script_iter->second.script == script.analyzed_script) {
+        return proto::StatusCode::OK;
+    }
+    // Collect all new names
+    std::unordered_map<std::pair<std::string_view, std::string_view>, bool, TupleHasher> new_names;
+    for (auto& table : script.analyzed_script->tables) {
+        auto name = script.analyzed_script->QualifyTableName(table.table_name);
+        new_names.insert({{name.database_name, name.schema_name}, false});
+    }
+    // Scan previous names, mark those that already exist, erase those that no longer exist
+    auto external_id = script.GetExternalID();
+    auto rank = script_iter->second.rank;
+    auto& names = script_iter->second.schema_names;
+    for (auto prev_name_iter = names.begin(); prev_name_iter != names.end();) {
+        auto& [db_name, schema_name] = *prev_name_iter;
+        auto new_name_iter = new_names.find({db_name, schema_name});
+        if (new_name_iter != new_names.end()) {
+            new_name_iter->second = true;
+        } else {
+            schema_names_ranked.erase({db_name, schema_name, rank, external_id});
+            names.erase(prev_name_iter++);
+            continue;
+        }
+        ++prev_name_iter;
+    }
+    // Scan new names and insert unmarked
+    for (auto& [k, already_exists] : new_names) {
+        if (!already_exists) {
+            auto& [db_name, schema_name] = k;
+            names.insert({db_name, schema_name});
+            schema_names_ranked.insert({db_name, schema_name, rank, external_id});
+        }
+    }
+    script_iter->second.script = script.analyzed_script;
     return proto::StatusCode::OK;
 }
 
 void SchemaRegistry::DropScript(Script& script) {
-    auto iter = script_entries.find(script.external_id);
-    if (iter == script_entries.end()) {
-        return;
+    auto iter = script_entries.find(script.GetExternalID());
+    if (iter != script_entries.end()) {
+        auto external_id = script.GetExternalID();
+        auto& names = iter->second.schema_names;
+        for (auto& [db_name, schema_name] : iter->second.schema_names) {
+            schema_names_ranked.erase({db_name, schema_name, iter->second.rank, external_id});
+        }
+        schemas_ranked.erase({iter->second.rank, external_id});
+        schemas.erase(external_id);
+        script_entries.erase(iter);
     }
-    auto rank = iter->second.rank;
-    ranked_schemas.erase({rank, iter->second.script.get()});
-    script_entries.erase(iter);
-    schemas.erase(script.external_id);
 }
 
 /// Add a schema
@@ -174,36 +214,30 @@ proto::StatusCode SchemaRegistry::InsertSchemaTables(ExternalID external_id, std
 }
 
 std::optional<Schema::ResolvedTable> SchemaRegistry::ResolveTable(ExternalObjectID table_id) const {
-    if (auto iter = schemas.find(table_id.GetExternalId()); iter != schemas.end()) {
-        return iter->second.get().ResolveTable(table_id);
+    if (auto iter = script_entries.find(table_id.GetExternalId()); iter != script_entries.end()) {
+        return iter->second.script->ResolveTable(table_id);
     }
     return std::nullopt;
 }
 std::optional<Schema::ResolvedTable> SchemaRegistry::ResolveTable(Schema::QualifiedTableName table_name) const {
-    for (auto iter = ranked_schemas.begin(); iter != ranked_schemas.end(); ++iter) {
-        auto& candidate = *iter->second;
-        if (candidate.GetDatabaseName().empty()) {
-            if (candidate.GetSchemaName().empty()) {
-                if (auto resolved = candidate.ResolveTable(table_name.table_name); resolved.has_value()) {
-                    return resolved;
-                }
-            } else if (candidate.GetSchemaName() == table_name.schema_name) {
-                if (auto resolved = candidate.ResolveTable(table_name.table_name); resolved.has_value()) {
-                    return resolved;
-                }
-            }
-        } else if (candidate.GetDatabaseName() == table_name.database_name &&
-                   candidate.GetSchemaName() == table_name.schema_name) {
-            // Stop search at exact match
-            return candidate.ResolveTable(table_name.table_name);
+    for (auto iter = schema_names_ranked.lower_bound({table_name.database_name, table_name.schema_name, 0, 0});
+         iter != schema_names_ranked.end(); ++iter) {
+        auto& [db_name, schema_name, rank, candidate] = *iter;
+        if (db_name != table_name.database_name || schema_name != table_name.schema_name) {
+            break;
         }
-    }
+        assert(schemas.contains(candidate));
+        auto& schema = schemas.at(candidate);
+        if (auto resolved = schema->ResolveTable(table_name)) {
+            return resolved;
+        }
+    };
     return std::nullopt;
 }
 
 void SchemaRegistry::ResolveTableColumn(std::string_view table_column,
                                         std::vector<Schema::ResolvedTableColumn>& out) const {
-    if (auto iter = ranked_schemas.begin(); iter != ranked_schemas.end()) {
-        iter->second->ResolveTableColumn(table_column, out);
+    for (auto& [key, schema] : schemas) {
+        schema->ResolveTableColumn(table_column, out);
     }
 }
