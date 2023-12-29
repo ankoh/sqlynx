@@ -236,6 +236,7 @@ class ExternalSchema : public CatalogEntry {
 class Catalog {
    public:
     using Rank = uint32_t;
+    using Version = uint64_t;
 
    protected:
     /// A catalog entry backed by an analyzed script
@@ -249,7 +250,7 @@ class Catalog {
     };
     /// The catalog version.
     /// Every modification bumps the version counter, the analyzer reads the version counter which protects all refs.
-    uint64_t version;
+    Version version = 1;
     /// The schemas
     std::unordered_map<ExternalID, CatalogEntry*> entries;
     /// The script entries
@@ -260,6 +261,13 @@ class Catalog {
     btree::set<std::tuple<std::string_view, std::string_view, Rank, ExternalID>> entry_names_ranked;
 
    public:
+    /// Explicit constructor needed due to deleted copy constructor
+    Catalog() = default;
+    /// Catalogs must not be copied
+    Catalog(const Catalog& other) = delete;
+    /// Catalogs must not be copy-assigned
+    Catalog& operator=(const Catalog& other) = delete;
+
     /// Get the current version of the registry
     uint64_t GetVersion() const { return version; }
 

@@ -369,11 +369,12 @@ flatbuffers::Offset<proto::ColumnReference> AnalyzedScript::ColumnReference::Pac
 }
 
 /// Constructor
-AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, Catalog catalog, std::string_view database_name,
-                               std::string_view schema_name)
+AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, const Catalog& catalog,
+                               std::string_view database_name, std::string_view schema_name)
     : CatalogEntry(parsed->external_id, database_name, schema_name),
       parsed_script(std::move(parsed)),
-      catalog(std::move(catalog)) {}
+      catalog(catalog),
+      catalog_version(catalog.GetVersion()) {}
 
 /// Get the name search index
 const CatalogEntry::NameSearchIndex& AnalyzedScript::GetNameSearchIndex() {
