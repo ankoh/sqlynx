@@ -7,10 +7,10 @@
 
 #include "flatbuffers/flatbuffers.h"
 #include "sqlynx/analyzer/completion.h"
+#include "sqlynx/catalog.h"
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/parser/scanner.h"
 #include "sqlynx/proto/proto_generated.h"
-#include "sqlynx/schema.h"
 #include "sqlynx/script.h"
 #include "sqlynx/text/rope.h"
 #include "sqlynx/version.h"
@@ -56,10 +56,10 @@ static FFIResult* packError(proto::StatusCode status) {
             message = "Graph input is not analyzed";
             break;
         case proto::StatusCode::SCHEMA_REGISTRY_SCRIPT_NOT_ANALYZED:
-            message = "Unanalyzed scripts cannot be added to the schema registry";
+            message = "Unanalyzed scripts cannot be added to the catalog";
             break;
         case proto::StatusCode::SCHEMA_REGISTRY_SCRIPT_UNKNOWN:
-            message = "Script is missing in schema registry";
+            message = "Script is missing in catalog";
             break;
         case proto::StatusCode::SCHEMA_REGISTRY_DESCRIPTOR_TABLES_NULL:
             message = "Schema descriptor field `tables` is null or empty";
@@ -195,9 +195,9 @@ extern "C" FFIResult* sqlynx_script_parse(Script* script) {
 }
 
 /// Analyze a script
-extern "C" FFIResult* sqlynx_script_analyze(Script* script, const SchemaRegistry* registry) {
+extern "C" FFIResult* sqlynx_script_analyze(Script* script, const Catalog* catalog) {
     // Analyze the script
-    auto [analyzed, status] = script->Analyze(registry);
+    auto [analyzed, status] = script->Analyze(catalog);
     if (status != proto::StatusCode::OK) {
         return packError(status);
     }
@@ -266,43 +266,41 @@ extern "C" FFIResult* sqlynx_script_get_statistics(sqlynx::Script* script) {
     return packBuffer(std::move(detached));
 }
 
-/// Create a schema registry
-extern "C" sqlynx::SchemaRegistry* sqlynx_schema_registry_new() { return new sqlynx::SchemaRegistry(); }
-/// Create a schema registry
-extern "C" void sqlynx_schema_registry_delete(sqlynx::SchemaRegistry* registry) { delete registry; }
-/// Add a script in the schema registry
-extern "C" FFIResult* sqlynx_schema_registry_add_script(sqlynx::SchemaRegistry* registry, sqlynx::Script* script,
-                                                        size_t rank) {
-    auto status = registry->AddScript(*script, rank);
+/// Create a catalog
+extern "C" sqlynx::Catalog* sqlynx_catalog_new() { return new sqlynx::Catalog(); }
+/// Create a catalog
+extern "C" void sqlynx_catalog_delete(sqlynx::Catalog* catalog) { delete catalog; }
+/// Add a script in the catalog
+extern "C" FFIResult* sqlynx_catalog_add_script(sqlynx::Catalog* catalog, sqlynx::Script* script, size_t rank) {
+    auto status = catalog->AddScript(*script, rank);
     if (status != proto::StatusCode::OK) {
         return packError(status);
     }
     return packOK();
 }
-/// Update a script in the schema registry
-extern "C" FFIResult* sqlynx_schema_registry_update_script(sqlynx::SchemaRegistry* registry, sqlynx::Script* script) {
-    auto status = registry->UpdateScript(*script);
+/// Update a script in the catalog
+extern "C" FFIResult* sqlynx_catalog_update_script(sqlynx::Catalog* catalog, sqlynx::Script* script) {
+    auto status = catalog->UpdateScript(*script);
     if (status != proto::StatusCode::OK) {
         return packError(status);
     }
     return packOK();
 }
-/// Drop entry in the schema registry
-extern "C" void sqlynx_schema_registry_drop_script(sqlynx::SchemaRegistry* registry, sqlynx::Script* script) {
-    registry->DropScript(*script);
+/// Drop entry in the catalog
+extern "C" void sqlynx_catalog_drop_script(sqlynx::Catalog* catalog, sqlynx::Script* script) {
+    catalog->DropScript(*script);
 }
-/// Add an external schema in the schema registry
-extern "C" FFIResult* sqlynx_schema_registry_add_schema(sqlynx::SchemaRegistry* registry, size_t external_id,
-                                                        size_t rank, const char* database_name_ptr,
-                                                        size_t database_name_length, const char* schema_name_ptr,
-                                                        size_t schema_name_length) {
+/// Add an external schema in the catalog
+extern "C" FFIResult* sqlynx_catalog_add_schema(sqlynx::Catalog* catalog, size_t external_id, size_t rank,
+                                                const char* database_name_ptr, size_t database_name_length,
+                                                const char* schema_name_ptr, size_t schema_name_length) {
     return nullptr;
 }
 /// Drop an external schema
-extern "C" void sqlynx_schema_registry_drop_schema(sqlynx::SchemaRegistry* registry, size_t external_id) {}
+extern "C" void sqlynx_catalog_drop_schema(sqlynx::Catalog* catalog, size_t external_id) {}
 /// Insert tables into an external schema
-extern "C" FFIResult* sqlynx_schema_registry_insert_schema_tables(sqlynx::SchemaRegistry* registry, size_t external_id,
-                                                                  const void* data_ptr, size_t data_size) {
+extern "C" FFIResult* sqlynx_catalog_insert_schema_tables(sqlynx::Catalog* catalog, size_t external_id,
+                                                          const void* data_ptr, size_t data_size) {
     return nullptr;
 }
 

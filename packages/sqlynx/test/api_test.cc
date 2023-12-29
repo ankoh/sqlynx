@@ -89,8 +89,8 @@ limit 100
     sqlynx_result_delete(external_parsed);
     sqlynx_result_delete(external_analyzed);
 
-    auto* registry = sqlynx_schema_registry_new();
-    sqlynx_schema_registry_add_script(registry, external_script, 0);
+    auto* catalog = sqlynx_catalog_new();
+    sqlynx_catalog_add_script(catalog, external_script, 0);
 
     auto* main_script = sqlynx_script_new(2);
     auto [main_text, main_text_buffer] = copyText(external_script_text);
@@ -98,7 +98,7 @@ limit 100
 
     auto main_scanned = sqlynx_script_scan(main_script);
     auto main_parsed = sqlynx_script_parse(main_script);
-    auto main_analyzed = sqlynx_script_analyze(main_script, registry);
+    auto main_analyzed = sqlynx_script_analyze(main_script, catalog);
     ASSERT_EQ(main_scanned->status_code, OK);
     ASSERT_EQ(main_parsed->status_code, OK);
     ASSERT_EQ(main_analyzed->status_code, OK);
@@ -106,7 +106,7 @@ limit 100
     sqlynx_result_delete(main_parsed);
     sqlynx_result_delete(main_analyzed);
 
-    sqlynx_schema_registry_delete(registry);
+    sqlynx_catalog_delete(catalog);
     sqlynx_script_delete(external_script);
     sqlynx_script_delete(main_script);
 }

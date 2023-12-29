@@ -1,7 +1,7 @@
 <completion-snapshots>
     <completion-snapshot name="empty">
         <script />
-        <registry />
+        <catalog />
         <cursor>
             <search text="" index="0" />
         </cursor>
@@ -13,13 +13,13 @@
                 select * from fo
             </input>
         </script>
-        <registry>
+        <catalog>
             <script>
                 <input>
                     create table foo(a int);
                 </input>
             </script>
-        </registry>
+        </catalog>
         <cursor>
             <search text="fo" index="2" />
         </cursor>
@@ -31,13 +31,13 @@
                 select * from ( foo );
             </input>
         </script>
-        <registry>
+        <catalog>
             <script>
                 <input>
                     create table foo(a int);
                 </input>
             </script>
-        </registry>
+        </catalog>
         <cursor>
             <search text="from (" index="6" />
         </cursor>
@@ -49,7 +49,7 @@
                 select attr2 from tab
             </input>
         </script>
-        <registry>
+        <catalog>
             <script>
                 <input>
 create table table1(attr1 integer);
@@ -57,7 +57,7 @@ create table table2(attr2 integer);
 create table table3(attr3 integer);
                 </input>
             </script>
-        </registry>
+        </catalog>
         <cursor>
             <search text="tab" index="3" />
         </cursor>
@@ -69,13 +69,13 @@ create table table3(attr3 integer);
                 select external_name2 from external_name1 where external_
             </input>
         </script>
-        <registry>
+        <catalog>
             <script>
                 <input>
                     create table external_name1(external_name2 int);
                 </input>
             </script>
-        </registry>
+        </catalog>
         <cursor script="1">
             <search text="where external_" index="14" />
         </cursor>
@@ -87,13 +87,13 @@ create table table3(attr3 integer);
                 select external_name2 from external_name1 where external_
             </input>
         </script>
-        <registry>
+        <catalog>
             <script>
                 <input>
                     create table external_name1(external_name2 int);
                 </input>
             </script>
-        </registry>
+        </catalog>
         <cursor>
             <search text="where external_" index="15" />
         </cursor>

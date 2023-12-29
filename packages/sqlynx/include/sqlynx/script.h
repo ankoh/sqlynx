@@ -8,11 +8,11 @@
 #include <tuple>
 
 #include "ankerl/unordered_dense.h"
+#include "sqlynx/catalog.h"
 #include "sqlynx/external.h"
 #include "sqlynx/parser/names.h"
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/proto/proto_generated.h"
-#include "sqlynx/schema.h"
 #include "sqlynx/text/rope.h"
 #include "sqlynx/utils/bits.h"
 #include "sqlynx/utils/btree/map.h"
@@ -54,11 +54,11 @@ class ScannedScript {
     /// The name pool
     StringPool<1024> name_pool;
     /// The name dictionary locations
-    ChunkBuffer<Schema::NameInfo, 32> names;
+    ChunkBuffer<CatalogEntry::NameInfo, 32> names;
     /// The name infos by name id
-    ankerl::unordered_dense::map<NameID, std::reference_wrapper<Schema::NameInfo>> names_by_id;
+    ankerl::unordered_dense::map<NameID, std::reference_wrapper<CatalogEntry::NameInfo>> names_by_id;
     /// The name infos by text
-    ankerl::unordered_dense::map<std::string_view, std::reference_wrapper<Schema::NameInfo>> names_by_text;
+    ankerl::unordered_dense::map<std::string_view, std::reference_wrapper<CatalogEntry::NameInfo>> names_by_text;
     /// All symbols
     ChunkBuffer<parser::Parser::symbol_type> symbols;
 
@@ -78,7 +78,7 @@ class ScannedScript {
     /// Register a keyword as name
     NameID RegisterKeywordAsName(std::string_view s, sx::Location location, sx::NameTag tag = sx::NameTag::NONE);
     /// Read a name
-    Schema::NameInfo& ReadName(NameID name);
+    CatalogEntry::NameInfo& ReadName(NameID name);
     /// Read a text at a location
     std::string_view ReadTextAtLocation(sx::Location loc) {
         return std::string_view{text_buffer}.substr(loc.offset(), loc.length());
@@ -166,7 +166,7 @@ class ParsedScript {
     flatbuffers::Offset<proto::ParsedScript> Pack(flatbuffers::FlatBufferBuilder& builder);
 };
 
-class AnalyzedScript : public Schema {
+class AnalyzedScript : public CatalogEntry {
     friend class Script;
     friend class NameResolutionPass;
 
@@ -253,7 +253,7 @@ class AnalyzedScript : public Schema {
     /// The parsed script
     std::shared_ptr<ParsedScript> parsed_script;
     /// The schema search path
-    SchemaRegistry schema_registry;
+    Catalog catalog;
     /// The table references
     std::vector<TableReference> table_references;
     /// The column references
@@ -265,13 +265,13 @@ class AnalyzedScript : public Schema {
 
    public:
     /// Constructor
-    AnalyzedScript(std::shared_ptr<ParsedScript> parsed, SchemaRegistry registry, std::string_view database_name,
+    AnalyzedScript(std::shared_ptr<ParsedScript> parsed, Catalog registry, std::string_view database_name,
                    std::string_view schema_name);
 
-    /// Get the schema registry
-    auto& GetSchemaRegistry() const { return schema_registry; }
+    /// Get the catalog
+    auto& GetCatalog() const { return catalog; }
     /// Get the name search index
-    const Schema::NameSearchIndex& GetNameSearchIndex() override;
+    const CatalogEntry::NameSearchIndex& GetNameSearchIndex() override;
     /// Build the program
     flatbuffers::Offset<proto::AnalyzedScript> Pack(flatbuffers::FlatBufferBuilder& builder);
 };
@@ -359,7 +359,7 @@ class Script {
     /// Parse the latest scanned script
     std::pair<ParsedScript*, proto::StatusCode> Parse();
     /// Analyze the latest parsed script
-    std::pair<AnalyzedScript*, proto::StatusCode> Analyze(const SchemaRegistry* registry = nullptr);
+    std::pair<AnalyzedScript*, proto::StatusCode> Analyze(const Catalog* registry = nullptr);
 
     /// Move the cursor
     std::pair<const ScriptCursor*, proto::StatusCode> MoveCursor(size_t text_offset);

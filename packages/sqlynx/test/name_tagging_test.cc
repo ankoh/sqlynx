@@ -3,11 +3,11 @@
 #include "gtest/gtest.h"
 #include "sqlynx/analyzer/analyzer.h"
 #include "sqlynx/api.h"
+#include "sqlynx/catalog.h"
 #include "sqlynx/parser/names.h"
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/parser/scanner.h"
 #include "sqlynx/proto/proto_generated.h"
-#include "sqlynx/schema.h"
 #include "sqlynx/script.h"
 
 using namespace sqlynx;

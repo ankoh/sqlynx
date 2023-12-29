@@ -5,7 +5,7 @@
                 select * from db1.schema1.A, db2.schema2.B where a = c;
             </input>
         </script>  
-        <registry>
+        <catalog>
             <script database="db1" schema="schema1">
                 <input>
                     create table A (a int, b int);
@@ -16,7 +16,7 @@
                     create table B (c int, d int);
                 </input>
             </script>  
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="cross_first_schema_wins">
         <script>  
@@ -25,7 +25,7 @@
                 select * from db1.schema1.A where c = 1;
             </input>
         </script>  
-        <registry>
+        <catalog>
             <script database="db1" schema="schema1">
                 <input>
                     create table A (a int, b int);
@@ -36,7 +36,7 @@
                     create table A (c int, d int);
                 </input>
             </script>  
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="cross_same_schema">
         <script database="db1" schema="schema1">
@@ -45,7 +45,7 @@
                 select * from B where a = 1;
             </input>
         </script>  
-        <registry>
+        <catalog>
             <script database="db1" schema="schema1">
                 <input>
                     create table A (a int, b int);
@@ -56,6 +56,6 @@
                     create table B (a int, b int);
                 </input>
             </script>
-        </registry>
+        </catalog>
     </analyzer-snapshot>
 </analyzer-snapshots>

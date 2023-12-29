@@ -10,12 +10,12 @@
 
 #include "sqlynx/analyzer/analyzer.h"
 #include "sqlynx/analyzer/completion.h"
+#include "sqlynx/catalog.h"
 #include "sqlynx/external.h"
 #include "sqlynx/parser/parse_context.h"
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/parser/scanner.h"
 #include "sqlynx/proto/proto_generated.h"
-#include "sqlynx/schema.h"
 #include "sqlynx/utils/string_conversion.h"
 #include "sqlynx/utils/suffix_trie.h"
 
@@ -39,7 +39,7 @@ ScannedScript::ScannedScript(const rope::Rope& text, uint32_t external_id)
 }
 
 /// Read a name
-Schema::NameInfo& ScannedScript::ReadName(NameID name) {
+CatalogEntry::NameInfo& ScannedScript::ReadName(NameID name) {
     assert(names_by_id.contains(name));
     return names_by_id.at(name).get();
 }
@@ -55,7 +55,7 @@ NameID ScannedScript::RegisterKeywordAsName(std::string_view s, sx::Location loc
     }
     NameID name_id = names.GetSize();
     auto& name = names.Append(
-        Schema::NameInfo{.name_id = name_id, .text = s, .location = location, .tags = tag, .occurrences = 1});
+        CatalogEntry::NameInfo{.name_id = name_id, .text = s, .location = location, .tags = tag, .occurrences = 1});
     names_by_text.insert({s, name});
     names_by_id.insert({name_id, name});
     return name_id;
@@ -72,7 +72,7 @@ NameID ScannedScript::RegisterName(std::string_view s, sx::Location location, sx
     }
     NameID name_id = names.GetSize();
     auto& name = names.Append(
-        Schema::NameInfo{.name_id = name_id, .text = s, .location = location, .tags = tag, .occurrences = 1});
+        CatalogEntry::NameInfo{.name_id = name_id, .text = s, .location = location, .tags = tag, .occurrences = 1});
     names_by_text.insert({s, name});
     names_by_id.insert({name_id, name});
     return name_id;
@@ -369,14 +369,14 @@ flatbuffers::Offset<proto::ColumnReference> AnalyzedScript::ColumnReference::Pac
 }
 
 /// Constructor
-AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, SchemaRegistry registry,
-                               std::string_view database_name, std::string_view schema_name)
-    : Schema(parsed->external_id, database_name, schema_name),
+AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, Catalog catalog, std::string_view database_name,
+                               std::string_view schema_name)
+    : CatalogEntry(parsed->external_id, database_name, schema_name),
       parsed_script(std::move(parsed)),
-      schema_registry(std::move(registry)) {}
+      catalog(std::move(catalog)) {}
 
 /// Get the name search index
-const Schema::NameSearchIndex& AnalyzedScript::GetNameSearchIndex() {
+const CatalogEntry::NameSearchIndex& AnalyzedScript::GetNameSearchIndex() {
     if (!name_search_index.has_value()) {
         auto& index = name_search_index.emplace();
         auto& names = parsed_script->scanned_script->names;
@@ -413,8 +413,8 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
     if (!schema_name.empty()) {
         schema_name_ofs = builder.CreateString(schema_name);
     }
-    auto tables_ofs = PackVector<Schema::Table, proto::Table>(builder, tables);
-    auto table_columns_ofs = PackVector<Schema::TableColumn, proto::TableColumn>(builder, table_columns);
+    auto tables_ofs = PackVector<CatalogEntry::Table, proto::Table>(builder, tables);
+    auto table_columns_ofs = PackVector<CatalogEntry::TableColumn, proto::TableColumn>(builder, table_columns);
     auto table_references_ofs =
         PackVector<AnalyzedScript::TableReference, proto::TableReference>(builder, table_references);
     auto column_references_ofs =
@@ -482,8 +482,8 @@ std::unique_ptr<proto::ScriptMemoryStatistics> Script::GetMemoryStatistics() {
         // Added analyzed before?
         if (registered_analyzed.contains(analyzed)) return;
         size_t analyzer_description_bytes =
-            analyzed->tables.size() * sizeof(Schema::Table) +
-            analyzed->table_columns.size() * sizeof(Schema::TableColumn) +
+            analyzed->tables.size() * sizeof(CatalogEntry::Table) +
+            analyzed->table_columns.size() * sizeof(CatalogEntry::TableColumn) +
             analyzed->table_references.size() * sizeof(decltype(analyzed->table_references)::value_type) +
             analyzed->column_references.size() * sizeof(decltype(analyzed->column_references)::value_type) +
             analyzed->graph_edges.size() * sizeof(decltype(analyzed->graph_edges)::value_type) +
@@ -509,7 +509,7 @@ std::unique_ptr<proto::ScriptMemoryStatistics> Script::GetMemoryStatistics() {
         if (registered_scanned.contains(scanned)) return;
         size_t scanner_symbol_bytes = scanned->symbols.GetSize() + sizeof(parser::Parser::symbol_type);
         size_t scanner_dictionary_bytes = scanned->name_pool.GetSize() +
-                                          scanned->names.GetSize() * sizeof(Schema::NameInfo) +
+                                          scanned->names.GetSize() * sizeof(CatalogEntry::NameInfo) +
                                           scanned->names_by_id.size() * sizeof(std::pair<NameID, void*>) +
                                           scanned->names_by_text.size() * sizeof(std::pair<std::string_view, void*>);
         stats.mutate_scanner_input_bytes(scanned->GetInput().size());
@@ -548,18 +548,18 @@ std::pair<ParsedScript*, proto::StatusCode> Script::Parse() {
 }
 
 /// Analyze a script
-std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(const SchemaRegistry* schema_registry) {
+std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(const Catalog* catalog) {
     auto time_start = std::chrono::steady_clock::now();
 
     // Check if the external context id is unique
-    if (schema_registry) {
-        if (schema_registry->Contains(external_id)) {
+    if (catalog) {
+        if (catalog->Contains(external_id)) {
             return {nullptr, proto::StatusCode::EXTERNAL_ID_COLLISION};
         }
     }
 
     // Analyze a script
-    auto [script, status] = Analyzer::Analyze(parsed_script, database_name, schema_name, schema_registry);
+    auto [script, status] = Analyzer::Analyze(parsed_script, database_name, schema_name, catalog);
     if (status != proto::StatusCode::OK) {
         return {nullptr, status};
     }

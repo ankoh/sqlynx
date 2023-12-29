@@ -19,7 +19,7 @@
                 </edge>
             </query-graph>
         </script>
-        <registry>
+        <catalog>
             <script id="1" database="db1" schema="schema1">
                 <input>
                     create table A (a int, b int);
@@ -42,7 +42,7 @@
                     </table>
                 </tables>
             </script>
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="cross_first_schema_wins">
         <script id="0">
@@ -59,7 +59,7 @@
                 <unresolved stmt="1" loc="108..109" text="c" />
             </column-references>
         </script>
-        <registry>
+        <catalog>
             <script id="1" database="db1" schema="schema1">
                 <input>
                     create table A (a int, b int);
@@ -82,7 +82,7 @@
                     </table>
                 </tables>
             </script>
-        </registry>
+        </catalog>
     </analyzer-snapshot>
     <analyzer-snapshot name="cross_same_schema">
         <script id="0" database="db1" schema="schema1">
@@ -99,7 +99,7 @@
                 <unresolved stmt="1" loc="84..85" text="a" />
             </column-references>
         </script>
-        <registry>
+        <catalog>
             <script id="1" database="db1" schema="schema1">
                 <input>
                     create table A (a int, b int);
@@ -122,6 +122,6 @@
                     </table>
                 </tables>
             </script>
-        </registry>
+        </catalog>
     </analyzer-snapshot>
 </analyzer-snapshots>

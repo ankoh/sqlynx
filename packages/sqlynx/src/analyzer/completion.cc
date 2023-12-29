@@ -174,11 +174,11 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
         auto name = parser::Keyword::GetKeywordName(expected);
         if (!name.empty()) {
             Candidate candidate{
-                .name = Schema::NameInfo{.name_id = static_cast<uint32_t>(expected),
-                                         .text = name,
-                                         .location = sx::Location(),
-                                         .tags = {proto::NameTag::KEYWORD},
-                                         .occurrences = 0},
+                .name = CatalogEntry::NameInfo{.name_id = static_cast<uint32_t>(expected),
+                                               .text = name,
+                                               .location = sx::Location(),
+                                               .tags = {proto::NameTag::KEYWORD},
+                                               .occurrences = 0},
                 .combined_tags = NameTags{proto::NameTag::KEYWORD},
                 .score = get_score(*location, expected, name),
                 .near_cursor = false,
@@ -191,7 +191,8 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
 
 void findCandidatesInIndex(
     Completion& completion,
-    const btree::multimap<fuzzy_ci_string_view, std::reference_wrapper<const Schema::NameInfo>>& index, bool external) {
+    const btree::multimap<fuzzy_ci_string_view, std::reference_wrapper<const CatalogEntry::NameInfo>>& index,
+    bool external) {
     using Relative = ScannedScript::LocationInfo::RelativePosition;
     auto& cursor = completion.GetCursor();
     auto& scoring_table = completion.GetScoringTable();
@@ -257,7 +258,7 @@ void Completion::FindCandidatesInIndexes() {
         // Find candidates in name dictionary of main script
         findCandidatesInIndex(*this, analyzed->GetNameSearchIndex(), false);
         // Find candidates in name dictionary of external script
-        analyzed->schema_registry.IterateRanked(
+        analyzed->catalog.IterateRanked(
             [this](auto& schema, size_t rank) { findCandidatesInIndex(*this, schema.GetNameSearchIndex(), true); });
     }
 }
@@ -267,15 +268,15 @@ void Completion::FindTablesForUnresolvedColumns() {
         return;
     }
     auto& analyzed_script = *cursor.script.analyzed_script;
-    auto& schema_registry = analyzed_script.schema_registry;
+    auto& catalog = analyzed_script.catalog;
 
     // Collect all unresolved columns in the current script
-    std::vector<Schema::ResolvedTableColumn> table_columns;
+    std::vector<CatalogEntry::ResolvedTableColumn> table_columns;
     for (auto& column_ref : analyzed_script.column_references) {
         // Is unresolved?
         if (column_ref.resolved_table_id.IsNull()) {
             auto& column_name = column_ref.column_name.column_name;
-            cursor.script.analyzed_script->ResolveTableColumn(column_name, schema_registry, table_columns);
+            cursor.script.analyzed_script->ResolveTableColumn(column_name, catalog, table_columns);
         }
     }
 
@@ -323,7 +324,7 @@ void Completion::FindCandidatesInAST() {
         mark_as_near(table_ref.alias_name);
 
         // Add all column names of the table
-        if (auto resolved = analyzed->ResolveTable(table_ref.resolved_table_id, analyzed->schema_registry)) {
+        if (auto resolved = analyzed->ResolveTable(table_ref.resolved_table_id, analyzed->catalog)) {
             for (auto& table_column : resolved->table_columns) {
                 mark_as_near(table_column.column_name);
             }
