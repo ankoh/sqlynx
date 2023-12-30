@@ -18,7 +18,7 @@
         "@primer/react": "^36.5.0",
         "@react-hook/resize-observer": "^1.2.6",
         "@types/react-window": "^1.8.8",
-        "classnames": "^2.5.0",
+        "classnames": "^2.5.1",
         "copy-to-clipboard": "^3.3.3",
         "flatbuffers": "^23.5.26",
         "fontfaceobserver": "^2.3.0",
