@@ -38,18 +38,18 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
     ASSERT_EQ(external_scanned->status_code, OK);
     ASSERT_EQ(external_parsed->status_code, OK);
     ASSERT_EQ(external_analyzed->status_code, OK);
-    sqlynx_result_delete(external_scanned);
-    sqlynx_result_delete(external_parsed);
-    sqlynx_result_delete(external_analyzed);
+    sqlynx_delete_result(external_scanned);
+    sqlynx_delete_result(external_parsed);
+    sqlynx_delete_result(external_analyzed);
 
     sqlynx_catalog_add_script(catalog, external_script, 0);
 
     auto main_result = sqlynx_script_new(catalog, 1);
     ASSERT_EQ(static_cast<proto::StatusCode>(main_result->status_code), proto::StatusCode::EXTERNAL_ID_COLLISION);
 
-    sqlynx_result_delete(main_result);
-    sqlynx_result_delete(catalog_result);
-    sqlynx_result_delete(external_result);
+    sqlynx_delete_result(main_result);
+    sqlynx_delete_result(catalog_result);
+    sqlynx_delete_result(external_result);
 }
 
 TEST(ApiTest, TPCH_Q2) {
@@ -128,9 +128,9 @@ limit 100
     ASSERT_EQ(external_scanned->status_code, OK);
     ASSERT_EQ(external_parsed->status_code, OK);
     ASSERT_EQ(external_analyzed->status_code, OK);
-    sqlynx_result_delete(external_scanned);
-    sqlynx_result_delete(external_parsed);
-    sqlynx_result_delete(external_analyzed);
+    sqlynx_delete_result(external_scanned);
+    sqlynx_delete_result(external_parsed);
+    sqlynx_delete_result(external_analyzed);
 
     sqlynx_catalog_add_script(catalog, external_script, 0);
 
@@ -146,13 +146,13 @@ limit 100
     ASSERT_EQ(main_scanned->status_code, OK);
     ASSERT_EQ(main_parsed->status_code, OK);
     ASSERT_EQ(main_analyzed->status_code, OK);
-    sqlynx_result_delete(main_scanned);
-    sqlynx_result_delete(main_parsed);
-    sqlynx_result_delete(main_analyzed);
+    sqlynx_delete_result(main_scanned);
+    sqlynx_delete_result(main_parsed);
+    sqlynx_delete_result(main_analyzed);
 
-    sqlynx_result_delete(main_result);
-    sqlynx_result_delete(external_result);
-    sqlynx_result_delete(catalog_result);
+    sqlynx_delete_result(main_result);
+    sqlynx_delete_result(external_result);
+    sqlynx_delete_result(catalog_result);
 }
 
 }  // namespace

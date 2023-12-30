@@ -7,20 +7,20 @@ import fs from 'fs';
 const distPath = path.resolve(__dirname, '../dist');
 const wasmPath = path.resolve(distPath, './sqlynx.wasm');
 
-let fsql: sqlynx.SQLynx | null = null;
+let lnx: sqlynx.SQLynx | null = null;
 
 beforeAll(async () => {
-    fsql = await sqlynx.SQLynx.create(async (imports: WebAssembly.Imports) => {
+    lnx = await sqlynx.SQLynx.create(async (imports: WebAssembly.Imports) => {
         const buf = await fs.promises.readFile(wasmPath);
         return await WebAssembly.instantiate(buf, imports);
     });
-    expect(fsql).not.toBeNull();
+    expect(lnx).not.toBeNull();
 });
 
 describe('SQLynx Completion', () => {
     describe('single script prefix', () => {
         const test = (text: string, cursor_offset: number, expected: string[]) => {
-            const script = fsql!.createScript(1);
+            const script = lnx!.createScript(null, 1);
             script.insertTextAt(0, text);
             script.scan().delete();
             script.parse().delete();

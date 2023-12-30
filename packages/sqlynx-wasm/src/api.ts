@@ -5,16 +5,16 @@ interface SQLynxModuleExports {
     sqlynx_version: () => number;
     sqlynx_malloc: (length: number) => number;
     sqlynx_free: (ptr: number) => void;
-    sqlynx_result_delete: (ptr: number) => void;
+    sqlynx_delete_result: (ptr: number) => void;
 
     sqlynx_script_new: (
+        catalog: number,
         id: number,
         db_name_ptr: number,
         db_name_length: number,
         schema_name_ptr: number,
         schema_name_length: number,
     ) => number;
-    sqlynx_script_delete: (ptr: number) => void;
     sqlynx_script_insert_text_at: (ptr: number, offset: number, text: number, textLength: number) => void;
     sqlynx_script_insert_char_at: (ptr: number, offset: number, unicode: number) => void;
     sqlynx_script_erase_text_range: (ptr: number, offset: number, length: number) => void;
@@ -22,36 +22,26 @@ interface SQLynxModuleExports {
     sqlynx_script_format: (ptr: number) => number;
     sqlynx_script_scan: (ptr: number) => number;
     sqlynx_script_parse: (ptr: number) => number;
-    sqlynx_script_analyze: (ptr: number, catalog_ptr: number) => number;
+    sqlynx_script_analyze: (ptr: number) => number;
     sqlynx_script_move_cursor: (ptr: number, offset: number) => number;
     sqlynx_script_complete_at_cursor: (ptr: number, limit: number) => number;
     sqlynx_script_get_statistics: (ptr: number) => number;
 
     sqlynx_catalog_new: () => number;
-    sqlynx_catalog_delete: (ptr: number) => number;
     sqlynx_catalog_add_script: (catalog_ptr: number, script_ptr: number, rank: number) => number;
     sqlynx_catalog_update_script: (catalog_ptr: number, script_ptr: number) => number;
     sqlynx_catalog_drop_script: (catalog_ptr: number, script_ptr: number) => void;
-    sqlynx_catalog_add_schema: (
-        catalog_ptr: number,
-        external_id: number,
-        rank: number,
-        database_name_ptr: number,
-        database_name_size: number,
-        schema_name_ptr: number,
-        schema_name_size: number,
-    ) => number;
-    sqlynx_catalog_drop_schema: (catalog_ptr: number, external_id: number) => void;
-    sqlynx_catalog_insert_schema_tables: (
+    sqlynx_catalog_add_descriptor_pool: (catalog_ptr: number, external_id: number, rank: number) => number;
+    sqlynx_catalog_drop_descriptor_pool: (catalog_ptr: number, external_id: number) => void;
+    sqlynx_catalog_add_schema_descriptor: (
         catalog_ptr: number,
         external_id: number,
         data_ptr: number,
         data_size: number,
     ) => number;
 
-    sqlynx_schema_layout_new: () => number;
-    sqlynx_schema_layout_delete: (ptr: number) => void;
-    sqlynx_schema_layout_configure: (
+    sqlynx_query_graph_layout_new: () => number;
+    sqlynx_query_graph_layout_configure: (
         ptr: number,
         boardWidth: number,
         boardHeight: number,
@@ -60,7 +50,7 @@ interface SQLynxModuleExports {
         tableWidth: number,
         tableHeight: number,
     ) => void;
-    sqlynx_schema_layout_load_script: (ptr: number, script: number) => number;
+    sqlynx_query_graph_layout_load_script: (ptr: number, script: number) => number;
 }
 
 type InstantiateWasmCallback = (stubs: WebAssembly.Imports) => PromiseLike<WebAssembly.WebAssemblyInstantiatedSource>;
@@ -68,6 +58,10 @@ type InstantiateWasmCallback = (stubs: WebAssembly.Imports) => PromiseLike<WebAs
 interface FlatBufferObject<T> {
     __init(i: number, bb: flatbuffers.ByteBuffer): T;
 }
+
+const SCRIPT_TYPE = Symbol('SCRIPT_TYPE');
+const CATALOG_TYPE = Symbol('CATALOG_TYPE');
+const GRAPH_LAYOUT_TYPE = Symbol('GRAPH_LAYOUT_TYPE');
 
 export class SQLynx {
     encoder: TextEncoder;
@@ -85,16 +79,16 @@ export class SQLynx {
             sqlynx_version: instance.exports['sqlynx_version'] as () => number,
             sqlynx_malloc: instance.exports['sqlynx_malloc'] as (length: number) => number,
             sqlynx_free: instance.exports['sqlynx_free'] as (ptr: number) => void,
-            sqlynx_result_delete: instance.exports['sqlynx_result_delete'] as (ptr: number) => void,
+            sqlynx_delete_result: instance.exports['sqlynx_delete_result'] as (ptr: number) => void,
 
             sqlynx_script_new: instance.exports['sqlynx_script_new'] as (
+                catalog: number,
                 id: number,
                 db_name_ptr: number,
                 db_name_length: number,
                 schema_name_ptr: number,
                 schema_name_length: number,
             ) => number,
-            sqlynx_script_delete: instance.exports['sqlynx_script_delete'] as (ptr: number) => void,
             sqlynx_script_insert_text_at: instance.exports['sqlynx_script_insert_text_at'] as (
                 ptr: number,
                 offset: number,
@@ -115,10 +109,7 @@ export class SQLynx {
             sqlynx_script_format: instance.exports['sqlynx_script_format'] as (ptr: number) => number,
             sqlynx_script_scan: instance.exports['sqlynx_script_scan'] as (ptr: number) => number,
             sqlynx_script_parse: instance.exports['sqlynx_script_parse'] as (ptr: number) => number,
-            sqlynx_script_analyze: instance.exports['sqlynx_script_analyze'] as (
-                ptr: number,
-                external: number,
-            ) => number,
+            sqlynx_script_analyze: instance.exports['sqlynx_script_analyze'] as (ptr: number) => number,
             sqlynx_script_get_statistics: instance.exports['sqlynx_script_get_statistics'] as (ptr: number) => number,
             sqlynx_script_move_cursor: instance.exports['sqlynx_script_move_cursor'] as (
                 ptr: number,
@@ -130,7 +121,6 @@ export class SQLynx {
             ) => number,
 
             sqlynx_catalog_new: instance.exports['sqlynx_catalog_new'] as () => number,
-            sqlynx_catalog_delete: instance.exports['sqlynx_catalog_delete'] as (ptr: number) => number,
             sqlynx_catalog_add_script: instance.exports['sqlynx_catalog_add_script'] as (
                 catalog_ptr: number,
                 index: number,
@@ -144,29 +134,24 @@ export class SQLynx {
                 catalog_ptr: number,
                 script_ptr: number,
             ) => void,
-            sqlynx_catalog_add_schema: instance.exports['sqlynx_catalog_add_schema'] as (
+            sqlynx_catalog_add_descriptor_pool: instance.exports['sqlynx_catalog_add_descriptor_pool'] as (
                 catalog_ptr: number,
                 rank: number,
                 external_id: number,
-                database_name_ptr: number,
-                database_name_size: number,
-                schema_name_ptr: number,
-                schema_name_size: number,
             ) => number,
-            sqlynx_catalog_drop_schema: instance.exports['sqlynx_catalog_drop_schema'] as (
+            sqlynx_catalog_drop_descriptor_pool: instance.exports['sqlynx_catalog_drop_descriptor_pool'] as (
                 catalog_ptr: number,
                 external_id: number,
             ) => void,
-            sqlynx_catalog_insert_schema_tables: instance.exports['sqlynx_catalog_insert_schema_tables'] as (
+            sqlynx_catalog_add_schema_descriptor: instance.exports['sqlynx_catalog_add_schema_descriptor'] as (
                 catalog_ptr: number,
                 external_id: number,
                 data_ptr: number,
                 data_size: number,
             ) => number,
 
-            sqlynx_schema_layout_new: instance.exports['sqlynx_schema_layout_new'] as () => number,
-            sqlynx_schema_layout_delete: instance.exports['sqlynx_schema_layout_delete'] as (ptr: number) => void,
-            sqlynx_schema_layout_configure: instance.exports['sqlynx_schema_layout_configure'] as (
+            sqlynx_query_graph_layout_new: instance.exports['sqlynx_query_graph_layout_new'] as () => number,
+            sqlynx_query_graph_layout_configure: instance.exports['sqlynx_query_graph_layout_configure'] as (
                 ptr: number,
                 boardWidth: number,
                 boardHeight: number,
@@ -175,7 +160,7 @@ export class SQLynx {
                 tableWidth: number,
                 tableHeight: number,
             ) => void,
-            sqlynx_schema_layout_load_script: instance.exports['sqlynx_schema_layout_load_script'] as (
+            sqlynx_query_graph_layout_load_script: instance.exports['sqlynx_query_graph_layout_load_script'] as (
                 ptr: number,
                 script: number,
             ) => number,
@@ -256,11 +241,12 @@ export class SQLynx {
     }
 
     public createScript(
-        context: number,
+        catalog: SQLynxCatalog | null,
+        id: number,
         databaseName: string | null = null,
         schemaName: string | null = null,
     ): SQLynxScript {
-        if (context == 0xffffffff) {
+        if (id == 0xffffffff) {
             throw new Error('context id 0xFFFFFFFF is reserved');
         }
         let databaseNamePtr = 0,
@@ -278,24 +264,29 @@ export class SQLynx {
                 throw e;
             }
         }
-        const scriptPtr = this.instanceExports.sqlynx_script_new(
-            context,
+        const catalogPtr = catalog?.ptr.assertNotNull() ?? 0;
+        const result = this.instanceExports.sqlynx_script_new(
+            catalogPtr,
+            id,
             databaseNamePtr, // pass ownership over buffer
             databaseNameLength,
             schemaNamePtr, // pass ownership over buffer
             schemaNameLength,
         );
-        return new SQLynxScript(this, scriptPtr);
+        const scriptPtr = this.readPtrResult(SCRIPT_TYPE, result);
+        return new SQLynxScript(scriptPtr);
     }
 
     public createCatalog(): SQLynxCatalog {
-        const pathPtr = this.instanceExports.sqlynx_catalog_new();
-        return new SQLynxCatalog(this, pathPtr);
+        const result = this.instanceExports.sqlynx_catalog_new();
+        const ptr = this.readPtrResult(CATALOG_TYPE, result);
+        return new SQLynxCatalog(ptr);
     }
 
-    public createSchemaLayout(): SQLynxSchemaLayout {
-        const graphPtr = this.instanceExports.sqlynx_schema_layout_new();
-        return new SQLynxSchemaLayout(this, graphPtr);
+    public createQueryGraphLayout(): SQLynxQueryGraphLayout {
+        const result = this.instanceExports.sqlynx_query_graph_layout_new();
+        const ptr = this.readPtrResult(GRAPH_LAYOUT_TYPE, result);
+        return new SQLynxQueryGraphLayout(ptr);
     }
 
     public getVersionText(): string {
@@ -308,6 +299,24 @@ export class SQLynx {
         return this.decoder.decode(dataArray);
     }
 
+    public readPtrResult<T extends symbol>(ptrType: T, resultPtr: number) {
+        const heapU8 = new Uint8Array(this.memory.buffer);
+        const resultPtrU32 = resultPtr / 4;
+        const heapU32 = new Uint32Array(this.memory.buffer);
+        const statusCode = heapU32[resultPtrU32];
+        if (statusCode == proto.StatusCode.OK) {
+            const ownerPtr = heapU32[resultPtrU32 + 3];
+            return new Ptr(ptrType, this, resultPtr, ownerPtr);
+        } else {
+            const dataLength = heapU32[resultPtrU32 + 1];
+            const dataPtr = heapU32[resultPtrU32 + 2];
+            const dataArray = heapU8.subarray(dataPtr, dataPtr + dataLength);
+            const error = this.decoder.decode(dataArray);
+            this.instanceExports.sqlynx_delete_result(resultPtr);
+            throw new Error(error);
+        }
+    }
+
     public readFlatBufferResult<T extends FlatBufferObject<T>>(resultPtr: number) {
         const heapU8 = new Uint8Array(this.memory.buffer);
         const resultPtrU32 = resultPtr / 4;
@@ -316,11 +325,11 @@ export class SQLynx {
         const dataLength = heapU32[resultPtrU32 + 1];
         const dataPtr = heapU32[resultPtrU32 + 2];
         if (statusCode == proto.StatusCode.OK) {
-            return new FlatBufferRef<T>(this, resultPtr, dataPtr, dataLength);
+            return new FlatBufferPtr<T>(this, resultPtr, dataPtr, dataLength);
         } else {
             const dataArray = heapU8.subarray(dataPtr, dataPtr + dataLength);
             const error = this.decoder.decode(dataArray);
-            this.instanceExports.sqlynx_result_delete(resultPtr);
+            this.instanceExports.sqlynx_delete_result(resultPtr);
             throw new Error(error);
         }
     }
@@ -333,41 +342,59 @@ export class SQLynx {
         const dataLength = heapU32[resultPtrU32 + 1];
         const dataPtr = heapU32[resultPtrU32 + 2];
         if (statusCode == proto.StatusCode.OK) {
-            this.instanceExports.sqlynx_result_delete(resultPtr);
+            this.instanceExports.sqlynx_delete_result(resultPtr);
         } else {
             const dataArray = heapU8.subarray(dataPtr, dataPtr + dataLength);
             const error = this.decoder.decode(dataArray);
-            this.instanceExports.sqlynx_result_delete(resultPtr);
+            this.instanceExports.sqlynx_delete_result(resultPtr);
             throw new Error(error);
         }
     }
 }
 
-export namespace ExternalID {
-    export type Value = bigint;
+export const NULL_POINTER_EXCEPTION = new Error('tried to access a null pointer');
 
-    /// Create the qualified id
-    export function create(context: number, value: number): bigint {
-        if (context == 0xffffffff) {
-            throw new Error('context id 0xFFFFFFFF is reserved');
+export class Ptr<T extends symbol> {
+    /// The object type
+    public readonly type: Symbol;
+    /// The SQLynx api
+    public readonly api: SQLynx;
+    /// The pointer
+    public readonly ptr: number;
+    /// The result pointer
+    resultPtr: number | null;
+
+    public constructor(type: T, api: SQLynx, resultPtr: number, ownerPtr: number) {
+        this.type = type;
+        this.api = api;
+        this.ptr = ownerPtr;
+        this.resultPtr = resultPtr;
+    }
+    /// Delete the object
+    public delete() {
+        if (this.resultPtr != null) {
+            this.api.instanceExports.sqlynx_delete_result(this.resultPtr);
+            this.resultPtr = null;
         }
-        return (BigInt(context) << 32n) | BigInt(value);
     }
-    /// Get the context id
-    export function getContext(value: Value): number {
-        return Number(value >> 32n);
+    /// Make sure the pointer is not null
+    public assertNotNull(): number {
+        if (this.resultPtr == null) {
+            throw NULL_POINTER_EXCEPTION;
+        }
+        return this.ptr;
     }
-    /// Mask index
-    export function getIndex(value: Value): number {
-        return Number(value & 0xffffffffn);
+    /// Is null?
+    public isNull(): boolean {
+        return this.resultPtr != null;
     }
-    /// Is a null id?
-    export function isNull(value: Value): boolean {
-        return ExternalID.getIndex(value) == 0xffffffff;
+    /// Get the object pointer
+    public get(): number | null {
+        return this.ptr;
     }
 }
 
-export class FlatBufferRef<T extends FlatBufferObject<T>> {
+export class FlatBufferPtr<T extends FlatBufferObject<T>> {
     /// The SQLynx api
     api: SQLynx;
     /// The result pointer
@@ -386,7 +413,7 @@ export class FlatBufferRef<T extends FlatBufferObject<T>> {
     /// Delete the buffer
     public delete() {
         if (this.resultPtr) {
-            this.api.instanceExports.sqlynx_result_delete(this.resultPtr);
+            this.api.instanceExports.sqlynx_delete_result(this.resultPtr);
         }
         this.resultPtr = null;
     }
@@ -409,205 +436,148 @@ export class FlatBufferRef<T extends FlatBufferObject<T>> {
     }
 }
 
-export const NULL_POINTER_EXCEPTION = new Error('tried to access a null pointer');
-
 export class SQLynxScript {
-    /// The SQLynx api
-    api: SQLynx;
-    /// The script pointer
-    scriptPtr: number | null;
+    public readonly ptr: Ptr<typeof SCRIPT_TYPE>;
 
-    public constructor(api: SQLynx, graphPtr: number) {
-        this.api = api;
-        this.scriptPtr = graphPtr;
+    public constructor(ptr: Ptr<typeof SCRIPT_TYPE>) {
+        this.ptr = ptr;
     }
     /// Delete a graph
     public delete() {
-        if (this.scriptPtr) {
-            this.api.instanceExports.sqlynx_script_delete(this.scriptPtr);
-        }
-        this.scriptPtr = null;
-    }
-    /// Make sure the script is not null
-    public assertNotNull(): number {
-        if (this.scriptPtr == null) {
-            throw NULL_POINTER_EXCEPTION;
-        }
-        return this.scriptPtr!;
+        this.ptr.delete();
     }
     /// Insert text at an offset
     public insertTextAt(offset: number, text: string) {
-        const scriptPtr = this.assertNotNull();
+        const scriptPtr = this.ptr.assertNotNull();
         // Short-circuit inserting texts of length 1
         if (text.length == 1) {
-            this.api.instanceExports.sqlynx_script_insert_char_at(scriptPtr, offset, text.charCodeAt(0));
+            this.ptr.api.instanceExports.sqlynx_script_insert_char_at(scriptPtr, offset, text.charCodeAt(0));
             return;
         }
         // To convert a JavaScript string s, the output space needed for full conversion is never less
         // than s.length bytes and never greater than s.length * 3 bytes.
-        const [textBegin, textLength] = this.api.copyString(text);
+        const [textBegin, textLength] = this.ptr.api.copyString(text);
         // Insert into rope
-        this.api.instanceExports.sqlynx_script_insert_text_at(scriptPtr, offset, textBegin, textLength);
+        this.ptr.api.instanceExports.sqlynx_script_insert_text_at(scriptPtr, offset, textBegin, textLength);
     }
     /// Earse a range of characters
     public eraseTextRange(offset: number, length: number) {
-        const scriptPtr = this.assertNotNull();
-        // Insert into rope
-        this.api.instanceExports.sqlynx_script_erase_text_range(scriptPtr, offset, length);
+        const scriptPtr = this.ptr.assertNotNull();
+        this.ptr.api.instanceExports.sqlynx_script_erase_text_range(scriptPtr, offset, length);
     }
     /// Convert a rope to a string
     public toString(): string {
-        const scriptPtr = this.assertNotNull();
-        const result = this.api.instanceExports.sqlynx_script_to_string(scriptPtr);
-        const resultBuffer = this.api.readFlatBufferResult(result);
-        const text = this.api.decoder.decode(resultBuffer.data);
+        const scriptPtr = this.ptr.assertNotNull();
+        const result = this.ptr.api.instanceExports.sqlynx_script_to_string(scriptPtr);
+        const resultBuffer = this.ptr.api.readFlatBufferResult(result);
+        const text = this.ptr.api.decoder.decode(resultBuffer.data);
         resultBuffer.delete();
         return text;
     }
     /// Parse the script
-    public scan(): FlatBufferRef<proto.ScannedScript> {
-        const scriptPtr = this.assertNotNull();
-        const resultPtr = this.api.instanceExports.sqlynx_script_scan(scriptPtr);
-        return this.api.readFlatBufferResult<proto.ScannedScript>(resultPtr);
+    public scan(): FlatBufferPtr<proto.ScannedScript> {
+        const scriptPtr = this.ptr.assertNotNull();
+        const resultPtr = this.ptr.api.instanceExports.sqlynx_script_scan(scriptPtr);
+        return this.ptr.api.readFlatBufferResult<proto.ScannedScript>(resultPtr);
     }
     /// Parse the script
-    public parse(): FlatBufferRef<proto.ParsedScript> {
-        const scriptPtr = this.assertNotNull();
-        const resultPtr = this.api.instanceExports.sqlynx_script_parse(scriptPtr);
-        return this.api.readFlatBufferResult<proto.ParsedScript>(resultPtr);
+    public parse(): FlatBufferPtr<proto.ParsedScript> {
+        const scriptPtr = this.ptr.assertNotNull();
+        const resultPtr = this.ptr.api.instanceExports.sqlynx_script_parse(scriptPtr);
+        return this.ptr.api.readFlatBufferResult<proto.ParsedScript>(resultPtr);
     }
     /// Analyze the script (optionally with an external script)
-    public analyze(searchPath: SQLynxCatalog | null = null): FlatBufferRef<proto.AnalyzedScript> {
-        const scriptPtr = this.assertNotNull();
-        const resultPtr = this.api.instanceExports.sqlynx_script_analyze(
-            scriptPtr,
-            searchPath == null ? 0 : searchPath.registryPtr,
-        );
-        return this.api.readFlatBufferResult<proto.AnalyzedScript>(resultPtr);
+    public analyze(): FlatBufferPtr<proto.AnalyzedScript> {
+        const scriptPtr = this.ptr.assertNotNull();
+        const resultPtr = this.ptr.api.instanceExports.sqlynx_script_analyze(scriptPtr);
+        return this.ptr.api.readFlatBufferResult<proto.AnalyzedScript>(resultPtr);
     }
     /// Pretty print the SQL string
     public format(): string {
-        const scriptPtr = this.assertNotNull();
-        const result = this.api.instanceExports.sqlynx_script_format(scriptPtr);
-        const resultBuffer = this.api.readFlatBufferResult(result);
-        const text = this.api.decoder.decode(resultBuffer.data);
+        const scriptPtr = this.ptr.assertNotNull();
+        const result = this.ptr.api.instanceExports.sqlynx_script_format(scriptPtr);
+        const resultBuffer = this.ptr.api.readFlatBufferResult(result);
+        const text = this.ptr.api.decoder.decode(resultBuffer.data);
         resultBuffer.delete();
         return text;
     }
     /// Move the cursor
-    public moveCursor(textOffset: number): FlatBufferRef<proto.ScriptCursorInfo> {
-        const scriptPtr = this.assertNotNull();
-        const resultPtr = this.api.instanceExports.sqlynx_script_move_cursor(scriptPtr, textOffset);
-        return this.api.readFlatBufferResult<proto.ScriptCursorInfo>(resultPtr);
+    public moveCursor(textOffset: number): FlatBufferPtr<proto.ScriptCursorInfo> {
+        const scriptPtr = this.ptr.assertNotNull();
+        const resultPtr = this.ptr.api.instanceExports.sqlynx_script_move_cursor(scriptPtr, textOffset);
+        return this.ptr.api.readFlatBufferResult<proto.ScriptCursorInfo>(resultPtr);
     }
     /// Complete at the cursor position
-    public completeAtCursor(limit: number): FlatBufferRef<proto.Completion> {
-        const scriptPtr = this.assertNotNull();
-        const resultPtr = this.api.instanceExports.sqlynx_script_complete_at_cursor(scriptPtr, limit);
-        return this.api.readFlatBufferResult<proto.Completion>(resultPtr);
+    public completeAtCursor(limit: number): FlatBufferPtr<proto.Completion> {
+        const scriptPtr = this.ptr.assertNotNull();
+        const resultPtr = this.ptr.api.instanceExports.sqlynx_script_complete_at_cursor(scriptPtr, limit);
+        return this.ptr.api.readFlatBufferResult<proto.Completion>(resultPtr);
     }
     /// Get the script statistics.
     /// Timings are useless in some browsers today.
     /// For example, Firefox rounds to millisecond precision, so all our step timings will be 0 for most input.
     /// One way out might be COEP but we cannot easily set that with GitHub pages.
     /// https://developer.mozilla.org/en-US/docs/Web/API/Performance_API/High_precision_timing#reduced_precision
-    public getStatistics(): FlatBufferRef<proto.ScriptStatistics> {
-        const scriptPtr = this.assertNotNull();
-        const resultPtr = this.api.instanceExports.sqlynx_script_get_statistics(scriptPtr);
-        return this.api.readFlatBufferResult<proto.ScriptStatistics>(resultPtr);
+    public getStatistics(): FlatBufferPtr<proto.ScriptStatistics> {
+        const scriptPtr = this.ptr.assertNotNull();
+        const resultPtr = this.ptr.api.instanceExports.sqlynx_script_get_statistics(scriptPtr);
+        return this.ptr.api.readFlatBufferResult<proto.ScriptStatistics>(resultPtr);
     }
 }
 
 export class SQLynxCatalog {
-    /// The SQLynx api
-    api: SQLynx;
-    /// The graph pointer
-    registryPtr: number | null;
+    public readonly ptr: Ptr<typeof CATALOG_TYPE> | null;
 
-    public constructor(api: SQLynx, pathPtr: number) {
-        this.api = api;
-        this.registryPtr = pathPtr;
+    public constructor(ptr: Ptr<typeof CATALOG_TYPE>) {
+        this.ptr = ptr;
     }
     /// Delete the graph
     public delete() {
-        if (this.registryPtr) {
-            this.api.instanceExports.sqlynx_catalog_delete(this.registryPtr);
-        }
-        this.registryPtr = null;
-    }
-    /// Make sure the search path is not null
-    protected assertNotNull(): number {
-        if (this.registryPtr == null) {
-            throw NULL_POINTER_EXCEPTION;
-        }
-        return this.registryPtr!;
+        this.ptr.delete();
     }
     /// Add a script in the registry
     public addScript(script: SQLynxScript, rank: number) {
-        const registryPtr = this.assertNotNull();
-        const scriptPtr = script.assertNotNull();
-        const result = this.api.instanceExports.sqlynx_catalog_add_script(registryPtr, scriptPtr, rank);
-        this.api.readStatusResult(result);
+        const catalogPtr = this.ptr.assertNotNull();
+        const scriptPtr = script.ptr.assertNotNull();
+        const result = this.ptr.api.instanceExports.sqlynx_catalog_add_script(catalogPtr, scriptPtr, rank);
+        this.ptr.api.readStatusResult(result);
     }
     /// Update a script from the registry
     public dropScript(script: SQLynxScript) {
-        const registryPtr = this.assertNotNull();
-        const scriptPtr = script.assertNotNull();
-        this.api.instanceExports.sqlynx_catalog_drop_script(registryPtr, scriptPtr);
+        const catalogPtr = this.ptr.assertNotNull();
+        const scriptPtr = script.ptr.assertNotNull();
+        this.ptr.api.instanceExports.sqlynx_catalog_drop_script(catalogPtr, scriptPtr);
     }
     /// Update a script in the registry
     public updateScript(script: SQLynxScript) {
-        const registryPtr = this.assertNotNull();
-        const scriptPtr = script.assertNotNull();
-        const result = this.api.instanceExports.sqlynx_catalog_update_script(registryPtr, scriptPtr);
-        this.api.readStatusResult(result);
+        const catalogPtr = this.ptr.assertNotNull();
+        const scriptPtr = script.ptr.assertNotNull();
+        const result = this.ptr.api.instanceExports.sqlynx_catalog_update_script(catalogPtr, scriptPtr);
+        this.ptr.api.readStatusResult(result);
     }
     /// Add an external schema
-    public addSchema(id: number, rank: number, databaseName: string | null, schemaName: string | null) {
-        const registryPtr = this.assertNotNull();
-        let databaseNamePtr = 0,
-            databaseNameLength = 0,
-            schemaNamePtr = 0,
-            schemaNameLength = 0;
-        if (databaseName != null) {
-            [databaseNamePtr, databaseNameLength] = this.api.copyString(databaseName);
-        }
-        if (schemaName != null) {
-            try {
-                [schemaNamePtr, schemaNameLength] = this.api.copyString(schemaName);
-            } catch (e: any) {
-                this.api.instanceExports.sqlynx_free(databaseNamePtr);
-                throw e;
-            }
-        }
-        const result = this.api.instanceExports.sqlynx_catalog_add_schema(
-            registryPtr,
-            id,
-            rank,
-            databaseNamePtr, // pass ownership over name buffer
-            databaseNameLength,
-            schemaNamePtr, // pass ownership over name buffer
-            schemaNameLength,
-        );
-        this.api.readStatusResult(result);
+    public addDescriptorPool(id: number, rank: number) {
+        const catalogPtr = this.ptr.assertNotNull();
+        const result = this.ptr.api.instanceExports.sqlynx_catalog_add_descriptor_pool(catalogPtr, id, rank);
+        this.ptr.api.readStatusResult(result);
     }
     /// Drop an external schema
-    public dropSchema(id: number) {
-        const registryPtr = this.assertNotNull();
-        this.api.instanceExports.sqlynx_catalog_drop_script(registryPtr, id);
+    public dropDescriptorPool(id: number) {
+        const catalogPtr = this.ptr.assertNotNull();
+        this.ptr.api.instanceExports.sqlynx_catalog_drop_script(catalogPtr, id);
     }
     /// Insert tables of an external schema.
     /// Fails if one of the tables already exists in the external schema.
-    public insertSchemaTables(id: number, buffer: Uint8Array) {
-        const registryPtr = this.assertNotNull();
-        const [bufferPtr, bufferLength] = this.api.copyBuffer(buffer);
-        const result = this.api.instanceExports.sqlynx_catalog_insert_schema_tables(
-            registryPtr,
+    public insertSchemaDescriptor(id: number, buffer: Uint8Array) {
+        const catalogPtr = this.ptr.assertNotNull();
+        const [bufferPtr, bufferLength] = this.ptr.api.copyBuffer(buffer);
+        const result = this.ptr.api.instanceExports.sqlynx_catalog_add_schema_descriptor(
+            catalogPtr,
             id,
             bufferPtr, // pass ownership over buffer
             bufferLength,
         );
-        this.api.readStatusResult(result);
+        this.ptr.api.readStatusResult(result);
     }
     /// Insert tables of an external schema
     public insertSchemaTablesT(id: number, descriptor: proto.SchemaDescriptorT) {
@@ -615,7 +585,7 @@ export class SQLynxCatalog {
         const descriptorOffset = descriptor.pack(builder);
         builder.finish(descriptorOffset);
         const buffer = builder.asUint8Array();
-        this.insertSchemaTables(id, buffer);
+        this.insertSchemaDescriptor(id, buffer);
     }
 }
 
@@ -628,35 +598,21 @@ export interface SQLynxSchemaLayoutConfig {
     tableHeight: number;
 }
 
-export class SQLynxSchemaLayout {
-    /// The SQLynx api
-    api: SQLynx;
-    /// The graph pointer
-    graphPtr: number | null;
+export class SQLynxQueryGraphLayout {
+    public readonly ptr: Ptr<typeof GRAPH_LAYOUT_TYPE>;
 
-    public constructor(api: SQLynx, graphPtr: number) {
-        this.api = api;
-        this.graphPtr = graphPtr;
+    public constructor(ptr: Ptr<typeof GRAPH_LAYOUT_TYPE>) {
+        this.ptr = ptr;
     }
     /// Delete the graph
     public delete() {
-        if (this.graphPtr) {
-            this.api.instanceExports.sqlynx_schema_layout_delete(this.graphPtr);
-        }
-        this.graphPtr = null;
-    }
-    /// Make sure the graph is not null
-    public assertNotNull(): number {
-        if (this.graphPtr == null) {
-            throw NULL_POINTER_EXCEPTION;
-        }
-        return this.graphPtr!;
+        this.ptr.delete();
     }
     /// Configure the graph
     public configure(config: SQLynxSchemaLayoutConfig) {
-        const graphPtr = this.assertNotNull();
-        this.api.instanceExports.sqlynx_schema_layout_configure(
-            graphPtr,
+        const ptr = this.ptr.assertNotNull();
+        this.ptr.api.instanceExports.sqlynx_query_graph_layout_configure(
+            ptr,
             config.boardWidth,
             config.boardHeight,
             config.cellWidth,
@@ -667,8 +623,33 @@ export class SQLynxSchemaLayout {
     }
     /// Load a script
     public loadScript(script: SQLynxScript) {
-        const graphPtr = this.assertNotNull();
-        const resultPtr = this.api.instanceExports.sqlynx_schema_layout_load_script(graphPtr, script.scriptPtr);
-        return this.api.readFlatBufferResult<proto.SchemaLayout>(resultPtr);
+        const ptr = this.ptr.assertNotNull();
+        const scriptPtr = script.ptr.assertNotNull();
+        const resultPtr = this.ptr.api.instanceExports.sqlynx_query_graph_layout_load_script(ptr, scriptPtr);
+        return this.ptr.api.readFlatBufferResult<proto.SchemaLayout>(resultPtr);
+    }
+}
+
+export namespace ExternalID {
+    export type Value = bigint;
+
+    /// Create the external id
+    export function create(context: number, value: number): bigint {
+        if (context == 0xffffffff) {
+            throw new Error('context id 0xFFFFFFFF is reserved');
+        }
+        return (BigInt(context) << 32n) | BigInt(value);
+    }
+    /// Get the context id
+    export function getContext(value: Value): number {
+        return Number(value >> 32n);
+    }
+    /// Mask index
+    export function getIndex(value: Value): number {
+        return Number(value & 0xffffffffn);
+    }
+    /// Is a null id?
+    export function isNull(value: Value): boolean {
+        return ExternalID.getIndex(value) == 0xffffffff;
     }
 }

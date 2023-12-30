@@ -19,32 +19,30 @@ beforeAll(async () => {
 
 describe('SQLynx Analyzer', () => {
     it('external identifier collision', () => {
-        const schemaScript = lnx!.createScript(1);
+        const schemaScript = lnx!.createScript(null, 1);
         schemaScript.insertTextAt(0, 'create table foo(a int);');
         schemaScript.scan().delete();
         schemaScript.parse().delete();
         schemaScript.analyze().delete();
 
-        const mainScript = lnx!.createScript(1);
-        mainScript.insertTextAt(0, 'select * from foo;');
-        mainScript.scan().delete();
-        mainScript.parse().delete();
-
-        const searchPath = lnx!.createCatalog();
-        searchPath.addScript(schemaScript, 0);
+        const catalog = lnx!.createCatalog();
+        catalog.addScript(schemaScript, 0);
 
         expect(() => {
-            const analyzed = mainScript.analyze(searchPath);
-            analyzed.delete();
+            const mainScript = lnx!.createScript(catalog, 1);
+            mainScript.insertTextAt(0, 'select * from foo;');
+            mainScript.scan().delete();
+            mainScript.parse().delete();
+            mainScript.analyze().delete();
+            mainScript.delete();
         }).toThrow(new Error('Collision on external identifier'));
 
-        searchPath.delete();
+        catalog.delete();
         schemaScript.delete();
-        mainScript.delete();
     });
 
     it(`external ref`, () => {
-        const extScript = lnx!.createScript(1);
+        const extScript = lnx!.createScript(null, 1);
         extScript.insertTextAt(0, 'create table foo(a int);');
 
         const extScannerRes = extScript.scan();
@@ -58,15 +56,15 @@ describe('SQLynx Analyzer', () => {
         expect(extParser.nodesLength()).toBeGreaterThan(0);
         expect(extAnalyzer.tablesLength()).toEqual(1);
 
-        const mainScript = lnx!.createScript(2);
-        mainScript.insertTextAt(0, 'select * from foo');
+        const catalog = lnx!.createCatalog();
+        catalog.addScript(extScript, 0);
 
-        const searchPath = lnx!.createCatalog();
-        searchPath.addScript(extScript, 0);
+        const mainScript = lnx!.createScript(catalog, 2);
+        mainScript.insertTextAt(0, 'select * from foo');
 
         const mainScannerRes = mainScript.scan();
         const mainParserRes = mainScript.parse();
-        const mainAnalyzerRes = mainScript.analyze(searchPath);
+        const mainAnalyzerRes = mainScript.analyze();
 
         const mainScanner = mainScannerRes.read(new sqlynx.proto.ScannedScript());
         const mainParser = mainParserRes.read(new sqlynx.proto.ParsedScript());
@@ -79,14 +77,14 @@ describe('SQLynx Analyzer', () => {
         const tableName = tableRef?.tableName()!;
         expect(tableName.tableName()).toEqual('foo');
 
-        searchPath.delete();
+        mainScannerRes.delete();
+        mainParserRes.delete();
+        mainAnalyzerRes.delete();
+
+        catalog.delete();
 
         extScannerRes.delete();
         extParserRes.delete();
         extAnalyzerRes.delete();
-
-        mainScannerRes.delete();
-        mainParserRes.delete();
-        mainAnalyzerRes.delete();
     });
 });
