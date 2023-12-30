@@ -310,17 +310,15 @@ extern "C" FFIResult* sqlynx_catalog_update_script(sqlynx::Catalog* catalog, sql
 extern "C" void sqlynx_catalog_drop_script(sqlynx::Catalog* catalog, sqlynx::Script* script) {
     catalog->DropScript(*script);
 }
-/// Add an external schema in the catalog
-extern "C" FFIResult* sqlynx_catalog_add_schema(sqlynx::Catalog* catalog, size_t external_id, size_t rank,
-                                                const char* database_name_ptr, size_t database_name_length,
-                                                const char* schema_name_ptr, size_t schema_name_length) {
+/// Add a descriptor pool to the catalog
+extern "C" FFIResult* sqlynx_catalog_add_descriptor_pool(sqlynx::Catalog* catalog, size_t external_id, size_t rank) {
     return nullptr;
 }
-/// Drop an external schema
-extern "C" void sqlynx_catalog_drop_schema(sqlynx::Catalog* catalog, size_t external_id) {}
-/// Insert tables into an external schema
-extern "C" FFIResult* sqlynx_catalog_insert_schema_tables(sqlynx::Catalog* catalog, size_t external_id,
-                                                          const void* data_ptr, size_t data_size) {
+/// Drop a descriptor pool from the catalog
+extern "C" void sqlynx_catalog_drop_descriptor_pool(sqlynx::Catalog* catalog, size_t external_id) {}
+/// Add schema descriptor to a catalog
+extern "C" FFIResult* sqlynx_catalog_add_schema_descriptor(sqlynx::Catalog* catalog, size_t external_id,
+                                                           const void* data_ptr, size_t data_size) {
     return nullptr;
 }
 
