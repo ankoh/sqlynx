@@ -205,19 +205,18 @@ void Catalog::DropScript(Script& script) {
 }
 
 /// Add a schema
-proto::StatusCode Catalog::AddSchema(ExternalID external_id, Rank rank, std::string_view database_name,
-                                     std::string_view schema_name) {
+proto::StatusCode Catalog::AddDescriptorPool(ExternalID external_id, Rank rank) {
     ++version;
     return proto::StatusCode::OK;
 }
 /// Drop a schema
-proto::StatusCode Catalog::DropSchema(ExternalID external_id) {
+proto::StatusCode Catalog::DropDescriptorPool(ExternalID external_id) {
     ++version;
     return proto::StatusCode::OK;
 }
 /// Insert schema tables as serialized FlatBuffer
-proto::StatusCode Catalog::InsertSchemaTables(ExternalID external_id, std::span<std::byte> descriptor_data,
-                                              std::unique_ptr<std::byte[]> descriptor_buffer) {
+proto::StatusCode Catalog::AddSchemaDescriptor(ExternalID external_id, std::span<std::byte> descriptor_data,
+                                               std::unique_ptr<std::byte[]> descriptor_buffer) {
     ++version;
     return proto::StatusCode::OK;
 }

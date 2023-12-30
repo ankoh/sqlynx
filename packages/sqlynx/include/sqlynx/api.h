@@ -70,21 +70,19 @@ extern "C" FFIResult* sqlynx_catalog_add_script(sqlynx::Catalog* catalog, sqlynx
 extern "C" FFIResult* sqlynx_catalog_update_script(sqlynx::Catalog* catalog, sqlynx::Script* script);
 /// Drop script from the catalog
 extern "C" void sqlynx_catalog_drop_script(sqlynx::Catalog* catalog, sqlynx::Script* script);
-/// Add an external schema in the catalog
-extern "C" FFIResult* sqlynx_catalog_add_schema(sqlynx::Catalog* catalog, size_t external_id, size_t rank,
-                                                const char* database_name_ptr, size_t database_name_length,
-                                                const char* schema_name_ptr, size_t schema_name_length);
-/// Drop an external schema
-extern "C" void sqlynx_catalog_drop_schema(sqlynx::Catalog* catalog, size_t external_id);
-/// Insert tables into an external schema
-extern "C" FFIResult* sqlynx_catalog_insert_schema_tables(sqlynx::Catalog* catalog, size_t external_id,
-                                                          const void* data_ptr, size_t data_size);
+/// Add a descriptor pool to the catalog
+extern "C" FFIResult* sqlynx_catalog_add_descriptor_pool(sqlynx::Catalog* catalog, size_t external_id, size_t rank);
+/// Drop a descriptor pool from the catalog
+extern "C" void sqlynx_catalog_drop_descriptor_pool(sqlynx::Catalog* catalog, size_t external_id);
+/// Add schema descriptor to a catalog
+extern "C" FFIResult* sqlynx_catalog_add_schema_descriptor(sqlynx::Catalog* catalog, size_t external_id,
+                                                           const void* data_ptr, size_t data_size);
 
-/// Create schema graph
+/// Create a query graph layout
 extern "C" FFIResult* sqlynx_query_graph_layout_new();
-/// Configure a schema graph
+/// Configure a query graph layout
 extern "C" void sqlynx_query_graph_layout_configure(sqlynx::QueryGraphLayout* graph, double board_width,
                                                     double board_height, double cell_width, double cell_height,
                                                     double table_width, double table_height);
-/// Update a schema graph
+/// Update a query graph layout
 extern "C" FFIResult* sqlynx_query_graph_layout_load_script(sqlynx::QueryGraphLayout* graph, sqlynx::Script* script);
