@@ -1,5 +1,83 @@
 <analyzer-snapshots>
-    <analyzer-snapshot name="cross_two_schemas">
+    <analyzer-snapshot name="cross_1_entry_explicit">
+        <script id="0">
+            <input>
+                select * from db1.schema1.A, db2.schema2.A where a = c;
+            </input>
+            <table-references>
+                <external schema="1" table="0" stmt="0" loc="31..44" text="db1.schema1.A" />
+                <external schema="1" table="1" stmt="0" loc="46..59" text="db2.schema2.A" />
+            </table-references>
+            <column-references>
+                <external schema="1" table="0" column="0" stmt="0" loc="66..67" text="a" />
+                <external schema="1" table="1" column="0" stmt="0" loc="70..71" text="c" />
+            </column-references>
+            <query-graph>
+                <edge op="EQUAL" loc="66..71" text="a = c">
+                    <node side="0" ref="0" />
+                    <node side="1" ref="1" />
+                </edge>
+            </query-graph>
+        </script>
+        <catalog>
+            <script id="1" database="db3" schema="schema3">
+                <input>
+                    create table db1.schema1.A (a int, b int);
+                    create table db2.schema2.A (c int, d int);
+                </input>
+                <tables>
+                    <table name="a" loc="21..62" text="create tab..nt, b int)">
+                        <column name="a" loc="49..54" text="a int" />
+                        <column name="b" loc="56..61" text="b int" />
+                    </table>
+                    <table name="a" loc="84..125" text="create tab..nt, d int)">
+                        <column name="c" loc="112..117" text="c int" />
+                        <column name="d" loc="119..124" text="d int" />
+                    </table>
+                </tables>
+            </script>
+        </catalog>
+    </analyzer-snapshot>
+    <analyzer-snapshot name="cross_1_entry_implicit">
+        <script id="0">
+            <input>
+                select * from db1.schema1.A, db2.schema2.A where a = c;
+            </input>
+            <table-references>
+                <external schema="1" table="0" stmt="0" loc="31..44" text="db1.schema1.A" />
+                <external schema="1" table="1" stmt="0" loc="46..59" text="db2.schema2.A" />
+            </table-references>
+            <column-references>
+                <external schema="1" table="0" column="0" stmt="0" loc="66..67" text="a" />
+                <external schema="1" table="1" column="0" stmt="0" loc="70..71" text="c" />
+            </column-references>
+            <query-graph>
+                <edge op="EQUAL" loc="66..71" text="a = c">
+                    <node side="0" ref="0" />
+                    <node side="1" ref="1" />
+                </edge>
+            </query-graph>
+        </script>
+        <catalog>
+            <script id="1" database="db1" schema="schema1">
+                <input>
+                    create table A (a int, b int);
+                    create table db2.schema2.A (c int, d int);
+                </input>
+                <tables>
+                    <table name="a" loc="21..50" text="create tab..nt, b int)">
+                        <column name="a" loc="37..42" text="a int" />
+                        <column name="b" loc="44..49" text="b int" />
+                    </table>
+                    <table name="a" loc="72..113" text="create tab..nt, d int)">
+                        <column name="c" loc="100..105" text="c int" />
+                        <column name="d" loc="107..112" text="d int" />
+                    </table>
+                </tables>
+            </script>
+        </catalog>
+    </analyzer-snapshot>
+    <analyzer-snapshot name="cross_2_entries_implicit">
         <script id="0">
             <input>
                 select * from db1.schema1.A, db2.schema2.B where a = c;
@@ -44,6 +122,51 @@
             </script>
         </catalog>
     </analyzer-snapshot>
+    <analyzer-snapshot name="cross_2_entries_explicit">
+        <script id="0">
+            <input>
+                select * from db1.schema1.A, db2.schema2.B where a = c;
+            </input>
+            <table-references>
+                <external schema="1" table="0" stmt="0" loc="31..44" text="db1.schema1.A" />
+                <external schema="2" table="0" stmt="0" loc="46..59" text="db2.schema2.B" />
+            </table-references>
+            <column-references>
+                <external schema="1" table="0" column="0" stmt="0" loc="66..67" text="a" />
+                <external schema="2" table="0" column="0" stmt="0" loc="70..71" text="c" />
+            </column-references>
+            <query-graph>
+                <edge op="EQUAL" loc="66..71" text="a = c">
+                    <node side="0" ref="0" />
+                    <node side="1" ref="1" />
+                </edge>
+            </query-graph>
+        </script>
+        <catalog>
+            <script id="1">
+                <input>
+                    create table db1.schema1.A (a int, b int);
+                </input>
+                <tables>
+                    <table name="a" loc="21..62" text="create tab..nt, b int)">
+                        <column name="a" loc="49..54" text="a int" />
+                        <column name="b" loc="56..61" text="b int" />
+                    </table>
+                </tables>
+            </script>
+            <script id="2">
+                <input>
+                    create table db2.schema2.B (c int, d int);
+                </input>
+                <tables>
+                    <table name="b" loc="21..62" text="create tab..nt, d int)">
+                        <column name="c" loc="49..54" text="c int" />
+                        <column name="d" loc="56..61" text="d int" />
+                    </table>
+                </tables>
+            </script>
+        </catalog>
+    </analyzer-snapshot>
     <analyzer-snapshot name="cross_first_schema_wins">
         <script id="0">
             <input>
@@ -79,46 +202,6 @@
                     <table name="a" loc="21..50" text="create tab..nt, d int)">
                         <column name="c" loc="37..42" text="c int" />
                         <column name="d" loc="44..49" text="d int" />
-                    </table>
-                </tables>
-            </script>
-        </catalog>
-    </analyzer-snapshot>
-    <analyzer-snapshot name="cross_same_schema">
-        <script id="0" database="db1" schema="schema1">
-            <input>
-                select * from A where a = 1;
-                select * from B where a = 1;
-            </input>
-            <table-references>
-                <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
-                <unresolved stmt="1" loc="76..77" text="B" />
-            </table-references>
-            <column-references>
-                <external schema="1" table="0" column="0" stmt="0" loc="39..40" text="a" />
-                <unresolved stmt="1" loc="84..85" text="a" />
-            </column-references>
-        </script>
-        <catalog>
-            <script id="1" database="db1" schema="schema1">
-                <input>
-                    create table A (a int, b int);
-                </input>
-                <tables>
-                    <table name="a" loc="21..50" text="create tab..nt, b int)">
-                        <column name="a" loc="37..42" text="a int" />
-                        <column name="b" loc="44..49" text="b int" />
-                    </table>
-                </tables>
-            </script>
-            <script id="2" database="db1" schema="schema2">
-                <input>
-                    create table B (a int, b int);
-                </input>
-                <tables>
-                    <table name="b" loc="21..50" text="create tab..nt, b int)">
-                        <column name="a" loc="37..42" text="a int" />
-                        <column name="b" loc="44..49" text="b int" />
                     </table>
                 </tables>
             </script>
