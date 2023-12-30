@@ -1,5 +1,35 @@
 <analyzer-snapshots>
-    <analyzer-snapshot name="cross_two_schemas">
+    <analyzer-snapshot name="cross_1_entry_explicit">
+        <script>  
+            <input>
+                select * from db1.schema1.A, db2.schema2.A where a = c;
+            </input>
+        </script>  
+        <catalog>
+            <script database="db3" schema="schema3">
+                <input>
+                    create table db1.schema1.A (a int, b int);
+                    create table db2.schema2.A (c int, d int);
+                </input>
+            </script>  
+        </catalog>
+    </analyzer-snapshot>
+    <analyzer-snapshot name="cross_1_entry_implicit">
+        <script>  
+            <input>
+                select * from db1.schema1.A, db2.schema2.A where a = c;
+            </input>
+        </script>  
+        <catalog>
+            <script database="db1" schema="schema1">
+                <input>
+                    create table A (a int, b int);
+                    create table db2.schema2.A (c int, d int);
+                </input>
+            </script>  
+        </catalog>
+    </analyzer-snapshot>
+    <analyzer-snapshot name="cross_2_entries_implicit">
         <script>  
             <input>
                 select * from db1.schema1.A, db2.schema2.B where a = c;
@@ -14,6 +44,25 @@
             <script database="db2" schema="schema2">
                 <input>
                     create table B (c int, d int);
+                </input>
+            </script>  
+        </catalog>
+    </analyzer-snapshot>
+    <analyzer-snapshot name="cross_2_entries_explicit">
+        <script>  
+            <input>
+                select * from db1.schema1.A, db2.schema2.B where a = c;
+            </input>
+        </script>  
+        <catalog>
+            <script>
+                <input>
+                    create table db1.schema1.A (a int, b int);
+                </input>
+            </script>  
+            <script>
+                <input>
+                    create table db2.schema2.B (c int, d int);
                 </input>
             </script>  
         </catalog>
@@ -36,26 +85,6 @@
                     create table A (c int, d int);
                 </input>
             </script>  
-        </catalog>
-    </analyzer-snapshot>
-    <analyzer-snapshot name="cross_same_schema">
-        <script database="db1" schema="schema1">
-            <input>
-                select * from A where a = 1;
-                select * from B where a = 1;
-            </input>
-        </script>  
-        <catalog>
-            <script database="db1" schema="schema1">
-                <input>
-                    create table A (a int, b int);
-                </input>
-            </script>
-            <script database="db1" schema="schema2">
-                <input>
-                    create table B (a int, b int);
-                </input>
-            </script>
         </catalog>
     </analyzer-snapshot>
 </analyzer-snapshots>
