@@ -53,12 +53,7 @@ if(WASM)
         -Wl,--export=sqlynx_malloc \
         -Wl,--export=sqlynx_free \
         -Wl,--export=sqlynx_result_delete \
-        -Wl,--export=sqlynx_query_graph_layout_new \
-        -Wl,--export=sqlynx_query_graph_layout_delete \
-        -Wl,--export=sqlynx_query_graph_layout_configure \
-        -Wl,--export=sqlynx_query_graph_layout_load_script \
         -Wl,--export=sqlynx_catalog_new \
-        -Wl,--export=sqlynx_catalog_delete \
         -Wl,--export=sqlynx_catalog_add_script \
         -Wl,--export=sqlynx_catalog_update_script \
         -Wl,--export=sqlynx_catalog_drop_script \
@@ -66,7 +61,6 @@ if(WASM)
         -Wl,--export=sqlynx_catalog_drop_schema \
         -Wl,--export=sqlynx_catalog_insert_schema_tables \
         -Wl,--export=sqlynx_script_new \
-        -Wl,--export=sqlynx_script_delete \
         -Wl,--export=sqlynx_script_insert_text_at \
         -Wl,--export=sqlynx_script_insert_char_at \
         -Wl,--export=sqlynx_script_erase_text_range \
@@ -78,6 +72,9 @@ if(WASM)
         -Wl,--export=sqlynx_script_get_statistics \
         -Wl,--export=sqlynx_script_move_cursor \
         -Wl,--export=sqlynx_script_complete_at_cursor \
+        -Wl,--export=sqlynx_query_graph_layout_new \
+        -Wl,--export=sqlynx_query_graph_layout_configure \
+        -Wl,--export=sqlynx_query_graph_layout_load_script \
         -flto \
     ")
 endif()

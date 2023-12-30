@@ -156,8 +156,6 @@ extern "C" FFIResult* sqlynx_script_new(const sqlynx::Catalog* catalog, uint32_t
     }
     return packPtr(std::move(script));
 }
-/// Delete a script
-extern "C" void sqlynx_script_delete(Script* script) { delete script; }
 /// Insert char at a position
 extern "C" void sqlynx_script_insert_char_at(Script* script, size_t offset, uint32_t unicode) {
     script->InsertCharAt(offset, unicode);
@@ -292,8 +290,6 @@ extern "C" FFIResult* sqlynx_script_get_statistics(sqlynx::Script* script) {
 
 /// Create a catalog
 extern "C" FFIResult* sqlynx_catalog_new() { return packPtr(std::make_unique<sqlynx::Catalog>()); }
-/// Create a catalog
-extern "C" void sqlynx_catalog_delete(sqlynx::Catalog* catalog) { delete catalog; }
 /// Add a script in the catalog
 extern "C" FFIResult* sqlynx_catalog_add_script(sqlynx::Catalog* catalog, sqlynx::Script* script, size_t rank) {
     auto status = catalog->AddScript(*script, rank);
@@ -330,8 +326,6 @@ extern "C" FFIResult* sqlynx_catalog_insert_schema_tables(sqlynx::Catalog* catal
 
 /// Create a schema graph
 extern "C" FFIResult* sqlynx_query_graph_layout_new() { return packPtr(std::make_unique<sqlynx::QueryGraphLayout>()); }
-/// Delete a schema graph
-extern "C" void sqlynx_query_graph_layout_delete(sqlynx::QueryGraphLayout* graph) { delete graph; }
 /// Configure a schema graph
 extern "C" void sqlynx_query_graph_layout_configure(sqlynx::QueryGraphLayout* graph, double board_width,
                                                     double board_height, double cell_width, double cell_height,
