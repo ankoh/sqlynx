@@ -82,14 +82,14 @@ struct Analyzer {
 
    public:
     /// Constructor
-    Analyzer(std::shared_ptr<ParsedScript> parsed, std::string_view database_name, std::string_view schema_name,
-             const Catalog& catalog);
+    Analyzer(std::shared_ptr<ParsedScript> parsed, const Catalog& catalog, std::string_view database_name,
+             std::string_view schema_name);
 
     /// Analyze a program
     static std::pair<std::shared_ptr<AnalyzedScript>, proto::StatusCode> Analyze(std::shared_ptr<ParsedScript> parsed,
+                                                                                 const Catalog& catalog,
                                                                                  std::string_view database_name = "",
-                                                                                 std::string_view schema_name = "",
-                                                                                 const Catalog* catalog = nullptr);
+                                                                                 std::string_view schema_name = "");
 };
 
 }  // namespace sqlynx

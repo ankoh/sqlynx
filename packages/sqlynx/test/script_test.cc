@@ -16,21 +16,6 @@ TEST(ScriptTest, ParsingBeforeScanning) {
     ASSERT_EQ(status, proto::StatusCode::PARSER_INPUT_NOT_SCANNED);
 }
 
-TEST(ScriptTest, ExternalIDIDCollision) {
-    Script schema_script{1};
-    schema_script.Scan();
-    schema_script.Parse();
-    schema_script.Analyze();
-    Script main_script{1};
-    main_script.Scan();
-    main_script.Parse();
-
-    Catalog catalog;
-    catalog.AddScript(schema_script, 0);
-    auto [result, status] = main_script.Analyze(&catalog);
-    ASSERT_EQ(status, proto::StatusCode::EXTERNAL_ID_COLLISION);
-}
-
 TEST(ScriptTest, AnalyzingBeforeParsing) {
     Script script{1};
     auto [analyzed, status] = script.Analyze();
@@ -109,7 +94,7 @@ limit 100
     ASSERT_EQ(main_script.Parse().second, proto::StatusCode::OK);
     Catalog catalog;
     catalog.AddScript(external_script, 0);
-    ASSERT_EQ(main_script.Analyze(&catalog).second, proto::StatusCode::OK);
+    ASSERT_EQ(main_script.Analyze().second, proto::StatusCode::OK);
 }
 
 }  // namespace

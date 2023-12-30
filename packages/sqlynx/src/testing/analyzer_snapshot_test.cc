@@ -78,14 +78,14 @@ static void writeTables(pugi::xml_node root, const AnalyzedScript& target) {
 namespace testing {
 
 void AnalyzerSnapshotTest::TestRegistrySnapshot(const std::vector<ScriptAnalysisSnapshot>& snaps, pugi::xml_node& node,
-                                                Catalog& catalog, std::vector<std::unique_ptr<Script>>& scripts,
+                                                Catalog& catalog, std::vector<std::unique_ptr<Script>>& catalog_scripts,
                                                 size_t& entry_ids) {
     for (size_t i = 0; i < snaps.size(); ++i) {
         auto& entry = snaps[i];
         auto entry_id = entry_ids++;
-        scripts.push_back(std::make_unique<Script>(entry_id, entry.database_name, entry.schema_name));
+        catalog_scripts.push_back(std::make_unique<Script>(entry_id, entry.database_name, entry.schema_name));
 
-        auto& script = *scripts.back();
+        auto& script = *catalog_scripts.back();
         script.InsertTextAt(0, entry.input);
         auto scanned = script.Scan();
         ASSERT_EQ(scanned.second, proto::StatusCode::OK);
@@ -106,15 +106,15 @@ void AnalyzerSnapshotTest::TestRegistrySnapshot(const std::vector<ScriptAnalysis
     }
 }
 
-void AnalyzerSnapshotTest::TestMainScriptSnapshot(const ScriptAnalysisSnapshot& snap, const Catalog& catalog,
-                                                  pugi::xml_node& node, Script& script, size_t entry_id) {
+void AnalyzerSnapshotTest::TestMainScriptSnapshot(const ScriptAnalysisSnapshot& snap, pugi::xml_node& node,
+                                                  Script& script, size_t entry_id) {
     script.InsertTextAt(entry_id, snap.input);
 
     auto scan = script.Scan();
     ASSERT_EQ(scan.second, proto::StatusCode::OK);
     auto parsed = script.Parse();
     ASSERT_EQ(parsed.second, proto::StatusCode::OK);
-    auto analyzed = script.Analyze(&catalog);
+    auto analyzed = script.Analyze();
     ASSERT_EQ(analyzed.second, proto::StatusCode::OK) << proto::EnumNameStatusCode(analyzed.second);
 
     AnalyzerSnapshotTest::EncodeScript(node, *script.analyzed_script, true);

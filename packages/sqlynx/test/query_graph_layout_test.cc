@@ -1,4 +1,4 @@
-#include "sqlynx/vis/schema_layout.h"
+#include "sqlynx/vis/query_graph_layout.h"
 
 #include <limits>
 
@@ -7,12 +7,13 @@
 #include "sqlynx/catalog.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
+#include "sqlynx/vis/query_graph_layout.h"
 
 using namespace sqlynx;
 
 namespace {
 
-SchemaGrid::Config DEFAULT_GRAPH_CONFIG{
+QueryGraphLayout::Config DEFAULT_GRAPH_CONFIG{
     .board_width = 0,
     .board_height = 0,
     .cell_width = 104,
@@ -87,19 +88,20 @@ TEST(SchemaGridTest, TPCHQ2) {
     ASSERT_EQ(schema_script.Parse().second, proto::StatusCode::OK);
     ASSERT_EQ(schema_script.Analyze().second, proto::StatusCode::OK);
 
-    Script query_script{2};
+    Catalog catalog;
+    catalog.AddScript(schema_script, 0);
+
+    Script query_script{catalog, 2};
     query_script.InsertTextAt(0, TPCH_Q2);
     ASSERT_EQ(query_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(query_script.Parse().second, proto::StatusCode::OK);
 
-    Catalog catalog;
-    catalog.AddScript(schema_script, 0);
-    ASSERT_EQ(query_script.Analyze(&catalog).second, proto::StatusCode::OK);
+    ASSERT_EQ(query_script.Analyze().second, proto::StatusCode::OK);
 
-    SchemaGrid grid;
+    QueryGraphLayout grid;
     for (size_t i = 0; i < 3; ++i) {
         grid.Configure(DEFAULT_GRAPH_CONFIG);
-        grid.LoadScript(query_script.analyzed_script);
+        grid.LoadScript(query_script);
     }
 
     auto& nodes = grid.GetNodes();

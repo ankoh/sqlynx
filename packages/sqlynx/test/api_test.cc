@@ -1,6 +1,7 @@
 #include "sqlynx/api.h"
 
 #include "gtest/gtest.h"
+#include "sqlynx/catalog.h"
 #include "sqlynx/proto/proto_generated.h"
 
 using namespace sqlynx;
@@ -14,6 +15,41 @@ std::pair<std::string_view, std::unique_ptr<char[]>> copyText(std::string_view t
     memcpy(buffer.get(), text.data(), text.size());
     std::string_view buffer_text{buffer.get(), text.size()};
     return {buffer_text, std::move(buffer)};
+}
+
+TEST(ApiTest, ExternalIDCollision) {
+    const std::string_view external_script_text = R"SQL(
+create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
+    )SQL";
+
+    auto catalog_result = sqlynx_catalog_new();
+    ASSERT_EQ(catalog_result->status_code, OK);
+    auto catalog = catalog_result->CastOwnerPtr<Catalog>();
+
+    auto external_result = sqlynx_script_new(nullptr, 1);
+    ASSERT_EQ(external_result->status_code, OK);
+    auto external_script = external_result->CastOwnerPtr<Script>();
+    auto [external_text, external_text_buffer] = copyText(external_script_text);
+    sqlynx_script_insert_text_at(external_script, 0, external_text_buffer.release(), external_text.size());
+
+    auto external_scanned = sqlynx_script_scan(external_script);
+    auto external_parsed = sqlynx_script_parse(external_script);
+    auto external_analyzed = sqlynx_script_analyze(external_script);
+    ASSERT_EQ(external_scanned->status_code, OK);
+    ASSERT_EQ(external_parsed->status_code, OK);
+    ASSERT_EQ(external_analyzed->status_code, OK);
+    sqlynx_result_delete(external_scanned);
+    sqlynx_result_delete(external_parsed);
+    sqlynx_result_delete(external_analyzed);
+
+    sqlynx_catalog_add_script(catalog, external_script, 0);
+
+    auto main_result = sqlynx_script_new(catalog, 1);
+    ASSERT_EQ(static_cast<proto::StatusCode>(main_result->status_code), proto::StatusCode::EXTERNAL_ID_COLLISION);
+
+    sqlynx_result_delete(main_result);
+    sqlynx_result_delete(catalog_result);
+    sqlynx_result_delete(external_result);
 }
 
 TEST(ApiTest, TPCH_Q2) {
@@ -75,13 +111,20 @@ order by
 limit 100
     )SQL";
 
-    auto* external_script = sqlynx_script_new(1);
+    // Create a new catalog
+    auto catalog_result = sqlynx_catalog_new();
+    ASSERT_EQ(catalog_result->status_code, OK);
+    auto catalog = reinterpret_cast<Catalog*>(catalog_result->owner_ptr);
+
+    auto external_result = sqlynx_script_new(nullptr, 1);
+    ASSERT_EQ(external_result->status_code, OK);
+    auto external_script = reinterpret_cast<Script*>(external_result->owner_ptr);
     auto [external_text, external_text_buffer] = copyText(external_script_text);
     sqlynx_script_insert_text_at(external_script, 0, external_text_buffer.release(), external_text.size());
 
     auto external_scanned = sqlynx_script_scan(external_script);
     auto external_parsed = sqlynx_script_parse(external_script);
-    auto external_analyzed = sqlynx_script_analyze(external_script, nullptr);
+    auto external_analyzed = sqlynx_script_analyze(external_script);
     ASSERT_EQ(external_scanned->status_code, OK);
     ASSERT_EQ(external_parsed->status_code, OK);
     ASSERT_EQ(external_analyzed->status_code, OK);
@@ -89,16 +132,17 @@ limit 100
     sqlynx_result_delete(external_parsed);
     sqlynx_result_delete(external_analyzed);
 
-    auto* catalog = sqlynx_catalog_new();
     sqlynx_catalog_add_script(catalog, external_script, 0);
 
-    auto* main_script = sqlynx_script_new(2);
+    auto main_result = sqlynx_script_new(catalog, 2);
+    ASSERT_EQ(main_result->status_code, OK);
+    auto main_script = reinterpret_cast<Script*>(main_result->owner_ptr);
     auto [main_text, main_text_buffer] = copyText(external_script_text);
     sqlynx_script_insert_text_at(main_script, 0, main_text_buffer.release(), main_text.size());
 
     auto main_scanned = sqlynx_script_scan(main_script);
     auto main_parsed = sqlynx_script_parse(main_script);
-    auto main_analyzed = sqlynx_script_analyze(main_script, catalog);
+    auto main_analyzed = sqlynx_script_analyze(main_script);
     ASSERT_EQ(main_scanned->status_code, OK);
     ASSERT_EQ(main_parsed->status_code, OK);
     ASSERT_EQ(main_analyzed->status_code, OK);
@@ -106,9 +150,9 @@ limit 100
     sqlynx_result_delete(main_parsed);
     sqlynx_result_delete(main_analyzed);
 
-    sqlynx_catalog_delete(catalog);
-    sqlynx_script_delete(external_script);
-    sqlynx_script_delete(main_script);
+    sqlynx_result_delete(main_result);
+    sqlynx_result_delete(external_result);
+    sqlynx_result_delete(catalog_result);
 }
 
 }  // namespace

@@ -86,7 +86,12 @@ static std::unique_ptr<Script> read_script(pugi::xml_node node, size_t entry_id,
     if (auto schema = node.attribute("schema")) {
         schema_name = schema.value();
     }
-    auto script = std::make_unique<Script>(entry_id, std::move(database_name), std::move(schema_name));
+    std::unique_ptr<Script> script;
+    if (catalog == nullptr) {
+        script = std::make_unique<Script>(entry_id, std::move(database_name), std::move(schema_name));
+    } else {
+        script = std::make_unique<Script>(*catalog, entry_id, std::move(database_name), std::move(schema_name));
+    }
     script->InsertTextAt(0, input);
     auto scanned = script->Scan();
     if (scanned.second != proto::StatusCode::OK) {
@@ -98,7 +103,7 @@ static std::unique_ptr<Script> read_script(pugi::xml_node node, size_t entry_id,
         std::cout << "  ERROR " << proto::EnumNameStatusCode(parsed.second) << std::endl;
         return nullptr;
     }
-    auto analyzed = script->Analyze(catalog);
+    auto analyzed = script->Analyze();
     if (analyzed.second != proto::StatusCode::OK) {
         std::cout << "  ERROR " << proto::EnumNameStatusCode(analyzed.second) << std::endl;
         return nullptr;

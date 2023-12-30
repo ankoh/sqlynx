@@ -373,7 +373,6 @@ AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, const Catal
                                std::string_view database_name, std::string_view schema_name)
     : CatalogEntry(parsed->external_id, database_name, schema_name),
       parsed_script(std::move(parsed)),
-      catalog(catalog),
       catalog_version(catalog.GetVersion()) {}
 
 /// Get the name search index
@@ -443,9 +442,22 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
     return out.Finish();
 }
 
-/// Constructor
+static const Catalog EMPTY_CATALOG;
+
 Script::Script(uint32_t external_id, std::string_view database_name, std::string_view schema_name)
-    : external_id(external_id), text(1024), database_name(database_name), schema_name(schema_name) {}
+    : catalog(EMPTY_CATALOG),
+      external_id(external_id),
+      text(1024),
+      database_name(database_name),
+      schema_name(schema_name) {
+    assert(!catalog.Contains(external_id));
+}
+
+Script::Script(const Catalog& catalog, uint32_t external_id, std::string_view database_name,
+               std::string_view schema_name)
+    : catalog(catalog), external_id(external_id), text(1024), database_name(database_name), schema_name(schema_name) {
+    assert(!catalog.Contains(external_id));
+}
 
 /// Insert a character at an offet
 void Script::InsertCharAt(size_t char_idx, uint32_t unicode) {
@@ -549,18 +561,11 @@ std::pair<ParsedScript*, proto::StatusCode> Script::Parse() {
 }
 
 /// Analyze a script
-std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze(const Catalog* catalog) {
+std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze() {
     auto time_start = std::chrono::steady_clock::now();
 
-    // Check if the external context id is unique
-    if (catalog) {
-        if (catalog->Contains(external_id)) {
-            return {nullptr, proto::StatusCode::EXTERNAL_ID_COLLISION};
-        }
-    }
-
     // Analyze a script
-    auto [script, status] = Analyzer::Analyze(parsed_script, database_name, schema_name, catalog);
+    auto [script, status] = Analyzer::Analyze(parsed_script, catalog, database_name, schema_name);
     if (status != proto::StatusCode::OK) {
         return {nullptr, status};
     }

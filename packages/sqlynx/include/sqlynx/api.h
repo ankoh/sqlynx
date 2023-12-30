@@ -6,7 +6,7 @@
 #include "sqlynx/catalog.h"
 #include "sqlynx/script.h"
 #include "sqlynx/version.h"
-#include "sqlynx/vis/schema_layout.h"
+#include "sqlynx/vis/query_graph_layout.h"
 
 namespace console {
 /// Log a text to the console
@@ -28,16 +28,16 @@ struct FFIResult {
     const void* data_ptr;
     void* owner_ptr;
     void (*owner_deleter)(void*);
+
+    template <typename T> T* CastOwnerPtr() { return static_cast<T*>(owner_ptr); }
 };
 /// Delete a result
 extern "C" void sqlynx_result_delete(FFIResult* result);
 
 /// Create a script
-extern "C" sqlynx::Script* sqlynx_script_new(uint32_t external_id, const char* database_name_ptr = nullptr,
-                                             size_t database_name_length = 0, const char* schema_name_ptr = nullptr,
-                                             size_t schema_name_length = 0);
-/// Delete a script
-extern "C" void sqlynx_script_delete(sqlynx::Script* script);
+extern "C" FFIResult* sqlynx_script_new(const sqlynx::Catalog* catalog, uint32_t external_id,
+                                        const char* database_name_ptr = nullptr, size_t database_name_length = 0,
+                                        const char* schema_name_ptr = nullptr, size_t schema_name_length = 0);
 /// Insert char at a position
 extern "C" void sqlynx_script_insert_char_at(sqlynx::Script* script, size_t offset, uint32_t unicode);
 /// Insert text at a position
@@ -52,7 +52,7 @@ extern "C" FFIResult* sqlynx_script_scan(sqlynx::Script* script);
 /// Parse a script
 extern "C" FFIResult* sqlynx_script_parse(sqlynx::Script* script);
 /// Analyze a script
-extern "C" FFIResult* sqlynx_script_analyze(sqlynx::Script* script, const sqlynx::Catalog* registry);
+extern "C" FFIResult* sqlynx_script_analyze(sqlynx::Script* script);
 /// Get a pretty-printed version of the SQL query
 extern "C" FFIResult* sqlynx_script_format(sqlynx::Script* script);
 /// Get script statistics
@@ -63,32 +63,28 @@ extern "C" FFIResult* sqlynx_script_move_cursor(sqlynx::Script* script, size_t t
 extern "C" FFIResult* sqlynx_script_complete_at_cursor(sqlynx::Script* script, size_t limit);
 
 /// Create a catalog
-extern "C" sqlynx::Catalog* sqlynx_catalog_new();
-/// Create a catalog
-extern "C" void sqlynx_catalog_delete(sqlynx::Catalog* registry);
+extern "C" FFIResult* sqlynx_catalog_new();
 /// Add a script to the catalog
-extern "C" FFIResult* sqlynx_catalog_add_script(sqlynx::Catalog* registry, sqlynx::Script* script, size_t rank);
+extern "C" FFIResult* sqlynx_catalog_add_script(sqlynx::Catalog* catalog, sqlynx::Script* script, size_t rank);
 /// Update a script in the catalog
-extern "C" FFIResult* sqlynx_catalog_update_script(sqlynx::Catalog* registry, sqlynx::Script* script);
+extern "C" FFIResult* sqlynx_catalog_update_script(sqlynx::Catalog* catalog, sqlynx::Script* script);
 /// Drop script from the catalog
-extern "C" void sqlynx_catalog_drop_script(sqlynx::Catalog* registry, sqlynx::Script* script);
+extern "C" void sqlynx_catalog_drop_script(sqlynx::Catalog* catalog, sqlynx::Script* script);
 /// Add an external schema in the catalog
-extern "C" FFIResult* sqlynx_catalog_add_schema(sqlynx::Catalog* registry, size_t external_id, size_t rank,
+extern "C" FFIResult* sqlynx_catalog_add_schema(sqlynx::Catalog* catalog, size_t external_id, size_t rank,
                                                 const char* database_name_ptr, size_t database_name_length,
                                                 const char* schema_name_ptr, size_t schema_name_length);
 /// Drop an external schema
-extern "C" void sqlynx_catalog_drop_schema(sqlynx::Catalog* registry, size_t external_id);
+extern "C" void sqlynx_catalog_drop_schema(sqlynx::Catalog* catalog, size_t external_id);
 /// Insert tables into an external schema
-extern "C" FFIResult* sqlynx_catalog_insert_schema_tables(sqlynx::Catalog* registry, size_t external_id,
+extern "C" FFIResult* sqlynx_catalog_insert_schema_tables(sqlynx::Catalog* catalog, size_t external_id,
                                                           const void* data_ptr, size_t data_size);
 
 /// Create schema graph
-extern "C" sqlynx::SchemaGrid* sqlynx_schema_layout_new();
-/// Delete a schema graph
-extern "C" void sqlynx_schema_layout_delete(sqlynx::SchemaGrid* graph);
+extern "C" FFIResult* sqlynx_query_graph_layout_new();
 /// Configure a schema graph
-extern "C" void sqlynx_schema_layout_configure(sqlynx::SchemaGrid* graph, double board_width, double board_height,
-                                               double cell_width, double cell_height, double table_width,
-                                               double table_height);
+extern "C" void sqlynx_query_graph_layout_configure(sqlynx::QueryGraphLayout* graph, double board_width,
+                                                    double board_height, double cell_width, double cell_height,
+                                                    double table_width, double table_height);
 /// Update a schema graph
-extern "C" FFIResult* sqlynx_schema_layout_load_script(sqlynx::SchemaGrid* graph, sqlynx::Script* script);
+extern "C" FFIResult* sqlynx_query_graph_layout_load_script(sqlynx::QueryGraphLayout* graph, sqlynx::Script* script);

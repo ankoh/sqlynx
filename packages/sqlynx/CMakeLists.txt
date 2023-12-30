@@ -53,10 +53,10 @@ if(WASM)
         -Wl,--export=sqlynx_malloc \
         -Wl,--export=sqlynx_free \
         -Wl,--export=sqlynx_result_delete \
-        -Wl,--export=sqlynx_schema_layout_new \
-        -Wl,--export=sqlynx_schema_layout_delete \
-        -Wl,--export=sqlynx_schema_layout_configure \
-        -Wl,--export=sqlynx_schema_layout_load_script \
+        -Wl,--export=sqlynx_query_graph_layout_new \
+        -Wl,--export=sqlynx_query_graph_layout_delete \
+        -Wl,--export=sqlynx_query_graph_layout_configure \
+        -Wl,--export=sqlynx_query_graph_layout_load_script \
         -Wl,--export=sqlynx_catalog_new \
         -Wl,--export=sqlynx_catalog_delete \
         -Wl,--export=sqlynx_catalog_add_script \
@@ -257,7 +257,7 @@ set(LIB_SRC
   ${CMAKE_SOURCE_DIR}/src/utils/rope.cc
   ${CMAKE_SOURCE_DIR}/src/utils/string_conversion.cc
   ${CMAKE_SOURCE_DIR}/src/utils/suffix_trie.cc
-  ${CMAKE_SOURCE_DIR}/src/vis/schema_layout.cc
+  ${CMAKE_SOURCE_DIR}/src/vis/query_graph_layout.cc
 )
 
 if(WASM)
@@ -293,7 +293,7 @@ if(NOT WASM)
     ${CMAKE_SOURCE_DIR}/test/parser_test.cc
     ${CMAKE_SOURCE_DIR}/test/rope_test.cc
     ${CMAKE_SOURCE_DIR}/test/scanner_test.cc
-    ${CMAKE_SOURCE_DIR}/test/schema_layout_test.cc
+    ${CMAKE_SOURCE_DIR}/test/query_graph_layout_test.cc
     ${CMAKE_SOURCE_DIR}/test/script_test.cc
     ${CMAKE_SOURCE_DIR}/test/suffix_trie_test.cc
     ${CMAKE_SOURCE_DIR}/test/topk_test.cc

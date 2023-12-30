@@ -59,7 +59,8 @@ TEST_P(TestNameTags, Test) {
     auto [parsed, parser_status] = parser::Parser::Parse(scanned);
     ASSERT_EQ(parser_status, proto::StatusCode::OK);
     ASSERT_TRUE(parsed->errors.empty()) << parsed->errors[0].second;
-    auto [analyzed, analyzer_status] = Analyzer::Analyze(parsed);
+    Catalog catalog;
+    auto [analyzed, analyzer_status] = Analyzer::Analyze(parsed, catalog);
     ASSERT_EQ(analyzer_status, proto::StatusCode::OK);
 
     ASSERT_EQ(scanned->names.GetSize(), GetParam().expected.size()) << snapshot(scanned->names);

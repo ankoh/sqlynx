@@ -252,8 +252,6 @@ class AnalyzedScript : public CatalogEntry {
 
     /// The parsed script
     std::shared_ptr<ParsedScript> parsed_script;
-    /// The catalog
-    const Catalog& catalog;
     /// The catalog version
     Catalog::Version catalog_version;
     /// The table references
@@ -270,8 +268,6 @@ class AnalyzedScript : public CatalogEntry {
     AnalyzedScript(std::shared_ptr<ParsedScript> parsed, const Catalog& catalog, std::string_view database_name,
                    std::string_view schema_name);
 
-    /// Get the catalog
-    auto& GetCatalog() const { return catalog; }
     /// Get the name search index
     const CatalogEntry::NameSearchIndex& GetNameSearchIndex() override;
     /// Build the program
@@ -313,6 +309,8 @@ struct ScriptCursor {
 
 class Script {
    public:
+    /// The catalog
+    const Catalog& catalog;
     /// The origin id
     const ExternalID external_id;
     /// The database name
@@ -341,6 +339,9 @@ class Script {
    public:
     /// Constructor
     Script(ExternalID external_id = 1, std::string_view database_name = "", std::string_view schema_name = "");
+    /// Constructor
+    Script(const Catalog& catalog, ExternalID external_id = 1, std::string_view database_name = "",
+           std::string_view schema_name = "");
     /// Scripts must not be copied
     Script(const Script& other) = delete;
     /// Scripts must not be copy-assigned
@@ -348,6 +349,8 @@ class Script {
 
     /// Get the external id
     auto GetExternalID() const { return external_id; }
+    /// Get the catalog
+    auto& GetCatalog() const { return catalog; }
 
     /// Insert a unicode codepoint at an offset
     void InsertCharAt(size_t offset, uint32_t unicode);
@@ -365,7 +368,7 @@ class Script {
     /// Parse the latest scanned script
     std::pair<ParsedScript*, proto::StatusCode> Parse();
     /// Analyze the latest parsed script
-    std::pair<AnalyzedScript*, proto::StatusCode> Analyze(const Catalog* registry = nullptr);
+    std::pair<AnalyzedScript*, proto::StatusCode> Analyze();
 
     /// Move the cursor
     std::pair<const ScriptCursor*, proto::StatusCode> MoveCursor(size_t text_offset);

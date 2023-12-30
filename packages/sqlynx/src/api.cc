@@ -14,7 +14,7 @@
 #include "sqlynx/script.h"
 #include "sqlynx/text/rope.h"
 #include "sqlynx/version.h"
-#include "sqlynx/vis/schema_layout.h"
+#include "sqlynx/vis/query_graph_layout.h"
 
 using namespace sqlynx;
 using namespace sqlynx::parser;
@@ -34,13 +34,34 @@ void log(std::string_view text) { return ::log(text.data(), text.size()); }
 }  // namespace console
 
 static FFIResult* packOK() {
-    auto result = new FFIResult();
+    auto result = std::make_unique<FFIResult>();
     result->status_code = static_cast<uint32_t>(proto::StatusCode::OK);
     result->data_ptr = nullptr;
     result->data_length = 0;
     result->owner_ptr = nullptr;
     result->owner_deleter = [](void*) {};
-    return result;
+    return result.release();
+}
+
+template <typename T> static FFIResult* packPtr(std::unique_ptr<T> ptr) {
+    auto result = std::make_unique<FFIResult>();
+    auto raw_ptr = ptr.release();
+    result->status_code = static_cast<uint32_t>(proto::StatusCode::OK);
+    result->data_ptr = nullptr;
+    result->data_length = 0;
+    result->owner_ptr = raw_ptr;
+    result->owner_deleter = [](void* p) { delete reinterpret_cast<T*>(p); };
+    return result.release();
+}
+
+static FFIResult* packBuffer(std::unique_ptr<flatbuffers::DetachedBuffer> detached) {
+    auto result = std::make_unique<FFIResult>();
+    result->status_code = static_cast<uint32_t>(proto::StatusCode::OK);
+    result->data_ptr = detached->data();
+    result->data_length = detached->size();
+    result->owner_ptr = detached.release();
+    result->owner_deleter = [](void* buffer) { delete reinterpret_cast<flatbuffers::DetachedBuffer*>(buffer); };
+    return result.release();
 }
 
 static FFIResult* packError(proto::StatusCode status) {
@@ -55,19 +76,19 @@ static FFIResult* packError(proto::StatusCode status) {
         case proto::StatusCode::GRAPH_INPUT_NOT_ANALYZED:
             message = "Graph input is not analyzed";
             break;
-        case proto::StatusCode::SCHEMA_REGISTRY_SCRIPT_NOT_ANALYZED:
+        case proto::StatusCode::CATALOG_SCRIPT_NOT_ANALYZED:
             message = "Unanalyzed scripts cannot be added to the catalog";
             break;
-        case proto::StatusCode::SCHEMA_REGISTRY_SCRIPT_UNKNOWN:
+        case proto::StatusCode::CATALOG_SCRIPT_UNKNOWN:
             message = "Script is missing in catalog";
             break;
-        case proto::StatusCode::SCHEMA_REGISTRY_DESCRIPTOR_TABLES_NULL:
+        case proto::StatusCode::CATALOG_DESCRIPTOR_TABLES_NULL:
             message = "Schema descriptor field `tables` is null or empty";
             break;
-        case proto::StatusCode::SCHEMA_REGISTRY_DESCRIPTOR_TABLE_NAME_EMPTY:
+        case proto::StatusCode::CATALOG_DESCRIPTOR_TABLE_NAME_EMPTY:
             message = "Table name in schema descriptor is null or empty";
             break;
-        case proto::StatusCode::SCHEMA_REGISTRY_DESCRIPTOR_TABLE_NAME_COLLISION:
+        case proto::StatusCode::CATALOG_DESCRIPTOR_TABLE_NAME_COLLISION:
             message = "Schema descriptor contains a duplicate table name";
             break;
         case proto::StatusCode::COMPLETION_MISSES_CURSOR:
@@ -109,8 +130,13 @@ extern "C" void sqlynx_result_delete(FFIResult* result) {
 }
 
 /// Create a script
-extern "C" Script* sqlynx_script_new(uint32_t external_id, const char* database_name_ptr, size_t database_name_length,
-                                     const char* schema_name_ptr, size_t schema_name_length) {
+extern "C" FFIResult* sqlynx_script_new(const sqlynx::Catalog* catalog, uint32_t external_id,
+                                        const char* database_name_ptr, size_t database_name_length,
+                                        const char* schema_name_ptr, size_t schema_name_length) {
+    if (catalog && catalog->Contains(external_id)) {
+        return packError(proto::StatusCode::EXTERNAL_ID_COLLISION);
+    }
+    // Read database and schema names
     std::string database_name, schema_name;
     if (database_name_ptr != nullptr) {
         database_name = {database_name_ptr, database_name_length};
@@ -118,9 +144,17 @@ extern "C" Script* sqlynx_script_new(uint32_t external_id, const char* database_
     if (schema_name_ptr != nullptr) {
         schema_name = {schema_name_ptr, schema_name_length};
     }
+    // Free argument buffers
     sqlynx_free(database_name_ptr);
     sqlynx_free(schema_name_ptr);
-    return new Script(external_id, std::move(database_name), std::move(schema_name));
+    // Construct the script
+    std::unique_ptr<Script> script;
+    if (catalog == nullptr) {
+        script = std::make_unique<Script>(external_id, std::move(database_name), std::move(schema_name));
+    } else {
+        script = std::make_unique<Script>(*catalog, external_id, std::move(database_name), std::move(schema_name));
+    }
+    return packPtr(std::move(script));
 }
 /// Delete a script
 extern "C" void sqlynx_script_delete(Script* script) { delete script; }
@@ -147,16 +181,6 @@ extern "C" FFIResult* sqlynx_script_to_string(Script* script) {
     result->data_length = text->length();
     result->owner_ptr = text.release();
     result->owner_deleter = [](void* buffer) { delete reinterpret_cast<std::string*>(buffer); };
-    return result;
-}
-
-static FFIResult* packBuffer(std::unique_ptr<flatbuffers::DetachedBuffer> detached) {
-    auto result = new FFIResult();
-    result->status_code = static_cast<uint32_t>(proto::StatusCode::OK);
-    result->data_ptr = detached->data();
-    result->data_length = detached->size();
-    result->owner_ptr = detached.release();
-    result->owner_deleter = [](void* buffer) { delete reinterpret_cast<flatbuffers::DetachedBuffer*>(buffer); };
     return result;
 }
 
@@ -195,9 +219,9 @@ extern "C" FFIResult* sqlynx_script_parse(Script* script) {
 }
 
 /// Analyze a script
-extern "C" FFIResult* sqlynx_script_analyze(Script* script, const Catalog* catalog) {
+extern "C" FFIResult* sqlynx_script_analyze(Script* script) {
     // Analyze the script
-    auto [analyzed, status] = script->Analyze(catalog);
+    auto [analyzed, status] = script->Analyze();
     if (status != proto::StatusCode::OK) {
         return packError(status);
     }
@@ -267,7 +291,7 @@ extern "C" FFIResult* sqlynx_script_get_statistics(sqlynx::Script* script) {
 }
 
 /// Create a catalog
-extern "C" sqlynx::Catalog* sqlynx_catalog_new() { return new sqlynx::Catalog(); }
+extern "C" FFIResult* sqlynx_catalog_new() { return packPtr(std::make_unique<sqlynx::Catalog>()); }
 /// Create a catalog
 extern "C" void sqlynx_catalog_delete(sqlynx::Catalog* catalog) { delete catalog; }
 /// Add a script in the catalog
@@ -305,14 +329,14 @@ extern "C" FFIResult* sqlynx_catalog_insert_schema_tables(sqlynx::Catalog* catal
 }
 
 /// Create a schema graph
-extern "C" sqlynx::SchemaGrid* sqlynx_schema_layout_new() { return new sqlynx::SchemaGrid(); }
+extern "C" FFIResult* sqlynx_query_graph_layout_new() { return packPtr(std::make_unique<sqlynx::QueryGraphLayout>()); }
 /// Delete a schema graph
-extern "C" void sqlynx_schema_layout_delete(sqlynx::SchemaGrid* graph) { delete graph; }
+extern "C" void sqlynx_query_graph_layout_delete(sqlynx::QueryGraphLayout* graph) { delete graph; }
 /// Configure a schema graph
-extern "C" void sqlynx_schema_layout_configure(sqlynx::SchemaGrid* graph, double board_width, double board_height,
-                                               double cell_width, double cell_height, double table_width,
-                                               double table_height) {
-    SchemaGrid::Config config;
+extern "C" void sqlynx_query_graph_layout_configure(sqlynx::QueryGraphLayout* graph, double board_width,
+                                                    double board_height, double cell_width, double cell_height,
+                                                    double table_width, double table_height) {
+    QueryGraphLayout::Config config;
     config.board_width = board_width;
     config.board_height = board_height;
     config.cell_width = cell_width;
@@ -322,12 +346,11 @@ extern "C" void sqlynx_schema_layout_configure(sqlynx::SchemaGrid* graph, double
     graph->Configure(config);
 }
 /// Update a schema graph
-extern "C" FFIResult* sqlynx_schema_layout_load_script(sqlynx::SchemaGrid* graph, sqlynx::Script* script) {
-    auto analyzed = script->analyzed_script;
-    if (!analyzed) {
-        return packError(proto::StatusCode::GRAPH_INPUT_NOT_ANALYZED);
+extern "C" FFIResult* sqlynx_query_graph_layout_load_script(sqlynx::QueryGraphLayout* graph, sqlynx::Script* script) {
+    auto status = graph->LoadScript(*script);
+    if (status != proto::StatusCode::OK) {
+        return packError(status);
     }
-    graph->LoadScript(analyzed);
 
     // Pack a schema graph
     flatbuffers::FlatBufferBuilder fb;
