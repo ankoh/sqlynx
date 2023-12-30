@@ -7,7 +7,7 @@
 #include "sqlynx/script.h"
 #include "sqlynx/text/rope.h"
 #include "sqlynx/utils/suffix_trie.h"
-#include "sqlynx/vis/schema_layout.h"
+#include "sqlynx/vis/query_graph_layout.h"
 
 using namespace sqlynx;
 
@@ -594,16 +594,15 @@ limit 100;
 )SQL";
 
 static void layout_schema(benchmark::State& state) {
-    rope::Rope input_external{1024, external_script};
+    Script script;
+    script.InsertTextAt(0, external_script);
+    script.Scan();
+    script.Parse();
+    script.Analyze();
 
-    // Analyze external script
-    auto external_scan = parser::Scanner::Scan(input_external, 0);
-    auto external_parsed = parser::Parser::Parse(external_scan.first);
-    auto external_analyzed = Analyzer::Analyze(external_parsed.first);
+    QueryGraphLayout graph;
 
-    SchemaGrid graph;
-
-    SchemaGrid::Config config;
+    QueryGraphLayout::Config config;
     config.board_width = 1600;
     config.board_height = 800;
     config.cell_width = 120;
@@ -613,7 +612,7 @@ static void layout_schema(benchmark::State& state) {
 
     for (auto _ : state) {
         graph.Configure(config);
-        graph.LoadScript(external_analyzed.first);
+        graph.LoadScript(script);
     }
 }
 

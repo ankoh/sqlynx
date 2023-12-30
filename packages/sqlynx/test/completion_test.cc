@@ -30,14 +30,14 @@ SELECT s_co
     ASSERT_EQ(external_script.Parse().second, proto::StatusCode::OK);
     ASSERT_EQ(external_script.Analyze().second, proto::StatusCode::OK);
 
-    Script main_script{2};
+    Catalog catalog;
+    catalog.AddScript(external_script, 0);
+
+    Script main_script{catalog, 2};
     main_script.InsertTextAt(0, main_script_text);
     ASSERT_EQ(main_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(main_script.Parse().second, proto::StatusCode::OK);
-
-    Catalog catalog;
-    catalog.AddScript(external_script, 0);
-    ASSERT_EQ(main_script.Analyze(&catalog).second, proto::StatusCode::OK);
+    ASSERT_EQ(main_script.Analyze().second, proto::StatusCode::OK);
 
     // Move the cursor
     auto cursor_ofs = main_script_text.find("s_co");

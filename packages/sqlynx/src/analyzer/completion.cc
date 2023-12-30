@@ -258,7 +258,7 @@ void Completion::FindCandidatesInIndexes() {
         // Find candidates in name dictionary of main script
         findCandidatesInIndex(*this, analyzed->GetNameSearchIndex(), false);
         // Find candidates in name dictionary of external script
-        analyzed->catalog.IterateRanked(
+        cursor.script.catalog.IterateRanked(
             [this](auto& schema, size_t rank) { findCandidatesInIndex(*this, schema.GetNameSearchIndex(), true); });
     }
 }
@@ -268,7 +268,7 @@ void Completion::FindTablesForUnresolvedColumns() {
         return;
     }
     auto& analyzed_script = *cursor.script.analyzed_script;
-    auto& catalog = analyzed_script.catalog;
+    auto& catalog = cursor.script.catalog;
 
     // Collect all unresolved columns in the current script
     std::vector<CatalogEntry::ResolvedTableColumn> table_columns;
@@ -324,7 +324,7 @@ void Completion::FindCandidatesInAST() {
         mark_as_near(table_ref.alias_name);
 
         // Add all column names of the table
-        if (auto resolved = analyzed->ResolveTable(table_ref.resolved_table_id, analyzed->catalog)) {
+        if (auto resolved = analyzed->ResolveTable(table_ref.resolved_table_id, cursor.script.catalog)) {
             for (auto& table_column : resolved->table_columns) {
                 mark_as_near(table_column.column_name);
             }

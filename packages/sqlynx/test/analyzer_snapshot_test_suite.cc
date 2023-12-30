@@ -31,9 +31,8 @@ TEST_P(AnalyzerSnapshotTestSuite, Test) {
         AnalyzerSnapshotTest::TestRegistrySnapshot(test->catalog, catalog_node, catalog, catalog_scripts, entry_id));
 
     // Read main script
-    Script main_script{0, test->script.database_name, test->script.schema_name};
-    ASSERT_NO_FATAL_FAILURE(
-        AnalyzerSnapshotTest::TestMainScriptSnapshot(test->script, catalog, main_node, main_script, 0));
+    Script main_script{catalog, 0, test->script.database_name, test->script.schema_name};
+    ASSERT_NO_FATAL_FAILURE(AnalyzerSnapshotTest::TestMainScriptSnapshot(test->script, main_node, main_script, 0));
 }
 
 // clang-format off

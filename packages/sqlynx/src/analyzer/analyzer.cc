@@ -8,8 +8,8 @@
 
 namespace sqlynx {
 
-Analyzer::Analyzer(std::shared_ptr<ParsedScript> parsed, std::string_view database_name, std::string_view schema_name,
-                   const Catalog& catalog)
+Analyzer::Analyzer(std::shared_ptr<ParsedScript> parsed, const Catalog& catalog, std::string_view database_name,
+                   std::string_view schema_name)
     : parsed_program(parsed),
       database_name(database_name),
       schema_name(schema_name),
@@ -19,16 +19,14 @@ Analyzer::Analyzer(std::shared_ptr<ParsedScript> parsed, std::string_view databa
           std::make_unique<NameResolutionPass>(*parsed, database_name, schema_name, this->catalog, attribute_index)) {}
 
 std::pair<std::shared_ptr<AnalyzedScript>, proto::StatusCode> Analyzer::Analyze(std::shared_ptr<ParsedScript> parsed,
+                                                                                const Catalog& catalog,
                                                                                 std::string_view database_name,
-                                                                                std::string_view schema_name,
-                                                                                const Catalog* catalog_ptr) {
+                                                                                std::string_view schema_name) {
     if (parsed == nullptr) {
         return {nullptr, proto::StatusCode::ANALYZER_INPUT_NOT_PARSED};
     }
     // Run analysis passes
-    static Catalog static_catalog;
-    const Catalog& catalog = catalog_ptr ? *catalog_ptr : static_catalog;
-    Analyzer az{parsed, database_name, schema_name, catalog};
+    Analyzer az{parsed, catalog, database_name, schema_name};
     az.pass_manager.Execute(*az.name_resolution);
 
     // Build program

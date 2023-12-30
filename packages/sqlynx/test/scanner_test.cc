@@ -30,14 +30,18 @@ static void match_tokens(const void* data, const std::vector<uint32_t>& offsets,
 }
 
 TEST(ScannerTest, InsertChars) {
-    auto script = sqlynx_script_new(1);
-    FFIResult* result = nullptr;
+    auto catalog_result = sqlynx_catalog_new();
+    ASSERT_EQ(catalog_result->status_code, OK);
+    auto catalog = static_cast<Catalog*>(catalog_result->owner_ptr);
+    auto script_result = sqlynx_script_new(catalog, 1);
+    ASSERT_EQ(script_result->status_code, OK);
+    auto script = static_cast<Script*>(script_result->owner_ptr);
 
     size_t size = 0;
     auto add_char = [&](char c, std::vector<uint32_t> offsets, std::vector<uint32_t> lengths,
                         std::vector<proto::ScannerTokenType> types, std::vector<uint32_t> breaks) {
         sqlynx_script_insert_char_at(script, size++, c);
-        result = sqlynx_script_scan(script);
+        auto result = sqlynx_script_scan(script);
         ASSERT_EQ(result->status_code, OK);
         match_tokens(result->data_ptr, offsets, lengths, types, breaks);
         sqlynx_result_delete(result);
@@ -52,7 +56,8 @@ TEST(ScannerTest, InsertChars) {
     add_char('\n', {0}, {6}, {ScannerToken::KEYWORD}, {1});
     add_char('1', {0, 7}, {6, 1}, {ScannerToken::KEYWORD, ScannerToken::LITERAL_INTEGER}, {1});
 
-    sqlynx_script_delete(script);
+    sqlynx_result_delete(catalog_result);
+    sqlynx_result_delete(script_result);
 }
 
 TEST(ScannerTest, FindTokenAtOffset) {

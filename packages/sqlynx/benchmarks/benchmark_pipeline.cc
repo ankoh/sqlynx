@@ -9,7 +9,7 @@
 #include "sqlynx/script.h"
 #include "sqlynx/text/rope.h"
 #include "sqlynx/utils/suffix_trie.h"
-#include "sqlynx/vis/schema_layout.h"
+#include "sqlynx/vis/query_graph_layout.h"
 
 using namespace sqlynx;
 
@@ -618,9 +618,7 @@ static void parse_query(benchmark::State& state) {
 }
 
 static void analyze_query(benchmark::State& state) {
-    Script main{1};
     Script external{2};
-    main.InsertTextAt(0, main_script);
     external.InsertTextAt(0, external_script);
 
     auto ext_scan = external.Scan();
@@ -633,13 +631,16 @@ static void analyze_query(benchmark::State& state) {
     Catalog catalog;
     catalog.AddScript(external, 0);
 
+    Script main{catalog, 1};
+    main.InsertTextAt(0, main_script);
+
     auto main_scan = main.Scan();
     auto main_parsed = main.Parse();
     assert(main_scan.second == proto::StatusCode::OK);
     assert(main_parsed.second == proto::StatusCode::OK);
 
     for (auto _ : state) {
-        auto main_analyzed = main.Analyze(&catalog);
+        auto main_analyzed = main.Analyze();
         benchmark::DoNotOptimize(main_analyzed);
     }
 }
@@ -695,16 +696,17 @@ static void complete_cursor(benchmark::State& state) {
 }
 
 static void compute_layout(benchmark::State& state) {
-    rope::Rope input_external{1024, external_script};
+    Catalog catalog;
 
-    // Analyze external script
-    auto external_scan = parser::Scanner::Scan(input_external, 0);
-    auto external_parsed = parser::Parser::Parse(external_scan.first);
-    auto external_analyzed = Analyzer::Analyze(external_parsed.first);
+    Script script;
+    script.InsertTextAt(0, external_script);
+    script.Scan();
+    script.Parse();
+    script.Analyze();
 
-    SchemaGrid graph;
+    QueryGraphLayout graph;
 
-    SchemaGrid::Config config;
+    QueryGraphLayout::Config config;
     config.board_width = 1600;
     config.board_height = 800;
     config.cell_width = 120;
@@ -714,7 +716,7 @@ static void compute_layout(benchmark::State& state) {
 
     for (auto _ : state) {
         graph.Configure(config);
-        graph.LoadScript(external_analyzed.first);
+        graph.LoadScript(script);
     }
 }
 

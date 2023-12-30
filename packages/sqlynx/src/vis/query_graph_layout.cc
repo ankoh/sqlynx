@@ -1,9 +1,10 @@
-#include "sqlynx/vis/schema_layout.h"
+#include "sqlynx/vis/query_graph_layout.h"
 
 #include <limits>
 
 #include "sqlynx/catalog.h"
 #include "sqlynx/external.h"
+#include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
 
 namespace sqlynx {
@@ -14,15 +15,15 @@ constexpr size_t NULL_TABLE_ID = std::numeric_limits<uint32_t>::max();
 
 /// Get the score
 constexpr double GetScore(double distance, uint8_t neighbor_count) {
-    SchemaGrid::Position base;
+    QueryGraphLayout::Position base;
     return -1.0 * distance + (static_cast<double>(neighbor_count) * (base.distance_to(base.north_east())));
 }
 
 }  // namespace
 
-SchemaGrid::SchemaGrid() {}
+QueryGraphLayout::QueryGraphLayout() {}
 
-void SchemaGrid::Clear() {
+void QueryGraphLayout::Clear() {
     script = nullptr;
     adjacency.adjacency_nodes.clear();
     adjacency.adjacency_offsets.clear();
@@ -36,21 +37,22 @@ void SchemaGrid::Clear() {
     unplaced_nodes.Clear();
 }
 
-void SchemaGrid::Configure(const SchemaGrid::Config& c) {
+proto::StatusCode QueryGraphLayout::Configure(const QueryGraphLayout::Config& c) {
     Clear();
     config = c;
+    return proto::StatusCode::OK;
 }
 
-void SchemaGrid::PrepareLayout() {
+void QueryGraphLayout::PrepareLayout(const AnalyzedScript& analyzed) {
     // Internal and external tables
-    size_t table_count = script->GetTables().size();
+    size_t table_count = analyzed.GetTables().size();
     script->GetCatalog().Iterate([&](CatalogEntry& schema) { table_count += schema.GetTables().size(); });
     // Load adjacency map
     assert(nodes.empty());
     nodes.reserve(table_count);
     // Load internal tables
     std::unordered_map<ExternalObjectID, size_t, ExternalObjectID::Hasher> nodes_by_table_id;
-    for (auto& table : script->GetTables()) {
+    for (auto& table : analyzed.GetTables()) {
         nodes_by_table_id.insert({table.table_id, nodes.size()});
         nodes.emplace_back(nodes.size(), table.table_id, 0);
     }
@@ -63,15 +65,15 @@ void SchemaGrid::PrepareLayout() {
     });
     // Add edge node ids
     assert(edge_nodes.empty());
-    edge_nodes.resize(script->graph_edge_nodes.size());
-    for (size_t i = 0; i < script->graph_edge_nodes.size(); ++i) {
-        AnalyzedScript::QueryGraphEdgeNode& node = script->graph_edge_nodes[i];
+    edge_nodes.resize(analyzed.graph_edge_nodes.size());
+    for (size_t i = 0; i < analyzed.graph_edge_nodes.size(); ++i) {
+        const AnalyzedScript::QueryGraphEdgeNode& node = analyzed.graph_edge_nodes[i];
         ExternalObjectID column_reference_id{script->GetExternalID(), node.column_reference_id};
-        auto& col_ref = script->column_references[node.column_reference_id];
+        auto& col_ref = analyzed.column_references[node.column_reference_id];
         ExternalObjectID ast_node_id = col_ref.ast_node_id.has_value()
                                            ? ExternalObjectID{script->GetExternalID(), *col_ref.ast_node_id}
                                            : ExternalObjectID{};
-        ExternalObjectID table_id = script->column_references[node.column_reference_id].resolved_table_id;
+        ExternalObjectID table_id = analyzed.column_references[node.column_reference_id].resolved_table_id;
         uint32_t node_id = std::numeric_limits<uint32_t>::max();
         if (auto iter = nodes_by_table_id.find(table_id); iter != nodes_by_table_id.end()) {
             node_id = iter->second;
@@ -80,9 +82,9 @@ void SchemaGrid::PrepareLayout() {
     }
     // Add edges
     assert(edges.empty());
-    edges.resize(script->graph_edges.size());
-    for (uint32_t i = 0; i < script->graph_edges.size(); ++i) {
-        AnalyzedScript::QueryGraphEdge& edge = script->graph_edges[i];
+    edges.resize(analyzed.graph_edges.size());
+    for (uint32_t i = 0; i < analyzed.graph_edges.size(); ++i) {
+        const AnalyzedScript::QueryGraphEdge& edge = analyzed.graph_edges[i];
         edges[i] = {ExternalObjectID{script->GetExternalID(), i},
                     edge.ast_node_id.has_value() ? ExternalObjectID{script->GetExternalID(), *edge.ast_node_id}
                                                  : ExternalObjectID{},
@@ -94,12 +96,12 @@ void SchemaGrid::PrepareLayout() {
     // Collect nˆ2 adjacency pairs for now.
     // We might want to model hyper-edges differently for edge attraction in the future
     std::vector<std::pair<size_t, size_t>> adjacency_pairs;
-    for (size_t i = 0; i < script->graph_edges.size(); ++i) {
-        AnalyzedScript::QueryGraphEdge& edge = script->graph_edges[i];
+    for (size_t i = 0; i < analyzed.graph_edges.size(); ++i) {
+        const AnalyzedScript::QueryGraphEdge& edge = analyzed.graph_edges[i];
         // Emit nˆ2 adjacency pairs with patched node ids
         for (size_t l = 0; l < edge.node_count_left; ++l) {
-            size_t lcol = script->graph_edge_nodes[edge.nodes_begin + l].column_reference_id;
-            ExternalObjectID ltid = script->column_references[lcol].resolved_table_id;
+            size_t lcol = analyzed.graph_edge_nodes[edge.nodes_begin + l].column_reference_id;
+            ExternalObjectID ltid = analyzed.column_references[lcol].resolved_table_id;
             auto iter = nodes_by_table_id.find(ltid);
             if (iter == nodes_by_table_id.end()) {
                 continue;
@@ -107,8 +109,9 @@ void SchemaGrid::PrepareLayout() {
             auto ln = iter->second;
             // Emit pair for each right node
             for (size_t r = 0; r < edge.node_count_right; ++r) {
-                size_t rcol = script->graph_edge_nodes[edge.nodes_begin + edge.node_count_left + r].column_reference_id;
-                ExternalObjectID rtid = script->column_references[rcol].resolved_table_id;
+                size_t rcol =
+                    analyzed.graph_edge_nodes[edge.nodes_begin + edge.node_count_left + r].column_reference_id;
+                ExternalObjectID rtid = analyzed.column_references[rcol].resolved_table_id;
                 if (rtid.IsNull()) continue;
                 auto iter = nodes_by_table_id.find(rtid);
                 if (iter == nodes_by_table_id.end()) {
@@ -171,7 +174,7 @@ void SchemaGrid::PrepareLayout() {
     }
 }
 
-void SchemaGrid::ComputeLayout() {
+void QueryGraphLayout::ComputeLayout() {
     // Reserve hashmap for peer positions
     Position center{0, 0};
     std::unordered_set<Position, Position::Hasher> peer_positions;
@@ -271,13 +274,17 @@ void SchemaGrid::ComputeLayout() {
     // auto remaining_unplaced = unplaced_nodes.Flush();
 }
 
-void SchemaGrid::LoadScript(std::shared_ptr<AnalyzedScript> s) {
-    script = s;
-    PrepareLayout();
+proto::StatusCode QueryGraphLayout::LoadScript(Script& s) {
+    script = &s;
+    if (!s.analyzed_script) {
+        return proto::StatusCode::GRAPH_INPUT_NOT_ANALYZED;
+    }
+    PrepareLayout(*s.analyzed_script);
     ComputeLayout();
+    return proto::StatusCode::OK;
 }
 
-flatbuffers::Offset<proto::SchemaLayout> SchemaGrid::Pack(flatbuffers::FlatBufferBuilder& builder) {
+flatbuffers::Offset<proto::SchemaLayout> QueryGraphLayout::Pack(flatbuffers::FlatBufferBuilder& builder) {
     proto::SchemaLayoutT layout;
     layout.table_nodes.resize(nodes.size());
     layout.edges.resize(edges.size());

@@ -91,7 +91,7 @@ ExternalSchema::ExternalSchema(ExternalID external_id) : CatalogEntry(external_i
 proto::StatusCode ExternalSchema::InsertTables(const proto::SchemaDescriptor& descriptor,
                                                std::unique_ptr<std::byte[]> descriptor_buffer) {
     if (!descriptor.tables()) {
-        return proto::StatusCode::SCHEMA_REGISTRY_DESCRIPTOR_TABLES_NULL;
+        return proto::StatusCode::CATALOG_DESCRIPTOR_TABLES_NULL;
     }
     std::string_view database_name =
         descriptor.database_name() == nullptr ? "" : descriptor.database_name()->string_view();
@@ -99,11 +99,11 @@ proto::StatusCode ExternalSchema::InsertTables(const proto::SchemaDescriptor& de
     for (auto* table : *descriptor.tables()) {
         auto table_name_ptr = table->table_name();
         if (!table_name_ptr || table_name_ptr->size() == 0) {
-            return proto::StatusCode::SCHEMA_REGISTRY_DESCRIPTOR_TABLE_NAME_EMPTY;
+            return proto::StatusCode::CATALOG_DESCRIPTOR_TABLE_NAME_EMPTY;
         }
         QualifiedTableName::Key table_name_key{database_name, schema_name, table_name_ptr->string_view()};
         if (tables_by_name.contains(table_name_key)) {
-            return proto::StatusCode::SCHEMA_REGISTRY_DESCRIPTOR_TABLE_NAME_COLLISION;
+            return proto::StatusCode::CATALOG_DESCRIPTOR_TABLE_NAME_COLLISION;
         }
     }
 
@@ -119,7 +119,7 @@ void CatalogEntry::ResolveTableColumn(std::string_view table_column, const Catal
 
 proto::StatusCode Catalog::AddScript(Script& script, Rank rank) {
     if (!script.analyzed_script) {
-        return proto::StatusCode::SCHEMA_REGISTRY_SCRIPT_NOT_ANALYZED;
+        return proto::StatusCode::CATALOG_SCRIPT_NOT_ANALYZED;
     }
     CatalogEntry& schema = *script.analyzed_script;
     auto iter = script_entries.find(schema.GetExternalID());
@@ -144,11 +144,11 @@ proto::StatusCode Catalog::AddScript(Script& script, Rank rank) {
 
 proto::StatusCode Catalog::UpdateScript(Script& script) {
     if (!script.analyzed_script) {
-        return proto::StatusCode::SCHEMA_REGISTRY_SCRIPT_NOT_ANALYZED;
+        return proto::StatusCode::CATALOG_SCRIPT_NOT_ANALYZED;
     }
     auto script_iter = script_entries.find(script.GetExternalID());
     if (script_iter == script_entries.end()) {
-        return proto::StatusCode::SCHEMA_REGISTRY_SCRIPT_UNKNOWN;
+        return proto::StatusCode::CATALOG_SCRIPT_UNKNOWN;
     }
     // Script stayed the same? Nothing to do then
     if (script_iter->second.script == script.analyzed_script) {

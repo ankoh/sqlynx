@@ -16,7 +16,7 @@
 
 namespace sqlynx {
 
-class SchemaGrid {
+class QueryGraphLayout {
    public:
     /// A config
     struct Config {
@@ -166,8 +166,8 @@ class SchemaGrid {
             : column_reference_id(col_ref), ast_node_id(ast_node_id), table_id(table_id), node_id(node_id) {}
     };
 
-    /// The analyzed script (if provided)
-    std::shared_ptr<AnalyzedScript> script = nullptr;
+    /// The script
+    Script* script;
     /// The configuration
     Config config;
     /// The adjacency map
@@ -191,13 +191,13 @@ class SchemaGrid {
     /// Reset the grid
     void Clear();
     /// Prepare layouting and create unplaced nodes
-    void PrepareLayout();
+    void PrepareLayout(const AnalyzedScript& analyzed);
     /// Compute the node layout
     void ComputeLayout();
 
    public:
     /// Constructor
-    SchemaGrid();
+    QueryGraphLayout();
 
     /// Get the current positions
     auto& GetNodes() { return nodes; }
@@ -207,9 +207,9 @@ class SchemaGrid {
     auto& GetEdges() { return edges; }
 
     /// Configure the schemagraph settings
-    void Configure(const Config& config);
+    proto::StatusCode Configure(const Config& config);
     /// Load a script
-    void LoadScript(std::shared_ptr<AnalyzedScript> s);
+    proto::StatusCode LoadScript(Script& script);
     /// Pack the schema graph
     flatbuffers::Offset<proto::SchemaLayout> Pack(flatbuffers::FlatBufferBuilder& builder);
 };
