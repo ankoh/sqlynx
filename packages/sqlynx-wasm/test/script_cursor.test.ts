@@ -8,14 +8,14 @@ import { ScriptCursorInfo } from '../gen/sqlynx/proto';
 const distPath = path.resolve(__dirname, '../dist');
 const wasmPath = path.resolve(distPath, './sqlynx.wasm');
 
-let fsql: sqlynx.SQLynx | null = null;
+let lnx: sqlynx.SQLynx | null = null;
 
 beforeAll(async () => {
-    fsql = await sqlynx.SQLynx.create(async (imports: WebAssembly.Imports) => {
+    lnx = await sqlynx.SQLynx.create(async (imports: WebAssembly.Imports) => {
         const buf = await fs.promises.readFile(wasmPath);
         return await WebAssembly.instantiate(buf, imports);
     });
-    expect(fsql).not.toBeNull();
+    expect(lnx).not.toBeNull();
 });
 
 interface ExpectedCursor {
@@ -32,7 +32,7 @@ interface ExpectedCursor {
 describe('SQLynx Cursor', () => {
     it('simple script', () => {
         const scriptText = 'select * from A b, C d where b.x = d.y';
-        const script = fsql!.createScript(1);
+        const script = lnx!.createScript(null, 1);
         script.insertTextAt(0, scriptText);
 
         const scannedBuffer = script.scan();

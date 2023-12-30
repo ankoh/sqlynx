@@ -118,7 +118,7 @@ describe('SQLynx editing fuzzer', () => {
     for (let seed = 0; seed < 100; ++seed) {
         it(`script editing sequence, seed=${seed}`, () => {
             const [ops, dataSource] = ScriptInteractionGenerator.generateMany(seed, 100, 100);
-            const script = fsql!.createScript(1);
+            const script = fsql!.createScript(null, 1);
             let expected = '';
             for (let i = 0; i < ops.length; ++i) {
                 expected = ops[i].applyToText(expected, dataSource);

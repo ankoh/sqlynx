@@ -44,7 +44,7 @@ TEST(ScannerTest, InsertChars) {
         auto result = sqlynx_script_scan(script);
         ASSERT_EQ(result->status_code, OK);
         match_tokens(result->data_ptr, offsets, lengths, types, breaks);
-        sqlynx_result_delete(result);
+        sqlynx_delete_result(result);
     };
 
     add_char('s', {0}, {1}, {ScannerToken::IDENTIFIER}, {});
@@ -56,8 +56,8 @@ TEST(ScannerTest, InsertChars) {
     add_char('\n', {0}, {6}, {ScannerToken::KEYWORD}, {1});
     add_char('1', {0, 7}, {6, 1}, {ScannerToken::KEYWORD, ScannerToken::LITERAL_INTEGER}, {1});
 
-    sqlynx_result_delete(catalog_result);
-    sqlynx_result_delete(script_result);
+    sqlynx_delete_result(catalog_result);
+    sqlynx_delete_result(script_result);
 }
 
 TEST(ScannerTest, FindTokenAtOffset) {

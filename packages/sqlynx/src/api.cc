@@ -122,7 +122,7 @@ extern "C" std::byte* sqlynx_malloc(size_t length) { return new std::byte[length
 extern "C" void sqlynx_free(const void* buffer) { delete[] reinterpret_cast<const std::byte*>(buffer); }
 
 /// Delete a result
-extern "C" void sqlynx_result_delete(FFIResult* result) {
+extern "C" void sqlynx_delete_result(FFIResult* result) {
     result->owner_deleter(result->owner_ptr);
     result->owner_ptr = nullptr;
     result->owner_deleter = nullptr;

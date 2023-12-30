@@ -32,7 +32,7 @@ struct FFIResult {
     template <typename T> T* CastOwnerPtr() { return static_cast<T*>(owner_ptr); }
 };
 /// Delete a result
-extern "C" void sqlynx_result_delete(FFIResult* result);
+extern "C" void sqlynx_delete_result(FFIResult* result);
 
 /// Create a script
 extern "C" FFIResult* sqlynx_script_new(const sqlynx::Catalog* catalog, uint32_t external_id,

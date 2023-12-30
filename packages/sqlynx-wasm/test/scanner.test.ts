@@ -7,21 +7,21 @@ import fs from 'fs';
 const distPath = path.resolve(__dirname, '../dist');
 const wasmPath = path.resolve(distPath, './sqlynx.wasm');
 
-let fsql: sqlynx.SQLynx | null = null;
+let lnx: sqlynx.SQLynx | null = null;
 
 beforeAll(async () => {
-    fsql = await sqlynx.SQLynx.create(async (imports: WebAssembly.Imports) => {
+    lnx = await sqlynx.SQLynx.create(async (imports: WebAssembly.Imports) => {
         const buf = await fs.promises.readFile(wasmPath);
         return await WebAssembly.instantiate(buf, imports);
     });
-    expect(fsql).not.toBeNull();
+    expect(lnx).not.toBeNull();
 });
 
 const Token = sqlynx.proto.ScannerTokenType;
 
 describe('SQLynx Scanner', () => {
     it(`Character Sequence`, () => {
-        const script = fsql!.createScript(1);
+        const script = lnx!.createScript(null, 1);
         let tmp = new sqlynx.proto.ScannedScript();
 
         let size = 0;
@@ -69,7 +69,7 @@ describe('SQLynx Scanner', () => {
                 textRange: [number, number],
                 expectedFiltered: [number, number],
             ) => {
-                const script = fsql!.createScript(1);
+                const script = lnx!.createScript(null, 1);
                 script.insertTextAt(0, text);
                 const scanResult = script.scan();
                 const scannedScript = scanResult.read(new sqlynx.proto.ScannedScript());
