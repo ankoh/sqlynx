@@ -45,14 +45,16 @@ const Connections = withNavBar(ConnectionsPage);
 const element = document.getElementById('root');
 const root = createRoot(element!);
 root.render(
-    <BrowserRouter>
-        <DataProviders>
-            <Routes>
-                <Route index element={<Editor />} />
-                <Route path="/connections" element={<Connections />} />
-                <Route path="/oauth2/callback" element={<OAuthCallbackPage />} />
-                <Route path="*" element={<Navigate to="/" />} />
-            </Routes>
-        </DataProviders>
-    </BrowserRouter>,
+    <React.StrictMode>
+        <BrowserRouter>
+            <DataProviders>
+                <Routes>
+                    <Route index element={<Editor />} />
+                    <Route path="/connections" element={<Connections />} />
+                    <Route path="/oauth2/callback" element={<OAuthCallbackPage />} />
+                    <Route path="*" element={<Navigate to="/" />} />
+                </Routes>
+            </DataProviders>
+        </BrowserRouter>
+    </React.StrictMode>,
 );

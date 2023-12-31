@@ -97,4 +97,12 @@ limit 100
     ASSERT_EQ(main_script.Analyze().second, proto::StatusCode::OK);
 }
 
+TEST(ScriptTest, ReplaceText) {
+    Script script{1};
+    script.InsertTextAt(0, "foo");
+    ASSERT_EQ(script.ToString(), "foo");
+    script.ReplaceText("bar");
+    ASSERT_EQ(script.ToString(), "bar");
+}
+
 }  // namespace

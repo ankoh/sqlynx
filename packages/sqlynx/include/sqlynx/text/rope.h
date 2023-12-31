@@ -313,6 +313,7 @@ struct Rope {
     Rope SplitOff(size_t char_idx);
     /// Append a rope to this rope
     void Append(Rope&& other);
+
     /// Reset the rope
     void Reset();
 

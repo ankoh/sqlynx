@@ -43,6 +43,8 @@ extern "C" void sqlynx_script_insert_char_at(sqlynx::Script* script, size_t offs
 /// Insert text at a position
 extern "C" void sqlynx_script_insert_text_at(sqlynx::Script* script, size_t offset, const char* text_ptr,
                                              size_t text_length);
+/// Replace text in a script
+extern "C" void sqlynx_script_replace_text(sqlynx::Script* script, const char* text_ptr, size_t text_length);
 /// Erase a text range
 extern "C" void sqlynx_script_erase_text_range(sqlynx::Script* script, size_t offset, size_t count);
 /// Get the script content as string

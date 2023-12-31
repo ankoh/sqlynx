@@ -471,6 +471,8 @@ void Script::InsertCharAt(size_t char_idx, uint32_t unicode) {
 void Script::InsertTextAt(size_t char_idx, std::string_view encoded) { text.Insert(char_idx, encoded); }
 /// Erase a text at an offet
 void Script::EraseTextRange(size_t char_idx, size_t count) { text.Remove(char_idx, count); }
+/// Replace the text in the script
+void Script::ReplaceText(std::string_view encoded) { text = rope::Rope{1024, encoded}; }
 /// Print a script as string
 std::string Script::ToString() { return text.ToString(); }
 

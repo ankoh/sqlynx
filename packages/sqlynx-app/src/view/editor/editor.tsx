@@ -55,7 +55,8 @@ interface Props {
 }
 
 interface ActiveScriptState {
-    targetScript: sqlynx.SQLynxScript | null;
+    editorScriptVersion: number;
+    editorScript: sqlynx.SQLynxScript | null;
     schemaScript: sqlynx.SQLynxScript | null;
     decorations: DecorationSet | null;
     cursor: ScriptCursorInfoT | null;
@@ -73,7 +74,8 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
     const viewWasCreated = React.useCallback((view: EditorView) => setView(view), [setView]);
     const viewWillBeDestroyed = React.useCallback((view: EditorView) => setView(null), [setView]);
     const active = React.useRef<ActiveScriptState>({
-        targetScript: null,
+        editorScriptVersion: 0,
+        editorScript: null,
         schemaScript: null,
         decorations: null,
         cursor: null,
@@ -132,8 +134,12 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         // Did the script change?
         const changes: ChangeSpec[] = [];
         const effects: StateEffect<any>[] = [];
-        if (active.current.targetScript !== targetScriptData.script) {
-            active.current.targetScript = targetScriptData.script;
+        if (
+            active.current.editorScript !== targetScriptData.script ||
+            active.current.editorScriptVersion !== targetScriptData.scriptVersion
+        ) {
+            active.current.editorScriptVersion = targetScriptData.scriptVersion;
+            active.current.editorScript = targetScriptData.script;
             active.current.schemaScript = schemaScript;
             changes.push({
                 from: 0,
@@ -157,7 +163,8 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
             );
         } else if (active.current.schemaScript !== schemaScriptData?.script) {
             // Only the external script changed, no need for text changes
-            active.current.targetScript = targetScriptData.script;
+            active.current.editorScriptVersion = targetScriptData.scriptVersion;
+            active.current.editorScript = targetScriptData.script;
             active.current.schemaScript = schemaScript;
         }
         effects.push(

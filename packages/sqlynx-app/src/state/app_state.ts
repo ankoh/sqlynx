@@ -41,6 +41,8 @@ export interface AppState {
 export interface ScriptData {
     /// The script key
     scriptKey: ScriptKey;
+    /// The version, changes trigger reloads in the editor
+    scriptVersion: number;
     /// The script
     script: sqlynx.SQLynxScript | null;
     /// The metadata
@@ -81,6 +83,7 @@ export function destroyState(state: AppState): AppState {
 export function createDefaultScript(key: ScriptKey) {
     const script: ScriptData = {
         scriptKey: key,
+        scriptVersion: 1,
         script: null,
         metadata: generateBlankScript(),
         loading: {
@@ -101,10 +104,11 @@ export function createDefaultScript(key: ScriptKey) {
     return script;
 }
 
-export function createEmptyScript(key: ScriptKey, api: sqlynx.SQLynx, catalog: sqlynx.SQLynxCatalog | null) {
+export function createEmptyScript(key: ScriptKey, empty: sqlynx.SQLynxScript) {
     const script: ScriptData = {
         scriptKey: key,
-        script: api.createScript(catalog, key),
+        scriptVersion: 1,
+        script: empty,
         metadata: generateBlankScript(),
         loading: {
             status: LoadingStatus.SUCCEEDED,

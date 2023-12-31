@@ -1,11 +1,11 @@
 import * as React from 'react';
 
 import { useSQLynx } from '../sqlynx_loader';
-import { AppState, ScriptKey, createDefaultState } from './app_state';
+import { AppState, ScriptKey } from './app_state';
 import { Dispatch } from '../utils/action';
 import { RESULT_OK } from '../utils/result';
 import { TPCH_SCHEMA, exampleScripts } from '../scripts/example_scripts';
-import { AppStateAction, INITIALIZE, LOAD_SCRIPTS, reduceAppState } from './app_state_reducer';
+import { AppStateAction, INITIALIZE, LOAD_SCRIPTS, useGlobalAppState } from './app_state_reducer';
 
 const stateContext = React.createContext<AppState | null>(null);
 const stateDispatch = React.createContext<Dispatch<AppStateAction> | null>(null);
@@ -15,15 +15,15 @@ type Props = {
 };
 
 export const AppStateProvider: React.FC<Props> = (props: Props) => {
-    const [state, dispatch] = React.useReducer(reduceAppState, null, () => createDefaultState());
+    const [state, dispatch] = useGlobalAppState();
     const scriptsLoaded = React.useRef<boolean>(false);
 
-    const backend = useSQLynx();
+    const lnxSetup = useSQLynx();
     React.useEffect(() => {
-        if (backend?.type == RESULT_OK && !state.instance) {
-            dispatch({ type: INITIALIZE, value: backend.value });
+        if (lnxSetup?.type == RESULT_OK && !state.instance) {
+            dispatch({ type: INITIALIZE, value: lnxSetup.value });
         }
-    }, [backend, state.instance]);
+    }, [lnxSetup, state.instance]);
 
     // TODO move this to a dedicated loader
     React.useEffect(() => {
