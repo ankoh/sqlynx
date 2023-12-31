@@ -1,9 +1,10 @@
 import * as sqlynx from '@ankoh/sqlynx';
+import * as React from 'react';
 
 import { SQLynxScriptBuffers, analyzeScript, parseAndAnalyzeScript } from '../view/editor/sqlynx_processor';
-import { AppState, ScriptKey, createEmptyScript, destroyState } from './app_state';
+import { AppState, ScriptKey, createDefaultState, createEmptyScript, destroyState } from './app_state';
 import { deriveScriptFocusFromCursor, focusGraphEdge, focusGraphNode } from './focus';
-import { Action } from '../utils/action';
+import { Action, Dispatch } from '../utils/action';
 import { ScriptMetadata } from '../scripts/script_metadata';
 import { LoadingStatus } from '../scripts/script_loader';
 import { GraphConnectionId, GraphNodeDescriptor, computeGraphViewModel } from '../view/schema/graph_view_model';
@@ -56,23 +57,45 @@ function rotateStatistics(
     }
 }
 
-/// Reducer for application actions
-export function reduceAppState(state: AppState, action: AppStateAction): AppState {
+/// ATTENTION
+///
+/// React reducers do not play nice together with the "impure" side-effects through state held in Wasm.
+/// When running react in strict mode, React will call our reducers multiple times with the same state.
+/// Moving all interactions and memory management OUT of the reducer is far too painful and nothing we want to do.
+///
+/// We therefore bypass the "pureness" rules for the top-level state and use a single global state instead.
+
+let GLOBAL_STATE: AppState = createDefaultState();
+
+export function useGlobalAppState(): [AppState, Dispatch<AppStateAction>] {
+    const [state, setState] = React.useState(GLOBAL_STATE);
+    const reducer = React.useCallback(
+        (action: AppStateAction) => {
+            GLOBAL_STATE = reduceAppState(GLOBAL_STATE, action);
+            setState(GLOBAL_STATE);
+        },
+        [setState],
+    );
+    return [state, reducer];
+}
+
+function reduceAppState(state: AppState, action: AppStateAction): AppState {
     switch (action.type) {
         case INITIALIZE: {
-            console.assert(state.catalog == null);
-            const catalog = action.value.createCatalog();
-            const mainScript = createEmptyScript(ScriptKey.MAIN_SCRIPT, action.value, catalog);
-            const schemaScript = createEmptyScript(ScriptKey.SCHEMA_SCRIPT, action.value, catalog);
+            const lnx = action.value;
+            const catalog = lnx.createCatalog();
+            const mainScript = lnx.createScript(catalog, ScriptKey.MAIN_SCRIPT);
+            const schemaScript = lnx.createScript(catalog, ScriptKey.SCHEMA_SCRIPT);
+            const graph = lnx.createQueryGraphLayout();
             const next: AppState = {
                 ...state,
-                instance: action.value,
-                scripts: {
-                    [ScriptKey.MAIN_SCRIPT]: mainScript,
-                    [ScriptKey.SCHEMA_SCRIPT]: schemaScript,
-                },
+                instance: lnx,
                 catalog,
-                graph: action.value.createQueryGraphLayout(),
+                scripts: {
+                    [ScriptKey.MAIN_SCRIPT]: createEmptyScript(ScriptKey.MAIN_SCRIPT, mainScript),
+                    [ScriptKey.SCHEMA_SCRIPT]: createEmptyScript(ScriptKey.MAIN_SCRIPT, schemaScript),
+                },
+                graph,
             };
             return next;
         }
@@ -99,7 +122,7 @@ export function reduceAppState(state: AppState, action: AppStateAction): AppStat
             // Is schema script?
             if (scriptKey == ScriptKey.SCHEMA_SCRIPT) {
                 // Update the catalog since the schema might have changed
-                next.catalog?.addScript(state.scripts[scriptKey].script!, SCHEMA_SCRIPT_CATALOG_RANK);
+                next.catalog!.addScript(state.scripts[scriptKey].script!, SCHEMA_SCRIPT_CATALOG_RANK);
                 // Update the main script since the schema graph depends on it
                 const mainData = next.scripts[ScriptKey.MAIN_SCRIPT];
                 const mainScript = mainData.script;
@@ -183,26 +206,23 @@ export function reduceAppState(state: AppState, action: AppStateAction): AppStat
                     },
                 },
             };
-            let newScript: sqlynx.SQLynxScript | null = null;
             try {
                 // Analyze newly loaded scripts
                 switch (scriptKey) {
                     case ScriptKey.MAIN_SCRIPT: {
-                        // Destroy the old script and buffers
+                        // Destroy the old buffers
                         const prev = next.scripts[ScriptKey.MAIN_SCRIPT];
                         prev.processed.destroy(prev.processed);
-                        prev.script?.delete();
-                        prev.script = null;
-                        // Create the SQLynx script and insert the text
-                        newScript = state.instance!.createScript(state.catalog, ScriptKey.MAIN_SCRIPT);
-                        newScript.insertTextAt(0, content);
                         // Analyze the new script
-                        const analysis = parseAndAnalyzeScript(newScript);
+                        const script = prev.script!;
+                        script.replaceText(content);
+                        const analysis = parseAndAnalyzeScript(script);
+                        // Update the state
                         next.scripts[ScriptKey.MAIN_SCRIPT] = {
-                            ...next.scripts[ScriptKey.MAIN_SCRIPT],
-                            script: newScript,
+                            ...prev,
+                            scriptVersion: ++prev.scriptVersion,
                             processed: analysis,
-                            statistics: rotateStatistics(prev.statistics, newScript.getStatistics() ?? null),
+                            statistics: rotateStatistics(prev.statistics, script.getStatistics() ?? null),
                         };
                         break;
                     }
@@ -210,14 +230,12 @@ export function reduceAppState(state: AppState, action: AppStateAction): AppStat
                         // Destroy the old script and buffers
                         const prev = next.scripts[ScriptKey.SCHEMA_SCRIPT];
                         prev.processed.destroy(prev.processed);
-                        prev.script?.delete();
-                        prev.script = null;
-                        // Create the script and insert the text
-                        newScript = state.instance!.createScript(state.catalog, ScriptKey.SCHEMA_SCRIPT);
-                        newScript.insertTextAt(0, content);
                         // Analyze the new schema
-                        const schemaAnalyzed = parseAndAnalyzeScript(newScript);
-                        next.catalog!.addScript(newScript, SCHEMA_SCRIPT_CATALOG_RANK);
+                        const script = prev.script!;
+                        script.replaceText(content);
+                        const schemaAnalyzed = parseAndAnalyzeScript(script);
+                        // Update the catalog
+                        next.catalog!.addScript(script, SCHEMA_SCRIPT_CATALOG_RANK);
                         // We updated the schema script, do we have to re-analyze the main script?
                         const main = next.scripts[ScriptKey.MAIN_SCRIPT];
                         if (main.script) {
@@ -226,25 +244,24 @@ export function reduceAppState(state: AppState, action: AppStateAction): AppStat
                             // Store the new main script
                             next.scripts[ScriptKey.MAIN_SCRIPT] = {
                                 ...main,
+                                scriptVersion: ++prev.scriptVersion,
                                 processed: mainAnalyzed,
                                 statistics: rotateStatistics(main.statistics, main.script.getStatistics() ?? null),
                             };
                         }
                         next.scripts[ScriptKey.SCHEMA_SCRIPT] = {
                             ...next.scripts[ScriptKey.SCHEMA_SCRIPT],
-                            script: newScript,
+                            scriptVersion: ++prev.scriptVersion,
                             processed: schemaAnalyzed,
-                            statistics: rotateStatistics(prev.statistics, newScript.getStatistics() ?? null),
+                            statistics: rotateStatistics(prev.statistics, script.getStatistics() ?? null),
                         };
                         break;
                     }
                 }
             } catch (e: any) {
                 console.error(e);
-                newScript?.delete();
                 next.scripts[scriptKey] = {
                     ...next.scripts[scriptKey],
-                    script: null,
                     loading: {
                         status: LoadingStatus.FAILED,
                         startedAt: data.loading.startedAt,
@@ -262,12 +279,12 @@ export function reduceAppState(state: AppState, action: AppStateAction): AppStat
                 // Destroy previous analysis & script
                 const prev = state.scripts[key];
                 prev.processed.destroy(prev.processed);
-                prev.script?.delete();
                 // Update the script metadata
                 const metadata = action.value[key];
                 next.scripts[key] = {
                     scriptKey: key,
-                    script: null,
+                    scriptVersion: ++prev.scriptVersion,
+                    script: prev.script,
                     metadata: metadata,
                     loading: {
                         status: LoadingStatus.PENDING,

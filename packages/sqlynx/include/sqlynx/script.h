@@ -360,6 +360,8 @@ class Script {
     void InsertTextAt(size_t offset, std::string_view text);
     /// Erase a text range
     void EraseTextRange(size_t offset, size_t count);
+    /// Replace the entire text
+    void ReplaceText(std::string_view text);
     /// Print a script as string
     std::string ToString();
     /// Returns the pretty-printed string for this script

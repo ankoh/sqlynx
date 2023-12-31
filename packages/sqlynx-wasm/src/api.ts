@@ -18,6 +18,7 @@ interface SQLynxModuleExports {
     sqlynx_script_insert_text_at: (ptr: number, offset: number, text: number, textLength: number) => void;
     sqlynx_script_insert_char_at: (ptr: number, offset: number, unicode: number) => void;
     sqlynx_script_erase_text_range: (ptr: number, offset: number, length: number) => void;
+    sqlynx_script_replace_text: (ptr: number, text: number, textLength: number) => void;
     sqlynx_script_to_string: (ptr: number) => number;
     sqlynx_script_format: (ptr: number) => number;
     sqlynx_script_scan: (ptr: number) => number;
@@ -104,6 +105,11 @@ export class SQLynx {
                 ptr: number,
                 offset: number,
                 length: number,
+            ) => void,
+            sqlynx_script_replace_text: instance.exports['sqlynx_script_replace_text'] as (
+                ptr: number,
+                text: number,
+                textLength: number,
             ) => void,
             sqlynx_script_to_string: instance.exports['sqlynx_script_to_string'] as (ptr: number) => number,
             sqlynx_script_format: instance.exports['sqlynx_script_format'] as (ptr: number) => number,
@@ -454,16 +460,19 @@ export class SQLynxScript {
             this.ptr.api.instanceExports.sqlynx_script_insert_char_at(scriptPtr, offset, text.charCodeAt(0));
             return;
         }
-        // To convert a JavaScript string s, the output space needed for full conversion is never less
-        // than s.length bytes and never greater than s.length * 3 bytes.
         const [textBegin, textLength] = this.ptr.api.copyString(text);
-        // Insert into rope
         this.ptr.api.instanceExports.sqlynx_script_insert_text_at(scriptPtr, offset, textBegin, textLength);
     }
     /// Earse a range of characters
     public eraseTextRange(offset: number, length: number) {
         const scriptPtr = this.ptr.assertNotNull();
         this.ptr.api.instanceExports.sqlynx_script_erase_text_range(scriptPtr, offset, length);
+    }
+    /// Replace the text text
+    public replaceText(text: string) {
+        const scriptPtr = this.ptr.assertNotNull();
+        const [textBegin, textLength] = this.ptr.api.copyString(text);
+        this.ptr.api.instanceExports.sqlynx_script_replace_text(scriptPtr, textBegin, textLength);
     }
     /// Convert a rope to a string
     public toString(): string {

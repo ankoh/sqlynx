@@ -63,6 +63,7 @@ if(WASM)
         -Wl,--export=sqlynx_script_insert_text_at \
         -Wl,--export=sqlynx_script_insert_char_at \
         -Wl,--export=sqlynx_script_erase_text_range \
+        -Wl,--export=sqlynx_script_replace_text \
         -Wl,--export=sqlynx_script_to_string \
         -Wl,--export=sqlynx_script_format \
         -Wl,--export=sqlynx_script_scan \
