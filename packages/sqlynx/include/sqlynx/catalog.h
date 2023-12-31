@@ -241,8 +241,10 @@ class Catalog {
    protected:
     /// A catalog entry backed by an analyzed script
     struct ScriptEntry {
+        /// The script
+        const Script& script;
         /// The analyzed script
-        std::shared_ptr<AnalyzedScript> script;
+        std::shared_ptr<AnalyzedScript> analyzed;
         /// The current rank
         Rank rank;
         /// The registered schema names
@@ -254,11 +256,14 @@ class Catalog {
     /// The schemas
     std::unordered_map<ExternalID, CatalogEntry*> entries;
     /// The script entries
-    std::unordered_map<ExternalID, ScriptEntry> script_entries;
+    std::unordered_map<Script*, ScriptEntry> script_entries;
     /// The schemas ordered by <rank>
     btree::set<std::tuple<Rank, ExternalID>> entries_ranked;
     /// The schemas ordered by <database, schema, rank>
     btree::set<std::tuple<std::string_view, std::string_view, Rank, ExternalID>> entry_names_ranked;
+
+    /// Update a script entry
+    proto::StatusCode UpdateScript(ScriptEntry& entry);
 
    public:
     /// Explicit constructor needed due to deleted copy constructor
@@ -289,8 +294,6 @@ class Catalog {
 
     /// Add a script
     proto::StatusCode AddScript(Script& script, Rank rank);
-    /// Update a script
-    proto::StatusCode UpdateScript(Script& script);
     /// Drop a script
     void DropScript(Script& script);
     /// Add a descriptor pool
@@ -304,7 +307,8 @@ class Catalog {
     /// Resolve a table by id
     std::optional<CatalogEntry::ResolvedTable> ResolveTable(ExternalObjectID table_id) const;
     /// Resolve a table by id
-    std::optional<CatalogEntry::ResolvedTable> ResolveTable(CatalogEntry::QualifiedTableName table_name) const;
+    std::optional<CatalogEntry::ResolvedTable> ResolveTable(CatalogEntry::QualifiedTableName table_name,
+                                                            ExternalID ignore_entry) const;
     /// Find table columns by name
     void ResolveTableColumn(std::string_view table_column, std::vector<CatalogEntry::ResolvedTableColumn>& out) const;
 };

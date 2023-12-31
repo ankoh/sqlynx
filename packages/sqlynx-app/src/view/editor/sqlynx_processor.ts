@@ -15,8 +15,6 @@ export interface SQLynxScriptUpdate {
     scriptKey: SQLynxScriptKey;
     // The currently active script in the editor
     targetScript: sqlynx.SQLynxScript | null;
-    // The schema script
-    schemaRegistry: sqlynx.SQLynxCatalog | null;
     /// The previous processed script buffers (if any)
     scriptBuffers: SQLynxScriptBuffers;
     /// The script cursor
@@ -37,11 +35,11 @@ export interface SQLynxScriptUpdate {
 /// The SQLynx script buffers
 export interface SQLynxScriptBuffers {
     /// The scanned script
-    scanned: sqlynx.FlatBufferRef<sqlynx.proto.ScannedScript> | null;
+    scanned: sqlynx.FlatBufferPtr<sqlynx.proto.ScannedScript> | null;
     /// The parsed script
-    parsed: sqlynx.FlatBufferRef<sqlynx.proto.ParsedScript> | null;
+    parsed: sqlynx.FlatBufferPtr<sqlynx.proto.ParsedScript> | null;
     /// The analyzed script
-    analyzed: sqlynx.FlatBufferRef<sqlynx.proto.AnalyzedScript> | null;
+    analyzed: sqlynx.FlatBufferPtr<sqlynx.proto.AnalyzedScript> | null;
     /// Destroy the state.
     /// The user is responsible for cleanup up FlatBufferRefs that are no longer needed.
     /// E.g. one strategy may be to destroy the "old" state once a script with the same script key is emitted.
@@ -51,30 +49,23 @@ export interface SQLynxScriptBuffers {
 type SQLynxEditorState = SQLynxScriptUpdate;
 
 /// Analyze a new script
-export function parseAndAnalyzeScript(
-    script: sqlynx.SQLynxScript,
-    catalog: sqlynx.SQLynxCatalog | null,
-): SQLynxScriptBuffers {
+export function parseAndAnalyzeScript(script: sqlynx.SQLynxScript): SQLynxScriptBuffers {
     // Scan the script
     const scanned = script.scan();
     // Parse the script
     const parsed = script.parse();
     // Analyze the script
-    const analyzed = script.analyze(registry);
+    const analyzed = script.analyze();
 
     return { scanned, parsed, analyzed, destroy: destroyBuffers };
 }
 
 /// Analyze an existing script
-export function analyzeScript(
-    buffers: SQLynxScriptBuffers,
-    script: sqlynx.SQLynxScript,
-    catalog: sqlynx.SQLynxCatalog | null,
-): SQLynxScriptBuffers {
+export function analyzeScript(buffers: SQLynxScriptBuffers, script: sqlynx.SQLynxScript): SQLynxScriptBuffers {
     // Delete the old analysis
     buffers.analyzed?.delete();
     // Analyze the script
-    const analyzed = script.analyze(registry);
+    const analyzed = script.analyze();
     // Return the new script
     return { ...buffers, analyzed };
 }
@@ -110,7 +101,6 @@ export const SQLynxProcessor: StateField<SQLynxEditorState> = StateField.define<
             },
             scriptKey: 0,
             targetScript: null,
-            schemaRegistry: null,
             scriptBuffers: {
                 scanned: null,
                 parsed: null,
@@ -148,7 +138,7 @@ export const SQLynxProcessor: StateField<SQLynxEditorState> = StateField.define<
                 };
 
                 // Entire script changed?
-                if (state.targetScript !== next.targetScript || state.schemaRegistry !== next.schemaRegistry) {
+                if (state.targetScript !== next.targetScript) {
                     return next;
                 }
             }
@@ -174,7 +164,7 @@ export const SQLynxProcessor: StateField<SQLynxEditorState> = StateField.define<
                     },
                 );
                 // Analyze the new script
-                next.scriptBuffers = parseAndAnalyzeScript(next.targetScript!, next.schemaRegistry);
+                next.scriptBuffers = parseAndAnalyzeScript(next.targetScript!);
                 const cursorBuffer = next.targetScript!.moveCursor(selection ?? 0);
                 next.scriptCursor = cursorBuffer.read(new sqlynx.proto.ScriptCursorInfo()).unpack();
                 cursorBuffer.delete();

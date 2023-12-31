@@ -36,10 +36,12 @@ export type AppStateAction =
     | Action<typeof DEBUG_GRAPH_LAYOUT, boolean>
     | Action<typeof DESTROY, undefined>;
 
+const SCHEMA_SCRIPT_CATALOG_RANK = 1e9;
 const STATS_HISTORY_LIMIT = 20;
+
 function rotateStatistics(
-    log: Immutable.List<sqlynx.FlatBufferRef<sqlynx.proto.ScriptStatistics>>,
-    stats: sqlynx.FlatBufferRef<sqlynx.proto.ScriptStatistics> | null,
+    log: Immutable.List<sqlynx.FlatBufferPtr<sqlynx.proto.ScriptStatistics>>,
+    stats: sqlynx.FlatBufferPtr<sqlynx.proto.ScriptStatistics> | null,
 ) {
     if (stats == null) {
         return log;
@@ -58,16 +60,21 @@ function rotateStatistics(
 export function reduceAppState(state: AppState, action: AppStateAction): AppState {
     switch (action.type) {
         case INITIALIZE: {
-            const newState: AppState = {
+            console.assert(state.catalog == null);
+            const catalog = action.value.createCatalog();
+            const mainScript = createEmptyScript(ScriptKey.MAIN_SCRIPT, action.value, catalog);
+            const schemaScript = createEmptyScript(ScriptKey.SCHEMA_SCRIPT, action.value, catalog);
+            const next: AppState = {
                 ...state,
                 instance: action.value,
                 scripts: {
-                    [ScriptKey.MAIN_SCRIPT]: createEmptyScript(ScriptKey.MAIN_SCRIPT, action.value),
-                    [ScriptKey.SCHEMA_SCRIPT]: createEmptyScript(ScriptKey.SCHEMA_SCRIPT, action.value),
+                    [ScriptKey.MAIN_SCRIPT]: mainScript,
+                    [ScriptKey.SCHEMA_SCRIPT]: schemaScript,
                 },
-                graph: action.value.createSchemaLayout(),
+                catalog,
+                graph: action.value.createQueryGraphLayout(),
             };
-            return newState;
+            return next;
         }
         case UPDATE_SCRIPT_ANALYSIS: {
             // Destroy the previous buffers
@@ -75,7 +82,7 @@ export function reduceAppState(state: AppState, action: AppStateAction): AppStat
             // Store the new buffers
             let scriptData = state.scripts[scriptKey];
             scriptData.processed.destroy(scriptData.processed);
-            const newState: AppState = {
+            const next: AppState = {
                 ...state,
                 scripts: {
                     ...state.scripts,
@@ -88,18 +95,22 @@ export function reduceAppState(state: AppState, action: AppStateAction): AppStat
                 },
                 focus: null,
             };
-            newState.focus = deriveScriptFocusFromCursor(scriptKey, newState.scripts, state.graphViewModel, cursor);
+            next.focus = deriveScriptFocusFromCursor(scriptKey, next.scripts, state.graphViewModel, cursor);
             // Is schema script?
-            // Then we also have to update the main script since the schema graph depends on it.
-            const mainData = newState.scripts[ScriptKey.MAIN_SCRIPT];
-            const mainScript = mainData.script;
-            if (scriptKey == ScriptKey.SCHEMA_SCRIPT && mainScript != null) {
-                const newMain = { ...mainData };
-                newMain.processed = analyzeScript(mainData.processed, mainScript, newState.schemaRegistry);
-                newMain.statistics = rotateStatistics(newMain.statistics, mainScript.getStatistics());
-                newState.scripts[ScriptKey.MAIN_SCRIPT] = newMain;
+            if (scriptKey == ScriptKey.SCHEMA_SCRIPT) {
+                // Update the catalog since the schema might have changed
+                next.catalog?.addScript(state.scripts[scriptKey].script!, SCHEMA_SCRIPT_CATALOG_RANK);
+                // Update the main script since the schema graph depends on it
+                const mainData = next.scripts[ScriptKey.MAIN_SCRIPT];
+                const mainScript = mainData.script;
+                if (mainScript != null) {
+                    const newMain = { ...mainData };
+                    newMain.processed = analyzeScript(mainData.processed, mainScript);
+                    newMain.statistics = rotateStatistics(newMain.statistics, mainScript.getStatistics());
+                    next.scripts[ScriptKey.MAIN_SCRIPT] = newMain;
+                }
             }
-            return computeSchemaGraph(newState);
+            return computeSchemaGraph(next);
         }
         case UPDATE_SCRIPT_CURSOR: {
             // Destroy previous cursor
@@ -156,11 +167,8 @@ export function reduceAppState(state: AppState, action: AppStateAction): AppStat
         case SCRIPT_LOADING_SUCCEEDED: {
             const [scriptKey, content] = action.value;
             const data = state.scripts[scriptKey];
-            // Create the SQLynx script and insert the text
-            const newScript = state.instance!.createScript(scriptKey);
-            newScript.insertTextAt(0, content);
             // Create new state
-            const newState = {
+            const next = {
                 ...state,
                 scripts: {
                     ...state.scripts,
@@ -175,67 +183,67 @@ export function reduceAppState(state: AppState, action: AppStateAction): AppStat
                     },
                 },
             };
+            let newScript: sqlynx.SQLynxScript | null = null;
             try {
                 // Analyze newly loaded scripts
                 switch (scriptKey) {
                     case ScriptKey.MAIN_SCRIPT: {
                         // Destroy the old script and buffers
-                        const old = newState.scripts[ScriptKey.MAIN_SCRIPT];
-                        old.processed.destroy(old.processed);
-                        old.script?.delete();
-                        old.script = null;
+                        const prev = next.scripts[ScriptKey.MAIN_SCRIPT];
+                        prev.processed.destroy(prev.processed);
+                        prev.script?.delete();
+                        prev.script = null;
+                        // Create the SQLynx script and insert the text
+                        newScript = state.instance!.createScript(state.catalog, ScriptKey.MAIN_SCRIPT);
+                        newScript.insertTextAt(0, content);
                         // Analyze the new script
-                        const analysis = parseAndAnalyzeScript(newScript, newState.schemaRegistry);
-                        newState.scripts[ScriptKey.MAIN_SCRIPT] = {
-                            ...newState.scripts[ScriptKey.MAIN_SCRIPT],
+                        const analysis = parseAndAnalyzeScript(newScript);
+                        next.scripts[ScriptKey.MAIN_SCRIPT] = {
+                            ...next.scripts[ScriptKey.MAIN_SCRIPT],
                             script: newScript,
                             processed: analysis,
-                            statistics: rotateStatistics(old.statistics, newScript.getStatistics() ?? null),
+                            statistics: rotateStatistics(prev.statistics, newScript.getStatistics() ?? null),
                         };
                         break;
                     }
                     case ScriptKey.SCHEMA_SCRIPT: {
                         // Destroy the old script and buffers
-                        const old = newState.scripts[ScriptKey.SCHEMA_SCRIPT];
-                        old.processed.destroy(old.processed);
-                        old.script?.delete();
-                        old.script = null;
-                        // Analyze the new schema script
-                        const schemaAnalyzed = parseAndAnalyzeScript(newScript, null);
-                        // Update or create the search path
-                        let registry = newState.schemaRegistry;
-                        if (!registry) {
-                            registry = newState.instance!.createCatalog();
-                            registry.addScript(newScript, 0);
-                        } else {
-                            registry.updateScript(newScript);
-                        }
-                        const main = newState.scripts[ScriptKey.MAIN_SCRIPT];
+                        const prev = next.scripts[ScriptKey.SCHEMA_SCRIPT];
+                        prev.processed.destroy(prev.processed);
+                        prev.script?.delete();
+                        prev.script = null;
+                        // Create the script and insert the text
+                        newScript = state.instance!.createScript(state.catalog, ScriptKey.SCHEMA_SCRIPT);
+                        newScript.insertTextAt(0, content);
+                        // Analyze the new schema
+                        const schemaAnalyzed = parseAndAnalyzeScript(newScript);
+                        next.catalog!.addScript(newScript, SCHEMA_SCRIPT_CATALOG_RANK);
+                        // We updated the schema script, do we have to re-analyze the main script?
+                        const main = next.scripts[ScriptKey.MAIN_SCRIPT];
                         if (main.script) {
-                            // Analyze the old main script with the new script as external
-                            const mainAnalyzed = analyzeScript(main.processed, main.script, registry);
+                            // Analyze the old main script with the new schema
+                            const mainAnalyzed = analyzeScript(main.processed, main.script);
                             // Store the new main script
-                            newState.scripts[ScriptKey.MAIN_SCRIPT] = {
+                            next.scripts[ScriptKey.MAIN_SCRIPT] = {
                                 ...main,
                                 processed: mainAnalyzed,
                                 statistics: rotateStatistics(main.statistics, main.script.getStatistics() ?? null),
                             };
                         }
-                        newState.scripts[ScriptKey.SCHEMA_SCRIPT] = {
-                            ...newState.scripts[ScriptKey.SCHEMA_SCRIPT],
+                        next.scripts[ScriptKey.SCHEMA_SCRIPT] = {
+                            ...next.scripts[ScriptKey.SCHEMA_SCRIPT],
                             script: newScript,
                             processed: schemaAnalyzed,
-                            statistics: rotateStatistics(old.statistics, newScript.getStatistics() ?? null),
+                            statistics: rotateStatistics(prev.statistics, newScript.getStatistics() ?? null),
                         };
-                        newState.schemaRegistry = registry;
                         break;
                     }
                 }
             } catch (e: any) {
                 console.error(e);
-                newScript.delete();
-                newState.scripts[scriptKey] = {
-                    ...newState.scripts[scriptKey],
+                newScript?.delete();
+                next.scripts[scriptKey] = {
+                    ...next.scripts[scriptKey],
                     script: null,
                     loading: {
                         status: LoadingStatus.FAILED,
@@ -245,19 +253,19 @@ export function reduceAppState(state: AppState, action: AppStateAction): AppStat
                     },
                 };
             }
-            return computeSchemaGraph(newState);
+            return computeSchemaGraph(next);
         }
         case LOAD_SCRIPTS: {
-            const newState = { ...state };
+            const next = { ...state };
             for (const key of [ScriptKey.MAIN_SCRIPT, ScriptKey.SCHEMA_SCRIPT]) {
                 if (!action.value[key]) continue;
                 // Destroy previous analysis & script
-                const previous = state.scripts[key];
-                previous.processed.destroy(previous.processed);
-                previous.script?.delete();
-                // Store
+                const prev = state.scripts[key];
+                prev.processed.destroy(prev.processed);
+                prev.script?.delete();
+                // Update the script metadata
                 const metadata = action.value[key];
-                newState.scripts[key] = {
+                next.scripts[key] = {
                     scriptKey: key,
                     script: null,
                     metadata: metadata,
@@ -277,7 +285,7 @@ export function reduceAppState(state: AppState, action: AppStateAction): AppStat
                     statistics: Immutable.List(),
                 };
             }
-            return newState;
+            return next;
         }
         case FOCUS_GRAPH_NODE:
             return focusGraphNode(state, action.value);
@@ -301,12 +309,13 @@ export function reduceAppState(state: AppState, action: AppStateAction): AppStat
 
 /// Compute a schema graph
 function computeSchemaGraph(state: AppState, debug?: boolean): AppState {
-    if (state.scripts[ScriptKey.MAIN_SCRIPT].script == null) {
+    const main = state.scripts[ScriptKey.MAIN_SCRIPT] ?? null;
+    if (main == null || main.script == null) {
         return state;
     }
     state.graph!.configure(state.graphConfig);
     state.graphLayout?.delete();
-    state.graphLayout = state.graph!.loadScript(state.scripts[ScriptKey.MAIN_SCRIPT].script);
+    state.graphLayout = state.graph!.loadScript(main.script);
     state.graphViewModel = computeGraphViewModel(state);
     return state;
 }

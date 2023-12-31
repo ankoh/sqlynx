@@ -77,7 +77,7 @@ static void generate_parser_snapshots(const std::filesystem::path& source_dir) {
     }
 }
 
-static std::unique_ptr<Script> read_script(pugi::xml_node node, size_t entry_id, const Catalog* catalog = nullptr) {
+static std::unique_ptr<Script> read_script(pugi::xml_node node, size_t entry_id, Catalog* catalog = nullptr) {
     auto input = node.child("input").last_child().value();
     std::string database_name, schema_name;
     if (auto db = node.attribute("database")) {

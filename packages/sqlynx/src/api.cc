@@ -130,9 +130,9 @@ extern "C" void sqlynx_delete_result(FFIResult* result) {
 }
 
 /// Create a script
-extern "C" FFIResult* sqlynx_script_new(const sqlynx::Catalog* catalog, uint32_t external_id,
-                                        const char* database_name_ptr, size_t database_name_length,
-                                        const char* schema_name_ptr, size_t schema_name_length) {
+extern "C" FFIResult* sqlynx_script_new(sqlynx::Catalog* catalog, uint32_t external_id, const char* database_name_ptr,
+                                        size_t database_name_length, const char* schema_name_ptr,
+                                        size_t schema_name_length) {
     if (catalog && catalog->Contains(external_id)) {
         return packError(proto::StatusCode::EXTERNAL_ID_COLLISION);
     }
@@ -293,14 +293,6 @@ extern "C" FFIResult* sqlynx_catalog_new() { return packPtr(std::make_unique<sql
 /// Add a script in the catalog
 extern "C" FFIResult* sqlynx_catalog_add_script(sqlynx::Catalog* catalog, sqlynx::Script* script, size_t rank) {
     auto status = catalog->AddScript(*script, rank);
-    if (status != proto::StatusCode::OK) {
-        return packError(status);
-    }
-    return packOK();
-}
-/// Update a script in the catalog
-extern "C" FFIResult* sqlynx_catalog_update_script(sqlynx::Catalog* catalog, sqlynx::Script* script) {
-    auto status = catalog->UpdateScript(*script);
     if (status != proto::StatusCode::OK) {
         return packError(status);
     }

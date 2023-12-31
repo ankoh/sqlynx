@@ -21,7 +21,7 @@ const FocusedColumnReferenceDecoration = Decoration.mark({
 });
 
 function buildDecorationsFromTokens(
-    scanned: sqlynx.FlatBufferRef<sqlynx.proto.ScannedScript>,
+    scanned: sqlynx.FlatBufferPtr<sqlynx.proto.ScannedScript>,
     tmp: sqlynx.proto.ScannedScript = new sqlynx.proto.ScannedScript(),
 ): DecorationSet {
     const builder = new RangeSetBuilder<Decoration>();

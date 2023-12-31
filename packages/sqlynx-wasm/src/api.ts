@@ -548,13 +548,6 @@ export class SQLynxCatalog {
         const scriptPtr = script.ptr.assertNotNull();
         this.ptr.api.instanceExports.sqlynx_catalog_drop_script(catalogPtr, scriptPtr);
     }
-    /// Update a script in the registry
-    public updateScript(script: SQLynxScript) {
-        const catalogPtr = this.ptr.assertNotNull();
-        const scriptPtr = script.ptr.assertNotNull();
-        const result = this.ptr.api.instanceExports.sqlynx_catalog_update_script(catalogPtr, scriptPtr);
-        this.ptr.api.readStatusResult(result);
-    }
     /// Add an external schema
     public addDescriptorPool(id: number, rank: number) {
         const catalogPtr = this.ptr.assertNotNull();

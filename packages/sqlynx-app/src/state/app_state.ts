@@ -21,16 +21,16 @@ export enum ScriptKey {
 export interface AppState {
     /// The API
     instance: sqlynx.SQLynx | null;
+    /// The catalog
+    catalog: sqlynx.SQLynxCatalog | null;
     /// The main script
     scripts: { [context: number]: ScriptData };
-    /// The catalog
-    schemaRegistry: sqlynx.SQLynxCatalog | null;
     /// The graph
-    graph: sqlynx.SQLynxSchemaLayout | null;
+    graph: sqlynx.SQLynxQueryGraphLayout | null;
     /// The graph config
     graphConfig: sqlynx.SQLynxSchemaLayoutConfig;
     /// The graph layout
-    graphLayout: sqlynx.FlatBufferRef<sqlynx.proto.SchemaLayout> | null;
+    graphLayout: sqlynx.FlatBufferPtr<sqlynx.proto.SchemaLayout> | null;
     /// The graph view model
     graphViewModel: GraphViewModel;
     /// The user focus
@@ -50,7 +50,7 @@ export interface ScriptData {
     /// The processed scripts
     processed: SQLynxScriptBuffers;
     /// The statistics
-    statistics: Immutable.List<sqlynx.FlatBufferRef<sqlynx.proto.ScriptStatistics>>;
+    statistics: Immutable.List<sqlynx.FlatBufferPtr<sqlynx.proto.ScriptStatistics>>;
     /// The cursor
     cursor: sqlynx.proto.ScriptCursorInfoT | null;
 }
@@ -61,9 +61,9 @@ export function destroyState(state: AppState): AppState {
     const schema = state.scripts[ScriptKey.SCHEMA_SCRIPT];
     main.processed.destroy(main.processed);
     schema.processed.destroy(schema.processed);
-    if (state.schemaRegistry) {
-        state.schemaRegistry.delete();
-        state.schemaRegistry = null;
+    if (state.catalog) {
+        state.catalog.delete();
+        state.catalog = null;
     }
     if (state.graphLayout) {
         state.graphLayout.delete();
@@ -101,10 +101,10 @@ export function createDefaultScript(key: ScriptKey) {
     return script;
 }
 
-export function createEmptyScript(key: ScriptKey, api: sqlynx.SQLynx) {
+export function createEmptyScript(key: ScriptKey, api: sqlynx.SQLynx, catalog: sqlynx.SQLynxCatalog | null) {
     const script: ScriptData = {
         scriptKey: key,
-        script: api.createScript(key),
+        script: api.createScript(catalog, key),
         metadata: generateBlankScript(),
         loading: {
             status: LoadingStatus.SUCCEEDED,
@@ -127,11 +127,8 @@ export function createEmptyScript(key: ScriptKey, api: sqlynx.SQLynx) {
 export function createDefaultState(): AppState {
     return {
         instance: null,
-        scripts: {
-            [ScriptKey.MAIN_SCRIPT]: createDefaultScript(ScriptKey.MAIN_SCRIPT),
-            [ScriptKey.SCHEMA_SCRIPT]: createDefaultScript(ScriptKey.SCHEMA_SCRIPT),
-        },
-        schemaRegistry: null,
+        scripts: {},
+        catalog: null,
         graph: null,
         graphConfig: {
             boardWidth: DEFAULT_BOARD_WIDTH,
