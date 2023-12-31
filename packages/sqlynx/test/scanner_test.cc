@@ -32,10 +32,10 @@ static void match_tokens(const void* data, const std::vector<uint32_t>& offsets,
 TEST(ScannerTest, InsertChars) {
     auto catalog_result = sqlynx_catalog_new();
     ASSERT_EQ(catalog_result->status_code, OK);
-    auto catalog = static_cast<Catalog*>(catalog_result->owner_ptr);
+    auto catalog = catalog_result->CastOwnerPtr<Catalog>();
     auto script_result = sqlynx_script_new(catalog, 1);
     ASSERT_EQ(script_result->status_code, OK);
-    auto script = static_cast<Script*>(script_result->owner_ptr);
+    auto script = script_result->CastOwnerPtr<Script>();
 
     size_t size = 0;
     auto add_char = [&](char c, std::vector<uint32_t> offsets, std::vector<uint32_t> lengths,
@@ -56,8 +56,8 @@ TEST(ScannerTest, InsertChars) {
     add_char('\n', {0}, {6}, {ScannerToken::KEYWORD}, {1});
     add_char('1', {0, 7}, {6, 1}, {ScannerToken::KEYWORD, ScannerToken::LITERAL_INTEGER}, {1});
 
-    sqlynx_delete_result(catalog_result);
     sqlynx_delete_result(script_result);
+    sqlynx_delete_result(catalog_result);
 }
 
 TEST(ScannerTest, FindTokenAtOffset) {

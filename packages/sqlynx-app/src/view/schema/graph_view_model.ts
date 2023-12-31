@@ -89,15 +89,11 @@ export function computeGraphViewModel(state: AppState): GraphViewModel {
     const edges = new Map<GraphConnectionId.Value, EdgeViewModel>();
 
     // Collect parsed and analyzed scripts
-    const mainProcessed = state.scripts[ScriptKey.MAIN_SCRIPT].processed;
-    const schemaProcessed = state.scripts[ScriptKey.SCHEMA_SCRIPT].processed;
-    const parsedScripts: { [key: number]: sqlynx.proto.ParsedScript | null } = {
-        [ScriptKey.MAIN_SCRIPT]: mainProcessed.parsed?.read(new sqlynx.proto.ParsedScript()) ?? null,
-        [ScriptKey.SCHEMA_SCRIPT]: schemaProcessed.parsed?.read(new sqlynx.proto.ParsedScript()) ?? null,
-    };
+    const mainProcessed = state.scripts[ScriptKey.MAIN_SCRIPT]?.processed;
+    const schemaProcessed = state.scripts[ScriptKey.SCHEMA_SCRIPT]?.processed;
     const analyzedScripts: { [key: number]: sqlynx.proto.AnalyzedScript | null } = {
-        [ScriptKey.MAIN_SCRIPT]: mainProcessed.analyzed?.read(new sqlynx.proto.AnalyzedScript()) ?? null,
-        [ScriptKey.SCHEMA_SCRIPT]: schemaProcessed.analyzed?.read(new sqlynx.proto.AnalyzedScript()) ?? null,
+        [ScriptKey.MAIN_SCRIPT]: mainProcessed?.analyzed?.read(new sqlynx.proto.AnalyzedScript()) ?? null,
+        [ScriptKey.SCHEMA_SCRIPT]: schemaProcessed?.analyzed?.read(new sqlynx.proto.AnalyzedScript()) ?? null,
     };
 
     if (!state.graphLayout) {
@@ -185,6 +181,9 @@ export function computeGraphViewModel(state: AppState): GraphViewModel {
                 continue;
             }
             const leftNode = nodesByTable.get(leftTableId)!;
+            if (!leftNode) {
+                continue;
+            }
 
             for (let r = 0; r < countRight; ++r) {
                 const rightEdgeNode = layout.edgeNodes(begin + countLeft + r, tmpGraphEdgeNode2)!;

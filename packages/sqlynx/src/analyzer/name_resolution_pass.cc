@@ -215,7 +215,7 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
         }
 
         // Otherwise consult the external search path
-        if (auto resolved = catalog.ResolveTable(qualified_table_name)) {
+        if (auto resolved = catalog.ResolveTable(qualified_table_name, external_id)) {
             // Remember resolved table
             scope.resolved_table_references.insert({&table_ref, *resolved});
             table_ref.resolved_table_id = resolved->table.table_id;

@@ -33,7 +33,7 @@ const History: React.FC<HistoryProps> = (props: HistoryProps) => {
 
 interface Props {
     className?: string;
-    stats: Immutable.List<sqlynx.FlatBufferRef<sqlynx.proto.ScriptStatistics>>;
+    stats: Immutable.List<sqlynx.FlatBufferPtr<sqlynx.proto.ScriptStatistics>>;
 }
 
 export const ScriptStatisticsBar: React.FC<Props> = (props: Props) => {

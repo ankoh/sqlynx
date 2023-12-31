@@ -46,7 +46,10 @@ export const ScriptLoader: React.FC<Props> = (props: Props) => {
     });
 
     // Load script if needed
-    const loadIfNeeded = (script: ScriptData) => {
+    const loadIfNeeded = (script: ScriptData | null) => {
+        if (script == null) {
+            return;
+        }
         // Skip if we're already loading it
         if (script.loading.status != LoadingStatus.PENDING) {
             return;
@@ -102,12 +105,12 @@ export const ScriptLoader: React.FC<Props> = (props: Props) => {
     };
 
     React.useEffect(
-        () => loadIfNeeded(appState.scripts[ScriptKey.MAIN_SCRIPT]),
-        [appState.scripts[ScriptKey.MAIN_SCRIPT].metadata],
+        () => loadIfNeeded(appState.scripts[ScriptKey.MAIN_SCRIPT] ?? null),
+        [appState.scripts[ScriptKey.MAIN_SCRIPT]?.metadata],
     );
     React.useEffect(
-        () => loadIfNeeded(appState.scripts[ScriptKey.SCHEMA_SCRIPT]),
-        [appState.scripts[ScriptKey.SCHEMA_SCRIPT].metadata],
+        () => loadIfNeeded(appState.scripts[ScriptKey.SCHEMA_SCRIPT] ?? null),
+        [appState.scripts[ScriptKey.SCHEMA_SCRIPT]?.metadata],
     );
     return props.children;
 };

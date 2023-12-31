@@ -310,7 +310,7 @@ struct ScriptCursor {
 class Script {
    public:
     /// The catalog
-    const Catalog& catalog;
+    Catalog& catalog;
     /// The origin id
     const ExternalID external_id;
     /// The database name
@@ -340,8 +340,10 @@ class Script {
     /// Constructor
     Script(ExternalID external_id = 1, std::string_view database_name = "", std::string_view schema_name = "");
     /// Constructor
-    Script(const Catalog& catalog, ExternalID external_id = 1, std::string_view database_name = "",
+    Script(Catalog& catalog, ExternalID external_id = 1, std::string_view database_name = "",
            std::string_view schema_name = "");
+    /// Destructor
+    ~Script();
     /// Scripts must not be copied
     Script(const Script& other) = delete;
     /// Scripts must not be copy-assigned

@@ -79,7 +79,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         cursor: null,
     });
     const activeScriptKey = activeTab == TabId.SCHEMA_SCRIPT ? ScriptKey.SCHEMA_SCRIPT : ScriptKey.MAIN_SCRIPT;
-    const activeScriptStatistics = ctx.scripts[activeScriptKey].statistics;
+    const activeScriptStatistics = ctx.scripts[activeScriptKey]?.statistics ?? null;
 
     // Helper to update a script
     const updateScript = React.useCallback(
@@ -125,6 +125,9 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         const targetScriptData = ctx.scripts[targetKey];
         const schemaScriptData = schemaKey != null ? ctx.scripts[schemaKey] : null;
         const schemaScript = schemaScriptData?.script ?? null;
+        if (!targetScriptData) {
+            return;
+        }
 
         // Did the script change?
         const changes: ChangeSpec[] = [];
@@ -144,7 +147,6 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                     },
                     scriptKey: targetKey,
                     targetScript: targetScriptData.script,
-                    schemaRegistry: ctx.schemaRegistry,
                     scriptBuffers: targetScriptData.processed,
                     scriptCursor: targetScriptData.cursor,
                     focusedColumnRefs: ctx.focus?.columnRefs ?? null,
@@ -165,7 +167,6 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                 },
                 scriptKey: targetKey,
                 targetScript: targetScriptData.script,
-                schemaRegistry: ctx.schemaRegistry,
                 scriptBuffers: targetScriptData.processed,
                 scriptCursor: targetScriptData.cursor,
                 focusedColumnRefs: ctx.focus?.columnRefs ?? null,
@@ -187,7 +188,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         activeTab,
         ctx.scripts[ScriptKey.MAIN_SCRIPT],
         ctx.scripts[ScriptKey.SCHEMA_SCRIPT],
-        ctx.schemaRegistry,
+        ctx.catalog,
         updateScript,
     ]);
 
@@ -233,7 +234,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                         aria-labelledby="stats"
                         onClick={toggleOpenStats}
                     />
-                    {statsOpen && <ScriptStatisticsBar stats={activeScriptStatistics} />}
+                    {activeScriptStatistics && statsOpen && <ScriptStatisticsBar stats={activeScriptStatistics} />}
                 </div>
             </div>
             <div className={styles.tabs}>

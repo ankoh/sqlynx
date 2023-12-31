@@ -70,7 +70,7 @@ std::optional<CatalogEntry::ResolvedTable> CatalogEntry::ResolveTable(QualifiedT
     if (auto resolved = ResolveTable(name)) {
         return resolved;
     } else {
-        return catalog.ResolveTable(name);
+        return catalog.ResolveTable(name, external_id);
     }
 }
 
@@ -121,37 +121,39 @@ proto::StatusCode Catalog::AddScript(Script& script, Rank rank) {
     if (!script.analyzed_script) {
         return proto::StatusCode::CATALOG_SCRIPT_NOT_ANALYZED;
     }
-    CatalogEntry& schema = *script.analyzed_script;
-    auto iter = script_entries.find(schema.GetExternalID());
-    if (iter != script_entries.end() && iter->second.script.get() != &schema) {
+    auto script_iter = script_entries.find(&script);
+    if (script_iter != script_entries.end()) {
+        return UpdateScript(script_iter->second);
+    }
+    auto entry_iter = entries.find(script.GetExternalID());
+    if (entry_iter != entries.end()) {
         return proto::StatusCode::EXTERNAL_ID_COLLISION;
     }
+    CatalogEntry& entry = *script.analyzed_script;
     std::unordered_set<std::pair<std::string_view, std::string_view>, TupleHasher> schema_names;
-    for (auto& table : schema.tables) {
-        auto name = schema.QualifyTableName(table.table_name);
+    for (auto& table : entry.tables) {
+        auto name = entry.QualifyTableName(table.table_name);
         schema_names.insert({name.database_name, name.schema_name});
     }
     for (auto& [db_name, schema_name] : schema_names) {
-        entry_names_ranked.insert({db_name, schema_name, rank, schema.GetExternalID()});
+        entry_names_ranked.insert({db_name, schema_name, rank, entry.GetExternalID()});
     }
-    script_entries.insert({schema.GetExternalID(),
-                           {.script = script.analyzed_script, .rank = rank, .schema_names = std::move(schema_names)}});
-    entries_ranked.insert({rank, schema.GetExternalID()});
-    entries.insert({schema.GetExternalID(), &schema});
+    script_entries.insert({&script,
+                           {.script = script,
+                            .analyzed = script.analyzed_script,
+                            .rank = rank,
+                            .schema_names = std::move(schema_names)}});
+    entries.insert({entry.GetExternalID(), &entry});
+    entries_ranked.insert({rank, entry.GetExternalID()});
     ++version;
     return proto::StatusCode::OK;
 }
 
-proto::StatusCode Catalog::UpdateScript(Script& script) {
-    if (!script.analyzed_script) {
-        return proto::StatusCode::CATALOG_SCRIPT_NOT_ANALYZED;
-    }
-    auto script_iter = script_entries.find(script.GetExternalID());
-    if (script_iter == script_entries.end()) {
-        return proto::StatusCode::CATALOG_SCRIPT_UNKNOWN;
-    }
+proto::StatusCode Catalog::UpdateScript(ScriptEntry& entry) {
+    auto& script = entry.script;
+    assert(script.analyzed_script);
     // Script stayed the same? Nothing to do then
-    if (script_iter->second.script == script.analyzed_script) {
+    if (entry.analyzed == script.analyzed_script) {
         return proto::StatusCode::OK;
     }
     // Collect all new names
@@ -162,8 +164,8 @@ proto::StatusCode Catalog::UpdateScript(Script& script) {
     }
     // Scan previous names, mark those that already exist, erase those that no longer exist
     auto external_id = script.GetExternalID();
-    auto rank = script_iter->second.rank;
-    auto& names = script_iter->second.schema_names;
+    auto rank = entry.rank;
+    auto& names = entry.schema_names;
     for (auto prev_name_iter = names.begin(); prev_name_iter != names.end();) {
         auto& [db_name, schema_name] = *prev_name_iter;
         auto new_name_iter = new_names.find({db_name, schema_name});
@@ -184,13 +186,13 @@ proto::StatusCode Catalog::UpdateScript(Script& script) {
             entry_names_ranked.insert({db_name, schema_name, rank, external_id});
         }
     }
-    script_iter->second.script = script.analyzed_script;
+    entry.analyzed = script.analyzed_script;
     ++version;
     return proto::StatusCode::OK;
 }
 
 void Catalog::DropScript(Script& script) {
-    auto iter = script_entries.find(script.GetExternalID());
+    auto iter = script_entries.find(&script);
     if (iter != script_entries.end()) {
         auto external_id = script.GetExternalID();
         auto& names = iter->second.schema_names;
@@ -200,8 +202,8 @@ void Catalog::DropScript(Script& script) {
         entries_ranked.erase({iter->second.rank, external_id});
         entries.erase(external_id);
         script_entries.erase(iter);
+        ++version;
     }
-    ++version;
 }
 
 /// Add a schema
@@ -222,17 +224,21 @@ proto::StatusCode Catalog::AddSchemaDescriptor(ExternalID external_id, std::span
 }
 
 std::optional<CatalogEntry::ResolvedTable> Catalog::ResolveTable(ExternalObjectID table_id) const {
-    if (auto iter = script_entries.find(table_id.GetExternalId()); iter != script_entries.end()) {
-        return iter->second.script->ResolveTable(table_id);
+    if (auto iter = entries.find(table_id.GetExternalId()); iter != entries.end()) {
+        return iter->second->ResolveTable(table_id);
     }
     return std::nullopt;
 }
-std::optional<CatalogEntry::ResolvedTable> Catalog::ResolveTable(CatalogEntry::QualifiedTableName table_name) const {
+std::optional<CatalogEntry::ResolvedTable> Catalog::ResolveTable(CatalogEntry::QualifiedTableName table_name,
+                                                                 ExternalID ignore_entry) const {
     for (auto iter = entry_names_ranked.lower_bound({table_name.database_name, table_name.schema_name, 0, 0});
          iter != entry_names_ranked.end(); ++iter) {
         auto& [db_name, schema_name, rank, candidate] = *iter;
         if (db_name != table_name.database_name || schema_name != table_name.schema_name) {
             break;
+        }
+        if (candidate == ignore_entry) {
+            continue;
         }
         assert(entries.contains(candidate));
         auto& schema = entries.at(candidate);

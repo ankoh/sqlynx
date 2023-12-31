@@ -35,7 +35,7 @@ struct FFIResult {
 extern "C" void sqlynx_delete_result(FFIResult* result);
 
 /// Create a script
-extern "C" FFIResult* sqlynx_script_new(const sqlynx::Catalog* catalog, uint32_t external_id,
+extern "C" FFIResult* sqlynx_script_new(sqlynx::Catalog* catalog, uint32_t external_id,
                                         const char* database_name_ptr = nullptr, size_t database_name_length = 0,
                                         const char* schema_name_ptr = nullptr, size_t schema_name_length = 0);
 /// Insert char at a position
@@ -66,8 +66,6 @@ extern "C" FFIResult* sqlynx_script_complete_at_cursor(sqlynx::Script* script, s
 extern "C" FFIResult* sqlynx_catalog_new();
 /// Add a script to the catalog
 extern "C" FFIResult* sqlynx_catalog_add_script(sqlynx::Catalog* catalog, sqlynx::Script* script, size_t rank);
-/// Update a script in the catalog
-extern "C" FFIResult* sqlynx_catalog_update_script(sqlynx::Catalog* catalog, sqlynx::Script* script);
 /// Drop script from the catalog
 extern "C" void sqlynx_catalog_drop_script(sqlynx::Catalog* catalog, sqlynx::Script* script);
 /// Add a descriptor pool to the catalog

@@ -442,7 +442,7 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
     return out.Finish();
 }
 
-static const Catalog EMPTY_CATALOG;
+static Catalog EMPTY_CATALOG;
 
 Script::Script(uint32_t external_id, std::string_view database_name, std::string_view schema_name)
     : catalog(EMPTY_CATALOG),
@@ -453,11 +453,12 @@ Script::Script(uint32_t external_id, std::string_view database_name, std::string
     assert(!catalog.Contains(external_id));
 }
 
-Script::Script(const Catalog& catalog, uint32_t external_id, std::string_view database_name,
-               std::string_view schema_name)
+Script::Script(Catalog& catalog, uint32_t external_id, std::string_view database_name, std::string_view schema_name)
     : catalog(catalog), external_id(external_id), text(1024), database_name(database_name), schema_name(schema_name) {
     assert(!catalog.Contains(external_id));
 }
+
+Script::~Script() { catalog.DropScript(*this); }
 
 /// Insert a character at an offet
 void Script::InsertCharAt(size_t char_idx, uint32_t unicode) {
