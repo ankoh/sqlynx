@@ -57,9 +57,7 @@ static void writeTables(pugi::xml_node root, const AnalyzedScript& target) {
         WriteLocation(xml_tbl, target.parsed_script->nodes[*table_decl.ast_node_id].location(),
                       target.parsed_script->scanned_script->GetInput());
         // Write child columns
-        for (size_t i = 0; i < table_decl.column_count; ++i) {
-            auto table_idx = table_decl.columns_begin + i;
-            auto& column_decl = target.GetTableColumns()[table_idx];
+        for (auto& column_decl : table_decl.table_columns) {
             auto xml_col = xml_tbl.append_child("column");
             if (!column_decl.column_name.empty()) {
                 std::string column_name{column_decl.column_name};
@@ -135,7 +133,7 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
     out.prepend_attribute("id").set_value(script.GetExternalID());
 
     // Write local declarations
-    if (!script.GetTables().empty()) {
+    if (script.GetTables().GetSize() > 0) {
         auto tables_node = out.append_child("tables");
         writeTables(tables_node, script);
     }

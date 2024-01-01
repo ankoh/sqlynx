@@ -45,7 +45,7 @@ class NameResolutionPass : public PassManager::LTRPass {
         /// The table references in scope
         OverlayList<AnalyzedScript::TableReference> table_references;
         /// The resolved table references
-        std::unordered_map<const AnalyzedScript::TableReference*, CatalogEntry::ResolvedTable>
+        std::unordered_map<const AnalyzedScript::TableReference*, std::reference_wrapper<const CatalogEntry::Table>>
             resolved_table_references;
         /// The resolved table columns
         std::unordered_map<CatalogEntry::QualifiedColumnName::Key, ResolvedTableColumn, TupleHasher>
@@ -68,16 +68,7 @@ class NameResolutionPass : public PassManager::LTRPass {
         void Merge(NodeState&& other);
     };
     /// The staging output
-    struct StagingOutput {
-        /// The tables
-        std::vector<AnalyzedScript::Table> tables;
-        /// The tables
-        std::vector<AnalyzedScript::TableColumn> table_columns;
-        /// The tables by name
-        std::unordered_map<CatalogEntry::QualifiedTableName::Key, std::reference_wrapper<AnalyzedScript::Table>,
-                           TupleHasher>
-            tables_by_name;
-    };
+    struct StagingOutput {};
 
    protected:
     /// The scanned program
@@ -111,12 +102,15 @@ class NameResolutionPass : public PassManager::LTRPass {
 
     /// The tables
     ChunkBuffer<AnalyzedScript::Table, 16> tables;
-    /// The table columns
-    ChunkBuffer<AnalyzedScript::TableColumn, 16> table_columns;
     /// The join edges
     ChunkBuffer<AnalyzedScript::QueryGraphEdge, 16> graph_edges;
     /// The join edge nodes
     ChunkBuffer<AnalyzedScript::QueryGraphEdgeNode, 16> graph_edge_nodes;
+
+    /// The tables by name
+    std::unordered_map<CatalogEntry::QualifiedTableName::Key, std::reference_wrapper<const AnalyzedScript::Table>,
+                       TupleHasher>
+        tables_by_name;
 
     /// The temporary name path buffer
     std::vector<std::reference_wrapper<CatalogEntry::NameInfo>> name_path_buffer;

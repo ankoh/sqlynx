@@ -22,9 +22,10 @@ export function expectTables(
         const table = analyzed.tables(i)!;
         const tableName = table.tableName()!;
         expect(tableName.tableName()).toEqual(tables[i].name);
+        const tmp = new sqlynx.proto.TableColumn();
         for (let j = 0; j < tables[i].columns.length; ++j) {
-            expect(j).toBeLessThan(table.columnCount());
-            const column = analyzed.tableColumns(table.columnsBegin() + j)!;
+            expect(j).toBeLessThan(table.tableColumnsLength());
+            const column = table.tableColumns(j, tmp)!;
             const columnName = column.columnName();
             expect(columnName).toEqual(tables[i].columns[j]);
         }
