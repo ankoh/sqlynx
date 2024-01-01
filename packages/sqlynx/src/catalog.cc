@@ -227,8 +227,8 @@ proto::StatusCode Catalog::DropDescriptorPool(ExternalID external_id) {
     return proto::StatusCode::OK;
 }
 /// Insert schema tables as serialized FlatBuffer
-proto::StatusCode Catalog::AddSchemaDescriptor(ExternalID external_id, std::span<std::byte> descriptor_data,
-                                               std::unique_ptr<std::byte[]> descriptor_buffer) {
+proto::StatusCode Catalog::AddSchemaDescriptor(ExternalID external_id, std::span<const std::byte> descriptor_data,
+                                               std::unique_ptr<const std::byte[]> descriptor_buffer) {
     ++version;
     return proto::StatusCode::OK;
 }

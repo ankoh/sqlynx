@@ -1,5 +1,6 @@
 #include "sqlynx/api.h"
 
+#include <flatbuffers/buffer.h>
 #include <flatbuffers/detached_buffer.h>
 #include <flatbuffers/flatbuffer_builder.h>
 
@@ -310,14 +311,26 @@ extern "C" void sqlynx_catalog_drop_script(sqlynx::Catalog* catalog, sqlynx::Scr
 }
 /// Add a descriptor pool to the catalog
 extern "C" FFIResult* sqlynx_catalog_add_descriptor_pool(sqlynx::Catalog* catalog, size_t external_id, size_t rank) {
-    return nullptr;
+    auto status = catalog->AddDescriptorPool(external_id, rank);
+    if (status != proto::StatusCode::OK) {
+        return packError(status);
+    }
+    return packOK();
 }
 /// Drop a descriptor pool from the catalog
-extern "C" void sqlynx_catalog_drop_descriptor_pool(sqlynx::Catalog* catalog, size_t external_id) {}
+extern "C" void sqlynx_catalog_drop_descriptor_pool(sqlynx::Catalog* catalog, size_t external_id) {
+    catalog->DropDescriptorPool(external_id);
+}
 /// Add schema descriptor to a catalog
 extern "C" FFIResult* sqlynx_catalog_add_schema_descriptor(sqlynx::Catalog* catalog, size_t external_id,
                                                            const void* data_ptr, size_t data_size) {
-    return nullptr;
+    std::unique_ptr<const std::byte[]> descriptor_buffer{static_cast<const std::byte*>(data_ptr)};
+    std::span<const std::byte> descriptor_data{descriptor_buffer.get(), data_size};
+    auto status = catalog->AddSchemaDescriptor(external_id, descriptor_data, std::move(descriptor_buffer));
+    if (status != proto::StatusCode::OK) {
+        return packError(status);
+    }
+    return packOK();
 }
 
 /// Create a schema graph
