@@ -591,7 +591,7 @@ export class SQLynxCatalog {
     }
 }
 
-export interface SQLynxSchemaLayoutConfig {
+export interface SQLynxQueryGraphLayoutConfig {
     boardWidth: number;
     boardHeight: number;
     cellWidth: number;
@@ -611,7 +611,7 @@ export class SQLynxQueryGraphLayout {
         this.ptr.delete();
     }
     /// Configure the graph
-    public configure(config: SQLynxSchemaLayoutConfig) {
+    public configure(config: SQLynxQueryGraphLayoutConfig) {
         const ptr = this.ptr.assertNotNull();
         this.ptr.api.instanceExports.sqlynx_query_graph_layout_configure(
             ptr,
@@ -628,7 +628,7 @@ export class SQLynxQueryGraphLayout {
         const ptr = this.ptr.assertNotNull();
         const scriptPtr = script.ptr.assertNotNull();
         const resultPtr = this.ptr.api.instanceExports.sqlynx_query_graph_layout_load_script(ptr, scriptPtr);
-        return this.ptr.api.readFlatBufferResult<proto.SchemaLayout>(resultPtr);
+        return this.ptr.api.readFlatBufferResult<proto.QueryGraphLayout>(resultPtr);
     }
 }
 

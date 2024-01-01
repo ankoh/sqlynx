@@ -104,13 +104,13 @@ export function computeGraphViewModel(state: AppState): GraphViewModel {
             boundaries,
         };
     }
-    const tmpGraphTableNode = new sqlynx.proto.SchemaLayoutTableNode();
-    const tmpGraphVertex = new sqlynx.proto.SchemaLayoutVertex();
+    const tmpGraphTableNode = new sqlynx.proto.QueryGraphLayoutTableNode();
+    const tmpGraphVertex = new sqlynx.proto.QueryGraphLayoutVertex();
     const tmpTable = new sqlynx.proto.Table();
     const tmpTableColumn = new sqlynx.proto.TableColumn();
 
     // Collect all tables in the schema script
-    const layout = state.graphLayout!.read(new sqlynx.proto.SchemaLayout());
+    const layout = state.graphLayout!.read(new sqlynx.proto.QueryGraphLayout());
     for (let nodeId = 0; nodeId < layout.tableNodesLength(); ++nodeId) {
         const node = layout.tableNodes(nodeId, tmpGraphTableNode);
         const position = node!.position(tmpGraphVertex)!;
@@ -162,9 +162,9 @@ export function computeGraphViewModel(state: AppState): GraphViewModel {
     }
 
     // Read edges
-    const tmpGraphEdge = new sqlynx.proto.SchemaLayoutEdge();
-    const tmpGraphEdgeNode1 = new sqlynx.proto.SchemaLayoutEdgeNode();
-    const tmpGraphEdgeNode2 = new sqlynx.proto.SchemaLayoutEdgeNode();
+    const tmpGraphEdge = new sqlynx.proto.QueryGraphLayoutEdge();
+    const tmpGraphEdgeNode1 = new sqlynx.proto.QueryGraphLayoutEdgeNode();
+    const tmpGraphEdgeNode2 = new sqlynx.proto.QueryGraphLayoutEdgeNode();
     const edgePathBuilder = new EdgePathBuilder();
 
     for (let i = 0; i < layout.edgesLength(); ++i) {

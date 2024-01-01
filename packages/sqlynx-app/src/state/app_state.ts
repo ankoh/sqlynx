@@ -28,9 +28,9 @@ export interface AppState {
     /// The graph
     graph: sqlynx.SQLynxQueryGraphLayout | null;
     /// The graph config
-    graphConfig: sqlynx.SQLynxSchemaLayoutConfig;
+    graphConfig: sqlynx.SQLynxQueryGraphLayoutConfig;
     /// The graph layout
-    graphLayout: sqlynx.FlatBufferPtr<sqlynx.proto.SchemaLayout> | null;
+    graphLayout: sqlynx.FlatBufferPtr<sqlynx.proto.QueryGraphLayout> | null;
     /// The graph view model
     graphViewModel: GraphViewModel;
     /// The user focus
