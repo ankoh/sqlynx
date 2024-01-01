@@ -155,18 +155,6 @@ platform_build_o3:
 platform_test:
 	yarn workspace @ankoh/sqlynx-platform test
 
-.PHONY: lsp
-lsp:
-	yarn workspace @ankoh/sqlynx-lsp build
-
-.PHONY: vscode
-vscode:
-	yarn workspace sqlynx-vscode build
-
-.PHONY: vscode_package
-vscode_package:
-	yarn workspace sqlynx-vscode package
-
 .PHONY: snapshots
 snapshots:
 	${LIB_DEBUG_DIR}/snapshotter --source_dir .

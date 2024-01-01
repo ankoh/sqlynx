@@ -284,38 +284,6 @@ jobs:
                   path: ./packages/sqlynx-app/build/pwa/o3
                   retention-days: 1
 
-    lsp:
-        name: Build and Package Language Server
-        runs-on: ubuntu-22.04
-        needs:
-            - core_js
-        steps:
-            - uses: actions/checkout@v4
-              with:
-                  submodules: 'recursive'
-                  fetch-depth: 0
-
-            - uses: actions/download-artifact@v4
-              with:
-                  name: sqlynx_jslib
-                  path: ./packages/sqlynx-wasm/dist
-
-            - name: Install npm dependencies
-              shell: bash
-              run: |
-                  yarn install --frozen-lockfile
-
-            - name: Build @ankoh/sqlynx-lsp
-              shell: bash
-              run: |
-                  yarn workspace @ankoh/sqlynx-lsp build
-
-            - uses: actions/upload-artifact@v4
-              with:
-                  name: sqlynx_lsp
-                  path: ./packages/sqlynx-lsp/dist/
-                  retention-days: 1
-
     pages:
         name: Deploy GitHub Page
         if: github.ref == 'refs/heads/main'
