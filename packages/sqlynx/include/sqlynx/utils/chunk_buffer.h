@@ -91,6 +91,12 @@ template <typename T, size_t InitialSize = 1024> struct ChunkBuffer {
         offsets.reserve(64);
         grow();
     }
+    /// Constructor
+    ChunkBuffer(std::vector<T> buffer) : ChunkBuffer() {
+        total_value_count = buffer.size();
+        offsets.push_back(total_value_count);
+        buffers.push_back(std::move(buffer));
+    }
 
     /// Get the size
     size_t GetSize() const { return total_value_count; }

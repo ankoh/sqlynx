@@ -132,9 +132,8 @@ export function computeGraphViewModel(state: AppState): GraphViewModel {
             const table = analyzed.tables(tableIdx, tmpTable);
             const tableName = table?.tableName();
             const columns: TableColumn[] = [];
-            const columnsBegin = table!.columnsBegin();
-            for (let j = 0; j < table!.columnCount(); ++j) {
-                const column = analyzed.tableColumns(columnsBegin + j, tmpTableColumn);
+            for (let j = 0; j < table!.tableColumnsLength(); ++j) {
+                const column = table?.tableColumns(j, tmpTableColumn);
                 const columnName = column?.columnName()!;
                 columns.push({
                     name: columnName,

@@ -21,51 +21,55 @@ flatbuffers::Offset<proto::TableColumn> CatalogEntry::TableColumn::Pack(flatbuff
 
 flatbuffers::Offset<proto::Table> CatalogEntry::Table::Pack(flatbuffers::FlatBufferBuilder& builder) const {
     auto table_name_ofs = table_name.Pack(builder);
+
+    // Pack table columns
+    std::vector<flatbuffers::Offset<proto::TableColumn>> table_column_offsets;
+    table_column_offsets.reserve(table_columns.size());
+    for (auto& table_column : table_columns) {
+        auto column_name_ofs = builder.CreateString(table_column.column_name);
+        proto::TableColumnBuilder column_builder{builder};
+        column_builder.add_column_name(column_name_ofs);
+        table_column_offsets.push_back(column_builder.Finish());
+    }
+    auto table_columns_ofs = builder.CreateVector(table_column_offsets);
+
+    // Pack table
     proto::TableBuilder out{builder};
     out.add_ast_node_id(ast_node_id.value_or(PROTO_NULL_U32));
     out.add_ast_statement_id(ast_statement_id.value_or(PROTO_NULL_U32));
     out.add_ast_scope_root(ast_scope_root.value_or(PROTO_NULL_U32));
     out.add_table_name(table_name_ofs);
-    out.add_columns_begin(columns_begin);
-    out.add_column_count(column_count);
+    out.add_table_columns(table_columns_ofs);
     return out.Finish();
 }
 
 CatalogEntry::CatalogEntry(ExternalID external_id, std::string_view database_name, std::string_view schema_name)
     : external_id(external_id), database_name(database_name), schema_name(schema_name) {}
 
-std::optional<CatalogEntry::ResolvedTable> CatalogEntry::ResolveTable(ExternalObjectID table_id) const {
-    if (table_id.GetExternalId() != external_id || table_id.GetIndex() >= tables.size()) {
-        return std::nullopt;
+const CatalogEntry::Table* CatalogEntry::ResolveTable(ExternalObjectID table_id) const {
+    if (table_id.GetExternalId() == external_id) {
+        return &tables[table_id.GetIndex()];
     }
-    auto& table = tables[table_id.GetIndex()];
-    auto columns = std::span<const TableColumn>{table_columns}.subspan(table.columns_begin, table.column_count);
-    return ResolvedTable{table, columns};
+    return nullptr;
 }
 
-std::optional<CatalogEntry::ResolvedTable> CatalogEntry::ResolveTable(ExternalObjectID table_id,
-                                                                      const Catalog& catalog) const {
+const CatalogEntry::Table* CatalogEntry::ResolveTable(ExternalObjectID table_id, const Catalog& catalog) const {
     if (external_id == table_id.GetExternalId()) {
-        auto& table = tables[table_id.GetIndex()];
-        auto columns = std::span<const TableColumn>{table_columns}.subspan(table.columns_begin, table.column_count);
-        return ResolvedTable{table, columns};
+        return &tables[table_id.GetIndex()];
     } else {
         return catalog.ResolveTable(table_id);
     }
 }
 
-std::optional<CatalogEntry::ResolvedTable> CatalogEntry::ResolveTable(QualifiedTableName name) const {
+const CatalogEntry::Table* CatalogEntry::ResolveTable(QualifiedTableName name) const {
     auto iter = tables_by_name.find(name);
     if (iter == tables_by_name.end()) {
-        return std::nullopt;
+        return nullptr;
     }
-    auto& table = iter->second.get();
-    auto columns = std::span<const TableColumn>{table_columns}.subspan(table.columns_begin, table.column_count);
-    return ResolvedTable{table, columns};
+    return &iter->second.get();
 }
 
-std::optional<CatalogEntry::ResolvedTable> CatalogEntry::ResolveTable(QualifiedTableName name,
-                                                                      const Catalog& catalog) const {
+const CatalogEntry::Table* CatalogEntry::ResolveTable(QualifiedTableName name, const Catalog& catalog) const {
     name = QualifyTableName(name);
     if (auto resolved = ResolveTable(name)) {
         return resolved;
@@ -78,32 +82,52 @@ void CatalogEntry::ResolveTableColumn(std::string_view table_column,
                                       std::vector<CatalogEntry::ResolvedTableColumn>& out) const {
     auto [begin, end] = table_columns_by_name.equal_range(table_column);
     for (auto iter = begin; iter != end; ++iter) {
-        auto& [table, column] = iter->second;
-        auto columns =
-            std::span<const TableColumn>{table_columns}.subspan(table.get().columns_begin, table.get().column_count);
-        auto column_id = &column.get() - columns.data();
-        out.push_back(ResolvedTableColumn{table, columns, static_cast<size_t>(column_id)});
+        auto& [table, column_id] = iter->second;
+        out.push_back(ResolvedTableColumn{table, static_cast<size_t>(column_id)});
     }
 }
 
-ExternalSchema::ExternalSchema(ExternalID external_id) : CatalogEntry(external_id, "", "") {}
+DescriptorPool::DescriptorPool(ExternalID external_id) : CatalogEntry(external_id, "", "") {}
 
-proto::StatusCode ExternalSchema::InsertTables(const proto::SchemaDescriptor& descriptor,
-                                               std::unique_ptr<std::byte[]> descriptor_buffer) {
+proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescriptor& descriptor,
+                                                      std::unique_ptr<std::byte[]> descriptor_buffer) {
     if (!descriptor.tables()) {
         return proto::StatusCode::CATALOG_DESCRIPTOR_TABLES_NULL;
     }
     std::string_view database_name =
         descriptor.database_name() == nullptr ? "" : descriptor.database_name()->string_view();
     std::string_view schema_name = descriptor.schema_name() == nullptr ? "" : descriptor.schema_name()->string_view();
+    uint32_t table_id = 0;
     for (auto* table : *descriptor.tables()) {
+        ExternalObjectID table_object_id{external_id, ++table_id};
+        // Get the table name
         auto table_name_ptr = table->table_name();
         if (!table_name_ptr || table_name_ptr->size() == 0) {
             return proto::StatusCode::CATALOG_DESCRIPTOR_TABLE_NAME_EMPTY;
         }
-        QualifiedTableName::Key table_name_key{database_name, schema_name, table_name_ptr->string_view()};
-        if (tables_by_name.contains(table_name_key)) {
+        // Build the qualified table name
+        QualifiedTableName::Key qualified_table_name{database_name, schema_name, table_name_ptr->string_view()};
+        if (tables_by_name.contains(qualified_table_name)) {
             return proto::StatusCode::CATALOG_DESCRIPTOR_TABLE_NAME_COLLISION;
+        }
+        // Begin of the columns
+        auto column_count = table->columns()->size();
+        std::vector<TableColumn> columns;
+        columns.reserve(column_count);
+        for (auto* column : *table->columns()) {
+            columns.emplace_back(std::nullopt, column->column_name()->string_view());
+        }
+        tables.Append(Table{table_object_id, std::nullopt, std::nullopt, std::nullopt,
+                            QualifiedTableName{qualified_table_name}, std::move(columns)});
+    }
+    // Build table index
+    tables_by_name.reserve(tables.GetSize());
+    for (auto& table_chunk : tables.GetChunks()) {
+        for (auto& table : table_chunk) {
+            tables_by_name.insert({table.table_name, table});
+            for (size_t i = 0; i < table.table_columns.size(); ++i) {
+                table_columns_by_name.insert({table.table_columns[i].column_name, {table, i}});
+            }
         }
     }
 
@@ -233,14 +257,14 @@ proto::StatusCode Catalog::AddSchemaDescriptor(ExternalID external_id, std::span
     return proto::StatusCode::OK;
 }
 
-std::optional<CatalogEntry::ResolvedTable> Catalog::ResolveTable(ExternalObjectID table_id) const {
+const CatalogEntry::Table* Catalog::ResolveTable(ExternalObjectID table_id) const {
     if (auto iter = entries.find(table_id.GetExternalId()); iter != entries.end()) {
         return iter->second->ResolveTable(table_id);
     }
-    return std::nullopt;
+    return nullptr;
 }
-std::optional<CatalogEntry::ResolvedTable> Catalog::ResolveTable(CatalogEntry::QualifiedTableName table_name,
-                                                                 ExternalID ignore_entry) const {
+const CatalogEntry::Table* Catalog::ResolveTable(CatalogEntry::QualifiedTableName table_name,
+                                                 ExternalID ignore_entry) const {
     for (auto iter = entry_names_ranked.lower_bound({table_name.database_name, table_name.schema_name, 0, 0});
          iter != entry_names_ranked.end(); ++iter) {
         auto& [db_name, schema_name, rank, candidate] = *iter;
@@ -256,7 +280,7 @@ std::optional<CatalogEntry::ResolvedTable> Catalog::ResolveTable(CatalogEntry::Q
             return resolved;
         }
     };
-    return std::nullopt;
+    return nullptr;
 }
 
 void Catalog::ResolveTableColumn(std::string_view table_column,

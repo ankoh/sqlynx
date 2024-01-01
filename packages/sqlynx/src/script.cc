@@ -414,8 +414,14 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
     if (!schema_name.empty()) {
         schema_name_ofs = builder.CreateString(schema_name);
     }
-    auto tables_ofs = PackVector<CatalogEntry::Table, proto::Table>(builder, tables);
-    auto table_columns_ofs = PackVector<CatalogEntry::TableColumn, proto::TableColumn>(builder, table_columns);
+    std::vector<flatbuffers::Offset<proto::Table>> table_offsets;
+    table_offsets.reserve(tables.GetSize());
+    for (auto& table_chunk : tables.GetChunks()) {
+        for (auto& table : table_chunk) {
+            table_offsets.push_back(table.Pack(builder));
+        }
+    }
+    auto tables_ofs = builder.CreateVector(table_offsets);
     auto table_references_ofs =
         PackVector<AnalyzedScript::TableReference, proto::TableReference>(builder, table_references);
     auto column_references_ofs =
@@ -435,7 +441,6 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
     proto::AnalyzedScriptBuilder out{builder};
     out.add_external_id(external_id);
     out.add_tables(tables_ofs);
-    out.add_table_columns(table_columns_ofs);
     out.add_table_references(table_references_ofs);
     out.add_column_references(column_references_ofs);
     out.add_graph_edges(graph_edges_ofs);
@@ -498,9 +503,14 @@ std::unique_ptr<proto::ScriptMemoryStatistics> Script::GetMemoryStatistics() {
         if (!analyzed) return;
         // Added analyzed before?
         if (registered_analyzed.contains(analyzed)) return;
+        size_t table_column_bytes = 0;
+        for (auto& table_chunk : analyzed->tables.GetChunks()) {
+            for (auto& table : table_chunk) {
+                table_column_bytes += table.table_columns.size() * sizeof(CatalogEntry::TableColumn);
+            }
+        }
         size_t analyzer_description_bytes =
-            analyzed->tables.size() * sizeof(CatalogEntry::Table) +
-            analyzed->table_columns.size() * sizeof(CatalogEntry::TableColumn) +
+            analyzed->tables.GetSize() * sizeof(CatalogEntry::Table) + table_column_bytes +
             analyzed->table_references.size() * sizeof(decltype(analyzed->table_references)::value_type) +
             analyzed->column_references.size() * sizeof(decltype(analyzed->column_references)::value_type) +
             analyzed->graph_edges.size() * sizeof(decltype(analyzed->graph_edges)::value_type) +

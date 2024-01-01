@@ -181,19 +181,17 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
         // TODO Matches a view or CTE?
 
         // Table ref points to own table?
-        auto iter = out.tables_by_name.find(QualifyTableName(table_ref.table_name));
-        if (iter != out.tables_by_name.end()) {
+        auto iter = tables_by_name.find(QualifyTableName(table_ref.table_name));
+        if (iter != tables_by_name.end()) {
             auto& table = iter->second.get();
-            auto table_columns = std::span{out.table_columns}.subspan(table.columns_begin, table.column_count);
 
             // Remember resolved table
-            CatalogEntry::ResolvedTable resolved_table{.table = table, .table_columns = table_columns};
-            scope.resolved_table_references.insert({&table_ref, resolved_table});
+            scope.resolved_table_references.insert({&table_ref, table});
             table_ref.resolved_table_id = table.table_id;
 
             // Remember all available columns
-            for (size_t i = 0; i < table_columns.size(); ++i) {
-                auto& column = table_columns[i];
+            for (size_t i = 0; i < table.table_columns.size(); ++i) {
+                auto& column = table.table_columns[i];
                 scope.resolved_table_columns.insert(
                     {CatalogEntry::QualifiedColumnName::Key{table_ref.alias_name, column.column_name},
                      ResolvedTableColumn{.alias_name = table_ref.alias_name,
@@ -218,7 +216,7 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
         if (auto resolved = catalog.ResolveTable(qualified_table_name, external_id)) {
             // Remember resolved table
             scope.resolved_table_references.insert({&table_ref, *resolved});
-            table_ref.resolved_table_id = resolved->table.table_id;
+            table_ref.resolved_table_id = resolved->table_id;
 
             // Collect all available columns
             for (size_t i = 0; i < resolved->table_columns.size(); ++i) {
@@ -227,7 +225,7 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
                     {CatalogEntry::QualifiedColumnName::Key{table_ref.alias_name, column.column_name},
                      ResolvedTableColumn{.alias_name = table_ref.alias_name,
                                          .column_name = column.column_name,
-                                         .table = resolved->table,
+                                         .table = *resolved,
                                          .column_id = i,
                                          .table_reference_id = table_ref.table_reference_id}});
             }
@@ -506,11 +504,10 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 // Merge child states
                 MergeChildStates(node_state, {elements_node});
                 // Collect all columns
-                size_t table_id = tables.GetSize();
-                size_t columns_begin = table_columns.GetSize();
-                size_t column_count = node_state.table_columns.GetSize();
+                std::vector<CatalogEntry::TableColumn> table_columns;
+                table_columns.reserve(node_state.table_columns.GetSize());
                 for (auto& table_col : node_state.table_columns) {
-                    table_columns.Append(table_col);
+                    table_columns.push_back(table_col);
                 }
                 pending_columns_free_list.Append(std::move(node_state.table_columns));
                 // Create the scope
@@ -522,8 +519,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 n.ast_statement_id = std::nullopt;
                 n.ast_scope_root = std::nullopt;
                 n.table_name = table_name;
-                n.columns_begin = columns_begin;
-                n.column_count = column_count;
+                n.table_columns = std::move(table_columns);
                 break;
             }
 
@@ -557,11 +553,11 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
 
 /// Finish the analysis pass
 void NameResolutionPass::Finish() {
-    out.tables = tables.Flatten();
-    out.table_columns = table_columns.Flatten();
-    out.tables_by_name.reserve(out.tables.size());
-    for (auto& table : out.tables) {
-        out.tables_by_name.insert({table.table_name, table});
+    tables_by_name.reserve(tables.GetSize());
+    for (auto& table_chunk : tables.GetChunks()) {
+        for (auto& table : table_chunk) {
+            tables_by_name.insert({table.table_name, table});
+        }
     }
 
     // Resolve all names
@@ -608,9 +604,8 @@ void NameResolutionPass::Finish() {
 
 /// Export an analyzed program
 void NameResolutionPass::Export(AnalyzedScript& program) {
-    program.tables = std::move(out.tables);
-    program.table_columns = table_columns.Flatten();
-    program.tables_by_name = std::move(out.tables_by_name);
+    program.tables = std::move(tables);
+    program.tables_by_name = std::move(tables_by_name);
     program.graph_edges = graph_edges.Flatten();
     program.graph_edge_nodes = graph_edge_nodes.Flatten();
 
@@ -627,9 +622,9 @@ void NameResolutionPass::Export(AnalyzedScript& program) {
         }
     }
     for (auto& table : program.tables) {
-        for (size_t column_id = 0; column_id < table.column_count; ++column_id) {
-            auto& column = program.table_columns[table.columns_begin + column_id];
-            program.table_columns_by_name.insert({column.column_name, {table, column}});
+        for (size_t i = 0; i < table.table_columns.size(); ++i) {
+            auto& column = table.table_columns[i];
+            program.table_columns_by_name.insert({column.column_name, {table, i}});
         }
     }
 }

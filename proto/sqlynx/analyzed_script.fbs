@@ -38,10 +38,8 @@ table Table {
     ast_scope_root: uint32;
     // The name of the table that is declared by the node
     table_name: QualifiedTableName;
-    /// The table colummns
-    columns_begin: uint32;
-    /// The table colummns
-    column_count: uint32;
+    /// The table columns
+    table_columns: [TableColumn];
 }
 
 table TableReference {
@@ -103,8 +101,6 @@ table AnalyzedScript {
     schema_name: string;
     // The local tables
     tables: [Table];
-    // The local table columns
-    table_columns: [TableColumn];
     // The table references in the statement
     table_references: [TableReference];
     // The column references in the statement

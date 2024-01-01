@@ -7,6 +7,14 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "All Tests",
+            "program": "${workspaceFolder}/packages/sqlynx/build/native/o0/tester",
+            "args": ["--source_dir=${workspaceFolder}"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Analyzer Tests",
             "program": "${workspaceFolder}/packages/sqlynx/build/native/o0/tester",
             "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*AnalyzerSnap*tpch_22"],
@@ -107,14 +115,6 @@
             "program": "${workspaceFolder}/packages/sqlynx/build/native/o0/benchmark_pipeline",
             "args": [],
             "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "extensionHost",
-            "request": "launch",
-            "name": "Launch VSCode Plugin",
-            "runtimeExecutable": "${execPath}",
-            "args": ["--extensionDevelopmentPath=${workspaceRoot}/packages/sqlynx-vscode"],
-            "outFiles": ["${workspaceRoot}/packages/sqlynx-vscode/dist/**/*.js"]
         }
     ]
 }
