@@ -13,6 +13,7 @@
         "@ankoh/sqlynx": "link:../sqlynx-wasm",
         "@codemirror/autocomplete": "^6.11.1",
         "@codemirror/view": "^6.23.0",
+        "@emotion/is-prop-valid": "^1.2.1",
         "@octokit/graphql": "^7.0.2",
         "@primer/octicons-react": "^19.8.0",
         "@primer/react": "^36.5.0",
