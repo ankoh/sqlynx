@@ -301,8 +301,8 @@ class Catalog {
     /// Drop a descriptor pool
     proto::StatusCode DropDescriptorPool(ExternalID external_id);
     /// Add a schema descriptor as serialized FlatBuffer
-    proto::StatusCode AddSchemaDescriptor(ExternalID external_id, std::span<std::byte> descriptor_data,
-                                          std::unique_ptr<std::byte[]> descriptor_buffer);
+    proto::StatusCode AddSchemaDescriptor(ExternalID external_id, std::span<const std::byte> descriptor_data,
+                                          std::unique_ptr<const std::byte[]> descriptor_buffer);
 
     /// Resolve a table by id
     std::optional<CatalogEntry::ResolvedTable> ResolveTable(ExternalObjectID table_id) const;
