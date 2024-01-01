@@ -117,18 +117,22 @@ void CatalogEntry::ResolveTableColumn(std::string_view table_column, const Catal
     ResolveTableColumn(table_column, tmp);
 }
 
-proto::StatusCode Catalog::AddScript(Script& script, Rank rank) {
+proto::StatusCode Catalog::LoadScript(Script& script, Rank rank) {
     if (!script.analyzed_script) {
         return proto::StatusCode::CATALOG_SCRIPT_NOT_ANALYZED;
     }
+
+    // Script was  dded to catalog before?
     auto script_iter = script_entries.find(&script);
     if (script_iter != script_entries.end()) {
         return UpdateScript(script_iter->second);
     }
+    // Is there another entry (!= the script) with the same external id?
     auto entry_iter = entries.find(script.GetExternalID());
     if (entry_iter != entries.end()) {
         return proto::StatusCode::EXTERNAL_ID_COLLISION;
     }
+    // Collect all schema names
     CatalogEntry& entry = *script.analyzed_script;
     std::unordered_set<std::pair<std::string_view, std::string_view>, TupleHasher> schema_names;
     for (auto& table : entry.tables) {
@@ -138,12 +142,15 @@ proto::StatusCode Catalog::AddScript(Script& script, Rank rank) {
     for (auto& [db_name, schema_name] : schema_names) {
         entry_names_ranked.insert({db_name, schema_name, rank, entry.GetExternalID()});
     }
+    // Register as script entry
     script_entries.insert({&script,
                            {.script = script,
                             .analyzed = script.analyzed_script,
                             .rank = rank,
                             .schema_names = std::move(schema_names)}});
+    // Register as catalog entry
     entries.insert({entry.GetExternalID(), &entry});
+    // Register rank
     entries_ranked.insert({rank, entry.GetExternalID()});
     ++version;
     return proto::StatusCode::OK;
@@ -187,6 +194,9 @@ proto::StatusCode Catalog::UpdateScript(ScriptEntry& entry) {
         }
     }
     entry.analyzed = script.analyzed_script;
+    auto entry_iter = entries.find(script.GetExternalID());
+    assert(entry_iter != entries.end());
+    entry_iter->second = entry.analyzed.get();
     ++version;
     return proto::StatusCode::OK;
 }

@@ -71,7 +71,7 @@ export const ScriptLoader: React.FC<Props> = (props: Props) => {
                 console.warn(e);
                 appStateDispatch({
                     type: SCRIPT_LOADING_FAILED,
-                    value: e,
+                    value: [key, e],
                 });
             }
         };

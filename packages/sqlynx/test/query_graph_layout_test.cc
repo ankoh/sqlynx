@@ -89,7 +89,7 @@ TEST(SchemaGridTest, TPCHQ2) {
     ASSERT_EQ(schema_script.Analyze().second, proto::StatusCode::OK);
 
     Catalog catalog;
-    catalog.AddScript(schema_script, 0);
+    catalog.LoadScript(schema_script, 0);
 
     Script query_script{catalog, 2};
     query_script.InsertTextAt(0, TPCH_Q2);

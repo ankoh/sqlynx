@@ -146,26 +146,16 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                 to: view.state.doc.length,
                 insert: targetScriptData.script?.toString(),
             });
-            effects.push(
-                UpdateSQLynxScript.of({
-                    config: {
-                        showCompletionDetails: config?.value?.features?.completionDetails ?? false,
-                    },
-                    scriptKey: targetKey,
-                    targetScript: targetScriptData.script,
-                    scriptBuffers: targetScriptData.processed,
-                    scriptCursor: targetScriptData.cursor,
-                    focusedColumnRefs: ctx.focus?.columnRefs ?? null,
-                    focusedTableRefs: ctx.focus?.tableRefs ?? null,
-                    onUpdateScript: updateScript,
-                    onUpdateScriptCursor: updateScriptCursor,
-                }),
-            );
         } else if (active.current.schemaScript !== schemaScriptData?.script) {
             // Only the external script changed, no need for text changes
             active.current.editorScriptVersion = targetScriptData.scriptVersion;
             active.current.editorScript = targetScriptData.script;
             active.current.schemaScript = schemaScript;
+        }
+        let selection: EditorSelection | null = null;
+        if (active.current.cursor !== targetScriptData.cursor) {
+            active.current.cursor = targetScriptData.cursor;
+            selection = EditorSelection.create([EditorSelection.cursor(targetScriptData.cursor?.textOffset ?? 0)]);
         }
         effects.push(
             UpdateSQLynxScript.of({
@@ -173,6 +163,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                     showCompletionDetails: config?.value?.features?.completionDetails ?? false,
                 },
                 scriptKey: targetKey,
+                targetScriptVersion: targetScriptData.scriptVersion,
                 targetScript: targetScriptData.script,
                 scriptBuffers: targetScriptData.processed,
                 scriptCursor: targetScriptData.cursor,
@@ -182,14 +173,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                 onUpdateScriptCursor: updateScriptCursor,
             }),
         );
-        let selection: EditorSelection | null = null;
-        if (active.current.cursor !== targetScriptData.cursor) {
-            active.current.cursor = targetScriptData.cursor;
-            selection = EditorSelection.create([EditorSelection.cursor(targetScriptData.cursor?.textOffset ?? 0)]);
-        }
-        if (changes.length > 0 || effects.length > 0 || selection !== null) {
-            view.dispatch({ changes, effects, selection: selection ?? undefined });
-        }
+        view.dispatch({ changes, effects, selection: selection ?? undefined });
     }, [
         view,
         activeTab,

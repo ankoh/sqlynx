@@ -94,7 +94,7 @@ void AnalyzerSnapshotTest::TestRegistrySnapshot(const std::vector<ScriptAnalysis
         auto analyzed = script.Analyze();
         ASSERT_EQ(analyzed.second, proto::StatusCode::OK);
 
-        catalog.AddScript(script, entry_id);
+        catalog.LoadScript(script, entry_id);
 
         auto script_node = node.append_child("script");
         AnalyzerSnapshotTest::EncodeScript(script_node, *script.analyzed_script, false);

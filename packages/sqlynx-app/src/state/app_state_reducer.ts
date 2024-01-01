@@ -40,23 +40,6 @@ export type AppStateAction =
 const SCHEMA_SCRIPT_CATALOG_RANK = 1e9;
 const STATS_HISTORY_LIMIT = 20;
 
-function rotateStatistics(
-    log: Immutable.List<sqlynx.FlatBufferPtr<sqlynx.proto.ScriptStatistics>>,
-    stats: sqlynx.FlatBufferPtr<sqlynx.proto.ScriptStatistics> | null,
-) {
-    if (stats == null) {
-        return log;
-    } else {
-        return log.withMutations(m => {
-            m.push(stats);
-            if (m.size > STATS_HISTORY_LIMIT) {
-                m.first()!.delete();
-                m.shift();
-            }
-        });
-    }
-}
-
 /// ATTENTION
 ///
 /// React reducers do not play nice together with the "impure" side-effects through state held in Wasm.
@@ -93,7 +76,7 @@ function reduceAppState(state: AppState, action: AppStateAction): AppState {
                 catalog,
                 scripts: {
                     [ScriptKey.MAIN_SCRIPT]: createEmptyScript(ScriptKey.MAIN_SCRIPT, mainScript),
-                    [ScriptKey.SCHEMA_SCRIPT]: createEmptyScript(ScriptKey.MAIN_SCRIPT, schemaScript),
+                    [ScriptKey.SCHEMA_SCRIPT]: createEmptyScript(ScriptKey.SCHEMA_SCRIPT, schemaScript),
                 },
                 graph,
             };
@@ -118,20 +101,18 @@ function reduceAppState(state: AppState, action: AppStateAction): AppState {
                 },
                 focus: null,
             };
+
             next.focus = deriveScriptFocusFromCursor(scriptKey, next.scripts, state.graphViewModel, cursor);
             // Is schema script?
             if (scriptKey == ScriptKey.SCHEMA_SCRIPT) {
                 // Update the catalog since the schema might have changed
-                next.catalog!.addScript(state.scripts[scriptKey].script!, SCHEMA_SCRIPT_CATALOG_RANK);
+                next.catalog!.loadScript(state.scripts[ScriptKey.SCHEMA_SCRIPT].script!, SCHEMA_SCRIPT_CATALOG_RANK);
                 // Update the main script since the schema graph depends on it
                 const mainData = next.scripts[ScriptKey.MAIN_SCRIPT];
-                const mainScript = mainData.script;
-                if (mainScript != null) {
-                    const newMain = { ...mainData };
-                    newMain.processed = analyzeScript(mainData.processed, mainScript);
-                    newMain.statistics = rotateStatistics(newMain.statistics, mainScript.getStatistics());
-                    next.scripts[ScriptKey.MAIN_SCRIPT] = newMain;
-                }
+                const newMain = { ...mainData };
+                newMain.processed = analyzeScript(mainData.processed, mainData.script!);
+                newMain.statistics = rotateStatistics(newMain.statistics, mainData.script!.getStatistics());
+                next.scripts[ScriptKey.MAIN_SCRIPT] = newMain;
             }
             return computeSchemaGraph(next);
         }
@@ -235,7 +216,7 @@ function reduceAppState(state: AppState, action: AppStateAction): AppState {
                         script.replaceText(content);
                         const schemaAnalyzed = parseAndAnalyzeScript(script);
                         // Update the catalog
-                        next.catalog!.addScript(script, SCHEMA_SCRIPT_CATALOG_RANK);
+                        next.catalog!.loadScript(script, SCHEMA_SCRIPT_CATALOG_RANK);
                         // We updated the schema script, do we have to re-analyze the main script?
                         const main = next.scripts[ScriptKey.MAIN_SCRIPT];
                         if (main.script) {
@@ -335,4 +316,21 @@ function computeSchemaGraph(state: AppState, debug?: boolean): AppState {
     state.graphLayout = state.graph!.loadScript(main.script);
     state.graphViewModel = computeGraphViewModel(state);
     return state;
+}
+
+function rotateStatistics(
+    log: Immutable.List<sqlynx.FlatBufferPtr<sqlynx.proto.ScriptStatistics>>,
+    stats: sqlynx.FlatBufferPtr<sqlynx.proto.ScriptStatistics> | null,
+) {
+    if (stats == null) {
+        return log;
+    } else {
+        return log.withMutations(m => {
+            m.push(stats);
+            if (m.size > STATS_HISTORY_LIMIT) {
+                m.first()!.delete();
+                m.shift();
+            }
+        });
+    }
 }

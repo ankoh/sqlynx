@@ -93,7 +93,7 @@ limit 100
     ASSERT_EQ(main_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(main_script.Parse().second, proto::StatusCode::OK);
     Catalog catalog;
-    catalog.AddScript(external_script, 0);
+    catalog.LoadScript(external_script, 0);
     ASSERT_EQ(main_script.Analyze().second, proto::StatusCode::OK);
 }
 
