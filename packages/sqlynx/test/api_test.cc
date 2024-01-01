@@ -42,7 +42,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
     sqlynx_delete_result(external_parsed);
     sqlynx_delete_result(external_analyzed);
 
-    sqlynx_catalog_add_script(catalog, external_script, 0);
+    sqlynx_catalog_load_script(catalog, external_script, 0);
 
     auto main_result = sqlynx_script_new(catalog, 1);
     ASSERT_EQ(static_cast<proto::StatusCode>(main_result->status_code), proto::StatusCode::EXTERNAL_ID_COLLISION);
@@ -132,7 +132,7 @@ limit 100
     sqlynx_delete_result(external_parsed);
     sqlynx_delete_result(external_analyzed);
 
-    sqlynx_catalog_add_script(catalog, external_script, 0);
+    sqlynx_catalog_load_script(catalog, external_script, 0);
 
     auto main_result = sqlynx_script_new(catalog, 2);
     ASSERT_EQ(main_result->status_code, OK);

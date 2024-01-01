@@ -26,7 +26,7 @@ describe('SQLynx Analyzer', () => {
         schemaScript.analyze().delete();
 
         const catalog = lnx!.createCatalog();
-        catalog.addScript(schemaScript, 0);
+        catalog.loadScript(schemaScript, 0);
 
         expect(() => {
             const mainScript = lnx!.createScript(catalog, 1);
@@ -57,7 +57,7 @@ describe('SQLynx Analyzer', () => {
         expect(extAnalyzer.tablesLength()).toEqual(1);
 
         const catalog = lnx!.createCatalog();
-        catalog.addScript(extScript, 0);
+        catalog.loadScript(extScript, 0);
 
         const mainScript = lnx!.createScript(catalog, 2);
         mainScript.insertTextAt(0, 'select * from foo');

@@ -67,7 +67,7 @@ extern "C" FFIResult* sqlynx_script_complete_at_cursor(sqlynx::Script* script, s
 /// Create a catalog
 extern "C" FFIResult* sqlynx_catalog_new();
 /// Add a script to the catalog
-extern "C" FFIResult* sqlynx_catalog_add_script(sqlynx::Catalog* catalog, sqlynx::Script* script, size_t rank);
+extern "C" FFIResult* sqlynx_catalog_load_script(sqlynx::Catalog* catalog, sqlynx::Script* script, size_t rank);
 /// Drop script from the catalog
 extern "C" void sqlynx_catalog_drop_script(sqlynx::Catalog* catalog, sqlynx::Script* script);
 /// Add a descriptor pool to the catalog

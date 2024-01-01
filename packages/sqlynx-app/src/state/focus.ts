@@ -135,6 +135,20 @@ export function deriveScriptFocusFromCursor(
     return focus;
 }
 
+function clearCursors(state: AppState): AppState {
+    state.scripts = {
+        [ScriptKey.MAIN_SCRIPT]: {
+            ...state.scripts[ScriptKey.MAIN_SCRIPT],
+            cursor: null,
+        },
+        [ScriptKey.SCHEMA_SCRIPT]: {
+            ...state.scripts[ScriptKey.SCHEMA_SCRIPT],
+            cursor: null,
+        },
+    };
+    return state;
+}
+
 export function focusGraphNode(state: AppState, target: GraphNodeDescriptor | null): AppState {
     // Unset focused node?
     if (target === null) {
@@ -143,10 +157,10 @@ export function focusGraphNode(state: AppState, target: GraphNodeDescriptor | nu
             return state;
         }
         // Otherwise clear the focus state
-        return {
+        return clearCursors({
             ...state,
             focus: null,
-        };
+        });
     }
     // Determine the focused connections
     const newConnections = new Set<GraphConnectionId.Value>();
@@ -208,7 +222,7 @@ export function focusGraphNode(state: AppState, target: GraphNodeDescriptor | nu
     }
 
     // Clear cursor and update focus
-    return {
+    return clearCursors({
         ...state,
         focus: {
             graphConnections: newConnections,
@@ -216,7 +230,7 @@ export function focusGraphNode(state: AppState, target: GraphNodeDescriptor | nu
             columnRefs,
             tableRefs,
         },
-    };
+    });
 }
 
 export function focusGraphEdge(state: AppState, conn: GraphConnectionId.Value | null): AppState {
@@ -227,10 +241,10 @@ export function focusGraphEdge(state: AppState, conn: GraphConnectionId.Value | 
             return state;
         }
         // Otherwise clear the focus state
-        return {
+        return clearCursors({
             ...state,
             focus: null,
-        };
+        });
     }
     // Does the set of focused edges only contain the newly focused edge?
     if (state.focus?.graphConnections?.size == 1) {
@@ -245,7 +259,7 @@ export function focusGraphEdge(state: AppState, conn: GraphConnectionId.Value | 
         return state;
     }
     // Clear cursor and update focus
-    return {
+    return clearCursors({
         ...state,
         focus: {
             graphConnections: new Set([conn]),
@@ -253,5 +267,5 @@ export function focusGraphEdge(state: AppState, conn: GraphConnectionId.Value | 
             columnRefs: edgeVM.columnRefs,
             tableRefs: new Set(),
         },
-    };
+    });
 }

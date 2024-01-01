@@ -30,7 +30,7 @@ std::pair<std::shared_ptr<AnalyzedScript>, proto::StatusCode> Analyzer::Analyze(
     az.pass_manager.Execute(*az.name_resolution);
 
     // Build program
-    auto program = std::make_shared<AnalyzedScript>(parsed, std::move(catalog), database_name, schema_name);
+    auto program = std::make_shared<AnalyzedScript>(parsed, catalog, database_name, schema_name);
     az.name_resolution->Export(*program);
     return {program, proto::StatusCode::OK};
 }

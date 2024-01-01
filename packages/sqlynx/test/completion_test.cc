@@ -31,7 +31,7 @@ SELECT s_co
     ASSERT_EQ(external_script.Analyze().second, proto::StatusCode::OK);
 
     Catalog catalog;
-    catalog.AddScript(external_script, 0);
+    catalog.LoadScript(external_script, 0);
 
     Script main_script{catalog, 2};
     main_script.InsertTextAt(0, main_script_text);

@@ -120,7 +120,7 @@ static std::unique_ptr<Catalog> read_catalog(pugi::xml_node catalog_node,
         if (entry_name == "script") {
             auto external_id = entry_id++;
             auto script = read_script(entry_node, external_id);
-            catalog->AddScript(*script, external_id);
+            catalog->LoadScript(*script, external_id);
             AnalyzerSnapshotTest::EncodeScript(entry_node, *script->analyzed_script, false);
             catalog_scripts.push_back(std::move(script));
         }

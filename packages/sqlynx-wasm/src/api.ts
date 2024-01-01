@@ -29,7 +29,7 @@ interface SQLynxModuleExports {
     sqlynx_script_get_statistics: (ptr: number) => number;
 
     sqlynx_catalog_new: () => number;
-    sqlynx_catalog_add_script: (catalog_ptr: number, script_ptr: number, rank: number) => number;
+    sqlynx_catalog_load_script: (catalog_ptr: number, script_ptr: number, rank: number) => number;
     sqlynx_catalog_update_script: (catalog_ptr: number, script_ptr: number) => number;
     sqlynx_catalog_drop_script: (catalog_ptr: number, script_ptr: number) => void;
     sqlynx_catalog_add_descriptor_pool: (catalog_ptr: number, external_id: number, rank: number) => number;
@@ -127,7 +127,7 @@ export class SQLynx {
             ) => number,
 
             sqlynx_catalog_new: instance.exports['sqlynx_catalog_new'] as () => number,
-            sqlynx_catalog_add_script: instance.exports['sqlynx_catalog_add_script'] as (
+            sqlynx_catalog_load_script: instance.exports['sqlynx_catalog_load_script'] as (
                 catalog_ptr: number,
                 index: number,
                 script_ptr: number,
@@ -545,10 +545,10 @@ export class SQLynxCatalog {
         this.ptr.delete();
     }
     /// Add a script in the registry
-    public addScript(script: SQLynxScript, rank: number) {
+    public loadScript(script: SQLynxScript, rank: number) {
         const catalogPtr = this.ptr.assertNotNull();
         const scriptPtr = script.ptr.assertNotNull();
-        const result = this.ptr.api.instanceExports.sqlynx_catalog_add_script(catalogPtr, scriptPtr, rank);
+        const result = this.ptr.api.instanceExports.sqlynx_catalog_load_script(catalogPtr, scriptPtr, rank);
         this.ptr.api.readStatusResult(result);
     }
     /// Update a script from the registry

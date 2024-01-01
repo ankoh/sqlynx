@@ -297,8 +297,8 @@ extern "C" FFIResult* sqlynx_script_get_statistics(sqlynx::Script* script) {
 /// Create a catalog
 extern "C" FFIResult* sqlynx_catalog_new() { return packPtr(std::make_unique<sqlynx::Catalog>()); }
 /// Add a script in the catalog
-extern "C" FFIResult* sqlynx_catalog_add_script(sqlynx::Catalog* catalog, sqlynx::Script* script, size_t rank) {
-    auto status = catalog->AddScript(*script, rank);
+extern "C" FFIResult* sqlynx_catalog_load_script(sqlynx::Catalog* catalog, sqlynx::Script* script, size_t rank) {
+    auto status = catalog->LoadScript(*script, rank);
     if (status != proto::StatusCode::OK) {
         return packError(status);
     }

@@ -629,7 +629,7 @@ static void analyze_query(benchmark::State& state) {
     assert(ext_analyzed.second == proto::StatusCode::OK);
 
     Catalog catalog;
-    catalog.AddScript(external, 0);
+    catalog.LoadScript(external, 0);
 
     Script main{catalog, 1};
     main.InsertTextAt(0, main_script);

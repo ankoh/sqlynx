@@ -280,20 +280,20 @@ class Catalog {
     bool Contains(ExternalID id) const { return entries.contains(id); }
     /// Iterate all entries in arbitrary order
     template <typename Fn> void Iterate(Fn f) const {
-        for (auto& [_entry_id, entry] : entries) {
-            f(*entry);
+        for (auto& [entry_id, entry] : entries) {
+            f(entry_id, *entry);
         }
     }
     /// Iterate entries in ranked order
     template <typename Fn> void IterateRanked(Fn f) const {
         for (auto& [rank, id] : entries_ranked) {
             auto* schema = entries.at(id);
-            f(*schema, rank);
+            f(id, *schema, rank);
         }
     }
 
     /// Add a script
-    proto::StatusCode AddScript(Script& script, Rank rank);
+    proto::StatusCode LoadScript(Script& script, Rank rank);
     /// Drop a script
     void DropScript(Script& script);
     /// Add a descriptor pool

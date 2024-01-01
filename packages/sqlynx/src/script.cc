@@ -10,6 +10,7 @@
 
 #include "sqlynx/analyzer/analyzer.h"
 #include "sqlynx/analyzer/completion.h"
+#include "sqlynx/api.h"
 #include "sqlynx/catalog.h"
 #include "sqlynx/external.h"
 #include "sqlynx/parser/parse_context.h"

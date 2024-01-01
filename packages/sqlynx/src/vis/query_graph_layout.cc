@@ -46,7 +46,7 @@ proto::StatusCode QueryGraphLayout::Configure(const QueryGraphLayout::Config& c)
 void QueryGraphLayout::PrepareLayout(const AnalyzedScript& analyzed) {
     // Internal and external tables
     size_t table_count = analyzed.GetTables().size();
-    script->GetCatalog().Iterate([&](CatalogEntry& schema) { table_count += schema.GetTables().size(); });
+    script->GetCatalog().Iterate([&](auto entry_id, CatalogEntry& entry) { table_count += entry.GetTables().size(); });
     // Load adjacency map
     assert(nodes.empty());
     nodes.reserve(table_count);
@@ -57,8 +57,8 @@ void QueryGraphLayout::PrepareLayout(const AnalyzedScript& analyzed) {
         nodes.emplace_back(nodes.size(), table.table_id, 0);
     }
     // Add external tables
-    script->GetCatalog().Iterate([&](CatalogEntry& schema) {
-        for (auto& table : schema.GetTables()) {
+    script->GetCatalog().Iterate([&](auto entry_id, CatalogEntry& entry) {
+        for (auto& table : entry.GetTables()) {
             nodes_by_table_id.insert({table.table_id, nodes.size()});
             nodes.emplace_back(nodes.size(), table.table_id, 0);
         }
