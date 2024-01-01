@@ -39,9 +39,6 @@ make core_js_tests        # Run js tests using the wasm module
 make snapshots            # Update snapshots
 make benchmark_pipeline   # Benchmark the processing pipeline
 
-make lsp                  # Build the lsp library
-make vscode               # Build the vscode extension
-
 make app_start            # Start the dev server for the PWA
 ```
 
