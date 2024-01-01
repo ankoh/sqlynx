@@ -22,26 +22,30 @@ import { Route, Routes, Navigate, BrowserRouter } from 'react-router-dom';
 import '../static/fonts/fonts.module.css';
 import './globals.css';
 
-const DataProviders = (props: { children: React.ReactElement }) => (
+const GitHubDesignSystem = (props: { children: React.ReactElement }) => (
     <StyleSheetManager shouldForwardProp={isPropValid}>
-        <ThemeProvider>
-            <AppConfigResolver>
-                <LogProvider>
-                    <SalesforceConnector>
-                        <GitHubAuthProvider>
-                            <GitHubProfileProvider>
-                                <SQLynxLoader>
-                                    <AppStateProvider>
-                                        <ScriptLoader>{props.children}</ScriptLoader>
-                                    </AppStateProvider>
-                                </SQLynxLoader>
-                            </GitHubProfileProvider>
-                        </GitHubAuthProvider>
-                    </SalesforceConnector>
-                </LogProvider>
-            </AppConfigResolver>
-        </ThemeProvider>
+        <ThemeProvider>{props.children}</ThemeProvider>
     </StyleSheetManager>
+);
+
+const DataProviders = (props: { children: React.ReactElement }) => (
+    <GitHubDesignSystem>
+        <AppConfigResolver>
+            <LogProvider>
+                <SalesforceConnector>
+                    <GitHubAuthProvider>
+                        <GitHubProfileProvider>
+                            <SQLynxLoader>
+                                <AppStateProvider>
+                                    <ScriptLoader>{props.children}</ScriptLoader>
+                                </AppStateProvider>
+                            </SQLynxLoader>
+                        </GitHubProfileProvider>
+                    </GitHubAuthProvider>
+                </SalesforceConnector>
+            </LogProvider>
+        </AppConfigResolver>
+    </GitHubDesignSystem>
 );
 
 const Editor = withNavBar(EditorPage);
