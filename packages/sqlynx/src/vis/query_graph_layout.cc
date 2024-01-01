@@ -284,8 +284,8 @@ proto::StatusCode QueryGraphLayout::LoadScript(Script& s) {
     return proto::StatusCode::OK;
 }
 
-flatbuffers::Offset<proto::SchemaLayout> QueryGraphLayout::Pack(flatbuffers::FlatBufferBuilder& builder) {
-    proto::SchemaLayoutT layout;
+flatbuffers::Offset<proto::QueryGraphLayout> QueryGraphLayout::Pack(flatbuffers::FlatBufferBuilder& builder) {
+    proto::QueryGraphLayoutT layout;
     layout.table_nodes.resize(nodes.size());
     layout.edges.resize(edges.size());
     layout.edge_nodes.resize(edge_nodes.size());
@@ -298,8 +298,9 @@ flatbuffers::Offset<proto::SchemaLayout> QueryGraphLayout::Pack(flatbuffers::Fla
         auto& placed_cell = *cell;
         auto x = center_x + placed_cell.position.column * config.cell_width;
         auto y = center_y + placed_cell.position.row * config.cell_height;
-        proto::SchemaLayoutVertex pos{x - config.cell_width / 2, y - config.cell_height / 2};
-        proto::SchemaLayoutTableNode proto_node{nodes[i].table_id.Pack(), pos, config.table_width, config.table_height};
+        proto::QueryGraphLayoutVertex pos{x - config.cell_width / 2, y - config.cell_height / 2};
+        proto::QueryGraphLayoutTableNode proto_node{nodes[i].table_id.Pack(), pos, config.table_width,
+                                                    config.table_height};
         layout.table_nodes[i] = proto_node;
     }
     size_t edge_node_reader = 0;
@@ -309,7 +310,7 @@ flatbuffers::Offset<proto::SchemaLayout> QueryGraphLayout::Pack(flatbuffers::Fla
         uint32_t nodes_begin = edge_node_writer;
         for (size_t j = 0; j < edge.node_count_left; ++j) {
             auto& edge_node = edge_nodes[edge_node_reader++];
-            layout.edge_nodes[edge_node_writer] = proto::SchemaLayoutEdgeNode{
+            layout.edge_nodes[edge_node_writer] = proto::QueryGraphLayoutEdgeNode{
                 edge_node.table_id.Pack(),
                 edge_node.column_reference_id.Pack(),
                 edge_node.ast_node_id.Pack(),
@@ -320,7 +321,7 @@ flatbuffers::Offset<proto::SchemaLayout> QueryGraphLayout::Pack(flatbuffers::Fla
         uint16_t node_count_left = edge_node_writer - nodes_begin;
         for (size_t j = 0; j < edge.node_count_right; ++j) {
             auto& edge_node = edge_nodes[edge_node_reader++];
-            layout.edge_nodes[edge_node_writer] = proto::SchemaLayoutEdgeNode{
+            layout.edge_nodes[edge_node_writer] = proto::QueryGraphLayoutEdgeNode{
                 edge_node.table_id.Pack(),
                 edge_node.column_reference_id.Pack(),
                 edge_node.ast_node_id.Pack(),
@@ -329,7 +330,7 @@ flatbuffers::Offset<proto::SchemaLayout> QueryGraphLayout::Pack(flatbuffers::Fla
             edge_node_writer += edge_node.node_id.has_value();
         }
         uint16_t node_count_right = edge_node_writer - (nodes_begin + node_count_left);
-        proto::SchemaLayoutEdge proto_edge{
+        proto::QueryGraphLayoutEdge proto_edge{
             edge.edge_id.Pack(), edge.ast_node_id.Pack(), nodes_begin,
             node_count_left,     node_count_right,        edge.expression_operator,
         };
@@ -337,7 +338,7 @@ flatbuffers::Offset<proto::SchemaLayout> QueryGraphLayout::Pack(flatbuffers::Fla
     }
     layout.edge_nodes.erase(layout.edge_nodes.begin() + edge_node_writer, layout.edge_nodes.end());
 
-    return proto::SchemaLayout::Pack(builder, &layout);
+    return proto::QueryGraphLayout::Pack(builder, &layout);
 }
 
 }  // namespace sqlynx

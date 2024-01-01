@@ -211,7 +211,7 @@ class QueryGraphLayout {
     /// Load a script
     proto::StatusCode LoadScript(Script& script);
     /// Pack the schema graph
-    flatbuffers::Offset<proto::SchemaLayout> Pack(flatbuffers::FlatBufferBuilder& builder);
+    flatbuffers::Offset<proto::QueryGraphLayout> Pack(flatbuffers::FlatBufferBuilder& builder);
 };
 
 }  // namespace sqlynx
