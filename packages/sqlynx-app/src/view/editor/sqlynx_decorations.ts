@@ -92,8 +92,8 @@ function buildDecorationsFromCursor(
     scriptKey: SQLynxScriptKey | null,
     scriptBuffers: SQLynxScriptBuffers,
     scriptCursor: sqlynx.proto.ScriptCursorInfoT | null,
-    focusedColumnRefs: Set<sqlynx.ExternalID.Value> | null,
-    focusedTableRefs: Set<sqlynx.ExternalID.Value> | null,
+    focusedColumnRefs: Set<sqlynx.ExternalObjectID.Value> | null,
+    focusedTableRefs: Set<sqlynx.ExternalObjectID.Value> | null,
 ): DecorationSet {
     const builder = new RangeSetBuilder<Decoration>();
     const parsed = scriptBuffers.parsed?.read(new sqlynx.proto.ParsedScript()) ?? null;
@@ -125,16 +125,16 @@ function buildDecorationsFromCursor(
     // Build decorations for column refs
     if (focusedColumnRefs !== null) {
         for (const refId of focusedColumnRefs) {
-            const context = sqlynx.ExternalID.getContext(refId);
-            const index = sqlynx.ExternalID.getIndex(refId);
-            if (context !== scriptKey) {
+            const externalId = sqlynx.ExternalObjectID.getExternalID(refId);
+            const objectId = sqlynx.ExternalObjectID.getObjectID(refId);
+            if (externalId !== scriptKey) {
                 continue;
             }
             // XXX invalidate focused table refs at write front
-            if (index >= analyzed.columnReferencesLength()) {
+            if (objectId >= analyzed.columnReferencesLength()) {
                 continue;
             }
-            const columnRef = analyzed.columnReferences(index, tmpColRef)!;
+            const columnRef = analyzed.columnReferences(objectId, tmpColRef)!;
             const astNodeId = columnRef.astNodeId()!;
             const astNode = parsed.nodes(astNodeId, tmpNode)!;
             const loc = astNode.location(tmpLoc)!;
@@ -149,16 +149,16 @@ function buildDecorationsFromCursor(
     // Build decorations for table refs
     if (focusedTableRefs !== null) {
         for (const refId of focusedTableRefs) {
-            const context = sqlynx.ExternalID.getContext(refId);
-            const index = sqlynx.ExternalID.getIndex(refId);
-            if (context !== scriptKey) {
+            const externalId = sqlynx.ExternalObjectID.getExternalID(refId);
+            const objectId = sqlynx.ExternalObjectID.getObjectID(refId);
+            if (externalId !== scriptKey) {
                 continue;
             }
             // XXX invalidate focused table refs at write front
-            if (index >= analyzed.tableReferencesLength()) {
+            if (objectId >= analyzed.tableReferencesLength()) {
                 continue;
             }
-            const columnRef = analyzed.tableReferences(index, tmpTblRef)!;
+            const columnRef = analyzed.tableReferences(objectId, tmpTblRef)!;
             const astNodeId = columnRef.astNodeId()!;
             const astNode = parsed.nodes(astNodeId, tmpNode)!;
             const loc = astNode.location(tmpLoc)!;
@@ -183,8 +183,8 @@ interface FocusDecorationState {
     decorations: DecorationSet;
     scriptBuffers: SQLynxScriptBuffers;
     scriptCursor: sqlynx.proto.ScriptCursorInfoT | null;
-    focusedColumnRefs: Set<sqlynx.ExternalID.Value> | null;
-    focusedTableRefs: Set<sqlynx.ExternalID.Value> | null;
+    focusedColumnRefs: Set<sqlynx.ExternalObjectID.Value> | null;
+    focusedTableRefs: Set<sqlynx.ExternalObjectID.Value> | null;
 }
 
 /// Decorations derived from SQLynx cursor

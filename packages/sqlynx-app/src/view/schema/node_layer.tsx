@@ -169,7 +169,7 @@ export function NodeLayer(props: Props) {
         />
     );
 
-    const connectionPorts = new Map<sqlynx.ExternalID.Value, number>();
+    const connectionPorts = new Map<sqlynx.ExternalObjectID.Value, number>();
     if (props.focus?.graphConnections) {
         for (const connection of props.focus.graphConnections) {
             const edge = props.edges.get(connection)!;
