@@ -5,6 +5,8 @@
 #include "sqlynx/external.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
+#include "sqlynx/utils/chunk_buffer.h"
+#include "sqlynx/utils/string_conversion.h"
 
 using namespace sqlynx;
 
@@ -97,6 +99,8 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
     std::string_view database_name =
         descriptor.database_name() == nullptr ? "" : descriptor.database_name()->string_view();
     std::string_view schema_name = descriptor.schema_name() == nullptr ? "" : descriptor.schema_name()->string_view();
+
+    // Read tables
     uint32_t table_id = 0;
     for (auto* table : *descriptor.tables()) {
         ExternalObjectID table_object_id{external_id, ++table_id};
@@ -120,6 +124,7 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
         tables.Append(Table{table_object_id, std::nullopt, std::nullopt, std::nullopt,
                             QualifiedTableName{qualified_table_name}, std::move(columns)});
     }
+
     // Build table index
     tables_by_name.reserve(tables.GetSize());
     for (auto& table_chunk : tables.GetChunks()) {
@@ -131,7 +136,44 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
         }
     }
 
-    // XXX
+    // Collect all name infos
+    auto register_name = [&](std::string_view name, NameTags tags) {
+        if (name.empty()) {
+            return;
+        }
+        auto iter = name_infos.find(name);
+        if (iter != name_infos.end()) {
+            auto& name_info = iter->second.get();
+            name_info.tags |= tags;
+            ++name_info.occurrences;
+        } else {
+            fuzzy_ci_string_view ci_name{name.data(), name.size()};
+            auto& name_info = names.Append(NameInfo{
+                .name_id = static_cast<uint32_t>(names.GetSize()),
+                .text = name,
+                .location = sx::Location(),
+                .tags = tags,
+                .occurrences = 1,
+            });
+            name_infos.insert({name, name_info});
+            for (size_t i = 1; i < ci_name.size(); ++i) {
+                auto suffix = ci_name.substr(ci_name.size() - 1 - i);
+                name_search_index->insert({suffix, name_info});
+            }
+        }
+    };
+    register_name(database_name, proto::NameTag::DATABASE_NAME);
+    register_name(schema_name, proto::NameTag::SCHEMA_NAME);
+    for (auto& table_chunk : tables.GetChunks()) {
+        for (auto& table : table_chunk) {
+            register_name(table.table_name.database_name, proto::NameTag::DATABASE_NAME);
+            register_name(table.table_name.schema_name, proto::NameTag::SCHEMA_NAME);
+            register_name(table.table_name.table_name, proto::NameTag::TABLE_NAME);
+            for (auto& column : table.table_columns) {
+                register_name(column.column_name, proto::NameTag::COLUMN_NAME);
+            }
+        }
+    }
     return proto::StatusCode::OK;
 }
 
