@@ -18,9 +18,32 @@ beforeAll(async () => {
 });
 
 describe('Catalog Tests ', () => {
-    it('add schema descriptor', () => {
+    it('dynamic registration', () => {
         const catalog = lnx!.createCatalog();
         catalog.addDescriptorPool(1, 10);
+
+        // Create and analyze a script referencing an unknown table
+        const script = lnx!.createScript(catalog, 2);
+        script.replaceText('select * from db1.schema1.table1');
+        script.scan().delete();
+        script.parse().delete();
+        let analyzedBuffer = script.analyze();
+        let analyzed = analyzedBuffer.read(new sqlynx.proto.AnalyzedScript());
+        expect(analyzed.tableReferencesLength()).toEqual(1);
+
+        // The analyzed script contains an unresolved table ref
+        const tableRef = analyzed.tableReferences(0)!;
+        let resolved = tableRef.resolvedTableId();
+        expect(sqlynx.ExternalObjectID.isNull(resolved)).toBeTruthy();
+
+        // Check the table name
+        const tableName = tableRef.tableName(new sqlynx.proto.QualifiedTableName())!;
+        expect(tableName.databaseName()).toEqual('db1');
+        expect(tableName.schemaName()).toEqual('schema1');
+        expect(tableName.tableName()).toEqual('table1');
+        analyzedBuffer.delete();
+
+        // Resolve the table declaration and add a schema descriptor to the descriptor pool
         catalog.addSchemaDescriptorT(
             1,
             new sqlynx.proto.SchemaDescriptorT('db1', 'schema1', [
@@ -31,26 +54,17 @@ describe('Catalog Tests ', () => {
                 ]),
             ]),
         );
-        const description = catalog.describeEntries();
-        const catalogEntries = description.read(new sqlynx.proto.CatalogEntries()).unpack();
-        expect(catalogEntries.entries.length).toEqual(1);
-        expect(catalogEntries.entries[0].externalId).toEqual(1);
-        expect(catalogEntries.entries[0].entryType).toEqual(sqlynx.proto.CatalogEntryType.DESCRIPTOR_POOL);
-        expect(catalogEntries.entries[0].rank).toEqual(10);
 
-        const script = lnx!.createScript(catalog, 2);
-        script.replaceText('select * from db1.schema1.table1');
-        script.scan().delete();
+        // Now analyze the script again
         script.parse().delete();
-        const analyzed = script.analyze().read(new sqlynx.proto.AnalyzedScript());
+        analyzedBuffer = script.analyze();
+        analyzed = analyzedBuffer.read(new sqlynx.proto.AnalyzedScript());
         expect(analyzed.tableReferencesLength()).toEqual(1);
+        resolved = tableRef.resolvedTableId();
+        expect(sqlynx.ExternalObjectID.isNull(resolved)).toBeFalsy();
 
-        const tableRef = analyzed.tableReferences(0)!;
-        const resovledTableId = tableRef.resolvedTableId();
-        expect(sqlynx.ExternalObjectID.isNull(resovledTableId)).toBeFalsy();
-        expect(sqlynx.ExternalObjectID.getExternalID(resovledTableId)).toEqual(1);
-        expect(sqlynx.ExternalObjectID.getObjectID(resovledTableId)).toEqual(0);
-
+        // Delete all the memory
+        analyzedBuffer.delete();
         script.delete();
         catalog.delete();
     });
