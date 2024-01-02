@@ -66,6 +66,8 @@ extern "C" FFIResult* sqlynx_script_complete_at_cursor(sqlynx::Script* script, s
 
 /// Create a catalog
 extern "C" FFIResult* sqlynx_catalog_new();
+/// Describe all entries
+extern "C" FFIResult* sqlynx_catalog_describe_entries(sqlynx::Catalog* catalog);
 /// Add a script to the catalog
 extern "C" FFIResult* sqlynx_catalog_load_script(sqlynx::Catalog* catalog, sqlynx::Script* script, size_t rank);
 /// Drop script from the catalog

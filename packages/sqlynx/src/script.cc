@@ -377,6 +377,11 @@ AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, const Catal
       catalog_version(catalog.GetVersion()) {}
 
 /// Get the name search index
+proto::CatalogEntry AnalyzedScript::DescribeEntry() const {
+    return proto::CatalogEntry(external_id, proto::CatalogEntryType::SCRIPT, 0);
+}
+
+/// Get the name search index
 const CatalogEntry::NameSearchIndex& AnalyzedScript::GetNameSearchIndex() {
     if (!name_search_index.has_value()) {
         auto& index = name_search_index.emplace();
