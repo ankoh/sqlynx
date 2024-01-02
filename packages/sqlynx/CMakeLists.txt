@@ -279,6 +279,7 @@ if(NOT WASM)
   set(TEST_SRC
     ${CMAKE_SOURCE_DIR}/test/analyzer_snapshot_test_suite.cc
     ${CMAKE_SOURCE_DIR}/test/api_test.cc
+    ${CMAKE_SOURCE_DIR}/test/catalog_test.cc
     ${CMAKE_SOURCE_DIR}/test/chunk_buffer_test.cc
     ${CMAKE_SOURCE_DIR}/test/completion_snapshot_test_suite.cc
     ${CMAKE_SOURCE_DIR}/test/completion_test.cc
