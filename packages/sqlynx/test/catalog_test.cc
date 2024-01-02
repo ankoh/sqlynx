@@ -77,15 +77,26 @@ TEST(CatalogTest, SingleDescriptorPool) {
     ASSERT_EQ(status, proto::StatusCode::OK);
 
     Script script{catalog, 2};
-    script.InsertTextAt(0, "select * from db1.schema1.table1");
-    ASSERT_EQ(script.Scan().second, proto::StatusCode::OK);
-    ASSERT_EQ(script.Parse().second, proto::StatusCode::OK);
-    auto [analyzed, analyzed_status] = script.Analyze();
-    ASSERT_EQ(analyzed_status, proto::StatusCode::OK);
-    ASSERT_EQ(analyzed->table_references.size(), 1);
-    ASSERT_FALSE(analyzed->table_references[0].resolved_table_id.IsNull());
-    ASSERT_EQ(analyzed->table_references[0].resolved_table_id.GetExternalId(), 1);
-    ASSERT_EQ(analyzed->table_references[0].resolved_table_id.GetIndex(), 0);
+    {
+        script.ReplaceText("select * from db1.schema1.table1");
+        ASSERT_EQ(script.Scan().second, proto::StatusCode::OK);
+        ASSERT_EQ(script.Parse().second, proto::StatusCode::OK);
+        auto [analyzed, analysis_status] = script.Analyze();
+        ASSERT_EQ(analysis_status, proto::StatusCode::OK);
+        ASSERT_EQ(analyzed->table_references.size(), 1);
+        ASSERT_FALSE(analyzed->table_references[0].resolved_table_id.IsNull());
+        ASSERT_EQ(analyzed->table_references[0].resolved_table_id.GetExternalId(), 1);
+        ASSERT_EQ(analyzed->table_references[0].resolved_table_id.GetIndex(), 0);
+    }
+    {
+        script.ReplaceText("select * from db1.schema1.table2");
+        ASSERT_EQ(script.Scan().second, proto::StatusCode::OK);
+        ASSERT_EQ(script.Parse().second, proto::StatusCode::OK);
+        auto [analyzed, analysis_status] = script.Analyze();
+        ASSERT_EQ(analysis_status, proto::StatusCode::OK);
+        ASSERT_EQ(analyzed->table_references.size(), 1);
+        ASSERT_TRUE(analyzed->table_references[0].resolved_table_id.IsNull());
+    }
 }
 
 TEST(CatalogTest, DescriptorPoolIDCollision) {
