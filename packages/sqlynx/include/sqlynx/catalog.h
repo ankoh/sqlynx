@@ -226,9 +226,11 @@ class DescriptorPool : public CatalogEntry {
    public:
     /// Construcutor
     DescriptorPool(ExternalID external_id);
+    /// Get the name search index
+    const NameSearchIndex& GetNameSearchIndex() override;
     /// Add a schema descriptor
     proto::StatusCode AddSchemaDescriptor(const proto::SchemaDescriptor& descriptor,
-                                          std::unique_ptr<std::byte[]> descriptor_buffer);
+                                          std::unique_ptr<const std::byte[]> descriptor_buffer);
 };
 
 class Catalog {
@@ -255,6 +257,8 @@ class Catalog {
     std::unordered_map<ExternalID, CatalogEntry*> entries;
     /// The script entries
     std::unordered_map<Script*, ScriptEntry> script_entries;
+    /// The descriptor pool entries
+    std::unordered_map<ExternalID, DescriptorPool> descriptor_pool_entries;
     /// The schemas ordered by <rank>
     btree::set<std::tuple<Rank, ExternalID>> entries_ranked;
     /// The schemas ordered by <database, schema, rank>

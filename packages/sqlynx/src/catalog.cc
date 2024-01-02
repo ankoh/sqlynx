@@ -1,6 +1,7 @@
 #include "sqlynx/catalog.h"
 
 #include <flatbuffers/buffer.h>
+#include <flatbuffers/verifier.h>
 
 #include "sqlynx/external.h"
 #include "sqlynx/proto/proto_generated.h"
@@ -89,10 +90,14 @@ void CatalogEntry::ResolveTableColumn(std::string_view table_column,
     }
 }
 
-DescriptorPool::DescriptorPool(ExternalID external_id) : CatalogEntry(external_id, "", "") {}
+DescriptorPool::DescriptorPool(ExternalID external_id) : CatalogEntry(external_id, "", "") {
+    name_search_index.emplace(CatalogEntry::NameSearchIndex{});
+}
+
+const CatalogEntry::NameSearchIndex& DescriptorPool::GetNameSearchIndex() { return name_search_index.value(); }
 
 proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescriptor& descriptor,
-                                                      std::unique_ptr<std::byte[]> descriptor_buffer) {
+                                                      std::unique_ptr<const std::byte[]> descriptor_buffer) {
     if (!descriptor.tables()) {
         return proto::StatusCode::CATALOG_DESCRIPTOR_TABLES_NULL;
     }
@@ -103,7 +108,7 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
     // Read tables
     uint32_t table_id = 0;
     for (auto* table : *descriptor.tables()) {
-        ExternalObjectID table_object_id{external_id, ++table_id};
+        ExternalObjectID table_object_id{external_id, table_id++};
         // Get the table name
         auto table_name_ptr = table->table_name();
         if (!table_name_ptr || table_name_ptr->size() == 0) {
@@ -114,13 +119,18 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
         if (tables_by_name.contains(qualified_table_name)) {
             return proto::StatusCode::CATALOG_DESCRIPTOR_TABLE_NAME_COLLISION;
         }
-        // Begin of the columns
-        auto column_count = table->columns()->size();
+        // Collect the table columns (if any)
         std::vector<TableColumn> columns;
-        columns.reserve(column_count);
-        for (auto* column : *table->columns()) {
-            columns.emplace_back(std::nullopt, column->column_name()->string_view());
+        if (auto columns_ptr = table->columns()) {
+            auto column_count = table->columns()->size();
+            columns.reserve(column_count);
+            for (auto* column : *columns_ptr) {
+                if (auto column_name = column->column_name()) {
+                    columns.emplace_back(std::nullopt, column_name->string_view());
+                }
+            }
         }
+        // Create the table
         tables.Append(Table{table_object_id, std::nullopt, std::nullopt, std::nullopt,
                             QualifiedTableName{qualified_table_name}, std::move(columns)});
     }
@@ -282,19 +292,28 @@ void Catalog::DropScript(Script& script) {
     }
 }
 
-/// Add a schema
 proto::StatusCode Catalog::AddDescriptorPool(ExternalID external_id, Rank rank) {
     ++version;
     return proto::StatusCode::OK;
 }
-/// Drop a schema
+
 proto::StatusCode Catalog::DropDescriptorPool(ExternalID external_id) {
-    ++version;
+    auto iter = descriptor_pool_entries.find(external_id);
+    if (iter != descriptor_pool_entries.end()) {
+        descriptor_pool_entries.erase(iter);
+        ++version;
+    }
     return proto::StatusCode::OK;
 }
-/// Insert schema tables as serialized FlatBuffer
+
 proto::StatusCode Catalog::AddSchemaDescriptor(ExternalID external_id, std::span<const std::byte> descriptor_data,
                                                std::unique_ptr<const std::byte[]> descriptor_buffer) {
+    auto iter = descriptor_pool_entries.find(external_id);
+    if (iter == descriptor_pool_entries.end()) {
+        return proto::StatusCode::CATALOG_DESCRIPTOR_POOL_UNKNOWN;
+    }
+    auto* descriptor = flatbuffers::GetRoot<proto::SchemaDescriptor>(descriptor_data.data());
+    iter->second.AddSchemaDescriptor(*descriptor, std::move(descriptor_buffer));
     ++version;
     return proto::StatusCode::OK;
 }
