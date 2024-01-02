@@ -218,6 +218,10 @@ class DescriptorPool : public CatalogEntry {
     };
     /// The schema descriptors
     std::vector<Descriptor> descriptor_buffers;
+    /// The names
+    ChunkBuffer<CatalogEntry::NameInfo, 32> names;
+    /// The name infos
+    std::unordered_map<std::string_view, std::reference_wrapper<CatalogEntry::NameInfo>> name_infos;
 
    public:
     /// Construcutor
