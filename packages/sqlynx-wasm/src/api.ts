@@ -241,7 +241,7 @@ export class SQLynx {
         if (ptr == 0) {
             throw new Error(`failed to allocate a buffer of size ${src.length}`);
         }
-        const dst = new Uint8Array(this.memory.buffer).subarray(ptr, src.length);
+        const dst = new Uint8Array(this.memory.buffer).subarray(ptr, ptr + src.length);
         dst.set(src);
         return [ptr, src.length];
     }
@@ -568,9 +568,8 @@ export class SQLynxCatalog {
         const catalogPtr = this.ptr.assertNotNull();
         this.ptr.api.instanceExports.sqlynx_catalog_drop_script(catalogPtr, id);
     }
-    /// Insert tables of an external schema.
-    /// Fails if one of the tables already exists in the external schema.
-    public insertSchemaDescriptor(id: number, buffer: Uint8Array) {
+    /// Add a schema descriptor to a descriptor pool
+    public addSchemaDescriptor(id: number, buffer: Uint8Array) {
         const catalogPtr = this.ptr.assertNotNull();
         const [bufferPtr, bufferLength] = this.ptr.api.copyBuffer(buffer);
         const result = this.ptr.api.instanceExports.sqlynx_catalog_add_schema_descriptor(
@@ -581,13 +580,13 @@ export class SQLynxCatalog {
         );
         this.ptr.api.readStatusResult(result);
     }
-    /// Insert tables of an external schema
-    public insertSchemaTablesT(id: number, descriptor: proto.SchemaDescriptorT) {
+    /// Add a schema descriptor to a descriptor pool
+    public addSchemaDescriptorT(id: number, descriptor: proto.SchemaDescriptorT) {
         const builder = new flatbuffers.Builder();
         const descriptorOffset = descriptor.pack(builder);
         builder.finish(descriptorOffset);
         const buffer = builder.asUint8Array();
-        this.insertSchemaDescriptor(id, buffer);
+        this.addSchemaDescriptor(id, buffer);
     }
 }
 
@@ -632,7 +631,7 @@ export class SQLynxQueryGraphLayout {
     }
 }
 
-export namespace ExternalID {
+export namespace ExternalObjectID {
     export type Value = bigint;
 
     /// Create the external id
@@ -643,15 +642,15 @@ export namespace ExternalID {
         return (BigInt(context) << 32n) | BigInt(value);
     }
     /// Get the context id
-    export function getContext(value: Value): number {
+    export function getExternalID(value: Value): number {
         return Number(value >> 32n);
     }
     /// Mask index
-    export function getIndex(value: Value): number {
+    export function getObjectID(value: Value): number {
         return Number(value & 0xffffffffn);
     }
     /// Is a null id?
     export function isNull(value: Value): boolean {
-        return ExternalID.getIndex(value) == 0xffffffff;
+        return ExternalObjectID.getObjectID(value) == 0xffffffff;
     }
 }
