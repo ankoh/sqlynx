@@ -90,7 +90,7 @@ void CatalogEntry::ResolveTableColumn(std::string_view table_column,
     }
 }
 
-DescriptorPool::DescriptorPool(ExternalID external_id) : CatalogEntry(external_id, "", "") {
+DescriptorPool::DescriptorPool(ExternalID external_id, uint32_t rank) : CatalogEntry(external_id, "", ""), rank(rank) {
     name_search_index.emplace(CatalogEntry::NameSearchIndex{});
 }
 
@@ -101,6 +101,7 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
     if (!descriptor.tables()) {
         return proto::StatusCode::CATALOG_DESCRIPTOR_TABLES_NULL;
     }
+    descriptor_buffers.push_back({.descriptor = descriptor, .descriptor_buffer = std::move(descriptor_buffer)});
     std::string_view database_name =
         descriptor.database_name() == nullptr ? "" : descriptor.database_name()->string_view();
     std::string_view schema_name = descriptor.schema_name() == nullptr ? "" : descriptor.schema_name()->string_view();
@@ -193,7 +194,7 @@ void CatalogEntry::ResolveTableColumn(std::string_view table_column, const Catal
     ResolveTableColumn(table_column, tmp);
 }
 
-proto::StatusCode Catalog::LoadScript(Script& script, Rank rank) {
+proto::StatusCode Catalog::LoadScript(Script& script, CatalogEntry::Rank rank) {
     if (!script.analyzed_script) {
         return proto::StatusCode::CATALOG_SCRIPT_NOT_ANALYZED;
     }
@@ -292,7 +293,14 @@ void Catalog::DropScript(Script& script) {
     }
 }
 
-proto::StatusCode Catalog::AddDescriptorPool(ExternalID external_id, Rank rank) {
+proto::StatusCode Catalog::AddDescriptorPool(ExternalID external_id, CatalogEntry::Rank rank) {
+    if (entries.contains(external_id)) {
+        return proto::StatusCode::EXTERNAL_ID_COLLISION;
+    }
+    auto pool = std::make_unique<DescriptorPool>(external_id, rank);
+    entries.insert({external_id, pool.get()});
+    entries_ranked.insert({rank, external_id});
+    descriptor_pool_entries.insert({external_id, std::move(pool)});
     ++version;
     return proto::StatusCode::OK;
 }
@@ -312,8 +320,18 @@ proto::StatusCode Catalog::AddSchemaDescriptor(ExternalID external_id, std::span
     if (iter == descriptor_pool_entries.end()) {
         return proto::StatusCode::CATALOG_DESCRIPTOR_POOL_UNKNOWN;
     }
-    auto* descriptor = flatbuffers::GetRoot<proto::SchemaDescriptor>(descriptor_data.data());
-    iter->second.AddSchemaDescriptor(*descriptor, std::move(descriptor_buffer));
+    // Add schema descriptor
+    auto& pool = *iter->second;
+    auto& descriptor = *flatbuffers::GetRoot<proto::SchemaDescriptor>(descriptor_data.data());
+    pool.AddSchemaDescriptor(descriptor, std::move(descriptor_buffer));
+    // Register schema name
+    {
+        std::string_view database_name =
+            descriptor.database_name() == nullptr ? "" : descriptor.database_name()->string_view();
+        std::string_view schema_name =
+            descriptor.schema_name() == nullptr ? "" : descriptor.schema_name()->string_view();
+        entry_names_ranked.insert({database_name, schema_name, pool.GetRank(), external_id});
+    }
     ++version;
     return proto::StatusCode::OK;
 }

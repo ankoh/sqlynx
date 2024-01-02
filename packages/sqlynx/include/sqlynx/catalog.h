@@ -42,6 +42,7 @@ class CatalogEntry {
 
    public:
     using NameID = uint32_t;
+    using Rank = uint32_t;
 
     /// The name info
     struct NameInfo {
@@ -214,8 +215,10 @@ class DescriptorPool : public CatalogEntry {
         /// The descriptor
         const proto::SchemaDescriptor& descriptor;
         /// The descriptor buffer
-        std::unique_ptr<std::byte[]> descriptor_buffer;
+        std::unique_ptr<const std::byte[]> descriptor_buffer;
     };
+    /// The rank
+    Rank rank;
     /// The schema descriptors
     std::vector<Descriptor> descriptor_buffers;
     /// The names
@@ -225,7 +228,9 @@ class DescriptorPool : public CatalogEntry {
 
    public:
     /// Construcutor
-    DescriptorPool(ExternalID external_id);
+    DescriptorPool(ExternalID external_id, Rank rank);
+    /// Get the rank
+    auto GetRank() const { return rank; }
     /// Get the name search index
     const NameSearchIndex& GetNameSearchIndex() override;
     /// Add a schema descriptor
@@ -235,7 +240,6 @@ class DescriptorPool : public CatalogEntry {
 
 class Catalog {
    public:
-    using Rank = uint32_t;
     using Version = uint64_t;
 
    protected:
@@ -246,7 +250,7 @@ class Catalog {
         /// The analyzed script
         std::shared_ptr<AnalyzedScript> analyzed;
         /// The current rank
-        Rank rank;
+        CatalogEntry::Rank rank;
         /// The registered schema names
         std::unordered_set<std::pair<std::string_view, std::string_view>, TupleHasher> schema_names;
     };
@@ -258,11 +262,11 @@ class Catalog {
     /// The script entries
     std::unordered_map<Script*, ScriptEntry> script_entries;
     /// The descriptor pool entries
-    std::unordered_map<ExternalID, DescriptorPool> descriptor_pool_entries;
+    std::unordered_map<ExternalID, std::unique_ptr<DescriptorPool>> descriptor_pool_entries;
     /// The schemas ordered by <rank>
-    btree::set<std::tuple<Rank, ExternalID>> entries_ranked;
+    btree::set<std::tuple<CatalogEntry::Rank, ExternalID>> entries_ranked;
     /// The schemas ordered by <database, schema, rank>
-    btree::set<std::tuple<std::string_view, std::string_view, Rank, ExternalID>> entry_names_ranked;
+    btree::set<std::tuple<std::string_view, std::string_view, CatalogEntry::Rank, ExternalID>> entry_names_ranked;
 
     /// Update a script entry
     proto::StatusCode UpdateScript(ScriptEntry& entry);
@@ -295,11 +299,11 @@ class Catalog {
     }
 
     /// Add a script
-    proto::StatusCode LoadScript(Script& script, Rank rank);
+    proto::StatusCode LoadScript(Script& script, CatalogEntry::Rank rank);
     /// Drop a script
     void DropScript(Script& script);
     /// Add a descriptor pool
-    proto::StatusCode AddDescriptorPool(ExternalID external_id, Rank rank);
+    proto::StatusCode AddDescriptorPool(ExternalID external_id, CatalogEntry::Rank rank);
     /// Drop a descriptor pool
     proto::StatusCode DropDescriptorPool(ExternalID external_id);
     /// Add a schema descriptor as serialized FlatBuffer

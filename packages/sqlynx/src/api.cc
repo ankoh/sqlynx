@@ -83,6 +83,9 @@ static FFIResult* packError(proto::StatusCode status) {
         case proto::StatusCode::CATALOG_SCRIPT_UNKNOWN:
             message = "Script is missing in catalog";
             break;
+        case proto::StatusCode::CATALOG_DESCRIPTOR_POOL_UNKNOWN:
+            message = "Schema descriptor pool is not known";
+            break;
         case proto::StatusCode::CATALOG_DESCRIPTOR_TABLES_NULL:
             message = "Schema descriptor field `tables` is null or empty";
             break;
