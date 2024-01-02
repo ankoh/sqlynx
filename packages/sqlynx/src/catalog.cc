@@ -94,6 +94,10 @@ DescriptorPool::DescriptorPool(ExternalID external_id, uint32_t rank) : CatalogE
     name_search_index.emplace(CatalogEntry::NameSearchIndex{});
 }
 
+proto::CatalogEntry DescriptorPool::DescribeEntry() const {
+    return proto::CatalogEntry(external_id, proto::CatalogEntryType::DESCRIPTOR_POOL, 0);
+}
+
 const CatalogEntry::NameSearchIndex& DescriptorPool::GetNameSearchIndex() { return name_search_index.value(); }
 
 proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescriptor& descriptor,
@@ -192,6 +196,17 @@ void CatalogEntry::ResolveTableColumn(std::string_view table_column, const Catal
                                       std::vector<CatalogEntry::ResolvedTableColumn>& tmp) const {
     catalog.ResolveTableColumn(table_column, tmp);
     ResolveTableColumn(table_column, tmp);
+}
+
+proto::CatalogEntriesT Catalog::DescribeEntries() const {
+    proto::CatalogEntriesT result;
+    result.entries.reserve(entries.size());
+    for (auto& [rank, external_id] : entries_ranked) {
+        auto* entry = entries.at(external_id);
+        result.entries.push_back(entry->DescribeEntry());
+        result.entries.back().mutate_rank(rank);
+    }
+    return result;
 }
 
 proto::StatusCode Catalog::LoadScript(Script& script, CatalogEntry::Rank rank) {

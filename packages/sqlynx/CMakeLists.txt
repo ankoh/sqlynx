@@ -54,6 +54,7 @@ if(WASM)
         -Wl,--export=sqlynx_free \
         -Wl,--export=sqlynx_delete_result \
         -Wl,--export=sqlynx_catalog_new \
+        -Wl,--export=sqlynx_catalog_describe_entries \
         -Wl,--export=sqlynx_catalog_load_script \
         -Wl,--export=sqlynx_catalog_drop_script \
         -Wl,--export=sqlynx_catalog_add_descriptor_pool \

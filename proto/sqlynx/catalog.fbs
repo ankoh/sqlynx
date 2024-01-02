@@ -1,5 +1,20 @@
 namespace sqlynx.proto;
 
+enum CatalogEntryType: uint8 {
+    SCRIPT = 0,
+    DESCRIPTOR_POOL = 1,
+}
+
+struct CatalogEntry {
+    external_id: uint32;
+    entry_type: CatalogEntryType;
+    rank: uint32;
+}
+
+table CatalogEntries {
+    entries: [CatalogEntry];
+}
+
 table SchemaDescriptor {
     database_name: string;
     schema_name: string;

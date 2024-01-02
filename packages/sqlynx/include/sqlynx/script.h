@@ -268,6 +268,8 @@ class AnalyzedScript : public CatalogEntry {
     AnalyzedScript(std::shared_ptr<ParsedScript> parsed, const Catalog& catalog, std::string_view database_name,
                    std::string_view schema_name);
 
+    /// Describe the catalog entry
+    virtual proto::CatalogEntry DescribeEntry() const override;
     /// Get the name search index
     const CatalogEntry::NameSearchIndex& GetNameSearchIndex() override;
     /// Build the program

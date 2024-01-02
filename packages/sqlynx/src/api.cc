@@ -300,6 +300,14 @@ extern "C" FFIResult* sqlynx_script_get_statistics(sqlynx::Script* script) {
 
 /// Create a catalog
 extern "C" FFIResult* sqlynx_catalog_new() { return packPtr(std::make_unique<sqlynx::Catalog>()); }
+/// Describe all entries
+extern "C" FFIResult* sqlynx_catalog_describe_entries(sqlynx::Catalog* catalog) {
+    auto entries = catalog->DescribeEntries();
+    flatbuffers::FlatBufferBuilder fb;
+    fb.Finish(proto::CatalogEntries::Pack(fb, &entries));
+    auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));
+    return packBuffer(std::move(detached));
+}
 /// Add a script in the catalog
 extern "C" FFIResult* sqlynx_catalog_load_script(sqlynx::Catalog* catalog, sqlynx::Script* script, size_t rank) {
     auto status = catalog->LoadScript(*script, rank);

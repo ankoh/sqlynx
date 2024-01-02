@@ -159,7 +159,7 @@ class CatalogEntry {
     };
 
    protected:
-    /// The context id
+    /// The external id
     const ExternalID external_id;
     /// The default database name
     const std::string_view database_name;
@@ -190,6 +190,8 @@ class CatalogEntry {
         return name;
     }
 
+    /// Describe the catalog entry
+    virtual proto::CatalogEntry DescribeEntry() const = 0;
     /// Get the name search index
     virtual const NameSearchIndex& GetNameSearchIndex() = 0;
 
@@ -231,8 +233,12 @@ class DescriptorPool : public CatalogEntry {
     DescriptorPool(ExternalID external_id, Rank rank);
     /// Get the rank
     auto GetRank() const { return rank; }
+
+    /// Describe the catalog entry
+    proto::CatalogEntry DescribeEntry() const override;
     /// Get the name search index
     const NameSearchIndex& GetNameSearchIndex() override;
+
     /// Add a schema descriptor
     proto::StatusCode AddSchemaDescriptor(const proto::SchemaDescriptor& descriptor,
                                           std::unique_ptr<const std::byte[]> descriptor_buffer);
@@ -298,6 +304,8 @@ class Catalog {
         }
     }
 
+    /// Describe catalog entries
+    proto::CatalogEntriesT DescribeEntries() const;
     /// Add a script
     proto::StatusCode LoadScript(Script& script, CatalogEntry::Rank rank);
     /// Drop a script

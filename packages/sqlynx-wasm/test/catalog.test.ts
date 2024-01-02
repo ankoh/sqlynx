@@ -31,12 +31,20 @@ describe('Catalog Tests ', () => {
                 ]),
             ]),
         );
+        const description = catalog.describeEntries();
+        const catalogEntries = description.read(new sqlynx.proto.CatalogEntries()).unpack();
+        expect(catalogEntries.entries.length).toEqual(1);
+        expect(catalogEntries.entries[0].externalId).toEqual(1);
+        expect(catalogEntries.entries[0].entryType).toEqual(sqlynx.proto.CatalogEntryType.DESCRIPTOR_POOL);
+        expect(catalogEntries.entries[0].rank).toEqual(10);
+
         const script = lnx!.createScript(catalog, 2);
         script.replaceText('select * from db1.schema1.table1');
         script.scan().delete();
         script.parse().delete();
         const analyzed = script.analyze().read(new sqlynx.proto.AnalyzedScript());
         expect(analyzed.tableReferencesLength()).toEqual(1);
+
         const tableRef = analyzed.tableReferences(0)!;
         const resovledTableId = tableRef.resolvedTableId();
         expect(sqlynx.ExternalObjectID.isNull(resovledTableId)).toBeFalsy();
