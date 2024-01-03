@@ -315,7 +315,7 @@ function reduceScriptState(state: ScriptState, action: ScriptStateAction): Scrip
 /// Compute a schema graph
 function computeSchemaGraph(state: ScriptState, debug?: boolean): ScriptState {
     const main = state.scripts[ScriptKey.MAIN_SCRIPT] ?? null;
-    if (main == null || main.script == null) {
+    if (main == null || main.script == null || main.processed.analyzed == null) {
         return state;
     }
     state.graph!.configure(state.graphConfig);
