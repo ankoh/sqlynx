@@ -1,21 +1,21 @@
 import * as React from 'react';
 
 import { useSQLynx } from '../sqlynx_loader';
-import { AppState, ScriptKey } from './app_state';
+import { ScriptState, ScriptKey } from './script_state';
 import { Dispatch } from '../utils/action';
 import { RESULT_OK } from '../utils/result';
-import { TPCH_SCHEMA, exampleScripts } from '../scripts/example_scripts';
-import { AppStateAction, INITIALIZE, LOAD_SCRIPTS, useGlobalAppState } from './app_state_reducer';
+import { TPCH_SCHEMA, exampleScripts } from './example_scripts';
+import { ScriptStateAction, INITIALIZE, LOAD_SCRIPTS, useGlobalScriptState } from './script_state_reducer';
 
-const stateContext = React.createContext<AppState | null>(null);
-const stateDispatch = React.createContext<Dispatch<AppStateAction> | null>(null);
+const SCRIPT_STATE_CTX = React.createContext<ScriptState | null>(null);
+const SCRIPT_DISPATCH_CTX = React.createContext<Dispatch<ScriptStateAction> | null>(null);
 
 type Props = {
     children: React.ReactElement;
 };
 
-export const AppStateProvider: React.FC<Props> = (props: Props) => {
-    const [state, dispatch] = useGlobalAppState();
+export const ScriptStateProvider: React.FC<Props> = (props: Props) => {
+    const [state, dispatch] = useGlobalScriptState();
     const scriptsLoaded = React.useRef<boolean>(false);
 
     const lnxSetup = useSQLynx();
@@ -40,11 +40,11 @@ export const AppStateProvider: React.FC<Props> = (props: Props) => {
     }, [state.instance]);
 
     return (
-        <stateContext.Provider value={state}>
-            <stateDispatch.Provider value={dispatch}>{props.children}</stateDispatch.Provider>
-        </stateContext.Provider>
+        <SCRIPT_STATE_CTX.Provider value={state}>
+            <SCRIPT_DISPATCH_CTX.Provider value={dispatch}>{props.children}</SCRIPT_DISPATCH_CTX.Provider>
+        </SCRIPT_STATE_CTX.Provider>
     );
 };
 
-export const useAppState = (): AppState => React.useContext(stateContext)!;
-export const useAppStateDispatch = (): Dispatch<AppStateAction> => React.useContext(stateDispatch)!;
+export const useScriptState = (): ScriptState => React.useContext(SCRIPT_STATE_CTX)!;
+export const useScriptStateDispatch = (): Dispatch<ScriptStateAction> => React.useContext(SCRIPT_DISPATCH_CTX)!;

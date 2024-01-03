@@ -1,6 +1,6 @@
 import * as sqlynx from '@ankoh/sqlynx';
 
-import { AppState, ScriptKey } from '../../state/app_state';
+import { ScriptState, ScriptKey } from '../../scripts/script_state';
 import { EdgePathBuilder, EdgeType, PORTS_FROM, PORTS_TO, buildEdgePath, selectEdgeType } from './graph_edges';
 
 export interface Boundaries {
@@ -67,7 +67,7 @@ export namespace GraphConnectionId {
     }
 }
 
-export function computeGraphViewModel(state: AppState): GraphViewModel {
+export function computeGraphViewModel(state: ScriptState): GraphViewModel {
     const boundaries: Boundaries = {
         minX: 0,
         maxX: 0,

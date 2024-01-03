@@ -1,7 +1,7 @@
 import React from 'react';
-import CONFIG_URL from '../../static/config.json';
-import { Maybe, MaybeStatus } from '../utils/maybe';
-import { ConnectorConfigs, readConnectorConfigs } from './connector_configs';
+import CONFIG_URL from '../static/config.json';
+import { Maybe, MaybeStatus } from './utils/maybe';
+import { ConnectorConfigs, readConnectorConfigs } from './connectors/connector_configs';
 
 export interface AppFeatures {
     userAccount?: boolean;

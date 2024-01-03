@@ -12,7 +12,7 @@ import {
     AUTH_FLOW_DEFAULT_STATE,
 } from './salesforce_auth_state';
 import { useSalesforceConnector } from './salesforce_connector';
-import { useAppConfig } from '../state/app_config';
+import { useAppConfig } from '../app_config';
 
 interface Props {
     children: React.ReactElement;

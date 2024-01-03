@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Action } from '../../utils/action';
 import { EdgeViewModel, GraphConnectionId, Boundaries } from './graph_view_model';
-import { FocusInfo } from '../../state/focus';
+import { FocusInfo } from '../../scripts/focus';
 
 interface Props {
     className?: string;

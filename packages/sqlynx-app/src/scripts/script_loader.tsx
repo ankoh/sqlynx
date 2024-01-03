@@ -1,21 +1,20 @@
 import React from 'react';
 
 import { ScriptMetadata } from './script_metadata';
-import { SCRIPT_LOADING_FAILED, SCRIPT_LOADING_STARTED, SCRIPT_LOADING_SUCCEEDED } from '../state/app_state_reducer';
-import { useAppState, useAppStateDispatch } from '../state/app_state_provider';
-import { ScriptData, ScriptKey } from '../state/app_state';
+import { SCRIPT_LOADING_FAILED, SCRIPT_LOADING_STARTED, SCRIPT_LOADING_SUCCEEDED } from './script_state_reducer';
+import { useScriptState, useScriptStateDispatch } from './script_state_provider';
+import { ScriptData, ScriptKey } from './script_state';
 
-/// The loading status
-export enum LoadingStatus {
+export enum ScriptLoadingStatus {
     PENDING = 1,
     STARTED = 2,
     SUCCEEDED = 3,
     FAILED = 4,
 }
 
-export interface LoadingInfo {
+export interface ScriptLoadingInfo {
     /// The loading status
-    status: LoadingStatus;
+    status: ScriptLoadingStatus;
     /// The loading error (if any)
     error: Error | null;
     /// The time at which the loading started (if any)
@@ -39,8 +38,8 @@ interface Props {
 }
 
 export const ScriptLoader: React.FC<Props> = (props: Props) => {
-    const appState = useAppState();
-    const appStateDispatch = useAppStateDispatch();
+    const scriptState = useScriptState();
+    const scriptStateDispatch = useScriptStateDispatch();
     const state = React.useRef<LoaderState>({
         scripts: new Map<string, ScriptLoadingState>(),
     });
@@ -51,11 +50,11 @@ export const ScriptLoader: React.FC<Props> = (props: Props) => {
             return;
         }
         // Skip if we're already loading it
-        if (script.loading.status != LoadingStatus.PENDING) {
+        if (script.loading.status != ScriptLoadingStatus.PENDING) {
             return;
         }
         // Mark the script as loading
-        appStateDispatch({
+        scriptStateDispatch({
             type: SCRIPT_LOADING_STARTED,
             value: script.scriptKey,
         });
@@ -63,13 +62,13 @@ export const ScriptLoader: React.FC<Props> = (props: Props) => {
         const waitForResult = async (key: ScriptKey, inflight: Promise<string>) => {
             try {
                 const content = await inflight;
-                appStateDispatch({
+                scriptStateDispatch({
                     type: SCRIPT_LOADING_SUCCEEDED,
                     value: [key, content],
                 });
             } catch (e: any) {
                 console.warn(e);
-                appStateDispatch({
+                scriptStateDispatch({
                     type: SCRIPT_LOADING_FAILED,
                     value: [key, e],
                 });
@@ -105,12 +104,12 @@ export const ScriptLoader: React.FC<Props> = (props: Props) => {
     };
 
     React.useEffect(
-        () => loadIfNeeded(appState.scripts[ScriptKey.MAIN_SCRIPT] ?? null),
-        [appState.scripts[ScriptKey.MAIN_SCRIPT]?.metadata],
+        () => loadIfNeeded(scriptState.scripts[ScriptKey.MAIN_SCRIPT] ?? null),
+        [scriptState.scripts[ScriptKey.MAIN_SCRIPT]?.metadata],
     );
     React.useEffect(
-        () => loadIfNeeded(appState.scripts[ScriptKey.SCHEMA_SCRIPT] ?? null),
-        [appState.scripts[ScriptKey.SCHEMA_SCRIPT]?.metadata],
+        () => loadIfNeeded(scriptState.scripts[ScriptKey.SCHEMA_SCRIPT] ?? null),
+        [scriptState.scripts[ScriptKey.SCHEMA_SCRIPT]?.metadata],
     );
     return props.children;
 };

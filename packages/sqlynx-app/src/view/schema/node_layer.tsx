@@ -5,7 +5,7 @@ import cn from 'classnames';
 import { Action } from '../../utils/action';
 import { NodeViewModel, EdgeViewModel, GraphConnectionId, GraphNodeDescriptor, Boundaries } from './graph_view_model';
 import { NodePort } from './graph_edges';
-import { FocusInfo } from '../../state/focus';
+import { FocusInfo } from '../../scripts/focus';
 
 import icons from '../../../static/svg/symbols.generated.svg';
 

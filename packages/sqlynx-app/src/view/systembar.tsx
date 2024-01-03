@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { RefreshingLogViewer } from './log_viewer';
-import { useAppConfig } from '../state/app_config';
+import { useAppConfig } from '../app_config';
 import { Button, HoverMode } from './button';
 
 import styles from './systembar.module.css';
