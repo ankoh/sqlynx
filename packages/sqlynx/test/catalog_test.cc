@@ -61,6 +61,32 @@ std::pair<std::span<const std::byte>, std::unique_ptr<const std::byte[]>> PackSc
     return {data_span, std::move(buffer_owned)};
 }
 
+TEST(CatalogTest, Clear) {
+    Catalog catalog;
+    ASSERT_EQ(catalog.AddDescriptorPool(1, 10), proto::StatusCode::OK);
+
+    auto [descriptor, descriptor_buffer] = PackSchema(Schema{
+        .database_name = "db1",
+        .schema_name = "schema1",
+        .tables = {SchemaTable{
+            .table_name = "table1",
+            .table_columns = {SchemaTableColumn{.column_name = "column1"}, SchemaTableColumn{.column_name = "column2"},
+                              SchemaTableColumn{.column_name = "column3"}}}},
+    });
+    auto status = catalog.AddSchemaDescriptor(1, descriptor, std::move(descriptor_buffer));
+    ASSERT_EQ(status, proto::StatusCode::OK);
+
+    auto description = catalog.DescribeEntries();
+    ASSERT_EQ(description.entries.size(), 1);
+    ASSERT_EQ(description.entries[0].external_id(), 1);
+    ASSERT_EQ(description.entries[0].entry_type(), proto::CatalogEntryType::DESCRIPTOR_POOL);
+
+    catalog.Clear();
+
+    description = catalog.DescribeEntries();
+    ASSERT_EQ(description.entries.size(), 0);
+}
+
 TEST(CatalogTest, SingleDescriptorPool) {
     Catalog catalog;
     ASSERT_EQ(catalog.AddDescriptorPool(1, 10), proto::StatusCode::OK);

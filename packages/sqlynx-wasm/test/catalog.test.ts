@@ -18,6 +18,32 @@ beforeAll(async () => {
 });
 
 describe('Catalog Tests ', () => {
+    it('clear catalog', () => {
+        const catalog = lnx!.createCatalog();
+        catalog.addDescriptorPool(1, 10);
+        catalog.addSchemaDescriptorT(
+            1,
+            new sqlynx.proto.SchemaDescriptorT('db1', 'schema1', [
+                new sqlynx.proto.SchemaTableT('table1', [
+                    new sqlynx.proto.SchemaTableColumnT('column1'),
+                    new sqlynx.proto.SchemaTableColumnT('column2'),
+                    new sqlynx.proto.SchemaTableColumnT('column3'),
+                ]),
+            ]),
+        );
+        let descriptionBuffer = catalog.describeEntries();
+        let description = descriptionBuffer.read(new sqlynx.proto.CatalogEntries());
+        expect(description.entriesLength()).toEqual(1);
+        descriptionBuffer.delete();
+
+        catalog.clear();
+
+        descriptionBuffer = catalog.describeEntries();
+        description = descriptionBuffer.read(new sqlynx.proto.CatalogEntries());
+        expect(description.entriesLength()).toEqual(0);
+        descriptionBuffer.delete();
+    });
+
     it('dynamic registration', () => {
         const catalog = lnx!.createCatalog();
         catalog.addDescriptorPool(1, 10);
