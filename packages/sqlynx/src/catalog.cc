@@ -198,6 +198,15 @@ void CatalogEntry::ResolveTableColumn(std::string_view table_column, const Catal
     ResolveTableColumn(table_column, tmp);
 }
 
+void Catalog::Clear() {
+    entry_names_ranked.clear();
+    entries_ranked.clear();
+    entries.clear();
+    script_entries.clear();
+    descriptor_pool_entries.clear();
+    ++version;
+}
+
 proto::CatalogEntriesT Catalog::DescribeEntries() const {
     proto::CatalogEntriesT result;
     result.entries.reserve(entries.size());

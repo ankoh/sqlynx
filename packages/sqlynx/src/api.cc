@@ -300,6 +300,8 @@ extern "C" FFIResult* sqlynx_script_get_statistics(sqlynx::Script* script) {
 
 /// Create a catalog
 extern "C" FFIResult* sqlynx_catalog_new() { return packPtr(std::make_unique<sqlynx::Catalog>()); }
+/// Clear a catalog
+extern "C" void sqlynx_catalog_clear(sqlynx::Catalog* catalog) { catalog->Clear(); }
 /// Describe all entries
 extern "C" FFIResult* sqlynx_catalog_describe_entries(sqlynx::Catalog* catalog) {
     auto entries = catalog->DescribeEntries();

@@ -29,6 +29,7 @@ interface SQLynxModuleExports {
     sqlynx_script_get_statistics: (ptr: number) => number;
 
     sqlynx_catalog_new: () => number;
+    sqlynx_catalog_clear: (catalog_ptr: number) => void;
     sqlynx_catalog_describe_entries: (catalog_ptr: number) => number;
     sqlynx_catalog_load_script: (catalog_ptr: number, script_ptr: number, rank: number) => number;
     sqlynx_catalog_update_script: (catalog_ptr: number, script_ptr: number) => number;
@@ -91,6 +92,7 @@ export class SQLynx {
                 schema_name_ptr: number,
                 schema_name_length: number,
             ) => number,
+            sqlynx_catalog_clear: instance.exports['sqlynx_catalog_clear'] as (ptr: number) => void,
             sqlynx_script_insert_text_at: instance.exports['sqlynx_script_insert_text_at'] as (
                 ptr: number,
                 offset: number,
@@ -547,6 +549,11 @@ export class SQLynxCatalog {
     /// Delete the graph
     public delete() {
         this.ptr.delete();
+    }
+    /// Reset a catalog
+    public clear(): void {
+        const catalogPtr = this.ptr.assertNotNull();
+        this.ptr.api.instanceExports.sqlynx_catalog_clear(catalogPtr);
     }
     /// Add a script in the registry
     public describeEntries(): FlatBufferPtr<proto.CatalogEntries> {

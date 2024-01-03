@@ -304,6 +304,8 @@ class Catalog {
         }
     }
 
+    /// Clear a catalog
+    void Clear();
     /// Describe catalog entries
     proto::CatalogEntriesT DescribeEntries() const;
     /// Add a script
