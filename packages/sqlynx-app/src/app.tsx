@@ -8,9 +8,10 @@ import { OAuthCallbackPage } from './view/pages/oauth_callback_page';
 import { ScriptLoader } from './scripts/script_loader';
 import { ScriptStateProvider, useScriptState } from './scripts/script_state_provider';
 import { SalesforceConnector } from './connectors/salesforce_connector';
+import { SalesforceCatalogLoader } from './connectors/salesforce_catalog_loader';
+import { CatalogLoader } from './connectors/catalog_loader';
 import { LogProvider } from './app_log';
 import { AppConfigResolver } from './app_config';
-import { CatalogLoader } from './connectors/catalog_loader';
 
 import { ThemeProvider } from '@primer/react';
 import { StyleSheetManager } from 'styled-components';
@@ -40,9 +41,11 @@ const AppProviders = (props: { children: React.ReactElement }) => (
                 <SQLynxLoader>
                     <SalesforceConnector>
                         <ScriptStateProvider>
-                            <ScriptLoader>
-                                <ScriptCatalogLoader>{props.children}</ScriptCatalogLoader>
-                            </ScriptLoader>
+                            <ScriptLoader />
+                            <ScriptCatalogLoader>
+                                <SalesforceCatalogLoader />
+                            </ScriptCatalogLoader>
+                            {props.children}
                         </ScriptStateProvider>
                     </SalesforceConnector>
                 </SQLynxLoader>

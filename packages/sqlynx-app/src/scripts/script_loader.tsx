@@ -34,13 +34,13 @@ interface LoaderState {
     scripts: Map<string, ScriptLoadingState>;
 }
 interface Props {
-    children: React.ReactElement;
+    children?: React.ReactElement;
 }
 
 export const ScriptLoader: React.FC<Props> = (props: Props) => {
     const scriptState = useScriptState();
     const scriptStateDispatch = useScriptStateDispatch();
-    const state = React.useRef<LoaderState>({
+    const internal = React.useRef<LoaderState>({
         scripts: new Map<string, ScriptLoadingState>(),
     });
 
@@ -78,7 +78,7 @@ export const ScriptLoader: React.FC<Props> = (props: Props) => {
         // This may happen if the user decided to load the script twice.
         // We'll just await the promise and store a duplicated script
         const flightKey = script.scriptKey + script.metadata.scriptId;
-        const existing = state.current.scripts.get(flightKey);
+        const existing = internal.current.scripts.get(flightKey);
         if (existing) {
             return;
         }
@@ -88,7 +88,7 @@ export const ScriptLoader: React.FC<Props> = (props: Props) => {
             inflight = (async () => {
                 const response = await fetch(script.metadata.httpURL!);
                 const content = await response.text();
-                state.current.scripts.delete(flightKey);
+                internal.current.scripts.delete(flightKey);
                 return content;
             })();
         }
@@ -98,7 +98,7 @@ export const ScriptLoader: React.FC<Props> = (props: Props) => {
             inflight: inflight ?? Promise.reject(`unsupported script type: ${script.metadata.scriptType}`),
         };
         // Register inflight request
-        state.current.scripts.set(flightKey, loadingState);
+        internal.current.scripts.set(flightKey, loadingState);
         // Wait for result
         waitForResult(script.scriptKey, loadingState.inflight);
     };

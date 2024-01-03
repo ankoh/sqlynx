@@ -52,6 +52,7 @@ export class SalesforceAPIClientMock implements SalesforceConnectorInterface {
         _access: SalesforceDataCloudAccessToken,
         _cancel: AbortSignal,
     ): Promise<SalesforceMetadata> {
+        console.log('mock(getDataCloudMetadata)');
         await sleep(200);
         return this.mock.dataCloudMetadata;
     }

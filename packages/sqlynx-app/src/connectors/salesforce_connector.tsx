@@ -5,7 +5,6 @@ import { useAppConfig } from '../app_config';
 import { SalesforceAuthFlow } from './salesforce_auth_flow';
 import { SalesforceAuthFlowMock } from './salesforce_auth_flow_mock';
 import { SalesforceUserInfoResolver } from './salesforce_userinfo_resolver';
-import { SalesforceMetadataResolver } from './salesforce_metadata_resolver';
 
 const CONNECTOR_CTX = React.createContext<SalesforceConnectorInterface | null>(null);
 
@@ -22,9 +21,7 @@ export const SalesforceConnector: React.FC<Props> = (props: Props) => {
         return (
             <CONNECTOR_CTX.Provider value={api}>
                 <SalesforceAuthFlowMock>
-                    <SalesforceUserInfoResolver>
-                        <SalesforceMetadataResolver>{props.children}</SalesforceMetadataResolver>
-                    </SalesforceUserInfoResolver>
+                    <SalesforceUserInfoResolver>{props.children}</SalesforceUserInfoResolver>
                 </SalesforceAuthFlowMock>
             </CONNECTOR_CTX.Provider>
         );
@@ -33,9 +30,7 @@ export const SalesforceConnector: React.FC<Props> = (props: Props) => {
         return (
             <CONNECTOR_CTX.Provider value={api}>
                 <SalesforceAuthFlow>
-                    <SalesforceUserInfoResolver>
-                        <SalesforceMetadataResolver>{props.children}</SalesforceMetadataResolver>
-                    </SalesforceUserInfoResolver>
+                    <SalesforceUserInfoResolver>{props.children}</SalesforceUserInfoResolver>
                 </SalesforceAuthFlow>
             </CONNECTOR_CTX.Provider>
         );

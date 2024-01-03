@@ -6,7 +6,7 @@ import {
     UPDATE_SALESFORCE_DATA_CLOUD_METADATA,
     UpdateDataCloudMetadataTask,
     updateDataCloudMetadata,
-} from './salesforce_catalog_update';
+} from './salesforce_catalog_loader';
 import { Action, Dispatch } from '../utils';
 
 export type CatalogLoadTaskVariant = Action<typeof UPDATE_SALESFORCE_DATA_CLOUD_METADATA, UpdateDataCloudMetadataTask>;
@@ -171,3 +171,5 @@ export const CatalogLoader: React.FC<Props> = (props: Props) => {
         </UPDATER_STATE_CTX.Provider>
     );
 };
+
+export const useCatalogLoader = (): Dispatch<CatalogLoadTaskVariant> => React.useContext(UPDATER_DISPATCH_CTX)!;
