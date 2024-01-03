@@ -62,9 +62,7 @@ export const HyperGrpcConnectorPanel: React.FC<HyperGrpcConnectorPanelProps> = (
                             sx={{ marginTop: '4px' }}
                         >
                             <SegmentedControl.Button selected={selectedProtocol === 0}>gRPC</SegmentedControl.Button>
-                            <SegmentedControl.Button selected={selectedProtocol === 1}>
-                                gRPC Web
-                            </SegmentedControl.Button>
+                            <SegmentedControl.Button selected={selectedProtocol === 1}>Web</SegmentedControl.Button>
                         </SegmentedControl>
                         <FormControl.Caption>
                             {selectedProtocol === 0 ? 'gRPC through Electron' : 'gRPC Web through Browser'}

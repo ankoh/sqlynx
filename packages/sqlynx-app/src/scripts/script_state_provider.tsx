@@ -11,7 +11,7 @@ const SCRIPT_STATE_CTX = React.createContext<ScriptState | null>(null);
 const SCRIPT_DISPATCH_CTX = React.createContext<Dispatch<ScriptStateAction> | null>(null);
 
 type Props = {
-    children: React.ReactElement;
+    children: React.ReactElement[];
 };
 
 export const ScriptStateProvider: React.FC<Props> = (props: Props) => {
