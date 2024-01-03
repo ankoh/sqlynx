@@ -1,7 +1,7 @@
 import React from 'react';
 import { SalesforceAPIClient, SalesforceConnectorInterface } from './salesforce_api_client';
 import { SalesforceAPIClientMock } from './salesforce_api_client_mock';
-import { useAppConfig } from '../state/app_config';
+import { useAppConfig } from '../app_config';
 import { SalesforceAuthFlow } from './salesforce_auth_flow';
 import { SalesforceAuthFlowMock } from './salesforce_auth_flow_mock';
 import { SalesforceUserInfoResolver } from './salesforce_userinfo_resolver';

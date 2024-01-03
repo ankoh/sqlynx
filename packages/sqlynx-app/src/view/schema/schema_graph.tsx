@@ -3,8 +3,8 @@ import { NodeLayer } from './node_layer';
 import { EdgeHighlightingLayer, EdgeLayer } from './edge_layer';
 import { GraphNodeDescriptor } from './graph_view_model';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { useAppStateDispatch, useAppState } from '../../state/app_state_provider';
-import { FOCUS_GRAPH_EDGE, FOCUS_GRAPH_NODE, RESIZE_SCHEMA_GRAPH } from '../../state/app_state_reducer';
+import { useScriptStateDispatch, useScriptState } from '../../scripts/script_state_provider';
+import { FOCUS_GRAPH_EDGE, FOCUS_GRAPH_NODE, RESIZE_SCHEMA_GRAPH } from '../../scripts/script_state_reducer';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 
 import styles from './schema_graph.module.css';
@@ -14,8 +14,8 @@ import icons from '../../../static/svg/symbols.generated.svg';
 interface SchemaGraphViewProps {}
 
 const SchemaGraphView: React.FC<SchemaGraphViewProps> = (props: SchemaGraphViewProps) => {
-    const state = useAppState();
-    const dispatch = useAppStateDispatch();
+    const state = useScriptState();
+    const dispatch = useScriptStateDispatch();
 
     // Helper to change node focus
     const onNodeFocusChanged = React.useCallback(
@@ -75,7 +75,7 @@ interface SchemaGraphBoardProps {
 }
 
 const SchemaGraphBoard: React.FC<SchemaGraphBoardProps> = (props: SchemaGraphBoardProps) => {
-    const dispatch = useAppStateDispatch();
+    const dispatch = useScriptStateDispatch();
 
     // Recompute the schema graph if the graph dimension hints change
     React.useEffect(() => {

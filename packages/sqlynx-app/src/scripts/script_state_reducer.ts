@@ -2,11 +2,11 @@ import * as sqlynx from '@ankoh/sqlynx';
 import * as React from 'react';
 
 import { SQLynxScriptBuffers, analyzeScript, parseAndAnalyzeScript } from '../view/editor/sqlynx_processor';
-import { AppState, ScriptKey, createDefaultState, createEmptyScript, destroyState } from './app_state';
+import { ScriptState, ScriptKey, createDefaultState, createEmptyScript, destroyState } from './script_state';
 import { deriveScriptFocusFromCursor, focusGraphEdge, focusGraphNode } from './focus';
 import { Action, Dispatch } from '../utils/action';
-import { ScriptMetadata } from '../scripts/script_metadata';
-import { LoadingStatus } from '../scripts/script_loader';
+import { ScriptMetadata } from './script_metadata';
+import { ScriptLoadingStatus } from './script_loader';
 import { GraphConnectionId, GraphNodeDescriptor, computeGraphViewModel } from '../view/schema/graph_view_model';
 import Immutable from 'immutable';
 
@@ -23,7 +23,7 @@ export const RESIZE_SCHEMA_GRAPH = Symbol('RESIZE_EDITOR');
 export const DEBUG_GRAPH_LAYOUT = Symbol('DEBUG_GRAPH_LAYOUT');
 export const DESTROY = Symbol('DESTROY');
 
-export type AppStateAction =
+export type ScriptStateAction =
     | Action<typeof INITIALIZE, sqlynx.SQLynx>
     | Action<typeof LOAD_SCRIPTS, { [key: number]: ScriptMetadata }>
     | Action<typeof UPDATE_SCRIPT_ANALYSIS, [ScriptKey, SQLynxScriptBuffers, sqlynx.proto.ScriptCursorInfoT]>
@@ -35,7 +35,7 @@ export type AppStateAction =
     | Action<typeof FOCUS_GRAPH_EDGE, GraphConnectionId.Value | null>
     | Action<typeof RESIZE_SCHEMA_GRAPH, [number, number]> // width, height
     | Action<typeof DEBUG_GRAPH_LAYOUT, boolean>
-    | Action<typeof DESTROY, undefined>;
+    | Action<typeof DESTROY, null>;
 
 const SCHEMA_SCRIPT_CATALOG_RANK = 1e9;
 const STATS_HISTORY_LIMIT = 20;
@@ -48,13 +48,13 @@ const STATS_HISTORY_LIMIT = 20;
 ///
 /// We therefore bypass the "pureness" rules for the top-level state and use a single global state instead.
 
-let GLOBAL_STATE: AppState = createDefaultState();
+let GLOBAL_STATE: ScriptState = createDefaultState();
 
-export function useGlobalAppState(): [AppState, Dispatch<AppStateAction>] {
+export function useGlobalScriptState(): [ScriptState, Dispatch<ScriptStateAction>] {
     const [state, setState] = React.useState(GLOBAL_STATE);
     const reducer = React.useCallback(
-        (action: AppStateAction) => {
-            GLOBAL_STATE = reduceAppState(GLOBAL_STATE, action);
+        (action: ScriptStateAction) => {
+            GLOBAL_STATE = reduceScriptState(GLOBAL_STATE, action);
             setState(GLOBAL_STATE);
         },
         [setState],
@@ -62,7 +62,7 @@ export function useGlobalAppState(): [AppState, Dispatch<AppStateAction>] {
     return [state, reducer];
 }
 
-function reduceAppState(state: AppState, action: AppStateAction): AppState {
+function reduceScriptState(state: ScriptState, action: ScriptStateAction): ScriptState {
     switch (action.type) {
         case INITIALIZE: {
             const lnx = action.value;
@@ -70,7 +70,7 @@ function reduceAppState(state: AppState, action: AppStateAction): AppState {
             const mainScript = lnx.createScript(catalog, ScriptKey.MAIN_SCRIPT);
             const schemaScript = lnx.createScript(catalog, ScriptKey.SCHEMA_SCRIPT);
             const graph = lnx.createQueryGraphLayout();
-            const next: AppState = {
+            const next: ScriptState = {
                 ...state,
                 instance: lnx,
                 catalog,
@@ -88,7 +88,7 @@ function reduceAppState(state: AppState, action: AppStateAction): AppState {
             // Store the new buffers
             let scriptData = state.scripts[scriptKey];
             scriptData.processed.destroy(scriptData.processed);
-            const next: AppState = {
+            const next: ScriptState = {
                 ...state,
                 scripts: {
                     ...state.scripts,
@@ -120,7 +120,7 @@ function reduceAppState(state: AppState, action: AppStateAction): AppState {
             // Destroy previous cursor
             const [scriptKey, cursor] = action.value;
             // Store new cursor
-            const newState: AppState = {
+            const newState: ScriptState = {
                 ...state,
                 scripts: {
                     ...state.scripts,
@@ -142,7 +142,7 @@ function reduceAppState(state: AppState, action: AppStateAction): AppState {
                     [action.value]: {
                         ...state.scripts[action.value],
                         loading: {
-                            status: LoadingStatus.STARTED,
+                            status: ScriptLoadingStatus.STARTED,
                             startedAt: new Date(),
                             finishedAt: null,
                             error: null,
@@ -159,7 +159,7 @@ function reduceAppState(state: AppState, action: AppStateAction): AppState {
                     [action.value[0]]: {
                         ...data,
                         loading: {
-                            status: LoadingStatus.FAILED,
+                            status: ScriptLoadingStatus.FAILED,
                             startedAt: data.loading.startedAt,
                             finishedAt: new Date(),
                             error: action.value[1],
@@ -179,7 +179,7 @@ function reduceAppState(state: AppState, action: AppStateAction): AppState {
                     [scriptKey]: {
                         ...data,
                         loading: {
-                            status: LoadingStatus.SUCCEEDED,
+                            status: ScriptLoadingStatus.SUCCEEDED,
                             startedAt: data.loading.startedAt,
                             finishedAt: new Date(),
                             error: null,
@@ -244,7 +244,7 @@ function reduceAppState(state: AppState, action: AppStateAction): AppState {
                 next.scripts[scriptKey] = {
                     ...next.scripts[scriptKey],
                     loading: {
-                        status: LoadingStatus.FAILED,
+                        status: ScriptLoadingStatus.FAILED,
                         startedAt: data.loading.startedAt,
                         finishedAt: new Date(),
                         error: e,
@@ -268,7 +268,7 @@ function reduceAppState(state: AppState, action: AppStateAction): AppState {
                     script: prev.script,
                     metadata: metadata,
                     loading: {
-                        status: LoadingStatus.PENDING,
+                        status: ScriptLoadingStatus.PENDING,
                         error: null,
                         startedAt: null,
                         finishedAt: null,
@@ -306,7 +306,7 @@ function reduceAppState(state: AppState, action: AppStateAction): AppState {
 }
 
 /// Compute a schema graph
-function computeSchemaGraph(state: AppState, debug?: boolean): AppState {
+function computeSchemaGraph(state: ScriptState, debug?: boolean): ScriptState {
     const main = state.scripts[ScriptKey.MAIN_SCRIPT] ?? null;
     if (main == null || main.script == null) {
         return state;

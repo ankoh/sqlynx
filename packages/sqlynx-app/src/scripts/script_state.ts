@@ -1,12 +1,11 @@
 import * as sqlynx from '@ankoh/sqlynx';
 import Immutable from 'immutable';
 
-import { generateBlankScript, ScriptMetadata } from '../scripts/script_metadata';
-import { LoadingStatus } from '../scripts/script_loader';
-
+import { generateBlankScript, ScriptMetadata } from './script_metadata';
+import { ScriptLoadingStatus } from './script_loader';
 import { SQLynxScriptBuffers } from '../view/editor/sqlynx_processor';
 import { GraphViewModel } from '../view/schema/graph_view_model';
-import { LoadingInfo } from '../scripts/script_loader';
+import { ScriptLoadingInfo } from './script_loader';
 import { FocusInfo } from './focus';
 
 const DEFAULT_BOARD_WIDTH = 800;
@@ -18,9 +17,11 @@ export enum ScriptKey {
     SCHEMA_SCRIPT = 2,
 }
 /// The state of the application
-export interface AppState {
+export interface ScriptState {
     /// The API
     instance: sqlynx.SQLynx | null;
+    /// The catalog update info
+    catalogVersion: number;
     /// The catalog
     catalog: sqlynx.SQLynxCatalog | null;
     /// The main script
@@ -48,7 +49,7 @@ export interface ScriptData {
     /// The metadata
     metadata: ScriptMetadata;
     /// The loading info
-    loading: LoadingInfo;
+    loading: ScriptLoadingInfo;
     /// The processed scripts
     processed: SQLynxScriptBuffers;
     /// The statistics
@@ -58,7 +59,7 @@ export interface ScriptData {
 }
 
 /// Destroy a state
-export function destroyState(state: AppState): AppState {
+export function destroyState(state: ScriptState): ScriptState {
     const main = state.scripts[ScriptKey.MAIN_SCRIPT];
     const schema = state.scripts[ScriptKey.SCHEMA_SCRIPT];
     main.processed.destroy(main.processed);
@@ -87,7 +88,7 @@ export function createDefaultScript(key: ScriptKey) {
         script: null,
         metadata: generateBlankScript(),
         loading: {
-            status: LoadingStatus.SUCCEEDED,
+            status: ScriptLoadingStatus.SUCCEEDED,
             error: null,
             startedAt: null,
             finishedAt: null,
@@ -111,7 +112,7 @@ export function createEmptyScript(key: ScriptKey, empty: sqlynx.SQLynxScript) {
         script: empty,
         metadata: generateBlankScript(),
         loading: {
-            status: LoadingStatus.SUCCEEDED,
+            status: ScriptLoadingStatus.SUCCEEDED,
             error: null,
             startedAt: null,
             finishedAt: null,
@@ -128,10 +129,11 @@ export function createEmptyScript(key: ScriptKey, empty: sqlynx.SQLynxScript) {
     return script;
 }
 
-export function createDefaultState(): AppState {
+export function createDefaultState(): ScriptState {
     return {
         instance: null,
         scripts: {},
+        catalogVersion: 1,
         catalog: null,
         graph: null,
         graphConfig: {

@@ -4,7 +4,7 @@ import { ActionList, IconButton, ButtonGroup } from '@primer/react';
 import { TriangleDownIcon, SyncIcon, PaperAirplaneIcon, LinkIcon, DownloadIcon } from '@primer/octicons-react';
 
 import { useSQLynx } from '../../sqlynx_loader';
-import { useAppConfig } from '../../state/app_config';
+import { useAppConfig } from '../../app_config';
 import { ScriptEditor } from '../editor/editor';
 import { SchemaGraph } from '../../view/schema/schema_graph';
 import { TabCard } from '../../view/tab_card';

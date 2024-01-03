@@ -23,7 +23,7 @@ export function SalesforceMetadataResolver(props: Props) {
         // Clear old user info whenever the api changes
         setState(s => ({
             ...s,
-            profile: null,
+            metadata: null,
         }));
         // Not authenticated?
         if (!auth.dataCloudAccessToken) return;

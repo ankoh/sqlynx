@@ -1,8 +1,6 @@
-// Copyright (c) 2022 The DashQL Authors
-
 import React from 'react';
 import * as Immutable from 'immutable';
-import { Action, Dispatch } from '../utils/action';
+import { Action, Dispatch } from './utils/action';
 
 const MAX_LOG_SIZE = 300;
 

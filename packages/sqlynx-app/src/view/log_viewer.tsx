@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as state from '../state';
+import * as appLog from '../app_log';
 import * as utils from '../utils';
 import classNames from 'classnames';
 import { SystemCard } from './system_card';
@@ -21,7 +21,7 @@ interface Props {
 
 export const LogViewer: React.FC<Props> = (props: Props) => {
     const [focused, setFocused] = React.useState<number | null>(null);
-    const log = state.useLogState();
+    const log = appLog.useLogState();
 
     React.useEffect(() => props.updateCurrentTime(), [log.entries]);
 
@@ -62,10 +62,10 @@ export const LogViewer: React.FC<Props> = (props: Props) => {
                 onClick={focusEntry}
             >
                 <div className={classNames(styles.row, { [styles.row_focused]: logEntryIndex == focused })}>
-                    <div className={styles.row_level}>{state.getLogLevelLabel(logEntry.level)}</div>
-                    <div className={styles.row_origin}>{state.getLogOriginLabel(logEntry.origin)}</div>
-                    <div className={styles.row_topic}>{state.getLogTopicLabel(logEntry.topic)}</div>
-                    <div className={styles.row_event}>{state.getLogEventLabel(logEntry.event)}</div>
+                    <div className={styles.row_level}>{appLog.getLogLevelLabel(logEntry.level)}</div>
+                    <div className={styles.row_origin}>{appLog.getLogOriginLabel(logEntry.origin)}</div>
+                    <div className={styles.row_topic}>{appLog.getLogTopicLabel(logEntry.topic)}</div>
+                    <div className={styles.row_event}>{appLog.getLogEventLabel(logEntry.event)}</div>
                     <div className={styles.row_timestamp}>{utils.getRelativeTime(tsLog, tsNow)}</div>
                 </div>
             </div>

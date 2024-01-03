@@ -3,7 +3,7 @@ import * as React from 'react';
 import { TextInput, FormControl, Button, IconButton } from '@primer/react';
 import { CopyIcon, InfoIcon } from '@primer/octicons-react';
 
-import { useAppConfig } from '../../state/app_config';
+import { useAppConfig } from '../../app_config';
 import { useSalesforceUserInfo } from '../../connectors/salesforce_userinfo_resolver';
 import {
     SalesforceAuthParams,

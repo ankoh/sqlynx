@@ -1,5 +1,5 @@
 import * as sqlynx from '@ankoh/sqlynx';
-import { AppState, ScriptData, ScriptKey } from './app_state';
+import { ScriptState, ScriptData, ScriptKey } from './script_state';
 import { GraphConnectionId, GraphNodeDescriptor, GraphViewModel } from '../view/schema/graph_view_model';
 
 export interface FocusInfo {
@@ -135,7 +135,7 @@ export function deriveScriptFocusFromCursor(
     return focus;
 }
 
-function clearCursors(state: AppState): AppState {
+function clearCursors(state: ScriptState): ScriptState {
     state.scripts = {
         [ScriptKey.MAIN_SCRIPT]: {
             ...state.scripts[ScriptKey.MAIN_SCRIPT],
@@ -149,7 +149,7 @@ function clearCursors(state: AppState): AppState {
     return state;
 }
 
-export function focusGraphNode(state: AppState, target: GraphNodeDescriptor | null): AppState {
+export function focusGraphNode(state: ScriptState, target: GraphNodeDescriptor | null): ScriptState {
     // Unset focused node?
     if (target === null) {
         // State already has cleared focus?
@@ -233,7 +233,7 @@ export function focusGraphNode(state: AppState, target: GraphNodeDescriptor | nu
     });
 }
 
-export function focusGraphEdge(state: AppState, conn: GraphConnectionId.Value | null): AppState {
+export function focusGraphEdge(state: ScriptState, conn: GraphConnectionId.Value | null): ScriptState {
     // Unset focused edge?
     if (conn === null) {
         // State already has cleared focus?

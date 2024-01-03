@@ -10,10 +10,10 @@ import { ChangeSpec, StateEffect, EditorSelection } from '@codemirror/state';
 import { CodeMirror } from './codemirror';
 import { SQLynxExtensions } from './sqlynx_extension';
 import { SQLynxScriptBuffers, SQLynxScriptKey, UpdateSQLynxScript } from './sqlynx_processor';
-import { useAppConfig } from '../../state/app_config';
-import { useAppState, useAppStateDispatch } from '../../state/app_state_provider';
-import { UPDATE_SCRIPT_ANALYSIS, UPDATE_SCRIPT_CURSOR } from '../../state/app_state_reducer';
-import { ScriptKey } from '../../state/app_state';
+import { useAppConfig } from '../../app_config';
+import { useScriptState, useScriptStateDispatch } from '../../scripts/script_state_provider';
+import { UPDATE_SCRIPT_ANALYSIS, UPDATE_SCRIPT_CURSOR } from '../../scripts/script_state_reducer';
+import { ScriptKey } from '../../scripts/script_state';
 import { ScriptStatisticsBar } from './script_statistics_bar';
 
 import icons from '../../../static/svg/symbols.generated.svg';
@@ -63,8 +63,8 @@ interface ActiveScriptState {
 }
 
 export const ScriptEditor: React.FC<Props> = (props: Props) => {
-    const ctx = useAppState();
-    const ctxDispatch = useAppStateDispatch();
+    const ctx = useScriptState();
+    const ctxDispatch = useScriptStateDispatch();
     const config = useAppConfig();
 
     const [activeTab, setActiveTab] = React.useState<TabId>(TabId.MAIN_SCRIPT);
