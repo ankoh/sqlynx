@@ -113,6 +113,7 @@ const UPDATER_DISPATCH_CTX = React.createContext<Dispatch<CatalogLoadTaskVariant
 
 interface Props {
     catalog: SQLynxCatalog | null;
+    catalogWasUpdated: () => void;
     children: React.ReactElement;
 }
 
@@ -157,6 +158,7 @@ export const CatalogLoader: React.FC<Props> = (props: Props) => {
                                 value: [taskId, e],
                             });
                         }
+                        props.catalogWasUpdated();
                     };
                     run();
                     break;

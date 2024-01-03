@@ -6,10 +6,10 @@ import { EditorPage } from './view/pages/editor_page';
 import { ConnectionsPage } from './view/pages/connections_page';
 import { OAuthCallbackPage } from './view/pages/oauth_callback_page';
 import { ScriptLoader } from './scripts/script_loader';
-import { ScriptStateProvider, useScriptState } from './scripts/script_state_provider';
+import { ScriptCatalogLoader } from './scripts/script_catalog_loader';
+import { ScriptStateProvider } from './scripts/script_state_provider';
 import { SalesforceConnector } from './connectors/salesforce_connector';
 import { SalesforceCatalogLoader } from './connectors/salesforce_catalog_loader';
-import { CatalogLoader } from './connectors/catalog_loader';
 import { LogProvider } from './app_log';
 import { AppConfigResolver } from './app_config';
 
@@ -28,11 +28,6 @@ const GitHubDesignSystem = (props: { children: React.ReactElement }) => (
         <ThemeProvider>{props.children}</ThemeProvider>
     </StyleSheetManager>
 );
-
-const ScriptCatalogLoader = (props: { children: React.ReactElement }) => {
-    const state = useScriptState();
-    return <CatalogLoader catalog={state.catalog}>{props.children}</CatalogLoader>;
-};
 
 const AppProviders = (props: { children: React.ReactElement }) => (
     <GitHubDesignSystem>
