@@ -11,6 +11,7 @@ import { GraphConnectionId, GraphNodeDescriptor, computeGraphViewModel } from '.
 import Immutable from 'immutable';
 
 export const INITIALIZE = Symbol('INITIALIZE');
+export const CATALOG_WAS_UPDATED = Symbol('CATALOG_WAS_UPDATED');
 export const LOAD_SCRIPTS = Symbol('LOAD_SCRIPTS');
 export const UPDATE_SCRIPT_ANALYSIS = Symbol('UPDATE_SCRIPT_ANALYSIS');
 export const UPDATE_SCRIPT_CURSOR = Symbol('UPDATE_SCRIPT_CURSOR');
@@ -25,6 +26,7 @@ export const DESTROY = Symbol('DESTROY');
 
 export type ScriptStateAction =
     | Action<typeof INITIALIZE, sqlynx.SQLynx>
+    | Action<typeof CATALOG_WAS_UPDATED, null>
     | Action<typeof LOAD_SCRIPTS, { [key: number]: ScriptMetadata }>
     | Action<typeof UPDATE_SCRIPT_ANALYSIS, [ScriptKey, SQLynxScriptBuffers, sqlynx.proto.ScriptCursorInfoT]>
     | Action<typeof UPDATE_SCRIPT_CURSOR, [ScriptKey, sqlynx.proto.ScriptCursorInfoT]>
@@ -81,6 +83,11 @@ function reduceScriptState(state: ScriptState, action: ScriptStateAction): Scrip
                 graph,
             };
             return next;
+        }
+        case CATALOG_WAS_UPDATED: {
+            // XXX
+            console.log('CATALOG_WAS_UPDATED');
+            return state;
         }
         case UPDATE_SCRIPT_ANALYSIS: {
             // Destroy the previous buffers
