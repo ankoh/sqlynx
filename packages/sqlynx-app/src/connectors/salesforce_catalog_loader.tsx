@@ -34,9 +34,12 @@ export async function updateDataCloudMetadata(
         schema.tables.push(table);
     }
     // Store the metadata in the descriptor pool
-    catalog.clear();
-    catalog.addDescriptorPool(METADATA_DESCRIPTOR_POOL_ID, METADATA_DESCRIPTOR_POOL_RANK);
-    catalog.addSchemaDescriptorT(METADATA_DESCRIPTOR_POOL_ID, schema);
+
+    // XXX Uncomment when scripts are re-analyzed after the catalog update
+    console.log('catalog.clear()');
+    // catalog.clear();
+    // catalog.addDescriptorPool(METADATA_DESCRIPTOR_POOL_ID, METADATA_DESCRIPTOR_POOL_RANK);
+    // catalog.addSchemaDescriptorT(METADATA_DESCRIPTOR_POOL_ID, schema);
 }
 
 interface Props {
