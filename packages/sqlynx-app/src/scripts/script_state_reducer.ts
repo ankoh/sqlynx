@@ -219,7 +219,7 @@ function reduceScriptState(state: ScriptState, action: ScriptStateAction): Scrip
                         next.catalog!.loadScript(script, SCHEMA_SCRIPT_CATALOG_RANK);
                         // We updated the schema script, do we have to re-analyze the main script?
                         const main = next.scripts[ScriptKey.MAIN_SCRIPT];
-                        if (main.script) {
+                        if (main.script && main.processed.parsed != null) {
                             // Analyze the old main script with the new schema
                             const mainAnalyzed = analyzeScript(main.processed, main.script);
                             // Store the new main script
