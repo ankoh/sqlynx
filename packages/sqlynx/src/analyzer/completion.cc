@@ -239,6 +239,7 @@ void findCandidatesInIndex(
             // Update the score if it is higher
             iter->second.score = std::max(iter->second.score, score);
             iter->second.combined_tags |= name_info.tags;
+            iter->second.external |= external;
         } else {
             // Otherwise store as new candidate
             Completion::Candidate candidate{
