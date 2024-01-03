@@ -15,6 +15,7 @@ export enum CatalogLoadTaskStatus {
     STARTED = 0,
     SUCCEEDED = 2,
     FAILED = 3,
+    CANCELLED = 4,
 }
 
 export interface CatalogLoadTaskState {
@@ -43,11 +44,13 @@ const TASK_REJECTED_CATALOG_MISSING = Symbol('TASK_FAILED_CATALOG_MISSING');
 const TASK_FAILED = Symbol('TASK_FAILED');
 const TASK_STARTED = Symbol('TASK_STARTED');
 const TASK_SUCCEEDED = Symbol('TASK_SUCCEEDED');
+const TASK_CANCELLED = Symbol('TASK_CANCELLED');
 
 type CatalogStateActionVarient =
     | Action<typeof TASK_REJECTED_CATALOG_MISSING, [number, CatalogLoadTaskVariant]>
     | Action<typeof TASK_STARTED, [number, CatalogLoadTaskVariant, AbortController]>
     | Action<typeof TASK_SUCCEEDED, number>
+    | Action<typeof TASK_CANCELLED, number>
     | Action<typeof TASK_FAILED, [number, any]>;
 
 function reduceCatalogLoaderState(state: CatalogLoaderState, action: CatalogStateActionVarient): CatalogLoaderState {
@@ -90,6 +93,17 @@ function reduceCatalogLoaderState(state: CatalogLoaderState, action: CatalogStat
                     ...task,
                     status: CatalogLoadTaskStatus.FAILED,
                     error,
+                    finishedAt: new Date(),
+                }),
+            };
+        }
+        case TASK_CANCELLED: {
+            const taskId = action.value;
+            const task = state.tasks.get(taskId)!;
+            return {
+                tasks: state.tasks.set(taskId, {
+                    ...task,
+                    status: CatalogLoadTaskStatus.FAILED,
                     finishedAt: new Date(),
                 }),
             };
@@ -153,10 +167,17 @@ export const CatalogLoader: React.FC<Props> = (props: Props) => {
                                 value: taskId,
                             });
                         } catch (e: any) {
-                            modifyState({
-                                type: TASK_FAILED,
-                                value: [taskId, e],
-                            });
+                            if ((e.message = 'AbortError')) {
+                                modifyState({
+                                    type: TASK_CANCELLED,
+                                    value: taskId,
+                                });
+                            } else {
+                                modifyState({
+                                    type: TASK_FAILED,
+                                    value: [taskId, e],
+                                });
+                            }
                         }
                         props.catalogWasUpdated();
                     };
