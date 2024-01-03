@@ -30,21 +30,17 @@ const GitHubDesignSystem = (props: { children: React.ReactElement }) => (
 
 const DataProviders = (props: { children: React.ReactElement }) => (
     <GitHubDesignSystem>
-        <AppConfigResolver>
-            <LogProvider>
-                <SalesforceConnector>
-                    <GitHubAuthProvider>
-                        <GitHubProfileProvider>
-                            <SQLynxLoader>
-                                <AppStateProvider>
-                                    <ScriptLoader>{props.children}</ScriptLoader>
-                                </AppStateProvider>
-                            </SQLynxLoader>
-                        </GitHubProfileProvider>
-                    </GitHubAuthProvider>
-                </SalesforceConnector>
-            </LogProvider>
-        </AppConfigResolver>
+        <LogProvider>
+            <AppConfigResolver>
+                <SQLynxLoader>
+                    <AppStateProvider>
+                        <SalesforceConnector>
+                            <ScriptLoader>{props.children}</ScriptLoader>
+                        </SalesforceConnector>
+                    </AppStateProvider>
+                </SQLynxLoader>
+            </AppConfigResolver>
+        </LogProvider>
     </GitHubDesignSystem>
 );
 
