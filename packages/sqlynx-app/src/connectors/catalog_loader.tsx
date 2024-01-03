@@ -1,13 +1,13 @@
 import React from 'react';
+import Immutable from 'immutable';
 
+import { SQLynxCatalog } from '@ankoh/sqlynx';
 import {
     UPDATE_SALESFORCE_DATA_CLOUD_METADATA,
     UpdateDataCloudMetadataTask,
     updateDataCloudMetadata,
 } from './salesforce_catalog_update';
-import { SQLynxCatalog } from '@ankoh/sqlynx';
 import { Action, Dispatch } from '../utils';
-import Immutable from 'immutable';
 
 export type CatalogLoadTaskVariant = Action<typeof UPDATE_SALESFORCE_DATA_CLOUD_METADATA, UpdateDataCloudMetadataTask>;
 
