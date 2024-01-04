@@ -6,7 +6,7 @@ import Immutable from 'immutable';
 import { SQLynxScriptBuffers, analyzeScript, parseAndAnalyzeScript } from '../view/editor/sqlynx_processor';
 import { ScriptState, ScriptKey, createDefaultState, createEmptyScript, destroyState } from './script_state';
 import { deriveScriptFocusFromCursor, focusGraphEdge, focusGraphNode } from './focus';
-import { Action, Dispatch } from '../utils/action';
+import { VariantKind, Dispatch } from '../utils/variant';
 import { ScriptMetadata } from './script_metadata';
 import { ScriptLoadingStatus } from './script_loader';
 import { GraphConnectionId, GraphNodeDescriptor, computeGraphViewModel } from '../view/schema/graph_view_model';
@@ -38,22 +38,22 @@ export const FOCUS_QUERY_GRAPH_EDGE = Symbol('FOCUS_GRAPH_EDGE');
 export const RESIZE_QUERY_GRAPH = Symbol('RESIZE_EDITOR');
 
 export type ScriptStateAction =
-    | Action<typeof INITIALIZE, sqlynx.SQLynx>
-    | Action<typeof DESTROY, null>
-    | Action<typeof UPDATE_SCRIPT_ANALYSIS, [ScriptKey, SQLynxScriptBuffers, sqlynx.proto.ScriptCursorInfoT]>
-    | Action<typeof UPDATE_SCRIPT_CURSOR, [ScriptKey, sqlynx.proto.ScriptCursorInfoT]>
-    | Action<typeof LOAD_SCRIPTS, { [key: number]: ScriptMetadata }>
-    | Action<typeof SCRIPT_LOADING_STARTED, ScriptKey>
-    | Action<typeof SCRIPT_LOADING_SUCCEEDED, [ScriptKey, string]>
-    | Action<typeof SCRIPT_LOADING_FAILED, [ScriptKey, any]>
-    | Action<typeof UPDATE_CATALOG, CatalogUpdateTaskVariant>
-    | Action<typeof CATALOG_UPDATE_STARTED, CatalogUpdateTaskState[]>
-    | Action<typeof CATALOG_UPDATE_CANCELLED, number>
-    | Action<typeof CATALOG_UPDATE_SUCCEEDED, number>
-    | Action<typeof CATALOG_UPDATE_FAILED, [number, any]>
-    | Action<typeof FOCUS_QUERY_GRAPH_NODE, GraphNodeDescriptor | null>
-    | Action<typeof FOCUS_QUERY_GRAPH_EDGE, GraphConnectionId.Value | null>
-    | Action<typeof RESIZE_QUERY_GRAPH, [number, number]>; // width, height
+    | VariantKind<typeof INITIALIZE, sqlynx.SQLynx>
+    | VariantKind<typeof DESTROY, null>
+    | VariantKind<typeof UPDATE_SCRIPT_ANALYSIS, [ScriptKey, SQLynxScriptBuffers, sqlynx.proto.ScriptCursorInfoT]>
+    | VariantKind<typeof UPDATE_SCRIPT_CURSOR, [ScriptKey, sqlynx.proto.ScriptCursorInfoT]>
+    | VariantKind<typeof LOAD_SCRIPTS, { [key: number]: ScriptMetadata }>
+    | VariantKind<typeof SCRIPT_LOADING_STARTED, ScriptKey>
+    | VariantKind<typeof SCRIPT_LOADING_SUCCEEDED, [ScriptKey, string]>
+    | VariantKind<typeof SCRIPT_LOADING_FAILED, [ScriptKey, any]>
+    | VariantKind<typeof UPDATE_CATALOG, CatalogUpdateTaskVariant>
+    | VariantKind<typeof CATALOG_UPDATE_STARTED, CatalogUpdateTaskState[]>
+    | VariantKind<typeof CATALOG_UPDATE_CANCELLED, number>
+    | VariantKind<typeof CATALOG_UPDATE_SUCCEEDED, number>
+    | VariantKind<typeof CATALOG_UPDATE_FAILED, [number, any]>
+    | VariantKind<typeof FOCUS_QUERY_GRAPH_NODE, GraphNodeDescriptor | null>
+    | VariantKind<typeof FOCUS_QUERY_GRAPH_EDGE, GraphConnectionId.Value | null>
+    | VariantKind<typeof RESIZE_QUERY_GRAPH, [number, number]>; // width, height
 
 const SCHEMA_SCRIPT_CATALOG_RANK = 1e9;
 const STATS_HISTORY_LIMIT = 20;

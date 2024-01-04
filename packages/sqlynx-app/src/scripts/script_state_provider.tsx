@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { useSQLynx } from '../sqlynx_loader';
 import { ScriptState, ScriptKey } from './script_state';
-import { Dispatch } from '../utils/action';
+import { Dispatch } from '../utils/variant';
 import { RESULT_OK } from '../utils/result';
 import { TPCH_SCHEMA, exampleScripts } from './example_scripts';
 import { ScriptStateAction, INITIALIZE, LOAD_SCRIPTS, useGlobalScriptState } from './script_state_reducer';

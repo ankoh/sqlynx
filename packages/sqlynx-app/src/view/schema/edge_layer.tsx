@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Action } from '../../utils/action';
+import { VariantKind } from '../../utils/variant';
 import { EdgeViewModel, GraphConnectionId, Boundaries } from './graph_view_model';
 import { FocusInfo } from '../../scripts/focus';
 
@@ -26,9 +26,9 @@ const MOUSE_LEAVE = Symbol('MOUSE_LEAVE');
 const CLICK = Symbol('CLICK');
 
 type FocusAction =
-    | Action<typeof MOUSE_ENTER, GraphConnectionId.Value>
-    | Action<typeof MOUSE_LEAVE, GraphConnectionId.Value>
-    | Action<typeof CLICK, GraphConnectionId.Value>;
+    | VariantKind<typeof MOUSE_ENTER, GraphConnectionId.Value>
+    | VariantKind<typeof MOUSE_LEAVE, GraphConnectionId.Value>
+    | VariantKind<typeof CLICK, GraphConnectionId.Value>;
 
 const reducer = (state: FocusState, action: FocusAction): FocusState => {
     switch (action.type) {
