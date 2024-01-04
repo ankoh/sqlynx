@@ -2,7 +2,7 @@ import * as sqlynx from '@ankoh/sqlynx';
 import * as React from 'react';
 import cn from 'classnames';
 
-import { Action } from '../../utils/action';
+import { VariantKind } from '../../utils/variant';
 import { NodeViewModel, EdgeViewModel, GraphConnectionId, GraphNodeDescriptor, Boundaries } from './graph_view_model';
 import { NodePort } from './graph_edges';
 import { FocusInfo } from '../../scripts/focus';
@@ -35,9 +35,9 @@ const MOUSE_LEAVE = Symbol('MOUSE_LEAVE');
 const CLICK = Symbol('CLICK');
 
 type FocusAction =
-    | Action<typeof MOUSE_ENTER, GraphNodeDescriptor>
-    | Action<typeof MOUSE_LEAVE, GraphNodeDescriptor>
-    | Action<typeof CLICK, GraphNodeDescriptor>;
+    | VariantKind<typeof MOUSE_ENTER, GraphNodeDescriptor>
+    | VariantKind<typeof MOUSE_LEAVE, GraphNodeDescriptor>
+    | VariantKind<typeof CLICK, GraphNodeDescriptor>;
 
 const reducer = (state: FocusState, action: FocusAction): FocusState => {
     switch (action.type) {

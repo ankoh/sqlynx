@@ -1,6 +1,6 @@
 import React from 'react';
 import * as Immutable from 'immutable';
-import { Action, Dispatch } from './utils/action';
+import { VariantKind, Dispatch } from './utils/variant';
 
 const MAX_LOG_SIZE = 300;
 
@@ -83,7 +83,7 @@ export type LogState = {
 };
 
 const PUSH_LOG_ENTRY = Symbol('PUSH_LOG_ENTRY');
-type LogStateAction = Action<typeof PUSH_LOG_ENTRY, LogEntryVariant>;
+type LogStateAction = VariantKind<typeof PUSH_LOG_ENTRY, LogEntryVariant>;
 
 const initialState = {
     entries: Immutable.List<LogEntryVariant>(),

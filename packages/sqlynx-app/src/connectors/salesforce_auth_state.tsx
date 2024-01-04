@@ -1,5 +1,5 @@
 import React from 'react';
-import { Action, Dispatch } from '../utils/action';
+import { VariantKind, Dispatch } from '../utils/variant';
 import { SalesforceCoreAccessToken, SalesforceDataCloudAccessToken } from './salesforce_api_client';
 import { PKCEChallenge } from '../utils/pkce';
 
@@ -63,16 +63,16 @@ export const RECEIVED_CORE_AUTH_TOKEN = Symbol('RECEIVED_CORE_ACCESS_TOKEN');
 export const RECEIVED_DATA_CLOUD_ACCESS_TOKEN = Symbol('RECEIVED_DATA_CLOUD_ACCESS_TOKEN');
 
 export type SalesforceAuthAction =
-    | Action<typeof CONFIGURE, SalesforceAuthParams>
-    | Action<typeof CONNECT, SalesforceAuthParams>
-    | Action<typeof DISCONNECT, null>
-    | Action<typeof OAUTH_WINDOW_OPENED, Window>
-    | Action<typeof OAUTH_WINDOW_CLOSED, null>
-    | Action<typeof AUTH_FAILED, string>
-    | Action<typeof GENERATED_PKCE_CHALLENGE, PKCEChallenge>
-    | Action<typeof RECEIVED_CORE_AUTH_CODE, string>
-    | Action<typeof RECEIVED_CORE_AUTH_TOKEN, SalesforceCoreAccessToken>
-    | Action<typeof RECEIVED_DATA_CLOUD_ACCESS_TOKEN, SalesforceDataCloudAccessToken>;
+    | VariantKind<typeof CONFIGURE, SalesforceAuthParams>
+    | VariantKind<typeof CONNECT, SalesforceAuthParams>
+    | VariantKind<typeof DISCONNECT, null>
+    | VariantKind<typeof OAUTH_WINDOW_OPENED, Window>
+    | VariantKind<typeof OAUTH_WINDOW_CLOSED, null>
+    | VariantKind<typeof AUTH_FAILED, string>
+    | VariantKind<typeof GENERATED_PKCE_CHALLENGE, PKCEChallenge>
+    | VariantKind<typeof RECEIVED_CORE_AUTH_CODE, string>
+    | VariantKind<typeof RECEIVED_CORE_AUTH_TOKEN, SalesforceCoreAccessToken>
+    | VariantKind<typeof RECEIVED_DATA_CLOUD_ACCESS_TOKEN, SalesforceDataCloudAccessToken>;
 
 export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAuthAction): SalesforceAuthState {
     switch (action.type) {

@@ -1,7 +1,7 @@
 import { UPDATE_SALESFORCE_DATA_CLOUD_METADATA, UpdateDataCloudMetadataTask } from './salesforce_metadata_catalog';
-import { Action } from '../utils';
+import { VariantKind } from '../utils';
 
-export type CatalogUpdateTaskVariant = Action<
+export type CatalogUpdateTaskVariant = VariantKind<
     typeof UPDATE_SALESFORCE_DATA_CLOUD_METADATA,
     UpdateDataCloudMetadataTask
 >;
