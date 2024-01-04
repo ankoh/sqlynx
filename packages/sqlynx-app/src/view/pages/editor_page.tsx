@@ -29,6 +29,11 @@ const SalesforceIcon = () => (
         <use xlinkHref={`${icons}#salesforce-notext`} />
     </svg>
 );
+const CloudOfflineIcon = () => (
+    <svg width="20px" height="20px">
+        <use xlinkHref={`${icons}#cloud_offline`} />
+    </svg>
+);
 
 const ActionsPanel = (props: {
     icon: React.ReactElement;
@@ -62,11 +67,13 @@ const ActionsPanel = (props: {
                             anchorOffset={8}
                             align="end"
                         >
-                            <Box>
+                            <Box sx={{ width: '240px' }}>
                                 <ActionList>
                                     <ActionList.Item>
-                                        <ActionList.LeadingVisual>{props.icon}</ActionList.LeadingVisual>
-                                        Offline
+                                        <ActionList.LeadingVisual>
+                                            <CloudOfflineIcon />
+                                        </ActionList.LeadingVisual>
+                                        Disconnected
                                     </ActionList.Item>
                                     <ActionList.Item>
                                         <ActionList.LeadingVisual>{props.icon}</ActionList.LeadingVisual>
