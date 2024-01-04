@@ -34,6 +34,11 @@ const CloudOfflineIcon = () => (
         <use xlinkHref={`${icons}#cloud_offline`} />
     </svg>
 );
+const HyperIcon = () => (
+    <svg width="20px" height="20px">
+        <use xlinkHref={`${icons}#hyper`} />
+    </svg>
+);
 
 const ActionsPanel = (props: {
     icon: React.ReactElement;
@@ -78,6 +83,12 @@ const ActionsPanel = (props: {
                                     <ActionList.Item>
                                         <ActionList.LeadingVisual>{props.icon}</ActionList.LeadingVisual>
                                         Salesforce Data Cloud
+                                    </ActionList.Item>
+                                    <ActionList.Item>
+                                        <ActionList.LeadingVisual>
+                                            <HyperIcon />
+                                        </ActionList.LeadingVisual>
+                                        Hyper Database
                                     </ActionList.Item>
                                 </ActionList>
                             </Box>
@@ -154,8 +165,10 @@ const connections = [
 
 export const EditorPage: React.FC<Props> = (props: Props) => {
     const appConfig = useAppConfig();
+
     const [selectedConnIdx, selectConn] = React.useState(1);
     const selectedConn = connections[selectedConnIdx];
+
     const activeConnector = useActiveConnector();
 
     const [isOpen, setIsOpen] = React.useState<boolean>(false);
