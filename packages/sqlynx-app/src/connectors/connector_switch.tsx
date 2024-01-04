@@ -20,39 +20,35 @@ export interface ConnectorInfo {
 export interface ConnectorFeatures {
     /// User-editable schema script?
     schemaScript: boolean;
-    /// The connector allows to execute queries?
+    /// Can execute queries?
     executeQueryAction: boolean;
-    /// The connector allows to refresh a schema?
+    /// Can refresh a schema?
     refreshSchemaAction: boolean;
 }
 
-const FEATURES_NO_CONNECTOR: ConnectorFeatures = {
-    schemaScript: true,
-    executeQueryAction: false,
-    refreshSchemaAction: false,
-};
-const FEATURES_SALESFORCE_DATA_CLOUD: ConnectorFeatures = {
-    schemaScript: false,
-    executeQueryAction: true,
-    refreshSchemaAction: true,
-};
+const CONNECTOR_INFOS: ConnectorInfo[] = [
+    {
+        connectorType: ConnectorType.NO_CONNECTOR,
+        features: {
+            schemaScript: true,
+            executeQueryAction: false,
+            refreshSchemaAction: false,
+        },
+    },
+    {
+        connectorType: ConnectorType.SALESFORCE_DATA_CLOUD_CONNECTOR,
+        features: {
+            schemaScript: false,
+            executeQueryAction: true,
+            refreshSchemaAction: true,
+        },
+    },
+];
 
-function getConnectorFeatures(type: ConnectorType): ConnectorFeatures {
-    switch (type) {
-        case ConnectorType.NO_CONNECTOR:
-            return FEATURES_NO_CONNECTOR;
-        case ConnectorType.SALESFORCE_DATA_CLOUD_CONNECTOR:
-            return FEATURES_SALESFORCE_DATA_CLOUD;
-    }
-}
-
-function reduceConnectorInfo(state: ConnectorInfo, action: ConnectorSwitchAction): ConnectorInfo {
+function reduceConnectorInfo(_state: ConnectorInfo, action: ConnectorSwitchAction): ConnectorInfo {
     switch (action.type) {
         case SWITCH_CONNECTOR:
-            return {
-                connectorType: action.value,
-                features: getConnectorFeatures(action.value),
-            };
+            return CONNECTOR_INFOS[action.value as number];
     }
 }
 
@@ -64,10 +60,7 @@ const CONNECTOR_INFO_CTX = React.createContext<ConnectorInfo | null>(null);
 const CONNECTOR_SWITCH_CTX = React.createContext<Dispatch<ConnectorSwitchAction> | null>(null);
 
 export const ConnectorSwitch: React.FC<Props> = (props: Props) => {
-    const [state, dispatch] = React.useReducer<typeof reduceConnectorInfo, null>(reduceConnectorInfo, null, () => ({
-        connectorType: ConnectorType.NO_CONNECTOR,
-        features: getConnectorFeatures(ConnectorType.NO_CONNECTOR),
-    }));
+    const [state, dispatch] = React.useReducer<typeof reduceConnectorInfo>(reduceConnectorInfo, CONNECTOR_INFOS[0]);
     return (
         <CONNECTOR_INFO_CTX.Provider value={state}>
             <CONNECTOR_SWITCH_CTX.Provider value={dispatch}>{props.children}</CONNECTOR_SWITCH_CTX.Provider>
@@ -76,4 +69,5 @@ export const ConnectorSwitch: React.FC<Props> = (props: Props) => {
 };
 
 export const useActiveConnector = () => React.useContext(CONNECTOR_INFO_CTX)!;
+export const useConnectors = () => CONNECTOR_INFOS;
 export const useConnectorSwitch = () => React.useContext(CONNECTOR_SWITCH_CTX)!;
