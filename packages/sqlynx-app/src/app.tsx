@@ -8,8 +8,9 @@ import { OAuthCallbackPage } from './view/pages/oauth_callback_page';
 import { ScriptLoader } from './scripts/script_loader';
 import { ScriptCatalogLoader } from './scripts/script_catalog_loader';
 import { ScriptStateProvider } from './scripts/script_state_provider';
+import { ScriptSalesforceMetadataCatalog } from './scripts/script_catalog_salesforce_metadata';
 import { SalesforceConnector } from './connectors/salesforce_connector';
-import { SalesforceCatalogLoader } from './connectors/salesforce_catalog_loader';
+import { ConnectorSwitch } from './connectors/connector_switch';
 import { LogProvider } from './app_log';
 import { AppConfigResolver } from './app_config';
 
@@ -34,15 +35,16 @@ const AppProviders = (props: { children: React.ReactElement }) => (
         <LogProvider>
             <AppConfigResolver>
                 <SQLynxLoader>
-                    <SalesforceConnector>
-                        <ScriptStateProvider>
-                            <ScriptLoader />
-                            <ScriptCatalogLoader>
-                                <SalesforceCatalogLoader />
-                            </ScriptCatalogLoader>
-                            {props.children}
-                        </ScriptStateProvider>
-                    </SalesforceConnector>
+                    <ConnectorSwitch>
+                        <SalesforceConnector>
+                            <ScriptStateProvider>
+                                <ScriptLoader />
+                                <ScriptCatalogLoader />
+                                <ScriptSalesforceMetadataCatalog />
+                                {props.children}
+                            </ScriptStateProvider>
+                        </SalesforceConnector>
+                    </ConnectorSwitch>
                 </SQLynxLoader>
             </AppConfigResolver>
         </LogProvider>
