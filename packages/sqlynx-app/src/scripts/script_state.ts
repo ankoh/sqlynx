@@ -1,6 +1,7 @@
 import * as sqlynx from '@ankoh/sqlynx';
 import Immutable from 'immutable';
 
+import { CatalogUpdateTaskState, CatalogUpdateTaskVariant } from '../connectors/catalog_update';
 import { generateBlankScript, ScriptMetadata } from './script_metadata';
 import { ScriptLoadingStatus } from './script_loader';
 import { SQLynxScriptBuffers } from '../view/editor/sqlynx_processor';
@@ -20,10 +21,14 @@ export enum ScriptKey {
 export interface ScriptState {
     /// The API
     instance: sqlynx.SQLynx | null;
-    /// The catalog update info
-    catalogVersion: number;
     /// The catalog
     catalog: sqlynx.SQLynxCatalog | null;
+    /// The catalog updates
+    catalogUpdates: Immutable.Map<number, CatalogUpdateTaskState>;
+    /// The pending catalog updates
+    catalogUpdateRequests: Immutable.Map<number, CatalogUpdateTaskVariant>;
+    /// The id for the next catalog update
+    nextCatalogUpdateId: number;
     /// The main script
     scripts: { [context: number]: ScriptData };
     /// The graph
@@ -133,7 +138,9 @@ export function createDefaultState(): ScriptState {
     return {
         instance: null,
         scripts: {},
-        catalogVersion: 1,
+        nextCatalogUpdateId: 1,
+        catalogUpdateRequests: Immutable.Map(),
+        catalogUpdates: Immutable.Map(),
         catalog: null,
         graph: null,
         graphConfig: {

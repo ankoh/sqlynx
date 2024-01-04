@@ -1,6 +1,8 @@
 import * as sqlynx from '@ankoh/sqlynx';
 import * as React from 'react';
 
+import Immutable from 'immutable';
+
 import { SQLynxScriptBuffers, analyzeScript, parseAndAnalyzeScript } from '../view/editor/sqlynx_processor';
 import { ScriptState, ScriptKey, createDefaultState, createEmptyScript, destroyState } from './script_state';
 import { deriveScriptFocusFromCursor, focusGraphEdge, focusGraphNode } from './focus';
@@ -8,36 +10,50 @@ import { Action, Dispatch } from '../utils/action';
 import { ScriptMetadata } from './script_metadata';
 import { ScriptLoadingStatus } from './script_loader';
 import { GraphConnectionId, GraphNodeDescriptor, computeGraphViewModel } from '../view/schema/graph_view_model';
-import Immutable from 'immutable';
+import {
+    CatalogUpdateTaskState,
+    CatalogUpdateTaskStatus,
+    CatalogUpdateTaskVariant,
+} from '../connectors/catalog_update';
 
 export const INITIALIZE = Symbol('INITIALIZE');
-export const CATALOG_WAS_UPDATED = Symbol('CATALOG_WAS_UPDATED');
-export const LOAD_SCRIPTS = Symbol('LOAD_SCRIPTS');
+export const DESTROY = Symbol('DESTROY');
+
 export const UPDATE_SCRIPT_ANALYSIS = Symbol('UPDATE_SCRIPT_ANALYSIS');
 export const UPDATE_SCRIPT_CURSOR = Symbol('UPDATE_SCRIPT_CURSOR');
+
+export const LOAD_SCRIPTS = Symbol('LOAD_SCRIPTS');
 export const SCRIPT_LOADING_STARTED = Symbol('SCRIPT_LOADING_STARTED');
 export const SCRIPT_LOADING_SUCCEEDED = Symbol('SCRIPT_LOADING_SUCCEEDED');
 export const SCRIPT_LOADING_FAILED = Symbol('SCRIPT_LOADING_FAILED');
-export const FOCUS_GRAPH_NODE = Symbol('FOCUS_GRAPH_NODE');
-export const FOCUS_GRAPH_EDGE = Symbol('FOCUS_GRAPH_EDGE');
-export const RESIZE_SCHEMA_GRAPH = Symbol('RESIZE_EDITOR');
-export const DEBUG_GRAPH_LAYOUT = Symbol('DEBUG_GRAPH_LAYOUT');
-export const DESTROY = Symbol('DESTROY');
+
+export const UPDATE_CATALOG = Symbol('UPDATE_CATALOG');
+export const CATALOG_UPDATE_STARTED = Symbol('CATALOG_UPDATE_STARTED');
+export const CATALOG_UPDATE_SUCCEEDED = Symbol('CATALOG_UPDATE_SUCCEEDED');
+export const CATALOG_UPDATE_FAILED = Symbol('CATALOG_UPDATE_FAILED');
+export const CATALOG_UPDATE_CANCELLED = Symbol('CATALOG_UPDATE_CANCELLED');
+
+export const FOCUS_QUERY_GRAPH_NODE = Symbol('FOCUS_GRAPH_NODE');
+export const FOCUS_QUERY_GRAPH_EDGE = Symbol('FOCUS_GRAPH_EDGE');
+export const RESIZE_QUERY_GRAPH = Symbol('RESIZE_EDITOR');
 
 export type ScriptStateAction =
     | Action<typeof INITIALIZE, sqlynx.SQLynx>
-    | Action<typeof CATALOG_WAS_UPDATED, null>
-    | Action<typeof LOAD_SCRIPTS, { [key: number]: ScriptMetadata }>
+    | Action<typeof DESTROY, null>
     | Action<typeof UPDATE_SCRIPT_ANALYSIS, [ScriptKey, SQLynxScriptBuffers, sqlynx.proto.ScriptCursorInfoT]>
     | Action<typeof UPDATE_SCRIPT_CURSOR, [ScriptKey, sqlynx.proto.ScriptCursorInfoT]>
+    | Action<typeof LOAD_SCRIPTS, { [key: number]: ScriptMetadata }>
     | Action<typeof SCRIPT_LOADING_STARTED, ScriptKey>
     | Action<typeof SCRIPT_LOADING_SUCCEEDED, [ScriptKey, string]>
     | Action<typeof SCRIPT_LOADING_FAILED, [ScriptKey, any]>
-    | Action<typeof FOCUS_GRAPH_NODE, GraphNodeDescriptor | null>
-    | Action<typeof FOCUS_GRAPH_EDGE, GraphConnectionId.Value | null>
-    | Action<typeof RESIZE_SCHEMA_GRAPH, [number, number]> // width, height
-    | Action<typeof DEBUG_GRAPH_LAYOUT, boolean>
-    | Action<typeof DESTROY, null>;
+    | Action<typeof UPDATE_CATALOG, CatalogUpdateTaskVariant>
+    | Action<typeof CATALOG_UPDATE_STARTED, CatalogUpdateTaskState[]>
+    | Action<typeof CATALOG_UPDATE_CANCELLED, number>
+    | Action<typeof CATALOG_UPDATE_SUCCEEDED, number>
+    | Action<typeof CATALOG_UPDATE_FAILED, [number, any]>
+    | Action<typeof FOCUS_QUERY_GRAPH_NODE, GraphNodeDescriptor | null>
+    | Action<typeof FOCUS_QUERY_GRAPH_EDGE, GraphConnectionId.Value | null>
+    | Action<typeof RESIZE_QUERY_GRAPH, [number, number]>; // width, height
 
 const SCHEMA_SCRIPT_CATALOG_RANK = 1e9;
 const STATS_HISTORY_LIMIT = 20;
@@ -84,11 +100,9 @@ function reduceScriptState(state: ScriptState, action: ScriptStateAction): Scrip
             };
             return next;
         }
-        case CATALOG_WAS_UPDATED: {
-            // XXX
-            console.log('CATALOG_WAS_UPDATED');
-            return state;
-        }
+        case DESTROY:
+            return destroyState({ ...state });
+
         case UPDATE_SCRIPT_ANALYSIS: {
             // Destroy the previous buffers
             const [scriptKey, buffers, cursor] = action.value;
@@ -140,6 +154,39 @@ function reduceScriptState(state: ScriptState, action: ScriptStateAction): Scrip
             };
             newState.focus = deriveScriptFocusFromCursor(scriptKey, newState.scripts, state.graphViewModel, cursor);
             return newState;
+        }
+
+        case LOAD_SCRIPTS: {
+            const next = { ...state };
+            for (const key of [ScriptKey.MAIN_SCRIPT, ScriptKey.SCHEMA_SCRIPT]) {
+                if (!action.value[key]) continue;
+                // Destroy previous analysis & script
+                const prev = state.scripts[key];
+                prev.processed.destroy(prev.processed);
+                // Update the script metadata
+                const metadata = action.value[key];
+                next.scripts[key] = {
+                    scriptKey: key,
+                    scriptVersion: ++prev.scriptVersion,
+                    script: prev.script,
+                    metadata: metadata,
+                    loading: {
+                        status: ScriptLoadingStatus.PENDING,
+                        error: null,
+                        startedAt: null,
+                        finishedAt: null,
+                    },
+                    processed: {
+                        scanned: null,
+                        parsed: null,
+                        analyzed: null,
+                        destroy: () => {},
+                    },
+                    cursor: null,
+                    statistics: Immutable.List(),
+                };
+            }
+            return next;
         }
         case SCRIPT_LOADING_STARTED:
             return {
@@ -260,43 +307,77 @@ function reduceScriptState(state: ScriptState, action: ScriptStateAction): Scrip
             }
             return computeSchemaGraph(next);
         }
-        case LOAD_SCRIPTS: {
-            const next = { ...state };
-            for (const key of [ScriptKey.MAIN_SCRIPT, ScriptKey.SCHEMA_SCRIPT]) {
-                if (!action.value[key]) continue;
-                // Destroy previous analysis & script
-                const prev = state.scripts[key];
-                prev.processed.destroy(prev.processed);
-                // Update the script metadata
-                const metadata = action.value[key];
-                next.scripts[key] = {
-                    scriptKey: key,
-                    scriptVersion: ++prev.scriptVersion,
-                    script: prev.script,
-                    metadata: metadata,
-                    loading: {
-                        status: ScriptLoadingStatus.PENDING,
-                        error: null,
-                        startedAt: null,
-                        finishedAt: null,
-                    },
-                    processed: {
-                        scanned: null,
-                        parsed: null,
-                        analyzed: null,
-                        destroy: () => {},
-                    },
-                    cursor: null,
-                    statistics: Immutable.List(),
-                };
-            }
-            return next;
+
+        case UPDATE_CATALOG: {
+            const task = action.value;
+            const taskId = state.nextCatalogUpdateId;
+            return {
+                ...state,
+                nextCatalogUpdateId: taskId + 1,
+                catalogUpdateRequests: state.catalogUpdateRequests.set(taskId, task),
+            };
         }
-        case FOCUS_GRAPH_NODE:
+        case CATALOG_UPDATE_STARTED: {
+            const requests = state.catalogUpdateRequests.withMutations(requests => {
+                for (const task of action.value) {
+                    requests.delete(task.taskId);
+                }
+            });
+            const updates = state.catalogUpdates.withMutations(updates => {
+                for (const task of action.value) {
+                    updates.set(task.taskId, task);
+                }
+            });
+            return {
+                ...state,
+                catalogUpdateRequests: requests,
+                catalogUpdates: updates,
+            };
+        }
+        case CATALOG_UPDATE_CANCELLED: {
+            const taskId = action.value;
+            const task = state.catalogUpdates.get(taskId)!;
+            return {
+                ...state,
+                catalogUpdates: state.catalogUpdates.set(taskId, {
+                    ...task,
+                    status: CatalogUpdateTaskStatus.CANCELLED,
+                    finishedAt: new Date(),
+                }),
+            };
+        }
+        case CATALOG_UPDATE_FAILED: {
+            const [taskId, error] = action.value;
+            const task = state.catalogUpdates.get(taskId)!;
+            return {
+                ...state,
+                catalogUpdates: state.catalogUpdates.set(taskId, {
+                    ...task,
+                    status: CatalogUpdateTaskStatus.FAILED,
+                    error,
+                    finishedAt: new Date(),
+                }),
+            };
+        }
+        case CATALOG_UPDATE_SUCCEEDED: {
+            const taskId = action.value;
+            const task = state.catalogUpdates.get(taskId)!;
+            // XXX Trigger script updates
+            return {
+                ...state,
+                catalogUpdates: state.catalogUpdates.set(taskId, {
+                    ...task,
+                    status: CatalogUpdateTaskStatus.SUCCEEDED,
+                    finishedAt: new Date(),
+                }),
+            };
+        }
+
+        case FOCUS_QUERY_GRAPH_NODE:
             return focusGraphNode(state, action.value);
-        case FOCUS_GRAPH_EDGE:
+        case FOCUS_QUERY_GRAPH_EDGE:
             return focusGraphEdge(state, action.value);
-        case RESIZE_SCHEMA_GRAPH:
+        case RESIZE_QUERY_GRAPH:
             return computeSchemaGraph({
                 ...state,
                 graphConfig: {
@@ -305,10 +386,6 @@ function reduceScriptState(state: ScriptState, action: ScriptStateAction): Scrip
                     boardHeight: action.value[1],
                 },
             });
-        case DEBUG_GRAPH_LAYOUT:
-            return computeSchemaGraph({ ...state }, action.value);
-        case DESTROY:
-            return destroyState({ ...state });
     }
 }
 
