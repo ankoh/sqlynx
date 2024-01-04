@@ -3,7 +3,7 @@ import * as React from 'react';
 import { ActionList, IconButton, ButtonGroup } from '@primer/react';
 import { TriangleDownIcon, SyncIcon, PaperAirplaneIcon, LinkIcon, DownloadIcon } from '@primer/octicons-react';
 
-import { useSQLynx } from '../../sqlynx_loader';
+import { ConnectorInfo, useActiveConnector } from '../../connectors/connector_switch';
 import { useAppConfig } from '../../app_config';
 import { ScriptEditor } from '../editor/editor';
 import { SchemaGraph } from '../../view/schema/schema_graph';
@@ -29,7 +29,7 @@ const SalesforceIcon = () => (
         <use xlinkHref={`${icons}#salesforce-notext`} />
     </svg>
 );
-const ActionsPanel = (props: { icon: React.ReactElement; name: string }) => (
+const ActionsPanel = (props: { icon: React.ReactElement; name: string; connectorInfo: ConnectorInfo }) => (
     <div className={styles.action_container}>
         <ActionList className={styles.data_actions}>
             <ActionList.Item>
@@ -40,14 +40,14 @@ const ActionsPanel = (props: { icon: React.ReactElement; name: string }) => (
                 </ActionList.TrailingVisual>
             </ActionList.Item>
             <ActionList.Divider />
-            <ActionList.Item>
+            <ActionList.Item disabled={!props.connectorInfo.features.executeQueryAction}>
                 <ActionList.LeadingVisual>
                     <PaperAirplaneIcon />
                 </ActionList.LeadingVisual>
                 Execute Query
                 <ActionList.TrailingVisual>Ctrl + E</ActionList.TrailingVisual>
             </ActionList.Item>
-            <ActionList.Item>
+            <ActionList.Item disabled={!props.connectorInfo.features.refreshSchemaAction}>
                 <ActionList.LeadingVisual>
                     <SyncIcon />
                 </ActionList.LeadingVisual>
@@ -69,7 +69,7 @@ const ActionsPanel = (props: { icon: React.ReactElement; name: string }) => (
                 Save Query as .sql
                 <ActionList.TrailingVisual>Ctrl + S</ActionList.TrailingVisual>
             </ActionList.Item>
-            <ActionList.Item>
+            <ActionList.Item disabled={!props.connectorInfo.features.executeQueryAction}>
                 <ActionList.LeadingVisual>
                     <DownloadIcon />
                 </ActionList.LeadingVisual>
@@ -110,6 +110,7 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
     const appConfig = useAppConfig();
     const [selectedConnIdx, selectConn] = React.useState(1);
     const selectedConn = connections[selectedConnIdx];
+    const activeConnector = useActiveConnector();
 
     return (
         <div className={styles.page}>
@@ -142,7 +143,7 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                 />
                 <ScriptEditor className={styles.editor_card} />
                 {appConfig.value?.features?.editorActions && (
-                    <ActionsPanel icon={selectedConn.icon()} name={selectedConn.name} />
+                    <ActionsPanel icon={selectedConn.icon()} name={selectedConn.name} connectorInfo={activeConnector} />
                 )}
             </div>
         </div>
