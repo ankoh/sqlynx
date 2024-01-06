@@ -2,8 +2,9 @@ import React from 'react';
 import { Dispatch, VariantKind } from '../utils';
 
 export enum ConnectorType {
-    NO_CONNECTOR = 0,
+    LOCAL_SCRIPT = 0,
     SALESFORCE_DATA_CLOUD_CONNECTOR = 1,
+    HYPER_DATABASE = 2,
 }
 
 export const SWITCH_CONNECTOR = Symbol('SWITCH_CONNECTOR');
@@ -13,6 +14,8 @@ export type ConnectorSwitchAction = VariantKind<typeof SWITCH_CONNECTOR, Connect
 export interface ConnectorInfo {
     /// The connector type
     connectorType: ConnectorType;
+    /// The connector title
+    title: string;
     /// The connector features
     features: ConnectorFeatures;
 }
@@ -28,7 +31,8 @@ export interface ConnectorFeatures {
 
 const CONNECTOR_INFOS: ConnectorInfo[] = [
     {
-        connectorType: ConnectorType.NO_CONNECTOR,
+        connectorType: ConnectorType.LOCAL_SCRIPT,
+        title: 'Local Script',
         features: {
             schemaScript: true,
             executeQueryAction: false,
@@ -37,6 +41,16 @@ const CONNECTOR_INFOS: ConnectorInfo[] = [
     },
     {
         connectorType: ConnectorType.SALESFORCE_DATA_CLOUD_CONNECTOR,
+        title: 'Salesforce Data Cloud',
+        features: {
+            schemaScript: false,
+            executeQueryAction: true,
+            refreshSchemaAction: true,
+        },
+    },
+    {
+        connectorType: ConnectorType.HYPER_DATABASE,
+        title: 'Hyper Database',
         features: {
             schemaScript: false,
             executeQueryAction: true,
@@ -68,6 +82,6 @@ export const ConnectorSwitch: React.FC<Props> = (props: Props) => {
     );
 };
 
-export const useActiveConnector = () => React.useContext(CONNECTOR_INFO_CTX)!;
-export const useConnectors = () => CONNECTOR_INFOS;
+export const useActiveConnectorInfo = () => React.useContext(CONNECTOR_INFO_CTX)!;
+export const useConnectorInfos = () => CONNECTOR_INFOS;
 export const useConnectorSwitch = () => React.useContext(CONNECTOR_SWITCH_CTX)!;

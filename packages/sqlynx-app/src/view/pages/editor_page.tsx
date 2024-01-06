@@ -3,11 +3,19 @@ import * as React from 'react';
 import { ActionList, IconButton, ButtonGroup, SelectPanel, AnchoredOverlay, Box, Button } from '@primer/react';
 import { TriangleDownIcon, SyncIcon, PaperAirplaneIcon, LinkIcon, DownloadIcon } from '@primer/octicons-react';
 
-import { ConnectorInfo, useActiveConnector } from '../../connectors/connector_switch';
+import {
+    ConnectorInfo,
+    ConnectorType,
+    SWITCH_CONNECTOR,
+    useActiveConnectorInfo,
+    useConnectorInfos,
+    useConnectorSwitch,
+} from '../../connectors/connector_switch';
 import { useAppConfig } from '../../app_config';
 import { ScriptEditor } from '../editor/editor';
 import { SchemaGraph } from '../../view/schema/schema_graph';
 import { TabCard } from '../../view/tab_card';
+import { getConnectorIcon } from '../connector_icons';
 
 import styles from './editor_page.module.css';
 import icons from '../../../static/svg/symbols.generated.svg';
@@ -29,81 +37,70 @@ const SalesforceIcon = () => (
         <use xlinkHref={`${icons}#salesforce-notext`} />
     </svg>
 );
-const CloudOfflineIcon = () => (
-    <svg width="20px" height="20px">
-        <use xlinkHref={`${icons}#cloud_offline`} />
-    </svg>
-);
-const HyperIcon = () => (
-    <svg width="20px" height="20px">
-        <use xlinkHref={`${icons}#hyper`} />
-    </svg>
-);
 
-const ActionsPanel = (props: {
-    icon: React.ReactElement;
-    name: string;
-    connectorInfo: ConnectorInfo;
-    isOpen: boolean;
-    setIsOpen: (open: boolean) => void;
-}) => {
-    const anchorRef = React.useRef(null);
+const ActionsPanel = (props: { activeConnector: ConnectorInfo }) => {
+    const allConnectors = useConnectorInfos();
+    const switchConnector = useConnectorSwitch();
+    const connectorListAnchor = React.useRef(null);
+    const [selectorIsOpen, setSelectorIsOpen] = React.useState<boolean>(false);
+
+    const selectConnector = React.useCallback((e: React.MouseEvent<HTMLLIElement, MouseEvent>) => {
+        e.stopPropagation();
+        const target = e.currentTarget as HTMLLIElement;
+        const connectorType = Number.parseInt(target.getAttribute('data-connector') ?? '0')! as ConnectorType;
+        setSelectorIsOpen(false);
+        switchConnector({
+            type: SWITCH_CONNECTOR,
+            value: connectorType,
+        });
+    }, []);
+
     return (
         <div className={styles.action_container}>
-            <ActionList className={styles.data_actions}>
+            <ActionList key={0} className={styles.data_actions}>
                 <ActionList.Item
                     onClick={() => {
-                        console.log('foo');
-                        props.setIsOpen(true);
+                        setSelectorIsOpen(true);
                     }}
                 >
-                    <ActionList.LeadingVisual>{props.icon}</ActionList.LeadingVisual>
-                    {props.name}
+                    <ActionList.LeadingVisual>{getConnectorIcon(props.activeConnector)}</ActionList.LeadingVisual>
+                    {props.activeConnector.title}
                     <ActionList.TrailingVisual>
                         <AnchoredOverlay
                             renderAnchor={anchorProps => (
-                                <div ref={anchorRef}>
+                                <div ref={connectorListAnchor}>
                                     <TriangleDownIcon />
                                 </div>
                             )}
-                            open={props.isOpen}
-                            onClose={() => props.setIsOpen(false)}
-                            anchorRef={anchorRef}
-                            anchorOffset={8}
+                            open={selectorIsOpen}
+                            onClose={() => setSelectorIsOpen(false)}
+                            anchorRef={connectorListAnchor}
                             align="end"
                         >
                             <Box sx={{ width: '240px' }}>
                                 <ActionList>
-                                    <ActionList.Item>
-                                        <ActionList.LeadingVisual>
-                                            <CloudOfflineIcon />
-                                        </ActionList.LeadingVisual>
-                                        Disconnected
-                                    </ActionList.Item>
-                                    <ActionList.Item>
-                                        <ActionList.LeadingVisual>{props.icon}</ActionList.LeadingVisual>
-                                        Salesforce Data Cloud
-                                    </ActionList.Item>
-                                    <ActionList.Item>
-                                        <ActionList.LeadingVisual>
-                                            <HyperIcon />
-                                        </ActionList.LeadingVisual>
-                                        Hyper Database
-                                    </ActionList.Item>
+                                    {allConnectors.map((connector, i) => (
+                                        <ActionList.Item key={i} data-connector={i} onClick={selectConnector}>
+                                            <ActionList.LeadingVisual>
+                                                {getConnectorIcon(connector)}
+                                            </ActionList.LeadingVisual>
+                                            {connector.title}
+                                        </ActionList.Item>
+                                    ))}
                                 </ActionList>
                             </Box>
                         </AnchoredOverlay>
                     </ActionList.TrailingVisual>
                 </ActionList.Item>
                 <ActionList.Divider />
-                <ActionList.Item disabled={!props.connectorInfo.features.executeQueryAction}>
+                <ActionList.Item disabled={!props.activeConnector.features.executeQueryAction}>
                     <ActionList.LeadingVisual>
                         <PaperAirplaneIcon />
                     </ActionList.LeadingVisual>
                     Execute Query
                     <ActionList.TrailingVisual>Ctrl + E</ActionList.TrailingVisual>
                 </ActionList.Item>
-                <ActionList.Item disabled={!props.connectorInfo.features.refreshSchemaAction}>
+                <ActionList.Item disabled={!props.activeConnector.features.refreshSchemaAction}>
                     <ActionList.LeadingVisual>
                         <SyncIcon />
                     </ActionList.LeadingVisual>
@@ -125,7 +122,7 @@ const ActionsPanel = (props: {
                     Save Query as .sql
                     <ActionList.TrailingVisual>Ctrl + S</ActionList.TrailingVisual>
                 </ActionList.Item>
-                <ActionList.Item disabled={!props.connectorInfo.features.executeQueryAction}>
+                <ActionList.Item disabled={!props.activeConnector.features.executeQueryAction}>
                     <ActionList.LeadingVisual>
                         <DownloadIcon />
                     </ActionList.LeadingVisual>
@@ -133,7 +130,7 @@ const ActionsPanel = (props: {
                     <ActionList.TrailingVisual>Ctrl + A</ActionList.TrailingVisual>
                 </ActionList.Item>
             </ActionList>
-            <ActionList className={styles.project_actions}>
+            <ActionList key={1} className={styles.project_actions}>
                 <ActionList.Item>
                     <ActionList.LeadingVisual>
                         <GitHubIcon />
@@ -169,9 +166,7 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
     const [selectedConnIdx, selectConn] = React.useState(1);
     const selectedConn = connections[selectedConnIdx];
 
-    const activeConnector = useActiveConnector();
-
-    const [isOpen, setIsOpen] = React.useState<boolean>(false);
+    const activeConnector = useActiveConnectorInfo();
 
     return (
         <div className={styles.page}>
@@ -203,15 +198,7 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                     }}
                 />
                 <ScriptEditor className={styles.editor_card} />
-                {appConfig.value?.features?.editorActions && (
-                    <ActionsPanel
-                        icon={selectedConn.icon()}
-                        name={selectedConn.name}
-                        connectorInfo={activeConnector}
-                        isOpen={isOpen}
-                        setIsOpen={setIsOpen}
-                    />
-                )}
+                {appConfig.value?.features?.editorActions && <ActionsPanel activeConnector={activeConnector} />}
             </div>
         </div>
     );
