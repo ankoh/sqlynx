@@ -6,7 +6,6 @@ import { CopyIcon, InfoIcon } from '@primer/octicons-react';
 import { useAppConfig } from '../../app_config';
 import { useSalesforceUserInfo } from '../../connectors/salesforce_userinfo_resolver';
 import {
-    SalesforceAuthParams,
     useSalesforceAuthState,
     useSalesforceAuthFlow,
     CONNECT,

@@ -43,6 +43,8 @@ struct QueryGraphLayoutTableNode {
     width: double;
     /// The node height
     height: double;
+    /// Is referenced?
+    is_referenced: uint8;
 }
 
 table QueryGraphLayout {

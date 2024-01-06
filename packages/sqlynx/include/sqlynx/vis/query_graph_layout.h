@@ -104,9 +104,11 @@ class QueryGraphLayout {
         uint32_t placed_peers;
         /// The placed cell
         std::optional<Cell> placed_cell;
+        /// Is referenced?
+        ExternalObjectID table_reference_id;
         /// Constructor
         Node(size_t node_id, ExternalObjectID table_id, uint32_t total_peers)
-            : node_id(node_id), table_id(table_id), total_peers(total_peers), placed_peers(0) {}
+            : node_id(node_id), table_id(table_id), total_peers(total_peers), placed_peers(0), table_reference_id() {}
 
         /// A ptr to a node
         struct Ref {

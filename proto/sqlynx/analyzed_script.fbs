@@ -38,7 +38,7 @@ table Table {
     ast_scope_root: uint32;
     // The name of the table that is declared by the node
     table_name: QualifiedTableName;
-    /// The table columns
+    // The table columns
     table_columns: [TableColumn];
 }
 
