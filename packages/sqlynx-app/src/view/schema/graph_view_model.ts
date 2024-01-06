@@ -30,6 +30,7 @@ export interface NodeViewModel {
     columns: TableColumn[];
     ports: number;
     peerCount: number;
+    isReferenced: boolean;
 }
 
 interface TableColumn {
@@ -115,6 +116,7 @@ export function computeGraphViewModel(state: ScriptState): GraphViewModel {
         const node = layout.tableNodes(nodeId, tmpGraphTableNode);
         const position = node!.position(tmpGraphVertex)!;
         const tableId = node!.tableId();
+        const nodeIsReferenced = node!.isReferenced() != 0;
 
         // Table ID is null?
         // That means we couldn't resolve a table.
@@ -150,6 +152,7 @@ export function computeGraphViewModel(state: ScriptState): GraphViewModel {
                 height: node!.height(),
                 ports: 0,
                 peerCount: 0,
+                isReferenced: nodeIsReferenced,
             };
             nodes.push(viewModel);
             nodesByTable.set(tableId, viewModel);

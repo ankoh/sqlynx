@@ -64,6 +64,11 @@ void QueryGraphLayout::PrepareLayout(const AnalyzedScript& analyzed) {
             nodes.emplace_back(nodes.size(), table.table_id, 0);
         }
     });
+    for (auto& ref : analyzed.table_references) {
+        if (auto iter = nodes_by_table_id.find(ref.resolved_table_id); iter != nodes_by_table_id.end()) {
+            nodes[iter->second].table_reference_id = ref.table_reference_id;
+        }
+    }
     // Add edge node ids
     assert(edge_nodes.empty());
     edge_nodes.resize(analyzed.graph_edge_nodes.size());
@@ -299,9 +304,10 @@ flatbuffers::Offset<proto::QueryGraphLayout> QueryGraphLayout::Pack(flatbuffers:
         auto& placed_cell = *cell;
         auto x = center_x + placed_cell.position.column * config.cell_width;
         auto y = center_y + placed_cell.position.row * config.cell_height;
+        bool is_referenced = !nodes[i].table_reference_id.IsNull();
         proto::QueryGraphLayoutVertex pos{x - config.cell_width / 2, y - config.cell_height / 2};
         proto::QueryGraphLayoutTableNode proto_node{nodes[i].table_id.Pack(), pos, config.table_width,
-                                                    config.table_height};
+                                                    config.table_height, is_referenced};
         layout.table_nodes[i] = proto_node;
     }
     size_t edge_node_reader = 0;

@@ -182,13 +182,12 @@ export function NodeLayer(props: Props) {
         <div className={props.className}>
             {props.nodes.map(n => {
                 const focusedPorts = connectionPorts.get(n.tableId) ?? 0;
-                const isFocused = focusedPorts != 0 || (props.focus?.tableIds.has(n.tableId) ?? false);
-                const isInactive = n.peerCount == 0;
+                const isReferenced = n.isReferenced;
+                const isInactive = n.peerCount == 0 && !isReferenced;
                 return (
                     <div
                         key={n.nodeId}
                         className={cn(styles.table_node, {
-                            [styles.table_node_focused]: isFocused,
                             [styles.table_node_inactive]: isInactive,
                         })}
                         style={{
@@ -237,11 +236,7 @@ export function NodeLayer(props: Props) {
                                 />
                             )}
                         </div>
-                        <div
-                            className={cn(styles.table_icon, {
-                                [styles.table_icon_focused]: isFocused,
-                            })}
-                        >
+                        <div className={styles.table_icon}>
                             <svg width="20px" height="20px">
                                 <use xlinkHref={`${icons}#table`} />
                             </svg>
