@@ -9,7 +9,7 @@ import {
     useConnectorList,
     useConnectorSelection,
 } from '../../connectors/active_connector';
-import { Connector, ConnectorType } from '../../connectors/connector';
+import { ConnectorInfo, ConnectorType } from '../../connectors/connector_info';
 import { useAppConfig } from '../../app_config';
 import { ScriptEditor } from '../editor/editor';
 import { SchemaGraph } from '../../view/schema/schema_graph';
@@ -32,8 +32,8 @@ const GitHubIcon = () => (
     </svg>
 );
 
-const ActionsPanel = (props: { activeConnector: Connector }) => {
-    const allConnectors = useConnectorList();
+const ActionsPanel = (props: { connector: ConnectorInfo }) => {
+    const connectorList = useConnectorList();
     const connectorSelection = useConnectorSelection();
     const connectorListAnchor = React.useRef(null);
     const [selectorIsOpen, setSelectorIsOpen] = React.useState<boolean>(false);
@@ -57,8 +57,8 @@ const ActionsPanel = (props: { activeConnector: Connector }) => {
                         setSelectorIsOpen(true);
                     }}
                 >
-                    <ActionList.LeadingVisual>{getConnectorIcon(props.activeConnector)}</ActionList.LeadingVisual>
-                    {props.activeConnector.title}
+                    <ActionList.LeadingVisual>{getConnectorIcon(props.connector)}</ActionList.LeadingVisual>
+                    {props.connector.title}
                     <ActionList.TrailingVisual>
                         <AnchoredOverlay
                             renderAnchor={anchorProps => (
@@ -73,7 +73,7 @@ const ActionsPanel = (props: { activeConnector: Connector }) => {
                         >
                             <Box sx={{ width: '240px' }}>
                                 <ActionList>
-                                    {allConnectors.map((connector, i) => (
+                                    {connectorList.map((connector, i) => (
                                         <ActionList.Item key={i} data-connector={i} onClick={selectConnector}>
                                             <ActionList.LeadingVisual>
                                                 {getConnectorIcon(connector)}
@@ -87,14 +87,14 @@ const ActionsPanel = (props: { activeConnector: Connector }) => {
                     </ActionList.TrailingVisual>
                 </ActionList.Item>
                 <ActionList.Divider />
-                <ActionList.Item disabled={!props.activeConnector.features.executeQueryAction}>
+                <ActionList.Item disabled={!props.connector.features.executeQueryAction}>
                     <ActionList.LeadingVisual>
                         <PaperAirplaneIcon />
                     </ActionList.LeadingVisual>
                     Execute Query
                     <ActionList.TrailingVisual>Ctrl + E</ActionList.TrailingVisual>
                 </ActionList.Item>
-                <ActionList.Item disabled={!props.activeConnector.features.refreshSchemaAction}>
+                <ActionList.Item disabled={!props.connector.features.refreshSchemaAction}>
                     <ActionList.LeadingVisual>
                         <SyncIcon />
                     </ActionList.LeadingVisual>
@@ -116,7 +116,7 @@ const ActionsPanel = (props: { activeConnector: Connector }) => {
                     Save Query as .sql
                     <ActionList.TrailingVisual>Ctrl + S</ActionList.TrailingVisual>
                 </ActionList.Item>
-                <ActionList.Item disabled={!props.activeConnector.features.executeQueryAction}>
+                <ActionList.Item disabled={!props.connector.features.executeQueryAction}>
                     <ActionList.LeadingVisual>
                         <DownloadIcon />
                     </ActionList.LeadingVisual>
@@ -150,7 +150,7 @@ const ActionsPanel = (props: { activeConnector: Connector }) => {
 
 export const EditorPage: React.FC<Props> = (props: Props) => {
     const appConfig = useAppConfig();
-    const activeConnector = useActiveConnector();
+    const connector = useActiveConnector();
     return (
         <div className={styles.page}>
             <div className={styles.header_container}>
@@ -181,7 +181,7 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                     }}
                 />
                 <ScriptEditor className={styles.editor_card} />
-                {appConfig.value?.features?.editorActions && <ActionsPanel activeConnector={activeConnector} />}
+                {appConfig.value?.features?.editorActions && <ActionsPanel connector={connector.info} />}
             </div>
         </div>
     );
