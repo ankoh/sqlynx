@@ -4,13 +4,13 @@ import { UPDATE_CATALOG } from './script_state_reducer';
 import { useScriptStateDispatch } from './script_state_provider';
 import { useSalesforceAuthState } from '../connectors/salesforce_auth_state';
 import { useSalesforceAPI } from '../connectors/salesforce_connector';
-import { UPDATE_SALESFORCE_DATA_CLOUD_METADATA } from '../connectors/salesforce_metadata_catalog';
+import { SALESFORCE_DATA_CLOUD } from '../connectors/connector';
 
 interface Props {
     children?: React.ReactElement;
 }
 
-export const ScriptSalesforceMetadataCatalog: React.FC<Props> = (props: Props) => {
+export const ScriptSalesforceCatalogAutoloader: React.FC<Props> = (props: Props) => {
     const dispatch = useScriptStateDispatch();
     const connector = useSalesforceAPI();
     const authState = useSalesforceAuthState();
@@ -19,7 +19,7 @@ export const ScriptSalesforceMetadataCatalog: React.FC<Props> = (props: Props) =
         dispatch({
             type: UPDATE_CATALOG,
             value: {
-                type: UPDATE_SALESFORCE_DATA_CLOUD_METADATA,
+                type: SALESFORCE_DATA_CLOUD,
                 value: {
                     api: connector,
                     accessToken: authState.dataCloudAccessToken,

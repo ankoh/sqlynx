@@ -1,11 +1,9 @@
 import * as React from 'react';
 
 import { useScriptState, useScriptStateDispatch } from '../scripts/script_state_provider';
-import {
-    UPDATE_SALESFORCE_DATA_CLOUD_METADATA,
-    updateDataCloudMetadata,
-} from '../connectors/salesforce_metadata_catalog';
+import { updateDataCloudMetadata } from '../connectors/salesforce_catalog_update';
 import { CatalogUpdateTaskState, CatalogUpdateTaskStatus } from '../connectors/catalog_update';
+import { SALESFORCE_DATA_CLOUD } from '../connectors/connector';
 import {
     CATALOG_UPDATE_CANCELLED,
     CATALOG_UPDATE_FAILED,
@@ -42,35 +40,40 @@ export const ScriptCatalogLoader = (props: { children?: React.ReactElement }) =>
             value: states,
         });
 
-        const run = async () => {
+        const processAll = async () => {
+            const updates = [];
             for (const taskState of states) {
-                try {
-                    switch (taskState.task.type) {
-                        case UPDATE_SALESFORCE_DATA_CLOUD_METADATA: {
-                            await updateDataCloudMetadata(catalog, taskState.task.value, taskState.cancellation);
-                            break;
+                const update = async () => {
+                    try {
+                        switch (taskState.task.type) {
+                            case SALESFORCE_DATA_CLOUD: {
+                                await updateDataCloudMetadata(catalog, taskState.task.value, taskState.cancellation);
+                                break;
+                            }
                         }
-                    }
-                    dispatch({
-                        type: CATALOG_UPDATE_SUCCEEDED,
-                        value: taskState.taskId,
-                    });
-                } catch (e: any) {
-                    if ((e.message = 'AbortError')) {
                         dispatch({
-                            type: CATALOG_UPDATE_CANCELLED,
+                            type: CATALOG_UPDATE_SUCCEEDED,
                             value: taskState.taskId,
                         });
-                    } else {
-                        dispatch({
-                            type: CATALOG_UPDATE_FAILED,
-                            value: [taskState.taskId, e],
-                        });
+                    } catch (e: any) {
+                        if ((e.message = 'AbortError')) {
+                            dispatch({
+                                type: CATALOG_UPDATE_CANCELLED,
+                                value: taskState.taskId,
+                            });
+                        } else {
+                            dispatch({
+                                type: CATALOG_UPDATE_FAILED,
+                                value: [taskState.taskId, e],
+                            });
+                        }
                     }
-                }
+                };
+                updates.push(update());
             }
+            await Promise.all(updates);
         };
-        run();
+        processAll();
     }, [state.catalog, state.catalogUpdateRequests]);
 
     return props.children;

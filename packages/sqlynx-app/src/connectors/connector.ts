@@ -1,3 +1,7 @@
+export const LOCAL_SCRIPT = Symbol('LOCAL_SCRIPT');
+export const SALESFORCE_DATA_CLOUD = Symbol('SCALESFORCE_DATA_CLOUD');
+export const HYPER_DATABASE = Symbol('HYPER_DATABASE');
+
 export enum ConnectorType {
     LOCAL_SCRIPT = 0,
     SALESFORCE_DATA_CLOUD = 1,
