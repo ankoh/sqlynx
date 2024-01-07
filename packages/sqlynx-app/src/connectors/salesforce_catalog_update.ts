@@ -2,8 +2,6 @@ import * as sqlynx from '@ankoh/sqlynx';
 
 import { SalesforceAPIClientInterface, SalesforceDataCloudAccessToken } from './salesforce_api_client';
 
-export const UPDATE_SALESFORCE_DATA_CLOUD_METADATA = Symbol('UPDATE_SALESFORCE_DATA_CLOUD_METADATA');
-
 export interface UpdateDataCloudMetadataTask {
     api: SalesforceAPIClientInterface;
     accessToken: SalesforceDataCloudAccessToken;
