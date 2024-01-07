@@ -5,10 +5,10 @@ import { TriangleDownIcon, SyncIcon, PaperAirplaneIcon, LinkIcon, DownloadIcon }
 
 import {
     SELECT_CONNECTOR,
-    useActiveConnector,
+    useSelectedConnector,
     useConnectorList,
     useConnectorSelection,
-} from '../../connectors/active_connector';
+} from '../../connectors/connector_selection';
 import { ConnectorInfo, ConnectorType } from '../../connectors/connector_info';
 import { useAppConfig } from '../../app_config';
 import { ScriptEditor } from '../editor/editor';
@@ -150,7 +150,7 @@ const ActionsPanel = (props: { connector: ConnectorInfo }) => {
 
 export const EditorPage: React.FC<Props> = (props: Props) => {
     const appConfig = useAppConfig();
-    const connector = useActiveConnector();
+    const connector = useSelectedConnector();
     return (
         <div className={styles.page}>
             <div className={styles.header_container}>

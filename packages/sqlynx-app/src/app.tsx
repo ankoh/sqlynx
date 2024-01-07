@@ -11,7 +11,7 @@ import { ScriptStateProvider } from './scripts/script_state_provider';
 import { ScriptCommands } from './scripts/script_commands';
 import { ScriptSalesforceMetadataCatalog } from './scripts/script_catalog_salesforce_metadata';
 import { SalesforceConnector } from './connectors/salesforce_connector';
-import { ActiveConnector } from './connectors/active_connector';
+import { ConnectorSelection } from './connectors/connector_selection';
 import { LogProvider } from './app_log';
 import { AppConfigResolver } from './app_config';
 
@@ -37,16 +37,16 @@ const AppProviders = (props: { children: React.ReactElement }) => (
             <AppConfigResolver>
                 <SQLynxLoader>
                     <SalesforceConnector>
-                        <ActiveConnector>
-                            <ScriptCommands>
-                                <ScriptStateProvider>
+                        <ConnectorSelection>
+                            <ScriptStateProvider>
+                                <ScriptCommands>
                                     <ScriptLoader />
                                     <ScriptCatalogLoader />
                                     <ScriptSalesforceMetadataCatalog />
                                     {props.children}
-                                </ScriptStateProvider>
-                            </ScriptCommands>
-                        </ActiveConnector>
+                                </ScriptCommands>
+                            </ScriptStateProvider>
+                        </ConnectorSelection>
                     </SalesforceConnector>
                 </SQLynxLoader>
             </AppConfigResolver>

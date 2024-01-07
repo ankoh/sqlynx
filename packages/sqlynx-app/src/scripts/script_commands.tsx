@@ -2,7 +2,7 @@ import React from 'react';
 import { KeyEventHandler, KeyEventHandlerType as KeyEventHandlerVariant, useKeyEvents } from '../utils/key_events';
 
 interface Props {
-    children?: React.ReactElement;
+    children?: React.ReactElement | React.ReactElement[];
 }
 
 export const ScriptCommands: React.FC<Props> = (props: Props) => {
