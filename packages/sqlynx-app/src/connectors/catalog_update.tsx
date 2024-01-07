@@ -1,8 +1,13 @@
-import { UpdateDataCloudMetadataTask } from './salesforce_catalog_update';
 import { VariantKind } from '../utils';
 import { SALESFORCE_DATA_CLOUD } from './connector_info';
+import { SalesforceAPIClientInterface, SalesforceDataCloudAccessToken } from './salesforce_api_client';
 
 export type CatalogUpdateTaskVariant = VariantKind<typeof SALESFORCE_DATA_CLOUD, UpdateDataCloudMetadataTask>;
+
+export interface UpdateDataCloudMetadataTask {
+    api: SalesforceAPIClientInterface;
+    accessToken: SalesforceDataCloudAccessToken;
+}
 
 export enum CatalogUpdateTaskStatus {
     STARTED = 0,

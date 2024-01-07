@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { useScriptState, useScriptStateDispatch } from '../scripts/script_state_provider';
-import { updateDataCloudMetadata } from '../connectors/salesforce_catalog_update';
+import { updateDataCloudCatalog } from '../connectors/salesforce_catalog_update';
 import { CatalogUpdateTaskState, CatalogUpdateTaskStatus } from '../connectors/catalog_update';
 import { SALESFORCE_DATA_CLOUD } from '../connectors/connector_info';
 import {
@@ -47,7 +47,12 @@ export const ScriptCatalogLoader = (props: { children?: React.ReactElement }) =>
                     try {
                         switch (taskState.task.type) {
                             case SALESFORCE_DATA_CLOUD: {
-                                await updateDataCloudMetadata(catalog, taskState.task.value, taskState.cancellation);
+                                const task = taskState.task.value;
+                                const metadata = await task.api.getDataCloudMetadata(
+                                    task.accessToken,
+                                    taskState.cancellation.signal,
+                                );
+                                updateDataCloudCatalog(catalog, metadata);
                                 break;
                             }
                         }
