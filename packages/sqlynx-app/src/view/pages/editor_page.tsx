@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { ActionList, IconButton, ButtonGroup, SelectPanel, AnchoredOverlay, Box, Button } from '@primer/react';
+import { ActionList, IconButton, ButtonGroup, AnchoredOverlay, Box } from '@primer/react';
 import { TriangleDownIcon, SyncIcon, PaperAirplaneIcon, LinkIcon, DownloadIcon } from '@primer/octicons-react';
 
 import {
@@ -13,6 +13,8 @@ import { ConnectorInfo, ConnectorType } from '../../connectors/connector_info';
 import { useAppConfig } from '../../app_config';
 import { ScriptEditor } from '../editor/editor';
 import { SchemaGraph } from '../../view/schema/schema_graph';
+import { QueryProgress } from '../../view/progress/query_progress';
+import { DataTable } from '../../view/table/data_table';
 import { TabCard } from '../../view/tab_card';
 import { getConnectorIcon } from '../connector_icons';
 
@@ -174,10 +176,16 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                 <TabCard
                     className={styles.output_card}
                     selectedTab={1}
-                    tabs={[[1, `${icons}#tables_connected`]]}
+                    tabs={[
+                        [1, `${icons}#tables_connected`],
+                        [2, `${icons}#log`],
+                        [3, `${icons}#table`],
+                    ]}
                     tabProps={{}}
                     tabRenderers={{
                         [1]: props => <SchemaGraph />,
+                        [2]: props => <QueryProgress />,
+                        [3]: props => <DataTable />,
                     }}
                 />
                 <ScriptEditor className={styles.editor_card} />
