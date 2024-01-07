@@ -6,7 +6,7 @@ import { SalesforceAuthFlow } from './salesforce_auth_flow';
 import { SalesforceAuthFlowMock } from './salesforce_auth_flow_mock';
 import { SalesforceUserInfoResolver } from './salesforce_userinfo_resolver';
 
-const API = React.createContext<SalesforceAPIClientInterface | null>(null);
+const API_CTX = React.createContext<SalesforceAPIClientInterface | null>(null);
 
 interface Props {
     children: React.ReactElement;
@@ -19,22 +19,22 @@ export const SalesforceConnector: React.FC<Props> = (props: Props) => {
     } else if (config.value?.connectors?.salesforce?.mock?.enabled) {
         const api = new SalesforceAPIClientMock(config.value!.connectors?.salesforce?.mock);
         return (
-            <API.Provider value={api}>
+            <API_CTX.Provider value={api}>
                 <SalesforceAuthFlowMock>
                     <SalesforceUserInfoResolver>{props.children}</SalesforceUserInfoResolver>
                 </SalesforceAuthFlowMock>
-            </API.Provider>
+            </API_CTX.Provider>
         );
     } else {
         const api = new SalesforceAPIClient();
         return (
-            <API.Provider value={api}>
+            <API_CTX.Provider value={api}>
                 <SalesforceAuthFlow>
                     <SalesforceUserInfoResolver>{props.children}</SalesforceUserInfoResolver>
                 </SalesforceAuthFlow>
-            </API.Provider>
+            </API_CTX.Provider>
         );
     }
 };
 
-export const useSalesforceAPI = (): SalesforceAPIClientInterface => React.useContext(API)!;
+export const useSalesforceAPI = (): SalesforceAPIClientInterface => React.useContext(API_CTX)!;

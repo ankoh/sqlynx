@@ -1,5 +1,6 @@
 import { PKCEChallenge } from '../utils/pkce';
 import { sleep } from '../utils/sleep';
+import { QueryExecutionResponseStream } from './query_execution';
 import {
     SalesforceAPIClientInterface,
     SalesforceCoreAccessToken,
@@ -55,5 +56,8 @@ export class SalesforceAPIClientMock implements SalesforceAPIClientInterface {
         console.log('mock(getDataCloudMetadata)');
         await sleep(200);
         return this.mock.dataCloudMetadata;
+    }
+    public executeQuery(scriptText: string, accessToken: SalesforceDataCloudAccessToken): QueryExecutionResponseStream {
+        throw new Error('Method not implemented.');
     }
 }

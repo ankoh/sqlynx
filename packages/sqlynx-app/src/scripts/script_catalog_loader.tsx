@@ -3,7 +3,7 @@ import * as React from 'react';
 import { useScriptState, useScriptStateDispatch } from '../scripts/script_state_provider';
 import { updateDataCloudMetadata } from '../connectors/salesforce_catalog_update';
 import { CatalogUpdateTaskState, CatalogUpdateTaskStatus } from '../connectors/catalog_update';
-import { SALESFORCE_DATA_CLOUD } from '../connectors/connector';
+import { SALESFORCE_DATA_CLOUD } from '../connectors/connector_info';
 import {
     CATALOG_UPDATE_CANCELLED,
     CATALOG_UPDATE_FAILED,

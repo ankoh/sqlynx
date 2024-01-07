@@ -1,7 +1,7 @@
 import React from 'react';
 import { KeyEventHandler, useKeyEvents } from '../utils/key_events';
 import { useSelectedConnector } from '../connectors/connector_selection';
-import { Connector } from 'connectors/connector';
+import { ConnectorInfo } from 'connectors/connector_info';
 
 export const EXECUTE_QUERY = Symbol('EXECUTE_QUERY');
 export const REFRESH_SCHEMA = Symbol('REFRESH_SCHEMA');
@@ -48,7 +48,7 @@ export const ScriptCommands: React.FC<Props> = (props: Props) => {
         [connector],
     );
     // Helper to signal that a command is not implemented
-    const commandNotImplemented = (connector: Connector, actionName: string) => {
+    const commandNotImplemented = (connector: ConnectorInfo, actionName: string) => {
         console.warn(`connector ${connector.displayName} does not implement the command '${actionName}'`);
     };
     // Create key event handlers

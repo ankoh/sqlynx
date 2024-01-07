@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Connector, ConnectorType } from '../connectors/connector';
+import { ConnectorInfo, ConnectorType } from '../connectors/connector_info';
 
 import icons from '../../static/svg/symbols.generated.svg';
 
@@ -20,7 +20,7 @@ const HyperIcon = () => (
     </svg>
 );
 
-export function getConnectorIcon(connector: Connector): React.ReactElement {
+export function getConnectorIcon(connector: ConnectorInfo): React.ReactElement {
     switch (connector.connectorType) {
         case ConnectorType.LOCAL_SCRIPT:
             return <CloudOfflineIcon />;

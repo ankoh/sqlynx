@@ -4,7 +4,7 @@ import { UPDATE_CATALOG } from './script_state_reducer';
 import { useScriptStateDispatch } from './script_state_provider';
 import { useSalesforceAuthState } from '../connectors/salesforce_auth_state';
 import { useSalesforceAPI } from '../connectors/salesforce_connector';
-import { SALESFORCE_DATA_CLOUD } from '../connectors/connector';
+import { SALESFORCE_DATA_CLOUD } from '../connectors/connector_info';
 
 interface Props {
     children?: React.ReactElement;

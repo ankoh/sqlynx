@@ -1,15 +1,15 @@
 import React from 'react';
 import { Dispatch, VariantKind } from '../utils';
-import { CONNECTORS, Connector, ConnectorType } from './connector';
+import { CONNECTOR_INFOS, ConnectorInfo, ConnectorType } from './connector_info';
 
 export const SELECT_CONNECTOR = Symbol('SELECT_CONNECTOR');
 
 export type SelectedConnectorDispatch = VariantKind<typeof SELECT_CONNECTOR, ConnectorType>;
 
-function reduceSelectedConnector(_state: Connector, action: SelectedConnectorDispatch): Connector {
+function reduceSelectedConnector(_state: ConnectorInfo, action: SelectedConnectorDispatch): ConnectorInfo {
     switch (action.type) {
         case SELECT_CONNECTOR:
-            return CONNECTORS[action.value as number];
+            return CONNECTOR_INFOS[action.value as number];
     }
 }
 
@@ -17,13 +17,13 @@ interface Props {
     children: React.ReactElement;
 }
 
-const ACTIVE_CONNECTOR_CTX = React.createContext<Connector | null>(null);
+const ACTIVE_CONNECTOR_CTX = React.createContext<ConnectorInfo | null>(null);
 const CONNECTOR_SELECTION_CTX = React.createContext<Dispatch<SelectedConnectorDispatch> | null>(null);
 
 export const ConnectorSelection: React.FC<Props> = (props: Props) => {
     const [connector, dispatch] = React.useReducer<typeof reduceSelectedConnector>(
         reduceSelectedConnector,
-        CONNECTORS[0],
+        CONNECTOR_INFOS[0],
     );
     return (
         <ACTIVE_CONNECTOR_CTX.Provider value={connector}>
@@ -32,6 +32,6 @@ export const ConnectorSelection: React.FC<Props> = (props: Props) => {
     );
 };
 
-export const useConnectorList = () => CONNECTORS;
+export const useConnectorList = () => CONNECTOR_INFOS;
 export const useConnectorSelection = () => React.useContext(CONNECTOR_SELECTION_CTX)!;
 export const useSelectedConnector = () => React.useContext(ACTIVE_CONNECTOR_CTX)!;
