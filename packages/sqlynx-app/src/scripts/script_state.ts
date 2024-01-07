@@ -8,6 +8,11 @@ import { SQLynxScriptBuffers } from '../view/editor/sqlynx_processor';
 import { GraphViewModel } from '../view/schema/graph_view_model';
 import { ScriptLoadingInfo } from './script_loader';
 import { FocusInfo } from './focus';
+import {
+    QueryExecutionResult,
+    QueryExecutionTaskState,
+    QueryExecutionTaskVariant,
+} from '../connectors/query_execution';
 
 const DEFAULT_BOARD_WIDTH = 800;
 const DEFAULT_BOARD_HEIGHT = 600;
@@ -29,8 +34,8 @@ export interface ScriptState {
     catalogUpdateRequests: Immutable.Map<number, CatalogUpdateTaskVariant>;
     /// The id for the next catalog update
     nextCatalogUpdateId: number;
-    /// The main script
-    scripts: { [context: number]: ScriptData };
+    /// The scripts (main or external)j
+    scripts: { [id: number]: ScriptData };
     /// The graph
     graph: sqlynx.SQLynxQueryGraphLayout | null;
     /// The graph config
@@ -39,8 +44,14 @@ export interface ScriptState {
     graphLayout: sqlynx.FlatBufferPtr<sqlynx.proto.QueryGraphLayout> | null;
     /// The graph view model
     graphViewModel: GraphViewModel;
-    /// The user focus
-    focus: FocusInfo | null;
+    /// The user focus info
+    userFocus: FocusInfo | null;
+    /// The query execution was requested?
+    queryExecutionRequest: QueryExecutionTaskVariant | null;
+    /// The query execution state
+    queryExecutionState: QueryExecutionTaskState | null;
+    /// The response stream of the active query
+    queryExecutionResult: QueryExecutionResult | null;
 }
 
 /// The script data
@@ -165,6 +176,9 @@ export function createDefaultState(): ScriptState {
                 totalHeight: 0,
             },
         },
-        focus: null,
+        userFocus: null,
+        queryExecutionRequest: null,
+        queryExecutionState: null,
+        queryExecutionResult: null,
     };
 }
