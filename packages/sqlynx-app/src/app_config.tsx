@@ -9,7 +9,6 @@ export interface AppFeatures {
     logViewer?: boolean;
     connections?: boolean;
     completionDetails?: boolean;
-    editorActions?: boolean;
 }
 
 export interface AppConfig {

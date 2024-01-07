@@ -25,6 +25,19 @@
         grid-template-columns: 100%;
         row-gap: 20px;
     }
+    .header_action_container {
+        grid-column: 3;
+        height: 100%;
+        margin-right: 8px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+    }
+    .header_action_connector {
+        margin-right: 4px;
+        color: black !important;
+        font-weight: 400 !important;
+    }
     .action_container {
         display: none;
     }
@@ -45,6 +58,9 @@
         grid-template-columns: auto max-content;
         row-gap: 24px;
         column-gap: 24px;
+    }
+    .header_action_container {
+        display: none;
     }
     .action_container {
         grid-row: 1 / span 2;
@@ -89,15 +105,6 @@
     justify-content: center;
     align-items: start;
     row-gap: 2px;
-}
-
-.header_right_container {
-    grid-column: 3;
-    height: 100%;
-    margin-right: 16px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
 }
 
 .output_card {

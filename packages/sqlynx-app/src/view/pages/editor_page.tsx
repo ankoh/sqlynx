@@ -1,7 +1,14 @@
 import * as React from 'react';
 
-import { ActionList, IconButton, ButtonGroup, AnchoredOverlay, Box } from '@primer/react';
-import { TriangleDownIcon, SyncIcon, PaperAirplaneIcon, LinkIcon, DownloadIcon } from '@primer/octicons-react';
+import { ActionList, Button, IconButton, ButtonGroup, AnchoredOverlay, Box } from '@primer/react';
+import {
+    TriangleDownIcon,
+    SyncIcon,
+    PaperAirplaneIcon,
+    LinkIcon,
+    DownloadIcon,
+    EllipsisIcon,
+} from '@primer/octicons-react';
 
 import {
     SELECT_CONNECTOR,
@@ -159,18 +166,17 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                 <div className={styles.header_left_container}>
                     <div className={styles.page_title}>SQL Editor</div>
                 </div>
-                {!appConfig.value?.features?.editorActions && (
-                    <div className={styles.header_right_container}>
-                        <ButtonGroup>
-                            <IconButton sx={{ width: '40px' }} icon={BugIcon} aria-labelledby="create-github-issue" />
-                            <IconButton
-                                sx={{ width: '40px' }}
-                                icon={GitHubIcon}
-                                aria-labelledby="visit-github-repository"
-                            />
-                        </ButtonGroup>
-                    </div>
-                )}
+                <div className={styles.header_action_container}>
+                    <Button variant="invisible" className={styles.header_action_connector}>
+                        {connector.displayName}
+                    </Button>
+                    <ButtonGroup>
+                        <IconButton icon={PaperAirplaneIcon} aria-labelledby="create-github-issue" />
+                        <IconButton icon={SyncIcon} aria-labelledby="visit-github-repository" />
+                        <IconButton icon={LinkIcon} aria-labelledby="visit-github-repository" />
+                        <IconButton icon={EllipsisIcon} aria-labelledby="visit-github-repository" />
+                    </ButtonGroup>
+                </div>
             </div>
             <div className={styles.body_container}>
                 <TabCard
@@ -189,7 +195,7 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                     }}
                 />
                 <ScriptEditor className={styles.editor_card} />
-                {appConfig.value?.features?.editorActions && <ActionsPanel connector={connector} />}
+                <ActionsPanel connector={connector} />
             </div>
         </div>
     );
