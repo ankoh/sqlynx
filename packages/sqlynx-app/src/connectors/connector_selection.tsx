@@ -1,7 +1,7 @@
 import React from 'react';
 import { Dispatch, VariantKind } from '../utils';
 import { CONNECTORS, ConnectorInfo, ConnectorType } from './connector_info';
-import { ConnectorActions, DEFAULT_CONNECTOR_ACTIONS } from './connector_actions';
+import { ConnectorInterface, DEFAULT_CONNECTOR_INTERFACE } from './connector_interface';
 
 export const SELECT_CONNECTOR = Symbol('SELECT_CONNECTOR');
 
@@ -18,7 +18,7 @@ interface Connector {
     /// The connector info
     info: ConnectorInfo;
     /// The actions
-    actions: ConnectorActions;
+    actions: ConnectorInterface;
 }
 
 interface Props {
@@ -33,12 +33,12 @@ export const ConnectorSelection: React.FC<Props> = (props: Props) => {
         reduceSelectedConnector,
         CONNECTORS[0],
     );
-    let connectorActions: ConnectorActions;
+    let connectorActions: ConnectorInterface;
     switch (connectorInfo.connectorType) {
         case ConnectorType.HYPER_DATABASE:
         case ConnectorType.SALESFORCE_DATA_CLOUD_CONNECTOR:
         case ConnectorType.LOCAL_SCRIPT:
-            connectorActions = DEFAULT_CONNECTOR_ACTIONS;
+            connectorActions = DEFAULT_CONNECTOR_INTERFACE;
     }
     const connector = {
         info: connectorInfo,

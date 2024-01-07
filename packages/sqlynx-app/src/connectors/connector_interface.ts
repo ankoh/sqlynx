@@ -1,9 +1,9 @@
-export interface ConnectorActions {
+export interface ConnectorInterface {
     executeQuery(): Promise<void>;
     refreshSchema(): Promise<void>;
 }
 
-export const DEFAULT_CONNECTOR_ACTIONS: ConnectorActions = {
+export const DEFAULT_CONNECTOR_INTERFACE: ConnectorInterface = {
     async executeQuery(): Promise<void> {
         console.warn('executeQuery is not implemented for this connector');
     },

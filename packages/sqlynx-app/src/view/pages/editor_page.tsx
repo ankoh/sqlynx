@@ -58,7 +58,7 @@ const ActionsPanel = (props: { connector: ConnectorInfo }) => {
                     }}
                 >
                     <ActionList.LeadingVisual>{getConnectorIcon(props.connector)}</ActionList.LeadingVisual>
-                    {props.connector.title}
+                    {props.connector.displayName}
                     <ActionList.TrailingVisual>
                         <AnchoredOverlay
                             renderAnchor={anchorProps => (
@@ -78,7 +78,7 @@ const ActionsPanel = (props: { connector: ConnectorInfo }) => {
                                             <ActionList.LeadingVisual>
                                                 {getConnectorIcon(connector)}
                                             </ActionList.LeadingVisual>
-                                            {connector.title}
+                                            {connector.displayName}
                                         </ActionList.Item>
                                     ))}
                                 </ActionList>
