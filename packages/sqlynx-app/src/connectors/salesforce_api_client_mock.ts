@@ -1,7 +1,7 @@
 import { PKCEChallenge } from '../utils/pkce';
 import { sleep } from '../utils/sleep';
 import {
-    SalesforceConnectorInterface,
+    SalesforceAPIClientInterface,
     SalesforceCoreAccessToken,
     SalesforceDataCloudAccessToken,
     SalesforceMetadata,
@@ -19,7 +19,7 @@ export interface SalesforceConnectorMockConfig {
     dataCloudMetadata: SalesforceMetadata;
 }
 
-export class SalesforceAPIClientMock implements SalesforceConnectorInterface {
+export class SalesforceAPIClientMock implements SalesforceAPIClientInterface {
     constructor(protected mock: SalesforceConnectorMockConfig) {}
 
     public async getCoreAccessToken(

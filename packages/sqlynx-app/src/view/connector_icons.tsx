@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { ConnectorInfo, ConnectorType } from '../connectors/connector_info';
+import { Connector, ConnectorType } from '../connectors/connector';
 
 import icons from '../../static/svg/symbols.generated.svg';
 
@@ -20,11 +20,11 @@ const HyperIcon = () => (
     </svg>
 );
 
-export function getConnectorIcon(connector: ConnectorInfo): React.ReactElement {
+export function getConnectorIcon(connector: Connector): React.ReactElement {
     switch (connector.connectorType) {
         case ConnectorType.LOCAL_SCRIPT:
             return <CloudOfflineIcon />;
-        case ConnectorType.SALESFORCE_DATA_CLOUD_CONNECTOR:
+        case ConnectorType.SALESFORCE_DATA_CLOUD:
             return <SalesforceIcon />;
         case ConnectorType.HYPER_DATABASE:
             return <HyperIcon />;

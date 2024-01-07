@@ -1,14 +1,11 @@
 import * as sqlynx from '@ankoh/sqlynx';
 
-import { SalesforceConnectorInterface, SalesforceDataCloudAccessToken } from './salesforce_api_client';
+import { SalesforceAPIClientInterface, SalesforceDataCloudAccessToken } from './salesforce_api_client';
 
 export const UPDATE_SALESFORCE_DATA_CLOUD_METADATA = Symbol('UPDATE_SALESFORCE_DATA_CLOUD_METADATA');
 
-const METADATA_DESCRIPTOR_POOL_ID = 100;
-const METADATA_DESCRIPTOR_POOL_RANK = 1e9;
-
 export interface UpdateDataCloudMetadataTask {
-    api: SalesforceConnectorInterface;
+    api: SalesforceAPIClientInterface;
     accessToken: SalesforceDataCloudAccessToken;
 }
 

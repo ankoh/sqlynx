@@ -1,10 +1,10 @@
 export enum ConnectorType {
     LOCAL_SCRIPT = 0,
-    SALESFORCE_DATA_CLOUD_CONNECTOR = 1,
+    SALESFORCE_DATA_CLOUD = 1,
     HYPER_DATABASE = 2,
 }
 
-export interface ConnectorInfo {
+export interface Connector {
     /// The connector type
     connectorType: ConnectorType;
     /// The connector title
@@ -22,7 +22,7 @@ export interface ConnectorFeatures {
     refreshSchemaAction: boolean;
 }
 
-export const CONNECTORS: ConnectorInfo[] = [
+export const CONNECTORS: Connector[] = [
     {
         connectorType: ConnectorType.LOCAL_SCRIPT,
         displayName: 'Local Script',
@@ -33,7 +33,7 @@ export const CONNECTORS: ConnectorInfo[] = [
         },
     },
     {
-        connectorType: ConnectorType.SALESFORCE_DATA_CLOUD_CONNECTOR,
+        connectorType: ConnectorType.SALESFORCE_DATA_CLOUD,
         displayName: 'Salesforce Data Cloud',
         features: {
             schemaScript: false,
