@@ -4,7 +4,7 @@ import { Connector, ConnectorType } from '../connectors/connector';
 
 import icons from '../../static/svg/symbols.generated.svg';
 
-const SalesforceIcon = () => (
+export const SalesforceIcon = () => (
     <svg width="20px" height="20px">
         <use xlinkHref={`${icons}#salesforce-notext`} />
     </svg>
