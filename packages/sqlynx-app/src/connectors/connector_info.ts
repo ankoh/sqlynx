@@ -4,7 +4,7 @@ export enum ConnectorType {
     HYPER_DATABASE = 2,
 }
 
-export interface Connector {
+export interface ConnectorInfo {
     /// The connector type
     connectorType: ConnectorType;
     /// The connector title
@@ -22,7 +22,7 @@ export interface ConnectorFeatures {
     refreshSchemaAction: boolean;
 }
 
-export const CONNECTORS: Connector[] = [
+export const CONNECTORS: ConnectorInfo[] = [
     {
         connectorType: ConnectorType.LOCAL_SCRIPT,
         title: 'Local Script',
