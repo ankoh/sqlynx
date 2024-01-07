@@ -1,3 +1,4 @@
+import * as arrow from 'apache-arrow';
 import * as sqlynx from '@ankoh/sqlynx';
 import * as React from 'react';
 
@@ -15,6 +16,12 @@ import {
     CatalogUpdateTaskStatus,
     CatalogUpdateTaskVariant,
 } from '../connectors/catalog_update';
+import {
+    QueryExecutionProgress,
+    QueryExecutionTaskState,
+    QueryExecutionTaskStatus,
+    QueryExecutionTaskVariant,
+} from '../connectors/query_execution';
 
 export const INITIALIZE = Symbol('INITIALIZE');
 export const DESTROY = Symbol('DESTROY');
@@ -35,7 +42,9 @@ export const CATALOG_UPDATE_CANCELLED = Symbol('CATALOG_UPDATE_CANCELLED');
 
 export const EXECUTE_QUERY = Symbol('EXECUTE_QUERY');
 export const QUERY_EXECUTION_STARTED = Symbol('QUERY_EXECUTION_STARTED');
-export const QUERY_EXECUTION_UPDATED = Symbol('QUERY_EXECUTION_UPDATED');
+export const QUERY_EXECUTION_PROGRESS_UPDATED = Symbol('QUERY_EXECUTION_PROGRESS_UPDATED');
+export const QUERY_EXECUTION_RECEIVED_SCHEMA = Symbol('QUERY_EXECUTION_RECEIVED_SCHEMA');
+export const QUERY_EXECUTION_RECEIVED_BATCH = Symbol('QUERY_EXECUTION_RECEIVED_BATCH');
 export const QUERY_EXECUTION_SUCCEEDED = Symbol('QUERY_EXECUTION_SUCCEEDED');
 export const QUERY_EXECUTION_FAILED = Symbol('QUERY_EXECUTION_FAILED');
 export const QUERY_EXECUTION_CANCELLED = Symbol('QUERY_EXECUTION_CANCELLED');
@@ -58,11 +67,13 @@ export type ScriptStateAction =
     | VariantKind<typeof CATALOG_UPDATE_CANCELLED, number>
     | VariantKind<typeof CATALOG_UPDATE_SUCCEEDED, number>
     | VariantKind<typeof CATALOG_UPDATE_FAILED, [number, any]>
-    | VariantKind<typeof EXECUTE_QUERY, null>
-    | VariantKind<typeof QUERY_EXECUTION_STARTED, null>
-    | VariantKind<typeof QUERY_EXECUTION_UPDATED, null>
-    | VariantKind<typeof QUERY_EXECUTION_SUCCEEDED, null>
-    | VariantKind<typeof QUERY_EXECUTION_FAILED, null>
+    | VariantKind<typeof EXECUTE_QUERY, QueryExecutionTaskVariant>
+    | VariantKind<typeof QUERY_EXECUTION_STARTED, QueryExecutionTaskState>
+    | VariantKind<typeof QUERY_EXECUTION_PROGRESS_UPDATED, QueryExecutionProgress>
+    | VariantKind<typeof QUERY_EXECUTION_RECEIVED_SCHEMA, arrow.Schema>
+    | VariantKind<typeof QUERY_EXECUTION_RECEIVED_BATCH, arrow.RecordBatch>
+    | VariantKind<typeof QUERY_EXECUTION_SUCCEEDED, arrow.RecordBatch | null>
+    | VariantKind<typeof QUERY_EXECUTION_FAILED, any>
     | VariantKind<typeof QUERY_EXECUTION_CANCELLED, null>
     | VariantKind<typeof FOCUS_QUERY_GRAPH_NODE, GraphNodeDescriptor | null>
     | VariantKind<typeof FOCUS_QUERY_GRAPH_EDGE, GraphConnectionId.Value | null>
@@ -387,22 +398,95 @@ function reduceScriptState(state: ScriptState, action: ScriptStateAction): Scrip
         }
 
         case EXECUTE_QUERY: {
-            return state;
+            return {
+                ...state,
+                queryExecutionRequest: action.value,
+                queryExecutionState: null,
+                queryExecutionResult: null,
+            };
         }
         case QUERY_EXECUTION_STARTED: {
-            return state;
+            return {
+                ...state,
+                queryExecutionRequest: null,
+                queryExecutionState: {
+                    ...action.value,
+                    status: QueryExecutionTaskStatus.STARTED,
+                    lastUpdatedAt: new Date(),
+                },
+                queryExecutionResult: null,
+            };
         }
-        case QUERY_EXECUTION_UPDATED: {
-            return state;
+        case QUERY_EXECUTION_PROGRESS_UPDATED: {
+            return {
+                ...state,
+                queryExecutionState: {
+                    ...state.queryExecutionState!,
+                    lastUpdatedAt: new Date(),
+                    latestProgressUpdate: action.value,
+                },
+            };
+        }
+        case QUERY_EXECUTION_RECEIVED_SCHEMA: {
+            return {
+                ...state,
+                queryExecutionState: {
+                    ...state.queryExecutionState!,
+                    status: QueryExecutionTaskStatus.RECEIVED_SCHEMA,
+                    lastUpdatedAt: new Date(),
+                    resultSchema: state.queryExecutionState!.resultSchema,
+                },
+            };
+        }
+        case QUERY_EXECUTION_RECEIVED_BATCH: {
+            return {
+                ...state,
+                queryExecutionState: {
+                    ...state.queryExecutionState!,
+                    status: QueryExecutionTaskStatus.RECEIVED_FIRST_RESULT,
+                    lastUpdatedAt: new Date(),
+                    resultBatches: state.queryExecutionState!.resultBatches.push(action.value),
+                },
+            };
         }
         case QUERY_EXECUTION_SUCCEEDED: {
-            return state;
+            const now = new Date();
+            return {
+                ...state,
+                queryExecutionState: {
+                    ...state.queryExecutionState!,
+                    status: QueryExecutionTaskStatus.SUCCEEDED,
+                    lastUpdatedAt: now,
+                    finishedAt: now,
+                },
+                queryExecutionResult: null, // XXX Build arrow table
+            };
         }
         case QUERY_EXECUTION_FAILED: {
-            return state;
+            const now = new Date();
+            return {
+                ...state,
+                queryExecutionState: {
+                    ...state.queryExecutionState!,
+                    status: QueryExecutionTaskStatus.FAILED,
+                    lastUpdatedAt: now,
+                    finishedAt: now,
+                    error: action.value,
+                },
+            };
         }
         case QUERY_EXECUTION_CANCELLED: {
-            return state;
+            const now = new Date();
+            return {
+                ...state,
+                queryExecutionState: {
+                    ...state.queryExecutionState!,
+                    status: QueryExecutionTaskStatus.CANCELLED,
+                    lastUpdatedAt: now,
+                    finishedAt: now,
+                    error: action.value,
+                },
+            };
         }
 
         case FOCUS_QUERY_GRAPH_NODE:

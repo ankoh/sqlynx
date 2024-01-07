@@ -8,9 +8,11 @@ export type QueryExecutionTaskVariant = VariantKind<typeof SALESFORCE_DATA_CLOUD
 
 export enum QueryExecutionTaskStatus {
     STARTED = 0,
-    SUCCEEDED = 2,
-    FAILED = 3,
-    CANCELLED = 4,
+    RECEIVED_SCHEMA = 1,
+    RECEIVED_FIRST_RESULT = 2,
+    SUCCEEDED = 3,
+    FAILED = 4,
+    CANCELLED = 5,
 }
 
 export interface QueryExecutionProgress {}
@@ -44,7 +46,9 @@ export interface QueryExecutionTaskState {
     /// The latest update for the query execution
     latestProgressUpdate: QueryExecutionProgress;
     /// The number of record batches that are already buffered
-    bufferedResultBatches: arrow.RecordBatch[];
+    resultSchema: arrow.Schema;
+    /// The number of record batches that are already buffered
+    resultBatches: Immutable.List<arrow.RecordBatch>;
 }
 
 export interface QueryExecutionResult {
