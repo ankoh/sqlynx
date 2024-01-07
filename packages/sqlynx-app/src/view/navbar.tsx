@@ -42,17 +42,6 @@ export const NavBar = (): React.ReactElement => {
                     <Tab route="/connections" location={location.pathname} icon={`${symbols}#connection`} />
                 )}
             </div>
-            {appConfig?.value?.features?.userAccount && (
-                <Link className={styles.account} to="/account">
-                    {ghProfile?.avatarUrl ? (
-                        <img className={styles.avatar} width="32px" height="32px" src={ghProfile!.avatarUrl} />
-                    ) : (
-                        <svg className={styles.avatar} width="26px" height="26px">
-                            <use xlinkHref={`${symbols}#folder_account`} />
-                        </svg>
-                    )}
-                </Link>
-            )}
             <SystemBar className={styles.sysbar} />
         </div>
     );
