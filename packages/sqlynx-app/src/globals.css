@@ -22,7 +22,7 @@
     --nav_bar_logo_fg: hsl(210, 24%, 32%);
     --nav_bar_logo_bg: white;
     --nav_bar_width: 48px;
-    --nav_bar_height: 48px;
+    --nav_bar_height: 40px;
     --nav_bar_border: 1px solid var(--border_color_primary);
     --nav_tab_bg: hsl(210, 24%, 92%);
     --nav_tab_bg_active: hsl(210, 24%, 88%);
