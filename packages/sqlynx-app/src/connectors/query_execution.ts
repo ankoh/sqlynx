@@ -2,9 +2,15 @@ import * as arrow from 'apache-arrow';
 
 import { VariantKind } from '../utils';
 import { SALESFORCE_DATA_CLOUD } from './connector_info';
-import { ExecuteDataCloudQueryTask } from './salesforce_query_execution';
+import { SalesforceAPIClientInterface, SalesforceDataCloudAccessToken } from './salesforce_api_client';
 
 export type QueryExecutionTaskVariant = VariantKind<typeof SALESFORCE_DATA_CLOUD, ExecuteDataCloudQueryTask>;
+
+export interface ExecuteDataCloudQueryTask {
+    api: SalesforceAPIClientInterface;
+    accessToken: SalesforceDataCloudAccessToken;
+    scriptText: string;
+}
 
 export enum QueryExecutionTaskStatus {
     ACCEPTED = 0,

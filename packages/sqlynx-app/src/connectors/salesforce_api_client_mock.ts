@@ -1,3 +1,5 @@
+import * as sqlynx from '@ankoh/sqlynx';
+
 import { PKCEChallenge } from '../utils/pkce';
 import { sleep } from '../utils/sleep';
 import { QueryExecutionResponseStream } from './query_execution';
@@ -57,6 +59,7 @@ export class SalesforceAPIClientMock implements SalesforceAPIClientInterface {
         await sleep(200);
         return this.mock.dataCloudMetadata;
     }
+
     public executeQuery(scriptText: string, accessToken: SalesforceDataCloudAccessToken): QueryExecutionResponseStream {
         throw new Error('Method not implemented.');
     }
