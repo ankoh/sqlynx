@@ -4,13 +4,12 @@ import { ActionList, IconButton, ButtonGroup, SelectPanel, AnchoredOverlay, Box,
 import { TriangleDownIcon, SyncIcon, PaperAirplaneIcon, LinkIcon, DownloadIcon } from '@primer/octicons-react';
 
 import {
-    ConnectorInfo,
-    ConnectorType,
-    SWITCH_CONNECTOR,
-    useActiveConnectorInfo,
-    useConnectorInfos,
-    useConnectorSwitch,
-} from '../../connectors/connector_switch';
+    SELECT_CONNECTOR,
+    useActiveConnector,
+    useConnectorList,
+    useActiveConnectorSelection,
+} from '../../connectors/active_connector';
+import { Connector, ConnectorType } from '../../connectors/connector';
 import { useAppConfig } from '../../app_config';
 import { ScriptEditor } from '../editor/editor';
 import { SchemaGraph } from '../../view/schema/schema_graph';
@@ -38,9 +37,9 @@ const SalesforceIcon = () => (
     </svg>
 );
 
-const ActionsPanel = (props: { activeConnector: ConnectorInfo }) => {
-    const allConnectors = useConnectorInfos();
-    const switchConnector = useConnectorSwitch();
+const ActionsPanel = (props: { activeConnector: Connector }) => {
+    const allConnectors = useConnectorList();
+    const activeConnectorSelection = useActiveConnectorSelection();
     const connectorListAnchor = React.useRef(null);
     const [selectorIsOpen, setSelectorIsOpen] = React.useState<boolean>(false);
 
@@ -49,8 +48,8 @@ const ActionsPanel = (props: { activeConnector: ConnectorInfo }) => {
         const target = e.currentTarget as HTMLLIElement;
         const connectorType = Number.parseInt(target.getAttribute('data-connector') ?? '0')! as ConnectorType;
         setSelectorIsOpen(false);
-        switchConnector({
-            type: SWITCH_CONNECTOR,
+        activeConnectorSelection({
+            type: SELECT_CONNECTOR,
             value: connectorType,
         });
     }, []);
@@ -166,7 +165,7 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
     const [selectedConnIdx, selectConn] = React.useState(1);
     const selectedConn = connections[selectedConnIdx];
 
-    const activeConnector = useActiveConnectorInfo();
+    const activeConnector = useActiveConnector();
 
     return (
         <div className={styles.page}>
