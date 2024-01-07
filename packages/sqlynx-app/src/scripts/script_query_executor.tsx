@@ -2,8 +2,7 @@ import * as React from 'react';
 import Immutable from 'immutable';
 
 import { useScriptState, useScriptStateDispatch } from '../scripts/script_state_provider';
-import { SALESFORCE_DATA_CLOUD } from '../connectors/connector';
-import * as sfq from '../connectors/salesforce_query_execution';
+import { SALESFORCE_DATA_CLOUD } from '../connectors/connector_info';
 import {
     QueryExecutionResponseStream,
     QueryExecutionTaskState,
@@ -90,7 +89,10 @@ export const ScriptQueryExecutor = (props: { children?: React.ReactElement }) =>
                 let resultStream: QueryExecutionResponseStream;
                 switch (request.type) {
                     case SALESFORCE_DATA_CLOUD: {
-                        resultStream = sfq.executeQuery(request.value);
+                        const api = request.value.api;
+                        const script = request.value.scriptText;
+                        const token = request.value.accessToken;
+                        resultStream = api.executeQuery(script, token);
                         break;
                     }
                 }

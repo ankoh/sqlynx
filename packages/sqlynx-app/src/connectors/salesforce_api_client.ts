@@ -1,3 +1,4 @@
+import { QueryExecutionResponseStream } from './query_execution';
 import { SalesforceAuthConfig, SalesforceAuthParams } from './salesforce_auth_state';
 
 export interface SalesforceCoreAccessToken {
@@ -177,6 +178,7 @@ export interface SalesforceAPIClientInterface {
         cancel: AbortSignal,
     ): Promise<SalesforceDataCloudAccessToken>;
     getDataCloudMetadata(access: SalesforceDataCloudAccessToken, cancel: AbortSignal): Promise<SalesforceMetadata>;
+    executeQuery(scriptText: string, accessToken: SalesforceDataCloudAccessToken): QueryExecutionResponseStream;
 }
 
 export class SalesforceAPIClient implements SalesforceAPIClientInterface {
@@ -262,5 +264,8 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
         const responseJson = await response.json();
         console.log(responseJson);
         return responseJson as SalesforceMetadata;
+    }
+    public executeQuery(scriptText: string, accessToken: SalesforceDataCloudAccessToken): QueryExecutionResponseStream {
+        throw new Error('Method not implemented.');
     }
 }

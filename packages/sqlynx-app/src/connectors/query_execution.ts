@@ -1,7 +1,7 @@
 import * as arrow from 'apache-arrow';
 
 import { VariantKind } from '../utils';
-import { SALESFORCE_DATA_CLOUD } from './connector';
+import { SALESFORCE_DATA_CLOUD } from './connector_info';
 import { ExecuteDataCloudQueryTask } from './salesforce_query_execution';
 
 export type QueryExecutionTaskVariant = VariantKind<typeof SALESFORCE_DATA_CLOUD, ExecuteDataCloudQueryTask>;

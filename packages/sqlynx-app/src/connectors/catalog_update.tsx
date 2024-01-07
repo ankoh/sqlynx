@@ -1,6 +1,6 @@
 import { UpdateDataCloudMetadataTask } from './salesforce_catalog_update';
 import { VariantKind } from '../utils';
-import { SALESFORCE_DATA_CLOUD } from './connector';
+import { SALESFORCE_DATA_CLOUD } from './connector_info';
 
 export type CatalogUpdateTaskVariant = VariantKind<typeof SALESFORCE_DATA_CLOUD, UpdateDataCloudMetadataTask>;
 
