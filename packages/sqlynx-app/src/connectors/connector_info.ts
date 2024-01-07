@@ -8,7 +8,7 @@ export interface ConnectorInfo {
     /// The connector type
     connectorType: ConnectorType;
     /// The connector title
-    title: string;
+    displayName: string;
     /// The connector features
     features: ConnectorFeatures;
 }
@@ -25,7 +25,7 @@ export interface ConnectorFeatures {
 export const CONNECTORS: ConnectorInfo[] = [
     {
         connectorType: ConnectorType.LOCAL_SCRIPT,
-        title: 'Local Script',
+        displayName: 'Local Script',
         features: {
             schemaScript: true,
             executeQueryAction: false,
@@ -34,7 +34,7 @@ export const CONNECTORS: ConnectorInfo[] = [
     },
     {
         connectorType: ConnectorType.SALESFORCE_DATA_CLOUD_CONNECTOR,
-        title: 'Salesforce Data Cloud',
+        displayName: 'Salesforce Data Cloud',
         features: {
             schemaScript: false,
             executeQueryAction: true,
@@ -43,7 +43,7 @@ export const CONNECTORS: ConnectorInfo[] = [
     },
     {
         connectorType: ConnectorType.HYPER_DATABASE,
-        title: 'Hyper Database',
+        displayName: 'Hyper Database',
         features: {
             schemaScript: false,
             executeQueryAction: true,

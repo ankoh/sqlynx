@@ -1,22 +1,11 @@
 import React from 'react';
 
-export enum KeyEventHandlerType {
-    ACTION = 1,
-}
-
 type KeyEventCallback = (event: KeyboardEvent) => void;
 
 export interface KeyEventHandler {
-    variant: KeyEventHandlerType;
     key: string;
+    ctrlKey: boolean;
     callback: KeyEventCallback;
-}
-
-function matchesKeyPress(subscriber: KeyEventHandler, event: KeyboardEvent) {
-    switch (subscriber.variant) {
-        case KeyEventHandlerType.ACTION:
-            return event.ctrlKey && event.key == subscriber.key;
-    }
 }
 
 export function useKeyEvents(subscribers: KeyEventHandler[]) {
@@ -26,7 +15,7 @@ export function useKeyEvents(subscribers: KeyEventHandler[]) {
     }, [subscribers]);
     const handleKeyPress = React.useCallback<(event: KeyboardEvent) => void>((event: KeyboardEvent) => {
         for (const subscriber of subscribersRef.current) {
-            if (matchesKeyPress(subscriber, event)) {
+            if (subscriber.ctrlKey && event.ctrlKey && subscriber.key == event.key) {
                 subscriber.callback(event);
             }
         }
