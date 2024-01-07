@@ -7,17 +7,20 @@ import { ExecuteDataCloudQueryTask } from './salesforce_query_execution';
 export type QueryExecutionTaskVariant = VariantKind<typeof SALESFORCE_DATA_CLOUD, ExecuteDataCloudQueryTask>;
 
 export enum QueryExecutionTaskStatus {
-    STARTED = 0,
-    RECEIVED_SCHEMA = 1,
-    RECEIVED_FIRST_RESULT = 2,
-    SUCCEEDED = 3,
-    FAILED = 4,
-    CANCELLED = 5,
+    ACCEPTED = 0,
+    STARTED = 1,
+    RECEIVED_SCHEMA = 2,
+    RECEIVED_FIRST_RESULT = 3,
+    SUCCEEDED = 4,
+    FAILED = 5,
+    CANCELLED = 6,
 }
 
 export interface QueryExecutionProgress {}
 
 export interface QueryExecutionResponseStream {
+    /// Await the schema message
+    getSchema(): Promise<arrow.Schema | null>;
     /// Await the next progress update
     nextProgressUpdate(): Promise<QueryExecutionProgress | null>;
     /// Await the next record batch
@@ -25,8 +28,6 @@ export interface QueryExecutionResponseStream {
 }
 
 export interface QueryExecutionTaskState {
-    /// The task key
-    taskId: number;
     /// The script text that is executed
     task: QueryExecutionTaskVariant;
     /// The status
@@ -34,7 +35,7 @@ export interface QueryExecutionTaskState {
     /// The cancellation signal
     cancellation: AbortController;
     /// The response stream
-    resultStream: QueryExecutionResponseStream;
+    resultStream: QueryExecutionResponseStream | null;
     /// The loading error (if any)
     error: Error | null;
     /// The time at which the query execution started (if any)
@@ -44,9 +45,9 @@ export interface QueryExecutionTaskState {
     /// The time at which the query execution was last updated
     lastUpdatedAt: Date | null;
     /// The latest update for the query execution
-    latestProgressUpdate: QueryExecutionProgress;
+    latestProgressUpdate: QueryExecutionProgress | null;
     /// The number of record batches that are already buffered
-    resultSchema: arrow.Schema;
+    resultSchema: arrow.Schema | null;
     /// The number of record batches that are already buffered
     resultBatches: Immutable.List<arrow.RecordBatch>;
 }

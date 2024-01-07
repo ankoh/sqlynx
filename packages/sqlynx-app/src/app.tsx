@@ -7,9 +7,10 @@ import { ConnectionsPage } from './view/pages/connections_page';
 import { OAuthCallbackPage } from './view/pages/oauth_callback_page';
 import { ScriptLoader } from './scripts/script_loader';
 import { ScriptCatalogLoader } from './scripts/script_catalog_loader';
+import { ScriptCatalogSalesforceAutoloader } from './scripts/script_catalog_autoloader_salesforce';
 import { ScriptStateProvider } from './scripts/script_state_provider';
 import { ScriptCommands } from './scripts/script_commands';
-import { ScriptSalesforceCatalogAutoloader } from './scripts/script_catalog_salesforce_autoloader';
+import { ScriptQueryExecutor } from './scripts/script_query_executor';
 import { SalesforceConnector } from './connectors/salesforce_connector';
 import { ConnectorSelection } from './connectors/connector_selection';
 import { LogProvider } from './app_log';
@@ -42,7 +43,8 @@ const AppProviders = (props: { children: React.ReactElement }) => (
                                 <ScriptCommands>
                                     <ScriptLoader />
                                     <ScriptCatalogLoader />
-                                    <ScriptSalesforceCatalogAutoloader />
+                                    <ScriptCatalogSalesforceAutoloader />
+                                    <ScriptQueryExecutor />
                                     {props.children}
                                 </ScriptCommands>
                             </ScriptStateProvider>

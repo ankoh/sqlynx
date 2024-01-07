@@ -10,7 +10,7 @@ interface Props {
     children?: React.ReactElement;
 }
 
-export const ScriptSalesforceCatalogAutoloader: React.FC<Props> = (props: Props) => {
+export const ScriptCatalogSalesforceAutoloader: React.FC<Props> = (props: Props) => {
     const dispatch = useScriptStateDispatch();
     const connector = useSalesforceAPI();
     const authState = useSalesforceAuthState();
