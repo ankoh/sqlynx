@@ -7,7 +7,7 @@ import {
     SELECT_CONNECTOR,
     useActiveConnector,
     useConnectorList,
-    useActiveConnectorSelection,
+    useConnectorSelection,
 } from '../../connectors/active_connector';
 import { Connector, ConnectorType } from '../../connectors/connector';
 import { useAppConfig } from '../../app_config';
@@ -39,7 +39,7 @@ const SalesforceIcon = () => (
 
 const ActionsPanel = (props: { activeConnector: Connector }) => {
     const allConnectors = useConnectorList();
-    const activeConnectorSelection = useActiveConnectorSelection();
+    const connectorSelection = useConnectorSelection();
     const connectorListAnchor = React.useRef(null);
     const [selectorIsOpen, setSelectorIsOpen] = React.useState<boolean>(false);
 
@@ -48,7 +48,7 @@ const ActionsPanel = (props: { activeConnector: Connector }) => {
         const target = e.currentTarget as HTMLLIElement;
         const connectorType = Number.parseInt(target.getAttribute('data-connector') ?? '0')! as ConnectorType;
         setSelectorIsOpen(false);
-        activeConnectorSelection({
+        connectorSelection({
             type: SELECT_CONNECTOR,
             value: connectorType,
         });
