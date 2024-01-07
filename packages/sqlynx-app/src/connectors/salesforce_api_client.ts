@@ -163,7 +163,7 @@ export function readUserInformation(obj: any): SalesforceUserInfo {
     };
 }
 
-export interface SalesforceConnectorInterface {
+export interface SalesforceAPIClientInterface {
     getCoreAccessToken(
         authConfig: SalesforceAuthConfig,
         authParams: SalesforceAuthParams,
@@ -179,7 +179,7 @@ export interface SalesforceConnectorInterface {
     getDataCloudMetadata(access: SalesforceDataCloudAccessToken, cancel: AbortSignal): Promise<SalesforceMetadata>;
 }
 
-export class SalesforceAPIClient implements SalesforceConnectorInterface {
+export class SalesforceAPIClient implements SalesforceAPIClientInterface {
     public async getCoreAccessToken(
         authConfig: SalesforceAuthConfig,
         authParams: SalesforceAuthParams,

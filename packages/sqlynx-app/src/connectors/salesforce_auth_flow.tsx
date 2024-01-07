@@ -14,7 +14,7 @@ import {
     reduceAuthState,
     AUTH_FLOW_DEFAULT_STATE,
 } from './salesforce_auth_state';
-import { useSalesforceConnector } from './salesforce_connector';
+import { useSalesforceAPI } from './salesforce_connector';
 import { useAppConfig } from '../app_config';
 import { generatePKCEChallenge } from '../utils/pkce';
 
@@ -58,7 +58,7 @@ interface Props {
 
 export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
     const appConfig = useAppConfig();
-    const connector = useSalesforceConnector();
+    const connector = useSalesforceAPI();
     const connectorConfig = appConfig.value?.connectors?.salesforce ?? null;
     const [state, dispatch] = React.useReducer(reduceAuthState, AUTH_FLOW_DEFAULT_STATE);
 

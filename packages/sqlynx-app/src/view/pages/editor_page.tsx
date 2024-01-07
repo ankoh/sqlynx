@@ -9,7 +9,7 @@ import {
     useConnectorList,
     useConnectorSelection,
 } from '../../connectors/connector_selection';
-import { ConnectorInfo, ConnectorType } from '../../connectors/connector_info';
+import { Connector, ConnectorType } from '../../connectors/connector';
 import { useAppConfig } from '../../app_config';
 import { ScriptEditor } from '../editor/editor';
 import { SchemaGraph } from '../../view/schema/schema_graph';
@@ -32,7 +32,7 @@ const GitHubIcon = () => (
     </svg>
 );
 
-const ActionsPanel = (props: { connector: ConnectorInfo }) => {
+const ActionsPanel = (props: { connector: Connector }) => {
     const connectorList = useConnectorList();
     const connectorSelection = useConnectorSelection();
     const connectorListAnchor = React.useRef(null);
@@ -181,7 +181,7 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                     }}
                 />
                 <ScriptEditor className={styles.editor_card} />
-                {appConfig.value?.features?.editorActions && <ActionsPanel connector={connector.info} />}
+                {appConfig.value?.features?.editorActions && <ActionsPanel connector={connector} />}
             </div>
         </div>
     );

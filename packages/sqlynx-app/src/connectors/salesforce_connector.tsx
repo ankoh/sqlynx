@@ -1,12 +1,12 @@
 import React from 'react';
-import { SalesforceAPIClient, SalesforceConnectorInterface } from './salesforce_api_client';
+import { SalesforceAPIClient, SalesforceAPIClientInterface } from './salesforce_api_client';
 import { SalesforceAPIClientMock } from './salesforce_api_client_mock';
 import { useAppConfig } from '../app_config';
 import { SalesforceAuthFlow } from './salesforce_auth_flow';
 import { SalesforceAuthFlowMock } from './salesforce_auth_flow_mock';
 import { SalesforceUserInfoResolver } from './salesforce_userinfo_resolver';
 
-const CONNECTOR_CTX = React.createContext<SalesforceConnectorInterface | null>(null);
+const API = React.createContext<SalesforceAPIClientInterface | null>(null);
 
 interface Props {
     children: React.ReactElement;
@@ -19,22 +19,22 @@ export const SalesforceConnector: React.FC<Props> = (props: Props) => {
     } else if (config.value?.connectors?.salesforce?.mock?.enabled) {
         const api = new SalesforceAPIClientMock(config.value!.connectors?.salesforce?.mock);
         return (
-            <CONNECTOR_CTX.Provider value={api}>
+            <API.Provider value={api}>
                 <SalesforceAuthFlowMock>
                     <SalesforceUserInfoResolver>{props.children}</SalesforceUserInfoResolver>
                 </SalesforceAuthFlowMock>
-            </CONNECTOR_CTX.Provider>
+            </API.Provider>
         );
     } else {
         const api = new SalesforceAPIClient();
         return (
-            <CONNECTOR_CTX.Provider value={api}>
+            <API.Provider value={api}>
                 <SalesforceAuthFlow>
                     <SalesforceUserInfoResolver>{props.children}</SalesforceUserInfoResolver>
                 </SalesforceAuthFlow>
-            </CONNECTOR_CTX.Provider>
+            </API.Provider>
         );
     }
 };
 
-export const useSalesforceConnector = (): SalesforceConnectorInterface => React.useContext(CONNECTOR_CTX)!;
+export const useSalesforceAPI = (): SalesforceAPIClientInterface => React.useContext(API)!;
