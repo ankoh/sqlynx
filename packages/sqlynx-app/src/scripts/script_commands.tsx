@@ -34,14 +34,19 @@ export const ScriptCommands: React.FC<Props> = (props: Props) => {
         async (command: ScriptCommandType) => {
             switch (command) {
                 case ScriptCommandType.ExecuteQuery:
+                    console.log('execute query command');
                     break;
                 case ScriptCommandType.RefreshSchema:
+                    console.log('refresh schema command');
                     break;
                 case ScriptCommandType.SaveQueryAsSql:
+                    console.log('save query as sql command');
                     break;
                 case ScriptCommandType.SaveQueryAsLink:
+                    console.log('save query as sql link');
                     break;
                 case ScriptCommandType.SaveQueryResultsAsArrow:
+                    console.log('save query results as arrow');
                     break;
             }
         },
@@ -49,37 +54,37 @@ export const ScriptCommands: React.FC<Props> = (props: Props) => {
     );
     // Helper to signal that a command is not implemented
     const commandNotImplemented = (connector: ConnectorInfo, actionName: string) => {
-        console.warn(`connector ${connector.displayName} does not implement the command '${actionName}'`);
+        console.warn(`connector '${connector.displayName}' does not implement the command '${actionName}'`);
     };
     // Create key event handlers
     const keyHandlers = React.useMemo<KeyEventHandler[]>(() => {
         return [
             {
-                key: 'E',
+                key: 'e',
                 ctrlKey: true,
                 callback: !connector.features.executeQueryAction
                     ? () => commandNotImplemented(connector, 'EXECUTE_QUERY')
                     : () => commandDispatch(ScriptCommandType.ExecuteQuery),
             },
             {
-                key: 'R',
+                key: 'r',
                 ctrlKey: true,
                 callback: !connector.features.executeQueryAction
                     ? () => commandNotImplemented(connector, 'REFRESH_SCHEMA')
                     : () => commandDispatch(ScriptCommandType.RefreshSchema),
             },
             {
-                key: 'L',
+                key: 'l',
                 ctrlKey: true,
                 callback: () => commandDispatch(ScriptCommandType.SaveQueryAsLink),
             },
             {
-                key: 'S',
+                key: 's',
                 ctrlKey: true,
                 callback: () => commandDispatch(ScriptCommandType.SaveQueryAsSql),
             },
             {
-                key: 'A',
+                key: 'a',
                 ctrlKey: true,
                 callback: !connector.features.executeQueryAction
                     ? () => commandNotImplemented(connector, 'SAVE_QUERY_RESULTS_AS_ARROW')
