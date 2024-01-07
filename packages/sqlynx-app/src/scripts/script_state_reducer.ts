@@ -33,6 +33,13 @@ export const CATALOG_UPDATE_SUCCEEDED = Symbol('CATALOG_UPDATE_SUCCEEDED');
 export const CATALOG_UPDATE_FAILED = Symbol('CATALOG_UPDATE_FAILED');
 export const CATALOG_UPDATE_CANCELLED = Symbol('CATALOG_UPDATE_CANCELLED');
 
+export const EXECUTE_QUERY = Symbol('EXECUTE_QUERY');
+export const QUERY_EXECUTION_STARTED = Symbol('QUERY_EXECUTION_STARTED');
+export const QUERY_EXECUTION_UPDATED = Symbol('QUERY_EXECUTION_UPDATED');
+export const QUERY_EXECUTION_SUCCEEDED = Symbol('QUERY_EXECUTION_SUCCEEDED');
+export const QUERY_EXECUTION_FAILED = Symbol('QUERY_EXECUTION_FAILED');
+export const QUERY_EXECUTION_CANCELLED = Symbol('QUERY_EXECUTION_CANCELLED');
+
 export const FOCUS_QUERY_GRAPH_NODE = Symbol('FOCUS_GRAPH_NODE');
 export const FOCUS_QUERY_GRAPH_EDGE = Symbol('FOCUS_GRAPH_EDGE');
 export const RESIZE_QUERY_GRAPH = Symbol('RESIZE_EDITOR');
@@ -51,6 +58,12 @@ export type ScriptStateAction =
     | VariantKind<typeof CATALOG_UPDATE_CANCELLED, number>
     | VariantKind<typeof CATALOG_UPDATE_SUCCEEDED, number>
     | VariantKind<typeof CATALOG_UPDATE_FAILED, [number, any]>
+    | VariantKind<typeof EXECUTE_QUERY, null>
+    | VariantKind<typeof QUERY_EXECUTION_STARTED, null>
+    | VariantKind<typeof QUERY_EXECUTION_UPDATED, null>
+    | VariantKind<typeof QUERY_EXECUTION_SUCCEEDED, null>
+    | VariantKind<typeof QUERY_EXECUTION_FAILED, null>
+    | VariantKind<typeof QUERY_EXECUTION_CANCELLED, null>
     | VariantKind<typeof FOCUS_QUERY_GRAPH_NODE, GraphNodeDescriptor | null>
     | VariantKind<typeof FOCUS_QUERY_GRAPH_EDGE, GraphConnectionId.Value | null>
     | VariantKind<typeof RESIZE_QUERY_GRAPH, [number, number]>; // width, height
@@ -120,10 +133,10 @@ function reduceScriptState(state: ScriptState, action: ScriptStateAction): Scrip
                         cursor,
                     },
                 },
-                focus: null,
+                userFocus: null,
             };
 
-            next.focus = deriveScriptFocusFromCursor(scriptKey, next.scripts, state.graphViewModel, cursor);
+            next.userFocus = deriveScriptFocusFromCursor(scriptKey, next.scripts, state.graphViewModel, cursor);
             // Is schema script?
             if (scriptKey == ScriptKey.SCHEMA_SCRIPT) {
                 // Update the catalog since the schema might have changed
@@ -150,9 +163,9 @@ function reduceScriptState(state: ScriptState, action: ScriptStateAction): Scrip
                         cursor,
                     },
                 },
-                focus: null,
+                userFocus: null,
             };
-            newState.focus = deriveScriptFocusFromCursor(scriptKey, newState.scripts, state.graphViewModel, cursor);
+            newState.userFocus = deriveScriptFocusFromCursor(scriptKey, newState.scripts, state.graphViewModel, cursor);
             return newState;
         }
 
@@ -371,6 +384,25 @@ function reduceScriptState(state: ScriptState, action: ScriptStateAction): Scrip
                     finishedAt: new Date(),
                 }),
             };
+        }
+
+        case EXECUTE_QUERY: {
+            return state;
+        }
+        case QUERY_EXECUTION_STARTED: {
+            return state;
+        }
+        case QUERY_EXECUTION_UPDATED: {
+            return state;
+        }
+        case QUERY_EXECUTION_SUCCEEDED: {
+            return state;
+        }
+        case QUERY_EXECUTION_FAILED: {
+            return state;
+        }
+        case QUERY_EXECUTION_CANCELLED: {
+            return state;
         }
 
         case FOCUS_QUERY_GRAPH_NODE:

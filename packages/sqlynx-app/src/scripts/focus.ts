@@ -153,18 +153,18 @@ export function focusGraphNode(state: ScriptState, target: GraphNodeDescriptor |
     // Unset focused node?
     if (target === null) {
         // State already has cleared focus?
-        if (state.focus === null) {
+        if (state.userFocus === null) {
             return state;
         }
         // Otherwise clear the focus state
         return clearCursors({
             ...state,
-            focus: null,
+            userFocus: null,
         });
     }
     // Determine the focused connections
     const newConnections = new Set<GraphConnectionId.Value>();
-    const prevConnections = state.focus?.graphConnections ?? new Set();
+    const prevConnections = state.userFocus?.graphConnections ?? new Set();
     let allInPrev = true;
 
     if (target.port === null) {
@@ -224,7 +224,7 @@ export function focusGraphNode(state: ScriptState, target: GraphNodeDescriptor |
     // Clear cursor and update focus
     return clearCursors({
         ...state,
-        focus: {
+        userFocus: {
             graphConnections: newConnections,
             tableIds,
             columnRefs,
@@ -237,18 +237,18 @@ export function focusGraphEdge(state: ScriptState, conn: GraphConnectionId.Value
     // Unset focused edge?
     if (conn === null) {
         // State already has cleared focus?
-        if (state.focus === null) {
+        if (state.userFocus === null) {
             return state;
         }
         // Otherwise clear the focus state
         return clearCursors({
             ...state,
-            focus: null,
+            userFocus: null,
         });
     }
     // Does the set of focused edges only contain the newly focused edge?
-    if (state.focus?.graphConnections?.size == 1) {
-        if (state.focus.graphConnections.has(conn)) {
+    if (state.userFocus?.graphConnections?.size == 1) {
+        if (state.userFocus.graphConnections.has(conn)) {
             return state;
         }
     }
@@ -261,7 +261,7 @@ export function focusGraphEdge(state: ScriptState, conn: GraphConnectionId.Value
     // Clear cursor and update focus
     return clearCursors({
         ...state,
-        focus: {
+        userFocus: {
             graphConnections: new Set([conn]),
             tableIds: new Set(),
             columnRefs: edgeVM.columnRefs,
