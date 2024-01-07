@@ -89,10 +89,8 @@ export const ScriptQueryExecutor = (props: { children?: React.ReactElement }) =>
                 let resultStream: QueryExecutionResponseStream;
                 switch (request.type) {
                     case SALESFORCE_DATA_CLOUD: {
-                        const api = request.value.api;
-                        const script = request.value.scriptText;
-                        const token = request.value.accessToken;
-                        resultStream = api.executeQuery(script, token);
+                        const req = request.value;
+                        resultStream = req.api.executeQuery(req.scriptText, req.accessToken);
                         break;
                     }
                 }

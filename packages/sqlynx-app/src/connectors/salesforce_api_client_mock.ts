@@ -12,6 +12,7 @@ import {
 } from './salesforce_api_client';
 
 import { SalesforceAuthConfig, SalesforceAuthParams } from './salesforce_auth_state';
+import { QueryExecutorMock } from './query_execution_mock';
 
 export interface SalesforceConnectorMockConfig {
     enabled: boolean;
@@ -60,7 +61,10 @@ export class SalesforceAPIClientMock implements SalesforceAPIClientInterface {
         return this.mock.dataCloudMetadata;
     }
 
-    public executeQuery(scriptText: string, accessToken: SalesforceDataCloudAccessToken): QueryExecutionResponseStream {
-        throw new Error('Method not implemented.');
+    public executeQuery(
+        _scriptText: string,
+        _accessToken: SalesforceDataCloudAccessToken,
+    ): QueryExecutionResponseStream {
+        return new QueryExecutorMock();
     }
 }
