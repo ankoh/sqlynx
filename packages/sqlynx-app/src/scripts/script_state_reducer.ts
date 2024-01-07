@@ -18,6 +18,7 @@ import {
 } from '../connectors/catalog_update';
 import {
     QueryExecutionProgress,
+    QueryExecutionResponseStream,
     QueryExecutionTaskState,
     QueryExecutionTaskStatus,
     QueryExecutionTaskVariant,
@@ -41,6 +42,7 @@ export const CATALOG_UPDATE_FAILED = Symbol('CATALOG_UPDATE_FAILED');
 export const CATALOG_UPDATE_CANCELLED = Symbol('CATALOG_UPDATE_CANCELLED');
 
 export const EXECUTE_QUERY = Symbol('EXECUTE_QUERY');
+export const QUERY_EXECUTION_ACCEPTED = Symbol('QUERY_EXECUTION_ACCEPTED');
 export const QUERY_EXECUTION_STARTED = Symbol('QUERY_EXECUTION_STARTED');
 export const QUERY_EXECUTION_PROGRESS_UPDATED = Symbol('QUERY_EXECUTION_PROGRESS_UPDATED');
 export const QUERY_EXECUTION_RECEIVED_SCHEMA = Symbol('QUERY_EXECUTION_RECEIVED_SCHEMA');
@@ -68,7 +70,8 @@ export type ScriptStateAction =
     | VariantKind<typeof CATALOG_UPDATE_SUCCEEDED, number>
     | VariantKind<typeof CATALOG_UPDATE_FAILED, [number, any]>
     | VariantKind<typeof EXECUTE_QUERY, QueryExecutionTaskVariant>
-    | VariantKind<typeof QUERY_EXECUTION_STARTED, QueryExecutionTaskState>
+    | VariantKind<typeof QUERY_EXECUTION_ACCEPTED, QueryExecutionTaskState>
+    | VariantKind<typeof QUERY_EXECUTION_STARTED, QueryExecutionResponseStream>
     | VariantKind<typeof QUERY_EXECUTION_PROGRESS_UPDATED, QueryExecutionProgress>
     | VariantKind<typeof QUERY_EXECUTION_RECEIVED_SCHEMA, arrow.Schema>
     | VariantKind<typeof QUERY_EXECUTION_RECEIVED_BATCH, arrow.RecordBatch>
@@ -405,14 +408,27 @@ function reduceScriptState(state: ScriptState, action: ScriptStateAction): Scrip
                 queryExecutionResult: null,
             };
         }
-        case QUERY_EXECUTION_STARTED: {
+        case QUERY_EXECUTION_ACCEPTED: {
             return {
                 ...state,
                 queryExecutionRequest: null,
                 queryExecutionState: {
                     ...action.value,
+                    status: QueryExecutionTaskStatus.ACCEPTED,
+                    lastUpdatedAt: new Date(),
+                },
+                queryExecutionResult: null,
+            };
+        }
+        case QUERY_EXECUTION_STARTED: {
+            return {
+                ...state,
+                queryExecutionRequest: null,
+                queryExecutionState: {
+                    ...state.queryExecutionState!,
                     status: QueryExecutionTaskStatus.STARTED,
                     lastUpdatedAt: new Date(),
+                    resultStream: action.value,
                 },
                 queryExecutionResult: null,
             };
