@@ -8,9 +8,10 @@ import { OAuthCallbackPage } from './view/pages/oauth_callback_page';
 import { ScriptLoader } from './scripts/script_loader';
 import { ScriptCatalogLoader } from './scripts/script_catalog_loader';
 import { ScriptStateProvider } from './scripts/script_state_provider';
+import { ScriptCommands } from './scripts/script_commands';
 import { ScriptSalesforceMetadataCatalog } from './scripts/script_catalog_salesforce_metadata';
 import { SalesforceConnector } from './connectors/salesforce_connector';
-import { ConnectorSwitch } from './connectors/connector_switch';
+import { ActiveConnector } from './connectors/active_connector';
 import { LogProvider } from './app_log';
 import { AppConfigResolver } from './app_config';
 
@@ -35,16 +36,18 @@ const AppProviders = (props: { children: React.ReactElement }) => (
         <LogProvider>
             <AppConfigResolver>
                 <SQLynxLoader>
-                    <ConnectorSwitch>
-                        <SalesforceConnector>
-                            <ScriptStateProvider>
-                                <ScriptLoader />
-                                <ScriptCatalogLoader />
-                                <ScriptSalesforceMetadataCatalog />
-                                {props.children}
-                            </ScriptStateProvider>
-                        </SalesforceConnector>
-                    </ConnectorSwitch>
+                    <SalesforceConnector>
+                        <ActiveConnector>
+                            <ScriptCommands>
+                                <ScriptStateProvider>
+                                    <ScriptLoader />
+                                    <ScriptCatalogLoader />
+                                    <ScriptSalesforceMetadataCatalog />
+                                    {props.children}
+                                </ScriptStateProvider>
+                            </ScriptCommands>
+                        </ActiveConnector>
+                    </SalesforceConnector>
                 </SQLynxLoader>
             </AppConfigResolver>
         </LogProvider>
