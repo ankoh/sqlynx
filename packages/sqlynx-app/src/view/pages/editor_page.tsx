@@ -31,11 +31,6 @@ const GitHubIcon = () => (
         <use xlinkHref={`${icons}#github`} />
     </svg>
 );
-const SalesforceIcon = () => (
-    <svg width="20px" height="20px">
-        <use xlinkHref={`${icons}#salesforce-notext`} />
-    </svg>
-);
 
 const ActionsPanel = (props: { activeConnector: Connector }) => {
     const allConnectors = useConnectorList();
@@ -153,20 +148,9 @@ const ActionsPanel = (props: { activeConnector: Connector }) => {
     );
 };
 
-const connections = [
-    { icon: SalesforceIcon, name: 'No Database' },
-    { icon: SalesforceIcon, name: 'Salesforce Data Cloud' },
-    { icon: SalesforceIcon, name: 'Hyper Database' },
-];
-
 export const EditorPage: React.FC<Props> = (props: Props) => {
     const appConfig = useAppConfig();
-
-    const [selectedConnIdx, selectConn] = React.useState(1);
-    const selectedConn = connections[selectedConnIdx];
-
     const activeConnector = useActiveConnector();
-
     return (
         <div className={styles.page}>
             <div className={styles.header_container}>
