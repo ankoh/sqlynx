@@ -2,7 +2,7 @@ import * as React from 'react';
 import { NodeLayer } from './node_layer';
 import { EdgeHighlightingLayer, EdgeLayer } from './edge_layer';
 import { GraphNodeDescriptor } from './graph_view_model';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import { observeSize } from '../size_observer';
 import { useScriptStateDispatch, useScriptState } from '../../scripts/script_state_provider';
 import { FOCUS_QUERY_GRAPH_EDGE, FOCUS_QUERY_GRAPH_NODE, RESIZE_QUERY_GRAPH } from '../../scripts/script_state_reducer';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
@@ -130,12 +130,12 @@ const SchemaGraphBoard: React.FC<SchemaGraphBoardProps> = (props: SchemaGraphBoa
 
 interface GraphWithControlsProps {}
 export const SchemaGraph: React.FC<GraphWithControlsProps> = (props: GraphWithControlsProps) => {
+    const containerElement = React.useRef(null);
+    const containerSize = observeSize(containerElement);
     return (
         <div className={styles.graph_container}>
-            <div className={styles.graph_board_container}>
-                <AutoSizer>
-                    {(s: { height: number; width: number }) => <SchemaGraphBoard height={s.height} width={s.width} />}
-                </AutoSizer>
+            <div className={styles.graph_board_container} ref={containerElement}>
+                <SchemaGraphBoard height={containerSize?.height ?? 100} width={containerSize?.width ?? 200} />
             </div>
             <div className={styles.graph_title}>Schema</div>
         </div>

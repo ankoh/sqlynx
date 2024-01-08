@@ -31,11 +31,6 @@ import icons from '../../../static/svg/symbols.generated.svg';
 
 interface Props {}
 
-const BugIcon = () => (
-    <svg width="20px" height="20px">
-        <use xlinkHref={`${icons}#bug`} />
-    </svg>
-);
 const GitHubIcon = () => (
     <svg width="20px" height="20px">
         <use xlinkHref={`${icons}#github`} />
