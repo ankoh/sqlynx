@@ -32,6 +32,7 @@
         justify-content: center;
         color: var(--nav_bar_logo_fg) !important;
         border-right: var(--nav_bar_border);
+        border-bottom: var(--nav_bar_border);
         background-color: var(--nav_bar_logo_bg);
     }
 
@@ -39,10 +40,24 @@
         grid-row: 1;
         grid-column: 2;
         display: grid;
-        grid-template-columns: repeat(3, 40px);
+        border-bottom: var(--nav_bar_border);
+        grid-template-columns: repeat(3, 48px);
         grid-template-rows: 100%;
-        grid-column-gap: 4px;
-        padding: 4px 8px;
+    }
+    .tab:hover {
+        background-color: var(--nav_tab_bg_active);
+    }
+    .tab.active {
+        background-color: var(--nav_tab_bg_active) !important;
+    }
+    .tab.active::after {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        content: '';
+        height: var(--nav_tab_indicator_width);
+        background-color: var(--nav_tab_indicator_color);
     }
 
     .sysbar {
