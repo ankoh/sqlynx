@@ -27,6 +27,7 @@ import { TabCard } from '../../view/tab_card';
 import { getConnectorIcon } from '../connector_icons';
 
 import styles from './editor_page.module.css';
+import primerBugFixes from '../../primer_bugfixes.module.css';
 import icons from '../../../static/svg/symbols.generated.svg';
 
 interface Props {}
@@ -177,14 +178,12 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                     <Button variant="invisible" className={styles.header_action_connector}>
                         {connector.displayName}
                     </Button>
-                    <ButtonGroup>
+                    <ButtonGroup className={primerBugFixes.button_group}>
                         <IconButton icon={PaperAirplaneIcon} aria-labelledby="create-github-issue" />
                         <IconButton icon={SyncIcon} aria-labelledby="visit-github-repository" />
                         <IconButton icon={LinkIcon} aria-labelledby="visit-github-repository" />
                     </ButtonGroup>
-                    <ButtonGroup>
-                        <IconButton icon={ThreeBarsIcon} aria-labelledby="visit-github-repository" />
-                    </ButtonGroup>
+                    <IconButton icon={ThreeBarsIcon} aria-labelledby="visit-github-repository" />
                 </div>
             </div>
             <div className={styles.body_container}>
