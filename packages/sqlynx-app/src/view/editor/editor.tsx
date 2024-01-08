@@ -186,7 +186,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
     // Helper to select a tab
     const selectTab = (event: React.MouseEvent<HTMLDivElement>) => {
         event.preventDefault();
-        const tab = (event.target as any).getAttribute('data-tab') as TabId;
+        const tab = (event.target as any).dataset.tab as TabId;
         setActiveTab(+tab);
     };
     // Helper to toggle the folder and stats

@@ -111,37 +111,37 @@ export function NodeLayer(props: Props) {
 
     const onEnterNode = React.useCallback(
         (event: React.MouseEvent<HTMLDivElement>) => {
-            const nodeId = event.currentTarget.getAttribute('data-node')!;
+            const nodeId = event.currentTarget.dataset.node!;
             dispatch({ type: MOUSE_ENTER, value: { nodeId: +nodeId, port: null } });
         },
         [dispatch],
     );
     const onLeaveNode = React.useCallback(
         (event: React.MouseEvent<HTMLDivElement>) => {
-            const nodeId = event.currentTarget.getAttribute('data-node')!;
+            const nodeId = event.currentTarget.dataset.node!;
             dispatch({ type: MOUSE_LEAVE, value: { nodeId: +nodeId, port: null } });
         },
         [dispatch],
     );
     const onEnterPort = React.useCallback(
         (event: React.MouseEvent<HTMLDivElement>) => {
-            const nodeId = event.currentTarget.getAttribute('data-node')!;
-            const portId = event.currentTarget.getAttribute('data-port')!;
+            const nodeId = event.currentTarget.dataset.node!;
+            const portId = event.currentTarget.dataset.port!;
             dispatch({ type: MOUSE_ENTER, value: { nodeId: +nodeId, port: portId != null ? +portId : null } });
         },
         [dispatch],
     );
     const onLeavePort = React.useCallback(
         (event: React.MouseEvent<HTMLDivElement>) => {
-            const nodeId = event.currentTarget.getAttribute('data-node')!;
-            const portId = event.currentTarget.getAttribute('data-port')!;
+            const nodeId = event.currentTarget.dataset.node!;
+            const portId = event.currentTarget.dataset.port!;
             dispatch({ type: MOUSE_LEAVE, value: { nodeId: +nodeId, port: +portId } });
         },
         [dispatch],
     );
     const onClickNode = React.useCallback(
         (event: React.MouseEvent<HTMLDivElement>) => {
-            const nodeId = event.currentTarget.getAttribute('data-node')!;
+            const nodeId = event.currentTarget.dataset.node!;
             dispatch({ type: CLICK, value: { nodeId: +nodeId, port: null } });
         },
         [dispatch],
@@ -149,8 +149,8 @@ export function NodeLayer(props: Props) {
     const onClickPort = React.useCallback(
         (event: React.MouseEvent<HTMLDivElement>) => {
             event.stopPropagation();
-            const nodeId = event.currentTarget.getAttribute('data-node')!;
-            const portId = event.currentTarget.getAttribute('data-port')!;
+            const nodeId = event.currentTarget.dataset.node!;
+            const portId = event.currentTarget.dataset.port!;
             dispatch({ type: CLICK, value: { nodeId: +nodeId, port: +portId } });
         },
         [dispatch],

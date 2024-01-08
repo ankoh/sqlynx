@@ -15,9 +15,14 @@ interface Props {
     tabRenderers: TabRenderers;
     tabProps: TabProps;
     selectedTab: number;
+    selectTab: (tab: number) => void;
 }
 
 export const TabCard: React.FC<Props> = (props: Props) => {
+    const selectTab = React.useCallback((elem: React.MouseEvent) => {
+        const target = elem.currentTarget as HTMLDivElement;
+        props.selectTab(Number.parseInt(target.dataset.tab ?? '0'));
+    }, []);
     return (
         <div className={cn(props.className, styles.container)}>
             <div className={styles.tabs}>
@@ -27,6 +32,8 @@ export const TabCard: React.FC<Props> = (props: Props) => {
                         className={cn(styles.tab, {
                             [styles.tab_active]: tab[0] == props.selectedTab,
                         })}
+                        data-tab={tab[0]}
+                        onClick={selectTab}
                     >
                         <svg width="20px" height="20px">
                             <use xlinkHref={tab[1]} />

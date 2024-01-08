@@ -50,7 +50,7 @@ const ActionsPanel = (props: { connector: ConnectorInfo }) => {
     const selectConnector = React.useCallback((e: React.MouseEvent<HTMLLIElement, MouseEvent>) => {
         e.stopPropagation();
         const target = e.currentTarget as HTMLLIElement;
-        const connectorType = Number.parseInt(target.getAttribute('data-connector') ?? '0')! as ConnectorType;
+        const connectorType = Number.parseInt(target.dataset.connector ?? '0')! as ConnectorType;
         setSelectorIsOpen(false);
         connectorSelection({
             type: SELECT_CONNECTOR,
@@ -160,6 +160,8 @@ const ActionsPanel = (props: { connector: ConnectorInfo }) => {
 export const EditorPage: React.FC<Props> = (props: Props) => {
     const appConfig = useAppConfig();
     const connector = useSelectedConnector();
+    const [selectedTab, selectTab] = React.useState<number>(1);
+
     return (
         <div className={styles.page}>
             <div className={styles.header_container}>
@@ -181,7 +183,8 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
             <div className={styles.body_container}>
                 <TabCard
                     className={styles.output_card}
-                    selectedTab={1}
+                    selectedTab={selectedTab}
+                    selectTab={selectTab}
                     tabs={[
                         [1, `${icons}#tables_connected`],
                         [2, `${icons}#log`],
