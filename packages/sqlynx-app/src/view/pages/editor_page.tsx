@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as arrow from 'apache-arrow';
 
 import { ActionList, Button, IconButton, ButtonGroup, AnchoredOverlay, Box } from '@primer/react';
 import {
@@ -162,6 +163,15 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
     const connector = useSelectedConnector();
     const [selectedTab, selectTab] = React.useState<number>(1);
 
+    const columnA = Int32Array.from({ length: 1000 }, () => Number((Math.random() * 1000).toFixed(0)));
+    const columnB = Int32Array.from({ length: 1000 }, () => Number((Math.random() * 1000).toFixed(0)));
+    const columnC = Int32Array.from({ length: 1000 }, () => Number((Math.random() * 1000).toFixed(0)));
+    const table = arrow.tableFromArrays({
+        A: columnA,
+        B: columnB,
+        C: columnC,
+    });
+
     return (
         <div className={styles.page}>
             <div className={styles.header_container}>
@@ -196,7 +206,7 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                     tabRenderers={{
                         [1]: props => <SchemaGraph />,
                         [2]: props => <QueryProgress />,
-                        [3]: props => <DataTable />,
+                        [3]: props => <DataTable data={table} />,
                     }}
                 />
                 <ScriptEditor className={styles.editor_card} />

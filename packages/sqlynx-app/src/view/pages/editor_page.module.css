@@ -21,7 +21,7 @@
         margin-left: 2%;
 
         display: grid;
-        grid-template-rows: auto 67%;
+        grid-template-rows: 33% 67%;
         grid-template-columns: 100%;
         row-gap: 20px;
     }
@@ -54,7 +54,7 @@
         margin: auto;
 
         display: grid;
-        grid-template-rows: auto 67%;
+        grid-template-rows: 33% 67%;
         grid-template-columns: auto max-content;
         row-gap: 24px;
         column-gap: 24px;
