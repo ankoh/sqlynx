@@ -12,7 +12,10 @@ export interface ConnectorInfo {
     /// The connector type
     connectorType: ConnectorType;
     /// The connector title
-    displayName: string;
+    displayName: {
+        long: string;
+        short: string;
+    };
     /// The connector features
     features: ConnectorFeatures;
 }
@@ -29,7 +32,10 @@ export interface ConnectorFeatures {
 export const CONNECTOR_INFOS: ConnectorInfo[] = [
     {
         connectorType: ConnectorType.LOCAL_SCRIPT,
-        displayName: 'Local Script',
+        displayName: {
+            short: 'Local',
+            long: 'Local Script',
+        },
         features: {
             schemaScript: true,
             executeQueryAction: false,
@@ -38,7 +44,10 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
     },
     {
         connectorType: ConnectorType.SALESFORCE_DATA_CLOUD,
-        displayName: 'Salesforce Data Cloud',
+        displayName: {
+            short: 'Salesforce',
+            long: 'Salesforce Data Cloud',
+        },
         features: {
             schemaScript: false,
             executeQueryAction: true,
@@ -47,7 +56,10 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
     },
     {
         connectorType: ConnectorType.HYPER_DATABASE,
-        displayName: 'Hyper Database',
+        displayName: {
+            short: 'Hyper',
+            long: 'Hyper Database',
+        },
         features: {
             schemaScript: false,
             executeQueryAction: true,

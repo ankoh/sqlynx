@@ -54,7 +54,7 @@ export const ScriptCommands: React.FC<Props> = (props: Props) => {
     );
     // Helper to signal that a command is not implemented
     const commandNotImplemented = (connector: ConnectorInfo, actionName: string) => {
-        console.warn(`connector '${connector.displayName}' does not implement the command '${actionName}'`);
+        console.warn(`connector '${connector.displayName.long}' does not implement the command '${actionName}'`);
     };
     // Create key event handlers
     const keyHandlers = React.useMemo<KeyEventHandler[]>(() => {
