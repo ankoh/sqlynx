@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as arrow from 'apache-arrow';
 
-import { ActionList, Button, IconButton, ButtonGroup, AnchoredOverlay, Box } from '@primer/react';
+import { ActionList, Button, IconButton, ButtonGroup, AnchoredOverlay, Box, ActionMenu } from '@primer/react';
 import {
     TriangleDownIcon,
     SyncIcon,
@@ -38,60 +38,50 @@ const GitHubIcon = () => (
     </svg>
 );
 
-const ActionsPanel = (props: { connector: ConnectorInfo }) => {
+const ConnectorSelection = (props: { className?: string; variant: 'default' | 'invisible'; short: boolean }) => {
     const connectorList = useConnectorList();
     const connectorSelection = useConnectorSelection();
-    const connectorListAnchor = React.useRef(null);
-    const [selectorIsOpen, setSelectorIsOpen] = React.useState<boolean>(false);
-
+    const connector = useSelectedConnector();
+    const [isOpen, setIsOpen] = React.useState<boolean>(false);
     const selectConnector = React.useCallback((e: React.MouseEvent<HTMLLIElement, MouseEvent>) => {
         e.stopPropagation();
         const target = e.currentTarget as HTMLLIElement;
         const connectorType = Number.parseInt(target.dataset.connector ?? '0')! as ConnectorType;
-        setSelectorIsOpen(false);
+        setIsOpen(false);
         connectorSelection({
             type: SELECT_CONNECTOR,
             value: connectorType,
         });
     }, []);
-
     return (
-        <div className={styles.action_container}>
+        <ActionMenu open={isOpen} onOpenChange={setIsOpen}>
+            <ActionMenu.Button
+                className={props.className}
+                variant={props.variant}
+                alignContent="start"
+                leadingVisual={() => getConnectorIcon(connector)}
+            >
+                {props.short ? connector.displayName.short : connector.displayName.long}
+            </ActionMenu.Button>
+            <ActionMenu.Overlay width={props.short ? 'auto' : 'medium'} align="end">
+                <ActionList>
+                    {connectorList.map((connector, i) => (
+                        <ActionList.Item key={i} data-connector={i} onClick={selectConnector}>
+                            <ActionList.LeadingVisual>{getConnectorIcon(connector)}</ActionList.LeadingVisual>
+                            {props.short ? connector.displayName.short : connector.displayName.long}
+                        </ActionList.Item>
+                    ))}
+                </ActionList>
+            </ActionMenu.Overlay>
+        </ActionMenu>
+    );
+};
+
+const ActionsPanel = (props: { connector: ConnectorInfo }) => {
+    return (
+        <div className={styles.action_sidebar}>
             <ActionList key={0} className={styles.data_actions}>
-                <ActionList.Item
-                    onClick={() => {
-                        setSelectorIsOpen(true);
-                    }}
-                >
-                    <ActionList.LeadingVisual>{getConnectorIcon(props.connector)}</ActionList.LeadingVisual>
-                    {props.connector.displayName}
-                    <ActionList.TrailingVisual>
-                        <AnchoredOverlay
-                            renderAnchor={anchorProps => (
-                                <div ref={connectorListAnchor}>
-                                    <TriangleDownIcon />
-                                </div>
-                            )}
-                            open={selectorIsOpen}
-                            onClose={() => setSelectorIsOpen(false)}
-                            anchorRef={connectorListAnchor}
-                            align="end"
-                        >
-                            <Box sx={{ width: '240px' }}>
-                                <ActionList>
-                                    {connectorList.map((connector, i) => (
-                                        <ActionList.Item key={i} data-connector={i} onClick={selectConnector}>
-                                            <ActionList.LeadingVisual>
-                                                {getConnectorIcon(connector)}
-                                            </ActionList.LeadingVisual>
-                                            {connector.displayName}
-                                        </ActionList.Item>
-                                    ))}
-                                </ActionList>
-                            </Box>
-                        </AnchoredOverlay>
-                    </ActionList.TrailingVisual>
-                </ActionList.Item>
+                <ConnectorSelection className={styles.sidebar_connector_selection} variant="invisible" short={false} />
                 <ActionList.Divider />
                 <ActionList.Item disabled={!props.connector.features.executeQueryAction}>
                     <ActionList.LeadingVisual>
@@ -175,9 +165,7 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                     <div className={styles.page_title}>SQL Editor</div>
                 </div>
                 <div className={styles.header_action_container}>
-                    <Button variant="invisible" className={styles.header_action_connector}>
-                        {connector.displayName}
-                    </Button>
+                    <ConnectorSelection variant="default" short={true} />
                     <ButtonGroup className={primerBugFixes.button_group}>
                         <IconButton icon={PaperAirplaneIcon} aria-labelledby="create-github-issue" />
                         <IconButton icon={SyncIcon} aria-labelledby="visit-github-repository" />

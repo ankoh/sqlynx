@@ -38,7 +38,7 @@
         color: black !important;
         font-weight: 400 !important;
     }
-    .action_container {
+    .action_sidebar {
         display: none;
     }
 }
@@ -63,7 +63,7 @@
     .header_action_container {
         display: none;
     }
-    .action_container {
+    .action_sidebar {
         grid-row: 1 / span 2;
         grid-column: 2;
         display: grid;
@@ -79,6 +79,10 @@
         border-radius: 8px;
         border: 1px solid var(--border_color_primary);
         background-color: white;
+    }
+    .sidebar_connector_selection {
+        width: calc(100% - 12px);
+        margin-left: 6px;
     }
 }
 
