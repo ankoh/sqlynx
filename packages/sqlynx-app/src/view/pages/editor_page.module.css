@@ -7,8 +7,6 @@
     display: grid;
     grid-template-rows: 48px calc(100% - 48px);
     grid-template-columns: 100%;
-    align-items: middle;
-    justify-content: middle;
 }
 
 @media only screen and (max-width: 1200px) {
