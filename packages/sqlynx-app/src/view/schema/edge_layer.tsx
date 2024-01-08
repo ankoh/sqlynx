@@ -66,7 +66,7 @@ const reducer = (state: FocusState, action: FocusAction): FocusState => {
 };
 
 function unpack(path: SVGPathElement): GraphConnectionId.Value {
-    const from = path.getAttribute('data-edge')!;
+    const from = path.dataset.edge!;
     return BigInt(from);
 }
 
