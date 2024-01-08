@@ -1,8 +1,8 @@
 @media only screen and (max-width: 600px) {
     .container {
         display: grid;
-        grid-template-rows: max-content 1fr;
-        grid-template-columns: 100%;
+        grid-template-rows: var(--nav_bar_height) calc(100% - var(--nav_bar_height));
+        grid-template-columns: 1fr;
         height: 100%;
     }
 
@@ -16,6 +16,12 @@
         display: grid;
         grid-template-columns: 48px auto max-content;
         grid-template-rows: var(--nav_bar_height);
+    }
+
+    .page {
+        grid-row: 2;
+        grid-column: 1;
+        height: 100%;
     }
 
     .logo {
@@ -73,7 +79,12 @@
 
         display: grid;
         grid-template-rows: 48px max-content 1fr 48px max-content;
-        grid-template-columns: 100%;
+        grid-template-columns: 1fr;
+    }
+    .page {
+        grid-row: 1;
+        grid-column: 2;
+        height: 100%;
     }
 
     .logo {
