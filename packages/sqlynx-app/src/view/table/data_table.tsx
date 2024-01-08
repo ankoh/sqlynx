@@ -14,8 +14,8 @@ interface Props {
 const HEADER_ROW_HEIGHT = 24;
 const DATA_ROW_HEIGHT = 24;
 const ZERO_CELL_WIDTH = 48;
-const DEFAULT_GRID_WIDTH = 100;
 const DEFAULT_GRID_HEIGHT = 200;
+const DEFAULT_GRID_WIDTH = 100;
 
 export const DataTable: React.FC<Props> = (props: Props) => {
     const data = props.data;
@@ -62,7 +62,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                 height={HEADER_ROW_HEIGHT}
                 rowCount={1}
                 rowHeight={() => HEADER_ROW_HEIGHT}
-                width={containerSize?.width ?? DEFAULT_GRID_WIDTH}
+                width={dataWidth}
             >
                 {HeaderCell}
             </Grid>

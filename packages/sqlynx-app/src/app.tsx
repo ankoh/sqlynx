@@ -16,7 +16,7 @@ import { ConnectorSelection } from './connectors/connector_selection';
 import { LogProvider } from './app_log';
 import { AppConfigResolver } from './app_config';
 
-import { ThemeProvider } from '@primer/react';
+import { BaseStyles, ThemeProvider } from '@primer/react';
 import { StyleSheetManager } from 'styled-components';
 import isPropValid from '@emotion/is-prop-valid';
 
