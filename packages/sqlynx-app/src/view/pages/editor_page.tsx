@@ -77,72 +77,71 @@ const ConnectorSelection = (props: { className?: string; variant: 'default' | 'i
     );
 };
 
-const ActionsPanel = (props: { connector: ConnectorInfo }) => {
+const CommandListItems = (props: { connector: ConnectorInfo }) => {
     return (
-        <div className={styles.action_sidebar}>
-            <ActionList key={0} className={styles.data_actions}>
-                <ConnectorSelection className={styles.sidebar_connector_selection} variant="invisible" short={false} />
-                <ActionList.Divider />
-                <ActionList.Item disabled={!props.connector.features.executeQueryAction}>
-                    <ActionList.LeadingVisual>
-                        <PaperAirplaneIcon />
-                    </ActionList.LeadingVisual>
-                    Execute Query
-                    <ActionList.TrailingVisual>Ctrl + E</ActionList.TrailingVisual>
-                </ActionList.Item>
-                <ActionList.Item disabled={!props.connector.features.refreshSchemaAction}>
-                    <ActionList.LeadingVisual>
-                        <SyncIcon />
-                    </ActionList.LeadingVisual>
-                    Refresh Schema
-                    <ActionList.TrailingVisual>Ctrl + R</ActionList.TrailingVisual>
-                </ActionList.Item>
-                <ActionList.Divider />
-                <ActionList.Item>
-                    <ActionList.LeadingVisual>
-                        <LinkIcon />
-                    </ActionList.LeadingVisual>
-                    Save Query as Link
-                    <ActionList.TrailingVisual>Ctrl + L</ActionList.TrailingVisual>
-                </ActionList.Item>
-                <ActionList.Item>
-                    <ActionList.LeadingVisual>
-                        <DownloadIcon />
-                    </ActionList.LeadingVisual>
-                    Save Query as .sql
-                    <ActionList.TrailingVisual>Ctrl + S</ActionList.TrailingVisual>
-                </ActionList.Item>
-                <ActionList.Item disabled={!props.connector.features.executeQueryAction}>
-                    <ActionList.LeadingVisual>
-                        <DownloadIcon />
-                    </ActionList.LeadingVisual>
-                    Save Results as .arrow
-                    <ActionList.TrailingVisual>Ctrl + A</ActionList.TrailingVisual>
-                </ActionList.Item>
-            </ActionList>
-            <ActionList key={1} className={styles.project_actions}>
-                <ActionList.Item>
-                    <ActionList.LeadingVisual>
-                        <GitHubIcon />
-                    </ActionList.LeadingVisual>
-                    Open-source project
-                </ActionList.Item>
-                <ActionList.Item>
-                    <ActionList.LeadingVisual>
-                        <GitHubIcon />
-                    </ActionList.LeadingVisual>
-                    Report a bug
-                </ActionList.Item>
-                <ActionList.Item>
-                    <ActionList.LeadingVisual>
-                        <GitHubIcon />
-                    </ActionList.LeadingVisual>
-                    View discussions
-                </ActionList.Item>
-            </ActionList>
-        </div>
+        <>
+            <ActionList.Item disabled={!props.connector.features.executeQueryAction}>
+                <ActionList.LeadingVisual>
+                    <PaperAirplaneIcon />
+                </ActionList.LeadingVisual>
+                Execute Query
+                <ActionList.TrailingVisual>Ctrl + E</ActionList.TrailingVisual>
+            </ActionList.Item>
+            <ActionList.Item disabled={!props.connector.features.refreshSchemaAction}>
+                <ActionList.LeadingVisual>
+                    <SyncIcon />
+                </ActionList.LeadingVisual>
+                Refresh Schema
+                <ActionList.TrailingVisual>Ctrl + R</ActionList.TrailingVisual>
+            </ActionList.Item>
+            <ActionList.Divider />
+            <ActionList.Item>
+                <ActionList.LeadingVisual>
+                    <LinkIcon />
+                </ActionList.LeadingVisual>
+                Save Query as Link
+                <ActionList.TrailingVisual>Ctrl + L</ActionList.TrailingVisual>
+            </ActionList.Item>
+            <ActionList.Item>
+                <ActionList.LeadingVisual>
+                    <DownloadIcon />
+                </ActionList.LeadingVisual>
+                Save Query as .sql
+                <ActionList.TrailingVisual>Ctrl + S</ActionList.TrailingVisual>
+            </ActionList.Item>
+            <ActionList.Item disabled={!props.connector.features.executeQueryAction}>
+                <ActionList.LeadingVisual>
+                    <DownloadIcon />
+                </ActionList.LeadingVisual>
+                Save Results as .arrow
+                <ActionList.TrailingVisual>Ctrl + A</ActionList.TrailingVisual>
+            </ActionList.Item>
+        </>
     );
 };
+
+const ProjectListItems = (props: {}) => (
+    <>
+        <ActionList.Item>
+            <ActionList.LeadingVisual>
+                <GitHubIcon />
+            </ActionList.LeadingVisual>
+            Open-source project
+        </ActionList.Item>
+        <ActionList.Item>
+            <ActionList.LeadingVisual>
+                <GitHubIcon />
+            </ActionList.LeadingVisual>
+            Report a bug
+        </ActionList.Item>
+        <ActionList.Item>
+            <ActionList.LeadingVisual>
+                <GitHubIcon />
+            </ActionList.LeadingVisual>
+            View discussions
+        </ActionList.Item>
+    </>
+);
 
 export const EditorPage: React.FC<Props> = (props: Props) => {
     const appConfig = useAppConfig();
@@ -192,7 +191,20 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                     }}
                 />
                 <ScriptEditor className={styles.editor_card} />
-                <ActionsPanel connector={connector} />
+                <div className={styles.action_sidebar}>
+                    <ActionList key={0} className={styles.data_actions}>
+                        <ConnectorSelection
+                            className={styles.sidebar_connector_selection}
+                            variant="invisible"
+                            short={false}
+                        />
+                        <ActionList.Divider />
+                        <CommandListItems connector={connector} />
+                    </ActionList>
+                    <ActionList key={1} className={styles.project_actions}>
+                        <ProjectListItems />
+                    </ActionList>
+                </div>
             </div>
         </div>
     );
