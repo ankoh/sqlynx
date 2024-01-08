@@ -7,7 +7,7 @@ import {
     PaperAirplaneIcon,
     LinkIcon,
     DownloadIcon,
-    EllipsisIcon,
+    ThreeBarsIcon,
 } from '@primer/octicons-react';
 
 import {
@@ -176,7 +176,9 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                         <IconButton icon={PaperAirplaneIcon} aria-labelledby="create-github-issue" />
                         <IconButton icon={SyncIcon} aria-labelledby="visit-github-repository" />
                         <IconButton icon={LinkIcon} aria-labelledby="visit-github-repository" />
-                        <IconButton icon={EllipsisIcon} aria-labelledby="visit-github-repository" />
+                    </ButtonGroup>
+                    <ButtonGroup>
+                        <IconButton icon={ThreeBarsIcon} aria-labelledby="visit-github-repository" />
                     </ButtonGroup>
                 </div>
             </div>

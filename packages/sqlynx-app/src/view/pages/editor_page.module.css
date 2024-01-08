@@ -32,9 +32,9 @@
         display: flex;
         flex-direction: row;
         align-items: center;
+        column-gap: 8px;
     }
     .header_action_connector {
-        margin-right: 4px;
         color: black !important;
         font-weight: 400 !important;
     }
