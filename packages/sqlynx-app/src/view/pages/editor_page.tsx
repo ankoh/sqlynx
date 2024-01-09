@@ -115,24 +115,24 @@ const CommandListItems = (props: { connector: ConnectorInfo }) => {
 
 const ProjectListItems = (props: {}) => (
     <>
-        <ActionList.Item>
+        <ActionList.LinkItem href="https://github.com/ankoh/sqlynx" target="_blank">
             <ActionList.LeadingVisual>
                 <GitHubIcon />
             </ActionList.LeadingVisual>
             Open-source project
-        </ActionList.Item>
-        <ActionList.Item>
+        </ActionList.LinkItem>
+        <ActionList.LinkItem href="https://github.com/ankoh/sqlynx/issues" target="_blank">
             <ActionList.LeadingVisual>
                 <GitHubIcon />
             </ActionList.LeadingVisual>
             Report a bug
-        </ActionList.Item>
-        <ActionList.Item>
+        </ActionList.LinkItem>
+        <ActionList.LinkItem href="https://github.com/ankoh/sqlynx/discussions" target="_blank">
             <ActionList.LeadingVisual>
                 <GitHubIcon />
             </ActionList.LeadingVisual>
             View discussions
-        </ActionList.Item>
+        </ActionList.LinkItem>
     </>
 );
 
