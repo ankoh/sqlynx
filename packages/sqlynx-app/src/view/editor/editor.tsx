@@ -230,7 +230,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
             </div>
             <div className={styles.tabs}>
                 <Tab id={TabId.MAIN_SCRIPT} active={activeTab} icon={`${icons}#database_search`} onClick={selectTab} />
-                <Tab id={TabId.SCHEMA_SCRIPT} active={activeTab} icon={`${icons}#table_multiple`} onClick={selectTab} />
+                <Tab id={TabId.SCHEMA_SCRIPT} active={activeTab} icon={`${icons}#database`} onClick={selectTab} />
                 <div style={{ flex: 1 }} />
                 <Tab
                     id={TabId.ACCOUNT}
