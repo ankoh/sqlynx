@@ -11,10 +11,7 @@ import styles from './schema_graph.module.css';
 
 import icons from '../../../static/svg/symbols.generated.svg';
 
-interface SchemaGraphViewProps {
-    width: number;
-    height: number;
-}
+interface SchemaGraphViewProps {}
 
 const SchemaGraphView: React.FC<SchemaGraphViewProps> = (props: SchemaGraphViewProps) => {
     const state = useScriptState();
@@ -91,7 +88,7 @@ const SchemaGraphBoard: React.FC<SchemaGraphBoardProps> = (props: SchemaGraphBoa
     return (
         <TransformWrapper
             initialScale={1}
-            minScale={0.7}
+            minScale={0.6}
             maxScale={1}
             centerZoomedOut={true}
             panning={{
@@ -105,7 +102,7 @@ const SchemaGraphBoard: React.FC<SchemaGraphBoardProps> = (props: SchemaGraphBoa
                 <>
                     <TransformComponent>
                         <div className={styles.graph_board} style={{ width: props.width, height: props.height }}>
-                            <SchemaGraphView width={props.width} height={props.height} />
+                            <SchemaGraphView />
                         </div>
                     </TransformComponent>
                     <div className={styles.graph_controls}>
