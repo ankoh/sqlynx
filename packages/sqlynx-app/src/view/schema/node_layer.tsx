@@ -19,8 +19,6 @@ import styles from './node_layer.module.css';
 
 interface Props {
     className?: string;
-    width: number;
-    height: number;
     bounds: GraphBoundaries;
     nodes: NodeViewModel[];
     edges: Map<GraphConnectionId.Value, EdgeViewModel>;
@@ -187,14 +185,8 @@ export function NodeLayer(props: Props) {
         }
     }
 
-    let scale = 1.0;
-    if (props.width < props.bounds.totalWidth || props.height < props.bounds.totalHeight) {
-        let height = Math.min(props.height, props.bounds.totalHeight);
-        let width = Math.min(props.width, props.bounds.totalWidth);
-        scale = Math.min(width / props.bounds.totalWidth, height / props.bounds.totalHeight);
-    }
     return (
-        <div className={props.className}>
+        <div className={props.className} style={{ width: props.bounds.totalWidth, height: props.bounds.totalHeight }}>
             {props.nodes.map(n => {
                 const focusedPorts = connectionPorts.get(n.tableId) ?? 0;
                 const isReferenced = n.isReferenced;
@@ -207,10 +199,10 @@ export function NodeLayer(props: Props) {
                         })}
                         style={{
                             position: 'absolute',
-                            top: (n.y - props.bounds.minY) * scale,
-                            left: (n.x - props.bounds.minX) * scale,
-                            width: n.width * scale,
-                            height: n.height * scale,
+                            top: n.y - props.bounds.minY,
+                            left: n.x - props.bounds.minX,
+                            width: n.width,
+                            height: n.height,
                         }}
                         data-node={n.nodeId}
                         onMouseEnter={onEnterNode}
