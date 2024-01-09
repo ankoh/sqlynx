@@ -11,7 +11,7 @@ interface TabRenderers {
 
 interface Props {
     className?: string;
-    tabs: [number, string][];
+    tabs: [number, string, boolean][];
     tabRenderers: TabRenderers;
     tabProps: TabProps;
     selectedTab: number;
@@ -26,17 +26,18 @@ export const TabCard: React.FC<Props> = (props: Props) => {
     return (
         <div className={cn(props.className, styles.container)}>
             <div className={styles.tabs}>
-                {props.tabs.map((tab: [number, string]) => (
+                {props.tabs.map(([tabId, tabIcon, tabEnabled]: [number, string, boolean]) => (
                     <div
-                        key={tab[0]}
+                        key={tabId}
                         className={cn(styles.tab, {
-                            [styles.tab_active]: tab[0] == props.selectedTab,
+                            [styles.tab_active]: tabId == props.selectedTab,
+                            [styles.tab_disabled]: !tabEnabled,
                         })}
-                        data-tab={tab[0]}
-                        onClick={selectTab}
+                        data-tab={tabId}
+                        onClick={tabEnabled ? selectTab : undefined}
                     >
                         <svg width="20px" height="20px">
-                            <use xlinkHref={tab[1]} />
+                            <use xlinkHref={tabIcon} />
                         </svg>
                     </div>
                 ))}

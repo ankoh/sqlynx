@@ -172,9 +172,9 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                     selectedTab={selectedTab}
                     selectTab={selectTab}
                     tabs={[
-                        [1, `${icons}#tables_connected`],
-                        [2, `${icons}#plan`],
-                        [3, `${icons}#table`],
+                        [1, `${icons}#tables_connected`, true],
+                        [2, `${icons}#plan`, false],
+                        [3, `${icons}#table`, false],
                     ]}
                     tabProps={{}}
                     tabRenderers={{

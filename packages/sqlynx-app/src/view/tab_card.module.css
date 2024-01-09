@@ -37,6 +37,9 @@
 .tab:first-child {
     border-radius: calc(var(--border_radius) - 1px) 0px 0px 0px;
 }
+.tab_disabled {
+    color: var(--editortab_disabled_color);
+}
 .tab_active {
     background-color: var(--editortabs_background_active) !important;
 }
