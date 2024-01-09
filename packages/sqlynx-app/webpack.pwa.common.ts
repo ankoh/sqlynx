@@ -18,6 +18,7 @@ interface ConfigParams {
     tsLoaderOptions?: any;
     extractCss: boolean;
     cssIdentifier: string;
+    appURL: string;
     githubOAuthClientID: string;
     githubOAuthRedirect: string;
 }
@@ -43,6 +44,7 @@ export const OAUTH_CALLBACK_VERSION = childProcess.execSync(`cat ${OAUTH_CALLBAC
 const CONFIG_PATH = 'static/config.[contenthash].json';
 
 export function configure(params: ConfigParams): Partial<Configuration> {
+    console.log(`appURL: ${params.appURL}`);
     return {
         target: params.target,
         entry: params.entry,
@@ -153,6 +155,7 @@ export function configure(params: ConfigParams): Partial<Configuration> {
             }),
             new webpack.DefinePlugin({
                 'process.env.ENV_BROWSER': true,
+                'process.env.SQLYNX_APP_URL': params.appURL,
                 'process.env.GITHUB_OAUTH_CLIENT_ID': JSON.stringify(params.githubOAuthClientID),
                 'process.env.GITHUB_OAUTH_REDIRECT': JSON.stringify(params.githubOAuthRedirect),
             }),

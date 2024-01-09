@@ -15,6 +15,7 @@ const base = configure({
     },
     extractCss: false,
     cssIdentifier: '[local]_[hash:base64]',
+    appURL: process.env.SQLYNX_APP_URL ?? 'http://localhost:9002',
     githubOAuthClientID: '877379132b93adf6f705',
     githubOAuthRedirect: `http://localhost:9001/static/html/auth_callback.${OAUTH_CALLBACK_VERSION}.html`,
 });
