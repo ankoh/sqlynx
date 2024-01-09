@@ -1,0 +1,16 @@
+.sharing_overlay {
+    display: grid;
+    grid-template-columns: auto max-content;
+    grid-template-rows: max-content;
+}
+
+.url_text {
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+.copy_icon {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-left: 0px !important;
+}

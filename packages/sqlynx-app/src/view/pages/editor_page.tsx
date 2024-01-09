@@ -17,6 +17,7 @@ import { SchemaGraph } from '../../view/schema/schema_graph';
 import { QueryProgress } from '../../view/progress/query_progress';
 import { DataTable } from '../../view/table/data_table';
 import { TabCard } from '../../view/tab_card';
+import { ScriptURLOverlay } from '../editor/script_url_overlay';
 import { getConnectorIcon } from '../connector_icons';
 
 import styles from './editor_page.module.css';
@@ -65,6 +66,7 @@ const ConnectorSelection = (props: { className?: string; variant: 'default' | 'i
 };
 
 const CommandListItems = (props: { connector: ConnectorInfo }) => {
+    const [sharingIsOpen, setSharingIsOpen] = React.useState<boolean>(false);
     return (
         <>
             <ActionList.Item disabled={!props.connector.features.executeQueryAction}>
@@ -82,11 +84,14 @@ const CommandListItems = (props: { connector: ConnectorInfo }) => {
                 <ActionList.TrailingVisual>Ctrl + R</ActionList.TrailingVisual>
             </ActionList.Item>
             <ActionList.Divider />
-            <ActionList.Item>
+            <ActionList.Item onClick={() => setSharingIsOpen(true)}>
                 <ActionList.LeadingVisual>
                     <LinkIcon />
                 </ActionList.LeadingVisual>
-                Save Query as Link
+                <span>
+                    Save Query as Link
+                    <ScriptURLOverlay isOpen={sharingIsOpen} setIsOpen={setSharingIsOpen} />
+                </span>
                 <ActionList.TrailingVisual>Ctrl + L</ActionList.TrailingVisual>
             </ActionList.Item>
             <ActionList.Item>

@@ -1,6 +1,5 @@
 export enum ScriptOriginType {
     LOCAL,
-    GITHUB_GIST,
     HTTP,
 }
 
@@ -47,9 +46,6 @@ export function createScriptMetadata(script: Omit<ScriptMetadata, 'scriptId'>): 
         case ScriptOriginType.HTTP:
             s.scriptId = script.httpURL;
             break;
-        case ScriptOriginType.GITHUB_GIST:
-            s.scriptId = `${script.githubAccount}/${script.githubGistName}`;
-            break;
         case ScriptOriginType.LOCAL:
             s.scriptId = script.name;
             break;
@@ -61,8 +57,6 @@ export function getScriptOriginTypeName(origin: ScriptOriginType): string {
     switch (origin) {
         case ScriptOriginType.LOCAL:
             return 'local';
-        case ScriptOriginType.GITHUB_GIST:
-            return 'gist';
         case ScriptOriginType.HTTP:
             return 'http';
     }
@@ -73,9 +67,6 @@ export function getScriptTags(script: ScriptMetadata): string[] {
     switch (script.originType) {
         case ScriptOriginType.LOCAL:
             beans.push('Local');
-            break;
-        case ScriptOriginType.GITHUB_GIST:
-            beans.push('Gist');
             break;
     }
     return beans;

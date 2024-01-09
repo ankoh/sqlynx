@@ -276,6 +276,7 @@ jobs:
             - name: Build @ankoh/sqlynx-app
               shell: bash
               run: |
+                  export SQLYNX_APP_URL=https://sqlynx.app
                   yarn workspace @ankoh/sqlynx-app pwa:build:o3
 
             - uses: actions/upload-artifact@v4
