@@ -56,12 +56,6 @@
     grid-template-columns: 100%;
 }
 
-.graph_nodes {
-    grid-row: 1;
-    grid-column: 1;
-    position: relative;
-}
-
 .graph_background {
     grid-row: 1;
     grid-column: 1;
@@ -72,10 +66,19 @@
     grid-column: 1;
     position: relative;
     color: var(--graph_edges_bg);
+    z-index: 90;
+}
+
+.graph_nodes {
+    grid-row: 1;
+    grid-column: 1;
+    position: relative;
+    z-index: 110;
 }
 
 .graph_edge_highlighting {
     grid-row: 1;
     grid-column: 1;
+    z-index: 100;
     /*    pointer-events: none; */
 }
