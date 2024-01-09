@@ -25,12 +25,6 @@ import icons from '../../../static/svg/symbols.generated.svg';
 
 interface Props {}
 
-const GitHubIcon = () => (
-    <svg width="20px" height="20px">
-        <use xlinkHref={`${icons}#github`} />
-    </svg>
-);
-
 const ConnectorSelection = (props: { className?: string; variant: 'default' | 'invisible'; short: boolean }) => {
     const connectorList = useConnectorList();
     const connectorSelection = useConnectorSelection();
@@ -112,6 +106,12 @@ const CommandListItems = (props: { connector: ConnectorInfo }) => {
         </>
     );
 };
+
+const GitHubIcon = () => (
+    <svg width="20px" height="20px">
+        <use xlinkHref={`${icons}#github`} />
+    </svg>
+);
 
 const ProjectListItems = (props: {}) => (
     <>
