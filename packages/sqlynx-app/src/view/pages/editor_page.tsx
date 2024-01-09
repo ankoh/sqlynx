@@ -1,15 +1,8 @@
 import * as React from 'react';
 import * as arrow from 'apache-arrow';
 
-import { ActionList, Button, IconButton, ButtonGroup, AnchoredOverlay, Box, ActionMenu } from '@primer/react';
-import {
-    TriangleDownIcon,
-    SyncIcon,
-    PaperAirplaneIcon,
-    LinkIcon,
-    DownloadIcon,
-    ThreeBarsIcon,
-} from '@primer/octicons-react';
+import { ActionList, IconButton, ButtonGroup, ActionMenu } from '@primer/react';
+import { SyncIcon, PaperAirplaneIcon, LinkIcon, DownloadIcon, ThreeBarsIcon } from '@primer/octicons-react';
 
 import {
     SELECT_CONNECTOR,
@@ -180,7 +173,7 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                     selectTab={selectTab}
                     tabs={[
                         [1, `${icons}#tables_connected`],
-                        [2, `${icons}#log`],
+                        [2, `${icons}#plan`],
                         [3, `${icons}#table`],
                     ]}
                     tabProps={{}}
