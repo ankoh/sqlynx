@@ -40,6 +40,9 @@
 .tab_disabled {
     color: var(--editortab_disabled_color);
 }
+.tab_disabled:hover {
+    background-color: transparent !important;
+}
 .tab_active {
     background-color: var(--editortabs_background_active) !important;
 }
