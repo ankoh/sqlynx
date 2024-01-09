@@ -70,6 +70,7 @@
 .graph_edges {
     grid-row: 1;
     grid-column: 1;
+    position: relative;
     color: var(--graph_edges_bg);
 }
 

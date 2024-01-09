@@ -11,7 +11,10 @@ import styles from './schema_graph.module.css';
 
 import icons from '../../../static/svg/symbols.generated.svg';
 
-interface SchemaGraphViewProps {}
+interface SchemaGraphViewProps {
+    width: number;
+    height: number;
+}
 
 const SchemaGraphView: React.FC<SchemaGraphViewProps> = (props: SchemaGraphViewProps) => {
     const state = useScriptState();
@@ -47,12 +50,16 @@ const SchemaGraphView: React.FC<SchemaGraphViewProps> = (props: SchemaGraphViewP
         >
             <EdgeLayer
                 className={styles.graph_edges}
+                width={props.width}
+                height={props.width}
                 bounds={state.graphViewModel.boundaries}
                 edges={state.graphViewModel.edges}
                 onFocusChanged={onEdgeFocusChanged}
             />
             <NodeLayer
                 className={styles.graph_nodes}
+                width={props.width}
+                height={props.width}
                 bounds={state.graphViewModel.boundaries}
                 nodes={state.graphViewModel.nodes}
                 edges={state.graphViewModel.edges}
@@ -61,6 +68,8 @@ const SchemaGraphView: React.FC<SchemaGraphViewProps> = (props: SchemaGraphViewP
             />
             <EdgeHighlightingLayer
                 className={styles.graph_edge_highlighting}
+                width={props.width}
+                height={props.width}
                 bounds={state.graphViewModel.boundaries}
                 edges={state.graphViewModel.edges}
                 focus={state.userFocus}
@@ -102,7 +111,7 @@ const SchemaGraphBoard: React.FC<SchemaGraphBoardProps> = (props: SchemaGraphBoa
                 <>
                     <TransformComponent>
                         <div className={styles.graph_board} style={{ width: props.width, height: props.height }}>
-                            <SchemaGraphView />
+                            <SchemaGraphView width={props.width} height={props.height} />
                         </div>
                     </TransformComponent>
                     <div className={styles.graph_controls}>

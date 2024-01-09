@@ -3,7 +3,7 @@ import * as sqlynx from '@ankoh/sqlynx';
 import { ScriptState, ScriptKey } from '../../scripts/script_state';
 import { EdgePathBuilder, EdgeType, PORTS_FROM, PORTS_TO, buildEdgePath, selectEdgeType } from './graph_edges';
 
-export interface Boundaries {
+export interface GraphBoundaries {
     minX: number;
     maxX: number;
     minY: number;
@@ -16,7 +16,7 @@ export interface GraphViewModel {
     nodes: NodeViewModel[];
     nodesByTable: Map<sqlynx.ExternalObjectID.Value, NodeViewModel>;
     edges: Map<GraphConnectionId.Value, EdgeViewModel>;
-    boundaries: Boundaries;
+    boundaries: GraphBoundaries;
 }
 
 export interface NodeViewModel {
@@ -69,7 +69,7 @@ export namespace GraphConnectionId {
 }
 
 export function computeGraphViewModel(state: ScriptState): GraphViewModel {
-    const boundaries: Boundaries = {
+    const boundaries: GraphBoundaries = {
         minX: 0,
         maxX: 0,
         minY: 0,

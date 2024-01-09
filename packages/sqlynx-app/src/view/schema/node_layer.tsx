@@ -3,7 +3,13 @@ import * as React from 'react';
 import cn from 'classnames';
 
 import { VariantKind } from '../../utils/variant';
-import { NodeViewModel, EdgeViewModel, GraphConnectionId, GraphNodeDescriptor, Boundaries } from './graph_view_model';
+import {
+    NodeViewModel,
+    EdgeViewModel,
+    GraphConnectionId,
+    GraphNodeDescriptor,
+    GraphBoundaries,
+} from './graph_view_model';
 import { NodePort } from './graph_edges';
 import { FocusInfo } from '../../scripts/focus';
 
@@ -13,7 +19,9 @@ import styles from './node_layer.module.css';
 
 interface Props {
     className?: string;
-    bounds: Boundaries;
+    width: number;
+    height: number;
+    bounds: GraphBoundaries;
     nodes: NodeViewModel[];
     edges: Map<GraphConnectionId.Value, EdgeViewModel>;
     focus: FocusInfo | null;
@@ -178,6 +186,13 @@ export function NodeLayer(props: Props) {
             connectionPorts.set(edge.toTable, (connectionPorts.get(edge.toTable) ?? 0) | edge.toPort);
         }
     }
+
+    let scale = 1.0;
+    if (props.width < props.bounds.totalWidth || props.height < props.bounds.totalHeight) {
+        let height = Math.min(props.height, props.bounds.totalHeight);
+        let width = Math.min(props.width, props.bounds.totalWidth);
+        scale = Math.min(width / props.bounds.totalWidth, height / props.bounds.totalHeight);
+    }
     return (
         <div className={props.className}>
             {props.nodes.map(n => {
@@ -192,10 +207,10 @@ export function NodeLayer(props: Props) {
                         })}
                         style={{
                             position: 'absolute',
-                            top: n.y - props.bounds.minY,
-                            left: n.x - props.bounds.minX,
-                            width: n.width,
-                            height: n.height,
+                            top: (n.y - props.bounds.minY) * scale,
+                            left: (n.x - props.bounds.minX) * scale,
+                            width: n.width * scale,
+                            height: n.height * scale,
                         }}
                         data-node={n.nodeId}
                         onMouseEnter={onEnterNode}
