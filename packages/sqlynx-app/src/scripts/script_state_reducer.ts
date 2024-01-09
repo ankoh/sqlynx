@@ -510,6 +510,7 @@ function reduceScriptState(state: ScriptState, action: ScriptStateAction): Scrip
         case FOCUS_QUERY_GRAPH_EDGE:
             return focusGraphEdge(state, action.value);
         case RESIZE_QUERY_GRAPH:
+            console.log({ what: 'RESIZE', boardWidth: action.value[0], boardHeight: action.value[1] });
             return computeSchemaGraph({
                 ...state,
                 graphConfig: {
