@@ -50,16 +50,12 @@ const SchemaGraphView: React.FC<SchemaGraphViewProps> = (props: SchemaGraphViewP
         >
             <EdgeLayer
                 className={styles.graph_edges}
-                width={props.width}
-                height={props.width}
                 bounds={state.graphViewModel.boundaries}
                 edges={state.graphViewModel.edges}
                 onFocusChanged={onEdgeFocusChanged}
             />
             <NodeLayer
                 className={styles.graph_nodes}
-                width={props.width}
-                height={props.width}
                 bounds={state.graphViewModel.boundaries}
                 nodes={state.graphViewModel.nodes}
                 edges={state.graphViewModel.edges}
@@ -68,8 +64,6 @@ const SchemaGraphView: React.FC<SchemaGraphViewProps> = (props: SchemaGraphViewP
             />
             <EdgeHighlightingLayer
                 className={styles.graph_edge_highlighting}
-                width={props.width}
-                height={props.width}
                 bounds={state.graphViewModel.boundaries}
                 edges={state.graphViewModel.edges}
                 focus={state.userFocus}

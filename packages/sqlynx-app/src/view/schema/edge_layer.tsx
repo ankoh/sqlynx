@@ -6,8 +6,6 @@ import { FocusInfo } from '../../scripts/focus';
 
 interface Props {
     className?: string;
-    width: number;
-    height: number;
     bounds: GraphBoundaries;
     edges: Map<GraphConnectionId.Value, EdgeViewModel>;
     onFocusChanged: (connection: GraphConnectionId.Value | null) => void;
@@ -121,6 +119,8 @@ export function EdgeLayer(props: Props) {
         <svg
             className={props.className}
             viewBox={`${props.bounds.minX} ${props.bounds.minY} ${props.bounds.totalWidth} ${props.bounds.totalHeight}`}
+            width={props.bounds.totalWidth}
+            height={props.bounds.totalHeight}
         >
             {paths}
         </svg>
@@ -129,8 +129,6 @@ export function EdgeLayer(props: Props) {
 
 interface HighlightingProps {
     className?: string;
-    width: number;
-    height: number;
     bounds: GraphBoundaries;
     edges: Map<GraphConnectionId.Value, EdgeViewModel>;
     focus: FocusInfo | null;
@@ -156,8 +154,8 @@ export function EdgeHighlightingLayer(props: HighlightingProps) {
         <svg
             className={props.className}
             viewBox={`${props.bounds.minX} ${props.bounds.minY} ${props.bounds.totalWidth} ${props.bounds.totalHeight}`}
-            width={props.width}
-            height={props.height}
+            width={props.bounds.totalWidth}
+            height={props.bounds.totalHeight}
         >
             {paths}
         </svg>
