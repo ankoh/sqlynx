@@ -90,7 +90,11 @@ const CommandListItems = (props: { connector: ConnectorInfo }) => {
                 </ActionList.LeadingVisual>
                 <span>
                     Save Query as Link
-                    <ScriptURLOverlay isOpen={sharingIsOpen} setIsOpen={setSharingIsOpen} />
+                    <ScriptURLOverlay
+                        isOpen={sharingIsOpen}
+                        setIsOpen={setSharingIsOpen}
+                        onClose={() => setSharingIsOpen(false)}
+                    />
                 </span>
                 <ActionList.TrailingVisual>Ctrl + L</ActionList.TrailingVisual>
             </ActionList.Item>
@@ -174,7 +178,11 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                                 onClick={() => setSharingIsOpen(s => !s)}
                             />
                         </ButtonGroup>
-                        <ScriptURLOverlay isOpen={sharingIsOpen} setIsOpen={setSharingIsOpen} />
+                        <ScriptURLOverlay
+                            isOpen={sharingIsOpen}
+                            setIsOpen={setSharingIsOpen}
+                            onClose={() => setSharingIsOpen(false)}
+                        />
                     </div>
                     <IconButton icon={ThreeBarsIcon} aria-labelledby="visit-github-repository" />
                 </div>
