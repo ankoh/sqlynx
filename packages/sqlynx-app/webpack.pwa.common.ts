@@ -155,7 +155,7 @@ export function configure(params: ConfigParams): Partial<Configuration> {
             }),
             new webpack.DefinePlugin({
                 'process.env.ENV_BROWSER': true,
-                'process.env.SQLYNX_APP_URL': params.appURL,
+                'process.env.SQLYNX_APP_URL': JSON.stringify(params.appURL),
                 'process.env.GITHUB_OAUTH_CLIENT_ID': JSON.stringify(params.githubOAuthClientID),
                 'process.env.GITHUB_OAUTH_REDIRECT': JSON.stringify(params.githubOAuthRedirect),
             }),

@@ -84,7 +84,7 @@ const CommandListItems = (props: { connector: ConnectorInfo }) => {
                 <ActionList.TrailingVisual>Ctrl + R</ActionList.TrailingVisual>
             </ActionList.Item>
             <ActionList.Divider />
-            <ActionList.Item onClick={() => setSharingIsOpen(true)}>
+            <ActionList.Item onClick={() => setSharingIsOpen(s => !s)}>
                 <ActionList.LeadingVisual>
                     <LinkIcon />
                 </ActionList.LeadingVisual>
@@ -154,6 +154,7 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
         B: columnB,
         C: columnC,
     });
+    const [sharingIsOpen, setSharingIsOpen] = React.useState<boolean>(false);
 
     return (
         <div className={styles.page}>
@@ -163,11 +164,18 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                 </div>
                 <div className={styles.header_action_container}>
                     <ConnectorSelection variant="default" short={true} />
-                    <ButtonGroup className={primerBugFixes.button_group}>
-                        <IconButton icon={PaperAirplaneIcon} aria-labelledby="create-github-issue" />
-                        <IconButton icon={SyncIcon} aria-labelledby="visit-github-repository" />
-                        <IconButton icon={LinkIcon} aria-labelledby="visit-github-repository" />
-                    </ButtonGroup>
+                    <div>
+                        <ButtonGroup className={primerBugFixes.button_group}>
+                            <IconButton icon={PaperAirplaneIcon} aria-labelledby="create-github-issue" />
+                            <IconButton icon={SyncIcon} aria-labelledby="visit-github-repository" />
+                            <IconButton
+                                icon={LinkIcon}
+                                aria-labelledby="visit-github-repository"
+                                onClick={() => setSharingIsOpen(s => !s)}
+                            />
+                        </ButtonGroup>
+                        <ScriptURLOverlay isOpen={sharingIsOpen} setIsOpen={setSharingIsOpen} />
+                    </div>
                     <IconButton icon={ThreeBarsIcon} aria-labelledby="visit-github-repository" />
                 </div>
             </div>
