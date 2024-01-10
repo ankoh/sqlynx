@@ -38,6 +38,7 @@ interface Props {
     className?: string;
     isOpen: boolean;
     setIsOpen: (v: boolean) => void;
+    onClose: () => void;
 }
 
 interface State {
@@ -106,6 +107,7 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
         <AnchoredOverlay
             renderAnchor={() => <div ref={anchorRef} />}
             open={props.isOpen}
+            onClose={props.onClose}
             anchorRef={anchorRef}
             align="end"
         >
