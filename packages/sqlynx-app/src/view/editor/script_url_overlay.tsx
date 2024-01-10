@@ -1,15 +1,15 @@
 import React from 'react';
 import LZString from 'lz-string';
 
-import { FormControl, TextInput, AnchoredOverlay, Box, Button, IconButton } from '@primer/react';
+import { TextInput, AnchoredOverlay, Box, IconButton } from '@primer/react';
 import { PaperclipIcon } from '@primer/octicons-react';
 
-import * as utils from '../../utils';
 import { sleep } from '../../utils/sleep';
-import { estimateUTF16Length } from '../../utils/text';
 import { ScriptData, ScriptKey, ScriptState } from '../../scripts/script_state';
+import { useScriptState } from '../../scripts/script_state_provider';
 
 import styles from './script_url_overlay.module.css';
+import classNames from 'classnames';
 
 const encodeScript = (url: URL, prefix: string, data: ScriptData) => {
     if (data.script) {
@@ -50,6 +50,7 @@ interface State {
 }
 
 export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
+    const scriptState = useScriptState();
     const [state, setState] = React.useState<State>(() => ({
         url: null,
         urlText: null,
@@ -58,6 +59,11 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
         copyError: null,
         uiResetAt: null,
     }));
+    const [url, urlText] = React.useMemo(() => {
+        const url = buildURL(scriptState);
+        const urlText = url.toString();
+        return [url, urlText];
+    }, [scriptState.scripts[ScriptKey.MAIN_SCRIPT], scriptState.scripts[ScriptKey.SCHEMA_SCRIPT]]);
 
     // Copy the url to the clipboard
     React.useCallback(
@@ -97,17 +103,20 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
 
     const anchorRef = React.createRef<HTMLDivElement>();
     return (
-        <AnchoredOverlay renderAnchor={() => <div ref={anchorRef} />} open={props.isOpen} anchorRef={anchorRef}>
-            <Box className={styles.sharing_overlay} padding={2}>
-                <FormControl>
-                    <TextInput className={styles.url_text} disabled={true} />
-                    <FormControl.Caption id="url-text">
-                        {state.urlText == null
-                            ? 'url is empty'
-                            : `~&nbsp;${utils.formatBytes(estimateUTF16Length(state.urlText))}`}
-                    </FormControl.Caption>
-                </FormControl>
-                <IconButton className={styles.copy_icon} icon={PaperclipIcon} aria-labelledby="copy-to-clipboard" />
+        <AnchoredOverlay
+            renderAnchor={() => <div ref={anchorRef} />}
+            open={props.isOpen}
+            anchorRef={anchorRef}
+            align="end"
+        >
+            <Box className={classNames(styles.sharing_overlay, props.className)}>
+                <div className={styles.sharing_title}>Save Query as Link</div>
+                <TextInput className={styles.sharing_url} disabled={true} value={urlText} />
+                <IconButton
+                    className={styles.sharing_button}
+                    icon={PaperclipIcon}
+                    aria-labelledby="copy-to-clipboard"
+                />
             </Box>
         </AnchoredOverlay>
     );
