@@ -32,10 +32,3 @@
     grid-column: 2;
     margin-left: 8px;
 }
-.sharing_caption {
-    grid-row: 3;
-    grid-column: 1 / span 2;
-    font-size: 0.7rem;
-    color: rgb(140, 140, 140);
-    padding: 4px 2px 0px 2px;
-}
