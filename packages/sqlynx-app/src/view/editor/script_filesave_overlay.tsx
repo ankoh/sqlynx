@@ -23,13 +23,12 @@ export const ScriptFileSaveOverlay: React.FC<Props> = (props: Props) => {
             align="end"
         >
             <Box className={classNames(styles.filesave_overlay, props.className)}>
-                <div className={styles.filesave_title}>Save Query as .sql</div>
-                <div className={styles.filesave_file_icon}>
-                    <FileIcon />
+                <div className={styles.filesave_file_icon_container}>
+                    <FileIcon className={styles.filesave_file_icon} />
                 </div>
                 <div className={styles.filesave_file_info}>
-                    <div className={styles.filesave_file_name}></div>
-                    <div className={styles.filesave_file_stats}></div>
+                    <div className={styles.filesave_file_name}>query.sql</div>
+                    <div className={styles.filesave_file_stats}>~&nbsp;123&nbsp;KB</div>
                 </div>
                 <div className={styles.filesave_download}>
                     <IconButton className={styles.filesave_button} icon={DownloadIcon} aria-labelledby="save-file" />
