@@ -12,7 +12,10 @@ static const proto::ScannerTokenType MapToken(Parser::symbol_type symbol, std::s
 #include "../../../grammar/lists/sql_type_func_keywords.list"
 #include "../../../grammar/lists/sql_unreserved_keywords.list"
 #undef X
-        return proto::ScannerTokenType::KEYWORD;
+        case Parser::symbol_kind_type::S_NULLS_LA:
+        case Parser::symbol_kind_type::S_NOT_LA:
+        case Parser::symbol_kind_type::S_WITH_LA:
+            return proto::ScannerTokenType::KEYWORD;
         case Parser::symbol_kind_type::S_SCONST:
             return proto::ScannerTokenType::LITERAL_STRING;
         case Parser::symbol_kind_type::S_ICONST:
