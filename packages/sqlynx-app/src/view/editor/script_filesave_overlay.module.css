@@ -1,0 +1,48 @@
+@media only screen and (max-width: 400px) {
+    .filesave_overlay {
+        display: grid;
+        grid-template-rows: max-content max-content;
+        grid-template-columns: max-content 1fr max-content;
+        padding: 8px;
+    }
+}
+@media only screen and (min-width: 400px) {
+    .filesave_overlay {
+        display: grid;
+        grid-template-rows: max-content max-content;
+        grid-template-columns: max-content 1fr max-content;
+        padding: 8px;
+        width: 400px;
+    }
+}
+
+.filesave_title {
+    grid-row: 1;
+    grid-column: 1 / span 3;
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 0px 2px 4px 2px;
+}
+
+.filesave_file_icon {
+    grid-row: 2;
+    grid-column: 1;
+    display: grid;
+    justify-items: center;
+    align-items: center;
+}
+.filesave_file_info {
+    display: grid;
+    grid-template-columns: 100%;
+    grid-template-rows: 1fr 1fr;
+}
+.filesave_file_name {
+    grid-row: 1;
+}
+.filesave_file_stats {
+    grid-row: 2;
+}
+.filesave_download {
+    grid-row: 2;
+    grid-column: 3;
+}
