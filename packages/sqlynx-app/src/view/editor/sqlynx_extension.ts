@@ -5,9 +5,7 @@ import { completeSQLynx } from './sqlynx_completion';
 import { SQLynxDecorations } from './sqlynx_decorations';
 import { SQLynxProcessor } from './sqlynx_processor';
 
-import { basicLight } from 'cm6-theme-basic-light';
-
-const THEME = basicLight;
+import { xcodeLight as THEME } from '@uiw/codemirror-themes-all';
 
 export const SQLynxExtensions = [
     THEME,

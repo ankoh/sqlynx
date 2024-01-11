@@ -24,6 +24,7 @@
         "@primer/react": "^36.5.0",
         "@react-hook/resize-observer": "^1.2.6",
         "@types/react-window": "^1.8.8",
+        "@uiw/codemirror-themes-all": "^4.21.21",
         "apache-arrow": "^14.0.2",
         "classnames": "^2.5.1",
         "cm6-theme-basic-light": "^0.2.0",
