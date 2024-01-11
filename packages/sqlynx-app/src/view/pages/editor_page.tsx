@@ -17,6 +17,7 @@ import { SchemaGraph } from '../../view/schema/schema_graph';
 import { QueryProgress } from '../../view/progress/query_progress';
 import { DataTable } from '../../view/table/data_table';
 import { TabCard } from '../../view/tab_card';
+import { ScriptFileSaveOverlay } from '../editor/script_filesave_overlay';
 import { ScriptURLOverlay } from '../editor/script_url_overlay';
 import { getConnectorIcon } from '../connector_icons';
 
@@ -66,7 +67,8 @@ const ConnectorSelection = (props: { className?: string; variant: 'default' | 'i
 };
 
 const CommandListItems = (props: { connector: ConnectorInfo }) => {
-    const [sharingIsOpen, setSharingIsOpen] = React.useState<boolean>(false);
+    const [linkSharingIsOpen, openLinkSharing] = React.useState<boolean>(false);
+    const [saveSqlIsOpen, openSaveSql] = React.useState<boolean>(false);
     return (
         <>
             <ActionList.Item disabled={!props.connector.features.executeQueryAction}>
@@ -84,25 +86,24 @@ const CommandListItems = (props: { connector: ConnectorInfo }) => {
                 <ActionList.TrailingVisual>Ctrl + R</ActionList.TrailingVisual>
             </ActionList.Item>
             <ActionList.Divider />
-            <ActionList.Item onClick={() => setSharingIsOpen(s => !s)}>
+            <ActionList.Item onClick={() => openLinkSharing(s => !s)}>
                 <ActionList.LeadingVisual>
                     <LinkIcon />
                 </ActionList.LeadingVisual>
                 <span>
                     Save Query as Link
-                    <ScriptURLOverlay
-                        isOpen={sharingIsOpen}
-                        setIsOpen={setSharingIsOpen}
-                        onClose={() => setSharingIsOpen(false)}
-                    />
+                    <ScriptURLOverlay isOpen={linkSharingIsOpen} setIsOpen={openLinkSharing} />
                 </span>
                 <ActionList.TrailingVisual>Ctrl + L</ActionList.TrailingVisual>
             </ActionList.Item>
-            <ActionList.Item>
+            <ActionList.Item onClick={() => openSaveSql(s => !s)}>
                 <ActionList.LeadingVisual>
                     <DownloadIcon />
                 </ActionList.LeadingVisual>
-                Save Query as .sql
+                <span>
+                    Save Query as .sql
+                    <ScriptFileSaveOverlay isOpen={saveSqlIsOpen} setIsOpen={openSaveSql} />
+                </span>
                 <ActionList.TrailingVisual>Ctrl + S</ActionList.TrailingVisual>
             </ActionList.Item>
             <ActionList.Item disabled={!props.connector.features.executeQueryAction}>
@@ -178,11 +179,7 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                                 onClick={() => setSharingIsOpen(s => !s)}
                             />
                         </ButtonGroup>
-                        <ScriptURLOverlay
-                            isOpen={sharingIsOpen}
-                            setIsOpen={setSharingIsOpen}
-                            onClose={() => setSharingIsOpen(false)}
-                        />
+                        <ScriptURLOverlay isOpen={sharingIsOpen} setIsOpen={setSharingIsOpen} />
                     </div>
                     <IconButton icon={ThreeBarsIcon} aria-labelledby="visit-github-repository" />
                 </div>
