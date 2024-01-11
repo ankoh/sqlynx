@@ -102,6 +102,7 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
     );
 
     const anchorRef = React.createRef<HTMLDivElement>();
+    const buttonRef = React.createRef<HTMLAnchorElement>();
     return (
         <AnchoredOverlay
             renderAnchor={() => <div ref={anchorRef} />}
@@ -109,11 +110,15 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
             onClose={() => props.setIsOpen(false)}
             anchorRef={anchorRef}
             align="end"
+            overlayProps={{
+                initialFocusRef: buttonRef,
+            }}
         >
             <Box className={classNames(styles.sharing_overlay, props.className)}>
                 <div className={styles.sharing_title}>Save Query as Link</div>
                 <TextInput className={styles.sharing_url} disabled={true} value={urlText} />
                 <IconButton
+                    ref={buttonRef}
                     className={styles.sharing_button}
                     icon={PaperclipIcon}
                     aria-labelledby="copy-to-clipboard"
