@@ -13,8 +13,12 @@
         "@ankoh/sqlynx": "link:../sqlynx-wasm",
         "@bufbuild/connect-web": "^0.13.0",
         "@codemirror/autocomplete": "^6.11.1",
+        "@codemirror/language": "^6.10.0",
+        "@codemirror/state": "^6.4.0",
         "@codemirror/view": "^6.23.0",
         "@emotion/is-prop-valid": "^1.2.1",
+        "@lezer/common": "^1.2.0",
+        "@lezer/highlight": "^1.2.0",
         "@octokit/graphql": "^7.0.2",
         "@primer/octicons-react": "^19.8.0",
         "@primer/react": "^36.5.0",
@@ -22,6 +26,8 @@
         "@types/react-window": "^1.8.8",
         "apache-arrow": "^14.0.2",
         "classnames": "^2.5.1",
+        "cm6-theme-basic-light": "^0.2.0",
+        "cm6-theme-nord": "^0.2.0",
         "flatbuffers": "^23.5.26",
         "fontfaceobserver": "^2.3.0",
         "framer-motion": "^10.18.0",
@@ -35,6 +41,9 @@
         "react-window": "^1.8.10",
         "react-zoom-pan-pinch": "^3.3.0",
         "styled-components": "^6.1.8"
+    },
+    "resolutions": {
+        "@codemirror/state": "6.4.0"
     },
     "devDependencies": {
         "@types/flatbuffers": "^1.10.3",

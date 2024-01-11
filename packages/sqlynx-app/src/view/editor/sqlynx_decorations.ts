@@ -1,15 +1,13 @@
 import * as sqlynx from '@ankoh/sqlynx';
 import { Decoration, DecorationSet, EditorView } from '@codemirror/view';
-import { Transaction, StateField, RangeSetBuilder } from '@codemirror/state';
+import { EditorState, Transaction, StateField, RangeSetBuilder } from '@codemirror/state';
+import { highlightingFor } from '@codemirror/language';
+import { tags as CODEMIRROR_TAGS, Tag } from '@lezer/highlight';
 
 import { SQLynxProcessor, SQLynxScriptBuffers, SQLynxScriptKey } from './sqlynx_processor';
 
 import './sqlynx_decorations.css';
 
-const TokenType = sqlynx.proto.ScannerTokenType;
-const KeywordDecoration = Decoration.mark({
-    class: 'sqlynx-keyword',
-});
 const FocusedQueryGraphEdgeDecoration = Decoration.mark({
     class: 'sqlynx-queryedge-focus',
 });
@@ -24,9 +22,38 @@ const ErrorDecoration = Decoration.mark({
 });
 
 function buildDecorationsFromTokens(
+    state: EditorState,
     scanned: sqlynx.FlatBufferPtr<sqlynx.proto.ScannedScript>,
     tmp: sqlynx.proto.ScannedScript = new sqlynx.proto.ScannedScript(),
 ): DecorationSet {
+    const tagMapping: Map<sqlynx.proto.ScannerTokenType, Tag> = new Map([
+        [sqlynx.proto.ScannerTokenType.KEYWORD, CODEMIRROR_TAGS.keyword],
+        [sqlynx.proto.ScannerTokenType.OPERATOR, CODEMIRROR_TAGS.operator],
+        [sqlynx.proto.ScannerTokenType.LITERAL_BINARY, CODEMIRROR_TAGS.literal],
+        [sqlynx.proto.ScannerTokenType.LITERAL_BOOLEAN, CODEMIRROR_TAGS.literal],
+        [sqlynx.proto.ScannerTokenType.LITERAL_FLOAT, CODEMIRROR_TAGS.literal],
+        [sqlynx.proto.ScannerTokenType.LITERAL_HEX, CODEMIRROR_TAGS.literal],
+        [sqlynx.proto.ScannerTokenType.LITERAL_STRING, CODEMIRROR_TAGS.literal],
+        [sqlynx.proto.ScannerTokenType.LITERAL_INTEGER, CODEMIRROR_TAGS.literal],
+        [sqlynx.proto.ScannerTokenType.IDENTIFIER, CODEMIRROR_TAGS.name],
+        [sqlynx.proto.ScannerTokenType.COMMENT, CODEMIRROR_TAGS.comment],
+    ]);
+    const decorations: Map<Tag, Decoration> = new Map();
+    for (const cmTag of [
+        CODEMIRROR_TAGS.keyword,
+        CODEMIRROR_TAGS.operator,
+        CODEMIRROR_TAGS.literal,
+        CODEMIRROR_TAGS.name,
+        CODEMIRROR_TAGS.comment,
+    ]) {
+        decorations.set(
+            cmTag,
+            Decoration.mark({
+                class: highlightingFor(state, [cmTag]) ?? '',
+            }),
+        );
+    }
+
     const builder = new RangeSetBuilder<Decoration>();
     const scan = scanned.read(tmp);
     const tokens = scan.tokens();
@@ -37,12 +64,10 @@ function buildDecorationsFromTokens(
         for (let i = 0; i < tokenOffsets.length; ++i) {
             const offset = tokenOffsets[i];
             const length = tokenLengths[i];
-            switch (tokenTypes[i]) {
-                case TokenType.KEYWORD:
-                    builder.add(offset, offset + length, KeywordDecoration);
-                    break;
-                default:
-                    break;
+            const cmTag = tagMapping.get(tokenTypes[i]);
+            if (cmTag) {
+                const decoration = decorations.get(cmTag)!;
+                builder.add(offset, offset + length, decoration);
             }
         }
     }
@@ -79,7 +104,7 @@ const ScannerDecorationField: StateField<ScannerDecorationState> = StateField.de
         const s = { ...state };
         s.scriptBuffers.scanned = processor.scriptBuffers.scanned;
         if (s.scriptBuffers.scanned) {
-            s.decorations = buildDecorationsFromTokens(s.scriptBuffers.scanned);
+            s.decorations = buildDecorationsFromTokens(transaction.state, s.scriptBuffers.scanned);
         }
         return s;
     },

@@ -19,7 +19,6 @@ import { ScriptStatisticsBar } from './script_statistics_bar';
 import icons from '../../../static/svg/symbols.generated.svg';
 
 import styles from './editor.module.css';
-import { ScriptCursorInfoT } from '@ankoh/sqlynx/dist/gen/sqlynx/proto';
 
 enum TabId {
     MAIN_SCRIPT = 1,
@@ -59,7 +58,7 @@ interface ActiveScriptState {
     editorScript: sqlynx.SQLynxScript | null;
     schemaScript: sqlynx.SQLynxScript | null;
     decorations: DecorationSet | null;
-    cursor: ScriptCursorInfoT | null;
+    cursor: sqlynx.proto.ScriptCursorInfoT | null;
 }
 
 export const ScriptEditor: React.FC<Props> = (props: Props) => {
