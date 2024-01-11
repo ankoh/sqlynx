@@ -41,5 +41,6 @@
 }
 .sqlynx-error {
     position: relative;
-    text-decoration: underline 3px red;
+    text-decoration: underline 1px red;
+    text-decoration-style: wavy;
 }
