@@ -8,6 +8,19 @@ import { SQLynxProcessor, SQLynxScriptBuffers, SQLynxScriptKey } from './sqlynx_
 
 import './sqlynx_decorations.css';
 
+const PROTO_TAG_MAPPING: Map<sqlynx.proto.ScannerTokenType, Tag> = new Map([
+    [sqlynx.proto.ScannerTokenType.KEYWORD, CODEMIRROR_TAGS.keyword],
+    [sqlynx.proto.ScannerTokenType.OPERATOR, CODEMIRROR_TAGS.operator],
+    [sqlynx.proto.ScannerTokenType.LITERAL_BINARY, CODEMIRROR_TAGS.literal],
+    [sqlynx.proto.ScannerTokenType.LITERAL_BOOLEAN, CODEMIRROR_TAGS.literal],
+    [sqlynx.proto.ScannerTokenType.LITERAL_FLOAT, CODEMIRROR_TAGS.literal],
+    [sqlynx.proto.ScannerTokenType.LITERAL_HEX, CODEMIRROR_TAGS.literal],
+    [sqlynx.proto.ScannerTokenType.LITERAL_STRING, CODEMIRROR_TAGS.literal],
+    [sqlynx.proto.ScannerTokenType.LITERAL_INTEGER, CODEMIRROR_TAGS.literal],
+    [sqlynx.proto.ScannerTokenType.IDENTIFIER, CODEMIRROR_TAGS.name],
+    [sqlynx.proto.ScannerTokenType.COMMENT, CODEMIRROR_TAGS.comment],
+]);
+
 const FocusedQueryGraphEdgeDecoration = Decoration.mark({
     class: 'sqlynx-queryedge-focus',
 });
@@ -26,18 +39,6 @@ function buildDecorationsFromTokens(
     scanned: sqlynx.FlatBufferPtr<sqlynx.proto.ScannedScript>,
     tmp: sqlynx.proto.ScannedScript = new sqlynx.proto.ScannedScript(),
 ): DecorationSet {
-    const tagMapping: Map<sqlynx.proto.ScannerTokenType, Tag> = new Map([
-        [sqlynx.proto.ScannerTokenType.KEYWORD, CODEMIRROR_TAGS.keyword],
-        [sqlynx.proto.ScannerTokenType.OPERATOR, CODEMIRROR_TAGS.operator],
-        [sqlynx.proto.ScannerTokenType.LITERAL_BINARY, CODEMIRROR_TAGS.literal],
-        [sqlynx.proto.ScannerTokenType.LITERAL_BOOLEAN, CODEMIRROR_TAGS.literal],
-        [sqlynx.proto.ScannerTokenType.LITERAL_FLOAT, CODEMIRROR_TAGS.literal],
-        [sqlynx.proto.ScannerTokenType.LITERAL_HEX, CODEMIRROR_TAGS.literal],
-        [sqlynx.proto.ScannerTokenType.LITERAL_STRING, CODEMIRROR_TAGS.literal],
-        [sqlynx.proto.ScannerTokenType.LITERAL_INTEGER, CODEMIRROR_TAGS.literal],
-        [sqlynx.proto.ScannerTokenType.IDENTIFIER, CODEMIRROR_TAGS.name],
-        [sqlynx.proto.ScannerTokenType.COMMENT, CODEMIRROR_TAGS.comment],
-    ]);
     const decorations: Map<Tag, Decoration> = new Map();
     for (const cmTag of [
         CODEMIRROR_TAGS.keyword,
@@ -64,9 +65,9 @@ function buildDecorationsFromTokens(
         for (let i = 0; i < tokenOffsets.length; ++i) {
             const offset = tokenOffsets[i];
             const length = tokenLengths[i];
-            const cmTag = tagMapping.get(tokenTypes[i]);
-            if (cmTag) {
-                const decoration = decorations.get(cmTag)!;
+            const tag = PROTO_TAG_MAPPING.get(tokenTypes[i]);
+            if (tag) {
+                const decoration = decorations.get(tag)!;
                 builder.add(offset, offset + length, decoration);
             }
         }
