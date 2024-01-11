@@ -11,7 +11,7 @@ function updateCursorTooltip(state: CursorTooltipState, transaction: Transaction
     if ((transaction.selection?.ranges.length ?? 0) == 0) {
         return state;
     }
-    let nextTooltips = [];
+    let nextTooltips: Tooltip[] = [];
 
     const tmpError = new sqlynx.proto.Error();
     const findErrorAtLocation = (

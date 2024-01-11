@@ -12,14 +12,18 @@ const PROTO_TAG_MAPPING: Map<sqlynx.proto.ScannerTokenType, Tag> = new Map([
     [sqlynx.proto.ScannerTokenType.KEYWORD, CODEMIRROR_TAGS.keyword],
     [sqlynx.proto.ScannerTokenType.OPERATOR, CODEMIRROR_TAGS.operator],
     [sqlynx.proto.ScannerTokenType.LITERAL_BINARY, CODEMIRROR_TAGS.literal],
-    [sqlynx.proto.ScannerTokenType.LITERAL_BOOLEAN, CODEMIRROR_TAGS.literal],
-    [sqlynx.proto.ScannerTokenType.LITERAL_FLOAT, CODEMIRROR_TAGS.literal],
-    [sqlynx.proto.ScannerTokenType.LITERAL_HEX, CODEMIRROR_TAGS.literal],
-    [sqlynx.proto.ScannerTokenType.LITERAL_STRING, CODEMIRROR_TAGS.literal],
-    [sqlynx.proto.ScannerTokenType.LITERAL_INTEGER, CODEMIRROR_TAGS.literal],
+    [sqlynx.proto.ScannerTokenType.LITERAL_BOOLEAN, CODEMIRROR_TAGS.bool],
+    [sqlynx.proto.ScannerTokenType.LITERAL_FLOAT, CODEMIRROR_TAGS.float],
+    [sqlynx.proto.ScannerTokenType.LITERAL_HEX, CODEMIRROR_TAGS.number],
+    [sqlynx.proto.ScannerTokenType.LITERAL_STRING, CODEMIRROR_TAGS.string],
+    [sqlynx.proto.ScannerTokenType.LITERAL_INTEGER, CODEMIRROR_TAGS.integer],
     [sqlynx.proto.ScannerTokenType.IDENTIFIER, CODEMIRROR_TAGS.name],
     [sqlynx.proto.ScannerTokenType.COMMENT, CODEMIRROR_TAGS.comment],
 ]);
+const CODEMIRROR_TAGS_USED: Set<Tag> = new Set();
+for (const [_token, tag] of PROTO_TAG_MAPPING) {
+    CODEMIRROR_TAGS_USED.add(tag);
+}
 
 const FocusedQueryGraphEdgeDecoration = Decoration.mark({
     class: 'sqlynx-queryedge-focus',
@@ -40,17 +44,11 @@ function buildDecorationsFromTokens(
     tmp: sqlynx.proto.ScannedScript = new sqlynx.proto.ScannedScript(),
 ): DecorationSet {
     const decorations: Map<Tag, Decoration> = new Map();
-    for (const cmTag of [
-        CODEMIRROR_TAGS.keyword,
-        CODEMIRROR_TAGS.operator,
-        CODEMIRROR_TAGS.literal,
-        CODEMIRROR_TAGS.name,
-        CODEMIRROR_TAGS.comment,
-    ]) {
+    for (const tag of CODEMIRROR_TAGS_USED) {
         decorations.set(
-            cmTag,
+            tag,
             Decoration.mark({
-                class: highlightingFor(state, [cmTag]) ?? '',
+                class: highlightingFor(state, [tag]) ?? '',
             }),
         );
     }
