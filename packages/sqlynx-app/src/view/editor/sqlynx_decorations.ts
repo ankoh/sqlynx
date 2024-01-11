@@ -125,6 +125,7 @@ function buildDecorationsFromCursor(
     focusedTableRefs: Set<sqlynx.ExternalObjectID.Value> | null,
 ): DecorationSet {
     const builder = new RangeSetBuilder<Decoration>();
+    const scanned = scriptBuffers.scanned?.read(new sqlynx.proto.ScannedScript()) ?? null;
     const parsed = scriptBuffers.parsed?.read(new sqlynx.proto.ParsedScript()) ?? null;
     const analyzed = scriptBuffers.analyzed?.read(new sqlynx.proto.AnalyzedScript()) ?? null;
     const queryEdgeId = scriptCursor?.queryEdgeId ?? null;
@@ -200,7 +201,19 @@ function buildDecorationsFromCursor(
         }
     }
 
-    // Are there any errors?
+    // Are there any scanner errors?
+    if (scanned != null) {
+        for (let i = 0; i < scanned.errorsLength(); ++i) {
+            const error = scanned.errors(i, tmpError)!;
+            const loc = error.location(tmpLoc)!;
+            decorations.push({
+                from: loc.offset(),
+                to: loc.offset() + loc.length(),
+                decoration: ErrorDecoration,
+            });
+        }
+    }
+    // Are there any parser errors?
     if (parsed !== null) {
         for (let i = 0; i < parsed.errorsLength(); ++i) {
             const error = parsed.errors(i, tmpError)!;
