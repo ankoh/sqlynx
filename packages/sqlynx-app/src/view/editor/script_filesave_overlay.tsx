@@ -14,6 +14,7 @@ interface Props {
 
 export const ScriptFileSaveOverlay: React.FC<Props> = (props: Props) => {
     const anchorRef = React.createRef<HTMLDivElement>();
+    const buttonRef = React.createRef<HTMLAnchorElement>();
     return (
         <AnchoredOverlay
             renderAnchor={() => <div ref={anchorRef} />}
@@ -21,6 +22,9 @@ export const ScriptFileSaveOverlay: React.FC<Props> = (props: Props) => {
             onClose={() => props.setIsOpen(false)}
             anchorRef={anchorRef}
             align="end"
+            overlayProps={{
+                initialFocusRef: buttonRef,
+            }}
         >
             <Box className={classNames(styles.filesave_overlay, props.className)}>
                 <div className={styles.filesave_file_icon_container}>
@@ -31,7 +35,12 @@ export const ScriptFileSaveOverlay: React.FC<Props> = (props: Props) => {
                     <div className={styles.filesave_file_stats}>~&nbsp;123&nbsp;KB</div>
                 </div>
                 <div className={styles.filesave_download}>
-                    <IconButton className={styles.filesave_button} icon={DownloadIcon} aria-labelledby="save-file" />
+                    <IconButton
+                        ref={buttonRef}
+                        className={styles.filesave_button}
+                        icon={DownloadIcon}
+                        aria-labelledby="save-file"
+                    />
                 </div>
             </Box>
         </AnchoredOverlay>
