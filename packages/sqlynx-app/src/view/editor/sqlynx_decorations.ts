@@ -300,5 +300,6 @@ const FocusDecorationField: StateField<FocusDecorationState> = StateField.define
 
 const ScannerDecorations = EditorView.decorations.from(ScannerDecorationField, state => state.decorations);
 const FocusDecorations = EditorView.decorations.from(FocusDecorationField, state => state.decorations);
+
 /// Bundle the decoration extensions
 export const SQLynxDecorations = [ScannerDecorationField, ScannerDecorations, FocusDecorationField, FocusDecorations];
