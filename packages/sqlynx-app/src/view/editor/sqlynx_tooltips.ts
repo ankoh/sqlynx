@@ -1,18 +1,12 @@
 import * as sqlynx from '@ankoh/sqlynx';
 
-import { Tooltip, showTooltip } from '@codemirror/view';
-import { Transaction } from '@codemirror/state';
-import { StateField } from '@codemirror/state';
+import { Tooltip, showTooltip, hoverTooltip, EditorView } from '@codemirror/view';
+import { Transaction, StateField, EditorState } from '@codemirror/state';
 
 import { SQLynxProcessor } from './sqlynx_processor';
 
-function updateCursorTooltip(state: CursorTooltipState, transaction: Transaction): CursorTooltipState {
-    const processor = transaction.state.field(SQLynxProcessor);
-    if ((transaction.selection?.ranges.length ?? 0) == 0) {
-        return state;
-    }
-    let nextTooltips: Tooltip[] = [];
-
+function createCursorTooltip(state: EditorState, pos: number): Tooltip | null {
+    const processor = state.field(SQLynxProcessor);
     const tmpError = new sqlynx.proto.Error();
     const findErrorAtLocation = (
         buffer: {
@@ -31,13 +25,12 @@ function updateCursorTooltip(state: CursorTooltipState, transaction: Transaction
         }
     };
 
-    const cursorPos = transaction.selection!.ranges[0].head;
     if (processor.scriptBuffers.scanned) {
         const scanned = processor.scriptBuffers.scanned.read(new sqlynx.proto.ScannedScript());
-        const error = findErrorAtLocation(scanned, cursorPos);
+        const error = findErrorAtLocation(scanned, pos);
         if (error != null) {
-            nextTooltips.push({
-                pos: cursorPos,
+            return {
+                pos,
                 arrow: true,
                 create: () => {
                     let dom = document.createElement('div');
@@ -45,15 +38,15 @@ function updateCursorTooltip(state: CursorTooltipState, transaction: Transaction
                     dom.textContent = error.message();
                     return { dom };
                 },
-            });
+            };
         }
     }
     if (processor.scriptBuffers.parsed) {
         const parsed = processor.scriptBuffers.parsed.read(new sqlynx.proto.ParsedScript());
-        const error = findErrorAtLocation(parsed, cursorPos);
+        const error = findErrorAtLocation(parsed, pos);
         if (error != null) {
-            nextTooltips.push({
-                pos: cursorPos,
+            return {
+                pos,
                 arrow: true,
                 create: () => {
                     let dom = document.createElement('div');
@@ -61,30 +54,39 @@ function updateCursorTooltip(state: CursorTooltipState, transaction: Transaction
                     dom.textContent = error.message();
                     return { dom };
                 },
-            });
+            };
         }
     }
-    return {
-        tooltips: nextTooltips,
-    };
+    return null;
 }
 
-interface CursorTooltipState {
-    tooltips: Tooltip[];
-}
-
-const CursorTooltipField = StateField.define<CursorTooltipState>({
-    create: () => {
-        const config: CursorTooltipState = {
-            tooltips: [],
-        };
-        return config;
-    },
-    update: (state: CursorTooltipState, transaction: Transaction) => {
+const CursorTooltipField = StateField.define<Tooltip | null>({
+    create: () => null,
+    update: (state: Tooltip | null, transaction: Transaction) => {
         if (!transaction.docChanged && !transaction.selection) return state;
-        return updateCursorTooltip(state, transaction);
+        const pos = transaction.selection?.ranges ?? [];
+        if (pos.length == 0) {
+            return null;
+        }
+        return createCursorTooltip(transaction.state, pos[0].head);
     },
-    provide: f => showTooltip.computeN([f], state => state.field(f).tooltips),
+    provide: f => showTooltip.computeN([f], state => [state.field(f)]),
 });
 
-export const SQLynxTooltips = [CursorTooltipField];
+const HoverTooltip = hoverTooltip(
+    (view: EditorView, pos: number, _side: 1 | -1): Tooltip | null => {
+        const cursorTooltip = view.state.field(CursorTooltipField);
+        if (cursorTooltip != null) {
+            return null;
+        }
+        return createCursorTooltip(view.state, pos);
+    },
+    {
+        hideOn: (tr: Transaction, tooltip: Tooltip): boolean => {
+            const cursorTooltip = tr.state.field(CursorTooltipField);
+            return cursorTooltip != null;
+        },
+    },
+);
+
+export const SQLynxTooltips = [CursorTooltipField, HoverTooltip];
