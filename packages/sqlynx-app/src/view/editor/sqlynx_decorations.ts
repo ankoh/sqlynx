@@ -19,6 +19,9 @@ const FocusedTableReferenceDecoration = Decoration.mark({
 const FocusedColumnReferenceDecoration = Decoration.mark({
     class: 'sqlynx-colref-focus',
 });
+const ErrorDecoration = Decoration.mark({
+    class: 'sqlynx-error',
+});
 
 function buildDecorationsFromTokens(
     scanned: sqlynx.FlatBufferPtr<sqlynx.proto.ScannedScript>,
@@ -121,6 +124,7 @@ function buildDecorationsFromCursor(
     const tmpTblRef = new sqlynx.proto.TableReference();
     const tmpNode = new sqlynx.proto.Node();
     const tmpLoc = new sqlynx.proto.Location();
+    const tmpError = new sqlynx.proto.Error();
 
     // Build decorations for column refs
     if (focusedColumnRefs !== null) {
@@ -169,6 +173,20 @@ function buildDecorationsFromCursor(
             });
         }
     }
+
+    // Are there any errors?
+    if (parsed !== null) {
+        for (let i = 0; i < parsed.errorsLength(); ++i) {
+            const error = parsed.errors(i, tmpError)!;
+            const loc = error.location(tmpLoc)!;
+            decorations.push({
+                from: loc.offset(),
+                to: loc.offset() + loc.length(),
+                decoration: ErrorDecoration,
+            });
+        }
+    }
+
     decorations.sort((l: DecorationInfo, r: DecorationInfo) => {
         return l.from - r.from;
     });
