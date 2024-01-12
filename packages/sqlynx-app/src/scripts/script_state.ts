@@ -14,9 +14,6 @@ import {
     QueryExecutionTaskVariant,
 } from '../connectors/query_execution';
 
-const DEFAULT_BOARD_WIDTH = 800;
-const DEFAULT_BOARD_HEIGHT = 600;
-
 /// A key to identify the target script
 export enum ScriptKey {
     MAIN_SCRIPT = 1,
@@ -146,6 +143,8 @@ export function createEmptyScript(key: ScriptKey, empty: sqlynx.SQLynxScript) {
 }
 
 export function createDefaultState(): ScriptState {
+    const DEFAULT_BOARD_WIDTH = 800;
+    const DEFAULT_BOARD_HEIGHT = 600;
     return {
         instance: null,
         scripts: {},

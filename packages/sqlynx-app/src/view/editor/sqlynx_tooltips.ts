@@ -7,7 +7,6 @@ import { SQLynxProcessor } from './sqlynx_processor';
 
 function createCursorTooltip(state: EditorState, pos: number): Tooltip | null {
     const processor = state.field(SQLynxProcessor);
-    const tmpError = new sqlynx.proto.Error();
     const findErrorAtLocation = (
         buffer: {
             errors: (index: number, obj?: sqlynx.proto.Error) => sqlynx.proto.Error | null;
@@ -15,8 +14,9 @@ function createCursorTooltip(state: EditorState, pos: number): Tooltip | null {
         },
         cursor: number,
     ) => {
+        const tmp = new sqlynx.proto.Error();
         for (let i = 0; i < buffer.errorsLength(); ++i) {
-            const error = buffer.errors(i, tmpError)!;
+            const error = buffer.errors(i, tmp)!;
             const loc = error.location()!;
             if (loc.offset() <= cursor && loc.offset() + loc.length() > cursor) {
                 return error;
