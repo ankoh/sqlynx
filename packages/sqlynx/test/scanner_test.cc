@@ -180,4 +180,16 @@ TEST(ScannerTest, FindTokenInterleaved) {
     }
 }
 
+TEST(ScannerTest, TrailingComments) {
+    rope::Rope buffer{128};
+    buffer.Insert(0, R"SQL(
+        select 1
+        --
+    )SQL");
+    auto [scanned, status] = parser::Scanner::Scan(buffer, 0);
+    ASSERT_EQ(status, proto::StatusCode::OK);
+    auto packed = scanned->PackTokens();
+    ASSERT_EQ(packed->token_types.size(), 3);
+}
+
 }  // namespace
