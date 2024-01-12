@@ -71,6 +71,13 @@ std::unique_ptr<proto::ScannerTokensT> ScannedScript::PackTokens() {
         lengths.push_back(symbol.location.length());
         types.push_back(MapToken(symbol, text_buffer));
     });
+    // Emit trailing comments
+    for (; ci < comments.size(); ++ci) {
+        auto& comment = comments[ci++];
+        offsets.push_back(comment.offset());
+        lengths.push_back(comment.length());
+        types.push_back(proto::ScannerTokenType::COMMENT);
+    }
 
     // Build the line breaks
     std::vector<uint32_t> breaks;
