@@ -5,9 +5,20 @@ import { Transaction, StateField } from '@codemirror/state';
 
 import { SQLynxProcessor, SQLynxScriptBuffers, SQLynxScriptKey } from './sqlynx_processor';
 
+import icons from '../../../static/svg/symbols.generated.svg';
+
+import './sqlynx_gutters.css';
+
 class ErrorMarker extends GutterMarker {
     toDOM() {
-        return document.createTextNode('!');
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('class', 'sqlynx-gutter-error');
+        svg.setAttribute('width', '14px');
+        svg.setAttribute('height', '14px');
+        const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+        use.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', `${icons}#close_circle`);
+        svg.appendChild(use);
+        return svg;
     }
 }
 
