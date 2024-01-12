@@ -49,7 +49,9 @@
     --editortabs_indicator_width: 3px;
     --editortab_disabled_color: hsl(210, 24%, 62%);
 
-    --loader_background: rgb(246, 248, 250);
+    --loader_background: hsl(210, 24%, 92%);
+    --loader_card_header_background: hsl(210, 29%, 97%);
+
     --editor_header_bg: hsl(210, 29%, 97%);
     --editor_gutter_bg: rgb(246, 248, 250);
     --editor_colref_bg: hsl(210, 24%, 88%);
