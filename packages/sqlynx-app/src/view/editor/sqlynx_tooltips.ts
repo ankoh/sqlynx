@@ -17,12 +17,13 @@ function createCursorTooltip(state: EditorState, pos: number): Tooltip | null {
         const tmp = new sqlynx.proto.Error();
         for (let i = 0; i < buffer.errorsLength(); ++i) {
             const error = buffer.errors(i, tmp)!;
-            const loc = error.location()!;
-            if (loc.offset() <= cursor && loc.offset() + loc.length() > cursor) {
+            const errorLoc = error.location()!;
+            const errorMatches = errorLoc.offset() <= cursor && errorLoc.offset() + errorLoc.length() >= cursor;
+            if (errorMatches) {
                 return error;
             }
-            return null;
         }
+        return null;
     };
 
     if (processor.scriptBuffers.scanned) {
