@@ -51,7 +51,7 @@ export const SetupPage: React.FC<Props> = (props: Props) => {
             <div className={styles.center_container}>
                 <div className={styles.banner_container}>
                     <div className={styles.banner_logo}>
-                        <svg width="64px" height="64px">
+                        <svg width="72px" height="72px">
                             <use xlinkHref={`${symbols}#sqlynx`} />
                         </svg>
                     </div>
