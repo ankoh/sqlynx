@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Button, ButtonGroup, IconButton } from '@primer/react';
 import { TriangleDownIcon } from '@primer/octicons-react';
 
-import styles from './url_parameters_page.module.css';
+import styles from './setup_page.module.css';
 import primerBugFixes from '../../primer_bugfixes.module.css';
 
 import symbols from '../../../static/svg/symbols.generated.svg';
@@ -10,7 +10,7 @@ import classNames from 'classnames';
 
 interface Props {}
 
-export const URLParametersPage: React.FC<Props> = (props: Props) => {
+export const SetupPage: React.FC<Props> = (props: Props) => {
     const TEST_URL = new URL('https://sqlynx.app?main-script=foo&schema-script=bar&connector-type=sfdc');
     const searchParams = new URLSearchParams(TEST_URL.search);
     const mainScript = searchParams.get('main-script') ?? null;
@@ -38,13 +38,13 @@ export const URLParametersPage: React.FC<Props> = (props: Props) => {
                 <div className={styles.card_container}>
                     <div className={styles.card_header}>
                         <div className={styles.link_icon}></div>
-                        <div className={styles.card_title}>SQLynx Parameters</div>
+                        <div className={styles.card_title}>SQLynx Setup</div>
                     </div>
                     <div className={styles.url_info}>
                         <div className={styles.url_box}>Some URL</div>
                         <div className={styles.url_details}>
-                            <UrlDetailEntry label="Main Script" value={mainScript ?? ''} />
-                            <UrlDetailEntry label="Schema Script" value={schemaScript ?? ''} />
+                            <UrlDetailEntry label="Inline Script" value={mainScript ?? ''} />
+                            <UrlDetailEntry label="Inline Schema" value={schemaScript ?? ''} />
                             <UrlDetailEntry label="Connector" value={connectorType ?? ''} />
                         </div>
                     </div>
