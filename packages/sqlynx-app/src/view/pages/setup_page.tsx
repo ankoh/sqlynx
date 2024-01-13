@@ -1,21 +1,37 @@
 import * as React from 'react';
-import { Button, ButtonGroup, IconButton } from '@primer/react';
-import { TriangleDownIcon } from '@primer/octicons-react';
+
+import { Button } from '@primer/react';
+
 import { CONNECTOR_INFOS } from '../../connectors/connector_info';
+import { useSQLynx, useSQLynxLoadingProgress } from '../../sqlynx_loader';
+import { RESULT_OK, formatBytes, formatNanoseconds } from '../../utils';
 
 import styles from './setup_page.module.css';
-import primerBugFixes from '../../primer_bugfixes.module.css';
 
 import symbols from '../../../static/svg/symbols.generated.svg';
-import classNames from 'classnames';
 
 interface Props {}
 
 export const SetupPage: React.FC<Props> = (props: Props) => {
+    const lnxLoaderProgress = useSQLynxLoadingProgress();
+    const lnx = useSQLynx();
+
+    // Get instantiation progress
+    let moduleSizeLoaded = BigInt(0);
+    let moduleInitTime = 0;
+    if (lnxLoaderProgress) {
+        moduleSizeLoaded = lnxLoaderProgress.bytesLoaded;
+        moduleInitTime = lnxLoaderProgress.updatedAt.getTime() - lnxLoaderProgress.startedAt.getTime();
+    }
+
+    // Get SQLynx version
+    let version: string | null = null;
+    if (lnx?.type == RESULT_OK) {
+        version = lnx.value.getVersionText();
+    }
+
     const TEST_URL = new URL('https://sqlynx.app?script=foo&schema=bar&connector=sfdc');
     const searchParams = new URLSearchParams(TEST_URL.search);
-    const mainScript = searchParams.get('script') ?? null;
-    const schemaScript = searchParams.get('schema') ?? null;
     const connectorType = searchParams.get('connector') ?? null;
 
     let connectorId: number = connectorType == null ? 0 : Number.parseInt(connectorType);
@@ -48,14 +64,14 @@ export const SetupPage: React.FC<Props> = (props: Props) => {
                     <div className={styles.wasm_setup}>
                         <div className={styles.card_section_header}>WebAssembly</div>
                         <div className={styles.wasm_details}>
-                            <DetailEntry label="Module Size">
-                                <Bean text="102 kB" />
+                            <DetailEntry label="Uncompressed Size">
+                                <Bean text={formatBytes(Number(moduleSizeLoaded))} />
                             </DetailEntry>
                             <DetailEntry label="Instantiation Time">
-                                <Bean text="~10 ms" />
+                                <Bean text={formatNanoseconds(moduleInitTime * 1000000)} />
                             </DetailEntry>
-                            <DetailEntry label="Version">
-                                <Bean text="0.0.1-dev1204" />
+                            <DetailEntry label="Module Version">
+                                <Bean text={version ?? 'unknown'} />
                             </DetailEntry>
                         </div>
                     </div>
