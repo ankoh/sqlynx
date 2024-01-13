@@ -4,7 +4,7 @@ import { SQLynxLoader } from './sqlynx_loader';
 import { withNavBar } from './view/navbar';
 import { EditorPage } from './view/pages/editor_page';
 import { ConnectionsPage } from './view/pages/connections_page';
-import { URLParametersPage } from './view/pages/url_parameters_page';
+import { SetupPage } from './view/pages/setup_page';
 import { ScriptLoader } from './scripts/script_loader';
 import { ScriptCatalogLoader } from './scripts/script_catalog_loader';
 import { ScriptCatalogSalesforceAutoloader } from './scripts/script_catalog_autoloader_salesforce';
@@ -68,7 +68,7 @@ root.render(
                 <Routes>
                     <Route index element={<Editor />} />
                     <Route path="/connections" element={<Connections />} />
-                    <Route path="/parameters" element={<URLParametersPage />} />
+                    <Route path="/setup" element={<SetupPage />} />
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
             </AppProviders>
