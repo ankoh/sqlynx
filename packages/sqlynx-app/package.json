@@ -12,7 +12,7 @@
     "dependencies": {
         "@ankoh/sqlynx": "link:../sqlynx-wasm",
         "@bufbuild/connect-web": "^0.13.0",
-        "@codemirror/autocomplete": "^6.11.1",
+        "@codemirror/autocomplete": "^6.12.0",
         "@codemirror/language": "^6.10.0",
         "@codemirror/state": "^6.4.0",
         "@codemirror/view": "^6.23.0",
