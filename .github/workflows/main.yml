@@ -285,6 +285,34 @@ jobs:
                   path: ./packages/sqlynx-app/build/pwa/o3
                   retention-days: 1
 
+    pwa:
+        name: Build App / Electron
+        runs-on: ubuntu-22.04
+        needs:
+            - core_js
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  submodules: 'recursive'
+                  fetch-depth: 0
+
+            - uses: actions/download-artifact@v4
+              with:
+                  name: sqlynx_jslib
+                  path: ./packages/sqlynx-wasm/dist
+
+            - name: Install npm dependencies
+              shell: bash
+              run: |
+                  mkdir -p ./lib/build/wasm/o3 ./reports
+                  yarn install --frozen-lockfile
+
+            - name: Build @ankoh/sqlynx-app
+              shell: bash
+              run: |
+                  export SQLYNX_APP_URL=https://sqlynx.app
+                  yarn workspace @ankoh/sqlynx-app electron:build:o3
+
     pages:
         name: Deploy GitHub Page
         if: github.ref == 'refs/heads/main'

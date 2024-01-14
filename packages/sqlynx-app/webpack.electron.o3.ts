@@ -22,7 +22,7 @@ const renderer = {
     ...base,
     target: 'electron-renderer',
     entry: {
-        app: ['./src/app.electron.tsx'],
+        app: ['./src/app.tsx'],
     },
     output: {
         ...base.output,
@@ -37,7 +37,6 @@ const preload = {
     ...base,
     target: 'electron-preload',
     entry: {
-        app: ['./src/app.electron.tsx'],
         preload: ['./src/electron_preload.ts'],
     },
     output: {
@@ -47,6 +46,7 @@ const preload = {
         publicPath: './',
         globalObject: 'globalThis',
     },
+    mode: 'production',
     plugins: [],
 };
 
@@ -68,6 +68,7 @@ const main = {
             keep: /app\//,
         },
     },
+    mode: 'production',
     plugins: [],
 };
 

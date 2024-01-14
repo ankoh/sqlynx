@@ -44,7 +44,6 @@ const preload = {
     ...base,
     target: 'electron-preload',
     entry: {
-        app: ['./src/app.tsx'],
         preload: ['./src/electron_preload.ts'],
     },
     output: {
