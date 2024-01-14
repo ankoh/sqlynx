@@ -2,7 +2,15 @@ import * as React from 'react';
 
 import { Button } from '@primer/react';
 
-import { CONNECTOR_INFOS } from '../../connectors/connector_info';
+import {
+    CONNECTOR_INFOS,
+    ConnectorType,
+    HYPER_DATABASE,
+    LOCAL_SCRIPT,
+    SALESFORCE_DATA_CLOUD,
+} from '../../connectors/connector_info';
+import { checkSalesforceAuthSetup, useSalesforceAuthState } from '../../connectors/salesforce_auth_state';
+import { readConnectorParamsFromURL } from '../../connectors/connector_url_params';
 import { useSQLynx, useSQLynxLoadingProgress } from '../../sqlynx_loader';
 import { RESULT_OK, formatBytes, formatNanoseconds } from '../../utils';
 
@@ -13,30 +21,41 @@ import symbols from '../../../static/svg/symbols.generated.svg';
 interface Props {}
 
 export const SetupPage: React.FC<Props> = (props: Props) => {
-    const lnxLoaderProgress = useSQLynxLoadingProgress();
     const lnx = useSQLynx();
+    const lnxLoading = useSQLynxLoadingProgress();
+    const salesforceAuth = useSalesforceAuthState();
 
     // Get instantiation progress
     let moduleSizeLoaded = BigInt(0);
     let moduleInitTime = 0;
-    if (lnxLoaderProgress) {
-        moduleSizeLoaded = lnxLoaderProgress.bytesLoaded;
-        moduleInitTime = lnxLoaderProgress.updatedAt.getTime() - lnxLoaderProgress.startedAt.getTime();
+    if (lnxLoading) {
+        moduleSizeLoaded = lnxLoading.bytesLoaded;
+        moduleInitTime = lnxLoading.updatedAt.getTime() - lnxLoading.startedAt.getTime();
     }
-
-    // Get SQLynx version
-    let version: string | null = null;
+    let moduleVersion: string | null = null;
     if (lnx?.type == RESULT_OK) {
-        version = lnx.value.getVersionText();
+        moduleVersion = lnx.value.getVersionText();
     }
 
+    // Unpack the URL parameters
     const TEST_URL = new URL('https://sqlynx.app?script=foo&schema=bar&connector=sfdc');
-    const searchParams = new URLSearchParams(TEST_URL.search);
-    const connectorType = searchParams.get('connector') ?? null;
-
-    let connectorId: number = connectorType == null ? 0 : Number.parseInt(connectorType);
-    connectorId = connectorId < CONNECTOR_INFOS.length ? connectorId : 0;
-    const connectorInfo = CONNECTOR_INFOS[connectorId];
+    const connectorSetup = readConnectorParamsFromURL(TEST_URL);
+    let connectorInfo = null;
+    let connectorAuthState = null;
+    let connectorAuthCheck = null;
+    switch (connectorSetup?.type) {
+        case SALESFORCE_DATA_CLOUD:
+            connectorInfo = CONNECTOR_INFOS[ConnectorType.SALESFORCE_DATA_CLOUD as number];
+            connectorAuthState = salesforceAuth;
+            connectorAuthCheck = checkSalesforceAuthSetup(salesforceAuth, connectorSetup.value);
+            break;
+        case HYPER_DATABASE:
+            connectorInfo = CONNECTOR_INFOS[ConnectorType.HYPER_DATABASE as number];
+            break;
+        case LOCAL_SCRIPT:
+            connectorInfo = CONNECTOR_INFOS[ConnectorType.LOCAL_SCRIPT as number];
+            break;
+    }
 
     const DetailEntry = (props: { label: string; children: React.ReactElement }) => (
         <>
@@ -70,7 +89,7 @@ export const SetupPage: React.FC<Props> = (props: Props) => {
                             <Bean text={formatNanoseconds(moduleInitTime * 1000000)} />
                         </DetailEntry>
                         <DetailEntry label="Module Version">
-                            <Bean text={version ?? 'unknown'} />
+                            <Bean text={moduleVersion ?? 'unknown'} />
                         </DetailEntry>
                     </div>
                 </div>
@@ -78,7 +97,7 @@ export const SetupPage: React.FC<Props> = (props: Props) => {
                     <div className={styles.card_section_header}>URL Parameters</div>
                     <div className={styles.url_details}>
                         <DetailEntry label="Connector Type">
-                            <Bean text={connectorInfo.displayName.long} />
+                            <Bean text={connectorInfo?.displayName.long ?? 'unknown'} />
                         </DetailEntry>
                         <DetailEntry label="Inline Script">
                             <Bean text="3 kB | syntax ok" />
