@@ -2,6 +2,8 @@ import React from 'react';
 import { VariantKind, Dispatch } from '../utils/variant';
 import { SalesforceCoreAccessToken, SalesforceDataCloudAccessToken } from './salesforce_api_client';
 import { PKCEChallenge } from '../utils/pkce';
+import { SalesforceSetupParams } from './connector_url_params';
+import { ConnectorAuthCheck } from './connector_info';
 
 export interface SalesforceAuthState {
     /// The auth params
@@ -153,6 +155,22 @@ export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAu
                 dataCloudAccessToken: null,
             };
     }
+}
+
+export function checkSalesforceAuthSetup(
+    state: SalesforceAuthState,
+    params: SalesforceSetupParams,
+): ConnectorAuthCheck {
+    if (!state.authParams) {
+        return ConnectorAuthCheck.AUTHENTICATION_NOT_STARTED;
+    }
+    if (state.authParams.clientId != params.clientId) {
+        return ConnectorAuthCheck.CLIENT_ID_MISMATCH;
+    }
+    if (!state.coreAccessToken || !state.dataCloudAccessToken) {
+        return ConnectorAuthCheck.TOKEN_MISSING;
+    }
+    return ConnectorAuthCheck.AUTHENTICATED;
 }
 
 export const AUTH_FLOW_STATE_CTX = React.createContext<SalesforceAuthState | null>(null);
