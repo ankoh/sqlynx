@@ -5,7 +5,7 @@ import * as React from 'react';
 import Immutable from 'immutable';
 
 import { SQLynxScriptBuffers, analyzeScript, parseAndAnalyzeScript } from '../view/editor/sqlynx_processor';
-import { ScriptState, ScriptKey, createDefaultState, createEmptyScript, destroyState } from './script_state';
+import { ScriptState, ScriptKey, createEmptyScript, destroyState } from './script_state';
 import { deriveScriptFocusFromCursor, focusGraphEdge, focusGraphNode } from './focus';
 import { VariantKind, Dispatch } from '../utils/variant';
 import { ScriptMetadata } from './script_metadata';
@@ -94,6 +94,46 @@ const STATS_HISTORY_LIMIT = 20;
 /// We therefore bypass the "pureness" rules for the top-level state and use a single global state instead.
 
 let GLOBAL_STATE: ScriptState = createDefaultState();
+
+function createDefaultState(): ScriptState {
+    const DEFAULT_BOARD_WIDTH = 800;
+    const DEFAULT_BOARD_HEIGHT = 600;
+    return {
+        instance: null,
+        scripts: {},
+        nextCatalogUpdateId: 1,
+        catalogUpdateRequests: Immutable.Map(),
+        catalogUpdates: Immutable.Map(),
+        catalog: null,
+        graph: null,
+        graphConfig: {
+            boardWidth: DEFAULT_BOARD_WIDTH,
+            boardHeight: DEFAULT_BOARD_HEIGHT,
+            cellWidth: 120,
+            cellHeight: 64,
+            tableWidth: 180,
+            tableHeight: 36,
+        },
+        graphLayout: null,
+        graphViewModel: {
+            nodes: [],
+            nodesByTable: new Map(),
+            edges: new Map(),
+            boundaries: {
+                minX: 0,
+                maxX: 0,
+                minY: 0,
+                maxY: 0,
+                totalWidth: 0,
+                totalHeight: 0,
+            },
+        },
+        userFocus: null,
+        queryExecutionRequest: null,
+        queryExecutionState: null,
+        queryExecutionResult: null,
+    };
+}
 
 export function useGlobalScriptState(): [ScriptState, Dispatch<ScriptStateAction>] {
     const [state, setState] = React.useState(GLOBAL_STATE);

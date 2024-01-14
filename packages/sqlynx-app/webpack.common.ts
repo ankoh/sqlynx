@@ -3,7 +3,7 @@ import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import childProcess from 'child_process';
-import * as webpack from 'webpack';
+import webpack from 'webpack';
 import * as webpackDevServer from 'webpack-dev-server';
 import path from 'path';
 
@@ -19,8 +19,6 @@ interface ConfigParams {
     extractCss: boolean;
     cssIdentifier: string;
     appURL: string;
-    githubOAuthClientID: string;
-    githubOAuthRedirect: string;
 }
 
 /// IMPORTANT
@@ -34,6 +32,9 @@ interface ConfigParams {
 /// If you change the version file, you have to change the redirect URI and get cache busting automatically.
 const OAUTH_CALLBACK_VERSION_FILE = path.resolve(__dirname, './src/connectors/oauth_callback.html.version');
 export const OAUTH_CALLBACK_VERSION = childProcess.execSync(`cat ${OAUTH_CALLBACK_VERSION_FILE}`).toString().trim();
+
+const GITHUB_OAUTH_CLIENT_ID = '877379132b93adf6f705';
+const GITHUB_OAUTH_REDIRECT = `http://localhost:9001/static/html/github_oauth.${OAUTH_CALLBACK_VERSION}.html`;
 
 /// We support dynamic configurations of DashQL via a dedicated config file.
 /// The app loads this file at startup which allows us to adjust certain settings dynamically.
@@ -55,6 +56,7 @@ export function configure(params: ConfigParams): Partial<Configuration> {
             chunkFilename: 'static/js/[name].[contenthash].js',
             assetModuleFilename: 'static/assets/[name].[contenthash][ext]',
             webassemblyModuleFilename: 'static/wasm/[hash].wasm',
+            globalObject: 'globalThis',
             clean: true,
         },
         resolve: {
@@ -156,8 +158,8 @@ export function configure(params: ConfigParams): Partial<Configuration> {
             new webpack.DefinePlugin({
                 'process.env.ENV_BROWSER': true,
                 'process.env.SQLYNX_APP_URL': JSON.stringify(params.appURL),
-                'process.env.GITHUB_OAUTH_CLIENT_ID': JSON.stringify(params.githubOAuthClientID),
-                'process.env.GITHUB_OAUTH_REDIRECT': JSON.stringify(params.githubOAuthRedirect),
+                'process.env.GITHUB_OAUTH_CLIENT_ID': JSON.stringify(GITHUB_OAUTH_CLIENT_ID),
+                'process.env.GITHUB_OAUTH_REDIRECT': JSON.stringify(GITHUB_OAUTH_REDIRECT),
             }),
             new MiniCssExtractPlugin({
                 filename: './static/css/[id].[contenthash].css',
