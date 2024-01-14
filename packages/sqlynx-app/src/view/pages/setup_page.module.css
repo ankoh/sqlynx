@@ -9,6 +9,7 @@
     }
 
     .banner_container {
+        margin-top: -86px;
         display: grid;
         grid-template-columns: auto auto;
         grid-template-rows: max-content;
