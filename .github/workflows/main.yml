@@ -285,7 +285,7 @@ jobs:
                   path: ./packages/sqlynx-app/build/pwa/o3
                   retention-days: 1
 
-    pwa:
+    electron:
         name: Build App / Electron
         runs-on: ubuntu-22.04
         needs:
