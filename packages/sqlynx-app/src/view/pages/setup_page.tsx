@@ -48,58 +48,56 @@ export const SetupPage: React.FC<Props> = (props: Props) => {
 
     return (
         <div className={styles.page}>
-            <div className={styles.center_container}>
-                <div className={styles.banner_container}>
-                    <div className={styles.banner_logo}>
-                        <svg width="72px" height="72px">
-                            <use xlinkHref={`${symbols}#sqlynx`} />
-                        </svg>
+            <div className={styles.banner_container}>
+                <div className={styles.banner_logo}>
+                    <svg width="100%" height="100%">
+                        <use xlinkHref={`${symbols}#sqlynx`} />
+                    </svg>
+                </div>
+            </div>
+            <div className={styles.card_container}>
+                <div className={styles.card_header}>
+                    <div className={styles.link_icon}></div>
+                    <div className={styles.card_title}>Setup</div>
+                </div>
+                <div className={styles.wasm_setup}>
+                    <div className={styles.card_section_header}>WebAssembly</div>
+                    <div className={styles.wasm_details}>
+                        <DetailEntry label="Uncompressed Size">
+                            <Bean text={formatBytes(Number(moduleSizeLoaded))} />
+                        </DetailEntry>
+                        <DetailEntry label="Instantiation Time">
+                            <Bean text={formatNanoseconds(moduleInitTime * 1000000)} />
+                        </DetailEntry>
+                        <DetailEntry label="Module Version">
+                            <Bean text={version ?? 'unknown'} />
+                        </DetailEntry>
                     </div>
                 </div>
-                <div className={styles.card_container}>
-                    <div className={styles.card_header}>
-                        <div className={styles.link_icon}></div>
-                        <div className={styles.card_title}>Setup</div>
+                <div className={styles.url_setup}>
+                    <div className={styles.card_section_header}>URL Parameters</div>
+                    <div className={styles.url_details}>
+                        <DetailEntry label="Connector Type">
+                            <Bean text={connectorInfo.displayName.long} />
+                        </DetailEntry>
+                        <DetailEntry label="Inline Script">
+                            <Bean text="3 kB | syntax ok" />
+                        </DetailEntry>
+                        <DetailEntry label="Inline Schema">
+                            <Bean text="10 kB | syntax ok" />
+                        </DetailEntry>
                     </div>
-                    <div className={styles.wasm_setup}>
-                        <div className={styles.card_section_header}>WebAssembly</div>
-                        <div className={styles.wasm_details}>
-                            <DetailEntry label="Uncompressed Size">
-                                <Bean text={formatBytes(Number(moduleSizeLoaded))} />
-                            </DetailEntry>
-                            <DetailEntry label="Instantiation Time">
-                                <Bean text={formatNanoseconds(moduleInitTime * 1000000)} />
-                            </DetailEntry>
-                            <DetailEntry label="Module Version">
-                                <Bean text={version ?? 'unknown'} />
-                            </DetailEntry>
-                        </div>
-                    </div>
-                    <div className={styles.url_setup}>
-                        <div className={styles.card_section_header}>URL Parameters</div>
-                        <div className={styles.url_details}>
-                            <DetailEntry label="Connector Type">
-                                <Bean text={connectorInfo.displayName.long} />
-                            </DetailEntry>
-                            <DetailEntry label="Inline Script">
-                                <Bean text="3 kB | 142 symbols" />
-                            </DetailEntry>
-                            <DetailEntry label="Inline Schema">
-                                <Bean text="10 kB | 1.5k symbols" />
-                            </DetailEntry>
-                        </div>
-                    </div>
-                    <div className={styles.auth_setup}>
-                        <div className={styles.card_section_header}>Authentiation</div>
-                    </div>
-                    <div className={styles.card_actions}>
-                        <Button className={styles.skip_button} variant="danger">
-                            Skip
-                        </Button>
-                        <Button className={styles.continue_button} variant="primary">
-                            Continue
-                        </Button>
-                    </div>
+                </div>
+                <div className={styles.auth_setup}>
+                    <div className={styles.card_section_header}>Authentiation</div>
+                </div>
+                <div className={styles.card_actions}>
+                    <Button className={styles.skip_button} variant="danger">
+                        Skip
+                    </Button>
+                    <Button className={styles.continue_button} variant="primary">
+                        Continue
+                    </Button>
                 </div>
             </div>
         </div>
