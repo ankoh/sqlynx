@@ -10,18 +10,25 @@
 
     .banner_container {
         display: grid;
-        grid-template-columns: 1fr;
-        grid-template-rows: max-content max-content;
+        grid-template-columns: auto auto;
+        grid-template-rows: max-content;
         align-items: center;
         justify-content: center;
+        column-gap: 20px;
         margin-bottom: 24px;
     }
     .banner_logo {
         display: grid;
         align-items: center;
         justify-content: center;
-        width: 72px;
-        height: 72px;
+        width: 56px;
+        height: 56px;
+    }
+    .banner_title {
+        font-size: 1.9rem;
+        font-family: 'RobotoMono';
+        font-weight: 200;
+        color: hsl(212, 8%, 23%);
     }
 }
 @media only screen and (min-width: 1200px) {
@@ -35,9 +42,11 @@
     }
 
     .banner_container {
+        position: relative;
         display: grid;
         grid-template-columns: 1fr;
         grid-template-rows: max-content max-content;
+        row-gap: 8px;
         align-items: center;
         justify-content: center;
         margin-right: 80px;
@@ -46,8 +55,15 @@
         display: grid;
         align-items: center;
         justify-content: center;
-        width: 80px;
-        height: 80px;
+        justify-self: center;
+        width: 72px;
+        height: 72px;
+    }
+    .banner_title {
+        font-size: 1.9rem;
+        font-family: 'RobotoMono';
+        font-weight: 200;
+        color: hsl(212, 8%, 23%);
     }
 }
 
