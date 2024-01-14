@@ -15,13 +15,14 @@ import { SalesforceConnector } from './connectors/salesforce_connector';
 import { ConnectorSelection } from './connectors/connector_selection';
 import { LogProvider } from './app_log';
 import { AppConfigResolver } from './app_config';
+import { isElectron } from './utils/user_agent';
 
 import { ThemeProvider } from '@primer/react';
 import { StyleSheetManager } from 'styled-components';
 import isPropValid from '@emotion/is-prop-valid';
 
 import { createRoot } from 'react-dom/client';
-import { Route, Routes, Navigate, BrowserRouter } from 'react-router-dom';
+import { Route, Routes, Navigate, BrowserRouter, HashRouter } from 'react-router-dom';
 
 import '../static/fonts/fonts.module.css';
 import './globals.css';
@@ -59,11 +60,13 @@ const AppProviders = (props: { children: React.ReactElement }) => (
 const Editor = withNavBar(EditorPage);
 const Connections = withNavBar(ConnectionsPage);
 
+const Router = isElectron() ? HashRouter : BrowserRouter;
+
 const element = document.getElementById('root');
 const root = createRoot(element!);
 root.render(
     <React.StrictMode>
-        <BrowserRouter>
+        <Router>
             <AppProviders>
                 <Routes>
                     <Route index element={<Editor />} />
@@ -72,6 +75,6 @@ root.render(
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
             </AppProviders>
-        </BrowserRouter>
+        </Router>
     </React.StrictMode>,
 );
