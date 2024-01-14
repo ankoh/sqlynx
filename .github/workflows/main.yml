@@ -290,6 +290,7 @@ jobs:
         runs-on: ubuntu-22.04
         needs:
             - core_js
+            - platform
         steps:
             - uses: actions/checkout@v4
               with:
