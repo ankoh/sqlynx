@@ -54,10 +54,10 @@ export const SetupPage: React.FC<Props> = (props: Props) => {
                         <use xlinkHref={`${symbols}#sqlynx`} />
                     </svg>
                 </div>
+                <div className={styles.banner_title}>sqlynx</div>
             </div>
             <div className={styles.card_container}>
                 <div className={styles.card_header}>
-                    <div className={styles.link_icon}></div>
                     <div className={styles.card_title}>Setup</div>
                 </div>
                 <div className={styles.wasm_setup}>

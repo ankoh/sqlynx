@@ -14,3 +14,7 @@
     padding-left: 8px;
     background-color: var(--editor_gutter_bg) !important;
 }
+
+.cm-editor * {
+    font-family: 'RobotoMono';
+}
