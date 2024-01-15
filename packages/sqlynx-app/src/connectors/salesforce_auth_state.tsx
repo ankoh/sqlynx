@@ -167,10 +167,16 @@ export function checkSalesforceAuthSetup(
     if (state.authParams.clientId != params.clientId) {
         return ConnectorAuthCheck.CLIENT_ID_MISMATCH;
     }
-    if (!state.coreAccessToken || !state.dataCloudAccessToken) {
-        return ConnectorAuthCheck.TOKEN_MISSING;
+    if (state.coreAccessToken || state.dataCloudAccessToken) {
+        return ConnectorAuthCheck.AUTHENTICATED;
     }
-    return ConnectorAuthCheck.AUTHENTICATED;
+    if (state.authStarted) {
+        return ConnectorAuthCheck.AUTHENTICATION_IN_PROGRESS;
+    }
+    if (state.authError) {
+        return ConnectorAuthCheck.AUTHENTICATION_FAILED;
+    }
+    return ConnectorAuthCheck.UNKNOWN;
 }
 
 export const AUTH_FLOW_STATE_CTX = React.createContext<SalesforceAuthState | null>(null);

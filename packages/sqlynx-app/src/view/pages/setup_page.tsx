@@ -4,6 +4,7 @@ import { Button } from '@primer/react';
 
 import {
     CONNECTOR_INFOS,
+    ConnectorAuthCheck,
     ConnectorType,
     HYPER_DATABASE,
     LOCAL_SCRIPT,
@@ -57,10 +58,33 @@ export const SetupPage: React.FC<Props> = (props: Props) => {
             break;
     }
 
+    // Get the auth status
+    let authStatus: string = 'not required';
+    switch (connectorAuthCheck) {
+        case ConnectorAuthCheck.AUTHENTICATED:
+            authStatus = 'authenticated';
+            break;
+        case ConnectorAuthCheck.AUTHENTICATION_IN_PROGRESS:
+            authStatus = 'in progress';
+            break;
+        case ConnectorAuthCheck.AUTHENTICATION_NOT_STARTED:
+            authStatus = 'not started';
+            break;
+        case ConnectorAuthCheck.CLIENT_ID_MISMATCH:
+            authStatus = 'id mismatch';
+            break;
+        case ConnectorAuthCheck.AUTHENTICATION_FAILED:
+            authStatus = 'failed';
+            break;
+        case ConnectorAuthCheck.UNKNOWN:
+            authStatus = 'unknown';
+            break;
+    }
+
     const DetailEntry = (props: { label: string; children: React.ReactElement }) => (
         <>
-            <div className={styles.url_detail_key}>{props.label}</div>
-            <div className={styles.url_detail_value}>{props.children}</div>
+            <div className={styles.detail_entry_key}>{props.label}</div>
+            <div className={styles.detail_entry_value}>{props.children}</div>
         </>
     );
     const Bean = (props: { text: string }) => <div className={styles.bean}>{props.text}</div>;
@@ -93,12 +117,9 @@ export const SetupPage: React.FC<Props> = (props: Props) => {
                         </DetailEntry>
                     </div>
                 </div>
-                <div className={styles.url_setup}>
-                    <div className={styles.card_section_header}>URL Parameters</div>
-                    <div className={styles.url_details}>
-                        <DetailEntry label="Connector Type">
-                            <Bean text={connectorInfo?.displayName.long ?? 'unknown'} />
-                        </DetailEntry>
+                <div className={styles.script_setup}>
+                    <div className={styles.card_section_header}>Script</div>
+                    <div className={styles.script_details}>
                         <DetailEntry label="Inline Script">
                             <Bean text="3 kB | syntax ok" />
                         </DetailEntry>
@@ -107,8 +128,23 @@ export const SetupPage: React.FC<Props> = (props: Props) => {
                         </DetailEntry>
                     </div>
                 </div>
-                <div className={styles.auth_setup}>
-                    <div className={styles.card_section_header}>Authentiation</div>
+                <div className={styles.connector_setup}>
+                    <div className={styles.card_section_header}>Connector</div>
+                    <div className={styles.connector_details}>
+                        <DetailEntry label="Connector Type">
+                            <Bean text={connectorInfo?.displayName.long ?? 'unknown'} />
+                        </DetailEntry>
+                        {connectorSetup?.type == SALESFORCE_DATA_CLOUD && (
+                            <>
+                                <DetailEntry label="Client ID">
+                                    <Bean text={connectorAuthState?.authParams?.clientId ?? 'unknown'} />
+                                </DetailEntry>
+                            </>
+                        )}
+                        <DetailEntry label="Authentication">
+                            <Bean text={authStatus} />
+                        </DetailEntry>
+                    </div>
                 </div>
                 <div className={styles.card_actions}>
                     <Button className={styles.skip_button} variant="danger">
