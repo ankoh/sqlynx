@@ -98,7 +98,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
         // Construct the URI
         const params = state.authParams!;
         const paramParts = [
-            `client_id=${params.consumerKey}`,
+            `client_id=${params.appConsumerKey}`,
             `redirect_uri=${connectorConfig.auth.oauthRedirect}`,
             `code_challenge=${state.pkceChallenge.value}`,
             `code_challange_method=S256`,

@@ -144,7 +144,7 @@ export const SetupPage: React.FC<Props> = (props: Props) => {
                                     <Bean text={connectorParams.value.instanceUrl ?? 'unknown'} />
                                 </DetailEntry>
                                 <DetailEntry label="Connected App">
-                                    <Bean text={connectorParams.value.consumerKey ?? 'unknown'} />
+                                    <Bean text={connectorParams.value.appConsumerKey ?? 'unknown'} />
                                 </DetailEntry>
                             </>
                         )}

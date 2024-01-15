@@ -35,9 +35,9 @@ export interface SalesforceAuthParams {
     /// The base URL
     instanceUrl: string;
     /// The client id
-    consumerKey: string;
+    appConsumerKey: string;
     /// The client secret
-    consumerSecret: string | null;
+    appConsumerSecret: string | null;
 }
 
 export const AUTH_FLOW_DEFAULT_STATE: SalesforceAuthState = {
@@ -163,7 +163,7 @@ export function checkSalesforceAuthSetup(
     if (!state.authParams) {
         return ConnectorAuthCheck.AUTHENTICATION_NOT_STARTED;
     }
-    if (state.authParams.consumerKey != params.consumerKey) {
+    if (state.authParams.appConsumerKey != params.appConsumerKey) {
         return ConnectorAuthCheck.CLIENT_ID_MISMATCH;
     }
     if (state.coreAccessToken || state.dataCloudAccessToken) {

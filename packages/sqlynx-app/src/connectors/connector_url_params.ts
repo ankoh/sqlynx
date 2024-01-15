@@ -3,7 +3,7 @@ import { SALESFORCE_DATA_CLOUD, LOCAL_SCRIPT, HYPER_DATABASE } from './connector
 
 export interface SalesforceSetupParams {
     instanceUrl: string | null;
-    consumerKey: string | null;
+    appConsumerKey: string | null;
 }
 export interface LocalSetupParams {}
 export interface HyperSetupParams {}
@@ -16,7 +16,7 @@ export type ConnectorSetupParamVariant =
 function readSalesforceConnectorParamsFromURL(urlParams: URLSearchParams): ConnectorSetupParamVariant {
     const result: SalesforceSetupParams = {
         instanceUrl: urlParams.get('instance') ?? null,
-        consumerKey: urlParams.get('app') ?? null,
+        appConsumerKey: urlParams.get('app') ?? null,
     };
     return {
         type: SALESFORCE_DATA_CLOUD,
