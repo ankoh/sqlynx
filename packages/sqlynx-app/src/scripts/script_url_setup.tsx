@@ -9,20 +9,23 @@ import {
     HYPER_DATABASE,
     LOCAL_SCRIPT,
     SALESFORCE_DATA_CLOUD,
-} from '../../connectors/connector_info';
-import { checkSalesforceAuthSetup, useSalesforceAuthState } from '../../connectors/salesforce_auth_state';
-import { readConnectorParamsFromURL } from '../../connectors/connector_url_params';
-import { useSQLynx, useSQLynxLoadingProgress } from '../../sqlynx_loader';
-import { RESULT_OK, formatBytes, formatNanoseconds } from '../../utils';
+} from '../connectors/connector_info';
+import { checkSalesforceAuthSetup, useSalesforceAuthState } from '../connectors/salesforce_auth_state';
+import { readConnectorParamsFromURL } from '../connectors/connector_url_params';
+import { useSQLynx, useSQLynxLoadingProgress } from '../sqlynx_loader';
+import { RESULT_OK, formatBytes, formatNanoseconds } from '../utils';
 
-import styles from './setup_page.module.css';
+import styles from './script_url_setup.module.css';
 
-import symbols from '../../../static/svg/symbols.generated.svg';
+import symbols from '../../static/svg/symbols.generated.svg';
 import { SyncIcon } from '@primer/octicons-react';
 
-interface Props {}
+interface Props {
+    url: URL;
+    onDone: () => void;
+}
 
-export const SetupPage: React.FC<Props> = (props: Props) => {
+const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
     const lnx = useSQLynx();
     const lnxLoading = useSQLynxLoadingProgress();
     const salesforceAuth = useSalesforceAuthState();
@@ -39,15 +42,8 @@ export const SetupPage: React.FC<Props> = (props: Props) => {
         moduleVersion = lnx.value.getVersionText();
     }
 
-    // Pack a test url
-    const params = new URLSearchParams();
-    params.set('connector', 'salesforce');
-    params.set('instance', 'https://trialorgfarmforu-16f.test2.my.pc-rnd.salesforce.com');
-    params.set('app', '3MVG9GS4BiwvuHvgBoJxvy6gBq99_Ptg8FHx1QqO0bcDgy3lYc3x1b3nLPXGDQzYlYYMOwqo_j12QdTgAvAZD');
-    const test_url = new URL(`https://sqlynx.app?${params.toString()}`);
-
     // Unpack the URL parameters
-    const connectorParams = readConnectorParamsFromURL(test_url);
+    const connectorParams = readConnectorParamsFromURL(props.url);
     let connectorInfo = null;
     let connectorAuthCheck = null;
     switch (connectorParams?.type) {
@@ -151,21 +147,38 @@ export const SetupPage: React.FC<Props> = (props: Props) => {
                     </div>
                 </div>
                 <div className={styles.card_actions}>
-                    <Button className={styles.skip_button} variant="danger">
-                        Skip
-                    </Button>
                     {canContinue ? (
-                        <Button className={styles.continue_button} variant="primary">
+                        <Button className={styles.card_action_continue} variant="primary" onClick={props.onDone}>
                             Continue
                         </Button>
                     ) : (
-                        <div className={styles.card_status}>
+                        <>
+                            <Button className={styles.skip_button} variant="danger" onClick={props.onDone}>
+                                Skip
+                            </Button>
                             <div className={styles.card_status_text}>{statusText}</div>
-                            <IconButton icon={SyncIcon} aria-labelledby="sync" />
-                        </div>
+                            <IconButton className={styles.card_action_restart} icon={SyncIcon} aria-labelledby="sync" />
+                        </>
                     )}
                 </div>
             </div>
         </div>
     );
+};
+
+export const ScriptURLSetup: React.FC<{ children: React.ReactElement }> = (props: { children: React.ReactElement }) => {
+    const [skipPage, setSkipPage] = React.useState<boolean>(false);
+
+    if (skipPage) {
+        return props.children;
+    }
+
+    // Pack a test url
+    const params = new URLSearchParams();
+    params.set('connector', 'salesforce');
+    params.set('instance', 'https://trialorgfarmforu-16f.test2.my.pc-rnd.salesforce.com');
+    params.set('app', '3MVG9GS4BiwvuHvgBoJxvy6gBq99_Ptg8FHx1QqO0bcDgy3lYc3x1b3nLPXGDQzYlYYMOwqo_j12QdTgAvAZD');
+    const test_url = new URL(`https://sqlynx.app?${params.toString()}`);
+
+    return <ScriptURLSetupPage url={test_url} onDone={() => setSkipPage(true)} />;
 };

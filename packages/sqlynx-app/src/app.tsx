@@ -4,13 +4,13 @@ import { SQLynxLoader } from './sqlynx_loader';
 import { withNavBar } from './view/navbar';
 import { EditorPage } from './view/pages/editor_page';
 import { ConnectionsPage } from './view/pages/connections_page';
-import { SetupPage } from './view/pages/setup_page';
 import { ScriptLoader } from './scripts/script_loader';
 import { ScriptCatalogLoader } from './scripts/script_catalog_loader';
 import { ScriptCatalogSalesforceAutoloader } from './scripts/script_catalog_autoloader_salesforce';
 import { ScriptStateProvider } from './scripts/script_state_provider';
 import { ScriptCommands } from './scripts/script_commands';
 import { ScriptQueryExecutor } from './scripts/script_query_executor';
+import { ScriptURLSetup } from './scripts/script_url_setup';
 import { SalesforceConnector } from './connectors/salesforce_connector';
 import { ConnectorSelection } from './connectors/connector_selection';
 import { LogProvider } from './app_log';
@@ -46,7 +46,7 @@ const AppProviders = (props: { children: React.ReactElement }) => (
                                     <ScriptCatalogLoader />
                                     <ScriptCatalogSalesforceAutoloader />
                                     <ScriptQueryExecutor />
-                                    {props.children}
+                                    <ScriptURLSetup>{props.children}</ScriptURLSetup>
                                 </ScriptCommands>
                             </ScriptStateProvider>
                         </ConnectorSelection>
@@ -71,7 +71,6 @@ root.render(
                 <Routes>
                     <Route index element={<Editor />} />
                     <Route path="/connections" element={<Connections />} />
-                    <Route path="/setup" element={<SetupPage />} />
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
             </AppProviders>

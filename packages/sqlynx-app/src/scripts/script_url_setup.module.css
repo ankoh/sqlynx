@@ -131,14 +131,22 @@
 .card_actions {
     border-top: 1px solid var(--border_color_primary);
     display: grid;
-    grid-template-columns: max-content 1fr;
+    grid-template-columns: max-content 1fr max-content;
+    align-items: center;
     column-gap: 8px;
     padding: 8px;
 }
 
-.continue_button {
+.card_action_continue {
     grid-column: 3;
 }
-.skip_button {
+.card_action_skip {
     grid-column: 1;
+}
+.card_status_text {
+    grid-column: 2;
+    text-align: right;
+}
+.card_action_restart {
+    grid-column: 3;
 }
