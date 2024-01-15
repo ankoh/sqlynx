@@ -138,6 +138,7 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
                         aria-labelledby="copy-to-clipboard"
                     />
                 </div>
+                <div className={styles.sharing_url_stats}>{state.urlText?.length ?? 0} characters</div>
             </Box>
         </AnchoredOverlay>
     );

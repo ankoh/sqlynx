@@ -21,11 +21,17 @@
     grid-column: 1 / span 2;
     font-size: 0.85rem;
     font-weight: 500;
-    padding: 0px 2px 0px 2px;
+    padding: 0px 2px;
 }
 .sharing_url {
     width: 100%;
     display: grid;
     grid-template-columns: 1fr max-content;
     column-gap: 8px;
+}
+.sharing_url_stats {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: hsl(212, 8%, 73%);
+    padding: 0px 2px;
 }
