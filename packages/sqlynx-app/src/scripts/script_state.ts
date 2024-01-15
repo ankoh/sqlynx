@@ -1,22 +1,14 @@
 import * as sqlynx from '@ankoh/sqlynx';
 import Immutable from 'immutable';
 
-import {
-    CatalogUpdateRequestVariant,
-    CatalogUpdateTaskState,
-    CatalogUpdateTaskVariant,
-} from '../connectors/catalog_update';
+import { CatalogUpdateRequestVariant, CatalogUpdateTaskState } from '../connectors/catalog_update';
 import { generateBlankScript, ScriptMetadata } from './script_metadata';
 import { ScriptLoadingStatus } from './script_loader';
 import { SQLynxScriptBuffers } from '../view/editor/sqlynx_processor';
 import { GraphViewModel } from '../view/schema/graph_view_model';
 import { ScriptLoadingInfo } from './script_loader';
 import { FocusInfo } from './focus';
-import {
-    QueryExecutionResult,
-    QueryExecutionTaskState,
-    QueryExecutionTaskVariant,
-} from '../connectors/query_execution';
+import { QueryExecutionResult, QueryExecutionTaskState } from '../connectors/query_execution';
 
 /// A key to identify the target script
 export enum ScriptKey {
