@@ -91,7 +91,7 @@ export const SetupPage: React.FC<Props> = (props: Props) => {
             <div className={styles.detail_entry_value}>{props.children}</div>
         </>
     );
-    const Bean = (props: { text: string }) => <div className={styles.bean}>{props.text}</div>;
+    const Bean = (props: { text: string }) => <span className={styles.bean}>{props.text}</span>;
 
     return (
         <div className={styles.page}>
