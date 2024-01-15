@@ -2,7 +2,8 @@ import { VariantKind } from '../utils';
 import { SALESFORCE_DATA_CLOUD, LOCAL_SCRIPT, HYPER_DATABASE } from './connector_info';
 
 export interface SalesforceSetupParams {
-    clientId?: string;
+    instanceUrl: string | null;
+    consumerKey: string | null;
 }
 export interface LocalSetupParams {}
 export interface HyperSetupParams {}
@@ -13,9 +14,13 @@ export type ConnectorSetupParamVariant =
     | VariantKind<typeof HYPER_DATABASE, HyperSetupParams>;
 
 function readSalesforceConnectorParamsFromURL(urlParams: URLSearchParams): ConnectorSetupParamVariant {
+    const result: SalesforceSetupParams = {
+        instanceUrl: urlParams.get('instance') ?? null,
+        consumerKey: urlParams.get('app') ?? null,
+    };
     return {
         type: SALESFORCE_DATA_CLOUD,
-        value: {},
+        value: result,
     };
 }
 
