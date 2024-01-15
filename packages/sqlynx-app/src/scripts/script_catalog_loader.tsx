@@ -2,8 +2,16 @@ import * as React from 'react';
 
 import { useScriptState, useScriptStateDispatch } from '../scripts/script_state_provider';
 import { updateDataCloudCatalog } from '../connectors/salesforce_catalog_update';
-import { CatalogUpdateTaskState, CatalogUpdateTaskStatus } from '../connectors/catalog_update';
+import {
+    CatalogUpdateTaskState,
+    CatalogUpdateTaskStatus,
+    CatalogUpdateTaskVariant,
+    FULL_CATALOG_REFRESH,
+} from '../connectors/catalog_update';
 import { SALESFORCE_DATA_CLOUD } from '../connectors/connector_info';
+import { useSelectedConnector } from '../connectors/connector_selection';
+import { useSalesforceAPI } from '../connectors/salesforce_connector';
+import { useSalesforceAuthState } from '../connectors/salesforce_auth_state';
 import {
     CATALOG_UPDATE_CANCELLED,
     CATALOG_UPDATE_FAILED,
@@ -14,6 +22,9 @@ import {
 export const ScriptCatalogLoader = (props: { children?: React.ReactElement }) => {
     const state = useScriptState();
     const dispatch = useScriptStateDispatch();
+    const selectedConnector = useSelectedConnector();
+    const salesforceAPI = useSalesforceAPI();
+    const salesforceAuth = useSalesforceAuthState();
 
     React.useEffect(() => {
         if (!state.catalog) {
@@ -23,7 +34,20 @@ export const ScriptCatalogLoader = (props: { children?: React.ReactElement }) =>
         const states: CatalogUpdateTaskState[] = [];
         const startedAt = new Date();
 
-        for (const [taskId, task] of state.catalogUpdateRequests) {
+        for (const [taskId, requestVariant] of state.catalogUpdateRequests) {
+            let task: CatalogUpdateTaskVariant;
+            switch (requestVariant.type) {
+                case FULL_CATALOG_REFRESH:
+                    task = {
+                        type: SALESFORCE_DATA_CLOUD,
+                        value: {
+                            api: salesforceAPI,
+                            accessToken: salesforceAuth.dataCloudAccessToken!,
+                        },
+                    };
+                    break;
+            }
+
             const cancellation = new AbortController();
             states.push({
                 taskId,
