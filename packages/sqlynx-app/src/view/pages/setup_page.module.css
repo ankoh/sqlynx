@@ -95,11 +95,15 @@
     display: grid;
     grid-template-columns: max-content 1fr;
     row-gap: 8px;
+    column-gap: 16px;
     align-items: center;
 }
 .detail_entry_value {
     justify-self: right;
+    max-width: 100%;
+    overflow: hidden;
     text-overflow: ellipsis;
+    text-wrap: nowrap;
 }
 .detail_entry_key {
     font-size: 0.9rem;
