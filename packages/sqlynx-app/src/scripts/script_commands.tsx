@@ -1,13 +1,10 @@
 import React from 'react';
 import { KeyEventHandler, useKeyEvents } from '../utils/key_events';
 import { useSelectedConnector } from '../connectors/connector_selection';
-import { ConnectorInfo } from 'connectors/connector_info';
-
-export const EXECUTE_QUERY = Symbol('EXECUTE_QUERY');
-export const REFRESH_SCHEMA = Symbol('REFRESH_SCHEMA');
-export const SAVE_QUERY_AS_LINK = Symbol('SAVE_QUERY_AS_LINK');
-export const SAVE_QUERY_AS_SQL = Symbol('SAVE_QUERY_AS_SQL');
-export const SAVE_QUERY_RESULTS_AS_ARROW = Symbol('SAVE_QUERY_RESULTS_AS_ARROW');
+import { ConnectorInfo } from '../connectors/connector_info';
+import { FULL_CATALOG_REFRESH } from '../connectors/catalog_update';
+import { useScriptStateDispatch } from './script_state_provider';
+import { EXECUTE_QUERY, UPDATE_CATALOG } from './script_state_reducer';
 
 export enum ScriptCommandType {
     ExecuteQuery = 0,
@@ -27,17 +24,26 @@ const COMMAND_DISPATCH_CTX = React.createContext<ScriptCommandDispatch | null>(n
 
 export const ScriptCommands: React.FC<Props> = (props: Props) => {
     const connector = useSelectedConnector();
-    // const stateDispatch = useScriptStateDispatch();
+    const stateDispatch = useScriptStateDispatch();
 
     // Setup command dispatch logic
     const commandDispatch = React.useCallback(
         async (command: ScriptCommandType) => {
             switch (command) {
                 case ScriptCommandType.ExecuteQuery:
-                    console.log('execute query command');
+                    stateDispatch({
+                        type: EXECUTE_QUERY,
+                        value: null,
+                    });
                     break;
                 case ScriptCommandType.RefreshSchema:
-                    console.log('refresh schema command');
+                    stateDispatch({
+                        type: UPDATE_CATALOG,
+                        value: {
+                            type: FULL_CATALOG_REFRESH,
+                            value: null,
+                        },
+                    });
                     break;
                 case ScriptCommandType.SaveQueryAsSql:
                     console.log('save query as sql command');

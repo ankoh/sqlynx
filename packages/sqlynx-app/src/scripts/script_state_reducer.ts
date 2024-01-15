@@ -21,7 +21,6 @@ import {
     QueryExecutionResponseStream,
     QueryExecutionTaskState,
     QueryExecutionTaskStatus,
-    QueryExecutionTaskVariant,
 } from '../connectors/query_execution';
 
 export const INITIALIZE = Symbol('INITIALIZE');
@@ -69,7 +68,7 @@ export type ScriptStateAction =
     | VariantKind<typeof CATALOG_UPDATE_CANCELLED, number>
     | VariantKind<typeof CATALOG_UPDATE_SUCCEEDED, number>
     | VariantKind<typeof CATALOG_UPDATE_FAILED, [number, any]>
-    | VariantKind<typeof EXECUTE_QUERY, QueryExecutionTaskVariant>
+    | VariantKind<typeof EXECUTE_QUERY, null>
     | VariantKind<typeof QUERY_EXECUTION_ACCEPTED, QueryExecutionTaskState>
     | VariantKind<typeof QUERY_EXECUTION_STARTED, QueryExecutionResponseStream>
     | VariantKind<typeof QUERY_EXECUTION_PROGRESS_UPDATED, QueryExecutionProgress>
