@@ -38,8 +38,7 @@ function readHyperConnectorParamsFromURL(urlParams: URLSearchParams): ConnectorS
     };
 }
 
-export function readConnectorParamsFromURL(url: URL): ConnectorSetupParamVariant | null {
-    const urlParams = new URLSearchParams(url.search);
+export function readConnectorParamsFromURL(urlParams: URLSearchParams): ConnectorSetupParamVariant | null {
     switch (urlParams.get('connector') ?? null) {
         case 'salesforce':
             return readSalesforceConnectorParamsFromURL(urlParams);

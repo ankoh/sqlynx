@@ -1,6 +1,8 @@
 import * as React from 'react';
 
 import { Button, IconButton } from '@primer/react';
+import { SyncIcon } from '@primer/octicons-react';
+import { useLocation } from 'react-router-dom';
 
 import {
     CONNECTOR_INFOS,
@@ -18,10 +20,9 @@ import { RESULT_OK, formatBytes, formatNanoseconds } from '../utils';
 import styles from './script_url_setup.module.css';
 
 import symbols from '../../static/svg/symbols.generated.svg';
-import { SyncIcon } from '@primer/octicons-react';
 
 interface Props {
-    url: URL;
+    params: URLSearchParams;
     onDone: () => void;
 }
 
@@ -43,7 +44,7 @@ const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
     }
 
     // Unpack the URL parameters
-    const connectorParams = readConnectorParamsFromURL(props.url);
+    const connectorParams = readConnectorParamsFromURL(props.params);
     let connectorInfo = null;
     let connectorAuthCheck = null;
     switch (connectorParams?.type) {
@@ -167,18 +168,28 @@ const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
 };
 
 export const ScriptURLSetup: React.FC<{ children: React.ReactElement }> = (props: { children: React.ReactElement }) => {
-    const [skipPage, setSkipPage] = React.useState<boolean>(false);
+    const [skipSetup, setSkipSetup] = React.useState<boolean>(false);
+    const location = useLocation();
+    const params = React.useMemo(() => new URLSearchParams(location.search), []);
 
-    if (skipPage) {
+    // Only show the setup if the initial URL has a connector parameter
+    React.useEffect(() => {
+        if (!skipSetup && !params.has('connector')) {
+            setSkipSetup(true);
+        }
+    }, []);
+
+    if (skipSetup) {
         return props.children;
+    } else {
+        return <ScriptURLSetupPage params={params} onDone={() => setSkipSetup(true)} />;
     }
-
-    // Pack a test url
-    const params = new URLSearchParams();
-    params.set('connector', 'salesforce');
-    params.set('instance', 'https://trialorgfarmforu-16f.test2.my.pc-rnd.salesforce.com');
-    params.set('app', '3MVG9GS4BiwvuHvgBoJxvy6gBq99_Ptg8FHx1QqO0bcDgy3lYc3x1b3nLPXGDQzYlYYMOwqo_j12QdTgAvAZD');
-    const test_url = new URL(`https://sqlynx.app?${params.toString()}`);
-
-    return <ScriptURLSetupPage url={test_url} onDone={() => setSkipPage(true)} />;
 };
+
+// Pack a test url
+// const params = new URLSearchParams();
+// params.set('connector', 'salesforce');
+// params.set('instance', 'https://trialorgfarmforu-16f.test2.my.pc-rnd.salesforce.com');
+// params.set('app', '3MVG9GS4BiwvuHvgBoJxvy6gBq99_Ptg8FHx1QqO0bcDgy3lYc3x1b3nLPXGDQzYlYYMOwqo_j12QdTgAvAZD');
+// const test_url = new URL(`https://sqlynx.app?${params.toString()}`);
+// http://localhost:9002/?connector=salesforce&instance=https%3A%2F%2Ftrialorgfarmforu-16f.test2.my.pc-rnd.salesforce.com&app=3MVG9GS4BiwvuHvgBoJxvy6gBq99_Ptg8FHx1QqO0bcDgy3lYc3x1b3nLPXGDQzYlYYMOwqo_j12QdTgAvAZD
