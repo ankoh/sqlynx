@@ -102,7 +102,7 @@ const SalesforceAuthFlowPanel: React.FC<SalesforceAuthFlowProps> = (props: Sales
                 <MutableTextBox
                     name="App Consumer Key"
                     caption="Setup > Apps > App Manager > View > Manage Consumer Details"
-                    value={authState.authParams?.consumerKey ?? ''}
+                    value={authState.authParams?.appConsumerKey ?? ''}
                     onChange={() => {}}
                 />
                 <Button sx={{ marginTop: '28px' }} onClick={connect} disabled={authState.authRequested}>

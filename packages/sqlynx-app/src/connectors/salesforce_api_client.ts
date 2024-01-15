@@ -196,12 +196,12 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
             grant_type: 'authorization_code',
             code: authCode!,
             redirect_uri: authConfig.oauthRedirect.toString(),
-            client_id: authParams.consumerKey,
+            client_id: authParams.appConsumerKey,
             code_verifier: pkceVerifier,
             format: 'json',
         };
-        if (authParams.consumerSecret && authParams.consumerSecret !== null) {
-            params.client_secret = authParams.consumerSecret;
+        if (authParams.appConsumerSecret && authParams.appConsumerSecret !== null) {
+            params.client_secret = authParams.appConsumerSecret;
         }
         // Get the access token
         const response = await fetch(`${authParams.instanceUrl}/services/oauth2/token`, {
