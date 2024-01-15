@@ -128,14 +128,16 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
         >
             <Box className={classNames(styles.sharing_overlay, props.className)}>
                 <div className={styles.sharing_title}>Save Query as Link</div>
-                <TextInput className={styles.sharing_url} disabled={true} value={state.urlText ?? ''} />
-                <IconButton
-                    ref={buttonRef}
-                    className={styles.sharing_button}
-                    icon={state.copyFinishedAt != null && state.uiResetAt == null ? CheckIcon : PaperclipIcon}
-                    onClick={copyURL}
-                    aria-labelledby="copy-to-clipboard"
-                />
+                <div className={styles.sharing_url}>
+                    <TextInput className={styles.sharing_url} disabled={true} value={state.urlText ?? ''} />
+                    <IconButton
+                        ref={buttonRef}
+                        className={styles.sharing_button}
+                        icon={state.copyFinishedAt != null && state.uiResetAt == null ? CheckIcon : PaperclipIcon}
+                        onClick={copyURL}
+                        aria-labelledby="copy-to-clipboard"
+                    />
+                </div>
             </Box>
         </AnchoredOverlay>
     );
