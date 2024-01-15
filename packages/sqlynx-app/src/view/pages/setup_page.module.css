@@ -85,11 +85,7 @@
     font-size: 0.8rem;
 }
 
-.wasm_setup {
-    padding: 8px;
-    border-top: 1px solid var(--border_color_primary);
-}
-.script_setup {
+.card_section {
     padding: 8px;
     border-top: 1px solid var(--border_color_primary);
 }
@@ -113,19 +109,6 @@
     border-radius: 6px;
     background-color: hsl(210, 29%, 95%);
     padding: 2px 8px;
-}
-
-.connector_setup {
-    padding: 8px;
-    border-top: 1px solid var(--border_color_primary);
-}
-
-.connector_details {
-    margin-top: 8px;
-    display: grid;
-    grid-template-columns: max-content 1fr;
-    grid-template-rows: repeat(2, 28px);
-    align-items: center;
 }
 
 .card_actions {

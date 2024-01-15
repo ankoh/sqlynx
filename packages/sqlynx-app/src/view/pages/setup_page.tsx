@@ -107,7 +107,7 @@ export const SetupPage: React.FC<Props> = (props: Props) => {
                 <div className={styles.card_header}>
                     <div className={styles.card_title}>Setup</div>
                 </div>
-                <div className={styles.wasm_setup}>
+                <div className={styles.card_section}>
                     <div className={styles.card_section_header}>WebAssembly</div>
                     <div className={styles.detail_entries}>
                         <DetailEntry label="Uncompressed Size">
@@ -121,7 +121,7 @@ export const SetupPage: React.FC<Props> = (props: Props) => {
                         </DetailEntry>
                     </div>
                 </div>
-                <div className={styles.script_setup}>
+                <div className={styles.card_section}>
                     <div className={styles.card_section_header}>Script</div>
                     <div className={styles.detail_entries}>
                         <DetailEntry label="Inline Script">
@@ -132,7 +132,7 @@ export const SetupPage: React.FC<Props> = (props: Props) => {
                         </DetailEntry>
                     </div>
                 </div>
-                <div className={styles.connector_setup}>
+                <div className={styles.card_section}>
                     <div className={styles.card_section_header}>Connector</div>
                     <div className={styles.detail_entries}>
                         <DetailEntry label="Connector Type">
