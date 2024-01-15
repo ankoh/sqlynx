@@ -1,5 +1,6 @@
 import { VariantKind } from '../utils';
-import { SALESFORCE_DATA_CLOUD, LOCAL_SCRIPT, HYPER_DATABASE } from './connector_info';
+import { SALESFORCE_DATA_CLOUD, LOCAL_SCRIPT, HYPER_DATABASE, ConnectorAuthCheck } from './connector_info';
+import { SalesforceAuthState } from './salesforce_auth_state';
 
 export interface SalesforceSetupParams {
     instanceUrl: string | null;
@@ -48,4 +49,44 @@ export function readConnectorParamsFromURL(urlParams: URLSearchParams): Connecto
         default:
             return readLocalConnectorParamsFromURL(urlParams);
     }
+}
+
+export function writeSalesforceConnectorParams(params: URLSearchParams, state: SalesforceAuthState) {
+    params.set('connector', 'salesforce');
+    if (state.authParams?.instanceUrl) {
+        params.set('instance', state.authParams?.instanceUrl);
+    }
+    if (state.authParams?.appConsumerKey) {
+        params.set('app', state.authParams?.appConsumerKey);
+    }
+}
+
+export function writeLocalConnectorParams(params: URLSearchParams) {
+    params.set('connector', 'local');
+}
+
+export function writeHyperConnectorParams(params: URLSearchParams) {
+    params.set('connector', 'hyper');
+}
+
+export function checkSalesforceAuthSetup(
+    state: SalesforceAuthState,
+    params: SalesforceSetupParams,
+): ConnectorAuthCheck {
+    if (!state.authParams) {
+        return ConnectorAuthCheck.AUTHENTICATION_NOT_STARTED;
+    }
+    if (state.authParams.appConsumerKey != params.appConsumerKey) {
+        return ConnectorAuthCheck.CLIENT_ID_MISMATCH;
+    }
+    if (state.coreAccessToken || state.dataCloudAccessToken) {
+        return ConnectorAuthCheck.AUTHENTICATED;
+    }
+    if (state.authStarted) {
+        return ConnectorAuthCheck.AUTHENTICATION_IN_PROGRESS;
+    }
+    if (state.authError) {
+        return ConnectorAuthCheck.AUTHENTICATION_FAILED;
+    }
+    return ConnectorAuthCheck.UNKNOWN;
 }

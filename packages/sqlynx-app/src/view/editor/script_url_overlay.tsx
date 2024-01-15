@@ -6,34 +6,27 @@ import { TextInput, AnchoredOverlay, Box, IconButton, ToggleSwitch } from '@prim
 import { CheckIcon, PaperclipIcon } from '@primer/octicons-react';
 
 import { sleep } from '../../utils/sleep';
-import { ScriptData, ScriptKey, ScriptState } from '../../scripts/script_state';
+import { ScriptData, ScriptKey } from '../../scripts/script_state';
 import { useScriptState } from '../../scripts/script_state_provider';
+import { useSalesforceAuthState } from '../../connectors/salesforce_auth_state';
+import { useSelectedConnector } from '../../connectors/connector_selection';
+import { ConnectorType } from '../../connectors/connector_info';
+import {
+    writeHyperConnectorParams,
+    writeLocalConnectorParams,
+    writeSalesforceConnectorParams,
+} from '../../connectors/connector_url_params';
 
 import styles from './script_url_overlay.module.css';
 
 const COPY_CHECKMARK_DURATION_MS = 1000;
 
-const encodeScript = (url: URL, key: string, data: ScriptData) => {
+const encodeScript = (url: URLSearchParams, key: string, data: ScriptData) => {
     if (data.script) {
         const text = data.script.toString();
         const textBase64 = LZString.compressToBase64(text);
-        url.searchParams.set(key, encodeURIComponent(textBase64));
+        url.set(key, encodeURIComponent(textBase64));
     }
-};
-
-const buildURL = (state: ScriptState | null, embedConnectorInfo: boolean): URL => {
-    const baseURL = process.env.SQLYNX_APP_URL;
-    const urlText = baseURL ?? '';
-    const url = new URL(urlText);
-    const mainScript = state?.scripts[ScriptKey.MAIN_SCRIPT] ?? null;
-    const schemaScript = state?.scripts[ScriptKey.SCHEMA_SCRIPT] ?? null;
-    if (mainScript?.script) {
-        encodeScript(url, 'script', mainScript);
-    }
-    if (schemaScript?.script) {
-        encodeScript(url, 'schema', schemaScript);
-    }
-    return url;
 };
 
 interface Props {
@@ -62,12 +55,37 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
         copyError: null,
         uiResetAt: null,
     }));
+    const selectedConnector = useSelectedConnector();
+    const salesforceAuth = useSalesforceAuthState();
+
     React.useEffect(() => {
-        const url = buildURL(scriptState, embedConnectorInfo);
-        const urlText = url.toString();
+        const baseURL = process.env.SQLYNX_APP_URL;
+        const url = new URL(baseURL ?? '');
+        url.searchParams.set('connector', 'local');
+        if (embedConnectorInfo) {
+            switch (selectedConnector.connectorType) {
+                case ConnectorType.LOCAL_SCRIPT:
+                    writeLocalConnectorParams(url.searchParams);
+                    break;
+                case ConnectorType.HYPER_DATABASE:
+                    writeHyperConnectorParams(url.searchParams);
+                    break;
+                case ConnectorType.SALESFORCE_DATA_CLOUD:
+                    writeSalesforceConnectorParams(url.searchParams, salesforceAuth);
+                    break;
+            }
+        }
+        const mainScript = scriptState.scripts[ScriptKey.MAIN_SCRIPT] ?? null;
+        const schemaScript = scriptState.scripts[ScriptKey.SCHEMA_SCRIPT] ?? null;
+        if (mainScript?.script) {
+            encodeScript(url.searchParams, 'script', mainScript);
+        }
+        if (schemaScript?.script) {
+            encodeScript(url.searchParams, 'schema', schemaScript);
+        }
         setState({
             url,
-            urlText,
+            urlText: url.toString(),
             copyStartedAt: null,
             copyFinishedAt: null,
             copyError: null,

@@ -12,8 +12,8 @@ import {
     LOCAL_SCRIPT,
     SALESFORCE_DATA_CLOUD,
 } from '../connectors/connector_info';
-import { checkSalesforceAuthSetup, useSalesforceAuthState } from '../connectors/salesforce_auth_state';
-import { readConnectorParamsFromURL } from '../connectors/connector_url_params';
+import { useSalesforceAuthState } from '../connectors/salesforce_auth_state';
+import { checkSalesforceAuthSetup, readConnectorParamsFromURL } from '../connectors/connector_url_params';
 import { useSQLynx, useSQLynxLoadingProgress } from '../sqlynx_loader';
 import { RESULT_OK, formatBytes, formatNanoseconds } from '../utils';
 
