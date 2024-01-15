@@ -97,21 +97,21 @@
     align-items: center;
 }
 
-.url_setup {
+.script_setup {
     padding: 8px;
     border-top: 1px solid var(--border_color_primary);
 }
-.url_details {
+.script_details {
     margin-top: 8px;
     display: grid;
     grid-template-columns: max-content 1fr;
-    grid-template-rows: repeat(3, 28px);
+    grid-template-rows: repeat(2, 28px);
     align-items: center;
 }
-.url_detail_value {
+.detail_entry_value {
     justify-self: right;
 }
-.url_detail_key {
+.detail_entry_key {
     font-size: 0.9rem;
 }
 .bean {
@@ -121,9 +121,17 @@
     padding: 2px 8px;
 }
 
-.auth_setup {
+.connector_setup {
     padding: 8px;
     border-top: 1px solid var(--border_color_primary);
+}
+
+.connector_details {
+    margin-top: 8px;
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    grid-template-rows: repeat(2, 28px);
+    align-items: center;
 }
 
 .card_actions {

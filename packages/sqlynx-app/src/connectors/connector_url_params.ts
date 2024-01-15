@@ -41,8 +41,7 @@ export function readConnectorParamsFromURL(url: URL): ConnectorSetupParamVariant
         case 'hyper':
             return readHyperConnectorParamsFromURL(urlParams);
         case 'local':
-            return readLocalConnectorParamsFromURL(urlParams);
         default:
-            return null;
+            return readLocalConnectorParamsFromURL(urlParams);
     }
 }

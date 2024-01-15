@@ -69,8 +69,10 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
 ];
 
 export enum ConnectorAuthCheck {
+    UNKNOWN,
     AUTHENTICATED,
+    AUTHENTICATION_FAILED,
+    AUTHENTICATION_IN_PROGRESS,
     AUTHENTICATION_NOT_STARTED,
     CLIENT_ID_MISMATCH,
-    TOKEN_MISSING,
 }
