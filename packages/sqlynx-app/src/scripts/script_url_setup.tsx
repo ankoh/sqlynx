@@ -167,22 +167,30 @@ const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
     );
 };
 
+enum SetupVisibility {
+    UNDECIDED,
+    SKIP,
+    SHOW,
+}
+
 export const ScriptURLSetup: React.FC<{ children: React.ReactElement }> = (props: { children: React.ReactElement }) => {
-    const [skipSetup, setSkipSetup] = React.useState<boolean>(false);
+    const [showSetup, setShowSetup] = React.useState<SetupVisibility>(SetupVisibility.UNDECIDED);
     const location = useLocation();
     const params = React.useMemo(() => new URLSearchParams(location.search), []);
-
-    // Only show the setup if the initial URL has a connector parameter
     React.useEffect(() => {
-        if (!skipSetup && !params.has('connector')) {
-            setSkipSetup(true);
+        if (!params.has('connector')) {
+            setShowSetup(SetupVisibility.SKIP);
+        } else {
+            setShowSetup(SetupVisibility.SHOW);
         }
     }, []);
-
-    if (skipSetup) {
-        return props.children;
-    } else {
-        return <ScriptURLSetupPage params={params} onDone={() => setSkipSetup(true)} />;
+    switch (showSetup) {
+        case SetupVisibility.UNDECIDED:
+            return <div />;
+        case SetupVisibility.SKIP:
+            return props.children;
+        case SetupVisibility.SHOW:
+            return <ScriptURLSetupPage params={params} onDone={() => setShowSetup(SetupVisibility.SKIP)} />;
     }
 };
 
