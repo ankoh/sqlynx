@@ -4,7 +4,7 @@ import { UPDATE_CATALOG } from './script_state_reducer';
 import { useScriptStateDispatch } from './script_state_provider';
 import { useSalesforceAuthState } from '../connectors/salesforce_auth_state';
 import { useSalesforceAPI } from '../connectors/salesforce_connector';
-import { SALESFORCE_DATA_CLOUD } from '../connectors/connector_info';
+import { FULL_CATALOG_REFRESH } from '../connectors/catalog_update';
 
 interface Props {
     children?: React.ReactElement;
@@ -19,11 +19,8 @@ export const ScriptCatalogSalesforceAutoloader: React.FC<Props> = (props: Props)
         dispatch({
             type: UPDATE_CATALOG,
             value: {
-                type: SALESFORCE_DATA_CLOUD,
-                value: {
-                    api: connector,
-                    accessToken: authState.dataCloudAccessToken,
-                },
+                type: FULL_CATALOG_REFRESH,
+                value: null,
             },
         });
     }, [connector, authState.dataCloudAccessToken]);

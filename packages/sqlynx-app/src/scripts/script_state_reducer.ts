@@ -12,9 +12,9 @@ import { ScriptMetadata } from './script_metadata';
 import { ScriptLoadingStatus } from './script_loader';
 import { GraphConnectionId, GraphNodeDescriptor, computeGraphViewModel } from '../view/schema/graph_view_model';
 import {
+    CatalogUpdateRequestVariant,
     CatalogUpdateTaskState,
     CatalogUpdateTaskStatus,
-    CatalogUpdateTaskVariant,
 } from '../connectors/catalog_update';
 import {
     QueryExecutionProgress,
@@ -64,7 +64,7 @@ export type ScriptStateAction =
     | VariantKind<typeof SCRIPT_LOADING_STARTED, ScriptKey>
     | VariantKind<typeof SCRIPT_LOADING_SUCCEEDED, [ScriptKey, string]>
     | VariantKind<typeof SCRIPT_LOADING_FAILED, [ScriptKey, any]>
-    | VariantKind<typeof UPDATE_CATALOG, CatalogUpdateTaskVariant>
+    | VariantKind<typeof UPDATE_CATALOG, CatalogUpdateRequestVariant>
     | VariantKind<typeof CATALOG_UPDATE_STARTED, CatalogUpdateTaskState[]>
     | VariantKind<typeof CATALOG_UPDATE_CANCELLED, number>
     | VariantKind<typeof CATALOG_UPDATE_SUCCEEDED, number>
@@ -129,7 +129,7 @@ function createDefaultState(): ScriptState {
             },
         },
         userFocus: null,
-        queryExecutionRequest: null,
+        queryExecutionRequested: false,
         queryExecutionState: null,
         queryExecutionResult: null,
     };
@@ -441,9 +441,14 @@ function reduceScriptState(state: ScriptState, action: ScriptStateAction): Scrip
         }
 
         case EXECUTE_QUERY: {
+            // Concurrent execution ongoing?
+            // Should we force the user to cancel here?
+            if (state.queryExecutionState != null && state.queryExecutionState.finishedAt == null) {
+                return state;
+            }
             return {
                 ...state,
-                queryExecutionRequest: action.value,
+                queryExecutionRequested: true,
                 queryExecutionState: null,
                 queryExecutionResult: null,
             };
@@ -451,7 +456,7 @@ function reduceScriptState(state: ScriptState, action: ScriptStateAction): Scrip
         case QUERY_EXECUTION_ACCEPTED: {
             return {
                 ...state,
-                queryExecutionRequest: null,
+                queryExecutionRequested: false,
                 queryExecutionState: {
                     ...action.value,
                     status: QueryExecutionTaskStatus.ACCEPTED,
@@ -463,7 +468,7 @@ function reduceScriptState(state: ScriptState, action: ScriptStateAction): Scrip
         case QUERY_EXECUTION_STARTED: {
             return {
                 ...state,
-                queryExecutionRequest: null,
+                queryExecutionRequested: false,
                 queryExecutionState: {
                     ...state.queryExecutionState!,
                     status: QueryExecutionTaskStatus.STARTED,

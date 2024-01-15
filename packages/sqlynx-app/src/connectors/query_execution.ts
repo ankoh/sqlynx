@@ -7,8 +7,11 @@ import { SalesforceAPIClientInterface, SalesforceDataCloudAccessToken } from './
 export type QueryExecutionTaskVariant = VariantKind<typeof SALESFORCE_DATA_CLOUD, ExecuteDataCloudQueryTask>;
 
 export interface ExecuteDataCloudQueryTask {
+    /// The salesforce api client
     api: SalesforceAPIClientInterface;
+    /// The access token
     accessToken: SalesforceDataCloudAccessToken;
+    /// The script text
     scriptText: string;
 }
 

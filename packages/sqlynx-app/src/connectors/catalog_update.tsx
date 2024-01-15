@@ -2,10 +2,16 @@ import { VariantKind } from '../utils';
 import { SALESFORCE_DATA_CLOUD } from './connector_info';
 import { SalesforceAPIClientInterface, SalesforceDataCloudAccessToken } from './salesforce_api_client';
 
+export const FULL_CATALOG_REFRESH = Symbol();
+
+export type CatalogUpdateRequestVariant = VariantKind<typeof FULL_CATALOG_REFRESH, null>;
+
 export type CatalogUpdateTaskVariant = VariantKind<typeof SALESFORCE_DATA_CLOUD, UpdateSalesforceMetadataTask>;
 
 export interface UpdateSalesforceMetadataTask {
+    /// The salesforce api client
     api: SalesforceAPIClientInterface;
+    /// The access token
     accessToken: SalesforceDataCloudAccessToken;
 }
 

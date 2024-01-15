@@ -2,12 +2,16 @@ import * as React from 'react';
 import Immutable from 'immutable';
 
 import { useScriptState, useScriptStateDispatch } from '../scripts/script_state_provider';
-import { SALESFORCE_DATA_CLOUD } from '../connectors/connector_info';
 import {
     QueryExecutionResponseStream,
     QueryExecutionTaskState,
     QueryExecutionTaskStatus,
+    QueryExecutionTaskVariant,
 } from '../connectors/query_execution';
+import { useSelectedConnector } from '../connectors/connector_selection';
+import { useSalesforceAPI } from '../connectors/salesforce_connector';
+import { useSalesforceAuthState } from '../connectors/salesforce_auth_state';
+import { ConnectorType, SALESFORCE_DATA_CLOUD } from '../connectors/connector_info';
 import {
     QUERY_EXECUTION_ACCEPTED,
     QUERY_EXECUTION_CANCELLED,
@@ -18,20 +22,41 @@ import {
     QUERY_EXECUTION_STARTED,
     QUERY_EXECUTION_SUCCEEDED,
 } from './script_state_reducer';
+import { ScriptKey } from './script_state';
 
 export const ScriptQueryExecutor = (props: { children?: React.ReactElement }) => {
     const state = useScriptState();
     const dispatch = useScriptStateDispatch();
+    const selectedConnector = useSelectedConnector();
+    const salesforceAPI = useSalesforceAPI();
+    const salesforceAuth = useSalesforceAuthState();
 
     React.useEffect(() => {
-        if (state.queryExecutionRequest == null) {
+        if (!state.queryExecutionRequested) {
             return;
         }
-        const request = state.queryExecutionRequest;
+
+        let task: QueryExecutionTaskVariant;
+        switch (selectedConnector.connectorType) {
+            case ConnectorType.SALESFORCE_DATA_CLOUD:
+                task = {
+                    type: SALESFORCE_DATA_CLOUD,
+                    value: {
+                        api: salesforceAPI,
+                        accessToken: salesforceAuth.dataCloudAccessToken!,
+                        scriptText: state.scripts[ScriptKey.MAIN_SCRIPT]?.script?.toString() ?? '',
+                    },
+                };
+                break;
+            case ConnectorType.LOCAL_SCRIPT:
+            case ConnectorType.HYPER_DATABASE:
+                console.warn(`script query executor does not support connector ${selectedConnector.connectorType} yet`);
+                return;
+        }
 
         // Accept the query and clear the request
         const initialState: QueryExecutionTaskState = {
-            task: state.queryExecutionRequest,
+            task,
             status: QueryExecutionTaskStatus.ACCEPTED,
             cancellation: new AbortController(),
             resultStream: null,
@@ -87,9 +112,9 @@ export const ScriptQueryExecutor = (props: { children?: React.ReactElement }) =>
             try {
                 // Start the query
                 let resultStream: QueryExecutionResponseStream;
-                switch (request.type) {
+                switch (task.type) {
                     case SALESFORCE_DATA_CLOUD: {
-                        const req = request.value;
+                        const req = task.value;
                         resultStream = req.api.executeQuery(req.scriptText, req.accessToken);
                         break;
                     }
@@ -121,7 +146,7 @@ export const ScriptQueryExecutor = (props: { children?: React.ReactElement }) =>
             }
         };
         run();
-    }, [state.queryExecutionRequest]);
+    }, [state.queryExecutionRequested]);
 
     return props.children;
 };

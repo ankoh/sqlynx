@@ -1,7 +1,11 @@
 import * as sqlynx from '@ankoh/sqlynx';
 import Immutable from 'immutable';
 
-import { CatalogUpdateTaskState, CatalogUpdateTaskVariant } from '../connectors/catalog_update';
+import {
+    CatalogUpdateRequestVariant,
+    CatalogUpdateTaskState,
+    CatalogUpdateTaskVariant,
+} from '../connectors/catalog_update';
 import { generateBlankScript, ScriptMetadata } from './script_metadata';
 import { ScriptLoadingStatus } from './script_loader';
 import { SQLynxScriptBuffers } from '../view/editor/sqlynx_processor';
@@ -28,7 +32,7 @@ export interface ScriptState {
     /// The catalog updates
     catalogUpdates: Immutable.Map<number, CatalogUpdateTaskState>;
     /// The pending catalog updates
-    catalogUpdateRequests: Immutable.Map<number, CatalogUpdateTaskVariant>;
+    catalogUpdateRequests: Immutable.Map<number, CatalogUpdateRequestVariant>;
     /// The id for the next catalog update
     nextCatalogUpdateId: number;
     /// The scripts (main or external)j
@@ -44,7 +48,7 @@ export interface ScriptState {
     /// The user focus info
     userFocus: FocusInfo | null;
     /// The query execution was requested?
-    queryExecutionRequest: QueryExecutionTaskVariant | null;
+    queryExecutionRequested: boolean;
     /// The query execution state
     queryExecutionState: QueryExecutionTaskState | null;
     /// The response stream of the active query
