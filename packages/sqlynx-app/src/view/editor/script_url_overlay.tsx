@@ -2,7 +2,7 @@ import React from 'react';
 import LZString from 'lz-string';
 import classNames from 'classnames';
 
-import { TextInput, AnchoredOverlay, Box, IconButton } from '@primer/react';
+import { TextInput, AnchoredOverlay, Box, IconButton, ToggleSwitch } from '@primer/react';
 import { CheckIcon, PaperclipIcon } from '@primer/octicons-react';
 
 import { sleep } from '../../utils/sleep';
@@ -113,6 +113,10 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
         [state, setState],
     );
 
+    const toggleConnectorEmbedding = React.useCallback((event: React.MouseEvent) => {
+        event.stopPropagation();
+    }, []);
+
     const anchorRef = React.createRef<HTMLDivElement>();
     const buttonRef = React.createRef<HTMLAnchorElement>();
     return (
@@ -137,8 +141,12 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
                         onClick={copyURL}
                         aria-labelledby="copy-to-clipboard"
                     />
+                    <div className={styles.sharing_url_stats}>{state.urlText?.length ?? 0} characters</div>
                 </div>
-                <div className={styles.sharing_url_stats}>{state.urlText?.length ?? 0} characters</div>
+                <div className={styles.sharing_url_setting}>
+                    <ToggleSwitch size="small" onClick={toggleConnectorEmbedding} />
+                    <div className={styles.sharing_url_setting_name}>Embed non-sensitive connector info</div>
+                </div>
             </Box>
         </AnchoredOverlay>
     );
