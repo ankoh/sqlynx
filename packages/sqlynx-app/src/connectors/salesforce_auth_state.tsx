@@ -35,10 +35,9 @@ export interface SalesforceAuthParams {
     /// The base URL
     instanceUrl: string;
     /// The client id
-    clientId: string;
-    /// The client secret.
-    /// This is meant for client secrets that the users enters ad-hoc.
-    clientSecret: string | null;
+    consumerKey: string;
+    /// The client secret
+    consumerSecret: string | null;
 }
 
 export const AUTH_FLOW_DEFAULT_STATE: SalesforceAuthState = {
@@ -164,7 +163,7 @@ export function checkSalesforceAuthSetup(
     if (!state.authParams) {
         return ConnectorAuthCheck.AUTHENTICATION_NOT_STARTED;
     }
-    if (state.authParams.clientId != params.clientId) {
+    if (state.authParams.consumerKey != params.consumerKey) {
         return ConnectorAuthCheck.CLIENT_ID_MISMATCH;
     }
     if (state.coreAccessToken || state.dataCloudAccessToken) {

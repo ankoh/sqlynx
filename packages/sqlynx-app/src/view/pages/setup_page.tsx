@@ -38,17 +38,21 @@ export const SetupPage: React.FC<Props> = (props: Props) => {
         moduleVersion = lnx.value.getVersionText();
     }
 
+    // Pack a test url
+    const params = new URLSearchParams();
+    params.set('connector', 'salesforce');
+    params.set('instance', 'https://trialorgfarmforu-16f.test2.my.pc-rnd.salesforce.com');
+    params.set('app', '3MVG9GS4BiwvuHvgBoJxvy6gBq99_Ptg8FHx1QqO0bcDgy3lYc3x1b3nLPXGDQzYlYYMOwqo_j12QdTgAvAZD');
+    const test_url = new URL(`https://sqlynx.app?${params.toString()}`);
+
     // Unpack the URL parameters
-    const TEST_URL = new URL('https://sqlynx.app?script=foo&schema=bar&connector=sfdc');
-    const connectorSetup = readConnectorParamsFromURL(TEST_URL);
+    const connectorParams = readConnectorParamsFromURL(test_url);
     let connectorInfo = null;
-    let connectorAuthState = null;
     let connectorAuthCheck = null;
-    switch (connectorSetup?.type) {
+    switch (connectorParams?.type) {
         case SALESFORCE_DATA_CLOUD:
             connectorInfo = CONNECTOR_INFOS[ConnectorType.SALESFORCE_DATA_CLOUD as number];
-            connectorAuthState = salesforceAuth;
-            connectorAuthCheck = checkSalesforceAuthSetup(salesforceAuth, connectorSetup.value);
+            connectorAuthCheck = checkSalesforceAuthSetup(salesforceAuth, connectorParams.value);
             break;
         case HYPER_DATABASE:
             connectorInfo = CONNECTOR_INFOS[ConnectorType.HYPER_DATABASE as number];
@@ -105,7 +109,7 @@ export const SetupPage: React.FC<Props> = (props: Props) => {
                 </div>
                 <div className={styles.wasm_setup}>
                     <div className={styles.card_section_header}>WebAssembly</div>
-                    <div className={styles.wasm_details}>
+                    <div className={styles.detail_entries}>
                         <DetailEntry label="Uncompressed Size">
                             <Bean text={formatBytes(Number(moduleSizeLoaded))} />
                         </DetailEntry>
@@ -119,7 +123,7 @@ export const SetupPage: React.FC<Props> = (props: Props) => {
                 </div>
                 <div className={styles.script_setup}>
                     <div className={styles.card_section_header}>Script</div>
-                    <div className={styles.script_details}>
+                    <div className={styles.detail_entries}>
                         <DetailEntry label="Inline Script">
                             <Bean text="3 kB | syntax ok" />
                         </DetailEntry>
@@ -130,14 +134,17 @@ export const SetupPage: React.FC<Props> = (props: Props) => {
                 </div>
                 <div className={styles.connector_setup}>
                     <div className={styles.card_section_header}>Connector</div>
-                    <div className={styles.connector_details}>
+                    <div className={styles.detail_entries}>
                         <DetailEntry label="Connector Type">
                             <Bean text={connectorInfo?.displayName.long ?? 'unknown'} />
                         </DetailEntry>
-                        {connectorSetup?.type == SALESFORCE_DATA_CLOUD && (
+                        {connectorParams?.type == SALESFORCE_DATA_CLOUD && (
                             <>
-                                <DetailEntry label="Client ID">
-                                    <Bean text={connectorAuthState?.authParams?.clientId ?? 'unknown'} />
+                                <DetailEntry label="Instance URL">
+                                    <Bean text={connectorParams.value.instanceUrl ?? 'unknown'} />
+                                </DetailEntry>
+                                <DetailEntry label="Connected App">
+                                    <Bean text={connectorParams.value.consumerKey ?? 'unknown'} />
                                 </DetailEntry>
                             </>
                         )}

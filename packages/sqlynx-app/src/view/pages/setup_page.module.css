@@ -89,27 +89,21 @@
     padding: 8px;
     border-top: 1px solid var(--border_color_primary);
 }
-.wasm_details {
-    margin-top: 8px;
-    display: grid;
-    grid-template-columns: max-content 1fr;
-    grid-template-rows: repeat(3, 28px);
-    align-items: center;
-}
-
 .script_setup {
     padding: 8px;
     border-top: 1px solid var(--border_color_primary);
 }
-.script_details {
+.detail_entries {
+    width: 100%;
     margin-top: 8px;
     display: grid;
     grid-template-columns: max-content 1fr;
-    grid-template-rows: repeat(2, 28px);
+    row-gap: 8px;
     align-items: center;
 }
 .detail_entry_value {
     justify-self: right;
+    text-overflow: ellipsis;
 }
 .detail_entry_key {
     font-size: 0.9rem;
