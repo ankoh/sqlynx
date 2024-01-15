@@ -3,13 +3,15 @@ import LZString from 'lz-string';
 import classNames from 'classnames';
 
 import { TextInput, AnchoredOverlay, Box, IconButton } from '@primer/react';
-import { PaperclipIcon } from '@primer/octicons-react';
+import { CheckIcon, PaperclipIcon } from '@primer/octicons-react';
 
 import { sleep } from '../../utils/sleep';
 import { ScriptData, ScriptKey, ScriptState } from '../../scripts/script_state';
 import { useScriptState } from '../../scripts/script_state_provider';
 
 import styles from './script_url_overlay.module.css';
+
+const COPY_CHECKMARK_DURATION_MS = 1000;
 
 const encodeScript = (url: URL, key: string, data: ScriptData) => {
     if (data.script) {
@@ -73,14 +75,17 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
     }, [scriptState.scripts[ScriptKey.MAIN_SCRIPT], scriptState.scripts[ScriptKey.SCHEMA_SCRIPT]]);
 
     // Copy the url to the clipboard
-    React.useCallback(
-        (url: URL) => {
-            const urlText = url.toString();
+    const copyURL = React.useCallback(
+        (event: React.MouseEvent) => {
+            if (!state.url) return;
+            event.stopPropagation();
+            const urlText = state.url.toString();
             setState(s => ({
                 ...s,
                 copyStartedAt: new Date(),
                 copyFinishedAt: null,
                 copyError: null,
+                uiResetAt: null,
             }));
             const copy = async () => {
                 try {
@@ -97,7 +102,7 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
                         copyError: e,
                     }));
                 }
-                await sleep(5000);
+                await sleep(COPY_CHECKMARK_DURATION_MS);
                 setState(s => ({
                     ...s,
                     uiResetAt: new Date(),
@@ -105,7 +110,7 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
             };
             copy();
         },
-        [setState],
+        [state, setState],
     );
 
     const anchorRef = React.createRef<HTMLDivElement>();
@@ -127,7 +132,8 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
                 <IconButton
                     ref={buttonRef}
                     className={styles.sharing_button}
-                    icon={PaperclipIcon}
+                    icon={state.copyFinishedAt != null && state.uiResetAt == null ? CheckIcon : PaperclipIcon}
+                    onClick={copyURL}
                     aria-labelledby="copy-to-clipboard"
                 />
             </Box>
