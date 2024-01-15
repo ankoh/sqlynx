@@ -1,4 +1,4 @@
-@media only screen and (max-width: 1200px) {
+@media only screen and (max-width: 800px) {
     .page {
         display: flex;
         align-items: center;
@@ -27,12 +27,12 @@
     }
     .banner_title {
         font-size: 1.8rem;
-        font-family: 'RobotoMono';
+        font-family: 'Roboto Mono';
         font-weight: 200;
         color: hsl(212, 8%, 23%);
     }
 }
-@media only screen and (min-width: 1200px) {
+@media only screen and (min-width: 800px) {
     .page {
         display: flex;
         align-items: center;
@@ -62,7 +62,7 @@
     }
     .banner_title {
         font-size: 1.8rem;
-        font-family: 'RobotoMono';
+        font-family: 'Roboto Mono';
         font-weight: 200;
         color: hsl(212, 8%, 23%);
     }
