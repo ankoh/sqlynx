@@ -92,10 +92,11 @@
 .detail_entries {
     width: 100%;
     margin-top: 8px;
+    margin-bottom: 4px;
     display: grid;
     grid-template-columns: max-content 1fr;
     row-gap: 8px;
-    column-gap: 16px;
+    column-gap: 24px;
     align-items: center;
 }
 .detail_entry_value {
@@ -115,10 +116,22 @@
     padding: 2px 8px;
 }
 
+.card_status {
+    column-gap: 8px;
+    display: flex;
+    flex-direction: row;
+    justify-content: right;
+    align-items: center;
+}
+.card_status_text {
+    font-size: 0.9rem;
+    font-weight: 400;
+}
+
 .card_actions {
     border-top: 1px solid var(--border_color_primary);
     display: grid;
-    grid-template-columns: max-content 1fr max-content;
+    grid-template-columns: max-content 1fr;
     column-gap: 8px;
     padding: 8px;
 }

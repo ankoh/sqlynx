@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Button } from '@primer/react';
+import { Button, IconButton } from '@primer/react';
 
 import {
     CONNECTOR_INFOS,
@@ -18,6 +18,7 @@ import { RESULT_OK, formatBytes, formatNanoseconds } from '../../utils';
 import styles from './setup_page.module.css';
 
 import symbols from '../../../static/svg/symbols.generated.svg';
+import { SyncIcon } from '@primer/octicons-react';
 
 interface Props {}
 
@@ -63,25 +64,24 @@ export const SetupPage: React.FC<Props> = (props: Props) => {
     }
 
     // Get the auth status
-    let authStatus: string = 'not required';
+    const canContinue = connectorAuthCheck === null || connectorAuthCheck === ConnectorAuthCheck.AUTHENTICATED;
+    let statusText: string = 'ready';
     switch (connectorAuthCheck) {
         case ConnectorAuthCheck.AUTHENTICATED:
-            authStatus = 'authenticated';
+            statusText = 'Authenticated';
             break;
         case ConnectorAuthCheck.AUTHENTICATION_IN_PROGRESS:
-            authStatus = 'in progress';
+            statusText = 'Authentication In Progress';
             break;
         case ConnectorAuthCheck.AUTHENTICATION_NOT_STARTED:
-            authStatus = 'not started';
-            break;
         case ConnectorAuthCheck.CLIENT_ID_MISMATCH:
-            authStatus = 'id mismatch';
+            statusText = 'Authentication Required';
             break;
         case ConnectorAuthCheck.AUTHENTICATION_FAILED:
-            authStatus = 'failed';
+            statusText = 'Authentication Failed';
             break;
         case ConnectorAuthCheck.UNKNOWN:
-            authStatus = 'unknown';
+            statusText = '';
             break;
     }
 
@@ -140,7 +140,7 @@ export const SetupPage: React.FC<Props> = (props: Props) => {
                         </DetailEntry>
                         {connectorParams?.type == SALESFORCE_DATA_CLOUD && (
                             <>
-                                <DetailEntry label="Instance URL">
+                                <DetailEntry label="Instance Url">
                                     <Bean text={connectorParams.value.instanceUrl ?? 'unknown'} />
                                 </DetailEntry>
                                 <DetailEntry label="Connected App">
@@ -148,18 +148,22 @@ export const SetupPage: React.FC<Props> = (props: Props) => {
                                 </DetailEntry>
                             </>
                         )}
-                        <DetailEntry label="Authentication">
-                            <Bean text={authStatus} />
-                        </DetailEntry>
                     </div>
                 </div>
                 <div className={styles.card_actions}>
                     <Button className={styles.skip_button} variant="danger">
                         Skip
                     </Button>
-                    <Button className={styles.continue_button} variant="primary">
-                        Continue
-                    </Button>
+                    {canContinue ? (
+                        <Button className={styles.continue_button} variant="primary">
+                            Continue
+                        </Button>
+                    ) : (
+                        <div className={styles.card_status}>
+                            <div className={styles.card_status_text}>{statusText}</div>
+                            <IconButton icon={SyncIcon} aria-labelledby="sync" />
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
