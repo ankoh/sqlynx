@@ -37,42 +37,42 @@
 /* -------------------------------------------------------------------- */
 
 @font-face {
-    font-family: 'RobotoMono';
+    font-family: 'Roboto Mono';
     font-style: normal;
     font-weight: 200;
     src: url(./RobotoMono-Thin.ttf) format('truetype');
 }
 
 @font-face {
-    font-family: 'RobotoMono';
+    font-family: 'Roboto Mono';
     font-style: normal;
     font-weight: 300;
     src: url(./RobotoMono-Light.ttf) format('truetype');
 }
 
 @font-face {
-    font-family: 'RobotoMono';
+    font-family: 'Roboto Mono';
     font-style: normal;
     font-weight: 400;
     src: url(./RobotoMono-Regular.ttf) format('truetype');
 }
 
 @font-face {
-    font-family: 'RobotoMono';
+    font-family: 'Roboto Mono';
     font-style: normal;
     font-weight: 500;
     src: url(./RobotoMono-SemiBold.ttf) format('truetype');
 }
 
 @font-face {
-    font-family: 'RobotoMono';
+    font-family: 'Roboto Mono';
     font-style: normal;
     font-weight: 700;
     src: url(./RobotoMono-Bold.ttf) format('truetype');
 }
 
 @font-face {
-    font-family: 'RobotoMono';
+    font-family: 'Roboto Mono';
     font-style: italic;
     font-weight: 400;
     src: url(./RobotoMono-Italic.ttf) format('truetype');
