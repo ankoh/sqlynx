@@ -12,6 +12,7 @@ import {
 } from '../../connectors/connector_selection';
 import { ConnectorInfo, ConnectorType } from '../../connectors/connector_info';
 import { useAppConfig } from '../../app_config';
+import { useScriptState } from '../../scripts/script_state_provider';
 import { ScriptEditor } from '../editor/editor';
 import { SchemaGraph } from '../../view/schema/schema_graph';
 import { QueryProgress } from '../../view/progress/query_progress';
@@ -147,9 +148,13 @@ const ProjectListItems = (props: {}) => (
 );
 
 export const EditorPage: React.FC<Props> = (props: Props) => {
-    const appConfig = useAppConfig();
+    const scriptState = useScriptState();
     const connector = useSelectedConnector();
     const [selectedTab, selectTab] = React.useState<number>(1);
+    const [sharingIsOpen, setSharingIsOpen] = React.useState<boolean>(false);
+
+    const queryExecutionStarted = (scriptState.queryExecutionState?.startedAt ?? null) != null;
+    const queryExecutionHasResults = scriptState.queryExecutionResult != null;
 
     const columnA = Int32Array.from({ length: 1000 }, () => Number((Math.random() * 1000).toFixed(0)));
     const columnB = Int32Array.from({ length: 1000 }, () => Number((Math.random() * 1000).toFixed(0)));
@@ -159,7 +164,6 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
         B: columnB,
         C: columnC,
     });
-    const [sharingIsOpen, setSharingIsOpen] = React.useState<boolean>(false);
 
     return (
         <div className={styles.page}>
@@ -191,8 +195,8 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                     selectTab={selectTab}
                     tabs={[
                         [1, `${icons}#tables_connected`, true],
-                        [2, `${icons}#plan`, true],
-                        [3, `${icons}#table`, false],
+                        [2, `${icons}#plan`, queryExecutionStarted],
+                        [3, `${icons}#table`, queryExecutionHasResults],
                     ]}
                     tabProps={{}}
                     tabRenderers={{
