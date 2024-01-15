@@ -21,7 +21,7 @@ const encodeScript = (url: URL, key: string, data: ScriptData) => {
     }
 };
 
-const buildURL = (state: ScriptState | null = null): URL => {
+const buildURL = (state: ScriptState | null, embedConnectorInfo: boolean): URL => {
     const baseURL = process.env.SQLYNX_APP_URL;
     const urlText = baseURL ?? '';
     const url = new URL(urlText);
@@ -53,6 +53,7 @@ interface State {
 
 export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
     const scriptState = useScriptState();
+    const [embedConnectorInfo, setEmbedConnectorInfo] = React.useState<boolean>(true);
     const [state, setState] = React.useState<State>(() => ({
         url: null,
         urlText: null,
@@ -62,7 +63,7 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
         uiResetAt: null,
     }));
     React.useEffect(() => {
-        const url = buildURL(scriptState);
+        const url = buildURL(scriptState, embedConnectorInfo);
         const urlText = url.toString();
         setState({
             url,
@@ -72,7 +73,7 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
             copyError: null,
             uiResetAt: null,
         });
-    }, [scriptState.scripts[ScriptKey.MAIN_SCRIPT], scriptState.scripts[ScriptKey.SCHEMA_SCRIPT]]);
+    }, [scriptState.scripts[ScriptKey.MAIN_SCRIPT], scriptState.scripts[ScriptKey.SCHEMA_SCRIPT], embedConnectorInfo]);
 
     // Copy the url to the clipboard
     const copyURL = React.useCallback(
@@ -115,6 +116,7 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
 
     const toggleConnectorEmbedding = React.useCallback((event: React.MouseEvent) => {
         event.stopPropagation();
+        setEmbedConnectorInfo(s => !s);
     }, []);
 
     const anchorRef = React.createRef<HTMLDivElement>();
@@ -144,7 +146,7 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
                     <div className={styles.sharing_url_stats}>{state.urlText?.length ?? 0} characters</div>
                 </div>
                 <div className={styles.sharing_url_setting}>
-                    <ToggleSwitch size="small" onClick={toggleConnectorEmbedding} />
+                    <ToggleSwitch checked={embedConnectorInfo} size="small" onClick={toggleConnectorEmbedding} />
                     <div className={styles.sharing_url_setting_name}>Embed non-sensitive connector info</div>
                 </div>
             </Box>
