@@ -119,7 +119,7 @@ const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
                     </div>
                 </div>
                 <div className={styles.card_section}>
-                    <div className={styles.card_section_header}>Script</div>
+                    <div className={styles.card_section_header}>SQL</div>
                     <div className={styles.detail_entries}>
                         <DetailEntry label="Inline Script">
                             <Bean text="3 kB | syntax ok" />
