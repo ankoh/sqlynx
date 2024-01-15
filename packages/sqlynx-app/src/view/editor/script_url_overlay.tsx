@@ -1,5 +1,6 @@
 import React from 'react';
 import LZString from 'lz-string';
+import classNames from 'classnames';
 
 import { TextInput, AnchoredOverlay, Box, IconButton } from '@primer/react';
 import { PaperclipIcon } from '@primer/octicons-react';
@@ -9,13 +10,12 @@ import { ScriptData, ScriptKey, ScriptState } from '../../scripts/script_state';
 import { useScriptState } from '../../scripts/script_state_provider';
 
 import styles from './script_url_overlay.module.css';
-import classNames from 'classnames';
 
-const encodeScript = (url: URL, prefix: string, data: ScriptData) => {
+const encodeScript = (url: URL, key: string, data: ScriptData) => {
     if (data.script) {
         const text = data.script.toString();
         const textBase64 = LZString.compressToBase64(text);
-        url.searchParams.set(`${prefix}-script`, encodeURIComponent(textBase64));
+        url.searchParams.set(key, encodeURIComponent(textBase64));
     }
 };
 
@@ -26,7 +26,7 @@ const buildURL = (state: ScriptState | null = null): URL => {
     const mainScript = state?.scripts[ScriptKey.MAIN_SCRIPT] ?? null;
     const schemaScript = state?.scripts[ScriptKey.SCHEMA_SCRIPT] ?? null;
     if (mainScript?.script) {
-        encodeScript(url, 'main', mainScript);
+        encodeScript(url, 'script', mainScript);
     }
     if (schemaScript?.script) {
         encodeScript(url, 'schema', schemaScript);
@@ -59,10 +59,17 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
         copyError: null,
         uiResetAt: null,
     }));
-    const [url, urlText] = React.useMemo(() => {
+    React.useEffect(() => {
         const url = buildURL(scriptState);
         const urlText = url.toString();
-        return [url, urlText];
+        setState({
+            url,
+            urlText,
+            copyStartedAt: null,
+            copyFinishedAt: null,
+            copyError: null,
+            uiResetAt: null,
+        });
     }, [scriptState.scripts[ScriptKey.MAIN_SCRIPT], scriptState.scripts[ScriptKey.SCHEMA_SCRIPT]]);
 
     // Copy the url to the clipboard
@@ -116,7 +123,7 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
         >
             <Box className={classNames(styles.sharing_overlay, props.className)}>
                 <div className={styles.sharing_title}>Save Query as Link</div>
-                <TextInput className={styles.sharing_url} disabled={true} value={urlText} />
+                <TextInput className={styles.sharing_url} disabled={true} value={state.urlText ?? ''} />
                 <IconButton
                     ref={buttonRef}
                     className={styles.sharing_button}
