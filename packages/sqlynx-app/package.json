@@ -21,7 +21,7 @@
         "@codemirror/state": "^6.4.0",
         "@codemirror/view": "^6.23.0",
         "@emotion/is-prop-valid": "^1.2.1",
-        "@lezer/common": "^1.2.0",
+        "@lezer/common": "^1.2.1",
         "@lezer/highlight": "^1.2.0",
         "@octokit/graphql": "^7.0.2",
         "@primer/octicons-react": "^19.8.0",
