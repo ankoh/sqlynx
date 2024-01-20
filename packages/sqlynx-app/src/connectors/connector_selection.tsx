@@ -3,13 +3,18 @@ import { Dispatch, VariantKind } from '../utils';
 import { CONNECTOR_INFOS, ConnectorInfo, ConnectorType } from './connector_info';
 
 export const SELECT_CONNECTOR = Symbol('SELECT_CONNECTOR');
+export const SELECT_NEXT_CONNECTOR = Symbol('SELECT_NEXT_CONNECTOR');
 
-export type SelectedConnectorDispatch = VariantKind<typeof SELECT_CONNECTOR, ConnectorType>;
+export type SelectedConnectorDispatch =
+    | VariantKind<typeof SELECT_CONNECTOR, ConnectorType>
+    | VariantKind<typeof SELECT_NEXT_CONNECTOR, null>;
 
-function reduceSelectedConnector(_state: ConnectorInfo, action: SelectedConnectorDispatch): ConnectorInfo {
+function reduceSelectedConnector(state: ConnectorInfo, action: SelectedConnectorDispatch): ConnectorInfo {
     switch (action.type) {
         case SELECT_CONNECTOR:
             return CONNECTOR_INFOS[action.value as number];
+        case SELECT_NEXT_CONNECTOR:
+            return CONNECTOR_INFOS[((state.connectorType as number) + 1) % CONNECTOR_INFOS.length];
     }
 }
 

@@ -1,17 +1,18 @@
 import React from 'react';
 import { KeyEventHandler, useKeyEvents } from '../utils/key_events';
-import { useSelectedConnector } from '../connectors/connector_selection';
+import { SELECT_NEXT_CONNECTOR, useConnectorSelection, useSelectedConnector } from '../connectors/connector_selection';
 import { ConnectorInfo } from '../connectors/connector_info';
 import { FULL_CATALOG_REFRESH } from '../connectors/catalog_update';
 import { useScriptStateDispatch } from './script_state_provider';
 import { EXECUTE_QUERY, UPDATE_CATALOG } from './script_state_reducer';
 
 export enum ScriptCommandType {
-    ExecuteQuery = 0,
-    RefreshSchema = 1,
-    SaveQueryAsSql = 2,
-    SaveQueryAsLink = 3,
-    SaveQueryResultsAsArrow = 4,
+    NextConnector = 0,
+    ExecuteQuery = 1,
+    RefreshSchema = 2,
+    SaveQueryAsSql = 3,
+    SaveQueryAsLink = 4,
+    SaveQueryResultsAsArrow = 5,
 }
 
 export type ScriptCommandDispatch = (command: ScriptCommandType) => void;
@@ -25,11 +26,15 @@ const COMMAND_DISPATCH_CTX = React.createContext<ScriptCommandDispatch | null>(n
 export const ScriptCommands: React.FC<Props> = (props: Props) => {
     const connector = useSelectedConnector();
     const stateDispatch = useScriptStateDispatch();
+    const selectConnector = useConnectorSelection();
 
     // Setup command dispatch logic
     const commandDispatch = React.useCallback(
         async (command: ScriptCommandType) => {
             switch (command) {
+                case ScriptCommandType.NextConnector:
+                    selectConnector({ type: SELECT_NEXT_CONNECTOR, value: null });
+                    break;
                 case ScriptCommandType.ExecuteQuery:
                     stateDispatch({
                         type: EXECUTE_QUERY,
@@ -65,6 +70,11 @@ export const ScriptCommands: React.FC<Props> = (props: Props) => {
     // Create key event handlers
     const keyHandlers = React.useMemo<KeyEventHandler[]>(() => {
         return [
+            {
+                key: 'n',
+                ctrlKey: true,
+                callback: () => commandDispatch(ScriptCommandType.NextConnector),
+            },
             {
                 key: 'e',
                 ctrlKey: true,
