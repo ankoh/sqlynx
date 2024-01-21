@@ -5,10 +5,11 @@ enum CatalogEntryType: uint8 {
     DESCRIPTOR_POOL = 1,
 }
 
-struct CatalogEntry {
+table CatalogEntry {
     external_id: uint32;
     entry_type: CatalogEntryType;
     rank: uint32;
+    schemas: [SchemaDescriptor];
 }
 
 table CatalogEntries {
@@ -22,6 +23,7 @@ table SchemaDescriptor {
 }
 
 table SchemaTable {
+    table_id: uint32;
     table_name: string;
     columns: [SchemaTableColumn];
 }

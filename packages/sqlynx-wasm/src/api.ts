@@ -31,6 +31,7 @@ interface SQLynxModuleExports {
     sqlynx_catalog_new: () => number;
     sqlynx_catalog_clear: (catalog_ptr: number) => void;
     sqlynx_catalog_describe_entries: (catalog_ptr: number) => number;
+    sqlynx_catalog_describe_entries_of: (catalog_ptr: number, external_id: number) => number;
     sqlynx_catalog_load_script: (catalog_ptr: number, script_ptr: number, rank: number) => number;
     sqlynx_catalog_update_script: (catalog_ptr: number, script_ptr: number) => number;
     sqlynx_catalog_drop_script: (catalog_ptr: number, script_ptr: number) => void;
@@ -132,6 +133,10 @@ export class SQLynx {
             sqlynx_catalog_new: instance.exports['sqlynx_catalog_new'] as () => number,
             sqlynx_catalog_describe_entries: instance.exports['sqlynx_catalog_describe_entries'] as (
                 catalog_ptr: number,
+            ) => number,
+            sqlynx_catalog_describe_entries_of: instance.exports['sqlynx_catalog_describe_entries_of'] as (
+                catalog_ptr: number,
+                entry_id: number,
             ) => number,
             sqlynx_catalog_load_script: instance.exports['sqlynx_catalog_load_script'] as (
                 catalog_ptr: number,
@@ -555,10 +560,16 @@ export class SQLynxCatalog {
         const catalogPtr = this.ptr.assertNotNull();
         this.ptr.api.instanceExports.sqlynx_catalog_clear(catalogPtr);
     }
-    /// Add a script in the registry
+    /// Describe catalog entries
     public describeEntries(): FlatBufferPtr<proto.CatalogEntries> {
         const catalogPtr = this.ptr.assertNotNull();
         const result = this.ptr.api.instanceExports.sqlynx_catalog_describe_entries(catalogPtr);
+        return this.ptr.api.readFlatBufferResult<proto.CatalogEntries>(result);
+    }
+    /// Describe catalog entries
+    public describeEntriesOf(id: number): FlatBufferPtr<proto.CatalogEntries> {
+        const catalogPtr = this.ptr.assertNotNull();
+        const result = this.ptr.api.instanceExports.sqlynx_catalog_describe_entries_of(catalogPtr, id);
         return this.ptr.api.readFlatBufferResult<proto.CatalogEntries>(result);
     }
     /// Add a script in the registry

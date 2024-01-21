@@ -2,6 +2,7 @@
 
 #include <limits>
 
+#include "sqlynx/api.h"
 #include "sqlynx/catalog.h"
 #include "sqlynx/external.h"
 #include "sqlynx/proto/proto_generated.h"
@@ -55,13 +56,13 @@ void QueryGraphLayout::PrepareLayout(const AnalyzedScript& analyzed) {
     std::unordered_map<ExternalObjectID, size_t, ExternalObjectID::Hasher> nodes_by_table_id;
     for (auto& table : analyzed.GetTables()) {
         nodes_by_table_id.insert({table.table_id, nodes.size()});
-        nodes.emplace_back(nodes.size(), table.table_id, 0);
+        nodes.emplace_back(nodes.size(), table.table_id, table.table_name, 0);
     }
     // Add external tables
     script->GetCatalog().Iterate([&](auto entry_id, CatalogEntry& entry) {
         for (auto& table : entry.GetTables()) {
             nodes_by_table_id.insert({table.table_id, nodes.size()});
-            nodes.emplace_back(nodes.size(), table.table_id, 0);
+            nodes.emplace_back(nodes.size(), table.table_id, table.table_name, 0);
         }
     });
     for (auto& ref : analyzed.table_references) {
@@ -305,10 +306,15 @@ flatbuffers::Offset<proto::QueryGraphLayout> QueryGraphLayout::Pack(flatbuffers:
         auto x = center_x + placed_cell.position.column * config.cell_width;
         auto y = center_y + placed_cell.position.row * config.cell_height;
         bool is_referenced = !nodes[i].table_reference_id.IsNull();
-        proto::QueryGraphLayoutVertex pos{x - config.cell_width / 2, y - config.cell_height / 2};
-        proto::QueryGraphLayoutTableNode proto_node{nodes[i].table_id.Pack(), pos, config.table_width,
-                                                    config.table_height, is_referenced};
-        layout.table_nodes[i] = proto_node;
+        auto proto_node = std::make_unique<proto::QueryGraphLayoutTableNodeT>();
+        proto_node->table_id = nodes[i].table_id.Pack();
+        proto_node->table_name = nodes[i].table_name.table_name;
+        proto_node->height = config.table_height;
+        proto_node->width = config.table_width;
+        proto_node->is_referenced = is_referenced;
+        proto_node->position =
+            std::make_unique<proto::QueryGraphLayoutVertex>(x - config.cell_width / 2, y - config.cell_height / 2);
+        layout.table_nodes[i] = std::move(proto_node);
     }
     size_t edge_node_reader = 0;
     size_t edge_node_writer = 0;

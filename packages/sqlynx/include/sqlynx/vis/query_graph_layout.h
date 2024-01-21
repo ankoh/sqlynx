@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "sqlynx/catalog.h"
 #include "sqlynx/external.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
@@ -98,6 +99,8 @@ class QueryGraphLayout {
         size_t node_id;
         /// The table id
         ExternalObjectID table_id;
+        /// The table name
+        CatalogEntry::QualifiedTableName table_name;
         /// The total number of peers
         uint32_t total_peers;
         /// The number of peers that are already placed
@@ -107,8 +110,14 @@ class QueryGraphLayout {
         /// Is referenced?
         ExternalObjectID table_reference_id;
         /// Constructor
-        Node(size_t node_id, ExternalObjectID table_id, uint32_t total_peers)
-            : node_id(node_id), table_id(table_id), total_peers(total_peers), placed_peers(0), table_reference_id() {}
+        Node(size_t node_id, ExternalObjectID table_id, CatalogEntry::QualifiedTableName table_name,
+             uint32_t total_peers)
+            : node_id(node_id),
+              table_id(table_id),
+              table_name(table_name),
+              total_peers(total_peers),
+              placed_peers(0),
+              table_reference_id() {}
 
         /// A ptr to a node
         struct Ref {

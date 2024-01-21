@@ -1,6 +1,7 @@
 #include "sqlynx/catalog.h"
 
 #include <flatbuffers/buffer.h>
+#include <flatbuffers/flatbuffer_builder.h>
 #include <flatbuffers/verifier.h>
 
 #include "sqlynx/external.h"
@@ -94,8 +95,57 @@ DescriptorPool::DescriptorPool(ExternalID external_id, uint32_t rank) : CatalogE
     name_search_index.emplace(CatalogEntry::NameSearchIndex{});
 }
 
-proto::CatalogEntry DescriptorPool::DescribeEntry() const {
-    return proto::CatalogEntry(external_id, proto::CatalogEntryType::DESCRIPTOR_POOL, 0);
+static flatbuffers::Offset<proto::SchemaDescriptor> describeEntrySchema(flatbuffers::FlatBufferBuilder& builder,
+                                                                        const proto::SchemaDescriptor& descriptor,
+                                                                        uint32_t& table_id) {
+    auto database_name = builder.CreateString(descriptor.database_name());
+    auto schema_name = builder.CreateString(descriptor.schema_name());
+
+    std::vector<flatbuffers::Offset<proto::SchemaTable>> table_offsets;
+    table_offsets.reserve(descriptor.tables()->size());
+    for (auto* table : *descriptor.tables()) {
+        auto table_name = builder.CreateString(table->table_name());
+
+        std::vector<flatbuffers::Offset<proto::SchemaTableColumn>> column_offsets;
+        column_offsets.reserve(table->columns()->size());
+        for (auto* column : *table->columns()) {
+            auto column_name = builder.CreateString(column->column_name());
+            proto::SchemaTableColumnBuilder column_builder{builder};
+            column_builder.add_column_name(column_name);
+            column_offsets.push_back(column_builder.Finish());
+        }
+        auto columns_offset = builder.CreateVector(column_offsets);
+
+        proto::SchemaTableBuilder table_builder{builder};
+        table_builder.add_table_id(table_id++);
+        table_builder.add_table_name(table_name);
+        table_builder.add_columns(columns_offset);
+        table_offsets.push_back(table_builder.Finish());
+    }
+    auto tables_offset = builder.CreateVector(table_offsets);
+
+    proto::SchemaDescriptorBuilder schema_builder{builder};
+    schema_builder.add_database_name(database_name);
+    schema_builder.add_schema_name(schema_name);
+    schema_builder.add_tables(tables_offset);
+    return schema_builder.Finish();
+}
+
+flatbuffers::Offset<proto::CatalogEntry> DescriptorPool::DescribeEntry(flatbuffers::FlatBufferBuilder& builder) const {
+    std::vector<flatbuffers::Offset<proto::SchemaDescriptor>> schema_offsets;
+    schema_offsets.reserve(descriptor_buffers.size());
+    uint32_t table_id = 0;
+    for (auto& buffer : descriptor_buffers) {
+        schema_offsets.push_back(describeEntrySchema(builder, buffer.descriptor, table_id));
+    }
+    auto schemas_offset = builder.CreateVector(schema_offsets);
+
+    proto::CatalogEntryBuilder catalog{builder};
+    catalog.add_external_id(external_id);
+    catalog.add_entry_type(proto::CatalogEntryType::DESCRIPTOR_POOL);
+    catalog.add_rank(0);
+    catalog.add_schemas(schemas_offset);
+    return catalog.Finish();
 }
 
 const CatalogEntry::NameSearchIndex& DescriptorPool::GetNameSearchIndex() { return name_search_index.value(); }
@@ -207,15 +257,33 @@ void Catalog::Clear() {
     ++version;
 }
 
-proto::CatalogEntriesT Catalog::DescribeEntries() const {
-    proto::CatalogEntriesT result;
-    result.entries.reserve(entries.size());
+flatbuffers::Offset<proto::CatalogEntries> Catalog::DescribeEntries(flatbuffers::FlatBufferBuilder& builder) const {
+    std::vector<flatbuffers::Offset<proto::CatalogEntry>> entryOffsets;
+    entryOffsets.reserve(entries_ranked.size());
     for (auto& [rank, external_id] : entries_ranked) {
         auto* entry = entries.at(external_id);
-        result.entries.push_back(entry->DescribeEntry());
-        result.entries.back().mutate_rank(rank);
+        entryOffsets.push_back(entry->DescribeEntry(builder));
     }
-    return result;
+    auto entriesOffset = builder.CreateVector(entryOffsets);
+    proto::CatalogEntriesBuilder entriesBuilder{builder};
+    entriesBuilder.add_entries(entriesOffset);
+    return entriesBuilder.Finish();
+}
+
+flatbuffers::Offset<proto::CatalogEntries> Catalog::DescribeEntriesOf(flatbuffers::FlatBufferBuilder& builder,
+                                                                      size_t external_id) const {
+    auto iter = entries.find(external_id);
+    if (iter == entries.end()) {
+        return {};
+    } else {
+        std::vector<flatbuffers::Offset<proto::CatalogEntry>> entryOffsets;
+        entryOffsets.reserve(entries_ranked.size());
+        entryOffsets.push_back(iter->second->DescribeEntry(builder));
+        auto entriesOffset = builder.CreateVector(entryOffsets);
+        proto::CatalogEntriesBuilder entriesBuilder{builder};
+        entriesBuilder.add_entries(entriesOffset);
+        return entriesBuilder.Finish();
+    }
 }
 
 proto::StatusCode Catalog::LoadScript(Script& script, CatalogEntry::Rank rank) {

@@ -34,9 +34,11 @@ struct QueryGraphLayoutEdgeNode {
     node_id: uint32;
 }
 
-struct QueryGraphLayoutTableNode {
+table QueryGraphLayoutTableNode {
     /// The id of table
     table_id: uint64;
+    /// The name of the table
+    table_name: string;
     /// The position
     position: QueryGraphLayoutVertex;
     /// The node width
