@@ -1,10 +1,9 @@
 import React from 'react';
 import { KeyEventHandler, useKeyEvents } from '../utils/key_events';
-import { SELECT_NEXT_CONNECTOR, useConnectorSelection, useSelectedConnector } from '../connectors/connector_selection';
 import { ConnectorInfo } from '../connectors/connector_info';
 import { FULL_CATALOG_REFRESH } from '../connectors/catalog_update';
-import { useScriptStateDispatch } from './script_state_provider';
-import { EXECUTE_QUERY, UPDATE_CATALOG } from './script_state_reducer';
+import { useScriptState, useScriptStateDispatch } from './script_state_provider';
+import { EXECUTE_QUERY, SELECT_NEXT_CONNECTOR, UPDATE_CATALOG } from './script_state_reducer';
 
 export enum ScriptCommandType {
     NextConnector = 0,
@@ -24,16 +23,15 @@ interface Props {
 const COMMAND_DISPATCH_CTX = React.createContext<ScriptCommandDispatch | null>(null);
 
 export const ScriptCommands: React.FC<Props> = (props: Props) => {
-    const connector = useSelectedConnector();
+    const state = useScriptState();
     const stateDispatch = useScriptStateDispatch();
-    const selectConnector = useConnectorSelection();
 
     // Setup command dispatch logic
     const commandDispatch = React.useCallback(
         async (command: ScriptCommandType) => {
             switch (command) {
                 case ScriptCommandType.NextConnector:
-                    selectConnector({ type: SELECT_NEXT_CONNECTOR, value: null });
+                    stateDispatch({ type: SELECT_NEXT_CONNECTOR, value: null });
                     break;
                 case ScriptCommandType.ExecuteQuery:
                     stateDispatch({
@@ -61,7 +59,7 @@ export const ScriptCommands: React.FC<Props> = (props: Props) => {
                     break;
             }
         },
-        [connector],
+        [state.connectorInfo],
     );
     // Helper to signal that a command is not implemented
     const commandNotImplemented = (connector: ConnectorInfo, actionName: string) => {
@@ -78,15 +76,15 @@ export const ScriptCommands: React.FC<Props> = (props: Props) => {
             {
                 key: 'e',
                 ctrlKey: true,
-                callback: !connector.features.executeQueryAction
-                    ? () => commandNotImplemented(connector, 'EXECUTE_QUERY')
+                callback: !state.connectorInfo.features.executeQueryAction
+                    ? () => commandNotImplemented(state.connectorInfo, 'EXECUTE_QUERY')
                     : () => commandDispatch(ScriptCommandType.ExecuteQuery),
             },
             {
                 key: 'r',
                 ctrlKey: true,
-                callback: !connector.features.executeQueryAction
-                    ? () => commandNotImplemented(connector, 'REFRESH_SCHEMA')
+                callback: !state.connectorInfo.features.executeQueryAction
+                    ? () => commandNotImplemented(state.connectorInfo, 'REFRESH_SCHEMA')
                     : () => commandDispatch(ScriptCommandType.RefreshSchema),
             },
             {
@@ -102,12 +100,12 @@ export const ScriptCommands: React.FC<Props> = (props: Props) => {
             {
                 key: 'a',
                 ctrlKey: true,
-                callback: !connector.features.executeQueryAction
-                    ? () => commandNotImplemented(connector, 'SAVE_QUERY_RESULTS_AS_ARROW')
+                callback: !state.connectorInfo.features.executeQueryAction
+                    ? () => commandNotImplemented(state.connectorInfo, 'SAVE_QUERY_RESULTS_AS_ARROW')
                     : () => commandDispatch(ScriptCommandType.SaveQueryResultsAsArrow),
             },
         ],
-        [connector, commandDispatch],
+        [state.connectorInfo, commandDispatch],
     );
 
     // Setup key event handlers

@@ -11,15 +11,11 @@ import {
     ArrowSwitchIcon,
 } from '@primer/octicons-react';
 
-import {
-    SELECT_CONNECTOR,
-    useSelectedConnector,
-    useConnectorList,
-    useConnectorSelection,
-} from '../../connectors/connector_selection';
+import { useConnectorList } from '../../connectors/connector_info';
 import { ConnectorInfo, ConnectorType } from '../../connectors/connector_info';
 import { QueryExecutionTaskStatus } from '../../connectors/query_execution';
-import { useScriptState } from '../../scripts/script_state_provider';
+import { useScriptState, useScriptStateDispatch } from '../../scripts/script_state_provider';
+import { SELECT_CONNECTOR } from '../../scripts/script_state_reducer';
 import { ScriptEditor } from '../editor/editor';
 import { SchemaGraph } from '../../view/schema/schema_graph';
 import { QueryProgress } from '../../view/progress/query_progress';
@@ -38,15 +34,15 @@ interface Props {}
 
 const ConnectorSelection = (props: { className?: string; variant: 'default' | 'invisible'; short: boolean }) => {
     const connectorList = useConnectorList();
-    const connectorSelection = useConnectorSelection();
-    const connector = useSelectedConnector();
+    const scriptState = useScriptState();
+    const scriptStateDispatch = useScriptStateDispatch();
     const [isOpen, setIsOpen] = React.useState<boolean>(false);
     const selectConnector = React.useCallback((e: React.MouseEvent<HTMLLIElement, MouseEvent>) => {
         e.stopPropagation();
         const target = e.currentTarget as HTMLLIElement;
         const connectorType = Number.parseInt(target.dataset.connector ?? '0')! as ConnectorType;
         setIsOpen(false);
-        connectorSelection({
+        scriptStateDispatch({
             type: SELECT_CONNECTOR,
             value: connectorType,
         });
@@ -57,9 +53,9 @@ const ConnectorSelection = (props: { className?: string; variant: 'default' | 'i
                 className={props.className}
                 variant={props.variant}
                 alignContent="start"
-                leadingVisual={() => getConnectorIcon(connector)}
+                leadingVisual={() => getConnectorIcon(scriptState.connectorInfo)}
             >
-                {props.short ? connector.displayName.short : connector.displayName.long}
+                {props.short ? scriptState.connectorInfo.displayName.short : scriptState.connectorInfo.displayName.long}
             </ActionMenu.Button>
             <ActionMenu.Overlay width={props.short ? 'auto' : 'medium'} align="end">
                 <ActionList>
@@ -180,9 +176,8 @@ interface TabState {
     enabledTabs: number;
 }
 
-export const EditorPage: React.FC<Props> = (props: Props) => {
+export const EditorPage: React.FC<Props> = (_props: Props) => {
     const scriptState = useScriptState();
-    const connector = useSelectedConnector();
     const [selectedTab, selectTab] = React.useState<TabKey>(TabKey.SchemaView);
     const [sharingIsOpen, setSharingIsOpen] = React.useState<boolean>(false);
 
@@ -288,7 +283,7 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                             short={false}
                         />
                         <ActionList.Divider />
-                        <CommandListItems connector={connector} canCycleOutput={enabledTabs > 1} />
+                        <CommandListItems connector={scriptState.connectorInfo} canCycleOutput={enabledTabs > 1} />
                     </ActionList>
                     <ActionList key={1} className={styles.project_actions}>
                         <ProjectListItems />

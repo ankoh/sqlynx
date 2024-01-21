@@ -1,6 +1,7 @@
 import * as sqlynx from '@ankoh/sqlynx';
 import Immutable from 'immutable';
 
+import { ConnectorInfo } from '../connectors/connector_info';
 import { CatalogUpdateRequestVariant, CatalogUpdateTaskState } from '../connectors/catalog_update';
 import { generateBlankScript, ScriptMetadata } from './script_metadata';
 import { ScriptLoadingStatus } from './script_loader';
@@ -19,6 +20,8 @@ export enum ScriptKey {
 export interface ScriptState {
     /// The API
     instance: sqlynx.SQLynx | null;
+    /// The connector info
+    connectorInfo: ConnectorInfo;
     /// The catalog
     catalog: sqlynx.SQLynxCatalog | null;
     /// The catalog updates
