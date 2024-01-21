@@ -2,7 +2,14 @@ import * as React from 'react';
 import * as arrow from 'apache-arrow';
 
 import { ActionList, IconButton, ButtonGroup, ActionMenu } from '@primer/react';
-import { SyncIcon, PaperAirplaneIcon, LinkIcon, DownloadIcon, ThreeBarsIcon } from '@primer/octicons-react';
+import {
+    SyncIcon,
+    PaperAirplaneIcon,
+    LinkIcon,
+    DownloadIcon,
+    ThreeBarsIcon,
+    VersionsIcon,
+} from '@primer/octicons-react';
 
 import {
     SELECT_CONNECTOR,
@@ -17,6 +24,7 @@ import { ScriptEditor } from '../editor/editor';
 import { SchemaGraph } from '../../view/schema/schema_graph';
 import { QueryProgress } from '../../view/progress/query_progress';
 import { DataTable } from '../../view/table/data_table';
+import { KeyEventHandler, useKeyEvents } from '../../utils/key_events';
 import { TabCard } from '../../view/tab_card';
 import { ScriptFileSaveOverlay } from '../editor/script_filesave_overlay';
 import { ScriptURLOverlay } from '../editor/script_url_overlay';
@@ -114,6 +122,21 @@ const CommandListItems = (props: { connector: ConnectorInfo }) => {
                 Save Results as .arrow
                 <ActionList.TrailingVisual>Ctrl + A</ActionList.TrailingVisual>
             </ActionList.Item>
+            <ActionList.Divider />
+            <ActionList.Item>
+                <ActionList.LeadingVisual>
+                    <VersionsIcon />
+                </ActionList.LeadingVisual>
+                Cycle connectors
+                <ActionList.TrailingVisual>Ctrl + N</ActionList.TrailingVisual>
+            </ActionList.Item>
+            <ActionList.Item>
+                <ActionList.LeadingVisual>
+                    <VersionsIcon />
+                </ActionList.LeadingVisual>
+                Cycle output tabs
+                <ActionList.TrailingVisual>Ctrl + O</ActionList.TrailingVisual>
+            </ActionList.Item>
         </>
     );
 };
@@ -148,20 +171,50 @@ const ProjectListItems = (props: {}) => (
 );
 
 enum TabKey {
-    SchemaView = 1,
-    PlanView = 2,
-    TableView = 3,
+    SchemaView = 0,
+    QueryProgressView = 1,
+    QueryResultView = 2,
+}
+
+interface TabState {
+    enabledTabs: number;
 }
 
 export const EditorPage: React.FC<Props> = (props: Props) => {
     const scriptState = useScriptState();
     const connector = useSelectedConnector();
-    const [selectedTab, selectTab] = React.useState<number>(1);
+    const [selectedTab, selectTab] = React.useState<TabKey>(TabKey.SchemaView);
     const [sharingIsOpen, setSharingIsOpen] = React.useState<boolean>(false);
 
-    const queryExecutionStarted = (scriptState.queryExecutionState?.startedAt ?? null) != null;
-    const queryExecutionHasResults = scriptState.queryExecutionResult != null;
-    const prevQueryExecutionState = React.useRef<QueryExecutionTaskStatus | null>(null);
+    // Determine selected tabs
+    const tabState = React.useRef<TabState>({
+        enabledTabs: 1,
+    });
+    let enabledTabs = 1;
+    enabledTabs += +((scriptState.queryExecutionState?.startedAt ?? null) != null);
+    enabledTabs += +(scriptState.queryExecutionResult != null);
+    tabState.current.enabledTabs = enabledTabs;
+
+    // Register keyboard events
+    const keyHandlers = React.useMemo<KeyEventHandler[]>(
+        () => [
+            {
+                key: 'o',
+                ctrlKey: true,
+                callback: () => {
+                    selectTab(key => {
+                        const tabs = [TabKey.SchemaView, TabKey.QueryProgressView, TabKey.QueryResultView];
+                        return tabs[((key as number) + 1) % tabState.current.enabledTabs];
+                    });
+                },
+            },
+        ],
+        [tabState, selectTab],
+    );
+    useKeyEvents(keyHandlers);
+
+    // Automatically switch tabs when the execution status changes meaningfully
+    const prevStatus = React.useRef<QueryExecutionTaskStatus | null>(null);
     React.useEffect(() => {
         const status = scriptState.queryExecutionState?.status ?? null;
         switch (status) {
@@ -171,27 +224,18 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
             case QueryExecutionTaskStatus.ACCEPTED:
             case QueryExecutionTaskStatus.RECEIVED_SCHEMA:
             case QueryExecutionTaskStatus.RECEIVED_FIRST_RESULT:
-                if (prevQueryExecutionState.current == null) {
-                    selectTab(TabKey.PlanView);
+                if (prevStatus.current == null) {
+                    selectTab(TabKey.QueryProgressView);
                 }
                 break;
             case QueryExecutionTaskStatus.FAILED:
                 break;
             case QueryExecutionTaskStatus.SUCCEEDED:
-                selectTab(TabKey.TableView);
+                selectTab(TabKey.QueryResultView);
                 break;
         }
-        prevQueryExecutionState.current = status;
+        prevStatus.current = status;
     }, [scriptState.queryExecutionState?.status]);
-
-    const columnA = Int32Array.from({ length: 1000 }, () => Number((Math.random() * 1000).toFixed(0)));
-    const columnB = Int32Array.from({ length: 1000 }, () => Number((Math.random() * 1000).toFixed(0)));
-    const columnC = Int32Array.from({ length: 1000 }, () => Number((Math.random() * 1000).toFixed(0)));
-    const table = arrow.tableFromArrays({
-        A: columnA,
-        B: columnB,
-        C: columnC,
-    });
 
     return (
         <div className={styles.page}>
@@ -223,14 +267,16 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                     selectTab={selectTab}
                     tabs={[
                         [TabKey.SchemaView, `${icons}#tables_connected`, true],
-                        [TabKey.PlanView, `${icons}#plan`, queryExecutionStarted],
-                        [TabKey.TableView, `${icons}#table`, queryExecutionHasResults],
+                        [TabKey.QueryProgressView, `${icons}#plan`, tabState.current.enabledTabs >= 2],
+                        [TabKey.QueryResultView, `${icons}#table`, tabState.current.enabledTabs >= 3],
                     ]}
                     tabProps={{}}
                     tabRenderers={{
                         [TabKey.SchemaView]: _props => <SchemaGraph />,
-                        [TabKey.PlanView]: _props => <QueryProgress />,
-                        [TabKey.TableView]: _props => <DataTable data={table} />,
+                        [TabKey.QueryProgressView]: _props => <QueryProgress />,
+                        [TabKey.QueryResultView]: _props => (
+                            <DataTable data={scriptState.queryExecutionResult?.resultTable ?? null} />
+                        ),
                     }}
                 />
                 <ScriptEditor className={styles.editor_card} />
