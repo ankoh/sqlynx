@@ -8,7 +8,6 @@ import {
     QueryExecutionTaskStatus,
     QueryExecutionTaskVariant,
 } from '../connectors/query_execution';
-import { useSelectedConnector } from '../connectors/connector_selection';
 import { useSalesforceAPI } from '../connectors/salesforce_connector';
 import { useSalesforceAuthState } from '../connectors/salesforce_auth_state';
 import { ConnectorType, SALESFORCE_DATA_CLOUD } from '../connectors/connector_info';
@@ -27,7 +26,6 @@ import { ScriptKey } from './script_state';
 export const ScriptQueryExecutor = (props: { children?: React.ReactElement }) => {
     const state = useScriptState();
     const dispatch = useScriptStateDispatch();
-    const selectedConnector = useSelectedConnector();
     const salesforceAPI = useSalesforceAPI();
     const salesforceAuth = useSalesforceAuthState();
 
@@ -37,7 +35,7 @@ export const ScriptQueryExecutor = (props: { children?: React.ReactElement }) =>
         }
 
         let task: QueryExecutionTaskVariant;
-        switch (selectedConnector.connectorType) {
+        switch (state.connectorInfo.connectorType) {
             case ConnectorType.SALESFORCE_DATA_CLOUD:
                 task = {
                     type: SALESFORCE_DATA_CLOUD,
@@ -50,7 +48,9 @@ export const ScriptQueryExecutor = (props: { children?: React.ReactElement }) =>
                 break;
             case ConnectorType.LOCAL_SCRIPT:
             case ConnectorType.HYPER_DATABASE:
-                console.warn(`script query executor does not support connector ${selectedConnector.connectorType} yet`);
+                console.warn(
+                    `script query executor does not support connector ${state.connectorInfo.connectorType} yet`,
+                );
                 return;
         }
 

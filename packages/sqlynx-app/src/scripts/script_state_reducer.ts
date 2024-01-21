@@ -22,9 +22,13 @@ import {
     QueryExecutionTaskState,
     QueryExecutionTaskStatus,
 } from '../connectors/query_execution';
+import { CONNECTOR_INFOS, ConnectorType } from '../connectors/connector_info';
 
 export const INITIALIZE = Symbol('INITIALIZE');
 export const DESTROY = Symbol('DESTROY');
+
+export const SELECT_CONNECTOR = Symbol('SELECT_CONNECTOR');
+export const SELECT_NEXT_CONNECTOR = Symbol('SELECT_NEXT_CONNECTOR');
 
 export const UPDATE_SCRIPT_ANALYSIS = Symbol('UPDATE_SCRIPT_ANALYSIS');
 export const UPDATE_SCRIPT_CURSOR = Symbol('UPDATE_SCRIPT_CURSOR');
@@ -57,6 +61,8 @@ export const RESIZE_QUERY_GRAPH = Symbol('RESIZE_EDITOR');
 export type ScriptStateAction =
     | VariantKind<typeof INITIALIZE, sqlynx.SQLynx>
     | VariantKind<typeof DESTROY, null>
+    | VariantKind<typeof SELECT_CONNECTOR, ConnectorType>
+    | VariantKind<typeof SELECT_NEXT_CONNECTOR, null>
     | VariantKind<typeof UPDATE_SCRIPT_ANALYSIS, [ScriptKey, SQLynxScriptBuffers, sqlynx.proto.ScriptCursorInfoT]>
     | VariantKind<typeof UPDATE_SCRIPT_CURSOR, [ScriptKey, sqlynx.proto.ScriptCursorInfoT]>
     | VariantKind<typeof LOAD_SCRIPTS, { [key: number]: ScriptMetadata }>
@@ -99,6 +105,7 @@ function createDefaultState(): ScriptState {
     const DEFAULT_BOARD_HEIGHT = 600;
     return {
         instance: null,
+        connectorInfo: CONNECTOR_INFOS[ConnectorType.LOCAL_SCRIPT],
         scripts: {},
         nextCatalogUpdateId: 1,
         catalogUpdateRequests: Immutable.Map(),
@@ -168,6 +175,21 @@ function reduceScriptState(state: ScriptState, action: ScriptStateAction): Scrip
         }
         case DESTROY:
             return destroyState({ ...state });
+
+        case SELECT_CONNECTOR:
+            return {
+                ...state,
+                connectorInfo: CONNECTOR_INFOS[action.value as number],
+            };
+
+        // XXX This doesn't make that much sense, we should only cycle through connectors that are configured.
+        //     The command execution has to inspect the connector state
+        case SELECT_NEXT_CONNECTOR:
+            return {
+                ...state,
+                connectorInfo:
+                    CONNECTOR_INFOS[((state.connectorInfo.connectorType as number) + 1) % CONNECTOR_INFOS.length],
+            };
 
         case UPDATE_SCRIPT_ANALYSIS: {
             // Destroy the previous buffers

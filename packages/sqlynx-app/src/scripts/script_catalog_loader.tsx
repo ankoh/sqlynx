@@ -9,7 +9,6 @@ import {
     FULL_CATALOG_REFRESH,
 } from '../connectors/catalog_update';
 import { SALESFORCE_DATA_CLOUD } from '../connectors/connector_info';
-import { useSelectedConnector } from '../connectors/connector_selection';
 import { useSalesforceAPI } from '../connectors/salesforce_connector';
 import { useSalesforceAuthState } from '../connectors/salesforce_auth_state';
 import {
@@ -22,7 +21,6 @@ import {
 export const ScriptCatalogLoader = (props: { children?: React.ReactElement }) => {
     const state = useScriptState();
     const dispatch = useScriptStateDispatch();
-    const selectedConnector = useSelectedConnector();
     const salesforceAPI = useSalesforceAPI();
     const salesforceAuth = useSalesforceAuthState();
 

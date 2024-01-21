@@ -76,3 +76,5 @@ export enum ConnectorAuthCheck {
     AUTHENTICATION_NOT_STARTED,
     CLIENT_ID_MISMATCH,
 }
+
+export const useConnectorList = () => CONNECTOR_INFOS;

@@ -12,7 +12,6 @@ import { ScriptCommands } from './scripts/script_commands';
 import { ScriptQueryExecutor } from './scripts/script_query_executor';
 import { ScriptURLSetup } from './scripts/script_url_setup';
 import { SalesforceConnector } from './connectors/salesforce_connector';
-import { ConnectorSelection } from './connectors/connector_selection';
 import { LogProvider } from './app_log';
 import { AppConfigResolver } from './app_config';
 import { isElectron } from './utils/user_agent';
@@ -39,17 +38,15 @@ const AppProviders = (props: { children: React.ReactElement }) => (
             <AppConfigResolver>
                 <SQLynxLoader>
                     <SalesforceConnector>
-                        <ConnectorSelection>
-                            <ScriptStateProvider>
-                                <ScriptCommands>
-                                    <ScriptLoader />
-                                    <ScriptCatalogLoader />
-                                    <ScriptCatalogSalesforceAutoloader />
-                                    <ScriptQueryExecutor />
-                                    <ScriptURLSetup>{props.children}</ScriptURLSetup>
-                                </ScriptCommands>
-                            </ScriptStateProvider>
-                        </ConnectorSelection>
+                        <ScriptStateProvider>
+                            <ScriptCommands>
+                                <ScriptLoader />
+                                <ScriptCatalogLoader />
+                                <ScriptCatalogSalesforceAutoloader />
+                                <ScriptQueryExecutor />
+                                <ScriptURLSetup>{props.children}</ScriptURLSetup>
+                            </ScriptCommands>
+                        </ScriptStateProvider>
                     </SalesforceConnector>
                 </SQLynxLoader>
             </AppConfigResolver>

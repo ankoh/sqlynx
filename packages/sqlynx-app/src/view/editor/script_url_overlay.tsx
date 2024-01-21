@@ -9,7 +9,6 @@ import { sleep } from '../../utils/sleep';
 import { ScriptData, ScriptKey } from '../../scripts/script_state';
 import { useScriptState } from '../../scripts/script_state_provider';
 import { useSalesforceAuthState } from '../../connectors/salesforce_auth_state';
-import { useSelectedConnector } from '../../connectors/connector_selection';
 import { ConnectorType } from '../../connectors/connector_info';
 import {
     writeHyperConnectorParams,
@@ -55,7 +54,6 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
         copyError: null,
         uiResetAt: null,
     }));
-    const selectedConnector = useSelectedConnector();
     const salesforceAuth = useSalesforceAuthState();
 
     React.useEffect(() => {
@@ -63,7 +61,7 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
         const url = new URL(baseURL ?? '');
         url.searchParams.set('connector', 'local');
         if (embedConnectorInfo) {
-            switch (selectedConnector.connectorType) {
+            switch (scriptState.connectorInfo.connectorType) {
                 case ConnectorType.LOCAL_SCRIPT:
                     writeLocalConnectorParams(url.searchParams);
                     break;
