@@ -14,7 +14,11 @@ import {
 import { useConnectorList } from '../../connectors/connector_info';
 import { ConnectorInfo, ConnectorType } from '../../connectors/connector_info';
 import { QueryExecutionTaskStatus } from '../../connectors/query_execution';
-import { useScriptState, useScriptStateDispatch } from '../../scripts/script_state_provider';
+import {
+    useScriptSelectionIterator,
+    useScriptState,
+    useScriptStateDispatch,
+} from '../../scripts/script_state_provider';
 import { SELECT_CONNECTOR } from '../../scripts/script_state_reducer';
 import { ScriptEditor } from '../editor/editor';
 import { SchemaGraph } from '../../view/schema/schema_graph';
@@ -129,9 +133,9 @@ const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
     );
 };
 
-const ViewCommandList = (props: { canCycleOutput: boolean }) => (
+const ViewCommandList = (props: { canCycleScripts: boolean; canCycleOutput: boolean }) => (
     <>
-        <ActionList.Item>
+        <ActionList.Item disabled={!props.canCycleScripts}>
             <ActionList.LeadingVisual>
                 <ArrowSwitchIcon />
             </ActionList.LeadingVisual>
@@ -190,6 +194,7 @@ interface TabState {
 
 export const EditorPage: React.FC<Props> = (_props: Props) => {
     const scriptState = useScriptState();
+    const scriptSelectionIterator = useScriptSelectionIterator();
     const [selectedTab, selectTab] = React.useState<TabKey>(TabKey.SchemaView);
     const [sharingIsOpen, setSharingIsOpen] = React.useState<boolean>(false);
 
@@ -296,7 +301,10 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                 <ScriptEditor className={styles.editor_card} />
                 <div className={styles.action_sidebar}>
                     <ActionList className={styles.view_actions}>
-                        <ViewCommandList canCycleOutput={enabledTabs > 1} />
+                        <ViewCommandList
+                            canCycleScripts={scriptSelectionIterator.count > 1}
+                            canCycleOutput={enabledTabs > 1}
+                        />
                     </ActionList>
                     <ActionList className={styles.data_actions}>
                         <ActionList.LinkItem href="/connections">

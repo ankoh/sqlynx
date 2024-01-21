@@ -2,7 +2,7 @@ import React from 'react';
 import { KeyEventHandler, useKeyEvents } from '../utils/key_events';
 import { ConnectorInfo } from '../connectors/connector_info';
 import { FULL_CATALOG_REFRESH } from '../connectors/catalog_update';
-import { useScriptState, useScriptStateDispatch } from './script_state_provider';
+import { useScriptSelectionIterator, useScriptState, useScriptStateDispatch } from './script_state_provider';
 import { EXECUTE_QUERY, SELECT_NEXT_CONNECTOR, UPDATE_CATALOG } from './script_state_reducer';
 
 export enum ScriptCommandType {
@@ -25,13 +25,14 @@ const COMMAND_DISPATCH_CTX = React.createContext<ScriptCommandDispatch | null>(n
 export const ScriptCommands: React.FC<Props> = (props: Props) => {
     const state = useScriptState();
     const stateDispatch = useScriptStateDispatch();
+    const scriptIterator = useScriptSelectionIterator();
 
     // Setup command dispatch logic
     const commandDispatch = React.useCallback(
         async (command: ScriptCommandType) => {
             switch (command) {
                 case ScriptCommandType.NextConnector:
-                    stateDispatch({ type: SELECT_NEXT_CONNECTOR, value: null });
+                    scriptIterator.next();
                     break;
                 case ScriptCommandType.ExecuteQuery:
                     stateDispatch({

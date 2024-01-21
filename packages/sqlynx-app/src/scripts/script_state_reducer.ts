@@ -125,6 +125,20 @@ export function createGlobalScriptState(scriptState: ScriptState): number {
     return scriptId;
 }
 
+export function getGlobalScriptCount(): number {
+    return GLOBAL_SCRIPTS.size;
+}
+
+export function getNextGlobalScript(id: number | null): number | null {
+    const keys = [...GLOBAL_SCRIPTS.keys()];
+    keys.sort();
+    if (keys.length == 0) {
+        return id;
+    } else {
+        return keys[(keys.findIndex(v => v == id) + 1) % keys.length];
+    }
+}
+
 function reduceScriptState(state: ScriptState, action: ScriptStateAction): ScriptState {
     switch (action.type) {
         case DESTROY:
