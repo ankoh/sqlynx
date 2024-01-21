@@ -292,7 +292,12 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                     tabProps={{}}
                     tabRenderers={{
                         [TabKey.SchemaView]: _props => <SchemaGraph />,
-                        [TabKey.QueryProgressView]: _props => <QueryProgress />,
+                        [TabKey.QueryProgressView]: _props => (
+                            <QueryProgress
+                                queryStatus={scriptState?.queryExecutionState?.status ?? null}
+                                queryProgress={scriptState?.queryExecutionState?.latestProgressUpdate ?? null}
+                            />
+                        ),
                         [TabKey.QueryResultView]: _props => (
                             <DataTable data={scriptState?.queryExecutionResult?.resultTable ?? null} />
                         ),
