@@ -249,7 +249,6 @@ export function NodeLayer(props: Props) {
                             </svg>
                         </div>
                         <div className={styles.table_name}>{n.name}</div>
-                        <div className={styles.table_column_count}>{n.columns.length}</div>
                     </div>
                 );
             })}
