@@ -80,6 +80,10 @@ export function deriveScriptFocusFromCursor(
             const tmpColRef = new sqlynx.proto.ColumnReference();
             const tmpTblRef = new sqlynx.proto.TableReference();
             for (const key of [ScriptKey.MAIN_SCRIPT, ScriptKey.SCHEMA_SCRIPT]) {
+                const data = scriptData[key];
+                if (!data) {
+                    continue;
+                }
                 const analyzed = scriptData[key].processed.analyzed?.read(new sqlynx.proto.AnalyzedScript());
                 if (!analyzed) continue;
                 for (let refId = 0; refId < analyzed.columnReferencesLength(); ++refId) {
