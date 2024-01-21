@@ -7,8 +7,8 @@ import {
     LinkIcon,
     DownloadIcon,
     ThreeBarsIcon,
-    FileIcon,
     StackIcon,
+    ArrowSwitchIcon,
 } from '@primer/octicons-react';
 
 import { useConnectorList } from '../../connectors/connector_info';
@@ -46,10 +46,10 @@ const ConnectorSelection = (props: { className?: string; variant: 'default' | 'i
         const target = e.currentTarget as HTMLLIElement;
         const connectorType = Number.parseInt(target.dataset.connector ?? '0')! as ConnectorType;
         setIsOpen(false);
-        scriptStateDispatch({
-            type: SELECT_CONNECTOR,
-            value: connectorType,
-        });
+        // scriptStateDispatch({
+        //     type: SELECT_CONNECTOR,
+        //     value: connectorType,
+        // });
     }, []);
     const connectorName = !scriptState?.connectorInfo
         ? 'Not set'
@@ -137,17 +137,17 @@ const NavCommandList = (props: { canCycleScripts: boolean; canCycleOutput: boole
     <>
         <ActionList.Item disabled={!props.canCycleScripts}>
             <ActionList.LeadingVisual>
-                <FileIcon />
+                <ArrowSwitchIcon />
             </ActionList.LeadingVisual>
             Switch script
-            <ActionList.TrailingVisual>Ctrl + N</ActionList.TrailingVisual>
+            <ActionList.TrailingVisual>Ctrl + H/L</ActionList.TrailingVisual>
         </ActionList.Item>
         <ActionList.Item disabled={!props.canCycleOutput}>
             <ActionList.LeadingVisual>
                 <StackIcon />
             </ActionList.LeadingVisual>
             Switch output
-            <ActionList.TrailingVisual>Ctrl + O</ActionList.TrailingVisual>
+            <ActionList.TrailingVisual>Ctrl + J/K</ActionList.TrailingVisual>
         </ActionList.Item>
     </>
 );
