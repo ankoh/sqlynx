@@ -11,7 +11,7 @@ import {
     ArrowSwitchIcon,
 } from '@primer/octicons-react';
 
-import { CONNECTOR_INFOS, useConnectorList } from '../../connectors/connector_info';
+import { useConnectorList } from '../../connectors/connector_info';
 import { ConnectorInfo, ConnectorType } from '../../connectors/connector_info';
 import { QueryExecutionTaskStatus } from '../../connectors/query_execution';
 import { useScriptState, useScriptStateDispatch } from '../../scripts/script_state_provider';
@@ -78,26 +78,11 @@ const ConnectorSelection = (props: { className?: string; variant: 'default' | 'i
     );
 };
 
-const CommandListItems = (props: { connector: ConnectorInfo | null; canCycleOutput: boolean }) => {
+const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
     const [linkSharingIsOpen, openLinkSharing] = React.useState<boolean>(false);
     const [saveSqlIsOpen, openSaveSql] = React.useState<boolean>(false);
     return (
         <>
-            <ActionList.Item>
-                <ActionList.LeadingVisual>
-                    <ArrowSwitchIcon />
-                </ActionList.LeadingVisual>
-                Cycle connectors
-                <ActionList.TrailingVisual>Ctrl + N</ActionList.TrailingVisual>
-            </ActionList.Item>
-            <ActionList.Item disabled={!props.canCycleOutput}>
-                <ActionList.LeadingVisual>
-                    <ArrowSwitchIcon />
-                </ActionList.LeadingVisual>
-                Cycle output
-                <ActionList.TrailingVisual>Ctrl + O</ActionList.TrailingVisual>
-            </ActionList.Item>
-            <ActionList.Divider />
             <ActionList.Item disabled={!props.connector?.features.executeQueryAction}>
                 <ActionList.LeadingVisual>
                     <PaperAirplaneIcon />
@@ -144,34 +129,54 @@ const CommandListItems = (props: { connector: ConnectorInfo | null; canCycleOutp
     );
 };
 
-const GitHubIcon = () => (
-    <svg width="20px" height="20px">
-        <use xlinkHref={`${icons}#github`} />
-    </svg>
-);
-
-const ProjectListItems = (props: {}) => (
+const ViewCommandList = (props: { canCycleOutput: boolean }) => (
     <>
-        <ActionList.LinkItem href="https://github.com/ankoh/sqlynx" target="_blank">
+        <ActionList.Item>
             <ActionList.LeadingVisual>
-                <GitHubIcon />
+                <ArrowSwitchIcon />
             </ActionList.LeadingVisual>
-            Open-source project
-        </ActionList.LinkItem>
-        <ActionList.LinkItem href="https://github.com/ankoh/sqlynx/issues" target="_blank">
+            Switch script
+            <ActionList.TrailingVisual>Ctrl + N</ActionList.TrailingVisual>
+        </ActionList.Item>
+        <ActionList.Item disabled={!props.canCycleOutput}>
             <ActionList.LeadingVisual>
-                <GitHubIcon />
+                <ArrowSwitchIcon />
             </ActionList.LeadingVisual>
-            Report a bug
-        </ActionList.LinkItem>
-        <ActionList.LinkItem href="https://github.com/ankoh/sqlynx/discussions" target="_blank">
-            <ActionList.LeadingVisual>
-                <GitHubIcon />
-            </ActionList.LeadingVisual>
-            View discussions
-        </ActionList.LinkItem>
+            Switch output
+            <ActionList.TrailingVisual>Ctrl + O</ActionList.TrailingVisual>
+        </ActionList.Item>
     </>
 );
+
+const ProjectCommandList = (props: {}) => {
+    const GitHubIcon = () => (
+        <svg width="20px" height="20px">
+            <use xlinkHref={`${icons}#github`} />
+        </svg>
+    );
+    return (
+        <>
+            <ActionList.LinkItem href="https://github.com/ankoh/sqlynx" target="_blank">
+                <ActionList.LeadingVisual>
+                    <GitHubIcon />
+                </ActionList.LeadingVisual>
+                Open-source project
+            </ActionList.LinkItem>
+            <ActionList.LinkItem href="https://github.com/ankoh/sqlynx/issues" target="_blank">
+                <ActionList.LeadingVisual>
+                    <GitHubIcon />
+                </ActionList.LeadingVisual>
+                Report a bug
+            </ActionList.LinkItem>
+            <ActionList.LinkItem href="https://github.com/ankoh/sqlynx/discussions" target="_blank">
+                <ActionList.LeadingVisual>
+                    <GitHubIcon />
+                </ActionList.LeadingVisual>
+                View discussions
+            </ActionList.LinkItem>
+        </>
+    );
+};
 
 enum TabKey {
     SchemaView = 0,
@@ -239,6 +244,13 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
         prevStatus.current = status;
     }, [scriptState?.queryExecutionState?.status]);
 
+    const connectorName = (short: boolean) =>
+        !scriptState?.connectorInfo
+            ? 'Not set'
+            : short
+            ? scriptState?.connectorInfo.displayName.short
+            : scriptState?.connectorInfo.displayName.long;
+
     return (
         <div className={styles.page}>
             <div className={styles.header_container}>
@@ -283,20 +295,21 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                 />
                 <ScriptEditor className={styles.editor_card} />
                 <div className={styles.action_sidebar}>
-                    <ActionList key={0} className={styles.data_actions}>
-                        <ConnectorSelection
-                            className={styles.sidebar_connector_selection}
-                            variant="invisible"
-                            short={false}
-                        />
-                        <ActionList.Divider />
-                        <CommandListItems
-                            connector={scriptState?.connectorInfo ?? null}
-                            canCycleOutput={enabledTabs > 1}
-                        />
+                    <ActionList className={styles.view_actions}>
+                        <ViewCommandList canCycleOutput={enabledTabs > 1} />
                     </ActionList>
-                    <ActionList key={1} className={styles.project_actions}>
-                        <ProjectListItems />
+                    <ActionList className={styles.data_actions}>
+                        <ActionList.LinkItem href="/connections">
+                            <ActionList.LeadingVisual>
+                                {!scriptState?.connectorInfo ? <div /> : getConnectorIcon(scriptState?.connectorInfo)}
+                            </ActionList.LeadingVisual>
+                            {connectorName(false)}
+                        </ActionList.LinkItem>
+                        <ActionList.Divider />
+                        <ScriptCommandList connector={scriptState?.connectorInfo ?? null} />
+                    </ActionList>
+                    <ActionList className={styles.project_actions}>
+                        <ProjectCommandList />
                     </ActionList>
                 </div>
             </div>
