@@ -5,9 +5,9 @@ import * as React from 'react';
 import Immutable from 'immutable';
 
 import { SQLynxScriptBuffers, analyzeScript, parseAndAnalyzeScript } from '../view/editor/sqlynx_processor';
-import { ScriptState, ScriptKey, setupEmptyScript, destroyState } from './script_state';
+import { ScriptState, ScriptKey, destroyState } from './script_state';
 import { deriveScriptFocusFromCursor, focusGraphEdge, focusGraphNode } from './focus';
-import { VariantKind, Dispatch } from '../utils/variant';
+import { VariantKind } from '../utils/variant';
 import { ScriptMetadata } from './script_metadata';
 import { ScriptLoadingStatus } from './script_loader';
 import { GraphConnectionId, GraphNodeDescriptor, computeGraphViewModel } from '../view/schema/graph_view_model';
@@ -22,7 +22,6 @@ import {
     QueryExecutionTaskState,
     QueryExecutionTaskStatus,
 } from '../connectors/query_execution';
-import { CONNECTOR_INFOS, ConnectorType } from '../connectors/connector_info';
 
 export const DESTROY = Symbol('DESTROY');
 
@@ -94,17 +93,20 @@ export function reduceScriptState(state: ScriptState, action: ScriptStateAction)
         case UPDATE_SCRIPT_ANALYSIS: {
             // Destroy the previous buffers
             const [scriptKey, buffers, cursor] = action.value;
+            const prevScript = state.scripts[scriptKey];
+            if (!prevScript) {
+                return state;
+            }
             // Store the new buffers
-            let scriptData = state.scripts[scriptKey];
-            scriptData.processed.destroy(scriptData.processed);
+            prevScript.processed.destroy(prevScript.processed);
             const next: ScriptState = {
                 ...state,
                 scripts: {
                     ...state.scripts,
                     [scriptKey]: {
-                        ...scriptData,
+                        ...prevScript,
                         processed: buffers,
-                        statistics: rotateStatistics(scriptData.statistics, scriptData.script?.getStatistics() ?? null),
+                        statistics: rotateStatistics(prevScript.statistics, prevScript.script?.getStatistics() ?? null),
                         cursor,
                     },
                 },
@@ -128,13 +130,17 @@ export function reduceScriptState(state: ScriptState, action: ScriptStateAction)
         case UPDATE_SCRIPT_CURSOR: {
             // Destroy previous cursor
             const [scriptKey, cursor] = action.value;
+            const prevScript = state.scripts[scriptKey];
+            if (!prevScript) {
+                return state;
+            }
             // Store new cursor
             const newState: ScriptState = {
                 ...state,
                 scripts: {
                     ...state.scripts,
                     [scriptKey]: {
-                        ...state.scripts[scriptKey],
+                        ...prevScript,
                         cursor,
                     },
                 },
@@ -193,16 +199,19 @@ export function reduceScriptState(state: ScriptState, action: ScriptStateAction)
                 },
             };
         case SCRIPT_LOADING_FAILED: {
-            const data = state.scripts[action.value[0]];
+            const prevScript = state.scripts[action.value[0]];
+            if (!prevScript) {
+                return state;
+            }
             return {
                 ...state,
                 scripts: {
                     ...state.scripts,
                     [action.value[0]]: {
-                        ...data,
+                        ...prevScript,
                         loading: {
                             status: ScriptLoadingStatus.FAILED,
-                            startedAt: data.loading.startedAt,
+                            startedAt: prevScript.loading.startedAt,
                             finishedAt: new Date(),
                             error: action.value[1],
                         },
@@ -212,17 +221,20 @@ export function reduceScriptState(state: ScriptState, action: ScriptStateAction)
         }
         case SCRIPT_LOADING_SUCCEEDED: {
             const [scriptKey, content] = action.value;
-            const data = state.scripts[scriptKey];
+            const prevScript = state.scripts[scriptKey];
+            if (!prevScript) {
+                return state;
+            }
             // Create new state
             const next = {
                 ...state,
                 scripts: {
                     ...state.scripts,
                     [scriptKey]: {
-                        ...data,
+                        ...prevScript,
                         loading: {
                             status: ScriptLoadingStatus.SUCCEEDED,
-                            startedAt: data.loading.startedAt,
+                            startedAt: prevScript.loading.startedAt,
                             finishedAt: new Date(),
                             error: null,
                         },
@@ -287,7 +299,7 @@ export function reduceScriptState(state: ScriptState, action: ScriptStateAction)
                     ...next.scripts[scriptKey],
                     loading: {
                         status: ScriptLoadingStatus.FAILED,
-                        startedAt: data.loading.startedAt,
+                        startedAt: prevScript.loading.startedAt,
                         finishedAt: new Date(),
                         error: e,
                     },
