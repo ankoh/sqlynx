@@ -19,7 +19,6 @@ import {
     useSelectedScriptState,
     useSelectedScriptStateDispatch,
 } from '../../scripts/script_state_provider';
-import { SELECT_CONNECTOR } from '../../scripts/script_state_reducer';
 import { ScriptEditor } from '../editor/editor';
 import { SchemaGraph } from '../../view/schema/schema_graph';
 import { QueryProgress } from '../../view/progress/query_progress';
@@ -110,7 +109,7 @@ const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
                     Save Query as Link
                     <ScriptURLOverlay isOpen={linkSharingIsOpen} setIsOpen={openLinkSharing} />
                 </span>
-                <ActionList.TrailingVisual>Ctrl + L</ActionList.TrailingVisual>
+                <ActionList.TrailingVisual>Ctrl + U</ActionList.TrailingVisual>
             </ActionList.Item>
             <ActionList.Item onClick={() => openSaveSql(s => !s)}>
                 <ActionList.LeadingVisual>
@@ -211,7 +210,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
     const keyHandlers = React.useMemo<KeyEventHandler[]>(
         () => [
             {
-                key: 'o',
+                key: 'j',
                 ctrlKey: true,
                 callback: () => {
                     selectTab(key => {

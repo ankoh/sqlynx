@@ -85,7 +85,7 @@ export const ScriptCommands: React.FC<Props> = (props: Props) => {
     const keyHandlers = React.useMemo<KeyEventHandler[]>(
         () => [
             {
-                key: 'n',
+                key: 'l',
                 ctrlKey: true,
                 callback: () => commandDispatch(ScriptCommandType.NextConnector),
             },
@@ -108,7 +108,7 @@ export const ScriptCommands: React.FC<Props> = (props: Props) => {
                 ),
             },
             {
-                key: 'l',
+                key: 'u',
                 ctrlKey: true,
                 callback: () => commandDispatch(ScriptCommandType.SaveQueryAsLink),
             },
