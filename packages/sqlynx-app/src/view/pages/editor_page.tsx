@@ -1,5 +1,4 @@
 import * as React from 'react';
-import * as arrow from 'apache-arrow';
 
 import { ActionList, IconButton, ButtonGroup, ActionMenu } from '@primer/react';
 import {
@@ -8,7 +7,8 @@ import {
     LinkIcon,
     DownloadIcon,
     ThreeBarsIcon,
-    ArrowSwitchIcon,
+    FileIcon,
+    StackIcon,
 } from '@primer/octicons-react';
 
 import { useConnectorList } from '../../connectors/connector_info';
@@ -133,18 +133,18 @@ const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
     );
 };
 
-const ViewCommandList = (props: { canCycleScripts: boolean; canCycleOutput: boolean }) => (
+const NavCommandList = (props: { canCycleScripts: boolean; canCycleOutput: boolean }) => (
     <>
         <ActionList.Item disabled={!props.canCycleScripts}>
             <ActionList.LeadingVisual>
-                <ArrowSwitchIcon />
+                <FileIcon />
             </ActionList.LeadingVisual>
             Switch script
             <ActionList.TrailingVisual>Ctrl + N</ActionList.TrailingVisual>
         </ActionList.Item>
         <ActionList.Item disabled={!props.canCycleOutput}>
             <ActionList.LeadingVisual>
-                <ArrowSwitchIcon />
+                <StackIcon />
             </ActionList.LeadingVisual>
             Switch output
             <ActionList.TrailingVisual>Ctrl + O</ActionList.TrailingVisual>
@@ -301,7 +301,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                 <ScriptEditor className={styles.editor_card} />
                 <div className={styles.action_sidebar}>
                     <ActionList className={styles.view_actions}>
-                        <ViewCommandList
+                        <NavCommandList
                             canCycleScripts={scriptSelectionIterator.count > 1}
                             canCycleOutput={enabledTabs > 1}
                         />
