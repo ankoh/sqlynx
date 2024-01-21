@@ -37,6 +37,9 @@ const SchemaGraphView: React.FC<SchemaGraphViewProps> = (props: SchemaGraphViewP
         },
         [dispatch],
     );
+    if (!state) {
+        return <div />;
+    }
     return (
         <div
             className={styles.graph_view}

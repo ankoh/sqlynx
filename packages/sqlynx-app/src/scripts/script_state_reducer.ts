@@ -5,7 +5,7 @@ import * as React from 'react';
 import Immutable from 'immutable';
 
 import { SQLynxScriptBuffers, analyzeScript, parseAndAnalyzeScript } from '../view/editor/sqlynx_processor';
-import { ScriptState, ScriptKey, createEmptyScript, destroyState } from './script_state';
+import { ScriptState, ScriptKey, setupEmptyScript, destroyState } from './script_state';
 import { deriveScriptFocusFromCursor, focusGraphEdge, focusGraphNode } from './focus';
 import { VariantKind, Dispatch } from '../utils/variant';
 import { ScriptMetadata } from './script_metadata';
@@ -24,7 +24,6 @@ import {
 } from '../connectors/query_execution';
 import { CONNECTOR_INFOS, ConnectorType } from '../connectors/connector_info';
 
-export const INITIALIZE = Symbol('INITIALIZE');
 export const DESTROY = Symbol('DESTROY');
 
 export const SELECT_CONNECTOR = Symbol('SELECT_CONNECTOR');
@@ -59,7 +58,6 @@ export const FOCUS_QUERY_GRAPH_EDGE = Symbol('FOCUS_GRAPH_EDGE');
 export const RESIZE_QUERY_GRAPH = Symbol('RESIZE_EDITOR');
 
 export type ScriptStateAction =
-    | VariantKind<typeof INITIALIZE, sqlynx.SQLynx>
     | VariantKind<typeof DESTROY, null>
     | VariantKind<typeof SELECT_CONNECTOR, ConnectorType>
     | VariantKind<typeof SELECT_NEXT_CONNECTOR, null>
@@ -98,85 +96,42 @@ const STATS_HISTORY_LIMIT = 20;
 ///
 /// We therefore bypass the "pureness" rules for the top-level state and use a single global state instead.
 
-let GLOBAL_STATE: ScriptState = createDefaultState();
+let GLOBAL_SCRIPTS: Map<number, ScriptState> = new Map();
+let NEXT_SCRIPT_STATE_ID = 1;
 
-function createDefaultState(): ScriptState {
-    const DEFAULT_BOARD_WIDTH = 800;
-    const DEFAULT_BOARD_HEIGHT = 600;
-    return {
-        instance: null,
-        connectorInfo: CONNECTOR_INFOS[ConnectorType.LOCAL_SCRIPT],
-        scripts: {},
-        nextCatalogUpdateId: 1,
-        catalogUpdateRequests: Immutable.Map(),
-        catalogUpdates: Immutable.Map(),
-        catalog: null,
-        graph: null,
-        graphConfig: {
-            boardWidth: DEFAULT_BOARD_WIDTH,
-            boardHeight: DEFAULT_BOARD_HEIGHT,
-            cellWidth: 120,
-            cellHeight: 64,
-            tableWidth: 180,
-            tableHeight: 36,
-        },
-        graphLayout: null,
-        graphViewModel: {
-            nodes: [],
-            nodesByTable: new Map(),
-            edges: new Map(),
-            boundaries: {
-                minX: 0,
-                maxX: 0,
-                minY: 0,
-                maxY: 0,
-                totalWidth: 0,
-                totalHeight: 0,
-            },
-        },
-        userFocus: null,
-        queryExecutionRequested: false,
-        queryExecutionState: null,
-        queryExecutionResult: null,
-    };
-}
-
-export function useGlobalScriptState(): [ScriptState, Dispatch<ScriptStateAction>] {
-    const [state, setState] = React.useState(GLOBAL_STATE);
+export function useGlobalScriptState(id: number | null): [ScriptState | null, Dispatch<ScriptStateAction>] {
+    const [state, setState] = React.useState<ScriptState | null>(null);
+    React.useEffect(() => {
+        setState(id == null ? null : GLOBAL_SCRIPTS.get(id) ?? null);
+    }, [id]);
     const reducer = React.useCallback(
         (action: ScriptStateAction) => {
-            GLOBAL_STATE = reduceScriptState(GLOBAL_STATE, action);
-            setState(GLOBAL_STATE);
+            if (id == null) {
+                return;
+            }
+            const prev = GLOBAL_SCRIPTS.get(id)!;
+            const next = reduceScriptState(prev, action);
+            GLOBAL_SCRIPTS.set(id, next);
+            setState(next);
         },
-        [setState],
+        [id, setState],
     );
     return [state, reducer];
 }
 
+export function createGlobalScriptState(scriptState: ScriptState): number {
+    const scriptId = NEXT_SCRIPT_STATE_ID++;
+    GLOBAL_SCRIPTS.set(scriptId, scriptState);
+    return scriptId;
+}
+
 function reduceScriptState(state: ScriptState, action: ScriptStateAction): ScriptState {
     switch (action.type) {
-        case INITIALIZE: {
-            const lnx = action.value;
-            const catalog = lnx.createCatalog();
-            const mainScript = lnx.createScript(catalog, ScriptKey.MAIN_SCRIPT);
-            const schemaScript = lnx.createScript(catalog, ScriptKey.SCHEMA_SCRIPT);
-            const graph = lnx.createQueryGraphLayout();
-            const next: ScriptState = {
-                ...state,
-                instance: lnx,
-                catalog,
-                scripts: {
-                    [ScriptKey.MAIN_SCRIPT]: createEmptyScript(ScriptKey.MAIN_SCRIPT, mainScript),
-                    [ScriptKey.SCHEMA_SCRIPT]: createEmptyScript(ScriptKey.SCHEMA_SCRIPT, schemaScript),
-                },
-                graph,
-            };
-            return next;
-        }
         case DESTROY:
             return destroyState({ ...state });
 
         case SELECT_CONNECTOR:
+            console.log('SELECT_CONNECTOR');
             return {
                 ...state,
                 connectorInfo: CONNECTOR_INFOS[action.value as number],
@@ -185,6 +140,7 @@ function reduceScriptState(state: ScriptState, action: ScriptStateAction): Scrip
         // XXX This doesn't make that much sense, we should only cycle through connectors that are configured.
         //     The command execution has to inspect the connector state
         case SELECT_NEXT_CONNECTOR:
+            console.log('SELECT_NEXT_CONNECTOR');
             return {
                 ...state,
                 connectorInfo:

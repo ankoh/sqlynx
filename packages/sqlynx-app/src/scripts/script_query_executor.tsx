@@ -30,7 +30,7 @@ export const ScriptQueryExecutor = (props: { children?: React.ReactElement }) =>
     const salesforceAuth = useSalesforceAuthState();
 
     React.useEffect(() => {
-        if (!state.queryExecutionRequested) {
+        if (!state || !state.queryExecutionRequested) {
             return;
         }
 
@@ -146,7 +146,7 @@ export const ScriptQueryExecutor = (props: { children?: React.ReactElement }) =>
             }
         };
         run();
-    }, [state.queryExecutionRequested]);
+    }, [state?.queryExecutionRequested]);
 
     return props.children;
 };

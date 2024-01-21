@@ -94,31 +94,7 @@ export function destroyState(state: ScriptState): ScriptState {
     return state;
 }
 
-export function createDefaultScript(key: ScriptKey) {
-    const script: ScriptData = {
-        scriptKey: key,
-        scriptVersion: 1,
-        script: null,
-        metadata: generateBlankScript(),
-        loading: {
-            status: ScriptLoadingStatus.SUCCEEDED,
-            error: null,
-            startedAt: null,
-            finishedAt: null,
-        },
-        processed: {
-            scanned: null,
-            parsed: null,
-            analyzed: null,
-            destroy: () => {},
-        },
-        statistics: Immutable.List(),
-        cursor: null,
-    };
-    return script;
-}
-
-export function createEmptyScript(key: ScriptKey, empty: sqlynx.SQLynxScript) {
+export function setupEmptyScript(key: ScriptKey, empty: sqlynx.SQLynxScript) {
     const script: ScriptData = {
         scriptKey: key,
         scriptVersion: 1,

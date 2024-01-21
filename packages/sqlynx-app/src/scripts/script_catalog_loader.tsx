@@ -25,7 +25,7 @@ export const ScriptCatalogLoader = (props: { children?: React.ReactElement }) =>
     const salesforceAuth = useSalesforceAuthState();
 
     React.useEffect(() => {
-        if (!state.catalog) {
+        if (!state?.catalog) {
             return;
         }
         const catalog = state.catalog;
@@ -101,7 +101,7 @@ export const ScriptCatalogLoader = (props: { children?: React.ReactElement }) =>
             await Promise.all(updates);
         };
         processAll();
-    }, [state.catalog, state.catalogUpdateRequests]);
+    }, [state?.catalog, state?.catalogUpdateRequests]);
 
     return props.children;
 };
