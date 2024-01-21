@@ -6,7 +6,7 @@
 
     display: grid;
     grid-template-rows: 100%;
-    grid-template-columns: max-content auto max-content;
+    grid-template-columns: max-content 1fr;
     align-items: center;
     justify-items: center;
 }
@@ -33,9 +33,12 @@
 .table_name {
     position: relative;
     grid-column: 2 / 2;
-    display: flex;
+    width: 100%;
+    text-align: center;
+    text-overflow: ellipsis;
     align-items: center;
     padding-left: 8px;
+    padding-right: 8px;
     font-size: 0.9rem;
     overflow: hidden;
     width: 100%;
