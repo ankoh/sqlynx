@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Immutable from 'immutable';
 
-import { createGlobalScriptState } from './global_script_state';
+import { registerScript } from './script_state_registry';
 import { useScriptSelector, useSelectedScriptState } from './script_state_provider';
 import { CONNECTOR_INFOS, ConnectorType } from '../connectors/connector_info';
 import { useSQLynx } from '../sqlynx_loader';
@@ -73,7 +73,7 @@ export const ScriptAutoloaderLocal: React.FC<Props> = (props: Props) => {
                 cursor: null,
             };
 
-            const scriptId = createGlobalScriptState({
+            const scriptId = registerScript({
                 instance: instance.value,
                 connectorInfo: CONNECTOR_INFOS[ConnectorType.LOCAL_SCRIPT],
                 scripts: {
