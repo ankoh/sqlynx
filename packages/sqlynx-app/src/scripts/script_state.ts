@@ -18,6 +18,8 @@ export enum ScriptKey {
 }
 /// The state of the application
 export interface ScriptState {
+    /// The registry entry id
+    registryEntryId: number;
     /// The script state contains many references into the Wasm heap.
     /// It therefore makes sense that script state users resolve the "right" module through here.
     instance: sqlynx.SQLynx | null;

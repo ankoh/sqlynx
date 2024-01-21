@@ -230,6 +230,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
         const status = scriptState?.queryExecutionState?.status ?? null;
         switch (status) {
             case null:
+                selectTab(TabKey.SchemaView);
                 break;
             case QueryExecutionTaskStatus.STARTED:
             case QueryExecutionTaskStatus.ACCEPTED:
