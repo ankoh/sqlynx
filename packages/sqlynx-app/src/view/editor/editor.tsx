@@ -80,7 +80,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         cursor: null,
     });
     const activeScriptKey = activeTab == TabId.SCHEMA_SCRIPT ? ScriptKey.SCHEMA_SCRIPT : ScriptKey.MAIN_SCRIPT;
-    const activeScriptStatistics = ctx.scripts[activeScriptKey]?.statistics ?? null;
+    const activeScriptStatistics = ctx?.scripts[activeScriptKey]?.statistics ?? null;
 
     // Helper to update a script
     const updateScript = React.useCallback(
@@ -123,8 +123,8 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                 targetKey = ScriptKey.SCHEMA_SCRIPT;
                 break;
         }
-        const targetScriptData = ctx.scripts[targetKey];
-        const schemaScriptData = schemaKey != null ? ctx.scripts[schemaKey] : null;
+        const targetScriptData = ctx?.scripts[targetKey];
+        const schemaScriptData = schemaKey != null ? ctx?.scripts[schemaKey] : null;
         const schemaScript = schemaScriptData?.script ?? null;
         if (!targetScriptData) {
             return;
@@ -166,8 +166,8 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                 targetScript: targetScriptData.script,
                 scriptBuffers: targetScriptData.processed,
                 scriptCursor: targetScriptData.cursor,
-                focusedColumnRefs: ctx.userFocus?.columnRefs ?? null,
-                focusedTableRefs: ctx.userFocus?.tableRefs ?? null,
+                focusedColumnRefs: ctx?.userFocus?.columnRefs ?? null,
+                focusedTableRefs: ctx?.userFocus?.tableRefs ?? null,
                 onUpdateScript: updateScript,
                 onUpdateScriptCursor: updateScriptCursor,
             }),
@@ -176,9 +176,9 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
     }, [
         view,
         activeTab,
-        ctx.scripts[ScriptKey.MAIN_SCRIPT],
-        ctx.scripts[ScriptKey.SCHEMA_SCRIPT],
-        ctx.catalog,
+        ctx?.scripts[ScriptKey.MAIN_SCRIPT],
+        ctx?.scripts[ScriptKey.SCHEMA_SCRIPT],
+        ctx?.catalog,
         updateScript,
     ]);
 

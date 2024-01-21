@@ -159,7 +159,7 @@ export const TPCH_SCHEMA = example(ScriptType.SCHEMA, 'TPC-H Schema', tpch_schem
 export const TPCHDS_SCHEMA = example(ScriptType.SCHEMA, 'TPC-DS Schema', tpcds_schema);
 export const SSB_SCHEMA = example(ScriptType.SCHEMA, 'SSB Schema', ssb_schema);
 
-export const exampleScripts = [
+export const EXAMPLE_SCRIPTS = [
     TPCH_SCHEMA,
     example(ScriptType.QUERY, 'TPC-H Query 1', tpch_q1, TPCH_SCHEMA.scriptId),
     example(ScriptType.QUERY, 'TPC-H Query 2', tpch_q2, TPCH_SCHEMA.scriptId),

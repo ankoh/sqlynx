@@ -61,7 +61,7 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
         const url = new URL(baseURL ?? '');
         url.searchParams.set('connector', 'local');
         if (embedConnectorInfo) {
-            switch (scriptState.connectorInfo.connectorType) {
+            switch (scriptState?.connectorInfo.connectorType) {
                 case ConnectorType.LOCAL_SCRIPT:
                     writeLocalConnectorParams(url.searchParams);
                     break;
@@ -73,8 +73,8 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
                     break;
             }
         }
-        const mainScript = scriptState.scripts[ScriptKey.MAIN_SCRIPT] ?? null;
-        const schemaScript = scriptState.scripts[ScriptKey.SCHEMA_SCRIPT] ?? null;
+        const mainScript = scriptState?.scripts[ScriptKey.MAIN_SCRIPT] ?? null;
+        const schemaScript = scriptState?.scripts[ScriptKey.SCHEMA_SCRIPT] ?? null;
         if (mainScript?.script) {
             encodeScript(url.searchParams, 'script', mainScript);
         }
@@ -89,7 +89,11 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
             copyError: null,
             uiResetAt: null,
         });
-    }, [scriptState.scripts[ScriptKey.MAIN_SCRIPT], scriptState.scripts[ScriptKey.SCHEMA_SCRIPT], embedConnectorInfo]);
+    }, [
+        scriptState?.scripts[ScriptKey.MAIN_SCRIPT],
+        scriptState?.scripts[ScriptKey.SCHEMA_SCRIPT],
+        embedConnectorInfo,
+    ]);
 
     // Copy the url to the clipboard
     const copyURL = React.useCallback(

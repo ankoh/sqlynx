@@ -104,12 +104,12 @@ export const ScriptLoader: React.FC<Props> = (props: Props) => {
     };
 
     React.useEffect(
-        () => loadIfNeeded(scriptState.scripts[ScriptKey.MAIN_SCRIPT] ?? null),
-        [scriptState.scripts[ScriptKey.MAIN_SCRIPT]?.metadata],
+        () => loadIfNeeded(scriptState?.scripts[ScriptKey.MAIN_SCRIPT] ?? null),
+        [scriptState?.scripts[ScriptKey.MAIN_SCRIPT]?.metadata],
     );
     React.useEffect(
-        () => loadIfNeeded(scriptState.scripts[ScriptKey.SCHEMA_SCRIPT] ?? null),
-        [scriptState.scripts[ScriptKey.SCHEMA_SCRIPT]?.metadata],
+        () => loadIfNeeded(scriptState?.scripts[ScriptKey.SCHEMA_SCRIPT] ?? null),
+        [scriptState?.scripts[ScriptKey.SCHEMA_SCRIPT]?.metadata],
     );
     return props.children;
 };

@@ -59,8 +59,19 @@ export const ScriptCommands: React.FC<Props> = (props: Props) => {
                     break;
             }
         },
-        [state.connectorInfo],
+        [state?.connectorInfo],
     );
+
+    // Helper to require connector info
+    const requireConnector = (handler: (connectorInfo: ConnectorInfo) => () => void) => {
+        const connectorInfo = state?.connectorInfo ?? null;
+        if (connectorInfo == null) {
+            return () => console.warn(`command requires an active connector`);
+        } else {
+            return handler(connectorInfo);
+        }
+    };
+
     // Helper to signal that a command is not implemented
     const commandNotImplemented = (connector: ConnectorInfo, actionName: string) => {
         console.warn(`connector '${connector.displayName.long}' does not implement the command '${actionName}'`);
@@ -76,16 +87,20 @@ export const ScriptCommands: React.FC<Props> = (props: Props) => {
             {
                 key: 'e',
                 ctrlKey: true,
-                callback: !state.connectorInfo.features.executeQueryAction
-                    ? () => commandNotImplemented(state.connectorInfo, 'EXECUTE_QUERY')
-                    : () => commandDispatch(ScriptCommandType.ExecuteQuery),
+                callback: requireConnector(c =>
+                    !c.features.executeQueryAction
+                        ? () => commandNotImplemented(c, 'EXECUTE_QUERY')
+                        : () => commandDispatch(ScriptCommandType.ExecuteQuery),
+                ),
             },
             {
                 key: 'r',
                 ctrlKey: true,
-                callback: !state.connectorInfo.features.executeQueryAction
-                    ? () => commandNotImplemented(state.connectorInfo, 'REFRESH_SCHEMA')
-                    : () => commandDispatch(ScriptCommandType.RefreshSchema),
+                callback: requireConnector(c =>
+                    !c.features.executeQueryAction
+                        ? () => commandNotImplemented(c, 'REFRESH_SCHEMA')
+                        : () => commandDispatch(ScriptCommandType.RefreshSchema),
+                ),
             },
             {
                 key: 'l',
@@ -100,12 +115,14 @@ export const ScriptCommands: React.FC<Props> = (props: Props) => {
             {
                 key: 'a',
                 ctrlKey: true,
-                callback: !state.connectorInfo.features.executeQueryAction
-                    ? () => commandNotImplemented(state.connectorInfo, 'SAVE_QUERY_RESULTS_AS_ARROW')
-                    : () => commandDispatch(ScriptCommandType.SaveQueryResultsAsArrow),
+                callback: requireConnector(c =>
+                    !c.features.executeQueryAction
+                        ? () => commandNotImplemented(c, 'SAVE_QUERY_RESULTS_AS_ARROW')
+                        : () => commandDispatch(ScriptCommandType.SaveQueryResultsAsArrow),
+                ),
             },
         ],
-        [state.connectorInfo, commandDispatch],
+        [state?.connectorInfo, commandDispatch],
     );
 
     // Setup key event handlers

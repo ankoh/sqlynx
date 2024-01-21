@@ -11,7 +11,7 @@ import {
     ArrowSwitchIcon,
 } from '@primer/octicons-react';
 
-import { useConnectorList } from '../../connectors/connector_info';
+import { CONNECTOR_INFOS, useConnectorList } from '../../connectors/connector_info';
 import { ConnectorInfo, ConnectorType } from '../../connectors/connector_info';
 import { QueryExecutionTaskStatus } from '../../connectors/query_execution';
 import { useScriptState, useScriptStateDispatch } from '../../scripts/script_state_provider';
@@ -47,15 +47,22 @@ const ConnectorSelection = (props: { className?: string; variant: 'default' | 'i
             value: connectorType,
         });
     }, []);
+    const connectorName = !scriptState?.connectorInfo
+        ? 'Not set'
+        : props.short
+        ? scriptState?.connectorInfo.displayName.short
+        : scriptState?.connectorInfo.displayName.long;
     return (
         <ActionMenu open={isOpen} onOpenChange={setIsOpen}>
             <ActionMenu.Button
                 className={props.className}
                 variant={props.variant}
                 alignContent="start"
-                leadingVisual={() => getConnectorIcon(scriptState.connectorInfo)}
+                leadingVisual={() =>
+                    !scriptState?.connectorInfo ? <div /> : getConnectorIcon(scriptState?.connectorInfo)
+                }
             >
-                {props.short ? scriptState.connectorInfo.displayName.short : scriptState.connectorInfo.displayName.long}
+                {connectorName}
             </ActionMenu.Button>
             <ActionMenu.Overlay width={props.short ? 'auto' : 'medium'} align="end">
                 <ActionList>
@@ -71,7 +78,7 @@ const ConnectorSelection = (props: { className?: string; variant: 'default' | 'i
     );
 };
 
-const CommandListItems = (props: { connector: ConnectorInfo; canCycleOutput: boolean }) => {
+const CommandListItems = (props: { connector: ConnectorInfo | null; canCycleOutput: boolean }) => {
     const [linkSharingIsOpen, openLinkSharing] = React.useState<boolean>(false);
     const [saveSqlIsOpen, openSaveSql] = React.useState<boolean>(false);
     return (
@@ -91,14 +98,14 @@ const CommandListItems = (props: { connector: ConnectorInfo; canCycleOutput: boo
                 <ActionList.TrailingVisual>Ctrl + O</ActionList.TrailingVisual>
             </ActionList.Item>
             <ActionList.Divider />
-            <ActionList.Item disabled={!props.connector.features.executeQueryAction}>
+            <ActionList.Item disabled={!props.connector?.features.executeQueryAction}>
                 <ActionList.LeadingVisual>
                     <PaperAirplaneIcon />
                 </ActionList.LeadingVisual>
                 Execute Query
                 <ActionList.TrailingVisual>Ctrl + E</ActionList.TrailingVisual>
             </ActionList.Item>
-            <ActionList.Item disabled={!props.connector.features.refreshSchemaAction}>
+            <ActionList.Item disabled={!props.connector?.features.refreshSchemaAction}>
                 <ActionList.LeadingVisual>
                     <SyncIcon />
                 </ActionList.LeadingVisual>
@@ -126,7 +133,7 @@ const CommandListItems = (props: { connector: ConnectorInfo; canCycleOutput: boo
                 </span>
                 <ActionList.TrailingVisual>Ctrl + S</ActionList.TrailingVisual>
             </ActionList.Item>
-            <ActionList.Item disabled={!props.connector.features.executeQueryAction}>
+            <ActionList.Item disabled={!props.connector?.features.executeQueryAction}>
                 <ActionList.LeadingVisual>
                     <DownloadIcon />
                 </ActionList.LeadingVisual>
@@ -186,8 +193,8 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
         enabledTabs: 1,
     });
     let enabledTabs = 1;
-    enabledTabs += +((scriptState.queryExecutionState?.startedAt ?? null) != null);
-    enabledTabs += +(scriptState.queryExecutionResult != null);
+    enabledTabs += +((scriptState?.queryExecutionState?.startedAt ?? null) != null);
+    enabledTabs += +(scriptState?.queryExecutionResult != null);
     tabState.current.enabledTabs = enabledTabs;
 
     // Register keyboard events
@@ -211,7 +218,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
     // Automatically switch tabs when the execution status changes meaningfully
     const prevStatus = React.useRef<QueryExecutionTaskStatus | null>(null);
     React.useEffect(() => {
-        const status = scriptState.queryExecutionState?.status ?? null;
+        const status = scriptState?.queryExecutionState?.status ?? null;
         switch (status) {
             case null:
                 break;
@@ -230,7 +237,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                 break;
         }
         prevStatus.current = status;
-    }, [scriptState.queryExecutionState?.status]);
+    }, [scriptState?.queryExecutionState?.status]);
 
     return (
         <div className={styles.page}>
@@ -270,7 +277,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                         [TabKey.SchemaView]: _props => <SchemaGraph />,
                         [TabKey.QueryProgressView]: _props => <QueryProgress />,
                         [TabKey.QueryResultView]: _props => (
-                            <DataTable data={scriptState.queryExecutionResult?.resultTable ?? null} />
+                            <DataTable data={scriptState?.queryExecutionResult?.resultTable ?? null} />
                         ),
                     }}
                 />
@@ -283,7 +290,10 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                             short={false}
                         />
                         <ActionList.Divider />
-                        <CommandListItems connector={scriptState.connectorInfo} canCycleOutput={enabledTabs > 1} />
+                        <CommandListItems
+                            connector={scriptState?.connectorInfo ?? null}
+                            canCycleOutput={enabledTabs > 1}
+                        />
                     </ActionList>
                     <ActionList key={1} className={styles.project_actions}>
                         <ProjectListItems />

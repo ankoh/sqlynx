@@ -6,7 +6,8 @@ import { EditorPage } from './view/pages/editor_page';
 import { ConnectionsPage } from './view/pages/connections_page';
 import { ScriptLoader } from './scripts/script_loader';
 import { ScriptCatalogLoader } from './scripts/script_catalog_loader';
-import { ScriptCatalogSalesforceAutoloader } from './scripts/script_catalog_autoloader_salesforce';
+import { ScriptAutoloaderSalesforce } from './scripts/script_autoloader_salesforce';
+import { ScriptAutoloaderLocal } from './scripts/script_autoloader_local';
 import { ScriptStateProvider } from './scripts/script_state_provider';
 import { ScriptCommands } from './scripts/script_commands';
 import { ScriptQueryExecutor } from './scripts/script_query_executor';
@@ -42,7 +43,8 @@ const AppProviders = (props: { children: React.ReactElement }) => (
                             <ScriptCommands>
                                 <ScriptLoader />
                                 <ScriptCatalogLoader />
-                                <ScriptCatalogSalesforceAutoloader />
+                                <ScriptAutoloaderSalesforce />
+                                <ScriptAutoloaderLocal />
                                 <ScriptQueryExecutor />
                                 <ScriptURLSetup>{props.children}</ScriptURLSetup>
                             </ScriptCommands>
