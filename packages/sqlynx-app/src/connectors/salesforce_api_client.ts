@@ -265,7 +265,6 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
             signal: cancel,
         });
         const responseJson = await response.json();
-        console.log(responseJson);
         return responseJson as SalesforceMetadata;
     }
     public async updateDataCloudCatalog(
@@ -277,8 +276,9 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
         const result = await this.getDataCloudMetadata(access, cancellation.signal);
         // Build the descriptor
         const schema = new sqlynx.proto.SchemaDescriptorT();
+        let tableId = 0;
         for (const entity of result.metadata) {
-            const table = new sqlynx.proto.SchemaTableT(entity.name);
+            const table = new sqlynx.proto.SchemaTableT(tableId++, entity.name);
             for (const column of entity.fields) {
                 table.columns.push(new sqlynx.proto.SchemaTableColumnT(column.name));
             }

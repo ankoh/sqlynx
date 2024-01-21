@@ -13,7 +13,7 @@ import { generateBlankScript } from './script_metadata';
 import { useSQLynx } from '../sqlynx_loader';
 import { useSalesforceAPI } from '../connectors/salesforce_connector';
 import { useSalesforceAuthState } from '../connectors/salesforce_auth_state';
-import { useScriptSelector, useSelectedScriptStateDispatch } from './script_state_provider';
+import { useScriptSelector } from './script_state_provider';
 
 interface Props {
     children?: React.ReactElement;

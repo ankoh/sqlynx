@@ -1,6 +1,7 @@
 #pragma once
 
 #include <flatbuffers/buffer.h>
+#include <flatbuffers/flatbuffer_builder.h>
 
 #include <functional>
 #include <optional>
@@ -269,7 +270,8 @@ class AnalyzedScript : public CatalogEntry {
                    std::string_view schema_name);
 
     /// Describe the catalog entry
-    virtual proto::CatalogEntry DescribeEntry() const override;
+    virtual flatbuffers::Offset<proto::CatalogEntry> DescribeEntry(
+        flatbuffers::FlatBufferBuilder& builder) const override;
     /// Get the name search index
     const CatalogEntry::NameSearchIndex& GetNameSearchIndex() override;
     /// Build the program

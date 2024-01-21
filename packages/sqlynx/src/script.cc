@@ -377,8 +377,49 @@ AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, const Catal
       catalog_version(catalog.GetVersion()) {}
 
 /// Get the name search index
-proto::CatalogEntry AnalyzedScript::DescribeEntry() const {
-    return proto::CatalogEntry(external_id, proto::CatalogEntryType::SCRIPT, 0);
+flatbuffers::Offset<proto::CatalogEntry> AnalyzedScript::DescribeEntry(flatbuffers::FlatBufferBuilder& builder) const {
+    auto database_name = builder.CreateString(GetDatabaseName());
+    auto schema_name = builder.CreateString(GetSchemaName());
+
+    std::vector<flatbuffers::Offset<proto::SchemaTable>> table_offsets;
+    table_offsets.reserve(tables.GetSize());
+    uint32_t table_id = 0;
+    for (auto& table_chunk : tables.GetChunks()) {
+        for (auto& table : table_chunk) {
+            auto table_name = builder.CreateString(table.table_name.table_name);
+
+            std::vector<flatbuffers::Offset<proto::SchemaTableColumn>> column_offsets;
+            column_offsets.reserve(table.table_columns.size());
+            for (auto& column : table.table_columns) {
+                auto column_name = builder.CreateString(column.column_name);
+                proto::SchemaTableColumnBuilder column_builder{builder};
+                column_builder.add_column_name(column_name);
+                column_offsets.push_back(column_builder.Finish());
+            }
+            auto columns_offset = builder.CreateVector(column_offsets);
+
+            proto::SchemaTableBuilder table_builder{builder};
+            table_builder.add_table_id(table_id++);
+            table_builder.add_table_name(table_name);
+            table_builder.add_columns(columns_offset);
+        }
+    }
+    auto tables_offset = builder.CreateVector(table_offsets);
+
+    proto::SchemaDescriptorBuilder schemaBuilder{builder};
+    schemaBuilder.add_database_name(database_name);
+    schemaBuilder.add_schema_name(schema_name);
+    schemaBuilder.add_tables(tables_offset);
+    auto schema_offset = schemaBuilder.Finish();
+    std::vector<flatbuffers::Offset<proto::SchemaDescriptor>> schemas{schema_offset};
+    auto schemas_offset = builder.CreateVector(schemas);
+
+    proto::CatalogEntryBuilder catalog{builder};
+    catalog.add_external_id(external_id);
+    catalog.add_entry_type(proto::CatalogEntryType::DESCRIPTOR_POOL);
+    catalog.add_rank(0);
+    catalog.add_schemas(schemas_offset);
+    return catalog.Finish();
 }
 
 /// Get the name search index

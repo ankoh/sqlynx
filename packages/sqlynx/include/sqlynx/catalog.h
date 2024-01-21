@@ -181,6 +181,10 @@ class CatalogEntry {
 
     /// Get the external id
     ExternalID GetExternalID() const { return external_id; }
+    /// Get the database name
+    auto& GetDatabaseName() const { return database_name; }
+    /// Get the schema name
+    auto& GetSchemaName() const { return schema_name; }
     /// Get the tables
     auto& GetTables() const { return tables; }
     /// Get the qualified name
@@ -189,9 +193,8 @@ class CatalogEntry {
         name.schema_name = name.schema_name.empty() ? database_name : name.schema_name;
         return name;
     }
-
     /// Describe the catalog entry
-    virtual proto::CatalogEntry DescribeEntry() const = 0;
+    virtual flatbuffers::Offset<proto::CatalogEntry> DescribeEntry(flatbuffers::FlatBufferBuilder& builder) const = 0;
     /// Get the name search index
     virtual const NameSearchIndex& GetNameSearchIndex() = 0;
 
@@ -211,7 +214,7 @@ class CatalogEntry {
 };
 
 class DescriptorPool : public CatalogEntry {
-   protected:
+   public:
     /// A schema descriptors
     struct Descriptor {
         /// The descriptor
@@ -219,6 +222,8 @@ class DescriptorPool : public CatalogEntry {
         /// The descriptor buffer
         std::unique_ptr<const std::byte[]> descriptor_buffer;
     };
+
+   protected:
     /// The rank
     Rank rank;
     /// The schema descriptors
@@ -235,7 +240,7 @@ class DescriptorPool : public CatalogEntry {
     auto GetRank() const { return rank; }
 
     /// Describe the catalog entry
-    proto::CatalogEntry DescribeEntry() const override;
+    flatbuffers::Offset<proto::CatalogEntry> DescribeEntry(flatbuffers::FlatBufferBuilder& builder) const override;
     /// Get the name search index
     const NameSearchIndex& GetNameSearchIndex() override;
 
@@ -307,7 +312,10 @@ class Catalog {
     /// Clear a catalog
     void Clear();
     /// Describe catalog entries
-    proto::CatalogEntriesT DescribeEntries() const;
+    flatbuffers::Offset<proto::CatalogEntries> DescribeEntries(flatbuffers::FlatBufferBuilder& builder) const;
+    /// Describe catalog entries
+    flatbuffers::Offset<proto::CatalogEntries> DescribeEntriesOf(flatbuffers::FlatBufferBuilder& builder,
+                                                                 size_t external_id) const;
     /// Add a script
     proto::StatusCode LoadScript(Script& script, CatalogEntry::Rank rank);
     /// Drop a script

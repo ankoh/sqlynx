@@ -97,7 +97,7 @@ export function computeGraphViewModel(state: ScriptState): GraphViewModel {
         [ScriptKey.SCHEMA_SCRIPT]: schemaProcessed?.analyzed?.read(new sqlynx.proto.AnalyzedScript()) ?? null,
     };
 
-    if (!state.graphLayout) {
+    if (!state.graphLayout || !state.catalog) {
         return {
             nodes: [],
             nodesByTable: new Map(),
@@ -107,60 +107,38 @@ export function computeGraphViewModel(state: ScriptState): GraphViewModel {
     }
     const tmpGraphTableNode = new sqlynx.proto.QueryGraphLayoutTableNode();
     const tmpGraphVertex = new sqlynx.proto.QueryGraphLayoutVertex();
-    const tmpTable = new sqlynx.proto.Table();
-    const tmpTableColumn = new sqlynx.proto.TableColumn();
-
-    // Collect all tables in the schema script
     const layout = state.graphLayout!.read(new sqlynx.proto.QueryGraphLayout());
+
+    // Collect all table nodes
     for (let nodeId = 0; nodeId < layout.tableNodesLength(); ++nodeId) {
-        const node = layout.tableNodes(nodeId, tmpGraphTableNode);
-        const position = node!.position(tmpGraphVertex)!;
-        const tableId = node!.tableId();
+        const node = layout.tableNodes(nodeId, tmpGraphTableNode)!;
+        const position = node.position(tmpGraphVertex)!;
+        const tableId = node.tableId();
         const nodeIsReferenced = node!.isReferenced() != 0;
 
-        // Table ID is null?
-        // That means we couldn't resolve a table.
-        // For now, just skip them.
-        if (sqlynx.ExternalObjectID.isNull(tableId)) {
-            continue;
-        }
+        // Note that the table ID might be null here.
+        // This means that we failed to resolve the table.
 
-        // Is an external table?
-        const externalId = sqlynx.ExternalObjectID.getExternalID(tableId);
-        const analyzed = analyzedScripts[externalId] ?? null;
-
-        if (analyzed) {
-            const tableIdx = sqlynx.ExternalObjectID.getObjectID(tableId);
-            const table = analyzed.tables(tableIdx, tmpTable);
-            const tableName = table?.tableName();
-            const columns: TableColumn[] = [];
-            for (let j = 0; j < table!.tableColumnsLength(); ++j) {
-                const column = table?.tableColumns(j, tmpTableColumn);
-                const columnName = column?.columnName()!;
-                columns.push({
-                    name: columnName,
-                });
-            }
-            const viewModel: NodeViewModel = {
-                nodeId,
-                tableId,
-                name: tableName?.tableName() ?? '',
-                x: position.x(),
-                y: position.y(),
-                columns: columns,
-                width: node!.width(),
-                height: node!.height(),
-                ports: 0,
-                peerCount: 0,
-                isReferenced: nodeIsReferenced,
-            };
-            nodes.push(viewModel);
-            nodesByTable.set(tableId, viewModel);
-            boundaries.minX = Math.min(boundaries.minX, viewModel.x);
-            boundaries.maxX = Math.max(boundaries.maxX, viewModel.x + viewModel.width);
-            boundaries.minY = Math.min(boundaries.minY, viewModel.y);
-            boundaries.maxY = Math.max(boundaries.maxY, viewModel.y + viewModel.height);
-        }
+        // Build node view model
+        const viewModel: NodeViewModel = {
+            nodeId,
+            tableId,
+            name: node?.tableName()!,
+            x: position.x(),
+            y: position.y(),
+            columns: [],
+            width: node!.width(),
+            height: node!.height(),
+            ports: 0,
+            peerCount: 0,
+            isReferenced: nodeIsReferenced,
+        };
+        nodes.push(viewModel);
+        nodesByTable.set(tableId, viewModel);
+        boundaries.minX = Math.min(boundaries.minX, viewModel.x);
+        boundaries.maxX = Math.max(boundaries.maxX, viewModel.x + viewModel.width);
+        boundaries.minY = Math.min(boundaries.minY, viewModel.y);
+        boundaries.maxY = Math.max(boundaries.maxY, viewModel.y + viewModel.height);
     }
 
     // Read edges

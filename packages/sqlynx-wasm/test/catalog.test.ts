@@ -36,6 +36,11 @@ describe('Catalog Tests ', () => {
         expect(description.entriesLength()).toEqual(1);
         descriptionBuffer.delete();
 
+        descriptionBuffer = catalog.describeEntriesOf(1);
+        description = descriptionBuffer.read(new sqlynx.proto.CatalogEntries());
+        expect(description.entriesLength()).toEqual(1);
+        descriptionBuffer.delete();
+
         catalog.clear();
 
         descriptionBuffer = catalog.describeEntries();

@@ -9,6 +9,7 @@
 #include "flatbuffers/flatbuffers.h"
 #include "sqlynx/analyzer/completion.h"
 #include "sqlynx/catalog.h"
+#include "sqlynx/external.h"
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/parser/scanner.h"
 #include "sqlynx/proto/proto_generated.h"
@@ -304,9 +305,19 @@ extern "C" FFIResult* sqlynx_catalog_new() { return packPtr(std::make_unique<sql
 extern "C" void sqlynx_catalog_clear(sqlynx::Catalog* catalog) { catalog->Clear(); }
 /// Describe all entries
 extern "C" FFIResult* sqlynx_catalog_describe_entries(sqlynx::Catalog* catalog) {
-    auto entries = catalog->DescribeEntries();
     flatbuffers::FlatBufferBuilder fb;
-    fb.Finish(proto::CatalogEntries::Pack(fb, &entries));
+    auto entries = catalog->DescribeEntries(fb);
+    fb.Finish(entries);
+
+    auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));
+    return packBuffer(std::move(detached));
+}
+/// Describe all entries
+extern "C" FFIResult* sqlynx_catalog_describe_entries_of(sqlynx::Catalog* catalog, size_t external_id) {
+    flatbuffers::FlatBufferBuilder fb;
+    auto entries = catalog->DescribeEntriesOf(fb, external_id);
+    fb.Finish(entries);
+
     auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));
     return packBuffer(std::move(detached));
 }

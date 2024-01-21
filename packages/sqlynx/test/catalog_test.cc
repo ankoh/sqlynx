@@ -76,15 +76,21 @@ TEST(CatalogTest, Clear) {
     auto status = catalog.AddSchemaDescriptor(1, descriptor, std::move(descriptor_buffer));
     ASSERT_EQ(status, proto::StatusCode::OK);
 
-    auto description = catalog.DescribeEntries();
-    ASSERT_EQ(description.entries.size(), 1);
-    ASSERT_EQ(description.entries[0].external_id(), 1);
-    ASSERT_EQ(description.entries[0].entry_type(), proto::CatalogEntryType::DESCRIPTOR_POOL);
-
+    {
+        flatbuffers::FlatBufferBuilder fb;
+        fb.Finish(catalog.DescribeEntries(fb));
+        auto description = flatbuffers::GetRoot<proto::CatalogEntries>(fb.GetBufferPointer());
+        ASSERT_EQ(description->entries()->size(), 1);
+        ASSERT_EQ(description->entries()->Get(0)->external_id(), 1);
+        ASSERT_EQ(description->entries()->Get(0)->entry_type(), proto::CatalogEntryType::DESCRIPTOR_POOL);
+    }
     catalog.Clear();
-
-    description = catalog.DescribeEntries();
-    ASSERT_EQ(description.entries.size(), 0);
+    {
+        flatbuffers::FlatBufferBuilder fb;
+        fb.Finish(catalog.DescribeEntries(fb));
+        auto description = flatbuffers::GetRoot<proto::CatalogEntries>(fb.GetBufferPointer());
+        ASSERT_EQ(description->entries()->size(), 0);
+    }
 }
 
 TEST(CatalogTest, SingleDescriptorPool) {
@@ -102,10 +108,14 @@ TEST(CatalogTest, SingleDescriptorPool) {
     auto status = catalog.AddSchemaDescriptor(1, descriptor, std::move(descriptor_buffer));
     ASSERT_EQ(status, proto::StatusCode::OK);
 
-    auto description = catalog.DescribeEntries();
-    ASSERT_EQ(description.entries.size(), 1);
-    ASSERT_EQ(description.entries[0].external_id(), 1);
-    ASSERT_EQ(description.entries[0].entry_type(), proto::CatalogEntryType::DESCRIPTOR_POOL);
+    {
+        flatbuffers::FlatBufferBuilder fb;
+        fb.Finish(catalog.DescribeEntries(fb));
+        auto description = flatbuffers::GetRoot<proto::CatalogEntries>(fb.GetBufferPointer());
+        ASSERT_EQ(description->entries()->size(), 1);
+        ASSERT_EQ(description->entries()->Get(0)->external_id(), 1);
+        ASSERT_EQ(description->entries()->Get(0)->entry_type(), proto::CatalogEntryType::DESCRIPTOR_POOL);
+    }
 
     Script script{catalog, 2};
     {
