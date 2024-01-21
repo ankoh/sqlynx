@@ -2,7 +2,11 @@ import React from 'react';
 import { KeyEventHandler, useKeyEvents } from '../utils/key_events';
 import { ConnectorInfo } from '../connectors/connector_info';
 import { FULL_CATALOG_REFRESH } from '../connectors/catalog_update';
-import { useScriptSelectionIterator, useScriptState, useScriptStateDispatch } from './script_state_provider';
+import {
+    useScriptSelectionIterator,
+    useSelectedScriptState,
+    useSelectedScriptStateDispatch,
+} from './script_state_provider';
 import { EXECUTE_QUERY, SELECT_NEXT_CONNECTOR, UPDATE_CATALOG } from './script_state_reducer';
 
 export enum ScriptCommandType {
@@ -23,8 +27,8 @@ interface Props {
 const COMMAND_DISPATCH_CTX = React.createContext<ScriptCommandDispatch | null>(null);
 
 export const ScriptCommands: React.FC<Props> = (props: Props) => {
-    const state = useScriptState();
-    const stateDispatch = useScriptStateDispatch();
+    const state = useSelectedScriptState();
+    const stateDispatch = useSelectedScriptStateDispatch();
     const scriptIterator = useScriptSelectionIterator();
 
     // Setup command dispatch logic

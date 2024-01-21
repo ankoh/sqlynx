@@ -2,7 +2,7 @@ import React from 'react';
 
 import { ScriptMetadata } from './script_metadata';
 import { SCRIPT_LOADING_FAILED, SCRIPT_LOADING_STARTED, SCRIPT_LOADING_SUCCEEDED } from './script_state_reducer';
-import { useScriptState, useScriptStateDispatch } from './script_state_provider';
+import { useSelectedScriptState, useSelectedScriptStateDispatch } from './script_state_provider';
 import { ScriptData, ScriptKey } from './script_state';
 
 export enum ScriptLoadingStatus {
@@ -38,8 +38,8 @@ interface Props {
 }
 
 export const ScriptLoader: React.FC<Props> = (props: Props) => {
-    const scriptState = useScriptState();
-    const scriptStateDispatch = useScriptStateDispatch();
+    const scriptState = useSelectedScriptState();
+    const scriptStateDispatch = useSelectedScriptStateDispatch();
     const internal = React.useRef<LoaderState>({
         scripts: new Map<string, ScriptLoadingState>(),
     });
