@@ -34,7 +34,7 @@
     position: relative;
     grid-column: 2 / 2;
     width: 100%;
-    text-align: center;
+    text-align: left;
     text-overflow: ellipsis;
     align-items: center;
     padding-left: 8px;
