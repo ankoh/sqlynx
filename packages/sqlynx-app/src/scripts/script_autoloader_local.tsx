@@ -2,7 +2,7 @@ import * as React from 'react';
 import Immutable from 'immutable';
 
 import { createGlobalScriptState } from './global_script_state';
-import { useScriptSelector, useScriptState } from './script_state_provider';
+import { useScriptSelector, useSelectedScriptState } from './script_state_provider';
 import { CONNECTOR_INFOS, ConnectorType } from '../connectors/connector_info';
 import { useSQLynx } from '../sqlynx_loader';
 import { ScriptData, ScriptKey } from './script_state';
@@ -14,11 +14,11 @@ interface Props {
     children?: React.ReactElement;
 }
 
-const DEFAULT_BOARD_WIDTH = 800;
-const DEFAULT_BOARD_HEIGHT = 600;
+export const DEFAULT_BOARD_WIDTH = 800;
+export const DEFAULT_BOARD_HEIGHT = 600;
 
 export const ScriptAutoloaderLocal: React.FC<Props> = (props: Props) => {
-    const state = useScriptState();
+    const state = useSelectedScriptState();
     const instance = useSQLynx();
     const selectScript = useScriptSelector();
 

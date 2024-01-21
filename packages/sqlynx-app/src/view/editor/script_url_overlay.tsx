@@ -7,7 +7,7 @@ import { CheckIcon, PaperclipIcon } from '@primer/octicons-react';
 
 import { sleep } from '../../utils/sleep';
 import { ScriptData, ScriptKey } from '../../scripts/script_state';
-import { useScriptState } from '../../scripts/script_state_provider';
+import { useSelectedScriptState } from '../../scripts/script_state_provider';
 import { useSalesforceAuthState } from '../../connectors/salesforce_auth_state';
 import { ConnectorType } from '../../connectors/connector_info';
 import {
@@ -44,7 +44,7 @@ interface State {
 }
 
 export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
-    const scriptState = useScriptState();
+    const scriptState = useSelectedScriptState();
     const [embedConnectorInfo, setEmbedConnectorInfo] = React.useState<boolean>(true);
     const [state, setState] = React.useState<State>(() => ({
         url: null,

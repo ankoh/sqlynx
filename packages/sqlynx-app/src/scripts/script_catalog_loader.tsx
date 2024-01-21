@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { useScriptState, useScriptStateDispatch } from '../scripts/script_state_provider';
+import { useSelectedScriptState, useSelectedScriptStateDispatch } from '../scripts/script_state_provider';
 import { updateDataCloudCatalog } from '../connectors/salesforce_catalog_update';
 import {
     CatalogUpdateTaskState,
@@ -19,8 +19,8 @@ import {
 } from './script_state_reducer';
 
 export const ScriptCatalogLoader = (props: { children?: React.ReactElement }) => {
-    const state = useScriptState();
-    const dispatch = useScriptStateDispatch();
+    const state = useSelectedScriptState();
+    const dispatch = useSelectedScriptStateDispatch();
     const salesforceAPI = useSalesforceAPI();
     const salesforceAuth = useSalesforceAuthState();
 

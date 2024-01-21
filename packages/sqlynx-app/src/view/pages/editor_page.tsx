@@ -16,8 +16,8 @@ import { ConnectorInfo, ConnectorType } from '../../connectors/connector_info';
 import { QueryExecutionTaskStatus } from '../../connectors/query_execution';
 import {
     useScriptSelectionIterator,
-    useScriptState,
-    useScriptStateDispatch,
+    useSelectedScriptState,
+    useSelectedScriptStateDispatch,
 } from '../../scripts/script_state_provider';
 import { SELECT_CONNECTOR } from '../../scripts/script_state_reducer';
 import { ScriptEditor } from '../editor/editor';
@@ -38,8 +38,8 @@ interface Props {}
 
 const ConnectorSelection = (props: { className?: string; variant: 'default' | 'invisible'; short: boolean }) => {
     const connectorList = useConnectorList();
-    const scriptState = useScriptState();
-    const scriptStateDispatch = useScriptStateDispatch();
+    const scriptState = useSelectedScriptState();
+    const scriptStateDispatch = useSelectedScriptStateDispatch();
     const [isOpen, setIsOpen] = React.useState<boolean>(false);
     const selectConnector = React.useCallback((e: React.MouseEvent<HTMLLIElement, MouseEvent>) => {
         e.stopPropagation();
@@ -193,7 +193,7 @@ interface TabState {
 }
 
 export const EditorPage: React.FC<Props> = (_props: Props) => {
-    const scriptState = useScriptState();
+    const scriptState = useSelectedScriptState();
     const scriptSelectionIterator = useScriptSelectionIterator();
     const [selectedTab, selectTab] = React.useState<TabKey>(TabKey.SchemaView);
     const [sharingIsOpen, setSharingIsOpen] = React.useState<boolean>(false);

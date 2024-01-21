@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Immutable from 'immutable';
 
-import { useScriptState, useScriptStateDispatch } from '../scripts/script_state_provider';
+import { useSelectedScriptState, useSelectedScriptStateDispatch } from '../scripts/script_state_provider';
 import {
     QueryExecutionResponseStream,
     QueryExecutionTaskState,
@@ -24,8 +24,8 @@ import {
 import { ScriptKey } from './script_state';
 
 export const ScriptQueryExecutor = (props: { children?: React.ReactElement }) => {
-    const state = useScriptState();
-    const dispatch = useScriptStateDispatch();
+    const state = useSelectedScriptState();
+    const dispatch = useSelectedScriptStateDispatch();
     const salesforceAPI = useSalesforceAPI();
     const salesforceAuth = useSalesforceAuthState();
 

@@ -37,7 +37,7 @@ export const ScriptStateProvider: React.FC<Props> = (props: Props) => {
     );
 };
 
-export const useScriptState = (): ScriptState | null => React.useContext(SCRIPT_STATE_CTX);
-export const useScriptStateDispatch = (): Dispatch<ScriptStateAction> => React.useContext(SCRIPT_DISPATCH_CTX)!;
+export const useSelectedScriptState = (): ScriptState | null => React.useContext(SCRIPT_STATE_CTX);
+export const useSelectedScriptStateDispatch = (): Dispatch<ScriptStateAction> => React.useContext(SCRIPT_DISPATCH_CTX)!;
 export const useScriptSelector = (): ((id: number) => void) => React.useContext(SCRIPT_SELECTOR_CTX)!;
 export const useScriptSelectionIterator = (): ScriptIterator => React.useContext(SCRIPT_ITERATOR_CTX)!;
