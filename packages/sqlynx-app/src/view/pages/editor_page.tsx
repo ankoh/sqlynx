@@ -8,7 +8,7 @@ import {
     LinkIcon,
     DownloadIcon,
     ThreeBarsIcon,
-    VersionsIcon,
+    ArrowSwitchIcon,
 } from '@primer/octicons-react';
 
 import {
@@ -80,6 +80,21 @@ const CommandListItems = (props: { connector: ConnectorInfo; canCycleOutput: boo
     const [saveSqlIsOpen, openSaveSql] = React.useState<boolean>(false);
     return (
         <>
+            <ActionList.Item>
+                <ActionList.LeadingVisual>
+                    <ArrowSwitchIcon />
+                </ActionList.LeadingVisual>
+                Cycle connectors
+                <ActionList.TrailingVisual>Ctrl + N</ActionList.TrailingVisual>
+            </ActionList.Item>
+            <ActionList.Item disabled={!props.canCycleOutput}>
+                <ActionList.LeadingVisual>
+                    <ArrowSwitchIcon />
+                </ActionList.LeadingVisual>
+                Cycle output
+                <ActionList.TrailingVisual>Ctrl + O</ActionList.TrailingVisual>
+            </ActionList.Item>
+            <ActionList.Divider />
             <ActionList.Item disabled={!props.connector.features.executeQueryAction}>
                 <ActionList.LeadingVisual>
                     <PaperAirplaneIcon />
@@ -121,21 +136,6 @@ const CommandListItems = (props: { connector: ConnectorInfo; canCycleOutput: boo
                 </ActionList.LeadingVisual>
                 Save Results as .arrow
                 <ActionList.TrailingVisual>Ctrl + A</ActionList.TrailingVisual>
-            </ActionList.Item>
-            <ActionList.Divider />
-            <ActionList.Item>
-                <ActionList.LeadingVisual>
-                    <VersionsIcon />
-                </ActionList.LeadingVisual>
-                Cycle connectors
-                <ActionList.TrailingVisual>Ctrl + N</ActionList.TrailingVisual>
-            </ActionList.Item>
-            <ActionList.Item disabled={!props.canCycleOutput}>
-                <ActionList.LeadingVisual>
-                    <VersionsIcon />
-                </ActionList.LeadingVisual>
-                Cycle output
-                <ActionList.TrailingVisual>Ctrl + O</ActionList.TrailingVisual>
             </ActionList.Item>
         </>
     );
