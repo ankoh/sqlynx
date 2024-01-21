@@ -3,7 +3,7 @@ import * as React from 'react';
 import { ScriptState } from './script_state';
 import { Dispatch } from '../utils/variant';
 import { ScriptStateAction } from './script_state_reducer';
-import { getNextGlobalScript, getGlobalScriptCount, useGlobalScriptState } from './global_script_state';
+import { getNextRegisteredScript, getRegisteredScriptCount, useScriptState } from './script_state_registry';
 
 interface ScriptIterator {
     count: number;
@@ -21,10 +21,10 @@ type Props = {
 
 export const ScriptStateProvider: React.FC<Props> = (props: Props) => {
     const [selectedScript, selectScript] = React.useState<number | null>(null);
-    const [state, dispatch] = useGlobalScriptState(selectedScript);
+    const [state, dispatch] = useScriptState(selectedScript);
     const iterator: ScriptIterator = {
-        count: getGlobalScriptCount(),
-        next: () => selectScript(s => getNextGlobalScript(s)),
+        count: getRegisteredScriptCount(),
+        next: () => selectScript(s => getNextRegisteredScript(s)),
     };
     return (
         <SCRIPT_SELECTOR_CTX.Provider value={selectScript}>

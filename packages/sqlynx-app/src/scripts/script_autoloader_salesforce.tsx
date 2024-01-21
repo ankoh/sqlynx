@@ -8,7 +8,7 @@ import { RESULT_OK } from '../utils';
 import { ScriptData, ScriptKey } from './script_state';
 import { ScriptLoadingStatus } from './script_loader';
 import { UPDATE_CATALOG } from './script_state_reducer';
-import { createGlobalScriptState, useGlobalScriptState } from './global_script_state';
+import { registerScript, useScriptState } from './script_state_registry';
 import { generateBlankScript } from './script_metadata';
 import { useSQLynx } from '../sqlynx_loader';
 import { useSalesforceAPI } from '../connectors/salesforce_connector';
@@ -26,7 +26,7 @@ export const ScriptAutoloaderSalesforce: React.FC<Props> = (props: Props) => {
     const selectScript = useScriptSelector();
 
     const [connectorScriptId, setConnectorScriptId] = React.useState<number | null>(null);
-    const [_scriptState, scriptStateDispatch] = useGlobalScriptState(connectorScriptId);
+    const [_scriptState, scriptStateDispatch] = useScriptState(connectorScriptId);
 
     React.useEffect(() => {
         if (!connector || !authState.dataCloudAccessToken || instance?.type != RESULT_OK) return;
@@ -60,7 +60,7 @@ export const ScriptAutoloaderSalesforce: React.FC<Props> = (props: Props) => {
                 cursor: null,
             };
 
-            const scriptId = createGlobalScriptState({
+            const scriptId = registerScript({
                 instance: instance.value,
                 connectorInfo: CONNECTOR_INFOS[ConnectorType.SALESFORCE_DATA_CLOUD],
                 scripts: {

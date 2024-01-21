@@ -15,7 +15,7 @@ import { ScriptStateAction, reduceScriptState } from './script_state_reducer';
 let GLOBAL_SCRIPTS: Map<number, ScriptState> = new Map();
 let NEXT_SCRIPT_STATE_ID = 1;
 
-export function useGlobalScriptState(id: number | null): [ScriptState | null, Dispatch<ScriptStateAction>] {
+export function useScriptState(id: number | null): [ScriptState | null, Dispatch<ScriptStateAction>] {
     const [state, setState] = React.useState<ScriptState | null>(null);
     React.useEffect(() => {
         setState(id == null ? null : GLOBAL_SCRIPTS.get(id) ?? null);
@@ -35,17 +35,17 @@ export function useGlobalScriptState(id: number | null): [ScriptState | null, Di
     return [state, reducer];
 }
 
-export function createGlobalScriptState(scriptState: ScriptState): number {
+export function registerScript(scriptState: ScriptState): number {
     const scriptId = NEXT_SCRIPT_STATE_ID++;
     GLOBAL_SCRIPTS.set(scriptId, scriptState);
     return scriptId;
 }
 
-export function getGlobalScriptCount(): number {
+export function getRegisteredScriptCount(): number {
     return GLOBAL_SCRIPTS.size;
 }
 
-export function getNextGlobalScript(id: number | null): number | null {
+export function getNextRegisteredScript(id: number | null): number | null {
     const keys = [...GLOBAL_SCRIPTS.keys()];
     keys.sort();
     if (keys.length == 0) {
