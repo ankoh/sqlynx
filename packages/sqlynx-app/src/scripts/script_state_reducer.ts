@@ -511,6 +511,17 @@ function reduceScriptState(state: ScriptState, action: ScriptStateAction): Scrip
         }
         case QUERY_EXECUTION_SUCCEEDED: {
             const now = new Date();
+
+            // XXX Build arrow table from execution state
+            const columnA = Int32Array.from({ length: 1000 }, () => Number((Math.random() * 1000).toFixed(0)));
+            const columnB = Int32Array.from({ length: 1000 }, () => Number((Math.random() * 1000).toFixed(0)));
+            const columnC = Int32Array.from({ length: 1000 }, () => Number((Math.random() * 1000).toFixed(0)));
+            const table = arrow.tableFromArrays({
+                A: columnA,
+                B: columnB,
+                C: columnC,
+            });
+
             return {
                 ...state,
                 queryExecutionState: {
@@ -519,7 +530,12 @@ function reduceScriptState(state: ScriptState, action: ScriptStateAction): Scrip
                     lastUpdatedAt: now,
                     finishedAt: now,
                 },
-                queryExecutionResult: null, // XXX Build arrow table
+                queryExecutionResult: {
+                    startedAt: state.queryExecutionState!.startedAt,
+                    finishedAt: state.queryExecutionState!.finishedAt,
+                    latestProgressUpdate: state.queryExecutionState!.lastUpdatedAt!,
+                    resultTable: table,
+                },
             };
         }
         case QUERY_EXECUTION_FAILED: {
