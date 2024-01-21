@@ -1,7 +1,8 @@
 import React from 'react';
-
 import { TextInput, FormControl, Button, IconButton, SegmentedControl } from '@primer/react';
 import { CopyIcon, InfoIcon } from '@primer/octicons-react';
+
+import { useAppConfig } from '../../app_config';
 
 import symbols from '../../../static/svg/symbols.generated.svg';
 
@@ -11,8 +12,9 @@ import panelStyle from './hyper_grpc_connector_panel.module.css';
 interface HyperGrpcConnectorPanelProps {}
 
 export const HyperGrpcConnectorPanel: React.FC<HyperGrpcConnectorPanelProps> = (
-    props: HyperGrpcConnectorPanelProps,
+    _props: HyperGrpcConnectorPanelProps,
 ) => {
+    const config = useAppConfig();
     const [selectedProtocol, selectProtocol] = React.useState(1);
     const CopyAction = () => (
         <TextInput.Action
@@ -28,13 +30,15 @@ export const HyperGrpcConnectorPanel: React.FC<HyperGrpcConnectorPanelProps> = (
         caption: string;
         value: string;
         onChange: React.ChangeEventHandler<HTMLInputElement>;
+        disabled: boolean;
     }) => (
-        <FormControl sx={{ marginTop: '8px' }}>
+        <FormControl sx={{ marginTop: '8px' }} disabled={props.disabled}>
             <FormControl.Label>{props.name}</FormControl.Label>
             <TextInput block trailingAction={CopyAction()} value={props.value} onChange={props.onChange} />
             <FormControl.Caption>{props.caption}</FormControl.Caption>
         </FormControl>
     );
+    const grpcConnectorDisabled = !config.value?.features?.grpcConnector;
     return (
         <>
             <div className={pageStyle.card_header_container}>
@@ -47,7 +51,12 @@ export const HyperGrpcConnectorPanel: React.FC<HyperGrpcConnectorPanelProps> = (
                     Hyper Database
                 </div>
                 <div className={pageStyle.platform_info}>
-                    <IconButton variant="invisible" icon={InfoIcon} aria-labelledby="connector-hyper-database" />
+                    <IconButton
+                        variant="invisible"
+                        icon={InfoIcon}
+                        aria-labelledby="connector-hyper-database"
+                        disabled={grpcConnectorDisabled}
+                    />
                 </div>
             </div>
             <div className={pageStyle.card_body_container}>
@@ -61,8 +70,12 @@ export const HyperGrpcConnectorPanel: React.FC<HyperGrpcConnectorPanelProps> = (
                             onChange={selectProtocol}
                             sx={{ marginTop: '4px' }}
                         >
-                            <SegmentedControl.Button selected={selectedProtocol === 0}>gRPC</SegmentedControl.Button>
-                            <SegmentedControl.Button selected={selectedProtocol === 1}>Web</SegmentedControl.Button>
+                            <SegmentedControl.Button selected={selectedProtocol === 0} disabled={grpcConnectorDisabled}>
+                                gRPC
+                            </SegmentedControl.Button>
+                            <SegmentedControl.Button selected={selectedProtocol === 1} disabled={grpcConnectorDisabled}>
+                                Web
+                            </SegmentedControl.Button>
                         </SegmentedControl>
                         <FormControl.Caption>
                             {selectedProtocol === 0 ? 'gRPC through Electron' : 'gRPC Web through Browser'}
@@ -74,9 +87,12 @@ export const HyperGrpcConnectorPanel: React.FC<HyperGrpcConnectorPanelProps> = (
                             caption="Endpoint of the gRPC service as '<https://host:port>'"
                             value="https://127.0.0.1:8443"
                             onChange={() => {}}
+                            disabled={grpcConnectorDisabled}
                         />
                         <div className={panelStyle.auth_config_connect}>
-                            <Button sx={{ marginTop: '28px' }}>Connect</Button>
+                            <Button sx={{ marginTop: '28px' }} disabled={grpcConnectorDisabled}>
+                                Connect
+                            </Button>
                         </div>
                     </div>
                 </div>

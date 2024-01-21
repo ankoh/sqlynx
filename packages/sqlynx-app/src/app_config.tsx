@@ -9,6 +9,7 @@ export interface AppFeatures {
     logViewer?: boolean;
     connections?: boolean;
     completionDetails?: boolean;
+    grpcConnector?: boolean;
 }
 
 export interface AppConfig {
