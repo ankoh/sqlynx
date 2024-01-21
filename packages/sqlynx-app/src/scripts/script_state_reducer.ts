@@ -59,8 +59,6 @@ export const RESIZE_QUERY_GRAPH = Symbol('RESIZE_EDITOR');
 
 export type ScriptStateAction =
     | VariantKind<typeof DESTROY, null>
-    | VariantKind<typeof SELECT_CONNECTOR, ConnectorType>
-    | VariantKind<typeof SELECT_NEXT_CONNECTOR, null>
     | VariantKind<typeof UPDATE_SCRIPT_ANALYSIS, [ScriptKey, SQLynxScriptBuffers, sqlynx.proto.ScriptCursorInfoT]>
     | VariantKind<typeof UPDATE_SCRIPT_CURSOR, [ScriptKey, sqlynx.proto.ScriptCursorInfoT]>
     | VariantKind<typeof LOAD_SCRIPTS, { [key: number]: ScriptMetadata }>
@@ -92,23 +90,6 @@ export function reduceScriptState(state: ScriptState, action: ScriptStateAction)
     switch (action.type) {
         case DESTROY:
             return destroyState({ ...state });
-
-        case SELECT_CONNECTOR:
-            console.log('SELECT_CONNECTOR');
-            return {
-                ...state,
-                connectorInfo: CONNECTOR_INFOS[action.value as number],
-            };
-
-        // XXX This doesn't make that much sense, we should only cycle through connectors that are configured.
-        //     The command execution has to inspect the connector state
-        case SELECT_NEXT_CONNECTOR:
-            console.log('SELECT_NEXT_CONNECTOR');
-            return {
-                ...state,
-                connectorInfo:
-                    CONNECTOR_INFOS[((state.connectorInfo.connectorType as number) + 1) % CONNECTOR_INFOS.length],
-            };
 
         case UPDATE_SCRIPT_ANALYSIS: {
             // Destroy the previous buffers
