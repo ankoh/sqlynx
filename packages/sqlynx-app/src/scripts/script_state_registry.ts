@@ -13,7 +13,7 @@ import { ScriptStateAction, reduceScriptState } from './script_state_reducer';
 /// We therefore bypass the "pureness" rules for the top-level state and use a single global state instead.
 
 let GLOBAL_SCRIPTS: Map<number, ScriptState> = new Map();
-let NEXT_SCRIPT_STATE_ID = 1;
+let NEXT_REGISTRY_ENTRY_ID = 1;
 
 export function useScriptState(id: number | null): [ScriptState | null, Dispatch<ScriptStateAction>] {
     const [state, setState] = React.useState<ScriptState | null>(null);
@@ -35,10 +35,13 @@ export function useScriptState(id: number | null): [ScriptState | null, Dispatch
     return [state, reducer];
 }
 
-export function registerScript(scriptState: ScriptState): number {
-    const scriptId = NEXT_SCRIPT_STATE_ID++;
-    GLOBAL_SCRIPTS.set(scriptId, scriptState);
-    return scriptId;
+export function registerScript(scriptState: Omit<ScriptState, 'registryEntryId'>): number {
+    const entryId = NEXT_REGISTRY_ENTRY_ID++;
+    GLOBAL_SCRIPTS.set(entryId, {
+        ...scriptState,
+        registryEntryId: entryId,
+    });
+    return entryId;
 }
 
 export function getRegisteredScriptCount(): number {
