@@ -61,14 +61,14 @@ export const HyperGrpcConnectorPanel: React.FC<HyperGrpcConnectorPanelProps> = (
             </div>
             <div className={pageStyle.card_body_container}>
                 <div className={panelStyle.auth_config_container}>
-                    <FormControl sx={{ marginTop: '8px' }}>
+                    <FormControl sx={{ marginTop: '8px' }} disabled={grpcConnectorDisabled}>
                         <FormControl.Label id="protocol-selector" as="span">
                             Protocol
                         </FormControl.Label>
                         <SegmentedControl
                             aria-labelledby="protocol-selector"
                             onChange={selectProtocol}
-                            sx={{ marginTop: '4px' }}
+                            sx={{ marginTop: '4px', opacity: grpcConnectorDisabled ? 0.75 : 1.0 }}
                         >
                             <SegmentedControl.Button selected={selectedProtocol === 0} disabled={grpcConnectorDisabled}>
                                 gRPC
