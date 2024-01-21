@@ -33,7 +33,7 @@ export class QueryExecutorMock implements QueryExecutionResponseStream {
             return null;
         }
         this.batchesWritten += 1;
-        await sleep(200);
+        await sleep(400);
         const columnA = Int32Array.from({ length: 1000 }, () => Number((Math.random() * 1000).toFixed(0)));
         const columnB = Int32Array.from({ length: 1000 }, () => Number((Math.random() * 1000).toFixed(0)));
         const columnC = Int32Array.from({ length: 1000 }, () => Number((Math.random() * 1000).toFixed(0)));

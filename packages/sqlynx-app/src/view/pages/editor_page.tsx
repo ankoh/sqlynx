@@ -11,7 +11,7 @@ import {
     useConnectorSelection,
 } from '../../connectors/connector_selection';
 import { ConnectorInfo, ConnectorType } from '../../connectors/connector_info';
-import { useAppConfig } from '../../app_config';
+import { QueryExecutionTaskStatus } from '../../connectors/query_execution';
 import { useScriptState } from '../../scripts/script_state_provider';
 import { ScriptEditor } from '../editor/editor';
 import { SchemaGraph } from '../../view/schema/schema_graph';
@@ -147,6 +147,12 @@ const ProjectListItems = (props: {}) => (
     </>
 );
 
+enum TabKey {
+    SchemaView = 1,
+    PlanView = 2,
+    TableView = 3,
+}
+
 export const EditorPage: React.FC<Props> = (props: Props) => {
     const scriptState = useScriptState();
     const connector = useSelectedConnector();
@@ -155,6 +161,28 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
 
     const queryExecutionStarted = (scriptState.queryExecutionState?.startedAt ?? null) != null;
     const queryExecutionHasResults = scriptState.queryExecutionResult != null;
+    const prevQueryExecutionState = React.useRef<QueryExecutionTaskStatus | null>(null);
+    React.useEffect(() => {
+        const status = scriptState.queryExecutionState?.status ?? null;
+        switch (status) {
+            case null:
+                break;
+            case QueryExecutionTaskStatus.STARTED:
+            case QueryExecutionTaskStatus.ACCEPTED:
+            case QueryExecutionTaskStatus.RECEIVED_SCHEMA:
+            case QueryExecutionTaskStatus.RECEIVED_FIRST_RESULT:
+                if (prevQueryExecutionState.current == null) {
+                    selectTab(TabKey.PlanView);
+                }
+                break;
+            case QueryExecutionTaskStatus.FAILED:
+                break;
+            case QueryExecutionTaskStatus.SUCCEEDED:
+                selectTab(TabKey.TableView);
+                break;
+        }
+        prevQueryExecutionState.current = status;
+    }, [scriptState.queryExecutionState?.status]);
 
     const columnA = Int32Array.from({ length: 1000 }, () => Number((Math.random() * 1000).toFixed(0)));
     const columnB = Int32Array.from({ length: 1000 }, () => Number((Math.random() * 1000).toFixed(0)));
@@ -194,15 +222,15 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                     selectedTab={selectedTab}
                     selectTab={selectTab}
                     tabs={[
-                        [1, `${icons}#tables_connected`, true],
-                        [2, `${icons}#plan`, queryExecutionStarted],
-                        [3, `${icons}#table`, queryExecutionHasResults],
+                        [TabKey.SchemaView, `${icons}#tables_connected`, true],
+                        [TabKey.PlanView, `${icons}#plan`, queryExecutionStarted],
+                        [TabKey.TableView, `${icons}#table`, queryExecutionHasResults],
                     ]}
                     tabProps={{}}
                     tabRenderers={{
-                        [1]: props => <SchemaGraph />,
-                        [2]: props => <QueryProgress />,
-                        [3]: props => <DataTable data={table} />,
+                        [TabKey.SchemaView]: _props => <SchemaGraph />,
+                        [TabKey.PlanView]: _props => <QueryProgress />,
+                        [TabKey.TableView]: _props => <DataTable data={table} />,
                     }}
                 />
                 <ScriptEditor className={styles.editor_card} />
