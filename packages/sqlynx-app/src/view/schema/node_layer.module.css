@@ -41,20 +41,6 @@
     width: 100%;
 }
 
-.table_column_count {
-    position: relative;
-    grid-column: 3;
-    margin-right: 8px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    background-color: var(--graph_card_column_count_bg);
-    padding: 4px 8px;
-    border-radius: 12px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
 .table_ports {
     position: absolute;
     width: 100%;
