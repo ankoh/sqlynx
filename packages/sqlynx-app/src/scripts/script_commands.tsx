@@ -68,8 +68,8 @@ export const ScriptCommands: React.FC<Props> = (props: Props) => {
         console.warn(`connector '${connector.displayName.long}' does not implement the command '${actionName}'`);
     };
     // Create key event handlers
-    const keyHandlers = React.useMemo<KeyEventHandler[]>(() => {
-        return [
+    const keyHandlers = React.useMemo<KeyEventHandler[]>(
+        () => [
             {
                 key: 'n',
                 ctrlKey: true,
@@ -106,8 +106,9 @@ export const ScriptCommands: React.FC<Props> = (props: Props) => {
                     ? () => commandNotImplemented(connector, 'SAVE_QUERY_RESULTS_AS_ARROW')
                     : () => commandDispatch(ScriptCommandType.SaveQueryResultsAsArrow),
             },
-        ];
-    }, [connector, commandDispatch]);
+        ],
+        [connector, commandDispatch],
+    );
 
     // Setup key event handlers
     useKeyEvents(keyHandlers);
