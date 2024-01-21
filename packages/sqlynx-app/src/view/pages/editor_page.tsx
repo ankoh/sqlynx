@@ -75,7 +75,7 @@ const ConnectorSelection = (props: { className?: string; variant: 'default' | 'i
     );
 };
 
-const CommandListItems = (props: { connector: ConnectorInfo }) => {
+const CommandListItems = (props: { connector: ConnectorInfo; canCycleOutput: boolean }) => {
     const [linkSharingIsOpen, openLinkSharing] = React.useState<boolean>(false);
     const [saveSqlIsOpen, openSaveSql] = React.useState<boolean>(false);
     return (
@@ -130,11 +130,11 @@ const CommandListItems = (props: { connector: ConnectorInfo }) => {
                 Cycle connectors
                 <ActionList.TrailingVisual>Ctrl + N</ActionList.TrailingVisual>
             </ActionList.Item>
-            <ActionList.Item>
+            <ActionList.Item disabled={!props.canCycleOutput}>
                 <ActionList.LeadingVisual>
                     <VersionsIcon />
                 </ActionList.LeadingVisual>
-                Cycle output tabs
+                Cycle output
                 <ActionList.TrailingVisual>Ctrl + O</ActionList.TrailingVisual>
             </ActionList.Item>
         </>
@@ -288,7 +288,7 @@ export const EditorPage: React.FC<Props> = (props: Props) => {
                             short={false}
                         />
                         <ActionList.Divider />
-                        <CommandListItems connector={connector} />
+                        <CommandListItems connector={connector} canCycleOutput={enabledTabs > 1} />
                     </ActionList>
                     <ActionList key={1} className={styles.project_actions}>
                         <ProjectListItems />
