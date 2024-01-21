@@ -65,8 +65,13 @@
         grid-row: 1 / span 2;
         grid-column: 2;
         display: grid;
-        grid-template-rows: max-content max-content;
+        grid-template-rows: max-content max-content max-content;
         row-gap: 24px;
+    }
+    .view_actions {
+        border-radius: 8px;
+        border: 1px solid var(--border_color_primary);
+        background-color: white;
     }
     .data_actions {
         border-radius: 8px;
