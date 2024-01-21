@@ -2,12 +2,8 @@ import * as React from 'react';
 
 import { ScriptState } from './script_state';
 import { Dispatch } from '../utils/variant';
-import {
-    ScriptStateAction,
-    getNextGlobalScript,
-    getGlobalScriptCount,
-    useGlobalScriptState,
-} from './script_state_reducer';
+import { ScriptStateAction } from './script_state_reducer';
+import { getNextGlobalScript, getGlobalScriptCount, useGlobalScriptState } from './global_script_state';
 
 interface ScriptIterator {
     count: number;

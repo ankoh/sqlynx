@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Immutable from 'immutable';
 
-import { createGlobalScriptState } from './script_state_reducer';
+import { createGlobalScriptState } from './global_script_state';
 import { useScriptSelector, useScriptState } from './script_state_provider';
 import { CONNECTOR_INFOS, ConnectorType } from '../connectors/connector_info';
 import { useSQLynx } from '../sqlynx_loader';
