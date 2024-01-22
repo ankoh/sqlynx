@@ -9,6 +9,14 @@ extern const std::array<unsigned char, 256> TOLOWER_ASCII_TABLE;
 // This will return weird results with non-ascii characters, use with caution
 inline unsigned char tolower_fuzzy(unsigned char c) { return TOLOWER_ASCII_TABLE[c]; }
 
+inline bool anyupper_fuzzy(std::string_view s) {
+    bool anyupper = false;
+    for (char c : s) {
+        anyupper |= c >= 65 && c <= 90;
+    }
+    return anyupper;
+}
+
 inline int memicmp_fuzzy(const void *_s1, const void *_s2, size_t len) {
     auto *s1 = static_cast<const unsigned char *>(_s1);
     auto *s2 = static_cast<const unsigned char *>(_s2);

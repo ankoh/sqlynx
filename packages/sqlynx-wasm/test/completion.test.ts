@@ -33,7 +33,7 @@ describe('SQLynx Completion', () => {
             let candidates: string[] = [];
             for (let i = 0; i < completion.candidatesLength(); ++i) {
                 const candidate = completion.candidates(i)!;
-                candidates.push(candidate.nameText()!);
+                candidates.push(candidate.completionText()!);
             }
             expect(candidates).toEqual(expected);
         };

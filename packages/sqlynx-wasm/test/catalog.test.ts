@@ -24,7 +24,7 @@ describe('Catalog Tests ', () => {
         catalog.addSchemaDescriptorT(
             1,
             new sqlynx.proto.SchemaDescriptorT('db1', 'schema1', [
-                new sqlynx.proto.SchemaTableT('table1', [
+                new sqlynx.proto.SchemaTableT(0, 'table1', [
                     new sqlynx.proto.SchemaTableColumnT('column1'),
                     new sqlynx.proto.SchemaTableColumnT('column2'),
                     new sqlynx.proto.SchemaTableColumnT('column3'),
@@ -78,7 +78,7 @@ describe('Catalog Tests ', () => {
         catalog.addSchemaDescriptorT(
             1,
             new sqlynx.proto.SchemaDescriptorT('db1', 'schema1', [
-                new sqlynx.proto.SchemaTableT('table1', [
+                new sqlynx.proto.SchemaTableT(0, 'table1', [
                     new sqlynx.proto.SchemaTableColumnT('column1'),
                     new sqlynx.proto.SchemaTableColumnT('column2'),
                     new sqlynx.proto.SchemaTableColumnT('column3'),

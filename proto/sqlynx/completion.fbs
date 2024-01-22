@@ -1,8 +1,10 @@
 namespace sqlynx.proto;
 
 table CompletionCandidate {
-    /// The completion
-    name_text: string;
+    /// The display text
+    display_text: string;
+    /// The completion text
+    completion_text: string;
     /// The combined tags
     combined_tags: uint64;
     /// The score
