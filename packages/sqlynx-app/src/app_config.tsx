@@ -10,6 +10,9 @@ export interface AppFeatures {
     connections?: boolean;
     completionDetails?: boolean;
     grpcConnector?: boolean;
+    refreshSchema?: boolean;
+    saveQueryAsSql?: boolean;
+    saveResultsAsArrow?: boolean;
 }
 
 export interface AppConfig {

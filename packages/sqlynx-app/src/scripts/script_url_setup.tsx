@@ -101,14 +101,17 @@ const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
     }
 
     // Initial auth trigger
+    const authOnce = React.useRef<boolean>(false);
     React.useEffect(() => {
         if (
+            authOnce.current ||
             state == null ||
             state.connectorParams == null ||
             connectorAuthCheck != ConnectorAuthCheck.AUTHENTICATION_NOT_STARTED
         ) {
             return;
         }
+        authOnce.current = true;
         switch (state?.connectorParams?.type) {
             case SALESFORCE_DATA_CLOUD:
                 salesforceAuthFlow({
@@ -283,11 +286,3 @@ export const ScriptURLSetup: React.FC<{ children: React.ReactElement }> = (props
             return <ScriptURLSetupPage params={params} onDone={() => setShowSetup(SetupVisibility.SKIP)} />;
     }
 };
-
-// Pack a test url
-// const params = new URLSearchParams();
-// params.set('connector', 'salesforce');
-// params.set('instance', 'https://trialorgfarmforu-16f.test2.my.pc-rnd.salesforce.com');
-// params.set('app', '3MVG9GS4BiwvuHvgBoJxvy6gBq99_Ptg8FHx1QqO0bcDgy3lYc3x1b3nLPXGDQzYlYYMOwqo_j12QdTgAvAZD');
-// const test_url = new URL(`https://sqlynx.app?${params.toString()}`);
-// http://localhost:9002/?connector=salesforce&instance=https%3A%2F%2Ftrialorgfarmforu-16f.test2.my.pc-rnd.salesforce.com&app=3MVG9GS4BiwvuHvgBoJxvy6gBq99_Ptg8FHx1QqO0bcDgy3lYc3x1b3nLPXGDQzYlYYMOwqo_j12QdTgAvAZD
