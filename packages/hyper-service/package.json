@@ -1,0 +1,29 @@
+{
+    "name": "@ankoh/hyper-service",
+    "private": true,
+    "version": "0.1.0",
+    "description": "",
+    "dependencies": {
+        "@connectrpc/connect-web": "^1.3.0",
+        "@bufbuild/protobuf": "^1.6.0"
+    },
+    "devDependencies": {
+        "@types/node": "^20.1.0",
+        "esbuild": "^0.14.25",
+        "typescript": "^5.0.4"
+    },
+    "scripts": {
+        "build": "tsc --emitDeclarationOnly && ts-node bundle.ts"
+    },
+    "include": [
+        "./gen/"
+    ],
+    "files": [
+        "dist/gen/",
+        "dist/index.*",
+        "dist/hyper-service.module.*"
+    ],
+    "module": "./dist/hyper-service.module.js",
+    "types": "./dist/hyper-service.module.d.ts"
+}
+

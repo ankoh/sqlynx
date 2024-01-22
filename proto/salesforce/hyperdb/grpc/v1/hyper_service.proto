@@ -1,0 +1,163 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+package salesforce.hyperdb.grpc.v1;
+
+/* Ensure that we have a sensible java package name and that
+messages are individual classes for better dev experience.
+*/
+option java_multiple_files = true;
+option java_package = "com.salesforce.hyperdb.grpc";
+option java_outer_classname = "HyperDatabaseServiceProto";
+
+service HyperService {
+    /* Execute a query / statement and retrieve its result.
+       The result stream will always start with a result header (QueryResultHeader)
+       and in case that data is returned the data will be streamed in chunks.
+    */
+    rpc ExecuteQuery(QueryParam) returns (stream QueryResult);
+}
+
+/* QueryParam represents a query alongside with additional options to describe
+ the execution context, like attached databases or parameters. Additionally, the
+ output format for data chunks can be configured */
+message QueryParam {
+    // Currently supported output formats
+    enum OutputFormat {
+        // Encode the result chunk in a text-based format intended for debugging gRPC on the command line.
+        // Currently, this format is the same as `QUERY_SERVICE_V1`, which encodes the result as a JSON array.
+        // However, this format might change in the future.
+        TEXT_DEBUG = 0;
+        // Formerly Hyper-Binary. Reserved as long as we expect clients to send it.
+        reserved 1;
+        // Do not use this format when onboarding any new workloads. `ARROW_STREAM` is
+        // strictly preferable.
+        // Encode the result chunk in a proprietary variant similar to the "Arrow IPC format".
+        // Each result chunk consists of a schema and a record batch message.
+        // This is the original format of the gRPC proxy. For the JDBC Tableau connector, this
+        // format is passed through directly to the public Data Cloud API endpoint. As such,
+        // we cannot just drop support for it.
+        ARROW_LEGACY = 2;
+        // Do not use this format when onboarding any new workloads. `ARROW_STREAM` is
+        // strictly preferable.
+        // Encode the result chunk as a JSON array of objects using the Query Service V1 SQL API convention.
+        QUERY_SERVICE_V1 = 3;
+        // Encode the result chunk as part of a single Arrow IPC stream that encompasses all result chunks of a query.
+        // This means only the first result chunk contains a schema message.
+        // The following result chunks contain one or more record batch messages.
+        ARROW_STREAM = 4;
+    }
+    // The SQL query text.
+    // See https://tableau.github.io/hyper-db/docs/sql/ for a documentation of Hyper's SQL.
+    string query = 1;
+    // Specify the list of attached databases for this query
+    repeated AttachedDatabase database = 2;
+    // Specify the output format for query result data chunks. Default is text output.
+    OutputFormat output_format = 3;
+    // Settings to allow adjusting the execution of a query.
+    // See https://tableau.github.io/hyper-db/docs/hyper-api/connection#connection-settings
+    map<string, string> params = 4;
+}
+
+message AttachedDatabase {
+    // Access path for the database
+    string path = 1;
+    // Alias for the database under which it should be availabe in SQL
+    string alias = 2;
+}
+
+/* The result of a query, in a QueryResult stream the result header will always
+  come first and will be followed by the configured result chunk type.
+*/
+message QueryResult {
+    oneof result {
+        QueryResultHeader header = 1;
+        QueryBinaryResultChunk arrow_chunk = 4;
+        QueryStringResultChunk qsv1_chunk = 5;
+    }
+}
+
+/* Describes the schema of the query result */
+message QueryResultHeader {
+    oneof header {
+        // Returned for normal queries (i.e., SELECT)
+        QueryResultSchema schema = 1;
+        // Returned when the query was of statement type
+        QueryCommandOk command = 2;
+    }
+}
+
+/* Returned for statements, some statements additionally return the affected row count.
+   The server will only send this message once the changes of the statement are committed successfully. */
+message QueryCommandOk {
+    oneof command_return {
+        google.protobuf.Empty empty = 2;
+        uint64 affected_rows = 1;
+    }
+}
+
+/* Schema of the query result */
+message QueryResultSchema {
+    repeated ColumnDescription column = 1;
+}
+
+/* Describes a column */
+message ColumnDescription {
+    string name = 1;
+    SqlType type = 2;
+}
+
+/* Type of a result column, provides additional information through the modifier field */
+message SqlType {
+    enum TypeTag {
+        HYPER_UNSUPPORTED = 0;
+        HYPER_BOOL = 1;
+        HYPER_BIG_INT = 2;
+        HYPER_SMALL_INT = 3;
+        HYPER_INT = 4;
+        HYPER_NUMERIC = 5;
+        HYPER_DOUBLE = 6;
+        HYPER_OID = 7;
+        HYPER_BYTE_A = 8;
+        HYPER_TEXT = 9;
+        HYPER_VARCHAR = 10;
+        HYPER_CHAR = 11;
+        HYPER_JSON = 12;
+        HYPER_DATE = 13;
+        HYPER_INTERVAL = 14;
+        HYPER_TIME = 15;
+        HYPER_TIMESTAMP = 16;
+        HYPER_TIMESTAMP_TZ = 17;
+        HYPER_GEOGRAPHY = 18;
+    }
+
+    // The precision of a numeric column
+    message NumericModifier {
+        uint32 precision = 1;
+        uint32 scale = 2;
+    }
+
+    // Matches hyperapi::SqlType enum
+    TypeTag tag = 1;
+    // Additional type information, e.g. about precision
+    oneof modifier {
+        google.protobuf.Empty empty = 2;
+        // Only available if tag is a text type
+        uint32 max_length = 3;
+        // Only available if tag is a numeric type
+        NumericModifier numeric_modifier = 4;
+    }
+}
+
+/* A result chunk which contains multiple rows encoded in the binary format requested via the `output_format` field of
+ * the `QueryParam` message */
+message QueryBinaryResultChunk {
+    bytes data = 127;
+}
+
+/* A result chunk which contains multiple rows encoded in the textual format requested via the `output_format` field of
+ * the `QueryParam` message */
+message QueryStringResultChunk {
+    string data = 127;
+}
