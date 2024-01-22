@@ -28,6 +28,8 @@ export const DataTable: React.FC<Props> = (props: Props) => {
         return <div />;
     }
 
+    const rows = React.useMemo(() => props.data?.toArray() ?? null, [props.data]);
+
     const gridRows = props.data.numRows;
     const gridColumns = 1 + props.data.numCols;
     const getColumnWidth = (i: number) => (i == 0 ? ROW_HEADER_WIDTH : MIN_COLUMN_WIDTH);
@@ -54,7 +56,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
         } else {
             return (
                 <div className={styles.data_cell} style={cellProps.style}>
-                    {cellProps.rowIndex + 1}
+                    {rows?.[cellProps.rowIndex][props.data?.schema.fields[cellProps.columnIndex - 1].name ?? 0] ?? null}
                 </div>
             );
         }
