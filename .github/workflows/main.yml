@@ -223,17 +223,17 @@ jobs:
               shell: bash
               run: ./scripts/generate_proto.sh
 
-            - name: Generate Protobuf files
-              shell: bash
-              run: |
-                  ./node_modules/.bin/buf generate 
-                  yarn workspace @ankoh/hyper-service build
-
             - name: Install npm dependencies
               shell: bash
               run: |
                   mkdir -p ./lib/build/wasm/o3 ./reports
                   yarn install --frozen-lockfile
+
+            - name: Generate Protobuf files
+              shell: bash
+              run: |
+                  ./node_modules/.bin/buf generate 
+                  yarn workspace @ankoh/hyper-service build
 
             - name: Build @ankoh/sqlynx
               shell: bash
