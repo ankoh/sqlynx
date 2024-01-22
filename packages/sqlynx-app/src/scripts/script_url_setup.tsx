@@ -13,7 +13,7 @@ import {
     LOCAL_SCRIPT,
     SALESFORCE_DATA_CLOUD,
 } from '../connectors/connector_info';
-import { useSalesforceAuthState } from '../connectors/salesforce_auth_state';
+import { CONNECT, useSalesforceAuthFlow, useSalesforceAuthState } from '../connectors/salesforce_auth_state';
 import {
     ConnectorSetupParamVariant,
     checkSalesforceAuthSetup,
@@ -25,7 +25,6 @@ import { RESULT_OK, formatBytes, formatNanoseconds } from '../utils';
 import styles from './script_url_setup.module.css';
 
 import symbols from '../../static/svg/symbols.generated.svg';
-import { useScriptState } from './script_state_registry';
 
 interface Props {
     params: URLSearchParams;
@@ -42,6 +41,7 @@ const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
     const lnx = useSQLynx();
     const lnxLoading = useSQLynxLoadingProgress();
     const salesforceAuth = useSalesforceAuthState();
+    const salesforceAuthFlow = useSalesforceAuthFlow();
     const [state, setState] = React.useState<State | null>(null);
 
     // Get instantiation progress
@@ -80,7 +80,7 @@ const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
 
     // Check the auth setup
     let connectorInfo = null;
-    let connectorAuthCheck = null;
+    let connectorAuthCheck: ConnectorAuthCheck | null = null;
     switch (state?.connectorParams?.type) {
         case SALESFORCE_DATA_CLOUD:
             connectorInfo = CONNECTOR_INFOS[ConnectorType.SALESFORCE_DATA_CLOUD as number];
@@ -93,6 +93,33 @@ const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
             connectorInfo = CONNECTOR_INFOS[ConnectorType.LOCAL_SCRIPT as number];
             break;
     }
+
+    // Initial auth trigger
+    React.useEffect(() => {
+        if (
+            state == null ||
+            connectorAuthCheck != ConnectorAuthCheck.AUTHENTICATION_NOT_STARTED ||
+            state.connectorParams == null
+        ) {
+            return;
+        }
+        switch (state?.connectorParams?.type) {
+            case SALESFORCE_DATA_CLOUD:
+                salesforceAuthFlow({
+                    type: CONNECT,
+                    value: {
+                        instanceUrl: state.connectorParams.value.instanceUrl ?? '', // XXX Warn if params make no sense
+                        appConsumerKey: state.connectorParams.value.appConsumerKey ?? '',
+                        appConsumerSecret: null,
+                    },
+                });
+                break;
+            case HYPER_DATABASE:
+                break;
+            case LOCAL_SCRIPT:
+                break;
+        }
+    }, [state, connectorAuthCheck]);
 
     // Get the auth status
     const canContinue = connectorAuthCheck === null || connectorAuthCheck === ConnectorAuthCheck.AUTHENTICATED;

@@ -51,6 +51,7 @@ export const AUTH_FLOW_DEFAULT_STATE: SalesforceAuthState = {
 };
 
 export const CONFIGURE = Symbol('CONFIGURE');
+export const CONFIGURE_AND_CONNECT = Symbol('CONFIGURE_AND_CONNECT');
 export const CONNECT = Symbol('CONNECT');
 export const DISCONNECT = Symbol('DISCONNECT');
 export const AUTH_FAILED = Symbol('AUTH_FAILED');
