@@ -3,14 +3,17 @@ import * as arrow from 'apache-arrow';
 import { VariantKind } from '../utils';
 import { SALESFORCE_DATA_CLOUD } from './connector_info';
 import { SalesforceAPIClientInterface, SalesforceDataCloudAccessToken } from './salesforce_api_client';
+import { SalesforceAuthParams } from './salesforce_auth_state';
 
 export type QueryExecutionTaskVariant = VariantKind<typeof SALESFORCE_DATA_CLOUD, ExecuteDataCloudQueryTask>;
 
 export interface ExecuteDataCloudQueryTask {
     /// The salesforce api client
     api: SalesforceAPIClientInterface;
+    /// The auth params
+    authParams: SalesforceAuthParams;
     /// The access token
-    accessToken: SalesforceDataCloudAccessToken;
+    dataCloudAccessToken: SalesforceDataCloudAccessToken;
     /// The script text
     scriptText: string;
 }

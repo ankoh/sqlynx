@@ -17,7 +17,7 @@
                 "appConsumerKey": "3MVG9GS4BiwvuHvgBoJxvy6gBq99_Ptg8FHx1QqO0bcDgy3lYc3x1b3nLPXGDQzYlYYMOwqo_j12QdTgAvAZD"
             },
             "mock": {
-                "enabled": true,
+                "enabled": false,
                 "coreAccess": {
                     "accessToken": "core-access-token",
                     "apiInstanceUrl": "http://localhost",

@@ -38,6 +38,10 @@ infra_macos:
 .PHONY: proto
 proto:
 	./scripts/generate_proto.sh
+	
+.PHONY: buf
+buf:
+	./node_modules/.bin/buf generate && yarn workspace @ankoh/hyper-service build
 
 .PHONY: core_native_o0
 core_native_o0:

@@ -41,7 +41,8 @@ export const ScriptQueryExecutor = (props: { children?: React.ReactElement }) =>
                     type: SALESFORCE_DATA_CLOUD,
                     value: {
                         api: salesforceAPI,
-                        accessToken: salesforceAuth.dataCloudAccessToken!,
+                        authParams: salesforceAuth.authParams!,
+                        dataCloudAccessToken: salesforceAuth.dataCloudAccessToken!,
                         scriptText: state.scripts[ScriptKey.MAIN_SCRIPT]?.script?.toString() ?? '',
                     },
                 };
@@ -88,23 +89,30 @@ export const ScriptQueryExecutor = (props: { children?: React.ReactElement }) =>
         };
         // Helper to subscribe to result batches
         const resultReader = async (resultStream: QueryExecutionResponseStream) => {
-            const schema = await resultStream.getSchema();
-            if (schema == null) {
-                return;
-            }
-            dispatch({
-                type: QUERY_EXECUTION_RECEIVED_SCHEMA,
-                value: schema,
-            });
-            while (true) {
-                const batch = await resultStream.nextRecordBatch();
-                if (batch == null) {
-                    break;
+            try {
+                console.log('READ SCHEMA');
+                const schema = await resultStream.getSchema();
+                if (schema == null) {
+                    console.log('SCHEMA IS NULL');
+                    return;
                 }
                 dispatch({
-                    type: QUERY_EXECUTION_RECEIVED_BATCH,
-                    value: batch,
+                    type: QUERY_EXECUTION_RECEIVED_SCHEMA,
+                    value: schema,
                 });
+                while (true) {
+                    console.log('READ RESULT');
+                    const batch = await resultStream.nextRecordBatch();
+                    if (batch == null) {
+                        break;
+                    }
+                    dispatch({
+                        type: QUERY_EXECUTION_RECEIVED_BATCH,
+                        value: batch,
+                    });
+                }
+            } catch (e: any) {
+                console.error(e);
             }
         };
         // Execute the query and consume the results
@@ -115,7 +123,7 @@ export const ScriptQueryExecutor = (props: { children?: React.ReactElement }) =>
                 switch (task.type) {
                     case SALESFORCE_DATA_CLOUD: {
                         const req = task.value;
-                        resultStream = req.api.executeQuery(req.scriptText, req.accessToken);
+                        resultStream = req.api.executeQuery(req.scriptText, req.dataCloudAccessToken);
                         break;
                     }
                 }

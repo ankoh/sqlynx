@@ -1,0 +1,13 @@
+version: v1
+plugins:
+    # Generate typescript protobuf library
+    - name: protoc-gen-es
+      path: ./node_modules/.bin/protoc-gen-es
+      out: ./packages/hyper-service/gen
+      opt: target=ts
+
+    # Generate Web & Node.js gRPC library
+    - name: protoc-gen-connect-es
+      path: ./node_modules/.bin/protoc-gen-connect-es
+      out: ./packages/hyper-service/gen
+      opt: target=ts

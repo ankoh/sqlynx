@@ -1,11 +1,13 @@
+import { HyperResultStream, HyperServiceClient } from './hyper_service_client';
 import { QueryExecutionResponseStream } from './query_execution';
 import { SalesforceDataCloudAccessToken } from './salesforce_api_client';
 
 export function executeQuery(
-    _scriptText: string,
-    _accessToken: SalesforceDataCloudAccessToken,
+    scriptText: string,
+    accessToken: SalesforceDataCloudAccessToken,
 ): QueryExecutionResponseStream {
-    console.warn('executQuery is not implemented');
-
-    throw new Error('Method not implemented.');
+    console.log(accessToken.instanceUrl.toString());
+    const client = new HyperServiceClient(accessToken.instanceUrl.toString());
+    const iterable = client.executeQuery(scriptText, accessToken.accessToken);
+    return new HyperResultStream(iterable[Symbol.asyncIterator]());
 }
