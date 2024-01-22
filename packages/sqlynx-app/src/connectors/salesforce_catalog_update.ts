@@ -13,14 +13,9 @@ export function updateDataCloudCatalog(catalog: sqlynx.SQLynxCatalog, metadata: 
         tables.push(table);
     }
 
-    console.log('drop descriptor pool');
     catalog.dropDescriptorPool(42);
-    console.log('add descriptor pool');
     catalog.addDescriptorPool(42, 100);
-    console.log('add schema descriptor');
     const descriptor = new sqlynx.proto.SchemaDescriptorT('', '', tables);
     catalog.addSchemaDescriptorT(42, descriptor);
-
-    console.log(metadata);
-    console.log('catalog.clear()');
+    console.log('Received response from MDS');
 }

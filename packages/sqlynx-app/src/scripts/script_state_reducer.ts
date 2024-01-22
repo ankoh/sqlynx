@@ -362,8 +362,7 @@ export function reduceScriptState(state: ScriptState, action: ScriptStateAction)
         case CATALOG_UPDATE_SUCCEEDED: {
             const taskId = action.value;
             const task = state.catalogUpdates.get(taskId)!;
-            // XXX Trigger script updates
-            return {
+            const next = {
                 ...state,
                 catalogUpdates: state.catalogUpdates.set(taskId, {
                     ...task,
@@ -371,6 +370,45 @@ export function reduceScriptState(state: ScriptState, action: ScriptStateAction)
                     finishedAt: new Date(),
                 }),
             };
+            // Update the scripts
+            const mainScript = next.scripts[ScriptKey.MAIN_SCRIPT];
+            const schemaScript = next.scripts[ScriptKey.SCHEMA_SCRIPT];
+            try {
+                if (schemaScript && schemaScript.script) {
+                    // Destroy the old script and buffers
+                    schemaScript.processed.destroy(schemaScript.processed);
+                    // Analyze the new schema
+                    const schemaAnalyzed = parseAndAnalyzeScript(schemaScript.script);
+                    // Update the catalog
+                    next.catalog!.loadScript(schemaScript.script, SCHEMA_SCRIPT_CATALOG_RANK);
+                    // Update the state
+                    next.scripts[ScriptKey.SCHEMA_SCRIPT] = {
+                        ...next.scripts[ScriptKey.SCHEMA_SCRIPT],
+                        scriptVersion: ++schemaScript.scriptVersion,
+                        processed: schemaAnalyzed,
+                        statistics: rotateStatistics(
+                            schemaScript.statistics,
+                            schemaScript.script!.getStatistics() ?? null,
+                        ),
+                    };
+                }
+                if (mainScript && mainScript.script) {
+                    // Destroy the old buffers
+                    mainScript.processed.destroy(mainScript.processed);
+                    const analysis = parseAndAnalyzeScript(mainScript.script);
+                    // Update the state
+                    next.scripts[ScriptKey.MAIN_SCRIPT] = {
+                        ...mainScript,
+                        scriptVersion: ++mainScript.scriptVersion,
+                        processed: analysis,
+                        statistics: rotateStatistics(mainScript.statistics, mainScript.script!.getStatistics() ?? null),
+                    };
+                }
+            } catch (e: any) {
+                console.warn(e);
+            }
+            // Update the schema graph
+            return computeSchemaGraph(next);
         }
 
         case EXECUTE_QUERY: {
