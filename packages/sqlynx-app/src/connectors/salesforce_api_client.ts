@@ -2,7 +2,7 @@ import * as sqlynx from '@ankoh/sqlynx';
 
 import { QueryExecutionResponseStream } from './query_execution';
 import { SalesforceAuthConfig, SalesforceAuthParams } from './salesforce_auth_state';
-import { executeQuery } from './salesforce_query_execution';
+import { executeQuery as execQuery } from './salesforce_query_execution';
 
 export interface SalesforceCoreAccessToken {
     /// The OAuth token
@@ -293,6 +293,6 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
         // catalog.addSchemaDescriptorT(METADATA_DESCRIPTOR_POOL_ID, schema);
     }
     public executeQuery(scriptText: string, accessToken: SalesforceDataCloudAccessToken): QueryExecutionResponseStream {
-        return executeQuery(scriptText, accessToken);
+        return execQuery(scriptText, accessToken);
     }
 }
