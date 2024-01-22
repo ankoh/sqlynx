@@ -1,5 +1,6 @@
 import * as React from 'react';
 
+import LZString from 'lz-string';
 import { Button, IconButton } from '@primer/react';
 import { SyncIcon } from '@primer/octicons-react';
 import { useLocation } from 'react-router-dom';
@@ -13,23 +14,35 @@ import {
     SALESFORCE_DATA_CLOUD,
 } from '../connectors/connector_info';
 import { useSalesforceAuthState } from '../connectors/salesforce_auth_state';
-import { checkSalesforceAuthSetup, readConnectorParamsFromURL } from '../connectors/connector_url_params';
+import {
+    ConnectorSetupParamVariant,
+    checkSalesforceAuthSetup,
+    readConnectorParamsFromURL,
+} from '../connectors/connector_url_params';
 import { useSQLynx, useSQLynxLoadingProgress } from '../sqlynx_loader';
 import { RESULT_OK, formatBytes, formatNanoseconds } from '../utils';
 
 import styles from './script_url_setup.module.css';
 
 import symbols from '../../static/svg/symbols.generated.svg';
+import { useScriptState } from './script_state_registry';
 
 interface Props {
     params: URLSearchParams;
     onDone: () => void;
 }
 
+interface State {
+    scriptText: string | null;
+    schemaText: string | null;
+    connectorParams: ConnectorSetupParamVariant | null;
+}
+
 const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
     const lnx = useSQLynx();
     const lnxLoading = useSQLynxLoadingProgress();
     const salesforceAuth = useSalesforceAuthState();
+    const [state, setState] = React.useState<State | null>(null);
 
     // Get instantiation progress
     let moduleSizeLoaded = BigInt(0);
@@ -43,14 +56,35 @@ const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
         moduleVersion = lnx.value.getVersionText();
     }
 
-    // Unpack the URL parameters
-    const connectorParams = readConnectorParamsFromURL(props.params);
+    // Read script parameters
+    React.useEffect(() => {
+        // Read the inline scripts
+        const scriptParam = props.params.get('script');
+        const schemaParam = props.params.get('schema');
+        let scriptText = null;
+        let schemaText = null;
+        if (scriptParam !== null) {
+            scriptText = LZString.decompressFromBase64(scriptParam);
+        }
+        if (schemaParam !== null) {
+            schemaText = LZString.decompressFromBase64(schemaParam);
+        }
+        // Unpack the URL parameters
+        const connectorParams = readConnectorParamsFromURL(props.params);
+        setState({
+            scriptText,
+            schemaText,
+            connectorParams,
+        });
+    }, []);
+
+    // Check the auth setup
     let connectorInfo = null;
     let connectorAuthCheck = null;
-    switch (connectorParams?.type) {
+    switch (state?.connectorParams?.type) {
         case SALESFORCE_DATA_CLOUD:
             connectorInfo = CONNECTOR_INFOS[ConnectorType.SALESFORCE_DATA_CLOUD as number];
-            connectorAuthCheck = checkSalesforceAuthSetup(salesforceAuth, connectorParams.value);
+            connectorAuthCheck = checkSalesforceAuthSetup(salesforceAuth, state.connectorParams.value);
             break;
         case HYPER_DATABASE:
             connectorInfo = CONNECTOR_INFOS[ConnectorType.HYPER_DATABASE as number];
@@ -122,10 +156,10 @@ const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
                     <div className={styles.card_section_header}>SQL</div>
                     <div className={styles.detail_entries}>
                         <DetailEntry label="Inline Script">
-                            <Bean text="3 kB | syntax ok" />
+                            <Bean text={(state?.scriptText?.length ?? 0) + ' chars'} />
                         </DetailEntry>
                         <DetailEntry label="Inline Schema">
-                            <Bean text="10 kB | syntax ok" />
+                            <Bean text={(state?.schemaText?.length ?? 0) + ' chars'} />
                         </DetailEntry>
                     </div>
                 </div>
@@ -135,13 +169,13 @@ const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
                         <DetailEntry label="Connector Type">
                             <Bean text={connectorInfo?.displayName.long ?? 'unknown'} />
                         </DetailEntry>
-                        {connectorParams?.type == SALESFORCE_DATA_CLOUD && (
+                        {state?.connectorParams?.type == SALESFORCE_DATA_CLOUD && (
                             <>
                                 <DetailEntry label="Instance Url">
-                                    <Bean text={connectorParams.value.instanceUrl ?? 'unknown'} />
+                                    <Bean text={state?.connectorParams.value.instanceUrl ?? 'not set'} />
                                 </DetailEntry>
                                 <DetailEntry label="Connected App">
-                                    <Bean text={connectorParams.value.appConsumerKey ?? 'unknown'} />
+                                    <Bean text={state?.connectorParams.value.appConsumerKey ?? 'not set'} />
                                 </DetailEntry>
                             </>
                         )}
