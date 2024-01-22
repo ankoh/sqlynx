@@ -223,6 +223,12 @@ jobs:
               shell: bash
               run: ./scripts/generate_proto.sh
 
+            - name: Generate Protobuf files
+              shell: bash
+              run: |
+                  ./node_modules/.bin/buf generate 
+                  yarn workspace @ankoh/hyper-service build
+
             - name: Install npm dependencies
               shell: bash
               run: |
