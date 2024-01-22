@@ -279,6 +279,12 @@ jobs:
                   mkdir -p ./lib/build/wasm/o3 ./reports
                   yarn install --frozen-lockfile
 
+            - name: Generate Protobuf files
+              shell: bash
+              run: |
+                  ./node_modules/.bin/buf generate 
+                  yarn workspace @ankoh/hyper-service build
+
             - name: Build @ankoh/sqlynx-app
               shell: bash
               run: |
@@ -313,6 +319,12 @@ jobs:
               run: |
                   mkdir -p ./lib/build/wasm/o3 ./reports
                   yarn install --frozen-lockfile
+
+            - name: Generate Protobuf files
+              shell: bash
+              run: |
+                  ./node_modules/.bin/buf generate 
+                  yarn workspace @ankoh/hyper-service build
 
             - name: Build @ankoh/sqlynx-app
               shell: bash
