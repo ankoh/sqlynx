@@ -7,7 +7,7 @@ import {
     useSelectedScriptState,
     useSelectedScriptStateDispatch,
 } from './script_state_provider';
-import { EXECUTE_QUERY, SELECT_NEXT_CONNECTOR, UPDATE_CATALOG } from './script_state_reducer';
+import { EXECUTE_QUERY, UPDATE_CATALOG } from './script_state_reducer';
 
 export enum ScriptCommandType {
     NextConnector = 0,
