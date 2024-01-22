@@ -35,12 +35,12 @@ infra_linux:
 infra_macos:
 	./scripts/install_infra.sh macos
 
-.PHONY: proto
-proto:
-	./scripts/generate_proto.sh
+.PHONY: flatbuf
+flatbuf:
+	./scripts/generate_flatbuf.sh
 	
-.PHONY: buf
-buf:
+.PHONY: protobuf
+protobuf:
 	./node_modules/.bin/buf generate && yarn workspace @ankoh/hyper-service build
 
 .PHONY: core_native_o0

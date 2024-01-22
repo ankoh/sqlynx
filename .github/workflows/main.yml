@@ -32,7 +32,7 @@ jobs:
 
             - name: Generate Flatbuffer files
               shell: bash
-              run: ./scripts/generate_proto.sh
+              run: ./scripts/generate_flatbuf.sh
 
             - name: Build WASM module
               shell: bash
@@ -72,7 +72,7 @@ jobs:
 
             - name: Generate Flatbuffer files
               shell: bash
-              run: ./scripts/generate_proto.sh
+              run: ./scripts/generate_flatbuf.sh
 
             - name: Compile library
               shell: bash
@@ -221,7 +221,7 @@ jobs:
 
             - name: Generate Flatbuffer files
               shell: bash
-              run: ./scripts/generate_proto.sh
+              run: ./scripts/generate_flatbuf.sh
 
             - name: Install npm dependencies
               shell: bash
