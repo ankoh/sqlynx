@@ -8,6 +8,7 @@ import { useLocation } from 'react-router-dom';
 import {
     CONNECTOR_INFOS,
     ConnectorAuthCheck,
+    ConnectorInfo,
     ConnectorType,
     HYPER_DATABASE,
     LOCAL_SCRIPT,
@@ -25,6 +26,9 @@ import { RESULT_OK, formatBytes, formatNanoseconds } from '../utils';
 import styles from './script_url_setup.module.css';
 
 import symbols from '../../static/svg/symbols.generated.svg';
+import { useSelectedScriptState, useSelectedScriptStateDispatch } from './script_state_provider';
+import { REPLACE_SCRIPT_CONTENT } from './script_state_reducer';
+import { ScriptKey } from './script_state';
 
 interface Props {
     params: URLSearchParams;
@@ -42,6 +46,8 @@ const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
     const lnxLoading = useSQLynxLoadingProgress();
     const salesforceAuth = useSalesforceAuthState();
     const salesforceAuthFlow = useSalesforceAuthFlow();
+    const selectedScript = useSelectedScriptState();
+    const selectedScriptDispatch = useSelectedScriptStateDispatch();
     const [state, setState] = React.useState<State | null>(null);
 
     // Get instantiation progress
@@ -79,7 +85,7 @@ const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
     }, []);
 
     // Check the auth setup
-    let connectorInfo = null;
+    let connectorInfo: ConnectorInfo | null = null;
     let connectorAuthCheck: ConnectorAuthCheck | null = null;
     switch (state?.connectorParams?.type) {
         case SALESFORCE_DATA_CLOUD:
@@ -98,8 +104,8 @@ const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
     React.useEffect(() => {
         if (
             state == null ||
-            connectorAuthCheck != ConnectorAuthCheck.AUTHENTICATION_NOT_STARTED ||
-            state.connectorParams == null
+            state.connectorParams == null ||
+            connectorAuthCheck != ConnectorAuthCheck.AUTHENTICATION_NOT_STARTED
         ) {
             return;
         }
@@ -120,6 +126,29 @@ const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
                 break;
         }
     }, [state, connectorAuthCheck]);
+
+    // Replace the script content with the inlined text after authentication finished
+    const loadedOnce = React.useRef<boolean>(false);
+    React.useEffect(() => {
+        if (
+            loadedOnce.current ||
+            state == null ||
+            state.connectorParams == null ||
+            connectorInfo !== selectedScript?.connectorInfo ||
+            connectorAuthCheck != ConnectorAuthCheck.AUTHENTICATED
+        ) {
+            return;
+        }
+        loadedOnce.current = true;
+        const update: any = {};
+        if (state.scriptText !== null) {
+            update[ScriptKey.MAIN_SCRIPT] = state.scriptText;
+        }
+        if (state.schemaText !== null) {
+            update[ScriptKey.SCHEMA_SCRIPT] = state.schemaText;
+        }
+        selectedScriptDispatch({ type: REPLACE_SCRIPT_CONTENT, value: update });
+    }, [state, selectedScript, connectorAuthCheck]);
 
     // Get the auth status
     const canContinue = connectorAuthCheck === null || connectorAuthCheck === ConnectorAuthCheck.AUTHENTICATED;
