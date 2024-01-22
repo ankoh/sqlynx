@@ -42,7 +42,7 @@ export async function completeSQLynx(context: CompletionContext): Promise<Comple
                     candidateDetail = `${candidateDetail}, score=${candidate.score()}, near=${candidate.nearCursor()}`;
                 }
                 options.push({
-                    label: candidate.nameText() ?? '',
+                    label: candidate.completionText() ?? '',
                     detail: candidateDetail,
                 });
             }

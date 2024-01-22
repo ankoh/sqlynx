@@ -428,9 +428,20 @@ flatbuffers::Offset<proto::Completion> Completion::Pack(flatbuffers::FlatBufferB
     std::vector<flatbuffers::Offset<proto::CompletionCandidate>> candidates;
     candidates.reserve(entries.size());
     for (auto iter = entries.rbegin(); iter != entries.rend(); ++iter) {
-        auto text_offset = builder.CreateString(iter->name.text);
+        auto display_text_offset = builder.CreateString(iter->name.text);
+        std::string quoted;
+        std::string_view completion_text = iter->name.text;
+        if (anyupper_fuzzy(completion_text)) {
+            quoted = completion_text;
+            quoted.insert(0, "\"");
+            quoted.push_back('\"');
+            completion_text = quoted;
+            // XXX Hack: Fewer copies
+        }
+        auto completion_text_offset = builder.CreateString(completion_text);
         proto::CompletionCandidateBuilder candidateBuilder{builder};
-        candidateBuilder.add_name_text(text_offset);
+        candidateBuilder.add_display_text(display_text_offset);
+        candidateBuilder.add_completion_text(completion_text_offset);
         candidateBuilder.add_combined_tags(iter->combined_tags);
         candidateBuilder.add_score(iter->GetScore());
         candidateBuilder.add_near_cursor(iter->near_cursor);
