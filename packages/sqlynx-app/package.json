@@ -48,10 +48,8 @@
         "react-router-dom": "^6.21.3",
         "react-window": "^1.8.10",
         "react-zoom-pan-pinch": "^3.3.0",
+        "style-mod": "^4.1.0",
         "styled-components": "^6.1.8"
-    },
-    "resolutions": {
-        "@codemirror/state": "6.4.0"
     },
     "devDependencies": {
         "@types/flatbuffers": "^1.10.3",
