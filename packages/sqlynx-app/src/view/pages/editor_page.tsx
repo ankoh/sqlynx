@@ -28,6 +28,7 @@ import { TabCard } from '../../view/tab_card';
 import { ScriptFileSaveOverlay } from '../editor/script_filesave_overlay';
 import { ScriptURLOverlay } from '../editor/script_url_overlay';
 import { getConnectorIcon } from '../connector_icons';
+import { useAppConfig } from '../../app_config';
 
 import styles from './editor_page.module.css';
 import primerBugFixes from '../../primer_bugfixes.module.css';
@@ -82,6 +83,7 @@ const ConnectorSelection = (props: { className?: string; variant: 'default' | 'i
 };
 
 const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
+    const config = useAppConfig();
     const [linkSharingIsOpen, openLinkSharing] = React.useState<boolean>(false);
     const [saveSqlIsOpen, openSaveSql] = React.useState<boolean>(false);
     return (
@@ -93,7 +95,9 @@ const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
                 Execute Query
                 <ActionList.TrailingVisual>Ctrl + E</ActionList.TrailingVisual>
             </ActionList.Item>
-            <ActionList.Item disabled={!props.connector?.features.refreshSchemaAction}>
+            <ActionList.Item
+                disabled={!props.connector?.features.refreshSchemaAction || !config.value?.features?.refreshSchema}
+            >
                 <ActionList.LeadingVisual>
                     <SyncIcon />
                 </ActionList.LeadingVisual>
@@ -111,7 +115,7 @@ const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
                 </span>
                 <ActionList.TrailingVisual>Ctrl + U</ActionList.TrailingVisual>
             </ActionList.Item>
-            <ActionList.Item onClick={() => openSaveSql(s => !s)}>
+            <ActionList.Item onClick={() => openSaveSql(s => !s)} disabled={!config.value?.features?.saveQueryAsSql}>
                 <ActionList.LeadingVisual>
                     <DownloadIcon />
                 </ActionList.LeadingVisual>
@@ -121,7 +125,9 @@ const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
                 </span>
                 <ActionList.TrailingVisual>Ctrl + S</ActionList.TrailingVisual>
             </ActionList.Item>
-            <ActionList.Item disabled={!props.connector?.features.executeQueryAction}>
+            <ActionList.Item
+                disabled={!props.connector?.features.executeQueryAction || !config.value?.features?.saveResultsAsArrow}
+            >
                 <ActionList.LeadingVisual>
                     <DownloadIcon />
                 </ActionList.LeadingVisual>
