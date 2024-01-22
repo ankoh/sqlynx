@@ -19,16 +19,16 @@
             "mock": {
                 "enabled": true,
                 "coreAccess": {
-                    "accessToken": "core-access-token",
-                    "apiInstanceUrl": "http://localhost",
-                    "id": "core-access-id",
-                    "idToken": "core-access-id-token",
-                    "instanceUrl": "core-access-instance-url",
-                    "issuedAt": "core-access-issued-at",
-                    "refreshToken": "core-access-refresh-token",
-                    "scope": "core-access-scope",
-                    "signature": "core-access-signature",
-                    "tokenType": "core-access-token-type"
+                    "accessToken": "90D757C2A023F9031D04114B3F713DF237B1FE22174DDFEEC5801B53AFCC81E255EE3099AD00BA0412825A3F4AC9E11CEC991897B8B48F16A3B598151D70717F",
+                    "apiInstanceUrl": "https://test.api.salesforce.com",
+                    "id": "https://login.test2.pc-rnd.salesforce.com/id/00DRZ00000039JE2AY/005RZ0000002ZbBYAU",
+                    "idToken": "1C26DF6705A69D438C648FFBC9DE49A9AB0F1FA8ED69D618B00FCCFF0C0DA1C063DFBE610B83E0F61D7418FFC41498DE4EE1F61677E42C989E76D4B41E708B1C",
+                    "instanceUrl": "https://trialorgfarmforu-16f.test2.my.pc-rnd.salesforce.com",
+                    "issuedAt": "1705956173033",
+                    "refreshToken": "1F2AEC5D1CBE9380A60E8DC19758D10B50BD4F0E3C90B26151FAA4CE4427C366v7E10F38F9948CDA6FE3007EEE049D926",
+                    "scope": "cdp_ingest_api custom_permissions cdp_segment_api cdp_api content chatbot_api cdp_identityresolution_api interaction_api wave_api einstein_gpt_api web cdp_calculated_insight_api id api eclair_api pardot_api lightning visualforce sfap_api cdp_query_api openid cdp_profile_api refresh_token pwdless_login_api user_registration_api chatter_api forgot_password full",
+                    "signature": "1F2AEC5D1CBE9380A60E8DC19758D10B50BD4F0E3C90B26151FAA4CE4427C366",
+                    "tokenType": "Bearer"
                 },
                 "coreUserInfo": {
                     "active": true,
@@ -58,14 +58,798 @@
                     "zoneinfo": "America/Los_Angeles"
                 },
                 "dataCloudAccess": {
-                    "accessToken": "data-cloud-access-token",
-                    "instanceUrl": "http://localhost",
-                    "expiresAt": null,
-                    "issuedTokenType": "data-cloud-issued-token-type",
-                    "tokenType": "data-cloud-token-type"
+                    "accessToken": "6199B65CDDD010D505CAE9C3C7C72222E9CAE358E6B358651EDCCCBB50FA152C3FEB7BC8700022684091DDF7BDA22607625E1E51DCB1A0223EFBDFB74E14CB4B",
+                    "instanceUrl": "https://6199B65CDDD010D505CAE9C3C7C72222.pc-rnd.c360a.salesforce.com/",
+                    "expiresAt": 7200,
+                    "issuedTokenType": "urn:ietf:params:oauth:token-type:jwt",
+                    "tokenType": "Bearer"
                 },
                 "dataCloudMetadata": {
-                    "metadata": []
+                    "metadata": [
+                        {
+                            "fields": [
+                                {
+                                    "name": "AccountNumber__c",
+                                    "displayName": "Account Number",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "AccountSource__c",
+                                    "displayName": "Account Source",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "AnnualRevenue__c",
+                                    "displayName": "Annual Revenue",
+                                    "type": "NUMBER",
+                                    "businessType": "NUMBER"
+                                },
+                                {
+                                    "name": "BillingCity__c",
+                                    "displayName": "Billing City",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "BillingCountry__c",
+                                    "displayName": "Billing Country",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "BillingGeocodeAccuracy__c",
+                                    "displayName": "Billing Geocode Accuracy",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "BillingLatitude__c",
+                                    "displayName": "Billing Latitude",
+                                    "type": "NUMBER",
+                                    "businessType": "NUMBER"
+                                },
+                                {
+                                    "name": "BillingLongitude__c",
+                                    "displayName": "Billing Longitude",
+                                    "type": "NUMBER",
+                                    "businessType": "NUMBER"
+                                },
+                                {
+                                    "name": "BillingPostalCode__c",
+                                    "displayName": "Billing Zip/Postal Code",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "BillingState__c",
+                                    "displayName": "Billing State/Province",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "BillingStreet__c",
+                                    "displayName": "Billing Street",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "cdp_sys_SourceVersion__c",
+                                    "displayName": "cdp_sys_SourceVersion",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "CreatedById__c",
+                                    "displayName": "Created By ID",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "CreatedDate__c",
+                                    "displayName": "Created Date",
+                                    "type": "DATE_TIME",
+                                    "businessType": "DATE_TIME"
+                                },
+                                {
+                                    "name": "DataSource__c",
+                                    "displayName": "Data Source",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "DataSourceObject__c",
+                                    "displayName": "Data Source Object",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "Description__c",
+                                    "displayName": "Account Description",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "Fax__c",
+                                    "displayName": "Account Fax",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "Id__c",
+                                    "displayName": "Account ID",
+                                    "type": "STRING",
+                                    "keyQualifier": "KQ_Id__c",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "Industry__c",
+                                    "displayName": "Industry",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "IsDeleted__c",
+                                    "displayName": "Deleted",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "Jigsaw__c",
+                                    "displayName": "Data.com Key",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "JigsawCompanyId__c",
+                                    "displayName": "Jigsaw Company ID",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "KQ_Id__c",
+                                    "displayName": "KQ_Id",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "LastActivityDate__c",
+                                    "displayName": "Last Activity",
+                                    "type": "DATE_TIME",
+                                    "businessType": "DATE_TIME"
+                                },
+                                {
+                                    "name": "LastModifiedById__c",
+                                    "displayName": "Last Modified By ID",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "LastModifiedDate__c",
+                                    "displayName": "Last Modified Date",
+                                    "type": "DATE_TIME",
+                                    "businessType": "DATE_TIME"
+                                },
+                                {
+                                    "name": "LastReferencedDate__c",
+                                    "displayName": "Last Referenced Date",
+                                    "type": "DATE_TIME",
+                                    "businessType": "DATE_TIME"
+                                },
+                                {
+                                    "name": "LastViewedDate__c",
+                                    "displayName": "Last Viewed Date",
+                                    "type": "DATE_TIME",
+                                    "businessType": "DATE_TIME"
+                                },
+                                {
+                                    "name": "MasterRecordId__c",
+                                    "displayName": "Master Record ID",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "Name__c",
+                                    "displayName": "Account Name",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "NumberOfEmployees__c",
+                                    "displayName": "Employees",
+                                    "type": "NUMBER",
+                                    "businessType": "NUMBER"
+                                },
+                                {
+                                    "name": "OwnerId__c",
+                                    "displayName": "Owner ID",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "ParentId__c",
+                                    "displayName": "Parent Account ID",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "Phone__c",
+                                    "displayName": "Account Phone",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "PhotoUrl__c",
+                                    "displayName": "Photo URL",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "SfdcOrganizationId__c",
+                                    "displayName": "SfdcOrganizationId",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "ShippingCity__c",
+                                    "displayName": "Shipping City",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "ShippingCountry__c",
+                                    "displayName": "Shipping Country",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "ShippingGeocodeAccuracy__c",
+                                    "displayName": "Shipping Geocode Accuracy",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "ShippingLatitude__c",
+                                    "displayName": "Shipping Latitude",
+                                    "type": "NUMBER",
+                                    "businessType": "NUMBER"
+                                },
+                                {
+                                    "name": "ShippingLongitude__c",
+                                    "displayName": "Shipping Longitude",
+                                    "type": "NUMBER",
+                                    "businessType": "NUMBER"
+                                },
+                                {
+                                    "name": "ShippingPostalCode__c",
+                                    "displayName": "Shipping Zip/Postal Code",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "ShippingState__c",
+                                    "displayName": "Shipping State/Province",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "ShippingStreet__c",
+                                    "displayName": "Shipping Street",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "SicDesc__c",
+                                    "displayName": "SIC Description",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "SystemModstamp__c",
+                                    "displayName": "System Modstamp",
+                                    "type": "DATE_TIME",
+                                    "businessType": "DATE_TIME"
+                                },
+                                {
+                                    "name": "Type__c",
+                                    "displayName": "Account Type",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "Website__c",
+                                    "displayName": "Website",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                }
+                            ],
+                            "category": "Related",
+                            "name": "Account_00DRZ00000039JE__dll",
+                            "displayName": "Account_00DRZ00000039JE",
+                            "primaryKeys": [
+                                {
+                                    "name": "Id__c",
+                                    "displayName": "Account ID",
+                                    "indexOrder": "1"
+                                }
+                            ]
+                        },
+                        {
+                            "fields": [
+                                {
+                                    "name": "BestCommentId__c",
+                                    "displayName": "Best Comment ID",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "Body__c",
+                                    "displayName": "Body",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "cdp_sys_SourceVersion__c",
+                                    "displayName": "cdp_sys_SourceVersion",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "CommentCount__c",
+                                    "displayName": "Comment Count",
+                                    "type": "NUMBER",
+                                    "businessType": "NUMBER"
+                                },
+                                {
+                                    "name": "CreatedById__c",
+                                    "displayName": "Created By ID",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "CreatedDate__c",
+                                    "displayName": "Created Date",
+                                    "type": "DATE_TIME",
+                                    "businessType": "DATE_TIME"
+                                },
+                                {
+                                    "name": "DataSource__c",
+                                    "displayName": "Data Source",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "DataSourceObject__c",
+                                    "displayName": "Data Source Object",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "Id__c",
+                                    "displayName": "Feed Item ID",
+                                    "type": "STRING",
+                                    "keyQualifier": "KQ_Id__c",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "InsertedById__c",
+                                    "displayName": "InsertedBy ID",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "IsDeleted__c",
+                                    "displayName": "Deleted",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "IsRichText__c",
+                                    "displayName": "Is Rich Text",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "KQ_Id__c",
+                                    "displayName": "KQ_Id",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "LastModifiedDate__c",
+                                    "displayName": "Last Modified Date",
+                                    "type": "DATE_TIME",
+                                    "businessType": "DATE_TIME"
+                                },
+                                {
+                                    "name": "LikeCount__c",
+                                    "displayName": "Like Count",
+                                    "type": "NUMBER",
+                                    "businessType": "NUMBER"
+                                },
+                                {
+                                    "name": "LinkUrl__c",
+                                    "displayName": "Link Url",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "ParentId__c",
+                                    "displayName": "Parent ID",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "RelatedRecordId__c",
+                                    "displayName": "Related Record ID",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "SfdcOrganizationId__c",
+                                    "displayName": "SfdcOrganizationId",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "SystemModstamp__c",
+                                    "displayName": "System Modstamp",
+                                    "type": "DATE_TIME",
+                                    "businessType": "DATE_TIME"
+                                },
+                                {
+                                    "name": "Title__c",
+                                    "displayName": "Title",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "Type__c",
+                                    "displayName": "Feed Item Type",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                }
+                            ],
+                            "category": "Related",
+                            "name": "AccountFeed_00DRZ00000039JE__dll",
+                            "displayName": "AccountFeed_00DRZ00000039JE",
+                            "primaryKeys": [
+                                {
+                                    "name": "Id__c",
+                                    "displayName": "Feed Item ID",
+                                    "indexOrder": "1"
+                                }
+                            ]
+                        },
+                        {
+                            "fields": [
+                                {
+                                    "name": "AccountId__c",
+                                    "displayName": "Account ID",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "ActivityDate__c",
+                                    "displayName": "Due Date Only",
+                                    "type": "DATE_TIME",
+                                    "businessType": "DATE_TIME"
+                                },
+                                {
+                                    "name": "ActivityDateTime__c",
+                                    "displayName": "Due Date Time",
+                                    "type": "DATE_TIME",
+                                    "businessType": "DATE_TIME"
+                                },
+                                {
+                                    "name": "cdp_sys_SourceVersion__c",
+                                    "displayName": "cdp_sys_SourceVersion",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "CreatedById__c",
+                                    "displayName": "Created By ID",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "CreatedDate__c",
+                                    "displayName": "Created Date",
+                                    "type": "DATE_TIME",
+                                    "businessType": "DATE_TIME"
+                                },
+                                {
+                                    "name": "DataSource__c",
+                                    "displayName": "Data Source",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "DataSourceObject__c",
+                                    "displayName": "Data Source Object",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "Description__c",
+                                    "displayName": "Description",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "DurationInMinutes__c",
+                                    "displayName": "Duration",
+                                    "type": "NUMBER",
+                                    "businessType": "NUMBER"
+                                },
+                                {
+                                    "name": "EndDate__c",
+                                    "displayName": "End Date",
+                                    "type": "DATE_TIME",
+                                    "businessType": "DATE_TIME"
+                                },
+                                {
+                                    "name": "EndDateTime__c",
+                                    "displayName": "End Date Time",
+                                    "type": "DATE_TIME",
+                                    "businessType": "DATE_TIME"
+                                },
+                                {
+                                    "name": "EventSubtype__c",
+                                    "displayName": "Event Subtype",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "GroupEventType__c",
+                                    "displayName": "Group Event Type",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "Id__c",
+                                    "displayName": "Activity ID",
+                                    "type": "STRING",
+                                    "keyQualifier": "KQ_Id__c",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "IsAllDayEvent__c",
+                                    "displayName": "All-Day Event",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "IsArchived__c",
+                                    "displayName": "Archived",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "IsChild__c",
+                                    "displayName": "Is Child",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "IsDeleted__c",
+                                    "displayName": "Deleted",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "IsGroupEvent__c",
+                                    "displayName": "Is Group Event",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "IsPrivate__c",
+                                    "displayName": "Private",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "IsRecurrence2__c",
+                                    "displayName": "Repeat",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "IsRecurrence2Exception__c",
+                                    "displayName": "Is Exception",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "IsRecurrence__c",
+                                    "displayName": "Create Recurring Series of Events",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "IsReminderSet__c",
+                                    "displayName": "Reminder Set",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "KQ_Id__c",
+                                    "displayName": "KQ_Id",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "LastModifiedById__c",
+                                    "displayName": "Last Modified By ID",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "LastModifiedDate__c",
+                                    "displayName": "Last Modified Date",
+                                    "type": "DATE_TIME",
+                                    "businessType": "DATE_TIME"
+                                },
+                                {
+                                    "name": "Location__c",
+                                    "displayName": "Location",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "OwnerId__c",
+                                    "displayName": "Assigned To ID",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "Recurrence2PatternStartDate__c",
+                                    "displayName": "Recurrence Pattern Start Date",
+                                    "type": "DATE_TIME",
+                                    "businessType": "DATE_TIME"
+                                },
+                                {
+                                    "name": "Recurrence2PatternText__c",
+                                    "displayName": "Recurrence Pattern",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "Recurrence2PatternTimeZone__c",
+                                    "displayName": "Recurrence Pattern Time Zone Reference",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "Recurrence2PatternVersion__c",
+                                    "displayName": "Pattern Version",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "RecurrenceActivityId__c",
+                                    "displayName": "Recurrence Activity ID",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "RecurrenceDayOfMonth__c",
+                                    "displayName": "Recurrence Day of Month",
+                                    "type": "NUMBER",
+                                    "businessType": "NUMBER"
+                                },
+                                {
+                                    "name": "RecurrenceDayOfWeekMask__c",
+                                    "displayName": "Recurrence Day of Week Mask",
+                                    "type": "NUMBER",
+                                    "businessType": "NUMBER"
+                                },
+                                {
+                                    "name": "RecurrenceEndDateOnly__c",
+                                    "displayName": "Recurrence End",
+                                    "type": "DATE_TIME",
+                                    "businessType": "DATE_TIME"
+                                },
+                                {
+                                    "name": "RecurrenceInstance__c",
+                                    "displayName": "Recurrence Instance",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "RecurrenceInterval__c",
+                                    "displayName": "Recurrence Interval",
+                                    "type": "NUMBER",
+                                    "businessType": "NUMBER"
+                                },
+                                {
+                                    "name": "RecurrenceMonthOfYear__c",
+                                    "displayName": "Recurrence Month of Year",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "RecurrenceStartDateTime__c",
+                                    "displayName": "Recurrence Start",
+                                    "type": "DATE_TIME",
+                                    "businessType": "DATE_TIME"
+                                },
+                                {
+                                    "name": "RecurrenceTimeZoneSidKey__c",
+                                    "displayName": "Recurrence Time Zone",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "RecurrenceType__c",
+                                    "displayName": "Recurrence Type",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "ReminderDateTime__c",
+                                    "displayName": "Reminder Date/Time",
+                                    "type": "DATE_TIME",
+                                    "businessType": "DATE_TIME"
+                                },
+                                {
+                                    "name": "SfdcOrganizationId__c",
+                                    "displayName": "SfdcOrganizationId",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "ShowAs__c",
+                                    "displayName": "Show Time As",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "StartDateTime__c",
+                                    "displayName": "Start Date Time",
+                                    "type": "DATE_TIME",
+                                    "businessType": "DATE_TIME"
+                                },
+                                {
+                                    "name": "Subject__c",
+                                    "displayName": "Subject",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "SystemModstamp__c",
+                                    "displayName": "System Modstamp",
+                                    "type": "DATE_TIME",
+                                    "businessType": "DATE_TIME"
+                                },
+                                {
+                                    "name": "WhatId__c",
+                                    "displayName": "Related To ID",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                },
+                                {
+                                    "name": "WhoId__c",
+                                    "displayName": "Name ID",
+                                    "type": "STRING",
+                                    "businessType": "TEXT"
+                                }
+                            ],
+                            "category": "Related",
+                            "name": "Event_00DRZ00000039JE__dll",
+                            "displayName": "Event_00DRZ00000039JE",
+                            "primaryKeys": [
+                                {
+                                    "name": "Id__c",
+                                    "displayName": "Activity ID",
+                                    "indexOrder": "1"
+                                }
+                            ]
+                        }
+                    ]
                 }
             }
         }
