@@ -135,13 +135,21 @@ core_js_tests:
 core_js_tests_debug:
 	yarn workspace @ankoh/sqlynx test:debug
 
-.PHONY: editor_o3
-app_o3:
+.PHONY: pwa_o3
+pwa_o3:
 	yarn workspace @ankoh/sqlynx-app pwa:build:o3
 
-.PHONY: editor_start
-app_start:
+.PHONY: pwa_start
+pwa_start:
 	yarn workspace @ankoh/sqlynx-app pwa:start
+
+.PHONY: electron_start
+electron_start:
+	yarn workspace @ankoh/sqlynx-app electron:start
+
+.PHONY: electron_open
+electron_open:
+	yarn workspace @ankoh/sqlynx-app electron:open
 	
 .PHONY: svg_symbols
 svg_symbols:

@@ -7,10 +7,10 @@ import { SQLynxTooltips } from './sqlynx_tooltips';
 import { SQLynxGutters } from './sqlynx_gutters';
 import { completeSQLynx } from './sqlynx_completion';
 
-import { xcodeLight as THEME } from '@uiw/codemirror-themes-all';
+import * as themes from './themes';
 
 export const SQLynxExtensions = [
-    THEME,
+    themes.xcode.xcodeLight,
     lineNumbers(),
     SQLynxProcessor,
     SQLynxDecorations,

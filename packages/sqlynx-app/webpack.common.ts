@@ -45,7 +45,6 @@ const GITHUB_OAUTH_REDIRECT = `http://localhost:9001/static/html/github_oauth.${
 const CONFIG_PATH = 'static/config.[contenthash].json';
 
 export function configure(params: ConfigParams): Partial<Configuration> {
-    console.log(`APP_URL: ${params.appURL}`);
     return {
         target: params.target,
         entry: params.entry,
