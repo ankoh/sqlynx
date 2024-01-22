@@ -90,10 +90,8 @@ export const ScriptQueryExecutor = (props: { children?: React.ReactElement }) =>
         // Helper to subscribe to result batches
         const resultReader = async (resultStream: QueryExecutionResponseStream) => {
             try {
-                console.log('READ SCHEMA');
                 const schema = await resultStream.getSchema();
                 if (schema == null) {
-                    console.log('SCHEMA IS NULL');
                     return;
                 }
                 dispatch({
@@ -101,7 +99,6 @@ export const ScriptQueryExecutor = (props: { children?: React.ReactElement }) =>
                     value: schema,
                 });
                 while (true) {
-                    console.log('READ RESULT');
                     const batch = await resultStream.nextRecordBatch();
                     if (batch == null) {
                         break;

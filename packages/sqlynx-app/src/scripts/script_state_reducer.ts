@@ -528,16 +528,7 @@ export function reduceScriptState(state: ScriptState, action: ScriptStateAction)
         case QUERY_EXECUTION_SUCCEEDED: {
             const now = new Date();
 
-            // XXX Build arrow table from execution state
-            const columnA = Int32Array.from({ length: 1000 }, () => Number((Math.random() * 1000).toFixed(0)));
-            const columnB = Int32Array.from({ length: 1000 }, () => Number((Math.random() * 1000).toFixed(0)));
-            const columnC = Int32Array.from({ length: 1000 }, () => Number((Math.random() * 1000).toFixed(0)));
-            const table = arrow.tableFromArrays({
-                A: columnA,
-                B: columnB,
-                C: columnC,
-            });
-
+            const table = new arrow.Table(state.queryExecutionState!.resultBatches);
             return {
                 ...state,
                 queryExecutionState: {
