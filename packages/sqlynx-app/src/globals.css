@@ -17,20 +17,16 @@
     --button_hover_bg: hsl(210deg, 12%, 16%);
     --button_hover_bg_inverted: hsl(210deg, 12%, 6%);
 
-    --nav_bar_bg: hsl(210, 24%, 92%);
+    --nav_bar_bg: hsl(208.5deg 24.69% 31.76%);
     --nav_bar_button_margin: 4px;
-    --nav_bar_logo_fg: hsl(210, 24%, 32%);
-    --nav_bar_logo_bg: white;
     --nav_bar_width: 48px;
     --nav_bar_height: 40px;
     --nav_bar_border: 1px solid var(--border_color_primary);
-    --nav_tab_bg: hsl(210, 24%, 92%);
-    --nav_tab_bg_active: hsl(210, 24%, 88%);
-    --nav_tab_fg: hsl(210, 24%, 32%);
-    --nav_tab_fg_active: hsl(210, 24%, 32%);
+    --nav_tab_bg: hsl(208.5deg 24.69% 31.76%);
+    --nav_tab_bg_active: hsl(208.5deg 24.69% 43.76%);
+    --nav_tab_fg: white;
+    --nav_tab_fg_active: white;
     --nav_tab_border: 1px solid black;
-    --nav_tab_indicator_color: rgb(254, 150, 0);
-    --nav_tab_indicator_width: 3px;
 
     --system_bg: transparent;
     --system_bg_active: transparent;

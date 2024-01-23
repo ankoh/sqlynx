@@ -8,7 +8,7 @@
     height: 100%;
 
     display: grid;
-    grid-template-columns: 48px auto;
+    grid-template-columns: 40px auto;
     grid-template-rows: 100%;
 }
 
