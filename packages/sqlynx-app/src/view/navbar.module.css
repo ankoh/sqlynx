@@ -10,9 +10,10 @@
     color: rgb(255, 255, 255);
     line-height: 24px;
     text-align: center;
+    align-items: center;
 
     display: grid;
-    grid-template-columns: auto max-content;
+    grid-template-columns: max-content auto max-content;
     grid-template-rows: var(--nav_bar_height);
 }
 
@@ -28,9 +29,20 @@
     border-top-left-radius: var(--border_radius);
 }
 
-.tabs {
+.app_name {
     grid-row: 1;
     grid-column: 1;
+
+    vertical-align: center;
+    font-size: 1rem;
+    font-family: 'Roboto Mono';
+    font-weight: 400;
+    margin: 0px 0px 0px 16px;
+}
+
+.tabs {
+    grid-row: 1;
+    grid-column: 2;
     color: var(--nav_tab_fg);
     display: flex;
     flex-direction: row;
@@ -42,7 +54,7 @@
     position: relative;
     background-color: var(--nav_tab_bg);
     color: var(--nav_tab_fg);
-    height: calc(100% - 12px);
+    height: 30px;
     border-radius: 8px;
 }
 .tab:hover {
