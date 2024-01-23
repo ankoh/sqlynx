@@ -31,6 +31,7 @@ export const NavBar = (): React.ReactElement => {
     const ghProfile = useActiveGitHubProfile();
     return (
         <div className={styles.navbar}>
+            <div className={styles.app_name}>SQLynx</div>
             <div className={styles.tabs}>
                 <Tab label="Editor" route="/" location={location.pathname} icon={`${symbols}#file_document_multiple`} />
                 {appConfig?.value?.features?.connections && (
