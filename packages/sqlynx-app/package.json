@@ -32,7 +32,7 @@
         "@react-hook/resize-observer": "^1.2.6",
         "@types/react-window": "^1.8.8",
         "@uiw/codemirror-themes-all": "^4.21.21",
-        "apache-arrow": "^14.0.2",
+        "apache-arrow": "^15.0.0",
         "classnames": "^2.5.1",
         "cm6-theme-basic-light": "^0.2.0",
         "cm6-theme-nord": "^0.2.0",
