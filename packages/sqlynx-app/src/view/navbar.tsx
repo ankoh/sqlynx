@@ -10,7 +10,7 @@ import styles from './navbar.module.css';
 
 import symbols from '../../static/svg/symbols.generated.svg';
 
-const Tab = (props: { route: string; alt?: string; location: string; icon: string }) => (
+const Tab = (props: { route: string; alt?: string; location: string; icon: string; label: string }) => (
     <div
         key={props.route}
         className={classNames(styles.tab, {
@@ -18,7 +18,7 @@ const Tab = (props: { route: string; alt?: string; location: string; icon: strin
         })}
     >
         <LinkButton className={styles.tab_link} to={props.route} hover={HoverMode.Darken}>
-            <svg width="20px" height="20px">
+            <svg width="18px" height="18px">
                 <use xlinkHref={props.icon} />
             </svg>
         </LinkButton>
@@ -31,15 +31,15 @@ export const NavBar = (): React.ReactElement => {
     const ghProfile = useActiveGitHubProfile();
     return (
         <div className={styles.navbar}>
-            <Link className={styles.logo} to="/">
-                <svg width="30px" height="30px">
-                    <use xlinkHref={`${symbols}#sqlynx`} />
-                </svg>
-            </Link>
             <div className={styles.tabs}>
-                <Tab route="/" location={location.pathname} icon={`${symbols}#file_document_multiple`} />
+                <Tab label="Editor" route="/" location={location.pathname} icon={`${symbols}#file_document_multiple`} />
                 {appConfig?.value?.features?.connections && (
-                    <Tab route="/connections" location={location.pathname} icon={`${symbols}#connection`} />
+                    <Tab
+                        label="Connections"
+                        route="/connections"
+                        location={location.pathname}
+                        icon={`${symbols}#connection`}
+                    />
                 )}
             </div>
             <SystemBar className={styles.sysbar} />
@@ -55,8 +55,8 @@ export function withNavBar<P extends React.JSX.IntrinsicAttributes>(
         return (
             <div className={styles.container}>
                 <NavBar />
-                <div className={styles.page}>
-                    <Component {...props} />
+                <div className={styles.page_container}>
+                    <Component {...props} className={styles.page} />
                 </div>
             </div>
         );

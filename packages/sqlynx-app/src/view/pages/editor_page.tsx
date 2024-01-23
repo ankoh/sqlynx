@@ -34,8 +34,6 @@ import styles from './editor_page.module.css';
 import primerBugFixes from '../../primer_bugfixes.module.css';
 import icons from '../../../static/svg/symbols.generated.svg';
 
-interface Props {}
-
 const ConnectorSelection = (props: { className?: string; variant: 'default' | 'invisible'; short: boolean }) => {
     const connectorList = useConnectorList();
     const scriptState = useSelectedScriptState();
@@ -196,6 +194,8 @@ enum TabKey {
 interface TabState {
     enabledTabs: number;
 }
+
+interface Props {}
 
 export const EditorPage: React.FC<Props> = (_props: Props) => {
     const scriptState = useSelectedScriptState();
