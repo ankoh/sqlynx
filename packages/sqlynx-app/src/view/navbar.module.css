@@ -33,10 +33,10 @@
     grid-row: 1;
     grid-column: 1;
 
-    vertical-align: center;
+    vertical-align: middle;
     font-size: 1rem;
     font-family: 'Roboto Mono';
-    font-weight: 400;
+    font-weight: 300;
     margin: 0px 0px 0px 16px;
 }
 
