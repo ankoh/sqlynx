@@ -3,7 +3,7 @@
     height: 100%;
 
     display: grid;
-    grid-template-columns: 40px auto;
+    grid-template-columns: 48px auto;
     grid-template-rows: 40px calc(100% - 40px);
 }
 
@@ -11,7 +11,6 @@
     grid-row: 1 / span 2;
     grid-column: 1;
     background-color: var(--editortabs_background);
-    border-radius: calc(var(--border_radius) - 1px) 0px 0px 0px;
     border-right: 1px solid var(--border_color_primary);
 
     display: flex;
@@ -32,9 +31,6 @@
 .tab:hover {
     background-color: var(--action_item_hover_bg);
 }
-.tab:first-child {
-    border-radius: calc(var(--border_radius) - 1px) 0px 0px 0px;
-}
 .tab_active {
     background-color: var(--editortabs_background_active) !important;
 }
@@ -54,8 +50,6 @@
 .headerbar {
     grid-row: 1;
     grid-column: 2;
-    background-color: var(--editor_header_bg);
-    border-radius: 0px calc(var(--border_radius) - 1px) 0px 0px;
     border-bottom: 1px solid var(--border_color_primary);
 
     display: grid;

@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { ActionList, IconButton, ButtonGroup, ActionMenu } from '@primer/react';
+import { ActionList, IconButton, ButtonGroup, ActionMenu, Button } from '@primer/react';
 import {
     SyncIcon,
     PaperAirplaneIcon,
@@ -54,29 +54,26 @@ const ConnectorSelection = (props: { className?: string; variant: 'default' | 'i
         : props.short
         ? scriptState?.connectorInfo.displayName.short
         : scriptState?.connectorInfo.displayName.long;
+    //        <ActionMenu.Overlay width={props.short ? 'auto' : 'medium'} align="end">
+    //            <ActionList>
+    //                {connectorList.map((connector, i) => (
+    //                    <ActionList.Item key={i} data-connector={i} onClick={selectConnector}>
+    //                        <ActionList.LeadingVisual>{getConnectorIcon(connector)}</ActionList.LeadingVisual>
+    //                        {props.short ? connector.displayName.short : connector.displayName.long}
+    //                    </ActionList.Item>
+    //                ))}
+    //            </ActionList>
+    //        </ActionMenu.Overlay>
+    //    </ActionMenu>
     return (
-        <ActionMenu open={isOpen} onOpenChange={setIsOpen}>
-            <ActionMenu.Button
-                className={props.className}
-                variant={props.variant}
-                alignContent="start"
-                leadingVisual={() =>
-                    !scriptState?.connectorInfo ? <div /> : getConnectorIcon(scriptState?.connectorInfo)
-                }
-            >
-                {connectorName}
-            </ActionMenu.Button>
-            <ActionMenu.Overlay width={props.short ? 'auto' : 'medium'} align="end">
-                <ActionList>
-                    {connectorList.map((connector, i) => (
-                        <ActionList.Item key={i} data-connector={i} onClick={selectConnector}>
-                            <ActionList.LeadingVisual>{getConnectorIcon(connector)}</ActionList.LeadingVisual>
-                            {props.short ? connector.displayName.short : connector.displayName.long}
-                        </ActionList.Item>
-                    ))}
-                </ActionList>
-            </ActionMenu.Overlay>
-        </ActionMenu>
+        <Button
+            className={props.className}
+            variant={props.variant}
+            alignContent="start"
+            leadingVisual={() => (!scriptState?.connectorInfo ? <div /> : getConnectorIcon(scriptState?.connectorInfo))}
+        >
+            {connectorName}
+        </Button>
     );
 };
 
@@ -269,7 +266,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                     <div className={styles.page_title}>SQL Editor</div>
                 </div>
                 <div className={styles.header_action_container}>
-                    <ConnectorSelection variant="default" short={true} />
+                    <ConnectorSelection variant="invisible" short={true} />
                     <div>
                         <ButtonGroup className={primerBugFixes.button_group}>
                             <IconButton icon={PaperAirplaneIcon} aria-labelledby="create-github-issue" />
