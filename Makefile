@@ -147,9 +147,9 @@ pwa_start:
 electron_start:
 	yarn workspace @ankoh/sqlynx-app electron:start
 
-.PHONY: electron_open
-electron_open:
-	yarn workspace @ankoh/sqlynx-app electron:open
+.PHONY: electron_make
+electron_make:
+	yarn workspace @ankoh/sqlynx-app electron:make
 	
 .PHONY: svg_symbols
 svg_symbols:
