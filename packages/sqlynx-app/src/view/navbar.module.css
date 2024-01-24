@@ -1,9 +1,17 @@
 .container {
+    display: flex;
+    justify-content: center;
+    background-color: var(--nav_bar_bg);
+    height: 100%;
+}
+
+.center_container {
     display: grid;
     grid-template-rows: var(--nav_bar_height) calc(100% - var(--nav_bar_height));
     grid-template-columns: 1fr;
     height: 100%;
-    background-color: var(--nav_bar_bg);
+    max-width: 1300px;
+    flex: 1;
 }
 
 .navbar {
@@ -23,21 +31,6 @@
     height: 100%;
     width: calc(100% - 16px);
     margin: 0px 8px 0px 8px;
-
-    overflow: hidden;
-    border-top-right-radius: var(--border_radius);
-    border-top-left-radius: var(--border_radius);
-}
-
-.app_name {
-    grid-row: 1;
-    grid-column: 1;
-
-    vertical-align: middle;
-    font-size: 1rem;
-    font-family: 'Roboto Mono';
-    font-weight: 300;
-    margin: 0px 0px 0px 16px;
 }
 
 .tabs {

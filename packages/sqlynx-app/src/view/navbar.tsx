@@ -31,7 +31,6 @@ export const NavBar = (): React.ReactElement => {
     const ghProfile = useActiveGitHubProfile();
     return (
         <div className={styles.navbar}>
-            <div className={styles.app_name}>sqlynx</div>
             <div className={styles.tabs}>
                 <Tab label="Editor" route="/" location={location.pathname} icon={`${symbols}#file_document_multiple`} />
                 {appConfig?.value?.features?.connections && (
@@ -55,9 +54,11 @@ export function withNavBar<P extends React.JSX.IntrinsicAttributes>(
     return (props: P) => {
         return (
             <div className={styles.container}>
-                <NavBar />
-                <div className={styles.page_container}>
-                    <Component {...props} className={styles.page} />
+                <div className={styles.center_container}>
+                    <NavBar />
+                    <div className={styles.page_container}>
+                        <Component {...props} className={styles.page} />
+                    </div>
                 </div>
             </div>
         );
