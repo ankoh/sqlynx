@@ -148,7 +148,7 @@ const NavCommandList = (props: { canCycleScripts: boolean; canCycleOutput: boole
             <ActionList.LeadingVisual>
                 <ArrowSwitchIcon />
             </ActionList.LeadingVisual>
-            Switch script
+            Switch connector
             <ActionList.TrailingVisual>Ctrl + H/L</ActionList.TrailingVisual>
         </ActionList.Item>
         <ActionList.Item disabled={!props.canCycleOutput}>
@@ -319,7 +319,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
             </div>
             <div className={styles.action_sidebar}>
                 <ActionList>
-                    <ActionList.GroupHeading>Connection</ActionList.GroupHeading>
+                    <ActionList.GroupHeading>Connector</ActionList.GroupHeading>
                     <ScriptCommandList connector={scriptState?.connectorInfo ?? null} />
                     <ActionList.Divider />
                     <ActionList.GroupHeading>Output</ActionList.GroupHeading>
