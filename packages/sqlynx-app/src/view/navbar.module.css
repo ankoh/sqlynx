@@ -10,7 +10,6 @@
     grid-template-rows: var(--nav_bar_height) calc(100% - var(--nav_bar_height));
     grid-template-columns: 1fr;
     height: 100%;
-    max-width: 1300px;
     flex: 1;
 }
 

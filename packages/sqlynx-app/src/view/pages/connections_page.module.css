@@ -3,6 +3,8 @@
     width: 100%;
     height: 100%;
     background-color: var(--background_color_primary);
+    border-top-right-radius: var(--border_radius);
+    border-top-left-radius: var(--border_radius);
 
     display: grid;
     grid-template-rows: 48px calc(100% - 48px);
