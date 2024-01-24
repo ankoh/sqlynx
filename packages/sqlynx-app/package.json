@@ -38,7 +38,7 @@
         "cm6-theme-nord": "^0.2.0",
         "flatbuffers": "^23.5.26",
         "fontfaceobserver": "^2.3.0",
-        "framer-motion": "^10.18.0",
+        "framer-motion": "^11.0.2",
         "immutable": "^4.3.4",
         "lz-string": "^1.5.0",
         "oauth-pkce": "^0.0.6",
