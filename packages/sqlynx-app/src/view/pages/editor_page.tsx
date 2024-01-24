@@ -99,7 +99,16 @@ const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
                 Refresh Schema
                 <ActionList.TrailingVisual>Ctrl + R</ActionList.TrailingVisual>
             </ActionList.Item>
-            <ActionList.Divider />
+        </>
+    );
+};
+
+const OutputCommandList = (props: { connector: ConnectorInfo | null }) => {
+    const config = useAppConfig();
+    const [linkSharingIsOpen, openLinkSharing] = React.useState<boolean>(false);
+    const [saveSqlIsOpen, openSaveSql] = React.useState<boolean>(false);
+    return (
+        <>
             <ActionList.Item onClick={() => openLinkSharing(s => !s)}>
                 <ActionList.LeadingVisual>
                     <LinkIcon />
@@ -307,27 +316,24 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                     }}
                 />
                 <ScriptEditor className={styles.editor_card} />
-                <div className={styles.action_sidebar}>
-                    <ActionList className={styles.view_actions}>
-                        <NavCommandList
-                            canCycleScripts={scriptSelectionIterator.count > 1}
-                            canCycleOutput={enabledTabs > 1}
-                        />
-                    </ActionList>
-                    <ActionList className={styles.data_actions}>
-                        <ActionList.LinkItem href="/connections">
-                            <ActionList.LeadingVisual>
-                                {!scriptState?.connectorInfo ? <div /> : getConnectorIcon(scriptState?.connectorInfo)}
-                            </ActionList.LeadingVisual>
-                            {connectorName(false)}
-                        </ActionList.LinkItem>
-                        <ActionList.Divider />
-                        <ScriptCommandList connector={scriptState?.connectorInfo ?? null} />
-                    </ActionList>
-                    <ActionList className={styles.project_actions}>
-                        <ProjectCommandList />
-                    </ActionList>
-                </div>
+            </div>
+            <div className={styles.action_sidebar}>
+                <ActionList>
+                    <ActionList.GroupHeading>Connection</ActionList.GroupHeading>
+                    <ScriptCommandList connector={scriptState?.connectorInfo ?? null} />
+                    <ActionList.Divider />
+                    <ActionList.GroupHeading>Output</ActionList.GroupHeading>
+                    <OutputCommandList connector={scriptState?.connectorInfo ?? null} />
+                    <ActionList.Divider />
+                    <ActionList.GroupHeading>Navigation</ActionList.GroupHeading>
+                    <NavCommandList
+                        canCycleScripts={scriptSelectionIterator.count > 1}
+                        canCycleOutput={enabledTabs > 1}
+                    />
+                    <ActionList.Divider />
+                    <ActionList.GroupHeading>Project</ActionList.GroupHeading>
+                    <ProjectCommandList />
+                </ActionList>
             </div>
         </div>
     );
