@@ -57,7 +57,7 @@
     }
     .header_container {
         grid-row: 1;
-        grid-column: 1;
+        grid-column: 1 / span 2;
         width: 100%;
 
         display: grid;
@@ -66,6 +66,7 @@
         background-color: var(--background_color_primary);
 
         border-bottom: 1px solid var(--border_color_primary);
+        border-top-right-radius: var(--border_radius);
         border-top-left-radius: var(--border_radius);
     }
     .body_container {
@@ -83,8 +84,7 @@
     }
     .action_sidebar {
         border-left: 1px solid var(--border_color_primary);
-        border-top-right-radius: var(--border_radius);
-        grid-row: 1 / span 2;
+        grid-row: 2;
         grid-column: 2;
         background-color: white;
     }
