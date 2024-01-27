@@ -308,6 +308,7 @@ jobs:
               shell: bash
               run: |
                   sudo snap install snapcraft --classic
+                  sudo snap install multipass
 
             - uses: actions/checkout@v4
               with:
