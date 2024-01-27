@@ -13,7 +13,7 @@ export default {
         new MakerDMG({}, ['darwin']),
         new MakerSnap(
             {
-                base: 'core22',
+                base: 'core20',
             },
             ['linux'],
         ),
