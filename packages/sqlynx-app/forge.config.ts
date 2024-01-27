@@ -1,5 +1,6 @@
 import { MakerSquirrel } from '@electron-forge/maker-squirrel';
-import { MakerZIP } from '@electron-forge/maker-zip';
+import { MakerDMG } from '@electron-forge/maker-dmg';
+import { MakerSnap } from '@electron-forge/maker-snap';
 import { WebpackPlugin } from '@electron-forge/plugin-webpack';
 
 import mainConfig from './webpack/webpack.electron.main';
@@ -7,7 +8,7 @@ import rendererConfig from './webpack/webpack.electron.renderer';
 import preloadConfig from './webpack/webpack.electron.preload';
 
 export default {
-    makers: [new MakerSquirrel({}), new MakerZIP({}, ['darwin'])],
+    makers: [new MakerSquirrel({}, ['win32']), new MakerDMG({}, ['darwin']), new MakerSnap({}, ['linux'])],
     plugins: [
         new WebpackPlugin({
             mainConfig: mainConfig as any,
