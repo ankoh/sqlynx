@@ -4,9 +4,9 @@
     "description": "",
     "license": "MPL-2.0",
     "scripts": {
-        "pwa:start": "webpack serve --config webpack.pwa.o0.ts",
-        "pwa:build:o0": "webpack --config webpack.pwa.o0.ts",
-        "pwa:build:o3": "webpack --config webpack.pwa.o3.ts",
+        "pwa:start": "webpack serve --config ./webpack/webpack.pwa.o0.ts",
+        "pwa:build:o0": "webpack --config ./webpack/webpack.pwa.o0.ts",
+        "pwa:build:o3": "webpack --config ./webpack/webpack.pwa.o3.ts",
         "electron:start": "electron-forge start",
         "electron:pkg": "electron-forge package",
         "electron:make": "electron-forge make",

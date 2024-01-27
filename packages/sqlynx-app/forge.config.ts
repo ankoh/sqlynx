@@ -2,9 +2,9 @@ import { MakerSquirrel } from '@electron-forge/maker-squirrel';
 import { MakerZIP } from '@electron-forge/maker-zip';
 import { WebpackPlugin } from '@electron-forge/plugin-webpack';
 
-import mainConfig from './webpack.electron.main';
-import rendererConfig from './webpack.electron.renderer';
-import preloadConfig from './webpack.electron.preload';
+import mainConfig from './webpack/webpack.electron.main';
+import rendererConfig from './webpack/webpack.electron.renderer';
+import preloadConfig from './webpack/webpack.electron.preload';
 
 export default {
     makers: [new MakerSquirrel({}), new MakerZIP({}, ['darwin'])],
