@@ -30,7 +30,7 @@ interface ConfigParams {
 /// We therefore use an explicit version file.
 /// If you don't change the version file, you don't have to change the redirect URI but an updated file won't bust the CDN cache.
 /// If you change the version file, you have to change the redirect URI and get cache busting automatically.
-const OAUTH_CALLBACK_VERSION_FILE = path.resolve(__dirname, './src/connectors/oauth_callback.html.version');
+const OAUTH_CALLBACK_VERSION_FILE = path.resolve(__dirname, '../src/connectors/oauth_callback.html.version');
 export const OAUTH_CALLBACK_VERSION = childProcess.execSync(`cat ${OAUTH_CALLBACK_VERSION_FILE}`).toString().trim();
 
 const GITHUB_OAUTH_CLIENT_ID = '877379132b93adf6f705';
