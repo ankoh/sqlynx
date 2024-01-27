@@ -330,7 +330,7 @@ jobs:
               shell: bash
               run: |
                   export SQLYNX_APP_URL=https://sqlynx.app
-                  yarn workspace @ankoh/sqlynx-app electron:build:o3
+                  yarn workspace @ankoh/sqlynx-app electron:make
 
     pages:
         name: Deploy GitHub Page
