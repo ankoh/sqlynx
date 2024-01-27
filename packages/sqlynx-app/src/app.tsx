@@ -15,7 +15,7 @@ import { ScriptURLSetup } from './scripts/script_url_setup';
 import { SalesforceConnector } from './connectors/salesforce_connector';
 import { LogProvider } from './app_log';
 import { AppConfigResolver } from './app_config';
-import { isElectron } from './utils/user_agent';
+import { ElectronContextResolver, isElectron } from './electron_context';
 
 import { ThemeProvider } from '@primer/react';
 import { StyleSheetManager } from 'styled-components';
@@ -36,22 +36,24 @@ const GitHubDesignSystem = (props: { children: React.ReactElement }) => (
 const AppProviders = (props: { children: React.ReactElement }) => (
     <GitHubDesignSystem>
         <LogProvider>
-            <AppConfigResolver>
-                <SQLynxLoader>
-                    <SalesforceConnector>
-                        <ScriptStateProvider>
-                            <ScriptCommands>
-                                <ScriptLoader />
-                                <ScriptCatalogLoader />
-                                <ScriptAutoloaderSalesforce />
-                                <ScriptAutoloaderLocal />
-                                <ScriptQueryExecutor />
-                                <ScriptURLSetup>{props.children}</ScriptURLSetup>
-                            </ScriptCommands>
-                        </ScriptStateProvider>
-                    </SalesforceConnector>
-                </SQLynxLoader>
-            </AppConfigResolver>
+            <ElectronContextResolver>
+                <AppConfigResolver>
+                    <SQLynxLoader>
+                        <SalesforceConnector>
+                            <ScriptStateProvider>
+                                <ScriptCommands>
+                                    <ScriptLoader />
+                                    <ScriptCatalogLoader />
+                                    <ScriptAutoloaderSalesforce />
+                                    <ScriptAutoloaderLocal />
+                                    <ScriptQueryExecutor />
+                                    <ScriptURLSetup>{props.children}</ScriptURLSetup>
+                                </ScriptCommands>
+                            </ScriptStateProvider>
+                        </SalesforceConnector>
+                    </SQLynxLoader>
+                </AppConfigResolver>
+            </ElectronContextResolver>
         </LogProvider>
     </GitHubDesignSystem>
 );

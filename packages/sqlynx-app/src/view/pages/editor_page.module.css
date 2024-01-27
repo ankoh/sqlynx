@@ -66,8 +66,6 @@
         background-color: var(--background_color_primary);
 
         border-bottom: 1px solid var(--border_color_primary);
-        border-top-right-radius: var(--border_radius);
-        border-top-left-radius: var(--border_radius);
     }
     .body_container {
         position: relative;

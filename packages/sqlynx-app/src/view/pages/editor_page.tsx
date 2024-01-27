@@ -319,19 +319,19 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
             </div>
             <div className={styles.action_sidebar}>
                 <ActionList>
-                    <ActionList.GroupHeading>Connector</ActionList.GroupHeading>
+                    <ActionList.GroupHeading as="h2">Connector</ActionList.GroupHeading>
                     <ScriptCommandList connector={scriptState?.connectorInfo ?? null} />
                     <ActionList.Divider />
-                    <ActionList.GroupHeading>Output</ActionList.GroupHeading>
+                    <ActionList.GroupHeading as="h2">Output</ActionList.GroupHeading>
                     <OutputCommandList connector={scriptState?.connectorInfo ?? null} />
                     <ActionList.Divider />
-                    <ActionList.GroupHeading>Navigation</ActionList.GroupHeading>
+                    <ActionList.GroupHeading as="h2">Navigation</ActionList.GroupHeading>
                     <NavCommandList
                         canCycleScripts={scriptSelectionIterator.count > 1}
                         canCycleOutput={enabledTabs > 1}
                     />
                     <ActionList.Divider />
-                    <ActionList.GroupHeading>Project</ActionList.GroupHeading>
+                    <ActionList.GroupHeading as="h2">Project</ActionList.GroupHeading>
                     <ProjectCommandList />
                 </ActionList>
             </div>

@@ -1,10 +1,11 @@
 import * as React from 'react';
 import classNames from 'classnames';
 import { SystemBar } from './systembar';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useActiveGitHubProfile } from '../github';
 import { useAppConfig } from '../app_config';
 import { HoverMode, LinkButton } from './button';
+import { useElectronContext } from '../electron_context';
 
 import styles from './navbar.module.css';
 
@@ -29,8 +30,10 @@ export const NavBar = (): React.ReactElement => {
     const appConfig = useAppConfig();
     const location = useLocation();
     const ghProfile = useActiveGitHubProfile();
+
+    const isMac = useElectronContext()?.platform === 'darwin';
     return (
-        <div className={styles.navbar}>
+        <div className={isMac ? styles.navbar_mac : styles.navbar_default}>
             <div className={styles.tabs}>
                 <Tab label="Editor" route="/" location={location.pathname} icon={`${symbols}#file_document_multiple`} />
                 {appConfig?.value?.features?.connections && (

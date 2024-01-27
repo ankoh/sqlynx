@@ -1,6 +1,7 @@
 export default {
+    target: 'electron-preload',
     mode: 'production',
-    entry: ['./src/electron/main.ts'],
+    entry: ['./src/electron/preload.ts'],
     resolve: {
         extensions: ['.ts', '.js', '.mjs'],
     },
