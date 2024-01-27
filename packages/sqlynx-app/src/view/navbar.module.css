@@ -13,7 +13,24 @@
     flex: 1;
 }
 
-.navbar {
+.navbar_mac {
+    -webkit-app-region: drag;
+
+    color: rgb(255, 255, 255);
+    line-height: 24px;
+    text-align: center;
+    align-items: center;
+
+    display: grid;
+    grid-template-columns: max-content auto max-content;
+    grid-template-rows: var(--nav_bar_height);
+
+    padding-left: 64px;
+}
+
+.navbar_default {
+    -webkit-app-region: drag;
+
     color: rgb(255, 255, 255);
     line-height: 24px;
     text-align: center;
@@ -27,9 +44,12 @@
 .page_container {
     grid-row: 2;
     grid-column: 1;
-    height: 100%;
+    height: calc(100% - 8px);
     width: calc(100% - 16px);
-    margin: 0px 8px 0px 8px;
+    margin: 0px 8px 8px 8px;
+
+    border-radius: var(--border_radius);
+    overflow: hidden;
 }
 
 .tabs {

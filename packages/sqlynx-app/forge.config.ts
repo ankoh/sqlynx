@@ -4,10 +4,9 @@ import { WebpackPlugin } from '@electron-forge/plugin-webpack';
 
 import mainConfig from './webpack.electron.main';
 import rendererConfig from './webpack.electron.renderer';
+import preloadConfig from './webpack.electron.preload';
 
 export default {
-    packagerConfig: {},
-    rebuildConfig: {},
     makers: [new MakerSquirrel({}), new MakerZIP({}, ['darwin'])],
     plugins: [
         new WebpackPlugin({
@@ -21,6 +20,7 @@ export default {
                         html: './static/index.html',
                         js: './src/app.tsx',
                         preload: {
+                            config: preloadConfig as any,
                             js: './src/electron/preload.ts',
                         },
                     },
