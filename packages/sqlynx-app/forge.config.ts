@@ -8,7 +8,16 @@ import rendererConfig from './webpack/webpack.electron.renderer';
 import preloadConfig from './webpack/webpack.electron.preload';
 
 export default {
-    makers: [new MakerSquirrel({}, ['win32']), new MakerDMG({}, ['darwin']), new MakerSnap({}, ['linux'])],
+    makers: [
+        new MakerSquirrel({}, ['win32']),
+        new MakerDMG({}, ['darwin']),
+        new MakerSnap(
+            {
+                base: 'core22',
+            },
+            ['linux'],
+        ),
+    ],
     plugins: [
         new WebpackPlugin({
             mainConfig: mainConfig as any,
