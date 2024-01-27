@@ -14,8 +14,6 @@
 }
 
 .navbar_mac {
-    -webkit-app-region: drag;
-
     color: rgb(255, 255, 255);
     line-height: 24px;
     text-align: center;
@@ -26,11 +24,11 @@
     grid-template-rows: var(--nav_bar_height);
 
     padding-left: 64px;
+
+    -webkit-app-region: drag;
 }
 
 .navbar_default {
-    -webkit-app-region: drag;
-
     color: rgb(255, 255, 255);
     line-height: 24px;
     text-align: center;
@@ -39,6 +37,8 @@
     display: grid;
     grid-template-columns: max-content auto max-content;
     grid-template-rows: var(--nav_bar_height);
+
+    -webkit-app-region: drag;
 }
 
 .page_container {
@@ -68,6 +68,8 @@
     color: var(--nav_tab_fg);
     height: 30px;
     border-radius: 8px;
+
+    -webkit-app-region: no-drag;
 }
 .tab:hover {
     background-color: var(--nav_tab_bg_active);
