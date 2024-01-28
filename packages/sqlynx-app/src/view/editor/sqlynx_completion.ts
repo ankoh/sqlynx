@@ -1,4 +1,4 @@
-import * as sqlynx from '@ankoh/sqlynx';
+import * as sqlynx from '@ankoh/sqlynx-core';
 
 import { CompletionContext, CompletionResult, Completion } from '@codemirror/autocomplete';
 import { SQLynxProcessor } from './sqlynx_processor';

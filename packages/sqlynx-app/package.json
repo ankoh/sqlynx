@@ -12,11 +12,11 @@
         "electron:open:release": "electron ./build/electron/release/main.cjs",
         "lint": "eslint src"
     },
-    "main": "./.webpack/main",
+    "main": "./build/electron/release/main.cjs",
     "productName": "SQLynx",
     "dependencies": {
         "@ankoh/hyper-service": "link:../hyper-service",
-        "@ankoh/sqlynx": "link:../sqlynx-wasm",
+        "@ankoh/sqlynx-core": "link:../sqlynx-core-wasm",
         "@bufbuild/protobuf": "^1.6.0",
         "@codemirror/autocomplete": "^6.12.0",
         "@codemirror/language": "^6.10.0",

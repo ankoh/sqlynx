@@ -30,13 +30,13 @@ await fs.promises.writeFile(new URL('sqlynx.module.d.ts', dist), "export * from 
 let wasmUrl: URL;
 switch (mode) {
     case 'o0':
-        wasmUrl = new URL('../sqlynx/build/wasm/o0/sqlynx.wasm', import.meta.url);
+        wasmUrl = new URL('../sqlynx-core/build/wasm/o0/sqlynx.wasm', import.meta.url);
         break;
     case 'o2':
-        wasmUrl = new URL('../sqlynx/build/wasm/o2/sqlynx.wasm', import.meta.url);
+        wasmUrl = new URL('../sqlynx-core/build/wasm/o2/sqlynx.wasm', import.meta.url);
         break;
     case 'o3':
-        wasmUrl = new URL('../sqlynx/build/wasm/o3/sqlynx.wasm', import.meta.url);
+        wasmUrl = new URL('../sqlynx-core/build/wasm/o3/sqlynx.wasm', import.meta.url);
         break;
     default:
         throw new Error(`unsupported mode: ${mode}`);

@@ -1,8 +1,8 @@
-import * as sqlynx from '@ankoh/sqlynx';
+import * as sqlynx from '@ankoh/sqlynx-core';
 import React from 'react';
 import { RESULT_ERROR, RESULT_OK, Result } from './utils/result';
 
-import wasm from '@ankoh/sqlynx/dist/sqlynx.wasm';
+import wasm from '@ankoh/sqlynx-core/dist/sqlynx.wasm';
 
 export interface InstantiationProgress {
     startedAt: Date;

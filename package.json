@@ -2,7 +2,7 @@
     "private": true,
     "workspaces": [
         "packages/sqlynx-app",
-        "packages/sqlynx-wasm",
+        "packages/sqlynx-core-api",
         "packages/sqlynx-platform",
         "packages/hyper-service"
     ],

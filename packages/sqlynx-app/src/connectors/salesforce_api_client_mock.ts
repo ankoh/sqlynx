@@ -1,4 +1,4 @@
-import * as sqlynx from '@ankoh/sqlynx';
+import * as sqlynx from '@ankoh/sqlynx-core';
 
 import { PKCEChallenge } from '../utils/pkce';
 import { sleep } from '../utils/sleep';
