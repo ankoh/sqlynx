@@ -1,4 +1,4 @@
-import * as sqlynx from '@ankoh/sqlynx';
+import * as sqlynx from '@ankoh/sqlynx-core';
 import { Decoration, DecorationSet, EditorView } from '@codemirror/view';
 import { EditorState, Transaction, StateField, RangeSetBuilder } from '@codemirror/state';
 import { highlightingFor } from '@codemirror/language';

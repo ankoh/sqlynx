@@ -1,4 +1,4 @@
-import * as sqlynx from '@ankoh/sqlynx';
+import * as sqlynx from '@ankoh/sqlynx-core';
 
 import { gutter, GutterMarker } from '@codemirror/view';
 import { Transaction, StateField } from '@codemirror/state';

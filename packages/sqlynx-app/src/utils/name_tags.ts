@@ -1,4 +1,4 @@
-import * as sqlynx from '@ankoh/sqlynx';
+import * as sqlynx from '@ankoh/sqlynx-core';
 
 export function unpackNameTags(tags: bigint): sqlynx.proto.NameTag[] {
     const out = [];

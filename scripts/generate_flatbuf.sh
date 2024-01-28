@@ -15,8 +15,8 @@ ${FLATC} --version \
 SPEC_DIR="${PROJECT_ROOT}/proto/"
 SPEC_INDEX="${SPEC_DIR}/sqlynx/proto.fbs"
 
-OUT_DIR_CPP="${PROJECT_ROOT}/packages/sqlynx/include/sqlynx/proto"
-OUT_DIR_TS="${PROJECT_ROOT}/packages/sqlynx-wasm/gen"
+OUT_DIR_CPP="${PROJECT_ROOT}/package/sqlynx-core/include/sqlynx/proto"
+OUT_DIR_TS="${PROJECT_ROOT}/packages/sqlynx-core-wasm/gen"
 
 rm -rf ${OUT_DIR_CPP}/*
 rm -rf ${OUT_DIR_TS}/*

@@ -1,7 +1,7 @@
 import cn from 'classnames';
 
 import * as React from 'react';
-import * as sqlynx from '@ankoh/sqlynx';
+import * as sqlynx from '@ankoh/sqlynx-core';
 
 import { IconButton } from '@primer/react';
 import { DecorationSet, EditorView } from '@codemirror/view';

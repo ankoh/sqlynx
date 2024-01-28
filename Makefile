@@ -8,7 +8,7 @@ ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 UID=${shell id -u}
 GID=${shell id -g}
 
-LIB_SOURCE_DIR="${ROOT_DIR}/packages/sqlynx"
+LIB_SOURCE_DIR="${ROOT_DIR}/packages/sqlynx-core"
 LIB_DEBUG_DIR="${LIB_SOURCE_DIR}/build/native/o0"
 LIB_RELWITHDEBINFO_DIR="${LIB_SOURCE_DIR}/build/native/o2"
 LIB_RELEASE_DIR="${LIB_SOURCE_DIR}/build/native/o3"
@@ -117,23 +117,23 @@ core_wasm_o3:
 
 .PHONY: core_js_o0
 core_js_o0:
-	yarn workspace @ankoh/sqlynx build:o0
+	yarn workspace @ankoh/sqlynx-core build:o0
 
 .PHONY: core_js_o2
 core_js_o2:
-	yarn workspace @ankoh/sqlynx build:o2
+	yarn workspace @ankoh/sqlynx-core build:o2
 
 .PHONY: core_js_o3
 core_js_o3:
-	yarn workspace @ankoh/sqlynx build:o3
+	yarn workspace @ankoh/sqlynx-core build:o3
 
 .PHONY: core_js_tests
 core_js_tests:
-	yarn workspace @ankoh/sqlynx test
+	yarn workspace @ankoh/sqlynx-core test
 
 .PHONY: core_js_debug
 core_js_tests_debug:
-	yarn workspace @ankoh/sqlynx test:debug
+	yarn workspace @ankoh/sqlynx-core test:debug
 
 .PHONY: pwa_build_release
 pwa_build_release:

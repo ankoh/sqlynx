@@ -1,4 +1,4 @@
-import * as sqlynx from '@ankoh/sqlynx';
+import * as sqlynx from '@ankoh/sqlynx-core';
 import { StateField, StateEffect, StateEffectType, Text, Transaction } from '@codemirror/state';
 
 /// The configuration of the SQLynx config
