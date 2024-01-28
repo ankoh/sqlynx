@@ -13,7 +13,7 @@ jobs:
             matrix:
                 build_type: ['o0', 'o3']
 
-        name: Build Library / WASM / ${{ matrix.build_type }}
+        name: Build Core / WASM / ${{ matrix.build_type }}
         runs-on: ubuntu-22.04
         steps:
             - uses: actions/checkout@v4
@@ -56,7 +56,7 @@ jobs:
             matrix:
                 build_type: ['o0', 'o2']
 
-        name: Build Library / Native / ${{ matrix.build_type }}
+        name: Build Core / Native / ${{ matrix.build_type }}
         runs-on: ubuntu-22.04
         steps:
             - uses: actions/checkout@v4
@@ -210,7 +210,7 @@ jobs:
                   retention-days: 1
 
     hyper_service_proto:
-        name: Build Proto / Hyper Service
+        name: Build Hyper Service Protocol
         runs-on: ubuntu-22.04
         steps:
             - uses: actions/checkout@v4
@@ -236,7 +236,7 @@ jobs:
                   retention-days: 1
 
     core_js:
-        name: Build Library / Javascript
+        name: Build Core
         runs-on: ubuntu-22.04
         needs:
             - core_wasm
