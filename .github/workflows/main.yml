@@ -355,12 +355,6 @@ jobs:
                   mkdir -p ./lib/build/wasm/o3 ./reports
                   yarn install --frozen-lockfile
 
-            - name: Generate Protobuf files
-              shell: bash
-              run: |
-                  ./node_modules/.bin/buf generate 
-                  yarn workspace @ankoh/hyper-service build
-
             - name: Build @ankoh/sqlynx-app
               shell: bash
               run: |
@@ -368,6 +362,7 @@ jobs:
                   yarn workspace @ankoh/sqlynx-app electron:build:release
 
             - name: Package @ankoh/sqlynx-app for snap store
+              if: matrix.system.target == 'ubuntu-22.04'
               shell: bash
               run: |
                   yarn workspace @ankoh/sqlynx-app electron:package:snap
