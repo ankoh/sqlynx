@@ -205,7 +205,7 @@ jobs:
 
             - uses: actions/upload-artifact@v4
               with:
-                  name: sqlynx_platform_${{ matrix.artifact }}
+                  name: sqlynx_platform_${{ matrix.system.artifact }}
                   path: ./packages/sqlynx-platform/dist
                   retention-days: 1
 
@@ -340,7 +340,7 @@ jobs:
 
             - uses: actions/download-artifact@v4
               with:
-                  name: sqlynx_platform_${{ matrix.artifact }}
+                  name: sqlynx_platform_${{ matrix.system.artifact }}
                   path: ./packages/sqlynx-platform/dist
 
             - name: Setup Node.js
