@@ -18,7 +18,7 @@
     "dependencies": {},
     "devDependencies": {
         "@ankoh/hyper-service": "link:../hyper-service",
-        "@ankoh/sqlynx-core": "link:../sqlynx-core-wasm",
+        "@ankoh/sqlynx-core": "link:../sqlynx-core-api",
         "@bufbuild/protobuf": "^1.6.0",
         "@codemirror/autocomplete": "^6.12.0",
         "@codemirror/language": "^6.10.0",
