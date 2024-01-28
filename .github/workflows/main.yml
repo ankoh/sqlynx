@@ -248,13 +248,13 @@ jobs:
             - uses: actions/upload-artifact@v4
               with:
                   name: sqlynx_jslib
-                  path: ./packages/sqlynx-core-wasm/dist
+                  path: ./packages/sqlynx-core-api/dist
                   retention-days: 1
 
             - uses: actions/upload-artifact@v4
               with:
                   name: sqlynx_coverage_js
-                  path: ./packages/sqlynx-core-wasm/coverage/lcov.info
+                  path: ./packages/sqlynx-core-api/coverage/lcov.info
                   retention-days: 1
 
     pwa:
@@ -271,7 +271,7 @@ jobs:
             - uses: actions/download-artifact@v4
               with:
                   name: sqlynx_jslib
-                  path: ./packages/sqlynx-core-wasm/dist
+                  path: ./packages/sqlynx-core-api/dist
 
             - name: Install npm dependencies
               shell: bash
@@ -312,7 +312,7 @@ jobs:
             - uses: actions/download-artifact@v4
               with:
                   name: sqlynx_jslib
-                  path: ./packages/sqlynx-core-wasm/dist
+                  path: ./packages/sqlynx-core-api/dist
 
             - name: Install npm dependencies
               shell: bash
@@ -380,7 +380,7 @@ jobs:
             - uses: actions/download-artifact@v4
               with:
                   name: sqlynx_coverage_js
-                  path: ./packages/sqlynx-core-wasm/coverage/
+                  path: ./packages/sqlynx-core-api/coverage/
 
             - name: Upload coverage report
               uses: coverallsapp/github-action@v2
