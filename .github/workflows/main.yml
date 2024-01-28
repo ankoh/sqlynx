@@ -307,7 +307,7 @@ jobs:
                   retention-days: 1
 
     electron:
-        name: Build App / Electron / ${{ matrix.system.os }} / ${{ matrix.system.target }} / ${{ matrix.node_version }}
+        name: Build App / ${{ matrix.system.os }} / ${{ matrix.system.target }} / ${{ matrix.node_version }}
         runs-on: ${{ matrix.system.os }}
         strategy:
             fail-fast: true
