@@ -151,6 +151,10 @@ svg_symbols:
 electron_dev:
 	yarn workspace @ankoh/sqlynx-app electron:build:dev
 	yarn workspace @ankoh/sqlynx-app electron:open:dev
+	
+.PHONY: electron_release
+electron_release:
+	yarn workspace @ankoh/sqlynx-app electron:build:release
 
 .PHONY: platform_o0
 platform_o0:

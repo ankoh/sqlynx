@@ -1,7 +1,8 @@
 {
     "name": "@ankoh/sqlynx-app",
     "version": "0.0.5",
-    "description": "",
+    "author": "André Kohn <kohn.a@outlook.com>",
+    "description": "Fast SQL analyzer for the web",
     "license": "MPL-2.0",
     "scripts": {
         "pwa:serve:dev": "webpack serve --config ./webpack/webpack.pwa.dev.ts",
@@ -10,10 +11,10 @@
         "electron:build:release": "webpack --config ./webpack/webpack.electron.release.ts",
         "electron:open:dev": "electron ./build/electron/dev/main.cjs -- debug",
         "electron:open:release": "electron ./build/electron/release/main.cjs",
+        "electron:package:snap": "electron-builder --linux snap",
+        "electron:package:mac": "electron-builder --mac",
         "lint": "eslint src"
     },
-    "main": "./build/electron/release/main.cjs",
-    "productName": "SQLynx",
     "dependencies": {},
     "devDependencies": {
         "@ankoh/hyper-service": "link:../hyper-service",
@@ -48,7 +49,8 @@
         "cm6-theme-nord": "^0.2.0",
         "copy-webpack-plugin": "^12.0.2",
         "css-loader": "^6.9.1",
-        "electron": "^28.1.4",
+        "electron": "28.1.4",
+        "electron-builder": "^24.9.1",
         "electron-squirrel-startup": "^1.0.0",
         "eslint": "^8.56.0",
         "eslint-config-prettier": "^9.1.0",
