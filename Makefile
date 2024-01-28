@@ -143,13 +143,21 @@ pwa_o3:
 pwa_start:
 	yarn workspace @ankoh/sqlynx-app pwa:start
 
-.PHONY: electron_start
-electron_start:
-	yarn workspace @ankoh/sqlynx-app electron:start
+.PHONY: electron_o0
+electron_o0:
+	yarn workspace @ankoh/sqlynx-app electron:build:o0
 
-.PHONY: electron_make
-electron_make:
-	yarn workspace @ankoh/sqlynx-app electron:make
+.PHONY: electron_open_o0
+electron_open_o0:
+	yarn workspace @ankoh/sqlynx-app electron:open:o0
+
+.PHONY: electron_watch_o0
+electron_watch_o0:
+	yarn workspace @ankoh/sqlynx-app electron:watch:o0
+	
+.PHONY: electron_o3
+electron_o3:
+	yarn workspace @ankoh/sqlynx-app electron:build:o3
 	
 .PHONY: svg_symbols
 svg_symbols:

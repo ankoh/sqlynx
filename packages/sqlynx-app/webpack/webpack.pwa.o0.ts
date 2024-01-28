@@ -1,4 +1,4 @@
-import { configure, Configuration } from './webpack.common';
+import { configure, Configuration } from './webpack.pwa.common';
 import path from 'path';
 
 const base = configure({
