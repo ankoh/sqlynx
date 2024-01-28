@@ -240,7 +240,6 @@ jobs:
         runs-on: ubuntu-22.04
         needs:
             - core_wasm
-            - hyper_service_proto
         steps:
             - uses: actions/checkout@v4
               with:
@@ -291,6 +290,7 @@ jobs:
         runs-on: ubuntu-22.04
         needs:
             - core_js
+            - hyper_service_proto
         steps:
             - uses: actions/checkout@v4
               with:
