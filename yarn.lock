@@ -41,7 +41,6 @@
 
 "@ankoh/sqlynx-core@link:packages/sqlynx-core-wasm":
   version "0.0.0"
-  uid ""
 
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.12.13", "@babel/code-frame@^7.16.7", "@babel/code-frame@^7.23.5":
   version "7.23.5"
@@ -1671,10 +1670,10 @@
   dependencies:
     "@types/node" "*"
 
-"@types/node@*", "@types/node@^20.11.8", "@types/node@^20.6.0":
-  version "20.11.8"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.11.8.tgz#bdb6de1048613c3c6ab6c341c37e8fd1a7860308"
-  integrity sha512-i7omyekpPTNdv4Jb/Rgqg0RU8YqLcNsI12quKSDkRXNfx7Wxdm6HhK1awT3xTgEkgxPn3bvnSpiEAc7a7Lpyow==
+"@types/node@*", "@types/node@^20.11.10", "@types/node@^20.6.0":
+  version "20.11.10"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.11.10.tgz#6c3de8974d65c362f82ee29db6b5adf4205462f9"
+  integrity sha512-rZEfe/hJSGYmdfX9tvcPMYeYPW2sNl50nsw4jZmRcaG0HIAb0WYEpsB05GOb53vjqpyE9GUhlDQ4jLSoB5q9kg==
   dependencies:
     undici-types "~5.26.4"
 
@@ -3407,15 +3406,10 @@ copy-webpack-plugin@^12.0.2:
     schema-utils "^4.2.0"
     serialize-javascript "^6.0.2"
 
-core-util-is@1.0.2:
+core-util-is@1.0.2, core-util-is@~1.0.0:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/core-util-is/-/core-util-is-1.0.2.tgz#b5fd54220aa2bc5ab57aab7140c940754503c1a7"
   integrity sha512-3lqz5YjWTYnW6dlDa5TLaTCcShfar1e40rmcJVwCBJC6mWlFuj0eCHIElmG1g5kyuJ/GD+8Wn4FFCcz4gJPfaQ==
-
-core-util-is@~1.0.0:
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/core-util-is/-/core-util-is-1.0.3.tgz#a6042d3634c2b27e9328f837b965fac83808db85"
-  integrity sha512-ZQBvi1DcpJ4GDqanjucZ2Hj3wEO5pZDS89BWbkcrvdxksJorwUDDZamX9ldFkp9aw2lmBDLgkObEA4DWNJ9FYQ==
 
 cosmiconfig@^8.2.0:
   version "8.3.6"
@@ -3851,10 +3845,10 @@ electron-to-chromium@^1.4.648:
   resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.4.648.tgz#c7b46c9010752c37bb4322739d6d2dd82354fbe4"
   integrity sha512-EmFMarXeqJp9cUKu/QEciEApn0S/xRcpZWuAm32U7NgoZCimjsilKXHRO9saeEW55eHZagIDg6XTUOv32w9pjg==
 
-electron@^28.1.4:
-  version "28.2.0"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-28.2.0.tgz#ecf7097d4a1e47dd08111c0229a9d03c44f485ad"
-  integrity sha512-22SylXQQ9IHtwLw4D+Z4Si7OUpeDtpHfJVTjy3yv53iLg5zJKKPOCWT4ZwgYGHQZ0eldyBrYBHF/P9FPd2CcVQ==
+electron@28.1.4:
+  version "28.1.4"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-28.1.4.tgz#3e1772521d19a8c70162c6c86deb3e57bb28721f"
+  integrity sha512-WE6go611KOhtH6efRPMnVC7FE7DCKnQ3ZyHFeI1DbaCy8OU4UjZ8/CZGcuZmZgRdxSBEHoHdgaJkWRHZzF0FOg==
   dependencies:
     "@electron/get" "^2.0.0"
     "@types/node" "^18.11.18"
@@ -6607,15 +6601,10 @@ minipass@^3.0.0:
   dependencies:
     yallist "^4.0.0"
 
-minipass@^5.0.0:
+minipass@^5.0.0, "minipass@^5.0.0 || ^6.0.2 || ^7.0.0":
   version "5.0.0"
   resolved "https://registry.yarnpkg.com/minipass/-/minipass-5.0.0.tgz#3e9788ffb90b694a5d0ec94479a45b5d8738133d"
   integrity sha512-3FnjYuehv9k6ovOEbyOswadCDPX1piCfhV8ncmYtHOjuPwylVWsghTLo7rabjC3Rx5xD4HDx8Wm1xnMF7S5qFQ==
-
-"minipass@^5.0.0 || ^6.0.2 || ^7.0.0":
-  version "7.0.4"
-  resolved "https://registry.yarnpkg.com/minipass/-/minipass-7.0.4.tgz#dbce03740f50a4786ba994c1fb908844d27b038c"
-  integrity sha512-jYofLM5Dam9279rdkWzqHozUo4ybjdZmCsDHePy5V/PbBcVMiSZR97gmAy45aqi8CK1lG2ECd356FU86avfwUQ==
 
 minizlib@^2.1.1:
   version "2.1.2"
