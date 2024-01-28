@@ -385,7 +385,7 @@
   resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.7.0.tgz#cecddc8162a231642b410bc7b99309cd5969733c"
   integrity sha512-jIsRadRsyxf6ERBU1auY2c1k3doFdqh15F4HRZs4BELVuBtpN+3ipkXqcsWE+rD+EQNigeR29SfQ+ES6UX/jGg==
 
-"@bufbuild/protoc-gen-es@^1.6.0":
+"@bufbuild/protoc-gen-es@^1.7.0":
   version "1.7.0"
   resolved "https://registry.yarnpkg.com/@bufbuild/protoc-gen-es/-/protoc-gen-es-1.7.0.tgz#37244a42c99267c6e818654cd860bc90e7f1d80e"
   integrity sha512-b9LwP8p+9ywtCM1P1pqQBrJF4RPyWbzhM8mTHvLEtHglogso70kmDmoIcqJ+kS/+65Bc7ilHFVGJF95GceLy1Q==
