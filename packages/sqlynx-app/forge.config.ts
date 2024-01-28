@@ -14,6 +14,7 @@ export default {
         new MakerSnap(
             {
                 base: 'core20',
+                extraArgs: ['--destructive-mode'],
             },
             ['linux'],
         ),
