@@ -373,7 +373,7 @@ jobs:
         runs-on: ubuntu-22.04
         needs:
             - pwa
-            - platform
+            - electron
             # Most test cases are in the native library. Don't update
             # the deployed webpage if the native tests failed.
             - core_native
