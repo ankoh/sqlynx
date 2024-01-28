@@ -118,25 +118,25 @@ jobs:
             - name: Merge coverage data
               shell: bash
               env:
-                  core_COVERAGE_DIR: ./package/sqlynx-core/build/coverage
+                  SQLYNX_COVERAGE_DIR: ./package/sqlynx-core/build/coverage
               run: |
-                  mkdir -p ${core_COVERAGE_DIR}
-                  ${{env.LLVM_PATH}}/bin/llvm-profdata merge -output=${core_COVERAGE_DIR}/coverage.prof -instr default.profraw
+                  mkdir -p ${SQLYNX_COVERAGE_DIR}
+                  ${{env.LLVM_PATH}}/bin/llvm-profdata merge -output=${SQLYNX_COVERAGE_DIR}/coverage.prof -instr default.profraw
 
             - name: Build coverage report
               shell: bash
               env:
                   SQLYNX_BUILD_DIR: ./package/sqlynx-core/build/native/${{ matrix.build_type }}
-                  core_COVERAGE_DIR: ./package/sqlynx-core/build/coverage
+                  SQLYNX_COVERAGE_DIR: ./package/sqlynx-core/build/coverage
               run: |
                   ${{env.LLVM_PATH}}/bin/llvm-cov export \
-                  --instr-profile ${core_COVERAGE_DIR}/coverage.prof \
+                  --instr-profile ${SQLYNX_COVERAGE_DIR}/coverage.prof \
                   --format lcov \
                   --ignore-filename-regex='.*/build/native/${{ matrix.build_type }}/.*' \
                   --ignore-filename-regex='.*/utf8proc/.*' \
                   --ignore-filename-regex='.*/proto/proto_generated.h' \
                   --ignore-filename-regex='.*/.*\.list' \
-                  ${SQLYNX_BUILD_DIR}/tester > ${core_COVERAGE_DIR}/lcov.info
+                  ${SQLYNX_BUILD_DIR}/tester > ${SQLYNX_COVERAGE_DIR}/lcov.info
 
             - uses: actions/upload-artifact@v4
               with:
