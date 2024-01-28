@@ -324,7 +324,6 @@ jobs:
                     - os: macos-12
                       target: x86_64-apple-darwin
                       artifact: darwin_x64
-        runs-on: ubuntu-22.04
         needs:
             - core_js
             - platform
