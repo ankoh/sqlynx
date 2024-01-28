@@ -4,13 +4,13 @@ export type Configuration = webpack.Configuration;
 export interface ConfigParams {
     mode: 'production' | 'development';
     buildDir: string;
-};
+}
 
 export function configure(params: ConfigParams): Partial<Configuration> {
     return {
         target: 'electron-preload',
         entry: {
-            preload: './src/electron/preload.ts'
+            preload: './src/electron/preload.ts',
         },
         output: {
             filename: '[name].cjs',
@@ -42,4 +42,4 @@ export function configure(params: ConfigParams): Partial<Configuration> {
             ],
         },
     };
-};
+}
