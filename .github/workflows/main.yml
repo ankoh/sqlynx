@@ -400,6 +400,7 @@ jobs:
             - core_native
             - platform
             - pwa
+            - electron
         steps:
             - uses: actions/checkout@v4
               with:
