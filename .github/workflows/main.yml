@@ -174,8 +174,8 @@ jobs:
                       ~/.cargo/registry/cache/
                       ~/.cargo/git/db/
                       target/
-                  key: ${{ runner.os }}-cargo-native-${{ hashFiles('Cargo.lock') }}
-                  restore-keys: ${{ runner.os }}-cargo-native-
+                  key: ${{ runner.os }}-cargo-native-${{ matrix.system.os }}-${{ matrix.system.target }}-${{ hashFiles('Cargo.lock') }}
+                  restore-keys: ${{ runner.os }}-cargo-native-${{ matrix.system.os }}-${{ matrix.system.target }}-
 
             - name: Setup Node.js
               uses: actions/setup-node@v4
