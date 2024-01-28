@@ -332,6 +332,11 @@ jobs:
                   export SQLYNX_APP_URL=https://sqlynx.app
                   yarn workspace @ankoh/sqlynx-app electron:build:release
 
+            - name: Package @ankoh/sqlynx-app for snap store
+              shell: bash
+              run: |
+                  yarn workspace @ankoh/sqlynx-app electron:package:snap
+
     pages:
         name: Deploy GitHub Page
         if: github.ref == 'refs/heads/main'
