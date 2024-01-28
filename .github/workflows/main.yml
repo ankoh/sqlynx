@@ -48,7 +48,7 @@ jobs:
             - uses: actions/upload-artifact@v4
               with:
                   name: sqlynx_parser_wasm_${{ matrix.build_type }}
-                  path: ./package/sqlynx-core/build/wasm/${{ matrix.build_type }}/sqlynx.wasm
+                  path: ./packages/sqlynx-core/build/wasm/${{ matrix.build_type }}/sqlynx.wasm
                   retention-days: 1
 
     core_native:
@@ -78,7 +78,7 @@ jobs:
               shell: bash
               env:
                   SQLYNX_SOURCE_DIR: ./packages/sqlynx-core
-                  SQLYNX_BUILD_DIR: ./package/sqlynx-core/build/native/${{ matrix.build_type }}
+                  SQLYNX_BUILD_DIR: ./packages/sqlynx-core/build/native/${{ matrix.build_type }}
               run: |
                   cmake -S ${SQLYNX_SOURCE_DIR} -B ${SQLYNX_BUILD_DIR} \
                   -DCMAKE_C_COMPILER=${{env.LLVM_PATH}}/bin/clang \
@@ -93,7 +93,7 @@ jobs:
               shell: bash
               env:
                   SQLYNX_SOURCE_DIR: ./packages/sqlynx
-                  SQLYNX_BUILD_DIR: ./package/sqlynx-core/build/native/${{ matrix.build_type }}
+                  SQLYNX_BUILD_DIR: ./packages/sqlynx-core/build/native/${{ matrix.build_type }}
               run: |
                   ${SQLYNX_BUILD_DIR}/tester --source ${SQLYNX_SOURCE_DIR}
 
@@ -102,7 +102,7 @@ jobs:
               shell: bash
               env:
                   SQLYNX_SOURCE_DIR: ./packages/sqlynx
-                  SQLYNX_BUILD_DIR: ./package/sqlynx-core/build/native/${{ matrix.build_type }}
+                  SQLYNX_BUILD_DIR: ./packages/sqlynx-core/build/native/${{ matrix.build_type }}
               run: |
                   ${SQLYNX_BUILD_DIR}/benchmark_pipeline
 
@@ -111,14 +111,14 @@ jobs:
               shell: bash
               env:
                   SQLYNX_SOURCE_DIR: ./packages/sqlynx
-                  SQLYNX_BUILD_DIR: ./package/sqlynx-core/build/native/${{ matrix.build_type }}
+                  SQLYNX_BUILD_DIR: ./packages/sqlynx-core/build/native/${{ matrix.build_type }}
               run: |
                   ${SQLYNX_BUILD_DIR}/benchmark_layout
 
             - name: Merge coverage data
               shell: bash
               env:
-                  SQLYNX_COVERAGE_DIR: ./package/sqlynx-core/build/coverage
+                  SQLYNX_COVERAGE_DIR: ./packages/sqlynx-core/build/coverage
               run: |
                   mkdir -p ${SQLYNX_COVERAGE_DIR}
                   ${{env.LLVM_PATH}}/bin/llvm-profdata merge -output=${SQLYNX_COVERAGE_DIR}/coverage.prof -instr default.profraw
@@ -126,8 +126,8 @@ jobs:
             - name: Build coverage report
               shell: bash
               env:
-                  SQLYNX_BUILD_DIR: ./package/sqlynx-core/build/native/${{ matrix.build_type }}
-                  SQLYNX_COVERAGE_DIR: ./package/sqlynx-core/build/coverage
+                  SQLYNX_BUILD_DIR: ./packages/sqlynx-core/build/native/${{ matrix.build_type }}
+                  SQLYNX_COVERAGE_DIR: ./packages/sqlynx-core/build/coverage
               run: |
                   ${{env.LLVM_PATH}}/bin/llvm-cov export \
                   --instr-profile ${SQLYNX_COVERAGE_DIR}/coverage.prof \
@@ -141,7 +141,7 @@ jobs:
             - uses: actions/upload-artifact@v4
               with:
                   name: sqlynx_coverage_native_${{ matrix.build_type }}
-                  path: ./package/sqlynx-core/build/coverage/lcov.info
+                  path: ./packages/sqlynx-core/build/coverage/lcov.info
                   retention-days: 1
 
     platform:
@@ -214,7 +214,7 @@ jobs:
             - uses: actions/download-artifact@v4
               with:
                   name: sqlynx_parser_wasm_o3
-                  path: ./package/sqlynx-core/build/wasm/o3/
+                  path: ./packages/sqlynx-core/build/wasm/o3/
 
             - name: Setup flatc
               uses: ./.github/actions/setup-flatc
@@ -375,7 +375,7 @@ jobs:
             - uses: actions/download-artifact@v4
               with:
                   name: sqlynx_coverage_native_o0
-                  path: ./package/sqlynx-core/build/coverage/
+                  path: ./packages/sqlynx-core/build/coverage/
 
             - uses: actions/download-artifact@v4
               with:
