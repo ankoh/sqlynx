@@ -11,5 +11,5 @@ export default [
     configurePreload({
         buildDir: path.resolve(__dirname, '../build/electron/dev/preload'),
         mode: 'development',
-    })
+    }),
 ];
