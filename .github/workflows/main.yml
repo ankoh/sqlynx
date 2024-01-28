@@ -335,7 +335,6 @@ jobs:
               shell: bash
               run: |
                   export SQLYNX_APP_URL=https://sqlynx.app
-                  export SNAP_DESTRUCTIVE_MODE="true"
                   yarn workspace @ankoh/sqlynx-app electron:make
 
     pages:
