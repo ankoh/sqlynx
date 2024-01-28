@@ -4,13 +4,13 @@ export type Configuration = webpack.Configuration;
 export interface ConfigParams {
     mode: 'production' | 'development';
     buildDir: string;
-};
+}
 
 export function configure(params: ConfigParams): Partial<Configuration> {
     return {
         target: 'electron-main',
         entry: {
-            main: './src/electron/main.ts'
+            main: './src/electron/main.ts',
         },
         output: {
             filename: '[name].cjs',
@@ -44,4 +44,4 @@ export function configure(params: ConfigParams): Partial<Configuration> {
             ],
         },
     };
-};
+}
