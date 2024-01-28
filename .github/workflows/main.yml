@@ -148,17 +148,20 @@ jobs:
         name: Build Platform / ${{ matrix.system.os }} / ${{ matrix.system.target }} / ${{ matrix.node_version }}
         runs-on: ${{ matrix.system.os }}
         strategy:
-            fail-fast: false
+            fail-fast: true
             matrix:
                 node_version:
                     - 18
                 system:
                     - os: ubuntu-22.04
                       target: x86_64-unknown-linux-gnu
+                      artifact: linux_x64
                     - os: windows-2022
                       target: x86_64-pc-windows-msvc
+                      artifact: windows_x64
                     - os: macos-12
                       target: x86_64-apple-darwin
+                      artifact: darwin_x64
         steps:
             - uses: actions/checkout@v4
 
@@ -199,6 +202,12 @@ jobs:
 
             - name: Test Platform
               run: yarn workspace @ankoh/sqlynx-platform test
+
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: sqlynx_platform_${{ matrix.artifact }}
+                  path: ./packages/sqlynx-platform/dist
+                  retention-days: 1
 
     core_js:
         name: Build Library / Javascript
@@ -298,7 +307,23 @@ jobs:
                   retention-days: 1
 
     electron:
-        name: Build App / Electron
+        name: Build App / Electron / ${{ matrix.system.os }} / ${{ matrix.system.target }} / ${{ matrix.node_version }}
+        runs-on: ${{ matrix.system.os }}
+        strategy:
+            fail-fast: true
+            matrix:
+                node_version:
+                    - 18
+                system:
+                    - os: ubuntu-22.04
+                      target: x86_64-unknown-linux-gnu
+                      artifact: linux_x64
+                    - os: windows-2022
+                      target: x86_64-pc-windows-msvc
+                      artifact: windows_x64
+                    - os: macos-12
+                      target: x86_64-apple-darwin
+                      artifact: darwin_x64
         runs-on: ubuntu-22.04
         needs:
             - core_js
@@ -313,6 +338,17 @@ jobs:
               with:
                   name: sqlynx_jslib
                   path: ./packages/sqlynx-core-api/dist
+
+            - uses: actions/download-artifact@v4
+              with:
+                  name: sqlynx_platform_${{ matrix.artifact }}
+                  path: ./packages/sqlynx-platform/dist
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ matrix.node_version }}
+                  registry-url: 'https://registry.npmjs.org'
 
             - name: Install npm dependencies
               shell: bash
