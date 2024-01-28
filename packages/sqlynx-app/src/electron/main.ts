@@ -2,9 +2,19 @@ import { app, BrowserWindow } from 'electron';
 import os from 'os';
 import path from 'path';
 
+// Determine context
 const BASE_DIR = path.dirname(process.argv[1]);
 const PRELOAD_SCRIPT = path.resolve(BASE_DIR, './preload/preload.cjs');
 const PLATFORM = os.platform();
+
+// Poor-mans argument parsing, we only need to detect the debug flag
+const ARGV = process.argv.slice(2);
+let isDebug = false;
+for (const arg of ARGV) {
+    if (arg === 'debug') {
+        isDebug = true;
+    }
+}
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -24,7 +34,11 @@ const createWindow = (): void => {
         show: false,
     });
     // and load the index.html of the app.
-    mainWindow.loadFile('./app/index.html');
+    if (isDebug) {
+        mainWindow.loadURL('http://localhost:9002');
+    } else {
+        mainWindow.loadFile('./app/index.html');
+    }
     mainWindow.once('ready-to-show', () => {
         mainWindow.show();
     });

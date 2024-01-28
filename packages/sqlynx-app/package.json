@@ -9,9 +9,8 @@
         "pwa:build:o3": "webpack --config ./webpack/webpack.pwa.o3.ts",
         "electron:build:o0": "webpack --config ./webpack/webpack.electron.o0.ts",
         "electron:build:o3": "webpack --config ./webpack/webpack.electron.o3.ts",
-        "electron:watch:o0": "webpack watch --config ./webpack/webpack.electron.o0.ts",
-        "electron:open:o0": "electron ./build/electron/o0/main.cjs",
-        "electron:open:o3": "electron ./build/electron/o0/main.cjs",
+        "electron:open:o0": "electron ./build/electron/o0/main.cjs -- debug",
+        "electron:open:o3": "electron ./build/electron/o3/main.cjs",
         "lint": "eslint src"
     },
     "main": "./.webpack/main",
