@@ -300,12 +300,6 @@ jobs:
             - core_js
             - platform
         steps:
-            - name: Setup snapcraft
-              shell: bash
-              run: |
-                  sudo snap install snapcraft --classic
-                  sudo snap install gnome-3-34-1804
-
             - uses: actions/checkout@v4
               with:
                   submodules: 'recursive'
