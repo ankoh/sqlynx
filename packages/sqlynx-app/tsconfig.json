@@ -23,7 +23,7 @@
         "src/**/*",
         "test/**/*.ts",
         "types/*.d.ts",
-        "webpack/webpack.common.ts",
+        "webpack/webpack.pwa.common.ts",
         "webpack/webpack.electron.main.ts",
         "webpack/webpack.electron.preload.ts",
         "webpack/webpack.electron.renderer.ts",

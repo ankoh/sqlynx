@@ -330,8 +330,7 @@ jobs:
               shell: bash
               run: |
                   export SQLYNX_APP_URL=https://sqlynx.app
-                  export SNAPCRAFT_BUILD_ENVIRONMENT=lxd
-                  yarn workspace @ankoh/sqlynx-app electron:make
+                  yarn workspace @ankoh/sqlynx-app electron:build:o3
 
     pages:
         name: Deploy GitHub Page
