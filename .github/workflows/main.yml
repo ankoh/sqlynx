@@ -289,12 +289,12 @@ jobs:
               shell: bash
               run: |
                   export SQLYNX_APP_URL=https://sqlynx.app
-                  yarn workspace @ankoh/sqlynx-app pwa:build:o3
+                  yarn workspace @ankoh/sqlynx-app pwa:build:release
 
             - uses: actions/upload-artifact@v4
               with:
                   name: sqlynx_app
-                  path: ./packages/sqlynx-app/build/pwa/o3
+                  path: ./packages/sqlynx-app/build/pwa/release
                   retention-days: 1
 
     electron:
@@ -330,7 +330,7 @@ jobs:
               shell: bash
               run: |
                   export SQLYNX_APP_URL=https://sqlynx.app
-                  yarn workspace @ankoh/sqlynx-app electron:build:o3
+                  yarn workspace @ankoh/sqlynx-app electron:build:release
 
     pages:
         name: Deploy GitHub Page

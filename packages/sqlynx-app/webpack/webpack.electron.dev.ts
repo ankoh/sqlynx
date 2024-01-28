@@ -5,11 +5,11 @@ import { configure as configurePreload } from './webpack.electron.common.preload
 
 export default [
     configureMain({
-        buildDir: path.resolve(__dirname, '../build/electron/o0'),
+        buildDir: path.resolve(__dirname, '../build/electron/dev'),
         mode: 'development',
     }),
     configurePreload({
-        buildDir: path.resolve(__dirname, '../build/electron/o0/preload'),
+        buildDir: path.resolve(__dirname, '../build/electron/dev/preload'),
         mode: 'development',
     })
 ];
