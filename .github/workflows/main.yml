@@ -47,7 +47,7 @@ jobs:
 
             - uses: actions/upload-artifact@v4
               with:
-                  name: sqlynx_parser_wasm_${{ matrix.build_type }}
+                  name: sqlynx_core_wasm_${{ matrix.build_type }}
                   path: ./packages/sqlynx-core/build/wasm/${{ matrix.build_type }}/sqlynx.wasm
                   retention-days: 1
 
@@ -209,11 +209,38 @@ jobs:
                   path: ./packages/sqlynx-platform/dist
                   retention-days: 1
 
+    hyper_service_proto:
+        name: Build Proto / Hyper Service
+        runs-on: ubuntu-22.04
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  submodules: 'recursive'
+                  fetch-depth: 0
+
+            - name: Install npm dependencies
+              shell: bash
+              run: |
+                  yarn install --frozen-lockfile
+
+            - name: Generate Protobuf files
+              shell: bash
+              run: |
+                  ./node_modules/.bin/buf generate 
+                  yarn workspace @ankoh/hyper-service build
+
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: hyper_service_proto
+                  path: ./packages/hyper-service/dist
+                  retention-days: 1
+
     core_js:
         name: Build Library / Javascript
         runs-on: ubuntu-22.04
         needs:
             - core_wasm
+            - hyper_service_proto
         steps:
             - uses: actions/checkout@v4
               with:
@@ -222,7 +249,7 @@ jobs:
 
             - uses: actions/download-artifact@v4
               with:
-                  name: sqlynx_parser_wasm_o3
+                  name: sqlynx_core_wasm_o3
                   path: ./packages/sqlynx-core/build/wasm/o3/
 
             - name: Setup flatc
@@ -235,14 +262,7 @@ jobs:
             - name: Install npm dependencies
               shell: bash
               run: |
-                  mkdir -p ./lib/build/wasm/o3 ./reports
                   yarn install --frozen-lockfile
-
-            - name: Generate Protobuf files
-              shell: bash
-              run: |
-                  ./node_modules/.bin/buf generate 
-                  yarn workspace @ankoh/hyper-service build
 
             - name: Build @ankoh/sqlynx-core
               shell: bash
@@ -256,7 +276,7 @@ jobs:
 
             - uses: actions/upload-artifact@v4
               with:
-                  name: sqlynx_jslib
+                  name: sqlynx_core
                   path: ./packages/sqlynx-core-api/dist
                   retention-days: 1
 
@@ -279,20 +299,18 @@ jobs:
 
             - uses: actions/download-artifact@v4
               with:
-                  name: sqlynx_jslib
+                  name: hyper_service_proto
+                  path: ./packages/hyper-service/dist
+
+            - uses: actions/download-artifact@v4
+              with:
+                  name: sqlynx_core
                   path: ./packages/sqlynx-core-api/dist
 
             - name: Install npm dependencies
               shell: bash
               run: |
-                  mkdir -p ./lib/build/wasm/o3 ./reports
                   yarn install --frozen-lockfile
-
-            - name: Generate Protobuf files
-              shell: bash
-              run: |
-                  ./node_modules/.bin/buf generate 
-                  yarn workspace @ankoh/hyper-service build
 
             - name: Build @ankoh/sqlynx-app
               shell: bash
@@ -325,6 +343,7 @@ jobs:
                       target: x86_64-apple-darwin
                       artifact: darwin_x64
         needs:
+            - core_js
             - pwa
             - platform
         steps:
@@ -332,6 +351,16 @@ jobs:
               with:
                   submodules: 'recursive'
                   fetch-depth: 0
+
+            - uses: actions/download-artifact@v4
+              with:
+                  name: hyper_service_proto
+                  path: ./packages/hyper-service/dist
+
+            - uses: actions/download-artifact@v4
+              with:
+                  name: sqlynx_core
+                  path: ./packages/sqlynx-core-api/dist
 
             - uses: actions/download-artifact@v4
               with:
@@ -354,13 +383,13 @@ jobs:
               run: |
                   yarn install --frozen-lockfile
 
-            - name: Build @ankoh/sqlynx-app
+            - name: Build electron app
               shell: bash
               run: |
                   export SQLYNX_APP_URL=https://sqlynx.app
                   yarn workspace @ankoh/sqlynx-app electron:build:release
 
-            - name: Package @ankoh/sqlynx-app for snap store
+            - name: Package app for snap store
               if: matrix.system.target == 'ubuntu-22.04'
               shell: bash
               run: |
