@@ -135,36 +135,29 @@ core_js_tests:
 core_js_tests_debug:
 	yarn workspace @ankoh/sqlynx test:debug
 
-.PHONY: pwa_o3
-pwa_o3:
-	yarn workspace @ankoh/sqlynx-app pwa:build:o3
+.PHONY: pwa_build_release
+pwa_build_release:
+	yarn workspace @ankoh/sqlynx-app pwa:build:release
 
-.PHONY: pwa_start
-pwa_start:
-	yarn workspace @ankoh/sqlynx-app pwa:start
-
-.PHONY: electron_o0
-electron_o0:
-	yarn workspace @ankoh/sqlynx-app electron:build:o0
-
-.PHONY: electron_start
-electron_start:
-	yarn workspace @ankoh/sqlynx-app electron:open:o0
-	
-.PHONY: electron_o3
-electron_o3:
-	yarn workspace @ankoh/sqlynx-app electron:build:o3
+.PHONY: pwa_dev
+pwa_dev:
+	yarn workspace @ankoh/sqlynx-app pwa:serve:dev
 	
 .PHONY: svg_symbols
 svg_symbols:
 	python3 ./scripts/generate_svg_symbols.py
 
-.PHONY: platform_build_o0
-platform_build_o0:
+.PHONY: electron_dev
+electron_dev:
+	yarn workspace @ankoh/sqlynx-app electron:build:dev
+	yarn workspace @ankoh/sqlynx-app electron:open:dev
+
+.PHONY: platform_o0
+platform_o0:
 	yarn workspace @ankoh/sqlynx-platform build:o0
 
-.PHONY: platform_build_o3
-platform_build_o3:
+.PHONY: platform_o3
+platform_o3:
 	yarn workspace @ankoh/sqlynx-platform build:o3
 
 .PHONY: platform_test

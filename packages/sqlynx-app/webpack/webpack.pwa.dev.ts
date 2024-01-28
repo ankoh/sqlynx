@@ -6,7 +6,7 @@ const base = configure({
     entry: {
         app: ['./src/app.tsx'],
     },
-    buildDir: path.resolve(__dirname, '../build/pwa/o0'),
+    buildDir: path.resolve(__dirname, '../build/pwa/dev'),
     tsLoaderOptions: {
         configFile: 'tsconfig.pwa.json',
         compilerOptions: {
@@ -33,7 +33,7 @@ const config: Configuration = {
         compress: true,
         port: 9002,
         static: {
-            directory: path.join(__dirname, './build/pwa/o0/static'),
+            directory: path.join(__dirname, './build/pwa/dev/static'),
         },
         headers: {
             'Access-Control-Allow-Origin': '*',
