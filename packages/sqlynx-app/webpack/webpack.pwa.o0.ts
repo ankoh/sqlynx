@@ -6,7 +6,7 @@ const base = configure({
     entry: {
         app: ['./src/app.tsx'],
     },
-    buildDir: path.resolve(__dirname, './build/pwa/o0'),
+    buildDir: path.resolve(__dirname, '../build/pwa/o0'),
     tsLoaderOptions: {
         configFile: 'tsconfig.pwa.json',
         compilerOptions: {
