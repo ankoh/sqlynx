@@ -302,7 +302,7 @@ jobs:
 
             - uses: actions/upload-artifact@v4
               with:
-                  name: sqlynx_app
+                  name: sqlynx_pwa
                   path: ./packages/sqlynx-app/build/pwa/release
                   retention-days: 1
 
@@ -325,7 +325,7 @@ jobs:
                       target: x86_64-apple-darwin
                       artifact: darwin_x64
         needs:
-            - core_js
+            - pwa
             - platform
         steps:
             - uses: actions/checkout@v4
@@ -335,8 +335,8 @@ jobs:
 
             - uses: actions/download-artifact@v4
               with:
-                  name: sqlynx_jslib
-                  path: ./packages/sqlynx-core-api/dist
+                  name: sqlynx_pwa
+                  path: ./packages/sqlynx-app/build/pwa/release
 
             - uses: actions/download-artifact@v4
               with:
@@ -352,7 +352,6 @@ jobs:
             - name: Install npm dependencies
               shell: bash
               run: |
-                  mkdir -p ./lib/build/wasm/o3 ./reports
                   yarn install --frozen-lockfile
 
             - name: Build @ankoh/sqlynx-app
