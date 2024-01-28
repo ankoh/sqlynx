@@ -308,7 +308,6 @@ jobs:
               shell: bash
               run: |
                   sudo snap install snapcraft --classic
-                  sudo snap install multipass
 
             - uses: actions/checkout@v4
               with:
@@ -336,6 +335,7 @@ jobs:
               shell: bash
               run: |
                   export SQLYNX_APP_URL=https://sqlynx.app
+                  export SNAP_DESTRUCTIVE_MODE="true"
                   yarn workspace @ankoh/sqlynx-app electron:make
 
     pages:
