@@ -9,6 +9,7 @@ files:
     - ./build/electron/release/*
 
 mac:
+    category: public.app-category.utilities
     target:
         - target: dmg
 
@@ -16,11 +17,20 @@ linux:
     target: snap
     executableName: sqlynx
     artifactName: ${productName}-${version}.${ext}
+    desktop:
+        StartupNotify: "false",
+        Encoding: "UTF-8",
+        MimeType: "x-scheme-handler/sqlynx"
 
 snap:
     base: core22
     grade: devel
     title: SQLynx
+
+protocols:
+    name: 'SQLynx App Link'
+    schemes:
+        - sqlynx
 
 extraMetadata:
     main: ./build/electron/release/main.cjs

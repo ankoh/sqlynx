@@ -1,46 +1,85 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, dialog } from 'electron';
 import os from 'os';
 import path from 'path';
 
-// Determine context
-const BASE_DIR = path.dirname(process.argv[1]);
-const PRELOAD_SCRIPT = path.resolve(BASE_DIR, './preload/preload.cjs');
-const PLATFORM = os.platform();
+// Handle the most common Window commands, such as managing desktop shortcuts
+if (require('electron-squirrel-startup')) {
+    app.quit();
+}
+
+// Collect context
+const baseDir = path.dirname(process.argv[1]);
+const preloadScriptPath = path.resolve(baseDir, './preload/preload.cjs');
+const platform = os.platform();
 
 // Poor-mans argument parsing, we only need to detect the debug flag
-const ARGV = process.argv.slice(2);
+const argv = process.argv.slice(2);
 let isDebug = false;
-for (const arg of ARGV) {
+for (const arg of argv) {
     if (arg === 'debug') {
         isDebug = true;
     }
 }
 
-// Handle creating/removing shortcuts on Windows when installing/uninstalling.
-if (require('electron-squirrel-startup')) {
+// Register as default protocol client
+if (process.defaultApp && !isDebug) {
+    if (process.argv.length >= 2) {
+        app.setAsDefaultProtocolClient('sqlynx', process.execPath, [path.resolve(process.argv[1])]);
+    }
+} else {
+    app.setAsDefaultProtocolClient('sqlynx');
+}
+
+// Don't open the app multiple times
+let mainWindow: BrowserWindow | null = null;
+
+// Instance lock for Windows and Linux
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
     app.quit();
+} else {
+    app.on('second-instance', (_event, commandLine, _workingDirectory) => {
+        // Someone tried to run a second instance, we should focus our window.
+        if (mainWindow) {
+            if (mainWindow.isMinimized()) mainWindow.restore();
+            mainWindow.focus();
+        }
+        // The commandLine is array of strings in which last element is deep link url
+        dialog.showErrorBox('Welcome Back', `You arrived from: ${commandLine.pop()}`);
+    });
+
+    // Create mainWindow
+    app.whenReady().then(() => {
+        createWindow();
+    });
+
+    // Handle the protocol
+    app.on('open-url', (event, url) => {
+        const appUrl = new URL(url);
+        dialog.showErrorBox('Welcome Back', `You arrived from: ${appUrl.host} ${appUrl.search}`);
+    });
 }
 
 const createWindow = (): void => {
-    // Create the browser window.
-    const mainWindow = new BrowserWindow({
+    // Create the browser window
+    mainWindow = new BrowserWindow({
         width: 1024,
         height: 768,
         titleBarStyle: 'hidden',
         webPreferences: {
-            preload: PRELOAD_SCRIPT,
-            additionalArguments: [`--platform=${PLATFORM}`],
+            preload: preloadScriptPath,
+            additionalArguments: [`--platform=${platform}`],
         },
         show: false,
     });
-    // and load the index.html of the app.
+    // Load the index.html of the app
     if (isDebug) {
         mainWindow.loadURL('http://localhost:9002');
     } else {
         mainWindow.loadFile('./app/index.html');
     }
     mainWindow.once('ready-to-show', () => {
-        mainWindow.show();
+        mainWindow!.show();
     });
 };
 
@@ -65,6 +104,3 @@ app.on('activate', () => {
         createWindow();
     }
 });
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and import them here.
