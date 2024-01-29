@@ -12,11 +12,11 @@ ${FLATC} --version \
     && { echo "[ OK  ] Command: flatc"; } \
     || { echo "[ ERR ] Command: flatc"; exit 1; }
 
-SPEC_DIR="${PROJECT_ROOT}/proto/"
+SPEC_DIR="${PROJECT_ROOT}/proto/fb/"
 SPEC_INDEX="${SPEC_DIR}/sqlynx/proto.fbs"
 
-OUT_DIR_CPP="${PROJECT_ROOT}/packages/sqlynx/include/sqlynx/proto"
-OUT_DIR_TS="${PROJECT_ROOT}/packages/sqlynx-wasm/gen"
+OUT_DIR_CPP="${PROJECT_ROOT}/packages/sqlynx-core/include/sqlynx/proto"
+OUT_DIR_TS="${PROJECT_ROOT}/packages/sqlynx-core-api/gen"
 
 rm -rf ${OUT_DIR_CPP}/*
 rm -rf ${OUT_DIR_TS}/*

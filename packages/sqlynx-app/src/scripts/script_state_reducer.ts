@@ -1,5 +1,5 @@
 import * as arrow from 'apache-arrow';
-import * as sqlynx from '@ankoh/sqlynx';
+import * as sqlynx from '@ankoh/sqlynx-core';
 import * as React from 'react';
 
 import Immutable from 'immutable';

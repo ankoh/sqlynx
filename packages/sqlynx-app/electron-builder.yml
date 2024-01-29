@@ -1,0 +1,26 @@
+appId: sqlynx.app
+productName: SQLynx
+
+directories:
+    output: ./build/electron/packages
+
+files:
+    - '!**/*'
+    - ./build/electron/release/*
+
+mac:
+    target:
+        - target: dmg
+
+linux:
+    target: snap
+    executableName: sqlynx
+    artifactName: ${productName}-${version}.${ext}
+
+snap:
+    base: core22
+    grade: devel
+    title: SQLynx
+
+extraMetadata:
+    main: ./build/electron/release/main.cjs

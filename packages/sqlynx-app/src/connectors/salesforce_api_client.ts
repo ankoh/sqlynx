@@ -1,4 +1,4 @@
-import * as sqlynx from '@ankoh/sqlynx';
+import * as sqlynx from '@ankoh/sqlynx-core';
 
 import { QueryExecutionResponseStream } from './query_execution';
 import { SalesforceAuthConfig, SalesforceAuthParams } from './salesforce_auth_state';

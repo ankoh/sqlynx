@@ -8,8 +8,8 @@
         "@bufbuild/protobuf": "^1.6.0"
     },
     "devDependencies": {
-        "@types/node": "^20.11.7",
-        "esbuild": "^0.19.12",
+        "@types/node": "^20.11.10",
+        "esbuild": "^0.20.0",
         "typescript": "^5.3.3"
     },
     "scripts": {

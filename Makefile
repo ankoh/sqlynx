@@ -8,7 +8,7 @@ ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 UID=${shell id -u}
 GID=${shell id -g}
 
-LIB_SOURCE_DIR="${ROOT_DIR}/packages/sqlynx"
+LIB_SOURCE_DIR="${ROOT_DIR}/packages/sqlynx-core"
 LIB_DEBUG_DIR="${LIB_SOURCE_DIR}/build/native/o0"
 LIB_RELWITHDEBINFO_DIR="${LIB_SOURCE_DIR}/build/native/o2"
 LIB_RELEASE_DIR="${LIB_SOURCE_DIR}/build/native/o3"
@@ -117,50 +117,51 @@ core_wasm_o3:
 
 .PHONY: core_js_o0
 core_js_o0:
-	yarn workspace @ankoh/sqlynx build:o0
+	yarn workspace @ankoh/sqlynx-core build:o0
 
 .PHONY: core_js_o2
 core_js_o2:
-	yarn workspace @ankoh/sqlynx build:o2
+	yarn workspace @ankoh/sqlynx-core build:o2
 
 .PHONY: core_js_o3
 core_js_o3:
-	yarn workspace @ankoh/sqlynx build:o3
+	yarn workspace @ankoh/sqlynx-core build:o3
 
 .PHONY: core_js_tests
 core_js_tests:
-	yarn workspace @ankoh/sqlynx test
+	yarn workspace @ankoh/sqlynx-core test
 
 .PHONY: core_js_debug
 core_js_tests_debug:
-	yarn workspace @ankoh/sqlynx test:debug
+	yarn workspace @ankoh/sqlynx-core test:debug
 
-.PHONY: pwa_o3
-pwa_o3:
-	yarn workspace @ankoh/sqlynx-app pwa:build:o3
+.PHONY: pwa_build_release
+pwa_build_release:
+	yarn workspace @ankoh/sqlynx-app pwa:build:release
 
-.PHONY: pwa_start
-pwa_start:
-	yarn workspace @ankoh/sqlynx-app pwa:start
-
-.PHONY: electron_start
-electron_start:
-	yarn workspace @ankoh/sqlynx-app electron:start
-
-.PHONY: electron_make
-electron_make:
-	yarn workspace @ankoh/sqlynx-app electron:make
+.PHONY: pwa_dev
+pwa_dev:
+	yarn workspace @ankoh/sqlynx-app pwa:serve:dev
 	
 .PHONY: svg_symbols
 svg_symbols:
 	python3 ./scripts/generate_svg_symbols.py
 
-.PHONY: platform_build_o0
-platform_build_o0:
+.PHONY: electron_dev
+electron_dev:
+	yarn workspace @ankoh/sqlynx-app electron:build:dev
+	yarn workspace @ankoh/sqlynx-app electron:open:dev
+	
+.PHONY: electron_release
+electron_release:
+	yarn workspace @ankoh/sqlynx-app electron:build:release
+
+.PHONY: platform_o0
+platform_o0:
 	yarn workspace @ankoh/sqlynx-platform build:o0
 
-.PHONY: platform_build_o3
-platform_build_o3:
+.PHONY: platform_o3
+platform_o3:
 	yarn workspace @ankoh/sqlynx-platform build:o3
 
 .PHONY: platform_test

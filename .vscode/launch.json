@@ -8,7 +8,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "All Tests",
-            "program": "${workspaceFolder}/packages/sqlynx/build/native/o0/tester",
+            "program": "${workspaceFolder}/packages/sqlynx-core/build/native/o0/tester",
             "args": ["--source_dir=${workspaceFolder}"],
             "cwd": "${workspaceFolder}"
         },
@@ -16,7 +16,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Analyzer Tests",
-            "program": "${workspaceFolder}/packages/sqlynx/build/native/o0/tester",
+            "program": "${workspaceFolder}/packages/sqlynx-core/build/native/o0/tester",
             "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*AnalyzerSnap*tpch_22"],
             "cwd": "${workspaceFolder}"
         },
@@ -24,7 +24,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Cursor Tests",
-            "program": "${workspaceFolder}/packages/sqlynx/build/native/o0/tester",
+            "program": "${workspaceFolder}/packages/sqlynx-core/build/native/o0/tester",
             "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*ScannerTest*:*ParserTest*:*CursorTest*"],
             "cwd": "${workspaceFolder}"
         },
@@ -32,7 +32,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Parser Tests",
-            "program": "${workspaceFolder}/packages/sqlynx/build/native/o0/tester",
+            "program": "${workspaceFolder}/packages/sqlynx-core/build/native/o0/tester",
             "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*Parser*"],
             "cwd": "${workspaceFolder}"
         },
@@ -40,7 +40,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Scanner Tests",
-            "program": "${workspaceFolder}/packages/sqlynx/build/native/o0/tester",
+            "program": "${workspaceFolder}/packages/sqlynx-core/build/native/o0/tester",
             "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*Scanner*"],
             "cwd": "${workspaceFolder}"
         },
@@ -48,7 +48,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Completion Tests",
-            "program": "${workspaceFolder}/packages/sqlynx/build/native/o0/tester",
+            "program": "${workspaceFolder}/packages/sqlynx-core/build/native/o0/tester",
             "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*Completion*"],
             "cwd": "${workspaceFolder}"
         },
@@ -56,7 +56,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Rope Tests",
-            "program": "${workspaceFolder}/packages/sqlynx/build/native/o0/tester",
+            "program": "${workspaceFolder}/packages/sqlynx-core/build/native/o0/tester",
             "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*Rope*"],
             "cwd": "${workspaceFolder}"
         },
@@ -64,7 +64,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Suffix Trie Tests",
-            "program": "${workspaceFolder}/packages/sqlynx/build/native/o0/tester",
+            "program": "${workspaceFolder}/packages/sqlynx-core/build/native/o0/tester",
             "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*Suffix*"],
             "cwd": "${workspaceFolder}"
         },
@@ -72,7 +72,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Grid Tests",
-            "program": "${workspaceFolder}/packages/sqlynx/build/native/o0/tester",
+            "program": "${workspaceFolder}/packages/sqlynx-core/build/native/o0/tester",
             "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*SchemaGridTest*"],
             "cwd": "${workspaceFolder}"
         },
@@ -80,7 +80,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Graph Tests",
-            "program": "${workspaceFolder}/packages/sqlynx/build/native/o0/tester",
+            "program": "${workspaceFolder}/packages/sqlynx-core/build/native/o0/tester",
             "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*SchemaGraphTest*"],
             "cwd": "${workspaceFolder}"
         },
@@ -88,7 +88,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Graph Tests O2",
-            "program": "${workspaceFolder}/packages/sqlynx/build/native/o2/tester",
+            "program": "${workspaceFolder}/packages/sqlynx-core/build/native/o2/tester",
             "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*SchemaGraphTest*"],
             "cwd": "${workspaceFolder}"
         },
@@ -96,7 +96,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Script Tests",
-            "program": "${workspaceFolder}/packages/sqlynx/build/native/o0/tester",
+            "program": "${workspaceFolder}/packages/sqlynx-core/build/native/o0/tester",
             "args": ["--source_dir=${workspaceFolder}", "--gtest_filter=*ScriptTest*"],
             "cwd": "${workspaceFolder}"
         },
@@ -104,7 +104,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Snapshots",
-            "program": "${workspaceFolder}/packages/sqlynx/build/native/o0/snapshotter",
+            "program": "${workspaceFolder}/packages/sqlynx-core/build/native/o0/snapshotter",
             "args": ["--source_dir=${workspaceFolder}"],
             "cwd": "${workspaceFolder}"
         },
@@ -112,7 +112,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Benchmarks",
-            "program": "${workspaceFolder}/packages/sqlynx/build/native/o0/benchmark_pipeline",
+            "program": "${workspaceFolder}/packages/sqlynx-core/build/native/o0/benchmark_pipeline",
             "args": [],
             "cwd": "${workspaceFolder}"
         }

@@ -1,4 +1,4 @@
-import * as sqlynx from '@ankoh/sqlynx';
+import * as sqlynx from '@ankoh/sqlynx-core';
 import Immutable from 'immutable';
 
 import { ConnectorInfo } from '../connectors/connector_info';

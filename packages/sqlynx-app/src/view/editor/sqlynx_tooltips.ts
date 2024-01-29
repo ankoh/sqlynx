@@ -1,4 +1,4 @@
-import * as sqlynx from '@ankoh/sqlynx';
+import * as sqlynx from '@ankoh/sqlynx-core';
 
 import { Tooltip, showTooltip, hoverTooltip, EditorView } from '@codemirror/view';
 import { Transaction, StateField, EditorState } from '@codemirror/state';

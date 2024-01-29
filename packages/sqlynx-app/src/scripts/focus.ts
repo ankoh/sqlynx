@@ -1,4 +1,4 @@
-import * as sqlynx from '@ankoh/sqlynx';
+import * as sqlynx from '@ankoh/sqlynx-core';
 import { ScriptState, ScriptData, ScriptKey } from './script_state';
 import { GraphConnectionId, GraphNodeDescriptor, GraphViewModel } from '../view/schema/graph_view_model';
 

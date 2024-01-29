@@ -15,7 +15,7 @@
         "jsx": "react",
         "types": ["node", "electron"],
         "plugins": [{ "name": "typescript-plugin-css-modules" }],
-        "lib": ["es6", "es2020", "dom"]
+        "lib": ["es6", "es2020", "dom"],
     },
     "exclude": ["node_modules"],
     "include": [
@@ -23,11 +23,12 @@
         "src/**/*",
         "test/**/*.ts",
         "types/*.d.ts",
-        "webpack/webpack.common.ts",
-        "webpack/webpack.electron.main.ts",
-        "webpack/webpack.electron.preload.ts",
-        "webpack/webpack.electron.renderer.ts",
-        "webpack/webpack.pwa.o0.ts",
-        "webpack/webpack.pwa.o3.ts"
-    ]
+        "webpack/webpack.electron.common.main.ts",
+        "webpack/webpack.electron.common.preload.ts",
+        "webpack/webpack.electron.dev.ts",
+        "webpack/webpack.electron.release.ts",
+        "webpack/webpack.pwa.common.ts",
+        "webpack/webpack.pwa.dev.ts",
+        "webpack/webpack.pwa.release.ts",
+    ],
 }

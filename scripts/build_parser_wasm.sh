@@ -20,7 +20,7 @@ case $MODE in
 esac
 ADDITIONAL_FLAGS="-DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
 
-CPP_SOURCE_DIR="${PROJECT_ROOT}/packages/sqlynx"
+CPP_SOURCE_DIR="${PROJECT_ROOT}/packages/sqlynx-core"
 CPP_BUILD_DIR="${CPP_SOURCE_DIR}/build/wasm/${MODE}"
 
 INFRA_DIR="${PROJECT_ROOT}/.infra"
