@@ -88,6 +88,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
         if (
             !connectorConfig ||
             !state.authParams ||
+            !state.authParams.instanceUrl ||
             !state.authRequested ||
             state.authStarted ||
             state.authError ||
