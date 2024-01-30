@@ -1,8 +1,8 @@
 .container {
     display: flex;
     justify-content: center;
-    background-color: var(--nav_bar_bg);
     height: 100%;
+    background: var(--background);
 }
 
 .center_container {

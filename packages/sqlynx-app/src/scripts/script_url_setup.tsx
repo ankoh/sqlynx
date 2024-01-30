@@ -188,7 +188,7 @@ const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
             <div className={styles.banner_container}>
                 <div className={styles.banner_logo}>
                     <svg width="100%" height="100%">
-                        <use xlinkHref={`${symbols}#sqlynx`} />
+                        <use xlinkHref={`${symbols}#sqlynx-inverted`} />
                     </svg>
                 </div>
                 <div className={styles.banner_title}>sqlynx</div>

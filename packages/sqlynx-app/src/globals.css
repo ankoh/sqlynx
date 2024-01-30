@@ -78,6 +78,18 @@
     --skeleton_animation_direction: normal;
 
     --salesforce_logo_bg: rgb(0, 161, 224);
+
+    --background_color_80: hsl(208.5deg, 24.69%, 31.76%);
+    --background_color_100: hsl(208.5deg, 24.69%, 23.76%);
+    --background: radial-gradient(circle at 50% 50%, var(--background_color_80) 20%, transparent 80%),
+        conic-gradient(
+            from 45deg at 50% 50%,
+            var(--background_color_100) 0%,
+            var(--background_color_80) 25%,
+            var(--background_color_100) 50%,
+            var(--background_color_80) 75%,
+            var(--background_color_100) 100%
+        );
 }
 
 :root {
