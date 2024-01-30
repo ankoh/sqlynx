@@ -1,7 +1,7 @@
 :root {
     --action_item_hover_bg: rgba(208, 215, 222, 0.32);
     --action_item_hover_border: rgba(0, 0, 0, 0);
-    --background_color_primary: rgb(253, 253, 253);
+    --background_color_primary: hsl(208.5deg 24.69% 31.76%);
     --border_color_primary: rgb(208, 215, 222);
     --border_radius: 8px;
     --color_icon: hsl(212, 8%, 23%);
