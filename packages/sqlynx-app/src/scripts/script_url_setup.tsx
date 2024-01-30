@@ -191,25 +191,14 @@ const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
                         <use xlinkHref={`${symbols}#sqlynx-inverted`} />
                     </svg>
                 </div>
-                <div className={styles.banner_title}>sqlynx</div>
+                <div className={styles.banner_text_container}>
+                    <div className={styles.banner_title}>sqlynx</div>
+                    <div className={styles.app_version}>v{moduleVersion ?? '-'}</div>
+                </div>
             </div>
             <div className={styles.card_container}>
                 <div className={styles.card_header}>
                     <div className={styles.card_title}>Setup</div>
-                </div>
-                <div className={styles.card_section}>
-                    <div className={styles.card_section_header}>WebAssembly</div>
-                    <div className={styles.detail_entries}>
-                        <DetailEntry label="Uncompressed Size">
-                            <Bean text={formatBytes(Number(moduleSizeLoaded))} />
-                        </DetailEntry>
-                        <DetailEntry label="Instantiation Time">
-                            <Bean text={formatNanoseconds(moduleInitTime * 1000000)} />
-                        </DetailEntry>
-                        <DetailEntry label="Module Version">
-                            <Bean text={moduleVersion ?? 'unknown'} />
-                        </DetailEntry>
-                    </div>
                 </div>
                 <div className={styles.card_section}>
                     <div className={styles.card_section_header}>SQL</div>

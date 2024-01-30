@@ -9,27 +9,37 @@
     }
 
     .banner_container {
-        margin-top: -86px;
         display: grid;
-        grid-template-columns: auto auto;
+        grid-template-columns: max-content max-content;
         grid-template-rows: max-content;
-        align-items: center;
-        justify-content: center;
         column-gap: 16px;
         margin-bottom: 20px;
+        align-items: center;
+    }
+    .banner_text_container {
+        display: grid;
+        grid-template-rows: max-content max-content;
+        grid-template-columns: max-content;
+        row-gap: 2px;
     }
     .banner_logo {
         display: grid;
         align-items: center;
         justify-content: center;
-        width: 64px;
-        height: 64px;
+
+        width: 56px;
+        height: 56px;
         color: white;
     }
     .banner_title {
-        font-size: 1.8rem;
+        font-size: 1.6rem;
         font-family: 'Roboto Mono';
-        font-weight: 200;
+        font-weight: 400;
+        color: white;
+    }
+    .app_version {
+        font-size: 0.8rem;
+        opacity: 0.7;
         color: white;
     }
 }
@@ -51,21 +61,32 @@
         row-gap: 8px;
         align-items: center;
         justify-content: center;
-        margin-right: 80px;
+        margin-right: 64px;
+    }
+    .banner_text_container {
+        display: grid;
+        grid-template-rows: max-content max-content;
+        grid-template-columns: max-content;
+        row-gap: 2px;
     }
     .banner_logo {
         display: grid;
         align-items: center;
         justify-content: center;
         justify-self: center;
-        width: 96px;
-        height: 96px;
+        width: 80px;
+        height: 80px;
         color: white;
     }
     .banner_title {
-        font-size: 1.8rem;
+        font-size: 1.6rem;
         font-family: 'Roboto Mono';
-        font-weight: 200;
+        font-weight: 400;
+        color: white;
+    }
+    .app_version {
+        font-size: 0.8rem;
+        opacity: 0.7;
         color: white;
     }
 }
