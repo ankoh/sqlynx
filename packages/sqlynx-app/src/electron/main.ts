@@ -2,17 +2,12 @@ import { app, BrowserWindow, dialog } from 'electron';
 import os from 'os';
 import path from 'path';
 
-// Handle the most common Window commands, such as managing desktop shortcuts
+// Handle the most common Windows commands, such as managing desktop shortcuts
 if (require('electron-squirrel-startup')) {
     app.quit();
 }
 
-// Collect context
-const baseDir = path.dirname(process.argv[1]);
-const preloadScriptPath = path.resolve(baseDir, './preload/preload.cjs');
-const platform = os.platform();
-
-// Poor-mans argument parsing, we only need to detect the debug flag
+// Poor-mans argument parsing, we only need to detect the debug flag at the moment
 const argv = process.argv.slice(2);
 let isDebug = false;
 for (const arg of argv) {
@@ -30,36 +25,12 @@ if (process.defaultApp && !isDebug) {
     app.setAsDefaultProtocolClient('sqlynx');
 }
 
-// Don't open the app multiple times
+const baseDir = path.dirname(process.argv[1]);
+const preloadScriptPath = path.resolve(baseDir, './preload/preload.cjs');
+const platform = os.platform();
 let mainWindow: BrowserWindow | null = null;
 
-// Instance lock for Windows and Linux
-const gotTheLock = app.requestSingleInstanceLock();
-if (!gotTheLock) {
-    app.quit();
-} else {
-    app.on('second-instance', (_event, commandLine, _workingDirectory) => {
-        // Someone tried to run a second instance, we should focus our window.
-        if (mainWindow) {
-            if (mainWindow.isMinimized()) mainWindow.restore();
-            mainWindow.focus();
-        }
-        // The commandLine is array of strings in which last element is deep link url
-        dialog.showErrorBox('Welcome Back', `You arrived from: ${commandLine.pop()}`);
-    });
-
-    // Create mainWindow
-    app.whenReady().then(() => {
-        createWindow();
-    });
-
-    // Handle the protocol
-    app.on('open-url', (event, url) => {
-        const appUrl = new URL(url);
-        dialog.showErrorBox('Welcome Back', `You arrived from: ${appUrl.host} ${appUrl.search}`);
-    });
-}
-
+// Helper to create the main window
 const createWindow = (): void => {
     // Create the browser window
     mainWindow = new BrowserWindow({
@@ -83,24 +54,39 @@ const createWindow = (): void => {
     });
 };
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
+// Make sure we're the main app instance
+const mainWindowLock = app.requestSingleInstanceLock();
+if (!mainWindowLock) {
+    app.quit();
+} else {
+    app.on('second-instance', (_event, commandLine, _workingDirectory) => {
+        // Someone tried to run a second instance, we should focus our window instead.
+        if (mainWindow) {
+            if (mainWindow.isMinimized()) mainWindow.restore();
+            mainWindow.focus();
+        }
+        // The commandLine is array of strings in which last element is deep link url
+        dialog.showErrorBox('Welcome Back', `You arrived from: ${commandLine.pop()}`);
+    });
+
+    // Create mainWindow
+    app.whenReady().then(() => {
+        createWindow();
+    });
+
+    // Handle the protocol
+    app.on('open-url', (event, url) => {
+        const appUrl = new URL(url);
+        dialog.showErrorBox('Welcome Back', `You arrived from: ${appUrl.host} ${appUrl.search}`);
+    });
+}
+
+// This method will be called when Electron has finished initialization and is ready to create browser windows.
 app.on('ready', createWindow);
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
+// Quit when all windows are closed.
+// On macOS, guides recommend to let the app run in the background and only "recreate" the window later.
+// We will not do that initially until we learn how this interferes with auto-updates.
 app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') {
-        app.quit();
-    }
-});
-
-app.on('activate', () => {
-    // On OS X it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) {
-        createWindow();
-    }
+    app.quit();
 });
