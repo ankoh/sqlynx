@@ -107,6 +107,8 @@ const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
         authOnce.current = true;
         switch (state?.connectorParams?.type) {
             case SALESFORCE_DATA_CLOUD:
+                // Only start the auth flow if we know we can support it.
+                // Right now, the Salesforce connector only works locally.
                 salesforceAuthFlow({
                     type: CONNECT,
                     value: {
@@ -168,7 +170,10 @@ const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
             break;
     }
 
-    const DetailEntry = (props: { label: string; children: React.ReactElement }) => (
+    const DetailEntry = (props: {
+        label: string;
+        children: (React.ReactElement | undefined)[] | React.ReactElement;
+    }) => (
         <>
             <div className={styles.detail_entry_key}>{props.label}</div>
             <div className={styles.detail_entry_value}>{props.children}</div>
@@ -209,6 +214,10 @@ const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
                     <div className={styles.detail_entries}>
                         <DetailEntry label="Connector Type">
                             <Bean text={connectorInfo?.displayName.long ?? 'unknown'} />
+                        </DetailEntry>
+                        <DetailEntry label="Supported Platforms">
+                            {connectorInfo?.platforms.native ? <Bean text="Native" /> : undefined}
+                            {connectorInfo?.platforms.browser ? <Bean text="Web" /> : undefined}
                         </DetailEntry>
                         {state?.connectorParams?.type == SALESFORCE_DATA_CLOUD && (
                             <>
