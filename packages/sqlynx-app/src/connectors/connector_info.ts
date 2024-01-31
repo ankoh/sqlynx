@@ -18,6 +18,15 @@ export interface ConnectorInfo {
     };
     /// The connector features
     features: ConnectorFeatures;
+    /// The connector platforms
+    platforms: ConnectorPlatforms;
+}
+
+export interface ConnectorPlatforms {
+    /// Supports the browser?
+    browser: boolean;
+    /// Supports the electron app?
+    native: boolean;
 }
 
 export interface ConnectorFeatures {
@@ -41,6 +50,10 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
             executeQueryAction: false,
             refreshSchemaAction: false,
         },
+        platforms: {
+            browser: true,
+            native: true,
+        },
     },
     {
         connectorType: ConnectorType.SALESFORCE_DATA_CLOUD,
@@ -53,6 +66,10 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
             executeQueryAction: true,
             refreshSchemaAction: true,
         },
+        platforms: {
+            browser: false,
+            native: true,
+        },
     },
     {
         connectorType: ConnectorType.HYPER_DATABASE,
@@ -64,6 +81,10 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
             schemaScript: false,
             executeQueryAction: true,
             refreshSchemaAction: true,
+        },
+        platforms: {
+            browser: true,
+            native: true,
         },
     },
 ];
