@@ -109,14 +109,14 @@ const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
             case SALESFORCE_DATA_CLOUD:
                 // Only start the auth flow if we know we can support it.
                 // Right now, the Salesforce connector only works locally.
-                salesforceAuthFlow({
-                    type: CONNECT,
-                    value: {
-                        instanceUrl: state.connectorParams.value.instanceUrl ?? '', // XXX Warn if params make no sense
-                        appConsumerKey: state.connectorParams.value.appConsumerKey ?? '',
-                        appConsumerSecret: null,
-                    },
-                });
+                // salesforceAuthFlow({
+                //     type: CONNECT,
+                //     value: {
+                //         instanceUrl: state.connectorParams.value.instanceUrl ?? '', // XXX Warn if params make no sense
+                //         appConsumerKey: state.connectorParams.value.appConsumerKey ?? '',
+                //         appConsumerSecret: null,
+                //     },
+                // });
                 break;
             case HYPER_DATABASE:
                 break;
