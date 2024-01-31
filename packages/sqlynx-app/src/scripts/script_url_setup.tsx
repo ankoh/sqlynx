@@ -191,7 +191,7 @@ const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
                 </div>
                 <div className={styles.banner_text_container}>
                     <div className={styles.banner_title}>sqlynx</div>
-                    <div className={styles.app_version}>v{moduleVersion ?? '-'}</div>
+                    <div className={styles.app_version}>version {moduleVersion ?? '-'}</div>
                 </div>
             </div>
             <div className={styles.card_container}>
