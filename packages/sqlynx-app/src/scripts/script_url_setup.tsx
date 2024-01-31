@@ -43,7 +43,6 @@ interface State {
 
 const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
     const lnx = useSQLynx();
-    const lnxLoading = useSQLynxLoadingProgress();
     const salesforceAuth = useSalesforceAuthState();
     const salesforceAuthFlow = useSalesforceAuthFlow();
     const selectedScript = useSelectedScriptState();
@@ -51,12 +50,6 @@ const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
     const [state, setState] = React.useState<State | null>(null);
 
     // Get instantiation progress
-    let moduleSizeLoaded = BigInt(0);
-    let moduleInitTime = 0;
-    if (lnxLoading) {
-        moduleSizeLoaded = lnxLoading.bytesLoaded;
-        moduleInitTime = lnxLoading.updatedAt.getTime() - lnxLoading.startedAt.getTime();
-    }
     let moduleVersion: string | null = null;
     if (lnx?.type == RESULT_OK) {
         moduleVersion = lnx.value.getVersionText();
