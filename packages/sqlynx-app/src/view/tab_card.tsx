@@ -3,17 +3,21 @@ import cn from 'classnames';
 
 import styles from './tab_card.module.css';
 
-interface TabProps {}
-
 interface TabRenderers {
     [key: number]: (props: TabProps) => React.ReactElement;
 }
 
+interface TabProps {
+    tabId: number;
+    icon: string;
+    label: string;
+    enabled: boolean;
+}
+
 interface Props {
     className?: string;
-    tabs: [number, string, boolean][];
+    tabs: TabProps[];
     tabRenderers: TabRenderers;
-    tabProps: TabProps;
     selectedTab: number;
     selectTab: (tab: number) => void;
 }
@@ -26,23 +30,26 @@ export const TabCard: React.FC<Props> = (props: Props) => {
     return (
         <div className={cn(props.className, styles.container)}>
             <div className={styles.tabs}>
-                {props.tabs.map(([tabId, tabIcon, tabEnabled]: [number, string, boolean]) => (
+                {props.tabs.map((tabProps: TabProps) => (
                     <div
-                        key={tabId}
+                        key={tabProps.tabId}
                         className={cn(styles.tab, {
-                            [styles.tab_active]: tabId == props.selectedTab,
-                            [styles.tab_disabled]: !tabEnabled,
+                            [styles.tab_active]: tabProps.tabId == props.selectedTab,
+                            [styles.tab_disabled]: !tabProps.enabled,
                         })}
-                        data-tab={tabId}
-                        onClick={tabEnabled ? selectTab : undefined}
+                        data-tab={tabProps.tabId}
+                        onClick={tabProps.enabled ? selectTab : undefined}
                     >
-                        <svg width="20px" height="20px">
-                            <use xlinkHref={tabIcon} />
-                        </svg>
+                        <div className={styles.tab_icon}>
+                            <svg width="20px" height="20px">
+                                <use xlinkHref={tabProps.icon} />
+                            </svg>
+                        </div>
+                        <div className={styles.tab_label}>{tabProps.label}</div>
                     </div>
                 ))}
             </div>
-            <div className={styles.body}>{props.tabRenderers[props.selectedTab](props.tabProps)}</div>
+            <div className={styles.body}>{props.tabRenderers[props.selectedTab](props.tabs[props.selectedTab])}</div>
         </div>
     );
 };

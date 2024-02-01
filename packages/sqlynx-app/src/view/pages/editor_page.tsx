@@ -52,8 +52,8 @@ const ConnectorSelection = (props: { className?: string; variant: 'default' | 'i
     const connectorName = !scriptState?.connectorInfo
         ? 'Not set'
         : props.short
-        ? scriptState?.connectorInfo.displayName.short
-        : scriptState?.connectorInfo.displayName.long;
+          ? scriptState?.connectorInfo.displayName.short
+          : scriptState?.connectorInfo.displayName.long;
     //        <ActionMenu.Overlay width={props.short ? 'auto' : 'medium'} align="end">
     //            <ActionList>
     //                {connectorList.map((connector, i) => (
@@ -265,8 +265,8 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
         !scriptState?.connectorInfo
             ? 'Not set'
             : short
-            ? scriptState?.connectorInfo.displayName.short
-            : scriptState?.connectorInfo.displayName.long;
+              ? scriptState?.connectorInfo.displayName.short
+              : scriptState?.connectorInfo.displayName.long;
 
     return (
         <div className={styles.page}>
@@ -297,11 +297,20 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                     selectedTab={selectedTab}
                     selectTab={selectTab}
                     tabs={[
-                        [TabKey.SchemaView, `${icons}#tables_connected`, true],
-                        [TabKey.QueryProgressView, `${icons}#plan`, tabState.current.enabledTabs >= 2],
-                        [TabKey.QueryResultView, `${icons}#table`, tabState.current.enabledTabs >= 3],
+                        { tabId: TabKey.SchemaView, icon: `${icons}#tables_connected`, label: 'Model', enabled: true },
+                        {
+                            tabId: TabKey.QueryProgressView,
+                            icon: `${icons}#plan`,
+                            label: 'Status',
+                            enabled: tabState.current.enabledTabs >= 2,
+                        },
+                        {
+                            tabId: TabKey.QueryResultView,
+                            icon: `${icons}#table`,
+                            label: 'Data',
+                            enabled: tabState.current.enabledTabs >= 3,
+                        },
                     ]}
-                    tabProps={{}}
                     tabRenderers={{
                         [TabKey.SchemaView]: _props => <SchemaGraph />,
                         [TabKey.QueryProgressView]: _props => (
