@@ -19,9 +19,12 @@ const Tab = (props: { route: string; alt?: string; location: string; icon: strin
         })}
     >
         <LinkButton className={styles.tab_link} to={props.route} hover={HoverMode.Darken}>
-            <svg width="18px" height="18px">
-                <use xlinkHref={props.icon} />
-            </svg>
+            <>
+                <svg width="16px" height="16px">
+                    <use xlinkHref={props.icon} />
+                </svg>
+                <div>{props.label}</div>
+            </>
         </LinkButton>
     </div>
 );
@@ -37,12 +40,7 @@ export const NavBar = (): React.ReactElement => {
             <div className={styles.tabs}>
                 <Tab label="Editor" route="/" location={location.pathname} icon={`${symbols}#file_document_multiple`} />
                 {appConfig?.value?.features?.connections && (
-                    <Tab
-                        label="Connections"
-                        route="/connections"
-                        location={location.pathname}
-                        icon={`${symbols}#connection`}
-                    />
+                    <Tab label="Settings" route="/settings" location={location.pathname} icon={`${symbols}#settings`} />
                 )}
             </div>
             <SystemBar className={styles.sysbar} />
