@@ -318,6 +318,11 @@ jobs:
                   export SQLYNX_APP_URL=https://sqlynx.app
                   yarn workspace @ankoh/sqlynx-app pwa:build:release
 
+            - name: Test @ankoh/sqlynx-app
+              shell: bash
+              run: |
+                  yarn workspace @ankoh/sqlynx-app pwa:test
+
             - uses: actions/upload-artifact@v4
               with:
                   name: sqlynx_pwa
