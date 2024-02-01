@@ -15,33 +15,27 @@
 
     display: flex;
     flex-direction: column;
+    padding: 4px;
+    row-gap: 8px;
     height: 100%;
 }
 
 .tab {
     position: relative;
-    height: 40px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-top: 1px solid transparent;
-    border-bottom: 1px solid var(--border_color_primary);
+    border-radius: var(--border_radius);
     color: var(--button_fg);
 }
 .tab:hover {
-    background-color: var(--action_item_hover_bg);
+    background-color: var(--editortabs_background_active);
 }
 .tab_active {
     background-color: var(--editortabs_background_active) !important;
-}
-.tab_active::after {
-    position: absolute;
-    top: -1px;
-    bottom: 0;
-    right: 0;
-    content: '';
-    width: var(--editortabs_indicator_width);
-    background-color: var(--editortabs_indicator_color);
+    color: var(--editortabs_foreground_active) !important;
 }
 .tab_disabled {
     display: none !important;
