@@ -1,7 +1,7 @@
 import * as React from 'react';
 import cn from 'classnames';
 
-import styles from './tab_card.module.css';
+import styles from './vertical_tabs.module.css';
 
 interface TabRenderers {
     [key: number]: (props: TabProps) => React.ReactElement;
@@ -22,7 +22,7 @@ interface Props {
     selectTab: (tab: number) => void;
 }
 
-export const TabCard: React.FC<Props> = (props: Props) => {
+export const VerticalTabBar: React.FC<Props> = (props: Props) => {
     const selectTab = React.useCallback((elem: React.MouseEvent) => {
         const target = elem.currentTarget as HTMLDivElement;
         props.selectTab(Number.parseInt(target.dataset.tab ?? '0'));
