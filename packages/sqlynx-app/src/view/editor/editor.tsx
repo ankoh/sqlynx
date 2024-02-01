@@ -15,6 +15,7 @@ import { useSelectedScriptState, useSelectedScriptStateDispatch } from '../../sc
 import { UPDATE_SCRIPT_ANALYSIS, UPDATE_SCRIPT_CURSOR } from '../../scripts/script_state_reducer';
 import { ScriptKey } from '../../scripts/script_state';
 import { ScriptStatisticsBar } from './script_statistics_bar';
+import { VerticalTabs } from '../../view/vertical_tabs';
 
 import icons from '../../../static/svg/symbols.generated.svg';
 
@@ -182,12 +183,6 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         updateScript,
     ]);
 
-    // Helper to select a tab
-    const selectTab = (event: React.MouseEvent<HTMLDivElement>) => {
-        event.preventDefault();
-        const tab = (event.target as any).dataset.tab as TabId;
-        setActiveTab(+tab);
-    };
     // Helper to toggle the folder and stats
     const toggleOpenStats = () => setStatsOpen(s => !s);
     // Get the title of the tab
@@ -210,8 +205,8 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         </svg>
     );
 
-    return (
-        <div className={cn(props.className, styles.container)}>
+    const EditorPage = (
+        <div className={styles.editor_with_header}>
             <div className={styles.headerbar}>
                 <div className={styles.script_title_container}>
                     <div className={styles.script_title}>{tabTitle}</div>
@@ -227,18 +222,6 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                     {activeScriptStatistics && statsOpen && <ScriptStatisticsBar stats={activeScriptStatistics} />}
                 </div>
             </div>
-            <div className={styles.tabs}>
-                <Tab id={TabId.MAIN_SCRIPT} active={activeTab} icon={`${icons}#database_search`} onClick={selectTab} />
-                <Tab id={TabId.SCHEMA_SCRIPT} active={activeTab} icon={`${icons}#database`} onClick={selectTab} />
-                <div style={{ flex: 1 }} />
-                <Tab
-                    id={TabId.ACCOUNT}
-                    active={activeTab}
-                    icon={`${icons}#account_circle`}
-                    onClick={selectTab}
-                    disabled
-                />
-            </div>
             <div className={styles.editor_with_loader}>
                 <div className={styles.editor}>
                     <CodeMirror
@@ -250,5 +233,26 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                 </div>
             </div>
         </div>
+    );
+
+    return (
+        <VerticalTabs
+            className={cn(props.className, styles.container)}
+            selectedTab={activeTab}
+            selectTab={setActiveTab}
+            tabs={[
+                { tabId: TabId.MAIN_SCRIPT, icon: `${icons}#database_search`, label: 'Query', enabled: true },
+                {
+                    tabId: TabId.SCHEMA_SCRIPT,
+                    icon: `${icons}#database`,
+                    label: 'Model',
+                    enabled: true,
+                },
+            ]}
+            tabRenderers={{
+                [TabId.MAIN_SCRIPT]: () => EditorPage,
+                [TabId.SCHEMA_SCRIPT]: () => EditorPage,
+            }}
+        />
     );
 };

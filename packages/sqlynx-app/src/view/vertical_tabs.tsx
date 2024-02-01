@@ -22,7 +22,7 @@ interface Props {
     selectTab: (tab: number) => void;
 }
 
-export const VerticalTabBar: React.FC<Props> = (props: Props) => {
+export const VerticalTabs: React.FC<Props> = (props: Props) => {
     const selectTab = React.useCallback((elem: React.MouseEvent) => {
         const target = elem.currentTarget as HTMLDivElement;
         props.selectTab(Number.parseInt(target.dataset.tab ?? '0'));
