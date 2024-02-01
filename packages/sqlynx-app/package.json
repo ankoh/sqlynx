@@ -49,7 +49,7 @@
         "cm6-theme-nord": "^0.2.0",
         "copy-webpack-plugin": "^12.0.2",
         "css-loader": "^6.10.0",
-        "electron": "28.2.0",
+        "electron": "28.2.1",
         "electron-builder": "^24.9.1",
         "electron-squirrel-startup": "^1.0.0",
         "eslint": "^8.56.0",
