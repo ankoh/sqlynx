@@ -41,7 +41,7 @@ export const AppConfigResolver: React.FC<Props> = (props: Props) => {
         started.current = true;
         const resolve = async (): Promise<void> => {
             try {
-                const resp = await fetch(CONFIG_URL as string);
+                const resp = await fetch(CONFIG_URL as unknown as string);
                 const body = await resp.json();
                 const config = readAppConfig(body);
                 setConfig(c => c.completeWith(config));

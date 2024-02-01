@@ -13,11 +13,11 @@
                 "version": {
                     "branch": 0,
                     "major": 0,
-                    "minor": 17950,
-                    "revision": "r18f0868b"
+                    "minor": 18441,
+                    "revision": "r118d57bb"
                 },
                 "artifactBaseUrl": "https://downloads.tableau.com/tssoftware/",
-                "artifacts": {
+                "artifactPaths": {
                     "windows": {
                         "python": "tableauhyperapi-{{VERSION_SHORT}}-py3-none-win_amd64.whl",
                         "cxx":  "tableauhyperapi-cxx-windows-x86_64-release-main.{{VERSION_LONG}}.zip",
