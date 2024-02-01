@@ -8,6 +8,43 @@
         "grpcConnector": false
     },
     "connectors": {
+        "hyper": {
+            "hyperApi": {
+                "version": {
+                    "branch": 0,
+                    "major": 0,
+                    "minor": 17950,
+                    "revision": "r18f0868b",
+                },
+                "artifactBaseUrl": "https://downloads.tableau.com/tssoftware/",
+                "artifacts": {
+                    "windows": {
+                        "python": "tableauhyperapi-{{VERSION_SHORT}}-py3-none-win_amd64.whl",
+                        "cxx":  "tableauhyperapi-cxx-windows-x86_64-release-main.{{VERSION_LONG}}.zip",
+                        "java": "tableauhyperapi-java-windows-x86_64-release-main.{{VERSION_LONG}}.zip",
+                        "dotnet": "tableauhyperapi-dotnet-windows-x86_64-main.{{VERSION_LONG}}.zip",
+                    },
+                    "macos": {
+                        "python": "tableauhyperapi-{{VERSION_SHORT}}-py3-none-macosx_10_11_x86_64.whl",
+                        "cxx": "tableauhyperapi-cxx-macos-x86_64-release-main.{{VERSION_LONG}}.zip",
+                        "java": "tableauhyperapi-java-macos-x86_64-release-main.{{VERSION_LONG}}.zip",
+                        "dotnet": "tableauhyperapi-dotnet-macos-x86_64-main.{{VERSION_LONG}}.zip",
+                    },
+                    "linux": {
+                        "python": "tableauhyperapi-{{VERSION_SHORT}}-py3-none-manylinux2014_x86_64.whl",
+                        "cxx": "tableauhyperapi-cxx-linux-x86_64-release-main.{{VERSION_LONG}}.zip",
+                        "java": "tableauhyperapi-java-linux-x86_64-release-main.{{VERSION_LONG}}.zip",
+                        "dotnet": "tableauhyperapi-dotnet-linux-x86_64-main.{{VERSION_LONG}}.zip",
+                    },
+                    "docs": {
+                        "python": "tableauhyperapi-py-docs-main.{{VERSION_LONG}}.zip",
+                        "cxx": "tableauhyperapi-cxx-docs-main.{{VERSION_LONG}}.zip",
+                        "java":  "tableauhyperapi-java-docs-main.{{VERSION_LONG}}.zip",
+                        "dotnet": "tableauhyperapi-dotnet-docs-main.{{VERSION_LONG}}.zip",
+                    },
+                }
+            }
+        },
         "salesforce": {
             "auth": {
                 "oauthRedirect": "http://localhost:9002/static/html/oauth_callback.2.html"
