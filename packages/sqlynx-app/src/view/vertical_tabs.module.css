@@ -42,6 +42,7 @@
 .tab_label {
     font-size: 0.7rem;
     font-weight: 500;
+    color: var(--button_fg);
 }
 
 .tab:hover > .tab_icon {

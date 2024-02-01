@@ -24,7 +24,7 @@ import { SchemaGraph } from '../../view/schema/schema_graph';
 import { QueryProgress } from '../../view/progress/query_progress';
 import { DataTable } from '../../view/table/data_table';
 import { KeyEventHandler, useKeyEvents } from '../../utils/key_events';
-import { VerticalTabBar } from '../vertical_tabs';
+import { VerticalTabs } from '../vertical_tabs';
 import { ScriptFileSaveOverlay } from '../editor/script_filesave_overlay';
 import { ScriptURLOverlay } from '../editor/script_url_overlay';
 import { getConnectorIcon } from '../connector_icons';
@@ -292,12 +292,12 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                 </div>
             </div>
             <div className={styles.body_container}>
-                <VerticalTabBar
+                <VerticalTabs
                     className={styles.output_card}
                     selectedTab={selectedTab}
                     selectTab={selectTab}
                     tabs={[
-                        { tabId: TabKey.SchemaView, icon: `${icons}#tables_connected`, label: 'Model', enabled: true },
+                        { tabId: TabKey.SchemaView, icon: `${icons}#tables_connected`, label: 'Graph', enabled: true },
                         {
                             tabId: TabKey.QueryProgressView,
                             icon: `${icons}#plan`,
