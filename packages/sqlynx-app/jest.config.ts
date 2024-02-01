@@ -17,22 +17,18 @@ const CONFIG = {
     extensionsToTreatAsEsm: ['.ts', '.tsx'],
     // Transform files
     transform: {
-        '^.+\\.(j|t)sx?$': 'ts-jest',
+        '^.+\\.(j|t)sx?$': [
+            'ts-jest',
+            {
+                useESM: true,
+                tsconfig: '<rootDir>/tsconfig.json',
+                isolatedModules: true,
+            },
+        ],
     },
-    // Transform vega-lite since it uses ESM
-    transformIgnorePatterns: ['node_modules/(?!vega-lite)/'],
     // Test paths
-    testMatch: ['<rootDir>/src/**/*.spec.{js,jsx,ts,tsx}'],
+    testMatch: ['<rootDir>/src/**/*.test.{js,jsx,ts,tsx}'],
     // Tells Jest what folders to ignore for tests
     testPathIgnorePatterns: [`node_modules`, `\\.cache`],
-    // Additional settings
-    globals: {
-        'ts-jest': {
-            useESM: true,
-            tsconfig: '<rootDir>/tsconfig.json',
-            isolatedModules: true,
-        },
-    },
 };
-
 export default CONFIG;
