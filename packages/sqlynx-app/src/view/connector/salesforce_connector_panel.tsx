@@ -19,7 +19,7 @@ import SalesforceDummyAccount from '../../../static/img/salesforce_account_place
 import symbols from '../../../static/svg/symbols.generated.svg';
 
 import panelStyle from './salesforce_connector_panel.module.css';
-import pageStyle from '../pages/connections_page.module.css';
+import pageStyle from '../pages/settings_page.module.css';
 
 interface SalesforceAuthFlowProps {}
 

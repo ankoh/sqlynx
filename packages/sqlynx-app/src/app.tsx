@@ -3,7 +3,7 @@ import * as React from 'react';
 import { SQLynxLoader } from './sqlynx_loader';
 import { withNavBar } from './view/navbar';
 import { EditorPage } from './view/pages/editor_page';
-import { ConnectionsPage } from './view/pages/connections_page';
+import { SettingsPage } from './view/pages/settings_page';
 import { ScriptLoader } from './scripts/script_loader';
 import { ScriptCatalogLoader } from './scripts/script_catalog_loader';
 import { ScriptAutoloaderSalesforce } from './scripts/script_autoloader_salesforce';
@@ -59,7 +59,7 @@ const AppProviders = (props: { children: React.ReactElement }) => (
 );
 
 const Editor = withNavBar(EditorPage);
-const Connections = withNavBar(ConnectionsPage);
+const Settings = withNavBar(SettingsPage);
 
 const Router = isElectron() ? HashRouter : BrowserRouter;
 
@@ -71,7 +71,7 @@ root.render(
             <AppProviders>
                 <Routes>
                     <Route index element={<Editor />} />
-                    <Route path="/connections" element={<Connections />} />
+                    <Route path="/settings" element={<Settings />} />
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
             </AppProviders>

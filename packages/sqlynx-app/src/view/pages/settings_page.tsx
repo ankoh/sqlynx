@@ -1,13 +1,13 @@
 import * as React from 'react';
 
-import { SalesforceConnectorPanel } from '../../view/connector/salesforce_connector_panel';
+import { SalesforceConnectorPanel } from '../connector/salesforce_connector_panel';
 import { HyperGrpcConnectorPanel } from '../connector/hyper_grpc_connector_panel';
 
-import styles from './connections_page.module.css';
+import styles from './settings_page.module.css';
 
 interface PageProps {}
 
-export const ConnectionsPage: React.FC<PageProps> = (props: PageProps) => {
+export const SettingsPage: React.FC<PageProps> = (props: PageProps) => {
     return (
         <div className={styles.page}>
             <div className={styles.header_container}>

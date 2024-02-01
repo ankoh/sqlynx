@@ -6,7 +6,7 @@ import { useAppConfig } from '../../app_config';
 
 import symbols from '../../../static/svg/symbols.generated.svg';
 
-import pageStyle from '../pages/connections_page.module.css';
+import pageStyle from '../pages/settings_page.module.css';
 import panelStyle from './hyper_grpc_connector_panel.module.css';
 
 interface HyperGrpcConnectorPanelProps {}
