@@ -1,6 +1,6 @@
 import { SalesforceConnectorMockConfig } from '../connectors/salesforce_api_client_mock';
 import { SalesforceAuthConfig, SalesforceAuthParams } from '../connectors/salesforce_auth_state';
-import { HyperApiVersion, instantiateHyperApiReleaseInfo } from './hyperapi_release';
+import { HyperApiConfig, loadReleaseInfo } from './hyperapi_release';
 
 export interface SalesforceConnectorConfig {
     auth: SalesforceAuthConfig;
@@ -8,12 +8,7 @@ export interface SalesforceConnectorConfig {
     mock?: SalesforceConnectorMockConfig;
 }
 
-export interface HyperApiConfig {
-    version: HyperApiVersion;
-    downloadBaseUrl: string;
-}
-
-export interface HyperConnectorConfig {
+interface HyperConnectorConfig {
     hyperApi: HyperApiConfig;
 }
 
@@ -23,9 +18,15 @@ export interface ConnectorConfigs {
 }
 
 export function readConnectorConfigs(configs: any): ConnectorConfigs {
-    const hyperApi = configs.hyper.hyperApi;
-    if (hyperApi) {
-        instantiateHyperApiReleaseInfo(hyperApi);
+    const out: ConnectorConfigs = {};
+    if (configs.salesforce) {
+        out.salesforce = configs.salesforce;
     }
-    return configs as ConnectorConfigs;
+    if (configs.hyper?.hyperApi) {
+        out.hyper = {
+            hyperApi: loadReleaseInfo(configs.hyper.hyperApi),
+        };
+    }
+    console.log(out);
+    return out;
 }

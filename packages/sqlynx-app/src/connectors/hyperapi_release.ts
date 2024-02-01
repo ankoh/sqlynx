@@ -24,24 +24,32 @@ type HyperApiArtifacts = {
     };
 };
 
-export interface HyperApiReleaseInfo {
+export interface HyperApiConfig {
     version: HyperApiVersion;
     artifactBaseUrl: string;
+    artifactPaths: HyperApiArtifacts;
     artifacts: HyperApiArtifacts;
 }
 
-export function instantiateHyperApiReleaseInfo(release: HyperApiReleaseInfo) {
-    const v = release.version;
+export function loadReleaseInfo(config: Omit<HyperApiConfig, 'artifacts'>): HyperApiConfig {
+    const release: HyperApiConfig = {
+        ...config,
+        artifacts: {},
+    };
+    const v = config.version;
     const vShort = `${v.branch}.${v.major}.${v.minor}`;
     const vLong = `${v.branch}.${v.major}.${v.minor}.${v.revision}`;
 
-    for (const platform in release.artifacts) {
-        const artifacts = release.artifacts[platform];
-        for (const target in artifacts) {
-            let template = artifacts[target];
+    for (const platform in config.artifactPaths) {
+        const paths = config.artifactPaths[platform];
+        const out: { [artifact: string]: string } = {};
+        for (const target in paths) {
+            let template = paths[target];
             template = template.replace('{{VERSION_SHORT}}', vShort);
             template = template.replace('{{VERSION_LONG}}', vLong);
-            artifacts[target] = `${release.artifactBaseUrl}${template}`;
+            out[target] = `${config.artifactBaseUrl}${template}`;
         }
+        release.artifacts[platform] = out;
     }
+    return release;
 }
