@@ -27,6 +27,5 @@ export function readConnectorConfigs(configs: any): ConnectorConfigs {
             hyperApi: loadReleaseInfo(configs.hyper.hyperApi),
         };
     }
-    console.log(out);
     return out;
 }
