@@ -9,6 +9,7 @@ import {
     ThreeBarsIcon,
     StackIcon,
     ArrowSwitchIcon,
+    StopwatchIcon,
 } from '@primer/octicons-react';
 
 import { useConnectorList } from '../../connectors/connector_info';
@@ -90,6 +91,13 @@ const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
                 Execute Query
                 <ActionList.TrailingVisual>Ctrl + E</ActionList.TrailingVisual>
             </ActionList.Item>
+            <ActionList.Item disabled={true}>
+                <ActionList.LeadingVisual>
+                    <StopwatchIcon />
+                </ActionList.LeadingVisual>
+                Analyze Query
+                <ActionList.TrailingVisual>Ctrl + A</ActionList.TrailingVisual>
+            </ActionList.Item>
             <ActionList.Item
                 disabled={!props.connector?.features.refreshSchemaAction || !config.value?.features?.refreshSchema}
             >
@@ -114,7 +122,7 @@ const OutputCommandList = (props: { connector: ConnectorInfo | null }) => {
                     <LinkIcon />
                 </ActionList.LeadingVisual>
                 <span>
-                    Save Query as Link
+                    Embed into URL
                     <ScriptURLOverlay isOpen={linkSharingIsOpen} setIsOpen={openLinkSharing} />
                 </span>
                 <ActionList.TrailingVisual>Ctrl + U</ActionList.TrailingVisual>
@@ -124,7 +132,7 @@ const OutputCommandList = (props: { connector: ConnectorInfo | null }) => {
                     <DownloadIcon />
                 </ActionList.LeadingVisual>
                 <span>
-                    Save Query as .sql
+                    Save Query Text
                     <ScriptFileSaveOverlay isOpen={saveSqlIsOpen} setIsOpen={openSaveSql} />
                 </span>
                 <ActionList.TrailingVisual>Ctrl + S</ActionList.TrailingVisual>
@@ -135,8 +143,8 @@ const OutputCommandList = (props: { connector: ConnectorInfo | null }) => {
                 <ActionList.LeadingVisual>
                     <DownloadIcon />
                 </ActionList.LeadingVisual>
-                Save Results as .arrow
-                <ActionList.TrailingVisual>Ctrl + A</ActionList.TrailingVisual>
+                Save Result Data
+                <ActionList.TrailingVisual>Ctrl + D</ActionList.TrailingVisual>
             </ActionList.Item>
         </>
     );
