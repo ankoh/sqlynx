@@ -1,5 +1,6 @@
 import * as React from 'react';
 
+import classNames from 'classnames';
 import { SalesforceConnectorPanel } from '../connector/salesforce_connector_panel';
 import { HyperGrpcConnectorPanel } from '../connector/hyper_grpc_connector_panel';
 
@@ -16,8 +17,20 @@ export const SettingsPage: React.FC<PageProps> = (props: PageProps) => {
                 </div>
             </div>
             <div className={styles.body_container}>
-                <div className={styles.subpage_list_container}></div>
-                <div className={styles.connector_list_container}></div>
+                <div className={styles.subpage_list_background} />
+                <div className={styles.section_list_container}>
+                    <div className={classNames(styles.section_list_entry, styles.section_list_entry_active)}>
+                        Connnectors
+                    </div>
+                    <div className={styles.section_list_entry}>Configuration</div>
+                    <div className={styles.section_list_entry}>About</div>
+                </div>
+                <div className={styles.connector_list_container}>
+                    <div className={styles.connector_list_entry}>Hyper Database</div>
+                    <div className={styles.connector_list_entry}>Salesforce Data Cloud</div>
+                    <div className={styles.connector_list_entry}>Arrow Flight SQL</div>
+                    <div className={styles.connector_list_entry}>Local Scripts</div>
+                </div>
                 <div className={styles.connector_details_container}>
                     <div className={styles.card_container}>
                         <SalesforceConnectorPanel />

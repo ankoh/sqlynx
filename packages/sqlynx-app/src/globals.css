@@ -79,8 +79,9 @@
 
     --salesforce_logo_bg: rgb(0, 161, 224);
 
-    --settings_list_bg: hsl(210, 24%, 92%);
-    --settings_connector_list_bg: hsl(210, 29%, 97%);
+    --settings_section_list_bg: hsl(210, 24%, 92%);
+    /* --settings_section_list_bg: hsl(210, 24%, 97%); */
+    --settings_connector_list_bg: hsl(210, 24%, 97%);
 
     --background_color_80: hsl(208.5deg, 24.69%, 31.76%);
     --background_color_100: hsl(208.5deg, 24.69%, 23.76%);
