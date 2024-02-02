@@ -16,11 +16,15 @@ export const SettingsPage: React.FC<PageProps> = (props: PageProps) => {
                 </div>
             </div>
             <div className={styles.body_container}>
-                <div className={styles.card_container}>
-                    <SalesforceConnectorPanel />
-                </div>
-                <div className={styles.card_container}>
-                    <HyperGrpcConnectorPanel />
+                <div className={styles.subpage_list_container}></div>
+                <div className={styles.connector_list_container}></div>
+                <div className={styles.connector_details_container}>
+                    <div className={styles.card_container}>
+                        <SalesforceConnectorPanel />
+                    </div>
+                    <div className={styles.card_container}>
+                        <HyperGrpcConnectorPanel />
+                    </div>
                 </div>
             </div>
         </div>
