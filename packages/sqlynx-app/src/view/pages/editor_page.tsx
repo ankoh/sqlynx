@@ -122,7 +122,7 @@ const OutputCommandList = (props: { connector: ConnectorInfo | null }) => {
                     <LinkIcon />
                 </ActionList.LeadingVisual>
                 <span>
-                    Embed into URL
+                    Share as URL
                     <ScriptURLOverlay isOpen={linkSharingIsOpen} setIsOpen={openLinkSharing} />
                 </span>
                 <ActionList.TrailingVisual>Ctrl + U</ActionList.TrailingVisual>
@@ -135,7 +135,7 @@ const OutputCommandList = (props: { connector: ConnectorInfo | null }) => {
                     Save Query Text
                     <ScriptFileSaveOverlay isOpen={saveSqlIsOpen} setIsOpen={openSaveSql} />
                 </span>
-                <ActionList.TrailingVisual>Ctrl + S</ActionList.TrailingVisual>
+                <ActionList.TrailingVisual>Ctrl + Q</ActionList.TrailingVisual>
             </ActionList.Item>
             <ActionList.Item
                 disabled={!props.connector?.features.executeQueryAction || !config.value?.features?.saveResultsAsArrow}
@@ -144,7 +144,7 @@ const OutputCommandList = (props: { connector: ConnectorInfo | null }) => {
                     <DownloadIcon />
                 </ActionList.LeadingVisual>
                 Save Result Data
-                <ActionList.TrailingVisual>Ctrl + D</ActionList.TrailingVisual>
+                <ActionList.TrailingVisual>Ctrl + S</ActionList.TrailingVisual>
             </ActionList.Item>
         </>
     );
@@ -286,8 +286,9 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                     <ConnectorSelection variant="invisible" short={true} />
                     <div>
                         <ButtonGroup className={primerBugFixes.button_group}>
-                            <IconButton icon={PaperAirplaneIcon} aria-labelledby="create-github-issue" />
-                            <IconButton icon={SyncIcon} aria-labelledby="visit-github-repository" />
+                            <IconButton icon={PaperAirplaneIcon} aria-labelledby="execute-query" />
+                            <IconButton icon={StopwatchIcon} aria-labelledby="analyze-query" />
+                            <IconButton icon={SyncIcon} aria-labelledby="refresh-schema" />
                             <IconButton
                                 icon={LinkIcon}
                                 aria-labelledby="visit-github-repository"
