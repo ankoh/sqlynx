@@ -9,7 +9,7 @@ on:
 
 jobs:
     main:
-        uses: ./.github/workflows/main.yml@Main
+        uses: ./.github/workflows/main.yml
         with:
             sha: github.event.inputs.sha
         secrets: inherit
