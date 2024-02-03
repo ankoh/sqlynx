@@ -1,14 +1,12 @@
 name: Publish
 
-permissions:
-    contents: read
-    pages: write
-    id-token: write
-
 on:
     push:
         branches-ignore:
             - 'renovate/*'
+    pull_request:
+        branches:
+            - 'main'
     workflow_dispatch:
         inputs:
             sha:
@@ -16,8 +14,8 @@ on:
                 type: string
 
 jobs:
-    main:
-        uses: ./.github/workflows/main.yml
+    build:
+        uses: ./.github/workflows/build.yml
         with:
             sha: github.event.inputs.sha
         secrets: inherit
