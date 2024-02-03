@@ -1,0 +1,27 @@
+name: Publish
+
+on:
+    workflow_dispatch:
+        inputs:
+            sha:
+                required: true
+                type: string
+
+jobs:
+    main:
+        uses: ./.github/workflows/main.yml@Main
+        with:
+            sha: github.event.inputs.sha
+        secrets: inherit
+
+    test:
+        name: Test
+        runs-on: ubuntu-22.04
+        needs:
+            - main
+
+        steps:
+            - uses: actions/download-artifact@v4
+              with:
+                  name: hyper_service_proto
+                  path: ./packages/hyper-service/dist
