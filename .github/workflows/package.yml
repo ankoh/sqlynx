@@ -1,0 +1,4 @@
+name: Main
+
+on:
+    workflow_dispatch:
