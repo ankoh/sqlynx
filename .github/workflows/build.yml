@@ -455,8 +455,8 @@ jobs:
                   export SQLYNX_APP_URL=https://sqlynx.app
                   yarn workspace @ankoh/sqlynx-app electron:build:release
 
-            - name: Package app for snap store
-              if: matrix.system.target == 'ubuntu-22.04'
-              shell: bash
-              run: |
-                  yarn workspace @ankoh/sqlynx-app electron:package:snap
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: sqlynx_electron_${{ matrix.system.name }}
+                  path: ./packages/sqlynx-app/electron/release
+                  retention-days: 1
