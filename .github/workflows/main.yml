@@ -452,7 +452,7 @@ jobs:
 
     pages:
         name: Deploy GitHub Pages
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         runs-on: ubuntu-22.04
         needs:
             - pwa_pages
@@ -478,6 +478,7 @@ jobs:
 
     coverage:
         name: Build Coverage Report
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         runs-on: ubuntu-22.04
         needs:
             - core_js
