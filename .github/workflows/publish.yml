@@ -1,12 +1,6 @@
 name: Publish
 
 on:
-    push:
-        branches-ignore:
-            - 'renovate/*'
-    pull_request:
-        branches:
-            - 'main'
     workflow_dispatch:
         inputs:
             sha:
