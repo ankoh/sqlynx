@@ -16,6 +16,7 @@ interface ConfigParams {
     entry?: any;
     buildDir?: string;
     tsLoaderOptions?: any;
+    relocatable: boolean;
     extractCss: boolean;
     cssIdentifier: string;
     appURL: string;
@@ -33,9 +34,6 @@ interface ConfigParams {
 const OAUTH_CALLBACK_VERSION_FILE = path.resolve(__dirname, '../src/connectors/oauth_callback.html.version');
 export const OAUTH_CALLBACK_VERSION = childProcess.execSync(`cat ${OAUTH_CALLBACK_VERSION_FILE}`).toString().trim();
 
-const GITHUB_OAUTH_CLIENT_ID = '877379132b93adf6f705';
-const GITHUB_OAUTH_REDIRECT = `http://localhost:9001/static/html/github_oauth.${OAUTH_CALLBACK_VERSION}.html`;
-
 /// We support dynamic configurations of DashQL via a dedicated config file.
 /// The app loads this file at startup which allows us to adjust certain settings dynamically.
 //
@@ -50,7 +48,7 @@ export function configure(params: ConfigParams): Partial<Configuration> {
         entry: params.entry,
         output: {
             path: params.buildDir,
-            publicPath: '/',
+            publicPath: params.relocatable ? './' : '/',
             filename: 'static/js/[name].[contenthash].js',
             chunkFilename: 'static/js/[name].[contenthash].js',
             assetModuleFilename: 'static/assets/[name].[contenthash][ext]',
@@ -153,12 +151,11 @@ export function configure(params: ConfigParams): Partial<Configuration> {
             new HtmlWebpackPlugin({
                 template: './static/index.html',
                 filename: './index.html',
+                base: params.relocatable ? './' : '/',
             }),
             new webpack.DefinePlugin({
-                'process.env.ENV_BROWSER': true,
                 'process.env.SQLYNX_APP_URL': JSON.stringify(params.appURL),
-                'process.env.GITHUB_OAUTH_CLIENT_ID': JSON.stringify(GITHUB_OAUTH_CLIENT_ID),
-                'process.env.GITHUB_OAUTH_REDIRECT': JSON.stringify(GITHUB_OAUTH_REDIRECT),
+                'process.env.SQLYNX_RELATIVE_IMPORTS': params.relocatable,
             }),
             new MiniCssExtractPlugin({
                 filename: './static/css/[id].[contenthash].css',

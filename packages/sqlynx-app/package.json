@@ -7,6 +7,7 @@
     "scripts": {
         "pwa:serve:dev": "webpack serve --config ./webpack/webpack.pwa.dev.ts",
         "pwa:build:release": "webpack --config ./webpack/webpack.pwa.release.ts",
+        "pwa:build:relreloc": "webpack --config ./webpack/webpack.pwa.relreloc.ts",
         "pwa:test": "jest",
         "electron:build:dev": "webpack --config ./webpack/webpack.electron.dev.ts",
         "electron:build:release": "webpack --config ./webpack/webpack.electron.release.ts",

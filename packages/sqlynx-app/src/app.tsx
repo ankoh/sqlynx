@@ -15,7 +15,7 @@ import { ScriptURLSetup } from './scripts/script_url_setup';
 import { SalesforceConnector } from './connectors/salesforce_connector';
 import { LogProvider } from './app_log';
 import { AppConfigResolver } from './app_config';
-import { ElectronContextResolver, isElectron } from './electron_context';
+import { ElectronContextResolver } from './electron_context';
 
 import { ThemeProvider } from '@primer/react';
 import { StyleSheetManager } from 'styled-components';
@@ -61,7 +61,7 @@ const AppProviders = (props: { children: React.ReactElement }) => (
 const Editor = withNavBar(EditorPage);
 const Settings = withNavBar(SettingsPage);
 
-const Router = isElectron() ? HashRouter : BrowserRouter;
+const Router = process.env.SQLYNX_RELATIVE_IMPORTS ? HashRouter : BrowserRouter;
 
 const element = document.getElementById('root');
 const root = createRoot(element!);

@@ -2,7 +2,6 @@ import * as React from 'react';
 import classNames from 'classnames';
 import { SystemBar } from './systembar';
 import { useLocation } from 'react-router-dom';
-import { useActiveGitHubProfile } from '../github';
 import { useAppConfig } from '../app_config';
 import { HoverMode, LinkButton } from './button';
 import { useElectronContext } from '../electron_context';
@@ -32,7 +31,6 @@ const Tab = (props: { route: string; alt?: string; location: string; icon: strin
 export const NavBar = (): React.ReactElement => {
     const appConfig = useAppConfig();
     const location = useLocation();
-    const ghProfile = useActiveGitHubProfile();
 
     const isMac = useElectronContext()?.platform === 'darwin';
     return (

@@ -1,6 +1,7 @@
 import { app, BrowserWindow, dialog } from 'electron';
 import os from 'os';
-import path from 'path';
+import path from 'node:path';
+import url from 'url';
 
 // Handle the most common Windows commands, such as managing desktop shortcuts
 if (require('electron-squirrel-startup')) {
@@ -19,15 +20,7 @@ for (const arg of argv) {
 // Register as default protocol client
 app.setAsDefaultProtocolClient('sqlynx');
 
-let baseDir = '';
-if (app.isPackaged) {
-    // SQLynx.app/Contents/MacOS/Electron ./main.cjs
-    baseDir = process.cwd();
-} else if (process.argv.length > 2) {
-    // node .../electron ./main.cjs
-    baseDir = path.dirname(process.argv[2]);
-}
-const preloadScriptPath = path.resolve(baseDir, './preload/preload.cjs');
+const preloadScriptPath = path.join(__dirname, './preload/preload.cjs');
 const platform = os.platform();
 let mainWindow: BrowserWindow | null = null;
 
@@ -48,7 +41,13 @@ const createWindow = (): void => {
     if (isDebug) {
         mainWindow.loadURL('http://localhost:9002');
     } else {
-        mainWindow.loadFile('./app/index.html');
+        mainWindow.loadURL(
+            url.format({
+                pathname: path.join(__dirname, './app/index.html'),
+                protocol: 'file:',
+                slashes: true,
+            }),
+        );
     }
     mainWindow.once('ready-to-show', () => {
         mainWindow!.show();

@@ -138,6 +138,11 @@ core_js_tests_debug:
 .PHONY: pwa_build_release
 pwa_build_release:
 	yarn workspace @ankoh/sqlynx-app pwa:build:release
+	
+.PHONY: pwa_build_relreloc
+pwa_build_relreloc:
+	yarn workspace @ankoh/sqlynx-app pwa:build:relreloc
+
 
 .PHONY: pwa_dev
 pwa_dev:
