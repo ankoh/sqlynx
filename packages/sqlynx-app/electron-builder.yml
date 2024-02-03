@@ -13,6 +13,7 @@ mac:
     target:
         - target: dmg
     entitlements: ./entitlements.mac.plist
+    entitlementsInherit: ./entitlements.mac.plist
     category: public.app-category.utilities
     icon: ../../misc/app_icons_mac.icns
     # Whether your app has to be signed with hardened runtime
