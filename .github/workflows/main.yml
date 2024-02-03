@@ -10,13 +10,14 @@ on:
 
 jobs:
     build:
+        name: Build
         uses: ./.github/workflows/build.yml
         with:
             sha: github.event.inputs.sha
         secrets: inherit
 
     coverage:
-        name: Build Coverage Report
+        name: Collect Coverage Report
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         runs-on: ubuntu-22.04
         needs:
