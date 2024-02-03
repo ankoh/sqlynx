@@ -17,15 +17,16 @@ for (const arg of argv) {
 }
 
 // Register as default protocol client
-if (process.defaultApp && !isDebug) {
-    if (process.argv.length >= 2) {
-        app.setAsDefaultProtocolClient('sqlynx', process.execPath, [path.resolve(process.argv[1])]);
-    }
-} else {
-    app.setAsDefaultProtocolClient('sqlynx');
-}
+app.setAsDefaultProtocolClient('sqlynx');
 
-const baseDir = path.dirname(process.argv[1]);
+let baseDir = '';
+if (app.isPackaged) {
+    // SQLynx.app/Contents/MacOS/Electron ./main.cjs
+    baseDir = process.cwd();
+} else if (process.argv.length > 2) {
+    // node .../electron ./main.cjs
+    baseDir = path.dirname(process.argv[2]);
+}
 const preloadScriptPath = path.resolve(baseDir, './preload/preload.cjs');
 const platform = os.platform();
 let mainWindow: BrowserWindow | null = null;

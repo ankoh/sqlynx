@@ -2,25 +2,34 @@ appId: sqlynx.app
 productName: SQLynx
 
 directories:
+    buildResources: ./build/electron/resources
     output: ./build/electron/packages
 
 files:
     - '!**/*'
-    - ./build/electron/release/*
+    - ./build/electron/release/**/*
 
 mac:
-    category: public.app-category.utilities
     target:
         - target: dmg
+    entitlements: ./entitlements.mac.plist
+    category: public.app-category.utilities
+    icon: ../../misc/app_icons_mac.icns
+    # Whether your app has to be signed with hardened runtime
+    hardenedRuntime: true
+    # Whether to let @electron/osx-sign validate the signing or not
+    gatekeeperAssess: false
+    # Whether to let @electron/osx-sign verify the contents or not
+    strictVerify: false
 
 linux:
     target: snap
     executableName: sqlynx
     artifactName: ${productName}-${version}.${ext}
     desktop:
-        StartupNotify: "false",
-        Encoding: "UTF-8",
-        MimeType: "x-scheme-handler/sqlynx"
+        StartupNotify: false
+        Encoding: UTF-8
+        MimeType: x-scheme-handler/sqlynx
 
 snap:
     base: core22
