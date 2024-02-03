@@ -13,7 +13,7 @@ jobs:
             matrix:
                 build_type: ['o0', 'o3']
 
-        name: Build Core / WASM / ${{ matrix.build_type }}
+        name: Core / WASM / ${{ matrix.build_type }}
         runs-on: ubuntu-22.04
         steps:
             - uses: actions/checkout@v4
@@ -57,7 +57,7 @@ jobs:
             matrix:
                 build_type: ['o0', 'o2']
 
-        name: Build Core / Native / ${{ matrix.build_type }}
+        name: Core / Native / ${{ matrix.build_type }}
         runs-on: ubuntu-22.04
         steps:
             - uses: actions/checkout@v4
@@ -147,7 +147,7 @@ jobs:
                   retention-days: 1
 
     platform:
-        name: Build Platform / ${{ matrix.system.name }}
+        name: Platform / ${{ matrix.system.name }}
         runs-on: ${{ matrix.system.os }}
         strategy:
             fail-fast: true
@@ -219,7 +219,7 @@ jobs:
                   retention-days: 1
 
     hyper_service_proto:
-        name: Build Hyper Service Protocol
+        name: Hyper Service Protocol
         runs-on: ubuntu-22.04
         steps:
             - uses: actions/checkout@v4
@@ -246,7 +246,7 @@ jobs:
                   retention-days: 1
 
     core_js:
-        name: Build Core
+        name: Core
         runs-on: ubuntu-22.04
         needs:
             - core_wasm
@@ -297,7 +297,7 @@ jobs:
                   retention-days: 1
 
     pwa_pages:
-        name: Build App / Web / Pages
+        name: App / Web / Pages
         runs-on: ubuntu-22.04
         needs:
             - core_js
@@ -342,7 +342,7 @@ jobs:
                   retention-days: 1
 
     pwa_reloc:
-        name: Build App / Web / Relocatable
+        name: App / Web / Relocatable
         runs-on: ubuntu-22.04
         needs:
             - core_js
@@ -387,7 +387,7 @@ jobs:
                   retention-days: 1
 
     electron:
-        name: Build App / ${{ matrix.system.name }}
+        name: App / ${{ matrix.system.name }}
         runs-on: ${{ matrix.system.os }}
         strategy:
             fail-fast: true
