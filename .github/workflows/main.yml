@@ -288,8 +288,8 @@ jobs:
                   path: ./packages/sqlynx-core-api/coverage/lcov.info
                   retention-days: 1
 
-    pwa:
-        name: Build App / Web
+    pwa_pages:
+        name: Build App / Web / Pages
         runs-on: ubuntu-22.04
         needs:
             - core_js
@@ -328,7 +328,7 @@ jobs:
 
             - uses: actions/upload-artifact@v4
               with:
-                  name: sqlynx_pwa
+                  name: sqlynx_pwa_pages
                   path: ./packages/sqlynx-app/build/pwa/release
                   retention-days: 1
 
@@ -451,11 +451,11 @@ jobs:
                   yarn workspace @ankoh/sqlynx-app electron:package:snap
 
     pages:
-        name: Deploy GitHub Page
+        name: Deploy GitHub Pages
         if: github.ref == 'refs/heads/main'
         runs-on: ubuntu-22.04
         needs:
-            - pwa
+            - pwa_pages
             - electron
             # Most test cases are in the native library. Don't update
             # the deployed webpage if the native tests failed.
@@ -467,7 +467,7 @@ jobs:
         steps:
             - uses: actions/download-artifact@v4
               with:
-                  name: sqlynx_pwa
+                  name: sqlynx_pwa_pages
                   path: ./page
 
             - uses: actions/upload-pages-artifact@v3
@@ -483,7 +483,7 @@ jobs:
             - core_js
             - core_native
             - platform
-            - pwa
+            - pwa_pages
             - electron
         steps:
             - uses: actions/checkout@v4
