@@ -1,11 +1,11 @@
 name: Main
 on:
-    push:
-        branches-ignore:
-            - 'renovate/*'
-    pull_request:
-        branches:
-            - 'main'
+    #    push:
+    #        branches-ignore:
+    #            - 'renovate/*'
+    #    pull_request:
+    #        branches:
+    #            - 'main'
     workflow_call:
         inputs:
             sha:
