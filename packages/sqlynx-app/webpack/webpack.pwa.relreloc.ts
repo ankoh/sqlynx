@@ -6,14 +6,14 @@ const base = configure({
     entry: {
         app: ['./src/app.tsx'],
     },
-    buildDir: path.resolve(__dirname, '../build/pwa/release'),
+    buildDir: path.resolve(__dirname, '../build/pwa/relreloc'),
     tsLoaderOptions: {
         configFile: 'tsconfig.pwa.json',
         compilerOptions: {
             sourceMap: false,
         },
     },
-    relocatable: false,
+    relocatable: true,
     extractCss: true,
     cssIdentifier: '[hash:base64]',
     appURL: process.env.SQLYNX_APP_URL ?? 'https://sqlynx.app',

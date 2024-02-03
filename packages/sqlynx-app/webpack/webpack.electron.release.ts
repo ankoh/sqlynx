@@ -5,7 +5,7 @@ import { configure as configureMain } from './webpack.electron.common.main';
 import { configure as configurePreload } from './webpack.electron.common.preload';
 
 const ELECTRON_OUTPUT_DIR = path.resolve(__dirname, '../build/electron/release');
-const PWA_DIR_IN = path.resolve(__dirname, '../build/pwa/release');
+const PWA_DIR_IN = path.resolve(__dirname, '../build/pwa/relreloc');
 const PWA_DIR_OUT = path.resolve(__dirname, '../build/electron/release/app');
 
 fs.mkdirSync(ELECTRON_OUTPUT_DIR, { recursive: true });

@@ -329,6 +329,50 @@ jobs:
                   path: ./packages/sqlynx-app/build/pwa/release
                   retention-days: 1
 
+    pwa_reloc:
+        name: Build App / Web / Relocatable
+        runs-on: ubuntu-22.04
+        needs:
+            - core_js
+            - hyper_service_proto
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  submodules: 'recursive'
+                  fetch-depth: 0
+
+            - uses: actions/download-artifact@v4
+              with:
+                  name: hyper_service_proto
+                  path: ./packages/hyper-service/dist
+
+            - uses: actions/download-artifact@v4
+              with:
+                  name: sqlynx_core
+                  path: ./packages/sqlynx-core-api/dist
+
+            - name: Install npm dependencies
+              shell: bash
+              run: |
+                  yarn install --frozen-lockfile
+
+            - name: Build @ankoh/sqlynx-app
+              shell: bash
+              run: |
+                  export SQLYNX_APP_URL=https://sqlynx.app
+                  yarn workspace @ankoh/sqlynx-app pwa:build:relreloc
+
+            - name: Test @ankoh/sqlynx-app
+              shell: bash
+              run: |
+                  yarn workspace @ankoh/sqlynx-app pwa:test
+
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: sqlynx_pwa_reloc
+                  path: ./packages/sqlynx-app/build/pwa/relreloc
+                  retention-days: 1
+
     electron:
         name: Build App / ${{ matrix.system.name }}
         runs-on: ${{ matrix.system.os }}
@@ -349,7 +393,7 @@ jobs:
                       name: darwin_x64
         needs:
             - core_js
-            - pwa
+            - pwa_reloc
             - platform
         steps:
             - uses: actions/checkout@v4
@@ -369,8 +413,8 @@ jobs:
 
             - uses: actions/download-artifact@v4
               with:
-                  name: sqlynx_pwa
-                  path: ./packages/sqlynx-app/build/pwa/release
+                  name: sqlynx_pwa_reloc
+                  path: ./packages/sqlynx-app/build/pwa/relreloc
 
             - uses: actions/download-artifact@v4
               with:
