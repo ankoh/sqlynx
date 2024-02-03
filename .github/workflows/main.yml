@@ -6,6 +6,11 @@ on:
     pull_request:
         branches:
             - 'main'
+    workflow_call:
+        inputs:
+            sha:
+                required: true
+                type: string
 
 jobs:
     core_wasm:
@@ -20,6 +25,7 @@ jobs:
               with:
                   submodules: 'recursive'
                   fetch-depth: 0
+                  ref: ${{ github.event.inputs.sha || github.sha }}
 
             - name: Setup flatc
               uses: ./.github/actions/setup-flatc
@@ -63,6 +69,7 @@ jobs:
               with:
                   submodules: 'recursive'
                   fetch-depth: 0
+                  ref: ${{ github.event.inputs.sha || github.sha }}
 
             - name: Setup llvm
               uses: ./.github/actions/setup-llvm
@@ -167,6 +174,10 @@ jobs:
                       name: macos_arm64
         steps:
             - uses: actions/checkout@v4
+              with:
+                  submodules: 'recursive'
+                  fetch-depth: 0
+                  ref: ${{ github.event.inputs.sha || github.sha }}
 
             - name: Setup Cargo Cache
               uses: actions/cache@v4
@@ -220,6 +231,7 @@ jobs:
               with:
                   submodules: 'recursive'
                   fetch-depth: 0
+                  ref: ${{ github.event.inputs.sha || github.sha }}
 
             - name: Install npm dependencies
               shell: bash
@@ -248,6 +260,7 @@ jobs:
               with:
                   submodules: 'recursive'
                   fetch-depth: 0
+                  ref: ${{ github.event.inputs.sha || github.sha }}
 
             - uses: actions/download-artifact@v4
               with:
@@ -299,6 +312,7 @@ jobs:
               with:
                   submodules: 'recursive'
                   fetch-depth: 0
+                  ref: ${{ github.event.inputs.sha || github.sha }}
 
             - uses: actions/download-artifact@v4
               with:
@@ -343,6 +357,7 @@ jobs:
               with:
                   submodules: 'recursive'
                   fetch-depth: 0
+                  ref: ${{ github.event.inputs.sha || github.sha }}
 
             - uses: actions/download-artifact@v4
               with:
@@ -406,6 +421,7 @@ jobs:
               with:
                   submodules: 'recursive'
                   fetch-depth: 0
+                  ref: ${{ github.event.inputs.sha || github.sha }}
 
             - uses: actions/download-artifact@v4
               with:
@@ -491,6 +507,7 @@ jobs:
               with:
                   submodules: 'recursive'
                   fetch-depth: 0
+                  ref: ${{ github.event.inputs.sha || github.sha }}
 
             - uses: actions/download-artifact@v4
               with:
