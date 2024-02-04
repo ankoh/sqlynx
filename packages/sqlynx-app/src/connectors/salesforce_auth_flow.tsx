@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import './oauth_callback.html';
 import {
@@ -13,10 +13,10 @@ import {
     AUTH_FLOW_STATE_CTX,
     reduceAuthState,
     AUTH_FLOW_DEFAULT_STATE,
-} from './salesforce_auth_state';
-import { useSalesforceAPI } from './salesforce_connector';
-import { useAppConfig } from '../app_config';
-import { generatePKCEChallenge } from '../utils/pkce';
+} from './salesforce_auth_state.js';
+import { useSalesforceAPI } from './salesforce_connector.js';
+import { useAppConfig } from '../app_config.js';
+import { generatePKCEChallenge } from '../utils/pkce.js';
 
 // We use the web-server OAuth Flow with or without consumer secret.
 //
@@ -121,7 +121,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
 
     // Effect to forget about the auth window when it closes
     React.useEffect(() => {
-        if (!state.openAuthWindow) return () => {};
+        if (!state.openAuthWindow) return () => { };
         const loop = setInterval(function () {
             if (state.openAuthWindow?.closed) {
                 clearInterval(loop);

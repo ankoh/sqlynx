@@ -1,6 +1,6 @@
-import { SalesforceConnectorMockConfig } from '../connectors/salesforce_api_client_mock';
-import { SalesforceAuthConfig, SalesforceAuthParams } from '../connectors/salesforce_auth_state';
-import { HyperApiConfig, loadReleaseInfo } from './hyperapi_release';
+import { SalesforceConnectorMockConfig } from '../connectors/salesforce_api_client_mock.js';
+import { SalesforceAuthConfig, SalesforceAuthParams } from '../connectors/salesforce_auth_state.js';
+import { HyperApiConfig, loadReleaseInfo } from './hyperapi_release.js';
 
 export interface SalesforceConnectorConfig {
     auth: SalesforceAuthConfig;

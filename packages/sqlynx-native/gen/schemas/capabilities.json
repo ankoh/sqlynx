@@ -1,0 +1,1 @@
+{"run-app":{"identifier":"run-app","description":"permissions to run the app","context":"local","windows":["main","main-*"],"permissions":["window:allow-start-dragging"],"platforms":["linux","macOS","windows","android","iOS"]}}

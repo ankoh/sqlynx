@@ -1,6 +1,6 @@
-import React from 'react';
+import * as React from 'react';
 import * as Immutable from 'immutable';
-import { VariantKind, Dispatch } from './utils/variant';
+import { VariantKind, Dispatch } from './utils/variant.js';
 
 const MAX_LOG_SIZE = 300;
 

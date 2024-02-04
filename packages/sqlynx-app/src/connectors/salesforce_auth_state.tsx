@@ -1,7 +1,7 @@
-import React from 'react';
-import { VariantKind, Dispatch } from '../utils/variant';
-import { SalesforceCoreAccessToken, SalesforceDataCloudAccessToken } from './salesforce_api_client';
-import { PKCEChallenge } from '../utils/pkce';
+import * as React from 'react';
+import { VariantKind, Dispatch } from '../utils/variant.js';
+import { SalesforceCoreAccessToken, SalesforceDataCloudAccessToken } from './salesforce_api_client.js';
+import { PKCEChallenge } from '../utils/pkce.js';
 
 export interface SalesforceAuthState {
     /// The auth params

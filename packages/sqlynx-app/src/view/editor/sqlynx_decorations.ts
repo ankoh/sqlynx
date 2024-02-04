@@ -4,7 +4,7 @@ import { EditorState, Transaction, StateField, RangeSetBuilder } from '@codemirr
 import { highlightingFor } from '@codemirror/language';
 import { tags as CODEMIRROR_TAGS, Tag } from '@lezer/highlight';
 
-import { SQLynxProcessor, SQLynxScriptBuffers, SQLynxScriptKey } from './sqlynx_processor';
+import { SQLynxProcessor, SQLynxScriptBuffers, SQLynxScriptKey } from './sqlynx_processor.js';
 
 import './sqlynx_decorations.css';
 

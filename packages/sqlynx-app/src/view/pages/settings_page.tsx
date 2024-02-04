@@ -1,8 +1,8 @@
 import * as React from 'react';
 
-import classNames from 'classnames';
-import { SalesforceConnectorPanel } from '../connector/salesforce_connector_panel';
-import { HyperGrpcConnectorPanel } from '../connector/hyper_grpc_connector_panel';
+import * as classNames from 'classnames';
+import { SalesforceConnectorPanel } from '../connector/salesforce_connector_panel.js';
+import { HyperGrpcConnectorPanel } from '../connector/hyper_grpc_connector_panel.js';
 
 import styles from './settings_page.module.css';
 
@@ -19,7 +19,7 @@ export const SettingsPage: React.FC<PageProps> = (props: PageProps) => {
             <div className={styles.body_container}>
                 <div className={styles.subpage_list_background} />
                 <div className={styles.section_list_container}>
-                    <div className={classNames(styles.section_list_entry, styles.section_list_entry_active)}>
+                    <div className={classNames.default(styles.section_list_entry, styles.section_list_entry_active)}>
                         Connnectors
                     </div>
                     <div className={styles.section_list_entry}>Configuration</div>

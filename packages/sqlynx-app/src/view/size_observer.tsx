@@ -1,5 +1,6 @@
 import * as React from 'react';
-import useResizeObserver from '@react-hook/resize-observer';
+import useResizeObserverRaw from '@react-hook/resize-observer';
+const useResizeObserver = useResizeObserverRaw as unknown as typeof useResizeObserverRaw.default;
 
 export interface ObservedSize {
     width: number;

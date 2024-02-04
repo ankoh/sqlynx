@@ -1,7 +1,8 @@
-import React from 'react';
-import CONFIG_URL from '../static/config.json';
-import { Maybe, MaybeStatus } from './utils/maybe';
-import { ConnectorConfigs, readConnectorConfigs } from './connectors/connector_configs';
+import * as React from 'react';
+import { Maybe, MaybeStatus } from './utils/maybe.js';
+import { ConnectorConfigs, readConnectorConfigs } from './connectors/connector_configs.js';
+
+const CONFIG_URL = new URL('../static/config.json', import.meta.url);
 
 export interface AppFeatures {
     userAccount?: boolean;

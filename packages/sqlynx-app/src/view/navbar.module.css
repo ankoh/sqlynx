@@ -24,8 +24,6 @@
     grid-template-rows: var(--nav_bar_height);
 
     padding-left: 64px;
-
-    -webkit-app-region: drag;
 }
 
 .navbar_default {
@@ -37,8 +35,6 @@
     display: grid;
     grid-template-columns: max-content auto max-content;
     grid-template-rows: var(--nav_bar_height);
-
-    -webkit-app-region: drag;
 }
 
 .page_container {
@@ -68,8 +64,6 @@
     color: var(--nav_tab_fg);
     height: 30px;
     border-radius: 8px;
-
-    -webkit-app-region: no-drag;
 }
 .tab:hover {
     background-color: var(--nav_tab_bg_active);

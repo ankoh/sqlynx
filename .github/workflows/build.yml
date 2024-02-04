@@ -3,11 +3,50 @@ name: Build
 on:
     workflow_call:
         inputs:
-            sha:
+            commit:
                 required: true
                 type: string
+            signed:
+                required: false
+                type: boolean
+                default: false
 
 jobs:
+    pack:
+        strategy:
+            matrix:
+                build:
+                    - os: macos-14
+                      target: aarch64-apple-darwin
+                      artifact: sqlynx_pack_macos
+                    - os: ubuntu-22.04
+                      target: x86_64-unknown-linux-gnu
+                      artifact: sqlynx_pack_linux
+        name: Pack / ${{ matrix.build.os }}
+        runs-on: ${{ matrix.build.os }}
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  submodules: 'recursive'
+                  fetch-depth: 0
+                  ref: ${{ github.event.inputs.commit || github.sha }}
+
+            - name: Setup rust
+              uses: ./.github/actions/setup-rust
+              with:
+                os: ${{ matrix.build.os }}
+
+            - name: Build sqlynx-pack
+              shell: bash
+              run: |
+                    cargo build --target=${{ matrix.build.target }} -p sqlynx-pack --release
+
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: ${{ matrix.build.artifact }}
+                  path: ${{ github.workspace }}/target/${{ matrix.build.target }}/release/*sqlynx*
+                  retention-days: 1
+
     core_wasm:
         strategy:
             matrix:
@@ -20,7 +59,7 @@ jobs:
               with:
                   submodules: 'recursive'
                   fetch-depth: 0
-                  ref: ${{ github.event.inputs.sha || github.sha }}
+                  ref: ${{ github.event.inputs.commit || github.sha }}
 
             - name: Setup flatc
               uses: ./.github/actions/setup-flatc
@@ -49,7 +88,7 @@ jobs:
             - uses: actions/upload-artifact@v4
               with:
                   name: sqlynx_core_wasm_${{ matrix.build_type }}
-                  path: ./packages/sqlynx-core/build/wasm/${{ matrix.build_type }}/sqlynx.wasm
+                  path: ${{ github.workspace }}/packages/sqlynx-core/build/wasm/${{ matrix.build_type }}/sqlynx.wasm
                   retention-days: 1
 
     core_native:
@@ -68,7 +107,6 @@ jobs:
 
             - name: Setup llvm
               uses: ./.github/actions/setup-llvm
-
             - name: Setup flatc
               uses: ./.github/actions/setup-flatc
 
@@ -79,8 +117,8 @@ jobs:
             - name: Compile library
               shell: bash
               env:
-                  SQLYNX_SOURCE_DIR: ./packages/sqlynx-core
-                  SQLYNX_BUILD_DIR: ./packages/sqlynx-core/build/native/${{ matrix.build_type }}
+                  SQLYNX_SOURCE_DIR: ${{ github.workspace }}/packages/sqlynx-core
+                  SQLYNX_BUILD_DIR: ${{ github.workspace }}/packages/sqlynx-core/build/native/${{ matrix.build_type }}
               run: |
                   cmake -S ${SQLYNX_SOURCE_DIR} -B ${SQLYNX_BUILD_DIR} \
                   -DCMAKE_C_COMPILER=${{env.LLVM_PATH}}/bin/clang \
@@ -94,8 +132,8 @@ jobs:
             - name: Test library
               shell: bash
               env:
-                  SQLYNX_SOURCE_DIR: ./packages/sqlynx
-                  SQLYNX_BUILD_DIR: ./packages/sqlynx-core/build/native/${{ matrix.build_type }}
+                  SQLYNX_SOURCE_DIR: ${{ github.workspace }}/packages/sqlynx
+                  SQLYNX_BUILD_DIR: ${{ github.workspace }}/packages/sqlynx-core/build/native/${{ matrix.build_type }}
               run: |
                   ${SQLYNX_BUILD_DIR}/tester --source ${SQLYNX_SOURCE_DIR}
 
@@ -103,8 +141,8 @@ jobs:
               if: matrix.build_type == 'o2'
               shell: bash
               env:
-                  SQLYNX_SOURCE_DIR: ./packages/sqlynx
-                  SQLYNX_BUILD_DIR: ./packages/sqlynx-core/build/native/${{ matrix.build_type }}
+                  SQLYNX_SOURCE_DIR: ${{ github.workspace }}/packages/sqlynx
+                  SQLYNX_BUILD_DIR: ${{ github.workspace }}/packages/sqlynx-core/build/native/${{ matrix.build_type }}
               run: |
                   ${SQLYNX_BUILD_DIR}/benchmark_pipeline
 
@@ -112,15 +150,15 @@ jobs:
               if: matrix.build_type == 'o2'
               shell: bash
               env:
-                  SQLYNX_SOURCE_DIR: ./packages/sqlynx
-                  SQLYNX_BUILD_DIR: ./packages/sqlynx-core/build/native/${{ matrix.build_type }}
+                  SQLYNX_SOURCE_DIR: ${{ github.workspace }}/packages/sqlynx
+                  SQLYNX_BUILD_DIR: ${{ github.workspace }}/packages/sqlynx-core/build/native/${{ matrix.build_type }}
               run: |
                   ${SQLYNX_BUILD_DIR}/benchmark_layout
 
             - name: Merge coverage data
               shell: bash
               env:
-                  SQLYNX_COVERAGE_DIR: ./packages/sqlynx-core/build/coverage
+                  SQLYNX_COVERAGE_DIR: ${{ github.workspace }}/packages/sqlynx-core/build/coverage
               run: |
                   mkdir -p ${SQLYNX_COVERAGE_DIR}
                   ${{env.LLVM_PATH}}/bin/llvm-profdata merge -output=${SQLYNX_COVERAGE_DIR}/coverage.prof -instr default.profraw
@@ -128,8 +166,8 @@ jobs:
             - name: Build coverage report
               shell: bash
               env:
-                  SQLYNX_BUILD_DIR: ./packages/sqlynx-core/build/native/${{ matrix.build_type }}
-                  SQLYNX_COVERAGE_DIR: ./packages/sqlynx-core/build/coverage
+                  SQLYNX_BUILD_DIR: ${{ github.workspace }}/packages/sqlynx-core/build/native/${{ matrix.build_type }}
+                  SQLYNX_COVERAGE_DIR: ${{ github.workspace }}/packages/sqlynx-core/build/coverage
               run: |
                   ${{env.LLVM_PATH}}/bin/llvm-cov export \
                   --instr-profile ${SQLYNX_COVERAGE_DIR}/coverage.prof \
@@ -143,109 +181,10 @@ jobs:
             - uses: actions/upload-artifact@v4
               with:
                   name: sqlynx_coverage_native_${{ matrix.build_type }}
-                  path: ./packages/sqlynx-core/build/coverage/lcov.info
+                  path: ${{ github.workspace }}/packages/sqlynx-core/build/coverage/lcov.info
                   retention-days: 1
 
-    platform:
-        name: Platform / ${{ matrix.system.name }}
-        runs-on: ${{ matrix.system.os }}
-        strategy:
-            fail-fast: true
-            matrix:
-                node_version:
-                    - 18
-                system:
-                    - os: ubuntu-22.04
-                      target: x86_64-unknown-linux-gnu
-                      name: ubuntu_x64
-                    - os: windows-2022
-                      target: x86_64-pc-windows-msvc
-                      name: windows_x64
-                    - os: macos-13
-                      target: x86_64-apple-darwin
-                      name: macos_x64
-                    - os: macos-14
-                      target: aarch64-apple-darwin
-                      name: macos_arm64
-        steps:
-            - uses: actions/checkout@v4
-              with:
-                  submodules: 'recursive'
-                  fetch-depth: 0
-                  ref: ${{ github.event.inputs.sha || github.sha }}
-
-            - name: Setup Cargo Cache
-              uses: actions/cache@v4
-              with:
-                  path: |
-                      ~/.cargo/bin/
-                      ~/.cargo/registry/index/
-                      ~/.cargo/registry/cache/
-                      ~/.cargo/git/db/
-                      target/
-                  key: ${{ runner.os }}-cargo-native-${{ matrix.system.os }}-${{ matrix.system.target }}-${{ hashFiles('Cargo.lock') }}
-                  restore-keys: ${{ runner.os }}-cargo-native-${{ matrix.system.os }}-${{ matrix.system.target }}-
-
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: ${{ matrix.node_version }}
-                  registry-url: 'https://registry.npmjs.org'
-
-            - name: Setup Rust
-              uses: actions-rs/toolchain@v1
-              with:
-                  profile: minimal
-                  toolchain: stable
-                  target: ${{ matrix.system.target }}
-                  override: true
-
-            - name: Install npm dependencies
-              run: yarn install --frozen-lockfile
-
-            - name: Build Platform / o0
-              run: yarn workspace @ankoh/sqlynx-platform build:o0
-
-            - name: Build Platform / o3
-              run: yarn workspace @ankoh/sqlynx-platform build:o3
-
-            - name: Test Platform
-              run: yarn workspace @ankoh/sqlynx-platform test
-
-            - uses: actions/upload-artifact@v4
-              with:
-                  name: sqlynx_platform_${{ matrix.system.name }}
-                  path: ./packages/sqlynx-platform/dist
-                  retention-days: 1
-
-    hyper_service_proto:
-        name: Hyper Service Protocol
-        runs-on: ubuntu-22.04
-        steps:
-            - uses: actions/checkout@v4
-              with:
-                  submodules: 'recursive'
-                  fetch-depth: 0
-                  ref: ${{ github.event.inputs.sha || github.sha }}
-
-            - name: Install npm dependencies
-              shell: bash
-              run: |
-                  yarn install --frozen-lockfile
-
-            - name: Generate Protobuf files
-              shell: bash
-              run: |
-                  ./node_modules/.bin/buf generate 
-                  yarn workspace @ankoh/hyper-service build
-
-            - uses: actions/upload-artifact@v4
-              with:
-                  name: hyper_service_proto
-                  path: ./packages/hyper-service/dist
-                  retention-days: 1
-
-    core_js:
+    core:
         name: Core
         runs-on: ubuntu-22.04
         needs:
@@ -260,7 +199,7 @@ jobs:
             - uses: actions/download-artifact@v4
               with:
                   name: sqlynx_core_wasm_o3
-                  path: ./packages/sqlynx-core/build/wasm/o3/
+                  path: ${{ github.workspace }}/packages/sqlynx-core/build/wasm/o3/
 
             - name: Setup flatc
               uses: ./.github/actions/setup-flatc
@@ -287,130 +226,33 @@ jobs:
             - uses: actions/upload-artifact@v4
               with:
                   name: sqlynx_core
-                  path: ./packages/sqlynx-core-api/dist
+                  path: ${{ github.workspace }}/packages/sqlynx-core-api/dist
                   retention-days: 1
 
             - uses: actions/upload-artifact@v4
               with:
                   name: sqlynx_coverage_js
-                  path: ./packages/sqlynx-core-api/coverage/lcov.info
+                  path: ${{ github.workspace }}/packages/sqlynx-core-api/coverage/lcov.info
                   retention-days: 1
 
-    pwa_pages:
-        name: App / Web / Pages
+    pwa:
+        name: App / Web / ${{ matrix.build.name }}
         runs-on: ubuntu-22.04
-        needs:
-            - core_js
-            - hyper_service_proto
-        steps:
-            - uses: actions/checkout@v4
-              with:
-                  submodules: 'recursive'
-                  fetch-depth: 0
-                  ref: ${{ github.event.inputs.sha || github.sha }}
-
-            - uses: actions/download-artifact@v4
-              with:
-                  name: hyper_service_proto
-                  path: ./packages/hyper-service/dist
-
-            - uses: actions/download-artifact@v4
-              with:
-                  name: sqlynx_core
-                  path: ./packages/sqlynx-core-api/dist
-
-            - name: Install npm dependencies
-              shell: bash
-              run: |
-                  yarn install --frozen-lockfile
-
-            - name: Build @ankoh/sqlynx-app
-              shell: bash
-              run: |
-                  export SQLYNX_APP_URL=https://sqlynx.app
-                  yarn workspace @ankoh/sqlynx-app pwa:build:release
-
-            - name: Test @ankoh/sqlynx-app
-              shell: bash
-              run: |
-                  yarn workspace @ankoh/sqlynx-app pwa:test
-
-            - uses: actions/upload-artifact@v4
-              with:
-                  name: sqlynx_pwa_pages
-                  path: ./packages/sqlynx-app/build/pwa/release
-                  retention-days: 1
-
-    pwa_reloc:
-        name: App / Web / Relocatable
-        runs-on: ubuntu-22.04
-        needs:
-            - core_js
-            - hyper_service_proto
-        steps:
-            - uses: actions/checkout@v4
-              with:
-                  submodules: 'recursive'
-                  fetch-depth: 0
-                  ref: ${{ github.event.inputs.sha || github.sha }}
-
-            - uses: actions/download-artifact@v4
-              with:
-                  name: hyper_service_proto
-                  path: ./packages/hyper-service/dist
-
-            - uses: actions/download-artifact@v4
-              with:
-                  name: sqlynx_core
-                  path: ./packages/sqlynx-core-api/dist
-
-            - name: Install npm dependencies
-              shell: bash
-              run: |
-                  yarn install --frozen-lockfile
-
-            - name: Build @ankoh/sqlynx-app
-              shell: bash
-              run: |
-                  export SQLYNX_APP_URL=https://sqlynx.app
-                  yarn workspace @ankoh/sqlynx-app pwa:build:relreloc
-
-            - name: Test @ankoh/sqlynx-app
-              shell: bash
-              run: |
-                  yarn workspace @ankoh/sqlynx-app pwa:test
-
-            - uses: actions/upload-artifact@v4
-              with:
-                  name: sqlynx_pwa_reloc
-                  path: ./packages/sqlynx-app/build/pwa/relreloc
-                  retention-days: 1
-
-    electron:
-        name: App / ${{ matrix.system.name }}
-        runs-on: ${{ matrix.system.os }}
         strategy:
             fail-fast: true
             matrix:
-                node_version:
-                    - 18
-                system:
-                    - os: ubuntu-22.04
-                      target: x86_64-unknown-linux-gnu
-                      name: ubuntu_x64
-                    - os: windows-2022
-                      target: x86_64-pc-windows-msvc
-                      name: windows_x64
-                    - os: macos-13
-                      target: x86_64-apple-darwin
-                      name: macos_x64
-                    - os: macos-14
-                      target: aarch64-apple-darwin
-                      name: macos_arm64
+                build:
+                    - name: Relocatable
+                      target: build:reloc
+                      output: reloc
+                      artifact: sqlynx_pwa_reloc
+                    - name: Pages
+                      target: build:pages
+                      output: pages
+                      artifact: sqlynx_pwa_pages
         needs:
-            - core_js
-            - pwa_reloc
-            - platform
+            - core
+            - pack
         steps:
             - uses: actions/checkout@v4
               with:
@@ -420,43 +262,143 @@ jobs:
 
             - uses: actions/download-artifact@v4
               with:
-                  name: hyper_service_proto
-                  path: ./packages/hyper-service/dist
+                  name: sqlynx_pack_linux
+                  path: ${{ github.workspace }}/.bin/
 
             - uses: actions/download-artifact@v4
               with:
                   name: sqlynx_core
-                  path: ./packages/sqlynx-core-api/dist
+                  path: ${{ github.workspace }}/packages/sqlynx-core-api/dist
 
-            - uses: actions/download-artifact@v4
-              with:
-                  name: sqlynx_pwa_reloc
-                  path: ./packages/sqlynx-app/build/pwa/relreloc
-
-            - uses: actions/download-artifact@v4
-              with:
-                  name: sqlynx_platform_${{ matrix.system.name }}
-                  path: ./packages/sqlynx-platform/dist
-
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: ${{ matrix.node_version }}
-                  registry-url: 'https://registry.npmjs.org'
+            - name: Freeze SQLynx version
+              shell: bash
+              run: |
+                    chmod +x ./.bin/sqlynx-pack
+                    ./.bin/sqlynx-pack freeze
 
             - name: Install npm dependencies
               shell: bash
               run: |
                   yarn install --frozen-lockfile
 
-            - name: Build electron app
+            - name: Build Hyper Service protobuf library
               shell: bash
               run: |
-                  export SQLYNX_APP_URL=https://sqlynx.app
-                  yarn workspace @ankoh/sqlynx-app electron:build:release
+                    ./node_modules/.bin/buf generate
+                    yarn workspace @ankoh/hyper-service build
+
+            - name: Run tests
+              shell: bash
+              run: |
+                    yarn workspace @ankoh/sqlynx-app test
+
+            - name: Build web app
+              shell: bash
+              env:
+                SQLYNX_APP_URL: "https://sqlynx.app"
+              run: |
+                    yarn workspace @ankoh/sqlynx-app ${{ matrix.build.target }}
 
             - uses: actions/upload-artifact@v4
               with:
-                  name: sqlynx_electron_${{ matrix.system.name }}
-                  path: ./packages/sqlynx-app/electron/release
+                  name: ${{ matrix.build.artifact }}
+                  path: ${{ github.workspace }}/packages/sqlynx-app/build/${{ matrix.build.output }}
                   retention-days: 1
+
+    native:
+        name: App / MacOS
+        runs-on: macos-14
+        needs:
+            - pwa
+            - pack
+        steps:
+
+            - uses: actions/checkout@v4
+              with:
+                submodules: 'recursive'
+                fetch-depth: 0
+                ref: ${{ github.event.inputs.sha || github.sha }}
+
+            - uses: actions/download-artifact@v4
+              with:
+                name: sqlynx_pack_macos
+                path: ${{ github.workspace }}/.bin/
+
+            - uses: actions/download-artifact@v4
+              with:
+                name: sqlynx_core
+                path: ${{ github.workspace }}/packages/sqlynx-core-api/dist
+
+            - uses: actions/download-artifact@v4
+              with:
+                name: sqlynx_pwa_reloc
+                path: ${{ github.workspace }}/packages/sqlynx-app/build/reloc
+
+            - name: Setup rust
+              uses: ./.github/actions/setup-rust
+              with:
+                os: macos-14
+
+            - name: Setup tauri
+              uses: ./.github/actions/setup-tauri
+
+            - name: Install npm dependencies
+              run: |
+                    yarn install --frozen-lockfile
+
+            - name: Freeze SQLynx version
+              shell: bash
+              run: |
+                    chmod +x ./.bin/sqlynx-pack
+                    ./.bin/sqlynx-pack freeze
+
+            - name: Run tests
+              run: |
+                    cargo test
+
+            - name: Build native app for macOS without code signing
+              if: ${{ !inputs.signed }}
+              run: |
+                    yarn run build:native:mac
+
+            - name: Build native app for macOS with code signing
+              if: ${{ inputs.signed }}
+              env:
+                APPLE_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
+                APPLE_CERTIFICATE: ${{ secrets.MACOS_DEVELOPER_ID_APPLICATION_BASE64 }}
+                APPLE_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_DEVELOPER_ID_APPLICATION_SECRET }}
+                APPLE_API_ISSUER: ${{ secrets.MACOS_STORE_ISSUER_ID }}
+                APPLE_API_KEY: ${{ secrets.MACOS_STORE_KEY_ID }}
+                APPLE_API_KEY_PATH: ${{ github.workspace }}/apple_store.key
+              run: |
+                    echo "${{ secrets.MACOS_STORE_KEY }}" > ${{ env.APPLE_API_KEY_PATH }}
+                    yarn run build:native:mac
+
+            - name: Package native app updates
+              if: ${{ inputs.signed }}
+              env:
+                APPLE_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
+                APPLE_CERTIFICATE: ${{ secrets.MACOS_DEVELOPER_ID_APPLICATION_BASE64 }}
+                APPLE_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_DEVELOPER_ID_APPLICATION_SECRET }}
+                APPLE_API_ISSUER: ${{ secrets.MACOS_STORE_ISSUER_ID }}
+                APPLE_API_KEY: ${{ secrets.MACOS_STORE_KEY_ID }}
+                APPLE_API_KEY_PATH: ${{ github.workspace }}/apple_store.key
+                TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.RELEASE_SIGNING_KEY_BASE64 }}
+                TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.RELEASE_SIGNING_KEY_PASSWORD }}
+              run: |
+                    echo "${{ secrets.MACOS_STORE_KEY }}" > ${{ env.APPLE_API_KEY_PATH }}
+                    yarn run package:native:updates:mac
+
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: sqlynx_native_macos_dmg
+                  path: ${{ github.workspace }}/target/universal-apple-darwin/release/bundle/dmg/
+                  retention-days: 1
+
+            - uses: actions/upload-artifact@v4
+              if: ${{ inputs.signed }}
+              with:
+                  name: sqlynx_native_macos_update
+                  path: ${{ github.workspace }}/target/release/bundle/macos/
+                  retention-days: 1
+

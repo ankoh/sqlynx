@@ -1,6 +1,6 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
 
-import { SalesforceMetadata } from './salesforce_api_client';
+import { SalesforceMetadata } from './salesforce_api_client.js';
 
 export function updateDataCloudCatalog(catalog: sqlynx.SQLynxCatalog, metadata: SalesforceMetadata) {
     const tables: sqlynx.proto.SchemaTableT[] = [];

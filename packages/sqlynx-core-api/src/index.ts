@@ -1,3 +1,3 @@
-export * as proto from '../gen/sqlynx/proto';
-export * from './api';
-export * from './tokens';
+export * as proto from '../gen/sqlynx/proto/index.js';
+export * from './api.js';
+export * from './tokens.js';

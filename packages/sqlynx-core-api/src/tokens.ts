@@ -1,4 +1,4 @@
-import * as proto from '../gen/sqlynx/proto';
+import * as proto from '../gen/sqlynx/proto/index.js';
 
 interface Indexable<ValueType> {
     [index: number]: ValueType;

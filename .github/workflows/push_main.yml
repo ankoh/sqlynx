@@ -10,8 +10,22 @@ jobs:
         name: Build
         uses: ./.github/workflows/build.yml
         with:
-            sha: github.event.inputs.sha
+            commit: github.event.inputs.commit
+            signed: true
         secrets: inherit
+
+    publish:
+        name: Publish
+        uses: ./.github/workflows/publish.yml
+        with:
+            commit: github.event.inputs.commit
+        needs:
+            - build
+        secrets: inherit
+        permissions:
+            contents: read
+            pages: write
+            id-token: write
 
     coverage:
         name: Collect Coverage Report
@@ -40,23 +54,3 @@ jobs:
               with:
                   github-token: ${{secrets.GITHUB_TOKEN}}
 
-    pages:
-        name: Deploy GitHub Pages
-        runs-on: ubuntu-22.04
-        needs:
-            - build
-        permissions:
-            contents: read
-            pages: write
-            id-token: write
-        steps:
-            - uses: actions/download-artifact@v4
-              with:
-                  name: sqlynx_pwa_pages
-                  path: ./page
-
-            - uses: actions/upload-pages-artifact@v3
-              with:
-                  path: ./page
-
-            - uses: actions/deploy-pages@v4

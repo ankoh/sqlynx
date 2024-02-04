@@ -1,4 +1,4 @@
-import * as sqlynx from '../src';
+import * as sqlynx from '../src/index.js';
 
 interface TestTable {
     name: string;

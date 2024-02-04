@@ -1,8 +1,8 @@
 import * as React from 'react';
 
-import { ConnectorInfo, ConnectorType } from '../connectors/connector_info';
+import { ConnectorInfo, ConnectorType } from '../connectors/connector_info.js';
 
-import icons from '../../static/svg/symbols.generated.svg';
+import * as icons from '../../static/svg/symbols.generated.svg';
 
 export const SalesforceIcon = () => (
     <svg width="20px" height="20px">

@@ -1,1 +1,1 @@
-export * as xcode from './xcode';
+export * as xcode from './xcode.js';

@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { useSalesforceAuthState } from './salesforce_auth_state';
-import { useSalesforceAPI } from './salesforce_connector';
-import { SalesforceUserInfo } from './salesforce_api_client';
+import { useSalesforceAuthState } from './salesforce_auth_state.js';
+import { useSalesforceAPI } from './salesforce_connector.js';
+import { SalesforceUserInfo } from './salesforce_api_client.js';
 
 interface Props {
     children: React.ReactElement;

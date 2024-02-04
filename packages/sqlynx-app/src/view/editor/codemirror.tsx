@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { EditorState, EditorStateConfig, Extension, Annotation, StateEffect } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 

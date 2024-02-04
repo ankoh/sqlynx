@@ -37,7 +37,6 @@ ${FLATC} -I ${SPEC_DIR} -o ${OUT_DIR_TS} ${SPEC_INDEX} --ts \
         --gen-name-strings --gen-compare \
         --gen-mutable \
         --gen-object-api \
-        --ts-no-import-ext \
     && { echo "[ OK  ] Generate Typescript Library"; } \
     || { echo "[ ERR ] Generate Typescript Library"; exit 1; }
 
@@ -56,5 +55,5 @@ PROTO_FILES=`ls ${TS_OUT_PROTO_BASE}/*.ts`
 for PROTO_FILE in ${PROTO_FILES}; do
     IMPORT="$(basename $PROTO_FILE)"
     if [ "${IMPORT}" = "index.ts" ]; then continue; fi
-    echo "export * from \"./${IMPORT%.*}\";" >> ${PROTO_INDEX}
+    echo "export * from \"./${IMPORT%.*}.js\";" >> ${PROTO_INDEX}
 done

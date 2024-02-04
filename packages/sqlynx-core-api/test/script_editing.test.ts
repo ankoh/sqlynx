@@ -1,11 +1,12 @@
 import '@jest/globals';
 
-import { cyrb128, xoshiro128ss } from './rand';
-import * as sqlynx from '../src';
-import path from 'path';
-import fs from 'fs';
+import { cyrb128, xoshiro128ss } from './rand.js';
+import * as sqlynx from '../src/index.js';
+import * as path from 'path';
+import * as fs from 'fs';
+import { fileURLToPath } from 'node:url';
 
-const distPath = path.resolve(__dirname, '../dist');
+const distPath = path.resolve(fileURLToPath(new URL('../dist', import.meta.url)));
 const wasmPath = path.resolve(distPath, './sqlynx.wasm');
 
 let fsql: sqlynx.SQLynx | null = null;

@@ -1,10 +1,10 @@
-import React from 'react';
-import { SalesforceAPIClient, SalesforceAPIClientInterface } from './salesforce_api_client';
-import { SalesforceAPIClientMock } from './salesforce_api_client_mock';
-import { useAppConfig } from '../app_config';
-import { SalesforceAuthFlow } from './salesforce_auth_flow';
-import { SalesforceAuthFlowMock } from './salesforce_auth_flow_mock';
-import { SalesforceUserInfoResolver } from './salesforce_userinfo_resolver';
+import * as React from 'react';
+import { SalesforceAPIClient, SalesforceAPIClientInterface } from './salesforce_api_client.js';
+import { SalesforceAPIClientMock } from './salesforce_api_client_mock.js';
+import { useAppConfig } from '../app_config.js';
+import { SalesforceAuthFlow } from './salesforce_auth_flow.js';
+import { SalesforceAuthFlowMock } from './salesforce_auth_flow_mock.js';
+import { SalesforceUserInfoResolver } from './salesforce_userinfo_resolver.js';
 
 const API_CTX = React.createContext<SalesforceAPIClientInterface | null>(null);
 

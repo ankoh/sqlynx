@@ -1,6 +1,4 @@
-.DEFAULT_GOAL := lib
-
-# ---------------------------------------------------------------------------
+.DEFAULT_GOAL := lib # ---------------------------------------------------------------------------
 # Config
 
 ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
@@ -30,15 +28,18 @@ endif
 .PHONY: infra_linux
 infra_linux:
 	./scripts/install_infra.sh linux
+	rustup target add x86_64-unknown-linux-gnu
 
 .PHONY: infra_macos
 infra_macos:
 	./scripts/install_infra.sh macos
+	rustup target add aarch64-apple-darwin
+	rustup target add x86_64-apple-darwin
 
 .PHONY: flatbuf
 flatbuf:
 	./scripts/generate_flatbuf.sh
-	
+
 .PHONY: protobuf
 protobuf:
 	./node_modules/.bin/buf generate && yarn workspace @ankoh/hyper-service build
@@ -135,43 +136,25 @@ core_js_tests:
 core_js_tests_debug:
 	yarn workspace @ankoh/sqlynx-core test:debug
 
-.PHONY: pwa_build_release
-pwa_build_release:
-	yarn workspace @ankoh/sqlynx-app pwa:build:release
-	
-.PHONY: pwa_build_relreloc
-pwa_build_relreloc:
-	yarn workspace @ankoh/sqlynx-app pwa:build:relreloc
+.PHONY: pwa_pages
+pwa_pages:
+	yarn workspace @ankoh/sqlynx-app build:pages
 
+.PHONY: pwa_reloc
+pwa_reloc:
+	yarn workspace @ankoh/sqlynx-app build:reloc
 
 .PHONY: pwa_dev
 pwa_dev:
-	yarn workspace @ankoh/sqlynx-app pwa:serve:dev
-	
+	yarn workspace @ankoh/sqlynx-app serve:dev
+
+.PHONY: pwa_test
+pwa_test:
+	yarn workspace @ankoh/sqlynx-app test
+
 .PHONY: svg_symbols
 svg_symbols:
 	python3 ./scripts/generate_svg_symbols.py
-
-.PHONY: electron_dev
-electron_dev:
-	yarn workspace @ankoh/sqlynx-app electron:build:dev
-	yarn workspace @ankoh/sqlynx-app electron:open:dev
-	
-.PHONY: electron_release
-electron_release:
-	yarn workspace @ankoh/sqlynx-app electron:build:release
-
-.PHONY: platform_o0
-platform_o0:
-	yarn workspace @ankoh/sqlynx-platform build:o0
-
-.PHONY: platform_o3
-platform_o3:
-	yarn workspace @ankoh/sqlynx-platform build:o3
-
-.PHONY: platform_test
-platform_test:
-	yarn workspace @ankoh/sqlynx-platform test
 
 .PHONY: snapshots
 snapshots:

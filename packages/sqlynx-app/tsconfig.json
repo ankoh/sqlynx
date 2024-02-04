@@ -2,33 +2,38 @@
     "compilerOptions": {
         "baseUrl": "./src",
         "outDir": "./build/ts/",
-        "target": "ES2020",
-        "module": "CommonJS",
-        // TODO(ankoh): Upgrade node resolution to node12 for exports once typescript 4.6.0 is out
-        // https://www.typescriptlang.org/docs/handbook/esm-node.html
-        "moduleResolution": "node",
+        "target": "ESNext",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
         "sourceMap": true,
         "noImplicitAny": true,
-        "esModuleInterop": true,
+        "esModuleInterop": false,
         "downlevelIteration": true,
         "strict": true,
         "jsx": "react",
-        "types": ["node", "electron", "jest"],
-        "plugins": [{ "name": "typescript-plugin-css-modules" }],
-        "lib": ["es6", "es2020", "dom"],
+        "types": [
+            "node",
+            "electron",
+            "jest"
+        ],
+        "plugins": [
+            {
+                "name": "typescript-plugin-css-modules"
+            }
+        ],
+        "lib": [
+            "es6",
+            "es2020",
+            "dom"
+        ]
     },
-    "exclude": ["node_modules"],
+    "exclude": [
+        "node_modules"
+    ],
     "include": [
         "*.ts",
         "src/**/*",
         "test/**/*.ts",
-        "types/*.d.ts",
-        "webpack/webpack.electron.common.main.ts",
-        "webpack/webpack.electron.common.preload.ts",
-        "webpack/webpack.electron.dev.ts",
-        "webpack/webpack.electron.release.ts",
-        "webpack/webpack.pwa.common.ts",
-        "webpack/webpack.pwa.dev.ts",
-        "webpack/webpack.pwa.release.ts",
-    ],
+        "types/*.d.ts"
+    ]
 }

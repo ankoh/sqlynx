@@ -1,0 +1,34 @@
+{
+    "preset": "ts-jest/presets/default-esm",
+    "moduleNameMapper": {
+        "^(\\.{1,2}/.*)\\.js$": "$1",
+        ".*\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga|html|wasm)$": "<rootDir>/__tests__/file_mock.ts",
+        "^.+\\.(css|styl|less|sass|scss)$": "identity-obj-proxy",
+        "react-router-dom": "react-router-dom/react-router-dom.development.js"
+    },
+    "extensionsToTreatAsEsm": [
+        ".ts",
+        ".tsx"
+    ],
+    "transform": {
+        "^.+\\.(j|t)sx?$": [
+            "ts-jest",
+            {
+                "useESM": true,
+                "tsconfig": "<rootDir>/tsconfig.json",
+                "diagnostics": {
+                    "ignoreCodes": [
+                        151001
+                    ]
+                }
+            }
+        ]
+    },
+    "testMatch": [
+        "<rootDir>/src/**/*.test.{js,jsx,ts,tsx}"
+    ],
+    "testPathIgnorePatterns": [
+        "node_modules",
+        "\\.cache"
+    ]
+}

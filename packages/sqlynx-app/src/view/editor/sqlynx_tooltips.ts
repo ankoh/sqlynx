@@ -3,7 +3,7 @@ import * as sqlynx from '@ankoh/sqlynx-core';
 import { Tooltip, showTooltip, hoverTooltip, EditorView } from '@codemirror/view';
 import { Transaction, StateField, EditorState } from '@codemirror/state';
 
-import { SQLynxProcessor } from './sqlynx_processor';
+import { SQLynxProcessor } from './sqlynx_processor.js';
 
 function createCursorTooltip(state: EditorState, pos: number): Tooltip | null {
     const processor = state.field(SQLynxProcessor);

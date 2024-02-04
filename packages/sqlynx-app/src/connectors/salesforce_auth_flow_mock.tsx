@@ -1,5 +1,5 @@
-import React from 'react';
-import { sleep } from '../utils/sleep';
+import * as React from 'react';
+import { sleep } from '../utils/sleep.js';
 
 import {
     RECEIVED_CORE_AUTH_CODE,
@@ -10,9 +10,9 @@ import {
     reduceAuthState,
     GENERATED_PKCE_CHALLENGE,
     AUTH_FLOW_DEFAULT_STATE,
-} from './salesforce_auth_state';
-import { useSalesforceAPI } from './salesforce_connector';
-import { useAppConfig } from '../app_config';
+} from './salesforce_auth_state.js';
+import { useSalesforceAPI } from './salesforce_connector.js';
+import { useAppConfig } from '../app_config.js';
 
 interface Props {
     children: React.ReactElement;

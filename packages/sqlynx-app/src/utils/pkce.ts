@@ -1,4 +1,5 @@
-import getPkce from 'oauth-pkce';
+import getPkceImport from 'oauth-pkce';
+export const getPkce = getPkceImport as unknown as typeof getPkceImport.default;
 
 export interface PKCEChallenge {
     /// The PKCE challenge
@@ -10,7 +11,7 @@ export interface PKCEChallenge {
 // Generate PKCE challenge
 export function generatePKCEChallenge(): Promise<PKCEChallenge> {
     return new Promise<PKCEChallenge>((resolve, reject) => {
-        getPkce(42, (error, { verifier, challenge }) => {
+        getPkce(42, (error: any, { verifier, challenge }: any) => {
             if (error != null) {
                 reject(error);
             } else {

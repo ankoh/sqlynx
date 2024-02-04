@@ -3,13 +3,20 @@
     "workspaces": [
         "packages/sqlynx-app",
         "packages/sqlynx-core-api",
-        "packages/sqlynx-platform",
         "packages/hyper-service"
     ],
+    "scripts": {
+        "serve:native:dev": "tauri dev",
+        "build:native": "tauri build",
+        "build:native:mac": "tauri build --ci --target universal-apple-darwin --bundles dmg",
+        "build:native:mac:debug": "tauri build --ci --target universal-apple-darwin --bundles app --debug",
+        "package:native:updates:mac": "tauri build --ci --bundles updater,app"
+    },
     "packages": {
         "ts-node": "^10.9.1"
     },
     "devDependencies": {
+        "@tauri-apps/cli": "^2.0.0-beta.1",
         "@types/node": "^20.11.17",
         "typescript": "^5.3.3",
         "ts-node": "^10.9.2",
@@ -17,10 +24,9 @@
         "@connectrpc/protoc-gen-connect-es": "^1.3.0",
         "@bufbuild/buf": "^1.29.0",
         "@bufbuild/protoc-gen-es": "^1.7.2"
-
     },
     "browserslist": [
         "last 1 version",
         "> 1%"
-    ]    
+    ]
 }

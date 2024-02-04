@@ -1,20 +1,20 @@
-import React from 'react';
-import LZString from 'lz-string';
-import classNames from 'classnames';
+import * as React from 'react';
+import * as LZString from 'lz-string';
+import * as classNames from 'classnames';
 
 import { TextInput, AnchoredOverlay, Box, IconButton, ToggleSwitch } from '@primer/react';
 import { CheckIcon, PaperclipIcon } from '@primer/octicons-react';
 
-import { sleep } from '../../utils/sleep';
-import { ScriptData, ScriptKey } from '../../scripts/script_state';
-import { useSelectedScriptState } from '../../scripts/script_state_provider';
-import { useSalesforceAuthState } from '../../connectors/salesforce_auth_state';
-import { ConnectorType } from '../../connectors/connector_info';
+import { sleep } from '../../utils/sleep.js';
+import { ScriptData, ScriptKey } from '../../session/session_state.js';
+import { useActiveSessionState } from '../../session/session_state_provider.js';
+import { useSalesforceAuthState } from '../../connectors/salesforce_auth_state.js';
+import { ConnectorType } from '../../connectors/connector_info.js';
 import {
     writeHyperConnectorParams,
     writeLocalConnectorParams,
     writeSalesforceConnectorParams,
-} from '../../connectors/connector_url_params';
+} from '../../connectors/connector_url_params.js';
 
 import styles from './script_url_overlay.module.css';
 
@@ -44,7 +44,7 @@ interface State {
 }
 
 export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
-    const scriptState = useSelectedScriptState();
+    const scriptState = useActiveSessionState();
     const [embedConnectorInfo, setEmbedConnectorInfo] = React.useState<boolean>(true);
     const [state, setState] = React.useState<State>(() => ({
         url: null,
@@ -152,7 +152,7 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
                 initialFocusRef: buttonRef,
             }}
         >
-            <Box className={classNames(styles.sharing_overlay, props.className)}>
+            <Box className={classNames.default(styles.sharing_overlay, props.className)}>
                 <div className={styles.sharing_title}>Save Query as Link</div>
                 <div className={styles.sharing_url}>
                     <TextInput className={styles.sharing_url} disabled={true} value={state.urlText ?? ''} />

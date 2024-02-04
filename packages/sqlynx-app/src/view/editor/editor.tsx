@@ -7,17 +7,17 @@ import { IconButton } from '@primer/react';
 import { DecorationSet, EditorView } from '@codemirror/view';
 import { ChangeSpec, StateEffect, EditorSelection } from '@codemirror/state';
 
-import { CodeMirror } from './codemirror';
-import { SQLynxExtensions } from './sqlynx_extension';
-import { SQLynxScriptBuffers, SQLynxScriptKey, UpdateSQLynxScript } from './sqlynx_processor';
-import { useAppConfig } from '../../app_config';
-import { useSelectedScriptState, useSelectedScriptStateDispatch } from '../../scripts/script_state_provider';
-import { UPDATE_SCRIPT_ANALYSIS, UPDATE_SCRIPT_CURSOR } from '../../scripts/script_state_reducer';
-import { ScriptKey } from '../../scripts/script_state';
-import { ScriptStatisticsBar } from './script_statistics_bar';
-import { VerticalTabs } from '../../view/vertical_tabs';
+import { CodeMirror } from './codemirror.js';
+import { SQLynxExtensions } from './sqlynx_extension.js';
+import { SQLynxScriptBuffers, SQLynxScriptKey, UpdateSQLynxScript } from './sqlynx_processor.js';
+import { useAppConfig } from '../../app_config.js';
+import { useActiveSessionState, useActiveSessionStateDispatch } from '../../session/session_state_provider.js';
+import { UPDATE_SCRIPT_ANALYSIS, UPDATE_SCRIPT_CURSOR } from '../../session/session_state_reducer.js';
+import { ScriptKey } from '../../session/session_state.js';
+import { ScriptStatisticsBar } from './script_statistics_bar.js';
+import { VerticalTabs } from '../../view/vertical_tabs.js';
 
-import icons from '../../../static/svg/symbols.generated.svg';
+import * as icons from '../../../static/svg/symbols.generated.svg';
 
 import styles from './editor.module.css';
 
@@ -63,8 +63,8 @@ interface ActiveScriptState {
 }
 
 export const ScriptEditor: React.FC<Props> = (props: Props) => {
-    const ctx = useSelectedScriptState();
-    const ctxDispatch = useSelectedScriptStateDispatch();
+    const ctx = useActiveSessionState();
+    const ctxDispatch = useActiveSessionStateDispatch();
     const config = useAppConfig();
 
     const [activeTab, setActiveTab] = React.useState<TabId>(TabId.MAIN_SCRIPT);

@@ -1,8 +1,8 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
 
 import { CompletionContext, CompletionResult, Completion } from '@codemirror/autocomplete';
-import { SQLynxProcessor } from './sqlynx_processor';
-import { getNameTagName, unpackNameTags } from '../../utils';
+import { SQLynxProcessor } from './sqlynx_processor.js';
+import { getNameTagName, unpackNameTags } from '../../utils/index.js';
 
 function updateCompletions(
     _current: CompletionResult,

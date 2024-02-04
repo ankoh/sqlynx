@@ -3,7 +3,7 @@ import * as arrow from 'apache-arrow';
 
 import { createPromiseClient, PromiseClient } from '@connectrpc/connect';
 import * as bufconnect from '@connectrpc/connect-web';
-import { QueryExecutionProgress, QueryExecutionResponseStream } from './query_execution';
+import { QueryExecutionProgress, QueryExecutionResponseStream } from './query_execution.js';
 import { RecordBatch, Schema } from 'apache-arrow';
 
 export class ArrowChunkStreamReader implements AsyncIterable<Uint8Array> {
