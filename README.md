@@ -2,7 +2,7 @@
   <img src="misc/logo.png" width=80>
 </p>
 <p align="center">
-  <a href="https://github.com/ankoh/sqlynx/actions/workflows/main.yml"><img src="https://github.com/ankoh/sqlynx/actions/workflows/main.yml/badge.svg?branch=main" /></a>
+  <a href="https://github.com/ankoh/sqlynx/actions/workflows/push_main.yml"><img src="https://github.com/ankoh/sqlynx/actions/workflows/push_main.yml/badge.svg?branch=main" /></a>
   <a href="https://github.com/ankoh/sqlynx/actions/workflows/renovate.yml"><img src="https://github.com/ankoh/sqlynx/actions/workflows/renovate.yml/badge.svg" /></a>
   <a href="https://coveralls.io/github/ankoh/sqlynx?branch=main"><img src="https://coveralls.io/repos/github/ankoh/sqlynx/badge.svg?branch=main" /></a>
   <a href="https://opensource.org/licenses/MPL-2.0"><img src="misc/badge_mpl2.svg?raw=true" /></a>
