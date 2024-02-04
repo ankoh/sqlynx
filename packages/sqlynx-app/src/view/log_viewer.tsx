@@ -1,10 +1,10 @@
 import * as React from 'react';
-import * as appLog from '../app_log';
-import * as utils from '../utils';
-import classNames from 'classnames';
-import { SystemCard } from './system_card';
-import { withCurrentTime } from '../utils/current_time';
-import { observeSize } from './size_observer';
+import * as appLog from '../app_log.js';
+import * as utils from '../utils/index.js';
+import * as classNames from 'classnames';
+import { SystemCard } from './system_card.js';
+import { withCurrentTime } from '../utils/current_time.js';
+import { observeSize } from './size_observer.js';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FixedSizeList, FixedSizeListProps, ListChildComponentProps } from 'react-window';
 
@@ -61,7 +61,7 @@ export const LogViewer: React.FC<Props> = (props: Props) => {
                 data-entry={logEntryIndex}
                 onClick={focusEntry}
             >
-                <div className={classNames(styles.row, { [styles.row_focused]: logEntryIndex == focused })}>
+                <div className={classNames.default(styles.row, { [styles.row_focused]: logEntryIndex == focused })}>
                     <div className={styles.row_level}>{appLog.getLogLevelLabel(logEntry.level)}</div>
                     <div className={styles.row_origin}>{appLog.getLogOriginLabel(logEntry.origin)}</div>
                     <div className={styles.row_topic}>{appLog.getLogTopicLabel(logEntry.topic)}</div>

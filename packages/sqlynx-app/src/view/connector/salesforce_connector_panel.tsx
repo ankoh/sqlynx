@@ -3,25 +3,25 @@ import * as React from 'react';
 import { TextInput, FormControl, Button, IconButton } from '@primer/react';
 import { CopyIcon, InfoIcon } from '@primer/octicons-react';
 
-import { useAppConfig } from '../../app_config';
-import { useSalesforceUserInfo } from '../../connectors/salesforce_userinfo_resolver';
+import { useAppConfig } from '../../app_config.js';
+import { useSalesforceUserInfo } from '../../connectors/salesforce_userinfo_resolver.js';
 import {
     useSalesforceAuthState,
     useSalesforceAuthFlow,
     CONNECT,
     DISCONNECT,
     CONFIGURE,
-} from '../../connectors/salesforce_auth_state';
-import { Skeleton } from '../../view/skeleton';
+} from '../../connectors/salesforce_auth_state.js';
+import { Skeleton } from '../../view/skeleton.js';
 
 import SalesforceDummyAccount from '../../../static/img/salesforce_account_placeholder.png';
 
-import symbols from '../../../static/svg/symbols.generated.svg';
+import * as symbols from '../../../static/svg/symbols.generated.svg';
 
 import panelStyle from './salesforce_connector_panel.module.css';
 import pageStyle from '../pages/settings_page.module.css';
 
-interface SalesforceAuthFlowProps {}
+interface SalesforceAuthFlowProps { }
 
 const SalesforceAuthFlowPanel: React.FC<SalesforceAuthFlowProps> = (props: SalesforceAuthFlowProps) => {
     const appConfig = useAppConfig();
@@ -97,13 +97,13 @@ const SalesforceAuthFlowPanel: React.FC<SalesforceAuthFlowProps> = (props: Sales
                     name="Instance URL"
                     caption="URL of the Salesforce Instance"
                     value={authState.authParams?.instanceUrl ?? ''}
-                    onChange={() => {}}
+                    onChange={() => { }}
                 />
                 <MutableTextBox
                     name="App Consumer Key"
                     caption="Setup > Apps > App Manager > View > Manage Consumer Details"
                     value={authState.authParams?.appConsumerKey ?? ''}
-                    onChange={() => {}}
+                    onChange={() => { }}
                 />
                 <Button sx={{ marginTop: '28px' }} onClick={connect} disabled={authState.authRequested}>
                     Connect
@@ -159,7 +159,7 @@ const SalesforceAuthFlowPanel: React.FC<SalesforceAuthFlowProps> = (props: Sales
     );
 };
 
-interface SalesforceConnectorPanelProps {}
+interface SalesforceConnectorPanelProps { }
 
 export const SalesforceConnectorPanel: React.FC<SalesforceConnectorPanelProps> = (
     _props: SalesforceConnectorPanelProps,

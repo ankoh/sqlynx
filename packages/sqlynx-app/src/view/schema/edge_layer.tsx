@@ -1,8 +1,8 @@
 import * as React from 'react';
 
-import { VariantKind } from '../../utils/variant';
-import { EdgeViewModel, GraphConnectionId, GraphBoundaries } from './graph_view_model';
-import { FocusInfo } from '../../scripts/focus';
+import { VariantKind } from '../../utils/variant.js';
+import { EdgeViewModel, GraphConnectionId, GraphBoundaries } from './graph_view_model.js';
+import { FocusInfo } from '../../session/focus.js';
 
 interface Props {
     className?: string;

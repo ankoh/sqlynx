@@ -1,5 +1,5 @@
-import esbuild from 'esbuild';
-import fs from 'fs';
+import * as esbuild from 'esbuild';
+import * as fs from 'fs';
 
 const dist = new URL('dist/', import.meta.url);
 
@@ -25,7 +25,7 @@ await esbuild.build({
     external: ['flatbuffers'],
 });
 
-await fs.promises.writeFile(new URL('sqlynx.module.d.ts', dist), "export * from './src';");
+await fs.promises.writeFile(new URL('sqlynx.module.d.ts', dist), "export * from './src/index.js';");
 
 let wasmUrl: URL;
 switch (mode) {

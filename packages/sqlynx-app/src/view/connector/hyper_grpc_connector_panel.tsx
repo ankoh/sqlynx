@@ -1,15 +1,15 @@
-import React from 'react';
+import * as React from 'react';
 import { TextInput, FormControl, Button, IconButton, SegmentedControl } from '@primer/react';
 import { CopyIcon, InfoIcon } from '@primer/octicons-react';
 
-import { useAppConfig } from '../../app_config';
+import { useAppConfig } from '../../app_config.js';
 
-import symbols from '../../../static/svg/symbols.generated.svg';
+import * as symbols from '../../../static/svg/symbols.generated.svg';
 
 import pageStyle from '../pages/settings_page.module.css';
 import panelStyle from './hyper_grpc_connector_panel.module.css';
 
-interface HyperGrpcConnectorPanelProps {}
+interface HyperGrpcConnectorPanelProps { }
 
 export const HyperGrpcConnectorPanel: React.FC<HyperGrpcConnectorPanelProps> = (
     _props: HyperGrpcConnectorPanelProps,
@@ -86,7 +86,7 @@ export const HyperGrpcConnectorPanel: React.FC<HyperGrpcConnectorPanelProps> = (
                             name="Endpoint"
                             caption="Endpoint of the gRPC service as '<https://host:port>'"
                             value="https://127.0.0.1:8443"
-                            onChange={() => {}}
+                            onChange={() => { }}
                             disabled={grpcConnectorDisabled}
                         />
                         <div className={panelStyle.auth_config_connect}>

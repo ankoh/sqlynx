@@ -1,0 +1,82 @@
+{
+    "$schema": "../../node_modules/@tauri-apps/cli/schema.json",
+    "app": {
+        "security": {
+            "csp": null
+        },
+        "windows": [
+            {
+                "fullscreen": false,
+                "height": 800,
+                "hiddenTitle": true,
+                "resizable": true,
+                "title": "SQLynx",
+                "titleBarStyle": "Overlay",
+                "width": 1000
+            }
+        ],
+        "withGlobalTauri": true
+    },
+    "build": {
+        "beforeDevCommand": "yarn workspace @ankoh/sqlynx-app run serve:dev",
+        "devUrl": "http://localhost:9002",
+        "frontendDist": "../sqlynx-app/build/reloc"
+    },
+    "bundle": {
+        "active": true,
+        "category": "Utility",
+        "copyright": "",
+        "externalBin": [],
+        "icon": [
+            "./icons/icon.icns",
+            "./icons/icon.ico",
+            "./icons/icon.png",
+            "./icons/16x16.png",
+            "./icons/16x16@2x.png",
+            "./icons/32x32.png",
+            "./icons/32x32@2x.png",
+            "./icons/64x64.png",
+            "./icons/64x64@2x.png",
+            "./icons/128x128.png",
+            "./icons/128x128@2x.png",
+            "./icons/256x256.png",
+            "./icons/256x256@2x.png",
+            "./icons/512x512.png",
+            "./icons/512x512@2x.png"
+        ],
+        "linux": {
+            "appimage": {}
+        },
+        "longDescription": "",
+        "macOS": {
+            "entitlements": null,
+            "exceptionDomain": "",
+            "frameworks": [],
+            "providerShortName": null,
+            "signingIdentity": null
+        },
+        "shortDescription": "",
+        "targets": "all",
+        "windows": {
+            "certificateThumbprint": null,
+            "digestAlgorithm": "sha256",
+            "timestampUrl": "",
+            "webviewInstallMode": {
+                "type": "embedBootstrapper"
+            }
+        }
+    },
+    "identifier": "app.sqlynx",
+    "plugins": {
+        "updater": {
+            "active": true,
+            "dialog": true,
+            "endpoints": [
+                "http://get.sqlynx.app/canary.json"
+            ],
+            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDJEQ0Y5MDE5Nzc1OEIwRUEKUldUcXNGaDNHWkRQTGUwVnV0LzlzWnNGWnNWL0tKWkhDOEFvclNSNERPSlRJUldTMEV1Q2FVd1gK"
+        }
+    },
+    "productName": "SQLynx",
+    "version": "0.0.1-dev.2344+7cfbe06"
+}

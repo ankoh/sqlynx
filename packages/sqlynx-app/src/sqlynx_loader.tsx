@@ -1,8 +1,8 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
-import React from 'react';
-import { RESULT_ERROR, RESULT_OK, Result } from './utils/result';
+import * as React from 'react';
+import { RESULT_ERROR, RESULT_OK, Result } from './utils/result.js';
 
-import wasm from '@ankoh/sqlynx-core/dist/sqlynx.wasm';
+const SQLYNX_MODULE_URL = new URL('@ankoh/sqlynx-core/dist/sqlynx.wasm', import.meta.url);
 
 export interface InstantiationProgress {
     startedAt: Date;
@@ -60,7 +60,7 @@ export const SQLynxLoader: React.FC<Props> = (props: Props) => {
         const instantiate = async () => {
             try {
                 const instance = await sqlynx.SQLynx.create(async (imports: WebAssembly.Imports) => {
-                    return await WebAssembly.instantiateStreaming(fetchWithProgress(wasm), imports);
+                    return await WebAssembly.instantiateStreaming(fetchWithProgress(SQLYNX_MODULE_URL), imports);
                 });
                 setProgress(_ => ({
                     ...internal,

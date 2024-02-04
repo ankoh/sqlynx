@@ -1,28 +1,69 @@
 name: Publish
 
 on:
-    workflow_dispatch:
+    workflow_call:
         inputs:
-            sha:
+            commit:
                 required: true
                 type: string
 
 jobs:
-    build:
-        name: Build
-        uses: ./.github/workflows/build.yml
-        with:
-            sha: github.event.inputs.sha
-        secrets: inherit
-
-    test:
-        name: Test
+    pages:
+        name: GitHub Page
         runs-on: ubuntu-22.04
-        needs:
-            - build
-
+        permissions:
+            contents: read
+            pages: write
+            id-token: write
         steps:
             - uses: actions/download-artifact@v4
               with:
-                  name: hyper_service_proto
-                  path: ./packages/hyper-service/dist
+                  name: sqlynx_pwa_pages
+                  path: ./page
+
+            - uses: actions/upload-pages-artifact@v3
+              with:
+                  path: ./page
+
+            - uses: actions/deploy-pages@v4
+
+    native:
+        name: Native apps
+        runs-on: ubuntu-22.04
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  submodules: 'recursive'
+                  fetch-depth: 0
+                  ref: ${{ github.event.inputs.commit || github.sha }}
+
+            - uses: actions/download-artifact@v4
+              with:
+                  name: sqlynx_pack_linux
+                  path: ${{ github.workspace }}/.bin/
+
+            - uses: actions/download-artifact@v4
+              with:
+                  name: sqlynx_native_macos_dmg
+                  path: ${{ github.workspace }}/target/universal-apple-darwin/release/bundle/dmg/
+
+            - uses: actions/download-artifact@v4
+              with:
+                  name: sqlynx_native_macos_update
+                  path: ${{ github.workspace }}/target/release/bundle/macos/
+
+            - name: Freeze SQLynx version
+              shell: bash
+              run: |
+                    chmod +x ./.bin/sqlynx-pack
+                    ./.bin/sqlynx-pack freeze
+
+            - name: Publish native apps
+              env:
+                SQLYNX_GET_R2_ENDPOINT: ${{ secrets.R2_SQLYNX_GET_ENDPOINT }}
+                SQLYNX_GET_R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+                SQLYNX_GET_R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+                SQLYNX_RELEASE_SIGNING_KEY_BASE64: ${{ secrets.RELEASE_SIGNING_KEY_BASE64 }}
+                SQLYNX_RELEASE_SIGNING_KEY_PASSWORD: ${{ secrets.RELEASE_SIGNING_KEY_PASSWORD }}
+              run: |
+                    ./.bin/sqlynx-pack publish

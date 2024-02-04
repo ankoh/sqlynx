@@ -1,21 +1,21 @@
 import * as React from 'react';
 
-import { SQLynxLoader } from './sqlynx_loader';
-import { withNavBar } from './view/navbar';
-import { EditorPage } from './view/pages/editor_page';
-import { SettingsPage } from './view/pages/settings_page';
-import { ScriptLoader } from './scripts/script_loader';
-import { ScriptCatalogLoader } from './scripts/script_catalog_loader';
-import { ScriptAutoloaderSalesforce } from './scripts/script_autoloader_salesforce';
-import { ScriptAutoloaderLocal } from './scripts/script_autoloader_local';
-import { ScriptStateProvider } from './scripts/script_state_provider';
-import { ScriptCommands } from './scripts/script_commands';
-import { ScriptQueryExecutor } from './scripts/script_query_executor';
-import { ScriptURLSetup } from './scripts/script_url_setup';
-import { SalesforceConnector } from './connectors/salesforce_connector';
-import { LogProvider } from './app_log';
-import { AppConfigResolver } from './app_config';
-import { ElectronContextResolver } from './electron_context';
+import { SQLynxLoader } from './sqlynx_loader.js';
+import { withNavBar } from './view/navbar.js';
+import { EditorPage } from './view/pages/editor_page.js';
+import { SettingsPage } from './view/pages/settings_page.js';
+import { ScriptLoader } from './session/script_loader.js';
+import { CatalogLoader } from './session/catalog_loader.js';
+import { ScriptAutoloaderSalesforce } from './session/script_autoloader_salesforce.js';
+import { ScriptAutoloaderLocal } from './session/script_autoloader_local.js';
+import { SessionStateProvider } from './session/session_state_provider.js';
+import { SessionCommands } from './session/session_commands.js';
+import { QueryExecutor } from './session/query_executor.js';
+import { SessionURLSetup } from './session/session_url_setup.js';
+import { SalesforceConnector } from './connectors/salesforce_connector.js';
+import { LogProvider } from './app_log.js';
+import { AppConfigResolver } from './app_config.js';
+import { NativeApiProvider } from './native_api.js';
 
 import { ThemeProvider } from '@primer/react';
 import { StyleSheetManager } from 'styled-components';
@@ -24,7 +24,7 @@ import isPropValid from '@emotion/is-prop-valid';
 import { createRoot } from 'react-dom/client';
 import { Route, Routes, Navigate, BrowserRouter, HashRouter } from 'react-router-dom';
 
-import '../static/fonts/fonts.module.css';
+import './../static/fonts/fonts.css';
 import './globals.css';
 
 const GitHubDesignSystem = (props: { children: React.ReactElement }) => (
@@ -36,24 +36,24 @@ const GitHubDesignSystem = (props: { children: React.ReactElement }) => (
 const AppProviders = (props: { children: React.ReactElement }) => (
     <GitHubDesignSystem>
         <LogProvider>
-            <ElectronContextResolver>
+            <NativeApiProvider>
                 <AppConfigResolver>
                     <SQLynxLoader>
                         <SalesforceConnector>
-                            <ScriptStateProvider>
-                                <ScriptCommands>
+                            <SessionStateProvider>
+                                <SessionCommands>
                                     <ScriptLoader />
-                                    <ScriptCatalogLoader />
-                                    <ScriptAutoloaderSalesforce />
                                     <ScriptAutoloaderLocal />
-                                    <ScriptQueryExecutor />
-                                    <ScriptURLSetup>{props.children}</ScriptURLSetup>
-                                </ScriptCommands>
-                            </ScriptStateProvider>
+                                    <ScriptAutoloaderSalesforce />
+                                    <CatalogLoader />
+                                    <QueryExecutor />
+                                    <SessionURLSetup>{props.children}</SessionURLSetup>
+                                </SessionCommands>
+                            </SessionStateProvider>
                         </SalesforceConnector>
                     </SQLynxLoader>
                 </AppConfigResolver>
-            </ElectronContextResolver>
+            </NativeApiProvider>
         </LogProvider>
     </GitHubDesignSystem>
 );

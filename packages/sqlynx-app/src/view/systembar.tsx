@@ -1,11 +1,11 @@
 import * as React from 'react';
-import { RefreshingLogViewer } from './log_viewer';
-import { useAppConfig } from '../app_config';
-import { Button, HoverMode } from './button';
+import { RefreshingLogViewer } from './log_viewer.js';
+import { useAppConfig } from '../app_config.js';
+import { Button, HoverMode } from './button.js';
 
 import styles from './systembar.module.css';
 
-import icons from '../../static/svg/symbols.generated.svg';
+import * as icons from '../../static/svg/symbols.generated.svg';
 
 interface SystemPanelProps {
     icon: string;

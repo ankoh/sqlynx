@@ -1,4 +1,4 @@
-import * as proto from '../gen/sqlynx/proto';
+import * as proto from '../gen/sqlynx/proto/index.js';
 import * as flatbuffers from 'flatbuffers';
 
 interface SQLynxModuleExports {

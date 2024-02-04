@@ -1,0 +1,50 @@
+name: 'Setup sqlynx-pack'
+description: 'Action to install the sqlynx-pack'
+
+inputs:
+    os:
+      description: 'The name of the operating system'
+      required: true
+
+runs:
+    using: 'composite'
+    steps:
+        - name: Setup Cargo Cache
+          uses: actions/cache@v4
+          with:
+              path: |
+                  target/
+              key: sqlynx-cargo-${{ inputs.os }}-${{ hashFiles('Cargo.lock') }}
+              restore-keys: sqlynx-cargo-${{ inputs.os }}-
+
+        - name: Install Rust toolchain on Windows
+          if: ${{ inputs.os == 'windows-2022' }}
+          shell: powershell
+          run: |
+            # Disable the download progress bar which can cause perf issues
+            $ProgressPreference = "SilentlyContinue"
+            Invoke-WebRequest https://win.rustup.rs/ -OutFile rustup-init.exe
+            .\rustup-init.exe -y --default-host=x86_64-pc-windows-msvc --default-toolchain=none
+            del rustup-init.exe
+            rustup target add x86_64-pc-windows-msvc
+            rustup show
+
+        - name: Install Rust toolchain on Linux
+          if: ${{ inputs.os == 'ubuntu-22.04' }}
+          shell: bash
+          run: |
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > rustup-init.sh
+            sh rustup-init.sh -y --default-toolchain none
+            rustup target add x86_64-unknown-linux-gnu
+            rustup show
+
+        - name: Install Rust toolchain on MacOS
+          if: ${{ inputs.os == 'macos-14' }}
+          shell: bash
+          run: |
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > rustup-init.sh
+            sh rustup-init.sh -y --default-toolchain none
+            rustup target add x86_64-apple-darwin
+            rustup target add aarch64-apple-darwin
+            rustup show
+

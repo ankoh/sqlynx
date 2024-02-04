@@ -1,6 +1,6 @@
-import { HyperResultStream, HyperServiceClient } from './hyper_service_client';
-import { QueryExecutionResponseStream } from './query_execution';
-import { SalesforceDataCloudAccessToken } from './salesforce_api_client';
+import { HyperResultStream, HyperServiceClient } from './hyper_service_client.js';
+import { QueryExecutionResponseStream } from './query_execution.js';
+import { SalesforceDataCloudAccessToken } from './salesforce_api_client.js';
 
 export function executeQuery(
     scriptText: string,

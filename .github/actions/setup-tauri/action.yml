@@ -1,0 +1,25 @@
+name: 'Setup Tauri'
+description: 'Action to install tauri dependencies'
+
+inputs:
+    os:
+      description: 'The name of the operating system'
+      required: true
+
+runs:
+    using: 'composite'
+    steps:
+        - name: Install apt dependencies
+          if: ${{ inputs.os == 'ubuntu-22.04' }}
+          shell: bash
+          run: |
+            sudo apt-get update
+            sudo apt-get install --no-install-recommends \
+                libwebkit2gtk-4.1-dev \
+                build-essential \
+                curl \
+                wget \
+                file \
+                libssl-dev \
+                libayatana-appindicator3-dev \
+                librsvg2-dev

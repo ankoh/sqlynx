@@ -1,0 +1,56 @@
+[package]
+name = "sqlynx-pack"
+version = "0.0.1-dev.2344+7cfbe06"
+description = "Packaging tool for get.sqlynx.app"
+edition = "2021"
+rust-version = "1.70"
+workspace = "../../"
+
+[dev-dependencies]
+tauri = "2.0.0-beta.2"
+tauri-plugin-updater = "2.0.0-beta.0"
+
+[dependencies]
+futures = "0.3.30"
+chrono = "0.4.34"
+anyhow = "1.0.79"
+semver = "1.0.21"
+aws-sdk-s3 = "1.15.0"
+aws-credential-types = "1.1.5"
+log = "0.4"
+env_logger = "0.11.2"
+git2 = "0.18.2"
+regex = "1.10.3"
+lazy_static = "1.4.0"
+minisign = "0.7.6"
+
+[dependencies.serde]
+version = "1.0.196"
+features = ["derive"]
+
+[dependencies.serde_json]
+version = "1.0.113"
+features = ["preserve_order"]
+
+[dependencies.serde_with]
+version = "3.6.1"
+features = ["json"]
+
+[dependencies.aws-config]
+version = "1.1.5"
+
+[dependencies.tokio]
+version = "1"
+features = ["full"]
+
+[dependencies.clap]
+version = "4.5.1"
+features = ["derive"]
+
+[dependencies.uuid]
+version = "1.7.0"
+features = ["v5"]
+
+[dependencies.toml]
+version = "0.8.10"
+features = ["preserve_order"]

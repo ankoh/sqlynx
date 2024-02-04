@@ -1,10 +1,10 @@
 import * as React from 'react';
 import * as arrow from 'apache-arrow';
-import classNames from 'classnames';
+import * as classNames from 'classnames';
 import { VariableSizeGrid as Grid, GridChildComponentProps } from 'react-window';
 
 import styles from './data_table.module.css';
-import { observeSize } from '../size_observer';
+import { observeSize } from '../size_observer.js';
 
 interface Props {
     className?: string;
@@ -62,7 +62,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
         }
     };
     return (
-        <div className={classNames(styles.root, props.className)}>
+        <div className={classNames.default(styles.root, props.className)}>
             <div className={styles.title_container}>
                 <div className={styles.title}>Query Results</div>
             </div>

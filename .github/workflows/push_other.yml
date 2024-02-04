@@ -5,13 +5,16 @@ on:
         branches-ignore:
             - 'main'
             - 'renovate/*'
+            - 'akohn-publish'
+            - 'akohn-tauri'
 
 jobs:
     build:
         name: Build
         uses: ./.github/workflows/build.yml
         with:
-            sha: github.event.inputs.sha
+            commit: github.event.inputs.sha
+            signed: false
         secrets: inherit
 
     coverage:

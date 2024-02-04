@@ -1,9 +1,9 @@
 import * as React from 'react';
 import styles from './system_card.module.css';
-import classNames from 'classnames';
+import * as classNames from 'classnames';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import icons from '../../static/svg/symbols.generated.svg';
+import * as icons from '../../static/svg/symbols.generated.svg';
 
 interface Props {
     className?: string;
@@ -15,7 +15,7 @@ interface Props {
 export const SystemCard: React.FC<Props> = (props: Props) => (
     <AnimatePresence>
         <motion.div
-            className={classNames(styles.panel, props.className)}
+            className={classNames.default(styles.panel, props.className)}
             initial={{ translateY: 30 }}
             animate={{ translateY: 0 }}
             transition={{ type: 'easeInOut' }}

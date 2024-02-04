@@ -2,7 +2,8 @@
 resolver = "2"
 
 members = [
-    "packages/sqlynx-platform",
+    "packages/sqlynx-native",
+    "packages/sqlynx-pack",
 ]
 
 [profile.release]

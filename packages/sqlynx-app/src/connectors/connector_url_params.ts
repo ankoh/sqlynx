@@ -1,6 +1,6 @@
-import { VariantKind } from '../utils';
-import { SALESFORCE_DATA_CLOUD, LOCAL_SCRIPT, HYPER_DATABASE, ConnectorAuthCheck } from './connector_info';
-import { SalesforceAuthState } from './salesforce_auth_state';
+import { VariantKind } from '../utils/index.js';
+import { SALESFORCE_DATA_CLOUD, LOCAL_SCRIPT, HYPER_DATABASE, ConnectorAuthCheck } from './connector_info.js';
+import { SalesforceAuthState } from './salesforce_auth_state.js';
 
 export interface SalesforceSetupParams {
     instanceUrl: string | null;

@@ -1,12 +1,10 @@
 <!doctype html>
 <html lang="en">
     <head>
-        <base href="./" />
-
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-        <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline';">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'unsafe-inline' 'wasm-unsafe-eval' 'self'; style-src 'unsafe-inline' 'self'; connect-src tauri: ipc: sqlynx-ipc: ws: http: https:" />
 
         <link rel="apple-touch-icon" href="/static/favicons/apple-touch-icon.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/static/favicons/apple-touch-icon.png" />
@@ -20,27 +18,6 @@
         <meta property="og:image" content="/static/favicons/sharingdashql.png" />
 
         <title>SQLynx</title>
-
-        <style>
-            html {
-                width: 100%;
-                height: 100%;
-                padding: 0;
-                margin: 0;
-            }
-            body {
-                width: 100%;
-                height: 100%;
-                padding: 0;
-                margin: 0;
-            }
-            #root {
-                width: 100%;
-                height: 100%;
-                padding: 0;
-                margin: 0;
-            }
-        </style>
     </head>
     <body>
         <div id="root"></div>

@@ -1,21 +1,25 @@
 import * as React from 'react';
-import { NodeLayer } from './node_layer';
-import { EdgeHighlightingLayer, EdgeLayer } from './edge_layer';
-import { GraphNodeDescriptor } from './graph_view_model';
-import { observeSize } from '../size_observer';
-import { useSelectedScriptStateDispatch, useSelectedScriptState } from '../../scripts/script_state_provider';
-import { FOCUS_QUERY_GRAPH_EDGE, FOCUS_QUERY_GRAPH_NODE, RESIZE_QUERY_GRAPH } from '../../scripts/script_state_reducer';
+import { NodeLayer } from './node_layer.js';
+import { EdgeHighlightingLayer, EdgeLayer } from './edge_layer.js';
+import { GraphNodeDescriptor } from './graph_view_model.js';
+import { observeSize } from '../size_observer.js';
+import { useActiveSessionStateDispatch, useActiveSessionState } from '../../session/session_state_provider.js';
+import {
+    FOCUS_QUERY_GRAPH_EDGE,
+    FOCUS_QUERY_GRAPH_NODE,
+    RESIZE_QUERY_GRAPH,
+} from '../../session/session_state_reducer.js';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 
 import styles from './schema_graph.module.css';
 
-import icons from '../../../static/svg/symbols.generated.svg';
+import * as icons from '../../../static/svg/symbols.generated.svg';
 
-interface SchemaGraphViewProps {}
+interface SchemaGraphViewProps { }
 
-const SchemaGraphView: React.FC<SchemaGraphViewProps> = (props: SchemaGraphViewProps) => {
-    const state = useSelectedScriptState();
-    const dispatch = useSelectedScriptStateDispatch();
+const SchemaGraphView: React.FC<SchemaGraphViewProps> = (_props: SchemaGraphViewProps) => {
+    const state = useActiveSessionState();
+    const dispatch = useActiveSessionStateDispatch();
 
     // Helper to change node focus
     const onNodeFocusChanged = React.useCallback(
@@ -78,7 +82,7 @@ interface SchemaGraphBoardProps {
 }
 
 const SchemaGraphBoard: React.FC<SchemaGraphBoardProps> = (props: SchemaGraphBoardProps) => {
-    const dispatch = useSelectedScriptStateDispatch();
+    const dispatch = useActiveSessionStateDispatch();
 
     // Recompute the schema graph if the graph dimension hints change
     React.useEffect(() => {
@@ -101,7 +105,7 @@ const SchemaGraphBoard: React.FC<SchemaGraphBoardProps> = (props: SchemaGraphBoa
                 disabled: false,
             }}
         >
-            {({ zoomIn, zoomOut, resetTransform, ...rest }) => (
+            {({ zoomIn, zoomOut, resetTransform, ...rest }: any) => (
                 <>
                     <TransformComponent>
                         <div className={styles.graph_board} style={{ width: props.width, height: props.height }}>
@@ -131,7 +135,7 @@ const SchemaGraphBoard: React.FC<SchemaGraphBoardProps> = (props: SchemaGraphBoa
     );
 };
 
-interface GraphWithControlsProps {}
+interface GraphWithControlsProps { }
 export const SchemaGraph: React.FC<GraphWithControlsProps> = (props: GraphWithControlsProps) => {
     const containerElement = React.useRef(null);
     const containerSize = observeSize(containerElement);

@@ -1,18 +1,16 @@
-import * as sqlynx from '@ankoh/sqlynx-core';
-
-import { PKCEChallenge } from '../utils/pkce';
-import { sleep } from '../utils/sleep';
-import { QueryExecutionResponseStream } from './query_execution';
+import { PKCEChallenge } from '../utils/pkce.js';
+import { sleep } from '../utils/sleep.js';
+import { QueryExecutionResponseStream } from './query_execution.js';
 import {
     SalesforceAPIClientInterface,
     SalesforceCoreAccessToken,
     SalesforceDataCloudAccessToken,
     SalesforceMetadata,
     SalesforceUserInfo,
-} from './salesforce_api_client';
+} from './salesforce_api_client.js';
 
-import { SalesforceAuthConfig, SalesforceAuthParams } from './salesforce_auth_state';
-import { QueryExecutorMock } from './query_execution_mock';
+import { SalesforceAuthConfig, SalesforceAuthParams } from './salesforce_auth_state.js';
+import { QueryExecutorMock } from './query_execution_mock.js';
 
 export interface SalesforceConnectorMockConfig {
     enabled: boolean;

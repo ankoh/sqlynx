@@ -1,6 +1,6 @@
-import { VariantKind } from '../utils';
-import { SALESFORCE_DATA_CLOUD } from './connector_info';
-import { SalesforceAPIClientInterface, SalesforceDataCloudAccessToken } from './salesforce_api_client';
+import { VariantKind } from '../utils/index.js';
+import { SALESFORCE_DATA_CLOUD } from './connector_info.js';
+import { SalesforceAPIClientInterface, SalesforceDataCloudAccessToken } from './salesforce_api_client.js';
 
 export const FULL_CATALOG_REFRESH = Symbol();
 

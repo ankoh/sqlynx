@@ -3,9 +3,9 @@ import * as sqlynx from '@ankoh/sqlynx-core';
 import { gutter, GutterMarker } from '@codemirror/view';
 import { Transaction, StateField } from '@codemirror/state';
 
-import { SQLynxProcessor, SQLynxScriptBuffers, SQLynxScriptKey } from './sqlynx_processor';
+import { SQLynxProcessor, SQLynxScriptBuffers, SQLynxScriptKey } from './sqlynx_processor.js';
 
-import icons from '../../../static/svg/symbols.generated.svg';
+import * as icons from '../../../static/svg/symbols.generated.svg';
 
 import './sqlynx_gutters.css';
 

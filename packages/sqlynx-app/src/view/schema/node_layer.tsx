@@ -2,18 +2,18 @@ import * as sqlynx from '@ankoh/sqlynx-core';
 import * as React from 'react';
 import cn from 'classnames';
 
-import { VariantKind } from '../../utils/variant';
+import { VariantKind } from '../../utils/variant.js';
 import {
     NodeViewModel,
     EdgeViewModel,
     GraphConnectionId,
     GraphNodeDescriptor,
     GraphBoundaries,
-} from './graph_view_model';
-import { NodePort } from './graph_edges';
-import { FocusInfo } from '../../scripts/focus';
+} from './graph_view_model.js';
+import { NodePort } from './graph_edges.js';
+import { FocusInfo } from '../../session/focus.js';
 
-import icons from '../../../static/svg/symbols.generated.svg';
+import * as icons from '../../../static/svg/symbols.generated.svg';
 
 import styles from './node_layer.module.css';
 

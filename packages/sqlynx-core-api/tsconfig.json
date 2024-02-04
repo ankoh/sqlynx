@@ -3,21 +3,31 @@
         "outDir": "./dist/",
         "baseUrl": ".",
         "target": "es2020",
-        "module": "es2020",
-        "moduleResolution": "node",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
         "sourceMap": true,
         "declaration": true,
         "declarationMap": true,
         "declarationDir": "./dist",
         "noImplicitAny": true,
-        "esModuleInterop": true,
-        "lib": ["es6", "dom"],
-        "types": ["node", "jest"],
+        "esModuleInterop": false,
+        "lib": [
+            "es6",
+            "dom"
+        ],
+        "types": [
+            "node",
+            "jest"
+        ],
         "paths": {
-            "flatbuffers": ["../../node_modules/flatbuffers/js/flatbuffers.mjs"]
+            "flatbuffers": [
+                "../../node_modules/flatbuffers/js/flatbuffers.mjs"
+            ]
         }
     },
-    "include": ["./src/**/*.ts"],
+    "include": [
+        "./src/**/*.ts"
+    ],
     "ts-node": {
         "compilerOptions": {
             "target": "es2022",

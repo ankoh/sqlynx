@@ -1,6 +1,6 @@
 import * as arrow from 'apache-arrow';
-import { QueryExecutionProgress, QueryExecutionResponseStream } from './query_execution';
-import { sleep } from '../utils/sleep';
+import { QueryExecutionProgress, QueryExecutionResponseStream } from './query_execution.js';
+import { sleep } from '../utils/sleep.js';
 
 export class QueryExecutorMock implements QueryExecutionResponseStream {
     schema: arrow.Schema;

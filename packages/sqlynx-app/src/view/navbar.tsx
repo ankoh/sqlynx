@@ -1,19 +1,19 @@
 import * as React from 'react';
-import classNames from 'classnames';
-import { SystemBar } from './systembar';
+import * as classNames from 'classnames';
+import { SystemBar } from './systembar.js';
 import { useLocation } from 'react-router-dom';
-import { useAppConfig } from '../app_config';
-import { HoverMode, LinkButton } from './button';
-import { useElectronContext } from '../electron_context';
+import { useAppConfig } from '../app_config.js';
+import { HoverMode, LinkButton } from './button.js';
+import { useNativeApi } from '../native_api.js';
 
 import styles from './navbar.module.css';
 
-import symbols from '../../static/svg/symbols.generated.svg';
+import * as symbols from '../../static/svg/symbols.generated.svg';
 
 const Tab = (props: { route: string; alt?: string; location: string; icon: string; label: string }) => (
     <div
         key={props.route}
-        className={classNames(styles.tab, {
+        className={classNames.default(styles.tab, {
             [styles.active]: props.location == props.route || props.location == props.alt,
         })}
     >
@@ -31,11 +31,15 @@ const Tab = (props: { route: string; alt?: string; location: string; icon: strin
 export const NavBar = (): React.ReactElement => {
     const appConfig = useAppConfig();
     const location = useLocation();
+    const nativeApi = useNativeApi();
 
-    const isMac = useElectronContext()?.platform === 'darwin';
+    const isMac = nativeApi?.os === 'darwin';
     return (
-        <div className={isMac ? styles.navbar_mac : styles.navbar_default}>
-            <div className={styles.tabs}>
+        <div className={isMac ? styles.navbar_mac : styles.navbar_default}
+        >
+            <div className={styles.tabs}
+                data-tauri-drag-region="true"
+            >
                 <Tab label="Editor" route="/" location={location.pathname} icon={`${symbols}#file_document_multiple`} />
                 {appConfig?.value?.features?.connections && (
                     <Tab label="Settings" route="/settings" location={location.pathname} icon={`${symbols}#settings`} />

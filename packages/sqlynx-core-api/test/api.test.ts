@@ -1,10 +1,11 @@
 import '@jest/globals';
 
-import * as sqlynx from '../src';
-import path from 'path';
-import fs from 'fs';
+import * as sqlynx from '../src/index.js';
+import * as path from 'path';
+import * as fs from 'fs';
+import { fileURLToPath } from 'node:url';
 
-const distPath = path.resolve(__dirname, '../dist');
+const distPath = path.resolve(fileURLToPath(new URL('../dist', import.meta.url)));
 const wasmPath = path.resolve(distPath, './sqlynx.wasm');
 
 describe('SQLynx setup', () => {

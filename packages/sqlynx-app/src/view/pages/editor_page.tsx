@@ -12,33 +12,33 @@ import {
     StopwatchIcon,
 } from '@primer/octicons-react';
 
-import { useConnectorList } from '../../connectors/connector_info';
-import { ConnectorInfo, ConnectorType } from '../../connectors/connector_info';
-import { QueryExecutionTaskStatus } from '../../connectors/query_execution';
+import { useConnectorList } from '../../connectors/connector_info.js';
+import { ConnectorInfo, ConnectorType } from '../../connectors/connector_info.js';
+import { QueryExecutionTaskStatus } from '../../connectors/query_execution.js';
 import {
-    useScriptSelectionIterator,
-    useSelectedScriptState,
-    useSelectedScriptStateDispatch,
-} from '../../scripts/script_state_provider';
-import { ScriptEditor } from '../editor/editor';
-import { SchemaGraph } from '../../view/schema/schema_graph';
-import { QueryProgress } from '../../view/progress/query_progress';
-import { DataTable } from '../../view/table/data_table';
-import { KeyEventHandler, useKeyEvents } from '../../utils/key_events';
-import { VerticalTabs } from '../vertical_tabs';
-import { ScriptFileSaveOverlay } from '../editor/script_filesave_overlay';
-import { ScriptURLOverlay } from '../editor/script_url_overlay';
-import { getConnectorIcon } from '../connector_icons';
-import { useAppConfig } from '../../app_config';
+    useSessionIterator,
+    useActiveSessionState,
+    useActiveSessionStateDispatch,
+} from '../../session/session_state_provider.js';
+import { ScriptEditor } from '../editor/editor.js';
+import { SchemaGraph } from '../../view/schema/schema_graph.js';
+import { QueryProgress } from '../../view/progress/query_progress.js';
+import { DataTable } from '../../view/table/data_table.js';
+import { KeyEventHandler, useKeyEvents } from '../../utils/key_events.js';
+import { VerticalTabs } from '../vertical_tabs.js';
+import { ScriptFileSaveOverlay } from '../editor/script_filesave_overlay.js';
+import { ScriptURLOverlay } from '../editor/script_url_overlay.js';
+import { getConnectorIcon } from '../connector_icons.js';
+import { useAppConfig } from '../../app_config.js';
 
 import styles from './editor_page.module.css';
-import primerBugFixes from '../../primer_bugfixes.module.css';
-import icons from '../../../static/svg/symbols.generated.svg';
+import * as primerBugFixes from '../../primer_bugfixes.module.css';
+import * as icons from '../../../static/svg/symbols.generated.svg';
 
 const ConnectorSelection = (props: { className?: string; variant: 'default' | 'invisible'; short: boolean }) => {
     const connectorList = useConnectorList();
-    const scriptState = useSelectedScriptState();
-    const scriptStateDispatch = useSelectedScriptStateDispatch();
+    const scriptState = useActiveSessionState();
+    const scriptStateDispatch = useActiveSessionStateDispatch();
     const [isOpen, setIsOpen] = React.useState<boolean>(false);
     const selectConnector = React.useCallback((e: React.MouseEvent<HTMLLIElement, MouseEvent>) => {
         e.stopPropagation();
@@ -53,8 +53,8 @@ const ConnectorSelection = (props: { className?: string; variant: 'default' | 'i
     const connectorName = !scriptState?.connectorInfo
         ? 'Not set'
         : props.short
-          ? scriptState?.connectorInfo.displayName.short
-          : scriptState?.connectorInfo.displayName.long;
+            ? scriptState?.connectorInfo.displayName.short
+            : scriptState?.connectorInfo.displayName.long;
     //        <ActionMenu.Overlay width={props.short ? 'auto' : 'medium'} align="end">
     //            <ActionList>
     //                {connectorList.map((connector, i) => (
@@ -209,11 +209,11 @@ interface TabState {
     enabledTabs: number;
 }
 
-interface Props {}
+interface Props { }
 
 export const EditorPage: React.FC<Props> = (_props: Props) => {
-    const scriptState = useSelectedScriptState();
-    const scriptSelectionIterator = useScriptSelectionIterator();
+    const scriptState = useActiveSessionState();
+    const scriptSelectionIterator = useSessionIterator();
     const [selectedTab, selectTab] = React.useState<TabKey>(TabKey.SchemaView);
     const [sharingIsOpen, setSharingIsOpen] = React.useState<boolean>(false);
 
@@ -273,8 +273,8 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
         !scriptState?.connectorInfo
             ? 'Not set'
             : short
-              ? scriptState?.connectorInfo.displayName.short
-              : scriptState?.connectorInfo.displayName.long;
+                ? scriptState?.connectorInfo.displayName.short
+                : scriptState?.connectorInfo.displayName.long;
 
     return (
         <div className={styles.page}>
