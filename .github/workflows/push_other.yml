@@ -1,0 +1,42 @@
+name: Branch
+
+on:
+    push:
+        branches-ignore:
+            - 'main'
+            - 'renovate/*'
+
+jobs:
+    build:
+        name: Build
+        uses: ./.github/workflows/build.yml
+        with:
+            sha: github.event.inputs.sha
+        secrets: inherit
+
+    coverage:
+        name: Collect Coverage Report
+        runs-on: ubuntu-22.04
+        needs:
+            - build
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  submodules: 'recursive'
+                  fetch-depth: 0
+                  ref: ${{ github.event.inputs.sha || github.sha }}
+
+            - uses: actions/download-artifact@v4
+              with:
+                  name: sqlynx_coverage_native_o0
+                  path: ./packages/sqlynx-core/build/coverage/
+
+            - uses: actions/download-artifact@v4
+              with:
+                  name: sqlynx_coverage_js
+                  path: ./packages/sqlynx-core-api/coverage/
+
+            - name: Upload coverage report
+              uses: coverallsapp/github-action@v2
+              with:
+                  github-token: ${{secrets.GITHUB_TOKEN}}
