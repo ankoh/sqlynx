@@ -2,9 +2,6 @@ name: Main
 
 on:
     push:
-        branches-ignore:
-            - 'renovate/*'
-    pull_request:
         branches:
             - 'main'
 
@@ -18,7 +15,6 @@ jobs:
 
     coverage:
         name: Collect Coverage Report
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         runs-on: ubuntu-22.04
         needs:
             - build
@@ -46,7 +42,6 @@ jobs:
 
     pages:
         name: Deploy GitHub Pages
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         runs-on: ubuntu-22.04
         needs:
             - build
