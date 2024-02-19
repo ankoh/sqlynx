@@ -11,7 +11,7 @@ use std::path::PathBuf;
 
 lazy_static! {
     static ref REGEX_DESCRIBE_LONG: Regex =
-        Regex::new("([0-9]+).([0-9]+).([0-9]+)-([0-9]+)-g([a-f0-9]+)").unwrap();
+        Regex::new("v([0-9]+).([0-9]+).([0-9]+)-([0-9]+)-g([a-f0-9]+)").unwrap();
 }
 
 pub struct GitVersion {
