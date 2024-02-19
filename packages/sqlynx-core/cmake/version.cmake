@@ -23,9 +23,9 @@ else()
 endif()
 
 if(GIT_RESULT EQUAL "0")
-    string(REGEX REPLACE "([0-9]+).[0-9]+.[0-9]+" "\\1" SQLYNX_VERSION_MAJOR "${GIT_LAST_TAG}")
-    string(REGEX REPLACE "[0-9]+.([0-9]+).[0-9]+" "\\1" SQLYNX_VERSION_MINOR "${GIT_LAST_TAG}")
-    string(REGEX REPLACE "[0-9]+.[0-9]+.([0-9]+)" "\\1" SQLYNX_VERSION_PATCH "${GIT_LAST_TAG}")
+    string(REGEX REPLACE "v([0-9]+).[0-9]+.[0-9]+" "\\1" SQLYNX_VERSION_MAJOR "${GIT_LAST_TAG}")
+    string(REGEX REPLACE "v[0-9]+.([0-9]+).[0-9]+" "\\1" SQLYNX_VERSION_MINOR "${GIT_LAST_TAG}")
+    string(REGEX REPLACE "v[0-9]+.[0-9]+.([0-9]+)" "\\1" SQLYNX_VERSION_PATCH "${GIT_LAST_TAG}")
     string(REGEX REPLACE ".*-([0-9]+)-.*" "\\1" SQLYNX_VERSION_DEV "${GIT_ITERATION}")
 
     if(SQLYNX_VERSION_DEV EQUAL 0)
