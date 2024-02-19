@@ -14,7 +14,7 @@ pub fn derive_remote_paths(release: &ReleaseVersion) -> RemotePaths {
         ReleaseChannel::Canary => vec!["canary.json"],
     };
     let channel_update = match release.channel {
-        ReleaseChannel::Stable => vec!["stable-update.json", "/canary-update.json"],
+        ReleaseChannel::Stable => vec!["stable-update.json", "canary-update.json"],
         ReleaseChannel::Canary => vec!["canary-update.json"],
     };
     let release_directory = format!("releases/{}", release.version.to_string());
