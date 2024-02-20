@@ -1,16 +1,9 @@
 .container {
-    display: flex;
-    justify-content: center;
-    height: 100%;
-    background: var(--background);
-}
-
-.center_container {
     display: grid;
     grid-template-rows: var(--nav_bar_height) calc(100% - var(--nav_bar_height));
     grid-template-columns: 1fr;
+    background: var(--background);
     height: 100%;
-    flex: 1;
 }
 
 .navbar_mac {
@@ -37,15 +30,31 @@
     grid-template-rows: var(--nav_bar_height);
 }
 
-.page_container {
-    grid-row: 2;
-    grid-column: 1;
-    height: calc(100% - 8px);
-    width: calc(100% - 16px);
-    margin: 0px 8px 8px 8px;
+.version_container {
+    grid-row: 1;
+    grid-column: 3;
+    display: grid;
+    grid-template-columns: max-content max-content;
+    grid-column-gap: 8px;
+    margin-right: 16px;
+}
 
-    border-radius: var(--border_radius);
-    overflow: hidden;
+.version {
+    font-size: 0.9rem;
+    height: 30px;
+    display: grid;
+    justify-content: center;
+    align-items: center;
+    padding: 0px 8px;
+}
+
+.git_commit {
+    font-size: 0.9rem;
+    height: 30px;
+    display: grid;
+    justify-content: center;
+    align-items: center;
+    padding: 0px 8px;
 }
 
 .tabs {
@@ -89,4 +98,15 @@
     display: grid;
     grid-template-columns: max-content max-content;
     column-gap: 8px;
+}
+
+.page_container {
+    grid-row: 2;
+    grid-column: 1;
+    height: calc(100% - 8px);
+    width: calc(100% - 16px);
+    margin: 0px 8px 8px 8px;
+
+    border-radius: var(--border_radius);
+    overflow: hidden;
 }

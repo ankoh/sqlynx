@@ -169,35 +169,6 @@ const NavCommandList = (props: { canCycleScripts: boolean; canCycleOutput: boole
     </>
 );
 
-const ProjectCommandList = (props: {}) => {
-    const GitHubIcon = () => (
-        <svg width="20px" height="20px">
-            <use xlinkHref={`${icons}#github`} />
-        </svg>
-    );
-    return (
-        <>
-            <ActionList.LinkItem href="https://github.com/ankoh/sqlynx" target="_blank">
-                <ActionList.LeadingVisual>
-                    <GitHubIcon />
-                </ActionList.LeadingVisual>
-                Open-source project
-            </ActionList.LinkItem>
-            <ActionList.LinkItem href="https://github.com/ankoh/sqlynx/issues" target="_blank">
-                <ActionList.LeadingVisual>
-                    <GitHubIcon />
-                </ActionList.LeadingVisual>
-                Report a bug
-            </ActionList.LinkItem>
-            <ActionList.LinkItem href="https://github.com/ankoh/sqlynx/discussions" target="_blank">
-                <ActionList.LeadingVisual>
-                    <GitHubIcon />
-                </ActionList.LeadingVisual>
-                View discussions
-            </ActionList.LinkItem>
-        </>
-    );
-};
 
 enum TabKey {
     SchemaView = 0,
@@ -348,9 +319,6 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                         canCycleScripts={scriptSelectionIterator.count > 1}
                         canCycleOutput={enabledTabs > 1}
                     />
-                    <ActionList.Divider />
-                    <ActionList.GroupHeading as="h2">Project</ActionList.GroupHeading>
-                    <ProjectCommandList />
                 </ActionList>
             </div>
         </div>

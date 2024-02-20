@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { useAppConfig } from '../app_config.js';
 import { HoverMode, LinkButton } from './button.js';
 import { useNativeApi } from '../native_api.js';
+import { SQLYNX_GIT_COMMIT, SQLYNX_VERSION } from '../app_version.js';
 
 import styles from './navbar.module.css';
 
@@ -28,7 +29,6 @@ const Tab = (props: { route: string; alt?: string; location: string; icon: strin
 );
 
 export const NavBar = (): React.ReactElement => {
-    const appConfig = useAppConfig();
     const location = useLocation();
     const nativeApi = useNativeApi();
 
@@ -42,9 +42,23 @@ export const NavBar = (): React.ReactElement => {
                 <Tab label="Editor" route="/" location={location.pathname} icon={`${symbols}#file_document_multiple`} />
                 <Tab label="Settings" route="/settings" location={location.pathname} icon={`${symbols}#settings`} />
             </div>
+            <div className={styles.version_container}>
+                <div className={styles.version}>
+                    {SQLYNX_VERSION}
+                </div>
+                <div className={styles.git_commit}>
+                    {SQLYNX_GIT_COMMIT}
+                </div>
+            </div>
         </div>
     );
 };
+
+//     const GitHubIcon = () => (
+//         <svg width="20px" height="20px">
+//             <use xlinkHref={`${icons}#github`} />
+//         </svg>
+//     );
 
 export function withNavBar<P extends React.JSX.IntrinsicAttributes>(
     Component: React.ComponentType<P>,
@@ -53,11 +67,9 @@ export function withNavBar<P extends React.JSX.IntrinsicAttributes>(
     return (props: P) => {
         return (
             <div className={styles.container}>
-                <div className={styles.center_container}>
-                    <NavBar />
-                    <div className={styles.page_container}>
-                        <Component {...props} />
-                    </div>
+                <NavBar />
+                <div className={styles.page_container}>
+                    <Component {...props} />
                 </div>
             </div>
         );
