@@ -1,9 +1,5 @@
 {
     "features": {
-        "userAccount": false,
-        "appInfo": false,
-        "logViewer": false,
-        "connections": true,
         "completionDetails": false,
         "grpcConnector": false
     },
@@ -20,7 +16,7 @@
                 "artifactPaths": {
                     "windows": {
                         "python": "tableauhyperapi-{{VERSION_SHORT}}-py3-none-win_amd64.whl",
-                        "cxx":  "tableauhyperapi-cxx-windows-x86_64-release-main.{{VERSION_LONG}}.zip",
+                        "cxx": "tableauhyperapi-cxx-windows-x86_64-release-main.{{VERSION_LONG}}.zip",
                         "java": "tableauhyperapi-java-windows-x86_64-release-main.{{VERSION_LONG}}.zip",
                         "dotnet": "tableauhyperapi-dotnet-windows-x86_64-main.{{VERSION_LONG}}.zip"
                     },
@@ -39,7 +35,7 @@
                     "docs": {
                         "python": "tableauhyperapi-py-docs-main.{{VERSION_LONG}}.zip",
                         "cxx": "tableauhyperapi-cxx-docs-main.{{VERSION_LONG}}.zip",
-                        "java":  "tableauhyperapi-java-docs-main.{{VERSION_LONG}}.zip",
+                        "java": "tableauhyperapi-java-docs-main.{{VERSION_LONG}}.zip",
                         "dotnet": "tableauhyperapi-dotnet-docs-main.{{VERSION_LONG}}.zip"
                     }
                 }

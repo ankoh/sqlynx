@@ -5,10 +5,6 @@ import { ConnectorConfigs, readConnectorConfigs } from './connectors/connector_c
 const CONFIG_URL = new URL('../static/config.json', import.meta.url);
 
 export interface AppFeatures {
-    userAccount?: boolean;
-    appInfo?: boolean;
-    logViewer?: boolean;
-    connections?: boolean;
     completionDetails?: boolean;
     grpcConnector?: boolean;
     refreshSchema?: boolean;
