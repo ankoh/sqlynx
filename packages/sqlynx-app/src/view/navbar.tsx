@@ -1,6 +1,5 @@
 import * as React from 'react';
 import * as classNames from 'classnames';
-import { SystemBar } from './systembar.js';
 import { useLocation } from 'react-router-dom';
 import { useAppConfig } from '../app_config.js';
 import { HoverMode, LinkButton } from './button.js';
@@ -41,11 +40,8 @@ export const NavBar = (): React.ReactElement => {
                 data-tauri-drag-region="true"
             >
                 <Tab label="Editor" route="/" location={location.pathname} icon={`${symbols}#file_document_multiple`} />
-                {appConfig?.value?.features?.connections && (
-                    <Tab label="Settings" route="/settings" location={location.pathname} icon={`${symbols}#settings`} />
-                )}
+                <Tab label="Settings" route="/settings" location={location.pathname} icon={`${symbols}#settings`} />
             </div>
-            <SystemBar className={styles.sysbar} />
         </div>
     );
 };
@@ -60,7 +56,7 @@ export function withNavBar<P extends React.JSX.IntrinsicAttributes>(
                 <div className={styles.center_container}>
                     <NavBar />
                     <div className={styles.page_container}>
-                        <Component {...props} className={styles.page} />
+                        <Component {...props} />
                     </div>
                 </div>
             </div>
