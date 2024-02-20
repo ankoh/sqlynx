@@ -7,6 +7,8 @@
         "main-*"
     ],
     "permissions": [
-        "window:allow-start-dragging"
+        "window:allow-start-dragging",
+        "updater:allow-check",
+        "updater:allow-download-and-install"
     ]
 }
