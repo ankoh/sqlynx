@@ -6,6 +6,7 @@ import * as childProcess from 'child_process';
 import webpack from 'webpack';
 import * as webpackDevServer from 'webpack-dev-server';
 import * as url from 'url';
+import * as fs from 'fs';
 
 export type Configuration = webpack.Configuration & {
     devServer?: webpackDevServer.Configuration;
@@ -21,6 +22,10 @@ interface ConfigParams {
     cssIdentifier: string;
     appURL: string;
 }
+
+// Read package json
+const PACKAGE_JSON_PATH = url.fileURLToPath(new URL('../package.json', import.meta.url));
+const PACKAGE_JSON = JSON.parse(fs.readFileSync(PACKAGE_JSON_PATH, 'utf8')) as { version: string; gitCommit: string; };
 
 /// IMPORTANT
 ///
@@ -157,6 +162,8 @@ export function configure(params: ConfigParams): Partial<Configuration> {
                 base: params.relocatable ? './' : '/',
             }),
             new webpack.DefinePlugin({
+                'process.env.SQLYNX_VERSION': JSON.stringify(PACKAGE_JSON.version),
+                'process.env.SQLYNX_GIT_COMMIT': JSON.stringify(PACKAGE_JSON.gitCommit),
                 'process.env.SQLYNX_APP_URL': JSON.stringify(params.appURL),
                 'process.env.SQLYNX_RELATIVE_IMPORTS': params.relocatable,
             }),
