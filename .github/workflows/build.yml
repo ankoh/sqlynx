@@ -34,12 +34,9 @@ jobs:
             - name: Setup cargo cache
               uses: actions/cache@v4
               with:
-                  path: |
-                      target/
-                  key: sqlynx-cargo-macos-pack-${{ matrix.build.target }}-${{ hashFiles('Cargo.lock') }}
                   restore-keys: |
-                    sqlynx-cargo-macos-pack-${{ matrix.build.target }}-${{ hashFiles('Cargo.lock') }}
-                    sqlynx-cargo-macos-pack-${{ matrix.build.target }}-
+                    cargo-macos-${{ hashFiles('Cargo.lock') }}
+                    cargo-macos-
 
             - name: Setup rust
               uses: ./.github/actions/setup-rust
@@ -349,10 +346,10 @@ jobs:
               with:
                   path: |
                       target/
-                  key: sqlynx-cargo-macos-app-${{ hashFiles('Cargo.lock') }}
+                  key: cargo-macos-${{ hashFiles('Cargo.lock') }}
                   restore-keys: |
-                    sqlynx-cargo-macos-app-${{ hashFiles('Cargo.lock') }}
-                    sqlynx-cargo-macos-app-
+                    cargo-macos-${{ hashFiles('Cargo.lock') }}
+                    cargo-macos-
 
             - name: Setup rust
               uses: ./.github/actions/setup-rust
