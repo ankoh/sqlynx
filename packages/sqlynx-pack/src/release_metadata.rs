@@ -48,7 +48,7 @@ impl Serialize for ArtifactTarget {
             Platform::Windows => "windows",
             Platform::Linux => "linux",
         };
-        serializer.serialize_str(&format!("{}-{}", arch, platform))
+        serializer.serialize_str(&format!("{}-{}", platform, arch))
     }
 }
 impl<'d> Deserialize<'d> for ArtifactTarget {
