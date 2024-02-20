@@ -1,6 +1,6 @@
 [package]
 name = "sqlynx-native"
-version = "0.0.1-dev.2344+7cfbe06"
+version = "0.0.2-dev.14"
 description = "SQL client for the Hyper database system and Salesforce Data Cloud"
 edition = "2021"
 rust-version = "1.70"

@@ -4577,7 +4577,7 @@ dependencies = [
 
 [[package]]
 name = "sqlynx-native"
-version = "0.0.1-dev.2344+7cfbe06"
+version = "0.0.2-dev.14"
 dependencies = [
  "bytes",
  "http 1.0.0",
@@ -4594,7 +4594,7 @@ dependencies = [
 
 [[package]]
 name = "sqlynx-pack"
-version = "0.0.1-dev.2344+7cfbe06"
+version = "0.0.2-dev.14"
 dependencies = [
  "anyhow",
  "aws-config",
