@@ -33,11 +33,12 @@ const History: React.FC<HistoryProps> = (props: HistoryProps) => {
 
 interface Props {
     className?: string;
-    stats: Immutable.List<sqlynx.FlatBufferPtr<sqlynx.proto.ScriptStatistics>>;
+    stats: Immutable.List<sqlynx.FlatBufferPtr<sqlynx.proto.ScriptStatistics>> | null;
 }
 
 export const ScriptStatisticsBar: React.FC<Props> = (props: Props) => {
-    if (props.stats.isEmpty()) {
+    let stats = props.stats ?? Immutable.List();
+    if (stats.isEmpty()) {
         return <div className={props.className}></div>;
     }
 
@@ -60,18 +61,18 @@ export const ScriptStatisticsBar: React.FC<Props> = (props: Props) => {
         return total;
     };
 
-    const last = props.stats.last()!.read(protoStats)!;
+    const last = stats.last()!.read(protoStats)!;
     const lastTotalElapsed = computeTotalElapsed(last.timings(protoTimings)!);
     const lastTotalMemory = computeTotalMemory(last.memory(protoMemory)!);
 
-    const n = Math.min(props.stats.size, 20);
+    const n = Math.min(stats.size, 20);
     const bufferSize = Math.max(n, 20);
     const elapsedHistory = new Float64Array(bufferSize);
     const memoryHistory = new Float64Array(bufferSize);
     let maxTotalElapsed = 0;
     let maxTotalMemory = 0;
     let writer = 0;
-    for (const reading of props.stats.toSeq().take(n)) {
+    for (const reading of stats.toSeq().take(n)) {
         const stats = reading.read(protoStats)!;
         const totalElapsed = computeTotalElapsed(stats.timings(protoTimings)!);
         const totalMemory = computeTotalMemory(stats.memory(protoMemory)!);

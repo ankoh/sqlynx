@@ -244,7 +244,7 @@ export function NodeLayer(props: Props) {
                             )}
                         </div>
                         <div className={styles.table_icon}>
-                            <svg width="20px" height="20px">
+                            <svg width="14px" height="14px">
                                 <use xlinkHref={`${icons}#table`} />
                             </svg>
                         </div>

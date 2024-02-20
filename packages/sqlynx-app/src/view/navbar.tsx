@@ -54,11 +54,11 @@ export const NavBar = (): React.ReactElement => {
             <div className={styles.tabs}
                 data-tauri-drag-region="true"
             >
-                <PageTab label="Editor" route="/" location={location.pathname} icon={`${symbols}#file_document_multiple`} />
+                <PageTab label="Editor" route="/" location={location.pathname} icon={`${symbols}#file`} />
                 <PageTab label="Settings" route="/settings" location={location.pathname} icon={`${symbols}#settings`} />
             </div>
             <div className={styles.version_container}>
-                <ExternalLink label={SQLYNX_VERSION} url="https://google.com" icon={`${symbols}#package_variant_closed`} />
+                <ExternalLink label={SQLYNX_VERSION} url="https://google.com" icon={`${symbols}#package`} />
                 <ExternalLink label={SQLYNX_GIT_COMMIT} url={SQLYNX_GIT_REPO_URL} icon={`${symbols}#github`} />
             </div>
         </div>
