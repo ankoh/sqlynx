@@ -41,7 +41,7 @@ export const VerticalTabs: React.FC<Props> = (props: Props) => {
                         onClick={tabProps.enabled ? selectTab : undefined}
                     >
                         <div className={styles.tab_icon}>
-                            <svg width="20px" height="20px">
+                            <svg width="18px" height="18px">
                                 <use xlinkHref={tabProps.icon} />
                             </svg>
                         </div>

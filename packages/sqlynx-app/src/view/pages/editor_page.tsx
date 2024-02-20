@@ -240,13 +240,6 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
         prevStatus.current = status;
     }, [scriptState?.queryExecutionState?.status]);
 
-    const connectorName = (short: boolean) =>
-        !scriptState?.connectorInfo
-            ? 'Not set'
-            : short
-                ? scriptState?.connectorInfo.displayName.short
-                : scriptState?.connectorInfo.displayName.long;
-
     return (
         <div className={styles.page}>
             <div className={styles.header_container}>

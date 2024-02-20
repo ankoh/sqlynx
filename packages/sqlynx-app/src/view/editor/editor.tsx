@@ -160,8 +160,6 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         updateScript,
     ]);
 
-    // Helper to toggle the folder and stats
-    const toggleOpenStats = () => setStatsOpen(s => !s);
     // Get the title of the tab
     let tabTitle = '';
     switch (activeTab) {
@@ -176,12 +174,6 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
             break;
     }
 
-    const StatsIcon: React.ElementType<any> = () => (
-        <svg className={styles.button_icon} width="20px" height="20px">
-            <use xlinkHref={`${icons}${statsOpen ? '#chevron_right' : '#speedometer'}`} />
-        </svg>
-    );
-
     const EditorPage = (
         <div className={styles.editor_with_header}>
             <div className={styles.headerbar}>
@@ -189,14 +181,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                     <div className={styles.script_title}>{tabTitle}</div>
                 </div>
                 <div className={styles.script_statistics_container}>
-                    <IconButton
-                        className={styles.script_statistics_toggle}
-                        variant="invisible"
-                        icon={StatsIcon}
-                        aria-labelledby="stats"
-                        onClick={toggleOpenStats}
-                    />
-                    {activeScriptStatistics && statsOpen && <ScriptStatisticsBar stats={activeScriptStatistics} />}
+                    <ScriptStatisticsBar stats={activeScriptStatistics} />
                 </div>
             </div>
             <div className={styles.editor_with_loader}>
@@ -218,7 +203,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
             selectedTab={activeTab}
             selectTab={setActiveTab}
             tabs={[
-                { tabId: TabId.MAIN_SCRIPT, icon: `${icons}#database_search`, label: 'Query', enabled: true },
+                { tabId: TabId.MAIN_SCRIPT, icon: `${icons}#search`, label: 'Query', enabled: true },
                 {
                     tabId: TabId.SCHEMA_SCRIPT,
                     icon: `${icons}#database`,
