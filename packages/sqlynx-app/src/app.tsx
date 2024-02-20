@@ -15,6 +15,7 @@ import { SessionURLSetup } from './session/session_url_setup.js';
 import { SalesforceConnector } from './connectors/salesforce_connector.js';
 import { LogProvider } from './app_log.js';
 import { AppConfigResolver } from './app_config.js';
+import { SQLYNX_GIT_COMMIT, SQLYNX_VERSION } from './app_version.js';
 import { NativeApiProvider } from './native_api.js';
 
 import { ThemeProvider } from '@primer/react';
@@ -62,6 +63,9 @@ const Editor = withNavBar(EditorPage);
 const Settings = withNavBar(SettingsPage);
 
 const Router = process.env.SQLYNX_RELATIVE_IMPORTS ? HashRouter : BrowserRouter;
+
+console.log(SQLYNX_VERSION);
+console.log(SQLYNX_GIT_COMMIT);
 
 const element = document.getElementById('root');
 const root = createRoot(element!);

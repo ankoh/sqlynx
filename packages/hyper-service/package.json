@@ -1,7 +1,8 @@
 {
     "name": "@ankoh/hyper-service",
     "private": true,
-    "version": "0.0.2-dev.14",
+    "version": "0.0.2-dev.17",
+    "gitCommit": "453866d",
     "description": "",
     "dependencies": {
         "@connectrpc/connect-web": "^1.3.0",

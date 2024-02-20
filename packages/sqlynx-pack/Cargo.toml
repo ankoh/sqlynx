@@ -1,6 +1,6 @@
 [package]
 name = "sqlynx-pack"
-version = "0.0.2-dev.14"
+version = "0.0.2-dev.17"
 description = "Packaging tool for get.sqlynx.app"
 edition = "2021"
 rust-version = "1.70"

@@ -11,7 +11,7 @@ use toml::Value as TomlValue;
 #[derive(Parser, Debug)]
 pub struct FreezeArgs {}
 
-fn update_package_json(path: &PathBuf, version: &str) -> Result<()> {
+fn update_package_json(path: &PathBuf, version: &str, git_commit: &str) -> Result<()> {
     let mut value: serde_json::Value;
     {
         let file = File::open(path)?;
@@ -20,6 +20,9 @@ fn update_package_json(path: &PathBuf, version: &str) -> Result<()> {
         if let JsonValue::Object(o) = &mut value {
             if let Some(v) = o.get_mut("version") {
                 *v = JsonValue::String(version.to_string());
+            }
+            if let Some(v) = o.get_mut("gitCommit") {
+                *v = JsonValue::String(git_commit.to_string());
             }
         }
     }
@@ -104,11 +107,19 @@ pub fn freeze() -> Result<()> {
 
     log::info!("version: {}", &version);
     log::info!("patching @ankoh/sqlynx-app package.json");
-    update_package_json(&app_package_json, &version)?;
+    update_package_json(&app_package_json, &version, &git_repo.version.short_hash)?;
     log::info!("patching @ankoh/sqlynx-core-api package.json");
-    update_package_json(&core_api_package_json, &version)?;
+    update_package_json(
+        &core_api_package_json,
+        &version,
+        &git_repo.version.short_hash,
+    )?;
     log::info!("patching @ankoh/hyper-service package.json");
-    update_package_json(&hyper_service_package_json, &version)?;
+    update_package_json(
+        &hyper_service_package_json,
+        &version,
+        &git_repo.version.short_hash,
+    )?;
     log::info!("patching @ankoh/sqlynx-native tauri.conf.json");
     update_tauri_config_json(&tauri_config_json, &version)?;
     log::info!("patching sqlynx-native Cargo.toml");
