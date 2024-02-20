@@ -27,29 +27,6 @@ enum TabId {
     ACCOUNT = 3,
 }
 
-interface TabProps {
-    id: TabId;
-    active: TabId;
-    icon: string;
-    disabled?: boolean;
-    onClick: (event: React.MouseEvent<HTMLDivElement>) => void;
-}
-
-const Tab: React.FC<TabProps> = (props: TabProps) => (
-    <div
-        className={cn(styles.tab, {
-            [styles.tab_active]: props.id == props.active,
-            [styles.tab_disabled]: props.disabled ?? false,
-        })}
-        onClick={props.onClick}
-        data-tab={props.id}
-    >
-        <svg className={styles.button_icon} width="20px" height="20px">
-            <use xlinkHref={props.icon} />
-        </svg>
-    </div>
-);
-
 interface Props {
     className?: string;
 }
