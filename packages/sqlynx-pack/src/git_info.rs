@@ -31,7 +31,7 @@ impl GitVersion {
                 minor: self.minor as u64,
                 patch: self.patch as u64,
                 pre: Prerelease::EMPTY,
-                build: BuildMetadata::new(&self.short_hash).unwrap(),
+                build: BuildMetadata::EMPTY,
             }
         } else {
             Version {
@@ -39,7 +39,8 @@ impl GitVersion {
                 minor: self.minor as u64,
                 patch: (self.patch + 1) as u64,
                 pre: Prerelease::new(&format!("dev.{}", self.iteration)).unwrap(),
-                build: BuildMetadata::new(&self.short_hash).unwrap(),
+                // build: BuildMetadata::new(&self.short_hash).unwrap(),
+                build: BuildMetadata::EMPTY,
             }
         }
     }
