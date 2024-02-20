@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import LZString from 'lz-string';
+import * as LZString from 'lz-string';
 import { Button, IconButton } from '@primer/react';
 import { SyncIcon } from '@primer/octicons-react';
 import { useLocation } from 'react-router-dom';
