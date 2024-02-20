@@ -22,8 +22,8 @@
     --nav_bar_width: 48px;
     --nav_bar_height: 40px;
     --nav_bar_border: 1px solid var(--border_color_primary);
-    --nav_tab_bg: hsl(208.5deg 24.69% 31.76%);
-    --nav_tab_bg_active: hsl(208.5deg 24.69% 43.76%);
+    --nav_tab_bg: transparent;
+    --nav_tab_bg_active: hsl(208.5deg 24.69% 40.76%);
     --nav_tab_fg: white;
     --nav_tab_fg_active: white;
     --nav_tab_border: 1px solid black;

@@ -4,13 +4,13 @@ import { useLocation } from 'react-router-dom';
 import { useAppConfig } from '../app_config.js';
 import { HoverMode, LinkButton } from './button.js';
 import { useNativeApi } from '../native_api.js';
-import { SQLYNX_GIT_COMMIT, SQLYNX_VERSION } from '../app_version.js';
+import { SQLYNX_GIT_COMMIT, SQLYNX_GIT_REPO_URL, SQLYNX_VERSION } from '../app_version.js';
 
 import styles from './navbar.module.css';
 
 import * as symbols from '../../static/svg/symbols.generated.svg';
 
-const Tab = (props: { route: string; alt?: string; location: string; icon: string; label: string }) => (
+const PageTab = (props: { route: string; alt?: string; location: string; icon: string; label: string }) => (
     <div
         key={props.route}
         className={classNames.default(styles.tab, {
@@ -28,6 +28,21 @@ const Tab = (props: { route: string; alt?: string; location: string; icon: strin
     </div>
 );
 
+const ExternalLink = (props: { url: string; alt?: string; icon?: string; label: string }) => (
+    <div className={styles.tab}>
+        <LinkButton className={styles.tab_link} to={props.url} hover={HoverMode.Darken} newWindow={true}>
+            <>
+                {props.icon &&
+                    <svg width="16px" height="16px">
+                        <use xlinkHref={props.icon} />
+                    </svg>
+                }
+                <div>{props.label}</div>
+            </>
+        </LinkButton>
+    </div>
+);
+
 export const NavBar = (): React.ReactElement => {
     const location = useLocation();
     const nativeApi = useNativeApi();
@@ -39,16 +54,12 @@ export const NavBar = (): React.ReactElement => {
             <div className={styles.tabs}
                 data-tauri-drag-region="true"
             >
-                <Tab label="Editor" route="/" location={location.pathname} icon={`${symbols}#file_document_multiple`} />
-                <Tab label="Settings" route="/settings" location={location.pathname} icon={`${symbols}#settings`} />
+                <PageTab label="Editor" route="/" location={location.pathname} icon={`${symbols}#file_document_multiple`} />
+                <PageTab label="Settings" route="/settings" location={location.pathname} icon={`${symbols}#settings`} />
             </div>
             <div className={styles.version_container}>
-                <div className={styles.version}>
-                    {SQLYNX_VERSION}
-                </div>
-                <div className={styles.git_commit}>
-                    {SQLYNX_GIT_COMMIT}
-                </div>
+                <ExternalLink label={SQLYNX_VERSION} url="https://google.com" icon={`${symbols}#package_variant_closed`} />
+                <ExternalLink label={SQLYNX_GIT_COMMIT} url={SQLYNX_GIT_REPO_URL} icon={`${symbols}#github`} />
             </div>
         </div>
     );

@@ -41,6 +41,7 @@ type LinkProps = {
     hover?: HoverMode;
     invert?: boolean;
     children?: React.ReactElement;
+    newWindow?: boolean;
 };
 
 export const LinkButton: React.FC<LinkProps> = (props: LinkProps) => (
@@ -53,6 +54,7 @@ export const LinkButton: React.FC<LinkProps> = (props: LinkProps) => (
             [styles.hover_darken]: props.hover === HoverMode.Darken,
         })}
         to={props.to}
+        target={props.newWindow ? '_blank' : undefined}
     >
         {props.children}
     </Link>
