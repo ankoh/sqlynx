@@ -31,6 +31,16 @@ jobs:
                   fetch-depth: 0
                   ref: ${{ github.event.inputs.commit || github.sha }}
 
+            - name: Setup cargo cache
+              uses: actions/cache@v4
+              with:
+                  path: |
+                      target/
+                  key: sqlynx-cargo-macos-pack-${{ matrix.build.target }}-${{ hashFiles('Cargo.lock') }}
+                  restore-keys: |
+                    sqlynx-cargo-macos-pack-${{ matrix.build.target }}-${{ hashFiles('Cargo.lock') }}
+                    sqlynx-cargo-macos-pack-${{ matrix.build.target }}-
+
             - name: Setup rust
               uses: ./.github/actions/setup-rust
               with:
@@ -333,6 +343,16 @@ jobs:
               with:
                 name: sqlynx_pwa_reloc
                 path: ${{ github.workspace }}/packages/sqlynx-app/build/reloc
+
+            - name: Setup cargo cache
+              uses: actions/cache@v4
+              with:
+                  path: |
+                      target/
+                  key: sqlynx-cargo-macos-app-${{ hashFiles('Cargo.lock') }}
+                  restore-keys: |
+                    sqlynx-cargo-macos-app-${{ hashFiles('Cargo.lock') }}
+                    sqlynx-cargo-macos-app-
 
             - name: Setup rust
               uses: ./.github/actions/setup-rust

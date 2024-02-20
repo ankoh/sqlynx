@@ -1,5 +1,5 @@
-name: 'Setup sqlynx-pack'
-description: 'Action to install the sqlynx-pack'
+name: 'Setup rust'
+description: 'Action to install the rust toolchain'
 
 inputs:
     os:
@@ -9,14 +9,6 @@ inputs:
 runs:
     using: 'composite'
     steps:
-        - name: Setup Cargo Cache
-          uses: actions/cache@v4
-          with:
-              path: |
-                  target/
-              key: sqlynx-cargo-${{ inputs.os }}-${{ hashFiles('Cargo.lock') }}
-              restore-keys: sqlynx-cargo-${{ inputs.os }}-
-
         - name: Install Rust toolchain on Windows
           if: ${{ inputs.os == 'windows-2022' }}
           shell: powershell
