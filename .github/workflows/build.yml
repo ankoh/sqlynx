@@ -34,9 +34,16 @@ jobs:
             - name: Setup cargo cache
               uses: actions/cache@v4
               with:
+                  path: |
+                    ~/.cargo/bin/
+                    ~/.cargo/registry/index/
+                    ~/.cargo/registry/cache/
+                    ~/.cargo/git/db/
+                    target/
+                  key: cargo-macos-${{ matrix.build.target }}-${{ hashFiles('Cargo.lock') }}
                   restore-keys: |
-                    cargo-macos-${{ hashFiles('Cargo.lock') }}
-                    cargo-macos-
+                    cargo-macos-${{ matrix.build.target }}-${{ hashFiles('Cargo.lock') }}
+                    cargo-macos-${{ matrix.build.target }}-
 
             - name: Setup rust
               uses: ./.github/actions/setup-rust
@@ -345,11 +352,15 @@ jobs:
               uses: actions/cache@v4
               with:
                   path: |
-                      target/
+                    ~/.cargo/bin/
+                    ~/.cargo/registry/index/
+                    ~/.cargo/registry/cache/
+                    ~/.cargo/git/db/
+                    target/
                   key: cargo-macos-${{ hashFiles('Cargo.lock') }}
                   restore-keys: |
-                    cargo-macos-${{ hashFiles('Cargo.lock') }}
-                    cargo-macos-
+                    cargo-macos-universal-${{ hashFiles('Cargo.lock') }}
+                    cargo-macos-universal-
 
             - name: Setup rust
               uses: ./.github/actions/setup-rust
