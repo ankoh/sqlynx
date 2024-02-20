@@ -1,6 +1,6 @@
 {
     "name": "@ankoh/sqlynx-app",
-    "version": "0.0.1-dev.2344+7cfbe06",
+    "version": "0.0.2-dev.14",
     "author": "André Kohn <kohn.a@outlook.com>",
     "description": "SQL client for the Hyper database system and Salesforce Data Cloud",
     "license": "MPL-2.0",
