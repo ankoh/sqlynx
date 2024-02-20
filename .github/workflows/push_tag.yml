@@ -1,0 +1,28 @@
+name: Main
+
+on:
+    push:
+        tags:
+            - 'v[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+    build:
+        name: Build
+        uses: ./.github/workflows/build.yml
+        with:
+            commit: github.event.inputs.commit
+            signed: true
+        secrets: inherit
+
+    publish:
+        name: Publish
+        uses: ./.github/workflows/publish.yml
+        with:
+            commit: github.event.inputs.commit
+        needs:
+            - build
+        secrets: inherit
+        permissions:
+            contents: read
+            pages: write
+            id-token: write
