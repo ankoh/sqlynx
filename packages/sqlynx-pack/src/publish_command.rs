@@ -40,7 +40,7 @@ pub async fn publish(args: PublishArgs) -> Result<()> {
     let rel = Release::build(ReleaseArgs {
         remote_base_url: url.clone(),
         source_dir,
-        git_repo,
+        git_repo: git_repo.clone(),
         release_version: version,
     })
     .await?;
@@ -70,9 +70,14 @@ pub async fn publish(args: PublishArgs) -> Result<()> {
             release_id: rel.release_metadata.release_id.clone(),
             pub_date: rel.release_metadata.pub_date.clone(),
             version: rel.release_metadata.version.clone(),
+            git_commit_hash: git_repo.version.short_hash.clone(),
+            git_commit_url: format!(
+                "https://github.com/ankoh/sqlynx/tree/{}",
+                &git_repo.version.short_hash
+            ),
             bundle_macos_dmg_url: rel.release_metadata.bundles[0].url.clone(),
             release_metadata_url: format!("{}/{}", &url, &rel.release_metadata_path),
-            update_manifest_url: rel.release_metadata.update_manifest.clone(),
+            update_manifest_url: rel.release_metadata.update_manifest_url.clone(),
         };
         let file = std::fs::File::create(path)?;
         let mut writer = std::io::BufWriter::new(file);

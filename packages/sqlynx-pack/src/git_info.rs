@@ -14,6 +14,7 @@ lazy_static! {
         Regex::new("v([0-9]+).([0-9]+).([0-9]+)-([0-9]+)-g([a-f0-9]+)").unwrap();
 }
 
+#[derive(Clone)]
 pub struct GitVersion {
     pub description: String,
     pub major: u32,
@@ -52,6 +53,7 @@ impl fmt::Display for GitVersion {
     }
 }
 
+#[derive(Clone)]
 pub struct GitInfo {
     pub version: GitVersion,
 }
