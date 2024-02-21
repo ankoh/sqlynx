@@ -3,12 +3,11 @@ use chrono::prelude::*;
 use futures::StreamExt;
 use std::collections::HashMap;
 use std::path::PathBuf;
-// use aws_sdk_s3::primitives::event_stream::
 
 use crate::{
     git_info::GitInfo,
     release_metadata::{
-        Architecture, Artifact, ArtifactTarget, Bundle, Platform, ReleaseMetadata, UpdateArtifact,
+        Architecture, Bundle, BundleTarget, BundleType, Platform, ReleaseMetadata, UpdateArtifact,
         UpdateManifest,
     },
     release_version::ReleaseVersion,
@@ -100,17 +99,17 @@ impl Release {
         if let Some(dmg_path) = find_dmg_in(&macos_universal_dir) {
             let remote_path = format!("{}/macos/SQLynx.dmg", remote_paths.release_directory);
             let remote_url = format!("{}/{}", &args.remote_base_url, remote_path);
-            let artifact = Artifact {
+            let bundle = Bundle {
                 url: remote_url.clone(),
                 signature: None,
                 name: "SQLynx.dmg".to_string(),
-                bundle: Bundle::Dmg,
+                bundle_type: BundleType::Dmg,
                 targets: vec![
-                    ArtifactTarget {
+                    BundleTarget {
                         platform: Platform::Darwin,
                         arch: Architecture::X86_64,
                     },
-                    ArtifactTarget {
+                    BundleTarget {
                         platform: Platform::Darwin,
                         arch: Architecture::Aarch64,
                     },
@@ -127,7 +126,7 @@ impl Release {
                 .insert(remote_path.clone(), upload_task);
 
             // Register release artifact
-            release.release_metadata.artifacts.push(artifact);
+            release.release_metadata.bundles.push(bundle);
         }
 
         // Register macOS tauri update
@@ -147,24 +146,8 @@ impl Release {
             } else {
                 None
             };
-            let artifact = Artifact {
-                url: remote_url.clone(),
-                signature: sig.clone(),
-                name: "SQLynx.app".to_string(),
-                bundle: Bundle::App,
-                targets: vec![
-                    ArtifactTarget {
-                        platform: Platform::Darwin,
-                        arch: Architecture::X86_64,
-                    },
-                    ArtifactTarget {
-                        platform: Platform::Darwin,
-                        arch: Architecture::Aarch64,
-                    },
-                ],
-            };
             let update_artifact = UpdateArtifact {
-                url: artifact.url.clone(),
+                url: remote_url.clone(),
                 signature: sig.unwrap_or_default(),
             };
 
@@ -178,16 +161,15 @@ impl Release {
                 .insert(remote_path.clone(), upload_task);
 
             // Register artifacts
-            release.release_metadata.artifacts.push(artifact);
             release.release_update_manifest.platforms.insert(
-                ArtifactTarget {
+                BundleTarget {
                     platform: Platform::Darwin,
                     arch: Architecture::X86_64,
                 },
                 update_artifact.clone(),
             );
             release.release_update_manifest.platforms.insert(
-                ArtifactTarget {
+                BundleTarget {
                     platform: Platform::Darwin,
                     arch: Architecture::Aarch64,
                 },
