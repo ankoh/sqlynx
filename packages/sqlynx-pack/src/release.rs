@@ -213,14 +213,8 @@ impl Release {
             (self.release_metadata_path.clone(), &release_metadata),
             (self.release_update_manifest_path.clone(), &update_manifest),
         ];
-        for channel_metadata_path in self.channel_metadata_paths.iter() {
-            pending_uploads.push((channel_metadata_path.to_string(), &release_metadata));
-        }
-        for ref channel_update_manifest_path in self.channel_update_manifest_paths.iter() {
-            pending_uploads.push((channel_update_manifest_path.to_string(), &update_manifest));
-        }
 
-        // Spawn json uploads
+        // Spawn json uploads for release files
         let mut upload_futures = futures::stream::FuturesUnordered::new();
         for (path, metadata) in pending_uploads.drain(..) {
             let path = path.clone();
@@ -254,6 +248,57 @@ impl Release {
                     .key(&path)
                     .body(bytes)
                     .content_type("application/octet-stream")
+                    .send()
+                    .await
+                    .map_err(|e| (path.clone(), e))
+                    .map(|_| path.clone())
+            }));
+        }
+
+        // Join all uploads
+        let mut upload_error: Option<anyhow::Error> = None;
+        while let Some(next) = upload_futures.next().await {
+            match next {
+                Ok(Ok(path)) => {
+                    log::info!("upload finished, path={}", &path);
+                }
+                Ok(Err((path, e))) => {
+                    log::error!("upload failed, path={}, error={}", &path, &e);
+                    upload_error = Some(e.into());
+                }
+                Err(e) => {
+                    log::error!("failed to join upload task, error={}", &e);
+                    upload_error = Some(anyhow::format_err!(
+                        "failed to join upload task, error={}",
+                        &e
+                    ));
+                }
+            }
+        }
+        // Don't update the top-level release metadata if any of the release uploads failed
+        if let Some(e) = upload_error {
+            return Err(e);
+        }
+
+        // Now update the release manifests
+        for channel_metadata_path in self.channel_metadata_paths.iter() {
+            pending_uploads.push((channel_metadata_path.to_string(), &release_metadata));
+        }
+        for ref channel_update_manifest_path in self.channel_update_manifest_paths.iter() {
+            pending_uploads.push((channel_update_manifest_path.to_string(), &update_manifest));
+        }
+        for (path, metadata) in pending_uploads.drain(..) {
+            let path = path.clone();
+            let bytes = ByteStream::from(metadata.to_vec());
+            let client = client.clone();
+            log::info!("upload started, path={}", &path);
+            upload_futures.push(tokio::spawn(async move {
+                client
+                    .put_object()
+                    .bucket("sqlynx-get")
+                    .key(&path)
+                    .body(bytes)
+                    .content_type("application/json")
                     .send()
                     .await
                     .map_err(|e| (path.clone(), e))
