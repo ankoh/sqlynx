@@ -139,6 +139,18 @@ pub struct ReleaseMetadata {
     pub update_manifest: String,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ReleaseSummary {
+    pub release_id: String,
+    #[serde(with = "serde_date")]
+    pub pub_date: DateTime<Utc>,
+    #[serde(with = "serde_version")]
+    pub version: Version,
+    pub bundle_macos_dmg_url: String,
+    pub release_metadata_url: String,
+    pub update_manifest_url: String,
+}
+
 impl Default for ReleaseMetadata {
     fn default() -> Self {
         Self {
