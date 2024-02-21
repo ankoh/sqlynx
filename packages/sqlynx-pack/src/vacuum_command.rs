@@ -1,6 +1,7 @@
 use anyhow::Result;
 use clap::Parser;
 use semver::Version;
+use std::collections::HashMap;
 
 use crate::remote_access::RemoteAccess;
 
@@ -15,6 +16,11 @@ pub struct VacuumArgs {
 }
 
 pub async fn vacuum(args: VacuumArgs) -> Result<()> {
+    // Is a dry-run?
+    if args.dry_run {
+        log::info!("DRY RUN, no persistent changes will be made");
+    }
+
     // Check R2 credentials
     let remote_access = RemoteAccess::from_env()?;
     log::info!("r2 bucket: **** (from environment)");
@@ -38,35 +44,36 @@ pub async fn vacuum(args: VacuumArgs) -> Result<()> {
         .list_objects_v2()
         .bucket("sqlynx-get")
         .prefix("releases/")
-        .delimiter("/")
         .send()
         .await?;
 
-    let versions: Vec<Version> = results
-        .common_prefixes()
+    let versions = results
+        .contents()
         .iter()
-        .map(|p| p.prefix())
-        .filter(|p| p.is_some())
-        .map(|p| {
-            let mut p = p.unwrap();
+        .filter(|entry| entry.key().is_some())
+        .map(|entry| {
+            let mut p = entry.key().unwrap();
             p = p.strip_prefix("releases/").unwrap_or(p);
-            p = p.strip_suffix("/").unwrap_or(p);
-            semver::Version::parse(p)
+            p = &p[..p.find('/').unwrap_or(p.len())];
+            (semver::Version::parse(p), entry)
         })
-        .filter(|p| p.is_ok())
-        .map(|p| p.unwrap())
-        .collect();
+        .filter(|(version, _entry)| version.is_ok())
+        .map(|(version, entry)| (version.unwrap(), entry));
 
-    let mut canary_versions: Vec<Version> = versions
-        .iter()
-        .filter(|v| !v.pre.is_empty())
-        .cloned()
-        .collect();
-    let mut stable_versions: Vec<Version> = versions
-        .iter()
-        .filter(|v| v.pre.is_empty())
-        .cloned()
-        .collect();
+    let mut stable_objects: HashMap<Version, Vec<&aws_sdk_s3::types::Object>> = HashMap::new();
+    let mut canary_objects: HashMap<Version, Vec<&aws_sdk_s3::types::Object>> = HashMap::new();
+    for (version, object) in versions {
+        if version.pre.is_empty() {
+            let objects = stable_objects.entry(version).or_insert_with(|| Vec::new());
+            objects.push(object);
+        } else {
+            let objects = canary_objects.entry(version).or_insert_with(|| Vec::new());
+            objects.push(object);
+        }
+    }
+
+    let mut canary_versions: Vec<Version> = canary_objects.keys().cloned().collect();
+    let mut stable_versions: Vec<Version> = stable_objects.keys().cloned().collect();
     canary_versions.sort_by(|a, b| b.cmp(a));
     stable_versions.sort_by(|a, b| b.cmp(a));
 
@@ -75,9 +82,52 @@ pub async fn vacuum(args: VacuumArgs) -> Result<()> {
     let (keep_stable, delete_stable) =
         stable_versions.split_at(args.keep_stable.min(stable_versions.len()));
 
-    log::info!("canary keep: {:?}", keep_canary);
-    log::info!("canary delete: {:?}", delete_canary);
-    log::info!("stable keep: {:?}", keep_stable);
-    log::info!("stable delete: {:?}", delete_stable);
+    log::info!("keep canary versions: {:?}", keep_canary);
+    log::info!("keep stable versions: {:?}", keep_stable);
+    log::info!("delete stable versions: {:?}", delete_stable);
+    log::info!("delete canary versions: {:?}", delete_canary);
+
+    let mut delete_objects: Vec<aws_sdk_s3::types::ObjectIdentifier> = vec![];
+    for v in delete_canary.iter() {
+        canary_objects
+            .get(v)
+            .unwrap()
+            .iter()
+            .map(|o| {
+                aws_sdk_s3::types::ObjectIdentifier::builder()
+                    .set_key(Some(o.key().unwrap().to_string()))
+                    .build()
+                    .unwrap()
+            })
+            .for_each(|o| delete_objects.push(o));
+    }
+    for v in delete_stable.iter() {
+        canary_objects
+            .get(v)
+            .unwrap()
+            .iter()
+            .map(|o| {
+                aws_sdk_s3::types::ObjectIdentifier::builder()
+                    .set_key(Some(o.key().unwrap().to_string()))
+                    .build()
+                    .unwrap()
+            })
+            .for_each(|o| delete_objects.push(o));
+    }
+    log::info!("delete objects: {:?}", delete_objects);
+
+    if !args.dry_run && !delete_objects.is_empty() {
+        let objects = aws_sdk_s3::types::Delete::builder()
+            .set_objects(Some(delete_objects))
+            .build()?;
+        r2_client
+            .delete_objects()
+            .bucket("sqlynx-get")
+            .delete(objects)
+            .send()
+            .await?;
+        log::info!("deleted objects");
+    }
+
     Ok(())
 }
