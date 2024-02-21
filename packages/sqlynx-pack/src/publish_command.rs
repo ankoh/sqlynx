@@ -7,11 +7,15 @@ use crate::{
 
 use anyhow::Result;
 use clap::Parser;
+use std::io::Write;
+use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
 pub struct PublishArgs {
     #[arg(long, required = false, default_value = "false")]
     dry_run: bool,
+    #[arg(long, required = false)]
+    save_metadata: Option<PathBuf>,
 }
 
 pub async fn publish(args: PublishArgs) -> Result<()> {
@@ -57,6 +61,15 @@ pub async fn publish(args: PublishArgs) -> Result<()> {
         .credentials_provider(r2_credential_provider)
         .build();
     let r2_client = aws_sdk_s3::Client::from_conf(r2_config);
+
+    // Write the metadata (if requested)
+    if let Some(path) = &args.save_metadata {
+        let file = std::fs::File::create(path)?;
+        let mut writer = std::io::BufWriter::new(file);
+        serde_json::to_writer_pretty(&mut writer, &rel.release_metadata)?;
+        writer.flush()?;
+        log::info!("wrote release metadata to: {:?}", &path.as_path());
+    }
 
     // Publish the release
     if !args.dry_run {

@@ -21,7 +21,7 @@ pub enum Architecture {
 }
 
 #[derive(Eq, PartialEq, Hash, Serialize, Deserialize, Debug)]
-pub enum Bundle {
+pub enum BundleType {
     Dmg,
     App,
     AppImage,
@@ -29,12 +29,12 @@ pub enum Bundle {
 }
 
 #[derive(Hash, Eq, PartialEq, Debug)]
-pub struct ArtifactTarget {
+pub struct BundleTarget {
     pub platform: Platform,
     pub arch: Architecture,
 }
 
-impl Serialize for ArtifactTarget {
+impl Serialize for BundleTarget {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -51,8 +51,8 @@ impl Serialize for ArtifactTarget {
         serializer.serialize_str(&format!("{}-{}", platform, arch))
     }
 }
-impl<'d> Deserialize<'d> for ArtifactTarget {
-    fn deserialize<D>(deserializer: D) -> Result<ArtifactTarget, D::Error>
+impl<'d> Deserialize<'d> for BundleTarget {
+    fn deserialize<D>(deserializer: D) -> Result<BundleTarget, D::Error>
     where
         D: Deserializer<'d>,
     {
@@ -88,7 +88,7 @@ impl<'d> Deserialize<'d> for ArtifactTarget {
                 ))
             }
         };
-        Ok(ArtifactTarget { platform, arch })
+        Ok(BundleTarget { platform, arch })
     }
 }
 
@@ -105,7 +105,7 @@ pub struct UpdateManifest {
     pub notes: String,
     #[serde(with = "serde_date")]
     pub pub_date: DateTime<Utc>,
-    pub platforms: HashMap<ArtifactTarget, UpdateArtifact>,
+    pub platforms: HashMap<BundleTarget, UpdateArtifact>,
 }
 
 impl Default for UpdateManifest {
@@ -120,12 +120,12 @@ impl Default for UpdateManifest {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Artifact {
+pub struct Bundle {
     pub url: String,
     pub signature: Option<String>,
     pub name: String,
-    pub bundle: Bundle,
-    pub targets: Vec<ArtifactTarget>,
+    pub bundle_type: BundleType,
+    pub targets: Vec<BundleTarget>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -135,7 +135,7 @@ pub struct ReleaseMetadata {
     pub pub_date: DateTime<Utc>,
     #[serde(with = "serde_version")]
     pub version: Version,
-    pub artifacts: Vec<Artifact>,
+    pub bundles: Vec<Bundle>,
     pub update_manifest: String,
 }
 
@@ -145,7 +145,7 @@ impl Default for ReleaseMetadata {
             release_id: String::default(),
             pub_date: DateTime::default(),
             version: Version::new(0, 0, 0),
-            artifacts: Vec::default(),
+            bundles: Vec::default(),
             update_manifest: String::default(),
         }
     }
@@ -192,25 +192,25 @@ mod tests {
         assert_eq!(v.version.patch, 0);
         assert_eq!(v.notes, "Test version");
         assert_eq!(v.platforms.len(), 4);
-        assert!(v.platforms.contains_key(&ArtifactTarget {
+        assert!(v.platforms.contains_key(&BundleTarget {
             platform: Platform::Darwin,
             arch: Architecture::X86_64,
         }));
-        assert!(v.platforms.contains_key(&ArtifactTarget {
+        assert!(v.platforms.contains_key(&BundleTarget {
             platform: Platform::Darwin,
             arch: Architecture::Aarch64,
         }));
-        assert!(v.platforms.contains_key(&ArtifactTarget {
+        assert!(v.platforms.contains_key(&BundleTarget {
             platform: Platform::Linux,
             arch: Architecture::X86_64,
         }));
-        assert!(v.platforms.contains_key(&ArtifactTarget {
+        assert!(v.platforms.contains_key(&BundleTarget {
             platform: Platform::Windows,
             arch: Architecture::X86_64,
         }));
         let darwin_x64 = &v
             .platforms
-            .get(&ArtifactTarget {
+            .get(&BundleTarget {
                 platform: Platform::Darwin,
                 arch: Architecture::X86_64,
             })
