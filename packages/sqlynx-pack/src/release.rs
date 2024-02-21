@@ -72,10 +72,15 @@ impl Release {
         release.release_metadata.release_id = args.release_version.id.to_string();
         release.release_metadata.version = args.release_version.version.clone();
         release.release_metadata.pub_date = pub_date.clone();
-        release.release_metadata.update_manifest = format!(
+        release.release_metadata.update_manifest_url = format!(
             "{}/{}",
             &args.remote_base_url,
             remote_paths.release_update.clone()
+        );
+        release.release_metadata.git_commit_hash = args.git_repo.version.short_hash.clone();
+        release.release_metadata.git_commit_url = format!(
+            "https://github.com/ankoh/sqlynx/tree/{}",
+            &args.git_repo.version.short_hash
         );
 
         // Prepare update manifest

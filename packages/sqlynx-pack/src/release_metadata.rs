@@ -135,20 +135,24 @@ pub struct ReleaseMetadata {
     pub pub_date: DateTime<Utc>,
     #[serde(with = "serde_version")]
     pub version: Version,
+    pub git_commit_hash: String,
+    pub git_commit_url: String,
+    pub update_manifest_url: String,
     pub bundles: Vec<Bundle>,
-    pub update_manifest: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ReleaseSummary {
     pub release_id: String,
-    #[serde(with = "serde_date")]
-    pub pub_date: DateTime<Utc>,
     #[serde(with = "serde_version")]
     pub version: Version,
-    pub bundle_macos_dmg_url: String,
+    #[serde(with = "serde_date")]
+    pub pub_date: DateTime<Utc>,
+    pub git_commit_hash: String,
+    pub git_commit_url: String,
     pub release_metadata_url: String,
     pub update_manifest_url: String,
+    pub bundle_macos_dmg_url: String,
 }
 
 impl Default for ReleaseMetadata {
@@ -157,8 +161,10 @@ impl Default for ReleaseMetadata {
             release_id: String::default(),
             pub_date: DateTime::default(),
             version: Version::new(0, 0, 0),
+            git_commit_hash: String::default(),
+            git_commit_url: String::default(),
+            update_manifest_url: String::default(),
             bundles: Vec::default(),
-            update_manifest: String::default(),
         }
     }
 }
