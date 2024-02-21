@@ -8,12 +8,14 @@ mod remote_access;
 mod remote_paths;
 mod serde_date;
 mod serde_version;
+mod vacuum_command;
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use freeze_command::{freeze, FreezeArgs};
 use publish_command::{publish, PublishArgs};
 use std::env;
+use vacuum_command::{vacuum, VacuumArgs};
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -27,6 +29,7 @@ enum CliCommand {
     Version,
     Freeze(FreezeArgs),
     Publish(PublishArgs),
+    Vacuum(VacuumArgs),
 }
 
 fn print_version() -> Result<()> {
@@ -51,6 +54,7 @@ async fn main() -> Result<()> {
         CliCommand::Version => print_version()?,
         CliCommand::Freeze(_args) => freeze()?,
         CliCommand::Publish(args) => publish(args).await?,
+        CliCommand::Vacuum(args) => vacuum(args).await?,
     };
     Ok(())
 }

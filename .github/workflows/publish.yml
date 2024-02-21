@@ -67,3 +67,11 @@ jobs:
                 SQLYNX_RELEASE_SIGNING_KEY_PASSWORD: ${{ secrets.RELEASE_SIGNING_KEY_PASSWORD }}
               run: |
                     ./.bin/sqlynx-pack publish
+
+            - name: Publish native apps
+              env:
+                SQLYNX_GET_R2_ENDPOINT: ${{ secrets.R2_SQLYNX_GET_ENDPOINT }}
+                SQLYNX_GET_R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+                SQLYNX_GET_R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+              run: |
+                    ./.bin/sqlynx-pack vacuum --keep-stable 100 --keep-canary 10
