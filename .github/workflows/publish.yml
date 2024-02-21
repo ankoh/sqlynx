@@ -68,7 +68,7 @@ jobs:
               run: |
                     ./.bin/sqlynx-pack publish
 
-            - name: Publish native apps
+            - name: Cleanup native app releases
               env:
                 SQLYNX_GET_R2_ENDPOINT: ${{ secrets.R2_SQLYNX_GET_ENDPOINT }}
                 SQLYNX_GET_R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
