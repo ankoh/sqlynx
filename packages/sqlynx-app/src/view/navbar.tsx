@@ -22,7 +22,7 @@ const PageTab = (props: { route: string; alt?: string; location: string; icon: s
                 <svg width="16px" height="16px">
                     <use xlinkHref={props.icon} />
                 </svg>
-                <div>{props.label}</div>
+                <span className={styles.tab_link_text}>{props.label}</span>
             </>
         </LinkButton>
     </div>
@@ -37,7 +37,7 @@ const ExternalLink = (props: { url: string; alt?: string; icon?: string; label: 
                         <use xlinkHref={props.icon} />
                     </svg>
                 }
-                <div>{props.label}</div>
+                <span className={styles.tab_link_text}>{props.label}</span>
             </>
         </LinkButton>
     </div>

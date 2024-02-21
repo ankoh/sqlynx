@@ -84,6 +84,9 @@
     flex-direction: row;
     column-gap: 8px;
 }
+.tab_link_text {
+    margin-top: 1px;
+}
 
 .page_container {
     grid-row: 2;
