@@ -1,6 +1,7 @@
 use crate::{
     git_info::collect_git_info,
     release::{Release, ReleaseArgs},
+    release_metadata::ReleaseSummary,
     release_version::build_release_version,
     remote_access::RemoteAccess,
 };
@@ -15,7 +16,7 @@ pub struct PublishArgs {
     #[arg(long, required = false, default_value = "false")]
     dry_run: bool,
     #[arg(long, required = false)]
-    save_metadata: Option<PathBuf>,
+    save_summary: Option<PathBuf>,
 }
 
 pub async fn publish(args: PublishArgs) -> Result<()> {
@@ -35,8 +36,9 @@ pub async fn publish(args: PublishArgs) -> Result<()> {
     log::info!("release channel: {}", &version.channel);
 
     // Build the release
+    let url = "https://get.sqlynx.app".to_string();
     let rel = Release::build(ReleaseArgs {
-        remote_base_url: "https://get.sqlynx.app".to_string(),
+        remote_base_url: url.clone(),
         source_dir,
         git_repo,
         release_version: version,
@@ -63,10 +65,18 @@ pub async fn publish(args: PublishArgs) -> Result<()> {
     let r2_client = aws_sdk_s3::Client::from_conf(r2_config);
 
     // Write the metadata (if requested)
-    if let Some(path) = &args.save_metadata {
+    if let Some(path) = &args.save_summary {
+        let summary = ReleaseSummary {
+            release_id: rel.release_metadata.release_id.clone(),
+            pub_date: rel.release_metadata.pub_date.clone(),
+            version: rel.release_metadata.version.clone(),
+            bundle_macos_dmg_url: rel.release_metadata.bundles[0].url.clone(),
+            release_metadata_url: format!("{}/{}", &url, &rel.release_metadata_path),
+            update_manifest_url: rel.release_metadata.update_manifest.clone(),
+        };
         let file = std::fs::File::create(path)?;
         let mut writer = std::io::BufWriter::new(file);
-        serde_json::to_writer_pretty(&mut writer, &rel.release_metadata)?;
+        serde_json::to_writer_pretty(&mut writer, &summary)?;
         writer.flush()?;
         log::info!("wrote release metadata to: {:?}", &path.as_path());
     }
