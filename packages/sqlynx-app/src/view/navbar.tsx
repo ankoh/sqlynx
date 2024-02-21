@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { useAppConfig } from '../app_config.js';
 import { HoverMode, LinkButton } from './button.js';
 import { useNativeApi } from '../native_api.js';
-import { SQLYNX_GIT_COMMIT, SQLYNX_GIT_REPO_URL, SQLYNX_VERSION } from '../app_version.js';
+import { SQLYNX_GET_URL, SQLYNX_GIT_COMMIT, SQLYNX_GIT_REPO_URL, SQLYNX_VERSION } from '../app_version.js';
 
 import styles from './navbar.module.css';
 
@@ -58,7 +58,7 @@ export const NavBar = (): React.ReactElement => {
                 <PageTab label="Settings" route="/settings" location={location.pathname} icon={`${symbols}#settings`} />
             </div>
             <div className={styles.version_container}>
-                <ExternalLink label={SQLYNX_VERSION} url="https://google.com" icon={`${symbols}#package`} />
+                <ExternalLink label={SQLYNX_VERSION} url={SQLYNX_GET_URL} icon={`${symbols}#package`} />
                 <ExternalLink label={SQLYNX_GIT_COMMIT} url={SQLYNX_GIT_REPO_URL} icon={`${symbols}#github`} />
             </div>
         </div>
