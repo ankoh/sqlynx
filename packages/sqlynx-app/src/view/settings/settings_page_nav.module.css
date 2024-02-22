@@ -4,7 +4,7 @@
 
     display: grid;
     grid-template-rows: 1fr;
-    grid-template-columns: 120px 1fr;
+    grid-template-columns: 140px 1fr;
 }
 
 .body {
@@ -30,11 +30,16 @@
     color: var(--button_fg);
     font-size: 0.9rem;
     font-weight: 400;
+    text-align: left;
     border: 0;
     background: none;
     -webkit-appearance: none;
 }
 
+.entry:hover {
+    background-color: hsl(210, 24%, 88%);
+}
+
 .entry_active {
-    background-color: hsl(210, 24%, 82%);
+    background-color: hsl(210, 24%, 82%) !important;
 }
