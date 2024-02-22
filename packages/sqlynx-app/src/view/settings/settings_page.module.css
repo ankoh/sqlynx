@@ -34,23 +34,12 @@
     .body_container {
         grid-row: 2;
         display: grid;
-        grid-template-columns: 160px 200px 1fr;
-    }
-    .subpage_list_background {
-        grid-row: 1;
-        grid-column: 1 / span 3;
-        background: var(--settings_background);
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr;
     }
     .section_list_container {
         grid-row: 1;
         grid-column: 1;
-
-        border-right: 1px solid var(--border_color_primary);
-        background-color: var(--settings_section_list_bg);
-        padding: 4px;
-        display: flex;
-        flex-direction: column;
-        row-gap: 4px;
     }
     .connector_list_container {
         grid-row: 1;
