@@ -18,12 +18,12 @@ import SalesforceDummyAccount from '../../../static/img/salesforce_account_place
 
 import * as symbols from '../../../static/svg/symbols.generated.svg';
 
-import panelStyle from './salesforce_connector_panel.module.css';
+import panelStyle from './salesforce_connector_settings.module.css';
 import pageStyle from './settings_page.module.css';
 
-interface SalesforceAuthFlowProps { }
+interface AuthFlowProps { }
 
-const SalesforceAuthFlowPanel: React.FC<SalesforceAuthFlowProps> = (_props: SalesforceAuthFlowProps) => {
+const SalesforceAuthFlowSettings: React.FC<AuthFlowProps> = (_props: AuthFlowProps) => {
     const appConfig = useAppConfig();
     const authState = useSalesforceAuthState();
     const authFlow = useSalesforceAuthFlow();
@@ -159,10 +159,10 @@ const SalesforceAuthFlowPanel: React.FC<SalesforceAuthFlowProps> = (_props: Sale
     );
 };
 
-interface SalesforceConnectorPanelProps { }
+interface Props { }
 
-export const SalesforceConnectorPanel: React.FC<SalesforceConnectorPanelProps> = (
-    _props: SalesforceConnectorPanelProps,
+export const SalesforceConnectorSettings: React.FC<Props> = (
+    _props: Props,
 ) => {
     return (
         <>
@@ -180,7 +180,7 @@ export const SalesforceConnectorPanel: React.FC<SalesforceConnectorPanelProps> =
                 </div>
             </div>
             <div className={pageStyle.card_body_container}>
-                <SalesforceAuthFlowPanel />
+                <SalesforceAuthFlowSettings />
             </div>
         </>
     );
