@@ -1,7 +1,7 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
 import * as React from 'react';
-import cn from 'classnames';
 
+import { classNames } from '../../utils/classnames.js';
 import { VariantKind } from '../../utils/variant.js';
 import {
     NodeViewModel,
@@ -164,7 +164,7 @@ export function NodeLayer(props: Props) {
 
     const Port = (props: { node: number; port: NodePort; focusedPorts: number; className: string }) => (
         <div
-            className={cn(styles.table_port, props.className, {
+            className={classNames(styles.table_port, props.className, {
                 [styles.table_port_focused]: (props.focusedPorts & props.port) != 0,
             })}
             data-node={props.node}
@@ -194,7 +194,7 @@ export function NodeLayer(props: Props) {
                 return (
                     <div
                         key={n.nodeId}
-                        className={cn(styles.table_node, {
+                        className={classNames(styles.table_node, {
                             [styles.table_node_inactive]: isInactive,
                         })}
                         style={{

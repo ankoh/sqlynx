@@ -1,9 +1,6 @@
-import cn from 'classnames';
-
 import * as React from 'react';
 import * as sqlynx from '@ankoh/sqlynx-core';
 
-import { IconButton } from '@primer/react';
 import { DecorationSet, EditorView } from '@codemirror/view';
 import { ChangeSpec, StateEffect, EditorSelection } from '@codemirror/state';
 
@@ -16,6 +13,7 @@ import { UPDATE_SCRIPT_ANALYSIS, UPDATE_SCRIPT_CURSOR } from '../../session/sess
 import { ScriptKey } from '../../session/session_state.js';
 import { ScriptStatisticsBar } from './script_statistics_bar.js';
 import { VerticalTabs } from '../../view/vertical_tabs.js';
+import { classNames } from '../../utils/classnames.js';
 
 import * as icons from '../../../static/svg/symbols.generated.svg';
 
@@ -199,7 +197,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
 
     return (
         <VerticalTabs
-            className={cn(props.className, styles.container)}
+            className={classNames(props.className, styles.container)}
             selectedTab={activeTab}
             selectTab={setActiveTab}
             tabs={[

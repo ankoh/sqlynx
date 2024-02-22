@@ -1,5 +1,6 @@
 import * as React from 'react';
-import cn from 'classnames';
+
+import { classNames } from '../utils/classnames.js';
 
 import styles from './vertical_tabs.module.css';
 
@@ -28,12 +29,12 @@ export const VerticalTabs: React.FC<Props> = (props: Props) => {
         props.selectTab(Number.parseInt(target.dataset.tab ?? '0'));
     }, []);
     return (
-        <div className={cn(props.className, styles.container)}>
+        <div className={classNames(props.className, styles.container)}>
             <div className={styles.tabs}>
                 {props.tabs.map((tabProps: TabProps) => (
                     <div
                         key={tabProps.tabId}
-                        className={cn(styles.tab, {
+                        className={classNames(styles.tab, {
                             [styles.tab_active]: tabProps.tabId == props.selectedTab,
                             [styles.tab_disabled]: !tabProps.enabled,
                         })}

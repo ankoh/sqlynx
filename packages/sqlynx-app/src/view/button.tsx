@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import cn from 'classnames';
+import { classNames } from '../utils/classnames.js';
 
 import styles from './button.module.css';
 
@@ -21,7 +21,7 @@ type ButtonProps = {
 
 export const Button: React.FC<ButtonProps> = (props: ButtonProps) => (
     <div
-        className={cn(props.className, {
+        className={classNames(props.className, {
             [styles.button]: props.invert === undefined || !props.invert,
             [styles.button_inverted]: props.invert,
             [styles.disabled]: props.disabled,
@@ -46,7 +46,7 @@ type LinkProps = {
 
 export const LinkButton: React.FC<LinkProps> = (props: LinkProps) => (
     <Link
-        className={cn(props.className, {
+        className={classNames(props.className, {
             [styles.button]: props.invert === undefined || !props.invert,
             [styles.button_inverted]: props.invert,
             [styles.hover_invert]: props.hover === undefined || props.hover === HoverMode.Invert,
