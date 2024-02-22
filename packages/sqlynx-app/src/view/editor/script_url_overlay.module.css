@@ -21,6 +21,7 @@
     grid-column: 1 / span 2;
     font-size: 0.9rem;
     font-weight: 500;
+    margin: 0px 2px;
 }
 .sharing_url {
     width: 100%;
@@ -37,10 +38,12 @@
     margin-right: 4px;
 }
 .sharing_url_setting {
+    grid-column: 1 / span 2;
     display: grid;
-    grid-template-columns: max-content 1fr;
+    grid-template-columns: 1fr max-content;
     column-gap: 12px;
     align-items: center;
+    margin-left: 2px;
 }
 .sharing_url_setting_name {
     font-size: 0.9rem;
