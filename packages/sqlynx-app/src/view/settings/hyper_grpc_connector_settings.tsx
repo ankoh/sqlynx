@@ -6,8 +6,8 @@ import { useAppConfig } from '../../app_config.js';
 
 import * as symbols from '../../../static/svg/symbols.generated.svg';
 
-import pageStyle from './settings_page.module.css';
-import panelStyle from './hyper_grpc_connector_settings.module.css';
+import baseStyle from './connector_settings.module.css';
+import hyperStyle from './hyper_grpc_connector_settings.module.css';
 
 interface Props { }
 
@@ -41,16 +41,16 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
     const grpcConnectorDisabled = !config.value?.features?.grpcConnector;
     return (
         <>
-            <div className={pageStyle.card_header_container}>
-                <div className={pageStyle.platform_logo}>
+            <div className={baseStyle.connector_header_container}>
+                <div className={baseStyle.platform_logo}>
                     <svg width="24px" height="24px">
                         <use xlinkHref={`${symbols}#hyper`} />
                     </svg>
                 </div>
-                <div className={pageStyle.platform_name} aria-labelledby="connector-hyper-database">
+                <div className={baseStyle.platform_name} aria-labelledby="connector-hyper-database">
                     Hyper Database
                 </div>
-                <div className={pageStyle.platform_info}>
+                <div className={baseStyle.platform_info}>
                     <IconButton
                         variant="invisible"
                         icon={InfoIcon}
@@ -59,8 +59,8 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                     />
                 </div>
             </div>
-            <div className={pageStyle.card_body_container}>
-                <div className={panelStyle.auth_config_container}>
+            <div className={baseStyle.connector_body_container}>
+                <div className={hyperStyle.auth_config_container}>
                     <FormControl sx={{ marginTop: '8px' }} disabled={grpcConnectorDisabled}>
                         <FormControl.Label id="protocol-selector" as="span">
                             Protocol
@@ -81,7 +81,7 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                             {selectedProtocol === 0 ? 'gRPC through Electron' : 'gRPC Web through Browser'}
                         </FormControl.Caption>
                     </FormControl>
-                    <div className={panelStyle.auto_config_protocol_settings}>
+                    <div className={hyperStyle.auto_config_protocol_settings}>
                         <MutableTextBox
                             name="Endpoint"
                             caption="Endpoint of the gRPC service as '<https://host:port>'"
@@ -89,7 +89,7 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                             onChange={() => { }}
                             disabled={grpcConnectorDisabled}
                         />
-                        <div className={panelStyle.auth_config_connect}>
+                        <div className={hyperStyle.auth_config_connect}>
                             <Button sx={{ marginTop: '28px' }} disabled={grpcConnectorDisabled}>
                                 Connect
                             </Button>

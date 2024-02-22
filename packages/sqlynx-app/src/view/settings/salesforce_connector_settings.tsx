@@ -18,8 +18,8 @@ import SalesforceDummyAccount from '../../../static/img/salesforce_account_place
 
 import * as symbols from '../../../static/svg/symbols.generated.svg';
 
-import panelStyle from './salesforce_connector_settings.module.css';
-import pageStyle from './settings_page.module.css';
+import baseStyle from './connector_settings.module.css';
+import sfStyle from './salesforce_connector_settings.module.css';
 
 interface AuthFlowProps { }
 
@@ -67,9 +67,9 @@ const SalesforceAuthFlowSettings: React.FC<AuthFlowProps> = (_props: AuthFlowPro
         </FormControl>
     );
     const LoadingTextBox = (props: { name: string }) => (
-        <div className={panelStyle.skeleton_text_box}>
-            <div className={panelStyle.skeleton_label}>{props.name}</div>
-            <Skeleton className={panelStyle.skeleton_bar} count={1} height={'100%'} />
+        <div className={sfStyle.skeleton_text_box}>
+            <div className={sfStyle.skeleton_label}>{props.name}</div>
+            <Skeleton className={sfStyle.skeleton_bar} count={1} height={'100%'} />
         </div>
     );
     const ImmutableTextBox = (props: { name: string; value: string | null }) =>
@@ -91,8 +91,8 @@ const SalesforceAuthFlowSettings: React.FC<AuthFlowProps> = (_props: AuthFlowPro
             </FormControl>
         );
     return (
-        <div className={panelStyle.auth_container}>
-            <div className={panelStyle.auth_config_container}>
+        <div className={sfStyle.auth_container}>
+            <div className={sfStyle.auth_config_container}>
                 <MutableTextBox
                     name="Instance URL"
                     caption="URL of the Salesforce Instance"
@@ -110,29 +110,29 @@ const SalesforceAuthFlowSettings: React.FC<AuthFlowProps> = (_props: AuthFlowPro
                 </Button>
             </div>
             {authState.authStarted && (
-                <div className={panelStyle.auth_info_container}>
-                    <div className={panelStyle.auth_info_header}>
-                        <div className={panelStyle.userinfo_profile_container}>
+                <div className={sfStyle.auth_info_container}>
+                    <div className={sfStyle.auth_info_header}>
+                        <div className={sfStyle.userinfo_profile_container}>
                             <img
-                                className={panelStyle.userinfo_profile_picture}
+                                className={sfStyle.userinfo_profile_picture}
                                 src={userInfo?.photos?.picture ?? SalesforceDummyAccount}
                             />
                         </div>
-                        <div className={panelStyle.userinfo_profile_who}>
-                            <div className={panelStyle.userinfo_profile_name}>
+                        <div className={sfStyle.userinfo_profile_who}>
+                            <div className={sfStyle.userinfo_profile_name}>
                                 {userInfo?.name || <Skeleton width={128} height={16} count={1} />}
                             </div>
-                            <div className={panelStyle.userinfo_profile_email}>
+                            <div className={sfStyle.userinfo_profile_email}>
                                 {userInfo?.email || <Skeleton width={256} height={16} count={1} />}
                             </div>
                         </div>
-                        <div className={panelStyle.auth_info_actions}>
+                        <div className={sfStyle.auth_info_actions}>
                             <Button variant="danger" onClick={disconnect}>
                                 Disconnect
                             </Button>
                         </div>
                     </div>
-                    <div className={panelStyle.auth_info_oauth}>
+                    <div className={sfStyle.auth_info_oauth}>
                         <ImmutableTextBox
                             name="API Instance URL"
                             value={authState.coreAccessToken?.apiInstanceUrl ?? null}
@@ -142,7 +142,7 @@ const SalesforceAuthFlowSettings: React.FC<AuthFlowProps> = (_props: AuthFlowPro
                             value={authState.coreAccessToken?.accessToken ?? null}
                         />
                     </div>
-                    <div className={panelStyle.auth_info_dc}>
+                    <div className={sfStyle.auth_info_dc}>
                         <ImmutableTextBox
                             name="Data Cloud Instance URL"
                             value={authState.dataCloudAccessToken?.instanceUrl?.toString() ?? null}
@@ -154,7 +154,7 @@ const SalesforceAuthFlowSettings: React.FC<AuthFlowProps> = (_props: AuthFlowPro
                     </div>
                 </div>
             )}
-            {authState.authError && <div className={panelStyle.auth_error}>{authState.authError}</div>}
+            {authState.authError && <div className={sfStyle.auth_error}>{authState.authError}</div>}
         </div>
     );
 };
@@ -166,20 +166,20 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
 ) => {
     return (
         <>
-            <div className={pageStyle.card_header_container}>
-                <div className={pageStyle.platform_logo}>
+            <div className={baseStyle.connector_header_container}>
+                <div className={baseStyle.platform_logo}>
                     <svg width="28px" height="28px">
                         <use xlinkHref={`${symbols}#salesforce-notext`} />
                     </svg>
                 </div>
-                <div className={pageStyle.platform_name} id="connector-sf-data-cloud">
+                <div className={baseStyle.platform_name} id="connector-sf-data-cloud">
                     Salesforce Data Cloud
                 </div>
-                <div className={pageStyle.platform_info}>
+                <div className={baseStyle.platform_info}>
                     <IconButton variant="invisible" icon={InfoIcon} aria-labelledby="connector-sf-data-cloud" />
                 </div>
             </div>
-            <div className={pageStyle.card_body_container}>
+            <div className={baseStyle.card_body_container}>
                 <SalesforceAuthFlowSettings />
             </div>
         </>

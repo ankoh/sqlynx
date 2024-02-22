@@ -12,11 +12,11 @@ export const ConnectorSettings: React.FC<PageProps> = (_props: PageProps) => {
     const connectors: ConnectorProps[] = React.useMemo(() => ([
         {
             id: 0,
-            label: "Hyper Database"
+            label: "Salesforce Data Cloud"
         },
         {
             id: 1,
-            label: "Salesforce Data Cloud"
+            label: "Hyper Database"
         },
         {
             id: 2,

@@ -53,10 +53,10 @@
                 </g>
             </g>
             <g transform="matrix(1.13621,0,0,1.01489,-1.62981,-1.80281e-15)">
-                <path d="M10.25,4.25L16.619,10.25" style="stroke:black;stroke-width:1px;"/>
+                <path d="M10.25,4.25L16.619,10.25" style="stroke:currentColor;stroke-width:1px;"/>
             </g>
             <g transform="matrix(1.13621,0,0,1.01489,-1.62981,-1.80281e-15)">
-                <path d="M16.619,12L10.25,18" style="stroke:black;stroke-width:1px;"/>
+                <path d="M16.619,12L10.25,18" style="stroke:currentColor;stroke-width:1px;"/>
             </g>
         </g>
     </symbol>
