@@ -31,7 +31,7 @@ export const SettingsPageNav: React.FC<Props> = (props: Props) => {
         <div className={classNames(props.className, styles.layout)}>
             <div className={styles.list}>
                 {props.sections.map((tabProps: SectionProps) => (
-                    <div
+                    <button
                         key={tabProps.id}
                         className={classNames(styles.entry, {
                             [styles.entry_active]: tabProps.id == props.selectedSection
@@ -39,8 +39,8 @@ export const SettingsPageNav: React.FC<Props> = (props: Props) => {
                         data-tab={tabProps.id}
                         onClick={selectSection}
                     >
-                        <div className={styles.entry_label}>{tabProps.label}</div>
-                    </div>
+                        {tabProps.label}
+                    </button>
                 ))}
             </div>
             <div className={styles.body}>{renderer ? renderer(props.sections[props.selectedSection]) : undefined}</div>

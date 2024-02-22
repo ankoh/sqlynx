@@ -38,6 +38,9 @@
     box-sizing: border-box;
     border-radius: var(--border_radius);
     color: var(--button_fg);
+    border: 0;
+    background: none;
+    -webkit-appearance: none;
 }
 .tab_label {
     font-size: 0.7rem;
