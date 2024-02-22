@@ -6,7 +6,7 @@ import { HyperGrpcConnectorPanel } from '../connector/hyper_grpc_connector_panel
 
 import styles from './settings_page.module.css';
 
-interface PageProps {}
+interface PageProps { }
 
 export const SettingsPage: React.FC<PageProps> = (props: PageProps) => {
     return (
@@ -28,7 +28,6 @@ export const SettingsPage: React.FC<PageProps> = (props: PageProps) => {
                 <div className={styles.connector_list_container}>
                     <div className={styles.connector_list_entry}>Hyper Database</div>
                     <div className={styles.connector_list_entry}>Salesforce Data Cloud</div>
-                    <div className={styles.connector_list_entry}>Arrow Flight SQL</div>
                     <div className={styles.connector_list_entry}>Local Scripts</div>
                 </div>
                 <div className={styles.connector_details_container}>
