@@ -2,8 +2,8 @@ import * as React from 'react';
 
 import { SQLynxLoader } from './sqlynx_loader.js';
 import { withNavBar } from './view/navbar.js';
-import { EditorPage } from './view/pages/editor_page.js';
-import { SettingsPage } from './view/pages/settings_page.js';
+import { EditorPage } from './view/editor/editor_page.js';
+import { SettingsPage } from './view/settings/settings_page.js';
 import { ScriptLoader } from './session/script_loader.js';
 import { CatalogLoader } from './session/catalog_loader.js';
 import { ScriptAutoloaderSalesforce } from './session/script_autoloader_salesforce.js';

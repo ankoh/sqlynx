@@ -19,11 +19,11 @@ import SalesforceDummyAccount from '../../../static/img/salesforce_account_place
 import * as symbols from '../../../static/svg/symbols.generated.svg';
 
 import panelStyle from './salesforce_connector_panel.module.css';
-import pageStyle from '../pages/settings_page.module.css';
+import pageStyle from './settings_page.module.css';
 
 interface SalesforceAuthFlowProps { }
 
-const SalesforceAuthFlowPanel: React.FC<SalesforceAuthFlowProps> = (props: SalesforceAuthFlowProps) => {
+const SalesforceAuthFlowPanel: React.FC<SalesforceAuthFlowProps> = (_props: SalesforceAuthFlowProps) => {
     const appConfig = useAppConfig();
     const authState = useSalesforceAuthState();
     const authFlow = useSalesforceAuthFlow();

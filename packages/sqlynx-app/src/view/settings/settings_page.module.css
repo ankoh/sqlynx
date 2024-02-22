@@ -34,7 +34,7 @@
     .body_container {
         grid-row: 2;
         display: grid;
-        grid-template-columns: 200px 200px 1fr;
+        grid-template-columns: 160px 200px 1fr;
     }
     .subpage_list_background {
         grid-row: 1;
@@ -82,7 +82,7 @@
     .body_container {
         grid-row: 2;
         display: grid;
-        grid-template-columns: 200px 200px 1fr;
+        grid-template-columns: 160px 200px 1fr;
     }
     .subpage_list_background {
         grid-row: 1;
