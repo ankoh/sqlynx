@@ -1,7 +1,6 @@
 import * as React from 'react';
-import * as classNames from 'classnames';
 import { useLocation } from 'react-router-dom';
-import { useAppConfig } from '../app_config.js';
+import { classNames } from '../utils/classnames.js';
 import { HoverMode, LinkButton } from './button.js';
 import { useNativeApi } from '../native_api.js';
 import { SQLYNX_GET_URL, SQLYNX_GIT_COMMIT, SQLYNX_GIT_REPO_URL, SQLYNX_VERSION } from '../app_version.js';
@@ -13,7 +12,7 @@ import * as symbols from '../../static/svg/symbols.generated.svg';
 const PageTab = (props: { route: string; alt?: string; location: string; icon: string; label: string }) => (
     <div
         key={props.route}
-        className={classNames.default(styles.tab, {
+        className={classNames(styles.tab, {
             [styles.active]: props.location == props.route || props.location == props.alt,
         })}
     >

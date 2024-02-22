@@ -3,8 +3,9 @@ import * as React from 'react';
 import { AnchoredOverlay, Box, IconButton } from '@primer/react';
 import { DownloadIcon, FileIcon } from '@primer/octicons-react';
 
+import { classNames } from '../../utils/classnames.js';
+
 import styles from './script_filesave_overlay.module.css';
-import * as classNames from 'classnames';
 
 interface Props {
     className?: string;
@@ -26,7 +27,7 @@ export const ScriptFileSaveOverlay: React.FC<Props> = (props: Props) => {
                 initialFocusRef: buttonRef,
             }}
         >
-            <Box className={classNames.default(styles.filesave_overlay, props.className)}>
+            <Box className={classNames(styles.filesave_overlay, props.className)}>
                 <div className={styles.filesave_file_icon_container}>
                     <FileIcon className={styles.filesave_file_icon} />
                 </div>

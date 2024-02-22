@@ -1,10 +1,10 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
 
 import * as React from 'react';
-import * as classNames from 'classnames';
 import Immutable from 'immutable';
 
 import { formatBytes, formatNanoseconds } from '../../utils/format.js';
+import { classNames } from '../../utils/classnames.js';
 
 import styles from './script_statistics_bar.module.css';
 
@@ -84,7 +84,7 @@ export const ScriptStatisticsBar: React.FC<Props> = (props: Props) => {
     }
 
     return (
-        <div className={classNames.default(props.className, styles.container)}>
+        <div className={classNames(props.className, styles.container)}>
             <div className={styles.metric_container}>
                 <History data={elapsedHistory} maximum={maxTotalElapsed} />
                 <div className={styles.metric_last_reading}>{formatNanoseconds(lastTotalElapsed)}</div>

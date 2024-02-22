@@ -1,10 +1,10 @@
 import * as React from 'react';
 import * as LZString from 'lz-string';
-import * as classNames from 'classnames';
 
 import { TextInput, AnchoredOverlay, Box, IconButton, ToggleSwitch } from '@primer/react';
 import { CheckIcon, PaperclipIcon } from '@primer/octicons-react';
 
+import { classNames } from '../../utils/classnames.js';
 import { sleep } from '../../utils/sleep.js';
 import { ScriptData, ScriptKey } from '../../session/session_state.js';
 import { useActiveSessionState } from '../../session/session_state_provider.js';
@@ -152,7 +152,7 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
                 initialFocusRef: buttonRef,
             }}
         >
-            <Box className={classNames.default(styles.sharing_overlay, props.className)}>
+            <Box className={classNames(styles.sharing_overlay, props.className)}>
                 <div className={styles.sharing_title}>Save Query as Link</div>
                 <div className={styles.sharing_url}>
                     <TextInput className={styles.sharing_url} disabled={true} value={state.urlText ?? ''} />
