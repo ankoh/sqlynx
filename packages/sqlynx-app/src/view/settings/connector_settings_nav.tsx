@@ -31,7 +31,7 @@ export const ConnectorSettingsNav: React.FC<Props> = (props: Props) => {
         <div className={classNames(props.className, styles.layout)}>
             <div className={styles.list}>
                 {props.connectors.map((tabProps: ConnectorProps) => (
-                    <div
+                    <button
                         key={tabProps.id}
                         className={classNames(styles.entry, {
                             [styles.entry_active]: tabProps.id == props.selectedConnector
@@ -39,8 +39,8 @@ export const ConnectorSettingsNav: React.FC<Props> = (props: Props) => {
                         data-tab={tabProps.id}
                         onClick={selectConnector}
                     >
-                        <div className={styles.entry_label}>{tabProps.label}</div>
-                    </div>
+                        {tabProps.label}
+                    </button>
                 ))}
             </div>
             <div className={styles.body}>{renderer ? renderer(props.connectors[props.selectedConnector]) : undefined}</div>

@@ -27,15 +27,14 @@
 .entry {
     padding: 8px 16px;
     border-radius: var(--border_radius);
+    color: var(--button_fg);
     font-size: 0.9rem;
+    font-weight: 400;
+    border: 0;
+    background: none;
+    -webkit-appearance: none;
 }
 
 .entry_active {
     background-color: hsl(210, 24%, 82%);
-}
-
-.entry_label {
-    font-size: 0.9rem;
-    font-weight: 400;
-    color: var(--button_fg);
 }
