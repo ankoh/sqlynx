@@ -1,7 +1,7 @@
 import * as React from 'react';
 
-import { SalesforceConnectorPanel } from './salesforce_connector_panel.js';
-import { HyperGrpcConnectorPanel } from './hyper_grpc_connector_panel.js';
+import { SalesforceConnectorSettings } from './salesforce_connector_settings.js';
+import { HyperGrpcConnectorSettings } from './hyper_grpc_connector_settings.js';
 import { ConnectorProps, ConnectorRenderers, ConnectorSettingsNav } from './connector_settings_nav.js';
 
 interface PageProps { }
@@ -24,8 +24,8 @@ export const ConnectorSettings: React.FC<PageProps> = (_props: PageProps) => {
         }
     ]), []);
     const connectorRenderers: ConnectorRenderers = React.useMemo(() => ({
-        [0]: (_props: {}) => <div><SalesforceConnectorPanel /></div>,
-        [1]: (_props: {}) => <div><HyperGrpcConnectorPanel /></div>,
+        [0]: (_props: {}) => <div><SalesforceConnectorSettings /></div>,
+        [1]: (_props: {}) => <div><HyperGrpcConnectorSettings /></div>,
     }), []);
 
     return (
