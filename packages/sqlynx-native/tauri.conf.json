@@ -12,7 +12,7 @@
                 "resizable": true,
                 "title": "SQLynx",
                 "titleBarStyle": "Overlay",
-                "width": 1000
+                "width": 1200
             }
         ],
         "withGlobalTauri": true
