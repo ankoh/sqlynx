@@ -166,8 +166,8 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
                     <div className={styles.sharing_url_stats}>{state.urlText?.length ?? 0} characters</div>
                 </div>
                 <div className={styles.sharing_url_setting}>
-                    <ToggleSwitch checked={embedConnectorInfo} size="small" onClick={toggleConnectorEmbedding} />
                     <div className={styles.sharing_url_setting_name}>Embed non-sensitive connector info</div>
+                    <ToggleSwitch checked={embedConnectorInfo} size="small" onClick={toggleConnectorEmbedding} />
                 </div>
             </Box>
         </AnchoredOverlay>
