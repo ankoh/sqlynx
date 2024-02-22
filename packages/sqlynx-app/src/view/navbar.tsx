@@ -9,7 +9,7 @@ import styles from './navbar.module.css';
 
 import * as symbols from '../../static/svg/symbols.generated.svg';
 
-const PageTab = (props: { route: string; alt?: string; location: string; icon: string; label: string }) => (
+const PageTab = (props: { route: string; alt?: string; location: string; icon: string; label: string | null }) => (
     <div
         key={props.route}
         className={classNames(styles.tab, {
@@ -21,7 +21,7 @@ const PageTab = (props: { route: string; alt?: string; location: string; icon: s
                 <svg width="16px" height="16px">
                     <use xlinkHref={props.icon} />
                 </svg>
-                <span className={styles.tab_link_text}>{props.label}</span>
+                {props.label && <span className={styles.tab_link_text}>{props.label}</span>}
             </>
         </LinkButton>
     </div>
