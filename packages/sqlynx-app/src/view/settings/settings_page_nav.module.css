@@ -4,7 +4,7 @@
 
     display: grid;
     grid-template-rows: 1fr;
-    grid-template-columns: 140px 1fr;
+    grid-template-columns: 120px 1fr;
 }
 
 .body {
@@ -36,6 +36,6 @@
 
 .entry_label {
     font-size: 0.9rem;
-    font-weight: 500;
+    font-weight: 400;
     color: var(--button_fg);
 }

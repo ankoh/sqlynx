@@ -10,7 +10,7 @@
 
     --button_bar_bg: hsla(210deg 12% 95%);
     --button_bar_border_color: hsl(210deg, 4%, 85%);
-    --button_fg: hsl(210, 24%, 32%);
+    --button_fg: hsl(210, 24%, 22%);
     --button_fg_inverted: rgb(255, 255, 255);
     --button_hover_fg: rgb(255, 255, 255);
     --button_hover_fg_inverted: hsl(210, 24%, 32%);
@@ -56,8 +56,7 @@
     --stats_bg: hsl(210deg, 28.57%, 97.25%);
     --stats_value_fg: rgb(140, 140, 140);
 
-    --connections_card_background: white;
-    --connections_card_header_background: hsl(210, 29%, 97%);
+    --connection_settings_header_background: hsl(210, 29%, 97%);
 
     --graph_title_fg: rgb(0, 0, 0);
     --graph_bg: hsl(210, 29%, 97%);

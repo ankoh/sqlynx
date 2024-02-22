@@ -36,6 +36,6 @@
 
 .entry_label {
     font-size: 0.9rem;
-    font-weight: 500;
+    font-weight: 400;
     color: var(--button_fg);
 }

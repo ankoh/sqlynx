@@ -28,7 +28,7 @@ export const SettingsPage: React.FC<PageProps> = (_props: PageProps) => {
         <div className={styles.page}>
             <div className={styles.header_container}>
                 <div className={styles.header_left_container}>
-                    <div className={styles.page_title}>More</div>
+                    <div className={styles.page_title}>Settings</div>
                 </div>
             </div>
             <SettingsPageNav
