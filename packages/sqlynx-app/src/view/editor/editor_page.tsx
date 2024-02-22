@@ -32,7 +32,7 @@ import { getConnectorIcon } from '../connector_icons.js';
 import { useAppConfig } from '../../app_config.js';
 
 import styles from './editor_page.module.css';
-import * as primerBugFixes from '../../primer_bugfixes.module.css';
+import primerBugFixes from '../../primer_bugfixes.module.css';
 import * as icons from '../../../static/svg/symbols.generated.svg';
 
 const ConnectorSelection = (props: { className?: string; variant: 'default' | 'invisible'; short: boolean }) => {
