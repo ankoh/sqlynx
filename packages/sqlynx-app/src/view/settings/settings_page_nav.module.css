@@ -38,11 +38,11 @@
 }
 
 .entry:hover {
-    background-color: hsl(208.5deg 24.69% 80.76%);
+    background-color: var(--pagenav_tabs_background_hover);
 }
 
 .entry_active {
-    color: white;
-    background-color: hsl(208.5deg 24.69% 40.76%) !important;
+    color: var(--pagenav_tabs_foreground_active);
+    background-color: var(--pagenav_tabs_background_active) !important;
     border: var(--pagenav_tabs_border_active);
 }
