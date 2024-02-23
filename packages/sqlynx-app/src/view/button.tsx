@@ -10,31 +10,6 @@ export enum HoverMode {
     Lighten,
 }
 
-type ButtonProps = {
-    className?: string;
-    disabled?: boolean;
-    hover?: HoverMode;
-    invert?: boolean;
-    onClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
-    children?: React.ReactElement;
-};
-
-export const Button: React.FC<ButtonProps> = (props: ButtonProps) => (
-    <div
-        className={classNames(props.className, {
-            [styles.button]: props.invert === undefined || !props.invert,
-            [styles.button_inverted]: props.invert,
-            [styles.disabled]: props.disabled,
-            [styles.hover_invert]: props.hover === undefined || props.hover === HoverMode.Invert,
-            [styles.hover_lighten]: props.hover === HoverMode.Lighten,
-            [styles.hover_darken]: props.hover === HoverMode.Darken,
-        })}
-        onClick={props.onClick}
-    >
-        {props.children}
-    </div>
-);
-
 type LinkProps = {
     className?: string;
     to: string;

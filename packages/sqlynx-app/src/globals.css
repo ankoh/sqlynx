@@ -6,8 +6,6 @@
     --color_primary: hsl(212, 8%, 23%);
     --color_version: rgb(160, 160, 160);
 
-    --button_bar_bg: hsla(210deg 12% 95%);
-    --button_bar_border_color: hsl(210deg, 4%, 85%);
     --button_fg: hsl(210, 24%, 22%);
     --button_fg_inverted: rgb(255, 255, 255);
     --button_hover_fg: rgb(255, 255, 255);
@@ -26,24 +24,12 @@
     --nav_tab_fg_active: white;
     --nav_tab_border: 1px solid black;
 
-    --system_bg: transparent;
-    --system_bg_active: transparent;
-    --system_fg: hsl(210, 24%, 32%);
-    --system_fg_active: hsl(210, 24%, 32%);
-    --system_panel_bg: hsl(210deg, 12%, 16%);
-    --system_panel_border_radius: 8px;
-    --system_subtitle_color: rgba(255, 255, 255, 0.6);
-    --system_subtitle_fontsize: 90%;
-
-    --log_timestamp_color: rgba(255, 255, 255, 0.6);
-
     --editortabs_background: hsl(210, 24%, 92%);
     --editortabs_background_active: hsl(210, 24%, 82%);
     --editortabs_foreground_active: hsl(210, 24%, 32%);
     --editortab_disabled_color: hsl(210, 24%, 62%);
     --editortabs_indicator_color: rgb(254, 150, 0);
 
-    --loader_background: hsl(210, 24%, 92%);
     --loader_card_header_background: hsl(210, 29%, 97%);
 
     --editor_header_bg: hsl(210, 29%, 97%);
@@ -73,12 +59,6 @@
     --skeleton_highlight_color: hsl(210, 29%, 94%);
     --skeleton_animation_duration: 1.5s;
     --skeleton_animation_direction: normal;
-
-    --salesforce_logo_bg: rgb(0, 161, 224);
-
-    --settings_section_list_bg: hsl(210, 24%, 92%);
-    /* --settings_section_list_bg: hsl(210, 24%, 97%); */
-    --settings_connector_list_bg: hsl(210, 24%, 97%);
 
     --background_color_80: hsl(208.5deg, 24.69%, 31.76%);
     --background_color_100: hsl(208.5deg, 24.69%, 23.76%);
