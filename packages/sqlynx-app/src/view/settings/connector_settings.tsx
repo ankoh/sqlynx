@@ -12,11 +12,11 @@ export const ConnectorSettings: React.FC<PageProps> = (_props: PageProps) => {
     const connectors: ConnectorProps[] = React.useMemo(() => ([
         {
             id: 0,
-            label: "Salesforce Data Cloud"
+            label: "Hyper Database"
         },
         {
             id: 1,
-            label: "Hyper Database"
+            label: "Salesforce Data Cloud"
         },
         {
             id: 2,
@@ -24,8 +24,8 @@ export const ConnectorSettings: React.FC<PageProps> = (_props: PageProps) => {
         }
     ]), []);
     const connectorRenderers: ConnectorRenderers = React.useMemo(() => ({
-        [0]: (_props: {}) => <div><SalesforceConnectorSettings /></div>,
-        [1]: (_props: {}) => <div><HyperGrpcConnectorSettings /></div>,
+        [0]: (_props: {}) => <div><HyperGrpcConnectorSettings /></div>,
+        [1]: (_props: {}) => <div><SalesforceConnectorSettings /></div>,
     }), []);
 
     return (
