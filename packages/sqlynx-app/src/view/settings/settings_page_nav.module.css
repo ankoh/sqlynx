@@ -25,7 +25,7 @@
 }
 
 .entry {
-    padding: 8px 16px;
+    padding: 6px 16px;
     border: 1px solid transparent;
     border-radius: var(--border_radius);
     color: var(--button_fg);
