@@ -13,7 +13,7 @@
 .tabs {
     grid-row: 1;
     grid-column: 1;
-    background-color: var(--editortabs_background);
+    background-color: var(--pagenav_tabs_background);
     border-right: 1px solid var(--border_color_primary);
 
     display: flex;
@@ -49,20 +49,21 @@
 }
 
 .tab:hover > .tab_icon {
-    background-color: hsl(208.5deg 24.69% 80.76%);
+    background-color: var(--pagenav_tabs_background_hover);
 }
 .tab_disabled:hover > .tab_icon {
     background-color: transparent !important;
 }
 .tab_disabled > .tab_icon {
-    color: var(--editortab_disabled_color);
+    color: var(--pagenav_tabs_disabled_color);
 }
 .tab_disabled > .tab_label {
-    color: var(--editortab_disabled_color);
+    color: var(--pagenav_tabs_disabled_color);
 }
 .tab_active > .tab_icon {
-    color: white;
-    background-color: hsl(208.5deg 24.69% 40.76%) !important;
+    color: var(--pagenav_tabs_foreground_active);
+    background-color: var(--pagenav_tabs_background_active) !important;
+    border: var(--pagenav_tabs_border_active);
 }
 
 .body {

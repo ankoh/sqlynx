@@ -58,12 +58,15 @@
     color: var(--nav_tab_fg);
     height: 30px;
     border-radius: 8px;
+    border: 1px solid transparent !important;
 }
 .tab:hover {
     background-color: var(--nav_tab_bg_active);
+    border: var(--nav_border_active) !important;
 }
 .tab.active {
     background-color: var(--nav_tab_bg_active) !important;
+    border: var(--nav_border_active) !important;
 }
 
 .tab_navbar {
