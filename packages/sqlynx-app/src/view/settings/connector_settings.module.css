@@ -8,7 +8,6 @@
 
     background-color: var(--connection_settings_header_background);
     border-bottom: 1px solid var(--border_color_primary);
-    border-radius: calc(var(--border_radius) - 1px) calc(var(--border_radius) - 1px) 0px 0px;
 }
 .connector_body_container {
     min-height: 48px;

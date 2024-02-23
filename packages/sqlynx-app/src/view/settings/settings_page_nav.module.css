@@ -30,6 +30,8 @@
     border-radius: var(--border_radius);
     color: var(--button_fg);
     font-size: 0.9rem;
+    font-weight: 400;
+    font-family: 'Roboto';
     text-align: left;
     background: none;
     -webkit-appearance: none;
