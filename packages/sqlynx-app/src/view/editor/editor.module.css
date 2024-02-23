@@ -11,27 +11,6 @@
     grid-template-rows: 40px calc(100% - 40px);
 }
 
-.tab {
-    position: relative;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-top: 1px solid transparent;
-    border-radius: var(--border_radius);
-    color: var(--button_fg);
-}
-.tab:hover {
-    background-color: var(--editortabs_background_active);
-}
-.tab_active {
-    background-color: var(--editortabs_background_active) !important;
-    color: var(--editortabs_foreground_active) !important;
-}
-.tab_disabled {
-    display: none !important;
-}
-
 .headerbar {
     grid-row: 1;
     grid-column: 1;
