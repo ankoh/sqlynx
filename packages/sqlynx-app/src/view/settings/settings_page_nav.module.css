@@ -29,7 +29,6 @@
     border-radius: var(--border_radius);
     color: var(--button_fg);
     font-size: 0.9rem;
-    font-weight: 400;
     text-align: left;
     border: 0;
     background: none;
@@ -37,9 +36,10 @@
 }
 
 .entry:hover {
-    background-color: hsl(210, 24%, 88%);
+    background-color: hsl(208.5deg 24.69% 80.76%);
 }
 
 .entry_active {
-    background-color: hsl(210, 24%, 82%) !important;
+    color: white;
+    background-color: hsl(208.5deg 24.69% 40.76%) !important;
 }

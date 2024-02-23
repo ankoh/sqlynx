@@ -49,7 +49,7 @@
 }
 
 .tab:hover > .tab_icon {
-    background-color: var(--action_item_hover_bg);
+    background-color: hsl(208.5deg 24.69% 80.76%);
 }
 .tab_disabled:hover > .tab_icon {
     background-color: transparent !important;
@@ -61,7 +61,8 @@
     color: var(--editortab_disabled_color);
 }
 .tab_active > .tab_icon {
-    background-color: var(--editortabs_background_active) !important;
+    color: white;
+    background-color: hsl(208.5deg 24.69% 40.76%) !important;
 }
 
 .body {
