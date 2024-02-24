@@ -72,9 +72,9 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                             disabled={false}
                         />
                         <MutableTextBox
-                            name="Tracing Data"
-                            caption="Queries are sent with header 'x-trace-id: sqlynx/<value>/<query-id>'"
-                            value="<random uuid>"
+                            name="Client UUID"
+                            caption="Queries are sent with header 'x-trace-id: sqlynx/<client-uuid>/<query-id>'"
+                            value="<client uuid>"
                             onChange={() => { }}
                             disabled={false}
                         />

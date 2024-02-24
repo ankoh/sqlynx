@@ -6,7 +6,7 @@
     grid-template-columns: max-content auto max-content;
     grid-template-rows: 56px;
 
-    background-color: var(--connection_settings_header_background);
+    background-color: var(--connector_header_background);
     border-bottom: 1px solid var(--border_color_primary);
 }
 .connector_body_container {
