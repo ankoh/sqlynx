@@ -37,27 +37,30 @@ export const VerticalTabs: React.FC<Props> = (props: Props) => {
     }, []);
     const tabRenderer = props.tabRenderers[props.selectedTab];
     const tabBody = tabRenderer ? tabRenderer(props.tabs[props.selectedTab]) : undefined;
+
+    const renderStackedTab = (tabProps: VerticalTabProps) => (
+        <div
+            key={tabProps.tabId}
+            className={classNames(styles.stacked_tab, {
+                [styles.stacked_tab_active]: tabProps.tabId == props.selectedTab,
+                [styles.stacked_tab_disabled]: tabProps.disabled,
+            })}
+            data-tab={tabProps.tabId}
+            onClick={tabProps.disabled ? undefined : selectTab}
+        >
+            <button className={styles.stacked_tab_icon}>
+                <svg width="18px" height="18px">
+                    <use xlinkHref={tabProps.icon} />
+                </svg>
+            </button>
+            <div className={styles.stacked_tab_label}>{tabProps.labelShort}</div>
+        </div>
+    );
+
     return (
         <div className={classNames(props.className, styles.container)}>
             <div className={styles.tabs}>
-                {props.tabs.map((tabProps: VerticalTabProps) => (
-                    <div
-                        key={tabProps.tabId}
-                        className={classNames(styles.tab, {
-                            [styles.tab_active]: tabProps.tabId == props.selectedTab,
-                            [styles.tab_disabled]: tabProps.disabled,
-                        })}
-                        data-tab={tabProps.tabId}
-                        onClick={tabProps.disabled ? undefined : selectTab}
-                    >
-                        <button className={styles.tab_icon}>
-                            <svg width="18px" height="18px">
-                                <use xlinkHref={tabProps.icon} />
-                            </svg>
-                        </button>
-                        <div className={styles.tab_label}>{tabProps.labelShort}</div>
-                    </div>
-                ))}
+                {props.tabs.map(renderStackedTab)}
             </div>
             <div className={styles.body}>{tabBody}</div>
         </div>
