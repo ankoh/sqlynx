@@ -12,8 +12,8 @@ import hyperStyle from './hyper_grpc_connector_settings.module.css';
 interface Props { }
 
 interface ListElement {
-    name: string | null;
-    alias: string | null;
+    name: string;
+    alias: string;
 }
 
 export const HyperGrpcConnectorSettings: React.FC<Props> = (
@@ -46,7 +46,7 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
 
     const elements: ListElement[] = [{
         name: "foo",
-        alias: null
+        alias: ""
     }];
 
     return (
@@ -85,6 +85,7 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                                             block
                                             className={hyperStyle.attached_db_path}
                                             value={props.name}
+                                            onChange={() => { }}
                                             leadingVisual={DatabaseIcon}
                                             trailingAction={
                                                 <TextInput.Action
@@ -102,6 +103,7 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                                             block
                                             className={hyperStyle.attached_db_alias}
                                             value={props.alias}
+                                            onChange={() => { }}
                                             placeholder="Database Alias"
                                             leadingVisual={MentionIcon}
                                             trailingAction={CopyAction()}
