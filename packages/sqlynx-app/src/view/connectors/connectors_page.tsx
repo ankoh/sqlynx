@@ -50,7 +50,7 @@ export const ConnectorsPage: React.FC<PageProps> = (_props: PageProps) => {
                 </div>
             </div>
             <VerticalTabs
-                variant={VerticalTabVariant.Stacked}
+                variant={VerticalTabVariant.Wide}
                 selectedTab={selectedConnector}
                 selectTab={selectConnector}
                 tabs={connectors}
