@@ -1,11 +1,3 @@
-.active_toggle {
-    margin-right: 16px;
-}
-.active_toggle > button {
-    /* background-color: hsl(20, 81%, 52%) !important; */
-    background-color: hsl(20, 81%, 62%) !important;
-    /* background-color: hsl(208.5deg 20.69% 60.76%) !important; */
-}
 .body_container {
 }
 .section {
@@ -17,6 +9,7 @@
     padding-top: 8px;
     padding-bottom: 20px;
     border-bottom: 1px solid var(--border_color_primary);
+    background-color: white;
 }
 @media only screen and (max-width: 900px) {
     .section_layout {

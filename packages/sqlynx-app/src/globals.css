@@ -25,6 +25,7 @@
     --nav_tab_border: 1px solid black;
     --nav_border_active: 1px solid hsl(208.5deg 24.69% 28.76%);
 
+    --pagenav_body_background: hsl(210, 29%, 97%);
     --pagenav_tabs_background: hsl(210, 24%, 92%);
     --pagenav_tabs_background_active: hsl(208.5deg 20.69% 50.76%);
     --pagenav_tabs_foreground_active: white;
