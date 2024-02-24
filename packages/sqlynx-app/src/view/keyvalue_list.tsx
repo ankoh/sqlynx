@@ -1,10 +1,14 @@
 import * as React from 'react';
-import { TextInput, Button } from '@primer/react';
-import { CopyIcon, XIcon } from '@primer/octicons-react';
+import { TextInput, Button, IconButton } from '@primer/react';
+import { CopyIcon, PlusIcon, XIcon } from '@primer/octicons-react';
+import { classNames } from '../utils/classnames.js';
 
 import styles from './keyvalue_list.module.css';
 
 interface Props {
+    className?: string;
+    title: string;
+    caption: string;
     keyIcon: React.ElementType;
     valueIcon: React.ElementType;
     addButtonLabel: string;
@@ -18,22 +22,23 @@ interface ListElement {
 export const KeyValueListBuilder: React.FC<Props> = (
     listProps: Props,
 ) => {
-    const CopyAction = () => (
-        <TextInput.Action
-            onClick={() => {
-                alert('clear input');
-            }}
-            icon={CopyIcon}
-            aria-label="Clear input"
-        />
-    );
     const elements: ListElement[] = [{
+        key: "x-hyperdb-workload",
+        value: "foo"
+    }, {
         key: "foo",
-        value: ""
+        value: "bar"
     }];
 
     return (
-        <div className={styles.list}>
+        <div className={classNames(listProps.className, styles.list)}>
+            <div className={styles.list_name}>
+                {listProps.title}
+            </div>
+            <div className={styles.list_caption}>
+                {listProps.caption}
+            </div>
+            <IconButton className={styles.add_button} icon={PlusIcon} aria-label="add-entry" />
             <div className={styles.list_elements}>
                 {elements.map((props, i) => (
                     <div key={i} className={styles.element}>
@@ -62,13 +67,9 @@ export const KeyValueListBuilder: React.FC<Props> = (
                             onChange={() => { }}
                             placeholder="Database Alias"
                             leadingVisual={listProps.valueIcon}
-                            trailingAction={CopyAction()}
                         />
                     </div>))}
             </div>
-            <Button
-                className={styles.add_button}
-            >{listProps.addButtonLabel}</Button>
         </div>
     );
 };
