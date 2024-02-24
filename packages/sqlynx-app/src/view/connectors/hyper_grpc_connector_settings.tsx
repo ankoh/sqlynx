@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ChecklistIcon, DatabaseIcon, KeyIcon, LinkIcon, ListOrderedIcon, ShieldCheckIcon, ShieldLockIcon, VerifiedIcon } from '@primer/octicons-react';
+import { BugIcon, ChecklistIcon, DatabaseIcon, FileBadgeIcon, KeyIcon, LinkIcon, ListOrderedIcon, ShieldCheckIcon, ShieldLockIcon, TagIcon, VerifiedIcon } from '@primer/octicons-react';
 import { TextField, KeyValueTextField } from '../text_field.js';
 
 import { KeyValueListBuilder } from '../../view/keyvalue_list.js';
@@ -31,8 +31,9 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                     <div className={hyperStyle.section_layout}>
                         <TextField
                             name="gRPC Endpoint"
-                            caption="Endpoint of the gRPC service as '<https://host:port>'"
+                            caption="Endpoint of the gRPC service as 'https://host:port'"
                             value="https://127.0.0.1:8443"
+                            leadingVisual={() => <div>URL</div>}
                             onChange={() => { }}
                             disabled={false}
                         />
@@ -40,6 +41,7 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                             name="Client ID"
                             caption="Requests are sent with the header 'x-trace-id: <client-id>'"
                             value="<client id>"
+                            leadingVisual={TagIcon}
                             onChange={() => { }}
                         />
                         <KeyValueTextField
@@ -47,7 +49,7 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                             caption="Path to the server certificate and CA chain"
                             k=""
                             v=""
-                            keyIcon={VerifiedIcon}
+                            keyIcon={FileBadgeIcon}
                             valueIcon={ChecklistIcon}
                             onChange={() => { }}
                             disabled={false}
