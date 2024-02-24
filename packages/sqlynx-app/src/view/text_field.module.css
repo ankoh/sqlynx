@@ -1,0 +1,54 @@
+.text_field {
+    display: grid;
+    grid-template-rows: max-content max-content max-content;
+    margin-top: 4px;
+}
+.text_field_name {
+    font-weight: 600;
+    font-size: 14px;
+}
+.text_field_caption {
+    font-size: 12px;
+    color: #656d76;
+    margin-top: 1px;
+}
+.text_field_input {
+    margin-top: 8px;
+}
+
+
+.kv_field {
+    display: grid;
+    grid-template-columns: 1fr;
+    margin-top: 4px;
+}
+.kv_field_name {
+    font-weight: 600;
+    font-size: 14px;
+}
+.kv_field_caption {
+    font-size: 12px;
+    color: #656d76;
+    margin-top: 1px;
+}
+.kv_field_input_key {
+    margin-top: 8px;
+}
+.kv_field_input_value {
+    position: relative;
+    margin-left: 36px;
+    margin-top: 8px;
+    width: calc(100% - 36px);
+}
+.kv_field_input_value::before {
+    position: absolute;
+    left: -17px;
+    top: -7px;
+    width: 15px;
+    height: 24px;
+    content: '';
+
+    border-bottom: 1px solid var(--border_color_primary);
+    border-left: 1px solid var(--border_color_primary);
+    border-bottom-left-radius: 6px;
+}
