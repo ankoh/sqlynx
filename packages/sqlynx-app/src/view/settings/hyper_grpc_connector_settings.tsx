@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { TextInput, FormControl, Button, IconButton, SegmentedControl } from '@primer/react';
-import { CopyIcon, InfoIcon } from '@primer/octicons-react';
+import { TextInput, FormControl, Button } from '@primer/react';
+import { CopyIcon, DatabaseIcon, MentionIcon, XIcon } from '@primer/octicons-react';
 
 import { useAppConfig } from '../../app_config.js';
 
@@ -10,6 +10,11 @@ import baseStyle from './connector_settings.module.css';
 import hyperStyle from './hyper_grpc_connector_settings.module.css';
 
 interface Props { }
+
+interface ListElement {
+    name: string | null;
+    alias: string | null;
+}
 
 export const HyperGrpcConnectorSettings: React.FC<Props> = (
     _props: Props,
@@ -38,62 +43,82 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
             <FormControl.Caption>{props.caption}</FormControl.Caption>
         </FormControl>
     );
-    const grpcConnectorDisabled = !config.value?.features?.grpcConnector;
+
+    const elements: ListElement[] = [{
+        name: "foo",
+        alias: null
+    }];
+
     return (
         <>
             <div className={baseStyle.connector_header_container}>
                 <div className={baseStyle.platform_logo}>
-                    <svg width="24px" height="24px">
+                    <svg width="28px" height="28px">
                         <use xlinkHref={`${symbols}#hyper`} />
                     </svg>
                 </div>
                 <div className={baseStyle.platform_name} aria-labelledby="connector-hyper-database">
                     Hyper Database
                 </div>
-                <div className={baseStyle.platform_info}>
-                    <IconButton
-                        variant="invisible"
-                        icon={InfoIcon}
-                        aria-labelledby="connector-hyper-database"
-                        disabled={grpcConnectorDisabled}
-                    />
-                </div>
             </div>
-            <div className={baseStyle.connector_body_container}>
-                <div className={hyperStyle.auth_config_container}>
-                    <FormControl sx={{ marginTop: '8px' }} disabled={grpcConnectorDisabled}>
-                        <FormControl.Label id="protocol-selector" as="span">
-                            Protocol
-                        </FormControl.Label>
-                        <SegmentedControl
-                            aria-labelledby="protocol-selector"
-                            onChange={selectProtocol}
-                            sx={{ marginTop: '4px', opacity: grpcConnectorDisabled ? 0.75 : 1.0 }}
-                        >
-                            <SegmentedControl.Button selected={selectedProtocol === 0} disabled={grpcConnectorDisabled}>
-                                gRPC
-                            </SegmentedControl.Button>
-                            <SegmentedControl.Button selected={selectedProtocol === 1} disabled={grpcConnectorDisabled}>
-                                Web
-                            </SegmentedControl.Button>
-                        </SegmentedControl>
-                        <FormControl.Caption>
-                            {selectedProtocol === 0 ? 'gRPC through Electron' : 'gRPC Web through Browser'}
-                        </FormControl.Caption>
-                    </FormControl>
-                    <div className={hyperStyle.auto_config_protocol_settings}>
+            <div className={hyperStyle.body_container}>
+                <div className={hyperStyle.section}>
+                    <div className={hyperStyle.centered_section}>
                         <MutableTextBox
-                            name="Endpoint"
+                            name="gRPC Endpoint"
                             caption="Endpoint of the gRPC service as '<https://host:port>'"
                             value="https://127.0.0.1:8443"
                             onChange={() => { }}
-                            disabled={grpcConnectorDisabled}
+                            disabled={false}
                         />
-                        <div className={hyperStyle.auth_config_connect}>
-                            <Button sx={{ marginTop: '28px' }} disabled={grpcConnectorDisabled}>
-                                Connect
-                            </Button>
+                        <div className={hyperStyle.attached_db_list}>
+                            <div className={hyperStyle.attached_db_list_name}>
+                                Attached Databases
+                            </div>
+                            <div className={hyperStyle.attached_db_caption}>
+                                Databases that are attached for each query
+                            </div>
+                            <div className={hyperStyle.attached_db_list_elements}>
+                                {elements.map((props, i) => (
+                                    <div key={i} className={hyperStyle.attached_db_element}>
+                                        <TextInput
+                                            block
+                                            className={hyperStyle.attached_db_path}
+                                            value={props.name}
+                                            leadingVisual={DatabaseIcon}
+                                            trailingAction={
+                                                <TextInput.Action
+                                                    onClick={() => {
+                                                        alert('clear input')
+                                                    }}
+                                                    icon={XIcon}
+                                                    sx={{ color: 'fg.subtle' }}
+                                                    aria-label="Clear input"
+                                                />
+                                            }
+                                        />
+                                        <div className={hyperStyle.attached_db_aliaslink} />
+                                        <TextInput
+                                            block
+                                            className={hyperStyle.attached_db_alias}
+                                            value={props.alias}
+                                            placeholder="Database Alias"
+                                            leadingVisual={MentionIcon}
+                                            trailingAction={CopyAction()}
+                                        />
+                                    </div>))}
+                            </div>
+                            <Button
+                                className={hyperStyle.attach_db_button}
+                            >Attach Database</Button>
                         </div>
+                        <MutableTextBox
+                            name="Trace Prefix"
+                            caption="Queries are sent with header 'x-trace-id: <value>/<random uuid>'"
+                            value=""
+                            onChange={() => { }}
+                            disabled={false}
+                        />
                     </div>
                 </div>
             </div>
