@@ -29,11 +29,12 @@
     display: flex;
     flex-direction: column;
     padding: 4px;
-    row-gap: 8px;
+    row-gap: 4px;
     height: 100%;
 }
 
 .stacked_tab {
+    margin-bottom: 4px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -86,7 +87,7 @@
     background: none;
 
     width: 100%;
-    padding: 6px 16px 6px 8px;
+    padding: 6px 24px 6px 8px;
     display: grid;
     grid-template-rows: max-content;
     grid-template-columns: max-content max-content;
@@ -99,7 +100,7 @@
 .wide_tab_label {
     font-family: 'Roboto';
     font-size: 0.9rem;
-    font-weight: 400;
+    font-weight: 300;
     white-space: nowrap;
 }
 .wide_tab:hover > .wide_tab_button {
