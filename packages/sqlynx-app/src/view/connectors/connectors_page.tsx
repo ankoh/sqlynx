@@ -1,13 +1,13 @@
 import * as React from 'react';
 
-import styles from './settings_page.module.css';
+import styles from './connectors_page.module.css';
 import { ConnectorProps, ConnectorRenderers, ConnectorSettingsNav } from './connector_settings_nav.js';
 import { HyperGrpcConnectorSettings } from './hyper_grpc_connector_settings.js';
 import { SalesforceConnectorSettings } from './salesforce_connector_settings.js';
 
 interface PageProps { }
 
-export const SettingsPage: React.FC<PageProps> = (_props: PageProps) => {
+export const ConnectorsPage: React.FC<PageProps> = (_props: PageProps) => {
     const [selectedConnector, selectConnector] = React.useState(0);
 
     const connectors: ConnectorProps[] = React.useMemo(() => ([
