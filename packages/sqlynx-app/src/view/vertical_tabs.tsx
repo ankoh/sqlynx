@@ -11,6 +11,7 @@ export interface VerticalTabRenderers {
 export interface VerticalTabProps {
     tabId: number;
     icon: string;
+    iconActive?: string;
     labelShort: string;
     labelLong?: string;
     disabled?: boolean;
@@ -50,7 +51,7 @@ export const VerticalTabs: React.FC<Props> = (props: Props) => {
         >
             <button className={styles.stacked_tab_icon}>
                 <svg width="18px" height="16px">
-                    <use xlinkHref={tabProps.icon} />
+                    <use xlinkHref={(tabProps.tabId == props.selectedTab && tabProps.iconActive) ? tabProps.iconActive : tabProps.icon} />
                 </svg>
             </button>
             <div className={styles.stacked_tab_label}>{tabProps.labelShort}</div>
@@ -68,7 +69,7 @@ export const VerticalTabs: React.FC<Props> = (props: Props) => {
         >
             <button className={styles.wide_tab_button}>
                 <svg width="18px" height="16px">
-                    <use xlinkHref={tabProps.icon} />
+                    <use xlinkHref={(tabProps.tabId == props.selectedTab && tabProps.iconActive) ? tabProps.iconActive : tabProps.icon} />
                 </svg>
                 <div className={styles.wide_tab_label}>{tabProps.labelShort}</div>
             </button>

@@ -23,12 +23,14 @@ export const ConnectorsPage: React.FC<PageProps> = (_props: PageProps) => {
             labelShort: "Hyper",
             labelLong: "Hyper Database",
             icon: `${icons}#hyper_outlines`,
+            iconActive: `${icons}#hyper_nocolor`,
         },
         {
             tabId: 1,
             labelShort: "Salesforce",
             labelLong: "Salesforce Data Cloud",
             icon: `${icons}#salesforce_outlines`,
+            iconActive: `${icons}#salesforce_notext`,
         },
         {
             tabId: 2,
