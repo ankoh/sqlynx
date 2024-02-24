@@ -1,42 +1,46 @@
 import * as React from 'react';
 
-import { SectionProps, SectionRenderers, SettingsPageNav } from './settings_page_nav.js';
-
 import styles from './settings_page.module.css';
-import { ConnectorSettings } from './connector_settings.js';
+import { ConnectorProps, ConnectorRenderers, ConnectorSettingsNav } from './connector_settings_nav.js';
+import { HyperGrpcConnectorSettings } from './hyper_grpc_connector_settings.js';
+import { SalesforceConnectorSettings } from './salesforce_connector_settings.js';
 
 interface PageProps { }
 
 export const SettingsPage: React.FC<PageProps> = (_props: PageProps) => {
-    const [selectedSection, selectSection] = React.useState(0);
+    const [selectedConnector, selectConnector] = React.useState(0);
 
-    const sections: SectionProps[] = React.useMemo(() => ([
+    const connectors: ConnectorProps[] = React.useMemo(() => ([
         {
             id: 0,
-            label: "Connectors"
+            label: "Hyper Database"
         },
         {
             id: 1,
-            label: "About"
+            label: "Salesforce Data Cloud"
+        },
+        {
+            id: 2,
+            label: "Local Scripts"
         }
     ]), []);
-    const sectionRenderers: SectionRenderers = React.useMemo(() => ({
-        [0]: (_props: {}) => <ConnectorSettings />
+    const connectorRenderers: ConnectorRenderers = React.useMemo(() => ({
+        [0]: (_props: {}) => <div><HyperGrpcConnectorSettings /></div>,
+        [1]: (_props: {}) => <div><SalesforceConnectorSettings /></div>,
     }), []);
 
     return (
         <div className={styles.page}>
             <div className={styles.header_container}>
                 <div className={styles.header_left_container}>
-                    <div className={styles.page_title}>Settings</div>
+                    <div className={styles.page_title}>Connectors</div>
                 </div>
             </div>
-            <SettingsPageNav
-                className={styles.body_container}
-                sections={sections}
-                sectionRenderers={sectionRenderers}
-                selectSection={selectSection}
-                selectedSection={selectedSection}
+            <ConnectorSettingsNav
+                connectors={connectors}
+                connectorRenderers={connectorRenderers}
+                selectConnector={selectConnector}
+                selectedConnector={selectedConnector}
             />
         </div >
     );
