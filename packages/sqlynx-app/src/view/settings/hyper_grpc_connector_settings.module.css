@@ -1,23 +1,91 @@
-.auth_config_container {
-    padding: 0px 16px 12px 16px;
-    display: grid;
-    grid-template-columns: max-content 1fr;
-    column-gap: 16px;
-}
-.auth_config_protocol {
-    grid-column: 1;
+.active_toggle {
     margin-right: 16px;
-
+}
+.active_toggle > button {
+    /* background-color: hsl(20, 81%, 52%) !important; */
+    background-color: hsl(20, 81%, 62%) !important;
+    /* background-color: hsl(208.5deg 20.69% 60.76%) !important; */
+}
+.body_container {
+}
+.section {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    width: 100%;
+    padding-top: 8px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border_color_primary);
 }
-.auto_config_protocol_settings {
+.centered_section {
+    width: 100%;
+    max-width: 640px;
+    display: flex;
+    flex-direction: column;
+    row-gap: 8px;
+}
+
+.attached_db_list {
     display: grid;
-    grid-template-columns: 1fr max-content;
-    column-gap: 16px;
+    grid-template-rows: repeat(auto-fit, max-content);
 }
-.auth_config_connect {
-    grid-column: 2;
+.attached_db_list_name {
+    font-weight: 600;
+    font-size: 14px;
+    margin-top: 8px;
+}
+.attached_db_list_elements {
+    margin-top: 8px;
+}
+.attached_db_caption {
+    font-size: 12px;
+    color: #656d76;
+    margin-top: 2px;
+}
+.attached_db_element {
+    position: relative;
+    margin-left: 32px;
+    display: grid;
+    grid-template-rows: max-content max-content;
+    row-gap: 8px;
+    position: relative;
+}
+.attached_db_element::before {
+    position: absolute;
+    left: -20px;
+    top: 12px;
+    height: 6px;
+    width: 6px;
+    border-radius: 3px;
+    content: "";
+    background-color: black;
+}
+
+.attached_db_path {
+    grid-row: 1;
+    grid-column: 1;
+}
+
+.attached_db_alias {
+    width: calc(100% - 72px) !important;
+    margin-left: 36px;
+}
+
+.attached_db_aliaslink {
+    position: absolute;
+    left: 20px;
+    top: 32px;
+    width: 16px;
+    height: 26px;
+
+    border-bottom: 1px solid var(--border_color_primary);
+    border-left: 1px solid var(--border_color_primary);
+    border-bottom-left-radius: 6px;
+}
+
+.attach_db_button {
+    margin-top: 8px;
+    margin-left: 36px;
+    justify-self: left;
 }
