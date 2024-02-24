@@ -245,9 +245,9 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
             <div className={styles.header_container}>
                 <div className={styles.header_left_container}>
                     <div className={styles.page_title}>SQL Editor</div>
+                    <ConnectorSelection variant="invisible" short={true} />
                 </div>
                 <div className={styles.header_action_container}>
-                    <ConnectorSelection variant="invisible" short={true} />
                     <div>
                         <ButtonGroup className={primerBugFixes.button_group}>
                             <IconButton icon={PaperAirplaneIcon} aria-labelledby="execute-query" />
