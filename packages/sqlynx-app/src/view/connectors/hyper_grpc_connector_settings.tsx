@@ -34,11 +34,17 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
         value: string;
         leadingVisual?: React.ElementType;
         onChange: React.ChangeEventHandler<HTMLInputElement>;
-        disabled: boolean;
+        disabled?: boolean;
     }) => (
         <FormControl sx={{ marginTop: '8px' }} disabled={props.disabled}>
             <FormControl.Label>{props.name}</FormControl.Label>
-            <TextInput block leadingVisual={props.leadingVisual} trailingAction={CopyAction()} value={props.value} onChange={props.onChange} />
+            <TextInput
+                block
+                leadingVisual={props.leadingVisual}
+                trailingAction={CopyAction()}
+                value={props.value}
+                onChange={props.onChange}
+            />
             <FormControl.Caption>{props.caption}</FormControl.Caption>
         </FormControl>
     );
@@ -66,11 +72,10 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                             disabled={false}
                         />
                         <TextField
-                            name="Client UUID"
-                            caption="Requests are sent with the header 'x-trace-id: sqlynx/<client-uuid>/<query-id>'"
-                            value="<client uuid>"
+                            name="Client ID"
+                            caption="Requests are sent with the header 'x-trace-id: <client-id>'"
+                            value="<client id>"
                             onChange={() => { }}
-                            disabled={false}
                         />
                         <TextField
                             name="mTLS Server Certificate"
