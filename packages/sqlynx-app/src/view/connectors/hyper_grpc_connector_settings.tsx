@@ -1,8 +1,7 @@
 import * as React from 'react';
 import { TextInput, FormControl, Button } from '@primer/react';
-import { CopyIcon, DatabaseIcon, MentionIcon, XIcon } from '@primer/octicons-react';
+import { CopyIcon, DatabaseIcon, KeyIcon, MentionIcon, XIcon } from '@primer/octicons-react';
 
-import { useAppConfig } from '../../app_config.js';
 import { KeyValueListBuilder } from '../../view/keyvalue_list.js';
 
 import * as symbols from '../../../static/svg/symbols.generated.svg';
@@ -20,8 +19,6 @@ interface ListElement {
 export const HyperGrpcConnectorSettings: React.FC<Props> = (
     _props: Props,
 ) => {
-    const config = useAppConfig();
-    const [selectedProtocol, selectProtocol] = React.useState(1);
     const CopyAction = () => (
         <TextInput.Action
             onClick={() => {
@@ -31,24 +28,20 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
             aria-label="Clear input"
         />
     );
-    const MutableTextBox = (props: {
+    const TextField = (props: {
         name: string;
         caption: string;
         value: string;
+        leadingVisual?: React.ElementType;
         onChange: React.ChangeEventHandler<HTMLInputElement>;
         disabled: boolean;
     }) => (
         <FormControl sx={{ marginTop: '8px' }} disabled={props.disabled}>
             <FormControl.Label>{props.name}</FormControl.Label>
-            <TextInput block trailingAction={CopyAction()} value={props.value} onChange={props.onChange} />
+            <TextInput block leadingVisual={props.leadingVisual} trailingAction={CopyAction()} value={props.value} onChange={props.onChange} />
             <FormControl.Caption>{props.caption}</FormControl.Caption>
         </FormControl>
     );
-
-    const elements: ListElement[] = [{
-        name: "foo",
-        alias: ""
-    }];
 
     return (
         <>
@@ -65,17 +58,32 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
             <div className={hyperStyle.body_container}>
                 <div className={hyperStyle.section}>
                     <div className={hyperStyle.section_layout}>
-                        <MutableTextBox
+                        <TextField
                             name="gRPC Endpoint"
                             caption="Endpoint of the gRPC service as '<https://host:port>'"
                             value="https://127.0.0.1:8443"
                             onChange={() => { }}
                             disabled={false}
                         />
-                        <MutableTextBox
+                        <TextField
                             name="Client UUID"
                             caption="Requests are sent with the header 'x-trace-id: sqlynx/<client-uuid>/<query-id>'"
                             value="<client uuid>"
+                            onChange={() => { }}
+                            disabled={false}
+                        />
+                        <TextField
+                            name="mTLS Server Certificate"
+                            caption="Path to the public key of the server"
+                            value=""
+                            onChange={() => { }}
+                            disabled={false}
+                        />
+                        <TextField
+                            name="mTLS Client Key"
+                            caption="Path to private key of the client"
+                            value=""
+                            leadingVisual={KeyIcon}
                             onChange={() => { }}
                             disabled={false}
                         />
@@ -83,8 +91,8 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                             className={hyperStyle.kvlist}
                             title="Attached Databases"
                             caption="Databases that are attached for every query"
-                            keyIcon={() => <div>Header</div>}
-                            valueIcon={() => <div>Value</div>}
+                            keyIcon={DatabaseIcon}
+                            valueIcon={() => <div>ID</div>}
                             addButtonLabel="Add Database"
                         />
                         <KeyValueListBuilder
