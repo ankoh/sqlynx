@@ -113,9 +113,9 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                             >Add Database</Button>
                         </div>
                         <MutableTextBox
-                            name="Trace Prefix"
-                            caption="Queries are sent with header 'x-trace-id: <value>/<random uuid>'"
-                            value=""
+                            name="Tracing Data"
+                            caption="Queries are sent with header 'x-trace-id: sqlynx/<value>/<query-id>'"
+                            value="<random uuid>"
                             onChange={() => { }}
                             disabled={false}
                         />
