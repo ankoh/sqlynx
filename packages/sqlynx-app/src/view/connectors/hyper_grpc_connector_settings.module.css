@@ -18,12 +18,27 @@
     padding-bottom: 20px;
     border-bottom: 1px solid var(--border_color_primary);
 }
-.centered_section {
-    width: 100%;
-    max-width: 640px;
-    display: flex;
-    flex-direction: column;
-    row-gap: 8px;
+@media only screen and (max-width: 900px) {
+    .section_layout {
+        padding: 0px 16px;
+        width: 100%;
+        max-width: 640px;
+        display: flex;
+        flex-direction: column;
+        row-gap: 8px;
+    }
+}
+@media only screen and (min-width: 900px) {
+    .section_layout {
+        padding: 0px 16px;
+        width: 100%;
+        max-width: 1000px;
+        display: grid;
+        grid-template-rows: repeat(auto-fit, max-content);
+        grid-template-columns: 1fr 1fr;
+        column-gap: 8px;
+        row-gap: 8px;
+    }
 }
 
 .attached_db_list {

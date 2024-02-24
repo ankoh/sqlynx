@@ -63,11 +63,18 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
             </div>
             <div className={hyperStyle.body_container}>
                 <div className={hyperStyle.section}>
-                    <div className={hyperStyle.centered_section}>
+                    <div className={hyperStyle.section_layout}>
                         <MutableTextBox
                             name="gRPC Endpoint"
                             caption="Endpoint of the gRPC service as '<https://host:port>'"
                             value="https://127.0.0.1:8443"
+                            onChange={() => { }}
+                            disabled={false}
+                        />
+                        <MutableTextBox
+                            name="Tracing Data"
+                            caption="Queries are sent with header 'x-trace-id: sqlynx/<value>/<query-id>'"
+                            value="<random uuid>"
                             onChange={() => { }}
                             disabled={false}
                         />
@@ -114,13 +121,6 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                                 className={hyperStyle.attach_db_button}
                             >Add Database</Button>
                         </div>
-                        <MutableTextBox
-                            name="Tracing Data"
-                            caption="Queries are sent with header 'x-trace-id: sqlynx/<value>/<query-id>'"
-                            value="<random uuid>"
-                            onChange={() => { }}
-                            disabled={false}
-                        />
                     </div>
                 </div>
             </div>
