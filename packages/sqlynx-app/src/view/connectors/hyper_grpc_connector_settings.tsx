@@ -74,24 +74,27 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                         />
                         <MutableTextBox
                             name="Client UUID"
-                            caption="Queries are sent with header 'x-trace-id: sqlynx/<client-uuid>/<query-id>'"
+                            caption="Requests are sent with the header 'x-trace-id: sqlynx/<client-uuid>/<query-id>'"
                             value="<client uuid>"
                             onChange={() => { }}
                             disabled={false}
                         />
-                        <div className={hyperStyle.attached_db_list}>
-                            <div className={hyperStyle.attached_db_list_name}>
-                                Attached Databases
-                            </div>
-                            <div className={hyperStyle.attached_db_list_caption}>
-                                Databases that are attached for each query
-                            </div>
-                            <KeyValueListBuilder
-                                keyIcon={DatabaseIcon}
-                                valueIcon={MentionIcon}
-                                addButtonLabel="Add Database"
-                            />
-                        </div>
+                        <KeyValueListBuilder
+                            className={hyperStyle.kvlist}
+                            title="Attached Databases"
+                            caption="Databases that are attached for every query"
+                            keyIcon={() => <div>Header</div>}
+                            valueIcon={() => <div>Value</div>}
+                            addButtonLabel="Add Database"
+                        />
+                        <KeyValueListBuilder
+                            className={hyperStyle.kvlist}
+                            title="gRPC Metadata"
+                            caption="Extra HTTP headers that are added to each request"
+                            keyIcon={() => <div>Header</div>}
+                            valueIcon={() => <div>Value</div>}
+                            addButtonLabel="Add Header"
+                        />
                     </div>
                 </div>
             </div>
