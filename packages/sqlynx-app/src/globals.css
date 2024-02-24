@@ -74,6 +74,8 @@
             var(--background_color_80) 75%,
             var(--background_color_100) 100%
         );
+
+    --logo_color_salesforce: rgb(0, 161, 224);
 }
 
 :root {

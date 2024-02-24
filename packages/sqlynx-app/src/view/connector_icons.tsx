@@ -6,7 +6,7 @@ import * as icons from '../../static/svg/symbols.generated.svg';
 
 export const SalesforceIcon = () => (
     <svg width="20px" height="20px">
-        <use xlinkHref={`${icons}#salesforce-notext`} />
+        <use xlinkHref={`${icons}#salesforce_notext`} />
     </svg>
 );
 const CloudOfflineIcon = () => (

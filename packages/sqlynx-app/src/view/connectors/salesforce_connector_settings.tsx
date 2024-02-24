@@ -13,6 +13,7 @@ import {
     CONFIGURE,
 } from '../../connectors/salesforce_auth_state.js';
 import { Skeleton } from '../../view/skeleton.js';
+import { classNames } from '../../utils/classnames.js';
 
 import SalesforceDummyAccount from '../../../static/img/salesforce_account_placeholder.png';
 
@@ -167,9 +168,9 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
     return (
         <>
             <div className={baseStyle.connector_header_container}>
-                <div className={baseStyle.platform_logo}>
+                <div className={classNames(baseStyle.platform_logo, sfStyle.salesforce_logo)}>
                     <svg width="28px" height="28px">
-                        <use xlinkHref={`${symbols}#salesforce-notext`} />
+                        <use xlinkHref={`${symbols}#salesforce_notext`} />
                     </svg>
                 </div>
                 <div className={baseStyle.platform_name} id="connector-sf-data-cloud">

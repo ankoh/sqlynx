@@ -1,3 +1,7 @@
+.salesforce_logo {
+    color: var(--logo_color_salesforce);
+}
+
 .auth_container {
 }
 

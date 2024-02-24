@@ -22,19 +22,19 @@ export const ConnectorsPage: React.FC<PageProps> = (_props: PageProps) => {
             tabId: 0,
             labelShort: "Hyper",
             labelLong: "Hyper Database",
-            icon: `${icons}#database`,
+            icon: `${icons}#hyper_nocolor`,
         },
         {
             tabId: 1,
-            labelShort: "Data Cloud",
+            labelShort: "Salesforce",
             labelLong: "Salesforce Data Cloud",
-            icon: `${icons}#database`,
+            icon: `${icons}#salesforce_notext`,
         },
         {
             tabId: 2,
             labelShort: "Local",
             labelLong: "Local Scripts",
-            icon: `${icons}#database`,
+            icon: `${icons}#cloud_offline`,
         }
     ]), []);
     const connectorRenderers: VerticalTabRenderers = React.useMemo(() => ({
