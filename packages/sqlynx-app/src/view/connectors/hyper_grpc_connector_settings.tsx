@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { ChecklistIcon, DatabaseIcon, FileBadgeIcon, KeyIcon, TagIcon } from '@primer/octicons-react';
+import { Button } from '@primer/react';
+import { ChecklistIcon, DatabaseIcon, FileBadgeIcon, KeyIcon, LogIcon, PulseIcon, TagIcon } from '@primer/octicons-react';
 import { TextField, KeyValueTextField } from '../text_field.js';
 
 import { KeyValueListBuilder } from '../../view/keyvalue_list.js';
@@ -25,7 +26,11 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                 <div className={baseStyle.platform_name} aria-labelledby="connector-hyper-database">
                     Hyper Database
                 </div>
-            </div>
+                <div className={baseStyle.platform_actions}>
+                    <Button leadingVisual={LogIcon} count={3}>Logs</Button>
+                    <Button leadingVisual={PulseIcon}>Test</Button>
+                </div>
+            </div >
             <div className={hyperStyle.body_container}>
                 <div className={hyperStyle.section}>
                     <div className={hyperStyle.section_layout}>
