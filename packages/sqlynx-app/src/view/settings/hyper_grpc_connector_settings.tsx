@@ -110,7 +110,7 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                             </div>
                             <Button
                                 className={hyperStyle.attach_db_button}
-                            >Attach Database</Button>
+                            >Add Database</Button>
                         </div>
                         <MutableTextBox
                             name="Trace Prefix"
