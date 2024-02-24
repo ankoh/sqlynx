@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { TextInput, FormControl, Button } from '@primer/react';
-import { CopyIcon, DatabaseIcon, KeyIcon, MentionIcon, XIcon } from '@primer/octicons-react';
+import { ChecklistIcon, DatabaseIcon, KeyIcon, LinkIcon, ListOrderedIcon, ShieldCheckIcon, ShieldLockIcon, VerifiedIcon } from '@primer/octicons-react';
+import { TextField, KeyValueTextField } from '../text_field.js';
 
 import { KeyValueListBuilder } from '../../view/keyvalue_list.js';
 
@@ -11,44 +11,9 @@ import hyperStyle from './hyper_grpc_connector_settings.module.css';
 
 interface Props { }
 
-interface ListElement {
-    name: string;
-    alias: string;
-}
-
 export const HyperGrpcConnectorSettings: React.FC<Props> = (
     _props: Props,
 ) => {
-    const CopyAction = () => (
-        <TextInput.Action
-            onClick={() => {
-                alert('clear input');
-            }}
-            icon={CopyIcon}
-            aria-label="Clear input"
-        />
-    );
-    const TextField = (props: {
-        name: string;
-        caption: string;
-        value: string;
-        leadingVisual?: React.ElementType;
-        onChange: React.ChangeEventHandler<HTMLInputElement>;
-        disabled?: boolean;
-    }) => (
-        <FormControl sx={{ marginTop: '8px' }} disabled={props.disabled}>
-            <FormControl.Label>{props.name}</FormControl.Label>
-            <TextInput
-                block
-                leadingVisual={props.leadingVisual}
-                trailingAction={CopyAction()}
-                value={props.value}
-                onChange={props.onChange}
-            />
-            <FormControl.Caption>{props.caption}</FormControl.Caption>
-        </FormControl>
-    );
-
     return (
         <>
             <div className={baseStyle.connector_header_container}>
@@ -77,16 +42,19 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                             value="<client id>"
                             onChange={() => { }}
                         />
-                        <TextField
+                        <KeyValueTextField
                             name="mTLS Server Certificate"
-                            caption="Path to the public key of the server"
-                            value=""
+                            caption="Path to the server certificate and CA chain"
+                            k=""
+                            v=""
+                            keyIcon={VerifiedIcon}
+                            valueIcon={ChecklistIcon}
                             onChange={() => { }}
                             disabled={false}
                         />
                         <TextField
                             name="mTLS Client Key"
-                            caption="Path to private key of the client"
+                            caption="Path to the private key of the client"
                             value=""
                             leadingVisual={KeyIcon}
                             onChange={() => { }}
