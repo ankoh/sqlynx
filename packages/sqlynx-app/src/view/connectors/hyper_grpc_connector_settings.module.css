@@ -75,9 +75,9 @@
 .attached_db_aliaslink {
     position: absolute;
     left: 20px;
-    top: 32px;
-    width: 16px;
-    height: 26px;
+    top: 33px;
+    width: 15px;
+    height: 24px;
 
     border-bottom: 1px solid var(--border_color_primary);
     border-left: 1px solid var(--border_color_primary);
