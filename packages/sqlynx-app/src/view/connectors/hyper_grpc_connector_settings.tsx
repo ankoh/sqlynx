@@ -3,6 +3,7 @@ import { TextInput, FormControl, Button } from '@primer/react';
 import { CopyIcon, DatabaseIcon, MentionIcon, XIcon } from '@primer/octicons-react';
 
 import { useAppConfig } from '../../app_config.js';
+import { KeyValueListBuilder } from '../../view/keyvalue_list.js';
 
 import * as symbols from '../../../static/svg/symbols.generated.svg';
 
@@ -82,44 +83,14 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                             <div className={hyperStyle.attached_db_list_name}>
                                 Attached Databases
                             </div>
-                            <div className={hyperStyle.attached_db_caption}>
+                            <div className={hyperStyle.attached_db_list_caption}>
                                 Databases that are attached for each query
                             </div>
-                            <div className={hyperStyle.attached_db_list_elements}>
-                                {elements.map((props, i) => (
-                                    <div key={i} className={hyperStyle.attached_db_element}>
-                                        <TextInput
-                                            block
-                                            className={hyperStyle.attached_db_path}
-                                            value={props.name}
-                                            onChange={() => { }}
-                                            leadingVisual={DatabaseIcon}
-                                            trailingAction={
-                                                <TextInput.Action
-                                                    onClick={() => {
-                                                        alert('clear input')
-                                                    }}
-                                                    icon={XIcon}
-                                                    sx={{ color: 'fg.subtle' }}
-                                                    aria-label="Clear input"
-                                                />
-                                            }
-                                        />
-                                        <div className={hyperStyle.attached_db_aliaslink} />
-                                        <TextInput
-                                            block
-                                            className={hyperStyle.attached_db_alias}
-                                            value={props.alias}
-                                            onChange={() => { }}
-                                            placeholder="Database Alias"
-                                            leadingVisual={MentionIcon}
-                                            trailingAction={CopyAction()}
-                                        />
-                                    </div>))}
-                            </div>
-                            <Button
-                                className={hyperStyle.attach_db_button}
-                            >Add Database</Button>
+                            <KeyValueListBuilder
+                                keyIcon={DatabaseIcon}
+                                valueIcon={MentionIcon}
+                                addButtonLabel="Add Database"
+                            />
                         </div>
                     </div>
                 </div>

@@ -1,0 +1,53 @@
+.list {
+    display: grid;
+    grid-template-rows: repeat(auto-fit, max-content);
+}
+.list_elements {
+    margin-top: 8px;
+}
+.element {
+    position: relative;
+    margin-left: 32px;
+    display: grid;
+    grid-template-rows: max-content max-content;
+    row-gap: 8px;
+    position: relative;
+}
+.element::before {
+    position: absolute;
+    left: -20px;
+    top: 12px;
+    height: 6px;
+    width: 6px;
+    border-radius: 3px;
+    content: "";
+    background-color: black;
+}
+
+.path {
+    grid-row: 1;
+    grid-column: 1;
+}
+
+.alias {
+    width: calc(100% - 72px) !important;
+    margin-left: 36px;
+}
+
+.aliaslink {
+    position: absolute;
+    left: 20px;
+    top: 33px;
+    width: 15px;
+    height: 24px;
+
+    border-bottom: 1px solid var(--border_color_primary);
+    border-left: 1px solid var(--border_color_primary);
+    border-bottom-left-radius: 6px;
+}
+
+.add_button {
+    margin-top: 8px;
+    margin-left: 36px;
+    justify-self: left;
+}
