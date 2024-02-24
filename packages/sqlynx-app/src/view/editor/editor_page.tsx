@@ -25,7 +25,7 @@ import { SchemaGraph } from '../../view/schema/schema_graph.js';
 import { QueryProgress } from '../../view/progress/query_progress.js';
 import { DataTable } from '../../view/table/data_table.js';
 import { KeyEventHandler, useKeyEvents } from '../../utils/key_events.js';
-import { VerticalTabs } from '../vertical_tabs.js';
+import { VerticalTabVariant, VerticalTabs } from '../vertical_tabs.js';
 import { ScriptFileSaveOverlay } from '../editor/script_filesave_overlay.js';
 import { ScriptURLOverlay } from '../editor/script_url_overlay.js';
 import { getConnectorIcon } from '../connector_icons.js';
@@ -266,22 +266,23 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
             </div>
             <div className={styles.body_container}>
                 <VerticalTabs
+                    variant={VerticalTabVariant.Stacked}
                     className={styles.output_card}
                     selectedTab={selectedTab}
                     selectTab={selectTab}
                     tabs={[
-                        { tabId: TabKey.SchemaView, icon: `${icons}#tables_connected`, label: 'Graph', enabled: true },
+                        { tabId: TabKey.SchemaView, icon: `${icons}#tables_connected`, labelShort: 'Graph', disabled: false },
                         {
                             tabId: TabKey.QueryProgressView,
                             icon: `${icons}#plan`,
-                            label: 'Status',
-                            enabled: tabState.current.enabledTabs >= 2,
+                            labelShort: 'Status',
+                            disabled: tabState.current.enabledTabs < 2,
                         },
                         {
                             tabId: TabKey.QueryResultView,
                             icon: `${icons}#table`,
-                            label: 'Data',
-                            enabled: tabState.current.enabledTabs >= 3,
+                            labelShort: 'Data',
+                            disabled: tabState.current.enabledTabs < 3,
                         },
                     ]}
                     tabRenderers={{

@@ -12,7 +12,7 @@ import { useActiveSessionState, useActiveSessionStateDispatch } from '../../sess
 import { UPDATE_SCRIPT_ANALYSIS, UPDATE_SCRIPT_CURSOR } from '../../session/session_state_reducer.js';
 import { ScriptKey } from '../../session/session_state.js';
 import { ScriptStatisticsBar } from './script_statistics_bar.js';
-import { VerticalTabs } from '../../view/vertical_tabs.js';
+import { VerticalTabVariant, VerticalTabs } from '../../view/vertical_tabs.js';
 import { classNames } from '../../utils/classnames.js';
 
 import * as icons from '../../../static/svg/symbols.generated.svg';
@@ -197,16 +197,16 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
 
     return (
         <VerticalTabs
+            variant={VerticalTabVariant.Stacked}
             className={classNames(props.className, styles.container)}
             selectedTab={activeTab}
             selectTab={setActiveTab}
             tabs={[
-                { tabId: TabId.MAIN_SCRIPT, icon: `${icons}#search`, label: 'Query', enabled: true },
+                { tabId: TabId.MAIN_SCRIPT, icon: `${icons}#search`, labelShort: 'Query' },
                 {
                     tabId: TabId.SCHEMA_SCRIPT,
                     icon: `${icons}#database`,
-                    label: 'Model',
-                    enabled: true,
+                    labelShort: 'Model',
                 },
             ]}
             tabRenderers={{
