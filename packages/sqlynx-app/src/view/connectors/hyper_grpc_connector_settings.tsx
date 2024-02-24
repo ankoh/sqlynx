@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { BugIcon, ChecklistIcon, DatabaseIcon, FileBadgeIcon, KeyIcon, LinkIcon, ListOrderedIcon, ShieldCheckIcon, ShieldLockIcon, TagIcon, VerifiedIcon } from '@primer/octicons-react';
+import { ChecklistIcon, DatabaseIcon, FileBadgeIcon, KeyIcon, TagIcon } from '@primer/octicons-react';
 import { TextField, KeyValueTextField } from '../text_field.js';
 
 import { KeyValueListBuilder } from '../../view/keyvalue_list.js';
@@ -33,6 +33,7 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                             name="gRPC Endpoint"
                             caption="Endpoint of the gRPC service as 'https://host:port'"
                             value="https://127.0.0.1:8443"
+                            placeholder="gRPC endpoint url"
                             leadingVisual={() => <div>URL</div>}
                             onChange={() => { }}
                             disabled={false}
@@ -40,25 +41,29 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                         <TextField
                             name="Client ID"
                             caption="Requests are sent with the header 'x-trace-id: <client-id>'"
-                            value="<client id>"
+                            value=""
+                            placeholder="client id"
                             leadingVisual={TagIcon}
                             onChange={() => { }}
                         />
                         <KeyValueTextField
-                            name="mTLS Server Certificate"
-                            caption="Path to the server certificate and CA chain"
+                            name="mTLS Client Key"
+                            caption="Paths to client key and client certificate"
                             k=""
                             v=""
-                            keyIcon={FileBadgeIcon}
-                            valueIcon={ChecklistIcon}
+                            keyPlaceholder="client.key"
+                            valuePlaceholder="client.pem"
+                            keyIcon={KeyIcon}
+                            valueIcon={FileBadgeIcon}
                             onChange={() => { }}
                             disabled={false}
                         />
                         <TextField
-                            name="mTLS Client Key"
-                            caption="Path to the private key of the client"
+                            name="mTLS CA certificates"
+                            caption="Path to certificate authority (CA) certificates"
                             value=""
-                            leadingVisual={KeyIcon}
+                            placeholder="cacerts.pem"
+                            leadingVisual={ChecklistIcon}
                             onChange={() => { }}
                             disabled={false}
                         />
