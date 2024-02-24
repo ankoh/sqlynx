@@ -8,6 +8,7 @@ export function TextField(props: {
     name: string;
     caption: string;
     value: string;
+    placeholder: string;
     leadingVisual?: React.ElementType;
     onChange: React.ChangeEventHandler<HTMLInputElement>;
     disabled?: boolean;
@@ -28,6 +29,7 @@ export function TextField(props: {
             <TextInput
                 className={styles.text_field_input}
                 block
+                placeholder={props.placeholder}
                 leadingVisual={props.leadingVisual}
                 trailingAction={CopyAction()}
                 value={props.value}
@@ -42,6 +44,8 @@ export function KeyValueTextField(props: {
     caption: string;
     k: string;
     v: string;
+    keyPlaceholder: string;
+    valuePlaceholder: string;
     keyIcon?: React.ElementType;
     valueIcon?: React.ElementType;
     onChange: React.ChangeEventHandler<HTMLInputElement>;
@@ -63,17 +67,19 @@ export function KeyValueTextField(props: {
             <TextInput
                 className={styles.kv_field_input_key}
                 block
+                value={props.k}
+                placeholder={props.keyPlaceholder}
                 leadingVisual={props.keyIcon}
                 trailingAction={CopyAction()}
-                value={props.k}
                 onChange={props.onChange}
             />
             <div className={styles.kv_field_input_value}>
                 <TextInput
                     block
+                    value={props.v}
+                    placeholder={props.valuePlaceholder}
                     leadingVisual={props.valueIcon}
                     trailingAction={CopyAction()}
-                    value={props.v}
                     onChange={props.onChange}
                 />
             </div>
