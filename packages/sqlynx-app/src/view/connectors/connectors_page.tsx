@@ -1,32 +1,45 @@
 import * as React from 'react';
 
 import styles from './connectors_page.module.css';
-import { ConnectorProps, ConnectorRenderers, ConnectorSettingsNav } from './connector_settings_nav.js';
 import { HyperGrpcConnectorSettings } from './hyper_grpc_connector_settings.js';
 import { SalesforceConnectorSettings } from './salesforce_connector_settings.js';
 
+import { VerticalTabProps, VerticalTabRenderers, VerticalTabVariant, VerticalTabs } from '../../view/vertical_tabs.js';
+
+import * as icons from '../../../static/svg/symbols.generated.svg';
+
 interface PageProps { }
+
+interface ConnectorProps extends VerticalTabProps {
+
+};
 
 export const ConnectorsPage: React.FC<PageProps> = (_props: PageProps) => {
     const [selectedConnector, selectConnector] = React.useState(0);
 
     const connectors: ConnectorProps[] = React.useMemo(() => ([
         {
-            id: 0,
-            label: "Hyper Database"
+            tabId: 0,
+            labelShort: "Hyper",
+            labelLong: "Hyper Database",
+            icon: `${icons}#database`,
         },
         {
-            id: 1,
-            label: "Salesforce Data Cloud"
+            tabId: 1,
+            labelShort: "Data Cloud",
+            labelLong: "Salesforce Data Cloud",
+            icon: `${icons}#database`,
         },
         {
-            id: 2,
-            label: "Local Scripts"
+            tabId: 2,
+            labelShort: "Local",
+            labelLong: "Local Scripts",
+            icon: `${icons}#database`,
         }
     ]), []);
-    const connectorRenderers: ConnectorRenderers = React.useMemo(() => ({
-        [0]: (_props: {}) => <div><HyperGrpcConnectorSettings /></div>,
-        [1]: (_props: {}) => <div><SalesforceConnectorSettings /></div>,
+    const connectorRenderers: VerticalTabRenderers = React.useMemo(() => ({
+        [0]: (_props: ConnectorProps) => <HyperGrpcConnectorSettings />,
+        [1]: (_props: ConnectorProps) => <SalesforceConnectorSettings />,
     }), []);
 
     return (
@@ -36,11 +49,12 @@ export const ConnectorsPage: React.FC<PageProps> = (_props: PageProps) => {
                     <div className={styles.page_title}>Connectors</div>
                 </div>
             </div>
-            <ConnectorSettingsNav
-                connectors={connectors}
-                connectorRenderers={connectorRenderers}
-                selectConnector={selectConnector}
-                selectedConnector={selectedConnector}
+            <VerticalTabs
+                variant={VerticalTabVariant.Stacked}
+                selectedTab={selectedConnector}
+                selectTab={selectConnector}
+                tabs={connectors}
+                tabRenderers={connectorRenderers}
             />
         </div >
     );

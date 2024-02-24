@@ -4,21 +4,28 @@ import { classNames } from '../utils/classnames.js';
 
 import styles from './vertical_tabs.module.css';
 
-interface TabRenderers {
-    [key: number]: (props: TabProps) => React.ReactElement;
+export interface VerticalTabRenderers {
+    [key: number]: (props: VerticalTabProps) => React.ReactElement;
 }
 
-interface TabProps {
+export interface VerticalTabProps {
     tabId: number;
     icon: string;
-    label: string;
-    enabled: boolean;
+    labelShort: string;
+    labelLong?: string;
+    disabled?: boolean;
+}
+
+export enum VerticalTabVariant {
+    Stacked = 0,
+    Wide = 1,
 }
 
 interface Props {
     className?: string;
-    tabs: TabProps[];
-    tabRenderers: TabRenderers;
+    variant: VerticalTabVariant;
+    tabs: VerticalTabProps[];
+    tabRenderers: VerticalTabRenderers;
     selectedTab: number;
     selectTab: (tab: number) => void;
 }
@@ -28,29 +35,31 @@ export const VerticalTabs: React.FC<Props> = (props: Props) => {
         const target = elem.currentTarget as HTMLDivElement;
         props.selectTab(Number.parseInt(target.dataset.tab ?? '0'));
     }, []);
+    const tabRenderer = props.tabRenderers[props.selectedTab];
+    const tabBody = tabRenderer ? tabRenderer(props.tabs[props.selectedTab]) : undefined;
     return (
         <div className={classNames(props.className, styles.container)}>
             <div className={styles.tabs}>
-                {props.tabs.map((tabProps: TabProps) => (
+                {props.tabs.map((tabProps: VerticalTabProps) => (
                     <div
                         key={tabProps.tabId}
                         className={classNames(styles.tab, {
                             [styles.tab_active]: tabProps.tabId == props.selectedTab,
-                            [styles.tab_disabled]: !tabProps.enabled,
+                            [styles.tab_disabled]: tabProps.disabled,
                         })}
                         data-tab={tabProps.tabId}
-                        onClick={tabProps.enabled ? selectTab : undefined}
+                        onClick={tabProps.disabled ? undefined : selectTab}
                     >
                         <button className={styles.tab_icon}>
                             <svg width="18px" height="18px">
                                 <use xlinkHref={tabProps.icon} />
                             </svg>
                         </button>
-                        <div className={styles.tab_label}>{tabProps.label}</div>
+                        <div className={styles.tab_label}>{tabProps.labelShort}</div>
                     </div>
                 ))}
             </div>
-            <div className={styles.body}>{props.tabRenderers[props.selectedTab](props.tabs[props.selectedTab])}</div>
+            <div className={styles.body}>{tabBody}</div>
         </div>
     );
 };

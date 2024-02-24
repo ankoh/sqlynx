@@ -6,7 +6,7 @@
     height: 100%;
 
     display: grid;
-    grid-template-columns: 56px auto;
+    grid-template-columns: 64px auto;
     grid-template-rows: 100%;
 }
 
@@ -46,6 +46,7 @@
     font-size: 0.7rem;
     font-weight: 500;
     color: var(--button_fg);
+    white-space: nowrap;
 }
 
 .tab:hover > .tab_icon {
