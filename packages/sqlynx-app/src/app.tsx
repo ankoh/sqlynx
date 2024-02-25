@@ -18,7 +18,7 @@ import { AppConfigResolver } from './app_config.js';
 import { SQLYNX_GIT_COMMIT, SQLYNX_VERSION } from './app_version.js';
 import { NativeApiProvider } from './native_api.js';
 
-import { ThemeProvider } from '@primer/react';
+import { ThemeProvider, BaseStyles } from '@primer/react';
 import { StyleSheetManager } from 'styled-components';
 import isPropValid from '@emotion/is-prop-valid';
 
@@ -27,10 +27,15 @@ import { Route, Routes, Navigate, BrowserRouter, HashRouter } from 'react-router
 
 import './../static/fonts/fonts.css';
 import './globals.css';
+import style from './app.module.css';
 
 const GitHubDesignSystem = (props: { children: React.ReactElement }) => (
     <StyleSheetManager shouldForwardProp={isPropValid}>
-        <ThemeProvider>{props.children}</ThemeProvider>
+        <ThemeProvider dayScheme="light" nightScheme="light">
+            <BaseStyles className={style.base_style}>
+                {props.children}
+            </BaseStyles>
+        </ThemeProvider>
     </StyleSheetManager>
 );
 

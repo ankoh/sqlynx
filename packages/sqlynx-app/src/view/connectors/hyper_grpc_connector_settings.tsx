@@ -27,7 +27,7 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                 </div>
                 <div className={style.platform_actions}>
                     <Button leadingVisual={LogIcon} count={3}>Logs</Button>
-                    <Button leadingVisual={PulseIcon}>Test</Button>
+                    <Button variant="primary" leadingVisual={PulseIcon}>Test</Button>
                 </div>
             </div >
             <div className={style.body_container}>

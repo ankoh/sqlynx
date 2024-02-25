@@ -100,7 +100,7 @@
 .wide_tab_label {
     font-family: 'Roboto';
     font-size: 0.9rem;
-    font-weight: 300;
+    font-weight: 400;
     white-space: nowrap;
 }
 .wide_tab:hover > .wide_tab_button {

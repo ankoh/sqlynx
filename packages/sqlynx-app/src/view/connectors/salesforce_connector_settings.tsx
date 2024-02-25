@@ -4,15 +4,12 @@ import { Button } from '@primer/react';
 import { KeyIcon, LogIcon, PlugIcon, TagIcon } from '@primer/octicons-react';
 
 import { useSalesforceAuthState } from '../../connectors/salesforce_auth_state.js';
-import { useSalesforceUserInfo } from '../../connectors/salesforce_userinfo_resolver.js';
 import { TextField } from '../../view/text_field.js';
 import { classNames } from '../../utils/classnames.js';
 
 import * as symbols from '../../../static/svg/symbols.generated.svg';
 
 import style from './connector_settings.module.css';
-
-const DUMMY_ACCOUNT = new URL('../../../static/img/salesforce_account_placeholder.png', import.meta.url);
 
 interface Props { }
 
@@ -21,8 +18,6 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
 ) => {
     const authState = useSalesforceAuthState();
     const isAuthenticated = false;
-
-    const userInfo = useSalesforceUserInfo();
 
     return (
         <div className={style.layout}>
@@ -37,7 +32,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                 </div>
                 <div className={style.platform_actions}>
                     <Button leadingVisual={LogIcon} count={3}>Logs</Button>
-                    <Button leadingVisual={PlugIcon}>Connect</Button>
+                    <Button variant='primary' leadingVisual={PlugIcon}>Connect</Button>
                 </div>
             </div>
             <div className={style.body_container}>
