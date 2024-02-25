@@ -75,7 +75,7 @@ root.render(
             <AppProviders>
                 <Routes>
                     <Route index element={<Editor />} />
-                    <Route path="/settings" element={<Connectors />} />
+                    <Route path="/connectors" element={<Connectors />} />
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
             </AppProviders>

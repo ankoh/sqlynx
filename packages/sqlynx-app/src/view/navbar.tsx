@@ -54,7 +54,7 @@ export const NavBar = (): React.ReactElement => {
                 data-tauri-drag-region="true"
             >
                 <PageTab label="Editor" route="/" location={location.pathname} icon={`${symbols}#file`} />
-                <PageTab label="Connectors" route="/settings" location={location.pathname} icon={`${symbols}#database`} />
+                <PageTab label="Connectors" route="/connectors" location={location.pathname} icon={`${symbols}#database`} />
             </div>
             <div className={styles.version_container}>
                 <ExternalLink label={SQLYNX_VERSION} url={SQLYNX_GET_URL} icon={`${symbols}#package`} />

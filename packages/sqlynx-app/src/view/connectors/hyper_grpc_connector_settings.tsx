@@ -16,7 +16,7 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
     _props: Props,
 ) => {
     return (
-        <>
+        <div className={hyperStyle.layout}>
             <div className={baseStyle.connector_header_container}>
                 <div className={baseStyle.platform_logo}>
                     <svg width="28px" height="28px">
@@ -91,6 +91,6 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                     </div>
                 </div>
             </div>
-        </>
+        </ div>
     );
 };
