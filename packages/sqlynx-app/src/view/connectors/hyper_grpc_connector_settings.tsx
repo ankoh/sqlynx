@@ -14,6 +14,11 @@ interface Props { }
 export const HyperGrpcConnectorSettings: React.FC<Props> = (
     _props: Props,
 ) => {
+    const testSettings = async () => {
+        const result = await fetch("sqlynx-native://test");
+        console.log(await result.text());
+    };
+
     return (
         <div className={style.layout}>
             <div className={style.connector_header_container}>
@@ -27,7 +32,11 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                 </div>
                 <div className={style.platform_actions}>
                     <Button leadingVisual={LogIcon} count={3}>Logs</Button>
-                    <Button variant="primary" leadingVisual={PulseIcon}>Test</Button>
+                    <Button
+                        variant="primary"
+                        leadingVisual={PulseIcon}
+                        onClick={testSettings}
+                    >Test</Button>
                 </div>
             </div >
             <div className={style.body_container}>

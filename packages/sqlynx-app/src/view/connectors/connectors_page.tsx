@@ -15,7 +15,7 @@ interface ConnectorProps extends VerticalTabProps {
 };
 
 export const ConnectorsPage: React.FC<PageProps> = (_props: PageProps) => {
-    const [selectedConnector, selectConnector] = React.useState(1);
+    const [selectedConnector, selectConnector] = React.useState(0);
 
     const connectors: ConnectorProps[] = React.useMemo(() => ([
         {
