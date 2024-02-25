@@ -34,9 +34,9 @@ export const ConnectorsPage: React.FC<PageProps> = (_props: PageProps) => {
         },
         {
             tabId: 2,
-            labelShort: "Local",
-            labelLong: "Local Scripts",
-            icon: `${icons}#cloud_offline`,
+            labelShort: "Brainstorm",
+            labelLong: "Brainstorm Mode",
+            icon: `${icons}#zap`,
         }
     ]), []);
     const connectorRenderers: VerticalTabRenderers = React.useMemo(() => ({

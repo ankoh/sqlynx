@@ -11,7 +11,7 @@ import {
     ConnectorInfo,
     ConnectorType,
     HYPER_DATABASE,
-    LOCAL_SCRIPT,
+    BRAINSTORM_MODE,
     SALESFORCE_DATA_CLOUD,
 } from '../connectors/connector_info.js';
 import { useSalesforceAuthFlow, useSalesforceAuthState } from '../connectors/salesforce_auth_state.js';
@@ -88,8 +88,8 @@ const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
         case HYPER_DATABASE:
             connectorInfo = CONNECTOR_INFOS[ConnectorType.HYPER_DATABASE as number];
             break;
-        case LOCAL_SCRIPT:
-            connectorInfo = CONNECTOR_INFOS[ConnectorType.LOCAL_SCRIPT as number];
+        case BRAINSTORM_MODE:
+            connectorInfo = CONNECTOR_INFOS[ConnectorType.BRAINSTORM_MODE as number];
             break;
     }
 
@@ -120,7 +120,7 @@ const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
                 break;
             case HYPER_DATABASE:
                 break;
-            case LOCAL_SCRIPT:
+            case BRAINSTORM_MODE:
                 break;
         }
     }, [state, connectorAuthCheck]);

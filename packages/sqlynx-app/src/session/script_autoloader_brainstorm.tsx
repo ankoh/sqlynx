@@ -17,7 +17,7 @@ interface Props {
 export const DEFAULT_BOARD_WIDTH = 800;
 export const DEFAULT_BOARD_HEIGHT = 600;
 
-export const ScriptAutoloaderLocal: React.FC<Props> = (props: Props) => {
+export const ScriptAutoloaderBrainstorm: React.FC<Props> = (props: Props) => {
     const state = useActiveSessionState();
     const instance = useSQLynx();
     const selectScript = useSessionSelector();
@@ -75,7 +75,7 @@ export const ScriptAutoloaderLocal: React.FC<Props> = (props: Props) => {
 
             const scriptId = registerSession({
                 instance: instance.value,
-                connectorInfo: CONNECTOR_INFOS[ConnectorType.LOCAL_SCRIPT],
+                connectorInfo: CONNECTOR_INFOS[ConnectorType.BRAINSTORM_MODE],
                 scripts: {
                     [ScriptKey.MAIN_SCRIPT]: mainScriptData,
                     [ScriptKey.SCHEMA_SCRIPT]: schemaScriptData,

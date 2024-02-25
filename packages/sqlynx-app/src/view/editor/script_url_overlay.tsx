@@ -12,7 +12,7 @@ import { useSalesforceAuthState } from '../../connectors/salesforce_auth_state.j
 import { ConnectorType } from '../../connectors/connector_info.js';
 import {
     writeHyperConnectorParams,
-    writeLocalConnectorParams,
+    writeBrainstormConnectorParams,
     writeSalesforceConnectorParams,
 } from '../../connectors/connector_url_params.js';
 
@@ -62,8 +62,8 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
         url.searchParams.set('connector', 'local');
         if (embedConnectorInfo) {
             switch (scriptState?.connectorInfo.connectorType) {
-                case ConnectorType.LOCAL_SCRIPT:
-                    writeLocalConnectorParams(url.searchParams);
+                case ConnectorType.BRAINSTORM_MODE:
+                    writeBrainstormConnectorParams(url.searchParams);
                     break;
                 case ConnectorType.HYPER_DATABASE:
                     writeHyperConnectorParams(url.searchParams);

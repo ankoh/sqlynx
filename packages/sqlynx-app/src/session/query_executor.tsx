@@ -47,7 +47,7 @@ export const QueryExecutor = (props: { children?: React.ReactElement }) => {
                     },
                 };
                 break;
-            case ConnectorType.LOCAL_SCRIPT:
+            case ConnectorType.BRAINSTORM_MODE:
             case ConnectorType.HYPER_DATABASE:
                 console.warn(
                     `script query executor does not support connector ${state.connectorInfo.connectorType} yet`,

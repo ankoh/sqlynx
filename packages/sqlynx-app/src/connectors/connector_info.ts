@@ -1,9 +1,9 @@
-export const LOCAL_SCRIPT = Symbol('LOCAL_SCRIPT');
+export const BRAINSTORM_MODE = Symbol('BRAINSTORM_MODE');
 export const SALESFORCE_DATA_CLOUD = Symbol('SCALESFORCE_DATA_CLOUD');
 export const HYPER_DATABASE = Symbol('HYPER_DATABASE');
 
 export enum ConnectorType {
-    LOCAL_SCRIPT = 0,
+    BRAINSTORM_MODE = 0,
     SALESFORCE_DATA_CLOUD = 1,
     HYPER_DATABASE = 2,
 }
@@ -40,10 +40,10 @@ export interface ConnectorFeatures {
 
 export const CONNECTOR_INFOS: ConnectorInfo[] = [
     {
-        connectorType: ConnectorType.LOCAL_SCRIPT,
+        connectorType: ConnectorType.BRAINSTORM_MODE,
         displayName: {
-            short: 'Local',
-            long: 'Local Script',
+            short: 'Brainstorm',
+            long: 'Draft Mode',
         },
         features: {
             schemaScript: true,

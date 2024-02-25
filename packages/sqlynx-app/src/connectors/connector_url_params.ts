@@ -1,17 +1,17 @@
 import { VariantKind } from '../utils/index.js';
-import { SALESFORCE_DATA_CLOUD, LOCAL_SCRIPT, HYPER_DATABASE, ConnectorAuthCheck } from './connector_info.js';
+import { SALESFORCE_DATA_CLOUD, BRAINSTORM_MODE, HYPER_DATABASE, ConnectorAuthCheck } from './connector_info.js';
 import { SalesforceAuthState } from './salesforce_auth_state.js';
 
 export interface SalesforceSetupParams {
     instanceUrl: string | null;
     appConsumerKey: string | null;
 }
-export interface LocalSetupParams {}
-export interface HyperSetupParams {}
+export interface BrainstormSetupParams { }
+export interface HyperSetupParams { }
 
 export type ConnectorSetupParamVariant =
     | VariantKind<typeof SALESFORCE_DATA_CLOUD, SalesforceSetupParams>
-    | VariantKind<typeof LOCAL_SCRIPT, LocalSetupParams>
+    | VariantKind<typeof BRAINSTORM_MODE, BrainstormSetupParams>
     | VariantKind<typeof HYPER_DATABASE, HyperSetupParams>;
 
 function readSalesforceConnectorParamsFromURL(urlParams: URLSearchParams): ConnectorSetupParamVariant {
@@ -25,9 +25,9 @@ function readSalesforceConnectorParamsFromURL(urlParams: URLSearchParams): Conne
     };
 }
 
-function readLocalConnectorParamsFromURL(urlParms: URLSearchParams): ConnectorSetupParamVariant {
+function readBrainstormConnectorParamsFromURL(urlParms: URLSearchParams): ConnectorSetupParamVariant {
     return {
-        type: LOCAL_SCRIPT,
+        type: BRAINSTORM_MODE,
         value: {},
     };
 }
@@ -45,9 +45,9 @@ export function readConnectorParamsFromURL(urlParams: URLSearchParams): Connecto
             return readSalesforceConnectorParamsFromURL(urlParams);
         case 'hyper':
             return readHyperConnectorParamsFromURL(urlParams);
-        case 'local':
+        case 'none':
         default:
-            return readLocalConnectorParamsFromURL(urlParams);
+            return readBrainstormConnectorParamsFromURL(urlParams);
     }
 }
 
@@ -61,8 +61,8 @@ export function writeSalesforceConnectorParams(params: URLSearchParams, state: S
     }
 }
 
-export function writeLocalConnectorParams(params: URLSearchParams) {
-    params.set('connector', 'local');
+export function writeBrainstormConnectorParams(params: URLSearchParams) {
+    params.set('connector', 'none');
 }
 
 export function writeHyperConnectorParams(params: URLSearchParams) {
