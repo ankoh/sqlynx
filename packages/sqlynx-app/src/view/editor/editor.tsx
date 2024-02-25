@@ -185,7 +185,6 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
             <div className={styles.editor_with_loader}>
                 <div className={styles.editor}>
                     <CodeMirror
-                        className={styles.codemirror}
                         extensions={SQLynxExtensions}
                         viewWasCreated={viewWasCreated}
                         viewWillBeDestroyed={viewWillBeDestroyed}

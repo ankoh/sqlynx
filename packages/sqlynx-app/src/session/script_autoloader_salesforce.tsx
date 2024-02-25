@@ -2,7 +2,7 @@ import * as React from 'react';
 import Immutable from 'immutable';
 
 import { CONNECTOR_INFOS, ConnectorType } from '../connectors/connector_info.js';
-import { DEFAULT_BOARD_HEIGHT, DEFAULT_BOARD_WIDTH } from './script_autoloader_local.js';
+import { DEFAULT_BOARD_HEIGHT, DEFAULT_BOARD_WIDTH } from './script_autoloader_brainstorm.js';
 import { FULL_CATALOG_REFRESH } from '../connectors/catalog_update.js';
 import { RESULT_OK } from '../utils/result.js';
 import { ScriptData, ScriptKey } from './session_state.js';
