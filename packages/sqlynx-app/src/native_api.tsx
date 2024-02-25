@@ -28,7 +28,7 @@ const setupNativeApi = async (setApi: (api: NativeApi) => void) => {
     const os = await tauri.core.invoke("sqlynx_get_os");
     console.log(os);
     // Test streaming call via custom scheme
-    const path = tauri.core.convertFileSrc("foo", "sqlynx-ipc");
+    const path = tauri.core.convertFileSrc("foo", "sqlynx-native");
     const response = await fetch(path);
     console.log(await response.text());
 

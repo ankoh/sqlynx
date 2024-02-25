@@ -248,7 +248,7 @@ dependencies = [
  "bytes",
  "fastrand",
  "http 0.2.9",
- "http-body",
+ "http-body 0.4.5",
  "percent-encoding",
  "pin-project-lite",
  "tracing",
@@ -276,7 +276,7 @@ dependencies = [
  "aws-types",
  "bytes",
  "http 0.2.9",
- "http-body",
+ "http-body 0.4.5",
  "once_cell",
  "percent-encoding",
  "regex-lite",
@@ -404,7 +404,7 @@ dependencies = [
  "crc32fast",
  "hex",
  "http 0.2.9",
- "http-body",
+ "http-body 0.4.5",
  "md-5",
  "pin-project-lite",
  "sha1",
@@ -436,7 +436,7 @@ dependencies = [
  "bytes-utils",
  "futures-core",
  "http 0.2.9",
- "http-body",
+ "http-body 0.4.5",
  "once_cell",
  "percent-encoding",
  "pin-project-lite",
@@ -477,7 +477,7 @@ dependencies = [
  "fastrand",
  "h2",
  "http 0.2.9",
- "http-body",
+ "http-body 0.4.5",
  "hyper",
  "hyper-rustls",
  "once_cell",
@@ -516,7 +516,7 @@ dependencies = [
  "bytes-utils",
  "futures-core",
  "http 0.2.9",
- "http-body",
+ "http-body 0.4.5",
  "itoa 1.0.9",
  "num-integer",
  "pin-project-lite",
@@ -564,7 +564,7 @@ dependencies = [
  "bytes",
  "futures-util",
  "http 0.2.9",
- "http-body",
+ "http-body 0.4.5",
  "hyper",
  "itoa 1.0.9",
  "matchit",
@@ -590,7 +590,7 @@ dependencies = [
  "bytes",
  "futures-util",
  "http 0.2.9",
- "http-body",
+ "http-body 0.4.5",
  "mime",
  "rustversion",
  "tower-layer",
@@ -1545,6 +1545,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "flume"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "55ac459de2512911e4b674ce33cf20befaba382d05b62b008afc1c8b57cbf181"
+dependencies = [
+ "futures-core",
+ "futures-sink",
+ "spin",
+]
+
+[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2136,6 +2147,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "http-body"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1cac85db508abc24a2e48553ba12a996e87244a0395ce011e62b37158745d643"
+dependencies = [
+ "bytes",
+ "http 1.0.0",
+]
+
+[[package]]
 name = "httparse"
 version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2165,7 +2186,7 @@ dependencies = [
  "futures-util",
  "h2",
  "http 0.2.9",
- "http-body",
+ "http-body 0.4.5",
  "httparse",
  "httpdate",
  "itoa 1.0.9",
@@ -3535,7 +3556,7 @@ dependencies = [
  "futures-util",
  "h2",
  "http 0.2.9",
- "http-body",
+ "http-body 0.4.5",
  "hyper",
  "ipnet",
  "js-sys",
@@ -4159,6 +4180,9 @@ name = "spin"
 version = "0.9.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6980e8d7511241f8acf4aebddbb1ff938df5eebe98691418c4468d0b72a96a67"
+dependencies = [
+ "lock_api",
+]
 
 [[package]]
 name = "spki"
@@ -4174,8 +4198,14 @@ dependencies = [
 name = "sqlynx-native"
 version = "0.0.2-dev.17"
 dependencies = [
+ "anyhow",
  "bytes",
+ "env_logger",
+ "flume",
  "http 1.0.0",
+ "http-body 1.0.0",
+ "lazy_static",
+ "log",
  "once_cell",
  "prost",
  "serde",
@@ -4937,7 +4967,7 @@ dependencies = [
  "bytes",
  "h2",
  "http 0.2.9",
- "http-body",
+ "http-body 0.4.5",
  "hyper",
  "hyper-timeout",
  "percent-encoding",
