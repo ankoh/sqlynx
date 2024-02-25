@@ -43,7 +43,7 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
         connectorType: ConnectorType.BRAINSTORM_MODE,
         displayName: {
             short: 'Brainstorm',
-            long: 'Draft Mode',
+            long: 'Brainstorm Mode',
         },
         features: {
             schemaScript: true,
