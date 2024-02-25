@@ -59,6 +59,10 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             placeholder="Consumer Key"
                             leadingVisual={() => <div>ID</div>}
                         />
+                    </div>
+                </div>
+                <div className={style.section}>
+                    <div className={style.section_layout}>
                         <TextField
                             name="Client ID"
                             caption="All requests are sent with the header 'x-trace-id: <client-id>/sfdc/<request-id>'"
@@ -69,23 +73,8 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             readOnly
                             disabled
                         />
-                    </div>
-                </div>
-                <div className={style.section}>
-                    <div className={style.section_layout}>
-                        <div className={classNames(style.grid_column_1_span_2, style.userinfo_container)}>
-                            <img
-                                className={style.userinfo_picture}
-                                src={userInfo?.photos?.picture ?? DUMMY_ACCOUNT.toString()}
-                            />
-                            <div className={style.userinfo_name}>
-                                {userInfo?.name ?? "User name"}
-                            </div>
-                            <div className={style.userinfo_email}>
-                                {userInfo?.email ?? "user@salesforce.com"}
-                            </div>
-                        </div>
                         <TextField
+                            className={style.grid_column_1}
                             name="Instance API URL"
                             caption="URL of the Salesforce API"
                             value={authState.coreAccessToken?.apiInstanceUrl ?? ''}
