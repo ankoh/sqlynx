@@ -5,6 +5,7 @@ import { KeyIcon, LogIcon, PlugIcon } from '@primer/octicons-react';
 
 import { useSalesforceAuthState } from '../../connectors/salesforce_auth_state.js';
 import { TextField } from '../../view/text_field.js';
+import { classNames } from '../../utils/classnames.js';
 
 import * as symbols from '../../../static/svg/symbols.generated.svg';
 
@@ -20,7 +21,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
     return (
         <div className={style.layout}>
             <div className={style.connector_header_container}>
-                <div className={style.platform_logo}>
+                <div className={classNames(style.platform_logo, style.salesforce_logo)}>
                     <svg width="28px" height="28px">
                         <use xlinkHref={`${symbols}#salesforce_notext`} />
                     </svg>
