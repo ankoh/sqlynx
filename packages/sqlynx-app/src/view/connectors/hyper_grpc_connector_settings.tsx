@@ -42,15 +42,6 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                             onChange={() => { }}
                             disabled={false}
                         />
-                        <TextField
-                            name="Client ID"
-                            caption="All requests are sent with the header 'x-trace-id: <client-id>/<request-id>'"
-                            value=""
-                            placeholder="client id"
-                            leadingVisual={TagIcon}
-                            onChange={() => { }}
-                            readOnly
-                        />
                         <KeyValueTextField
                             className={style.grid_column_1}
                             name="mTLS Client Key"
@@ -77,7 +68,18 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                 </div>
                 <div className={style.section}>
                     <div className={style.section_layout}>
+                        <TextField
+                            name="Client ID"
+                            caption="All requests are sent with the header 'x-trace-id: <client-id>/hyper/<request-id>'"
+                            value=""
+                            placeholder="client id"
+                            leadingVisual={TagIcon}
+                            onChange={() => { }}
+                            readOnly
+                            disabled
+                        />
                         <KeyValueListBuilder
+                            className={style.grid_column_1}
                             title="Attached Databases"
                             caption="Databases that are attached for every query"
                             keyIcon={DatabaseIcon}

@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { Button } from '@primer/react';
-import { KeyIcon, LogIcon, PlugIcon } from '@primer/octicons-react';
+import { KeyIcon, LogIcon, PlugIcon, TagIcon } from '@primer/octicons-react';
 
 import { useSalesforceAuthState } from '../../connectors/salesforce_auth_state.js';
 import { useSalesforceUserInfo } from '../../connectors/salesforce_userinfo_resolver.js';
@@ -59,6 +59,16 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             placeholder="Consumer Key"
                             leadingVisual={() => <div>ID</div>}
                         />
+                        <TextField
+                            name="Client ID"
+                            caption="All requests are sent with the header 'x-trace-id: <client-id>/sfdc/<request-id>'"
+                            value=""
+                            placeholder="client id"
+                            leadingVisual={TagIcon}
+                            onChange={() => { }}
+                            readOnly
+                            disabled
+                        />
                     </div>
                 </div>
                 <div className={style.section}>
@@ -80,7 +90,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             caption="URL of the Salesforce API"
                             value={authState.coreAccessToken?.apiInstanceUrl ?? ''}
                             onChange={() => { }}
-                            placeholder="Instance API"
+                            placeholder=""
                             leadingVisual={() => <div>URL</div>}
                             readOnly
                             disabled={!isAuthenticated}
@@ -90,7 +100,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             caption="Access Token for Salesforce Core"
                             value={authState.coreAccessToken?.accessToken ?? ''}
                             onChange={() => { }}
-                            placeholder="Access Token"
+                            placeholder=""
                             leadingVisual={KeyIcon}
                             readOnly
                             disabled={!isAuthenticated}
@@ -100,7 +110,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             caption="URL of the Data Cloud instance"
                             value={authState.dataCloudAccessToken?.instanceUrl?.toString() ?? ''}
                             onChange={() => { }}
-                            placeholder="Data Cloud Instance"
+                            placeholder=""
                             leadingVisual={() => <div>URL</div>}
                             readOnly
                             disabled={!isAuthenticated}
@@ -110,7 +120,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             caption="URL of the Data Cloud instance"
                             value={authState.dataCloudAccessToken?.accessToken?.toString() ?? ''}
                             onChange={() => { }}
-                            placeholder="Access Token"
+                            placeholder=""
                             leadingVisual={KeyIcon}
                             readOnly
                             disabled={!isAuthenticated}
