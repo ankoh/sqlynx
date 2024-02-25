@@ -1,7 +1,7 @@
 import * as React from 'react';
 
-import { TextInput, FormControl, Button, IconButton } from '@primer/react';
-import { CopyIcon, InfoIcon } from '@primer/octicons-react';
+import { TextInput, FormControl, Button } from '@primer/react';
+import { CopyIcon, LogIcon, PlugIcon, RocketIcon } from '@primer/octicons-react';
 
 import { useAppConfig } from '../../app_config.js';
 import { useSalesforceUserInfo } from '../../connectors/salesforce_userinfo_resolver.js';
@@ -176,8 +176,9 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                 <div className={baseStyle.platform_name} id="connector-sf-data-cloud">
                     Salesforce Data Cloud
                 </div>
-                <div className={baseStyle.platform_info}>
-                    <IconButton variant="invisible" icon={InfoIcon} aria-labelledby="connector-sf-data-cloud" />
+                <div className={baseStyle.platform_actions}>
+                    <Button leadingVisual={LogIcon} count={3}>Logs</Button>
+                    <Button leadingVisual={PlugIcon}>Connect</Button>
                 </div>
             </div>
             <div className={baseStyle.card_body_container}>
