@@ -41,7 +41,7 @@ function readHyperConnectorParamsFromURL(urlParams: URLSearchParams): ConnectorS
 
 export function readConnectorParamsFromURL(urlParams: URLSearchParams): ConnectorSetupParamVariant | null {
     switch (urlParams.get('connector') ?? null) {
-        case 'salesforce':
+        case 'sfdc':
             return readSalesforceConnectorParamsFromURL(urlParams);
         case 'hyper':
             return readHyperConnectorParamsFromURL(urlParams);
@@ -52,7 +52,7 @@ export function readConnectorParamsFromURL(urlParams: URLSearchParams): Connecto
 }
 
 export function writeSalesforceConnectorParams(params: URLSearchParams, state: SalesforceAuthState) {
-    params.set('connector', 'salesforce');
+    params.set('connector', 'sfdc');
     if (state.authParams?.instanceUrl) {
         params.set('instance', state.authParams?.instanceUrl);
     }
