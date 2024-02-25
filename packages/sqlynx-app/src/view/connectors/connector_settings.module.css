@@ -49,6 +49,10 @@
     grid-column: 1;
 }
 
+.grid_column_1_span_2 {
+    grid-column: 1 / span 2;
+}
+
 .connector_header_container {
     position: relative;
 
@@ -95,4 +99,36 @@
 
 .salesforce_logo {
     color: var(--logo_color_salesforce);
+}
+
+.userinfo_container {
+    display: grid;
+    grid-template-rows: max-content max-content;
+    grid-template-columns: max-content 1fr;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    column-gap: 16px;
+    align-items: center;
+}
+.userinfo_picture {
+    grid-row: 1 / span 2;
+    height: 36px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-left: 8px;
+    border: 1px solid rgb(138, 143, 147);
+}
+.userinfo_name {
+    grid-row: 1;
+    grid-column: 2;
+    align-self: bottom;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+.userinfo_email {
+    grid-row: 2;
+    grid-column: 2;
+    align-self: start;
+    font-family: 'Roboto Mono';
+    font-size: 0.9rem;
 }

@@ -4,6 +4,7 @@ import { Button } from '@primer/react';
 import { KeyIcon, LogIcon, PlugIcon } from '@primer/octicons-react';
 
 import { useSalesforceAuthState } from '../../connectors/salesforce_auth_state.js';
+import { useSalesforceUserInfo } from '../../connectors/salesforce_userinfo_resolver.js';
 import { TextField } from '../../view/text_field.js';
 import { classNames } from '../../utils/classnames.js';
 
@@ -11,12 +12,17 @@ import * as symbols from '../../../static/svg/symbols.generated.svg';
 
 import style from './connector_settings.module.css';
 
+const DUMMY_ACCOUNT = new URL('../../../static/img/salesforce_account_placeholder.png', import.meta.url);
+
 interface Props { }
 
 export const SalesforceConnectorSettings: React.FC<Props> = (
     _props: Props,
 ) => {
     const authState = useSalesforceAuthState();
+    const isAuthenticated = false;
+
+    const userInfo = useSalesforceUserInfo();
 
     return (
         <div className={style.layout}>
@@ -57,6 +63,18 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                 </div>
                 <div className={style.section}>
                     <div className={style.section_layout}>
+                        <div className={classNames(style.grid_column_1_span_2, style.userinfo_container)}>
+                            <img
+                                className={style.userinfo_picture}
+                                src={userInfo?.photos?.picture ?? DUMMY_ACCOUNT.toString()}
+                            />
+                            <div className={style.userinfo_name}>
+                                {userInfo?.name ?? "User name"}
+                            </div>
+                            <div className={style.userinfo_email}>
+                                {userInfo?.email ?? "user@salesforce.com"}
+                            </div>
+                        </div>
                         <TextField
                             name="Instance API URL"
                             caption="URL of the Salesforce API"
@@ -65,6 +83,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             placeholder="Instance API"
                             leadingVisual={() => <div>URL</div>}
                             readOnly
+                            disabled={!isAuthenticated}
                         />
                         <TextField
                             name="Core Access Token"
@@ -74,6 +93,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             placeholder="Access Token"
                             leadingVisual={KeyIcon}
                             readOnly
+                            disabled={!isAuthenticated}
                         />
                         <TextField
                             name="Data Cloud Instance URL"
@@ -83,6 +103,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             placeholder="Data Cloud Instance"
                             leadingVisual={() => <div>URL</div>}
                             readOnly
+                            disabled={!isAuthenticated}
                         />
                         <TextField
                             name="Data Cloud Access Token"
@@ -92,6 +113,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             placeholder="Access Token"
                             leadingVisual={KeyIcon}
                             readOnly
+                            disabled={!isAuthenticated}
                         />
                     </div>
                 </div>

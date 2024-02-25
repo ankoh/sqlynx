@@ -38,6 +38,7 @@ export function TextField(props: {
                 trailingAction={CopyAction()}
                 value={props.value}
                 onChange={props.onChange}
+                disabled={props.disabled}
                 readOnly={props.readOnly}
             />
         </div>
@@ -80,6 +81,7 @@ export function KeyValueTextField(props: {
                 trailingAction={CopyAction()}
                 onChange={props.onChange}
                 readOnly={props.readOnly}
+                disabled={props.disabled}
             />
             <div className={styles.kv_field_input_value}>
                 <TextInput
@@ -90,6 +92,7 @@ export function KeyValueTextField(props: {
                     trailingAction={CopyAction()}
                     onChange={props.onChange}
                     readOnly={props.readOnly}
+                    disabled={props.disabled}
                 />
             </div>
         </div>
