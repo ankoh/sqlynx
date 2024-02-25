@@ -2,9 +2,12 @@ import * as React from 'react';
 import { TextInput } from '@primer/react';
 import { CopyIcon } from '@primer/octicons-react';
 
+import { classNames } from '../utils/classnames.js';
+
 import styles from './text_field.module.css';
 
 export function TextField(props: {
+    className?: string;
     name: string;
     caption: string;
     value: string;
@@ -12,6 +15,7 @@ export function TextField(props: {
     leadingVisual?: React.ElementType;
     onChange: React.ChangeEventHandler<HTMLInputElement>;
     disabled?: boolean;
+    readOnly?: boolean;
 }) {
     const CopyAction = () => (
         <TextInput.Action
@@ -23,7 +27,7 @@ export function TextField(props: {
         />
     );
     return (
-        <div className={styles.text_field}>
+        <div className={classNames(styles.text_field, props.className)}>
             <div className={styles.text_field_name}>{props.name}</div>
             <div className={styles.text_field_caption}>{props.caption}</div>
             <TextInput
@@ -34,12 +38,14 @@ export function TextField(props: {
                 trailingAction={CopyAction()}
                 value={props.value}
                 onChange={props.onChange}
+                readOnly={props.readOnly}
             />
         </div>
     );
 }
 
 export function KeyValueTextField(props: {
+    className?: string;
     name: string;
     caption: string;
     k: string;
@@ -50,6 +56,7 @@ export function KeyValueTextField(props: {
     valueIcon?: React.ElementType;
     onChange: React.ChangeEventHandler<HTMLInputElement>;
     disabled?: boolean;
+    readOnly?: boolean;
 }) {
     const CopyAction = () => (
         <TextInput.Action
@@ -61,7 +68,7 @@ export function KeyValueTextField(props: {
         />
     );
     return (
-        <div className={styles.kv_field}>
+        <div className={classNames(styles.kv_field, props.className)}>
             <div className={styles.kv_field_name}>{props.name}</div>
             <div className={styles.kv_field_caption}>{props.caption}</div>
             <TextInput
@@ -72,6 +79,7 @@ export function KeyValueTextField(props: {
                 leadingVisual={props.keyIcon}
                 trailingAction={CopyAction()}
                 onChange={props.onChange}
+                readOnly={props.readOnly}
             />
             <div className={styles.kv_field_input_value}>
                 <TextInput
@@ -81,6 +89,7 @@ export function KeyValueTextField(props: {
                     leadingVisual={props.valueIcon}
                     trailingAction={CopyAction()}
                     onChange={props.onChange}
+                    readOnly={props.readOnly}
                 />
             </div>
         </div>
