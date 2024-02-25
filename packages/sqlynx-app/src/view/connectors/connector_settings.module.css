@@ -92,3 +92,7 @@
     margin-right: 16px;
     column-gap: 8px
 }
+
+.salesforce_logo {
+    color: var(--logo_color_salesforce);
+}
