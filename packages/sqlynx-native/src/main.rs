@@ -3,12 +3,19 @@
 
 mod grpc_stream_registry;
 
+use std::env;
 use tauri::http::header::{ACCESS_CONTROL_ALLOW_ORIGIN, CONTENT_TYPE};
 use tauri::http::response::Builder as ResponseBuilder;
 use tauri::http::Request;
 use tauri::http::Response;
 
 fn main() {
+    // Setup the logger
+    if env::var("RUST_LOG").is_err() {
+        env::set_var("RUST_LOG", "info")
+    }
+    env_logger::init();
+
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![sqlynx_get_os])
         .register_asynchronous_uri_scheme_protocol(
