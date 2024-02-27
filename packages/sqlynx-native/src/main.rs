@@ -3,12 +3,10 @@
 
 mod grpc_proxy;
 mod grpc_stream_registry;
+mod ipc_router;
 
+use ipc_router::route_ipc_request;
 use std::env;
-use tauri::http::header::{ACCESS_CONTROL_ALLOW_ORIGIN, CONTENT_TYPE};
-use tauri::http::response::Builder as ResponseBuilder;
-use tauri::http::Request;
-use tauri::http::Response;
 
 fn main() {
     // Setup the logger
@@ -22,8 +20,10 @@ fn main() {
         .register_asynchronous_uri_scheme_protocol(
             "sqlynx-native",
             move |_runtime, request, responder| {
-                let response = sqlynx_ipc_router(request);
-                responder.respond(response)
+                tokio::spawn(async move {
+                    let response = route_ipc_request(request).await;
+                    responder.respond(response);
+                });
             },
         )
         .setup(|app| {
@@ -39,15 +39,4 @@ fn main() {
 #[tauri::command]
 async fn sqlynx_get_os() -> &'static str {
     return "darwin";
-}
-
-fn sqlynx_ipc_router(request: Request<Vec<u8>>) -> Response<Vec<u8>> {
-    let _path = request.uri();
-
-    let resp = ResponseBuilder::new()
-        .header(CONTENT_TYPE, "text/plain")
-        .header(ACCESS_CONTROL_ALLOW_ORIGIN, "*")
-        .body("hello world".to_string().as_bytes().to_vec())
-        .unwrap();
-    resp
 }
