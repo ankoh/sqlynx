@@ -5,38 +5,37 @@ use std::sync::RwLock;
 use tonic::metadata::MetadataMap;
 
 pub enum GrpcServerStreamingResponse {
-    InitialMetadata(MetadataMap),
     Message(Vec<u8>),
-    TrailingMetadata(MetadataMap),
-    Empty,
+    End(MetadataMap),
     Error(Box<dyn std::error::Error + Send + Sync>),
+    NoStream,
 }
 
 pub struct ResultGrpcServerStreamingResponse {
     /// The response
     response: GrpcServerStreamingResponse,
     /// The response id
-    response_id: u64,
+    sequence_id: u64,
     /// The total number of received messages
     total_received: u64,
 }
 
-struct BufferedGrpcServerStreamingResponse {
+struct OrderedGrpcServerStreamingResponse {
     /// The response
     response: GrpcServerStreamingResponse,
-    /// The response id
-    response_id: u64,
+    /// The sequence id
+    sequence_id: u64,
 }
 
-pub struct GRPCServerStreamingRequest {
+struct GRPCServerStreamingRequest {
     /// The output receiver
-    pub receiver: flume::Receiver<BufferedGrpcServerStreamingResponse>,
+    receiver: flume::Receiver<OrderedGrpcServerStreamingResponse>,
+    /// The total number of received messages
+    total_received: AtomicU64,
 }
 
 #[derive(Default)]
 pub struct GrpcStreamRegistry {
-    /// The next event id
-    next_response_id: AtomicU64,
     /// The next message id
     next_stream_id: AtomicU64,
     /// The server streams
@@ -65,10 +64,10 @@ impl GrpcStreamRegistry {
         }
     }
     /// Start a server stream
-    pub async fn start_server_stream(
+    pub fn start_server_stream(
         self: Arc<Self>,
-        mut response: tonic::Response<tonic::Streaming<bytes::Bytes>>,
-    ) -> u64 {
+        mut request: tonic::Response<tonic::Streaming<bytes::Bytes>>,
+    ) -> anyhow::Result<MetadataMap> {
         // Allocate an identifier for the stream
         let stream_id = self
             .next_stream_id
@@ -77,42 +76,30 @@ impl GrpcStreamRegistry {
         // Setup channel for spmc queue
         const STREAM_CAPACITY: usize = 10;
         let (sender, receiver) =
-            flume::bounded::<BufferedGrpcServerStreamingResponse>(STREAM_CAPACITY);
+            flume::bounded::<OrderedGrpcServerStreamingResponse>(STREAM_CAPACITY);
 
         // Move the initial metadata out and send insert them in the channel
         let mut metadata = MetadataMap::new();
-        std::mem::swap(&mut metadata, response.metadata_mut());
-        assert!(
-            STREAM_CAPACITY > 1,
-            "initial metadata is pushed into the channel without active receier and must not block"
-        );
-        // Allocate an identifier for the response
-        let response_id = self
-            .next_response_id
-            .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-        // Send the initial metadata
-        if let Err(e) = sender
-            .send_async(BufferedGrpcServerStreamingResponse {
-                response: GrpcServerStreamingResponse::InitialMetadata(metadata),
-                response_id,
-            })
-            .await
-        {
-            log::debug!(
-                "inserting initial metadata into the channel failed with error: {}",
-                e
-            );
-        }
+        std::mem::swap(&mut metadata, request.metadata_mut());
 
         // Register the receiver
-        let request = Arc::new(GRPCServerStreamingRequest { receiver });
-        GrpcStreamRegistry::register_stream(&self.server_streams, stream_id, request);
+        let entry = Arc::new(GRPCServerStreamingRequest {
+            receiver,
+            total_received: AtomicU64::new(0),
+        });
+        GrpcStreamRegistry::register_stream(&self.server_streams, stream_id, entry.clone());
 
         // Spawn the async reader
-        let mut streaming = response.into_inner();
+        let mut streaming = request.into_inner();
         tokio::spawn(async move {
+            let mut next_sequence_id = 0;
+
             let mut stream_alive = true;
             while stream_alive {
+                // Get next sequence id
+                let sequence_id = next_sequence_id;
+                next_sequence_id += 1;
+
                 // Read the next message from the gRPC output stream
                 let response = match streaming.message().await {
                     // Received bytes, forward the message as-is to receivers
@@ -124,7 +111,14 @@ impl GrpcStreamRegistry {
                     Ok(None) => {
                         stream_alive = false;
                         log::debug!("reached end of server stream");
-                        GrpcServerStreamingResponse::Empty
+                        match streaming.trailers().await {
+                            Ok(Some(trailer)) => GrpcServerStreamingResponse::End(trailer),
+                            Ok(None) => GrpcServerStreamingResponse::End(MetadataMap::new()),
+                            Err(e) => {
+                                log::warn!("reading trailers failed with error: {}", e);
+                                GrpcServerStreamingResponse::Error(Box::new(e))
+                            }
+                        }
                     }
                     // Stream failed, send error to receivers and close the stream
                     Err(e) => {
@@ -133,16 +127,15 @@ impl GrpcStreamRegistry {
                         GrpcServerStreamingResponse::Error(Box::new(e))
                     }
                 };
-                // Allocate an identifier for the response
-                let response_id = self
-                    .next_response_id
-                    .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                entry
+                    .total_received
+                    .fetch_add(1, std::sync::atomic::Ordering::AcqRel);
 
                 // Forward the response to the receivers
                 if let Err(e) = sender
-                    .send_async(BufferedGrpcServerStreamingResponse {
+                    .send_async(OrderedGrpcServerStreamingResponse {
                         response,
-                        response_id,
+                        sequence_id,
                     })
                     .await
                 {
@@ -156,42 +149,41 @@ impl GrpcStreamRegistry {
             // There might still be arriving read calls that will receive an empty response by default.
             GrpcStreamRegistry::remove_stream(&self.server_streams, stream_id)
         });
-        stream_id
+
+        // Return initial metadata
+        Ok(metadata)
     }
 
     /// Read from a server stream
     pub async fn read_server_stream(self: Arc<Self>, id: u64) -> ResultGrpcServerStreamingResponse {
-        // Get the response id
-        let total_received = self
-            .next_response_id
-            .load(std::sync::atomic::Ordering::SeqCst);
-
         // Try to find the stream.
         // If there is none, the request might have finished already.
-        // Return an empty message instead.
         let stream = match GrpcStreamRegistry::find_stream(&self.server_streams, id) {
             Some(stream) => stream,
             None => {
                 return ResultGrpcServerStreamingResponse {
-                    response: GrpcServerStreamingResponse::Empty,
-                    response_id: total_received,
-                    total_received,
+                    response: GrpcServerStreamingResponse::NoStream,
+                    sequence_id: 0,
+                    total_received: 0,
                 }
             }
         };
+        let total_received = stream
+            .total_received
+            .load(std::sync::atomic::Ordering::Acquire);
         // Receive the next message from the stream
         match stream.receiver.recv_async().await {
             Ok(buffered) => ResultGrpcServerStreamingResponse {
                 response: buffered.response,
-                response_id: buffered.response_id,
+                sequence_id: buffered.sequence_id,
                 total_received,
             },
             Err(e) => {
                 // XXX Closing probably returns an error as well?
                 log::warn!("{}", e);
                 ResultGrpcServerStreamingResponse {
-                    response: GrpcServerStreamingResponse::Empty,
-                    response_id: total_received,
+                    response: GrpcServerStreamingResponse::Error(Box::new(e)),
+                    sequence_id: total_received,
                     total_received,
                 }
             }
