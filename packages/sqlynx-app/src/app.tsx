@@ -16,7 +16,7 @@ import { SalesforceConnector } from './connectors/salesforce_connector.js';
 import { LogProvider } from './app_log.js';
 import { AppConfigResolver } from './app_config.js';
 import { SQLYNX_GIT_COMMIT, SQLYNX_VERSION } from './app_version.js';
-import { NativeApiProvider } from './native_api.js';
+import { NativeApiProvider } from './native/native_api.js';
 
 import { ThemeProvider, BaseStyles } from '@primer/react';
 import { StyleSheetManager } from 'styled-components';

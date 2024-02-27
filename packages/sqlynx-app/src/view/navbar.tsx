@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useLocation } from 'react-router-dom';
 import { classNames } from '../utils/classnames.js';
 import { HoverMode, LinkButton } from './button.js';
-import { useNativeApi } from '../native_api.js';
+import { useNativeApi } from '../native/native_api.js';
 import { SQLYNX_GET_URL, SQLYNX_GIT_COMMIT, SQLYNX_GIT_REPO_URL, SQLYNX_VERSION } from '../app_version.js';
 
 import styles from './navbar.module.css';
