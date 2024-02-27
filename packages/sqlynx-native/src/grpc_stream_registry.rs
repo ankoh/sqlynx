@@ -33,6 +33,7 @@ pub struct GRPCServerStreamingRequest {
     pub receiver: flume::Receiver<BufferedGrpcServerStreamingResponse>,
 }
 
+#[derive(Default)]
 pub struct GrpcStreamRegistry {
     /// The next event id
     next_response_id: AtomicU64,
