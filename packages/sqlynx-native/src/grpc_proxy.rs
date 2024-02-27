@@ -76,7 +76,9 @@ impl GrpcHttpProxy {
                     tls_cacerts = Some(read_header_value(value, "sqlynx-tls-cacerts")?);
                 }
                 _ => {
-                    extra_metadata.insert(key, value);
+                    if !key.as_str().starts_with("sqlynx-") {
+                        extra_metadata.insert(key, value);
+                    }
                 }
             }
         }
