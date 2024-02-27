@@ -179,6 +179,7 @@ impl GrpcStreamRegistry {
                 }
             }
         };
+        // Receive the next message from the stream
         match stream.receiver.recv_async().await {
             Ok(buffered) => ResultGrpcServerStreamingResponse {
                 response: buffered.response,
@@ -186,6 +187,7 @@ impl GrpcStreamRegistry {
                 total_received,
             },
             Err(e) => {
+                // XXX Closing probably returns an error as well?
                 log::warn!("{}", e);
                 ResultGrpcServerStreamingResponse {
                     response: GrpcServerStreamingResponse::Empty,
