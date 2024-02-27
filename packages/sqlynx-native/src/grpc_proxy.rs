@@ -30,9 +30,10 @@ struct GrpcRequestParams {
 }
 
 impl GrpcHttpProxy {
+    /// Helper to unpack parameters for a gRPC call
     fn read_request_params(req: &mut Request<Vec<u8>>) -> Result<GrpcRequestParams> {
-        let headers = req.headers_mut();
-        let read_header_value = |value: &mut HeaderValue, header: &'static str| -> Result<String> {
+        // Helper to read a header value as string
+        let read_header_value = |value: HeaderValue, header: &'static str| -> Result<String> {
             Ok(value
                 .to_str()
                 .map_err(|e| {
@@ -50,29 +51,29 @@ impl GrpcHttpProxy {
         let mut tls_client_key = None;
         let mut tls_client_cert = None;
         let mut tls_cacerts = None;
-        let mut extra_metadata = HeaderMap::with_capacity(headers.len());
+        let mut extra_metadata = HeaderMap::with_capacity(req.headers().len());
 
-        for (key, mut value) in headers.drain() {
+        // Read all headers in the request, pick up the one from us and declare the remaining as extra
+        for (key, value) in req.headers_mut().drain() {
             let key = match key {
                 Some(k) => k,
                 None => continue,
             };
             match key.as_str() {
                 "sqlynx-host" => {
-                    host = Some(read_header_value(&mut value, "sqlynx-host")?);
+                    host = Some(read_header_value(value, "sqlynx-host")?);
                 }
                 "sqlynx-path" => {
-                    path = Some(read_header_value(&mut value, "sqlynx-path")?);
+                    path = Some(read_header_value(value, "sqlynx-path")?);
                 }
                 "sqlynx-tls-client-key" => {
-                    tls_client_key = Some(read_header_value(&mut value, "sqlynx-tls-client-key")?);
+                    tls_client_key = Some(read_header_value(value, "sqlynx-tls-client-key")?);
                 }
                 "sqlynx-tls-client-cert" => {
-                    tls_client_cert =
-                        Some(read_header_value(&mut value, "sqlynx-tls-client-cert")?);
+                    tls_client_cert = Some(read_header_value(value, "sqlynx-tls-client-cert")?);
                 }
                 "sqlynx-tls-cacerts" => {
-                    tls_cacerts = Some(read_header_value(&mut value, "sqlynx-tls-cacerts")?);
+                    tls_cacerts = Some(read_header_value(value, "sqlynx-tls-cacerts")?);
                 }
                 _ => {
                     extra_metadata.insert(key, value);
@@ -80,6 +81,7 @@ impl GrpcHttpProxy {
             }
         }
 
+        // Make sure the user provided an endpoint
         let endpoint = if let Some(host) = &host {
             Endpoint::from_str(host).map_err(|e| {
                 anyhow!(
@@ -90,12 +92,15 @@ impl GrpcHttpProxy {
         } else {
             return Err(anyhow!("request misses required header 'sqlynx-host'"));
         };
+        // Make sure the user provided a path
         let path = if let Some(path) = &path {
             PathAndQuery::from_str(path)
                 .map_err(|e| anyhow!("request header 'sqlynx-path' is not a valid path: {}", e))?
         } else {
             return Err(anyhow!("request misses required header 'sqlynx-path'"));
         };
+        // If the user provided a client key, we also require a client cert and cacerts.
+        // XXX Maybe we can relax this a bit.
         let tls = if let Some(client_key) = &tls_client_key {
             if tls_client_cert.is_none() {
                 return Err(anyhow!(
@@ -123,6 +128,7 @@ impl GrpcHttpProxy {
         })
     }
 
+    /// Call a unary gRPC function
     pub async fn call_unary(&self, mut req: Request<Vec<u8>>) -> Response<Vec<u8>> {
         let _params = GrpcHttpProxy::read_request_params(&mut req);
 
@@ -130,6 +136,7 @@ impl GrpcHttpProxy {
         response
     }
 
+    /// Call a gRPC function with results streamed from the server
     pub async fn start_server_stream(&self, mut req: Request<Vec<u8>>) -> Response<Vec<u8>> {
         let _params = GrpcHttpProxy::read_request_params(&mut req);
 
@@ -137,6 +144,7 @@ impl GrpcHttpProxy {
         response
     }
 
+    /// Read from a result stream
     pub async fn read_server_stream(&self, _req: Request<Vec<u8>>) -> Response<Vec<u8>> {
         let response = Response::builder().status(200).body(Vec::new()).unwrap();
         response
