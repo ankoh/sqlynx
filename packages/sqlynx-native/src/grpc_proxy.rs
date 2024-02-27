@@ -7,10 +7,12 @@ use tauri::http::uri::PathAndQuery;
 use tauri::http::HeaderMap;
 use tauri::http::HeaderValue;
 use tauri::http::Request;
+use tauri::http::Response;
 use tonic::transport::channel::Endpoint;
 
 use crate::grpc_stream_registry::GrpcStreamRegistry;
 
+#[derive(Default)]
 pub struct GrpcHttpProxy {
     streams: Arc<GrpcStreamRegistry>,
 }
@@ -28,7 +30,7 @@ struct GrpcRequestParams {
 }
 
 impl GrpcHttpProxy {
-    fn read_params(req: &mut Request<Vec<u8>>) -> Result<GrpcRequestParams> {
+    fn read_request_params(req: &mut Request<Vec<u8>>) -> Result<GrpcRequestParams> {
         let headers = req.headers_mut();
         let read_header_value = |value: &mut HeaderValue, header: &'static str| -> Result<String> {
             Ok(value
@@ -121,9 +123,22 @@ impl GrpcHttpProxy {
         })
     }
 
-    //    pub async fn call_unary(req: Request<Vec<u8>>) -> Response<Vec<u8>> {}
-    //
-    //    pub async fn start_server_stream(req: Request<Vec<u8>>) -> Response<Vec<u8>> {}
-    //
-    //    pub async fn read_server_stream(req: Request<Vec<u8>>) -> Response<Vec<u8>> {}
+    pub async fn call_unary(&self, mut req: Request<Vec<u8>>) -> Response<Vec<u8>> {
+        let _params = GrpcHttpProxy::read_request_params(&mut req);
+
+        let response = Response::builder().status(200).body(Vec::new()).unwrap();
+        response
+    }
+
+    pub async fn start_server_stream(&self, mut req: Request<Vec<u8>>) -> Response<Vec<u8>> {
+        let _params = GrpcHttpProxy::read_request_params(&mut req);
+
+        let response = Response::builder().status(200).body(Vec::new()).unwrap();
+        response
+    }
+
+    pub async fn read_server_stream(&self, _req: Request<Vec<u8>>) -> Response<Vec<u8>> {
+        let response = Response::builder().status(200).body(Vec::new()).unwrap();
+        response
+    }
 }
