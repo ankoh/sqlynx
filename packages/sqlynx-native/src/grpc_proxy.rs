@@ -3,6 +3,7 @@ use std::sync::Arc;
 
 use anyhow::anyhow;
 use anyhow::Result;
+use std::error::Error;
 use tauri::http::uri::PathAndQuery;
 use tauri::http::HeaderMap;
 use tauri::http::HeaderValue;
@@ -133,6 +134,7 @@ impl GrpcHttpProxy {
     /// Call a unary gRPC function
     pub async fn call_unary(&self, mut req: Request<Vec<u8>>) -> Response<Vec<u8>> {
         let _params = GrpcHttpProxy::read_request_params(&mut req);
+        // params.endpoint.conn
 
         let response = Response::builder().status(200).body(Vec::new()).unwrap();
         response
@@ -151,4 +153,9 @@ impl GrpcHttpProxy {
         let response = Response::builder().status(200).body(Vec::new()).unwrap();
         response
     }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
 }
