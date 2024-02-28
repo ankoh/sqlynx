@@ -2,7 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod grpc_proxy;
-mod grpc_stream_registry;
+mod grpc_stream_reader;
 mod ipc_router;
 mod proto;
 
