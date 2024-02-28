@@ -44,9 +44,17 @@ features = ["derive"]
 version = "2.0.0-beta"
 features = []
 
+
+[dependencies.tokio-stream]
+version = "0.1.14"
+features = [
+    "net",
+]
+
 [dependencies.tokio]
 version = "^1.36.0"
 features = [
+    "net",
     "rt",
     "rt-multi-thread",
     "sync",

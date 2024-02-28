@@ -194,3 +194,34 @@ impl GrpcStreamRegistry {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::hyper_service_mocks::{spawn_test_hyper_service, HyperExecuteQueryMock};
+    use crate::proto::salesforce_hyperdb_grpc_v1::query_result::Result;
+    use crate::proto::salesforce_hyperdb_grpc_v1::query_result_header::Header;
+    use crate::proto::salesforce_hyperdb_grpc_v1::QueryBinaryResultChunk;
+    use crate::proto::salesforce_hyperdb_grpc_v1::QueryResult;
+    use crate::proto::salesforce_hyperdb_grpc_v1::QueryResultHeader;
+    use crate::proto::salesforce_hyperdb_grpc_v1::QueryResultSchema;
+
+    #[tokio::test]
+    async fn test() {
+        let mut execute_query_mock = HyperExecuteQueryMock::default();
+        execute_query_mock.returns_messages = vec![
+            Ok(QueryResult {
+                result: Some(Result::Header(QueryResultHeader {
+                    header: Some(Header::Schema(QueryResultSchema { column: Vec::new() })),
+                })),
+            }),
+            Ok(QueryResult {
+                result: Some(Result::ArrowChunk(QueryBinaryResultChunk {
+                    data: Vec::new(),
+                })),
+            }),
+        ];
+        let (_addr, shutdown) = spawn_test_hyper_service(execute_query_mock).await;
+
+        shutdown.send(()).expect("shutdown hyper service");
+    }
+}

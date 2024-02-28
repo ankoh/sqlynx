@@ -3,6 +3,8 @@
 
 mod grpc_proxy;
 mod grpc_stream_reader;
+#[cfg(test)]
+mod hyper_service_mocks;
 mod ipc_router;
 mod proto;
 
