@@ -197,16 +197,23 @@ impl GrpcStreamRegistry {
 
 #[cfg(test)]
 mod test {
+    use std::collections::HashMap;
+
+    use tokio_stream::StreamExt;
+
     use crate::hyper_service_mocks::{spawn_test_hyper_service, HyperExecuteQueryMock};
+    use crate::proto::salesforce_hyperdb_grpc_v1::hyper_service_client::HyperServiceClient;
     use crate::proto::salesforce_hyperdb_grpc_v1::query_result::Result;
     use crate::proto::salesforce_hyperdb_grpc_v1::query_result_header::Header;
-    use crate::proto::salesforce_hyperdb_grpc_v1::QueryBinaryResultChunk;
     use crate::proto::salesforce_hyperdb_grpc_v1::QueryResult;
     use crate::proto::salesforce_hyperdb_grpc_v1::QueryResultHeader;
     use crate::proto::salesforce_hyperdb_grpc_v1::QueryResultSchema;
+    use crate::proto::salesforce_hyperdb_grpc_v1::{
+        query_param, QueryBinaryResultChunk, QueryParam,
+    };
 
     #[tokio::test]
-    async fn test() {
+    async fn test_mock() {
         let mut execute_query_mock = HyperExecuteQueryMock::default();
         execute_query_mock.returns_messages = vec![
             Ok(QueryResult {
@@ -220,8 +227,27 @@ mod test {
                 })),
             }),
         ];
-        let (_addr, shutdown) = spawn_test_hyper_service(execute_query_mock).await;
+        let (addr, shutdown) = spawn_test_hyper_service(execute_query_mock).await;
+        let mut client = HyperServiceClient::connect(format!("http://{}", addr))
+            .await
+            .unwrap();
 
-        shutdown.send(()).expect("shutdown hyper service");
+        let param = QueryParam {
+            query: "select 1".to_string(),
+            output_format: query_param::OutputFormat::ArrowStream.into(),
+            database: Vec::new(),
+            params: HashMap::new(),
+        };
+        let result = client.execute_query(param).await.unwrap();
+
+        let mut stream = result.into_inner();
+        let mut results = Vec::new();
+        while let Some(item) = stream.next().await {
+            assert!(item.is_ok());
+            results.push(item.unwrap());
+        }
+        assert_eq!(results.len(), 2);
+
+        shutdown.send(()).unwrap();
     }
 }
