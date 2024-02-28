@@ -63,6 +63,7 @@ impl GrpcStreamRegistry {
             None
         }
     }
+
     /// Start a server stream
     pub fn start_server_stream(
         self: Arc<Self>,
@@ -155,10 +156,13 @@ impl GrpcStreamRegistry {
     }
 
     /// Read from a server stream
-    pub async fn read_server_stream(self: Arc<Self>, id: u64) -> ResultGrpcServerStreamingResponse {
+    pub async fn read_server_stream(
+        self: Arc<Self>,
+        stream_id: u64,
+    ) -> ResultGrpcServerStreamingResponse {
         // Try to find the stream.
         // If there is none, the request might have finished already.
-        let stream = match GrpcStreamRegistry::find_stream(&self.server_streams, id) {
+        let stream = match GrpcStreamRegistry::find_stream(&self.server_streams, stream_id) {
             Some(stream) => stream,
             None => {
                 return ResultGrpcServerStreamingResponse {
