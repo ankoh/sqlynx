@@ -3,19 +3,12 @@ use std::sync::Arc;
 
 use anyhow::anyhow;
 use anyhow::Result;
-use tauri::http::uri::PathAndQuery;
 use tauri::http::HeaderMap;
 use tauri::http::HeaderValue;
 use tauri::http::Request;
-use tauri::http::Response;
 use tonic::transport::channel::Endpoint;
 
-use crate::grpc_stream_registry::GrpcStreamRegistry;
-
-#[derive(Default)]
-pub struct GrpcHttpProxy {
-    streams: Arc<GrpcStreamRegistry>,
-}
+use crate::grpc_stream_reader::GrpcStreamRegistry;
 
 struct GrpcRequestTlsConfig {
     client_key: String,
@@ -23,15 +16,19 @@ struct GrpcRequestTlsConfig {
     cacerts: String,
 }
 
-struct GrpcRequestParams {
+struct GrpcChannelParams {
     endpoint: Endpoint,
-    path: PathAndQuery,
     tls: Option<GrpcRequestTlsConfig>,
 }
 
+#[derive(Default)]
+pub struct GrpcHttpProxy {
+    streams: Arc<GrpcStreamRegistry>,
+}
+
 impl GrpcHttpProxy {
-    /// Helper to unpack parameters for a gRPC call
-    fn read_request_params(req: &mut Request<Vec<u8>>) -> Result<GrpcRequestParams> {
+    /// Helper to unpack parameters for a gRPC channel
+    fn read_channel_params(req: &mut Request<Vec<u8>>) -> Result<GrpcChannelParams> {
         // Helper to read a header value as string
         let read_header_value = |value: HeaderValue, header: &'static str| -> Result<String> {
             Ok(value
@@ -47,7 +44,6 @@ impl GrpcHttpProxy {
         };
 
         let mut host = None;
-        let mut path = None;
         let mut tls_client_key = None;
         let mut tls_client_cert = None;
         let mut tls_cacerts = None;
@@ -62,9 +58,6 @@ impl GrpcHttpProxy {
             match key.as_str() {
                 "sqlynx-host" => {
                     host = Some(read_header_value(value, "sqlynx-host")?);
-                }
-                "sqlynx-path" => {
-                    path = Some(read_header_value(value, "sqlynx-path")?);
                 }
                 "sqlynx-tls-client-key" => {
                     tls_client_key = Some(read_header_value(value, "sqlynx-tls-client-key")?);
@@ -94,13 +87,6 @@ impl GrpcHttpProxy {
         } else {
             return Err(anyhow!("request misses required header 'sqlynx-host'"));
         };
-        // Make sure the user provided a path
-        let path = if let Some(path) = &path {
-            PathAndQuery::from_str(path)
-                .map_err(|e| anyhow!("request header 'sqlynx-path' is not a valid path: {}", e))?
-        } else {
-            return Err(anyhow!("request misses required header 'sqlynx-path'"));
-        };
         // If the user provided a client key, we also require a client cert and cacerts.
         // XXX Maybe we can relax this a bit.
         let tls = if let Some(client_key) = &tls_client_key {
@@ -123,30 +109,32 @@ impl GrpcHttpProxy {
             None
         };
 
-        Ok(GrpcRequestParams {
-            endpoint,
-            path,
-            tls,
-        })
+        Ok(GrpcChannelParams { endpoint, tls })
+    }
+
+    /// Create a channel
+    pub async fn create_channel(&self, mut req: Request<Vec<u8>>) -> Result<u64> {
+        let _params = GrpcHttpProxy::read_channel_params(&mut req)?;
+        //        let channel = params
+        //            .endpoint
+        //            .connect()
+        //            .await
+        //            .map_err(|e| anyhow!("connect to endpoint failed with error: {}", e))?;
+        Ok(42)
+    }
+    /// Destroy a channel
+    pub async fn destroy_channel(&self, _req: Request<Vec<u8>>) -> Result<()> {
+        Ok(())
     }
 
     /// Call a unary gRPC function
-    pub async fn call_unary(&self, mut req: Request<Vec<u8>>) -> Result<Vec<u8>> {
-        let params = GrpcHttpProxy::read_request_params(&mut req)?;
-        let channel = params
-            .endpoint
-            .connect()
-            .await
-            .map_err(|e| anyhow!("connect to endpoint failed with error: {}", e))?;
-
-        // tonic::client::Grpc
-
+    pub async fn call_unary(&self, _req: Request<Vec<u8>>) -> Result<Vec<u8>> {
         Ok(Vec::new())
     }
 
     /// Call a gRPC function with results streamed from the server
     pub async fn start_server_stream(&self, mut req: Request<Vec<u8>>) -> Result<Vec<u8>> {
-        let _params = GrpcHttpProxy::read_request_params(&mut req);
+        let _params = GrpcHttpProxy::read_channel_params(&mut req);
 
         Ok(Vec::new())
     }
