@@ -198,36 +198,44 @@ impl GrpcStreamRegistry {
 #[cfg(test)]
 mod test {
     use std::collections::HashMap;
-
     use tokio_stream::StreamExt;
 
     use crate::hyper_service_mocks::{spawn_test_hyper_service, HyperExecuteQueryMock};
     use crate::proto::salesforce_hyperdb_grpc_v1::hyper_service_client::HyperServiceClient;
+    use crate::proto::salesforce_hyperdb_grpc_v1::query_param;
     use crate::proto::salesforce_hyperdb_grpc_v1::query_result::Result;
     use crate::proto::salesforce_hyperdb_grpc_v1::query_result_header::Header;
-    use crate::proto::salesforce_hyperdb_grpc_v1::QueryResult;
-    use crate::proto::salesforce_hyperdb_grpc_v1::QueryResultHeader;
+    use crate::proto::salesforce_hyperdb_grpc_v1::QueryBinaryResultChunk;
+    use crate::proto::salesforce_hyperdb_grpc_v1::QueryParam;
     use crate::proto::salesforce_hyperdb_grpc_v1::QueryResultSchema;
-    use crate::proto::salesforce_hyperdb_grpc_v1::{
-        query_param, QueryBinaryResultChunk, QueryParam,
-    };
+    use crate::proto::salesforce_hyperdb_grpc_v1::SqlType;
+    use crate::proto::salesforce_hyperdb_grpc_v1::{sql_type, QueryResultHeader};
+    use crate::proto::salesforce_hyperdb_grpc_v1::{ColumnDescription, QueryResult};
 
     #[tokio::test]
     async fn test_mock() {
-        let mut execute_query_mock = HyperExecuteQueryMock::default();
-        execute_query_mock.returns_messages = vec![
+        let mut mock = HyperExecuteQueryMock::default();
+        mock.returns_messages = vec![
             Ok(QueryResult {
                 result: Some(Result::Header(QueryResultHeader {
-                    header: Some(Header::Schema(QueryResultSchema { column: Vec::new() })),
+                    header: Some(Header::Schema(QueryResultSchema {
+                        column: vec![ColumnDescription {
+                            name: "foo".to_string(),
+                            r#type: Some(SqlType {
+                                tag: sql_type::TypeTag::HyperBool.into(),
+                                modifier: None,
+                            }),
+                        }],
+                    })),
                 })),
             }),
             Ok(QueryResult {
                 result: Some(Result::ArrowChunk(QueryBinaryResultChunk {
-                    data: Vec::new(),
+                    data: vec![0x1, 0x2, 0x3, 0x4],
                 })),
             }),
         ];
-        let (addr, shutdown) = spawn_test_hyper_service(execute_query_mock).await;
+        let (addr, shutdown) = spawn_test_hyper_service(mock).await;
         let mut client = HyperServiceClient::connect(format!("http://{}", addr))
             .await
             .unwrap();
@@ -247,7 +255,32 @@ mod test {
             results.push(item.unwrap());
         }
         assert_eq!(results.len(), 2);
-
+        assert!(results[0].result.is_some());
+        assert_eq!(
+            &results[0],
+            &QueryResult {
+                result: Some(Result::Header(QueryResultHeader {
+                    header: Some(Header::Schema(QueryResultSchema {
+                        column: vec![ColumnDescription {
+                            name: "foo".to_string(),
+                            r#type: Some(SqlType {
+                                tag: sql_type::TypeTag::HyperBool.into(),
+                                modifier: None,
+                            }),
+                        }],
+                    })),
+                })),
+            }
+        );
+        assert!(results[1].result.is_some());
+        assert_eq!(
+            &results[1],
+            &QueryResult {
+                result: Some(Result::ArrowChunk(QueryBinaryResultChunk {
+                    data: vec![0x1, 0x2, 0x3, 0x4],
+                })),
+            }
+        );
         shutdown.send(()).unwrap();
     }
 }
