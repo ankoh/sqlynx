@@ -1,8 +1,11 @@
+use prost::Message;
 use std::collections::HashMap;
 use std::sync::atomic::AtomicU64;
 use std::sync::Arc;
 use std::sync::RwLock;
 use tonic::metadata::MetadataMap;
+
+use crate::proto::salesforce_hyperdb_grpc_v1::QueryResult;
 
 pub enum GrpcServerStreamingResponse {
     Message(Vec<u8>),
@@ -42,6 +45,12 @@ pub struct GrpcStreamRegistry {
     server_streams: RwLock<HashMap<u64, Arc<GRPCServerStreamingRequest>>>,
 }
 
+impl Into<Vec<u8>> for QueryResult {
+    fn into(self) -> Vec<u8> {
+        self.encode_to_vec()
+    }
+}
+
 impl GrpcStreamRegistry {
     /// Register a streaming request
     fn register_stream<T>(dict: &RwLock<HashMap<u64, Arc<T>>>, id: u64, req: Arc<T>) {
@@ -65,10 +74,10 @@ impl GrpcStreamRegistry {
     }
 
     /// Start a server stream
-    pub fn start_server_stream(
+    pub fn start_server_stream<T: Into<Vec<u8>> + Send + 'static>(
         self: Arc<Self>,
-        mut request: tonic::Response<tonic::Streaming<bytes::Bytes>>,
-    ) -> anyhow::Result<MetadataMap> {
+        mut streaming: tonic::Streaming<T>,
+    ) -> anyhow::Result<u64> {
         // Allocate an identifier for the stream
         let stream_id = self
             .next_stream_id
@@ -79,10 +88,6 @@ impl GrpcStreamRegistry {
         let (sender, receiver) =
             flume::bounded::<OrderedGrpcServerStreamingResponse>(STREAM_CAPACITY);
 
-        // Move the initial metadata out and send insert them in the channel
-        let mut metadata = MetadataMap::new();
-        std::mem::swap(&mut metadata, request.metadata_mut());
-
         // Register the receiver
         let entry = Arc::new(GRPCServerStreamingRequest {
             receiver,
@@ -91,7 +96,6 @@ impl GrpcStreamRegistry {
         GrpcStreamRegistry::register_stream(&self.server_streams, stream_id, entry.clone());
 
         // Spawn the async reader
-        let mut streaming = request.into_inner();
         tokio::spawn(async move {
             let mut next_sequence_id = 0;
 
@@ -104,9 +108,13 @@ impl GrpcStreamRegistry {
                 // Read the next message from the gRPC output stream
                 let response = match streaming.message().await {
                     // Received bytes, forward the message as-is to receivers
-                    Ok(Some(bytes)) => {
-                        log::debug!("received message from server stream, bytes={}", bytes.len());
-                        GrpcServerStreamingResponse::Message(bytes.into())
+                    Ok(Some(m)) => {
+                        let buffer: Vec<u8> = m.into();
+                        log::debug!(
+                            "received message from server stream, bytes={}",
+                            buffer.len()
+                        );
+                        GrpcServerStreamingResponse::Message(buffer)
                     }
                     // Stream was closed, delete stream and return trailers
                     Ok(None) => {
@@ -152,7 +160,7 @@ impl GrpcStreamRegistry {
         });
 
         // Return initial metadata
-        Ok(metadata)
+        Ok(stream_id)
     }
 
     /// Read from a server stream
@@ -197,6 +205,7 @@ impl GrpcStreamRegistry {
 
 #[cfg(test)]
 mod test {
+    use super::*;
     use std::collections::HashMap;
     use tokio_stream::StreamExt;
 
@@ -213,7 +222,7 @@ mod test {
     use crate::proto::salesforce_hyperdb_grpc_v1::{ColumnDescription, QueryResult};
 
     #[tokio::test]
-    async fn test_mock() {
+    async fn test_execute_query_mock() {
         let mut mock = HyperExecuteQueryMock::default();
         mock.returns_messages = vec![
             Ok(QueryResult {
@@ -247,8 +256,8 @@ mod test {
             params: HashMap::new(),
         };
         let result = client.execute_query(param).await.unwrap();
-
         let mut stream = result.into_inner();
+
         let mut results = Vec::new();
         while let Some(item) = stream.next().await {
             assert!(item.is_ok());
@@ -281,6 +290,45 @@ mod test {
                 })),
             }
         );
+        shutdown.send(()).unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_stream_reader() {
+        let mut mock = HyperExecuteQueryMock::default();
+        mock.returns_messages = vec![
+            Ok(QueryResult {
+                result: Some(Result::ArrowChunk(QueryBinaryResultChunk {
+                    data: vec![0x1, 0x2, 0x3, 0x4],
+                })),
+            }),
+            Ok(QueryResult {
+                result: Some(Result::ArrowChunk(QueryBinaryResultChunk {
+                    data: vec![0x5, 0x6, 0x7, 0x8],
+                })),
+            }),
+        ];
+        let (addr, shutdown) = spawn_test_hyper_service(mock).await;
+        let mut client = HyperServiceClient::connect(format!("http://{}", addr))
+            .await
+            .unwrap();
+
+        let param = QueryParam {
+            query: "select 1".to_string(),
+            output_format: query_param::OutputFormat::ArrowStream.into(),
+            database: Vec::new(),
+            params: HashMap::new(),
+        };
+        let result = client.execute_query(param).await.unwrap();
+        let stream = result.into_inner();
+
+        let registry = Arc::new(GrpcStreamRegistry::default());
+        registry
+            .next_stream_id
+            .fetch_add(42, std::sync::atomic::Ordering::SeqCst);
+        let stream_id = registry.start_server_stream(stream).unwrap();
+        assert_eq!(stream_id, 42);
+
         shutdown.send(()).unwrap();
     }
 }
