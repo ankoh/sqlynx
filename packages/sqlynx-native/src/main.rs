@@ -4,6 +4,7 @@
 mod grpc_proxy;
 mod grpc_stream_registry;
 mod ipc_router;
+mod proto;
 
 use ipc_router::route_ipc_request;
 use std::env;
