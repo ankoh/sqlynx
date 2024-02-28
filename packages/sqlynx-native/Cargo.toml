@@ -26,15 +26,11 @@ lazy_static = "1.4.0"
 log = "0.4"
 env_logger = "0.11.2"
 http-body = "1.0.0"
+crossbeam = "0.8.4"
 
 [dependencies.tonic]
 version = "^0.11.0"
 features = ["tls"]
-
-[dependencies.flume]
-version = "0.11.0"
-default-features = false
-features = ["async"]
 
 [dependencies.serde]
 version = "1.0"
