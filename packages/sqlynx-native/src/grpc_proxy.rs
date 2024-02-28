@@ -3,7 +3,6 @@ use std::sync::Arc;
 
 use anyhow::anyhow;
 use anyhow::Result;
-use std::error::Error;
 use tauri::http::uri::PathAndQuery;
 use tauri::http::HeaderMap;
 use tauri::http::HeaderValue;
@@ -132,26 +131,29 @@ impl GrpcHttpProxy {
     }
 
     /// Call a unary gRPC function
-    pub async fn call_unary(&self, mut req: Request<Vec<u8>>) -> Response<Vec<u8>> {
-        let _params = GrpcHttpProxy::read_request_params(&mut req);
-        // params.endpoint.conn
+    pub async fn call_unary(&self, mut req: Request<Vec<u8>>) -> Result<Vec<u8>> {
+        let params = GrpcHttpProxy::read_request_params(&mut req)?;
+        let channel = params
+            .endpoint
+            .connect()
+            .await
+            .map_err(|e| anyhow!("connect to endpoint failed with error: {}", e))?;
 
-        let response = Response::builder().status(200).body(Vec::new()).unwrap();
-        response
+        // tonic::client::Grpc
+
+        Ok(Vec::new())
     }
 
     /// Call a gRPC function with results streamed from the server
-    pub async fn start_server_stream(&self, mut req: Request<Vec<u8>>) -> Response<Vec<u8>> {
+    pub async fn start_server_stream(&self, mut req: Request<Vec<u8>>) -> Result<Vec<u8>> {
         let _params = GrpcHttpProxy::read_request_params(&mut req);
 
-        let response = Response::builder().status(200).body(Vec::new()).unwrap();
-        response
+        Ok(Vec::new())
     }
 
     /// Read from a result stream
-    pub async fn read_server_stream(&self, _req: Request<Vec<u8>>) -> Response<Vec<u8>> {
-        let response = Response::builder().status(200).body(Vec::new()).unwrap();
-        response
+    pub async fn read_server_stream(&self, _req: Request<Vec<u8>>) -> Result<Vec<u8>> {
+        Ok(Vec::new())
     }
 }
 
