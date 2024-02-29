@@ -322,19 +322,6 @@ mod test {
 
     #[tokio::test]
     async fn test_stream_reader() -> Result<()> {
-        let messages = vec![
-            Ok(QueryResult {
-                result: Some(query_result::Result::ArrowChunk(QueryBinaryResultChunk {
-                    data: vec![0x1, 0x2, 0x3, 0x4],
-                })),
-            }),
-            Ok(QueryResult {
-                result: Some(query_result::Result::ArrowChunk(QueryBinaryResultChunk {
-                    data: vec![0x5, 0x6, 0x7, 0x8],
-                })),
-            }),
-        ];
-
         // Spawn the hyper service
         let (mock, mut mock_result_sender) = HyperExecuteQueryMock::new();
         let (addr, shutdown) = spawn_test_hyper_service(mock).await;
@@ -351,9 +338,21 @@ mod test {
         };
         let res = client.execute_query(param).await.unwrap();
         let stream = res.into_inner();
+        let (_params, result_sender) = mock_result_sender.recv().await.unwrap();
 
         // Send the results
-        let (_params, result_sender) = mock_result_sender.recv().await.unwrap();
+        let messages = vec![
+            Ok(QueryResult {
+                result: Some(query_result::Result::ArrowChunk(QueryBinaryResultChunk {
+                    data: vec![0x1, 0x2, 0x3, 0x4],
+                })),
+            }),
+            Ok(QueryResult {
+                result: Some(query_result::Result::ArrowChunk(QueryBinaryResultChunk {
+                    data: vec![0x5, 0x6, 0x7, 0x8],
+                })),
+            }),
+        ];
         for msg in messages.iter() {
             result_sender.send(msg.clone()).await?;
         }
