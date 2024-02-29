@@ -14,18 +14,19 @@ pub async fn route_ipc_request(request: Request<Vec<u8>>) -> Response<Vec<u8>> {
     let uri = request.uri();
 
     match uri.path() {
-        "/grpc-call-unary" => {
+        "/grpc/call-unary" => {
             // XXX
             GRPC_PROXY.call_unary(request).await;
         }
-        "/grpc-start-server-stream" => {
+        "/grpc/start-server-stream" => {
             // XXX
             GRPC_PROXY.start_server_stream(request).await;
         }
-        "/grpc-read-server-stream" => {
+        "/grpc/read-server-stream" => {
             // XXX
             GRPC_PROXY.read_server_stream(request).await;
         }
+        "/grpc/cancel-server-stream" => {}
         _ => {
             // Report unknown
         }

@@ -2,17 +2,25 @@ use crate::proto::salesforce_hyperdb_grpc_v1::{
     hyper_service_server::{HyperService, HyperServiceServer},
     QueryParam, QueryResult,
 };
-use std::sync::Mutex;
 use std::{net::SocketAddr, pin::Pin};
-use tokio::sync::mpsc;
 use tokio::sync::oneshot;
 use tokio_stream::{wrappers::ReceiverStream, Stream};
 use tonic::Status;
 
-#[derive(Default)]
+pub type QueryResultSender = tokio::sync::mpsc::Sender<Result<QueryResult, tonic::Status>>;
+
 pub struct HyperExecuteQueryMock {
-    pub received_params: Mutex<Option<QueryParam>>,
-    pub returns_messages: Vec<Result<QueryResult, tonic::Status>>,
+    pub test_setup: tokio::sync::mpsc::Sender<(QueryParam, QueryResultSender)>,
+}
+
+impl HyperExecuteQueryMock {
+    pub fn new() -> (
+        Self,
+        tokio::sync::mpsc::Receiver<(QueryParam, QueryResultSender)>,
+    ) {
+        let (send, recv) = tokio::sync::mpsc::channel(1);
+        (Self { test_setup: send }, recv)
+    }
 }
 
 type ExecuteQueryResponseStream = Pin<Box<dyn Stream<Item = Result<QueryResult, Status>> + Send>>;
@@ -25,18 +33,11 @@ impl HyperService for HyperExecuteQueryMock {
         &self,
         request: tonic::Request<QueryParam>,
     ) -> Result<tonic::Response<Self::ExecuteQueryStream>, tonic::Status> {
-        {
-            let mut params = self.received_params.lock().unwrap();
-            params.replace(request.get_ref().clone());
-        }
-        let (tx, rx) = mpsc::channel(10);
-        let messages = self.returns_messages.clone();
-        tokio::spawn(async move {
-            for msg in messages {
-                tx.send(msg.clone()).await.expect("tx ok");
-            }
-        });
-        let out = ReceiverStream::new(rx);
+        let params = request.into_inner();
+        let (result_sender, receive) = tokio::sync::mpsc::channel(10);
+        let test_setup = self.test_setup.clone();
+        test_setup.send((params, result_sender)).await.unwrap();
+        let out = ReceiverStream::new(receive);
         Ok(tonic::Response::new(
             Box::pin(out) as Self::ExecuteQueryStream
         ))
