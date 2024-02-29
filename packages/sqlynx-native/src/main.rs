@@ -2,7 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod grpc_proxy;
-mod grpc_stream_reader;
+mod grpc_stream_manager;
 #[cfg(test)]
 mod hyper_service_mocks;
 mod ipc_router;
