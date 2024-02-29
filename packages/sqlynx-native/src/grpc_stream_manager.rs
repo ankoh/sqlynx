@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::sync::atomic::AtomicU64;
 use std::sync::Arc;
 use std::sync::RwLock;
-use tokio::sync::Semaphore;
+use tokio::sync::Mutex;
 use tonic::metadata::MetadataMap;
 
 use crate::proto::salesforce_hyperdb_grpc_v1::QueryResult;
@@ -35,11 +35,9 @@ struct OrderedGrpcServerStreamResponse {
 
 pub struct GRPCServerStream {
     /// The response queue
-    response_queue: crossbeam::queue::ArrayQueue<OrderedGrpcServerStreamResponse>,
+    response_sender: tokio::sync::mpsc::Sender<OrderedGrpcServerStreamResponse>,
     /// The response queue reading
-    response_queue_reading_permits: Semaphore,
-    /// The response queue writing
-    response_queue_writing_permits: Semaphore,
+    response_receiver: Mutex<tokio::sync::mpsc::Receiver<OrderedGrpcServerStreamResponse>>,
     /// The total number of received messages
     total_received: AtomicU64,
 }
@@ -94,10 +92,10 @@ impl GrpcStreamManager {
 
         // Register the receiver
         const STREAM_CAPACITY: usize = 10;
+        let (sender, receiver) = tokio::sync::mpsc::channel(STREAM_CAPACITY);
         let stream = Arc::new(GRPCServerStream {
-            response_queue: crossbeam::queue::ArrayQueue::new(STREAM_CAPACITY),
-            response_queue_reading_permits: Semaphore::new(0),
-            response_queue_writing_permits: Semaphore::new(STREAM_CAPACITY),
+            response_sender: sender,
+            response_receiver: Mutex::new(receiver),
             total_received: AtomicU64::new(0),
         });
         GrpcStreamManager::register_stream(&self.server_streams, stream_id, stream.clone());
@@ -148,18 +146,16 @@ impl GrpcStreamManager {
                     .fetch_add(1, std::sync::atomic::Ordering::AcqRel);
 
                 // Push the response into the queue
-                if let Ok(permit) = stream.response_queue_writing_permits.acquire().await {
-                    permit.forget();
-                    stream
-                        .response_queue
-                        .push(OrderedGrpcServerStreamResponse {
-                            response,
-                            sequence_id,
-                        })
-                        .unwrap();
-                    stream.response_queue_reading_permits.add_permits(1);
-                } else {
+                if let Err(e) = stream
+                    .response_sender
+                    .send(OrderedGrpcServerStreamResponse {
+                        response,
+                        sequence_id,
+                    })
+                    .await
+                {
                     stream_alive = false;
+                    log::warn!("writing resonse to stream failed with error: {}", e);
                 }
             }
         });
@@ -192,10 +188,7 @@ impl GrpcStreamManager {
             .load(std::sync::atomic::Ordering::Acquire);
 
         // Receive the next message from the stream
-        let queued = if let Ok(permit) = stream.response_queue_reading_permits.acquire().await {
-            permit.forget();
-            let queued = stream.response_queue.pop().unwrap();
-            stream.response_queue_writing_permits.add_permits(1);
+        let queued = if let Some(queued) = stream.response_receiver.lock().await.recv().await {
             queued
         } else {
             // XXX Closed?
@@ -219,18 +212,26 @@ impl GrpcStreamManager {
             total_received,
         };
     }
+
+    /// Cancellation is done by just dropping everything
+    #[allow(dead_code)]
+    pub async fn cancel_server_stream(self: &Arc<Self>, stream_id: u64) {
+        // XXX Is tonic internally awaiting the finish of the server?
+        GrpcStreamManager::remove_stream(&self.server_streams, stream_id);
+    }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
+    use anyhow::Result;
     use std::collections::HashMap;
     use tokio_stream::StreamExt;
 
     use crate::hyper_service_mocks::{spawn_test_hyper_service, HyperExecuteQueryMock};
     use crate::proto::salesforce_hyperdb_grpc_v1::hyper_service_client::HyperServiceClient;
     use crate::proto::salesforce_hyperdb_grpc_v1::query_param;
-    use crate::proto::salesforce_hyperdb_grpc_v1::query_result::Result;
+    use crate::proto::salesforce_hyperdb_grpc_v1::query_result;
     use crate::proto::salesforce_hyperdb_grpc_v1::query_result_header::Header;
     use crate::proto::salesforce_hyperdb_grpc_v1::QueryBinaryResultChunk;
     use crate::proto::salesforce_hyperdb_grpc_v1::QueryParam;
@@ -240,28 +241,8 @@ mod test {
     use crate::proto::salesforce_hyperdb_grpc_v1::{ColumnDescription, QueryResult};
 
     #[tokio::test]
-    async fn test_execute_query_mock() {
-        let mut mock = HyperExecuteQueryMock::default();
-        mock.returns_messages = vec![
-            Ok(QueryResult {
-                result: Some(Result::Header(QueryResultHeader {
-                    header: Some(Header::Schema(QueryResultSchema {
-                        column: vec![ColumnDescription {
-                            name: "foo".to_string(),
-                            r#type: Some(SqlType {
-                                tag: sql_type::TypeTag::HyperBool.into(),
-                                modifier: None,
-                            }),
-                        }],
-                    })),
-                })),
-            }),
-            Ok(QueryResult {
-                result: Some(Result::ArrowChunk(QueryBinaryResultChunk {
-                    data: vec![0x1, 0x2, 0x3, 0x4],
-                })),
-            }),
-        ];
+    async fn test_execute_query_mock() -> Result<()> {
+        let (mock, mut mock_result_sender) = HyperExecuteQueryMock::new();
         let (addr, shutdown) = spawn_test_hyper_service(mock).await;
         let mut client = HyperServiceClient::connect(format!("http://{}", addr))
             .await
@@ -276,6 +257,32 @@ mod test {
         let result = client.execute_query(param).await.unwrap();
         let mut stream = result.into_inner();
 
+        // Send the results
+        let (_params, result_sender) = mock_result_sender.recv().await.unwrap();
+        result_sender
+            .send(Ok(QueryResult {
+                result: Some(query_result::Result::Header(QueryResultHeader {
+                    header: Some(Header::Schema(QueryResultSchema {
+                        column: vec![ColumnDescription {
+                            name: "foo".to_string(),
+                            r#type: Some(SqlType {
+                                tag: sql_type::TypeTag::HyperBool.into(),
+                                modifier: None,
+                            }),
+                        }],
+                    })),
+                })),
+            }))
+            .await?;
+        result_sender
+            .send(Ok(QueryResult {
+                result: Some(query_result::Result::ArrowChunk(QueryBinaryResultChunk {
+                    data: vec![0x1, 0x2, 0x3, 0x4],
+                })),
+            }))
+            .await?;
+        drop(result_sender);
+
         let mut results = Vec::new();
         while let Some(item) = stream.next().await {
             assert!(item.is_ok());
@@ -286,7 +293,7 @@ mod test {
         assert_eq!(
             &results[0],
             &QueryResult {
-                result: Some(Result::Header(QueryResultHeader {
+                result: Some(query_result::Result::Header(QueryResultHeader {
                     header: Some(Header::Schema(QueryResultSchema {
                         column: vec![ColumnDescription {
                             name: "foo".to_string(),
@@ -303,36 +310,39 @@ mod test {
         assert_eq!(
             &results[1],
             &QueryResult {
-                result: Some(Result::ArrowChunk(QueryBinaryResultChunk {
+                result: Some(query_result::Result::ArrowChunk(QueryBinaryResultChunk {
                     data: vec![0x1, 0x2, 0x3, 0x4],
                 })),
             }
         );
         shutdown.send(()).unwrap();
+
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_stream_reader() {
+    async fn test_stream_reader() -> Result<()> {
         let messages = vec![
             Ok(QueryResult {
-                result: Some(Result::ArrowChunk(QueryBinaryResultChunk {
+                result: Some(query_result::Result::ArrowChunk(QueryBinaryResultChunk {
                     data: vec![0x1, 0x2, 0x3, 0x4],
                 })),
             }),
             Ok(QueryResult {
-                result: Some(Result::ArrowChunk(QueryBinaryResultChunk {
+                result: Some(query_result::Result::ArrowChunk(QueryBinaryResultChunk {
                     data: vec![0x5, 0x6, 0x7, 0x8],
                 })),
             }),
         ];
-        let mut mock = HyperExecuteQueryMock::default();
-        mock.returns_messages = messages.clone();
-        let (addr, shutdown) = spawn_test_hyper_service(mock).await;
 
+        // Spawn the hyper service
+        let (mock, mut mock_result_sender) = HyperExecuteQueryMock::new();
+        let (addr, shutdown) = spawn_test_hyper_service(mock).await;
         let mut client = HyperServiceClient::connect(format!("http://{}", addr))
             .await
             .unwrap();
 
+        // Exeute the query
         let param = QueryParam {
             query: "select 1".to_string(),
             output_format: query_param::OutputFormat::ArrowStream.into(),
@@ -342,6 +352,14 @@ mod test {
         let res = client.execute_query(param).await.unwrap();
         let stream = res.into_inner();
 
+        // Send the results
+        let (_params, result_sender) = mock_result_sender.recv().await.unwrap();
+        for msg in messages.iter() {
+            result_sender.send(msg.clone()).await?;
+        }
+        drop(result_sender);
+
+        // Setup the stream manager
         let reg = Arc::new(GrpcStreamManager::default());
         reg.next_stream_id
             .fetch_add(42, std::sync::atomic::Ordering::SeqCst);
@@ -371,5 +389,6 @@ mod test {
         assert!(!reg.server_streams.read().unwrap().contains_key(&stream_id));
 
         shutdown.send(()).unwrap();
+        Ok(())
     }
 }
