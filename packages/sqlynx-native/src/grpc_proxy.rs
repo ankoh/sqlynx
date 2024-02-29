@@ -8,7 +8,7 @@ use tauri::http::HeaderValue;
 use tauri::http::Request;
 use tonic::transport::channel::Endpoint;
 
-use crate::grpc_stream_reader::GrpcStreamRegistry;
+use crate::grpc_stream_manager::GrpcStreamManager;
 
 struct GrpcRequestTlsConfig {
     client_key: String,
@@ -23,7 +23,7 @@ struct GrpcChannelParams {
 
 #[derive(Default)]
 pub struct GrpcHttpProxy {
-    streams: Arc<GrpcStreamRegistry>,
+    streams: Arc<GrpcStreamManager>,
 }
 
 impl GrpcHttpProxy {

@@ -13,7 +13,7 @@ pub enum GrpcServerStreamResponse {
     Message(Vec<u8>),
     End(MetadataMap),
     Error(Box<dyn std::error::Error + Send + Sync>),
-    NoStream,
+    UnknownStream,
 }
 
 pub struct ResultGrpcServerStreamResponse {
@@ -37,15 +37,15 @@ struct GRPCServerStream {
     /// The response queue
     response_queue: crossbeam::queue::ArrayQueue<OrderedGrpcServerStreamResponse>,
     /// The response queue reading
-    response_queue_reading: Semaphore,
+    response_queue_reading_permits: Semaphore,
     /// The response queue writing
-    response_queue_writing: Semaphore,
+    response_queue_writing_permits: Semaphore,
     /// The total number of received messages
     total_received: AtomicU64,
 }
 
 #[derive(Default)]
-pub struct GrpcStreamRegistry {
+pub struct GrpcStreamManager {
     /// The next message id
     next_stream_id: AtomicU64,
     /// The server streams
@@ -58,7 +58,7 @@ impl Into<Vec<u8>> for QueryResult {
     }
 }
 
-impl GrpcStreamRegistry {
+impl GrpcStreamManager {
     /// Register a streaming request
     fn register_stream<T>(dict: &RwLock<HashMap<u64, Arc<T>>>, id: u64, req: Arc<T>) {
         if let Ok(mut requests) = dict.write() {
@@ -95,11 +95,11 @@ impl GrpcStreamRegistry {
         const STREAM_CAPACITY: usize = 10;
         let stream = Arc::new(GRPCServerStream {
             response_queue: crossbeam::queue::ArrayQueue::new(STREAM_CAPACITY),
-            response_queue_reading: Semaphore::new(0),
-            response_queue_writing: Semaphore::new(STREAM_CAPACITY),
+            response_queue_reading_permits: Semaphore::new(0),
+            response_queue_writing_permits: Semaphore::new(STREAM_CAPACITY),
             total_received: AtomicU64::new(0),
         });
-        GrpcStreamRegistry::register_stream(&self.server_streams, stream_id, stream.clone());
+        GrpcStreamManager::register_stream(&self.server_streams, stream_id, stream.clone());
 
         // Spawn the async reader
         tokio::spawn(async move {
@@ -146,8 +146,8 @@ impl GrpcStreamRegistry {
                     .total_received
                     .fetch_add(1, std::sync::atomic::Ordering::AcqRel);
 
-                // Forward the response to the receivers
-                if let Ok(permit) = stream.response_queue_writing.acquire().await {
+                // Push the response into the queue
+                if let Ok(permit) = stream.response_queue_writing_permits.acquire().await {
                     permit.forget();
                     stream
                         .response_queue
@@ -156,16 +156,11 @@ impl GrpcStreamRegistry {
                             sequence_id,
                         })
                         .unwrap();
-                    stream.response_queue_reading.add_permits(1);
+                    stream.response_queue_reading_permits.add_permits(1);
                 } else {
                     stream_alive = false;
                 }
             }
-
-            // Remove the stream when we're done.
-            // Note that we're cleaning up the stream early.
-            // There might still be arriving read calls that will receive an empty response by default.
-            GrpcStreamRegistry::remove_stream(&reg.server_streams, stream_id)
         });
 
         // Return initial metadata
@@ -180,11 +175,11 @@ impl GrpcStreamRegistry {
         // Try to find the stream.
         // If there is none, the request might have finished already.
         let reg = self.clone();
-        let stream = match GrpcStreamRegistry::find_stream(&reg.server_streams, stream_id) {
+        let stream = match GrpcStreamManager::find_stream(&reg.server_streams, stream_id) {
             Some(stream) => stream,
             None => {
                 return ResultGrpcServerStreamResponse {
-                    response: GrpcServerStreamResponse::NoStream,
+                    response: GrpcServerStreamResponse::UnknownStream,
                     sequence_id: 0,
                     total_received: 0,
                 }
@@ -195,22 +190,37 @@ impl GrpcStreamRegistry {
             .load(std::sync::atomic::Ordering::Acquire);
 
         // Receive the next message from the stream
-        if let Ok(permit) = stream.response_queue_reading.acquire().await {
+        let queued = if let Ok(permit) = stream.response_queue_reading_permits.acquire().await {
             permit.forget();
             let queued = stream.response_queue.pop().unwrap();
-            stream.response_queue_writing.add_permits(1);
+            stream.response_queue_writing_permits.add_permits(1);
+            queued
+        } else {
+            // XXX Closed?
             return ResultGrpcServerStreamResponse {
-                response: queued.response,
-                sequence_id: queued.sequence_id,
-                total_received,
+                response: GrpcServerStreamResponse::UnknownStream,
+                sequence_id: 0,
+                total_received: 0,
             };
-        }
-        // XXX Closed?
-        return ResultGrpcServerStreamResponse {
-            response: GrpcServerStreamResponse::NoStream,
-            sequence_id: 0,
-            total_received: 0,
         };
+
+        // Cleanup the stream if we reached the end
+        match queued.response {
+            GrpcServerStreamResponse::End(_) | GrpcServerStreamResponse::Error(_) => {
+                GrpcStreamManager::remove_stream(&self.server_streams, stream_id)
+            }
+            _ => (),
+        };
+        return ResultGrpcServerStreamResponse {
+            response: queued.response,
+            sequence_id: queued.sequence_id,
+            total_received,
+        };
+    }
+
+    /// Read from a server stream
+    pub async fn finish_server_stream(self: &Arc<Self>, stream_id: u64) -> () {
+        GrpcStreamManager::remove_stream(&self.server_streams, stream_id)
     }
 }
 
@@ -335,29 +345,30 @@ mod test {
         let res = client.execute_query(param).await.unwrap();
         let stream = res.into_inner();
 
-        let reg = Arc::new(GrpcStreamRegistry::default());
+        let reg = Arc::new(GrpcStreamManager::default());
         reg.next_stream_id
             .fetch_add(42, std::sync::atomic::Ordering::SeqCst);
         let stream_id = reg.start_server_stream(stream).unwrap();
         assert_eq!(stream_id, 42);
 
-        // Read first message
-        let res = reg.read_server_stream(stream_id).await;
-        let msg = match res.response {
-            GrpcServerStreamResponse::Message(m) => m,
-            _ => panic!(),
-        };
-        assert_eq!(res.sequence_id, 0);
-        assert_eq!(msg, messages[0].as_ref().unwrap().encode_to_vec());
+        // Read batches
+        for i in 0..2 {
+            let res = reg.read_server_stream(stream_id).await;
+            let msg = match res.response {
+                GrpcServerStreamResponse::Message(m) => m,
+                _ => panic!("{:?}", res.response),
+            };
+            assert_eq!(res.sequence_id, i);
+            assert_eq!(msg, messages[i as usize].as_ref().unwrap().encode_to_vec());
+        }
 
-        // Read second message
+        // Read the end
         let res = reg.read_server_stream(stream_id).await;
-        let msg = match res.response {
-            GrpcServerStreamResponse::Message(m) => m,
-            _ => panic!(),
+        let _trailer = match res.response {
+            GrpcServerStreamResponse::End(m) => m,
+            _ => panic!("{:?}", res.response),
         };
-        assert_eq!(res.sequence_id, 1);
-        assert_eq!(msg, messages[1].as_ref().unwrap().encode_to_vec());
+        assert_eq!(res.sequence_id, 2);
 
         shutdown.send(()).unwrap();
     }
