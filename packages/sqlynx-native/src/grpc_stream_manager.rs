@@ -33,7 +33,7 @@ struct OrderedGrpcServerStreamResponse {
     sequence_id: u64,
 }
 
-struct GRPCServerStream {
+pub struct GRPCServerStream {
     /// The response queue
     response_queue: crossbeam::queue::ArrayQueue<OrderedGrpcServerStreamResponse>,
     /// The response queue reading
@@ -47,9 +47,9 @@ struct GRPCServerStream {
 #[derive(Default)]
 pub struct GrpcStreamManager {
     /// The next message id
-    next_stream_id: AtomicU64,
+    pub next_stream_id: AtomicU64,
     /// The server streams
-    server_streams: RwLock<HashMap<u64, Arc<GRPCServerStream>>>,
+    pub server_streams: RwLock<HashMap<u64, Arc<GRPCServerStream>>>,
 }
 
 impl Into<Vec<u8>> for QueryResult {
@@ -81,6 +81,7 @@ impl GrpcStreamManager {
     }
 
     /// Start a server stream
+    #[allow(dead_code)]
     pub fn start_server_stream<T: Into<Vec<u8>> + Send + 'static>(
         self: &Arc<Self>,
         mut streaming: tonic::Streaming<T>,
@@ -168,6 +169,7 @@ impl GrpcStreamManager {
     }
 
     /// Read from a server stream
+    #[allow(dead_code)]
     pub async fn read_server_stream(
         self: &Arc<Self>,
         stream_id: u64,
@@ -216,11 +218,6 @@ impl GrpcStreamManager {
             sequence_id: queued.sequence_id,
             total_received,
         };
-    }
-
-    /// Read from a server stream
-    pub async fn finish_server_stream(self: &Arc<Self>, stream_id: u64) -> () {
-        GrpcStreamManager::remove_stream(&self.server_streams, stream_id)
     }
 }
 
@@ -369,6 +366,9 @@ mod test {
             _ => panic!("{:?}", res.response),
         };
         assert_eq!(res.sequence_id, 2);
+
+        // Auto cleanup
+        assert!(!reg.server_streams.read().unwrap().contains_key(&stream_id));
 
         shutdown.send(()).unwrap();
     }
