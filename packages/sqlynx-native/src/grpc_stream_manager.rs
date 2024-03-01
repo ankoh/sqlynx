@@ -57,27 +57,6 @@ impl Into<Vec<u8>> for QueryResult {
 }
 
 impl GrpcStreamManager {
-    /// Register a streaming request
-    fn register_stream<T>(dict: &RwLock<HashMap<u64, Arc<T>>>, id: u64, req: Arc<T>) {
-        if let Ok(mut requests) = dict.write() {
-            requests.insert(id, req.clone());
-        }
-    }
-    /// Remove a request
-    fn remove_stream<T>(dict: &RwLock<HashMap<u64, Arc<T>>>, id: u64) {
-        if let Ok(mut requests) = dict.write() {
-            requests.remove(&id);
-        }
-    }
-    /// Find a request
-    fn find_stream<T>(dict: &RwLock<HashMap<u64, Arc<T>>>, id: u64) -> Option<Arc<T>> {
-        if let Ok(requests) = dict.read() {
-            requests.get(&id).cloned()
-        } else {
-            None
-        }
-    }
-
     /// Start a server stream
     #[allow(dead_code)]
     pub fn start_server_stream<T: Into<Vec<u8>> + Send + 'static>(
@@ -98,7 +77,9 @@ impl GrpcStreamManager {
             response_receiver: Mutex::new(receiver),
             total_received: AtomicU64::new(0),
         });
-        GrpcStreamManager::register_stream(&self.server_streams, stream_id, stream.clone());
+        if let Ok(mut streams) = self.server_streams.write() {
+            streams.insert(stream_id, stream.clone());
+        }
 
         // Spawn the async reader
         tokio::spawn(async move {
@@ -173,15 +154,14 @@ impl GrpcStreamManager {
         // Try to find the stream.
         // If there is none, the request might have finished already.
         let reg = self.clone();
-        let stream = match GrpcStreamManager::find_stream(&reg.server_streams, stream_id) {
-            Some(stream) => stream,
-            None => {
-                return ResultGrpcServerStreamResponse {
-                    response: GrpcServerStreamResponse::UnknownStream,
-                    sequence_id: 0,
-                    total_received: 0,
-                }
-            }
+        let stream = if let Some(streams) = reg.server_streams.read().unwrap().get(&stream_id) {
+            streams.clone()
+        } else {
+            return ResultGrpcServerStreamResponse {
+                response: GrpcServerStreamResponse::UnknownStream,
+                sequence_id: 0,
+                total_received: 0,
+            };
         };
         let total_received = stream
             .total_received
@@ -202,7 +182,9 @@ impl GrpcStreamManager {
         // Cleanup the stream if we reached the end
         match queued.response {
             GrpcServerStreamResponse::End(_) | GrpcServerStreamResponse::Error(_) => {
-                GrpcStreamManager::remove_stream(&self.server_streams, stream_id)
+                if let Ok(mut streams) = self.server_streams.write() {
+                    streams.remove(&stream_id);
+                }
             }
             _ => (),
         };
@@ -217,7 +199,9 @@ impl GrpcStreamManager {
     #[allow(dead_code)]
     pub async fn cancel_server_stream(self: &Arc<Self>, stream_id: u64) {
         // XXX Is tonic internally awaiting the finish of the server?
-        GrpcStreamManager::remove_stream(&self.server_streams, stream_id);
+        if let Ok(mut streams) = self.server_streams.write() {
+            streams.remove(&stream_id);
+        }
     }
 }
 
@@ -242,7 +226,7 @@ mod test {
 
     #[tokio::test]
     async fn test_execute_query_mock() -> Result<()> {
-        let (mock, mut mock_result_sender) = HyperExecuteQueryMock::new();
+        let (mock, mut mock_test_started) = HyperExecuteQueryMock::new();
         let (addr, shutdown) = spawn_test_hyper_service(mock).await;
         let mut client = HyperServiceClient::connect(format!("http://{}", addr))
             .await
@@ -258,7 +242,7 @@ mod test {
         let mut stream = result.into_inner();
 
         // Send the results
-        let (_params, result_sender) = mock_result_sender.recv().await.unwrap();
+        let (_params, result_sender) = mock_test_started.recv().await.unwrap();
         result_sender
             .send(Ok(QueryResult {
                 result: Some(query_result::Result::Header(QueryResultHeader {
@@ -323,7 +307,7 @@ mod test {
     #[tokio::test]
     async fn test_stream_reader() -> Result<()> {
         // Spawn the hyper service
-        let (mock, mut mock_result_sender) = HyperExecuteQueryMock::new();
+        let (mock, mut mock_test_started) = HyperExecuteQueryMock::new();
         let (addr, shutdown) = spawn_test_hyper_service(mock).await;
         let mut client = HyperServiceClient::connect(format!("http://{}", addr))
             .await
@@ -338,7 +322,7 @@ mod test {
         };
         let res = client.execute_query(param).await.unwrap();
         let stream = res.into_inner();
-        let (_params, result_sender) = mock_result_sender.recv().await.unwrap();
+        let (_params, result_sender) = mock_test_started.recv().await.unwrap();
 
         // Send the results
         let messages = vec![
