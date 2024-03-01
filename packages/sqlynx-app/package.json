@@ -73,7 +73,7 @@
         "react-zoom-pan-pinch": "^3.4.3",
         "source-map-loader": "^5.0.0",
         "style-loader": "^3.3.4",
-        "style-mod": "^4.1.0",
+        "style-mod": "^4.1.2",
         "styled-components": "^6.1.8",
         "ts-jest": "^29.1.2",
         "ts-loader": "^9.5.1",
