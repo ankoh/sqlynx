@@ -33,10 +33,15 @@ impl HyperService for HyperExecuteQueryMock {
         &self,
         request: tonic::Request<QueryParam>,
     ) -> Result<tonic::Response<Self::ExecuteQueryStream>, tonic::Status> {
-        let params = request.into_inner();
+        // Setup a channel for sending results
         let (result_sender, receive) = tokio::sync::mpsc::channel(10);
         let test_setup = self.test_setup.clone();
+
+        // Pass the result_sender back to the test, together with the request params
+        let params = request.into_inner();
         test_setup.send((params, result_sender)).await.unwrap();
+
+        // Wire up a receiver stream to the gRPC output
         let out = ReceiverStream::new(receive);
         Ok(tonic::Response::new(
             Box::pin(out) as Self::ExecuteQueryStream

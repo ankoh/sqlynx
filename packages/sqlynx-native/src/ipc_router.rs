@@ -4,10 +4,10 @@ use tauri::http::response::Builder as ResponseBuilder;
 use tauri::http::Request;
 use tauri::http::Response;
 
-use crate::grpc_proxy::GrpcHttpProxy;
+use crate::grpc_proxy::GrpcProxy;
 
 lazy_static! {
-    static ref GRPC_PROXY: GrpcHttpProxy = GrpcHttpProxy::default();
+    static ref GRPC_PROXY: GrpcProxy = GrpcProxy::default();
 }
 
 pub async fn route_ipc_request(request: Request<Vec<u8>>) -> Response<Vec<u8>> {
