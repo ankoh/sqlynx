@@ -2,10 +2,18 @@ syntax = "proto3";
 
 package sqlynx.test.v1;
 
-message TestUnaryRequest {}
-message TestUnaryResponse {}
-message TestServerStreamingRequest {}
-message TestServerStreamingResponse {}
+message TestUnaryRequest {
+    string data = 1;
+}
+message TestUnaryResponse {
+    string data = 1;
+}
+message TestServerStreamingRequest {
+    string data = 1;
+}
+message TestServerStreamingResponse {
+    string data = 1;
+}
 
 service TestService {
     rpc TestUnary(TestUnaryRequest) returns (TestUnaryResponse);

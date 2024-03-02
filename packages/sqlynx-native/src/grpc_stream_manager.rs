@@ -226,7 +226,7 @@ mod test {
 
     #[tokio::test]
     async fn test_execute_query_mock() -> Result<()> {
-        let (mock, mut mock_test_started) = HyperServiceMock::new();
+        let (mock, mut setup_execute_query) = HyperServiceMock::new();
         let (addr, shutdown) = spawn_hyper_service_mock(mock).await;
         let mut client = HyperServiceClient::connect(format!("http://{}", addr))
             .await
@@ -242,7 +242,7 @@ mod test {
         let mut stream = result.into_inner();
 
         // Send the results
-        let (_params, result_sender) = mock_test_started.recv().await.unwrap();
+        let (_params, result_sender) = setup_execute_query.recv().await.unwrap();
         result_sender
             .send(Ok(QueryResult {
                 result: Some(query_result::Result::Header(QueryResultHeader {
@@ -306,8 +306,8 @@ mod test {
 
     #[tokio::test]
     async fn test_stream_reader() -> Result<()> {
-        // Spawn the hyper service
-        let (mock, mut mock_test_started) = HyperServiceMock::new();
+        // Spawn a hyper service mock
+        let (mock, mut setup_execute_query) = HyperServiceMock::new();
         let (addr, shutdown) = spawn_hyper_service_mock(mock).await;
         let mut client = HyperServiceClient::connect(format!("http://{}", addr))
             .await
@@ -321,8 +321,7 @@ mod test {
             params: HashMap::new(),
         };
         let res = client.execute_query(param).await.unwrap();
-        let stream = res.into_inner();
-        let (_params, result_sender) = mock_test_started.recv().await.unwrap();
+        let (_params, result_sender) = setup_execute_query.recv().await.unwrap();
 
         // Send the results
         let messages = vec![
@@ -346,7 +345,7 @@ mod test {
         let reg = Arc::new(GrpcStreamManager::default());
         reg.next_stream_id
             .fetch_add(42, std::sync::atomic::Ordering::SeqCst);
-        let stream_id = reg.start_server_stream(stream).unwrap();
+        let stream_id = reg.start_server_stream(res.into_inner()).unwrap();
         assert_eq!(stream_id, 42);
 
         // Read batches
