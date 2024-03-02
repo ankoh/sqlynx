@@ -3,11 +3,7 @@ use std::io::{Read, Write};
 use bytes::{Buf, BufMut};
 use tonic::{codec::{Codec, DecodeBuf, Decoder, EncodeBuf, Encoder}, Status};
 
-pub struct GenericGrpcClient {
-    inner: tonic::client::Grpc<tonic::transport::Channel>,
-}
-
-type GenericGrpcClientData = bytes::Bytes;
+type GenericGrpcClientData = Vec<u8>;
 
 #[derive(Debug, Clone, Default)]
 struct PassthroughCodec();
@@ -17,8 +13,8 @@ struct PassthroughEncoder();
 struct PassthroughDecoder();
 
 impl Codec for PassthroughCodec {
-    type Encode = bytes::Bytes;
-    type Decode = bytes::Bytes;
+    type Encode = GenericGrpcClientData;
+    type Decode = GenericGrpcClientData;
 
     type Encoder = PassthroughEncoder;
     type Decoder = PassthroughDecoder;
@@ -30,9 +26,8 @@ impl Codec for PassthroughCodec {
         PassthroughDecoder()
     }
 }
-
 impl Encoder for PassthroughEncoder {
-    type Item = bytes::Bytes;
+    type Item = GenericGrpcClientData;
     type Error = Status;
     fn encode(&mut self, item: Self::Item, buf: &mut EncodeBuf<'_>) -> Result<(), Self::Error> {
         buf.writer().write(&item)?;
@@ -40,16 +35,18 @@ impl Encoder for PassthroughEncoder {
     }
 }
 impl Decoder for PassthroughDecoder {
-    type Item = bytes::Bytes;
+    type Item = GenericGrpcClientData;
     type Error = Status;
     fn decode(&mut self, buf: &mut DecodeBuf<'_>) -> Result<Option<Self::Item>, Self::Error> {
         let mut buffer = Vec::new();
-        buf.reader().read_to_end(&mut buffer)?; // XXX This copy is unnecessary
-        let data = bytes::Bytes::from(buffer);
-        Ok(Some(data))
+        buf.reader().read_to_end(&mut buffer)?;
+        Ok(Some(buffer))
     }
 }
 
+pub struct GenericGrpcClient {
+    inner: tonic::client::Grpc<tonic::transport::Channel>,
+}
 
 impl GenericGrpcClient {
     pub fn new(inner: tonic::transport::Channel) -> Self {
@@ -136,7 +133,7 @@ mod test {
         let unary_param = TestUnaryRequest {
             data: "request data".to_string()
         };
-        let unary_req = bytes::Bytes::from(unary_param.encode_to_vec());
+        let unary_req = unary_param.encode_to_vec();
         let unary_result = client.call_unary(unary_req, unary_path).await?;
 
         // Check received parameter
