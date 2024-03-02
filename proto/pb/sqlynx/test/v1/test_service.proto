@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package sqlynx.test.v1;
+
+message TestUnaryRequest {}
+message TestUnaryResponse {}
+message TestServerStreamingRequest {}
+message TestServerStreamingResponse {}
+
+service TestService {
+    rpc TestUnary(TestUnaryRequest) returns (TestUnaryResponse);
+    rpc TestServerStreaming(TestServerStreamingRequest) returns (stream TestServerStreamingResponse);
+}
