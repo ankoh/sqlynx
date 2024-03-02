@@ -32,14 +32,14 @@ struct GrpcChannelParams {
     tls: Option<GrpcRequestTlsConfig>,
 }
 
-pub struct GrpcChannel {
+pub struct GrpcChannelEntry {
     pub channel: tonic::transport::Channel,
 }
 
 #[derive(Default)]
 pub struct GrpcProxy {
     pub next_channel_id: AtomicU64,
-    pub channels: RwLock<HashMap<u64, Arc<GrpcChannel>>>,
+    pub channels: RwLock<HashMap<u64, Arc<GrpcChannelEntry>>>,
     pub streams: Arc<GrpcStreamManager>,
 }
 
@@ -173,7 +173,7 @@ impl GrpcProxy {
         register_channel(
             &self.channels,
             channel_id,
-            Arc::new(GrpcChannel { channel }),
+            Arc::new(GrpcChannelEntry { channel }),
         );
         Ok(channel_id)
     }
@@ -187,7 +187,7 @@ impl GrpcProxy {
     /// Call a unary gRPC function
     pub async fn call_unary(&self, req: Request<Vec<u8>>) -> Result<Vec<u8>> {
         let channel_id = require_id_header(&req, HEADER_NAME_CHANNEL_ID)?;
-        let _channel = if let Some(channel) = self.channels.read().unwrap().get(&channel_id) {
+        let channel_entry = if let Some(channel) = self.channels.read().unwrap().get(&channel_id) {
             channel.clone()
         } else {
             return Err(anyhow!("channel id refers to unknown channel '{}'", channel_id));
@@ -198,7 +198,7 @@ impl GrpcProxy {
     /// Call a gRPC function with results streamed from the server
     pub async fn start_server_stream(&self, req: Request<Vec<u8>>) -> Result<Vec<u8>> {
         let channel_id = require_id_header(&req, HEADER_NAME_CHANNEL_ID)?;
-        let _channel = if let Some(channel) = self.channels.read().unwrap().get(&channel_id) {
+        let _channel_entry = if let Some(channel) = self.channels.read().unwrap().get(&channel_id) {
             channel.clone()
         } else {
             return Err(anyhow!("channel id refers to unknown channel '{}'", channel_id));
