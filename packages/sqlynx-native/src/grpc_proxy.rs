@@ -6,11 +6,13 @@ use std::sync::RwLock;
 
 use anyhow::anyhow;
 use anyhow::Result;
+use tauri::http::uri::PathAndQuery;
 use tauri::http::HeaderMap;
 use tauri::http::HeaderValue;
 use tauri::http::Request;
 use tonic::transport::channel::Endpoint;
 
+use crate::grpc_client::GenericGrpcClient;
 use crate::grpc_stream_manager::GrpcStreamManager;
 
 const HEADER_PREFIX: &'static str = "sqlynx-";
@@ -192,6 +194,9 @@ impl GrpcProxy {
         } else {
             return Err(anyhow!("channel id refers to unknown channel '{}'", channel_id));
         };
+        let _client = GenericGrpcClient::new(channel_entry.channel.clone());
+        // let path = PathAndQuery::from_static();
+        // let response = client.call_unary(req, path).await?;
         Ok(Vec::new())
     }
 
