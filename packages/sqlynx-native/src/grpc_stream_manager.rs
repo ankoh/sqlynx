@@ -212,7 +212,7 @@ mod test {
     use std::collections::HashMap;
     use tokio_stream::StreamExt;
 
-    use crate::hyper_service_mocks::{spawn_test_hyper_service, HyperExecuteQueryMock};
+    use crate::test::hyper_service_mock::{spawn_test_hyper_service, HyperExecuteQueryMock};
     use crate::proto::salesforce_hyperdb_grpc_v1::hyper_service_client::HyperServiceClient;
     use crate::proto::salesforce_hyperdb_grpc_v1::query_param;
     use crate::proto::salesforce_hyperdb_grpc_v1::query_result;
