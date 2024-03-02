@@ -4,10 +4,10 @@
 mod grpc_client;
 mod grpc_proxy;
 mod grpc_stream_manager;
-#[cfg(test)]
-mod hyper_service_mocks;
 mod ipc_router;
 mod proto;
+#[cfg(test)]
+mod test;
 
 use ipc_router::route_ipc_request;
 use std::env;
