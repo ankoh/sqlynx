@@ -1,8 +1,55 @@
+use std::io::{Read, Write};
+
+use bytes::{Buf, BufMut};
+use tonic::{codec::{Codec, DecodeBuf, Decoder, EncodeBuf, Encoder}, Status};
+
 pub struct GenericGrpcClient {
     inner: tonic::client::Grpc<tonic::transport::Channel>,
 }
 
 type GenericGrpcClientData = bytes::Bytes;
+
+#[derive(Debug, Clone, Default)]
+struct PassthroughCodec();
+#[derive(Debug, Clone, Default)]
+struct PassthroughEncoder();
+#[derive(Debug, Clone, Default)]
+struct PassthroughDecoder();
+
+impl Codec for PassthroughCodec {
+    type Encode = bytes::Bytes;
+    type Decode = bytes::Bytes;
+
+    type Encoder = PassthroughEncoder;
+    type Decoder = PassthroughDecoder;
+
+    fn encoder(&mut self) -> Self::Encoder {
+        PassthroughEncoder()
+    }
+    fn decoder(&mut self) -> Self::Decoder {
+        PassthroughDecoder()
+    }
+}
+
+impl Encoder for PassthroughEncoder {
+    type Item = bytes::Bytes;
+    type Error = Status;
+    fn encode(&mut self, item: Self::Item, buf: &mut EncodeBuf<'_>) -> Result<(), Self::Error> {
+        buf.writer().write(&item)?;
+        Ok(())
+    }
+}
+impl Decoder for PassthroughDecoder {
+    type Item = bytes::Bytes;
+    type Error = Status;
+    fn decode(&mut self, buf: &mut DecodeBuf<'_>) -> Result<Option<Self::Item>, Self::Error> {
+        let mut buffer = Vec::new();
+        buf.reader().read_to_end(&mut buffer)?; // XXX This copy is unnecessary
+        let data = bytes::Bytes::from(buffer);
+        Ok(Some(data))
+    }
+}
+
 
 impl GenericGrpcClient {
     pub fn new(inner: tonic::transport::Channel) -> Self {
@@ -27,9 +74,9 @@ impl GenericGrpcClient {
                     format!("Service was not ready: {}", e),
                 )
             })?;
-        let codec = tonic::codec::ProstCodec::default();
-        let req = request.into_request();
-        self.inner.unary(req, path, codec).await
+        let request = request.into_request();
+        let codec = PassthroughCodec::default();
+        self.inner.unary(request, path, codec).await
     }
 
     pub async fn call_server_streaming(
@@ -49,9 +96,9 @@ impl GenericGrpcClient {
                     format!("Service was not ready: {}", e),
                 )
             })?;
+        let request = request.into_request();
         let codec = tonic::codec::ProstCodec::default();
-        let req = request.into_request();
-        self.inner.server_streaming(req, path, codec).await
+        self.inner.server_streaming(request, path, codec).await
     }
 }
 
