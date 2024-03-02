@@ -9,24 +9,24 @@ use tonic::Status;
 
 pub type QueryResultSender = tokio::sync::mpsc::Sender<Result<QueryResult, tonic::Status>>;
 
-pub struct HyperExecuteQueryMock {
-    pub test_setup: tokio::sync::mpsc::Sender<(QueryParam, QueryResultSender)>,
+pub struct HyperServiceMock {
+    pub setup_execute_query: tokio::sync::mpsc::Sender<(QueryParam, QueryResultSender)>,
 }
 
-impl HyperExecuteQueryMock {
+impl HyperServiceMock {
     pub fn new() -> (
         Self,
         tokio::sync::mpsc::Receiver<(QueryParam, QueryResultSender)>,
     ) {
         let (send, recv) = tokio::sync::mpsc::channel(1);
-        (Self { test_setup: send }, recv)
+        (Self { setup_execute_query: send }, recv)
     }
 }
 
 type ExecuteQueryResponseStream = Pin<Box<dyn Stream<Item = Result<QueryResult, Status>> + Send>>;
 
 #[tonic::async_trait]
-impl HyperService for HyperExecuteQueryMock {
+impl HyperService for HyperServiceMock {
     type ExecuteQueryStream = ExecuteQueryResponseStream;
 
     async fn execute_query(
@@ -35,7 +35,7 @@ impl HyperService for HyperExecuteQueryMock {
     ) -> Result<tonic::Response<Self::ExecuteQueryStream>, tonic::Status> {
         // Setup a channel for sending results
         let (result_sender, receive) = tokio::sync::mpsc::channel(10);
-        let test_setup = self.test_setup.clone();
+        let test_setup = self.setup_execute_query.clone();
 
         // Pass the result_sender back to the test, together with the request params
         let params = request.into_inner();
@@ -49,11 +49,8 @@ impl HyperService for HyperExecuteQueryMock {
     }
 }
 
-pub async fn spawn_test_hyper_service<S>(service_impl: S) -> (SocketAddr, oneshot::Sender<()>)
-where
-    S: HyperService,
-{
-    let service = HyperServiceServer::new(service_impl);
+pub async fn spawn_hyper_service_mock(mock: HyperServiceMock) -> (SocketAddr, oneshot::Sender<()>) {
+    let service = HyperServiceServer::new(mock);
 
     // create the listener up front so the server is immediately ready
     // bind to port `0` so the OS finds a free port

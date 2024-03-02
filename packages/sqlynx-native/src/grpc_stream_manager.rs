@@ -212,7 +212,7 @@ mod test {
     use std::collections::HashMap;
     use tokio_stream::StreamExt;
 
-    use crate::test::hyper_service_mock::{spawn_test_hyper_service, HyperExecuteQueryMock};
+    use crate::test::hyper_service_mock::{spawn_hyper_service_mock, HyperServiceMock};
     use crate::proto::salesforce_hyperdb_grpc_v1::hyper_service_client::HyperServiceClient;
     use crate::proto::salesforce_hyperdb_grpc_v1::query_param;
     use crate::proto::salesforce_hyperdb_grpc_v1::query_result;
@@ -226,8 +226,8 @@ mod test {
 
     #[tokio::test]
     async fn test_execute_query_mock() -> Result<()> {
-        let (mock, mut mock_test_started) = HyperExecuteQueryMock::new();
-        let (addr, shutdown) = spawn_test_hyper_service(mock).await;
+        let (mock, mut mock_test_started) = HyperServiceMock::new();
+        let (addr, shutdown) = spawn_hyper_service_mock(mock).await;
         let mut client = HyperServiceClient::connect(format!("http://{}", addr))
             .await
             .unwrap();
@@ -307,8 +307,8 @@ mod test {
     #[tokio::test]
     async fn test_stream_reader() -> Result<()> {
         // Spawn the hyper service
-        let (mock, mut mock_test_started) = HyperExecuteQueryMock::new();
-        let (addr, shutdown) = spawn_test_hyper_service(mock).await;
+        let (mock, mut mock_test_started) = HyperServiceMock::new();
+        let (addr, shutdown) = spawn_hyper_service_mock(mock).await;
         let mut client = HyperServiceClient::connect(format!("http://{}", addr))
             .await
             .unwrap();
