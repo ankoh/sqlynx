@@ -72,13 +72,13 @@ impl GrpcStreamManager {
         // Register the receiver
         const STREAM_CAPACITY: usize = 10;
         let (sender, receiver) = tokio::sync::mpsc::channel(STREAM_CAPACITY);
-        let stream = Arc::new(GRPCServerStream {
+        let stream_entry = Arc::new(GRPCServerStream {
             response_sender: sender,
             response_receiver: Mutex::new(receiver),
             total_received: AtomicU64::new(0),
         });
         if let Ok(mut streams) = self.server_streams.write() {
-            streams.insert(stream_id, stream.clone());
+            streams.insert(stream_id, stream_entry.clone());
         }
 
         // Spawn the async reader
@@ -122,12 +122,12 @@ impl GrpcStreamManager {
                         GrpcServerStreamResponse::Error(Box::new(e))
                     }
                 };
-                stream
+                stream_entry
                     .total_received
                     .fetch_add(1, std::sync::atomic::Ordering::AcqRel);
 
                 // Push the response into the queue
-                if let Err(e) = stream
+                if let Err(e) = stream_entry
                     .response_sender
                     .send(OrderedGrpcServerStreamResponse {
                         response,
