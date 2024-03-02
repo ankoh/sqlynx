@@ -1,6 +1,8 @@
-struct GenericGrpcClient {
+pub struct GenericGrpcClient {
     inner: tonic::client::Grpc<tonic::transport::Channel>,
 }
+
+type GenericGrpcClientData = bytes::Bytes;
 
 impl GenericGrpcClient {
     pub fn new(inner: tonic::transport::Channel) -> Self {
@@ -10,10 +12,10 @@ impl GenericGrpcClient {
 
     pub async fn call_unary(
         &mut self,
-        request: impl tonic::IntoRequest<bytes::Bytes>,
+        request: impl tonic::IntoRequest<GenericGrpcClientData>,
         path: tauri::http::uri::PathAndQuery,
     ) -> std::result::Result<
-        tonic::Response<bytes::Bytes>,
+        tonic::Response<GenericGrpcClientData>,
         tonic::Status,
     > {
         self.inner
@@ -32,10 +34,10 @@ impl GenericGrpcClient {
 
     pub async fn call_server_streaming(
         &mut self,
-        request: impl tonic::IntoRequest<bytes::Bytes>,
+        request: impl tonic::IntoRequest<GenericGrpcClientData>,
         path: tauri::http::uri::PathAndQuery,
     ) -> std::result::Result<
-        tonic::Response<tonic::codec::Streaming<bytes::Bytes>>,
+        tonic::Response<tonic::codec::Streaming<GenericGrpcClientData>>,
         tonic::Status,
     > {
         self.inner
@@ -53,3 +55,54 @@ impl GenericGrpcClient {
     }
 }
 
+#[cfg(test)]
+mod test {
+    use super::*;
+    use anyhow::Result;
+    use prost::Message;
+
+    use crate::{proto::sqlynx_test_v1::{TestUnaryRequest, TestUnaryResponse}, test::test_service_mock::{spawn_test_service_mock, TestServiceMock}};
+
+    #[tokio::test]
+    async fn test_unary() -> Result<()> {
+        // Spawn a test service mock
+        let (mock, mut setup_unary, mut _setup_server_streaming) = TestServiceMock::new();
+        let (addr, shutdown) = spawn_test_service_mock(mock).await;
+
+        // Respond single unary response
+        let unary_call = tokio::spawn(async move {
+            let (param, result_sender) = setup_unary.recv().await.unwrap();
+            result_sender.send(Ok(TestUnaryResponse {
+                data: "response data".to_string()
+            })).await.unwrap();
+            param
+        });
+
+        // Setup the gRPC client
+        let channel = tonic::transport::Endpoint::new(format!("http://{}", addr))?.connect().await?;
+        let mut client = GenericGrpcClient::new(channel);
+
+        // Call the unary test function
+        let unary_path = tauri::http::uri::PathAndQuery::from_static(
+            "/sqlynx.test.v1.TestService/TestUnary",
+        );
+        let unary_param = TestUnaryRequest {
+            data: "request data".to_string()
+        };
+        let unary_req = bytes::Bytes::from(unary_param.encode_to_vec());
+        let unary_result = client.call_unary(unary_req, unary_path).await?;
+
+        // Check received parameter
+        let received_param = unary_call.await?;
+        assert_eq!(received_param.data, "request data");
+
+        // Check received buffer
+        let received_buffer = unary_result.into_inner();
+        let received_message = TestUnaryResponse::decode(bytes::Bytes::from(received_buffer))?;
+        assert_eq!(received_message.data, "response data");
+
+        shutdown.send(()).unwrap();
+        Ok(())
+    }
+
+}
