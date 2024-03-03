@@ -7,8 +7,8 @@ pub enum Status {
     HeaderRequiredButMissing{ header: &'static str },
     HeaderIsNotAValidEndpoint{ header: &'static str, message: String },
     HeaderIsNotANumber{ header: &'static str, message: String },
-    HeaderChannelIdIsUnknown{ header: &'static str, channel_id: usize },
     HeaderPathIsInvalid{ header: &'static str, path: String, message: String },
+    ChannelIdIsUnknown{ channel_id: usize },
     EndpointConnectFailed{ message: String },
     GrpcCallFailed{ status: tonic::Status },
 }
@@ -28,11 +28,11 @@ impl Display for Status {
             Status::HeaderIsNotANumber { header, message } => {
                 f.write_fmt(format_args!("header '{}' is not a number: {}", header, message))
             }
-            Status::HeaderChannelIdIsUnknown { header, channel_id } => {
-                f.write_fmt(format_args!("header '{}' refers to unknown channel with id {}", header, channel_id))
-            }
             Status::HeaderPathIsInvalid { header, path, message } => {
                 f.write_fmt(format_args!("header '{}' stores the path '{}' and is invalid: {}", header, path, message))
+            }
+            Status::ChannelIdIsUnknown { channel_id } => {
+                f.write_fmt(format_args!("channel id {} is unknown", channel_id))
             }
             Status::EndpointConnectFailed { message } => {
                 f.write_fmt(format_args!("connecting to endpoint failed with error: {}", message))
@@ -51,8 +51,8 @@ impl From<&Status> for StatusCode {
             Status::HeaderIsNotAValidEndpoint { header: _, message: _ } => StatusCode::BAD_REQUEST,
             Status::HeaderRequiredButMissing { header: _ } => StatusCode::BAD_REQUEST,
             Status::HeaderIsNotANumber { header: _, message: _ } => StatusCode::BAD_REQUEST,
-            Status::HeaderChannelIdIsUnknown { header: _, channel_id: _ } => StatusCode::BAD_REQUEST,
             Status::HeaderPathIsInvalid { header: _, path: _, message: _ } => StatusCode::BAD_REQUEST,
+            Status::ChannelIdIsUnknown { channel_id: _ } => StatusCode::BAD_REQUEST,
             Status::EndpointConnectFailed { message: _ } => StatusCode::BAD_REQUEST,
             Status::GrpcCallFailed { status: _ } => StatusCode::BAD_REQUEST,
         }
