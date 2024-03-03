@@ -1,24 +1,26 @@
-use axum::Router;
 use tauri::http::header::ACCESS_CONTROL_ALLOW_ORIGIN;
 use tauri::http::header::CONTENT_TYPE;
 use tauri::http::Request;
 use tauri::http::Response;
-use tauri::http::response::Builder as ResponseBuilder;
-use lazy_static::lazy_static;
+use tauri::http::HeaderValue;
 
-use crate::grpc_proxy_router::create_grpc_router;
+use crate::grpc_proxy_router::call_grpc_proxy;
+use crate::grpc_proxy_router::parse_grpc_route;
 
-
-lazy_static! {
-    static ref ROUTER: axum::routing::Router<()> = Router::new()
-        .nest("/grpc", create_grpc_router());
+async fn dispatch_ipc_request(request: Request<Vec<u8>>) -> Response<Vec<u8>> {
+    if let Some(route) = parse_grpc_route(request.uri().path()) {
+        return call_grpc_proxy(route, request).await;
+    }
+    Response::builder()
+        .status(400)
+        .body(Vec::new())
+        .unwrap()
 }
 
-pub async fn route_ipc_request(_request: Request<Vec<u8>>) -> Response<Vec<u8>> {
-    let resp = ResponseBuilder::new()
-        .header(CONTENT_TYPE, "text/plain")
-        .header(ACCESS_CONTROL_ALLOW_ORIGIN, "*")
-        .body("hello world".to_string().as_bytes().to_vec())
-        .unwrap();
-    resp
+pub async fn route_ipc_request(request: Request<Vec<u8>>) -> Response<Vec<u8>> {
+    let mut response = dispatch_ipc_request(request).await;
+    let headers = response.headers_mut();
+    headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/octet-stream"));
+    headers.insert(ACCESS_CONTROL_ALLOW_ORIGIN, HeaderValue::from_static("*"));
+    response
 }
