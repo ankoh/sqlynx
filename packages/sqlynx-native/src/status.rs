@@ -1,5 +1,7 @@
 use std::fmt::{Display, Formatter, Error};
 
+use tauri::http::StatusCode;
+
 pub enum Status {
     HeaderHasInvalidEncoding{ header: &'static str, message: String },
     HeaderRequiredButMissing{ header: &'static str },
@@ -40,4 +42,20 @@ impl Display for Status {
             }
         }
     }
+}
+
+impl From<&Status> for StatusCode {
+    fn from(status: &Status) -> StatusCode {
+        match status {
+            Status::HeaderHasInvalidEncoding { header: _, message: _ } => StatusCode::BAD_REQUEST,
+            Status::HeaderIsNotAValidEndpoint { header: _, message: _ } => StatusCode::BAD_REQUEST,
+            Status::HeaderRequiredButMissing { header: _ } => StatusCode::BAD_REQUEST,
+            Status::HeaderIsNotANumber { header: _, message: _ } => StatusCode::BAD_REQUEST,
+            Status::HeaderChannelIdIsUnknown { header: _, channel_id: _ } => StatusCode::BAD_REQUEST,
+            Status::HeaderPathIsInvalid { header: _, path: _, message: _ } => StatusCode::BAD_REQUEST,
+            Status::EndpointConnectFailed { message: _ } => StatusCode::BAD_REQUEST,
+            Status::GrpcCallFailed { status: _ } => StatusCode::BAD_REQUEST,
+        }
+    }
+
 }
