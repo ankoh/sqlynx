@@ -6,9 +6,9 @@ use std::sync::RwLock;
 use std::result::Result;
 
 use tauri::http::uri::PathAndQuery;
+use tauri::http::Request;
 use tauri::http::HeaderMap;
 use tauri::http::HeaderValue;
-use tauri::http::Request;
 use tonic::transport::channel::Endpoint;
 
 use crate::grpc_client::GenericGrpcClient;
@@ -188,16 +188,14 @@ impl GrpcProxy {
         Ok(channel_id)
     }
     /// Destroy a channel
-    pub async fn destroy_channel(&self, headers: &HeaderMap) -> Result<(), Status> {
-        let channel_id = require_number_header(&headers, HEADER_NAME_CHANNEL_ID)?;
+    pub async fn destroy_channel(&self, channel_id: usize) -> Result<(), Status> {
         remove_channel(&self.channels, channel_id);
         Ok(())
     }
 
     /// Call a unary gRPC function
-    pub async fn call_unary(&self, headers: &HeaderMap, body: &mut Vec<u8>) -> Result<Vec<u8>, Status> {
-        let path = require_string_header(&headers, HEADER_NAME_PATH)?;
-        let channel_id = require_number_header(&headers, HEADER_NAME_CHANNEL_ID)?;
+    pub async fn call_unary(&self, channel_id: usize, request: &mut Request<Vec<u8>>) -> Result<Vec<u8>, Status> {
+        let path = require_string_header(request.headers(), HEADER_NAME_PATH)?;
         let channel_entry = if let Some(channel) = self.channels.read().unwrap().get(&channel_id) {
             channel.clone()
         } else {
@@ -209,16 +207,15 @@ impl GrpcProxy {
                 Status::HeaderPathIsInvalid { header: HEADER_NAME_PATH, path: path.to_string(), message: e.to_string() }
             })?;
 
-        let req = tonic::Request::new(std::mem::take(body));
+        let req = tonic::Request::new(std::mem::take(request.body_mut()));
 
-        let _response = client.call_unary(req, path).await
+        let _response = client.call_unary(req , path).await
             .map_err(|status| Status::GrpcCallFailed { status })?;
         Ok(Vec::new())
     }
 
     /// Call a gRPC function with results streamed from the server
-    pub async fn start_server_stream(&self, headers: &HeaderMap, _body: &mut Vec<u8>) -> Result<Vec<u8>, Status> {
-        let channel_id = require_number_header(&headers, HEADER_NAME_CHANNEL_ID)?;
+    pub async fn start_server_stream(&self, channel_id: usize, headers: &HeaderMap, _body: &mut Vec<u8>) -> Result<Vec<u8>, Status> {
         let _channel_entry = if let Some(channel) = self.channels.read().unwrap().get(&channel_id) {
             channel.clone()
         } else {
@@ -228,8 +225,7 @@ impl GrpcProxy {
     }
 
     /// Read from a result stream
-    pub async fn read_server_stream(&self, headers: &HeaderMap) -> Result<Vec<u8>, Status> {
-        let _stream_id = require_number_header(&headers, HEADER_NAME_STREAM_ID)?;
+    pub async fn read_server_stream(&self, channel_id: usize, stream_id: usize, headers: &HeaderMap) -> Result<Vec<u8>, Status> {
         Ok(Vec::new())
     }
 }

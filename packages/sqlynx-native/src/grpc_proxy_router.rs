@@ -65,7 +65,7 @@ pub fn parse_grpc_route(path: &str) -> Option<GrpcProxyRoute> {
 pub async fn call_grpc_proxy(route: GrpcProxyRoute, req: Request<Vec<u8>>) -> Response<Vec<u8>> {
     match (req.method().clone(), route) {
         (Method::POST, GrpcProxyRoute::Channels) => create_channel(req).await,
-        (Method::DELETE, GrpcProxyRoute::Channel { channel_id }) => delete_channel(channel_id, req).await,
+        (Method::DELETE, GrpcProxyRoute::Channel { channel_id }) => delete_channel(channel_id).await,
         (Method::POST, GrpcProxyRoute::ChannelUnary { channel_id }) => call_unary(channel_id, req).await,
         (Method::POST, GrpcProxyRoute::ChannelStreams { channel_id }) => start_server_stream(channel_id, req).await,
         (Method::GET, GrpcProxyRoute::ChannelStream { channel_id, stream_id }) => read_server_stream(channel_id, stream_id).await,
