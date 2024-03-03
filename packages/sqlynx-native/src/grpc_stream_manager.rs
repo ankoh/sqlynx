@@ -198,7 +198,13 @@ impl GrpcStreamManager {
                 }
             } else {
                 // After receiving one batch, we check the `flush_batch_after` timeout.
-                let receive_timeout = flush_batch_after.checked_sub(elapsed_since_start).unwrap_or_default();
+                let receive_timeout = match flush_batch_after.checked_sub(elapsed_since_start) {
+                    Some(timeout) => timeout,
+                    None => {
+                        batch.event = GrpcServerStreamBatchEvent::FlushAfterTimeout;
+                        return GrpcServerStreamResult::Messages(batch);
+                    }
+                };
                 match timeout(receive_timeout, receiver.recv()).await {
                     Ok(Some(response)) =>  response,
                     Ok(None) => {
