@@ -10,6 +10,7 @@ mod ipc_router;
 mod proto;
 #[cfg(test)]
 mod test;
+mod status;
 
 use ipc_router::route_ipc_request;
 use std::env;
