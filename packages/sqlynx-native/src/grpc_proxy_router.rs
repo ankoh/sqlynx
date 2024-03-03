@@ -5,12 +5,12 @@ use tauri::http::Request;
 use tauri::http::Response;
 use regex_automata::meta::Regex;
 
-use crate::grpc_proxy_requests::call_unary;
-use crate::grpc_proxy_requests::create_channel;
-use crate::grpc_proxy_requests::delete_channel;
-use crate::grpc_proxy_requests::delete_server_stream;
-use crate::grpc_proxy_requests::read_server_stream;
-use crate::grpc_proxy_requests::start_server_stream;
+use crate::grpc_proxy_globals::call_unary;
+use crate::grpc_proxy_globals::create_channel;
+use crate::grpc_proxy_globals::delete_channel;
+use crate::grpc_proxy_globals::delete_server_stream;
+use crate::grpc_proxy_globals::read_server_stream;
+use crate::grpc_proxy_globals::start_server_stream;
 
 #[derive(Debug, PartialEq)]
 pub enum GrpcProxyRoute {
@@ -31,7 +31,7 @@ lazy_static! {
     ]).unwrap();
 }
 
-pub fn parse_grpc_route(path: &str) -> Option<GrpcProxyRoute> {
+pub fn parse_grpc_proxy_path(path: &str) -> Option<GrpcProxyRoute> {
     let mut all = Captures::all(ROUTES.group_info().clone());
     ROUTES.captures(path, &mut all);
     match all.pattern().map(|p| p.as_usize()) {
@@ -61,8 +61,7 @@ pub fn parse_grpc_route(path: &str) -> Option<GrpcProxyRoute> {
     }
 }
 
-
-pub async fn call_grpc_proxy(route: GrpcProxyRoute, req: Request<Vec<u8>>) -> Response<Vec<u8>> {
+pub async fn dispatch_grpc_proxy_route(route: GrpcProxyRoute, req: Request<Vec<u8>>) -> Response<Vec<u8>> {
     match (req.method().clone(), route) {
         (Method::POST, GrpcProxyRoute::Channels) => create_channel(req).await,
         (Method::DELETE, GrpcProxyRoute::Channel { channel_id }) => delete_channel(channel_id).await,
@@ -74,6 +73,13 @@ pub async fn call_grpc_proxy(route: GrpcProxyRoute, req: Request<Vec<u8>>) -> Re
             unreachable!();
         }
     }
+}
+
+pub async fn route_grpc_proxy_request(request: &mut Request<Vec<u8>>) -> Option<Response<Vec<u8>>> {
+    if let Some(route) = parse_grpc_proxy_path(request.uri().path()) {
+        return Some(dispatch_grpc_proxy_route(route, std::mem::take(request)).await);
+    }
+    return None;
 }
 
 #[cfg(test)]
@@ -91,23 +97,23 @@ mod test {
 
     #[tokio::test]
     async fn test_valid_routes() -> Result<()> {
-        assert_eq!(parse_grpc_route("/grpc/channels"), Some(GrpcProxyRoute::Channels));
-        assert_eq!(parse_grpc_route("/grpc/channel/1"), Some(GrpcProxyRoute::Channel { channel_id: 1 }));
-        assert_eq!(parse_grpc_route("/grpc/channel/1/unary"), Some(GrpcProxyRoute::ChannelUnary { channel_id: 1 }));
-        assert_eq!(parse_grpc_route("/grpc/channel/1/streams"), Some(GrpcProxyRoute::ChannelStreams { channel_id: 1 }));
-        assert_eq!(parse_grpc_route("/grpc/channel/1/stream/2"), Some(GrpcProxyRoute::ChannelStream { channel_id: 1, stream_id: 2 }));
-        assert_eq!(parse_grpc_route("/grpc/channel/123/stream/456"), Some(GrpcProxyRoute::ChannelStream { channel_id: 123, stream_id: 456 }));
+        assert_eq!(parse_grpc_proxy_path("/grpc/channels"), Some(GrpcProxyRoute::Channels));
+        assert_eq!(parse_grpc_proxy_path("/grpc/channel/1"), Some(GrpcProxyRoute::Channel { channel_id: 1 }));
+        assert_eq!(parse_grpc_proxy_path("/grpc/channel/1/unary"), Some(GrpcProxyRoute::ChannelUnary { channel_id: 1 }));
+        assert_eq!(parse_grpc_proxy_path("/grpc/channel/1/streams"), Some(GrpcProxyRoute::ChannelStreams { channel_id: 1 }));
+        assert_eq!(parse_grpc_proxy_path("/grpc/channel/1/stream/2"), Some(GrpcProxyRoute::ChannelStream { channel_id: 1, stream_id: 2 }));
+        assert_eq!(parse_grpc_proxy_path("/grpc/channel/123/stream/456"), Some(GrpcProxyRoute::ChannelStream { channel_id: 123, stream_id: 456 }));
         Ok(())
     }
 
     #[tokio::test]
     async fn test_invalid_routes() -> Result<()> {
-        assert_eq!(parse_grpc_route("/grpc/foo"), None);
-        assert_eq!(parse_grpc_route("/grpc/channels/foo"), None);
-        assert_eq!(parse_grpc_route("/grpc/channel/foo"), None);
-        assert_eq!(parse_grpc_route("/grpc/channel/1/foo"), None);
-        assert_eq!(parse_grpc_route("/grpc/channel/1/stream/foo"), None);
-        assert_eq!(parse_grpc_route("/grpc/channel/1/stream/2/foo"), None);
+        assert_eq!(parse_grpc_proxy_path("/grpc/foo"), None);
+        assert_eq!(parse_grpc_proxy_path("/grpc/channels/foo"), None);
+        assert_eq!(parse_grpc_proxy_path("/grpc/channel/foo"), None);
+        assert_eq!(parse_grpc_proxy_path("/grpc/channel/1/foo"), None);
+        assert_eq!(parse_grpc_proxy_path("/grpc/channel/1/stream/foo"), None);
+        assert_eq!(parse_grpc_proxy_path("/grpc/channel/1/stream/2/foo"), None);
         Ok(())
     }
 
@@ -118,23 +124,31 @@ mod test {
         let (addr, shutdown) = spawn_test_service_mock(mock).await;
         let host = format!("http://{}", addr);
 
-        let route = parse_grpc_route("/grpc/channels");
-        assert_eq!(route, Some(GrpcProxyRoute::Channels));
-
-        // Route gRPC proxy call
-        let request: Request<Vec<u8>> = Request::builder()
+        // Create gRPC channel
+        let mut request: Request<Vec<u8>> = Request::builder()
+            .method("POST")
+            .uri(format!("{}/grpc/channels", host))
             .header(HEADER_NAME_HOST, &host)
             .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
-            .method("POST")
             .body(Vec::new())
             .unwrap();
-        let response = call_grpc_proxy(route.unwrap(), request).await;
-
-        // Check response headers
+        let response = route_grpc_proxy_request(&mut request).await.unwrap();
         assert_eq!(response.status(), 200);
+
+        // Get channel id
         assert!(response.headers().contains_key(HEADER_NAME_CHANNEL_ID));
         let channel_id = response.headers().get(HEADER_NAME_CHANNEL_ID).unwrap().to_str().unwrap();
         assert!(!channel_id.is_empty());
+
+        // Delete gRPC channel
+        let mut request: Request<Vec<u8>> = Request::builder()
+            .method("DELETE")
+            .uri(format!("{}/grpc/channel/{}", host, channel_id))
+            .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
+            .body(Vec::new())
+            .unwrap();
+        let response = route_grpc_proxy_request(&mut request).await.unwrap();
+        assert_eq!(response.status(), 200);
 
         shutdown.send(()).unwrap();
         Ok(())

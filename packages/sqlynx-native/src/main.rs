@@ -3,7 +3,7 @@
 
 mod grpc_client;
 mod grpc_proxy;
-mod grpc_proxy_requests;
+mod grpc_proxy_globals;
 mod grpc_proxy_router;
 mod grpc_stream_manager;
 mod ipc_router;
@@ -12,7 +12,7 @@ mod proto;
 mod test;
 mod status;
 
-use ipc_router::route_ipc_request;
+use ipc_router::process_ipc_request;
 use std::env;
 
 fn main() {
@@ -28,7 +28,7 @@ fn main() {
             "sqlynx-native",
             move |_runtime, request, responder| {
                 tokio::spawn(async move {
-                    let response = route_ipc_request(request).await;
+                    let response = process_ipc_request(request).await;
                     responder.respond(response);
                 });
             },
