@@ -56,14 +56,45 @@ pub async fn call_unary(channel_id: usize, mut req: Request<Vec<u8>>) -> Respons
     }
 }
 
-pub async fn start_server_stream(_channel_id: usize, _req: Request<Vec<u8>>) -> Response<Vec<u8>> {
-    unimplemented!("start_server_stream")
+pub async fn start_server_stream(channel_id: usize, mut req: Request<Vec<u8>>) -> Response<Vec<u8>> {
+    let body = std::mem::take(req.body_mut());
+    match GRPC_PROXY.start_server_stream(channel_id, req.headers(), body).await {
+        Ok(body) => {
+            let response = Response::builder()
+                .status(200)
+                .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
+                .body(body)
+                .unwrap();
+            response
+        },
+        Err(e) => Response::from(&e)
+    }
 }
 
-pub async fn read_server_stream(_channel_id: usize, _stream_id: usize) -> Response<Vec<u8>> {
-    unimplemented!("read_server_stream")
+pub async fn read_server_stream(channel_id: usize, stream_id: usize, req: Request<Vec<u8>>) -> Response<Vec<u8>> {
+    match GRPC_PROXY.read_server_stream(channel_id, stream_id, req.headers()).await {
+        Ok(body) => {
+            let response = Response::builder()
+                .status(200)
+                .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
+                .body(body)
+                .unwrap();
+            response
+        },
+        Err(e) => Response::from(&e)
+    }
 }
 
-pub async fn delete_server_stream(_channel_id: usize, _stream_id: usize, _req: Request<Vec<u8>>) -> Response<Vec<u8>> {
-    unimplemented!("delete_server_stream")
+pub async fn delete_server_stream(channel_id: usize, stream_id: usize, _req: Request<Vec<u8>>) -> Response<Vec<u8>> {
+    match GRPC_PROXY.destroy_server_stream(channel_id, stream_id).await {
+        Ok(()) => {
+            let response = Response::builder()
+                .status(200)
+                .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
+                .body(Vec::new())
+                .unwrap();
+            response
+        }
+        Err(e) => Response::from(&e)
+    }
 }
