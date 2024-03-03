@@ -21,6 +21,7 @@ pub const HEADER_NAME_TLS_CLIENT_CERT: &'static str = "sqlynx-tls-client-cert";
 pub const HEADER_NAME_TLS_CACERTS: &'static str = "sqlynx-tls-cacerts";
 pub const HEADER_NAME_PATH: &'static str = "sqlynx-path";
 pub const HEADER_NAME_CHANNEL_ID: &'static str = "sqlynx-channel-id";
+pub const HEADER_NAME_STREAM_ID: &'static str = "sqlynx-stream-id";
 
 struct GrpcRequestTlsConfig {
     client_key: String,
@@ -213,13 +214,13 @@ impl GrpcProxy {
     }
 
     /// Call a gRPC function with results streamed from the server
-    pub async fn start_server_stream(&self, channel_id: usize, _headers: &HeaderMap, _body: Vec<u8>) -> Result<Vec<u8>, Status> {
+    pub async fn start_server_stream(&self, channel_id: usize, _headers: &HeaderMap, _body: Vec<u8>) -> Result<(usize, Vec<u8>), Status> {
         let _channel_entry = if let Some(channel) = self.channels.read().unwrap().get(&channel_id) {
             channel.clone()
         } else {
             return Err(Status::ChannelIdIsUnknown { channel_id });
         };
-        Ok(Vec::new())
+        Ok((42, Vec::new()))
     }
 
     /// Read from a result stream
