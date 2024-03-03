@@ -1,45 +1,68 @@
 use prost::Message;
+use tokio::time::timeout;
+use std::time::Instant;
 use std::collections::HashMap;
 use std::sync::atomic::AtomicU64;
 use std::sync::Arc;
 use std::sync::RwLock;
+use std::time::Duration;
 use tokio::sync::Mutex;
 use tonic::metadata::MetadataMap;
 
 use crate::proto::salesforce_hyperdb_grpc_v1::QueryResult;
 
 #[derive(Debug)]
-pub enum GrpcServerStreamResponse {
+pub enum GrpcServerStreamEvent {
     Message(Vec<u8>),
     End(MetadataMap),
     Error(Box<dyn std::error::Error + Send + Sync>),
-    UnknownStream,
-}
-
-pub struct ResultGrpcServerStreamResponse {
-    /// The response
-    response: GrpcServerStreamResponse,
-    /// The response id
-    sequence_id: u64,
-    /// The total number of received messages
-    total_received: u64,
 }
 
 #[derive(Debug)]
-struct OrderedGrpcServerStreamResponse {
-    /// The response
-    response: GrpcServerStreamResponse,
-    /// The sequence id
-    sequence_id: u64,
+pub enum GrpcServerStreamResult {
+    Messages(GrpcServerStreamBatch),
+    Error(Box<dyn std::error::Error + Send + Sync>),
+    ReadTimeout,
+    StreamUnknown,
+    StreamClosed,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum GrpcServerStreamBatchEvent {
+    StreamFailed,
+    StreamFinished,
+    FlushAfterTimeout,
+    FlushAfterBytes,
+}
+
+#[derive(Debug)]
+pub struct GrpcServerStreamBatch {
+    /// The event that emitted the batch
+    event: GrpcServerStreamBatchEvent,
+    /// The messages in the batch
+    messages: Vec<Vec<u8>>,
+    /// The total message bytes in the batch
+    total_message_bytes: usize,
+    /// The trailing headers (if any)
+    trailers: Option<MetadataMap>,
+}
+
+impl Default for GrpcServerStreamBatch {
+    fn default() -> Self {
+        Self {
+            event: GrpcServerStreamBatchEvent::StreamFailed,
+            messages: Vec::default(),
+            total_message_bytes: 0,
+            trailers: None,
+        }
+    }
 }
 
 pub struct GRPCServerStream {
     /// The response queue
-    response_sender: tokio::sync::mpsc::Sender<OrderedGrpcServerStreamResponse>,
+    response_sender: tokio::sync::mpsc::Sender<GrpcServerStreamEvent>,
     /// The response queue reading
-    response_receiver: Mutex<tokio::sync::mpsc::Receiver<OrderedGrpcServerStreamResponse>>,
-    /// The total number of received messages
-    total_received: AtomicU64,
+    response_receiver: Mutex<tokio::sync::mpsc::Receiver<GrpcServerStreamEvent>>,
 }
 
 #[derive(Default)]
@@ -75,7 +98,6 @@ impl GrpcStreamManager {
         let stream_entry = Arc::new(GRPCServerStream {
             response_sender: sender,
             response_receiver: Mutex::new(receiver),
-            total_received: AtomicU64::new(0),
         });
         if let Ok(mut streams) = self.server_streams.write() {
             streams.insert(stream_id, stream_entry.clone());
@@ -83,14 +105,8 @@ impl GrpcStreamManager {
 
         // Spawn the async reader
         tokio::spawn(async move {
-            let mut next_sequence_id = 0;
-
             let mut stream_alive = true;
             while stream_alive {
-                // Get next sequence id
-                let sequence_id = next_sequence_id;
-                next_sequence_id += 1;
-
                 // Read the next message from the gRPC output stream
                 let response = match streaming.message().await {
                     // Received bytes, forward the message as-is to receivers
@@ -100,18 +116,18 @@ impl GrpcStreamManager {
                             "received message from server stream, bytes={}",
                             buffer.len()
                         );
-                        GrpcServerStreamResponse::Message(buffer)
+                        GrpcServerStreamEvent::Message(buffer)
                     }
                     // Stream was closed, delete stream and return trailers
                     Ok(None) => {
                         stream_alive = false;
                         log::debug!("reached end of server stream");
                         match streaming.trailers().await {
-                            Ok(Some(trailer)) => GrpcServerStreamResponse::End(trailer),
-                            Ok(None) => GrpcServerStreamResponse::End(MetadataMap::new()),
+                            Ok(Some(trailer)) => GrpcServerStreamEvent::End(trailer),
+                            Ok(None) => GrpcServerStreamEvent::End(MetadataMap::new()),
                             Err(e) => {
                                 log::warn!("reading trailers failed with error: {}", e);
-                                GrpcServerStreamResponse::Error(Box::new(e))
+                                GrpcServerStreamEvent::Error(Box::new(e))
                             }
                         }
                     }
@@ -119,20 +135,14 @@ impl GrpcStreamManager {
                     Err(e) => {
                         stream_alive = false;
                         log::warn!("reading from server stream failed with error: {}", e);
-                        GrpcServerStreamResponse::Error(Box::new(e))
+                        GrpcServerStreamEvent::Error(Box::new(e))
                     }
                 };
-                stream_entry
-                    .total_received
-                    .fetch_add(1, std::sync::atomic::Ordering::AcqRel);
 
                 // Push the response into the queue
                 if let Err(e) = stream_entry
                     .response_sender
-                    .send(OrderedGrpcServerStreamResponse {
-                        response,
-                        sequence_id,
-                    })
+                    .send(response)
                     .await
                 {
                     stream_alive = false;
@@ -150,49 +160,90 @@ impl GrpcStreamManager {
     pub async fn read_server_stream(
         self: &Arc<Self>,
         stream_id: u64,
-    ) -> ResultGrpcServerStreamResponse {
+        timeout_read_after: Duration,
+        flush_batch_after: Duration,
+        flush_batch_bytes: usize,
+    ) -> GrpcServerStreamResult {
+        let started_at = Instant::now();
+
         // Try to find the stream.
         // If there is none, the request might have finished already.
         let reg = self.clone();
         let stream = if let Some(streams) = reg.server_streams.read().unwrap().get(&stream_id) {
             streams.clone()
         } else {
-            return ResultGrpcServerStreamResponse {
-                response: GrpcServerStreamResponse::UnknownStream,
-                sequence_id: 0,
-                total_received: 0,
-            };
-        };
-        let total_received = stream
-            .total_received
-            .load(std::sync::atomic::Ordering::Acquire);
-
-        // Receive the next message from the stream
-        let queued = if let Some(queued) = stream.response_receiver.lock().await.recv().await {
-            queued
-        } else {
-            // XXX Closed?
-            return ResultGrpcServerStreamResponse {
-                response: GrpcServerStreamResponse::UnknownStream,
-                sequence_id: 0,
-                total_received: 0,
-            };
+            return GrpcServerStreamResult::StreamUnknown;
         };
 
-        // Cleanup the stream if we reached the end
-        match queued.response {
-            GrpcServerStreamResponse::End(_) | GrpcServerStreamResponse::Error(_) => {
-                if let Ok(mut streams) = self.server_streams.write() {
-                    streams.remove(&stream_id);
+        // Acquire the receiver lock.
+        // There can only be one active reader at a time.
+        let mut receiver = stream.response_receiver.lock().await;
+
+        // Receive messages and return them in batches
+        let mut batch = GrpcServerStreamBatch::default();
+        loop {
+            // Receive the next message from the reader
+            let elapsed_since_start = started_at.elapsed();
+            let response = if batch.messages.len() == 0 {
+                // Initially, we check the `timeout_read_after` timeout.
+                let receive_timeout = timeout_read_after.checked_sub(elapsed_since_start).unwrap_or_default();
+                match timeout(receive_timeout, receiver.recv()).await {
+                    Ok(Some(response)) =>  response,
+                    Ok(None) => {
+                        return GrpcServerStreamResult::StreamClosed;
+                    },
+                    Err(_) => {
+                        return GrpcServerStreamResult::ReadTimeout;
+                    }
                 }
+            } else {
+                // After receiving one batch, we check the `flush_batch_after` timeout.
+                let receive_timeout = flush_batch_after.checked_sub(elapsed_since_start).unwrap_or_default();
+                match timeout(receive_timeout, receiver.recv()).await {
+                    Ok(Some(response)) =>  response,
+                    Ok(None) => {
+                        return GrpcServerStreamResult::StreamClosed;
+                    },
+                    Err(_) => {
+                        batch.event = GrpcServerStreamBatchEvent::FlushAfterTimeout;
+                        return GrpcServerStreamResult::Messages(batch);
+                    }
+                }
+            };
+
+            match response {
+                // We reached the end of the stream.
+                // Flush the current batch with trailers and an EOS marker.
+                GrpcServerStreamEvent::End(trailers) => {
+                    if let Ok(mut streams) = self.server_streams.write() {
+                        streams.remove(&stream_id);
+                    }
+                    batch.trailers = Some(trailers);
+                    batch.event = GrpcServerStreamBatchEvent::StreamFinished;
+                    return GrpcServerStreamResult::Messages(batch);
+                }
+                // An error occurred,.
+                // Throw away any intermediate messages that we held back.
+                GrpcServerStreamEvent::Error(e) => {
+                    if let Ok(mut streams) = self.server_streams.write() {
+                        streams.remove(&stream_id);
+                    }
+                    return GrpcServerStreamResult::Error(e);
+                }
+                // Return the message
+                GrpcServerStreamEvent::Message(m) => {
+                    // Add the message to the current batch and check if we should flush
+                    batch.total_message_bytes += m.len();
+                    batch.messages.push(m);
+
+                    // Flush if we hit the message size
+                    if batch.total_message_bytes > flush_batch_bytes {
+                        batch.event = GrpcServerStreamBatchEvent::FlushAfterBytes;
+                        return GrpcServerStreamResult::Messages(batch);
+                    }
+                },
             }
-            _ => (),
-        };
-        return ResultGrpcServerStreamResponse {
-            response: queued.response,
-            sequence_id: queued.sequence_id,
-            total_received,
-        };
+        }
     }
 
     /// Cancellation is done by just dropping everything
@@ -348,26 +399,18 @@ mod test {
         let stream_id = reg.start_server_stream(res.into_inner()).unwrap();
         assert_eq!(stream_id, 42);
 
-        // Read batches
-        for i in 0..2 {
-            let res = reg.read_server_stream(stream_id).await;
-            let msg = match res.response {
-                GrpcServerStreamResponse::Message(m) => m,
-                _ => panic!("{:?}", res.response),
-            };
-            assert_eq!(res.sequence_id, i);
-            assert_eq!(msg, messages[i as usize].as_ref().unwrap().encode_to_vec());
-        }
-
-        // Read the end
-        let res = reg.read_server_stream(stream_id).await;
-        let _trailer = match res.response {
-            GrpcServerStreamResponse::End(m) => m,
-            _ => panic!("{:?}", res.response),
+        // Read batched messages
+        let res = reg.read_server_stream(stream_id, Duration::from_secs(10), Duration::from_secs(10), 1000000).await;
+        let batch = match res {
+            GrpcServerStreamResult::Messages(batch) => batch,
+            r => {
+                panic!("unexpected: {:?}", r);
+            },
         };
-        assert_eq!(res.sequence_id, 2);
-
-        // Auto cleanup
+        assert_eq!(batch.messages.len(), 2);
+        assert_eq!(batch.messages[0], messages[0].as_ref().unwrap().encode_to_vec());
+        assert_eq!(batch.messages[1], messages[1].as_ref().unwrap().encode_to_vec());
+        assert_eq!(batch.event, GrpcServerStreamBatchEvent::StreamFinished);
         assert!(!reg.server_streams.read().unwrap().contains_key(&stream_id));
 
         shutdown.send(()).unwrap();
