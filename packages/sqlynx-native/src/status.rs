@@ -8,7 +8,7 @@ pub enum Status {
     HeaderChannelIdIsUnknown{ header: &'static str, channel_id: usize },
     HeaderPathIsInvalid{ header: &'static str, path: String, message: String },
     EndpointConnectFailed{ message: String },
-    GrpcUnaryCallFailed{ message: String },
+    GrpcCallFailed{ status: tonic::Status },
 }
 
 impl Display for Status {
@@ -33,10 +33,10 @@ impl Display for Status {
                 f.write_fmt(format_args!("header '{}' stores the path '{}' and is invalid: {}", header, path, message))
             }
             Status::EndpointConnectFailed { message } => {
-                f.write_fmt(format_args!("connect to endpoint failed with error: {}", message))
+                f.write_fmt(format_args!("connecting to endpoint failed with error: {}", message))
             }
-            Status::GrpcUnaryCallFailed { message } => {
-                f.write_fmt(format_args!("unary gRPC call failed with error: {}", message))
+            Status::GrpcCallFailed { status } => {
+                f.write_fmt(format_args!("gRPC call failed with error: {}", status.to_string()))
             }
         }
     }
