@@ -178,11 +178,11 @@ impl GrpcProxy {
                 Status::HeaderPathIsInvalid { header: HEADER_NAME_PATH, path: path.to_string(), message: e.to_string() }
             })?;
 
-        let req = tonic::Request::new(body);
-
-        let _response = client.call_unary(req , path).await
+        let request = tonic::Request::new(body);
+        let response = client.call_unary(request, path).await
             .map_err(|status| Status::GrpcCallFailed { status })?;
-        Ok(Vec::new())
+        let body = response.into_inner();
+        Ok(body)
     }
 
     /// Call a gRPC function with results streamed from the server
