@@ -1,8 +1,9 @@
 use lazy_static::lazy_static;
+use regex_automata::util::captures::Captures;
 use tauri::http::Method;
 use tauri::http::Request;
 use tauri::http::Response;
-use regex::Regex;
+use regex_automata::meta::Regex;
 
 use crate::grpc_proxy::GrpcProxy;
 
@@ -16,35 +17,43 @@ pub enum GrpcProxyRoute {
 }
 
 lazy_static! {
-    static ref ROUTE_CHANNELS: Regex = Regex::new(r"^/grpc/channels$").unwrap();
-    static ref ROUTE_CHANNEL: Regex = Regex::new(r"^/grpc/channel/(\d+)$").unwrap();
-    static ref ROUTE_CHANNEL_UNARY: Regex = Regex::new(r"^/grpc/channel/(\d+)/unary$").unwrap();
-    static ref ROUTE_CHANNEL_STREAMS: Regex = Regex::new(r"^/grpc/channel/(\d+)/streams$").unwrap();
-    static ref ROUTE_CHANNEL_STREAM: Regex = Regex::new(r"^/grpc/channel/(\d+)/stream/(\d+)$").unwrap();
+    static ref ROUTES: Regex = Regex::new_many(&[
+        r"^/grpc/channels$",
+        r"^/grpc/channel/(\d+)$",
+        r"^/grpc/channel/(\d+)/unary$",
+        r"^/grpc/channel/(\d+)/streams$",
+        r"^/grpc/channel/(\d+)/stream/(\d+)$",
+    ]).unwrap();
 }
 
-pub fn parse_grpc_route(uri: &str) -> Option<GrpcProxyRoute> {
-    if ROUTE_CHANNELS.is_match(uri) {
-        return Some(GrpcProxyRoute::Channels)
+pub fn parse_grpc_route(path: &str) -> Option<GrpcProxyRoute> {
+    let mut all = Captures::all(ROUTES.group_info().clone());
+    ROUTES.captures(path, &mut all);
+    match all.pattern().map(|p| p.as_usize()) {
+        Some(0) => {
+            Some(GrpcProxyRoute::Channels)
+        }
+        Some(1) => {
+            let channel_id = path[all.get_group(1).unwrap()].parse().unwrap_or_default();
+            Some(GrpcProxyRoute::Channel { channel_id })
+        }
+        Some(2) => {
+            let channel_id = path[all.get_group(1).unwrap()].parse().unwrap_or_default();
+            Some(GrpcProxyRoute::ChannelUnary { channel_id })
+        }
+        Some(3) => {
+            let channel_id = path[all.get_group(1).unwrap()].parse().unwrap_or_default();
+            Some(GrpcProxyRoute::ChannelStreams { channel_id })
+        }
+        Some(4) => {
+            let channel_id = path[all.get_group(1).unwrap()].parse().unwrap_or_default();
+            let stream_id = path[all.get_group(2).unwrap()].parse().unwrap_or_default();
+            Some(GrpcProxyRoute::ChannelStream { channel_id, stream_id })
+        }
+        _ => {
+            None
+        }
     }
-    if let Some(captures) = ROUTE_CHANNEL.captures(uri) {
-        let channel_id: usize = captures[1].parse().unwrap_or_default();
-        return Some(GrpcProxyRoute::Channel{ channel_id });
-    }
-    if let Some(captures) = ROUTE_CHANNEL_UNARY.captures(uri) {
-        let channel_id: usize = captures[1].parse().unwrap_or_default();
-        return Some(GrpcProxyRoute::ChannelUnary{ channel_id });
-    }
-    if let Some(captures) = ROUTE_CHANNEL_STREAMS.captures(uri) {
-        let channel_id: usize = captures[1].parse().unwrap_or_default();
-        return Some(GrpcProxyRoute::ChannelStreams{ channel_id });
-    }
-    if let Some(captures) = ROUTE_CHANNEL_STREAM.captures(uri) {
-        let channel_id: usize = captures[1].parse().unwrap_or_default();
-        let stream_id: usize = captures[2].parse().unwrap_or_default();
-        return Some(GrpcProxyRoute::ChannelStream{ channel_id, stream_id });
-    }
-    None
 }
 
 lazy_static! {

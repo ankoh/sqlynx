@@ -4295,7 +4295,7 @@ dependencies = [
  "log",
  "once_cell",
  "prost",
- "regex",
+ "regex-automata 0.4.5",
  "serde",
  "serde_json",
  "tauri",
