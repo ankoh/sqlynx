@@ -3,6 +3,7 @@
 
 mod grpc_client;
 mod grpc_proxy;
+mod grpc_proxy_requests;
 mod grpc_proxy_router;
 mod grpc_stream_manager;
 mod ipc_router;
