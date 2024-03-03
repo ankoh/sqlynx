@@ -1,11 +1,10 @@
 use std::collections::HashMap;
 use std::str::FromStr;
-use std::sync::atomic::AtomicU64;
+use std::sync::atomic::AtomicUsize;
 use std::sync::Arc;
 use std::sync::RwLock;
+use std::result::Result;
 
-use anyhow::anyhow;
-use anyhow::Result;
 use tauri::http::uri::PathAndQuery;
 use tauri::http::HeaderMap;
 use tauri::http::HeaderValue;
@@ -14,15 +13,16 @@ use tonic::transport::channel::Endpoint;
 
 use crate::grpc_client::GenericGrpcClient;
 use crate::grpc_stream_manager::GrpcStreamManager;
+use crate::status::Status;
 
-const HEADER_PREFIX: &'static str = "sqlynx-";
-const HEADER_NAME_HOST: &'static str = "sqlynx-host";
-const HEADER_NAME_TLS_CLIENT_KEY: &'static str = "sqlynx-tls-client-key";
-const HEADER_NAME_TLS_CLIENT_CERT: &'static str = "sqlynx-tls-client-cert";
-const HEADER_NAME_TLS_CACERTS: &'static str = "sqlynx-tls-cacerts";
-const HEADER_NAME_CHANNEL_ID: &'static str = "sqlynx-channel-id";
-const HEADER_NAME_STREAM_ID: &'static str = "sqlynx-stream-id";
-const HEADER_NAME_PATH: &'static str = "sqlynx-path";
+pub const HEADER_PREFIX: &'static str = "sqlynx-";
+pub const HEADER_NAME_HOST: &'static str = "sqlynx-host";
+pub const HEADER_NAME_TLS_CLIENT_KEY: &'static str = "sqlynx-tls-client-key";
+pub const HEADER_NAME_TLS_CLIENT_CERT: &'static str = "sqlynx-tls-client-cert";
+pub const HEADER_NAME_TLS_CACERTS: &'static str = "sqlynx-tls-cacerts";
+pub const HEADER_NAME_CHANNEL_ID: &'static str = "sqlynx-channel-id";
+pub const HEADER_NAME_STREAM_ID: &'static str = "sqlynx-stream-id";
+pub const HEADER_NAME_PATH: &'static str = "sqlynx-path";
 
 struct GrpcRequestTlsConfig {
     client_key: String,
@@ -41,29 +41,29 @@ pub struct GrpcChannelEntry {
 
 #[derive(Default)]
 pub struct GrpcProxy {
-    pub next_channel_id: AtomicU64,
-    pub channels: RwLock<HashMap<u64, Arc<GrpcChannelEntry>>>,
+    pub next_channel_id: AtomicUsize,
+    pub channels: RwLock<HashMap<usize, Arc<GrpcChannelEntry>>>,
     pub streams: Arc<GrpcStreamManager>,
 }
 
 /// Helper to unpack parameters for a gRPC channel
-fn read_channel_params(req: &mut Request<Vec<u8>>) -> Result<GrpcChannelParams> {
+fn read_channel_params(headers: &mut HeaderMap) -> Result<GrpcChannelParams, Status> {
     let mut host = None;
     let mut tls_client_key = None;
     let mut tls_client_cert = None;
     let mut tls_cacerts = None;
-    let mut extra_metadata = HeaderMap::with_capacity(req.headers().len());
+    let mut extra_metadata = HeaderMap::with_capacity(headers.len());
 
     // Helper to unpack a header value
-    let read_header_value = |value: HeaderValue, header: &'static str| -> Result<String> {
+    let read_header_value = |value: HeaderValue, header: &'static str| -> Result<String, Status> {
         Ok(value
             .to_str()
-            .map_err(|e| anyhow!("request header '{}' has an invalid encoding: {}", header, e))?
+            .map_err(|e| Status::HeaderHasInvalidEncoding{ header, message: e.to_string() })?
             .to_string())
     };
 
     // Read all headers in the request, pick up the one from us and declare the remaining as extra
-    for (key, value) in req.headers_mut().drain() {
+    for (key, value) in headers.drain() {
         let key = match key {
             Some(k) => k,
             None => continue,
@@ -91,23 +91,19 @@ fn read_channel_params(req: &mut Request<Vec<u8>>) -> Result<GrpcChannelParams> 
 
     // Make sure the user provided an endpoint
     let endpoint = if let Some(host) = &host {
-        Endpoint::from_str(host).map_err(|e| {
-            anyhow!(
-                "request header 'sqlynx-host' is not a valid endpoint: {}",
-                e
-            )
-        })?
+        Endpoint::from_str(host).map_err(|e| Status::HeaderIsNotAValidEndpoint { header: HEADER_NAME_HOST, message: e.to_string() })
+        ?
     } else {
-        return Err(anyhow!("request misses required header 'sqlynx-host'"));
+        return Err(Status::HeaderRequiredButMissing { header: HEADER_NAME_HOST });
     };
     // If the user provided a client key, we also require a client cert and cacerts.
     // XXX Maybe we can relax this a bit.
     let tls = if let Some(client_key) = &tls_client_key {
         if tls_client_cert.is_none() {
-            return Err(anyhow!("request misses required tls header '{}'", HEADER_NAME_TLS_CLIENT_CERT));
+            return Err(Status::HeaderRequiredButMissing { header: HEADER_NAME_TLS_CLIENT_CERT });
         }
         if tls_cacerts.is_none() {
-            return Err(anyhow!("request misses required tls header '{}'", HEADER_NAME_TLS_CACERTS));
+            return Err(Status::HeaderRequiredButMissing { header: HEADER_NAME_TLS_CACERTS });
         }
         Some(GrpcRequestTlsConfig {
             client_key: client_key.clone(),
@@ -122,52 +118,48 @@ fn read_channel_params(req: &mut Request<Vec<u8>>) -> Result<GrpcChannelParams> 
 
 }
 /// Helper to read a string from request headers
-fn require_string_header<V>(req: &Request<V>, header_name: &'static str) -> Result<String> {
-    if let Some(header) = req.headers().get(header_name) {
+fn require_string_header(headers: &HeaderMap, header_name: &'static str) -> Result<String, Status> {
+    if let Some(header) = headers.get(header_name) {
         let header = header
             .to_str()
-            .map_err(|e| {
-                anyhow!("request header '{}' has an invalid encoding: {}", header_name, e)
-            })?
+            .map_err(|e| Status::HeaderHasInvalidEncoding{ header: header_name, message: e.to_string() })?
             .to_string();
         Ok(header)
     } else {
-        Err(anyhow!("missing required header '{}'", header_name))
+        Err(Status::HeaderRequiredButMissing { header: header_name })
     }
 }
 
 /// Helper to read a number from request headers
-fn require_number_header<V>(req: &Request<V>, header_name: &'static str) -> Result<u64> {
-    if let Some(header) = req.headers().get(header_name) {
+fn require_number_header(headers: &HeaderMap, header_name: &'static str) -> Result<usize, Status> {
+    if let Some(header) = headers.get(header_name) {
         let id_string = header
             .to_str()
-            .map_err(|e| {
-                anyhow!("request header '{}' has an invalid encoding: {}", header_name, e)
-            })?
+            .map_err(|e| Status::HeaderHasInvalidEncoding{ header: header_name, message: e.to_string() })?
             .to_string();
-        let id: u64 = id_string.parse().map_err(|e| {
-            anyhow!("request header '{}' is not a number: {}", header_name, e)
-        })?;
+        let id: usize = id_string.parse::<usize>().map_err(|e|
+            Status::HeaderIsNotANumber { header: header_name, message: e.to_string() }
+        )?;
         Ok(id)
     } else {
-        Err(anyhow!("missing required header '{}'", header_name))
+        Err(Status::HeaderRequiredButMissing { header: header_name })
     }
 }
 
 /// Helper to register a channel
-fn register_channel<T>(dict: &RwLock<HashMap<u64, Arc<T>>>, id: u64, req: Arc<T>) {
+fn register_channel<T>(dict: &RwLock<HashMap<usize, Arc<T>>>, id: usize, req: Arc<T>) {
     if let Ok(mut channels) = dict.write() {
         channels.insert(id, req.clone());
     }
 }
 /// Helper to remove a channel
-fn remove_channel<T>(dict: &RwLock<HashMap<u64, Arc<T>>>, id: u64) {
+fn remove_channel<T>(dict: &RwLock<HashMap<usize, Arc<T>>>, id: usize) {
     if let Ok(mut channels) = dict.write() {
         channels.remove(&id);
     }
 }
 /// Helper to find a channel
-fn find_channel<T>(dict: &RwLock<HashMap<u64, Arc<T>>>, id: u64) -> Option<Arc<T>> {
+fn find_channel<T>(dict: &RwLock<HashMap<usize, Arc<T>>>, id: usize) -> Option<Arc<T>> {
     if let Ok(channels) = dict.read() {
         channels.get(&id).cloned()
     } else {
@@ -177,16 +169,16 @@ fn find_channel<T>(dict: &RwLock<HashMap<u64, Arc<T>>>, id: u64) -> Option<Arc<T
 
 impl GrpcProxy {
     /// Create a channel
-    pub async fn create_channel(&self, mut req: Request<Vec<u8>>) -> Result<u64> {
+    pub async fn create_channel(&self, headers: &mut HeaderMap) -> Result<usize, Status> {
         let channel_id = self
             .next_channel_id
             .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-        let params = read_channel_params(&mut req)?;
+        let params = read_channel_params(headers)?;
         let channel = params
             .endpoint
             .connect()
             .await
-            .map_err(|e| anyhow!("connect to endpoint failed with error: {}", e))?;
+            .map_err(|e| Status::EndpointConnectFailed{ message: e.to_string() })?;
 
         register_channel(
             &self.channels,
@@ -196,46 +188,48 @@ impl GrpcProxy {
         Ok(channel_id)
     }
     /// Destroy a channel
-    pub async fn destroy_channel(&self, req: Request<Vec<u8>>) -> Result<()> {
-        let channel_id = require_number_header(&req, HEADER_NAME_CHANNEL_ID)?;
+    pub async fn destroy_channel(&self, headers: &HeaderMap) -> Result<(), Status> {
+        let channel_id = require_number_header(&headers, HEADER_NAME_CHANNEL_ID)?;
         remove_channel(&self.channels, channel_id);
         Ok(())
     }
 
     /// Call a unary gRPC function
-    pub async fn call_unary(&self, mut req: Request<Vec<u8>>) -> Result<Vec<u8>> {
-        let path = require_string_header(&req, HEADER_NAME_PATH)?;
-        let channel_id = require_number_header(&req, HEADER_NAME_CHANNEL_ID)?;
+    pub async fn call_unary(&self, headers: &HeaderMap, body: &mut Vec<u8>) -> Result<Vec<u8>, Status> {
+        let path = require_string_header(&headers, HEADER_NAME_PATH)?;
+        let channel_id = require_number_header(&headers, HEADER_NAME_CHANNEL_ID)?;
         let channel_entry = if let Some(channel) = self.channels.read().unwrap().get(&channel_id) {
             channel.clone()
         } else {
-            return Err(anyhow!("channel id refers to unknown channel '{}'", channel_id));
+            return Err(Status::HeaderChannelIdIsUnknown { header: HEADER_NAME_CHANNEL_ID, channel_id });
         };
         let mut client = GenericGrpcClient::new(channel_entry.channel.clone());
-        let path = PathAndQuery::from_str(&path)?;
+        let path = PathAndQuery::from_str(&path)
+            .map_err(|e| {
+                Status::HeaderPathIsInvalid { header: HEADER_NAME_PATH, path: path.to_string(), message: e.to_string() }
+            })?;
 
-        let mut body = Vec::new();
-        std::mem::swap(&mut body, req.body_mut());
-        let req = tonic::Request::new(body);
+        let req = tonic::Request::new(std::mem::take(body));
 
-        let _response = client.call_unary(req, path).await?;
+        let _response = client.call_unary(req, path).await
+            .map_err(|e| Status::GrpcUnaryCallFailed { message: e.to_string() })?;
         Ok(Vec::new())
     }
 
     /// Call a gRPC function with results streamed from the server
-    pub async fn start_server_stream(&self, req: Request<Vec<u8>>) -> Result<Vec<u8>> {
-        let channel_id = require_number_header(&req, HEADER_NAME_CHANNEL_ID)?;
+    pub async fn start_server_stream(&self, headers: &HeaderMap, _body: &mut Vec<u8>) -> Result<Vec<u8>, Status> {
+        let channel_id = require_number_header(&headers, HEADER_NAME_CHANNEL_ID)?;
         let _channel_entry = if let Some(channel) = self.channels.read().unwrap().get(&channel_id) {
             channel.clone()
         } else {
-            return Err(anyhow!("channel id refers to unknown channel '{}'", channel_id));
+            return Err(Status::HeaderChannelIdIsUnknown { header: HEADER_NAME_CHANNEL_ID, channel_id });
         };
         Ok(Vec::new())
     }
 
     /// Read from a result stream
-    pub async fn read_server_stream(&self, req: Request<Vec<u8>>) -> Result<Vec<u8>> {
-        let _stream_id = require_number_header(&req, HEADER_NAME_STREAM_ID)?;
+    pub async fn read_server_stream(&self, headers: &HeaderMap) -> Result<Vec<u8>, Status> {
+        let _stream_id = require_number_header(&headers, HEADER_NAME_STREAM_ID)?;
         Ok(Vec::new())
     }
 }
