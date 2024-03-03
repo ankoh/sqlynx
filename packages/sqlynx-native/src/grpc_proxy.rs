@@ -19,9 +19,8 @@ pub const HEADER_NAME_HOST: &'static str = "sqlynx-host";
 pub const HEADER_NAME_TLS_CLIENT_KEY: &'static str = "sqlynx-tls-client-key";
 pub const HEADER_NAME_TLS_CLIENT_CERT: &'static str = "sqlynx-tls-client-cert";
 pub const HEADER_NAME_TLS_CACERTS: &'static str = "sqlynx-tls-cacerts";
-pub const HEADER_NAME_CHANNEL_ID: &'static str = "sqlynx-channel-id";
-pub const HEADER_NAME_STREAM_ID: &'static str = "sqlynx-stream-id";
 pub const HEADER_NAME_PATH: &'static str = "sqlynx-path";
+pub const HEADER_NAME_CHANNEL_ID: &'static str = "sqlynx-channel-id";
 
 struct GrpcRequestTlsConfig {
     client_key: String,
@@ -198,7 +197,7 @@ impl GrpcProxy {
         let channel_entry = if let Some(channel) = self.channels.read().unwrap().get(&channel_id) {
             channel.clone()
         } else {
-            return Err(Status::HeaderChannelIdIsUnknown { header: HEADER_NAME_CHANNEL_ID, channel_id });
+            return Err(Status::ChannelIdIsUnknown { channel_id });
         };
         let mut client = GenericGrpcClient::new(channel_entry.channel.clone());
         let path = PathAndQuery::from_str(&path)
@@ -214,17 +213,23 @@ impl GrpcProxy {
     }
 
     /// Call a gRPC function with results streamed from the server
-    pub async fn start_server_stream(&self, channel_id: usize, headers: &HeaderMap, _body: &mut Vec<u8>) -> Result<Vec<u8>, Status> {
+    pub async fn start_server_stream(&self, channel_id: usize, _headers: &HeaderMap, _body: Vec<u8>) -> Result<Vec<u8>, Status> {
         let _channel_entry = if let Some(channel) = self.channels.read().unwrap().get(&channel_id) {
             channel.clone()
         } else {
-            return Err(Status::HeaderChannelIdIsUnknown { header: HEADER_NAME_CHANNEL_ID, channel_id });
+            return Err(Status::ChannelIdIsUnknown { channel_id });
         };
         Ok(Vec::new())
     }
 
     /// Read from a result stream
-    pub async fn read_server_stream(&self, channel_id: usize, stream_id: usize, headers: &HeaderMap) -> Result<Vec<u8>, Status> {
+    pub async fn read_server_stream(&self, _channel_id: usize, _stream_id: usize, _headers: &HeaderMap) -> Result<Vec<u8>, Status> {
         Ok(Vec::new())
+    }
+
+    /// Destroy a result steram
+    pub async fn destroy_server_stream(&self, _channel_id: usize, stream_id: usize) -> Result<(), Status> {
+        self.streams.destroy_server_stream(stream_id).await;
+        Ok(())
     }
 }

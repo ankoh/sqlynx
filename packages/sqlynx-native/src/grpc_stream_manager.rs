@@ -1,8 +1,8 @@
 use prost::Message;
 use tokio::time::timeout;
+use std::sync::atomic::AtomicUsize;
 use std::time::Instant;
 use std::collections::HashMap;
-use std::sync::atomic::AtomicU64;
 use std::sync::Arc;
 use std::sync::RwLock;
 use std::time::Duration;
@@ -68,9 +68,9 @@ pub struct GRPCServerStream {
 #[derive(Default)]
 pub struct GrpcStreamManager {
     /// The next message id
-    pub next_stream_id: AtomicU64,
+    pub next_stream_id: AtomicUsize,
     /// The server streams
-    pub server_streams: RwLock<HashMap<u64, Arc<GRPCServerStream>>>,
+    pub server_streams: RwLock<HashMap<usize, Arc<GRPCServerStream>>>,
 }
 
 impl Into<Vec<u8>> for QueryResult {
@@ -85,7 +85,7 @@ impl GrpcStreamManager {
     pub fn start_server_stream<T: Into<Vec<u8>> + Send + 'static>(
         self: &Arc<Self>,
         mut streaming: tonic::Streaming<T>,
-    ) -> anyhow::Result<u64> {
+    ) -> anyhow::Result<usize> {
         // Allocate an identifier for the stream
         let reg = self.clone();
         let stream_id = reg
@@ -159,7 +159,7 @@ impl GrpcStreamManager {
     #[allow(dead_code)]
     pub async fn read_server_stream(
         self: &Arc<Self>,
-        stream_id: u64,
+        stream_id: usize,
         timeout_read_after: Duration,
         flush_batch_after: Duration,
         flush_batch_bytes: usize,
@@ -254,7 +254,7 @@ impl GrpcStreamManager {
 
     /// Cancellation is done by just dropping everything
     #[allow(dead_code)]
-    pub async fn cancel_server_stream(self: &Arc<Self>, stream_id: u64) {
+    pub async fn destroy_server_stream(self: &Arc<Self>, stream_id: usize) {
         // XXX Is tonic internally awaiting the finish of the server?
         if let Ok(mut streams) = self.server_streams.write() {
             streams.remove(&stream_id);
