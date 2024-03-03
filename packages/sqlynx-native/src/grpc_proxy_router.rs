@@ -79,7 +79,15 @@ pub async fn call_grpc_proxy(route: GrpcProxyRoute, req: Request<Vec<u8>>) -> Re
 #[cfg(test)]
 mod test {
     use super::*;
+
+    use crate::grpc_proxy::HEADER_NAME_CHANNEL_ID;
+    use crate::grpc_proxy::HEADER_NAME_HOST;
+    use crate::test::test_service_mock::spawn_test_service_mock;
+    use crate::test::test_service_mock::TestServiceMock;
+
     use anyhow::Result;
+    use tauri::http::header::CONTENT_TYPE;
+    use tauri::http::Request;
 
     #[tokio::test]
     async fn test_valid_routes() -> Result<()> {
@@ -100,6 +108,35 @@ mod test {
         assert_eq!(parse_grpc_route("/grpc/channel/1/foo"), None);
         assert_eq!(parse_grpc_route("/grpc/channel/1/stream/foo"), None);
         assert_eq!(parse_grpc_route("/grpc/channel/1/stream/2/foo"), None);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_channel_setup() -> anyhow::Result<()> {
+        // Spawn a test service mock
+        let (mock, mut _setup_unary, mut _setup_server_streaming) = TestServiceMock::new();
+        let (addr, shutdown) = spawn_test_service_mock(mock).await;
+        let host = format!("http://{}", addr);
+
+        let route = parse_grpc_route("/grpc/channels");
+        assert_eq!(route, Some(GrpcProxyRoute::Channels));
+
+        // Route gRPC proxy call
+        let request: Request<Vec<u8>> = Request::builder()
+            .header(HEADER_NAME_HOST, &host)
+            .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
+            .method("POST")
+            .body(Vec::new())
+            .unwrap();
+        let response = call_grpc_proxy(route.unwrap(), request).await;
+
+        // Check response headers
+        assert_eq!(response.status(), 200);
+        assert!(response.headers().contains_key(HEADER_NAME_CHANNEL_ID));
+        let channel_id = response.headers().get(HEADER_NAME_CHANNEL_ID).unwrap().to_str().unwrap();
+        assert!(!channel_id.is_empty());
+
+        shutdown.send(()).unwrap();
         Ok(())
     }
 }
