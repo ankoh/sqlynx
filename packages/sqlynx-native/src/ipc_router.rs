@@ -13,14 +13,15 @@ async fn dispatch_ipc_request(request: Request<Vec<u8>>) -> Response<Vec<u8>> {
     }
     Response::builder()
         .status(400)
-        .body(Vec::new())
+        .header(CONTENT_TYPE, mime::TEXT_PLAIN.essence_str())
+        .body("cannot find route for request path".as_bytes().to_vec())
         .unwrap()
 }
 
 pub async fn route_ipc_request(request: Request<Vec<u8>>) -> Response<Vec<u8>> {
     let mut response = dispatch_ipc_request(request).await;
     let headers = response.headers_mut();
-    headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/octet-stream"));
+    headers.insert(CONTENT_TYPE, HeaderValue::from_static(mime::APPLICATION_OCTET_STREAM.essence_str()));
     headers.insert(ACCESS_CONTROL_ALLOW_ORIGIN, HeaderValue::from_static("*"));
     response
 }

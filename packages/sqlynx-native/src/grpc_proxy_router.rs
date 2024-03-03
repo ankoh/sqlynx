@@ -71,10 +71,7 @@ pub async fn call_grpc_proxy(route: GrpcProxyRoute, req: Request<Vec<u8>>) -> Re
         (Method::GET, GrpcProxyRoute::ChannelStream { channel_id, stream_id }) => read_server_stream(channel_id, stream_id, req).await,
         (Method::DELETE, GrpcProxyRoute::ChannelStream { channel_id, stream_id }) => delete_server_stream(channel_id, stream_id, req).await,
         (_, _) => {
-            Response::builder()
-                .status(400)
-                .body(Vec::new())
-                .unwrap()
+            unreachable!();
         }
     }
 }

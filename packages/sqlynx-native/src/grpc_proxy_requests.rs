@@ -14,14 +14,12 @@ lazy_static! {
 pub async fn create_channel(mut req: Request<Vec<u8>>) -> Response<Vec<u8>> {
     match GRPC_PROXY.create_channel(req.headers_mut()).await {
         Ok(channel_id) => {
-            let mut response = Response::builder()
+            Response::builder()
                 .status(200)
+                .header(HEADER_NAME_CHANNEL_ID, channel_id)
                 .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
                 .body(Vec::new())
-                .unwrap();
-            let headers = response.headers_mut();
-            headers.insert(HEADER_NAME_CHANNEL_ID, channel_id.into());
-            response
+                .unwrap()
         },
         Err(e) => Response::from(&e)
     }
@@ -46,14 +44,12 @@ pub async fn call_unary(channel_id: usize, mut req: Request<Vec<u8>>) -> Respons
     let body = std::mem::take(req.body_mut());
     match GRPC_PROXY.call_unary(channel_id, req.headers(), body).await {
         Ok(body) => {
-            let mut response = Response::builder()
+            Response::builder()
                 .status(200)
+                .header(HEADER_NAME_CHANNEL_ID, channel_id)
                 .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
                 .body(body)
-                .unwrap();
-            let headers = response.headers_mut();
-            headers.insert(HEADER_NAME_CHANNEL_ID, channel_id.into());
-            response
+                .unwrap()
         },
         Err(e) => Response::from(&e)
     }
@@ -63,15 +59,13 @@ pub async fn start_server_stream(channel_id: usize, mut req: Request<Vec<u8>>) -
     let body = std::mem::take(req.body_mut());
     match GRPC_PROXY.start_server_stream(channel_id, req.headers(), body).await {
         Ok((stream_id, body)) => {
-            let mut response = Response::builder()
+            Response::builder()
                 .status(200)
+                .header(HEADER_NAME_CHANNEL_ID, channel_id)
+                .header(HEADER_NAME_STREAM_ID, stream_id)
                 .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
                 .body(body)
-                .unwrap();
-            let headers = response.headers_mut();
-            headers.insert(HEADER_NAME_CHANNEL_ID, channel_id.into());
-            headers.insert(HEADER_NAME_STREAM_ID, stream_id.into());
-            response
+                .unwrap()
         },
         Err(e) => Response::from(&e)
     }
@@ -80,15 +74,13 @@ pub async fn start_server_stream(channel_id: usize, mut req: Request<Vec<u8>>) -
 pub async fn read_server_stream(channel_id: usize, stream_id: usize, req: Request<Vec<u8>>) -> Response<Vec<u8>> {
     match GRPC_PROXY.read_server_stream(channel_id, stream_id, req.headers()).await {
         Ok(body) => {
-            let mut response = Response::builder()
+            Response::builder()
                 .status(200)
+                .header(HEADER_NAME_CHANNEL_ID, channel_id)
+                .header(HEADER_NAME_STREAM_ID, stream_id)
                 .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
                 .body(body)
-                .unwrap();
-            let headers = response.headers_mut();
-            headers.insert(HEADER_NAME_CHANNEL_ID, channel_id.into());
-            headers.insert(HEADER_NAME_STREAM_ID, stream_id.into());
-            response
+                .unwrap()
         },
         Err(e) => Response::from(&e)
     }
@@ -97,15 +89,22 @@ pub async fn read_server_stream(channel_id: usize, stream_id: usize, req: Reques
 pub async fn delete_server_stream(channel_id: usize, stream_id: usize, _req: Request<Vec<u8>>) -> Response<Vec<u8>> {
     match GRPC_PROXY.destroy_server_stream(channel_id, stream_id).await {
         Ok(()) => {
-            let mut response = Response::builder()
+            Response::builder()
                 .status(200)
+                .header(HEADER_NAME_CHANNEL_ID, channel_id)
                 .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
                 .body(Vec::new())
-                .unwrap();
-            let headers = response.headers_mut();
-            headers.insert(HEADER_NAME_CHANNEL_ID, channel_id.into());
-            response
+                .unwrap()
         }
         Err(e) => Response::from(&e)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    #[tokio::test]
+    async fn test_requests() -> anyhow::Result<()> {
+        // XXX
+        Ok(())
     }
 }
