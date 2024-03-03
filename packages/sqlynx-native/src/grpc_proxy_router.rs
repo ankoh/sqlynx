@@ -88,10 +88,14 @@ mod test {
 
     use crate::grpc_proxy::HEADER_NAME_CHANNEL_ID;
     use crate::grpc_proxy::HEADER_NAME_HOST;
+    use crate::grpc_proxy::HEADER_NAME_PATH;
+    use crate::proto::sqlynx_test_v1::TestUnaryRequest;
+    use crate::proto::sqlynx_test_v1::TestUnaryResponse;
     use crate::test::test_service_mock::spawn_test_service_mock;
     use crate::test::test_service_mock::TestServiceMock;
 
     use anyhow::Result;
+    use prost::Message;
     use tauri::http::header::CONTENT_TYPE;
     use tauri::http::Request;
 
@@ -134,11 +138,73 @@ mod test {
             .unwrap();
         let response = route_grpc_proxy_request(&mut request).await.unwrap();
         assert_eq!(response.status(), 200);
-
-        // Get channel id
         assert!(response.headers().contains_key(HEADER_NAME_CHANNEL_ID));
         let channel_id = response.headers().get(HEADER_NAME_CHANNEL_ID).unwrap().to_str().unwrap();
         let channel_id: usize = channel_id.parse().unwrap();
+
+        // Delete gRPC channel
+        let mut request: Request<Vec<u8>> = Request::builder()
+            .method("DELETE")
+            .uri(format!("{}/grpc/channel/{}", host, channel_id))
+            .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
+            .body(Vec::new())
+            .unwrap();
+        let response = route_grpc_proxy_request(&mut request).await.unwrap();
+        assert_eq!(response.status(), 200);
+
+        shutdown.send(()).unwrap();
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_unary_call() -> Result<()> {
+        // Spawn a test service mock
+        let (mock, mut setup_unary, mut _setup_server_streaming) = TestServiceMock::new();
+        let (addr, shutdown) = spawn_test_service_mock(mock).await;
+        let host = format!("http://{}", addr);
+
+        // Respond single streaming response
+        let unary_call = tokio::spawn(async move {
+            let (param, result_sender) = setup_unary.recv().await.unwrap();
+            result_sender.send(Ok(TestUnaryResponse {
+                data: "response data".to_string()
+            })).await.unwrap();
+            param
+        });
+
+        // Create gRPC channel
+        let mut request: Request<Vec<u8>> = Request::builder()
+            .method("POST")
+            .uri(format!("{}/grpc/channels", host))
+            .header(HEADER_NAME_HOST, &host)
+            .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
+            .body(Vec::new())
+            .unwrap();
+        let response = route_grpc_proxy_request(&mut request).await.unwrap();
+        assert_eq!(response.status(), 200);
+        assert!(response.headers().contains_key(HEADER_NAME_CHANNEL_ID));
+        let channel_id = response.headers().get(HEADER_NAME_CHANNEL_ID).unwrap().to_str().unwrap();
+        let channel_id: usize = channel_id.parse().unwrap();
+
+        // Call unary gRPC call
+        let request_param = TestUnaryRequest {
+            data: "request data".to_string()
+        };
+        let mut request: Request<Vec<u8>> = Request::builder()
+            .method("POST")
+            .uri(format!("{}/grpc/channel/{}/unary", host, channel_id))
+            .header(HEADER_NAME_PATH, "/sqlynx.test.v1.TestService/TestUnary")
+            .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
+            .body(request_param.encode_to_vec())
+            .unwrap();
+        let response = route_grpc_proxy_request(&mut request).await.unwrap();
+        assert_eq!(response.status(), 200);
+
+        // Check received parameter
+        let received_param = unary_call.await?;
+        let received_response = TestUnaryResponse::decode(response.body().as_slice()).unwrap();
+        assert_eq!(received_param.data, "request data");
+        assert_eq!(received_response.data, "response data");
 
         // Delete gRPC channel
         let mut request: Request<Vec<u8>> = Request::builder()
