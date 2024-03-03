@@ -138,7 +138,7 @@ mod test {
         // Get channel id
         assert!(response.headers().contains_key(HEADER_NAME_CHANNEL_ID));
         let channel_id = response.headers().get(HEADER_NAME_CHANNEL_ID).unwrap().to_str().unwrap();
-        assert!(!channel_id.is_empty());
+        let channel_id: usize = channel_id.parse().unwrap();
 
         // Delete gRPC channel
         let mut request: Request<Vec<u8>> = Request::builder()
