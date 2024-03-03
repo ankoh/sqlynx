@@ -42,7 +42,8 @@ pub async fn delete_channel(channel_id: usize) -> Response<Vec<u8>> {
 }
 
 pub async fn call_unary(channel_id: usize, mut req: Request<Vec<u8>>) -> Response<Vec<u8>> {
-    match GRPC_PROXY.call_unary(channel_id, &mut req).await {
+    let body = std::mem::take(req.body_mut());
+    match GRPC_PROXY.call_unary(channel_id, req.headers(), body).await {
         Ok(body) => {
             let response = Response::builder()
                 .status(200)
