@@ -38,11 +38,20 @@ pub struct GrpcChannelEntry {
     pub channel: tonic::transport::Channel,
 }
 
-#[derive(Default)]
 pub struct GrpcProxy {
     pub next_channel_id: AtomicUsize,
     pub channels: RwLock<HashMap<usize, Arc<GrpcChannelEntry>>>,
     pub streams: Arc<GrpcStreamManager>,
+}
+
+impl Default for GrpcProxy {
+    fn default() -> Self {
+        Self {
+            next_channel_id: AtomicUsize::new(1),
+            channels: Default::default(),
+            streams: Default::default(),
+        }
+    }
 }
 
 /// Helper to unpack parameters for a gRPC channel
