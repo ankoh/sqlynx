@@ -129,43 +129,6 @@ fn require_string_header(headers: &HeaderMap, header_name: &'static str) -> Resu
     }
 }
 
-/// Helper to read a number from request headers
-fn require_number_header(headers: &HeaderMap, header_name: &'static str) -> Result<usize, Status> {
-    if let Some(header) = headers.get(header_name) {
-        let id_string = header
-            .to_str()
-            .map_err(|e| Status::HeaderHasInvalidEncoding{ header: header_name, message: e.to_string() })?
-            .to_string();
-        let id: usize = id_string.parse::<usize>().map_err(|e|
-            Status::HeaderIsNotANumber { header: header_name, message: e.to_string() }
-        )?;
-        Ok(id)
-    } else {
-        Err(Status::HeaderRequiredButMissing { header: header_name })
-    }
-}
-
-/// Helper to register a channel
-fn register_channel<T>(dict: &RwLock<HashMap<usize, Arc<T>>>, id: usize, req: Arc<T>) {
-    if let Ok(mut channels) = dict.write() {
-        channels.insert(id, req.clone());
-    }
-}
-/// Helper to remove a channel
-fn remove_channel<T>(dict: &RwLock<HashMap<usize, Arc<T>>>, id: usize) {
-    if let Ok(mut channels) = dict.write() {
-        channels.remove(&id);
-    }
-}
-/// Helper to find a channel
-fn find_channel<T>(dict: &RwLock<HashMap<usize, Arc<T>>>, id: usize) -> Option<Arc<T>> {
-    if let Ok(channels) = dict.read() {
-        channels.get(&id).cloned()
-    } else {
-        None
-    }
-}
-
 impl GrpcProxy {
     /// Create a channel
     pub async fn create_channel(&self, headers: &mut HeaderMap) -> Result<usize, Status> {
@@ -179,16 +142,16 @@ impl GrpcProxy {
             .await
             .map_err(|e| Status::EndpointConnectFailed{ message: e.to_string() })?;
 
-        register_channel(
-            &self.channels,
-            channel_id,
-            Arc::new(GrpcChannelEntry { channel }),
-        );
+        if let Ok(mut channels) = self.channels.write() {
+            channels.insert(channel_id, Arc::new(GrpcChannelEntry { channel }));
+        }
         Ok(channel_id)
     }
     /// Destroy a channel
     pub async fn destroy_channel(&self, channel_id: usize) -> Result<(), Status> {
-        remove_channel(&self.channels, channel_id);
+        if let Ok(mut channels) = self.channels.write() {
+            channels.remove(&channel_id);
+        }
         Ok(())
     }
 
