@@ -36,10 +36,10 @@ async fn delete_server_stream(Path(_channel_id): Path<usize>, Path(_stream_id): 
 
 pub fn create_grpc_router() -> axum::Router<()> {
     Router::new()
-        .route("/channel", post(create_channel))
+        .route("/channels", post(create_channel))
         .route("/channel/:channel_id", delete(delete_channel))
         .route("/channel/:channel_id/unary", post(call_unary))
-        .route("/channel/:channel_id/stream", post(start_server_stream))
+        .route("/channel/:channel_id/streams", post(start_server_stream))
         .route("/channel/:channel_id/stream/:stream_id", get(read_server_stream))
         .route("/channel/:channel_id/stream/:stream_id", delete(delete_server_stream))
 }
