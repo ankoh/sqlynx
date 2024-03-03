@@ -6,7 +6,6 @@ use std::sync::RwLock;
 
 use anyhow::anyhow;
 use anyhow::Result;
-use tauri::http::uri::PathAndQuery;
 use tauri::http::HeaderMap;
 use tauri::http::HeaderValue;
 use tauri::http::Request;
