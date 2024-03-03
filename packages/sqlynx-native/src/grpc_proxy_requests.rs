@@ -1,3 +1,4 @@
+use tauri::http::StatusCode;
 use tauri::http::Request;
 use tauri::http::Response;
 use lazy_static::lazy_static;
@@ -24,7 +25,7 @@ pub async fn create_channel(mut req: Request<Vec<u8>>) -> Response<Vec<u8>> {
         },
         Err(e) => {
             let mut response = Response::builder()
-                .status(400)
+                .status(StatusCode::from(&e).as_u16())
                 .body(Vec::new())
                 .unwrap();
             let headers = response.headers_mut();
