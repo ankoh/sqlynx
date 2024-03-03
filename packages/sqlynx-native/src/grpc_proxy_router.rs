@@ -5,7 +5,12 @@ use tauri::http::Request;
 use tauri::http::Response;
 use regex_automata::meta::Regex;
 
-use crate::grpc_proxy::GrpcProxy;
+use crate::grpc_proxy_requests::call_unary;
+use crate::grpc_proxy_requests::create_channel;
+use crate::grpc_proxy_requests::delete_channel;
+use crate::grpc_proxy_requests::delete_server_stream;
+use crate::grpc_proxy_requests::read_server_stream;
+use crate::grpc_proxy_requests::start_server_stream;
 
 #[derive(Debug, PartialEq)]
 pub enum GrpcProxyRoute {
@@ -54,34 +59,6 @@ pub fn parse_grpc_route(path: &str) -> Option<GrpcProxyRoute> {
             None
         }
     }
-}
-
-lazy_static! {
-    static ref GRPC_PROXY: GrpcProxy = GrpcProxy::default();
-}
-
-async fn create_channel(_req: Request<Vec<u8>>) -> Response<Vec<u8>> {
-    unimplemented!("create_channel")
-}
-
-async fn delete_channel(_channel_id: usize, _req: Request<Vec<u8>>) -> Response<Vec<u8>> {
-    unimplemented!("delete_channel")
-}
-
-async fn call_unary(_channel_id: usize, _req: Request<Vec<u8>>) -> Response<Vec<u8>> {
-    unimplemented!("call_unary")
-}
-
-async fn start_server_stream(_channel_id: usize, _req: Request<Vec<u8>>) -> Response<Vec<u8>> {
-    unimplemented!("start_server_stream")
-}
-
-async fn read_server_stream(_channel_id: usize, _stream_id: usize, _req: Request<Vec<u8>>) -> Response<Vec<u8>> {
-    unimplemented!("read_server_stream")
-}
-
-async fn delete_server_stream(_channel_id: usize, _stream_id: usize, _req: Request<Vec<u8>>) -> Response<Vec<u8>> {
-    unimplemented!("delete_server_stream")
 }
 
 
