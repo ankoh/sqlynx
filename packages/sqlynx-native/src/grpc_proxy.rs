@@ -186,13 +186,28 @@ impl GrpcProxy {
     }
 
     /// Call a gRPC function with results streamed from the server
-    pub async fn start_server_stream(&self, channel_id: usize, _headers: &HeaderMap, _body: Vec<u8>) -> Result<(usize, Vec<u8>), Status> {
-        let _channel_entry = if let Some(channel) = self.channels.read().unwrap().get(&channel_id) {
+    pub async fn start_server_stream(&self, channel_id: usize, headers: &HeaderMap, body: Vec<u8>) -> Result<usize, Status> {
+        let path = require_string_header(headers, HEADER_NAME_PATH)?;
+        let channel_entry = if let Some(channel) = self.channels.read().unwrap().get(&channel_id) {
             channel.clone()
         } else {
             return Err(Status::ChannelIdIsUnknown { channel_id });
         };
-        Ok((42, Vec::new()))
+        let mut client = GenericGrpcClient::new(channel_entry.channel.clone());
+        let path = PathAndQuery::from_str(&path)
+            .map_err(|e| {
+                Status::HeaderPathIsInvalid { header: HEADER_NAME_PATH, path: path.to_string(), message: e.to_string() }
+            })?;
+        let request = tonic::Request::new(body);
+        let mut response = client.call_server_streaming(request, path).await
+            .map_err(|status| Status::GrpcCallFailed { status })?;
+
+        let _response_headers = std::mem::take(response.metadata_mut());
+        // let streaming = response.into_inner();
+
+        // self.streams.start_server_stream(streaming).unwrap_or_default();
+
+        Ok(42)
     }
 
     /// Read from a result stream
