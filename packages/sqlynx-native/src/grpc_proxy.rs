@@ -212,7 +212,7 @@ impl GrpcProxy {
         let req = tonic::Request::new(std::mem::take(body));
 
         let _response = client.call_unary(req, path).await
-            .map_err(|e| Status::GrpcUnaryCallFailed { message: e.to_string() })?;
+            .map_err(|status| Status::GrpcCallFailed { status })?;
         Ok(Vec::new())
     }
 
