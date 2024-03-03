@@ -99,12 +99,3 @@ pub async fn delete_server_stream(channel_id: usize, stream_id: usize, _req: Req
         Err(e) => Response::from(&e)
     }
 }
-
-#[cfg(test)]
-mod test {
-    #[tokio::test]
-    async fn test_requests() -> anyhow::Result<()> {
-        // XXX
-        Ok(())
-    }
-}
