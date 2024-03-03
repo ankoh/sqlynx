@@ -6,6 +6,7 @@ use std::sync::RwLock;
 
 use anyhow::anyhow;
 use anyhow::Result;
+use tauri::http::uri::PathAndQuery;
 use tauri::http::HeaderMap;
 use tauri::http::HeaderValue;
 use tauri::http::Request;
@@ -21,6 +22,7 @@ const HEADER_NAME_TLS_CLIENT_CERT: &'static str = "sqlynx-tls-client-cert";
 const HEADER_NAME_TLS_CACERTS: &'static str = "sqlynx-tls-cacerts";
 const HEADER_NAME_CHANNEL_ID: &'static str = "sqlynx-channel-id";
 const HEADER_NAME_STREAM_ID: &'static str = "sqlynx-stream-id";
+const HEADER_NAME_PATH: &'static str = "sqlynx-path";
 
 struct GrpcRequestTlsConfig {
     client_key: String,
@@ -117,10 +119,25 @@ fn read_channel_params(req: &mut Request<Vec<u8>>) -> Result<GrpcChannelParams> 
     };
 
     Ok(GrpcChannelParams { endpoint, tls })
+
+}
+/// Helper to read a string from request headers
+fn require_string_header<V>(req: &Request<V>, header_name: &'static str) -> Result<String> {
+    if let Some(header) = req.headers().get(header_name) {
+        let header = header
+            .to_str()
+            .map_err(|e| {
+                anyhow!("request header '{}' has an invalid encoding: {}", header_name, e)
+            })?
+            .to_string();
+        Ok(header)
+    } else {
+        Err(anyhow!("missing required header '{}'", header_name))
+    }
 }
 
-/// Helper to read a stream id from request headers
-fn require_id_header<V>(req: &Request<V>, header_name: &'static str) -> Result<u64> {
+/// Helper to read a number from request headers
+fn require_number_header<V>(req: &Request<V>, header_name: &'static str) -> Result<u64> {
     if let Some(header) = req.headers().get(header_name) {
         let id_string = header
             .to_str()
@@ -180,28 +197,34 @@ impl GrpcProxy {
     }
     /// Destroy a channel
     pub async fn destroy_channel(&self, req: Request<Vec<u8>>) -> Result<()> {
-        let channel_id = require_id_header(&req, HEADER_NAME_CHANNEL_ID)?;
+        let channel_id = require_number_header(&req, HEADER_NAME_CHANNEL_ID)?;
         remove_channel(&self.channels, channel_id);
         Ok(())
     }
 
     /// Call a unary gRPC function
-    pub async fn call_unary(&self, req: Request<Vec<u8>>) -> Result<Vec<u8>> {
-        let channel_id = require_id_header(&req, HEADER_NAME_CHANNEL_ID)?;
+    pub async fn call_unary(&self, mut req: Request<Vec<u8>>) -> Result<Vec<u8>> {
+        let path = require_string_header(&req, HEADER_NAME_PATH)?;
+        let channel_id = require_number_header(&req, HEADER_NAME_CHANNEL_ID)?;
         let channel_entry = if let Some(channel) = self.channels.read().unwrap().get(&channel_id) {
             channel.clone()
         } else {
             return Err(anyhow!("channel id refers to unknown channel '{}'", channel_id));
         };
-        let _client = GenericGrpcClient::new(channel_entry.channel.clone());
-        // let path = PathAndQuery::from_static();
-        // let response = client.call_unary(req, path).await?;
+        let mut client = GenericGrpcClient::new(channel_entry.channel.clone());
+        let path = PathAndQuery::from_str(&path)?;
+
+        let mut body = Vec::new();
+        std::mem::swap(&mut body, req.body_mut());
+        let req = tonic::Request::new(body);
+
+        let _response = client.call_unary(req, path).await?;
         Ok(Vec::new())
     }
 
     /// Call a gRPC function with results streamed from the server
     pub async fn start_server_stream(&self, req: Request<Vec<u8>>) -> Result<Vec<u8>> {
-        let channel_id = require_id_header(&req, HEADER_NAME_CHANNEL_ID)?;
+        let channel_id = require_number_header(&req, HEADER_NAME_CHANNEL_ID)?;
         let _channel_entry = if let Some(channel) = self.channels.read().unwrap().get(&channel_id) {
             channel.clone()
         } else {
@@ -212,7 +235,7 @@ impl GrpcProxy {
 
     /// Read from a result stream
     pub async fn read_server_stream(&self, req: Request<Vec<u8>>) -> Result<Vec<u8>> {
-        let _stream_id = require_id_header(&req, HEADER_NAME_STREAM_ID)?;
+        let _stream_id = require_number_header(&req, HEADER_NAME_STREAM_ID)?;
         Ok(Vec::new())
     }
 }
