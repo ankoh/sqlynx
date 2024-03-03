@@ -20,7 +20,7 @@ impl GenericGrpcClient {
 
     pub async fn call_unary(
         &mut self,
-        request: impl tonic::IntoRequest<GenericGrpcClientData>,
+        request: tonic::Request<GenericGrpcClientData>,
         path: tauri::http::uri::PathAndQuery,
     ) -> std::result::Result<
         tonic::Response<GenericGrpcClientData>,
@@ -35,14 +35,13 @@ impl GenericGrpcClient {
                     format!("Service was not ready: {}", e),
                 )
             })?;
-        let request = request.into_request();
         let codec = PassthroughCodec::default();
         self.inner.unary(request, path, codec).await
     }
 
     pub async fn call_server_streaming(
         &mut self,
-        request: impl tonic::IntoRequest<GenericGrpcClientData>,
+        request: tonic::Request<GenericGrpcClientData>,
         path: tauri::http::uri::PathAndQuery,
     ) -> std::result::Result<
         tonic::Response<tonic::codec::Streaming<GenericGrpcClientData>>,
@@ -57,7 +56,6 @@ impl GenericGrpcClient {
                     format!("Service was not ready: {}", e),
                 )
             })?;
-        let request = request.into_request();
         let codec = PassthroughCodec::default();
         self.inner.server_streaming(request, path, codec).await
     }
@@ -137,7 +135,7 @@ mod test {
         let unary_param = TestUnaryRequest {
             data: "request data".to_string()
         };
-        let unary_req = unary_param.encode_to_vec();
+        let unary_req = tonic::Request::new(unary_param.encode_to_vec());
         let unary_result = client.call_unary(unary_req, unary_path).await?;
 
         // Check received parameter
@@ -179,7 +177,7 @@ mod test {
         let streaming_param = TestServerStreamingRequest {
             data: "request data".to_string()
         };
-        let streaming_req = streaming_param.encode_to_vec();
+        let streaming_req = tonic::Request::new(streaming_param.encode_to_vec());
         let streaming_response = client.call_server_streaming(streaming_req, streaming_path).await?;
 
         // Check received parameter
