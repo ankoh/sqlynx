@@ -10,6 +10,7 @@ use tokio::sync::Mutex;
 use tonic::metadata::MetadataMap;
 
 use crate::proto::salesforce_hyperdb_grpc_v1::QueryResult;
+use crate::status::Status;
 
 #[derive(Debug)]
 pub enum GrpcServerStreamEvent {
@@ -85,7 +86,7 @@ impl GrpcStreamManager {
     pub fn start_server_stream<T: Into<Vec<u8>> + Send + 'static>(
         self: &Arc<Self>,
         mut streaming: tonic::Streaming<T>,
-    ) -> anyhow::Result<usize> {
+    ) -> Result<usize, Status> {
         // Allocate an identifier for the stream
         let reg = self.clone();
         let stream_id = reg
