@@ -4288,6 +4288,7 @@ name = "sqlynx-native"
 version = "0.0.2-dev.17"
 dependencies = [
  "anyhow",
+ "byteorder",
  "bytes",
  "env_logger",
  "http 1.0.0",
