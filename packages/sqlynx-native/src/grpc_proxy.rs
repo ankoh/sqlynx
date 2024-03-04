@@ -188,7 +188,7 @@ impl GrpcProxy {
     }
 
     /// Call a gRPC function with results streamed from the server
-    pub async fn start_server_stream(&self, channel_id: usize, headers: &HeaderMap, body: Vec<u8>) -> Result<usize, Status> {
+    pub async fn start_server_stream(&self, channel_id: usize, headers: &HeaderMap, body: Vec<u8>) -> Result<(usize, MetadataMap), Status> {
         let path = require_string_header(headers, HEADER_NAME_PATH)?;
         let channel_entry = if let Some(channel) = self.channels.read().unwrap().get(&channel_id) {
             channel.clone()
@@ -204,12 +204,12 @@ impl GrpcProxy {
         let mut response = client.call_server_streaming(request, path).await
             .map_err(|status| Status::GrpcCallFailed { status })?;
 
-        let _response_headers = std::mem::take(response.metadata_mut());
+        let response_headers = std::mem::take(response.metadata_mut());
         // let streaming = response.into_inner();
 
         // self.streams.start_server_stream(streaming).unwrap_or_default();
 
-        Ok(42)
+        Ok((42, response_headers))
     }
 
     /// Read from a result stream
