@@ -28,6 +28,8 @@ pub const HEADER_NAME_STREAM_ID: &'static str = "sqlynx-stream-id";
 pub const HEADER_NAME_READ_TIMEOUT: &'static str = "sqlynx-read-timeout";
 pub const HEADER_NAME_BATCH_TIMEOUT: &'static str = "sqlynx-batch-timout";
 pub const HEADER_NAME_BATCH_BYTES: &'static str = "sqlynx-batch-bytes";
+pub const HEADER_NAME_BATCH_EVENT: &'static str = "sqlynx-batch-event";
+pub const HEADER_NAME_BATCH_MESSAGES: &'static str = "sqlynx-batch-messages";
 
 struct GrpcRequestTlsConfig {
     client_key: String,

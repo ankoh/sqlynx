@@ -29,6 +29,18 @@ pub enum GrpcServerStreamBatchEvent {
     FlushAfterBytes,
 }
 
+impl GrpcServerStreamBatchEvent {
+    pub fn to_str(&self) -> &'static str {
+        match self {
+            GrpcServerStreamBatchEvent::StreamFailed => "StreamFailed",
+            GrpcServerStreamBatchEvent::StreamFinished => "StreamFinished",
+            GrpcServerStreamBatchEvent::FlushAfterClose => "FlushAfterClose",
+            GrpcServerStreamBatchEvent::FlushAfterTimeout => "FlushAfterTimeout",
+            GrpcServerStreamBatchEvent::FlushAfterBytes => "FlushAfterBytes",
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct GrpcServerStreamBatch {
     /// The event that emitted the batch
