@@ -1,3 +1,7 @@
+use std::io::Write;
+
+use byteorder::LittleEndian;
+use byteorder::WriteBytesExt;
 use tauri::http::header::CONTENT_TYPE;
 use tauri::http::HeaderMap;
 use tauri::http::HeaderName;
@@ -110,14 +114,18 @@ pub async fn start_server_stream(channel_id: usize, mut req: Request<Vec<u8>>) -
 
 pub async fn read_server_stream(channel_id: usize, stream_id: usize, req: Request<Vec<u8>>) -> Response<Vec<u8>> {
     match GRPC_PROXY.read_server_stream(channel_id, stream_id, req.headers()).await {
-        Ok(_batch) => {
-            // XXX Unpack the stream result
+        Ok(batches) => {
+            let mut buffer: Vec<u8> = Vec::with_capacity(batches.total_message_bytes + 4 * batches.messages.len());
+            for message in batches.messages.iter() {
+                buffer.write_u32::<LittleEndian>(message.len() as u32).unwrap();
+                buffer.write(&message).unwrap();
+            }
             Response::builder()
                 .status(200)
                 .header(HEADER_NAME_CHANNEL_ID, channel_id)
                 .header(HEADER_NAME_STREAM_ID, stream_id)
                 .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
-                .body(Vec::new())
+                .body(buffer)
                 .unwrap()
         },
         Err(e) => Response::from(&e)
