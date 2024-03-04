@@ -10,28 +10,21 @@ use tokio::sync::Mutex;
 use tonic::metadata::MetadataMap;
 
 use crate::proto::salesforce_hyperdb_grpc_v1::QueryResult;
+use crate::status::GrpcStreamElement;
 use crate::status::Status;
 
 #[derive(Debug)]
 pub enum GrpcServerStreamEvent {
     Message(Vec<u8>),
     End(MetadataMap),
-    Error(Box<dyn std::error::Error + Send + Sync>),
-}
-
-#[derive(Debug)]
-pub enum GrpcServerStreamResult {
-    Messages(GrpcServerStreamBatch),
-    Error(Box<dyn std::error::Error + Send + Sync>),
-    ReadTimeout,
-    StreamUnknown,
-    StreamClosed,
+    ReadFailed(tonic::Status, GrpcStreamElement),
 }
 
 #[derive(Debug, PartialEq)]
 pub enum GrpcServerStreamBatchEvent {
     StreamFailed,
     StreamFinished,
+    FlushAfterClose,
     FlushAfterTimeout,
     FlushAfterBytes,
 }
@@ -60,6 +53,9 @@ impl Default for GrpcServerStreamBatch {
 }
 
 pub struct GRPCServerStream {
+    /// The channel id
+    #[allow(dead_code)]
+    channel_id: usize,
     /// The response queue
     response_sender: tokio::sync::mpsc::Sender<GrpcServerStreamEvent>,
     /// The response queue reading
@@ -85,6 +81,7 @@ impl GrpcStreamManager {
     #[allow(dead_code)]
     pub fn start_server_stream<T: Into<Vec<u8>> + Send + 'static>(
         self: &Arc<Self>,
+        channel_id: usize,
         mut streaming: tonic::Streaming<T>,
     ) -> Result<usize, Status> {
         // Allocate an identifier for the stream
@@ -97,6 +94,7 @@ impl GrpcStreamManager {
         const STREAM_CAPACITY: usize = 10;
         let (sender, receiver) = tokio::sync::mpsc::channel(STREAM_CAPACITY);
         let stream_entry = Arc::new(GRPCServerStream {
+            channel_id,
             response_sender: sender,
             response_receiver: Mutex::new(receiver),
         });
@@ -127,8 +125,7 @@ impl GrpcStreamManager {
                             Ok(Some(trailer)) => GrpcServerStreamEvent::End(trailer),
                             Ok(None) => GrpcServerStreamEvent::End(MetadataMap::new()),
                             Err(e) => {
-                                log::warn!("reading trailers failed with error: {}", e);
-                                GrpcServerStreamEvent::Error(Box::new(e))
+                                GrpcServerStreamEvent::ReadFailed(e, GrpcStreamElement::Trailers)
                             }
                         }
                     }
@@ -136,7 +133,7 @@ impl GrpcStreamManager {
                     Err(e) => {
                         stream_alive = false;
                         log::warn!("reading from server stream failed with error: {}", e);
-                        GrpcServerStreamEvent::Error(Box::new(e))
+                        GrpcServerStreamEvent::ReadFailed(e, GrpcStreamElement::Message)
                     }
                 };
 
@@ -160,11 +157,12 @@ impl GrpcStreamManager {
     #[allow(dead_code)]
     pub async fn read_server_stream(
         self: &Arc<Self>,
+        channel_id: usize,
         stream_id: usize,
         timeout_read_after: Duration,
         flush_batch_after: Duration,
         flush_batch_bytes: usize,
-    ) -> GrpcServerStreamResult {
+    ) -> Result<GrpcServerStreamBatch, Status> {
         let started_at = Instant::now();
 
         // Try to find the stream.
@@ -173,7 +171,7 @@ impl GrpcStreamManager {
         let stream = if let Some(streams) = reg.server_streams.read().unwrap().get(&stream_id) {
             streams.clone()
         } else {
-            return GrpcServerStreamResult::StreamUnknown;
+            return Err(Status::GrpcStreamIsUnknown { channel_id, stream_id });
         };
 
         // Acquire the receiver lock.
@@ -191,10 +189,10 @@ impl GrpcStreamManager {
                 match timeout(receive_timeout, receiver.recv()).await {
                     Ok(Some(response)) =>  response,
                     Ok(None) => {
-                        return GrpcServerStreamResult::StreamClosed;
+                        return Err(Status::GrpcStreamClosed { channel_id, stream_id });
                     },
                     Err(_) => {
-                        return GrpcServerStreamResult::ReadTimeout;
+                        return Err(Status::GrpcStreamReadTimedOut { channel_id, stream_id });
                     }
                 }
             } else {
@@ -203,17 +201,18 @@ impl GrpcStreamManager {
                     Some(timeout) => timeout,
                     None => {
                         batch.event = GrpcServerStreamBatchEvent::FlushAfterTimeout;
-                        return GrpcServerStreamResult::Messages(batch);
+                        return Ok(batch);
                     }
                 };
                 match timeout(receive_timeout, receiver.recv()).await {
                     Ok(Some(response)) =>  response,
                     Ok(None) => {
-                        return GrpcServerStreamResult::StreamClosed;
+                        batch.event = GrpcServerStreamBatchEvent::FlushAfterClose;
+                        return Ok(batch);
                     },
                     Err(_) => {
                         batch.event = GrpcServerStreamBatchEvent::FlushAfterTimeout;
-                        return GrpcServerStreamResult::Messages(batch);
+                        return Ok(batch);
                     }
                 }
             };
@@ -227,15 +226,20 @@ impl GrpcStreamManager {
                     }
                     batch.trailers = Some(trailers);
                     batch.event = GrpcServerStreamBatchEvent::StreamFinished;
-                    return GrpcServerStreamResult::Messages(batch);
+                    return Ok(batch);
                 }
                 // An error occurred,.
                 // Throw away any intermediate messages that we held back.
-                GrpcServerStreamEvent::Error(e) => {
+                GrpcServerStreamEvent::ReadFailed(status, element) => {
                     if let Ok(mut streams) = self.server_streams.write() {
                         streams.remove(&stream_id);
                     }
-                    return GrpcServerStreamResult::Error(e);
+                    return Err(Status::GrpcStreamReadFailed{
+                        channel_id,
+                        stream_id,
+                        element,
+                        status,
+                    });
                 }
                 // Return the message
                 GrpcServerStreamEvent::Message(m) => {
@@ -246,7 +250,7 @@ impl GrpcStreamManager {
                     // Flush if we hit the message size
                     if batch.total_message_bytes > flush_batch_bytes {
                         batch.event = GrpcServerStreamBatchEvent::FlushAfterBytes;
-                        return GrpcServerStreamResult::Messages(batch);
+                        return Ok(batch);
                     }
                 },
             }
@@ -266,10 +270,10 @@ impl GrpcStreamManager {
 #[cfg(test)]
 mod test {
     use super::*;
-    use anyhow::Result;
     use std::collections::HashMap;
     use tokio_stream::StreamExt;
 
+    use crate::status::Status;
     use crate::test::hyper_service_mock::{spawn_hyper_service_mock, HyperServiceMock};
     use crate::proto::salesforce_hyperdb_grpc_v1::hyper_service_client::HyperServiceClient;
     use crate::proto::salesforce_hyperdb_grpc_v1::query_param;
@@ -283,7 +287,7 @@ mod test {
     use crate::proto::salesforce_hyperdb_grpc_v1::{ColumnDescription, QueryResult};
 
     #[tokio::test]
-    async fn test_execute_query_mock() -> Result<()> {
+    async fn test_execute_query_mock() -> Result<(), Status> {
         let (mock, mut setup_execute_query) = HyperServiceMock::new();
         let (addr, shutdown) = spawn_hyper_service_mock(mock).await;
         let mut client = HyperServiceClient::connect(format!("http://{}", addr))
@@ -315,14 +319,14 @@ mod test {
                     })),
                 })),
             }))
-            .await?;
+            .await.unwrap();
         result_sender
             .send(Ok(QueryResult {
                 result: Some(query_result::Result::ArrowChunk(QueryBinaryResultChunk {
                     data: vec![0x1, 0x2, 0x3, 0x4],
                 })),
             }))
-            .await?;
+            .await.unwrap();
         drop(result_sender);
 
         let mut results = Vec::new();
@@ -363,7 +367,7 @@ mod test {
     }
 
     #[tokio::test]
-    async fn test_stream_reader() -> Result<()> {
+    async fn test_stream_reader() -> Result<(), Status> {
         // Spawn a hyper service mock
         let (mock, mut setup_execute_query) = HyperServiceMock::new();
         let (addr, shutdown) = spawn_hyper_service_mock(mock).await;
@@ -395,7 +399,7 @@ mod test {
             }),
         ];
         for msg in messages.iter() {
-            result_sender.send(msg.clone()).await?;
+            result_sender.send(msg.clone()).await.unwrap();
         }
         drop(result_sender);
 
@@ -403,17 +407,11 @@ mod test {
         let reg = Arc::new(GrpcStreamManager::default());
         reg.next_stream_id
             .fetch_add(42, std::sync::atomic::Ordering::SeqCst);
-        let stream_id = reg.start_server_stream(res.into_inner()).unwrap();
+        let stream_id = reg.start_server_stream(0, res.into_inner()).unwrap();
         assert_eq!(stream_id, 42);
 
         // Read batched messages
-        let res = reg.read_server_stream(stream_id, Duration::from_secs(10), Duration::from_secs(10), 1000000).await;
-        let batch = match res {
-            GrpcServerStreamResult::Messages(batch) => batch,
-            r => {
-                panic!("unexpected: {:?}", r);
-            },
-        };
+        let batch = reg.read_server_stream(0, stream_id, Duration::from_secs(10), Duration::from_secs(10), 1000000).await?;
         assert_eq!(batch.messages.len(), 2);
         assert_eq!(batch.messages[0], messages[0].as_ref().unwrap().encode_to_vec());
         assert_eq!(batch.messages[1], messages[1].as_ref().unwrap().encode_to_vec());

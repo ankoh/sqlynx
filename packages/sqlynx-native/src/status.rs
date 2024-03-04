@@ -3,15 +3,26 @@ use std::fmt::{Display, Formatter, Error};
 use tauri::http::{header::CONTENT_TYPE, Response, StatusCode};
 
 #[derive(Debug)]
+pub enum GrpcStreamElement {
+    Message,
+    Trailers,
+}
+
+#[derive(Debug)]
 pub enum Status {
     HeaderHasInvalidEncoding{ header: &'static str, message: String },
     HeaderRequiredButMissing{ header: &'static str },
     HeaderIsNotAValidEndpoint{ header: &'static str, message: String },
     HeaderIsNotAnUsize{ header: &'static str, message: String },
     HeaderPathIsInvalid{ header: &'static str, path: String, message: String },
-    ChannelIdIsUnknown{ channel_id: usize },
-    EndpointConnectFailed{ message: String },
+    GrpcChannelIdIsUnknown{ channel_id: usize },
+    GrpcEndpointConnectFailed{ message: String },
     GrpcCallFailed{ status: tonic::Status },
+    GrpcStreamReadFailed { channel_id: usize, stream_id: usize, element: GrpcStreamElement, status: tonic::Status },
+    GrpcStreamReadTimedOut { channel_id: usize, stream_id: usize },
+    GrpcStreamIsUnknown { channel_id: usize, stream_id: usize },
+    GrpcStreamClosed { channel_id: usize, stream_id: usize },
+    GrpcStreamFailed { status: tonic::Status }
 }
 
 impl Display for Status {
@@ -32,14 +43,29 @@ impl Display for Status {
             Status::HeaderPathIsInvalid { header, path, message } => {
                 f.write_fmt(format_args!("header '{}' stores the path '{}' and is invalid: {}", header, path, message))
             }
-            Status::ChannelIdIsUnknown { channel_id } => {
-                f.write_fmt(format_args!("channel id {} is unknown", channel_id))
+            Status::GrpcChannelIdIsUnknown { channel_id } => {
+                f.write_fmt(format_args!("gRPC channel id {} is unknown", channel_id))
             }
-            Status::EndpointConnectFailed { message } => {
-                f.write_fmt(format_args!("connecting to endpoint failed with error: {}", message))
+            Status::GrpcEndpointConnectFailed { message } => {
+                f.write_fmt(format_args!("connecting to gRPC endpoint failed with error: {}", message))
             }
             Status::GrpcCallFailed { status } => {
                 f.write_fmt(format_args!("gRPC call failed with error: {}", status.to_string()))
+            }
+            Status::GrpcStreamReadFailed {  channel_id, stream_id, element, status  } => {
+                f.write_fmt(format_args!("reading {} from gRPC stream {} of channel {} failed with error: {}", match element { GrpcStreamElement::Trailers => "trailers", GrpcStreamElement::Message => "message" }, stream_id, channel_id, status.to_string()))
+            }
+            Status::GrpcStreamReadTimedOut { channel_id, stream_id } => {
+                f.write_fmt(format_args!("reading from gRPC stream {} of channel {} timed out", stream_id, channel_id))
+            }
+            Status::GrpcStreamIsUnknown { channel_id, stream_id } => {
+                f.write_fmt(format_args!("gRPC stream {} of channel {} is unknown", stream_id, channel_id))
+            }
+            Status::GrpcStreamClosed { channel_id, stream_id } => {
+                f.write_fmt(format_args!("gRPC stream {} of channel {} closed", stream_id, channel_id))
+            }
+            Status::GrpcStreamFailed { status } => {
+                f.write_fmt(format_args!("gRPC stream failed with error: {}", status))
             }
         }
     }
@@ -53,9 +79,14 @@ impl From<&Status> for StatusCode {
             Status::HeaderRequiredButMissing { header: _ } => StatusCode::BAD_REQUEST,
             Status::HeaderIsNotAnUsize { header: _, message: _ } => StatusCode::BAD_REQUEST,
             Status::HeaderPathIsInvalid { header: _, path: _, message: _ } => StatusCode::BAD_REQUEST,
-            Status::ChannelIdIsUnknown { channel_id: _ } => StatusCode::BAD_REQUEST,
-            Status::EndpointConnectFailed { message: _ } => StatusCode::BAD_REQUEST,
+            Status::GrpcChannelIdIsUnknown { channel_id: _ } => StatusCode::BAD_REQUEST,
+            Status::GrpcEndpointConnectFailed { message: _ } => StatusCode::BAD_REQUEST,
             Status::GrpcCallFailed { status: _ } => StatusCode::BAD_REQUEST,
+            Status::GrpcStreamReadFailed { channel_id: _, stream_id: _, element: _, status: _ } => StatusCode::BAD_REQUEST,
+            Status::GrpcStreamReadTimedOut { channel_id: _, stream_id: _ } => StatusCode::BAD_REQUEST,
+            Status::GrpcStreamIsUnknown { channel_id: _, stream_id: _ } => StatusCode::BAD_REQUEST,
+            Status::GrpcStreamClosed { channel_id: _, stream_id: _ } => StatusCode::BAD_REQUEST,
+            Status::GrpcStreamFailed { status: _ } => StatusCode::BAD_REQUEST,
         }
     }
 }

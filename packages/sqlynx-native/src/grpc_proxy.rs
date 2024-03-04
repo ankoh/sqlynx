@@ -13,7 +13,7 @@ use tonic::metadata::MetadataMap;
 use tonic::transport::channel::Endpoint;
 
 use crate::grpc_client::GenericGrpcClient;
-use crate::grpc_stream_manager::GrpcServerStreamResult;
+use crate::grpc_stream_manager::GrpcServerStreamBatch;
 use crate::grpc_stream_manager::GrpcStreamManager;
 use crate::status::Status;
 
@@ -169,7 +169,7 @@ impl GrpcProxy {
             .endpoint
             .connect()
             .await
-            .map_err(|e| Status::EndpointConnectFailed{ message: e.to_string() })?;
+            .map_err(|e| Status::GrpcEndpointConnectFailed{ message: e.to_string() })?;
 
         if let Ok(mut channels) = self.channels.write() {
             channels.insert(channel_id, Arc::new(GrpcChannelEntry { channel }));
@@ -190,7 +190,7 @@ impl GrpcProxy {
         let channel_entry = if let Some(channel) = self.channels.read().unwrap().get(&channel_id) {
             channel.clone()
         } else {
-            return Err(Status::ChannelIdIsUnknown { channel_id });
+            return Err(Status::GrpcChannelIdIsUnknown { channel_id });
         };
         let mut client = GenericGrpcClient::new(channel_entry.channel.clone());
         let path = PathAndQuery::from_str(&path)
@@ -212,7 +212,7 @@ impl GrpcProxy {
         let channel_entry = if let Some(channel) = self.channels.read().unwrap().get(&channel_id) {
             channel.clone()
         } else {
-            return Err(Status::ChannelIdIsUnknown { channel_id });
+            return Err(Status::GrpcChannelIdIsUnknown { channel_id });
         };
 
         // Send the gRPC request
@@ -230,17 +230,17 @@ impl GrpcProxy {
 
         // Register the output stream
         let streaming = response.into_inner();
-        let stream_id = self.streams.start_server_stream(streaming)?;
+        let stream_id = self.streams.start_server_stream(channel_id, streaming)?;
 
         Ok((stream_id, response_headers))
     }
 
     /// Read from a result stream
-    pub async fn read_server_stream(&self, channel_id: usize, stream_id: usize, headers: &HeaderMap) -> Result<GrpcServerStreamResult, Status> {
+    pub async fn read_server_stream(&self, channel_id: usize, stream_id: usize, headers: &HeaderMap) -> Result<GrpcServerStreamBatch, Status> {
         // We don't need the channel id to resolve the stream today since the stream id is unique across all channels.
         // We still check if the channel id exists so that we can still maintain streams per channel later.
         if self.channels.read().unwrap().get(&channel_id).is_none() {
-            return Err(Status::ChannelIdIsUnknown { channel_id });
+            return Err(Status::GrpcChannelIdIsUnknown { channel_id });
         }
         // Read limits from request headers
         let read_timeout = require_usize_header(headers, HEADER_NAME_READ_TIMEOUT)?;
@@ -250,7 +250,7 @@ impl GrpcProxy {
         // Read from the stream
         let read_timeout_duration = Duration::from_millis(read_timeout as u64);
         let batch_timeout_duration = Duration::from_millis(batch_timeout as u64);
-        let read_result = self.streams.read_server_stream(stream_id, read_timeout_duration, batch_timeout_duration, batch_bytes).await;
+        let read_result = self.streams.read_server_stream(channel_id, stream_id, read_timeout_duration, batch_timeout_duration, batch_bytes).await?;
         Ok(read_result)
     }
 
