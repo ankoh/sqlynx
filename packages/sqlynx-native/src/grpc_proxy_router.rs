@@ -61,23 +61,20 @@ pub fn parse_grpc_proxy_path(path: &str) -> Option<GrpcProxyRoute> {
     }
 }
 
-pub async fn dispatch_grpc_proxy_route(route: GrpcProxyRoute, req: Request<Vec<u8>>) -> Response<Vec<u8>> {
-    match (req.method().clone(), route) {
-        (Method::POST, GrpcProxyRoute::Channels) => create_channel(req).await,
-        (Method::DELETE, GrpcProxyRoute::Channel { channel_id }) => delete_channel(channel_id).await,
-        (Method::POST, GrpcProxyRoute::ChannelUnary { channel_id }) => call_unary(channel_id, req).await,
-        (Method::POST, GrpcProxyRoute::ChannelStreams { channel_id }) => start_server_stream(channel_id, req).await,
-        (Method::GET, GrpcProxyRoute::ChannelStream { channel_id, stream_id }) => read_server_stream(channel_id, stream_id, req).await,
-        (Method::DELETE, GrpcProxyRoute::ChannelStream { channel_id, stream_id }) => delete_server_stream(channel_id, stream_id, req).await,
-        (_, _) => {
-            unreachable!();
-        }
-    }
-}
-
-pub async fn route_grpc_proxy_request(request: &mut Request<Vec<u8>>) -> Option<Response<Vec<u8>>> {
-    if let Some(route) = parse_grpc_proxy_path(request.uri().path()) {
-        return Some(dispatch_grpc_proxy_route(route, std::mem::take(request)).await);
+pub async fn route_grpc_proxy_request(req: &mut Request<Vec<u8>>) -> Option<Response<Vec<u8>>> {
+    if let Some(route) = parse_grpc_proxy_path(req.uri().path()) {
+        let response = match (req.method().clone(), route) {
+            (Method::POST, GrpcProxyRoute::Channels) => create_channel(std::mem::take(req)).await,
+            (Method::DELETE, GrpcProxyRoute::Channel { channel_id }) => delete_channel(channel_id).await,
+            (Method::POST, GrpcProxyRoute::ChannelUnary { channel_id }) => call_unary(channel_id, std::mem::take(req)).await,
+            (Method::POST, GrpcProxyRoute::ChannelStreams { channel_id }) => start_server_stream(channel_id, std::mem::take(req)).await,
+            (Method::GET, GrpcProxyRoute::ChannelStream { channel_id, stream_id }) => read_server_stream(channel_id, stream_id, std::mem::take(req)).await,
+            (Method::DELETE, GrpcProxyRoute::ChannelStream { channel_id, stream_id }) => delete_server_stream(channel_id, stream_id, std::mem::take(req)).await,
+            (_, _) => {
+                return None;
+            }
+        };
+        return Some(response);
     }
     return None;
 }
