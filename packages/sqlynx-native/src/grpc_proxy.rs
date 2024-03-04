@@ -8,6 +8,7 @@ use std::result::Result;
 use tauri::http::uri::PathAndQuery;
 use tauri::http::HeaderMap;
 use tauri::http::HeaderValue;
+use tonic::metadata::MetadataMap;
 use tonic::transport::channel::Endpoint;
 
 use crate::grpc_client::GenericGrpcClient;
@@ -165,7 +166,7 @@ impl GrpcProxy {
     }
 
     /// Call a unary gRPC function
-    pub async fn call_unary(&self, channel_id: usize, headers: &HeaderMap, body: Vec<u8>) -> Result<Vec<u8>, Status> {
+    pub async fn call_unary(&self, channel_id: usize, headers: &HeaderMap, body: Vec<u8>) -> Result<(Vec<u8>, MetadataMap), Status> {
         let path = require_string_header(headers, HEADER_NAME_PATH)?;
         let channel_entry = if let Some(channel) = self.channels.read().unwrap().get(&channel_id) {
             channel.clone()
@@ -179,10 +180,11 @@ impl GrpcProxy {
             })?;
 
         let request = tonic::Request::new(body);
-        let response = client.call_unary(request, path).await
+        let mut response = client.call_unary(request, path).await
             .map_err(|status| Status::GrpcCallFailed { status })?;
+        let metadata = std::mem::take(response.metadata_mut());
         let body = response.into_inner();
-        Ok(body)
+        Ok((body, metadata))
     }
 
     /// Call a gRPC function with results streamed from the server
