@@ -32,13 +32,13 @@ pub enum GrpcServerStreamBatchEvent {
 #[derive(Debug)]
 pub struct GrpcServerStreamBatch {
     /// The event that emitted the batch
-    event: GrpcServerStreamBatchEvent,
+    pub event: GrpcServerStreamBatchEvent,
     /// The messages in the batch
-    messages: Vec<Vec<u8>>,
+    pub messages: Vec<Vec<u8>>,
     /// The total message bytes in the batch
-    total_message_bytes: usize,
+    pub total_message_bytes: usize,
     /// The trailing headers (if any)
-    trailers: Option<MetadataMap>,
+    pub trailers: Option<MetadataMap>,
 }
 
 impl Default for GrpcServerStreamBatch {
