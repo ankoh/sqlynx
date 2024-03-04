@@ -2,11 +2,12 @@ use std::fmt::{Display, Formatter, Error};
 
 use tauri::http::{header::CONTENT_TYPE, Response, StatusCode};
 
+#[derive(Debug)]
 pub enum Status {
     HeaderHasInvalidEncoding{ header: &'static str, message: String },
     HeaderRequiredButMissing{ header: &'static str },
     HeaderIsNotAValidEndpoint{ header: &'static str, message: String },
-    HeaderIsNotANumber{ header: &'static str, message: String },
+    HeaderIsNotAnUsize{ header: &'static str, message: String },
     HeaderPathIsInvalid{ header: &'static str, path: String, message: String },
     ChannelIdIsUnknown{ channel_id: usize },
     EndpointConnectFailed{ message: String },
@@ -25,8 +26,8 @@ impl Display for Status {
             Status::HeaderRequiredButMissing { header } => {
                 f.write_fmt(format_args!("header '{}' is missing", header))
             }
-            Status::HeaderIsNotANumber { header, message } => {
-                f.write_fmt(format_args!("header '{}' is not a number: {}", header, message))
+            Status::HeaderIsNotAnUsize { header, message } => {
+                f.write_fmt(format_args!("header '{}' is not an unsigned integer: {}", header, message))
             }
             Status::HeaderPathIsInvalid { header, path, message } => {
                 f.write_fmt(format_args!("header '{}' stores the path '{}' and is invalid: {}", header, path, message))
@@ -50,7 +51,7 @@ impl From<&Status> for StatusCode {
             Status::HeaderHasInvalidEncoding { header: _, message: _ } => StatusCode::BAD_REQUEST,
             Status::HeaderIsNotAValidEndpoint { header: _, message: _ } => StatusCode::BAD_REQUEST,
             Status::HeaderRequiredButMissing { header: _ } => StatusCode::BAD_REQUEST,
-            Status::HeaderIsNotANumber { header: _, message: _ } => StatusCode::BAD_REQUEST,
+            Status::HeaderIsNotAnUsize { header: _, message: _ } => StatusCode::BAD_REQUEST,
             Status::HeaderPathIsInvalid { header: _, path: _, message: _ } => StatusCode::BAD_REQUEST,
             Status::ChannelIdIsUnknown { channel_id: _ } => StatusCode::BAD_REQUEST,
             Status::EndpointConnectFailed { message: _ } => StatusCode::BAD_REQUEST,

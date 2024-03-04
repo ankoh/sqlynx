@@ -12,6 +12,7 @@ use crate::grpc_proxy::GrpcProxy;
 use crate::grpc_proxy::HEADER_NAME_CHANNEL_ID;
 use crate::grpc_proxy::HEADER_NAME_STREAM_ID;
 use crate::grpc_proxy::HEADER_PREFIX;
+use crate::grpc_stream_manager::GrpcServerStreamResult;
 
 lazy_static! {
     static ref GRPC_PROXY: GrpcProxy = GrpcProxy::default();
@@ -110,13 +111,21 @@ pub async fn start_server_stream(channel_id: usize, mut req: Request<Vec<u8>>) -
 
 pub async fn read_server_stream(channel_id: usize, stream_id: usize, req: Request<Vec<u8>>) -> Response<Vec<u8>> {
     match GRPC_PROXY.read_server_stream(channel_id, stream_id, req.headers()).await {
-        Ok(body) => {
+        Ok(stream_result) => {
+            match stream_result {
+                GrpcServerStreamResult::StreamUnknown => (),
+                GrpcServerStreamResult::StreamClosed => (),
+                GrpcServerStreamResult::ReadTimeout => (),
+                GrpcServerStreamResult::Error(_) => (),
+                GrpcServerStreamResult::Messages(_) => (),
+            }
+            // XXX Unpack the stream result
             Response::builder()
                 .status(200)
                 .header(HEADER_NAME_CHANNEL_ID, channel_id)
                 .header(HEADER_NAME_STREAM_ID, stream_id)
                 .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
-                .body(body)
+                .body(Vec::new())
                 .unwrap()
         },
         Err(e) => Response::from(&e)

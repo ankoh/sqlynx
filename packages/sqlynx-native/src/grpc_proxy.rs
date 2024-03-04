@@ -4,6 +4,7 @@ use std::sync::atomic::AtomicUsize;
 use std::sync::Arc;
 use std::sync::RwLock;
 use std::result::Result;
+use std::time::Duration;
 
 use tauri::http::uri::PathAndQuery;
 use tauri::http::HeaderMap;
@@ -12,6 +13,7 @@ use tonic::metadata::MetadataMap;
 use tonic::transport::channel::Endpoint;
 
 use crate::grpc_client::GenericGrpcClient;
+use crate::grpc_stream_manager::GrpcServerStreamResult;
 use crate::grpc_stream_manager::GrpcStreamManager;
 use crate::status::Status;
 
@@ -23,6 +25,9 @@ pub const HEADER_NAME_TLS_CACERTS: &'static str = "sqlynx-tls-cacerts";
 pub const HEADER_NAME_PATH: &'static str = "sqlynx-path";
 pub const HEADER_NAME_CHANNEL_ID: &'static str = "sqlynx-channel-id";
 pub const HEADER_NAME_STREAM_ID: &'static str = "sqlynx-stream-id";
+pub const HEADER_NAME_READ_TIMEOUT: &'static str = "sqlynx-read-timeout";
+pub const HEADER_NAME_BATCH_TIMEOUT: &'static str = "sqlynx-batch-timout";
+pub const HEADER_NAME_BATCH_BYTES: &'static str = "sqlynx-batch-bytes";
 
 struct GrpcRequestTlsConfig {
     client_key: String,
@@ -124,8 +129,8 @@ fn read_channel_params(headers: &mut HeaderMap) -> Result<GrpcChannelParams, Sta
     };
 
     Ok(GrpcChannelParams { endpoint, tls })
-
 }
+
 /// Helper to read a string from request headers
 fn require_string_header(headers: &HeaderMap, header_name: &'static str) -> Result<String, Status> {
     if let Some(header) = headers.get(header_name) {
@@ -133,6 +138,20 @@ fn require_string_header(headers: &HeaderMap, header_name: &'static str) -> Resu
             .to_str()
             .map_err(|e| Status::HeaderHasInvalidEncoding{ header: header_name, message: e.to_string() })?
             .to_string();
+        Ok(header)
+    } else {
+        Err(Status::HeaderRequiredButMissing { header: header_name })
+    }
+}
+
+/// Helper to read a string from request headers
+fn require_usize_header(headers: &HeaderMap, header_name: &'static str) -> Result<usize, Status> {
+    if let Some(header) = headers.get(header_name) {
+        let header = header
+            .to_str()
+            .map_err(|e| Status::HeaderHasInvalidEncoding{ header: header_name, message: e.to_string() })?
+            .to_string();
+        let header: usize = header.parse::<usize>().map_err(|e| Status::HeaderIsNotAnUsize { header: header_name, message: e.to_string() })?;
         Ok(header)
     } else {
         Err(Status::HeaderRequiredButMissing { header: header_name })
@@ -195,6 +214,8 @@ impl GrpcProxy {
         } else {
             return Err(Status::ChannelIdIsUnknown { channel_id });
         };
+
+        // Send the gRPC request
         let mut client = GenericGrpcClient::new(channel_entry.channel.clone());
         let path = PathAndQuery::from_str(&path)
             .map_err(|e| {
@@ -204,17 +225,33 @@ impl GrpcProxy {
         let mut response = client.call_server_streaming(request, path).await
             .map_err(|status| Status::GrpcCallFailed { status })?;
 
+        // Save the response headers
         let response_headers = std::mem::take(response.metadata_mut());
-        // let streaming = response.into_inner();
 
-        // self.streams.start_server_stream(streaming).unwrap_or_default();
+        // Register the output stream
+        let streaming = response.into_inner();
+        let stream_id = self.streams.start_server_stream(streaming)?;
 
-        Ok((42, response_headers))
+        Ok((stream_id, response_headers))
     }
 
     /// Read from a result stream
-    pub async fn read_server_stream(&self, _channel_id: usize, _stream_id: usize, _headers: &HeaderMap) -> Result<Vec<u8>, Status> {
-        Ok(Vec::new())
+    pub async fn read_server_stream(&self, channel_id: usize, stream_id: usize, headers: &HeaderMap) -> Result<GrpcServerStreamResult, Status> {
+        // We don't need the channel id to resolve the stream today since the stream id is unique across all channels.
+        // We still check if the channel id exists so that we can still maintain streams per channel later.
+        if self.channels.read().unwrap().get(&channel_id).is_none() {
+            return Err(Status::ChannelIdIsUnknown { channel_id });
+        }
+        // Read limits from request headers
+        let read_timeout = require_usize_header(headers, HEADER_NAME_READ_TIMEOUT)?;
+        let batch_timeout = require_usize_header(headers, HEADER_NAME_BATCH_TIMEOUT)?;
+        let batch_bytes = require_usize_header(headers, HEADER_NAME_BATCH_BYTES)?;
+
+        // Read from the stream
+        let read_timeout_duration = Duration::from_millis(read_timeout as u64);
+        let batch_timeout_duration = Duration::from_millis(batch_timeout as u64);
+        let read_result = self.streams.read_server_stream(stream_id, read_timeout_duration, batch_timeout_duration, batch_bytes).await;
+        Ok(read_result)
     }
 
     /// Destroy a result steram
