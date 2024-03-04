@@ -93,14 +93,16 @@ pub async fn call_unary(channel_id: usize, mut req: Request<Vec<u8>>) -> Respons
 pub async fn start_server_stream(channel_id: usize, mut req: Request<Vec<u8>>) -> Response<Vec<u8>> {
     let body = std::mem::take(req.body_mut());
     match GRPC_PROXY.start_server_stream(channel_id, req.headers(), body).await {
-        Ok(stream_id) => {
-            Response::builder()
+        Ok((stream_id, mut metadata)) => {
+            let mut response = Response::builder()
                 .status(200)
                 .header(HEADER_NAME_CHANNEL_ID, channel_id)
                 .header(HEADER_NAME_STREAM_ID, stream_id)
                 .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
                 .body(Vec::new())
-                .unwrap()
+                .unwrap();
+            copy_metadata(&mut metadata, response.headers_mut());
+            response
         },
         Err(e) => Response::from(&e)
     }
