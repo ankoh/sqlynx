@@ -13,6 +13,8 @@ use tonic::metadata::KeyAndMutValueRef;
 use lazy_static::lazy_static;
 
 use crate::grpc_proxy::GrpcProxy;
+use crate::grpc_proxy::HEADER_NAME_BATCH_EVENT;
+use crate::grpc_proxy::HEADER_NAME_BATCH_MESSAGES;
 use crate::grpc_proxy::HEADER_NAME_CHANNEL_ID;
 use crate::grpc_proxy::HEADER_NAME_STREAM_ID;
 use crate::grpc_proxy::HEADER_PREFIX;
@@ -124,6 +126,8 @@ pub async fn read_server_stream(channel_id: usize, stream_id: usize, req: Reques
                 .status(200)
                 .header(HEADER_NAME_CHANNEL_ID, channel_id)
                 .header(HEADER_NAME_STREAM_ID, stream_id)
+                .header(HEADER_NAME_BATCH_EVENT, batches.event.to_str())
+                .header(HEADER_NAME_BATCH_MESSAGES, batches.messages.len())
                 .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
                 .body(buffer)
                 .unwrap()
