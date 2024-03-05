@@ -2,11 +2,11 @@ runs:
   using: "composite"
   steps:
     - name: Download Flatc
-      run: |-
+      shell: bash
+      run: |
         curl -Lo ${{ github.action_path }}/flatc.zip https://github.com/google/flatbuffers/releases/download/v23.1.21/Linux.flatc.binary.g++-10.zip
         7z x ${{ github.action_path }}/flatc.zip -o/usr/local/bin/
-      shell: bash
     - name: Print Flatc version
+      shell: bash
       run: |-
         flatc --version
-      shell: bash

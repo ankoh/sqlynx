@@ -1,0 +1,21 @@
+inputs:
+    os:
+      description: 'The name of the operating system'
+      required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Download Protoc
+      if: ${{ inputs.os == 'macos-14' }}
+      shell: bash
+      run: |
+        rm -rf ${{ runner.temp }}/protoc.zip ${{ runner.temp }}/protoc
+        curl -Lo ${{ runner.temp }}/protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v25.3/protoc-25.3-osx-aarch_64.zip
+        7z x ${{ runner.temp }}/protoc.zip -o${{ runner.temp }}/protoc
+        cp ${{ runner.temp }}/protoc/bin/protoc /usr/local/bin/protoc
+
+    - name: Print Protoc version
+      run: |-
+        protoc --version
+      shell: bash
