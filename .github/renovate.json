@@ -1,46 +1,74 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-    "extends": ["config:recommended"],
+    "extends": [
+        "config:recommended"
+    ],
     "timezone": "Europe/Berlin",
-    "baseBranches": ["main"],
+    "baseBranches": [
+        "main"
+    ],
     "rangeStrategy": "bump",
     "automergeStrategy": "rebase",
-    "postUpdateOptions": ["yarnDedupeFewer"],
-    "labels": ["dependencies"],
+    "postUpdateOptions": [
+        "yarnDedupeFewer"
+    ],
+    "labels": [
+        "dependencies"
+    ],
     "npm": {
-        "labels": ["javascript", "dependencies"]
+        "labels": [
+            "javascript",
+            "dependencies"
+        ]
     },
     "packageRules": [
         {
             "groupName": "flatbuffers",
-            "matchPackageNames": ["flatbuffers"],
+            "matchPackageNames": [
+                "flatbuffers"
+            ],
             "automerge": true
         },
         {
             "groupName": "esbuild",
-            "matchPackageNames": ["esbuild"],
+            "matchPackageNames": [
+                "esbuild"
+            ],
             "automerge": true
         },
         {
             "groupName": "webpack",
-            "matchPackagePatterns": ["^webpack", "^webpack-.*"],
+            "matchPackagePatterns": [
+                "^webpack",
+                "^webpack-.*"
+            ],
             "automerge": true
         },
         {
             "groupName": "jest",
-            "matchPackageNames": ["@types/jest"],
-            "matchPackagePatterns": [".*jest.*"],
+            "matchPackageNames": [
+                "@types/jest"
+            ],
+            "matchPackagePatterns": [
+                ".*jest.*"
+            ],
             "automerge": true
         },
         {
             "groupName": "linter",
-            "matchPackagePatterns": [".*eslint.*"],
+            "matchPackagePatterns": [
+                ".*eslint.*"
+            ],
             "automerge": true
         },
         {
             "groupName": "type definitions",
-            "matchPackagePatterns": ["^@types/.*"],
-            "excludePackagePatterns": ["^@types/react.*"],
+            "matchPackagePatterns": [
+                "^@types/.*"
+            ],
+            "excludePackagePatterns": [
+                "^@types/react.*"
+            ],
             "automerge": true
         },
         {
@@ -52,6 +80,13 @@
                 "vscode-languageclient"
             ],
             "automerge": true
+        },
+        {
+            "groupName": "connectrpc",
+            "matchPackagePatterns": [
+                "^@connectrpc/.*"
+            ],
+            "automerge": false
         }
     ]
 }
