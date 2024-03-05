@@ -17,7 +17,6 @@
     ],
     "npm": {
         "labels": [
-            "javascript",
             "dependencies"
         ]
     },
@@ -85,6 +84,18 @@
             "groupName": "connectrpc",
             "matchPackagePatterns": [
                 "^@connectrpc/.*"
+            ],
+            "automerge": false
+        },
+        {
+            "groupName": "tauri",
+            "matchPackageNames": [
+                "@tauri-apps/cli",
+                "tauri",
+                "tauri-build"
+            ],
+            "matchPackagePatterns": [
+                "tauri-plugin-*"
             ],
             "automerge": false
         }
