@@ -362,11 +362,14 @@ jobs:
                     cargo-macos-universal-${{ hashFiles('Cargo.lock') }}
                     cargo-macos-universal-
 
+            - name: Setup protoc
+              uses: ./.github/actions/setup-protoc
+              with:
+                os: macos-14
             - name: Setup rust
               uses: ./.github/actions/setup-rust
               with:
                 os: macos-14
-
             - name: Setup tauri
               uses: ./.github/actions/setup-tauri
 
