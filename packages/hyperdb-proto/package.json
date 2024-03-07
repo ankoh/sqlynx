@@ -1,5 +1,5 @@
 {
-    "name": "@ankoh/hyper-service",
+    "name": "@ankoh/hyperdb-proto",
     "private": true,
     "version": "0.0.2-dev.17",
     "gitCommit": "453866d",
@@ -22,8 +22,8 @@
     "files": [
         "dist/gen/",
         "dist/index.*",
-        "dist/hyper-service.module.*"
+        "dist/hyperdb-proto.module.*"
     ],
-    "module": "./dist/hyper-service.module.js",
-    "types": "./dist/hyper-service.module.d.ts"
+    "module": "./dist/hyperdb-service.module.js",
+    "types": "./dist/hyperdb-service.module.d.ts"
 }

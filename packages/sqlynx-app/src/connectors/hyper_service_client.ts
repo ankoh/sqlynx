@@ -1,4 +1,4 @@
-import * as hyper from '@ankoh/hyper-service';
+import * as hyper from '@ankoh/hyperdb-proto';
 import * as arrow from 'apache-arrow';
 
 import { createPromiseClient, PromiseClient } from '@connectrpc/connect';

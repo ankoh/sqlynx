@@ -3,7 +3,7 @@
     "workspaces": [
         "packages/sqlynx-app",
         "packages/sqlynx-core-api",
-        "packages/hyper-service"
+        "packages/hyperdb-proto"
     ],
     "scripts": {
         "serve:native:dev": "tauri dev",
