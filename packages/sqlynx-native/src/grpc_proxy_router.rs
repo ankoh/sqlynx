@@ -83,11 +83,19 @@ pub async fn route_grpc_proxy_request(req: &mut Request<Vec<u8>>) -> Option<Resp
 mod test {
     use super::*;
 
+    use crate::grpc_proxy::HEADER_NAME_BATCH_BYTES;
+    use crate::grpc_proxy::HEADER_NAME_BATCH_EVENT;
+    use crate::grpc_proxy::HEADER_NAME_BATCH_MESSAGES;
+    use crate::grpc_proxy::HEADER_NAME_BATCH_TIMEOUT;
     use crate::grpc_proxy::HEADER_NAME_CHANNEL_ID;
     use crate::grpc_proxy::HEADER_NAME_HOST;
     use crate::grpc_proxy::HEADER_NAME_PATH;
+    use crate::grpc_proxy::HEADER_NAME_READ_TIMEOUT;
+    use crate::grpc_proxy::HEADER_NAME_STREAM_ID;
     use crate::proto::sqlynx_test_v1::TestUnaryRequest;
     use crate::proto::sqlynx_test_v1::TestUnaryResponse;
+    use crate::proto::sqlynx_test_v1::TestServerStreamingRequest;
+    use crate::proto::sqlynx_test_v1::TestServerStreamingResponse;
     use crate::test::test_service_mock::spawn_test_service_mock;
     use crate::test::test_service_mock::TestServiceMock;
 
@@ -202,6 +210,92 @@ mod test {
         let received_response = TestUnaryResponse::decode(response.body().as_slice()).unwrap();
         assert_eq!(received_param.data, "request data");
         assert_eq!(received_response.data, "response data");
+
+        // Delete gRPC channel
+        let mut request: Request<Vec<u8>> = Request::builder()
+            .method("DELETE")
+            .uri(format!("{}/grpc/channel/{}", host, channel_id))
+            .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
+            .body(Vec::new())
+            .unwrap();
+        let response = route_grpc_proxy_request(&mut request).await.unwrap();
+        assert_eq!(response.status(), 200);
+
+        shutdown.send(()).unwrap();
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_streaming_call() -> Result<()> {
+        // Spawn a test service mock
+        let (mock, mut _setup_unary, mut setup_server_streaming) = TestServiceMock::new();
+        let (addr, shutdown) = spawn_test_service_mock(mock).await;
+        let host = format!("http://{}", addr);
+
+        // Respond single streaming response
+        let _streaming_call = tokio::spawn(async move {
+            let (param, result_sender) = setup_server_streaming.recv().await.unwrap();
+            result_sender.send(Ok(TestServerStreamingResponse {
+                data: "response data".to_string()
+            })).await.unwrap();
+            param
+        });
+
+        // Create gRPC channel
+        let mut request: Request<Vec<u8>> = Request::builder()
+            .method("POST")
+            .uri(format!("{}/grpc/channels", host))
+            .header(HEADER_NAME_HOST, &host)
+            .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
+            .body(Vec::new())
+            .unwrap();
+        let response = route_grpc_proxy_request(&mut request).await.unwrap();
+        assert_eq!(response.status(), 200);
+        assert!(response.headers().contains_key(HEADER_NAME_CHANNEL_ID));
+        let channel_id = response.headers().get(HEADER_NAME_CHANNEL_ID).unwrap().to_str().unwrap();
+        let channel_id: usize = channel_id.parse().unwrap();
+
+        // Call server streaming gRPC call
+        let request_param = TestServerStreamingRequest {
+            data: "request data".to_string()
+        };
+        let mut request: Request<Vec<u8>> = Request::builder()
+            .method("POST")
+            .uri(format!("{}/grpc/channel/{}/streams", host, channel_id))
+            .header(HEADER_NAME_PATH, "/sqlynx.test.v1.TestService/TestServerStreaming")
+            .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
+            .body(request_param.encode_to_vec())
+            .unwrap();
+        let response = route_grpc_proxy_request(&mut request).await.unwrap();
+        assert_eq!(response.status(), 200);
+        assert!(response.headers().contains_key(HEADER_NAME_STREAM_ID));
+        let stream_id = response.headers().get(HEADER_NAME_STREAM_ID).unwrap().to_str().unwrap();
+        let stream_id: usize = stream_id.parse().unwrap();
+
+        // Read query results
+        let mut request: Request<Vec<u8>> = Request::builder()
+            .method("GET")
+            .uri(format!("{}/grpc/channel/{}/stream/{}", host, channel_id, stream_id))
+            .header(HEADER_NAME_READ_TIMEOUT, "1000")
+            .header(HEADER_NAME_BATCH_TIMEOUT, "1000")
+            .header(HEADER_NAME_BATCH_BYTES, "10000000")
+            .body(Vec::new())
+            .unwrap();
+        let response = route_grpc_proxy_request(&mut request).await.unwrap();
+        assert_eq!(response.status(), 200);
+        assert!(response.headers().contains_key(HEADER_NAME_CHANNEL_ID));
+        assert!(response.headers().contains_key(HEADER_NAME_STREAM_ID));
+        assert!(response.headers().contains_key(HEADER_NAME_BATCH_EVENT));
+        assert!(response.headers().contains_key(HEADER_NAME_BATCH_MESSAGES));
+        assert!(response.headers().contains_key(CONTENT_TYPE));
+        let batch_event = response.headers().get(HEADER_NAME_BATCH_EVENT).unwrap().to_str().unwrap();
+        let batch_messages = response.headers().get(HEADER_NAME_BATCH_MESSAGES).unwrap().to_str().unwrap();
+        assert_eq!(batch_messages, "1");
+        assert_eq!(batch_event, "StreamFinished");
+        let response_bytes = response.body();
+        assert!(response_bytes.len() > 4);
+        let response_message = TestServerStreamingResponse::decode(&response_bytes[4..]).unwrap();
+        assert_eq!(response_message.data, "response data");
 
         // Delete gRPC channel
         let mut request: Request<Vec<u8>> = Request::builder()

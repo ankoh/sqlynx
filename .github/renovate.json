@@ -17,7 +17,14 @@
     ],
     "npm": {
         "labels": [
-            "dependencies"
+            "dependencies",
+            "javascript"
+        ]
+    },
+    "cargo": {
+        "labels": [
+            "dependencies",
+            "rust"
         ]
     },
     "packageRules": [
@@ -95,7 +102,7 @@
                 "tauri-build"
             ],
             "matchPackagePatterns": [
-                "tauri-plugin-*"
+                "^tauri-plugin-*"
             ],
             "automerge": false
         }
