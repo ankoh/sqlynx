@@ -87,7 +87,7 @@ pub fn freeze() -> Result<()> {
         .join("package.json");
     let hyper_service_package_json = source_dir
         .join("packages")
-        .join("hyper-service")
+        .join("hyperdb-proto")
         .join("package.json");
     let tauri_config_json = source_dir
         .join("packages")
@@ -114,7 +114,7 @@ pub fn freeze() -> Result<()> {
         &version,
         &git_repo.version.short_hash,
     )?;
-    log::info!("patching @ankoh/hyper-service package.json");
+    log::info!("patching @ankoh/hyperdb-proto package.json");
     update_package_json(
         &hyper_service_package_json,
         &version,

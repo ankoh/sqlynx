@@ -28,11 +28,9 @@
     "@jridgewell/gen-mapping" "^0.3.0"
     "@jridgewell/trace-mapping" "^0.3.9"
 
-"@ankoh/hyper-service@link:packages/hyper-service":
-  version "0.0.2-dev.17"
-  dependencies:
-    "@bufbuild/protobuf" "^1.7.2"
-    "@connectrpc/connect-web" "^1.4.0"
+"@ankoh/hyperdb-proto@link:packages/hyperdb-proto":
+  version "0.0.0"
+  uid ""
 
 "@ankoh/sqlynx-core@link:packages/sqlynx-core-api":
   version "0.0.2-dev.17"

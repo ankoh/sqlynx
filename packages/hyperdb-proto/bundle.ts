@@ -7,10 +7,10 @@ function printErr(err: NodeJS.ErrnoException | null) {
 }
 const dist = path.resolve(__dirname, 'dist');
 
-console.log(`[ ESBUILD ] hyper-service.module.js`);
+console.log(`[ ESBUILD ] hyperdb-proto.module.js`);
 esbuild.build({
     entryPoints: [`./index.ts`],
-    outfile: `dist/hyper-service.module.js`,
+    outfile: `dist/hyperdb-proto.module.js`,
     platform: 'neutral',
     format: 'esm',
     target: 'es2020',
@@ -20,4 +20,4 @@ esbuild.build({
     external: ['@bufbuild/protobuf', '@connectrpc/connect-web'],
 });
 
-fs.writeFile(path.join(dist, 'hyper-service.module.d.ts'), "export * from './index';", printErr);
+fs.writeFile(path.join(dist, 'hyperdb-proto.module.d.ts'), "export * from './index';", printErr);
