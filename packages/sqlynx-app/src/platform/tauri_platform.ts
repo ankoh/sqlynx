@@ -1,9 +1,5 @@
-import * as React from 'react';
-
-/// The native api exposed to the PWA
-export interface NativeApi {
-    os: string;
-}
+import { PlatformApi, PlatformType } from './platform_api.js';
+import { TauriHyperDatabaseClient } from './tauri_hyper_client.js';
 
 /// The globals provided by tauri
 interface TauriGlobals {
@@ -14,7 +10,7 @@ interface TauriGlobals {
 }
 
 /// Initialize the native api, if we're running in a Tauri app
-const setupNativeApi = async (setApi: (api: NativeApi) => void) => {
+export async function setupTauriPlatform(setApi: (api: PlatformApi) => void) {
     const tauri = (window as any).__TAURI__ as TauriGlobals;
 
     // Not running in tauri? (e.g. regular web app?)
@@ -34,23 +30,7 @@ const setupNativeApi = async (setApi: (api: NativeApi) => void) => {
 
     // Build the api client
     setApi({
-        os
+        getPlatformType: () => PlatformType.MACOS,
+        getHyperDatabaseClient: () => new TauriHyperDatabaseClient(),
     });
-};
-
-/// Expose the native api through a context.
-/// In the browser, this context will just be null
-const NATIVE_API_CTX = React.createContext<NativeApi | null>(null);
-export const useNativeApi = () => React.useContext(NATIVE_API_CTX);
-
-type Props = {
-    children: React.ReactElement;
-};
-
-export const NativeApiProvider: React.FC<Props> = (props: Props) => {
-    const [api, setApi] = React.useState<NativeApi | null>(null);
-    React.useEffect(() => {
-        setupNativeApi(setApi);
-    }, []);
-    return <NATIVE_API_CTX.Provider value={api}>{props.children}</NATIVE_API_CTX.Provider>;
 };
