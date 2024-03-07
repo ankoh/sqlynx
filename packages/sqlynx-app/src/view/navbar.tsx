@@ -2,7 +2,8 @@ import * as React from 'react';
 import { useLocation } from 'react-router-dom';
 import { classNames } from '../utils/classnames.js';
 import { HoverMode, LinkButton } from './button.js';
-import { useNativeApi } from '../native/native_api.js';
+import { PlatformType } from '../platform/platform_api.js';
+import { usePlatformApi } from '../platform/platform_api_provider.js';
 import { SQLYNX_GET_URL, SQLYNX_GIT_COMMIT, SQLYNX_GIT_REPO_URL, SQLYNX_VERSION } from '../app_version.js';
 
 import styles from './navbar.module.css';
@@ -44,9 +45,9 @@ const ExternalLink = (props: { url: string; alt?: string; icon?: string; label: 
 
 export const NavBar = (): React.ReactElement => {
     const location = useLocation();
-    const nativeApi = useNativeApi();
+    const platform = usePlatformApi();
 
-    const isMac = nativeApi?.os === 'darwin';
+    const isMac = platform?.getPlatformType() === PlatformType.MACOS;
     return (
         <div className={isMac ? styles.navbar_mac : styles.navbar_default}
         >

@@ -16,7 +16,7 @@ import { SalesforceConnector } from './connectors/salesforce_connector.js';
 import { LogProvider } from './app_log.js';
 import { AppConfigResolver } from './app_config.js';
 import { SQLYNX_GIT_COMMIT, SQLYNX_VERSION } from './app_version.js';
-import { NativeApiProvider } from './native/native_api.js';
+import { PlatformApiProvider } from './platform/platform_api_provider.js';
 
 import { ThemeProvider, BaseStyles } from '@primer/react';
 import { StyleSheetManager } from 'styled-components';
@@ -42,7 +42,7 @@ const GitHubDesignSystem = (props: { children: React.ReactElement }) => (
 const AppProviders = (props: { children: React.ReactElement }) => (
     <GitHubDesignSystem>
         <LogProvider>
-            <NativeApiProvider>
+            <PlatformApiProvider>
                 <AppConfigResolver>
                     <SQLynxLoader>
                         <SalesforceConnector>
@@ -59,7 +59,7 @@ const AppProviders = (props: { children: React.ReactElement }) => (
                         </SalesforceConnector>
                     </SQLynxLoader>
                 </AppConfigResolver>
-            </NativeApiProvider>
+            </PlatformApiProvider>
         </LogProvider>
     </GitHubDesignSystem>
 );
