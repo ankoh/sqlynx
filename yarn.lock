@@ -37,7 +37,7 @@
 "@ankoh/sqlynx-core@link:packages/sqlynx-core-api":
   version "0.0.2-dev.17"
   dependencies:
-    flatbuffers "^23.5.26"
+    flatbuffers "^24.3.7"
 
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.12.13", "@babel/code-frame@^7.16.7", "@babel/code-frame@^7.23.5":
   version "7.23.5"
@@ -4009,6 +4009,11 @@ flatbuffers@^23.5.26:
   version "23.5.26"
   resolved "https://registry.yarnpkg.com/flatbuffers/-/flatbuffers-23.5.26.tgz#01358e272a61239f0faf3bfbe4e014f3ace9d746"
   integrity sha512-vE+SI9vrJDwi1oETtTIFldC/o9GsVKRM+s6EL0nQgxXlYV1Vc4Tk30hj4xGICftInKQKj1F3up2n8UbIVobISQ==
+
+flatbuffers@^24.3.7:
+  version "24.3.7"
+  resolved "https://registry.yarnpkg.com/flatbuffers/-/flatbuffers-24.3.7.tgz#90077fb73eec19a9859dc8e622fa9d75dad23e7d"
+  integrity sha512-GB19A5cyEvOVeQw3D72zXG/5rWXhGo+BhQj5YbXwOi9tV0IorjWKu1PyoW80FSNtii/YBAxHLuu54/ww0pPceQ==
 
 flatted@^3.2.9:
   version "3.2.9"
