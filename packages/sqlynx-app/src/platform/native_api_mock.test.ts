@@ -13,7 +13,7 @@ describe('Native API mock', () => {
     })
 
     it("rejects requests that are not targeting sqlynx-native://", async () => {
-        const request = new Request(new URL("not-sqlynx-native://foo"), {
+        const request = new Request(new URL("not-sqlynx-native://[::1]/foo"), {
             method: 'POST',
             headers: {}
         });
@@ -21,7 +21,7 @@ describe('Native API mock', () => {
         expect(response.status).toEqual(400);
     });
     it("rejects requests with an invalid request path", async () => {
-        const request = new Request(new URL("sqlynx-native://local/invalid-path"), {
+        const request = new Request(new URL("sqlynx-native://[::1]/invalid-path"), {
             method: 'POST',
             headers: {}
         });
@@ -30,7 +30,7 @@ describe('Native API mock', () => {
         expect(response.status).toEqual(400);
     });
     it("accepts requests that are targeting the root path /", async () => {
-        const request = new Request(new URL("sqlynx-native://local/"), {
+        const request = new Request(new URL("sqlynx-native://[::1]/"), {
             method: 'POST',
             headers: {}
         });
@@ -39,7 +39,7 @@ describe('Native API mock', () => {
         expect(response.status).toEqual(200);
     })
     it("create channels when POSTing to /grpc/channels", async () => {
-        const request = new Request(new URL("sqlynx-native://local/grpc/channels"), {
+        const request = new Request(new URL("sqlynx-native://[::1]/grpc/channels"), {
             method: 'POST',
             headers: {}
         });
