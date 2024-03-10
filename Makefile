@@ -148,8 +148,8 @@ pwa_reloc:
 pwa_dev:
 	yarn workspace @ankoh/sqlynx-app serve:dev
 
-.PHONY: pwa_test
-pwa_test:
+.PHONY: pwa_tests
+pwa_tests:
 	yarn workspace @ankoh/sqlynx-app test
 
 .PHONY: svg_symbols
