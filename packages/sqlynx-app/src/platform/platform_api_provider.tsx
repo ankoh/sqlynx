@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { PlatformApi } from './platform_api.js';
-import { setupTauriPlatform } from './tauri_platform.js';
+import { setupNativePlatform } from './native_platform.js';
 
 /// Expose the native api through a context.
 /// In the browser, this context will just be null
@@ -15,7 +15,7 @@ type Props = {
 export const PlatformApiProvider: React.FC<Props> = (props: Props) => {
     const [api, setApi] = React.useState<PlatformApi | null>(null);
     React.useEffect(() => {
-        setupTauriPlatform(setApi);
+        setupNativePlatform(setApi);
     }, []);
     return <PLATFORM_API_CTX.Provider value={api}>{props.children}</PLATFORM_API_CTX.Provider>;
 };

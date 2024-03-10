@@ -1,17 +1,17 @@
 import { PlatformApi, PlatformType } from './platform_api.js';
-import { TauriHyperDatabaseClient } from './tauri_hyper_client.js';
+import { NativeHyperDatabaseClient } from './native_hyperdb_client.js';
 
 /// The globals provided by tauri
-interface TauriGlobals {
+interface NativeGlobals {
     core: {
         convertFileSrc: (path: string, scheme: string) => string;
         invoke: (command: string) => any;
     }
 }
 
-/// Initialize the native api, if we're running in a Tauri app
-export async function setupTauriPlatform(setApi: (api: PlatformApi) => void) {
-    const tauri = (window as any).__TAURI__ as TauriGlobals;
+/// Initialize the native api, if we're running in a Native app
+export async function setupNativePlatform(setApi: (api: PlatformApi) => void) {
+    const tauri = (window as any).__TAURI__ as NativeGlobals;
 
     // Not running in tauri? (e.g. regular web app?)
     // Silently stop.
@@ -31,6 +31,6 @@ export async function setupTauriPlatform(setApi: (api: PlatformApi) => void) {
     // Build the api client
     setApi({
         getPlatformType: () => PlatformType.MACOS,
-        getHyperDatabaseClient: () => new TauriHyperDatabaseClient(),
+        getHyperDatabaseClient: () => new NativeHyperDatabaseClient(),
     });
 };
