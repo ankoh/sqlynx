@@ -49,11 +49,11 @@ export class NativeAPIMock {
     constructor(platform: PlatformType) {
         this.platform = platform;
         this.routeMatchers = {
-            grpcChannels: new RegExp("^/grpc/channels$"),
-            grpcChannel: new RegExp("^/grpc/channel/(\d+)$"),
-            grpcChannelUnary: new RegExp("^/grpc/channel/(\d+)/unary$"),
-            grpcChannelStreams: new RegExp("^/grpc/channel/(\d+)/streams$"),
-            grpcChannelStream: new RegExp("^/grpc/channel/(\d+)/stream/(\d+)$"),
+            grpcChannels: /^\/grpc\/channels$/,
+            grpcChannel: /^\/grpc\/channel\/(?<channel>\d+)$/,
+            grpcChannelUnary: /^\/grpc\/channel\/(?<channel>\d+)\/unary$/,
+            grpcChannelStreams: /^\/grpc\/channel\/(?<channel>\d+)\/streams$/,
+            grpcChannelStream: /^\/grpc\/channel\/(?<channel>\d+)\/stream\/(?<stream>\d+)$/,
         };
         this.nextGrpcChannelId = 1;
         this.grpcChannels = new Map();
@@ -70,6 +70,14 @@ export class NativeAPIMock {
             headers: {
                 [HEADER_NAME_CHANNEL_ID]: channel.id.toString()
             }
+        });
+    }
+    protected async deleteGrpcChannel(channelId: number, _req: Request): Promise<Response> {
+        this.grpcChannels.delete(channelId);
+        return new Response(null, {
+            status: 200,
+            statusText: "OK",
+            headers: {}
         });
     }
 
@@ -95,9 +103,9 @@ export class NativeAPIMock {
         }
 
         // Helper to report an invalid request
-        const invalidRequest = () => new Response(null, {
+        const invalidRequest = (req: Request) => new Response(null, {
             status: 400,
-            statusText: "unknown request path",
+            statusText: `invalid request: path=${new URL(req.url).pathname} method=${req.method}`,
             headers: {}
         });
 
@@ -107,11 +115,19 @@ export class NativeAPIMock {
             switch (req.method) {
                 case "POST": return this.createGrpcChannel(req);
                 default:
-                    return invalidRequest();
+                    return invalidRequest(req);
+            }
+        }
+        if ((matches = this.routeMatchers.grpcChannel.exec(url.pathname)) !== null) {
+            const channelId = Number.parseInt(matches.groups!["channel"]!);
+            switch (req.method) {
+                case "DELETE": return this.deleteGrpcChannel(channelId, req);
+                default:
+                    return invalidRequest(req);
             }
         }
 
 
-        return invalidRequest();
+        return invalidRequest(req);
     }
 }
