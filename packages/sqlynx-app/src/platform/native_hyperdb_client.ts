@@ -29,7 +29,7 @@ class DatabaseConnection implements HyperDatabaseConnection {
     }
 }
 
-export class TauriHyperDatabaseClient implements HyperDatabaseClient {
+export class NativeHyperDatabaseClient implements HyperDatabaseClient {
     /// Create a database connection
     public async connect(): Promise<HyperDatabaseConnection> {
         return new DatabaseConnection();
