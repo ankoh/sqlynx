@@ -51,7 +51,7 @@ describe('Native API mock', () => {
             Number.parseInt(response.headers.get("sqlynx-channel-id")!)
         }).not.toThrow();
     });
-    it("delete created channel on DELETE to /grpc/channel/<channel-id>", async () => {
+    it("deletes created channel on DELETE to /grpc/channel/<channel-id>", async () => {
         const createRequest = new Request(new URL("sqlynx-native://[::1]/grpc/channels"), {
             method: 'POST',
             headers: {}
@@ -68,5 +68,26 @@ describe('Native API mock', () => {
         const deleteResponse = await fetch(deleteRequest);
         expect(deleteResponse.statusText).toEqual("OK");
         expect(deleteResponse.status).toEqual(200);
+    });
+    it("reports an error if the path for a streaming gRPC call is unknown", async () => {
+        const createRequest = new Request(new URL("sqlynx-native://[::1]/grpc/channels"), {
+            method: 'POST',
+            headers: {}
+        });
+        const createResponse = await fetch(createRequest);
+        expect(createResponse.statusText).toEqual("OK");
+        expect(createResponse.status).toEqual(200);
+        expect(createResponse.headers.has("sqlynx-channel-id")).toBeTruthy();
+        const channelId = Number.parseInt(createResponse.headers.get("sqlynx-channel-id")!);
+
+        const streamRequest = new Request(new URL(`sqlynx-native://[::1]/grpc/channel/${channelId}/streams`), {
+            method: 'POST',
+            headers: {
+                "sqlynx-path": "/salesforce.hyperdb.grpc.v1.HyperService/ExecuteQuery"
+            }
+        });
+        const streamResponse = await fetch(streamRequest);
+        expect(streamResponse.statusText).toEqual(`unexpected gRPC call of: /salesforce.hyperdb.grpc.v1.HyperService/ExecuteQuery`);
+        expect(streamResponse.status).toEqual(400);
     })
 });
