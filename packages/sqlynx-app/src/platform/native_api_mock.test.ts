@@ -23,6 +23,7 @@ describe('Native API mock', () => {
         const response = await fetch(request);
         expect(response.status).toEqual(400);
     });
+
     it("rejects requests with an invalid request path", async () => {
         const request = new Request(new URL("sqlynx-native://[::1]/invalid-path"), {
             method: 'POST',
@@ -32,6 +33,7 @@ describe('Native API mock', () => {
         expect(response.statusText).toEqual("invalid request: path=/invalid-path method=POST");
         expect(response.status).toEqual(400);
     });
+
     it("accepts requests that are targeting the root path /", async () => {
         const request = new Request(new URL("sqlynx-native://[::1]/"), {
             method: 'POST',
@@ -40,7 +42,8 @@ describe('Native API mock', () => {
         const response = await fetch(request);
         expect(response.statusText).toEqual("OK");
         expect(response.status).toEqual(200);
-    })
+    });
+
     it("create channels on POST to /grpc/channels", async () => {
         const request = new Request(new URL("sqlynx-native://[::1]/grpc/channels"), {
             method: 'POST',
@@ -54,6 +57,7 @@ describe('Native API mock', () => {
             Number.parseInt(response.headers.get("sqlynx-channel-id")!)
         }).not.toThrow();
     });
+
     it("deletes created channel on DELETE to /grpc/channel/<channel-id>", async () => {
         const createRequest = new Request(new URL("sqlynx-native://[::1]/grpc/channels"), {
             method: 'POST',
@@ -72,6 +76,7 @@ describe('Native API mock', () => {
         expect(deleteResponse.statusText).toEqual("OK");
         expect(deleteResponse.status).toEqual(200);
     });
+
     it("reports an error if the path for a streaming gRPC call is unknown", async () => {
         const createRequest = new Request(new URL("sqlynx-native://[::1]/grpc/channels"), {
             method: 'POST',
@@ -93,6 +98,7 @@ describe('Native API mock', () => {
         expect(streamResponse.statusText).toEqual(`unexpected gRPC call of: /salesforce.hyperdb.grpc.v1.HyperService/ExecuteQuery`);
         expect(streamResponse.status).toEqual(400);
     });
+
     it("returns a server stream id for streaming gRPC calls", async () => {
         const channelRequest = new Request(new URL("sqlynx-native://[::1]/grpc/channels"), {
             method: 'POST',
@@ -109,7 +115,9 @@ describe('Native API mock', () => {
         const respondSingleMessage = (_req: proto.pb.QueryParam) => {
             const initialStatus = 200;
             const initialStatusMessage = "OK";
-            const initialMetadata: Record<string, string> = {};
+            const initialMetadata: Record<string, string> = {
+                "some-server-metadata": "some-value",
+            };
             const message = new proto.pb.QueryResult();
             const batches: GrpcServerStreamBatch[] = [
                 {
@@ -138,7 +146,10 @@ describe('Native API mock', () => {
 
         expect(streamResponse.status).toEqual(200);
         expect(streamResponse.headers.has("sqlynx-channel-id")).toBeTruthy();
+        expect(streamResponse.headers.get("sqlynx-channel-id")).toEqual(channelId.toString());
         expect(streamResponse.headers.has("sqlynx-stream-id")).toBeTruthy();
+        expect(streamResponse.headers.has("some-server-metadata")).toBeTruthy();
+        expect(streamResponse.headers.get("some-server-metadata")).toEqual("some-value");
         expect(executeQueryMock).toHaveBeenCalled();
     });
 });
