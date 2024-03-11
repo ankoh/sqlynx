@@ -110,19 +110,23 @@ describe('Native API mock', () => {
         expect(channelResponse.headers.has("sqlynx-channel-id")).toBeTruthy();
         const channelId = Number.parseInt(channelResponse.headers.get("sqlynx-channel-id")!);
 
-
         // Mock the next ExecuteQuery call
+        const messageToRespond = new proto.pb.QueryResult({
+            result: {
+                case: "header",
+                value: new proto.pb.QueryResultHeader(),
+            }
+        });
         const respondSingleMessage = (_req: proto.pb.QueryParam) => {
             const initialStatus = 200;
             const initialStatusMessage = "OK";
             const initialMetadata: Record<string, string> = {
                 "some-server-metadata": "some-value",
             };
-            const message = new proto.pb.QueryResult();
             const batches: GrpcServerStreamBatch[] = [
                 {
                     event: GrpcServerStreamBatchEvent.FlushAfterClose,
-                    messages: [message],
+                    messages: [messageToRespond],
                 }
             ];
             const result = new GrpcServerStream(initialStatus, initialStatusMessage, initialMetadata, batches);
@@ -131,10 +135,10 @@ describe('Native API mock', () => {
         const executeQueryMock = jest.fn(respondSingleMessage);
         mock!.hyperService.executeQuery = (req: proto.pb.QueryParam) => executeQueryMock.call(req);
 
+        // Send the ExecuteQuery request
         const params = new proto.pb.QueryParam();
         params.query = "select 1";
         const paramsBuffer = params.toBinary();
-
         const streamRequest = new Request(new URL(`sqlynx-native://[::1]/grpc/channel/${channelId}/streams`), {
             method: 'POST',
             headers: {
@@ -144,12 +148,35 @@ describe('Native API mock', () => {
         });
         const streamResponse = await fetch(streamRequest);
 
+        // Retrieve and check the initial metadata
         expect(streamResponse.status).toEqual(200);
-        expect(streamResponse.headers.has("sqlynx-channel-id")).toBeTruthy();
         expect(streamResponse.headers.get("sqlynx-channel-id")).toEqual(channelId.toString());
         expect(streamResponse.headers.has("sqlynx-stream-id")).toBeTruthy();
-        expect(streamResponse.headers.has("some-server-metadata")).toBeTruthy();
         expect(streamResponse.headers.get("some-server-metadata")).toEqual("some-value");
         expect(executeQueryMock).toHaveBeenCalled();
+        const streamId = Number.parseInt(streamResponse.headers.get("sqlynx-stream-id")!);
+
+        // Now read from the stream
+        const readRequest = new Request(new URL(`sqlynx-native://[::1]/grpc/channel/${channelId}/stream/${streamId}`), {
+            method: 'GET',
+            headers: {
+                "sqlynx-path": "/salesforce.hyperdb.grpc.v1.HyperService/ExecuteQuery"
+            },
+        });
+
+        const expectedMessage = messageToRespond.toBinary();
+        const expectedBuffer = new ArrayBuffer(expectedMessage.length + 4);
+        (new DataView(expectedBuffer)).setUint32(expectedMessage.length, 0, true);
+        (new Uint8Array(expectedBuffer, 4)).set(expectedMessage);
+
+        const readResponse = await fetch(readRequest);
+        expect(readResponse.statusText).toEqual("OK");
+        expect(readResponse.status).toEqual(200);
+        expect(readResponse.headers.has("sqlynx-channel-id")).toBeTruthy();
+        expect(readResponse.headers.has("sqlynx-stream-id")).toBeTruthy();
+        expect(readResponse.headers.get("sqlynx-batch-event")).toEqual("FlushAfterClose");
+        expect(readResponse.headers.get("sqlynx-batch-messages")).toEqual("1");
+        expect(readResponse.headers.get("sqlynx-batch-bytes")).toEqual(expectedMessage.length.toString());
+        expect(await readResponse.arrayBuffer()).toEqual(expectedBuffer);
     });
 });

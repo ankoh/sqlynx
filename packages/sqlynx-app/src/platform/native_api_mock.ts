@@ -192,6 +192,7 @@ export class NativeAPIMock {
                 stream.channelId = channel.channelId;
                 stream.streamId = this.nextGrpcStreamId;
                 this.nextGrpcStreamId += 1;
+                channel.streams.set(stream.streamId, stream);
                 return new Response(null, {
                     status: stream.initialStatus,
                     statusText: stream.initialStatusMessage,
