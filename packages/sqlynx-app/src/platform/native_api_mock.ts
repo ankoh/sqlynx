@@ -1,23 +1,17 @@
 import * as proto from "@ankoh/hyperdb-proto";
 
 import { PlatformType } from "./platform_api.js";
+import { Message } from "@bufbuild/protobuf";
 
 /// Only process requests that are targeting sqlynx-native://
 const NATIVE_API_SCHEME = "sqlynx-native://";
 
-// const HEADER_PREFIX = "sqlynx-";
-// const HEADER_NAME_HOST = "sqlynx-host";
-// const HEADER_NAME_TLS_CLIENT_KEY = "sqlynx-tls-client-key";
-// const HEADER_NAME_TLS_CLIENT_CERT = "sqlynx-tls-client-cert";
-// const HEADER_NAME_TLS_CACERTS = "sqlynx-tls-cacerts";
 export const HEADER_NAME_PATH = "sqlynx-path";
 export const HEADER_NAME_CHANNEL_ID = "sqlynx-channel-id";
 export const HEADER_NAME_STREAM_ID = "sqlynx-stream-id";
-// const HEADER_NAME_READ_TIMEOUT = "sqlynx-read-timeout";
-// const HEADER_NAME_BATCH_TIMEOUT = "sqlynx-batch-timout";
-// const HEADER_NAME_BATCH_BYTES = "sqlynx-batch-bytes";
-// const HEADER_NAME_BATCH_EVENT = "sqlynx-batch-event";
-// const HEADER_NAME_BATCH_MESSAGES = "sqlynx-batch-messages";
+const HEADER_NAME_BATCH_BYTES = "sqlynx-batch-bytes";
+const HEADER_NAME_BATCH_EVENT = "sqlynx-batch-event";
+const HEADER_NAME_BATCH_MESSAGES = "sqlynx-batch-messages";
 
 interface RouteMatchers {
     grpcChannels: RegExp;
@@ -26,25 +20,99 @@ interface RouteMatchers {
     grpcChannelStream: RegExp;
 }
 
-interface GrpcChannel { };
+export enum GrpcServerStreamBatchEvent {
+    StreamFailed = "StreamFailed",
+    StreamFinished = "StreamFinished",
+    FlushAfterClose = "FlushAfterClose",
+    FlushAfterTimeout = "FlushAfterTimeout",
+    FlushAfterBytes = "FlushAfterBytes",
+}
 
-type GrpcServerStreamEvent<T> = { status: "ok", message: T[] };
+export interface GrpcServerStreamBatch {
+    event: GrpcServerStreamBatchEvent;
+    messages: Message[],
+    trailers?: Record<string, string>
+}
 
-class GrpcServerStream<T> {
+export class GrpcServerStream {
+    channelId: number | null;
+    streamId: number | null;
     initialStatus: number;
     initialStatusMessage: string;
     initialMetadata: Record<string, string>;
-    events: GrpcServerStreamEvent<T>[];
-    constructor(initialStatus: number, initialStatusMessage: string, initialMetadata: Record<string, string>, events: GrpcServerStreamEvent<T>[]) {
+    batches: GrpcServerStreamBatch[];
+    nextBatchId: number;
+
+    constructor(initialStatus: number, initialStatusMessage: string, initialMetadata: Record<string, string>, events: GrpcServerStreamBatch[]) {
+        this.channelId = null;
+        this.streamId = null;
         this.initialStatus = initialStatus;
         this.initialStatusMessage = initialStatusMessage;
         this.initialMetadata = initialMetadata;
-        this.events = events;
+        this.batches = events;
+        this.nextBatchId = 0;
+    }
+
+    public reachedEnd(): boolean {
+        return this.nextBatchId == this.batches.length;
+    }
+
+    public read(): Response {
+        const batchId = this.nextBatchId;
+        this.nextBatchId += 1;
+
+        if (batchId < this.batches.length) {
+            const batch = this.batches[batchId];
+
+            // Encode all messages in the batch
+            const encodedMessages = batch.messages.map((m) => m.toBinary());
+            let totalBatchBytes = 0;
+            for (const m of encodedMessages) {
+                totalBatchBytes += m.length;
+            }
+
+            // Combine all message bytes into a single body buffer
+            let bodyBuffer = new ArrayBuffer(totalBatchBytes + 4 * encodedMessages.length);
+            let bodyView = new DataView(bodyBuffer);
+            let bodyWriteOffset = 0;
+            for (const m of encodedMessages) {
+                bodyView.setUint32(bodyWriteOffset, m.byteLength, true);
+                bodyWriteOffset += 4;
+                new Uint8Array(bodyBuffer, bodyWriteOffset, m.byteLength).set(m);
+                bodyWriteOffset += m.byteLength;
+            }
+            return new Response(bodyBuffer, {
+                status: 200,
+                statusText: "OK",
+                headers: {
+                    [HEADER_NAME_CHANNEL_ID]: this.channelId!.toString(),
+                    [HEADER_NAME_STREAM_ID]: this.streamId!.toString(),
+                    [HEADER_NAME_BATCH_EVENT]: batch.event,
+                    [HEADER_NAME_BATCH_MESSAGES]: batch.messages.length.toString(),
+                    [HEADER_NAME_BATCH_BYTES]: totalBatchBytes.toString()
+                }
+            });
+        } else {
+            return new Response(null, {
+                status: 404,
+                statusText: "unknown stream"
+            });
+        }
     }
 }
 
+class GrpcChannel {
+    channelId: number;
+    streams: Map<number, GrpcServerStream>;
+
+    constructor(channelId: number) {
+        this.channelId = channelId;
+        this.streams = new Map();
+    }
+};
+
 interface HyperServiceMock {
-    executeQuery: ((req: proto.pb.QueryParam) => GrpcServerStream<proto.pb.QueryResult>) | null;
+    executeQuery: ((req: proto.pb.QueryParam) => GrpcServerStream) | null;
 }
 
 /// The native API mock mimics the api that is provided by tauri.
@@ -83,7 +151,7 @@ export class NativeAPIMock {
     /// Create a gRPC channel
     protected async createGrpcChannel(_req: Request): Promise<Response> {
         const channelId = this.nextGrpcStreamId;
-        const channel: GrpcChannel = {};
+        const channel = new GrpcChannel(channelId);
         this.grpcChannels.set(channelId, channel);
         this.nextGrpcChannelId += 1;
 
@@ -106,7 +174,7 @@ export class NativeAPIMock {
     }
 
     /// Call a streaming gRPC
-    protected async streamingGrpcCall(_channelId: number, req: Request): Promise<Response> {
+    protected async streamingGrpcCall(channel: GrpcChannel, req: Request): Promise<Response> {
         const path = req.headers.get(HEADER_NAME_PATH);
         switch (path) {
             case "/salesforce.hyperdb.grpc.v1.HyperService/ExecuteQuery": {
@@ -120,15 +188,17 @@ export class NativeAPIMock {
                 }
                 const body = await req.arrayBuffer();
                 const params = proto.pb.QueryParam.fromBinary(new Uint8Array(body));
-                const result = handler(params);
-                const streamId = this.nextGrpcStreamId;
+                const stream = handler(params);
+                stream.channelId = channel.channelId;
+                stream.streamId = this.nextGrpcStreamId;
                 this.nextGrpcStreamId += 1;
                 return new Response(null, {
-                    status: result.initialStatus,
-                    statusText: result.initialStatusMessage,
+                    status: stream.initialStatus,
+                    statusText: stream.initialStatusMessage,
                     headers: {
-                        ...result.initialMetadata,
-                        [HEADER_NAME_STREAM_ID]: streamId.toString()
+                        ...stream.initialMetadata,
+                        [HEADER_NAME_CHANNEL_ID]: stream.channelId.toString(),
+                        [HEADER_NAME_STREAM_ID]: stream.streamId.toString()
                     }
                 });
             }
@@ -139,6 +209,15 @@ export class NativeAPIMock {
                     headers: {}
                 });
         }
+    }
+
+    /// Read from a gRPC stream
+    protected async readFromGrpcStream(channel: GrpcChannel, stream: GrpcServerStream, _req: Request): Promise<Response> {
+        const response = stream.read();
+        if (stream.reachedEnd()) {
+            channel.streams.delete(stream.streamId!);
+        }
+        return response;
     }
 
     /// Process a fetch request.
@@ -190,8 +269,39 @@ export class NativeAPIMock {
         // Create a server stream
         if ((matches = this.routeMatchers.grpcChannelStreams.exec(url.pathname)) !== null) {
             const channelId = Number.parseInt(matches.groups!["channel"]!);
+            const channel = this.grpcChannels.get(channelId);
+            if (!channel) {
+                return new Response(null, {
+                    status: 404,
+                    statusText: `channel not found`
+                });
+            }
             switch (req.method) {
-                case "POST": return this.streamingGrpcCall(channelId, req);
+                case "POST": return this.streamingGrpcCall(channel, req);
+                default:
+                    return invalidRequest(req);
+            }
+        }
+        // Read from a server stream
+        if ((matches = this.routeMatchers.grpcChannelStream.exec(url.pathname)) !== null) {
+            const channelId = Number.parseInt(matches.groups!["channel"]!);
+            const streamId = Number.parseInt(matches.groups!["stream"]!);
+            const channel = this.grpcChannels.get(channelId);
+            if (!channel) {
+                return new Response(null, {
+                    status: 404,
+                    statusText: `channel not found`
+                });
+            }
+            const stream = channel.streams.get(streamId);
+            if (!stream) {
+                return new Response(null, {
+                    status: 404,
+                    statusText: `stream not found`
+                });
+            }
+            switch (req.method) {
+                case "GET": return this.readFromGrpcStream(channel, stream, req);
                 default:
                     return invalidRequest(req);
             }
