@@ -1,12 +1,15 @@
+import * as proto from "@ankoh/hyperdb-proto";
+
 import { jest } from '@jest/globals';
 
-import { NativeAPIMock } from './native_api_mock.js';
+import { GrpcServerStream, GrpcServerStreamBatch, GrpcServerStreamBatchEvent, NativeAPIMock } from './native_api_mock.js';
 import { PlatformType } from './platform_api.js';
 
 describe('Native API mock', () => {
+    let mock: NativeAPIMock | null;
     beforeEach(() => {
-        const mock = new NativeAPIMock(PlatformType.MACOS);
-        jest.spyOn(global, 'fetch').mockImplementation((req) => mock.process(req as Request));
+        mock = new NativeAPIMock(PlatformType.MACOS);
+        jest.spyOn(global, 'fetch').mockImplementation((req) => mock!.process(req as Request));
     });
     afterEach(() => {
         (global.fetch as jest.Mock).mockRestore();
@@ -89,5 +92,53 @@ describe('Native API mock', () => {
         const streamResponse = await fetch(streamRequest);
         expect(streamResponse.statusText).toEqual(`unexpected gRPC call of: /salesforce.hyperdb.grpc.v1.HyperService/ExecuteQuery`);
         expect(streamResponse.status).toEqual(400);
-    })
+    });
+    it("returns a server stream id for streaming gRPC calls", async () => {
+        const channelRequest = new Request(new URL("sqlynx-native://[::1]/grpc/channels"), {
+            method: 'POST',
+            headers: {}
+        });
+        const channelResponse = await fetch(channelRequest);
+        expect(channelResponse.statusText).toEqual("OK");
+        expect(channelResponse.status).toEqual(200);
+        expect(channelResponse.headers.has("sqlynx-channel-id")).toBeTruthy();
+        const channelId = Number.parseInt(channelResponse.headers.get("sqlynx-channel-id")!);
+
+
+        // Mock the next ExecuteQuery call
+        const respondSingleMessage = (_req: proto.pb.QueryParam) => {
+            const initialStatus = 200;
+            const initialStatusMessage = "OK";
+            const initialMetadata: Record<string, string> = {};
+            const message = new proto.pb.QueryResult();
+            const batches: GrpcServerStreamBatch[] = [
+                {
+                    event: GrpcServerStreamBatchEvent.FlushAfterClose,
+                    messages: [message],
+                }
+            ];
+            const result = new GrpcServerStream(initialStatus, initialStatusMessage, initialMetadata, batches);
+            return result;
+        };
+        const executeQueryMock = jest.fn(respondSingleMessage);
+        mock!.hyperService.executeQuery = (req: proto.pb.QueryParam) => executeQueryMock.call(req);
+
+        const params = new proto.pb.QueryParam();
+        params.query = "select 1";
+        const paramsBuffer = params.toBinary();
+
+        const streamRequest = new Request(new URL(`sqlynx-native://[::1]/grpc/channel/${channelId}/streams`), {
+            method: 'POST',
+            headers: {
+                "sqlynx-path": "/salesforce.hyperdb.grpc.v1.HyperService/ExecuteQuery"
+            },
+            body: paramsBuffer,
+        });
+        const streamResponse = await fetch(streamRequest);
+
+        expect(streamResponse.status).toEqual(200);
+        expect(streamResponse.headers.has("sqlynx-channel-id")).toBeTruthy();
+        expect(streamResponse.headers.has("sqlynx-stream-id")).toBeTruthy();
+        expect(executeQueryMock).toHaveBeenCalled();
+    });
 });
