@@ -15,7 +15,8 @@ mod status;
 use ipc_router::process_ipc_request;
 use std::env;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     // Setup the logger
     if env::var("RUST_LOG").is_err() {
         env::set_var("RUST_LOG", "info")
