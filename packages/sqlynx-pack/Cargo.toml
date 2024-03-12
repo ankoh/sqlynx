@@ -52,5 +52,5 @@ version = "1.7.0"
 features = ["v5"]
 
 [dependencies.toml]
-version = "0.8.10"
+version = "0.8.11"
 features = ["preserve_order"]
