@@ -1,7 +1,7 @@
 import * as arrow from 'apache-arrow';
 import * as proto from "@ankoh/hyperdb-proto";
 
-import { HyperDatabaseClient, HyperDatabaseConnection, HyperQueryExecutionProgress, HyperQueryExecutionStatus, HyperQueryResultStream } from "./hyperdb_client.js";
+import { HyperDatabaseClient, HyperDatabaseConnection, HyperQueryExecutionProgress, HyperQueryExecutionStatus, HyperQueryResultStream } from "./platform_hyperdb_client.js";
 
 class QueryResultStream implements HyperQueryResultStream {
     /// Get the schema message
