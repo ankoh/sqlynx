@@ -1,4 +1,4 @@
-import { HyperDatabaseClient } from "./hyperdb_client.js";
+import { HyperDatabaseClient } from "./platform_hyperdb_client.js";
 
 export enum PlatformType {
     BROWSER = 0,
