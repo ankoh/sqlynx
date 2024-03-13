@@ -63,7 +63,7 @@ export class NativeGrpcServerStream {
         const response = await fetch(request);
 
         if (response.status != 200) {
-            // Throw error
+            throw new NativeGrpcError(response.status, response.statusText);
         }
 
         const streamBatchEvent = requireStringHeader(response.headers, "sqlynx-batch-event");
@@ -98,6 +98,16 @@ interface StartServerStreamArgs {
     tlsClientKeyPath: string | null;
     tlsClientCertPath: string | null;
     tlsCacertsPath: string | null;
+}
+
+class NativeGrpcError extends Error {
+    status: number;
+
+    constructor(status: number, msg: string) {
+        super(msg);
+        this.status = status;
+        Object.setPrototypeOf(this, NativeGrpcError.prototype);
+    }
 }
 
 export class NativeGrpcChannel {
@@ -139,7 +149,7 @@ export class NativeGrpcChannel {
         });
         const response = await fetch(request);
         if (response.status != 200) {
-            // Throw error
+            throw new NativeGrpcError(response.status, response.statusText);
         }
 
         const streamId = requireIntegerHeader(response.headers, HEADER_NAME_STREAM_ID);
@@ -165,8 +175,11 @@ export class NativeGrpcClient {
             headers: {}
         });
         const response = await fetch(request);
-        const channelId = requireIntegerHeader(response.headers, HEADER_NAME_STREAM_ID);
+        if (response.status !== 200) {
+            throw new NativeGrpcError(response.status, response.statusText);
+        }
 
+        const channelId = requireIntegerHeader(response.headers, HEADER_NAME_STREAM_ID);
         return new NativeGrpcChannel(this.endpoint, channelId);
     }
 }
