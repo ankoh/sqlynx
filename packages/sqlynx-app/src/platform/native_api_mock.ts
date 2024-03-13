@@ -2,16 +2,24 @@ import * as proto from "@ankoh/hyperdb-proto";
 
 import { PlatformType } from "./platform_api.js";
 import { Message } from "@bufbuild/protobuf";
+import { NativeGrpcServerStreamBatchEvent } from "./native_grpc_client.js";
 
 /// Only process requests that are targeting sqlynx-native://
 const NATIVE_API_SCHEME = "sqlynx-native://";
 
-export const HEADER_NAME_PATH = "sqlynx-path";
 export const HEADER_NAME_CHANNEL_ID = "sqlynx-channel-id";
 export const HEADER_NAME_STREAM_ID = "sqlynx-stream-id";
-const HEADER_NAME_BATCH_BYTES = "sqlynx-batch-bytes";
-const HEADER_NAME_BATCH_EVENT = "sqlynx-batch-event";
-const HEADER_NAME_BATCH_MESSAGES = "sqlynx-batch-messages";
+export const HEADER_NAME_BATCH_BYTES = "sqlynx-batch-bytes";
+export const HEADER_NAME_BATCH_EVENT = "sqlynx-batch-event";
+export const HEADER_NAME_BATCH_MESSAGES = "sqlynx-batch-messages";
+export const HEADER_NAME_READ_TIMEOUT = "sqlynx-read-timeout";
+export const HEADER_NAME_BATCH_TIMEOUT = "sqlynx-batch-timeout";
+
+export const HEADER_NAME_HOST = "sqlynx-host";
+export const HEADER_NAME_PATH = "sqlynx-path";
+export const HEADER_NAME_TLS_CLIENT_KEY = "sqlynx-tls-client-key";
+export const HEADER_NAME_TLS_CLIENT_CERT = "sqlynx-tls-client-cert";
+export const HEADER_NAME_TLS_CACERTS = "sqlynx-tls-cacerts";
 
 interface RouteMatchers {
     grpcChannels: RegExp;
@@ -20,18 +28,10 @@ interface RouteMatchers {
     grpcChannelStream: RegExp;
 }
 
-export enum GrpcServerStreamBatchEvent {
-    StreamFailed = "StreamFailed",
-    StreamFinished = "StreamFinished",
-    FlushAfterClose = "FlushAfterClose",
-    FlushAfterTimeout = "FlushAfterTimeout",
-    FlushAfterBytes = "FlushAfterBytes",
-}
-
 export interface GrpcServerStreamBatch {
-    event: GrpcServerStreamBatchEvent;
+    event: NativeGrpcServerStreamBatchEvent;
     messages: Message[],
-    trailers?: Record<string, string>
+    trailers?: Headers
 }
 
 export class GrpcServerStream {

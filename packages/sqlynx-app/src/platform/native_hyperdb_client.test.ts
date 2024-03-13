@@ -1,15 +1,24 @@
 import { jest } from '@jest/globals';
 
-describe('Global fetch mock', () => {
-    it("can be mocked with jest", async () => {
-        jest.spyOn(global, 'fetch').mockImplementationOnce(async (): Promise<any> => {
-            return {
-                ok: true,
-                status: 200,
-            };
-        });
-        const response = await fetch("sqlynx-native://foo", { method: 'POST' });
-        expect(response.status).toEqual(200);
+import { NativeAPIMock } from './native_api_mock.js';
+import { PlatformType } from './platform_api.js';
+
+describe('Native HyperDB client', () => {
+    let mock: NativeAPIMock | null;
+    beforeEach(() => {
+        mock = new NativeAPIMock(PlatformType.MACOS);
+        jest.spyOn(global, 'fetch').mockImplementation((req) => mock!.process(req as Request));
+    });
+    afterEach(() => {
         (global.fetch as jest.Mock).mockRestore();
+    });
+
+    it("rejects requests that are not targeting sqlynx-native://", async () => {
+        const request = new Request(new URL("not-sqlynx-native://[::1]/foo"), {
+            method: 'POST',
+            headers: {}
+        });
+        const response = await fetch(request);
+        expect(response.status).toEqual(400);
     });
 });

@@ -2,8 +2,9 @@ import * as proto from "@ankoh/hyperdb-proto";
 
 import { jest } from '@jest/globals';
 
-import { GrpcServerStream, GrpcServerStreamBatch, GrpcServerStreamBatchEvent, NativeAPIMock } from './native_api_mock.js';
+import { GrpcServerStream, GrpcServerStreamBatch, NativeAPIMock } from './native_api_mock.js';
 import { PlatformType } from './platform_api.js';
+import { NativeGrpcServerStreamBatchEvent } from "./native_grpc_client.js";
 
 describe('Native API mock', () => {
     let mock: NativeAPIMock | null;
@@ -13,7 +14,7 @@ describe('Native API mock', () => {
     });
     afterEach(() => {
         (global.fetch as jest.Mock).mockRestore();
-    })
+    });
 
     it("rejects requests that are not targeting sqlynx-native://", async () => {
         const request = new Request(new URL("not-sqlynx-native://[::1]/foo"), {
@@ -125,7 +126,7 @@ describe('Native API mock', () => {
             };
             const batches: GrpcServerStreamBatch[] = [
                 {
-                    event: GrpcServerStreamBatchEvent.FlushAfterClose,
+                    event: NativeGrpcServerStreamBatchEvent.FlushAfterClose,
                     messages: [messageToRespond],
                 }
             ];
