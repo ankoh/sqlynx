@@ -18,7 +18,7 @@ use crate::grpc_stream_manager::GrpcStreamManager;
 use crate::status::Status;
 
 pub const HEADER_PREFIX: &'static str = "sqlynx-";
-pub const HEADER_NAME_HOST: &'static str = "sqlynx-host";
+pub const HEADER_NAME_ENDPOINT: &'static str = "sqlynx-endpoint";
 pub const HEADER_NAME_TLS_CLIENT_KEY: &'static str = "sqlynx-tls-client-key";
 pub const HEADER_NAME_TLS_CLIENT_CERT: &'static str = "sqlynx-tls-client-cert";
 pub const HEADER_NAME_TLS_CACERTS: &'static str = "sqlynx-tls-cacerts";
@@ -85,8 +85,8 @@ fn read_channel_params(headers: &mut HeaderMap) -> Result<GrpcChannelParams, Sta
             None => continue,
         };
         match key.as_str() {
-            HEADER_NAME_HOST => {
-                host = Some(read_header_value(value, HEADER_NAME_HOST)?);
+            HEADER_NAME_ENDPOINT => {
+                host = Some(read_header_value(value, HEADER_NAME_ENDPOINT)?);
             }
             HEADER_NAME_TLS_CLIENT_KEY => {
                 tls_client_key = Some(read_header_value(value, HEADER_NAME_TLS_CLIENT_KEY)?);
@@ -107,10 +107,10 @@ fn read_channel_params(headers: &mut HeaderMap) -> Result<GrpcChannelParams, Sta
 
     // Make sure the user provided an endpoint
     let endpoint = if let Some(host) = &host {
-        Endpoint::from_str(host).map_err(|e| Status::HeaderIsNotAValidEndpoint { header: HEADER_NAME_HOST, message: e.to_string() })
+        Endpoint::from_str(host).map_err(|e| Status::HeaderIsNotAValidEndpoint { header: HEADER_NAME_ENDPOINT, message: e.to_string() })
         ?
     } else {
-        return Err(Status::HeaderRequiredButMissing { header: HEADER_NAME_HOST });
+        return Err(Status::HeaderRequiredButMissing { header: HEADER_NAME_ENDPOINT });
     };
     // If the user provided a client key, we also require a client cert and cacerts.
     // XXX Maybe we can relax this a bit.

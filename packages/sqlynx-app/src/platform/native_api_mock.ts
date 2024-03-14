@@ -15,7 +15,7 @@ export const HEADER_NAME_BATCH_MESSAGES = "sqlynx-batch-messages";
 export const HEADER_NAME_READ_TIMEOUT = "sqlynx-read-timeout";
 export const HEADER_NAME_BATCH_TIMEOUT = "sqlynx-batch-timeout";
 
-export const HEADER_NAME_HOST = "sqlynx-host";
+export const HEADER_NAME_ENDPOINT = "sqlynx-endpoint";
 export const HEADER_NAME_PATH = "sqlynx-path";
 export const HEADER_NAME_TLS_CLIENT_KEY = "sqlynx-tls-client-key";
 export const HEADER_NAME_TLS_CLIENT_CERT = "sqlynx-tls-client-cert";

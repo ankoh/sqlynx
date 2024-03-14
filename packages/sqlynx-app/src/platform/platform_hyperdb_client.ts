@@ -1,5 +1,6 @@
 import * as arrow from 'apache-arrow';
 import * as proto from "@ankoh/hyperdb-proto";
+import { GrpcChannelArgs } from './grpc_common.js';
 
 export enum HyperQueryExecutionStatus {
     ACCEPTED = 0,
@@ -31,5 +32,5 @@ export interface HyperDatabaseConnection {
 
 export interface HyperDatabaseClient {
     /// Create a database connection
-    connect(): Promise<HyperDatabaseConnection>;
+    connect(args: GrpcChannelArgs): Promise<HyperDatabaseConnection>;
 }
