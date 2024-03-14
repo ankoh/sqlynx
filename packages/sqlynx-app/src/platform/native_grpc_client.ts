@@ -49,7 +49,7 @@ export class NativeGrpcServerStream {
     }
 
     /// Read the next messages from the stream
-    async read(): Promise<NativeGrpcServerStreamBatch> {
+    public async read(): Promise<NativeGrpcServerStreamBatch> {
         const url = new URL(this.endpoint.baseURL);
         url.pathname = `/grpc/channels/${this.channelId}/stream/${this.streamId}`;
         const request = new Request(url, {
@@ -82,9 +82,18 @@ export class NativeGrpcServerStream {
         // Message count mismatch?
         // We treat this as an error since this means our encoded response buffer is corrupt.
         if (streamBatchMessages != messages.length) {
-            // XXX
+            // Fatal error, silently drop the stream
+            const url = new URL(this.endpoint.baseURL);
+            url.pathname = `/grpc/channels/${this.channelId}/stream/${this.streamId}`;
+            const request = new Request(url, {
+                method: 'DELETE'
+            });
+            await fetch(request);
+            // XXX Log if the dropping failed
+            throw new NativeGrpcError(500, "batch message count mismatch");
         }
 
+        // Return the batch event and all messages
         return {
             event: streamBatchEvent as NativeGrpcServerStreamBatchEvent,
             messages: messages,
@@ -121,9 +130,8 @@ export class NativeGrpcChannel {
         this.channelId = channelId;
     }
 
-
     /// Call a server streaming
-    protected async startServerStream(args: StartServerStreamArgs): Promise<NativeGrpcServerStream> {
+    public async startServerStream(args: StartServerStreamArgs): Promise<NativeGrpcServerStream> {
         const url = new URL(this.endpoint.baseURL);
         url.pathname = `/grpc/channels/${this.channelId}/streams`;
 
@@ -166,7 +174,7 @@ export class NativeGrpcClient {
     }
 
     /// Create a gRPC channel
-    protected async connectChannel(): Promise<NativeGrpcChannel> {
+    public async connectChannel(): Promise<NativeGrpcChannel> {
         const url = new URL(this.endpoint.baseURL);
         url.pathname = `/grpc/channels`;
 
@@ -178,7 +186,6 @@ export class NativeGrpcClient {
         if (response.status !== 200) {
             throw new NativeGrpcError(response.status, response.statusText);
         }
-
         const channelId = requireIntegerHeader(response.headers, HEADER_NAME_STREAM_ID);
         return new NativeGrpcChannel(this.endpoint, channelId);
     }
