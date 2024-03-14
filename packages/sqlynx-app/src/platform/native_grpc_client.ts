@@ -133,7 +133,7 @@ export class NativeGrpcChannel {
     /// Call a server streaming
     public async startServerStream(args: StartServerStreamArgs): Promise<NativeGrpcServerStream> {
         const url = new URL(this.endpoint.baseURL);
-        url.pathname = `/grpc/channels/${this.channelId}/streams`;
+        url.pathname = `/grpc/channel/${this.channelId}/streams`;
 
         // Collect the request headers
         const headers = new Headers();
@@ -186,7 +186,7 @@ export class NativeGrpcClient {
         if (response.status !== 200) {
             throw new NativeGrpcError(response.status, response.statusText);
         }
-        const channelId = requireIntegerHeader(response.headers, HEADER_NAME_STREAM_ID);
+        const channelId = requireIntegerHeader(response.headers, HEADER_NAME_CHANNEL_ID);
         return new NativeGrpcChannel(this.endpoint, channelId);
     }
 }
