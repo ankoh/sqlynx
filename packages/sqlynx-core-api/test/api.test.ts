@@ -10,7 +10,7 @@ const wasmPath = path.resolve(distPath, './sqlynx.wasm');
 
 describe('SQLynx setup', () => {
     it('WebAssembly file exists', () => {
-        expect(async () => await fs.promises.access(wasmPath)).not.toThrow();
+        expect(async () => await fs.promises.access(wasmPath)).resolves;
     });
     it('instantiates WebAssembly module', async () => {
         const instance = await sqlynx.SQLynx.create(async (imports: WebAssembly.Imports) => {
