@@ -2,12 +2,14 @@ import * as arrow from 'apache-arrow';
 import * as proto from "@ankoh/hyperdb-proto";
 
 import { HyperDatabaseClient, HyperDatabaseConnection, HyperQueryExecutionProgress, HyperQueryExecutionStatus, HyperQueryResultStream } from "./platform_hyperdb_client.js";
-import { NativeGrpcChannel, NativeGrpcClient, NativeGrpcEndpoint, NativeGrpcServerStream } from './native_grpc_client.js';
+import { NativeGrpcChannel, NativeGrpcClient, NativeGrpcProxyConfig, NativeGrpcServerStream } from './native_grpc_client.js';
+import { GrpcChannelArgs } from './grpc_common.js';
 
-class NativeHyperQueryResultStream extends NativeGrpcServerStream implements HyperQueryResultStream {
+class NativeHyperQueryResultStream implements HyperQueryResultStream {
+    grpcStream: NativeGrpcServerStream;
 
-    constructor(endpoint: NativeGrpcEndpoint, channelId: number, streamId: number) {
-        super(endpoint, channelId, streamId);
+    constructor(stream: NativeGrpcServerStream) {
+        this.grpcStream = stream;
     }
 
     /// Get the schema message
@@ -28,24 +30,33 @@ class NativeHyperQueryResultStream extends NativeGrpcServerStream implements Hyp
     }
 }
 
-class NativeHyperDatabaseConnection extends NativeGrpcChannel implements HyperDatabaseConnection {
-    constructor(endpoint: NativeGrpcEndpoint, channelId: number) {
-        super(endpoint, channelId);
+class NativeHyperDatabaseConnection implements HyperDatabaseConnection {
+    channel: NativeGrpcChannel;
+
+    constructor(channel: NativeGrpcChannel) {
+        this.channel = channel;
     }
 
-    /// Execute Query
-    public async executeQuery(_param: proto.pb.QueryParam): Promise<HyperQueryResultStream> {
-        return new NativeHyperQueryResultStream(this.endpoint, 0, 0);
+    /// Execute a query against Hyper
+    public async executeQuery(params: proto.pb.QueryParam): Promise<HyperQueryResultStream> {
+        const stream = await this.channel.startServerStream({
+            path: "/salesforce.hyperdb.grpc.v1.HyperService/ExecuteQuery",
+            body: params.toBinary(),
+        });
+        return new NativeHyperQueryResultStream(stream);
     }
 }
 
-export class NativeHyperDatabaseClient extends NativeGrpcClient implements HyperDatabaseClient {
-    constructor(endpoint: NativeGrpcEndpoint) {
-        super(endpoint);
+export class NativeHyperDatabaseClient implements HyperDatabaseClient {
+    client: NativeGrpcClient;
+
+    constructor(config: NativeGrpcProxyConfig) {
+        this.client = new NativeGrpcClient(config);
     }
 
     /// Create a database connection
-    public async connect(): Promise<HyperDatabaseConnection> {
-        return new NativeHyperDatabaseConnection(this.endpoint, 0);
+    public async connect(args: GrpcChannelArgs): Promise<HyperDatabaseConnection> {
+        const channel = await this.client.connect(args);
+        return new NativeHyperDatabaseConnection(channel);
     }
 }

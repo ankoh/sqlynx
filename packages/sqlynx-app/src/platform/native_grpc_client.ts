@@ -1,4 +1,5 @@
-import { HEADER_NAME_BATCH_BYTES, HEADER_NAME_BATCH_TIMEOUT, HEADER_NAME_CHANNEL_ID, HEADER_NAME_PATH, HEADER_NAME_READ_TIMEOUT, HEADER_NAME_STREAM_ID, HEADER_NAME_TLS_CACERTS, HEADER_NAME_TLS_CLIENT_CERT, HEADER_NAME_TLS_CLIENT_KEY } from "./native_api_mock.js";
+import { GrpcChannelArgs, GrpcError } from "./grpc_common.js";
+import { HEADER_NAME_BATCH_BYTES, HEADER_NAME_BATCH_TIMEOUT, HEADER_NAME_CHANNEL_ID, HEADER_NAME_ENDPOINT, HEADER_NAME_PATH, HEADER_NAME_READ_TIMEOUT, HEADER_NAME_STREAM_ID, HEADER_NAME_TLS_CACERTS, HEADER_NAME_TLS_CLIENT_CERT, HEADER_NAME_TLS_CLIENT_KEY } from "./native_api_mock.js";
 
 export enum NativeGrpcServerStreamBatchEvent {
     StreamFailed = "StreamFailed",
@@ -17,7 +18,7 @@ export interface NativeGrpcServerStreamBatch {
     trailers?: Record<string, string>;
 }
 
-export interface NativeGrpcEndpoint {
+export interface NativeGrpcProxyConfig {
     /// The endpoint URL
     baseURL: URL;
 };
@@ -36,13 +37,13 @@ function requireIntegerHeader(headers: Headers, key: string): number {
 
 export class NativeGrpcServerStream {
     /// The endpoint
-    endpoint: NativeGrpcEndpoint;
+    endpoint: NativeGrpcProxyConfig;
     /// The channel id
     channelId: number;
     /// The stream id
     streamId: number;
 
-    constructor(endpoint: NativeGrpcEndpoint, channelId: number, streamId: number) {
+    constructor(endpoint: NativeGrpcProxyConfig, channelId: number, streamId: number) {
         this.endpoint = endpoint;
         this.channelId = channelId;
         this.streamId = streamId;
@@ -63,7 +64,7 @@ export class NativeGrpcServerStream {
         const response = await fetch(request);
 
         if (response.status != 200) {
-            throw new NativeGrpcError(response.status, response.statusText);
+            throw new GrpcError(response.status, response.statusText);
         }
 
         const streamBatchEvent = requireStringHeader(response.headers, "sqlynx-batch-event");
@@ -92,7 +93,7 @@ export class NativeGrpcServerStream {
             });
             await fetch(request);
             // XXX Log if the dropping failed
-            throw new NativeGrpcError(500, "batch message count mismatch");
+            throw new GrpcError(500, "batch message count mismatch");
         }
 
         // Return the batch event and all messages
@@ -106,28 +107,15 @@ export class NativeGrpcServerStream {
 interface StartServerStreamArgs {
     path: string;
     body: Uint8Array;
-    tlsClientKeyPath: string | null;
-    tlsClientCertPath: string | null;
-    tlsCacertsPath: string | null;
-}
-
-class NativeGrpcError extends Error {
-    status: number;
-
-    constructor(status: number, msg: string) {
-        super(msg);
-        this.status = status;
-        Object.setPrototypeOf(this, NativeGrpcError.prototype);
-    }
 }
 
 export class NativeGrpcChannel {
     /// The endpoint
-    endpoint: NativeGrpcEndpoint;
+    endpoint: NativeGrpcProxyConfig;
     /// The channel id
     channelId: number;
 
-    constructor(endpoint: NativeGrpcEndpoint, channelId: number) {
+    constructor(endpoint: NativeGrpcProxyConfig, channelId: number) {
         this.endpoint = endpoint;
         this.channelId = channelId;
     }
@@ -141,15 +129,6 @@ export class NativeGrpcChannel {
         const headers = new Headers();
         headers.set(HEADER_NAME_CHANNEL_ID, this.channelId.toString());
         headers.set(HEADER_NAME_PATH, args.path);
-        if (args.tlsClientKeyPath) {
-            headers.set(HEADER_NAME_TLS_CLIENT_KEY, args.tlsClientKeyPath);
-        }
-        if (args.tlsClientCertPath) {
-            headers.set(HEADER_NAME_TLS_CLIENT_CERT, args.tlsClientCertPath);
-        }
-        if (args.tlsCacertsPath) {
-            headers.set(HEADER_NAME_TLS_CACERTS, args.tlsCacertsPath);
-        }
 
         // Send the request
         const request = new Request(url, {
@@ -159,7 +138,7 @@ export class NativeGrpcChannel {
         });
         const response = await fetch(request);
         if (response.status != 200) {
-            throw new NativeGrpcError(response.status, response.statusText);
+            throw new GrpcError(response.status, response.statusText);
         }
 
         const streamId = requireIntegerHeader(response.headers, HEADER_NAME_STREAM_ID);
@@ -169,26 +148,37 @@ export class NativeGrpcChannel {
 
 export class NativeGrpcClient {
     /// The endpoint
-    endpoint: NativeGrpcEndpoint;
+    proxy: NativeGrpcProxyConfig;
 
-    constructor(endpoint: NativeGrpcEndpoint) {
-        this.endpoint = endpoint;
+    constructor(proxy: NativeGrpcProxyConfig) {
+        this.proxy = proxy;
     }
 
     /// Create a gRPC channel
-    public async connectChannel(): Promise<NativeGrpcChannel> {
-        const url = new URL(this.endpoint.baseURL);
+    public async connect(args: GrpcChannelArgs): Promise<NativeGrpcChannel> {
+        const url = new URL(this.proxy.baseURL);
         url.pathname = `/grpc/channels`;
 
+        const headers = new Headers();
+        headers.set(HEADER_NAME_ENDPOINT, args.endpoint);
+        if (args.tlsClientKeyPath) {
+            headers.set(HEADER_NAME_TLS_CLIENT_KEY, args.tlsClientKeyPath);
+        }
+        if (args.tlsClientCertPath) {
+            headers.set(HEADER_NAME_TLS_CLIENT_CERT, args.tlsClientCertPath);
+        }
+        if (args.tlsCacertsPath) {
+            headers.set(HEADER_NAME_TLS_CACERTS, args.tlsCacertsPath);
+        }
         const request = new Request(url, {
             method: 'POST',
-            headers: {}
+            headers
         });
         const response = await fetch(request);
         if (response.status !== 200) {
-            throw new NativeGrpcError(response.status, response.statusText);
+            throw new GrpcError(response.status, response.statusText);
         }
         const channelId = requireIntegerHeader(response.headers, HEADER_NAME_CHANNEL_ID);
-        return new NativeGrpcChannel(this.endpoint, channelId);
+        return new NativeGrpcChannel(this.proxy, channelId);
     }
 }
