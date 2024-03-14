@@ -111,6 +111,8 @@ class GrpcChannel {
     }
 };
 
+type ExecuteQueryMockFn = ((req: proto.pb.QueryParam) => GrpcServerStream);
+
 interface HyperServiceMock {
     executeQuery: ((req: proto.pb.QueryParam) => GrpcServerStream) | null;
 }
@@ -308,13 +310,5 @@ export class NativeAPIMock {
             }
         }
         return invalidRequest(req);
-    }
-
-    /// Mock an execute query call
-    public mockExecuteQueryCall(status: number, statusMessage: string, initialMetadata: Record<string, string>, batches: GrpcServerStreamBatch[]) {
-        const resultWriter = (_query: string) => new GrpcServerStream(status, statusMessage, initialMetadata, batches);
-        const mock = jest.fn(resultWriter);
-        this.hyperService.executeQuery = (req: proto.pb.QueryParam) => mock.call(req.query);
-        return mock;
     }
 }
