@@ -51,7 +51,7 @@ export class NativeGrpcServerStream {
     /// Read the next messages from the stream
     public async read(): Promise<NativeGrpcServerStreamBatch> {
         const url = new URL(this.endpoint.baseURL);
-        url.pathname = `/grpc/channels/${this.channelId}/stream/${this.streamId}`;
+        url.pathname = `/grpc/channel/${this.channelId}/stream/${this.streamId}`;
         const request = new Request(url, {
             method: 'GET',
             headers: {
@@ -76,7 +76,9 @@ export class NativeGrpcServerStream {
         let messages = [];
         while (offset < bodyBuffer.byteLength) {
             const length = bodyBufferView.getUint32(offset, true);
-            messages.push(new Uint8Array(bodyBuffer, offset + 4, length));
+            offset += 4;
+            messages.push(new Uint8Array(bodyBuffer, offset, length));
+            offset += length;
         }
 
         // Message count mismatch?
