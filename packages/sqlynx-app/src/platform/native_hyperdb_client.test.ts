@@ -1,9 +1,14 @@
 import { jest } from '@jest/globals';
 
-import { NativeAPIMock } from './native_api_mock.js';
+import { GrpcServerStream, NativeAPIMock } from './native_api_mock.js';
 import { PlatformType } from './platform_api.js';
+import { GrpcChannelArgs } from './grpc_common.js';
 
-describe('Native HyperDB client', () => {
+import * as proto from "@ankoh/hyperdb-proto";
+import { NativeHyperDatabaseClient } from './native_hyperdb_client.js';
+import { NativeGrpcServerStreamBatchEvent } from './native_grpc_client.js';
+
+describe('Native Hyper client', () => {
     let mock: NativeAPIMock | null;
     beforeEach(() => {
         mock = new NativeAPIMock(PlatformType.MACOS);
@@ -12,13 +17,55 @@ describe('Native HyperDB client', () => {
     afterEach(() => {
         (global.fetch as jest.Mock).mockRestore();
     });
+    const testChannelArgs: GrpcChannelArgs = {
+        endpoint: "http://[::1]:8080"
+    };
 
-    it("rejects requests that are not targeting sqlynx-native://", async () => {
-        const request = new Request(new URL("not-sqlynx-native://[::1]/foo"), {
-            method: 'POST',
-            headers: {}
+    // Test channel creation
+    it("can create a channel", () => {
+        const client = new NativeHyperDatabaseClient({
+            baseURL: new URL("sqlynx-native://[::1]")
         });
-        const response = await fetch(request);
-        expect(response.status).toEqual(400);
+        expect(async () => await client.connect(testChannelArgs)).resolves;
+    });
+    // Make sure channel creation fails with wrong base url
+    it("fails to create a channel with invalid base URL", () => {
+        const client = new NativeHyperDatabaseClient({
+            baseURL: new URL("not-sqlynx-native://[::1]")
+        });
+        expect(async () => await client.connect(testChannelArgs)).rejects.toThrow();
+    });
+
+    describe('channels', () => {
+        // Test starting a server stream
+        it("can start a streaming gRPC call", async () => {
+            const client = new NativeHyperDatabaseClient({
+                baseURL: new URL("sqlynx-native://[::1]")
+            });
+
+            // Setup the channel
+            const channel = await client.connect(testChannelArgs);
+            expect(channel.channel.channelId).not.toBeNull();
+            expect(channel.channel.channelId).not.toBeNaN();
+
+            // Mock executeQuery call
+            const executeQueryMock = jest.fn((_query: string) => new GrpcServerStream(200, "OK", {}, [
+                {
+                    event: NativeGrpcServerStreamBatchEvent.FlushAfterClose,
+                    messages: [
+                        new proto.pb.QueryResult()
+                    ],
+                }
+            ]));
+            mock!.hyperService.executeQuery = (p) => executeQueryMock(p.query);
+
+            // Start the server stream
+            const params = new proto.pb.QueryParam({
+                query: "select 1"
+            });
+            await channel.executeQuery(params);
+            expect(executeQueryMock).toHaveBeenCalled();
+            expect(executeQueryMock).toHaveBeenCalledWith("select 1");
+        });
     });
 });

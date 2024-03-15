@@ -58,7 +58,7 @@ class NativeHyperDatabaseConnection implements HyperDatabaseConnection {
     }
 
     /// Execute a query against Hyper
-    public async executeQuery(params: proto.pb.QueryParam): Promise<HyperQueryResultStream> {
+    public async executeQuery(params: proto.pb.QueryParam): Promise<NativeHyperQueryResultStream> {
         const stream = await this.channel.startServerStream({
             path: "/salesforce.hyperdb.grpc.v1.HyperService/ExecuteQuery",
             body: params.toBinary(),
@@ -75,7 +75,7 @@ export class NativeHyperDatabaseClient implements HyperDatabaseClient {
     }
 
     /// Create a database connection
-    public async connect(args: GrpcChannelArgs): Promise<HyperDatabaseConnection> {
+    public async connect(args: GrpcChannelArgs): Promise<NativeHyperDatabaseConnection> {
         const channel = await this.client.connect(args);
         return new NativeHyperDatabaseConnection(channel);
     }
