@@ -6,13 +6,13 @@ import { GrpcChannelArgs } from './grpc_common.js';
 
 
 class NativeHyperQueryResultStream implements HyperQueryResultStream {
-    stream: NativeGrpcServerStream;
+    grpcStream: NativeGrpcServerStream;
     messageIterator: NativeGrpcServerStreamMessageIterator;
     currentStatus: HyperQueryExecutionStatus;
 
     constructor(stream: NativeGrpcServerStream) {
-        this.stream = stream;
-        this.messageIterator = new NativeGrpcServerStreamMessageIterator(this.stream);
+        this.grpcStream = stream;
+        this.messageIterator = new NativeGrpcServerStreamMessageIterator(this.grpcStream);
         this.currentStatus = HyperQueryExecutionStatus.STARTED;
     }
 
@@ -51,15 +51,15 @@ class NativeHyperQueryResultStream implements HyperQueryResultStream {
 }
 
 class NativeHyperDatabaseConnection implements HyperDatabaseConnection {
-    channel: NativeGrpcChannel;
+    grpcChannel: NativeGrpcChannel;
 
     constructor(channel: NativeGrpcChannel) {
-        this.channel = channel;
+        this.grpcChannel = channel;
     }
 
     /// Execute a query against Hyper
     public async executeQuery(params: proto.pb.QueryParam): Promise<NativeHyperQueryResultStream> {
-        const stream = await this.channel.startServerStream({
+        const stream = await this.grpcChannel.startServerStream({
             path: "/salesforce.hyperdb.grpc.v1.HyperService/ExecuteQuery",
             body: params.toBinary(),
         });
