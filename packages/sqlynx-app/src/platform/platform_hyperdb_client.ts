@@ -5,8 +5,7 @@ import { GrpcChannelArgs } from './grpc_common.js';
 export enum HyperQueryExecutionStatus {
     ACCEPTED = 0,
     STARTED = 1,
-    RECEIVED_SCHEMA = 2,
-    RECEIVED_FIRST_RESULT = 3,
+    RECEIVED_RESULT_CHUNK = 3,
     SUCCEEDED = 4,
     FAILED = 5,
     CANCELLED = 6,
@@ -14,15 +13,9 @@ export enum HyperQueryExecutionStatus {
 
 export interface HyperQueryExecutionProgress { }
 
-export interface HyperQueryResultStream {
-    /// Get the schema message
-    getSchema(): Promise<arrow.Schema | null>;
+export interface HyperQueryResultStream extends AsyncIterator<Uint8Array> {
     /// Get the query execution status
-    getStatus(): Promise<HyperQueryExecutionStatus | null>;
-    /// Get the next progress update
-    nextProgressUpdate(): Promise<HyperQueryExecutionProgress | null>;
-    /// Get the next record batch
-    nextRecordBatch(): Promise<arrow.RecordBatch<any> | null>;
+    getStatus(): HyperQueryExecutionStatus;
 }
 
 export interface HyperDatabaseConnection {

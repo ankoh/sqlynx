@@ -1,32 +1,52 @@
-import * as arrow from 'apache-arrow';
 import * as proto from "@ankoh/hyperdb-proto";
 
-import { HyperDatabaseClient, HyperDatabaseConnection, HyperQueryExecutionProgress, HyperQueryExecutionStatus, HyperQueryResultStream } from "./platform_hyperdb_client.js";
-import { NativeGrpcChannel, NativeGrpcClient, NativeGrpcProxyConfig, NativeGrpcServerStream } from './native_grpc_client.js';
+import { HyperDatabaseClient, HyperDatabaseConnection, HyperQueryExecutionStatus, HyperQueryResultStream } from "./platform_hyperdb_client.js";
+import { NativeGrpcChannel, NativeGrpcClient, NativeGrpcProxyConfig, NativeGrpcServerStream, NativeGrpcServerStreamMessageIterator } from './native_grpc_client.js';
 import { GrpcChannelArgs } from './grpc_common.js';
 
+
 class NativeHyperQueryResultStream implements HyperQueryResultStream {
-    grpcStream: NativeGrpcServerStream;
+    stream: NativeGrpcServerStream;
+    messageIterator: NativeGrpcServerStreamMessageIterator;
+    currentStatus: HyperQueryExecutionStatus;
 
     constructor(stream: NativeGrpcServerStream) {
-        this.grpcStream = stream;
+        this.stream = stream;
+        this.messageIterator = new NativeGrpcServerStreamMessageIterator(this.stream);
+        this.currentStatus = HyperQueryExecutionStatus.STARTED;
     }
 
-    /// Get the schema message
-    public async getSchema(): Promise<arrow.Schema | null> {
-        return null;
-    }
     /// Get the query execution status
-    public async getStatus(): Promise<HyperQueryExecutionStatus | null> {
-        return null;
+    public getStatus(): HyperQueryExecutionStatus {
+        return this.currentStatus;
     }
-    /// Get the next progress update
-    public async nextProgressUpdate(): Promise<HyperQueryExecutionProgress | null> {
-        return null;
+
+    /// Get the next result chunk
+    protected async getNextResultChunk(): Promise<Uint8Array | null> {
+        while (true) {
+            const next = await this.messageIterator.next();
+            if (next.value == null) {
+                return null;
+            }
+            const resultMessage = proto.pb.QueryResult.fromBinary(next.value);
+            switch (resultMessage.result.case) {
+                case "header":
+                case "qsv1Chunk":
+                    break;
+                case "arrowChunk":
+                    return resultMessage.result.value.data;
+            }
+        }
     }
-    /// Get the next record batch
-    public async nextRecordBatch(): Promise<arrow.RecordBatch<any> | null> {
-        return null;
+
+    /// Get the next buffer
+    public async next(): Promise<IteratorResult<Uint8Array>> {
+        const next = await this.getNextResultChunk();
+        if (next == null) {
+            return { value: undefined, done: true };
+        } else {
+            return { value: next, done: false };
+        }
     }
 }
 
