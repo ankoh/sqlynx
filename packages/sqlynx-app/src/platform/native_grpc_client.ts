@@ -165,6 +165,7 @@ export class NativeGrpcServerStreamMessageIterator implements AsyncIterator<Uint
                 return { value: undefined, done: true, }
             } else {
                 this.currentBatch = result.value;
+                this.nextInCurrentBatch = 0;
             }
         }
     }
