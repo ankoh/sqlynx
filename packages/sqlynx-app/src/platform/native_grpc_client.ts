@@ -20,7 +20,7 @@ export interface NativeGrpcServerStreamBatch {
 
 export interface NativeGrpcProxyConfig {
     /// The endpoint URL
-    baseURL: URL;
+    proxyEndpoint: URL;
 };
 
 const DEFAULT_READ_TIMEOUT = 1000;
@@ -58,7 +58,7 @@ export class NativeGrpcServerStream implements AsyncIterator<NativeGrpcServerStr
 
     /// Read the next messages from the stream
     public async read(): Promise<NativeGrpcServerStreamBatch> {
-        const url = new URL(this.endpoint.baseURL);
+        const url = new URL(this.endpoint.proxyEndpoint);
         url.pathname = `/grpc/channel/${this.channelId}/stream/${this.streamId}`;
         const request = new Request(url, {
             method: 'GET',
@@ -93,7 +93,7 @@ export class NativeGrpcServerStream implements AsyncIterator<NativeGrpcServerStr
         // We treat this as an error since this means our encoded response buffer is corrupt.
         if (streamBatchMessages != messages.length) {
             // Fatal error, silently drop the stream
-            const url = new URL(this.endpoint.baseURL);
+            const url = new URL(this.endpoint.proxyEndpoint);
             url.pathname = `/grpc/channels/${this.channelId}/stream/${this.streamId}`;
             const request = new Request(url, {
                 method: 'DELETE'
@@ -189,7 +189,7 @@ export class NativeGrpcChannel {
 
     /// Call a server streaming
     public async startServerStream(args: StartServerStreamArgs): Promise<NativeGrpcServerStream> {
-        const url = new URL(this.endpoint.baseURL);
+        const url = new URL(this.endpoint.proxyEndpoint);
         url.pathname = `/grpc/channel/${this.channelId}/streams`;
 
         // Collect the request headers
@@ -223,7 +223,7 @@ export class NativeGrpcClient {
 
     /// Create a gRPC channel
     public async connect(args: GrpcChannelArgs): Promise<NativeGrpcChannel> {
-        const url = new URL(this.proxy.baseURL);
+        const url = new URL(this.proxy.proxyEndpoint);
         url.pathname = `/grpc/channels`;
 
         const headers = new Headers();
