@@ -88,7 +88,7 @@ mod test {
     use crate::grpc_proxy::HEADER_NAME_BATCH_MESSAGES;
     use crate::grpc_proxy::HEADER_NAME_BATCH_TIMEOUT;
     use crate::grpc_proxy::HEADER_NAME_CHANNEL_ID;
-    use crate::grpc_proxy::HEADER_NAME_HOST;
+    use crate::grpc_proxy::HEADER_NAME_ENDPOINT;
     use crate::grpc_proxy::HEADER_NAME_PATH;
     use crate::grpc_proxy::HEADER_NAME_READ_TIMEOUT;
     use crate::grpc_proxy::HEADER_NAME_STREAM_ID;
@@ -137,7 +137,7 @@ mod test {
         let mut request: Request<Vec<u8>> = Request::builder()
             .method("POST")
             .uri(format!("{}/grpc/channels", host))
-            .header(HEADER_NAME_HOST, &host)
+            .header(HEADER_NAME_ENDPOINT, &host)
             .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
             .body(Vec::new())
             .unwrap();
@@ -181,7 +181,7 @@ mod test {
         let mut request: Request<Vec<u8>> = Request::builder()
             .method("POST")
             .uri(format!("{}/grpc/channels", host))
-            .header(HEADER_NAME_HOST, &host)
+            .header(HEADER_NAME_ENDPOINT, &host)
             .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
             .body(Vec::new())
             .unwrap();
@@ -245,7 +245,7 @@ mod test {
         let mut request: Request<Vec<u8>> = Request::builder()
             .method("POST")
             .uri(format!("{}/grpc/channels", host))
-            .header(HEADER_NAME_HOST, &host)
+            .header(HEADER_NAME_ENDPOINT, &host)
             .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
             .body(Vec::new())
             .unwrap();

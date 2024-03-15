@@ -35,18 +35,25 @@ function requireIntegerHeader(headers: Headers, key: string): number {
     return Number.parseInt(raw);
 }
 
-export class NativeGrpcServerStream {
+export class NativeGrpcServerStream implements AsyncIterator<NativeGrpcServerStreamBatch> {
     /// The endpoint
     endpoint: NativeGrpcProxyConfig;
     /// The channel id
     channelId: number;
     /// The stream id
     streamId: number;
+    /// Reached the end of the stream?
+    reachedEndOfStream: boolean;
 
     constructor(endpoint: NativeGrpcProxyConfig, channelId: number, streamId: number) {
         this.endpoint = endpoint;
         this.channelId = channelId;
         this.streamId = streamId;
+        this.reachedEndOfStream = false;
+    }
+
+    [Symbol.asyncIterator](): AsyncIterator<NativeGrpcServerStreamBatch> {
+        return this;
     }
 
     /// Read the next messages from the stream
@@ -101,6 +108,65 @@ export class NativeGrpcServerStream {
             event: streamBatchEvent as NativeGrpcServerStreamBatchEvent,
             messages: messages,
         };
+    }
+
+    /// Get the next batch
+    public async next(): Promise<IteratorResult<NativeGrpcServerStreamBatch>> {
+        if (this.reachedEndOfStream) {
+            return { value: undefined, done: true };
+        }
+        const batch = await this.read();
+        switch (batch.event) {
+            case NativeGrpcServerStreamBatchEvent.FlushAfterBytes:
+            case NativeGrpcServerStreamBatchEvent.FlushAfterTimeout:
+                return { value: batch, done: false };
+
+            case NativeGrpcServerStreamBatchEvent.StreamFinished:
+            case NativeGrpcServerStreamBatchEvent.FlushAfterClose:
+                this.reachedEndOfStream = true;
+                return { value: batch, done: false };
+
+            case NativeGrpcServerStreamBatchEvent.StreamFailed:
+                this.reachedEndOfStream = true;
+                throw new GrpcError(400, "", batch.trailers);
+        }
+    }
+}
+
+export class NativeGrpcServerStreamMessageIterator implements AsyncIterator<Uint8Array> {
+    /// The batch iterator
+    protected batchIterator: AsyncIterator<NativeGrpcServerStreamBatch>;
+    /// The current batch
+    protected currentBatch: NativeGrpcServerStreamBatch | null;
+    /// The next index in the current batch
+    protected nextInCurrentBatch: number;
+
+    constructor(batchIterator: AsyncIterator<NativeGrpcServerStreamBatch>) {
+        this.batchIterator = batchIterator;
+        this.currentBatch = null;
+        this.nextInCurrentBatch = 0;
+    }
+
+    /// Get the bytes from the next message in the gRPC stream
+    async next(): Promise<IteratorResult<Uint8Array>> {
+        while (true) {
+            // Fast path, we still have a buffered message
+            if (this.currentBatch !== null && this.nextInCurrentBatch < this.currentBatch.messages.length) {
+                const mId = this.nextInCurrentBatch;
+                this.nextInCurrentBatch += 1;
+                return { value: this.currentBatch.messages[mId], done: false };
+            }
+            this.currentBatch = null;
+            this.nextInCurrentBatch = 0;
+
+            // Otherwise, get a new batch
+            const result = await this.batchIterator.next();
+            if (result.done) {
+                return { value: undefined, done: true, }
+            } else {
+                this.currentBatch = result.value;
+            }
+        }
     }
 }
 
