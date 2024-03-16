@@ -9,6 +9,13 @@
     "permissions": [
         "window:allow-start-dragging",
         "updater:allow-check",
-        "updater:allow-download-and-install"
+        "updater:allow-download-and-install",
+        "deep-link:default",
+        "window:allow-set-shadow"
+    ],
+    "platforms": [
+        "linux",
+        "macOS",
+        "windows"
     ]
 }

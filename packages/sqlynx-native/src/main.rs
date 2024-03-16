@@ -13,6 +13,7 @@ mod test;
 mod status;
 
 use ipc_router::process_ipc_request;
+use tauri::AppHandle;
 use std::env;
 
 #[tokio::main]
@@ -34,10 +35,14 @@ async fn main() {
                 });
             },
         )
+        .plugin(tauri_plugin_deep_link::init())
         .setup(|app| {
+            let handle = app.handle().clone();
             #[cfg(desktop)]
-            app.handle()
-                .plugin(tauri_plugin_updater::Builder::new().build())?;
+            handle.plugin(tauri_plugin_updater::Builder::new().build())?;
+
+            // Forward deep-link events
+            app.listen("deep-link://new-url", move |event| deep_link(event, handle.clone()));
             Ok(())
         })
         .run(tauri::generate_context!())
@@ -47,4 +52,18 @@ async fn main() {
 #[tauri::command]
 async fn sqlynx_get_os() -> &'static str {
     return "darwin";
+}
+
+
+fn deep_link(event: tauri::Event, _handle: AppHandle) {
+    let payload = event.payload();
+    let Some(link) = payload.get(2..payload.len() - 2) else {
+        return;
+    };
+
+    if link.starts_with("sqlynx://") {
+        println!("received deep link: {}", link);
+    } else {
+        println!("unknown deep link: {}", link);
+    }
 }
