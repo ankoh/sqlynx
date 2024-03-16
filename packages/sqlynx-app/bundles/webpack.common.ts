@@ -14,7 +14,6 @@ export type Configuration = webpack.Configuration & {
 
 interface ConfigParams {
     target?: string;
-    entry?: any;
     buildDir?: string;
     tsLoaderOptions?: any;
     relocatable: boolean;
@@ -50,7 +49,10 @@ const CONFIG_PATH = 'static/config.[contenthash].json';
 export function configure(params: ConfigParams): Partial<Configuration> {
     return {
         target: params.target,
-        entry: params.entry,
+        entry: {
+            'app': ['./src/app.tsx'],
+            'oauth_redirect': ['./src/oauth_redirect.tsx'],
+        },
         output: {
             path: params.buildDir,
             filename: 'static/js/[name].[contenthash].js',
@@ -157,8 +159,15 @@ export function configure(params: ConfigParams): Partial<Configuration> {
         plugins: [
             new ForkTsCheckerWebpackPlugin(),
             new HtmlWebpackPlugin({
+                chunks: ['app'],
                 template: './static/index.html',
                 filename: './index.html',
+                base: params.relocatable ? './' : '/',
+            }),
+            new HtmlWebpackPlugin({
+                chunks: ['oauth_redirect'],
+                template: './static/oauth_redirect.html',
+                filename: './oauth_redirect.html',
                 base: params.relocatable ? './' : '/',
             }),
             new webpack.DefinePlugin({
