@@ -3,9 +3,6 @@ import * as url from 'url';
 
 const base = configure({
     target: 'web',
-    entry: {
-        app: ['./src/app.tsx'],
-    },
     buildDir: url.fileURLToPath(new URL('../build/reloc', import.meta.url)),
     tsLoaderOptions: {
         configFile: 'tsconfig.json',

@@ -31,6 +31,6 @@ export async function setupNativePlatform(setApi: (api: PlatformApi) => void) {
     // Build the api client
     setApi({
         getPlatformType: () => PlatformType.MACOS,
-        getHyperDatabaseClient: () => new NativeHyperDatabaseClient({ baseURL: new URL("sqlynx-native://[::1]") }),
+        getHyperDatabaseClient: () => new NativeHyperDatabaseClient({ proxyEndpoint: new URL("sqlynx-native://[::1]") }),
     });
 };
