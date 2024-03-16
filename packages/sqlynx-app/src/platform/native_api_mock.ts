@@ -40,7 +40,7 @@ export class GrpcServerStream {
     initialStatus: number;
     initialStatusMessage: string;
     initialMetadata: Record<string, string>;
-    batches: GrpcServerStreamBatch[];
+    batches: GrpcServerStreamBatch[]; // XXX Make this an async generator for GrpcServerStreamBatches
     nextBatchId: number;
 
     constructor(initialStatus: number, initialStatusMessage: string, initialMetadata: Record<string, string>, events: GrpcServerStreamBatch[]) {
