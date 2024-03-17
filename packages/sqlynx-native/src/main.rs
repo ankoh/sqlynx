@@ -11,19 +11,13 @@ mod proto;
 #[cfg(test)]
 mod test;
 mod status;
+mod logging;
 
 use ipc_router::process_ipc_request;
 use tauri::AppHandle;
-use std::env;
 
 #[tokio::main]
 async fn main() {
-    // Setup the logger
-    if env::var("RUST_LOG").is_err() {
-        env::set_var("RUST_LOG", "info")
-    }
-    env_logger::init();
-
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![sqlynx_get_os])
         .register_asynchronous_uri_scheme_protocol(
@@ -36,12 +30,20 @@ async fn main() {
             },
         )
         .plugin(tauri_plugin_deep_link::init())
+        .plugin(
+            tauri_plugin_log::Builder::default()
+                .targets(logging::config::LOG_TARGETS)
+                .level(logging::config::LOG_LEVEL)
+                .build()
+        )
         .setup(|app| {
             let handle = app.handle().clone();
+
+            // Only setup the updater plugin for Desktop builds
             #[cfg(desktop)]
             handle.plugin(tauri_plugin_updater::Builder::new().build())?;
 
-            // Forward deep-link events
+            // Forward all deep-link events to a custom handler
             app.listen("deep-link://new-url", move |event| deep_link(event, handle.clone()));
             Ok(())
         })
@@ -54,7 +56,6 @@ async fn sqlynx_get_os() -> &'static str {
     return "darwin";
 }
 
-
 fn deep_link(event: tauri::Event, _handle: AppHandle) {
     let payload = event.payload();
     let Some(link) = payload.get(2..payload.len() - 2) else {
@@ -62,8 +63,8 @@ fn deep_link(event: tauri::Event, _handle: AppHandle) {
     };
 
     if link.starts_with("sqlynx://") {
-        println!("received deep link: {}", link);
+        log::info!("received deep link: {}", link);
     } else {
-        println!("unknown deep link: {}", link);
+        log::info!("unknown deep link: {}", link);
     }
 }
