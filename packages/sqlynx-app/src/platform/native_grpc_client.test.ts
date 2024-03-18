@@ -17,20 +17,20 @@ describe('Native gRPC client', () => {
         (global.fetch as jest.Mock).mockRestore();
     });
     const testChannelArgs: GrpcChannelArgs = {
-        endpoint: "http://[::1]:8080"
+        endpoint: "http://localhost:8080"
     };
 
     // Test channel creation
     it("can create a channel", () => {
         const client = new NativeGrpcClient({
-            proxyEndpoint: new URL("sqlynx-native://[::1]")
+            proxyEndpoint: new URL("sqlynx-native://localhost")
         });
         expect(async () => await client.connect(testChannelArgs)).resolves;
     });
     // Make sure channel creation fails with wrong base url
     it("fails to create a channel with invalid base URL", () => {
         const client = new NativeGrpcClient({
-            proxyEndpoint: new URL("not-sqlynx-native://[::1]")
+            proxyEndpoint: new URL("not-sqlynx-native://localhost")
         });
         expect(async () => await client.connect(testChannelArgs)).rejects.toThrow();
     });
@@ -38,7 +38,7 @@ describe('Native gRPC client', () => {
     // Test starting a server stream
     it("can start a streaming gRPC call", async () => {
         const client = new NativeGrpcClient({
-            proxyEndpoint: new URL("sqlynx-native://[::1]")
+            proxyEndpoint: new URL("sqlynx-native://localhost")
         });
 
         // Setup the channel
@@ -72,7 +72,7 @@ describe('Native gRPC client', () => {
     // Test reading from a server stream
     it("can read form a gRPC output stream", async () => {
         const client = new NativeGrpcClient({
-            proxyEndpoint: new URL("sqlynx-native://[::1]")
+            proxyEndpoint: new URL("sqlynx-native://localhost")
         });
 
         // Setup the channel

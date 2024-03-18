@@ -17,7 +17,7 @@ describe('Native API mock', () => {
     });
 
     it("rejects requests that are not targeting sqlynx-native://", async () => {
-        const request = new Request(new URL("not-sqlynx-native://[::1]/foo"), {
+        const request = new Request(new URL("not-sqlynx-native://localhost/foo"), {
             method: 'POST',
             headers: {}
         });
@@ -26,7 +26,7 @@ describe('Native API mock', () => {
     });
 
     it("rejects requests with an invalid request path", async () => {
-        const request = new Request(new URL("sqlynx-native://[::1]/invalid-path"), {
+        const request = new Request(new URL("sqlynx-native://localhost/invalid-path"), {
             method: 'POST',
             headers: {}
         });
@@ -36,7 +36,7 @@ describe('Native API mock', () => {
     });
 
     it("accepts requests that are targeting the root path /", async () => {
-        const request = new Request(new URL("sqlynx-native://[::1]/"), {
+        const request = new Request(new URL("sqlynx-native://localhost/"), {
             method: 'POST',
             headers: {}
         });
@@ -46,7 +46,7 @@ describe('Native API mock', () => {
     });
 
     it("create channels on POST to /grpc/channels", async () => {
-        const request = new Request(new URL("sqlynx-native://[::1]/grpc/channels"), {
+        const request = new Request(new URL("sqlynx-native://localhost/grpc/channels"), {
             method: 'POST',
             headers: {}
         });
@@ -60,7 +60,7 @@ describe('Native API mock', () => {
     });
 
     it("deletes created channel on DELETE to /grpc/channel/<channel-id>", async () => {
-        const createRequest = new Request(new URL("sqlynx-native://[::1]/grpc/channels"), {
+        const createRequest = new Request(new URL("sqlynx-native://localhost/grpc/channels"), {
             method: 'POST',
             headers: {}
         });
@@ -69,7 +69,7 @@ describe('Native API mock', () => {
         expect(createResponse.status).toEqual(200);
         expect(createResponse.headers.has("sqlynx-channel-id")).toBeTruthy();
         const channelId = Number.parseInt(createResponse.headers.get("sqlynx-channel-id")!);
-        const deleteRequest = new Request(new URL(`sqlynx-native://[::1]/grpc/channel/${channelId}`), {
+        const deleteRequest = new Request(new URL(`sqlynx-native://localhost/grpc/channel/${channelId}`), {
             method: 'DELETE',
             headers: {}
         });
@@ -79,7 +79,7 @@ describe('Native API mock', () => {
     });
 
     it("reports an error if the path for a streaming gRPC call is unknown", async () => {
-        const createRequest = new Request(new URL("sqlynx-native://[::1]/grpc/channels"), {
+        const createRequest = new Request(new URL("sqlynx-native://localhost/grpc/channels"), {
             method: 'POST',
             headers: {}
         });
@@ -89,7 +89,7 @@ describe('Native API mock', () => {
         expect(createResponse.headers.has("sqlynx-channel-id")).toBeTruthy();
         const channelId = Number.parseInt(createResponse.headers.get("sqlynx-channel-id")!);
 
-        const streamRequest = new Request(new URL(`sqlynx-native://[::1]/grpc/channel/${channelId}/streams`), {
+        const streamRequest = new Request(new URL(`sqlynx-native://localhost/grpc/channel/${channelId}/streams`), {
             method: 'POST',
             headers: {
                 "sqlynx-path": "/salesforce.hyperdb.grpc.v1.HyperService/ExecuteQuery"
@@ -101,7 +101,7 @@ describe('Native API mock', () => {
     });
 
     it("returns a server stream id for streaming gRPC calls", async () => {
-        const channelRequest = new Request(new URL("sqlynx-native://[::1]/grpc/channels"), {
+        const channelRequest = new Request(new URL("sqlynx-native://localhost/grpc/channels"), {
             method: 'POST',
             headers: {}
         });
@@ -140,7 +140,7 @@ describe('Native API mock', () => {
         const params = new proto.pb.QueryParam();
         params.query = "select 1";
         const paramsBuffer = params.toBinary();
-        const streamRequest = new Request(new URL(`sqlynx-native://[::1]/grpc/channel/${channelId}/streams`), {
+        const streamRequest = new Request(new URL(`sqlynx-native://localhost/grpc/channel/${channelId}/streams`), {
             method: 'POST',
             headers: {
                 "sqlynx-path": "/salesforce.hyperdb.grpc.v1.HyperService/ExecuteQuery"
@@ -158,7 +158,7 @@ describe('Native API mock', () => {
         const streamId = Number.parseInt(streamResponse.headers.get("sqlynx-stream-id")!);
 
         // Now read from the stream
-        const readRequest = new Request(new URL(`sqlynx-native://[::1]/grpc/channel/${channelId}/stream/${streamId}`), {
+        const readRequest = new Request(new URL(`sqlynx-native://localhost/grpc/channel/${channelId}/stream/${streamId}`), {
             method: 'GET',
             headers: {
                 "sqlynx-path": "/salesforce.hyperdb.grpc.v1.HyperService/ExecuteQuery"
