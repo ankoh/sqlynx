@@ -77,7 +77,14 @@
             "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDJEQ0Y5MDE5Nzc1OEIwRUEKUldUcXNGaDNHWkRQTGUwVnV0LzlzWnNGWnNWL0tKWkhDOEFvclNSNERPSlRJUldTMEV1Q2FVd1gK"
         },
         "deep-link": {
-            "domains": []
+            "domains": [
+                {
+                    "host": "localhost",
+                    "pathPrefix": [
+                        "sqlynx://"
+                    ]
+                }
+            ]
         }
     },
     "productName": "SQLynx",
