@@ -105,6 +105,13 @@
                 "^tauri-plugin-*"
             ],
             "automerge": false
+        },
+        {
+            "groupName": "bufbuild",
+            "matchPackagePatterns": [
+                "^@bufbuild/.*"
+            ],
+            "automerge": false
         }
     ]
 }
