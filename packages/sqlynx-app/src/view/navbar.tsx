@@ -88,12 +88,6 @@ export const NavBar = (): React.ReactElement => {
     );
 };
 
-//     const GitHubIcon = () => (
-//         <svg width="20px" height="20px">
-//             <use xlinkHref={`${icons}#github`} />
-//         </svg>
-//     );
-
 export function withNavBar<P extends React.JSX.IntrinsicAttributes>(
     Component: React.ComponentType<P>,
 ): React.FunctionComponent<P> {

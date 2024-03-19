@@ -1,9 +1,15 @@
 import * as React from 'react';
+import * as LZString from 'lz-string';
 
 import { Location, useLocation, useNavigate } from 'react-router-dom';
 
 import { VariantKind } from '../utils/index.js';
 import { ScriptURLSetupPage } from './session_setup_page.js';
+import { ScriptData, ScriptKey } from './session_state.js';
+import { useActiveSessionState } from './session_state_provider.js';
+import { useSalesforceAuthState } from '../connectors/salesforce_auth_state.js';
+import { ConnectorType } from '../connectors/connector_info.js';
+import { writeBrainstormConnectorParams, writeHyperConnectorParams, writeSalesforceConnectorParams } from '../connectors/connector_url_params.js';
 
 enum SetupVisibility {
     UNDECIDED,
@@ -30,7 +36,8 @@ interface SessionURLSetupState {
     searchParams: URLSearchParams;
 }
 
-const reducer = (state: SessionURLSetupState, action: SessionURLSetupAction): SessionURLSetupState => {
+/// The reducer for url setup actions
+function reducer(state: SessionURLSetupState, action: SessionURLSetupAction): SessionURLSetupState {
     switch (action.type) {
         case SETUP_COMPLETE:
             return {
@@ -96,14 +103,8 @@ const reducer = (state: SessionURLSetupState, action: SessionURLSetupAction): Se
     }
 }
 
-export const SessionURLManager: React.FC<{ children: React.ReactElement }> = (props: { children: React.ReactElement }) => {
-    const location = useLocation();
-    const [state, dispatch] = React.useReducer(reducer, null, () => ({
-        visibility: SetupVisibility.UNDECIDED,
-        location: location,
-        searchParams: new URLSearchParams(location.search),
-    }));
-    React.useEffect(() => (dispatch({ type: UPDATE_LOCATION, value: location })), [location]);
+/// Helper to subscribe paste events with deep links
+function usePastedDeepLinks() {
     const navigate = useNavigate();
     const onWindowPaste = React.useCallback((e: ClipboardEvent) => {
         // Is the pasted text a deeplink?
@@ -126,16 +127,91 @@ export const SessionURLManager: React.FC<{ children: React.ReactElement }> = (pr
             window.removeEventListener("paste", onWindowPaste);
         };
     }, []);
+}
 
+/// Encode a script as compressed base64 text
+function encodeScript(url: URLSearchParams, key: string, data: ScriptData) {
+    if (data.script) {
+        const text = data.script.toString();
+        const textBase64 = LZString.compressToBase64(text);
+        url.set(key, encodeURIComponent(textBase64));
+    }
+};
+
+/// Hook to generate a deep link
+function useGeneratedDeepLink() {
+    const scriptState = useActiveSessionState();
+    const salesforceAuth = useSalesforceAuthState();
+
+    return React.useMemo(() => {
+        const url = new URL("sqlynx://localhost");
+        switch (scriptState?.connectorInfo.connectorType ?? ConnectorType.BRAINSTORM_MODE) {
+            case ConnectorType.BRAINSTORM_MODE:
+                writeBrainstormConnectorParams(url.searchParams);
+                break;
+            case ConnectorType.HYPER_DATABASE:
+                writeHyperConnectorParams(url.searchParams);
+                break;
+            case ConnectorType.SALESFORCE_DATA_CLOUD:
+                writeSalesforceConnectorParams(url.searchParams, salesforceAuth);
+                break;
+        }
+        const mainScript = scriptState?.scripts[ScriptKey.MAIN_SCRIPT] ?? null;
+        const schemaScript = scriptState?.scripts[ScriptKey.SCHEMA_SCRIPT] ?? null;
+        if (mainScript?.script) {
+            encodeScript(url.searchParams, 'script', mainScript);
+        }
+        if (schemaScript?.script) {
+            encodeScript(url.searchParams, 'schema', schemaScript);
+        }
+        return url;
+    }, [
+        salesforceAuth,
+        scriptState?.scripts[ScriptKey.MAIN_SCRIPT],
+        scriptState?.scripts[ScriptKey.SCHEMA_SCRIPT],
+    ]);
+}
+
+const DEEP_LINK_CTX = React.createContext<URL | null>(null);
+
+export const SessionURLManager: React.FC<{ children: React.ReactElement }> = (props: { children: React.ReactElement }) => {
+
+    // Setup reducer
+    const location = useLocation();
+    const [state, dispatch] = React.useReducer(reducer, null, () => ({
+        visibility: SetupVisibility.UNDECIDED,
+        location: location,
+        searchParams: new URLSearchParams(location.search),
+    }));
+    // Update the location whenever it changes
+    React.useEffect(() => (dispatch({ type: UPDATE_LOCATION, value: location })), [location]);
+    // Subscribe to paste events of deep links
+    usePastedDeepLinks();
+    // Maintain generated deep link
+    const deepLink = useGeneratedDeepLink();
+
+    // Determine child element
+    let child: React.ReactElement;
     switch (state.visibility) {
         case SetupVisibility.UNDECIDED:
-            return <div />;
+            child = <div />;
+            break;
         case SetupVisibility.SKIP:
-            return props.children;
+            child = props.children;
+            break;
         case SetupVisibility.SHOW:
-            return <ScriptURLSetupPage
+            child = <ScriptURLSetupPage
                 searchParams={state.searchParams}
                 onDone={() => dispatch({ type: SETUP_COMPLETE, value: null })}
             />;
+            break;
     }
+    return (
+        <DEEP_LINK_CTX.Provider value={deepLink}>
+            {child}
+        </DEEP_LINK_CTX.Provider>
+    );
 };
+
+/// Use the generated deep link
+export const useDeepLink = () => React.useContext(DEEP_LINK_CTX);
