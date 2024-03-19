@@ -16,7 +16,7 @@ const SETUP_COMPLETE = Symbol('SETUP_COMPLETE');
 
 // We use a marker to be able to skip the URL setup when we navigate ourselves.
 // We should evaluate if we want to update the search params from time to time (maybe debounced?)
-// Then the user wouldn't even need to click the url sharing button when in the browser but could instead just copy browser link.
+// Then the user wouldn't even need to click the url sharing button when in the browser but could instead just copy from the browser bar.
 export const SKIP_URL_SETUP = Symbol('SKIP_URL_SETUP');
 
 type SessionURLSetupAction =
