@@ -42,6 +42,16 @@ const ExternalLink = (props: { url: string; alt?: string; icon?: string; label: 
         </LinkButton>
     </div>
 );
+const OpenOnDesktop = () => (
+    <div className={styles.tab}>
+        <button className={styles.tab_button}>
+            <svg width="16px" height="16px">
+                <use xlinkHref={`${symbols}#download_desktop`} />
+            </svg>
+            <span className={styles.tab_link_text}>Open in App</span>
+        </button>
+    </div>
+);
 
 export const NavBar = (): React.ReactElement => {
     const location = useLocation();
@@ -60,6 +70,7 @@ export const NavBar = (): React.ReactElement => {
             <div className={styles.version_container}>
                 <ExternalLink label={SQLYNX_VERSION} url={SQLYNX_GET_URL} icon={`${symbols}#package`} />
                 <ExternalLink label={SQLYNX_GIT_COMMIT} url={SQLYNX_GIT_REPO_URL} icon={`${symbols}#github`} />
+                <OpenOnDesktop />
             </div>
         </div>
     );
