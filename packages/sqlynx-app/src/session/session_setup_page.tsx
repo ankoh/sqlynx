@@ -3,7 +3,6 @@ import * as React from 'react';
 import * as LZString from 'lz-string';
 import { Button, IconButton } from '@primer/react';
 import { SyncIcon } from '@primer/octicons-react';
-import { useLocation } from 'react-router-dom';
 
 import {
     CONNECTOR_INFOS,
@@ -14,24 +13,20 @@ import {
     BRAINSTORM_MODE,
     SALESFORCE_DATA_CLOUD,
 } from '../connectors/connector_info.js';
+import { ConnectorSetupParamVariant, checkSalesforceAuthSetup, readConnectorParamsFromURL } from '../connectors/connector_url_params.js';
 import { useSalesforceAuthFlow, useSalesforceAuthState } from '../connectors/salesforce_auth_state.js';
-import {
-    ConnectorSetupParamVariant,
-    checkSalesforceAuthSetup,
-    readConnectorParamsFromURL,
-} from '../connectors/connector_url_params.js';
 import { useSQLynx } from '../sqlynx_loader.js';
 import { RESULT_OK } from '../utils/index.js';
-
-import styles from './session_url_setup.module.css';
-
-import * as symbols from '../../static/svg/symbols.generated.svg';
-import { useActiveSessionState, useActiveSessionStateDispatch } from './session_state_provider.js';
 import { REPLACE_SCRIPT_CONTENT } from './session_state_reducer.js';
+import { useActiveSessionState, useActiveSessionStateDispatch } from './session_state_provider.js';
 import { ScriptKey } from './session_state.js';
 
+import styles from './session_setup_page.module.css';
+
+import * as symbols from '../../static/svg/symbols.generated.svg';
+
 interface Props {
-    params: URLSearchParams;
+    searchParams: URLSearchParams;
     onDone: () => void;
 }
 
@@ -41,7 +36,7 @@ interface State {
     connectorParams: ConnectorSetupParamVariant | null;
 }
 
-const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
+export const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
     const lnx = useSQLynx();
     const salesforceAuth = useSalesforceAuthState();
     const salesforceAuthFlow = useSalesforceAuthFlow();
@@ -58,8 +53,8 @@ const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
     // Read script parameters
     React.useEffect(() => {
         // Read the inline scripts
-        const scriptParam = props.params.get('script');
-        const schemaParam = props.params.get('schema');
+        const scriptParam = props.searchParams.get('script');
+        const schemaParam = props.searchParams.get('schema');
         let scriptText = null;
         let schemaText = null;
         if (scriptParam !== null) {
@@ -69,7 +64,7 @@ const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
             schemaText = LZString.decompressFromBase64(schemaParam);
         }
         // Unpack the URL parameters
-        const connectorParams = readConnectorParamsFromURL(props.params);
+        const connectorParams = readConnectorParamsFromURL(props.searchParams);
         setState({
             scriptText,
             schemaText,
@@ -196,7 +191,7 @@ const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
             </div>
             <div className={styles.card_container}>
                 <div className={styles.card_header}>
-                    <div className={styles.card_title}>Setup</div>
+                    <div>Setup</div>
                 </div>
                 <div className={styles.card_section}>
                     <div className={styles.card_section_header}>SQL</div>
@@ -238,7 +233,7 @@ const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
                         </Button>
                     ) : (
                         <>
-                            <Button className={styles.skip_button} variant="danger" onClick={props.onDone}>
+                            <Button variant="danger" onClick={props.onDone}>
                                 Skip
                             </Button>
                             <div className={styles.card_status_text}>{statusText}</div>
@@ -249,31 +244,4 @@ const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
             </div>
         </div>
     );
-};
-
-enum SetupVisibility {
-    UNDECIDED,
-    SKIP,
-    SHOW,
-}
-
-export const SessionURLSetup: React.FC<{ children: React.ReactElement }> = (props: { children: React.ReactElement }) => {
-    const [showSetup, setShowSetup] = React.useState<SetupVisibility>(SetupVisibility.UNDECIDED);
-    const location = useLocation();
-    const params = React.useMemo(() => new URLSearchParams(location.search), []);
-    React.useEffect(() => {
-        if (!params.has('connector')) {
-            setShowSetup(SetupVisibility.SKIP);
-        } else {
-            setShowSetup(SetupVisibility.SHOW);
-        }
-    }, []);
-    switch (showSetup) {
-        case SetupVisibility.UNDECIDED:
-            return <div />;
-        case SetupVisibility.SKIP:
-            return props.children;
-        case SetupVisibility.SHOW:
-            return <ScriptURLSetupPage params={params} onDone={() => setShowSetup(SetupVisibility.SKIP)} />;
-    }
 };
