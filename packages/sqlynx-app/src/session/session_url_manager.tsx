@@ -138,33 +138,47 @@ function encodeScript(url: URLSearchParams, key: string, data: ScriptData) {
     }
 };
 
+export interface SessionURLs {
+    deepLink: URL;
+    publicLink: URL;
+};
+
 /// Hook to generate a deep link
-function useGeneratedDeepLink() {
+function generateSessionURLs(): SessionURLs {
     const scriptState = useActiveSessionState();
     const salesforceAuth = useSalesforceAuthState();
 
     return React.useMemo(() => {
-        const url = new URL("sqlynx://localhost");
+        const appUrl = process.env.SQLYNX_APP_URL!;
+        const privateParams = new URLSearchParams();
+        const publicParams = new URLSearchParams();
         switch (scriptState?.connectorInfo.connectorType ?? ConnectorType.BRAINSTORM_MODE) {
             case ConnectorType.BRAINSTORM_MODE:
-                writeBrainstormConnectorParams(url.searchParams);
+                writeBrainstormConnectorParams(privateParams, publicParams);
                 break;
             case ConnectorType.HYPER_DATABASE:
-                writeHyperConnectorParams(url.searchParams);
+                writeHyperConnectorParams(privateParams, publicParams);
                 break;
             case ConnectorType.SALESFORCE_DATA_CLOUD:
-                writeSalesforceConnectorParams(url.searchParams, salesforceAuth);
+                writeSalesforceConnectorParams(privateParams, publicParams, salesforceAuth);
                 break;
         }
         const mainScript = scriptState?.scripts[ScriptKey.MAIN_SCRIPT] ?? null;
         const schemaScript = scriptState?.scripts[ScriptKey.SCHEMA_SCRIPT] ?? null;
         if (mainScript?.script) {
-            encodeScript(url.searchParams, 'script', mainScript);
+            encodeScript(publicParams, 'script', mainScript);
         }
         if (schemaScript?.script) {
-            encodeScript(url.searchParams, 'schema', schemaScript);
+            encodeScript(privateParams, 'schema', schemaScript);
         }
-        return url;
+        const deepLinkParams = new URLSearchParams(publicParams);
+        for (const [k, v] of privateParams) {
+            deepLinkParams.set(k, v);
+        }
+        return {
+            deepLink: new URL(`sqlynx://localhost?${deepLinkParams.toString()}`),
+            publicLink: new URL(`${appUrl}?${publicParams.toString()}`)
+        };
     }, [
         salesforceAuth,
         scriptState?.scripts[ScriptKey.MAIN_SCRIPT],
@@ -172,7 +186,7 @@ function useGeneratedDeepLink() {
     ]);
 }
 
-const DEEP_LINK_CTX = React.createContext<URL | null>(null);
+const GENERATED_URLS_CTX = React.createContext<SessionURLs | null>(null);
 
 export const SessionURLManager: React.FC<{ children: React.ReactElement }> = (props: { children: React.ReactElement }) => {
 
@@ -188,7 +202,7 @@ export const SessionURLManager: React.FC<{ children: React.ReactElement }> = (pr
     // Subscribe to paste events of deep links
     usePastedDeepLinks();
     // Maintain generated deep link
-    const deepLink = useGeneratedDeepLink();
+    const urls = generateSessionURLs();
 
     // Determine child element
     let child: React.ReactElement;
@@ -207,11 +221,11 @@ export const SessionURLManager: React.FC<{ children: React.ReactElement }> = (pr
             break;
     }
     return (
-        <DEEP_LINK_CTX.Provider value={deepLink}>
+        <GENERATED_URLS_CTX.Provider value={urls}>
             {child}
-        </DEEP_LINK_CTX.Provider>
+        </GENERATED_URLS_CTX.Provider>
     );
 };
 
-/// Use the generated deep link
-export const useDeepLink = () => React.useContext(DEEP_LINK_CTX);
+/// Use the session urls
+export const useSessionURLs = () => React.useContext(GENERATED_URLS_CTX);

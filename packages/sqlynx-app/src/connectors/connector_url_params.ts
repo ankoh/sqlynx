@@ -51,22 +51,22 @@ export function readConnectorParamsFromURL(urlParams: URLSearchParams): Connecto
     }
 }
 
-export function writeSalesforceConnectorParams(params: URLSearchParams, state: SalesforceAuthState) {
-    params.set('connector', 'sfdc');
+export function writeSalesforceConnectorParams(publicParams: URLSearchParams, privateParams: URLSearchParams, state: SalesforceAuthState) {
+    publicParams.set('connector', 'sfdc');
     if (state.authParams?.instanceUrl) {
-        params.set('instance', state.authParams?.instanceUrl);
+        publicParams.set('instance', state.authParams?.instanceUrl);
     }
     if (state.authParams?.appConsumerKey) {
-        params.set('app', state.authParams?.appConsumerKey);
+        publicParams.set('app', state.authParams?.appConsumerKey);
     }
 }
 
-export function writeBrainstormConnectorParams(params: URLSearchParams) {
-    params.set('connector', 'none');
+export function writeBrainstormConnectorParams(publicParams: URLSearchParams, _privateParams: URLSearchParams) {
+    publicParams.set('connector', 'none');
 }
 
-export function writeHyperConnectorParams(params: URLSearchParams) {
-    params.set('connector', 'hyper');
+export function writeHyperConnectorParams(publicParams: URLSearchParams, _privateParams: URLSearchParams) {
+    publicParams.set('connector', 'hyper');
 }
 
 export function checkSalesforceAuthSetup(
