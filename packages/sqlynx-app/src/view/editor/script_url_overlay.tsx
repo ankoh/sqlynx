@@ -158,7 +158,6 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
                     <TextInput className={styles.sharing_url} disabled={true} value={state.urlText ?? ''} />
                     <IconButton
                         ref={buttonRef}
-                        className={styles.sharing_button}
                         icon={state.copyFinishedAt != null && state.uiResetAt == null ? CheckIcon : PaperclipIcon}
                         onClick={copyURL}
                         aria-labelledby="copy-to-clipboard"
