@@ -42,6 +42,7 @@ const ExternalLink = (props: { url: string; alt?: string; icon?: string; label: 
         </LinkButton>
     </div>
 );
+
 const OpenOnDesktop = () => (
     <div className={styles.tab}>
         <button className={styles.tab_button}>
@@ -52,10 +53,21 @@ const OpenOnDesktop = () => (
         </button>
     </div>
 );
+const OpenInBrowser = () => (
+    <div className={styles.tab}>
+        <button className={styles.tab_button}>
+            <svg width="16px" height="16px">
+                <use xlinkHref={`${symbols}#upload_browser`} />
+            </svg>
+            <span className={styles.tab_link_text}>Open in Browser</span>
+        </button>
+    </div>
+);
 
 export const NavBar = (): React.ReactElement => {
     const location = useLocation();
     const platform = usePlatformApi();
+    const isBrowser = platform?.getPlatformType() === PlatformType.WEB;
 
     const isMac = platform?.getPlatformType() === PlatformType.MACOS;
     return (
@@ -70,7 +82,7 @@ export const NavBar = (): React.ReactElement => {
             <div className={styles.version_container}>
                 <ExternalLink label={SQLYNX_VERSION} url={SQLYNX_GET_URL} icon={`${symbols}#package`} />
                 <ExternalLink label={SQLYNX_GIT_COMMIT} url={SQLYNX_GIT_REPO_URL} icon={`${symbols}#github`} />
-                <OpenOnDesktop />
+                {isBrowser ? <OpenOnDesktop /> : <OpenInBrowser />}
             </div>
         </div>
     );
