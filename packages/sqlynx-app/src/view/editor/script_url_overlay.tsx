@@ -6,27 +6,14 @@ import { CheckIcon, PaperclipIcon } from '@primer/octicons-react';
 
 import { classNames } from '../../utils/classnames.js';
 import { sleep } from '../../utils/sleep.js';
-import { ScriptData, ScriptKey } from '../../session/session_state.js';
+import { ScriptData } from '../../session/session_state.js';
 import { useActiveSessionState } from '../../session/session_state_provider.js';
+import { SessionURLs, useSessionURLs } from '../../session/session_url_manager.js';
 import { useSalesforceAuthState } from '../../connectors/salesforce_auth_state.js';
-import { ConnectorType } from '../../connectors/connector_info.js';
-import {
-    writeHyperConnectorParams,
-    writeBrainstormConnectorParams,
-    writeSalesforceConnectorParams,
-} from '../../connectors/connector_url_params.js';
 
 import styles from './script_url_overlay.module.css';
 
 const COPY_CHECKMARK_DURATION_MS = 1000;
-
-const encodeScript = (url: URLSearchParams, key: string, data: ScriptData) => {
-    if (data.script) {
-        const text = data.script.toString();
-        const textBase64 = LZString.compressToBase64(text);
-        url.set(key, encodeURIComponent(textBase64));
-    }
-};
 
 interface Props {
     className?: string;
@@ -35,8 +22,8 @@ interface Props {
 }
 
 interface State {
-    url: URL | null;
-    urlText: string | null;
+    sessionURLs: SessionURLs | null;
+    publicURLText: string | null;
     copyStartedAt: Date | null;
     copyFinishedAt: Date | null;
     copyError: any | null;
@@ -44,63 +31,33 @@ interface State {
 }
 
 export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
-    const scriptState = useActiveSessionState();
-    const [embedConnectorInfo, setEmbedConnectorInfo] = React.useState<boolean>(true);
     const [state, setState] = React.useState<State>(() => ({
-        url: null,
-        urlText: null,
+        sessionURLs: null,
+        publicURLText: null,
         copyStartedAt: null,
         copyFinishedAt: null,
         copyError: null,
         uiResetAt: null,
     }));
-    const salesforceAuth = useSalesforceAuthState();
+    const sessionURLs = useSessionURLs();
 
     React.useEffect(() => {
-        const baseURL = process.env.SQLYNX_APP_URL;
-        const url = new URL(baseURL ?? '');
-        url.searchParams.set('connector', 'local');
-        if (embedConnectorInfo) {
-            switch (scriptState?.connectorInfo.connectorType) {
-                case ConnectorType.BRAINSTORM_MODE:
-                    writeBrainstormConnectorParams(url.searchParams);
-                    break;
-                case ConnectorType.HYPER_DATABASE:
-                    writeHyperConnectorParams(url.searchParams);
-                    break;
-                case ConnectorType.SALESFORCE_DATA_CLOUD:
-                    writeSalesforceConnectorParams(url.searchParams, salesforceAuth);
-                    break;
-            }
-        }
-        const mainScript = scriptState?.scripts[ScriptKey.MAIN_SCRIPT] ?? null;
-        const schemaScript = scriptState?.scripts[ScriptKey.SCHEMA_SCRIPT] ?? null;
-        if (mainScript?.script) {
-            encodeScript(url.searchParams, 'script', mainScript);
-        }
-        if (schemaScript?.script) {
-            encodeScript(url.searchParams, 'schema', schemaScript);
-        }
         setState({
-            url,
-            urlText: url.toString(),
+            sessionURLs,
+            publicURLText: sessionURLs?.publicLink.toString() ?? null,
             copyStartedAt: null,
             copyFinishedAt: null,
             copyError: null,
             uiResetAt: null,
         });
-    }, [
-        scriptState?.scripts[ScriptKey.MAIN_SCRIPT],
-        scriptState?.scripts[ScriptKey.SCHEMA_SCRIPT],
-        embedConnectorInfo,
-    ]);
+    }, [sessionURLs]);
 
     // Copy the url to the clipboard
     const copyURL = React.useCallback(
         (event: React.MouseEvent) => {
-            if (!state.url) return;
+            if (!state.sessionURLs) return;
             event.stopPropagation();
-            const urlText = state.url.toString();
+            const urlText = state.sessionURLs.publicLink.toString();
             setState(s => ({
                 ...s,
                 copyStartedAt: new Date(),
@@ -134,11 +91,6 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
         [state, setState],
     );
 
-    const toggleConnectorEmbedding = React.useCallback((event: React.MouseEvent) => {
-        event.stopPropagation();
-        setEmbedConnectorInfo(s => !s);
-    }, []);
-
     const anchorRef = React.createRef<HTMLDivElement>();
     const buttonRef = React.createRef<HTMLAnchorElement>();
     return (
@@ -155,18 +107,14 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
             <Box className={classNames(styles.sharing_overlay, props.className)}>
                 <div className={styles.sharing_title}>Save Query as Link</div>
                 <div className={styles.sharing_url}>
-                    <TextInput className={styles.sharing_url} disabled={true} value={state.urlText ?? ''} />
+                    <TextInput className={styles.sharing_url} disabled={true} value={state.publicURLText ?? ''} />
                     <IconButton
                         ref={buttonRef}
                         icon={state.copyFinishedAt != null && state.uiResetAt == null ? CheckIcon : PaperclipIcon}
                         onClick={copyURL}
                         aria-labelledby="copy-to-clipboard"
                     />
-                    <div className={styles.sharing_url_stats}>{state.urlText?.length ?? 0} characters</div>
-                </div>
-                <div className={styles.sharing_url_setting}>
-                    <div className={styles.sharing_url_setting_name}>Embed non-sensitive connector info</div>
-                    <ToggleSwitch checked={embedConnectorInfo} size="small" onClick={toggleConnectorEmbedding} />
+                    <div className={styles.sharing_url_stats}>{state.publicURLText?.length ?? 0} characters</div>
                 </div>
             </Box>
         </AnchoredOverlay>
