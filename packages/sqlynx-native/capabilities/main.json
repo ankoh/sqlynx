@@ -1,17 +1,24 @@
 {
     "$schema": "../gen/schemas/desktop-schema.json",
-    "identifier": "run-app",
+    "identifier": "main-capabilities",
     "description": "permissions to run the app",
     "windows": [
         "main",
         "main-*"
     ],
     "permissions": [
-        "window:allow-start-dragging",
+        "deep-link:default",
+        "event:default",
+        "menu:default",
+        "resources:default",
+        "shell:allow-open",
+        "tray:default",
         "updater:allow-check",
         "updater:allow-download-and-install",
-        "deep-link:default",
-        "window:allow-set-shadow"
+        "window:allow-set-shadow",
+        "window:allow-start-dragging",
+        "app:default",
+        "window:default"
     ],
     "platforms": [
         "linux",
