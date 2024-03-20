@@ -3,6 +3,7 @@ import * as LZString from 'lz-string';
 
 import { Location, useLocation, useNavigate } from 'react-router-dom';
 
+import { useThrottledMemo } from '../utils/throttle.js';
 import { VariantKind } from '../utils/index.js';
 import { ScriptURLSetupPage } from './session_setup_page.js';
 import { ScriptData, ScriptKey } from './session_state.js';
@@ -36,7 +37,8 @@ interface SessionURLSetupState {
     searchParams: URLSearchParams;
 }
 
-/// The reducer for url setup actions
+
+// The reducer for url setup actions
 function reducer(state: SessionURLSetupState, action: SessionURLSetupAction): SessionURLSetupState {
     switch (action.type) {
         case SETUP_COMPLETE:
@@ -138,17 +140,18 @@ function encodeScript(url: URLSearchParams, key: string, data: ScriptData) {
     }
 };
 
-export interface SessionURLs {
-    deepLink: URL;
-    publicLink: URL;
+export interface SessionLinks {
+    privateDeepLink: URL;
+    privateWebLink: URL;
+    publicWebLink: URL;
 };
 
 /// Hook to generate a deep link
-function generateSessionURLs(): SessionURLs {
+function generateSessionLinks(): SessionLinks {
     const scriptState = useActiveSessionState();
     const salesforceAuth = useSalesforceAuthState();
 
-    return React.useMemo(() => {
+    return useThrottledMemo(() => {
         const appUrl = process.env.SQLYNX_APP_URL!;
         const privateParams = new URLSearchParams();
         const publicParams = new URLSearchParams();
@@ -171,24 +174,25 @@ function generateSessionURLs(): SessionURLs {
         if (schemaScript?.script) {
             encodeScript(privateParams, 'schema', schemaScript);
         }
-        const deepLinkParams = new URLSearchParams(publicParams);
+        const privateAndPublicParams = new URLSearchParams(publicParams);
         for (const [k, v] of privateParams) {
-            deepLinkParams.set(k, v);
+            privateAndPublicParams.set(k, v);
         }
         return {
-            deepLink: new URL(`sqlynx://localhost?${deepLinkParams.toString()}`),
-            publicLink: new URL(`${appUrl}?${publicParams.toString()}`)
+            privateDeepLink: new URL(`sqlynx://localhost?${privateAndPublicParams.toString()}`),
+            privateWebLink: new URL(`${appUrl}?${privateAndPublicParams.toString()}`),
+            publicWebLink: new URL(`${appUrl}?${publicParams.toString()}`)
         };
     }, [
         salesforceAuth,
         scriptState?.scripts[ScriptKey.MAIN_SCRIPT],
         scriptState?.scripts[ScriptKey.SCHEMA_SCRIPT],
-    ]);
+    ], 500);
 }
 
-const GENERATED_URLS_CTX = React.createContext<SessionURLs | null>(null);
+const GENERATED_LINKS_CTX = React.createContext<SessionLinks | null>(null);
 
-export const SessionURLManager: React.FC<{ children: React.ReactElement }> = (props: { children: React.ReactElement }) => {
+export const SessionLinkManager: React.FC<{ children: React.ReactElement }> = (props: { children: React.ReactElement }) => {
 
     // Setup reducer
     const location = useLocation();
@@ -202,7 +206,7 @@ export const SessionURLManager: React.FC<{ children: React.ReactElement }> = (pr
     // Subscribe to paste events of deep links
     usePastedDeepLinks();
     // Maintain generated deep link
-    const urls = generateSessionURLs();
+    const urls = generateSessionLinks();
 
     // Determine child element
     let child: React.ReactElement;
@@ -221,11 +225,11 @@ export const SessionURLManager: React.FC<{ children: React.ReactElement }> = (pr
             break;
     }
     return (
-        <GENERATED_URLS_CTX.Provider value={urls}>
+        <GENERATED_LINKS_CTX.Provider value={urls}>
             {child}
-        </GENERATED_URLS_CTX.Provider>
+        </GENERATED_LINKS_CTX.Provider>
     );
 };
 
 /// Use the session urls
-export const useSessionURLs = () => React.useContext(GENERATED_URLS_CTX);
+export const useSessionLinks = () => React.useContext(GENERATED_LINKS_CTX);
