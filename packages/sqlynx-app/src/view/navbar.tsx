@@ -62,7 +62,6 @@ export const NavBar = (): React.ReactElement => {
             <div className={styles.version_container}>
                 <ExternalLink label={SQLYNX_VERSION} url={SQLYNX_GET_URL} icon={`${symbols}#package`} newWindow={true} />
                 <ExternalLink label={SQLYNX_GIT_COMMIT} url={SQLYNX_GIT_REPO_URL} icon={`${symbols}#github`} newWindow={true} />
-                <ExternalLink label={SQLYNX_GIT_COMMIT} url={SQLYNX_GIT_REPO_URL} icon={`${symbols}#github`} newWindow={true} />
                 {isBrowser
                     ? <ExternalLink label="Open in App" url={sessionLinks?.privateDeepLink.toString()} icon={`${symbols}#download_desktop`} newWindow={false} />
                     : <ExternalLink label="Open in Browser" url={sessionLinks?.privateWebLink.toString()} icon={`${symbols}#upload_browser`} newWindow={true} />
