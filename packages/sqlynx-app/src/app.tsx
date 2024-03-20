@@ -11,7 +11,7 @@ import { ScriptAutoloaderSalesforce } from './session/script_autoloader_salesfor
 import { SessionStateProvider } from './session/session_state_provider.js';
 import { SessionCommands } from './session/session_commands.js';
 import { QueryExecutor } from './session/query_executor.js';
-import { SessionURLManager } from './session/session_url_manager.js';
+import { SessionLinkManager } from './session/session_link_manager.js';
 import { SalesforceConnector } from './connectors/salesforce_connector.js';
 import { LogProvider } from './app_log.js';
 import { AppConfigResolver } from './app_config.js';
@@ -53,7 +53,7 @@ const AppProviders = (props: { children: React.ReactElement }) => (
                                     <ScriptAutoloaderSalesforce />
                                     <CatalogLoader />
                                     <QueryExecutor />
-                                    <SessionURLManager>{props.children}</SessionURLManager>
+                                    <SessionLinkManager>{props.children}</SessionLinkManager>
                                 </SessionCommands>
                             </SessionStateProvider>
                         </SalesforceConnector>

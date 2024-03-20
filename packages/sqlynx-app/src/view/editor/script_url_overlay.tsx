@@ -1,15 +1,11 @@
 import * as React from 'react';
-import * as LZString from 'lz-string';
 
 import { TextInput, AnchoredOverlay, Box, IconButton, ToggleSwitch } from '@primer/react';
 import { CheckIcon, PaperclipIcon } from '@primer/octicons-react';
 
 import { classNames } from '../../utils/classnames.js';
 import { sleep } from '../../utils/sleep.js';
-import { ScriptData } from '../../session/session_state.js';
-import { useActiveSessionState } from '../../session/session_state_provider.js';
-import { SessionURLs, useSessionURLs } from '../../session/session_url_manager.js';
-import { useSalesforceAuthState } from '../../connectors/salesforce_auth_state.js';
+import { SessionLinks, useSessionLinks } from '../../session/session_link_manager.js';
 
 import styles from './script_url_overlay.module.css';
 
@@ -22,7 +18,7 @@ interface Props {
 }
 
 interface State {
-    sessionURLs: SessionURLs | null;
+    sessionLinks: SessionLinks | null;
     publicURLText: string | null;
     copyStartedAt: Date | null;
     copyFinishedAt: Date | null;
@@ -32,32 +28,32 @@ interface State {
 
 export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
     const [state, setState] = React.useState<State>(() => ({
-        sessionURLs: null,
+        sessionLinks: null,
         publicURLText: null,
         copyStartedAt: null,
         copyFinishedAt: null,
         copyError: null,
         uiResetAt: null,
     }));
-    const sessionURLs = useSessionURLs();
+    const sessionLinks = useSessionLinks();
 
     React.useEffect(() => {
         setState({
-            sessionURLs,
-            publicURLText: sessionURLs?.publicLink.toString() ?? null,
+            sessionLinks: sessionLinks,
+            publicURLText: sessionLinks?.publicWebLink.toString() ?? null,
             copyStartedAt: null,
             copyFinishedAt: null,
             copyError: null,
             uiResetAt: null,
         });
-    }, [sessionURLs]);
+    }, [sessionLinks]);
 
     // Copy the url to the clipboard
     const copyURL = React.useCallback(
         (event: React.MouseEvent) => {
-            if (!state.sessionURLs) return;
+            if (!state.sessionLinks) return;
             event.stopPropagation();
-            const urlText = state.sessionURLs.publicLink.toString();
+            const urlText = state.sessionLinks.publicWebLink.toString();
             setState(s => ({
                 ...s,
                 copyStartedAt: new Date(),
