@@ -205,7 +205,7 @@ export const SessionLinkManager: React.FC<{ children: React.ReactElement }> = (p
     React.useEffect(() => (dispatch({ type: UPDATE_LOCATION, value: location })), [location]);
     // Subscribe to paste events of deep links
     usePastedDeepLinks();
-    // Maintain generated deep link
+    // Maintain generated session links
     const urls = generateSessionLinks();
 
     // Determine child element
