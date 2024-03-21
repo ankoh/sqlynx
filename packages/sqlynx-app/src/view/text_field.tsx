@@ -3,8 +3,36 @@ import { TextInput } from '@primer/react';
 import { CopyIcon } from '@primer/octicons-react';
 
 import { classNames } from '../utils/classnames.js';
+import { VariantKind } from '../utils/variant.js';
+
+import * as icons from '../../static/svg/symbols.generated.svg';
 
 import styles from './text_field.module.css';
+
+export const VALIDATION_UNKNOWN = Symbol("VALIDATION_UNKNOWN");
+export const VALIDATION_OK = Symbol("VALIDATION_OK");
+export const VALIDATION_ERROR = Symbol("VALIDATION_ERROR");
+
+export type TextFieldValidationStatus =
+    | VariantKind<typeof VALIDATION_UNKNOWN, null>
+    | VariantKind<typeof VALIDATION_OK, null>
+    | VariantKind<typeof VALIDATION_ERROR, string>;
+
+function TextFieldValidation(props: { validation?: TextFieldValidationStatus }) {
+    if (!props.validation || props.validation?.type != VALIDATION_ERROR) {
+        return undefined;
+    }
+    return (
+        <div className={styles.text_field_validation_error}>
+            <svg className={styles.text_field_validation_error_icon} width="12px" height="12px">
+                <use xlinkHref={`${icons}#alert_fill_12`} />
+            </svg>
+            <span className={styles.text_field_validation_error_text}>
+                {props.validation.value}
+            </span>
+        </div>
+    );
+}
 
 export function TextField(props: {
     className?: string;
@@ -16,6 +44,7 @@ export function TextField(props: {
     onChange: React.ChangeEventHandler<HTMLInputElement>;
     disabled?: boolean;
     readOnly?: boolean;
+    validation?: TextFieldValidationStatus;
 }) {
     const CopyAction = () => (
         <TextInput.Action
@@ -26,6 +55,12 @@ export function TextField(props: {
             aria-label="Clear input"
         />
     );
+    let validationStatus: undefined | "error" | "success" = undefined;
+    if (props.validation?.type === VALIDATION_OK) {
+        validationStatus = 'success';
+    } else if (props.validation?.type === VALIDATION_ERROR) {
+        validationStatus = 'error';
+    }
     return (
         <div className={classNames(styles.text_field, props.className)}>
             <div className={styles.text_field_name}>{props.name}</div>
@@ -40,7 +75,9 @@ export function TextField(props: {
                 onChange={props.onChange}
                 disabled={props.disabled}
                 readOnly={props.readOnly}
+                validationStatus={validationStatus}
             />
+            <TextFieldValidation validation={props.validation} />
         </div>
     );
 }
