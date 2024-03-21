@@ -45,7 +45,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
             validationSucceeded = false;
             setAppConsumerValidation({
                 type: VALIDATION_ERROR,
-                value: "Consumer Key cannot be empty"
+                value: "Consumer key cannot be empty"
             });
         }
         if (validationSucceeded) {
