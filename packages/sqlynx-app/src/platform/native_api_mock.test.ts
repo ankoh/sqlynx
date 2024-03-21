@@ -112,13 +112,13 @@ describe('Native API mock', () => {
         const channelId = Number.parseInt(channelResponse.headers.get("sqlynx-channel-id")!);
 
         // Mock the next ExecuteQuery call
-        const messageToRespond = new proto.pb.QueryResult({
+        const messageToRespond = new proto.salesforce_hyperdb_grpc_v1.pb.QueryResult({
             result: {
                 case: "header",
-                value: new proto.pb.QueryResultHeader(),
+                value: new proto.salesforce_hyperdb_grpc_v1.pb.QueryResultHeader(),
             }
         });
-        const respondSingleMessage = (_req: proto.pb.QueryParam) => {
+        const respondSingleMessage = (_req: proto.salesforce_hyperdb_grpc_v1.pb.QueryParam) => {
             const initialStatus = 200;
             const initialStatusMessage = "OK";
             const initialMetadata: Record<string, string> = {
@@ -134,10 +134,10 @@ describe('Native API mock', () => {
             return result;
         };
         const executeQueryMock = jest.fn(respondSingleMessage);
-        mock!.hyperService.executeQuery = (req: proto.pb.QueryParam) => executeQueryMock.call(req);
+        mock!.hyperService.executeQuery = (req: proto.salesforce_hyperdb_grpc_v1.pb.QueryParam) => executeQueryMock.call(req);
 
         // Send the ExecuteQuery request
-        const params = new proto.pb.QueryParam();
+        const params = new proto.salesforce_hyperdb_grpc_v1.pb.QueryParam();
         params.query = "select 1";
         const paramsBuffer = params.toBinary();
         const streamRequest = new Request(new URL(`sqlynx-native://localhost/grpc/channel/${channelId}/streams`), {

@@ -51,14 +51,14 @@ describe('Native gRPC client', () => {
             {
                 event: NativeGrpcServerStreamBatchEvent.FlushAfterClose,
                 messages: [
-                    new proto.pb.QueryResult()
+                    new proto.salesforce_hyperdb_grpc_v1.pb.QueryResult()
                 ],
             }
         ]));
         mock!.hyperService.executeQuery = (p) => executeQueryMock(p.query);
 
         // Start the server stream
-        const params = new proto.pb.QueryParam({
+        const params = new proto.salesforce_hyperdb_grpc_v1.pb.QueryParam({
             query: "select 1"
         });
         await channel.startServerStream({
@@ -81,13 +81,13 @@ describe('Native gRPC client', () => {
         expect(channel.channelId).not.toBeNaN();
 
         // Build the first message that is returned to the client (in this test a header message)
-        const headerMessage = new proto.pb.QueryResult({
+        const headerMessage = new proto.salesforce_hyperdb_grpc_v1.pb.QueryResult({
             result: {
                 case: "header",
-                value: new proto.pb.QueryResultHeader({
+                value: new proto.salesforce_hyperdb_grpc_v1.pb.QueryResultHeader({
                     header: {
                         case: "schema",
-                        value: new proto.pb.QueryResultSchema({
+                        value: new proto.salesforce_hyperdb_grpc_v1.pb.QueryResultSchema({
                             column: []
                         })
                     }
@@ -105,7 +105,7 @@ describe('Native gRPC client', () => {
         mock!.hyperService.executeQuery = (p) => executeQueryMock(p.query);
 
         // Start the server stream
-        const params = new proto.pb.QueryParam({
+        const params = new proto.salesforce_hyperdb_grpc_v1.pb.QueryParam({
             query: "select 1"
         });
         const stream = await channel.startServerStream({

@@ -52,14 +52,14 @@ describe('Native Hyper client', () => {
             {
                 event: NativeGrpcServerStreamBatchEvent.FlushAfterClose,
                 messages: [
-                    new proto.pb.QueryResult()
+                    new proto.salesforce_hyperdb_grpc_v1.pb.QueryResult()
                 ],
             }
         ]));
         mock!.hyperService.executeQuery = (p) => executeQueryMock(p.query);
 
         // Start the server stream
-        const params = new proto.pb.QueryParam({
+        const params = new proto.salesforce_hyperdb_grpc_v1.pb.QueryParam({
             query: "select 1"
         });
         await channel.executeQuery(params);
@@ -79,23 +79,23 @@ describe('Native Hyper client', () => {
         expect(channel.grpcChannel.channelId).not.toBeNaN();
 
         // Build the first message that is returned to the client (in this test a header message)
-        const headerMessage = new proto.pb.QueryResult({
+        const headerMessage = new proto.salesforce_hyperdb_grpc_v1.pb.QueryResult({
             result: {
                 case: "header",
-                value: new proto.pb.QueryResultHeader({
+                value: new proto.salesforce_hyperdb_grpc_v1.pb.QueryResultHeader({
                     header: {
                         case: "schema",
-                        value: new proto.pb.QueryResultSchema({
+                        value: new proto.salesforce_hyperdb_grpc_v1.pb.QueryResultSchema({
                             column: []
                         })
                     }
                 }),
             }
         });
-        const bodyMessage = new proto.pb.QueryResult({
+        const bodyMessage = new proto.salesforce_hyperdb_grpc_v1.pb.QueryResult({
             result: {
                 case: "arrowChunk",
-                value: new proto.pb.QueryBinaryResultChunk({
+                value: new proto.salesforce_hyperdb_grpc_v1.pb.QueryBinaryResultChunk({
                     data: new Uint8Array([0x01, 0x02, 0x03, 0x04]),
                 }),
             }
@@ -111,7 +111,7 @@ describe('Native Hyper client', () => {
         mock!.hyperService.executeQuery = (p) => executeQueryMock(p.query);
 
         // Start the server stream
-        const params = new proto.pb.QueryParam({
+        const params = new proto.salesforce_hyperdb_grpc_v1.pb.QueryParam({
             query: "select 1"
         });
         const stream = await channel.executeQuery(params);

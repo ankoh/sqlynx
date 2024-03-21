@@ -19,7 +19,7 @@ export interface HyperQueryResultStream extends AsyncIterator<Uint8Array> {
 
 export interface HyperDatabaseConnection {
     /// Execute Query
-    executeQuery(param: proto.pb.QueryParam): Promise<HyperQueryResultStream>;
+    executeQuery(param: proto.salesforce_hyperdb_grpc_v1.pb.QueryParam): Promise<HyperQueryResultStream>;
 }
 
 export interface HyperDatabaseClient {

@@ -111,10 +111,10 @@ class GrpcChannel {
     }
 };
 
-type ExecuteQueryMockFn = ((req: proto.pb.QueryParam) => GrpcServerStream);
+type ExecuteQueryMockFn = ((req: proto.salesforce_hyperdb_grpc_v1.pb.QueryParam) => GrpcServerStream);
 
 interface HyperServiceMock {
-    executeQuery: ((req: proto.pb.QueryParam) => GrpcServerStream) | null;
+    executeQuery: ((req: proto.salesforce_hyperdb_grpc_v1.pb.QueryParam) => GrpcServerStream) | null;
 }
 
 /// The native API mock mimics the api that is provided by tauri.
@@ -189,7 +189,7 @@ export class NativeAPIMock {
                     })
                 }
                 const body = await req.arrayBuffer();
-                const params = proto.pb.QueryParam.fromBinary(new Uint8Array(body));
+                const params = proto.salesforce_hyperdb_grpc_v1.pb.QueryParam.fromBinary(new Uint8Array(body));
                 const stream = handler(params);
                 stream.channelId = channel.channelId;
                 stream.streamId = this.nextGrpcStreamId;
