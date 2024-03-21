@@ -8,9 +8,9 @@ import { RecordBatch, Schema } from 'apache-arrow';
 
 export class ArrowChunkStreamReader implements AsyncIterable<Uint8Array> {
     /** In-flight */
-    protected _stream: AsyncIterator<hyper.pb.QueryResult>;
+    protected _stream: AsyncIterator<hyper.salesforce_hyperdb_grpc_v1.pb.QueryResult>;
 
-    constructor(protected readonly stream: AsyncIterator<hyper.pb.QueryResult>) {
+    constructor(protected readonly stream: AsyncIterator<hyper.salesforce_hyperdb_grpc_v1.pb.QueryResult>) {
         this._stream = stream;
     }
 
@@ -42,7 +42,7 @@ export class HyperResultStream implements QueryExecutionResponseStream {
     stream: ArrowChunkStreamReader;
     arrowReader: arrow.RecordBatchReader | null;
 
-    constructor(stream: AsyncIterator<hyper.pb.QueryResult>) {
+    constructor(stream: AsyncIterator<hyper.salesforce_hyperdb_grpc_v1.pb.QueryResult>) {
         this.stream = new ArrowChunkStreamReader(stream);
         this.arrowReader = null;
     }
@@ -66,7 +66,7 @@ export class HyperResultStream implements QueryExecutionResponseStream {
 }
 
 export class HyperServiceClient {
-    client: PromiseClient<typeof hyper.grpc.HyperService>;
+    client: PromiseClient<typeof hyper.salesforce_hyperdb_grpc_v1.grpc.HyperService>;
     public url: string;
 
     constructor(url: string, credentials?: RequestCredentials) {
@@ -75,12 +75,12 @@ export class HyperServiceClient {
             baseUrl: url,
             credentials,
         });
-        this.client = createPromiseClient(hyper.grpc.HyperService, transport);
+        this.client = createPromiseClient(hyper.salesforce_hyperdb_grpc_v1.grpc.HyperService, transport);
     }
-    public executeQuery(text: string, token: string): AsyncIterable<hyper.pb.QueryResult> {
-        const request = new hyper.pb.QueryParam();
+    public executeQuery(text: string, token: string): AsyncIterable<hyper.salesforce_hyperdb_grpc_v1.pb.QueryResult> {
+        const request = new hyper.salesforce_hyperdb_grpc_v1.pb.QueryParam();
         request.query = text;
-        request.outputFormat = hyper.pb.QueryParam_OutputFormat.ARROW_STREAM;
+        request.outputFormat = hyper.salesforce_hyperdb_grpc_v1.pb.QueryParam_OutputFormat.ARROW_STREAM;
         // request.database = [
         //     new hyper.pb.AttachedDatabase({
         //         path: 'hyper.external:lakehouse_a360_falcondev_cb1b20c5c1b449969b9b3da9f8e0fce6',

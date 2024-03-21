@@ -28,7 +28,7 @@ class NativeHyperQueryResultStream implements HyperQueryResultStream {
             if (next.value == null) {
                 return null;
             }
-            const resultMessage = proto.pb.QueryResult.fromBinary(next.value);
+            const resultMessage = proto.salesforce_hyperdb_grpc_v1.pb.QueryResult.fromBinary(next.value);
             switch (resultMessage.result.case) {
                 case "header":
                 case "qsv1Chunk":
@@ -58,7 +58,7 @@ class NativeHyperDatabaseConnection implements HyperDatabaseConnection {
     }
 
     /// Execute a query against Hyper
-    public async executeQuery(params: proto.pb.QueryParam): Promise<NativeHyperQueryResultStream> {
+    public async executeQuery(params: proto.salesforce_hyperdb_grpc_v1.pb.QueryParam): Promise<NativeHyperQueryResultStream> {
         const stream = await this.grpcChannel.startServerStream({
             path: "/salesforce.hyperdb.grpc.v1.HyperService/ExecuteQuery",
             body: params.toBinary(),
