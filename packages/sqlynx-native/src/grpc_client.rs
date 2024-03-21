@@ -107,7 +107,7 @@ mod test {
     use prost::Message;
     use tokio_stream::StreamExt;
 
-    use crate::{proto::sqlynx_test_v1::{TestServerStreamingRequest, TestServerStreamingResponse, TestUnaryRequest, TestUnaryResponse}, test::test_service_mock::{spawn_test_service_mock, TestServiceMock}};
+    use crate::{proto::sqlynx_test::{TestServerStreamingRequest, TestServerStreamingResponse, TestUnaryRequest, TestUnaryResponse}, test::test_service_mock::{spawn_test_service_mock, TestServiceMock}};
 
     #[tokio::test]
     async fn test_unary() -> Result<()> {
@@ -130,7 +130,7 @@ mod test {
 
         // Call the unary test function
         let unary_path = tauri::http::uri::PathAndQuery::from_static(
-            "/sqlynx.test.v1.TestService/TestUnary",
+            "/sqlynx.test.TestService/TestUnary",
         );
         let unary_param = TestUnaryRequest {
             data: "request data".to_string()
@@ -172,7 +172,7 @@ mod test {
 
         // Call the unary test function
         let streaming_path = tauri::http::uri::PathAndQuery::from_static(
-            "/sqlynx.test.v1.TestService/TestServerStreaming",
+            "/sqlynx.test.TestService/TestServerStreaming",
         );
         let streaming_param = TestServerStreamingRequest {
             data: "request data".to_string()

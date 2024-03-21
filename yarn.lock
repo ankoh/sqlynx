@@ -28,7 +28,7 @@
     "@jridgewell/gen-mapping" "^0.3.0"
     "@jridgewell/trace-mapping" "^0.3.9"
 
-"@ankoh/hyperdb-proto@link:packages/hyperdb-proto":
+"@ankoh/sqlynx-proto@link:packages/sqlynx-proto":
   version "0.0.2-dev.17"
   dependencies:
     "@bufbuild/protobuf" "^1.7.2"

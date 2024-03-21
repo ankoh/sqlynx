@@ -299,7 +299,7 @@ jobs:
               shell: bash
               run: |
                     ./node_modules/.bin/buf generate
-                    yarn workspace @ankoh/hyperdb-proto build
+                    yarn workspace @ankoh/sqlynx-proto build
 
             - name: Run tests
               shell: bash

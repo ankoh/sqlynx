@@ -92,10 +92,10 @@ mod test {
     use crate::grpc_proxy::HEADER_NAME_PATH;
     use crate::grpc_proxy::HEADER_NAME_READ_TIMEOUT;
     use crate::grpc_proxy::HEADER_NAME_STREAM_ID;
-    use crate::proto::sqlynx_test_v1::TestUnaryRequest;
-    use crate::proto::sqlynx_test_v1::TestUnaryResponse;
-    use crate::proto::sqlynx_test_v1::TestServerStreamingRequest;
-    use crate::proto::sqlynx_test_v1::TestServerStreamingResponse;
+    use crate::proto::sqlynx_test::TestUnaryRequest;
+    use crate::proto::sqlynx_test::TestUnaryResponse;
+    use crate::proto::sqlynx_test::TestServerStreamingRequest;
+    use crate::proto::sqlynx_test::TestServerStreamingResponse;
     use crate::test::test_service_mock::spawn_test_service_mock;
     use crate::test::test_service_mock::TestServiceMock;
 
@@ -198,7 +198,7 @@ mod test {
         let mut request: Request<Vec<u8>> = Request::builder()
             .method("POST")
             .uri(format!("{}/grpc/channel/{}/unary", host, channel_id))
-            .header(HEADER_NAME_PATH, "/sqlynx.test.v1.TestService/TestUnary")
+            .header(HEADER_NAME_PATH, "/sqlynx.test.TestService/TestUnary")
             .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
             .body(request_param.encode_to_vec())
             .unwrap();
@@ -262,7 +262,7 @@ mod test {
         let mut request: Request<Vec<u8>> = Request::builder()
             .method("POST")
             .uri(format!("{}/grpc/channel/{}/streams", host, channel_id))
-            .header(HEADER_NAME_PATH, "/sqlynx.test.v1.TestService/TestServerStreaming")
+            .header(HEADER_NAME_PATH, "/sqlynx.test.TestService/TestServerStreaming")
             .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
             .body(request_param.encode_to_vec())
             .unwrap();

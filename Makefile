@@ -42,7 +42,7 @@ flatbuf:
 
 .PHONY: protobuf
 protobuf:
-	./node_modules/.bin/buf generate && yarn workspace @ankoh/hyperdb-proto build
+	./node_modules/.bin/buf generate && yarn workspace @ankoh/sqlynx-proto build
 
 .PHONY: core_native_o0
 core_native_o0:
