@@ -1,4 +1,4 @@
-use crate::proto::sqlynx_test_v1::{
+use crate::proto::sqlynx_test::{
     test_service_server::{TestService, TestServiceServer},
     TestUnaryRequest, TestUnaryResponse,
     TestServerStreamingRequest, TestServerStreamingResponse,

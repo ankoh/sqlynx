@@ -5,7 +5,7 @@ import { PlatformType } from './platform_api.js';
 import { NativeGrpcClient, NativeGrpcServerStreamBatchEvent } from './native_grpc_client.js';
 import { GrpcChannelArgs } from './grpc_common.js';
 
-import * as proto from "@ankoh/hyperdb-proto";
+import * as proto from "@ankoh/sqlynx-proto";
 
 describe('Native gRPC client', () => {
     let mock: NativeAPIMock | null;

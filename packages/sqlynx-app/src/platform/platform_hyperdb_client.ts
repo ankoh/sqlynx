@@ -1,5 +1,4 @@
-import * as arrow from 'apache-arrow';
-import * as proto from "@ankoh/hyperdb-proto";
+import * as proto from "@ankoh/sqlynx-proto";
 import { GrpcChannelArgs } from './grpc_common.js';
 
 export enum HyperQueryExecutionStatus {

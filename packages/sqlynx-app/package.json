@@ -15,7 +15,7 @@
     },
     "dependencies": {},
     "devDependencies": {
-        "@ankoh/hyperdb-proto": "link:../hyperdb-proto",
+        "@ankoh/sqlynx-proto": "link:../sqlynx-proto",
         "@ankoh/sqlynx-core": "link:../sqlynx-core-api",
         "@bufbuild/protobuf": "^1.7.2",
         "@codemirror/autocomplete": "^6.15.0",

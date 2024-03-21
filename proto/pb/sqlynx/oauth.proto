@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package sqlynx;
+
+enum OAuthFlowVariant {
+    /// Setup OAuth using a web opener
+    WEB_OPENER = 0;
+    /// Setup OAuth using a native deep link
+    NATIVE_LINK = 1;
+}
+
+enum OAuthProvider {
+    /// The Salesforce OAuth provider
+    SALESFORCE = 0;
+}
+
+message OAuthState {
+    /// The OAuth provider
+    OAuthProvider oauth_provider = 3;
+    /// The OAuth flow variant
+    OAuthFlowVariant oauth_flow_variant = 2;
+}

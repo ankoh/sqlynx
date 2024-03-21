@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package sqlynx.test.v1;
+package sqlynx.test;
 
 message TestUnaryRequest {
     string data = 1;

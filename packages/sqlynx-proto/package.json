@@ -1,5 +1,5 @@
 {
-    "name": "@ankoh/hyperdb-proto",
+    "name": "@ankoh/sqlynx-proto",
     "private": true,
     "version": "0.0.2-dev.17",
     "gitCommit": "453866d",
@@ -22,8 +22,8 @@
     "files": [
         "dist/gen/",
         "dist/index.*",
-        "dist/hyperdb-proto.module.*"
+        "dist/sqlynx-proto.module.*"
     ],
-    "module": "./dist/hyperdb-service.module.js",
-    "types": "./dist/hyperdb-service.module.d.ts"
+    "module": "./dist/sqlynx-proto.module.js",
+    "types": "./dist/sqlynx-proto.module.d.ts"
 }

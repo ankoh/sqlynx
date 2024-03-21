@@ -1,4 +1,4 @@
-import * as proto from "@ankoh/hyperdb-proto";
+import * as proto from "@ankoh/sqlynx-proto";
 
 import { jest } from '@jest/globals';
 
