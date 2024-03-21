@@ -2,8 +2,8 @@ import CopyWebpackPlugin from 'copy-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
-import * as childProcess from 'child_process';
 import webpack from 'webpack';
+import * as childProcess from 'child_process';
 import * as webpackDevServer from 'webpack-dev-server';
 import * as url from 'url';
 import * as fs from 'fs';
@@ -166,8 +166,8 @@ export function configure(params: ConfigParams): Partial<Configuration> {
             }),
             new HtmlWebpackPlugin({
                 chunks: ['oauth_redirect'],
-                template: './static/oauth_redirect.html',
-                filename: './oauth_redirect.html',
+                template: './static/oauth.html',
+                filename: './oauth.html',
                 base: params.relocatable ? './' : '/',
             }),
             new webpack.DefinePlugin({

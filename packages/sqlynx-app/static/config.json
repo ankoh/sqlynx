@@ -43,7 +43,7 @@
         },
         "salesforce": {
             "auth": {
-                "oauthRedirect": "http://localhost:9002/static/html/oauth_callback.2.html"
+                "oauthRedirect": "http://localhost:9002/oauth.html"
             },
             "defaultApp": {
                 "instanceUrl": "https://trialorgfarmforu-16f.test2.my.pc-rnd.salesforce.com",
