@@ -79,7 +79,7 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                     <div className={style.section_layout}>
                         <TextField
                             name="Client ID"
-                            caption="All requests are sent with the header 'x-trace-id: <client-id>/hyper/<request-id>'"
+                            caption="All requests are sent with the header 'x-trace-id: sqlynx/<client-id>/hyper/<request-id>'"
                             value=""
                             placeholder="client id"
                             leadingVisual={TagIcon}

@@ -15,6 +15,24 @@
 .text_field_input {
     margin-top: 8px;
 }
+.text_field_validation_error {
+    font-size: 12px;
+    color: #cf222e;
+    margin-top: 2px;
+    margin-left: 4px;
+
+    align-self: start;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+.text_field_validation_error_icon {
+}
+.text_field_validation_error_text {
+    margin-top: 0px;
+    margin-left: 6px;
+}
 
 
 .kv_field {

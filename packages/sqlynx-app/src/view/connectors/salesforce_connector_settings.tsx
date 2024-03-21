@@ -3,8 +3,8 @@ import * as React from 'react';
 import { Button } from '@primer/react';
 import { KeyIcon, LogIcon, PlugIcon, TagIcon } from '@primer/octicons-react';
 
-import { useSalesforceAuthState } from '../../connectors/salesforce_auth_state.js';
-import { TextField } from '../../view/text_field.js';
+import { CONNECT, useSalesforceAuthFlow, useSalesforceAuthState } from '../../connectors/salesforce_auth_state.js';
+import { TextField, TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_UNKNOWN } from '../../view/text_field.js';
 import { classNames } from '../../utils/classnames.js';
 
 import * as symbols from '../../../static/svg/symbols.generated.svg';
@@ -17,7 +17,48 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
     _props: Props,
 ) => {
     const authState = useSalesforceAuthState();
+    const authFlow = useSalesforceAuthFlow();
     const isAuthenticated = false;
+
+    const [instanceUrl, _setInstanceUrl] = React.useState<string>("");
+    const [appConsumerKey, _setAppConsumerKey] = React.useState<string>("");
+    const [appConsumerSecret, _setAppConsumerSecret] = React.useState<string | null>(null);
+
+    const [instanceUrlValidation, setInstanceUrlValidation] = React.useState<TextFieldValidationStatus>({
+        type: VALIDATION_UNKNOWN,
+        value: null
+    });
+    const [appConsumerValidation, setAppConsumerValidation] = React.useState<TextFieldValidationStatus>({
+        type: VALIDATION_UNKNOWN,
+        value: null
+    });
+    const startAuth = () => {
+        let validationSucceeded = true;
+        if (instanceUrl === "") {
+            validationSucceeded = false;
+            setInstanceUrlValidation({
+                type: VALIDATION_ERROR,
+                value: "Instance URL cannot be empty"
+            });
+        }
+        if (appConsumerKey === "") {
+            validationSucceeded = false;
+            setAppConsumerValidation({
+                type: VALIDATION_ERROR,
+                value: "Consumer Key cannot be empty"
+            });
+        }
+        if (validationSucceeded) {
+            authFlow({
+                type: CONNECT,
+                value: {
+                    instanceUrl: instanceUrl!,
+                    appConsumerKey: appConsumerKey!,
+                    appConsumerSecret,
+                }
+            });
+        }
+    };
 
     return (
         <div className={style.layout}>
@@ -32,7 +73,11 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                 </div>
                 <div className={style.platform_actions}>
                     <Button leadingVisual={LogIcon} count={3}>Logs</Button>
-                    <Button variant='primary' leadingVisual={PlugIcon}>Connect</Button>
+                    <Button
+                        variant='primary'
+                        leadingVisual={PlugIcon}
+                        onClick={startAuth}
+                    >Connect</Button>
                 </div>
             </div>
             <div className={style.body_container}>
@@ -45,6 +90,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             onChange={() => { }}
                             placeholder="Salesforce Instance"
                             leadingVisual={() => <div>URL</div>}
+                            validation={instanceUrlValidation}
                         />
                         <TextField
                             name="App Consumer Key"
@@ -53,6 +99,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             onChange={() => { }}
                             placeholder="Consumer Key"
                             leadingVisual={() => <div>ID</div>}
+                            validation={appConsumerValidation}
                         />
                     </div>
                 </div>
@@ -60,7 +107,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                     <div className={style.section_layout}>
                         <TextField
                             name="Client ID"
-                            caption="All requests are sent with the header 'x-trace-id: <client-id>/sfdc/<request-id>'"
+                            caption="All requests are sent with the header 'x-trace-id: sqlynx/<client-id>/sfdc/<request-id>'"
                             value=""
                             placeholder="client id"
                             leadingVisual={TagIcon}
