@@ -28,16 +28,16 @@
     "@jridgewell/gen-mapping" "^0.3.0"
     "@jridgewell/trace-mapping" "^0.3.9"
 
+"@ankoh/sqlynx-core@link:packages/sqlynx-core-api":
+  version "0.0.2-dev.17"
+  dependencies:
+    flatbuffers "^24.3.7"
+
 "@ankoh/sqlynx-proto@link:packages/sqlynx-proto":
   version "0.0.2-dev.17"
   dependencies:
     "@bufbuild/protobuf" "^1.7.2"
     "@connectrpc/connect-web" "^1.4.0"
-
-"@ankoh/sqlynx-core@link:packages/sqlynx-core-api":
-  version "0.0.2-dev.17"
-  dependencies:
-    flatbuffers "^24.3.7"
 
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.12.13", "@babel/code-frame@^7.16.7", "@babel/code-frame@^7.23.5":
   version "7.23.5"
@@ -4074,10 +4074,10 @@ forwarded@0.2.0:
   resolved "https://registry.yarnpkg.com/forwarded/-/forwarded-0.2.0.tgz#2269936428aad4c15c7ebe9779a84bf0b2a81811"
   integrity sha512-buRG0fpBtRHSTCOASe6hD258tEubFoRLb4ZNA6NxMVHNw2gOcwHo9wyablzMzOA5z9xA9L1KNjk/Nt6MT9aYow==
 
-framer-motion@^11.0.18:
-  version "11.0.18"
-  resolved "https://registry.yarnpkg.com/framer-motion/-/framer-motion-11.0.18.tgz#989e36874111b3cfebbaae9dcd0f4168fed899bd"
-  integrity sha512-TPKJ1KqQzTQ//cGFAb/jrpbbNY8UVh2q69vAcVRA8AxsKYkl5nrW1nsmrHRc5dLsRdwlXSV1kuo1Khylhph7kw==
+framer-motion@^11.0.20:
+  version "11.0.20"
+  resolved "https://registry.yarnpkg.com/framer-motion/-/framer-motion-11.0.20.tgz#6bb72bd0b8020fc417a40453b9247d596acbea78"
+  integrity sha512-YSDmWznt3hpdERosbE0UAPYWoYhTnmQ0J1qWPsgpCia9NgY8Xsz5IpOiUEGGj/nzCAW29fSrWugeLRkdp5de7g==
   dependencies:
     tslib "^2.4.0"
 
