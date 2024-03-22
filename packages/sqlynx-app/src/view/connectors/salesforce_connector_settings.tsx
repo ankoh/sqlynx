@@ -20,8 +20,8 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
     const authFlow = useSalesforceAuthFlow();
     const isAuthenticated = false;
 
-    const [instanceUrl, _setInstanceUrl] = React.useState<string>("");
-    const [appConsumerKey, _setAppConsumerKey] = React.useState<string>("");
+    const [instanceUrl, setInstanceUrl] = React.useState<string>("");
+    const [appConsumerKey, setAppConsumerKey] = React.useState<string>("");
     const [appConsumerSecret, _setAppConsumerSecret] = React.useState<string | null>(null);
 
     const [instanceUrlValidation, setInstanceUrlValidation] = React.useState<TextFieldValidationStatus>({
@@ -86,8 +86,8 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                         <TextField
                             name="Instance URL"
                             caption="URL of the Salesforce Instance"
-                            value={authState.authParams?.instanceUrl ?? ''}
-                            onChange={() => { }}
+                            value={instanceUrl}
+                            onChange={(e) => setInstanceUrl(e.target.value)}
                             placeholder="Salesforce Instance"
                             leadingVisual={() => <div>URL</div>}
                             validation={instanceUrlValidation}
@@ -95,8 +95,8 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                         <TextField
                             name="App Consumer Key"
                             caption="Setup > Apps > App Manager > View > Manage Consumer Details"
-                            value={authState.authParams?.appConsumerKey ?? ''}
-                            onChange={() => { }}
+                            value={appConsumerKey}
+                            onChange={(e) => setAppConsumerKey(e.target.value)}
                             placeholder="Consumer Key"
                             leadingVisual={() => <div>ID</div>}
                             validation={appConsumerValidation}

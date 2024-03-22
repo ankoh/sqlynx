@@ -108,12 +108,12 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
         // When initiating the OAuth flow from the native app, the redirect will then open a deep link with the OAuth code.
         // When initiating from the web, the redirect will assume there's an opener that it can post the code to.
         const flowVariant = platform?.getPlatformType() !== PlatformType.WEB
-            ? proto.sqlynx_oauth.pb.OAuthFlowVariant.NATIVE_LINK
-            : proto.sqlynx_oauth.pb.OAuthFlowVariant.WEB_OPENER;
+            ? proto.sqlynx_oauth.pb.OAuthFlowVariant.NATIVE_LINK_FLOW
+            : proto.sqlynx_oauth.pb.OAuthFlowVariant.WEB_OPENER_FLOW;
 
         // Construct the auth state
         const authState = new proto.sqlynx_oauth.pb.OAuthState({
-            oauthProvider: proto.sqlynx_oauth.pb.OAuthProvider.SALESFORCE,
+            oauthProvider: proto.sqlynx_oauth.pb.OAuthProvider.SALESFORCE_PROVIDER,
             oauthFlowVariant: flowVariant
         });
         const authStateBuffer = authState.toBinary();
@@ -131,7 +131,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
         ].join('&');
         const url = `${params.instanceUrl}/services/oauth2/authorize?${paramParts}`;
 
-        if (flowVariant == proto.sqlynx_oauth.pb.OAuthFlowVariant.WEB_OPENER) {
+        if (flowVariant == proto.sqlynx_oauth.pb.OAuthFlowVariant.WEB_OPENER_FLOW) {
             // Open popup window
             const popup = window.open(url, OAUTH_POPUP_NAME, OAUTH_POPUP_SETTINGS);
             if (!popup) {

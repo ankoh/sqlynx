@@ -4,14 +4,18 @@ package sqlynx;
 
 enum OAuthFlowVariant {
     /// Setup OAuth using a web opener
-    WEB_OPENER = 0;
+    UNSPECIFIED_FLOW = 0;
+    /// Setup OAuth using a web opener
+    WEB_OPENER_FLOW = 1;
     /// Setup OAuth using a native deep link
-    NATIVE_LINK = 1;
+    NATIVE_LINK_FLOW = 2;
 }
 
 enum OAuthProvider {
     /// The Salesforce OAuth provider
-    SALESFORCE = 0;
+    UNSPECIFIED_PROVIDER = 0;
+    /// The Salesforce OAuth provider
+    SALESFORCE_PROVIDER = 1;
 }
 
 message OAuthState {
