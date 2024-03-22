@@ -2,7 +2,6 @@ import * as React from 'react';
 
 import * as proto from '@ankoh/sqlynx-pb';
 
-import './oauth_callback.html';
 import {
     AUTH_FAILED,
     OAUTH_WINDOW_CLOSED,
@@ -15,6 +14,7 @@ import {
     AUTH_FLOW_STATE_CTX,
     reduceAuthState,
     AUTH_FLOW_DEFAULT_STATE,
+    OAUTH_LINK_OPENED,
 } from './salesforce_auth_state.js';
 import { useSalesforceAPI } from './salesforce_connector.js';
 import { useAppConfig } from '../app_config.js';
@@ -103,7 +103,10 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
             return;
         }
 
-        // Select the oauth flow variant
+        // Select the oauth flow variant.
+        // This will instruct the redirect to sqlynx.app/oauth.html about the "actual" target.
+        // When initiating the OAuth flow from the native app, the redirect will then open a deep link with the OAuth code.
+        // When initiating from the web, the redirect will assume there's an opener that it can post the code to.
         const flowVariant = platform?.getPlatformType() !== PlatformType.WEB
             ? proto.sqlynx_oauth.pb.OAuthFlowVariant.NATIVE_LINK
             : proto.sqlynx_oauth.pb.OAuthFlowVariant.WEB_OPENER;
@@ -128,16 +131,23 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
         ].join('&');
         const url = `${params.instanceUrl}/services/oauth2/authorize?${paramParts}`;
 
-        // Open popup window
-        const popup = window.open(url, OAUTH_POPUP_NAME, OAUTH_POPUP_SETTINGS);
-        if (!popup) {
-            // Something went wrong, Browser might prevent the popup.
-            // (E.g. FF blocks by default)
-            dispatch({ type: AUTH_FAILED, value: 'could not open oauth window' });
-            return;
+        if (flowVariant == proto.sqlynx_oauth.pb.OAuthFlowVariant.WEB_OPENER) {
+            // Open popup window
+            const popup = window.open(url, OAUTH_POPUP_NAME, OAUTH_POPUP_SETTINGS);
+            if (!popup) {
+                // Something went wrong, Browser might prevent the popup.
+                // (E.g. FF blocks by default)
+                dispatch({ type: AUTH_FAILED, value: 'could not open oauth window' });
+                return;
+            }
+            popup.focus();
+            dispatch({ type: OAUTH_WINDOW_OPENED, value: popup });
+        } else {
+            // Just open the link with the default browser
+            window.open(url);
+            dispatch({ type: OAUTH_LINK_OPENED, value: null });
         }
-        popup.focus();
-        dispatch({ type: OAUTH_WINDOW_OPENED, value: popup });
+
     }, [state.authRequested, state.authError, state.openAuthWindow, state.pkceChallenge]);
 
     // Effect to forget about the auth window when it closes
@@ -157,7 +167,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
         };
     }, [state.openAuthWindow]);
 
-    // Register a receive for the oauth code from the window
+    // Register a receiver for the oauth code from the window
     React.useEffect(() => {
         const handler = (event: any) => {
             const params = new URLSearchParams(event?.data);

@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Button } from '@primer/react';
 import { KeyIcon, LogIcon, PlugIcon, TagIcon } from '@primer/octicons-react';
 
-import { CONNECT, useSalesforceAuthFlow, useSalesforceAuthState } from '../../connectors/salesforce_auth_state.js';
+import { AUTHORIZE, useSalesforceAuthFlow, useSalesforceAuthState } from '../../connectors/salesforce_auth_state.js';
 import { TextField, TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_UNKNOWN } from '../../view/text_field.js';
 import { classNames } from '../../utils/classnames.js';
 
@@ -50,7 +50,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
         }
         if (validationSucceeded) {
             authFlow({
-                type: CONNECT,
+                type: AUTHORIZE,
                 value: {
                     instanceUrl: instanceUrl!,
                     appConsumerKey: appConsumerKey!,

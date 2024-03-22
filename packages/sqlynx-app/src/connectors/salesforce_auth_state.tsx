@@ -14,7 +14,7 @@ export interface SalesforceAuthState {
     authError: string | null;
     /// The PKCE challenge
     pkceChallenge: PKCEChallenge | null;
-    /// The popup window
+    /// The popup window (if starting the OAuth flow from the browser)
     openAuthWindow: Window | null;
     /// The code
     coreAuthCode: string | null;
@@ -51,11 +51,11 @@ export const AUTH_FLOW_DEFAULT_STATE: SalesforceAuthState = {
 };
 
 export const CONFIGURE = Symbol('CONFIGURE');
-export const CONFIGURE_AND_CONNECT = Symbol('CONFIGURE_AND_CONNECT');
-export const CONNECT = Symbol('CONNECT');
+export const AUTHORIZE = Symbol('CONNECT');
 export const DISCONNECT = Symbol('DISCONNECT');
 export const AUTH_FAILED = Symbol('AUTH_FAILED');
 export const GENERATED_PKCE_CHALLENGE = Symbol('GENERATED_PKCE_CHALLENGE');
+export const OAUTH_LINK_OPENED = Symbol('OAUTH_LINK_OPENED');
 export const OAUTH_WINDOW_CLOSED = Symbol('OAUTH_WINDOW_CLOSED');
 export const OAUTH_WINDOW_OPENED = Symbol('OAUTH_WINDOW_OPENED');
 export const RECEIVED_CORE_AUTH_CODE = Symbol('RECEIVED_AUTH_CODE');
@@ -64,8 +64,9 @@ export const RECEIVED_DATA_CLOUD_ACCESS_TOKEN = Symbol('RECEIVED_DATA_CLOUD_ACCE
 
 export type SalesforceAuthAction =
     | VariantKind<typeof CONFIGURE, SalesforceAuthParams>
-    | VariantKind<typeof CONNECT, SalesforceAuthParams>
+    | VariantKind<typeof AUTHORIZE, SalesforceAuthParams>
     | VariantKind<typeof DISCONNECT, null>
+    | VariantKind<typeof OAUTH_LINK_OPENED, null>
     | VariantKind<typeof OAUTH_WINDOW_OPENED, Window>
     | VariantKind<typeof OAUTH_WINDOW_CLOSED, null>
     | VariantKind<typeof AUTH_FAILED, string>
@@ -88,7 +89,7 @@ export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAu
                 coreAccessToken: null,
                 dataCloudAccessToken: null,
             };
-        case CONNECT:
+        case AUTHORIZE:
             return {
                 authParams: action.value,
                 authError: null,
@@ -105,6 +106,12 @@ export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAu
                 ...state,
                 pkceChallenge: action.value,
             };
+        case OAUTH_LINK_OPENED:
+            return {
+                ...state,
+                authStarted: true,
+                openAuthWindow: null,
+            };
         case OAUTH_WINDOW_OPENED:
             return {
                 ...state,
@@ -115,7 +122,6 @@ export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAu
             if (!state.openAuthWindow) return state;
             return {
                 ...state,
-                authStarted: true,
                 openAuthWindow: null,
             };
         case AUTH_FAILED:

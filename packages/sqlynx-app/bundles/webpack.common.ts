@@ -26,18 +26,6 @@ interface ConfigParams {
 const PACKAGE_JSON_PATH = url.fileURLToPath(new URL('../package.json', import.meta.url));
 const PACKAGE_JSON = JSON.parse(fs.readFileSync(PACKAGE_JSON_PATH, 'utf8')) as { version: string; gitCommit: string; };
 
-/// IMPORTANT
-///
-/// We use a dedicated tiny html file for the OAuth callback to not inflate the whole app in the popup.
-/// However the EXACT OAuth callback URI has to be configured in the apps web interface.
-/// If we would load the file using webpacks [contenthash], we would get cache busting but could break OAuth for our users without really noticing it.
-//
-/// We therefore use an explicit version file.
-/// If you don't change the version file, you don't have to change the redirect URI but an updated file won't bust the CDN cache.
-/// If you change the version file, you have to change the redirect URI and get cache busting automatically.
-const OAUTH_CALLBACK_VERSION_FILE = url.fileURLToPath(new URL('../src/connectors/oauth_callback.html.version', import.meta.url));
-export const OAUTH_CALLBACK_VERSION = childProcess.execSync(`cat ${OAUTH_CALLBACK_VERSION_FILE}`).toString().trim();
-
 /// We support dynamic configurations of DashQL via a dedicated config file.
 /// The app loads this file at startup which allows us to adjust certain settings dynamically.
 //
@@ -128,14 +116,7 @@ export function configure(params: ConfigParams): Partial<Configuration> {
                     generator: {
                         filename: CONFIG_PATH,
                     },
-                },
-                {
-                    test: /.*oauth_callback\.html$/,
-                    type: 'asset/resource',
-                    generator: {
-                        filename: `static/html/[name].${OAUTH_CALLBACK_VERSION}[ext]`,
-                    },
-                },
+                }
             ],
         },
         optimization: {
