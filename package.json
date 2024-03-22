@@ -3,7 +3,7 @@
     "workspaces": [
         "packages/sqlynx-app",
         "packages/sqlynx-core-api",
-        "packages/sqlynx-proto"
+        "packages/sqlynx-pb"
     ],
     "scripts": {
         "serve:native:dev": "tauri dev",

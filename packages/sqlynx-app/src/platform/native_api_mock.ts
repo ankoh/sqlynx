@@ -1,4 +1,4 @@
-import * as proto from "@ankoh/sqlynx-proto";
+import * as proto from "@ankoh/sqlynx-pb";
 
 import { PlatformType } from "./platform_api.js";
 import { Message } from "@bufbuild/protobuf";
