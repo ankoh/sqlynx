@@ -28,16 +28,16 @@
     "@jridgewell/gen-mapping" "^0.3.0"
     "@jridgewell/trace-mapping" "^0.3.9"
 
+"@ankoh/sqlynx-core@link:packages/sqlynx-core-api":
+  version "0.0.2-dev.17"
+  dependencies:
+    flatbuffers "^24.3.7"
+
 "@ankoh/sqlynx-proto@link:packages/sqlynx-proto":
   version "0.0.2-dev.17"
   dependencies:
     "@bufbuild/protobuf" "^1.7.2"
     "@connectrpc/connect-web" "^1.4.0"
-
-"@ankoh/sqlynx-core@link:packages/sqlynx-core-api":
-  version "0.0.2-dev.17"
-  dependencies:
-    flatbuffers "^24.3.7"
 
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.12.13", "@babel/code-frame@^7.16.7", "@babel/code-frame@^7.23.5":
   version "7.23.5"
@@ -1089,10 +1089,10 @@
   resolved "https://registry.yarnpkg.com/@primer/primitives/-/primitives-7.15.3.tgz#ff3bb74877bfea2ec3c0780c419f15d32b5f8b53"
   integrity sha512-BFxFKwa0Bkr+esqbXU5Yt91z/58J2MPoW1cYtp0j2rUYus4lIZnczX7+ZYb7j4BqpfY/88q9Vn+BRwW/Sx4eIA==
 
-"@primer/react@^36.11.0":
-  version "36.11.0"
-  resolved "https://registry.yarnpkg.com/@primer/react/-/react-36.11.0.tgz#3be981206a48bfed4a894610c8b78259c4301023"
-  integrity sha512-ECVoWy/Df0FnZc220H8S+JtjJJyXPnTVcaLVk0XRImodcYzRg+ihQHnFTuDCWr9gkqYLraqxbWxq9jYtvMc0Ag==
+"@primer/react@^36.12.0":
+  version "36.12.0"
+  resolved "https://registry.yarnpkg.com/@primer/react/-/react-36.12.0.tgz#4c4833e52af29bd6ae46f425b66be31ad0975b17"
+  integrity sha512-Kzp2l/n8OfQRvt/3ScEbr4tAlB/MStPEuWjUeYC8ud4fZb7MrXpJY7m73uwuxgpgAL01DhcQ6impP/MsKABelQ==
   dependencies:
     "@github/combobox-nav" "^2.1.5"
     "@github/markdown-toolbar-element" "^2.1.0"
@@ -1104,7 +1104,6 @@
     "@primer/live-region-element" "^0.2.0"
     "@primer/octicons-react" "^19.8.0"
     "@primer/primitives" "7.15.3"
-    "@react-aria/ssr" "^3.5.0"
     "@styled-system/css" "^5.1.5"
     "@styled-system/props" "^5.1.5"
     "@styled-system/theme-get" "^5.1.2"
@@ -1124,13 +1123,6 @@
     react-is "^18.2.0"
     react-markdown "8.0.7"
     styled-system "^5.1.5"
-
-"@react-aria/ssr@^3.5.0":
-  version "3.9.1"
-  resolved "https://registry.yarnpkg.com/@react-aria/ssr/-/ssr-3.9.1.tgz#a1252fd5ef87eada810dd9dd6751a5e21359d1d2"
-  integrity sha512-NqzkLFP8ZVI4GSorS0AYljC13QW2sc8bDqJOkBvkAt3M8gbcAXJWVRGtZBCRscki9RZF+rNlnPdg0G0jYkhJcg==
-  dependencies:
-    "@swc/helpers" "^0.5.0"
 
 "@react-hook/latest@^1.0.2":
   version "1.0.3"
@@ -1284,7 +1276,7 @@
     "@styled-system/core" "^5.1.2"
     "@styled-system/css" "^5.1.5"
 
-"@swc/helpers@^0.5.0", "@swc/helpers@^0.5.2":
+"@swc/helpers@^0.5.2":
   version "0.5.3"
   resolved "https://registry.yarnpkg.com/@swc/helpers/-/helpers-0.5.3.tgz#98c6da1e196f5f08f977658b80d6bd941b5f294f"
   integrity sha512-FaruWX6KdudYloq1AHD/4nU+UsMTdNE8CKyrseXWEcgjDAbvkwJg2QGPAnfIJLIWsjZOSPLOAykK6fuYp4vp4A==
