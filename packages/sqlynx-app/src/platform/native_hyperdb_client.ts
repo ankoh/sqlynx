@@ -1,4 +1,4 @@
-import * as proto from "@ankoh/sqlynx-proto";
+import * as proto from "@ankoh/sqlynx-pb";
 
 import { HyperDatabaseClient, HyperDatabaseConnection, HyperQueryExecutionStatus, HyperQueryResultStream } from "./platform_hyperdb_client.js";
 import { NativeGrpcChannel, NativeGrpcClient, NativeGrpcProxyConfig, NativeGrpcServerStream, NativeGrpcServerStreamMessageIterator } from './native_grpc_client.js';

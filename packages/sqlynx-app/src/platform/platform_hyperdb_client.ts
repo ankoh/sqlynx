@@ -1,4 +1,4 @@
-import * as proto from "@ankoh/sqlynx-proto";
+import * as proto from "@ankoh/sqlynx-pb";
 import { GrpcChannelArgs } from './grpc_common.js';
 
 export enum HyperQueryExecutionStatus {

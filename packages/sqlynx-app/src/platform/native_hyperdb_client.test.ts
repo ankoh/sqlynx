@@ -4,7 +4,7 @@ import { GrpcServerStream, NativeAPIMock } from './native_api_mock.js';
 import { PlatformType } from './platform_api.js';
 import { GrpcChannelArgs } from './grpc_common.js';
 
-import * as proto from "@ankoh/sqlynx-proto";
+import * as proto from "@ankoh/sqlynx-pb";
 import { NativeHyperDatabaseClient } from './native_hyperdb_client.js';
 import { NativeGrpcServerStreamBatchEvent } from './native_grpc_client.js';
 

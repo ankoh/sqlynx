@@ -33,7 +33,7 @@
   dependencies:
     flatbuffers "^24.3.7"
 
-"@ankoh/sqlynx-proto@link:packages/sqlynx-proto":
+"@ankoh/sqlynx-pb@link:packages/sqlynx-pb":
   version "0.0.2-dev.17"
   dependencies:
     "@bufbuild/protobuf" "^1.7.2"

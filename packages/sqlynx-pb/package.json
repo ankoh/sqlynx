@@ -1,5 +1,5 @@
 {
-    "name": "@ankoh/sqlynx-proto",
+    "name": "@ankoh/sqlynx-pb",
     "private": true,
     "version": "0.0.2-dev.17",
     "gitCommit": "453866d",
@@ -22,8 +22,8 @@
     "files": [
         "dist/gen/",
         "dist/index.*",
-        "dist/sqlynx-proto.module.*"
+        "dist/sqlynx-pb.module.*"
     ],
-    "module": "./dist/sqlynx-proto.module.js",
-    "types": "./dist/sqlynx-proto.module.d.ts"
+    "module": "./dist/sqlynx-pb.module.js",
+    "types": "./dist/sqlynx-pb.module.d.ts"
 }
