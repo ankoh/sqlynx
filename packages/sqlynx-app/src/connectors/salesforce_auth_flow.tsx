@@ -1,5 +1,7 @@
 import * as React from 'react';
 
+import * as proto from '@ankoh/sqlynx-pb';
+
 import './oauth_callback.html';
 import {
     AUTH_FAILED,
@@ -17,6 +19,9 @@ import {
 import { useSalesforceAPI } from './salesforce_connector.js';
 import { useAppConfig } from '../app_config.js';
 import { generatePKCEChallenge } from '../utils/pkce.js';
+import { usePlatformApi } from '../platform/platform_api_provider.js';
+import { PlatformType } from '../platform/platform_api.js';
+import { BASE64_CODEC } from '../utils/base64.js';
 
 // We use the web-server OAuth Flow with or without consumer secret.
 //
@@ -59,6 +64,7 @@ interface Props {
 export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
     const appConfig = useAppConfig();
     const connector = useSalesforceAPI();
+    const platform = usePlatformApi();
     const connectorConfig = appConfig.value?.connectors?.salesforce ?? null;
     const [state, dispatch] = React.useReducer(reduceAuthState, AUTH_FLOW_DEFAULT_STATE);
 
@@ -93,8 +99,22 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
             state.authStarted ||
             state.authError ||
             !state.pkceChallenge
-        )
+        ) {
             return;
+        }
+
+        // Select the oauth flow variant
+        const flowVariant = platform?.getPlatformType() !== PlatformType.WEB
+            ? proto.sqlynx_oauth.pb.OAuthFlowVariant.NATIVE_LINK
+            : proto.sqlynx_oauth.pb.OAuthFlowVariant.WEB_OPENER;
+
+        // Construct the auth state
+        const authState = new proto.sqlynx_oauth.pb.OAuthState({
+            oauthProvider: proto.sqlynx_oauth.pb.OAuthProvider.SALESFORCE,
+            oauthFlowVariant: flowVariant
+        });
+        const authStateBuffer = authState.toBinary();
+        const authStateBase64 = BASE64_CODEC.encode(authStateBuffer.buffer);
 
         // Construct the URI
         const params = state.authParams!;
@@ -104,6 +124,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
             `code_challenge=${state.pkceChallenge.value}`,
             `code_challange_method=S256`,
             `response_type=code`,
+            `state=${authStateBase64}`
         ].join('&');
         const url = `${params.instanceUrl}/services/oauth2/authorize?${paramParts}`;
 
