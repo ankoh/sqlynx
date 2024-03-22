@@ -1,3 +1,5 @@
+import * as proto from '@ankoh/sqlynx-pb';
+
 import { BASE64_CODEC } from "./base64.js";
 import { cyrb128, randomBuffer32, sfc32T } from "./prng.js";
 
@@ -21,5 +23,25 @@ describe('Base64Codec', () => {
                 expect(decoded).toEqual(randomBytes);
             });
         }
+    });
+
+    it("encode salesforce oauth web flow state", () => {
+        const authState = new proto.sqlynx_oauth.pb.OAuthState({
+            oauthProvider: proto.sqlynx_oauth.pb.OAuthProvider.SALESFORCE_PROVIDER,
+            oauthFlowVariant: proto.sqlynx_oauth.pb.OAuthFlowVariant.WEB_OPENER_FLOW
+        });
+        const authStateBuffer = authState.toBinary();
+        const authStateBase64 = BASE64_CODEC.encode(authStateBuffer.buffer);
+        expect(authStateBase64).toEqual("EAEYAQ==");
+    });
+
+    it("encode salesforce oauth native flow state", () => {
+        const authState = new proto.sqlynx_oauth.pb.OAuthState({
+            oauthProvider: proto.sqlynx_oauth.pb.OAuthProvider.SALESFORCE_PROVIDER,
+            oauthFlowVariant: proto.sqlynx_oauth.pb.OAuthFlowVariant.NATIVE_LINK_FLOW
+        });
+        const authStateBuffer = authState.toBinary();
+        const authStateBase64 = BASE64_CODEC.encode(authStateBuffer.buffer);
+        expect(authStateBase64).toEqual("EAIYAQ==");
     });
 })
