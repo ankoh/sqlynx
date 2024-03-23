@@ -27,21 +27,33 @@ describe('Base64Codec', () => {
 
     it("encode salesforce oauth web flow state", () => {
         const authState = new proto.sqlynx_oauth.pb.OAuthState({
-            oauthProvider: proto.sqlynx_oauth.pb.OAuthProvider.SALESFORCE_PROVIDER,
-            oauthFlowVariant: proto.sqlynx_oauth.pb.OAuthFlowVariant.WEB_OPENER_FLOW
+            flowVariant: proto.sqlynx_oauth.pb.OAuthFlowVariant.WEB_OPENER_FLOW,
+            providerOptions: {
+                case: "salesforceProvider",
+                value: new proto.sqlynx_oauth.pb.SalesforceOAuthOptions({
+                    instanceUrl: "https://trialorgfarmforu-16f.test2.my.pc-rnd.salesforce.com",
+                    appConsumerKey: "foo",
+                }),
+            }
         });
         const authStateBuffer = authState.toBinary();
         const authStateBase64 = BASE64_CODEC.encode(authStateBuffer.buffer);
-        expect(authStateBase64).toEqual("EAEYAQ==");
+        expect(authStateBase64).toEqual("EAEaQgo7aHR0cHM6Ly90cmlhbG9yZ2Zhcm1mb3J1LTE2Zi50ZXN0Mi5teS5wYy1ybmQuc2FsZXNmb3JjZS5jb20SA2Zvbw==");
     });
 
     it("encode salesforce oauth native flow state", () => {
         const authState = new proto.sqlynx_oauth.pb.OAuthState({
-            oauthProvider: proto.sqlynx_oauth.pb.OAuthProvider.SALESFORCE_PROVIDER,
-            oauthFlowVariant: proto.sqlynx_oauth.pb.OAuthFlowVariant.NATIVE_LINK_FLOW
+            flowVariant: proto.sqlynx_oauth.pb.OAuthFlowVariant.NATIVE_LINK_FLOW,
+            providerOptions: {
+                case: "salesforceProvider",
+                value: new proto.sqlynx_oauth.pb.SalesforceOAuthOptions({
+                    instanceUrl: "https://trialorgfarmforu-16f.test2.my.pc-rnd.salesforce.com",
+                    appConsumerKey: "foo",
+                }),
+            }
         });
         const authStateBuffer = authState.toBinary();
         const authStateBase64 = BASE64_CODEC.encode(authStateBuffer.buffer);
-        expect(authStateBase64).toEqual("EAIYAQ==");
+        expect(authStateBase64).toEqual("EAIaQgo7aHR0cHM6Ly90cmlhbG9yZ2Zhcm1mb3J1LTE2Zi50ZXN0Mi5teS5wYy1ybmQuc2FsZXNmb3JjZS5jb20SA2Zvbw==");
     });
 })

@@ -113,8 +113,14 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
 
         // Construct the auth state
         const authState = new proto.sqlynx_oauth.pb.OAuthState({
-            oauthProvider: proto.sqlynx_oauth.pb.OAuthProvider.SALESFORCE_PROVIDER,
-            oauthFlowVariant: flowVariant
+            flowVariant: flowVariant,
+            providerOptions: {
+                case: "salesforceProvider",
+                value: new proto.sqlynx_oauth.pb.SalesforceOAuthOptions({
+                    instanceUrl: state.authParams.instanceUrl,
+                    appConsumerKey: state.authParams.appConsumerKey,
+                }),
+            }
         });
         const authStateBuffer = authState.toBinary();
         const authStateBase64 = BASE64_CODEC.encode(authStateBuffer.buffer);
