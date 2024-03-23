@@ -13,7 +13,7 @@ import { BASE64_CODEC } from './utils/base64.js';
 import './../static/fonts/fonts.css';
 import './globals.css';
 import style from './app.module.css';
-import { OAuthFlowVariant, OAuthProvider } from '@ankoh/sqlynx-pb/gen/sqlynx/oauth_pb.js';
+import { OAuthFlowVariant, SalesforceOAuthOptions } from '@ankoh/sqlynx-pb/gen/sqlynx/oauth_pb.js';
 
 const GitHubDesignSystem = (props: { children: React.ReactElement }) => (
     <StyleSheetManager shouldForwardProp={isPropValid}>
@@ -38,18 +38,8 @@ const RedirectPage: React.FC<Props> = (_props: Props) => {
     const authStateBuffer = BASE64_CODEC.decode(state);
     const authState = proto.sqlynx_oauth.pb.OAuthState.fromBinary(new Uint8Array(authStateBuffer));
 
-    let oauthProvider = "";
-    switch (authState.oauthProvider) {
-        case OAuthProvider.UNSPECIFIED_PROVIDER:
-            oauthProvider = "Unspecified"
-            break;
-        case OAuthProvider.SALESFORCE_PROVIDER:
-            oauthProvider = "Salesforce"
-            break;
-    }
-
     let flowVariant = "";
-    switch (authState.oauthFlowVariant) {
+    switch (authState.flowVariant) {
         case OAuthFlowVariant.UNSPECIFIED_FLOW:
             flowVariant = "Unspecified";
             break;
@@ -60,13 +50,19 @@ const RedirectPage: React.FC<Props> = (_props: Props) => {
             flowVariant = "Native App";
             break;
     }
+    switch (authState.providerOptions.case) {
+        case "salesforceProvider": {
+            return (
+                <div>
+                    <div>{flowVariant}</div>
+                    <div>{authState.providerOptions.value.instanceUrl}</div>
+                    <div>{authState.providerOptions.value.appConsumerKey}</div>
+                </div>
+            );
+        }
+    }
+
     console.log(authState);
-    return (
-        <div>
-            <div>{flowVariant}</div>
-            <div>{oauthProvider}</div>
-        </div>
-    );
 };
 
 const element = document.getElementById('root');
