@@ -6,7 +6,7 @@
     "description": "",
     "dependencies": {
         "@connectrpc/connect-web": "^1.4.0",
-        "@bufbuild/protobuf": "^1.7.2"
+        "@bufbuild/protobuf": "^1.8.0"
     },
     "devDependencies": {
         "@types/node": "^20.12.7",

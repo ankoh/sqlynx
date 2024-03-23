@@ -30,7 +30,7 @@ interface RouteMatchers {
 
 export interface GrpcServerStreamBatch {
     event: NativeGrpcServerStreamBatchEvent;
-    messages: Message[],
+    messages: any[],
     trailers?: Headers
 }
 

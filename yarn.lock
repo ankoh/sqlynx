@@ -36,7 +36,7 @@
 "@ankoh/sqlynx-pb@link:packages/sqlynx-pb":
   version "0.0.2-dev.17"
   dependencies:
-    "@bufbuild/protobuf" "^1.7.2"
+    "@bufbuild/protobuf" "^1.8.0"
     "@connectrpc/connect-web" "^1.4.0"
 
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.10.4", "@babel/code-frame@^7.12.13", "@babel/code-frame@^7.16.7", "@babel/code-frame@^7.23.5":
@@ -334,67 +334,67 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@bufbuild/buf-darwin-arm64@1.30.0":
-  version "1.30.0"
-  resolved "https://registry.yarnpkg.com/@bufbuild/buf-darwin-arm64/-/buf-darwin-arm64-1.30.0.tgz#5fa3aed8af0dadefa9b6e9d14569300d4ca3af73"
-  integrity sha512-EUhh/hiazZPyf6I0HcQHf/ODZAq2js+PdIbemEWm8WQV29rqhY/stRxKDF755gG5xNr4xwhraQXYTizG3MZV5A==
+"@bufbuild/buf-darwin-arm64@1.30.1":
+  version "1.30.1"
+  resolved "https://registry.yarnpkg.com/@bufbuild/buf-darwin-arm64/-/buf-darwin-arm64-1.30.1.tgz#294b45cbdf7ef67f042580c212729d8b3da21102"
+  integrity sha512-FRgf+x4V4s9Z1wH2xHdP8+1AYtil1GCmMjzKf/4AQ+eaUpoLfipSIsVYiBrnpcRxEPe9UMVzwNjKtPak/szwPw==
 
-"@bufbuild/buf-darwin-x64@1.30.0":
-  version "1.30.0"
-  resolved "https://registry.yarnpkg.com/@bufbuild/buf-darwin-x64/-/buf-darwin-x64-1.30.0.tgz#c129ce4b77cfb80a799d8d046c2dd1b51ad00ef7"
-  integrity sha512-ID9G93hlpvy3KwYqu1UFZCFHaQ7KDESH3OmL33ASpdCojtQbD7EtKCQe8vwIW2raim7lSocSHLyZuLCUAvWoUw==
+"@bufbuild/buf-darwin-x64@1.30.1":
+  version "1.30.1"
+  resolved "https://registry.yarnpkg.com/@bufbuild/buf-darwin-x64/-/buf-darwin-x64-1.30.1.tgz#9518def718a7e555f8fc5c2c810c92cf1902efb3"
+  integrity sha512-kE0ne45zE7lSdv9WxPVhapwu627WMbWmWCzqSxzYr8sWDLqiAuw+XvO9/mHGdPWcMhV4lMX6tutitd9PPVxK8A==
 
-"@bufbuild/buf-linux-aarch64@1.30.0":
-  version "1.30.0"
-  resolved "https://registry.yarnpkg.com/@bufbuild/buf-linux-aarch64/-/buf-linux-aarch64-1.30.0.tgz#b39ce6b962cea6b6cc16cfd256fa56c47f7bc126"
-  integrity sha512-VTp5YnfsHtCmRNqGAgzSm18fCTVw8ErK0Lk506CWtqqGhPJ+lWuVkxgAAzG+qoK4LZXIpX9dXxkoqdb+L1NTkg==
+"@bufbuild/buf-linux-aarch64@1.30.1":
+  version "1.30.1"
+  resolved "https://registry.yarnpkg.com/@bufbuild/buf-linux-aarch64/-/buf-linux-aarch64-1.30.1.tgz#f0bf5e93d80e614dc0c46edd0c9c66ed4db508e9"
+  integrity sha512-kVV9Sl0GwZiQkMOXJiuwuU+gIHe6AWcYBMRMmuW55sY0ePZNXBmRGt4k5W4ijy98O6pnY3ao+n9ne0KwiD9MVA==
 
-"@bufbuild/buf-linux-x64@1.30.0":
-  version "1.30.0"
-  resolved "https://registry.yarnpkg.com/@bufbuild/buf-linux-x64/-/buf-linux-x64-1.30.0.tgz#99a5c7a8cf6a2ca04d91b5fbe7a09f4245221e01"
-  integrity sha512-XBasj1Baf/lJIiJbX40RDjM8OLS3eVIiilnDqQ7ZL3WOCn6gROYr9lLjlUg9GYox9On5LCFp3536zfr3hNqQwg==
+"@bufbuild/buf-linux-x64@1.30.1":
+  version "1.30.1"
+  resolved "https://registry.yarnpkg.com/@bufbuild/buf-linux-x64/-/buf-linux-x64-1.30.1.tgz#5ba1618d317d9658f10bc0e0a0265ab0de73b3db"
+  integrity sha512-RacDbQJYNwqRlMESa/rLHprfUVa8Wu1/cmcqS29Fyt/cGzs0G8sNcQzQ87HYFIS9cSlSPl6vWL0x8JqQRp68lQ==
 
-"@bufbuild/buf-win32-arm64@1.30.0":
-  version "1.30.0"
-  resolved "https://registry.yarnpkg.com/@bufbuild/buf-win32-arm64/-/buf-win32-arm64-1.30.0.tgz#d33a6565e351a449401816f5cadd48c88eeafa1b"
-  integrity sha512-1C18Abq2GpBeGP54VOr9ABzSobynH/q8pUkbY6ftp7JIYdrCvKfJmianEpvTHJWl5kwe3UP9xYYgr5Yt+Y/8Yw==
+"@bufbuild/buf-win32-arm64@1.30.1":
+  version "1.30.1"
+  resolved "https://registry.yarnpkg.com/@bufbuild/buf-win32-arm64/-/buf-win32-arm64-1.30.1.tgz#ac4dc7fc1181d93bfa8794a7c72171f3134e55e5"
+  integrity sha512-ndp/qb5M6yrSzcnMI0j4jjAuDKa7zHBFc187FwyDb3v63rvyQeYqncHb0leT5ZWqfNggJT4vXIH6QnH82PfDQw==
 
-"@bufbuild/buf-win32-x64@1.30.0":
-  version "1.30.0"
-  resolved "https://registry.yarnpkg.com/@bufbuild/buf-win32-x64/-/buf-win32-x64-1.30.0.tgz#6006e4f0cbe3c36036830fa3b4e3aede0138b8fb"
-  integrity sha512-uRc05jpbvdUxKSHpUj6RfNR3yJTIdSYccgtupgc6qPoDXE+KveyqjbA0CqIqXhgJmgyggBcYLEbX+tdtz5LRhA==
+"@bufbuild/buf-win32-x64@1.30.1":
+  version "1.30.1"
+  resolved "https://registry.yarnpkg.com/@bufbuild/buf-win32-x64/-/buf-win32-x64-1.30.1.tgz#49cb5b1ddaf011dcefb0b1a774c42fd16bb63fb9"
+  integrity sha512-1kmIY6oKLKZ4zIQVNG60GRDp+vKSZdaim7wRejOtgEDuWXhIuErlnGbpstypU8FO+OV3SeFUJNOJ8tLOYd3PvQ==
 
-"@bufbuild/buf@^1.30.0":
-  version "1.30.0"
-  resolved "https://registry.yarnpkg.com/@bufbuild/buf/-/buf-1.30.0.tgz#765a5926bf0d87c2ebfd7fba6552fdfda3096a4b"
-  integrity sha512-SImlJJA+9uDccWzt6SFXJwRQE/6fGv2cIKyXqDJCWthYMMYw9/QOdM/pXg5JZx1XJrHiEvzZ0y+ump7Q08/FPw==
+"@bufbuild/buf@^1.30.1":
+  version "1.30.1"
+  resolved "https://registry.yarnpkg.com/@bufbuild/buf/-/buf-1.30.1.tgz#d658e17fa1533ecc7fa5b9590118a0b0b7e386d1"
+  integrity sha512-9VVvrXBCWUiH8ToccqDfPRuTiPXSbHmSkL8XPlMpUhpJIlm01m4/Vzbc5FJL1yuk3e1rdBGCF6I9Obs9NsILzg==
   optionalDependencies:
-    "@bufbuild/buf-darwin-arm64" "1.30.0"
-    "@bufbuild/buf-darwin-x64" "1.30.0"
-    "@bufbuild/buf-linux-aarch64" "1.30.0"
-    "@bufbuild/buf-linux-x64" "1.30.0"
-    "@bufbuild/buf-win32-arm64" "1.30.0"
-    "@bufbuild/buf-win32-x64" "1.30.0"
+    "@bufbuild/buf-darwin-arm64" "1.30.1"
+    "@bufbuild/buf-darwin-x64" "1.30.1"
+    "@bufbuild/buf-linux-aarch64" "1.30.1"
+    "@bufbuild/buf-linux-x64" "1.30.1"
+    "@bufbuild/buf-win32-arm64" "1.30.1"
+    "@bufbuild/buf-win32-x64" "1.30.1"
 
-"@bufbuild/protobuf@1.7.2", "@bufbuild/protobuf@^1.7.2":
-  version "1.7.2"
-  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.7.2.tgz#1b3d6c66ebd987f7da7f1e3f0546cffaa87f8732"
-  integrity sha512-i5GE2Dk5ekdlK1TR7SugY4LWRrKSfb5T1Qn4unpIMbfxoeGKERKQ59HG3iYewacGD10SR7UzevfPnh6my4tNmQ==
+"@bufbuild/protobuf@1.8.0", "@bufbuild/protobuf@^1.7.2", "@bufbuild/protobuf@^1.8.0":
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.8.0.tgz#1c8651ea34adb8019b483e09de02aeeb1cd57d79"
+  integrity sha512-qR9FwI8QKIveDnUYutvfzbC21UZJJryYrLuZGjeZ/VGz+vXelUkK+xgkOHsvPEdYEdxtgUUq4313N8QtOehJ1Q==
 
-"@bufbuild/protoc-gen-es@^1.7.2":
-  version "1.7.2"
-  resolved "https://registry.yarnpkg.com/@bufbuild/protoc-gen-es/-/protoc-gen-es-1.7.2.tgz#03d85a30338191c74fcee330a2644d35eb8c7240"
-  integrity sha512-yiRk/T+YGmpSVvIkybCjPt+QyM/pLWMO+MAiz6auvCsiAgfXfc5nFFosD4yBYXID55M6eIkgBcity1AoJ6I30A==
+"@bufbuild/protoc-gen-es@^1.8.0":
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protoc-gen-es/-/protoc-gen-es-1.8.0.tgz#b16cca884ccba23f1401104ca002028635a2b169"
+  integrity sha512-jnvBKwHq3o/iOgfKxaxn5Za7ay4oAs8KWgoHiDc9Fsb0g+/d1z+mHlHvmevOiCPcVZsnH6V3LImOJvGStPONpA==
   dependencies:
-    "@bufbuild/protobuf" "^1.7.2"
-    "@bufbuild/protoplugin" "1.7.2"
+    "@bufbuild/protobuf" "^1.8.0"
+    "@bufbuild/protoplugin" "1.8.0"
 
-"@bufbuild/protoplugin@1.7.2", "@bufbuild/protoplugin@^1.7.2":
-  version "1.7.2"
-  resolved "https://registry.yarnpkg.com/@bufbuild/protoplugin/-/protoplugin-1.7.2.tgz#3f5d7a75bf486d7c0956b73227e46c40216c191a"
-  integrity sha512-N3QtO8XWD4F4alMtASWtxBw6BWXp4aLz7rPBXH4KTULdjpUHnq46g15TsrG0/8szZw6pIklTO3lFe14dl6ZYdA==
+"@bufbuild/protoplugin@1.8.0", "@bufbuild/protoplugin@^1.7.2":
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protoplugin/-/protoplugin-1.8.0.tgz#0e60a79d195ad79d014c263ae9c57f64063d23a5"
+  integrity sha512-Pb89cTshW+I577qh27VvxGYvZEvQ3zJ8La1OfzPCKugP9d4A4P65WStkAY+aSCiDHk68m1/+mtBb6elfiLPuFg==
   dependencies:
-    "@bufbuild/protobuf" "1.7.2"
+    "@bufbuild/protobuf" "1.8.0"
     "@typescript/vfs" "^1.4.0"
     typescript "4.5.2"
 
@@ -7248,16 +7248,7 @@ string-length@^4.0.1:
     char-regex "^1.0.2"
     strip-ansi "^6.0.0"
 
-"string-width-cjs@npm:string-width@^4.2.0":
-  version "4.2.3"
-  resolved "https://registry.yarnpkg.com/string-width/-/string-width-4.2.3.tgz#269c7117d27b05ad2e536830a8ec895ef9c6d010"
-  integrity sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==
-  dependencies:
-    emoji-regex "^8.0.0"
-    is-fullwidth-code-point "^3.0.0"
-    strip-ansi "^6.0.1"
-
-string-width@^4.1.0, string-width@^4.2.0, string-width@^4.2.3:
+"string-width-cjs@npm:string-width@^4.2.0", string-width@^4.1.0, string-width@^4.2.0, string-width@^4.2.3:
   version "4.2.3"
   resolved "https://registry.yarnpkg.com/string-width/-/string-width-4.2.3.tgz#269c7117d27b05ad2e536830a8ec895ef9c6d010"
   integrity sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==
@@ -7324,14 +7315,7 @@ string_decoder@^1.1.1, string_decoder@~1.1.1:
   dependencies:
     safe-buffer "~5.1.0"
 
-"strip-ansi-cjs@npm:strip-ansi@^6.0.1":
-  version "6.0.1"
-  resolved "https://registry.yarnpkg.com/strip-ansi/-/strip-ansi-6.0.1.tgz#9e26c63d30f53443e9489495b2105d37b67a85d9"
-  integrity sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==
-  dependencies:
-    ansi-regex "^5.0.1"
-
-strip-ansi@^6.0.0, strip-ansi@^6.0.1:
+"strip-ansi-cjs@npm:strip-ansi@^6.0.1", strip-ansi@^6.0.0, strip-ansi@^6.0.1:
   version "6.0.1"
   resolved "https://registry.yarnpkg.com/strip-ansi/-/strip-ansi-6.0.1.tgz#9e26c63d30f53443e9489495b2105d37b67a85d9"
   integrity sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==
@@ -8164,16 +8148,7 @@ wordwrapjs@^5.1.0:
   resolved "https://registry.yarnpkg.com/wordwrapjs/-/wordwrapjs-5.1.0.tgz#4c4d20446dcc670b14fa115ef4f8fd9947af2b3a"
   integrity sha512-JNjcULU2e4KJwUNv6CHgI46UvDGitb6dGryHajXTDiLgg1/RiGoPSDw4kZfYnwGtEXf2ZMeIewDQgFGzkCB2Sg==
 
-"wrap-ansi-cjs@npm:wrap-ansi@^7.0.0":
-  version "7.0.0"
-  resolved "https://registry.yarnpkg.com/wrap-ansi/-/wrap-ansi-7.0.0.tgz#67e145cff510a6a6984bdf1152911d69d2eb9e43"
-  integrity sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q==
-  dependencies:
-    ansi-styles "^4.0.0"
-    string-width "^4.1.0"
-    strip-ansi "^6.0.0"
-
-wrap-ansi@^7.0.0:
+"wrap-ansi-cjs@npm:wrap-ansi@^7.0.0", wrap-ansi@^7.0.0:
   version "7.0.0"
   resolved "https://registry.yarnpkg.com/wrap-ansi/-/wrap-ansi-7.0.0.tgz#67e145cff510a6a6984bdf1152911d69d2eb9e43"
   integrity sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q==
