@@ -9,8 +9,9 @@ import { Route, Routes, BrowserRouter, useSearchParams } from 'react-router-dom'
 import { BASE64_CODEC } from './utils/base64.js';
 import { RESULT_OK, RESULT_ERROR, Result } from './utils/result.js';
 import { SQLYNX_VERSION } from './app_version.js';
-import { TextField } from './view/text_field.js';
+import { TextField, TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_WARNING } from './view/text_field.js';
 import { GitHubTheme } from './github_theme.js';
+import { formatTimeDifference } from './utils/format.js';
 
 import _styles from './oauth_redirect.module.css';
 import page_styles from './view/banner_page.module.css';
@@ -24,10 +25,24 @@ interface OAuthSucceededProps {
 }
 
 const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProps) => {
+    let codeIsExpired: boolean = false;
+    let codeExpiresAt: Date | undefined = undefined;
+
+    // Refresh expiration timer every second
+    const [now, setNow] = React.useState(new Date());
+    React.useEffect(() => {
+        const intervalId = setInterval(() => setNow(new Date()), 100);
+        return () => clearInterval(intervalId);
+    }, []);
+
     // Render provider arguments from state
     let infoSection: React.ReactElement = <div />;
     switch (props.state.providerOptions.case) {
         case "salesforceProvider": {
+            const expiresAt = props.state.providerOptions.value.expiresAt;
+            // const expiresAt = 10;
+            codeIsExpired = now.getTime() > (expiresAt ?? 0);
+            codeExpiresAt = codeIsExpired ? undefined : new Date(Number(expiresAt));
             infoSection = (
                 <div className={page_styles.card_section}>
                     <div className={page_styles.section_entries}>
@@ -50,6 +65,16 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
             );
         }
     }
+
+    // Get expiration validation
+    const codeExpirationValidation: TextFieldValidationStatus = codeIsExpired ? {
+        type: VALIDATION_ERROR,
+        value: "code is expired"
+    } : {
+        type: VALIDATION_WARNING,
+        value: `code expires ${(formatTimeDifference(codeExpiresAt!, now))}`
+    };
+
     // Construct the page
     return (
         <div className={page_styles.page}>
@@ -78,6 +103,7 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
                             readOnly={true}
                             disabled={true}
                             leadingVisual={() => <div>Code</div>}
+                            validation={codeExpirationValidation}
                         />
                     </div>
                 </div>

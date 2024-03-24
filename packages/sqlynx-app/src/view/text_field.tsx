@@ -31,7 +31,7 @@ function TextFieldValidation(props: { validation?: TextFieldValidationStatus }) 
         }
         case VALIDATION_WARNING: {
             return (
-                <div className={styles.text_field_validation_error}>
+                <div className={styles.text_field_validation_warning}>
                     <svg className={styles.text_field_validation_icon} width="12px" height="12px">
                         <use xlinkHref={`${icons}#alert_fill_12`} />
                     </svg>

@@ -15,8 +15,8 @@
 }
 .text_field_validation_error {
     font-size: 12px;
-    color: #cf222e;
-    margin-top: 2px;
+    color: rgb(207, 34, 46);
+    margin-top: 4px;
     margin-left: 4px;
 
     align-self: start;
@@ -27,8 +27,8 @@
 }
 .text_field_validation_warning {
     font-size: 12px;
-    color: #cf222e;
-    margin-top: 2px;
+    color: rgb(191, 135, 0);
+    margin-top: 4px;
     margin-left: 4px;
 
     align-self: start;
