@@ -21,6 +21,7 @@ import '../static/fonts/fonts.css';
 import './globals.css';
 
 interface OAuthSucceededProps {
+    params: URLSearchParams;
     state: proto.sqlynx_oauth.pb.OAuthState;
 }
 
@@ -35,6 +36,26 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
         return () => clearInterval(intervalId);
     }, []);
 
+    // Construct the flow handler
+    const continueFlow = props.state.flowVariant == proto.sqlynx_oauth.pb.OAuthFlowVariant.NATIVE_LINK_FLOW
+        ? () => {
+            const deepLink = new URL(`sqlynx://localhost/oauth?${props.params}`);
+            window.open(deepLink, '_self');
+        }
+        : () => {
+            const eventMessage = new proto.sqlynx_app_event.pb.AppEvent({
+                eventData: {
+                    case: "oauthRedirect",
+                    value: new proto.sqlynx_oauth.pb.OAuthRedirectData({
+                        code: props.params.get('code') ?? '',
+                        state: props.state,
+                    })
+                }
+            });
+            const eventBase64 = BASE64_CODEC.encode(eventMessage.toBinary().buffer);
+            window.opener.postMessage(eventBase64);
+        };
+
     // Render provider arguments from state
     let infoSection: React.ReactElement = <div />;
     switch (props.state.providerOptions.case) {
@@ -48,14 +69,14 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
                     <div className={page_styles.section_entries}>
                         <TextField
                             name="Salesforce Instance URL"
-                            value={"foo"}
+                            value={props.state.providerOptions.value.instanceUrl}
                             readOnly={true}
                             disabled={true}
                             leadingVisual={() => <div>URL</div>}
                         />
                         <TextField
                             name="Connected App"
-                            value={"foo"}
+                            value={props.state.providerOptions.value.appConsumerKey}
                             readOnly={true}
                             disabled={true}
                             leadingVisual={() => <div>ID</div>}
@@ -98,8 +119,7 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
                     <div className={page_styles.section_entries}>
                         <TextField
                             name="Authorization Code"
-                            value={"*****"}
-                            onChange={() => { }}
+                            value={"*".repeat(props.params.get('code')?.length ?? 8)}
                             readOnly={true}
                             disabled={true}
                             leadingVisual={() => <div>Code</div>}
@@ -113,7 +133,11 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
                             Your browser should prompt you to open the native app. You can retry until the code expires.
                         </div>
                         <div className={page_styles.card_actions}>
-                            <Button className={page_styles.card_action_continue} variant="primary">
+                            <Button
+                                className={page_styles.card_action_continue}
+                                variant="primary"
+                                onClick={continueFlow}
+                            >
                                 Send to App
                             </Button>
                         </div>
@@ -180,7 +204,7 @@ const RedirectPage: React.FC<RedirectPageProps> = (_props: RedirectPageProps) =>
     console.log(authState);
 
     if (authState.type == RESULT_OK) {
-        return <OAuthSucceeded state={authState.value} />
+        return <OAuthSucceeded params={params} state={authState.value} />
     } else {
         return <OAuthFailed error={authState.error} />
     }

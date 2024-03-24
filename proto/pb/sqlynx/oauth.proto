@@ -31,3 +31,10 @@ message OAuthState {
         SalesforceOAuthOptions salesforce_provider = 3;
     }
 }
+
+message OAuthRedirectData {
+    /// The OAuth code
+    string code = 1;
+    /// The OAuth state
+    OAuthState state = 2;
+}
