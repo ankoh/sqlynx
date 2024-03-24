@@ -1,19 +1,17 @@
 .text_field {
     display: grid;
     grid-template-rows: max-content max-content max-content;
-    margin-top: 4px;
 }
 .text_field_name {
     font-weight: 600;
     font-size: 14px;
 }
 .text_field_caption {
-    font-size: 12px;
+    font-size: 0.8rem;
     color: #656d76;
-    margin-top: 1px;
 }
 .text_field_input {
-    margin-top: 8px;
+    margin-top: 6px;
 }
 .text_field_validation_error {
     font-size: 12px;

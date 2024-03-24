@@ -32,7 +32,7 @@ import { getConnectorIcon } from '../connector_icons.js';
 import { useAppConfig } from '../../app_config.js';
 
 import styles from './editor_page.module.css';
-import primerBugFixes from '../../primer_bugfixes.module.css';
+import theme from '../../github_theme.module.css';
 import * as icons from '../../../static/svg/symbols.generated.svg';
 
 const ConnectorSelection = (props: { className?: string; variant: 'default' | 'invisible'; short: boolean }) => {
@@ -249,7 +249,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                 </div>
                 <div className={styles.header_action_container}>
                     <div>
-                        <ButtonGroup className={primerBugFixes.button_group}>
+                        <ButtonGroup className={theme.button_group}>
                             <IconButton icon={PaperAirplaneIcon} aria-labelledby="execute-query" />
                             <IconButton icon={StopwatchIcon} aria-labelledby="analyze-query" />
                             <IconButton icon={SyncIcon} aria-labelledby="refresh-schema" />

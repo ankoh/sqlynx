@@ -37,11 +37,11 @@ function TextFieldValidation(props: { validation?: TextFieldValidationStatus }) 
 export function TextField(props: {
     className?: string;
     name: string;
-    caption: string;
+    caption?: string;
     value: string;
-    placeholder: string;
+    placeholder?: string;
     leadingVisual?: React.ElementType;
-    onChange: React.ChangeEventHandler<HTMLInputElement>;
+    onChange?: React.ChangeEventHandler<HTMLInputElement>;
     disabled?: boolean;
     readOnly?: boolean;
     validation?: TextFieldValidationStatus;
@@ -64,7 +64,7 @@ export function TextField(props: {
     return (
         <div className={classNames(styles.text_field, props.className)}>
             <div className={styles.text_field_name}>{props.name}</div>
-            <div className={styles.text_field_caption}>{props.caption}</div>
+            {props.caption && <div className={styles.text_field_caption}>{props.caption}</div>}
             <TextInput
                 className={styles.text_field_input}
                 block
