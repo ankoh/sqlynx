@@ -11,27 +11,50 @@ import styles from './text_field.module.css';
 
 export const VALIDATION_UNKNOWN = Symbol("VALIDATION_UNKNOWN");
 export const VALIDATION_OK = Symbol("VALIDATION_OK");
+export const VALIDATION_WARNING = Symbol("VALIDATION_WARNING");
 export const VALIDATION_ERROR = Symbol("VALIDATION_ERROR");
 
 export type TextFieldValidationStatus =
     | VariantKind<typeof VALIDATION_UNKNOWN, null>
     | VariantKind<typeof VALIDATION_OK, null>
+    | VariantKind<typeof VALIDATION_WARNING, string>
     | VariantKind<typeof VALIDATION_ERROR, string>;
 
 function TextFieldValidation(props: { validation?: TextFieldValidationStatus }) {
-    if (!props.validation || props.validation?.type != VALIDATION_ERROR) {
+    if (!props.validation) {
         return undefined;
     }
-    return (
-        <div className={styles.text_field_validation_error}>
-            <svg className={styles.text_field_validation_error_icon} width="12px" height="12px">
-                <use xlinkHref={`${icons}#alert_fill_12`} />
-            </svg>
-            <span className={styles.text_field_validation_error_text}>
-                {props.validation.value}
-            </span>
-        </div>
-    );
+    switch (props.validation.type) {
+        case VALIDATION_OK:
+        case VALIDATION_UNKNOWN: {
+            return undefined;
+        }
+        case VALIDATION_WARNING: {
+            return (
+                <div className={styles.text_field_validation_error}>
+                    <svg className={styles.text_field_validation_icon} width="12px" height="12px">
+                        <use xlinkHref={`${icons}#alert_fill_12`} />
+                    </svg>
+                    <span className={styles.text_field_validation_text}>
+                        {props.validation.value}
+                    </span>
+                </div>
+            );
+        }
+        case VALIDATION_ERROR: {
+            return (
+                <div className={styles.text_field_validation_error}>
+                    <svg className={styles.text_field_validation_icon} width="12px" height="12px">
+                        <use xlinkHref={`${icons}#alert_fill_12`} />
+                    </svg>
+                    <span className={styles.text_field_validation_text}>
+                        {props.validation.value}
+                    </span>
+                </div>
+            );
+        }
+
+    }
 }
 
 export function TextField(props: {
