@@ -16,6 +16,10 @@ message SalesforceOAuthOptions {
     string instanceUrl = 1;
     /// The consumer key of the connected pp
     string appConsumerKey = 2;
+    /// The request time in milliseconds since epoch
+    uint64 requestedAt = 3;
+    /// The time when the authorization code
+    uint64 expiresAt = 4;
 }
 
 message OAuthState {

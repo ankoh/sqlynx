@@ -31,6 +31,33 @@ export function formatNanoseconds(value: number): string {
     return `${value.toFixed(1)} ${suffix}`;
 }
 
-export function formatTitle(str: string): string {
-    return str.replace(/[-_]/g, ' ').replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) => word.toUpperCase());
+export function formatHHMMSS(secs: number) {
+    let hours = Math.floor(secs / 3600);
+    let minutes = Math.floor((secs - (hours * 3600)) / 60);
+    let seconds = Math.floor(secs - (hours * 3600) - (minutes * 60));
+    const hh = hours < 10 ? `0${hours}` : hours.toString();
+    const mm = minutes < 10 ? `0${minutes}` : minutes.toString();
+    const ss = seconds < 10 ? `0${seconds}` : seconds.toString();
+    return `${hh}:${mm}:${ss}`;
+}
+
+const TIME_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
+    ['year', 24 * 60 * 60 * 1000 * 365],
+    ['month', (24 * 60 * 60 * 1000 * 365) / 12],
+    ['day', 24 * 60 * 60 * 1000],
+    ['hour', 60 * 60 * 1000],
+    ['minute', 60 * 1000],
+    ['second', 1000],
+];
+
+const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+
+export function formatTimeDifference(to: Date, from: Date = new Date()): string {
+    const elapsed = to.getTime() - from.getTime();
+    for (const [unitName, unitInMs] of TIME_UNITS) {
+        if (Math.abs(elapsed) > unitInMs || unitName == 'second') {
+            return rtf.format(Math.round(elapsed / unitInMs), unitName);
+        }
+    }
+    return '';
 }
