@@ -2,35 +2,128 @@ import * as React from 'react';
 
 import * as proto from '@ankoh/sqlynx-pb';
 
-import isPropValid from '@emotion/is-prop-valid';
-import { ThemeProvider, BaseStyles } from '@primer/react';
-import { StyleSheetManager } from 'styled-components';
+import { Button } from '@primer/react';
 import { createRoot } from 'react-dom/client';
 import { Route, Routes, BrowserRouter, useSearchParams } from 'react-router-dom';
 
 import { BASE64_CODEC } from './utils/base64.js';
 import { RESULT_OK, RESULT_ERROR, Result } from './utils/result.js';
+import { SQLYNX_VERSION } from './app_version.js';
+import { TextField } from './view/text_field.js';
+import { GitHubTheme } from './github_theme.js';
 
-import './../static/fonts/fonts.css';
+import _styles from './oauth_redirect.module.css';
+import page_styles from './view/banner_page.module.css';
+import * as symbols from '../static/svg/symbols.generated.svg';
+
+import '../static/fonts/fonts.css';
 import './globals.css';
 
-import style from './oauth_redirect.module.css';
-
-const GitHubDesignSystem = (props: { children: React.ReactElement }) => (
-    <StyleSheetManager shouldForwardProp={isPropValid}>
-        <ThemeProvider dayScheme="light" nightScheme="light">
-            <BaseStyles className={style.base_style}>
-                {props.children}
-            </BaseStyles>
-        </ThemeProvider>
-    </StyleSheetManager>
-);
-
-interface Props {
-
+interface OAuthSucceededProps {
+    state: proto.sqlynx_oauth.pb.OAuthState;
 }
 
-const RedirectPage: React.FC<Props> = (_props: Props) => {
+const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProps) => {
+    // Render provider arguments from state
+    let infoSection: React.ReactElement = <div />;
+    switch (props.state.providerOptions.case) {
+        case "salesforceProvider": {
+            infoSection = (
+                <div className={page_styles.card_section}>
+                    <div className={page_styles.section_entries}>
+                        <TextField
+                            name="Salesforce Instance URL"
+                            value={"foo"}
+                            readOnly={true}
+                            disabled={true}
+                            leadingVisual={() => <div>URL</div>}
+                        />
+                        <TextField
+                            name="Connected App"
+                            value={"foo"}
+                            readOnly={true}
+                            disabled={true}
+                            leadingVisual={() => <div>ID</div>}
+                        />
+                    </div>
+                </div>
+            );
+        }
+    }
+    // Construct the page
+    return (
+        <div className={page_styles.page}>
+            <div className={page_styles.banner_container}>
+                <div className={page_styles.banner_logo}>
+                    <svg width="100%" height="100%">
+                        <use xlinkHref={`${symbols}#sqlynx-inverted`} />
+                    </svg>
+                </div>
+                <div className={page_styles.banner_text_container}>
+                    <div className={page_styles.banner_title}>sqlynx</div>
+                    <div className={page_styles.app_version}>version {SQLYNX_VERSION}</div>
+                </div>
+            </div>
+            <div className={page_styles.card_container}>
+                <div className={page_styles.card_header}>
+                    <div>Authorization Succeeded</div>
+                </div>
+                {infoSection}
+                <div className={page_styles.card_section}>
+                    <div className={page_styles.section_entries}>
+                        <TextField
+                            name="Authorization Code"
+                            value={"*****"}
+                            onChange={() => { }}
+                            readOnly={true}
+                            disabled={true}
+                            leadingVisual={() => <div>Code</div>}
+                        />
+                    </div>
+                </div>
+                <div className={page_styles.card_actions}>
+                    <Button className={page_styles.card_action_continue} variant="primary">
+                        Continue
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+interface OAuthFailedProps {
+    error: Error;
+}
+
+const OAuthFailed: React.FC<OAuthFailedProps> = (props: OAuthFailedProps) => {
+    return (
+        <div className={page_styles.page}>
+            <div className={page_styles.banner_container}>
+                <div className={page_styles.banner_logo}>
+                    <svg width="100%" height="100%">
+                        <use xlinkHref={`${symbols}#sqlynx-inverted`} />
+                    </svg>
+                </div>
+                <div className={page_styles.banner_text_container}>
+                    <div className={page_styles.banner_title}>sqlynx</div>
+                    <div className={page_styles.app_version}>version {SQLYNX_VERSION}</div>
+                </div>
+            </div>
+            <div className={page_styles.card_container}>
+                <div className={page_styles.card_header}>
+                    <div>Authorization Failed</div>
+                </div>
+                {props.error.toString()}
+            </div>
+        </div>
+    );
+}
+
+
+interface RedirectPageProps { }
+
+
+const RedirectPage: React.FC<RedirectPageProps> = (_props: RedirectPageProps) => {
     const [params, _setParams] = useSearchParams();
     const code = params.get("code") ?? "";
     const state = params.get("state") ?? "";
@@ -53,37 +146,10 @@ const RedirectPage: React.FC<Props> = (_props: Props) => {
 
     console.log(authState);
 
-    if (authState.type == RESULT_ERROR) {
-        return (
-            <div>
-                <div>Received malformed OAuth state</div>
-                <div>{authState.error.message}</div>
-            </div>
-        );
+    if (authState.type == RESULT_OK) {
+        return <OAuthSucceeded state={authState.value} />
     } else {
-        let flowVariant = "";
-        switch (authState.value.flowVariant) {
-            case proto.sqlynx_oauth.pb.OAuthFlowVariant.UNSPECIFIED_FLOW:
-                flowVariant = "Unspecified";
-                break;
-            case proto.sqlynx_oauth.pb.OAuthFlowVariant.WEB_OPENER_FLOW:
-                flowVariant = "Web App";
-                break;
-            case proto.sqlynx_oauth.pb.OAuthFlowVariant.NATIVE_LINK_FLOW:
-                flowVariant = "Native App";
-                break;
-        }
-        switch (authState.value.providerOptions.case) {
-            case "salesforceProvider": {
-                return (
-                    <div>
-                        <div>{flowVariant}</div>
-                        <div>{authState.value.providerOptions.value.instanceUrl}</div>
-                        <div>{authState.value.providerOptions.value.appConsumerKey}</div>
-                    </div>
-                );
-            }
-        }
+        return <OAuthFailed error={authState.error} />
     }
 };
 
@@ -92,11 +158,11 @@ const root = createRoot(element!);
 root.render(
     <React.StrictMode>
         <BrowserRouter>
-            <GitHubDesignSystem>
+            <GitHubTheme>
                 <Routes>
                     <Route path="*" element={<RedirectPage />} />
                 </Routes>
-            </GitHubDesignSystem>
+            </GitHubTheme>
         </BrowserRouter>
     </React.StrictMode>,
 );
