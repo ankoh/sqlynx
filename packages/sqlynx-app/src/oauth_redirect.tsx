@@ -107,14 +107,18 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
                         />
                     </div>
                 </div>
-                <div className={page_styles.card_section_info}>
-                    Your browser should prompt you to open the native app. You can retry until the code expires.
-                </div>
-                <div className={page_styles.card_actions}>
-                    <Button className={page_styles.card_action_continue} variant="primary">
-                        Send to App
-                    </Button>
-                </div>
+                {!codeIsExpired &&
+                    <>
+                        <div className={page_styles.card_section_info}>
+                            Your browser should prompt you to open the native app. You can retry until the code expires.
+                        </div>
+                        <div className={page_styles.card_actions}>
+                            <Button className={page_styles.card_action_continue} variant="primary">
+                                Send to App
+                            </Button>
+                        </div>
+                    </>
+                }
             </div>
         </div>
     );
