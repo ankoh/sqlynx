@@ -1,6 +1,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod deep_link;
 mod grpc_client;
 mod grpc_proxy;
 mod grpc_proxy_globals;
@@ -45,7 +46,7 @@ async fn main() {
             handle.plugin(tauri_plugin_updater::Builder::new().build())?;
 
             // Forward all deep-link events to a custom handler
-            app.listen("deep-link://new-url", move |event| deep_link(event, handle.clone()));
+            app.listen("deep-link://new-url", move |event| deep_link::process_deep_link(event, handle.clone()));
             Ok(())
         })
         .run(tauri::generate_context!())
@@ -55,17 +56,4 @@ async fn main() {
 #[tauri::command]
 async fn sqlynx_get_os() -> &'static str {
     return "darwin";
-}
-
-fn deep_link(event: tauri::Event, _handle: AppHandle) {
-    let payload = event.payload();
-    let Some(link) = payload.get(2..payload.len() - 2) else {
-        return;
-    };
-
-    if link.starts_with("sqlynx://") {
-        log::info!("received deep link: {}", link);
-    } else {
-        log::info!("unknown deep link: {}", link);
-    }
 }
