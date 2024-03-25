@@ -33,14 +33,12 @@ describe('Base64Codec', () => {
                 value: new proto.sqlynx_oauth.pb.SalesforceOAuthOptions({
                     instanceUrl: "https://trialorgfarmforu-16f.test2.my.pc-rnd.salesforce.com",
                     appConsumerKey: "foo",
-                    requestedAt: BigInt((new Date(2024, 1, 2, 3, 4, 5)).getTime()),
-                    expiresAt: BigInt((new Date(2024, 1, 2, 3, 19, 5)).getTime()),
                 }),
             }
         });
         const authStateBuffer = authState.toBinary();
         const authStateBase64 = BASE64_CODEC.encode(authStateBuffer.buffer);
-        expect(authStateBase64).toEqual("EAEaUAo7aHR0cHM6Ly90cmlhbG9yZ2Zhcm1mb3J1LTE2Zi50ZXN0Mi5teS5wYy1ybmQuc2FsZXNmb3JjZS5jb20SA2ZvbxiInLy81jEgqJPzvNYx");
+        expect(authStateBase64).toEqual("EAEaQgo7aHR0cHM6Ly90cmlhbG9yZ2Zhcm1mb3J1LTE2Zi50ZXN0Mi5teS5wYy1ybmQuc2FsZXNmb3JjZS5jb20SA2Zvbw==");
     });
 
     it("encode salesforce oauth native flow state", () => {
@@ -50,14 +48,12 @@ describe('Base64Codec', () => {
                 case: "salesforceProvider",
                 value: new proto.sqlynx_oauth.pb.SalesforceOAuthOptions({
                     instanceUrl: "https://trialorgfarmforu-16f.test2.my.pc-rnd.salesforce.com",
-                    appConsumerKey: "foo",
-                    requestedAt: BigInt((new Date(2024, 4, 1, 3, 4, 5)).getTime()),
-                    expiresAt: BigInt((new Date(2024, 4, 1, 3, 19, 5)).getTime()),
+                    appConsumerKey: "foo"
                 }),
             }
         });
         const authStateBuffer = authState.toBinary();
         const authStateBase64 = BASE64_CODEC.encode(authStateBuffer.buffer);
-        expect(authStateBase64).toEqual("EAIaUAo7aHR0cHM6Ly90cmlhbG9yZ2Zhcm1mb3J1LTE2Zi50ZXN0Mi5teS5wYy1ybmQuc2FsZXNmb3JjZS5jb20SA2ZvbxiIt7iN8zEgqK7vjfMx");
+        expect(authStateBase64).toEqual("EAIaQgo7aHR0cHM6Ly90cmlhbG9yZ2Zhcm1mb3J1LTE2Zi50ZXN0Mi5teS5wYy1ybmQuc2FsZXNmb3JjZS5jb20SA2Zvbw==");
     });
 })
