@@ -164,6 +164,10 @@ native_mac_universal:
 native_mac_updates:
 	yarn run tauri build --ci --bundles updater,app
 
+.PHONY: native_tests
+native_tests:
+	cargo test
+
 .PHONY: svg_symbols
 svg_symbols:
 	python3 ./scripts/generate_svg_symbols.py
