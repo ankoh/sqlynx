@@ -13,34 +13,20 @@ import { SessionCommands } from './session/session_commands.js';
 import { QueryExecutor } from './session/query_executor.js';
 import { SessionLinkManager } from './session/session_link_manager.js';
 import { SalesforceConnector } from './connectors/salesforce_connector.js';
+import { GitHubTheme } from './github_theme.js';
 import { LogProvider } from './app_log.js';
 import { AppConfigResolver } from './app_config.js';
 import { SQLYNX_GIT_COMMIT, SQLYNX_VERSION } from './app_version.js';
 import { PlatformApiProvider } from './platform/platform_api_provider.js';
-
-import { ThemeProvider, BaseStyles } from '@primer/react';
-import { StyleSheetManager } from 'styled-components';
-import isPropValid from '@emotion/is-prop-valid';
 
 import { createRoot } from 'react-dom/client';
 import { Route, Routes, Navigate, BrowserRouter, HashRouter } from 'react-router-dom';
 
 import './../static/fonts/fonts.css';
 import './globals.css';
-import style from './app.module.css';
-
-const GitHubDesignSystem = (props: { children: React.ReactElement }) => (
-    <StyleSheetManager shouldForwardProp={isPropValid}>
-        <ThemeProvider dayScheme="light" nightScheme="light">
-            <BaseStyles className={style.base_style}>
-                {props.children}
-            </BaseStyles>
-        </ThemeProvider>
-    </StyleSheetManager>
-);
 
 const AppProviders = (props: { children: React.ReactElement }) => (
-    <GitHubDesignSystem>
+    <GitHubTheme>
         <LogProvider>
             <PlatformApiProvider>
                 <AppConfigResolver>
@@ -61,7 +47,7 @@ const AppProviders = (props: { children: React.ReactElement }) => (
                 </AppConfigResolver>
             </PlatformApiProvider>
         </LogProvider>
-    </GitHubDesignSystem>
+    </GitHubTheme>
 );
 
 const Editor = withNavBar(EditorPage);

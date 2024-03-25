@@ -45,7 +45,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
             validationSucceeded = false;
             setAppConsumerValidation({
                 type: VALIDATION_ERROR,
-                value: "Consumer key cannot be empty"
+                value: "Connected App cannot be empty"
             });
         }
         if (validationSucceeded) {
@@ -84,7 +84,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                 <div className={style.section}>
                     <div className={style.section_layout}>
                         <TextField
-                            name="Instance URL"
+                            name="Salesforce Instance URL"
                             caption="URL of the Salesforce Instance"
                             value={instanceUrl}
                             onChange={(e) => setInstanceUrl(e.target.value)}
@@ -93,7 +93,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             validation={instanceUrlValidation}
                         />
                         <TextField
-                            name="App Consumer Key"
+                            name="Connected App"
                             caption="Setup > Apps > App Manager > View > Manage Consumer Details"
                             value={appConsumerKey}
                             onChange={(e) => setAppConsumerKey(e.target.value)}

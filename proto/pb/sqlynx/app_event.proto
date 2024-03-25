@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+import "sqlynx/oauth.proto";
+
+package sqlynx;
+
+message AppEvent {
+    oneof event_data {
+        OAuthRedirectData oauth_redirect = 1;
+    }
+}
