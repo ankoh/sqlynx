@@ -39,7 +39,14 @@ make core_js_tests        # Run js tests using the wasm module
 make snapshots            # Update snapshots
 make benchmark_pipeline   # Benchmark the processing pipeline
 
-make app_start            # Start the dev server for the PWA
+make svg_symbol           # Update svg sprites used in the PWA
+make pwa_tests            # Run js tests of the PWA
+make pwa_dev              # Run the dev server of the PWA
+
+make native_tests         # Run rust tests of native app
+make native_mac_o0        # Create a debug build packaged as .dmg, open devtools with (cmd + alt + i)
+make native_mac_universal # Create a universal build packaged as .dmg
+make native_mac_updates   # Create universal app updates with code signing (requires signing key)
 ```
 
 ---

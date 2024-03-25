@@ -152,6 +152,18 @@ pwa_dev:
 pwa_tests:
 	yarn workspace @ankoh/sqlynx-app test
 
+.PHONY: native_mac_o0
+native_mac_o0:
+	yarn run tauri build --ci --bundles dmg --debug
+
+.PHONY: native_mac
+native_mac_universal:
+	yarn run tauri build --ci --target universal-apple-darwin --bundles dmg
+
+.PHONY: native_mac_updates
+native_mac_updates:
+	yarn run tauri build --ci --bundles updater,app
+
 .PHONY: svg_symbols
 svg_symbols:
 	python3 ./scripts/generate_svg_symbols.py
