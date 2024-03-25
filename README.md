@@ -39,7 +39,7 @@ make core_js_tests        # Run js tests using the wasm module
 make snapshots            # Update snapshots
 make benchmark_pipeline   # Benchmark the processing pipeline
 
-make svg_symbol           # Update svg sprites used in the PWA
+make svg_symbols          # Update svg sprites used in the PWA
 make pwa_tests            # Run js tests of the PWA
 make pwa_dev              # Run the dev server of the PWA
 
