@@ -20,12 +20,38 @@ import * as symbols from '../static/svg/symbols.generated.svg';
 import '../static/fonts/fonts.css';
 import './globals.css';
 
+const AUTOTRIGGER_DELAY = 2000;
+
 interface OAuthSucceededProps {
     params: URLSearchParams;
     state: proto.sqlynx_oauth.pb.OAuthState;
 }
 
+function triggerFlow(state: proto.sqlynx_oauth.pb.OAuthState, code: string) {
+    switch (state.flowVariant) {
+        case proto.sqlynx_oauth.pb.OAuthFlowVariant.NATIVE_LINK_FLOW: {
+            const data = new proto.sqlynx_oauth.pb.OAuthRedirectData({ code, state });
+            const dataBase64 = BASE64_CODEC.encode(data.toBinary().buffer);
+            const deepLink = new URL(`sqlynx://localhost/oauth?data=${dataBase64}`);
+            window.open(deepLink, '_self');
+            break;
+        }
+        case proto.sqlynx_oauth.pb.OAuthFlowVariant.WEB_OPENER_FLOW: {
+            const eventMessage = new proto.sqlynx_app_event.pb.AppEvent({
+                eventData: {
+                    case: "oauthRedirect",
+                    value: new proto.sqlynx_oauth.pb.OAuthRedirectData({ code, state })
+                }
+            });
+            const eventBase64 = BASE64_CODEC.encode(eventMessage.toBinary().buffer);
+            window.opener.postMessage(eventBase64);
+            break;
+        }
+    }
+}
+
 const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProps) => {
+    let code = props.params.get('code') ?? '';
     let codeIsExpired: boolean = true;
     let codeExpiresAt: Date | undefined = undefined;
 
@@ -36,25 +62,14 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
         return () => clearInterval(intervalId);
     }, []);
 
-    // Construct the flow handler
-    const continueFlow = props.state.flowVariant == proto.sqlynx_oauth.pb.OAuthFlowVariant.NATIVE_LINK_FLOW
-        ? () => {
-            const deepLink = new URL(`sqlynx://localhost/oauth?${props.params}`);
-            window.open(deepLink, '_self');
-        }
-        : () => {
-            const eventMessage = new proto.sqlynx_app_event.pb.AppEvent({
-                eventData: {
-                    case: "oauthRedirect",
-                    value: new proto.sqlynx_oauth.pb.OAuthRedirectData({
-                        code: props.params.get('code') ?? '',
-                        state: props.state,
-                    })
-                }
-            });
-            const eventBase64 = BASE64_CODEC.encode(eventMessage.toBinary().buffer);
-            window.opener.postMessage(eventBase64);
-        };
+    // Setup autotrigger timestamp
+    const autoTriggersAt = React.useMemo(() => new Date(now.getTime() + AUTOTRIGGER_DELAY), []);
+    const remainingUntilAutoTrigger = Math.max(autoTriggersAt.getTime(), now.getTime()) - now.getTime();
+    React.useEffect(() => {
+        console.log("foo");
+        const timeoutId = setTimeout(() => triggerFlow(props.state, code), remainingUntilAutoTrigger);
+        return () => clearTimeout(timeoutId);
+    }, [props.state, code]);
 
     // Render provider arguments from state
     let infoSection: React.ReactElement = <div />;
@@ -88,13 +103,22 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
     }
 
     // Get expiration validation
-    const codeExpirationValidation: TextFieldValidationStatus = codeIsExpired ? {
-        type: VALIDATION_ERROR,
-        value: "code is expired"
-    } : {
-        type: VALIDATION_WARNING,
-        value: `code expires ${(formatTimeDifference(codeExpiresAt!, now))}`
-    };
+    let codeExpirationValidation: TextFieldValidationStatus;
+    const codeIsEmpty = (props.params.get('code') ?? '').length == 0;
+    if (codeIsEmpty) {
+        codeExpirationValidation = {
+            type: VALIDATION_ERROR,
+            value: "code is empty"
+        };
+    } else {
+        codeExpirationValidation = codeIsExpired ? {
+            type: VALIDATION_ERROR,
+            value: "code is expired"
+        } : {
+            type: VALIDATION_WARNING,
+            value: `code expires ${(formatTimeDifference(codeExpiresAt!, now))}`
+        };
+    }
 
     // Construct the page
     return (
@@ -119,7 +143,7 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
                     <div className={page_styles.section_entries}>
                         <TextField
                             name="Authorization Code"
-                            value={"*".repeat(props.params.get('code')?.length ?? 8)}
+                            value={"*".repeat(props.params.get('code')?.length ?? 0)}
                             readOnly={true}
                             disabled={true}
                             leadingVisual={() => <div>Code</div>}
@@ -133,13 +157,24 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
                             Your browser should prompt you to open the native app. You can retry until the code expires.
                         </div>
                         <div className={page_styles.card_actions}>
-                            <Button
-                                className={page_styles.card_action_continue}
-                                variant="primary"
-                                onClick={continueFlow}
-                            >
-                                Send to App
-                            </Button>
+                            {
+                                remainingUntilAutoTrigger == 0
+                                    ? <Button
+                                        className={page_styles.card_action_continue}
+                                        variant="primary"
+                                        onClick={triggerFlow}
+                                    >
+                                        Send to App
+                                    </Button>
+                                    : <Button
+                                        className={page_styles.card_action_continue}
+                                        variant="primary"
+                                        onClick={triggerFlow}
+                                        trailingVisual={() => <div>{Math.ceil(remainingUntilAutoTrigger / 1000)}</div>}
+                                    >
+                                        Send to App
+                                    </Button>
+                            }
                         </div>
                     </>
                 }
