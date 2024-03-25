@@ -11,16 +11,30 @@ enum OAuthFlowVariant {
     NATIVE_LINK_FLOW = 2;
 }
 
-enum OAuthProvider {
-    /// The Salesforce OAuth provider
-    UNSPECIFIED_PROVIDER = 0;
-    /// The Salesforce OAuth provider
-    SALESFORCE_PROVIDER = 1;
+message SalesforceOAuthOptions {
+    /// The url of the salesforce instance
+    string instanceUrl = 1;
+    /// The consumer key of the connected pp
+    string appConsumerKey = 2;
+    /// The request time in milliseconds since epoch
+    uint64 requestedAt = 3;
+    /// The time when the authorization code
+    uint64 expiresAt = 4;
 }
 
 message OAuthState {
-    /// The OAuth provider
-    OAuthProvider oauth_provider = 3;
     /// The OAuth flow variant
-    OAuthFlowVariant oauth_flow_variant = 2;
+    OAuthFlowVariant flow_variant = 2;
+    /// Specific provider options
+    oneof provider_options {
+        /// The Salesforce OAuth provider
+        SalesforceOAuthOptions salesforce_provider = 3;
+    }
+}
+
+message OAuthRedirectData {
+    /// The OAuth code
+    string code = 1;
+    /// The OAuth state
+    OAuthState state = 2;
 }
