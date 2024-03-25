@@ -26,7 +26,7 @@ interface OAuthSucceededProps {
 }
 
 const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProps) => {
-    let codeIsExpired: boolean = false;
+    let codeIsExpired: boolean = true;
     let codeExpiresAt: Date | undefined = undefined;
 
     // Refresh expiration timer every second
