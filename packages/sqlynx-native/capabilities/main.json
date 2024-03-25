@@ -15,6 +15,7 @@
         "tray:default",
         "updater:allow-check",
         "updater:allow-download-and-install",
+        "webview:default",
         "window:allow-set-shadow",
         "window:allow-start-dragging",
         "app:default",

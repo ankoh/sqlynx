@@ -83,6 +83,12 @@
                     "pathPrefix": [
                         "sqlynx://"
                     ]
+                },
+                {
+                    "host": "sqlynx.app",
+                    "pathPrefix": [
+                        "sqlynx://"
+                    ]
                 }
             ]
         }

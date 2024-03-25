@@ -5,13 +5,6 @@
         "packages/sqlynx-core-api",
         "packages/sqlynx-pb"
     ],
-    "scripts": {
-        "serve:native:dev": "tauri dev",
-        "build:native": "tauri build",
-        "build:native:mac": "tauri build --ci --target universal-apple-darwin --bundles dmg",
-        "build:native:mac:debug": "tauri build --ci --target universal-apple-darwin --bundles app --debug",
-        "package:native:updates:mac": "tauri build --ci --bundles updater,app"
-    },
     "packages": {
         "ts-node": "^10.9.1"
     },

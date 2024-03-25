@@ -390,7 +390,7 @@ jobs:
             - name: Build native app for macOS without code signing
               if: ${{ !inputs.signed }}
               run: |
-                    yarn run build:native:mac
+                    yarn run tauri build --ci --target universal-apple-darwin --bundles dmg
 
             - name: Build native app for macOS with code signing
               if: ${{ inputs.signed }}
@@ -403,7 +403,7 @@ jobs:
                 APPLE_API_KEY_PATH: ${{ github.workspace }}/apple_store.key
               run: |
                     echo "${{ secrets.MACOS_STORE_KEY }}" > ${{ env.APPLE_API_KEY_PATH }}
-                    yarn run build:native:mac
+                    yarn run tauri build --ci --target universal-apple-darwin --bundles dmg
 
             - name: Package native app updates
               if: ${{ inputs.signed }}
@@ -418,7 +418,7 @@ jobs:
                 TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.RELEASE_SIGNING_KEY_PASSWORD }}
               run: |
                     echo "${{ secrets.MACOS_STORE_KEY }}" > ${{ env.APPLE_API_KEY_PATH }}
-                    yarn run package:native:updates:mac
+                    yarn run tauri build --ci --bundles updater,app
 
             - uses: actions/upload-artifact@v4
               with:

@@ -15,7 +15,6 @@ mod status;
 mod logging;
 
 use ipc_router::process_ipc_request;
-use tauri::AppHandle;
 
 #[tokio::main]
 async fn main() {
