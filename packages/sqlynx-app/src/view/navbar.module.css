@@ -98,6 +98,8 @@
     font-size: 0.9rem;
     margin-top: 1px;
 }
+
+/* Dead, but useful should we ever add an unread log counter */
 .tab_button_count {
     font-weight: 400 !important;
     font-size: 0.8rem;
