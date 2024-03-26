@@ -152,9 +152,13 @@ pwa_dev:
 pwa_tests:
 	yarn workspace @ankoh/sqlynx-app test
 
+.PHONY: native_mac_dev
+native_mac_dev:
+	yarn run tauri dev
+
 .PHONY: native_mac_o0
 native_mac_o0:
-	yarn run tauri build --ci --bundles dmg --debug
+	yarn run tauri build --ci --bundles dmg --debug --verbose
 
 .PHONY: native_mac
 native_mac_universal:

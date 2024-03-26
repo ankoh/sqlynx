@@ -12,17 +12,52 @@ import { observeSize } from './size_observer.js';
 
 import styles from './log_viewer.module.css';
 
-interface LogLevelLabelProps {
+interface LevelCellProps {
     level: LogLevel;
     style?: React.CSSProperties;
 }
-export const LogLevelLabel: React.FC<LogLevelLabelProps> = (props: LogLevelLabelProps) => {
+export const LevelCell: React.FC<LevelCellProps> = (props: LevelCellProps) => {
     const level = getLogLevelName(props.level);
     return (
         <div className={styles.cell_level} style={props.style}>
-            <div className={styles.cell_level_text}>
-                {level}
-            </div>
+            {level}
+        </div>
+    );
+}
+
+interface TimestampCellProps {
+    style?: React.CSSProperties;
+    children: number;
+}
+export const TimestampCell: React.FC<TimestampCellProps> = (props: TimestampCellProps) => {
+    console.log(props);
+    return (
+        <div className={styles.cell_timestamp} style={props.style}>
+            {(new Date(props.children)).toLocaleTimeString()}
+        </div>
+    );
+}
+
+interface TargetCellProps {
+    style?: React.CSSProperties;
+    children: string;
+}
+export const TargetCell: React.FC<TargetCellProps> = (props: TargetCellProps) => {
+    return (
+        <div className={styles.cell_target} style={props.style}>
+            {props.children}
+        </div>
+    );
+}
+
+interface MessageCellProps {
+    style?: React.CSSProperties;
+    children: string;
+}
+export const MessageCell: React.FC<MessageCellProps> = (props: MessageCellProps) => {
+    return (
+        <div className={styles.cell_message} style={props.style}>
+            {props.children}
         </div>
     );
 }
@@ -31,8 +66,10 @@ interface LogViewerProps {
     onClose: () => void;
 }
 
-const COLUMN_0_WIDTH = 64;
-const ROW_HEIGHT = 32;
+const COLUMN_TIMESTAMP_WIDTH = 64;
+const COLUMN_LEVEL_WIDTH = 48;
+const COLUMN_TARGET_WIDTH = 96;
+const ROW_HEIGHT = 28;
 
 export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
     const logger = useLogger();
@@ -43,7 +80,10 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
     const logContainerSize = observeSize(logContainerRef);
     const logContainerWidth = logContainerSize?.width ?? 0;
     const logContainerHeight = logContainerSize?.height ?? 0;
-    const getColumnWidth = (col: number) => (col == 0) ? COLUMN_0_WIDTH : (Math.max(logContainerWidth, COLUMN_0_WIDTH) - COLUMN_0_WIDTH);
+
+    const columnWidthLeftOfMessage = Math.max(logContainerWidth, COLUMN_TIMESTAMP_WIDTH + COLUMN_LEVEL_WIDTH + COLUMN_TARGET_WIDTH + 3);
+    const columnWidths = React.useMemo(() => ([COLUMN_TIMESTAMP_WIDTH, COLUMN_LEVEL_WIDTH, COLUMN_TARGET_WIDTH, columnWidthLeftOfMessage - COLUMN_TIMESTAMP_WIDTH - COLUMN_LEVEL_WIDTH - COLUMN_TARGET_WIDTH]), [logContainerWidth]);
+    const getColumnWidth = (col: number) => columnWidths[col];
     const getRowHeight = (_row: number) => ROW_HEIGHT;
 
     // Poll the log version when the viewer is opened
@@ -65,18 +105,11 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
 
     const Cell = ({ columnIndex, rowIndex, style }: any) => {
         const record = logger.buffer.at(rowIndex)!;
-        if (columnIndex == 0) {
-            return (
-                <LogLevelLabel level={record.level} style={style} />
-            );
-        } else {
-            return (
-                <div style={style} className={styles.cell_message}>
-                    <div className={styles.cell_message_text}>
-                        {record!.message}
-                    </div>
-                </div>
-            );
+        switch (columnIndex) {
+            case 0: return <TimestampCell style={style}>{record.timestamp}</TimestampCell>;
+            case 1: return <LevelCell level={record.level} style={style} />;
+            case 2: return <TargetCell style={style}>{record.target}</TargetCell>;
+            case 3: return <MessageCell style={style}>{record.message}</MessageCell>;
         }
     };
 
@@ -113,10 +146,12 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
                         key={logGridKey}
                         width={logContainerWidth}
                         height={logContainerHeight}
-                        columnCount={2}
+                        columnCount={4}
                         columnWidth={getColumnWidth}
                         rowCount={logRowCount}
                         rowHeight={getRowHeight}
+                        estimatedColumnWidth={logContainerWidth / 4}
+                        estimatedRowHeight={ROW_HEIGHT}
                     >
                         {Cell}
                     </Grid>
