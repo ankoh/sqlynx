@@ -72,7 +72,6 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                     Salesforce Data Cloud
                 </div>
                 <div className={style.platform_actions}>
-                    <Button leadingVisual={LogIcon} count={3}>Logs</Button>
                     <Button
                         variant='primary'
                         leadingVisual={PlugIcon}
