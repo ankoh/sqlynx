@@ -3,8 +3,8 @@ import * as proto from "@ankoh/sqlynx-pb";
 import { jest } from '@jest/globals';
 
 import { GrpcServerStream, GrpcServerStreamBatch, NativeAPIMock } from './native_api_mock.js';
-import { PlatformType } from './platform_api.js';
 import { NativeGrpcServerStreamBatchEvent } from "./native_grpc_client.js";
+import { PlatformType } from "./platform_type.js";
 
 describe('Native API mock', () => {
     let mock: NativeAPIMock | null;

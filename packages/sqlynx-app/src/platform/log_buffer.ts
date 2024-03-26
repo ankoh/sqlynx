@@ -1,4 +1,17 @@
-import { LogRecord } from "./platform_logger.js";
+export enum LogLevel {
+    Trace = 1,
+    Debug,
+    Info,
+    Warn,
+    Error,
+}
+/// A log record
+export interface LogRecord {
+    /// The log level
+    level: LogLevel;
+    /// A message
+    message: string;
+}
 
 const TARGET_CHUNK_SIZE = 1024;
 
@@ -11,6 +24,8 @@ class FrozenLogChunk {
     }
 }
 
+type LogObserver = (buffer: LogBuffer) => void;
+
 export class LogBuffer {
     /// Internal version counter
     protected version_: number;
@@ -18,17 +33,30 @@ export class LogBuffer {
     protected lastEntries_: LogRecord[];
     /// The frozen chunks
     protected frozenChunks_: FrozenLogChunk[];
+    /// The log observers
+    protected logObservers: Set<LogObserver>;
 
     constructor() {
         this.version_ = 1;
         this.lastEntries_ = [];
         this.frozenChunks_ = [];
+        this.logObservers = new Set();
     }
 
     /// Get the current version
     public get version(): number { return this.version_; }
     /// Get the total amount of log entries
     public get length(): number { return this.lastEntries_.length + this.frozenChunks_.length * TARGET_CHUNK_SIZE; }
+    /// Get the observers
+    public get observers(): Set<LogObserver> { return this.logObservers; }
+
+    /// Subscribe to log events
+    public observe(observer: LogObserver, callWhenRegistering: boolean = false) {
+        this.logObservers.add(observer);
+        if (callWhenRegistering) {
+            observer(this);
+        }
+    }
 
     /// Push an entry
     public push(entry: LogRecord) {
@@ -40,6 +68,10 @@ export class LogBuffer {
         }
         // Bump the version
         this.version_ += 1;
+        // Notify all observers
+        for (const observer of this.logObservers) {
+            observer(this);
+        }
     }
 
     /// Get at position

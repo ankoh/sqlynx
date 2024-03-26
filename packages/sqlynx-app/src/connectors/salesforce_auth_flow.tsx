@@ -19,9 +19,8 @@ import {
 import { useSalesforceAPI } from './salesforce_connector.js';
 import { useAppConfig } from '../app_config.js';
 import { generatePKCEChallenge } from '../utils/pkce.js';
-import { usePlatformApi } from '../platform/platform_api_provider.js';
-import { PlatformType } from '../platform/platform_api.js';
 import { BASE64_CODEC } from '../utils/base64.js';
+import { PlatformType, usePlatformType } from '../platform/platform_type.js';
 
 // We use the web-server OAuth Flow with or without consumer secret.
 //
@@ -64,7 +63,7 @@ interface Props {
 export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
     const appConfig = useAppConfig();
     const connector = useSalesforceAPI();
-    const platform = usePlatformApi();
+    const platformType = usePlatformType();
     const connectorConfig = appConfig.value?.connectors?.salesforce ?? null;
     const [state, dispatch] = React.useReducer(reduceAuthState, AUTH_FLOW_DEFAULT_STATE);
 
@@ -107,7 +106,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
         // This will instruct the redirect to sqlynx.app/oauth.html about the "actual" target.
         // When initiating the OAuth flow from the native app, the redirect will then open a deep link with the OAuth code.
         // When initiating from the web, the redirect will assume there's an opener that it can post the code to.
-        const flowVariant = platform?.platformType !== PlatformType.WEB
+        const flowVariant = platformType !== PlatformType.WEB
             ? proto.sqlynx_oauth.pb.OAuthFlowVariant.NATIVE_LINK_FLOW
             : proto.sqlynx_oauth.pb.OAuthFlowVariant.WEB_OPENER_FLOW;
 

@@ -3,8 +3,7 @@ import { useLocation } from 'react-router-dom';
 
 import { classNames } from '../utils/classnames.js';
 import { HoverMode, NavBarLink, NavBarButtonWithRef } from './navbar_button.js';
-import { PlatformType } from '../platform/platform_api.js';
-import { usePlatformApi } from '../platform/platform_api_provider.js';
+import { PlatformType, usePlatformType } from '../platform/platform_type.js';
 import { useSessionLinks } from '../session/session_link_manager.js';
 import { SQLYNX_GET_URL, SQLYNX_VERSION } from '../app_version.js';
 import { LogViewerInPortal } from './log_viewer.js';
@@ -52,7 +51,7 @@ const LogButton = (props: {}) => {
         <div className={styles.tab}>
             <NavBarButtonWithRef className={styles.tab_button} hover={HoverMode.Darken} onClick={() => setIsOpen(s => !s)}>
                 <>
-                    <svg width="15px" height="15px">
+                    <svg width="14px" height="14px">
                         <use xlinkHref={`${symbols}#log`} />
                     </svg>
                     <span className={styles.tab_button_text}>Logs</span>
@@ -66,9 +65,9 @@ const LogButton = (props: {}) => {
 
 export const NavBar = (): React.ReactElement => {
     const location = useLocation();
-    const platform = usePlatformApi();
-    const isBrowser = platform?.platformType === PlatformType.WEB;
-    const isMac = platform?.platformType === PlatformType.MACOS;
+    const platformType = usePlatformType();
+    const isBrowser = platformType === PlatformType.WEB;
+    const isMac = platformType === PlatformType.MACOS;
     const sessionLinks = useSessionLinks();
     return (
         <div className={isMac ? styles.navbar_mac : styles.navbar_default}
