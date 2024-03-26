@@ -14,7 +14,7 @@ export interface NativeGlobals {
 }
 
 /// The tauri globals
-const TAURI = ((window as any).__TAURI__ as NativeGlobals) ?? null;
+const TAURI = ((globalThis as any).__TAURI__ as NativeGlobals) ?? null;
 /// Is a running natively?
 export function isNativePlatform(): boolean {
     return TAURI != null;
