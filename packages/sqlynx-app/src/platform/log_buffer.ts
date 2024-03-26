@@ -34,7 +34,6 @@ class FrozenLogChunk {
     readonly entries: LogRecord[];
 
     constructor(entries: LogRecord[]) {
-        entries.reverse();
         this.entries = entries;
     }
 }
@@ -91,19 +90,23 @@ export class LogBuffer {
 
     /// Get at position
     public at(index: number): LogRecord | null {
-        if (index < this.lastEntries_.length) {
-            return this.lastEntries_[this.lastEntries_.length - 1 - index];
+        const frozenEntries = this.frozenChunks_.length * TARGET_CHUNK_SIZE
+        if (index < frozenEntries) {
+            const chunkIndex = Math.floor(index / TARGET_CHUNK_SIZE);
+            const indexInChunk = index - (chunkIndex * TARGET_CHUNK_SIZE);
+            if (chunkIndex >= this.frozenChunks_.length) {
+                return null;
+            }
+            const chunk = this.frozenChunks_[chunkIndex];
+            if (indexInChunk >= chunk.entries.length) {
+                return null;
+            }
+            return chunk.entries[indexInChunk];
         }
-        const frozenIndex = index - this.lastEntries_.length;
-        const chunkIndex = Math.floor(frozenIndex / TARGET_CHUNK_SIZE);
-        const indexInChunk = frozenIndex - (chunkIndex * TARGET_CHUNK_SIZE);
-        if (chunkIndex >= this.frozenChunks_.length) {
-            return null;
+        const pendingIndex = index - frozenEntries;
+        if (pendingIndex < this.lastEntries_.length) {
+            return this.lastEntries_[pendingIndex];
         }
-        const chunk = this.frozenChunks_[chunkIndex];
-        if (indexInChunk >= chunk.entries.length) {
-            return null;
-        }
-        return chunk.entries[indexInChunk];
+        return null;
     }
 }
