@@ -1,8 +1,8 @@
 import * as proto from "@ankoh/sqlynx-pb";
 
-import { PlatformType } from "./platform_api.js";
 import { Message } from "@bufbuild/protobuf";
 import { NativeGrpcServerStreamBatchEvent } from "./native_grpc_client.js";
+import { PlatformType } from "./platform_type.js";
 
 /// Only process requests that are targeting sqlynx-native://
 const NATIVE_API_SCHEME = "sqlynx-native://";

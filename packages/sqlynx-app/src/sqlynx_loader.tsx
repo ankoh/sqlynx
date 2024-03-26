@@ -1,6 +1,8 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
 import * as React from 'react';
+
 import { RESULT_ERROR, RESULT_OK, Result } from './utils/result.js';
+import { useLogger } from './platform/logger_provider.js';
 
 const SQLYNX_MODULE_URL = new URL('@ankoh/sqlynx-core/dist/sqlynx.wasm', import.meta.url);
 
@@ -21,6 +23,7 @@ const MODULE_CONTEXT = React.createContext<Result<sqlynx.SQLynx> | null>(null);
 export const SQLynxLoader: React.FC<Props> = (props: Props) => {
     const [module, setModule] = React.useState<Result<sqlynx.SQLynx> | null>(null);
     const [progress, setProgress] = React.useState<InstantiationProgress | null>(null);
+    const logger = useLogger();
 
     React.useEffect(() => {
         const now = new Date();
@@ -32,6 +35,8 @@ export const SQLynxLoader: React.FC<Props> = (props: Props) => {
         };
         // Fetch an url with progress tracking
         const fetchWithProgress = async (url: URL) => {
+            logger.info("fetching core wasm module", "sqlynx_loader");
+
             // Try to determine file size
             const request = new Request(url);
             const response = await fetch(request);
@@ -59,9 +64,12 @@ export const SQLynxLoader: React.FC<Props> = (props: Props) => {
         };
         const instantiate = async () => {
             try {
+                var initStart = performance.now();
                 const instance = await sqlynx.SQLynx.create(async (imports: WebAssembly.Imports) => {
                     return await WebAssembly.instantiateStreaming(fetchWithProgress(SQLYNX_MODULE_URL), imports);
                 });
+                var initEnd = performance.now();
+                logger.info(`instantiated core in ${Math.floor(initEnd - initStart)} ms`, "sqlynx_loader");
                 setProgress(_ => ({
                     ...internal,
                     updatedAt: new Date(),

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Maybe, MaybeStatus } from './utils/maybe.js';
 import { ConnectorConfigs, readConnectorConfigs } from './connectors/connector_configs.js';
+import { useLogger } from './platform/logger_provider.js';
 
 const CONFIG_URL = new URL('../static/config.json', import.meta.url);
 
@@ -32,6 +33,7 @@ type Props = {
 };
 
 export const AppConfigResolver: React.FC<Props> = (props: Props) => {
+    const logger = useLogger();
     const [config, setConfig] = React.useState<Maybe<AppConfig>>(new Maybe<AppConfig, null>(MaybeStatus.NONE, null));
     const started = React.useRef<boolean>(false);
     if (!started.current) {
@@ -41,6 +43,7 @@ export const AppConfigResolver: React.FC<Props> = (props: Props) => {
                 const resp = await fetch(CONFIG_URL as unknown as string);
                 const body = await resp.json();
                 const config = readAppConfig(body);
+                logger.info("loaded app config", "app_config");
                 setConfig(c => c.completeWith(config));
             } catch (e: any) {
                 console.error(e);

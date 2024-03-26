@@ -1,8 +1,8 @@
 use lazy_static::lazy_static;
-use regex_automata::util::captures::Captures;
 use tauri::http::Method;
 use tauri::http::Request;
 use tauri::http::Response;
+use regex_automata::util::captures::Captures;
 use regex_automata::meta::Regex;
 
 use crate::grpc_proxy_globals::call_unary;

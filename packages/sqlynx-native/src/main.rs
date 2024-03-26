@@ -1,6 +1,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod deep_link;
 mod grpc_client;
 mod grpc_proxy;
 mod grpc_proxy_globals;
@@ -13,8 +14,9 @@ mod test;
 mod status;
 mod logging;
 
+use std::time::{SystemTime, UNIX_EPOCH};
+
 use ipc_router::process_ipc_request;
-use tauri::AppHandle;
 
 #[tokio::main]
 async fn main() {
@@ -35,6 +37,23 @@ async fn main() {
             tauri_plugin_log::Builder::default()
                 .targets(logging::config::LOG_TARGETS)
                 .level(logging::config::LOG_LEVEL)
+                .format(|out, message, record| {
+                    let start = SystemTime::now();
+                    let since_epoch = start
+                        .duration_since(UNIX_EPOCH).unwrap().as_millis();
+                    out.finish(format_args!(
+                        "{}",
+                        serde_json::to_string(&serde_json::json!(
+                            {
+                                "timestamp": since_epoch as f64,
+                                "level": record.level() as usize,
+                                "target": record.target().to_string(),
+                                "message": message,
+                            }
+                        )).expect("formatting `serde_json::Value` with string keys never fails")
+                    ))
+
+                })
                 .build()
         )
         .setup(|app| {
@@ -45,7 +64,7 @@ async fn main() {
             handle.plugin(tauri_plugin_updater::Builder::new().build())?;
 
             // Forward all deep-link events to a custom handler
-            app.listen("deep-link://new-url", move |event| deep_link(event, handle.clone()));
+            app.listen("deep-link://new-url", move |event| deep_link::process_deep_link(event, handle.clone()));
             Ok(())
         })
         .run(tauri::generate_context!())
@@ -55,17 +74,4 @@ async fn main() {
 #[tauri::command]
 async fn sqlynx_get_os() -> &'static str {
     return "darwin";
-}
-
-fn deep_link(event: tauri::Event, _handle: AppHandle) {
-    let payload = event.payload();
-    let Some(link) = payload.get(2..payload.len() - 2) else {
-        return;
-    };
-
-    if link.starts_with("sqlynx://") {
-        log::info!("received deep link: {}", link);
-    } else {
-        log::info!("unknown deep link: {}", link);
-    }
 }
