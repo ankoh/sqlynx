@@ -76,7 +76,7 @@ export class LogBuffer {
 
     /// Get at position
     public at(index: number): LogRecord | null {
-        if (this.lastEntries_.length < index) {
+        if (index < this.lastEntries_.length) {
             return this.lastEntries_[this.lastEntries_.length - 1 - index];
         }
         const frozenIndex = index - this.lastEntries_.length;
