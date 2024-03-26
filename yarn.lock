@@ -31,7 +31,7 @@
 "@ankoh/sqlynx-core@link:packages/sqlynx-core-api":
   version "0.0.2-dev.17"
   dependencies:
-    flatbuffers "^24.3.7"
+    flatbuffers "^24.3.25"
 
 "@ankoh/sqlynx-pb@link:packages/sqlynx-pb":
   version "0.0.2-dev.17"
@@ -4003,10 +4003,10 @@ flatbuffers@^23.5.26:
   resolved "https://registry.yarnpkg.com/flatbuffers/-/flatbuffers-23.5.26.tgz#01358e272a61239f0faf3bfbe4e014f3ace9d746"
   integrity sha512-vE+SI9vrJDwi1oETtTIFldC/o9GsVKRM+s6EL0nQgxXlYV1Vc4Tk30hj4xGICftInKQKj1F3up2n8UbIVobISQ==
 
-flatbuffers@^24.3.7:
-  version "24.3.7"
-  resolved "https://registry.yarnpkg.com/flatbuffers/-/flatbuffers-24.3.7.tgz#90077fb73eec19a9859dc8e622fa9d75dad23e7d"
-  integrity sha512-GB19A5cyEvOVeQw3D72zXG/5rWXhGo+BhQj5YbXwOi9tV0IorjWKu1PyoW80FSNtii/YBAxHLuu54/ww0pPceQ==
+flatbuffers@^24.3.25:
+  version "24.3.25"
+  resolved "https://registry.yarnpkg.com/flatbuffers/-/flatbuffers-24.3.25.tgz#e2f92259ba8aa53acd0af7844afb7c7eb95e7089"
+  integrity sha512-3HDgPbgiwWMI9zVB7VYBHaMrbOO7Gm0v+yD2FV/sCKj+9NDeVL7BOBYUuhWAQGKWOzBo8S9WdMvV0eixO233XQ==
 
 flatted@^3.2.9:
   version "3.2.9"
