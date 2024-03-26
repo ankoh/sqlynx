@@ -55,7 +55,6 @@ const LogButton = (props: {}) => {
                         <use xlinkHref={`${symbols}#log`} />
                     </svg>
                     <span className={styles.tab_button_text}>Logs</span>
-                    <span className={styles.tab_button_count}>42</span>
                 </>
             </NavBarButtonWithRef>
             {isOpen && <LogViewerInPortal onClose={() => setIsOpen(false)} />}
