@@ -1,17 +1,16 @@
-import { PlatformLogger, LogLevel, LogRecord } from './platform_logger.js';
+import { LogRecord } from './log_buffer.js';
 import { NativeGlobals, Unlistener } from './native_globals.js';
-import { LogBuffer } from './log_buffer.js';
+import { Logger } from './logger.js';
 
-export class NativeLogger implements PlatformLogger {
+export class NativeLogger extends Logger {
     globals: NativeGlobals;
-    buffer: LogBuffer;
     unlistener: Promise<Unlistener>;
 
-    constructor(globals: NativeGlobals, buffer: LogBuffer) {
+    constructor(globals: NativeGlobals) {
+        super();
         this.globals = globals;
-        this.buffer = buffer;
         this.unlistener = globals.event.listen("log://log", (event: any) => {
-            this.buffer.push(event as LogRecord);
+            this.outputBuffer.push(event as LogRecord);
         });
     }
 
@@ -20,29 +19,19 @@ export class NativeLogger implements PlatformLogger {
         const unlisten = await this.unlistener;
         unlisten();
     }
-
-    /// Log a message
-    log(level: LogLevel, message: string): Promise<void> {
-        return this.globals.core.invoke("plugin:log|log", {
-            level,
-            message,
-        });
-    }
-
-    /// Log a trace message
-    public trace(message: string): Promise<void> {
-        return this.log(LogLevel.Trace, message);
-    }
-    /// Log an info message
-    public info(message: string): Promise<void> {
-        return this.log(LogLevel.Info, message);
-    }
-    /// Log a warning message
-    public warn(message: string): Promise<void> {
-        return this.log(LogLevel.Warn, message);
-    }
-    /// Log an error message
-    public async error(message: string): Promise<void> {
-        return this.log(LogLevel.Error, message);
+    /// Helper to flush pending records
+    protected flushPendingRecords(): void {
+        if (this.pendingRecords.length == 0) {
+            return;
+        }
+        this.pendingRecords = [];
+        const pending = this.pendingRecords;
+        for (let i = 0; i < pending.length; ++i) {
+            const record = pending[i];
+            this.globals.core.invoke("plugin:log|log", {
+                level: record.level,
+                message: record.message,
+            });
+        }
     }
 };

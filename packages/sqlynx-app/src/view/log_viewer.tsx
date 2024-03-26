@@ -3,15 +3,18 @@ import { motion } from "framer-motion"
 
 import { createPortal } from 'react-dom';
 import { IconButton } from '@primer/react';
-
-import styles from './log_viewer.module.css';
 import { XIcon } from '@primer/octicons-react';
+
+import { useLogVersion, useLogger } from '../platform/logger_provider.js';
+import styles from './log_viewer.module.css';
 
 interface LogViewerProps {
     onClose: () => void;
 }
 
 export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
+    const logger = useLogger();
+    const logVersion = useLogVersion();
     return (
         <div className={styles.overlay}>
             <motion.div
@@ -40,6 +43,8 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
                         />
                     </div>
                 </div>
+                {logger.buffer.length}
+                {logVersion}
             </motion.div>
         </div>
     );
