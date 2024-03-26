@@ -2,8 +2,10 @@ import * as React from 'react';
 import { motion } from "framer-motion"
 
 import { createPortal } from 'react-dom';
+import { IconButton } from '@primer/react';
 
 import styles from './log_viewer.module.css';
+import { XIcon } from '@primer/octicons-react';
 
 interface LogViewerProps {
     onClose: () => void;
@@ -28,6 +30,14 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
                 <div className={styles.header_container}>
                     <div className={styles.header_left_container}>
                         <div className={styles.page_title}>Logs</div>
+                    </div>
+                    <div className={styles.header_right_container}>
+                        <IconButton
+                            variant="invisible"
+                            icon={XIcon}
+                            aria-label="close-overlay"
+                            onClick={props.onClose}
+                        />
                     </div>
                 </div>
             </motion.div>
