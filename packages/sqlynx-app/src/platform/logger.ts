@@ -22,34 +22,42 @@ export abstract class Logger {
     public get buffer() { return this.outputBuffer; }
 
     /// Log a trace message
-    public trace(message: string): void {
+    public trace(message: string, target?: string): void {
         this.pendingRecords.push({
+            timestamp: Date.now(),
             level: LogLevel.Trace,
-            message
+            target: target ?? "pwa:unknown",
+            message,
         });
         this.flushPendingRecords();
     }
     /// Log an info message
-    public info(message: string): void {
+    public info(message: string, target?: string): void {
         this.pendingRecords.push({
+            timestamp: Date.now(),
             level: LogLevel.Info,
-            message
+            target: target ?? "pwa:unknown",
+            message,
         });
         this.flushPendingRecords();
     }
     /// Log a warning message
-    public warn(message: string): void {
+    public warn(message: string, target?: string): void {
         this.pendingRecords.push({
+            timestamp: Date.now(),
             level: LogLevel.Warn,
-            message
+            target: target ?? "pwa:unknown",
+            message,
         });
         this.flushPendingRecords();
     }
     /// Log an error message
-    public error(message: string): void {
+    public error(message: string, target?: string): void {
         this.pendingRecords.push({
-            level: LogLevel.Error,
-            message
+            timestamp: Date.now(),
+            level: LogLevel.Warn,
+            target: target ?? "pwa:unknown",
+            message,
         });
         this.flushPendingRecords();
     }

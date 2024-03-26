@@ -10,7 +10,8 @@ export class NativeLogger extends Logger {
         super();
         this.globals = globals;
         this.unlistener = globals.event.listen("log://log", (event: any) => {
-            this.outputBuffer.push(event as LogRecord);
+            const record = JSON.parse(event.payload.message) as LogRecord;
+            this.outputBuffer.push(record);
         });
     }
 
@@ -24,13 +25,15 @@ export class NativeLogger extends Logger {
         if (this.pendingRecords.length == 0) {
             return;
         }
-        this.pendingRecords = [];
         const pending = this.pendingRecords;
+        this.pendingRecords = [];
         for (let i = 0; i < pending.length; ++i) {
             const record = pending[i];
+            console.log("invoke");
             this.globals.core.invoke("plugin:log|log", {
                 level: record.level,
                 message: record.message,
+                location: record.target
             });
         }
     }

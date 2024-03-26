@@ -1,10 +1,11 @@
 export enum LogLevel {
-    Trace = 1,
-    Debug,
-    Info,
+    Error = 1,
     Warn,
-    Error,
+    Info,
+    Debug,
+    Trace,
 }
+
 export function getLogLevelName(level: LogLevel): string {
     switch (level) {
         case LogLevel.Trace: return "trace";
@@ -17,8 +18,12 @@ export function getLogLevelName(level: LogLevel): string {
 
 /// A log record
 export interface LogRecord {
+    /// The timestamp
+    timestamp: number;
     /// The log level
     level: LogLevel;
+    /// The target
+    target: string;
     /// A message
     message: string;
 }

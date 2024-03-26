@@ -35,7 +35,7 @@ export const SQLynxLoader: React.FC<Props> = (props: Props) => {
         };
         // Fetch an url with progress tracking
         const fetchWithProgress = async (url: URL) => {
-            logger.info("fetch sqlynx wasm module");
+            logger.info("fetch sqlynx wasm module", "sqlynx_loader");
             // Try to determine file size
             const request = new Request(url);
             const response = await fetch(request);
