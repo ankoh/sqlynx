@@ -6,16 +6,33 @@ import { VariableSizeGrid as Grid } from 'react-window';
 import { IconButton } from '@primer/react';
 import { XIcon } from '@primer/octicons-react';
 
+import { LogLevel, getLogLevelName } from '../platform/log_buffer.js';
 import { useLogger } from '../platform/logger_provider.js';
-import styles from './log_viewer.module.css';
 import { observeSize } from './size_observer.js';
+
+import styles from './log_viewer.module.css';
+
+interface LogLevelLabelProps {
+    level: LogLevel;
+    style?: React.CSSProperties;
+}
+export const LogLevelLabel: React.FC<LogLevelLabelProps> = (props: LogLevelLabelProps) => {
+    const level = getLogLevelName(props.level);
+    return (
+        <div className={styles.cell_level} style={props.style}>
+            <div className={styles.cell_level_text}>
+                {level}
+            </div>
+        </div>
+    );
+}
 
 interface LogViewerProps {
     onClose: () => void;
 }
 
-const COLUMN_0_WIDTH = 100;
-const ROW_HEIGHT = 40;
+const COLUMN_0_WIDTH = 64;
+const ROW_HEIGHT = 32;
 
 export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
     const logger = useLogger();
@@ -47,17 +64,17 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
     console.log(`width=${logContainerWidth}, height=${logContainerHeight}, logGridKey=${logGridKey}`);
 
     const Cell = ({ columnIndex, rowIndex, style }: any) => {
-        const record = logger.buffer.at(rowIndex);
+        const record = logger.buffer.at(rowIndex)!;
         if (columnIndex == 0) {
             return (
-                <div style={style}>
-                    {record!.level}
-                </div>
+                <LogLevelLabel level={record.level} style={style} />
             );
         } else {
             return (
-                <div style={style}>
-                    {record!.message}
+                <div style={style} className={styles.cell_message}>
+                    <div className={styles.cell_message_text}>
+                        {record!.message}
+                    </div>
                 </div>
             );
         }
