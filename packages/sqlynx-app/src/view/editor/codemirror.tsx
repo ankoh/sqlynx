@@ -2,11 +2,13 @@ import * as React from 'react';
 import { EditorState, EditorStateConfig, Extension, Annotation, StateEffect } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 
+import { useLogger } from '../../platform/logger_provider.js';
+
 import './codemirror.css';
 
 export interface CodeMirrorProps
     extends Omit<EditorStateConfig, 'doc' | 'extensions'>,
-        Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange' | 'placeholder'> {
+    Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange' | 'placeholder'> {
     /// Callback after view is initially created
     viewWasCreated?: (view: EditorView) => void;
     /// Callback before view is destroyed
@@ -27,6 +29,8 @@ interface ViewMountState {
 }
 
 export const CodeMirror: React.FC<CodeMirrorProps> = (props: CodeMirrorProps) => {
+    const logger = useLogger();
+
     /// Maintain the view DOM node
     const mount = React.useRef<ViewMountState>({
         view: null,
@@ -47,6 +51,7 @@ export const CodeMirror: React.FC<CodeMirrorProps> = (props: CodeMirrorProps) =>
         if (node != null && node === mount.current!.node) {
             return;
         }
+
         // Is there a view?
         if (mount.current.view !== null) {
             if (props.viewWillBeDestroyed) {
@@ -60,8 +65,11 @@ export const CodeMirror: React.FC<CodeMirrorProps> = (props: CodeMirrorProps) =>
         // Has the DOM node been unmounted?
         // Then we don't need to create a new view.
         if (node === null) {
+            logger.warn("target node was unmounted", "codemirror");
             return;
         }
+        logger.info("creating a new codemirror view", "codemirror");
+
         // The DOM node has changed, create a new view
         mount.current.view = new EditorView({
             state: EditorState.create({ extensions: mount.current.extensions }),

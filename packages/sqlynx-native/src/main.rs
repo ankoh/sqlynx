@@ -14,6 +14,8 @@ mod test;
 mod status;
 mod logging;
 
+use std::time::{SystemTime, UNIX_EPOCH};
+
 use ipc_router::process_ipc_request;
 
 #[tokio::main]
@@ -35,6 +37,23 @@ async fn main() {
             tauri_plugin_log::Builder::default()
                 .targets(logging::config::LOG_TARGETS)
                 .level(logging::config::LOG_LEVEL)
+                .format(|out, message, record| {
+                    let start = SystemTime::now();
+                    let since_epoch = start
+                        .duration_since(UNIX_EPOCH).unwrap().as_millis();
+                    out.finish(format_args!(
+                        "{}",
+                        serde_json::to_string(&serde_json::json!(
+                            {
+                                "timestamp": since_epoch as f64,
+                                "level": record.level() as usize,
+                                "target": record.target().to_string(),
+                                "message": message,
+                            }
+                        )).expect("formatting `serde_json::Value` with string keys never fails")
+                    ))
+
+                })
                 .build()
         )
         .setup(|app| {

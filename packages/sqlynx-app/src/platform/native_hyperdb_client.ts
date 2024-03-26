@@ -1,6 +1,6 @@
 import * as proto from "@ankoh/sqlynx-pb";
 
-import { HyperDatabaseClient, HyperDatabaseConnection, HyperQueryExecutionStatus, HyperQueryResultStream } from "./platform_hyperdb_client.js";
+import { HyperDatabaseClient, HyperDatabaseConnection, HyperQueryExecutionStatus, HyperQueryResultStream } from "./hyperdb_client.js";
 import { NativeGrpcChannel, NativeGrpcClient, NativeGrpcProxyConfig, NativeGrpcServerStream, NativeGrpcServerStreamMessageIterator } from './native_grpc_client.js';
 import { GrpcChannelArgs } from './grpc_common.js';
 

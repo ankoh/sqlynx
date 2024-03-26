@@ -1,11 +1,12 @@
 import * as React from 'react';
 import { useLocation } from 'react-router-dom';
+
 import { classNames } from '../utils/classnames.js';
-import { HoverMode, LinkButton } from './button.js';
-import { PlatformType } from '../platform/platform_api.js';
-import { usePlatformApi } from '../platform/platform_api_provider.js';
+import { HoverMode, NavBarLink, NavBarButtonWithRef } from './navbar_button.js';
+import { PlatformType, usePlatformType } from '../platform/platform_type.js';
 import { useSessionLinks } from '../session/session_link_manager.js';
-import { SQLYNX_GET_URL, SQLYNX_GIT_COMMIT, SQLYNX_GIT_REPO_URL, SQLYNX_VERSION } from '../app_version.js';
+import { SQLYNX_GET_URL, SQLYNX_VERSION } from '../app_version.js';
+import { LogViewerInPortal } from './log_viewer.js';
 
 import styles from './navbar.module.css';
 
@@ -18,37 +19,54 @@ const PageTab = (props: { route: string; alt?: string; location: string; icon: s
             [styles.active]: props.location == props.route || props.location == props.alt,
         })}
     >
-        <LinkButton className={styles.tab_link} to={props.route} hover={HoverMode.Darken}>
+        <NavBarLink className={styles.tab_button} to={props.route} hover={HoverMode.Darken}>
             <>
                 <svg width="16px" height="16px">
                     <use xlinkHref={props.icon} />
                 </svg>
-                {props.label && <span className={styles.tab_link_text}>{props.label}</span>}
+                {props.label && <span className={styles.tab_button_text}>{props.label}</span>}
             </>
-        </LinkButton>
+        </NavBarLink>
     </div>
 );
 
 const ExternalLink = (props: { url?: string | null; alt?: string; icon?: string; label: string, newWindow?: boolean }) => (
     <div className={styles.tab}>
-        <LinkButton className={styles.tab_link} to={props.url ?? ""} hover={HoverMode.Darken} newWindow={props.newWindow}>
+        <NavBarLink className={styles.tab_button} to={props.url ?? ""} hover={HoverMode.Darken} newWindow={props.newWindow}>
             <>
                 {props.icon &&
                     <svg width="16px" height="16px">
                         <use xlinkHref={props.icon} />
                     </svg>
                 }
-                <span className={styles.tab_link_text}>{props.label}</span>
+                <span className={styles.tab_button_text}>{props.label}</span>
             </>
-        </LinkButton>
+        </NavBarLink>
     </div>
 );
 
+const LogButton = (props: {}) => {
+    const [isOpen, setIsOpen] = React.useState<boolean>(false);
+    return (
+        <div className={styles.tab}>
+            <NavBarButtonWithRef className={styles.tab_button} hover={HoverMode.Darken} onClick={() => setIsOpen(s => !s)}>
+                <>
+                    <svg width="14px" height="14px">
+                        <use xlinkHref={`${symbols}#log`} />
+                    </svg>
+                    <span className={styles.tab_button_text}>Logs</span>
+                </>
+            </NavBarButtonWithRef>
+            {isOpen && <LogViewerInPortal onClose={() => setIsOpen(false)} />}
+        </div>
+    );
+}
+
 export const NavBar = (): React.ReactElement => {
     const location = useLocation();
-    const platform = usePlatformApi();
-    const isBrowser = platform?.getPlatformType() === PlatformType.WEB;
-    const isMac = platform?.getPlatformType() === PlatformType.MACOS;
+    const platformType = usePlatformType();
+    const isBrowser = platformType === PlatformType.WEB;
+    const isMac = platformType === PlatformType.MACOS;
     const sessionLinks = useSessionLinks();
     return (
         <div className={isMac ? styles.navbar_mac : styles.navbar_default}
@@ -60,8 +78,8 @@ export const NavBar = (): React.ReactElement => {
                 <PageTab label="Connectors" route="/connectors" location={location.pathname} icon={`${symbols}#database`} />
             </div>
             <div className={styles.version_container}>
+                <LogButton />
                 <ExternalLink label={SQLYNX_VERSION} url={SQLYNX_GET_URL} icon={`${symbols}#package`} newWindow={true} />
-                <ExternalLink label={SQLYNX_GIT_COMMIT} url={SQLYNX_GIT_REPO_URL} icon={`${symbols}#github`} newWindow={true} />
                 {isBrowser
                     ? <ExternalLink label="Open in App" url={sessionLinks?.privateDeepLink.toString()} icon={`${symbols}#download_desktop`} newWindow={false} />
                     : <ExternalLink label="Open in Browser" url={sessionLinks?.privateWebLink.toString()} icon={`${symbols}#upload_browser`} newWindow={true} />

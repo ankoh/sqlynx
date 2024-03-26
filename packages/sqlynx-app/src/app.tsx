@@ -14,10 +14,11 @@ import { QueryExecutor } from './session/query_executor.js';
 import { SessionLinkManager } from './session/session_link_manager.js';
 import { SalesforceConnector } from './connectors/salesforce_connector.js';
 import { GitHubTheme } from './github_theme.js';
-import { LogProvider } from './app_log.js';
 import { AppConfigResolver } from './app_config.js';
 import { SQLYNX_GIT_COMMIT, SQLYNX_VERSION } from './app_version.js';
-import { PlatformApiProvider } from './platform/platform_api_provider.js';
+import { LoggerProvider } from './platform/logger_provider.js';
+import { PlatformTypeProvider } from './platform/platform_type.js';
+import { HyperDatabaseClientProvider } from './platform/hyperdb_client_provider.js';
 
 import { createRoot } from 'react-dom/client';
 import { Route, Routes, Navigate, BrowserRouter, HashRouter } from 'react-router-dom';
@@ -27,26 +28,28 @@ import './globals.css';
 
 const AppProviders = (props: { children: React.ReactElement }) => (
     <GitHubTheme>
-        <LogProvider>
-            <PlatformApiProvider>
+        <PlatformTypeProvider>
+            <LoggerProvider>
                 <AppConfigResolver>
-                    <SQLynxLoader>
-                        <SalesforceConnector>
-                            <SessionStateProvider>
-                                <SessionCommands>
-                                    <ScriptLoader />
-                                    <ScriptAutoloaderBrainstorm />
-                                    <ScriptAutoloaderSalesforce />
-                                    <CatalogLoader />
-                                    <QueryExecutor />
-                                    <SessionLinkManager>{props.children}</SessionLinkManager>
-                                </SessionCommands>
-                            </SessionStateProvider>
-                        </SalesforceConnector>
-                    </SQLynxLoader>
+                    <HyperDatabaseClientProvider>
+                        <SQLynxLoader>
+                            <SalesforceConnector>
+                                <SessionStateProvider>
+                                    <SessionCommands>
+                                        <ScriptLoader />
+                                        <ScriptAutoloaderBrainstorm />
+                                        <ScriptAutoloaderSalesforce />
+                                        <CatalogLoader />
+                                        <QueryExecutor />
+                                        <SessionLinkManager>{props.children}</SessionLinkManager>
+                                    </SessionCommands>
+                                </SessionStateProvider>
+                            </SalesforceConnector>
+                        </SQLynxLoader>
+                    </HyperDatabaseClientProvider>
                 </AppConfigResolver>
-            </PlatformApiProvider>
-        </LogProvider>
+            </LoggerProvider>
+        </PlatformTypeProvider>
     </GitHubTheme>
 );
 

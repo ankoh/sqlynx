@@ -37,6 +37,10 @@ function triggerFlow(state: proto.sqlynx_oauth.pb.OAuthState, code: string) {
             break;
         }
         case proto.sqlynx_oauth.pb.OAuthFlowVariant.WEB_OPENER_FLOW: {
+            if (!window.opener) {
+                console.warn("window opener is undefined");
+                return;
+            }
             const eventMessage = new proto.sqlynx_app_event.pb.AppEvent({
                 eventData: {
                     case: "oauthRedirect",
@@ -66,7 +70,6 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
     const autoTriggersAt = React.useMemo(() => new Date(now.getTime() + AUTOTRIGGER_DELAY), []);
     const remainingUntilAutoTrigger = Math.max(autoTriggersAt.getTime(), now.getTime()) - now.getTime();
     React.useEffect(() => {
-        console.log("foo");
         const timeoutId = setTimeout(() => triggerFlow(props.state, code), remainingUntilAutoTrigger);
         return () => clearTimeout(timeoutId);
     }, [props.state, code]);
@@ -162,14 +165,14 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
                                     ? <Button
                                         className={page_styles.card_action_continue}
                                         variant="primary"
-                                        onClick={triggerFlow}
+                                        onClick={() => triggerFlow(props.state, code)}
                                     >
                                         Send to App
                                     </Button>
                                     : <Button
                                         className={page_styles.card_action_continue}
                                         variant="primary"
-                                        onClick={triggerFlow}
+                                        onClick={() => triggerFlow(props.state, code)}
                                         trailingVisual={() => <div>{Math.ceil(remainingUntilAutoTrigger / 1000)}</div>}
                                     >
                                         Send to App
