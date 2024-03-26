@@ -123,7 +123,7 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
                 onClick={props.onClose}
             />
             <motion.div
-                className={styles.overlay_body}
+                className={styles.overlay_card}
                 initial={{ translateY: "20px" }}
                 animate={{ translateY: 0 }}
                 transition={{ duration: 0.2 }}

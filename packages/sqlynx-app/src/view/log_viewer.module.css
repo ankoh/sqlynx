@@ -20,16 +20,17 @@
     width: 100%;
     height: 100%;
     z-index: 100;
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: rgba(0, 0, 0, 0.1);
 }
 
-.overlay_body {
+.overlay_card {
     width: 85%;
     height: 80%;
     max-width: 600px;
     max-height: 800px;
     z-index: 200;
     border-radius: var(--border_radius);
+    border: 1px solid var(--log_border_color);
 
     display: grid;
     grid-template-rows: 48px calc(100% - 48px);
