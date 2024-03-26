@@ -103,6 +103,13 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
     const logGridKey = (logContainerWidth & 0xFFFF) | ((logContainerHeight & 0xFFFF) << 16) | ((logVersion & 0xFFFF) << 32);
     console.log(`width=${logContainerWidth}, height=${logContainerHeight}, logGridKey=${logGridKey}`);
 
+    const gridRef = React.useRef<Grid>(null);
+    const scrollToBottom = () =>
+        gridRef?.current?.scrollToItem({ rowIndex: logRowCount });
+    React.useEffect(() => {
+        scrollToBottom();
+    }, [logRowCount]);
+
     const Cell = ({ columnIndex, rowIndex, style }: any) => {
         const record = logger.buffer.at(rowIndex)!;
         switch (columnIndex) {
