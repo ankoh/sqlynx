@@ -5,6 +5,16 @@ export enum LogLevel {
     Warn,
     Error,
 }
+export function getLogLevelName(level: LogLevel): string {
+    switch (level) {
+        case LogLevel.Trace: return "trace";
+        case LogLevel.Debug: return "debug";
+        case LogLevel.Info: return "info";
+        case LogLevel.Warn: return "warn";
+        case LogLevel.Error: return "error";
+    }
+}
+
 /// A log record
 export interface LogRecord {
     /// The log level

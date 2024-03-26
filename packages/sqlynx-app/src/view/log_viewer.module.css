@@ -36,6 +36,8 @@
     grid-template-columns: 100%;
 
     background-color: white;
+
+    box-shadow: var(--shadow-medium);
 }
 
 .header_container {
@@ -80,4 +82,40 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
+    background-color: var(--log_background);
+    border-radius: 0 0 var(--border_radius) var(--border_radius);
+}
+
+.cell_level {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    justify-content: center;
+    align-items: center;
+    border-bottom: 1px solid var(--log_border_color);
+    background-color: var(--log_cell_background);
+    font-size: 0.8rem;
+}
+.cell_level_text {
+    background-color: rgb(230 234 240);
+    padding: 2px 8px;
+    border-radius: var(--border_radius);
+}
+.cell_message {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    justify-content: start;
+    align-items: center;
+
+    padding-left: 12px;
+
+    border-bottom: 1px solid var(--log_border_color);
+    border-left: 1px solid var(--log_border_color);
+    background-color: var(--log_cell_background);
+
+    font-size: 0.8rem;
+}
+.cell_message_text {
+
 }
