@@ -35,7 +35,8 @@ export const SQLynxLoader: React.FC<Props> = (props: Props) => {
         };
         // Fetch an url with progress tracking
         const fetchWithProgress = async (url: URL) => {
-            logger.info("fetch sqlynx wasm module", "sqlynx_loader");
+            logger.info("fetching core wasm module", "sqlynx_loader");
+
             // Try to determine file size
             const request = new Request(url);
             const response = await fetch(request);
@@ -63,9 +64,12 @@ export const SQLynxLoader: React.FC<Props> = (props: Props) => {
         };
         const instantiate = async () => {
             try {
+                var initStart = performance.now();
                 const instance = await sqlynx.SQLynx.create(async (imports: WebAssembly.Imports) => {
                     return await WebAssembly.instantiateStreaming(fetchWithProgress(SQLYNX_MODULE_URL), imports);
                 });
+                var initEnd = performance.now();
+                logger.info(`instantiated core in ${Math.floor(initEnd - initStart)} ms`, "sqlynx_loader");
                 setProgress(_ => ({
                     ...internal,
                     updatedAt: new Date(),

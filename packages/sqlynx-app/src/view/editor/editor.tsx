@@ -14,6 +14,7 @@ import { ScriptKey } from '../../session/session_state.js';
 import { ScriptStatisticsBar } from './script_statistics_bar.js';
 import { VerticalTabVariant, VerticalTabs } from '../../view/vertical_tabs.js';
 import { classNames } from '../../utils/classnames.js';
+import { useLogger } from '../../platform/logger_provider.js';
 
 import * as icons from '../../../static/svg/symbols.generated.svg';
 
@@ -38,12 +39,12 @@ interface ActiveScriptState {
 }
 
 export const ScriptEditor: React.FC<Props> = (props: Props) => {
+    const logger = useLogger();
     const ctx = useActiveSessionState();
     const ctxDispatch = useActiveSessionStateDispatch();
     const config = useAppConfig();
 
     const [activeTab, setActiveTab] = React.useState<TabId>(TabId.MAIN_SCRIPT);
-    const [statsOpen, setStatsOpen] = React.useState<boolean>(false);
     const [view, setView] = React.useState<EditorView | null>(null);
 
     const viewWasCreated = React.useCallback((view: EditorView) => setView(view), [setView]);
@@ -113,6 +114,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
             active.current.editorScript !== targetScriptData.script ||
             active.current.editorScriptVersion !== targetScriptData.scriptVersion
         ) {
+            logger.info("loading new script", "editor");
             active.current.editorScriptVersion = targetScriptData.scriptVersion;
             active.current.editorScript = targetScriptData.script;
             active.current.schemaScript = schemaScript;
@@ -122,6 +124,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                 insert: targetScriptData.script?.toString(),
             });
         } else if (active.current.schemaScript !== schemaScriptData?.script) {
+            logger.info("skipping schema script update", "editor");
             // Only the external script changed, no need for text changes
             active.current.editorScriptVersion = targetScriptData.scriptVersion;
             active.current.editorScript = targetScriptData.script;
