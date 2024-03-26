@@ -107,7 +107,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
         // This will instruct the redirect to sqlynx.app/oauth.html about the "actual" target.
         // When initiating the OAuth flow from the native app, the redirect will then open a deep link with the OAuth code.
         // When initiating from the web, the redirect will assume there's an opener that it can post the code to.
-        const flowVariant = platform?.getPlatformType() !== PlatformType.WEB
+        const flowVariant = platform?.platformType !== PlatformType.WEB
             ? proto.sqlynx_oauth.pb.OAuthFlowVariant.NATIVE_LINK_FLOW
             : proto.sqlynx_oauth.pb.OAuthFlowVariant.WEB_OPENER_FLOW;
 

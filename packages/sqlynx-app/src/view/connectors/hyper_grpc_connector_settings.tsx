@@ -31,7 +31,6 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                     Hyper Database
                 </div>
                 <div className={style.platform_actions}>
-                    <Button leadingVisual={LogIcon} count={3}>Logs</Button>
                     <Button
                         variant="primary"
                         leadingVisual={PulseIcon}

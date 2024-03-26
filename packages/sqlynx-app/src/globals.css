@@ -95,13 +95,16 @@ html {
     margin: 0;
 }
 body {
+    position: relative;
     width: 100%;
     height: 100%;
     padding: 0;
     margin: 0;
     overflow: hidden;
 }
+
 #root {
+    position: absolute;
     width: 100%;
     height: 100%;
     padding: 0;

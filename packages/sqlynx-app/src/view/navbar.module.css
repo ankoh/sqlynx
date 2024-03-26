@@ -57,7 +57,7 @@
     position: relative;
     color: var(--nav_tab_fg);
     height: 30px;
-    border-radius: 8px;
+    border-radius: var(--border_radius);
     border: 1px solid transparent !important;
 }
 .tab:hover {
@@ -73,43 +73,37 @@
     display: block;
 }
 
-.tab_link {
+.tab_button {
+    -webkit-appearance: none;
+    background: none;
+
     text-decoration: none;
     color: var(--nav_tab_fg) !important;
+    font-family: 'Roboto';
 
     width: 100%;
     height: 100%;
-    padding: 0px 12px;
+    padding: 0px 8px;
     background-color: transparent !important;
     border-radius: var(--border_radius);
+    border: 1px solid transparent;
 
     display: flex;
     flex-direction: row;
     column-gap: 8px;
 }
-.tab_link_text {
+.tab_button_text {
     font-family: 'Roboto';
     font-weight: 300 !important;
     font-size: 0.9rem;
     margin-top: 1px;
 }
-.tab_button {
-    -webkit-appearance: none;
-    background: none;
-
-    color: var(--nav_tab_fg) !important;
-
-    height: 100%;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    padding: 0px 12px;
-    column-gap: 8px;
-
-    box-sizing: border-box;
+.tab_button_count {
+    font-weight: 400 !important;
+    font-size: 0.8rem;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 2px 6px;
     border-radius: var(--border_radius);
-    border: 1px solid transparent;
 }
 
 .page_container {

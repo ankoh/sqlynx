@@ -1,42 +1,36 @@
 import { PlatformApi, PlatformType } from './platform_api.js';
 import { NativeHyperDatabaseClient } from './native_hyperdb_client.js';
-
-/// The globals provided by tauri
-interface NativeGlobals {
-    core: {
-        convertFileSrc: (path: string, scheme: string) => string;
-        invoke: (command: string) => any;
-    }
-}
-
-/// The tauri globals
-const TAURI = ((window as any).__TAURI__ as NativeGlobals) ?? null;
-
-/// Is a running natively?
-export function isNativePlatform(): boolean {
-    return TAURI != null;
-}
+import { getNativeGlobals } from './native_globals.js';
+import { NativeLogger } from './native_logger.js';
+import { LogBuffer } from './log_buffer.js';
 
 /// Initialize the native api, if we're running in a Native app
-export async function setupNativePlatform(setApi: (api: PlatformApi) => void) {
+export async function setupNativePlatform(logBuffer: LogBuffer): Promise<PlatformApi | null> {
+    const globals = getNativeGlobals();
+
     // Not running in tauri? (e.g. regular web app?)
     // Silently stop.
-    if (TAURI == null) {
-        return;
+    if (globals == null) {
+        return null;
     }
-    console.log(TAURI);
+    console.log(globals);
 
     // Test command call
-    const os = await TAURI.core.invoke("sqlynx_get_os");
+    const os = await globals.core.invoke("sqlynx_get_os");
     console.log(os);
-    // Test streaming call via custom scheme
-    const path = TAURI.core.convertFileSrc("foo", "sqlynx-native");
-    const response = await fetch(path);
-    console.log(await response.text());
+
+    // // Test streaming call via custom scheme
+    // const path = globals.core.convertFileSrc("foo", "sqlynx-native");
+    // const response = await fetch(path);
+    // console.log(await response.text());
 
     // Build the api client
-    setApi({
-        getPlatformType: () => PlatformType.MACOS,
-        getHyperDatabaseClient: () => new NativeHyperDatabaseClient({ proxyEndpoint: new URL("sqlynx-native://localhost") }),
-    });
+    return {
+        /// The platform type
+        platformType: PlatformType.MACOS,
+        /// The native logger
+        logger: new NativeLogger(globals, logBuffer),
+        /// The Hyper database client
+        hyperDatabaseClient: new NativeHyperDatabaseClient({ proxyEndpoint: new URL("sqlynx-native://localhost") }),
+    };
 };
