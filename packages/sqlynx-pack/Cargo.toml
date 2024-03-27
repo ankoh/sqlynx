@@ -15,7 +15,7 @@ futures = "0.3.30"
 chrono = "0.4.35"
 anyhow = "1.0.81"
 semver = "1.0.22"
-aws-sdk-s3 = "1.20.0"
+aws-sdk-s3 = "1.21.0"
 aws-credential-types = "1.1.8"
 log = "0.4"
 env_logger = "0.11.3"
@@ -37,7 +37,7 @@ version = "3.7.0"
 features = ["json"]
 
 [dependencies.aws-config]
-version = "1.1.8"
+version = "1.1.9"
 
 [dependencies.tokio]
 version = "1"
