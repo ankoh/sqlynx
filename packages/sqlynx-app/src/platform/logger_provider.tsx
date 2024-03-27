@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { Logger } from './logger.js';
-import { getNativeGlobals, isNativePlatform } from './native_globals.js';
+import { isNativePlatform } from './native_globals.js';
 import { NativeLogger } from './native_logger.js';
 import { WebLogger } from './web_logger.js';
 
@@ -15,7 +15,7 @@ type Props = {
 
 export const LoggerProvider: React.FC<Props> = (props: Props) => {
     // Synchronously setup a logger
-    const logger = React.useMemo<Logger>(() => isNativePlatform() ? new NativeLogger(getNativeGlobals()) : new WebLogger(), []);
+    const logger = React.useMemo<Logger>(() => isNativePlatform() ? new NativeLogger() : new WebLogger(), []);
 
     // Maintain a log buffer version
     return (
