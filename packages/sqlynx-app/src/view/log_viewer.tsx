@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { motion } from "framer-motion"
-
 import { createPortal } from 'react-dom';
 import { VariableSizeGrid as Grid } from 'react-window';
 import { IconButton } from '@primer/react';
@@ -79,7 +78,7 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
     const containerRef = React.useRef<HTMLDivElement>(null);
     const containerSize = observeSize(containerRef);
     const containerWidth = containerSize?.width ?? 200;
-    const containerHeight = containerSize?.height ?? 400;
+    const containerHeight = containerSize?.height ?? 100;
 
     // Determine column width
     const scrollBarShown = (logger.buffer.length * ROW_HEIGHT) >= containerHeight;
