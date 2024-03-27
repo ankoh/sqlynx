@@ -5,8 +5,9 @@ import { classNames } from '../utils/classnames.js';
 import { HoverMode, NavBarLink, NavBarButtonWithRef } from './navbar_button.js';
 import { PlatformType, usePlatformType } from '../platform/platform_type.js';
 import { useSessionLinks } from '../session/session_link_manager.js';
-import { SQLYNX_GET_URL, SQLYNX_VERSION } from '../globals.js';
+import { SQLYNX_VERSION } from '../globals.js';
 import { LogViewerInPortal } from './log_viewer.js';
+import { VersionViewerInPortal } from './version_viewer.js';
 
 import styles from './navbar.module.css';
 
@@ -62,6 +63,23 @@ const LogButton = (props: {}) => {
     );
 }
 
+const UpdateButton = (props: {}) => {
+    const [isOpen, setIsOpen] = React.useState<boolean>(false);
+    return (
+        <div className={styles.tab}>
+            <NavBarButtonWithRef className={styles.tab_button} hover={HoverMode.Darken} onClick={() => setIsOpen(s => !s)}>
+                <>
+                    <svg width="14px" height="14px">
+                        <use xlinkHref={`${symbols}#package`} />
+                    </svg>
+                    <span className={styles.tab_button_text}>{SQLYNX_VERSION}</span>
+                </>
+            </NavBarButtonWithRef>
+            {isOpen && <VersionViewerInPortal onClose={() => setIsOpen(false)} />}
+        </div>
+    );
+};
+
 export const NavBar = (): React.ReactElement => {
     const location = useLocation();
     const platformType = usePlatformType();
@@ -79,7 +97,7 @@ export const NavBar = (): React.ReactElement => {
             </div>
             <div className={styles.version_container}>
                 <LogButton />
-                <ExternalLink label={SQLYNX_VERSION} url={SQLYNX_GET_URL} icon={`${symbols}#package`} newWindow={true} />
+                <UpdateButton />
                 {isBrowser
                     ? <ExternalLink label="Open in App" url={sessionLinks?.privateDeepLink.toString()} icon={`${symbols}#download_desktop`} newWindow={false} />
                     : <ExternalLink label="Open in Browser" url={sessionLinks?.privateWebLink.toString()} icon={`${symbols}#upload_browser`} newWindow={true} />
