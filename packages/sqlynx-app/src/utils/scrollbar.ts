@@ -1,5 +1,3 @@
-import * as React from 'react';
-
 let SCROLLBAR_WIDTH: number | null = null;
 
 // Kudos to: https://www.robinwieruch.de/react-hook-scrollbar-width/
