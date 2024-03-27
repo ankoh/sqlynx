@@ -139,7 +139,11 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
             </div>
             <div className={page_styles.card_container}>
                 <div className={page_styles.card_header}>
-                    <div>Authorization Succeeded</div>
+                    <div className={page_styles.card_header_left_container}>
+                        Authorization Succeeded
+                    </div>
+                    <div className={page_styles.card_header_right_container}>
+                    </div>
                 </div>
                 {infoSection}
                 <div className={page_styles.card_section}>

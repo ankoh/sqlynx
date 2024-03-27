@@ -8,6 +8,7 @@ import { XIcon } from '@primer/octicons-react';
 
 import { LogLevel, getLogLevelName } from '../platform/log_buffer.js';
 import { useLogger } from '../platform/logger_provider.js';
+import { useScrollbarWidth } from '../utils/scrollbar.js';
 import { observeSize } from './size_observer.js';
 
 import styles from './log_viewer.module.css';
@@ -70,7 +71,6 @@ const COLUMN_TIMESTAMP_WIDTH = 64;
 const COLUMN_LEVEL_WIDTH = 48;
 const COLUMN_TARGET_WIDTH = 96;
 const ROW_HEIGHT = 32;
-const COLUMN_RIGHT_PADDING = 0;
 
 export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
     const logger = useLogger();
@@ -82,8 +82,11 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
     const containerHeight = containerSize?.height ?? 400;
 
     // Determine column width
+    const scrollBarShown = (logger.buffer.length * ROW_HEIGHT) >= containerHeight;
+    const scrollBarWidth = useScrollbarWidth();
+    const scrollBarWidthIfShown = scrollBarShown ? scrollBarWidth : 0;
     const columnWidthLeftOfMessage = COLUMN_TIMESTAMP_WIDTH + COLUMN_LEVEL_WIDTH + COLUMN_TARGET_WIDTH;
-    const columnWidthMessage = Math.max(containerWidth, columnWidthLeftOfMessage + COLUMN_RIGHT_PADDING) - (columnWidthLeftOfMessage + COLUMN_RIGHT_PADDING);
+    const columnWidthMessage = Math.max(containerWidth, columnWidthLeftOfMessage + scrollBarWidth) - columnWidthLeftOfMessage - scrollBarWidthIfShown;
     const columnWidths = React.useMemo(() => ([COLUMN_TIMESTAMP_WIDTH, COLUMN_LEVEL_WIDTH, COLUMN_TARGET_WIDTH, columnWidthMessage]), [containerWidth]);
     const getColumnWidth = (col: number) => columnWidths[col];
     const getRowHeight = (_row: number) => ROW_HEIGHT;
@@ -118,6 +121,10 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
     const seenLogRows = React.useRef<number>(0);
     React.useEffect(() => {
         if (gridRef.current) {
+            const rowCount = logger.buffer.length;
+            seenLogRows.current = rowCount;
+            // Scroll to last row
+            gridRef.current.scrollToItem({ rowIndex: Math.max(rowCount, 1) - 1 });
             // Only tell the grid about the new rows.
             // Note that this relies on the detail that we're currently not flushing out old records.
             gridRef.current.resetAfterIndices({
@@ -125,10 +132,6 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
                 columnIndex: 0,
                 shouldForceUpdate: true
             });
-            const rowCount = logger.buffer.length;
-            seenLogRows.current = rowCount;
-            // Scroll to last row
-            gridRef.current.scrollToItem({ rowIndex: Math.max(rowCount, 1) - 1 });
         }
     }, [logVersion]);
 
