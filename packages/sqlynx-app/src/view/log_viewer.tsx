@@ -30,7 +30,6 @@ interface TimestampCellProps {
     children: number;
 }
 export const TimestampCell: React.FC<TimestampCellProps> = (props: TimestampCellProps) => {
-    console.log(props);
     return (
         <div className={styles.cell_timestamp} style={props.style}>
             {(new Date(props.children)).toLocaleTimeString()}
@@ -66,6 +65,7 @@ interface LogViewerProps {
     onClose: () => void;
 }
 
+const COLUMN_COUNT = 4;
 const COLUMN_TIMESTAMP_WIDTH = 64;
 const COLUMN_LEVEL_WIDTH = 48;
 const COLUMN_TARGET_WIDTH = 96;
@@ -73,20 +73,20 @@ const ROW_HEIGHT = 32;
 
 export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
     const logger = useLogger();
-    const logRowCount = logger.buffer.length;
 
     // Determine log container dimensions
-    const logContainerRef = React.useRef<HTMLDivElement>(null);
-    const logContainerSize = observeSize(logContainerRef);
-    const logContainerWidth = logContainerSize?.width ?? 0;
-    const logContainerHeight = logContainerSize?.height ?? 0;
+    const containerRef = React.useRef<HTMLDivElement>(null);
+    const containerSize = observeSize(containerRef);
+    const containerWidth = containerSize?.width ?? 200;
+    const containerHeight = containerSize?.height ?? 400;
 
-    const columnWidthLeftOfMessage = Math.max(logContainerWidth, COLUMN_TIMESTAMP_WIDTH + COLUMN_LEVEL_WIDTH + COLUMN_TARGET_WIDTH + 3);
-    const columnWidths = React.useMemo(() => ([COLUMN_TIMESTAMP_WIDTH, COLUMN_LEVEL_WIDTH, COLUMN_TARGET_WIDTH, columnWidthLeftOfMessage - COLUMN_TIMESTAMP_WIDTH - COLUMN_LEVEL_WIDTH - COLUMN_TARGET_WIDTH]), [logContainerWidth]);
+    // Determine column width
+    const columnWidthLeftOfMessage = Math.max(containerWidth, COLUMN_TIMESTAMP_WIDTH + COLUMN_LEVEL_WIDTH + COLUMN_TARGET_WIDTH + 3);
+    const columnWidths = React.useMemo(() => ([COLUMN_TIMESTAMP_WIDTH, COLUMN_LEVEL_WIDTH, COLUMN_TARGET_WIDTH, columnWidthLeftOfMessage - COLUMN_TIMESTAMP_WIDTH - COLUMN_LEVEL_WIDTH - COLUMN_TARGET_WIDTH]), [containerWidth]);
     const getColumnWidth = (col: number) => columnWidths[col];
     const getRowHeight = (_row: number) => ROW_HEIGHT;
 
-    // Poll the log version when the viewer is opened
+    // Poll the log version when the viewer is opened and translate into React state
     const [logVersion, setLogVersion] = React.useState<number>(logger.buffer.version);
     React.useEffect(() => {
         let intervalId = setInterval(() => {
@@ -99,14 +99,36 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
         };
     }, []);
 
-    // Build key for grid refreshes
-    const logGridKey = (logContainerWidth & 0xFFFF) | ((logContainerHeight & 0xFFFF) << 16) | ((logVersion & 0xFFFF) << 32);
-    console.log(`width=${logContainerWidth}, height=${logContainerHeight}, logGridKey=${logGridKey}`);
 
+    // Reset the grid styling when container dimensions change or log gets updated
     const gridRef = React.useRef<Grid>(null);
     React.useEffect(() => {
-        gridRef?.current?.scrollToItem({ rowIndex: Math.max(logRowCount, 1) - 1 });
-    }, [logRowCount]);
+        if (gridRef.current) {
+            gridRef.current.resetAfterIndices({
+                rowIndex: 0,
+                columnIndex: 0,
+                shouldForceUpdate: true
+            });
+        }
+    }, [containerWidth, containerHeight]);
+
+    // Detect whenever the log version changes
+    const seenLogRows = React.useRef<number>(0);
+    React.useEffect(() => {
+        if (gridRef.current) {
+            // Only tell the grid about the new rows.
+            // Note that this relies on the detail that we're currently not flushing out old records.
+            gridRef.current.resetAfterIndices({
+                rowIndex: seenLogRows.current,
+                columnIndex: 0,
+                shouldForceUpdate: true
+            });
+            const rowCount = logger.buffer.length;
+            seenLogRows.current = rowCount;
+            // Scroll to last row
+            gridRef.current.scrollToItem({ rowIndex: Math.max(rowCount, 1) - 1 });
+        }
+    }, [logVersion]);
 
     const Cell = ({ columnIndex, rowIndex, style }: any) => {
         const record = logger.buffer.at(rowIndex)!;
@@ -146,17 +168,16 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
                         />
                     </div>
                 </div>
-                <div className={styles.log_grid_container} ref={logContainerRef}>
+                <div className={styles.log_grid_container} ref={containerRef}>
                     <Grid
                         ref={gridRef}
-                        key={logGridKey}
-                        width={logContainerWidth}
-                        height={logContainerHeight}
-                        columnCount={4}
+                        width={containerWidth}
+                        height={containerHeight}
+                        columnCount={COLUMN_COUNT}
                         columnWidth={getColumnWidth}
-                        rowCount={logRowCount}
+                        rowCount={logger.buffer.length}
                         rowHeight={getRowHeight}
-                        estimatedColumnWidth={logContainerWidth / 4}
+                        estimatedColumnWidth={containerWidth / COLUMN_COUNT}
                         estimatedRowHeight={ROW_HEIGHT}
                     >
                         {Cell}
