@@ -69,7 +69,7 @@ interface LogViewerProps {
 const COLUMN_TIMESTAMP_WIDTH = 64;
 const COLUMN_LEVEL_WIDTH = 48;
 const COLUMN_TARGET_WIDTH = 96;
-const ROW_HEIGHT = 28;
+const ROW_HEIGHT = 32;
 
 export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
     const logger = useLogger();
@@ -104,10 +104,8 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
     console.log(`width=${logContainerWidth}, height=${logContainerHeight}, logGridKey=${logGridKey}`);
 
     const gridRef = React.useRef<Grid>(null);
-    const scrollToBottom = () =>
-        gridRef?.current?.scrollToItem({ rowIndex: logRowCount });
     React.useEffect(() => {
-        scrollToBottom();
+        gridRef?.current?.scrollToItem({ rowIndex: Math.max(logRowCount, 1) - 1 });
     }, [logRowCount]);
 
     const Cell = ({ columnIndex, rowIndex, style }: any) => {
@@ -150,6 +148,7 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
                 </div>
                 <div className={styles.log_grid_container} ref={logContainerRef}>
                     <Grid
+                        ref={gridRef}
                         key={logGridKey}
                         width={logContainerWidth}
                         height={logContainerHeight}
