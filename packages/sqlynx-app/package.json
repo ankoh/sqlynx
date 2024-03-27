@@ -40,7 +40,7 @@
         "@types/react-window": "^1.8.8",
         "@typescript-eslint/eslint-plugin": "^7.4.0",
         "@typescript-eslint/parser": "^7.4.0",
-        "@uiw/codemirror-themes-all": "^4.21.24",
+        "@uiw/codemirror-themes-all": "^4.21.25",
         "apache-arrow": "^15.0.2",
         "cm6-theme-basic-light": "^0.2.0",
         "cm6-theme-nord": "^0.2.0",
