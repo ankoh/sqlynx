@@ -246,9 +246,8 @@ interface RedirectPageProps { }
 
 const RedirectPage: React.FC<RedirectPageProps> = (_props: RedirectPageProps) => {
     const [params, _setParams] = useSearchParams();
-    const code = params.get("code") ?? "";
+    // const code = params.get("code") ?? "";
     const state = params.get("state") ?? "";
-    console.log([code, state]);
 
     const authState = React.useMemo<Result<proto.sqlynx_oauth.pb.OAuthState>>(() => {
         try {
@@ -264,8 +263,6 @@ const RedirectPage: React.FC<RedirectPageProps> = (_props: RedirectPageProps) =>
             };
         }
     }, [state]);
-
-    console.log(authState);
 
     if (authState.type == RESULT_OK) {
         return <OAuthSucceeded params={params} state={authState.value} />
