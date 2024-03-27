@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Maybe, MaybeStatus } from './utils/maybe.js';
 import { ConnectorConfigs, readConnectorConfigs } from './connectors/connector_configs.js';
 import { useLogger } from './platform/logger_provider.js';
+import { SQLYNX_BUILD_MODE, SQLYNX_GIT_COMMIT, SQLYNX_VERSION } from './globals.js';
 
 const CONFIG_URL = new URL('../static/config.json', import.meta.url);
 
@@ -44,6 +45,9 @@ export const AppConfigResolver: React.FC<Props> = (props: Props) => {
                 const body = await resp.json();
                 const config = readAppConfig(body);
                 logger.info("loaded app config", "app_config");
+                if (SQLYNX_BUILD_MODE == 'development') {
+                    logger.info(`react is running in strict mode and will duplicate events`, "app_config")
+                }
                 setConfig(c => c.completeWith(config));
             } catch (e: any) {
                 console.error(e);

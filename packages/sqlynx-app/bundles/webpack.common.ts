@@ -3,7 +3,6 @@ import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import webpack from 'webpack';
-import * as childProcess from 'child_process';
 import * as webpackDevServer from 'webpack-dev-server';
 import * as url from 'url';
 import * as fs from 'fs';
@@ -13,6 +12,7 @@ export type Configuration = webpack.Configuration & {
 };
 
 interface ConfigParams {
+    mode: 'production' | 'development';
     target?: string;
     buildDir?: string;
     tsLoaderOptions?: any;
@@ -36,6 +36,7 @@ const CONFIG_PATH = 'static/config.[contenthash].json';
 
 export function configure(params: ConfigParams): Partial<Configuration> {
     return {
+        mode: params.mode,
         target: params.target,
         entry: {
             'app': ['./src/app.tsx'],
@@ -152,6 +153,7 @@ export function configure(params: ConfigParams): Partial<Configuration> {
                 base: params.relocatable ? './' : '/',
             }),
             new webpack.DefinePlugin({
+                'process.env.SQLYNX_BUILD_MODE': JSON.stringify(params.mode),
                 'process.env.SQLYNX_VERSION': JSON.stringify(PACKAGE_JSON.version),
                 'process.env.SQLYNX_GIT_COMMIT': JSON.stringify(PACKAGE_JSON.gitCommit),
                 'process.env.SQLYNX_APP_URL': JSON.stringify(params.appURL),

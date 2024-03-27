@@ -8,7 +8,7 @@ import { Route, Routes, BrowserRouter, useSearchParams } from 'react-router-dom'
 
 import { BASE64_CODEC } from './utils/base64.js';
 import { RESULT_OK, RESULT_ERROR, Result } from './utils/result.js';
-import { SQLYNX_VERSION } from './app_version.js';
+import { SQLYNX_VERSION } from './globals.js';
 import { TextField, TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_WARNING } from './view/text_field.js';
 import { GitHubTheme } from './github_theme.js';
 import { formatHHMMSS, formatTimeDifference } from './utils/format.js';

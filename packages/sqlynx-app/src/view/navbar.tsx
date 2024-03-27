@@ -5,7 +5,7 @@ import { classNames } from '../utils/classnames.js';
 import { HoverMode, NavBarLink, NavBarButtonWithRef } from './navbar_button.js';
 import { PlatformType, usePlatformType } from '../platform/platform_type.js';
 import { useSessionLinks } from '../session/session_link_manager.js';
-import { SQLYNX_GET_URL, SQLYNX_VERSION } from '../app_version.js';
+import { SQLYNX_GET_URL, SQLYNX_VERSION } from '../globals.js';
 import { LogViewerInPortal } from './log_viewer.js';
 
 import styles from './navbar.module.css';
