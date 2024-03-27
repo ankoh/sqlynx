@@ -123,17 +123,22 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
         if (gridRef.current) {
             const rowCount = logger.buffer.length;
             seenLogRows.current = rowCount;
-            // Scroll to last row
-            gridRef.current.scrollToItem({ rowIndex: Math.max(rowCount, 1) - 1 });
+
             // Only tell the grid about the new rows.
             // Note that this relies on the detail that we're currently not flushing out old records.
             gridRef.current.resetAfterIndices({
-                rowIndex: seenLogRows.current,
+                rowIndex: Math.max(seenLogRows.current, 1) - 1,
                 columnIndex: 0,
                 shouldForceUpdate: true
             });
+
+            // Scroll to last row
+            gridRef.current.scrollToItem({
+                align: 'end',
+                rowIndex: Math.max(rowCount, 1) - 1
+            });
         }
-    }, [logVersion]);
+    }, [logVersion, scrollBarShown, containerHeight]);
 
     const Cell = ({ columnIndex, rowIndex, style }: any) => {
         const record = logger.buffer.at(rowIndex)!;
