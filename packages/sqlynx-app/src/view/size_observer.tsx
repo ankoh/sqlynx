@@ -15,7 +15,9 @@ export const observeSize = (target: React.RefObject<HTMLElement>): ObservedSize 
     React.useLayoutEffect(() => {
         setSize(target.current?.getBoundingClientRect() ?? null);
     }, [target.current]);
-    useResizeObserver(target, (entry: ResizeObserverEntry) => setSize(entry.contentRect));
+    useResizeObserver(target, (entry: ResizeObserverEntry) => {
+        setSize(entry.contentRect);
+    });
     return size;
 };
 
