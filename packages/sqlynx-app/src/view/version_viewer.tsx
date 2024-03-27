@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { IconButton } from '@primer/react';
 import { XIcon } from '@primer/octicons-react';
 import { motion } from "framer-motion"
+import { SQLYNX_GIT_COMMIT, SQLYNX_VERSION } from '../globals.js';
 
 // import { useLogger } from '../platform/logger_provider';
 
@@ -32,7 +33,7 @@ export const VersionViewer: React.FC<VersionViewerProps> = (props: VersionViewer
             >
                 <div className={styles.header_container}>
                     <div className={styles.header_left_container}>
-                        <div className={styles.page_title}>Version</div>
+                        <div className={styles.title}>Version</div>
                     </div>
                     <div className={styles.header_right_container}>
                         <IconButton
@@ -43,7 +44,26 @@ export const VersionViewer: React.FC<VersionViewerProps> = (props: VersionViewer
                         />
                     </div>
                 </div>
-                <div />
+                <div className={styles.version_info_container}>
+                    <div className={styles.version_info_key}>
+                        Release Channel
+                    </div>
+                    <div className={styles.version_info_value}>
+                        Canary
+                    </div>
+                    <div className={styles.version_info_key}>
+                        Release Version
+                    </div>
+                    <div className={styles.version_info_value}>
+                        {SQLYNX_VERSION}
+                    </div>
+                    <div className={styles.version_info_key}>
+                        Git Commit
+                    </div>
+                    <div className={styles.version_info_value}>
+                        {SQLYNX_GIT_COMMIT}
+                    </div>
+                </div>
             </motion.div>
         </div>
     );
