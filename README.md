@@ -41,6 +41,13 @@ make benchmark_pipeline   # Benchmark the processing pipeline
 
 make svg_symbols          # Update svg sprites used in the PWA
 make pwa_tests            # Run js tests of the PWA
+
+# PWA dev server, you will spend most time here during development
+#
+# Make sure to increase the number of file system watchers for hot module reloading:
+# MacOS: sudo sysctl -w kern.maxfiles=524288
+# Linux: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+#
 make pwa_dev              # Run the dev server of the PWA
 
 make native_tests         # Run rust tests of native app

@@ -29,6 +29,8 @@ const config: Configuration = {
     devServer: {
         historyApiFallback: true,
         compress: true,
+        hot: true,
+        liveReload: true,
         port: 9002,
         static: {
             directory: url.fileURLToPath(new URL('./build/pwa/dev/static', import.meta.url)),
