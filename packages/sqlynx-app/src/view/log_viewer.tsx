@@ -14,7 +14,8 @@ import styles from './log_viewer.module.css';
 
 interface LevelCellProps {
     level: LogLevel;
-    style?: React.CSSProperties;
+    style: React.CSSProperties;
+    rowIndex: number;
 }
 export const LevelCell: React.FC<LevelCellProps> = (props: LevelCellProps) => {
     const level = getLogLevelName(props.level);
@@ -26,8 +27,9 @@ export const LevelCell: React.FC<LevelCellProps> = (props: LevelCellProps) => {
 }
 
 interface TimestampCellProps {
-    style?: React.CSSProperties;
     children: number;
+    style: React.CSSProperties;
+    rowIndex: number;
 }
 export const TimestampCell: React.FC<TimestampCellProps> = (props: TimestampCellProps) => {
     return (
@@ -38,8 +40,9 @@ export const TimestampCell: React.FC<TimestampCellProps> = (props: TimestampCell
 }
 
 interface TargetCellProps {
-    style?: React.CSSProperties;
     children: string;
+    style: React.CSSProperties;
+    rowIndex: number;
 }
 export const TargetCell: React.FC<TargetCellProps> = (props: TargetCellProps) => {
     return (
@@ -50,8 +53,9 @@ export const TargetCell: React.FC<TargetCellProps> = (props: TargetCellProps) =>
 }
 
 interface MessageCellProps {
-    style?: React.CSSProperties;
     children: string;
+    style: React.CSSProperties;
+    rowIndex: number;
 }
 export const MessageCell: React.FC<MessageCellProps> = (props: MessageCellProps) => {
     return (
@@ -142,10 +146,10 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
     const Cell = ({ columnIndex, rowIndex, style }: any) => {
         const record = logger.buffer.at(rowIndex)!;
         switch (columnIndex) {
-            case 0: return <TimestampCell style={style}>{record.timestamp}</TimestampCell>;
-            case 1: return <LevelCell level={record.level} style={style} />;
-            case 2: return <TargetCell style={style}>{record.target}</TargetCell>;
-            case 3: return <MessageCell style={style}>{record.message}</MessageCell>;
+            case 0: return <TimestampCell rowIndex={rowIndex} style={style}>{record.timestamp}</TimestampCell>;
+            case 1: return <LevelCell rowIndex={rowIndex} level={record.level} style={style} />;
+            case 2: return <TargetCell rowIndex={rowIndex} style={style}>{record.target}</TargetCell>;
+            case 3: return <MessageCell rowIndex={rowIndex} style={style}>{record.message}</MessageCell>;
         }
     };
 

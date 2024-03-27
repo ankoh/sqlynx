@@ -87,6 +87,7 @@
     background-color: var(--log_background);
     border-radius: 0 0 var(--border_radius) var(--border_radius);
 }
+
 .cell_timestamp {
     width: 100%;
     height: 100%;
