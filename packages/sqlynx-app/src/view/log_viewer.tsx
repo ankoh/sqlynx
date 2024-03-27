@@ -70,6 +70,7 @@ const COLUMN_TIMESTAMP_WIDTH = 64;
 const COLUMN_LEVEL_WIDTH = 48;
 const COLUMN_TARGET_WIDTH = 96;
 const ROW_HEIGHT = 32;
+const COLUMN_RIGHT_PADDING = 0;
 
 export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
     const logger = useLogger();
@@ -81,8 +82,9 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
     const containerHeight = containerSize?.height ?? 400;
 
     // Determine column width
-    const columnWidthLeftOfMessage = Math.max(containerWidth, COLUMN_TIMESTAMP_WIDTH + COLUMN_LEVEL_WIDTH + COLUMN_TARGET_WIDTH + 3);
-    const columnWidths = React.useMemo(() => ([COLUMN_TIMESTAMP_WIDTH, COLUMN_LEVEL_WIDTH, COLUMN_TARGET_WIDTH, columnWidthLeftOfMessage - COLUMN_TIMESTAMP_WIDTH - COLUMN_LEVEL_WIDTH - COLUMN_TARGET_WIDTH]), [containerWidth]);
+    const columnWidthLeftOfMessage = COLUMN_TIMESTAMP_WIDTH + COLUMN_LEVEL_WIDTH + COLUMN_TARGET_WIDTH;
+    const columnWidthMessage = Math.max(containerWidth, columnWidthLeftOfMessage + COLUMN_RIGHT_PADDING) - (columnWidthLeftOfMessage + COLUMN_RIGHT_PADDING);
+    const columnWidths = React.useMemo(() => ([COLUMN_TIMESTAMP_WIDTH, COLUMN_LEVEL_WIDTH, COLUMN_TARGET_WIDTH, columnWidthMessage]), [containerWidth]);
     const getColumnWidth = (col: number) => columnWidths[col];
     const getRowHeight = (_row: number) => ROW_HEIGHT;
 
