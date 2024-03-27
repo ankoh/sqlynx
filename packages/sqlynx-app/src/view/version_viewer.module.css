@@ -25,7 +25,6 @@
 
 .overlay_card {
     width: 90%;
-    height: 90%;
     max-width: 480px;
     max-height: 320px;
     z-index: 200;
@@ -55,7 +54,7 @@
 
 .header_left_container {
     grid-column: 1;
-    margin-left: 20px;
+    margin-left: 16px;
     height: 100%;
     display: flex;
     flex-direction: row;
@@ -74,6 +73,23 @@
     overflow: hidden;
 }
 
-.page_title {
+.title {
     font-size: 1rem;
+}
+
+.version_info_container {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    grid-column-gap: 8px;
+    padding: 8px 0px;
+    font-size: 0.9rem;
+}
+
+.version_info_key {
+    grid-column: 1;
+    padding: 8px 16px;
+}
+.version_info_value {
+    grid-column: 2;
+    padding: 8px 16px;
 }

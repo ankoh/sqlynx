@@ -170,7 +170,7 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
             >
                 <div className={styles.header_container}>
                     <div className={styles.header_left_container}>
-                        <div className={styles.page_title}>Logs</div>
+                        <div className={styles.title}>Logs</div>
                     </div>
                     <div className={styles.header_right_container}>
                         <IconButton
