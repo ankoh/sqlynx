@@ -2,6 +2,7 @@ import { configure, Configuration } from './webpack.common.js';
 import * as url from 'url';
 
 const base = configure({
+    mode: 'production',
     target: 'web',
     buildDir: url.fileURLToPath(new URL('../build/reloc', import.meta.url)),
     tsLoaderOptions: {
@@ -18,7 +19,6 @@ const base = configure({
 
 const config: Configuration = {
     ...base,
-    mode: 'production',
     devtool: false,
 };
 

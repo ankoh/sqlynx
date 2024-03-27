@@ -15,7 +15,7 @@ import { SessionLinkManager } from './session/session_link_manager.js';
 import { SalesforceConnector } from './connectors/salesforce_connector.js';
 import { GitHubTheme } from './github_theme.js';
 import { AppConfigResolver } from './app_config.js';
-import { SQLYNX_GIT_COMMIT, SQLYNX_VERSION } from './app_version.js';
+import { SQLYNX_GIT_COMMIT, SQLYNX_VERSION } from './globals.js';
 import { LoggerProvider } from './platform/logger_provider.js';
 import { PlatformTypeProvider } from './platform/platform_type.js';
 import { HyperDatabaseClientProvider } from './platform/hyperdb_client_provider.js';
