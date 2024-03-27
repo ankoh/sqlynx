@@ -1,15 +1,14 @@
+import { listen, UnlistenFn } from "@tauri-apps/api/event";
+import { invoke } from "@tauri-apps/api/core";
 import { LogRecord } from './log_buffer.js';
-import { NativeGlobals, Unlistener } from './native_globals.js';
 import { Logger } from './logger.js';
 
 export class NativeLogger extends Logger {
-    globals: NativeGlobals;
-    unlistener: Promise<Unlistener>;
+    unlistener: Promise<UnlistenFn>;
 
-    constructor(globals: NativeGlobals) {
+    constructor() {
         super();
-        this.globals = globals;
-        this.unlistener = globals.event.listen("log://log", (event: any) => {
+        this.unlistener = listen("log://log", (event: any) => {
             const record = JSON.parse(event.payload.message) as LogRecord;
             this.outputBuffer.push(record);
         });
@@ -29,8 +28,7 @@ export class NativeLogger extends Logger {
         this.pendingRecords = [];
         for (let i = 0; i < pending.length; ++i) {
             const record = pending[i];
-            console.log("invoke");
-            this.globals.core.invoke("plugin:log|log", {
+            invoke("plugin:log|log", {
                 level: record.level,
                 message: record.message,
                 location: record.target
