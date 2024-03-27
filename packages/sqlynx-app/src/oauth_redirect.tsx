@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import * as proto from '@ankoh/sqlynx-pb';
 
-import { Button } from '@primer/react';
+import { Button, IconButton } from '@primer/react';
 import { createRoot } from 'react-dom/client';
 import { Route, Routes, BrowserRouter, useSearchParams } from 'react-router-dom';
 
@@ -11,7 +11,10 @@ import { RESULT_OK, RESULT_ERROR, Result } from './utils/result.js';
 import { SQLYNX_VERSION } from './app_version.js';
 import { TextField, TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_WARNING } from './view/text_field.js';
 import { GitHubTheme } from './github_theme.js';
-import { formatTimeDifference } from './utils/format.js';
+import { formatHHMMSS, formatTimeDifference } from './utils/format.js';
+import { LogViewerInPortal } from './view/log_viewer.js';
+import { LoggerProvider, useLogger } from './platform/logger_provider.js';
+import { Logger } from './platform/logger.js';
 
 import _styles from './oauth_redirect.module.css';
 import page_styles from './view/banner_page.module.css';
@@ -27,18 +30,19 @@ interface OAuthSucceededProps {
     state: proto.sqlynx_oauth.pb.OAuthState;
 }
 
-function triggerFlow(state: proto.sqlynx_oauth.pb.OAuthState, code: string) {
+function triggerFlow(state: proto.sqlynx_oauth.pb.OAuthState, code: string, logger: Logger) {
     switch (state.flowVariant) {
         case proto.sqlynx_oauth.pb.OAuthFlowVariant.NATIVE_LINK_FLOW: {
             const data = new proto.sqlynx_oauth.pb.OAuthRedirectData({ code, state });
             const dataBase64 = BASE64_CODEC.encode(data.toBinary().buffer);
             const deepLink = new URL(`sqlynx://localhost/oauth?data=${dataBase64}`);
+            logger.info(`opening deep link`, "oauth_redirect");
             window.open(deepLink, '_self');
             break;
         }
         case proto.sqlynx_oauth.pb.OAuthFlowVariant.WEB_OPENER_FLOW: {
             if (!window.opener) {
-                console.warn("window opener is undefined");
+                logger.error("window opener is undefined", "oauth_redirect");
                 return;
             }
             const eventMessage = new proto.sqlynx_app_event.pb.AppEvent({
@@ -48,6 +52,7 @@ function triggerFlow(state: proto.sqlynx_oauth.pb.OAuthState, code: string) {
                 }
             });
             const eventBase64 = BASE64_CODEC.encode(eventMessage.toBinary().buffer);
+            logger.info(`posting oauth data to opener`, "oauth_redirect");
             window.opener.postMessage(eventBase64);
             break;
         }
@@ -55,34 +60,31 @@ function triggerFlow(state: proto.sqlynx_oauth.pb.OAuthState, code: string) {
 }
 
 const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProps) => {
-    let code = props.params.get('code') ?? '';
-    let codeIsExpired: boolean = true;
-    let codeExpiresAt: Date | undefined = undefined;
+    const logger = useLogger();
 
-    // Refresh expiration timer every second
-    const [now, setNow] = React.useState(new Date());
-    React.useEffect(() => {
-        const intervalId = setInterval(() => setNow(new Date()), 100);
-        return () => clearInterval(intervalId);
-    }, []);
+    let code = props.params.get('code') ?? '';
+    const now = new Date();
+    const [logsAreOpen, setLogsAreOpen] = React.useState<boolean>(false);
 
     // Setup autotrigger timestamp
     const autoTriggersAt = React.useMemo(() => new Date(now.getTime() + AUTOTRIGGER_DELAY), []);
     const remainingUntilAutoTrigger = Math.max(autoTriggersAt.getTime(), now.getTime()) - now.getTime();
     React.useEffect(() => {
-        const timeoutId = setTimeout(() => triggerFlow(props.state, code), remainingUntilAutoTrigger);
+        logger.info(`setup auto-trigger in ${formatHHMMSS(remainingUntilAutoTrigger / 1000)}`, "oauth_redirect");
+        const timeoutId = setTimeout(() => triggerFlow(props.state, code, logger), remainingUntilAutoTrigger);
         return () => clearTimeout(timeoutId);
     }, [props.state, code]);
 
-    // Render provider arguments from state
-    let infoSection: React.ReactElement = <div />;
+    // Render provider options
+    let providerOptionsSection: React.ReactElement = <div />;
+    let codeExpiresAt: Date | undefined = undefined;
+    let [codeIsExpired, setCodeIsExpired] = React.useState(false);
     switch (props.state.providerOptions.case) {
         case "salesforceProvider": {
             const expiresAt = props.state.providerOptions.value.expiresAt;
-            // const expiresAt = 10;
             codeIsExpired = now.getTime() > (expiresAt ?? 0);
             codeExpiresAt = codeIsExpired ? undefined : new Date(Number(expiresAt));
-            infoSection = (
+            providerOptionsSection = (
                 <div className={page_styles.card_section}>
                     <div className={page_styles.section_entries}>
                         <TextField
@@ -104,6 +106,15 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
             );
         }
     }
+
+    // Determine the time we have left
+    let remainingUntilExpiration = codeExpiresAt !== undefined
+        ? (Math.max(codeExpiresAt.getTime(), now.getTime()) - now.getTime()) : 0;
+    React.useEffect(() => {
+        logger.info(`code expires in ${formatHHMMSS(remainingUntilExpiration / 1000)}`, "oauth_redirect");
+        const timeoutId = setTimeout(() => setCodeIsExpired(true), remainingUntilExpiration);
+        return () => clearTimeout(timeoutId);
+    }, [props.state]);
 
     // Get expiration validation
     let codeExpirationValidation: TextFieldValidationStatus;
@@ -143,9 +154,20 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
                         Authorization Succeeded
                     </div>
                     <div className={page_styles.card_header_right_container}>
+                        <IconButton
+                            variant="invisible"
+                            icon={() => (
+                                <svg width="16px" height="16px">
+                                    <use xlinkHref={`${symbols}#log`} />
+                                </svg>
+                            )}
+                            aria-label="close-overlay"
+                            onClick={() => setLogsAreOpen(s => !s)}
+                        />
+                        {logsAreOpen && <LogViewerInPortal onClose={() => setLogsAreOpen(false)} />}
                     </div>
                 </div>
-                {infoSection}
+                {providerOptionsSection}
                 <div className={page_styles.card_section}>
                     <div className={page_styles.section_entries}>
                         <TextField
@@ -169,14 +191,14 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
                                     ? <Button
                                         className={page_styles.card_action_continue}
                                         variant="primary"
-                                        onClick={() => triggerFlow(props.state, code)}
+                                        onClick={() => triggerFlow(props.state, code, logger)}
                                     >
                                         Send to App
                                     </Button>
                                     : <Button
                                         className={page_styles.card_action_continue}
                                         variant="primary"
-                                        onClick={() => triggerFlow(props.state, code)}
+                                        onClick={() => triggerFlow(props.state, code, logger)}
                                         trailingVisual={() => <div>{Math.ceil(remainingUntilAutoTrigger / 1000)}</div>}
                                     >
                                         Send to App
@@ -258,9 +280,11 @@ root.render(
     <React.StrictMode>
         <BrowserRouter>
             <GitHubTheme>
-                <Routes>
-                    <Route path="*" element={<RedirectPage />} />
-                </Routes>
+                <LoggerProvider>
+                    <Routes>
+                        <Route path="*" element={<RedirectPage />} />
+                    </Routes>
+                </LoggerProvider>
             </GitHubTheme>
         </BrowserRouter>
     </React.StrictMode>,

@@ -139,6 +139,7 @@
     background-color: var(--log_cell_background);
     font-size: 0.8rem;
     text-wrap: nowrap;
+    overflow: hidden;
 
     position: relative;
 }
