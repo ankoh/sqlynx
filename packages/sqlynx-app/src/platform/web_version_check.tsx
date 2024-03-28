@@ -4,12 +4,15 @@ import { useLogger } from './logger_provider.js';
 import { Result, RESULT_ERROR, RESULT_OK } from '../utils/result.js';
 import { Logger } from './logger.js';
 import { SQLYNX_CANARY_RELEASE_MANIFEST, SQLYNX_STABLE_RELEASE_MANIFEST } from '../globals.js';
+import { CANARY_RELEASE_MANIFEST_CTX, CANARY_UPDATE_MANIFEST_CTX, STABLE_RELEASE_MANIFEST_CTX, STABLE_UPDATE_MANIFEST_CTX, UPDATE_STATUS_CTX, UpdateStatus } from './version_check.js';
 
 type Props = {
     children: React.ReactElement;
 };
 
-export interface ReleaseManifest { }
+export interface ReleaseManifest {
+    version: string;
+}
 
 export type ReleaseChannel = "stable" | "canary";
 
@@ -40,13 +43,25 @@ export async function loadReleaseManifest(channel: ReleaseChannel, url: URL, set
 export const WebVersionCheck: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
 
-    const [_stableRelease, setStableRelease] = React.useState<Result<ReleaseManifest> | null>(null);
-    const [_canaryRelease, setCanaryRelease] = React.useState<Result<ReleaseManifest> | null>(null);
+    const [stableRelease, setStableRelease] = React.useState<Result<ReleaseManifest> | null>(null);
+    const [canaryRelease, setCanaryRelease] = React.useState<Result<ReleaseManifest> | null>(null);
 
     React.useEffect(() => {
         loadReleaseManifest("stable", SQLYNX_STABLE_RELEASE_MANIFEST, setStableRelease, logger);
         loadReleaseManifest("canary", SQLYNX_CANARY_RELEASE_MANIFEST, setCanaryRelease, logger);
     }, []);
 
-    return props.children;
+    return (
+        <UPDATE_STATUS_CTX.Provider value={UpdateStatus.Disabled}>
+            <STABLE_RELEASE_MANIFEST_CTX.Provider value={stableRelease}>
+                <STABLE_UPDATE_MANIFEST_CTX.Provider value={null}>
+                    <CANARY_RELEASE_MANIFEST_CTX.Provider value={canaryRelease}>
+                        <CANARY_UPDATE_MANIFEST_CTX.Provider value={null}>
+                            {props.children}
+                        </CANARY_UPDATE_MANIFEST_CTX.Provider>
+                    </CANARY_RELEASE_MANIFEST_CTX.Provider>
+                </STABLE_UPDATE_MANIFEST_CTX.Provider>
+            </STABLE_RELEASE_MANIFEST_CTX.Provider>
+        </UPDATE_STATUS_CTX.Provider>
+    );
 };
