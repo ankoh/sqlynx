@@ -24,15 +24,13 @@
 }
 
 .overlay_card {
-    width: 90%;
-    max-width: 480px;
     max-height: 320px;
     z-index: 200;
     border-radius: var(--border_radius);
     border: 1px solid var(--log_border_color);
 
     display: grid;
-    grid-template-rows: 48px calc(100% - 48px);
+    grid-template-rows: 48px max-content max-content;
     grid-template-columns: 100%;
 
     background-color: white;
@@ -81,7 +79,7 @@
     display: grid;
     grid-template-columns: max-content 1fr;
     grid-column-gap: 8px;
-    padding: 8px 0px;
+    padding: 4px 0px;
     font-size: 0.9rem;
 }
 
@@ -95,4 +93,57 @@
 .version_info_value {
     grid-column: 2;
     padding: 8px 16px;
+}
+
+.release_channels_container {
+    border-top: 1px solid var(--border_color_primary);
+    font-size: 0.9rem;
+    padding: 4px 0px;
+}
+
+.release_channels_title {
+    padding: 8px 16px 8px 16px;
+    font-weight: 500;
+}
+
+.release_channel_list {
+    display: grid;
+    padding: 0px 12px 4px 16px;
+    column-gap: 20px;
+    grid-template-rows: 40px 40px;
+    grid-template-columns: max-content max-content minmax(80px, auto);
+    align-items: center;
+}
+.release_channel_name {
+    grid-column: 1;
+    justify-self: start;
+}
+.release_channel_version {
+    grid-column: 2;
+    justify-self: start;
+    display: flex;
+    flex-direction: row;
+    column-gap: 8px;
+    align-items: center;
+    justify-content: center;
+}
+.release_channel_version_icon {
+}
+.release_channel_version_name {
+}
+.release_channel_action {
+    grid-column: 3;
+    justify-self: end;
+
+    display: flex;
+    flex-direction: row;
+    column-gap: 8px;
+    align-items: center;
+    justify-content: center;
+}
+.release_channel_action_status {
+}
+.release_channel_action_status_disabled {
+    /* color: hsl(212, 8%, 73%); */
+    margin-right: 2px;
 }

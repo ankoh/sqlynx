@@ -1,10 +1,12 @@
 import * as React from 'react';
 import { createPortal } from 'react-dom';
-import { XIcon } from '@primer/octicons-react';
-import { IconButton } from '@primer/react';
+import { DownloadIcon, XIcon } from '@primer/octicons-react';
+import { Button, IconButton } from '@primer/react';
 import { motion } from "framer-motion"
 import { SQLYNX_GIT_COMMIT, SQLYNX_VERSION } from '../globals.js';
 import { check } from '@tauri-apps/plugin-updater'
+
+import * as symbols from '../../static/svg/symbols.generated.svg';
 
 // import { useLogger } from '../platform/logger_provider';
 
@@ -47,22 +49,57 @@ export const VersionViewer: React.FC<VersionViewerProps> = (props: VersionViewer
                 </div>
                 <div className={styles.version_info_container}>
                     <div className={styles.version_info_key}>
-                        Latest Version
+                        Current Version
                     </div>
                     <div className={styles.version_info_value}>
                         {SQLYNX_VERSION}
                     </div>
                     <div className={styles.version_info_key}>
-                        Own Version
-                    </div>
-                    <div className={styles.version_info_value}>
-                        {SQLYNX_VERSION}
-                    </div>
-                    <div className={styles.version_info_key}>
-                        Own Git Commit
+                        Git Commit
                     </div>
                     <div className={styles.version_info_value}>
                         {SQLYNX_GIT_COMMIT}
+                    </div>
+                </div>
+                <div className={styles.release_channels_container}>
+                    <div className={styles.release_channels_title}>
+                        Release Channels
+                    </div>
+                    <div className={styles.release_channel_list}>
+                        <>
+                            <div className={styles.release_channel_name}>
+                                Stable
+                            </div>
+                            <div className={styles.release_channel_version}>
+                                <svg className={styles.release_channel_version_icon} width="16px" height="16px">
+                                    <use xlinkHref={`${symbols}#package`} />
+                                </svg>
+                                <div className={styles.release_channel_version_name}>
+                                    v0.0.3
+                                </div>
+                            </div>
+                            <div className={styles.release_channel_action}>
+                                <span className={styles.release_channel_action_status_disabled}>
+                                    Version is older
+                                </span>
+                            </div>
+                        </>
+                        <>
+                            <div className={styles.release_channel_name}>
+                                Canary
+                            </div>
+                            <div className={styles.release_channel_version}>
+                                <svg className={styles.release_channel_version_icon} width="16px" height="16px">
+                                    <use xlinkHref={`${symbols}#package`} />
+                                </svg>
+                                <div className={styles.release_channel_version_name}>
+                                    v0.0.4-dev.123
+                                </div>
+                            </div>
+                            <div className={styles.release_channel_action}>
+                                <Button>Install</Button>
+                            </div>
+                        </>
                     </div>
                 </div>
             </motion.div>
