@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { createPortal } from 'react-dom';
-import { IconButton } from '@primer/react';
 import { XIcon } from '@primer/octicons-react';
+import { IconButton } from '@primer/react';
 import { motion } from "framer-motion"
 import { SQLYNX_GIT_COMMIT, SQLYNX_VERSION } from '../globals.js';
+import { check } from '@tauri-apps/plugin-updater'
 
 // import { useLogger } from '../platform/logger_provider';
 
@@ -46,19 +47,19 @@ export const VersionViewer: React.FC<VersionViewerProps> = (props: VersionViewer
                 </div>
                 <div className={styles.version_info_container}>
                     <div className={styles.version_info_key}>
-                        Release Channel
-                    </div>
-                    <div className={styles.version_info_value}>
-                        Canary
-                    </div>
-                    <div className={styles.version_info_key}>
-                        Release Version
+                        Latest Version
                     </div>
                     <div className={styles.version_info_value}>
                         {SQLYNX_VERSION}
                     </div>
                     <div className={styles.version_info_key}>
-                        Git Commit
+                        Own Version
+                    </div>
+                    <div className={styles.version_info_value}>
+                        {SQLYNX_VERSION}
+                    </div>
+                    <div className={styles.version_info_key}>
+                        Own Git Commit
                     </div>
                     <div className={styles.version_info_value}>
                         {SQLYNX_GIT_COMMIT}
