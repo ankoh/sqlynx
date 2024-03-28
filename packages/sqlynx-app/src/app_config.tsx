@@ -33,7 +33,7 @@ type Props = {
     children: React.ReactElement;
 };
 
-export const AppConfigResolver: React.FC<Props> = (props: Props) => {
+export const AppConfigProvider: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
     const [config, setConfig] = React.useState<Maybe<AppConfig>>(new Maybe<AppConfig, null>(MaybeStatus.NONE, null));
     const started = React.useRef<boolean>(false);

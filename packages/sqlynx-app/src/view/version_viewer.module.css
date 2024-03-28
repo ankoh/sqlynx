@@ -88,6 +88,9 @@
 .version_info_key {
     grid-column: 1;
     padding: 8px 16px;
+    display: grid;
+    justify-content: start;
+    align-items: center;
 }
 .version_info_value {
     grid-column: 2;

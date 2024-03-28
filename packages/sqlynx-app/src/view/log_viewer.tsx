@@ -72,7 +72,7 @@ interface LogViewerProps {
 const COLUMN_COUNT = 4;
 const COLUMN_TIMESTAMP_WIDTH = 64;
 const COLUMN_LEVEL_WIDTH = 48;
-const COLUMN_TARGET_WIDTH = 96;
+const COLUMN_TARGET_WIDTH = 128;
 const ROW_HEIGHT = 32;
 
 export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
