@@ -44,11 +44,11 @@ export const AppConfigProvider: React.FC<Props> = (props: Props) => {
                 const resp = await fetch(CONFIG_URL as unknown as string);
                 const body = await resp.json();
                 const config = readAppConfig(body);
-                logger.info("loaded app config", "app_config");
+                setConfig(c => c.completeWith(config));
+                logger.info("configured application", "app_config");
                 if (SQLYNX_BUILD_MODE == 'development') {
                     logger.info(`react is running in strict mode and will duplicate events`, "app_config")
                 }
-                setConfig(c => c.completeWith(config));
             } catch (e: any) {
                 console.error(e);
                 setConfig(c => c.failWith(e));

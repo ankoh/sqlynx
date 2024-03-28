@@ -16,14 +16,14 @@ type Props = {
 async function checkChannelUpdates(channel: ReleaseChannel, setResult: (result: Result<Update | null>) => void, logger: Logger) {
     const start = performance.now();
     try {
-        logger.info(`checking for updates on channel "${channel}"`, "version_check");
+        logger.info(`checking for ${channel} updates`, "version_check");
         const update = await check({
             headers: {
                 "sqlynx-channel": channel
             }
         });
         const end = performance.now();
-        logger.info(`checking for updates on channel "${channel}" succeeded in ${end - start} ms`, "version_check");
+        logger.info(`checking for ${channel} updates succeeded in ${end - start} ms`, "version_check");
         setResult({
             type: RESULT_OK,
             value: update
@@ -31,7 +31,7 @@ async function checkChannelUpdates(channel: ReleaseChannel, setResult: (result: 
         console.log(update);
     } catch (e: any) {
         const end = performance.now();
-        logger.error(`checking for updates on channel "${channel}" failed after ${end - start} ms with error: ${e.toString()}`, "version_check");
+        logger.error(`checking for ${channel} updates failed after ${end - start} ms with error: ${e.toString()}`, "version_check");
         setResult({
             type: RESULT_ERROR,
             error: new Error(e.toString())
