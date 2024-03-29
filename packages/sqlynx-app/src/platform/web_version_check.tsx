@@ -10,10 +10,37 @@ type Props = {
     children: React.ReactElement;
 };
 
-export interface ReleaseManifest {
-    version: string;
+/// A release bundle
+export interface ReleaseBundle {
+    url: URL;
+    signature: string | null;
+    name: string;
+    bundle_type: string;
+    targets: string[];
 }
 
+/// A release manifest
+export interface ReleaseManifest {
+    release_id: string;
+    pub_date: Date;
+    version: string;
+    git_commit_hash: string;
+    git_commit_url: string;
+    update_manifest_url: string;
+    bundles: ReleaseBundle[];
+}
+
+function parseReleaseManifest(raw: any): ReleaseManifest {
+    if (raw.pub_date) {
+        raw.pub_date = new Date(Date.parse(raw.pub_date));
+    }
+    for (const bundle of raw.bundles) {
+        bundle.url = new URL(bundle.url);
+    }
+    return raw as ReleaseManifest;
+}
+
+/// A release channel
 export type ReleaseChannel = "stable" | "canary";
 
 /// Load the release manifest
@@ -21,8 +48,11 @@ export async function loadReleaseManifest(channel: ReleaseChannel, url: URL, set
     const start = performance.now();
     logger.info(`fetching ${channel} release manifest`, "version_check");
     try {
+        // Fetch the release manifest
         const manifestRequest = await fetch(url);
-        const manifest = (await manifestRequest.json()) as ReleaseManifest;
+        const manifestRaw = (await manifestRequest.json());
+        const manifest = parseReleaseManifest(manifestRaw);
+        // Set release manifest
         const end = performance.now();
         logger.info(`fetched ${channel} release manifest in ${Math.floor(end - start)} ms`, "version_check");
         setResult({
