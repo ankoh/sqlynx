@@ -54,16 +54,37 @@ const UpdateChannel: React.FC<UpdateChannelProps> = (props: UpdateChannelProps) 
     );
 }
 
-interface VersionViewerProps {
-    onClose: () => void;
-}
-
-interface ReleaseBundle {
+interface ReleaseBundleProps {
     name: string;
     channel: ReleaseChannel;
     pubDate: Date;
     url: URL;
     version: string;
+}
+
+const ReleaseBundle: React.FC<ReleaseBundleProps> = (props: ReleaseBundleProps) => {
+    return (
+        <React.Fragment>
+            <div className={styles.native_app_platform_bundle_name}>
+                {props.name}
+            </div>
+            <div className={styles.native_app_platform_bundle_version}>
+                {props.version}
+            </div>
+            <div className={styles.native_app_platform_bundle_channel}>
+                <div className={styles.native_app_platform_bundle_channel_text}>
+                    {props.channel}
+                </div>
+            </div>
+            <div className={styles.native_app_platform_bundle_download}>
+                <Button>Download</Button>
+            </div>
+        </React.Fragment>
+    );
+}
+
+interface VersionViewerProps {
+    onClose: () => void;
 }
 
 export const VersionViewer: React.FC<VersionViewerProps> = (props: VersionViewerProps) => {
@@ -75,8 +96,8 @@ export const VersionViewer: React.FC<VersionViewerProps> = (props: VersionViewer
     const canaryUpdateManifest = useCanaryUpdateManifest();
 
     // We'll care about identifying the exact platform bundles as soon as we support more than mac.
-    const macBundles: ReleaseBundle[] = React.useMemo(() => {
-        const macBundles: ReleaseBundle[] = []
+    const macBundles: ReleaseBundleProps[] = React.useMemo(() => {
+        const macBundles: ReleaseBundleProps[] = []
         const releaseManifests: [Result<ReleaseManifest>, ReleaseChannel][] = [[stableReleaseManifest, "stable"], [canaryReleaseManifest, "canary"]];
         for (const [manifest, channel] of releaseManifests) {
             if (manifest.type == RESULT_OK) {
@@ -138,7 +159,7 @@ export const VersionViewer: React.FC<VersionViewerProps> = (props: VersionViewer
                         {SQLYNX_GIT_COMMIT}
                     </div>
                 </div>
-                {isWebPlatform && (
+                {!isWebPlatform && (
                     <div className={styles.update_channels_container}>
                         <div className={styles.update_channels_title}>
                             Release Channels
@@ -165,22 +186,7 @@ export const VersionViewer: React.FC<VersionViewerProps> = (props: VersionViewer
                             </div>
                             <div className={styles.native_app_platform_bundles}>
                                 {macBundles.map((bundle, index) => (
-                                    <React.Fragment key={index}>
-                                        <div className={styles.native_app_platform_bundle_name}>
-                                            {bundle.name}
-                                        </div>
-                                        <div className={styles.native_app_platform_bundle_version}>
-                                            {bundle.version}
-                                        </div>
-                                        <div className={styles.native_app_platform_bundle_channel}>
-                                            <div className={styles.native_app_platform_bundle_channel_text}>
-                                                {bundle.channel}
-                                            </div>
-                                        </div>
-                                        <div className={styles.native_app_platform_bundle_download}>
-                                            <Button>Download</Button>
-                                        </div>
-                                    </React.Fragment>
+                                    <ReleaseBundle key={index} {...bundle} />
                                 ))}
                             </div>
                         </>
