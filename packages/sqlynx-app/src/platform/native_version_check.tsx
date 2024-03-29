@@ -1,20 +1,63 @@
 import * as React from 'react';
 
-import { check, Update } from '@tauri-apps/plugin-updater';
+import { check, DownloadEvent, Update } from '@tauri-apps/plugin-updater';
 
 import { useLogger } from './logger_provider.js';
 import { Result, RESULT_ERROR, RESULT_OK } from '../utils/result.js';
 import { Logger } from './logger.js';
 import { loadReleaseManifest, ReleaseChannel, ReleaseManifest } from './web_version_check.js';
 import { SQLYNX_CANARY_RELEASE_MANIFEST, SQLYNX_STABLE_RELEASE_MANIFEST } from '../globals.js';
-import { STABLE_RELEASE_MANIFEST_CTX, STABLE_UPDATE_MANIFEST_CTX, CANARY_RELEASE_MANIFEST_CTX, CANARY_UPDATE_MANIFEST_CTX, UPDATE_STATUS_CTX, UpdateStatus } from './version_check.js';
+import { STABLE_RELEASE_MANIFEST_CTX, STABLE_UPDATE_MANIFEST_CTX, CANARY_RELEASE_MANIFEST_CTX, CANARY_UPDATE_MANIFEST_CTX, UPDATE_STATUS_CTX, UpdateStatus, InstallableUpdate, InstallationStatusSetter, InstallationState, InstallationStatus } from './version_check.js';
 
-type Props = {
-    children: React.ReactElement;
-};
+class InstallableTauriUpdate implements InstallableUpdate {
+    /// The logger
+    logger: Logger;
+    /// Update the installation status
+    update: Update;
+    /// Set the installation status
+    setInstallationState: (setter: InstallationStatusSetter) => void;
+
+    constructor(update: Update, setState: (setter: InstallationStatusSetter) => void, logger: Logger) {
+        this.logger = logger;
+        this.update = update;
+        this.setInstallationState = setState;
+    }
+    /// Download and install
+    public async download() {
+        await this.update.downloadAndInstall((progress: DownloadEvent) => {
+            console.log(progress);
+            switch (progress.event) {
+                case "Started":
+                    this.setInstallationState(_ => ({
+                        state: InstallationState.Started,
+                        totalBytes: progress.data.contentLength ?? null,
+                        loadedBytes: 0,
+                        inProgressBytes: 0,
+                    }));
+                    break;
+                case "Progress":
+                    this.setInstallationState(s => ({
+                        state: InstallationState.InProgress,
+                        totalBytes: s?.totalBytes ?? 0,
+                        loadedBytes: (s?.loadedBytes ?? 0) + (s?.inProgressBytes ?? 0),
+                        inProgressBytes: progress.data.chunkLength,
+                    }));
+                    break;
+                case "Finished":
+                    this.setInstallationState(s => ({
+                        state: InstallationState.Finished,
+                        totalBytes: s?.totalBytes ?? 0,
+                        loadedBytes: s?.loadedBytes ?? 0 + (s?.inProgressBytes ?? 0),
+                        inProgressBytes: 0,
+                    }));
+                    break;
+            }
+        });
+    }
+}
 
 /// Check for updates using the tauri updater
-async function checkChannelUpdates(channel: ReleaseChannel, setResult: (result: Result<Update | null>) => void, logger: Logger) {
+async function checkChannelUpdates(channel: ReleaseChannel, setResult: (result: Result<InstallableTauriUpdate | null>) => void, setInstallationStatus: (setter: InstallationStatusSetter) => void, logger: Logger) {
     const start = performance.now();
     try {
         logger.info(`checking for ${channel} updates`, "version_check");
@@ -27,7 +70,7 @@ async function checkChannelUpdates(channel: ReleaseChannel, setResult: (result: 
         logger.info(`checking for ${channel} updates succeeded in ${end - start} ms`, "version_check");
         setResult({
             type: RESULT_OK,
-            value: update
+            value: update == null ? null : new InstallableTauriUpdate(update, setInstallationStatus, logger),
         });
         console.log(update);
     } catch (e: any) {
@@ -40,6 +83,11 @@ async function checkChannelUpdates(channel: ReleaseChannel, setResult: (result: 
     }
 }
 
+
+type Props = {
+    children: React.ReactElement;
+};
+
 export const NativeVersionCheck: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
 
@@ -47,15 +95,16 @@ export const NativeVersionCheck: React.FC<Props> = (props: Props) => {
     // Let's check if we can contribute upstream if `check` can return version information also if there's no newer version available.
 
     const [stableRelease, setStableRelease] = React.useState<Result<ReleaseManifest> | null>(null);
-    const [stableUpdate, setStableUpdate] = React.useState<Result<Update | null> | null>(null);
+    const [stableUpdate, setStableUpdate] = React.useState<Result<InstallableTauriUpdate | null> | null>(null);
     const [canaryRelease, setCanaryRelease] = React.useState<Result<ReleaseManifest> | null>(null);
-    const [canaryUpdate, setCanaryUpdate] = React.useState<Result<Update | null> | null>(null);
+    const [canaryUpdate, setCanaryUpdate] = React.useState<Result<InstallableTauriUpdate | null> | null>(null);
+    const [_installationStatus, setInstallationStatus] = React.useState<InstallationStatus | null>(null);
 
     React.useEffect(() => {
         loadReleaseManifest("stable", SQLYNX_STABLE_RELEASE_MANIFEST, setStableRelease, logger);
         loadReleaseManifest("canary", SQLYNX_CANARY_RELEASE_MANIFEST, setCanaryRelease, logger);
-        checkChannelUpdates("stable", setStableUpdate, logger);
-        checkChannelUpdates("canary", setCanaryUpdate, logger);
+        checkChannelUpdates("stable", setStableUpdate, setInstallationStatus, logger);
+        checkChannelUpdates("canary", setCanaryUpdate, setInstallationStatus, logger);
     }, []);
 
     let updateFetched = false;
