@@ -1,16 +1,15 @@
 import * as React from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from "framer-motion"
-import { Update } from '@tauri-apps/plugin-updater';
 import { XIcon } from '@primer/octicons-react';
 import { Button, IconButton } from '@primer/react';
 
 import { SQLYNX_GIT_COMMIT, SQLYNX_VERSION } from '../globals.js';
-import { useCanaryReleaseManifest, useCanaryUpdateManifest, useStableReleaseManifest, useStableUpdateManifest } from '../platform/version_check.js';
+import { InstallableUpdate, useCanaryReleaseManifest, useCanaryUpdateManifest, useStableReleaseManifest, useStableUpdateManifest } from '../platform/version_check.js';
 import { PlatformType, usePlatformType } from '../platform/platform_type.js';
 import { ReleaseChannel, ReleaseManifest } from '../platform/web_version_check.js';
 import { useLogger } from '../platform/logger_provider.js';
-import { RESULT_OK, Result } from '../utils/result.js';
+import { RESULT_ERROR, RESULT_OK, Result } from '../utils/result.js';
 
 import * as symbols from '../../static/svg/symbols.generated.svg';
 
@@ -19,7 +18,7 @@ import styles from './version_viewer.module.css';
 interface UpdateChannelProps {
     name: string;
     releaseManifest: Result<ReleaseManifest | null> | null;
-    updateManifest: Result<Update | null> | null;
+    updateManifest: Result<InstallableUpdate | null> | null;
 }
 
 const UpdateChannel: React.FC<UpdateChannelProps> = (props: UpdateChannelProps) => {
@@ -29,11 +28,28 @@ const UpdateChannel: React.FC<UpdateChannelProps> = (props: UpdateChannelProps) 
             version = props.releaseManifest.value.version;
         }
     }
-    let hasUpdate = false;
-    if (props.updateManifest?.type === RESULT_OK) {
-        if (props.updateManifest.value != null) {
-            hasUpdate = true;
-        }
+    let update: React.ReactElement | undefined = undefined;
+    switch (props.updateManifest?.type) {
+        case RESULT_OK:
+            if (props.updateManifest.value == null) {
+                update = <span>Version is older</span>;
+            } else {
+                console.log(props.updateManifest.value);
+                const installable = props.updateManifest.value;
+                update = <Button onClick={async () => {
+                    try {
+                        console.log("bar");
+                        await installable.download();
+                        console.log("foo");
+                    } catch (e: any) {
+                        console.error(e);
+                    }
+                }}>Install</Button>;
+            }
+            break;
+        case RESULT_ERROR:
+            update = <span>{props.updateManifest.error.toString()}</span>;
+            break;
     }
     return (
         <>
@@ -49,7 +65,7 @@ const UpdateChannel: React.FC<UpdateChannelProps> = (props: UpdateChannelProps) 
                 {props.name}
             </div>
             <div className={styles.update_channel_action}>
-                {hasUpdate ? <Button>Install</Button> : <span>Version is older</span>}
+                {update}
             </div>
         </>
     );
