@@ -8,20 +8,20 @@ import { Button, IconButton } from '@primer/react';
 import { SQLYNX_GIT_COMMIT, SQLYNX_VERSION } from '../globals.js';
 import { useCanaryReleaseManifest, useCanaryUpdateManifest, useStableReleaseManifest, useStableUpdateManifest } from '../platform/version_check.js';
 import { PlatformType, usePlatformType } from '../platform/platform_type.js';
-import { ReleaseManifest } from '../platform/web_version_check.js';
+import { ReleaseChannel, ReleaseManifest } from '../platform/web_version_check.js';
 import { RESULT_OK, Result } from '../utils/result.js';
 
 import * as symbols from '../../static/svg/symbols.generated.svg';
 
 import styles from './version_viewer.module.css';
 
-interface ReleaseChannelProps {
+interface UpdateChannelProps {
     name: string;
     releaseManifest: Result<ReleaseManifest | null> | null;
     updateManifest: Result<Update | null> | null;
 }
 
-const UpdateChannel: React.FC<ReleaseChannelProps> = (props: ReleaseChannelProps) => {
+const UpdateChannel: React.FC<UpdateChannelProps> = (props: UpdateChannelProps) => {
     let version = null;
     if (props.releaseManifest?.type === RESULT_OK) {
         if (props.releaseManifest.value != null) {
@@ -36,9 +36,6 @@ const UpdateChannel: React.FC<ReleaseChannelProps> = (props: ReleaseChannelProps
     }
     return (
         <>
-            <div className={styles.update_channel_name}>
-                {props.name}
-            </div>
             <div className={styles.update_channel_version}>
                 <svg className={styles.update_channel_version_icon} width="16px" height="16px">
                     <use xlinkHref={`${symbols}#package`} />
@@ -46,6 +43,9 @@ const UpdateChannel: React.FC<ReleaseChannelProps> = (props: ReleaseChannelProps
                 <div className={styles.update_channel_version_name}>
                     {version}
                 </div>
+            </div>
+            <div className={styles.update_channel_name}>
+                {props.name}
             </div>
             <div className={styles.update_channel_action}>
                 {hasUpdate ? <Button>Install</Button> : <span>Version is older</span>}
@@ -58,6 +58,14 @@ interface VersionViewerProps {
     onClose: () => void;
 }
 
+interface ReleaseBundle {
+    name: string;
+    channel: ReleaseChannel;
+    pubDate: Date;
+    url: URL;
+    version: string;
+}
+
 export const VersionViewer: React.FC<VersionViewerProps> = (props: VersionViewerProps) => {
     const platformType = usePlatformType();
     const isWebPlatform = platformType == PlatformType.WEB;
@@ -65,6 +73,28 @@ export const VersionViewer: React.FC<VersionViewerProps> = (props: VersionViewer
     const stableUpdateManifest = useStableUpdateManifest();
     const canaryReleaseManifest = useCanaryReleaseManifest();
     const canaryUpdateManifest = useCanaryUpdateManifest();
+
+    // We'll care about identifying the exact platform bundles as soon as we support more than mac.
+    const macBundles: ReleaseBundle[] = React.useMemo(() => {
+        const macBundles: ReleaseBundle[] = []
+        const releaseManifests: [Result<ReleaseManifest>, ReleaseChannel][] = [[stableReleaseManifest, "stable"], [canaryReleaseManifest, "canary"]];
+        for (const [manifest, channel] of releaseManifests) {
+            if (manifest.type == RESULT_OK) {
+                for (const bundle of manifest.value.bundles) {
+                    if (bundle.bundle_type == "Dmg") {
+                        macBundles.push({
+                            name: bundle.name,
+                            channel: channel,
+                            pubDate: manifest.value.pub_date,
+                            url: bundle.url,
+                            version: manifest.value.version
+                        });
+                    }
+                }
+            }
+        }
+        return macBundles;
+    }, [stableReleaseManifest, canaryReleaseManifest]);
 
     return (
         <div className={styles.overlay}>
@@ -108,23 +138,52 @@ export const VersionViewer: React.FC<VersionViewerProps> = (props: VersionViewer
                         {SQLYNX_GIT_COMMIT}
                     </div>
                 </div>
-                {!isWebPlatform && (
+                {isWebPlatform && (
                     <div className={styles.update_channels_container}>
                         <div className={styles.update_channels_title}>
                             Release Channels
                         </div>
                         <div className={styles.update_channel_list}>
                             <UpdateChannel
-                                name="Stable"
+                                name="stable"
                                 releaseManifest={stableReleaseManifest}
                                 updateManifest={stableUpdateManifest}
                             />
                             <UpdateChannel
-                                name="Canary"
+                                name="canary"
                                 releaseManifest={canaryReleaseManifest}
                                 updateManifest={canaryUpdateManifest}
                             />
                         </div>
+                    </div>
+                )}
+                {isWebPlatform && (
+                    <div className={styles.native_apps_container}>
+                        <>
+                            <div className={styles.native_app_platform_title}>
+                                Native Apps
+                            </div>
+                            <div className={styles.native_app_platform_bundles}>
+                                {macBundles.map((bundle, index) => (
+                                    <React.Fragment key={index}>
+                                        <div className={styles.native_app_platform_bundle_name}>
+                                            {bundle.name}
+                                        </div>
+                                        <div className={styles.native_app_platform_bundle_version}>
+                                            {bundle.version}
+                                        </div>
+                                        <div className={styles.native_app_platform_bundle_channel}>
+                                            <div className={styles.native_app_platform_bundle_channel_text}>
+                                                {bundle.channel}
+                                            </div>
+                                        </div>
+                                        <div className={styles.native_app_platform_bundle_download}>
+                                            <Button>Download</Button>
+                                        </div>
+                                    </React.Fragment>
+                                ))}
+                            </div>
+                        </>
                     </div>
                 )}
             </motion.div>
