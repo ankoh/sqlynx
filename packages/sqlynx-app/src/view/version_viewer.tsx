@@ -9,6 +9,7 @@ import { SQLYNX_GIT_COMMIT, SQLYNX_VERSION } from '../globals.js';
 import { useCanaryReleaseManifest, useCanaryUpdateManifest, useStableReleaseManifest, useStableUpdateManifest } from '../platform/version_check.js';
 import { PlatformType, usePlatformType } from '../platform/platform_type.js';
 import { ReleaseChannel, ReleaseManifest } from '../platform/web_version_check.js';
+import { useLogger } from '../platform/logger_provider.js';
 import { RESULT_OK, Result } from '../utils/result.js';
 
 import * as symbols from '../../static/svg/symbols.generated.svg';
@@ -63,6 +64,7 @@ interface ReleaseBundleProps {
 }
 
 const ReleaseBundle: React.FC<ReleaseBundleProps> = (props: ReleaseBundleProps) => {
+    const logger = useLogger();
     return (
         <React.Fragment>
             <div className={styles.native_app_platform_bundle_name}>
@@ -77,7 +79,13 @@ const ReleaseBundle: React.FC<ReleaseBundleProps> = (props: ReleaseBundleProps) 
                 </div>
             </div>
             <div className={styles.native_app_platform_bundle_download}>
-                <Button>Download</Button>
+                <Button onClick={() => {
+                    logger.info(`prompting user to download ${props.name} ${props.version}`);
+                    const link = document.createElement('a');
+                    link.href = props.url.toString();
+                    link.download = props.name;
+                    link.click();
+                }}>Download</Button>
             </div>
         </React.Fragment>
     );
@@ -88,6 +96,7 @@ interface VersionViewerProps {
 }
 
 export const VersionViewer: React.FC<VersionViewerProps> = (props: VersionViewerProps) => {
+    const logger = useLogger();
     const platformType = usePlatformType();
     const isWebPlatform = platformType == PlatformType.WEB;
     const stableReleaseManifest = useStableReleaseManifest();
