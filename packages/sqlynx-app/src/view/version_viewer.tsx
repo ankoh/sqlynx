@@ -96,7 +96,6 @@ interface VersionViewerProps {
 }
 
 export const VersionViewer: React.FC<VersionViewerProps> = (props: VersionViewerProps) => {
-    const logger = useLogger();
     const platformType = usePlatformType();
     const isWebPlatform = platformType == PlatformType.WEB;
     const stableReleaseManifest = useStableReleaseManifest();
