@@ -17,12 +17,11 @@ import styles from './version_viewer.module.css';
 
 interface ReleaseChannelProps {
     name: string;
-    isWeb: boolean;
     releaseManifest: Result<ReleaseManifest | null> | null;
     updateManifest: Result<Update | null> | null;
 }
 
-const ReleaseChannel: React.FC<ReleaseChannelProps> = (props: ReleaseChannelProps) => {
+const UpdateChannel: React.FC<ReleaseChannelProps> = (props: ReleaseChannelProps) => {
     let version = null;
     if (props.releaseManifest?.type === RESULT_OK) {
         if (props.releaseManifest.value != null) {
@@ -37,18 +36,18 @@ const ReleaseChannel: React.FC<ReleaseChannelProps> = (props: ReleaseChannelProp
     }
     return (
         <>
-            <div className={styles.release_channel_name}>
+            <div className={styles.update_channel_name}>
                 {props.name}
             </div>
-            <div className={styles.release_channel_version}>
-                <svg className={styles.release_channel_version_icon} width="16px" height="16px">
+            <div className={styles.update_channel_version}>
+                <svg className={styles.update_channel_version_icon} width="16px" height="16px">
                     <use xlinkHref={`${symbols}#package`} />
                 </svg>
-                <div className={styles.release_channel_version_name}>
+                <div className={styles.update_channel_version_name}>
                     {version}
                 </div>
             </div>
-            <div className={styles.release_channel_action}>
+            <div className={styles.update_channel_action}>
                 {hasUpdate ? <Button>Install</Button> : <span>Version is older</span>}
             </div>
         </>
@@ -60,7 +59,8 @@ interface VersionViewerProps {
 }
 
 export const VersionViewer: React.FC<VersionViewerProps> = (props: VersionViewerProps) => {
-    const isWebPlatform = usePlatformType() == PlatformType.WEB;
+    const platformType = usePlatformType();
+    const isWebPlatform = platformType == PlatformType.WEB;
     const stableReleaseManifest = useStableReleaseManifest();
     const stableUpdateManifest = useStableUpdateManifest();
     const canaryReleaseManifest = useCanaryReleaseManifest();
@@ -108,25 +108,25 @@ export const VersionViewer: React.FC<VersionViewerProps> = (props: VersionViewer
                         {SQLYNX_GIT_COMMIT}
                     </div>
                 </div>
-                <div className={styles.release_channels_container}>
-                    <div className={styles.release_channels_title}>
-                        Release Channels
+                {!isWebPlatform && (
+                    <div className={styles.update_channels_container}>
+                        <div className={styles.update_channels_title}>
+                            Release Channels
+                        </div>
+                        <div className={styles.update_channel_list}>
+                            <UpdateChannel
+                                name="Stable"
+                                releaseManifest={stableReleaseManifest}
+                                updateManifest={stableUpdateManifest}
+                            />
+                            <UpdateChannel
+                                name="Canary"
+                                releaseManifest={canaryReleaseManifest}
+                                updateManifest={canaryUpdateManifest}
+                            />
+                        </div>
                     </div>
-                    <div className={styles.release_channel_list}>
-                        <ReleaseChannel
-                            name="Stable"
-                            releaseManifest={stableReleaseManifest}
-                            updateManifest={stableUpdateManifest}
-                            isWeb={isWebPlatform}
-                        />
-                        <ReleaseChannel
-                            name="Canary"
-                            releaseManifest={canaryReleaseManifest}
-                            updateManifest={canaryUpdateManifest}
-                            isWeb={isWebPlatform}
-                        />
-                    </div>
-                </div>
+                )}
             </motion.div>
         </div>
     );
