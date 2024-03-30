@@ -4,7 +4,7 @@ import { useLogger } from './logger_provider.js';
 import { Result, RESULT_ERROR, RESULT_OK } from '../utils/result.js';
 import { Logger } from './logger.js';
 import { SQLYNX_CANARY_RELEASE_MANIFEST, SQLYNX_STABLE_RELEASE_MANIFEST } from '../globals.js';
-import { CANARY_RELEASE_MANIFEST_CTX, CANARY_UPDATE_MANIFEST_CTX, STABLE_RELEASE_MANIFEST_CTX, STABLE_UPDATE_MANIFEST_CTX, UPDATE_STATUS_CTX, UpdateStatus } from './version_check.js';
+import { CANARY_RELEASE_MANIFEST_CTX, CANARY_UPDATE_MANIFEST_CTX, INSTALLATION_STATUS_CTX, STABLE_RELEASE_MANIFEST_CTX, STABLE_UPDATE_MANIFEST_CTX, UPDATE_STATUS_CTX, UpdateStatus } from './version_check.js';
 
 type Props = {
     children: React.ReactElement;
@@ -83,15 +83,17 @@ export const WebVersionCheck: React.FC<Props> = (props: Props) => {
 
     return (
         <UPDATE_STATUS_CTX.Provider value={UpdateStatus.Disabled}>
-            <STABLE_RELEASE_MANIFEST_CTX.Provider value={stableRelease}>
-                <STABLE_UPDATE_MANIFEST_CTX.Provider value={null}>
-                    <CANARY_RELEASE_MANIFEST_CTX.Provider value={canaryRelease}>
-                        <CANARY_UPDATE_MANIFEST_CTX.Provider value={null}>
-                            {props.children}
-                        </CANARY_UPDATE_MANIFEST_CTX.Provider>
-                    </CANARY_RELEASE_MANIFEST_CTX.Provider>
-                </STABLE_UPDATE_MANIFEST_CTX.Provider>
-            </STABLE_RELEASE_MANIFEST_CTX.Provider>
+            <INSTALLATION_STATUS_CTX.Provider value={null}>
+                <STABLE_RELEASE_MANIFEST_CTX.Provider value={stableRelease}>
+                    <STABLE_UPDATE_MANIFEST_CTX.Provider value={null}>
+                        <CANARY_RELEASE_MANIFEST_CTX.Provider value={canaryRelease}>
+                            <CANARY_UPDATE_MANIFEST_CTX.Provider value={null}>
+                                {props.children}
+                            </CANARY_UPDATE_MANIFEST_CTX.Provider>
+                        </CANARY_RELEASE_MANIFEST_CTX.Provider>
+                    </STABLE_UPDATE_MANIFEST_CTX.Provider>
+                </STABLE_RELEASE_MANIFEST_CTX.Provider>
+            </INSTALLATION_STATUS_CTX.Provider>
         </UPDATE_STATUS_CTX.Provider>
     );
 };

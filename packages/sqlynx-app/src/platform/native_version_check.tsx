@@ -7,7 +7,7 @@ import { Result, RESULT_ERROR, RESULT_OK } from '../utils/result.js';
 import { Logger } from './logger.js';
 import { loadReleaseManifest, ReleaseChannel, ReleaseManifest } from './web_version_check.js';
 import { SQLYNX_CANARY_RELEASE_MANIFEST, SQLYNX_STABLE_RELEASE_MANIFEST } from '../globals.js';
-import { STABLE_RELEASE_MANIFEST_CTX, STABLE_UPDATE_MANIFEST_CTX, CANARY_RELEASE_MANIFEST_CTX, CANARY_UPDATE_MANIFEST_CTX, UPDATE_STATUS_CTX, UpdateStatus, InstallableUpdate, InstallationStatusSetter, InstallationState, InstallationStatus } from './version_check.js';
+import { STABLE_RELEASE_MANIFEST_CTX, STABLE_UPDATE_MANIFEST_CTX, CANARY_RELEASE_MANIFEST_CTX, CANARY_UPDATE_MANIFEST_CTX, UPDATE_STATUS_CTX, UpdateStatus, InstallableUpdate, InstallationStatusSetter, InstallationState, InstallationStatus, INSTALLATION_STATUS_CTX } from './version_check.js';
 
 class InstallableTauriUpdate implements InstallableUpdate {
     /// The logger
@@ -98,7 +98,7 @@ export const NativeVersionCheck: React.FC<Props> = (props: Props) => {
     const [stableUpdate, setStableUpdate] = React.useState<Result<InstallableTauriUpdate | null> | null>(null);
     const [canaryRelease, setCanaryRelease] = React.useState<Result<ReleaseManifest> | null>(null);
     const [canaryUpdate, setCanaryUpdate] = React.useState<Result<InstallableTauriUpdate | null> | null>(null);
-    const [_installationStatus, setInstallationStatus] = React.useState<InstallationStatus | null>(null);
+    const [installationStatus, setInstallationStatus] = React.useState<InstallationStatus | null>(null);
 
     React.useEffect(() => {
         loadReleaseManifest("stable", SQLYNX_STABLE_RELEASE_MANIFEST, setStableRelease, logger);
@@ -127,15 +127,17 @@ export const NativeVersionCheck: React.FC<Props> = (props: Props) => {
     }
     return (
         <UPDATE_STATUS_CTX.Provider value={status}>
-            <STABLE_RELEASE_MANIFEST_CTX.Provider value={stableRelease}>
-                <STABLE_UPDATE_MANIFEST_CTX.Provider value={stableUpdate}>
-                    <CANARY_RELEASE_MANIFEST_CTX.Provider value={canaryRelease}>
-                        <CANARY_UPDATE_MANIFEST_CTX.Provider value={canaryUpdate}>
-                            {props.children}
-                        </CANARY_UPDATE_MANIFEST_CTX.Provider>
-                    </CANARY_RELEASE_MANIFEST_CTX.Provider>
-                </STABLE_UPDATE_MANIFEST_CTX.Provider>
-            </STABLE_RELEASE_MANIFEST_CTX.Provider>
+            <INSTALLATION_STATUS_CTX.Provider value={installationStatus}>
+                <STABLE_RELEASE_MANIFEST_CTX.Provider value={stableRelease}>
+                    <STABLE_UPDATE_MANIFEST_CTX.Provider value={stableUpdate}>
+                        <CANARY_RELEASE_MANIFEST_CTX.Provider value={canaryRelease}>
+                            <CANARY_UPDATE_MANIFEST_CTX.Provider value={canaryUpdate}>
+                                {props.children}
+                            </CANARY_UPDATE_MANIFEST_CTX.Provider>
+                        </CANARY_RELEASE_MANIFEST_CTX.Provider>
+                    </STABLE_UPDATE_MANIFEST_CTX.Provider>
+                </STABLE_RELEASE_MANIFEST_CTX.Provider>
+            </INSTALLATION_STATUS_CTX.Provider>
         </UPDATE_STATUS_CTX.Provider>
     );
 };
