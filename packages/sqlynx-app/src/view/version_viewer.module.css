@@ -147,6 +147,9 @@
     /* color: hsl(212, 8%, 73%); */
     margin-right: 2px;
 }
+.update_channel_action_progress {
+    width: 64px;
+}
 
 
 .native_apps_container {

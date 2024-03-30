@@ -5,7 +5,7 @@ import { XIcon } from '@primer/octicons-react';
 import { Button, IconButton, ProgressBar } from '@primer/react';
 
 import { SQLYNX_GIT_COMMIT, SQLYNX_VERSION } from '../globals.js';
-import { InstallableUpdate, InstallationStatus, useCanaryReleaseManifest, useCanaryUpdateManifest, useInstallationStatus, useStableReleaseManifest, useStableUpdateManifest } from '../platform/version_check.js';
+import { InstallableUpdate, InstallationState, InstallationStatus, useCanaryReleaseManifest, useCanaryUpdateManifest, useInstallationStatus, useStableReleaseManifest, useStableUpdateManifest } from '../platform/version_check.js';
 import { PlatformType, usePlatformType } from '../platform/platform_type.js';
 import { ReleaseChannel, ReleaseManifest } from '../platform/web_version_check.js';
 import { useLogger } from '../platform/logger_provider.js';
@@ -23,32 +23,65 @@ interface UpdateChannelProps {
 }
 
 const UpdateChannel: React.FC<UpdateChannelProps> = (props: UpdateChannelProps) => {
-    let version = null;
+    let versionName: string | null = null;
+    let status: React.ReactElement | null = null;
+
+    // Get the latest version from the release manifest
     if (props.releaseManifest?.type === RESULT_OK) {
         if (props.releaseManifest.value != null) {
-            version = props.releaseManifest.value.version;
+            versionName = props.releaseManifest.value.version;
         }
     }
-    let update: React.ReactElement | undefined = undefined;
     switch (props.updateManifest?.type) {
         case RESULT_OK:
-            if (props.updateManifest.value == null) {
-                update = <span>Version is older</span>;
+            // Check if there's an installation status.
+            // If there is no installation ongoing, we render a download button.
+            // If the installation status refers to this channel, we render the installation status instead.
+            // If it's not referring to this channel, we render nothing.
+            if (props.installationStatus == null) {
+                // If the update manifest succeeded but is null, the released version cannot be installed
+                if (props.updateManifest.value == null) {
+                    status = <span>version incompatible</span>;
+                } else {
+                    // The version can be installed, render a button to trigger installation
+                    const installable = props.updateManifest.value;
+                    status = <Button onClick={async () => {
+                        try {
+                            await installable.download();
+                        } catch (e: any) {
+                            console.error(e);
+                        }
+                    }}>Install</Button>;
+                }
             } else {
-                const installable = props.updateManifest.value;
-                update = <Button onClick={async () => {
-                    try {
-                        console.log("bar");
-                        await installable.download();
-                        console.log("foo");
-                    } catch (e: any) {
-                        console.error(e);
+                // Does the current installation refer to this channel?
+                if (props.installationStatus.update == props.updateManifest.value) {
+                    console.log(props.installationStatus);
+                    // Do we know the total bytes already?
+                    // Render a progress bar then.
+                    if (props.installationStatus.totalBytes != null && props.installationStatus.totalBytes > 0) {
+                        if (props.installationStatus.state == InstallationState.InProgress) {
+                            const progress = props.installationStatus.loadedBytes / props.installationStatus.totalBytes;
+                            console.log(progress * 100);
+                            status = <ProgressBar className={styles.update_channel_action_progress} progress={progress * 100} />;
+                        } else {
+                            status = (
+                                <svg width="16px" height="16px">
+                                    <use xlinkHref={`${symbols}#status_completed`} />
+                                </svg>
+                            );
+                        }
+                    } else {
+                        // Otherwise just tell the user we're doing something
+                        status = <span>installing</span>
                     }
-                }}>Install</Button>;
+                } else {
+                    // Otherwise render nothing since we're installing a different update
+                }
             }
             break;
         case RESULT_ERROR:
-            update = <span>{props.updateManifest.error.toString()}</span>;
+            status = <span>{(props.updateManifest.error as Error).message}</span>;
             break;
     }
     return (
@@ -58,14 +91,14 @@ const UpdateChannel: React.FC<UpdateChannelProps> = (props: UpdateChannelProps) 
                     <use xlinkHref={`${symbols}#package`} />
                 </svg>
                 <div className={styles.update_channel_version_name}>
-                    {version}
+                    {versionName}
                 </div>
             </div>
             <div className={styles.update_channel_name}>
                 {props.name}
             </div>
             <div className={styles.update_channel_action}>
-                {update}
+                {status ?? undefined}
             </div>
         </>
     );
