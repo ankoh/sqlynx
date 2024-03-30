@@ -44,15 +44,19 @@ class InstallableTauriUpdate implements InstallableUpdate {
                         inProgressBytes: progress.data.chunkLength,
                     }));
                     break;
-                case "Finished":
-                    this.setInstallationState(s => ({
-                        update: this,
-                        state: InstallationState.Finished,
-                        totalBytes: s?.totalBytes ?? 0,
-                        loadedBytes: s?.loadedBytes ?? 0 + (s?.inProgressBytes ?? 0),
-                        inProgressBytes: 0,
-                    }));
+                case "Finished": {
+                    this.setInstallationState(s => {
+                        const totalBytes = s?.totalBytes ?? 0;
+                        return {
+                            update: this,
+                            state: InstallationState.Finished,
+                            totalBytes: totalBytes,
+                            loadedBytes: (totalBytes > 0) ? totalBytes : (s?.loadedBytes ?? 0 + (s?.inProgressBytes ?? 0)),
+                            inProgressBytes: 0,
+                        };
+                    });
                     break;
+                }
             }
         });
     }
