@@ -32,6 +32,7 @@ export interface InstallableUpdate {
 }
 
 export const UPDATE_STATUS_CTX = React.createContext<UpdateStatus>(UpdateStatus.Unknown);
+export const INSTALLATION_STATUS_CTX = React.createContext<InstallationStatus | null>(null);
 export const STABLE_RELEASE_MANIFEST_CTX = React.createContext<Result<ReleaseManifest> | null>(null);
 export const STABLE_UPDATE_MANIFEST_CTX = React.createContext<Result<InstallableUpdate | null> | null>(null);
 export const CANARY_RELEASE_MANIFEST_CTX = React.createContext<Result<ReleaseManifest> | null>(null);
