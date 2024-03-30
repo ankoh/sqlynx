@@ -14,12 +14,11 @@ import {
     SALESFORCE_DATA_CLOUD,
 } from '../connectors/connector_info.js';
 import { ConnectorSetupParamVariant, checkSalesforceAuthSetup, readConnectorParamsFromURL } from '../connectors/connector_url_params.js';
-import { useSalesforceAuthFlow, useSalesforceAuthState } from '../connectors/salesforce_auth_state.js';
-import { useSQLynx } from '../sqlynx_loader.js';
-import { RESULT_OK } from '../utils/index.js';
+import { useSalesforceAuthState } from '../connectors/salesforce_auth_state.js';
 import { REPLACE_SCRIPT_CONTENT } from './session_state_reducer.js';
 import { useActiveSessionState, useActiveSessionStateDispatch } from './session_state_provider.js';
 import { ScriptKey } from './session_state.js';
+import { SQLYNX_VERSION } from '../globals.js';
 
 import styles from './session_setup_page.module.css';
 
@@ -37,18 +36,10 @@ interface State {
 }
 
 export const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
-    const lnx = useSQLynx();
     const salesforceAuth = useSalesforceAuthState();
-    const salesforceAuthFlow = useSalesforceAuthFlow();
     const selectedScript = useActiveSessionState();
     const selectedScriptDispatch = useActiveSessionStateDispatch();
     const [state, setState] = React.useState<State | null>(null);
-
-    // Get instantiation progress
-    let moduleVersion: string | null = null;
-    if (lnx?.type == RESULT_OK) {
-        moduleVersion = lnx.value.getVersionText();
-    }
 
     // Read script parameters
     React.useEffect(() => {
@@ -186,7 +177,7 @@ export const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
                 </div>
                 <div className={styles.banner_text_container}>
                     <div className={styles.banner_title}>sqlynx</div>
-                    <div className={styles.app_version}>version {moduleVersion ?? '-'}</div>
+                    <div className={styles.app_version}>version {SQLYNX_VERSION ?? '-'}</div>
                 </div>
             </div>
             <div className={styles.card_container}>

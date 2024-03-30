@@ -13,19 +13,28 @@ export interface InstantiationProgress {
     bytesLoaded: bigint;
 }
 
+const INSTANTIATOR_CONTEXT = React.createContext<(() => void) | null>(null);
+const MODULE_CONTEXT = React.createContext<Result<sqlynx.SQLynx> | null>(null);
+const PROGRESS_CONTEXT = React.createContext<InstantiationProgress | null>(null);
+
 interface Props {
     children: JSX.Element;
 }
 
-const PROGRESS_CONTEXT = React.createContext<InstantiationProgress | null>(null);
-const MODULE_CONTEXT = React.createContext<Result<sqlynx.SQLynx> | null>(null);
-
 export const SQLynxLoader: React.FC<Props> = (props: Props) => {
-    const [module, setModule] = React.useState<Result<sqlynx.SQLynx> | null>(null);
-    const [progress, setProgress] = React.useState<InstantiationProgress | null>(null);
     const logger = useLogger();
+    const instantiation = React.useRef<boolean>(false);
+    const [mod, setModule] = React.useState<Result<sqlynx.SQLynx> | null>(null);
+    const [progress, setProgress] = React.useState<InstantiationProgress | null>(null);
 
-    React.useEffect(() => {
+    const instantiator = React.useCallback(() => {
+        /// Already instantiated?
+        if (instantiation.current) {
+            return;
+        }
+        instantiation.current = true;
+
+        // Create instantiation progress
         const now = new Date();
         const internal: InstantiationProgress = {
             startedAt: now,
@@ -87,13 +96,28 @@ export const SQLynxLoader: React.FC<Props> = (props: Props) => {
             }
         };
         instantiate();
-    }, []);
+    }, [logger, setModule, setProgress]);
+
     return (
-        <PROGRESS_CONTEXT.Provider value={progress}>
-            <MODULE_CONTEXT.Provider value={module}>{props.children}</MODULE_CONTEXT.Provider>
-        </PROGRESS_CONTEXT.Provider>
+        <INSTANTIATOR_CONTEXT.Provider value={instantiator}>
+            <MODULE_CONTEXT.Provider value={mod}>
+                <PROGRESS_CONTEXT.Provider value={progress}>
+                    {props.children}
+                </PROGRESS_CONTEXT.Provider>
+            </MODULE_CONTEXT.Provider>
+        </INSTANTIATOR_CONTEXT.Provider>
     );
 };
 
-export const useSQLynxLoadingProgress = (): InstantiationProgress | null => React.useContext(PROGRESS_CONTEXT);
-export const useSQLynx = (): Result<sqlynx.SQLynx> | null => React.useContext(MODULE_CONTEXT);
+export const useSQLynxSetupProgress = (): InstantiationProgress | null => React.useContext(PROGRESS_CONTEXT);
+export const useSQLynxSetup = (): (() => Result<sqlynx.SQLynx> | null) => {
+    // Resolve function to instantiate the module
+    const instantiate = React.useContext(INSTANTIATOR_CONTEXT)!;
+    // Get the module
+    const mod = React.useContext(MODULE_CONTEXT);
+    // Create a getter to instantiate on access
+    return () => {
+        instantiate();
+        return mod;
+    };
+};

@@ -10,7 +10,7 @@ import { ScriptLoadingStatus } from './script_loader.js';
 import { UPDATE_CATALOG } from './session_state_reducer.js';
 import { registerSession, useSessionState } from './session_state_registry.js';
 import { generateBlankScript } from './script_metadata.js';
-import { useSQLynx } from '../sqlynx_loader.js';
+import { useSQLynxSetup } from '../sqlynx_loader.js';
 import { useSalesforceAPI } from '../connectors/salesforce_connector.js';
 import { useSalesforceAuthState } from '../connectors/salesforce_auth_state.js';
 import { useSessionSelector } from './session_state_provider.js';
@@ -20,7 +20,7 @@ interface Props {
 }
 
 export const ScriptAutoloaderSalesforce: React.FC<Props> = (props: Props) => {
-    const instance = useSQLynx();
+    const setupSQLynx = useSQLynxSetup();
     const connector = useSalesforceAPI();
     const authState = useSalesforceAuthState();
     const selectScript = useSessionSelector();
@@ -29,7 +29,12 @@ export const ScriptAutoloaderSalesforce: React.FC<Props> = (props: Props) => {
     const [_scriptState, scriptStateDispatch] = useSessionState(connectorScriptId);
 
     React.useEffect(() => {
-        if (!connector || !authState.dataCloudAccessToken || instance?.type != RESULT_OK) return;
+        if (!connector || !authState.dataCloudAccessToken) return;
+
+        // Setup SQLynx lazily.
+        // Note that this means the WASM module will only be set up when da data cloud token is provided.
+        const instance = setupSQLynx();
+        if (instance?.type != RESULT_OK) return;
 
         // First time we use this connector?
         // Setup a new script then and select it.
@@ -119,6 +124,6 @@ export const ScriptAutoloaderSalesforce: React.FC<Props> = (props: Props) => {
                 },
             });
         }
-    }, [connector, authState.dataCloudAccessToken, instance]);
+    }, [connector, authState.dataCloudAccessToken, setupSQLynx]);
     return props.children;
 };
