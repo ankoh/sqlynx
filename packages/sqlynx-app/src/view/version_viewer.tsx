@@ -2,10 +2,10 @@ import * as React from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from "framer-motion"
 import { XIcon } from '@primer/octicons-react';
-import { Button, IconButton } from '@primer/react';
+import { Button, IconButton, ProgressBar } from '@primer/react';
 
 import { SQLYNX_GIT_COMMIT, SQLYNX_VERSION } from '../globals.js';
-import { InstallableUpdate, useCanaryReleaseManifest, useCanaryUpdateManifest, useStableReleaseManifest, useStableUpdateManifest } from '../platform/version_check.js';
+import { InstallableUpdate, InstallationStatus, useCanaryReleaseManifest, useCanaryUpdateManifest, useInstallationStatus, useStableReleaseManifest, useStableUpdateManifest } from '../platform/version_check.js';
 import { PlatformType, usePlatformType } from '../platform/platform_type.js';
 import { ReleaseChannel, ReleaseManifest } from '../platform/web_version_check.js';
 import { useLogger } from '../platform/logger_provider.js';
@@ -19,6 +19,7 @@ interface UpdateChannelProps {
     name: string;
     releaseManifest: Result<ReleaseManifest | null> | null;
     updateManifest: Result<InstallableUpdate | null> | null;
+    installationStatus: InstallationStatus | null;
 }
 
 const UpdateChannel: React.FC<UpdateChannelProps> = (props: UpdateChannelProps) => {
@@ -34,7 +35,6 @@ const UpdateChannel: React.FC<UpdateChannelProps> = (props: UpdateChannelProps) 
             if (props.updateManifest.value == null) {
                 update = <span>Version is older</span>;
             } else {
-                console.log(props.updateManifest.value);
                 const installable = props.updateManifest.value;
                 update = <Button onClick={async () => {
                     try {
@@ -118,6 +118,7 @@ export const VersionViewer: React.FC<VersionViewerProps> = (props: VersionViewer
     const stableUpdateManifest = useStableUpdateManifest();
     const canaryReleaseManifest = useCanaryReleaseManifest();
     const canaryUpdateManifest = useCanaryUpdateManifest();
+    const installationStatus = useInstallationStatus();
 
     // We'll care about identifying the exact platform bundles as soon as we support more than mac.
     const macBundles: ReleaseBundleProps[] = React.useMemo(() => {
@@ -193,11 +194,13 @@ export const VersionViewer: React.FC<VersionViewerProps> = (props: VersionViewer
                                 name="stable"
                                 releaseManifest={stableReleaseManifest}
                                 updateManifest={stableUpdateManifest}
+                                installationStatus={installationStatus}
                             />
                             <UpdateChannel
                                 name="canary"
                                 releaseManifest={canaryReleaseManifest}
                                 updateManifest={canaryUpdateManifest}
+                                installationStatus={installationStatus}
                             />
                         </div>
                     </div>

@@ -19,6 +19,7 @@ export enum InstallationState {
 }
 
 export interface InstallationStatus {
+    update: InstallableUpdate;
     state: InstallationState;
     totalBytes: number | null;
     loadedBytes: number;
@@ -39,6 +40,7 @@ export const CANARY_RELEASE_MANIFEST_CTX = React.createContext<Result<ReleaseMan
 export const CANARY_UPDATE_MANIFEST_CTX = React.createContext<Result<InstallableUpdate | null> | null>(null);
 
 export const useUpdateStatus = () => React.useContext(UPDATE_STATUS_CTX)!;
+export const useInstallationStatus = () => React.useContext(INSTALLATION_STATUS_CTX)!;
 export const useStableReleaseManifest = () => React.useContext(STABLE_RELEASE_MANIFEST_CTX)!;
 export const useStableUpdateManifest = () => React.useContext(STABLE_UPDATE_MANIFEST_CTX)!;
 export const useCanaryReleaseManifest = () => React.useContext(CANARY_RELEASE_MANIFEST_CTX)!;
