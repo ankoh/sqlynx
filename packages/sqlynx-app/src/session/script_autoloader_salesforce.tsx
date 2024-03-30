@@ -33,7 +33,7 @@ export const ScriptAutoloaderSalesforce: React.FC<Props> = (props: Props) => {
 
         // Setup SQLynx lazily.
         // Note that this means the WASM module will only be set up when da data cloud token is provided.
-        const instance = setupSQLynx();
+        const instance = setupSQLynx("salesforce_autoloader");
         if (instance?.type != RESULT_OK) return;
 
         // First time we use this connector?

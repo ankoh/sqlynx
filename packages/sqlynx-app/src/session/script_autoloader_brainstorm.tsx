@@ -29,7 +29,7 @@ export const ScriptAutoloaderBrainstorm: React.FC<Props> = (props: Props) => {
             return;
         }
         // Try to setup SQLynx, abort if that fails
-        const instance = setupSQLynx();
+        const instance = setupSQLynx("brainstorm_autoloader");
         if (instance?.type !== RESULT_OK) {
             return;
         }

@@ -13,7 +13,7 @@ export interface InstantiationProgress {
     bytesLoaded: bigint;
 }
 
-const INSTANTIATOR_CONTEXT = React.createContext<(() => void) | null>(null);
+const INSTANTIATOR_CONTEXT = React.createContext<((context: string) => void) | null>(null);
 const MODULE_CONTEXT = React.createContext<Result<sqlynx.SQLynx> | null>(null);
 const PROGRESS_CONTEXT = React.createContext<InstantiationProgress | null>(null);
 
@@ -27,7 +27,7 @@ export const SQLynxLoader: React.FC<Props> = (props: Props) => {
     const [mod, setModule] = React.useState<Result<sqlynx.SQLynx> | null>(null);
     const [progress, setProgress] = React.useState<InstantiationProgress | null>(null);
 
-    const instantiator = React.useCallback(() => {
+    const instantiator = React.useCallback((context: string) => {
         /// Already instantiated?
         if (instantiation.current) {
             return;
@@ -44,7 +44,7 @@ export const SQLynxLoader: React.FC<Props> = (props: Props) => {
         };
         // Fetch an url with progress tracking
         const fetchWithProgress = async (url: URL) => {
-            logger.info("fetching core wasm module", "sqlynx_loader");
+            logger.info(`instantiating core for ${context}`, "sqlynx_loader");
 
             // Try to determine file size
             const request = new Request(url);
@@ -110,14 +110,14 @@ export const SQLynxLoader: React.FC<Props> = (props: Props) => {
 };
 
 export const useSQLynxSetupProgress = (): InstantiationProgress | null => React.useContext(PROGRESS_CONTEXT);
-export const useSQLynxSetup = (): (() => Result<sqlynx.SQLynx> | null) => {
+export const useSQLynxSetup = (): ((context: string) => Result<sqlynx.SQLynx> | null) => {
     // Resolve function to instantiate the module
     const instantiate = React.useContext(INSTANTIATOR_CONTEXT)!;
     // Get the module
     const mod = React.useContext(MODULE_CONTEXT);
     // Create a getter to instantiate on access
-    return () => {
-        instantiate();
+    return (context: string) => {
+        instantiate(context);
         return mod;
     };
 };
