@@ -25,10 +25,10 @@ class InstallableTauriUpdate implements InstallableUpdate {
     /// Download and install
     public async download() {
         await this.update.downloadAndInstall((progress: DownloadEvent) => {
-            console.log(progress);
             switch (progress.event) {
                 case "Started":
                     this.setInstallationState(_ => ({
+                        update: this,
                         state: InstallationState.Started,
                         totalBytes: progress.data.contentLength ?? null,
                         loadedBytes: 0,
@@ -37,6 +37,7 @@ class InstallableTauriUpdate implements InstallableUpdate {
                     break;
                 case "Progress":
                     this.setInstallationState(s => ({
+                        update: this,
                         state: InstallationState.InProgress,
                         totalBytes: s?.totalBytes ?? 0,
                         loadedBytes: (s?.loadedBytes ?? 0) + (s?.inProgressBytes ?? 0),
@@ -45,6 +46,7 @@ class InstallableTauriUpdate implements InstallableUpdate {
                     break;
                 case "Finished":
                     this.setInstallationState(s => ({
+                        update: this,
                         state: InstallationState.Finished,
                         totalBytes: s?.totalBytes ?? 0,
                         loadedBytes: s?.loadedBytes ?? 0 + (s?.inProgressBytes ?? 0),
@@ -72,7 +74,6 @@ async function checkChannelUpdates(channel: ReleaseChannel, setResult: (result: 
             type: RESULT_OK,
             value: update == null ? null : new InstallableTauriUpdate(update, setInstallationStatus, logger),
         });
-        console.log(update);
     } catch (e: any) {
         const end = performance.now();
         logger.error(`checking for ${channel} updates failed after ${end - start} ms with error: ${e.toString()}`, "version_check");

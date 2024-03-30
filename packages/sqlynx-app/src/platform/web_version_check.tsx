@@ -59,7 +59,6 @@ export async function loadReleaseManifest(channel: ReleaseChannel, url: URL, set
             type: RESULT_OK,
             value: manifest
         });
-        console.log(manifest);
     } catch (e: any) {
         const end = performance.now();
         logger.error(`failed to fetch ${channel} release manifest after ${Math.floor(end - start)} ms: ${e.toString()}`, "version_check");
