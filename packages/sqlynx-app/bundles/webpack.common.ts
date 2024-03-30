@@ -121,22 +121,8 @@ export function configure(params: ConfigParams): Partial<Configuration> {
             ],
         },
         optimization: {
-            usedExports: 'global',
             chunkIds: 'deterministic',
             moduleIds: 'deterministic',
-            splitChunks: {
-                chunks: 'all',
-                cacheGroups: {
-                    vendors: {
-                        test: /[\\/]node_modules[\\/]/,
-                        priority: -10,
-                    },
-                    default: {
-                        priority: -20,
-                        reuseExistingChunk: true,
-                    },
-                },
-            },
         },
         plugins: [
             new ForkTsCheckerWebpackPlugin(),
