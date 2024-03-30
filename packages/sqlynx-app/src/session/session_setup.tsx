@@ -12,7 +12,7 @@ import { useSalesforceAuthState } from '../connectors/salesforce_auth_state.js';
 import { ConnectorType } from '../connectors/connector_info.js';
 import { writeBrainstormConnectorParams, writeHyperConnectorParams, writeSalesforceConnectorParams } from '../connectors/connector_url_params.js';
 
-enum SetupVisibility {
+enum SetupPageVisibility {
     UNDECIDED,
     SKIP,
     SHOW,
@@ -24,30 +24,30 @@ const SETUP_COMPLETE = Symbol('SETUP_COMPLETE');
 // We use a marker to be able to skip the URL setup when we navigate ourselves.
 // We should evaluate if we want to update the search params from time to time (maybe debounced?)
 // Then the user wouldn't even need to click the url sharing button when in the browser but could instead just copy from the browser bar.
-export const SKIP_URL_SETUP = Symbol('SKIP_URL_SETUP');
+export const SKIP_SETUP = Symbol('SKIP_SETUP');
 
-type SessionURLSetupAction =
+type SessionSetupAction =
     | VariantKind<typeof UPDATE_LOCATION, Location>
     | VariantKind<typeof SETUP_COMPLETE, null>
     ;
 
-interface SessionURLSetupState {
-    visibility: SetupVisibility;
+interface SessionSetupState {
+    pageVisibility: SetupPageVisibility;
     location: Location;
     searchParams: URLSearchParams;
 }
 
 
-// The reducer for url setup actions
-function reducer(state: SessionURLSetupState, action: SessionURLSetupAction): SessionURLSetupState {
+// The reducer for session setup actions
+function reduceSessionSetup(state: SessionSetupState, action: SessionSetupAction): SessionSetupState {
     switch (action.type) {
         case SETUP_COMPLETE:
             return {
                 ...state,
-                visibility: SetupVisibility.SKIP
+                pageVisibility: SetupPageVisibility.SKIP
             };
         case UPDATE_LOCATION: {
-            if (action.value.state === SKIP_URL_SETUP) {
+            if (action.value.state === SKIP_SETUP) {
                 return {
                     ...state,
                     location: action.value,
@@ -59,7 +59,7 @@ function reducer(state: SessionURLSetupState, action: SessionURLSetupAction): Se
             let newSearchParams = new URLSearchParams(action.value.search);
             if (newSearchParams.size == 0) {
                 return {
-                    visibility: SetupVisibility.SKIP,
+                    pageVisibility: SetupPageVisibility.SKIP,
                     location: action.value,
                     searchParams: newSearchParams,
                 }
@@ -67,9 +67,9 @@ function reducer(state: SessionURLSetupState, action: SessionURLSetupAction): Se
 
             // Not empty and currently undecided?
             // Always show setup then
-            if (state.visibility == SetupVisibility.UNDECIDED) {
+            if (state.pageVisibility == SetupPageVisibility.UNDECIDED) {
                 return {
-                    visibility: SetupVisibility.SHOW,
+                    pageVisibility: SetupPageVisibility.SHOW,
                     location: action.value,
                     searchParams: newSearchParams,
                 };
@@ -89,7 +89,7 @@ function reducer(state: SessionURLSetupState, action: SessionURLSetupAction): Se
             }
             if (searchParamsChanged) {
                 return {
-                    visibility: SetupVisibility.SHOW,
+                    pageVisibility: SetupPageVisibility.SHOW,
                     location: action.value,
                     searchParams: newSearchParams,
                 }
@@ -109,7 +109,7 @@ function reducer(state: SessionURLSetupState, action: SessionURLSetupAction): Se
 function usePastedDeepLinks() {
     const navigate = useNavigate();
     const onWindowPaste = React.useCallback((e: ClipboardEvent) => {
-        // Is the pasted text a deeplink?
+        // Is the pasted text of a deeplink?
         const pastedText = e.clipboardData?.getData("text/plain") ?? null;
         if (pastedText != null && pastedText.startsWith("sqlynx://")) {
             try {
@@ -192,12 +192,11 @@ function generateSessionLinks(): SessionLinks {
 
 const GENERATED_LINKS_CTX = React.createContext<SessionLinks | null>(null);
 
-export const SessionLinkManager: React.FC<{ children: React.ReactElement }> = (props: { children: React.ReactElement }) => {
-
+export const SessionSetup: React.FC<{ children: React.ReactElement }> = (props: { children: React.ReactElement }) => {
     // Setup reducer
     const location = useLocation();
-    const [state, dispatch] = React.useReducer(reducer, null, () => ({
-        visibility: SetupVisibility.UNDECIDED,
+    const [state, dispatch] = React.useReducer(reduceSessionSetup, null, () => ({
+        pageVisibility: SetupPageVisibility.UNDECIDED,
         location: location,
         searchParams: new URLSearchParams(location.search),
     }));
@@ -206,18 +205,18 @@ export const SessionLinkManager: React.FC<{ children: React.ReactElement }> = (p
     // Subscribe to paste events of deep links
     usePastedDeepLinks();
     // Maintain generated session links
-    const urls = generateSessionLinks();
+    const links = generateSessionLinks();
 
     // Determine child element
     let child: React.ReactElement;
-    switch (state.visibility) {
-        case SetupVisibility.UNDECIDED:
+    switch (state.pageVisibility) {
+        case SetupPageVisibility.UNDECIDED:
             child = <div />;
             break;
-        case SetupVisibility.SKIP:
+        case SetupPageVisibility.SKIP:
             child = props.children;
             break;
-        case SetupVisibility.SHOW:
+        case SetupPageVisibility.SHOW:
             child = <ScriptURLSetupPage
                 searchParams={state.searchParams}
                 onDone={() => dispatch({ type: SETUP_COMPLETE, value: null })}
@@ -225,7 +224,7 @@ export const SessionLinkManager: React.FC<{ children: React.ReactElement }> = (p
             break;
     }
     return (
-        <GENERATED_LINKS_CTX.Provider value={urls}>
+        <GENERATED_LINKS_CTX.Provider value={links}>
             {child}
         </GENERATED_LINKS_CTX.Provider>
     );
