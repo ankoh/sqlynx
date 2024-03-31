@@ -2,7 +2,7 @@ import * as React from 'react';
 import Immutable from 'immutable';
 
 import { CONNECTOR_INFOS, ConnectorType } from '../connectors/connector_info.js';
-import { DEFAULT_BOARD_HEIGHT, DEFAULT_BOARD_WIDTH } from './script_autoloader_brainstorm.js';
+import { DEFAULT_BOARD_HEIGHT, DEFAULT_BOARD_WIDTH } from './setup_brainstorm_session.js';
 import { FULL_CATALOG_REFRESH } from '../connectors/catalog_update.js';
 import { RESULT_OK } from '../utils/result.js';
 import { ScriptData, ScriptKey } from './session_state.js';
@@ -15,25 +15,21 @@ import { useSalesforceAPI } from '../connectors/salesforce_connector.js';
 import { useSalesforceAuthState } from '../connectors/salesforce_auth_state.js';
 import { useSessionSelector } from './session_state_provider.js';
 
-interface Props {
-    children?: React.ReactElement;
-}
-
-export const ScriptAutoloaderSalesforce: React.FC<Props> = (props: Props) => {
+export function useSalesforceSessionSetup() {
     const setupSQLynx = useSQLynxSetup();
-    const connector = useSalesforceAPI();
-    const authState = useSalesforceAuthState();
     const selectScript = useSessionSelector();
+    const sfApi = useSalesforceAPI();
+    const sfAuth = useSalesforceAuthState();
 
     const [connectorScriptId, setConnectorScriptId] = React.useState<number | null>(null);
-    const [_scriptState, scriptStateDispatch] = useSessionState(connectorScriptId);
+    const [_sessionState, sessionStateDispatch] = useSessionState(connectorScriptId);
 
-    React.useEffect(() => {
-        if (!connector || !authState.dataCloudAccessToken) return;
+    return React.useCallback(async () => {
+        if (!sfApi || !sfAuth.dataCloudAccessToken) return;
 
         // Setup SQLynx lazily.
         // Note that this means the WASM module will only be set up when da data cloud token is provided.
-        const instance = setupSQLynx("salesforce_autoloader");
+        const instance = await setupSQLynx("salesforce_session");
         if (instance?.type != RESULT_OK) return;
 
         // First time we use this connector?
@@ -116,7 +112,7 @@ export const ScriptAutoloaderSalesforce: React.FC<Props> = (props: Props) => {
         } else {
             // Otherwise, the access token just changed.
             // Do a full catalog refresh
-            scriptStateDispatch({
+            sessionStateDispatch({
                 type: UPDATE_CATALOG,
                 value: {
                     type: FULL_CATALOG_REFRESH,
@@ -124,6 +120,5 @@ export const ScriptAutoloaderSalesforce: React.FC<Props> = (props: Props) => {
                 },
             });
         }
-    }, [connector, authState.dataCloudAccessToken, setupSQLynx]);
-    return props.children;
+    }, [sfApi, sfAuth.dataCloudAccessToken, setupSQLynx]);
 };

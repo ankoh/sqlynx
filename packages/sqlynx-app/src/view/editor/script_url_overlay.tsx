@@ -5,7 +5,7 @@ import { CheckIcon, PaperclipIcon } from '@primer/octicons-react';
 
 import { classNames } from '../../utils/classnames.js';
 import { sleep } from '../../utils/sleep.js';
-import { SessionLinks, useSessionLinks } from '../../session/session_setup.js';
+import { SessionLinks, useSessionLinks } from '../../session/session_link_generator.js';
 
 import styles from './script_url_overlay.module.css';
 
