@@ -6,8 +6,6 @@ import { EditorPage } from './view/editor/editor_page.js';
 import { ConnectorsPage } from './view/connectors/connectors_page.js';
 import { ScriptLoader } from './session/script_loader.js';
 import { CatalogLoader } from './session/catalog_loader.js';
-import { ScriptAutoloaderBrainstorm } from './session/script_autoloader_brainstorm.js';
-import { ScriptAutoloaderSalesforce } from './session/script_autoloader_salesforce.js';
 import { SessionStateProvider } from './session/session_state_provider.js';
 import { SessionCommands } from './session/session_commands.js';
 import { QueryExecutor } from './session/query_executor.js';
@@ -39,8 +37,6 @@ const AppProviders = (props: { children: React.ReactElement }) => (
                                     <SessionStateProvider>
                                         <SessionCommands>
                                             <ScriptLoader />
-                                            <ScriptAutoloaderBrainstorm />
-                                            <ScriptAutoloaderSalesforce />
                                             <CatalogLoader />
                                             <QueryExecutor />
                                             <SessionSetup>{props.children}</SessionSetup>
@@ -60,9 +56,6 @@ const Editor = withNavBar(EditorPage);
 const Connectors = withNavBar(ConnectorsPage);
 
 const Router = process.env.SQLYNX_RELATIVE_IMPORTS ? HashRouter : BrowserRouter;
-
-console.log(SQLYNX_VERSION);
-console.log(SQLYNX_GIT_COMMIT);
 
 const element = document.getElementById('root');
 const root = createRoot(element!);

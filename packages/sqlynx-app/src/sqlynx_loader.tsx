@@ -13,7 +13,7 @@ export interface InstantiationProgress {
     bytesLoaded: bigint;
 }
 
-const INSTANTIATOR_CONTEXT = React.createContext<((context: string) => void) | null>(null);
+const INSTANTIATOR_CONTEXT = React.createContext<((context: string) => Promise<Result<sqlynx.SQLynx>>) | null>(null);
 const MODULE_CONTEXT = React.createContext<Result<sqlynx.SQLynx> | null>(null);
 const PROGRESS_CONTEXT = React.createContext<InstantiationProgress | null>(null);
 
@@ -23,16 +23,15 @@ interface Props {
 
 export const SQLynxLoader: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
-    const instantiation = React.useRef<boolean>(false);
+    const instantiation = React.useRef<Promise<Result<sqlynx.SQLynx>> | null>(null);
     const [mod, setModule] = React.useState<Result<sqlynx.SQLynx> | null>(null);
     const [progress, setProgress] = React.useState<InstantiationProgress | null>(null);
 
-    const instantiator = React.useCallback((context: string) => {
+    const instantiator = React.useCallback(async (context: string): Promise<Result<sqlynx.SQLynx>> => {
         /// Already instantiated?
-        if (instantiation.current) {
-            return;
+        if (instantiation.current != null) {
+            return await instantiation.current;
         }
-        instantiation.current = true;
 
         // Create instantiation progress
         const now = new Date();
@@ -71,7 +70,7 @@ export const SQLynxLoader: React.FC<Props> = (props: Props) => {
             const ts = new TransformStream(tracker);
             return new Response(response.body?.pipeThrough(ts), response);
         };
-        const instantiate = async () => {
+        const instantiate = async (): Promise<Result<sqlynx.SQLynx>> => {
             try {
                 var initStart = performance.now();
                 const instance = await sqlynx.SQLynx.create(async (imports: WebAssembly.Imports) => {
@@ -83,19 +82,27 @@ export const SQLynxLoader: React.FC<Props> = (props: Props) => {
                     ...internal,
                     updatedAt: new Date(),
                 }));
-                setModule({
+                const result: Result<sqlynx.SQLynx> = {
                     type: RESULT_OK,
                     value: instance!,
-                });
+                };
+                setModule(result);
+                return result;
             } catch (e: any) {
                 console.error(e);
-                setModule({
+                const result: Result<sqlynx.SQLynx> = {
                     type: RESULT_ERROR,
                     error: e!,
-                });
+                };
+                setModule(result);
+                return result;
             }
         };
-        instantiate();
+        // Start the instantiation
+        instantiation.current = instantiate();
+        // Await the instantiation
+        return await instantiation.current;
+
     }, [logger, setModule, setProgress]);
 
     return (
@@ -110,14 +117,18 @@ export const SQLynxLoader: React.FC<Props> = (props: Props) => {
 };
 
 export const useSQLynxSetupProgress = (): InstantiationProgress | null => React.useContext(PROGRESS_CONTEXT);
-export const useSQLynxSetup = (): ((context: string) => Result<sqlynx.SQLynx> | null) => {
-    // Resolve function to instantiate the module
-    const instantiate = React.useContext(INSTANTIATOR_CONTEXT)!;
+export function useSQLynxSetup(): ((context: string) => Promise<Result<sqlynx.SQLynx>> | null) {
     // Get the module
     const mod = React.useContext(MODULE_CONTEXT);
+    // Resolve function to instantiate the module
+    const instantiate = React.useContext(INSTANTIATOR_CONTEXT)!;
     // Create a getter to instantiate on access
-    return (context: string) => {
-        instantiate(context);
-        return mod;
-    };
+    const setup = React.useCallback(async (context: string): Promise<Result<sqlynx.SQLynx>> => {
+        if (!mod) {
+            return await instantiate(context);
+        } else {
+            return mod;
+        }
+    }, [instantiate, mod]);
+    return setup;
 };

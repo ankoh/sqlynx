@@ -35,7 +35,7 @@ interface State {
     connectorParams: ConnectorSetupParamVariant | null;
 }
 
-export const ScriptURLSetupPage: React.FC<Props> = (props: Props) => {
+export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     const salesforceAuth = useSalesforceAuthState();
     const selectedScript = useActiveSessionState();
     const selectedScriptDispatch = useActiveSessionStateDispatch();

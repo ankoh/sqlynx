@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { classNames } from '../utils/classnames.js';
 import { HoverMode, NavBarLink, NavBarButtonWithRef } from './navbar_button.js';
 import { PlatformType, usePlatformType } from '../platform/platform_type.js';
-import { useSessionLinks } from '../session/session_setup.js';
+import { useSessionLinks } from '../session/session_link_generator.js';
 import { SQLYNX_VERSION } from '../globals.js';
 import { LogViewerInPortal } from './log_viewer.js';
 import { VersionViewerInPortal } from './version_viewer.js';

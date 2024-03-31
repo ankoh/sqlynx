@@ -1,112 +1,30 @@
 import * as React from 'react';
-import * as LZString from 'lz-string';
 
 import { Location, useLocation, useNavigate } from 'react-router-dom';
 
-import { useThrottledMemo } from '../utils/throttle.js';
-import { VariantKind } from '../utils/index.js';
-import { ScriptURLSetupPage } from './session_setup_page.js';
-import { ScriptData, ScriptKey } from './session_state.js';
-import { useActiveSessionState } from './session_state_provider.js';
-import { useSalesforceAuthState } from '../connectors/salesforce_auth_state.js';
-import { ConnectorType } from '../connectors/connector_info.js';
-import { writeBrainstormConnectorParams, writeHyperConnectorParams, writeSalesforceConnectorParams } from '../connectors/connector_url_params.js';
+import { SessionSetupPage } from './session_setup_page.js';
+import { SessionLinkGenerator } from './session_link_generator.js';
+import { useBrainstormSessionSetup } from './setup_brainstorm_session.js';
 
-enum SetupPageVisibility {
+enum SessionSetupDecision {
     UNDECIDED,
-    SKIP,
-    SHOW,
+    SKIP_SETUP_PAGE,
+    SHOW_SETUP_PAGE,
 }
-
-const UPDATE_LOCATION = Symbol('UPDATE_LOCATION');
-const SETUP_COMPLETE = Symbol('SETUP_COMPLETE');
-
 // We use a marker to be able to skip the URL setup when we navigate ourselves.
 // We should evaluate if we want to update the search params from time to time (maybe debounced?)
 // Then the user wouldn't even need to click the url sharing button when in the browser but could instead just copy from the browser bar.
-export const SKIP_SETUP = Symbol('SKIP_SETUP');
-
-type SessionSetupAction =
-    | VariantKind<typeof UPDATE_LOCATION, Location>
-    | VariantKind<typeof SETUP_COMPLETE, null>
-    ;
+export const SKIP_SETUP_MARKER = Symbol('SKIP_SETUP');
 
 interface SessionSetupState {
-    pageVisibility: SetupPageVisibility;
-    location: Location;
-    searchParams: URLSearchParams;
+    decision: SessionSetupDecision;
+    pageLocation: Location;
+    pageSearchParams: URLSearchParams;
 }
 
-
-// The reducer for session setup actions
-function reduceSessionSetup(state: SessionSetupState, action: SessionSetupAction): SessionSetupState {
-    switch (action.type) {
-        case SETUP_COMPLETE:
-            return {
-                ...state,
-                pageVisibility: SetupPageVisibility.SKIP
-            };
-        case UPDATE_LOCATION: {
-            if (action.value.state === SKIP_SETUP) {
-                return {
-                    ...state,
-                    location: action.value,
-                };
-            }
-
-            // Skip setup if there is nothing to do.
-            // Every component will either stay as is or assume the default state
-            let newSearchParams = new URLSearchParams(action.value.search);
-            if (newSearchParams.size == 0) {
-                return {
-                    pageVisibility: SetupPageVisibility.SKIP,
-                    location: action.value,
-                    searchParams: newSearchParams,
-                }
-            }
-
-            // Not empty and currently undecided?
-            // Always show setup then
-            if (state.pageVisibility == SetupPageVisibility.UNDECIDED) {
-                return {
-                    pageVisibility: SetupPageVisibility.SHOW,
-                    location: action.value,
-                    searchParams: newSearchParams,
-                };
-            }
-
-            // We rerun the session setup whenever the search parameters change.
-            // Figure out if any differs.
-            let searchParamsChanged = newSearchParams.entries.length != state.searchParams.entries.length;
-            if (!searchParamsChanged) {
-                for (const [newKey, newValue] of newSearchParams) {
-                    const oldValue = state.searchParams.get(newKey);
-                    if (oldValue !== newValue) {
-                        searchParamsChanged = true;
-                        break;
-                    }
-                }
-            }
-            if (searchParamsChanged) {
-                return {
-                    pageVisibility: SetupPageVisibility.SHOW,
-                    location: action.value,
-                    searchParams: newSearchParams,
-                }
-            } else {
-                // Otherwise we just update the location
-                return {
-                    ...state,
-                    location: action.value,
-                    searchParams: newSearchParams,
-                };
-            }
-        }
-    }
-}
 
 /// Helper to subscribe paste events with deep links
-function usePastedDeepLinks() {
+function loadDeepLinksFromClipboard() {
     const navigate = useNavigate();
     const onWindowPaste = React.useCallback((e: ClipboardEvent) => {
         // Is the pasted text of a deeplink?
@@ -131,104 +49,110 @@ function usePastedDeepLinks() {
     }, []);
 }
 
-/// Encode a script as compressed base64 text
-function encodeScript(url: URLSearchParams, key: string, data: ScriptData) {
-    if (data.script) {
-        const text = data.script.toString();
-        const textBase64 = LZString.compressToBase64(text);
-        url.set(key, encodeURIComponent(textBase64));
-    }
-};
-
-export interface SessionLinks {
-    privateDeepLink: URL;
-    privateWebLink: URL;
-    publicWebLink: URL;
-};
-
-/// Hook to generate a deep link
-function generateSessionLinks(): SessionLinks {
-    const scriptState = useActiveSessionState();
-    const salesforceAuth = useSalesforceAuthState();
-
-    return useThrottledMemo(() => {
-        const appUrl = process.env.SQLYNX_APP_URL!;
-        const privateParams = new URLSearchParams();
-        const publicParams = new URLSearchParams();
-        switch (scriptState?.connectorInfo.connectorType ?? ConnectorType.BRAINSTORM_MODE) {
-            case ConnectorType.BRAINSTORM_MODE:
-                writeBrainstormConnectorParams(privateParams, publicParams);
-                break;
-            case ConnectorType.HYPER_DATABASE:
-                writeHyperConnectorParams(privateParams, publicParams);
-                break;
-            case ConnectorType.SALESFORCE_DATA_CLOUD:
-                writeSalesforceConnectorParams(privateParams, publicParams, salesforceAuth);
-                break;
-        }
-        const mainScript = scriptState?.scripts[ScriptKey.MAIN_SCRIPT] ?? null;
-        const schemaScript = scriptState?.scripts[ScriptKey.SCHEMA_SCRIPT] ?? null;
-        if (mainScript?.script) {
-            encodeScript(publicParams, 'script', mainScript);
-        }
-        if (schemaScript?.script) {
-            encodeScript(privateParams, 'schema', schemaScript);
-        }
-        const privateAndPublicParams = new URLSearchParams(publicParams);
-        for (const [k, v] of privateParams) {
-            privateAndPublicParams.set(k, v);
-        }
-        return {
-            privateDeepLink: new URL(`sqlynx://localhost?${privateAndPublicParams.toString()}`),
-            privateWebLink: new URL(`${appUrl}?${privateAndPublicParams.toString()}`),
-            publicWebLink: new URL(`${appUrl}?${publicParams.toString()}`)
-        };
-    }, [
-        salesforceAuth,
-        scriptState?.scripts[ScriptKey.MAIN_SCRIPT],
-        scriptState?.scripts[ScriptKey.SCHEMA_SCRIPT],
-    ], 500);
-}
-
-const GENERATED_LINKS_CTX = React.createContext<SessionLinks | null>(null);
-
 export const SessionSetup: React.FC<{ children: React.ReactElement }> = (props: { children: React.ReactElement }) => {
     // Setup reducer
     const location = useLocation();
-    const [state, dispatch] = React.useReducer(reduceSessionSetup, null, () => ({
-        pageVisibility: SetupPageVisibility.UNDECIDED,
-        location: location,
-        searchParams: new URLSearchParams(location.search),
-    }));
-    // Update the location whenever it changes
-    React.useEffect(() => (dispatch({ type: UPDATE_LOCATION, value: location })), [location]);
     // Subscribe to paste events of deep links
-    usePastedDeepLinks();
-    // Maintain generated session links
-    const links = generateSessionLinks();
+    loadDeepLinksFromClipboard();
 
-    // Determine child element
+    /// Prepare the specific setup functions
+    const setupBrainstormSession = useBrainstormSessionSetup();
+
+    // State to decide about session setup strategy
+    const [state, setState] = React.useState<SessionSetupState>(() => ({
+        decision: SessionSetupDecision.UNDECIDED,
+        pageLocation: location,
+        pageSearchParams: new URLSearchParams(location.search),
+    }));
+    // Re-evaluate session setup strategy whenever our location changes
+    React.useEffect(() => {
+        // Navigation marker to differentiate user-induced navigation from ours
+        if (location.state === SKIP_SETUP_MARKER) {
+            setState({
+                ...state,
+                pageLocation: location,
+            });
+            return;
+        }
+        let newSearchParams = new URLSearchParams(location.search);
+
+        // UNDECIDED? That means we're arriving here for the first time.
+        // Either we directly set up an empty brainstorming session or we show the session setup page.
+        if (state.decision == SessionSetupDecision.UNDECIDED) {
+
+            // No search parameters?
+            // In that case we just bypass the setup.
+            // XXX In the future, we might want to check if the parameters are actually referring to a setup.
+            if (newSearchParams.size == 0) {
+                // Setup an empty brainstorm session asynchronously
+                setupBrainstormSession();
+                // Skip the setup page
+                setState({
+                    decision: SessionSetupDecision.SKIP_SETUP_PAGE,
+                    pageLocation: location,
+                    pageSearchParams: newSearchParams,
+                });
+                return;
+            }
+
+            // In all other cases, we show a setup page
+            setState({
+                decision: SessionSetupDecision.SHOW_SETUP_PAGE,
+                pageLocation: location,
+                pageSearchParams: newSearchParams,
+            });
+            return;
+        }
+
+        // We rerun the session setup whenever the search parameters change.
+        // Figure out if any differs.
+        let searchParamsChanged = newSearchParams.entries.length != state.pageSearchParams.entries.length;
+        if (!searchParamsChanged) {
+            for (const [newKey, newValue] of newSearchParams) {
+                const oldValue = state.pageSearchParams.get(newKey);
+                if (oldValue !== newValue) {
+                    searchParamsChanged = true;
+                    break;
+                }
+            }
+        }
+        if (searchParamsChanged) {
+            setState({
+                decision: SessionSetupDecision.SHOW_SETUP_PAGE,
+                pageLocation: location,
+                pageSearchParams: newSearchParams,
+            });
+            return;
+        } else {
+            // Otherwise we just update the location
+            setState({
+                ...state,
+                pageLocation: location,
+                pageSearchParams: newSearchParams,
+            });
+            return;
+        }
+    }, [location]);
+
+    // Determine what we want to render
     let child: React.ReactElement;
-    switch (state.pageVisibility) {
-        case SetupPageVisibility.UNDECIDED:
+    switch (state.decision) {
+        case SessionSetupDecision.UNDECIDED:
             child = <div />;
             break;
-        case SetupPageVisibility.SKIP:
+        case SessionSetupDecision.SKIP_SETUP_PAGE:
             child = props.children;
             break;
-        case SetupPageVisibility.SHOW:
-            child = <ScriptURLSetupPage
-                searchParams={state.searchParams}
-                onDone={() => dispatch({ type: SETUP_COMPLETE, value: null })}
+        case SessionSetupDecision.SHOW_SETUP_PAGE:
+            child = <SessionSetupPage
+                searchParams={state.pageSearchParams}
+                onDone={() => setState(s => ({ ...s, decision: SessionSetupDecision.SKIP_SETUP_PAGE }))}
             />;
             break;
     }
     return (
-        <GENERATED_LINKS_CTX.Provider value={links}>
+        <SessionLinkGenerator>
             {child}
-        </GENERATED_LINKS_CTX.Provider>
+        </SessionLinkGenerator>
     );
 };
-
-/// Use the session urls
-export const useSessionLinks = () => React.useContext(GENERATED_LINKS_CTX);

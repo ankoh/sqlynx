@@ -2,7 +2,7 @@ import * as React from 'react';
 import Immutable from 'immutable';
 
 import { registerSession } from './session_state_registry.js';
-import { useSessionSelector, useActiveSessionState } from './session_state_provider.js';
+import { useSessionSelector } from './session_state_provider.js';
 import { CONNECTOR_INFOS, ConnectorType } from '../connectors/connector_info.js';
 import { useSQLynxSetup } from '../sqlynx_loader.js';
 import { ScriptData, ScriptKey } from './session_state.js';
@@ -10,26 +10,16 @@ import { RESULT_OK } from '../utils/result.js';
 import { ScriptLoadingStatus } from './script_loader.js';
 import { TPCH_SCHEMA, EXAMPLE_SCRIPTS } from './example_scripts.js';
 
-interface Props {
-    children?: React.ReactElement;
-}
-
 export const DEFAULT_BOARD_WIDTH = 800;
 export const DEFAULT_BOARD_HEIGHT = 600;
 
-export const ScriptAutoloaderBrainstorm: React.FC<Props> = (props: Props) => {
+export function useBrainstormSessionSetup() {
     const setupSQLynx = useSQLynxSetup();
-    const state = useActiveSessionState();
     const selectScript = useSessionSelector();
 
-    // Setup an emtpy brainstorm environment IFF there is not state configured
-    React.useEffect(() => {
-        // Bail out if there is a state
-        if (state) {
-            return;
-        }
+    return React.useCallback(async () => {
         // Try to setup SQLynx, abort if that fails
-        const instance = setupSQLynx("brainstorm_autoloader");
+        const instance = await setupSQLynx("brainstorm_session");
         if (instance?.type !== RESULT_OK) {
             return;
         }
@@ -123,6 +113,5 @@ export const ScriptAutoloaderBrainstorm: React.FC<Props> = (props: Props) => {
         });
 
         selectScript(scriptId);
-    }, [state, setupSQLynx, selectScript]);
-    return props.children;
+    }, [setupSQLynx, selectScript]);
 };
