@@ -189,13 +189,13 @@
     grid-template-columns: max-content 1fr max-content;
     align-items: center;
     column-gap: 8px;
-    padding: 8px 12px;
+    padding: 12px;
 }
 
 .card_status_text {
     grid-column: 2;
 }
-.card_action_continue {
+.card_action_right {
     grid-column: 3;
 }
 

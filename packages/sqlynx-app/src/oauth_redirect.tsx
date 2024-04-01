@@ -189,14 +189,14 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
                             {
                                 remainingUntilAutoTrigger == 0
                                     ? <Button
-                                        className={page_styles.card_action_continue}
+                                        className={page_styles.card_action_right}
                                         variant="primary"
                                         onClick={() => triggerFlow(props.state, code, logger)}
                                     >
                                         Send to App
                                     </Button>
                                     : <Button
-                                        className={page_styles.card_action_continue}
+                                        className={page_styles.card_action_right}
                                         variant="primary"
                                         onClick={() => triggerFlow(props.state, code, logger)}
                                         trailingVisual={() => <div>{Math.ceil(remainingUntilAutoTrigger / 1000)}</div>}
