@@ -1,5 +1,5 @@
 export const BRAINSTORM_MODE = Symbol('BRAINSTORM_MODE');
-export const SALESFORCE_DATA_CLOUD = Symbol('SCALESFORCE_DATA_CLOUD');
+export const SALESFORCE_DATA_CLOUD = Symbol('SALESFORCE_DATA_CLOUD');
 export const HYPER_DATABASE = Symbol('HYPER_DATABASE');
 
 export enum ConnectorType {
