@@ -15,7 +15,7 @@ runs:
         key: llvm-16.0.0
 
     - name: Install llvm
-      uses: KyleMayes/install-llvm-action@v1
+      uses: KyleMayes/install-llvm-action@v2
       with:
         version: "16.0.0"
         cached: ${{ steps.cache-llvm.outputs.cache-hit }}
