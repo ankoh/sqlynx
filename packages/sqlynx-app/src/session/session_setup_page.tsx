@@ -162,29 +162,37 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     // Render connector options
     let connectorOptionsSection: React.ReactElement = <div />;
     switch (state?.connectorParams?.type) {
-        case SALESFORCE_DATA_CLOUD:
-            console.log(state.connectorParams);
+        case SALESFORCE_DATA_CLOUD: {
+            const switchToNative = true;
             connectorOptionsSection = (
-                <div className={page_styles.card_section}>
-                    <div className={page_styles.section_entries}>
-                        <TextField
-                            name="Salesforce Instance URL"
-                            value={state.connectorParams.value.instanceUrl ?? ""}
-                            readOnly={true}
-                            disabled={true}
-                            leadingVisual={() => <div>URL</div>}
-                        />
-                        <TextField
-                            name="Connected App"
-                            value={state.connectorParams.value.appConsumerKey ?? ""}
-                            readOnly={true}
-                            disabled={true}
-                            leadingVisual={() => <div>ID</div>}
-                        />
+                <>
+                    <div className={page_styles.card_section}>
+                        <div className={page_styles.section_entries}>
+                            <TextField
+                                name="Salesforce Instance URL"
+                                value={state.connectorParams.value.instanceUrl ?? ""}
+                                readOnly={true}
+                                disabled={true}
+                                leadingVisual={() => <div>URL</div>}
+                            />
+                            <TextField
+                                name="Connected App"
+                                value={state.connectorParams.value.appConsumerKey ?? ""}
+                                readOnly={true}
+                                disabled={true}
+                                leadingVisual={() => <div>ID</div>}
+                            />
+                        </div>
                     </div>
-                </div>
+                    {switchToNative &&
+                        <div className={page_styles.card_section_info}>
+                            The Salesforce connector can only be used in native apps.
+                        </div>
+                    }
+                </>
             );
             break;
+        }
     }
 
     // Construct the page
@@ -227,7 +235,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                             value={state?.scriptText ?? ""}
                             readOnly={true}
                             disabled={true}
-                            leadingVisual={() => <div>Base64 script text with 0 characters</div>}
+                            leadingVisual={() => <div>Script text with 0 characters</div>}
                         />
                         {(state?.schemaText?.length ?? 0) > 0 &&
                             <TextField
@@ -235,82 +243,21 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                                 value={state?.schemaText ?? ""}
                                 readOnly={true}
                                 disabled={true}
-                                leadingVisual={() => <div>Text</div>}
+                                leadingVisual={() => <div>Schema text with 0 characters</div>}
                             />
                         }
                     </div>
                 </div>
                 {connectorOptionsSection}
+                <div className={page_styles.card_actions}>
+                    <Button
+                        className={page_styles.card_action_right}
+                        variant="primary"
+                        onClick={console.log}>
+                        Continue
+                    </Button>
+                </div>
             </div>
         </div>
     );
-
-    // return (
-    //     <div className={styles.page}>
-    //         <div className={styles.banner_container}>
-    //             <div className={styles.banner_logo}>
-    //                 <svg width="100%" height="100%">
-    //                     <use xlinkHref={`${symbols}#sqlynx-inverted`} />
-    //                 </svg>
-    //             </div>
-    //             <div className={styles.banner_text_container}>
-    //                 <div className={styles.banner_title}>sqlynx</div>
-    //                 <div className={styles.app_version}>version {SQLYNX_VERSION ?? '-'}</div>
-    //             </div>
-    //         </div>
-    //         <div className={styles.card_container}>
-    //             <div className={styles.card_header}>
-    //                 <div>Setup</div>
-    //             </div>
-    //             <div className={styles.card_section}>
-    //                 <div className={styles.card_section_header}>SQL</div>
-    //                 <div className={styles.detail_entries}>
-    //                     <DetailEntry label="Inline Script">
-    //                         <Bean text={(state?.scriptText?.length ?? 0) + ' chars'} />
-    //                     </DetailEntry>
-    //                     <DetailEntry label="Inline Schema">
-    //                         <Bean text={(state?.schemaText?.length ?? 0) + ' chars'} />
-    //                     </DetailEntry>
-    //                 </div>
-    //             </div>
-    //             <div className={styles.card_section}>
-    //                 <div className={styles.card_section_header}>Connector</div>
-    //                 <div className={styles.detail_entries}>
-    //                     <DetailEntry label="Connector Type">
-    //                         <Bean text={connectorInfo?.displayName.long ?? 'unknown'} />
-    //                     </DetailEntry>
-    //                     <DetailEntry label="Supported Platforms">
-    //                         {connectorInfo?.platforms.native ? <Bean text="Native" /> : undefined}
-    //                         {connectorInfo?.platforms.browser ? <Bean text="Web" /> : undefined}
-    //                     </DetailEntry>
-    //                     {state?.connectorParams?.type == SALESFORCE_DATA_CLOUD && (
-    //                         <>
-    //                             <DetailEntry label="Instance Url">
-    //                                 <Bean text={state?.connectorParams.value.instanceUrl ?? 'not set'} />
-    //                             </DetailEntry>
-    //                             <DetailEntry label="Connected App">
-    //                                 <Bean text={state?.connectorParams.value.appConsumerKey ?? 'not set'} />
-    //                             </DetailEntry>
-    //                         </>
-    //                     )}
-    //                 </div>
-    //             </div>
-    //             <div className={styles.card_actions}>
-    //                 {canContinue ? (
-    //                     <Button className={styles.card_action_continue} variant="primary" onClick={props.onDone}>
-    //                         Continue
-    //                     </Button>
-    //                 ) : (
-    //                     <>
-    //                         <Button variant="danger" onClick={props.onDone}>
-    //                             Skip
-    //                         </Button>
-    //                         <div className={styles.card_status_text}>{statusText}</div>
-    //                         <IconButton className={styles.card_action_restart} icon={SyncIcon} aria-labelledby="sync" />
-    //                     </>
-    //                 )}
-    //             </div>
-    //         </div>
-    //     </div>
-    // );
 };
