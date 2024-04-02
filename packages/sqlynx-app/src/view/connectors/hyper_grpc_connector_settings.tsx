@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as proto from "@ankoh/sqlynx-pb";
 
 import { Button } from '@primer/react';
-import { ChecklistIcon, DatabaseIcon, FileBadgeIcon, KeyIcon, PulseIcon, TagIcon } from '@primer/octicons-react';
+import { ChecklistIcon, DatabaseIcon, FileBadgeIcon, KeyIcon, PlugIcon, TagIcon } from '@primer/octicons-react';
 
 import { TextField, KeyValueTextField } from '../text_field.js';
 import { useLogger } from '../../platform/logger_provider.js';
@@ -64,10 +64,10 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                 </div>
                 <div className={style.platform_actions}>
                     <Button
-                        variant="primary"
-                        leadingVisual={PulseIcon}
+                        variant='primary'
+                        leadingVisual={PlugIcon}
                         onClick={testSettings}
-                    >Test</Button>
+                    >Connect</Button>
                 </div>
             </div >
             <div className={style.body_container}>
