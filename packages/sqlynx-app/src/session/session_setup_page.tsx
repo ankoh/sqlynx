@@ -67,10 +67,6 @@ const ConnectorParamsSection: React.FC<{ params: ConnectorSetupParamVariant }> =
     }
 };
 
-const ConnectorIsUnsupported: React.FC<{ params: UnsupportedSetupParams }> = (props: { params: UnsupportedSetupParams }) => {
-    return <div />;
-};
-
 export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     const [logsAreOpen, setLogsAreOpen] = React.useState<boolean>(false);
 
@@ -119,7 +115,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
 
     // Need to switch to native?
     // Some connectors only run in the native app.
-    const switchToNative = connectorInfo ? requiresSwitchingToNative(connectorInfo) : false;
+    const canExecuteHere = connectorInfo ? requiresSwitchingToNative(connectorInfo) : false;
 
     // Initial attempt to auto-trigger the authorization.
     const didAuthOnce = React.useRef<boolean>(false);
@@ -128,7 +124,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
             didAuthOnce.current ||
             state == null ||
             state.connectorParams == null ||
-            switchToNative ||
+            canExecuteHere ||
             connectorAuthCheck != ConnectorAuthCheck.AUTHENTICATION_NOT_STARTED
         ) {
             return;
@@ -243,14 +239,14 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
 
             // Do we need to switch to native?
             // Render a warning, information where to get the app and a button to switch.
-            if (switchToNative) {
+            if (canExecuteHere) {
                 sections.push(
                     <div key={sections.length} className={page_styles.card_actions}>
                         <Button
                             className={page_styles.card_action_right}
                             variant="primary"
                             onClick={console.log}>
-                            Continue
+                            Open App
                         </Button>
                     </div>
                 );

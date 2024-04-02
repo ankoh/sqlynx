@@ -66,7 +66,7 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
     const now = new Date();
     const [logsAreOpen, setLogsAreOpen] = React.useState<boolean>(false);
 
-    // Setup autotrigger timestamp
+    // Setup autotrigger
     const autoTriggersAt = React.useMemo(() => new Date(now.getTime() + AUTOTRIGGER_DELAY), []);
     const remainingUntilAutoTrigger = Math.max(autoTriggersAt.getTime(), now.getTime()) - now.getTime();
     React.useEffect(() => {
