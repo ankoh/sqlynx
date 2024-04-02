@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Immutable from 'immutable';
 
-import { CONNECTOR_INFOS, ConnectorType } from '../connectors/connector_info.js';
+import { CONNECTOR_INFOS, ConnectorType, SALESFORCE_DATA_CLOUD } from '../connectors/connector_info.js';
 import { DEFAULT_BOARD_HEIGHT, DEFAULT_BOARD_WIDTH } from './setup_brainstorm_session.js';
 import { FULL_CATALOG_REFRESH } from '../connectors/catalog_update.js';
 import { RESULT_OK } from '../utils/result.js';
@@ -12,7 +12,7 @@ import { registerSession, useSessionState } from './session_state_registry.js';
 import { generateBlankScript } from './script_metadata.js';
 import { useSQLynxSetup } from '../sqlynx_loader.js';
 import { useSalesforceAPI } from '../connectors/salesforce_connector.js';
-import { useSalesforceAuthState } from '../connectors/salesforce_auth_state.js';
+import { AUTH_FLOW_DEFAULT_STATE, useSalesforceAuthState } from '../connectors/salesforce_auth_state.js';
 import { useSessionSelector } from './session_state_provider.js';
 
 export function useSalesforceSessionSetup() {
@@ -64,6 +64,12 @@ export function useSalesforceSessionSetup() {
             const scriptId = registerSession({
                 instance: instance.value,
                 connectorInfo: CONNECTOR_INFOS[ConnectorType.SALESFORCE_DATA_CLOUD],
+                connectorState: {
+                    type: SALESFORCE_DATA_CLOUD,
+                    value: {
+                        auth: AUTH_FLOW_DEFAULT_STATE,
+                    }
+                },
                 scripts: {
                     [ScriptKey.MAIN_SCRIPT]: mainScriptData,
                 },

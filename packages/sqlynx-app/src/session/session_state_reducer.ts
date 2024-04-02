@@ -24,8 +24,7 @@ import {
 
 export const DESTROY = Symbol('DESTROY');
 
-export const SELECT_CONNECTOR = Symbol('SELECT_CONNECTOR');
-export const SELECT_NEXT_CONNECTOR = Symbol('SELECT_NEXT_CONNECTOR');
+export const UPDATE_CONNECTOR_STATE = Symbol('UPDATE_CONNECTOR_STATE');
 
 export const UPDATE_SCRIPT_ANALYSIS = Symbol('UPDATE_SCRIPT_ANALYSIS');
 export const UPDATE_SCRIPT_CURSOR = Symbol('UPDATE_SCRIPT_CURSOR');
