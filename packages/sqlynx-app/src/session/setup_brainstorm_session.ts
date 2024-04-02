@@ -3,7 +3,7 @@ import Immutable from 'immutable';
 
 import { registerSession } from './session_state_registry.js';
 import { useSessionSelector } from './session_state_provider.js';
-import { CONNECTOR_INFOS, ConnectorType } from '../connectors/connector_info.js';
+import { BRAINSTORM_MODE, CONNECTOR_INFOS, ConnectorType } from '../connectors/connector_info.js';
 import { useSQLynxSetup } from '../sqlynx_loader.js';
 import { ScriptData, ScriptKey } from './session_state.js';
 import { RESULT_OK } from '../utils/result.js';
@@ -75,6 +75,10 @@ export function useBrainstormSessionSetup() {
         const scriptId = registerSession({
             instance: instance.value,
             connectorInfo: CONNECTOR_INFOS[ConnectorType.BRAINSTORM_MODE],
+            connectorState: {
+                type: BRAINSTORM_MODE,
+                value: {}
+            },
             scripts: {
                 [ScriptKey.MAIN_SCRIPT]: mainScriptData,
                 [ScriptKey.SCHEMA_SCRIPT]: schemaScriptData,
