@@ -171,7 +171,10 @@ impl GrpcProxy {
             .endpoint
             .connect()
             .await
-            .map_err(|e| Status::GrpcEndpointConnectFailed{ message: e.to_string() })?;
+            .map_err(|e| {
+                log::error!("creating a channel failed with error: {:?}", e);
+                Status::GrpcEndpointConnectFailed{ message: e.to_string() }
+            })?;
 
         if let Ok(mut channels) = self.channels.write() {
             channels.insert(channel_id, Arc::new(GrpcChannelEntry { channel }));

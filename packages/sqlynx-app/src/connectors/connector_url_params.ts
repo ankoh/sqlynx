@@ -49,6 +49,7 @@ export function readConnectorParamsFromURL(urlParams: URLSearchParams): Connecto
         case 'hyper':
             return readHyperConnectorParamsFromURL(urlParams);
         case 'none':
+        case null:
             return readBrainstormConnectorParamsFromURL(urlParams);
         default:
             return null;
