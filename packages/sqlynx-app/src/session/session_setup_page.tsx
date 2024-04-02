@@ -206,13 +206,13 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
 
     // Did not parse the url params yet?
     if (!state) {
-        sections.push(<div>State is empty</div>);
+        sections.push(<div key={sections.length} className={page_styles.card_section}>State is empty</div>);
     } else if (!connectorInfo) {
         // Unknown connector
-        sections.push(<div>Connector is unsupported</div>);
+        sections.push(<div key={sections.length} className={page_styles.card_section}>Connector is unsupported</div>);
     } else {
         sections.push(
-            <div className={page_styles.card_section}>
+            <div key={sections.length} className={page_styles.card_section}>
                 <div className={page_styles.section_entries}>
                     <TextField
                         name="Inline Script"
@@ -236,18 +236,27 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
         // Do we have connector params?
         // Then render them in a dedicated section.
         if (state.connectorParams) {
-            sections.push(<ConnectorParamsSection params={state?.connectorParams} />);
+            sections.push(<ConnectorParamsSection key={sections.length} params={state?.connectorParams} />);
         }
 
         // Do we need to switch to native?
         // Render a warning, information where to get the app and a button to switch.
         if (switchToNative) {
-            // XXX
+            sections.push(
+                <div key={sections.length} className={page_styles.card_actions}>
+                    <Button
+                        className={page_styles.card_action_right}
+                        variant="primary"
+                        onClick={console.log}>
+                        Continue
+                    </Button>
+                </div>
+            );
 
         } else {
             // We can stay here, render normal action bar
             sections.push(
-                <div className={page_styles.card_actions}>
+                <div key={sections.length} className={page_styles.card_actions}>
                     <Button
                         className={page_styles.card_action_right}
                         variant="primary"
