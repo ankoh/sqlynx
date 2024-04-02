@@ -139,7 +139,7 @@
     border-bottom: 1px solid var(--log_border_color);
     background-color: var(--log_cell_background);
     font-size: 0.8rem;
-    text-wrap: nowrap;
+    text-wrap: wrap;
     overflow: hidden;
 
     position: relative;
