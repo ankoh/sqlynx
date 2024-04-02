@@ -3,16 +3,19 @@ import * as proto from "@ankoh/sqlynx-pb";
 import { HyperDatabaseClient, HyperDatabaseConnection, HyperQueryExecutionStatus, HyperQueryResultStream } from "./hyperdb_client.js";
 import { NativeGrpcChannel, NativeGrpcClient, NativeGrpcProxyConfig, NativeGrpcServerStream, NativeGrpcServerStreamMessageIterator } from './native_grpc_client.js';
 import { GrpcChannelArgs } from './grpc_common.js';
+import { Logger } from "./logger.js";
 
 
 class NativeHyperQueryResultStream implements HyperQueryResultStream {
+    logger: Logger;
     grpcStream: NativeGrpcServerStream;
     messageIterator: NativeGrpcServerStreamMessageIterator;
     currentStatus: HyperQueryExecutionStatus;
 
-    constructor(stream: NativeGrpcServerStream) {
+    constructor(stream: NativeGrpcServerStream, logger: Logger) {
+        this.logger = logger;
         this.grpcStream = stream;
-        this.messageIterator = new NativeGrpcServerStreamMessageIterator(this.grpcStream);
+        this.messageIterator = new NativeGrpcServerStreamMessageIterator(this.grpcStream, logger);
         this.currentStatus = HyperQueryExecutionStatus.STARTED;
     }
 
@@ -51,9 +54,11 @@ class NativeHyperQueryResultStream implements HyperQueryResultStream {
 }
 
 class NativeHyperDatabaseConnection implements HyperDatabaseConnection {
+    logger: Logger;
     grpcChannel: NativeGrpcChannel;
 
-    constructor(channel: NativeGrpcChannel) {
+    constructor(channel: NativeGrpcChannel, logger: Logger) {
+        this.logger = logger;
         this.grpcChannel = channel;
     }
 
@@ -63,20 +68,27 @@ class NativeHyperDatabaseConnection implements HyperDatabaseConnection {
             path: "/salesforce.hyperdb.grpc.v1.HyperService/ExecuteQuery",
             body: params.toBinary(),
         });
-        return new NativeHyperQueryResultStream(stream);
+        return new NativeHyperQueryResultStream(stream, this.logger);
+    }
+
+    /// Close the connection
+    public async close(): Promise<void> {
+        await this.grpcChannel.close();
     }
 }
 
 export class NativeHyperDatabaseClient implements HyperDatabaseClient {
+    logger: Logger;
     client: NativeGrpcClient;
 
-    constructor(config: NativeGrpcProxyConfig) {
-        this.client = new NativeGrpcClient(config);
+    constructor(config: NativeGrpcProxyConfig, logger: Logger) {
+        this.logger = logger;
+        this.client = new NativeGrpcClient(config, logger);
     }
 
     /// Create a database connection
     public async connect(args: GrpcChannelArgs): Promise<NativeHyperDatabaseConnection> {
         const channel = await this.client.connect(args);
-        return new NativeHyperDatabaseConnection(channel);
+        return new NativeHyperDatabaseConnection(channel, this.logger);
     }
 }

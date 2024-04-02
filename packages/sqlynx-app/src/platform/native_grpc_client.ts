@@ -1,4 +1,5 @@
 import { GrpcChannelArgs, GrpcError } from "./grpc_common.js";
+import { Logger } from "./logger.js";
 import { HEADER_NAME_BATCH_BYTES, HEADER_NAME_BATCH_TIMEOUT, HEADER_NAME_CHANNEL_ID, HEADER_NAME_ENDPOINT, HEADER_NAME_PATH, HEADER_NAME_READ_TIMEOUT, HEADER_NAME_STREAM_ID, HEADER_NAME_TLS_CACERTS, HEADER_NAME_TLS_CLIENT_CERT, HEADER_NAME_TLS_CLIENT_KEY } from "./native_api_mock.js";
 
 export enum NativeGrpcServerStreamBatchEvent {
@@ -36,6 +37,8 @@ function requireIntegerHeader(headers: Headers, key: string): number {
 }
 
 export class NativeGrpcServerStream implements AsyncIterator<NativeGrpcServerStreamBatch> {
+    /// The logger
+    logger: Logger;
     /// The endpoint
     endpoint: NativeGrpcProxyConfig;
     /// The channel id
@@ -45,7 +48,8 @@ export class NativeGrpcServerStream implements AsyncIterator<NativeGrpcServerStr
     /// Reached the end of the stream?
     reachedEndOfStream: boolean;
 
-    constructor(endpoint: NativeGrpcProxyConfig, channelId: number, streamId: number) {
+    constructor(endpoint: NativeGrpcProxyConfig, channelId: number, streamId: number, logger: Logger) {
+        this.logger = logger;
         this.endpoint = endpoint;
         this.channelId = channelId;
         this.streamId = streamId;
@@ -134,6 +138,8 @@ export class NativeGrpcServerStream implements AsyncIterator<NativeGrpcServerStr
 }
 
 export class NativeGrpcServerStreamMessageIterator implements AsyncIterator<Uint8Array> {
+    /// The logger
+    protected logger: Logger;
     /// The batch iterator
     protected batchIterator: AsyncIterator<NativeGrpcServerStreamBatch>;
     /// The current batch
@@ -141,7 +147,8 @@ export class NativeGrpcServerStreamMessageIterator implements AsyncIterator<Uint
     /// The next index in the current batch
     protected nextInCurrentBatch: number;
 
-    constructor(batchIterator: AsyncIterator<NativeGrpcServerStreamBatch>) {
+    constructor(batchIterator: AsyncIterator<NativeGrpcServerStreamBatch>, logger: Logger) {
+        this.logger = logger;
         this.batchIterator = batchIterator;
         this.currentBatch = null;
         this.nextInCurrentBatch = 0;
@@ -177,12 +184,15 @@ interface StartServerStreamArgs {
 }
 
 export class NativeGrpcChannel {
+    /// The logger
+    logger: Logger;
     /// The endpoint
     endpoint: NativeGrpcProxyConfig;
     /// The channel id
     channelId: number;
 
-    constructor(endpoint: NativeGrpcProxyConfig, channelId: number) {
+    constructor(endpoint: NativeGrpcProxyConfig, channelId: number, logger: Logger) {
+        this.logger = logger;
         this.endpoint = endpoint;
         this.channelId = channelId;
     }
@@ -209,15 +219,38 @@ export class NativeGrpcChannel {
         }
 
         const streamId = requireIntegerHeader(response.headers, HEADER_NAME_STREAM_ID);
-        return new NativeGrpcServerStream(this.endpoint, this.channelId, streamId);
+        return new NativeGrpcServerStream(this.endpoint, this.channelId, streamId, this.logger);
+    }
+
+    // Destroy a channel
+    public async close(): Promise<void> {
+        const url = new URL(this.endpoint.proxyEndpoint);
+        url.pathname = `/grpc/channel/${this.channelId}`;
+
+        const headers = new Headers();
+        headers.set(HEADER_NAME_CHANNEL_ID, this.channelId.toString());
+
+        // Send the request
+        const request = new Request(url, {
+            method: 'DELETE',
+            headers,
+            body: "",
+        });
+        const response = await fetch(request);
+        if (response.status != 200) {
+            throw new GrpcError(response.status, response.statusText);
+        }
     }
 }
 
 export class NativeGrpcClient {
+    /// The logger
+    logger: Logger;
     /// The endpoint
     proxy: NativeGrpcProxyConfig;
 
-    constructor(proxy: NativeGrpcProxyConfig) {
+    constructor(proxy: NativeGrpcProxyConfig, logger: Logger) {
+        this.logger = logger;
         this.proxy = proxy;
     }
 
@@ -245,7 +278,8 @@ export class NativeGrpcClient {
         if (response.status !== 200) {
             throw new GrpcError(response.status, response.statusText);
         }
+
         const channelId = requireIntegerHeader(response.headers, HEADER_NAME_CHANNEL_ID);
-        return new NativeGrpcChannel(this.proxy, channelId);
+        return new NativeGrpcChannel(this.proxy, channelId, this.logger);
     }
 }
