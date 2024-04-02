@@ -85,14 +85,14 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
             refreshSchemaAction: true,
         },
         platforms: {
-            browser: true,
+            browser: false,
             native: true,
         },
     },
 ];
 
 export function requiresSwitchingToNative(info: ConnectorInfo) {
-    return !info.platforms.browser && isNativePlatform();
+    return !info.platforms.browser && !isNativePlatform();
 }
 
 export enum ConnectorAuthCheck {
