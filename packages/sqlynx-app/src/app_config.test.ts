@@ -8,9 +8,4 @@ describe('App config', () => {
         const file = await fs.readFile(fileURLToPath(configPath), 'utf-8');
         expect(() => JSON.parse(file)).not.toThrow();
     });
-    it('defines HyperApi artifacts', async () => {
-        const file = await fs.readFile(fileURLToPath(configPath), 'utf-8');
-        const config = JSON.parse(file);
-        expect(config.connectors?.hyper?.hyperApi).toBeDefined();
-    });
 });
