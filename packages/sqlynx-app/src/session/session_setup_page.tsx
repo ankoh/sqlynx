@@ -11,8 +11,10 @@ import {
     HYPER_DATABASE,
     BRAINSTORM_MODE,
     SALESFORCE_DATA_CLOUD,
+    requiresSwitchingToNative,
+    UNKNOWN_CONNECTOR,
 } from '../connectors/connector_info.js';
-import { ConnectorSetupParamVariant, checkSalesforceAuthSetup, readConnectorParamsFromURL } from '../connectors/connector_url_params.js';
+import { ConnectorSetupParamVariant, UnsupportedSetupParams, checkSalesforceAuthSetup, readConnectorParamsFromURL } from '../connectors/connector_url_params.js';
 import { useSalesforceAuthState } from '../connectors/salesforce_auth_state.js';
 import { REPLACE_SCRIPT_CONTENT } from './session_state_reducer.js';
 import { useActiveSessionState, useActiveSessionStateDispatch } from './session_state_provider.js';
@@ -33,8 +35,42 @@ interface Props {
 interface State {
     scriptText: string | null;
     schemaText: string | null;
-    connectorParams: ConnectorSetupParamVariant | null;
+    connectorParams: ConnectorSetupParamVariant;
 }
+
+const ConnectorParamsSection: React.FC<{ params: ConnectorSetupParamVariant }> = (props: { params: ConnectorSetupParamVariant }) => {
+    switch (props.params.type) {
+        case SALESFORCE_DATA_CLOUD: {
+            return (
+                <div className={page_styles.card_section}>
+                    <div className={page_styles.section_entries}>
+                        <TextField
+                            name="Salesforce Instance URL"
+                            value={props.params.value.instanceUrl ?? ""}
+                            readOnly={true}
+                            disabled={true}
+                            leadingVisual={() => <div>URL</div>}
+                        />
+                        <TextField
+                            name="Connected App"
+                            value={props.params.value.appConsumerKey ?? ""}
+                            readOnly={true}
+                            disabled={true}
+                            leadingVisual={() => <div>ID</div>}
+                        />
+                    </div>
+                </div>
+            );
+        }
+        default: {
+            return <div />;
+        }
+    }
+};
+
+const ConnectorIsUnsupported: React.FC<{ params: UnsupportedSetupParams }> = (props: { params: UnsupportedSetupParams }) => {
+    return <div />;
+};
 
 export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     const [logsAreOpen, setLogsAreOpen] = React.useState<boolean>(false);
@@ -66,10 +102,10 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
         });
     }, []);
 
-    // Check the auth setup
+    // Resolve the connector info
     let connectorInfo: ConnectorInfo | null = null;
     let connectorAuthCheck: ConnectorAuthCheck | null = null;
-    switch (state?.connectorParams?.type) {
+    switch (state?.connectorParams.type) {
         case SALESFORCE_DATA_CLOUD:
             connectorInfo = CONNECTOR_INFOS[ConnectorType.SALESFORCE_DATA_CLOUD as number];
             connectorAuthCheck = checkSalesforceAuthSetup(salesforceAuth, state.connectorParams.value);
@@ -82,18 +118,18 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
             break;
     }
 
-    // Distinguish the different connector types
-    const authOnce = React.useRef<boolean>(false);
+    // Initial attempt to auto-trigger the authorization
+    const didAuthOnce = React.useRef<boolean>(false);
     React.useEffect(() => {
         if (
-            authOnce.current ||
+            didAuthOnce.current ||
             state == null ||
             state.connectorParams == null ||
             connectorAuthCheck != ConnectorAuthCheck.AUTHENTICATION_NOT_STARTED
         ) {
             return;
         }
-        authOnce.current = true;
+        didAuthOnce.current = true;
         switch (state?.connectorParams?.type) {
             case SALESFORCE_DATA_CLOUD:
                 // Only start the auth flow if we know we can support it.
@@ -115,10 +151,10 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     }, [state, connectorAuthCheck]);
 
     // Replace the script content with the inlined text after authentication finished
-    const loadedOnce = React.useRef<boolean>(false);
+    const didLoadScriptOnce = React.useRef<boolean>(false);
     React.useEffect(() => {
         if (
-            loadedOnce.current ||
+            didLoadScriptOnce.current ||
             state == null ||
             state.connectorParams == null ||
             connectorInfo !== selectedScript?.connectorInfo ||
@@ -126,7 +162,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
         ) {
             return;
         }
-        loadedOnce.current = true;
+        didLoadScriptOnce.current = true;
         const update: any = {};
         if (state.scriptText !== null) {
             update[ScriptKey.MAIN_SCRIPT] = state.scriptText;
@@ -159,43 +195,58 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     //         break;
     // }
 
-    // Render connector options
-    let connectorOptionsSection: React.ReactElement = <div />;
-    switch (state?.connectorParams?.type) {
-        case SALESFORCE_DATA_CLOUD: {
-            const switchToNative = true;
-            connectorOptionsSection = (
-                <>
-                    <div className={page_styles.card_section}>
-                        <div className={page_styles.section_entries}>
-                            <TextField
-                                name="Salesforce Instance URL"
-                                value={state.connectorParams.value.instanceUrl ?? ""}
-                                readOnly={true}
-                                disabled={true}
-                                leadingVisual={() => <div>URL</div>}
-                            />
-                            <TextField
-                                name="Connected App"
-                                value={state.connectorParams.value.appConsumerKey ?? ""}
-                                readOnly={true}
-                                disabled={true}
-                                leadingVisual={() => <div>ID</div>}
-                            />
-                        </div>
-                    </div>
-                    {switchToNative &&
-                        <div className={page_styles.card_section_info}>
-                            The Salesforce connector can only be used in native apps.
-                        </div>
+
+    let sections: React.ReactElement[] = [];
+
+    // Did not parse the url params yet?
+    if (!state) {
+        sections.push(<div>State is empty</div>);
+    } else if (state.connectorParams.type === UNKNOWN_CONNECTOR) {
+        sections.push(<div>Connector is unsupported</div>);
+    } else {
+        sections.push(
+            <div className={page_styles.card_section}>
+                <div className={page_styles.section_entries}>
+                    <TextField
+                        name="Inline Script"
+                        value={state?.scriptText ?? ""}
+                        readOnly={true}
+                        disabled={true}
+                        leadingVisual={() => <div>Script text with 0 characters</div>}
+                    />
+                    {(state?.schemaText?.length ?? 0) > 0 &&
+                        <TextField
+                            name="Inline Schema"
+                            value={state?.schemaText ?? ""}
+                            readOnly={true}
+                            disabled={true}
+                            leadingVisual={() => <div>Schema text with 0 characters</div>}
+                        />
                     }
-                </>
+                </div>
+            </div>
+        );
+        if (state.connectorParams) {
+            sections.push(<ConnectorParamsSection params={state?.connectorParams} />);
+            sections.push(
+                <div className={page_styles.card_actions}>
+                    <Button
+                        className={page_styles.card_action_right}
+                        variant="primary"
+                        onClick={console.log}>
+                        Continue
+                    </Button>
+                </div>
             );
-            break;
         }
     }
 
-    // Construct the page
+
+    // if (requiresSwitchingToNative(!connectorInfo?.platforms.browser)) {
+
+    // }
+
+    // Render the page
     return (
         <div className={page_styles.page}>
             <div className={page_styles.banner_container}>
@@ -228,35 +279,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                         {logsAreOpen && <LogViewerInPortal onClose={() => setLogsAreOpen(false)} />}
                     </div>
                 </div>
-                <div className={page_styles.card_section}>
-                    <div className={page_styles.section_entries}>
-                        <TextField
-                            name="Inline Script"
-                            value={state?.scriptText ?? ""}
-                            readOnly={true}
-                            disabled={true}
-                            leadingVisual={() => <div>Script text with 0 characters</div>}
-                        />
-                        {(state?.schemaText?.length ?? 0) > 0 &&
-                            <TextField
-                                name="Inline Schema"
-                                value={state?.schemaText ?? ""}
-                                readOnly={true}
-                                disabled={true}
-                                leadingVisual={() => <div>Schema text with 0 characters</div>}
-                            />
-                        }
-                    </div>
-                </div>
-                {connectorOptionsSection}
-                <div className={page_styles.card_actions}>
-                    <Button
-                        className={page_styles.card_action_right}
-                        variant="primary"
-                        onClick={console.log}>
-                        Continue
-                    </Button>
-                </div>
+                {sections}
             </div>
         </div>
     );

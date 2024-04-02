@@ -1,5 +1,5 @@
 import { VariantKind } from '../utils/index.js';
-import { SALESFORCE_DATA_CLOUD, BRAINSTORM_MODE, HYPER_DATABASE, ConnectorAuthCheck } from './connector_info.js';
+import { SALESFORCE_DATA_CLOUD, BRAINSTORM_MODE, HYPER_DATABASE, ConnectorAuthCheck, UNKNOWN_CONNECTOR } from './connector_info.js';
 import { SalesforceAuthState } from './salesforce_auth_state.js';
 
 export interface SalesforceSetupParams {
@@ -8,11 +8,15 @@ export interface SalesforceSetupParams {
 }
 export interface BrainstormSetupParams { }
 export interface HyperSetupParams { }
+export interface UnsupportedSetupParams {
+    params: URLSearchParams;
+}
 
 export type ConnectorSetupParamVariant =
     | VariantKind<typeof SALESFORCE_DATA_CLOUD, SalesforceSetupParams>
     | VariantKind<typeof BRAINSTORM_MODE, BrainstormSetupParams>
-    | VariantKind<typeof HYPER_DATABASE, HyperSetupParams>;
+    | VariantKind<typeof HYPER_DATABASE, HyperSetupParams>
+    | VariantKind<typeof UNKNOWN_CONNECTOR, UnsupportedSetupParams>;
 
 function readSalesforceConnectorParamsFromURL(urlParams: URLSearchParams): ConnectorSetupParamVariant {
     const result: SalesforceSetupParams = {
@@ -25,33 +29,39 @@ function readSalesforceConnectorParamsFromURL(urlParams: URLSearchParams): Conne
     };
 }
 
-function readBrainstormConnectorParamsFromURL(urlParms: URLSearchParams): ConnectorSetupParamVariant {
+function readBrainstormConnectorParamsFromURL(_urlParms: URLSearchParams): ConnectorSetupParamVariant {
     return {
         type: BRAINSTORM_MODE,
         value: {},
     };
 }
 
-function readHyperConnectorParamsFromURL(urlParams: URLSearchParams): ConnectorSetupParamVariant {
+function readHyperConnectorParamsFromURL(_urlParams: URLSearchParams): ConnectorSetupParamVariant {
     return {
         type: HYPER_DATABASE,
         value: {},
     };
 }
 
-export function readConnectorParamsFromURL(urlParams: URLSearchParams): ConnectorSetupParamVariant | null {
+export function readConnectorParamsFromURL(urlParams: URLSearchParams): ConnectorSetupParamVariant {
     switch (urlParams.get('connector') ?? null) {
         case 'sfdc':
             return readSalesforceConnectorParamsFromURL(urlParams);
         case 'hyper':
             return readHyperConnectorParamsFromURL(urlParams);
         case 'none':
-        default:
             return readBrainstormConnectorParamsFromURL(urlParams);
+        default:
+            return {
+                type: UNKNOWN_CONNECTOR,
+                value: {
+                    params: urlParams
+                }
+            };
     }
 }
 
-export function writeSalesforceConnectorParams(publicParams: URLSearchParams, privateParams: URLSearchParams, state: SalesforceAuthState) {
+export function writeSalesforceConnectorParams(publicParams: URLSearchParams, _privateParams: URLSearchParams, state: SalesforceAuthState) {
     publicParams.set('connector', 'sfdc');
     if (state.authParams?.instanceUrl) {
         publicParams.set('instance', state.authParams?.instanceUrl);
