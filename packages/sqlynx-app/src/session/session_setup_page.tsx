@@ -12,7 +12,6 @@ import {
     BRAINSTORM_MODE,
     SALESFORCE_DATA_CLOUD,
     requiresSwitchingToNative,
-    UNKNOWN_CONNECTOR,
 } from '../connectors/connector_info.js';
 import { ConnectorSetupParamVariant, UnsupportedSetupParams, checkSalesforceAuthSetup, readConnectorParamsFromURL } from '../connectors/connector_url_params.js';
 import { useSalesforceAuthState } from '../connectors/salesforce_auth_state.js';
@@ -35,7 +34,7 @@ interface Props {
 interface State {
     scriptText: string | null;
     schemaText: string | null;
-    connectorParams: ConnectorSetupParamVariant;
+    connectorParams: ConnectorSetupParamVariant | null;
 }
 
 const ConnectorParamsSection: React.FC<{ params: ConnectorSetupParamVariant }> = (props: { params: ConnectorSetupParamVariant }) => {
@@ -80,7 +79,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     const selectedScriptDispatch = useActiveSessionStateDispatch();
     const [state, setState] = React.useState<State | null>(null);
 
-    // Read script parameters
+    // Parse setup parameters and make them available through a state.
     React.useEffect(() => {
         // Read the inline scripts
         const scriptParam = props.searchParams.get('script');
@@ -105,7 +104,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     // Resolve the connector info
     let connectorInfo: ConnectorInfo | null = null;
     let connectorAuthCheck: ConnectorAuthCheck | null = null;
-    switch (state?.connectorParams.type) {
+    switch (state?.connectorParams?.type) {
         case SALESFORCE_DATA_CLOUD:
             connectorInfo = CONNECTOR_INFOS[ConnectorType.SALESFORCE_DATA_CLOUD as number];
             connectorAuthCheck = checkSalesforceAuthSetup(salesforceAuth, state.connectorParams.value);
@@ -118,13 +117,18 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
             break;
     }
 
-    // Initial attempt to auto-trigger the authorization
+    // Need to switch to native?
+    // Some connectors only run in the native app.
+    const switchToNative = connectorInfo ? requiresSwitchingToNative(connectorInfo) : false;
+
+    // Initial attempt to auto-trigger the authorization.
     const didAuthOnce = React.useRef<boolean>(false);
     React.useEffect(() => {
         if (
             didAuthOnce.current ||
             state == null ||
             state.connectorParams == null ||
+            switchToNative ||
             connectorAuthCheck != ConnectorAuthCheck.AUTHENTICATION_NOT_STARTED
         ) {
             return;
@@ -150,7 +154,8 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
         }
     }, [state, connectorAuthCheck]);
 
-    // Replace the script content with the inlined text after authentication finished
+    // Replace the script content with the inlined text after authentication finished.
+    // We could think about replacing the script earlier but it's not visible anyway.
     const didLoadScriptOnce = React.useRef<boolean>(false);
     React.useEffect(() => {
         if (
@@ -196,12 +201,14 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     // }
 
 
+    // Collect all sections
     let sections: React.ReactElement[] = [];
 
     // Did not parse the url params yet?
     if (!state) {
         sections.push(<div>State is empty</div>);
-    } else if (state.connectorParams.type === UNKNOWN_CONNECTOR) {
+    } else if (!connectorInfo) {
+        // Unknown connector
         sections.push(<div>Connector is unsupported</div>);
     } else {
         sections.push(
@@ -226,8 +233,19 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                 </div>
             </div>
         );
+        // Do we have connector params?
+        // Then render them in a dedicated section.
         if (state.connectorParams) {
             sections.push(<ConnectorParamsSection params={state?.connectorParams} />);
+        }
+
+        // Do we need to switch to native?
+        // Render a warning, information where to get the app and a button to switch.
+        if (switchToNative) {
+            // XXX
+
+        } else {
+            // We can stay here, render normal action bar
             sections.push(
                 <div className={page_styles.card_actions}>
                     <Button
@@ -240,11 +258,6 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
             );
         }
     }
-
-
-    // if (requiresSwitchingToNative(!connectorInfo?.platforms.browser)) {
-
-    // }
 
     // Render the page
     return (
