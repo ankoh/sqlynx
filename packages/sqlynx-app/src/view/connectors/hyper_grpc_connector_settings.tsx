@@ -1,7 +1,9 @@
 import * as React from 'react';
 import { Button } from '@primer/react';
-import { ChecklistIcon, DatabaseIcon, FileBadgeIcon, KeyIcon, LogIcon, PulseIcon, TagIcon } from '@primer/octicons-react';
+import { ChecklistIcon, DatabaseIcon, FileBadgeIcon, KeyIcon, PulseIcon, TagIcon } from '@primer/octicons-react';
 import { TextField, KeyValueTextField } from '../text_field.js';
+import { useLogger } from '../../platform/logger_provider.js';
+import { useHyperDatabaseClient } from '../../platform/hyperdb_client_provider.js';
 
 import { KeyValueListBuilder } from '../../view/keyvalue_list.js';
 
@@ -14,9 +16,29 @@ interface Props { }
 export const HyperGrpcConnectorSettings: React.FC<Props> = (
     _props: Props,
 ) => {
+    const logger = useLogger();
+    const hyperClient = useHyperDatabaseClient();
+
+    const [endpoint, setEndpoint] = React.useState<string>("http://127.0.0.1:9090");
+    const [mtlsKeyPath, setMtlsKeyPath] = React.useState<string>("");
+    const [mtlsPubPath, setMtlsPubPath] = React.useState<string>("");
+    const [mtlsCaPath, setMtlsCaPath] = React.useState<string>("");
+
     const testSettings = async () => {
-        const result = await fetch("sqlynx-native://test");
-        console.log(await result.text());
+        if (hyperClient == null) {
+            logger.error("Hyper client is unavailable", "hyper_grpc");
+            return;
+        }
+        try {
+            logger.trace(`connecting to endpoint: ${endpoint}`, "hyper_grpc");
+            await hyperClient.connect({
+                endpoint
+            });
+        } catch (e: any) {
+            console.error(e);
+            logger.trace(`connecting failed with error: ${e.toString()}`, "hyper_grpc");
+        }
+
     };
 
     return (
@@ -44,32 +66,33 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                         <TextField
                             name="gRPC Endpoint"
                             caption="Endpoint of the gRPC service as 'https://host:port'"
-                            value="https://127.0.0.1:8443"
+                            value={endpoint}
                             placeholder="gRPC endpoint url"
                             leadingVisual={() => <div>URL</div>}
-                            onChange={() => { }}
+                            onChange={(e) => setEndpoint(e.target.value)}
                             disabled={false}
                         />
                         <KeyValueTextField
                             className={style.grid_column_1}
                             name="mTLS Client Key"
                             caption="Paths to client key and client certificate"
-                            k=""
-                            v=""
+                            k={mtlsKeyPath}
+                            v={mtlsPubPath}
                             keyPlaceholder="client.key"
                             valuePlaceholder="client.pem"
                             keyIcon={KeyIcon}
                             valueIcon={FileBadgeIcon}
-                            onChange={() => { }}
+                            onChangeKey={(e) => setMtlsKeyPath(e.target.value)}
+                            onChangeValue={(e) => setMtlsPubPath(e.target.value)}
                             disabled={false}
                         />
                         <TextField
                             name="mTLS CA certificates"
                             caption="Path to certificate authority (CA) certificates"
-                            value=""
+                            value={mtlsCaPath}
                             placeholder="cacerts.pem"
                             leadingVisual={ChecklistIcon}
-                            onChange={() => { }}
+                            onChange={(e) => setMtlsCaPath(e.target.value)}
                             disabled={false}
                         />
                     </div>
@@ -82,7 +105,6 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                             value=""
                             placeholder="client id"
                             leadingVisual={TagIcon}
-                            onChange={() => { }}
                             readOnly
                             disabled
                         />

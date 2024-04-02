@@ -5,6 +5,8 @@ import { Location, useLocation, useNavigate } from 'react-router-dom';
 import { SessionSetupPage } from './session_setup_page.js';
 import { SessionLinkGenerator } from './session_link_generator.js';
 import { useBrainstormSessionSetup } from './setup_brainstorm_session.js';
+import { useLogger } from '../platform/logger_provider.js';
+import { Logger } from 'platform/logger.js';
 
 enum SessionSetupDecision {
     UNDECIDED,
@@ -24,7 +26,7 @@ interface SessionSetupState {
 
 
 /// Helper to subscribe paste events with deep links
-function loadDeepLinksFromClipboard() {
+function loadDeepLinksFromClipboard(logger: Logger) {
     const navigate = useNavigate();
     const onWindowPaste = React.useCallback((e: ClipboardEvent) => {
         // Is the pasted text of a deeplink?
@@ -32,12 +34,14 @@ function loadDeepLinksFromClipboard() {
         if (pastedText != null && pastedText.startsWith("sqlynx://")) {
             try {
                 const deepLink = new URL(pastedText);
+                logger.info(`received deep link: ${deepLink.toString()}`, "session_setup");
                 const params = deepLink.searchParams;
                 params.set("deeplink", "true");
                 navigate(`/?${params.toString()}`, { replace: true });
                 e.preventDefault();
             } catch (e: any) {
                 console.warn(e);
+                logger.warn(`parsing deep link failed with error: ${e.toString()}`, "session_setup");
             }
         }
     }, []);
@@ -50,15 +54,15 @@ function loadDeepLinksFromClipboard() {
 }
 
 export const SessionSetup: React.FC<{ children: React.ReactElement }> = (props: { children: React.ReactElement }) => {
-    // Setup reducer
-    const location = useLocation();
+    // Resolve the logger
+    const logger = useLogger();
     // Subscribe to paste events of deep links
-    loadDeepLinksFromClipboard();
-
-    /// Prepare the specific setup functions
+    loadDeepLinksFromClipboard(logger);
+    // Prepare the specific setup functions
     const setupBrainstormSession = useBrainstormSessionSetup();
 
     // State to decide about session setup strategy
+    const location = useLocation();
     const [state, setState] = React.useState<SessionSetupState>(() => ({
         decision: SessionSetupDecision.UNDECIDED,
         pageLocation: location,

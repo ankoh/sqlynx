@@ -115,7 +115,8 @@ export function KeyValueTextField(props: {
     valuePlaceholder: string;
     keyIcon?: React.ElementType;
     valueIcon?: React.ElementType;
-    onChange: React.ChangeEventHandler<HTMLInputElement>;
+    onChangeKey: React.ChangeEventHandler<HTMLInputElement>;
+    onChangeValue: React.ChangeEventHandler<HTMLInputElement>;
     disabled?: boolean;
     readOnly?: boolean;
 }) {
@@ -139,7 +140,7 @@ export function KeyValueTextField(props: {
                 placeholder={props.keyPlaceholder}
                 leadingVisual={props.keyIcon}
                 trailingAction={CopyAction()}
-                onChange={props.onChange}
+                onChange={props.onChangeKey}
                 readOnly={props.readOnly}
                 disabled={props.disabled}
             />
@@ -150,7 +151,7 @@ export function KeyValueTextField(props: {
                     placeholder={props.valuePlaceholder}
                     leadingVisual={props.valueIcon}
                     trailingAction={CopyAction()}
-                    onChange={props.onChange}
+                    onChange={props.onChangeValue}
                     readOnly={props.readOnly}
                     disabled={props.disabled}
                 />

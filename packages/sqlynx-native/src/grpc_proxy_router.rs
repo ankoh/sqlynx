@@ -62,7 +62,11 @@ pub fn parse_grpc_proxy_path(path: &str) -> Option<GrpcProxyRoute> {
 }
 
 pub async fn route_grpc_proxy_request(req: &mut Request<Vec<u8>>) -> Option<Response<Vec<u8>>> {
-    if let Some(route) = parse_grpc_proxy_path(req.uri().path()) {
+    let route = parse_grpc_proxy_path(req.uri().path());
+    if route.is_some() {
+        log::trace!("testing grpc proxy route={:?}, method={:?}", route.as_ref().unwrap(), req.method());
+    }
+    if let Some(route) = route {
         let response = match (req.method().clone(), route) {
             (Method::POST, GrpcProxyRoute::Channels) => create_channel(std::mem::take(req)).await,
             (Method::DELETE, GrpcProxyRoute::Channel { channel_id }) => delete_channel(channel_id).await,
@@ -74,6 +78,7 @@ pub async fn route_grpc_proxy_request(req: &mut Request<Vec<u8>>) -> Option<Resp
                 return None;
             }
         };
+        log::trace!("grpc proxy responded with {:?}", response);
         return Some(response);
     }
     return None;

@@ -7,6 +7,7 @@ use tauri::http::HeaderValue;
 use crate::grpc_proxy_router::route_grpc_proxy_request;
 
 async fn route_ipc_request(mut request: Request<Vec<u8>>) -> Response<Vec<u8>> {
+    log::trace!("received ipc request with path={}", request.uri().path());
     if let Some(response) = route_grpc_proxy_request(&mut request).await {
         return response;
     }
