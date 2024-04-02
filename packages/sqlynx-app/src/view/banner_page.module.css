@@ -199,7 +199,7 @@
     grid-column: 3;
 }
 
-.card_section_info {
+.card_section_description {
     border-top: 1px solid var(--border_color_primary);
     display: grid;
     grid-template-columns: 1fr;

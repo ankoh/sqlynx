@@ -201,70 +201,73 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     // }
 
 
-    // Collect all sections
+    // Collect all sections (after parsing the params)
     let sections: React.ReactElement[] = [];
-
-    // Did not parse the url params yet?
-    if (!state) {
-        sections.push(<div key={sections.length} className={page_styles.card_section}>State is empty</div>);
-    } else if (!connectorInfo) {
-        // Unknown connector
-        sections.push(<div key={sections.length} className={page_styles.card_section}>Connector is unsupported</div>);
-    } else {
-        sections.push(
-            <div key={sections.length} className={page_styles.card_section}>
-                <div className={page_styles.section_entries}>
-                    <TextField
-                        name="Inline Script"
-                        value={state?.scriptText ?? ""}
-                        readOnly={true}
-                        disabled={true}
-                        leadingVisual={() => <div>Script text with 0 characters</div>}
-                    />
-                    {(state?.schemaText?.length ?? 0) > 0 &&
+    if (state) {
+        if (!connectorInfo) {
+            // Unknown connector
+            sections.push(
+                <div key={sections.length} className={page_styles.card_section}>
+                    <div className={page_styles.card_section_description}>
+                        Connector is unsupported
+                    </div>
+                </div>);
+        } else {
+            sections.push(
+                <div key={sections.length} className={page_styles.card_section}>
+                    <div className={page_styles.section_entries}>
                         <TextField
-                            name="Inline Schema"
-                            value={state?.schemaText ?? ""}
+                            name="Inline Script"
+                            value={state?.scriptText ?? ""}
                             readOnly={true}
                             disabled={true}
-                            leadingVisual={() => <div>Schema text with 0 characters</div>}
+                            leadingVisual={() => <div>Script text with 0 characters</div>}
                         />
-                    }
-                </div>
-            </div>
-        );
-        // Do we have connector params?
-        // Then render them in a dedicated section.
-        if (state.connectorParams) {
-            sections.push(<ConnectorParamsSection key={sections.length} params={state?.connectorParams} />);
-        }
-
-        // Do we need to switch to native?
-        // Render a warning, information where to get the app and a button to switch.
-        if (switchToNative) {
-            sections.push(
-                <div key={sections.length} className={page_styles.card_actions}>
-                    <Button
-                        className={page_styles.card_action_right}
-                        variant="primary"
-                        onClick={console.log}>
-                        Continue
-                    </Button>
+                        {(state?.schemaText?.length ?? 0) > 0 &&
+                            <TextField
+                                name="Inline Schema"
+                                value={state?.schemaText ?? ""}
+                                readOnly={true}
+                                disabled={true}
+                                leadingVisual={() => <div>Schema text with 0 characters</div>}
+                            />
+                        }
+                    </div>
                 </div>
             );
+            // Do we have connector params?
+            // Then render them in a dedicated section.
+            if (state.connectorParams) {
+                sections.push(<ConnectorParamsSection key={sections.length} params={state?.connectorParams} />);
+            }
 
-        } else {
-            // We can stay here, render normal action bar
-            sections.push(
-                <div key={sections.length} className={page_styles.card_actions}>
-                    <Button
-                        className={page_styles.card_action_right}
-                        variant="primary"
-                        onClick={console.log}>
-                        Continue
-                    </Button>
-                </div>
-            );
+            // Do we need to switch to native?
+            // Render a warning, information where to get the app and a button to switch.
+            if (switchToNative) {
+                sections.push(
+                    <div key={sections.length} className={page_styles.card_actions}>
+                        <Button
+                            className={page_styles.card_action_right}
+                            variant="primary"
+                            onClick={console.log}>
+                            Continue
+                        </Button>
+                    </div>
+                );
+
+            } else {
+                // We can stay here, render normal action bar
+                sections.push(
+                    <div key={sections.length} className={page_styles.card_actions}>
+                        <Button
+                            className={page_styles.card_action_right}
+                            variant="primary"
+                            onClick={console.log}>
+                            Continue
+                        </Button>
+                    </div>
+                );
+            }
         }
     }
 
