@@ -1,6 +1,9 @@
 import * as React from 'react';
+import * as proto from "@ankoh/sqlynx-pb";
+
 import { Button } from '@primer/react';
 import { ChecklistIcon, DatabaseIcon, FileBadgeIcon, KeyIcon, PulseIcon, TagIcon } from '@primer/octicons-react';
+
 import { TextField, KeyValueTextField } from '../text_field.js';
 import { useLogger } from '../../platform/logger_provider.js';
 import { useHyperDatabaseClient } from '../../platform/hyperdb_client_provider.js';
@@ -31,9 +34,16 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
         }
         try {
             logger.trace(`connecting to endpoint: ${endpoint}`, "hyper_grpc");
-            await hyperClient.connect({
+            const channel = await hyperClient.connect({
                 endpoint
             });
+
+            await channel.executeQuery(new proto.salesforce_hyperdb_grpc_v1.pb.QueryParam({
+                query: "select 1"
+
+            }))
+
+            await channel.close();
         } catch (e: any) {
             console.error(e);
             logger.trace(`connecting failed with error: ${e.toString()}`, "hyper_grpc");

@@ -28,8 +28,8 @@ pub async fn create_channel(mut req: Request<Vec<u8>>) -> Response<Vec<u8>> {
         Ok(channel_id) => {
             Response::builder()
                 .status(200)
+                .header("X-Custom-Foo", "bar")
                 .header(HEADER_NAME_CHANNEL_ID, channel_id)
-                .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
                 .body(Vec::new())
                 .unwrap()
         },
@@ -42,7 +42,6 @@ pub async fn delete_channel(channel_id: usize) -> Response<Vec<u8>> {
         Ok(()) => {
             let response = Response::builder()
                 .status(200)
-                .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
                 .body(Vec::new())
                 .unwrap();
             response
@@ -86,7 +85,6 @@ pub async fn call_unary(channel_id: usize, mut req: Request<Vec<u8>>) -> Respons
             let mut response = Response::builder()
                 .status(200)
                 .header(HEADER_NAME_CHANNEL_ID, channel_id)
-                .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
                 .body(body)
                 .unwrap();
             copy_metadata(&mut metadata, response.headers_mut());
@@ -104,7 +102,6 @@ pub async fn start_server_stream(channel_id: usize, mut req: Request<Vec<u8>>) -
                 .status(200)
                 .header(HEADER_NAME_CHANNEL_ID, channel_id)
                 .header(HEADER_NAME_STREAM_ID, stream_id)
-                .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
                 .body(Vec::new())
                 .unwrap();
             copy_metadata(&mut metadata, response.headers_mut());
@@ -128,7 +125,6 @@ pub async fn read_server_stream(channel_id: usize, stream_id: usize, req: Reques
                 .header(HEADER_NAME_STREAM_ID, stream_id)
                 .header(HEADER_NAME_BATCH_EVENT, batches.event.to_str())
                 .header(HEADER_NAME_BATCH_MESSAGES, batches.messages.len())
-                .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
                 .body(buffer)
                 .unwrap()
         },
@@ -142,7 +138,6 @@ pub async fn delete_server_stream(channel_id: usize, stream_id: usize, _req: Req
             Response::builder()
                 .status(200)
                 .header(HEADER_NAME_CHANNEL_ID, channel_id)
-                .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
                 .body(Vec::new())
                 .unwrap()
         }

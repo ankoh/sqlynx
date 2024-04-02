@@ -7,6 +7,7 @@ import { GrpcChannelArgs } from './grpc_common.js';
 import { NativeHyperDatabaseClient } from './native_hyperdb_client.js';
 import { NativeGrpcServerStreamBatchEvent } from './native_grpc_client.js';
 import { PlatformType } from './platform_type.js';
+import { TestLogger } from './test_logger.js';
 
 describe('Native Hyper client', () => {
     let mock: NativeAPIMock | null;
@@ -23,24 +24,27 @@ describe('Native Hyper client', () => {
 
     // Test channel creation
     it("can create a channel", () => {
+        const logger = new TestLogger();
         const client = new NativeHyperDatabaseClient({
             proxyEndpoint: new URL("sqlynx-native://localhost")
-        });
+        }, logger);
         expect(async () => await client.connect(testChannelArgs)).resolves;
     });
     // Make sure channel creation fails with wrong base url
     it("fails to create a channel with invalid base URL", () => {
+        const logger = new TestLogger();
         const client = new NativeHyperDatabaseClient({
             proxyEndpoint: new URL("not-sqlynx-native://localhost")
-        });
+        }, logger);
         expect(async () => await client.connect(testChannelArgs)).rejects.toThrow();
     });
 
     // Test starting a server stream
     it("can start a streaming gRPC call", async () => {
+        const logger = new TestLogger();
         const client = new NativeHyperDatabaseClient({
             proxyEndpoint: new URL("sqlynx-native://localhost")
-        });
+        }, logger);
 
         // Setup the channel
         const channel = await client.connect(testChannelArgs);
@@ -69,9 +73,10 @@ describe('Native Hyper client', () => {
 
     // Test reading from a server stream
     it("can read form a gRPC output stream", async () => {
+        const logger = new TestLogger();
         const client = new NativeHyperDatabaseClient({
             proxyEndpoint: new URL("sqlynx-native://localhost")
-        });
+        }, logger);
 
         // Setup the channel
         const channel = await client.connect(testChannelArgs);

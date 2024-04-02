@@ -1,3 +1,4 @@
+use tauri::http::header::ACCESS_CONTROL_EXPOSE_HEADERS;
 use tauri::http::header::ACCESS_CONTROL_ALLOW_ORIGIN;
 use tauri::http::header::CONTENT_TYPE;
 use tauri::http::Request;
@@ -23,5 +24,6 @@ pub async fn process_ipc_request(request: Request<Vec<u8>>) -> Response<Vec<u8>>
     let headers = response.headers_mut();
     headers.insert(CONTENT_TYPE, HeaderValue::from_static(mime::APPLICATION_OCTET_STREAM.essence_str()));
     headers.insert(ACCESS_CONTROL_ALLOW_ORIGIN, HeaderValue::from_static("*"));
+    headers.insert(ACCESS_CONTROL_EXPOSE_HEADERS, HeaderValue::from_static("*"));
     response
 }
