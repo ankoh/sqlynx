@@ -3,7 +3,6 @@ import { isNativePlatform } from "../platform/native_globals.js";
 export const BRAINSTORM_MODE = Symbol('BRAINSTORM_MODE');
 export const SALESFORCE_DATA_CLOUD = Symbol('SALESFORCE_DATA_CLOUD');
 export const HYPER_DATABASE = Symbol('HYPER_DATABASE');
-export const UNKNOWN_CONNECTOR = Symbol('UNKNOWN_CONNECTOR');
 
 export enum ConnectorType {
     BRAINSTORM_MODE = 0,
