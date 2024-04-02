@@ -13,7 +13,7 @@ import {
     SALESFORCE_DATA_CLOUD,
     requiresSwitchingToNative,
 } from '../connectors/connector_info.js';
-import { ConnectorSetupParamVariant, UnsupportedSetupParams, checkSalesforceAuthSetup, readConnectorParamsFromURL } from '../connectors/connector_url_params.js';
+import { ConnectorSetupParamVariant, checkSalesforceAuthSetup, readConnectorParamsFromURL } from '../connectors/connector_url_params.js';
 import { useSalesforceAuthState } from '../connectors/salesforce_auth_state.js';
 import { REPLACE_SCRIPT_CONTENT } from './session_state_reducer.js';
 import { useActiveSessionState, useActiveSessionStateDispatch } from './session_state_provider.js';
@@ -21,6 +21,7 @@ import { ScriptKey } from './session_state.js';
 import { SQLYNX_VERSION } from '../globals.js';
 import { TextField } from '../view/text_field.js';
 import { LogViewerInPortal } from '../view/log_viewer.js';
+import { useLogger } from '../platform/logger_provider.js';
 
 import page_styles from '../view/banner_page.module.css';
 
@@ -68,6 +69,7 @@ const ConnectorParamsSection: React.FC<{ params: ConnectorSetupParamVariant }> =
 };
 
 export const SessionSetupPage: React.FC<Props> = (props: Props) => {
+    const logger = useLogger();
     const [logsAreOpen, setLogsAreOpen] = React.useState<boolean>(false);
 
     const salesforceAuth = useSalesforceAuthState();
@@ -240,12 +242,18 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
             // Do we need to switch to native?
             // Render a warning, information where to get the app and a button to switch.
             if (canExecuteHere) {
+                const appLink = new URL(`sqlynx://localhost?${props.searchParams.toString()}`);
                 sections.push(
                     <div key={sections.length} className={page_styles.card_actions}>
                         <Button
                             className={page_styles.card_action_right}
                             variant="primary"
-                            onClick={console.log}>
+                            onClick={() => {
+                                logger.info(`opening deep link: ${appLink}`);
+                                const link = document.createElement('a');
+                                link.href = appLink.toString();
+                                link.click();
+                            }}>
                             Open App
                         </Button>
                     </div>
