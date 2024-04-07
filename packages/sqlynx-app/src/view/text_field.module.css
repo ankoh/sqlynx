@@ -13,6 +13,9 @@
 .text_field_input {
     margin-top: 6px;
 }
+.text_field_disabled {
+    background-color: hsl(210, 29%, 97%) !important;
+}
 .text_field_validation_error {
     font-size: 12px;
     color: rgb(207, 34, 46);

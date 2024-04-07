@@ -132,3 +132,50 @@
     font-family: 'Roboto Mono';
     font-size: 0.9rem;
 }
+
+.section_status {
+    width: 100%;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    background-color: var(--connector_header_background);
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.status_bar {
+    display: grid;
+    grid-template-columns: max-content max-content auto max-content;
+    align-items: center;
+
+    column-gap: 8px;
+    width: calc(100% - 32px);
+    max-width: 1000px;
+    border-radius: var(--border_radius);
+    border: 1px solid var(--border_color_primary);
+    padding: 4px 16px;
+
+    background-color: var(--connector_status_background);
+    color: var(--connector_status_foreground);
+}
+
+.status_indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 4px;
+    background-color: red;
+}
+
+.status_text {
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.status_stats {
+    grid-column: 4;
+
+    font-size: 0.8rem;
+    font-weight: 500;
+}

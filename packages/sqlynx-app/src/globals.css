@@ -45,6 +45,8 @@
     --stats_value_fg: rgb(140, 140, 140);
 
     --connector_header_background: hsl(210, 29%, 97%);
+    --connector_status_background: hsl(210, 24%, 92%);
+    --connector_status_foreground: hsl(212, 8%, 23%);
 
     --graph_title_fg: rgb(0, 0, 0);
     --graph_bg: hsl(210, 29%, 97%);

@@ -71,6 +71,16 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                 </div>
             </div >
             <div className={style.body_container}>
+                <div className={style.section_status}>
+                    <div className={style.status_bar}>
+                        <div className={style.status_indicator} />
+                        <div className={style.status_text}>
+                            disconnected
+                        </div>
+                        <div className={style.status_stats}>
+                        </div>
+                    </div>
+                </div>
                 <div className={style.section}>
                     <div className={style.section_layout}>
                         <TextField
