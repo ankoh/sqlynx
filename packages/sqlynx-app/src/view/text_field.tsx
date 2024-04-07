@@ -89,7 +89,9 @@ export function TextField(props: {
             <div className={styles.text_field_name}>{props.name}</div>
             {props.caption && <div className={styles.text_field_caption}>{props.caption}</div>}
             <TextInput
-                className={styles.text_field_input}
+                className={classNames(styles.text_field_input, {
+                    [styles.text_field_disabled]: props.disabled
+                })}
                 block
                 placeholder={props.placeholder}
                 leadingVisual={props.leadingVisual}
