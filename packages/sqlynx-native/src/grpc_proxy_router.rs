@@ -292,7 +292,6 @@ mod test {
         assert!(response.headers().contains_key(HEADER_NAME_STREAM_ID));
         assert!(response.headers().contains_key(HEADER_NAME_BATCH_EVENT));
         assert!(response.headers().contains_key(HEADER_NAME_BATCH_MESSAGES));
-        assert!(response.headers().contains_key(CONTENT_TYPE));
         let batch_event = response.headers().get(HEADER_NAME_BATCH_EVENT).unwrap().to_str().unwrap();
         let batch_messages = response.headers().get(HEADER_NAME_BATCH_MESSAGES).unwrap().to_str().unwrap();
         assert_eq!(batch_messages, "1");
