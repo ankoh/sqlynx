@@ -23,8 +23,7 @@ import { TextField } from '../view/text_field.js';
 import { LogViewerInPortal } from '../view/log_viewer.js';
 import { useLogger } from '../platform/logger_provider.js';
 
-import page_styles from '../view/banner_page.module.css';
-
+import * as page_styles from '../view/banner_page.module.css';
 import * as symbols from '../../static/svg/symbols.generated.svg';
 
 interface Props {

@@ -16,8 +16,8 @@ import { LogViewerInPortal } from './view/log_viewer.js';
 import { LoggerProvider, useLogger } from './platform/logger_provider.js';
 import { Logger } from './platform/logger.js';
 
-import _styles from './oauth_redirect.module.css';
-import page_styles from './view/banner_page.module.css';
+import * as _styles from './oauth_redirect.module.css';
+import * as page_styles from './view/banner_page.module.css';
 import * as symbols from '../static/svg/symbols.generated.svg';
 
 import '../static/fonts/fonts.css';

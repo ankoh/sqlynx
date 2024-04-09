@@ -9,7 +9,7 @@ import { classNames } from '../../utils/classnames.js';
 
 import * as symbols from '../../../static/svg/symbols.generated.svg';
 
-import style from './connector_settings.module.css';
+import * as style from './connector_settings.module.css';
 
 interface Props { }
 
