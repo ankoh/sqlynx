@@ -11,7 +11,7 @@ import {
 } from '../../session/session_state_reducer.js';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 
-import styles from './schema_graph.module.css';
+import * as styles from './schema_graph.module.css';
 
 import * as icons from '../../../static/svg/symbols.generated.svg';
 

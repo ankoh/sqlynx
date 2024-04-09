@@ -2,7 +2,7 @@ import * as React from 'react';
 import { RectangleWaveSpinner } from '../../view/spinners.js';
 import { QueryExecutionProgress, QueryExecutionTaskStatus } from '../../connectors/query_execution.js';
 
-import styles from './query_progress.module.css';
+import * as styles from './query_progress.module.css';
 
 interface Props {
     queryStatus: QueryExecutionTaskStatus | null;

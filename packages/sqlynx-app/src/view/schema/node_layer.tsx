@@ -15,7 +15,7 @@ import { FocusInfo } from '../../session/focus.js';
 
 import * as icons from '../../../static/svg/symbols.generated.svg';
 
-import styles from './node_layer.module.css';
+import * as styles from './node_layer.module.css';
 
 interface Props {
     className?: string;

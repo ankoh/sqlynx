@@ -3,7 +3,7 @@ import { TextInput, Button, IconButton } from '@primer/react';
 import { CopyIcon, PlusIcon, XIcon } from '@primer/octicons-react';
 import { classNames } from '../utils/classnames.js';
 
-import styles from './keyvalue_list.module.css';
+import * as styles from './keyvalue_list.module.css';
 
 interface Props {
     className?: string;

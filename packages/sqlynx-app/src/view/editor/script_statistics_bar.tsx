@@ -6,7 +6,7 @@ import Immutable from 'immutable';
 import { formatBytes, formatNanoseconds } from '../../utils/format.js';
 import { classNames } from '../../utils/classnames.js';
 
-import styles from './script_statistics_bar.module.css';
+import * as styles from './script_statistics_bar.module.css';
 
 interface HistoryProps {
     data: Float64Array;

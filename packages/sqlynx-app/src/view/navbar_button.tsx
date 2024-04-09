@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { classNames } from '../utils/classnames.js';
 
-import styles from './navbar_button.module.css';
+import * as styles from './navbar_button.module.css';
 
 export enum HoverMode {
     Invert,

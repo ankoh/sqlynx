@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { PropsWithChildren, ReactElement } from 'react';
 
-import styles from './skeleton.module.css';
+import * as styles from './skeleton.module.css';
 
 export interface SkeletonProps {
     width?: string | number;

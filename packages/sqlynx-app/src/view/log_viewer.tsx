@@ -10,7 +10,7 @@ import { useLogger } from '../platform/logger_provider.js';
 import { useScrollbarWidth } from '../utils/scrollbar.js';
 import { observeSize } from './size_observer.js';
 
-import styles from './log_viewer.module.css';
+import * as styles from './log_viewer.module.css';
 
 interface LevelCellProps {
     level: LogLevel;

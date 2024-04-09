@@ -13,7 +13,7 @@ import { RESULT_ERROR, RESULT_OK, Result } from '../utils/result.js';
 
 import * as symbols from '../../static/svg/symbols.generated.svg';
 
-import styles from './version_viewer.module.css';
+import * as styles from './version_viewer.module.css';
 
 interface UpdateChannelProps {
     name: string;
