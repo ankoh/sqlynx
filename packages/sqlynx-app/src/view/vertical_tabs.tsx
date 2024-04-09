@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { classNames } from '../utils/classnames.js';
 
-import styles from './vertical_tabs.module.css';
+import * as styles from './vertical_tabs.module.css';
 
 export interface VerticalTabRenderers {
     [key: number]: (props: VerticalTabProps) => React.ReactElement;

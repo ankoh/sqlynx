@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import styles from './connectors_page.module.css';
+import * as styles from './connectors_page.module.css';
 import { HyperGrpcConnectorSettings } from './hyper_grpc_connector_settings.js';
 import { SalesforceConnectorSettings } from './salesforce_connector_settings.js';
 

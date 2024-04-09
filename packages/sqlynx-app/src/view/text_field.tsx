@@ -7,7 +7,7 @@ import { VariantKind } from '../utils/variant.js';
 
 import * as icons from '../../static/svg/symbols.generated.svg';
 
-import styles from './text_field.module.css';
+import * as styles from './text_field.module.css';
 
 export const VALIDATION_UNKNOWN = Symbol("VALIDATION_UNKNOWN");
 export const VALIDATION_OK = Symbol("VALIDATION_OK");

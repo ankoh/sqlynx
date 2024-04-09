@@ -9,7 +9,7 @@ import { SQLYNX_VERSION } from '../globals.js';
 import { LogViewerInPortal } from './log_viewer.js';
 import { VersionViewerInPortal } from './version_viewer.js';
 
-import styles from './navbar.module.css';
+import * as styles from './navbar.module.css';
 
 import * as symbols from '../../static/svg/symbols.generated.svg';
 

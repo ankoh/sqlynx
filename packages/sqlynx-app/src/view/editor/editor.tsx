@@ -18,7 +18,7 @@ import { useLogger } from '../../platform/logger_provider.js';
 
 import * as icons from '../../../static/svg/symbols.generated.svg';
 
-import styles from './editor.module.css';
+import * as styles from './editor.module.css';
 
 enum TabId {
     MAIN_SCRIPT = 1,

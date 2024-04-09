@@ -5,7 +5,7 @@ import { DownloadIcon, FileIcon } from '@primer/octicons-react';
 
 import { classNames } from '../../utils/classnames.js';
 
-import styles from './script_filesave_overlay.module.css';
+import * as styles from './script_filesave_overlay.module.css';
 
 interface Props {
     className?: string;

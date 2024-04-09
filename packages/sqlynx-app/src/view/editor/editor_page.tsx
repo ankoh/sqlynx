@@ -31,8 +31,8 @@ import { ScriptURLOverlay } from '../editor/script_url_overlay.js';
 import { getConnectorIcon } from '../connector_icons.js';
 import { useAppConfig } from '../../app_config.js';
 
-import styles from './editor_page.module.css';
-import theme from '../../github_theme.module.css';
+import * as styles from './editor_page.module.css';
+import * as theme from '../../github_theme.module.css';
 import * as icons from '../../../static/svg/symbols.generated.svg';
 
 const ConnectorSelection = (props: { className?: string; variant: 'default' | 'invisible'; short: boolean }) => {

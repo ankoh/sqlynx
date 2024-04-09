@@ -7,7 +7,7 @@ import { classNames } from '../../utils/classnames.js';
 import { sleep } from '../../utils/sleep.js';
 import { SessionLinks, useSessionLinks } from '../../session/session_link_generator.js';
 
-import styles from './script_url_overlay.module.css';
+import * as styles from './script_url_overlay.module.css';
 
 const COPY_CHECKMARK_DURATION_MS = 1000;
 
