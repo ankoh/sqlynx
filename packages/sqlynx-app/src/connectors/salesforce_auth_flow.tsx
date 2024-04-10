@@ -16,6 +16,9 @@ import {
     AUTH_FLOW_DEFAULT_STATE,
     OAUTH_LINK_OPENED,
     SalesforceAuthAction,
+    REQUESTING_CORE_AUTH_TOKEN,
+    REQUESTING_DATA_CLOUD_ACCESS_TOKEN,
+    GENERATING_PKCE_CHALLENGE,
 } from './salesforce_auth_state.js';
 import { useSalesforceAPI } from './salesforce_connector.js';
 import { useAppConfig } from '../app_config.js';
@@ -24,7 +27,7 @@ import { BASE64_CODEC } from '../utils/base64.js';
 import { PlatformType, usePlatformType } from '../platform/platform_type.js';
 import { createConnectionId, useConnectionState } from './connection_manager.js';
 import { SALESFORCE_DATA_CLOUD } from './connector_info.js';
-import { SalesforceConnectorState } from './connector_state.js';
+import { SalesforceConnectorState } from './connection_state.js';
 
 // We use the web-server OAuth Flow with or without consumer secret.
 //
@@ -94,6 +97,11 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
         if (connection.auth.pkceChallenge) return;
         const cancellation = { triggered: false };
         (async () => {
+            dispatch({
+                type: GENERATING_PKCE_CHALLENGE,
+                value: null,
+            });
+
             // Generate PKCE challenge
             const pkceChallenge = await generatePKCEChallenge();
             if (cancellation.triggered) return;
@@ -116,7 +124,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
             !connectorConfig ||
             !connection.auth.authParams ||
             !connection.auth.authParams.instanceUrl ||
-            !connection.auth.authRequested ||
+            !connection.auth.authRequestedAt ||
             connection.auth.authStarted ||
             connection.auth.authError ||
             !connection.auth.pkceChallenge
@@ -175,7 +183,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
             dispatch({ type: OAUTH_LINK_OPENED, value: null });
         }
 
-    }, [connection.auth.authRequested, connection.auth.authError, connection.auth.openAuthWindow, connection.auth.pkceChallenge]);
+    }, [connection.auth.authRequestedAt, connection.auth.authError, connection.auth.openAuthWindow, connection.auth.pkceChallenge]);
 
     // Effect to forget about the auth window when it closes
     React.useEffect(() => {
@@ -225,6 +233,10 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
         const pkceChallenge = connection.auth.pkceChallenge;
         (async () => {
             try {
+                dispatch({
+                    type: REQUESTING_CORE_AUTH_TOKEN,
+                    value: null,
+                });
                 const token = await connector.getCoreAccessToken(
                     connectorConfig.auth,
                     authParams,
@@ -258,6 +270,10 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
         const coreAccessToken = connection.auth.coreAccessToken;
         (async () => {
             try {
+                dispatch({
+                    type: REQUESTING_DATA_CLOUD_ACCESS_TOKEN,
+                    value: null,
+                });
                 const token = await connector.getDataCloudAccessToken(coreAccessToken, abortController.signal);
                 console.log(token);
                 dispatch({
