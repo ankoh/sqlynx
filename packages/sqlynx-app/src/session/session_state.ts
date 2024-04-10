@@ -2,7 +2,7 @@ import * as sqlynx from '@ankoh/sqlynx-core';
 import Immutable from 'immutable';
 
 import { ConnectorInfo } from '../connectors/connector_info.js';
-import { ConnectorState } from '../connectors/connector_state.js';
+import { ConnectionState } from '../connectors/connection_state.js';
 import { CatalogUpdateRequestVariant, CatalogUpdateTaskState } from '../connectors/catalog_update.js';
 import { generateBlankScript, ScriptMetadata } from './script_metadata.js';
 import { ScriptLoadingStatus } from './script_loader.js';
@@ -27,7 +27,7 @@ export interface SessionState {
     /// The connector info
     connectorInfo: ConnectorInfo;
     /// The connector state
-    connectorState: ConnectorState;
+    connectorState: ConnectionState;
     /// The catalog
     catalog: sqlynx.SQLynxCatalog | null;
     /// The catalog updates

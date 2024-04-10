@@ -1,9 +1,9 @@
 import * as React from "react";
 
-import { ConnectorState } from "./connector_state.js";
+import { ConnectionState } from "./connection_state.js";
 import { Dispatch } from "../utils/variant.js";
 
-type RegisteredConnection = ConnectorState & { readonly registryEntryId: number };
+type RegisteredConnection = ConnectionState & { readonly registryEntryId: number };
 export type SetConnectionAction<V> = (prev: V) => V;
 
 let GLOBAL_CONNECTIONS: Map<number, RegisteredConnection> = new Map();
@@ -11,7 +11,7 @@ let NEXT_CONNECTION_ID = 1;
 
 /// Resolve a session state by id.
 /// We deliberately pass in the id as parameter since we'll later use multiple connections of the same connector.
-export function useConnectionState<V>(id: number, init: () => ConnectorState): [V, Dispatch<SetConnectionAction<V>>] {
+export function useConnectionState<V>(id: number, init: () => ConnectionState): [V, Dispatch<SetConnectionAction<V>>] {
     const [state, setState] = React.useState<RegisteredConnection>(() => {
         const conn = GLOBAL_CONNECTIONS.get(id);
         if (conn) {
