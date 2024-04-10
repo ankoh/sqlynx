@@ -15,12 +15,16 @@ import {
     reduceAuthState,
     AUTH_FLOW_DEFAULT_STATE,
     OAUTH_LINK_OPENED,
+    SalesforceAuthAction,
 } from './salesforce_auth_state.js';
 import { useSalesforceAPI } from './salesforce_connector.js';
 import { useAppConfig } from '../app_config.js';
 import { generatePKCEChallenge } from '../utils/pkce.js';
 import { BASE64_CODEC } from '../utils/base64.js';
 import { PlatformType, usePlatformType } from '../platform/platform_type.js';
+import { createConnectionId, useConnectionState } from './connection_manager.js';
+import { SALESFORCE_DATA_CLOUD } from './connector_info.js';
+import { SalesforceConnectorState } from './connector_state.js';
 
 // We use the web-server OAuth Flow with or without consumer secret.
 //
@@ -65,11 +69,29 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
     const connector = useSalesforceAPI();
     const platformType = usePlatformType();
     const connectorConfig = appConfig.value?.connectors?.salesforce ?? null;
-    const [state, dispatch] = React.useReducer(reduceAuthState, AUTH_FLOW_DEFAULT_STATE);
+
+    // Pre-allocate a connection id for all Salesforce connections
+    // This might change in the future when we start maintaining multiple connections per connector.
+    // In that case, someone else would create the connection id, and we would need an "active" connection id provider
+    // similar to how we register the active session.
+    const connectionId = React.useMemo(() => createConnectionId(), []);
+    const [connection, setConnection] = useConnectionState<SalesforceConnectorState>(connectionId, () => ({
+        type: SALESFORCE_DATA_CLOUD,
+        value: {
+            auth: AUTH_FLOW_DEFAULT_STATE
+        }
+    }));
+    const dispatch = React.useCallback((action: SalesforceAuthAction) => {
+        setConnection((s) => ({
+            ...s,
+            auth: reduceAuthState(connection.auth, action)
+        }));
+    }, []);
+
 
     // Effect to generate PKCE challenge, regenerate whenever auth params change
     React.useEffect(() => {
-        if (state.pkceChallenge) return;
+        if (connection.auth.pkceChallenge) return;
         const cancellation = { triggered: false };
         (async () => {
             // Generate PKCE challenge
@@ -86,18 +108,18 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
         return () => {
             cancellation.triggered = true;
         };
-    }, [state.authParams, state.pkceChallenge]);
+    }, [connection.auth.authParams, connection.auth.pkceChallenge]);
 
     // Effect to open the auth window when there is a pending auth
     React.useEffect(() => {
         if (
             !connectorConfig ||
-            !state.authParams ||
-            !state.authParams.instanceUrl ||
-            !state.authRequested ||
-            state.authStarted ||
-            state.authError ||
-            !state.pkceChallenge
+            !connection.auth.authParams ||
+            !connection.auth.authParams.instanceUrl ||
+            !connection.auth.authRequested ||
+            connection.auth.authStarted ||
+            connection.auth.authError ||
+            !connection.auth.pkceChallenge
         ) {
             return;
         }
@@ -116,8 +138,8 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
             providerOptions: {
                 case: "salesforceProvider",
                 value: new proto.sqlynx_oauth.pb.SalesforceOAuthOptions({
-                    instanceUrl: state.authParams.instanceUrl,
-                    appConsumerKey: state.authParams.appConsumerKey,
+                    instanceUrl: connection.auth.authParams.instanceUrl,
+                    appConsumerKey: connection.auth.authParams.appConsumerKey,
                 }),
             }
         });
@@ -125,11 +147,11 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
         const authStateBase64 = BASE64_CODEC.encode(authStateBuffer.buffer);
 
         // Construct the URI
-        const params = state.authParams!;
+        const params = connection.auth.authParams!;
         const paramParts = [
             `client_id=${params.appConsumerKey}`,
             `redirect_uri=${connectorConfig.auth.oauthRedirect}`,
-            `code_challenge=${state.pkceChallenge.value}`,
+            `code_challenge=${connection.auth.pkceChallenge.value}`,
             `code_challange_method=S256`,
             `response_type=code`,
             `state=${authStateBase64}`
@@ -153,13 +175,13 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
             dispatch({ type: OAUTH_LINK_OPENED, value: null });
         }
 
-    }, [state.authRequested, state.authError, state.openAuthWindow, state.pkceChallenge]);
+    }, [connection.auth.authRequested, connection.auth.authError, connection.auth.openAuthWindow, connection.auth.pkceChallenge]);
 
     // Effect to forget about the auth window when it closes
     React.useEffect(() => {
-        if (!state.openAuthWindow) return () => { };
+        if (!connection.auth.openAuthWindow) return () => { };
         const loop = setInterval(function () {
-            if (state.openAuthWindow?.closed) {
+            if (connection.auth.openAuthWindow?.closed) {
                 clearInterval(loop);
                 dispatch({
                     type: OAUTH_WINDOW_CLOSED,
@@ -170,7 +192,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
         return () => {
             clearInterval(loop);
         };
-    }, [state.openAuthWindow]);
+    }, [connection.auth.openAuthWindow]);
 
     // Register a receiver for the oauth code from the window
     React.useEffect(() => {
@@ -195,12 +217,12 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
 
     // Effect to get the core access token
     React.useEffect(() => {
-        if (!connectorConfig || !state.coreAuthCode || !state.authParams || !state.pkceChallenge || state.authError)
+        if (!connectorConfig || !connection.auth.coreAuthCode || !connection.auth.authParams || !connection.auth.pkceChallenge || connection.auth.authError)
             return;
         const abortController = new AbortController();
-        const authParams = state.authParams;
-        const authCode = state.coreAuthCode;
-        const pkceChallenge = state.pkceChallenge;
+        const authParams = connection.auth.authParams;
+        const authCode = connection.auth.coreAuthCode;
+        const pkceChallenge = connection.auth.pkceChallenge;
         (async () => {
             try {
                 const token = await connector.getCoreAccessToken(
@@ -227,13 +249,13 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
             }
         })();
         return () => abortController.abort();
-    }, [connectorConfig, state.coreAuthCode, state.authParams, state.pkceChallenge, state.authError]);
+    }, [connectorConfig, connection.auth.coreAuthCode, connection.auth.authParams, connection.auth.pkceChallenge, connection.auth.authError]);
 
     // Effect to get the data cloud access token
     React.useEffect(() => {
-        if (!state.coreAccessToken?.accessToken || !state.authParams || state.authError) return;
+        if (!connection.auth.coreAccessToken?.accessToken || !connection.auth.authParams || connection.auth.authError) return;
         const abortController = new AbortController();
-        const coreAccessToken = state.coreAccessToken;
+        const coreAccessToken = connection.auth.coreAccessToken;
         (async () => {
             try {
                 const token = await connector.getDataCloudAccessToken(coreAccessToken, abortController.signal);
@@ -254,11 +276,11 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
             }
         })();
         return () => abortController.abort();
-    }, [state.coreAccessToken]);
+    }, [connection.auth.coreAccessToken]);
 
     return (
         <AUTH_FLOW_DISPATCH_CTX.Provider value={dispatch}>
-            <AUTH_FLOW_STATE_CTX.Provider value={state}>{props.children}</AUTH_FLOW_STATE_CTX.Provider>
+            <AUTH_FLOW_STATE_CTX.Provider value={connection.auth}>{props.children}</AUTH_FLOW_STATE_CTX.Provider>
         </AUTH_FLOW_DISPATCH_CTX.Provider>
     );
 };
