@@ -4,41 +4,42 @@ import { ConnectorState } from "./connector_state.js";
 import { Dispatch } from "../utils/variant.js";
 
 type RegisteredConnection = ConnectorState & { readonly registryEntryId: number };
-type SetConnectionAction = (prev: ConnectorState) => ConnectorState;
+export type SetConnectionAction<V> = (prev: V) => V;
 
 let GLOBAL_CONNECTIONS: Map<number, RegisteredConnection> = new Map();
 let NEXT_CONNECTION_ID = 1;
 
-/// Resolve a session state by id
-export function useSessionState(id: number | null): [ConnectorState | null, Dispatch<SetConnectionAction>] {
-    const [state, setState] = React.useState<RegisteredConnection | null>(null);
-    React.useEffect(() => {
-        setState(id == null ? null : GLOBAL_CONNECTIONS.get(id) ?? null);
-    }, [id]);
-    const reducer = React.useCallback(
-        (action: SetConnectionAction) => {
-            if (id == null) {
-                return;
-            }
-            const prev = GLOBAL_CONNECTIONS.get(id)!;
+/// Resolve a session state by id.
+/// We deliberately pass in the id as parameter since we'll later use multiple connections of the same connector.
+export function useConnectionState<V>(id: number, init: () => ConnectorState): [V, Dispatch<SetConnectionAction<V>>] {
+    const [state, setState] = React.useState<RegisteredConnection>(() => {
+        const conn = GLOBAL_CONNECTIONS.get(id);
+        if (conn) {
+            return conn;
+        } else {
             const next = {
-                ...action(prev),
                 registryEntryId: id,
+                ...init(),
             };
             GLOBAL_CONNECTIONS.set(id, next);
-            setState(next);
-        },
-        [id, setState],
-    );
-    return [state, reducer];
-}
-
-/// Register a new session
-export function registerSession(state: ConnectorState): number {
-    const entryId = NEXT_CONNECTION_ID++;
-    GLOBAL_CONNECTIONS.set(entryId, {
-        ...state,
-        registryEntryId: entryId,
+            return next;
+        }
     });
-    return entryId;
+    const reducer = React.useCallback(
+        (action: SetConnectionAction<V>) => {
+            const prev = GLOBAL_CONNECTIONS.get(id);
+            const next = {
+                ...prev,
+                value: action(prev!.value as V),
+            } as RegisteredConnection;
+            GLOBAL_CONNECTIONS.set(id, next);
+            setState(next);
+        }, []
+    );
+    return [state.value as V, reducer];
+};
+
+/// Create a connection id
+export function createConnectionId(): number {
+    return NEXT_CONNECTION_ID++;
 }
