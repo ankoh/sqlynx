@@ -36,6 +36,8 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
         type: VALIDATION_UNKNOWN,
         value: null
     });
+
+    // Helper to start the authorization
     const startAuth = () => {
         let validationSucceeded = true;
         if (instanceUrl === "") {
