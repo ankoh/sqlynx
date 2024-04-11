@@ -10,7 +10,9 @@ import {
 } from '../connectors/catalog_update.js';
 import { SALESFORCE_DATA_CLOUD } from '../connectors/connector_info.js';
 import { useSalesforceAPI } from '../connectors/salesforce_connector.js';
-import { useSalesforceAuthState } from '../connectors/salesforce_auth_state.js';
+import { useSalesforceConnectionId } from '../connectors/salesforce_auth_state.js';
+import { useConnectionState } from '../connectors/connection_manager.js';
+import { SalesforceConnectorState } from '../connectors/connection_state.js';
 import {
     CATALOG_UPDATE_CANCELLED,
     CATALOG_UPDATE_FAILED,
@@ -22,10 +24,11 @@ export const CatalogLoader = (props: { children?: React.ReactElement }) => {
     const state = useActiveSessionState();
     const dispatch = useActiveSessionStateDispatch();
     const salesforceAPI = useSalesforceAPI();
-    const salesforceAuth = useSalesforceAuthState();
+    const connectionId = useSalesforceConnectionId();
+    const [connection, _setConnection] = useConnectionState<SalesforceConnectorState>(connectionId);
 
     React.useEffect(() => {
-        if (!state?.catalog) {
+        if (!state?.catalog || !connection) {
             return;
         }
         const catalog = state.catalog;
@@ -40,7 +43,7 @@ export const CatalogLoader = (props: { children?: React.ReactElement }) => {
                         type: SALESFORCE_DATA_CLOUD,
                         value: {
                             api: salesforceAPI,
-                            accessToken: salesforceAuth.dataCloudAccessToken!,
+                            accessToken: connection.auth.dataCloudAccessToken!,
                         },
                     };
                     break;

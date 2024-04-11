@@ -3,12 +3,13 @@ import * as React from 'react';
 import { Button } from '@primer/react';
 import { KeyIcon, PlugIcon, TagIcon } from '@primer/octicons-react';
 
-import { AUTHORIZE, useSalesforceAuthFlow, useSalesforceAuthState } from '../../connectors/salesforce_auth_state.js';
+import { AUTHORIZE, useSalesforceAuthFlow, useSalesforceConnectionId } from '../../connectors/salesforce_auth_state.js';
+import { useConnectionState } from '../../connectors/connection_manager.js';
+import { SalesforceConnectorState } from '../../connectors/connection_state.js';
 import { TextField, TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_UNKNOWN } from '../../view/text_field.js';
 import { classNames } from '../../utils/classnames.js';
 
 import * as symbols from '../../../static/svg/symbols.generated.svg';
-
 import * as style from './connector_settings.module.css';
 
 interface Props { }
@@ -16,13 +17,15 @@ interface Props { }
 export const SalesforceConnectorSettings: React.FC<Props> = (
     _props: Props,
 ) => {
-    const authState = useSalesforceAuthState();
     const authFlow = useSalesforceAuthFlow();
     const isAuthenticated = false;
 
     const [instanceUrl, setInstanceUrl] = React.useState<string>("");
     const [appConsumerKey, setAppConsumerKey] = React.useState<string>("");
     const [appConsumerSecret, _setAppConsumerSecret] = React.useState<string | null>(null);
+
+    const connectionId = useSalesforceConnectionId();
+    const [connection, _setConnection] = useConnectionState<SalesforceConnectorState>(connectionId);
 
     const [instanceUrlValidation, setInstanceUrlValidation] = React.useState<TextFieldValidationStatus>({
         type: VALIDATION_UNKNOWN,
@@ -118,7 +121,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             className={style.grid_column_1}
                             name="Instance API URL"
                             caption="URL of the Salesforce API"
-                            value={authState.coreAccessToken?.apiInstanceUrl ?? ''}
+                            value={connection?.auth.coreAccessToken?.apiInstanceUrl ?? ''}
                             onChange={() => { }}
                             placeholder=""
                             leadingVisual={() => <div>URL</div>}
@@ -128,7 +131,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                         <TextField
                             name="Core Access Token"
                             caption="Access Token for Salesforce Core"
-                            value={authState.coreAccessToken?.accessToken ?? ''}
+                            value={connection?.auth.coreAccessToken?.accessToken ?? ''}
                             onChange={() => { }}
                             placeholder=""
                             leadingVisual={KeyIcon}
@@ -138,7 +141,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                         <TextField
                             name="Data Cloud Instance URL"
                             caption="URL of the Data Cloud instance"
-                            value={authState.dataCloudAccessToken?.instanceUrl?.toString() ?? ''}
+                            value={connection?.auth.dataCloudAccessToken?.instanceUrl?.toString() ?? ''}
                             onChange={() => { }}
                             placeholder=""
                             leadingVisual={() => <div>URL</div>}
@@ -148,7 +151,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                         <TextField
                             name="Data Cloud Access Token"
                             caption="URL of the Data Cloud instance"
-                            value={authState.dataCloudAccessToken?.accessToken?.toString() ?? ''}
+                            value={connection?.auth.dataCloudAccessToken?.accessToken?.toString() ?? ''}
                             onChange={() => { }}
                             placeholder=""
                             leadingVisual={KeyIcon}

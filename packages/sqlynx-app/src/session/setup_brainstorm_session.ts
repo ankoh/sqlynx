@@ -9,6 +9,7 @@ import { ScriptData, ScriptKey } from './session_state.js';
 import { RESULT_OK } from '../utils/result.js';
 import { ScriptLoadingStatus } from './script_loader.js';
 import { TPCH_SCHEMA, EXAMPLE_SCRIPTS } from './example_scripts.js';
+import { createEmptyTimings } from '../connectors/connection_state.js';
 
 export const DEFAULT_BOARD_WIDTH = 800;
 export const DEFAULT_BOARD_HEIGHT = 600;
@@ -77,7 +78,9 @@ export function useBrainstormSessionSetup() {
             connectorInfo: CONNECTOR_INFOS[ConnectorType.BRAINSTORM_MODE],
             connectorState: {
                 type: BRAINSTORM_MODE,
-                value: {}
+                value: {
+                    timings: createEmptyTimings(),
+                }
             },
             scripts: {
                 [ScriptKey.MAIN_SCRIPT]: mainScriptData,

@@ -4,6 +4,10 @@ import Immutable from 'immutable';
 import { CONNECTOR_INFOS, ConnectorType, SALESFORCE_DATA_CLOUD } from '../connectors/connector_info.js';
 import { DEFAULT_BOARD_HEIGHT, DEFAULT_BOARD_WIDTH } from './setup_brainstorm_session.js';
 import { FULL_CATALOG_REFRESH } from '../connectors/catalog_update.js';
+import { useSalesforceAPI } from '../connectors/salesforce_connector.js';
+import { AUTH_FLOW_DEFAULT_STATE, useSalesforceConnectionId } from '../connectors/salesforce_auth_state.js';
+import { SalesforceConnectorState, createEmptyTimings } from '../connectors/connection_state.js';
+import { useConnectionState } from '../connectors/connection_manager.js';
 import { RESULT_OK } from '../utils/result.js';
 import { ScriptData, ScriptKey } from './session_state.js';
 import { ScriptLoadingStatus } from './script_loader.js';
@@ -11,21 +15,20 @@ import { UPDATE_CATALOG } from './session_state_reducer.js';
 import { registerSession, useSessionState } from './session_state_registry.js';
 import { generateBlankScript } from './script_metadata.js';
 import { useSQLynxSetup } from '../sqlynx_loader.js';
-import { useSalesforceAPI } from '../connectors/salesforce_connector.js';
-import { AUTH_FLOW_DEFAULT_STATE, useSalesforceAuthState } from '../connectors/salesforce_auth_state.js';
 import { useSessionSelector } from './session_state_provider.js';
 
 export function useSalesforceSessionSetup() {
     const setupSQLynx = useSQLynxSetup();
     const selectScript = useSessionSelector();
     const sfApi = useSalesforceAPI();
-    const sfAuth = useSalesforceAuthState();
+    const sfConnectionId = useSalesforceConnectionId();
+    const [sfConnection, _setConnection] = useConnectionState<SalesforceConnectorState>(sfConnectionId);
 
     const [connectorScriptId, setConnectorScriptId] = React.useState<number | null>(null);
     const [_sessionState, sessionStateDispatch] = useSessionState(connectorScriptId);
 
     return React.useCallback(async () => {
-        if (!sfApi || !sfAuth.dataCloudAccessToken) return;
+        if (!sfApi || !sfConnection || !sfConnection.auth.dataCloudAccessToken) return;
 
         // Setup SQLynx lazily.
         // Note that this means the WASM module will only be set up when da data cloud token is provided.
@@ -67,6 +70,7 @@ export function useSalesforceSessionSetup() {
                 connectorState: {
                     type: SALESFORCE_DATA_CLOUD,
                     value: {
+                        timings: createEmptyTimings(),
                         auth: AUTH_FLOW_DEFAULT_STATE,
                     }
                 },
@@ -126,5 +130,5 @@ export function useSalesforceSessionSetup() {
                 },
             });
         }
-    }, [sfApi, sfAuth.dataCloudAccessToken, setupSQLynx]);
+    }, [sfApi, sfConnection?.auth.dataCloudAccessToken, setupSQLynx]);
 };

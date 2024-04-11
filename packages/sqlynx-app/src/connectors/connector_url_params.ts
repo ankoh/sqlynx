@@ -1,4 +1,5 @@
 import { VariantKind } from '../utils/index.js';
+import { SalesforceConnectorState } from './connection_state.js';
 import { SALESFORCE_DATA_CLOUD, BRAINSTORM_MODE, HYPER_DATABASE, ConnectorAuthCheck } from './connector_info.js';
 import { SalesforceAuthState } from './salesforce_auth_state.js';
 
@@ -56,13 +57,14 @@ export function readConnectorParamsFromURL(urlParams: URLSearchParams): Connecto
     }
 }
 
-export function writeSalesforceConnectorParams(publicParams: URLSearchParams, _privateParams: URLSearchParams, state: SalesforceAuthState) {
+export function writeSalesforceConnectorParams(publicParams: URLSearchParams, _privateParams: URLSearchParams, state: SalesforceConnectorState | null) {
+    if (!state) return;
     publicParams.set('connector', 'sfdc');
-    if (state.authParams?.instanceUrl) {
-        publicParams.set('instance', state.authParams?.instanceUrl);
+    if (state.auth.authParams?.instanceUrl) {
+        publicParams.set('instance', state.auth.authParams?.instanceUrl);
     }
-    if (state.authParams?.appConsumerKey) {
-        publicParams.set('app', state.authParams?.appConsumerKey);
+    if (state.auth.authParams?.appConsumerKey) {
+        publicParams.set('app', state.auth.authParams?.appConsumerKey);
     }
 }
 
@@ -75,22 +77,25 @@ export function writeHyperConnectorParams(publicParams: URLSearchParams, _privat
 }
 
 export function checkSalesforceAuthSetup(
-    state: SalesforceAuthState,
+    state: SalesforceConnectorState | null,
     params: SalesforceSetupParams,
 ): ConnectorAuthCheck {
-    if (!state.authParams) {
+    if (!state) {
+        return ConnectorAuthCheck.UNKNOWN;
+    }
+    if (!state.auth.authParams) {
         return ConnectorAuthCheck.AUTHENTICATION_NOT_STARTED;
     }
-    if (state.authParams.appConsumerKey != params.appConsumerKey) {
+    if (state.auth.authParams.appConsumerKey != params.appConsumerKey) {
         return ConnectorAuthCheck.CLIENT_ID_MISMATCH;
     }
-    if (state.coreAccessToken || state.dataCloudAccessToken) {
+    if (state.auth.coreAccessToken || state.auth.dataCloudAccessToken) {
         return ConnectorAuthCheck.AUTHENTICATED;
     }
-    if (state.authStarted) {
+    if (state.auth.authStarted) {
         return ConnectorAuthCheck.AUTHENTICATION_IN_PROGRESS;
     }
-    if (state.authError) {
+    if (state.auth.authError) {
         return ConnectorAuthCheck.AUTHENTICATION_FAILED;
     }
     return ConnectorAuthCheck.UNKNOWN;

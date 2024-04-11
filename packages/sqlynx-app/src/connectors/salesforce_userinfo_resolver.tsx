@@ -1,7 +1,9 @@
 import * as React from 'react';
-import { useSalesforceAuthState } from './salesforce_auth_state.js';
+import { useSalesforceConnectionId } from './salesforce_auth_state.js';
 import { useSalesforceAPI } from './salesforce_connector.js';
 import { SalesforceUserInfo } from './salesforce_api_client.js';
+import { useConnectionState } from './connection_manager.js';
+import { SalesforceConnectorState } from './connection_state.js';
 
 interface Props {
     children: React.ReactElement;
@@ -17,7 +19,9 @@ export function SalesforceUserInfoResolver(props: Props) {
     const [state, setState] = React.useState<State>({
         userInfo: null,
     });
-    const auth = useSalesforceAuthState();
+    const connectionId = useSalesforceConnectionId();
+    const [connection, _setConnection] = useConnectionState<SalesforceConnectorState>(connectionId);
+
     const api = useSalesforceAPI();
     React.useEffect(() => {
         // Clear old user info whenever the api changes
@@ -26,9 +30,9 @@ export function SalesforceUserInfoResolver(props: Props) {
             profile: null,
         }));
         // Not authenticated?
-        if (!auth.coreAccessToken) return;
+        if (!connection?.auth.coreAccessToken) return;
         // Fetch new user information
-        const coreAccessToken = auth.coreAccessToken;
+        const coreAccessToken = connection.auth.coreAccessToken;
         const cancellation = new AbortController();
         (async () => {
             try {
@@ -46,7 +50,7 @@ export function SalesforceUserInfoResolver(props: Props) {
             }
         })();
         return () => cancellation.abort();
-    }, [api, auth.coreAccessToken]);
+    }, [api, connection?.auth.coreAccessToken]);
 
     return <userInfoCtx.Provider value={state.userInfo}>{props.children}</userInfoCtx.Provider>;
 }

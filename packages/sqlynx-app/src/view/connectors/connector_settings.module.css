@@ -161,12 +161,25 @@
     color: var(--connector_status_foreground);
 }
 
-.status_indicator {
+.status_health {
     width: 8px;
     height: 8px;
     border-radius: 4px;
     background-color: red;
 }
+.status_health_online {
+    background-color: green;
+}
+.status_health_error {
+    background-color: red;
+}
+.status_health_connecting {
+    background-color: orange;
+}
+.status_health_not_started {
+    background-color: grey;
+}
+
 
 .status_text {
     font-size: 0.8rem;

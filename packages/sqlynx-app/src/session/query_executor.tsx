@@ -9,7 +9,8 @@ import {
     QueryExecutionTaskVariant,
 } from '../connectors/query_execution.js';
 import { useSalesforceAPI } from '../connectors/salesforce_connector.js';
-import { useSalesforceAuthState } from '../connectors/salesforce_auth_state.js';
+import { useSalesforceConnectionId } from '../connectors/salesforce_auth_state.js';
+import { SalesforceConnectorState } from '../connectors/connection_state.js';
 import { ConnectorType, SALESFORCE_DATA_CLOUD } from '../connectors/connector_info.js';
 import {
     QUERY_EXECUTION_ACCEPTED,
@@ -22,15 +23,18 @@ import {
     QUERY_EXECUTION_SUCCEEDED,
 } from './session_state_reducer.js';
 import { ScriptKey } from './session_state.js';
+import { useConnectionState } from '../connectors/connection_manager.js';
 
 export const QueryExecutor = (props: { children?: React.ReactElement }) => {
     const state = useActiveSessionState();
     const dispatch = useActiveSessionStateDispatch();
     const salesforceAPI = useSalesforceAPI();
-    const salesforceAuth = useSalesforceAuthState();
+
+    const connectionId = useSalesforceConnectionId();
+    const [connection, _setConnection] = useConnectionState<SalesforceConnectorState>(connectionId);
 
     React.useEffect(() => {
-        if (!state || !state.queryExecutionRequested) {
+        if (!state || !state.queryExecutionRequested || !connection) {
             return;
         }
 
@@ -41,8 +45,8 @@ export const QueryExecutor = (props: { children?: React.ReactElement }) => {
                     type: SALESFORCE_DATA_CLOUD,
                     value: {
                         api: salesforceAPI,
-                        authParams: salesforceAuth.authParams!,
-                        dataCloudAccessToken: salesforceAuth.dataCloudAccessToken!,
+                        authParams: connection.auth.authParams!,
+                        dataCloudAccessToken: connection.auth.dataCloudAccessToken!,
                         scriptText: state.scripts[ScriptKey.MAIN_SCRIPT]?.script?.toString() ?? '',
                     },
                 };

@@ -305,8 +305,8 @@ export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAu
     }
 }
 
-export const AUTH_FLOW_STATE_CTX = React.createContext<SalesforceAuthState | null>(null);
+export const CONNECTION_ID = React.createContext<number | null>(null);
 export const AUTH_FLOW_DISPATCH_CTX = React.createContext<Dispatch<SalesforceAuthAction> | null>(null);
 
-export const useSalesforceAuthState = (): SalesforceAuthState => React.useContext(AUTH_FLOW_STATE_CTX)!;
+export const useSalesforceConnectionId = (): number => React.useContext(CONNECTION_ID)!;
 export const useSalesforceAuthFlow = (): Dispatch<SalesforceAuthAction> => React.useContext(AUTH_FLOW_DISPATCH_CTX)!;
