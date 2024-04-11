@@ -26,7 +26,7 @@ export const SalesforceAuthFlowMock: React.FC<Props> = (props: Props) => {
 
     // Effect to get the core access token
     React.useEffect(() => {
-        if (!connectorConfig?.auth || !state.authParams || !state.authRequested) return;
+        if (!connectorConfig?.auth || !state.authParams || state.authStarted || !state.timings.authRequestedAt) return;
         const abort = new AbortController();
         const pkceChallenge = config.value?.connectors?.salesforce?.mock?.pkceChallenge ?? {
             value: 'pkce-challenge',
@@ -60,7 +60,7 @@ export const SalesforceAuthFlowMock: React.FC<Props> = (props: Props) => {
                 value: dataCloudAccess,
             });
         })();
-    }, [state.authRequested, state.coreAuthCode]);
+    }, [state.authParams, state.authStarted, state.timings.authRequestedAt, state.coreAuthCode]);
 
     return (
         <AUTH_FLOW_DISPATCH_CTX.Provider value={dispatch}>

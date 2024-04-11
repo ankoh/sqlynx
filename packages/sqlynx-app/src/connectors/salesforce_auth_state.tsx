@@ -3,45 +3,52 @@ import { VariantKind, Dispatch } from '../utils/variant.js';
 import { SalesforceCoreAccessToken, SalesforceDataCloudAccessToken } from './salesforce_api_client.js';
 import { PKCEChallenge } from '../utils/pkce.js';
 
-export interface SalesforceAuthState {
-    /// The auth params
-    authParams: SalesforceAuthParams | null;
+export interface SalesforceAuthTimings {
     /// The time when the auth was requested
     authRequestedAt: Date | null;
     /// The time when the auth failed
     authFailedAt: Date | null;
-    /// The authentication error
-    authError: string | null;
-    /// The PKCE challenge
-    pkceChallenge: PKCEChallenge | null;
     /// The time when the PKCE generation started
     pkceGenStartedAt: Date | null;
     /// The time when the PKCE generation finished
     pkceGenFinishedAt: Date | null;
     /// The time when the auth link was opened
     openedAuthLinkAt: Date | null;
-    /// The popup window (if starting the OAuth flow from the browser)
-    openAuthWindow: Window | null;
     /// The time when the auth window was opened
     openedAuthWindowAt: Date | null;
     /// The time when the auth window was closed
     closedAuthWindowAt: Date | null;
-    /// The code
-    coreAuthCode: string | null;
-    /// The time when we received the auth code
-    coreAuthCodeReceivedAt: Date | null;
-    /// The core access token
-    coreAccessToken: SalesforceCoreAccessToken | null;
+    /// The time when we received the oauth code
+    oauthCodeReceivedAt: Date | null;
     /// The time when we started to request the core access token
     coreAccessTokenRequestedAt: Date | null;
     /// The time when we received the core access token
     coreAccessTokenReceivedAt: Date | null;
-    /// The data cloud access token
-    dataCloudAccessToken: SalesforceDataCloudAccessToken | null;
     /// The time when we started to request the data cloud access token
     dataCloudAccessTokenRequestedAt: Date | null;
     /// The time when we received the data cloud access token
     dataCloudAccessTokenReceievedAt: Date | null;
+}
+
+export interface SalesforceAuthState {
+    /// The timings
+    timings: SalesforceAuthTimings;
+    /// The auth params
+    authParams: SalesforceAuthParams | null;
+    /// The auth started
+    authStarted: boolean;
+    /// The authentication error
+    authError: string | null;
+    /// The PKCE challenge
+    pkceChallenge: PKCEChallenge | null;
+    /// The popup window (if starting the OAuth flow from the browser)
+    openAuthWindow: Window | null;
+    /// The code
+    coreAuthCode: string | null;
+    /// The core access token
+    coreAccessToken: SalesforceCoreAccessToken | null;
+    /// The data cloud access token
+    dataCloudAccessToken: SalesforceDataCloudAccessToken | null;
 }
 
 export interface SalesforceAuthConfig {
@@ -59,31 +66,35 @@ export interface SalesforceAuthParams {
 }
 
 export const AUTH_FLOW_DEFAULT_STATE: SalesforceAuthState = {
+    timings: {
+        authRequestedAt: null,
+        authFailedAt: null,
+        pkceGenStartedAt: null,
+        pkceGenFinishedAt: null,
+        openedAuthLinkAt: null,
+        openedAuthWindowAt: null,
+        closedAuthWindowAt: null,
+        oauthCodeReceivedAt: null,
+        coreAccessTokenRequestedAt: null,
+        coreAccessTokenReceivedAt: null,
+        dataCloudAccessTokenRequestedAt: null,
+        dataCloudAccessTokenReceievedAt: null,
+    },
     authParams: null,
-    authRequestedAt: null,
-    authFailedAt: null,
+    authStarted: false,
     authError: null,
     pkceChallenge: null,
-    pkceGenStartedAt: null,
-    pkceGenFinishedAt: null,
-    openedAuthLinkAt: null,
     openAuthWindow: null,
-    openedAuthWindowAt: null,
-    closedAuthWindowAt: null,
     coreAuthCode: null,
-    coreAuthCodeReceivedAt: null,
     coreAccessToken: null,
-    coreAccessTokenRequestedAt: null,
-    coreAccessTokenReceivedAt: null,
     dataCloudAccessToken: null,
-    dataCloudAccessTokenRequestedAt: null,
-    dataCloudAccessTokenReceievedAt: null,
 };
 
 export const CONFIGURE = Symbol('CONFIGURE');
 export const AUTHORIZE = Symbol('AUTHORIZE');
 export const DISCONNECT = Symbol('DISCONNECT');
 export const AUTH_FAILED = Symbol('AUTH_FAILED');
+export const AUTH_STARTED = Symbol('AUTH_STARTED');
 export const GENERATING_PKCE_CHALLENGE = Symbol('GENERATING_PKCE_CHALLENGE');
 export const GENERATED_PKCE_CHALLENGE = Symbol('GENERATED_PKCE_CHALLENGE');
 export const OAUTH_LINK_OPENED = Symbol('OAUTH_LINK_OPENED');
@@ -100,6 +111,7 @@ export type SalesforceAuthAction =
     | VariantKind<typeof AUTHORIZE, SalesforceAuthParams>
     | VariantKind<typeof DISCONNECT, null>
     | VariantKind<typeof AUTH_FAILED, string>
+    | VariantKind<typeof AUTH_STARTED, null>
     | VariantKind<typeof GENERATING_PKCE_CHALLENGE, null>
     | VariantKind<typeof GENERATED_PKCE_CHALLENGE, PKCEChallenge>
     | VariantKind<typeof OAUTH_LINK_OPENED, null>
@@ -115,132 +127,180 @@ export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAu
     switch (action.type) {
         case CONFIGURE:
             return {
+                timings: {
+                    authRequestedAt: null,
+                    authFailedAt: null,
+                    pkceGenStartedAt: null,
+                    pkceGenFinishedAt: null,
+                    openedAuthLinkAt: null,
+                    openedAuthWindowAt: null,
+                    closedAuthWindowAt: null,
+                    oauthCodeReceivedAt: null,
+                    coreAccessTokenRequestedAt: null,
+                    coreAccessTokenReceivedAt: null,
+                    dataCloudAccessTokenRequestedAt: null,
+                    dataCloudAccessTokenReceievedAt: null,
+                },
                 authParams: action.value,
-                authRequestedAt: null,
-                authFailedAt: null,
+                authStarted: false,
                 authError: null,
-                pkceGenStartedAt: null,
-                pkceGenFinishedAt: null,
                 pkceChallenge: null,
-                openedAuthLinkAt: null,
-                openedAuthWindowAt: null,
-                closedAuthWindowAt: null,
                 openAuthWindow: null,
                 coreAuthCode: null,
-                coreAuthCodeReceivedAt: null,
-                coreAccessTokenRequestedAt: null,
-                coreAccessTokenReceivedAt: null,
                 coreAccessToken: null,
-                dataCloudAccessTokenRequestedAt: null,
-                dataCloudAccessTokenReceievedAt: null,
                 dataCloudAccessToken: null,
             };
         case AUTHORIZE:
             return {
+                timings: {
+                    authRequestedAt: new Date(),
+                    authFailedAt: null,
+                    pkceGenStartedAt: null,
+                    pkceGenFinishedAt: null,
+                    openedAuthLinkAt: null,
+                    openedAuthWindowAt: null,
+                    closedAuthWindowAt: null,
+                    oauthCodeReceivedAt: null,
+                    coreAccessTokenRequestedAt: null,
+                    coreAccessTokenReceivedAt: null,
+                    dataCloudAccessTokenRequestedAt: null,
+                    dataCloudAccessTokenReceievedAt: null,
+                },
                 authParams: action.value,
-                authRequestedAt: new Date(),
-                authFailedAt: null,
+                authStarted: false,
                 authError: null,
-                pkceGenStartedAt: null,
-                pkceGenFinishedAt: null,
                 pkceChallenge: null,
-                openedAuthLinkAt: null,
-                openedAuthWindowAt: null,
-                closedAuthWindowAt: null,
                 openAuthWindow: null,
                 coreAuthCode: null,
-                coreAuthCodeReceivedAt: null,
-                coreAccessTokenRequestedAt: null,
-                coreAccessTokenReceivedAt: null,
                 coreAccessToken: null,
-                dataCloudAccessTokenRequestedAt: null,
-                dataCloudAccessTokenReceievedAt: null,
                 dataCloudAccessToken: null,
             };
         case DISCONNECT:
             return {
+                timings: {
+                    authRequestedAt: new Date(),
+                    authFailedAt: null,
+                    pkceGenStartedAt: null,
+                    pkceGenFinishedAt: null,
+                    openedAuthLinkAt: null,
+                    openedAuthWindowAt: null,
+                    closedAuthWindowAt: null,
+                    oauthCodeReceivedAt: null,
+                    coreAccessTokenRequestedAt: null,
+                    coreAccessTokenReceivedAt: null,
+                    dataCloudAccessTokenRequestedAt: null,
+                    dataCloudAccessTokenReceievedAt: null,
+                },
                 authParams: state.authParams,
-                authRequestedAt: null,
-                authFailedAt: null,
+                authStarted: false,
                 authError: null,
-                pkceGenStartedAt: null,
-                pkceGenFinishedAt: null,
                 pkceChallenge: null,
-                openedAuthLinkAt: null,
-                openedAuthWindowAt: null,
-                closedAuthWindowAt: null,
                 openAuthWindow: null,
                 coreAuthCode: null,
-                coreAuthCodeReceivedAt: null,
-                coreAccessTokenRequestedAt: null,
-                coreAccessTokenReceivedAt: null,
                 coreAccessToken: null,
-                dataCloudAccessTokenRequestedAt: null,
-                dataCloudAccessTokenReceievedAt: null,
                 dataCloudAccessToken: null,
+            };
+        case AUTH_STARTED:
+            return {
+                ...state,
+                authStarted: true,
             };
         case AUTH_FAILED:
             return {
                 ...state,
-                authFailedAt: new Date(),
+                timings: {
+                    ...state.timings,
+                    authFailedAt: new Date(),
+                },
                 authError: action.value,
             };
         case GENERATING_PKCE_CHALLENGE:
             return {
                 ...state,
-                pkceGenStartedAt: new Date(),
+                timings: {
+                    ...state.timings,
+                    pkceGenStartedAt: new Date(),
+                },
             };
         case GENERATED_PKCE_CHALLENGE:
             return {
                 ...state,
+                timings: {
+                    ...state.timings,
+                    pkceGenFinishedAt: new Date(),
+                },
                 pkceChallenge: action.value,
             };
         case OAUTH_LINK_OPENED:
             return {
                 ...state,
-                openedAuthLinkAt: new Date(),
+                timings: {
+                    ...state.timings,
+                    openedAuthLinkAt: new Date(),
+                },
                 openAuthWindow: null,
             };
         case OAUTH_WINDOW_OPENED:
             return {
                 ...state,
-                openedAuthWindowAt: new Date(),
+                timings: {
+                    ...state.timings,
+                    openedAuthWindowAt: new Date(),
+                },
                 openAuthWindow: action.value,
             };
         case OAUTH_WINDOW_CLOSED:
             if (!state.openAuthWindow) return state;
             return {
                 ...state,
+                timings: {
+                    ...state.timings,
+                    closedAuthWindowAt: new Date(),
+                },
                 openAuthWindow: null,
-                closedAuthWindowAt: new Date(),
             };
         case RECEIVED_CORE_AUTH_CODE:
             return {
                 ...state,
+                timings: {
+                    ...state.timings,
+                    oauthCodeReceivedAt: new Date(),
+                },
                 coreAuthCode: action.value,
-                coreAuthCodeReceivedAt: new Date(),
             };
         case REQUESTING_CORE_AUTH_TOKEN:
             return {
                 ...state,
-                coreAccessTokenRequestedAt: new Date(),
+                timings: {
+                    ...state.timings,
+                    coreAccessTokenRequestedAt: new Date(),
+                },
             };
         case RECEIVED_CORE_AUTH_TOKEN:
             return {
                 ...state,
+                timings: {
+                    ...state.timings,
+                    coreAccessTokenReceivedAt: new Date(),
+                },
                 coreAccessToken: action.value,
-                coreAccessTokenReceivedAt: new Date(),
             };
         case REQUESTING_DATA_CLOUD_ACCESS_TOKEN:
             return {
                 ...state,
-                dataCloudAccessTokenRequestedAt: new Date(),
+                timings: {
+                    ...state.timings,
+                    dataCloudAccessTokenRequestedAt: new Date(),
+                },
             };
         case RECEIVED_DATA_CLOUD_ACCESS_TOKEN:
             return {
                 ...state,
+                timings: {
+                    ...state.timings,
+                    dataCloudAccessTokenReceievedAt: new Date(),
+                },
                 dataCloudAccessToken: action.value,
-                dataCloudAccessTokenReceievedAt: new Date(),
             };
     }
 }
