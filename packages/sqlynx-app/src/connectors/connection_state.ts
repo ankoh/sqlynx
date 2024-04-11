@@ -96,6 +96,22 @@ export function getSalesforceConnectionStatus(conn: SalesforceConnectorState | n
     return state;
 }
 
-export function getSalesforceConnnectionHealth(_status: ConnectionStatus) {
-    return ConnectionHealth.UNKNOWN;
+export function getSalesforceConnnectionHealth(status: ConnectionStatus): ConnectionHealth {
+    switch (status) {
+        case ConnectionStatus.UNKNOWN:
+        case ConnectionStatus.NOT_STARTED:
+            return ConnectionHealth.NOT_STARTED;
+        case ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_LINK:
+        case ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_WINDOW:
+        case ConnectionStatus.PKCE_GENERATION_STARTED:
+        case ConnectionStatus.OAUTH_CODE_RECEIVED:
+        case ConnectionStatus.DATA_CLOUD_TOKEN_REQUESTED:
+        case ConnectionStatus.CORE_ACCESS_TOKEN_REQUESTED:
+        case ConnectionStatus.AUTHENTICATION_REQUESTED:
+            return ConnectionHealth.CONNECTING;
+        case ConnectionStatus.AUTHENTICATION_COMPLETED:
+            return ConnectionHealth.ONLINE;
+        case ConnectionStatus.AUTHENTICATION_FAILED:
+            return ConnectionHealth.FAILED;
+    }
 }
