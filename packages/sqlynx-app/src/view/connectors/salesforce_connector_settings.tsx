@@ -5,7 +5,7 @@ import { KeyIcon, PlugIcon, TagIcon } from '@primer/octicons-react';
 
 import { AUTHORIZE, useSalesforceAuthFlow, useSalesforceConnectionId } from '../../connectors/salesforce_auth_state.js';
 import { useConnectionState } from '../../connectors/connection_manager.js';
-import { SalesforceConnectorState } from '../../connectors/connection_state.js';
+import { ConnectionHealth, ConnectionStatus, SalesforceConnectorState, getSalesforceConnectionStatus, getSalesforceConnnectionHealth } from '../../connectors/connection_state.js';
 import { TextField, TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_UNKNOWN } from '../../view/text_field.js';
 import { classNames } from '../../utils/classnames.js';
 
@@ -17,16 +17,17 @@ interface Props { }
 export const SalesforceConnectorSettings: React.FC<Props> = (
     _props: Props,
 ) => {
-    const authFlow = useSalesforceAuthFlow();
-    const isAuthenticated = false;
-
     const [instanceUrl, setInstanceUrl] = React.useState<string>("");
     const [appConsumerKey, setAppConsumerKey] = React.useState<string>("");
     const [appConsumerSecret, _setAppConsumerSecret] = React.useState<string | null>(null);
 
+    // Resolve the connection
     const connectionId = useSalesforceConnectionId();
     const [connection, _setConnection] = useConnectionState<SalesforceConnectorState>(connectionId);
+    const authFlow = useSalesforceAuthFlow();
+    const isAuthenticated = false;
 
+    // Maintain setting validations
     const [instanceUrlValidation, setInstanceUrlValidation] = React.useState<TextFieldValidationStatus>({
         type: VALIDATION_UNKNOWN,
         value: null
@@ -63,6 +64,57 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
         }
     };
 
+    // Get the connection status
+    const status = getSalesforceConnectionStatus(connection);
+    let statusName: string | undefined = undefined;
+    switch (status) {
+        case ConnectionStatus.UNKNOWN:
+        case ConnectionStatus.NOT_STARTED:
+            statusName = "disconnected";
+            break;
+        case ConnectionStatus.AUTHENTICATION_FAILED:
+            statusName = "authentication failed";
+            break;
+        case ConnectionStatus.AUTHENTICATION_COMPLETED:
+            statusName = "connected";
+            break;
+        case ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_LINK:
+        case ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_WINDOW:
+            statusName = "waiting for oauth code";
+            break;
+        case ConnectionStatus.OAUTH_CODE_RECEIVED:
+            statusName = "received oauth code";
+            break;
+        case ConnectionStatus.CORE_ACCESS_TOKEN_REQUESTED:
+            statusName = "requesting core access token";
+            break;
+        case ConnectionStatus.DATA_CLOUD_TOKEN_REQUESTED:
+            statusName = "requesting data cloud access token";
+            break;
+        case ConnectionStatus.PKCE_GENERATION_STARTED:
+            statusName = "generating pkce challenge";
+            break;
+    }
+
+    // Get the connection health
+    const health = getSalesforceConnnectionHealth(status);
+    let statusIndicatorClass: string | undefined = undefined;
+    switch (health) {
+        case ConnectionHealth.UNKNOWN:
+        case ConnectionHealth.NOT_STARTED:
+            statusIndicatorClass = style.status_health_not_started;
+            break;
+        case ConnectionHealth.ONLINE:
+            statusIndicatorClass = style.status_health_online;
+            break;
+        case ConnectionHealth.FAILED:
+            statusIndicatorClass = style.status_health_error;
+            break;
+        case ConnectionHealth.CONNECTING:
+            statusIndicatorClass = style.status_health_connecting;
+            break;
+    }
+
     return (
         <div className={style.layout}>
             <div className={style.connector_header_container}>
@@ -85,9 +137,9 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
             <div className={style.body_container}>
                 <div className={style.section_status}>
                     <div className={style.status_bar}>
-                        <div className={classNames(style.status_health,)} />
+                        <div className={classNames(style.status_health, statusIndicatorClass)} />
                         <div className={style.status_text}>
-                            disconnected
+                            {statusName}
                         </div>
                         <div className={style.status_stats}>
                         </div>
