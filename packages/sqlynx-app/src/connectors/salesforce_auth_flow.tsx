@@ -124,7 +124,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
             !connectorConfig ||
             !connection.auth.authParams ||
             !connection.auth.authParams.instanceUrl ||
-            !connection.auth.authRequestedAt ||
+            !connection.auth.timings.authRequestedAt ||
             connection.auth.authStarted ||
             connection.auth.authError ||
             !connection.auth.pkceChallenge
@@ -183,7 +183,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
             dispatch({ type: OAUTH_LINK_OPENED, value: null });
         }
 
-    }, [connection.auth.authRequestedAt, connection.auth.authError, connection.auth.openAuthWindow, connection.auth.pkceChallenge]);
+    }, [connection.auth.authStarted, connection.auth.authError, connection.auth.openAuthWindow, connection.auth.pkceChallenge]);
 
     // Effect to forget about the auth window when it closes
     React.useEffect(() => {
