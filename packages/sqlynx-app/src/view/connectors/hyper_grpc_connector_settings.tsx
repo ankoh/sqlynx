@@ -4,6 +4,7 @@ import * as proto from "@ankoh/sqlynx-pb";
 import { Button } from '@primer/react';
 import { ChecklistIcon, DatabaseIcon, FileBadgeIcon, KeyIcon, PlugIcon, TagIcon } from '@primer/octicons-react';
 
+import { classNames } from '../../utils/classnames.js';
 import { TextField, KeyValueTextField } from '../text_field.js';
 import { useLogger } from '../../platform/logger_provider.js';
 import { useHyperDatabaseClient } from '../../platform/hyperdb_client_provider.js';
@@ -48,7 +49,6 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
             console.error(e);
             logger.trace(`connecting failed with error: ${e.toString()}`, "hyper_grpc");
         }
-
     };
 
     return (
@@ -73,7 +73,7 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
             <div className={style.body_container}>
                 <div className={style.section_status}>
                     <div className={style.status_bar}>
-                        <div className={style.status_indicator} />
+                        <div className={classNames(style.status_health,)} />
                         <div className={style.status_text}>
                             disconnected
                         </div>

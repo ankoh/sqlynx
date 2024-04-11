@@ -9,19 +9,36 @@ export type ConnectionState =
     | VariantKind<typeof HYPER_DATABASE, HyperDBConnectorState>
     ;
 
+export interface ConnectionTimings {
+    totalQueriesStarted: BigInt;
+    totalQueriesFinished: BigInt;
+    totalQueryDurationMs: BigInt;
+    lastQueryStarted: Date | null;
+    lastQueryFinished: Date | null;
+}
+
 export interface BrainstormConnectorState {
+    timings: ConnectionTimings;
 }
 
 export interface SalesforceConnectorState {
+    timings: ConnectionTimings;
     auth: SalesforceAuthState;
 }
 
 export interface HyperDBConnectorState {
+    connectionTimings: ConnectionTimings;
     connection: HyperDatabaseConnection;
 }
 
+export enum ConnectionStatusHealthiness {
+    NOT_STARTED,
+    CONNECTING,
+    ONLINE,
+    FAILED,
+}
+
 export enum ConnectionStatus {
-    UNKNOWN,
     NOT_STARTED,
     PKCE_GENERATION_STARTED,
     OAUTH_CODE_RECEIVED,
@@ -33,6 +50,16 @@ export enum ConnectionStatus {
     AUTHENTICATION_FAILED,
     AUTHENTICATION_COMPLETED,
     UNSUPPORTED,
+}
+
+export function createEmptyTimings(): ConnectionTimings {
+    return {
+        totalQueriesStarted: BigInt(0),
+        totalQueriesFinished: BigInt(0),
+        totalQueryDurationMs: BigInt(0),
+        lastQueryStarted: null,
+        lastQueryFinished: null
+    };
 }
 
 export function getConnectionStatus(conn: ConnectionState) {
@@ -70,4 +97,3 @@ export function getConnectionStatus(conn: ConnectionState) {
             return ConnectionStatus.UNSUPPORTED;
     }
 }
-

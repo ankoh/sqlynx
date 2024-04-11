@@ -11,23 +11,23 @@ import {
     RECEIVED_CORE_AUTH_TOKEN,
     RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
     AUTH_FLOW_DISPATCH_CTX,
-    AUTH_FLOW_STATE_CTX,
-    reduceAuthState,
     AUTH_FLOW_DEFAULT_STATE,
+    reduceAuthState,
     OAUTH_LINK_OPENED,
     SalesforceAuthAction,
     REQUESTING_CORE_AUTH_TOKEN,
     REQUESTING_DATA_CLOUD_ACCESS_TOKEN,
     GENERATING_PKCE_CHALLENGE,
+    CONNECTION_ID,
 } from './salesforce_auth_state.js';
 import { useSalesforceAPI } from './salesforce_connector.js';
 import { useAppConfig } from '../app_config.js';
 import { generatePKCEChallenge } from '../utils/pkce.js';
 import { BASE64_CODEC } from '../utils/base64.js';
 import { PlatformType, usePlatformType } from '../platform/platform_type.js';
-import { createConnectionId, useConnectionState } from './connection_manager.js';
+import { createConnectionId, useOrCreateConnectionState } from './connection_manager.js';
 import { SALESFORCE_DATA_CLOUD } from './connector_info.js';
-import { SalesforceConnectorState } from './connection_state.js';
+import { SalesforceConnectorState, createEmptyTimings } from './connection_state.js';
 
 // We use the web-server OAuth Flow with or without consumer secret.
 //
@@ -78,9 +78,10 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
     // In that case, someone else would create the connection id, and we would need an "active" connection id provider
     // similar to how we register the active session.
     const connectionId = React.useMemo(() => createConnectionId(), []);
-    const [connection, setConnection] = useConnectionState<SalesforceConnectorState>(connectionId, () => ({
+    const [connection, setConnection] = useOrCreateConnectionState<SalesforceConnectorState>(connectionId, () => ({
         type: SALESFORCE_DATA_CLOUD,
         value: {
+            timings: createEmptyTimings(),
             auth: AUTH_FLOW_DEFAULT_STATE
         }
     }));
@@ -292,11 +293,11 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
             }
         })();
         return () => abortController.abort();
-    }, [connection.auth.coreAccessToken]);
+    }, [connection?.auth.coreAccessToken]);
 
     return (
         <AUTH_FLOW_DISPATCH_CTX.Provider value={dispatch}>
-            <AUTH_FLOW_STATE_CTX.Provider value={connection.auth}>{props.children}</AUTH_FLOW_STATE_CTX.Provider>
+            <CONNECTION_ID.Provider value={connectionId}>{props.children}</CONNECTION_ID.Provider>
         </AUTH_FLOW_DISPATCH_CTX.Provider>
     );
 };

@@ -3,9 +3,11 @@ import * as LZString from 'lz-string';
 
 import { ScriptData, ScriptKey } from './session_state.js';
 import { ConnectorType } from '../connectors/connector_info.js';
+import { SalesforceConnectorState } from '../connectors/connection_state.js';
+import { useConnectionState } from '../connectors/connection_manager.js';
 import { useThrottledMemo } from '../utils/throttle.js';
 import { useActiveSessionState } from './session_state_provider.js';
-import { useSalesforceAuthState } from '../connectors/salesforce_auth_state.js';
+import { useSalesforceConnectionId } from '../connectors/salesforce_auth_state.js';
 import { writeBrainstormConnectorParams, writeHyperConnectorParams, writeSalesforceConnectorParams } from '../connectors/connector_url_params.js';
 
 /// Encode a script as compressed base64 text
@@ -26,7 +28,8 @@ export interface SessionLinks {
 /// Hook to maintain generated links for a session
 function generateSessionLinks(): SessionLinks {
     const scriptState = useActiveSessionState();
-    const salesforceAuth = useSalesforceAuthState();
+    const connectionId = useSalesforceConnectionId();
+    const [connection, _setConnection] = useConnectionState<SalesforceConnectorState>(connectionId);
 
     return useThrottledMemo(() => {
         const appUrl = process.env.SQLYNX_APP_URL!;
@@ -40,7 +43,7 @@ function generateSessionLinks(): SessionLinks {
                 writeHyperConnectorParams(privateParams, publicParams);
                 break;
             case ConnectorType.SALESFORCE_DATA_CLOUD:
-                writeSalesforceConnectorParams(privateParams, publicParams, salesforceAuth);
+                writeSalesforceConnectorParams(privateParams, publicParams, connection);
                 break;
         }
         const mainScript = scriptState?.scripts[ScriptKey.MAIN_SCRIPT] ?? null;
@@ -61,7 +64,7 @@ function generateSessionLinks(): SessionLinks {
             publicWebLink: new URL(`${appUrl}?${publicParams.toString()}`)
         };
     }, [
-        salesforceAuth,
+        connection,
         scriptState?.scripts[ScriptKey.MAIN_SCRIPT],
         scriptState?.scripts[ScriptKey.SCHEMA_SCRIPT],
     ], 500);

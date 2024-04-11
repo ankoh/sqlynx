@@ -6,13 +6,17 @@ import {
     RECEIVED_CORE_AUTH_TOKEN,
     RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
     AUTH_FLOW_DISPATCH_CTX,
-    AUTH_FLOW_STATE_CTX,
     reduceAuthState,
     GENERATED_PKCE_CHALLENGE,
     AUTH_FLOW_DEFAULT_STATE,
+    CONNECTION_ID,
+    SalesforceAuthAction,
 } from './salesforce_auth_state.js';
 import { useSalesforceAPI } from './salesforce_connector.js';
 import { useAppConfig } from '../app_config.js';
+import { createConnectionId, useOrCreateConnectionState } from './connection_manager.js';
+import { SALESFORCE_DATA_CLOUD } from './connector_info.js';
+import { SalesforceConnectorState, createEmptyTimings } from './connection_state.js';
 
 interface Props {
     children: React.ReactElement;
@@ -22,17 +26,32 @@ export const SalesforceAuthFlowMock: React.FC<Props> = (props: Props) => {
     const config = useAppConfig();
     const connector = useSalesforceAPI();
     const connectorConfig = config.value?.connectors?.salesforce ?? null;
-    const [state, dispatch] = React.useReducer(reduceAuthState, AUTH_FLOW_DEFAULT_STATE);
+
+    // Get the connection state
+    const connectionId = React.useMemo(() => createConnectionId(), []);
+    const [connection, setConnection] = useOrCreateConnectionState<SalesforceConnectorState>(connectionId, () => ({
+        type: SALESFORCE_DATA_CLOUD,
+        value: {
+            timings: createEmptyTimings(),
+            auth: AUTH_FLOW_DEFAULT_STATE
+        }
+    }));
+    const dispatch = React.useCallback((action: SalesforceAuthAction) => {
+        setConnection((s) => ({
+            ...s,
+            auth: reduceAuthState(connection.auth, action)
+        }));
+    }, []);
 
     // Effect to get the core access token
     React.useEffect(() => {
-        if (!connectorConfig?.auth || !state.authParams || state.authStarted || !state.timings.authRequestedAt) return;
+        if (!connectorConfig?.auth || !connection.auth.authParams || connection.auth.authStarted || !connection.auth.timings.authRequestedAt) return;
         const abort = new AbortController();
         const pkceChallenge = config.value?.connectors?.salesforce?.mock?.pkceChallenge ?? {
             value: 'pkce-challenge',
             verifier: 'pkce-verifier',
         };
-        const authParams = state.authParams;
+        const authParams = connection.auth.authParams;
         (async () => {
             dispatch({
                 type: GENERATED_PKCE_CHALLENGE,
@@ -60,11 +79,11 @@ export const SalesforceAuthFlowMock: React.FC<Props> = (props: Props) => {
                 value: dataCloudAccess,
             });
         })();
-    }, [state.authParams, state.authStarted, state.timings.authRequestedAt, state.coreAuthCode]);
+    }, [connection.auth.authParams, connection.auth.authStarted, connection.auth.timings.authRequestedAt, connection.auth.coreAuthCode]);
 
     return (
         <AUTH_FLOW_DISPATCH_CTX.Provider value={dispatch}>
-            <AUTH_FLOW_STATE_CTX.Provider value={state}>{props.children}</AUTH_FLOW_STATE_CTX.Provider>
+            <CONNECTION_ID.Provider value={connectionId}>{props.children}</CONNECTION_ID.Provider>
         </AUTH_FLOW_DISPATCH_CTX.Provider>
     );
 };

@@ -14,17 +14,19 @@ import {
     requiresSwitchingToNative,
 } from '../connectors/connector_info.js';
 import { ConnectorSetupParamVariant, checkSalesforceAuthSetup, readConnectorParamsFromURL } from '../connectors/connector_url_params.js';
-import { useSalesforceAuthState } from '../connectors/salesforce_auth_state.js';
-import { REPLACE_SCRIPT_CONTENT } from './session_state_reducer.js';
+import { useSalesforceConnectionId } from '../connectors/salesforce_auth_state.js';
 import { useActiveSessionState, useActiveSessionStateDispatch } from './session_state_provider.js';
-import { ScriptKey } from './session_state.js';
+import { REPLACE_SCRIPT_CONTENT } from './session_state_reducer.js';
 import { SQLYNX_VERSION } from '../globals.js';
+import { ScriptKey } from './session_state.js';
 import { TextField } from '../view/text_field.js';
 import { LogViewerInPortal } from '../view/log_viewer.js';
 import { useLogger } from '../platform/logger_provider.js';
 
 import * as page_styles from '../view/banner_page.module.css';
 import * as symbols from '../../static/svg/symbols.generated.svg';
+import { useConnectionState } from '../connectors/connection_manager.js';
+import { SalesforceConnectorState } from '../connectors/connection_state.js';
 
 interface Props {
     searchParams: URLSearchParams;
@@ -70,8 +72,9 @@ const ConnectorParamsSection: React.FC<{ params: ConnectorSetupParamVariant }> =
 export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
     const [logsAreOpen, setLogsAreOpen] = React.useState<boolean>(false);
+    const connectionId = useSalesforceConnectionId();
+    const [connection, _setConnection] = useConnectionState<SalesforceConnectorState>(connectionId);
 
-    const salesforceAuth = useSalesforceAuthState();
     const selectedScript = useActiveSessionState();
     const selectedScriptDispatch = useActiveSessionStateDispatch();
     const [state, setState] = React.useState<State | null>(null);
@@ -104,7 +107,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     switch (state?.connectorParams?.type) {
         case SALESFORCE_DATA_CLOUD:
             connectorInfo = CONNECTOR_INFOS[ConnectorType.SALESFORCE_DATA_CLOUD as number];
-            connectorAuthCheck = checkSalesforceAuthSetup(salesforceAuth, state.connectorParams.value);
+            connectorAuthCheck = checkSalesforceAuthSetup(connection, state.connectorParams.value);
             break;
         case HYPER_DATABASE:
             connectorInfo = CONNECTOR_INFOS[ConnectorType.HYPER_DATABASE as number];
