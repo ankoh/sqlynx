@@ -31,7 +31,8 @@ export interface HyperDBConnectorState {
     connection: HyperDatabaseConnection;
 }
 
-export enum ConnectionStatusHealthiness {
+export enum ConnectionHealth {
+    UNKNOWN,
     NOT_STARTED,
     CONNECTING,
     ONLINE,
@@ -39,17 +40,17 @@ export enum ConnectionStatusHealthiness {
 }
 
 export enum ConnectionStatus {
+    UNKNOWN,
     NOT_STARTED,
     PKCE_GENERATION_STARTED,
     OAUTH_CODE_RECEIVED,
     DATA_CLOUD_TOKEN_REQUESTED,
     CORE_ACCESS_TOKEN_REQUESTED,
-    WAITING_FOR_OAUTH_CODE_VIA_POPUP,
+    WAITING_FOR_OAUTH_CODE_VIA_WINDOW,
     WAITING_FOR_OAUTH_CODE_VIA_LINK,
     AUTHENTICATION_REQUESTED,
     AUTHENTICATION_FAILED,
     AUTHENTICATION_COMPLETED,
-    UNSUPPORTED,
 }
 
 export function createEmptyTimings(): ConnectionTimings {
@@ -62,38 +63,39 @@ export function createEmptyTimings(): ConnectionTimings {
     };
 }
 
-export function getConnectionStatus(conn: ConnectionState) {
-    switch (conn.type) {
-        case SALESFORCE_DATA_CLOUD: {
-            let state: ConnectionStatus;
-            if (!conn.value.auth.authStarted) {
-                state = ConnectionStatus.NOT_STARTED;
-            } else if (conn.value.auth.authError) {
-                state = ConnectionStatus.AUTHENTICATION_FAILED;
-            } else if (conn.value.auth.openAuthWindow != null) {
-                state = ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_POPUP;
-            } else if (conn.value.auth.timings.dataCloudAccessTokenReceievedAt) {
-                state = ConnectionStatus.AUTHENTICATION_COMPLETED;
-            } else if (conn.value.auth.timings.dataCloudAccessTokenRequestedAt) {
-                state = ConnectionStatus.DATA_CLOUD_TOKEN_REQUESTED;
-            } else if (conn.value.auth.timings.coreAccessTokenRequestedAt) {
-                state = ConnectionStatus.CORE_ACCESS_TOKEN_REQUESTED;
-            } else if (conn.value.auth.timings.pkceGenStartedAt) {
-                state = ConnectionStatus.PKCE_GENERATION_STARTED;
-            } else if (conn.value.auth.timings.openedAuthLinkAt) {
-                state = ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_LINK;
-            } else if (conn.value.auth.timings.openedAuthWindowAt) {
-                if (!conn.value.auth.timings.closedAuthWindowAt) {
-                    state = ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_POPUP;
-                } else if (!conn.value.auth.timings.oauthCodeReceivedAt) {
-                    state = ConnectionStatus.OAUTH_CODE_RECEIVED;
-                }
-            } else if (conn.value.auth.timings.authRequestedAt) {
-                state = ConnectionStatus.AUTHENTICATION_REQUESTED;
-            }
-            break;
-        }
-        default:
-            return ConnectionStatus.UNSUPPORTED;
+export function getSalesforceConnectionStatus(conn: SalesforceConnectorState | null): ConnectionStatus {
+    if (!conn) {
+        return ConnectionStatus.UNKNOWN;
     }
+    let state: ConnectionStatus = ConnectionStatus.UNKNOWN;
+    if (!conn.auth.authStarted) {
+        state = ConnectionStatus.NOT_STARTED;
+    } else if (conn.auth.authError) {
+        state = ConnectionStatus.AUTHENTICATION_FAILED;
+    } else if (conn.auth.openAuthWindow != null) {
+        state = ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_WINDOW;
+    } else if (conn.auth.timings.dataCloudAccessTokenReceievedAt) {
+        state = ConnectionStatus.AUTHENTICATION_COMPLETED;
+    } else if (conn.auth.timings.dataCloudAccessTokenRequestedAt) {
+        state = ConnectionStatus.DATA_CLOUD_TOKEN_REQUESTED;
+    } else if (conn.auth.timings.coreAccessTokenRequestedAt) {
+        state = ConnectionStatus.CORE_ACCESS_TOKEN_REQUESTED;
+    } else if (conn.auth.timings.pkceGenStartedAt) {
+        state = ConnectionStatus.PKCE_GENERATION_STARTED;
+    } else if (conn.auth.timings.openedAuthLinkAt) {
+        state = ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_LINK;
+    } else if (conn.auth.timings.openedAuthWindowAt) {
+        if (!conn.auth.timings.closedAuthWindowAt) {
+            state = ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_WINDOW;
+        } else if (!conn.auth.timings.oauthCodeReceivedAt) {
+            state = ConnectionStatus.OAUTH_CODE_RECEIVED;
+        }
+    } else if (conn.auth.timings.authRequestedAt) {
+        state = ConnectionStatus.AUTHENTICATION_REQUESTED;
+    }
+    return state;
+}
+
+export function getSalesforceConnnectionHealth(_status: ConnectionStatus) {
+    return ConnectionHealth.UNKNOWN;
 }
