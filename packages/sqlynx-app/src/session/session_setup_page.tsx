@@ -286,7 +286,8 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
 
     // Render the page
     return (
-        <div className={page_styles.page}>
+        <div className={page_styles.page}
+            data-tauri-drag-region="true">
             <div className={page_styles.banner_container}>
                 <div className={page_styles.banner_logo}>
                     <svg width="100%" height="100%">
