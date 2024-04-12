@@ -213,28 +213,32 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                     </div>
                 </div>);
         } else {
-            sections.push(
-                <div key={sections.length} className={page_styles.card_section}>
-                    <div className={page_styles.section_entries}>
-                        <TextField
-                            name="Inline Script"
-                            value={state?.scriptText ?? ""}
-                            readOnly={true}
-                            disabled={true}
-                            leadingVisual={() => <div>Script text with 0 characters</div>}
-                        />
-                        {(state?.schemaText?.length ?? 0) > 0 &&
-                            <TextField
-                                name="Inline Schema"
-                                value={state?.schemaText ?? ""}
-                                readOnly={true}
-                                disabled={true}
-                                leadingVisual={() => <div>Schema text with 0 characters</div>}
-                            />
-                        }
+            if (((state?.scriptText?.length ?? 0) > 0) || ((state?.schemaText?.length ?? 0) > 0)) {
+                sections.push(
+                    <div key={sections.length} className={page_styles.card_section}>
+                        <div className={page_styles.section_entries}>
+                            {(state?.scriptText?.length ?? 0) > 0 &&
+                                <TextField
+                                    name="Inline Script"
+                                    value={state?.scriptText ?? ""}
+                                    readOnly={true}
+                                    disabled={true}
+                                    leadingVisual={() => <div>Script text with 0 characters</div>}
+                                />
+                            }
+                            {(state?.schemaText?.length ?? 0) > 0 &&
+                                <TextField
+                                    name="Inline Schema"
+                                    value={state?.schemaText ?? ""}
+                                    readOnly={true}
+                                    disabled={true}
+                                    leadingVisual={() => <div>Schema text with 0 characters</div>}
+                                />
+                            }
+                        </div>
                     </div>
-                </div>
-            );
+                );
+            }
             // Do we have connector params?
             // Then render them in a dedicated section.
             if (state.connectorParams) {
