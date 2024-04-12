@@ -2,7 +2,6 @@ use std::io::Write;
 
 use byteorder::LittleEndian;
 use byteorder::WriteBytesExt;
-use tauri::http::header::CONTENT_TYPE;
 use tauri::http::HeaderMap;
 use tauri::http::HeaderName;
 use tauri::http::HeaderValue;
