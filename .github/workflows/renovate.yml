@@ -41,7 +41,7 @@ jobs:
                   fetch-depth: 0
 
             - name: Self-hosted Renovate
-              uses: renovatebot/github-action@10b0dbf049fea8f04c079c8802145f3eac72d9e7 # v40.1.8
+              uses: renovatebot/github-action@74811c93da74bf38cb37f41489065619930fba44 # v40.1.9
               env:
                   # Repository taken from variable to keep configuration file generic
                   RENOVATE_REPOSITORIES: ${{ github.repository }}
