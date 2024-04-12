@@ -119,7 +119,10 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
 
     // Need to switch to native?
     // Some connectors only run in the native app.
-    const canExecuteHere = connectorInfo ? requiresSwitchingToNative(connectorInfo) : false;
+    let canExecuteHere = connectorInfo ? !requiresSwitchingToNative(connectorInfo) : true;
+    if (props.searchParams.has("here")) {
+        canExecuteHere = true;
+    }
 
     // Initial attempt to auto-trigger the authorization.
     const didAuthOnce = React.useRef<boolean>(false);
@@ -247,7 +250,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
 
             // Do we need to switch to native?
             // Render a warning, information where to get the app and a button to switch.
-            if (canExecuteHere) {
+            if (!canExecuteHere) {
                 const appLink = new URL(`sqlynx://localhost?${props.searchParams.toString()}`);
                 sections.push(
                     <div key={sections.length} className={page_styles.card_actions}>
