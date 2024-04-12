@@ -275,7 +275,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                         <Button
                             className={page_styles.card_action_right}
                             variant="primary"
-                            onClick={console.log}>
+                            onClick={props.onDone()}>
                             Continue
                         </Button>
                     </div>
