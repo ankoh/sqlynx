@@ -181,29 +181,6 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
         selectedScriptDispatch({ type: REPLACE_SCRIPT_CONTENT, value: update });
     }, [state, selectedScript, connectorAuthCheck]);
 
-    // Get the auth status
-    // const canContinue = connectorAuthCheck === null || connectorAuthCheck === ConnectorAuthCheck.AUTHENTICATED;
-    // let statusText: string = 'ready';
-    // switch (connectorAuthCheck) {
-    //     case ConnectorAuthCheck.AUTHENTICATED:
-    //         statusText = 'Authenticated';
-    //         break;
-    //     case ConnectorAuthCheck.AUTHENTICATION_IN_PROGRESS:
-    //         statusText = 'Authentication In Progress';
-    //         break;
-    //     case ConnectorAuthCheck.AUTHENTICATION_NOT_STARTED:
-    //     case ConnectorAuthCheck.CLIENT_ID_MISMATCH:
-    //         statusText = 'Authentication Required';
-    //         break;
-    //     case ConnectorAuthCheck.AUTHENTICATION_FAILED:
-    //         statusText = 'Authentication Failed';
-    //         break;
-    //     case ConnectorAuthCheck.UNKNOWN:
-    //         statusText = '';
-    //         break;
-    // }
-
-
     // Collect all sections (after parsing the params)
     let sections: React.ReactElement[] = [];
     if (state) {

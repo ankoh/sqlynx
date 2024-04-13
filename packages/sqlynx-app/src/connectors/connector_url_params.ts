@@ -1,7 +1,6 @@
 import { VariantKind } from '../utils/index.js';
 import { SalesforceConnectorState } from './connection_state.js';
 import { SALESFORCE_DATA_CLOUD, BRAINSTORM_MODE, HYPER_DATABASE, ConnectorAuthCheck } from './connector_info.js';
-import { SalesforceAuthState } from './salesforce_auth_state.js';
 
 export interface SalesforceSetupParams {
     instanceUrl: string | null;
