@@ -1,11 +1,13 @@
 import esbuild from 'esbuild';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'node:url';
 
 function printErr(err: NodeJS.ErrnoException | null) {
     if (err) return console.log(err);
 }
-const dist = path.resolve(__dirname, 'dist');
+
+const dist = path.resolve(fileURLToPath(new URL('./dist', import.meta.url)));
 
 console.log(`[ ESBUILD ] sqlynx-proto.module.js`);
 esbuild.build({
