@@ -1,7 +1,7 @@
-import * as salesforce_hyperdb_grpc_v1_pb_ from './gen/salesforce/hyperdb/grpc/v1/hyper_service_pb';
-import * as salesforce_hyperdb_grpc_v1_grpc_ from './gen/salesforce/hyperdb/grpc/v1/hyper_service_connect';
-import * as sqlynx_oauth_pb_ from './gen/sqlynx/oauth_pb';
-import * as sqlynx_app_event_pb_ from './gen/sqlynx/app_event_pb';
+import * as salesforce_hyperdb_grpc_v1_pb_ from './gen/salesforce/hyperdb/grpc/v1/hyper_service_pb.js';
+import * as salesforce_hyperdb_grpc_v1_grpc_ from './gen/salesforce/hyperdb/grpc/v1/hyper_service_connect.js';
+import * as sqlynx_oauth_pb_ from './gen/sqlynx/oauth_pb.js';
+import * as sqlynx_app_event_pb_ from './gen/sqlynx/app_event_pb.js';
 
 export namespace salesforce_hyperdb_grpc_v1 {
     export import pb = salesforce_hyperdb_grpc_v1_pb_;

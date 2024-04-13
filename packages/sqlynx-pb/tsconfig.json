@@ -2,17 +2,24 @@
     "compilerOptions": {
         "outDir": "./dist/",
         "baseUrl": ".",
-        "target": "ES6",
-        "module": "commonjs",
-        "moduleResolution": "node",
+        "target": "ESNext",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
         "sourceMap": true,
         "declaration": true,
         "declarationMap": true,
         "declarationDir": "./dist",
         "noImplicitAny": true,
         "esModuleInterop": true,
-        "lib": ["es6", "dom"],
-        "types": ["node"]
+        "lib": [
+            "es6",
+            "dom"
+        ],
+        "types": [
+            "node"
+        ]
     },
-    "files": ["index.ts"]
+    "files": [
+        "index.ts"
+    ]
 }
