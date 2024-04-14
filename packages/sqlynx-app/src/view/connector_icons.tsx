@@ -3,7 +3,7 @@ import * as React from 'react';
 import { ConnectorInfo, ConnectorType } from '../connectors/connector_info.js';
 
 import * as icons from '../../static/svg/symbols.generated.svg';
-import { PencilIcon, SquirrelIcon, TelescopeIcon, ZapIcon } from '@primer/octicons-react';
+import { ZapIcon } from '@primer/octicons-react';
 
 export const SalesforceIcon = () => (
     <svg width="20px" height="20px">

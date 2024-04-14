@@ -1,6 +1,5 @@
 import * as proto from "@ankoh/sqlynx-pb";
 
-import { Message } from "@bufbuild/protobuf";
 import { NativeGrpcServerStreamBatchEvent } from "./native_grpc_client.js";
 import { PlatformType } from "./platform_type.js";
 
