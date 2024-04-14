@@ -35,9 +35,12 @@ function loadDeepLinksFromClipboard(logger: Logger) {
             try {
                 const deepLink = new URL(pastedText);
                 logger.info(`received deep link: ${deepLink.toString()}`, "session_setup");
+                const path = deepLink.pathname;
                 const params = deepLink.searchParams;
+                logger.trace(`pathname: ${path}`, "session_setup");
+                logger.trace(`params: ${params.toString()}`, "session_setup");
                 params.set("deeplink", "true");
-                navigate(`/?${params.toString()}`, { replace: true });
+                navigate(`${path}?${params.toString()}`, { replace: true });
                 e.preventDefault();
             } catch (e: any) {
                 console.warn(e);
