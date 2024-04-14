@@ -57,7 +57,7 @@ __metadata:
     "@lezer/highlight": "npm:^1.2.0"
     "@octokit/graphql": "npm:^8.1.0"
     "@primer/octicons-react": "patch:@primer/octicons-react@npm%3A19.9.0#~/.yarn/patches/@primer-octicons-react-npm-19.9.0-65341cfa23.patch"
-    "@primer/react": "npm:^36.12.0"
+    "@primer/react": "npm:^36.13.0"
     "@react-hook/resize-observer": "npm:^1.2.6"
     "@tauri-apps/api": "npm:^2.0.0-beta.7"
     "@tauri-apps/plugin-deep-link": "npm:^2.0.0-beta.2"
@@ -1051,6 +1051,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@github/tab-container-element@npm:4.5.0":
+  version: 4.5.0
+  resolution: "@github/tab-container-element@npm:4.5.0"
+  checksum: 10c0/0428b39f794867a4938f3f381d00af2eba76d4320c1219e6aaf47137a88ec893e9c36d37fe33ea5428f8717939e769ab25ad74b2a2480ca27037ea308c14c186
+  languageName: node
+  linkType: hard
+
 "@humanwhocodes/config-array@npm:^0.12.3":
   version: 0.12.3
   resolution: "@humanwhocodes/config-array@npm:0.12.3"
@@ -1622,7 +1629,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@primer/octicons-react@npm:19.9.0":
+"@primer/octicons-react@npm:19.9.0, @primer/octicons-react@npm:^19.9.0":
   version: 19.9.0
   resolution: "@primer/octicons-react@npm:19.9.0"
   peerDependencies:
@@ -1640,27 +1647,28 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@primer/primitives@npm:7.15.3":
-  version: 7.15.3
-  resolution: "@primer/primitives@npm:7.15.3"
-  checksum: 10c0/ccae421931690c9dc7a6edfe41ca4dc2070d1c5af5100678977393d8f7a95f12072dc2baca840bf00cbce9dd7279dc563c431c224b64633edaf011c18fb379da
+"@primer/primitives@npm:^7.15.14":
+  version: 7.16.0
+  resolution: "@primer/primitives@npm:7.16.0"
+  checksum: 10c0/538ad5a5f3325b25568950e0ded04a28fc03e0c515a1562e64f72147be9bff176a568a4a3bae54fa8e432bcc06500e13705fe5876ece135a5aa8d9d0499003f0
   languageName: node
   linkType: hard
 
-"@primer/react@npm:^36.12.0":
-  version: 36.12.0
-  resolution: "@primer/react@npm:36.12.0"
+"@primer/react@npm:^36.13.0":
+  version: 36.13.0
+  resolution: "@primer/react@npm:36.13.0"
   dependencies:
     "@github/combobox-nav": "npm:^2.1.5"
     "@github/markdown-toolbar-element": "npm:^2.1.0"
     "@github/paste-markdown": "npm:^1.4.0"
     "@github/relative-time-element": "npm:^4.1.2"
+    "@github/tab-container-element": "npm:4.5.0"
     "@lit-labs/react": "npm:1.2.1"
     "@oddbird/popover-polyfill": "npm:^0.3.1"
     "@primer/behaviors": "npm:^1.5.1"
     "@primer/live-region-element": "npm:^0.2.0"
-    "@primer/octicons-react": "npm:^19.8.0"
-    "@primer/primitives": "npm:7.15.3"
+    "@primer/octicons-react": "npm:^19.9.0"
+    "@primer/primitives": "npm:^7.15.14"
     "@styled-system/css": "npm:^5.1.5"
     "@styled-system/props": "npm:^5.1.5"
     "@styled-system/theme-get": "npm:^5.1.2"
@@ -1694,7 +1702,7 @@ __metadata:
       optional: true
     "@types/styled-components":
       optional: true
-  checksum: 10c0/8ac036742b3caa435ebd5a2b1803f4c3d281605a6e17fac0aa4b61df9813716568a197f363234d4941c3d9da7745b7127bf9a4c8d0e17b8937293bc1708a296e
+  checksum: 10c0/4da196b87a264a432de179828ab807442620ef69a3aa712f05f9260e0068ed8dafd4525b293dc172bf1e648fc6ff4b7270c1c7207791fcc566d4360a6ff64a40
   languageName: node
   linkType: hard
 
