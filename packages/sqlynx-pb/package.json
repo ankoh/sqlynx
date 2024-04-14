@@ -5,10 +5,11 @@
     "gitCommit": "453866d",
     "description": "",
     "dependencies": {
-        "@connectrpc/connect-web": "^1.4.0",
-        "@bufbuild/protobuf": "^1.8.0"
+        "@bufbuild/protobuf": "^1.8.0",
+        "@connectrpc/connect-web": "^1.4.0"
     },
     "devDependencies": {
+        "@connectrpc/connect": "^1.4.0",
         "@types/node": "^20.12.7",
         "esbuild": "^0.20.2",
         "typescript": "^5.4.5"

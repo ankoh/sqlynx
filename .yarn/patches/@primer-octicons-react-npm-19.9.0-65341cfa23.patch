@@ -1,0 +1,19 @@
+diff --git a/dist/index.d.mts b/dist/index.d.mts
+index acfe71a1ce71b4764c3d155334b3bbc2830ea5d0..8539c08534ff1732a8f80c3ba850dfd6cc7f4ac8 100644
+--- a/dist/index.d.mts
++++ b/dist/index.d.mts
+@@ -2,7 +2,7 @@
+ import * as React from 'react'
+ 
+ // eslint-disable-next-line prettier/prettier
+-import { Icon } from './icons'
++import { Icon } from './icons.js'
+ 
+ type Size = 'small' | 'medium' | 'large'
+ 
+@@ -20,4 +20,4 @@ export interface OcticonProps {
+   verticalAlign?: 'middle' | 'text-bottom' | 'text-top' | 'top' | 'unset'
+ }
+ 
+-export * from './icons'
++export * from './icons.js'
