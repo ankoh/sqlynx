@@ -3,10 +3,10 @@ import * as LZString from 'lz-string';
 
 import { ScriptData, ScriptKey } from './session_state.js';
 import { ConnectorType } from '../connectors/connector_info.js';
-import { SalesforceConnectorState } from '../connectors/connection_state.js';
-import { useConnectionState } from '../connectors/connection_manager.js';
+import { unpackSalesforceConnection } from '../connectors/connection_state.js';
+import { useConnectionState } from '../connectors/connection_registry.js';
 import { useThrottledMemo } from '../utils/throttle.js';
-import { useActiveSessionState } from './session_state_provider.js';
+import { useActiveSessionState } from './active_session.js';
 import { useSalesforceConnectionId } from '../connectors/salesforce_auth_state.js';
 import { writeBrainstormConnectorParams, writeHyperConnectorParams, writeSalesforceConnectorParams } from '../connectors/connector_url_params.js';
 
@@ -27,15 +27,15 @@ export interface SessionLinks {
 
 /// Hook to maintain generated links for a session
 function generateSessionLinks(): SessionLinks {
-    const scriptState = useActiveSessionState();
+    const [sessionState, _setSessionState] = useActiveSessionState();
     const connectionId = useSalesforceConnectionId();
-    const [connection, _setConnection] = useConnectionState<SalesforceConnectorState>(connectionId);
+    const [connection, _setConnection] = useConnectionState(connectionId);
 
     return useThrottledMemo(() => {
         const appUrl = process.env.SQLYNX_APP_URL!;
         const privateParams = new URLSearchParams();
         const publicParams = new URLSearchParams();
-        switch (scriptState?.connectorInfo.connectorType ?? ConnectorType.BRAINSTORM_MODE) {
+        switch (sessionState?.connectorInfo.connectorType ?? ConnectorType.BRAINSTORM_MODE) {
             case ConnectorType.BRAINSTORM_MODE:
                 writeBrainstormConnectorParams(privateParams, publicParams);
                 break;
@@ -43,11 +43,11 @@ function generateSessionLinks(): SessionLinks {
                 writeHyperConnectorParams(privateParams, publicParams);
                 break;
             case ConnectorType.SALESFORCE_DATA_CLOUD:
-                writeSalesforceConnectorParams(privateParams, publicParams, connection);
+                writeSalesforceConnectorParams(privateParams, publicParams, unpackSalesforceConnection(connection));
                 break;
         }
-        const mainScript = scriptState?.scripts[ScriptKey.MAIN_SCRIPT] ?? null;
-        const schemaScript = scriptState?.scripts[ScriptKey.SCHEMA_SCRIPT] ?? null;
+        const mainScript = sessionState?.scripts[ScriptKey.MAIN_SCRIPT] ?? null;
+        const schemaScript = sessionState?.scripts[ScriptKey.SCHEMA_SCRIPT] ?? null;
         if (mainScript?.script) {
             encodeScript(publicParams, 'script', mainScript);
         }
@@ -65,8 +65,8 @@ function generateSessionLinks(): SessionLinks {
         };
     }, [
         connection,
-        scriptState?.scripts[ScriptKey.MAIN_SCRIPT],
-        scriptState?.scripts[ScriptKey.SCHEMA_SCRIPT],
+        sessionState?.scripts[ScriptKey.MAIN_SCRIPT],
+        sessionState?.scripts[ScriptKey.SCHEMA_SCRIPT],
     ], 500);
 }
 

@@ -12,6 +12,7 @@ import { SessionCommands } from './session/session_commands.js';
 import { QueryExecutor } from './session/query_executor.js';
 import { SessionSetup } from './session/session_setup.js';
 import { SalesforceConnector } from './connectors/salesforce_connector.js';
+import { ConnectionRegistry } from './connectors/connection_registry.js';
 import { GitHubTheme } from './github_theme.js';
 import { AppConfigProvider } from './app_config.js';
 import { LoggerProvider } from './platform/logger_provider.js';
@@ -31,22 +32,24 @@ const AppProviders = (props: { children: React.ReactElement }) => (
             <LoggerProvider>
                 <AppConfigProvider>
                     <VersionCheck>
-                        <HyperDatabaseClientProvider>
-                            <SQLynxLoader>
-                                <SalesforceConnector>
-                                    <SessionStateRegistry>
-                                        <ActiveSessionStateProvider>
-                                            <SessionCommands>
-                                                <ScriptLoader />
-                                                <CatalogLoader />
-                                                <QueryExecutor />
-                                                <SessionSetup>{props.children}</SessionSetup>
-                                            </SessionCommands>
-                                        </ActiveSessionStateProvider>
-                                    </SessionStateRegistry>
-                                </SalesforceConnector>
-                            </SQLynxLoader>
-                        </HyperDatabaseClientProvider>
+                        <ConnectionRegistry>
+                            <HyperDatabaseClientProvider>
+                                <SQLynxLoader>
+                                    <SalesforceConnector>
+                                        <SessionStateRegistry>
+                                            <ActiveSessionStateProvider>
+                                                <SessionCommands>
+                                                    <ScriptLoader />
+                                                    <CatalogLoader />
+                                                    <QueryExecutor />
+                                                    <SessionSetup>{props.children}</SessionSetup>
+                                                </SessionCommands>
+                                            </ActiveSessionStateProvider>
+                                        </SessionStateRegistry>
+                                    </SalesforceConnector>
+                                </SQLynxLoader>
+                            </HyperDatabaseClientProvider>
+                        </ConnectionRegistry>
                     </VersionCheck>
                 </AppConfigProvider>
             </LoggerProvider>

@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Dispatch } from '../utils/variant.js';
 import { SessionState } from './session_state.js';
-import { ModifySessionAction, useSession } from './session_state_registry.js';
+import { ModifySessionAction, useSessionState } from './session_state_registry.js';
 
 type ActiveSessionSetter = Dispatch<React.SetStateAction<number | null>>;
 
@@ -27,5 +27,5 @@ export function useActiveSessionSelector(): ActiveSessionSetter {
 
 export function useActiveSessionState(): [SessionState | null, ModifySessionAction] {
     const [activeSession, _setActiveSession] = React.useContext(ACTIVE_SESSION_CTX)!;
-    return useSession(activeSession);
+    return useSessionState(activeSession);
 };
