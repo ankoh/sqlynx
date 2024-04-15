@@ -39,7 +39,7 @@ export function useConnectionState(id: number): [ConnectionState | null, ModifyC
     const setConnection = React.useCallback((reducer: ConnectionReducer) => {
         setRegistry(
             (reg: ConnectionRegistry) => {
-                const prev = registry.get(id);
+                const prev = reg.get(id);
                 if (!prev) {
                     return reg;
                 }
