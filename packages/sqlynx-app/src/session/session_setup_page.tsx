@@ -14,7 +14,7 @@ import {
     requiresSwitchingToNative,
 } from '../connectors/connector_info.js';
 import { ConnectorSetupParamVariant, checkSalesforceAuthSetup, readConnectorParamsFromURL } from '../connectors/connector_url_params.js';
-import { useSalesforceConnectionId } from '../connectors/salesforce_auth_state.js';
+import { AUTHORIZE, useSalesforceAuthFlow, useSalesforceConnectionId } from '../connectors/salesforce_auth_state.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
 import { useActiveSessionSelector, useActiveSessionState } from './active_session.js';
 import { unpackSalesforceConnection } from '../connectors/connection_state.js';
@@ -72,10 +72,10 @@ const ConnectorParamsSection: React.FC<{ params: ConnectorSetupParamVariant }> =
 export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
     const [logsAreOpen, setLogsAreOpen] = React.useState<boolean>(false);
-    const connectionId = useSalesforceConnectionId();
-    const [connection, _setConnection] = useConnectionState(connectionId);
+    const sfConnId = useSalesforceConnectionId();
+    const sfAuth = useSalesforceAuthFlow();
+    const [connection, _setConnection] = useConnectionState(sfConnId);
 
-    const selectActiveSession = useActiveSessionSelector();
     const [activeSession, modifyActiveSession] = useActiveSessionState();
     const [state, setState] = React.useState<State | null>(null);
 
@@ -131,7 +131,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
             didAuthOnce.current ||
             state == null ||
             state.connectorParams == null ||
-            canExecuteHere ||
+            !canExecuteHere ||
             connectorAuthCheck != ConnectorAuthCheck.AUTHENTICATION_NOT_STARTED
         ) {
             return;
@@ -141,14 +141,14 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
             case SALESFORCE_DATA_CLOUD:
                 // Only start the auth flow if we know we can support it.
                 // Right now, the Salesforce connector only works locally.
-                // salesforceAuthFlow({
-                //     type: CONNECT,
-                //     value: {
-                //         instanceUrl: state.connectorParams.value.instanceUrl ?? '', // XXX Warn if params make no sense
-                //         appConsumerKey: state.connectorParams.value.appConsumerKey ?? '',
-                //         appConsumerSecret: null,
-                //     },
-                // });
+                sfAuth({
+                    type: AUTHORIZE,
+                    value: {
+                        instanceUrl: state.connectorParams.value.instanceUrl ?? '', // XXX Warn if params make no sense
+                        appConsumerKey: state.connectorParams.value.appConsumerKey ?? '',
+                        appConsumerSecret: null,
+                    },
+                });
                 break;
             case HYPER_DATABASE:
                 break;
