@@ -152,7 +152,7 @@
 
     column-gap: 8px;
     width: calc(100% - 32px);
-    max-width: 1000px;
+    max-width: 968px;
     border-radius: var(--border_radius);
     border: 1px solid var(--border_color_primary);
     padding: 4px 16px;
