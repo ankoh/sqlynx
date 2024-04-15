@@ -28,6 +28,7 @@ import { SALESFORCE_DATA_CLOUD } from './connector_info.js';
 import { PlatformType, usePlatformType } from '../platform/platform_type.js';
 import { ConnectionState, createEmptyTimings, unpackSalesforceConnection } from './connection_state.js';
 import { useAllocatedConnectionState, useConnectionState } from './connection_registry.js';
+import { useLogger } from '../platform/logger_provider.js';
 
 // We use the web-server OAuth Flow with or without consumer secret.
 //
@@ -68,6 +69,7 @@ interface Props {
 }
 
 export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
+    const logger = useLogger();
     const appConfig = useAppConfig();
     const connector = useSalesforceAPI();
     const platformType = usePlatformType();
@@ -176,6 +178,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
 
         if (flowVariant == proto.sqlynx_oauth.pb.OAuthFlowVariant.WEB_OPENER_FLOW) {
             // Open popup window
+            logger.debug(`opening popup: ${url.toString()}`, "salesforce_auth");
             const popup = window.open(url, OAUTH_POPUP_NAME, OAUTH_POPUP_SETTINGS);
             if (!popup) {
                 // Something went wrong, Browser might prevent the popup.
@@ -187,6 +190,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
             sfAuth({ type: OAUTH_WINDOW_OPENED, value: popup });
         } else {
             // Just open the link with the default browser
+            logger.debug(`opening url: ${url.toString()}`, "salesforce_auth");
             window.open(url);
             sfAuth({ type: OAUTH_LINK_OPENED, value: null });
         }
