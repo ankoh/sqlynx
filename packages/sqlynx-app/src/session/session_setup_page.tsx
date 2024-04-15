@@ -15,7 +15,9 @@ import {
 } from '../connectors/connector_info.js';
 import { ConnectorSetupParamVariant, checkSalesforceAuthSetup, readConnectorParamsFromURL } from '../connectors/connector_url_params.js';
 import { useSalesforceConnectionId } from '../connectors/salesforce_auth_state.js';
-import { useActiveSessionState, useActiveSessionStateDispatch } from './session_state_provider.js';
+import { useConnectionState } from '../connectors/connection_registry.js';
+import { useActiveSessionSelector, useActiveSessionState } from './active_session.js';
+import { unpackSalesforceConnection } from '../connectors/connection_state.js';
 import { REPLACE_SCRIPT_CONTENT } from './session_state_reducer.js';
 import { SQLYNX_VERSION } from '../globals.js';
 import { ScriptKey } from './session_state.js';
@@ -25,8 +27,6 @@ import { useLogger } from '../platform/logger_provider.js';
 
 import * as page_styles from '../view/banner_page.module.css';
 import * as symbols from '../../static/svg/symbols.generated.svg';
-import { useConnectionState } from '../connectors/connection_manager.js';
-import { SalesforceConnectorState } from '../connectors/connection_state.js';
 
 interface Props {
     searchParams: URLSearchParams;
@@ -73,10 +73,10 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
     const [logsAreOpen, setLogsAreOpen] = React.useState<boolean>(false);
     const connectionId = useSalesforceConnectionId();
-    const [connection, _setConnection] = useConnectionState<SalesforceConnectorState>(connectionId);
+    const [connection, _setConnection] = useConnectionState(connectionId);
 
-    const selectedScript = useActiveSessionState();
-    const selectedScriptDispatch = useActiveSessionStateDispatch();
+    const selectActiveSession = useActiveSessionSelector();
+    const [activeSession, modifyActiveSession] = useActiveSessionState();
     const [state, setState] = React.useState<State | null>(null);
 
     // Parse setup parameters and make them available through a state.
@@ -107,7 +107,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     switch (state?.connectorParams?.type) {
         case SALESFORCE_DATA_CLOUD:
             connectorInfo = CONNECTOR_INFOS[ConnectorType.SALESFORCE_DATA_CLOUD as number];
-            connectorAuthCheck = checkSalesforceAuthSetup(connection, state.connectorParams.value);
+            connectorAuthCheck = checkSalesforceAuthSetup(unpackSalesforceConnection(connection), state.connectorParams.value);
             break;
         case HYPER_DATABASE:
             connectorInfo = CONNECTOR_INFOS[ConnectorType.HYPER_DATABASE as number];
@@ -165,7 +165,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
             didLoadScriptOnce.current ||
             state == null ||
             state.connectorParams == null ||
-            connectorInfo !== selectedScript?.connectorInfo ||
+            connectorInfo !== activeSession?.connectorInfo ||
             connectorAuthCheck != ConnectorAuthCheck.AUTHENTICATED
         ) {
             return;
@@ -178,8 +178,8 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
         if (state.schemaText !== null) {
             update[ScriptKey.SCHEMA_SCRIPT] = state.schemaText;
         }
-        selectedScriptDispatch({ type: REPLACE_SCRIPT_CONTENT, value: update });
-    }, [state, selectedScript, connectorAuthCheck]);
+        modifyActiveSession({ type: REPLACE_SCRIPT_CONTENT, value: update });
+    }, [state, activeSession, connectorAuthCheck]);
 
     // Collect all sections (after parsing the params)
     let sections: React.ReactElement[] = [];

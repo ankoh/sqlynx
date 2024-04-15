@@ -1,13 +1,13 @@
 import * as React from 'react';
 import Immutable from 'immutable';
 
-import { registerSession } from './session_state_registry.js';
-import { useSessionSelector } from './session_state_provider.js';
-import { BRAINSTORM_MODE, CONNECTOR_INFOS, ConnectorType } from '../connectors/connector_info.js';
+import { useSessionStateAllocator } from './session_state_registry.js';
+import { useActiveSessionSelector } from './active_session.js';
 import { useSQLynxSetup } from '../sqlynx_loader.js';
 import { ScriptData, ScriptKey } from './session_state.js';
-import { RESULT_OK } from '../utils/result.js';
 import { ScriptLoadingStatus } from './script_loader.js';
+import { BRAINSTORM_MODE, CONNECTOR_INFOS, ConnectorType } from '../connectors/connector_info.js';
+import { RESULT_OK } from '../utils/result.js';
 import { TPCH_SCHEMA, EXAMPLE_SCRIPTS } from './example_scripts.js';
 import { createEmptyTimings } from '../connectors/connection_state.js';
 
@@ -16,7 +16,8 @@ export const DEFAULT_BOARD_HEIGHT = 600;
 
 export function useBrainstormSessionSetup() {
     const setupSQLynx = useSQLynxSetup();
-    const selectScript = useSessionSelector();
+    const selectActiveSession = useActiveSessionSelector();
+    const allocateSessionState = useSessionStateAllocator();
 
     return React.useCallback(async () => {
         // Try to setup SQLynx, abort if that fails
@@ -73,7 +74,7 @@ export function useBrainstormSessionSetup() {
             cursor: null,
         };
 
-        const scriptId = registerSession({
+        const scriptId = allocateSessionState({
             instance: instance.value,
             connectorInfo: CONNECTOR_INFOS[ConnectorType.BRAINSTORM_MODE],
             connectorState: {
@@ -119,6 +120,6 @@ export function useBrainstormSessionSetup() {
             queryExecutionResult: null,
         });
 
-        selectScript(scriptId);
-    }, [setupSQLynx, selectScript]);
+        selectActiveSession(scriptId);
+    }, [setupSQLynx, allocateSessionState, selectActiveSession]);
 };

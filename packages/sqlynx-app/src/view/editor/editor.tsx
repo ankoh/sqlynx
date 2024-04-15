@@ -8,7 +8,7 @@ import { CodeMirror } from './codemirror.js';
 import { SQLynxExtensions } from './sqlynx_extension.js';
 import { SQLynxScriptBuffers, SQLynxScriptKey, UpdateSQLynxScript } from './sqlynx_processor.js';
 import { useAppConfig } from '../../app_config.js';
-import { useActiveSessionState, useActiveSessionStateDispatch } from '../../session/session_state_provider.js';
+import { useActiveSessionState } from '../../session/active_session.js';
 import { UPDATE_SCRIPT_ANALYSIS, UPDATE_SCRIPT_CURSOR } from '../../session/session_state_reducer.js';
 import { ScriptKey } from '../../session/session_state.js';
 import { ScriptStatisticsBar } from './script_statistics_bar.js';
@@ -40,9 +40,8 @@ interface ActiveScriptState {
 
 export const ScriptEditor: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
-    const ctx = useActiveSessionState();
-    const ctxDispatch = useActiveSessionStateDispatch();
     const config = useAppConfig();
+    const [ctx, ctxDispatch] = useActiveSessionState();
 
     const [activeTab, setActiveTab] = React.useState<TabId>(TabId.MAIN_SCRIPT);
     const [view, setView] = React.useState<EditorView | null>(null);

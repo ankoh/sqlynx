@@ -3,7 +3,7 @@ import { NodeLayer } from './node_layer.js';
 import { EdgeHighlightingLayer, EdgeLayer } from './edge_layer.js';
 import { GraphNodeDescriptor } from './graph_view_model.js';
 import { observeSize } from '../size_observer.js';
-import { useActiveSessionStateDispatch, useActiveSessionState } from '../../session/session_state_provider.js';
+import { useActiveSessionState } from '../../session/active_session.js';
 import {
     FOCUS_QUERY_GRAPH_EDGE,
     FOCUS_QUERY_GRAPH_NODE,
@@ -18,8 +18,7 @@ import * as icons from '../../../static/svg/symbols.generated.svg';
 interface SchemaGraphViewProps { }
 
 const SchemaGraphView: React.FC<SchemaGraphViewProps> = (_props: SchemaGraphViewProps) => {
-    const state = useActiveSessionState();
-    const dispatch = useActiveSessionStateDispatch();
+    const [state, dispatch] = useActiveSessionState();
 
     // Helper to change node focus
     const onNodeFocusChanged = React.useCallback(
@@ -82,7 +81,7 @@ interface SchemaGraphBoardProps {
 }
 
 const SchemaGraphBoard: React.FC<SchemaGraphBoardProps> = (props: SchemaGraphBoardProps) => {
-    const dispatch = useActiveSessionStateDispatch();
+    const [_state, dispatch] = useActiveSessionState();
 
     // Recompute the schema graph if the graph dimension hints change
     React.useEffect(() => {
