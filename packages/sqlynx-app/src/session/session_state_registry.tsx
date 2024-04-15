@@ -43,7 +43,7 @@ export function useSessionState(id: number | null): [SessionState | null, Modify
                 if (!id) {
                     return reg;
                 }
-                const prev = registry.get(id);
+                const prev = reg.get(id);
                 if (!prev) {
                     return reg;
                 }

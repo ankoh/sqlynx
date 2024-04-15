@@ -47,7 +47,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
     const [view, setView] = React.useState<EditorView | null>(null);
 
     const viewWasCreated = React.useCallback((view: EditorView) => setView(view), [setView]);
-    const viewWillBeDestroyed = React.useCallback((view: EditorView) => setView(null), [setView]);
+    const viewWillBeDestroyed = React.useCallback((_view: EditorView) => setView(null), [setView]);
     const active = React.useRef<ActiveScriptState>({
         editorScriptVersion: 0,
         editorScript: null,
