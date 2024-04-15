@@ -13,11 +13,11 @@ export interface SalesforceAuthTimings {
     /// The time when the PKCE generation finished
     pkceGenFinishedAt: Date | null;
     /// The time when the auth link was opened
-    openedAuthLinkAt: Date | null;
+    openedNativeAuthLinkAt: Date | null;
     /// The time when the auth window was opened
-    openedAuthWindowAt: Date | null;
+    openedWebAuthWindowAt: Date | null;
     /// The time when the auth window was closed
-    closedAuthWindowAt: Date | null;
+    closedWebAuthWindowAt: Date | null;
     /// The time when we received the oauth code
     oauthCodeReceivedAt: Date | null;
     /// The time when we started to request the core access token
@@ -71,9 +71,9 @@ export const AUTH_FLOW_DEFAULT_STATE: SalesforceAuthState = {
         authFailedAt: null,
         pkceGenStartedAt: null,
         pkceGenFinishedAt: null,
-        openedAuthLinkAt: null,
-        openedAuthWindowAt: null,
-        closedAuthWindowAt: null,
+        openedNativeAuthLinkAt: null,
+        openedWebAuthWindowAt: null,
+        closedWebAuthWindowAt: null,
         oauthCodeReceivedAt: null,
         coreAccessTokenRequestedAt: null,
         coreAccessTokenReceivedAt: null,
@@ -97,9 +97,9 @@ export const AUTH_FAILED = Symbol('AUTH_FAILED');
 export const AUTH_STARTED = Symbol('AUTH_STARTED');
 export const GENERATING_PKCE_CHALLENGE = Symbol('GENERATING_PKCE_CHALLENGE');
 export const GENERATED_PKCE_CHALLENGE = Symbol('GENERATED_PKCE_CHALLENGE');
-export const OAUTH_LINK_OPENED = Symbol('OAUTH_LINK_OPENED');
-export const OAUTH_WINDOW_CLOSED = Symbol('OAUTH_WINDOW_CLOSED');
-export const OAUTH_WINDOW_OPENED = Symbol('OAUTH_WINDOW_OPENED');
+export const OAUTH_NATIVE_LINK_OPENED = Symbol('OAUTH_NATIVE_LINK_OPENED');
+export const OAUTH_WEB_WINDOW_CLOSED = Symbol('OAUTH_WEB_WINDOW_CLOSED');
+export const OAUTH_WEB_WINDOW_OPENED = Symbol('OAUTH_WEB_WINDOW_OPENED');
 export const RECEIVED_CORE_AUTH_CODE = Symbol('RECEIVED_AUTH_CODE');
 export const REQUESTING_CORE_AUTH_TOKEN = Symbol('REQUESTING_CORE_AUTH_TOKEN');
 export const RECEIVED_CORE_AUTH_TOKEN = Symbol('RECEIVED_CORE_ACCESS_TOKEN');
@@ -114,9 +114,9 @@ export type SalesforceAuthAction =
     | VariantKind<typeof AUTH_STARTED, null>
     | VariantKind<typeof GENERATING_PKCE_CHALLENGE, null>
     | VariantKind<typeof GENERATED_PKCE_CHALLENGE, PKCEChallenge>
-    | VariantKind<typeof OAUTH_LINK_OPENED, null>
-    | VariantKind<typeof OAUTH_WINDOW_OPENED, Window>
-    | VariantKind<typeof OAUTH_WINDOW_CLOSED, null>
+    | VariantKind<typeof OAUTH_NATIVE_LINK_OPENED, null>
+    | VariantKind<typeof OAUTH_WEB_WINDOW_OPENED, Window>
+    | VariantKind<typeof OAUTH_WEB_WINDOW_CLOSED, null>
     | VariantKind<typeof RECEIVED_CORE_AUTH_CODE, string>
     | VariantKind<typeof REQUESTING_CORE_AUTH_TOKEN, null>
     | VariantKind<typeof RECEIVED_CORE_AUTH_TOKEN, SalesforceCoreAccessToken>
@@ -132,9 +132,9 @@ export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAu
                     authFailedAt: null,
                     pkceGenStartedAt: null,
                     pkceGenFinishedAt: null,
-                    openedAuthLinkAt: null,
-                    openedAuthWindowAt: null,
-                    closedAuthWindowAt: null,
+                    openedNativeAuthLinkAt: null,
+                    openedWebAuthWindowAt: null,
+                    closedWebAuthWindowAt: null,
                     oauthCodeReceivedAt: null,
                     coreAccessTokenRequestedAt: null,
                     coreAccessTokenReceivedAt: null,
@@ -157,9 +157,9 @@ export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAu
                     authFailedAt: null,
                     pkceGenStartedAt: null,
                     pkceGenFinishedAt: null,
-                    openedAuthLinkAt: null,
-                    openedAuthWindowAt: null,
-                    closedAuthWindowAt: null,
+                    openedNativeAuthLinkAt: null,
+                    openedWebAuthWindowAt: null,
+                    closedWebAuthWindowAt: null,
                     oauthCodeReceivedAt: null,
                     coreAccessTokenRequestedAt: null,
                     coreAccessTokenReceivedAt: null,
@@ -182,9 +182,9 @@ export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAu
                     authFailedAt: null,
                     pkceGenStartedAt: null,
                     pkceGenFinishedAt: null,
-                    openedAuthLinkAt: null,
-                    openedAuthWindowAt: null,
-                    closedAuthWindowAt: null,
+                    openedNativeAuthLinkAt: null,
+                    openedWebAuthWindowAt: null,
+                    closedWebAuthWindowAt: null,
                     oauthCodeReceivedAt: null,
                     coreAccessTokenRequestedAt: null,
                     coreAccessTokenReceivedAt: null,
@@ -231,31 +231,31 @@ export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAu
                 },
                 pkceChallenge: action.value,
             };
-        case OAUTH_LINK_OPENED:
+        case OAUTH_NATIVE_LINK_OPENED:
             return {
                 ...state,
                 timings: {
                     ...state.timings,
-                    openedAuthLinkAt: new Date(),
+                    openedNativeAuthLinkAt: new Date(),
                 },
                 openAuthWindow: null,
             };
-        case OAUTH_WINDOW_OPENED:
+        case OAUTH_WEB_WINDOW_OPENED:
             return {
                 ...state,
                 timings: {
                     ...state.timings,
-                    openedAuthWindowAt: new Date(),
+                    openedWebAuthWindowAt: new Date(),
                 },
                 openAuthWindow: action.value,
             };
-        case OAUTH_WINDOW_CLOSED:
+        case OAUTH_WEB_WINDOW_CLOSED:
             if (!state.openAuthWindow) return state;
             return {
                 ...state,
                 timings: {
                     ...state.timings,
-                    closedAuthWindowAt: new Date(),
+                    closedWebAuthWindowAt: new Date(),
                 },
                 openAuthWindow: null,
             };

@@ -90,10 +90,10 @@ export function getSalesforceConnectionStatus(conn: SalesforceConnectorState | n
         state = ConnectionStatus.CORE_ACCESS_TOKEN_REQUESTED;
     } else if (conn.auth.timings.pkceGenStartedAt) {
         state = ConnectionStatus.PKCE_GENERATION_STARTED;
-    } else if (conn.auth.timings.openedAuthLinkAt) {
+    } else if (conn.auth.timings.openedNativeAuthLinkAt) {
         state = ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_LINK;
-    } else if (conn.auth.timings.openedAuthWindowAt) {
-        if (!conn.auth.timings.closedAuthWindowAt) {
+    } else if (conn.auth.timings.openedWebAuthWindowAt) {
+        if (!conn.auth.timings.closedWebAuthWindowAt) {
             state = ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_WINDOW;
         } else if (!conn.auth.timings.oauthCodeReceivedAt) {
             state = ConnectionStatus.OAUTH_CODE_RECEIVED;

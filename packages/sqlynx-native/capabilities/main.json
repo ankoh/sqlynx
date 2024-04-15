@@ -7,8 +7,11 @@
         "main-*"
     ],
     "permissions": [
+        "app:default",
         "deep-link:default",
         "event:default",
+        "log:allow-log",
+        "log:default",
         "menu:default",
         "resources:default",
         "shell:allow-open",
@@ -18,10 +21,7 @@
         "webview:default",
         "window:allow-set-shadow",
         "window:allow-start-dragging",
-        "app:default",
-        "window:default",
-        "log:default",
-        "log:allow-log"
+        "window:default"
     ],
     "platforms": [
         "linux",

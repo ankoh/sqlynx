@@ -9,9 +9,9 @@ import {
     CONNECTION_ID,
     GENERATED_PKCE_CHALLENGE,
     GENERATING_PKCE_CHALLENGE,
-    OAUTH_LINK_OPENED,
-    OAUTH_WINDOW_CLOSED,
-    OAUTH_WINDOW_OPENED,
+    OAUTH_NATIVE_LINK_OPENED,
+    OAUTH_WEB_WINDOW_CLOSED,
+    OAUTH_WEB_WINDOW_OPENED,
     RECEIVED_CORE_AUTH_CODE,
     RECEIVED_CORE_AUTH_TOKEN,
     RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
@@ -29,6 +29,8 @@ import { PlatformType, usePlatformType } from '../platform/platform_type.js';
 import { ConnectionState, createEmptyTimings, unpackSalesforceConnection } from './connection_state.js';
 import { useAllocatedConnectionState, useConnectionState } from './connection_registry.js';
 import { useLogger } from '../platform/logger_provider.js';
+
+import * as shell from '@tauri-apps/plugin-shell';
 
 // We use the web-server OAuth Flow with or without consumer secret.
 //
@@ -187,12 +189,12 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
                 return;
             }
             popup.focus();
-            sfAuth({ type: OAUTH_WINDOW_OPENED, value: popup });
+            sfAuth({ type: OAUTH_WEB_WINDOW_OPENED, value: popup });
         } else {
             // Just open the link with the default browser
             logger.debug(`opening url: ${url.toString()}`, "salesforce_auth");
-            window.open(url);
-            sfAuth({ type: OAUTH_LINK_OPENED, value: null });
+            shell.open(url);
+            sfAuth({ type: OAUTH_NATIVE_LINK_OPENED, value: null });
         }
 
     }, [sfConn?.auth.authStarted, sfConn?.auth.authError, sfConn?.auth.openAuthWindow, sfConn?.auth.pkceChallenge]);
@@ -204,7 +206,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
             if (sfConn.auth.openAuthWindow?.closed) {
                 clearInterval(loop);
                 sfAuth({
-                    type: OAUTH_WINDOW_CLOSED,
+                    type: OAUTH_WEB_WINDOW_CLOSED,
                     value: null,
                 });
             }
