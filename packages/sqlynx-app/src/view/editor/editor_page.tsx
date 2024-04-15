@@ -15,11 +15,6 @@ import {
 import { useConnectorList } from '../../connectors/connector_info.js';
 import { ConnectorInfo, ConnectorType } from '../../connectors/connector_info.js';
 import { QueryExecutionTaskStatus } from '../../connectors/query_execution.js';
-import {
-    useSessionIterator,
-    useActiveSessionState,
-    useActiveSessionStateDispatch,
-} from '../../session/session_state_provider.js';
 import { ScriptEditor } from '../editor/editor.js';
 import { SchemaGraph } from '../../view/schema/schema_graph.js';
 import { QueryProgress } from '../../view/progress/query_progress.js';
@@ -34,11 +29,11 @@ import { useAppConfig } from '../../app_config.js';
 import * as styles from './editor_page.module.css';
 import * as theme from '../../github_theme.module.css';
 import * as icons from '../../../static/svg/symbols.generated.svg';
+import { useActiveSessionState } from 'session/active_session.js';
 
 const ConnectorSelection = (props: { className?: string; variant: 'default' | 'invisible'; short: boolean }) => {
     const connectorList = useConnectorList();
-    const scriptState = useActiveSessionState();
-    const scriptStateDispatch = useActiveSessionStateDispatch();
+    const [scriptState, _scriptStateDispatch] = useActiveSessionState();
     const [isOpen, setIsOpen] = React.useState<boolean>(false);
     const selectConnector = React.useCallback((e: React.MouseEvent<HTMLLIElement, MouseEvent>) => {
         e.stopPropagation();
@@ -150,26 +145,6 @@ const OutputCommandList = (props: { connector: ConnectorInfo | null }) => {
     );
 };
 
-const NavCommandList = (props: { canCycleScripts: boolean; canCycleOutput: boolean }) => (
-    <>
-        <ActionList.Item disabled={!props.canCycleScripts}>
-            <ActionList.LeadingVisual>
-                <ArrowSwitchIcon />
-            </ActionList.LeadingVisual>
-            Switch connector
-            <ActionList.TrailingVisual>Ctrl + H/L</ActionList.TrailingVisual>
-        </ActionList.Item>
-        <ActionList.Item disabled={!props.canCycleOutput}>
-            <ActionList.LeadingVisual>
-                <StackIcon />
-            </ActionList.LeadingVisual>
-            Switch output
-            <ActionList.TrailingVisual>Ctrl + J/K</ActionList.TrailingVisual>
-        </ActionList.Item>
-    </>
-);
-
-
 enum TabKey {
     SchemaView = 0,
     QueryProgressView = 1,
@@ -183,8 +158,7 @@ interface TabState {
 interface Props { }
 
 export const EditorPage: React.FC<Props> = (_props: Props) => {
-    const scriptState = useActiveSessionState();
-    const scriptSelectionIterator = useSessionIterator();
+    const [scriptState, _scriptStateDispatch] = useActiveSessionState();
     const [selectedTab, selectTab] = React.useState<TabKey>(TabKey.SchemaView);
     const [sharingIsOpen, setSharingIsOpen] = React.useState<boolean>(false);
 
@@ -308,11 +282,6 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                     <ActionList.GroupHeading as="h2">Output</ActionList.GroupHeading>
                     <OutputCommandList connector={scriptState?.connectorInfo ?? null} />
                     <ActionList.Divider />
-                    <ActionList.GroupHeading as="h2">Navigation</ActionList.GroupHeading>
-                    <NavCommandList
-                        canCycleScripts={scriptSelectionIterator.count > 1}
-                        canCycleOutput={enabledTabs > 1}
-                    />
                 </ActionList>
             </div>
         </div>

@@ -63,6 +63,14 @@ export function createEmptyTimings(): ConnectionTimings {
     };
 }
 
+export function unpackSalesforceConnection(state: ConnectionState | null): SalesforceConnectorState | null {
+    if (state == null) return null;
+    switch (state.type) {
+        case SALESFORCE_DATA_CLOUD: return state.value;
+        default: return null;
+    }
+}
+
 export function getSalesforceConnectionStatus(conn: SalesforceConnectorState | null): ConnectionStatus {
     if (!conn) {
         return ConnectionStatus.UNKNOWN;

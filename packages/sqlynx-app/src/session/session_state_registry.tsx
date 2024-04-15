@@ -7,9 +7,11 @@ import { DESTROY, SessionStateAction, reduceSessionState } from './session_state
 
 type SessionRegistry = Immutable.Map<number, SessionState>;
 type SetSessionRegistryAction = React.SetStateAction<SessionRegistry>;
+type SessionAllocator = (session: SessionState) => number;
 export type ModifySessionAction = (action: SessionStateAction) => void;
 
 const SESSION_REGISTRY_CTX = React.createContext<[SessionRegistry, Dispatch<SetSessionRegistryAction>] | null>(null);
+let NEXT_SESSION_ID: number = 1;
 
 type Props = {
     children: React.ReactElement | React.ReactElement[];
@@ -23,6 +25,15 @@ export const SessionStateRegistry: React.FC<Props> = (props: Props) => {
         </SESSION_REGISTRY_CTX.Provider>
     );
 };
+
+export function useSessionStateAllocator(): SessionAllocator {
+    const [_reg, setReg] = React.useContext(SESSION_REGISTRY_CTX)!;
+    return React.useCallback((state: SessionState) => {
+        const sessionId = NEXT_SESSION_ID++;
+        setReg((reg) => reg.set(sessionId, state));
+        return sessionId;
+    }, [setReg]);
+}
 
 export function useSessionState(id: number | null): [SessionState | null, ModifySessionAction] {
     const [registry, setRegistry] = React.useContext(SESSION_REGISTRY_CTX)!;
