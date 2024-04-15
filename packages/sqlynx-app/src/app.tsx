@@ -65,15 +65,13 @@ const Router = process.env.SQLYNX_RELATIVE_IMPORTS ? HashRouter : BrowserRouter;
 const element = document.getElementById('root');
 const root = createRoot(element!);
 root.render(
-    <React.StrictMode>
-        <Router>
-            <AppProviders>
-                <Routes>
-                    <Route index element={<Editor />} />
-                    <Route path="/connectors" element={<Connectors />} />
-                    <Route path="*" element={<Navigate to="/" />} />
-                </Routes>
-            </AppProviders>
-        </Router>
-    </React.StrictMode>,
+    <Router>
+        <AppProviders>
+            <Routes>
+                <Route index element={<Editor />} />
+                <Route path="/connectors" element={<Connectors />} />
+                <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+        </AppProviders>
+    </Router>
 );

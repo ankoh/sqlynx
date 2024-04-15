@@ -22,7 +22,8 @@ export const ActiveSessionStateProvider: React.FC<Props> = (props: Props) => {
 };
 
 export function useActiveSessionSelector(): ActiveSessionSetter {
-    return React.useContext(ACTIVE_SESSION_CTX)![1];
+    const [_activeSession, setActiveSession] = React.useContext(ACTIVE_SESSION_CTX)!;
+    return setActiveSession;
 }
 
 export function useActiveSessionState(): [SessionState | null, ModifySessionAction] {
