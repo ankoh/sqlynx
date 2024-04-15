@@ -31,6 +31,16 @@ export abstract class Logger {
         });
         this.flushPendingRecords();
     }
+    /// Log an debug message
+    public debug(message: string, target?: string): void {
+        this.pendingRecords.push({
+            timestamp: Date.now(),
+            level: LogLevel.Debug,
+            target: target ?? "pwa:unknown",
+            message,
+        });
+        this.flushPendingRecords();
+    }
     /// Log an info message
     public info(message: string, target?: string): void {
         this.pendingRecords.push({
