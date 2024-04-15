@@ -1,6 +1,5 @@
 import * as React from 'react';
 
-import { useActiveSessionState, useActiveSessionStateDispatch } from '../session/session_state_provider.js';
 import { updateDataCloudCatalog } from '../connectors/salesforce_catalog_update.js';
 import {
     CatalogUpdateTaskState,
@@ -9,10 +8,11 @@ import {
     FULL_CATALOG_REFRESH,
 } from '../connectors/catalog_update.js';
 import { SALESFORCE_DATA_CLOUD } from '../connectors/connector_info.js';
+import { unpackSalesforceConnection } from '../connectors/connection_state.js';
+import { useActiveSessionState } from '../session/active_session.js';
+import { useConnectionState } from '../connectors/connection_registry.js';
 import { useSalesforceAPI } from '../connectors/salesforce_connector.js';
 import { useSalesforceConnectionId } from '../connectors/salesforce_auth_state.js';
-import { useConnectionState } from '../connectors/connection_manager.js';
-import { SalesforceConnectorState } from '../connectors/connection_state.js';
 import {
     CATALOG_UPDATE_CANCELLED,
     CATALOG_UPDATE_FAILED,
@@ -21,11 +21,10 @@ import {
 } from './session_state_reducer.js';
 
 export const CatalogLoader = (props: { children?: React.ReactElement }) => {
-    const state = useActiveSessionState();
-    const dispatch = useActiveSessionStateDispatch();
+    const [state, dispatch] = useActiveSessionState();
     const salesforceAPI = useSalesforceAPI();
     const connectionId = useSalesforceConnectionId();
-    const [connection, _setConnection] = useConnectionState<SalesforceConnectorState>(connectionId);
+    const [connection, _setConnection] = useConnectionState(connectionId);
 
     React.useEffect(() => {
         if (!state?.catalog || !connection) {
@@ -34,6 +33,7 @@ export const CatalogLoader = (props: { children?: React.ReactElement }) => {
         const catalog = state.catalog;
         const states: CatalogUpdateTaskState[] = [];
         const startedAt = new Date();
+        const sfconn = unpackSalesforceConnection(connection)!;
 
         for (const [taskId, requestVariant] of state.catalogUpdateRequests) {
             let task: CatalogUpdateTaskVariant;
@@ -43,7 +43,7 @@ export const CatalogLoader = (props: { children?: React.ReactElement }) => {
                         type: SALESFORCE_DATA_CLOUD,
                         value: {
                             api: salesforceAPI,
-                            accessToken: connection.auth.dataCloudAccessToken!,
+                            accessToken: sfconn.auth.dataCloudAccessToken!,
                         },
                     };
                     break;

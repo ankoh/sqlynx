@@ -15,6 +15,7 @@ import {
 import { useConnectorList } from '../../connectors/connector_info.js';
 import { ConnectorInfo, ConnectorType } from '../../connectors/connector_info.js';
 import { QueryExecutionTaskStatus } from '../../connectors/query_execution.js';
+import { useActiveSessionState } from '../../session/active_session.js';
 import { ScriptEditor } from '../editor/editor.js';
 import { SchemaGraph } from '../../view/schema/schema_graph.js';
 import { QueryProgress } from '../../view/progress/query_progress.js';
@@ -29,7 +30,6 @@ import { useAppConfig } from '../../app_config.js';
 import * as styles from './editor_page.module.css';
 import * as theme from '../../github_theme.module.css';
 import * as icons from '../../../static/svg/symbols.generated.svg';
-import { useActiveSessionState } from 'session/active_session.js';
 
 const ConnectorSelection = (props: { className?: string; variant: 'default' | 'invisible'; short: boolean }) => {
     const connectorList = useConnectorList();

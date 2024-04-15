@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { useSalesforceConnectionId } from './salesforce_auth_state.js';
 import { useSalesforceAPI } from './salesforce_connector.js';
+import { useConnectionState } from './connection_registry.js';
 import { SalesforceUserInfo } from './salesforce_api_client.js';
-import { useConnectionState } from './connection_manager.js';
-import { SalesforceConnectorState } from './connection_state.js';
+import { SALESFORCE_DATA_CLOUD } from './connector_info.js';
 
 interface Props {
     children: React.ReactElement;
@@ -20,7 +20,7 @@ export function SalesforceUserInfoResolver(props: Props) {
         userInfo: null,
     });
     const connectionId = useSalesforceConnectionId();
-    const [connection, _setConnection] = useConnectionState<SalesforceConnectorState>(connectionId);
+    const [connection, _setConnection] = useConnectionState(connectionId);
 
     const api = useSalesforceAPI();
     React.useEffect(() => {
@@ -29,10 +29,14 @@ export function SalesforceUserInfoResolver(props: Props) {
             ...s,
             profile: null,
         }));
-        // Not authenticated?
-        if (!connection?.auth.coreAccessToken) return;
+        // No connection?
+        if (!connection) return;
+        // Not a salesforce connection?
+        if (connection.type != SALESFORCE_DATA_CLOUD) return;
+        // No core access token?
+        if (!connection.value.auth.coreAccessToken) return;
         // Fetch new user information
-        const coreAccessToken = connection.auth.coreAccessToken;
+        const coreAccessToken = connection.value.auth.coreAccessToken;
         const cancellation = new AbortController();
         (async () => {
             try {
@@ -50,7 +54,7 @@ export function SalesforceUserInfoResolver(props: Props) {
             }
         })();
         return () => cancellation.abort();
-    }, [api, connection?.auth.coreAccessToken]);
+    }, [api, connection?.value]);
 
     return <userInfoCtx.Provider value={state.userInfo}>{props.children}</userInfoCtx.Provider>;
 }

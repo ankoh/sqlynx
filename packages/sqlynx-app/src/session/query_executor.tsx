@@ -1,7 +1,8 @@
 import * as React from 'react';
 import Immutable from 'immutable';
 
-import { useActiveSessionState, useActiveSessionStateDispatch } from '../session/session_state_provider.js';
+import { useActiveSessionState } from '../session/active_session.js';
+import { useConnectionState } from '../connectors/connection_registry.js';
 import {
     QueryExecutionResponseStream,
     QueryExecutionTaskState,
@@ -10,7 +11,7 @@ import {
 } from '../connectors/query_execution.js';
 import { useSalesforceAPI } from '../connectors/salesforce_connector.js';
 import { useSalesforceConnectionId } from '../connectors/salesforce_auth_state.js';
-import { SalesforceConnectorState } from '../connectors/connection_state.js';
+import { unpackSalesforceConnection } from '../connectors/connection_state.js';
 import { ConnectorType, SALESFORCE_DATA_CLOUD } from '../connectors/connector_info.js';
 import {
     QUERY_EXECUTION_ACCEPTED,
@@ -23,15 +24,13 @@ import {
     QUERY_EXECUTION_SUCCEEDED,
 } from './session_state_reducer.js';
 import { ScriptKey } from './session_state.js';
-import { useConnectionState } from '../connectors/connection_manager.js';
 
 export const QueryExecutor = (props: { children?: React.ReactElement }) => {
-    const state = useActiveSessionState();
-    const dispatch = useActiveSessionStateDispatch();
+    const [state, dispatch] = useActiveSessionState();
     const salesforceAPI = useSalesforceAPI();
 
     const connectionId = useSalesforceConnectionId();
-    const [connection, _setConnection] = useConnectionState<SalesforceConnectorState>(connectionId);
+    const [connection, _setConnection] = useConnectionState(connectionId);
 
     React.useEffect(() => {
         if (!state || !state.queryExecutionRequested || !connection) {
@@ -40,17 +39,19 @@ export const QueryExecutor = (props: { children?: React.ReactElement }) => {
 
         let task: QueryExecutionTaskVariant;
         switch (state.connectorInfo.connectorType) {
-            case ConnectorType.SALESFORCE_DATA_CLOUD:
+            case ConnectorType.SALESFORCE_DATA_CLOUD: {
+                const sfconn = unpackSalesforceConnection(connection)!;
                 task = {
                     type: SALESFORCE_DATA_CLOUD,
                     value: {
                         api: salesforceAPI,
-                        authParams: connection.auth.authParams!,
-                        dataCloudAccessToken: connection.auth.dataCloudAccessToken!,
+                        authParams: sfconn.auth.authParams!,
+                        dataCloudAccessToken: sfconn.auth.dataCloudAccessToken!,
                         scriptText: state.scripts[ScriptKey.MAIN_SCRIPT]?.script?.toString() ?? '',
                     },
                 };
                 break;
+            }
             case ConnectorType.BRAINSTORM_MODE:
             case ConnectorType.HYPER_DATABASE:
                 console.warn(

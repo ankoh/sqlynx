@@ -4,30 +4,30 @@ import * as proto from '@ankoh/sqlynx-pb';
 
 import {
     AUTH_FAILED,
+    AUTH_FLOW_DEFAULT_STATE,
+    AUTH_FLOW_DISPATCH_CTX,
+    CONNECTION_ID,
+    GENERATED_PKCE_CHALLENGE,
+    GENERATING_PKCE_CHALLENGE,
+    OAUTH_LINK_OPENED,
     OAUTH_WINDOW_CLOSED,
     OAUTH_WINDOW_OPENED,
-    GENERATED_PKCE_CHALLENGE,
     RECEIVED_CORE_AUTH_CODE,
     RECEIVED_CORE_AUTH_TOKEN,
     RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
-    AUTH_FLOW_DISPATCH_CTX,
-    AUTH_FLOW_DEFAULT_STATE,
-    reduceAuthState,
-    OAUTH_LINK_OPENED,
-    SalesforceAuthAction,
     REQUESTING_CORE_AUTH_TOKEN,
     REQUESTING_DATA_CLOUD_ACCESS_TOKEN,
-    GENERATING_PKCE_CHALLENGE,
-    CONNECTION_ID,
+    SalesforceAuthAction,
+    reduceAuthState,
 } from './salesforce_auth_state.js';
 import { useSalesforceAPI } from './salesforce_connector.js';
 import { useAppConfig } from '../app_config.js';
 import { generatePKCEChallenge } from '../utils/pkce.js';
 import { BASE64_CODEC } from '../utils/base64.js';
-import { PlatformType, usePlatformType } from '../platform/platform_type.js';
-import { createConnectionId, useOrCreateConnectionState } from './connection_manager.js';
 import { SALESFORCE_DATA_CLOUD } from './connector_info.js';
-import { SalesforceConnectorState, createEmptyTimings } from './connection_state.js';
+import { PlatformType, usePlatformType } from '../platform/platform_type.js';
+import { ConnectionState, createEmptyTimings, unpackSalesforceConnection } from './connection_state.js';
+import { useAllocatedConnectionState, useConnectionState } from './connection_registry.js';
 
 // We use the web-server OAuth Flow with or without consumer secret.
 //
@@ -77,28 +77,34 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
     // This might change in the future when we start maintaining multiple connections per connector.
     // In that case, someone else would create the connection id, and we would need an "active" connection id provider
     // similar to how we register the active session.
-    const connectionId = React.useMemo(() => createConnectionId(), []);
-    const [connection, setConnection] = useOrCreateConnectionState<SalesforceConnectorState>(connectionId, () => ({
+    const connectionId = useAllocatedConnectionState((_) => ({
         type: SALESFORCE_DATA_CLOUD,
         value: {
             timings: createEmptyTimings(),
             auth: AUTH_FLOW_DEFAULT_STATE
         }
     }));
-    const dispatch = React.useCallback((action: SalesforceAuthAction) => {
-        setConnection((s) => ({
-            ...s,
-            auth: reduceAuthState(connection.auth, action)
-        }));
-    }, []);
-
+    const [connection, setConnection] = useConnectionState(connectionId);
+    const sfConn = unpackSalesforceConnection(connection);
+    const sfAuth = (auth: SalesforceAuthAction) => {
+        setConnection((c: ConnectionState) => {
+            const s = unpackSalesforceConnection(c)!;
+            return {
+                type: SALESFORCE_DATA_CLOUD,
+                value: {
+                    ...s,
+                    auth: reduceAuthState(s.auth, auth)
+                }
+            };
+        });
+    };
 
     // Effect to generate PKCE challenge, regenerate whenever auth params change
     React.useEffect(() => {
-        if (connection.auth.pkceChallenge) return;
+        if (sfConn?.auth.pkceChallenge) return;
         const cancellation = { triggered: false };
         (async () => {
-            dispatch({
+            sfAuth({
                 type: GENERATING_PKCE_CHALLENGE,
                 value: null,
             });
@@ -108,7 +114,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
             if (cancellation.triggered) return;
 
             // Set the pending popup URL
-            dispatch({
+            sfAuth({
                 type: GENERATED_PKCE_CHALLENGE,
                 value: pkceChallenge,
             });
@@ -117,18 +123,19 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
         return () => {
             cancellation.triggered = true;
         };
-    }, [connection.auth.authParams, connection.auth.pkceChallenge]);
+    }, [sfConn?.auth.authParams, sfConn?.auth.pkceChallenge]);
 
     // Effect to open the auth window when there is a pending auth
     React.useEffect(() => {
         if (
             !connectorConfig ||
-            !connection.auth.authParams ||
-            !connection.auth.authParams.instanceUrl ||
-            !connection.auth.timings.authRequestedAt ||
-            connection.auth.authStarted ||
-            connection.auth.authError ||
-            !connection.auth.pkceChallenge
+            !sfConn ||
+            !sfConn.auth.authParams ||
+            !sfConn.auth.authParams.instanceUrl ||
+            !sfConn.auth.timings.authRequestedAt ||
+            sfConn.auth.authStarted ||
+            sfConn.auth.authError ||
+            !sfConn.auth.pkceChallenge
         ) {
             return;
         }
@@ -147,8 +154,8 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
             providerOptions: {
                 case: "salesforceProvider",
                 value: new proto.sqlynx_oauth.pb.SalesforceOAuthOptions({
-                    instanceUrl: connection.auth.authParams.instanceUrl,
-                    appConsumerKey: connection.auth.authParams.appConsumerKey,
+                    instanceUrl: sfConn.auth.authParams.instanceUrl,
+                    appConsumerKey: sfConn.auth.authParams.appConsumerKey,
                 }),
             }
         });
@@ -156,11 +163,11 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
         const authStateBase64 = BASE64_CODEC.encode(authStateBuffer.buffer);
 
         // Construct the URI
-        const params = connection.auth.authParams!;
+        const params = sfConn.auth.authParams!;
         const paramParts = [
             `client_id=${params.appConsumerKey}`,
             `redirect_uri=${connectorConfig.auth.oauthRedirect}`,
-            `code_challenge=${connection.auth.pkceChallenge.value}`,
+            `code_challenge=${sfConn.auth.pkceChallenge.value}`,
             `code_challange_method=S256`,
             `response_type=code`,
             `state=${authStateBase64}`
@@ -173,26 +180,26 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
             if (!popup) {
                 // Something went wrong, Browser might prevent the popup.
                 // (E.g. FF blocks by default)
-                dispatch({ type: AUTH_FAILED, value: 'could not open oauth window' });
+                sfAuth({ type: AUTH_FAILED, value: 'could not open oauth window' });
                 return;
             }
             popup.focus();
-            dispatch({ type: OAUTH_WINDOW_OPENED, value: popup });
+            sfAuth({ type: OAUTH_WINDOW_OPENED, value: popup });
         } else {
             // Just open the link with the default browser
             window.open(url);
-            dispatch({ type: OAUTH_LINK_OPENED, value: null });
+            sfAuth({ type: OAUTH_LINK_OPENED, value: null });
         }
 
-    }, [connection.auth.authStarted, connection.auth.authError, connection.auth.openAuthWindow, connection.auth.pkceChallenge]);
+    }, [sfConn?.auth.authStarted, sfConn?.auth.authError, sfConn?.auth.openAuthWindow, sfConn?.auth.pkceChallenge]);
 
     // Effect to forget about the auth window when it closes
     React.useEffect(() => {
-        if (!connection.auth.openAuthWindow) return () => { };
+        if (!sfConn || !sfConn.auth.openAuthWindow) return () => { };
         const loop = setInterval(function () {
-            if (connection.auth.openAuthWindow?.closed) {
+            if (sfConn.auth.openAuthWindow?.closed) {
                 clearInterval(loop);
-                dispatch({
+                sfAuth({
                     type: OAUTH_WINDOW_CLOSED,
                     value: null,
                 });
@@ -201,7 +208,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
         return () => {
             clearInterval(loop);
         };
-    }, [connection.auth.openAuthWindow]);
+    }, [sfConn?.auth.openAuthWindow]);
 
     // Register a receiver for the oauth code from the window
     React.useEffect(() => {
@@ -213,7 +220,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
             }
             const code = params.get('code');
             if (!code) return;
-            dispatch({
+            sfAuth({
                 type: RECEIVED_CORE_AUTH_CODE,
                 value: code,
             });
@@ -222,19 +229,19 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
         return () => {
             window.removeEventListener('message', handler);
         };
-    }, [dispatch]);
+    }, [sfAuth]);
 
     // Effect to get the core access token
     React.useEffect(() => {
-        if (!connectorConfig || !connection.auth.coreAuthCode || !connection.auth.authParams || !connection.auth.pkceChallenge || connection.auth.authError)
+        if (!connectorConfig || !sfConn || !sfConn.auth.coreAuthCode || !sfConn.auth.authParams || !sfConn.auth.pkceChallenge || !sfConn.auth.authError)
             return;
         const abortController = new AbortController();
-        const authParams = connection.auth.authParams;
-        const authCode = connection.auth.coreAuthCode;
-        const pkceChallenge = connection.auth.pkceChallenge;
+        const authParams = sfConn.auth.authParams;
+        const authCode = sfConn.auth.coreAuthCode;
+        const pkceChallenge = sfConn.auth.pkceChallenge;
         (async () => {
             try {
-                dispatch({
+                sfAuth({
                     type: REQUESTING_CORE_AUTH_TOKEN,
                     value: null,
                 });
@@ -246,7 +253,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
                     abortController.signal,
                 );
                 console.log(token);
-                dispatch({
+                sfAuth({
                     type: RECEIVED_CORE_AUTH_TOKEN,
                     value: token,
                 });
@@ -254,7 +261,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
                 if (error.name === 'AbortError') {
                     return;
                 } else if (error instanceof Error) {
-                    dispatch({
+                    sfAuth({
                         type: AUTH_FAILED,
                         value: error.message,
                     });
@@ -262,22 +269,22 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
             }
         })();
         return () => abortController.abort();
-    }, [connectorConfig, connection.auth.coreAuthCode, connection.auth.authParams, connection.auth.pkceChallenge, connection.auth.authError]);
+    }, [connectorConfig, sfConn?.auth.coreAuthCode, sfConn?.auth.authParams, sfConn?.auth.pkceChallenge, sfConn?.auth.authError]);
 
     // Effect to get the data cloud access token
     React.useEffect(() => {
-        if (!connection.auth.coreAccessToken?.accessToken || !connection.auth.authParams || connection.auth.authError) return;
+        if (!sfConn || !sfConn.auth.coreAccessToken?.accessToken || !sfConn.auth.authParams || sfConn.auth.authError) return;
         const abortController = new AbortController();
-        const coreAccessToken = connection.auth.coreAccessToken;
+        const coreAccessToken = sfConn.auth.coreAccessToken;
         (async () => {
             try {
-                dispatch({
+                sfAuth({
                     type: REQUESTING_DATA_CLOUD_ACCESS_TOKEN,
                     value: null,
                 });
                 const token = await connector.getDataCloudAccessToken(coreAccessToken, abortController.signal);
                 console.log(token);
-                dispatch({
+                sfAuth({
                     type: RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
                     value: token,
                 });
@@ -285,7 +292,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
                 if (error.name === 'AbortError') {
                     return;
                 } else if (error instanceof Error) {
-                    dispatch({
+                    sfAuth({
                         type: AUTH_FAILED,
                         value: error.message,
                     });
@@ -293,10 +300,10 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
             }
         })();
         return () => abortController.abort();
-    }, [connection?.auth.coreAccessToken]);
+    }, [sfConn?.auth.coreAccessToken]);
 
     return (
-        <AUTH_FLOW_DISPATCH_CTX.Provider value={dispatch}>
+        <AUTH_FLOW_DISPATCH_CTX.Provider value={sfAuth}>
             <CONNECTION_ID.Provider value={connectionId}>{props.children}</CONNECTION_ID.Provider>
         </AUTH_FLOW_DISPATCH_CTX.Provider>
     );

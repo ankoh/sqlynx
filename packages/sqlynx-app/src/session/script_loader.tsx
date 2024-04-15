@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { ScriptMetadata } from './script_metadata.js';
 import { SCRIPT_LOADING_FAILED, SCRIPT_LOADING_STARTED, SCRIPT_LOADING_SUCCEEDED } from './session_state_reducer.js';
-import { useActiveSessionState, useActiveSessionStateDispatch } from './session_state_provider.js';
+import { useActiveSessionState } from './active_session.js';
 import { ScriptData, ScriptKey } from './session_state.js';
 
 export enum ScriptLoadingStatus {
@@ -38,8 +38,7 @@ interface Props {
 }
 
 export const ScriptLoader: React.FC<Props> = (props: Props) => {
-    const scriptState = useActiveSessionState();
-    const scriptStateDispatch = useActiveSessionStateDispatch();
+    const [session, modifySession] = useActiveSessionState();
     const internal = React.useRef<LoaderState>({
         scripts: new Map<string, ScriptLoadingState>(),
     });
@@ -54,7 +53,7 @@ export const ScriptLoader: React.FC<Props> = (props: Props) => {
             return;
         }
         // Mark the script as loading
-        scriptStateDispatch({
+        modifySession({
             type: SCRIPT_LOADING_STARTED,
             value: script.scriptKey,
         });
@@ -62,13 +61,13 @@ export const ScriptLoader: React.FC<Props> = (props: Props) => {
         const waitForResult = async (key: ScriptKey, inflight: Promise<string>) => {
             try {
                 const content = await inflight;
-                scriptStateDispatch({
+                modifySession({
                     type: SCRIPT_LOADING_SUCCEEDED,
                     value: [key, content],
                 });
             } catch (e: any) {
                 console.warn(e);
-                scriptStateDispatch({
+                modifySession({
                     type: SCRIPT_LOADING_FAILED,
                     value: [key, e],
                 });
@@ -104,12 +103,12 @@ export const ScriptLoader: React.FC<Props> = (props: Props) => {
     };
 
     React.useEffect(
-        () => loadIfNeeded(scriptState?.scripts[ScriptKey.MAIN_SCRIPT] ?? null),
-        [scriptState?.scripts[ScriptKey.MAIN_SCRIPT]?.metadata],
+        () => loadIfNeeded(session?.scripts[ScriptKey.MAIN_SCRIPT] ?? null),
+        [session?.scripts[ScriptKey.MAIN_SCRIPT]?.metadata],
     );
     React.useEffect(
-        () => loadIfNeeded(scriptState?.scripts[ScriptKey.SCHEMA_SCRIPT] ?? null),
-        [scriptState?.scripts[ScriptKey.SCHEMA_SCRIPT]?.metadata],
+        () => loadIfNeeded(session?.scripts[ScriptKey.SCHEMA_SCRIPT] ?? null),
+        [session?.scripts[ScriptKey.SCHEMA_SCRIPT]?.metadata],
     );
     return props.children;
 };

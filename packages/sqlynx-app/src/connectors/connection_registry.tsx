@@ -7,7 +7,6 @@ import { Dispatch } from '../utils/variant.js';
 type ConnectionRegistry = Immutable.Map<number, ConnectionState>;
 type SetConnectionRegistryAction = React.SetStateAction<ConnectionRegistry>;
 type ConnectionReducer = (prev: ConnectionState) => ConnectionState;
-type ConnectionAllocator = (prev: ConnectionState) => number;
 export type ModifyConnectionAction = (reducer: ConnectionReducer) => void;
 
 const CONNECTION_REGISTRY_CTX = React.createContext<[ConnectionRegistry, Dispatch<SetConnectionRegistryAction>] | null>(null);
@@ -26,23 +25,20 @@ export const ConnectionRegistry: React.FC<Props> = (props: Props) => {
     );
 };
 
-export function useConnectionStateAllocator(): ConnectionAllocator {
+export function useAllocatedConnectionState(init: (id: number) => ConnectionState): number {
     const [_reg, setReg] = React.useContext(CONNECTION_REGISTRY_CTX)!;
-    return React.useCallback((state: ConnectionState) => {
-        const sessionId = NEXT_CONNECTION_ID++;
-        setReg((reg) => reg.set(sessionId, state));
-        return sessionId;
-    }, [setReg]);
+    const cid = React.useMemo(() => NEXT_CONNECTION_ID++, []);
+    React.useEffect(() => {
+        setReg((reg) => reg.set(cid, init(cid)));
+    }, []);
+    return cid;
 }
 
-export function useConnectionState(id: number | null): [ConnectionState | null, ModifyConnectionAction] {
+export function useConnectionState(id: number): [ConnectionState | null, ModifyConnectionAction] {
     const [registry, setRegistry] = React.useContext(CONNECTION_REGISTRY_CTX)!;
     const setConnection = React.useCallback((reducer: ConnectionReducer) => {
         setRegistry(
             (reg: ConnectionRegistry) => {
-                if (!id) {
-                    return reg;
-                }
                 const prev = registry.get(id);
                 if (!prev) {
                     return reg;
@@ -52,5 +48,5 @@ export function useConnectionState(id: number | null): [ConnectionState | null, 
             }
         );
     }, [id, setRegistry]);
-    return [id == null ? null : registry.get(id) ?? null, setConnection];
+    return [registry.get(id) ?? null, setConnection];
 };

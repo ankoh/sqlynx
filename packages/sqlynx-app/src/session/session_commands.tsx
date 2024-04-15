@@ -2,15 +2,10 @@ import * as React from 'react';
 import { KeyEventHandler, useKeyEvents } from '../utils/key_events.js';
 import { ConnectorInfo } from '../connectors/connector_info.js';
 import { FULL_CATALOG_REFRESH } from '../connectors/catalog_update.js';
-import {
-    useSessionIterator,
-    useActiveSessionState,
-    useActiveSessionStateDispatch,
-} from './session_state_provider.js';
 import { EXECUTE_QUERY, UPDATE_CATALOG } from './session_state_reducer.js';
+import { useActiveSessionState } from './active_session.js';
 
 export enum ScriptCommandType {
-    NextConnector = 0,
     ExecuteQuery = 1,
     RefreshSchema = 2,
     SaveQueryAsSql = 3,
@@ -27,25 +22,20 @@ interface Props {
 const COMMAND_DISPATCH_CTX = React.createContext<ScriptCommandDispatch | null>(null);
 
 export const SessionCommands: React.FC<Props> = (props: Props) => {
-    const state = useActiveSessionState();
-    const stateDispatch = useActiveSessionStateDispatch();
-    const scriptIterator = useSessionIterator();
+    const [state, modifySession] = useActiveSessionState();
 
     // Setup command dispatch logic
     const commandDispatch = React.useCallback(
         async (command: ScriptCommandType) => {
             switch (command) {
-                case ScriptCommandType.NextConnector:
-                    scriptIterator.next();
-                    break;
                 case ScriptCommandType.ExecuteQuery:
-                    stateDispatch({
+                    modifySession({
                         type: EXECUTE_QUERY,
                         value: null,
                     });
                     break;
                 case ScriptCommandType.RefreshSchema:
-                    stateDispatch({
+                    modifySession({
                         type: UPDATE_CATALOG,
                         value: {
                             type: FULL_CATALOG_REFRESH,
@@ -84,11 +74,6 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
     // Create key event handlers
     const keyHandlers = React.useMemo<KeyEventHandler[]>(
         () => [
-            {
-                key: 'l',
-                ctrlKey: true,
-                callback: () => commandDispatch(ScriptCommandType.NextConnector),
-            },
             {
                 key: 'e',
                 ctrlKey: true,

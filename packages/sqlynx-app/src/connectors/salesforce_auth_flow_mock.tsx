@@ -14,9 +14,9 @@ import {
 } from './salesforce_auth_state.js';
 import { useSalesforceAPI } from './salesforce_connector.js';
 import { useAppConfig } from '../app_config.js';
-import { createConnectionId, useOrCreateConnectionState } from './connection_manager.js';
+import { useAllocatedConnectionState, useConnectionState } from './connection_registry.js';
 import { SALESFORCE_DATA_CLOUD } from './connector_info.js';
-import { SalesforceConnectorState, createEmptyTimings } from './connection_state.js';
+import { ConnectionState, createEmptyTimings, unpackSalesforceConnection } from './connection_state.js';
 
 interface Props {
     children: React.ReactElement;
@@ -28,37 +28,49 @@ export const SalesforceAuthFlowMock: React.FC<Props> = (props: Props) => {
     const connectorConfig = config.value?.connectors?.salesforce ?? null;
 
     // Get the connection state
-    const connectionId = React.useMemo(() => createConnectionId(), []);
-    const [connection, setConnection] = useOrCreateConnectionState<SalesforceConnectorState>(connectionId, () => ({
+    const connectionId = useAllocatedConnectionState((_) => ({
         type: SALESFORCE_DATA_CLOUD,
         value: {
             timings: createEmptyTimings(),
             auth: AUTH_FLOW_DEFAULT_STATE
         }
     }));
-    const dispatch = React.useCallback((action: SalesforceAuthAction) => {
-        setConnection((s) => ({
-            ...s,
-            auth: reduceAuthState(connection.auth, action)
-        }));
-    }, []);
+    const [connection, setConnection] = useConnectionState(connectionId);
+    const sfConn = unpackSalesforceConnection(connection);
+    const sfAuth = (auth: SalesforceAuthAction) => {
+        setConnection((c: ConnectionState) => {
+            const s = unpackSalesforceConnection(c)!;
+            return {
+                type: SALESFORCE_DATA_CLOUD,
+                value: {
+                    ...s,
+                    auth: reduceAuthState(s.auth, auth)
+                }
+            };
+        });
+    };
 
     // Effect to get the core access token
     React.useEffect(() => {
-        if (!connectorConfig?.auth || !connection.auth.authParams || connection.auth.authStarted || !connection.auth.timings.authRequestedAt) return;
+        if (!connectorConfig?.auth ||
+            !sfConn ||
+            !sfConn.auth.authParams ||
+            sfConn.auth.authStarted ||
+            !sfConn.auth.timings.authRequestedAt)
+            return;
         const abort = new AbortController();
         const pkceChallenge = config.value?.connectors?.salesforce?.mock?.pkceChallenge ?? {
             value: 'pkce-challenge',
             verifier: 'pkce-verifier',
         };
-        const authParams = connection.auth.authParams;
+        const authParams = sfConn.auth.authParams;
         (async () => {
-            dispatch({
+            sfAuth({
                 type: GENERATED_PKCE_CHALLENGE,
                 value: pkceChallenge,
             });
             await sleep(200);
-            dispatch({
+            sfAuth({
                 type: RECEIVED_CORE_AUTH_CODE,
                 value: 'core-access-auth-code',
             });
@@ -69,20 +81,20 @@ export const SalesforceAuthFlowMock: React.FC<Props> = (props: Props) => {
                 pkceChallenge.verifier,
                 abort.signal,
             );
-            dispatch({
+            sfAuth({
                 type: RECEIVED_CORE_AUTH_TOKEN,
                 value: coreAccess,
             });
             const dataCloudAccess = await connector.getDataCloudAccessToken(coreAccess, abort.signal);
-            dispatch({
+            sfAuth({
                 type: RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
                 value: dataCloudAccess,
             });
         })();
-    }, [connection.auth.authParams, connection.auth.authStarted, connection.auth.timings.authRequestedAt, connection.auth.coreAuthCode]);
+    }, [sfConn?.auth.authParams, sfConn?.auth.authStarted, sfConn?.auth.timings.authRequestedAt, sfConn?.auth.coreAuthCode]);
 
     return (
-        <AUTH_FLOW_DISPATCH_CTX.Provider value={dispatch}>
+        <AUTH_FLOW_DISPATCH_CTX.Provider value={sfAuth}>
             <CONNECTION_ID.Provider value={connectionId}>{props.children}</CONNECTION_ID.Provider>
         </AUTH_FLOW_DISPATCH_CTX.Provider>
     );
