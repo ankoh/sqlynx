@@ -59,7 +59,7 @@ __metadata:
     "@primer/octicons-react": "patch:@primer/octicons-react@npm%3A19.9.0#~/.yarn/patches/@primer-octicons-react-npm-19.9.0-65341cfa23.patch"
     "@primer/react": "npm:^36.13.0"
     "@react-hook/resize-observer": "npm:^1.2.6"
-    "@tauri-apps/api": "npm:^2.0.0-beta.7"
+    "@tauri-apps/api": "npm:^2.0.0-beta.8"
     "@tauri-apps/plugin-deep-link": "npm:^2.0.0-beta.2"
     "@tauri-apps/plugin-log": "npm:^2.0.0-beta.2"
     "@tauri-apps/plugin-shell": "npm:^2.0.0-beta.2"
@@ -1926,10 +1926,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tauri-apps/api@npm:^2.0.0-beta.7":
-  version: 2.0.0-beta.7
-  resolution: "@tauri-apps/api@npm:2.0.0-beta.7"
-  checksum: 10c0/52106eaf0ce13552a22c750024e711a170418d98f7f891ba655e9908e855dedc4f5401f2719a5eba9e865fb096482765bd60342be84fb673add7c3cac80381eb
+"@tauri-apps/api@npm:^2.0.0-beta.8":
+  version: 2.0.0-beta.8
+  resolution: "@tauri-apps/api@npm:2.0.0-beta.8"
+  checksum: 10c0/6b26b6e14f2529c396e79ea564e9465171de8e1edad9b2cd9b8a34780dd30dc8dd6c16d976c344fedc0158c7117826b75a92e578f0947c9229674295c06ba64c
   languageName: node
   linkType: hard
 
