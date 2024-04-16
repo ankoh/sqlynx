@@ -73,14 +73,14 @@ async function checkChannelUpdates(channel: ReleaseChannel, setResult: (result: 
             }
         });
         const end = performance.now();
-        logger.info(`checking for ${channel} updates succeeded in ${end - start} ms`, "version_check");
+        logger.info(`checking for ${channel} updates succeeded in ${Math.floor(end - start)} ms`, "version_check");
         setResult({
             type: RESULT_OK,
             value: update == null ? null : new InstallableTauriUpdate(update, setInstallationStatus, logger),
         });
     } catch (e: any) {
         const end = performance.now();
-        logger.error(`checking for ${channel} updates failed after ${end - start} ms with error: ${e.toString()}`, "version_check");
+        logger.error(`checking for ${channel} updates failed after ${Math.floor(end - start)} ms with error: ${e.toString()}`, "version_check");
         setResult({
             type: RESULT_ERROR,
             error: new Error(e.toString())
