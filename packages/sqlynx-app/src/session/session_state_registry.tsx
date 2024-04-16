@@ -4,6 +4,7 @@ import * as Immutable from 'immutable';
 import { SessionState } from './session_state.js';
 import { Dispatch } from '../utils/variant.js';
 import { DESTROY, SessionStateAction, reduceSessionState } from './session_state_reducer.js';
+import { useLogger } from '../platform/logger_provider.js';
 
 type SessionRegistry = Immutable.Map<number, SessionState>;
 type SetSessionRegistryAction = React.SetStateAction<SessionRegistry>;
@@ -36,6 +37,7 @@ export function useSessionStateAllocator(): SessionAllocator {
 }
 
 export function useSessionState(id: number | null): [SessionState | null, ModifySessionAction] {
+    const logger = useLogger();
     const [registry, setRegistry] = React.useContext(SESSION_REGISTRY_CTX)!;
     const setSession = React.useCallback((action: SessionStateAction) => {
         setRegistry(
@@ -47,6 +49,7 @@ export function useSessionState(id: number | null): [SessionState | null, Modify
                 if (!prev) {
                     return reg;
                 }
+                logger.trace(`session ${id} applying ${action.type.toString()}`, "session_state");
                 const next = reduceSessionState(prev, action);
                 if (action.type == DESTROY) {
                     return reg.delete(id);
