@@ -55,7 +55,7 @@ __metadata:
     "@emotion/is-prop-valid": "npm:^1.2.2"
     "@lezer/common": "npm:^1.2.1"
     "@lezer/highlight": "npm:^1.2.0"
-    "@octokit/graphql": "npm:^8.1.0"
+    "@octokit/graphql": "npm:^8.1.1"
     "@primer/octicons-react": "patch:@primer/octicons-react@npm%3A19.9.0#~/.yarn/patches/@primer-octicons-react-npm-19.9.0-65341cfa23.patch"
     "@primer/react": "npm:^36.13.0"
     "@react-hook/resize-observer": "npm:^1.2.6"
@@ -1521,14 +1521,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@octokit/graphql@npm:^8.1.0":
-  version: 8.1.0
-  resolution: "@octokit/graphql@npm:8.1.0"
+"@octokit/graphql@npm:^8.1.1":
+  version: 8.1.1
+  resolution: "@octokit/graphql@npm:8.1.1"
   dependencies:
     "@octokit/request": "npm:^9.0.0"
     "@octokit/types": "npm:^13.0.0"
     universal-user-agent: "npm:^7.0.0"
-  checksum: 10c0/3fed6b4c3fd8928866314573cc749b3c4c1e05f3777cfea3abc8817f8e03ca2ac40cb86160d7b581c29e8839eac3478f7d82c84cfed812946c18f68808fe2d07
+  checksum: 10c0/fe68b89b21416f56bc9c0d19bba96a9a8ee567312b6fb764b05ea0649a5e44bec71665a0013e7c34304eb77c20ad7e7a7cf43b87ea27c280350229d71034c131
   languageName: node
   linkType: hard
 
