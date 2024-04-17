@@ -62,6 +62,7 @@ __metadata:
     "@tauri-apps/api": "npm:^2.0.0-beta.8"
     "@tauri-apps/plugin-deep-link": "npm:^2.0.0-beta.2"
     "@tauri-apps/plugin-log": "npm:^2.0.0-beta.2"
+    "@tauri-apps/plugin-os": "npm:^2.0.0-beta.2"
     "@tauri-apps/plugin-shell": "npm:^2.0.0-beta.2"
     "@tauri-apps/plugin-updater": "npm:^2.0.0-beta.2"
     "@testing-library/react": "npm:^15.0.2"
@@ -2059,6 +2060,15 @@ __metadata:
   dependencies:
     "@tauri-apps/api": "npm:2.0.0-beta.4"
   checksum: 10c0/568c02f547ee2144ef8e2ca33cef284c750e2d5a86278adfe16183879bc3212fbe0343550f508288c57b2d77e8e28c32e414af0139a1f1327ffcff08a93f9823
+  languageName: node
+  linkType: hard
+
+"@tauri-apps/plugin-os@npm:^2.0.0-beta.2":
+  version: 2.0.0-beta.2
+  resolution: "@tauri-apps/plugin-os@npm:2.0.0-beta.2"
+  dependencies:
+    "@tauri-apps/api": "npm:2.0.0-beta.4"
+  checksum: 10c0/541a40188e39c924cad30d9cddfa03b0d9a8c9218ab04810963da95b0c3159526cbbe0fcb5a5ee73758bf5c34119cb67114cb5ca3e432924e5008944523a6025
   languageName: node
   linkType: hard
 
