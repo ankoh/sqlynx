@@ -134,14 +134,26 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
         };
     }
 
-    // Build the footer
-    let footer: React.ReactElement = <div />;
-    if (!codeIsExpired) {
-        footer = (
-            <>
+    let flowInfo: React.ReactElement = <div />;
+    switch (props.state.flowVariant) {
+        case proto.sqlynx_oauth.pb.OAuthFlowVariant.WEB_OPENER_FLOW: {
+            break;
+        }
+        case proto.sqlynx_oauth.pb.OAuthFlowVariant.NATIVE_LINK_FLOW: {
+            flowInfo = (
                 <div className={page_styles.card_section_description}>
                     Your browser should prompt you to open the native app. You can retry until the code expires.
                 </div>
+            );
+            break;
+        }
+    }
+
+    // Build the footer
+    let actionBar: React.ReactElement = <div />;
+    if (!codeIsExpired) {
+        actionBar = (
+            <>
                 <div className={page_styles.card_actions}>
                     {
                         remainingUntilAutoTrigger == 0
@@ -212,7 +224,8 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
                         />
                     </div>
                 </div>
-                {footer}
+                {flowInfo}
+                {actionBar}
             </div>
         </div>
     );
