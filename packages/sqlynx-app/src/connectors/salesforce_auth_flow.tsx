@@ -29,6 +29,8 @@ import { PlatformType, usePlatformType } from '../platform/platform_type.js';
 import { ConnectionState, createEmptyTimings, unpackSalesforceConnection } from './connection_state.js';
 import { useAllocatedConnectionState, useConnectionState } from './connection_registry.js';
 import { useLogger } from '../platform/logger_provider.js';
+import { isNativePlatform } from '../platform/native_globals.js';
+import { isDebugBuild } from '../globals.js';
 
 import * as shell from '@tauri-apps/plugin-shell';
 
@@ -154,6 +156,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
 
         // Construct the auth state
         const authState = new proto.sqlynx_oauth.pb.OAuthState({
+            debugMode: isNativePlatform() && isDebugBuild(),
             flowVariant: flowVariant,
             providerOptions: {
                 case: "salesforceProvider",

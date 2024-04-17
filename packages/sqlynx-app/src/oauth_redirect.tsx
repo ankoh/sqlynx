@@ -134,6 +134,38 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
         };
     }
 
+    // Build the footer
+    let footer: React.ReactElement = <div />;
+    if (!codeIsExpired) {
+        footer = (
+            <>
+                <div className={page_styles.card_section_description}>
+                    Your browser should prompt you to open the native app. You can retry until the code expires.
+                </div>
+                <div className={page_styles.card_actions}>
+                    {
+                        remainingUntilAutoTrigger == 0
+                            ? <Button
+                                className={page_styles.card_action_right}
+                                variant="primary"
+                                onClick={() => triggerFlow(props.state, code, logger)}
+                            >
+                                Send to App
+                            </Button>
+                            : <Button
+                                className={page_styles.card_action_right}
+                                variant="primary"
+                                onClick={() => triggerFlow(props.state, code, logger)}
+                                trailingVisual={() => <div>{Math.ceil(remainingUntilAutoTrigger / 1000)}</div>}
+                            >
+                                Send to App
+                            </Button>
+                    }
+                </div>
+            </>
+        );
+    }
+
     // Construct the page
     return (
         <div className={page_styles.page}>
@@ -180,33 +212,7 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
                         />
                     </div>
                 </div>
-                {!codeIsExpired &&
-                    <>
-                        <div className={page_styles.card_section_description}>
-                            Your browser should prompt you to open the native app. You can retry until the code expires.
-                        </div>
-                        <div className={page_styles.card_actions}>
-                            {
-                                remainingUntilAutoTrigger == 0
-                                    ? <Button
-                                        className={page_styles.card_action_right}
-                                        variant="primary"
-                                        onClick={() => triggerFlow(props.state, code, logger)}
-                                    >
-                                        Send to App
-                                    </Button>
-                                    : <Button
-                                        className={page_styles.card_action_right}
-                                        variant="primary"
-                                        onClick={() => triggerFlow(props.state, code, logger)}
-                                        trailingVisual={() => <div>{Math.ceil(remainingUntilAutoTrigger / 1000)}</div>}
-                                    >
-                                        Send to App
-                                    </Button>
-                            }
-                        </div>
-                    </>
-                }
+                {footer}
             </div>
         </div>
     );

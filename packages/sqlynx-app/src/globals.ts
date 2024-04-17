@@ -11,3 +11,8 @@ export const SQLYNX_GIT_REPO: URL = new URL(`https://github.com/ankoh/sqlynx/tre
 export const SQLYNX_STABLE_RELEASE_MANIFEST = new URL("https://get.sqlynx.app/stable.json");
 /// The URL of the canary release manifest
 export const SQLYNX_CANARY_RELEASE_MANIFEST = new URL("https://get.sqlynx.app/canary.json");
+
+
+export function isDebugBuild() {
+    return SQLYNX_BUILD_MODE == "development";
+}
