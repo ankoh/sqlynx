@@ -25,6 +25,10 @@ message SalesforceOAuthOptions {
 message OAuthState {
     /// The OAuth flow variant
     OAuthFlowVariant flow_variant = 2;
+    /// Is in debug mode?
+    /// Our native dev server cannot override the deep-link handler.
+    /// The oauth redirect will therefore not auto-open deep-links in debug mode.
+    bool debugMode = 4;
     /// Specific provider options
     oneof provider_options {
         /// The Salesforce OAuth provider

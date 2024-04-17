@@ -21,7 +21,7 @@ use ipc_router::process_ipc_request;
 #[tokio::main]
 async fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![sqlynx_get_os])
+        .invoke_handler(tauri::generate_handler![sqlynx_is_debug_build])
         .register_asynchronous_uri_scheme_protocol(
             "sqlynx-native",
             move |_runtime, request, responder| {
@@ -72,6 +72,6 @@ async fn main() {
 }
 
 #[tauri::command]
-async fn sqlynx_get_os() -> &'static str {
-    return "darwin";
+async fn sqlynx_is_debug_build() -> bool {
+    cfg!(debug_assertions)
 }
