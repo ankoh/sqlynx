@@ -25,7 +25,7 @@ lazy_static = "1.4.0"
 minisign = "0.7.6"
 
 [dependencies.serde]
-version = "1.0.197"
+version = "1.0.198"
 features = ["derive"]
 
 [dependencies.serde_json]
