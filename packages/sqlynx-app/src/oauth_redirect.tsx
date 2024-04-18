@@ -67,12 +67,19 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
     const [logsAreOpen, setLogsAreOpen] = React.useState<boolean>(false);
 
     // Setup autotrigger
+    const skipAutoTrigger = props.state.flowVariant == proto.sqlynx_oauth.pb.OAuthFlowVariant.NATIVE_LINK_FLOW && props.state.debugMode;
     const autoTriggersAt = React.useMemo(() => new Date(now.getTime() + AUTOTRIGGER_DELAY), []);
     const remainingUntilAutoTrigger = Math.max(autoTriggersAt.getTime(), now.getTime()) - now.getTime();
     React.useEffect(() => {
-        logger.info(`setup auto-trigger in ${formatHHMMSS(remainingUntilAutoTrigger / 1000)}`, "oauth_redirect");
-        const timeoutId = setTimeout(() => triggerFlow(props.state, code, logger), remainingUntilAutoTrigger);
-        return () => clearTimeout(timeoutId);
+        // Skip auto trigger for native apps in debug mode
+        if (skipAutoTrigger) {
+            logger.info(`skip auto-trigger for native app in debug mode`, "oauth_redirect");
+            return () => { };
+        } else {
+            logger.info(`setup auto-trigger in ${formatHHMMSS(remainingUntilAutoTrigger / 1000)}`, "oauth_redirect");
+            const timeoutId = setTimeout(() => triggerFlow(props.state, code, logger), remainingUntilAutoTrigger);
+            return () => clearTimeout(timeoutId);
+        }
     }, [props.state, code]);
 
     // Render provider options
@@ -134,48 +141,54 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
         };
     }
 
-    let flowInfo: React.ReactElement = <div />;
+    // Get flow continuation
+    let flowContinuation: React.ReactElement = <div />;
     switch (props.state.flowVariant) {
         case proto.sqlynx_oauth.pb.OAuthFlowVariant.WEB_OPENER_FLOW: {
             break;
         }
         case proto.sqlynx_oauth.pb.OAuthFlowVariant.NATIVE_LINK_FLOW: {
-            flowInfo = (
-                <div className={page_styles.card_section_description}>
-                    Your browser should prompt you to open the native app. You can retry until the code expires.
-                </div>
-            );
+            if (props.state.debugMode) {
+                flowContinuation = (
+                    <>
+                        <div className={page_styles.card_section_description}>
+                            The initiator is a native app in debug mode which cannot register as deep link handler.
+                            Copy the following link manually and paste it into the app window.
+                        </div>
+                    </>
+                );
+
+            } else {
+                flowContinuation = (
+                    <>
+                        <div className={page_styles.card_section_description}>
+                            Your browser should prompt you to open the native app. You can retry until the code expires.
+                        </div>
+                        <div className={page_styles.card_actions}>
+                            {
+                                remainingUntilAutoTrigger == 0
+                                    ? <Button
+                                        className={page_styles.card_action_right}
+                                        variant="primary"
+                                        onClick={() => triggerFlow(props.state, code, logger)}
+                                    >
+                                        Send to App
+                                    </Button>
+                                    : <Button
+                                        className={page_styles.card_action_right}
+                                        variant="primary"
+                                        onClick={() => triggerFlow(props.state, code, logger)}
+                                        trailingVisual={() => <div>{Math.ceil(remainingUntilAutoTrigger / 1000)}</div>}
+                                    >
+                                        Send to App
+                                    </Button>
+                            }
+                        </div>
+                    </>
+                );
+            }
             break;
         }
-    }
-
-    // Build the footer
-    let actionBar: React.ReactElement = <div />;
-    if (!codeIsExpired) {
-        actionBar = (
-            <>
-                <div className={page_styles.card_actions}>
-                    {
-                        remainingUntilAutoTrigger == 0
-                            ? <Button
-                                className={page_styles.card_action_right}
-                                variant="primary"
-                                onClick={() => triggerFlow(props.state, code, logger)}
-                            >
-                                Send to App
-                            </Button>
-                            : <Button
-                                className={page_styles.card_action_right}
-                                variant="primary"
-                                onClick={() => triggerFlow(props.state, code, logger)}
-                                trailingVisual={() => <div>{Math.ceil(remainingUntilAutoTrigger / 1000)}</div>}
-                            >
-                                Send to App
-                            </Button>
-                    }
-                </div>
-            </>
-        );
     }
 
     // Construct the page
@@ -224,8 +237,7 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
                         />
                     </div>
                 </div>
-                {flowInfo}
-                {actionBar}
+                {flowContinuation}
             </div>
         </div>
     );
