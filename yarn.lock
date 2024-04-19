@@ -61,7 +61,7 @@ __metadata:
     "@react-hook/resize-observer": "npm:^1.2.6"
     "@tauri-apps/api": "patch:@tauri-apps/api@npm%3A2.0.0-beta.8#~/.yarn/patches/@tauri-apps-api-npm-2.0.0-beta.8-d68cf559f2.patch"
     "@tauri-apps/plugin-deep-link": "npm:^2.0.0-beta.2"
-    "@tauri-apps/plugin-log": "npm:^2.0.0-beta.2"
+    "@tauri-apps/plugin-log": "npm:^2.0.0-beta.3"
     "@tauri-apps/plugin-os": "npm:^2.0.0-beta.2"
     "@tauri-apps/plugin-shell": "npm:^2.0.0-beta.2"
     "@tauri-apps/plugin-updater": "npm:^2.0.0-beta.2"
@@ -2054,12 +2054,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tauri-apps/plugin-log@npm:^2.0.0-beta.2":
-  version: 2.0.0-beta.2
-  resolution: "@tauri-apps/plugin-log@npm:2.0.0-beta.2"
+"@tauri-apps/plugin-log@npm:^2.0.0-beta.3":
+  version: 2.0.0-beta.3
+  resolution: "@tauri-apps/plugin-log@npm:2.0.0-beta.3"
   dependencies:
-    "@tauri-apps/api": "npm:2.0.0-beta.4"
-  checksum: 10c0/568c02f547ee2144ef8e2ca33cef284c750e2d5a86278adfe16183879bc3212fbe0343550f508288c57b2d77e8e28c32e414af0139a1f1327ffcff08a93f9823
+    "@tauri-apps/api": "npm:2.0.0-beta.8"
+  checksum: 10c0/df9fa3d64b8c5d46b97aa1a25879b6ed4855d7c85dae6b3314993953a47e97199affc1a36f2244406d366aa0f08f09978132dc226d5517e5500a057ef99f0067
   languageName: node
   linkType: hard
 
