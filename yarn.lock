@@ -57,7 +57,7 @@ __metadata:
     "@lezer/highlight": "npm:^1.2.0"
     "@octokit/graphql": "npm:^8.1.1"
     "@primer/octicons-react": "patch:@primer/octicons-react@npm%3A19.9.0#~/.yarn/patches/@primer-octicons-react-npm-19.9.0-65341cfa23.patch"
-    "@primer/react": "npm:^36.13.0"
+    "@primer/react": "npm:^36.15.0"
     "@react-hook/resize-observer": "npm:^1.2.6"
     "@tauri-apps/api": "patch:@tauri-apps/api@npm%3A2.0.0-beta.8#~/.yarn/patches/@tauri-apps-api-npm-2.0.0-beta.8-d68cf559f2.patch"
     "@tauri-apps/plugin-deep-link": "npm:^2.0.0-beta.2"
@@ -1648,16 +1648,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@primer/primitives@npm:^7.15.14":
+"@primer/primitives@npm:^7.16.0":
   version: 7.16.0
   resolution: "@primer/primitives@npm:7.16.0"
   checksum: 10c0/538ad5a5f3325b25568950e0ded04a28fc03e0c515a1562e64f72147be9bff176a568a4a3bae54fa8e432bcc06500e13705fe5876ece135a5aa8d9d0499003f0
   languageName: node
   linkType: hard
 
-"@primer/react@npm:^36.13.0":
-  version: 36.13.0
-  resolution: "@primer/react@npm:36.13.0"
+"@primer/react@npm:^36.15.0":
+  version: 36.15.0
+  resolution: "@primer/react@npm:36.15.0"
   dependencies:
     "@github/combobox-nav": "npm:^2.1.5"
     "@github/markdown-toolbar-element": "npm:^2.1.0"
@@ -1669,7 +1669,7 @@ __metadata:
     "@primer/behaviors": "npm:^1.5.1"
     "@primer/live-region-element": "npm:^0.2.0"
     "@primer/octicons-react": "npm:^19.9.0"
-    "@primer/primitives": "npm:^7.15.14"
+    "@primer/primitives": "npm:^7.16.0"
     "@styled-system/css": "npm:^5.1.5"
     "@styled-system/props": "npm:^5.1.5"
     "@styled-system/theme-get": "npm:^5.1.2"
@@ -1703,7 +1703,7 @@ __metadata:
       optional: true
     "@types/styled-components":
       optional: true
-  checksum: 10c0/4da196b87a264a432de179828ab807442620ef69a3aa712f05f9260e0068ed8dafd4525b293dc172bf1e648fc6ff4b7270c1c7207791fcc566d4360a6ff64a40
+  checksum: 10c0/a7fb03c3b7e8d6a60e9d06f862ba39e3c46fb3ed2ee2902de90775f80ab12fbdd608665ac28ecbe198214ac7687c8722abd028f2faebe75a47f8cfad5892e531
   languageName: node
   linkType: hard
 
