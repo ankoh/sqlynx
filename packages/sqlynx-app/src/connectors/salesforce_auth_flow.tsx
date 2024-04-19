@@ -30,6 +30,7 @@ import { PlatformType, usePlatformType } from '../platform/platform_type.js';
 import { ConnectionState, createEmptyTimings, unpackSalesforceConnection } from './connection_state.js';
 import { Dispatch } from '../utils/variant.js';
 import { Logger } from '../platform/logger.js';
+import { OAuthListener } from '../platform/oauth_listener.js';
 import { useAllocatedConnectionState, useConnectionState } from './connection_registry.js';
 import { useLogger } from '../platform/logger_provider.js';
 import { isNativePlatform } from '../platform/native_globals.js';
@@ -72,7 +73,7 @@ import { SalesforceAPIClientInterface } from './salesforce_api_client.js';
 const OAUTH_POPUP_NAME = 'SQLynx OAuth';
 const OAUTH_POPUP_SETTINGS = 'toolbar=no, menubar=no, width=600, height=700, top=100, left=100';
 
-export async function authorizeSalesforceConnection(params: SalesforceAuthParams, config: SalesforceConnectorConfig, platformType: PlatformType, apiClient: SalesforceAPIClientInterface, awaitOAuthCode: (signal: AbortSignal) => Promise<string>, logger: Logger, dispatch: Dispatch<SalesforceAuthAction>, abortSignal: AbortSignal) {
+export async function authorizeSalesforceConnection(params: SalesforceAuthParams, config: SalesforceConnectorConfig, platformType: PlatformType, apiClient: SalesforceAPIClientInterface, oauthListener: OAuthListener, logger: Logger, dispatch: Dispatch<SalesforceAuthAction>, abortSignal: AbortSignal) {
     try {
         dispatch({
             type: GENERATING_PKCE_CHALLENGE,
@@ -141,7 +142,7 @@ export async function authorizeSalesforceConnection(params: SalesforceAuthParams
         }
 
         // Await the oauth code
-        let authCode = await awaitOAuthCode(abortSignal);
+        let authCode = await oauthListener.waitForOAuthCode(abortSignal);
         abortSignal.throwIfAborted();
 
         dispatch({
@@ -227,12 +228,6 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
         });
     };
 
-    // Helper to await an OAuth code
-    const awaitOAuthCode = async (_signal: AbortSignal): Promise<string> => {
-        throw new Error("not implemented");
-    };
-
-
     React.useEffect(() => {
         const params = sfConn?.auth.authParams;
         if (!params || !connectorConfig) {
@@ -241,7 +236,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
 
         // Start the auth flow
         const abortCtrl = new AbortController();
-        authorizeSalesforceConnection(params, connectorConfig, platformType, sfApi, awaitOAuthCode, logger, sfAuthDispatch, abortCtrl.signal);
+        authorizeSalesforceConnection(params, connectorConfig, platformType, sfApi, logger, sfAuthDispatch, abortCtrl.signal);
 
         // Fire the abort signal
         return () => abortCtrl.abort();
