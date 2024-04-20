@@ -6,7 +6,7 @@ use std::sync::RwLock;
 use std::result::Result;
 use std::time::Duration;
 
-use tauri::http::uri::PathAndQuery;
+use tonic::codegen::http::uri::PathAndQuery;
 use tauri::http::HeaderMap;
 use tauri::http::HeaderValue;
 use tonic::metadata::MetadataMap;
