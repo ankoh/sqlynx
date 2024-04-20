@@ -16,15 +16,15 @@ interface OAuthSubscriber {
 
 export abstract class AppEventListener {
     /// The logger
-    logger: Logger;
+    protected logger: Logger;
     /// The oauth subscriber.
     /// There can only be a single OAuth subscriber at a single point in time.
-    oAuthSubscriber: OAuthSubscriber | null = null;
+    private oAuthSubscriber: OAuthSubscriber | null = null;
     /// The navigation subscriber.
     /// There can only be a single navigation subscribe at a single point in time
-    navigateToSubscriber: ((data: proto.sqlynx_app_event.pb.NavigateTo) => void) | null = null;
+    private navigateToSubscriber: ((data: proto.sqlynx_app_event.pb.NavigateTo) => void) | null = null;
     /// The clipboard subscriber
-    clipboardEventHandler: (e: ClipboardEvent) => void;
+    private clipboardEventHandler: (e: ClipboardEvent) => void;
 
     /// Constructor
     constructor(logger: Logger) {

@@ -15,6 +15,7 @@ import { SalesforceConnector } from './connectors/salesforce_connector.js';
 import { ConnectionRegistry } from './connectors/connection_registry.js';
 import { GitHubTheme } from './github_theme.js';
 import { AppConfigProvider } from './app_config.js';
+import { AppEventNavigation } from './app_event_navigation.js';
 import { LoggerProvider } from './platform/logger_provider.js';
 import { PlatformTypeProvider } from './platform/platform_type.js';
 import { HyperDatabaseClientProvider } from './platform/hyperdb_client_provider.js';
@@ -32,28 +33,30 @@ const AppProviders = (props: { children: React.ReactElement }) => (
         <PlatformTypeProvider>
             <LoggerProvider>
                 <AppConfigProvider>
-                    <VersionCheck>
-                        <ConnectionRegistry>
-                            <HyperDatabaseClientProvider>
-                                <SQLynxLoader>
-                                    <AppEventListenerProvider>
-                                        <SalesforceConnector>
-                                            <SessionStateRegistry>
-                                                <ActiveSessionStateProvider>
-                                                    <SessionCommands>
-                                                        <ScriptLoader />
-                                                        <CatalogLoader />
-                                                        <QueryExecutor />
-                                                        <SessionSetup>{props.children}</SessionSetup>
-                                                    </SessionCommands>
-                                                </ActiveSessionStateProvider>
-                                            </SessionStateRegistry>
-                                        </SalesforceConnector>
-                                    </AppEventListenerProvider>
-                                </SQLynxLoader>
-                            </HyperDatabaseClientProvider>
-                        </ConnectionRegistry>
-                    </VersionCheck>
+                    <AppEventListenerProvider>
+                        <AppEventNavigation>
+                            <VersionCheck>
+                                <ConnectionRegistry>
+                                    <HyperDatabaseClientProvider>
+                                        <SQLynxLoader>
+                                            <SalesforceConnector>
+                                                <SessionStateRegistry>
+                                                    <ActiveSessionStateProvider>
+                                                        <SessionCommands>
+                                                            <ScriptLoader />
+                                                            <CatalogLoader />
+                                                            <QueryExecutor />
+                                                            <SessionSetup>{props.children}</SessionSetup>
+                                                        </SessionCommands>
+                                                    </ActiveSessionStateProvider>
+                                                </SessionStateRegistry>
+                                            </SalesforceConnector>
+                                        </SQLynxLoader>
+                                    </HyperDatabaseClientProvider>
+                                </ConnectionRegistry>
+                            </VersionCheck>
+                        </AppEventNavigation>
+                    </AppEventListenerProvider>
                 </AppConfigProvider>
             </LoggerProvider>
         </PlatformTypeProvider>
