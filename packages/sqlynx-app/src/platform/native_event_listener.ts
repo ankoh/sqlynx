@@ -8,15 +8,15 @@ import { AppEventListener } from "./event_listener.js";
 const NATIVE_EVENT_CHANNEL = "sqlynx:event";
 
 export class NativeAppEventListener extends AppEventListener {
-    unlistener: Promise<UnlistenFn> | null;
+    unlistenNativeEvents: Promise<UnlistenFn> | null;
 
     constructor(logger: Logger) {
         super(logger);
-        this.unlistener = null;
+        this.unlistenNativeEvents = null;
     }
 
-    public listen() {
-        this.unlistener = listen(NATIVE_EVENT_CHANNEL, (event: any) => {
+    public listenForAppEvents() {
+        this.unlistenNativeEvents = listen(NATIVE_EVENT_CHANNEL, (event: any) => {
             // Make sure everything arriving here is a valid base64 string
             const dataBase64 = event.payload.message as string;
             if (!dataBase64 || typeof dataBase64 !== 'string') {

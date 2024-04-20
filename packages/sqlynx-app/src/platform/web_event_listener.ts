@@ -5,18 +5,18 @@ import { AppEventListener } from "./event_listener.js";
 import { BASE64_CODEC } from '../utils/base64.js';
 
 export class WebAppEventListener extends AppEventListener {
-    handler: (event: any) => void;
+    onWindowMessage: (event: any) => void;
 
     constructor(logger: Logger) {
         super(logger);
-        this.handler = this.onMessage.bind(this);
+        this.onWindowMessage = this.processMessageEvent.bind(this);
     }
 
-    public listen() {
-        window.addEventListener("message", this.handler);
+    public listenForAppEvents() {
+        window.addEventListener("message", this.onWindowMessage);
     }
 
-    protected onMessage(event: MessageEvent) {
+    protected processMessageEvent(event: MessageEvent) {
         // Very defensively check if it's our message.
         // We're subscribing to ALL window messages after all and should not assume anything.
         const data = event.data;
