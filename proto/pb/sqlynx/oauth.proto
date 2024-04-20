@@ -37,8 +37,10 @@ message OAuthState {
 }
 
 message OAuthRedirectData {
-    /// The OAuth code
-    string code = 1;
     /// The OAuth state
     OAuthState state = 2;
+    /// The OAuth code
+    string code = 1;
+    /// The OAuth error (if any)
+    string error = 3;
 }

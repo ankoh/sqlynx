@@ -30,7 +30,8 @@ import { PlatformType, usePlatformType } from '../platform/platform_type.js';
 import { ConnectionState, createEmptyTimings, unpackSalesforceConnection } from './connection_state.js';
 import { Dispatch } from '../utils/variant.js';
 import { Logger } from '../platform/logger.js';
-import { OAuthListener } from '../platform/oauth_listener.js';
+import { AppEventListener } from '../platform/event_listener.js';
+import { useAppEventListener } from '../platform/event_listener_provider.js';
 import { useAllocatedConnectionState, useConnectionState } from './connection_registry.js';
 import { useLogger } from '../platform/logger_provider.js';
 import { isNativePlatform } from '../platform/native_globals.js';
@@ -73,7 +74,7 @@ import { SalesforceAPIClientInterface } from './salesforce_api_client.js';
 const OAUTH_POPUP_NAME = 'SQLynx OAuth';
 const OAUTH_POPUP_SETTINGS = 'toolbar=no, menubar=no, width=600, height=700, top=100, left=100';
 
-export async function authorizeSalesforceConnection(params: SalesforceAuthParams, config: SalesforceConnectorConfig, platformType: PlatformType, apiClient: SalesforceAPIClientInterface, oauthListener: OAuthListener, logger: Logger, dispatch: Dispatch<SalesforceAuthAction>, abortSignal: AbortSignal) {
+export async function authorizeSalesforceConnection(params: SalesforceAuthParams, config: SalesforceConnectorConfig, platformType: PlatformType, apiClient: SalesforceAPIClientInterface, appEvents: AppEventListener, logger: Logger, dispatch: Dispatch<SalesforceAuthAction>, abortSignal: AbortSignal) {
     try {
         dispatch({
             type: GENERATING_PKCE_CHALLENGE,
@@ -141,9 +142,14 @@ export async function authorizeSalesforceConnection(params: SalesforceAuthParams
             dispatch({ type: OAUTH_NATIVE_LINK_OPENED, value: null });
         }
 
-        // Await the oauth code
-        let authCode = await oauthListener.waitForOAuthCode(abortSignal);
+        // Await the oauth redirect
+        let authCode = await appEvents.waitForOAuthCode(abortSignal);
         abortSignal.throwIfAborted();
+
+        // Received an oauth error?
+        if (authCode.error) {
+            throw new Error(authCode.error);
+        }
 
         dispatch({
             type: REQUESTING_CORE_AUTH_TOKEN,
@@ -153,7 +159,7 @@ export async function authorizeSalesforceConnection(params: SalesforceAuthParams
         const coreAccessToken = await apiClient.getCoreAccessToken(
             config.auth,
             params,
-            authCode,
+            authCode.code,
             pkceChallenge.verifier,
             abortSignal,
         );
@@ -198,6 +204,7 @@ interface Props {
 export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
     const appConfig = useAppConfig();
+    const appEvents = useAppEventListener();
     const platformType = usePlatformType();
     const sfApi = useSalesforceAPI();
     const connectorConfig = appConfig.value?.connectors?.salesforce ?? null;
@@ -236,7 +243,7 @@ export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
 
         // Start the auth flow
         const abortCtrl = new AbortController();
-        authorizeSalesforceConnection(params, connectorConfig, platformType, sfApi, logger, sfAuthDispatch, abortCtrl.signal);
+        authorizeSalesforceConnection(params, connectorConfig, platformType, sfApi, appEvents, logger, sfAuthDispatch, abortCtrl.signal);
 
         // Fire the abort signal
         return () => abortCtrl.abort();

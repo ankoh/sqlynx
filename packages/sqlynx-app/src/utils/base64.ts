@@ -37,7 +37,7 @@ export class Base64Codec {
     };
 
     /// Check if the string is a valid base64 sequence
-    public isValidABase64(base64: string) {
+    public isValidBase64(base64: string) {
         let valid = true;
         let dataLength = base64.length;
         if (base64[base64.length - 1] === "=") {
