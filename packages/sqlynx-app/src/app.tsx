@@ -19,7 +19,7 @@ import { LoggerProvider } from './platform/logger_provider.js';
 import { PlatformTypeProvider } from './platform/platform_type.js';
 import { HyperDatabaseClientProvider } from './platform/hyperdb_client_provider.js';
 import { VersionCheck } from './platform/version_check.js';
-import { OAuthListenerProvider } from './platform/oauth_listener_provider.js';
+import { AppEventListenerProvider } from './platform/event_listener_provider.js';
 
 import { createRoot } from 'react-dom/client';
 import { Route, Routes, Navigate, BrowserRouter, HashRouter } from 'react-router-dom';
@@ -36,7 +36,7 @@ const AppProviders = (props: { children: React.ReactElement }) => (
                         <ConnectionRegistry>
                             <HyperDatabaseClientProvider>
                                 <SQLynxLoader>
-                                    <OAuthListenerProvider>
+                                    <AppEventListenerProvider>
                                         <SalesforceConnector>
                                             <SessionStateRegistry>
                                                 <ActiveSessionStateProvider>
@@ -49,7 +49,7 @@ const AppProviders = (props: { children: React.ReactElement }) => (
                                                 </ActiveSessionStateProvider>
                                             </SessionStateRegistry>
                                         </SalesforceConnector>
-                                    </OAuthListenerProvider>
+                                    </AppEventListenerProvider>
                                 </SQLynxLoader>
                             </HyperDatabaseClientProvider>
                         </ConnectionRegistry>
