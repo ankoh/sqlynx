@@ -4,8 +4,18 @@ import "sqlynx/oauth.proto";
 
 package sqlynx;
 
+message NavigateTo {
+    /// The target path
+    string path = 1;
+    /// The target search parameters
+    map<string, string> search_params = 2;
+}
+
 message AppEvent {
     oneof event_data {
+        /// Navigate to a specific page
+        NavigateTo navigate_to = 2;
+        /// Provide the oauth redirect
         OAuthRedirectData oauth_redirect = 1;
     }
 }

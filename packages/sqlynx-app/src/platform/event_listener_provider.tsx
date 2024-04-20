@@ -18,7 +18,7 @@ export const AppEventListenerProvider: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
     const listener = React.useMemo<AppEventListener>(() => {
         const l = isNativePlatform() ? new NativeAppEventListener(logger) : new WebAppEventListener(logger);
-        l.listen();
+        l.setup();
         return l;
     }, []);
     return (

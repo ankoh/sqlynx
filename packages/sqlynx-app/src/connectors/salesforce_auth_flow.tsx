@@ -143,7 +143,7 @@ export async function authorizeSalesforceConnection(params: SalesforceAuthParams
         }
 
         // Await the oauth redirect
-        let authCode = await appEvents.waitForOAuthCode(abortSignal);
+        let authCode = await appEvents.waitForOAuthRedirect(abortSignal);
         abortSignal.throwIfAborted();
 
         // Received an oauth error?
