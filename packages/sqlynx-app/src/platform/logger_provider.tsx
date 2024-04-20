@@ -14,10 +14,7 @@ type Props = {
 };
 
 export const LoggerProvider: React.FC<Props> = (props: Props) => {
-    // Synchronously setup a logger
     const logger = React.useMemo<Logger>(() => isNativePlatform() ? new NativeLogger() : new WebLogger(), []);
-
-    // Maintain a log buffer version
     return (
         <LOGGER_CTX.Provider value={logger}>
             {props.children}

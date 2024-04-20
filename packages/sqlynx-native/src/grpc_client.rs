@@ -21,7 +21,7 @@ impl GenericGrpcClient {
     pub async fn call_unary(
         &mut self,
         request: tonic::Request<GenericGrpcClientData>,
-        path: tauri::http::uri::PathAndQuery,
+        path: tonic::codegen::http::uri::PathAndQuery,
     ) -> std::result::Result<
         tonic::Response<GenericGrpcClientData>,
         tonic::Status,
@@ -42,7 +42,7 @@ impl GenericGrpcClient {
     pub async fn call_server_streaming(
         &mut self,
         request: tonic::Request<GenericGrpcClientData>,
-        path: tauri::http::uri::PathAndQuery,
+        path: tonic::codegen::http::uri::PathAndQuery,
     ) -> std::result::Result<
         tonic::Response<tonic::codec::Streaming<GenericGrpcClientData>>,
         tonic::Status,
@@ -129,7 +129,7 @@ mod test {
         let mut client = GenericGrpcClient::new(channel);
 
         // Call the unary test function
-        let unary_path = tauri::http::uri::PathAndQuery::from_static(
+        let unary_path = tonic::codegen::http::uri::PathAndQuery::from_static(
             "/sqlynx.test.TestService/TestUnary",
         );
         let unary_param = TestUnaryRequest {
@@ -171,7 +171,7 @@ mod test {
         let mut client = GenericGrpcClient::new(channel);
 
         // Call the unary test function
-        let streaming_path = tauri::http::uri::PathAndQuery::from_static(
+        let streaming_path = tonic::codegen::http::uri::PathAndQuery::from_static(
             "/sqlynx.test.TestService/TestServerStreaming",
         );
         let streaming_param = TestServerStreamingRequest {
