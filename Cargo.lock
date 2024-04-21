@@ -4680,6 +4680,7 @@ dependencies = [
  "tonic",
  "tonic-build",
  "tower-service",
+ "url",
 ]
 
 [[package]]
