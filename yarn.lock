@@ -76,7 +76,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": "npm:^7.7.1"
     "@typescript-eslint/parser": "npm:^7.7.1"
     "@uiw/codemirror-themes-all": "npm:^4.21.25"
-    apache-arrow: "npm:^15.0.2"
+    apache-arrow: "npm:^16.0.0"
     cm6-theme-basic-light: "npm:^0.2.0"
     cm6-theme-nord: "npm:^0.2.0"
     copy-webpack-plugin: "npm:^12.0.2"
@@ -3587,9 +3587,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"apache-arrow@npm:^15.0.2":
-  version: 15.0.2
-  resolution: "apache-arrow@npm:15.0.2"
+"apache-arrow@npm:^16.0.0":
+  version: 16.0.0
+  resolution: "apache-arrow@npm:16.0.0"
   dependencies:
     "@swc/helpers": "npm:^0.5.2"
     "@types/command-line-args": "npm:^5.2.1"
@@ -3602,7 +3602,7 @@ __metadata:
     tslib: "npm:^2.6.2"
   bin:
     arrow2csv: bin/arrow2csv.cjs
-  checksum: 10c0/6e15a41d87cc9cd07431e5a5a06871530bc58bfaaf70671bf2f37d5a5ff04851c96beb19b1118fc41e8d6099761240e05662f000e5803406ded26472d7d2cf39
+  checksum: 10c0/587d4dff24d4982c612456aef1abe6560d1dab4f601ab3492e8dd9b25a65feadcc71b9d61147a6a1abd969008ebe119ba0dfd388243660abb891578d0820092b
   languageName: node
   linkType: hard
 
