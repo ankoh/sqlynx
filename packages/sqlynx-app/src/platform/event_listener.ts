@@ -1,5 +1,6 @@
 import * as proto from '@ankoh/sqlynx-pb';
 
+import { BASE64_CODEC } from '../utils/base64.js';
 import { Logger } from './logger.js';
 
 // An oauth subscriber
@@ -20,9 +21,9 @@ export abstract class AppEventListener {
     /// The oauth subscriber.
     /// There can only be a single OAuth subscriber at a single point in time.
     private oAuthSubscriber: OAuthSubscriber | null = null;
-    /// The navigation subscriber.
+    /// The session setup subscriber.
     /// There can only be a single navigation subscribe at a single point in time
-    private navigateToSubscriber: ((data: proto.sqlynx_app_event.pb.NavigateTo) => void) | null = null;
+    private sessionSetupSubscriber: ((data: proto.sqlynx_session.pb.SessionSetup) => void) | null = null;
     /// The clipboard subscriber
     private clipboardEventHandler: (e: ClipboardEvent) => void;
 
@@ -30,7 +31,7 @@ export abstract class AppEventListener {
     constructor(logger: Logger) {
         this.logger = logger;
         this.oAuthSubscriber = null;
-        this.navigateToSubscriber = null;
+        this.sessionSetupSubscriber = null;
         this.clipboardEventHandler = this.processClipboardEvent.bind(this);
     }
 
@@ -44,25 +45,25 @@ export abstract class AppEventListener {
     protected abstract listenForAppEvents(): void;
 
     /// Called by subclasses when receiving an app event
-    protected dispatchAppEvent(event: proto.sqlynx_app_event.pb.AppEvent) {
-        switch (event.eventData.case) {
+    protected dispatchAppEvent(event: proto.sqlynx_app_event.pb.AppEventData) {
+        switch (event.data.case) {
             case "oauthRedirect": {
-                this.dispatchOAuthRedirect(event.eventData.value);
+                this.dispatchOAuthRedirect(event.data.value);
                 break;
             }
-            case "navigateTo": {
-                this.dispatchNavigateTo(event.eventData.value);
+            case "sessionSetup": {
+                this.dispatchSessionSetup(event.data.value);
                 break;
             }
         }
     }
 
     /// Received navigation event
-    protected dispatchNavigateTo(data: proto.sqlynx_app_event.pb.NavigateTo) {
-        if (!this.navigateToSubscriber) {
+    protected dispatchSessionSetup(data: proto.sqlynx_session.pb.SessionSetup) {
+        if (!this.sessionSetupSubscriber) {
             console.warn("received navigation event but there's no registered subscriber");
         } else {
-            this.navigateToSubscriber(data);
+            this.sessionSetupSubscriber(data);
         }
     }
 
@@ -114,12 +115,12 @@ export abstract class AppEventListener {
     }
 
     /// Subscribe navigation events
-    public subscribeNavigationEvents(handler: (data: proto.sqlynx_app_event.pb.NavigateTo) => void): void {
-        if (this.navigateToSubscriber) {
-            this.logger.error("tried to register more than one navigation subscriber");
+    public subscribeSessionSetupEvents(handler: (data: proto.sqlynx_session.pb.SessionSetup) => void): void {
+        if (this.sessionSetupSubscriber) {
+            this.logger.error("tried to register more than one session setup subscriber");
         } else {
-            this.logger.debug("subscribing to navigation events", "event_listener");
-            this.navigateToSubscriber = handler;
+            this.logger.debug("subscribing to session setup events", "event_listener");
+            this.sessionSetupSubscriber = handler;
         }
     }
 
@@ -129,37 +130,59 @@ export abstract class AppEventListener {
         window.addEventListener("paste", this.clipboardEventHandler);
     }
 
+    /// Helper to unpack app link data
+    protected readAppEvent(dataBase64: any, fromWhat: string) {
+        // Make sure everything arriving here is a valid base64 string
+        if (!dataBase64 || typeof dataBase64 !== 'string') {
+            this.logger.error(`${fromWhat} is not a string`, "event_listener");
+            return null;
+        }
+        // Is a valid base64?
+        if (!BASE64_CODEC.isValidBase64(dataBase64)) {
+            this.logger.error(`${fromWhat} string is not encoded as base64`, "event_listener");
+            return null;
+        }
+        // Try to parse as AppLinkData
+        try {
+            const dataBuffer = BASE64_CODEC.decode(dataBase64);
+            const dataBytes = new Uint8Array(dataBuffer);
+            return proto.sqlynx_app_event.pb.AppEventData.fromBinary(dataBytes);
+        } catch (error: any) {
+            this.logger.error(`${fromWhat} does not encode valid link data`, "event_listener");
+            return null;
+        }
+    }
+
     /// Helper to process a clipboard event
     private processClipboardEvent(event: ClipboardEvent) {
         // Is the pasted text of a deeplink?
         const pastedText = event.clipboardData?.getData("text/plain") ?? null;
         if (pastedText != null && pastedText.startsWith("sqlynx://")) {
+            // Get the data parameter
+            let deepLinkData: any = null;
             try {
                 const deepLink = new URL(pastedText);
-                this.logger.info(`received deep link: ${deepLink.toString()}`, "session_setup");
-
-                // Is there a navigation subscriber?
-                if (this.navigateToSubscriber) {
-                    // Mimic a navigateTo app event
-                    const path = deepLink.pathname;
-                    const searchParams: { [key: string]: string } = {};
-                    for (const [k, v] of deepLink.searchParams) {
-                        searchParams[k] = v;
-                    }
-                    searchParams["deeplink"] = "true";
-                    let eventProto = new proto.sqlynx_app_event.pb.NavigateTo({
-                        path,
-                        searchParams
-                    });
-                    this.navigateToSubscriber(eventProto);
-                } else {
-                    this.logger.warn("deep link was pasted to the clipboard but nobody subscribed to NavigateTo events");
+                this.logger.info(`received deep link: ${deepLink.toString()}`, "event_listener");
+                // Has link data?
+                deepLinkData = deepLink.searchParams.get("data");
+                if (!deepLinkData) {
+                    this.logger.warn(`deep link lacks the query parameter 'data'`, "event_listener");
+                    return;
                 }
-                event.preventDefault();
-                event.stopPropagation();
             } catch (e: any) {
                 console.warn(e);
-                this.logger.warn(`parsing deep link failed with error: ${e.toString()}`, "session_setup");
+                this.logger.warn(`parsing deep link failed with error: ${e.toString()}`, "event_listener");
+            }
+
+            // Unpack the app event
+            let data = this.readAppEvent(deepLinkData, `clipboard data`);
+            if (data != null) {
+                // Stop propagation of clipboard event
+                event.preventDefault();
+                event.stopPropagation();
+
+                // Dispatch App Event
+                this.dispatchAppEvent(data);
             }
         }
     }
