@@ -47,7 +47,7 @@
         "@typescript-eslint/eslint-plugin": "^7.7.0",
         "@typescript-eslint/parser": "^7.7.0",
         "@uiw/codemirror-themes-all": "^4.21.25",
-        "apache-arrow": "^15.0.2",
+        "apache-arrow": "^16.0.0",
         "cm6-theme-basic-light": "^0.2.0",
         "cm6-theme-nord": "^0.2.0",
         "copy-webpack-plugin": "^12.0.2",
