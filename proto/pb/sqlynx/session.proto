@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+import "sqlynx/oauth.proto";
+
+package sqlynx;
+
+message HyperConnectorParams {}
+
+message SalesforceConnectorParams {
+    /// The instance url
+    string instanceUrl = 1;
+    /// The key of the connected app
+    string appConsumerKey = 2;
+}
+
+message BrainstormConnectorParams {}
+
+message ConnectorParams {
+    oneof connector {
+        /// Parameters for Brainstorm sessions
+        BrainstormConnectorParams brainstorm = 1;
+        /// Parameters for Salesforce connections
+        SalesforceConnectorParams salesforce = 2;
+        /// Parameters for direct-to-Hyper connections
+        HyperConnectorParams hyper = 3;
+    }
+}
+
+enum ScriptType {
+    Query = 0;
+    Schema = 1;
+}
+
+message SessionScript {
+    /// The script id
+    uint32 script_id = 1;
+    /// The script type
+    ScriptType script_type = 2;
+    /// The script text
+    string script_text = 3;
+}
+
+message SessionSetup {
+    /// The connector params
+    ConnectorParams connector_params = 1;
+    /// The scripts
+    repeated SessionScript scripts = 2;
+}

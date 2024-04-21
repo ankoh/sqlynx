@@ -22,11 +22,11 @@ pub fn process_deep_link(event: tauri::Event, handle: AppHandle) {
         return;
     }
     // Unpack query parameters
-    let mut event_data = None;
+    let mut link_data = None;
     for (k, v) in link_parsed.query_pairs() {
         match k {
-            Cow::Borrowed("event") => {
-                event_data = Some(v);
+            Cow::Borrowed("data") => {
+                link_data = Some(v);
             }
             k => {
                 log::warn!("unknown deep link parameter `{}`", k);
@@ -34,16 +34,16 @@ pub fn process_deep_link(event: tauri::Event, handle: AppHandle) {
         }
     }
     // Did we receive event data?
-    let event_data = if let Some(event_data) = event_data {
+    let link_data = if let Some(event_data) = link_data {
         event_data
     } else {
-        log::warn!("deep link misses parameter `event`");
+        log::warn!("deep link misses parameter `data`");
         return;
     };
     log::trace!("emitting app event from deep link");
 
     // Forward the event to the PWA
-    match handle.emit("sqlynx:event", event_data.to_string()) {
+    match handle.emit("sqlynx:event", link_data.to_string()) {
         Ok(_) => {},
         Err(e) => {
             log::error!("failed to emit app event for deep link: {}", e);

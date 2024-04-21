@@ -1,5 +1,6 @@
 import * as React from 'react';
 import * as LZString from 'lz-string';
+import * as proto from '@ankoh/sqlynx-pb';
 
 import { ScriptData, ScriptKey } from './session_state.js';
 import { ConnectorType } from '../connectors/connector_info.js';
@@ -54,10 +55,18 @@ function generateSessionLinks(): SessionLinks {
         if (schemaScript?.script) {
             encodeScript(privateParams, 'schema', schemaScript);
         }
-        const privateAndPublicParams = new URLSearchParams(publicParams);
-        for (const [k, v] of privateParams) {
-            privateAndPublicParams.set(k, v);
+        const privateAndPublicParamMap: Record<string, string> = {};
+        for (const [k, v] of publicParams) {
+            privateAndPublicParamMap[k] = v;
         }
+        for (const [k, v] of privateParams) {
+            privateAndPublicParamMap[k] = v;
+        }
+        const deepLinkEvent = proto.sqlynx_app_event.pb.AppEvent({
+            eventData: {
+
+            }
+        });
         return {
             privateDeepLink: new URL(`sqlynx://localhost?${privateAndPublicParams.toString()}`),
             privateWebLink: new URL(`${appUrl}?${privateAndPublicParams.toString()}`),
