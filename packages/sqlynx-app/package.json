@@ -16,7 +16,7 @@
     "devDependencies": {
         "@ankoh/sqlynx-core": "link:../sqlynx-core-api",
         "@ankoh/sqlynx-pb": "link:../sqlynx-pb",
-        "@bufbuild/protobuf": "^1.8.0",
+        "@bufbuild/protobuf": "^1.9.0",
         "@codemirror/autocomplete": "^6.16.0",
         "@codemirror/language": "^6.10.1",
         "@codemirror/state": "^6.4.1",
