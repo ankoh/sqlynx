@@ -45,7 +45,7 @@ __metadata:
   dependencies:
     "@ankoh/sqlynx-core": "link:../sqlynx-core-api"
     "@ankoh/sqlynx-pb": "link:../sqlynx-pb"
-    "@bufbuild/protobuf": "npm:^1.8.0"
+    "@bufbuild/protobuf": "npm:^1.9.0"
     "@codemirror/autocomplete": "npm:^6.16.0"
     "@codemirror/language": "npm:^6.10.1"
     "@codemirror/state": "npm:^6.4.1"
@@ -154,7 +154,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@ankoh/sqlynx-pb@workspace:packages/sqlynx-pb"
   dependencies:
-    "@bufbuild/protobuf": "npm:^1.8.0"
+    "@bufbuild/protobuf": "npm:^1.9.0"
     "@connectrpc/connect": "npm:^1.4.0"
     "@connectrpc/connect-web": "npm:^1.4.0"
     "@types/node": "npm:^20.12.7"
@@ -650,31 +650,49 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@bufbuild/protobuf@npm:1.8.0, @bufbuild/protobuf@npm:^1.7.2, @bufbuild/protobuf@npm:^1.8.0":
+"@bufbuild/protobuf@npm:1.8.0, @bufbuild/protobuf@npm:^1.7.2":
   version: 1.8.0
   resolution: "@bufbuild/protobuf@npm:1.8.0"
   checksum: 10c0/1f8a5a780f6272e7e8d8bb835c2b474485bf9e92213bef96f0fcd550fd77db064c145a5dabdc7b2121167c530fd28b09723d144a6c6baff88296ce6f5860808d
   languageName: node
   linkType: hard
 
-"@bufbuild/protoc-gen-es@npm:^1.8.0":
-  version: 1.8.0
-  resolution: "@bufbuild/protoc-gen-es@npm:1.8.0"
+"@bufbuild/protobuf@npm:1.9.0, @bufbuild/protobuf@npm:^1.9.0":
+  version: 1.9.0
+  resolution: "@bufbuild/protobuf@npm:1.9.0"
+  checksum: 10c0/45b0b6789819defcfaf2f7c3a431310f47e246bad23fdb0d184b015c7c1a047d787232cc349d52c204d8757c274b1148e278e01f82288e19f574b0996c5ef0f1
+  languageName: node
+  linkType: hard
+
+"@bufbuild/protoc-gen-es@npm:^1.9.0":
+  version: 1.9.0
+  resolution: "@bufbuild/protoc-gen-es@npm:1.9.0"
   dependencies:
-    "@bufbuild/protobuf": "npm:^1.8.0"
-    "@bufbuild/protoplugin": "npm:1.8.0"
+    "@bufbuild/protobuf": "npm:^1.9.0"
+    "@bufbuild/protoplugin": "npm:1.9.0"
   peerDependencies:
-    "@bufbuild/protobuf": 1.8.0
+    "@bufbuild/protobuf": 1.9.0
   peerDependenciesMeta:
     "@bufbuild/protobuf":
       optional: true
   bin:
     protoc-gen-es: bin/protoc-gen-es
-  checksum: 10c0/dd75d0d4146d0ce30656c8f25484acf565056b81eb350a177266d5ac82f2046e9960e8189167dc24e66426e09afb8534cc75d7d5a5fdb683be58ef726b72dd33
+  checksum: 10c0/46ca4ba5303b802669c1f64581c9f1f4ad845b812e756557e826790ea2d3d2ce2cf448cc2caf71a73dbd6f88fbe9a8d3a01c01eae70aea197dac1ba4cdd60223
   languageName: node
   linkType: hard
 
-"@bufbuild/protoplugin@npm:1.8.0, @bufbuild/protoplugin@npm:^1.7.2":
+"@bufbuild/protoplugin@npm:1.9.0":
+  version: 1.9.0
+  resolution: "@bufbuild/protoplugin@npm:1.9.0"
+  dependencies:
+    "@bufbuild/protobuf": "npm:1.9.0"
+    "@typescript/vfs": "npm:^1.4.0"
+    typescript: "npm:4.5.2"
+  checksum: 10c0/4627d6b6e448f946e04e899580de72f7ec36bdf57daa1d9eca8bb5d985277767255630de774ce3b47005a959376d51c3e0f0dd6a93f81904945836ff8befb707
+  languageName: node
+  linkType: hard
+
+"@bufbuild/protoplugin@npm:^1.7.2":
   version: 1.8.0
   resolution: "@bufbuild/protoplugin@npm:1.8.0"
   dependencies:
@@ -9811,7 +9829,7 @@ __metadata:
   resolution: "root-workspace-0b6124@workspace:."
   dependencies:
     "@bufbuild/buf": "npm:^1.30.1"
-    "@bufbuild/protoc-gen-es": "npm:^1.8.0"
+    "@bufbuild/protoc-gen-es": "npm:^1.9.0"
     "@connectrpc/protoc-gen-connect-es": "npm:^1.4.0"
     "@tauri-apps/cli": "npm:^2.0.0-beta.13"
     "@types/node": "npm:^20.12.7"
