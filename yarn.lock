@@ -98,7 +98,7 @@ __metadata:
     jest: "npm:^29.7.0"
     lz-string: "npm:^1.5.0"
     mini-css-extract-plugin: "npm:^2.9.0"
-    oauth-pkce: "npm:^0.0.6"
+    oauth-pkce: "npm:^0.0.7"
     prettier: "npm:^3.2.5"
     react: "npm:^18.2.0"
     react-dom: "npm:^18.2.0"
@@ -8681,10 +8681,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"oauth-pkce@npm:^0.0.6":
-  version: 0.0.6
-  resolution: "oauth-pkce@npm:0.0.6"
-  checksum: 10c0/8cf1bf46f8cde70dfc5e4c56271c579c74a8ac4d4e8fb39941c1ef7f0fa332e17cba9b574ea3a55f59005a06b57db8eb2c7b8f8f0c7582fd73ffed14da0089bd
+"oauth-pkce@npm:^0.0.7":
+  version: 0.0.7
+  resolution: "oauth-pkce@npm:0.0.7"
+  checksum: 10c0/1ebe67e318971ac3c9840558db60e0bd290594497b0f3cf3a74f1c6d8edd94bc291070e1114b93e181dcf8e96dde9fb347c473550f7b5dfc5570969103ecf86f
   languageName: node
   linkType: hard
 
