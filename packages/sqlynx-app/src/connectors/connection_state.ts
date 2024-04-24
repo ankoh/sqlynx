@@ -151,7 +151,7 @@ export function checkSalesforceAuth(
     if (state.auth.coreAccessToken || state.auth.dataCloudAccessToken) {
         return ConnectorAuthCheck.AUTHENTICATED;
     }
-    if (state.auth.authStarted) {
+    if (state.auth.timings.authStartedAt) {
         return ConnectorAuthCheck.AUTHENTICATION_IN_PROGRESS;
     }
     if (state.auth.authError) {
@@ -188,4 +188,15 @@ export function buildHyperConnectorParams() {
             value: new proto.sqlynx_session.pb.HyperConnectorParams()
         }
     });
+}
+
+export function buildConnectorParams(state: ConnectionState) {
+    switch (state.type) {
+        case BRAINSTORM_MODE:
+            return buildBrainstormConnectorParams();
+        case HYPER_DATABASE:
+            return buildHyperConnectorParams();
+        case SALESFORCE_DATA_CLOUD:
+            return buildSalesforceConnectorParams(state.value);
+    }
 }

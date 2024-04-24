@@ -2,7 +2,6 @@ import * as proto from '@ankoh/sqlynx-pb';
 import * as React from 'react';
 
 import { SessionSetupPage } from './session_setup_page.js';
-import { SessionLinkGenerator } from './session_link_generator.js';
 import { useBrainstormSessionSetup } from './setup_brainstorm_session.js';
 import { ConnectorInfo, getConnectorInfoForParams } from 'connectors/connector_info.js';
 import { useAppEventListener } from '../platform/event_listener_provider.js';
@@ -87,8 +86,6 @@ export const SessionSetup: React.FC<{ children: React.ReactElement }> = (props: 
             break;
     }
     return (
-        <SessionLinkGenerator>
-            {child}
-        </SessionLinkGenerator>
+        { child }
     );
 };
