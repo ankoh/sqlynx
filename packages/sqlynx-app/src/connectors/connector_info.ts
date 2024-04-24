@@ -1,3 +1,4 @@
+import * as proto from '@ankoh/sqlynx-pb';
 import { isNativePlatform } from "../platform/native_globals.js";
 
 export const BRAINSTORM_MODE = Symbol('BRAINSTORM_MODE');
@@ -91,17 +92,17 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
     },
 ];
 
-export function requiresSwitchingToNative(info: ConnectorInfo) {
-    return !info.platforms.browser && !isNativePlatform();
+export function getConnectorInfoForParams(params: proto.sqlynx_session.pb.ConnectorParams): ConnectorInfo | null {
+    switch (params.connector.case) {
+        case "hyper": return CONNECTOR_INFOS[ConnectorType.HYPER_DATABASE];
+        case "salesforce": return CONNECTOR_INFOS[ConnectorType.SALESFORCE_DATA_CLOUD];
+        case "brainstorm": return CONNECTOR_INFOS[ConnectorType.BRAINSTORM_MODE];
+        default: return null;
+    }
 }
 
-export enum ConnectorAuthCheck {
-    UNKNOWN,
-    AUTHENTICATED,
-    AUTHENTICATION_FAILED,
-    AUTHENTICATION_IN_PROGRESS,
-    AUTHENTICATION_NOT_STARTED,
-    CLIENT_ID_MISMATCH,
+export function requiresSwitchingToNative(info: ConnectorInfo) {
+    return !info.platforms.browser && !isNativePlatform();
 }
 
 export const useConnectorList = () => CONNECTOR_INFOS;

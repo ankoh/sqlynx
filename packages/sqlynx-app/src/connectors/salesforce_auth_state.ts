@@ -1,11 +1,13 @@
-import * as React from 'react';
-import { VariantKind, Dispatch } from '../utils/variant.js';
-import { SalesforceCoreAccessToken, SalesforceDataCloudAccessToken } from './salesforce_api_client.js';
 import { PKCEChallenge } from '../utils/pkce.js';
+import { VariantKind } from '../utils/variant.js';
+import { SalesforceCoreAccessToken, SalesforceDataCloudAccessToken } from './salesforce_api_client.js';
+import { SalesforceAuthParams } from './connector_configs.js';
 
 export interface SalesforceAuthTimings {
-    /// The time when the auth was requested
-    authRequestedAt: Date | null;
+    /// The time when the auth started
+    authStartedAt: Date | null;
+    /// The time when the auth got cancelled
+    authCancelledAt: Date | null;
     /// The time when the auth failed
     authFailedAt: Date | null;
     /// The time when the PKCE generation started
@@ -35,8 +37,6 @@ export interface SalesforceAuthState {
     timings: SalesforceAuthTimings;
     /// The auth params
     authParams: SalesforceAuthParams | null;
-    /// The auth started
-    authStarted: boolean;
     /// The authentication error
     authError: string | null;
     /// The PKCE challenge
@@ -51,24 +51,11 @@ export interface SalesforceAuthState {
     dataCloudAccessToken: SalesforceDataCloudAccessToken | null;
 }
 
-export interface SalesforceAuthConfig {
-    /// The oauth redirect
-    oauthRedirect: string;
-}
-
-export interface SalesforceAuthParams {
-    /// The base URL
-    instanceUrl: string;
-    /// The client id
-    appConsumerKey: string;
-    /// The client secret
-    appConsumerSecret: string | null;
-}
-
 export const AUTH_FLOW_DEFAULT_STATE: SalesforceAuthState = {
     timings: {
-        authRequestedAt: null,
+        authCancelledAt: null,
         authFailedAt: null,
+        authStartedAt: null,
         pkceGenStartedAt: null,
         pkceGenFinishedAt: null,
         openedNativeAuthLinkAt: null,
@@ -81,7 +68,6 @@ export const AUTH_FLOW_DEFAULT_STATE: SalesforceAuthState = {
         dataCloudAccessTokenReceievedAt: null,
     },
     authParams: null,
-    authStarted: false,
     authError: null,
     pkceChallenge: null,
     openAuthWindow: null,
@@ -90,9 +76,8 @@ export const AUTH_FLOW_DEFAULT_STATE: SalesforceAuthState = {
     dataCloudAccessToken: null,
 };
 
-export const CONFIGURE = Symbol('CONFIGURE');
-export const AUTHORIZE = Symbol('AUTHORIZE');
-export const DISCONNECT = Symbol('DISCONNECT');
+export const RESET = Symbol('RESET');
+export const AUTH_CANCELLED = Symbol('AUTH_CANCELLED');
 export const AUTH_FAILED = Symbol('AUTH_FAILED');
 export const AUTH_STARTED = Symbol('AUTH_STARTED');
 export const GENERATING_PKCE_CHALLENGE = Symbol('GENERATING_PKCE_CHALLENGE');
@@ -107,11 +92,10 @@ export const REQUESTING_DATA_CLOUD_ACCESS_TOKEN = Symbol('REQUESTING_DATA_CLOUD_
 export const RECEIVED_DATA_CLOUD_ACCESS_TOKEN = Symbol('RECEIVED_DATA_CLOUD_ACCESS_TOKEN');
 
 export type SalesforceAuthAction =
-    | VariantKind<typeof CONFIGURE, SalesforceAuthParams>
-    | VariantKind<typeof AUTHORIZE, SalesforceAuthParams>
-    | VariantKind<typeof DISCONNECT, null>
+    | VariantKind<typeof RESET, null>
+    | VariantKind<typeof AUTH_STARTED, SalesforceAuthParams>
     | VariantKind<typeof AUTH_FAILED, string>
-    | VariantKind<typeof AUTH_STARTED, null>
+    | VariantKind<typeof AUTH_CANCELLED, string>
     | VariantKind<typeof GENERATING_PKCE_CHALLENGE, null>
     | VariantKind<typeof GENERATED_PKCE_CHALLENGE, PKCEChallenge>
     | VariantKind<typeof OAUTH_NATIVE_LINK_OPENED, null>
@@ -125,10 +109,11 @@ export type SalesforceAuthAction =
 
 export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAuthAction): SalesforceAuthState {
     switch (action.type) {
-        case CONFIGURE:
+        case AUTH_STARTED:
             return {
                 timings: {
-                    authRequestedAt: null,
+                    authStartedAt: new Date(),
+                    authCancelledAt: null,
                     authFailedAt: null,
                     pkceGenStartedAt: null,
                     pkceGenFinishedAt: null,
@@ -142,7 +127,6 @@ export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAu
                     dataCloudAccessTokenReceievedAt: null,
                 },
                 authParams: action.value,
-                authStarted: false,
                 authError: null,
                 pkceChallenge: null,
                 openAuthWindow: null,
@@ -150,35 +134,11 @@ export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAu
                 coreAccessToken: null,
                 dataCloudAccessToken: null,
             };
-        case AUTHORIZE:
+        case RESET:
             return {
                 timings: {
-                    authRequestedAt: new Date(),
-                    authFailedAt: null,
-                    pkceGenStartedAt: null,
-                    pkceGenFinishedAt: null,
-                    openedNativeAuthLinkAt: null,
-                    openedWebAuthWindowAt: null,
-                    closedWebAuthWindowAt: null,
-                    oauthCodeReceivedAt: null,
-                    coreAccessTokenRequestedAt: null,
-                    coreAccessTokenReceivedAt: null,
-                    dataCloudAccessTokenRequestedAt: null,
-                    dataCloudAccessTokenReceievedAt: null,
-                },
-                authParams: action.value,
-                authStarted: false,
-                authError: null,
-                pkceChallenge: null,
-                openAuthWindow: null,
-                coreAuthCode: null,
-                coreAccessToken: null,
-                dataCloudAccessToken: null,
-            };
-        case DISCONNECT:
-            return {
-                timings: {
-                    authRequestedAt: new Date(),
+                    authStartedAt: new Date(),
+                    authCancelledAt: null,
                     authFailedAt: null,
                     pkceGenStartedAt: null,
                     pkceGenFinishedAt: null,
@@ -192,7 +152,6 @@ export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAu
                     dataCloudAccessTokenReceievedAt: null,
                 },
                 authParams: state.authParams,
-                authStarted: false,
                 authError: null,
                 pkceChallenge: null,
                 openAuthWindow: null,
@@ -203,7 +162,15 @@ export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAu
         case AUTH_STARTED:
             return {
                 ...state,
-                authStarted: true,
+            };
+        case AUTH_CANCELLED:
+            return {
+                ...state,
+                timings: {
+                    ...state.timings,
+                    authCancelledAt: new Date(),
+                },
+                authError: action.value
             };
         case AUTH_FAILED:
             return {
@@ -304,9 +271,3 @@ export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAu
             };
     }
 }
-
-export const CONNECTION_ID = React.createContext<number | null>(null);
-export const AUTH_FLOW_DISPATCH_CTX = React.createContext<Dispatch<SalesforceAuthAction> | null>(null);
-
-export const useSalesforceConnectionId = (): number => React.useContext(CONNECTION_ID)!;
-export const useSalesforceAuthFlow = (): Dispatch<SalesforceAuthAction> => React.useContext(AUTH_FLOW_DISPATCH_CTX)!;
