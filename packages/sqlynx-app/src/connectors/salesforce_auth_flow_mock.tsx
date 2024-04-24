@@ -16,7 +16,7 @@ import { useSalesforceAPI } from './salesforce_connector.js';
 import { useAppConfig } from '../app_config.js';
 import { useAllocatedConnectionState, useConnectionState } from './connection_registry.js';
 import { SALESFORCE_DATA_CLOUD } from './connector_info.js';
-import { ConnectionState, createEmptyTimings, unpackSalesforceConnection } from './connection_state.js';
+import { ConnectionState, createEmptyTimings, asSalesforceConnection } from './connection_state.js';
 
 interface Props {
     children: React.ReactElement;
@@ -36,10 +36,10 @@ export const SalesforceAuthFlowMock: React.FC<Props> = (props: Props) => {
         }
     }));
     const [connection, setConnection] = useConnectionState(connectionId);
-    const sfConn = unpackSalesforceConnection(connection);
+    const sfConn = asSalesforceConnection(connection);
     const sfAuth = (auth: SalesforceAuthAction) => {
         setConnection((c: ConnectionState) => {
-            const s = unpackSalesforceConnection(c)!;
+            const s = asSalesforceConnection(c)!;
             return {
                 type: SALESFORCE_DATA_CLOUD,
                 value: {
@@ -56,7 +56,7 @@ export const SalesforceAuthFlowMock: React.FC<Props> = (props: Props) => {
             !sfConn ||
             !sfConn.auth.authParams ||
             sfConn.auth.authStarted ||
-            !sfConn.auth.timings.authRequestedAt)
+            !sfConn.auth.timings.authStartedAt)
             return;
         const abort = new AbortController();
         const pkceChallenge = config.value?.connectors?.salesforce?.mock?.pkceChallenge ?? {
@@ -91,7 +91,7 @@ export const SalesforceAuthFlowMock: React.FC<Props> = (props: Props) => {
                 value: dataCloudAccess,
             });
         })();
-    }, [sfConn?.auth.authParams, sfConn?.auth.authStarted, sfConn?.auth.timings.authRequestedAt, sfConn?.auth.coreAuthCode]);
+    }, [sfConn?.auth.authParams, sfConn?.auth.authStarted, sfConn?.auth.timings.authStartedAt, sfConn?.auth.coreAuthCode]);
 
     return (
         <AUTH_FLOW_DISPATCH_CTX.Provider value={sfAuth}>

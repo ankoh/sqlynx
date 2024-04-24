@@ -5,7 +5,7 @@ import { KeyIcon, PlugIcon, TagIcon } from '@primer/octicons-react';
 
 import { AUTHORIZE, useSalesforceAuthFlow, useSalesforceConnectionId } from '../../connectors/salesforce_auth_state.js';
 import { useConnectionState } from '../../connectors/connection_registry.js';
-import { ConnectionHealth, ConnectionStatus, getSalesforceConnectionStatus, getSalesforceConnnectionHealth, unpackSalesforceConnection } from '../../connectors/connection_state.js';
+import { ConnectionHealth, ConnectionStatus, getSalesforceConnectionStatus, getSalesforceConnnectionHealth, asSalesforceConnection } from '../../connectors/connection_state.js';
 import { TextField, TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_UNKNOWN } from '../../view/text_field.js';
 import { classNames } from '../../utils/classnames.js';
 
@@ -24,7 +24,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
     // Resolve the connection
     const connectionId = useSalesforceConnectionId();
     const [connection, _setConnection] = useConnectionState(connectionId);
-    const sfConnection = unpackSalesforceConnection(connection);
+    const sfConnection = asSalesforceConnection(connection);
     const authFlow = useSalesforceAuthFlow();
     const isAuthenticated = false;
 

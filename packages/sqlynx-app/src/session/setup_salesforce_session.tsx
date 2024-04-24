@@ -6,7 +6,7 @@ import { DEFAULT_BOARD_HEIGHT, DEFAULT_BOARD_WIDTH } from './setup_brainstorm_se
 import { FULL_CATALOG_REFRESH } from '../connectors/catalog_update.js';
 import { useSalesforceAPI } from '../connectors/salesforce_connector.js';
 import { AUTH_FLOW_DEFAULT_STATE, useSalesforceConnectionId } from '../connectors/salesforce_auth_state.js';
-import { createEmptyTimings, unpackSalesforceConnection } from '../connectors/connection_state.js';
+import { createEmptyTimings, asSalesforceConnection } from '../connectors/connection_state.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
 import { RESULT_OK } from '../utils/result.js';
 import { ScriptData, ScriptKey } from './session_state.js';
@@ -24,7 +24,7 @@ export function useSalesforceSessionSetup() {
     const sfApi = useSalesforceAPI();
     const sfConnectionId = useSalesforceConnectionId();
     const [connection, _setConnection] = useConnectionState(sfConnectionId);
-    const sfConnection = unpackSalesforceConnection(connection);
+    const sfConnection = asSalesforceConnection(connection);
 
     const [connectorScriptId, setConnectorScriptId] = React.useState<number | null>(null);
     const [_sessionState, sessionStateDispatch] = useSessionState(connectorScriptId);
