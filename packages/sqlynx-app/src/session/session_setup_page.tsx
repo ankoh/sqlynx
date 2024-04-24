@@ -66,7 +66,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     const salesforceConnectionId = useSalesforceConnectionId();
     const salesforceAuthFlow = useSalesforceAuthFlow();
     const [connectionState, setConnectionState] = useConnectionState(salesforceConnectionId);
-    const [activeSessionState, modifyActiveSession] = useActiveSessionState();
+    const [_activeSessionState, modifyActiveSession] = useActiveSessionState();
     const [logsAreOpen, setLogsAreOpen] = React.useState<boolean>(false);
 
     // Resolve the connector info
@@ -124,6 +124,9 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
 
         // Does the proto specify scripts?
         // Load them asynchronously then after setting up the session.
+        //
+        // XXX This is the first time we're modifying the attached session....
+        //     We should make sure this is sane, ideally we would get the connector info from there.
         const update: any = {};
         for (const script of props.setupProto.scripts) {
             update[script.scriptId] = script.scriptText;
@@ -156,18 +159,18 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
         let scriptElems: React.ReactElement[] = [];
         for (const script of props.setupProto.scripts) {
             let scriptName = null;
-            switch (script.scriptId) {
-                case ScriptKey.MAIN_SCRIPT:
-                    scriptName = "query";
+            switch (script.scriptType) {
+                case proto.sqlynx_session.pb.ScriptType.Query:
+                    scriptName = "Query";
                     break;
-                case ScriptKey.SCHEMA_SCRIPT:
-                    scriptName = "schema";
+                case proto.sqlynx_session.pb.ScriptType.Schema:
+                    scriptName = "Schema";
                     break;
             }
             scriptElems.push(
                 <TextField
                     key={script.scriptId}
-                    name={`Inline Script ${scriptName != null ? scriptName : script.scriptId}`}
+                    name={`Inline ${scriptName != null ? scriptName : script.scriptId}`}
                     value={script.scriptText}
                     readOnly={true}
                     disabled={true}
@@ -186,7 +189,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     // Do we have connector params?
     // Then render them in a dedicated section.
     if (props.setupProto?.connectorParams) {
-        sections.push(<ConnectorParamsSection key={sections.length} params={state?.setupProto?.connectorParams} />);
+        sections.push(<ConnectorParamsSection key={sections.length} params={props?.setupProto?.connectorParams} />);
     }
 
     // Do we need to switch to native?
