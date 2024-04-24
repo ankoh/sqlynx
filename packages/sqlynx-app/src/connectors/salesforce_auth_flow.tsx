@@ -3,43 +3,36 @@ import * as React from 'react';
 import * as proto from '@ankoh/sqlynx-pb';
 
 import {
+    AUTH_CANCELLED,
     AUTH_FAILED,
-    AUTH_FLOW_DEFAULT_STATE,
-    AUTH_FLOW_DISPATCH_CTX,
-    CONNECTION_ID,
+    AUTH_STARTED,
+    RESET,
     GENERATED_PKCE_CHALLENGE,
     GENERATING_PKCE_CHALLENGE,
     OAUTH_NATIVE_LINK_OPENED,
-    OAUTH_WEB_WINDOW_CLOSED,
     OAUTH_WEB_WINDOW_OPENED,
-    RECEIVED_CORE_AUTH_CODE,
     RECEIVED_CORE_AUTH_TOKEN,
     RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
     REQUESTING_CORE_AUTH_TOKEN,
     REQUESTING_DATA_CLOUD_ACCESS_TOKEN,
     SalesforceAuthAction,
-    SalesforceAuthParams,
-    reduceAuthState,
 } from './salesforce_auth_state.js';
 import { useSalesforceAPI } from './salesforce_connector.js';
 import { useAppConfig } from '../app_config.js';
 import { generatePKCEChallenge } from '../utils/pkce.js';
 import { BASE64_CODEC } from '../utils/base64.js';
-import { SALESFORCE_DATA_CLOUD } from './connector_info.js';
 import { PlatformType, usePlatformType } from '../platform/platform_type.js';
-import { ConnectionState, createEmptyTimings, unpackSalesforceConnection } from './connection_state.js';
+import { SalesforceAuthParams, SalesforceConnectorConfig } from './connector_configs.js';
+import { SalesforceAPIClientInterface } from './salesforce_api_client.js';
 import { Dispatch } from '../utils/variant.js';
 import { Logger } from '../platform/logger.js';
 import { AppEventListener } from '../platform/event_listener.js';
 import { useAppEventListener } from '../platform/event_listener_provider.js';
-import { useAllocatedConnectionState, useConnectionState } from './connection_registry.js';
 import { useLogger } from '../platform/logger_provider.js';
 import { isNativePlatform } from '../platform/native_globals.js';
 import { isDebugBuild } from '../globals.js';
 
 import * as shell from '@tauri-apps/plugin-shell';
-import { SalesforceConnectorConfig } from './connector_configs.js';
-import { SalesforceAPIClientInterface } from './salesforce_api_client.js';
 
 // We use the web-server OAuth Flow with or without consumer secret.
 //
@@ -54,7 +47,7 @@ import { SalesforceAPIClientInterface } from './salesforce_api_client.js';
 //      Setup > App Manager > Your App > "Require Proof Key for Code Exchange (PKCE)"
 // Uncheck this:
 //      Setup > App Manager > Your App > "Require Secret for Web Server Flow"
-// What you'll likely need as well:
+// What you'll eventually need as well (not, if you only use the native apps):
 //      Setup > CORS > Enable CORS for OAuth endpoints
 //      Setup > CORS > Allowed Origins List > Add your Origin
 //
@@ -74,13 +67,20 @@ import { SalesforceAPIClientInterface } from './salesforce_api_client.js';
 const OAUTH_POPUP_NAME = 'SQLynx OAuth';
 const OAUTH_POPUP_SETTINGS = 'toolbar=no, menubar=no, width=600, height=700, top=100, left=100';
 
-export async function authorizeSalesforceConnection(params: SalesforceAuthParams, config: SalesforceConnectorConfig, platformType: PlatformType, apiClient: SalesforceAPIClientInterface, appEvents: AppEventListener, logger: Logger, dispatch: Dispatch<SalesforceAuthAction>, abortSignal: AbortSignal) {
+export async function authorizeSalesforceConnection(dispatch: Dispatch<SalesforceAuthAction>, logger: Logger, params: SalesforceAuthParams, config: SalesforceConnectorConfig, platformType: PlatformType, apiClient: SalesforceAPIClientInterface, appEvents: AppEventListener, abortSignal: AbortSignal): Promise<void> {
     try {
+        // Start the authorization process
+        dispatch({
+            type: AUTH_STARTED,
+            value: params,
+        });
+        abortSignal.throwIfAborted()
+
+        // Generate new PKCE challenge
         dispatch({
             type: GENERATING_PKCE_CHALLENGE,
             value: null,
         });
-        // Generate new PKCE challenge
         const pkceChallenge = await generatePKCEChallenge();
         abortSignal.throwIfAborted();
         dispatch({
@@ -151,11 +151,11 @@ export async function authorizeSalesforceConnection(params: SalesforceAuthParams
             throw new Error(authCode.error);
         }
 
+        // Request the core access token
         dispatch({
             type: REQUESTING_CORE_AUTH_TOKEN,
             value: null,
         });
-        // Request the core access token
         const coreAccessToken = await apiClient.getCoreAccessToken(
             config.auth,
             params,
@@ -170,11 +170,11 @@ export async function authorizeSalesforceConnection(params: SalesforceAuthParams
         });
         abortSignal.throwIfAborted();
 
+        // Request the data cloud access token
         dispatch({
             type: REQUESTING_DATA_CLOUD_ACCESS_TOKEN,
             value: null,
         });
-        // Request the data cloud access token
         const token = await apiClient.getDataCloudAccessToken(coreAccessToken, abortSignal);
         console.log(token);
         dispatch({
@@ -186,6 +186,10 @@ export async function authorizeSalesforceConnection(params: SalesforceAuthParams
     } catch (error: any) {
         if (error.name === 'AbortError') {
             logger.warn("oauth flow was aborted");
+            dispatch({
+                type: AUTH_CANCELLED,
+                value: error.message,
+            });
         } else if (error instanceof Error) {
             logger.error(`oauth flow failed with error: ${error.toString()}`);
             dispatch({
@@ -196,62 +200,44 @@ export async function authorizeSalesforceConnection(params: SalesforceAuthParams
     }
 }
 
+export interface SalesforceAuthFlowApi {
+    authorize(dispatch: Dispatch<SalesforceAuthAction>, params: SalesforceAuthParams, abortSignal: AbortSignal): Promise<void>
+    reset(dispatch: Dispatch<SalesforceAuthAction>): Promise<void>
+};
+
+export const AUTH_FLOW_CTX = React.createContext<SalesforceAuthFlowApi | null>(null);
+export const useSalesforceAuthFlow = () => React.useContext(AUTH_FLOW_CTX!);
+
 interface Props {
     /// The children
     children: React.ReactElement;
 }
 
-export const SalesforceAuthFlow: React.FC<Props> = (props: Props) => {
+export const SalesforceAuthFlowProvider: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
     const appConfig = useAppConfig();
     const appEvents = useAppEventListener();
     const platformType = usePlatformType();
-    const sfApi = useSalesforceAPI();
+    const salesforceApi = useSalesforceAPI();
     const connectorConfig = appConfig.value?.connectors?.salesforce ?? null;
 
-    // Pre-allocate a connection id for all Salesforce connections
-    // This might change in the future when we start maintaining multiple connections per connector.
-    // In that case, someone else would create the connection id, and we would need an "active" connection id provider
-    // similar to how we register the active session.
-    const connectionId = useAllocatedConnectionState((_) => ({
-        type: SALESFORCE_DATA_CLOUD,
-        value: {
-            timings: createEmptyTimings(),
-            auth: AUTH_FLOW_DEFAULT_STATE
+    const api = React.useMemo<SalesforceAuthFlowApi | null>(() => {
+        if (!connectorConfig) {
+            return null;
         }
-    }));
-    const [connection, setConnection] = useConnectionState(connectionId);
-    const sfConn = unpackSalesforceConnection(connection);
-    const sfAuthDispatch = (auth: SalesforceAuthAction) => {
-        setConnection((c: ConnectionState) => {
-            const s = unpackSalesforceConnection(c)!;
-            return {
-                type: SALESFORCE_DATA_CLOUD,
-                value: {
-                    ...s,
-                    auth: reduceAuthState(s.auth, auth)
-                }
-            };
-        });
-    };
-
-    React.useEffect(() => {
-        const params = sfConn?.auth.authParams;
-        if (!params || !connectorConfig) {
-            return;
-        }
-
-        // Start the auth flow
-        const abortCtrl = new AbortController();
-        authorizeSalesforceConnection(params, connectorConfig, platformType, sfApi, appEvents, logger, sfAuthDispatch, abortCtrl.signal);
-
-        // Fire the abort signal
-        return () => abortCtrl.abort();
-    }, [sfConn?.auth.authParams, connectorConfig]);
+        const auth = async (dispatch: Dispatch<SalesforceAuthAction>, params: SalesforceAuthParams, abort: AbortSignal) => {
+            return authorizeSalesforceConnection(dispatch, logger, params, connectorConfig, platformType, salesforceApi, appEvents, abort);
+        };
+        const reset = async (dispatch: Dispatch<SalesforceAuthAction>) => {
+            dispatch({
+                type: RESET,
+                value: null,
+            })
+        };
+        return { authorize: auth, reset: reset };
+    }, [connectorConfig]);
 
     return (
-        <AUTH_FLOW_DISPATCH_CTX.Provider value={sfAuthDispatch}>
-            <CONNECTION_ID.Provider value={connectionId}>{props.children}</CONNECTION_ID.Provider>
-        </AUTH_FLOW_DISPATCH_CTX.Provider>
+        <AUTH_FLOW_CTX.Provider value={api}>{props.children}</AUTH_FLOW_CTX.Provider>
     );
 };

@@ -45,8 +45,8 @@ function triggerFlow(state: proto.sqlynx_oauth.pb.OAuthState, code: string, logg
                 logger.error("window opener is undefined", "oauth_redirect");
                 return;
             }
-            const eventMessage = new proto.sqlynx_app_event.pb.AppEvent({
-                eventData: {
+            const eventMessage = new proto.sqlynx_app_event.pb.AppEventData({
+                data: {
                     case: "oauthRedirect",
                     value: new proto.sqlynx_oauth.pb.OAuthRedirectData({ code, state })
                 }

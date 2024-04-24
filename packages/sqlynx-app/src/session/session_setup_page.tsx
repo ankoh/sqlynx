@@ -1,42 +1,33 @@
+import * as proto from '@ankoh/sqlynx-pb';
 import * as React from 'react';
 
-import * as LZString from 'lz-string';
 import { Button, IconButton } from '@primer/react';
 
-import {
-    CONNECTOR_INFOS,
-    ConnectorAuthCheck,
-    ConnectorInfo,
-    ConnectorType,
-    HYPER_DATABASE,
-    BRAINSTORM_MODE,
-    SALESFORCE_DATA_CLOUD,
-    requiresSwitchingToNative,
-} from '../connectors/connector_info.js';
-import { ConnectorSetupParamVariant, checkSalesforceAuthSetup, readConnectorParamsFromURL } from '../connectors/connector_url_params.js';
-import { AUTHORIZE, useSalesforceAuthFlow, useSalesforceConnectionId } from '../connectors/salesforce_auth_state.js';
+import { formatHHMMSS } from '../utils/format.js';
+import { useLogger } from '../platform/logger_provider.js';
+import { useSalesforceAuthFlow } from '../connectors/salesforce_auth_flow.js';
+import { useSalesforceConnectionId } from 'connectors/salesforce_connector.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
-import { useActiveSessionSelector, useActiveSessionState } from './active_session.js';
-import { unpackSalesforceConnection } from '../connectors/connection_state.js';
-import { REPLACE_SCRIPT_CONTENT } from './session_state_reducer.js';
+import { useActiveSessionState } from './active_session.js';
+import { ConnectorInfo, SALESFORCE_DATA_CLOUD, requiresSwitchingToNative } from '../connectors/connector_info.js';
+import { ConnectorAuthCheck, checkSalesforceAuth, asSalesforceConnection, ConnectionState } from '../connectors/connection_state.js';
+import { SalesforceAuthAction, reduceAuthState } from '../connectors/salesforce_auth_state.js';
+import { SalesforceAuthParams } from '../connectors/connector_configs.js';
 import { SQLYNX_VERSION } from '../globals.js';
-import { ScriptKey } from './session_state.js';
+import { REPLACE_SCRIPT_CONTENT } from './session_state_reducer.js';
 import { TextField } from '../view/text_field.js';
 import { LogViewerInPortal } from '../view/log_viewer.js';
-import { useLogger } from '../platform/logger_provider.js';
 
 import * as page_styles from '../view/banner_page.module.css';
 import * as symbols from '../../static/svg/symbols.generated.svg';
+import { ScriptKey } from './session_state.js';
+
+const AUTOTRIGGER_DELAY = 2000;
 
 interface Props {
-    searchParams: URLSearchParams;
+    setupProto: proto.sqlynx_session.pb.SessionSetup;
+    connectorInfo: ConnectorInfo;
     onDone: () => void;
-}
-
-interface State {
-    scriptText: string | null;
-    schemaText: string | null;
-    connectorParams: ConnectorSetupParamVariant | null;
 }
 
 const ConnectorParamsSection: React.FC<{ params: ConnectorSetupParamVariant }> = (props: { params: ConnectorSetupParamVariant }) => {
@@ -70,195 +61,166 @@ const ConnectorParamsSection: React.FC<{ params: ConnectorSetupParamVariant }> =
 };
 
 export const SessionSetupPage: React.FC<Props> = (props: Props) => {
+    const now = new Date();
     const logger = useLogger();
+    const salesforceConnectionId = useSalesforceConnectionId();
+    const salesforceAuthFlow = useSalesforceAuthFlow();
+    const [connectionState, setConnectionState] = useConnectionState(salesforceConnectionId);
+    const [activeSessionState, modifyActiveSession] = useActiveSessionState();
     const [logsAreOpen, setLogsAreOpen] = React.useState<boolean>(false);
-    const sfConnId = useSalesforceConnectionId();
-    const sfAuth = useSalesforceAuthFlow();
-    const [connection, _setConnection] = useConnectionState(sfConnId);
-
-    const [activeSession, modifyActiveSession] = useActiveSessionState();
-    const [state, setState] = React.useState<State | null>(null);
-
-    // Parse setup parameters and make them available through a state.
-    React.useEffect(() => {
-        // Read the inline scripts
-        const scriptParam = props.searchParams.get('script');
-        const schemaParam = props.searchParams.get('schema');
-        let scriptText = null;
-        let schemaText = null;
-        if (scriptParam !== null) {
-            scriptText = LZString.decompressFromBase64(scriptParam);
-        }
-        if (schemaParam !== null) {
-            schemaText = LZString.decompressFromBase64(schemaParam);
-        }
-        // Unpack the URL parameters
-        const connectorParams = readConnectorParamsFromURL(props.searchParams);
-        setState({
-            scriptText,
-            schemaText,
-            connectorParams,
-        });
-    }, []);
 
     // Resolve the connector info
-    let connectorInfo: ConnectorInfo | null = null;
     let connectorAuthCheck: ConnectorAuthCheck | null = null;
-    switch (state?.connectorParams?.type) {
-        case SALESFORCE_DATA_CLOUD:
-            connectorInfo = CONNECTOR_INFOS[ConnectorType.SALESFORCE_DATA_CLOUD as number];
-            connectorAuthCheck = checkSalesforceAuthSetup(unpackSalesforceConnection(connection), state.connectorParams.value);
+    switch (props.setupProto.connectorParams?.connector.case) {
+        case "salesforce":
+            connectorAuthCheck = checkSalesforceAuth(asSalesforceConnection(connectionState), props.setupProto.connectorParams.connector.value);
             break;
-        case HYPER_DATABASE:
-            connectorInfo = CONNECTOR_INFOS[ConnectorType.HYPER_DATABASE as number];
-            break;
-        case BRAINSTORM_MODE:
-            connectorInfo = CONNECTOR_INFOS[ConnectorType.BRAINSTORM_MODE as number];
+        default:
             break;
     }
 
     // Need to switch to native?
     // Some connectors only run in the native app.
-    let canExecuteHere = connectorInfo ? !requiresSwitchingToNative(connectorInfo) : true;
-    if (props.searchParams.has("here")) {
+    let canExecuteHere = props.connectorInfo ? !requiresSwitchingToNative(props.connectorInfo) : true;
+    if (props.setupProto.noPlatformCheck) {
         canExecuteHere = true;
     }
 
-    // Initial attempt to auto-trigger the authorization.
-    const didAuthOnce = React.useRef<boolean>(false);
-    React.useEffect(() => {
-        if (
-            didAuthOnce.current ||
-            state == null ||
-            state.connectorParams == null ||
-            !canExecuteHere ||
-            connectorAuthCheck != ConnectorAuthCheck.AUTHENTICATION_NOT_STARTED
-        ) {
-            return;
-        }
-        didAuthOnce.current = true;
-        switch (state?.connectorParams?.type) {
-            case SALESFORCE_DATA_CLOUD:
-                // Only start the auth flow if we know we can support it.
-                // Right now, the Salesforce connector only works locally.
-                sfAuth({
-                    type: AUTHORIZE,
-                    value: {
-                        instanceUrl: state.connectorParams.value.instanceUrl ?? '', // XXX Warn if params make no sense
-                        appConsumerKey: state.connectorParams.value.appConsumerKey ?? '',
-                        appConsumerSecret: null,
-                    },
-                });
-                break;
-            case HYPER_DATABASE:
-                break;
-            case BRAINSTORM_MODE:
-                break;
-        }
-    }, [state, connectorAuthCheck]);
+    // Helper to setup the session
+    const configure = React.useCallback(async () => {
+        // Check which connector configuring
+        const connectorParams = props.setupProto.connectorParams?.connector;
+        switch (connectorParams?.case) {
+            case "salesforce": {
+                // Salesforce auth flow not yet ready?
+                if (!salesforceAuthFlow) {
+                    return;
+                }
+                // Helper to dispatch auth state actions against the connection state
+                const salesforceAuthDispatch = (action: SalesforceAuthAction) => {
+                    setConnectionState((c: ConnectionState) => {
+                        const s = asSalesforceConnection(c)!;
+                        return {
+                            type: SALESFORCE_DATA_CLOUD,
+                            value: {
+                                ...s,
+                                auth: reduceAuthState(s.auth, action)
+                            }
+                        };
+                    });
+                };
+                // Authorize the client
+                const abortController = new AbortController();
+                const authParams: SalesforceAuthParams = {
+                    instanceUrl: connectorParams.value.instanceUrl,
+                    appConsumerKey: connectorParams.value.appConsumerKey,
+                    appConsumerSecret: null,
+                };
+                await salesforceAuthFlow.authorize(salesforceAuthDispatch, authParams, abortController.signal);
 
-    // Replace the script content with the inlined text after authentication finished.
-    // We could think about replacing the script earlier but it's not visible anyway.
-    const didLoadScriptOnce = React.useRef<boolean>(false);
-    React.useEffect(() => {
-        if (
-            didLoadScriptOnce.current ||
-            state == null ||
-            state.connectorParams == null ||
-            connectorInfo !== activeSession?.connectorInfo ||
-            connectorAuthCheck != ConnectorAuthCheck.AUTHENTICATED
-        ) {
-            return;
+                break;
+            }
         }
-        didLoadScriptOnce.current = true;
+
+        // Does the proto specify scripts?
+        // Load them asynchronously then after setting up the session.
         const update: any = {};
-        if (state.scriptText !== null) {
-            update[ScriptKey.MAIN_SCRIPT] = state.scriptText;
-        }
-        if (state.schemaText !== null) {
-            update[ScriptKey.SCHEMA_SCRIPT] = state.schemaText;
+        for (const script of props.setupProto.scripts) {
+            update[script.scriptId] = script.scriptText;
         }
         modifyActiveSession({ type: REPLACE_SCRIPT_CONTENT, value: update });
-    }, [state, activeSession, connectorAuthCheck]);
+
+        // We're done, return close the session setup page
+        props.onDone();
+
+    }, [salesforceAuthFlow]);
+
+    // Setup config auto-trigger
+    const autoTriggersAt = React.useMemo(() => new Date(now.getTime() + AUTOTRIGGER_DELAY), []);
+    const remainingUntilAutoTrigger = Math.max(autoTriggersAt.getTime(), now.getTime()) - now.getTime();
+    React.useEffect(() => {
+        // Skip if the connector can't be used here
+        if (!canExecuteHere) {
+            logger.info("connector cannot be used here, skipping setup trigger", "session_setup");
+            return () => { };
+        }
+        // Otherwise setup an autotrigger for the setup
+        logger.info(`setup config auto-trigger in ${formatHHMMSS(remainingUntilAutoTrigger / 1000)}`, "session_setup");
+        const timeoutId = setTimeout(() => configure, remainingUntilAutoTrigger);
+        return () => clearTimeout(timeoutId);
+    }, [props.setupProto]);
 
     // Collect all sections (after parsing the params)
     let sections: React.ReactElement[] = [];
-    if (state) {
-        if (!connectorInfo) {
-            // Unknown connector
-            sections.push(
-                <div key={sections.length} className={page_styles.card_section}>
-                    <div className={page_styles.card_section_description}>
-                        Connector is unsupported
-                    </div>
-                </div>);
-        } else {
-            if (((state?.scriptText?.length ?? 0) > 0) || ((state?.schemaText?.length ?? 0) > 0)) {
-                sections.push(
-                    <div key={sections.length} className={page_styles.card_section}>
-                        <div className={page_styles.section_entries}>
-                            {(state?.scriptText?.length ?? 0) > 0 &&
-                                <TextField
-                                    name="Inline Script"
-                                    value={state?.scriptText ?? ""}
-                                    readOnly={true}
-                                    disabled={true}
-                                    leadingVisual={() => <div>Script text with 0 characters</div>}
-                                />
-                            }
-                            {(state?.schemaText?.length ?? 0) > 0 &&
-                                <TextField
-                                    name="Inline Schema"
-                                    value={state?.schemaText ?? ""}
-                                    readOnly={true}
-                                    disabled={true}
-                                    leadingVisual={() => <div>Schema text with 0 characters</div>}
-                                />
-                            }
-                        </div>
-                    </div>
-                );
+    if (props.setupProto.scripts.length > 0) {
+        let scriptElems: React.ReactElement[] = [];
+        for (const script of props.setupProto.scripts) {
+            let scriptName = null;
+            switch (script.scriptId) {
+                case ScriptKey.MAIN_SCRIPT:
+                    scriptName = "query";
+                    break;
+                case ScriptKey.SCHEMA_SCRIPT:
+                    scriptName = "schema";
+                    break;
             }
-            // Do we have connector params?
-            // Then render them in a dedicated section.
-            if (state.connectorParams) {
-                sections.push(<ConnectorParamsSection key={sections.length} params={state?.connectorParams} />);
-            }
-
-            // Do we need to switch to native?
-            // Render a warning, information where to get the app and a button to switch.
-            if (!canExecuteHere) {
-                const appLink = new URL(`sqlynx://localhost?${props.searchParams.toString()}`);
-                sections.push(
-                    <div key={sections.length} className={page_styles.card_actions}>
-                        <Button
-                            className={page_styles.card_action_right}
-                            variant="primary"
-                            onClick={() => {
-                                logger.info(`opening deep link: ${appLink}`);
-                                const link = document.createElement('a');
-                                link.href = appLink.toString();
-                                link.click();
-                            }}>
-                            Open App
-                        </Button>
-                    </div>
-                );
-
-            } else {
-                // We can stay here, render normal action bar
-                sections.push(
-                    <div key={sections.length} className={page_styles.card_actions}>
-                        <Button
-                            className={page_styles.card_action_right}
-                            variant="primary"
-                            onClick={() => props.onDone()}>
-                            Continue
-                        </Button>
-                    </div>
-                );
-            }
+            scriptElems.push(
+                <TextField
+                    key={script.scriptId}
+                    name={`Inline Script ${scriptName != null ? scriptName : script.scriptId}`}
+                    value={script.scriptText}
+                    readOnly={true}
+                    disabled={true}
+                    leadingVisual={() => <div>Script text with 0 characters</div>}
+                />
+            )
         }
+        sections.push(
+            <div key={sections.length} className={page_styles.card_section}>
+                <div className={page_styles.section_entries}>
+                    {scriptElems}
+                </div>
+            </div>
+        );
+    }
+    // Do we have connector params?
+    // Then render them in a dedicated section.
+    if (props.setupProto?.connectorParams) {
+        sections.push(<ConnectorParamsSection key={sections.length} params={state?.setupProto?.connectorParams} />);
+    }
+
+    // Do we need to switch to native?
+    // Render a warning, information where to get the app and a button to switch.
+    if (!canExecuteHere) {
+        const appLink = new URL(`sqlynx://localhost?${props.searchParams.toString()}`);
+        sections.push(
+            <div key={sections.length} className={page_styles.card_actions}>
+                <Button
+                    className={page_styles.card_action_right}
+                    variant="primary"
+                    onClick={() => {
+                        logger.info(`opening deep link: ${appLink}`);
+                        const link = document.createElement('a');
+                        link.href = appLink.toString();
+                        link.click();
+                    }}>
+                    Open App
+                </Button>
+            </div>
+        );
+
+    } else {
+        // We can stay here, render normal action bar
+        sections.push(
+            <div key={sections.length} className={page_styles.card_actions}>
+                <Button
+                    className={page_styles.card_action_right}
+                    variant="primary"
+                    onClick={() => props.onDone()}>
+                    Continue
+                </Button>
+            </div>
+        );
     }
 
     // Render the page

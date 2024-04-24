@@ -124,6 +124,15 @@ export abstract class AppEventListener {
         }
     }
 
+    /// Unsubscribe from session setup events
+    public unsubscribeSessionSetupEvents(handler: (data: proto.sqlynx_session.pb.SessionSetup) => void): void {
+        if (this.sessionSetupSubscriber != handler) {
+            this.logger.error("tried to unregister a session setup subscriber that is not registered");
+        } else {
+            this.sessionSetupSubscriber = null;
+        }
+    }
+
     /// Method to listen for pasted sqlynx links
     private listenForClipboardEvents() {
         this.logger.debug("subscribing to clipboard events", "event_listener");
@@ -142,7 +151,7 @@ export abstract class AppEventListener {
             this.logger.error(`${fromWhat} string is not encoded as base64`, "event_listener");
             return null;
         }
-        // Try to parse as AppLinkData
+        // Try to parse as app event data
         try {
             const dataBuffer = BASE64_CODEC.decode(dataBase64);
             const dataBytes = new Uint8Array(dataBuffer);

@@ -1,5 +1,18 @@
 import { SalesforceConnectorMockConfig } from '../connectors/salesforce_api_client_mock.js';
-import { SalesforceAuthConfig, SalesforceAuthParams } from '../connectors/salesforce_auth_state.js';
+
+export interface SalesforceAuthConfig {
+    /// The oauth redirect
+    oauthRedirect: string;
+}
+
+export interface SalesforceAuthParams {
+    /// The base URL
+    instanceUrl: string;
+    /// The client id
+    appConsumerKey: string;
+    /// The client secret
+    appConsumerSecret: string | null;
+}
 
 export interface SalesforceConnectorConfig {
     auth: SalesforceAuthConfig;

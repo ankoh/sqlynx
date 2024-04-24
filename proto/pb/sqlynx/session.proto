@@ -45,4 +45,6 @@ message SessionSetup {
     ConnectorParams connector_params = 1;
     /// The scripts
     repeated SessionScript scripts = 2;
+    /// The flag to disable the platform check
+    bool no_platform_check = 3;
 }

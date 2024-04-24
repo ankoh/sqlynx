@@ -1,3 +1,5 @@
+import * as proto from '@ankoh/sqlynx-pb';
+
 import { HyperDatabaseConnection } from "../platform/hyperdb_client.js";
 import { VariantKind } from "../utils/variant.js";
 import { BRAINSTORM_MODE, HYPER_DATABASE, SALESFORCE_DATA_CLOUD } from "./connector_info.js";
@@ -53,6 +55,15 @@ export enum ConnectionStatus {
     AUTHENTICATION_COMPLETED,
 }
 
+export enum ConnectorAuthCheck {
+    UNKNOWN,
+    AUTHENTICATED,
+    AUTHENTICATION_FAILED,
+    AUTHENTICATION_IN_PROGRESS,
+    AUTHENTICATION_NOT_STARTED,
+    CLIENT_ID_MISMATCH,
+}
+
 export function createEmptyTimings(): ConnectionTimings {
     return {
         totalQueriesStarted: BigInt(0),
@@ -63,7 +74,7 @@ export function createEmptyTimings(): ConnectionTimings {
     };
 }
 
-export function unpackSalesforceConnection(state: ConnectionState | null): SalesforceConnectorState | null {
+export function asSalesforceConnection(state: ConnectionState | null): SalesforceConnectorState | null {
     if (state == null) return null;
     switch (state.type) {
         case SALESFORCE_DATA_CLOUD: return state.value;
@@ -76,7 +87,7 @@ export function getSalesforceConnectionStatus(conn: SalesforceConnectorState | n
         return ConnectionStatus.UNKNOWN;
     }
     let state: ConnectionStatus = ConnectionStatus.UNKNOWN;
-    if (!conn.auth.authStarted) {
+    if (!conn.auth.timings.authStartedAt) {
         state = ConnectionStatus.NOT_STARTED;
     } else if (conn.auth.authError) {
         state = ConnectionStatus.AUTHENTICATION_FAILED;
@@ -98,7 +109,7 @@ export function getSalesforceConnectionStatus(conn: SalesforceConnectorState | n
         } else if (!conn.auth.timings.oauthCodeReceivedAt) {
             state = ConnectionStatus.OAUTH_CODE_RECEIVED;
         }
-    } else if (conn.auth.timings.authRequestedAt) {
+    } else if (conn.auth.timings.authStartedAt) {
         state = ConnectionStatus.AUTHENTICATION_REQUESTED;
     }
     return state;
@@ -122,4 +133,59 @@ export function getSalesforceConnnectionHealth(status: ConnectionStatus): Connec
         case ConnectionStatus.AUTHENTICATION_FAILED:
             return ConnectionHealth.FAILED;
     }
+}
+
+export function checkSalesforceAuth(
+    state: SalesforceConnectorState | null,
+    params: proto.sqlynx_session.pb.SalesforceConnectorParams,
+): ConnectorAuthCheck {
+    if (!state) {
+        return ConnectorAuthCheck.UNKNOWN;
+    }
+    if (!state.auth.authParams) {
+        return ConnectorAuthCheck.AUTHENTICATION_NOT_STARTED;
+    }
+    if (state.auth.authParams.appConsumerKey != params.appConsumerKey) {
+        return ConnectorAuthCheck.CLIENT_ID_MISMATCH;
+    }
+    if (state.auth.coreAccessToken || state.auth.dataCloudAccessToken) {
+        return ConnectorAuthCheck.AUTHENTICATED;
+    }
+    if (state.auth.authStarted) {
+        return ConnectorAuthCheck.AUTHENTICATION_IN_PROGRESS;
+    }
+    if (state.auth.authError) {
+        return ConnectorAuthCheck.AUTHENTICATION_FAILED;
+    }
+    return ConnectorAuthCheck.UNKNOWN;
+}
+
+export function buildSalesforceConnectorParams(state: SalesforceConnectorState | null) {
+    return new proto.sqlynx_session.pb.ConnectorParams({
+        connector: {
+            case: "salesforce",
+            value: new proto.sqlynx_session.pb.SalesforceConnectorParams({
+                instanceUrl: state?.auth.authParams?.instanceUrl,
+                appConsumerKey: state?.auth.authParams?.appConsumerKey
+            })
+        }
+    });
+}
+
+export function buildBrainstormConnectorParams() {
+    return new proto.sqlynx_session.pb.ConnectorParams({
+        connector: {
+            case: "brainstorm",
+            value: new proto.sqlynx_session.pb.BrainstormConnectorParams()
+        }
+    });
+}
+
+export function buildHyperConnectorParams() {
+    return new proto.sqlynx_session.pb.ConnectorParams({
+        connector: {
+            case: "hyper",
+            value: new proto.sqlynx_session.pb.HyperConnectorParams()
+        }
+    });
 }
