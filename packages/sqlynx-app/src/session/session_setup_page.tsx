@@ -11,6 +11,7 @@ import { useConnectionState } from '../connectors/connection_registry.js';
 import { useActiveSessionState } from './active_session.js';
 import { ConnectorInfo, SALESFORCE_DATA_CLOUD, requiresSwitchingToNative } from '../connectors/connector_info.js';
 import { ConnectorAuthCheck, checkSalesforceAuth, asSalesforceConnection, ConnectionState } from '../connectors/connection_state.js';
+import { SessionLinkTarget, generateSessionSetupUrl } from './session_setup_url.js';
 import { SalesforceAuthAction, reduceAuthState } from '../connectors/salesforce_auth_state.js';
 import { SalesforceAuthParams } from '../connectors/connector_configs.js';
 import { SQLYNX_VERSION } from '../globals.js';
@@ -20,7 +21,6 @@ import { LogViewerInPortal } from '../view/log_viewer.js';
 
 import * as page_styles from '../view/banner_page.module.css';
 import * as symbols from '../../static/svg/symbols.generated.svg';
-import { ScriptKey } from './session_state.js';
 
 const AUTOTRIGGER_DELAY = 2000;
 
@@ -66,7 +66,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     const salesforceConnectionId = useSalesforceConnectionId();
     const salesforceAuthFlow = useSalesforceAuthFlow();
     const [connectionState, setConnectionState] = useConnectionState(salesforceConnectionId);
-    const [_activeSessionState, modifyActiveSession] = useActiveSessionState();
+    const [activeSessionState, modifyActiveSession] = useActiveSessionState();
     const [logsAreOpen, setLogsAreOpen] = React.useState<boolean>(false);
 
     // Resolve the connector info
@@ -192,19 +192,30 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
         sections.push(<ConnectorParamsSection key={sections.length} params={props?.setupProto?.connectorParams} />);
     }
 
+    // Generate the session setup url
+    const sessionSetupURL = React.useMemo(() => {
+        if (canExecuteHere || !activeSessionState || !connectionState) {
+            return null;
+        } else {
+            return generateSessionSetupUrl(activeSessionState, connectionState, SessionLinkTarget.NATIVE);
+        }
+    }, [
+        activeSessionState,
+        connectionState
+    ]);
+
     // Do we need to switch to native?
     // Render a warning, information where to get the app and a button to switch.
-    if (!canExecuteHere) {
-        const appLink = new URL(`sqlynx://localhost?${props.searchParams.toString()}`);
+    if (!canExecuteHere && sessionSetupURL != null) {
         sections.push(
             <div key={sections.length} className={page_styles.card_actions}>
                 <Button
                     className={page_styles.card_action_right}
                     variant="primary"
                     onClick={() => {
-                        logger.info(`opening deep link: ${appLink}`);
                         const link = document.createElement('a');
-                        link.href = appLink.toString();
+                        link.href = sessionSetupURL.toString();
+                        logger.info(`opening deep link: ${link.href}`);
                         link.click();
                     }}>
                     Open App

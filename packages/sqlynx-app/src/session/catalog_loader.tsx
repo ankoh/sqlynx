@@ -8,7 +8,7 @@ import {
     FULL_CATALOG_REFRESH,
 } from '../connectors/catalog_update.js';
 import { SALESFORCE_DATA_CLOUD } from '../connectors/connector_info.js';
-import { unpackSalesforceConnection } from '../connectors/connection_state.js';
+import { asSalesforceConnection } from '../connectors/connection_state.js';
 import { useActiveSessionState } from '../session/active_session.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
 import { useSalesforceAPI } from '../connectors/salesforce_connector.js';
@@ -33,7 +33,7 @@ export const CatalogLoader = (props: { children?: React.ReactElement }) => {
         const catalog = state.catalog;
         const states: CatalogUpdateTaskState[] = [];
         const startedAt = new Date();
-        const sfconn = unpackSalesforceConnection(connection)!;
+        const sfconn = asSalesforceConnection(connection)!;
 
         for (const [taskId, requestVariant] of state.catalogUpdateRequests) {
             let task: CatalogUpdateTaskVariant;
