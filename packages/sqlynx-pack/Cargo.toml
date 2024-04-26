@@ -40,7 +40,7 @@ features = ["json"]
 version = "1.2.1"
 
 [dependencies.tokio]
-version = "1"
+version = "1.37.0"
 features = ["full"]
 
 [dependencies.clap]
