@@ -5,7 +5,9 @@ import { CheckIcon, PaperclipIcon } from '@primer/octicons-react';
 
 import { classNames } from '../../utils/classnames.js';
 import { sleep } from '../../utils/sleep.js';
-import { SessionLinks, useSessionLinks } from '../../session/session_link_generator.js';
+import { useActiveSessionState } from '../../session/active_session.js';
+import { useConnectionState } from '../../connectors/connection_registry.js';
+import { SessionLinkTarget, generateSessionSetupUrl } from '../../session/session_setup_url.js';
 
 import * as styles from './script_url_overlay.module.css';
 
@@ -18,7 +20,6 @@ interface Props {
 }
 
 interface State {
-    sessionLinks: SessionLinks | null;
     publicURLText: string | null;
     copyStartedAt: Date | null;
     copyFinishedAt: Date | null;
@@ -27,33 +28,36 @@ interface State {
 }
 
 export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
+    const [sessionState, _modifySessionState] = useActiveSessionState();
+    const [connectionState, _setConnectionState] = useConnectionState(sessionState?.connectionId ?? null);
     const [state, setState] = React.useState<State>(() => ({
-        sessionLinks: null,
         publicURLText: null,
         copyStartedAt: null,
         copyFinishedAt: null,
         copyError: null,
         uiResetAt: null,
     }));
-    const sessionLinks = useSessionLinks();
 
     React.useEffect(() => {
+        let setupUrl: URL | null = null;
+        if (sessionState != null && connectionState != null) {
+            setupUrl = generateSessionSetupUrl(sessionState, connectionState, SessionLinkTarget.WEB);
+        }
         setState({
-            sessionLinks: sessionLinks,
-            publicURLText: sessionLinks?.publicWebLink.toString() ?? null,
+            publicURLText: setupUrl?.toString() ?? null,
             copyStartedAt: null,
             copyFinishedAt: null,
             copyError: null,
             uiResetAt: null,
         });
-    }, [sessionLinks]);
+    }, [sessionState, connectionState]);
 
     // Copy the url to the clipboard
     const copyURL = React.useCallback(
         (event: React.MouseEvent) => {
-            if (!state.sessionLinks) return;
+            if (!state.publicURLText) return;
             event.stopPropagation();
-            const urlText = state.sessionLinks.publicWebLink.toString();
+            const urlText = state.publicURLText;
             setState(s => ({
                 ...s,
                 copyStartedAt: new Date(),

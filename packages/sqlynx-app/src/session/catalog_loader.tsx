@@ -11,8 +11,7 @@ import { SALESFORCE_DATA_CLOUD } from '../connectors/connector_info.js';
 import { asSalesforceConnection } from '../connectors/connection_state.js';
 import { useActiveSessionState } from '../session/active_session.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
-import { useSalesforceAPI } from '../connectors/salesforce_connector.js';
-import { useSalesforceConnectionId } from '../connectors/salesforce_auth_state.js';
+import { useSalesforceAPI, useSalesforceConnectionId } from '../connectors/salesforce_connector.js';
 import {
     CATALOG_UPDATE_CANCELLED,
     CATALOG_UPDATE_FAILED,

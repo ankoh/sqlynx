@@ -3,9 +3,13 @@ import * as React from 'react';
 import { Button } from '@primer/react';
 import { KeyIcon, PlugIcon, TagIcon } from '@primer/octicons-react';
 
-import { AUTHORIZE, useSalesforceAuthFlow, useSalesforceConnectionId } from '../../connectors/salesforce_auth_state.js';
 import { useConnectionState } from '../../connectors/connection_registry.js';
-import { ConnectionHealth, ConnectionStatus, getSalesforceConnectionStatus, getSalesforceConnnectionHealth, asSalesforceConnection } from '../../connectors/connection_state.js';
+import { useSalesforceConnectionId } from '../../connectors/salesforce_connector.js';
+import { useSalesforceAuthFlow } from '../../connectors/salesforce_auth_flow.js';
+import { ConnectionHealth, ConnectionStatus, getSalesforceConnectionStatus, getSalesforceConnnectionHealth, asSalesforceConnection, ConnectionState } from '../../connectors/connection_state.js';
+import { SalesforceAuthParams } from '../../connectors/connector_configs.js';
+import { SalesforceAuthAction, reduceAuthState } from '../../connectors/salesforce_auth_state.js';
+import { SALESFORCE_DATA_CLOUD } from '../../connectors/connector_info.js';
 import { TextField, TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_UNKNOWN } from '../../view/text_field.js';
 import { classNames } from '../../utils/classnames.js';
 
@@ -19,13 +23,13 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
 ) => {
     const [instanceUrl, setInstanceUrl] = React.useState<string>("");
     const [appConsumerKey, setAppConsumerKey] = React.useState<string>("");
-    const [appConsumerSecret, _setAppConsumerSecret] = React.useState<string | null>(null);
+    const [_appConsumerSecret, _setAppConsumerSecret] = React.useState<string | null>(null);
 
     // Resolve the connection
     const connectionId = useSalesforceConnectionId();
-    const [connection, _setConnection] = useConnectionState(connectionId);
-    const sfConnection = asSalesforceConnection(connection);
-    const authFlow = useSalesforceAuthFlow();
+    const [connectionState, setConnectionState] = useConnectionState(connectionId);
+    const salesforceConnection = asSalesforceConnection(connectionState);
+    const salesforceAuthFlow = useSalesforceAuthFlow();
     const isAuthenticated = false;
 
     // Maintain setting validations
@@ -39,7 +43,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
     });
 
     // Helper to start the authorization
-    const startAuth = () => {
+    const startAuth = async () => {
         let validationSucceeded = true;
         if (instanceUrl === "") {
             validationSucceeded = false;
@@ -55,20 +59,35 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                 value: "Connected App cannot be empty"
             });
         }
-        if (validationSucceeded) {
-            authFlow({
-                type: AUTHORIZE,
-                value: {
-                    instanceUrl: instanceUrl!,
-                    appConsumerKey: appConsumerKey!,
-                    appConsumerSecret,
-                }
-            });
+        if (!validationSucceeded || !salesforceAuthFlow) {
+            return;
         }
+
+        // Helper to dispatch auth state actions against the connection state
+        const salesforceAuthDispatch = (action: SalesforceAuthAction) => {
+            setConnectionState((c: ConnectionState) => {
+                const s = asSalesforceConnection(c)!;
+                return {
+                    type: SALESFORCE_DATA_CLOUD,
+                    value: {
+                        ...s,
+                        auth: reduceAuthState(s.auth, action)
+                    }
+                };
+            });
+        };
+        // Authorize the client
+        const abortController = new AbortController();
+        const authParams: SalesforceAuthParams = {
+            instanceUrl: instanceUrl,
+            appConsumerKey: appConsumerKey,
+            appConsumerSecret: null,
+        };
+        await salesforceAuthFlow.authorize(salesforceAuthDispatch, authParams, abortController.signal);
     };
 
     // Get the connection status
-    const status = getSalesforceConnectionStatus(sfConnection);
+    const status = getSalesforceConnectionStatus(salesforceConnection);
     let statusName: string | undefined = undefined;
     switch (status) {
         case ConnectionStatus.UNKNOWN:
@@ -186,7 +205,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             className={style.grid_column_1}
                             name="Instance API URL"
                             caption="URL of the Salesforce API"
-                            value={sfConnection?.auth.coreAccessToken?.apiInstanceUrl ?? ''}
+                            value={salesforceConnection?.auth.coreAccessToken?.apiInstanceUrl ?? ''}
                             onChange={() => { }}
                             placeholder=""
                             leadingVisual={() => <div>URL</div>}
@@ -196,7 +215,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                         <TextField
                             name="Core Access Token"
                             caption="Access Token for Salesforce Core"
-                            value={sfConnection?.auth.coreAccessToken?.accessToken ?? ''}
+                            value={salesforceConnection?.auth.coreAccessToken?.accessToken ?? ''}
                             onChange={() => { }}
                             placeholder=""
                             leadingVisual={KeyIcon}
@@ -206,7 +225,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                         <TextField
                             name="Data Cloud Instance URL"
                             caption="URL of the Data Cloud instance"
-                            value={sfConnection?.auth.dataCloudAccessToken?.instanceUrl?.toString() ?? ''}
+                            value={salesforceConnection?.auth.dataCloudAccessToken?.instanceUrl?.toString() ?? ''}
                             onChange={() => { }}
                             placeholder=""
                             leadingVisual={() => <div>URL</div>}
@@ -216,7 +235,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                         <TextField
                             name="Data Cloud Access Token"
                             caption="URL of the Data Cloud instance"
-                            value={sfConnection?.auth.dataCloudAccessToken?.accessToken?.toString() ?? ''}
+                            value={salesforceConnection?.auth.dataCloudAccessToken?.accessToken?.toString() ?? ''}
                             onChange={() => { }}
                             placeholder=""
                             leadingVisual={KeyIcon}

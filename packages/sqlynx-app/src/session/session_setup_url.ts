@@ -2,7 +2,7 @@ import * as proto from '@ankoh/sqlynx-pb';
 
 import { SessionState, ScriptData, ScriptKey } from './session_state.js';
 import { ConnectionState, buildConnectorParams } from '../connectors/connection_state.js';
-import { BASE64_CODEC } from 'utils/base64.js';
+import { BASE64_CODEC } from '../utils/base64.js';
 
 export enum SessionLinkTarget {
     NATIVE,

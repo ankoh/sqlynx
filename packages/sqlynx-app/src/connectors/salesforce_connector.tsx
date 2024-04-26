@@ -4,7 +4,7 @@ import { useAllocatedConnectionState } from './connection_registry.js';
 import { SalesforceAPIClient, SalesforceAPIClientInterface } from './salesforce_api_client.js';
 import { SalesforceAPIClientMock } from './salesforce_api_client_mock.js';
 import { SalesforceAuthFlowProvider } from './salesforce_auth_flow.js';
-import { SalesforceAuthFlowMock } from './salesforce_auth_flow_mock.js';
+import { SalesforceAuthFlowMockProvider } from './salesforce_auth_flow_mock.js';
 import { SalesforceUserInfoResolver } from './salesforce_userinfo_resolver.js';
 import { createEmptyTimings } from './connection_state.js';
 import { AUTH_FLOW_DEFAULT_STATE } from './salesforce_auth_state.js';
@@ -39,9 +39,9 @@ export const SalesforceConnector: React.FC<Props> = (props: Props) => {
         return (
             <API_CTX.Provider value={api}>
                 <CONNECTION_ID_CTX.Provider value={connectionId}>
-                    <SalesforceAuthFlowMock>
+                    <SalesforceAuthFlowMockProvider>
                         <SalesforceUserInfoResolver>{props.children}</SalesforceUserInfoResolver>
-                    </SalesforceAuthFlowMock>
+                    </SalesforceAuthFlowMockProvider>
                 </CONNECTION_ID_CTX.Provider>
             </API_CTX.Provider>
         );

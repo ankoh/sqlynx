@@ -8,9 +8,8 @@ import {
     SalesforceMetadata,
     SalesforceUserInfo,
 } from './salesforce_api_client.js';
-
-import { SalesforceAuthConfig, SalesforceAuthParams } from './salesforce_auth_state.js';
 import { QueryExecutorMock } from './query_execution_mock.js';
+import { SalesforceAuthConfig, SalesforceAuthParams } from './connector_configs.js';
 
 export interface SalesforceConnectorMockConfig {
     enabled: boolean;
@@ -22,7 +21,7 @@ export interface SalesforceConnectorMockConfig {
 }
 
 export class SalesforceAPIClientMock implements SalesforceAPIClientInterface {
-    constructor(protected mock: SalesforceConnectorMockConfig) {}
+    constructor(protected mock: SalesforceConnectorMockConfig) { }
 
     public async getCoreAccessToken(
         _authConfig: SalesforceAuthConfig,

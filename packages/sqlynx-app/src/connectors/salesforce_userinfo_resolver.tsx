@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { useSalesforceConnectionId } from './salesforce_auth_state.js';
-import { useSalesforceAPI } from './salesforce_connector.js';
+import { useSalesforceAPI, useSalesforceConnectionId } from './salesforce_connector.js';
 import { useConnectionState } from './connection_registry.js';
 import { SalesforceUserInfo } from './salesforce_api_client.js';
 import { SALESFORCE_DATA_CLOUD } from './connector_info.js';

@@ -1,7 +1,5 @@
-import * as sqlynx from '@ankoh/sqlynx-core';
-
+import { SalesforceAuthConfig, SalesforceAuthParams } from './connector_configs.js';
 import { QueryExecutionResponseStream } from './query_execution.js';
-import { SalesforceAuthConfig, SalesforceAuthParams } from './salesforce_auth_state.js';
 import { executeQuery as execQuery } from './salesforce_query_execution.js';
 
 export interface SalesforceCoreAccessToken {

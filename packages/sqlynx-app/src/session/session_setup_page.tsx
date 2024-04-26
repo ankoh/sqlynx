@@ -6,7 +6,7 @@ import { Button, IconButton } from '@primer/react';
 import { formatHHMMSS } from '../utils/format.js';
 import { useLogger } from '../platform/logger_provider.js';
 import { useSalesforceAuthFlow } from '../connectors/salesforce_auth_flow.js';
-import { useSalesforceConnectionId } from 'connectors/salesforce_connector.js';
+import { useSalesforceConnectionId } from '../connectors/salesforce_connector.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
 import { useActiveSessionState } from './active_session.js';
 import { ConnectorInfo, SALESFORCE_DATA_CLOUD, requiresSwitchingToNative } from '../connectors/connector_info.js';
@@ -30,22 +30,22 @@ interface Props {
     onDone: () => void;
 }
 
-const ConnectorParamsSection: React.FC<{ params: ConnectorSetupParamVariant }> = (props: { params: ConnectorSetupParamVariant }) => {
-    switch (props.params.type) {
-        case SALESFORCE_DATA_CLOUD: {
+const ConnectorParamsSection: React.FC<{ params: proto.sqlynx_session.pb.ConnectorParams }> = (props: { params: proto.sqlynx_session.pb.ConnectorParams }) => {
+    switch (props.params.connector.case) {
+        case "salesforce": {
             return (
                 <div className={page_styles.card_section}>
                     <div className={page_styles.section_entries}>
                         <TextField
                             name="Salesforce Instance URL"
-                            value={props.params.value.instanceUrl ?? ""}
+                            value={props.params.connector.value.instanceUrl ?? ""}
                             readOnly={true}
                             disabled={true}
                             leadingVisual={() => <div>URL</div>}
                         />
                         <TextField
                             name="Connected App"
-                            value={props.params.value.appConsumerKey ?? ""}
+                            value={props.params.connector.value.appConsumerKey ?? ""}
                             readOnly={true}
                             disabled={true}
                             leadingVisual={() => <div>ID</div>}

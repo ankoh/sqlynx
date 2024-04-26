@@ -30,10 +30,11 @@ import { useAppConfig } from '../../app_config.js';
 import * as styles from './editor_page.module.css';
 import * as theme from '../../github_theme.module.css';
 import * as icons from '../../../static/svg/symbols.generated.svg';
+import { useConnectionState } from 'connectors/connection_registry.js';
 
 const ConnectorSelection = (props: { className?: string; variant: 'default' | 'invisible'; short: boolean }) => {
     const connectorList = useConnectorList();
-    const [scriptState, _scriptStateDispatch] = useActiveSessionState();
+    const [sessionState, _modifySessionState] = useActiveSessionState();
     const [isOpen, setIsOpen] = React.useState<boolean>(false);
     const selectConnector = React.useCallback((e: React.MouseEvent<HTMLLIElement, MouseEvent>) => {
         e.stopPropagation();
@@ -45,11 +46,11 @@ const ConnectorSelection = (props: { className?: string; variant: 'default' | 'i
         //     value: connectorType,
         // });
     }, []);
-    const connectorName = !scriptState?.connectorInfo
+    const connectorName = !sessionState?.connectorInfo
         ? 'Not set'
         : props.short
-            ? scriptState?.connectorInfo.displayName.short
-            : scriptState?.connectorInfo.displayName.long;
+            ? sessionState?.connectorInfo.displayName.short
+            : sessionState?.connectorInfo.displayName.long;
     //        <ActionMenu.Overlay width={props.short ? 'auto' : 'medium'} align="end">
     //            <ActionList>
     //                {connectorList.map((connector, i) => (
@@ -66,7 +67,7 @@ const ConnectorSelection = (props: { className?: string; variant: 'default' | 'i
             className={props.className}
             variant={props.variant}
             alignContent="start"
-            leadingVisual={() => (!scriptState?.connectorInfo ? <div /> : getConnectorIcon(scriptState?.connectorInfo))}
+            leadingVisual={() => (!sessionState?.connectorInfo ? <div /> : getConnectorIcon(sessionState?.connectorInfo))}
         >
             {connectorName}
         </Button>

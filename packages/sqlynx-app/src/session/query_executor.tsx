@@ -9,8 +9,7 @@ import {
     QueryExecutionTaskStatus,
     QueryExecutionTaskVariant,
 } from '../connectors/query_execution.js';
-import { useSalesforceAPI } from '../connectors/salesforce_connector.js';
-import { useSalesforceConnectionId } from '../connectors/salesforce_auth_state.js';
+import { useSalesforceAPI, useSalesforceConnectionId } from '../connectors/salesforce_connector.js';
 import { asSalesforceConnection } from '../connectors/connection_state.js';
 import { ConnectorType, SALESFORCE_DATA_CLOUD } from '../connectors/connector_info.js';
 import {
