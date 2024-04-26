@@ -16,6 +16,7 @@ import {
     REQUESTING_CORE_AUTH_TOKEN,
     REQUESTING_DATA_CLOUD_ACCESS_TOKEN,
     SalesforceAuthAction,
+    RECEIVED_CORE_AUTH_CODE,
 } from './salesforce_auth_state.js';
 import { useSalesforceAPI } from './salesforce_connector.js';
 import { useAppConfig } from '../app_config.js';
@@ -130,8 +131,7 @@ export async function authorizeSalesforceConnection(dispatch: Dispatch<Salesforc
             if (!popup) {
                 // Something went wrong, Browser might prevent the popup.
                 // (E.g. FF blocks by default)
-                dispatch({ type: AUTH_FAILED, value: 'could not open oauth window' });
-                return;
+                throw new Error('could not open oauth window');
             }
             popup.focus();
             dispatch({ type: OAUTH_WEB_WINDOW_OPENED, value: popup });
@@ -150,6 +150,10 @@ export async function authorizeSalesforceConnection(dispatch: Dispatch<Salesforc
         if (authCode.error) {
             throw new Error(authCode.error);
         }
+        dispatch({
+            type: RECEIVED_CORE_AUTH_CODE,
+            value: authCode.code,
+        });
 
         // Request the core access token
         dispatch({

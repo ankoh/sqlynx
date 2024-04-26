@@ -1,13 +1,15 @@
 import * as React from 'react';
 import { useLocation } from 'react-router-dom';
 
+import { SQLYNX_VERSION } from '../globals.js';
 import { classNames } from '../utils/classnames.js';
 import { HoverMode, NavBarLink, NavBarButtonWithRef } from './navbar_button.js';
 import { PlatformType, usePlatformType } from '../platform/platform_type.js';
-import { useSessionLinks } from '../session/session_link_generator.js';
-import { SQLYNX_VERSION } from '../globals.js';
 import { LogViewerInPortal } from './log_viewer.js';
 import { VersionViewerInPortal } from './version_viewer.js';
+import { SessionLinkTarget, generateSessionSetupUrl } from '../session/session_setup_url.js';
+import { useActiveSessionState } from '../session/active_session.js';
+import { useConnectionState } from '../connectors/connection_registry.js';
 
 import * as styles from './navbar.module.css';
 
@@ -46,7 +48,7 @@ const ExternalLink = (props: { url?: string | null; alt?: string; icon?: string;
     </div>
 );
 
-const LogButton = (props: {}) => {
+const LogButton = (_props: {}) => {
     const [isOpen, setIsOpen] = React.useState<boolean>(false);
     return (
         <div className={styles.tab}>
@@ -63,7 +65,7 @@ const LogButton = (props: {}) => {
     );
 }
 
-const UpdateButton = (props: {}) => {
+const UpdateButton = (_props: {}) => {
     const [isOpen, setIsOpen] = React.useState<boolean>(false);
     return (
         <div className={styles.tab}>
@@ -83,9 +85,19 @@ const UpdateButton = (props: {}) => {
 export const NavBar = (): React.ReactElement => {
     const location = useLocation();
     const platformType = usePlatformType();
+    const [sessionState, _modifySessionState] = useActiveSessionState();
+    const [connectionState, _setConnectionState] = useConnectionState(sessionState?.connectionId ?? null);
+
     const isBrowser = platformType === PlatformType.WEB;
     const isMac = platformType === PlatformType.MACOS;
-    const sessionLinks = useSessionLinks();
+    const setupLinkTarget = isBrowser ? SessionLinkTarget.NATIVE : SessionLinkTarget.WEB;
+    const setupUrl = React.useMemo(() => {
+        if (sessionState == null || connectionState == null) {
+            return null;
+        }
+        return generateSessionSetupUrl(sessionState, connectionState, setupLinkTarget);
+    }, [sessionState, connectionState, setupLinkTarget]);
+
     return (
         <div className={isMac ? styles.navbar_mac : styles.navbar_default}
         >
@@ -99,8 +111,8 @@ export const NavBar = (): React.ReactElement => {
                 <LogButton />
                 <UpdateButton />
                 {isBrowser
-                    ? <ExternalLink label="Open in App" url={sessionLinks?.privateDeepLink.toString()} icon={`${symbols}#download_desktop`} newWindow={false} />
-                    : <ExternalLink label="Open in Browser" url={sessionLinks?.privateWebLink.toString()} icon={`${symbols}#upload_browser`} newWindow={true} />
+                    ? <ExternalLink label="Open in App" url={setupUrl?.toString()} icon={`${symbols}#download_desktop`} newWindow={false} />
+                    : <ExternalLink label="Open in Browser" url={setupUrl?.toString()} icon={`${symbols}#upload_browser`} newWindow={true} />
                 }
             </div>
         </div>

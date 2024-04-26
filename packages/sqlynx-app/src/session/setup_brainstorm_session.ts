@@ -1,15 +1,16 @@
 import * as React from 'react';
 import Immutable from 'immutable';
 
+import { useSQLynxSetup } from '../sqlynx_loader.js';
 import { useSessionStateAllocator } from './session_state_registry.js';
 import { useActiveSessionSelector } from './active_session.js';
-import { useSQLynxSetup } from '../sqlynx_loader.js';
+import { useConnectionStateAllocator } from '../connectors/connection_registry.js';
+import { createEmptyTimings } from '../connectors/connection_state.js';
 import { ScriptData, ScriptKey } from './session_state.js';
 import { ScriptLoadingStatus } from './script_loader.js';
 import { BRAINSTORM_MODE, CONNECTOR_INFOS, ConnectorType } from '../connectors/connector_info.js';
 import { RESULT_OK } from '../utils/result.js';
 import { TPCH_SCHEMA, EXAMPLE_SCRIPTS } from './example_scripts.js';
-import { createEmptyTimings } from '../connectors/connection_state.js';
 
 export const DEFAULT_BOARD_WIDTH = 800;
 export const DEFAULT_BOARD_HEIGHT = 600;
@@ -18,6 +19,7 @@ export function useBrainstormSessionSetup() {
     const setupSQLynx = useSQLynxSetup();
     const selectActiveSession = useActiveSessionSelector();
     const allocateSessionState = useSessionStateAllocator();
+    const allocateConnectionId = useConnectionStateAllocator();
 
     return React.useCallback(async () => {
         // Try to setup SQLynx, abort if that fails
@@ -77,12 +79,12 @@ export function useBrainstormSessionSetup() {
         const scriptId = allocateSessionState({
             instance: instance.value,
             connectorInfo: CONNECTOR_INFOS[ConnectorType.BRAINSTORM_MODE],
-            connectorState: {
+            connectionId: allocateConnectionId({
                 type: BRAINSTORM_MODE,
                 value: {
-                    timings: createEmptyTimings(),
+                    timings: createEmptyTimings()
                 }
-            },
+            }),
             scripts: {
                 [ScriptKey.MAIN_SCRIPT]: mainScriptData,
                 [ScriptKey.SCHEMA_SCRIPT]: schemaScriptData,

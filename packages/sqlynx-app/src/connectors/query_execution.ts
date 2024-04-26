@@ -3,7 +3,7 @@ import * as arrow from 'apache-arrow';
 import { VariantKind } from '../utils/index.js';
 import { SALESFORCE_DATA_CLOUD } from './connector_info.js';
 import { SalesforceAPIClientInterface, SalesforceDataCloudAccessToken } from './salesforce_api_client.js';
-import { SalesforceAuthParams } from './salesforce_auth_state.js';
+import { SalesforceAuthParams } from './connector_configs.js';
 
 export type QueryExecutionTaskVariant = VariantKind<typeof SALESFORCE_DATA_CLOUD, ExecuteDataCloudQueryTask>;
 
@@ -28,7 +28,7 @@ export enum QueryExecutionTaskStatus {
     CANCELLED = 6,
 }
 
-export interface QueryExecutionProgress {}
+export interface QueryExecutionProgress { }
 
 export interface QueryExecutionResponseStream {
     /// Await the schema message

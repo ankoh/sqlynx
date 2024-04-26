@@ -1,8 +1,6 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
 import Immutable from 'immutable';
 
-import { ConnectorInfo } from '../connectors/connector_info.js';
-import { ConnectionState } from '../connectors/connection_state.js';
 import { CatalogUpdateRequestVariant, CatalogUpdateTaskState } from '../connectors/catalog_update.js';
 import { generateBlankScript, ScriptMetadata } from './script_metadata.js';
 import { ScriptLoadingStatus } from './script_loader.js';
@@ -11,6 +9,7 @@ import { GraphViewModel } from '../view/schema/graph_view_model.js';
 import { ScriptLoadingInfo } from './script_loader.js';
 import { FocusInfo } from './focus.js';
 import { QueryExecutionResult, QueryExecutionTaskState } from '../connectors/query_execution.js';
+import { ConnectorInfo } from '../connectors/connector_info.js';
 
 /// A key to identify the target script
 export enum ScriptKey {
@@ -25,7 +24,7 @@ export interface SessionState {
     /// The connector info
     connectorInfo: ConnectorInfo;
     /// The connector state
-    connectorState: ConnectionState;
+    connectionId: number;
     /// The catalog
     catalog: sqlynx.SQLynxCatalog | null;
     /// The catalog updates
