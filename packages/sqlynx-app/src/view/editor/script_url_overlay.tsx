@@ -5,7 +5,7 @@ import { CheckIcon, PaperclipIcon } from '@primer/octicons-react';
 
 import { classNames } from '../../utils/classnames.js';
 import { sleep } from '../../utils/sleep.js';
-import { useActiveSessionState } from '../../session/active_session.js';
+import { useCurrentSessionState } from '../../session/current_session.js';
 import { useConnectionState } from '../../connectors/connection_registry.js';
 import { SessionLinkTarget, generateSessionSetupUrl } from '../../session/session_setup_url.js';
 
@@ -28,7 +28,7 @@ interface State {
 }
 
 export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
-    const [sessionState, _modifySessionState] = useActiveSessionState();
+    const [sessionState, _modifySessionState] = useCurrentSessionState();
     const [connectionState, _setConnectionState] = useConnectionState(sessionState?.connectionId ?? null);
     const [state, setState] = React.useState<State>(() => ({
         publicURLText: null,

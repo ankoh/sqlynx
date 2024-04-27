@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { ScriptMetadata } from './script_metadata.js';
 import { SCRIPT_LOADING_FAILED, SCRIPT_LOADING_STARTED, SCRIPT_LOADING_SUCCEEDED } from './session_state_reducer.js';
-import { useActiveSessionState } from './active_session.js';
+import { useCurrentSessionState } from './current_session.js';
 import { ScriptData, ScriptKey } from './session_state.js';
 
 export enum ScriptLoadingStatus {
@@ -38,7 +38,7 @@ interface Props {
 }
 
 export const ScriptLoader: React.FC<Props> = (props: Props) => {
-    const [session, modifySession] = useActiveSessionState();
+    const [session, modifySession] = useCurrentSessionState();
     const internal = React.useRef<LoaderState>({
         scripts: new Map<string, ScriptLoadingState>(),
     });

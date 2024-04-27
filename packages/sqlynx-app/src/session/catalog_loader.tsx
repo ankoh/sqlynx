@@ -9,7 +9,7 @@ import {
 } from '../connectors/catalog_update.js';
 import { SALESFORCE_DATA_CLOUD } from '../connectors/connector_info.js';
 import { asSalesforceConnection } from '../connectors/connection_state.js';
-import { useActiveSessionState } from '../session/active_session.js';
+import { useCurrentSessionState } from '../session/current_session.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
 import { useSalesforceAPI, useSalesforceConnectionId } from '../connectors/salesforce_connector.js';
 import {
@@ -20,7 +20,7 @@ import {
 } from './session_state_reducer.js';
 
 export const CatalogLoader = (props: { children?: React.ReactElement }) => {
-    const [state, dispatch] = useActiveSessionState();
+    const [state, dispatch] = useCurrentSessionState();
     const salesforceAPI = useSalesforceAPI();
     const connectionId = useSalesforceConnectionId();
     const [connection, _setConnection] = useConnectionState(connectionId);

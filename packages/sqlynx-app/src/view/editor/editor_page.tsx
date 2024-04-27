@@ -15,7 +15,7 @@ import {
 import { useConnectorList } from '../../connectors/connector_info.js';
 import { ConnectorInfo, ConnectorType } from '../../connectors/connector_info.js';
 import { QueryExecutionTaskStatus } from '../../connectors/query_execution.js';
-import { useActiveSessionState } from '../../session/active_session.js';
+import { useCurrentSessionState } from '../../session/current_session.js';
 import { ScriptEditor } from '../editor/editor.js';
 import { SchemaGraph } from '../../view/schema/schema_graph.js';
 import { QueryProgress } from '../../view/progress/query_progress.js';
@@ -34,7 +34,7 @@ import { useConnectionState } from 'connectors/connection_registry.js';
 
 const ConnectorSelection = (props: { className?: string; variant: 'default' | 'invisible'; short: boolean }) => {
     const connectorList = useConnectorList();
-    const [sessionState, _modifySessionState] = useActiveSessionState();
+    const [sessionState, _modifySessionState] = useCurrentSessionState();
     const [isOpen, setIsOpen] = React.useState<boolean>(false);
     const selectConnector = React.useCallback((e: React.MouseEvent<HTMLLIElement, MouseEvent>) => {
         e.stopPropagation();
@@ -159,7 +159,7 @@ interface TabState {
 interface Props { }
 
 export const EditorPage: React.FC<Props> = (_props: Props) => {
-    const [scriptState, _scriptStateDispatch] = useActiveSessionState();
+    const [scriptState, _scriptStateDispatch] = useCurrentSessionState();
     const [selectedTab, selectTab] = React.useState<TabKey>(TabKey.SchemaView);
     const [sharingIsOpen, setSharingIsOpen] = React.useState<boolean>(false);
 

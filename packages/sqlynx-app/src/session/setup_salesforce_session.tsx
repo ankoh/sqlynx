@@ -14,12 +14,12 @@ import { UPDATE_CATALOG } from './session_state_reducer.js';
 import { useSessionStateAllocator, useSessionState } from './session_state_registry.js';
 import { generateBlankScript } from './script_metadata.js';
 import { useSQLynxSetup } from '../sqlynx_loader.js';
-import { useActiveSessionSelector } from './active_session.js';
+import { useCurrentSessionSelector } from './current_session.js';
 
 export function useSalesforceSessionSetup() {
     const setupSQLynx = useSQLynxSetup();
     const allocateSessionState = useSessionStateAllocator();
-    const selectActiveSession = useActiveSessionSelector();
+    const selectCurrentSession = useCurrentSessionSelector();
     const sfApi = useSalesforceAPI();
     const sfConnectionId = useSalesforceConnectionId();
     const [connection, _setConnection] = useConnectionState(sfConnectionId);
@@ -113,7 +113,7 @@ export function useSalesforceSessionSetup() {
                 queryExecutionResult: null,
             });
             setConnectorScriptId(scriptId);
-            selectActiveSession(scriptId);
+            selectCurrentSession(scriptId);
         } else {
             // Otherwise, the access token just changed.
             // Do a full catalog refresh

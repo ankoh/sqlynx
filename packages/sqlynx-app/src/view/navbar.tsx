@@ -8,7 +8,7 @@ import { PlatformType, usePlatformType } from '../platform/platform_type.js';
 import { LogViewerInPortal } from './log_viewer.js';
 import { VersionViewerInPortal } from './version_viewer.js';
 import { SessionLinkTarget, generateSessionSetupUrl } from '../session/session_setup_url.js';
-import { useActiveSessionState } from '../session/active_session.js';
+import { useCurrentSessionState } from '../session/current_session.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
 
 import * as styles from './navbar.module.css';
@@ -85,7 +85,7 @@ const UpdateButton = (_props: {}) => {
 export const NavBar = (): React.ReactElement => {
     const location = useLocation();
     const platformType = usePlatformType();
-    const [sessionState, _modifySessionState] = useActiveSessionState();
+    const [sessionState, _modifySessionState] = useCurrentSessionState();
     const [connectionState, _setConnectionState] = useConnectionState(sessionState?.connectionId ?? null);
 
     const isBrowser = platformType === PlatformType.WEB;
