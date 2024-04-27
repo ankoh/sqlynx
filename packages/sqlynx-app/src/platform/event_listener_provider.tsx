@@ -1,13 +1,16 @@
 import * as React from 'react';
 
-import { AppEventListener } from './event_listener.js';
+import { useLocation } from 'react-router-dom';
+
+import { AppEventListener, EVENT_QUERY_PARAMETER } from './event_listener.js';
 import { NativeAppEventListener } from './native_event_listener.js';
 import { WebAppEventListener } from './web_event_listener.js';
 import { isNativePlatform } from './native_globals.js';
 import { useLogger } from './logger_provider.js';
 
-const LISTENER_CTX = React.createContext<AppEventListener | null>(null);
+export const SKIP_EVENT_LISTENER = Symbol("SKIP_EVENT_LISTENER");
 
+const LISTENER_CTX = React.createContext<AppEventListener | null>(null);
 export const useAppEventListener = () => React.useContext(LISTENER_CTX)!;
 
 type Props = {
@@ -16,11 +19,28 @@ type Props = {
 
 export const AppEventListenerProvider: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
+    const location = useLocation();
+
+    // Construct the event listener
     const listener = React.useMemo<AppEventListener>(() => {
         const l = isNativePlatform() ? new NativeAppEventListener(logger) : new WebAppEventListener(logger);
         l.setup();
         return l;
     }, []);
+
+    // Search for initial app events passed via the url parameter
+    React.useEffect(() => {
+        const searchParams = new URLSearchParams(location.search);
+        const data = searchParams.get(EVENT_QUERY_PARAMETER);
+        if (!data || location.state == SKIP_EVENT_LISTENER) {
+            return;
+        }
+        const event = listener.readAppEvent(data, "location");
+        if (event != null) {
+            listener.dispatchAppEvent(event);
+        }
+    }, [location.search]);
+
     return (
         <LISTENER_CTX.Provider value={listener}>
             {props.children}

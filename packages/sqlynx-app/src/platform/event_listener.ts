@@ -3,6 +3,8 @@ import * as proto from '@ankoh/sqlynx-pb';
 import { BASE64_CODEC } from '../utils/base64.js';
 import { Logger } from './logger.js';
 
+export const EVENT_QUERY_PARAMETER = "data";
+
 // An oauth subscriber
 interface OAuthSubscriber {
     /// Resolve the promise with oauth redirect data
@@ -45,7 +47,7 @@ export abstract class AppEventListener {
     protected abstract listenForAppEvents(): void;
 
     /// Called by subclasses when receiving an app event
-    protected dispatchAppEvent(event: proto.sqlynx_app_event.pb.AppEventData) {
+    public dispatchAppEvent(event: proto.sqlynx_app_event.pb.AppEventData) {
         switch (event.data.case) {
             case "oauthRedirect": {
                 this.dispatchOAuthRedirect(event.data.value);
@@ -140,7 +142,7 @@ export abstract class AppEventListener {
     }
 
     /// Helper to unpack app link data
-    protected readAppEvent(dataBase64: any, fromWhat: string) {
+    public readAppEvent(dataBase64: any, fromWhat: string) {
         // Make sure everything arriving here is a valid base64 string
         if (!dataBase64 || typeof dataBase64 !== 'string') {
             this.logger.error(`${fromWhat} is not a string`, "event_listener");
@@ -173,9 +175,9 @@ export abstract class AppEventListener {
                 const deepLink = new URL(pastedText);
                 this.logger.info(`received deep link: ${deepLink.toString()}`, "event_listener");
                 // Has link data?
-                deepLinkData = deepLink.searchParams.get("data");
+                deepLinkData = deepLink.searchParams.get(EVENT_QUERY_PARAMETER);
                 if (!deepLinkData) {
-                    this.logger.warn(`deep link lacks the query parameter 'data'`, "event_listener");
+                    this.logger.warn(`deep link lacks the query parameter '${EVENT_QUERY_PARAMETER}'`, "event_listener");
                     return;
                 }
             } catch (e: any) {
@@ -195,5 +197,4 @@ export abstract class AppEventListener {
             }
         }
     }
-
 }
