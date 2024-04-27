@@ -8,7 +8,7 @@ import { useLogger } from '../platform/logger_provider.js';
 import { useSalesforceAuthFlow } from '../connectors/salesforce_auth_flow.js';
 import { useSalesforceConnectionId } from '../connectors/salesforce_connector.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
-import { useActiveSessionState } from './active_session.js';
+import { useCurrentSessionState } from './current_session.js';
 import { ConnectorInfo, SALESFORCE_DATA_CLOUD, requiresSwitchingToNative } from '../connectors/connector_info.js';
 import { ConnectorAuthCheck, checkSalesforceAuth, asSalesforceConnection, ConnectionState } from '../connectors/connection_state.js';
 import { SessionLinkTarget, generateSessionSetupUrl } from './session_setup_url.js';
@@ -66,7 +66,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     const salesforceConnectionId = useSalesforceConnectionId();
     const salesforceAuthFlow = useSalesforceAuthFlow();
     const [connectionState, setConnectionState] = useConnectionState(salesforceConnectionId);
-    const [activeSessionState, modifyActiveSession] = useActiveSessionState();
+    const [currentSessionState, modifyCurrentSession] = useCurrentSessionState();
     const [logsAreOpen, setLogsAreOpen] = React.useState<boolean>(false);
 
     // Resolve the connector info
@@ -131,7 +131,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
         for (const script of props.setupProto.scripts) {
             update[script.scriptId] = script.scriptText;
         }
-        modifyActiveSession({ type: REPLACE_SCRIPT_CONTENT, value: update });
+        modifyCurrentSession({ type: REPLACE_SCRIPT_CONTENT, value: update });
 
         // We're done, return close the session setup page
         props.onDone();
@@ -194,13 +194,13 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
 
     // Generate the session setup url
     const sessionSetupURL = React.useMemo(() => {
-        if (canExecuteHere || !activeSessionState || !connectionState) {
+        if (canExecuteHere || !currentSessionState || !connectionState) {
             return null;
         } else {
-            return generateSessionSetupUrl(activeSessionState, connectionState, SessionLinkTarget.NATIVE);
+            return generateSessionSetupUrl(currentSessionState, connectionState, SessionLinkTarget.NATIVE);
         }
     }, [
-        activeSessionState,
+        currentSessionState,
         connectionState
     ]);
 

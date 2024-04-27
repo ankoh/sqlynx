@@ -3,7 +3,7 @@ import Immutable from 'immutable';
 
 import { useSQLynxSetup } from '../sqlynx_loader.js';
 import { useSessionStateAllocator } from './session_state_registry.js';
-import { useActiveSessionSelector } from './active_session.js';
+import { useCurrentSessionSelector } from './current_session.js';
 import { useConnectionStateAllocator } from '../connectors/connection_registry.js';
 import { createEmptyTimings } from '../connectors/connection_state.js';
 import { ScriptData, ScriptKey } from './session_state.js';
@@ -17,7 +17,7 @@ export const DEFAULT_BOARD_HEIGHT = 600;
 
 export function useBrainstormSessionSetup() {
     const setupSQLynx = useSQLynxSetup();
-    const selectActiveSession = useActiveSessionSelector();
+    const selectCurrentSession = useCurrentSessionSelector();
     const allocateSessionState = useSessionStateAllocator();
     const allocateConnectionId = useConnectionStateAllocator();
 
@@ -122,6 +122,6 @@ export function useBrainstormSessionSetup() {
             queryExecutionResult: null,
         });
 
-        selectActiveSession(scriptId);
-    }, [setupSQLynx, allocateSessionState, selectActiveSession]);
+        selectCurrentSession(scriptId);
+    }, [setupSQLynx, allocateSessionState, selectCurrentSession]);
 };

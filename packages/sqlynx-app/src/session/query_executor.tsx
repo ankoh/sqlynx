@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Immutable from 'immutable';
 
-import { useActiveSessionState } from '../session/active_session.js';
+import { useCurrentSessionState } from '../session/current_session.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
 import {
     QueryExecutionResponseStream,
@@ -25,7 +25,7 @@ import {
 import { ScriptKey } from './session_state.js';
 
 export const QueryExecutor = (props: { children?: React.ReactElement }) => {
-    const [state, dispatch] = useActiveSessionState();
+    const [state, dispatch] = useCurrentSessionState();
     const salesforceAPI = useSalesforceAPI();
 
     const connectionId = useSalesforceConnectionId();

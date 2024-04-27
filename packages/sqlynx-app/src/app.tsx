@@ -6,7 +6,7 @@ import { EditorPage } from './view/editor/editor_page.js';
 import { ConnectorsPage } from './view/connectors/connectors_page.js';
 import { ScriptLoader } from './session/script_loader.js';
 import { CatalogLoader } from './session/catalog_loader.js';
-import { ActiveSessionStateProvider } from './session/active_session.js';
+import { CurrentSessionStateProvider } from './session/current_session.js';
 import { SessionStateRegistry } from './session/session_state_registry.js';
 import { SessionCommands } from './session/session_commands.js';
 import { QueryExecutor } from './session/query_executor.js';
@@ -39,14 +39,14 @@ const AppProviders = (props: { children: React.ReactElement }) => (
                                     <SQLynxLoader>
                                         <SalesforceConnector>
                                             <SessionStateRegistry>
-                                                <ActiveSessionStateProvider>
+                                                <CurrentSessionStateProvider>
                                                     <SessionCommands>
                                                         <ScriptLoader />
                                                         <CatalogLoader />
                                                         <QueryExecutor />
                                                         <SessionSetup>{props.children}</SessionSetup>
                                                     </SessionCommands>
-                                                </ActiveSessionStateProvider>
+                                                </CurrentSessionStateProvider>
                                             </SessionStateRegistry>
                                         </SalesforceConnector>
                                     </SQLynxLoader>

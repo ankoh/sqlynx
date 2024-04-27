@@ -3,7 +3,7 @@ import { KeyEventHandler, useKeyEvents } from '../utils/key_events.js';
 import { ConnectorInfo } from '../connectors/connector_info.js';
 import { FULL_CATALOG_REFRESH } from '../connectors/catalog_update.js';
 import { EXECUTE_QUERY, UPDATE_CATALOG } from './session_state_reducer.js';
-import { useActiveSessionState } from './active_session.js';
+import { useCurrentSessionState } from './current_session.js';
 
 export enum ScriptCommandType {
     ExecuteQuery = 1,
@@ -22,7 +22,7 @@ interface Props {
 const COMMAND_DISPATCH_CTX = React.createContext<ScriptCommandDispatch | null>(null);
 
 export const SessionCommands: React.FC<Props> = (props: Props) => {
-    const [state, modifySession] = useActiveSessionState();
+    const [state, modifySession] = useCurrentSessionState();
 
     // Setup command dispatch logic
     const commandDispatch = React.useCallback(
