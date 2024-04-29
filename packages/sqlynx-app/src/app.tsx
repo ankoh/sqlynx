@@ -42,10 +42,10 @@ const AppProviders = (props: { children: React.ReactElement }) => (
                                             <SessionStateRegistry>
                                                 <CurrentSessionStateProvider>
                                                     <InitialSessionSetup />
+                                                    <ScriptLoader />
+                                                    <CatalogLoader />
+                                                    <QueryExecutor />
                                                     <SessionCommands>
-                                                        <ScriptLoader />
-                                                        <CatalogLoader />
-                                                        <QueryExecutor />
                                                         <SessionSetup>{props.children}</SessionSetup>
                                                     </SessionCommands>
                                                 </CurrentSessionStateProvider>
