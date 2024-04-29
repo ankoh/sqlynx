@@ -28,14 +28,14 @@ export const AppEventListenerProvider: React.FC<Props> = (props: Props) => {
         return l;
     }, []);
 
-    // Search for initial app events passed via the url parameter
+    // Search for app events passed via the url parameter
     React.useEffect(() => {
         const searchParams = new URLSearchParams(location.search);
         const data = searchParams.get(EVENT_QUERY_PARAMETER);
         if (!data || location.state == SKIP_EVENT_LISTENER) {
             return;
         }
-        const event = listener.readAppEvent(data, "location");
+        const event = listener.readAppEvent(data, "event_listener");
         if (event != null) {
             listener.dispatchAppEvent(event);
         }

@@ -14,12 +14,10 @@ import { UPDATE_CATALOG } from './session_state_reducer.js';
 import { useSessionStateAllocator, useSessionState } from './session_state_registry.js';
 import { generateBlankScript } from './script_metadata.js';
 import { useSQLynxSetup } from '../sqlynx_loader.js';
-import { useCurrentSessionSelector } from './current_session.js';
 
 export function useSalesforceSessionSetup() {
     const setupSQLynx = useSQLynxSetup();
     const allocateSessionState = useSessionStateAllocator();
-    const selectCurrentSession = useCurrentSessionSelector();
     const sfApi = useSalesforceAPI();
     const sfConnectionId = useSalesforceConnectionId();
     const [connection, _setConnection] = useConnectionState(sfConnectionId);
@@ -29,12 +27,12 @@ export function useSalesforceSessionSetup() {
     const [_sessionState, sessionStateDispatch] = useSessionState(connectorScriptId);
 
     return React.useCallback(async () => {
-        if (!sfApi || !sfConnection || !sfConnection.auth.dataCloudAccessToken) return;
+        if (!sfApi || !sfConnection || !sfConnection.auth.dataCloudAccessToken) return null;
 
         // Setup SQLynx lazily.
         // Note that this means the WASM module will only be set up when da data cloud token is provided.
         const instance = await setupSQLynx("salesforce_session");
-        if (instance?.type != RESULT_OK) return;
+        if (instance?.type != RESULT_OK) return null;
 
         // First time we use this connector?
         // Setup a new script then and select it.
@@ -113,7 +111,7 @@ export function useSalesforceSessionSetup() {
                 queryExecutionResult: null,
             });
             setConnectorScriptId(scriptId);
-            selectCurrentSession(scriptId);
+            return scriptId;
         } else {
             // Otherwise, the access token just changed.
             // Do a full catalog refresh
@@ -124,6 +122,7 @@ export function useSalesforceSessionSetup() {
                     value: null,
                 },
             });
+            return connectorScriptId;
         }
     }, [sfApi, sfConnection?.auth.dataCloudAccessToken, setupSQLynx]);
 };
