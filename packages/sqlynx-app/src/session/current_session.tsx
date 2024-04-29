@@ -22,11 +22,11 @@ export const CurrentSessionStateProvider: React.FC<Props> = (props: Props) => {
 };
 
 export function useCurrentSessionSelector(): CurrentSessionSetter {
-    const [_CurrentSession, setCurrentSession] = React.useContext(SESSION_CTX)!;
+    const [_currentSession, setCurrentSession] = React.useContext(SESSION_CTX)!;
     return setCurrentSession;
 }
 
 export function useCurrentSessionState(): [SessionState | null, ModifySessionAction] {
-    const [CurrentSession, _setCurrentSession] = React.useContext(SESSION_CTX)!;
-    return useSessionState(CurrentSession);
+    const [currentSession, _setCurrentSession] = React.useContext(SESSION_CTX)!;
+    return useSessionState(currentSession);
 };

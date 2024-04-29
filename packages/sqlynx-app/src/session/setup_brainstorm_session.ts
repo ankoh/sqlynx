@@ -17,7 +17,6 @@ export const DEFAULT_BOARD_HEIGHT = 600;
 
 export function useBrainstormSessionSetup() {
     const setupSQLynx = useSQLynxSetup();
-    const selectCurrentSession = useCurrentSessionSelector();
     const allocateSessionState = useSessionStateAllocator();
     const allocateConnectionId = useConnectionStateAllocator();
 
@@ -25,7 +24,7 @@ export function useBrainstormSessionSetup() {
         // Try to setup SQLynx, abort if that fails
         const instance = await setupSQLynx("brainstorm_session");
         if (instance?.type !== RESULT_OK) {
-            return;
+            return null;
         }
 
         const lnx = instance.value;
@@ -121,7 +120,7 @@ export function useBrainstormSessionSetup() {
             queryExecutionState: null,
             queryExecutionResult: null,
         });
+        return scriptId;
 
-        selectCurrentSession(scriptId);
-    }, [setupSQLynx, allocateSessionState, selectCurrentSession]);
+    }, [setupSQLynx, allocateSessionState]);
 };
