@@ -3,7 +3,6 @@ import Immutable from 'immutable';
 
 import { useSQLynxSetup } from '../sqlynx_loader.js';
 import { useSessionStateAllocator } from './session_state_registry.js';
-import { useCurrentSessionSelector } from './current_session.js';
 import { useConnectionStateAllocator } from '../connectors/connection_registry.js';
 import { createEmptyTimings } from '../connectors/connection_state.js';
 import { ScriptData, ScriptKey } from './session_state.js';
@@ -15,17 +14,20 @@ import { TPCH_SCHEMA, EXAMPLE_SCRIPTS } from './example_scripts.js';
 export const DEFAULT_BOARD_WIDTH = 800;
 export const DEFAULT_BOARD_HEIGHT = 600;
 
-export function useBrainstormSessionSetup() {
+type SessionSetupFn = (abort: AbortSignal) => Promise<number | null>;
+
+export function useBrainstormSessionSetup(): SessionSetupFn {
     const setupSQLynx = useSQLynxSetup();
     const allocateSessionState = useSessionStateAllocator();
     const allocateConnectionId = useConnectionStateAllocator();
 
-    return React.useCallback(async () => {
+    return React.useCallback(async (abort: AbortSignal) => {
         // Try to setup SQLynx, abort if that fails
         const instance = await setupSQLynx("brainstorm_session");
         if (instance?.type !== RESULT_OK) {
             return null;
         }
+        abort.throwIfAborted();
 
         const lnx = instance.value;
 

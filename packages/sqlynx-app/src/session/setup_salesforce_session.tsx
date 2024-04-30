@@ -15,7 +15,9 @@ import { useSessionStateAllocator, useSessionState } from './session_state_regis
 import { generateBlankScript } from './script_metadata.js';
 import { useSQLynxSetup } from '../sqlynx_loader.js';
 
-export function useSalesforceSessionSetup() {
+type SessionSetupFn = (abort: AbortSignal) => Promise<number | null>;
+
+export function useSalesforceSessionSetup(): SessionSetupFn {
     const setupSQLynx = useSQLynxSetup();
     const allocateSessionState = useSessionStateAllocator();
     const sfApi = useSalesforceAPI();
@@ -26,13 +28,13 @@ export function useSalesforceSessionSetup() {
     const [connectorScriptId, setConnectorScriptId] = React.useState<number | null>(null);
     const [_sessionState, sessionStateDispatch] = useSessionState(connectorScriptId);
 
-    return React.useCallback(async () => {
+    return React.useCallback(async (signal: AbortSignal) => {
         if (!sfApi || !sfConnection || !sfConnection.auth.dataCloudAccessToken) return null;
 
         // Setup SQLynx lazily.
         // Note that this means the WASM module will only be set up when da data cloud token is provided.
         const instance = await setupSQLynx("salesforce_session");
-        if (instance?.type != RESULT_OK) return null;
+        if (instance?.type != RESULT_OK || signal.aborted) return null;
 
         // First time we use this connector?
         // Setup a new script then and select it.
