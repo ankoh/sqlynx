@@ -10,7 +10,6 @@ import { useCurrentSessionSelector } from './current_session.js';
 
 enum SessionSetupDecision {
     UNDECIDED,
-    UNKNOWN,
     SKIP_SETUP_PAGE,
     SHOW_SETUP_PAGE,
 }
@@ -26,6 +25,7 @@ export const SessionSetup: React.FC<{ children: React.ReactElement }> = (props: 
     const setupSalesforceSession = useSalesforceSessionSetup();
     const selectCurrentSession = useCurrentSessionSelector();
     const appEvents = useAppEventListener();
+    const abortInitialSetup = React.useRef(new AbortController());
 
     // State to decide about session setup strategy
     const [state, setState] = React.useState<SessionSetupState>(() => ({
@@ -37,8 +37,10 @@ export const SessionSetup: React.FC<{ children: React.ReactElement }> = (props: 
     // Register an event handler for setup events.
     // The user may either paste a deep link through the clipboard, or may run a setup through a deep link.
     React.useEffect(() => {
+        const abortSetup = new AbortController();
         // Create a subscriber
         const subscriber = async (data: proto.sqlynx_session.pb.SessionSetup) => {
+            abortInitialSetup.current.abort();
             const connectorInfo = data.connectorParams ? getConnectorInfoForParams(data.connectorParams) : null;
             switch (data.connectorParams?.connector.case) {
                 case "hyper": {
@@ -50,7 +52,7 @@ export const SessionSetup: React.FC<{ children: React.ReactElement }> = (props: 
                     break;
                 }
                 case "salesforce": {
-                    const sessionId = await setupSalesforceSession()
+                    const sessionId = await setupSalesforceSession(abortSetup.signal)
                     if (sessionId != null) {
                         selectCurrentSession(sessionId);
                     }
@@ -62,7 +64,7 @@ export const SessionSetup: React.FC<{ children: React.ReactElement }> = (props: 
                     break;
                 }
                 case "brainstorm": {
-                    const sessionId = await setupBrainstormSession();
+                    const sessionId = await setupBrainstormSession(abortSetup.signal);
                     if (sessionId != null) {
                         selectCurrentSession(sessionId);
                     }
@@ -73,26 +75,53 @@ export const SessionSetup: React.FC<{ children: React.ReactElement }> = (props: 
                     });
                     return;
                 }
-                default:
-                    setState({
-                        decision: SessionSetupDecision.UNKNOWN,
-                        setupProto: data,
-                        connectorInfo
-                    });
             }
         };
 
         // Subscribe to setup events
         appEvents.subscribeSessionSetupEvents(subscriber);
         // Remove listener as soon as this component unmounts
-        return () => appEvents.unsubscribeSessionSetupEvents(subscriber);
+        return () => {
+            appEvents.unsubscribeSessionSetupEvents(subscriber);
+            abortSetup.abort();
+        };
     }, [appEvents]);
+
+    // Effect for initial session setup
+    React.useEffect(() => {
+        const run = async () => {
+            const sessionId = await setupBrainstormSession(abortInitialSetup.current.signal);
+            if (sessionId != null) {
+                // Only select the brainstorm session if there's no other session set
+                selectCurrentSession(s => {
+                    if (s == null) {
+                        return sessionId;
+                    } else {
+                        return s;
+                    }
+                });
+                // Skip the setup page
+                setState(s => {
+                    // Still undecided?
+                    if (s.decision == SessionSetupDecision.UNDECIDED) {
+                        return {
+                            decision: SessionSetupDecision.SKIP_SETUP_PAGE,
+                            setupProto: null,
+                            connectorInfo: null
+                        }
+                    } else {
+                        return s;
+                    }
+                })
+            }
+        };
+        run();
+    }, []);
 
     // Determine what we want to render
     let child: React.ReactElement = <div />;
     switch (state.decision) {
         case SessionSetupDecision.UNDECIDED:
-        case SessionSetupDecision.UNKNOWN:
             break;
         case SessionSetupDecision.SKIP_SETUP_PAGE:
             child = props.children;

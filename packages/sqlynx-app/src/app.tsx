@@ -20,7 +20,6 @@ import { PlatformTypeProvider } from './platform/platform_type.js';
 import { HyperDatabaseClientProvider } from './platform/hyperdb_client_provider.js';
 import { VersionCheck } from './platform/version_check.js';
 import { AppEventListenerProvider } from './platform/event_listener_provider.js';
-import { InitialSessionSetup } from './session/initial_session_setup.js';
 
 import { createRoot } from 'react-dom/client';
 import { Route, Routes, Navigate, BrowserRouter, HashRouter } from 'react-router-dom';
@@ -41,7 +40,6 @@ const AppProviders = (props: { children: React.ReactElement }) => (
                                         <SalesforceConnector>
                                             <SessionStateRegistry>
                                                 <CurrentSessionStateProvider>
-                                                    <InitialSessionSetup />
                                                     <ScriptLoader />
                                                     <CatalogLoader />
                                                     <QueryExecutor />
