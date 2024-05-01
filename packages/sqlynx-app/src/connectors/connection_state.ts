@@ -99,8 +99,6 @@ export function getSalesforceConnectionStatus(conn: SalesforceConnectorState | n
         state = ConnectionStatus.DATA_CLOUD_TOKEN_REQUESTED;
     } else if (conn.auth.timings.coreAccessTokenRequestedAt) {
         state = ConnectionStatus.CORE_ACCESS_TOKEN_REQUESTED;
-    } else if (conn.auth.timings.pkceGenStartedAt) {
-        state = ConnectionStatus.PKCE_GENERATION_STARTED;
     } else if (conn.auth.timings.openedNativeAuthLinkAt) {
         state = ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_LINK;
     } else if (conn.auth.timings.openedWebAuthWindowAt) {
@@ -109,6 +107,8 @@ export function getSalesforceConnectionStatus(conn: SalesforceConnectorState | n
         } else if (!conn.auth.timings.oauthCodeReceivedAt) {
             state = ConnectionStatus.OAUTH_CODE_RECEIVED;
         }
+    } else if (conn.auth.timings.pkceGenStartedAt) {
+        state = ConnectionStatus.PKCE_GENERATION_STARTED;
     } else if (conn.auth.timings.authStartedAt) {
         state = ConnectionStatus.AUTHENTICATION_REQUESTED;
     }
