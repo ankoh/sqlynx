@@ -130,10 +130,6 @@
 .card_section {
     border-top: 1px solid var(--border_color_primary);
 }
-.card_section_header {
-    font-weight: 500;
-    font-size: 0.8rem;
-}
 .section_entries {
     padding: 8px 12px 16px 12px;
     display: flex;
@@ -199,13 +195,11 @@
     grid-column: 3;
 }
 
-.card_section_description {
-    border-top: 1px solid var(--border_color_primary);
+.section_description {
     display: grid;
     grid-template-columns: 1fr;
     align-items: center;
     column-gap: 8px;
-    padding: 8px 12px;
 
     font-size: 0.9rem;
     font-weight: 400;

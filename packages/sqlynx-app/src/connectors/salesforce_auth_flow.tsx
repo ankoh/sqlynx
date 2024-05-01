@@ -35,6 +35,9 @@ import { isDebugBuild } from '../globals.js';
 
 import * as shell from '@tauri-apps/plugin-shell';
 
+// By default, a Salesforce OAuth Access Token expires after 2 hours = 7200 seconds
+const DEFAULT_EXPIRATION_TIME_MS = 2 * 60 * 60 * 1000;
+
 // We use the web-server OAuth Flow with or without consumer secret.
 //
 // !! Don't embed a client secret of a connected Salesforce App !!
@@ -106,6 +109,7 @@ export async function authorizeSalesforceConnection(dispatch: Dispatch<Salesforc
                 value: new proto.sqlynx_oauth.pb.SalesforceOAuthOptions({
                     instanceUrl: params.instanceUrl,
                     appConsumerKey: params.appConsumerKey,
+                    expiresAt: BigInt(Date.now()) + BigInt(DEFAULT_EXPIRATION_TIME_MS)
                 }),
             }
         });
