@@ -22,6 +22,7 @@ import { LogViewerInPortal } from '../view/log_viewer.js';
 import * as page_styles from '../view/banner_page.module.css';
 import * as symbols from '../../static/svg/symbols.generated.svg';
 
+const LOG_CTX = "session_setup";
 const AUTOTRIGGER_DELAY = 2000;
 
 interface Props {
@@ -39,16 +40,18 @@ const ConnectorParamsSection: React.FC<{ params: proto.sqlynx_session.pb.Connect
                         <TextField
                             name="Salesforce Instance URL"
                             value={props.params.connector.value.instanceUrl ?? ""}
-                            readOnly={true}
-                            disabled={true}
+                            readOnly
+                            disabled
                             leadingVisual={() => <div>URL</div>}
+                            logContext={LOG_CTX}
                         />
                         <TextField
                             name="Connected App"
                             value={props.params.connector.value.appConsumerKey ?? ""}
-                            readOnly={true}
-                            disabled={true}
+                            readOnly
+                            disabled
                             leadingVisual={() => <div>ID</div>}
+                            logContext={LOG_CTX}
                         />
                     </div>
                 </div>
@@ -175,6 +178,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                     readOnly={true}
                     disabled={true}
                     leadingVisual={() => <div>Script text with 0 characters</div>}
+                    logContext={LOG_CTX}
                 />
             )
         }

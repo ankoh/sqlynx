@@ -12,8 +12,9 @@ import { useHyperDatabaseClient } from '../../platform/hyperdb_client_provider.j
 import { KeyValueListBuilder } from '../../view/keyvalue_list.js';
 
 import * as symbols from '../../../static/svg/symbols.generated.svg';
-
 import * as style from './connector_settings.module.css';
+
+const LOG_CTX = "hyper_connector";
 
 interface Props { }
 
@@ -30,11 +31,11 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
 
     const testSettings = async () => {
         if (hyperClient == null) {
-            logger.error("Hyper client is unavailable", "hyper_grpc");
+            logger.error("Hyper client is unavailable", LOG_CTX);
             return;
         }
         try {
-            logger.trace(`connecting to endpoint: ${endpoint}`, "hyper_grpc");
+            logger.trace(`connecting to endpoint: ${endpoint}`, LOG_CTX);
             const channel = await hyperClient.connect({
                 endpoint
             });
@@ -47,7 +48,7 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
             await channel.close();
         } catch (e: any) {
             console.error(e);
-            logger.trace(`connecting failed with error: ${e.toString()}`, "hyper_grpc");
+            logger.trace(`connecting failed with error: ${e.toString()}`, LOG_CTX);
         }
     };
 
@@ -91,6 +92,7 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                             leadingVisual={() => <div>URL</div>}
                             onChange={(e) => setEndpoint(e.target.value)}
                             disabled={false}
+                            logContext={LOG_CTX}
                         />
                         <KeyValueTextField
                             className={style.grid_column_1}
@@ -105,6 +107,9 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                             onChangeKey={(e) => setMtlsKeyPath(e.target.value)}
                             onChangeValue={(e) => setMtlsPubPath(e.target.value)}
                             disabled={false}
+                            keyAriaLabel='mTLS Client Key'
+                            valueAriaLabel='mTLS Client Certificate'
+                            logContext={LOG_CTX}
                         />
                         <TextField
                             name="mTLS CA certificates"
@@ -114,6 +119,7 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                             leadingVisual={ChecklistIcon}
                             onChange={(e) => setMtlsCaPath(e.target.value)}
                             disabled={false}
+                            logContext={LOG_CTX}
                         />
                     </div>
                 </div>
@@ -127,6 +133,7 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                             leadingVisual={TagIcon}
                             readOnly
                             disabled
+                            logContext={LOG_CTX}
                         />
                         <KeyValueListBuilder
                             className={style.grid_column_1}

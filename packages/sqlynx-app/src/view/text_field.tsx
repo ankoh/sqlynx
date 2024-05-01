@@ -1,12 +1,11 @@
 import * as React from 'react';
 import { TextInput } from '@primer/react';
-import { CopyIcon } from '@primer/octicons-react';
 
+import { CopyToClipboardAction } from '../utils/clipboard.js';
 import { classNames } from '../utils/classnames.js';
 import { VariantKind } from '../utils/variant.js';
 
 import * as icons from '../../static/svg/symbols.generated.svg';
-
 import * as styles from './text_field.module.css';
 
 export const VALIDATION_UNKNOWN = Symbol("VALIDATION_UNKNOWN");
@@ -69,16 +68,8 @@ export function TextField(props: {
     concealed?: boolean;
     readOnly?: boolean;
     validation?: TextFieldValidationStatus;
+    logContext: string;
 }) {
-    const CopyAction = () => (
-        <TextInput.Action
-            onClick={() => {
-                alert('clear input');
-            }}
-            icon={CopyIcon}
-            aria-label="Clear input"
-        />
-    );
     let validationStatus: undefined | "error" | "success" = undefined;
     if (props.validation?.type === VALIDATION_OK) {
         validationStatus = 'success';
@@ -97,7 +88,7 @@ export function TextField(props: {
                 block
                 placeholder={props.placeholder}
                 leadingVisual={props.leadingVisual}
-                trailingAction={CopyAction()}
+                trailingAction={<CopyToClipboardAction value={props.value} logContext={props.logContext} ariaLabel={`Copy ${props.name}`} />}
                 value={value}
                 onChange={props.onChange}
                 disabled={props.disabled}
@@ -123,16 +114,10 @@ export function KeyValueTextField(props: {
     onChangeValue: React.ChangeEventHandler<HTMLInputElement>;
     disabled?: boolean;
     readOnly?: boolean;
+    keyAriaLabel: string;
+    valueAriaLabel: string;
+    logContext: string;
 }) {
-    const CopyAction = () => (
-        <TextInput.Action
-            onClick={() => {
-                alert('clear input');
-            }}
-            icon={CopyIcon}
-            aria-label="Clear input"
-        />
-    );
     return (
         <div className={classNames(styles.kv_field, props.className)}>
             <div className={styles.kv_field_name}>{props.name}</div>
@@ -143,7 +128,7 @@ export function KeyValueTextField(props: {
                 value={props.k}
                 placeholder={props.keyPlaceholder}
                 leadingVisual={props.keyIcon}
-                trailingAction={CopyAction()}
+                trailingAction={<CopyToClipboardAction value={props.k} logContext={props.logContext} ariaLabel={`Copy ${props.keyAriaLabel}`} />}
                 onChange={props.onChangeKey}
                 readOnly={props.readOnly}
                 disabled={props.disabled}
@@ -154,7 +139,7 @@ export function KeyValueTextField(props: {
                     value={props.v}
                     placeholder={props.valuePlaceholder}
                     leadingVisual={props.valueIcon}
-                    trailingAction={CopyAction()}
+                    trailingAction={<CopyToClipboardAction value={props.v} logContext={props.logContext} ariaLabel={`Copy ${props.valueAriaLabel}`} />}
                     onChange={props.onChangeValue}
                     readOnly={props.readOnly}
                     disabled={props.disabled}

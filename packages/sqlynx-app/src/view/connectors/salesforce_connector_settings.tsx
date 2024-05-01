@@ -16,6 +16,8 @@ import { classNames } from '../../utils/classnames.js';
 import * as symbols from '../../../static/svg/symbols.generated.svg';
 import * as style from './connector_settings.module.css';
 
+const LOG_CTX = "sf_connector";
+
 interface Props { }
 
 export const SalesforceConnectorSettings: React.FC<Props> = (
@@ -177,6 +179,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             placeholder="Salesforce Instance"
                             leadingVisual={() => <div>URL</div>}
                             validation={instanceUrlValidation}
+                            logContext={LOG_CTX}
                         />
                         <TextField
                             name="Connected App"
@@ -186,6 +189,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             placeholder="Consumer Key"
                             leadingVisual={() => <div>ID</div>}
                             validation={appConsumerValidation}
+                            logContext={LOG_CTX}
                         />
                     </div>
                 </div>
@@ -200,6 +204,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             onChange={() => { }}
                             readOnly
                             disabled
+                            logContext={LOG_CTX}
                         />
                         <TextField
                             className={style.grid_column_1}
@@ -211,6 +216,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             leadingVisual={() => <div>URL</div>}
                             readOnly
                             disabled={!isAuthenticated}
+                            logContext={LOG_CTX}
                         />
                         <TextField
                             name="Core Access Token"
@@ -221,6 +227,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             leadingVisual={KeyIcon}
                             readOnly
                             disabled={!isAuthenticated}
+                            logContext={LOG_CTX}
                         />
                         <TextField
                             name="Data Cloud Instance URL"
@@ -231,6 +238,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             leadingVisual={() => <div>URL</div>}
                             readOnly
                             disabled={!isAuthenticated}
+                            logContext={LOG_CTX}
                         />
                         <TextField
                             name="Data Cloud Access Token"
@@ -241,6 +249,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             leadingVisual={KeyIcon}
                             readOnly
                             disabled={!isAuthenticated}
+                            logContext={LOG_CTX}
                         />
                     </div>
                 </div>
