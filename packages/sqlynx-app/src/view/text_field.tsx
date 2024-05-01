@@ -59,13 +59,14 @@ function TextFieldValidation(props: { validation?: TextFieldValidationStatus }) 
 
 export function TextField(props: {
     className?: string;
-    name: string;
+    name?: string;
     caption?: string;
     value: string;
     placeholder?: string;
     leadingVisual?: React.ElementType;
     onChange?: React.ChangeEventHandler<HTMLInputElement>;
     disabled?: boolean;
+    concealed?: boolean;
     readOnly?: boolean;
     validation?: TextFieldValidationStatus;
 }) {
@@ -84,9 +85,10 @@ export function TextField(props: {
     } else if (props.validation?.type === VALIDATION_ERROR) {
         validationStatus = 'error';
     }
+    const value = props.concealed ? "*".repeat(props.value.length) : props.value;
     return (
         <div className={classNames(styles.text_field, props.className)}>
-            <div className={styles.text_field_name}>{props.name}</div>
+            {props.name && <div className={styles.text_field_name}>{props.name}</div>}
             {props.caption && <div className={styles.text_field_caption}>{props.caption}</div>}
             <TextInput
                 className={classNames(styles.text_field_input, {
@@ -96,7 +98,7 @@ export function TextField(props: {
                 placeholder={props.placeholder}
                 leadingVisual={props.leadingVisual}
                 trailingAction={CopyAction()}
-                value={props.value}
+                value={value}
                 onChange={props.onChange}
                 disabled={props.disabled}
                 readOnly={props.readOnly}

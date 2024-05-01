@@ -30,12 +30,14 @@ interface OAuthSucceededProps {
     state: proto.sqlynx_oauth.pb.OAuthState;
 }
 
-function triggerFlow(state: proto.sqlynx_oauth.pb.OAuthState, code: string, logger: Logger) {
+function buildDeepLink(eventBase64: string) {
+    return new URL(`sqlynx://localhost?data=${eventBase64}`);
+}
+
+function triggerFlow(state: proto.sqlynx_oauth.pb.OAuthState, eventBase64: string, logger: Logger) {
     switch (state.flowVariant) {
         case proto.sqlynx_oauth.pb.OAuthFlowVariant.NATIVE_LINK_FLOW: {
-            const data = new proto.sqlynx_oauth.pb.OAuthRedirectData({ code, state });
-            const dataBase64 = BASE64_CODEC.encode(data.toBinary().buffer);
-            const deepLink = new URL(`sqlynx://localhost/oauth?data=${dataBase64}`);
+            const deepLink = buildDeepLink(eventBase64).toString();
             logger.info(`opening deep link`, "oauth_redirect");
             window.open(deepLink, '_self');
             break;
@@ -45,13 +47,6 @@ function triggerFlow(state: proto.sqlynx_oauth.pb.OAuthState, code: string, logg
                 logger.error("window opener is undefined", "oauth_redirect");
                 return;
             }
-            const eventMessage = new proto.sqlynx_app_event.pb.AppEventData({
-                data: {
-                    case: "oauthRedirect",
-                    value: new proto.sqlynx_oauth.pb.OAuthRedirectData({ code, state })
-                }
-            });
-            const eventBase64 = BASE64_CODEC.encode(eventMessage.toBinary().buffer);
             logger.info(`posting oauth data to opener`, "oauth_redirect");
             window.opener.postMessage(eventBase64);
             break;
@@ -66,6 +61,17 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
     const now = new Date();
     const [logsAreOpen, setLogsAreOpen] = React.useState<boolean>(false);
 
+    // Encode the event as base64
+    const eventBase64 = React.useMemo(() => {
+        const eventMessage = new proto.sqlynx_app_event.pb.AppEventData({
+            data: {
+                case: "oauthRedirect",
+                value: new proto.sqlynx_oauth.pb.OAuthRedirectData({ code, state: props.state })
+            }
+        });
+        return BASE64_CODEC.encode(eventMessage.toBinary().buffer);
+    }, [code, props.state]);
+
     // Setup autotrigger
     const skipAutoTrigger = props.state.flowVariant == proto.sqlynx_oauth.pb.OAuthFlowVariant.NATIVE_LINK_FLOW && props.state.debugMode;
     const autoTriggersAt = React.useMemo(() => new Date(now.getTime() + AUTOTRIGGER_DELAY), []);
@@ -77,7 +83,7 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
             return () => { };
         } else {
             logger.info(`setup auto-trigger in ${formatHHMMSS(remainingUntilAutoTrigger / 1000)}`, "oauth_redirect");
-            const timeoutId = setTimeout(() => triggerFlow(props.state, code, logger), remainingUntilAutoTrigger);
+            const timeoutId = setTimeout(() => triggerFlow(props.state, eventBase64, logger), remainingUntilAutoTrigger);
             return () => clearTimeout(timeoutId);
         }
     }, [props.state, code]);
@@ -97,16 +103,16 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
                         <TextField
                             name="Salesforce Instance URL"
                             value={props.state.providerOptions.value.instanceUrl}
-                            readOnly={true}
-                            disabled={true}
                             leadingVisual={() => <div>URL</div>}
+                            readOnly
+                            disabled
                         />
                         <TextField
                             name="Connected App"
                             value={props.state.providerOptions.value.appConsumerKey}
-                            readOnly={true}
-                            disabled={true}
                             leadingVisual={() => <div>ID</div>}
+                            readOnly
+                            disabled
                         />
                     </div>
                 </div>
@@ -150,18 +156,27 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
         case proto.sqlynx_oauth.pb.OAuthFlowVariant.NATIVE_LINK_FLOW: {
             if (props.state.debugMode) {
                 flowContinuation = (
-                    <>
-                        <div className={page_styles.card_section_description}>
-                            The initiator is a native app in debug mode which cannot register as deep link handler.
-                            Copy the following link manually and paste it into the app window.
+                    <div className={page_styles.card_section}>
+                        <div className={page_styles.section_entries}>
+                            <div className={page_styles.section_description}>
+                                The initiator is a native app in debug mode which cannot register as deep link handler.
+                                Copy the following url and paste it anywhere into the app window.
+                            </div>
+                            <TextField
+                                name="Native OAuth Callback"
+                                value={buildDeepLink(eventBase64).toString()}
+                                leadingVisual={() => <div>URL</div>}
+                                readOnly
+                                disabled
+                            />
                         </div>
-                    </>
+                    </div>
                 );
 
             } else {
                 flowContinuation = (
-                    <>
-                        <div className={page_styles.card_section_description}>
+                    <div className={page_styles.card_section}>
+                        <div className={page_styles.section_description}>
                             Your browser should prompt you to open the native app. You can retry until the code expires.
                         </div>
                         <div className={page_styles.card_actions}>
@@ -170,21 +185,21 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
                                     ? <Button
                                         className={page_styles.card_action_right}
                                         variant="primary"
-                                        onClick={() => triggerFlow(props.state, code, logger)}
+                                        onClick={() => triggerFlow(props.state, eventBase64, logger)}
                                     >
                                         Send to App
                                     </Button>
                                     : <Button
                                         className={page_styles.card_action_right}
                                         variant="primary"
-                                        onClick={() => triggerFlow(props.state, code, logger)}
+                                        onClick={() => triggerFlow(props.state, eventBase64, logger)}
                                         trailingVisual={() => <div>{Math.ceil(remainingUntilAutoTrigger / 1000)}</div>}
                                     >
                                         Send to App
                                     </Button>
                             }
                         </div>
-                    </>
+                    </div>
                 );
             }
             break;
@@ -229,11 +244,12 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
                     <div className={page_styles.section_entries}>
                         <TextField
                             name="Authorization Code"
-                            value={"*".repeat(props.params.get('code')?.length ?? 0)}
-                            readOnly={true}
-                            disabled={true}
+                            value={code ?? ""}
                             leadingVisual={() => <div>Code</div>}
                             validation={codeExpirationValidation}
+                            readOnly
+                            disabled
+                            concealed
                         />
                     </div>
                 </div>
