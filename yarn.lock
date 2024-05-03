@@ -60,7 +60,7 @@ __metadata:
     "@primer/react": "npm:^36.16.0"
     "@react-hook/resize-observer": "npm:^1.2.6"
     "@tauri-apps/api": "patch:@tauri-apps/api@npm%3A2.0.0-beta.8#~/.yarn/patches/@tauri-apps-api-npm-2.0.0-beta.8-d68cf559f2.patch"
-    "@tauri-apps/plugin-deep-link": "npm:^2.0.0-beta.2"
+    "@tauri-apps/plugin-deep-link": "npm:^2.0.0-beta.3"
     "@tauri-apps/plugin-log": "npm:^2.0.0-beta.4"
     "@tauri-apps/plugin-os": "npm:^2.0.0-beta.2"
     "@tauri-apps/plugin-shell": "npm:^2.0.0-beta.2"
@@ -2077,12 +2077,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tauri-apps/plugin-deep-link@npm:^2.0.0-beta.2":
-  version: 2.0.0-beta.2
-  resolution: "@tauri-apps/plugin-deep-link@npm:2.0.0-beta.2"
+"@tauri-apps/plugin-deep-link@npm:^2.0.0-beta.3":
+  version: 2.0.0-beta.3
+  resolution: "@tauri-apps/plugin-deep-link@npm:2.0.0-beta.3"
   dependencies:
-    "@tauri-apps/api": "npm:2.0.0-beta.4"
-  checksum: 10c0/443c51a1b9d90d5b0e9a11cbe92039b223d2d4af21c61da3ed0b27167768586cead45609c570e42c8233903a2c2f750d063c1c6a3885e9ba992db9fd186bfb6b
+    "@tauri-apps/api": "npm:2.0.0-beta.11"
+  checksum: 10c0/8b1acc0bb72f2dc64952d9fab2a441c2ec34ae693271dc883c28c6085c1b73ef775eae253a3fbc619bb376d7176d00231122b722ade7b5ae257e9e440996f074
   languageName: node
   linkType: hard
 
