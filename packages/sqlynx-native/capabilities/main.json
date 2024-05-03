@@ -24,7 +24,14 @@
         "webview:default",
         "window:allow-set-shadow",
         "window:allow-start-dragging",
-        "window:default"
+        "window:default",
+        {
+            "identifier": "http:default",
+            "allow": [
+                "https://*.force.com/*",
+                "https://*.salesforce.com/*"
+            ]
+        }
     ],
     "platforms": [
         "linux",

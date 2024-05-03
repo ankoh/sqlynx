@@ -22,7 +22,12 @@ pub enum Status {
     GrpcStreamReadTimedOut { channel_id: usize, stream_id: usize },
     GrpcStreamIsUnknown { channel_id: usize, stream_id: usize },
     GrpcStreamClosed { channel_id: usize, stream_id: usize },
-    GrpcStreamFailed { status: tonic::Status }
+    HttpRequestFailed { stream_id: usize, error: String },
+    HttpStreamReadFailed { stream_id: usize, error: String },
+    HttpStreamReadTimedOut { stream_id: usize },
+    HttpStreamIsUnknown { stream_id: usize },
+    HttpStreamClosed { stream_id: usize },
+    HttpStreamFailed { stream_id: usize, error: String }
 }
 
 impl Display for Status {
@@ -64,8 +69,23 @@ impl Display for Status {
             Status::GrpcStreamClosed { channel_id, stream_id } => {
                 f.write_fmt(format_args!("gRPC stream {} of channel {} closed", stream_id, channel_id))
             }
-            Status::GrpcStreamFailed { status } => {
-                f.write_fmt(format_args!("gRPC stream failed with error: {}", status))
+            Status::HttpRequestFailed { stream_id, error } => {
+                f.write_fmt(format_args!("request for http stream {} failed with error: {}", stream_id, error))
+            }
+            Status::HttpStreamReadFailed { stream_id, error } => {
+                f.write_fmt(format_args!("reading chunk from http stream {} failed with error: {}", stream_id, error))
+            }
+            Status::HttpStreamReadTimedOut { stream_id } => {
+                f.write_fmt(format_args!("reading from http stream {} timed out", stream_id))
+            }
+            Status::HttpStreamIsUnknown { stream_id } => {
+                f.write_fmt(format_args!("http stream {} is unknown", stream_id))
+            }
+            Status::HttpStreamClosed { stream_id } => {
+                f.write_fmt(format_args!("http stream {} closed", stream_id))
+            }
+            Status::HttpStreamFailed { stream_id, error } => {
+                f.write_fmt(format_args!("http stream {} failed with error: {}", stream_id, error))
             }
         }
     }
@@ -86,7 +106,12 @@ impl From<&Status> for StatusCode {
             Status::GrpcStreamReadTimedOut { channel_id: _, stream_id: _ } => StatusCode::BAD_REQUEST,
             Status::GrpcStreamIsUnknown { channel_id: _, stream_id: _ } => StatusCode::NOT_FOUND,
             Status::GrpcStreamClosed { channel_id: _, stream_id: _ } => StatusCode::BAD_REQUEST,
-            Status::GrpcStreamFailed { status: _ } => StatusCode::BAD_REQUEST,
+            Status::HttpRequestFailed { stream_id: _, error: _ } => StatusCode::BAD_REQUEST,
+            Status::HttpStreamReadFailed { stream_id: _, error: _ } => StatusCode::BAD_REQUEST,
+            Status::HttpStreamReadTimedOut { stream_id: _ } => StatusCode::BAD_REQUEST,
+            Status::HttpStreamIsUnknown { stream_id: _ } => StatusCode::NOT_FOUND,
+            Status::HttpStreamClosed { stream_id: _ } => StatusCode::BAD_REQUEST,
+            Status::HttpStreamFailed { stream_id: _, error: _ } => StatusCode::BAD_REQUEST,
         }
     }
 }

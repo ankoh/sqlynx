@@ -7,6 +7,7 @@ mod grpc_proxy;
 mod grpc_proxy_globals;
 mod grpc_proxy_router;
 mod grpc_stream_manager;
+mod http_stream_manager;
 mod ipc_router;
 mod proto;
 #[cfg(test)]
@@ -34,6 +35,7 @@ async fn main() {
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_http::init())
         .plugin(
             tauri_plugin_log::Builder::default()
                 .targets(logging::config::LOG_TARGETS)
