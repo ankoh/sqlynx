@@ -9,7 +9,6 @@ use std::time::Duration;
 use tokio::sync::Mutex;
 use tonic::metadata::MetadataMap;
 
-use crate::proto::salesforce_hyperdb_grpc_v1::QueryResult;
 use crate::status::GrpcStreamElement;
 use crate::status::Status;
 
@@ -80,12 +79,6 @@ pub struct GrpcStreamManager {
     pub next_stream_id: AtomicUsize,
     /// The server streams
     pub server_streams: RwLock<HashMap<usize, Arc<GRPCServerStream>>>,
-}
-
-impl Into<Vec<u8>> for QueryResult {
-    fn into(self) -> Vec<u8> {
-        self.encode_to_vec()
-    }
 }
 
 impl GrpcStreamManager {
@@ -297,6 +290,12 @@ mod test {
     use crate::proto::salesforce_hyperdb_grpc_v1::SqlType;
     use crate::proto::salesforce_hyperdb_grpc_v1::{sql_type, QueryResultHeader};
     use crate::proto::salesforce_hyperdb_grpc_v1::{ColumnDescription, QueryResult};
+
+    impl Into<Vec<u8>> for QueryResult {
+        fn into(self) -> Vec<u8> {
+            self.encode_to_vec()
+        }
+    }
 
     #[tokio::test]
     async fn test_execute_query_mock() -> Result<(), Status> {
