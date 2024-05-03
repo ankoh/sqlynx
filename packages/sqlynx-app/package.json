@@ -33,7 +33,7 @@
         "@tauri-apps/api": "patch:@tauri-apps/api@npm%3A2.0.0-beta.8#~/.yarn/patches/@tauri-apps-api-npm-2.0.0-beta.8-d68cf559f2.patch",
         "@tauri-apps/plugin-deep-link": "^2.0.0-beta.2",
         "@tauri-apps/plugin-log": "^2.0.0-beta.4",
-        "@tauri-apps/plugin-os": "^2.0.0-beta.2",
+        "@tauri-apps/plugin-os": "^2.0.0-beta.3",
         "@tauri-apps/plugin-shell": "^2.0.0-beta.2",
         "@tauri-apps/plugin-updater": "^2.0.0-beta.2",
         "@testing-library/react": "^15.0.5",
