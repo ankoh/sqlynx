@@ -22,7 +22,7 @@
         "last 1 version",
         "> 1%"
     ],
-    "packageManager": "yarn@4.1.1",
+    "packageManager": "yarn@4.2.1",
     "resolutions": {
         "@primer/octicons-react@npm:^19.8.0": "patch:@primer/octicons-react@npm%3A19.9.0#~/.yarn/patches/@primer-octicons-react-npm-19.9.0-65341cfa23.patch",
         "@tauri-apps/api@npm:2.0.0-beta.4": "patch:@tauri-apps/api@npm%3A2.0.0-beta.8#~/.yarn/patches/@tauri-apps-api-npm-2.0.0-beta.8-d68cf559f2.patch"
