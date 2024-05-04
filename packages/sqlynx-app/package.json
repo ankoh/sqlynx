@@ -28,7 +28,7 @@
         "@lezer/highlight": "^1.2.0",
         "@octokit/graphql": "^8.1.1",
         "@primer/octicons-react": "patch:@primer/octicons-react@npm%3A19.9.0#~/.yarn/patches/@primer-octicons-react-npm-19.9.0-65341cfa23.patch",
-        "@primer/react": "^36.16.0",
+        "@primer/react": "^36.17.0",
         "@react-hook/resize-observer": "^1.2.6",
         "@tauri-apps/api": "patch:@tauri-apps/api@npm%3A2.0.0-beta.8#~/.yarn/patches/@tauri-apps-api-npm-2.0.0-beta.8-d68cf559f2.patch",
         "@tauri-apps/plugin-deep-link": "^2.0.0-beta.2",
