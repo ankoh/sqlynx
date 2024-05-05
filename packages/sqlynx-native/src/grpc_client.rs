@@ -107,12 +107,12 @@ mod test {
     use prost::Message;
     use tokio_stream::StreamExt;
 
-    use crate::{proto::sqlynx_test::{TestServerStreamingRequest, TestServerStreamingResponse, TestUnaryRequest, TestUnaryResponse}, test::test_service_mock::{spawn_grpc_test_service_mock, TestServiceMock}};
+    use crate::{proto::sqlynx_test::{TestServerStreamingRequest, TestServerStreamingResponse, TestUnaryRequest, TestUnaryResponse}, test::grpc_service_mock::{spawn_grpc_test_service_mock, GrpcServiceMock}};
 
     #[tokio::test]
     async fn test_unary() -> Result<()> {
         // Spawn a test service mock
-        let (mock, mut setup_unary, mut _setup_server_streaming) = TestServiceMock::new();
+        let (mock, mut setup_unary, mut _setup_server_streaming) = GrpcServiceMock::new();
         let (addr, shutdown) = spawn_grpc_test_service_mock(mock).await;
 
         // Respond single unary response
@@ -154,7 +154,7 @@ mod test {
     #[tokio::test]
     async fn test_server_streaming() -> Result<()> {
         // Spawn a test service mock
-        let (mock, mut _setup_unary, mut setup_server_streaming) = TestServiceMock::new();
+        let (mock, mut _setup_unary, mut setup_server_streaming) = GrpcServiceMock::new();
         let (addr, shutdown) = spawn_grpc_test_service_mock(mock).await;
 
         // Respond single streaming response

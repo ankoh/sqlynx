@@ -12,8 +12,6 @@ struct HttpRequestParams {
     endpoint: Url,
     path_and_query: String,
     read_timeout: usize,
-    batch_timeout: usize,
-    batch_bytes: usize,
     headers: HeaderMap<HeaderValue>
 }
 
@@ -65,8 +63,6 @@ fn read_request_params(headers: &mut HeaderMap) -> Result<HttpRequestParams, Sta
     let endpoint = require_string_header(headers, HEADER_NAME_ENDPOINT)?;
     let path_and_query = require_string_header(headers, HEADER_NAME_PATH)?;
     let read_timeout = require_usize_header(headers, HEADER_NAME_READ_TIMEOUT)?;
-    let batch_timeout = require_usize_header(headers, HEADER_NAME_BATCH_TIMEOUT)?;
-    let batch_bytes = require_usize_header(headers, HEADER_NAME_BATCH_BYTES)?;
 
     let endpoint = url::Url::parse(&endpoint)
         .map_err(|e| {
@@ -77,7 +73,7 @@ fn read_request_params(headers: &mut HeaderMap) -> Result<HttpRequestParams, Sta
             Status::HttpMethodIsInvalid { header: HEADER_NAME_METHOD, method: method.to_string(), message: e.to_string() }
         })?;
 
-    Ok(HttpRequestParams { method, endpoint, path_and_query, read_timeout, batch_timeout, batch_bytes, headers: extra_metadata })
+    Ok(HttpRequestParams { method, endpoint, path_and_query, read_timeout, headers: extra_metadata })
 }
 
 #[derive(Default)]
