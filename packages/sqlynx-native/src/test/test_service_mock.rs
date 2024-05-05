@@ -1,7 +1,5 @@
 use crate::proto::sqlynx_test::{
-    test_service_server::{TestService, TestServiceServer},
-    TestUnaryRequest, TestUnaryResponse,
-    TestServerStreamingRequest, TestServerStreamingResponse,
+    test_service_server::{TestService, TestServiceServer}, TestServerStreamingRequest, TestServerStreamingResponse, TestUnaryRequest, TestUnaryResponse
 };
 use std::{net::SocketAddr, pin::Pin};
 use tokio::sync::oneshot;
@@ -11,12 +9,12 @@ use tonic::Status;
 pub type UnaryResponseSender = tokio::sync::mpsc::Sender<Result<TestUnaryResponse, tonic::Status>>;
 pub type ServerStreamingResponseSender = tokio::sync::mpsc::Sender<Result<TestServerStreamingResponse, tonic::Status>>;
 
-pub struct TestServiceMock {
+pub struct TestGrpcServiceMock {
     pub setup_unary: tokio::sync::mpsc::Sender<(TestUnaryRequest, UnaryResponseSender)>,
     pub setup_server_streaming: tokio::sync::mpsc::Sender<(TestServerStreamingRequest, ServerStreamingResponseSender)>,
 }
 
-impl TestServiceMock {
+impl TestGrpcServiceMock {
     pub fn new() -> (
         Self,
         tokio::sync::mpsc::Receiver<(TestUnaryRequest, UnaryResponseSender)>,
@@ -31,7 +29,7 @@ impl TestServiceMock {
 type ServerStreamingResponseStream = Pin<Box<dyn Stream<Item = Result<TestServerStreamingResponse, Status>> + Send>>;
 
 #[tonic::async_trait]
-impl TestService for TestServiceMock {
+impl TestService for TestGrpcServiceMock {
     type TestServerStreamingStream = ServerStreamingResponseStream;
 
     async fn test_unary(
@@ -71,7 +69,7 @@ impl TestService for TestServiceMock {
     }
 }
 
-pub async fn spawn_test_service_mock(mock: TestServiceMock) -> (SocketAddr, oneshot::Sender<()>) {
+pub async fn spawn_grpc_test_service_mock(mock: TestGrpcServiceMock) -> (SocketAddr, oneshot::Sender<()>) {
     let service = TestServiceServer::new(mock);
 
     // create the listener up front so the server is immediately ready
