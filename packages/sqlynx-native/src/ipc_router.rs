@@ -99,8 +99,8 @@ mod test {
     use crate::proto::sqlynx_test::TestUnaryResponse;
     use crate::proto::sqlynx_test::TestServerStreamingRequest;
     use crate::proto::sqlynx_test::TestServerStreamingResponse;
-    use crate::test::test_service_mock::spawn_grpc_test_service_mock;
-    use crate::test::test_service_mock::TestServiceMock;
+    use crate::test::grpc_service_mock::spawn_grpc_test_service_mock;
+    use crate::test::grpc_service_mock::GrpcServiceMock;
 
     use anyhow::Result;
     use prost::Message;
@@ -110,7 +110,7 @@ mod test {
     #[tokio::test]
     async fn test_grpc_channel_setup() -> anyhow::Result<()> {
         // Spawn a test service mock
-        let (mock, mut _setup_unary, mut _setup_server_streaming) = TestServiceMock::new();
+        let (mock, mut _setup_unary, mut _setup_server_streaming) = GrpcServiceMock::new();
         let (addr, shutdown) = spawn_grpc_test_service_mock(mock).await;
         let host = format!("http://{}", addr);
 
@@ -145,7 +145,7 @@ mod test {
     #[tokio::test]
     async fn test_unary_grpc_call() -> Result<()> {
         // Spawn a test service mock
-        let (mock, mut setup_unary, mut _setup_server_streaming) = TestServiceMock::new();
+        let (mock, mut setup_unary, mut _setup_server_streaming) = GrpcServiceMock::new();
         let (addr, shutdown) = spawn_grpc_test_service_mock(mock).await;
         let host = format!("http://{}", addr);
 
@@ -209,7 +209,7 @@ mod test {
     #[tokio::test]
     async fn test_streaming_grpc_call() -> Result<()> {
         // Spawn a test service mock
-        let (mock, mut _setup_unary, mut setup_server_streaming) = TestServiceMock::new();
+        let (mock, mut _setup_unary, mut setup_server_streaming) = GrpcServiceMock::new();
         let (addr, shutdown) = spawn_grpc_test_service_mock(mock).await;
         let host = format!("http://{}", addr);
 

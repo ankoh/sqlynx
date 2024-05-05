@@ -9,12 +9,12 @@ use tonic::Status;
 pub type UnaryResponseSender = tokio::sync::mpsc::Sender<Result<TestUnaryResponse, tonic::Status>>;
 pub type ServerStreamingResponseSender = tokio::sync::mpsc::Sender<Result<TestServerStreamingResponse, tonic::Status>>;
 
-pub struct TestGrpcServiceMock {
+pub struct GrpcServiceMock {
     pub setup_unary: tokio::sync::mpsc::Sender<(TestUnaryRequest, UnaryResponseSender)>,
     pub setup_server_streaming: tokio::sync::mpsc::Sender<(TestServerStreamingRequest, ServerStreamingResponseSender)>,
 }
 
-impl TestGrpcServiceMock {
+impl GrpcServiceMock {
     pub fn new() -> (
         Self,
         tokio::sync::mpsc::Receiver<(TestUnaryRequest, UnaryResponseSender)>,
@@ -29,7 +29,7 @@ impl TestGrpcServiceMock {
 type ServerStreamingResponseStream = Pin<Box<dyn Stream<Item = Result<TestServerStreamingResponse, Status>> + Send>>;
 
 #[tonic::async_trait]
-impl TestService for TestGrpcServiceMock {
+impl TestService for GrpcServiceMock {
     type TestServerStreamingStream = ServerStreamingResponseStream;
 
     async fn test_unary(
@@ -69,7 +69,7 @@ impl TestService for TestGrpcServiceMock {
     }
 }
 
-pub async fn spawn_grpc_test_service_mock(mock: TestGrpcServiceMock) -> (SocketAddr, oneshot::Sender<()>) {
+pub async fn spawn_grpc_test_service_mock(mock: GrpcServiceMock) -> (SocketAddr, oneshot::Sender<()>) {
     let service = TestServiceServer::new(mock);
 
     // create the listener up front so the server is immediately ready
