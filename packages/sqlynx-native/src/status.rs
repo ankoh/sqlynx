@@ -10,24 +10,28 @@ pub enum GrpcStreamElement {
 
 #[derive(Debug)]
 pub enum Status {
+    GrpcCallFailed{ status: tonic::Status },
+    GrpcChannelIdIsUnknown{ channel_id: usize },
+    GrpcEndpointConnectFailed{ message: String },
+    GrpcStreamClosed { channel_id: usize, stream_id: usize },
+    GrpcStreamIsUnknown { channel_id: usize, stream_id: usize },
+    GrpcStreamReadFailed { channel_id: usize, stream_id: usize, element: GrpcStreamElement, status: tonic::Status },
+    GrpcStreamReadTimedOut { channel_id: usize, stream_id: usize },
     HeaderHasInvalidEncoding{ header: &'static str, message: String },
-    HeaderRequiredButMissing{ header: &'static str },
     HeaderIsNotAValidEndpoint{ header: &'static str, message: String },
     HeaderIsNotAnUsize{ header: &'static str, message: String },
     HeaderPathIsInvalid{ header: &'static str, path: String, message: String },
-    GrpcChannelIdIsUnknown{ channel_id: usize },
-    GrpcEndpointConnectFailed{ message: String },
-    GrpcCallFailed{ status: tonic::Status },
-    GrpcStreamReadFailed { channel_id: usize, stream_id: usize, element: GrpcStreamElement, status: tonic::Status },
-    GrpcStreamReadTimedOut { channel_id: usize, stream_id: usize },
-    GrpcStreamIsUnknown { channel_id: usize, stream_id: usize },
-    GrpcStreamClosed { channel_id: usize, stream_id: usize },
+    HeaderRequiredButMissing{ header: &'static str },
+    HttpClientConfigInvalid{ message: String },
+    HttpEndpointIsInvalid{ header: &'static str, endpoint: String, message: String },
+    HttpMethodIsInvalid{ header: &'static str, method: String, message: String },
     HttpRequestFailed { stream_id: usize, error: String },
+    HttpStreamClosed { stream_id: usize },
+    HttpStreamFailed { stream_id: usize, error: String },
+    HttpStreamIsUnknown { stream_id: usize },
     HttpStreamReadFailed { stream_id: usize, error: String },
     HttpStreamReadTimedOut { stream_id: usize },
-    HttpStreamIsUnknown { stream_id: usize },
-    HttpStreamClosed { stream_id: usize },
-    HttpStreamFailed { stream_id: usize, error: String }
+    HttpUrlIsInvalid{ message: String },
 }
 
 impl Display for Status {
@@ -47,6 +51,12 @@ impl Display for Status {
             }
             Status::HeaderPathIsInvalid { header, path, message } => {
                 f.write_fmt(format_args!("header '{}' stores the path '{}' and is invalid: {}", header, path, message))
+            }
+            Status::HttpEndpointIsInvalid { header, endpoint, message } => {
+                f.write_fmt(format_args!("header '{}' stores endpoint '{}' which is invalid: {}", header, endpoint, message))
+            }
+            Status::HttpMethodIsInvalid { header, method, message } => {
+                f.write_fmt(format_args!("header '{}' stores method '{}' which is invalid: {}", header, method, message))
             }
             Status::GrpcChannelIdIsUnknown { channel_id } => {
                 f.write_fmt(format_args!("gRPC channel id {} is unknown", channel_id))
@@ -87,6 +97,12 @@ impl Display for Status {
             Status::HttpStreamFailed { stream_id, error } => {
                 f.write_fmt(format_args!("http stream {} failed with error: {}", stream_id, error))
             }
+            Status::HttpClientConfigInvalid {  message } => {
+                f.write_fmt(format_args!("http client config is invalid: {}", message))
+            }
+            Status::HttpUrlIsInvalid { message } => {
+                f.write_fmt(format_args!("http url is invalid : {}", message))
+            }
         }
     }
 }
@@ -94,24 +110,28 @@ impl Display for Status {
 impl From<&Status> for StatusCode {
     fn from(status: &Status) -> StatusCode {
         match status {
-            Status::HeaderHasInvalidEncoding { header: _, message: _ } => StatusCode::BAD_REQUEST,
-            Status::HeaderIsNotAValidEndpoint { header: _, message: _ } => StatusCode::BAD_REQUEST,
-            Status::HeaderRequiredButMissing { header: _ } => StatusCode::BAD_REQUEST,
-            Status::HeaderIsNotAnUsize { header: _, message: _ } => StatusCode::BAD_REQUEST,
-            Status::HeaderPathIsInvalid { header: _, path: _, message: _ } => StatusCode::BAD_REQUEST,
+            Status::GrpcCallFailed { status: _ } => StatusCode::BAD_REQUEST,
             Status::GrpcChannelIdIsUnknown { channel_id: _ } => StatusCode::NOT_FOUND,
             Status::GrpcEndpointConnectFailed { message: _ } => StatusCode::BAD_REQUEST,
-            Status::GrpcCallFailed { status: _ } => StatusCode::BAD_REQUEST,
+            Status::GrpcStreamClosed { channel_id: _, stream_id: _ } => StatusCode::BAD_REQUEST,
+            Status::GrpcStreamIsUnknown { channel_id: _, stream_id: _ } => StatusCode::NOT_FOUND,
             Status::GrpcStreamReadFailed { channel_id: _, stream_id: _, element: _, status: _ } => StatusCode::BAD_REQUEST,
             Status::GrpcStreamReadTimedOut { channel_id: _, stream_id: _ } => StatusCode::BAD_REQUEST,
-            Status::GrpcStreamIsUnknown { channel_id: _, stream_id: _ } => StatusCode::NOT_FOUND,
-            Status::GrpcStreamClosed { channel_id: _, stream_id: _ } => StatusCode::BAD_REQUEST,
+            Status::HeaderHasInvalidEncoding { header: _, message: _ } => StatusCode::BAD_REQUEST,
+            Status::HeaderIsNotAValidEndpoint { header: _, message: _ } => StatusCode::BAD_REQUEST,
+            Status::HeaderIsNotAnUsize { header: _, message: _ } => StatusCode::BAD_REQUEST,
+            Status::HeaderPathIsInvalid { header: _, path: _, message: _ } => StatusCode::BAD_REQUEST,
+            Status::HeaderRequiredButMissing { header: _ } => StatusCode::BAD_REQUEST,
+            Status::HttpClientConfigInvalid { message: _ } => StatusCode::BAD_REQUEST,
+            Status::HttpEndpointIsInvalid { header: _, endpoint: _ , message: _ } => StatusCode::BAD_REQUEST,
+            Status::HttpMethodIsInvalid { header: _, method: _, message: _ } => StatusCode::BAD_REQUEST,
             Status::HttpRequestFailed { stream_id: _, error: _ } => StatusCode::BAD_REQUEST,
-            Status::HttpStreamReadFailed { stream_id: _, error: _ } => StatusCode::BAD_REQUEST,
-            Status::HttpStreamReadTimedOut { stream_id: _ } => StatusCode::BAD_REQUEST,
-            Status::HttpStreamIsUnknown { stream_id: _ } => StatusCode::NOT_FOUND,
             Status::HttpStreamClosed { stream_id: _ } => StatusCode::BAD_REQUEST,
             Status::HttpStreamFailed { stream_id: _, error: _ } => StatusCode::BAD_REQUEST,
+            Status::HttpStreamIsUnknown { stream_id: _ } => StatusCode::NOT_FOUND,
+            Status::HttpStreamReadFailed { stream_id: _, error: _ } => StatusCode::BAD_REQUEST,
+            Status::HttpStreamReadTimedOut { stream_id: _ } => StatusCode::BAD_REQUEST,
+            Status::HttpUrlIsInvalid { message: _ } => StatusCode::BAD_REQUEST,
         }
     }
 }
