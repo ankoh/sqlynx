@@ -88,15 +88,15 @@ pub async fn route_grpc_proxy_request(req: &mut Request<Vec<u8>>) -> Option<Resp
 mod test {
     use super::*;
 
-    use crate::grpc_proxy::HEADER_NAME_BATCH_BYTES;
-    use crate::grpc_proxy::HEADER_NAME_BATCH_EVENT;
-    use crate::grpc_proxy::HEADER_NAME_BATCH_MESSAGES;
-    use crate::grpc_proxy::HEADER_NAME_BATCH_TIMEOUT;
-    use crate::grpc_proxy::HEADER_NAME_CHANNEL_ID;
-    use crate::grpc_proxy::HEADER_NAME_ENDPOINT;
-    use crate::grpc_proxy::HEADER_NAME_PATH;
-    use crate::grpc_proxy::HEADER_NAME_READ_TIMEOUT;
-    use crate::grpc_proxy::HEADER_NAME_STREAM_ID;
+    use crate::proxy_headers::HEADER_NAME_BATCH_BYTES;
+    use crate::proxy_headers::HEADER_NAME_BATCH_EVENT;
+    use crate::proxy_headers::HEADER_NAME_BATCH_MESSAGES;
+    use crate::proxy_headers::HEADER_NAME_BATCH_TIMEOUT;
+    use crate::proxy_headers::HEADER_NAME_CHANNEL_ID;
+    use crate::proxy_headers::HEADER_NAME_ENDPOINT;
+    use crate::proxy_headers::HEADER_NAME_PATH;
+    use crate::proxy_headers::HEADER_NAME_READ_TIMEOUT;
+    use crate::proxy_headers::HEADER_NAME_STREAM_ID;
     use crate::proto::sqlynx_test::TestUnaryRequest;
     use crate::proto::sqlynx_test::TestUnaryResponse;
     use crate::proto::sqlynx_test::TestServerStreamingRequest;

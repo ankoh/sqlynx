@@ -1,4 +1,3 @@
-use prost::Message;
 use tokio::time::timeout;
 use std::sync::atomic::AtomicUsize;
 use std::time::Instant;
@@ -277,6 +276,7 @@ mod test {
     use super::*;
     use std::collections::HashMap;
     use tokio_stream::StreamExt;
+    use prost::Message;
 
     use crate::status::Status;
     use crate::test::hyper_service_mock::{spawn_hyper_service_mock, HyperServiceMock};

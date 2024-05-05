@@ -12,11 +12,11 @@ use tonic::metadata::KeyAndMutValueRef;
 use lazy_static::lazy_static;
 
 use crate::grpc_proxy::GrpcProxy;
-use crate::grpc_proxy::HEADER_NAME_BATCH_EVENT;
-use crate::grpc_proxy::HEADER_NAME_BATCH_MESSAGES;
-use crate::grpc_proxy::HEADER_NAME_CHANNEL_ID;
-use crate::grpc_proxy::HEADER_NAME_STREAM_ID;
-use crate::grpc_proxy::HEADER_PREFIX;
+use crate::proxy_headers::HEADER_NAME_BATCH_EVENT;
+use crate::proxy_headers::HEADER_NAME_BATCH_MESSAGES;
+use crate::proxy_headers::HEADER_NAME_CHANNEL_ID;
+use crate::proxy_headers::HEADER_NAME_STREAM_ID;
+use crate::proxy_headers::HEADER_PREFIX;
 
 lazy_static! {
     static ref GRPC_PROXY: GrpcProxy = GrpcProxy::default();

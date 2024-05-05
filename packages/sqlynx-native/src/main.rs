@@ -7,7 +7,9 @@ mod grpc_proxy;
 mod grpc_proxy_globals;
 mod grpc_proxy_router;
 mod grpc_stream_manager;
+mod http_proxy;
 mod http_stream_manager;
+mod proxy_headers;
 mod ipc_router;
 mod proto;
 #[cfg(test)]
