@@ -28,6 +28,18 @@ pub enum HttpServerStreamBatchEvent {
     FlushAfterBytes,
 }
 
+impl HttpServerStreamBatchEvent {
+    pub fn to_str(&self) -> &'static str {
+        match self {
+            HttpServerStreamBatchEvent::StreamFailed => "StreamFailed",
+            HttpServerStreamBatchEvent::StreamFinished => "StreamFinished",
+            HttpServerStreamBatchEvent::FlushAfterClose => "FlushAfterClose",
+            HttpServerStreamBatchEvent::FlushAfterTimeout => "FlushAfterTimeout",
+            HttpServerStreamBatchEvent::FlushAfterBytes => "FlushAfterBytes",
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct HttpServerStreamBatch {
     /// The event that emitted the batch
