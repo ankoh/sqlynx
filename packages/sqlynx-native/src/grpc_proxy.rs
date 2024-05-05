@@ -11,25 +11,21 @@ use tauri::http::HeaderMap;
 use tauri::http::HeaderValue;
 use tonic::metadata::MetadataMap;
 use tonic::transport::channel::Endpoint;
+use http::HeaderName;
 
 use crate::grpc_client::GenericGrpcClient;
 use crate::grpc_stream_manager::GrpcServerStreamBatch;
 use crate::grpc_stream_manager::GrpcStreamManager;
+use crate::proxy_headers::HEADER_NAME_BATCH_BYTES;
+use crate::proxy_headers::HEADER_NAME_BATCH_TIMEOUT;
+use crate::proxy_headers::HEADER_NAME_ENDPOINT;
+use crate::proxy_headers::HEADER_NAME_PATH;
+use crate::proxy_headers::HEADER_NAME_READ_TIMEOUT;
+use crate::proxy_headers::HEADER_NAME_TLS_CACERTS;
+use crate::proxy_headers::HEADER_NAME_TLS_CLIENT_CERT;
+use crate::proxy_headers::HEADER_NAME_TLS_CLIENT_KEY;
+use crate::proxy_headers::HEADER_PREFIX;
 use crate::status::Status;
-
-pub const HEADER_PREFIX: &'static str = "sqlynx-";
-pub const HEADER_NAME_ENDPOINT: &'static str = "sqlynx-endpoint";
-pub const HEADER_NAME_TLS_CLIENT_KEY: &'static str = "sqlynx-tls-client-key";
-pub const HEADER_NAME_TLS_CLIENT_CERT: &'static str = "sqlynx-tls-client-cert";
-pub const HEADER_NAME_TLS_CACERTS: &'static str = "sqlynx-tls-cacerts";
-pub const HEADER_NAME_PATH: &'static str = "sqlynx-path";
-pub const HEADER_NAME_CHANNEL_ID: &'static str = "sqlynx-channel-id";
-pub const HEADER_NAME_STREAM_ID: &'static str = "sqlynx-stream-id";
-pub const HEADER_NAME_READ_TIMEOUT: &'static str = "sqlynx-read-timeout";
-pub const HEADER_NAME_BATCH_TIMEOUT: &'static str = "sqlynx-batch-timout";
-pub const HEADER_NAME_BATCH_BYTES: &'static str = "sqlynx-batch-bytes";
-pub const HEADER_NAME_BATCH_EVENT: &'static str = "sqlynx-batch-event";
-pub const HEADER_NAME_BATCH_MESSAGES: &'static str = "sqlynx-batch-messages";
 
 struct GrpcRequestTlsConfig {
     client_key: String,
@@ -80,11 +76,11 @@ fn read_channel_params(headers: &mut HeaderMap) -> Result<GrpcChannelParams, Sta
 
     // Read all headers in the request, pick up the one from us and declare the remaining as extra
     for (key, value) in headers.drain() {
-        let key = match key {
-            Some(k) => k,
+        let key = match &key {
+            Some(k) => k.as_str(),
             None => continue,
         };
-        match key.as_str() {
+        match key {
             HEADER_NAME_ENDPOINT => {
                 host = Some(read_header_value(value, HEADER_NAME_ENDPOINT)?);
             }
@@ -98,8 +94,12 @@ fn read_channel_params(headers: &mut HeaderMap) -> Result<GrpcChannelParams, Sta
                 tls_cacerts = Some(read_header_value(value, HEADER_NAME_TLS_CACERTS)?);
             }
             _ => {
-                if !key.as_str().starts_with(HEADER_PREFIX) {
-                    extra_metadata.insert(key, value);
+                if !key.starts_with(HEADER_PREFIX) {
+                    if let Ok(header) = HeaderName::try_from(key.to_string()) {
+                        extra_metadata.insert(header, value);
+                    } else {
+                        log::warn!("failed to add extra metadata with key: {}", key);
+                    }
                 }
             }
         }
