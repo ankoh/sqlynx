@@ -5,7 +5,7 @@ use http::{HeaderMap, HeaderName, HeaderValue};
 use std::time::Duration;
 use url::Url;
 
-use crate::{http_stream_manager::{HttpServerStreamBatchEvent, HttpStreamManager}, proxy_headers::{HEADER_NAME_BATCH_BYTES, HEADER_NAME_BATCH_TIMEOUT, HEADER_NAME_ENDPOINT, HEADER_NAME_METHOD, HEADER_NAME_PATH, HEADER_NAME_READ_TIMEOUT, HEADER_PREFIX}, status::Status};
+use crate::{http_stream_manager::HttpStreamManager, proxy_headers::{HEADER_NAME_BATCH_BYTES, HEADER_NAME_BATCH_TIMEOUT, HEADER_NAME_ENDPOINT, HEADER_NAME_METHOD, HEADER_NAME_PATH, HEADER_NAME_READ_TIMEOUT, HEADER_PREFIX}, status::Status};
 
 struct HttpRequestParams {
     method: http::Method,

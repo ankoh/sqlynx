@@ -22,7 +22,7 @@ lazy_static! {
     static ref GRPC_PROXY: GrpcProxy = GrpcProxy::default();
 }
 
-pub async fn create_channel(mut req: Request<Vec<u8>>) -> Response<Vec<u8>> {
+pub async fn create_grpc_channel(mut req: Request<Vec<u8>>) -> Response<Vec<u8>> {
     match GRPC_PROXY.create_channel(req.headers_mut()).await {
         Ok(channel_id) => {
             Response::builder()
@@ -36,7 +36,7 @@ pub async fn create_channel(mut req: Request<Vec<u8>>) -> Response<Vec<u8>> {
     }
 }
 
-pub async fn delete_channel(channel_id: usize) -> Response<Vec<u8>> {
+pub async fn delete_grpc_channel(channel_id: usize) -> Response<Vec<u8>> {
     match GRPC_PROXY.destroy_channel(channel_id).await {
         Ok(()) => {
             let response = Response::builder()
@@ -77,7 +77,7 @@ fn copy_metadata(metadata: &mut MetadataMap, headers: &mut HeaderMap) {
     }
 }
 
-pub async fn call_unary(channel_id: usize, mut req: Request<Vec<u8>>) -> Response<Vec<u8>> {
+pub async fn call_grpc_unary(channel_id: usize, mut req: Request<Vec<u8>>) -> Response<Vec<u8>> {
     let body = std::mem::take(req.body_mut());
     match GRPC_PROXY.call_unary(channel_id, req.headers(), body).await {
         Ok((body, mut metadata)) => {
@@ -93,7 +93,7 @@ pub async fn call_unary(channel_id: usize, mut req: Request<Vec<u8>>) -> Respons
     }
 }
 
-pub async fn start_server_stream(channel_id: usize, mut req: Request<Vec<u8>>) -> Response<Vec<u8>> {
+pub async fn start_grpc_server_stream(channel_id: usize, mut req: Request<Vec<u8>>) -> Response<Vec<u8>> {
     let body = std::mem::take(req.body_mut());
     match GRPC_PROXY.start_server_stream(channel_id, req.headers(), body).await {
         Ok((stream_id, mut metadata)) => {
@@ -110,7 +110,7 @@ pub async fn start_server_stream(channel_id: usize, mut req: Request<Vec<u8>>) -
     }
 }
 
-pub async fn read_server_stream(channel_id: usize, stream_id: usize, req: Request<Vec<u8>>) -> Response<Vec<u8>> {
+pub async fn read_grpc_server_stream(channel_id: usize, stream_id: usize, req: Request<Vec<u8>>) -> Response<Vec<u8>> {
     match GRPC_PROXY.read_server_stream(channel_id, stream_id, req.headers()).await {
         Ok(batches) => {
             let mut buffer: Vec<u8> = Vec::with_capacity(batches.total_message_bytes + 4 * batches.messages.len());
@@ -131,7 +131,7 @@ pub async fn read_server_stream(channel_id: usize, stream_id: usize, req: Reques
     }
 }
 
-pub async fn delete_server_stream(channel_id: usize, stream_id: usize, _req: Request<Vec<u8>>) -> Response<Vec<u8>> {
+pub async fn delete_grpc_server_stream(channel_id: usize, stream_id: usize, _req: Request<Vec<u8>>) -> Response<Vec<u8>> {
     match GRPC_PROXY.destroy_server_stream(channel_id, stream_id).await {
         Ok(()) => {
             Response::builder()
