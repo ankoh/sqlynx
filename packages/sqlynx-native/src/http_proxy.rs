@@ -80,6 +80,7 @@ fn read_request_params(headers: &mut HeaderMap) -> Result<HttpRequestParams, Sta
     Ok(HttpRequestParams { method, endpoint, path_and_query, read_timeout, batch_timeout, batch_bytes, headers: extra_metadata })
 }
 
+#[derive(Default)]
 pub struct HttpProxy {
     pub streams: Arc<HttpStreamManager>,
 }
@@ -120,12 +121,10 @@ impl HttpProxy {
         let read_result = self.streams.read_server_stream(stream_id, read_timeout_duration, batch_timeout_duration, batch_bytes).await?;
         Ok(read_result)
     }
-}
 
-impl Default for HttpProxy {
-    fn default() -> Self {
-        Self {
-            streams: Default::default(),
-        }
+    /// Destroy a server stream
+    pub async fn destroy_server_stream(&self, stream_id: usize) -> Result<(), Status> {
+        self.streams.destroy_server_stream(stream_id).await;
+        Ok(())
     }
 }
