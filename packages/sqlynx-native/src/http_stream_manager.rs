@@ -1,12 +1,12 @@
-use tokio::time::timeout;
-use std::sync::atomic::AtomicUsize;
-use std::time::Instant;
+use hyper::header::{HeaderValue, HeaderMap};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::RwLock;
+use std::sync::atomic::AtomicUsize;
 use std::time::Duration;
+use std::time::Instant;
 use tokio::sync::Mutex;
-use hyper::header::{HeaderValue, HeaderMap};
+use tokio::time::timeout;
 
 use crate::status::Status;
 
@@ -72,13 +72,11 @@ pub struct HttpStreamManager {
 impl HttpStreamManager {
     /// Start a server stream
     #[allow(dead_code)]
-    pub fn start_server_stream<T: Into<Vec<u8>> + Send + 'static>(
+    pub fn start_server_stream(
         self: &Arc<Self>,
+        client: reqwest::Client,
         request: reqwest::Request,
     ) -> Result<usize, Status> {
-
-        // Create the http client
-        let client = reqwest::Client::new();
 
         // Allocate an identifier for the stream
         let reg = self.clone();
