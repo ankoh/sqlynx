@@ -283,7 +283,7 @@ impl HttpStreamManager {
     /// Cancellation is done by just dropping everything
     #[allow(dead_code)]
     pub async fn destroy_server_stream(self: &Arc<Self>, stream_id: usize) {
-        // XXX Is tonic internally awaiting the finish of the server?
+        // XXX We should let reqwest cancel the request
         if let Ok(mut streams) = self.server_streams.write() {
             streams.remove(&stream_id);
         }
