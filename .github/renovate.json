@@ -97,12 +97,12 @@
         {
             "groupName": "tauri",
             "matchPackageNames": [
-                "@tauri-apps/cli",
                 "tauri",
                 "tauri-build"
             ],
             "matchPackagePatterns": [
-                "^tauri-plugin-*"
+                "^tauri-plugin-*",
+                "^@tauri-apps/*"
             ],
             "automerge": false
         },
