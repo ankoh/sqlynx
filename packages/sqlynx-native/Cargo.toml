@@ -40,6 +40,10 @@ mime = "0.3.17"
 futures-util = "0.3.30"
 futures-core = "0.3.30"
 
+[dependencies.hyper-util]
+version = "0.1.3"
+features = ["server"]
+
 [dependencies.reqwest]
 version = "^0.12.4"
 features = ["stream"]
