@@ -6,6 +6,7 @@ use hyper::body;
 use hyper::{Request, Response};
 use std::convert::Infallible;
 use std::net::SocketAddr;
+use std::pin::Pin;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::oneshot;
@@ -23,7 +24,7 @@ pub struct HttpServiceMock {
 }
 
 impl HttpServiceMock {
-    pub async fn handle_request(&self, request: Request<body::Incoming>) -> hyper::Result<Response<Box<dyn Body<Data = bytes::Bytes, Error = Infallible>>>> {
+    pub async fn handle_request(&self, request: Request<body::Incoming>) -> hyper::Result<Response<Pin<Box<dyn Body<Data = bytes::Bytes, Error = Infallible> + Send>>>> {
         // Setup a channel for sending the result
         let (result_sender, mut receiver) = tokio::sync::mpsc::channel(1);
 
@@ -39,7 +40,7 @@ impl HttpServiceMock {
                 let mut response = Response::builder();
                 response = response.status(500);
                 let body_data = bytes::Bytes::from("receiver was closed before providing a header".to_string());
-                let body: Box<dyn Body<Data = bytes::Bytes, Error = Infallible>> = Box::new(Full::new(body_data));
+                let body: Pin<Box<dyn Body<Data = bytes::Bytes, Error = Infallible> + Send>> = Box::pin(Full::new(body_data));
                 let response = response.body(body).unwrap();
                 return Ok(response);
             }
@@ -58,7 +59,7 @@ impl HttpServiceMock {
         // Setup the stream body
         let (body_sender, body_receiver) = tokio::sync::mpsc::channel::<Result<Frame<bytes::Bytes>, Infallible>>(1);
         let body_stream: ReceiverStream<Result<Frame::<bytes::Bytes>, Infallible>> = ReceiverStream::new(body_receiver);
-        let body: Box<dyn Body<Data = bytes::Bytes, Error = Infallible>> = Box::new(StreamBody::new(body_stream));
+        let body: Pin<Box<dyn Body<Data = bytes::Bytes, Error = Infallible> + Send>> = Box::pin(StreamBody::new(body_stream));
         let response = response_builder.body(body).unwrap();
 
         // Spawn the body forwarder
@@ -101,10 +102,11 @@ async fn accept_connections(listener: tokio::net::TcpListener, mut shutdown_rx: 
                 log::info!("incomming connection accepted: {}", peer_addr);
                 let stream = hyper_util::rt::TokioIo::new(Box::pin(stream));
 
-                 tokio::spawn(async move {
+                let mock_owned = mock.clone();
+                tokio::spawn(async move {
                     let server = hyper_util::server::conn::auto::Builder::new(hyper_util::rt::TokioExecutor::new());
-                    let conn = server.serve_connection_with_upgrades(stream, hyper::service::service_fn(|request| async move {
-                        mock.handle_request(request).await
+                    let conn = server.serve_connection_with_upgrades(stream, hyper::service::service_fn(async move |request| {
+                        mock_owned.handle_request(request).await
                     }));
                     if let Err(err) = conn.await {
                         log::error!("connection error: {}", err);
