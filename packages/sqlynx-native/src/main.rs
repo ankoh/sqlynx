@@ -12,6 +12,8 @@ mod grpc_stream_manager;
 mod http_proxy;
 mod http_proxy_globals;
 mod http_proxy_routes;
+#[cfg(test)]
+mod http_proxy_tests;
 mod http_stream_manager;
 mod proxy_headers;
 mod ipc_router;
