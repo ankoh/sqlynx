@@ -160,6 +160,7 @@ mod test {
             headers.insert("sqlynx-test-header", HeaderValue::from_str("foo").unwrap());
             result_sender.send(PartialResponse::Header(StatusCode::OK, headers)).await.unwrap();
             result_sender.send(PartialResponse::BodyChunk(vec![1, 2, 3, 4])).await.unwrap();
+            result_sender.send(PartialResponse::BodyChunk(vec![5, 6, 7, 8])).await.unwrap();
             drop(result_sender);
         });
 
@@ -171,7 +172,7 @@ mod test {
         let body = result
             .bytes()
             .await?;
-        assert_eq!(body.to_vec(), vec![1, 2, 3, 4]);
+        assert_eq!(body.to_vec(), vec![1, 2, 3, 4, 5, 6, 7, 8]);
 
         shutdown.send(()).unwrap();
         handler.await.unwrap();
