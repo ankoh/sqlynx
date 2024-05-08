@@ -44,8 +44,13 @@ fn require_usize_header(headers: &HeaderMap, header_name: &'static str) -> Resul
 
 /// Helper to unpack request parameters
 fn read_request_params(headers: &mut HeaderMap) -> Result<HttpRequestParams, Status> {
-    // Copy all headers in the request that don't start with sqlynx-
     let mut extra_metadata = HeaderMap::with_capacity(headers.len());
+    let method = require_string_header(headers, HEADER_NAME_METHOD)?;
+    let endpoint = require_string_header(headers, HEADER_NAME_ENDPOINT)?;
+    let path_and_query = require_string_header(headers, HEADER_NAME_PATH)?;
+    let read_timeout = require_usize_header(headers, HEADER_NAME_READ_TIMEOUT)?;
+
+    // Copy all headers in the request that don't start with sqlynx-
     for (key, value) in headers.drain() {
         let key = match &key {
             Some(k) => k.as_str(),
@@ -59,10 +64,6 @@ fn read_request_params(headers: &mut HeaderMap) -> Result<HttpRequestParams, Sta
             }
         }
     }
-    let method = require_string_header(headers, HEADER_NAME_METHOD)?;
-    let endpoint = require_string_header(headers, HEADER_NAME_ENDPOINT)?;
-    let path_and_query = require_string_header(headers, HEADER_NAME_PATH)?;
-    let read_timeout = require_usize_header(headers, HEADER_NAME_READ_TIMEOUT)?;
 
     let endpoint = url::Url::parse(&endpoint)
         .map_err(|e| {

@@ -100,7 +100,7 @@ async fn accept_connections(listener: tokio::net::TcpListener, mut shutdown_rx: 
                         continue;
                     }
                 };
-                log::info!("incomming connection accepted: {}", peer_addr);
+                log::debug!("incoming connection accepted: {}", peer_addr);
                 let stream = hyper_util::rt::TokioIo::new(Box::pin(stream));
 
                 // Handle request
