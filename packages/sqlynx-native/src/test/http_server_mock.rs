@@ -141,3 +141,40 @@ pub async fn spawn_http_service_mock(mock: Arc<HttpServiceMock>) -> (SocketAddr,
     });
     (addr, shutdown_tx)
 }
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use anyhow::Result;
+    use http::StatusCode;
+
+    #[tokio::test]
+    async fn test_http_service_mock() -> Result<()> {
+        let (mock_server, mut setup_http_server) = HttpServiceMock::new();
+        let (addr, shutdown) = spawn_http_service_mock(Arc::new(mock_server)).await;
+
+        let handler = tokio::spawn(async move {
+            let (_request, result_sender) = setup_http_server.recv().await.unwrap();
+            let mut headers = HeaderMap::new();
+            headers.insert("sqlynx-test-header", HeaderValue::from_str("foo").unwrap());
+            result_sender.send(PartialResponse::Header(StatusCode::OK, headers)).await.unwrap();
+            result_sender.send(PartialResponse::BodyChunk(vec![1, 2, 3, 4])).await.unwrap();
+            drop(result_sender);
+        });
+
+        let host = format!("http://{}", addr);
+        let result = reqwest::get(host)
+            .await?;
+        assert!(result.headers().contains_key("sqlynx-test-header"));
+        assert_eq!(result.headers().get("sqlynx-test-header").unwrap(), "foo");
+        let body = result
+            .bytes()
+            .await?;
+        assert_eq!(body.to_vec(), vec![1, 2, 3, 4]);
+
+        shutdown.send(()).unwrap();
+        handler.await.unwrap();
+        Ok(())
+    }
+}
