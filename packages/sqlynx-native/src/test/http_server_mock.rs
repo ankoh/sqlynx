@@ -91,6 +91,7 @@ async fn accept_connections(listener: tokio::net::TcpListener, mut shutdown_rx: 
     loop {
         tokio::select! {
             conn = listener.accept() => {
+                // Await next incoming connection
                 let (stream, peer_addr) = match conn {
                     Ok(conn) => conn,
                     Err(e) => {
@@ -102,12 +103,18 @@ async fn accept_connections(listener: tokio::net::TcpListener, mut shutdown_rx: 
                 log::info!("incomming connection accepted: {}", peer_addr);
                 let stream = hyper_util::rt::TokioIo::new(Box::pin(stream));
 
-                let mock_owned = mock.clone();
+                // Handle request
+                let mock_copy = mock.clone();
+                let service_fn = move |req: Request<body::Incoming>| {
+                    let mock_copy = mock_copy.clone();
+                    async move {
+                        mock_copy.handle_request(req).await
+                    }
+                };
+                // Spawn the request handler
                 tokio::spawn(async move {
                     let server = hyper_util::server::conn::auto::Builder::new(hyper_util::rt::TokioExecutor::new());
-                    let conn = server.serve_connection_with_upgrades(stream, hyper::service::service_fn(async move |request| {
-                        mock_owned.handle_request(request).await
-                    }));
+                    let conn = server.serve_connection_with_upgrades(stream, hyper::service::service_fn(service_fn));
                     if let Err(err) = conn.await {
                         log::error!("connection error: {}", err);
                     }
@@ -132,6 +139,5 @@ pub async fn spawn_http_service_mock(mock: Arc<HttpServiceMock>) -> (SocketAddr,
     tokio::spawn(async move {
         accept_connections(listener, shutdown_rx, mock).await
     });
-
     (addr, shutdown_tx)
 }
