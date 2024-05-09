@@ -89,15 +89,15 @@ checksum = "e999941b234f3131b00bc13c22d06e8c5ff726d1b6318ac7eb276997bbb4fef0"
 
 [[package]]
 name = "android_log-sys"
-version = "0.2.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "85965b6739a430150bdd138e2374a98af0c3ee0d030b3bb7fc3bddff58d0102e"
+checksum = "5ecc8056bf6ab9892dcd53216c83d1597487d7dacac16c8df6b877d127df9937"
 
 [[package]]
 name = "android_logger"
-version = "0.11.3"
+version = "0.13.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8619b80c242aa7bd638b5c7ddd952addeecb71f69c75e33f1d47b2804f8f883a"
+checksum = "c494134f746c14dc653a35a4ea5aca24ac368529da5370ecf41fe0341c35772f"
 dependencies = [
  "android_log-sys",
  "env_logger 0.10.2",
@@ -1071,22 +1071,6 @@ checksum = "98cc8fbded0c607b7ba9dd60cd98df59af97e84d24e49c8557331cfc26d301ce"
 
 [[package]]
 name = "cocoa"
-version = "0.24.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f425db7937052c684daec3bd6375c8abe2d146dca4b8b143d6db777c39138f3a"
-dependencies = [
- "bitflags 1.3.2",
- "block",
- "cocoa-foundation",
- "core-foundation",
- "core-graphics 0.22.3",
- "foreign-types 0.3.2",
- "libc",
- "objc",
-]
-
-[[package]]
-name = "cocoa"
 version = "0.25.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f6140449f97a6e97f9511815c5632d84c8aacf8ac271ad77c559218161a1373c"
@@ -1095,7 +1079,7 @@ dependencies = [
  "block",
  "cocoa-foundation",
  "core-foundation",
- "core-graphics 0.23.1",
+ "core-graphics",
  "foreign-types 0.5.0",
  "libc",
  "objc",
@@ -1164,19 +1148,6 @@ name = "core-foundation-sys"
 version = "0.8.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06ea2b9bc92be3c2baa9334a323ebca2d6f074ff852cd1d7b11064035cd3868f"
-
-[[package]]
-name = "core-graphics"
-version = "0.22.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2581bbab3b8ffc6fcbd550bf46c355135d16e9ff2a6ea032ad6b9bf1d7efe4fb"
-dependencies = [
- "bitflags 1.3.2",
- "core-foundation",
- "core-graphics-types",
- "foreign-types 0.3.2",
- "libc",
-]
 
 [[package]]
 name = "core-graphics"
@@ -3033,7 +3004,7 @@ version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f428b4e9db3d17e2f809dfb1ff9ddfbbf16c71790d1656d10aee320877e1392f"
 dependencies = [
- "cocoa 0.25.0",
+ "cocoa",
  "crossbeam-channel",
  "dpi",
  "gtk",
@@ -4687,8 +4658,8 @@ checksum = "071916a85d1db274b4ed57af3a14afb66bd836ae7f82ebb6f1fd3455107830d9"
 dependencies = [
  "bytemuck",
  "cfg_aliases 0.2.0",
- "cocoa 0.25.0",
- "core-graphics 0.23.1",
+ "cocoa",
+ "core-graphics",
  "foreign-types 0.5.0",
  "js-sys",
  "log",
@@ -4966,9 +4937,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bd5b6ec2c43abd15155f040c765001098f50f425414b679225d471a1cd782753"
 dependencies = [
  "bitflags 1.3.2",
- "cocoa 0.25.0",
+ "cocoa",
  "core-foundation",
- "core-graphics 0.23.1",
+ "core-graphics",
  "crossbeam-channel",
  "dispatch",
  "dlopen2",
@@ -5039,7 +5010,7 @@ checksum = "5fedd5490eddf117253945f0baedafded43474c971cba546a818f527d5c26266"
 dependencies = [
  "anyhow",
  "bytes",
- "cocoa 0.25.0",
+ "cocoa",
  "dirs-next",
  "dunce",
  "embed_plist",
@@ -5162,9 +5133,9 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-deep-link"
-version = "2.0.0-beta.3"
+version = "2.0.0-beta.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a1aee2af6aec05ace816d46da0b0c0bdb4fcd0c985c0f14634a50c860824435"
+checksum = "1861880f7498926f397fc3a790c2add9b86f4065b73ba3a574a1bb74b5b13532"
 dependencies = [
  "log",
  "serde",
@@ -5217,13 +5188,13 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-log"
-version = "2.0.0-beta.3"
+version = "2.0.0-beta.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6813eccea6d148421f59a3f9ff45e1c71bff2566759ce82666cf0999572b9457"
+checksum = "97718db0d981b03b7b1257c22f699ff46639220c5acb4510ac9696437afc93f8"
 dependencies = [
  "android_logger",
  "byte-unit",
- "cocoa 0.24.1",
+ "cocoa",
  "fern",
  "log",
  "objc",
@@ -5238,9 +5209,9 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-os"
-version = "2.0.0-beta.3"
+version = "2.0.0-beta.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c02dc0a2037ef113d9d9db85edceab6f95f83ae111e4d989d6bc1df79c8ab4cf"
+checksum = "653c0dbf5f954c7614a5e93f5b548bbe4417b3e1aa553b31ed0b6a2656949459"
 dependencies = [
  "gethostname",
  "log",
@@ -5256,9 +5227,9 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-shell"
-version = "2.0.0-beta.3"
+version = "2.0.0-beta.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5624537650f627707f3bd9c6562efe2116c7fb043fcfc2e3d10f802d7870a1cd"
+checksum = "d961fa0fcacd8ef43f19af2ee71ae27ee16678417f8cdc9841033eede6f3fdb0"
 dependencies = [
  "encoding_rs",
  "log",
@@ -5276,15 +5247,16 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-updater"
-version = "2.0.0-beta.4"
+version = "2.0.0-beta.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f34be6851c7e84ca99b3bddd57e033d55d8bfca1dd153d6e8d18e9f1fb95469"
+checksum = "0d1a632f5b0cc00911c3f379b0b69a4ccf5fd22eb10d022010dfb02717d5b6bc"
 dependencies = [
  "base64 0.22.0",
  "dirs-next",
  "flate2",
  "futures-util",
  "http 1.1.0",
+ "infer",
  "minisign-verify",
  "reqwest",
  "semver",
@@ -5327,7 +5299,7 @@ version = "2.0.0-beta.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "398d065c6e0fbf3c4304583759b6e153bc1e0daeb033bede6834ebe4df371fc3"
 dependencies = [
- "cocoa 0.25.0",
+ "cocoa",
  "gtk",
  "http 1.1.0",
  "jni",
@@ -5818,8 +5790,8 @@ version = "0.13.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a97ec55956c54569e74209ae9d29a7a79193b252d17a6ac28bcffd4c11a384ad"
 dependencies = [
- "cocoa 0.25.0",
- "core-graphics 0.23.1",
+ "cocoa",
+ "core-graphics",
  "crossbeam-channel",
  "dirs-next",
  "libappindicator",
@@ -6311,7 +6283,7 @@ version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "33082acd404763b315866e14a0d5193f3422c81086657583937a750cdd3ec340"
 dependencies = [
- "cocoa 0.25.0",
+ "cocoa",
  "objc",
  "raw-window-handle 0.6.0",
  "windows-sys 0.52.0",
@@ -6693,8 +6665,8 @@ checksum = "6e180ac2740d6cb4d5cec0abf63eacbea90f1b7e5e3803043b13c1c84c4b7884"
 dependencies = [
  "base64 0.22.0",
  "block",
- "cocoa 0.25.0",
- "core-graphics 0.23.1",
+ "cocoa",
+ "core-graphics",
  "crossbeam-channel",
  "dpi",
  "dunce",
