@@ -1,3 +1,5 @@
+import { Logger } from '../platform/logger.js';
+import { HttpClient } from '../platform/http_client.js';
 import { SalesforceAuthConfig, SalesforceAuthParams } from './connector_configs.js';
 import { QueryExecutionResponseStream } from './query_execution.js';
 import { executeQuery as execQuery } from './salesforce_query_execution.js';
@@ -183,6 +185,14 @@ export interface SalesforceAPIClientInterface {
 }
 
 export class SalesforceAPIClient implements SalesforceAPIClientInterface {
+    logger: Logger;
+    httpClient: HttpClient;
+
+    constructor(logger: Logger, httpClient: HttpClient) {
+        this.logger = logger;
+        this.httpClient = httpClient;
+    }
+
     public async getCoreAccessToken(
         authConfig: SalesforceAuthConfig,
         authParams: SalesforceAuthParams,
@@ -201,18 +211,29 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
         if (authParams.appConsumerSecret && authParams.appConsumerSecret !== null) {
             params.client_secret = authParams.appConsumerSecret;
         }
+        const body = new URLSearchParams(params);
+        console.log(body.toString());
         // Get the access token
-        const response = await fetch(`${authParams.instanceUrl}/services/oauth2/token`, {
+        const response = await this.httpClient.fetch(`${authParams.instanceUrl}/services/oauth2/token`, {
             method: 'POST',
             headers: new Headers({
                 Accept: 'application/json',
                 'Content-Type': 'application/x-www-form-urlencoded',
             }),
-            body: new URLSearchParams(params),
+            body: body,
             signal: cancel,
         });
         const responseBody = await response.json();
-        return readCoreAccessToken(responseBody);
+        console.log(responseBody);
+        if (responseBody.error) {
+            const errorDesc = responseBody.error_description;
+            this.logger.error(errorDesc, "salesforce_api");
+            throw new Error(errorDesc);
+        } else {
+            const parsed = readCoreAccessToken(responseBody);
+            console.log(parsed);
+            return parsed;
+        }
     }
 
     public async getDataCloudAccessToken(
@@ -225,7 +246,7 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
             subject_token_type: 'urn:ietf:params:oauth:token-type:access_token',
         };
         // Get the data cloud access token
-        const response = await fetch(`${access.instanceUrl}/services/a360/token`, {
+        const response = await this.httpClient.fetch(`${access.instanceUrl}/services/a360/token`, {
             method: 'POST',
             headers: new Headers({
                 Accept: 'application/json',
@@ -242,7 +263,7 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
         const params = new URLSearchParams();
         params.set('format', 'json');
         params.set('access_token', access.accessToken ?? '');
-        const response = await fetch(`${access.instanceUrl}/services/oauth2/userinfo?${params.toString()}`, {
+        const response = await this.httpClient.fetch(`${access.instanceUrl}/services/oauth2/userinfo?${params.toString()}`, {
             signal: cancel,
         });
         const responseJson = await response.json();
@@ -256,7 +277,7 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
     ): Promise<SalesforceMetadata> {
         const params = new URLSearchParams();
         console.log(access.instanceUrl);
-        const response = await fetch(`${access.instanceUrl}api/v1/metadata?${params.toString()}`, {
+        const response = await this.httpClient.fetch(`${access.instanceUrl}api/v1/metadata?${params.toString()}`, {
             headers: {
                 authorization: `Bearer ${access.accessToken}`,
             },

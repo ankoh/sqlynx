@@ -1,9 +1,9 @@
 import * as arrow from 'apache-arrow';
 
 import { VariantKind } from '../utils/index.js';
-import { SALESFORCE_DATA_CLOUD } from './connector_info.js';
 import { SalesforceAPIClientInterface, SalesforceDataCloudAccessToken } from './salesforce_api_client.js';
 import { SalesforceAuthParams } from './connector_configs.js';
+import { SALESFORCE_DATA_CLOUD } from './connector_info.js';
 
 export type QueryExecutionTaskVariant = VariantKind<typeof SALESFORCE_DATA_CLOUD, ExecuteDataCloudQueryTask>;
 

@@ -45,7 +45,7 @@ export function SalesforceUserInfoResolver(props: Props) {
                     userInfo: result,
                 }));
             } catch (e: any) {
-                if ((e.message = 'AbortError')) {
+                if ((e.message === 'AbortError')) {
                     return;
                 } else {
                     throw e;

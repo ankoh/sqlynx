@@ -12,6 +12,7 @@ use tonic::metadata::KeyAndMutValueRef;
 use lazy_static::lazy_static;
 
 use crate::grpc_proxy::GrpcProxy;
+use crate::proxy_headers::HEADER_NAME_BATCH_BYTES;
 use crate::proxy_headers::HEADER_NAME_BATCH_EVENT;
 use crate::proxy_headers::HEADER_NAME_BATCH_MESSAGES;
 use crate::proxy_headers::HEADER_NAME_CHANNEL_ID;
@@ -124,6 +125,7 @@ pub async fn read_grpc_server_stream(channel_id: usize, stream_id: usize, req: R
                 .header(HEADER_NAME_STREAM_ID, stream_id)
                 .header(HEADER_NAME_BATCH_EVENT, batches.event.to_str())
                 .header(HEADER_NAME_BATCH_MESSAGES, batches.messages.len())
+                .header(HEADER_NAME_BATCH_BYTES, batches.total_message_bytes)
                 .body(buffer)
                 .unwrap()
         },

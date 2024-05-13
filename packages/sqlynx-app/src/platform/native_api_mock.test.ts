@@ -2,9 +2,10 @@ import * as proto from "@ankoh/sqlynx-pb";
 
 import { jest } from '@jest/globals';
 
-import { GrpcServerStream, GrpcServerStreamBatch, NativeAPIMock } from './native_api_mock.js';
+import { GrpcServerStream, GrpcServerStreamBatch, HttpServerStream, HttpServerStreamBatch, NativeAPIMock } from './native_api_mock.js';
 import { NativeGrpcServerStreamBatchEvent } from "./native_grpc_client.js";
 import { PlatformType } from "./platform_type.js";
+import { NativeHttpServerStreamBatchEvent } from "./native_http_client.js";
 
 describe('Native API mock', () => {
     let mock: NativeAPIMock | null;
@@ -100,7 +101,7 @@ describe('Native API mock', () => {
         expect(streamResponse.status).toEqual(400);
     });
 
-    it("returns a server stream id for streaming gRPC calls", async () => {
+    it("returns correct results for streaming gRPC calls", async () => {
         const channelRequest = new Request(new URL("sqlynx-native://localhost/grpc/channels"), {
             method: 'POST',
             headers: {}
@@ -179,5 +180,50 @@ describe('Native API mock', () => {
         expect(readResponse.headers.get("sqlynx-batch-messages")).toEqual("1");
         expect(readResponse.headers.get("sqlynx-batch-bytes")).toEqual(expectedMessage.length.toString());
         expect(await readResponse.arrayBuffer()).toEqual(expectedBuffer);
+    });
+
+    it("returns correct results for http streams", async () => {
+        const processRequest = (_req: Request) => {
+            const initialStatus = 200;
+            const initialStatusMessage = "OK";
+            const initialMetadata: Record<string, string> = {
+                "some-server-metadata": "some-value",
+            };
+            const batches: HttpServerStreamBatch[] = [
+                {
+                    event: NativeHttpServerStreamBatchEvent.FlushAfterTimeout,
+                    chunks: [
+                        new Uint8Array([1, 2, 3, 4]),
+                        new Uint8Array([5, 6, 7, 8])
+                    ],
+                },
+                {
+                    event: NativeHttpServerStreamBatchEvent.FlushAfterClose,
+                    chunks: [
+                        new Uint8Array([9, 10, 11, 12])
+                    ],
+                }
+            ];
+            const result = new HttpServerStream(initialStatus, initialStatusMessage, initialMetadata, batches);
+            return result;
+        };
+        const processRequestMock = jest.fn(processRequest);
+        mock!.httpServer.processRequest = (req: Request) => processRequestMock.call(req);
+
+        const streamRequest = new Request(new URL("sqlynx-native://localhost/http/streams"), {
+            method: 'POST',
+            headers: {
+                "sqlynx-method": "GET",
+                "sqlynx-endpoint": "http://localhost:1234",
+                "sqlynx-path": "/foo/bar",
+                "sqlynx-read-timeout": "1000",
+            }
+        });
+        const streamResponse = await fetch(streamRequest);
+        expect(streamResponse.statusText).toEqual("OK");
+        expect(streamResponse.status).toEqual(200);
+        expect(streamResponse.headers.has("sqlynx-stream-id")).toBeTruthy();
+        const streamId = Number.parseInt(streamResponse.headers.get("sqlynx-stream-id")!);
+        expect(streamId).toBeTruthy();
     });
 });
