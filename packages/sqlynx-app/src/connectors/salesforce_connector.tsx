@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { useAppConfig } from '../app_config.js';
 import { useAllocatedConnectionState } from './connection_registry.js';
+import { useHttpClient } from '../platform/http_client_provider.js';
+import { useLogger } from '../platform/logger_provider.js';
 import { SalesforceAPIClient, SalesforceAPIClientInterface } from './salesforce_api_client.js';
 import { SalesforceAPIClientMock } from './salesforce_api_client_mock.js';
 import { SalesforceAuthFlowProvider } from './salesforce_auth_flow.js';
@@ -18,7 +20,9 @@ interface Props {
 }
 
 export const SalesforceConnector: React.FC<Props> = (props: Props) => {
+    const logger = useLogger();
     const config = useAppConfig();
+    const httpClient = useHttpClient();
 
     // Pre-allocate a connection id for all Salesforce connections.
     // This might change in the future when we start maintaining multiple connections per connector.
@@ -46,7 +50,7 @@ export const SalesforceConnector: React.FC<Props> = (props: Props) => {
             </API_CTX.Provider>
         );
     } else {
-        const api = new SalesforceAPIClient();
+        const api = new SalesforceAPIClient(logger, httpClient);
         return (
             <API_CTX.Provider value={api}>
                 <CONNECTION_ID_CTX.Provider value={connectionId}>

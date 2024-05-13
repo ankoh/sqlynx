@@ -1,8 +1,8 @@
 import * as hyper from '@ankoh/sqlynx-pb';
 import * as arrow from 'apache-arrow';
+import * as bufconnect from '@connectrpc/connect-web';
 
 import { createPromiseClient, PromiseClient } from '@connectrpc/connect';
-import * as bufconnect from '@connectrpc/connect-web';
 import { QueryExecutionProgress, QueryExecutionResponseStream } from './query_execution.js';
 import { RecordBatch, Schema } from 'apache-arrow';
 

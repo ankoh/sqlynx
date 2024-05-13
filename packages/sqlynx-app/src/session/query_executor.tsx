@@ -143,7 +143,7 @@ export const QueryExecutor = (props: { children?: React.ReactElement }) => {
                     });
                 }
             } catch (e: any) {
-                if ((e.message = 'AbortError')) {
+                if ((e.message === 'AbortError')) {
                     dispatch({
                         type: QUERY_EXECUTION_CANCELLED,
                         value: null,

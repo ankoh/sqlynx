@@ -1,14 +1,12 @@
 use std::io::Write;
 
-use byteorder::LittleEndian;
-use byteorder::WriteBytesExt;
 use tauri::http::Request;
 use tauri::http::Response;
 use lazy_static::lazy_static;
 
 use crate::http_proxy::HttpProxy;
+use crate::proxy_headers::HEADER_NAME_BATCH_BYTES;
 use crate::proxy_headers::HEADER_NAME_BATCH_EVENT;
-use crate::proxy_headers::HEADER_NAME_BATCH_MESSAGES;
 use crate::proxy_headers::HEADER_NAME_STREAM_ID;
 
 lazy_static! {
@@ -33,16 +31,15 @@ pub async fn start_http_server_stream(mut req: Request<Vec<u8>>) -> Response<Vec
 pub async fn read_http_server_stream(stream_id: usize, req: Request<Vec<u8>>) -> Response<Vec<u8>> {
     match HTTP_PROXY.read_server_stream(stream_id, req.headers()).await {
         Ok(batches) => {
-            let mut buffer: Vec<u8> = Vec::with_capacity(batches.total_body_bytes + 4 * batches.body_chunks.len());
+            let mut buffer: Vec<u8> = Vec::with_capacity(batches.total_body_bytes);
             for message in batches.body_chunks.iter() {
-                buffer.write_u32::<LittleEndian>(message.len() as u32).unwrap();
                 buffer.write(&message).unwrap();
             }
             Response::builder()
                 .status(200)
                 .header(HEADER_NAME_STREAM_ID, stream_id)
                 .header(HEADER_NAME_BATCH_EVENT, batches.event.to_str())
-                .header(HEADER_NAME_BATCH_MESSAGES, batches.body_chunks.len())
+                .header(HEADER_NAME_BATCH_BYTES, batches.total_body_bytes)
                 .body(buffer)
                 .unwrap()
         },
