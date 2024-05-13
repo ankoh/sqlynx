@@ -165,7 +165,6 @@ describe('Native API mock', () => {
                 "sqlynx-path": "/salesforce.hyperdb.grpc.v1.HyperService/ExecuteQuery"
             },
         });
-
         const expectedMessage = messageToRespond.toBinary();
         const expectedBuffer = new ArrayBuffer(expectedMessage.length + 4);
         (new DataView(expectedBuffer)).setUint32(expectedMessage.length, 0, true);
@@ -183,7 +182,8 @@ describe('Native API mock', () => {
     });
 
     it("returns correct results for http streams", async () => {
-        const processRequest = (_req: Request) => {
+        let resultStream: HttpServerStream | null = null;
+        const startStream = (_req: Request) => {
             const initialStatus = 200;
             const initialStatusMessage = "OK";
             const initialMetadata: Record<string, string> = {
@@ -204,12 +204,13 @@ describe('Native API mock', () => {
                     ],
                 }
             ];
-            const result = new HttpServerStream(initialStatus, initialStatusMessage, initialMetadata, batches);
-            return result;
+            resultStream = new HttpServerStream(initialStatus, initialStatusMessage, initialMetadata, batches);
+            return resultStream;
         };
-        const processRequestMock = jest.fn(processRequest);
-        mock!.httpServer.processRequest = (req: Request) => processRequestMock.call(req);
+        const startStreamMock = jest.fn(startStream);
+        mock!.httpServer.processRequest = (req: Request) => startStreamMock.call(req);
 
+        // Start a http stream
         const streamRequest = new Request(new URL("sqlynx-native://localhost/http/streams"), {
             method: 'POST',
             headers: {
@@ -225,5 +226,24 @@ describe('Native API mock', () => {
         expect(streamResponse.headers.has("sqlynx-stream-id")).toBeTruthy();
         const streamId = Number.parseInt(streamResponse.headers.get("sqlynx-stream-id")!);
         expect(streamId).toBeTruthy();
+
+        // Read from a http stream
+        const readStream = (_req: Request) => resultStream!.read();
+        const readStreamMock = jest.fn(readStream);
+        mock!.httpServer.processRequest = (req: Request) => readStreamMock.call(req);
+
+        // Read from the http stream
+        const streamReadRequest = new Request(new URL(`sqlynx-native://localhost/http/stream/${streamId}`), {
+            method: 'GET',
+            headers: {
+                "sqlynx-read-timeout": "1000",
+                "sqlynx-batch-timeout": "1000",
+                "sqlynx-batch-bytes": "1000",
+            },
+        });
+        const streamReadResponse = await fetch(streamReadRequest);
+        expect(streamReadResponse.statusText).toEqual("OK");
+        expect(streamReadResponse.status).toEqual(200);
+        expect(streamReadResponse.headers.has("sqlynx-stream-id")).toBeTruthy();
     });
 });
