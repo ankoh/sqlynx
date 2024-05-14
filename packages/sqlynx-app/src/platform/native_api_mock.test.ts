@@ -233,7 +233,7 @@ describe('Native API mock', () => {
         mock!.httpServer.processRequest = (req: Request) => readStreamMock.call(req);
 
         // Read from the http stream
-        const streamReadRequest = new Request(new URL(`sqlynx-native://localhost/http/stream/${streamId}`), {
+        let streamReadRequest = new Request(new URL(`sqlynx-native://localhost/http/stream/${streamId}`), {
             method: 'GET',
             headers: {
                 "sqlynx-read-timeout": "1000",
@@ -241,9 +241,31 @@ describe('Native API mock', () => {
                 "sqlynx-batch-bytes": "1000",
             },
         });
-        const streamReadResponse = await fetch(streamReadRequest);
+        let streamReadResponse = await fetch(streamReadRequest);
         expect(streamReadResponse.statusText).toEqual("OK");
         expect(streamReadResponse.status).toEqual(200);
         expect(streamReadResponse.headers.has("sqlynx-stream-id")).toBeTruthy();
+        expect(streamReadResponse.headers.get("sqlynx-batch-event")).toEqual("FlushAfterTimeout");
+        expect(streamReadResponse.headers.get("sqlynx-batch-bytes")).toEqual("8");
+        let body = await streamReadResponse.arrayBuffer();
+        expect(new Uint8Array(body)).toEqual(new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]));
+
+        // Read from the http stream
+        streamReadRequest = new Request(new URL(`sqlynx-native://localhost/http/stream/${streamId}`), {
+            method: 'GET',
+            headers: {
+                "sqlynx-read-timeout": "1000",
+                "sqlynx-batch-timeout": "1000",
+                "sqlynx-batch-bytes": "1000",
+            },
+        });
+        streamReadResponse = await fetch(streamReadRequest);
+        expect(streamReadResponse.statusText).toEqual("OK");
+        expect(streamReadResponse.status).toEqual(200);
+        expect(streamReadResponse.headers.has("sqlynx-stream-id")).toBeTruthy();
+        expect(streamReadResponse.headers.get("sqlynx-batch-event")).toEqual("FlushAfterClose");
+        expect(streamReadResponse.headers.get("sqlynx-batch-bytes")).toEqual("4");
+        body = await streamReadResponse.arrayBuffer();
+        expect(new Uint8Array(body)).toEqual(new Uint8Array([9, 10, 11, 12]));
     });
 });
