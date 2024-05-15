@@ -57,7 +57,7 @@ __metadata:
     "@lezer/highlight": "npm:^1.2.0"
     "@octokit/graphql": "npm:^8.1.1"
     "@primer/octicons-react": "patch:@primer/octicons-react@npm%3A19.9.0#~/.yarn/patches/@primer-octicons-react-npm-19.9.0-65341cfa23.patch"
-    "@primer/react": "npm:^36.17.0"
+    "@primer/react": "npm:^36.18.0"
     "@react-hook/resize-observer": "npm:^1.2.6"
     "@tauri-apps/api": "patch:@tauri-apps/api@npm%3A2.0.0-beta.8#~/.yarn/patches/@tauri-apps-api-npm-2.0.0-beta.8-d68cf559f2.patch"
     "@tauri-apps/plugin-deep-link": "npm:^2.0.0-beta.3"
@@ -1637,12 +1637,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@primer/live-region-element@npm:^0.2.0":
-  version: 0.2.0
-  resolution: "@primer/live-region-element@npm:0.2.0"
+"@primer/live-region-element@npm:^0.6.1":
+  version: 0.6.1
+  resolution: "@primer/live-region-element@npm:0.6.1"
   dependencies:
     "@lit-labs/ssr-dom-shim": "npm:^1.2.0"
-  checksum: 10c0/d611b558a2f4333ffb081ffc25472e25bd88633d31cfb113c66e05f2a396d89bd8530ce49fa0f30eabc18659be6a4a9955c6d1e7b5c98fa70c958d3563373ef7
+  checksum: 10c0/3ad709d31087a4dc3e5f40538b1ac38deb17805497ed20a34a2746851bf845dac65de51bbace099326b38394acf54e6ac73281f8cf528e1f687c7b02549f08f7
   languageName: node
   linkType: hard
 
@@ -1671,9 +1671,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@primer/react@npm:^36.17.0":
-  version: 36.17.0
-  resolution: "@primer/react@npm:36.17.0"
+"@primer/react@npm:^36.18.0":
+  version: 36.18.0
+  resolution: "@primer/react@npm:36.18.0"
   dependencies:
     "@github/combobox-nav": "npm:^2.1.5"
     "@github/markdown-toolbar-element": "npm:^2.1.0"
@@ -1683,7 +1683,7 @@ __metadata:
     "@lit-labs/react": "npm:1.2.1"
     "@oddbird/popover-polyfill": "npm:^0.3.1"
     "@primer/behaviors": "npm:^1.5.1"
-    "@primer/live-region-element": "npm:^0.2.0"
+    "@primer/live-region-element": "npm:^0.6.1"
     "@primer/octicons-react": "npm:^19.9.0"
     "@primer/primitives": "npm:^7.16.0"
     "@styled-system/css": "npm:^5.1.5"
@@ -1719,7 +1719,7 @@ __metadata:
       optional: true
     "@types/styled-components":
       optional: true
-  checksum: 10c0/3c5cd01a0daf37bd539cd8f53cf3949e7231fd476a973bfe031457b3905e0881a86baa40c4c8c5d597b69bd33ecc2994fdaaf2991505ad48784d3912fc8dd8a8
+  checksum: 10c0/9c28c8f6e478516b6dcb4a7a279bfcd8c095e22d1d25581fdeba46b10ae96e1df95af48bdbe569b6815e5de86bf0bfb84f81136ce97c228b09063ed54c9c947a
   languageName: node
   linkType: hard
 
