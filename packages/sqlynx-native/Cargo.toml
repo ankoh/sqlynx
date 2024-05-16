@@ -46,7 +46,7 @@ version = "^0.11.0"
 features = ["tls"]
 
 [dependencies.serde]
-version = "1.0.201"
+version = "1.0.202"
 features = ["derive"]
 
 [dependencies.tauri]
