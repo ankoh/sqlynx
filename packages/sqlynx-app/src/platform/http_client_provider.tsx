@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { useLogger } from './logger_provider.js';
 import { isNativePlatform } from './native_globals.js';
-import { NativeHttpClient } from './native_http_client.js';
+import { NativeHttpClient, NativeHttpProxyConfig } from './native_http_client.js';
 import { WebHttpClient } from './web_http_client.js';
 import { HttpClient } from './http_client.js';
 
@@ -19,7 +19,7 @@ export const HttpClientProvider: React.FC<Props> = (props: Props) => {
     React.useEffect(() => {
         let client: HttpClient;
         if (isNativePlatform()) {
-            client = new NativeHttpClient(logger);
+            client = new NativeHttpClient({ proxyEndpoint: new URL("sqlynx-native://localhost") }, logger);
         } else {
             client = new WebHttpClient(logger);
         }

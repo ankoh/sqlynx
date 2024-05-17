@@ -39,6 +39,10 @@ export class NativeHttpServerStream implements HttpFetchResult {
         this.logger = logger;
     }
 
+    async json(): Promise<any> {
+        throw Error("not implemented");
+    }
+
     /// Get the response as array buffer
     async arrayBuffer(): Promise<ArrayBuffer> {
         if (this.streamId == null) {

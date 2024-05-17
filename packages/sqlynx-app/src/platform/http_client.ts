@@ -10,6 +10,7 @@ export interface HttpFetchResult {
     statusText: string,
 
     arrayBuffer(): Promise<ArrayBuffer>;
+    json(): Promise<any>;
 }
 
 /// An abstract http client
