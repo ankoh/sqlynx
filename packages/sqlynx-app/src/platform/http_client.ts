@@ -3,7 +3,17 @@ export interface ClientOptions {
     connectTimeout?: number;
 }
 
+/// A `Response` subset that is also implemented by our native http proxy
+export interface HttpFetchResult {
+    headers: Headers,
+    status: number,
+    statusText: string,
+
+    arrayBuffer(): Promise<ArrayBuffer>;
+}
+
+/// An abstract http client
 export interface HttpClient {
-    fetch(input: URL | Request | string, init?: RequestInit & ClientOptions): Promise<Response>;
+    fetch(input: URL | Request | string, init?: RequestInit & ClientOptions): Promise<HttpFetchResult>;
 }
 
