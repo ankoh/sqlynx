@@ -39,7 +39,7 @@ describe('Native gRPC client', () => {
     });
 
     // Test starting a server stream
-    it("can start a streaming gRPC call", async () => {
+    it("starts a streaming gRPC call", async () => {
         const logger = new TestLogger();
         const client = new NativeGrpcClient({
             proxyEndpoint: new URL("sqlynx-native://localhost")
@@ -74,7 +74,7 @@ describe('Native gRPC client', () => {
     });
 
     // Test reading from a server stream
-    it("can read form a gRPC output stream", async () => {
+    it("reads from a gRPC output stream", async () => {
         const logger = new TestLogger();
         const client = new NativeGrpcClient({
             proxyEndpoint: new URL("sqlynx-native://localhost")
