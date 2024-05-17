@@ -1,6 +1,6 @@
 import { HttpClient, HttpFetchResult } from './http_client.js';
 import { Logger } from './logger.js';
-import { HEADER_NAME_BATCH_TIMEOUT, HEADER_NAME_ENDPOINT, HEADER_NAME_PATH, HEADER_NAME_READ_TIMEOUT, HEADER_NAME_STREAM_ID } from "./native_api_mock.js";
+import { HEADER_NAME_BATCH_EVENT, HEADER_NAME_BATCH_TIMEOUT, HEADER_NAME_ENDPOINT, HEADER_NAME_PATH, HEADER_NAME_READ_TIMEOUT, HEADER_NAME_STREAM_ID } from "./native_api_mock.js";
 
 export enum NativeHttpServerStreamBatchEvent {
     StreamFailed = "StreamFailed",
@@ -44,19 +44,56 @@ export class NativeHttpServerStream implements HttpFetchResult {
         if (this.streamId == null) {
             return new ArrayBuffer(0);
         }
+
+        // Prepare request
         const url = new URL(this.endpoint.proxyEndpoint);
         url.pathname = `/http/stream/${this.streamId}`;
-
         const headers = new Headers();
         headers.set(HEADER_NAME_BATCH_TIMEOUT, "1000");
         headers.set(HEADER_NAME_READ_TIMEOUT, "1000");
 
-        const request = new Request(url, {
-            method: 'GET',
-            headers,
-        });
-        const response = await fetch(request);
-        return await response.arrayBuffer();
+        const chunks = [];
+        let totalChunkBytes = 0;
+        let lastStatus = 0;
+        let lastStatusText = "";
+
+        // Fetch all the chunks
+        let fetchNext = true;
+        while (fetchNext) {
+            const request = new Request(url, {
+                method: 'GET',
+                headers,
+            });
+            const response = await fetch(request);
+            lastStatus = response.status;
+            lastStatusText = response.statusText;
+            const batchEvent = response.headers.get(HEADER_NAME_BATCH_EVENT);
+            switch (batchEvent) {
+                case "StreamFailed":
+                    fetchNext = false;
+                    break;
+                case "StreamFinished":
+                case "FlushAfterClose":
+                    fetchNext = false;
+                    break;
+                case "FlushAfterTimeout":
+                case "FlushAfterBytes":
+                    break;
+            }
+            const buffer = await response.arrayBuffer();
+            chunks.push(buffer)
+            totalChunkBytes += buffer.byteLength;
+        }
+
+        // Combine buffers
+        let combined = new Uint8Array(new ArrayBuffer(totalChunkBytes));
+        let combinedWriter = 0;
+        for (const chunk of chunks) {
+            combined.set(new Uint8Array(chunk), combinedWriter);
+            combinedWriter += chunk.byteLength;
+        }
+
+        return combined.buffer;
     }
 }
 
