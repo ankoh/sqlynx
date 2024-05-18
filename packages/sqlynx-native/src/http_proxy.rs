@@ -7,10 +7,10 @@ use url::Url;
 
 use crate::{http_stream_manager::HttpStreamManager, proxy_headers::{HEADER_NAME_BATCH_BYTES, HEADER_NAME_BATCH_TIMEOUT, HEADER_NAME_ENDPOINT, HEADER_NAME_METHOD, HEADER_NAME_PATH, HEADER_NAME_READ_TIMEOUT, HEADER_PREFIX}, status::Status};
 
+#[derive(Debug)]
 struct HttpRequestParams {
     method: http::Method,
-    endpoint: Url,
-    path_and_query: String,
+    url: Url,
     read_timeout: usize,
     headers: HeaderMap<HeaderValue>
 }
@@ -65,16 +65,17 @@ fn read_request_params(headers: &mut HeaderMap) -> Result<HttpRequestParams, Sta
         }
     }
 
-    let endpoint = url::Url::parse(&endpoint)
+    let url_text = format!("{}{}", &endpoint, &path_and_query);
+    let url = url::Url::parse(&url_text)
         .map_err(|e| {
-            Status::HttpEndpointIsInvalid { header: HEADER_NAME_ENDPOINT, endpoint: endpoint.to_string(), message: e.to_string() }
+            Status::HttpEndpointIsInvalid { header: HEADER_NAME_ENDPOINT, endpoint: url_text, message: e.to_string() }
         })?;
     let method = http::Method::from_str(&method)
         .map_err(|e| {
             Status::HttpMethodIsInvalid { header: HEADER_NAME_METHOD, method: method.to_string(), message: e.to_string() }
         })?;
 
-    Ok(HttpRequestParams { method, endpoint, path_and_query, read_timeout, headers: extra_metadata })
+    Ok(HttpRequestParams { method, url, read_timeout, headers: extra_metadata })
 }
 
 #[derive(Default)]
@@ -83,13 +84,10 @@ pub struct HttpProxy {
 }
 
 impl HttpProxy {
-    /// Call a unary gRPC function
+    /// Start a server stream function
     pub async fn start_server_stream(&self, headers: &mut HeaderMap, body: Vec<u8>) -> Result<usize, Status> {
         let mut params = read_request_params(headers)?;
-        let url = params.endpoint.join(&params.path_and_query)
-            .map_err(|e| {
-                Status::HeaderPathIsInvalid { header: HEADER_NAME_PATH, path: params.path_and_query, message: e.to_string() }
-            })?;
+        log::debug!("remote: {:?}", params.url.to_string());
         let client = reqwest::Client::builder()
             .read_timeout(Duration::from_millis(params.read_timeout as u64))
             .build()
@@ -98,7 +96,7 @@ impl HttpProxy {
             })?;
         let mut request = reqwest::Request::new(
             params.method,
-            url
+            params.url
         );
         *request.body_mut() = Some(body.into());
         std::mem::swap(&mut params.headers, &mut request.headers_mut());
@@ -107,6 +105,8 @@ impl HttpProxy {
 
     /// Read from a result stream
     pub async fn read_server_stream(&self, stream_id: usize, headers: &HeaderMap) -> Result<HttpServerStreamBatch, Status> {
+        log::debug!("read from http stream {}", stream_id);
+
         // Read limits from request headers
         let read_timeout = require_usize_header(headers, HEADER_NAME_READ_TIMEOUT)?;
         let batch_timeout = require_usize_header(headers, HEADER_NAME_BATCH_TIMEOUT)?;

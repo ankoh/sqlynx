@@ -149,6 +149,7 @@ export async function authorizeSalesforceConnection(dispatch: Dispatch<Salesforc
         // Await the oauth redirect
         let authCode = await appEvents.waitForOAuthRedirect(abortSignal);
         abortSignal.throwIfAborted();
+        logger.debug(`received oauth code: ${JSON.stringify(authCode)}`);
 
         // Received an oauth error?
         if (authCode.error) {
@@ -171,7 +172,7 @@ export async function authorizeSalesforceConnection(dispatch: Dispatch<Salesforc
             pkceChallenge.verifier,
             abortSignal,
         );
-        console.log(coreAccessToken);
+        logger.debug(`received core access token: ${JSON.stringify(coreAccessToken)}`);
         dispatch({
             type: RECEIVED_CORE_AUTH_TOKEN,
             value: coreAccessToken,
@@ -184,7 +185,7 @@ export async function authorizeSalesforceConnection(dispatch: Dispatch<Salesforc
             value: null,
         });
         const token = await apiClient.getDataCloudAccessToken(coreAccessToken, abortSignal);
-        console.log(token);
+        logger.debug(`received data cloud token: ${JSON.stringify(token)}`);
         dispatch({
             type: RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
             value: token,
