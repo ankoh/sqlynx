@@ -77,20 +77,19 @@
             "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDJEQ0Y5MDE5Nzc1OEIwRUEKUldUcXNGaDNHWkRQTGUwVnV0LzlzWnNGWnNWL0tKWkhDOEFvclNSNERPSlRJUldTMEV1Q2FVd1gK"
         },
         "deep-link": {
-            "domains": [
+            "mobile": [
                 {
-                    "host": "localhost",
-                    "pathPrefix": [
-                        "sqlynx://"
-                    ]
+                    "host": "localhost"
                 },
                 {
-                    "host": "sqlynx.app",
-                    "pathPrefix": [
-                        "sqlynx://"
-                    ]
+                    "host": "sqlynx.app"
                 }
-            ]
+            ],
+            "desktop": {
+                "schemes": [
+                    "sqlynx"
+                ]
+            }
         }
     },
     "productName": "SQLynx",
