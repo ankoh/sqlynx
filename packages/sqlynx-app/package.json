@@ -49,7 +49,7 @@
         "@typescript-eslint/eslint-plugin": "^7.9.0",
         "@typescript-eslint/parser": "^7.9.0",
         "@uiw/codemirror-themes-all": "^4.22.1",
-        "apache-arrow": "^16.0.0",
+        "apache-arrow": "^16.1.0",
         "cm6-theme-basic-light": "^0.2.0",
         "cm6-theme-nord": "^0.2.0",
         "copy-webpack-plugin": "^12.0.2",
