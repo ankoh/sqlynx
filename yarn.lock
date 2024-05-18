@@ -58,7 +58,7 @@ __metadata:
     "@octokit/graphql": "npm:^8.1.1"
     "@primer/octicons-react": "patch:@primer/octicons-react@npm%3A19.9.0#~/.yarn/patches/@primer-octicons-react-npm-19.9.0-65341cfa23.patch"
     "@primer/react": "npm:^36.18.0"
-    "@react-hook/resize-observer": "npm:^1.2.6"
+    "@react-hook/resize-observer": "npm:^2.0.1"
     "@tauri-apps/api": "patch:@tauri-apps/api@npm%3A2.0.0-beta.8#~/.yarn/patches/@tauri-apps-api-npm-2.0.0-beta.8-d68cf559f2.patch"
     "@tauri-apps/cli": "npm:^2.0.0-beta.15"
     "@tauri-apps/plugin-deep-link": "npm:^2.0.0-beta.3"
@@ -1743,16 +1743,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-hook/resize-observer@npm:^1.2.6":
-  version: 1.2.6
-  resolution: "@react-hook/resize-observer@npm:1.2.6"
+"@react-hook/resize-observer@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "@react-hook/resize-observer@npm:2.0.1"
   dependencies:
     "@juggle/resize-observer": "npm:^3.3.1"
     "@react-hook/latest": "npm:^1.0.2"
     "@react-hook/passive-layout-effect": "npm:^1.2.0"
   peerDependencies:
-    react: ">=16.8"
-  checksum: 10c0/6ebe4ded4dc4602906c4c727871f93ea73754dd5758f90d50e5fc7382b1844324a46a4c2e0842d8ad5bf95886091ba8a0c9d3a1ef0f10bd0c9e011ecd7aeea42
+    react: ">=18"
+  checksum: 10c0/f36b181b1faecbe3894a23e3ad9d1206afc64287d60fa55f3018679a03161a2ecefc857575ee2a2dc2008cc6d3ded760d45bf6b4bf2102d5da6460aa349317db
   languageName: node
   linkType: hard
 
