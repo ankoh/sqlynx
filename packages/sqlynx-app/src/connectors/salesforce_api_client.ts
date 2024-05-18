@@ -212,9 +212,8 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
             params.client_secret = authParams.appConsumerSecret;
         }
         const body = new URLSearchParams(params);
-        console.log(body.toString());
         // Get the access token
-        const response = await this.httpClient.fetch(`${authParams.instanceUrl}/services/oauth2/token`, {
+        const response = await this.httpClient.fetch(new URL(`${authParams.instanceUrl}/services/oauth2/token`), {
             method: 'POST',
             headers: new Headers({
                 Accept: 'application/json',
@@ -240,22 +239,28 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
         access: SalesforceCoreAccessToken,
         cancel: AbortSignal,
     ): Promise<SalesforceDataCloudAccessToken> {
+        console.log(access);
         const params: Record<string, string> = {
             grant_type: 'urn:salesforce:grant-type:external:cdp',
             subject_token: access.accessToken!,
             subject_token_type: 'urn:ietf:params:oauth:token-type:access_token',
         };
+        const body = new URLSearchParams(params);
         // Get the data cloud access token
-        const response = await this.httpClient.fetch(`${access.instanceUrl}/services/a360/token`, {
+        const response = await this.httpClient.fetch(new URL(`${access.instanceUrl}/services/a360/token`), {
             method: 'POST',
             headers: new Headers({
                 Accept: 'application/json',
                 'Content-Type': 'application/x-www-form-urlencoded',
             }),
-            body: new URLSearchParams(params),
+            body: body,
             signal: cancel,
         });
         const responseBody = await response.json();
+        if (responseBody.error) {
+            const err = responseBody as { error: string, error_description: string };
+            throw new Error(`request failed: error=${err.error}, description=${err.error_description}`);
+        }
         return readDataCloudAccessToken(responseBody);
     }
 
@@ -263,7 +268,10 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
         const params = new URLSearchParams();
         params.set('format', 'json');
         params.set('access_token', access.accessToken ?? '');
-        const response = await this.httpClient.fetch(`${access.instanceUrl}/services/oauth2/userinfo?${params.toString()}`, {
+        const response = await this.httpClient.fetch(new URL(`${access.instanceUrl}/services/oauth2/userinfo?${params.toString()}`), {
+            headers: {
+                authorization: `Bearer ${access.accessToken}`,
+            },
             signal: cancel,
         });
         const responseJson = await response.json();

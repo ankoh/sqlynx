@@ -1,6 +1,6 @@
 import { HttpClient, HttpFetchResult } from './http_client.js';
 import { Logger } from './logger.js';
-import { HEADER_NAME_BATCH_EVENT, HEADER_NAME_BATCH_TIMEOUT, HEADER_NAME_ENDPOINT, HEADER_NAME_PATH, HEADER_NAME_READ_TIMEOUT, HEADER_NAME_STREAM_ID } from "./native_api_mock.js";
+import { HEADER_NAME_BATCH_BYTES, HEADER_NAME_BATCH_EVENT, HEADER_NAME_BATCH_TIMEOUT, HEADER_NAME_ENDPOINT, HEADER_NAME_METHOD, HEADER_NAME_PATH, HEADER_NAME_READ_TIMEOUT, HEADER_NAME_STREAM_ID } from "./native_api_mock.js";
 
 export enum NativeHttpServerStreamBatchEvent {
     StreamFailed = "StreamFailed",
@@ -28,6 +28,8 @@ export class NativeHttpServerStream implements HttpFetchResult {
     statusText: string;
     /// The logger
     logger: Logger;
+    /// The text decoder for decoding utf8
+    textDecoder: TextDecoder;
 
     /// Constructor
     constructor(endpoint: NativeHttpProxyConfig, streamId: number | null, headers: Headers, status: number, statusText: string, logger: Logger) {
@@ -37,10 +39,14 @@ export class NativeHttpServerStream implements HttpFetchResult {
         this.endpoint = endpoint;
         this.streamId = streamId;
         this.logger = logger;
+        this.textDecoder = new TextDecoder();
     }
 
     async json(): Promise<any> {
-        throw Error("not implemented");
+        const buffer = await this.arrayBuffer();
+        const text = this.textDecoder.decode(buffer);
+        this.logger.debug(`parsing json response body: ${text}`);
+        return JSON.parse(text);
     }
 
     /// Get the response as array buffer
@@ -53,13 +59,12 @@ export class NativeHttpServerStream implements HttpFetchResult {
         const url = new URL(this.endpoint.proxyEndpoint);
         url.pathname = `/http/stream/${this.streamId}`;
         const headers = new Headers();
+        headers.set(HEADER_NAME_BATCH_BYTES, "4000000"); // 4 MB
         headers.set(HEADER_NAME_BATCH_TIMEOUT, "1000");
         headers.set(HEADER_NAME_READ_TIMEOUT, "1000");
 
         const chunks = [];
         let totalChunkBytes = 0;
-        let lastStatus = 0;
-        let lastStatusText = "";
 
         // Fetch all the chunks
         let fetchNext = true;
@@ -69,9 +74,16 @@ export class NativeHttpServerStream implements HttpFetchResult {
                 headers,
             });
             const response = await fetch(request);
-            lastStatus = response.status;
-            lastStatusText = response.statusText;
+            const status = response.status;
+            const statusText = response.statusText;
+            if (status !== 200) {
+                const errorMessage = await response.text();
+                throw new Error(errorMessage);
+            }
+
+            // Get batch event
             const batchEvent = response.headers.get(HEADER_NAME_BATCH_EVENT);
+            this.logger.debug(`received fetch response: status=${status}, statusText=${statusText}, event=${batchEvent}`, "native_http_client")
             switch (batchEvent) {
                 case "StreamFailed":
                     fetchNext = false;
@@ -88,6 +100,7 @@ export class NativeHttpServerStream implements HttpFetchResult {
             chunks.push(buffer)
             totalChunkBytes += buffer.byteLength;
         }
+
 
         // Combine buffers
         let combined = new Uint8Array(new ArrayBuffer(totalChunkBytes));
@@ -106,22 +119,41 @@ export class NativeHttpClient implements HttpClient {
     logger: Logger;
     /// The endpoint
     endpoint: NativeHttpProxyConfig;
+    /// The text encoder
+    encoder: TextEncoder;
 
     /// Constructor
     constructor(proxy: NativeHttpProxyConfig, logger: Logger) {
         this.logger = logger;
         this.endpoint = proxy;
+        this.encoder = new TextEncoder();
     }
 
     public async fetch(input: URL, init?: RequestInit): Promise<HttpFetchResult> {
         const url = new URL(this.endpoint.proxyEndpoint);
         url.pathname = `/http/streams`;
+        const remote = `${input.protocol}//${input.host}`;
 
         const headers = new Headers(init?.headers);
-        headers.set(HEADER_NAME_ENDPOINT, input.host);
+        headers.set(HEADER_NAME_METHOD, init?.method ?? "GET");
+        headers.set(HEADER_NAME_ENDPOINT, remote);
         headers.set(HEADER_NAME_PATH, input.pathname);
         headers.set(HEADER_NAME_BATCH_TIMEOUT, "1000");
         headers.set(HEADER_NAME_READ_TIMEOUT, "1000");
+
+        this.logger.info(`fetch: remote=${remote}, path=${input.pathname}`, "native_http_client");
+
+        const body: any = init?.body;
+        let bodyBuffer: ArrayBuffer;
+        if (init?.body) {
+            if (init.body instanceof ArrayBuffer) {
+                bodyBuffer = init.body;
+            } else if (init.body instanceof URLSearchParams) {
+                bodyBuffer = new TextEncoder().encode(body.toString());
+            } else {
+                throw Error("fetch body is of unexpected type");
+            }
+        }
 
         const request = new Request(url, {
             method: 'POST',
