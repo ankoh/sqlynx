@@ -147,7 +147,7 @@
 
 .status_bar {
     display: grid;
-    grid-template-columns: 16px max-content auto max-content;
+    grid-template-columns: max-content max-content auto max-content;
     align-items: center;
 
     column-gap: 8px;
@@ -156,6 +156,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    margin-left: 8px;
 }
 .status_indicator_spinner {
     width: 16px;
