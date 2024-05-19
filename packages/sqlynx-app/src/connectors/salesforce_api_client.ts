@@ -268,10 +268,6 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
     }
 
     protected readDataCloudAccessToken(obj: any): SalesforceDataCloudAccessToken {
-        const expiration = new Date();
-        if (obj.expires_in) {
-            expiration.setSeconds(expiration.getSeconds() + obj.expires_in);
-        }
         const prependProtoIfMissing = (urlString: string) => {
             if (!urlString.startsWith('https:')) {
                 urlString = `https://${urlString}`;
@@ -279,10 +275,7 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
             return new URL(urlString);
         };
         if (!obj.access_token) {
-            throw new Error('missing expires_in');
-        }
-        if (!obj.expires_in) {
-            throw new Error('missing expires_in');
+            throw new Error('missing access_token');
         }
         if (!obj.instance_url) {
             throw new Error('missing instance_url');
