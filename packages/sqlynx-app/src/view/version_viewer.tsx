@@ -10,7 +10,7 @@ import { PlatformType, usePlatformType } from '../platform/platform_type.js';
 import { ReleaseChannel, ReleaseManifest } from '../platform/web_version_check.js';
 import { useLogger } from '../platform/logger_provider.js';
 import { RESULT_ERROR, RESULT_OK, Result } from '../utils/result.js';
-import { StatusIndicator, Status } from './status_indicator.js';
+import { StatusIndicator, IndicatorStatus } from './status_indicator.js';
 
 import * as symbols from '../../static/svg/symbols.generated.svg';
 
@@ -67,7 +67,7 @@ const UpdateChannel: React.FC<UpdateChannelProps> = (props: UpdateChannelProps) 
                             status = <ProgressBar className={styles.update_channel_action_progress} progress={progress * 100} />;
                         } else {
                             status = (
-                                <StatusIndicator width="16px" height="16px" fill="black" status={Status.Succeeded} />
+                                <StatusIndicator width="16px" height="16px" fill="black" status={IndicatorStatus.Succeeded} />
                             );
                         }
                     } else {

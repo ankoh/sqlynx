@@ -60,8 +60,8 @@ export class NativeHttpServerStream implements HttpFetchResult {
         url.pathname = `/http/stream/${this.streamId}`;
         const headers = new Headers();
         headers.set(HEADER_NAME_BATCH_BYTES, "4000000"); // 4 MB
-        headers.set(HEADER_NAME_BATCH_TIMEOUT, "10000");
-        headers.set(HEADER_NAME_READ_TIMEOUT, "1000");
+        headers.set(HEADER_NAME_BATCH_TIMEOUT, "1000");
+        headers.set(HEADER_NAME_READ_TIMEOUT, "10000");
 
         const chunks = [];
         let totalChunkBytes = 0;
@@ -138,8 +138,8 @@ export class NativeHttpClient implements HttpClient {
         headers.set(HEADER_NAME_METHOD, init?.method ?? "GET");
         headers.set(HEADER_NAME_ENDPOINT, remote);
         headers.set(HEADER_NAME_PATH, input.pathname);
-        headers.set(HEADER_NAME_BATCH_TIMEOUT, "10000");
-        headers.set(HEADER_NAME_READ_TIMEOUT, "1000");
+        headers.set(HEADER_NAME_BATCH_TIMEOUT, "1000");
+        headers.set(HEADER_NAME_READ_TIMEOUT, "10000");
 
         this.logger.info(`fetch: remote=${remote}, path=${input.pathname}`, "native_http_client");
 

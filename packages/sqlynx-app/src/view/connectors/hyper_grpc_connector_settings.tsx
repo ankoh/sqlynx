@@ -9,7 +9,7 @@ import { TextField, KeyValueTextField } from '../text_field.js';
 import { useLogger } from '../../platform/logger_provider.js';
 import { useHyperDatabaseClient } from '../../platform/hyperdb_client_provider.js';
 import { KeyValueListBuilder } from '../../view/keyvalue_list.js';
-import { Status, StatusIndicator } from '../../view/status_indicator.js';
+import { IndicatorStatus, StatusIndicator } from '../../view/status_indicator.js';
 
 import * as symbols from '../../../static/svg/symbols.generated.svg';
 import * as style from './connector_settings.module.css';
@@ -76,7 +76,7 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                     <div className={classNames(style.section_layout, style.status_section_layout)}>
                         <div className={style.status_bar}>
                             <div className={style.status_indicator}>
-                                <StatusIndicator className={style.status_indicator_spinner} status={Status.Running} fill="black" />
+                                <StatusIndicator className={style.status_indicator_spinner} status={IndicatorStatus.Running} fill="black" />
                             </div>
                             <div className={style.status_text}>
                                 disconnected

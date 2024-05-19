@@ -4,7 +4,7 @@ import { classNames } from '../utils/classnames.js';
 
 import * as styles from './status_indicator.module.css';
 
-export enum Status {
+export enum IndicatorStatus {
     None,
     Running,
     Failed,
@@ -14,7 +14,7 @@ export enum Status {
 
 export interface StatusIndicatorProps {
     className?: string;
-    status: Status;
+    status: IndicatorStatus;
     width?: string;
     height?: string;
     fill?: string;
@@ -23,7 +23,7 @@ export interface StatusIndicatorProps {
 export const StatusIndicator: React.FC<StatusIndicatorProps> = (props: StatusIndicatorProps) => {
     let element = <div />;
     switch (props.status) {
-        case Status.Running:
+        case IndicatorStatus.Running:
             element = (
                 <svg
                     className={classNames(props.className)}
@@ -42,7 +42,7 @@ export const StatusIndicator: React.FC<StatusIndicatorProps> = (props: StatusInd
                 </svg>
             );
             break;
-        case Status.None:
+        case IndicatorStatus.None:
             element = (
                 <svg
                     className={classNames(props.className)}
@@ -59,7 +59,7 @@ export const StatusIndicator: React.FC<StatusIndicatorProps> = (props: StatusInd
                 </svg>
             );
             break;
-        case Status.Failed:
+        case IndicatorStatus.Failed:
             element = (
                 <svg
                     className={classNames(props.className)}
@@ -79,7 +79,7 @@ export const StatusIndicator: React.FC<StatusIndicatorProps> = (props: StatusInd
                 </svg>
             );
             break;
-        case Status.Succeeded:
+        case IndicatorStatus.Succeeded:
             element = (
                 <svg
                     className={classNames(props.className)}
