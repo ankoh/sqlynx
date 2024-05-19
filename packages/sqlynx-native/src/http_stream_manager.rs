@@ -109,19 +109,21 @@ impl HttpStreamManager {
 
         // Spawn the async reader
         tokio::spawn(async move {
+            log::trace!("{:?}", &request);
+
             // Execute a request
             let mut response = match client.execute(request).await {
                 Ok(response) => response,
                 Err(e) => {
+                    log::warn!("{}", &e);
                     if let Err(e) = stream_entry
                         .response_sender
                         .send(HttpServerStreamEvent::RequestFailed(e.to_string()))
                         .await
                     {
-                        log::warn!("request failed with error: {}", e);
+                        log::warn!("forwarding request error failed: {}", e);
                         return;
                     }
-                    log::warn!("request failed with error: {}", e);
                     return;
                 }
             };
