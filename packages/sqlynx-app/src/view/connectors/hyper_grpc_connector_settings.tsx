@@ -2,14 +2,14 @@ import * as React from 'react';
 import * as proto from "@ankoh/sqlynx-pb";
 
 import { Button } from '@primer/react';
-import { ChecklistIcon, DatabaseIcon, FileBadgeIcon, KeyIcon, PlugIcon, TagIcon } from '@primer/octicons-react';
+import { ChecklistIcon, DatabaseIcon, FileBadgeIcon, KeyIcon, PlugIcon } from '@primer/octicons-react';
 
 import { classNames } from '../../utils/classnames.js';
 import { TextField, KeyValueTextField } from '../text_field.js';
 import { useLogger } from '../../platform/logger_provider.js';
 import { useHyperDatabaseClient } from '../../platform/hyperdb_client_provider.js';
-
 import { KeyValueListBuilder } from '../../view/keyvalue_list.js';
+import { Status, StatusIndicator } from '../../view/status_indicator.js';
 
 import * as symbols from '../../../static/svg/symbols.generated.svg';
 import * as style from './connector_settings.module.css';
@@ -72,18 +72,22 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                 </div>
             </div >
             <div className={style.body_container}>
-                <div className={style.section_status}>
-                    <div className={style.status_bar}>
-                        <div className={classNames(style.status_health,)} />
-                        <div className={style.status_text}>
-                            disconnected
-                        </div>
-                        <div className={style.status_stats}>
+                <div className={classNames(style.section, style.status_section)}>
+                    <div className={classNames(style.section_layout, style.status_section_layout)}>
+                        <div className={style.status_bar}>
+                            <div className={style.status_indicator}>
+                                <StatusIndicator className={style.status_indicator_spinner} status={Status.Running} fill="black" />
+                            </div>
+                            <div className={style.status_text}>
+                                disconnected
+                            </div>
+                            <div className={style.status_stats}>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div className={style.section}>
-                    <div className={style.section_layout}>
+                    <div className={classNames(style.section_layout, style.body_section_layout)}>
                         <TextField
                             name="gRPC Endpoint"
                             caption="Endpoint of the gRPC service as 'https://host:port'"
@@ -124,7 +128,7 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                     </div>
                 </div>
                 <div className={style.section}>
-                    <div className={style.section_layout}>
+                    <div className={classNames(style.section_layout, style.body_section_layout)}>
                         <KeyValueListBuilder
                             className={style.grid_column_1}
                             title="Attached Databases"

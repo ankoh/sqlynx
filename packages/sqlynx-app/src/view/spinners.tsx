@@ -4,14 +4,14 @@ import { classNames } from '../utils/classnames.js';
 
 import * as styles from './spinners.module.css';
 
-interface IRectangleWaveSpinnerProps {
+interface RectangleWaveSpinnerProps {
     className?: string;
     color?: string;
     active: boolean;
 }
 
-export const CenteredRectangleWaveSpinner: React.FC<IRectangleWaveSpinnerProps> = (
-    props: IRectangleWaveSpinnerProps,
+export const CenteredRectangleWaveSpinner: React.FC<RectangleWaveSpinnerProps> = (
+    props: RectangleWaveSpinnerProps,
 ) => {
     return (
         <div className={styles.rw_container}>
@@ -20,7 +20,7 @@ export const CenteredRectangleWaveSpinner: React.FC<IRectangleWaveSpinnerProps> 
     );
 };
 
-export const RectangleWaveSpinner: React.FC<IRectangleWaveSpinnerProps> = (props: IRectangleWaveSpinnerProps) => {
+export const RectangleWaveSpinner: React.FC<RectangleWaveSpinnerProps> = (props: RectangleWaveSpinnerProps) => {
     const s = {
         backgroundColor: props.color || 'rgb(36, 41, 46)',
     };

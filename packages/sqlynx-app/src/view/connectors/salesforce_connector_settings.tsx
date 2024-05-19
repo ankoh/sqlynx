@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { Button } from '@primer/react';
-import { KeyIcon, PlugIcon, TagIcon } from '@primer/octicons-react';
+import { KeyIcon, PlugIcon } from '@primer/octicons-react';
 
 import { useConnectionState } from '../../connectors/connection_registry.js';
 import { useSalesforceConnectionId } from '../../connectors/salesforce_connector.js';
@@ -159,18 +159,20 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                 </div>
             </div>
             <div className={style.body_container}>
-                <div className={style.section_status}>
-                    <div className={style.status_bar}>
-                        <div className={classNames(style.status_health, statusIndicatorClass)} />
-                        <div className={style.status_text}>
-                            {statusName}
-                        </div>
-                        <div className={style.status_stats}>
+                <div className={classNames(style.section, style.status_section)}>
+                    <div className={classNames(style.section_layout, style.status_section_layout)}>
+                        <div className={style.status_bar}>
+                            <div className={classNames(style.status_health, statusIndicatorClass)} />
+                            <div className={style.status_text}>
+                                {statusName}
+                            </div>
+                            <div className={style.status_stats}>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div className={style.section}>
-                    <div className={style.section_layout}>
+                    <div className={classNames(style.section_layout, style.body_section_layout)}>
                         <TextField
                             name="Salesforce Instance URL"
                             caption="URL of the Salesforce Instance"
@@ -194,7 +196,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                     </div>
                 </div>
                 <div className={style.section}>
-                    <div className={style.section_layout}>
+                    <div className={classNames(style.section_layout, style.body_section_layout)}>
                         <TextField
                             name="Instance API URL"
                             caption="URL of the Salesforce API"
@@ -220,7 +222,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                     </div>
                 </div>
                 <div className={style.section}>
-                    <div className={style.section_layout}>
+                    <div className={classNames(style.section_layout, style.body_section_layout)}>
                         <TextField
                             name="Data Cloud Instance URL"
                             caption="URL of the Data Cloud instance"

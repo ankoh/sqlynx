@@ -16,8 +16,6 @@
     align-items: center;
     justify-content: center;
     width: 100%;
-    padding-top: 8px;
-    padding-bottom: 16px;
     background-color: white;
 }
 .section:not(:first-child) {
@@ -25,7 +23,6 @@
 }
 @media only screen and (max-width: 800px) {
     .section_layout {
-        padding: 8px 16px;
         width: 100%;
         display: flex;
         flex-direction: column;
@@ -35,7 +32,6 @@
 @media only screen and (min-width: 800px) {
     .section_layout {
         position: relative;
-        padding: 8px 16px;
         width: 100%;
         max-width: 1000px;
         display: grid;
@@ -43,6 +39,10 @@
         column-gap: 32px;
         row-gap: 16px;
     }
+}
+
+.body_section_layout {
+    padding: 16px 16px 32px 16px;
 }
 
 .grid_column_1 {
@@ -133,51 +133,29 @@
     font-size: 0.9rem;
 }
 
-.section_status {
-    width: 100%;
-    padding-top: 12px;
-    padding-bottom: 12px;
+.status_section {
     background-color: var(--connector_header_background);
+}
 
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
+.status_section_layout {
+    padding: 12px 16px;
 }
 
 .status_bar {
     display: grid;
-    grid-template-columns: max-content max-content auto max-content;
+    grid-template-columns: 16px max-content auto max-content;
     align-items: center;
 
     column-gap: 8px;
-    width: calc(100% - 32px);
-    max-width: 968px;
-    border-radius: var(--border_radius);
-    border: 1px solid var(--border_color_primary);
-    padding: 4px 16px;
-
-    background-color: var(--connector_status_background);
-    color: var(--connector_status_foreground);
 }
-
-.status_health {
-    width: 8px;
-    height: 8px;
-    border-radius: 4px;
-    background-color: red;
+.status_indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
-.status_health_online {
-    background-color: green;
-}
-.status_health_error {
-    background-color: red;
-}
-.status_health_connecting {
-    background-color: orange;
-}
-.status_health_not_started {
-    background-color: grey;
+.status_indicator_spinner {
+    width: 16px;
+    height: 16px;
 }
 
 
