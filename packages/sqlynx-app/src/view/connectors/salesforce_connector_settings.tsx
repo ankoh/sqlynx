@@ -11,6 +11,7 @@ import { SalesforceAuthParams } from '../../connectors/connector_configs.js';
 import { SalesforceAuthAction, reduceAuthState } from '../../connectors/salesforce_auth_state.js';
 import { SALESFORCE_DATA_CLOUD } from '../../connectors/connector_info.js';
 import { TextField, TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_UNKNOWN } from '../../view/text_field.js';
+import { IndicatorStatus, StatusIndicator } from '../../view/status_indicator.js';
 import { classNames } from '../../utils/classnames.js';
 
 import * as symbols from '../../../static/svg/symbols.generated.svg';
@@ -122,20 +123,20 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
 
     // Get the connection health
     const health = getSalesforceConnnectionHealth(status);
-    let statusIndicatorClass: string | undefined = undefined;
+    let indicatorStatus: IndicatorStatus | undefined = undefined;
     switch (health) {
         case ConnectionHealth.UNKNOWN:
         case ConnectionHealth.NOT_STARTED:
-            statusIndicatorClass = style.status_health_not_started;
+            indicatorStatus = IndicatorStatus.None;
             break;
         case ConnectionHealth.ONLINE:
-            statusIndicatorClass = style.status_health_online;
+            indicatorStatus = IndicatorStatus.Succeeded;
             break;
         case ConnectionHealth.FAILED:
-            statusIndicatorClass = style.status_health_error;
+            indicatorStatus = IndicatorStatus.Failed;
             break;
         case ConnectionHealth.CONNECTING:
-            statusIndicatorClass = style.status_health_connecting;
+            indicatorStatus = IndicatorStatus.Running;
             break;
     }
 
@@ -162,7 +163,9 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                 <div className={classNames(style.section, style.status_section)}>
                     <div className={classNames(style.section_layout, style.status_section_layout)}>
                         <div className={style.status_bar}>
-                            <div className={classNames(style.status_health, statusIndicatorClass)} />
+                            <div className={style.status_indicator}>
+                                <StatusIndicator className={style.status_indicator_spinner} status={indicatorStatus} fill="black" />
+                            </div>
                             <div className={style.status_text}>
                                 {statusName}
                             </div>
