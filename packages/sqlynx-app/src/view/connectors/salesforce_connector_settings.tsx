@@ -96,11 +96,11 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
         case ConnectionStatus.NOT_STARTED:
             statusName = "disconnected";
             break;
-        case ConnectionStatus.AUTHENTICATION_FAILED:
-            statusName = "authentication failed";
+        case ConnectionStatus.AUTHORIZATION_FAILED:
+            statusName = "authorization failed";
             break;
-        case ConnectionStatus.AUTHENTICATION_COMPLETED:
-            statusName = "connected";
+        case ConnectionStatus.AUTHORIZATION_COMPLETED:
+            statusName = "authorized";
             break;
         case ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_LINK:
         case ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_WINDOW:
@@ -196,18 +196,6 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                 <div className={style.section}>
                     <div className={style.section_layout}>
                         <TextField
-                            name="Client ID"
-                            caption="All requests are sent with the header 'x-trace-id: sqlynx/<client-id>/sfdc/<request-id>'"
-                            value=""
-                            placeholder="client id"
-                            leadingVisual={TagIcon}
-                            onChange={() => { }}
-                            readOnly
-                            disabled
-                            logContext={LOG_CTX}
-                        />
-                        <TextField
-                            className={style.grid_column_1}
                             name="Instance API URL"
                             caption="URL of the Salesforce API"
                             value={salesforceConnection?.auth.coreAccessToken?.apiInstanceUrl ?? ''}
@@ -229,6 +217,10 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             disabled={!isAuthenticated}
                             logContext={LOG_CTX}
                         />
+                    </div>
+                </div>
+                <div className={style.section}>
+                    <div className={style.section_layout}>
                         <TextField
                             name="Data Cloud Instance URL"
                             caption="URL of the Data Cloud instance"
@@ -243,10 +235,32 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                         <TextField
                             name="Data Cloud Access Token"
                             caption="URL of the Data Cloud instance"
-                            value={salesforceConnection?.auth.dataCloudAccessToken?.accessToken?.toString() ?? ''}
+                            value={salesforceConnection?.auth.dataCloudAccessToken?.jwt?.raw ?? ''}
                             onChange={() => { }}
                             placeholder=""
                             leadingVisual={KeyIcon}
+                            readOnly
+                            disabled={!isAuthenticated}
+                            logContext={LOG_CTX}
+                        />
+                        <TextField
+                            name="Core Tenant ID"
+                            caption="Tenant id for core apis"
+                            value={salesforceConnection?.auth.dataCloudAccessToken?.coreTenantId ?? ''}
+                            onChange={() => { }}
+                            placeholder=""
+                            leadingVisual={() => <div>ID</div>}
+                            readOnly
+                            disabled={!isAuthenticated}
+                            logContext={LOG_CTX}
+                        />
+                        <TextField
+                            name="Data Cloud Tenant ID"
+                            caption="Tenant id for Data Cloud apis"
+                            value={salesforceConnection?.auth.dataCloudAccessToken?.dcTenantId ?? ''}
+                            onChange={() => { }}
+                            placeholder=""
+                            leadingVisual={() => <div>ID</div>}
                             readOnly
                             disabled={!isAuthenticated}
                             logContext={LOG_CTX}
