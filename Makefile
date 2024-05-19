@@ -1,6 +1,3 @@
-.DEFAULT_GOAL := lib # ---------------------------------------------------------------------------
-# Config
-
 ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 UID=${shell id -u}

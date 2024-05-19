@@ -115,7 +115,7 @@ impl HttpStreamManager {
             let mut response = match client.execute(request).await {
                 Ok(response) => response,
                 Err(e) => {
-                    log::warn!("{}", &e);
+                    log::warn!("{:?}", &e);
                     if let Err(e) = stream_entry
                         .response_sender
                         .send(HttpServerStreamEvent::RequestFailed(e.to_string()))
