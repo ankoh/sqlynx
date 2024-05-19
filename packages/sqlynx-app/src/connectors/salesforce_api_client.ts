@@ -3,6 +3,7 @@ import { HttpClient } from '../platform/http_client.js';
 import { SalesforceAuthConfig, SalesforceAuthParams } from './connector_configs.js';
 import { QueryExecutionResponseStream } from './query_execution.js';
 import { executeQuery as execQuery } from './salesforce_query_execution.js';
+import { Base64Codec } from '../utils/base64.js';
 
 export interface SalesforceCoreAccessToken {
     /// The OAuth token
@@ -26,10 +27,46 @@ export interface SalesforceCoreAccessToken {
     /// A Bearer token type
     tokenType: string | null;
 }
+export interface SalesforceDataCloudJWTPayload {
+    /// The JWT subject
+    sub: string;
+    /// The JWT audience
+    aud: string;
+    /// The JWT expiration time, seconds since epoch for SF
+    exp: string;
+    /// The time when the JWT was issued
+    iat: string;
+    //// The unique id of the JWT token
+    jti: string;
+    /// The JWT scope
+    scp: string;
+    /// The JWT issuer
+    iss: string;
+    /// The time when the JWT becomes valid
+    nbf: string;
+
+    /// The SF core org id
+    orgId: string;
+    /// The SF app id
+    sfappid: string;
+    /// The SF oid
+    sfoid: string;
+    /// The SF uid
+    sfuid: string;
+
+    /// The SF core tenant id of the issuer
+    issuerTenantId: string;
+    /// The SF offcore tenant id required for the DC api
+    audienceTentantId: string;
+    /// The custom attributes (contains "dataspace")
+    customAttributes: Record<string, string>;
+}
 
 export interface SalesforceDataCloudAccessToken {
-    /// The access token
+    /// The access token (as raw jwt)
     accessToken: string;
+    /// The unpacked access token
+    accessTokenPayload: SalesforceDataCloudJWTPayload;
     /// The instance URL
     instanceUrl: URL;
     /// The expiration time
@@ -110,36 +147,6 @@ export function readCoreAccessToken(obj: any): SalesforceCoreAccessToken {
     };
 }
 
-export function readDataCloudAccessToken(obj: any): SalesforceDataCloudAccessToken {
-    const expiration = new Date();
-    if (obj.expires_in) {
-        expiration.setSeconds(expiration.getSeconds() + obj.expires_in);
-    }
-    const prependProtoIfMissing = (urlString: string) => {
-        if (!urlString.startsWith('https:')) {
-            urlString = `https://${urlString}`;
-        }
-        console.log(urlString);
-        return new URL(urlString);
-    };
-    if (!obj.access_token) {
-        throw new Error('missing expires_in');
-    }
-    if (!obj.expires_in) {
-        throw new Error('missing expires_in');
-    }
-    if (!obj.instance_url) {
-        throw new Error('missing instance_url');
-    }
-    return {
-        accessToken: obj.access_token,
-        instanceUrl: prependProtoIfMissing(obj.instance_url),
-        expiresAt: obj.expires_in,
-        issuedTokenType: obj.issued_token_type ?? null,
-        tokenType: obj.token_type ?? null,
-    };
-}
-
 export function readUserInformation(obj: any): SalesforceUserInfo {
     return {
         active: obj.active ?? null,
@@ -187,10 +194,14 @@ export interface SalesforceAPIClientInterface {
 export class SalesforceAPIClient implements SalesforceAPIClientInterface {
     logger: Logger;
     httpClient: HttpClient;
+    base64Codec: Base64Codec;
+    textDecoder: TextDecoder;
 
     constructor(logger: Logger, httpClient: HttpClient) {
         this.logger = logger;
         this.httpClient = httpClient;
+        this.base64Codec = new Base64Codec();
+        this.textDecoder = new TextDecoder();
     }
 
     public async getCoreAccessToken(
@@ -235,6 +246,49 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
         }
     }
 
+    protected readDataCloudAccessToken(obj: any): SalesforceDataCloudAccessToken {
+        const expiration = new Date();
+        if (obj.expires_in) {
+            expiration.setSeconds(expiration.getSeconds() + obj.expires_in);
+        }
+        const prependProtoIfMissing = (urlString: string) => {
+            if (!urlString.startsWith('https:')) {
+                urlString = `https://${urlString}`;
+            }
+            console.log(urlString);
+            return new URL(urlString);
+        };
+        if (!obj.access_token) {
+            throw new Error('missing expires_in');
+        }
+        if (!obj.expires_in) {
+            throw new Error('missing expires_in');
+        }
+        if (!obj.instance_url) {
+            throw new Error('missing instance_url');
+        }
+
+        const jwtParts = obj.access_token.split('.');
+        console.log(jwtParts);
+        if (jwtParts.length != 3) {
+            throw new Error(`invalid jwt, expected 3 parts, received ${jwtParts.length}`);
+        }
+        const jwtPayloadRaw = jwtParts[1];
+        const jwtPayloadBytes = this.base64Codec.decode(jwtPayloadRaw);
+        const jwtPayloadText = this.textDecoder.decode(jwtPayloadBytes);
+        const jwtPayloadParsed = JSON.parse(jwtPayloadText) as SalesforceDataCloudJWTPayload;
+        console.log(jwtPayloadParsed);
+
+        return {
+            accessToken: obj.access_token,
+            accessTokenPayload: jwtPayloadParsed,
+            instanceUrl: prependProtoIfMissing(obj.instance_url),
+            expiresAt: obj.expires_in,
+            issuedTokenType: obj.issued_token_type ?? null,
+            tokenType: obj.token_type ?? null,
+        };
+    }
+
     public async getDataCloudAccessToken(
         access: SalesforceCoreAccessToken,
         cancel: AbortSignal,
@@ -261,7 +315,7 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
             const err = responseBody as { error: string, error_description: string };
             throw new Error(`request failed: error=${err.error}, description=${err.error_description}`);
         }
-        return readDataCloudAccessToken(responseBody);
+        return this.readDataCloudAccessToken(responseBody);
     }
 
     public async getCoreUserInfo(access: SalesforceCoreAccessToken, cancel: AbortSignal): Promise<SalesforceUserInfo> {
