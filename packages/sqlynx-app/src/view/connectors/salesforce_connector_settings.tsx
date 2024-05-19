@@ -159,7 +159,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                     >Connect</Button>
                 </div>
             </div>
-            <div className={style.body_container}>
+            <div className={style.status_container}>
                 <div className={classNames(style.section, style.status_section)}>
                     <div className={classNames(style.section_layout, style.status_section_layout)}>
                         <div className={style.status_bar}>
@@ -174,6 +174,8 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                         </div>
                     </div>
                 </div>
+            </div>
+            <div className={style.body_container}>
                 <div className={style.section}>
                     <div className={classNames(style.section_layout, style.body_section_layout)}>
                         <TextField
