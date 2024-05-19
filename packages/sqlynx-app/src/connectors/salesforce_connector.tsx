@@ -7,7 +7,6 @@ import { SalesforceAPIClient, SalesforceAPIClientInterface } from './salesforce_
 import { SalesforceAPIClientMock } from './salesforce_api_client_mock.js';
 import { SalesforceAuthFlowProvider } from './salesforce_auth_flow.js';
 import { SalesforceAuthFlowMockProvider } from './salesforce_auth_flow_mock.js';
-import { SalesforceUserInfoResolver } from './salesforce_userinfo_resolver.js';
 import { createEmptyTimings } from './connection_state.js';
 import { AUTH_FLOW_DEFAULT_STATE } from './salesforce_auth_state.js';
 import { SALESFORCE_DATA_CLOUD } from './connector_info.js';
@@ -44,7 +43,7 @@ export const SalesforceConnector: React.FC<Props> = (props: Props) => {
             <API_CTX.Provider value={api}>
                 <CONNECTION_ID_CTX.Provider value={connectionId}>
                     <SalesforceAuthFlowMockProvider>
-                        <SalesforceUserInfoResolver>{props.children}</SalesforceUserInfoResolver>
+                        {props.children}
                     </SalesforceAuthFlowMockProvider>
                 </CONNECTION_ID_CTX.Provider>
             </API_CTX.Provider>
@@ -55,7 +54,7 @@ export const SalesforceConnector: React.FC<Props> = (props: Props) => {
             <API_CTX.Provider value={api}>
                 <CONNECTION_ID_CTX.Provider value={connectionId}>
                     <SalesforceAuthFlowProvider>
-                        <SalesforceUserInfoResolver>{props.children}</SalesforceUserInfoResolver>
+                        {props.children}
                     </SalesforceAuthFlowProvider>
                 </CONNECTION_ID_CTX.Provider>
             </API_CTX.Provider>
