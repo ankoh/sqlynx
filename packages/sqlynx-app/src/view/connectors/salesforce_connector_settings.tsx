@@ -10,7 +10,7 @@ import { ConnectionHealth, ConnectionStatus, getSalesforceConnectionStatus, getS
 import { SalesforceAuthParams } from '../../connectors/connector_configs.js';
 import { SalesforceAuthAction, reduceAuthState } from '../../connectors/salesforce_auth_state.js';
 import { SALESFORCE_DATA_CLOUD } from '../../connectors/connector_info.js';
-import { TextField, TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_UNKNOWN } from '../../view/text_field.js';
+import { TextField, TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_OK, VALIDATION_UNKNOWN } from '../../view/text_field.js';
 import { IndicatorStatus, StatusIndicator } from '../../view/status_indicator.js';
 import { classNames } from '../../utils/classnames.js';
 
@@ -54,6 +54,11 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                 type: VALIDATION_ERROR,
                 value: "Instance URL cannot be empty"
             });
+        } else {
+            setInstanceUrlValidation({
+                type: VALIDATION_UNKNOWN,
+                value: null
+            })
         }
         if (appConsumerKey === "") {
             validationSucceeded = false;
@@ -61,6 +66,11 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                 type: VALIDATION_ERROR,
                 value: "Connected App cannot be empty"
             });
+        } else {
+            setAppConsumerValidation({
+                type: VALIDATION_UNKNOWN,
+                value: null
+            })
         }
         if (!validationSucceeded || !salesforceAuthFlow) {
             return;
@@ -95,29 +105,29 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
     switch (status) {
         case ConnectionStatus.UNKNOWN:
         case ConnectionStatus.NOT_STARTED:
-            statusName = "disconnected";
+            statusName = "Disconnected";
             break;
         case ConnectionStatus.AUTHORIZATION_FAILED:
-            statusName = "authorization failed";
+            statusName = "Authorization failed";
             break;
         case ConnectionStatus.AUTHORIZATION_COMPLETED:
-            statusName = "authorized";
+            statusName = "Authorization successfull";
             break;
         case ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_LINK:
         case ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_WINDOW:
-            statusName = "waiting for oauth code";
+            statusName = "Waiting for OAuth code";
             break;
         case ConnectionStatus.OAUTH_CODE_RECEIVED:
-            statusName = "received oauth code";
+            statusName = "Received OAuth code";
             break;
         case ConnectionStatus.CORE_ACCESS_TOKEN_REQUESTED:
-            statusName = "requesting core access token";
+            statusName = "Requesting core access token";
             break;
         case ConnectionStatus.DATA_CLOUD_TOKEN_REQUESTED:
-            statusName = "requesting data cloud access token";
+            statusName = "Requesting Data Cloud access token";
             break;
         case ConnectionStatus.PKCE_GENERATION_STARTED:
-            statusName = "generating pkce challenge";
+            statusName = "Generating pkce challenge";
             break;
     }
 
@@ -190,7 +200,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                         />
                         <TextField
                             name="Connected App"
-                            caption="Setup > Apps > App Manager > View > Manage Consumer Details"
+                            caption="Setup > App Manager > [App] > Manage Consumer Details"
                             value={appConsumerKey}
                             onChange={(e) => setAppConsumerKey(e.target.value)}
                             placeholder="Consumer Key"
