@@ -125,16 +125,6 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                 </div>
                 <div className={style.section}>
                     <div className={style.section_layout}>
-                        <TextField
-                            name="Client ID"
-                            caption="All requests are sent with the header 'x-trace-id: sqlynx/<client-id>/hyper/<request-id>'"
-                            value=""
-                            placeholder="client id"
-                            leadingVisual={TagIcon}
-                            readOnly
-                            disabled
-                            logContext={LOG_CTX}
-                        />
                         <KeyValueListBuilder
                             className={style.grid_column_1}
                             title="Attached Databases"

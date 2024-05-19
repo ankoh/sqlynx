@@ -51,8 +51,8 @@ export enum ConnectionStatus {
     WAITING_FOR_OAUTH_CODE_VIA_WINDOW,
     WAITING_FOR_OAUTH_CODE_VIA_LINK,
     AUTHENTICATION_REQUESTED,
-    AUTHENTICATION_FAILED,
-    AUTHENTICATION_COMPLETED,
+    AUTHORIZATION_FAILED,
+    AUTHORIZATION_COMPLETED,
 }
 
 export enum ConnectorAuthCheck {
@@ -90,11 +90,11 @@ export function getSalesforceConnectionStatus(conn: SalesforceConnectorState | n
     if (!conn.auth.timings.authStartedAt) {
         state = ConnectionStatus.NOT_STARTED;
     } else if (conn.auth.authError) {
-        state = ConnectionStatus.AUTHENTICATION_FAILED;
+        state = ConnectionStatus.AUTHORIZATION_FAILED;
     } else if (conn.auth.openAuthWindow != null) {
         state = ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_WINDOW;
     } else if (conn.auth.timings.dataCloudAccessTokenReceievedAt) {
-        state = ConnectionStatus.AUTHENTICATION_COMPLETED;
+        state = ConnectionStatus.AUTHORIZATION_COMPLETED;
     } else if (conn.auth.timings.dataCloudAccessTokenRequestedAt) {
         state = ConnectionStatus.DATA_CLOUD_TOKEN_REQUESTED;
     } else if (conn.auth.timings.coreAccessTokenRequestedAt) {
@@ -128,9 +128,9 @@ export function getSalesforceConnnectionHealth(status: ConnectionStatus): Connec
         case ConnectionStatus.CORE_ACCESS_TOKEN_REQUESTED:
         case ConnectionStatus.AUTHENTICATION_REQUESTED:
             return ConnectionHealth.CONNECTING;
-        case ConnectionStatus.AUTHENTICATION_COMPLETED:
+        case ConnectionStatus.AUTHORIZATION_COMPLETED:
             return ConnectionHealth.ONLINE;
-        case ConnectionStatus.AUTHENTICATION_FAILED:
+        case ConnectionStatus.AUTHORIZATION_FAILED:
             return ConnectionHealth.FAILED;
     }
 }

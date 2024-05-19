@@ -8,6 +8,6 @@ export function executeQuery(
 ): QueryExecutionResponseStream {
     console.log(accessToken.instanceUrl.toString());
     const client = new HyperServiceClient(accessToken.instanceUrl.toString());
-    const iterable = client.executeQuery(scriptText, accessToken.accessToken);
+    const iterable = client.executeQuery(scriptText, accessToken.jwt.raw);
     return new HyperResultStream(iterable[Symbol.asyncIterator]());
 }

@@ -57,24 +57,47 @@ export interface SalesforceDataCloudJWTPayload {
     /// The SF core tenant id of the issuer
     issuerTenantId: string;
     /// The SF offcore tenant id required for the DC api
-    audienceTentantId: string;
+    audienceTenantId: string;
     /// The custom attributes (contains "dataspace")
     customAttributes: Record<string, string>;
 }
 
-export interface SalesforceDataCloudAccessToken {
-    /// The access token (as raw jwt)
-    accessToken: string;
-    /// The unpacked access token
-    accessTokenPayload: SalesforceDataCloudJWTPayload;
-    /// The instance URL
-    instanceUrl: URL;
+export interface SalesforceDataCloudJWT {
+    /// The raw JWT string
+    raw: string;
+    /// The JWT header
+    header: Record<string, string>;
+    /// The JWT payload
+    payload: SalesforceDataCloudJWTPayload;
+}
+
+
+export class SalesforceDataCloudAccessToken {
+    /// The token type
+    tokenType: string | null;
+    /// The issued token type
+    issuedTokenType: string | null;
     /// The expiration time
     expiresAt: Date;
-    /// The issued token type
-    issuedTokenType: string;
-    /// The token type
-    tokenType: string;
+    /// The jwt
+    jwt: SalesforceDataCloudJWT;
+    /// The instance URL
+    instanceUrl: URL;
+
+    constructor(tokenType: string | null, issuedTokenType: string | null, expiresAt: Date, jwt: SalesforceDataCloudJWT, instanceUrl: URL) {
+        this.tokenType = tokenType;
+        this.issuedTokenType = issuedTokenType;
+        this.expiresAt = expiresAt;
+        this.jwt = jwt;
+        this.instanceUrl = instanceUrl;
+    }
+
+    /// The tenant id in core
+    get coreTenantId(): string { return this.jwt.payload.issuerTenantId; }
+    /// The tenant id in data cloud
+    get dcTenantId(): string { return this.jwt.payload.audienceTenantId; }
+    /// The dataspace in data cloud
+    get dcDataspace(): string { return this.jwt.payload.customAttributes["dataspace"] ?? null; }
 }
 
 export interface SalesforceUserInfoPhotos {
@@ -234,14 +257,12 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
             signal: cancel,
         });
         const responseBody = await response.json();
-        console.log(responseBody);
         if (responseBody.error) {
             const errorDesc = responseBody.error_description;
             this.logger.error(errorDesc, "salesforce_api");
             throw new Error(errorDesc);
         } else {
             const parsed = readCoreAccessToken(responseBody);
-            console.log(parsed);
             return parsed;
         }
     }
@@ -255,7 +276,6 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
             if (!urlString.startsWith('https:')) {
                 urlString = `https://${urlString}`;
             }
-            console.log(urlString);
             return new URL(urlString);
         };
         if (!obj.access_token) {
@@ -269,31 +289,40 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
         }
 
         const jwtParts = obj.access_token.split('.');
-        console.log(jwtParts);
         if (jwtParts.length != 3) {
             throw new Error(`invalid jwt, expected 3 parts, received ${jwtParts.length}`);
         }
+
+        // Parse the JWT header
+        const jwtHeaderRaw = jwtParts[0];
+        const jwtHeaderBytes = this.base64Codec.decode(jwtHeaderRaw);
+        const jwtHeaderText = this.textDecoder.decode(jwtHeaderBytes);
+        const jwtHeaderParsed = JSON.parse(jwtHeaderText);
+
+        // Parse the JWT payload
         const jwtPayloadRaw = jwtParts[1];
         const jwtPayloadBytes = this.base64Codec.decode(jwtPayloadRaw);
         const jwtPayloadText = this.textDecoder.decode(jwtPayloadBytes);
         const jwtPayloadParsed = JSON.parse(jwtPayloadText) as SalesforceDataCloudJWTPayload;
-        console.log(jwtPayloadParsed);
 
-        return {
-            accessToken: obj.access_token,
-            accessTokenPayload: jwtPayloadParsed,
-            instanceUrl: prependProtoIfMissing(obj.instance_url),
-            expiresAt: obj.expires_in,
-            issuedTokenType: obj.issued_token_type ?? null,
-            tokenType: obj.token_type ?? null,
-        };
+        const access = new SalesforceDataCloudAccessToken(
+            obj.token_type ?? null,
+            obj.issued_token_type ?? null,
+            new Date(Number.parseInt(jwtPayloadParsed.exp) * 1000),
+            {
+                raw: obj.access_token,
+                header: jwtHeaderParsed,
+                payload: jwtPayloadParsed
+            },
+            prependProtoIfMissing(obj.instance_url),
+        );
+        return access;
     }
 
     public async getDataCloudAccessToken(
         access: SalesforceCoreAccessToken,
         cancel: AbortSignal,
     ): Promise<SalesforceDataCloudAccessToken> {
-        console.log(access);
         const params: Record<string, string> = {
             grant_type: 'urn:salesforce:grant-type:external:cdp',
             subject_token: access.accessToken!,
@@ -341,7 +370,7 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
         console.log(access.instanceUrl);
         const response = await this.httpClient.fetch(`${access.instanceUrl}api/v1/metadata?${params.toString()}`, {
             headers: {
-                authorization: `Bearer ${access.accessToken}`,
+                authorization: `Bearer ${access.jwt}`,
             },
             signal: cancel,
         });
