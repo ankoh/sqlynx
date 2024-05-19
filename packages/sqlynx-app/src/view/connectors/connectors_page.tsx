@@ -8,6 +8,11 @@ import { VerticalTabProps, VerticalTabRenderers, VerticalTabVariant, VerticalTab
 
 import * as icons from '../../../static/svg/symbols.generated.svg';
 
+type ConnectorsPageState = number | null;
+type ConnectorsPageStateSetter = (s: ConnectorsPageState) => void;
+
+const PAGE_STATE_CTX = React.createContext<[ConnectorsPageState, ConnectorsPageStateSetter] | null>(null);
+
 interface PageProps { }
 
 interface ConnectorProps extends VerticalTabProps {
@@ -15,7 +20,7 @@ interface ConnectorProps extends VerticalTabProps {
 };
 
 export const ConnectorsPage: React.FC<PageProps> = (_props: PageProps) => {
-    const [selectedConnector, selectConnector] = React.useState(0);
+    const [selectedConnector, selectConnector] = React.useContext(PAGE_STATE_CTX)!;
 
     const connectors: ConnectorProps[] = React.useMemo(() => ([
         {
@@ -53,11 +58,22 @@ export const ConnectorsPage: React.FC<PageProps> = (_props: PageProps) => {
             </div>
             <VerticalTabs
                 variant={VerticalTabVariant.Wide}
-                selectedTab={selectedConnector}
+                selectedTab={selectedConnector ?? 0}
                 selectTab={selectConnector}
                 tabs={connectors}
                 tabRenderers={connectorRenderers}
             />
         </div >
+    );
+};
+
+interface ProviderProps { children: React.ReactElement };
+
+export const ConnectorsPageStateProvider: React.FC<ProviderProps> = (props: ProviderProps) => {
+    const state = React.useState<ConnectorsPageState>(null);
+    return (
+        <PAGE_STATE_CTX.Provider value={state}>
+            {props.children}
+        </PAGE_STATE_CTX.Provider>
     );
 };

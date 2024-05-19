@@ -3,7 +3,7 @@ import * as React from 'react';
 import { SQLynxLoader } from './sqlynx_loader.js';
 import { withNavBar } from './view/navbar.js';
 import { EditorPage } from './view/editor/editor_page.js';
-import { ConnectorsPage } from './view/connectors/connectors_page.js';
+import { ConnectorsPage, ConnectorsPageStateProvider } from './view/connectors/connectors_page.js';
 import { ScriptLoader } from './session/script_loader.js';
 import { CatalogLoader } from './session/catalog_loader.js';
 import { CurrentSessionStateProvider } from './session/current_session.js';
@@ -28,6 +28,27 @@ import { Route, Routes, Navigate, BrowserRouter, HashRouter } from 'react-router
 import './../static/fonts/fonts.css';
 import './globals.css';
 
+const SessionProviders = (props: { children: React.ReactElement }) => (
+    <SessionStateRegistry>
+        <CurrentSessionStateProvider>
+            <ScriptLoader />
+            <CatalogLoader />
+            <QueryExecutor />
+            <SessionCommands>
+                <SessionSetup>
+                    {props.children}
+                </SessionSetup>
+            </SessionCommands>
+        </CurrentSessionStateProvider>
+    </SessionStateRegistry>
+);
+
+const PageStateProviders = (props: { children: React.ReactElement }) => (
+    <ConnectorsPageStateProvider>
+        {props.children}
+    </ConnectorsPageStateProvider>
+);
+
 const AppProviders = (props: { children: React.ReactElement }) => (
     <GitHubTheme>
         <PlatformTypeProvider>
@@ -40,16 +61,11 @@ const AppProviders = (props: { children: React.ReactElement }) => (
                                     <HyperDatabaseClientProvider>
                                         <SQLynxLoader>
                                             <SalesforceConnector>
-                                                <SessionStateRegistry>
-                                                    <CurrentSessionStateProvider>
-                                                        <ScriptLoader />
-                                                        <CatalogLoader />
-                                                        <QueryExecutor />
-                                                        <SessionCommands>
-                                                            <SessionSetup>{props.children}</SessionSetup>
-                                                        </SessionCommands>
-                                                    </CurrentSessionStateProvider>
-                                                </SessionStateRegistry>
+                                                <SessionProviders>
+                                                    <PageStateProviders>
+                                                        {props.children}
+                                                    </PageStateProviders>
+                                                </SessionProviders>
                                             </SalesforceConnector>
                                         </SQLynxLoader>
                                     </HyperDatabaseClientProvider>
