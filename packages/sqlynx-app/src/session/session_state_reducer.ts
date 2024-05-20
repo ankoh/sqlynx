@@ -18,8 +18,8 @@ import {
 import {
     QueryExecutionProgress,
     QueryExecutionResponseStream,
+    QueryExecutionStatus,
     QueryExecutionTaskState,
-    QueryExecutionTaskStatus,
 } from '../connectors/query_execution.js';
 
 export const DESTROY = Symbol('DESTROY');
@@ -472,7 +472,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                 queryExecutionRequested: false,
                 queryExecutionState: {
                     ...action.value,
-                    status: QueryExecutionTaskStatus.ACCEPTED,
+                    status: QueryExecutionStatus.ACCEPTED,
                     lastUpdatedAt: new Date(),
                 },
                 queryExecutionResult: null,
@@ -484,7 +484,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                 queryExecutionRequested: false,
                 queryExecutionState: {
                     ...state.queryExecutionState!,
-                    status: QueryExecutionTaskStatus.STARTED,
+                    status: QueryExecutionStatus.STARTED,
                     lastUpdatedAt: new Date(),
                     resultStream: action.value,
                 },
@@ -506,7 +506,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                 ...state,
                 queryExecutionState: {
                     ...state.queryExecutionState!,
-                    status: QueryExecutionTaskStatus.RECEIVED_SCHEMA,
+                    status: QueryExecutionStatus.RECEIVED_SCHEMA,
                     lastUpdatedAt: new Date(),
                     resultSchema: state.queryExecutionState!.resultSchema,
                 },
@@ -517,7 +517,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                 ...state,
                 queryExecutionState: {
                     ...state.queryExecutionState!,
-                    status: QueryExecutionTaskStatus.RECEIVED_FIRST_RESULT,
+                    status: QueryExecutionStatus.RECEIVED_FIRST_RESULT,
                     lastUpdatedAt: new Date(),
                     resultBatches: state.queryExecutionState!.resultBatches.push(action.value),
                 },
@@ -531,7 +531,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                 ...state,
                 queryExecutionState: {
                     ...state.queryExecutionState!,
-                    status: QueryExecutionTaskStatus.SUCCEEDED,
+                    status: QueryExecutionStatus.SUCCEEDED,
                     lastUpdatedAt: now,
                     finishedAt: now,
                 },
@@ -549,7 +549,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                 ...state,
                 queryExecutionState: {
                     ...state.queryExecutionState!,
-                    status: QueryExecutionTaskStatus.FAILED,
+                    status: QueryExecutionStatus.FAILED,
                     lastUpdatedAt: now,
                     finishedAt: now,
                     error: action.value,
@@ -562,7 +562,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                 ...state,
                 queryExecutionState: {
                     ...state.queryExecutionState!,
-                    status: QueryExecutionTaskStatus.CANCELLED,
+                    status: QueryExecutionStatus.CANCELLED,
                     lastUpdatedAt: now,
                     finishedAt: now,
                     error: action.value,

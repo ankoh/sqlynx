@@ -4,7 +4,7 @@ import * as proto from "@ankoh/sqlynx-pb";
 
 import { GrpcServerStream, NativeAPIMock } from './native_api_mock.js';
 import { GrpcChannelArgs } from './grpc_common.js';
-import { NativeHyperDatabaseClient } from './native_hyperdb_client.js';
+import { NativeHyperDatabaseClient, NativeHyperQueryResultStream } from './native_hyperdb_client.js';
 import { NativeGrpcServerStreamBatchEvent } from './native_grpc_client.js';
 import { PlatformType } from './platform_type.js';
 import { TestLogger } from './test_logger.js';
@@ -119,21 +119,21 @@ describe('Native Hyper client', () => {
         const params = new proto.salesforce_hyperdb_grpc_v1.pb.QueryParam({
             query: "select 1"
         });
-        const stream = await channel.executeQuery(params);
+        const stream = await channel.executeQuery(params) as NativeHyperQueryResultStream;
         expect(executeQueryMock).toHaveBeenCalled();
         expect(executeQueryMock).toHaveBeenCalledWith("select 1");
-        expect(stream.grpcStream.streamId).not.toBeNull();
-        expect(stream.grpcStream.streamId).not.toBeNaN();
+        expect(stream.resultReader.grpcStream.streamId).not.toBeNull();
+        expect(stream.resultReader.grpcStream.streamId).not.toBeNaN();
 
-        // Read a message from the result stream
-        const result = await stream.next();
+        // Read a message from the result stream directly
+        const result = await stream.resultReader.grpcStream.next();
         expect(result.done).not.toBeTruthy();
         const value = result.value;
         expect(value).not.toBeNull();
         expect(value).toEqual(new Uint8Array([0x01, 0x02, 0x03, 0x04]));
 
         // The next read hits the end of the stream
-        const next = await stream.next();
+        const next = await stream.resultReader.grpcStream.next();
         expect(next.done).toBeTruthy();
 
     });

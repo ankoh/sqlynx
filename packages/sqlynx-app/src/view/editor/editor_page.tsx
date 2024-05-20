@@ -14,7 +14,7 @@ import {
 
 import { useConnectorList } from '../../connectors/connector_info.js';
 import { ConnectorInfo, ConnectorType } from '../../connectors/connector_info.js';
-import { QueryExecutionTaskStatus } from '../../connectors/query_execution.js';
+import { QueryExecutionStatus } from '../../connectors/query_execution.js';
 import { useCurrentSessionState } from '../../session/current_session.js';
 import { ScriptEditor } from '../editor/editor.js';
 import { SchemaGraph } from '../../view/schema/schema_graph.js';
@@ -191,24 +191,24 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
     useKeyEvents(keyHandlers);
 
     // Automatically switch tabs when the execution status changes meaningfully
-    const prevStatus = React.useRef<QueryExecutionTaskStatus | null>(null);
+    const prevStatus = React.useRef<QueryExecutionStatus | null>(null);
     React.useEffect(() => {
         const status = scriptState?.queryExecutionState?.status ?? null;
         switch (status) {
             case null:
                 selectTab(TabKey.SchemaView);
                 break;
-            case QueryExecutionTaskStatus.STARTED:
-            case QueryExecutionTaskStatus.ACCEPTED:
-            case QueryExecutionTaskStatus.RECEIVED_SCHEMA:
-            case QueryExecutionTaskStatus.RECEIVED_FIRST_RESULT:
+            case QueryExecutionStatus.STARTED:
+            case QueryExecutionStatus.ACCEPTED:
+            case QueryExecutionStatus.RECEIVED_SCHEMA:
+            case QueryExecutionStatus.RECEIVED_FIRST_RESULT:
                 if (prevStatus.current == null) {
                     selectTab(TabKey.QueryProgressView);
                 }
                 break;
-            case QueryExecutionTaskStatus.FAILED:
+            case QueryExecutionStatus.FAILED:
                 break;
-            case QueryExecutionTaskStatus.SUCCEEDED:
+            case QueryExecutionStatus.SUCCEEDED:
                 selectTab(TabKey.QueryResultView);
                 break;
         }

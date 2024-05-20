@@ -157,7 +157,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
             indicatorStatus = IndicatorStatus.Running;
             break;
     }
-    const freezeInput = health != ConnectionHealth.CONNECTING && health != ConnectionHealth.ONLINE;
+    const freezeInput = health == ConnectionHealth.CONNECTING || health == ConnectionHealth.ONLINE;
 
     return (
         <div className={style.layout}>

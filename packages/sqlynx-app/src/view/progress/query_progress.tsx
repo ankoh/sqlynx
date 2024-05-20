@@ -1,49 +1,49 @@
 import * as React from 'react';
 import { RectangleWaveSpinner } from '../../view/spinners.js';
-import { QueryExecutionProgress, QueryExecutionTaskStatus } from '../../connectors/query_execution.js';
+import { QueryExecutionProgress, QueryExecutionStatus } from '../../connectors/query_execution.js';
 
 import * as styles from './query_progress.module.css';
 
 interface Props {
-    queryStatus: QueryExecutionTaskStatus | null;
+    queryStatus: QueryExecutionStatus | null;
     queryProgress: QueryExecutionProgress | null;
 }
 
 export const QueryProgress: React.FC<Props> = (props: Props) => {
-    const getStatusText = (status: QueryExecutionTaskStatus | null) => {
+    const getStatusText = (status: QueryExecutionStatus | null) => {
         if (status == null) {
             return '';
         }
         switch (status) {
-            case QueryExecutionTaskStatus.ACCEPTED:
+            case QueryExecutionStatus.ACCEPTED:
                 return 'Sending query';
-            case QueryExecutionTaskStatus.STARTED:
+            case QueryExecutionStatus.STARTED:
                 return 'Executing query';
-            case QueryExecutionTaskStatus.RECEIVED_SCHEMA:
+            case QueryExecutionStatus.RECEIVED_SCHEMA:
                 return 'Executing query, received schema';
-            case QueryExecutionTaskStatus.RECEIVED_FIRST_RESULT:
+            case QueryExecutionStatus.RECEIVED_FIRST_RESULT:
                 return 'Executing query, received first result';
-            case QueryExecutionTaskStatus.FAILED:
+            case QueryExecutionStatus.FAILED:
                 return 'Query execution failed';
-            case QueryExecutionTaskStatus.CANCELLED:
+            case QueryExecutionStatus.CANCELLED:
                 return 'Query was cancelled';
-            case QueryExecutionTaskStatus.SUCCEEDED:
+            case QueryExecutionStatus.SUCCEEDED:
                 return 'Query executed successfully';
         }
     };
-    const queryIsOngoing = (status: QueryExecutionTaskStatus | null) => {
+    const queryIsOngoing = (status: QueryExecutionStatus | null) => {
         if (status == null) {
             return false;
         }
         switch (status) {
-            case QueryExecutionTaskStatus.ACCEPTED:
-            case QueryExecutionTaskStatus.STARTED:
-            case QueryExecutionTaskStatus.RECEIVED_SCHEMA:
-            case QueryExecutionTaskStatus.RECEIVED_FIRST_RESULT:
+            case QueryExecutionStatus.ACCEPTED:
+            case QueryExecutionStatus.STARTED:
+            case QueryExecutionStatus.RECEIVED_SCHEMA:
+            case QueryExecutionStatus.RECEIVED_FIRST_RESULT:
                 return true;
-            case QueryExecutionTaskStatus.FAILED:
-            case QueryExecutionTaskStatus.CANCELLED:
-            case QueryExecutionTaskStatus.SUCCEEDED:
+            case QueryExecutionStatus.FAILED:
+            case QueryExecutionStatus.CANCELLED:
+            case QueryExecutionStatus.SUCCEEDED:
                 return false;
         }
     };

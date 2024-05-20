@@ -2,7 +2,6 @@ import { Logger } from '../platform/logger.js';
 import { HttpClient } from '../platform/http_client.js';
 import { SalesforceAuthConfig, SalesforceAuthParams } from './connector_configs.js';
 import { QueryExecutionResponseStream } from './query_execution.js';
-import { executeQuery as execQuery } from './salesforce_query_execution.js';
 import { Base64Codec } from '../utils/base64.js';
 
 export interface SalesforceCoreAccessToken {
@@ -370,7 +369,7 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
         const responseJson = await response.json();
         return responseJson as SalesforceMetadata;
     }
-    public executeQuery(scriptText: string, accessToken: SalesforceDataCloudAccessToken): QueryExecutionResponseStream {
-        return execQuery(scriptText, accessToken);
+    public executeQuery(_scriptText: string, _accessToken: SalesforceDataCloudAccessToken): QueryExecutionResponseStream {
+        throw new Error("not implemented");
     }
 }

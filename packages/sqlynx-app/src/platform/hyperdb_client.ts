@@ -1,21 +1,11 @@
 import * as proto from "@ankoh/sqlynx-pb";
+
 import { GrpcChannelArgs } from './grpc_common.js';
+import { QueryExecutionProgress, QueryExecutionResponseStream } from "../connectors/query_execution.js";
 
-export enum HyperQueryExecutionStatus {
-    ACCEPTED = 0,
-    STARTED = 1,
-    RECEIVED_RESULT_CHUNK = 3,
-    SUCCEEDED = 4,
-    FAILED = 5,
-    CANCELLED = 6,
-}
+export interface HyperQueryExecutionProgress extends QueryExecutionProgress { }
 
-export interface HyperQueryExecutionProgress { }
-
-export interface HyperQueryResultStream extends AsyncIterator<Uint8Array> {
-    /// Get the query execution status
-    getStatus(): HyperQueryExecutionStatus;
-}
+export interface HyperQueryResultStream extends QueryExecutionResponseStream { }
 
 export interface HyperDatabaseConnection {
     /// Execute Query
