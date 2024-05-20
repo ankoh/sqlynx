@@ -138,7 +138,6 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
             statusName = "Generating pkce challenge";
             break;
     }
-    const freezeInput = !(status == ConnectionStatus.UNKNOWN || status == ConnectionStatus.NOT_STARTED);
 
     // Get the connection health
     const health = getSalesforceConnnectionHealth(status);
@@ -158,6 +157,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
             indicatorStatus = IndicatorStatus.Running;
             break;
     }
+    const freezeInput = health != ConnectionHealth.CONNECTING && health != ConnectionHealth.ONLINE;
 
     return (
         <div className={style.layout}>
