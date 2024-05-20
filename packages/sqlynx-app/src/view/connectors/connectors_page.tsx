@@ -3,15 +3,15 @@ import * as React from 'react';
 import * as styles from './connectors_page.module.css';
 import { HyperGrpcConnectorSettings } from './hyper_grpc_connector_settings.js';
 import { SalesforceConnectorSettings } from './salesforce_connector_settings.js';
+import { Dispatch } from '../../utils/variant.js';
 
 import { VerticalTabProps, VerticalTabRenderers, VerticalTabVariant, VerticalTabs } from '../../view/vertical_tabs.js';
 
 import * as icons from '../../../static/svg/symbols.generated.svg';
 
-type ConnectorsPageState = number | null;
-type ConnectorsPageStateSetter = (s: ConnectorsPageState) => void;
-
-const PAGE_STATE_CTX = React.createContext<[ConnectorsPageState, ConnectorsPageStateSetter] | null>(null);
+type PageState = number | null;
+type PageStateSetter = Dispatch<React.SetStateAction<PageState>>;
+const PAGE_STATE_CTX = React.createContext<[PageState, PageStateSetter] | null>(null);
 
 interface PageProps { }
 
@@ -70,7 +70,7 @@ export const ConnectorsPage: React.FC<PageProps> = (_props: PageProps) => {
 interface ProviderProps { children: React.ReactElement };
 
 export const ConnectorsPageStateProvider: React.FC<ProviderProps> = (props: ProviderProps) => {
-    const state = React.useState<ConnectorsPageState>(null);
+    const state = React.useState<PageState>(null);
     return (
         <PAGE_STATE_CTX.Provider value={state}>
             {props.children}

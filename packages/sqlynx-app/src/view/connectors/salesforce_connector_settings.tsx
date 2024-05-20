@@ -10,8 +10,9 @@ import { ConnectionHealth, ConnectionStatus, getSalesforceConnectionStatus, getS
 import { SalesforceAuthParams } from '../../connectors/connector_configs.js';
 import { SalesforceAuthAction, reduceAuthState } from '../../connectors/salesforce_auth_state.js';
 import { SALESFORCE_DATA_CLOUD } from '../../connectors/connector_info.js';
-import { TextField, TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_OK, VALIDATION_UNKNOWN } from '../../view/text_field.js';
+import { TextField, TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_UNKNOWN } from '../../view/text_field.js';
 import { IndicatorStatus, StatusIndicator } from '../../view/status_indicator.js';
+import { Dispatch } from '../../utils/variant.js';
 import { classNames } from '../../utils/classnames.js';
 
 import * as symbols from '../../../static/svg/symbols.generated.svg';
@@ -19,21 +20,28 @@ import * as style from './connector_settings.module.css';
 
 const LOG_CTX = "sf_connector";
 
+interface PageState {
+    instanceUrl: string;
+    appConsumerKey: string;
+};
+type PageStateSetter = Dispatch<React.SetStateAction<PageState>>;
+const PAGE_STATE_CTX = React.createContext<[PageState, PageStateSetter] | null>(null);
+
 interface Props { }
 
 export const SalesforceConnectorSettings: React.FC<Props> = (
     _props: Props,
 ) => {
-    const [instanceUrl, setInstanceUrl] = React.useState<string>("");
-    const [appConsumerKey, setAppConsumerKey] = React.useState<string>("");
-    const [_appConsumerSecret, _setAppConsumerSecret] = React.useState<string | null>(null);
-
     // Resolve the connection
     const connectionId = useSalesforceConnectionId();
     const [connectionState, setConnectionState] = useConnectionState(connectionId);
     const salesforceConnection = asSalesforceConnection(connectionState);
     const salesforceAuthFlow = useSalesforceAuthFlow();
-    const isAuthenticated = false;
+
+    // Wire up the page state
+    const [pageState, setPageState] = React.useContext(PAGE_STATE_CTX)!;
+    const updateInstanceUrl: React.ChangeEventHandler<HTMLInputElement> = ev => setPageState(s => ({ ...s, instanceUrl: ev.target.value }));
+    const updateAppConsumerKey: React.ChangeEventHandler<HTMLInputElement> = ev => setPageState(s => ({ ...s, appConsumerKey: ev.target.value }));
 
     // Maintain setting validations
     const [instanceUrlValidation, setInstanceUrlValidation] = React.useState<TextFieldValidationStatus>({
@@ -48,7 +56,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
     // Helper to start the authorization
     const startAuth = async () => {
         let validationSucceeded = true;
-        if (instanceUrl === "") {
+        if (pageState.instanceUrl == "") {
             validationSucceeded = false;
             setInstanceUrlValidation({
                 type: VALIDATION_ERROR,
@@ -60,7 +68,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                 value: null
             })
         }
-        if (appConsumerKey === "") {
+        if (pageState.appConsumerKey === "") {
             validationSucceeded = false;
             setAppConsumerValidation({
                 type: VALIDATION_ERROR,
@@ -92,8 +100,8 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
         // Authorize the client
         const abortController = new AbortController();
         const authParams: SalesforceAuthParams = {
-            instanceUrl: instanceUrl,
-            appConsumerKey: appConsumerKey,
+            instanceUrl: pageState.instanceUrl,
+            appConsumerKey: pageState.appConsumerKey,
             appConsumerSecret: null,
         };
         await salesforceAuthFlow.authorize(salesforceAuthDispatch, authParams, abortController.signal);
@@ -191,8 +199,8 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                         <TextField
                             name="Salesforce Instance URL"
                             caption="URL of the Salesforce Instance"
-                            value={instanceUrl}
-                            onChange={(e) => setInstanceUrl(e.target.value)}
+                            value={pageState.instanceUrl}
+                            onChange={updateInstanceUrl}
                             placeholder="Salesforce Instance"
                             leadingVisual={() => <div>URL</div>}
                             validation={instanceUrlValidation}
@@ -201,8 +209,8 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                         <TextField
                             name="Connected App"
                             caption="Setup > App Manager > [App] > Manage Consumer Details"
-                            value={appConsumerKey}
-                            onChange={(e) => setAppConsumerKey(e.target.value)}
+                            value={pageState.appConsumerKey}
+                            onChange={updateAppConsumerKey}
                             placeholder="Consumer Key"
                             leadingVisual={() => <div>ID</div>}
                             validation={appConsumerValidation}
@@ -220,7 +228,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             placeholder=""
                             leadingVisual={() => <div>URL</div>}
                             readOnly
-                            disabled={!isAuthenticated}
+                            disabled
                             logContext={LOG_CTX}
                         />
                         <TextField
@@ -231,7 +239,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             placeholder=""
                             leadingVisual={KeyIcon}
                             readOnly
-                            disabled={!isAuthenticated}
+                            disabled
                             logContext={LOG_CTX}
                         />
                     </div>
@@ -246,7 +254,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             placeholder=""
                             leadingVisual={() => <div>URL</div>}
                             readOnly
-                            disabled={!isAuthenticated}
+                            disabled
                             logContext={LOG_CTX}
                         />
                         <TextField
@@ -257,7 +265,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             placeholder=""
                             leadingVisual={KeyIcon}
                             readOnly
-                            disabled={!isAuthenticated}
+                            disabled
                             logContext={LOG_CTX}
                         />
                         <TextField
@@ -268,7 +276,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             placeholder=""
                             leadingVisual={() => <div>ID</div>}
                             readOnly
-                            disabled={!isAuthenticated}
+                            disabled
                             logContext={LOG_CTX}
                         />
                         <TextField
@@ -279,12 +287,26 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             placeholder=""
                             leadingVisual={() => <div>ID</div>}
                             readOnly
-                            disabled={!isAuthenticated}
+                            disabled
                             logContext={LOG_CTX}
                         />
                     </div>
                 </div>
             </div>
         </div>
+    );
+};
+
+interface ProviderProps { children: React.ReactElement };
+
+export const SalesforceConnectorSettingsStateProvider: React.FC<ProviderProps> = (props: ProviderProps) => {
+    const state = React.useState<PageState>({
+        instanceUrl: "",
+        appConsumerKey: "",
+    });
+    return (
+        <PAGE_STATE_CTX.Provider value={state}>
+            {props.children}
+        </PAGE_STATE_CTX.Provider>
     );
 };
