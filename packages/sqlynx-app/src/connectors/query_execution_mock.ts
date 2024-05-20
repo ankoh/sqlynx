@@ -1,5 +1,5 @@
 import * as arrow from 'apache-arrow';
-import { QueryExecutionProgress, QueryExecutionResponseStream } from './query_execution.js';
+import { QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionStatus } from './query_execution.js';
 import { sleep } from '../utils/sleep.js';
 
 export class QueryExecutorMock implements QueryExecutionResponseStream {
@@ -17,6 +17,10 @@ export class QueryExecutorMock implements QueryExecutionResponseStream {
         this.batchesWritten = 0;
     }
 
+    /// Get the status
+    getStatus() {
+        return QueryExecutionStatus.STARTED;
+    }
     /// Get the arrow schema
     async getSchema(): Promise<arrow.Schema | null> {
         await sleep(200);

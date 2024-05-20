@@ -6,7 +6,7 @@ import { useConnectionState } from '../connectors/connection_registry.js';
 import {
     QueryExecutionResponseStream,
     QueryExecutionTaskState,
-    QueryExecutionTaskStatus,
+    QueryExecutionStatus,
     QueryExecutionTaskVariant,
 } from '../connectors/query_execution.js';
 import { useSalesforceAPI, useSalesforceConnectionId } from '../connectors/salesforce_connector.js';
@@ -62,7 +62,7 @@ export const QueryExecutor = (props: { children?: React.ReactElement }) => {
         // Accept the query and clear the request
         const initialState: QueryExecutionTaskState = {
             task,
-            status: QueryExecutionTaskStatus.ACCEPTED,
+            status: QueryExecutionStatus.ACCEPTED,
             cancellation: new AbortController(),
             resultStream: null,
             error: null,

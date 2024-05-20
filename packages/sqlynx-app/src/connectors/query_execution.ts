@@ -18,7 +18,7 @@ export interface ExecuteDataCloudQueryTask {
     scriptText: string;
 }
 
-export enum QueryExecutionTaskStatus {
+export enum QueryExecutionStatus {
     ACCEPTED = 0,
     STARTED = 1,
     RECEIVED_SCHEMA = 2,
@@ -31,6 +31,8 @@ export enum QueryExecutionTaskStatus {
 export interface QueryExecutionProgress { }
 
 export interface QueryExecutionResponseStream {
+    /// Get the current query status
+    getStatus(): QueryExecutionStatus;
     /// Await the schema message
     getSchema(): Promise<arrow.Schema | null>;
     /// Await the next progress update
@@ -42,8 +44,8 @@ export interface QueryExecutionResponseStream {
 export interface QueryExecutionTaskState {
     /// The script text that is executed
     task: QueryExecutionTaskVariant;
-    /// The status
-    status: QueryExecutionTaskStatus;
+    /// The current status
+    status: QueryExecutionStatus;
     /// The cancellation signal
     cancellation: AbortController;
     /// The response stream

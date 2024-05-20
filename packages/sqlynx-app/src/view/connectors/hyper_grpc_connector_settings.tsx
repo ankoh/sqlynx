@@ -10,11 +10,21 @@ import { useLogger } from '../../platform/logger_provider.js';
 import { useHyperDatabaseClient } from '../../platform/hyperdb_client_provider.js';
 import { KeyValueListBuilder } from '../../view/keyvalue_list.js';
 import { IndicatorStatus, StatusIndicator } from '../../view/status_indicator.js';
+import { Dispatch } from '../../utils/variant.js';
 
 import * as symbols from '../../../static/svg/symbols.generated.svg';
 import * as style from './connector_settings.module.css';
 
 const LOG_CTX = "hyper_connector";
+
+interface PageState {
+    endpoint: string;
+    mtlsKeyPath: string;
+    mtlsPubPath: string;
+    mtlsCaPath: string;
+};
+type PageStateSetter = Dispatch<React.SetStateAction<PageState>>;
+const PAGE_STATE_CTX = React.createContext<[PageState, PageStateSetter] | null>(null);
 
 interface Props { }
 
