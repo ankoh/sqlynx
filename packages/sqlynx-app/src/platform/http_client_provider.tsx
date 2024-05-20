@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { useLogger } from './logger_provider.js';
 import { isNativePlatform } from './native_globals.js';
-import { NativeHttpClient, NativeHttpProxyConfig } from './native_http_client.js';
+import { NativeHttpClient } from './native_http_client.js';
 import { WebHttpClient } from './web_http_client.js';
 import { HttpClient } from './http_client.js';
 

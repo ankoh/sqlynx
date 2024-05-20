@@ -3,6 +3,7 @@ import * as React from 'react';
 import { SQLynxLoader } from './sqlynx_loader.js';
 import { withNavBar } from './view/navbar.js';
 import { EditorPage } from './view/editor/editor_page.js';
+import { SalesforceConnectorSettingsStateProvider } from './view/connectors/salesforce_connector_settings.js';
 import { ConnectorsPage, ConnectorsPageStateProvider } from './view/connectors/connectors_page.js';
 import { ScriptLoader } from './session/script_loader.js';
 import { CatalogLoader } from './session/catalog_loader.js';
@@ -45,7 +46,9 @@ const SessionProviders = (props: { children: React.ReactElement }) => (
 
 const PageStateProviders = (props: { children: React.ReactElement }) => (
     <ConnectorsPageStateProvider>
-        {props.children}
+        <SalesforceConnectorSettingsStateProvider>
+            {props.children}
+        </SalesforceConnectorSettingsStateProvider>
     </ConnectorsPageStateProvider>
 );
 
