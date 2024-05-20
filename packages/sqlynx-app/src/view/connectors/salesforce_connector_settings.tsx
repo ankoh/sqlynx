@@ -138,6 +138,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
             statusName = "Generating pkce challenge";
             break;
     }
+    const freezeInput = !(status == ConnectionStatus.UNKNOWN || status == ConnectionStatus.NOT_STARTED);
 
     // Get the connection health
     const health = getSalesforceConnnectionHealth(status);
@@ -205,6 +206,8 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             leadingVisual={() => <div>URL</div>}
                             validation={instanceUrlValidation}
                             logContext={LOG_CTX}
+                            disabled={freezeInput}
+                            readOnly={freezeInput}
                         />
                         <TextField
                             name="Connected App"
@@ -215,6 +218,8 @@ export const SalesforceConnectorSettings: React.FC<Props> = (
                             leadingVisual={() => <div>ID</div>}
                             validation={appConsumerValidation}
                             logContext={LOG_CTX}
+                            disabled={freezeInput}
+                            readOnly={freezeInput}
                         />
                     </div>
                 </div>
