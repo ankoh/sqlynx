@@ -224,7 +224,6 @@ export const SalesforceConnectorSettings: React.FC<{}> = (_props: {}) => {
                             name="Instance API URL"
                             caption="URL of the Salesforce API"
                             value={salesforceConnection?.auth.coreAccessToken?.apiInstanceUrl ?? ''}
-                            onChange={() => { }}
                             placeholder=""
                             leadingVisual={() => <div>URL</div>}
                             readOnly
@@ -235,7 +234,6 @@ export const SalesforceConnectorSettings: React.FC<{}> = (_props: {}) => {
                             name="Core Access Token"
                             caption="Access Token for Salesforce Core"
                             value={salesforceConnection?.auth.coreAccessToken?.accessToken ?? ''}
-                            onChange={() => { }}
                             placeholder=""
                             leadingVisual={KeyIcon}
                             readOnly
@@ -250,7 +248,6 @@ export const SalesforceConnectorSettings: React.FC<{}> = (_props: {}) => {
                             name="Data Cloud Instance URL"
                             caption="URL of the Data Cloud instance"
                             value={salesforceConnection?.auth.dataCloudAccessToken?.instanceUrl?.toString() ?? ''}
-                            onChange={() => { }}
                             placeholder=""
                             leadingVisual={() => <div>URL</div>}
                             readOnly
@@ -261,7 +258,6 @@ export const SalesforceConnectorSettings: React.FC<{}> = (_props: {}) => {
                             name="Data Cloud Access Token"
                             caption="URL of the Data Cloud instance"
                             value={salesforceConnection?.auth.dataCloudAccessToken?.jwt?.raw ?? ''}
-                            onChange={() => { }}
                             placeholder=""
                             leadingVisual={KeyIcon}
                             readOnly
@@ -272,7 +268,6 @@ export const SalesforceConnectorSettings: React.FC<{}> = (_props: {}) => {
                             name="Core Tenant ID"
                             caption="Tenant id for core apis"
                             value={salesforceConnection?.auth.dataCloudAccessToken?.coreTenantId ?? ''}
-                            onChange={() => { }}
                             placeholder=""
                             leadingVisual={() => <div>ID</div>}
                             readOnly
@@ -283,7 +278,6 @@ export const SalesforceConnectorSettings: React.FC<{}> = (_props: {}) => {
                             name="Data Cloud Tenant ID"
                             caption="Tenant id for Data Cloud apis"
                             value={salesforceConnection?.auth.dataCloudAccessToken?.dcTenantId ?? ''}
-                            onChange={() => { }}
                             placeholder=""
                             leadingVisual={() => <div>ID</div>}
                             readOnly
