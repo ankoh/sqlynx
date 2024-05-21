@@ -21,9 +21,10 @@ import { generatePKCEChallenge } from '../utils/pkce.js';
 import { sleep } from '../utils/sleep.js';
 import { Dispatch } from '../utils/variant.js';
 import { Logger } from '../platform/logger.js';
-import { SalesforceAuthParams, SalesforceConnectorConfig } from './connector_configs.js';
 import { SalesforceAPIClientInterface } from './salesforce_api_client.js';
 import { SalesforceAuthFlowApi, AUTH_FLOW_CTX } from './salesforce_auth_flow.js';
+import { SalesforceAuthParams } from './connection_params.js';
+import { SalesforceConnectorConfig } from './connector_configs.js';
 
 interface Props {
     children: React.ReactElement;

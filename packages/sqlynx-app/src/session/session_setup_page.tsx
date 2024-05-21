@@ -13,7 +13,7 @@ import { ConnectorInfo, SALESFORCE_DATA_CLOUD_CONNECTOR, requiresSwitchingToNati
 import { ConnectorAuthCheck, checkSalesforceAuth, asSalesforceConnection, ConnectionState } from '../connectors/connection_state.js';
 import { SessionLinkTarget, generateSessionSetupUrl } from './session_setup_url.js';
 import { SalesforceAuthAction, reduceAuthState } from '../connectors/salesforce_auth_state.js';
-import { SalesforceAuthParams } from '../connectors/connector_configs.js';
+import { SalesforceAuthParams } from '../connectors/connection_params.js';
 import { SQLYNX_VERSION } from '../globals.js';
 import { REPLACE_SCRIPT_CONTENT } from './session_state_reducer.js';
 import { TextField } from '../view/text_field.js';

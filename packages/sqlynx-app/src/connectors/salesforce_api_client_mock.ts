@@ -9,7 +9,8 @@ import {
     SalesforceUserInfo,
 } from './salesforce_api_client.js';
 import { QueryExecutorMock } from './query_execution_mock.js';
-import { SalesforceAuthConfig, SalesforceAuthParams } from './connector_configs.js';
+import { SalesforceAuthConfig } from './connector_configs.js';
+import { SalesforceAuthParams } from './connection_params.js';
 
 export interface SalesforceConnectorMockConfig {
     enabled: boolean;
