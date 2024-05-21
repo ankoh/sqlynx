@@ -1,4 +1,6 @@
 import * as React from 'react';
+import { createRoot } from 'react-dom/client';
+import { Route, Routes, Navigate, BrowserRouter, HashRouter } from 'react-router-dom';
 
 import { AppConfigProvider } from './app_config.js';
 import { AppEventListenerProvider } from './platform/event_listener_provider.js';
@@ -24,9 +26,6 @@ import { SessionSetup } from './session/session_setup.js';
 import { SessionStateRegistry } from './session/session_state_registry.js';
 import { VersionCheck } from './platform/version_check.js';
 import { withNavBar } from './view/navbar.js';
-
-import { createRoot } from 'react-dom/client';
-import { Route, Routes, Navigate, BrowserRouter, HashRouter } from 'react-router-dom';
 
 import './../static/fonts/fonts.css';
 import './globals.css';
