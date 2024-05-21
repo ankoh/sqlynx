@@ -9,7 +9,7 @@ import { useSalesforceAuthFlow } from '../../connectors/salesforce_auth_flow.js'
 import { ConnectionHealth, ConnectionStatus, getSalesforceConnectionStatus, getSalesforceConnnectionHealth, asSalesforceConnection, ConnectionState } from '../../connectors/connection_state.js';
 import { SalesforceAuthParams } from '../../connectors/connector_configs.js';
 import { SalesforceAuthAction, reduceAuthState } from '../../connectors/salesforce_auth_state.js';
-import { SALESFORCE_DATA_CLOUD } from '../../connectors/connector_info.js';
+import { SALESFORCE_DATA_CLOUD_CONNECTOR } from '../../connectors/connector_info.js';
 import { TextField, TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_UNKNOWN } from '../../view/text_field.js';
 import { IndicatorStatus, StatusIndicator } from '../../view/status_indicator.js';
 import { Dispatch } from '../../utils/variant.js';
@@ -84,7 +84,7 @@ export const SalesforceConnectorSettings: React.FC<{}> = (_props: {}) => {
             setConnectionState((c: ConnectionState) => {
                 const s = asSalesforceConnection(c)!;
                 return {
-                    type: SALESFORCE_DATA_CLOUD,
+                    type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {
                         ...s,
                         auth: reduceAuthState(s.auth, action)

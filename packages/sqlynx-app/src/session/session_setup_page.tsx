@@ -9,7 +9,7 @@ import { useSalesforceAuthFlow } from '../connectors/salesforce_auth_flow.js';
 import { useSalesforceConnectionId } from '../connectors/salesforce_connector.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
 import { useCurrentSessionState } from './current_session.js';
-import { ConnectorInfo, SALESFORCE_DATA_CLOUD, requiresSwitchingToNative } from '../connectors/connector_info.js';
+import { ConnectorInfo, SALESFORCE_DATA_CLOUD_CONNECTOR, requiresSwitchingToNative } from '../connectors/connector_info.js';
 import { ConnectorAuthCheck, checkSalesforceAuth, asSalesforceConnection, ConnectionState } from '../connectors/connection_state.js';
 import { SessionLinkTarget, generateSessionSetupUrl } from './session_setup_url.js';
 import { SalesforceAuthAction, reduceAuthState } from '../connectors/salesforce_auth_state.js';
@@ -104,7 +104,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                     setConnectionState((c: ConnectionState) => {
                         const s = asSalesforceConnection(c)!;
                         return {
-                            type: SALESFORCE_DATA_CLOUD,
+                            type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                             value: {
                                 ...s,
                                 auth: reduceAuthState(s.auth, action)

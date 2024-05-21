@@ -2,13 +2,13 @@ import * as proto from '@ankoh/sqlynx-pb';
 
 import { HyperDatabaseConnection } from "../platform/hyperdb_client.js";
 import { VariantKind } from "../utils/variant.js";
-import { BRAINSTORM_MODE, HYPER_DATABASE, SALESFORCE_DATA_CLOUD } from "./connector_info.js";
+import { BRAINSTORM_CONNECTOR, HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR as SALESFORCE_DATA_CLOUD_CONNECTOR } from "./connector_info.js";
 import { SalesforceAuthState } from "./salesforce_auth_state.js";
 
 export type ConnectionState =
-    | VariantKind<typeof SALESFORCE_DATA_CLOUD, SalesforceConnectorState>
-    | VariantKind<typeof BRAINSTORM_MODE, BrainstormConnectorState>
-    | VariantKind<typeof HYPER_DATABASE, HyperDBConnectorState>
+    | VariantKind<typeof SALESFORCE_DATA_CLOUD_CONNECTOR, SalesforceConnectorState>
+    | VariantKind<typeof BRAINSTORM_CONNECTOR, BrainstormConnectorState>
+    | VariantKind<typeof HYPER_GRPC_CONNECTOR, HyperGrpcConnectorState>
     ;
 
 export interface ConnectionTimings {
@@ -28,9 +28,9 @@ export interface SalesforceConnectorState {
     auth: SalesforceAuthState;
 }
 
-export interface HyperDBConnectorState {
+export interface HyperGrpcConnectorState {
     connectionTimings: ConnectionTimings;
-    connection: HyperDatabaseConnection;
+    connection: HyperDatabaseConnection | null;
 }
 
 export enum ConnectionHealth {
@@ -77,7 +77,7 @@ export function createEmptyTimings(): ConnectionTimings {
 export function asSalesforceConnection(state: ConnectionState | null): SalesforceConnectorState | null {
     if (state == null) return null;
     switch (state.type) {
-        case SALESFORCE_DATA_CLOUD: return state.value;
+        case SALESFORCE_DATA_CLOUD_CONNECTOR: return state.value;
         default: return null;
     }
 }
@@ -192,11 +192,11 @@ export function buildHyperConnectorParams() {
 
 export function buildConnectorParams(state: ConnectionState) {
     switch (state.type) {
-        case BRAINSTORM_MODE:
+        case BRAINSTORM_CONNECTOR:
             return buildBrainstormConnectorParams();
-        case HYPER_DATABASE:
+        case HYPER_GRPC_CONNECTOR:
             return buildHyperConnectorParams();
-        case SALESFORCE_DATA_CLOUD:
+        case SALESFORCE_DATA_CLOUD_CONNECTOR:
             return buildSalesforceConnectorParams(state.value);
     }
 }

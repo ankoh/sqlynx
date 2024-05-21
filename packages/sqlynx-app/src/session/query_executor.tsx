@@ -11,7 +11,7 @@ import {
 } from '../connectors/query_execution.js';
 import { useSalesforceAPI, useSalesforceConnectionId } from '../connectors/salesforce_connector.js';
 import { asSalesforceConnection } from '../connectors/connection_state.js';
-import { ConnectorType, SALESFORCE_DATA_CLOUD } from '../connectors/connector_info.js';
+import { ConnectorType, SALESFORCE_DATA_CLOUD_CONNECTOR } from '../connectors/connector_info.js';
 import {
     QUERY_EXECUTION_ACCEPTED,
     QUERY_EXECUTION_CANCELLED,
@@ -41,7 +41,7 @@ export const QueryExecutor = (props: { children?: React.ReactElement }) => {
             case ConnectorType.SALESFORCE_DATA_CLOUD: {
                 const sfconn = asSalesforceConnection(connection)!;
                 task = {
-                    type: SALESFORCE_DATA_CLOUD,
+                    type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {
                         api: salesforceAPI,
                         authParams: sfconn.auth.authParams!,
@@ -52,7 +52,7 @@ export const QueryExecutor = (props: { children?: React.ReactElement }) => {
                 break;
             }
             case ConnectorType.BRAINSTORM_MODE:
-            case ConnectorType.HYPER_DATABASE:
+            case ConnectorType.HYPER_GRPC:
                 console.warn(
                     `script query executor does not support connector ${state.connectorInfo.connectorType} yet`,
                 );
@@ -122,7 +122,7 @@ export const QueryExecutor = (props: { children?: React.ReactElement }) => {
                 // Start the query
                 let resultStream: QueryExecutionResponseStream | null = null;
                 switch (task.type) {
-                    case SALESFORCE_DATA_CLOUD: {
+                    case SALESFORCE_DATA_CLOUD_CONNECTOR: {
                         const req = task.value;
                         resultStream = req.api.executeQuery(req.scriptText, req.dataCloudAccessToken);
                         break;

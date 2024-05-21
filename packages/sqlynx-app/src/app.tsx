@@ -10,6 +10,7 @@ import { EditorPage } from './view/editor/editor_page.js';
 import { GitHubTheme } from './github_theme.js';
 import { HttpClientProvider } from './platform/http_client_provider.js';
 import { HyperDatabaseClientProvider } from './platform/hyperdb_client_provider.js';
+import { HyperGrpcConnector } from './connectors/hyper_grpc_connector.js';
 import { HyperGrpcConnectorSettingsStateProvider } from './view/connectors/hyper_grpc_connector_settings.js';
 import { LoggerProvider } from './platform/logger_provider.js';
 import { PlatformTypeProvider } from './platform/platform_type.js';
@@ -55,6 +56,16 @@ const PageStateProviders = (props: { children: React.ReactElement }) => (
     </ConnectorsPageStateProvider>
 );
 
+const Connectors = (props: { children: React.ReactElement }) => (
+    <ConnectionRegistry>
+        <SalesforceConnector>
+            <HyperGrpcConnector>
+                {props.children}
+            </HyperGrpcConnector>
+        </SalesforceConnector>
+    </ConnectionRegistry>
+);
+
 const AppProviders = (props: { children: React.ReactElement }) => (
     <GitHubTheme>
         <PlatformTypeProvider>
@@ -62,21 +73,19 @@ const AppProviders = (props: { children: React.ReactElement }) => (
                 <AppConfigProvider>
                     <AppEventListenerProvider>
                         <VersionCheck>
-                            <ConnectionRegistry>
-                                <HttpClientProvider>
-                                    <HyperDatabaseClientProvider>
-                                        <SQLynxLoader>
-                                            <SalesforceConnector>
-                                                <SessionProviders>
-                                                    <PageStateProviders>
-                                                        {props.children}
-                                                    </PageStateProviders>
-                                                </SessionProviders>
-                                            </SalesforceConnector>
-                                        </SQLynxLoader>
-                                    </HyperDatabaseClientProvider>
-                                </HttpClientProvider>
-                            </ConnectionRegistry>
+                            <HttpClientProvider>
+                                <HyperDatabaseClientProvider>
+                                    <SQLynxLoader>
+                                        <Connectors>
+                                            <SessionProviders>
+                                                <PageStateProviders>
+                                                    {props.children}
+                                                </PageStateProviders>
+                                            </SessionProviders>
+                                        </Connectors>
+                                    </SQLynxLoader>
+                                </HyperDatabaseClientProvider>
+                            </HttpClientProvider>
                         </VersionCheck>
                     </AppEventListenerProvider>
                 </AppConfigProvider>
@@ -85,8 +94,8 @@ const AppProviders = (props: { children: React.ReactElement }) => (
     </GitHubTheme>
 );
 
-const Editor = withNavBar(EditorPage);
-const Connectors = withNavBar(ConnectorsPage);
+const EditorPageWithNav = withNavBar(EditorPage);
+const ConnectorsPageWithNav = withNavBar(ConnectorsPage);
 
 const Router = process.env.SQLYNX_RELATIVE_IMPORTS ? HashRouter : BrowserRouter;
 
@@ -96,8 +105,8 @@ root.render(
     <Router>
         <AppProviders>
             <Routes>
-                <Route index element={<Editor />} />
-                <Route path="/connectors" element={<Connectors />} />
+                <Route index element={<EditorPageWithNav />} />
+                <Route path="/connectors" element={<ConnectorsPageWithNav />} />
                 <Route path="*" element={<Navigate to="/" />} />
             </Routes>
         </AppProviders>

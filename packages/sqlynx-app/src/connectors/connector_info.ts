@@ -1,14 +1,14 @@
 import * as proto from '@ankoh/sqlynx-pb';
 import { isNativePlatform } from "../platform/native_globals.js";
 
-export const BRAINSTORM_MODE = Symbol('BRAINSTORM_MODE');
-export const SALESFORCE_DATA_CLOUD = Symbol('SALESFORCE_DATA_CLOUD');
-export const HYPER_DATABASE = Symbol('HYPER_DATABASE');
+export const BRAINSTORM_CONNECTOR = Symbol('BRAINSTORM_CONNECTOR');
+export const SALESFORCE_DATA_CLOUD_CONNECTOR = Symbol('SALESFORCE_DATA_CLOUD_CONNECTOR');
+export const HYPER_GRPC_CONNECTOR = Symbol('HYPER_GRPC_CONNECTOR');
 
 export enum ConnectorType {
     BRAINSTORM_MODE = 0,
     SALESFORCE_DATA_CLOUD = 1,
-    HYPER_DATABASE = 2,
+    HYPER_GRPC = 2,
 }
 
 export interface ConnectorInfo {
@@ -75,7 +75,7 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
         },
     },
     {
-        connectorType: ConnectorType.HYPER_DATABASE,
+        connectorType: ConnectorType.HYPER_GRPC,
         displayName: {
             short: 'Hyper',
             long: 'Hyper Database',
@@ -94,7 +94,7 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
 
 export function getConnectorInfoForParams(params: proto.sqlynx_session.pb.ConnectorParams): ConnectorInfo | null {
     switch (params.connector.case) {
-        case "hyper": return CONNECTOR_INFOS[ConnectorType.HYPER_DATABASE];
+        case "hyper": return CONNECTOR_INFOS[ConnectorType.HYPER_GRPC];
         case "salesforce": return CONNECTOR_INFOS[ConnectorType.SALESFORCE_DATA_CLOUD];
         case "brainstorm": return CONNECTOR_INFOS[ConnectorType.BRAINSTORM_MODE];
         default: return null;

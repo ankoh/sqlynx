@@ -7,7 +7,7 @@ import { useConnectionStateAllocator } from '../connectors/connection_registry.j
 import { createEmptyTimings } from '../connectors/connection_state.js';
 import { ScriptData, ScriptKey } from './session_state.js';
 import { ScriptLoadingStatus } from './script_loader.js';
-import { BRAINSTORM_MODE, CONNECTOR_INFOS, ConnectorType } from '../connectors/connector_info.js';
+import { BRAINSTORM_CONNECTOR, CONNECTOR_INFOS, ConnectorType } from '../connectors/connector_info.js';
 import { RESULT_OK } from '../utils/result.js';
 import { TPCH_SCHEMA, EXAMPLE_SCRIPTS } from './example_scripts.js';
 
@@ -81,7 +81,7 @@ export function useBrainstormSessionSetup(): SessionSetupFn {
             instance: instance.value,
             connectorInfo: CONNECTOR_INFOS[ConnectorType.BRAINSTORM_MODE],
             connectionId: allocateConnectionId({
-                type: BRAINSTORM_MODE,
+                type: BRAINSTORM_CONNECTOR,
                 value: {
                     timings: createEmptyTimings()
                 }
