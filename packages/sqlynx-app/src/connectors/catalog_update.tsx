@@ -1,12 +1,12 @@
 import { VariantKind } from '../utils/index.js';
-import { SALESFORCE_DATA_CLOUD } from './connector_info.js';
+import { SALESFORCE_DATA_CLOUD_CONNECTOR } from './connector_info.js';
 import { SalesforceAPIClientInterface, SalesforceDataCloudAccessToken } from './salesforce_api_client.js';
 
 export const FULL_CATALOG_REFRESH = Symbol();
 
 export type CatalogUpdateRequestVariant = VariantKind<typeof FULL_CATALOG_REFRESH, null>;
 
-export type CatalogUpdateTaskVariant = VariantKind<typeof SALESFORCE_DATA_CLOUD, UpdateSalesforceMetadataTask>;
+export type CatalogUpdateTaskVariant = VariantKind<typeof SALESFORCE_DATA_CLOUD_CONNECTOR, UpdateSalesforceMetadataTask>;
 
 export interface UpdateSalesforceMetadataTask {
     /// The salesforce api client

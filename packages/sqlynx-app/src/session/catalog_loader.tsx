@@ -7,7 +7,7 @@ import {
     CatalogUpdateTaskVariant,
     FULL_CATALOG_REFRESH,
 } from '../connectors/catalog_update.js';
-import { SALESFORCE_DATA_CLOUD } from '../connectors/connector_info.js';
+import { SALESFORCE_DATA_CLOUD_CONNECTOR } from '../connectors/connector_info.js';
 import { asSalesforceConnection } from '../connectors/connection_state.js';
 import { useCurrentSessionState } from '../session/current_session.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
@@ -39,7 +39,7 @@ export const CatalogLoader = (props: { children?: React.ReactElement }) => {
             switch (requestVariant.type) {
                 case FULL_CATALOG_REFRESH:
                     task = {
-                        type: SALESFORCE_DATA_CLOUD,
+                        type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                         value: {
                             api: salesforceAPI,
                             accessToken: sfconn.auth.dataCloudAccessToken!,
@@ -70,7 +70,7 @@ export const CatalogLoader = (props: { children?: React.ReactElement }) => {
                 const update = async () => {
                     try {
                         switch (taskState.task.type) {
-                            case SALESFORCE_DATA_CLOUD: {
+                            case SALESFORCE_DATA_CLOUD_CONNECTOR: {
                                 const task = taskState.task.value;
                                 const metadata = await task.api.getDataCloudMetadata(
                                     task.accessToken,

@@ -33,6 +33,12 @@ export const HyperGrpcConnectorSettings: React.FC<{}> = (_props: {}) => {
     const logger = useLogger();
     const hyperClient = useHyperDatabaseClient();
 
+    // Resolve Hyper connection state
+    // const connectionId = useSalesforceConnectionId();
+    // const [connectionState, setConnectionState] = useConnectionState(connectionId);
+    // const salesforceConnection = asSalesforceConnection(connectionState);
+    // const salesforceAuthFlow = useSalesforceAuthFlow();
+
     // Wire up the page state
     const [pageState, setPageState] = React.useContext(PAGE_STATE_CTX)!;
     const setEndpoint = (v: string) => setPageState(s => ({ ...s, endpoint: v }));

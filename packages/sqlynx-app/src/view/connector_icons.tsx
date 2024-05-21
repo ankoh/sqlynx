@@ -27,7 +27,7 @@ export function getConnectorIcon(connector: ConnectorInfo): React.ReactElement {
             return <ZapIcon />;
         case ConnectorType.SALESFORCE_DATA_CLOUD:
             return <SalesforceIcon />;
-        case ConnectorType.HYPER_DATABASE:
+        case ConnectorType.HYPER_GRPC:
             return <HyperIcon />;
     }
 }
