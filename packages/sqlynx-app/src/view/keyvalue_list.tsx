@@ -14,6 +14,8 @@ export interface KeyValueListElement {
     value: string;
 }
 
+export type UpdateKeyValueList = (prev: Immutable.List<KeyValueListElement>) => Immutable.List<KeyValueListElement>;
+
 interface Props {
     className?: string;
     title: string;
@@ -22,7 +24,7 @@ interface Props {
     valueIcon: React.ElementType;
     addButtonLabel: string;
     elements: Immutable.List<KeyValueListElement>;
-    modifyElements: Dispatch<React.SetStateAction<Immutable.List<KeyValueListElement>>>;
+    modifyElements: Dispatch<UpdateKeyValueList>;
 }
 
 export const KeyValueListBuilder: React.FC<Props> = (props: Props) => {
