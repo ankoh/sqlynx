@@ -31,6 +31,7 @@ export interface LogRecord {
 const TARGET_CHUNK_SIZE = 1024;
 
 class FrozenLogChunk {
+    /// The entries of the chunk
     readonly entries: LogRecord[];
 
     constructor(entries: LogRecord[]) {

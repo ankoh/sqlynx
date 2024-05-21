@@ -26,7 +26,7 @@
 .overlay_card {
     width: 90%;
     height: 90%;
-    max-width: 640px;
+    max-width: 800px;
     max-height: 560px;
     z-index: 200;
     border-radius: var(--border_radius);

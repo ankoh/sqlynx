@@ -7,7 +7,6 @@ import { XIcon } from '@primer/octicons-react';
 
 import { LogLevel, getLogLevelName } from '../platform/log_buffer.js';
 import { useLogger } from '../platform/logger_provider.js';
-import { useScrollbarWidth } from '../utils/scrollbar.js';
 import { observeSize } from './size_observer.js';
 
 import * as styles from './log_viewer.module.css';
@@ -72,11 +71,14 @@ interface LogViewerProps {
 const COLUMN_COUNT = 4;
 const COLUMN_TIMESTAMP_WIDTH = 64;
 const COLUMN_LEVEL_WIDTH = 48;
-const COLUMN_TARGET_WIDTH = 128;
 const ROW_HEIGHT = 32;
+
+const PIXEL_PER_CHAR = 6.5;
+const VALUE_PADDING = 0;
 
 export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
     const logger = useLogger();
+    const logStats = logger.statistics;
 
     // Determine log container dimensions
     const containerRef = React.useRef<HTMLDivElement>(null);
@@ -84,13 +86,11 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
     const containerWidth = containerSize?.width ?? 200;
     const containerHeight = containerSize?.height ?? 100;
 
+    const targetColumnWidth = logStats.maxTargetWidth * PIXEL_PER_CHAR + VALUE_PADDING;
+    const messageColumnWidth = logStats.maxMessageWidth * PIXEL_PER_CHAR + VALUE_PADDING;
+
     // Determine column width
-    const scrollBarShown = (logger.buffer.length * ROW_HEIGHT) >= containerHeight;
-    const scrollBarWidth = useScrollbarWidth();
-    const scrollBarWidthIfShown = scrollBarShown ? scrollBarWidth : 0;
-    const columnWidthLeftOfMessage = COLUMN_TIMESTAMP_WIDTH + COLUMN_LEVEL_WIDTH + COLUMN_TARGET_WIDTH;
-    const columnWidthMessage = Math.max(containerWidth, columnWidthLeftOfMessage + scrollBarWidth) - columnWidthLeftOfMessage - scrollBarWidthIfShown;
-    const columnWidths = React.useMemo(() => ([COLUMN_TIMESTAMP_WIDTH, COLUMN_LEVEL_WIDTH, COLUMN_TARGET_WIDTH, columnWidthMessage]), [containerWidth]);
+    const columnWidths = [COLUMN_TIMESTAMP_WIDTH, COLUMN_LEVEL_WIDTH, targetColumnWidth, messageColumnWidth];
     const getColumnWidth = (col: number) => columnWidths[col];
     const getRowHeight = (_row: number) => ROW_HEIGHT;
 
@@ -108,7 +108,7 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
     }, []);
 
 
-    // Reset the grid styling when container dimensions change or log gets updated
+    // Reset the grid styling when container dimensions change or message column gets updated
     const gridRef = React.useRef<Grid>(null);
     React.useEffect(() => {
         if (gridRef.current) {
@@ -118,9 +118,9 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
                 shouldForceUpdate: true
             });
         }
-    }, [containerWidth, containerHeight]);
+    }, [containerWidth, containerHeight, targetColumnWidth, messageColumnWidth]);
 
-    // Detect whenever the log version changes
+    // Redraw whenever the log version changes
     const seenLogRows = React.useRef<number>(0);
     React.useEffect(() => {
         if (gridRef.current) {
@@ -141,7 +141,7 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
                 rowIndex: Math.max(rowCount, 1) - 1
             });
         }
-    }, [logVersion, scrollBarShown, containerHeight]);
+    }, [logVersion, containerHeight]);
 
     const Cell = ({ columnIndex, rowIndex, style }: any) => {
         const record = logger.buffer.at(rowIndex)!;

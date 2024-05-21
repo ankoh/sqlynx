@@ -33,6 +33,7 @@ export class NativeLogger extends Logger {
             const record = JSON.parse(event.payload.message) as any;
             record.level = rustToWebLogLevel(record.level as RustLogLevel);
             this.outputBuffer.push(record);
+            this.logStatistics.push(record);
         });
     }
 
