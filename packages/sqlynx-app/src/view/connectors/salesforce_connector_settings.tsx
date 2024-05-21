@@ -7,7 +7,7 @@ import { useConnectionState } from '../../connectors/connection_registry.js';
 import { useSalesforceConnectionId } from '../../connectors/salesforce_connector.js';
 import { useSalesforceAuthFlow } from '../../connectors/salesforce_auth_flow.js';
 import { ConnectionHealth, ConnectionStatus, getSalesforceConnectionStatus, getSalesforceConnnectionHealth, asSalesforceConnection, ConnectionState } from '../../connectors/connection_state.js';
-import { SalesforceAuthParams } from '../../connectors/connector_configs.js';
+import { SalesforceAuthParams } from '../../connectors/connection_params.js';
 import { SalesforceAuthAction, reduceAuthState } from '../../connectors/salesforce_auth_state.js';
 import { SALESFORCE_DATA_CLOUD_CONNECTOR } from '../../connectors/connector_info.js';
 import { TextField, TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_UNKNOWN } from '../../view/text_field.js';

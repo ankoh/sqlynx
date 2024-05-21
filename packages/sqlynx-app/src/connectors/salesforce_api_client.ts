@@ -1,6 +1,7 @@
 import { Logger } from '../platform/logger.js';
 import { HttpClient } from '../platform/http_client.js';
-import { SalesforceAuthConfig, SalesforceAuthParams } from './connector_configs.js';
+import { SalesforceAuthParams } from './connection_params.js';
+import { SalesforceAuthConfig } from './connector_configs.js';
 import { QueryExecutionResponseStream } from './query_execution.js';
 import { Base64Codec } from '../utils/base64.js';
 

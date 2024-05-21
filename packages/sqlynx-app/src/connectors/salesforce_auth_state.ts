@@ -1,7 +1,7 @@
 import { PKCEChallenge } from '../utils/pkce.js';
 import { VariantKind } from '../utils/variant.js';
 import { SalesforceCoreAccessToken, SalesforceDataCloudAccessToken } from './salesforce_api_client.js';
-import { SalesforceAuthParams } from './connector_configs.js';
+import { SalesforceAuthParams } from './connection_params.js';
 
 export interface SalesforceAuthTimings {
     /// The time when the auth started

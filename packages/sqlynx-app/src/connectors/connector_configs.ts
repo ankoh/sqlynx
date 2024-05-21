@@ -1,27 +1,30 @@
+import { SalesforceAuthParams, HyperGrpcConnectionParams } from './connection_params.js';
 import { SalesforceConnectorMockConfig } from '../connectors/salesforce_api_client_mock.js';
+
+export interface HyperGrpcConnectorConfig {
+    /// The default parameters
+    defaultParams?: HyperGrpcConnectionParams;
+}
 
 export interface SalesforceAuthConfig {
     /// The oauth redirect
     oauthRedirect: string;
 }
 
-export interface SalesforceAuthParams {
-    /// The base URL
-    instanceUrl: string;
-    /// The client id
-    appConsumerKey: string;
-    /// The client secret
-    appConsumerSecret: string | null;
-}
-
 export interface SalesforceConnectorConfig {
+    /// The connector auth config
     auth: SalesforceAuthConfig;
-    defaultApp?: SalesforceAuthParams;
+    /// The default parameters
+    defaultParams?: SalesforceAuthParams;
+    /// The mock config
     mock?: SalesforceConnectorMockConfig;
 }
 
 export interface ConnectorConfigs {
+    /// The config for the Salesforce Data Cloud connector
     salesforce?: SalesforceConnectorConfig;
+    /// The config for the Hyper gRPC connector
+    hyperGrpc?: HyperGrpcConnectorConfig;
 }
 
 export function readConnectorConfigs(configs: any): ConnectorConfigs {
