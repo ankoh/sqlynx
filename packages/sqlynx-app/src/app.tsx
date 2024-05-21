@@ -1,27 +1,28 @@
 import * as React from 'react';
 
-import { SQLynxLoader } from './sqlynx_loader.js';
-import { withNavBar } from './view/navbar.js';
-import { EditorPage } from './view/editor/editor_page.js';
-import { SalesforceConnectorSettingsStateProvider } from './view/connectors/salesforce_connector_settings.js';
-import { ConnectorsPage, ConnectorsPageStateProvider } from './view/connectors/connectors_page.js';
-import { ScriptLoader } from './session/script_loader.js';
-import { CatalogLoader } from './session/catalog_loader.js';
-import { CurrentSessionStateProvider } from './session/current_session.js';
-import { SessionStateRegistry } from './session/session_state_registry.js';
-import { SessionCommands } from './session/session_commands.js';
-import { QueryExecutor } from './session/query_executor.js';
-import { SessionSetup } from './session/session_setup.js';
-import { SalesforceConnector } from './connectors/salesforce_connector.js';
-import { ConnectionRegistry } from './connectors/connection_registry.js';
-import { GitHubTheme } from './github_theme.js';
 import { AppConfigProvider } from './app_config.js';
+import { AppEventListenerProvider } from './platform/event_listener_provider.js';
+import { CatalogLoader } from './session/catalog_loader.js';
+import { ConnectionRegistry } from './connectors/connection_registry.js';
+import { ConnectorsPage, ConnectorsPageStateProvider } from './view/connectors/connectors_page.js';
+import { CurrentSessionStateProvider } from './session/current_session.js';
+import { EditorPage } from './view/editor/editor_page.js';
+import { GitHubTheme } from './github_theme.js';
+import { HttpClientProvider } from './platform/http_client_provider.js';
+import { HyperDatabaseClientProvider } from './platform/hyperdb_client_provider.js';
+import { HyperGrpcConnectorSettingsStateProvider } from './view/connectors/hyper_grpc_connector_settings.js';
 import { LoggerProvider } from './platform/logger_provider.js';
 import { PlatformTypeProvider } from './platform/platform_type.js';
-import { HyperDatabaseClientProvider } from './platform/hyperdb_client_provider.js';
-import { HttpClientProvider } from './platform/http_client_provider.js';
+import { QueryExecutor } from './session/query_executor.js';
+import { SQLynxLoader } from './sqlynx_loader.js';
+import { SalesforceConnector } from './connectors/salesforce_connector.js';
+import { SalesforceConnectorSettingsStateProvider } from './view/connectors/salesforce_connector_settings.js';
+import { ScriptLoader } from './session/script_loader.js';
+import { SessionCommands } from './session/session_commands.js';
+import { SessionSetup } from './session/session_setup.js';
+import { SessionStateRegistry } from './session/session_state_registry.js';
 import { VersionCheck } from './platform/version_check.js';
-import { AppEventListenerProvider } from './platform/event_listener_provider.js';
+import { withNavBar } from './view/navbar.js';
 
 import { createRoot } from 'react-dom/client';
 import { Route, Routes, Navigate, BrowserRouter, HashRouter } from 'react-router-dom';
@@ -47,7 +48,9 @@ const SessionProviders = (props: { children: React.ReactElement }) => (
 const PageStateProviders = (props: { children: React.ReactElement }) => (
     <ConnectorsPageStateProvider>
         <SalesforceConnectorSettingsStateProvider>
-            {props.children}
+            <HyperGrpcConnectorSettingsStateProvider>
+                {props.children}
+            </HyperGrpcConnectorSettingsStateProvider>
         </SalesforceConnectorSettingsStateProvider>
     </ConnectorsPageStateProvider>
 );

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import * as proto from "@ankoh/sqlynx-pb";
+import * as Immutable from 'immutable';
 
 import { Button } from '@primer/react';
 import { ChecklistIcon, DatabaseIcon, FileBadgeIcon, KeyIcon, PlugIcon } from '@primer/octicons-react';
@@ -8,7 +9,7 @@ import { classNames } from '../../utils/classnames.js';
 import { TextField, KeyValueTextField } from '../text_field.js';
 import { useLogger } from '../../platform/logger_provider.js';
 import { useHyperDatabaseClient } from '../../platform/hyperdb_client_provider.js';
-import { KeyValueListBuilder } from '../../view/keyvalue_list.js';
+import { KeyValueListBuilder, KeyValueListElement } from '../../view/keyvalue_list.js';
 import { IndicatorStatus, StatusIndicator } from '../../view/status_indicator.js';
 import { Dispatch } from '../../utils/variant.js';
 
@@ -61,6 +62,21 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
             logger.trace(`connecting failed with error: ${e.toString()}`, LOG_CTX);
         }
     };
+
+    const [attachedDbs, setAttachedDbs] = React.useState<Immutable.List<KeyValueListElement>>(() => Immutable.List([{
+        index: 0,
+        key: "x-hyperdb-workload",
+        value: "foo"
+    }, {
+        index: 1,
+        key: "foo",
+        value: "bar"
+    }]));
+    const [grpcMetadata, setGrpcMetadata] = React.useState<Immutable.List<KeyValueListElement>>(() => Immutable.List([{
+        index: 0,
+        key: "x-hyperdb-workload",
+        value: "foo"
+    }]));
 
     return (
         <div className={style.layout}>
@@ -148,6 +164,8 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                             keyIcon={DatabaseIcon}
                             valueIcon={() => <div>ID</div>}
                             addButtonLabel="Add Database"
+                            elements={attachedDbs}
+                            modifyElements={setAttachedDbs}
                         />
                         <KeyValueListBuilder
                             title="gRPC Metadata"
@@ -155,10 +173,28 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                             keyIcon={() => <div>Header</div>}
                             valueIcon={() => <div>Value</div>}
                             addButtonLabel="Add Header"
+                            elements={grpcMetadata}
+                            modifyElements={setGrpcMetadata}
                         />
                     </div>
                 </div>
             </div>
         </ div>
+    );
+};
+
+interface ProviderProps { children: React.ReactElement };
+
+export const HyperGrpcConnectorSettingsStateProvider: React.FC<ProviderProps> = (props: ProviderProps) => {
+    const state = React.useState<PageState>({
+        endpoint: "",
+        mtlsKeyPath: "",
+        mtlsPubPath: "",
+        mtlsCaPath: "",
+    });
+    return (
+        <PAGE_STATE_CTX.Provider value={state}>
+            {props.children}
+        </PAGE_STATE_CTX.Provider>
     );
 };

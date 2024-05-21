@@ -1,7 +1,5 @@
 .list {
     display: grid;
-    grid-template-columns: 1fr max-content;
-    grid-template-rows: 32px repeat(auto-fit, max-content);
     column-gap: 8px;
 }
 .list_name {
@@ -30,7 +28,6 @@
     grid-row: 3;
     grid-column: 1 / span 2;
     display: grid;
-    grid-template-rows: repeat(auto-fit, max-content);
     margin-top: 8px;
     row-gap: 8px;
 }
