@@ -9,7 +9,7 @@ import { classNames } from '../../utils/classnames.js';
 import { TextField, KeyValueTextField } from '../text_field.js';
 import { useLogger } from '../../platform/logger_provider.js';
 import { useHyperDatabaseClient } from '../../platform/hyperdb_client_provider.js';
-import { KeyValueListBuilder, KeyValueListElement } from '../../view/keyvalue_list.js';
+import { KeyValueListBuilder, KeyValueListElement, UpdateKeyValueList } from '../../view/keyvalue_list.js';
 import { IndicatorStatus, StatusIndicator } from '../../view/status_indicator.js';
 import { Dispatch } from '../../utils/variant.js';
 
@@ -20,25 +20,27 @@ const LOG_CTX = "hyper_connector";
 
 interface PageState {
     endpoint: string;
-    mtlsKeyPath: string;
-    mtlsPubPath: string;
-    mtlsCaPath: string;
+    mTlsKeyPath: string;
+    mTlsPubPath: string;
+    mTlsCaPath: string;
+    attachedDatabases: Immutable.List<KeyValueListElement>;
+    gRPCMetadata: Immutable.List<KeyValueListElement>;
 };
 type PageStateSetter = Dispatch<React.SetStateAction<PageState>>;
 const PAGE_STATE_CTX = React.createContext<[PageState, PageStateSetter] | null>(null);
 
-interface Props { }
-
-export const HyperGrpcConnectorSettings: React.FC<Props> = (
-    _props: Props,
-) => {
+export const HyperGrpcConnectorSettings: React.FC<{}> = (_props: {}) => {
     const logger = useLogger();
     const hyperClient = useHyperDatabaseClient();
 
-    const [endpoint, setEndpoint] = React.useState<string>("http://127.0.0.1:9090");
-    const [mtlsKeyPath, setMtlsKeyPath] = React.useState<string>("");
-    const [mtlsPubPath, setMtlsPubPath] = React.useState<string>("");
-    const [mtlsCaPath, setMtlsCaPath] = React.useState<string>("");
+    // Wire up the page state
+    const [pageState, setPageState] = React.useContext(PAGE_STATE_CTX)!;
+    const setEndpoint = (v: string) => setPageState(s => ({ ...s, endpoint: v }));
+    const setMtlsKeyPath = (v: string) => setPageState(s => ({ ...s, mTlsKeyPath: v }));
+    const setMtlsPubPath = (v: string) => setPageState(s => ({ ...s, mTlsPubPath: v }));
+    const setMtlsCaPath = (v: string) => setPageState(s => ({ ...s, mTlsCaPath: v }));
+    const modifyAttachedDbs: Dispatch<UpdateKeyValueList> = (action: UpdateKeyValueList) => setPageState(s => ({ ...s, attachedDatabases: action(s.attachedDatabases) }));
+    const modifyGrpcMetadata: Dispatch<UpdateKeyValueList> = (action: UpdateKeyValueList) => setPageState(s => ({ ...s, gRPCMetadata: action(s.gRPCMetadata) }));
 
     const testSettings = async () => {
         if (hyperClient == null) {
@@ -46,9 +48,9 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
             return;
         }
         try {
-            logger.trace(`connecting to endpoint: ${endpoint}`, LOG_CTX);
+            logger.trace(`connecting to endpoint: ${pageState.endpoint}`, LOG_CTX);
             const channel = await hyperClient.connect({
-                endpoint
+                endpoint: pageState.endpoint
             });
 
             await channel.executeQuery(new proto.salesforce_hyperdb_grpc_v1.pb.QueryParam({
@@ -62,21 +64,6 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
             logger.trace(`connecting failed with error: ${e.toString()}`, LOG_CTX);
         }
     };
-
-    const [attachedDbs, setAttachedDbs] = React.useState<Immutable.List<KeyValueListElement>>(() => Immutable.List([{
-        index: 0,
-        key: "x-hyperdb-workload",
-        value: "foo"
-    }, {
-        index: 1,
-        key: "foo",
-        value: "bar"
-    }]));
-    const [grpcMetadata, setGrpcMetadata] = React.useState<Immutable.List<KeyValueListElement>>(() => Immutable.List([{
-        index: 0,
-        key: "x-hyperdb-workload",
-        value: "foo"
-    }]));
 
     return (
         <div className={style.layout}>
@@ -119,7 +106,7 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                         <TextField
                             name="gRPC Endpoint"
                             caption="Endpoint of the gRPC service as 'https://host:port'"
-                            value={endpoint}
+                            value={pageState.endpoint}
                             placeholder="gRPC endpoint url"
                             leadingVisual={() => <div>URL</div>}
                             onChange={(e) => setEndpoint(e.target.value)}
@@ -130,8 +117,8 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                             className={style.grid_column_1}
                             name="mTLS Client Key"
                             caption="Paths to client key and client certificate"
-                            k={mtlsKeyPath}
-                            v={mtlsPubPath}
+                            k={pageState.mTlsKeyPath}
+                            v={pageState.mTlsPubPath}
                             keyPlaceholder="client.key"
                             valuePlaceholder="client.pem"
                             keyIcon={KeyIcon}
@@ -146,7 +133,7 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                         <TextField
                             name="mTLS CA certificates"
                             caption="Path to certificate authority (CA) certificates"
-                            value={mtlsCaPath}
+                            value={pageState.mTlsCaPath}
                             placeholder="cacerts.pem"
                             leadingVisual={ChecklistIcon}
                             onChange={(e) => setMtlsCaPath(e.target.value)}
@@ -164,8 +151,8 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                             keyIcon={DatabaseIcon}
                             valueIcon={() => <div>ID</div>}
                             addButtonLabel="Add Database"
-                            elements={attachedDbs}
-                            modifyElements={setAttachedDbs}
+                            elements={pageState.attachedDatabases}
+                            modifyElements={modifyAttachedDbs}
                         />
                         <KeyValueListBuilder
                             title="gRPC Metadata"
@@ -173,8 +160,8 @@ export const HyperGrpcConnectorSettings: React.FC<Props> = (
                             keyIcon={() => <div>Header</div>}
                             valueIcon={() => <div>Value</div>}
                             addButtonLabel="Add Header"
-                            elements={grpcMetadata}
-                            modifyElements={setGrpcMetadata}
+                            elements={pageState.gRPCMetadata}
+                            modifyElements={modifyGrpcMetadata}
                         />
                     </div>
                 </div>
@@ -187,10 +174,12 @@ interface ProviderProps { children: React.ReactElement };
 
 export const HyperGrpcConnectorSettingsStateProvider: React.FC<ProviderProps> = (props: ProviderProps) => {
     const state = React.useState<PageState>({
-        endpoint: "",
-        mtlsKeyPath: "",
-        mtlsPubPath: "",
-        mtlsCaPath: "",
+        endpoint: "http://localhost:7484",
+        mTlsKeyPath: "",
+        mTlsPubPath: "",
+        mTlsCaPath: "",
+        attachedDatabases: Immutable.List(),
+        gRPCMetadata: Immutable.List(),
     });
     return (
         <PAGE_STATE_CTX.Provider value={state}>
