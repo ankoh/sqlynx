@@ -7,8 +7,7 @@ import { SalesforceAPIClient, SalesforceAPIClientInterface } from './salesforce_
 import { SalesforceAPIClientMock } from './salesforce_api_client_mock.js';
 import { SalesforceAuthFlowProvider } from './salesforce_auth_flow.js';
 import { SalesforceAuthFlowMockProvider } from './salesforce_auth_flow_mock.js';
-import { createEmptyTimings } from './connection_state.js';
-import { AUTH_FLOW_DEFAULT_STATE } from './salesforce_auth_state.js';
+import { createSalesforceConnectorState } from './salesforce_connection_state.js';
 import { SALESFORCE_DATA_CLOUD_CONNECTOR } from './connector_info.js';
 
 const API_CTX = React.createContext<SalesforceAPIClientInterface | null>(null);
@@ -29,10 +28,7 @@ export const SalesforceConnector: React.FC<Props> = (props: Props) => {
     // similar to how we maintain the active session.
     const connectionId = useAllocatedConnectionState((_) => ({
         type: SALESFORCE_DATA_CLOUD_CONNECTOR,
-        value: {
-            timings: createEmptyTimings(),
-            auth: AUTH_FLOW_DEFAULT_STATE,
-        }
+        value: createSalesforceConnectorState()
     }));
 
     if (config == null || !config.isResolved()) {

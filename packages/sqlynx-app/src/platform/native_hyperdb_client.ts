@@ -1,7 +1,7 @@
 import * as arrow from "apache-arrow";
 import * as proto from "@ankoh/sqlynx-pb";
 
-import { HyperDatabaseClient, HyperDatabaseConnection, HyperQueryResultStream } from "./hyperdb_client.js";
+import { HyperDatabaseClient, HyperDatabaseChannel, HyperQueryResultStream } from "./hyperdb_client.js";
 import { NativeGrpcChannel, NativeGrpcClient, NativeGrpcProxyConfig, NativeGrpcServerStream, NativeGrpcServerStreamMessageIterator } from './native_grpc_client.js';
 import { QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionStatus } from "../connectors/query_execution.js";
 import { GrpcChannelArgs } from './grpc_common.js';
@@ -90,8 +90,10 @@ export class NativeHyperQueryResultStream implements QueryExecutionResponseStrea
 }
 
 /// A native Hyper database connection
-class NativeHyperDatabaseConnection implements HyperDatabaseConnection {
+class NativeHyperDatabaseChannel implements HyperDatabaseChannel {
+    /// A logger
     logger: Logger;
+    /// A gRPC channel
     grpcChannel: NativeGrpcChannel;
 
     constructor(channel: NativeGrpcChannel, logger: Logger) {
@@ -127,8 +129,8 @@ export class NativeHyperDatabaseClient implements HyperDatabaseClient {
     }
 
     /// Create a database connection
-    public async connect(args: GrpcChannelArgs): Promise<NativeHyperDatabaseConnection> {
+    public async connect(args: GrpcChannelArgs): Promise<NativeHyperDatabaseChannel> {
         const channel = await this.client.connect(args);
-        return new NativeHyperDatabaseConnection(channel, this.logger);
+        return new NativeHyperDatabaseChannel(channel, this.logger);
     }
 }

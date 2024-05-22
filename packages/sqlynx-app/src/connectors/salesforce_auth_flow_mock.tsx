@@ -13,7 +13,7 @@ import {
     AUTH_CANCELLED,
     AUTH_FAILED,
     RESET,
-} from './salesforce_auth_state.js';
+} from './salesforce_connection_state.js';
 import { useSalesforceAPI } from './salesforce_connector.js';
 import { useAppConfig } from '../app_config.js';
 import { useLogger } from '../platform/logger_provider.js';

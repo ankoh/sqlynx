@@ -4,7 +4,7 @@ import Immutable from 'immutable';
 import { useSQLynxSetup } from '../sqlynx_loader.js';
 import { useSessionStateAllocator } from './session_state_registry.js';
 import { useConnectionStateAllocator } from '../connectors/connection_registry.js';
-import { createEmptyTimings } from '../connectors/connection_state.js';
+import { createConnectionStatistics } from '../connectors/connection_statistics.js';
 import { ScriptData, ScriptKey } from './session_state.js';
 import { ScriptLoadingStatus } from './script_loader.js';
 import { BRAINSTORM_CONNECTOR, CONNECTOR_INFOS, ConnectorType } from '../connectors/connector_info.js';
@@ -83,7 +83,7 @@ export function useBrainstormSessionSetup(): SessionSetupFn {
             connectionId: allocateConnectionId({
                 type: BRAINSTORM_CONNECTOR,
                 value: {
-                    timings: createEmptyTimings()
+                    stats: createConnectionStatistics()
                 }
             }),
             scripts: {

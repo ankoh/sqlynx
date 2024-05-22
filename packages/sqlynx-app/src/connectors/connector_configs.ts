@@ -1,5 +1,5 @@
 import { SalesforceAuthParams, HyperGrpcConnectionParams } from './connection_params.js';
-import { SalesforceConnectorMockConfig } from '../connectors/salesforce_api_client_mock.js';
+import { SalesforceConnectorMockConfig } from './salesforce_api_client_mock.js';
 
 export interface HyperGrpcConnectorConfig {
     /// The default parameters

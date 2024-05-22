@@ -29,7 +29,7 @@ export function useSalesforceSessionSetup(): SessionSetupFn {
     const [_sessionState, sessionStateDispatch] = useSessionState(connectorScriptId);
 
     return React.useCallback(async (signal: AbortSignal) => {
-        if (!sfApi || !sfConnection || !sfConnection.auth.dataCloudAccessToken) return null;
+        if (!sfApi || !sfConnection || !sfConnection.dataCloudAccessToken) return null;
 
         // Setup SQLynx lazily.
         // Note that this means the WASM module will only be set up when da data cloud token is provided.
@@ -126,5 +126,5 @@ export function useSalesforceSessionSetup(): SessionSetupFn {
             });
             return connectorScriptId;
         }
-    }, [sfApi, sfConnection?.auth.dataCloudAccessToken, setupSQLynx]);
+    }, [sfApi, sfConnection?.dataCloudAccessToken, setupSQLynx]);
 };

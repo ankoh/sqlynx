@@ -9,7 +9,7 @@ import {
 } from '../connectors/catalog_update.js';
 import { SALESFORCE_DATA_CLOUD_CONNECTOR } from '../connectors/connector_info.js';
 import { asSalesforceConnection } from '../connectors/connection_state.js';
-import { useCurrentSessionState } from '../session/current_session.js';
+import { useCurrentSessionState } from './current_session.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
 import { useSalesforceAPI, useSalesforceConnectionId } from '../connectors/salesforce_connector.js';
 import {
@@ -42,7 +42,7 @@ export const CatalogLoader = (props: { children?: React.ReactElement }) => {
                         type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                         value: {
                             api: salesforceAPI,
-                            accessToken: sfconn.auth.dataCloudAccessToken!,
+                            accessToken: sfconn.dataCloudAccessToken!,
                         },
                     };
                     break;

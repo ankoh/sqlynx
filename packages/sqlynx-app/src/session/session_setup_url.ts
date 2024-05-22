@@ -10,8 +10,8 @@ export enum SessionLinkTarget {
 }
 
 export function generateSessionSetupUrl(sessionState: SessionState, connection: ConnectionState, target: SessionLinkTarget): URL {
-    let connectorParams = buildConnectorParams(connection);
-    let scripts: proto.sqlynx_session.pb.SessionScript[] = [];
+    const connectorParams = buildConnectorParams(connection);
+    const scripts: proto.sqlynx_session.pb.SessionScript[] = [];
     const addScript = (script: ScriptData | null) => {
         if (script != null) {
             scripts.push(new proto.sqlynx_session.pb.SessionScript({

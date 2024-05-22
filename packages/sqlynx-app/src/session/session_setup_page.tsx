@@ -12,7 +12,7 @@ import { useCurrentSessionState } from './current_session.js';
 import { ConnectorInfo, SALESFORCE_DATA_CLOUD_CONNECTOR, requiresSwitchingToNative } from '../connectors/connector_info.js';
 import { ConnectorAuthCheck, checkSalesforceAuth, asSalesforceConnection, ConnectionState } from '../connectors/connection_state.js';
 import { SessionLinkTarget, generateSessionSetupUrl } from './session_setup_url.js';
-import { SalesforceAuthAction, reduceAuthState } from '../connectors/salesforce_auth_state.js';
+import { SalesforceAuthAction, reduceAuthState } from '../connectors/salesforce_connection_state.js';
 import { SalesforceAuthParams } from '../connectors/connection_params.js';
 import { SQLYNX_VERSION } from '../globals.js';
 import { REPLACE_SCRIPT_CONTENT } from './session_state_reducer.js';
@@ -105,11 +105,8 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                         const s = asSalesforceConnection(c)!;
                         return {
                             type: SALESFORCE_DATA_CLOUD_CONNECTOR,
-                            value: {
-                                ...s,
-                                auth: reduceAuthState(s.auth, action)
-                            }
-                        };
+                            value: reduceAuthState(s, action)
+                        }
                     });
                 };
                 // Authorize the client
@@ -157,9 +154,9 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     }, [props.setupProto]);
 
     // Collect all sections (after parsing the params)
-    let sections: React.ReactElement[] = [];
+    const sections: React.ReactElement[] = [];
     if (props.setupProto.scripts.length > 0) {
-        let scriptElems: React.ReactElement[] = [];
+        const scriptElems: React.ReactElement[] = [];
         for (const script of props.setupProto.scripts) {
             let scriptName = null;
             switch (script.scriptType) {
