@@ -1,14 +1,14 @@
 import * as React from 'react';
 
 import { Button } from '@primer/react';
-import { KeyIcon, PlugIcon } from '@primer/octicons-react';
+import { KeyIcon, PlugIcon, XIcon } from '@primer/octicons-react';
 
 import { useConnectionState } from '../../connectors/connection_registry.js';
 import { useSalesforceConnectionId } from '../../connectors/salesforce_connector.js';
 import { useSalesforceAuthFlow } from '../../connectors/salesforce_auth_flow.js';
 import { ConnectionHealth, ConnectionStatus, getSalesforceConnectionStatus, getSalesforceConnectionHealth, asSalesforceConnection, ConnectionState } from '../../connectors/connection_state.js';
 import { SalesforceAuthParams } from '../../connectors/connection_params.js';
-import { SalesforceAuthAction, reduceAuthState } from '../../connectors/salesforce_connection_state.js';
+import { SalesforceAuthAction, reduceAuthState, RESET } from '../../connectors/salesforce_connection_state.js';
 import { SALESFORCE_DATA_CLOUD_CONNECTOR } from '../../connectors/connector_info.js';
 import { TextField, TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_UNKNOWN } from '../text_field.js';
 import { IndicatorStatus, StatusIndicator } from '../status_indicator.js';
@@ -49,6 +49,7 @@ export const SalesforceConnectorSettings: React.FC<{}> = (_props: {}) => {
     });
 
     // Helper to start the authorization
+    const authAbortController = React.useRef<AbortController | null>(null);
     const startAuth = async () => {
         let validationSucceeded = true;
         if (pageState.instanceUrl == "") {
@@ -90,13 +91,33 @@ export const SalesforceConnectorSettings: React.FC<{}> = (_props: {}) => {
             });
         };
         // Authorize the client
-        const abortController = new AbortController();
+        authAbortController.current = new AbortController();
         const authParams: SalesforceAuthParams = {
             instanceUrl: pageState.instanceUrl,
             appConsumerKey: pageState.appConsumerKey,
             appConsumerSecret: null,
         };
-        await salesforceAuthFlow.authorize(salesforceAuthDispatch, authParams, abortController.signal);
+        await salesforceAuthFlow.authorize(salesforceAuthDispatch, authParams, authAbortController.current.signal);
+        authAbortController.current = null;
+    };
+
+    // Helper to cancel the authorization
+    const cancelAuth = () => {
+        if (authAbortController.current) {
+            authAbortController.current.abort("abort the authorization flow");
+            authAbortController.current = null;
+        }
+    };
+
+    // Helper to reset the authorization
+    const resetAuth = () => {
+        setConnectionState((c: ConnectionState) => {
+            const s = asSalesforceConnection(c)!;
+            return {
+                type: SALESFORCE_DATA_CLOUD_CONNECTOR,
+                value: reduceAuthState(s, { type: RESET, value: null })
+            };
+        });
     };
 
     // Get the connection status
@@ -131,7 +152,7 @@ export const SalesforceConnectorSettings: React.FC<{}> = (_props: {}) => {
             break;
     }
 
-    // Get the connection health
+    // Get the indicator status
     const health = getSalesforceConnectionHealth(status);
     let indicatorStatus: IndicatorStatus | undefined = undefined;
     switch (health) {
@@ -149,6 +170,24 @@ export const SalesforceConnectorSettings: React.FC<{}> = (_props: {}) => {
             indicatorStatus = IndicatorStatus.Running;
             break;
     }
+
+    // Get the action button
+    let actionButton: React.ReactElement = <div />;
+    switch (health) {
+        case ConnectionHealth.UNKNOWN:
+        case ConnectionHealth.NOT_STARTED:
+        case ConnectionHealth.FAILED:
+            actionButton = <Button variant='primary' leadingVisual={PlugIcon} onClick={startAuth}>Connect</Button>;
+            break;
+        case ConnectionHealth.CONNECTING:
+            actionButton = <Button variant='danger' leadingVisual={XIcon} onClick={cancelAuth}>Cancel</Button>;
+            break;
+        case ConnectionHealth.ONLINE:
+            actionButton = <Button variant='danger' leadingVisual={XIcon} onClick={resetAuth}>Reset</Button>;
+            break;
+    }
+
+    // Lock any changes?
     const freezeInput = health == ConnectionHealth.CONNECTING || health == ConnectionHealth.ONLINE;
 
     return (
@@ -163,11 +202,7 @@ export const SalesforceConnectorSettings: React.FC<{}> = (_props: {}) => {
                     Salesforce Data Cloud
                 </div>
                 <div className={style.platform_actions}>
-                    <Button
-                        variant='primary'
-                        leadingVisual={PlugIcon}
-                        onClick={startAuth}
-                    >Connect</Button>
+                    {actionButton}
                 </div>
             </div>
             <div className={style.status_container}>
