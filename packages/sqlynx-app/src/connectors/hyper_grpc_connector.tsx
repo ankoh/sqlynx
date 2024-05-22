@@ -31,6 +31,7 @@ export const HyperGrpcConnector: React.FC<Props> = (props: Props) => {
     // Create the connector api
     const api = React.useMemo<HyperGrpcConnectorApi | null>(() => {
         const setup = async (_dispatch: Dispatch<HyperGrpcConnectorAction>, _params: HyperGrpcConnectionParams, _abort: AbortSignal) => {
+
             // XXX
         };
         const reset = async (dispatch: Dispatch<HyperGrpcConnectorAction>) => {
