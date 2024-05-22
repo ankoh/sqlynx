@@ -159,10 +159,6 @@ export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAu
                 coreAccessToken: null,
                 dataCloudAccessToken: null,
             };
-        case AUTH_STARTED:
-            return {
-                ...state,
-            };
         case AUTH_CANCELLED:
             return {
                 ...state,
