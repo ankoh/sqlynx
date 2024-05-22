@@ -17,7 +17,7 @@ import {
     REQUESTING_DATA_CLOUD_ACCESS_TOKEN,
     SalesforceAuthAction,
     RECEIVED_CORE_AUTH_CODE,
-} from './salesforce_auth_state.js';
+} from './salesforce_connection_state.js';
 import { useSalesforceAPI } from './salesforce_connector.js';
 import { useAppConfig } from '../app_config.js';
 import { generatePKCEChallenge } from '../utils/pkce.js';

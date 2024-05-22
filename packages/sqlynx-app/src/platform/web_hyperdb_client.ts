@@ -84,7 +84,7 @@ export class WebHyperQueryResultStream implements QueryExecutionResponseStream {
     }
 }
 
-export class HyperServiceClient {
+export class HyperServiceChannel {
     client: PromiseClient<typeof hyper.salesforce_hyperdb_grpc_v1.grpc.HyperService>;
     public url: string;
 

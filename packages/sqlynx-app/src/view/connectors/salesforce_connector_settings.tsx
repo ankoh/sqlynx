@@ -6,12 +6,12 @@ import { KeyIcon, PlugIcon } from '@primer/octicons-react';
 import { useConnectionState } from '../../connectors/connection_registry.js';
 import { useSalesforceConnectionId } from '../../connectors/salesforce_connector.js';
 import { useSalesforceAuthFlow } from '../../connectors/salesforce_auth_flow.js';
-import { ConnectionHealth, ConnectionStatus, getSalesforceConnectionStatus, getSalesforceConnnectionHealth, asSalesforceConnection, ConnectionState } from '../../connectors/connection_state.js';
+import { ConnectionHealth, ConnectionStatus, getSalesforceConnectionStatus, getSalesforceConnectionHealth, asSalesforceConnection, ConnectionState } from '../../connectors/connection_state.js';
 import { SalesforceAuthParams } from '../../connectors/connection_params.js';
-import { SalesforceAuthAction, reduceAuthState } from '../../connectors/salesforce_auth_state.js';
+import { SalesforceAuthAction, reduceAuthState } from '../../connectors/salesforce_connection_state.js';
 import { SALESFORCE_DATA_CLOUD_CONNECTOR } from '../../connectors/connector_info.js';
-import { TextField, TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_UNKNOWN } from '../../view/text_field.js';
-import { IndicatorStatus, StatusIndicator } from '../../view/status_indicator.js';
+import { TextField, TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_UNKNOWN } from '../text_field.js';
+import { IndicatorStatus, StatusIndicator } from '../status_indicator.js';
 import { Dispatch } from '../../utils/variant.js';
 import { classNames } from '../../utils/classnames.js';
 
@@ -85,10 +85,7 @@ export const SalesforceConnectorSettings: React.FC<{}> = (_props: {}) => {
                 const s = asSalesforceConnection(c)!;
                 return {
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
-                    value: {
-                        ...s,
-                        auth: reduceAuthState(s.auth, action)
-                    }
+                    value: reduceAuthState(s, action)
                 };
             });
         };
@@ -135,7 +132,7 @@ export const SalesforceConnectorSettings: React.FC<{}> = (_props: {}) => {
     }
 
     // Get the connection health
-    const health = getSalesforceConnnectionHealth(status);
+    const health = getSalesforceConnectionHealth(status);
     let indicatorStatus: IndicatorStatus | undefined = undefined;
     switch (health) {
         case ConnectionHealth.UNKNOWN:
@@ -223,7 +220,7 @@ export const SalesforceConnectorSettings: React.FC<{}> = (_props: {}) => {
                         <TextField
                             name="Instance API URL"
                             caption="URL of the Salesforce API"
-                            value={salesforceConnection?.auth.coreAccessToken?.apiInstanceUrl ?? ''}
+                            value={salesforceConnection?.coreAccessToken?.apiInstanceUrl ?? ''}
                             placeholder=""
                             leadingVisual={() => <div>URL</div>}
                             readOnly
@@ -233,7 +230,7 @@ export const SalesforceConnectorSettings: React.FC<{}> = (_props: {}) => {
                         <TextField
                             name="Core Access Token"
                             caption="Access Token for Salesforce Core"
-                            value={salesforceConnection?.auth.coreAccessToken?.accessToken ?? ''}
+                            value={salesforceConnection?.coreAccessToken?.accessToken ?? ''}
                             placeholder=""
                             leadingVisual={KeyIcon}
                             readOnly
@@ -247,7 +244,7 @@ export const SalesforceConnectorSettings: React.FC<{}> = (_props: {}) => {
                         <TextField
                             name="Data Cloud Instance URL"
                             caption="URL of the Data Cloud instance"
-                            value={salesforceConnection?.auth.dataCloudAccessToken?.instanceUrl?.toString() ?? ''}
+                            value={salesforceConnection?.dataCloudAccessToken?.instanceUrl?.toString() ?? ''}
                             placeholder=""
                             leadingVisual={() => <div>URL</div>}
                             readOnly
@@ -257,7 +254,7 @@ export const SalesforceConnectorSettings: React.FC<{}> = (_props: {}) => {
                         <TextField
                             name="Data Cloud Access Token"
                             caption="URL of the Data Cloud instance"
-                            value={salesforceConnection?.auth.dataCloudAccessToken?.jwt?.raw ?? ''}
+                            value={salesforceConnection?.dataCloudAccessToken?.jwt?.raw ?? ''}
                             placeholder=""
                             leadingVisual={KeyIcon}
                             readOnly
@@ -267,7 +264,7 @@ export const SalesforceConnectorSettings: React.FC<{}> = (_props: {}) => {
                         <TextField
                             name="Core Tenant ID"
                             caption="Tenant id for core apis"
-                            value={salesforceConnection?.auth.dataCloudAccessToken?.coreTenantId ?? ''}
+                            value={salesforceConnection?.dataCloudAccessToken?.coreTenantId ?? ''}
                             placeholder=""
                             leadingVisual={() => <div>ID</div>}
                             readOnly
@@ -277,7 +274,7 @@ export const SalesforceConnectorSettings: React.FC<{}> = (_props: {}) => {
                         <TextField
                             name="Data Cloud Tenant ID"
                             caption="Tenant id for Data Cloud apis"
-                            value={salesforceConnection?.auth.dataCloudAccessToken?.dcTenantId ?? ''}
+                            value={salesforceConnection?.dataCloudAccessToken?.dcTenantId ?? ''}
                             placeholder=""
                             leadingVisual={() => <div>ID</div>}
                             readOnly

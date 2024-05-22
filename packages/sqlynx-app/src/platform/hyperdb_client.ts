@@ -7,7 +7,7 @@ export interface HyperQueryExecutionProgress extends QueryExecutionProgress { }
 
 export interface HyperQueryResultStream extends QueryExecutionResponseStream { }
 
-export interface HyperDatabaseConnection {
+export interface HyperDatabaseChannel {
     /// Execute Query
     executeQuery(param: proto.salesforce_hyperdb_grpc_v1.pb.QueryParam): Promise<HyperQueryResultStream>;
     /// Destroy the connection
@@ -16,5 +16,5 @@ export interface HyperDatabaseConnection {
 
 export interface HyperDatabaseClient {
     /// Create a database connection
-    connect(args: GrpcChannelArgs): Promise<HyperDatabaseConnection>;
+    connect(args: GrpcChannelArgs): Promise<HyperDatabaseChannel>;
 }

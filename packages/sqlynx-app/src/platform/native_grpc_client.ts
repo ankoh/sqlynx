@@ -22,7 +22,7 @@ export interface NativeGrpcServerStreamBatch {
 export interface NativeGrpcProxyConfig {
     /// The endpoint URL
     proxyEndpoint: URL;
-};
+}
 
 const DEFAULT_READ_TIMEOUT = 1000;
 const DEFAULT_BATCH_TIMEOUT = 100;
@@ -85,7 +85,7 @@ export class NativeGrpcServerStream implements AsyncIterator<NativeGrpcServerStr
 
         // Unpack the messages
         let offset = 0;
-        let messages = [];
+        const messages = [];
         while (offset < bodyBuffer.byteLength) {
             const length = bodyBufferView.getUint32(offset, true);
             offset += 4;

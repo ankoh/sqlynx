@@ -1,12 +1,11 @@
 import * as React from 'react';
 
-import { HYPER_GRPC_CONNECTOR as HYPER_GRPC_CONNECTOR } from './connector_info.js';
-import { createEmptyTimings } from './connection_state.js';
+import { HYPER_GRPC_CONNECTOR } from './connector_info.js';
 import { useAllocatedConnectionState } from './connection_registry.js';
 import { useAppConfig } from '../app_config.js';
 import { useLogger } from '../platform/logger_provider.js';
 import { Dispatch } from '../utils/variant.js';
-import { HyperGrpcConnectorAction, RESET } from './hyper_grpc_connector_state.js';
+import { createHyperGrpcConnectionState, HyperGrpcConnectorAction, RESET } from './hyper_grpc_connection_state.js';
 import { HyperGrpcConnectionParams } from './connection_params.js';
 
 export interface HyperGrpcConnectorApi {
@@ -47,10 +46,7 @@ export const HyperGrpcConnector: React.FC<Props> = (props: Props) => {
     // c.f. salesforce_connector
     const connectionId = useAllocatedConnectionState((_) => ({
         type: HYPER_GRPC_CONNECTOR,
-        value: {
-            connectionTimings: createEmptyTimings(),
-            connection: null,
-        }
+        value: createHyperGrpcConnectionState()
     }));
     return (
         <CONNECTION_ID_CTX.Provider value={connectionId}>

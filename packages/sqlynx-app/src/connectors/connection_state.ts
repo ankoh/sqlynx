@@ -1,36 +1,28 @@
 import * as proto from '@ankoh/sqlynx-pb';
 
-import { HyperDatabaseConnection } from "../platform/hyperdb_client.js";
-import { VariantKind } from "../utils/variant.js";
-import { BRAINSTORM_CONNECTOR, HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR as SALESFORCE_DATA_CLOUD_CONNECTOR } from "./connector_info.js";
-import { SalesforceAuthState } from "./salesforce_auth_state.js";
+import { HyperGrpcConnectionState } from './hyper_grpc_connection_state.js';
+import { SalesforceConnectorState } from './salesforce_connection_state.js';
+import { ConnectionStatistics } from './connection_statistics.js';
+import { VariantKind } from '../utils/variant.js';
+import {
+    BRAINSTORM_CONNECTOR,
+    HYPER_GRPC_CONNECTOR,
+    SALESFORCE_DATA_CLOUD_CONNECTOR,
+} from './connector_info.js';
+import {
+    buildBrainstormConnectorParams,
+    buildHyperConnectorParams,
+    buildSalesforceConnectorParams,
+} from './connection_params.js';
 
 export type ConnectionState =
     | VariantKind<typeof SALESFORCE_DATA_CLOUD_CONNECTOR, SalesforceConnectorState>
-    | VariantKind<typeof BRAINSTORM_CONNECTOR, BrainstormConnectorState>
-    | VariantKind<typeof HYPER_GRPC_CONNECTOR, HyperGrpcConnectorState>
+    | VariantKind<typeof BRAINSTORM_CONNECTOR, BrainstormConnectionState>
+    | VariantKind<typeof HYPER_GRPC_CONNECTOR, HyperGrpcConnectionState>
     ;
 
-export interface ConnectionTimings {
-    totalQueriesStarted: BigInt;
-    totalQueriesFinished: BigInt;
-    totalQueryDurationMs: BigInt;
-    lastQueryStarted: Date | null;
-    lastQueryFinished: Date | null;
-}
-
-export interface BrainstormConnectorState {
-    timings: ConnectionTimings;
-}
-
-export interface SalesforceConnectorState {
-    timings: ConnectionTimings;
-    auth: SalesforceAuthState;
-}
-
-export interface HyperGrpcConnectorState {
-    connectionTimings: ConnectionTimings;
-    connection: HyperDatabaseConnection | null;
+export interface BrainstormConnectionState {
+    stats: ConnectionStatistics;
 }
 
 export enum ConnectionHealth {
@@ -64,14 +56,12 @@ export enum ConnectorAuthCheck {
     CLIENT_ID_MISMATCH,
 }
 
-export function createEmptyTimings(): ConnectionTimings {
-    return {
-        totalQueriesStarted: BigInt(0),
-        totalQueriesFinished: BigInt(0),
-        totalQueryDurationMs: BigInt(0),
-        lastQueryStarted: null,
-        lastQueryFinished: null
-    };
+export function asHyperGrpcConnection(state: ConnectionState | null): HyperGrpcConnectionState | null {
+    if (state == null) return null;
+    switch (state.type) {
+        case HYPER_GRPC_CONNECTOR: return state.value;
+        default: return null;
+    }
 }
 
 export function asSalesforceConnection(state: ConnectionState | null): SalesforceConnectorState | null {
@@ -82,40 +72,53 @@ export function asSalesforceConnection(state: ConnectionState | null): Salesforc
     }
 }
 
+export function getHyperGrpcConnectionStatus(conn: HyperGrpcConnectionState | null): ConnectionStatus {
+    if (!conn) {
+        return ConnectionStatus.UNKNOWN;
+    }
+    let state: ConnectionStatus = ConnectionStatus.UNKNOWN;
+    if (!conn) {
+        state = ConnectionStatus.NOT_STARTED;
+    } else if (conn.connectionError) {
+        state = ConnectionStatus.AUTHORIZATION_FAILED;
+    }
+    return state;
+}
+
 export function getSalesforceConnectionStatus(conn: SalesforceConnectorState | null): ConnectionStatus {
     if (!conn) {
         return ConnectionStatus.UNKNOWN;
     }
     let state: ConnectionStatus = ConnectionStatus.UNKNOWN;
-    if (!conn.auth.timings.authStartedAt) {
+    if (!conn.authTimings.authStartedAt) {
         state = ConnectionStatus.NOT_STARTED;
-    } else if (conn.auth.authError) {
+    } else if (conn.authError) {
         state = ConnectionStatus.AUTHORIZATION_FAILED;
-    } else if (conn.auth.openAuthWindow != null) {
+    } else if (conn.openAuthWindow != null) {
         state = ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_WINDOW;
-    } else if (conn.auth.timings.dataCloudAccessTokenReceievedAt) {
+    } else if (conn.authTimings.dataCloudAccessTokenReceievedAt) {
         state = ConnectionStatus.AUTHORIZATION_COMPLETED;
-    } else if (conn.auth.timings.dataCloudAccessTokenRequestedAt) {
+    } else if (conn.authTimings.dataCloudAccessTokenRequestedAt) {
         state = ConnectionStatus.DATA_CLOUD_TOKEN_REQUESTED;
-    } else if (conn.auth.timings.coreAccessTokenRequestedAt) {
+    } else if (conn.authTimings.coreAccessTokenRequestedAt) {
         state = ConnectionStatus.CORE_ACCESS_TOKEN_REQUESTED;
-    } else if (conn.auth.timings.openedNativeAuthLinkAt) {
+    } else if (conn.authTimings.openedNativeAuthLinkAt) {
         state = ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_LINK;
-    } else if (conn.auth.timings.openedWebAuthWindowAt) {
-        if (!conn.auth.timings.closedWebAuthWindowAt) {
+    } else if (conn.authTimings.openedWebAuthWindowAt) {
+        if (!conn.authTimings.closedWebAuthWindowAt) {
             state = ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_WINDOW;
-        } else if (!conn.auth.timings.oauthCodeReceivedAt) {
+        } else if (!conn.authTimings.oauthCodeReceivedAt) {
             state = ConnectionStatus.OAUTH_CODE_RECEIVED;
         }
-    } else if (conn.auth.timings.pkceGenStartedAt) {
+    } else if (conn.authTimings.pkceGenStartedAt) {
         state = ConnectionStatus.PKCE_GENERATION_STARTED;
-    } else if (conn.auth.timings.authStartedAt) {
+    } else if (conn.authTimings.authStartedAt) {
         state = ConnectionStatus.AUTHENTICATION_REQUESTED;
     }
     return state;
 }
 
-export function getSalesforceConnnectionHealth(status: ConnectionStatus): ConnectionHealth {
+export function getSalesforceConnectionHealth(status: ConnectionStatus): ConnectionHealth {
     switch (status) {
         case ConnectionStatus.UNKNOWN:
         case ConnectionStatus.NOT_STARTED:
@@ -142,52 +145,22 @@ export function checkSalesforceAuth(
     if (!state) {
         return ConnectorAuthCheck.UNKNOWN;
     }
-    if (!state.auth.authParams) {
+    if (!state.authParams) {
         return ConnectorAuthCheck.AUTHENTICATION_NOT_STARTED;
     }
-    if (state.auth.authParams.appConsumerKey != params.appConsumerKey) {
+    if (state.authParams.appConsumerKey != params.appConsumerKey) {
         return ConnectorAuthCheck.CLIENT_ID_MISMATCH;
     }
-    if (state.auth.coreAccessToken || state.auth.dataCloudAccessToken) {
+    if (state.coreAccessToken || state.dataCloudAccessToken) {
         return ConnectorAuthCheck.AUTHENTICATED;
     }
-    if (state.auth.timings.authStartedAt) {
+    if (state.authTimings.authStartedAt) {
         return ConnectorAuthCheck.AUTHENTICATION_IN_PROGRESS;
     }
-    if (state.auth.authError) {
+    if (state.authError) {
         return ConnectorAuthCheck.AUTHENTICATION_FAILED;
     }
     return ConnectorAuthCheck.UNKNOWN;
-}
-
-export function buildSalesforceConnectorParams(state: SalesforceConnectorState | null) {
-    return new proto.sqlynx_session.pb.ConnectorParams({
-        connector: {
-            case: "salesforce",
-            value: new proto.sqlynx_session.pb.SalesforceConnectorParams({
-                instanceUrl: state?.auth.authParams?.instanceUrl,
-                appConsumerKey: state?.auth.authParams?.appConsumerKey
-            })
-        }
-    });
-}
-
-export function buildBrainstormConnectorParams() {
-    return new proto.sqlynx_session.pb.ConnectorParams({
-        connector: {
-            case: "brainstorm",
-            value: new proto.sqlynx_session.pb.BrainstormConnectorParams()
-        }
-    });
-}
-
-export function buildHyperConnectorParams() {
-    return new proto.sqlynx_session.pb.ConnectorParams({
-        connector: {
-            case: "hyper",
-            value: new proto.sqlynx_session.pb.HyperConnectorParams()
-        }
-    });
 }
 
 export function buildConnectorParams(state: ConnectionState) {
@@ -196,7 +169,8 @@ export function buildConnectorParams(state: ConnectionState) {
             return buildBrainstormConnectorParams();
         case HYPER_GRPC_CONNECTOR:
             return buildHyperConnectorParams();
-        case SALESFORCE_DATA_CLOUD_CONNECTOR:
-            return buildSalesforceConnectorParams(state.value);
+        case SALESFORCE_DATA_CLOUD_CONNECTOR: {
+            return buildSalesforceConnectorParams(state.value.authParams);
+        }
     }
 }

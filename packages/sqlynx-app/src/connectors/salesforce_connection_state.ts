@@ -2,6 +2,7 @@ import { PKCEChallenge } from '../utils/pkce.js';
 import { VariantKind } from '../utils/variant.js';
 import { SalesforceCoreAccessToken, SalesforceDataCloudAccessToken } from './salesforce_api_client.js';
 import { SalesforceAuthParams } from './connection_params.js';
+import { ConnectionStatistics, createConnectionStatistics } from './connection_statistics.js';
 
 export interface SalesforceAuthTimings {
     /// The time when the auth started
@@ -32,9 +33,29 @@ export interface SalesforceAuthTimings {
     dataCloudAccessTokenReceievedAt: Date | null;
 }
 
-export interface SalesforceAuthState {
+export function createSalesforceAuthTimings(): SalesforceAuthTimings {
+    return {
+        authCancelledAt: null,
+        authFailedAt: null,
+        authStartedAt: null,
+        pkceGenStartedAt: null,
+        pkceGenFinishedAt: null,
+        openedNativeAuthLinkAt: null,
+        openedWebAuthWindowAt: null,
+        closedWebAuthWindowAt: null,
+        oauthCodeReceivedAt: null,
+        coreAccessTokenRequestedAt: null,
+        coreAccessTokenReceivedAt: null,
+        dataCloudAccessTokenRequestedAt: null,
+        dataCloudAccessTokenReceievedAt: null
+    };
+}
+
+export interface SalesforceConnectorState {
+    /// The connection statistics
+    stats: ConnectionStatistics;
     /// The timings
-    timings: SalesforceAuthTimings;
+    authTimings: SalesforceAuthTimings;
     /// The auth params
     authParams: SalesforceAuthParams | null;
     /// The authentication error
@@ -51,30 +72,19 @@ export interface SalesforceAuthState {
     dataCloudAccessToken: SalesforceDataCloudAccessToken | null;
 }
 
-export const AUTH_FLOW_DEFAULT_STATE: SalesforceAuthState = {
-    timings: {
-        authCancelledAt: null,
-        authFailedAt: null,
-        authStartedAt: null,
-        pkceGenStartedAt: null,
-        pkceGenFinishedAt: null,
-        openedNativeAuthLinkAt: null,
-        openedWebAuthWindowAt: null,
-        closedWebAuthWindowAt: null,
-        oauthCodeReceivedAt: null,
-        coreAccessTokenRequestedAt: null,
-        coreAccessTokenReceivedAt: null,
-        dataCloudAccessTokenRequestedAt: null,
-        dataCloudAccessTokenReceievedAt: null,
-    },
-    authParams: null,
-    authError: null,
-    pkceChallenge: null,
-    openAuthWindow: null,
-    coreAuthCode: null,
-    coreAccessToken: null,
-    dataCloudAccessToken: null,
-};
+export function createSalesforceConnectorState(): SalesforceConnectorState {
+    return {
+        stats: createConnectionStatistics(),
+        authTimings: createSalesforceAuthTimings(),
+        authParams: null,
+        authError: null,
+        pkceChallenge: null,
+        openAuthWindow: null,
+        coreAuthCode: null,
+        coreAccessToken: null,
+        dataCloudAccessToken: null,
+    };
+}
 
 export const RESET = Symbol('RESET');
 export const AUTH_CANCELLED = Symbol('AUTH_CANCELLED');
@@ -107,24 +117,14 @@ export type SalesforceAuthAction =
     | VariantKind<typeof REQUESTING_DATA_CLOUD_ACCESS_TOKEN, null>
     | VariantKind<typeof RECEIVED_DATA_CLOUD_ACCESS_TOKEN, SalesforceDataCloudAccessToken>;
 
-export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAuthAction): SalesforceAuthState {
+export function reduceAuthState(state: SalesforceConnectorState, action: SalesforceAuthAction): SalesforceConnectorState {
     switch (action.type) {
         case AUTH_STARTED:
             return {
-                timings: {
+                stats: state.stats,
+                authTimings: {
+                    ...createSalesforceAuthTimings(),
                     authStartedAt: new Date(),
-                    authCancelledAt: null,
-                    authFailedAt: null,
-                    pkceGenStartedAt: null,
-                    pkceGenFinishedAt: null,
-                    openedNativeAuthLinkAt: null,
-                    openedWebAuthWindowAt: null,
-                    closedWebAuthWindowAt: null,
-                    oauthCodeReceivedAt: null,
-                    coreAccessTokenRequestedAt: null,
-                    coreAccessTokenReceivedAt: null,
-                    dataCloudAccessTokenRequestedAt: null,
-                    dataCloudAccessTokenReceievedAt: null,
                 },
                 authParams: action.value,
                 authError: null,
@@ -136,21 +136,8 @@ export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAu
             };
         case RESET:
             return {
-                timings: {
-                    authStartedAt: new Date(),
-                    authCancelledAt: null,
-                    authFailedAt: null,
-                    pkceGenStartedAt: null,
-                    pkceGenFinishedAt: null,
-                    openedNativeAuthLinkAt: null,
-                    openedWebAuthWindowAt: null,
-                    closedWebAuthWindowAt: null,
-                    oauthCodeReceivedAt: null,
-                    coreAccessTokenRequestedAt: null,
-                    coreAccessTokenReceivedAt: null,
-                    dataCloudAccessTokenRequestedAt: null,
-                    dataCloudAccessTokenReceievedAt: null,
-                },
+                stats: createConnectionStatistics(),
+                authTimings: createSalesforceAuthTimings(),
                 authParams: state.authParams,
                 authError: null,
                 pkceChallenge: null,
@@ -162,8 +149,8 @@ export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAu
         case AUTH_CANCELLED:
             return {
                 ...state,
-                timings: {
-                    ...state.timings,
+                authTimings: {
+                    ...state.authTimings,
                     authCancelledAt: new Date(),
                 },
                 authError: action.value
@@ -171,8 +158,8 @@ export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAu
         case AUTH_FAILED:
             return {
                 ...state,
-                timings: {
-                    ...state.timings,
+                authTimings: {
+                    ...state.authTimings,
                     authFailedAt: new Date(),
                 },
                 authError: action.value,
@@ -180,16 +167,16 @@ export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAu
         case GENERATING_PKCE_CHALLENGE:
             return {
                 ...state,
-                timings: {
-                    ...state.timings,
+                authTimings: {
+                    ...state.authTimings,
                     pkceGenStartedAt: new Date(),
                 },
             };
         case GENERATED_PKCE_CHALLENGE:
             return {
                 ...state,
-                timings: {
-                    ...state.timings,
+                authTimings: {
+                    ...state.authTimings,
                     pkceGenFinishedAt: new Date(),
                 },
                 pkceChallenge: action.value,
@@ -197,8 +184,8 @@ export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAu
         case OAUTH_NATIVE_LINK_OPENED:
             return {
                 ...state,
-                timings: {
-                    ...state.timings,
+                authTimings: {
+                    ...state.authTimings,
                     openedNativeAuthLinkAt: new Date(),
                 },
                 openAuthWindow: null,
@@ -206,8 +193,8 @@ export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAu
         case OAUTH_WEB_WINDOW_OPENED:
             return {
                 ...state,
-                timings: {
-                    ...state.timings,
+                authTimings: {
+                    ...state.authTimings,
                     openedWebAuthWindowAt: new Date(),
                 },
                 openAuthWindow: action.value,
@@ -216,8 +203,8 @@ export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAu
             if (!state.openAuthWindow) return state;
             return {
                 ...state,
-                timings: {
-                    ...state.timings,
+                authTimings: {
+                    ...state.authTimings,
                     closedWebAuthWindowAt: new Date(),
                 },
                 openAuthWindow: null,
@@ -225,8 +212,8 @@ export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAu
         case RECEIVED_CORE_AUTH_CODE:
             return {
                 ...state,
-                timings: {
-                    ...state.timings,
+                authTimings: {
+                    ...state.authTimings,
                     oauthCodeReceivedAt: new Date(),
                 },
                 coreAuthCode: action.value,
@@ -234,16 +221,16 @@ export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAu
         case REQUESTING_CORE_AUTH_TOKEN:
             return {
                 ...state,
-                timings: {
-                    ...state.timings,
+                authTimings: {
+                    ...state.authTimings,
                     coreAccessTokenRequestedAt: new Date(),
                 },
             };
         case RECEIVED_CORE_AUTH_TOKEN:
             return {
                 ...state,
-                timings: {
-                    ...state.timings,
+                authTimings: {
+                    ...state.authTimings,
                     coreAccessTokenReceivedAt: new Date(),
                 },
                 coreAccessToken: action.value,
@@ -251,16 +238,16 @@ export function reduceAuthState(state: SalesforceAuthState, action: SalesforceAu
         case REQUESTING_DATA_CLOUD_ACCESS_TOKEN:
             return {
                 ...state,
-                timings: {
-                    ...state.timings,
+                authTimings: {
+                    ...state.authTimings,
                     dataCloudAccessTokenRequestedAt: new Date(),
                 },
             };
         case RECEIVED_DATA_CLOUD_ACCESS_TOKEN:
             return {
                 ...state,
-                timings: {
-                    ...state.timings,
+                authTimings: {
+                    ...state.authTimings,
                     dataCloudAccessTokenReceievedAt: new Date(),
                 },
                 dataCloudAccessToken: action.value,

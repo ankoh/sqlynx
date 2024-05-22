@@ -1,4 +1,6 @@
+import * as proto from '@ankoh/sqlynx-pb';
 import Immutable from 'immutable';
+
 import { KeyValueListElement } from '../view/keyvalue_list.js';
 import { GrpcChannelArgs } from '../platform/grpc_common.js';
 
@@ -18,4 +20,34 @@ export interface SalesforceAuthParams {
     appConsumerKey: string;
     /// The client secret
     appConsumerSecret: string | null;
+}
+
+export function buildSalesforceConnectorParams(params: SalesforceAuthParams | null): proto.sqlynx_session.pb.ConnectorParams {
+    return new proto.sqlynx_session.pb.ConnectorParams({
+        connector: {
+            case: "salesforce",
+            value: new proto.sqlynx_session.pb.SalesforceConnectorParams({
+                instanceUrl: params?.instanceUrl ?? "",
+                appConsumerKey: params?.appConsumerKey ?? ""
+            })
+        }
+    });
+}
+
+export function buildBrainstormConnectorParams(): proto.sqlynx_session.pb.ConnectorParams {
+    return new proto.sqlynx_session.pb.ConnectorParams({
+        connector: {
+            case: "brainstorm",
+            value: new proto.sqlynx_session.pb.BrainstormConnectorParams()
+        }
+    });
+}
+
+export function buildHyperConnectorParams(): proto.sqlynx_session.pb.ConnectorParams {
+    return new proto.sqlynx_session.pb.ConnectorParams({
+        connector: {
+            case: "hyper",
+            value: new proto.sqlynx_session.pb.HyperConnectorParams()
+        }
+    });
 }

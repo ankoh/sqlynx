@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Immutable from 'immutable';
 
-import { useCurrentSessionState } from '../session/current_session.js';
+import { useCurrentSessionState } from './current_session.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
 import {
     QueryExecutionResponseStream,
@@ -44,8 +44,8 @@ export const QueryExecutor = (props: { children?: React.ReactElement }) => {
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {
                         api: salesforceAPI,
-                        authParams: sfconn.auth.authParams!,
-                        dataCloudAccessToken: sfconn.auth.dataCloudAccessToken!,
+                        authParams: sfconn.authParams!,
+                        dataCloudAccessToken: sfconn.dataCloudAccessToken!,
                         scriptText: state.scripts[ScriptKey.MAIN_SCRIPT]?.script?.toString() ?? '',
                     },
                 };
