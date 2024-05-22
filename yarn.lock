@@ -57,7 +57,7 @@ __metadata:
     "@lezer/highlight": "npm:^1.2.0"
     "@octokit/graphql": "npm:^8.1.1"
     "@primer/octicons-react": "patch:@primer/octicons-react@npm%3A19.9.0#~/.yarn/patches/@primer-octicons-react-npm-19.9.0-65341cfa23.patch"
-    "@primer/react": "npm:^36.18.0"
+    "@primer/react": "npm:^36.19.0"
     "@react-hook/resize-observer": "npm:^2.0.1"
     "@tauri-apps/api": "npm:^2.0.0-beta.11"
     "@tauri-apps/cli": "npm:^2.0.0-beta.17"
@@ -1063,10 +1063,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@github/tab-container-element@npm:4.5.0":
-  version: 4.5.0
-  resolution: "@github/tab-container-element@npm:4.5.0"
-  checksum: 10c0/0428b39f794867a4938f3f381d00af2eba76d4320c1219e6aaf47137a88ec893e9c36d37fe33ea5428f8717939e769ab25ad74b2a2480ca27037ea308c14c186
+"@github/tab-container-element@npm:^4.8.0":
+  version: 4.8.0
+  resolution: "@github/tab-container-element@npm:4.8.0"
+  checksum: 10c0/5df7e691fdf70cc700a51e3c7d676bc064a59d5dcc5d9b2ff16901b4300c1515600f7afe6dc700060376ff2422abcc0ad1cc988bb148a9e164108a02922c3a4e
   languageName: node
   linkType: hard
 
@@ -1673,15 +1673,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@primer/react@npm:^36.18.0":
-  version: 36.18.0
-  resolution: "@primer/react@npm:36.18.0"
+"@primer/react@npm:^36.19.0":
+  version: 36.19.0
+  resolution: "@primer/react@npm:36.19.0"
   dependencies:
     "@github/combobox-nav": "npm:^2.1.5"
     "@github/markdown-toolbar-element": "npm:^2.1.0"
     "@github/paste-markdown": "npm:^1.4.0"
     "@github/relative-time-element": "npm:^4.1.2"
-    "@github/tab-container-element": "npm:4.5.0"
+    "@github/tab-container-element": "npm:^4.8.0"
     "@lit-labs/react": "npm:1.2.1"
     "@oddbird/popover-polyfill": "npm:^0.3.1"
     "@primer/behaviors": "npm:^1.5.1"
@@ -1721,7 +1721,7 @@ __metadata:
       optional: true
     "@types/styled-components":
       optional: true
-  checksum: 10c0/9c28c8f6e478516b6dcb4a7a279bfcd8c095e22d1d25581fdeba46b10ae96e1df95af48bdbe569b6815e5de86bf0bfb84f81136ce97c228b09063ed54c9c947a
+  checksum: 10c0/eb54c32c493e708d3ea43b1560e0b6b2ff412c03a2abe03b299b3e6f51cd65f6869346f3846fa7c568a6bacf39270d361e3aeae22a6c924af5472c3f8483fd94
   languageName: node
   linkType: hard
 
