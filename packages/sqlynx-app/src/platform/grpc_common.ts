@@ -1,9 +1,15 @@
+export interface GrpcTlsSettings {
+    /// The mTLS client key path
+    keyPath: string;
+    /// The mTLS client certificate path
+    pubPath: string;
+    /// The mTLS ca certificates path
+    caPath: string;
+}
 
 export interface GrpcChannelArgs {
     endpoint: string,
-    tlsClientKeyPath?: string;
-    tlsClientCertPath?: string;
-    tlsCacertsPath?: string;
+    tls?: GrpcTlsSettings;
 }
 
 export class GrpcError extends Error {

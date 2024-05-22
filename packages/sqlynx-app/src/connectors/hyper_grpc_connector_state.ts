@@ -1,5 +1,6 @@
 import { VariantKind } from '../utils/variant.js';
 import { HyperGrpcConnectionParams } from './connection_params.js';
+import { HyperDatabaseConnection } from '../platform/hyperdb_client.js';
 
 export interface HyperGrpcTimings {
     /// The time when the setup started
@@ -16,7 +17,9 @@ export interface HyperGrpcState {
     /// The auth params
     setupParams: HyperGrpcConnectionParams | null;
     /// The authentication error
-    connError: string | null;
+    connectionError: string | null;
+    /// The Hyper connection
+    connection: HyperDatabaseConnection | null;
 }
 
 export const CONNECTION_DEFAULT_STATE: HyperGrpcState = {
@@ -26,13 +29,15 @@ export const CONNECTION_DEFAULT_STATE: HyperGrpcState = {
         setupStartedAt: null,
     },
     setupParams: null,
-    connError: null,
+    connectionError: null,
+    connection: null,
 };
 
 export const RESET = Symbol('RESET');
-export const SETUP_CANCELLED = Symbol('AUTH_CANCELLED');
-export const SETUP_FAILED = Symbol('AUTH_FAILED');
-export const SETUP_STARTED = Symbol('AUTH_STARTED');
+export const SETUP_CANCELLED = Symbol('SETUP_CANCELLED');
+export const SETUP_FAILED = Symbol('SETUP_FAILED');
+export const SETUP_STARTED = Symbol('SETUP_STARTED');
+export const CHANNEL_SETUP = Symbol('SETUP_STARTED');
 
 export type HyperGrpcConnectorAction =
     | VariantKind<typeof RESET, null>
@@ -42,16 +47,6 @@ export type HyperGrpcConnectorAction =
 
 export function reduceAuthState(state: HyperGrpcState, action: HyperGrpcConnectorAction): HyperGrpcState {
     switch (action.type) {
-        case SETUP_STARTED:
-            return {
-                timings: {
-                    setupStartedAt: new Date(),
-                    setupCancelledAt: null,
-                    setupFailedAt: null,
-                },
-                setupParams: action.value,
-                connError: null,
-            };
         case RESET:
             return {
                 timings: {
@@ -60,11 +55,19 @@ export function reduceAuthState(state: HyperGrpcState, action: HyperGrpcConnecto
                     setupFailedAt: null,
                 },
                 setupParams: state.setupParams,
-                connError: null,
+                connectionError: null,
+                connection: null,
             };
         case SETUP_STARTED:
             return {
-                ...state,
+                timings: {
+                    setupStartedAt: new Date(),
+                    setupCancelledAt: null,
+                    setupFailedAt: null,
+                },
+                setupParams: action.value,
+                connectionError: null,
+                connection: null,
             };
         case SETUP_CANCELLED:
             return {
@@ -73,7 +76,8 @@ export function reduceAuthState(state: HyperGrpcState, action: HyperGrpcConnecto
                     ...state.timings,
                     setupCancelledAt: new Date(),
                 },
-                connError: action.value
+                connectionError: action.value,
+                connection: null
             };
         case SETUP_FAILED:
             return {
@@ -82,7 +86,8 @@ export function reduceAuthState(state: HyperGrpcState, action: HyperGrpcConnecto
                     ...state.timings,
                     setupFailedAt: new Date(),
                 },
-                connError: action.value,
+                connectionError: action.value,
+                connection: null
             };
     }
 }

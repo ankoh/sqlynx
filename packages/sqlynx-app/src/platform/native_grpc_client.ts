@@ -261,14 +261,16 @@ export class NativeGrpcClient {
 
         const headers = new Headers();
         headers.set(HEADER_NAME_ENDPOINT, args.endpoint);
-        if (args.tlsClientKeyPath) {
-            headers.set(HEADER_NAME_TLS_CLIENT_KEY, args.tlsClientKeyPath);
-        }
-        if (args.tlsClientCertPath) {
-            headers.set(HEADER_NAME_TLS_CLIENT_CERT, args.tlsClientCertPath);
-        }
-        if (args.tlsCacertsPath) {
-            headers.set(HEADER_NAME_TLS_CACERTS, args.tlsCacertsPath);
+        if (args.tls) {
+            if (args.tls.keyPath !== "") {
+                headers.set(HEADER_NAME_TLS_CLIENT_KEY, args.tls.keyPath);
+            }
+            if (args.tls.pubPath !== "") {
+                headers.set(HEADER_NAME_TLS_CLIENT_CERT, args.tls.pubPath);
+            }
+            if (args.tls.caPath !== "") {
+                headers.set(HEADER_NAME_TLS_CACERTS, args.tls.caPath);
+            }
         }
         const request = new Request(url, {
             method: 'POST',
