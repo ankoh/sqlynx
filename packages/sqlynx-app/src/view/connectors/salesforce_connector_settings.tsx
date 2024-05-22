@@ -114,7 +114,7 @@ export const SalesforceConnectorSettings: React.FC<{}> = (_props: {}) => {
             statusName = "Authorization failed";
             break;
         case ConnectionStatus.AUTHORIZATION_COMPLETED:
-            statusName = "Authorization successfull";
+            statusName = "Authorization successful";
             break;
         case ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_LINK:
         case ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_WINDOW:
