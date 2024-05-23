@@ -52,7 +52,7 @@
         "cm6-theme-nord": "^0.2.0",
         "copy-webpack-plugin": "^12.0.2",
         "cross-env": "^7.0.3",
-        "css-loader": "^7.1.1",
+        "css-loader": "^7.1.2",
         "file-loader": "^6.2.0",
         "flatbuffers": "^24.3.25",
         "fontfaceobserver": "^2.3.0",
