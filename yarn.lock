@@ -86,7 +86,7 @@ __metadata:
     flatbuffers: "npm:^24.3.25"
     fontfaceobserver: "npm:^2.3.0"
     fork-ts-checker-webpack-plugin: "npm:^9.0.2"
-    framer-motion: "npm:^11.2.5"
+    framer-motion: "npm:^11.2.6"
     html-webpack-plugin: "npm:^5.6.0"
     identity-obj-proxy: "npm:^3.0.0"
     immutable: "npm:^4.3.6"
@@ -5541,9 +5541,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"framer-motion@npm:^11.2.5":
-  version: 11.2.5
-  resolution: "framer-motion@npm:11.2.5"
+"framer-motion@npm:^11.2.6":
+  version: 11.2.6
+  resolution: "framer-motion@npm:11.2.6"
   dependencies:
     tslib: "npm:^2.4.0"
   peerDependencies:
@@ -5557,7 +5557,7 @@ __metadata:
       optional: true
     react-dom:
       optional: true
-  checksum: 10c0/24f611acd8a330974a015427db278a726d3b1f61d8aee0127fafc18e60ee9aecc9d86d292fe81fb13c507f1b1cc47b847e287a3a57489467e457a10f4ea201e8
+  checksum: 10c0/e3e6e0869f0397b5f1c440bb3d0a825f904b55077f80e7f4c7354dccef70b135f542d414494b52de6014a53e35fbbc0feaa112d2700bca13aeab1b2010ac773e
   languageName: node
   linkType: hard
 
