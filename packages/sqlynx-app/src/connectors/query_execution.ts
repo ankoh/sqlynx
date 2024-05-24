@@ -1,4 +1,5 @@
 import * as arrow from 'apache-arrow';
+import Immutable from 'immutable';
 
 import { VariantKind } from '../utils/index.js';
 import { SalesforceAPIClientInterface, SalesforceDataCloudAccessToken } from './salesforce_api_client.js';

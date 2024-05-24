@@ -48,8 +48,8 @@ export function createHyperGrpcConnectionState(): HyperGrpcConnectionState {
 }
 
 export const RESET = Symbol('RESET');
-export const CHANNEL_SETUP_CANCELLED = Symbol('CHANNEL_SETUP_CANCELLED');
-export const CHANNEL_SETUP_FAILED = Symbol('CHANNEL_SETUP_FAILED');
+export const SETUP_CANCELLED = Symbol('CHANNEL_SETUP_CANCELLED');
+export const SETUP_FAILED = Symbol('CHANNEL_SETUP_FAILED');
 export const CHANNEL_SETUP_STARTED = Symbol('CHANNEL_SETUP_STARTED');
 export const CHANNEL_READY = Symbol('CHANNEL_READY');
 export const HEALTH_CHECK_STARTED = Symbol('HEALTH_CHECK_STARTED');
@@ -59,9 +59,9 @@ export const HEALTH_CHECK_SUCCEEDED = Symbol('HEALTH_CHECK_SUCCEEDED');
 
 export type HyperGrpcConnectorAction =
     | VariantKind<typeof RESET, null>
+    | VariantKind<typeof SETUP_CANCELLED, string>
+    | VariantKind<typeof SETUP_FAILED, string>
     | VariantKind<typeof CHANNEL_SETUP_STARTED, HyperGrpcConnectionParams>
-    | VariantKind<typeof CHANNEL_SETUP_FAILED, string>
-    | VariantKind<typeof CHANNEL_SETUP_CANCELLED, string>
     | VariantKind<typeof CHANNEL_READY, HyperDatabaseChannel>
     | VariantKind<typeof HEALTH_CHECK_STARTED, void>
     | VariantKind<typeof HEALTH_CHECK_FAILED, string>
@@ -86,6 +86,26 @@ export function reduceAuthState(state: HyperGrpcConnectionState, action: HyperGr
                 connectionError: null,
                 connection: null,
             };
+        case SETUP_CANCELLED:
+            return {
+                ...state,
+                setupTimings: {
+                    ...state.setupTimings,
+                    channelSetupCancelledAt: new Date(),
+                },
+                connectionError: action.value,
+                connection: null
+            };
+        case SETUP_FAILED:
+            return {
+                ...state,
+                setupTimings: {
+                    ...state.setupTimings,
+                    channelSetupFailedAt: new Date(),
+                },
+                connectionError: action.value,
+                connection: null
+            };
         case CHANNEL_SETUP_STARTED:
             return {
                 setupTimings: {
@@ -100,26 +120,6 @@ export function reduceAuthState(state: HyperGrpcConnectionState, action: HyperGr
                 channelSetupParams: action.value,
                 connectionError: null,
                 connection: null,
-            };
-        case CHANNEL_SETUP_CANCELLED:
-            return {
-                ...state,
-                setupTimings: {
-                    ...state.setupTimings,
-                    channelSetupCancelledAt: new Date(),
-                },
-                connectionError: action.value,
-                connection: null
-            };
-        case CHANNEL_SETUP_FAILED:
-            return {
-                ...state,
-                setupTimings: {
-                    ...state.setupTimings,
-                    channelSetupFailedAt: new Date(),
-                },
-                connectionError: action.value,
-                connection: null
             };
 
         case CHANNEL_READY:

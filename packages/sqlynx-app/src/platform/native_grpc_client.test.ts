@@ -4,7 +4,7 @@ import * as proto from "@ankoh/sqlynx-pb";
 
 import { GrpcServerStream, NativeAPIMock } from './native_api_mock.js';
 import { NativeGrpcClient, NativeGrpcServerStreamBatchEvent } from './native_grpc_client.js';
-import { GrpcChannelArgs } from './grpc_common.js';
+import { GrpcChannelArgs, GrpcMetadataProvider } from './grpc_common.js';
 import { PlatformType } from './platform_type.js';
 import { TestLogger } from './test_logger.js';
 
@@ -20,6 +20,11 @@ describe('Native gRPC client', () => {
     const testChannelArgs: GrpcChannelArgs = {
         endpoint: "http://localhost:8080"
     };
+    const fakeMetadataProvider: GrpcMetadataProvider = {
+        getRequestMetadata(): Promise<Record<string, string>> {
+            return Promise.resolve({});
+        }
+    };
 
     // Test channel creation
     it("can create a channel", () => {
@@ -27,7 +32,7 @@ describe('Native gRPC client', () => {
         const client = new NativeGrpcClient({
             proxyEndpoint: new URL("sqlynx-native://localhost")
         }, logger);
-        expect(async () => await client.connect(testChannelArgs)).resolves;
+        expect(async () => await client.connect(testChannelArgs, fakeMetadataProvider)).resolves;
     });
     // Make sure channel creation fails with wrong base url
     it("fails to create a channel with invalid base URL", () => {
@@ -35,7 +40,7 @@ describe('Native gRPC client', () => {
         const client = new NativeGrpcClient({
             proxyEndpoint: new URL("not-sqlynx-native://localhost")
         }, logger);
-        expect(async () => await client.connect(testChannelArgs)).rejects.toThrow();
+        expect(async () => await client.connect(testChannelArgs, fakeMetadataProvider)).rejects.toThrow();
     });
 
     // Test starting a server stream
@@ -46,7 +51,7 @@ describe('Native gRPC client', () => {
         }, logger);
 
         // Setup the channel
-        const channel = await client.connect(testChannelArgs);
+        const channel = await client.connect(testChannelArgs, fakeMetadataProvider);
         expect(channel.channelId).not.toBeNull();
         expect(channel.channelId).not.toBeNaN();
 
@@ -81,7 +86,7 @@ describe('Native gRPC client', () => {
         }, logger);
 
         // Setup the channel
-        const channel = await client.connect(testChannelArgs);
+        const channel = await client.connect(testChannelArgs, fakeMetadataProvider);
         expect(channel.channelId).not.toBeNull();
         expect(channel.channelId).not.toBeNaN();
 

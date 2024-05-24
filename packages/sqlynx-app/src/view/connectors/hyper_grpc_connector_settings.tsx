@@ -15,6 +15,7 @@ import { Dispatch } from '../../utils/variant.js';
 
 import * as symbols from '../../../static/svg/symbols.generated.svg';
 import * as style from './connector_settings.module.css';
+import { AttachedDatabase, HyperDatabaseConnectionContext } from '../../platform/hyperdb_client.js';
 
 const LOG_CTX = "hyper_connector";
 
@@ -55,13 +56,21 @@ export const HyperGrpcConnectorSettings: React.FC<{}> = (_props: {}) => {
         }
         try {
             logger.trace(`connecting to endpoint: ${pageState.endpoint}`, LOG_CTX);
+            // XXX
+            const fakeConnection: HyperDatabaseConnectionContext = {
+                getAttachedDatabases(): AttachedDatabase[] {
+                    return []
+                },
+                getRequestMetadata(): Promise<Record<string, string>> {
+                    return Promise.resolve({});
+                }
+            };
             const channel = await hyperClient.connect({
                 endpoint: pageState.endpoint
-            });
+            }, fakeConnection);
 
             await channel.executeQuery(new proto.salesforce_hyperdb_grpc_v1.pb.QueryParam({
                 query: "select 1"
-
             }))
 
             await channel.close();

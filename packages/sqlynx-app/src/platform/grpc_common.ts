@@ -23,3 +23,9 @@ export class GrpcError extends Error {
         Object.setPrototypeOf(this, GrpcError.prototype);
     }
 }
+
+export interface GrpcMetadataProvider {
+    /// Get additional request metadata.
+    /// Retrieving the request metadata might involve refreshing the OAuth token, thus the promise.
+    getRequestMetadata(): Promise<Record<string, string>>;
+}
