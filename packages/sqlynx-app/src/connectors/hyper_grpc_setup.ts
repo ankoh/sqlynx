@@ -1,18 +1,29 @@
 import {
     CHANNEL_READY,
+    CHANNEL_SETUP_CANCELLED,
+    CHANNEL_SETUP_FAILED,
     CHANNEL_SETUP_STARTED,
-    SETUP_CANCELLED,
-    SETUP_FAILED,
+    HEALTH_CHECK_CANCELLED,
+    HEALTH_CHECK_FAILED,
+    HEALTH_CHECK_STARTED,
+    HEALTH_CHECK_SUCCEEDED,
     HyperGrpcConnectorAction,
 } from './hyper_grpc_connection_state.js';
 import { Logger } from '../platform/logger.js';
 import { HyperGrpcConnectionParams } from './connection_params.js';
 import { HyperGrpcConnectorConfig } from './connector_configs.js';
 import { Dispatch } from '../utils/index.js';
-import { AttachedDatabase, HyperDatabaseClient, HyperDatabaseConnectionContext } from '../platform/hyperdb_client.js';
+import {
+    AttachedDatabase,
+    HyperDatabaseChannel,
+    HyperDatabaseClient,
+    HyperDatabaseConnectionContext,
+} from '../platform/hyperdb_client.js';
 
 
 export async function setupHyperGrpcConnection(dispatch: Dispatch<HyperGrpcConnectorAction>, logger: Logger, params: HyperGrpcConnectionParams, _config: HyperGrpcConnectorConfig, client: HyperDatabaseClient, abortSignal: AbortSignal): Promise<void> {
+    // First prepare the channel
+    let channel: HyperDatabaseChannel;
     try {
         // Start the channel setup
         dispatch({
@@ -21,18 +32,27 @@ export async function setupHyperGrpcConnection(dispatch: Dispatch<HyperGrpcConne
         });
         abortSignal.throwIfAborted()
 
-        // XXX Dummy connection context
+        // Static connection context.
+        // The direct gRPC Hyper connector never changes the headers it injects.
         const connectionContext: HyperDatabaseConnectionContext = {
             getAttachedDatabases(): AttachedDatabase[] {
-                return []
+                const dbs = [];
+                for (const db of params.attachedDatabases) {
+                    dbs.push({ path: db.key, alias: db.value });
+                }
+                return dbs;
             },
-            getRequestMetadata(): Promise<Record<string, string>> {
-                return Promise.resolve({});
+            async getRequestMetadata(): Promise<Record<string, string>> {
+                const headers: Record<string, string> = {};
+                for (const md of params.gRPCMetadata) {
+                    headers[md.key] = md.value;
+                }
+                return headers;
             }
         };
 
         // Create the channel
-        const channel = await client.connect(params.channel, connectionContext);
+        channel = await client.connect(params.channel, connectionContext);
         abortSignal.throwIfAborted();
 
         // Mark the channel as ready
@@ -42,21 +62,63 @@ export async function setupHyperGrpcConnection(dispatch: Dispatch<HyperGrpcConne
         });
         abortSignal.throwIfAborted();
 
-        // Start a health check
-
     } catch (error: any) {
         if (error.name === 'AbortError') {
             logger.warn("setup was aborted");
             dispatch({
-                type: SETUP_CANCELLED,
+                type: CHANNEL_SETUP_CANCELLED,
                 value: error.message,
             });
         } else if (error instanceof Error) {
             logger.error(`setup failed with error: ${error.toString()}`);
             dispatch({
-                type: SETUP_FAILED,
+                type: CHANNEL_SETUP_FAILED,
                 value: error.message,
             });
         }
+        return;
+    }
+
+    // Then perform an initial health check
+    try {
+        // Start the channel setup
+        dispatch({
+            type: HEALTH_CHECK_STARTED,
+            value: null,
+        });
+        abortSignal.throwIfAborted();
+
+        // Create the channel
+        const health = await channel.checkHealth();
+        abortSignal.throwIfAborted();
+
+        if (health.ok) {
+            dispatch({
+                type: HEALTH_CHECK_SUCCEEDED,
+                value: null,
+            });
+            return;
+        } else {
+            dispatch({
+                type: HEALTH_CHECK_FAILED,
+                value: health.errorMessage!,
+            });
+            return;
+        }
+    } catch (error: any) {
+        if (error.name === 'AbortError') {
+            logger.warn("setup was aborted");
+            dispatch({
+                type: HEALTH_CHECK_CANCELLED,
+                value: error.message,
+            });
+        } else if (error instanceof Error) {
+            logger.error(`setup failed with error: ${error.toString()}`);
+            dispatch({
+                type: CHANNEL_SETUP_FAILED,
+                value: error.message,
+            });
+        }
+        return;
     }
 }

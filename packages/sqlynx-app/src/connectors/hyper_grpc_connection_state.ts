@@ -17,6 +17,8 @@ export interface HyperGrpcSetupTimings {
     healthCheckCancelledAt: Date | null;
     /// The time when the health check failed
     healthCheckFailedAt: Date | null;
+    /// The time when the health check succeeded
+    healthCheckSucceededAt: Date | null;
 }
 
 export interface HyperGrpcConnectionState {
@@ -25,48 +27,52 @@ export interface HyperGrpcConnectionState {
     /// The auth params
     channelSetupParams: HyperGrpcConnectionParams | null;
     /// The authentication error
-    connectionError: string | null;
+    channelError: string | null;
     /// The Hyper connection
-    connection: HyperDatabaseChannel | null;
+    channel: HyperDatabaseChannel | null;
+    /// The health check error
+    healthCheckError: string | null;
 }
 
 export function createHyperGrpcConnectionState(): HyperGrpcConnectionState {
     return {
         setupTimings: {
+            channelSetupStartedAt: null,
             channelSetupCancelledAt: null,
             channelSetupFailedAt: null,
-            channelSetupStartedAt: null,
             channelReadyAt: null,
+            healthCheckStartedAt: null,
             healthCheckCancelledAt: null,
             healthCheckFailedAt: null,
-            healthCheckStartedAt: null,
+            healthCheckSucceededAt: null,
         },
         channelSetupParams: null,
-        connectionError: null,
-        connection: null,
+        channelError: null,
+        channel: null,
+        healthCheckError: null,
     }
 }
 
 export const RESET = Symbol('RESET');
-export const SETUP_CANCELLED = Symbol('CHANNEL_SETUP_CANCELLED');
-export const SETUP_FAILED = Symbol('CHANNEL_SETUP_FAILED');
+export const CHANNEL_SETUP_CANCELLED = Symbol('CHANNEL_SETUP_CANCELLED');
+export const CHANNEL_SETUP_FAILED = Symbol('CHANNEL_SETUP_FAILED');
 export const CHANNEL_SETUP_STARTED = Symbol('CHANNEL_SETUP_STARTED');
 export const CHANNEL_READY = Symbol('CHANNEL_READY');
 export const HEALTH_CHECK_STARTED = Symbol('HEALTH_CHECK_STARTED');
-export const HEALTH_CHECK_FAILED = Symbol('HEALTH_CHECK_FAILED');
 export const HEALTH_CHECK_CANCELLED = Symbol('HEALTH_CHECK_CANCELLED');
 export const HEALTH_CHECK_SUCCEEDED = Symbol('HEALTH_CHECK_SUCCEEDED');
+export const HEALTH_CHECK_FAILED = Symbol('HEALTH_CHECK_FAILED');
 
 export type HyperGrpcConnectorAction =
     | VariantKind<typeof RESET, null>
-    | VariantKind<typeof SETUP_CANCELLED, string>
-    | VariantKind<typeof SETUP_FAILED, string>
     | VariantKind<typeof CHANNEL_SETUP_STARTED, HyperGrpcConnectionParams>
+    | VariantKind<typeof CHANNEL_SETUP_CANCELLED, string>
+    | VariantKind<typeof CHANNEL_SETUP_FAILED, string>
     | VariantKind<typeof CHANNEL_READY, HyperDatabaseChannel>
-    | VariantKind<typeof HEALTH_CHECK_STARTED, void>
+    | VariantKind<typeof HEALTH_CHECK_STARTED, null>
+    | VariantKind<typeof HEALTH_CHECK_CANCELLED, null>
     | VariantKind<typeof HEALTH_CHECK_FAILED, string>
-    | VariantKind<typeof HEALTH_CHECK_CANCELLED, string>
-    | VariantKind<typeof HEALTH_CHECK_SUCCEEDED, string>
+    | VariantKind<typeof HEALTH_CHECK_SUCCEEDED, null>
     ;
 
 export function reduceAuthState(state: HyperGrpcConnectionState, action: HyperGrpcConnectorAction): HyperGrpcConnectionState {
@@ -81,30 +87,32 @@ export function reduceAuthState(state: HyperGrpcConnectionState, action: HyperGr
                     healthCheckStartedAt: null,
                     healthCheckCancelledAt: null,
                     healthCheckFailedAt: null,
+                    healthCheckSucceededAt: null,
                 },
                 channelSetupParams: state.channelSetupParams,
-                connectionError: null,
-                connection: null,
+                channelError: null,
+                channel: null,
+                healthCheckError: null,
             };
-        case SETUP_CANCELLED:
+        case CHANNEL_SETUP_CANCELLED:
             return {
                 ...state,
                 setupTimings: {
                     ...state.setupTimings,
                     channelSetupCancelledAt: new Date(),
                 },
-                connectionError: action.value,
-                connection: null
+                channelError: action.value,
+                channel: null
             };
-        case SETUP_FAILED:
+        case CHANNEL_SETUP_FAILED:
             return {
                 ...state,
                 setupTimings: {
                     ...state.setupTimings,
                     channelSetupFailedAt: new Date(),
                 },
-                connectionError: action.value,
-                connection: null
+                channelError: action.value,
+                channel: null
             };
         case CHANNEL_SETUP_STARTED:
             return {
@@ -116,17 +124,55 @@ export function reduceAuthState(state: HyperGrpcConnectionState, action: HyperGr
                     healthCheckStartedAt: null,
                     healthCheckCancelledAt: null,
                     healthCheckFailedAt: null,
+                    healthCheckSucceededAt: null,
                 },
                 channelSetupParams: action.value,
-                connectionError: null,
-                connection: null,
+                channelError: null,
+                channel: null,
+                healthCheckError: null,
+            };
+        case CHANNEL_READY:
+            return {
+                ...state,
+                setupTimings: {
+                    ...state.setupTimings,
+                    channelReadyAt: new Date(),
+                },
+                channel: action.value
             };
 
-        case CHANNEL_READY:
         case HEALTH_CHECK_STARTED:
+            return {
+                ...state,
+                setupTimings: {
+                    ...state.setupTimings,
+                    healthCheckStartedAt: new Date(),
+                },
+            };
         case HEALTH_CHECK_FAILED:
+            return {
+                ...state,
+                setupTimings: {
+                    ...state.setupTimings,
+                    healthCheckFailedAt: new Date(),
+                },
+                healthCheckError: action.value,
+            };
         case HEALTH_CHECK_CANCELLED:
+            return {
+                ...state,
+                setupTimings: {
+                    ...state.setupTimings,
+                    healthCheckCancelledAt: new Date(),
+                },
+            };
         case HEALTH_CHECK_SUCCEEDED:
-            return state;
+            return {
+                ...state,
+                setupTimings: {
+                    ...state.setupTimings,
+                    healthCheckSucceededAt: new Date(),
+                },
+            };
     }
 }

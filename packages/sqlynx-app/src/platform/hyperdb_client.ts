@@ -17,14 +17,13 @@ export interface HyperQueryExecutionProgress extends QueryExecutionProgress {}
 
 export interface HyperQueryResultStream extends QueryExecutionResponseStream {}
 
-export enum HealthCheckStatus {
-    OK,
-    TIMED_OUT,
-    FAILED
+export interface HealthCheckResult {
+    ok: boolean;
+    errorMessage: string | null;
 }
 export interface HyperDatabaseChannel {
     /// Perform a health check
-    checkHealth(): Promise<HealthCheckStatus>;
+    checkHealth(): Promise<HealthCheckResult>;
     /// Execute Query
     executeQuery(param: proto.salesforce_hyperdb_grpc_v1.pb.QueryParam): Promise<HyperQueryResultStream>;
     /// Destroy the connection
