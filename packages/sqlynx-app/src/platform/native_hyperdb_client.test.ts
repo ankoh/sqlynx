@@ -8,6 +8,7 @@ import { NativeHyperDatabaseClient, NativeHyperQueryResultStream } from './nativ
 import { NativeGrpcServerStreamBatchEvent } from './native_grpc_client.js';
 import { PlatformType } from './platform_type.js';
 import { TestLogger } from './test_logger.js';
+import { AttachedDatabase, HyperDatabaseConnectionContext } from './hyperdb_client.js';
 
 describe('Native Hyper client', () => {
     let mock: NativeAPIMock | null;
@@ -21,6 +22,14 @@ describe('Native Hyper client', () => {
     const testChannelArgs: GrpcChannelArgs = {
         endpoint: "http://localhost:8080"
     };
+    const fakeConnection: HyperDatabaseConnectionContext = {
+        getAttachedDatabases(): AttachedDatabase[] {
+            return []
+        },
+        getRequestMetadata(): Promise<Record<string, string>> {
+            return Promise.resolve({});
+        }
+    };
 
     // Test channel creation
     it("can create a channel", () => {
@@ -28,7 +37,7 @@ describe('Native Hyper client', () => {
         const client = new NativeHyperDatabaseClient({
             proxyEndpoint: new URL("sqlynx-native://localhost")
         }, logger);
-        expect(async () => await client.connect(testChannelArgs)).resolves;
+        expect(async () => await client.connect(testChannelArgs, fakeConnection)).resolves;
     });
     // Make sure channel creation fails with wrong base url
     it("fails to create a channel with invalid base URL", () => {
@@ -36,7 +45,7 @@ describe('Native Hyper client', () => {
         const client = new NativeHyperDatabaseClient({
             proxyEndpoint: new URL("not-sqlynx-native://localhost")
         }, logger);
-        expect(async () => await client.connect(testChannelArgs)).rejects.toThrow();
+        expect(async () => await client.connect(testChannelArgs, fakeConnection)).rejects.toThrow();
     });
 
     // Test starting a server stream
@@ -47,7 +56,7 @@ describe('Native Hyper client', () => {
         }, logger);
 
         // Setup the channel
-        const channel = await client.connect(testChannelArgs);
+        const channel = await client.connect(testChannelArgs, fakeConnection);
         expect(channel.grpcChannel.channelId).not.toBeNull();
         expect(channel.grpcChannel.channelId).not.toBeNaN();
 
@@ -79,7 +88,7 @@ describe('Native Hyper client', () => {
         }, logger);
 
         // Setup the channel
-        const channel = await client.connect(testChannelArgs);
+        const channel = await client.connect(testChannelArgs, fakeConnection);
         expect(channel.grpcChannel.channelId).not.toBeNull();
         expect(channel.grpcChannel.channelId).not.toBeNaN();
 

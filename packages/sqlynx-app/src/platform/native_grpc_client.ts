@@ -1,4 +1,4 @@
-import { GrpcChannelArgs, GrpcError } from "./grpc_common.js";
+import { GrpcChannelArgs, GrpcError, GrpcMetadataProvider } from './grpc_common.js';
 import { Logger } from "./logger.js";
 import { HEADER_NAME_BATCH_BYTES, HEADER_NAME_BATCH_TIMEOUT, HEADER_NAME_CHANNEL_ID, HEADER_NAME_ENDPOINT, HEADER_NAME_PATH, HEADER_NAME_READ_TIMEOUT, HEADER_NAME_STREAM_ID, HEADER_NAME_TLS_CACERTS, HEADER_NAME_TLS_CLIENT_CERT, HEADER_NAME_TLS_CLIENT_KEY } from "./native_api_mock.js";
 
@@ -45,28 +45,29 @@ export class NativeGrpcServerStream implements AsyncIterator<NativeGrpcServerStr
     channelId: number;
     /// The stream id
     streamId: number;
+    /// The metadata provider
+    metadataProvider: GrpcMetadataProvider;
     /// Reached the end of the stream?
     reachedEndOfStream: boolean;
 
-    constructor(endpoint: NativeGrpcProxyConfig, channelId: number, streamId: number, logger: Logger) {
+    constructor(endpoint: NativeGrpcProxyConfig, channelId: number, streamId: number, metadata: GrpcMetadataProvider, logger: Logger) {
         this.logger = logger;
         this.endpoint = endpoint;
         this.channelId = channelId;
         this.streamId = streamId;
+        this.metadataProvider = metadata;
         this.reachedEndOfStream = false;
-    }
-
-    [Symbol.asyncIterator](): AsyncIterator<NativeGrpcServerStreamBatch> {
-        return this;
     }
 
     /// Read the next messages from the stream
     public async read(): Promise<NativeGrpcServerStreamBatch> {
         const url = new URL(this.endpoint.proxyEndpoint);
         url.pathname = `/grpc/channel/${this.channelId}/stream/${this.streamId}`;
+        const metadata = await this.metadataProvider.getRequestMetadata();
         const request = new Request(url, {
             method: 'GET',
             headers: {
+                ...metadata,
                 [HEADER_NAME_READ_TIMEOUT]: DEFAULT_READ_TIMEOUT.toString(),
                 [HEADER_NAME_BATCH_TIMEOUT]: DEFAULT_BATCH_TIMEOUT.toString(),
                 [HEADER_NAME_BATCH_BYTES]: DEFAULT_BATCH_BYTES.toString(),
@@ -179,7 +180,9 @@ export class NativeGrpcServerStreamMessageIterator implements AsyncIterator<Uint
 }
 
 interface StartServerStreamArgs {
+    /// The path
     path: string;
+    /// The request body
     body: Uint8Array;
 }
 
@@ -188,22 +191,28 @@ export class NativeGrpcChannel {
     logger: Logger;
     /// The endpoint
     endpoint: NativeGrpcProxyConfig;
+    /// The metadata provider
+    metadataProvider: GrpcMetadataProvider;
     /// The channel id
     channelId: number;
 
-    constructor(endpoint: NativeGrpcProxyConfig, channelId: number, logger: Logger) {
+    constructor(endpoint: NativeGrpcProxyConfig, channelId: number, metadataProvider: GrpcMetadataProvider, logger: Logger) {
         this.logger = logger;
         this.endpoint = endpoint;
+        this.metadataProvider = metadataProvider;
         this.channelId = channelId;
     }
 
-    /// Call a server streaming
+    /// Call a server streaming.
     public async startServerStream(args: StartServerStreamArgs): Promise<NativeGrpcServerStream> {
         const url = new URL(this.endpoint.proxyEndpoint);
         url.pathname = `/grpc/channel/${this.channelId}/streams`;
 
+        // Resolve the additional metadata
+        const additionalMetadata = await this.metadataProvider.getRequestMetadata();
+
         // Collect the request headers
-        const headers = new Headers();
+        const headers = new Headers(additionalMetadata);
         headers.set(HEADER_NAME_CHANNEL_ID, this.channelId.toString());
         headers.set(HEADER_NAME_PATH, args.path);
 
@@ -219,7 +228,7 @@ export class NativeGrpcChannel {
         }
 
         const streamId = requireIntegerHeader(response.headers, HEADER_NAME_STREAM_ID);
-        return new NativeGrpcServerStream(this.endpoint, this.channelId, streamId, this.logger);
+        return new NativeGrpcServerStream(this.endpoint, this.channelId, streamId, this.metadataProvider, this.logger);
     }
 
     // Destroy a channel
@@ -255,11 +264,15 @@ export class NativeGrpcClient {
     }
 
     /// Create a gRPC channel
-    public async connect(args: GrpcChannelArgs): Promise<NativeGrpcChannel> {
+    public async connect(args: GrpcChannelArgs, metadataProvider: GrpcMetadataProvider): Promise<NativeGrpcChannel> {
         const url = new URL(this.proxy.proxyEndpoint);
         url.pathname = `/grpc/channels`;
 
-        const headers = new Headers();
+        // Resolve additional metadata (such as the authorization header)
+        const additionalMetadata = await metadataProvider.getRequestMetadata()
+
+        // Set system headers
+        const headers = new Headers(additionalMetadata);
         headers.set(HEADER_NAME_ENDPOINT, args.endpoint);
         if (args.tls) {
             if (args.tls.keyPath !== "") {
@@ -282,6 +295,6 @@ export class NativeGrpcClient {
         }
 
         const channelId = requireIntegerHeader(response.headers, HEADER_NAME_CHANNEL_ID);
-        return new NativeGrpcChannel(this.proxy, channelId, this.logger);
+        return new NativeGrpcChannel(this.proxy, channelId, metadataProvider, this.logger);
     }
 }
