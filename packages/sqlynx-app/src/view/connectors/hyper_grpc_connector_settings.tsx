@@ -9,8 +9,8 @@ import { classNames } from '../../utils/classnames.js';
 import { TextField, KeyValueTextField } from '../text_field.js';
 import { useLogger } from '../../platform/logger_provider.js';
 import { useHyperDatabaseClient } from '../../platform/hyperdb_client_provider.js';
-import { KeyValueListBuilder, KeyValueListElement, UpdateKeyValueList } from '../../view/keyvalue_list.js';
-import { IndicatorStatus, StatusIndicator } from '../../view/status_indicator.js';
+import { KeyValueListBuilder, KeyValueListElement, UpdateKeyValueList } from '../keyvalue_list.js';
+import { IndicatorStatus, StatusIndicator } from '../status_indicator.js';
 import { Dispatch } from '../../utils/variant.js';
 
 import * as symbols from '../../../static/svg/symbols.generated.svg';
@@ -49,7 +49,7 @@ export const HyperGrpcConnectorSettings: React.FC<{}> = (_props: {}) => {
     const modifyAttachedDbs: Dispatch<UpdateKeyValueList> = (action: UpdateKeyValueList) => setPageState(s => ({ ...s, attachedDatabases: action(s.attachedDatabases) }));
     const modifyGrpcMetadata: Dispatch<UpdateKeyValueList> = (action: UpdateKeyValueList) => setPageState(s => ({ ...s, gRPCMetadata: action(s.gRPCMetadata) }));
 
-    const testSettings = async () => {
+    const setupConnection = async () => {
         if (hyperClient == null) {
             logger.error("Hyper client is unavailable", LOG_CTX);
             return;
@@ -95,7 +95,7 @@ export const HyperGrpcConnectorSettings: React.FC<{}> = (_props: {}) => {
                     <Button
                         variant='primary'
                         leadingVisual={PlugIcon}
-                        onClick={testSettings}
+                        onClick={setupConnection}
                     >Connect</Button>
                 </div>
             </div >

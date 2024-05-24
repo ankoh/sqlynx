@@ -2,7 +2,7 @@ import * as arrow from 'apache-arrow';
 import * as proto from '@ankoh/sqlynx-pb';
 
 import {
-    HealthCheckStatus,
+    HealthCheckResult,
     HyperDatabaseChannel,
     HyperDatabaseClient,
     HyperDatabaseConnectionContext,
@@ -121,8 +121,8 @@ class NativeHyperDatabaseChannel implements HyperDatabaseChannel {
     }
 
     /// Check if Hyper is reachable
-    public async checkHealth(): Promise<HealthCheckStatus> {
-        return HealthCheckStatus.OK;
+    public async checkHealth(): Promise<HealthCheckResult> {
+        return { ok: true, errorMessage: null };
     }
 
     /// Execute a query against Hyper

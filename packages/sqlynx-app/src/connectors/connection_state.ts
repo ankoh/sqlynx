@@ -79,7 +79,7 @@ export function getHyperGrpcConnectionStatus(conn: HyperGrpcConnectionState | nu
     let state: ConnectionStatus = ConnectionStatus.UNKNOWN;
     if (!conn) {
         state = ConnectionStatus.NOT_STARTED;
-    } else if (conn.connectionError) {
+    } else if (conn.channelError) {
         state = ConnectionStatus.AUTHORIZATION_FAILED;
     }
     return state;
