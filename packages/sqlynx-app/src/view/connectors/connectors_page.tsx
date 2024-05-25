@@ -45,7 +45,8 @@ export const ConnectorsPage: React.FC<PageProps> = (_props: PageProps) => {
             tabId: 2,
             labelShort: "Brainstorm",
             labelLong: "Brainstorm Mode",
-            icon: `${icons}#zap`,
+            icon: `${icons}#square`,
+            iconActive: `${icons}#square_fill`,
             connectorType: ConnectorType.BRAINSTORM_MODE,
         }
     ]), []);
