@@ -7,10 +7,10 @@ import { Button, IconButton, ProgressBar } from '@primer/react';
 import { SQLYNX_GIT_COMMIT, SQLYNX_VERSION } from '../globals.js';
 import { InstallableUpdate, InstallationState, InstallationStatus, useCanaryReleaseManifest, useCanaryUpdateManifest, useInstallationStatus, useStableReleaseManifest, useStableUpdateManifest } from '../platform/version_check.js';
 import { PlatformType, usePlatformType } from '../platform/platform_type.js';
-import { ReleaseChannel, ReleaseManifest } from '../platform/web_version_check.js';
-import { useLogger } from '../platform/logger_provider.js';
+import { ReleaseManifest } from '../platform/web_version_check.js';
 import { RESULT_ERROR, RESULT_OK, Result } from '../utils/result.js';
 import { StatusIndicator, IndicatorStatus } from './status_indicator.js';
+import { ReleaseBundles } from './release_bundle.js';
 
 import * as symbols from '../../static/svg/symbols.generated.svg';
 
@@ -103,42 +103,6 @@ const UpdateChannel: React.FC<UpdateChannelProps> = (props: UpdateChannelProps) 
     );
 }
 
-interface ReleaseBundleProps {
-    name: string;
-    channel: ReleaseChannel;
-    pubDate: Date;
-    url: URL;
-    version: string;
-}
-
-const ReleaseBundle: React.FC<ReleaseBundleProps> = (props: ReleaseBundleProps) => {
-    const logger = useLogger();
-    return (
-        <React.Fragment>
-            <div className={styles.native_app_platform_bundle_name}>
-                {props.name}
-            </div>
-            <div className={styles.native_app_platform_bundle_version}>
-                {props.version}
-            </div>
-            <div className={styles.native_app_platform_bundle_channel}>
-                <div className={styles.native_app_platform_bundle_channel_text}>
-                    {props.channel}
-                </div>
-            </div>
-            <div className={styles.native_app_platform_bundle_download}>
-                <Button onClick={() => {
-                    logger.info(`prompting user to download ${props.name} ${props.version}`);
-                    const link = document.createElement('a');
-                    link.href = props.url.toString();
-                    link.download = props.name;
-                    link.click();
-                }}>Download</Button>
-            </div>
-        </React.Fragment>
-    );
-}
-
 interface VersionViewerProps {
     onClose: () => void;
 }
@@ -151,28 +115,6 @@ export const VersionViewer: React.FC<VersionViewerProps> = (props: VersionViewer
     const canaryReleaseManifest = useCanaryReleaseManifest();
     const canaryUpdateManifest = useCanaryUpdateManifest();
     const installationStatus = useInstallationStatus();
-
-    // We'll care about identifying the exact platform bundles as soon as we support more than mac.
-    const macBundles: ReleaseBundleProps[] = React.useMemo(() => {
-        const macBundles: ReleaseBundleProps[] = []
-        const releaseManifests: [Result<ReleaseManifest>, ReleaseChannel][] = [[stableReleaseManifest, "stable"], [canaryReleaseManifest, "canary"]];
-        for (const [manifest, channel] of releaseManifests) {
-            if (manifest.type == RESULT_OK) {
-                for (const bundle of manifest.value.bundles) {
-                    if (bundle.bundle_type == "Dmg") {
-                        macBundles.push({
-                            name: bundle.name,
-                            channel: channel,
-                            pubDate: manifest.value.pub_date,
-                            url: bundle.url,
-                            version: manifest.value.version
-                        });
-                    }
-                }
-            }
-        }
-        return macBundles;
-    }, [stableReleaseManifest, canaryReleaseManifest]);
 
     return (
         <div className={styles.overlay}>
@@ -237,20 +179,7 @@ export const VersionViewer: React.FC<VersionViewerProps> = (props: VersionViewer
                         </div>
                     </div>
                 )}
-                {isWebPlatform && (
-                    <div className={styles.native_apps_container}>
-                        <>
-                            <div className={styles.native_app_platform_title}>
-                                Native Apps
-                            </div>
-                            <div className={styles.native_app_platform_bundles}>
-                                {macBundles.map((bundle, index) => (
-                                    <ReleaseBundle key={index} {...bundle} />
-                                ))}
-                            </div>
-                        </>
-                    </div>
-                )}
+                {isWebPlatform && <ReleaseBundles className={styles.release_bundles} />}
             </motion.div>
         </div>
     );

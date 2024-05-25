@@ -7,20 +7,14 @@
 }
 
 .container {
-    display: grid;
-    grid-template-rows: 48px max-content max-content;
-    row-gap: 4px;
-}
-
-.unavailable_icon {
     display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-direction: column;
+    row-gap: 16px;
 }
 
 .title {
-    justify-self: center;
     font-weight: 500;
+    font-size: 1.1rem;
 }
 
 .description {
@@ -35,3 +29,5 @@
 .github_link_text {
     text-decoration: none;
 }
+
+.release_bundles {}
