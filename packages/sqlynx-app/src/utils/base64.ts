@@ -7,14 +7,14 @@ export class Base64Codec {
         // Build a lookup table
         this.lookupTable = new Uint8Array(256);
         this.lookupTable.fill(0xFF);
-        for (var i = 0; i < BASE64.length; i++) {
+        for (let i = 0; i < BASE64.length; i++) {
             this.lookupTable[BASE64.charCodeAt(i)] = i;
         }
     }
 
     /// Encode the ArrayBuffer
     public encode(arraybuffer: ArrayBuffer) {
-        let bytes = new Uint8Array(arraybuffer);
+        const bytes = new Uint8Array(arraybuffer);
         let base64 = "";
 
         for (let i = 0; i < bytes.length; i += 3) {
@@ -65,7 +65,7 @@ export class Base64Codec {
         }
 
         /// Allocate the ArrayBuffer
-        var arraybuffer = new ArrayBuffer(bufferLength),
+        const arraybuffer = new ArrayBuffer(bufferLength),
             bytes = new Uint8Array(arraybuffer);
 
         let writer = 0;

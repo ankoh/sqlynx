@@ -148,7 +148,7 @@ export async function authorizeSalesforceConnection(dispatch: Dispatch<Salesforc
         }
 
         // Await the oauth redirect
-        let authCode = await appEvents.waitForOAuthRedirect(abortSignal);
+        const authCode = await appEvents.waitForOAuthRedirect(abortSignal);
         abortSignal.throwIfAborted();
         logger.debug(`received oauth code: ${JSON.stringify(authCode)}`);
 

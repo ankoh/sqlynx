@@ -103,7 +103,7 @@ export class NativeHttpServerStream implements HttpFetchResult {
 
 
         // Combine buffers
-        let combined = new Uint8Array(new ArrayBuffer(totalChunkBytes));
+        const combined = new Uint8Array(new ArrayBuffer(totalChunkBytes));
         let combinedWriter = 0;
         for (const chunk of chunks) {
             combined.set(new Uint8Array(chunk), combinedWriter);

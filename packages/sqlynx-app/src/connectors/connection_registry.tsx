@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as Immutable from 'immutable';
+import Immutable from 'immutable';
 
 import { ConnectionState } from './connection_state.js';
 import { Dispatch } from '../utils/variant.js';
@@ -61,5 +61,5 @@ export function useConnectionState(id: number | null): [ConnectionState | null, 
             }
         );
     }, [id, setRegistry]);
-    return [id == null ? null : (registry.get(id) ?? null), setConnection];
-};
+    return [id == null ? null : (registry.get(id) ?? null), setConnection]
+}

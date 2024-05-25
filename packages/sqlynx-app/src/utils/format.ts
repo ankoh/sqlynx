@@ -18,7 +18,7 @@ export function formatThousands(value: number): string {
 }
 
 export function formatNanoseconds(value: number): string {
-    let suffix = 'ns';
+    const suffix = 'ns';
     if (value < 1000 * 1000) {
         value /= 1000 * 1000;
         return `${value.toFixed(2)} ms`;
@@ -32,9 +32,9 @@ export function formatNanoseconds(value: number): string {
 }
 
 export function formatHHMMSS(secs: number) {
-    let hours = Math.floor(secs / 3600);
-    let minutes = Math.floor((secs - (hours * 3600)) / 60);
-    let seconds = Math.floor(secs - (hours * 3600) - (minutes * 60));
+    const hours = Math.floor(secs / 3600);
+    const minutes = Math.floor((secs - (hours * 3600)) / 60);
+    const seconds = Math.floor(secs - (hours * 3600) - (minutes * 60));
     const hh = hours < 10 ? `0${hours}` : hours.toString();
     const mm = minutes < 10 ? `0${minutes}` : minutes.toString();
     const ss = seconds < 10 ? `0${seconds}` : seconds.toString();

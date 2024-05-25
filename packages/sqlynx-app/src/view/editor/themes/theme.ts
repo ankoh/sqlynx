@@ -86,7 +86,7 @@ export const createTheme = ({ theme, settings = {}, styles = [] }: CreateThemeOp
             borderLeftColor: settings.caret,
         };
     }
-    let activeLineGutterStyle: StyleSpec = {};
+    const activeLineGutterStyle: StyleSpec = {};
     if (settings.gutterActiveForeground) {
         activeLineGutterStyle.color = settings.gutterActiveForeground;
     }

@@ -80,7 +80,7 @@ class ScriptInteractionGenerator {
 
     /// Constructor
     private constructor(seedNumber: number, maxBytes: number) {
-        let seed = cyrb128(seedNumber);
+        const seed = cyrb128(seedNumber);
         this.currentBufferSize = 0;
         this.dataSource = '';
         this.rng = xoshiro128ss(seed[0], seed[1], seed[2], seed[3]);

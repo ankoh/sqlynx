@@ -15,7 +15,7 @@ export class NativeAppEventListener extends AppEventListener {
 
     public listenForAppEvents() {
         this.unlistenNativeEvents = listen(NATIVE_EVENT_CHANNEL, (event: any) => {
-            let data = this.readAppEvent(event.payload.message, `${NATIVE_EVENT_CHANNEL} message`);
+            const data = this.readAppEvent(event.payload.message, `${NATIVE_EVENT_CHANNEL} message`);
             if (data != null) {
                 super.dispatchAppEvent(data);
             }
