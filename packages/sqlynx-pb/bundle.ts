@@ -1,6 +1,6 @@
 import esbuild from 'esbuild';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import { fileURLToPath } from 'node:url';
 
 function printErr(err: NodeJS.ErrnoException | null) {

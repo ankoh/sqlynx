@@ -15,7 +15,7 @@
         "typescript": "^5.4.5"
     },
     "scripts": {
-        "build": "tsc --emitDeclarationOnly && node --loader ts-node/esm bundle.ts"
+        "build": "tsc --emitDeclarationOnly --declaration && node --loader ts-node/esm bundle.ts"
     },
     "include": [
         "./gen/"
