@@ -9,7 +9,7 @@ import { ScriptData, ScriptKey } from './session_state.js';
 import { ScriptLoadingStatus } from './script_loader.js';
 import { BRAINSTORM_CONNECTOR, CONNECTOR_INFOS, ConnectorType } from '../connectors/connector_info.js';
 import { RESULT_OK } from '../utils/result.js';
-import { TPCH_SCHEMA, EXAMPLE_SCRIPTS } from './example_scripts.js';
+import { EXAMPLES } from './example_scripts.js';
 
 export const DEFAULT_BOARD_WIDTH = 800;
 export const DEFAULT_BOARD_HEIGHT = 600;
@@ -40,7 +40,7 @@ export function useBrainstormSessionSetup(): SessionSetupFn {
             scriptKey: ScriptKey.MAIN_SCRIPT,
             scriptVersion: 1,
             script: mainScript,
-            metadata: EXAMPLE_SCRIPTS[2],
+            metadata:  EXAMPLES.tpch.queries[1],
             loading: {
                 status: ScriptLoadingStatus.PENDING,
                 error: null,
@@ -60,7 +60,7 @@ export function useBrainstormSessionSetup(): SessionSetupFn {
             scriptKey: ScriptKey.SCHEMA_SCRIPT,
             scriptVersion: 1,
             script: schemaScript,
-            metadata: TPCH_SCHEMA,
+            metadata:  EXAMPLES.tpch.schema,
             loading: {
                 status: ScriptLoadingStatus.PENDING,
                 error: null,
