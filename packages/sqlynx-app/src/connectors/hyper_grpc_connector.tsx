@@ -2,11 +2,10 @@ import * as React from 'react';
 
 import { HYPER_GRPC_CONNECTOR } from './connector_info.js';
 import { useAllocatedConnectionState } from './connection_registry.js';
-import { useAppConfig } from '../app_config.js';
-import { useLogger } from '../platform/logger_provider.js';
 import { Dispatch } from '../utils/variant.js';
-import { createHyperGrpcConnectionState, HyperGrpcConnectorAction, RESET } from './hyper_grpc_connection_state.js';
+import { createHyperGrpcConnectionState, HyperGrpcConnectorAction } from './hyper_grpc_connection_state.js';
 import { HyperGrpcConnectionParams } from './connection_params.js';
+import { HyperGrpcSetupProvider } from './hyper_grpc_setup.js';
 
 export interface HyperGrpcConnectorApi {
     setup(dispatch: Dispatch<HyperGrpcConnectorAction>, params: HyperGrpcConnectionParams, abortSignal: AbortSignal): Promise<void>
@@ -14,34 +13,12 @@ export interface HyperGrpcConnectorApi {
 };
 
 const CONNECTION_ID_CTX = React.createContext<number | null>(null);
-const API_CTX = React.createContext<HyperGrpcConnectorApi | null>(null);
-
-export const useHyperGrpcConnectorApi = () => React.useContext(API_CTX!);
 
 interface Props {
     children: React.ReactElement;
 }
 
 export const HyperGrpcConnector: React.FC<Props> = (props: Props) => {
-    const _logger = useLogger();
-    const appConfig = useAppConfig();
-    const connectorConfig = appConfig.value?.connectors?.hyperGrpc ?? null;
-
-    // Create the connector api
-    const api = React.useMemo<HyperGrpcConnectorApi | null>(() => {
-        const setup = async (_dispatch: Dispatch<HyperGrpcConnectorAction>, _params: HyperGrpcConnectionParams, _abort: AbortSignal) => {
-
-            // XXX
-        };
-        const reset = async (dispatch: Dispatch<HyperGrpcConnectorAction>) => {
-            dispatch({
-                type: RESET,
-                value: null,
-            })
-        };
-        return { setup, reset };
-    }, [connectorConfig]);
-
     // Pre-allocate a connection id for all Hyper gRPC connections.
     // c.f. salesforce_connector
     const connectionId = useAllocatedConnectionState((_) => ({
@@ -50,9 +27,9 @@ export const HyperGrpcConnector: React.FC<Props> = (props: Props) => {
     }));
     return (
         <CONNECTION_ID_CTX.Provider value={connectionId}>
-            <API_CTX.Provider value={api}>
+            <HyperGrpcSetupProvider>
                 {props.children}
-            </API_CTX.Provider>
+            </HyperGrpcSetupProvider>
         </CONNECTION_ID_CTX.Provider>
     );
 };
