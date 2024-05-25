@@ -7,8 +7,6 @@ import {
     LinkIcon,
     DownloadIcon,
     ThreeBarsIcon,
-    StackIcon,
-    ArrowSwitchIcon,
     StopwatchIcon,
 } from '@primer/octicons-react';
 
@@ -30,7 +28,6 @@ import { useAppConfig } from '../../app_config.js';
 import * as styles from './editor_page.module.css';
 import * as theme from '../../github_theme.module.css';
 import * as icons from '../../../static/svg/symbols.generated.svg';
-import { useConnectionState } from 'connectors/connection_registry.js';
 
 const ConnectorSelection = (props: { className?: string; variant: 'default' | 'invisible'; short: boolean }) => {
     const connectorList = useConnectorList();
