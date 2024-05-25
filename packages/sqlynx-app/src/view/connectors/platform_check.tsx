@@ -12,7 +12,7 @@ export const PlatformCheck: React.FC<{ connectorType: ConnectorType, children: R
         return (
             <div className={styles.root}>
                 <div className={styles.container}>
-                    <div className={styles.title}>Unsupported platform</div>
+                    <div className={styles.title}>Unsupported Platform</div>
                     <div className={styles.description}>
                         This connector can only be used in the native app.<br />
                         cf.
