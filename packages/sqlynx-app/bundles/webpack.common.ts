@@ -15,7 +15,7 @@ interface ConfigParams {
     mode: 'production' | 'development';
     target?: string;
     buildDir?: string;
-    tsLoaderOptions?: any;
+    tsLoaderOptions?: object;
     relocatable: boolean;
     extractCss: boolean;
     cssIdentifier: string;
