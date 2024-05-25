@@ -1,16 +1,8 @@
 {
+    "extends": "../../tsconfig.json",
     "compilerOptions": {
         "outDir": "./dist/",
         "baseUrl": ".",
-        "target": "ESNext",
-        "module": "NodeNext",
-        "moduleResolution": "NodeNext",
-        "sourceMap": true,
-        "declaration": true,
-        "declarationMap": true,
-        "declarationDir": "./dist",
-        "noImplicitAny": true,
-        "esModuleInterop": true,
         "lib": [
             "es6",
             "dom"
