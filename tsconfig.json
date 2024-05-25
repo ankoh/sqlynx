@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "sourceMap": true,
+        "noImplicitAny": true,
+        "esModuleInterop": false,
+        "downlevelIteration": true,
+        "strict": true,
+        "types": [
+            "node",
+            "jest"
+        ]
+    }
+}
