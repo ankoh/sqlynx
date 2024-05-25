@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Maybe, MaybeStatus } from './utils/maybe.js';
 import { ConnectorConfigs, readConnectorConfigs } from './connectors/connector_configs.js';
 import { useLogger } from './platform/logger_provider.js';
-import { SQLYNX_BUILD_MODE, SQLYNX_GIT_COMMIT, SQLYNX_VERSION } from './globals.js';
+import { SQLYNX_BUILD_MODE } from './globals.js';
 
 const CONFIG_URL = new URL('../static/config.json', import.meta.url);
 
@@ -19,7 +19,7 @@ export interface AppConfig {
     connectors?: ConnectorConfigs;
 }
 
-export function readAppConfig(object: any): AppConfig {
+export function readAppConfig(object: Record<string, object>): AppConfig {
     if (object.connectors) {
         object.connectors = readConnectorConfigs(object.connectors);
     }
@@ -65,4 +65,3 @@ export const AppConfigProvider: React.FC<Props> = (props: Props) => {
 };
 
 export const useAppConfig = (): Maybe<AppConfig> => React.useContext(configCtx)!;
-export const useAppReconfigure = (): ((config: AppConfig) => void) => React.useContext(reconfigureCtx)!;
