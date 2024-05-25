@@ -20,7 +20,7 @@ export const PlatformCheck: React.FC<{ connectorType: ConnectorType, children: R
                             <use xlinkHref={`${icons}#github`} />
                         </svg>
                         &nbsp;
-                        <a className={styles.github_link_text} href="https://github.com/ankoh/sqlynx/issues/738">
+                        <a className={styles.github_link_text} href="https://github.com/ankoh/sqlynx/issues/738" target="_blank">
                             Web connectors for Hyper and Data Cloud
                         </a>
                     </div>
