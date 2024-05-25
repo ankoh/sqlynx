@@ -12,10 +12,10 @@ import { useHyperDatabaseClient } from '../../platform/hyperdb_client_provider.j
 import { KeyValueListBuilder, KeyValueListElement, UpdateKeyValueList } from '../keyvalue_list.js';
 import { IndicatorStatus, StatusIndicator } from '../status_indicator.js';
 import { Dispatch } from '../../utils/variant.js';
+import { AttachedDatabase, HyperDatabaseConnectionContext } from '../../platform/hyperdb_client.js';
 
 import * as symbols from '../../../static/svg/symbols.generated.svg';
 import * as style from './connector_settings.module.css';
-import { AttachedDatabase, HyperDatabaseConnectionContext } from '../../platform/hyperdb_client.js';
 
 const LOG_CTX = "hyper_connector";
 

@@ -189,7 +189,6 @@ export const SalesforceConnectorSettings: React.FC<{}> = (_props: {}) => {
 
     // Lock any changes?
     const freezeInput = health == ConnectionHealth.CONNECTING || health == ConnectionHealth.ONLINE;
-
     return (
         <div className={style.layout}>
             <div className={style.connector_header_container}>
