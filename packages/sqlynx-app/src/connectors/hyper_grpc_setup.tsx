@@ -1,3 +1,5 @@
+import * as React from 'react';
+
 import {
     CHANNEL_READY,
     CHANNEL_SETUP_CANCELLED,
@@ -19,7 +21,10 @@ import {
     HyperDatabaseClient,
     HyperDatabaseConnectionContext,
 } from '../platform/hyperdb_client.js';
-
+import { RESET, SalesforceAuthAction } from './salesforce_connection_state.js';
+import { useLogger } from '../platform/logger_provider.js';
+import { useAppConfig } from '../app_config.js';
+import { useHyperDatabaseClient } from '../platform/hyperdb_client_provider.js';
 
 export async function setupHyperGrpcConnection(dispatch: Dispatch<HyperGrpcConnectorAction>, logger: Logger, params: HyperGrpcConnectionParams, _config: HyperGrpcConnectorConfig, client: HyperDatabaseClient, abortSignal: AbortSignal): Promise<void> {
     // First prepare the channel
@@ -122,3 +127,42 @@ export async function setupHyperGrpcConnection(dispatch: Dispatch<HyperGrpcConne
         return;
     }
 }
+export interface HyperGrpcSetupApi {
+    setup(dispatch: Dispatch<HyperGrpcConnectorAction>, params: HyperGrpcConnectionParams, abortSignal: AbortSignal): Promise<void>
+    reset(dispatch: Dispatch<SalesforceAuthAction>): Promise<void>
+};
+
+export const SETUP_CTX = React.createContext<HyperGrpcSetupApi | null>(null);
+export const useHyperGrpcSetup = () => React.useContext(SETUP_CTX!);
+
+interface Props {
+    /// The children
+    children: React.ReactElement;
+}
+
+export const HyperGrpcSetupProvider: React.FC<Props> = (props: Props) => {
+    const logger = useLogger();
+    const appConfig = useAppConfig();
+    const connectorConfig = appConfig.value?.connectors?.hyperGrpc ?? null;
+    const hyperClient = useHyperDatabaseClient();
+
+    const api = React.useMemo<HyperGrpcSetupApi | null>(() => {
+        if (!connectorConfig || !hyperClient) {
+            return null;
+        }
+        const setup = async (dispatch: Dispatch<HyperGrpcConnectorAction>, params: HyperGrpcConnectionParams, abort: AbortSignal) => {
+            return setupHyperGrpcConnection(dispatch, logger, params, connectorConfig, hyperClient, abort);
+        };
+        const reset = async (dispatch: Dispatch<SalesforceAuthAction>) => {
+            dispatch({
+                type: RESET,
+                value: null,
+            })
+        };
+        return { setup, reset };
+    }, [connectorConfig]);
+
+    return (
+        <SETUP_CTX.Provider value={api}>{props.children}</SETUP_CTX.Provider>
+    );
+};
