@@ -149,6 +149,10 @@ pwa_dev:
 pwa_tests:
 	yarn workspace @ankoh/sqlynx-app test
 
+.PHONY: lint
+lint:
+	DEBUG=eslint:cli-engine yarn run eslint
+
 .PHONY: native_mac_dev
 native_mac_dev:
 	yarn run tauri dev
