@@ -151,46 +151,7 @@
     width: 64px;
 }
 
-
-.native_apps_container {
-    border-top: 1px solid var(--border_color_primary);
-    font-size: 0.9rem;
+.release_bundles {
     padding: 12px 12px 12px 16px;
-    display: flex;
-    flex-direction: column;
-    row-gap: 8px;
-}
-.native_apps_title {
-    font-weight: 500;
-}
-.native_app_platform_title {
-    font-weight: 500;
-}
-.native_app_platform_bundles {
-    display: grid;
-    grid-template-columns: max-content max-content max-content auto;
-    justify-content: center;
-    align-items: center;
-    column-gap: 20px;
-    row-gap: 8px;
-    margin-left: 8px;
-}
-.native_app_platform_bundle_name {
-    grid-column: 1;
-}
-.native_app_platform_bundle_version {
-    grid-column: 2;
-}
-.native_app_platform_bundle_channel {
-    grid-column: 3;
-    display: grid;
-    justify-content: center;
-    align-items: center;
-}
-.native_app_platform_bundle_channel_text {
-}
-.native_app_platform_bundle_download {
-    grid-column: 4;
-    justify-content: end;
-    align-items: end;
+    border-top: 1px solid var(--border_color_primary);
 }
