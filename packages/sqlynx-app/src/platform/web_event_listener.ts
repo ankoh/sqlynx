@@ -14,7 +14,7 @@ export class WebAppEventListener extends AppEventListener {
     }
 
     protected processMessageEvent(event: MessageEvent) {
-        let data = this.readAppEvent(event.data, `event message`);
+        const data = this.readAppEvent(event.data, `event message`);
         if (data != null) {
             // Message was a valid base64 AND parsed as AppEvent?
             // Assume it's ours.

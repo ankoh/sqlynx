@@ -373,7 +373,7 @@ export const NULL_POINTER_EXCEPTION = new Error('tried to access a null pointer'
 
 export class Ptr<T extends symbol> {
     /// The object type
-    public readonly type: Symbol;
+    public readonly type: symbol;
     /// The SQLynx api
     public readonly api: SQLynx;
     /// The pointer

@@ -37,7 +37,7 @@ interface Props {
 }
 
 export const ScriptStatisticsBar: React.FC<Props> = (props: Props) => {
-    let stats = props.stats ?? Immutable.List();
+    const stats = props.stats ?? Immutable.List();
     if (stats.isEmpty()) {
         return <div className={props.className}></div>;
     }

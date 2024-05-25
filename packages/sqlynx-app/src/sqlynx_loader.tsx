@@ -72,11 +72,11 @@ export const SQLynxLoader: React.FC<Props> = (props: Props) => {
         };
         const instantiate = async (): Promise<Result<sqlynx.SQLynx>> => {
             try {
-                var initStart = performance.now();
+                const initStart = performance.now();
                 const instance = await sqlynx.SQLynx.create(async (imports: WebAssembly.Imports) => {
                     return await WebAssembly.instantiateStreaming(fetchWithProgress(SQLYNX_MODULE_URL), imports);
                 });
-                var initEnd = performance.now();
+                const initEnd = performance.now();
                 logger.info(`instantiated core in ${Math.floor(initEnd - initStart)} ms`, "sqlynx_loader");
                 setProgress(_ => ({
                     ...internal,

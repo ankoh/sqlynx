@@ -27,7 +27,7 @@ interface PageState {
 type PageStateSetter = Dispatch<React.SetStateAction<PageState>>;
 const PAGE_STATE_CTX = React.createContext<[PageState, PageStateSetter] | null>(null);
 
-export const SalesforceConnectorSettings: React.FC<{}> = (_props: {}) => {
+export const SalesforceConnectorSettings: React.FC<object> = (_props: object) => {
     const connectionId = useSalesforceConnectionId();
     const [connectionState, setConnectionState] = useConnectionState(connectionId);
     const salesforceConnection = asSalesforceConnection(connectionState);
@@ -322,7 +322,7 @@ export const SalesforceConnectorSettings: React.FC<{}> = (_props: {}) => {
     );
 };
 
-interface ProviderProps { children: React.ReactElement };
+interface ProviderProps { children: React.ReactElement }
 
 export const SalesforceConnectorSettingsStateProvider: React.FC<ProviderProps> = (props: ProviderProps) => {
     const state = React.useState<PageState>({

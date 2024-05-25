@@ -72,7 +72,7 @@ export class HttpServerStream {
             }
 
             // Combine all message bytes into a single body buffer
-            let bodyBuffer = new ArrayBuffer(totalBatchBytes);
+            const bodyBuffer = new ArrayBuffer(totalBatchBytes);
             let bodyWriteOffset = 0;
             for (const m of batch.chunks) {
                 new Uint8Array(bodyBuffer, bodyWriteOffset, m.byteLength).set(m);
@@ -144,8 +144,8 @@ export class GrpcServerStream {
             }
 
             // Combine all message bytes into a single body buffer
-            let bodyBuffer = new ArrayBuffer(totalBatchBytes + 4 * encodedMessages.length);
-            let bodyView = new DataView(bodyBuffer);
+            const bodyBuffer = new ArrayBuffer(totalBatchBytes + 4 * encodedMessages.length);
+            const bodyView = new DataView(bodyBuffer);
             let bodyWriteOffset = 0;
             for (const m of encodedMessages) {
                 bodyView.setUint32(bodyWriteOffset, m.byteLength, true);
@@ -351,7 +351,7 @@ export class NativeAPIMock {
             });
         }
         // If the request targets /, we consider this a health check and return with 200
-        let url = new URL(req.url);
+        const url = new URL(req.url);
         if (url.pathname == "/") {
             return new Response(null, {
                 status: 200,

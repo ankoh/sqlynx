@@ -48,7 +48,7 @@ declare module 'react-test-renderer' {
     // VoidOrUndefinedOnly is here to forbid any sneaky "Promise" returns.
     // the actual return value is always a "DebugPromiseLike".
     declare const UNDEFINED_VOID_ONLY: unique symbol;
-    // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+     
     type VoidOrUndefinedOnly = void | { [UNDEFINED_VOID_ONLY]: never };
     /**
     * Wrap any code rendering and triggering updates to your components into `act()` calls.

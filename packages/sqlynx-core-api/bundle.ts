@@ -3,7 +3,7 @@ import * as fs from 'fs';
 
 const dist = new URL('dist/', import.meta.url);
 
-let args = process.argv.slice(2);
+const args = process.argv.slice(2);
 let mode = 'o3';
 if (args.length == 0) {
     console.warn('Usage: node bundle.mjs {o0/o2/o3}');

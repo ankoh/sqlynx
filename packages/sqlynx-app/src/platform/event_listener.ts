@@ -184,7 +184,7 @@ export abstract class AppEventListener {
             }
 
             // Unpack the app event
-            let data = this.readAppEvent(deepLinkData, `clipboard data`);
+            const data = this.readAppEvent(deepLinkData, `clipboard data`);
             if (data != null) {
                 // Stop propagation of clipboard event
                 event.preventDefault();

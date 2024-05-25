@@ -34,7 +34,7 @@ function createCursorTooltip(state: EditorState, pos: number): Tooltip | null {
                 pos,
                 arrow: true,
                 create: () => {
-                    let dom = document.createElement('div');
+                    const dom = document.createElement('div');
                     dom.className = 'cm-tooltip-cursor';
                     dom.textContent = error.message();
                     return { dom };
@@ -50,7 +50,7 @@ function createCursorTooltip(state: EditorState, pos: number): Tooltip | null {
                 pos,
                 arrow: true,
                 create: () => {
-                    let dom = document.createElement('div');
+                    const dom = document.createElement('div');
                     dom.className = 'cm-tooltip-cursor';
                     dom.textContent = error.message();
                     return { dom };

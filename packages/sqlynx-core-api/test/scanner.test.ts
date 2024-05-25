@@ -23,7 +23,7 @@ const Token = sqlynx.proto.ScannerTokenType;
 describe('SQLynx Scanner', () => {
     it(`Character Sequence`, () => {
         const script = lnx!.createScript(null, 1);
-        let tmp = new sqlynx.proto.ScannedScript();
+        const tmp = new sqlynx.proto.ScannedScript();
 
         let size = 0;
         const add = (
@@ -38,7 +38,7 @@ describe('SQLynx Scanner', () => {
             const scanned = result.read(tmp);
 
             expect(scanned.tokens()).toBeTruthy();
-            let hl = scanned.tokens()!;
+            const hl = scanned.tokens()!;
             expect(hl.tokenOffsetsArray()).toBeTruthy();
             expect(hl.tokenLengthsArray()).toBeTruthy();
             expect(hl.tokenTypesArray()).toBeTruthy();

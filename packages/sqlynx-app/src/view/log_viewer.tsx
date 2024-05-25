@@ -97,7 +97,7 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
     // Poll the log version when the viewer is opened and translate into React state
     const [logVersion, setLogVersion] = React.useState<number>(logger.buffer.version);
     React.useEffect(() => {
-        let intervalId = setInterval(() => {
+        const intervalId = setInterval(() => {
             if (logger.buffer.version !== logVersion) {
                 setLogVersion(logger.buffer.version);
             }

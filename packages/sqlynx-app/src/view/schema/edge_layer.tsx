@@ -135,7 +135,7 @@ interface HighlightingProps {
 }
 
 export function EdgeHighlightingLayer(props: HighlightingProps) {
-    let paths = [];
+    const paths = [];
     if (props.focus) {
         for (const [conn, edge] of props.edges) {
             if (!props.focus.graphConnections?.has(conn)) continue;

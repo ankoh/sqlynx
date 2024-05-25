@@ -59,7 +59,7 @@ function triggerFlow(state: proto.sqlynx_oauth.pb.OAuthState, eventBase64: strin
 const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProps) => {
     const logger = useLogger();
 
-    let code = props.params.get('code') ?? '';
+    const code = props.params.get('code') ?? '';
     const now = new Date();
     const [logsAreOpen, setLogsAreOpen] = React.useState<boolean>(false);
 
@@ -125,7 +125,7 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
     }
 
     // Determine the time we have left
-    let remainingUntilExpiration = codeExpiresAt !== undefined
+    const remainingUntilExpiration = codeExpiresAt !== undefined
         ? (Math.max(codeExpiresAt.getTime(), now.getTime()) - now.getTime()) : 0;
     React.useEffect(() => {
         logger.info(`code expires in ${formatHHMMSS(remainingUntilExpiration / 1000)}`, LOG_CTX);

@@ -49,7 +49,7 @@ const UpdateChannel: React.FC<UpdateChannelProps> = (props: UpdateChannelProps) 
                     status = <Button onClick={async () => {
                         try {
                             await installable.download();
-                        } catch (e: any) {
+                        } catch (e: unknown) {
                             console.error(e);
                         }
                     }}>Install</Button>;

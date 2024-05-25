@@ -124,7 +124,7 @@ export const SQLynxProcessor: StateField<SQLynxEditorState> = StateField.define<
         const prevSelection = transaction.startState.selection.asSingle();
         const newSelection = transaction.newSelection.asSingle();
         const cursorChanged = !prevSelection.eq(newSelection);
-        let selection: number | null = newSelection.main.to;
+        const selection: number | null = newSelection.main.to;
         let next: SQLynxEditorState = state;
 
         const copyIfNotReplaced = () => {

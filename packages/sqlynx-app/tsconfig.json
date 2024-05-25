@@ -13,7 +13,6 @@
         "jsx": "react",
         "types": [
             "node",
-            "electron",
             "jest"
         ],
         "plugins": [
