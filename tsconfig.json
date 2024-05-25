@@ -8,9 +8,15 @@
         "esModuleInterop": false,
         "downlevelIteration": true,
         "strict": true,
+        "jsx": "react",
         "types": [
             "node",
             "jest"
+        ],
+        "lib": [
+            "es6",
+            "es2020",
+            "dom"
         ]
     }
 }
