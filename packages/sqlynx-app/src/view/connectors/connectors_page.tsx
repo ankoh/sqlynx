@@ -1,23 +1,32 @@
 import * as React from 'react';
 
-import * as styles from './connectors_page.module.css';
 import { HyperGrpcConnectorSettings } from './hyper_grpc_connector_settings.js';
 import { SalesforceConnectorSettings } from './salesforce_connector_settings.js';
 import { Dispatch } from '../../utils/variant.js';
+import { VerticalTabProps, VerticalTabRenderers, VerticalTabs, VerticalTabVariant } from '../vertical_tabs.js';
+import { CONNECTOR_INFOS, ConnectorType, requiresSwitchingToNative } from '../../connectors/connector_info.js';
 
-import { VerticalTabProps, VerticalTabRenderers, VerticalTabVariant, VerticalTabs } from '../../view/vertical_tabs.js';
-
+import * as styles from './connectors_page.module.css';
 import * as icons from '../../../static/svg/symbols.generated.svg';
 
 type PageState = number | null;
 type PageStateSetter = Dispatch<React.SetStateAction<PageState>>;
 const PAGE_STATE_CTX = React.createContext<[PageState, PageStateSetter] | null>(null);
 
+export const PlatformCheck: React.FC<{ connectorType: ConnectorType, children: React.ReactElement }> = (props) => {
+    const info = CONNECTOR_INFOS[props.connectorType];
+    if (requiresSwitchingToNative(info)) {
+        return <div>This connector can only be used in the native app</div>;
+    } else {
+        return props.children;
+    }
+};
+
 interface PageProps { }
 
 interface ConnectorProps extends VerticalTabProps {
-
-};
+    connectorType: ConnectorType;
+}
 
 export const ConnectorsPage: React.FC<PageProps> = (_props: PageProps) => {
     const [selectedConnector, selectConnector] = React.useContext(PAGE_STATE_CTX)!;
@@ -29,6 +38,7 @@ export const ConnectorsPage: React.FC<PageProps> = (_props: PageProps) => {
             labelLong: "Hyper Database",
             icon: `${icons}#hyper_outlines`,
             iconActive: `${icons}#hyper_nocolor`,
+            connectorType: ConnectorType.HYPER_GRPC,
         },
         {
             tabId: 1,
@@ -36,17 +46,19 @@ export const ConnectorsPage: React.FC<PageProps> = (_props: PageProps) => {
             labelLong: "Salesforce Data Cloud",
             icon: `${icons}#salesforce_outlines`,
             iconActive: `${icons}#salesforce_notext`,
+            connectorType: ConnectorType.SALESFORCE_DATA_CLOUD,
         },
         {
             tabId: 2,
             labelShort: "Brainstorm",
             labelLong: "Brainstorm Mode",
             icon: `${icons}#zap`,
+            connectorType: ConnectorType.BRAINSTORM_MODE,
         }
     ]), []);
-    const connectorRenderers: VerticalTabRenderers = React.useMemo(() => ({
-        [0]: (_props: ConnectorProps) => <HyperGrpcConnectorSettings />,
-        [1]: (_props: ConnectorProps) => <SalesforceConnectorSettings />,
+    const connectorRenderers: VerticalTabRenderers<ConnectorProps> = React.useMemo(() => ({
+        [0]: (props: ConnectorProps) => <PlatformCheck connectorType={props.connectorType}><HyperGrpcConnectorSettings /></PlatformCheck>,
+        [1]: (props: ConnectorProps) => <PlatformCheck connectorType={props.connectorType}><SalesforceConnectorSettings /></PlatformCheck>,
     }), []);
 
     return (

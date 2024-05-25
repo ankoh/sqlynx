@@ -4,8 +4,8 @@ import { classNames } from '../utils/classnames.js';
 
 import * as styles from './vertical_tabs.module.css';
 
-export interface VerticalTabRenderers {
-    [key: number]: (props: VerticalTabProps) => React.ReactElement;
+export interface VerticalTabRenderers<TabProps extends VerticalTabProps> {
+    [key: number]: (props: TabProps) => React.ReactElement;
 }
 
 export interface VerticalTabProps {
@@ -22,16 +22,16 @@ export enum VerticalTabVariant {
     Wide = 1,
 }
 
-interface Props {
+interface Props<TabProps extends VerticalTabProps> {
     className?: string;
     variant: VerticalTabVariant;
-    tabs: VerticalTabProps[];
-    tabRenderers: VerticalTabRenderers;
+    tabs: TabProps[];
+    tabRenderers: VerticalTabRenderers<TabProps>;
     selectedTab: number;
     selectTab: (tab: number) => void;
 }
 
-export const VerticalTabs: React.FC<Props> = (props: Props) => {
+export function VerticalTabs<TabProps extends VerticalTabProps>(props: Props<TabProps>): React.ReactElement {
     const selectTab = React.useCallback((elem: React.MouseEvent) => {
         const target = elem.currentTarget as HTMLDivElement;
         props.selectTab(Number.parseInt(target.dataset.tab ?? '0'));
