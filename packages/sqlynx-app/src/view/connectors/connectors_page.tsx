@@ -4,7 +4,8 @@ import { HyperGrpcConnectorSettings } from './hyper_grpc_connector_settings.js';
 import { SalesforceConnectorSettings } from './salesforce_connector_settings.js';
 import { Dispatch } from '../../utils/variant.js';
 import { VerticalTabProps, VerticalTabRenderers, VerticalTabs, VerticalTabVariant } from '../vertical_tabs.js';
-import { CONNECTOR_INFOS, ConnectorType, requiresSwitchingToNative } from '../../connectors/connector_info.js';
+import { ConnectorType } from '../../connectors/connector_info.js';
+import { PlatformCheck } from './platform_check.js';
 
 import * as styles from './connectors_page.module.css';
 import * as icons from '../../../static/svg/symbols.generated.svg';
@@ -12,15 +13,6 @@ import * as icons from '../../../static/svg/symbols.generated.svg';
 type PageState = number | null;
 type PageStateSetter = Dispatch<React.SetStateAction<PageState>>;
 const PAGE_STATE_CTX = React.createContext<[PageState, PageStateSetter] | null>(null);
-
-export const PlatformCheck: React.FC<{ connectorType: ConnectorType, children: React.ReactElement }> = (props) => {
-    const info = CONNECTOR_INFOS[props.connectorType];
-    if (requiresSwitchingToNative(info)) {
-        return <div>This connector can only be used in the native app</div>;
-    } else {
-        return props.children;
-    }
-};
 
 interface PageProps { }
 
