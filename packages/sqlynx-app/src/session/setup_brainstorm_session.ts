@@ -7,7 +7,7 @@ import { useConnectionStateAllocator } from '../connectors/connection_registry.j
 import { createConnectionStatistics } from '../connectors/connection_statistics.js';
 import { ScriptData, ScriptKey } from './session_state.js';
 import { ScriptLoadingStatus } from './script_loader.js';
-import { FILES_CONNECTOR, CONNECTOR_INFOS, ConnectorType } from '../connectors/connector_info.js';
+import { FILE_CONNECTOR, CONNECTOR_INFOS, ConnectorType } from '../connectors/connector_info.js';
 import { RESULT_OK } from '../utils/result.js';
 import { EXAMPLES } from './example_scripts.js';
 
@@ -81,7 +81,7 @@ export function useFilesSessionSetup(): SessionSetupFn {
             instance: instance.value,
             connectorInfo: CONNECTOR_INFOS[ConnectorType.FILES],
             connectionId: allocateConnectionId({
-                type: FILES_CONNECTOR,
+                type: FILE_CONNECTOR,
                 value: {
                     stats: createConnectionStatistics()
                 }
