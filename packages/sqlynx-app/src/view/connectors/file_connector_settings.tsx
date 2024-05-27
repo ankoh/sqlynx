@@ -6,7 +6,7 @@ import { classNames } from '../../utils/classnames.js';
 
 const LOG_CTX = "files_connector";
 
-export const FiledConnectorSettings: React.FC<{}> = (_props: {}) => {
+export const FileConnectorSettings: React.FC<{}> = (_props: {}) => {
     return (
         <div className={style.layout}>
             <div className={style.connector_header_container}>
@@ -15,7 +15,7 @@ export const FiledConnectorSettings: React.FC<{}> = (_props: {}) => {
                         <use xlinkHref={`${symbols}#folder`} />
                     </svg>
                 </div>
-                <div className={style.platform_name} aria-labelledby="connector-brainstorm">
+                <div className={style.platform_name} aria-labelledby="connector-files">
                     Files
                 </div>
             </div >

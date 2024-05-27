@@ -1,7 +1,7 @@
 import * as proto from '@ankoh/sqlynx-pb';
 import { isNativePlatform } from "../platform/native_globals.js";
 
-export const FILES_CONNECTOR = Symbol('FILED_CONNECTOR');
+export const FILE_CONNECTOR = Symbol('FILE_CONNECTOR');
 export const SALESFORCE_DATA_CLOUD_CONNECTOR = Symbol('SALESFORCE_DATA_CLOUD_CONNECTOR');
 export const HYPER_GRPC_CONNECTOR = Symbol('HYPER_GRPC_CONNECTOR');
 
