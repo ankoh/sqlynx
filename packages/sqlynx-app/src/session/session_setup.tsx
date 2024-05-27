@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { SessionSetupPage } from './session_setup_page.js';
 import { ConnectorInfo, getConnectorInfoForParams } from '../connectors/connector_info.js';
-import { useBrainstormSessionSetup } from './setup_brainstorm_session.js';
+import { useFilesSessionSetup } from './setup_brainstorm_session.js';
 import { useAppEventListener } from '../platform/event_listener_provider.js';
 import { useSalesforceSessionSetup } from './setup_salesforce_session.js';
 import { useCurrentSessionSelector } from './current_session.js';
@@ -21,7 +21,7 @@ interface SessionSetupState {
 }
 
 export const SessionSetup: React.FC<{ children: React.ReactElement }> = (props: { children: React.ReactElement }) => {
-    const setupBrainstormSession = useBrainstormSessionSetup();
+    const setupBrainstormSession = useFilesSessionSetup();
     const setupSalesforceSession = useSalesforceSessionSetup();
     const selectCurrentSession = useCurrentSessionSelector();
     const appEvents = useAppEventListener();

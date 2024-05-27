@@ -6,7 +6,7 @@ import { Dispatch } from '../../utils/variant.js';
 import { VerticalTabProps, VerticalTabRenderers, VerticalTabs, VerticalTabVariant } from '../vertical_tabs.js';
 import { ConnectorType } from '../../connectors/connector_info.js';
 import { PlatformCheck } from './platform_check.js';
-import { BrainstormConnectorSettings } from './brainstorm_connector_settings.js';
+import { FiledConnectorSettings } from './files_connector_settings.js';
 
 import * as styles from './connectors_page.module.css';
 import * as icons from '../../../static/svg/symbols.generated.svg';
@@ -43,17 +43,17 @@ export const ConnectorsPage: React.FC<PageProps> = (_props: PageProps) => {
         },
         {
             tabId: 2,
-            labelShort: "Brainstorm",
-            labelLong: "Brainstorm Mode",
-            icon: `${icons}#square`,
-            iconActive: `${icons}#square_fill`,
-            connectorType: ConnectorType.BRAINSTORM_MODE,
+            labelShort: "Files",
+            labelLong: "Files",
+            icon: `${icons}#folder`,
+            iconActive: `${icons}#folder_fill`,
+            connectorType: ConnectorType.FILES,
         }
     ]), []);
     const connectorRenderers: VerticalTabRenderers<ConnectorProps> = React.useMemo(() => ({
         [0]: (props: ConnectorProps) => <PlatformCheck connectorType={props.connectorType}><HyperGrpcConnectorSettings /></PlatformCheck>,
         [1]: (props: ConnectorProps) => <PlatformCheck connectorType={props.connectorType}><SalesforceConnectorSettings /></PlatformCheck>,
-        [2]: (props: ConnectorProps) => <PlatformCheck connectorType={props.connectorType}><BrainstormConnectorSettings /></PlatformCheck>,
+        [2]: (props: ConnectorProps) => <PlatformCheck connectorType={props.connectorType}><FiledConnectorSettings /></PlatformCheck>,
     }), []);
 
     return (

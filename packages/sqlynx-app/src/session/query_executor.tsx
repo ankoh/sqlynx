@@ -51,7 +51,7 @@ export const QueryExecutor = (props: { children?: React.ReactElement }) => {
                 };
                 break;
             }
-            case ConnectorType.BRAINSTORM_MODE:
+            case ConnectorType.FILES:
             case ConnectorType.HYPER_GRPC:
                 console.warn(
                     `script query executor does not support connector ${state.connectorInfo.connectorType} yet`,
