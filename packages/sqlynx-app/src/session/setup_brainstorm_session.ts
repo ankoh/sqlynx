@@ -7,7 +7,7 @@ import { useConnectionStateAllocator } from '../connectors/connection_registry.j
 import { createConnectionStatistics } from '../connectors/connection_statistics.js';
 import { ScriptData, ScriptKey } from './session_state.js';
 import { ScriptLoadingStatus } from './script_loader.js';
-import { BRAINSTORM_CONNECTOR, CONNECTOR_INFOS, ConnectorType } from '../connectors/connector_info.js';
+import { FILES_CONNECTOR, CONNECTOR_INFOS, ConnectorType } from '../connectors/connector_info.js';
 import { RESULT_OK } from '../utils/result.js';
 import { EXAMPLES } from './example_scripts.js';
 
@@ -16,7 +16,7 @@ export const DEFAULT_BOARD_HEIGHT = 600;
 
 type SessionSetupFn = (abort: AbortSignal) => Promise<number | null>;
 
-export function useBrainstormSessionSetup(): SessionSetupFn {
+export function useFilesSessionSetup(): SessionSetupFn {
     const setupSQLynx = useSQLynxSetup();
     const allocateSessionState = useSessionStateAllocator();
     const allocateConnectionId = useConnectionStateAllocator();
@@ -79,9 +79,9 @@ export function useBrainstormSessionSetup(): SessionSetupFn {
 
         const scriptId = allocateSessionState({
             instance: instance.value,
-            connectorInfo: CONNECTOR_INFOS[ConnectorType.BRAINSTORM_MODE],
+            connectorInfo: CONNECTOR_INFOS[ConnectorType.FILES],
             connectionId: allocateConnectionId({
-                type: BRAINSTORM_CONNECTOR,
+                type: FILES_CONNECTOR,
                 value: {
                     stats: createConnectionStatistics()
                 }

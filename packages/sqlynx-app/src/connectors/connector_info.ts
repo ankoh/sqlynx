@@ -1,12 +1,12 @@
 import * as proto from '@ankoh/sqlynx-pb';
 import { isNativePlatform } from "../platform/native_globals.js";
 
-export const BRAINSTORM_CONNECTOR = Symbol('BRAINSTORM_CONNECTOR');
+export const FILES_CONNECTOR = Symbol('FILED_CONNECTOR');
 export const SALESFORCE_DATA_CLOUD_CONNECTOR = Symbol('SALESFORCE_DATA_CLOUD_CONNECTOR');
 export const HYPER_GRPC_CONNECTOR = Symbol('HYPER_GRPC_CONNECTOR');
 
 export enum ConnectorType {
-    BRAINSTORM_MODE = 0,
+    FILES = 0,
     SALESFORCE_DATA_CLOUD = 1,
     HYPER_GRPC = 2,
 }
@@ -43,10 +43,10 @@ export interface ConnectorFeatures {
 
 export const CONNECTOR_INFOS: ConnectorInfo[] = [
     {
-        connectorType: ConnectorType.BRAINSTORM_MODE,
+        connectorType: ConnectorType.FILES,
         displayName: {
-            short: 'Brainstorm',
-            long: 'Brainstorm Mode',
+            short: 'Files',
+            long: 'Files',
         },
         features: {
             schemaScript: true,
@@ -96,7 +96,7 @@ export function getConnectorInfoForParams(params: proto.sqlynx_session.pb.Connec
     switch (params.connector.case) {
         case "hyper": return CONNECTOR_INFOS[ConnectorType.HYPER_GRPC];
         case "salesforce": return CONNECTOR_INFOS[ConnectorType.SALESFORCE_DATA_CLOUD];
-        case "brainstorm": return CONNECTOR_INFOS[ConnectorType.BRAINSTORM_MODE];
+        case "brainstorm": return CONNECTOR_INFOS[ConnectorType.FILES];
         default: return null;
     }
 }

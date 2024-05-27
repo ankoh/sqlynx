@@ -11,7 +11,7 @@ export const SalesforceIcon = () => (
 );
 const BrainstormIcon = () => (
     <svg width="20px" height="20px">
-        <use xlinkHref={`${icons}#square`} />
+        <use xlinkHref={`${icons}#folder`} />
     </svg>
 );
 const HyperIcon = () => (
@@ -22,7 +22,7 @@ const HyperIcon = () => (
 
 export function getConnectorIcon(connector: ConnectorInfo): React.ReactElement {
     switch (connector.connectorType) {
-        case ConnectorType.BRAINSTORM_MODE:
+        case ConnectorType.FILES:
             return <BrainstormIcon />;
         case ConnectorType.SALESFORCE_DATA_CLOUD:
             return <SalesforceIcon />;
