@@ -19,6 +19,7 @@ import { useLogger } from '../../platform/logger_provider.js';
 import * as icons from '../../../static/svg/symbols.generated.svg';
 
 import * as styles from './editor.module.css';
+import { isDebugBuild } from '../../globals.js';
 
 enum TabId {
     MAIN_SCRIPT = 1,
@@ -180,9 +181,6 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                 <div className={styles.script_title_container}>
                     <div className={styles.script_title}>{tabTitle}</div>
                 </div>
-                <div className={styles.script_statistics_container}>
-                    <ScriptStatisticsBar stats={activeScriptStatistics} />
-                </div>
             </div>
             <div className={styles.editor_with_loader}>
                 <div className={styles.editor}>
@@ -193,6 +191,16 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                     />
                 </div>
             </div>
+            {isDebugBuild() &&
+                <div className={styles.devtools_overlay}>
+                    <div className={styles.devtools_title}>
+                        Editor Perf
+                    </div>
+                    <div className={styles.script_stats}>
+                        <ScriptStatisticsBar stats={activeScriptStatistics} />
+                    </div>
+                </div>
+            }
         </div>
     );
 
