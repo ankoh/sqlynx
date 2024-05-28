@@ -27,6 +27,10 @@ export const SessionStateRegistry: React.FC<Props> = (props: Props) => {
     );
 };
 
+export function useSessionStates(): SessionRegistry {
+    return React.useContext(SESSION_REGISTRY_CTX)![0];
+}
+
 export function useSessionStateAllocator(): SessionAllocator {
     const [_reg, setReg] = React.useContext(SESSION_REGISTRY_CTX)!;
     return React.useCallback((state: SessionState) => {
