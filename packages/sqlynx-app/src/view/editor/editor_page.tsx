@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { ActionList, IconButton, ButtonGroup, ActionMenu, Button } from '@primer/react';
+import { ActionList, IconButton, ButtonGroup, ActionMenu, Button, AnchoredOverlay } from '@primer/react';
 import {
     SyncIcon,
     PaperAirplaneIcon,
@@ -29,10 +29,12 @@ import * as styles from './editor_page.module.css';
 import * as theme from '../../github_theme.module.css';
 import * as icons from '../../../static/svg/symbols.generated.svg';
 
+// XXX This should actually not be a CONNECTION list, but a SESSION list
 const ConnectorSelection = (props: { className?: string; variant: 'default' | 'invisible'; short: boolean }) => {
     const connectorList = useConnectorList();
     const [sessionState, _modifySessionState] = useCurrentSessionState();
     const [isOpen, setIsOpen] = React.useState<boolean>(false);
+
     const selectConnector = React.useCallback((e: React.MouseEvent<HTMLLIElement, MouseEvent>) => {
         e.stopPropagation();
         const target = e.currentTarget as HTMLLIElement;
@@ -48,26 +50,33 @@ const ConnectorSelection = (props: { className?: string; variant: 'default' | 'i
         : props.short
             ? sessionState?.connectorInfo.displayName.short
             : sessionState?.connectorInfo.displayName.long;
-    //        <ActionMenu.Overlay width={props.short ? 'auto' : 'medium'} align="end">
-    //            <ActionList>
-    //                {connectorList.map((connector, i) => (
-    //                    <ActionList.Item key={i} data-connector={i} onClick={selectConnector}>
-    //                        <ActionList.LeadingVisual>{getConnectorIcon(connector)}</ActionList.LeadingVisual>
-    //                        {props.short ? connector.displayName.short : connector.displayName.long}
-    //                    </ActionList.Item>
-    //                ))}
-    //            </ActionList>
-    //        </ActionMenu.Overlay>
-    //    </ActionMenu>
     return (
-        <Button
-            className={props.className}
-            variant={props.variant}
-            alignContent="start"
-            leadingVisual={() => (!sessionState?.connectorInfo ? <div /> : getConnectorIcon(sessionState?.connectorInfo))}
-        >
-            {connectorName}
-        </Button>
+        <AnchoredOverlay
+            open={isOpen}
+            onOpen={() => setIsOpen(true)}
+            onClose={() => setIsOpen(false)}
+            renderAnchor={
+                (props: any) =>
+                <Button
+                    {...props}
+                    className={props.className}
+                    variant="invisible"
+                    alignContent="start"
+                    leadingVisual={() => (!sessionState?.connectorInfo ? <div /> : getConnectorIcon(sessionState?.connectorInfo))}
+                >
+                    {connectorName}
+                </Button>}
+            >
+                <ActionList>
+                    <ActionList.GroupHeading as="h2">Connectors</ActionList.GroupHeading>
+                    {connectorList.map((connector, i) => (
+                        <ActionList.Item key={i} data-connector={i} onClick={selectConnector}>
+                            <ActionList.LeadingVisual>{getConnectorIcon(connector)}</ActionList.LeadingVisual>
+                            {props.short ? connector.displayName.short : connector.displayName.long}
+                        </ActionList.Item>
+                    ))}
+                </ActionList>
+        </AnchoredOverlay>
     );
 };
 

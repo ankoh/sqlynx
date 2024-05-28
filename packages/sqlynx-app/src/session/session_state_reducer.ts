@@ -24,8 +24,6 @@ import {
 
 export const DESTROY = Symbol('DESTROY');
 
-export const UPDATE_CONNECTOR_STATE = Symbol('UPDATE_CONNECTOR_STATE');
-
 export const UPDATE_SCRIPT_ANALYSIS = Symbol('UPDATE_SCRIPT_ANALYSIS');
 export const UPDATE_SCRIPT_CURSOR = Symbol('UPDATE_SCRIPT_CURSOR');
 export const REPLACE_SCRIPT_CONTENT = Symbol('REPLACE_SCRIPT_CONTENT');

@@ -26,15 +26,15 @@ export const ConnectorsPage: React.FC<PageProps> = (_props: PageProps) => {
 
     const connectors: ConnectorProps[] = React.useMemo(() => ([
         {
-            tabId: 0,
-            labelShort: "Hyper",
-            labelLong: "Hyper Database",
-            icon: `${icons}#hyper_outlines`,
-            iconActive: `${icons}#hyper_nocolor`,
-            connectorType: ConnectorType.HYPER_GRPC,
+            tabId: ConnectorType.FILES as number,
+            labelShort: "Files",
+            labelLong: "Files",
+            icon: `${icons}#folder`,
+            iconActive: `${icons}#folder_fill`,
+            connectorType: ConnectorType.FILES,
         },
         {
-            tabId: 1,
+            tabId: ConnectorType.SALESFORCE_DATA_CLOUD as number,
             labelShort: "Salesforce",
             labelLong: "Salesforce Data Cloud",
             icon: `${icons}#salesforce_outlines`,
@@ -42,18 +42,18 @@ export const ConnectorsPage: React.FC<PageProps> = (_props: PageProps) => {
             connectorType: ConnectorType.SALESFORCE_DATA_CLOUD,
         },
         {
-            tabId: 2,
-            labelShort: "Files",
-            labelLong: "Files",
-            icon: `${icons}#folder`,
-            iconActive: `${icons}#folder_fill`,
-            connectorType: ConnectorType.FILES,
-        }
+            tabId: ConnectorType.HYPER_GRPC as number,
+            labelShort: "Hyper",
+            labelLong: "Hyper Database",
+            icon: `${icons}#hyper_outlines`,
+            iconActive: `${icons}#hyper_nocolor`,
+            connectorType: ConnectorType.HYPER_GRPC,
+        },
     ]), []);
     const connectorRenderers: VerticalTabRenderers<ConnectorProps> = React.useMemo(() => ({
-        [0]: (props: ConnectorProps) => <PlatformCheck connectorType={props.connectorType}><HyperGrpcConnectorSettings /></PlatformCheck>,
-        [1]: (props: ConnectorProps) => <PlatformCheck connectorType={props.connectorType}><SalesforceConnectorSettings /></PlatformCheck>,
-        [2]: (props: ConnectorProps) => <PlatformCheck connectorType={props.connectorType}><FileConnectorSettings /></PlatformCheck>,
+        [ConnectorType.HYPER_GRPC as number]: (props: ConnectorProps) => <PlatformCheck connectorType={props.connectorType}><HyperGrpcConnectorSettings /></PlatformCheck>,
+        [ConnectorType.SALESFORCE_DATA_CLOUD as number]: (props: ConnectorProps) => <PlatformCheck connectorType={props.connectorType}><SalesforceConnectorSettings /></PlatformCheck>,
+        [ConnectorType.FILES as number]: (props: ConnectorProps) => <PlatformCheck connectorType={props.connectorType}><FileConnectorSettings /></PlatformCheck>,
     }), []);
 
     return (
