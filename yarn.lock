@@ -106,7 +106,7 @@ __metadata:
     style-loader: "npm:^4.0.0"
     style-mod: "npm:^4.1.2"
     styled-components: "npm:^6.1.11"
-    ts-jest: "npm:^29.1.3"
+    ts-jest: "npm:^29.1.4"
     ts-loader: "npm:^9.5.1"
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.4.5"
@@ -134,7 +134,7 @@ __metadata:
     esbuild: "npm:^0.21.4"
     flatbuffers: "npm:^24.3.25"
     jest: "npm:^29.7.0"
-    ts-jest: "npm:^29.1.3"
+    ts-jest: "npm:^29.1.4"
     typescript: "npm:^5.4.5"
   languageName: unknown
   linkType: soft
@@ -10012,9 +10012,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ts-jest@npm:^29.1.3":
-  version: 29.1.3
-  resolution: "ts-jest@npm:29.1.3"
+"ts-jest@npm:^29.1.4":
+  version: 29.1.4
+  resolution: "ts-jest@npm:29.1.4"
   dependencies:
     bs-logger: "npm:0.x"
     fast-json-stable-stringify: "npm:2.x"
@@ -10044,7 +10044,7 @@ __metadata:
       optional: true
   bin:
     ts-jest: cli.js
-  checksum: 10c0/7810882f53c7d722dfcd9fbe65c1c80258ec4bd216a21448f27759f2f06d57a2f3f2472e1efe4a5e29fd4064dce07a93c8dbf3b13e77dac0e32419a30756f8f5
+  checksum: 10c0/97def10be26a553e529dfacafe264fa9833d638052bc2b1ebe6301262ae2d3e43954f4d91f2d2d07cf92352cdd4fa163a86f8116a1f6bb8cef7060cddfec794b
   languageName: node
   linkType: hard
 
