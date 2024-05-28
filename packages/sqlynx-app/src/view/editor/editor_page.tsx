@@ -10,10 +10,10 @@ import {
     StopwatchIcon,
 } from '@primer/octicons-react';
 
-import { useConnectorList } from '../../connectors/connector_info.js';
 import { ConnectorInfo } from '../../connectors/connector_info.js';
 import { QueryExecutionStatus } from '../../connectors/query_execution.js';
 import { useCurrentSessionState } from '../../session/current_session.js';
+import { useSessionStates } from '../../session/session_state_registry.js';
 import { ScriptEditor } from './editor.js';
 import { SchemaGraph } from '../schema/schema_graph.js';
 import { QueryProgress } from '../progress/query_progress.js';
@@ -29,9 +29,8 @@ import * as styles from './editor_page.module.css';
 import * as theme from '../../github_theme.module.css';
 import * as icons from '../../../static/svg/symbols.generated.svg';
 
-// XXX This should actually not be a CONNECTION list, but a SESSION list
-const ConnectorSelection = (props: { className?: string; variant: 'default' | 'invisible'; short: boolean }) => {
-    const connectorList = useConnectorList();
+const SessionSelection = (props: { className?: string; variant: 'default' | 'invisible'; short: boolean }) => {
+    const sessionRegistry = useSessionStates();
     const [sessionState, _modifySessionState] = useCurrentSessionState();
     const [isOpen, setIsOpen] = React.useState<boolean>(false);
 
@@ -68,11 +67,11 @@ const ConnectorSelection = (props: { className?: string; variant: 'default' | 'i
                 </Button>}
             >
                 <ActionList>
-                    <ActionList.GroupHeading as="h2">Connectors</ActionList.GroupHeading>
-                    {connectorList.map((connector, i) => (
-                        <ActionList.Item key={i} data-connector={i} onClick={selectConnector}>
-                            <ActionList.LeadingVisual>{getConnectorIcon(connector)}</ActionList.LeadingVisual>
-                            {props.short ? connector.displayName.short : connector.displayName.long}
+                    <ActionList.GroupHeading as="h2">Sessions</ActionList.GroupHeading>
+                    {sessionRegistry.entrySeq().map(([_sessionId, session]) => (
+                        <ActionList.Item key={session.connectionId} data-session={session.connectionId} onClick={selectConnector}>
+                            <ActionList.LeadingVisual>{getConnectorIcon(session.connectorInfo)}</ActionList.LeadingVisual>
+                            {props.short ? session.connectorInfo.displayName.short : session.connectorInfo.displayName.long}
                         </ActionList.Item>
                     ))}
                 </ActionList>
@@ -224,7 +223,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
             <div className={styles.header_container}>
                 <div className={styles.header_left_container}>
                     <div className={styles.page_title}>SQL Editor</div>
-                    <ConnectorSelection variant="invisible" short={true} />
+                    <SessionSelection variant="invisible" short={true} />
                 </div>
                 <div className={styles.header_action_container}>
                     <div>
