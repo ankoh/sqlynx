@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { ActionList, IconButton, ButtonGroup, ActionMenu, Button, AnchoredOverlay } from '@primer/react';
+import { ActionList, IconButton, ButtonGroup, Button, AnchoredOverlay } from '@primer/react';
 import {
     SyncIcon,
     PaperAirplaneIcon,
@@ -11,17 +11,17 @@ import {
 } from '@primer/octicons-react';
 
 import { useConnectorList } from '../../connectors/connector_info.js';
-import { ConnectorInfo, ConnectorType } from '../../connectors/connector_info.js';
+import { ConnectorInfo } from '../../connectors/connector_info.js';
 import { QueryExecutionStatus } from '../../connectors/query_execution.js';
 import { useCurrentSessionState } from '../../session/current_session.js';
-import { ScriptEditor } from '../editor/editor.js';
-import { SchemaGraph } from '../../view/schema/schema_graph.js';
-import { QueryProgress } from '../../view/progress/query_progress.js';
-import { DataTable } from '../../view/table/data_table.js';
+import { ScriptEditor } from './editor.js';
+import { SchemaGraph } from '../schema/schema_graph.js';
+import { QueryProgress } from '../progress/query_progress.js';
+import { DataTable } from '../table/data_table.js';
 import { KeyEventHandler, useKeyEvents } from '../../utils/key_events.js';
 import { VerticalTabVariant, VerticalTabs } from '../vertical_tabs.js';
-import { ScriptFileSaveOverlay } from '../editor/script_filesave_overlay.js';
-import { ScriptURLOverlay } from '../editor/script_url_overlay.js';
+import { ScriptFileSaveOverlay } from './script_filesave_overlay.js';
+import { ScriptURLOverlay } from './script_url_overlay.js';
 import { getConnectorIcon } from '../connector_icons.js';
 import { useAppConfig } from '../../app_config.js';
 
@@ -37,9 +37,9 @@ const ConnectorSelection = (props: { className?: string; variant: 'default' | 'i
 
     const selectConnector = React.useCallback((e: React.MouseEvent<HTMLLIElement, MouseEvent>) => {
         e.stopPropagation();
-        const target = e.currentTarget as HTMLLIElement;
-        const connectorType = Number.parseInt(target.dataset.connector ?? '0')! as ConnectorType;
-        setIsOpen(false);
+        // const target = e.currentTarget as HTMLLIElement;
+        // const connectorType = Number.parseInt(target.dataset.connector ?? '0')! as ConnectorType;
+        // setIsOpen(false);
         // scriptStateDispatch({
         //     type: SELECT_CONNECTOR,
         //     value: connectorType,
@@ -82,8 +82,6 @@ const ConnectorSelection = (props: { className?: string; variant: 'default' | 'i
 
 const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
     const config = useAppConfig();
-    const [linkSharingIsOpen, openLinkSharing] = React.useState<boolean>(false);
-    const [saveSqlIsOpen, openSaveSql] = React.useState<boolean>(false);
     return (
         <>
             <ActionList.Item disabled={!props.connector?.features.executeQueryAction}>
