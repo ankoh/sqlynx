@@ -55,7 +55,7 @@
 .devtools_overlay {
     position: absolute;
     bottom: 16px;
-    right: 16px;
+    right: 32px;
     overflow: hidden;
     border-radius: var(--border_radius);
     border: 1px solid var(--border_color_primary);
