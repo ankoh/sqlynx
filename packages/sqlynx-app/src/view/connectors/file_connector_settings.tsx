@@ -1,27 +1,65 @@
 import * as React from 'react';
 
-import * as symbols from '../../../static/svg/symbols.generated.svg';
-import * as style from './connector_settings.module.css';
 import { classNames } from '../../utils/classnames.js';
+import { EXAMPLE_SCHEMAS } from '../../session/example_scripts.js';
+
+import * as symbols from '../../../static/svg/symbols.generated.svg';
+import * as baseStyle from './connector_settings.module.css';
+import * as style from './file_connector_settings.module.css';
 
 const LOG_CTX = "files_connector";
 
-export const FileConnectorSettings: React.FC<{}> = (_props: {}) => {
+interface Props {}
+
+export const FileConnectorSettings: React.FC<Props> = (_props: Props) => {
+    const example_schemas_out: React.ReactElement[] = [];
+    for (const example of EXAMPLE_SCHEMAS) {
+        const queries_out: React.ReactElement[] = [];
+        for (const query of example.queries) {
+            queries_out.push(
+                <div key={query.scriptId} className={style.example_query}>
+                    <div className={style.example_query_name}>
+                        {query.name}
+                    </div>
+                    <div className={style.example_query_filename}>
+                        {query.filename}
+                    </div>
+                </div>,
+            );
+        }
+        example_schemas_out.push(
+            <div key={example.schema.scriptId} className={style.example_schema}>
+                <div className={style.example_schema_name}>
+                    {example.name}
+                </div>
+                <div className={style.example_queries}>
+                    {queries_out}
+                </div>
+            </div>
+        );
+    }
+    const examples = (
+        <div className={style.examples}>
+            {example_schemas_out}
+        </div>
+    );
+
     return (
-        <div className={style.layout}>
-            <div className={style.connector_header_container}>
-                <div className={style.platform_logo}>
+        <div className={baseStyle.layout}>
+            <div className={baseStyle.connector_header_container}>
+                <div className={baseStyle.platform_logo}>
                     <svg width="24px" height="24px">
                         <use xlinkHref={`${symbols}#folder`} />
                     </svg>
                 </div>
-                <div className={style.platform_name} aria-labelledby="connector-files">
+                <div className={baseStyle.platform_name} aria-labelledby="connector-files">
                     Files
                 </div>
             </div >
-            <div className={style.body_container}>
-                <div className={style.section}>
-                    <div className={classNames(style.section_layout, style.body_section_layout)}>
+            <div className={baseStyle.body_container}>
+                <div className={baseStyle.section}>
+                    <div className={classNames(baseStyle.section_layout, baseStyle.body_section_layout)}>
+                        {examples}
                     </div>
                 </div>
             </div>
