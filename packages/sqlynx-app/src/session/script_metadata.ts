@@ -18,6 +18,8 @@ export interface ScriptMetadata {
     originType: ScriptOriginType;
     /// The name
     name: string | null;
+    /// The file name
+    filename: string | null;
     /// The http url
     httpURL: URL | null;
     /// The github account
@@ -31,6 +33,7 @@ export interface ScriptMetadata {
 export function generateBlankScript(): ScriptMetadata {
     return createScriptMetadata({
         name: null,
+        filename: null,
         scriptType: ScriptType.UNKNOWN,
         originType: ScriptOriginType.LOCAL,
         httpURL: null,
