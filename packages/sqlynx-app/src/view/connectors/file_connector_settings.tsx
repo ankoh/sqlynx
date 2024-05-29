@@ -11,7 +11,7 @@ export const FileConnectorSettings: React.FC<{}> = (_props: {}) => {
         <div className={style.layout}>
             <div className={style.connector_header_container}>
                 <div className={style.platform_logo}>
-                    <svg width="28px" height="28px">
+                    <svg width="24px" height="24px">
                         <use xlinkHref={`${symbols}#folder`} />
                     </svg>
                 </div>
