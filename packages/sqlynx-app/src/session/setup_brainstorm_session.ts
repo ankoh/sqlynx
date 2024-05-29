@@ -40,7 +40,7 @@ export function useFilesSessionSetup(): SessionSetupFn {
             scriptKey: ScriptKey.MAIN_SCRIPT,
             scriptVersion: 1,
             script: mainScript,
-            metadata:  EXAMPLES.tpch.queries[1],
+            metadata:  EXAMPLES.TPCH.queries[1],
             loading: {
                 status: ScriptLoadingStatus.PENDING,
                 error: null,
@@ -60,7 +60,7 @@ export function useFilesSessionSetup(): SessionSetupFn {
             scriptKey: ScriptKey.SCHEMA_SCRIPT,
             scriptVersion: 1,
             script: schemaScript,
-            metadata:  EXAMPLES.tpch.schema,
+            metadata:  EXAMPLES.TPCH.schema,
             loading: {
                 status: ScriptLoadingStatus.PENDING,
                 error: null,

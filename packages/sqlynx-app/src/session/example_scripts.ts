@@ -160,8 +160,21 @@ export const TPCH_SCHEMA = example(ScriptType.SCHEMA, 'TPC-H Schema', 'tpch_sche
 export const TPCHDS_SCHEMA = example(ScriptType.SCHEMA, 'TPC-DS Schema', 'tpchds_schema.sql', tpcds_schema);
 export const SSB_SCHEMA = example(ScriptType.SCHEMA, 'SSB Schema', 'ssb_schema.sql', ssb_schema);
 
-export const EXAMPLES = {
-    tpch: {
+export interface ExampleSchema {
+    name: string;
+    schema: ScriptMetadata;
+    queries: ScriptMetadata[];
+}
+
+interface ExampleSchemas {
+    TPCH: ExampleSchema;
+    TPCDS: ExampleSchema;
+    SSB: ExampleSchema;
+}
+
+export const EXAMPLES: ExampleSchemas = {
+    TPCH: {
+        name: "TPC-H",
         schema: TPCH_SCHEMA,
         queries: [
             example(ScriptType.QUERY, 'TPC-H Query 1', 'tpch_q1.sql', tpch_q1, TPCH_SCHEMA.scriptId),
@@ -188,7 +201,8 @@ export const EXAMPLES = {
             example(ScriptType.QUERY, 'TPC-H Query 22', 'tpch_q22.sql', tpch_q22, TPCH_SCHEMA.scriptId),
         ]
     },
-    tpcds: {
+    TPCDS: {
+        name: "TPC-DS",
         schema: TPCHDS_SCHEMA,
         queries: [
             example(ScriptType.QUERY, 'TPC-DS Query 1', 'tpcds_q1.sql', tpcds_q1, TPCH_SCHEMA.scriptId),
@@ -295,7 +309,8 @@ export const EXAMPLES = {
             example(ScriptType.QUERY, 'TPC-DS Query 98', 'tpcds_q98.sql', tpcds_q98, TPCH_SCHEMA.scriptId),
         ]
     },
-    ssb: {
+    SSB: {
+        name: "SSB",
         schema: SSB_SCHEMA,
         queries: [
             example(ScriptType.QUERY, 'SSB Query 11', 'ssb_q11.sql', ssb_q11, SSB_SCHEMA.scriptId),
@@ -314,3 +329,9 @@ export const EXAMPLES = {
         ]
     }
 };
+
+export const EXAMPLE_SCHEMAS = [
+    EXAMPLES.TPCH,
+    EXAMPLES.TPCDS,
+    EXAMPLES.SSB,
+];
