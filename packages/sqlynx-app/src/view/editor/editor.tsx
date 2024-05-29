@@ -57,7 +57,9 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         cursor: null,
     });
     const activeScriptKey = activeTab == TabId.SCHEMA_SCRIPT ? ScriptKey.SCHEMA_SCRIPT : ScriptKey.MAIN_SCRIPT;
-    const activeScriptStatistics = ctx?.scripts[activeScriptKey]?.statistics ?? null;
+    const activeScript = ctx?.scripts[activeScriptKey] ?? null;
+    const activeScriptStatistics = activeScript?.statistics ?? null;
+    const activeScriptFilename = activeScript?.metadata?.filename ?? null;
 
     // Helper to update a script
     const updateScript = React.useCallback(
@@ -178,12 +180,11 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
     const EditorPage = (
         <div className={styles.editor_with_header}>
             <div className={styles.headerbar}>
-                <div className={styles.script_title_container}>
-                    <div className={styles.script_title}>{tabTitle}</div>
-                </div>
+                <div className={styles.script_title}>{tabTitle}</div>
+                <div className={styles.script_filename}>{activeScriptFilename ?? ""}</div>
             </div>
             <div className={styles.editor_with_loader}>
-                <div className={styles.editor}>
+            <div className={styles.editor}>
                     <CodeMirror
                         extensions={SQLynxExtensions}
                         viewWasCreated={viewWasCreated}
