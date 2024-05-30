@@ -1,21 +1,36 @@
-.examples {
-
+.example_section_layout {
+    width: 100%;
+    max-width: 1000px;
+    display: flex;
+    flex-direction: column;
+    row-gap: 16px;
+    align-items: start;
 }
 
 .example_schema {
-
+    display: grid;
+    grid-template-rows: 32px max-content;
 }
 
 .example_schema_name {
-
+    font-weight: 500;
 }
 
 .example_queries {
-
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    row-gap: 8px;
+    column-gap: 16px;
 }
 
 .example_query {
-
+    display: grid;
+    grid-template-columns: max-content;
+    grid-column-gap: 8px;
+    border: 1px solid var(--border_color_primary);
+    border-radius: var(--border_radius);
+    padding: 2px 8px;
 }
 
 .example_query_name {

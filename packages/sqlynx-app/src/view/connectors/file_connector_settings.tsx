@@ -6,6 +6,7 @@ import { EXAMPLE_SCHEMAS } from '../../session/example_scripts.js';
 import * as symbols from '../../../static/svg/symbols.generated.svg';
 import * as baseStyle from './connector_settings.module.css';
 import * as style from './file_connector_settings.module.css';
+import { ScriptMetadata } from '../../session/script_metadata.js';
 
 const LOG_CTX = "files_connector";
 
@@ -14,18 +15,17 @@ interface Props {}
 export const FileConnectorSettings: React.FC<Props> = (_props: Props) => {
     const example_schemas_out: React.ReactElement[] = [];
     for (const example of EXAMPLE_SCHEMAS) {
-        const queries_out: React.ReactElement[] = [];
+        const queriesOut: React.ReactElement[] = [];
+        const renderQuery = (metadata: ScriptMetadata) => (
+            <div key={metadata.scriptId} className={style.example_query}>
+                <div className={style.example_query_filename}>
+                    {metadata.filename}
+                </div>
+            </div>
+        );
+        queriesOut.push(renderQuery(example.schema));
         for (const query of example.queries) {
-            queries_out.push(
-                <div key={query.scriptId} className={style.example_query}>
-                    <div className={style.example_query_name}>
-                        {query.name}
-                    </div>
-                    <div className={style.example_query_filename}>
-                        {query.filename}
-                    </div>
-                </div>,
-            );
+            queriesOut.push(renderQuery(query));
         }
         example_schemas_out.push(
             <div key={example.schema.scriptId} className={style.example_schema}>
@@ -33,15 +33,15 @@ export const FileConnectorSettings: React.FC<Props> = (_props: Props) => {
                     {example.name}
                 </div>
                 <div className={style.example_queries}>
-                    {queries_out}
+                    {queriesOut}
                 </div>
             </div>
         );
     }
     const examples = (
-        <div className={style.examples}>
+        <>
             {example_schemas_out}
-        </div>
+        </>
     );
 
     return (
@@ -58,7 +58,7 @@ export const FileConnectorSettings: React.FC<Props> = (_props: Props) => {
             </div >
             <div className={baseStyle.body_container}>
                 <div className={baseStyle.section}>
-                    <div className={classNames(baseStyle.section_layout, baseStyle.body_section_layout)}>
+                    <div className={classNames(style.example_section_layout, baseStyle.body_section_layout)}>
                         {examples}
                     </div>
                 </div>
