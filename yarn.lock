@@ -46,7 +46,7 @@ __metadata:
     "@ankoh/sqlynx-core": "link:../sqlynx-core-api"
     "@ankoh/sqlynx-pb": "link:../sqlynx-pb"
     "@bufbuild/protobuf": "npm:^1.9.0"
-    "@codemirror/autocomplete": "npm:^6.16.0"
+    "@codemirror/autocomplete": "npm:^6.16.1"
     "@codemirror/language": "npm:^6.10.1"
     "@codemirror/state": "npm:^6.4.1"
     "@codemirror/view": "npm:^6.26.3"
@@ -698,9 +698,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/autocomplete@npm:^6.16.0":
-  version: 6.16.0
-  resolution: "@codemirror/autocomplete@npm:6.16.0"
+"@codemirror/autocomplete@npm:^6.16.1":
+  version: 6.16.1
+  resolution: "@codemirror/autocomplete@npm:6.16.1"
   dependencies:
     "@codemirror/language": "npm:^6.0.0"
     "@codemirror/state": "npm:^6.0.0"
@@ -711,7 +711,7 @@ __metadata:
     "@codemirror/state": ^6.0.0
     "@codemirror/view": ^6.0.0
     "@lezer/common": ^1.0.0
-  checksum: 10c0/629306843b348e39f3e8c6cc76dd0c1caf2a38e2ecbac391b095dcb97f94fa60130b33d9745020e0a95ede3f3ed0bf746ce0437d6db9dcbf8d14fa97e8fbc20f
+  checksum: 10c0/a871ce7b076fae2558eecc3f3330919f347e0a70318436caadd80300301a7e2dcb0e0f754bfec3473f2bdd41309cf02f5f936827cc7eb687ac5ce93c9cc86eab
   languageName: node
   linkType: hard
 
