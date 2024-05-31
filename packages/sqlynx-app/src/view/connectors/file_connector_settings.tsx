@@ -60,9 +60,10 @@ export const FileConnectorSettings: React.FC<Props> = (_props: Props) => {
     const example_schemas_out: React.ReactElement[] = [];
     for (const example of EXAMPLE_SCHEMAS) {
         const queriesOut: React.ReactElement[] = [];
-        queriesOut.push(<SchemaEntry metadata={example.schema} />);
+        let i = 0;
+        queriesOut.push(<SchemaEntry key={i++} metadata={example.schema} />);
         for (const query of example.queries) {
-            queriesOut.push(<QueryEntry metadata={query} />);
+            queriesOut.push(<QueryEntry key={i++} metadata={query} />);
         }
         example_schemas_out.push(
             <div key={example.schema.scriptId} className={style.example_schema}>
