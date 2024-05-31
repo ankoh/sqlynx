@@ -9,14 +9,6 @@ export enum ScriptType {
     SCHEMA,
 }
 
-export function getScriptTypeName(type: ScriptType) {
-    switch (type) {
-        case ScriptType.UNKNOWN: return "Unknown";
-        case ScriptType.QUERY: return "Query";
-        case ScriptType.SCHEMA: return "Schema";
-    }
-}
-
 export interface ScriptAnnotations {
     /// The base tables
     tableRefs?: Set<string>;
