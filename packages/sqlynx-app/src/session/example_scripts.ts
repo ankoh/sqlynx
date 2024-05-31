@@ -209,8 +209,8 @@ export const EXAMPLES: ExampleSchemas = {
         name: "TPC-DS",
         schema: TPCHDS_SCHEMA,
         queries: [
-            example(ScriptType.QUERY, 'tpcds_q1.sql', tpcds_q1, TPCH_SCHEMA.scriptId, { tableRefs: new Set([]) }),
-            example(ScriptType.QUERY, 'tpcds_q2.sql', tpcds_q2, TPCH_SCHEMA.scriptId, { tableRefs: new Set([]) }),
+            example(ScriptType.QUERY, 'tpcds_q1.sql', tpcds_q1, TPCH_SCHEMA.scriptId, { tableRefs: new Set(['store_returns', 'date_dim', 'store', 'customer']) }),
+            example(ScriptType.QUERY, 'tpcds_q2.sql', tpcds_q2, TPCH_SCHEMA.scriptId, { tableRefs: new Set(['web_sales', 'catalog_sales', 'date_dim']) }),
             example(ScriptType.QUERY, 'tpcds_q3.sql', tpcds_q3, TPCH_SCHEMA.scriptId, { tableRefs: new Set([]) }),
             example(ScriptType.QUERY, 'tpcds_q4.sql', tpcds_q4, TPCH_SCHEMA.scriptId, { tableRefs: new Set([]) }),
             example(ScriptType.QUERY, 'tpcds_q5.sql', tpcds_q5, TPCH_SCHEMA.scriptId, { tableRefs: new Set([]) }),
