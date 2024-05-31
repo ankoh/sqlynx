@@ -28,7 +28,7 @@
     border: 1px solid var(--border_color_primary);
     border-radius: var(--border_radius);
     overflow: hidden;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
 
     display: grid;
     grid-template-rows: max-content max-content;
@@ -60,6 +60,7 @@
     padding: 2px 8px;
     border-left: 1px solid var(--border_color_primary);
     border-bottom: 1px solid var(--border_color_primary);
+    font-family: "Roboto Mono";
 }
 
 .example_script_info {
@@ -69,7 +70,6 @@
     display: flex;
     flex-direction: row-reverse;
     background-color: hsl(210, 29%, 97%);
-    font-size: 0.8rem;
     color: #8c959f;
 }
 
