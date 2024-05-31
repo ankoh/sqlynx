@@ -39,10 +39,19 @@
     grid-row: 1;
     grid-column: 1;
     border-bottom: 1px solid var(--border_color_primary);
+    background-color: hsl(208.5deg 20.69% 50.76%);
+    color: white;
 
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+.example_script_icon_schema {
+    background-color: hsl(208.5deg 20.69% 50.76%);
+}
+.example_script_icon_query {
+    background-color: #9B7F67;
 }
 
 .example_script_name {
