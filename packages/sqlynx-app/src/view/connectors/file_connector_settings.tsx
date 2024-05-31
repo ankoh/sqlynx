@@ -6,39 +6,63 @@ import { EXAMPLE_SCHEMAS } from '../../session/example_scripts.js';
 import * as symbols from '../../../static/svg/symbols.generated.svg';
 import * as baseStyle from './connector_settings.module.css';
 import * as style from './file_connector_settings.module.css';
-import { getScriptTypeName, ScriptMetadata } from '../../session/script_metadata.js';
+import { ScriptMetadata, ScriptType } from '../../session/script_metadata.js';
 
 const LOG_CTX = "files_connector";
 
 interface Props {}
 
+function SchemaEntry(props: {metadata: ScriptMetadata }) {
+    return (<div key={props.metadata.scriptId} className={style.example_script}>
+        <div className={style.example_script_icon}>
+            <svg width="14px" height="14px">
+                <use xlinkHref={`${symbols}#database`} />
+            </svg>
+        </div>
+        <div className={style.example_script_name}>
+            {props.metadata.name}
+        </div>
+        <div className={style.example_script_info}>
+            <div className={style.example_script_table_count}>
+                <svg width="12px" height="12px">
+                    <use xlinkHref={`${symbols}#rows`} />
+                </svg>
+                <span className={style.example_script_table_count_label}>
+                    {props.metadata.annotations?.tableDefs?.size ?? 0}
+                </span>
+            </div>
+        </div>
+    </div>)
+};
+function QueryEntry(props: {metadata: ScriptMetadata}) {
+    return (<div key={props.metadata.scriptId} className={style.example_script}>
+        <div className={style.example_script_icon}>
+            <svg width="14px" height="14px">
+                <use xlinkHref={`${symbols}#search`} />
+            </svg>
+        </div>
+        <div className={style.example_script_name}>
+            {props.metadata.name}
+        </div>
+        <div className={style.example_script_info}>
+            <div className={style.example_script_table_count}>
+                <svg width="12px" height="12px">
+                    <use xlinkHref={`${symbols}#rows`} />
+                </svg>
+                <span className={style.example_script_table_count_label}>       {props.metadata.annotations?.tableRefs?.size ?? 0}
+                </span>
+            </div>
+        </div>
+    </div>)
+};
+
 export const FileConnectorSettings: React.FC<Props> = (_props: Props) => {
     const example_schemas_out: React.ReactElement[] = [];
     for (const example of EXAMPLE_SCHEMAS) {
         const queriesOut: React.ReactElement[] = [];
-        const renderQuery = (metadata: ScriptMetadata) => (
-            <div key={metadata.scriptId} className={style.example_script}>
-                <div className={style.example_script_name}>
-                    {metadata.name}
-                </div>
-                <div className={style.example_script_info}>
-                    <div className={style.example_script_type}>
-                        {getScriptTypeName(metadata.scriptType)}
-                    </div>
-                    <div className={style.example_script_table_count}>
-                        <svg width="12px" height="12px">
-                            <use xlinkHref={`${symbols}#table`} />
-                        </svg>
-                        <span className={style.example_script_table_count_label}>
-                            {metadata.annotations?.tableRefs?.size ?? 0}
-                        </span>
-                    </div>
-                </div>
-            </div>
-        );
-        queriesOut.push(renderQuery(example.schema));
+        queriesOut.push(<SchemaEntry metadata={example.schema} />);
         for (const query of example.queries) {
-            queriesOut.push(renderQuery(query));
+            queriesOut.push(<QueryEntry metadata={query} />);
         }
         example_schemas_out.push(
             <div key={example.schema.scriptId} className={style.example_schema}>

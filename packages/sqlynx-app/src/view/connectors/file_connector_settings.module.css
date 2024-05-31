@@ -29,39 +29,54 @@
     border-radius: var(--border_radius);
     overflow: hidden;
     font-size: 0.9rem;
+
+    display: grid;
+    grid-template-rows: max-content max-content;
+    grid-template-columns: 24px max-content;
+}
+
+.example_script_icon {
+    grid-row: 1;
+    grid-column: 1;
+    border-bottom: 1px solid var(--border_color_primary);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .example_script_name {
+    grid-column: 2;
     grid-row: 1;
-    grid-column: 1 / span 2;
     padding: 2px 8px;
+    border-left: 1px solid var(--border_color_primary);
     border-bottom: 1px solid var(--border_color_primary);
 }
 
 .example_script_info {
+    grid-column: 1 / span 2;
+    grid-row: 2;
+
     display: flex;
-    flex-direction: row;
+    flex-direction: row-reverse;
     background-color: hsl(210, 29%, 97%);
+    font-size: 0.8rem;
+    color: #8c959f;
 }
 
 .example_script_type {
-    grid-row: 2;
-    grid-column: 1;
     padding: 2px 8px 2px 8px;
-    font-size: 0.8rem;
     flex: 1;
 }
 
 .example_script_table_count {
-    grid-row: 2;
-    grid-column: 2;
-    font-size: 0.8rem;
     display: flex;
     flex-direction: row;
     justify-content: start;
     align-items: center;
     padding: 0 8px 0 8px;
     border-left: 1px solid var(--border_color_primary);
+    font-weight: 500;
 }
 
 .example_script_table_count_label {
