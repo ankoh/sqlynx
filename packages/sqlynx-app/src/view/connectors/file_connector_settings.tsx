@@ -14,7 +14,7 @@ interface Props {}
 
 function SchemaEntry(props: {metadata: ScriptMetadata }) {
     return (<div key={props.metadata.scriptId} className={style.example_script}>
-        <div className={style.example_script_icon}>
+        <div className={classNames(style.example_script_icon, style.example_script_icon_schema)}>
             <svg width="14px" height="14px">
                 <use xlinkHref={`${symbols}#database`} />
             </svg>
@@ -36,7 +36,7 @@ function SchemaEntry(props: {metadata: ScriptMetadata }) {
 };
 function QueryEntry(props: {metadata: ScriptMetadata}) {
     return (<div key={props.metadata.scriptId} className={style.example_script}>
-        <div className={style.example_script_icon}>
+        <div className={classNames(style.example_script_icon, style.example_script_icon_query)}>
             <svg width="14px" height="14px">
                 <use xlinkHref={`${symbols}#search`} />
             </svg>
