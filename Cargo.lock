@@ -5242,9 +5242,9 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-deep-link"
-version = "2.0.0-beta.6"
+version = "2.0.0-beta.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "afd3eda0341a4b79e453ed8ed67f2354959c9d74a2c638bfe104e05314a32284"
+checksum = "3bfc538a38845f08c7a63acd9e03737b5e89c815273ed8e2a447780a4e2583f4"
 dependencies = [
  "dunce",
  "log",
@@ -5262,9 +5262,9 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-fs"
-version = "2.0.0-beta.8"
+version = "2.0.0-beta.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa5aa871169b0a7b7922cfed584b7e240fabbd286cf8ee6be308624b5d619b83"
+checksum = "3aa91955751f329e0aa431b87c199b7378b6f91ec0765d2ad9d4c64e017c3cda"
 dependencies = [
  "anyhow",
  "glob",
@@ -5281,9 +5281,9 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-http"
-version = "2.0.0-beta.8"
+version = "2.0.0-beta.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d42b52d7ef1b79c92f3c08219c740846f45a7cf2b75ed29041787bdd410e0633"
+checksum = "9d5b9dc82eedca8daabeaa779be7e3a74dc1c07ab2339cbc071f3997a3b1b544"
 dependencies = [
  "data-url",
  "http 1.1.0",
@@ -5302,9 +5302,9 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-log"
-version = "2.0.0-beta.5"
+version = "2.0.0-beta.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2f26d6ad873db669ce22406bfd8d3d87bcc0e6f81edbda93b4ee4df541d8ae89"
+checksum = "28be50bb36ac6b5181a360cee0606a4364d9e0bdcdd8974c40710d7af12e60ec"
 dependencies = [
  "android_logger",
  "byte-unit",
@@ -5323,9 +5323,9 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-os"
-version = "2.0.0-beta.5"
+version = "2.0.0-beta.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "602907c114cec1ab718505fad7b0a2f179fed3e2f869d61befe297ee82d61806"
+checksum = "b9ae3c8aeb113ce614cc36a43b1061fdf64381f7635d02c390052ce7579ec628"
 dependencies = [
  "gethostname",
  "log",
@@ -5341,9 +5341,9 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-shell"
-version = "2.0.0-beta.6"
+version = "2.0.0-beta.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7e235c0024cd28a56e1a575aef3df734822a37a1fc974ca8092c24b0ee16bddd"
+checksum = "f8675bf7ab71f571a99192d0685ae870eb7af1264bdbbb66a1d655609f6c7ebd"
 dependencies = [
  "encoding_rs",
  "log",
@@ -5362,9 +5362,9 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-updater"
-version = "2.0.0-beta.6"
+version = "2.0.0-beta.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "92c1e3e66fa414df7d77ffa023cf831bf02767d361872e03d9bd567d9e71cbe5"
+checksum = "dd8b0bec1fe304e1ff350b5e7be5048047f9bdec19dcc224ba266e9f2a692b8e"
 dependencies = [
  "base64 0.22.0",
  "dirs-next",
