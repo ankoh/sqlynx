@@ -11,9 +11,9 @@ export enum ScriptType {
 
 export interface ScriptAnnotations {
     /// The base tables
-    tableRefs?: string[];
+    tableRefs?: Set<string>;
     /// The table definitions
-    tableDefs?: string[];
+    tableDefs?: Set<string>;
     /// The tenant name (if any)
     tenantName?: string;
     /// The org name (if any)
