@@ -59,7 +59,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
     const activeScriptKey = activeTab == TabId.SCHEMA_SCRIPT ? ScriptKey.SCHEMA_SCRIPT : ScriptKey.MAIN_SCRIPT;
     const activeScript = ctx?.scripts[activeScriptKey] ?? null;
     const activeScriptStatistics = activeScript?.statistics ?? null;
-    const activeScriptFilename = activeScript?.metadata?.filename ?? null;
+    const activeScriptFilename = activeScript?.metadata?.name ?? null;
 
     // Helper to update a script
     const updateScript = React.useCallback(
