@@ -10,7 +10,6 @@ with wscs as
         from catalog_sales)),
  wswscs as
  (select d_week_seq,
-        sum(case when (d_day_name='Sunday') then sales_price else null end) sun_sales,
         sum(case when (d_day_name='Monday') then sales_price else null end) mon_sales,
         sum(case when (d_day_name='Tuesday') then sales_price else  null end) tue_sales,
         sum(case when (d_day_name='Wednesday') then sales_price else null end) wed_sales,

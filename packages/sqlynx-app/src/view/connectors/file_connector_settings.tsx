@@ -6,7 +6,7 @@ import { EXAMPLE_SCHEMAS } from '../../session/example_scripts.js';
 import * as symbols from '../../../static/svg/symbols.generated.svg';
 import * as baseStyle from './connector_settings.module.css';
 import * as style from './file_connector_settings.module.css';
-import { ScriptMetadata } from '../../session/script_metadata.js';
+import { getScriptTypeName, ScriptMetadata } from '../../session/script_metadata.js';
 
 const LOG_CTX = "files_connector";
 
@@ -17,9 +17,22 @@ export const FileConnectorSettings: React.FC<Props> = (_props: Props) => {
     for (const example of EXAMPLE_SCHEMAS) {
         const queriesOut: React.ReactElement[] = [];
         const renderQuery = (metadata: ScriptMetadata) => (
-            <div key={metadata.scriptId} className={style.example_query}>
-                <div className={style.example_query_filename}>
+            <div key={metadata.scriptId} className={style.example_script}>
+                <div className={style.example_script_name}>
                     {metadata.name}
+                </div>
+                <div className={style.example_script_info}>
+                    <div className={style.example_script_type}>
+                        {getScriptTypeName(metadata.scriptType)}
+                    </div>
+                    <div className={style.example_script_table_count}>
+                        <svg width="12px" height="12px">
+                            <use xlinkHref={`${symbols}#table`} />
+                        </svg>
+                        <span className={style.example_script_table_count_label}>
+                            {metadata.annotations?.tableRefs?.size ?? 0}
+                        </span>
+                    </div>
                 </div>
             </div>
         );
@@ -32,7 +45,7 @@ export const FileConnectorSettings: React.FC<Props> = (_props: Props) => {
                 <div className={style.example_schema_name}>
                     {example.name}
                 </div>
-                <div className={style.example_queries}>
+                <div className={style.example_scripts}>
                     {queriesOut}
                 </div>
             </div>
