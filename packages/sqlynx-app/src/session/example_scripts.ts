@@ -162,7 +162,7 @@ const ssb_q43 = new URL('../../static/examples/ssb/q43.sql', import.meta.url);
 
 export const TPCH_SCHEMA = example(ScriptType.SCHEMA, 'tpch_schema.sql', tpch_schema, null, { tableDefs: ['part', 'supplier', 'partsupp', 'customer', 'orders', 'lineitem', 'nation', 'region'] });
 export const TPCHDS_SCHEMA = example(ScriptType.SCHEMA, 'tpchds_schema.sql', tpcds_schema, null, { tableDefs: ['dbgen_version', 'customer_address', 'customer_demographics', 'date_dim', 'warehouse', 'ship_mode', 'time_dim', 'reason', 'income_band', 'item', 'store', 'call_center', 'customer', 'web_site', 'store_returns', 'household_demographics', 'web_page', 'promotion', 'catalog_page', 'inventory', 'catalog_returns', 'web_returns', 'web_sales', 'catalog_sales', 'store_sales'] });
-export const SSB_SCHEMA = example(ScriptType.SCHEMA, 'ssb_schema.sql', ssb_schema, null, { tableDefs: [] });
+export const SSB_SCHEMA = example(ScriptType.SCHEMA, 'ssb_schema.sql', ssb_schema, null, { tableDefs: ['lineorder', 'part', 'supplier', 'customer', 'date'] });
 
 export interface ExampleSchema {
     name: string;
@@ -317,19 +317,19 @@ export const EXAMPLES: ExampleSchemas = {
         name: "SSB",
         schema: SSB_SCHEMA,
         queries: [
-            example(ScriptType.QUERY, 'ssb_q11.sql', ssb_q11, SSB_SCHEMA.scriptId, { tableRefs: [] }),
-            example(ScriptType.QUERY, 'ssb_q12.sql', ssb_q12, SSB_SCHEMA.scriptId, { tableRefs: [] }),
-            example(ScriptType.QUERY, 'ssb_q13.sql', ssb_q13, SSB_SCHEMA.scriptId, { tableRefs: [] }),
-            example(ScriptType.QUERY, 'ssb_q21.sql', ssb_q21, SSB_SCHEMA.scriptId, { tableRefs: [] }),
-            example(ScriptType.QUERY, 'ssb_q22.sql', ssb_q22, SSB_SCHEMA.scriptId, { tableRefs: [] }),
-            example(ScriptType.QUERY, 'ssb_q23.sql', ssb_q23, SSB_SCHEMA.scriptId, { tableRefs: [] }),
-            example(ScriptType.QUERY, 'ssb_q31.sql', ssb_q31, SSB_SCHEMA.scriptId, { tableRefs: [] }),
-            example(ScriptType.QUERY, 'ssb_q32.sql', ssb_q32, SSB_SCHEMA.scriptId, { tableRefs: [] }),
-            example(ScriptType.QUERY, 'ssb_q33.sql', ssb_q33, SSB_SCHEMA.scriptId, { tableRefs: [] }),
-            example(ScriptType.QUERY, 'ssb_q34.sql', ssb_q34, SSB_SCHEMA.scriptId, { tableRefs: [] }),
-            example(ScriptType.QUERY, 'ssb_q41.sql', ssb_q41, SSB_SCHEMA.scriptId, { tableRefs: [] }),
-            example(ScriptType.QUERY, 'ssb_q42.sql', ssb_q42, SSB_SCHEMA.scriptId, { tableRefs: [] }),
-            example(ScriptType.QUERY, 'ssb_q43.sql', ssb_q43, SSB_SCHEMA.scriptId, { tableRefs: [] }),
+            example(ScriptType.QUERY, 'ssb_q11.sql', ssb_q11, SSB_SCHEMA.scriptId, { tableRefs: ['lineorder', 'date'] }),
+            example(ScriptType.QUERY, 'ssb_q12.sql', ssb_q12, SSB_SCHEMA.scriptId, { tableRefs: ['lineorder', 'date'] }),
+            example(ScriptType.QUERY, 'ssb_q13.sql', ssb_q13, SSB_SCHEMA.scriptId, { tableRefs: ['lineorder', 'date'] }),
+            example(ScriptType.QUERY, 'ssb_q21.sql', ssb_q21, SSB_SCHEMA.scriptId, { tableRefs: ['lineorder', 'date', 'part', 'supplier'] }),
+            example(ScriptType.QUERY, 'ssb_q22.sql', ssb_q22, SSB_SCHEMA.scriptId, { tableRefs: ['lineorder', 'date', 'part', 'supplier'] }),
+            example(ScriptType.QUERY, 'ssb_q23.sql', ssb_q23, SSB_SCHEMA.scriptId, { tableRefs: ['lineorder', 'date', 'part', 'supplier'] }),
+            example(ScriptType.QUERY, 'ssb_q31.sql', ssb_q31, SSB_SCHEMA.scriptId, { tableRefs: ['customer', 'lineorder', 'supplier', 'date'] }),
+            example(ScriptType.QUERY, 'ssb_q32.sql', ssb_q32, SSB_SCHEMA.scriptId, { tableRefs: ['customer', 'lineorder', 'supplier', 'date'] }),
+            example(ScriptType.QUERY, 'ssb_q33.sql', ssb_q33, SSB_SCHEMA.scriptId, { tableRefs: ['customer', 'lineorder', 'supplier', 'date'] }),
+            example(ScriptType.QUERY, 'ssb_q34.sql', ssb_q34, SSB_SCHEMA.scriptId, { tableRefs: ['customer', 'lineorder', 'supplier', 'date', 'part'] }),
+            example(ScriptType.QUERY, 'ssb_q41.sql', ssb_q41, SSB_SCHEMA.scriptId, { tableRefs: ['customer', 'lineorder', 'supplier', 'date', 'part'] }),
+            example(ScriptType.QUERY, 'ssb_q42.sql', ssb_q42, SSB_SCHEMA.scriptId, { tableRefs: ['customer', 'lineorder', 'supplier', 'date', 'part'] }),
+            example(ScriptType.QUERY, 'ssb_q43.sql', ssb_q43, SSB_SCHEMA.scriptId, { tableRefs: ['customer', 'lineorder', 'supplier', 'date', 'part'] }),
         ]
     }
 };
