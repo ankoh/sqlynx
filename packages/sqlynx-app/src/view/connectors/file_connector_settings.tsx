@@ -19,7 +19,7 @@ export const FileConnectorSettings: React.FC<Props> = (_props: Props) => {
         const renderQuery = (metadata: ScriptMetadata) => (
             <div key={metadata.scriptId} className={style.example_query}>
                 <div className={style.example_query_filename}>
-                    {metadata.filename}
+                    {metadata.name}
                 </div>
             </div>
         );
@@ -38,11 +38,6 @@ export const FileConnectorSettings: React.FC<Props> = (_props: Props) => {
             </div>
         );
     }
-    const examples = (
-        <>
-            {example_schemas_out}
-        </>
-    );
 
     return (
         <div className={baseStyle.layout}>
@@ -58,8 +53,14 @@ export const FileConnectorSettings: React.FC<Props> = (_props: Props) => {
             </div >
             <div className={baseStyle.body_container}>
                 <div className={baseStyle.section}>
+                    <div className={classNames(baseStyle.body_section_layout)}>
+                        History
+                    </div>
+                </div>
+                <div className={baseStyle.section}>
                     <div className={classNames(style.example_section_layout, baseStyle.body_section_layout)}>
-                        {examples}
+                        Examples
+                        {example_schemas_out}
                     </div>
                 </div>
             </div>

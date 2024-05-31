@@ -9,37 +9,42 @@ export enum ScriptType {
     SCHEMA,
 }
 
+export interface ScriptAnnotations {
+    /// The base tables
+    tableRefs?: string[];
+    /// The table definitions
+    tableDefs?: string[];
+    /// The tenant name (if any)
+    tenantName?: string;
+    /// The org name (if any)
+    orgName?: string;
+}
+
 export interface ScriptMetadata {
     /// The pseudo context id
     scriptId: string;
+    /// The schema id
+    schemaId: string | null;
+    /// The name
+    name: string | null;
     /// The script type
     scriptType: ScriptType;
     /// The origin type
     originType: ScriptOriginType;
-    /// The name
-    name: string | null;
-    /// The file name
-    filename: string | null;
     /// The http url
     httpURL: URL | null;
-    /// The github account
-    githubAccount: string | null;
-    /// The github gist name
-    githubGistName: string | null;
-    /// The schema id
-    schemaId: string | null;
+    /// The statistics
+    annotations: ScriptAnnotations | null;
 }
 
 export function generateBlankScript(): ScriptMetadata {
     return createScriptMetadata({
+        schemaId: null,
         name: null,
-        filename: null,
         scriptType: ScriptType.UNKNOWN,
         originType: ScriptOriginType.LOCAL,
         httpURL: null,
-        githubAccount: null,
-        githubGistName: null,
-        schemaId: null,
+        annotations: null,
     });
 }
 
