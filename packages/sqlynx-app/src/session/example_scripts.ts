@@ -184,7 +184,7 @@ export const EXAMPLES: ExampleSchemas = {
             example(ScriptType.QUERY, 'tpch_q1.sql', tpch_q1, TPCH_SCHEMA.scriptId, { tableRefs: new Set(['lineitem']) }),
             example(ScriptType.QUERY, 'tpch_q2.sql', tpch_q2, TPCH_SCHEMA.scriptId, { tableRefs: new Set(['part', 'supplier', 'partsupp', 'nation', 'region']) }),
             example(ScriptType.QUERY, 'tpch_q3.sql', tpch_q3, TPCH_SCHEMA.scriptId, { tableRefs: new Set(['customer', 'orders', 'lineitem']) }),
-            example(ScriptType.QUERY, 'tpch_q4sql', tpch_q4, TPCH_SCHEMA.scriptId, { tableRefs: new Set(['orders', 'lineitem']) }),
+            example(ScriptType.QUERY, 'tpch_q4.sql', tpch_q4, TPCH_SCHEMA.scriptId, { tableRefs: new Set(['orders', 'lineitem']) }),
             example(ScriptType.QUERY, 'tpch_q5.sql', tpch_q5, TPCH_SCHEMA.scriptId, { tableRefs: new Set(['customer', 'orders', 'lineitem', 'supplier', 'nation', 'region']) }),
             example(ScriptType.QUERY, 'tpch_q6.sql', tpch_q6, TPCH_SCHEMA.scriptId, { tableRefs: new Set(['lineitem']) }),
             example(ScriptType.QUERY, 'tpch_q7.sql', tpch_q7, TPCH_SCHEMA.scriptId, { tableRefs: new Set(['supplier', 'lineitem', 'orders', 'customer', 'nation']) }),
