@@ -17,7 +17,7 @@
         "@ankoh/sqlynx-core": "link:../sqlynx-core-api",
         "@ankoh/sqlynx-pb": "link:../sqlynx-pb",
         "@bufbuild/protobuf": "^1.10.0",
-        "@codemirror/autocomplete": "^6.16.1",
+        "@codemirror/autocomplete": "^6.16.2",
         "@codemirror/language": "^6.10.1",
         "@codemirror/state": "^6.4.1",
         "@codemirror/view": "^6.26.3",
