@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <span>
@@ -29,15 +30,13 @@ constexpr bool isCodepointBoundary(std::span<const std::byte> buffer, size_t pos
 /// Find the previous codepoint boundary
 constexpr size_t prevCodepoint(std::span<const std::byte> buffer, size_t pos) {
     assert(pos <= buffer.size());
-    for (; pos > 0 && !isCodepointBoundary(buffer[pos]); --pos)
-        ;
+    for (; pos > 0 && !isCodepointBoundary(buffer[pos]); --pos);
     return pos;
 }
 /// Find the next codepoint boundary
 constexpr size_t nextCodepoint(std::span<const std::byte> buffer, size_t pos) {
     assert(pos <= buffer.size());
-    for (; pos < buffer.size() && !isCodepointBoundary(buffer[pos]); ++pos)
-        ;
+    for (; pos < buffer.size() && !isCodepointBoundary(buffer[pos]); ++pos);
     return pos;
 }
 /// Find the nearest codepoint boundary

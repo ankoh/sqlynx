@@ -4,12 +4,10 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <iostream>
 #include <limits>
 #include <memory>
 #include <span>
 #include <string_view>
-#include <type_traits>
 
 #include "sqlynx/text/utf8.h"
 
