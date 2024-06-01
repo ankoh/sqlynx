@@ -161,7 +161,7 @@ const ssb_q42 = new URL('../../static/examples/ssb/q42.sql', import.meta.url);
 const ssb_q43 = new URL('../../static/examples/ssb/q43.sql', import.meta.url);
 
 export const TPCH_SCHEMA = example(ScriptType.SCHEMA, 'tpch_schema.sql', tpch_schema, null, { tableDefs: new Set(['part', 'supplier', 'partsupp', 'customer', 'orders', 'lineitem', 'nation', 'region']) });
-export const TPCHDS_SCHEMA = example(ScriptType.SCHEMA, 'tpchds_schema.sql', tpcds_schema, null, { tableDefs: new Set(['dbgen_version', 'customer_address', 'customer_demographics', 'date_dim', 'warehouse', 'ship_mode', 'time_dim', 'reason', 'income_band', 'item', 'store', 'call_center', 'customer', 'web_site', 'store_returns', 'household_demographics', 'web_page', 'promotion', 'catalog_page', 'inventory', 'catalog_returns', 'web_returns', 'web_sales', 'catalog_sales', 'store_sales']) });
+export const TPCDS_SCHEMA = example(ScriptType.SCHEMA, 'tpcds_schema.sql', tpcds_schema, null, { tableDefs: new Set(['dbgen_version', 'customer_address', 'customer_demographics', 'date_dim', 'warehouse', 'ship_mode', 'time_dim', 'reason', 'income_band', 'item', 'store', 'call_center', 'customer', 'web_site', 'store_returns', 'household_demographics', 'web_page', 'promotion', 'catalog_page', 'inventory', 'catalog_returns', 'web_returns', 'web_sales', 'catalog_sales', 'store_sales']) });
 export const SSB_SCHEMA = example(ScriptType.SCHEMA, 'ssb_schema.sql', ssb_schema, null, { tableDefs: new Set(['lineorder', 'part', 'supplier', 'customer', 'date']) });
 
 export interface ExampleSchema {
@@ -207,7 +207,7 @@ export const EXAMPLES: ExampleSchemas = {
     },
     TPCDS: {
         name: "TPC-DS",
-        schema: TPCHDS_SCHEMA,
+        schema: TPCDS_SCHEMA,
         queries: [
             example(ScriptType.QUERY, 'tpcds_q1.sql', tpcds_q1, TPCH_SCHEMA.scriptId, { tableRefs: new Set(['store_returns', 'date_dim', 'store', 'customer']) }),
             example(ScriptType.QUERY, 'tpcds_q2.sql', tpcds_q2, TPCH_SCHEMA.scriptId, { tableRefs: new Set(['web_sales', 'catalog_sales', 'date_dim']) }),
