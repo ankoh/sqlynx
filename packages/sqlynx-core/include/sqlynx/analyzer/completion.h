@@ -1,12 +1,10 @@
 #pragma once
 
 #include "ankerl/unordered_dense.h"
-#include "sqlynx/external.h"
 #include "sqlynx/parser/names.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
 #include "sqlynx/utils/string_conversion.h"
-#include "sqlynx/utils/suffix_trie.h"
 #include "sqlynx/utils/topk.h"
 
 namespace sqlynx {
