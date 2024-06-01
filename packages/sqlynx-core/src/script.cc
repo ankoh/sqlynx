@@ -35,6 +35,17 @@ ScannedScript::ScannedScript(const rope::Rope& text, uint32_t external_id)
     names_by_text.reserve(64);
     names_by_id.reserve(64);
 }
+/// Constructor
+ScannedScript::ScannedScript(std::string text, uint32_t external_id)
+    : external_id(external_id), text_buffer(std::move(text)) {
+    if (text_buffer.size() < 2) {
+        text_buffer.resize(2);
+    }
+    text_buffer[text_buffer.size() - 1] = 0;
+    text_buffer[text_buffer.size() - 2] = 0;
+    names_by_text.reserve(64);
+    names_by_id.reserve(64);
+}
 
 /// Read a name
 CatalogEntry::NameInfo& ScannedScript::ReadName(NameID name) {

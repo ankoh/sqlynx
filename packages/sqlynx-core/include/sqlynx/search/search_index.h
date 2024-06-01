@@ -4,6 +4,7 @@
 
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/proto/proto_generated.h"
+#include "sqlynx/script.h"
 #include "sqlynx/utils/btree/map.h"
 #include "sqlynx/utils/chunk_buffer.h"
 #include "sqlynx/utils/string_pool.h"
@@ -49,14 +50,16 @@ struct SearchIndex {
     /// The tombstones for indexed files that were deleted
     std::unordered_set<size_t> indexed_files_tombstones;
     /// The statistics of all files that are indexed
-    IndexedFileStatistics stats_total;
+    IndexedFileStatistics index_stats_total;
     /// The statistics of dead files that are indexed
-    IndexedFileStatistics stats_dead;
+    IndexedFileStatistics index_stats_dead;
 
-    /// The string pool
-    StringPool<1024> string_pool;
-    /// The name buffer
-    ChunkBuffer<FileSearchLabel, 32> search_labels;
+    /// The string pool for labels
+    StringPool<1024> label_string_pool;
+    /// The label strings
+    std::unordered_set<std::string_view> label_strings;
+    /// The file labels
+    ChunkBuffer<FileSearchLabel, 32> file_labels;
     /// The label suffixes
     SearchIndexType search_index;
 
@@ -68,7 +71,7 @@ struct SearchIndex {
     SearchIndex();
 
     /// Add a file to the search index
-    void AddFile(std::string_view filename, std::string_view text);
+    void AddFile(std::string_view filename, ScannedScript& script);
     /// Remove a file from the search indexjA
     void RemoveFile(std::string_view filename);
     /// Search file

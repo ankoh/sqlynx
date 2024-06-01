@@ -60,6 +60,8 @@ class ScannedScript {
    public:
     /// Constructor
     ScannedScript(const rope::Rope& text, ExternalID external_id = 1);
+    /// Constructor
+    ScannedScript(std::string text, ExternalID external_id = 1);
 
     /// Get the input
     auto& GetInput() const { return text_buffer; }
