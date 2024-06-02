@@ -79,11 +79,6 @@ export const FilesPage: React.FC<Props> = (_props: Props) => {
             }
         }
     }
-    const historyFiles = (
-        <div className={style.files}>
-            {historyEntries}
-        </div>
-    );
 
     const exampleGroups: React.ReactElement[] = [];
     for (const example of EXAMPLE_SCHEMAS) {
@@ -117,12 +112,19 @@ export const FilesPage: React.FC<Props> = (_props: Props) => {
                 <div className={style.body_container}>
                     <div className={style.section}>
                         <div className={style.scripts_layout}>
-                            {historyFiles}
+                            <div className={style.file_group}>
+                                <div className={style.file_group_name}>
+                                    History
+                                </div>
+                                <div className={style.files}>
+                                    {historyEntries}
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div className={style.section}>
                         <div className={style.scripts_layout}>
-                            {exampleGroups}
+                        {exampleGroups}
                         </div>
                     </div>
                 </div>
