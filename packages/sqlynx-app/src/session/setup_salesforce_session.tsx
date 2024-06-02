@@ -2,7 +2,7 @@ import * as React from 'react';
 import Immutable from 'immutable';
 
 import { CONNECTOR_INFOS, ConnectorType } from '../connectors/connector_info.js';
-import { DEFAULT_BOARD_HEIGHT, DEFAULT_BOARD_WIDTH } from './setup_brainstorm_session.js';
+import { DEFAULT_BOARD_HEIGHT, DEFAULT_BOARD_WIDTH } from './setup_serverless_session.js';
 import { FULL_CATALOG_REFRESH } from '../connectors/catalog_update.js';
 import { useSalesforceAPI, useSalesforceConnectionId } from '../connectors/salesforce_connector.js';
 import { asSalesforceConnection } from '../connectors/connection_state.js';

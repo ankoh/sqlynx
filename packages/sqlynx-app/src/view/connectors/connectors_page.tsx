@@ -6,7 +6,6 @@ import { Dispatch } from '../../utils/variant.js';
 import { VerticalTabProps, VerticalTabRenderers, VerticalTabs, VerticalTabVariant } from '../vertical_tabs.js';
 import { ConnectorType } from '../../connectors/connector_info.js';
 import { PlatformCheck } from './platform_check.js';
-import { FileConnectorSettings } from './file_connector_settings.js';
 
 import * as styles from './connectors_page.module.css';
 import * as icons from '../../../static/svg/symbols.generated.svg';
@@ -24,16 +23,8 @@ interface ConnectorProps extends VerticalTabProps {
 export const ConnectorsPage: React.FC<PageProps> = (_props: PageProps) => {
     const [selectedConnector, selectConnector] = React.useContext(PAGE_STATE_CTX)!;
 
-    const connectors: ConnectorProps[] = React.useMemo(() => ([
-        {
-            tabId: ConnectorType.FILES as number,
-            labelShort: "Files",
-            labelLong: "Files",
-            icon: `${icons}#folder`,
-            iconActive: `${icons}#folder_fill`,
-            connectorType: ConnectorType.FILES,
-        },
-        {
+    const connectors: Record<number, ConnectorProps> = React.useMemo(() => ({
+        [ConnectorType.SALESFORCE_DATA_CLOUD]: {
             tabId: ConnectorType.SALESFORCE_DATA_CLOUD as number,
             labelShort: "Salesforce",
             labelLong: "Salesforce Data Cloud",
@@ -41,7 +32,7 @@ export const ConnectorsPage: React.FC<PageProps> = (_props: PageProps) => {
             iconActive: `${icons}#salesforce_notext`,
             connectorType: ConnectorType.SALESFORCE_DATA_CLOUD,
         },
-        {
+        [ConnectorType.HYPER_GRPC]: {
             tabId: ConnectorType.HYPER_GRPC as number,
             labelShort: "Hyper",
             labelLong: "Hyper Database",
@@ -49,11 +40,11 @@ export const ConnectorsPage: React.FC<PageProps> = (_props: PageProps) => {
             iconActive: `${icons}#hyper_nocolor`,
             connectorType: ConnectorType.HYPER_GRPC,
         },
-    ]), []);
+    }), []);
     const connectorRenderers: VerticalTabRenderers<ConnectorProps> = React.useMemo(() => ({
         [ConnectorType.HYPER_GRPC as number]: (props: ConnectorProps) => <PlatformCheck connectorType={props.connectorType}><HyperGrpcConnectorSettings /></PlatformCheck>,
         [ConnectorType.SALESFORCE_DATA_CLOUD as number]: (props: ConnectorProps) => <PlatformCheck connectorType={props.connectorType}><SalesforceConnectorSettings /></PlatformCheck>,
-        [ConnectorType.FILES as number]: (props: ConnectorProps) => <PlatformCheck connectorType={props.connectorType}><FileConnectorSettings /></PlatformCheck>,
+//        [ConnectorType.SERVERLESS as number]: (props: ConnectorProps) => <PlatformCheck connectorType={props.connectorType}><ServerlessSettings /></PlatformCheck>,
     }), []);
 
     return (
@@ -65,9 +56,10 @@ export const ConnectorsPage: React.FC<PageProps> = (_props: PageProps) => {
             </div>
             <VerticalTabs
                 variant={VerticalTabVariant.Wide}
-                selectedTab={selectedConnector ?? 0}
+                selectedTab={selectedConnector ?? (ConnectorType.SALESFORCE_DATA_CLOUD as number)}
                 selectTab={selectConnector}
-                tabs={connectors}
+                tabKeys={[ConnectorType.SALESFORCE_DATA_CLOUD as number, ConnectorType.HYPER_GRPC as number]}
+                tabProps={connectors}
                 tabRenderers={connectorRenderers}
             />
         </div >

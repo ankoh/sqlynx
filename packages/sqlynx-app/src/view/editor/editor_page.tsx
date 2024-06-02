@@ -248,21 +248,22 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                     className={styles.output_card}
                     selectedTab={selectedTab}
                     selectTab={selectTab}
-                    tabs={[
-                        { tabId: TabKey.SchemaView, icon: `${icons}#tables_connected`, labelShort: 'Graph', disabled: false },
-                        {
+                    tabProps={{
+                        [TabKey.SchemaView]: { tabId: TabKey.SchemaView, icon: `${icons}#tables_connected`, labelShort: 'Graph', disabled: false },
+                        [TabKey.QueryProgressView]: {
                             tabId: TabKey.QueryProgressView,
                             icon: `${icons}#plan`,
                             labelShort: 'Status',
                             disabled: tabState.current.enabledTabs < 2,
                         },
-                        {
+                        [TabKey.QueryResultView]: {
                             tabId: TabKey.QueryResultView,
                             icon: `${icons}#table`,
                             labelShort: 'Data',
                             disabled: tabState.current.enabledTabs < 3,
                         },
-                    ]}
+                    }}
+                    tabKeys={[TabKey.SchemaView, TabKey.QueryProgressView, TabKey.QueryResultView]}
                     tabRenderers={{
                         [TabKey.SchemaView]: _props => <SchemaGraph />,
                         [TabKey.QueryProgressView]: _props => (

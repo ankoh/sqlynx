@@ -37,8 +37,8 @@ export function buildSalesforceConnectorParams(params: SalesforceAuthParams | nu
 export function buildBrainstormConnectorParams(): proto.sqlynx_session.pb.ConnectorParams {
     return new proto.sqlynx_session.pb.ConnectorParams({
         connector: {
-            case: "brainstorm",
-            value: new proto.sqlynx_session.pb.BrainstormConnectorParams()
+            case: "serverless",
+            value: new proto.sqlynx_session.pb.ServerlessParams()
         }
     });
 }

@@ -9,7 +9,7 @@ export const SalesforceIcon = () => (
         <use xlinkHref={`${icons}#salesforce_notext`} />
     </svg>
 );
-const BrainstormIcon = () => (
+const ServerlessIcon = () => (
     <svg width="20px" height="20px">
         <use xlinkHref={`${icons}#folder`} />
     </svg>
@@ -22,8 +22,8 @@ const HyperIcon = () => (
 
 export function getConnectorIcon(connector: ConnectorInfo): React.ReactElement {
     switch (connector.connectorType) {
-        case ConnectorType.FILES:
-            return <BrainstormIcon />;
+        case ConnectorType.SERVERLESS:
+            return <ServerlessIcon />;
         case ConnectorType.SALESFORCE_DATA_CLOUD:
             return <SalesforceIcon />;
         case ConnectorType.HYPER_GRPC:

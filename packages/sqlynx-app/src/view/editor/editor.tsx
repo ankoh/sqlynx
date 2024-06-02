@@ -211,14 +211,15 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
             className={classNames(props.className, styles.container)}
             selectedTab={activeTab}
             selectTab={setActiveTab}
-            tabs={[
-                { tabId: TabId.MAIN_SCRIPT, icon: `${icons}#search`, labelShort: 'Query' },
-                {
+            tabProps={{
+                [TabId.MAIN_SCRIPT]: { tabId: TabId.MAIN_SCRIPT, icon: `${icons}#search`, labelShort: 'Query' },
+                [TabId.SCHEMA_SCRIPT]: {
                     tabId: TabId.SCHEMA_SCRIPT,
                     icon: `${icons}#database`,
                     labelShort: 'Model',
                 },
-            ]}
+            }}
+            tabKeys={[TabId.MAIN_SCRIPT, TabId.SCHEMA_SCRIPT]}
             tabRenderers={{
                 [TabId.MAIN_SCRIPT]: () => EditorPage,
                 [TabId.SCHEMA_SCRIPT]: () => EditorPage,
