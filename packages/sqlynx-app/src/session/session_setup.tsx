@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { SessionSetupPage } from './session_setup_page.js';
 import { ConnectorInfo, getConnectorInfoForParams } from '../connectors/connector_info.js';
-import { useFilesSessionSetup } from './setup_brainstorm_session.js';
+import { useServerlessSessionSetup } from './setup_serverless_session.js';
 import { useAppEventListener } from '../platform/event_listener_provider.js';
 import { useSalesforceSessionSetup } from './setup_salesforce_session.js';
 import { useCurrentSessionSelector } from './current_session.js';
@@ -21,7 +21,7 @@ interface SessionSetupState {
 }
 
 export const SessionSetup: React.FC<{ children: React.ReactElement }> = (props: { children: React.ReactElement }) => {
-    const setupBrainstormSession = useFilesSessionSetup();
+    const setupServerlessSession = useServerlessSessionSetup();
     const setupSalesforceSession = useSalesforceSessionSetup();
     const selectCurrentSession = useCurrentSessionSelector();
     const appEvents = useAppEventListener();
@@ -63,8 +63,8 @@ export const SessionSetup: React.FC<{ children: React.ReactElement }> = (props: 
                     });
                     break;
                 }
-                case "brainstorm": {
-                    const sessionId = await setupBrainstormSession(abortSetup.signal);
+                case "serverless": {
+                    const sessionId = await setupServerlessSession(abortSetup.signal);
                     if (sessionId != null) {
                         selectCurrentSession(sessionId);
                     }
@@ -90,7 +90,7 @@ export const SessionSetup: React.FC<{ children: React.ReactElement }> = (props: 
     // Effect for initial session setup
     React.useEffect(() => {
         const run = async () => {
-            const sessionId = await setupBrainstormSession(abortInitialSetup.current.signal);
+            const sessionId = await setupServerlessSession(abortInitialSetup.current.signal);
             if (sessionId != null) {
                 // Only select the brainstorm session if there's no other session set
                 selectCurrentSession(s => {

@@ -4,8 +4,10 @@ import { classNames } from '../utils/classnames.js';
 
 import * as styles from './vertical_tabs.module.css';
 
+type Key = number;
+
 export interface VerticalTabRenderers<TabProps extends VerticalTabProps> {
-    [key: number]: (props: TabProps) => React.ReactElement;
+    [key: Key]: (props: TabProps) => React.ReactElement;
 }
 
 export interface VerticalTabProps {
@@ -25,10 +27,11 @@ export enum VerticalTabVariant {
 interface Props<TabProps extends VerticalTabProps> {
     className?: string;
     variant: VerticalTabVariant;
-    tabs: TabProps[];
+    tabKeys: Key[];
+    tabProps: Record<Key, TabProps>;
     tabRenderers: VerticalTabRenderers<TabProps>;
-    selectedTab: number;
-    selectTab: (tab: number) => void;
+    selectedTab: Key;
+    selectTab: (tab: Key) => void;
 }
 
 export function VerticalTabs<TabProps extends VerticalTabProps>(props: Props<TabProps>): React.ReactElement {
@@ -37,7 +40,7 @@ export function VerticalTabs<TabProps extends VerticalTabProps>(props: Props<Tab
         props.selectTab(Number.parseInt(target.dataset.tab ?? '0'));
     }, []);
     const tabBodyRenderer = props.tabRenderers[props.selectedTab];
-    const tabBody = tabBodyRenderer ? tabBodyRenderer(props.tabs[props.selectedTab]) : undefined;
+    const tabBody = tabBodyRenderer ? tabBodyRenderer(props.tabProps[props.selectedTab]) : undefined;
 
     const renderStackedTab = (tabProps: VerticalTabProps) => (
         <div
@@ -79,7 +82,7 @@ export function VerticalTabs<TabProps extends VerticalTabProps>(props: Props<Tab
     return (
         <div className={classNames(props.className, styles.container)}>
             <div className={styles.tabs}>
-                {props.tabs.map(tabRenderer)}
+                {props.tabKeys.map(t => tabRenderer(props.tabProps[t]))}
             </div>
             <div className={styles.body}>{tabBody}</div>
         </div>

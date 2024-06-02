@@ -13,12 +13,12 @@ message SalesforceConnectorParams {
     string appConsumerKey = 2;
 }
 
-message BrainstormConnectorParams {}
+message ServerlessParams {}
 
 message ConnectorParams {
     oneof connector {
-        /// Parameters for Brainstorm sessions
-        BrainstormConnectorParams brainstorm = 1;
+        /// Parameters for Serverless sessions
+        ServerlessParams serverless = 1;
         /// Parameters for Salesforce connections
         SalesforceConnectorParams salesforce = 2;
         /// Parameters for direct-to-Hyper connections

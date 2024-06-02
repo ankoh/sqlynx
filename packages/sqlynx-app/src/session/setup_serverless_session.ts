@@ -16,7 +16,7 @@ export const DEFAULT_BOARD_HEIGHT = 600;
 
 type SessionSetupFn = (abort: AbortSignal) => Promise<number | null>;
 
-export function useFilesSessionSetup(): SessionSetupFn {
+export function useServerlessSessionSetup(): SessionSetupFn {
     const setupSQLynx = useSQLynxSetup();
     const allocateSessionState = useSessionStateAllocator();
     const allocateConnectionId = useConnectionStateAllocator();
@@ -79,7 +79,7 @@ export function useFilesSessionSetup(): SessionSetupFn {
 
         const scriptId = allocateSessionState({
             instance: instance.value,
-            connectorInfo: CONNECTOR_INFOS[ConnectorType.FILES],
+            connectorInfo: CONNECTOR_INFOS[ConnectorType.SERVERLESS],
             connectionId: allocateConnectionId({
                 type: FILE_CONNECTOR,
                 value: {

@@ -6,7 +6,7 @@ export const SALESFORCE_DATA_CLOUD_CONNECTOR = Symbol('SALESFORCE_DATA_CLOUD_CON
 export const HYPER_GRPC_CONNECTOR = Symbol('HYPER_GRPC_CONNECTOR');
 
 export enum ConnectorType {
-    FILES = 0,
+    SERVERLESS = 0,
     SALESFORCE_DATA_CLOUD = 1,
     HYPER_GRPC = 2,
 }
@@ -43,10 +43,10 @@ export interface ConnectorFeatures {
 
 export const CONNECTOR_INFOS: ConnectorInfo[] = [
     {
-        connectorType: ConnectorType.FILES,
+        connectorType: ConnectorType.SERVERLESS,
         displayName: {
-            short: 'Files',
-            long: 'Files',
+            short: 'Serverless',
+            long: 'Serverless',
         },
         features: {
             schemaScript: true,
@@ -96,7 +96,7 @@ export function getConnectorInfoForParams(params: proto.sqlynx_session.pb.Connec
     switch (params.connector.case) {
         case "hyper": return CONNECTOR_INFOS[ConnectorType.HYPER_GRPC];
         case "salesforce": return CONNECTOR_INFOS[ConnectorType.SALESFORCE_DATA_CLOUD];
-        case "brainstorm": return CONNECTOR_INFOS[ConnectorType.FILES];
+        case "serverless": return CONNECTOR_INFOS[ConnectorType.SERVERLESS];
         default: return null;
     }
 }

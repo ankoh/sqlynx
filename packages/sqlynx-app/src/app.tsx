@@ -9,6 +9,7 @@ import { ConnectionRegistry } from './connectors/connection_registry.js';
 import { ConnectorsPage, ConnectorsPageStateProvider } from './view/connectors/connectors_page.js';
 import { CurrentSessionStateProvider } from './session/current_session.js';
 import { EditorPage } from './view/editor/editor_page.js';
+import { FilesPage } from './view/files/files_page.js';
 import { GitHubTheme } from './github_theme.js';
 import { HttpClientProvider } from './platform/http_client_provider.js';
 import { HyperDatabaseClientProvider } from './platform/hyperdb_client_provider.js';
@@ -95,6 +96,7 @@ const AppProviders = (props: { children: React.ReactElement }) => (
 
 const EditorPageWithNav = withNavBar(EditorPage);
 const ConnectorsPageWithNav = withNavBar(ConnectorsPage);
+const FilesPageWithNav = withNavBar(FilesPage);
 
 const Router = process.env.SQLYNX_RELATIVE_IMPORTS ? HashRouter : BrowserRouter;
 
@@ -106,6 +108,7 @@ root.render(
             <Routes>
                 <Route index element={<EditorPageWithNav />} />
                 <Route path="/connectors" element={<ConnectorsPageWithNav />} />
+                <Route path="/files" element={<FilesPageWithNav />} />
                 <Route path="*" element={<Navigate to="/" />} />
             </Routes>
         </AppProviders>
