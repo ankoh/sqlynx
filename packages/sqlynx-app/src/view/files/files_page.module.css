@@ -110,15 +110,14 @@
     display: grid;
     grid-template-rows: max-content max-content;
     grid-template-columns: 28px max-content;
-    background-color: white;
+    background-color: hsl(210, 24%, 94%);
 }
 
 .file_icon {
     grid-row: 1;
     grid-column: 1;
-    /* color: white; */
+    /* color: white */
     /* background-color: hsl(208.5deg 20.69% 50.76%); */
-    background-color: hsl(210, 24%, 92%);
 
     display: flex;
     justify-content: center;
