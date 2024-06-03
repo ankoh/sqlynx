@@ -6,14 +6,20 @@
 #include <functional>
 #include <optional>
 #include <string_view>
+#include <tuple>
 
 #include "ankerl/unordered_dense.h"
 #include "sqlynx/catalog.h"
 #include "sqlynx/external.h"
+#include "sqlynx/parser/names.h"
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/text/rope.h"
+#include "sqlynx/utils/bits.h"
+#include "sqlynx/utils/btree/map.h"
+#include "sqlynx/utils/hash.h"
 #include "sqlynx/utils/string_pool.h"
+#include "sqlynx/utils/suffix_trie.h"
 
 namespace sqlynx {
 namespace parser {

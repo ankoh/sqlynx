@@ -10,12 +10,15 @@
 
 #include "sqlynx/analyzer/analyzer.h"
 #include "sqlynx/analyzer/completion.h"
+#include "sqlynx/api.h"
 #include "sqlynx/catalog.h"
 #include "sqlynx/external.h"
 #include "sqlynx/parser/parse_context.h"
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/parser/scanner.h"
 #include "sqlynx/proto/proto_generated.h"
+#include "sqlynx/utils/string_conversion.h"
+#include "sqlynx/utils/suffix_trie.h"
 
 namespace sqlynx {
 
