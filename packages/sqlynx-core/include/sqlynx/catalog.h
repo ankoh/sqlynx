@@ -5,20 +5,25 @@
 
 #include <functional>
 #include <limits>
+#include <map>
 #include <optional>
 #include <string_view>
 #include <tuple>
 #include <unordered_set>
 
+#include "ankerl/unordered_dense.h"
 #include "sqlynx/external.h"
 #include "sqlynx/parser/names.h"
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/proto/proto_generated.h"
+#include "sqlynx/text/rope.h"
+#include "sqlynx/utils/bits.h"
 #include "sqlynx/utils/btree/map.h"
 #include "sqlynx/utils/btree/set.h"
 #include "sqlynx/utils/chunk_buffer.h"
 #include "sqlynx/utils/hash.h"
 #include "sqlynx/utils/string_conversion.h"
+#include "sqlynx/utils/string_pool.h"
 
 namespace sqlynx {
 
