@@ -118,6 +118,7 @@
     grid-column: 1;
     /* color: white; */
     /* background-color: hsl(208.5deg 20.69% 50.76%); */
+    background-color: hsl(210, 24%, 92%);
 
     display: flex;
     justify-content: center;
