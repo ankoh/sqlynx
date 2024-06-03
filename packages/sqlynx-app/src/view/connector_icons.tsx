@@ -11,7 +11,7 @@ export const SalesforceIcon = () => (
 );
 const ServerlessIcon = () => (
     <svg width="20px" height="20px">
-        <use xlinkHref={`${icons}#folder`} />
+        <use xlinkHref={`${icons}#cloud_offline`} />
     </svg>
 );
 const HyperIcon = () => (
