@@ -5,6 +5,7 @@ import { VariableSizeGrid as Grid } from 'react-window';
 import { IconButton } from '@primer/react';
 import { XIcon } from '@primer/octicons-react';
 
+import { useScrollbarWidth } from '../utils/scrollbar.js';
 import { LogLevel, getLogLevelName } from '../platform/log_buffer.js';
 import { useLogger } from '../platform/logger_provider.js';
 import { observeSize } from './size_observer.js';
@@ -86,8 +87,17 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
     const containerWidth = containerSize?.width ?? 200;
     const containerHeight = containerSize?.height ?? 100;
 
+    // Compute size of target and message column based on log statistics
     const targetColumnWidth = logStats.maxTargetWidth * PIXEL_PER_CHAR + VALUE_PADDING;
-    const messageColumnWidth = logStats.maxMessageWidth * PIXEL_PER_CHAR + VALUE_PADDING;
+    let messageColumnWidth = logStats.maxMessageWidth * PIXEL_PER_CHAR + VALUE_PADDING;
+
+    // Expand message column to the right if there's space
+    const scrollBarShown = (logger.buffer.length * ROW_HEIGHT) >= containerHeight;
+    const scrollBarWidth = useScrollbarWidth();
+    const scrollBarWidthIfShown = scrollBarShown ? scrollBarWidth : 0;
+    const columnWidthLeftOfMessage = COLUMN_TIMESTAMP_WIDTH + COLUMN_LEVEL_WIDTH + targetColumnWidth;
+    const columnWidthRightOfTarget = Math.max(containerWidth - columnWidthLeftOfMessage - scrollBarWidthIfShown, 0);
+    messageColumnWidth = Math.max(messageColumnWidth, columnWidthRightOfTarget);
 
     // Determine column width
     const columnWidths = [COLUMN_TIMESTAMP_WIDTH, COLUMN_LEVEL_WIDTH, targetColumnWidth, messageColumnWidth];
