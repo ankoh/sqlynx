@@ -7,7 +7,7 @@ import {
     LinkIcon,
     DownloadIcon,
     ThreeBarsIcon,
-    StopwatchIcon,
+    StopwatchIcon, TriangleDownIcon,
 } from '@primer/octicons-react';
 
 import { ConnectorInfo } from '../../connectors/connector_info.js';
@@ -28,6 +28,7 @@ import { useAppConfig } from '../../app_config.js';
 import * as styles from './editor_page.module.css';
 import * as theme from '../../github_theme.module.css';
 import * as icons from '../../../static/svg/symbols.generated.svg';
+import { ScriptMetadata } from '../../session/script_metadata.js';
 
 const SessionSelection = (props: { className?: string; variant: 'default' | 'invisible'; short: boolean }) => {
     const sessionRegistry = useSessionStates();
@@ -62,6 +63,7 @@ const SessionSelection = (props: { className?: string; variant: 'default' | 'inv
                     variant="invisible"
                     alignContent="start"
                     leadingVisual={() => (!sessionState?.connectorInfo ? <div /> : getConnectorIcon(sessionState?.connectorInfo))}
+                    trailingVisual={TriangleDownIcon}
                 >
                     {connectorName}
                 </Button>}
