@@ -126,14 +126,11 @@ export const FilesPage: React.FC<Props> = (_props: Props) => {
                 <div className={style.body_container}>
                     <div className={style.section}>
                         <div className={style.search_layout}>
-                            <div className={style.search_section_header}>
-                                Find File
-                            </div>
-                            <div className={style.search_input}>
-                                <TextInput
-                                    size="medium"
-                                />
-                            </div>
+                            <TextInput
+                                className={style.search_input}
+                                placeholder="Filter Files"
+                                size="medium"
+                            />
                             <div className={style.search_tokens}>
                                 <div className={style.search_token}>
                                     vector_search

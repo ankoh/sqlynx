@@ -28,7 +28,6 @@ import { useAppConfig } from '../../app_config.js';
 import * as styles from './editor_page.module.css';
 import * as theme from '../../github_theme.module.css';
 import * as icons from '../../../static/svg/symbols.generated.svg';
-import { ScriptMetadata } from '../../session/script_metadata.js';
 
 const SessionSelection = (props: { className?: string; variant: 'default' | 'invisible'; short: boolean }) => {
     const sessionRegistry = useSessionStates();
