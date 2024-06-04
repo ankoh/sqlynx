@@ -20,6 +20,9 @@ import * as icons from '../../../static/svg/symbols.generated.svg';
 
 import * as styles from './editor.module.css';
 import { isDebugBuild } from '../../globals.js';
+import { ScriptMetadata } from '../../session/script_metadata.js';
+import { ActionList, AnchoredOverlay, Button } from '@primer/react';
+import { TriangleDownIcon } from '@primer/octicons-react';
 
 enum TabId {
     MAIN_SCRIPT = 1,
@@ -38,6 +41,36 @@ interface ActiveScriptState {
     decorations: DecorationSet | null;
     cursor: sqlynx.proto.ScriptCursorInfoT | null;
 }
+
+const FileSelector = (props: { className?: string; variant: 'default' | 'invisible'; script: ScriptMetadata }) => {
+    const [isOpen, setIsOpen] = React.useState<boolean>(false);
+
+    const selectFile = React.useCallback((e: React.MouseEvent<HTMLLIElement, MouseEvent>) => {
+        e.stopPropagation();
+    }, []);
+    return (
+        <AnchoredOverlay
+            open={isOpen}
+            onOpen={() => setIsOpen(true)}
+            onClose={() => setIsOpen(false)}
+            renderAnchor={
+                (p: any) =>
+                    <Button
+                        {...p}
+                        className={props.className}
+                        variant="invisible"
+                        alignContent="start"
+                        trailingVisual={TriangleDownIcon}
+                    >
+                        {props.script.name}
+                    </Button>}
+        >
+            <ActionList>
+                <ActionList.GroupHeading as="h2">Files</ActionList.GroupHeading>
+            </ActionList>
+        </AnchoredOverlay>
+    );
+};
 
 export const ScriptEditor: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
@@ -59,7 +92,6 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
     const activeScriptKey = activeTab == TabId.SCHEMA_SCRIPT ? ScriptKey.SCHEMA_SCRIPT : ScriptKey.MAIN_SCRIPT;
     const activeScript = ctx?.scripts[activeScriptKey] ?? null;
     const activeScriptStatistics = activeScript?.statistics ?? null;
-    const activeScriptFilename = activeScript?.metadata?.name ?? null;
 
     // Helper to update a script
     const updateScript = React.useCallback(
@@ -181,7 +213,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         <div className={styles.editor_with_header}>
             <div className={styles.headerbar}>
                 <div className={styles.script_title}>{tabTitle}</div>
-                <div className={styles.script_filename}>{activeScriptFilename ?? ""}</div>
+                {activeScript && <FileSelector className={styles.script_filename} variant="invisible" script={activeScript.metadata}/>}
             </div>
             <div className={styles.editor_with_loader}>
             <div className={styles.editor}>
