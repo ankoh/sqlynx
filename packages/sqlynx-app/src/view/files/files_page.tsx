@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { TextInput } from '@primer/react';
 
 import { classNames } from '../../utils/classnames.js';
 import { EXAMPLE_SCHEMAS } from '../../session/example_scripts.js';
@@ -7,7 +8,6 @@ import * as symbols from '../../../static/svg/symbols.generated.svg';
 import * as style from './files_page.module.css';
 import { createScriptMetadata, ScriptMetadata, ScriptOriginType, ScriptType } from '../../session/script_metadata.js';
 import { ConnectorType } from '../../connectors/connector_info.js';
-import { Autocomplete, FormControl, TextInputWithTokens } from '@primer/react';
 
 const LOG_CTX = "files_connector";
 
@@ -44,22 +44,10 @@ interface Token {
     text: string;
 }
 const ITEMS: Token[] = [
-    {text: 'zero', id: 0},
-    {text: 'one', id: 1},
-    {text: 'two', id: 2},
-    {text: 'three', id: 3},
-    {text: 'four', id: 4},
-    {text: 'five', id: 5},
-    {text: 'six', id: 6},
-    {text: 'seven', id: 7},
-    {text: 'twenty', id: 20},
-    {text: 'twentyone', id: 21},
+    {text: 'vector_search', id: 0},
+    {text: 'a360/falcondev/b306c1896f34230a54b13db23f019a6', id: 1},
 ];
 const MOCK_TOKENS = ITEMS.slice(0, 3);
-
-function TokenInput(props: object) {
-    return <TextInputWithTokens size="large" {...props} />
-}
 
 export const FilesPage: React.FC<Props> = (_props: Props) => {
     const sfSchema0 = createScriptMetadata({
@@ -70,7 +58,7 @@ export const FilesPage: React.FC<Props> = (_props: Props) => {
         httpURL: null,
         annotations: {
             tableDefs: new Set(["some_dmo__dlm", "another_dmo__dlm"]),
-            tenantName: "a360/falcondev/0b306c1896f34230a54b13db23f019a6"
+            tenantName: "a360/falcondev/b306c1896f34230a54b13db23f019a6"
         }
     });
     const sfQuery0 = createScriptMetadata({
@@ -148,20 +136,9 @@ export const FilesPage: React.FC<Props> = (_props: Props) => {
                                 </div>
                             </div>
                             <div className={style.search_input}>
-                                <Autocomplete>
-                                    <Autocomplete.Input
-                                        size="medium"
-                                        data-testid="autocompleteInput"
-                                    />
-                                    <Autocomplete.Overlay>
-                                        <Autocomplete.Menu
-                                            items={MOCK_TOKENS}
-                                            selectedItemIds={[]}
-                                            onSelectedChange={undefined}
-                                            aria-labelledby="autocompleteLabel"
-                                        />
-                                    </Autocomplete.Overlay>
-                                </Autocomplete>
+                                <TextInput
+                                    size="medium"
+                                />
                             </div>
                         </div>
                     </div>
