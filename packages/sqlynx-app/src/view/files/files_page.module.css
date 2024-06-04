@@ -86,6 +86,10 @@
     color: white;
     font-size: 0.8rem;
     font-weight: 500;
+    max-width: 180px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .search_input {
