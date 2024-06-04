@@ -6,7 +6,8 @@ import { EXAMPLE_SCHEMAS } from '../../session/example_scripts.js';
 import * as symbols from '../../../static/svg/symbols.generated.svg';
 import * as style from './files_page.module.css';
 import { createScriptMetadata, ScriptMetadata, ScriptOriginType, ScriptType } from '../../session/script_metadata.js';
-import { CONNECTOR_INFOS, ConnectorType } from '../../connectors/connector_info.js';
+import { ConnectorType } from '../../connectors/connector_info.js';
+import { Autocomplete, FormControl, TextInputWithTokens } from '@primer/react';
 
 const LOG_CTX = "files_connector";
 
@@ -23,7 +24,8 @@ function SchemaEntry(props: { metadata: ScriptMetadata }) {
             {props.metadata.name}
         </div>
     </div>)
-};
+}
+
 function QueryEntry(props: { metadata: ScriptMetadata }) {
     return (<div key={props.metadata.scriptId} className={style.file}>
         <div className={classNames(style.file_icon, style.file_icon_query)}>
@@ -35,7 +37,29 @@ function QueryEntry(props: { metadata: ScriptMetadata }) {
             {props.metadata.name}
         </div>
     </div>)
-};
+}
+
+interface Token {
+    id: number;
+    text: string;
+}
+const ITEMS: Token[] = [
+    {text: 'zero', id: 0},
+    {text: 'one', id: 1},
+    {text: 'two', id: 2},
+    {text: 'three', id: 3},
+    {text: 'four', id: 4},
+    {text: 'five', id: 5},
+    {text: 'six', id: 6},
+    {text: 'seven', id: 7},
+    {text: 'twenty', id: 20},
+    {text: 'twentyone', id: 21},
+];
+const MOCK_TOKENS = ITEMS.slice(0, 3);
+
+function TokenInput(props: object) {
+    return <TextInputWithTokens size="large" {...props} />
+}
 
 export const FilesPage: React.FC<Props> = (_props: Props) => {
     const sfSchema0 = createScriptMetadata({
@@ -110,6 +134,37 @@ export const FilesPage: React.FC<Props> = (_props: Props) => {
 
             <div className={style.layout}>
                 <div className={style.body_container}>
+                    <div className={style.section}>
+                        <div className={style.search_layout}>
+                            <div className={style.search_section_header}>
+                                Find File
+                            </div>
+                            <div className={style.search_tokens}>
+                                <div className={style.search_token}>
+                                    vector_search
+                                </div>
+                                <div className={style.search_token}>
+                                    a360/falcondev/0b306c1896f34230a54b13db23f019a6
+                                </div>
+                            </div>
+                            <div className={style.search_input}>
+                                <Autocomplete>
+                                    <Autocomplete.Input
+                                        size="medium"
+                                        data-testid="autocompleteInput"
+                                    />
+                                    <Autocomplete.Overlay>
+                                        <Autocomplete.Menu
+                                            items={MOCK_TOKENS}
+                                            selectedItemIds={[]}
+                                            onSelectedChange={undefined}
+                                            aria-labelledby="autocompleteLabel"
+                                        />
+                                    </Autocomplete.Overlay>
+                                </Autocomplete>
+                            </div>
+                        </div>
+                    </div>
                     <div className={style.section}>
                         <div className={style.scripts_layout}>
                             <div className={style.file_group}>
