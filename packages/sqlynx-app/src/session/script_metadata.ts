@@ -35,6 +35,8 @@ export interface ScriptMetadata {
     httpURL: URL | null;
     /// The statistics
     annotations: ScriptAnnotations | null;
+    /// Is the script immutable?
+    immutable: boolean;
 }
 
 export function generateBlankScript(): ScriptMetadata {
@@ -45,6 +47,7 @@ export function generateBlankScript(): ScriptMetadata {
         originType: ScriptOriginType.LOCAL,
         httpURL: null,
         annotations: null,
+        immutable: false,
     });
 }
 

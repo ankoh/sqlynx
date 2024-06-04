@@ -13,7 +13,8 @@ function example(scriptType: ScriptType, name: string, url: URL, schemaId: strin
         originType: ScriptOriginType.HTTP,
         httpURL: url,
         schemaId,
-        annotations
+        annotations,
+        immutable: true
     });
 }
 

@@ -72,11 +72,15 @@
     font-weight: 500;
 }
 
+.search_input {
+}
+
 .search_tokens {
     display: flex;
     flex-direction: row;
     row-gap: 8px;
     column-gap: 8px;
+    margin-top: 8px;
 }
 
 .search_token {
@@ -90,10 +94,6 @@
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-}
-
-.search_input {
-    margin-top: 8px;
 }
 
 .scripts_layout {

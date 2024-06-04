@@ -59,7 +59,8 @@ export const FilesPage: React.FC<Props> = (_props: Props) => {
         annotations: {
             tableDefs: new Set(["some_dmo__dlm", "another_dmo__dlm"]),
             tenantName: "a360/falcondev/b306c1896f34230a54b13db23f019a6"
-        }
+        },
+        immutable: true,
     });
     const sfQuery0 = createScriptMetadata({
         schemaId: sfSchema0.schemaId,
@@ -70,7 +71,8 @@ export const FilesPage: React.FC<Props> = (_props: Props) => {
         annotations: {
             tableRefs: new Set(["some_dmo__dlm"]),
             tenantName: "a360/falcondev/0b306c1896f34230a54b13db23f019a6"
-        }
+        },
+        immutable: true,
     })
 
     const history: Map<ConnectorType, ScriptMetadata[]> = new Map([
@@ -127,6 +129,11 @@ export const FilesPage: React.FC<Props> = (_props: Props) => {
                             <div className={style.search_section_header}>
                                 Find File
                             </div>
+                            <div className={style.search_input}>
+                                <TextInput
+                                    size="medium"
+                                />
+                            </div>
                             <div className={style.search_tokens}>
                                 <div className={style.search_token}>
                                     vector_search
@@ -135,17 +142,12 @@ export const FilesPage: React.FC<Props> = (_props: Props) => {
                                     a360/falcondev/0b306c1896f34230a54b13db23f019a6
                                 </div>
                             </div>
-                            <div className={style.search_input}>
-                                <TextInput
-                                    size="medium"
-                                />
-                            </div>
                         </div>
                     </div>
                     <div className={style.section}>
                         <div className={style.scripts_layout}>
                             <div className={style.file_group}>
-                                <div className={style.file_group_name}>
+                            <div className={style.file_group_name}>
                                     History
                                 </div>
                                 <div className={style.files}>
