@@ -49,7 +49,7 @@ __metadata:
     "@codemirror/autocomplete": "npm:^6.16.2"
     "@codemirror/language": "npm:^6.10.2"
     "@codemirror/state": "npm:^6.4.1"
-    "@codemirror/view": "npm:^6.26.3"
+    "@codemirror/view": "npm:^6.27.0"
     "@connectrpc/connect": "npm:^1.4.0"
     "@connectrpc/connect-web": "npm:^1.4.0"
     "@emotion/is-prop-valid": "npm:^1.2.2"
@@ -750,7 +750,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/view@npm:^6.0.0, @codemirror/view@npm:^6.17.0, @codemirror/view@npm:^6.23.0, @codemirror/view@npm:^6.26.3":
+"@codemirror/view@npm:^6.0.0, @codemirror/view@npm:^6.17.0, @codemirror/view@npm:^6.23.0":
   version: 6.26.3
   resolution: "@codemirror/view@npm:6.26.3"
   dependencies:
@@ -758,6 +758,17 @@ __metadata:
     style-mod: "npm:^4.1.0"
     w3c-keyname: "npm:^2.2.4"
   checksum: 10c0/b2018bd4a0f738dcbfb609412784c7fb13d276d8be6044b513875710567c802c8d6ab5ad755c5669d09029b1c0f7dc739c2e5e5e1256df3d879b1899a07b8df8
+  languageName: node
+  linkType: hard
+
+"@codemirror/view@npm:^6.27.0":
+  version: 6.27.0
+  resolution: "@codemirror/view@npm:6.27.0"
+  dependencies:
+    "@codemirror/state": "npm:^6.4.0"
+    style-mod: "npm:^4.1.0"
+    w3c-keyname: "npm:^2.2.4"
+  checksum: 10c0/0c7fc829afe9ca4186a1b1211c67f2c7625c4cb1afbadd616d1823a2ee312caf8681524c976f2a16c66017ac3146d8165ef24cc9a8b1091844a8d770e53852b3
   languageName: node
   linkType: hard
 
