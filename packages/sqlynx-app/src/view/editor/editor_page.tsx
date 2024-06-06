@@ -67,7 +67,7 @@ const SessionSelection = (props: { className?: string; variant: 'default' | 'inv
                     {connectorName}
                 </Button>}
             >
-                <ActionList>
+                <ActionList aria-label="Sessions">
                     <ActionList.GroupHeading as="h2">Sessions</ActionList.GroupHeading>
                     {sessionRegistry.entrySeq().map(([_sessionId, session]) => (
                         <ActionList.Item key={session.connectionId} data-session={session.connectionId} onClick={selectConnector}>
@@ -281,7 +281,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                 <ScriptEditor className={styles.editor_card} />
             </div>
             <div className={styles.action_sidebar}>
-                <ActionList>
+                <ActionList aria-label="Actions">
                     <ActionList.GroupHeading as="h2">Connector</ActionList.GroupHeading>
                     <ScriptCommandList connector={scriptState?.connectorInfo ?? null} />
                     <ActionList.Divider />

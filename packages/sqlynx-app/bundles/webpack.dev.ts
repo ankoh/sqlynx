@@ -6,7 +6,6 @@ const base = configure({
     target: 'web',
     buildDir: url.fileURLToPath(new URL('../build/dev', import.meta.url)),
     tsLoaderOptions: {
-        configFile: 'tsconfig.json',
         compilerOptions: {
             sourceMap: true,
         },

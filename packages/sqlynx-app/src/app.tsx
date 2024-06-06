@@ -10,6 +10,7 @@ import { ConnectorsPage, ConnectorsPageStateProvider } from './view/connectors/c
 import { CurrentSessionStateProvider } from './session/current_session.js';
 import { EditorPage } from './view/editor/editor_page.js';
 import { FilesPage } from './view/files/files_page.js';
+import { UIInternalsPage } from './view/internals/ui_internals_page.js';
 import { GitHubTheme } from './github_theme.js';
 import { HttpClientProvider } from './platform/http_client_provider.js';
 import { HyperDatabaseClientProvider } from './platform/hyperdb_client_provider.js';
@@ -97,6 +98,7 @@ const AppProviders = (props: { children: React.ReactElement }) => (
 const EditorPageWithNav = withNavBar(EditorPage);
 const ConnectorsPageWithNav = withNavBar(ConnectorsPage);
 const FilesPageWithNav = withNavBar(FilesPage);
+const UIInternalsPageWithNav = withNavBar(UIInternalsPage);
 
 const Router = process.env.SQLYNX_RELATIVE_IMPORTS ? HashRouter : BrowserRouter;
 
@@ -109,6 +111,7 @@ root.render(
                 <Route index element={<EditorPageWithNav />} />
                 <Route path="/connectors" element={<ConnectorsPageWithNav />} />
                 <Route path="/files" element={<FilesPageWithNav />} />
+                <Route path="/internals/ui" element={<UIInternalsPageWithNav />} />
                 <Route path="*" element={<Navigate to="/" />} />
             </Routes>
         </AppProviders>
