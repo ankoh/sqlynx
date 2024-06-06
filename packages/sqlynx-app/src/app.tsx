@@ -31,6 +31,7 @@ import { withNavBar } from './view/navbar.js';
 
 import './../static/fonts/fonts.css';
 import './globals.css';
+import { isDebugBuild } from './globals.js';
 
 const SessionProviders = (props: { children: React.ReactElement }) => (
     <SessionStateRegistry>
@@ -111,7 +112,11 @@ root.render(
                 <Route index element={<EditorPageWithNav />} />
                 <Route path="/connectors" element={<ConnectorsPageWithNav />} />
                 <Route path="/files" element={<FilesPageWithNav />} />
-                <Route path="/internals/ui" element={<UIInternalsPageWithNav />} />
+                {isDebugBuild() && (
+                    <>
+                        <Route path="/internals/ui" element={<UIInternalsPageWithNav />} />
+                    </>
+                )}
                 <Route path="*" element={<Navigate to="/" />} />
             </Routes>
         </AppProviders>
