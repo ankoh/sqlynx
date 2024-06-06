@@ -2,10 +2,11 @@ import * as React from 'react';
 import * as styles from './ui_internals_page.module.css';
 
 import { TextInput as GHTextInput } from '@primer/react';
-import { ChecklistIcon } from '@primer/octicons-react';
+import { CheckIcon, ChecklistIcon, CopyIcon } from '@primer/octicons-react';
 
 import { TextInput, TextInputValidationStatus } from '../base/text_input.js';
 import { CopyToClipboardAction } from '../../utils/clipboard.js';
+import { TextInputAction } from '../base/text_input_action.js';
 
 interface Props {
 
@@ -15,7 +16,7 @@ export function UIInternalsPage(props: Props) {
     return <div className={styles.root}>
         <div className={styles.component_section}>
             <div className={styles.component_section_header}>
-                UI components
+                UI Design System
             </div>
             <div className={styles.component}>
                 <div className={styles.component_title}>
@@ -53,7 +54,9 @@ export function UIInternalsPage(props: Props) {
                         trailingVisual={ChecklistIcon}
                         trailingAction={<CopyToClipboardAction value="foo" logContext="bar" ariaLabel={`Copy foo`} />}
                     />
+
                     <div className={styles.component_variant_delimiter} />
+
                     <TextInput />
                     <TextInput value="some value" onChange={() => {}} />
                     <TextInput value="looooooooooooooooooooooooooooooooooooooooooong" onChange={() => {}} />
@@ -77,12 +80,26 @@ export function UIInternalsPage(props: Props) {
                         trailingVisual={ChecklistIcon}
                     />
                     <TextInput
-                        trailingAction={<CopyToClipboardAction value="foo" logContext="bar" ariaLabel={`Copy foo`} />}
+                        trailingAction={
+                            <TextInputAction
+                                onClick={() => {}}
+                                icon={CopyIcon}
+                                aria-label="action"
+                                aria-labelledby=""
+                            />
+                        }
                     />
                     <TextInput
                         leadingVisual={ChecklistIcon}
                         trailingVisual={ChecklistIcon}
-                        trailingAction={<CopyToClipboardAction value="foo" logContext="bar" ariaLabel={`Copy foo`} />}
+                        trailingAction={
+                            <TextInputAction
+                                onClick={() => {}}
+                                icon={CopyIcon}
+                                aria-label="action"
+                                aria-labelledby=""
+                            />
+                        }
                     />
                 </div>
             </div>

@@ -1,7 +1,7 @@
 import * as React from "react";
 
+import { TextInput } from '@primer/react';
 import { CheckIcon, CopyIcon, Icon } from "@primer/octicons-react";
-import { TextInput } from "@primer/react";
 
 import { useLogger } from "../platform/logger_provider.js";
 
