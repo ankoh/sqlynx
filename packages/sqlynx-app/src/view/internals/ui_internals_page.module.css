@@ -1,0 +1,44 @@
+.root {
+    background-color: white;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.component_section {
+    padding: 16px;
+    width: 100%;
+    max-width: 1000px;
+}
+
+.component_section_header {
+    font-size: 1.1rem;
+    padding: 8px 0 0 0;
+}
+
+.component {
+}
+
+.component_title {
+    font-weight: 500;
+    padding: 16px 0 16px 0;
+}
+
+.component_description {
+}
+
+.component_variants {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    row-gap: 16px;
+    column-gap: 16px;
+}
+
+.component_variant_delimiter {
+    width: 100%;
+    border-bottom: 1px solid red;
+    padding: 8px 0;
+}

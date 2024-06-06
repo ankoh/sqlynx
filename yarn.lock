@@ -58,6 +58,7 @@ __metadata:
     "@octokit/graphql": "npm:^8.1.1"
     "@primer/octicons-react": "patch:@primer/octicons-react@npm%3A19.9.0#~/.yarn/patches/@primer-octicons-react-npm-19.9.0-65341cfa23.patch"
     "@primer/react": "npm:^36.20.0"
+    "@primer/react-brand": "npm:^0.34.0"
     "@react-hook/resize-observer": "npm:^2.0.1"
     "@tauri-apps/api": "npm:^2.0.0-beta.13"
     "@tauri-apps/cli": "npm:^2.0.0-beta.20"
@@ -76,6 +77,7 @@ __metadata:
     "@types/react-dom": "npm:^18.3.0"
     "@types/react-window": "npm:^1.8.8"
     "@uiw/codemirror-themes-all": "npm:^4.22.2"
+    "@types/stylis": "npm:^4"
     apache-arrow: "npm:^16.1.0"
     cm6-theme-basic-light: "npm:^0.2.0"
     cm6-theme-nord: "npm:^0.2.0"
@@ -106,6 +108,7 @@ __metadata:
     style-loader: "npm:^4.0.0"
     style-mod: "npm:^4.1.2"
     styled-components: "npm:^6.1.11"
+    stylis: "npm:^4.3.2"
     ts-jest: "npm:^29.1.4"
     ts-loader: "npm:^9.5.1"
     ts-node: "npm:^10.9.2"
@@ -1622,6 +1625,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@oddbird/popover-polyfill@npm:0.4.3":
+  version: 0.4.3
+  resolution: "@oddbird/popover-polyfill@npm:0.4.3"
+  checksum: 10c0/262c6d35cda575bfc67a1b7e8ba612a1d19474f8440b297e94c69b34f9c5baa8a661f82be71d057bec42c3d282a5389bebe71d4e8aaac2546e482b12c9225abc
+  languageName: node
+  linkType: hard
+
 "@oddbird/popover-polyfill@npm:^0.3.1":
   version: 0.3.8
   resolution: "@oddbird/popover-polyfill@npm:0.3.8"
@@ -1643,7 +1653,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@primer/behaviors@npm:^1.5.1":
+"@primer/behaviors@npm:^1.3.4, @primer/behaviors@npm:^1.5.1":
   version: 1.5.1
   resolution: "@primer/behaviors@npm:1.5.1"
   checksum: 10c0/29e7fcfdad6a500504f6488cdf3d35509c77eb90bc41697c24f920b8b78e9e0a8b5ca6fed6b29bb793353e6ed89f8134756fc30806a155de54ebf9b1a4fb8f9f
@@ -1681,6 +1691,20 @@ __metadata:
   version: 7.16.0
   resolution: "@primer/primitives@npm:7.16.0"
   checksum: 10c0/538ad5a5f3325b25568950e0ded04a28fc03e0c515a1562e64f72147be9bff176a568a4a3bae54fa8e432bcc06500e13705fe5876ece135a5aa8d9d0499003f0
+  languageName: node
+  linkType: hard
+
+"@primer/react-brand@npm:^0.34.0":
+  version: 0.34.0
+  resolution: "@primer/react-brand@npm:0.34.0"
+  dependencies:
+    "@oddbird/popover-polyfill": "npm:0.4.3"
+    "@primer/behaviors": "npm:^1.3.4"
+    clsx: "npm:^1.2.1"
+  peerDependencies:
+    react: ">=17 <= 18"
+    react-dom: ">=17 <= 18"
+  checksum: 10c0/40e597d7feb9ca3a5e492f70038f23ab589c049d2515ff7f0254dceb3f93a2d5122c1f09b124300cd421921ce801b278601e5259da30bc123ce852c374044f9d
   languageName: node
   linkType: hard
 
@@ -2646,6 +2670,13 @@ __metadata:
   version: 4.2.5
   resolution: "@types/stylis@npm:4.2.5"
   checksum: 10c0/23f5b35a3a04f6bb31a29d404fa1bc8e0035fcaff2356b4047743a057e0c37b2eba7efe14d57dd2b95b398cea3bac294d9c6cd93ed307d8c0b7f5d282224b469
+  languageName: node
+  linkType: hard
+
+"@types/stylis@npm:^4":
+  version: 4.2.6
+  resolution: "@types/stylis@npm:4.2.6"
+  checksum: 10c0/4c384a90451c5d2447ea10e6d3d483bb3de877a3d67488952f26726996929f25605b68f41c315ef0c6ecf7491e69a4f58d87c7a2009b35f2a6dde8de8ec2e8a2
   languageName: node
   linkType: hard
 
@@ -9760,7 +9791,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"stylis@npm:4.3.2":
+"stylis@npm:4.3.2, stylis@npm:^4.3.2":
   version: 4.3.2
   resolution: "stylis@npm:4.3.2"
   checksum: 10c0/0410e1404cbeee3388a9e17587875211ce2f014c8379af0d1e24ca55878867c9f1ccc7b0ce9a156ca53f5d6e301391a82b0645522a604674a378b3189a4a1994

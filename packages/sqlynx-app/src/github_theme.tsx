@@ -6,14 +6,16 @@ import isPropValid from '@emotion/is-prop-valid';
 
 import * as style from './github_theme.module.css';
 
+import '@primer/react-brand/lib/css/main.css'
+
 export function GitHubTheme(props: { children: React.ReactElement }) {
     return (
         <StyleSheetManager shouldForwardProp={isPropValid}>
-            <ThemeProvider dayScheme="light" nightScheme="light">
-                <BaseStyles className={style.base_style}>
-                    {props.children}
-                </BaseStyles>
-            </ThemeProvider>
+             <BaseStyles className={style.base_style}>
+                 <ThemeProvider dayScheme="light" nightScheme="light">
+                     {props.children}
+                 </ThemeProvider>
+             </BaseStyles>
         </StyleSheetManager>
     );
 }

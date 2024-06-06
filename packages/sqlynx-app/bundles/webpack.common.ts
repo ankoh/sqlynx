@@ -63,7 +63,10 @@ export function configure(params: ConfigParams): Partial<Configuration> {
                     test: /\.tsx?$/,
                     loader: 'ts-loader',
                     exclude: /node_modules/,
-                    options: params.tsLoaderOptions,
+                    options: {
+                        ...params.tsLoaderOptions,
+                        configFile: 'tsconfig.json',
+                    },
                 },
                 {
                     test: /\.css$/,
