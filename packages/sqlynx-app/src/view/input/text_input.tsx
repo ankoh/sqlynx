@@ -2,6 +2,7 @@ import * as React from 'react';
 import { classNames } from '../../utils/classnames.js';
 
 import * as styles from './text_input.module.css';
+import { VALIDATION_ERROR } from '../text_field.js';
 
 // import { CopyToClipboardAction } from '../../utils/clipboard.js';
 // import * as React from 'react';
@@ -19,7 +20,7 @@ import * as styles from './text_input.module.css';
 // readOnly={props.readOnly}
 // validationStatus={validationStatus}
 
-enum TextInputValidationStatus {
+export enum TextInputValidationStatus {
     Success = 1,
     Error = 2,
 }
@@ -40,13 +41,25 @@ interface TextInputProps {
 
 export function TextInput(props: TextInputProps): React.ReactElement {
     return (
-        <span className={classNames(styles.root, props.className)}>
+        <span className={classNames(styles.root, props.className, {
+            [styles.root_disabled]: props.disabled,
+            [styles.root_block]: props.block,
+            [styles.root_validation_success]: props.validationStatus == TextInputValidationStatus.Success,
+            [styles.root_validation_error]: props.validationStatus == TextInputValidationStatus.Error,
+        })}>
             {props.leadingVisual && (
                 <span className={styles.leading_visual_container}>
                     {props.leadingVisual}
                 </span>
             )}
-            <input className={styles.input_container} />
+            <input
+                className={styles.input_container}
+                value={props.value}
+                readOnly={props.readOnly}
+                placeholder={props.placeholder}
+                disabled={props.disabled}
+                onChange={props.onChange}
+            />
             {props.trailingVisual && (
                 <span className={styles.trailing_visual_container}>
                     {props.trailingVisual}

@@ -25,6 +25,27 @@
     outline-offset: -1px;
 }
 
+.root_disabled {
+    color: #8c959f;
+    background-color: rgba(175, 184, 193, 0.2);
+    box-shadow: none;
+}
+.root_disabled > input {
+    cursor: not-allowed;
+}
+.root_validation_success {
+    border-color: #1f883d;
+}
+.root_validation_error {
+    border-color: #cf222e;
+}
+
+.root_block {
+    width: 100%;
+    display: flex;
+    align-self: stretch;
+}
+
 .leading_visual_container {
     grid-column: 1;
 }
