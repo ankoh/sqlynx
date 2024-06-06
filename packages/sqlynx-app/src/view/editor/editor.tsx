@@ -12,7 +12,7 @@ import { useCurrentSessionState } from '../../session/current_session.js';
 import { UPDATE_SCRIPT_ANALYSIS, UPDATE_SCRIPT_CURSOR } from '../../session/session_state_reducer.js';
 import { ScriptKey } from '../../session/session_state.js';
 import { ScriptStatisticsBar } from './script_statistics_bar.js';
-import { VerticalTabVariant, VerticalTabs } from '../../view/vertical_tabs.js';
+import { VerticalTabVariant, VerticalTabs } from '../base/vertical_tabs.js';
 import { classNames } from '../../utils/classnames.js';
 import { useLogger } from '../../platform/logger_provider.js';
 

@@ -19,10 +19,10 @@ import { SchemaGraph } from '../schema/schema_graph.js';
 import { QueryProgress } from '../progress/query_progress.js';
 import { DataTable } from '../table/data_table.js';
 import { KeyEventHandler, useKeyEvents } from '../../utils/key_events.js';
-import { VerticalTabVariant, VerticalTabs } from '../vertical_tabs.js';
+import { VerticalTabVariant, VerticalTabs } from '../base/vertical_tabs.js';
 import { ScriptFileSaveOverlay } from './script_filesave_overlay.js';
 import { ScriptURLOverlay } from './script_url_overlay.js';
-import { getConnectorIcon } from '../connector_icons.js';
+import { getConnectorIcon } from '../connectors/connector_icons.js';
 import { useAppConfig } from '../../app_config.js';
 
 import * as styles from './editor_page.module.css';

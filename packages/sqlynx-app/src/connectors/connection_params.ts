@@ -1,7 +1,7 @@
 import * as proto from '@ankoh/sqlynx-pb';
 import Immutable from 'immutable';
 
-import { KeyValueListElement } from '../view/keyvalue_list.js';
+import { KeyValueListElement } from '../view/base/keyvalue_list.js';
 import { GrpcChannelArgs } from '../platform/grpc_common.js';
 
 export interface HyperGrpcConnectionParams {
