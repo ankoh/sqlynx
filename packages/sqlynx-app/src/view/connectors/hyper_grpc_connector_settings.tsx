@@ -6,11 +6,11 @@ import { Button } from '@primer/react';
 import { ChecklistIcon, DatabaseIcon, FileBadgeIcon, KeyIcon, PlugIcon } from '@primer/octicons-react';
 
 import { classNames } from '../../utils/classnames.js';
-import { TextField, KeyValueTextField } from '../text_field.js';
+import { TextField, KeyValueTextField } from '../base/text_field.js';
 import { useLogger } from '../../platform/logger_provider.js';
 import { useHyperDatabaseClient } from '../../platform/hyperdb_client_provider.js';
-import { KeyValueListBuilder, KeyValueListElement, UpdateKeyValueList } from '../keyvalue_list.js';
-import { IndicatorStatus, StatusIndicator } from '../status_indicator.js';
+import { KeyValueListBuilder, KeyValueListElement, UpdateKeyValueList } from '../base/keyvalue_list.js';
+import { IndicatorStatus, StatusIndicator } from '../base/status_indicator.js';
 import { Dispatch } from '../../utils/variant.js';
 import { AttachedDatabase, HyperDatabaseConnectionContext } from '../../platform/hyperdb_client.js';
 

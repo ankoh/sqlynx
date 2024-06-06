@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { TextInput } from '@primer/react';
 
-import { CopyToClipboardAction } from '../utils/clipboard.js';
-import { classNames } from '../utils/classnames.js';
-import { VariantKind } from '../utils/variant.js';
+import { CopyToClipboardAction } from '../../utils/clipboard.js';
+import { classNames } from '../../utils/classnames.js';
+import { VariantKind } from '../../utils/variant.js';
 
-import * as icons from '../../static/svg/symbols.generated.svg';
+import * as icons from '../../../static/svg/symbols.generated.svg';
 import * as styles from './text_field.module.css';
 
 export const VALIDATION_UNKNOWN = Symbol("VALIDATION_UNKNOWN");

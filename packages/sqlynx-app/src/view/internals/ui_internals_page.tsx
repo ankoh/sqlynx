@@ -4,7 +4,7 @@ import * as styles from './ui_internals_page.module.css';
 import { TextInput as GHTextInput } from '@primer/react';
 import { ChecklistIcon } from '@primer/octicons-react';
 
-import { TextInput, TextInputValidationStatus } from '../input/text_input.js';
+import { TextInput, TextInputValidationStatus } from '../base/text_input.js';
 import { CopyToClipboardAction } from '../../utils/clipboard.js';
 
 interface Props {

@@ -1,10 +1,10 @@
 import * as React from 'react';
 import * as Immutable from 'immutable';
 
-import { Dispatch } from '../utils/variant.js';
+import { Dispatch } from '../../utils/variant.js';
 import { PlusIcon, XIcon } from '@primer/octicons-react';
 import { TextInput, IconButton } from '@primer/react';
-import { classNames } from '../utils/classnames.js';
+import { classNames } from '../../utils/classnames.js';
 
 import * as styles from './keyvalue_list.module.css';
 

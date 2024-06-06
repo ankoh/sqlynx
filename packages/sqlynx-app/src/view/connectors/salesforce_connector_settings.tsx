@@ -10,8 +10,8 @@ import { ConnectionHealth, ConnectionStatus, getSalesforceConnectionStatus, getS
 import { SalesforceAuthParams } from '../../connectors/connection_params.js';
 import { SalesforceAuthAction, reduceAuthState, RESET } from '../../connectors/salesforce_connection_state.js';
 import { SALESFORCE_DATA_CLOUD_CONNECTOR } from '../../connectors/connector_info.js';
-import { TextField, TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_UNKNOWN } from '../text_field.js';
-import { IndicatorStatus, StatusIndicator } from '../status_indicator.js';
+import { TextField, TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_UNKNOWN } from '../base/text_field.js';
+import { IndicatorStatus, StatusIndicator } from '../base/status_indicator.js';
 import { Dispatch } from '../../utils/variant.js';
 import { classNames } from '../../utils/classnames.js';
 

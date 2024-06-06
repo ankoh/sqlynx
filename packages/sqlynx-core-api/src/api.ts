@@ -535,7 +535,7 @@ export class SQLynxScript {
     }
     /// Get the script statistics.
     /// Timings are useless in some browsers today.
-    /// For example, Firefox rounds to millisecond precision, so all our step timings will be 0 for most input.
+    /// For example, Firefox rounds to millisecond precision, so all our step timings will be 0 for most base.
     /// One way out might be COEP but we cannot easily set that with GitHub pages.
     /// https://developer.mozilla.org/en-US/docs/Web/API/Performance_API/High_precision_timing#reduced_precision
     public getStatistics(): FlatBufferPtr<proto.ScriptStatistics> {

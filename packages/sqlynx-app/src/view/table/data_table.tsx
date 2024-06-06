@@ -5,7 +5,7 @@ import { VariableSizeGrid as Grid, GridChildComponentProps } from 'react-window'
 import { classNames } from '../../utils/classnames.js';
 
 import * as styles from './data_table.module.css';
-import { observeSize } from '../size_observer.js';
+import { observeSize } from '../base/size_observer.js';
 
 interface Props {
     className?: string;
