@@ -15,8 +15,9 @@
 
     background-repeat: no-repeat;
     background-position: right 8px center;
-    padding-left: 0;
-    padding-right: 0;
+
+    padding-left: 12px;
+    padding-right: 12px;
 }
 
 .root:focus-within {
@@ -48,6 +49,11 @@
 
 .leading_visual_container {
     grid-column: 1;
+    margin-right: 8px;
+
+    align-self: center;
+    color: #656d76;
+    flex-shrink: 0;
 }
 
 .input_container {
@@ -61,8 +67,8 @@
     color: inherit;
     width: 100%;
 
-    padding-left: 12px;
-    padding-right: 12px;
+    padding-block: 1px;
+    padding-inline: 2px;
 }
 
 .input_container {
@@ -71,6 +77,11 @@
 
 .trailing_visual_container {
     grid-column: 3;
+
+    margin-left: 8px;
+    align-self: center;
+    color: #656d76;
+    flex-shrink: 0;
 }
 
 .trailing_action_container {

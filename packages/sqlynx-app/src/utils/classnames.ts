@@ -14,7 +14,7 @@ function parseValue(arg: ClassValue) {
         return '';
     }
     if (Array.isArray(arg)) {
-        return classNames.apply(null, arg);
+        return classNames(...arg);
     }
     if (arg.toString !== Object.prototype.toString) {
         return arg.toString();
