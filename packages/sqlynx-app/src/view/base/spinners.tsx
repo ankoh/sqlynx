@@ -1,8 +1,7 @@
 import * as React from 'react';
+import * as styles from './spinners.module.css';
 
 import { classNames } from '../../utils/classnames.js';
-
-import * as styles from './spinners.module.css';
 
 interface RectangleWaveSpinnerProps {
     className?: string;

@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as styles from './ui_internals_page.module.css';
 
 import { TextInput as GHTextInput } from '@primer/react';
-import { CheckIcon, ChecklistIcon, CopyIcon } from '@primer/octicons-react';
+import { ChecklistIcon, CopyIcon } from '@primer/octicons-react';
 
 import { TextInput, TextInputValidationStatus } from '../base/text_input.js';
 import { CopyToClipboardAction } from '../../utils/clipboard.js';
