@@ -1,10 +1,9 @@
 import * as React from 'react';
 import * as styles from './tooltip.module.css';
 
-import type {AnchorSide, AnchorAlignment} from '@primer/behaviors'
-import { getAnchoredPosition } from '@primer/behaviors'
 import { useLogger } from '../../platform/logger_provider.js';
 import { KeyEventHandler, useKeyEvents } from '../../utils/key_events.js';
+import { AnchorAlignment, AnchorSide, getAnchoredPosition } from './anchored_position.js';
 
 export type TriggerPropsType = {
     'aria-describedby'?: string
