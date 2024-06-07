@@ -46,7 +46,7 @@
         "@types/react": "^18.3.3",
         "@types/react-dom": "^18.3.0",
         "@types/react-window": "^1.8.8",
-        "@uiw/codemirror-themes-all": "^4.22.1",
+        "@uiw/codemirror-themes-all": "^4.22.2",
         "apache-arrow": "^16.1.0",
         "cm6-theme-basic-light": "^0.2.0",
         "cm6-theme-nord": "^0.2.0",
