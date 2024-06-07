@@ -3,6 +3,7 @@ import * as styles from './text_input_action.module.css';
 
 import type { IconProps } from '@primer/octicons-react'
 import { IconButton } from '@primer/react';
+import { Tooltip } from './tooltip.js';
 
 interface TextInputActionProps {
     children?: React.ReactElement;
@@ -25,13 +26,15 @@ export function TextInputAction(props: Props) {
     }
     // marginLeft={1} marginRight={1} lineHeight="0"
     return (
-        <IconButton
-            className={styles.input_action}
-            type="button"
-            icon={props.icon}
-            variant="invisible"
-            size="small"
-            aria-labelledby={ariaLabelledBy}
-        />
+        <Tooltip text={ariaLabel} type="label">
+            <IconButton
+                className={styles.input_action}
+                type="button"
+                icon={props.icon}
+                variant="invisible"
+                size="small"
+                aria-labelledby={ariaLabelledBy}
+            />
+        </Tooltip>
     );
 }
