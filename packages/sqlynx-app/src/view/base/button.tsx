@@ -1,0 +1,74 @@
+import * as React from 'react';
+import * as styles from './button.module.css';
+
+import { classNames } from '../../utils/classnames.js';
+
+const BUTTON_VARIANT_CLASSNAME = [
+    styles.button_variant_default,
+    styles.button_variant_primary,
+    styles.button_variant_danger,
+    styles.button_variant_invisible,
+];
+const BUTTON_SIZE_CLASSNAME = [
+    styles.button_size_small,
+    styles.button_size_medium,
+    styles.button_size_large,
+];
+
+export enum ButtonVariant {
+    Default,
+    Primary,
+    Danger,
+    Invisible,
+    Outline,
+}
+
+export enum ButtonSize {
+    Small,
+    Medium,
+    Large
+}
+
+interface Props {
+    variant?: ButtonVariant;
+    size?: ButtonSize;
+    disabled?: boolean;
+    inactive?: boolean;
+    block?: boolean;
+    leadingVisual?: React.ElementType;
+    trailingVisual?: React.ElementType;
+    trailingAction?: React.ReactElement<React.HTMLProps<HTMLButtonElement>>;
+    children?: React.ReactElement | string;
+}
+
+export function Button(props: Props) {
+    const variantStyle = BUTTON_VARIANT_CLASSNAME[props.variant ?? ButtonVariant.Default];
+    const sizeStyle = BUTTON_SIZE_CLASSNAME[props.size ?? ButtonSize.Medium];
+    return (
+        <button
+            className={classNames(styles.button, variantStyle, sizeStyle, {
+                [styles.inactive]: props.inactive,
+                [styles.block]: props.block,
+                [styles.disabled]: props.disabled,
+                [styles.no_visuals]: !props.leadingVisual && !props.trailingVisual && !props.trailingAction ? true : undefined,
+            })}
+        >
+            <span className={styles.button_content}>
+                {props.leadingVisual && (
+                    <span className={styles.leading_visual}><props.leadingVisual /></span>
+                )}
+                {props.children && (
+                    <span className={styles.text}>{props.children}</span>
+                )}
+                {props.trailingVisual && (
+                    <span className={styles.trailing_visual}><props.trailingVisual /></span>
+                )}
+            </span>
+            {props.trailingAction && (
+                <span className={styles.trailing_action}>
+                    {props.trailingAction}
+                </span>
+            )}
+        </button>
+    );
+}
