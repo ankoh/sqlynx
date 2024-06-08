@@ -1,7 +1,6 @@
 import * as React from 'react';
 import * as styles from './tooltip.module.css';
 
-import { useLogger } from '../../platform/logger_provider.js';
 import { KeyEventHandler, useKeyEvents } from '../../utils/key_events.js';
 import { AnchorAlignment, AnchorSide, getAnchoredPosition } from './anchored_position.js';
 
@@ -49,7 +48,6 @@ const positionToDirection: Record<string, TooltipDirection> = {
 export const TooltipContext = React.createContext<{tooltipId?: string}>({})
 
 export function Tooltip(props: TooltipProps): React.ReactElement  {
-    const logger = useLogger();
     const tooltipId = React.useId()
     const triggerRef = React.useRef<HTMLElement>(null);
     const tooltipElRef = React.useRef<HTMLDivElement>(null)
@@ -101,7 +99,7 @@ export function Tooltip(props: TooltipProps): React.ReactElement  {
                 child => child instanceof HTMLElement && child.hasAttribute('aria-label'),
             )
             if (hasAriaLabel || hasAriaLabelInChildren) {
-                logger.warn(
+                console.warn(
                     'The label type `Tooltip` is going to be used here to label the trigger element. Please remove the aria-label from the trigger element.',
                 );
             }
