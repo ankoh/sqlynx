@@ -1,9 +1,9 @@
 import * as React from "react";
 
-import { TextInput } from '@primer/react';
 import { CheckIcon, CopyIcon, Icon } from "@primer/octicons-react";
 
 import { useLogger } from "../platform/logger_provider.js";
+import { TextInputAction } from '../view/base/text_input_action.js';
 
 const DEFAULT_COPY_TIMEOUT = 2000;
 
@@ -41,10 +41,11 @@ export function CopyToClipboardAction(props: { value: string, timeoutMs?: number
         icon = CopyIcon;
     }
     return (
-        <TextInput.Action
+        <TextInputAction
             onClick={copy}
             icon={icon}
             aria-label={props.ariaLabel}
+            aria-labelledby=""
         />
     );
 }

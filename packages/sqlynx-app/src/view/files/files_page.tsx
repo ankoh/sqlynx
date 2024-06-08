@@ -1,15 +1,13 @@
 import * as React from 'react';
-import { TextInput } from '@primer/react';
 
 import { classNames } from '../../utils/classnames.js';
 import { EXAMPLE_SCHEMAS } from '../../session/example_scripts.js';
-
-import * as symbols from '../../../static/svg/symbols.generated.svg';
-import * as style from './files_page.module.css';
+import { TextInput } from '../base/text_input.js';
 import { createScriptMetadata, ScriptMetadata, ScriptOriginType, ScriptType } from '../../session/script_metadata.js';
 import { ConnectorType } from '../../connectors/connector_info.js';
 
-const LOG_CTX = "files_connector";
+import * as symbols from '../../../static/svg/symbols.generated.svg';
+import * as style from './files_page.module.css';
 
 interface Props { }
 
@@ -129,7 +127,6 @@ export const FilesPage: React.FC<Props> = (_props: Props) => {
                             <TextInput
                                 className={style.search_input}
                                 placeholder="Filter Files"
-                                size="medium"
                             />
                             <div className={style.search_tokens}>
                                 <div className={style.search_token}>

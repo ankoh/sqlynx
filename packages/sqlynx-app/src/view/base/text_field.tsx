@@ -1,9 +1,9 @@
 import * as React from 'react';
-import { TextInput } from '@primer/react';
 
 import { CopyToClipboardAction } from '../../utils/clipboard.js';
 import { classNames } from '../../utils/classnames.js';
 import { VariantKind } from '../../utils/variant.js';
+import { TextInput, TextInputValidationStatus } from './text_input.js';
 
 import * as icons from '../../../static/svg/symbols.generated.svg';
 import * as styles from './text_field.module.css';
@@ -70,11 +70,11 @@ export function TextField(props: {
     validation?: TextFieldValidationStatus;
     logContext: string;
 }) {
-    let validationStatus: undefined | "error" | "success" = undefined;
+    let validationStatus: undefined | TextInputValidationStatus = undefined;
     if (props.validation?.type === VALIDATION_OK) {
-        validationStatus = 'success';
+        validationStatus = TextInputValidationStatus.Success;
     } else if (props.validation?.type === VALIDATION_ERROR) {
-        validationStatus = 'error';
+        validationStatus = TextInputValidationStatus.Error;
     }
     const value = props.concealed ? "*".repeat(props.value.length) : props.value;
     return (

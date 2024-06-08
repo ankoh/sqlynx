@@ -3,10 +3,12 @@ import * as Immutable from 'immutable';
 
 import { Dispatch } from '../../utils/variant.js';
 import { PlusIcon, XIcon } from '@primer/octicons-react';
-import { TextInput, IconButton } from '@primer/react';
 import { classNames } from '../../utils/classnames.js';
 
 import * as styles from './keyvalue_list.module.css';
+import { TextInput } from './text_input.js';
+import { IconButton } from '@primer/react';
+import { TextInputAction } from './text_input_action.js';
 
 export interface KeyValueListElement {
     index: number;
@@ -64,10 +66,10 @@ export const KeyValueListBuilder: React.FC<Props> = (props: Props) => {
                             onChange={(ev: any) => modifyElement(i, ev.target.value, elem.value)}
                             leadingVisual={props.keyIcon}
                             trailingAction={
-                                <TextInput.Action
+                                <TextInputAction
                                     icon={XIcon}
-                                    sx={{ color: 'fg.subtle' }}
                                     aria-label="Clear input"
+                                    aria-labelledby=""
                                     onClick={() => deleteIndex(i)}
                                 />
                             }
