@@ -1,14 +1,13 @@
 import * as React from 'react';
 import * as styles from './ui_internals_page.module.css';
 
-import { ChecklistIcon, CopyIcon } from '@primer/octicons-react';
+import { ChecklistIcon, CopyIcon, EyeIcon, HeartIcon, TriangleDownIcon } from '@primer/octicons-react';
+import { Button as GHButton } from '@primer/react'
 
 import { TextInput, TextInputValidationStatus } from '../base/text_input.js';
 import { TextInputAction } from '../base/text_input_action.js';
 
-interface Props {}
-
-export function UIInternalsPage(props: Props) {
+export function UIInternalsPage(): React.ReactElement {
     return <div className={styles.root}>
         <div className={styles.component_section}>
             <div className={styles.component_section_header}>
@@ -18,7 +17,6 @@ export function UIInternalsPage(props: Props) {
                 <div className={styles.component_title}>
                     Text Input
                 </div>
-                <div className={styles.component_description}></div>
                 <div className={styles.component_variants}>
                     <TextInput />
                     <TextInput value="some value" onChange={() => {}} />
@@ -64,6 +62,30 @@ export function UIInternalsPage(props: Props) {
                             />
                         }
                     />
+                </div>
+            </div>
+            <div className={styles.component}>
+                <div className={styles.component_title}>
+                    Button
+                </div>
+                <div className={styles.component_variants}>
+                    <GHButton>Default</GHButton>
+                    <GHButton disabled>Default</GHButton>
+                    <GHButton variant="primary">Primary</GHButton>
+                    <GHButton variant="primary" disabled>Primary</GHButton>
+                    <GHButton variant="danger">Danger</GHButton>
+                    <GHButton variant="danger" disabled>Danger</GHButton>
+                    <GHButton variant="invisible">Invisible</GHButton>
+                    <GHButton variant="invisible" disabled>Invisible</GHButton>
+                    <GHButton leadingVisual={HeartIcon}>Leading Visual</GHButton>
+                    <GHButton trailingVisual={EyeIcon}>Trailing Visual</GHButton>
+                    <GHButton count={42}>Counter</GHButton>
+                    <GHButton trailingAction={TriangleDownIcon}>Trailing action</GHButton>
+                    <GHButton block>Block</GHButton>
+                    <GHButton size="small">Small</GHButton>
+                    <GHButton size="medium">Medium</GHButton>
+                    <GHButton size="large">Large</GHButton>
+                    <div className={styles.component_variant_delimiter}></div>
                 </div>
             </div>
         </div>
