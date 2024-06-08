@@ -2,25 +2,6 @@ import * as React from 'react';
 import * as styles from './text_input.module.css';
 
 import { classNames } from '../../utils/classnames.js';
-import { Tooltip } from './tooltip.js';
-
-const ConditionalTooltip: React.FC<
-    React.PropsWithChildren<{
-        ['aria-label']?: string
-        tooltipDirection?: 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'nw'
-        children: React.ReactElement
-    }>
-> = ({'aria-label': ariaLabel, children, tooltipDirection}) => (
-    <>
-        {ariaLabel ? (
-            <Tooltip text={ariaLabel} direction={tooltipDirection}>
-                {children}
-            </Tooltip>
-        ) : (
-            children
-        )}
-    </>
-)
 
 export enum TextInputValidationStatus {
     Success = 1,

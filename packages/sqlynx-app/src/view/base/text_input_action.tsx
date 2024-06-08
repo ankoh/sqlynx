@@ -26,7 +26,7 @@ export function TextInputAction(props: Props) {
     }
     // marginLeft={1} marginRight={1} lineHeight="0"
     return (
-        <Tooltip text={ariaLabel} type="label">
+        <Tooltip text={ariaLabel} type="label" direction="s">
             <IconButton
                 className={styles.input_action}
                 type="button"
