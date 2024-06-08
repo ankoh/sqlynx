@@ -19,14 +19,14 @@
 }
 
 .component {
+    padding-top: 16px;
+    display: flex;
+    flex-direction: column;
+    row-gap: 16px;
 }
 
 .component_title {
     font-weight: 500;
-    padding: 16px 0 16px 0;
-}
-
-.component_description {
 }
 
 .component_variants {
