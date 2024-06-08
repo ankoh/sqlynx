@@ -34,6 +34,7 @@ export function TextInputAction(props: Props) {
                 variant="invisible"
                 size="small"
                 aria-labelledby={ariaLabelledBy}
+                onClick={props.onClick}
             />
         </Tooltip>
     );
