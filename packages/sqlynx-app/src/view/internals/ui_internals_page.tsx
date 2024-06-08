@@ -2,11 +2,11 @@ import * as React from 'react';
 import * as styles from './ui_internals_page.module.css';
 
 import { ChecklistIcon, CopyIcon, EyeIcon, HeartIcon, TriangleDownIcon } from '@primer/octicons-react';
-import { Button as GHButton } from '@primer/react'
+import { Button as GHButton } from '@primer/react';
 
 import { TextInput, TextInputValidationStatus } from '../base/text_input.js';
 import { TextInputAction } from '../base/text_input_action.js';
-import { Button } from '../base/button.js';
+import { Button, ButtonSize } from '../base/button.js';
 
 export function UIInternalsPage(): React.ReactElement {
     return <div className={styles.root}>
@@ -88,6 +88,11 @@ export function UIInternalsPage(): React.ReactElement {
                     <GHButton size="large">Large</GHButton>
                     <div className={styles.component_variant_delimiter}></div>
                     <Button>Default</Button>
+                    <Button disabled>Default</Button>
+                    <Button block>Block</Button>
+                    <Button size={ButtonSize.Small}>Small</Button>
+                    <Button size={ButtonSize.Medium}>Medium</Button>
+                    <Button size={ButtonSize.Large}>Large</Button>
                 </div>
             </div>
         </div>

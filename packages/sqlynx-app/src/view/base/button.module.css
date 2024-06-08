@@ -96,13 +96,10 @@
     padding: 0 8px;
     height: 28px;
     gap: 4px;
-    font-size: 0;
+    font-size: 12px;
 }
 .button_size_small .text {
     line-height: calc(20 / 12);
-}
-.button_size_small .button_counter {
-    font-size: 0;
 }
 .button_size_small .button_content > :not(:last-child) {
     margin-right: 4px;
