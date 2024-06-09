@@ -6,7 +6,7 @@ import { Button as GHButton } from '@primer/react';
 
 import { TextInput, TextInputValidationStatus } from '../base/text_input.js';
 import { TextInputAction } from '../base/text_input_action.js';
-import { Button, ButtonSize } from '../base/button.js';
+import { Button, ButtonSize, ButtonVariant } from '../base/button.js';
 
 export function UIInternalsPage(): React.ReactElement {
     return <div className={styles.root}>
@@ -89,6 +89,8 @@ export function UIInternalsPage(): React.ReactElement {
                     <div className={styles.component_variant_delimiter}></div>
                     <Button>Default</Button>
                     <Button disabled>Default</Button>
+                    <Button variant={ButtonVariant.Primary}>Primary</Button>
+                    <Button variant={ButtonVariant.Primary} disabled>Primary</Button>
                     <Button block>Block</Button>
                     <Button size={ButtonSize.Small}>Small</Button>
                     <Button size={ButtonSize.Medium}>Medium</Button>
