@@ -91,6 +91,8 @@ export function UIInternalsPage(): React.ReactElement {
                     <Button disabled>Default</Button>
                     <Button variant={ButtonVariant.Primary}>Primary</Button>
                     <Button variant={ButtonVariant.Primary} disabled>Primary</Button>
+                    <Button variant={ButtonVariant.Danger}>Danger</Button>
+                    <Button variant={ButtonVariant.Danger} disabled>Danger</Button>
                     <Button block>Block</Button>
                     <Button size={ButtonSize.Small}>Small</Button>
                     <Button size={ButtonSize.Medium}>Medium</Button>
