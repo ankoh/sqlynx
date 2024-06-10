@@ -67,6 +67,7 @@
 }
 .leading_visual {
     grid-column: 1;
+    display: inline-flex;
 }
 .text {
     grid-column: 2;
@@ -75,9 +76,11 @@
 }
 .trailing_visual {
     grid-column: 3;
+    display: inline-flex;
 }
 .trailing_action {
     margin-right: -4px;
+    display: inline;
 }
 .button_content {
     flex: 1 0 auto;
