@@ -5,7 +5,7 @@ import {
     RECEIVED_CORE_AUTH_TOKEN,
     RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
     GENERATED_PKCE_CHALLENGE,
-    SalesforceAuthAction,
+    SalesforceConnectionStateAction,
     AUTH_STARTED,
     GENERATING_PKCE_CHALLENGE,
     REQUESTING_CORE_AUTH_TOKEN,
@@ -30,7 +30,7 @@ interface Props {
     children: React.ReactElement;
 }
 
-export async function authorizeSalesforceConnection(dispatch: Dispatch<SalesforceAuthAction>, logger: Logger, params: SalesforceAuthParams, config: SalesforceConnectorConfig, apiClient: SalesforceAPIClientInterface, abortSignal: AbortSignal): Promise<void> {
+export async function authorizeSalesforceConnection(dispatch: Dispatch<SalesforceConnectionStateAction>, logger: Logger, params: SalesforceAuthParams, config: SalesforceConnectorConfig, apiClient: SalesforceAPIClientInterface, abortSignal: AbortSignal): Promise<void> {
     try {
         // Start the authorization process
         dispatch({
@@ -119,10 +119,10 @@ export const SalesforceAuthFlowMockProvider: React.FC<Props> = (props: Props) =>
         if (!connectorConfig) {
             return null;
         }
-        const auth = async (dispatch: Dispatch<SalesforceAuthAction>, params: SalesforceAuthParams, abort: AbortSignal) => {
+        const auth = async (dispatch: Dispatch<SalesforceConnectionStateAction>, params: SalesforceAuthParams, abort: AbortSignal) => {
             return authorizeSalesforceConnection(dispatch, logger, params, connectorConfig, salesforceApi, abort);
         };
-        const reset = async (dispatch: Dispatch<SalesforceAuthAction>) => {
+        const reset = async (dispatch: Dispatch<SalesforceConnectionStateAction>) => {
             dispatch({
                 type: RESET,
                 value: null,

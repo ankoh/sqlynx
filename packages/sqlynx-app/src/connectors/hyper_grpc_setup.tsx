@@ -21,7 +21,7 @@ import {
     HyperDatabaseClient,
     HyperDatabaseConnectionContext,
 } from '../platform/hyperdb_client.js';
-import { RESET, SalesforceAuthAction } from './salesforce_connection_state.js';
+import { RESET, SalesforceConnectionStateAction } from './salesforce_connection_state.js';
 import { useLogger } from '../platform/logger_provider.js';
 import { useAppConfig } from '../app_config.js';
 import { useHyperDatabaseClient } from '../platform/hyperdb_client_provider.js';
@@ -129,7 +129,7 @@ export async function setupHyperGrpcConnection(dispatch: Dispatch<HyperGrpcConne
 }
 export interface HyperGrpcSetupApi {
     setup(dispatch: Dispatch<HyperGrpcConnectorAction>, params: HyperGrpcConnectionParams, abortSignal: AbortSignal): Promise<void>
-    reset(dispatch: Dispatch<SalesforceAuthAction>): Promise<void>
+    reset(dispatch: Dispatch<SalesforceConnectionStateAction>): Promise<void>
 };
 
 export const SETUP_CTX = React.createContext<HyperGrpcSetupApi | null>(null);
@@ -153,7 +153,7 @@ export const HyperGrpcSetupProvider: React.FC<Props> = (props: Props) => {
         const setup = async (dispatch: Dispatch<HyperGrpcConnectorAction>, params: HyperGrpcConnectionParams, abort: AbortSignal) => {
             return setupHyperGrpcConnection(dispatch, logger, params, connectorConfig, hyperClient, abort);
         };
-        const reset = async (dispatch: Dispatch<SalesforceAuthAction>) => {
+        const reset = async (dispatch: Dispatch<SalesforceConnectionStateAction>) => {
             dispatch({
                 type: RESET,
                 value: null,

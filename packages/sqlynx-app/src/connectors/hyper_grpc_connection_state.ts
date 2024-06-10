@@ -1,6 +1,7 @@
 import { VariantKind } from '../utils/variant.js';
 import { HyperGrpcConnectionParams } from './connection_params.js';
 import { HyperDatabaseChannel } from '../platform/hyperdb_client.js';
+import { ConnectionHealth, ConnectionStatus } from './connection_status.js';
 
 export interface HyperGrpcSetupTimings {
     /// The time when the channel setup started
@@ -22,6 +23,10 @@ export interface HyperGrpcSetupTimings {
 }
 
 export interface HyperGrpcConnectionState {
+    /// The connection state
+    connectionStatus: ConnectionStatus;
+    /// The connection health
+    connectionHealth: ConnectionHealth;
     /// The setup timings
     setupTimings: HyperGrpcSetupTimings;
     /// The auth params
@@ -36,6 +41,8 @@ export interface HyperGrpcConnectionState {
 
 export function createHyperGrpcConnectionState(): HyperGrpcConnectionState {
     return {
+        connectionStatus: ConnectionStatus.NOT_STARTED,
+        connectionHealth: ConnectionHealth.NOT_STARTED,
         setupTimings: {
             channelSetupStartedAt: null,
             channelSetupCancelledAt: null,
@@ -75,10 +82,12 @@ export type HyperGrpcConnectorAction =
     | VariantKind<typeof HEALTH_CHECK_SUCCEEDED, null>
     ;
 
-export function reduceAuthState(state: HyperGrpcConnectionState, action: HyperGrpcConnectorAction): HyperGrpcConnectionState {
+export function reduceHyperGrpcConnectorState(state: HyperGrpcConnectionState, action: HyperGrpcConnectorAction): HyperGrpcConnectionState {
     switch (action.type) {
         case RESET:
             return {
+                connectionStatus: ConnectionStatus.NOT_STARTED,
+                connectionHealth: ConnectionHealth.NOT_STARTED,
                 setupTimings: {
                     channelSetupStartedAt: new Date(),
                     channelSetupCancelledAt: null,
@@ -97,6 +106,8 @@ export function reduceAuthState(state: HyperGrpcConnectionState, action: HyperGr
         case CHANNEL_SETUP_CANCELLED:
             return {
                 ...state,
+                connectionStatus: ConnectionStatus.CHANNEL_SETUP_CANCELLED,
+                connectionHealth: ConnectionHealth.CANCELLED,
                 setupTimings: {
                     ...state.setupTimings,
                     channelSetupCancelledAt: new Date(),
@@ -107,6 +118,8 @@ export function reduceAuthState(state: HyperGrpcConnectionState, action: HyperGr
         case CHANNEL_SETUP_FAILED:
             return {
                 ...state,
+                connectionStatus: ConnectionStatus.CHANNEL_SETUP_FAILED,
+                connectionHealth: ConnectionHealth.FAILED,
                 setupTimings: {
                     ...state.setupTimings,
                     channelSetupFailedAt: new Date(),
@@ -116,6 +129,8 @@ export function reduceAuthState(state: HyperGrpcConnectionState, action: HyperGr
             };
         case CHANNEL_SETUP_STARTED:
             return {
+                connectionStatus: ConnectionStatus.CHANNEL_SETUP_STARTED,
+                connectionHealth: ConnectionHealth.CONNECTING,
                 setupTimings: {
                     channelSetupStartedAt: new Date(),
                     channelSetupCancelledAt: null,
@@ -134,6 +149,8 @@ export function reduceAuthState(state: HyperGrpcConnectionState, action: HyperGr
         case CHANNEL_READY:
             return {
                 ...state,
+                connectionStatus: ConnectionStatus.CHANNEL_READY,
+                connectionHealth: ConnectionHealth.CONNECTING,
                 setupTimings: {
                     ...state.setupTimings,
                     channelReadyAt: new Date(),
@@ -144,6 +161,8 @@ export function reduceAuthState(state: HyperGrpcConnectionState, action: HyperGr
         case HEALTH_CHECK_STARTED:
             return {
                 ...state,
+                connectionStatus: ConnectionStatus.HEALTH_CHECK_STARTED,
+                connectionHealth: ConnectionHealth.CONNECTING,
                 setupTimings: {
                     ...state.setupTimings,
                     healthCheckStartedAt: new Date(),
@@ -152,6 +171,8 @@ export function reduceAuthState(state: HyperGrpcConnectionState, action: HyperGr
         case HEALTH_CHECK_FAILED:
             return {
                 ...state,
+                connectionStatus: ConnectionStatus.HEALTH_CHECK_FAILED,
+                connectionHealth: ConnectionHealth.FAILED,
                 setupTimings: {
                     ...state.setupTimings,
                     healthCheckFailedAt: new Date(),
@@ -161,6 +182,8 @@ export function reduceAuthState(state: HyperGrpcConnectionState, action: HyperGr
         case HEALTH_CHECK_CANCELLED:
             return {
                 ...state,
+                connectionStatus: ConnectionStatus.HEALTH_CHECK_CANCELLED,
+                connectionHealth: ConnectionHealth.CANCELLED,
                 setupTimings: {
                     ...state.setupTimings,
                     healthCheckCancelledAt: new Date(),
@@ -169,6 +192,8 @@ export function reduceAuthState(state: HyperGrpcConnectionState, action: HyperGr
         case HEALTH_CHECK_SUCCEEDED:
             return {
                 ...state,
+                connectionStatus: ConnectionStatus.HEALTH_CHECK_SUCCEEDED,
+                connectionHealth: ConnectionHealth.ONLINE,
                 setupTimings: {
                     ...state.setupTimings,
                     healthCheckSucceededAt: new Date(),
