@@ -61,7 +61,7 @@ pub async fn route_ipc_request(mut request: Request<Vec<u8>>) -> Response<Vec<u8
                     .unwrap();
             }
         };
-        log::debug!("grpc proxy responded with {:?}", response);
+        log::debug!("grpc proxy responded with: status={:?}, body_bytes={:?}", response.status(), response.body().len());
         return response;
     }
 
