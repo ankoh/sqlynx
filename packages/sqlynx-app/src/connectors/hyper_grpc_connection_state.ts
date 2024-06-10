@@ -85,6 +85,9 @@ export type HyperGrpcConnectorAction =
 export function reduceHyperGrpcConnectorState(state: HyperGrpcConnectionState, action: HyperGrpcConnectorAction): HyperGrpcConnectionState {
     switch (action.type) {
         case RESET:
+            if (state.channel) {
+                state.channel.close()
+            }
             return {
                 connectionStatus: ConnectionStatus.NOT_STARTED,
                 connectionHealth: ConnectionHealth.NOT_STARTED,

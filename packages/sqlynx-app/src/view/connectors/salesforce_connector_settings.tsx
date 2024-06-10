@@ -1,6 +1,5 @@
 import * as React from 'react';
 
-import { Button } from '@primer/react';
 import { KeyIcon, PlugIcon, XIcon } from '@primer/octicons-react';
 
 import { useConnectionState } from '../../connectors/connection_registry.js';
@@ -24,6 +23,7 @@ import { ConnectionHealth, ConnectionStatus } from '../../connectors/connection_
 
 import * as symbols from '../../../static/svg/symbols.generated.svg';
 import * as style from './connector_settings.module.css';
+import { Button, ButtonVariant } from '../base/button.js';
 
 const LOG_CTX = "sf_connector";
 
@@ -151,7 +151,6 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
             authAbortController.current = null;
         }
     };
-
     // Helper to reset the authorization
     const resetAuth = () => {
         setConnectionState((c: ConnectionState) => {
@@ -189,14 +188,14 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
     switch (salesforceConnection?.connectionHealth) {
         case ConnectionHealth.NOT_STARTED:
         case ConnectionHealth.FAILED:
-            actionButton = <Button variant='primary' leadingVisual={PlugIcon} onClick={startAuth}>Connect</Button>;
+            actionButton = <Button variant={ButtonVariant.Primary} leadingVisual={PlugIcon} onClick={startAuth}>Connect</Button>;
             break;
         case ConnectionHealth.CONNECTING:
-            actionButton = <Button variant='danger' leadingVisual={XIcon} onClick={cancelAuth}>Cancel</Button>;
+            actionButton = <Button variant={ButtonVariant.Danger} leadingVisual={XIcon} onClick={cancelAuth}>Cancel</Button>;
             freezeInput = true;
             break;
         case ConnectionHealth.ONLINE:
-            actionButton = <Button variant='danger' leadingVisual={XIcon} onClick={resetAuth}>Reset</Button>;
+            actionButton = <Button variant={ButtonVariant.Danger} leadingVisual={XIcon} onClick={resetAuth}>Reset</Button>;
             freezeInput = true;
             break;
     }
