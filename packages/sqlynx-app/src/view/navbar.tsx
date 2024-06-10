@@ -12,7 +12,6 @@ import { useCurrentSessionState } from '../session/current_session.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
 
 import * as styles from './navbar.module.css';
-
 import * as symbols from '../../static/svg/symbols.generated.svg';
 
 const PageTab = (props: { route: string; alt?: string; location: string; icon: string; label: string | null }) => (
@@ -120,18 +119,13 @@ export const NavBar = (): React.ReactElement => {
     );
 };
 
-export function withNavBar<P extends React.JSX.IntrinsicAttributes>(
-    Component: React.ComponentType<P>,
-): React.FunctionComponent<P> {
-    // eslint-disable-next-line react/display-name
-    return (props: P) => {
-        return (
-            <div className={styles.container}>
-                <NavBar />
-                <div className={styles.page_container}>
-                    <Component {...props} />
-                </div>
+export function NavBarContainer(props: { children: React.ReactElement }){
+    return (
+        <div className={styles.container}>
+            <NavBar key={0} />
+            <div key={1} className={styles.page_container}>
+                {props.children}
             </div>
-        );
-    };
+        </div>
+    );
 }
