@@ -1,12 +1,11 @@
 import * as React from 'react';
-import * as proto from "@ankoh/sqlynx-pb";
+import * as proto from '@ankoh/sqlynx-pb';
 import * as Immutable from 'immutable';
 
-import { Button } from '@primer/react';
 import { ChecklistIcon, DatabaseIcon, FileBadgeIcon, KeyIcon, PlugIcon } from '@primer/octicons-react';
 
 import { classNames } from '../../utils/classnames.js';
-import { TextField, KeyValueTextField } from '../base/text_field.js';
+import { KeyValueTextField, TextField } from '../base/text_field.js';
 import { useLogger } from '../../platform/logger_provider.js';
 import { useHyperDatabaseClient } from '../../platform/hyperdb_client_provider.js';
 import { KeyValueListBuilder, KeyValueListElement, UpdateKeyValueList } from '../base/keyvalue_list.js';
@@ -16,6 +15,7 @@ import { AttachedDatabase, HyperDatabaseConnectionContext } from '../../platform
 
 import * as symbols from '../../../static/svg/symbols.generated.svg';
 import * as style from './connector_settings.module.css';
+import { Button, ButtonVariant } from '../base/button.js';
 
 const LOG_CTX = "hyper_connector";
 
@@ -56,23 +56,34 @@ export const HyperGrpcConnectorSettings: React.FC<{}> = (_props: {}) => {
         }
         try {
             logger.trace(`connecting to endpoint: ${pageState.endpoint}`, LOG_CTX);
-            // XXX
+
+            // Save the current gRPC metadata
+            const metadata = pageState.gRPCMetadata;
+            // Set up an ad-hoc connection for now
             const fakeConnection: HyperDatabaseConnectionContext = {
                 getAttachedDatabases(): AttachedDatabase[] {
-                    return []
+                    return [];
                 },
                 getRequestMetadata(): Promise<Record<string, string>> {
-                    return Promise.resolve({});
+                    const headers: Record<string, string> = {};
+                    for (const entry of metadata) {
+                        headers[entry.key] = entry.value;
+                    }
+                    return Promise.resolve(headers);
                 }
             };
+            // Create a channel
             const channel = await hyperClient.connect({
                 endpoint: pageState.endpoint
             }, fakeConnection);
 
-            await channel.executeQuery(new proto.salesforce_hyperdb_grpc_v1.pb.QueryParam({
-                query: "select 1"
-            }))
-
+            // Check the channel health
+            const healthCheck = await channel.checkHealth();
+            if (!healthCheck.ok) {
+                logger.error(healthCheck.errorMessage!, LOG_CTX);
+            }
+            logger.info("health check ok");
+            // Close the channel
             await channel.close();
         } catch (e: any) {
             console.error(e);
@@ -93,7 +104,7 @@ export const HyperGrpcConnectorSettings: React.FC<{}> = (_props: {}) => {
                 </div>
                 <div className={style.platform_actions}>
                     <Button
-                        variant='primary'
+                        variant={ButtonVariant.Primary}
                         leadingVisual={PlugIcon}
                         onClick={setupConnection}
                     >Connect</Button>

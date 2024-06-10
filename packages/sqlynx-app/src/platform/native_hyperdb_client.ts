@@ -49,9 +49,13 @@ export class QueryResultReader implements AsyncIterator<Uint8Array>, AsyncIterab
             }
             const resultMessage = proto.salesforce_hyperdb_grpc_v1.pb.QueryResult.fromBinary(next.value);
             switch (resultMessage.result.case) {
+                // We skip any dedicated header prefix
                 case "header":
+                    continue;
+                // Skip qsv1 chunks
                 case "qsv1Chunk":
-                    break;
+                    throw new Error("invalid result data message. expected arrowChunk, received qsv1Chunk");
+                // Unpack an arrow chunk
                 case "arrowChunk":
                     return { done: false, value: resultMessage.result.value.data };
             }
@@ -97,7 +101,12 @@ export class NativeHyperQueryResultStream implements QueryExecutionResponseStrea
         if (this.arrowReader == null) {
             await this.setupArrowReader();
         }
-        return this.arrowReader!.next();
+        const result = await this.arrowReader!.next();
+        if (result.done) {
+            return null;
+        } else {
+            return result.value;
+        }
     }
     /// Await the next progress update
     async nextProgressUpdate(): Promise<QueryExecutionProgress | null> {
@@ -122,11 +131,45 @@ class NativeHyperDatabaseChannel implements HyperDatabaseChannel {
 
     /// Check if Hyper is reachable
     public async checkHealth(): Promise<HealthCheckResult> {
-        return { ok: true, errorMessage: null };
+        try {
+            const result = await this.executeQuery(new proto.salesforce_hyperdb_grpc_v1.pb.QueryParam({
+                query: "select 1 as healthy"
+            }));
+            const schema = await result.getSchema();
+            if (schema == null) {
+                return { ok: false, errorMessage: "query result did not include a schema" };
+            }
+            if (schema.fields.length != 1) {
+                return { ok: false, errorMessage: `unexpected number of fields in the query result schema: expected 1, received ${schema.fields.length}` };
+            }
+            const field = schema.fields[0];
+            if (field.name != "healthy") {
+                return { ok: false, errorMessage: `unexpected field name in the query result schema: expected 'healthy', received '${field.name}'` };
+            }
+            const batch = await result.nextRecordBatch();
+            if (batch == null) {
+                return { ok: false, errorMessage: "query result did not include a record batch" };
+            }
+            const healthyColumn = batch.getChildAt(0)!;
+            if (healthyColumn == null) {
+                return { ok: false, errorMessage: "query result batch did not include any data" };
+            }
+            if (healthyColumn.length != 1) {
+                return { ok: false, errorMessage: `query result batch contains an unexpected number of rows: expected 1, received ${healthyColumn.length}` };
+            }
+            const healthyRow = healthyColumn.get(0);
+            if (healthyRow !== 1) {
+                return { ok: false, errorMessage: `health check query returned an unexpected result` };
+            }
+            return { ok: true, errorMessage: null };
+        } catch (e: any) {
+            return { ok: false, errorMessage: e.toString() };
+        }
     }
 
     /// Execute a query against Hyper
     public async executeQuery(params: proto.salesforce_hyperdb_grpc_v1.pb.QueryParam): Promise<HyperQueryResultStream> {
+        params.outputFormat = proto.salesforce_hyperdb_grpc_v1.pb.QueryParam_OutputFormat.ARROW_STREAM;
         for (const db of this.connection.getAttachedDatabases()) {
             params.database.push(new proto.salesforce_hyperdb_grpc_v1.pb.AttachedDatabase(db))
         }
