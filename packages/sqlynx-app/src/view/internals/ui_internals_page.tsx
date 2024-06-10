@@ -95,6 +95,9 @@ export function UIInternalsPage(): React.ReactElement {
                     <Button variant={ButtonVariant.Danger} disabled>Danger</Button>
                     <Button variant={ButtonVariant.Invisible}>Invisible</Button>
                     <Button variant={ButtonVariant.Invisible} disabled>Invisible</Button>
+                    <Button leadingVisual={HeartIcon}>Leading Visual</Button>
+                    <Button trailingVisual={EyeIcon}>Trailing Visual</Button>
+                    <Button trailingAction={<TriangleDownIcon />}>Trailing action</Button>
                     <Button block>Block</Button>
                     <Button size={ButtonSize.Small}>Small</Button>
                     <Button size={ButtonSize.Medium}>Medium</Button>
