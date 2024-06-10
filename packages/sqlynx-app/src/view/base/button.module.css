@@ -243,5 +243,39 @@
 /* --------------------------------------------------------------------- */
 
 .button_variant_invisible {
+    color: #24292f;
+    background-color: transparent;
+    border-color: transparent;
+    box-shadow: none;
+}
 
+.button_variant_invisible:hover:not(.disabled) {
+    background-color: rgba(208,215,222,0.32);
+}
+.button_variant_invisible:active:not(.disabled) {
+    background-color: rgba(208,215,222,0.48);
+}
+.button_variant_invisible.disabled {
+    color: #8c959f;
+}
+.button_variant_invisible .button_counter {
+    color: inherit;
+}
+.button_variant_invisible .leading_visual {
+    color: inherit;
+}
+.button_variant_invisible .trailing_action {
+    color: inherit;
+}
+.button_variant_invisible.no_visuals {
+    color: #0969da;
+}
+.button_variant_invisible.button_counter {
+    color: #24292f;
+}
+.button_variant_invisible.disabled.no_visuals {
+    color: #8c959f;
+}
+.button_variant_invisible.disabled.no_visuals .button_counter {
+    color: inherit;
 }
