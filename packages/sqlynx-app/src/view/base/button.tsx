@@ -39,6 +39,7 @@ interface Props {
     trailingVisual?: React.ElementType;
     trailingAction?: React.ReactElement<React.HTMLProps<HTMLButtonElement>>;
     children?: React.ReactElement | string;
+    onClick?: React.MouseEventHandler;
 }
 
 export function Button(props: Props) {
@@ -52,6 +53,7 @@ export function Button(props: Props) {
                 [styles.disabled]: props.disabled,
                 [styles.no_visuals]: !props.leadingVisual && !props.trailingVisual && !props.trailingAction ? true : undefined,
             })}
+            onClick={props.onClick}
         >
             <span className={styles.button_content}>
                 {props.leadingVisual && (
