@@ -15,7 +15,7 @@ import {
     RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
     REQUESTING_CORE_AUTH_TOKEN,
     REQUESTING_DATA_CLOUD_ACCESS_TOKEN,
-    SalesforceAuthAction,
+    SalesforceConnectionStateAction,
     RECEIVED_CORE_AUTH_CODE,
 } from './salesforce_connection_state.js';
 import { useSalesforceAPI } from './salesforce_connector.js';
@@ -72,7 +72,7 @@ const DEFAULT_EXPIRATION_TIME_MS = 2 * 60 * 60 * 1000;
 const OAUTH_POPUP_NAME = 'SQLynx OAuth';
 const OAUTH_POPUP_SETTINGS = 'toolbar=no, menubar=no, width=600, height=700, top=100, left=100';
 
-export async function authorizeSalesforceConnection(dispatch: Dispatch<SalesforceAuthAction>, logger: Logger, params: SalesforceAuthParams, config: SalesforceConnectorConfig, platformType: PlatformType, apiClient: SalesforceAPIClientInterface, appEvents: AppEventListener, abortSignal: AbortSignal): Promise<void> {
+export async function authorizeSalesforceConnection(dispatch: Dispatch<SalesforceConnectionStateAction>, logger: Logger, params: SalesforceAuthParams, config: SalesforceConnectorConfig, platformType: PlatformType, apiClient: SalesforceAPIClientInterface, appEvents: AppEventListener, abortSignal: AbortSignal): Promise<void> {
     try {
         // Start the authorization process
         dispatch({
@@ -211,8 +211,8 @@ export async function authorizeSalesforceConnection(dispatch: Dispatch<Salesforc
 }
 
 export interface SalesforceAuthFlowApi {
-    authorize(dispatch: Dispatch<SalesforceAuthAction>, params: SalesforceAuthParams, abortSignal: AbortSignal): Promise<void>
-    reset(dispatch: Dispatch<SalesforceAuthAction>): Promise<void>
+    authorize(dispatch: Dispatch<SalesforceConnectionStateAction>, params: SalesforceAuthParams, abortSignal: AbortSignal): Promise<void>
+    reset(dispatch: Dispatch<SalesforceConnectionStateAction>): Promise<void>
 };
 
 export const AUTH_FLOW_CTX = React.createContext<SalesforceAuthFlowApi | null>(null);
@@ -235,10 +235,10 @@ export const SalesforceAuthFlowProvider: React.FC<Props> = (props: Props) => {
         if (!connectorConfig) {
             return null;
         }
-        const auth = async (dispatch: Dispatch<SalesforceAuthAction>, params: SalesforceAuthParams, abort: AbortSignal) => {
+        const auth = async (dispatch: Dispatch<SalesforceConnectionStateAction>, params: SalesforceAuthParams, abort: AbortSignal) => {
             return authorizeSalesforceConnection(dispatch, logger, params, connectorConfig, platformType, salesforceApi, appEvents, abort);
         };
-        const reset = async (dispatch: Dispatch<SalesforceAuthAction>) => {
+        const reset = async (dispatch: Dispatch<SalesforceConnectionStateAction>) => {
             dispatch({
                 type: RESET,
                 value: null,

@@ -6,14 +6,21 @@ import { KeyIcon, PlugIcon, XIcon } from '@primer/octicons-react';
 import { useConnectionState } from '../../connectors/connection_registry.js';
 import { useSalesforceConnectionId } from '../../connectors/salesforce_connector.js';
 import { useSalesforceAuthFlow } from '../../connectors/salesforce_auth_flow.js';
-import { ConnectionHealth, ConnectionStatus, getSalesforceConnectionStatus, getSalesforceConnectionHealth, asSalesforceConnection, ConnectionState } from '../../connectors/connection_state.js';
+import { asSalesforceConnection, ConnectionState } from '../../connectors/connection_state.js';
 import { SalesforceAuthParams } from '../../connectors/connection_params.js';
-import { SalesforceAuthAction, reduceAuthState, RESET } from '../../connectors/salesforce_connection_state.js';
+import {
+    reduceSalesforceConnectionState,
+    RESET,
+    SalesforceConnectionStateAction,
+} from '../../connectors/salesforce_connection_state.js';
 import { SALESFORCE_DATA_CLOUD_CONNECTOR } from '../../connectors/connector_info.js';
 import { TextField, TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_UNKNOWN } from '../base/text_field.js';
 import { IndicatorStatus, StatusIndicator } from '../base/status_indicator.js';
 import { Dispatch } from '../../utils/variant.js';
 import { classNames } from '../../utils/classnames.js';
+import { useLogger } from '../../platform/logger_provider.js';
+import { Logger } from '../../platform/logger.js';
+import { ConnectionHealth, ConnectionStatus } from '../../connectors/connection_status.js';
 
 import * as symbols from '../../../static/svg/symbols.generated.svg';
 import * as style from './connector_settings.module.css';
@@ -27,7 +34,43 @@ interface PageState {
 type PageStateSetter = Dispatch<React.SetStateAction<PageState>>;
 const PAGE_STATE_CTX = React.createContext<[PageState, PageStateSetter] | null>(null);
 
+function getConnectionStatusText(status: ConnectionStatus | undefined, logger: Logger) {
+    switch (status) {
+        case ConnectionStatus.NOT_STARTED:
+            return "Disconnected";
+        case ConnectionStatus.AUTH_STARTED:
+            return "Starting authorization";
+        case ConnectionStatus.AUTH_CANCELLED:
+            return "Cancelled authorization";
+        case ConnectionStatus.AUTH_FAILED:
+            return "Authorization failed";
+        case ConnectionStatus.PKCE_GENERATION_STARTED:
+            return "Generating PKCE challenge";
+        case ConnectionStatus.PKCE_GENERATED:
+            return "Generated PKCE challenge";
+        case ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_LINK:
+        case ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_WINDOW:
+            return "Waiting for OAuth code";
+        case ConnectionStatus.OAUTH_CODE_RECEIVED:
+            return "Received OAuth code";
+        case ConnectionStatus.CORE_ACCESS_TOKEN_REQUESTED:
+            return "Requesting Core access token";
+        case ConnectionStatus.CORE_ACCESS_TOKEN_RECEIVED:
+            return "Received Core access token";
+        case ConnectionStatus.DATA_CLOUD_TOKEN_REQUESTED:
+            return "Requesting Data Cloud access token";
+        case ConnectionStatus.DATA_CLOUD_TOKEN_RECEIVED:
+            return "Received Data Cloud access token";
+        case undefined:
+            break;
+        default:
+            logger.warn(`unexpected connection status: ${status}`);
+    }
+    return "";
+}
+
 export const SalesforceConnectorSettings: React.FC<object> = (_props: object) => {
+    const logger = useLogger();
     const connectionId = useSalesforceConnectionId();
     const [connectionState, setConnectionState] = useConnectionState(connectionId);
     const salesforceConnection = asSalesforceConnection(connectionState);
@@ -81,12 +124,12 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
         }
 
         // Helper to dispatch auth state actions against the connection state
-        const salesforceAuthDispatch = (action: SalesforceAuthAction) => {
+        const salesforceAuthDispatch = (action: SalesforceConnectionStateAction) => {
             setConnectionState((c: ConnectionState) => {
                 const s = asSalesforceConnection(c)!;
                 return {
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
-                    value: reduceAuthState(s, action)
+                    value: reduceSalesforceConnectionState(s, action)
                 };
             });
         };
@@ -115,48 +158,17 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
             const s = asSalesforceConnection(c)!;
             return {
                 type: SALESFORCE_DATA_CLOUD_CONNECTOR,
-                value: reduceAuthState(s, { type: RESET, value: null })
+                value: reduceSalesforceConnectionState(s, { type: RESET, value: null })
             };
         });
     };
 
     // Get the connection status
-    const status = getSalesforceConnectionStatus(salesforceConnection);
-    let statusName: string | undefined = undefined;
-    switch (status) {
-        case ConnectionStatus.UNKNOWN:
-        case ConnectionStatus.NOT_STARTED:
-            statusName = "Disconnected";
-            break;
-        case ConnectionStatus.AUTHORIZATION_FAILED:
-            statusName = "Authorization failed";
-            break;
-        case ConnectionStatus.AUTHORIZATION_COMPLETED:
-            statusName = "Authorization successful";
-            break;
-        case ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_LINK:
-        case ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_WINDOW:
-            statusName = "Waiting for OAuth code";
-            break;
-        case ConnectionStatus.OAUTH_CODE_RECEIVED:
-            statusName = "Received OAuth code";
-            break;
-        case ConnectionStatus.CORE_ACCESS_TOKEN_REQUESTED:
-            statusName = "Requesting core access token";
-            break;
-        case ConnectionStatus.DATA_CLOUD_TOKEN_REQUESTED:
-            statusName = "Requesting Data Cloud access token";
-            break;
-        case ConnectionStatus.PKCE_GENERATION_STARTED:
-            statusName = "Generating pkce challenge";
-            break;
-    }
+    const statusText = getConnectionStatusText(salesforceConnection?.connectionStatus, logger);
 
     // Get the indicator status
-    const health = getSalesforceConnectionHealth(status);
-    let indicatorStatus: IndicatorStatus | undefined = undefined;
-    switch (health) {
-        case ConnectionHealth.UNKNOWN:
+    let indicatorStatus: IndicatorStatus = IndicatorStatus.None;
+    switch (salesforceConnection?.connectionHealth) {
         case ConnectionHealth.NOT_STARTED:
             indicatorStatus = IndicatorStatus.None;
             break;
@@ -173,22 +185,23 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
 
     // Get the action button
     let actionButton: React.ReactElement = <div />;
-    switch (health) {
-        case ConnectionHealth.UNKNOWN:
+    let freezeInput = false;
+    switch (salesforceConnection?.connectionHealth) {
         case ConnectionHealth.NOT_STARTED:
         case ConnectionHealth.FAILED:
             actionButton = <Button variant='primary' leadingVisual={PlugIcon} onClick={startAuth}>Connect</Button>;
             break;
         case ConnectionHealth.CONNECTING:
             actionButton = <Button variant='danger' leadingVisual={XIcon} onClick={cancelAuth}>Cancel</Button>;
+            freezeInput = true;
             break;
         case ConnectionHealth.ONLINE:
             actionButton = <Button variant='danger' leadingVisual={XIcon} onClick={resetAuth}>Reset</Button>;
+            freezeInput = true;
             break;
     }
 
     // Lock any changes?
-    const freezeInput = health == ConnectionHealth.CONNECTING || health == ConnectionHealth.ONLINE;
     return (
         <div className={style.layout}>
             <div className={style.connector_header_container}>
@@ -212,7 +225,7 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
                                 <StatusIndicator className={style.status_indicator_spinner} status={indicatorStatus} fill="black" />
                             </div>
                             <div className={style.status_text}>
-                                {statusName}
+                                {statusText}
                             </div>
                             <div className={style.status_stats}>
                             </div>

@@ -12,7 +12,7 @@ import { useCurrentSessionState } from './current_session.js';
 import { ConnectorInfo, SALESFORCE_DATA_CLOUD_CONNECTOR, requiresSwitchingToNative } from '../connectors/connector_info.js';
 import { ConnectorAuthCheck, checkSalesforceAuth, asSalesforceConnection, ConnectionState } from '../connectors/connection_state.js';
 import { SessionLinkTarget, generateSessionSetupUrl } from './session_setup_url.js';
-import { SalesforceAuthAction, reduceAuthState } from '../connectors/salesforce_connection_state.js';
+import { SalesforceConnectionStateAction, reduceSalesforceConnectionState } from '../connectors/salesforce_connection_state.js';
 import { SalesforceAuthParams } from '../connectors/connection_params.js';
 import { SQLYNX_VERSION } from '../globals.js';
 import { REPLACE_SCRIPT_CONTENT } from './session_state_reducer.js';
@@ -100,12 +100,12 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                     return;
                 }
                 // Helper to dispatch auth state actions against the connection state
-                const salesforceAuthDispatch = (action: SalesforceAuthAction) => {
+                const salesforceAuthDispatch = (action: SalesforceConnectionStateAction) => {
                     setConnectionState((c: ConnectionState) => {
                         const s = asSalesforceConnection(c)!;
                         return {
                             type: SALESFORCE_DATA_CLOUD_CONNECTOR,
-                            value: reduceAuthState(s, action)
+                            value: reduceSalesforceConnectionState(s, action)
                         }
                     });
                 };
