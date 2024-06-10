@@ -1,13 +1,14 @@
 import * as React from 'react';
 
-import { ActionList, IconButton, ButtonGroup, Button, AnchoredOverlay } from '@primer/react';
+import { ActionList, AnchoredOverlay, ButtonGroup, IconButton, Button as GHButton } from '@primer/react';
 import {
-    SyncIcon,
-    PaperAirplaneIcon,
-    LinkIcon,
     DownloadIcon,
+    LinkIcon,
+    PaperAirplaneIcon,
+    StopwatchIcon,
+    SyncIcon,
     ThreeBarsIcon,
-    StopwatchIcon, TriangleDownIcon,
+    TriangleDownIcon,
 } from '@primer/octicons-react';
 
 import { ConnectorInfo } from '../../connectors/connector_info.js';
@@ -18,8 +19,9 @@ import { ScriptEditor } from './editor.js';
 import { SchemaGraph } from '../schema/schema_graph.js';
 import { QueryProgress } from '../progress/query_progress.js';
 import { DataTable } from '../table/data_table.js';
+import { Button, ButtonVariant } from '../base/button.js';
 import { KeyEventHandler, useKeyEvents } from '../../utils/key_events.js';
-import { VerticalTabVariant, VerticalTabs } from '../base/vertical_tabs.js';
+import { VerticalTabs, VerticalTabVariant } from '../base/vertical_tabs.js';
 import { ScriptFileSaveOverlay } from './script_filesave_overlay.js';
 import { ScriptURLOverlay } from './script_url_overlay.js';
 import { getConnectorIcon } from '../connectors/connector_icons.js';
@@ -49,33 +51,35 @@ const SessionSelection = (props: { className?: string; variant: 'default' | 'inv
         : props.short
             ? sessionState?.connectorInfo.displayName.short
             : sessionState?.connectorInfo.displayName.long;
+
+    // Memoize button to prevent svg flickering
+    const button = React.useMemo(() => (
+        <Button
+            className={props.className}
+            onClick={() => setIsOpen(true)}
+            variant={ButtonVariant.Invisible}
+            leadingVisual={() => (!sessionState?.connectorInfo ? <div /> : getConnectorIcon(sessionState?.connectorInfo))}
+            trailingVisual={TriangleDownIcon}
+        >
+            {connectorName}
+        </Button>
+    ), [sessionState?.connectorInfo, connectorName]);
+
     return (
         <AnchoredOverlay
             open={isOpen}
-            onOpen={() => setIsOpen(true)}
             onClose={() => setIsOpen(false)}
-            renderAnchor={
-                (props: any) =>
-                <Button
-                    {...props}
-                    className={props.className}
-                    variant="invisible"
-                    alignContent="start"
-                    leadingVisual={() => (!sessionState?.connectorInfo ? <div /> : getConnectorIcon(sessionState?.connectorInfo))}
-                    trailingVisual={TriangleDownIcon}
-                >
-                    {connectorName}
-                </Button>}
-            >
-                <ActionList aria-label="Sessions">
-                    <ActionList.GroupHeading as="h2">Sessions</ActionList.GroupHeading>
-                    {sessionRegistry.entrySeq().map(([_sessionId, session]) => (
-                        <ActionList.Item key={session.connectionId} data-session={session.connectionId} onClick={selectConnector}>
-                            <ActionList.LeadingVisual>{getConnectorIcon(session.connectorInfo)}</ActionList.LeadingVisual>
-                            {props.short ? session.connectorInfo.displayName.short : session.connectorInfo.displayName.long}
-                        </ActionList.Item>
-                    ))}
-                </ActionList>
+            renderAnchor={(p: object) => <div {...p}>{button}</div>}
+        >
+            <ActionList aria-label="Sessions">
+                <ActionList.GroupHeading as="h2">Sessions</ActionList.GroupHeading>
+                {sessionRegistry.entrySeq().map(([_sessionId, session]) => (
+                    <ActionList.Item key={session.connectionId} data-session={session.connectionId} onClick={selectConnector}>
+                        <ActionList.LeadingVisual>{getConnectorIcon(session.connectorInfo)}</ActionList.LeadingVisual>
+                        {props.short ? session.connectorInfo.displayName.short : session.connectorInfo.displayName.long}
+                    </ActionList.Item>
+                ))}
+            </ActionList>
         </AnchoredOverlay>
     );
 };

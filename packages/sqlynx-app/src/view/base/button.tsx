@@ -30,6 +30,7 @@ export enum ButtonSize {
 }
 
 interface Props {
+    className?: string;
     variant?: ButtonVariant;
     size?: ButtonSize;
     disabled?: boolean;
@@ -42,7 +43,7 @@ interface Props {
     onClick?: React.MouseEventHandler;
 }
 
-export function Button(props: Props) {
+export const Button = React.forwardRef<HTMLButtonElement, Props>((props: Props, ref) => {
     const variantStyle = BUTTON_VARIANT_CLASSNAME[props.variant ?? ButtonVariant.Default];
     const sizeStyle = BUTTON_SIZE_CLASSNAME[props.size ?? ButtonSize.Medium];
     return (
@@ -52,8 +53,9 @@ export function Button(props: Props) {
                 [styles.block]: props.block,
                 [styles.disabled]: props.disabled,
                 [styles.no_visuals]: !props.leadingVisual && !props.trailingVisual && !props.trailingAction ? true : undefined,
-            })}
+            }, props.className)}
             onClick={props.onClick}
+            ref={ref}
         >
             <span className={styles.button_content}>
                 {props.leadingVisual && (
@@ -73,4 +75,4 @@ export function Button(props: Props) {
             )}
         </button>
     );
-}
+});
