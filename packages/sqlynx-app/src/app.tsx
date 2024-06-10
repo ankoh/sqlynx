@@ -27,11 +27,11 @@ import { SessionCommands } from './session/session_commands.js';
 import { SessionSetup } from './session/session_setup.js';
 import { SessionStateRegistry } from './session/session_state_registry.js';
 import { VersionCheck } from './platform/version_check.js';
-import { withNavBar } from './view/navbar.js';
 
 import './../static/fonts/fonts.css';
 import './globals.css';
 import { isDebugBuild } from './globals.js';
+import { NavBarContainer } from './view/navbar.js';
 
 const SessionProviders = (props: { children: React.ReactElement }) => (
     <SessionStateRegistry>
@@ -96,11 +96,6 @@ const AppProviders = (props: { children: React.ReactElement }) => (
     </GitHubTheme>
 );
 
-const EditorPageWithNav = withNavBar(EditorPage);
-const ConnectorsPageWithNav = withNavBar(ConnectorsPage);
-const FilesPageWithNav = withNavBar(FilesPage);
-const UIInternalsPageWithNav = withNavBar(UIInternalsPage);
-
 const Router = process.env.SQLYNX_RELATIVE_IMPORTS ? HashRouter : BrowserRouter;
 
 const element = document.getElementById('root');
@@ -108,17 +103,19 @@ const root = createRoot(element!);
 root.render(
     <Router>
         <AppProviders>
-            <Routes>
-                <Route index element={<EditorPageWithNav />} />
-                <Route path="/connectors" element={<ConnectorsPageWithNav />} />
-                <Route path="/files" element={<FilesPageWithNav />} />
-                {isDebugBuild() && (
-                    <>
-                        <Route path="/internals/ui" element={<UIInternalsPageWithNav />} />
-                    </>
-                )}
-                <Route path="*" element={<Navigate to="/" />} />
-            </Routes>
+            <NavBarContainer>
+                <Routes>
+                    <Route index Component={EditorPage} />
+                    <Route path="/connectors" Component={ConnectorsPage} />
+                    <Route path="/files" Component={FilesPage} />
+                    {isDebugBuild() && (
+                        <>
+                            <Route path="/internals/ui" Component={UIInternalsPage} />
+                        </>
+                    )}
+                    <Route path="*" element={<Navigate to="/" />} />
+                </Routes>
+            </NavBarContainer>
         </AppProviders>
     </Router>
 );
