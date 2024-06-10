@@ -21,11 +21,11 @@ use crate::http_proxy_routes::HttpProxyRoute;
 use crate::http_proxy_routes::parse_http_proxy_path;
 
 pub async fn route_ipc_request(mut request: Request<Vec<u8>>) -> Response<Vec<u8>> {
-    log::trace!("received ipc request with path={}", request.uri().path());
+    log::debug!("received ipc request with path={}", request.uri().path());
 
     // Handle HTTP requests
     if let Some(route) = parse_http_proxy_path(request.uri().path()) {
-        log::trace!("matching http proxy route={:?}, method={:?}", route, request.method());
+        log::debug!("matching http proxy route={:?}, method={:?}", route, request.method());
         let response = match (request.method().clone(), route) {
             (Method::POST, HttpProxyRoute::Streams { }) => start_http_server_stream(std::mem::take(&mut request)).await,
             (Method::GET, HttpProxyRoute::Stream { stream_id }) => read_http_server_stream(stream_id, std::mem::take(&mut request)).await,
@@ -44,7 +44,7 @@ pub async fn route_ipc_request(mut request: Request<Vec<u8>>) -> Response<Vec<u8
 
     // Handle gRPC requests
     if let Some(route) = parse_grpc_proxy_path(request.uri().path()) {
-        log::trace!("matching grpc proxy route={:?}, method={:?}", route, request.method());
+        log::debug!("matching grpc proxy route={:?}, method={:?}", route, request.method());
         let response = match (request.method().clone(), route) {
             (Method::POST, GrpcProxyRoute::Channels) => create_grpc_channel(std::mem::take(&mut request)).await,
             (Method::DELETE, GrpcProxyRoute::Channel { channel_id }) => delete_grpc_channel(channel_id).await,
@@ -61,7 +61,7 @@ pub async fn route_ipc_request(mut request: Request<Vec<u8>>) -> Response<Vec<u8
                     .unwrap();
             }
         };
-        log::trace!("grpc proxy responded with {:?}", response);
+        log::debug!("grpc proxy responded with {:?}", response);
         return response;
     }
 

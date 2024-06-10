@@ -109,7 +109,7 @@ impl HttpStreamManager {
 
         // Spawn the async reader
         tokio::spawn(async move {
-            log::trace!("{:?}", &request);
+            log::debug!("{:?}", &request);
 
             // Execute a request
             let mut response = match client.execute(request).await {

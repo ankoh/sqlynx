@@ -6,7 +6,7 @@ pub mod config {
     use tauri_plugin_log::TargetKind as LogTargetKind;
 
     pub const LOG_TARGETS: [LogTarget; 2] = [LogTarget::new(LogTargetKind::Webview), LogTarget::new(LogTargetKind::Stdout)];
-    pub const LOG_LEVEL: LevelFilter = LevelFilter::Trace;
+    pub const LOG_LEVEL: LevelFilter = LevelFilter::Debug;
 }
 
 #[cfg(not(debug_assertions))]

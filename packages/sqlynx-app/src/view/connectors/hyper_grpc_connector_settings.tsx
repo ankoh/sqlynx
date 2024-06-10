@@ -131,7 +131,7 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
         });
         let channel: HyperDatabaseChannel;
         try {
-            logger.trace(`connecting to endpoint: ${pageState.endpoint}`, LOG_CTX);
+            logger.debug(`connecting to endpoint: ${pageState.endpoint}`, LOG_CTX);
 
             // Save the current gRPC metadata
             const metadata = pageState.gRPCMetadata;

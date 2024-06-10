@@ -8,7 +8,7 @@ pub fn process_deep_link(event: tauri::Event, handle: AppHandle) {
         return;
     };
     // Parse deep link
-    log::trace!("received deep link");
+    log::debug!("received deep link");
     let link_parsed = match Url::parse(link) {
         Ok(url) => url,
         Err(e) => {
@@ -40,7 +40,7 @@ pub fn process_deep_link(event: tauri::Event, handle: AppHandle) {
         log::warn!("deep link misses parameter `data`");
         return;
     };
-    log::trace!("emitting app event from deep link");
+    log::debug!("emitting app event from deep link");
 
     // Forward the event to the PWA
     match handle.emit("sqlynx:event", link_data.to_string()) {
