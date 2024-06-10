@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as Immutable from 'immutable';
 
-import { ChecklistIcon, DatabaseIcon, FileBadgeIcon, KeyIcon, PlugIcon } from '@primer/octicons-react';
+import { ChecklistIcon, DatabaseIcon, FileBadgeIcon, KeyIcon, PlugIcon, XIcon } from '@primer/octicons-react';
 
 import { classNames } from '../../utils/classnames.js';
 import { KeyValueTextField, TextField } from '../base/text_field.js';
@@ -28,6 +28,7 @@ import {
     HEALTH_CHECK_SUCCEEDED,
     HyperGrpcConnectorAction,
     reduceHyperGrpcConnectorState,
+    RESET,
 } from '../../connectors/hyper_grpc_connection_state.js';
 import { HYPER_GRPC_CONNECTOR } from '../../connectors/connector_info.js';
 import { HyperGrpcConnectionParams } from '../../connectors/connection_params.js';
@@ -189,6 +190,25 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
         await channel.close();
     };
 
+    // Helper to cancel the authorization
+    const cancelAuth = () => {
+        // XXX
+        // if (authAbortController.current) {
+        //     authAbortController.current.abort("abort the authorization flow");
+        //     authAbortController.current = null;
+        // }
+    };
+    // Helper to reset the authorization
+    const resetAuth = () => {
+        setConnectionState((c: ConnectionState) => {
+            const s = asHyperGrpcConnection(c)!;
+            return {
+                type: HYPER_GRPC_CONNECTOR,
+                value: reduceHyperGrpcConnectorState(s, { type: RESET, value: null })
+            };
+        });
+    };
+
     // Get the connection status
     const statusText: string = getConnectionStatusText(hyperConnection?.connectionStatus, logger);
 
@@ -209,6 +229,24 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
             break;
     }
 
+    // Get the action button
+    let actionButton: React.ReactElement = <div />;
+    let freezeInput = false;
+    switch (hyperConnection?.connectionHealth) {
+        case ConnectionHealth.NOT_STARTED:
+        case ConnectionHealth.FAILED:
+            actionButton = <Button variant={ButtonVariant.Primary} leadingVisual={PlugIcon} onClick={setupConnection}>Connect</Button>;
+            break;
+        case ConnectionHealth.CONNECTING:
+            actionButton = <Button variant={ButtonVariant.Danger} leadingVisual={XIcon} onClick={cancelAuth}>Cancel</Button>;
+            freezeInput = true;
+            break;
+        case ConnectionHealth.ONLINE:
+            actionButton = <Button variant={ButtonVariant.Danger} leadingVisual={XIcon} onClick={resetAuth}>Reset</Button>;
+            freezeInput = true;
+            break;
+    }
+
     return (
         <div className={style.layout}>
             <div className={style.connector_header_container}>
@@ -221,11 +259,7 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
                     Hyper Database
                 </div>
                 <div className={style.platform_actions}>
-                    <Button
-                        variant={ButtonVariant.Primary}
-                        leadingVisual={PlugIcon}
-                        onClick={setupConnection}
-                    >Connect</Button>
+                    {actionButton}
                 </div>
             </div >
             <div className={style.status_container}>
@@ -254,7 +288,8 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
                             placeholder="gRPC endpoint url"
                             leadingVisual={() => <div>URL</div>}
                             onChange={(e) => setEndpoint(e.target.value)}
-                            disabled={false}
+                            disabled={freezeInput}
+                            readOnly={freezeInput}
                             logContext={LOG_CTX}
                         />
                         <KeyValueTextField
@@ -269,10 +304,11 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
                             valueIcon={FileBadgeIcon}
                             onChangeKey={(e) => setMTLSKeyPath(e.target.value)}
                             onChangeValue={(e) => setMTLSPubPath(e.target.value)}
-                            disabled={false}
                             keyAriaLabel='mTLS Client Key'
                             valueAriaLabel='mTLS Client Certificate'
                             logContext={LOG_CTX}
+                            disabled={freezeInput}
+                            readOnly={freezeInput}
                         />
                         <TextField
                             name="mTLS CA certificates"
@@ -281,8 +317,9 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
                             placeholder="cacerts.pem"
                             leadingVisual={ChecklistIcon}
                             onChange={(e) => setMTLSCaPath(e.target.value)}
-                            disabled={false}
                             logContext={LOG_CTX}
+                            disabled={freezeInput}
+                            readOnly={freezeInput}
                         />
                     </div>
                 </div>
@@ -297,6 +334,8 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
                             addButtonLabel="Add Database"
                             elements={pageState.attachedDatabases}
                             modifyElements={modifyAttachedDbs}
+                            disabled={freezeInput}
+                            readOnly={freezeInput}
                         />
                         <KeyValueListBuilder
                             title="gRPC Metadata"
@@ -306,6 +345,8 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
                             addButtonLabel="Add Header"
                             elements={pageState.gRPCMetadata}
                             modifyElements={modifyGrpcMetadata}
+                            disabled={freezeInput}
+                            readOnly={freezeInput}
                         />
                     </div>
                 </div>

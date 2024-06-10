@@ -27,6 +27,8 @@ interface Props {
     addButtonLabel: string;
     elements: Immutable.List<KeyValueListElement>;
     modifyElements: Dispatch<UpdateKeyValueList>;
+    disabled?: boolean;
+    readOnly?: boolean;
 }
 
 export const KeyValueListBuilder: React.FC<Props> = (props: Props) => {
@@ -55,6 +57,7 @@ export const KeyValueListBuilder: React.FC<Props> = (props: Props) => {
                 icon={PlusIcon}
                 aria-label="add-entry"
                 onClick={appendElement}
+                disabled={props.disabled}
             />
             <div className={styles.list_elements}>
                 {props.elements.map((elem, i) => (
@@ -73,6 +76,8 @@ export const KeyValueListBuilder: React.FC<Props> = (props: Props) => {
                                     onClick={() => deleteIndex(i)}
                                 />
                             }
+                            disabled={props.disabled}
+                            readOnly={props.disabled}
                         />
                         <div className={styles.aliaslink} />
                         <TextInput
@@ -82,6 +87,8 @@ export const KeyValueListBuilder: React.FC<Props> = (props: Props) => {
                             onChange={(ev: any) => modifyElement(i, elem.key, ev.target.value)}
                             placeholder="Database Alias"
                             leadingVisual={props.valueIcon}
+                            disabled={props.disabled}
+                            readOnly={props.disabled}
                         />
                     </div>))}
             </div>
