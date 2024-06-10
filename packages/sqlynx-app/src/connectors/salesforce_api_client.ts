@@ -242,7 +242,7 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
             code_verifier: pkceVerifier,
             format: 'json',
         };
-        if (authParams.appConsumerSecret && authParams.appConsumerSecret !== null) {
+        if (authParams.appConsumerSecret) {
             params.client_secret = authParams.appConsumerSecret;
         }
         const body = new URLSearchParams(params);
