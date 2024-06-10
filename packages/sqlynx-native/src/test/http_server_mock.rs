@@ -70,7 +70,7 @@ impl HttpServiceMock {
                         log::error!("http service mock received a header message when streaming the body");
                     },
                     PartialResponse::BodyChunk(body) => {
-                        log::trace!("forwarded {} bytes to stream body", body.len());
+                        log::debug!("forwarded {} bytes to stream body", body.len());
                         let data = bytes::Bytes::from(body);
                         let frame = hyper::body::Frame::data(data);
                         body_sender.send(Ok(frame)).await.expect("failed to forward response body to the writer");

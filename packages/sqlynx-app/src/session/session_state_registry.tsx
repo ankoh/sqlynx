@@ -53,7 +53,7 @@ export function useSessionState(id: number | null): [SessionState | null, Modify
                 if (!prev) {
                     return reg;
                 }
-                logger.trace(`session ${id} applying ${action.type.toString()}`, "session_state");
+                logger.debug(`session ${id} applying ${action.type.toString()}`, "session_state");
                 const next = reduceSessionState(prev, action);
                 if (action.type == DESTROY) {
                     return reg.delete(id);
