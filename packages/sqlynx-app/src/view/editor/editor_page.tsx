@@ -1,6 +1,10 @@
 import * as React from 'react';
+import * as ActionList from '../base/action_list.js'
+import * as styles from './editor_page.module.css';
+import * as theme from '../../github_theme.module.css';
+import * as icons from '../../../static/svg/symbols.generated.svg';
 
-import { ActionList, ButtonGroup, IconButton } from '@primer/react';
+import { ButtonGroup, IconButton } from '@primer/react';
 import {
     DownloadIcon,
     LinkIcon,
@@ -28,16 +32,12 @@ import { ScriptURLOverlay } from './script_url_overlay.js';
 import { getConnectorIcon } from '../connectors/connector_icons.js';
 import { useAppConfig } from '../../app_config.js';
 
-import * as styles from './editor_page.module.css';
-import * as theme from '../../github_theme.module.css';
-import * as icons from '../../../static/svg/symbols.generated.svg';
-
 const SessionSelection = (props: { className?: string; short: boolean }) => {
     const sessionRegistry = useSessionStates();
     const [sessionState, _modifySessionState] = useCurrentSessionState();
     const [isOpen, setIsOpen] = React.useState<boolean>(false);
 
-    const selectConnector = React.useCallback((e: React.MouseEvent<HTMLLIElement, MouseEvent>) => {
+    const selectConnector = React.useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
         // const target = e.currentTarget as HTMLLIElement;
         // const connectorType = Number.parseInt(target.dataset.connector ?? '0')! as ConnectorType;
@@ -72,15 +72,17 @@ const SessionSelection = (props: { className?: string; short: boolean }) => {
             onClose={() => setIsOpen(false)}
             renderAnchor={(p: object) => <div {...p}>{button}</div>}
         >
-            <ActionList aria-label="Sessions">
-                <ActionList.GroupHeading as="h2">Sessions</ActionList.GroupHeading>
-                {sessionRegistry.entrySeq().map(([_sessionId, session]) => (
-                    <ActionList.Item key={session.connectionId} data-session={session.connectionId} onClick={selectConnector}>
-                        <ActionList.LeadingVisual>{getConnectorIcon(session.connectorInfo)}</ActionList.LeadingVisual>
-                        {props.short ? session.connectorInfo.displayName.short : session.connectorInfo.displayName.long}
-                    </ActionList.Item>
-                ))}
-            </ActionList>
+            <ActionList.List aria-label="Sessions">
+                <ActionList.GroupHeading>Sessions</ActionList.GroupHeading>
+                <>
+                    {sessionRegistry.entrySeq().map(([_sessionId, session]) => (
+                        <ActionList.ListItem key={session.connectionId} data-session={session.connectionId} onClick={selectConnector}>
+                            <ActionList.Leading>{getConnectorIcon(session.connectorInfo)}</ActionList.Leading>
+                            <ActionList.ItemText>{props.short ? session.connectorInfo.displayName.short : session.connectorInfo.displayName.long}</ActionList.ItemText>
+                        </ActionList.ListItem>
+                    ))}
+                </>
+            </ActionList.List>
         </AnchoredOverlay>
     );
 };
@@ -89,29 +91,35 @@ const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
     const config = useAppConfig();
     return (
         <>
-            <ActionList.Item disabled={!props.connector?.features.executeQueryAction}>
-                <ActionList.LeadingVisual>
+            <ActionList.ListItem disabled={!props.connector?.features.executeQueryAction}>
+                <ActionList.Leading>
                     <PaperAirplaneIcon />
-                </ActionList.LeadingVisual>
-                Execute Query
-                <ActionList.TrailingVisual>Ctrl + E</ActionList.TrailingVisual>
-            </ActionList.Item>
-            <ActionList.Item disabled={true}>
-                <ActionList.LeadingVisual>
+                </ActionList.Leading>
+                <ActionList.ItemText>
+                    Execute Query
+                </ActionList.ItemText>
+                <ActionList.Trailing>Ctrl + E</ActionList.Trailing>
+            </ActionList.ListItem>
+            <ActionList.ListItem disabled={true}>
+                <ActionList.Leading>
                     <StopwatchIcon />
-                </ActionList.LeadingVisual>
-                Analyze Query
-                <ActionList.TrailingVisual>Ctrl + A</ActionList.TrailingVisual>
-            </ActionList.Item>
-            <ActionList.Item
+                </ActionList.Leading>
+                <ActionList.ItemText>
+                    Analyze Query
+                </ActionList.ItemText>
+                <ActionList.Trailing>Ctrl + A</ActionList.Trailing>
+            </ActionList.ListItem>
+            <ActionList.ListItem
                 disabled={!props.connector?.features.refreshSchemaAction || !config.value?.features?.refreshSchema}
             >
-                <ActionList.LeadingVisual>
+                <ActionList.Leading>
                     <SyncIcon />
-                </ActionList.LeadingVisual>
-                Refresh Schema
-                <ActionList.TrailingVisual>Ctrl + R</ActionList.TrailingVisual>
-            </ActionList.Item>
+                </ActionList.Leading>
+                <ActionList.ItemText>
+                    Refresh Schema
+                </ActionList.ItemText>
+                <ActionList.Trailing>Ctrl + R</ActionList.Trailing>
+            </ActionList.ListItem>
         </>
     );
 };
@@ -122,35 +130,35 @@ const OutputCommandList = (props: { connector: ConnectorInfo | null }) => {
     const [saveSqlIsOpen, openSaveSql] = React.useState<boolean>(false);
     return (
         <>
-            <ActionList.Item onClick={() => openLinkSharing(s => !s)}>
-                <ActionList.LeadingVisual>
+            <ActionList.ListItem onClick={() => openLinkSharing(s => !s)}>
+                <ActionList.Leading>
                     <LinkIcon />
-                </ActionList.LeadingVisual>
-                <span>
+                </ActionList.Leading>
+                <ActionList.ItemText>
                     Share as URL
                     <ScriptURLOverlay isOpen={linkSharingIsOpen} setIsOpen={openLinkSharing} />
-                </span>
-                <ActionList.TrailingVisual>Ctrl + U</ActionList.TrailingVisual>
-            </ActionList.Item>
-            <ActionList.Item onClick={() => openSaveSql(s => !s)} disabled={!config.value?.features?.saveQueryAsSql}>
-                <ActionList.LeadingVisual>
+                </ActionList.ItemText>
+                <ActionList.Trailing>Ctrl + U</ActionList.Trailing>
+            </ActionList.ListItem>
+            <ActionList.ListItem onClick={() => openSaveSql(s => !s)} disabled={!config.value?.features?.saveQueryAsSql}>
+                <ActionList.Leading>
                     <DownloadIcon />
-                </ActionList.LeadingVisual>
-                <span>
+                </ActionList.Leading>
+                <ActionList.ItemText>
                     Save Query Text
                     <ScriptFileSaveOverlay isOpen={saveSqlIsOpen} setIsOpen={openSaveSql} />
-                </span>
-                <ActionList.TrailingVisual>Ctrl + Q</ActionList.TrailingVisual>
-            </ActionList.Item>
-            <ActionList.Item
+                </ActionList.ItemText>
+                <ActionList.Trailing>Ctrl + Q</ActionList.Trailing>
+            </ActionList.ListItem>
+            <ActionList.ListItem
                 disabled={!props.connector?.features.executeQueryAction || !config.value?.features?.saveResultsAsArrow}
             >
-                <ActionList.LeadingVisual>
+                <ActionList.Leading>
                     <DownloadIcon />
-                </ActionList.LeadingVisual>
-                Save Result Data
-                <ActionList.TrailingVisual>Ctrl + S</ActionList.TrailingVisual>
-            </ActionList.Item>
+                </ActionList.Leading>
+                <ActionList.ItemText>Save Result Data</ActionList.ItemText>
+                <ActionList.Trailing>Ctrl + S</ActionList.Trailing>
+            </ActionList.ListItem>
         </>
     );
 };
@@ -286,14 +294,14 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                 <ScriptEditor className={styles.editor_card} />
             </div>
             <div className={styles.action_sidebar}>
-                <ActionList aria-label="Actions">
-                    <ActionList.GroupHeading as="h2">Connector</ActionList.GroupHeading>
+                <ActionList.List aria-label="Actions">
+                    <ActionList.GroupHeading>Connector</ActionList.GroupHeading>
                     <ScriptCommandList connector={scriptState?.connectorInfo ?? null} />
                     <ActionList.Divider />
-                    <ActionList.GroupHeading as="h2">Output</ActionList.GroupHeading>
+                    <ActionList.GroupHeading>Output</ActionList.GroupHeading>
                     <OutputCommandList connector={scriptState?.connectorInfo ?? null} />
                     <ActionList.Divider />
-                </ActionList>
+                </ActionList.List>
             </div>
         </div>
     );

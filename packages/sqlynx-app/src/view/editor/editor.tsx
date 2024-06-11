@@ -1,10 +1,10 @@
 import * as React from 'react';
 import * as sqlynx from '@ankoh/sqlynx-core';
+import * as ActionList from '../base/action_list.js';
 
 import { DecorationSet, EditorView } from '@codemirror/view';
 import { ChangeSpec, EditorSelection, StateEffect } from '@codemirror/state';
 
-import { ActionList } from '@primer/react';
 import { Button, ButtonVariant } from '../base/button.js';
 import { CodeMirror } from './codemirror.js';
 import { SQLynxExtensions } from './sqlynx_extension.js';
@@ -66,9 +66,9 @@ const FileSelector = (props: { className?: string; variant: 'default' | 'invisib
                         {props.script.name}
                     </Button>}
         >
-            <ActionList>
-                <ActionList.GroupHeading as="h2">Files</ActionList.GroupHeading>
-            </ActionList>
+            <ActionList.List>
+                <ActionList.GroupHeading>Files</ActionList.GroupHeading>
+            </ActionList.List>
         </AnchoredOverlay>
     );
 };

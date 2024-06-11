@@ -1,8 +1,16 @@
 import * as React from 'react';
+import * as ActionList from '../base/action_list.js'
 import * as styles from './ui_internals_page.module.css';
 
-import { ChecklistIcon, CopyIcon, EyeIcon, HeartIcon, TriangleDownIcon } from '@primer/octicons-react';
-import { Button as GHButton } from '@primer/react';
+import {
+    ChecklistIcon,
+    CopyIcon,
+    EyeIcon,
+    HeartIcon,
+    PaperAirplaneIcon,
+    TriangleDownIcon,
+} from '@primer/octicons-react';
+import { ActionList as GHAL, Button as GHButton } from '@primer/react';
 
 import { TextInput, TextInputValidationStatus } from '../base/text_input.js';
 import { TextInputAction } from '../base/text_input_action.js';
@@ -102,6 +110,58 @@ export function UIInternalsPage(): React.ReactElement {
                     <Button size={ButtonSize.Small}>Small</Button>
                     <Button size={ButtonSize.Medium}>Medium</Button>
                     <Button size={ButtonSize.Large}>Large</Button>
+                </div>
+                <div className={styles.component}>
+                    <div className={styles.component_title}>
+                        Action List
+                    </div>
+                    <div className={styles.component_variants}>
+                        <div className={styles.actionlist_component}>
+                            <GHAL aria-label="Sessions">
+                                <GHAL.GroupHeading as="h2">Sessions</GHAL.GroupHeading>
+                                <GHAL.Item>
+                                    <GHAL.LeadingVisual><PaperAirplaneIcon /></GHAL.LeadingVisual>
+                                    Execute Query
+                                    <GHAL.TrailingVisual>Ctrl + E</GHAL.TrailingVisual>
+                                </GHAL.Item>
+                                <GHAL.Item>
+                                    <GHAL.LeadingVisual><EyeIcon /></GHAL.LeadingVisual>
+                                    Execute Query
+                                    <GHAL.TrailingVisual>Ctrl + E</GHAL.TrailingVisual>
+                                </GHAL.Item>
+                            </GHAL>
+                        </div>
+                        <div className={styles.component_variant_delimiter}></div>
+                        <div className={styles.actionlist_component}>
+                            <ActionList.List aria-label="Sessions" leading trailing>
+                                <ActionList.GroupHeading>
+                                    Sessions
+                                </ActionList.GroupHeading>
+                                <ActionList.ListItem>
+                                    <ActionList.Leading>
+                                        <PaperAirplaneIcon />
+                                    </ActionList.Leading>
+                                    <ActionList.ItemText>
+                                        Execute Query
+                                    </ActionList.ItemText>
+                                    <ActionList.Trailing>
+                                        Ctrl + E
+                                    </ActionList.Trailing>
+                                </ActionList.ListItem>
+                                <ActionList.ListItem>
+                                    <ActionList.Leading>
+                                        <EyeIcon />
+                                    </ActionList.Leading>
+                                    <ActionList.ItemText>
+                                    Execute Query
+                                    </ActionList.ItemText>
+                                    <ActionList.Trailing>
+                                        Ctrl + E
+                                    </ActionList.Trailing>
+                                </ActionList.ListItem>
+                            </ActionList.List>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
