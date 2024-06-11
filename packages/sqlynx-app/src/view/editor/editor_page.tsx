@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { ActionList, AnchoredOverlay, ButtonGroup, IconButton, Button as GHButton } from '@primer/react';
+import { ActionList, AnchoredOverlay, ButtonGroup, IconButton } from '@primer/react';
 import {
     DownloadIcon,
     LinkIcon,
@@ -31,7 +31,7 @@ import * as styles from './editor_page.module.css';
 import * as theme from '../../github_theme.module.css';
 import * as icons from '../../../static/svg/symbols.generated.svg';
 
-const SessionSelection = (props: { className?: string; variant: 'default' | 'invisible'; short: boolean }) => {
+const SessionSelection = (props: { className?: string; short: boolean }) => {
     const sessionRegistry = useSessionStates();
     const [sessionState, _modifySessionState] = useCurrentSessionState();
     const [isOpen, setIsOpen] = React.useState<boolean>(false);
@@ -228,7 +228,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
             <div className={styles.header_container}>
                 <div className={styles.header_left_container}>
                     <div className={styles.page_title}>SQL Editor</div>
-                    <SessionSelection variant="invisible" short={true} />
+                    <SessionSelection short={true} />
                 </div>
                 <div className={styles.header_action_container}>
                     <div>

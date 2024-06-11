@@ -22,7 +22,7 @@ function parseValue(arg: ClassValue) {
     }
     let out = '';
     for (const key in arg) {
-        if (arg[key]) {
+        if (Object.prototype.hasOwnProperty.call(arg, key) && arg[key]) {
             out = appendClass(out, key);
         }
     }
@@ -36,10 +36,9 @@ function appendClass(value: string, newClass: string | null) {
     return value ? (value + ' ' + newClass) : newClass;
 }
 
-export function classNames(...values: ClassValue[]) {
+export function classNames(...args: ClassValue[]) {
     let out = "";
-    for (let i = 0; i < values.length; i++) {
-        const arg = values[i];
+    for (const arg of args) {
         if (arg) {
             out = appendClass(out, parseValue(arg));
         }

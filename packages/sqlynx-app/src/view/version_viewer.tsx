@@ -2,10 +2,11 @@ import * as React from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from "framer-motion"
 import { XIcon } from '@primer/octicons-react';
-import { Button, IconButton, ProgressBar } from '@primer/react';
+import { IconButton, ProgressBar } from '@primer/react';
 
 import { SQLYNX_GIT_COMMIT, SQLYNX_VERSION } from '../globals.js';
 import { InstallableUpdate, InstallationState, InstallationStatus, useCanaryReleaseManifest, useCanaryUpdateManifest, useInstallationStatus, useStableReleaseManifest, useStableUpdateManifest } from '../platform/version_check.js';
+import { Button } from './base/button.js';
 import { PlatformType, usePlatformType } from '../platform/platform_type.js';
 import { ReleaseManifest } from '../platform/web_version_check.js';
 import { RESULT_ERROR, RESULT_OK, Result } from '../utils/result.js';
