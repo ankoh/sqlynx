@@ -54,5 +54,5 @@
 
 .divider {
     border-bottom: 1px solid var(--border_color_primary);
-    padding: 8px 0;
+    margin: 8px 0;
 }
