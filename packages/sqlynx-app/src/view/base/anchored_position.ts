@@ -1,15 +1,27 @@
-export type AnchorAlignment = 'start' | 'center' | 'end'
+import * as React from 'react';
+import { observeSize } from './size_observer.js';
 
-export type AnchorSide =
-    | 'inside-top'
-    | 'inside-bottom'
-    | 'inside-left'
-    | 'inside-right'
-    | 'inside-center'
-    | 'outside-top'
-    | 'outside-bottom'
-    | 'outside-left'
-    | 'outside-right'
+export enum AnchorAlignment {
+    Start,
+    Center,
+    End
+}
+
+export enum AnchorSide {
+    InsideTop = 0 << 1,
+    InsideBottom = 1 << 1,
+    InsideLeft = 2 << 1,
+    InsideRight = 3 << 1,
+
+    InsideCenter = 4 << 1,
+
+    OutsideTop =  (5 << 1) | 0b1,
+    OutsideBottom = (6 << 1) | 0b1,
+    OutsideLeft = (7 << 1) | 0b1,
+    OutsideRight = (8 << 1) | 0b1,
+}
+
+function isInsideAnchorSide(side: AnchorSide) { return (side & 0b1) == 0; }
 
 export interface PositionSettings {
     /// Sets the side of the anchor element that the floating element should be
@@ -30,21 +42,18 @@ export interface PositionSettings {
     /// to position it in the Y-direction).
     /// Note: "outside-center" is _not_ a valid value for this property.
     side: AnchorSide;
-
     /// Determines how the floating element should align with the anchor element. If
     /// set to "start", the floating element's first edge (top or left) will align
     /// with the anchor element's first edge. If set to "center", the floating
     /// element will be centered along the axis of the anchor edge. If set to "end",
     /// the floating element's last edge will align with the anchor element's last edge.
     align: AnchorAlignment;
-
     ///  The number of pixels between the anchor edge and the floating element.
     ///
     ///  Positive values move the floating element farther from the anchor element
     ///  (for outside positioning) or further inside the anchor element (for inside
     ///  positioning). Negative values have the opposite effect.
     anchorOffset: number;
-
     /// An additional offset, in pixels, to move the floating element from
     /// the aligning edge.
     ///
@@ -54,7 +63,6 @@ export interface PositionSettings {
     /// element right (top or bottom anchor side) or down (left or right
     /// anchor side).
     alignmentOffset: number;
-
     /// If false, when the above settings result in rendering the floating element
     /// wholly or partially outside of the bounds of the containing element, attempt
     /// to adjust the settings to prevent this. Only applies to "outside" positioning.
@@ -77,19 +85,19 @@ export interface PositionSettings {
 /// the event that the original position overflows. See comment on `allowOutOfBounds`
 /// for a more detailed description.
 const alternateOrders: Partial<Record<AnchorSide, [AnchorSide, AnchorSide, AnchorSide, AnchorSide]>> = {
-    'outside-top': ['outside-bottom', 'outside-right', 'outside-left', 'outside-bottom'],
-    'outside-bottom': ['outside-top', 'outside-right', 'outside-left', 'outside-bottom'],
-    'outside-left': ['outside-right', 'outside-bottom', 'outside-top', 'outside-bottom'],
-    'outside-right': ['outside-left', 'outside-bottom', 'outside-top', 'outside-bottom'],
+    [AnchorSide.OutsideTop]: [AnchorSide.OutsideBottom, AnchorSide.OutsideRight, AnchorSide.OutsideLeft, AnchorSide.OutsideBottom],
+    [AnchorSide.OutsideBottom]: [AnchorSide.OutsideTop, AnchorSide.OutsideRight, AnchorSide.OutsideLeft, AnchorSide.OutsideBottom],
+    [AnchorSide.OutsideLeft]: [AnchorSide.OutsideRight, AnchorSide.OutsideBottom, AnchorSide.OutsideTop, AnchorSide.OutsideBottom],
+    [AnchorSide.OutsideRight]: [AnchorSide.OutsideLeft, AnchorSide.OutsideBottom, AnchorSide.OutsideTop, AnchorSide.OutsideBottom],
 }
 
 /// For each alignment, list the order of alternate alignments to try in
 /// the event that the original position overflows.
 /// Prefer start or end over center.
 const alternateAlignments: Partial<Record<AnchorAlignment, [AnchorAlignment, AnchorAlignment]>> = {
-    start: ['end', 'center'],
-    end: ['start', 'center'],
-    center: ['end', 'start'],
+    [AnchorAlignment.Start]: [AnchorAlignment.End, AnchorAlignment.Center],
+    [AnchorAlignment.End]: [AnchorAlignment.Start, AnchorAlignment.Start],
+    [AnchorAlignment.Center]: [AnchorAlignment.End, AnchorAlignment.Start],
 }
 
 interface Size {
@@ -114,11 +122,6 @@ interface BoxPosition extends Size, Position {}
 /// Given a floating element and an anchor element, return coordinates for the top-left
 /// of the floating element in order to absolutely position it such that it appears
 /// near the anchor element.
-///
-/// @param floatingElement Element intended to be positioned near or within an anchor
-/// @param anchorElement The element to serve as the position anchor
-/// @param settings Settings to determine the rules for positioning the floating element
-/// @returns {top: number, left: number} coordinates for the floating element
 export function getAnchoredPosition(
     floatingElement: Element,
     anchorElement: Element | DOMRect,
@@ -217,8 +220,8 @@ function getClippingRect(element: Element): BoxPosition {
 
 // Default settings to position a floating element
 const positionDefaults: PositionSettings = {
-    side: 'outside-bottom',
-    align: 'start',
+    side: AnchorSide.OutsideBottom,
+    align: AnchorAlignment.Start,
 
     // note: the following default is not applied if side === "inside-center"
     anchorOffset: 4,
@@ -239,10 +242,10 @@ function getDefaultSettings(settings: Partial<PositionSettings> = {}): PositionS
         side,
         align,
         // offsets always default to 0 if their respective side/alignment is centered
-        anchorOffset: settings.anchorOffset ?? (side === 'inside-center' ? 0 : positionDefaults.anchorOffset),
+        anchorOffset: settings.anchorOffset ?? (side === AnchorSide.InsideCenter ? 0 : positionDefaults.anchorOffset),
         alignmentOffset:
             settings.alignmentOffset ??
-            (align !== 'center' && side.startsWith('inside') ? positionDefaults.alignmentOffset : 0),
+            (align !== AnchorAlignment.Center &&  isInsideAnchorSide(side) ? positionDefaults.alignmentOffset : 0),
         allowOutOfBounds: settings.allowOutOfBounds ?? positionDefaults.allowOutOfBounds,
     }
 }
@@ -355,20 +358,20 @@ function calculatePosition(
     const anchorBottom = anchorPosition.top + anchorPosition.height
     let top = -1
     let left = -1
-    if (side === 'outside-top') {
+    if (side === AnchorSide.OutsideTop) {
         top = anchorPosition.top - anchorOffset - elementDimensions.height
-    } else if (side === 'outside-bottom') {
+    } else if (side === AnchorSide.OutsideBottom) {
         top = anchorBottom + anchorOffset
-    } else if (side === 'outside-left') {
+    } else if (side === AnchorSide.OutsideLeft) {
         left = anchorPosition.left - anchorOffset - elementDimensions.width
-    } else if (side === 'outside-right') {
+    } else if (side === AnchorSide.OutsideRight) {
         left = anchorRight + anchorOffset
     }
 
-    if (side === 'outside-top' || side === 'outside-bottom') {
-        if (align === 'start') {
+    if (side === AnchorSide.OutsideTop || side === AnchorSide.OutsideBottom) {
+        if (align === AnchorAlignment.Start) {
             left = anchorPosition.left + alignmentOffset
-        } else if (align === 'center') {
+        } else if (align === AnchorAlignment.Center) {
             left = anchorPosition.left - (elementDimensions.width - anchorPosition.width) / 2 + alignmentOffset
         } else {
             // end
@@ -376,10 +379,10 @@ function calculatePosition(
         }
     }
 
-    if (side === 'outside-left' || side === 'outside-right') {
-        if (align === 'start') {
+    if (side === AnchorSide.OutsideLeft || side === AnchorSide.OutsideRight) {
+        if (align === AnchorAlignment.Start) {
             top = anchorPosition.top + alignmentOffset
-        } else if (align === 'center') {
+        } else if (align === AnchorAlignment.Center) {
             top = anchorPosition.top - (elementDimensions.height - anchorPosition.height) / 2 + alignmentOffset
         } else {
             // end
@@ -387,31 +390,31 @@ function calculatePosition(
         }
     }
 
-    if (side === 'inside-top') {
+    if (side === AnchorSide.InsideTop) {
         top = anchorPosition.top + anchorOffset
-    } else if (side === 'inside-bottom') {
+    } else if (side === AnchorSide.InsideBottom) {
         top = anchorBottom - anchorOffset - elementDimensions.height
-    } else if (side === 'inside-left') {
+    } else if (side === AnchorSide.InsideLeft) {
         left = anchorPosition.left + anchorOffset
-    } else if (side === 'inside-right') {
+    } else if (side === AnchorSide.InsideRight) {
         left = anchorRight - anchorOffset - elementDimensions.width
-    } else if (side === 'inside-center') {
+    } else if (side === AnchorSide.InsideCenter) {
         left = (anchorRight + anchorPosition.left) / 2 - elementDimensions.width / 2 + anchorOffset
     }
 
-    if (side === 'inside-top' || side === 'inside-bottom') {
-        if (align === 'start') {
+    if (side === AnchorSide.InsideTop || side === AnchorSide.InsideBottom) {
+        if (align === AnchorAlignment.Start) {
             left = anchorPosition.left + alignmentOffset
-        } else if (align === 'center') {
+        } else if (align === AnchorAlignment.Center) {
             left = anchorPosition.left - (elementDimensions.width - anchorPosition.width) / 2 + alignmentOffset
         } else {
             // end
             left = anchorRight - elementDimensions.width - alignmentOffset
         }
-    } else if (side === 'inside-left' || side === 'inside-right' || side === 'inside-center') {
-        if (align === 'start') {
+    } else if (side === AnchorSide.InsideLeft || side === AnchorSide.InsideRight || side === AnchorSide.InsideCenter) {
+        if (align === AnchorAlignment.Start) {
             top = anchorPosition.top + alignmentOffset
-        } else if (align === 'center') {
+        } else if (align === AnchorAlignment.Center) {
             top = anchorPosition.top - (elementDimensions.height - anchorPosition.height) / 2 + alignmentOffset
         } else {
             // end
@@ -429,7 +432,7 @@ function shouldRecalculatePosition(
     containerDimensions: BoxPosition,
     elementDimensions: Size,
 ) {
-    if (side === 'outside-top' || side === 'outside-bottom') {
+    if (side === AnchorSide.OutsideTop || AnchorSide.OutsideBottom) {
         return (
             currentPos.top < containerDimensions.top ||
             currentPos.top + elementDimensions.height > containerDimensions.height + containerDimensions.top
@@ -449,14 +452,50 @@ function shouldRecalculateAlignment(
     containerDimensions: BoxPosition,
     elementDimensions: Size,
 ) {
-    if (align === 'end') {
+    if (align === AnchorAlignment.End) {
         return currentPos.left < containerDimensions.left
-    } else if (align === 'start' || align === 'center') {
+    } else if (align === AnchorAlignment.Start || align === AnchorAlignment.Center) {
         return (
             // right edge
             currentPos.left + elementDimensions.width > containerDimensions.left + containerDimensions.width ||
             // left edge
             currentPos.left < containerDimensions.left
         )
+    }
+}
+
+export interface AnchoredPositionHookArgs extends Partial<PositionSettings> {
+    floatingElementRef?: React.RefObject<Element>
+    anchorElementRef?: React.RefObject<Element>
+}
+
+export function useAnchoredPosition(args?: AnchoredPositionHookArgs, dependencies: React.DependencyList = []): {
+    floatingElementRef: React.RefObject<Element>
+    anchorElementRef: React.RefObject<Element>
+    position: AnchorPosition | undefined
+} {
+    const altFloatingElementRef = React.useRef<Element>(null);
+    const altAnchorElementRef = React.useRef<Element>(null);
+
+    const floatingElementRef = args?.floatingElementRef ?? altFloatingElementRef;
+    const anchorElementRef = args?.anchorElementRef ?? altAnchorElementRef;
+    const [position, setPosition] = React.useState<AnchorPosition | undefined>(undefined)
+
+    const windowElem = React.useRef(document.documentElement);
+    const windowSize = observeSize(windowElem);
+
+    // Update the anchored position whenever the window resizes
+    React.useLayoutEffect(() => {
+        if (floatingElementRef.current instanceof Element && anchorElementRef.current instanceof Element) {
+            setPosition(getAnchoredPosition(floatingElementRef.current, anchorElementRef.current, args))
+        } else {
+            setPosition(undefined)
+        }
+    }, [windowSize, ...dependencies]);
+
+    return {
+        floatingElementRef,
+        anchorElementRef,
+        position,
     }
 }

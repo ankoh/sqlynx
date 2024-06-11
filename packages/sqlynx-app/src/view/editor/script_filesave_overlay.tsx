@@ -1,8 +1,10 @@
 import * as React from 'react';
 
-import { AnchoredOverlay, Box, IconButton } from '@primer/react';
+import { Box, IconButton } from '@primer/react';
 import { DownloadIcon, FileIcon } from '@primer/octicons-react';
 
+import { AnchoredOverlay } from '../base/anchored_overlay.js';
+import { AnchorAlignment } from '../base/anchored_position.js';
 import { classNames } from '../../utils/classnames.js';
 
 import * as styles from './script_filesave_overlay.module.css';
@@ -22,7 +24,7 @@ export const ScriptFileSaveOverlay: React.FC<Props> = (props: Props) => {
             open={props.isOpen}
             onClose={() => props.setIsOpen(false)}
             anchorRef={anchorRef}
-            align="end"
+            align={AnchorAlignment.End}
             overlayProps={{
                 initialFocusRef: buttonRef,
             }}

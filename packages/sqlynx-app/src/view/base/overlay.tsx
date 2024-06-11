@@ -2,11 +2,12 @@ import * as React from "react";
 
 import { Portal } from './portal.js';
 import { classNames } from '../../utils/classnames.js';
-import { useOpenAndCloseFocus } from './auto_focus.js';
+import { useOpenAndCloseFocus } from './focus.js';
 import { useOnOutsideClick } from './outside_click.js';
+import { useKeyEvents } from '../../utils/key_events.js';
+import { AnchorSide } from './anchored_position.js';
 
 import * as styles from './overlay.module.css';
-import { useKeyEvents } from '../../utils/key_events.js';
 
 interface UseOverlayArgs {
     ignoreClickRefs?: React.RefObject<HTMLElement>[];
@@ -89,33 +90,30 @@ const MAX_WIDTH_STYLES: (string | null)[] = [
     styles.max_width_xxl,
 ];
 
-export enum OverlayAnchorSide {
-    Top,
-    Right,
-    Bottom,
-    Left,
-}
-
 export enum OverlayVisibility {
     Hidden,
     Visible
 }
 
-function getSlideAnimationStartingVector(anchorSide?: OverlayAnchorSide): {x: number; y: number} {
+function getSlideAnimationStartingVector(anchorSide?: AnchorSide): {x: number; y: number} {
     switch (anchorSide) {
-        case OverlayAnchorSide.Top:
+        case AnchorSide.OutsideTop:
+        case AnchorSide.InsideTop:
             return {x: 0, y: 1};
-        case OverlayAnchorSide.Right:
+        case AnchorSide.OutsideRight:
+        case AnchorSide.InsideRight:
             return {x: -1, y: 0};
-        case OverlayAnchorSide.Left:
+        case AnchorSide.OutsideLeft:
+        case AnchorSide.InsideLeft:
             return {x: 1, y: 0};
-        case OverlayAnchorSide.Bottom:
+        case AnchorSide.OutsideBottom:
+        case AnchorSide.InsideBottom:
             return {x: 0, y: -1};
     }
     return {x: 0, y: 0}
 }
 
-interface Props {
+export interface OverlayProps {
     ignoreClickRefs?: React.RefObject<HTMLElement>[];
     initialFocusRef?: React.RefObject<HTMLElement>;
     returnFocusRef: React.RefObject<HTMLElement>;
@@ -123,24 +121,35 @@ interface Props {
     onEscape: (e: KeyboardEvent) => void;
     visibility?: OverlayVisibility;
     preventFocusOnOpen?: boolean;
-    portalContainerName: string;
+    portalContainerName?: string;
+    top?: React.CSSProperties['top'];
+    left?: React.CSSProperties['left'];
+    right?: React.CSSProperties['right'];
+    bottom?: React.CSSProperties['bottom'];
+    position?: React.CSSProperties['position'];
     width?: OverlaySize;
     height?: OverlaySize;
     maxWidth?: OverlaySize;
     maxHeight?: OverlaySize;
-    anchorSide?: OverlayAnchorSide;
+    anchorSide?: AnchorSide;
     children?: React.ReactNode;
+    role?: React.AriaRole;
 }
 
 const SLIDE_ANIMATION_DISTANCE = 8;
 
-export function Overlay(props: Props) {
+export const Overlay = React.forwardRef((props: OverlayProps, forwardedRef: React.ForwardedRef<HTMLDivElement>) => {
+    // Use a ref as forwarded ref
+    const overlayRef = React.useRef<HTMLDivElement>(null);
+    React.useImperativeHandle(forwardedRef, () => overlayRef.current!);
+
     const width = WIDTH_STYLES[props.width ?? OverlaySize.UNSPECIFIED];
     const height = props.height ? HEIGHT_STYLES[props.height] : null;
     const maxWidth = props.maxWidth ? MAX_WIDTH_STYLES[props.maxWidth] : null;
     const maxHeight = props.maxHeight ? MAX_HEIGHT_STYLES[props.maxHeight] : null;
 
-    const overlayRef = useOverlay({
+    useOverlay({
+        overlayRef,
         returnFocusRef: props.returnFocusRef,
         onEscape: props.onEscape,
         ignoreClickRefs: props.ignoreClickRefs,
@@ -158,7 +167,7 @@ export function Overlay(props: Props) {
         overlayRef.current.animate(
             {transform: [`translate(${SLIDE_ANIMATION_DISTANCE * x}px, ${SLIDE_ANIMATION_DISTANCE * y}px)`, `translate(0, 0)`]},
             {
-                duration: "200ms",
+                duration: 200,
                 easing: "cubic-bezier(0.33, 1, 0.68, 1)",
             },
         )
@@ -166,9 +175,20 @@ export function Overlay(props: Props) {
 
     return (
         <Portal containerName={props.portalContainerName}>
-            <div className={classNames(styles.overlay, width, height, maxWidth, maxHeight)}>
-
+            <div
+                className={classNames(styles.overlay, width, height, maxWidth, maxHeight)}
+                ref={overlayRef}
+                role={props.role}
+                style={{
+                    position: props.position,
+                    top: props.top,
+                    right: props.right,
+                    bottom: props.bottom,
+                    left: props.left
+                }}
+            >
+                {props.children}
             </div>
         </Portal>
     );
-}
+});
