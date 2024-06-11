@@ -42,7 +42,7 @@ __metadata:
     "@codemirror/autocomplete": "npm:^6.16.2"
     "@codemirror/language": "npm:^6.10.2"
     "@codemirror/state": "npm:^6.4.1"
-    "@codemirror/view": "npm:^6.27.0"
+    "@codemirror/view": "npm:^6.28.0"
     "@connectrpc/connect": "npm:^1.4.0"
     "@connectrpc/connect-web": "npm:^1.4.0"
     "@emotion/is-prop-valid": "npm:^1.2.2"
@@ -706,7 +706,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/view@npm:^6.0.0, @codemirror/view@npm:^6.17.0, @codemirror/view@npm:^6.23.0, @codemirror/view@npm:^6.27.0":
+"@codemirror/view@npm:^6.0.0, @codemirror/view@npm:^6.17.0, @codemirror/view@npm:^6.23.0, @codemirror/view@npm:^6.28.0":
   version: 6.28.0
   resolution: "@codemirror/view@npm:6.28.0"
   dependencies:
