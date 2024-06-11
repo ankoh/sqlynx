@@ -1,17 +1,18 @@
-const hasOwn = {}.hasOwnProperty;
-
 interface ClassArray extends Array<ClassValue> { }
 interface ClassDictionary {
     [id: string]: boolean | undefined;
 }
-declare type ClassValue = undefined | string | number | ClassDictionary | ClassArray;
+declare type ClassValue = undefined | null | string | ClassDictionary | ClassArray;
 
 function parseValue(arg: ClassValue) {
+    if (arg == null) {
+        return null;
+    }
     if (typeof arg === 'string') {
         return arg;
     }
     if (typeof arg !== 'object') {
-        return '';
+        return null;
     }
     if (Array.isArray(arg)) {
         return classNames(...arg);
@@ -21,7 +22,7 @@ function parseValue(arg: ClassValue) {
     }
     let out = '';
     for (const key in arg) {
-        if (hasOwn.call(arg, key) && arg[key]) {
+        if (arg[key]) {
             out = appendClass(out, key);
         }
     }
