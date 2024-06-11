@@ -2,21 +2,20 @@ import * as React from 'react';
 
 import * as proto from '@ankoh/sqlynx-pb';
 
-import { Button, IconButton } from '@primer/react';
+import { IconButton } from '@primer/react';
 import { createRoot } from 'react-dom/client';
-import { Route, Routes, BrowserRouter, useSearchParams } from 'react-router-dom';
+import { BrowserRouter, Route, Routes, useSearchParams } from 'react-router-dom';
 
 import { BASE64_CODEC } from './utils/base64.js';
-import { RESULT_OK, RESULT_ERROR, Result } from './utils/result.js';
+import { Result, RESULT_ERROR, RESULT_OK } from './utils/result.js';
 import { SQLYNX_VERSION } from './globals.js';
+import { Button, ButtonVariant } from './view/base/button.js';
 import { TextField, TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_WARNING } from './view/base/text_field.js';
 import { GitHubTheme } from './github_theme.js';
 import { formatHHMMSS, formatTimeDifference } from './utils/format.js';
 import { LogViewerInPortal } from './view/log_viewer.js';
 import { LoggerProvider, useLogger } from './platform/logger_provider.js';
 import { Logger } from './platform/logger.js';
-
-import * as _styles from './oauth_redirect.module.css';
 import * as page_styles from './view/banner_page.module.css';
 import * as symbols from '../static/svg/symbols.generated.svg';
 
@@ -189,14 +188,14 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
                                 remainingUntilAutoTrigger == 0
                                     ? <Button
                                         className={page_styles.card_action_right}
-                                        variant="primary"
+                                        variant={ButtonVariant.Primary}
                                         onClick={() => triggerFlow(props.state, eventBase64, logger)}
                                     >
                                         Send to App
                                     </Button>
                                     : <Button
                                         className={page_styles.card_action_right}
-                                        variant="primary"
+                                        variant={ButtonVariant.Primary}
                                         onClick={() => triggerFlow(props.state, eventBase64, logger)}
                                         trailingVisual={() => <div>{Math.ceil(remainingUntilAutoTrigger / 1000)}</div>}
                                     >

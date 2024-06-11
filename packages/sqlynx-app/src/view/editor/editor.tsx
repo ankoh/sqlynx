@@ -2,27 +2,27 @@ import * as React from 'react';
 import * as sqlynx from '@ankoh/sqlynx-core';
 
 import { DecorationSet, EditorView } from '@codemirror/view';
-import { ChangeSpec, StateEffect, EditorSelection } from '@codemirror/state';
+import { ChangeSpec, EditorSelection, StateEffect } from '@codemirror/state';
 
+import { ActionList, AnchoredOverlay } from '@primer/react';
+import { Button, ButtonVariant } from '../base/button.js';
 import { CodeMirror } from './codemirror.js';
 import { SQLynxExtensions } from './sqlynx_extension.js';
 import { SQLynxScriptBuffers, SQLynxScriptKey, UpdateSQLynxScript } from './sqlynx_processor.js';
+import { ScriptKey } from '../../session/session_state.js';
+import { ScriptMetadata } from '../../session/script_metadata.js';
+import { ScriptStatisticsBar } from './script_statistics_bar.js';
+import { TriangleDownIcon } from '@primer/octicons-react';
+import { UPDATE_SCRIPT_ANALYSIS, UPDATE_SCRIPT_CURSOR } from '../../session/session_state_reducer.js';
+import { VerticalTabs, VerticalTabVariant } from '../base/vertical_tabs.js';
+import { classNames } from '../../utils/classnames.js';
+import { isDebugBuild } from '../../globals.js';
 import { useAppConfig } from '../../app_config.js';
 import { useCurrentSessionState } from '../../session/current_session.js';
-import { UPDATE_SCRIPT_ANALYSIS, UPDATE_SCRIPT_CURSOR } from '../../session/session_state_reducer.js';
-import { ScriptKey } from '../../session/session_state.js';
-import { ScriptStatisticsBar } from './script_statistics_bar.js';
-import { VerticalTabVariant, VerticalTabs } from '../base/vertical_tabs.js';
-import { classNames } from '../../utils/classnames.js';
 import { useLogger } from '../../platform/logger_provider.js';
 
 import * as icons from '../../../static/svg/symbols.generated.svg';
-
 import * as styles from './editor.module.css';
-import { isDebugBuild } from '../../globals.js';
-import { ScriptMetadata } from '../../session/script_metadata.js';
-import { ActionList, AnchoredOverlay, Button } from '@primer/react';
-import { TriangleDownIcon } from '@primer/octicons-react';
 
 enum TabId {
     MAIN_SCRIPT = 1,
@@ -58,7 +58,7 @@ const FileSelector = (props: { className?: string; variant: 'default' | 'invisib
                     <Button
                         {...p}
                         className={props.className}
-                        variant="invisible"
+                        variant={ButtonVariant.Invisible}
                         alignContent="start"
                         trailingVisual={TriangleDownIcon}
                     >
