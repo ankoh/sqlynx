@@ -1,0 +1,33 @@
+.overlay {
+    background-color: #ffffff;
+    box-shadow: 0 1px 3px rgba(31,35,40,0.12), 0 8px 24px rgba(66,74,83,0.12);
+    position: absolute;
+    min-width: 192px;
+    animation: overlay-appear 200ms cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.width_s     { width: 256px; }
+.width_m     { width: 320px; }
+.width_l     { width: 480px; }
+.width_xl    { width: 640px; }
+.width_xxl   { width: 960px; }
+.width_auto  { width: auto;  }
+
+.max_width_s     { max-width: 256px; }
+.max_width_m     { max-width: 320px; }
+.max_width_l     { max-width: 480px; }
+.max_width_xl    { max-width: 640px; }
+.max_width_xxl   { max-width: 960px; }
+
+.height_xs   { height: 192px; }
+.height_s    { height: 256px; }
+.height_m    { height: 320px; }
+.height_l    { height: 432px; }
+.height_xl   { height: 600px; }
+.height_auto { height: auto;  }
+
+.max_height_xs   { max-height: 192px; }
+.max_height_s    { max-height: 256px; }
+.max_height_m    { max-height: 320px; }
+.max_height_l    { max-height: 432px; }
+.max_height_xl   { max-height: 600px; }
