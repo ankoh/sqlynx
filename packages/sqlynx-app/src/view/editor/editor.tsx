@@ -4,7 +4,7 @@ import * as sqlynx from '@ankoh/sqlynx-core';
 import { DecorationSet, EditorView } from '@codemirror/view';
 import { ChangeSpec, EditorSelection, StateEffect } from '@codemirror/state';
 
-import { ActionList, AnchoredOverlay } from '@primer/react';
+import { ActionList } from '@primer/react';
 import { Button, ButtonVariant } from '../base/button.js';
 import { CodeMirror } from './codemirror.js';
 import { SQLynxExtensions } from './sqlynx_extension.js';
@@ -23,6 +23,7 @@ import { useLogger } from '../../platform/logger_provider.js';
 
 import * as icons from '../../../static/svg/symbols.generated.svg';
 import * as styles from './editor.module.css';
+import { AnchoredOverlay } from '../base/anchored_overlay.js';
 
 enum TabId {
     MAIN_SCRIPT = 1,

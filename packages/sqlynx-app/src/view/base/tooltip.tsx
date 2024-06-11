@@ -24,25 +24,25 @@ export interface TooltipProps {
 }
 
 const directionToPosition: Record<TooltipDirection, {side: AnchorSide; align: AnchorAlignment}> = {
-    nw: { side: 'outside-top', align: 'end' },
-    n: { side: 'outside-top', align: 'center' },
-    ne: { side: 'outside-top', align: 'start' },
-    e: { side: 'outside-right', align: 'center' },
-    se: { side: 'outside-bottom', align: 'start' },
-    s: { side: 'outside-bottom', align: 'center' },
-    sw: { side: 'outside-bottom', align: 'end' },
-    w: { side: 'outside-left', align: 'center' },
+    nw: { side: AnchorSide.OutsideTop, align: AnchorAlignment.End },
+    n: { side: AnchorSide.OutsideTop, align: AnchorAlignment.Center },
+    ne: { side: AnchorSide.OutsideTop, align: AnchorAlignment.Start },
+    e: { side: AnchorSide.OutsideRight, align: AnchorAlignment.Center },
+    se: { side: AnchorSide.OutsideBottom, align: AnchorAlignment.Start },
+    s: { side: AnchorSide.OutsideBottom, align: AnchorAlignment.Center },
+    sw: { side: AnchorSide.OutsideBottom, align: AnchorAlignment.End },
+    w: { side: AnchorSide.OutsideLeft, align: AnchorAlignment.Center },
 }
 
-const positionToDirection: Record<string, TooltipDirection> = {
-    'outside-top-end': 'nw',
-    'outside-top-center': 'n',
-    'outside-top-start': 'ne',
-    'outside-right-center': 'e',
-    'outside-bottom-start': 'se',
-    'outside-bottom-center': 's',
-    'outside-bottom-end': 'sw',
-    'outside-left-center': 'w',
+const positionToDirection: Record<number, TooltipDirection> = {
+    [(AnchorSide.OutsideTop << 3 | AnchorAlignment.End)]: 'nw',
+    [(AnchorSide.OutsideTop << 3 | AnchorAlignment.Center)]: 'n',
+    [(AnchorSide.OutsideTop << 3 | AnchorAlignment.Start)]: 'ne',
+    [(AnchorSide.OutsideRight << 3 | AnchorAlignment.Center)]: 'e',
+    [(AnchorSide.OutsideBottom << 3 | AnchorAlignment.Start)]: 'se',
+    [(AnchorSide.OutsideBottom << 3 | AnchorAlignment.Center)]: 's',
+    [(AnchorSide.OutsideBottom << 3 | AnchorAlignment.End)]: 'sw',
+    [(AnchorSide.OutsideLeft << 3 | AnchorAlignment.Center)]: 'w',
 }
 
 export const TooltipContext = React.createContext<{tooltipId?: string}>({})
@@ -68,7 +68,7 @@ export function Tooltip(props: TooltipProps): React.ReactElement  {
 
             const settings = props.direction ? directionToPosition[props.direction] : undefined;
             const {top, left, anchorAlign, anchorSide} = getAnchoredPosition(tooltip, trigger, settings)
-            const calculatedDirection = positionToDirection[`${anchorSide}-${anchorAlign}` as string];
+            const calculatedDirection = positionToDirection[(anchorSide << 3) | anchorAlign];
             setCalculatedDirection(calculatedDirection);
             tooltip.style.top = `${top}px`
             tooltip.style.left = `${left}px`

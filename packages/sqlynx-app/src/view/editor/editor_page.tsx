@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { ActionList, AnchoredOverlay, ButtonGroup, IconButton } from '@primer/react';
+import { ActionList, ButtonGroup, IconButton } from '@primer/react';
 import {
     DownloadIcon,
     LinkIcon,
@@ -15,6 +15,7 @@ import { ConnectorInfo } from '../../connectors/connector_info.js';
 import { QueryExecutionStatus } from '../../connectors/query_execution.js';
 import { useCurrentSessionState } from '../../session/current_session.js';
 import { useSessionStates } from '../../session/session_state_registry.js';
+import { AnchoredOverlay } from '../base/anchored_overlay.js';
 import { ScriptEditor } from './editor.js';
 import { SchemaGraph } from '../schema/schema_graph.js';
 import { QueryProgress } from '../progress/query_progress.js';

@@ -1,14 +1,16 @@
 import * as React from 'react';
 
-import { AnchoredOverlay, Box, IconButton } from '@primer/react';
+import { Box, IconButton } from '@primer/react';
 import { CheckIcon, PaperclipIcon } from '@primer/octicons-react';
 
-import { classNames } from '../../utils/classnames.js';
-import { sleep } from '../../utils/sleep.js';
-import { useCurrentSessionState } from '../../session/current_session.js';
-import { useConnectionState } from '../../connectors/connection_registry.js';
-import { SessionLinkTarget, generateSessionSetupUrl } from '../../session/session_setup_url.js';
+import { AnchorAlignment } from '../base/anchored_position.js';
+import { AnchoredOverlay } from '../base/anchored_overlay.js';
 import { TextInput } from '../base/text_input.js';
+import { classNames } from '../../utils/classnames.js';
+import { generateSessionSetupUrl, SessionLinkTarget } from '../../session/session_setup_url.js';
+import { sleep } from '../../utils/sleep.js';
+import { useConnectionState } from '../../connectors/connection_registry.js';
+import { useCurrentSessionState } from '../../session/current_session.js';
 
 import * as styles from './script_url_overlay.module.css';
 
@@ -100,7 +102,7 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
             open={props.isOpen}
             onClose={() => props.setIsOpen(false)}
             anchorRef={anchorRef}
-            align="end"
+            align={AnchorAlignment.End}
             overlayProps={{
                 initialFocusRef: buttonRef,
             }}
