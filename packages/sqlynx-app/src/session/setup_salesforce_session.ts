@@ -1,28 +1,25 @@
 import * as React from 'react';
 import Immutable from 'immutable';
 
-import { CONNECTOR_INFOS, ConnectorType, FILE_CONNECTOR } from '../connectors/connector_info.js';
-import { EXAMPLES } from './example_scripts.js';
+import { CONNECTOR_INFOS, ConnectorType } from '../connectors/connector_info.js';
+import { DEFAULT_BOARD_HEIGHT, DEFAULT_BOARD_WIDTH } from './setup_serverless_session.js';
 import { RESULT_OK } from '../utils/result.js';
 import { ScriptData, ScriptKey } from './session_state.js';
 import { ScriptLoadingStatus } from './script_loader.js';
-import { createConnectionStatistics } from '../connectors/connection_statistics.js';
-import { useConnectionStateAllocator } from '../connectors/connection_registry.js';
+import { generateBlankScript } from './script_metadata.js';
 import { useSQLynxSetup } from '../sqlynx_loader.js';
+import { useSalesforceConnectionId } from '../connectors/salesforce_connector.js';
 import { useSessionStateAllocator } from './session_state_registry.js';
-
-export const DEFAULT_BOARD_WIDTH = 800;
-export const DEFAULT_BOARD_HEIGHT = 600;
 
 type SessionSetupFn = (abort?: AbortSignal) => Promise<number>;
 
-export function useServerlessSessionSetup(): SessionSetupFn {
+export function useSalesforceSessionSetup(): SessionSetupFn {
     const setupSQLynx = useSQLynxSetup();
     const allocateSessionState = useSessionStateAllocator();
-    const allocateConnectionId = useConnectionStateAllocator();
+    const connectionId = useSalesforceConnectionId();
 
     return React.useCallback(async (signal?: AbortSignal) => {
-        const instance = await setupSQLynx("serverless_session");
+        const instance = await setupSQLynx("salesforce_session");
         if (instance?.type != RESULT_OK) throw instance.error;
         signal?.throwIfAborted();
 
@@ -30,35 +27,14 @@ export function useServerlessSessionSetup(): SessionSetupFn {
         const graph = lnx.createQueryGraphLayout();
         const catalog = lnx.createCatalog();
         const mainScript = lnx.createScript(catalog, ScriptKey.MAIN_SCRIPT);
-        const schemaScript = lnx.createScript(catalog, ScriptKey.SCHEMA_SCRIPT);
 
         const mainScriptData: ScriptData = {
             scriptKey: ScriptKey.MAIN_SCRIPT,
             scriptVersion: 1,
             script: mainScript,
-            metadata:  EXAMPLES.TPCH.queries[1],
+            metadata: generateBlankScript(),
             loading: {
-                status: ScriptLoadingStatus.PENDING,
-                error: null,
-                startedAt: null,
-                finishedAt: null,
-            },
-            processed: {
-                scanned: null,
-                parsed: null,
-                analyzed: null,
-                destroy: () => { },
-            },
-            statistics: Immutable.List(),
-            cursor: null,
-        };
-        const schemaScriptData: ScriptData = {
-            scriptKey: ScriptKey.SCHEMA_SCRIPT,
-            scriptVersion: 1,
-            script: schemaScript,
-            metadata:  EXAMPLES.TPCH.schema,
-            loading: {
-                status: ScriptLoadingStatus.PENDING,
+                status: ScriptLoadingStatus.SUCCEEDED,
                 error: null,
                 startedAt: null,
                 finishedAt: null,
@@ -75,18 +51,12 @@ export function useServerlessSessionSetup(): SessionSetupFn {
 
         return allocateSessionState({
             instance: instance.value,
-            connectorInfo: CONNECTOR_INFOS[ConnectorType.SERVERLESS],
-            connectionId: allocateConnectionId({
-                type: FILE_CONNECTOR,
-                value: {
-                    stats: createConnectionStatistics()
-                }
-            }),
+            connectorInfo: CONNECTOR_INFOS[ConnectorType.SALESFORCE_DATA_CLOUD],
+            connectionId: connectionId,
             scripts: {
                 [ScriptKey.MAIN_SCRIPT]: mainScriptData,
-                [ScriptKey.SCHEMA_SCRIPT]: schemaScriptData,
             },
-            nextCatalogUpdateId: 1,
+            nextCatalogUpdateId: 2,
             catalogUpdateRequests: Immutable.Map(),
             catalogUpdates: Immutable.Map(),
             catalog,
@@ -118,6 +88,5 @@ export function useServerlessSessionSetup(): SessionSetupFn {
             queryExecutionState: null,
             queryExecutionResult: null,
         });
-
     }, [setupSQLynx, allocateSessionState]);
 };
