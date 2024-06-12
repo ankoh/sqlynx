@@ -118,6 +118,10 @@ export function SessionSelectorButton(props: { className?: string; short: boolea
         )
     };
 
+    const sessions = React.useMemo(() => [...sessionRegistry.entries()].sort((l, r) => {
+        return l[1].connectorInfo.connectorType - r[1].connectorInfo.connectorType;
+    }), [sessionRegistry]);
+
     return (
         <AnchoredOverlay
             open={isOpen}
@@ -127,7 +131,7 @@ export function SessionSelectorButton(props: { className?: string; short: boolea
             <ActionList.List aria-label="Sessions">
                 <ActionList.GroupHeading>Sessions</ActionList.GroupHeading>
                 <>
-                    {sessionRegistry.entrySeq().map(renderItem)}
+                    {sessions.map(renderItem)}
                 </>
             </ActionList.List>
         </AnchoredOverlay>
