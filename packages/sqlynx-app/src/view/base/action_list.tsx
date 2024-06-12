@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import * as styles from "./action_list.module.css";
+import { classNames } from '../../utils/classnames.js';
 
 export interface ListProps {
     children?: React.ReactElement | React.ReactElement[];
@@ -25,7 +26,9 @@ export interface ListItemProps {
 
 export function ListItem(props: ListItemProps) {
     return (
-        <button className={styles.item_container} onClick={props.onClick} disabled={props.disabled}>
+        <button className={classNames(styles.item_container, {
+            [styles.disabled]: props.disabled
+        })} onClick={props.onClick} disabled={props.disabled}>
             {props.children}
         </button>
     );

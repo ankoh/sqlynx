@@ -28,6 +28,9 @@
     margin-right: 8px;
     align-items: center;
 }
+.item_container.disabled {
+    cursor: not-allowed;
+}
 .item_container:hover {
     background-color: rgba(208,215,222,0.32);
 }
