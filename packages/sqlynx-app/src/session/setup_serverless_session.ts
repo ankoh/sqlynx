@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Immutable from 'immutable';
 
-import { CONNECTOR_INFOS, ConnectorType, FILE_CONNECTOR } from '../connectors/connector_info.js';
+import { CONNECTOR_INFOS, ConnectorType, SERVERLESS_CONNECTOR } from '../connectors/connector_info.js';
 import { EXAMPLES } from './example_scripts.js';
 import { RESULT_OK } from '../utils/result.js';
 import { ScriptData, ScriptKey } from './session_state.js';
@@ -77,7 +77,7 @@ export function useServerlessSessionSetup(): SessionSetupFn {
             instance: instance.value,
             connectorInfo: CONNECTOR_INFOS[ConnectorType.SERVERLESS],
             connectionId: allocateConnectionId({
-                type: FILE_CONNECTOR,
+                type: SERVERLESS_CONNECTOR,
                 value: {
                     stats: createConnectionStatistics()
                 }

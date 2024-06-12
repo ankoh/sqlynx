@@ -18,6 +18,8 @@ export enum ScriptKey {
 }
 /// The state of the session
 export interface SessionState {
+    /// The session id
+    sessionId: number;
     /// The session state contains many references into the Wasm heap.
     /// It therefore makes sense that script state users resolve the "right" module through here.
     instance: sqlynx.SQLynx | null;

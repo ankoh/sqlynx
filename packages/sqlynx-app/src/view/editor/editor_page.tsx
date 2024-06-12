@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as ActionList from '../base/action_list.js'
+import * as ActionList from '../base/action_list.js';
 import * as styles from './editor_page.module.css';
 import * as theme from '../../github_theme.module.css';
 import * as icons from '../../../static/svg/symbols.generated.svg';
@@ -18,74 +18,16 @@ import {
 import { ConnectorInfo } from '../../connectors/connector_info.js';
 import { QueryExecutionStatus } from '../../connectors/query_execution.js';
 import { useCurrentSessionState } from '../../session/current_session.js';
-import { useSessionStates } from '../../session/session_state_registry.js';
-import { AnchoredOverlay } from '../base/anchored_overlay.js';
 import { ScriptEditor } from './editor.js';
 import { SchemaGraph } from '../schema/schema_graph.js';
 import { QueryProgress } from '../progress/query_progress.js';
 import { DataTable } from '../table/data_table.js';
-import { Button, ButtonVariant } from '../base/button.js';
 import { KeyEventHandler, useKeyEvents } from '../../utils/key_events.js';
 import { VerticalTabs, VerticalTabVariant } from '../base/vertical_tabs.js';
 import { ScriptFileSaveOverlay } from './script_filesave_overlay.js';
 import { ScriptURLOverlay } from './script_url_overlay.js';
-import { getConnectorIcon } from '../connectors/connector_icons.js';
 import { useAppConfig } from '../../app_config.js';
-
-const SessionSelection = (props: { className?: string; short: boolean }) => {
-    const sessionRegistry = useSessionStates();
-    const [sessionState, _modifySessionState] = useCurrentSessionState();
-    const [isOpen, setIsOpen] = React.useState<boolean>(false);
-
-    const selectConnector = React.useCallback((e: React.MouseEvent) => {
-        e.stopPropagation();
-        // const target = e.currentTarget as HTMLLIElement;
-        // const connectorType = Number.parseInt(target.dataset.connector ?? '0')! as ConnectorType;
-        // setIsOpen(false);
-        // scriptStateDispatch({
-        //     type: SELECT_CONNECTOR,
-        //     value: connectorType,
-        // });
-    }, []);
-    const connectorName = !sessionState?.connectorInfo
-        ? 'Not set'
-        : props.short
-            ? sessionState?.connectorInfo.displayName.short
-            : sessionState?.connectorInfo.displayName.long;
-
-    // Memoize button to prevent svg flickering
-    const button = React.useMemo(() => (
-        <Button
-            className={props.className}
-            onClick={() => setIsOpen(true)}
-            variant={ButtonVariant.Invisible}
-            leadingVisual={() => (!sessionState?.connectorInfo ? <div /> : getConnectorIcon(sessionState?.connectorInfo))}
-            trailingVisual={TriangleDownIcon}
-        >
-            {connectorName}
-        </Button>
-    ), [sessionState?.connectorInfo, connectorName]);
-
-    return (
-        <AnchoredOverlay
-            open={isOpen}
-            onClose={() => setIsOpen(false)}
-            renderAnchor={(p: object) => <div {...p}>{button}</div>}
-        >
-            <ActionList.List aria-label="Sessions">
-                <ActionList.GroupHeading>Sessions</ActionList.GroupHeading>
-                <>
-                    {sessionRegistry.entrySeq().map(([sessionId, session]) => (
-                        <ActionList.ListItem key={sessionId} data-session={session.connectionId} onClick={selectConnector}>
-                            <ActionList.Leading>{getConnectorIcon(session.connectorInfo)}</ActionList.Leading>
-                            <ActionList.ItemText>{props.short ? session.connectorInfo.displayName.short : session.connectorInfo.displayName.long}</ActionList.ItemText>
-                        </ActionList.ListItem>
-                    ))}
-                </>
-            </ActionList.List>
-        </AnchoredOverlay>
-    );
-};
+import { SessionSelectorButton } from './session_selector_button.js';
 
 const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
     const config = useAppConfig();
@@ -176,7 +118,7 @@ interface TabState {
 interface Props { }
 
 export const EditorPage: React.FC<Props> = (_props: Props) => {
-    const [scriptState, _scriptStateDispatch] = useCurrentSessionState();
+    const [currentSession, _modifyCurrentSession] = useCurrentSessionState();
     const [selectedTab, selectTab] = React.useState<TabKey>(TabKey.SchemaView);
     const [sharingIsOpen, setSharingIsOpen] = React.useState<boolean>(false);
 
@@ -185,8 +127,8 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
         enabledTabs: 1,
     });
     let enabledTabs = 1;
-    enabledTabs += +((scriptState?.queryExecutionState?.startedAt ?? null) != null);
-    enabledTabs += +(scriptState?.queryExecutionResult != null);
+    enabledTabs += +((currentSession?.queryExecutionState?.startedAt ?? null) != null);
+    enabledTabs += +(currentSession?.queryExecutionResult != null);
     tabState.current.enabledTabs = enabledTabs;
 
     // Register keyboard events
@@ -210,7 +152,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
     // Automatically switch tabs when the execution status changes meaningfully
     const prevStatus = React.useRef<QueryExecutionStatus | null>(null);
     React.useEffect(() => {
-        const status = scriptState?.queryExecutionState?.status ?? null;
+        const status = currentSession?.queryExecutionState?.status ?? null;
         switch (status) {
             case null:
                 selectTab(TabKey.SchemaView);
@@ -230,14 +172,14 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                 break;
         }
         prevStatus.current = status;
-    }, [scriptState?.queryExecutionState?.status]);
+    }, [currentSession?.queryExecutionState?.status]);
 
     return (
         <div className={styles.page}>
             <div className={styles.header_container}>
                 <div className={styles.header_left_container}>
                     <div className={styles.page_title}>SQL Editor</div>
-                    <SessionSelection short={true} />
+                    <SessionSelectorButton short={true} />
                 </div>
                 <div className={styles.header_action_container}>
                     <div>
@@ -282,12 +224,12 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                         [TabKey.SchemaView]: _props => <SchemaGraph />,
                         [TabKey.QueryProgressView]: _props => (
                             <QueryProgress
-                                queryStatus={scriptState?.queryExecutionState?.status ?? null}
-                                queryProgress={scriptState?.queryExecutionState?.latestProgressUpdate ?? null}
+                                queryStatus={currentSession?.queryExecutionState?.status ?? null}
+                                queryProgress={currentSession?.queryExecutionState?.latestProgressUpdate ?? null}
                             />
                         ),
                         [TabKey.QueryResultView]: _props => (
-                            <DataTable data={scriptState?.queryExecutionResult?.resultTable ?? null} />
+                            <DataTable data={currentSession?.queryExecutionResult?.resultTable ?? null} />
                         ),
                     }}
                 />
@@ -296,10 +238,10 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
             <div className={styles.action_sidebar}>
                 <ActionList.List aria-label="Actions">
                     <ActionList.GroupHeading>Connector</ActionList.GroupHeading>
-                    <ScriptCommandList connector={scriptState?.connectorInfo ?? null} />
+                    <ScriptCommandList connector={currentSession?.connectorInfo ?? null} />
                     <ActionList.Divider />
                     <ActionList.GroupHeading>Output</ActionList.GroupHeading>
-                    <OutputCommandList connector={scriptState?.connectorInfo ?? null} />
+                    <OutputCommandList connector={currentSession?.connectorInfo ?? null} />
                     <ActionList.Divider />
                 </ActionList.List>
             </div>
