@@ -1,7 +1,7 @@
 import * as proto from '@ankoh/sqlynx-pb';
 import { isNativePlatform } from "../platform/native_globals.js";
 
-export const FILE_CONNECTOR = Symbol('FILE_CONNECTOR');
+export const SERVERLESS_CONNECTOR = Symbol('SERVERLESS_CONNECTOR');
 export const SALESFORCE_DATA_CLOUD_CONNECTOR = Symbol('SALESFORCE_DATA_CLOUD_CONNECTOR');
 export const HYPER_GRPC_CONNECTOR = Symbol('HYPER_GRPC_CONNECTOR');
 
@@ -19,6 +19,12 @@ export interface ConnectorInfo {
         long: string;
         short: string;
     };
+    /// The icons
+    icons: {
+        colored: string,
+        uncolored: string,
+        outlines: string,
+    }
     /// The connector features
     features: ConnectorFeatures;
     /// The connector platforms
@@ -48,6 +54,11 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
             short: 'Serverless',
             long: 'Serverless',
         },
+        icons: {
+            colored: "cloud_offline",
+            uncolored: "cloud_offline",
+            outlines: "cloud_offline",
+        },
         features: {
             schemaScript: true,
             executeQueryAction: false,
@@ -64,6 +75,11 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
             short: 'Salesforce',
             long: 'Salesforce Data Cloud',
         },
+        icons: {
+            colored: "hyper",
+            uncolored: "hyper_nocolor",
+            outlines: "hyper_outlines",
+        },
         features: {
             schemaScript: false,
             executeQueryAction: true,
@@ -79,6 +95,11 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
         displayName: {
             short: 'Hyper',
             long: 'Hyper Database',
+        },
+        icons: {
+            colored: "salesforce_notext",
+            uncolored: "salesforce_notext",
+            outlines: "salesforce_outlines",
         },
         features: {
             schemaScript: false,

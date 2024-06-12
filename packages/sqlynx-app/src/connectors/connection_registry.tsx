@@ -44,6 +44,8 @@ export function useConnectionStateAllocator(): ConnectionAllocator {
     }, [setReg]);
 }
 
+export const useConnectionRegistry = () => React.useContext(CONNECTION_REGISTRY_CTX)![0];
+
 export function useConnectionState(id: number | null): [ConnectionState | null, ModifyConnectionAction] {
     const [registry, setRegistry] = React.useContext(CONNECTION_REGISTRY_CTX)!;
     const setConnection = React.useCallback((reducer: ConnectionReducer) => {

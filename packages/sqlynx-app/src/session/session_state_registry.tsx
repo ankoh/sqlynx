@@ -7,8 +7,9 @@ import { DESTROY, SessionStateAction, reduceSessionState } from './session_state
 import { useLogger } from '../platform/logger_provider.js';
 
 type SessionRegistry = Immutable.Map<number, SessionState>;
+type SessionStateWithoutId = Omit<SessionState, "sessionId">;
 type SetSessionRegistryAction = React.SetStateAction<SessionRegistry>;
-export type SessionAllocator = (session: SessionState) => number;
+export type SessionAllocator = (session: SessionStateWithoutId) => number;
 export type ModifySessionAction = (action: SessionStateAction) => void;
 
 const SESSION_REGISTRY_CTX = React.createContext<[SessionRegistry, Dispatch<SetSessionRegistryAction>] | null>(null);
@@ -33,9 +34,9 @@ export function useSessionStates(): SessionRegistry {
 
 export function useSessionStateAllocator(): SessionAllocator {
     const [_reg, setReg] = React.useContext(SESSION_REGISTRY_CTX)!;
-    return React.useCallback((state: SessionState) => {
+    return React.useCallback((state: SessionStateWithoutId) => {
         const sessionId = NEXT_SESSION_ID++;
-        setReg((reg) => reg.set(sessionId, state));
+        setReg((reg) => reg.set(sessionId, { ...state, sessionId }));
         return sessionId;
     }, [setReg]);
 }

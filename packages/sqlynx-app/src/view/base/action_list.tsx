@@ -20,6 +20,7 @@ export interface ListItemProps {
     children?: React.ReactElement | React.ReactElement[];
     onClick?: (ev: React.MouseEvent) => void;
     disabled?: boolean;
+    selected?: boolean;
 }
 
 export function ListItem(props: ListItemProps) {
@@ -67,11 +68,17 @@ export function GroupHeading(props: GroupHeadingProps) {
 }
 
 export interface ItemTextProps {
-    children?: string | React.ReactElement | (string | React.ReactElement)[];
+    children?: undefined | string | React.ReactElement | (undefined | string | React.ReactElement)[];
 }
 
 export function ItemText(props: ItemTextProps) {
     return <span className={styles.text_container}>{props.children}</span>;
+}
+export function ItemTextTitle(props: ItemTextProps) {
+    return <span className={styles.text_title}>{props.children}</span>;
+}
+export function ItemTextDescription(props: ItemTextProps) {
+    return <span className={styles.text_description}>{props.children}</span>;
 }
 
 export function Divider() {

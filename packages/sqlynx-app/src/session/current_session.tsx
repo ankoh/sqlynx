@@ -29,4 +29,4 @@ export function useCurrentSessionSelector(): CurrentSessionSetter {
 export function useCurrentSessionState(): [SessionState | null, ModifySessionAction] {
     const [currentSession, _setCurrentSession] = React.useContext(SESSION_CTX)!;
     return useSessionState(currentSession);
-};
+}

@@ -5,7 +5,7 @@ import { SalesforceConnectionState } from './salesforce_connection_state.js';
 import { ConnectionStatistics } from './connection_statistics.js';
 import { VariantKind } from '../utils/variant.js';
 import {
-    FILE_CONNECTOR,
+    SERVERLESS_CONNECTOR,
     HYPER_GRPC_CONNECTOR,
     SALESFORCE_DATA_CLOUD_CONNECTOR,
 } from './connector_info.js';
@@ -17,7 +17,7 @@ import {
 
 export type ConnectionState =
     | VariantKind<typeof SALESFORCE_DATA_CLOUD_CONNECTOR, SalesforceConnectionState>
-    | VariantKind<typeof FILE_CONNECTOR, BrainstormConnectionState>
+    | VariantKind<typeof SERVERLESS_CONNECTOR, BrainstormConnectionState>
     | VariantKind<typeof HYPER_GRPC_CONNECTOR, HyperGrpcConnectionState>
     ;
 
@@ -77,7 +77,7 @@ export function checkSalesforceAuth(
 
 export function buildConnectorParams(state: ConnectionState) {
     switch (state.type) {
-        case FILE_CONNECTOR:
+        case SERVERLESS_CONNECTOR:
             return buildBrainstormConnectorParams();
         case HYPER_GRPC_CONNECTOR:
             return buildHyperConnectorParams();

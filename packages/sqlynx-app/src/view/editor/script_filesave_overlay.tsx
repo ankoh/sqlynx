@@ -31,7 +31,7 @@ export const ScriptFileSaveOverlay: React.FC<Props> = (props: Props) => {
         >
             <Box className={classNames(styles.filesave_overlay, props.className)}>
                 <div className={styles.filesave_file_icon_container}>
-                    <FileIcon className={styles.filesave_file_icon} />
+                    <FileIcon />
                 </div>
                 <div className={styles.filesave_file_info}>
                     <div className={styles.filesave_file_name}>query.sql</div>
@@ -40,7 +40,6 @@ export const ScriptFileSaveOverlay: React.FC<Props> = (props: Props) => {
                 <div className={styles.filesave_download}>
                     <IconButton
                         ref={buttonRef}
-                        className={styles.filesave_button}
                         icon={DownloadIcon}
                         aria-labelledby="save-file"
                     />
