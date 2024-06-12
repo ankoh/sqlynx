@@ -1,6 +1,7 @@
 import * as React from 'react';
 import * as styles from './button.module.css';
 
+import { Tooltip } from './tooltip.js';
 import { classNames } from '../../utils/classnames.js';
 
 const BUTTON_VARIANT_CLASSNAME = [
@@ -29,7 +30,7 @@ export enum ButtonSize {
     Large
 }
 
-interface Props {
+interface ButtonProps {
     className?: string;
     variant?: ButtonVariant;
     size?: ButtonSize;
@@ -43,7 +44,7 @@ interface Props {
     onClick?: React.MouseEventHandler;
 }
 
-export const Button = React.forwardRef<HTMLButtonElement, Props>((props: Props, ref) => {
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props: ButtonProps, ref) => {
     const variantStyle = BUTTON_VARIANT_CLASSNAME[props.variant ?? ButtonVariant.Default];
     const sizeStyle = BUTTON_SIZE_CLASSNAME[props.size ?? ButtonSize.Medium];
     return (
@@ -74,5 +75,40 @@ export const Button = React.forwardRef<HTMLButtonElement, Props>((props: Props, 
                 </span>
             )}
         </button>
+    );
+});
+
+interface IconButtonProps {
+    className?: string;
+    variant?: ButtonVariant;
+    size?: ButtonSize;
+    disabled?: boolean;
+    inactive?: boolean;
+    children?: React.ReactElement | string;
+    onClick?: React.MouseEventHandler;
+    description?: string;
+    'aria-label': string;
+}
+
+export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props: IconButtonProps, ref) => {
+    const ariaLabel = props['aria-label'];
+    const variantStyle = BUTTON_VARIANT_CLASSNAME[props.variant ?? ButtonVariant.Default];
+    const sizeStyle = BUTTON_SIZE_CLASSNAME[props.size ?? ButtonSize.Medium];
+    return (
+        <Tooltip
+            text={props.description ?? ariaLabel}
+            type={props.description ? undefined : 'label'}
+        >
+            <button
+                className={classNames(styles.button, variantStyle, sizeStyle, {
+                    [styles.inactive]: props.inactive,
+                    [styles.disabled]: props.disabled,
+                }, props.className)}
+                onClick={props.onClick}
+                ref={ref}
+            >
+                {props.children}
+            </button>
+        </Tooltip>
     );
 });
