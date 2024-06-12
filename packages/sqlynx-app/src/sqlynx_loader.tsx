@@ -117,18 +117,18 @@ export const SQLynxLoader: React.FC<Props> = (props: Props) => {
 };
 
 export const useSQLynxSetupProgress = (): InstantiationProgress | null => React.useContext(PROGRESS_CONTEXT);
-export function useSQLynxSetup(): ((context: string) => Promise<Result<sqlynx.SQLynx>> | null) {
+export type SQLynxSetupFn = (context: string) => Promise<Result<sqlynx.SQLynx>>;
+export function useSQLynxSetup(): SQLynxSetupFn {
     // Get the module
     const mod = React.useContext(MODULE_CONTEXT);
     // Resolve function to instantiate the module
     const instantiate = React.useContext(INSTANTIATOR_CONTEXT)!;
     // Create a getter to instantiate on access
-    const setup = React.useCallback(async (context: string): Promise<Result<sqlynx.SQLynx>> => {
+    return React.useCallback(async (context: string): Promise<Result<sqlynx.SQLynx>> => {
         if (!mod) {
             return await instantiate(context);
         } else {
             return mod;
         }
     }, [instantiate, mod]);
-    return setup;
 };

@@ -75,8 +75,8 @@ const SessionSelection = (props: { className?: string; short: boolean }) => {
             <ActionList.List aria-label="Sessions">
                 <ActionList.GroupHeading>Sessions</ActionList.GroupHeading>
                 <>
-                    {sessionRegistry.entrySeq().map(([_sessionId, session]) => (
-                        <ActionList.ListItem key={session.connectionId} data-session={session.connectionId} onClick={selectConnector}>
+                    {sessionRegistry.entrySeq().map(([sessionId, session]) => (
+                        <ActionList.ListItem key={sessionId} data-session={session.connectionId} onClick={selectConnector}>
                             <ActionList.Leading>{getConnectorIcon(session.connectorInfo)}</ActionList.Leading>
                             <ActionList.ItemText>{props.short ? session.connectorInfo.displayName.short : session.connectorInfo.displayName.long}</ActionList.ItemText>
                         </ActionList.ListItem>

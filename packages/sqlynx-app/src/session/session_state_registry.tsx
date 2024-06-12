@@ -8,7 +8,7 @@ import { useLogger } from '../platform/logger_provider.js';
 
 type SessionRegistry = Immutable.Map<number, SessionState>;
 type SetSessionRegistryAction = React.SetStateAction<SessionRegistry>;
-type SessionAllocator = (session: SessionState) => number;
+export type SessionAllocator = (session: SessionState) => number;
 export type ModifySessionAction = (action: SessionStateAction) => void;
 
 const SESSION_REGISTRY_CTX = React.createContext<[SessionRegistry, Dispatch<SetSessionRegistryAction>] | null>(null);
