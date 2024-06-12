@@ -70,7 +70,7 @@ __metadata:
     "@types/react": "npm:^18.3.3"
     "@types/react-dom": "npm:^18.3.0"
     "@types/react-window": "npm:^1.8.8"
-    "@types/stylis": "npm:^4"
+    "@types/stylis": "npm:^4.2.6"
     "@uiw/codemirror-themes-all": "npm:^4.22.2"
     apache-arrow: "npm:^16.1.0"
     cm6-theme-basic-light: "npm:^0.2.0"
@@ -2604,7 +2604,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/stylis@npm:^4":
+"@types/stylis@npm:^4.2.6":
   version: 4.2.6
   resolution: "@types/stylis@npm:4.2.6"
   checksum: 10c0/4c384a90451c5d2447ea10e6d3d483bb3de877a3d67488952f26726996929f25605b68f41c315ef0c6ecf7491e69a4f58d87c7a2009b35f2a6dde8de8ec2e8a2
