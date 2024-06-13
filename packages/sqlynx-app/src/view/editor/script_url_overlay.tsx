@@ -3,9 +3,9 @@ import * as React from 'react';
 import { Box, IconButton } from '@primer/react';
 import { CheckIcon, PaperclipIcon } from '@primer/octicons-react';
 
-import { AnchorAlignment } from '../base/anchored_position.js';
-import { AnchoredOverlay } from '../base/anchored_overlay.js';
-import { TextInput } from '../base/text_input.js';
+import { AnchorAlignment } from '../foundations/anchored_position.js';
+import { AnchoredOverlay } from '../foundations/anchored_overlay.js';
+import { TextInput } from '../foundations/text_input.js';
 import { classNames } from '../../utils/classnames.js';
 import { generateSessionSetupUrl, SessionLinkTarget } from '../../session/session_setup_url.js';
 import { sleep } from '../../utils/sleep.js';

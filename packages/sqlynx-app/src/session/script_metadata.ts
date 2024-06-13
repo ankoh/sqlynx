@@ -10,7 +10,7 @@ export enum ScriptType {
 }
 
 export interface ScriptAnnotations {
-    /// The base tables
+    /// The foundations tables
     tableRefs?: Set<string>;
     /// The table definitions
     tableDefs?: Set<string>;

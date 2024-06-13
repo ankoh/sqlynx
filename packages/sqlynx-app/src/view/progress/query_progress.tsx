@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { RectangleWaveSpinner } from '../base/spinners.js';
+import { RectangleWaveSpinner } from '../foundations/spinners.js';
 import { QueryExecutionProgress, QueryExecutionStatus } from '../../connectors/query_execution.js';
 
 import * as styles from './query_progress.module.css';

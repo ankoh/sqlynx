@@ -8,7 +8,7 @@ import { XIcon } from '@primer/octicons-react';
 import { useScrollbarWidth } from '../utils/scrollbar.js';
 import { LogLevel, getLogLevelName } from '../platform/log_buffer.js';
 import { useLogger } from '../platform/logger_provider.js';
-import { observeSize } from './base/size_observer.js';
+import { observeSize } from './foundations/size_observer.js';
 
 import * as styles from './log_viewer.module.css';
 

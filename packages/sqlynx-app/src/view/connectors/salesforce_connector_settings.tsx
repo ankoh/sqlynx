@@ -15,8 +15,8 @@ import {
     RESET,
     SalesforceConnectionStateAction,
 } from '../../connectors/salesforce_connection_state.js';
-import { TextField, TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_UNKNOWN } from '../base/text_field.js';
-import { IndicatorStatus, StatusIndicator } from '../base/status_indicator.js';
+import { TextField, TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_UNKNOWN } from '../foundations/text_field.js';
+import { IndicatorStatus, StatusIndicator } from '../foundations/status_indicator.js';
 import { Dispatch } from '../../utils/variant.js';
 import { classNames } from '../../utils/classnames.js';
 import { useLogger } from '../../platform/logger_provider.js';
@@ -25,7 +25,7 @@ import { ConnectionHealth, ConnectionStatus } from '../../connectors/connection_
 import { useSessionStates } from '../../session/session_state_registry.js';
 import { useCurrentSessionSelector } from '../../session/current_session.js';
 import { useNavigate } from 'react-router-dom';
-import { Button, ButtonVariant } from '../base/button.js';
+import { Button, ButtonVariant } from '../foundations/button.js';
 
 const LOG_CTX = "sf_connector";
 

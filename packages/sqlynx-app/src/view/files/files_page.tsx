@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { classNames } from '../../utils/classnames.js';
 import { EXAMPLE_SCHEMAS } from '../../session/example_scripts.js';
-import { TextInput } from '../base/text_input.js';
+import { TextInput } from '../foundations/text_input.js';
 import { createScriptMetadata, ScriptMetadata, ScriptOriginType, ScriptType } from '../../session/script_metadata.js';
 import { ConnectorType } from '../../connectors/connector_info.js';
 

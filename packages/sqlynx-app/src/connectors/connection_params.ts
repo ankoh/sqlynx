@@ -1,7 +1,7 @@
 import * as proto from '@ankoh/sqlynx-pb';
 import Immutable from 'immutable';
 
-import { KeyValueListElement } from '../view/base/keyvalue_list.js';
+import { KeyValueListElement } from '../view/foundations/keyvalue_list.js';
 import { GrpcChannelArgs } from '../platform/grpc_common.js';
 
 export interface HyperGrpcConnectionParams {
@@ -14,7 +14,7 @@ export interface HyperGrpcConnectionParams {
 }
 
 export interface SalesforceAuthParams {
-    /// The base URL
+    /// The foundations URL
     instanceUrl: string;
     /// The client id
     appConsumerKey: string;

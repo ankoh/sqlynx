@@ -1,11 +1,11 @@
 import * as React from 'react';
 import * as sqlynx from '@ankoh/sqlynx-core';
-import * as ActionList from '../base/action_list.js';
+import * as ActionList from '../foundations/action_list.js';
 
 import { DecorationSet, EditorView } from '@codemirror/view';
 import { ChangeSpec, EditorSelection, StateEffect } from '@codemirror/state';
 
-import { Button, ButtonVariant } from '../base/button.js';
+import { Button, ButtonVariant } from '../foundations/button.js';
 import { CodeMirror } from './codemirror.js';
 import { SQLynxExtensions } from './sqlynx_extension.js';
 import { SQLynxScriptBuffers, SQLynxScriptKey, UpdateSQLynxScript } from './sqlynx_processor.js';
@@ -14,7 +14,7 @@ import { ScriptMetadata } from '../../session/script_metadata.js';
 import { ScriptStatisticsBar } from './script_statistics_bar.js';
 import { TriangleDownIcon } from '@primer/octicons-react';
 import { UPDATE_SCRIPT_ANALYSIS, UPDATE_SCRIPT_CURSOR } from '../../session/session_state_reducer.js';
-import { VerticalTabs, VerticalTabVariant } from '../base/vertical_tabs.js';
+import { VerticalTabs, VerticalTabVariant } from '../foundations/vertical_tabs.js';
 import { classNames } from '../../utils/classnames.js';
 import { isDebugBuild } from '../../globals.js';
 import { useAppConfig } from '../../app_config.js';
@@ -23,7 +23,7 @@ import { useLogger } from '../../platform/logger_provider.js';
 
 import * as icons from '../../../static/svg/symbols.generated.svg';
 import * as styles from './editor.module.css';
-import { AnchoredOverlay } from '../base/anchored_overlay.js';
+import { AnchoredOverlay } from '../foundations/anchored_overlay.js';
 
 enum TabId {
     MAIN_SCRIPT = 1,

@@ -3,7 +3,7 @@ import * as React from 'react';
 import { HyperGrpcConnectorSettings } from './hyper_grpc_connector_settings.js';
 import { SalesforceConnectorSettings } from './salesforce_connector_settings.js';
 import { Dispatch } from '../../utils/variant.js';
-import { VerticalTabProps, VerticalTabRenderers, VerticalTabs, VerticalTabVariant } from '../base/vertical_tabs.js';
+import { VerticalTabProps, VerticalTabRenderers, VerticalTabs, VerticalTabVariant } from '../foundations/vertical_tabs.js';
 import { ConnectorType } from '../../connectors/connector_info.js';
 import { PlatformCheck } from './platform_check.js';
 

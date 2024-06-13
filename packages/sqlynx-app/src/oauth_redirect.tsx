@@ -9,8 +9,8 @@ import { BrowserRouter, Route, Routes, useSearchParams } from 'react-router-dom'
 import { BASE64_CODEC } from './utils/base64.js';
 import { Result, RESULT_ERROR, RESULT_OK } from './utils/result.js';
 import { SQLYNX_VERSION } from './globals.js';
-import { Button, ButtonVariant } from './view/base/button.js';
-import { TextField, TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_WARNING } from './view/base/text_field.js';
+import { Button, ButtonVariant } from './view/foundations/button.js';
+import { TextField, TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_WARNING } from './view/foundations/text_field.js';
 import { GitHubTheme } from './github_theme.js';
 import { formatHHMMSS, formatTimeDifference } from './utils/format.js';
 import { LogViewerInPortal } from './view/log_viewer.js';

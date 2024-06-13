@@ -26,7 +26,7 @@ enum ScriptInteractionType {
 }
 /// A single user interaction
 class ScriptInteraction {
-    /// The base operation tyep
+    /// The foundations operation tyep
     type: ScriptInteractionType;
     /// The begin of the operation
     begin: number;
@@ -39,7 +39,7 @@ class ScriptInteraction {
         this.count = count;
     }
 
-    /// Apply the base operation to a string buffer
+    /// Apply the foundations operation to a string buffer
     public applyToText(buffer: string, data: string): string {
         switch (this.type) {
             case ScriptInteractionType.Insert:
@@ -48,7 +48,7 @@ class ScriptInteraction {
                 return buffer.substring(0, this.begin) + buffer.substring(this.begin + this.count);
         }
     }
-    /// Apply the base operation to a rope
+    /// Apply the foundations operation to a rope
     public applyToScript(script: sqlynx.SQLynxScript, data: string) {
         switch (this.type) {
             case ScriptInteractionType.Insert:
@@ -104,7 +104,7 @@ class ScriptInteractionGenerator {
         }
     }
 
-    /// Generate multiple base operations
+    /// Generate multiple foundations operations
     public static generateMany(seed: number, n: number, maxBytes: number): [ScriptInteraction[], string] {
         const gen = new ScriptInteractionGenerator(seed, maxBytes);
         const out: ScriptInteraction[] = [];
