@@ -65,7 +65,7 @@
 .text_description {
     font-weight: 400;
     display: inline-flex;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     white-space: nowrap;
 }
 .trailing_container {

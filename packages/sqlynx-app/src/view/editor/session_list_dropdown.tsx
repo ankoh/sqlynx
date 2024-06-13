@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as ActionList from '../base/action_list.js';
 
-import { useCurrentSessionState } from '../../session/current_session.js';
+import { useCurrentSessionSelector, useCurrentSessionState } from '../../session/current_session.js';
 import { useSessionStates } from '../../session/session_state_registry.js';
 import { AnchoredOverlay } from '../base/anchored_overlay.js';
 import { Button, ButtonVariant } from '../base/button.js';
@@ -18,18 +18,19 @@ import { ConnectionHealth } from '../../connectors/connection_status.js';
 export function SessionListDropdown(props: { className?: string; short: boolean }) {
     const sessionRegistry = useSessionStates();
     const [sessionState, _modifySessionState] = useCurrentSessionState();
+    const selectSession = useCurrentSessionSelector();
     const [isOpen, setIsOpen] = React.useState<boolean>(false);
     const connRegistry = useConnectionRegistry();
 
-    const selectConnector = React.useCallback((e: React.MouseEvent) => {
+    const onSessionClick = React.useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
-        // const target = e.currentTarget as HTMLLIElement;
-        // const connectorType = Number.parseInt(target.dataset.connector ?? '0')! as ConnectorType;
-        // setIsOpen(false);
-        // scriptStateDispatch({
-        //     type: SELECT_CONNECTOR,
-        //     value: connectorType,
-        // });
+        const target = e.currentTarget as HTMLLIElement;
+        if (target.dataset.item) {
+            const sessionId = Number.parseInt(target.dataset.item)!;
+            selectSession(sessionId);
+        } else {
+            console.warn("click target did not contain a data attribute");
+        }
     }, []);
     const connectorName = !sessionState?.connectorInfo
         ? 'Not set'
@@ -45,7 +46,7 @@ export function SessionListDropdown(props: { className?: string; short: boolean 
             variant={ButtonVariant.Invisible}
             leadingVisual={() => (!sessionState?.connectorInfo
                     ? <div />
-                    : <ConnectorIcon connector={sessionState?.connectorInfo} variant={ConnectorIconVariant.UNCOLORED} />
+                    : <ConnectorIcon connector={sessionState?.connectorInfo} variant={ConnectorIconVariant.OUTLINES} />
             )}
         >
             {connectorName}
@@ -101,9 +102,10 @@ export function SessionListDropdown(props: { className?: string; short: boolean 
             <ActionList.ListItem
                 key={sessionId}
                 data-session={session.connectionId}
-                onClick={selectConnector}
+                onClick={onSessionClick}
                 selected={sessionId === sessionState?.sessionId}
                 disabled={!enabled}
+                data-item={sessionId.toString()}
             >
                 <ActionList.Leading>
                     <ConnectorIcon connector={session.connectorInfo} variant={ConnectorIconVariant.OUTLINES} />
