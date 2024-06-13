@@ -76,9 +76,9 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
             long: 'Salesforce Data Cloud',
         },
         icons: {
-            colored: "hyper",
-            uncolored: "hyper_nocolor",
-            outlines: "hyper_outlines",
+            colored: "salesforce_notext",
+            uncolored: "salesforce_notext",
+            outlines: "salesforce_outlines",
         },
         features: {
             schemaScript: false,
@@ -97,9 +97,9 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
             long: 'Hyper Database',
         },
         icons: {
-            colored: "salesforce_notext",
-            uncolored: "salesforce_notext",
-            outlines: "salesforce_outlines",
+            colored: "hyper",
+            uncolored: "hyper_nocolor",
+            outlines: "hyper_outlines",
         },
         features: {
             schemaScript: false,

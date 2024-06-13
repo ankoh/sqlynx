@@ -22,14 +22,20 @@ export interface ListItemProps {
     onClick?: (ev: React.MouseEvent) => void;
     disabled?: boolean;
     selected?: boolean;
+    'data-item'?: string;
 }
 
 export function ListItem(props: ListItemProps) {
     return (
-        <button className={classNames(styles.item_container, {
-            [styles.disabled]: props.disabled,
-            [styles.selected]: props.selected
-        })} onClick={props.onClick} disabled={props.disabled}>
+        <button
+            className={classNames(styles.item_container, {
+                [styles.disabled]: props.disabled,
+                [styles.selected]: props.selected
+            })}
+            onClick={props.onClick}
+            disabled={props.disabled}
+            data-item={props['data-item']}
+        >
             {props.children}
         </button>
     );
