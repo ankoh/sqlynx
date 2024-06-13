@@ -1,7 +1,15 @@
 import * as React from 'react';
 import * as Immutable from 'immutable';
 
-import { ChecklistIcon, DatabaseIcon, FileBadgeIcon, KeyIcon, PlugIcon, XIcon } from '@primer/octicons-react';
+import {
+    ChecklistIcon,
+    DatabaseIcon,
+    FileBadgeIcon, FileIcon, FileSymlinkFileIcon,
+    KeyIcon,
+    MoveToStartIcon,
+    PlugIcon,
+    XIcon,
+} from '@primer/octicons-react';
 
 import { classNames } from '../../utils/classnames.js';
 import { KeyValueTextField, TextField } from '../base/text_field.js';
@@ -230,19 +238,19 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
     }
 
     // Get the action button
-    let actionButton: React.ReactElement = <div />;
+    let connectButton: React.ReactElement = <div />;
     let freezeInput = false;
     switch (hyperConnection?.connectionHealth) {
         case ConnectionHealth.NOT_STARTED:
         case ConnectionHealth.FAILED:
-            actionButton = <Button variant={ButtonVariant.Primary} leadingVisual={PlugIcon} onClick={setupConnection}>Connect</Button>;
+            connectButton = <Button variant={ButtonVariant.Primary} leadingVisual={PlugIcon} onClick={setupConnection}>Connect</Button>;
             break;
         case ConnectionHealth.CONNECTING:
-            actionButton = <Button variant={ButtonVariant.Danger} leadingVisual={XIcon} onClick={cancelAuth}>Cancel</Button>;
+            connectButton = <Button variant={ButtonVariant.Danger} leadingVisual={XIcon} onClick={cancelAuth}>Cancel</Button>;
             freezeInput = true;
             break;
         case ConnectionHealth.ONLINE:
-            actionButton = <Button variant={ButtonVariant.Danger} leadingVisual={XIcon} onClick={resetAuth}>Reset</Button>;
+            connectButton = <Button variant={ButtonVariant.Danger} leadingVisual={XIcon} onClick={resetAuth}>Disconnect</Button>;
             freezeInput = true;
             break;
     }
@@ -259,7 +267,10 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
                     Hyper Database
                 </div>
                 <div className={style.platform_actions}>
-                    {actionButton}
+                    {(hyperConnection?.connectionHealth == ConnectionHealth.ONLINE) && (
+                        <Button variant={ButtonVariant.Default} leadingVisual={FileSymlinkFileIcon}>Open Editor</Button>
+                    )}
+                    {connectButton}
                 </div>
             </div >
             <div className={style.status_container}>
