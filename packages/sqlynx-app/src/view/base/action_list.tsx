@@ -27,7 +27,8 @@ export interface ListItemProps {
 export function ListItem(props: ListItemProps) {
     return (
         <button className={classNames(styles.item_container, {
-            [styles.disabled]: props.disabled
+            [styles.disabled]: props.disabled,
+            [styles.selected]: props.selected
         })} onClick={props.onClick} disabled={props.disabled}>
             {props.children}
         </button>

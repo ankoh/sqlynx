@@ -27,7 +27,7 @@ import { VerticalTabs, VerticalTabVariant } from '../base/vertical_tabs.js';
 import { ScriptFileSaveOverlay } from './script_filesave_overlay.js';
 import { ScriptURLOverlay } from './script_url_overlay.js';
 import { useAppConfig } from '../../app_config.js';
-import { SessionSelectorButton } from './session_selector_button.js';
+import { SessionListDropdown } from './session_list_dropdown.js';
 
 const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
     const config = useAppConfig();
@@ -179,7 +179,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
             <div className={styles.header_container}>
                 <div className={styles.header_left_container}>
                     <div className={styles.page_title}>SQL Editor</div>
-                    <SessionSelectorButton short={true} />
+                    <SessionListDropdown short={true} />
                 </div>
                 <div className={styles.header_action_container}>
                     <div>
