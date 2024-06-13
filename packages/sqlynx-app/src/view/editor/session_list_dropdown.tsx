@@ -120,7 +120,7 @@ export function SessionListDropdown(props: { className?: string; short: boolean 
         )
     };
 
-    const sessions = React.useMemo(() => [...sessionRegistry.entries()].sort((l, r) => {
+    const sessions = React.useMemo(() => [...sessionRegistry.sessionMap.entries()].sort((l, r) => {
         return l[1].connectorInfo.connectorType - r[1].connectorInfo.connectorType;
     }), [sessionRegistry]);
 
